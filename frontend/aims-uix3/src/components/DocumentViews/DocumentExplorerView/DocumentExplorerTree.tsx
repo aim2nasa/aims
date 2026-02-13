@@ -57,6 +57,9 @@ export interface DocumentExplorerTreeProps {
   searchTerm?: string
   /** 썸네일 미리보기 활성화 여부 */
   thumbnailEnabled?: boolean
+  /** 🍎 파일명 표시 모드 */
+  filenameMode?: 'display' | 'original'
+  onFilenameModeChange?: (mode: 'display' | 'original') => void
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -116,6 +119,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   sortDirection = 'desc',
   searchTerm = '',
   thumbnailEnabled = true,
+  filenameMode = 'display',
+  onFilenameModeChange,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -338,6 +343,19 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     )
   }
 
+  // 🍎 filenameMode에 따라 문서 표시명 결정
+  const getDocName = (doc: Document): { showName: string; altName: string } => {
+    const originalName = DocumentStatusService.extractOriginalFilename(doc)
+    const hasDisplay = Boolean(doc.displayName)
+    const showName = filenameMode === 'display' && hasDisplay
+      ? doc.displayName!
+      : originalName
+    const altName = filenameMode === 'display' && hasDisplay
+      ? `원본: ${originalName}`
+      : (hasDisplay ? `별칭: ${doc.displayName}` : '')
+    return { showName, altName }
+  }
+
   // 날짜/시간 포맷 (MM.DD HH:mm:ss)
   const formatDateTime = (dateStr: string): string => {
     try {
@@ -388,10 +406,15 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
           />
         </span>
 
-        {/* 문서명 */}
-        <span className="doc-explorer-tree__doc-name" title={node.label}>
-          {highlightText(node.label, searchTerm)}
-        </span>
+        {/* 🍎 문서명: filenameMode에 따라 별칭/원본 전환 */}
+        {(() => {
+          const { showName, altName } = getDocName(doc)
+          return (
+            <span className="doc-explorer-tree__doc-name" title={altName || showName}>
+              {highlightText(showName, searchTerm)}
+            </span>
+          )
+        })()}
 
         {/* 고객명 (클릭 시 해당 고객 문서만 필터) */}
         <span
@@ -435,8 +458,12 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
 
       switch (sortBy) {
         case 'name': {
-          const nameA = (a.displayName || a.originalName || a.filename || a.name || '').toLowerCase()
-          const nameB = (b.displayName || b.originalName || b.filename || b.name || '').toLowerCase()
+          const nameA = filenameMode === 'display' && a.displayName
+            ? a.displayName.toLowerCase()
+            : DocumentStatusService.extractOriginalFilename(a).toLowerCase()
+          const nameB = filenameMode === 'display' && b.displayName
+            ? b.displayName.toLowerCase()
+            : DocumentStatusService.extractOriginalFilename(b).toLowerCase()
           comparison = nameA.localeCompare(nameB, 'ko')
           break
         }
@@ -466,7 +493,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     })
 
     return sorted
-  }, [recentDocuments, sortBy, sortDirection])
+  }, [recentDocuments, sortBy, sortDirection, filenameMode])
 
   // 최근 본 문서 렌더링 (검색 중일 때는 숨김)
   const renderRecentDocuments = () => {
@@ -501,10 +528,10 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             {sortedRecentDocuments.map((doc) => {
               const docId = doc._id || doc.id || ''
               const isSelected = selectedDocumentId === docId
-              const displayName = doc.displayName || doc.originalName || doc.filename || doc.name || '이름 없음'
               const customerName = doc.customer_relation?.customer_name
               const documentDate = getDocumentDate(doc)
               const filename = DocumentStatusService.extractFilename(doc)
+              const { showName, altName } = getDocName(doc)
 
               return (
                 <div
@@ -526,9 +553,9 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                     />
                   </span>
 
-                  {/* 문서명 */}
-                  <span className="doc-explorer-tree__doc-name" title={displayName}>
-                    {highlightText(displayName, searchTerm)}
+                  {/* 🍎 문서명: filenameMode에 따라 별칭/원본 전환 */}
+                  <span className="doc-explorer-tree__doc-name" title={altName || showName}>
+                    {highlightText(showName, searchTerm)}
                   </span>
 
                   {/* 고객명 */}

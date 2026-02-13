@@ -651,7 +651,8 @@ export function filterDocuments(documents: Document[], searchTerm: string): Docu
 function sortDocumentNodes(
   nodes: DocumentTreeNode[],
   sortBy: DocumentSortBy,
-  sortDirection: SortDirection
+  sortDirection: SortDirection,
+  filenameMode: 'display' | 'original' = 'display'
 ): DocumentTreeNode[] {
   const multiplier = sortDirection === 'asc' ? 1 : -1
 
@@ -663,8 +664,15 @@ function sortDocumentNodes(
 
     switch (sortBy) {
       case 'name': {
-        const nameA = getDocumentDisplayName(docA).toLowerCase()
-        const nameB = getDocumentDisplayName(docB).toLowerCase()
+        // 🍎 filenameMode에 따라 정렬 기준 변경
+        const nameA = (filenameMode === 'display' && docA.displayName
+          ? docA.displayName
+          : (docA.originalName || docA.filename || docA.name || '')
+        ).toLowerCase()
+        const nameB = (filenameMode === 'display' && docB.displayName
+          ? docB.displayName
+          : (docB.originalName || docB.filename || docB.name || '')
+        ).toLowerCase()
         return nameA.localeCompare(nameB, 'ko') * multiplier
       }
       case 'date': {
@@ -703,7 +711,8 @@ function sortDocumentNodes(
 export function sortTreeNodes(
   nodes: DocumentTreeNode[],
   sortBy: DocumentSortBy,
-  sortDirection: SortDirection
+  sortDirection: SortDirection,
+  filenameMode: 'display' | 'original' = 'display'
 ): DocumentTreeNode[] {
   return nodes.map((node) => {
     if (node.type === 'document') {
@@ -718,10 +727,10 @@ export function sortTreeNodes(
     const groupNodes = children.filter((child) => child.type !== 'document')
 
     // 문서 노드만 정렬
-    const sortedDocumentNodes = sortDocumentNodes(documentNodes, sortBy, sortDirection)
+    const sortedDocumentNodes = sortDocumentNodes(documentNodes, sortBy, sortDirection, filenameMode)
 
     // 그룹 노드는 재귀적으로 처리
-    const sortedGroupNodes = sortTreeNodes(groupNodes, sortBy, sortDirection)
+    const sortedGroupNodes = sortTreeNodes(groupNodes, sortBy, sortDirection, filenameMode)
 
     return {
       ...node,

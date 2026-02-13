@@ -6,7 +6,7 @@
  * 윈도우 탐색기 스타일의 트리 구조로 문서를 분류별로 탐색
  */
 
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { DocumentStatusProvider } from '@/providers/DocumentStatusProvider'
@@ -40,6 +40,17 @@ const DocumentExplorerContent: React.FC<{
   onCustomerClick?: (customerId: string) => void
 }> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick }) => {
   const { state, actions } = useDocumentStatusContext()
+
+  // 🍎 파일명 표시 모드 (별칭/원본) - localStorage 동기화
+  const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
+
+  const handleFilenameModeChange = useCallback((mode: 'display' | 'original') => {
+    setFilenameMode(mode)
+    localStorage.setItem('aims-filename-mode', mode)
+  }, [])
 
   const {
     groupBy,
@@ -79,6 +90,7 @@ const DocumentExplorerContent: React.FC<{
   } = useDocumentExplorerTree({
     documents: state.documents,
     isLoading: state.isLoading,
+    filenameMode,
   })
 
   // 문서 클릭 핸들러
@@ -142,6 +154,8 @@ const DocumentExplorerContent: React.FC<{
         onDateFilterClear={clearDateFilter}
         thumbnailEnabled={thumbnailEnabled}
         onThumbnailEnabledChange={setThumbnailEnabled}
+        filenameMode={filenameMode}
+        onFilenameModeChange={handleFilenameModeChange}
       />
 
       {/* 초성 필터 바 - 공용 컴포넌트 사용 */}
@@ -177,6 +191,8 @@ const DocumentExplorerContent: React.FC<{
             sortDirection={sortDirection}
             searchTerm={searchTerm}
             thumbnailEnabled={thumbnailEnabled}
+            filenameMode={filenameMode}
+            onFilenameModeChange={handleFilenameModeChange}
           />
         )}
       </div>

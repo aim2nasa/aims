@@ -15,6 +15,8 @@ const MAX_RECENT_DOCUMENTS = 5
 export interface UseDocumentExplorerTreeOptions {
   documents: Document[]
   isLoading?: boolean
+  /** 🍎 파일명 표시 모드 (별칭/원본) - 정렬에 반영 */
+  filenameMode?: 'display' | 'original'
 }
 
 export interface UseDocumentExplorerTreeResult {
@@ -73,6 +75,7 @@ export interface UseDocumentExplorerTreeResult {
 export function useDocumentExplorerTree({
   documents,
   isLoading = false,
+  filenameMode = 'display',
 }: UseDocumentExplorerTreeOptions): UseDocumentExplorerTreeResult {
   // Persisted states (F5 새로고침 후에도 유지)
   const [groupBy, setGroupByState] = usePersistedState<DocumentGroupBy>(
@@ -262,9 +265,9 @@ export function useDocumentExplorerTree({
     }
 
     // 문서 노드에 정렬 적용
-    sortedNodes = sortTreeNodes(sortedNodes, sortBy, sortDirection)
+    sortedNodes = sortTreeNodes(sortedNodes, sortBy, sortDirection, filenameMode)
     return { ...tree, nodes: sortedNodes }
-  }, [filteredDocuments, groupBy, minTagCount, sortBy, sortDirection, searchTerm])
+  }, [filteredDocuments, groupBy, minTagCount, sortBy, sortDirection, searchTerm, filenameMode])
 
   // expandedKeys를 Set으로 변환
   const expandedKeysSet = useMemo(() => new Set(expandedKeys), [expandedKeys])

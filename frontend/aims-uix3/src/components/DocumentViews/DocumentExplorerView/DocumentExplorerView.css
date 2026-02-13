@@ -329,6 +329,31 @@
   opacity: 0.7;
 }
 
+/* 🍎 Filename Mode Toggle Button (별칭/원본) */
+.doc-explorer-toolbar__filename-mode-btn {
+  flex-shrink: 0;
+  padding: 2px 5px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  white-space: nowrap;
+}
+
+.doc-explorer-toolbar__filename-mode-btn:hover {
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-tertiary);
+}
+
+.doc-explorer-toolbar__filename-mode-btn:active {
+  opacity: 0.7;
+}
+
 /* Stats */
 .doc-explorer-toolbar__stats {
   display: flex;

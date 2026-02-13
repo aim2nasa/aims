@@ -50,6 +50,9 @@ export interface DocumentExplorerToolbarProps {
   /** 썸네일 미리보기 활성화 */
   thumbnailEnabled: boolean
   onThumbnailEnabledChange: (enabled: boolean) => void
+  /** 🍎 파일명 표시 모드 (별칭/원본) */
+  filenameMode: 'display' | 'original'
+  onFilenameModeChange: (mode: 'display' | 'original') => void
 }
 
 const GROUP_BY_OPTIONS: DropdownOption[] = [
@@ -91,6 +94,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   onDateFilterClear,
   thumbnailEnabled,
   onThumbnailEnabledChange,
+  filenameMode,
+  onFilenameModeChange,
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -499,6 +504,18 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                 <path d="M2 10L5 7.5L7 9.5L10 6.5L14 10.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
             )}
+          </button>
+        </Tooltip>
+
+        {/* 🍎 파일명 표시 모드 토글 (별칭/원본) */}
+        <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'} placement="bottom">
+          <button
+            type="button"
+            className="doc-explorer-toolbar__filename-mode-btn"
+            onClick={() => onFilenameModeChange(filenameMode === 'display' ? 'original' : 'display')}
+            aria-label={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
+          >
+            {filenameMode === 'display' ? '별칭' : '원본'}
           </button>
         </Tooltip>
       </div>
