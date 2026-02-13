@@ -72,6 +72,8 @@ export interface SemanticSearchResultItem {
   score: number
   /** MIME Type (최상위 필드) */
   mimeType?: string
+  /** 사용자 지정 별칭 */
+  displayName?: string
   /** payload 데이터 */
   payload?: {
     doc_id?: string
@@ -119,6 +121,8 @@ export interface KeywordSearchResultItem {
   filename?: string
   /** MIME Type (최상위 필드) */
   mimeType?: string
+  /** 사용자 지정 별칭 */
+  displayName?: string
   /** 업로드 정보 */
   upload?: {
     originalName?: string

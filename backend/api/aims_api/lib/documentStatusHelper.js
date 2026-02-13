@@ -88,6 +88,7 @@ function prepareDocumentResponse(doc) {
     customer_relation: doc.customer_relation || null,
     ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
     customerId: doc.customerId || null,  // 🆕 내 파일 기능
+    displayName: doc.displayName || null,  // 🍎 사용자 지정 별칭
     document_type: doc.document_type || null,  // 🏷️ 문서 유형
     document_type_auto: doc.document_type_auto || false,  // 🏷️ 자동 분류 여부
     virusScan: doc.virusScan || null  // 🔴 바이러스 스캔 정보

@@ -185,6 +185,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [contextMenuDocument, setContextMenuDocument] = useState<SearchResultItem | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
+  const [filenameMode, setFilenameMode] = React.useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
+
+  const handleFilenameModeChange = React.useCallback((mode: 'display' | 'original') => {
+    setFilenameMode(mode)
+    localStorage.setItem('aims-filename-mode', mode)
+  }, [])
+
   // 🍎 정렬 상태
   type SortField = 'filename' | 'customer' | 'status' | 'similarity' | null
   type SortOrder = 'asc' | 'desc'
@@ -264,9 +275,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       let compareValue = 0
 
       if (sortField === 'filename') {
-        const nameA = SearchService.getOriginalName(a).toLowerCase()
-        const nameB = SearchService.getOriginalName(b).toLowerCase()
-        compareValue = nameA.localeCompare(nameB, 'ko-KR')
+        // 🍎 filenameMode에 따라 정렬 기준 변경
+        const nameA = (filenameMode === 'display' && SearchService.getDisplayName(a)) || SearchService.getOriginalName(a)
+        const nameB = (filenameMode === 'display' && SearchService.getDisplayName(b)) || SearchService.getOriginalName(b)
+        compareValue = nameA.toLowerCase().localeCompare(nameB.toLowerCase(), 'ko-KR')
       } else if (sortField === 'customer') {
         const customerA = ('customer_relation' in a && a.customer_relation?.customer_name) || ''
         const customerB = ('customer_relation' in b && b.customer_relation?.customer_name) || ''
@@ -295,7 +307,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     })
 
     return sorted
-  }, [results, sortField, sortOrder])
+  }, [results, sortField, sortOrder, filenameMode])
 
   /**
    * Enter 키 입력 핸들러
@@ -1308,34 +1320,51 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               {/* 🍎 컬럼 헤더 */}
               <div className="search-results-column-header" data-search-mode={searchMode}>
                 <div className="header-index">#</div>
-                <div
-                  className={`header-filename sortable ${sortField === 'filename' ? 'sorted' : ''}`}
-                  onClick={() => handleSort('filename')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      handleSort('filename')
-                    }
-                  }}
-                  aria-label={`파일명으로 정렬 ${sortField === 'filename' ? (sortOrder === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
-                >
-                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                    <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
-                    <path className="pdf-icon-fold" d="M9 1v3h3" strokeWidth="0.8" fill="none"/>
-                  </svg>
-                  <span>파일명</span>
-                  {sortField === 'filename' ? (
-                    <span className="sort-indicator" aria-hidden="true">
-                      {sortOrder === 'asc' ? '▲' : '▼'}
-                    </span>
-                  ) : (
-                    <span className="sort-indicator sort-indicator--both" aria-hidden="true">
-                      <span className="sort-arrow">▲</span>
-                      <span className="sort-arrow">▼</span>
-                    </span>
-                  )}
+                <div className="header-filename">
+                  <div
+                    className={`header-filename__sort-area sortable ${sortField === 'filename' ? 'sorted' : ''}`}
+                    onClick={() => handleSort('filename')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSort('filename')
+                      }
+                    }}
+                    aria-label={`파일명으로 정렬 ${sortField === 'filename' ? (sortOrder === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                  >
+                    <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                      <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
+                      <path className="pdf-icon-fold" d="M9 1v3h3" strokeWidth="0.8" fill="none"/>
+                    </svg>
+                    <span>파일명</span>
+                    {sortField === 'filename' ? (
+                      <span className="sort-indicator" aria-hidden="true">
+                        {sortOrder === 'asc' ? '▲' : '▼'}
+                      </span>
+                    ) : (
+                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
+                        <span className="sort-arrow">▲</span>
+                        <span className="sort-arrow">▼</span>
+                      </span>
+                    )}
+                  </div>
+                  {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
+                  <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}>
+                    <button
+                      type="button"
+                      className="filename-mode-toggle"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const next = filenameMode === 'display' ? 'original' : 'display'
+                        handleFilenameModeChange(next)
+                      }}
+                      aria-label={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
+                    >
+                      {filenameMode === 'display' ? '별칭' : '원본'}
+                    </button>
+                  </Tooltip>
                 </div>
                 <div
                   className={`header-customer sortable ${sortField === 'customer' ? 'sorted' : ''}`}
@@ -1440,6 +1469,16 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               <div className="search-results-table" role="list">
                 {sortedResults.map((item, index) => {
                   const originalName = SearchService.getOriginalName(item)
+                  const displayName = SearchService.getDisplayName(item)
+                  const hasDisplay = Boolean(displayName)
+                  // 🍎 filenameMode에 따라 표시할 파일명 결정
+                  const showName = filenameMode === 'display' && hasDisplay
+                    ? displayName!
+                    : originalName
+                  // 🍎 툴팁용 대체 파일명
+                  const altName = filenameMode === 'display' && hasDisplay
+                    ? `원본: ${originalName}`
+                    : (hasDisplay ? `별칭: ${displayName}` : '')
                   const summary = SearchService.getSummary(item)
                   const confidence = SearchService.getOCRConfidence(item)
                   const score = 'score' in item ? item.score : null
@@ -1535,7 +1574,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             })()}
                           </div>
                           <div className="row-title-container">
-                            <span className="row-title">{originalName}</span>
+                            {/* 🍎 filenameMode에 따라 별칭/원본 전환 표시 */}
+                            {altName ? (
+                              <Tooltip content={altName}>
+                                <span className="row-title">{showName}</span>
+                              </Tooltip>
+                            ) : (
+                              <span className="row-title">{showName}</span>
+                            )}
                             {/* 메모 버튼: customer_relation에 notes가 있는 경우에만 표시 */}
                             {('customer_relation' in item && item.customer_relation?.notes &&
                              typeof item.customer_relation.notes === 'string' &&
@@ -1941,7 +1987,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             <div className="keyword-location-modal-content">
               <div className="keyword-location-modal-header">
                 <span className="keyword-location-filename">
-                  {SearchService.getOriginalName(selectedDocumentForKeywordLocation)}
+                  {(filenameMode === 'display' && SearchService.getDisplayName(selectedDocumentForKeywordLocation)) || SearchService.getOriginalName(selectedDocumentForKeywordLocation)}
                 </span>
                 <span className="keyword-location-query">
                   검색어: <strong>{query}</strong>

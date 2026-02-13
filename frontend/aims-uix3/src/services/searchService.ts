@@ -122,7 +122,8 @@ export class SearchService {
                 progress: docData.data.computed.progress,
                 customer_relation: docData.data.raw.customer_relation,
                 ownerId: docData.data.raw.ownerId,  // 🆕 내 파일 기능
-                customerId: docData.data.raw.customerId  // 🆕 내 파일 기능
+                customerId: docData.data.raw.customerId,  // 🆕 내 파일 기능
+                displayName: docData.data.raw.displayName  // 🍎 별칭
               }
             } catch (error) {
               console.error(`[SearchService] 문서 ${docId} 조회 오류:`, error)
@@ -242,7 +243,8 @@ export class SearchService {
 
               return {
                 ...item,
-                customer_relation: docData.data.raw.customer_relation
+                customer_relation: docData.data.raw.customer_relation,
+                ...(docData.data.raw.displayName && { displayName: docData.data.raw.displayName })  // 🍎 별칭
               }
             } catch (error) {
               console.error(`[SearchService] 키워드 검색 - 문서 ${docId} customer_relation 조회 오류:`, error)
@@ -434,6 +436,19 @@ export class SearchService {
     }
 
     return '알 수 없는 파일'
+  }
+
+  /**
+   * 별칭(displayName) 추출
+   *
+   * @param item 검색 결과 아이템
+   * @returns 별칭 또는 undefined
+   */
+  static getDisplayName(item: SearchResultItem): string | undefined {
+    if (item.displayName) {
+      return item.displayName
+    }
+    return undefined
   }
 
   /**

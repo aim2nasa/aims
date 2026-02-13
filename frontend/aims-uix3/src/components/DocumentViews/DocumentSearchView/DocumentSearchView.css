@@ -616,6 +616,44 @@ html[data-theme="dark"] .search-results-column-header {
   justify-content: center;
 }
 
+/* 🍎 파일명 헤더: 정렬 영역 + 토글 버튼 */
+.search-results-column-header .header-filename {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-results-column-header .header-filename__sort-area {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 🍎 파일명 표시 모드 토글 버튼 */
+.search-results-column-header .filename-mode-toggle {
+  flex-shrink: 0;
+  padding: 1px 4px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  white-space: nowrap;
+}
+
+.search-results-column-header .filename-mode-toggle:hover {
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-tertiary);
+}
+
+.search-results-column-header .filename-mode-toggle:active {
+  opacity: 0.7;
+}
+
 /* 🍎 정렬 가능한 컬럼 헤더 */
 .search-results-column-header .sortable {
   cursor: pointer;
