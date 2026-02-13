@@ -308,6 +308,10 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
               <span className="ar-mobile-summary__label">계약수</span>
               <span className="ar-mobile-summary__value">{report.contract_count}건</span>
             </div>
+            <div className="ar-mobile-summary__item">
+              <span className="ar-mobile-summary__label">FSR</span>
+              <span className="ar-mobile-summary__value">{report.fsr_name || '-'}</span>
+            </div>
           </div>
 
           {/* 모바일 계약 카드 목록 */}
@@ -401,6 +405,12 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
             <span className="annual-report-summary__label">계약 건수</span>
             <span className="annual-report-summary__value">
               {AnnualReportApi.formatContractCount(report.contract_count)}
+            </span>
+          </div>
+          <div className="annual-report-summary__item">
+            <span className="annual-report-summary__label">FSR</span>
+            <span className="annual-report-summary__value">
+              {report.fsr_name || '-'}
             </span>
           </div>
         </div>
@@ -609,6 +619,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
             <h2>{report?.customer_name || customerName}님의 Annual Report</h2>
             <p>
               {report?.issue_date ? `발행일: ${formatDate(report.issue_date)}` : '정보 없음'}
+              {report?.fsr_name && ` · FSR ${report.fsr_name}`}
               {report && ` · ${report.contract_count}건`}
             </p>
           </div>

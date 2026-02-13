@@ -50,6 +50,9 @@ interface RawAnnualReportData {
   status?: 'completed' | 'error' | 'processing' | 'pending';  // 파싱 상태
   error_message?: string;  // 에러 메시지
   retry_count?: number;  // 재시도 횟수 (1~3)
+  fsr_name?: string;  // FSR(담당 설계사) 이름
+  report_title?: string;  // 리포트 제목
+  registered_at?: string;  // 보험계약 탭 등록일시
   contracts?: Array<{
     '증권번호': string;
     '보험상품': string;
@@ -444,7 +447,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
             parsed_at: isFailedOrProcessing ? rawData.parsed_at : (rawData.parsed_at || ''),
             status: status,
             error_message: rawData.error_message,
-            retry_count: rawData.retry_count  // 재시도 횟수
+            retry_count: rawData.retry_count,  // 재시도 횟수
+            fsr_name: rawData.fsr_name,
+            registered_at: rawData.registered_at,
           };
         });
 
