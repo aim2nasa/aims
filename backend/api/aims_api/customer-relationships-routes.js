@@ -180,8 +180,8 @@ const setupCustomerRelationshipRoutes = (app, db) => {
         meta: {
           created_at: now,
           updated_at: now,
-          created_by: new ObjectId('000000000000000000000000'), // 임시 - 실제로는 로그인한 사용자 ID
-          last_modified_by: new ObjectId('000000000000000000000000'),
+          created_by: fromCustomer.meta?.created_by || '000000000000000000000000',
+          last_modified_by: fromCustomer.meta?.created_by || '000000000000000000000000',
           verified: false,
           verification_date: null,
           verified_by: null
@@ -491,7 +491,12 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       }
 
       updateFields['meta.updated_at'] = utcNowDate();
-      updateFields['meta.last_modified_by'] = new ObjectId('000000000000000000000000'); // 임시
+      // last_modified_by: 관계의 from_customer 소유자 정보로 설정
+      const relOwner = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+        { _id: new ObjectId(id) },
+        { projection: { 'meta.created_by': 1 } }
+      );
+      updateFields['meta.last_modified_by'] = relOwner?.meta?.created_by || '000000000000000000000000';
 
       const result = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).updateOne(
         { 
@@ -594,7 +599,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
       // 1. 해당 사용자의 모든 고객 ID 조회
       const userCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
-        .find({ userId: new ObjectId(userId), 'meta.status': { $ne: 'deleted' } })
+        .find({ 'meta.created_by': userId, deleted_at: null })
         .project({ _id: 1 })
         .toArray();
 
