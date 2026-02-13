@@ -227,8 +227,6 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
             cr_update = {
                 "cr_parsing_status": "completed",
                 "cr_parsing_completed_at": datetime.now(timezone.utc),
-                "overallStatus": "completed",
-                "overallStatusUpdatedAt": datetime.now(timezone.utc)
             }
 
             # 📄 CRS displayName 자동 생성/보정
@@ -246,6 +244,9 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
                     cr_update["displayName"] = new_display
                     logger.info(f"📄 [CR Parsing] displayName 생성: {new_display}")
 
+            # 🔴 overallStatus는 건드리지 않음 (관할권 분리 원칙)
+            # overallStatus는 주 파이프라인(doc_prep_main, full_pipeline)만 관리
+            # CRS 스캐너는 cr_parsing_status만 관리
             db["files"].update_one(
                 {"_id": doc["_id"]},
                 {"$set": cr_update}

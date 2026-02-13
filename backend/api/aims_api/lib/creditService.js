@@ -962,9 +962,14 @@ async function processCreditPendingDocuments(db, userId) {
   const analyticsDb = db.client.db('aims_analytics');
 
   // 1. credit_pending 문서 조회 (오래된 순)
+  // 🔴 overallStatus뿐 아니라 docembed.status도 확인
+  // CRS 스캐너가 overallStatus를 "completed"로 덮어쓴 경우에도 찾을 수 있도록
   const pendingDocs = await filesCollection.find({
     ownerId: userId,
-    overallStatus: 'credit_pending'
+    $or: [
+      { overallStatus: 'credit_pending' },
+      { 'docembed.status': 'credit_pending' }
+    ]
   }).sort({ createdAt: 1 }).toArray();
 
   if (pendingDocs.length === 0) {

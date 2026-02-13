@@ -191,8 +191,6 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
             update_fields = {
                 "ar_parsing_status": "completed",
                 "ar_parsing_completed_at": datetime.now(timezone.utc),
-                "overallStatus": "completed",  # 🔧 전체 문서 보기에서 표시되도록
-                "overallStatusUpdatedAt": datetime.now(timezone.utc)
             }
             # customer_id가 있으면 customerId도 업데이트
             if customer_id:
@@ -205,6 +203,9 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
                     update_fields["displayName"] = new_display
                     logger.info(f"📄 [Queue Parsing] displayName 생성: {new_display}")
 
+            # 🔴 overallStatus는 건드리지 않음 (관할권 분리 원칙)
+            # overallStatus는 주 파이프라인(doc_prep_main, full_pipeline)만 관리
+            # AR 스캐너는 ar_parsing_status만 관리
             db["files"].update_one(
                 {"_id": doc["_id"]},
                 {"$set": update_fields}
@@ -422,8 +423,6 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                     bg_update = {
                         "ar_parsing_status": "completed",
                         "ar_parsing_completed_at": datetime.now(timezone.utc),
-                        "overallStatus": "completed",
-                        "overallStatusUpdatedAt": datetime.now(timezone.utc)
                     }
 
                     # 📄 displayName 자동 생성/보정
@@ -433,10 +432,14 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                             bg_update["displayName"] = new_display
                             logger.info(f"📄 [BG Parsing] displayName 생성: {new_display}")
 
+                    # 🔴 overallStatus는 건드리지 않음 (관할권 분리 원칙)
+                    # overallStatus는 주 파이프라인(doc_prep_main, full_pipeline)만 관리
+                    # AR 스캐너는 ar_parsing_status만 관리
                     db["files"].update_one(
                         {"_id": doc["_id"]},
                         {"$set": bg_update}
                     )
+
                     processing_count += 1
                 else:
                     logger.error(f"❌ [BG Parsing] DB 저장 실패: {save_result.get('message')}")
