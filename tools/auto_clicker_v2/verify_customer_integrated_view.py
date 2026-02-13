@@ -53,7 +53,7 @@ except NameError:
     pass  # 외부 import 시 SikuliX 전역 객체가 없을 수 있음
 
 # ===== SikuliX 함수 래핑: 모든 UI 조작 전에 자동으로 일시정지 체크 =====
-_PAUSE_SIGNAL_PATH = os.path.join(r"D:\aims\tools\auto_clicker_v2", ".pause_signal")
+_PAUSE_SIGNAL_PATH = os.path.join(os.environ.get("AC_HOME", r"D:\aims\tools\auto_clicker_v2"), ".pause_signal")
 _sikuli_click = click
 _sikuli_type = type    # SikuliX 원본 type(키보드 입력) 보존
 _sikuli_paste = paste  # SikuliX 원본 paste 보존

@@ -137,7 +137,9 @@ def log(msg):
 
 
 # ===== 일시정지 신호 파일 체크 (GUI ↔ SikuliX IPC) =====
-_PAUSE_SIGNAL = os.path.join(r"D:\aims\tools\auto_clicker_v2", ".pause_signal")
+_AC_HOME = os.environ.get("AC_HOME", r"D:\aims\tools\auto_clicker_v2")
+_PAUSE_SIGNAL = os.path.join(_AC_HOME, ".pause_signal")
+log(u"[IPC] AC_HOME=%s, PAUSE_SIGNAL=%s" % (_AC_HOME, _PAUSE_SIGNAL))
 
 def check_pause():
     """GUI 일시정지 신호 파일이 존재하면 삭제될 때까지 대기"""
