@@ -104,8 +104,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   // 검색어 상태
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // 트리 뷰 모드: 대표만 보기 → 초성만 보기 → 전체 보기 (순환)
-  type ViewMode = 'representative' | 'consonant' | 'all';
+  // 트리 뷰 모드: 대표만 보기 → 관계만 보기 → 전체 보기 (순환)
+  type ViewMode = 'representative' | 'consonant' | 'relationships' | 'all';
   const [viewMode, setViewMode] = useState<ViewMode>('representative');
 
   // 빠른 가족 등록 패널용 상태
@@ -120,6 +120,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   // 초성 필터 상태 (F5 이후에도 유지)
   const [initialType, setInitialType] = usePersistedState<InitialType>('customer-relationship-initial-type', 'korean');
   const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('customer-relationship-selected-initial', null);
+
+  // 미설정 고객 숨기기: 'relationships' 모드일 때 자동 적용
+  const hideUnassigned = viewMode === 'relationships';
 
   // LocalStorage에서 트리 확장 상태 복원
   // 기본 viewMode가 'representative'이므로 'no-family-relationship'은 닫힌 상태
@@ -666,21 +669,25 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       if (name) allNames.push(name);
     });
 
-    // 가족관계 미설정 고객 이름 수집
-    structuredData.가족관계미설정.forEach(customer => {
-      const name = customer.personal_info?.name;
-      if (name) allNames.push(name);
-    });
+    // 가족관계 미설정 고객 이름 수집 (숨기기 모드일 때 제외)
+    if (!hideUnassigned) {
+      structuredData.가족관계미설정.forEach(customer => {
+        const name = customer.personal_info?.name;
+        if (name) allNames.push(name);
+      });
+    }
 
-    // 법인관계자 미설정 고객 이름 수집
-    structuredData.법인관계자미설정.forEach(customer => {
-      const name = customer.personal_info?.name;
-      if (name) allNames.push(name);
-    });
+    // 법인관계자 미설정 고객 이름 수집 (숨기기 모드일 때 제외)
+    if (!hideUnassigned) {
+      structuredData.법인관계자미설정.forEach(customer => {
+        const name = customer.personal_info?.name;
+        if (name) allNames.push(name);
+      });
+    }
 
     // calculateInitialCounts expects array of objects with a getter function
     return calculateInitialCounts(allNames.map(name => ({ name })), (item) => item.name);
-  }, [structuredData]);
+  }, [structuredData, hideUnassigned]);
 
   const corporateEntries = Object.entries(filteredStructuredData.법인);
   const noFamilyRelationshipCustomers = filteredStructuredData.가족관계미설정 || [];
@@ -693,16 +700,19 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     }
 
     const query = searchQuery.toLowerCase().trim();
-    const newExpandedNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
+    const newExpandedNodes = new Set<string>(['family', 'corporate']);
 
-    // 가족관계 미설정 고객 검색
-    const hasNoFamilyMatch = structuredData.가족관계미설정.some(customer => {
-      const customerName = customer.personal_info?.name || '';
-      return customerName.toLowerCase().includes(query);
-    });
-
-    if (hasNoFamilyMatch) {
+    // 가족관계 미설정 고객 검색 (숨기기 모드가 아닐 때만)
+    if (!hideUnassigned) {
       newExpandedNodes.add('no-family-relationship');
+      const hasNoFamilyMatch = structuredData.가족관계미설정.some(customer => {
+        const customerName = customer.personal_info?.name || '';
+        return customerName.toLowerCase().includes(query);
+      });
+
+      if (hasNoFamilyMatch) {
+        newExpandedNodes.add('no-family-relationship');
+      }
     }
 
     // 가족 그룹 검색
@@ -754,7 +764,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     setExpandedNodes(newExpandedNodes);
     // 검색 시 뷰 모드를 'all'로 변경
     setViewMode('all');
-  }, [searchQuery, structuredData]);
+  }, [searchQuery, structuredData, hideUnassigned]);
 
   const toggleNode = useCallback((nodeKey: string) => {
     setExpandedNodes(prev => {
@@ -772,12 +782,25 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     }
   }, [viewMode]);
 
-  // 뷰 모드 순환 토글: 대표만 보기 → 전체 보기 → 대표만 보기
+  // 뷰 모드 순환 토글: 대표만 보기 → 관계만 보기 → 전체 보기 → 대표만 보기
   const toggleViewMode = useCallback(() => {
     let newExpandedNodes: Set<string>;
 
     if (viewMode === 'representative' || viewMode === 'consonant') {
-      // 대표만 보기 → 전체 보기
+      // 대표만 보기 → 관계만 보기 (미설정 숨기고 관계 그룹만 펼침)
+      newExpandedNodes = new Set<string>(['family', 'corporate']);
+
+      Object.keys(structuredData.가족그룹).forEach(groupId => {
+        newExpandedNodes.add(`family-${groupId}`);
+      });
+
+      Object.keys(structuredData.법인).forEach(companyId => {
+        newExpandedNodes.add(`corporate-${companyId}`);
+      });
+
+      setViewMode('relationships');
+    } else if (viewMode === 'relationships') {
+      // 관계만 보기 → 전체 보기 (미설정 포함 모두 펼침)
       newExpandedNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
 
       Object.keys(structuredData.가족그룹).forEach(groupId => {
@@ -877,7 +900,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     );
   }
 
-  const hasNoData = Object.keys(filteredStructuredData.가족그룹).length === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0 && noCorporateRelationshipCustomers.length === 0;
+  const hasNoData = hideUnassigned
+    ? (Object.keys(filteredStructuredData.가족그룹).length === 0 && corporateEntries.length === 0)
+    : (Object.keys(filteredStructuredData.가족그룹).length === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0 && noCorporateRelationshipCustomers.length === 0);
 
   return (
     <>
@@ -932,8 +957,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
               {/* 트리 뷰 모드 전환 버튼 */}
               <div className="relationship-tree-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Tooltip content={
-                  viewMode === 'representative' ? "초성만 보기" :
-                  viewMode === 'consonant' ? "전체 보기" :
+                  viewMode === 'representative' ? "관계만 보기" :
+                  viewMode === 'consonant' ? "관계만 보기" :
+                  viewMode === 'relationships' ? "전체 보기" :
                   "대표만 보기"
                 }>
                   <div style={{ display: 'inline-flex', width: '24px', height: '24px', position: 'relative' }}>
@@ -942,8 +968,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                       className="tree-control-button"
                       onClick={toggleViewMode}
                       aria-label={
-                        viewMode === 'representative' ? "초성만 보기" :
-                        viewMode === 'consonant' ? "전체 보기" :
+                        viewMode === 'representative' ? "관계만 보기" :
+                        viewMode === 'consonant' ? "관계만 보기" :
+                        viewMode === 'relationships' ? "전체 보기" :
                         "대표만 보기"
                       }
                       style={{ position: 'relative' }}
@@ -956,7 +983,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                         fill="none"
                         stroke="currentColor"
                         style={{
-                          display: viewMode === 'representative' ? 'block' : 'none',
+                          display: (viewMode === 'representative' || viewMode === 'consonant') ? 'block' : 'none',
                           position: 'absolute',
                           top: '50%',
                           left: '50%',
@@ -971,21 +998,34 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                         <circle cx="11" cy="11" r="1.5" fill="currentColor"/>
                       </svg>
 
-                      {/* 초성만 보기 - 점 */}
+                      {/* 관계만 보기 - 연결된 두 그룹 */}
                       <svg
                         width="14"
                         height="14"
                         viewBox="0 0 16 16"
-                        fill="currentColor"
+                        fill="none"
+                        stroke="currentColor"
                         style={{
-                          display: viewMode === 'consonant' ? 'block' : 'none',
+                          display: viewMode === 'relationships' ? 'block' : 'none',
                           position: 'absolute',
                           top: '50%',
                           left: '50%',
                           transform: 'translate(-50%, -50%)'
                         }}
                       >
-                        <circle cx="8" cy="8" r="2"/>
+                        <circle cx="5" cy="4" r="1.5" fill="currentColor"/>
+                        <circle cx="11" cy="4" r="1.5" fill="currentColor"/>
+                        <line x1="6.5" y1="4" x2="9.5" y2="4" strokeWidth="1.5"/>
+                        <line x1="5" y1="5.5" x2="5" y2="8" strokeWidth="1.5"/>
+                        <line x1="11" y1="5.5" x2="11" y2="8" strokeWidth="1.5"/>
+                        <line x1="5" y1="8" x2="3" y2="10.5" strokeWidth="1.5"/>
+                        <line x1="5" y1="8" x2="7" y2="10.5" strokeWidth="1.5"/>
+                        <line x1="11" y1="8" x2="9" y2="10.5" strokeWidth="1.5"/>
+                        <line x1="11" y1="8" x2="13" y2="10.5" strokeWidth="1.5"/>
+                        <circle cx="3" cy="10.5" r="1" fill="currentColor"/>
+                        <circle cx="7" cy="10.5" r="1" fill="currentColor"/>
+                        <circle cx="9" cy="10.5" r="1" fill="currentColor"/>
+                        <circle cx="13" cy="10.5" r="1" fill="currentColor"/>
                       </svg>
 
                       {/* 전체 보기 - 큰 트리 */}
@@ -1025,7 +1065,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                 </Tooltip>
                 <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                   {viewMode === 'representative' ? "대표만 보기" :
-                   viewMode === 'consonant' ? "초성만 보기" :
+                   viewMode === 'consonant' ? "대표만 보기" :
+                   viewMode === 'relationships' ? "관계만 보기" :
                    "전체 보기"}
                 </span>
               </div>
@@ -1067,7 +1108,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
             className="relationship-initial-filter"
           />
           {/* 가족 관계 섹션 - 가족 그룹 또는 가족관계 미설정 고객이 있을 때 표시 */}
-          {(Object.keys(filteredStructuredData.가족그룹).length > 0 || noFamilyRelationshipCustomers.length > 0) && (
+          {(Object.keys(filteredStructuredData.가족그룹).length > 0 || (!hideUnassigned && noFamilyRelationshipCustomers.length > 0)) && (
             <div className="tree-section">
               <div
                 className="tree-node tree-node--root"
@@ -1086,8 +1127,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
               {expandedNodes.has('family') && (
                 <div className="tree-children">
-                  {/* 가족관계 미설정 섹션 - 가족 폴더 내 최상단 */}
-                  {noFamilyRelationshipCustomers.length > 0 && (
+                  {/* 가족관계 미설정 섹션 - 가족 폴더 내 최상단 (숨기기 모드 시 미표시) */}
+                  {!hideUnassigned && noFamilyRelationshipCustomers.length > 0 && (
                     <div className="tree-group">
                       <div
                         className="tree-node tree-node--group"
@@ -1252,7 +1293,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
           )}
 
           {/* 법인 관계 섹션 - 법인 그룹 또는 관계자 미설정 법인이 있을 때 표시 */}
-          {(corporateEntries.length > 0 || noCorporateRelationshipCustomers.length > 0) && (
+          {(corporateEntries.length > 0 || (!hideUnassigned && noCorporateRelationshipCustomers.length > 0)) && (
             <div className="tree-section">
               <div
                 className="tree-node tree-node--root"
@@ -1269,8 +1310,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
               {expandedNodes.has('corporate') && (
                 <div className="tree-children">
-                  {/* 관계자 미설정 섹션 - 법인 폴더 내 최상단 */}
-                  {noCorporateRelationshipCustomers.length > 0 && (
+                  {/* 관계자 미설정 섹션 - 법인 폴더 내 최상단 (숨기기 모드 시 미표시) */}
+                  {!hideUnassigned && noCorporateRelationshipCustomers.length > 0 && (
                     <div className="tree-group">
                       <div
                         className="tree-node tree-node--group"
