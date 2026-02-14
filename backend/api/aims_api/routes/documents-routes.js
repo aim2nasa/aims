@@ -196,7 +196,7 @@ router.post('/documents/check-hash', authenticateJWT, async (req, res) => {
 
     if (customerId) {
       // 특정 고객에게 업로드하는 경우: 해당 고객의 문서만 체크
-      query.customerId = customerId;
+      query.customerId = ObjectId.isValid(customerId) ? new ObjectId(customerId) : customerId;
     } else {
       // 미분류로 업로드하는 경우: 미분류 문서만 체크
       query.customerId = null;
