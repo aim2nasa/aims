@@ -1409,7 +1409,7 @@ router.get('/admin/users/:id/delete-preview', authenticateJWT, requireRole('admi
     try {
       tokenUsageCount = await db.collection('token_usage').countDocuments({ userId });
     } catch (err) {
-      console.log('[Admin] token_usage 조회 오류:', err.message);
+      backendLogger.error('Admin', 'token_usage 조회 오류', err);
     }
 
     // 7. Qdrant 임베딩 수 조회 (추정치: 문서별 청크 수)
