@@ -161,7 +161,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
     setError(null)
 
     try {
-      // Step 1: 가족 관계 로드
+      // Step 1: 현재 고객의 가족 관계 로드
       const relationships = await RelationshipService.getCustomerRelationships(customer._id)
       const familyRelations = relationships.filter(
         (rel: Relationship) => rel.relationship_info.relationship_category === 'family'
@@ -174,8 +174,20 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
       const selfName = customer.personal_info?.name || '-'
       familyMembers.set(customer._id, { name: selfName, relationship: '본인' })
 
-      // 가족 구성원 추가
+      // 직접 연결된 가족 구성원 추가 + family_representative ID 수집
+      const familyRepresentativeIds = new Set<string>()
+
       for (const rel of familyRelations) {
+        // family_representative ID 추출 (현재 고객이 아닌 경우만)
+        if (rel.family_representative) {
+          const repId = typeof rel.family_representative === 'object'
+            ? (rel.family_representative as Customer)._id
+            : String(rel.family_representative)
+          if (repId && repId !== customer._id) {
+            familyRepresentativeIds.add(repId)
+          }
+        }
+
         const relatedCustomer = rel.related_customer as Customer
         const fromCustomer = rel.from_customer as Customer
 
@@ -199,6 +211,40 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
               name: fromCustomer.personal_info?.name || '-',
               relationship: relLabel
             })
+          }
+        }
+      }
+
+      // Step 2: 가족 대표의 관계 로드 → 전체 가족 그룹 확장
+      // 현재 고객이 가족 대표가 아닌 경우, 대표의 관계를 조회하여
+      // 누락된 가족 구성원(예: 자녀가 볼 때 배우자 누락)을 발견
+      if (familyRepresentativeIds.size > 0) {
+        const repResults = await Promise.allSettled(
+          Array.from(familyRepresentativeIds).map(repId =>
+            RelationshipService.getCustomerRelationships(repId)
+          )
+        )
+
+        for (const result of repResults) {
+          if (result.status !== 'fulfilled') continue
+          const repFamilyRelations = result.value.filter(
+            (rel: Relationship) => rel.relationship_info.relationship_category === 'family'
+          )
+
+          for (const rel of repFamilyRelations) {
+            const relatedCustomer = rel.related_customer as Customer
+
+            const relLabel = rel.display_relationship_label
+              || RELATION_TYPE_LABELS[rel.relationship_info.relationship_type]
+              || rel.relationship_info.relationship_type
+              || '가족'
+
+            if (typeof relatedCustomer === 'object' && relatedCustomer._id && !familyMembers.has(relatedCustomer._id)) {
+              familyMembers.set(relatedCustomer._id, {
+                name: relatedCustomer.personal_info?.name || '-',
+                relationship: relLabel
+              })
+            }
           }
         }
       }
