@@ -1243,9 +1243,7 @@ router.delete('/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
         {
           $set: {
             'meta.status': 'inactive',
-            'meta.updated_at': utcNowISO(),
-            deleted_at: utcNowDate(),
-            deleted_by: userId
+            'meta.updated_at': utcNowISO()
           }
         },
         { returnDocument: 'after' }  // 업데이트 후 문서 반환
