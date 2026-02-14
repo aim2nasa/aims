@@ -20,6 +20,7 @@ import { RelationshipsTab } from '../CustomerDetailView/tabs/RelationshipsTab'
 import { MemosTab } from '../CustomerDetailView/tabs/MemosTab'
 import { ContractsTab } from '../CustomerDetailView/tabs/ContractsTab'
 import { FamilyContractsTab } from '../CustomerDetailView/tabs/FamilyContractsTab'
+import { CorporateContractsTab } from '../CustomerDetailView/tabs/CorporateContractsTab'
 import { DocumentsTab } from '../CustomerDetailView/tabs/DocumentsTab'
 import { AnnualReportTab } from '../CustomerDetailView/tabs/AnnualReportTab'
 import { CustomerReviewTab } from '../CustomerDetailView/tabs/CustomerReviewTab'
@@ -97,6 +98,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [arHistoryCount, setArHistoryCount] = useState(0)
   const [crHistoryCount, setCrHistoryCount] = useState(0)
   const [familyContractCount, setFamilyContractCount] = useState(0)
+  const [corporateContractCount, setCorporateContractCount] = useState(0)
+  const [corporateRefreshTrigger, setCorporateRefreshTrigger] = useState(0)
 
   // 🍎 계약 검색 상태
   const [contractSearchTerm, setContractSearchTerm] = useState('')
@@ -116,8 +119,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 보고서 탭 상태 ('annual' | 'review')
   const [reportTab, setReportTab] = useState<'annual' | 'review'>('annual')
 
-  // 🍎 보험 이력 탭 상태 ('ar' | 'cr' | 'family')
-  const [historyTab, setHistoryTab] = useState<'ar' | 'cr' | 'family'>('ar')
+  // 🍎 보험 이력 탭 상태 ('ar' | 'cr' | 'family' | 'corporate')
+  const [historyTab, setHistoryTab] = useState<'ar' | 'cr' | 'family' | 'corporate'>('ar')
 
   // 🍎 문서 내용 검색 모달 상태
   const [isDocContentSearchModalOpen, setIsDocContentSearchModalOpen] = useState(false)
@@ -906,6 +909,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                             가족{familyContractCount > 0 && <span className="history-tabs__count">{familyContractCount}</span>}
                           </button>
                         )}
+                        <button type="button" className={`history-tabs__tab ${historyTab === 'corporate' ? 'history-tabs__tab--active' : ''}`} onClick={() => { setHistoryTab('corporate'); setCorporateRefreshTrigger(n => n + 1) }}>
+                          법인{corporateContractCount > 0 && <span className="history-tabs__count">{corporateContractCount}</span>}
+                        </button>
                       </div>
                       <div className="customer-full-detail__section-search">
                         <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} className="section-search-icon" decorative={true} />
@@ -924,7 +930,11 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                           <FamilyContractsTab customer={customer} searchTerm={contractSearchTerm} onSearchChange={setContractSearchTerm} onFamilyContractCountChange={setFamilyContractCount} refreshTrigger={familyRefreshTrigger} />
                         </div>
                       )}
-                      {historyTab !== 'family' && (
+                      {/* 🍎 CorporateContractsTab: 항상 렌더링 → 카운트 즉시 계산 */}
+                      <div className={`history-tab-panel ${historyTab === 'corporate' ? 'history-tab-panel--active' : ''}`}>
+                        <CorporateContractsTab customer={customer} searchTerm={contractSearchTerm} onSearchChange={setContractSearchTerm} onCorporateContractCountChange={setCorporateContractCount} refreshTrigger={corporateRefreshTrigger} />
+                      </div>
+                      {historyTab !== 'family' && historyTab !== 'corporate' && (
                         <ContractsTab customer={customer} onContractCountChange={setContractCount} searchTerm={contractSearchTerm} onSearchChange={setContractSearchTerm} refreshTrigger={annualReportRefreshTrigger} historyTab={historyTab} onArHistoryCountChange={setArHistoryCount} onCrHistoryCountChange={setCrHistoryCount} />
                       )}
                     </div>
@@ -1203,6 +1213,16 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                         )}
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className={`history-tabs__tab ${historyTab === 'corporate' ? 'history-tabs__tab--active' : ''}`}
+                      onClick={() => { setHistoryTab('corporate'); setCorporateRefreshTrigger(n => n + 1) }}
+                    >
+                      법인계약
+                      {corporateContractCount > 0 && (
+                        <span className="history-tabs__count">{corporateContractCount}</span>
+                      )}
+                    </button>
                   </div>
                   {/* 🍎 계약 검색 */}
                   <div className="customer-full-detail__section-search">
@@ -1250,8 +1270,18 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                         />
                       </div>
                     )}
-                    {/* 🍎 ContractsTab: 조건부 렌더링 → family에서 복귀 시 재마운트로 자동 refresh */}
-                    {historyTab !== 'family' && (
+                    {/* 🍎 CorporateContractsTab: 항상 렌더링 (CSS 숨김) → 카운트가 즉시 계산됨 */}
+                    <div className={`history-tab-panel ${historyTab === 'corporate' ? 'history-tab-panel--active' : ''}`}>
+                      <CorporateContractsTab
+                        customer={customer}
+                        searchTerm={contractSearchTerm}
+                        onSearchChange={setContractSearchTerm}
+                        onCorporateContractCountChange={setCorporateContractCount}
+                        refreshTrigger={corporateRefreshTrigger}
+                      />
+                    </div>
+                    {/* 🍎 ContractsTab: 조건부 렌더링 → family/corporate에서 복귀 시 재마운트로 자동 refresh */}
+                    {historyTab !== 'family' && historyTab !== 'corporate' && (
                       <ContractsTab
                         customer={customer}
                         onContractCountChange={setContractCount}

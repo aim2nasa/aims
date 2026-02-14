@@ -22,6 +22,7 @@ import { ContractsTab } from './tabs/ContractsTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { AnnualReportTab } from './tabs/AnnualReportTab';
 import { CustomerReviewTab } from './tabs/CustomerReviewTab';
+import { CorporateContractsTab } from './tabs/CorporateContractsTab';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerDocument } from '@/stores/CustomerDocument';
 import { RelationshipService } from '@/services/relationshipService';
@@ -82,6 +83,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false);
   const [relationshipsCount, setRelationshipsCount] = useState(0);
   const [contractCount, setContractCount] = useState(0);
+  const [corporateContractCount, setCorporateContractCount] = useState(0);
   const [documentCount, setDocumentCount] = useState(0);
   const [annualReportCount, setAnnualReportCount] = useState(0);
   const [customerReviewCount, setCustomerReviewCount] = useState(0);
@@ -477,6 +479,23 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       count: contractCount
     });
 
+    // 법인계약 탭 추가 (항상 표시, 카운트 0도 표시)
+    baseTabs.push({
+      key: 'corporate_contracts',
+      label: '법인계약',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M2 3.5A1.5 1.5 0 013.5 2h3A1.5 1.5 0 018 3.5V5h4.5A1.5 1.5 0 0114 6.5v6a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 12.5v-9z"/>
+          <rect x="4" y="4" width="1.5" height="1.5" rx="0.3" fill="white" opacity="0.8"/>
+          <rect x="4" y="7" width="1.5" height="1.5" rx="0.3" fill="white" opacity="0.8"/>
+          <rect x="4" y="10" width="1.5" height="1.5" rx="0.3" fill="white" opacity="0.8"/>
+          <rect x="9" y="7" width="1.5" height="1.5" rx="0.3" fill="white" opacity="0.8"/>
+          <rect x="9" y="10" width="1.5" height="1.5" rx="0.3" fill="white" opacity="0.8"/>
+        </svg>
+      ),
+      count: corporateContractCount
+    });
+
     // 문서, Annual Report 탭 추가
     baseTabs.push(
       {
@@ -530,7 +549,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     );
 
     return baseTabs;
-  }, [isBusinessCustomer, relationshipsCount, contractCount, documentCount, annualReportCount, customerReviewCount]);
+  }, [isBusinessCustomer, relationshipsCount, contractCount, corporateContractCount, documentCount, annualReportCount, customerReviewCount]);
 
   // 🍎 탭 내용 렌더링 (개수 업데이트를 위해 모든 탭을 숨김 상태로 렌더링)
   const renderTabContent = () => {
@@ -569,6 +588,14 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <ContractsTab
             customer={customer}
             onContractCountChange={setContractCount}
+          />
+        </div>
+
+        {/* 법인계약 탭 - 항상 렌더링하여 개수 표시 */}
+        <div className={`customer-detail-view__tab-panel ${activeTab === 'corporate_contracts' ? 'customer-detail-view__tab-panel--active' : ''}`}>
+          <CorporateContractsTab
+            customer={customer}
+            onCorporateContractCountChange={setCorporateContractCount}
           />
         </div>
 

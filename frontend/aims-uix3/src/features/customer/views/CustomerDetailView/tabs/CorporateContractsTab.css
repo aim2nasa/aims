@@ -1,0 +1,422 @@
+/**
+ * 🍎 Corporate Contracts Tab - 법인 계약 탭 스타일
+ * FamilyContractsTab.css 패턴 기반
+ */
+
+/* === 최상위 컨테이너 === */
+.corporate-contracts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* === 요약 헤더 === */
+.corporate-contracts__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: 4px 8px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption-1);
+  flex-shrink: 0;
+}
+
+.corporate-contracts__summary strong {
+  color: var(--color-text-primary);
+}
+
+/* === 상태 표시 (로딩, 에러, 빈 상태) === */
+.corporate-contracts__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6) var(--spacing-5);
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.02);
+  text-align: center;
+  color: var(--color-text-secondary);
+  flex: 1;
+  min-height: 120px;
+}
+
+[data-theme="dark"] .corporate-contracts__state {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.corporate-contracts__state--error {
+  color: var(--color-icon-red);
+}
+
+.corporate-contracts__loading-text {
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .corporate-contracts__loading-text {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* === 테이블 컨테이너 === */
+.corporate-contracts__table-section {
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.corporate-contracts__table-section.is-resizing {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: col-resize;
+}
+
+/* === 스크롤바 === */
+.corporate-contracts__table-section::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.corporate-contracts__table-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.corporate-contracts__table-section::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-light);
+  border-radius: 4px;
+}
+
+html[data-theme="dark"] .corporate-contracts__table-section::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-dark);
+}
+
+.corporate-contracts__table-section::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* === 테이블 헤더 (9칼럼) === */
+.corporate-contracts-header {
+  display: grid;
+  grid-template-columns:
+    var(--cc-relation-width, 60px)
+    var(--cc-policy-width, 94px)
+    var(--cc-product-width, 198px)
+    var(--cc-holder-width, 50px)
+    var(--cc-insured-width, 50px)
+    var(--cc-date-width, 75px)
+    var(--cc-status-width, 46px)
+    var(--cc-amount-width, 61px)
+    var(--cc-premium-width, 83px);
+  gap: 4px;
+  padding: 6px 8px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  background: var(--color-bg-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-width: max-content;
+}
+
+html[data-theme="dark"] .corporate-contracts-header {
+  color: var(--color-ios-text-tertiary-dark);
+  background: var(--color-bg-secondary);
+}
+
+.corporate-contracts-header > div {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: ellipsis;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* 정렬 가능한 헤더 */
+.corporate-contracts-header .header-sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.corporate-contracts-header .header-sortable:hover {
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .corporate-contracts-header .header-sortable:hover {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* 정렬 인디케이터 */
+.cc-sort-indicator {
+  font-size: 8px;
+  color: var(--color-ios-blue-light);
+  margin-left: 2px;
+}
+
+html[data-theme="dark"] .cc-sort-indicator {
+  color: var(--color-ios-blue-dark);
+}
+
+/* === 테이블 리스트 === */
+.corporate-contracts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: max-content;
+}
+
+/* === 테이블 행 (9칼럼) === */
+.corporate-contracts-row {
+  display: grid;
+  grid-template-columns:
+    var(--cc-relation-width, 60px)
+    var(--cc-policy-width, 94px)
+    var(--cc-product-width, 198px)
+    var(--cc-holder-width, 50px)
+    var(--cc-insured-width, 50px)
+    var(--cc-date-width, 75px)
+    var(--cc-status-width, 46px)
+    var(--cc-amount-width, 61px)
+    var(--cc-premium-width, 83px);
+  gap: 4px;
+  align-items: center;
+  padding: 5px 8px;
+  font-size: var(--font-size-caption-1);
+  background: var(--color-ios-bg-primary-light);
+  cursor: default;
+  transition: background-color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .corporate-contracts-row {
+  background: var(--color-ios-bg-primary-dark);
+}
+
+.corporate-contracts-row:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .corporate-contracts-row:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+/* === 셀 공통 === */
+.corporate-contracts-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .corporate-contracts-row > span {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* === 관계 뱃지 === */
+.cc-relation-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* 본인 */
+.cc-relation-badge--본인 {
+  color: var(--color-primary-600);
+  background: var(--color-primary-50);
+}
+
+html[data-theme="dark"] .cc-relation-badge--본인 {
+  color: var(--color-primary-300);
+  background: var(--color-primary-900);
+}
+
+/* 대표이사 */
+.cc-relation-badge--대표이사 {
+  color: var(--color-warning-700);
+  background: var(--color-warning-50);
+}
+
+html[data-theme="dark"] .cc-relation-badge--대표이사 {
+  color: var(--color-warning-300);
+  background: var(--color-warning-900);
+}
+
+/* 임원 */
+.cc-relation-badge--임원 {
+  color: var(--color-purple-600);
+  background: var(--color-purple-50);
+}
+
+html[data-theme="dark"] .cc-relation-badge--임원 {
+  color: var(--color-purple-300);
+  background: var(--color-purple-900);
+}
+
+/* 직원 */
+.cc-relation-badge--직원 {
+  color: var(--color-success-600);
+  background: var(--color-success-50);
+}
+
+html[data-theme="dark"] .cc-relation-badge--직원 {
+  color: var(--color-success-300);
+  background: var(--color-success-900);
+}
+
+/* 주주 */
+.cc-relation-badge--주주 {
+  color: var(--color-ios-indigo-light);
+  background: rgba(88, 86, 214, 0.1);
+}
+
+html[data-theme="dark"] .cc-relation-badge--주주 {
+  color: var(--color-ios-indigo-dark);
+  background: rgba(94, 92, 230, 0.2);
+}
+
+/* 이사 */
+.cc-relation-badge--이사 {
+  color: var(--color-ios-teal-light);
+  background: rgba(48, 176, 199, 0.1);
+}
+
+html[data-theme="dark"] .cc-relation-badge--이사 {
+  color: var(--color-ios-teal-dark);
+  background: rgba(64, 200, 224, 0.2);
+}
+
+/* 회사 */
+.cc-relation-badge--회사 {
+  color: var(--color-warning-600);
+  background: var(--color-warning-50);
+}
+
+html[data-theme="dark"] .cc-relation-badge--회사 {
+  color: var(--color-warning-300);
+  background: var(--color-warning-900);
+}
+
+/* 고용주 */
+.cc-relation-badge--고용주 {
+  color: var(--color-warning-600);
+  background: var(--color-warning-50);
+}
+
+html[data-theme="dark"] .cc-relation-badge--고용주 {
+  color: var(--color-warning-300);
+  background: var(--color-warning-900);
+}
+
+/* 기본 (기타 관계) */
+.cc-relation-badge--default {
+  color: var(--color-gray-600);
+  background: var(--color-gray-100);
+}
+
+html[data-theme="dark"] .cc-relation-badge--default {
+  color: var(--color-gray-400);
+  background: var(--color-gray-800);
+}
+
+/* === 증권번호 === */
+.cc-policy {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === 보험상품 === */
+.cc-product {
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light) !important;
+}
+
+html[data-theme="dark"] .cc-product {
+  color: var(--color-ios-text-secondary-dark) !important;
+}
+
+/* === 계약자 / 피보험자 === */
+.cc-holder,
+.cc-insured {
+  text-align: center;
+}
+
+/* 법인 구성원인 경우 강조 */
+.cc-holder--corp,
+.cc-insured--corp {
+  font-weight: 600;
+  color: var(--color-warning-600) !important;
+}
+
+html[data-theme="dark"] .cc-holder--corp,
+html[data-theme="dark"] .cc-insured--corp {
+  color: var(--color-warning-400) !important;
+}
+
+/* === 계약일 === */
+.cc-date {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === 계약상태 === */
+.cc-status {
+  text-align: center;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 600;
+}
+
+.cc-status--정상 {
+  background: var(--color-success-100);
+  color: var(--color-success-700);
+}
+
+html[data-theme="dark"] .cc-status--정상 {
+  background: var(--color-success-900);
+  color: var(--color-success-300);
+}
+
+.cc-status--해지,
+.cc-status--실효 {
+  color: var(--color-icon-red);
+  opacity: 0.7;
+}
+
+html[data-theme="dark"] .cc-status--해지,
+html[data-theme="dark"] .cc-status--실효 {
+  opacity: 0.8;
+}
+
+/* === 가입금액 === */
+.cc-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === 보험료 === */
+.cc-premium {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--color-primary-600) !important;
+}
+
+html[data-theme="dark"] .cc-premium {
+  color: var(--color-primary-400) !important;
+}
