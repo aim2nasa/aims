@@ -209,9 +209,148 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
         }
       }
 
-      // Step 2: 현재 고객의 AR / CRS / 수동 계약을 병렬 로드
+      // ===== 법인/개인 분기 =====
+      const isCorpCustomer = customer.insurance_info?.customer_type === '법인'
       const userId = UserContextService.getContext().identifierValue
 
+      if (isCorpCustomer && selfName) {
+        // =====================================================
+        // 🏢 법인 고객 경로: 관련 개인들의 계약에서 이 법인이 계약자/피보험자인 것
+        // =====================================================
+
+        // (A) 명시적 법인 관계에서 관련 개인 수집
+        const uniqueRelated = new Map<string, { name: string; relLabel: string }>()
+        for (const rel of corporateRelations) {
+          const relatedCustomer = rel.related_customer as Customer
+          const fromCustomer = rel.from_customer as Customer
+          const relLabel = rel.display_relationship_label
+            || CORP_RELATION_TYPE_LABELS[rel.relationship_info.relationship_type]
+            || rel.relationship_info.relationship_type
+            || '법인관계'
+
+          if (typeof relatedCustomer === 'object' && relatedCustomer._id && relatedCustomer._id !== customer._id) {
+            if (!uniqueRelated.has(relatedCustomer._id)) {
+              uniqueRelated.set(relatedCustomer._id, { name: relatedCustomer.personal_info?.name || '', relLabel })
+            }
+          }
+          if (typeof fromCustomer === 'object' && fromCustomer._id && fromCustomer._id !== customer._id) {
+            if (!uniqueRelated.has(fromCustomer._id)) {
+              uniqueRelated.set(fromCustomer._id, { name: fromCustomer.personal_info?.name || '', relLabel })
+            }
+          }
+        }
+
+        // (B) 암시적 감지: AR/CRS/수동계약에서 이 법인명이 계약자/피보험자인 고객 검색
+        const implicitCustomers = await CustomerService.findCustomersByContractParty(selfName)
+        for (const c of implicitCustomers) {
+          if (c._id !== customer._id && !uniqueRelated.has(c._id)) {
+            uniqueRelated.set(c._id, { name: c.name, relLabel: '법인' })
+          }
+        }
+
+        // 자기 자신 + 관련 고객들의 계약 병렬 로드
+        const allCustomerIds = [customer._id, ...uniqueRelated.keys()]
+        const loadResults = await Promise.all(
+          allCustomerIds.map(async (custId) => {
+            const [ar, crs, manual] = await Promise.allSettled([
+              AnnualReportApi.getAnnualReports(custId, userId, 50),
+              CustomerReviewApi.getCustomerReviews(custId, 100),
+              ContractService.getContractsByCustomer(custId),
+            ])
+            return { custId, ar, crs, manual }
+          })
+        )
+
+        const seenPolicies = new Map<string, CorporateContract>()
+        const discoveredMembers = new Set<string>()
+
+        // selfName(법인명)이 계약자 or 피보험자인지 체크
+        const isSelfInvolved = (holder: string, insured: string): boolean =>
+          holder === selfName || insured === selfName
+
+        for (const { custId, ar, crs, manual } of loadResults) {
+          const isSelf = custId === customer._id
+          const relInfo = uniqueRelated.get(custId)
+          const relLabel = isSelf ? '본인' : (relInfo?.relLabel || '법인관계')
+          const memberName = isSelf ? selfName : (relInfo?.name || '')
+
+          // --- AR (최우선) ---
+          if (ar.status === 'fulfilled') {
+            const arResponse = ar.value as { success?: boolean; data?: { reports: AnnualReport[] } }
+            if (arResponse.success && arResponse.data) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const completedReports = (arResponse.data.reports as any[])
+                .filter(r => r.status === 'completed')
+                .map(r => ({ report_id: r.report_id || r.file_id || '', issue_date: r.issue_date || '', customer_name: r.customer_name || '', contracts: r.contracts || [], status: r.status || 'completed' })) as AnnualReport[]
+
+              for (const h of groupContractsByPolicyNumber(completedReports)) {
+                if (!isSelfInvolved(h.holder || '', h.insured || '') || seenPolicies.has(h.policyNumber)) continue
+                discoveredMembers.add(memberName)
+                seenPolicies.set(h.policyNumber, {
+                  policyNumber: h.policyNumber, productName: h.productName || '-',
+                  holderName: h.holder || '-', insuredName: h.insured || '-',
+                  contractDate: h.contractDate || '-', status: h.latestSnapshot.status || '-',
+                  premium: h.latestSnapshot.premium || 0, coverageAmount: h.latestSnapshot.coverageAmount || 0,
+                  memberName, memberRelationship: relLabel, source: 'ar',
+                })
+              }
+            }
+          }
+
+          // --- CRS ---
+          if (crs.status === 'fulfilled') {
+            const crsResponse = crs.value as { success?: boolean; data?: { reviews: CustomerReview[] } }
+            if (crsResponse.success && crsResponse.data) {
+              for (const review of crsResponse.data.reviews) {
+                const pn = review.contract_info?.policy_number
+                if (!pn || seenPolicies.has(pn)) continue
+                if (!isSelfInvolved(review.contractor_name || '', review.insured_name || '')) continue
+                discoveredMembers.add(memberName)
+                seenPolicies.set(pn, {
+                  policyNumber: pn, productName: review.product_name || '-',
+                  holderName: review.contractor_name || '-', insuredName: review.insured_name || '-',
+                  contractDate: review.contract_info?.contract_date || '-', status: '-',
+                  premium: 0, coverageAmount: review.contract_info?.insured_amount ? Math.round(review.contract_info.insured_amount / 10000) : 0,
+                  memberName, memberRelationship: relLabel, source: 'crs',
+                })
+              }
+            }
+          }
+
+          // --- 수동 계약 ---
+          if (manual.status === 'fulfilled') {
+            const contracts = manual.value as Contract[]
+            if (Array.isArray(contracts)) {
+              for (const c of contracts) {
+                if (!c.policy_number || seenPolicies.has(c.policy_number)) continue
+                if (!isSelfInvolved(c.customer_name || '', c.insured_person || '')) continue
+                discoveredMembers.add(memberName)
+                seenPolicies.set(c.policy_number, {
+                  policyNumber: c.policy_number, productName: c.product_name || '-',
+                  holderName: c.customer_name || '-', insuredName: c.insured_person || '-',
+                  contractDate: c.contract_date || '-', status: c.payment_status || '-',
+                  premium: c.premium || 0, coverageAmount: 0,
+                  memberName, memberRelationship: relLabel, source: 'manual',
+                })
+              }
+            }
+          }
+        }
+
+        setMemberCount(discoveredMembers.size)
+        setCorporateMemberNames(new Set([selfName]))
+
+        const merged = Array.from(seenPolicies.values())
+        setCorporateContracts(merged)
+        onCorporateContractCountChange?.(merged.length)
+        return
+      }
+
+      // =====================================================
+      // 👤 개인 고객 경로: 현재 고객의 계약에서 법인명 매칭
+      // =====================================================
+
+      // Step 2: 현재 고객의 AR / CRS / 수동 계약을 병렬 로드
       const [arResult, crsResult, manualResult] = await Promise.allSettled([
         AnnualReportApi.getAnnualReports(customer._id, userId, 50),
         CustomerReviewApi.getCustomerReviews(customer._id, 100),
@@ -273,10 +412,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
       }
 
       // Step 4: 후보 이름을 DB에서 검증 → 실제 법인 고객만 확인
-      // 확정된 법인 맵: corpName → relationship label
       const confirmedCorpMap = new Map<string, string>(explicitCorpMap)
-
-      // 명시적 법인 관계에 없는 후보 이름만 DB 검증
       const namesToVerify = Array.from(candidateNames).filter(n => !confirmedCorpMap.has(n))
 
       if (namesToVerify.length > 0) {
@@ -302,7 +438,6 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
 
       const confirmedCorpNames = new Set(confirmedCorpMap.keys())
 
-      // 🍎 법인명 매칭 헬퍼: 확정된 법인 이름만 매칭
       const findConfirmedCorp = (holderName: string, insuredName: string): { corpName: string; relationship: string } | null => {
         if (holderName && confirmedCorpNames.has(holderName)) {
           return { corpName: holderName, relationship: confirmedCorpMap.get(holderName)! }
@@ -317,71 +452,45 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
       const seenPolicies = new Map<string, CorporateContract>()
       const discoveredCorpNames = new Set<string>()
 
-      // --- AR 결과 (최우선) ---
       for (const history of arHistories) {
         const match = findConfirmedCorp(history.holder || '', history.insured || '')
         if (!match || seenPolicies.has(history.policyNumber)) continue
-
         discoveredCorpNames.add(match.corpName)
         seenPolicies.set(history.policyNumber, {
-          policyNumber: history.policyNumber,
-          productName: history.productName || '-',
-          holderName: history.holder || '-',
-          insuredName: history.insured || '-',
-          contractDate: history.contractDate || '-',
-          status: history.latestSnapshot.status || '-',
-          premium: history.latestSnapshot.premium || 0,
-          coverageAmount: history.latestSnapshot.coverageAmount || 0,
-          memberName: match.corpName,
-          memberRelationship: match.relationship,
-          source: 'ar',
+          policyNumber: history.policyNumber, productName: history.productName || '-',
+          holderName: history.holder || '-', insuredName: history.insured || '-',
+          contractDate: history.contractDate || '-', status: history.latestSnapshot.status || '-',
+          premium: history.latestSnapshot.premium || 0, coverageAmount: history.latestSnapshot.coverageAmount || 0,
+          memberName: match.corpName, memberRelationship: match.relationship, source: 'ar',
         })
       }
 
-      // --- CRS 결과 ---
       for (const review of crsReviews) {
         const pn = review.contract_info?.policy_number
         if (!pn || seenPolicies.has(pn)) continue
-
         const match = findConfirmedCorp(review.contractor_name || '', review.insured_name || '')
         if (!match) continue
-
         discoveredCorpNames.add(match.corpName)
         seenPolicies.set(pn, {
-          policyNumber: pn,
-          productName: review.product_name || '-',
-          holderName: review.contractor_name || '-',
-          insuredName: review.insured_name || '-',
-          contractDate: review.contract_info?.contract_date || '-',
-          status: '-',
-          premium: 0,
-          coverageAmount: review.contract_info?.insured_amount ? Math.round(review.contract_info.insured_amount / 10000) : 0,
-          memberName: match.corpName,
-          memberRelationship: match.relationship,
-          source: 'crs',
+          policyNumber: pn, productName: review.product_name || '-',
+          holderName: review.contractor_name || '-', insuredName: review.insured_name || '-',
+          contractDate: review.contract_info?.contract_date || '-', status: '-',
+          premium: 0, coverageAmount: review.contract_info?.insured_amount ? Math.round(review.contract_info.insured_amount / 10000) : 0,
+          memberName: match.corpName, memberRelationship: match.relationship, source: 'crs',
         })
       }
 
-      // --- 수동 계약 결과 ---
       for (const contract of manualContracts) {
         if (!contract.policy_number || seenPolicies.has(contract.policy_number)) continue
-
         const match = findConfirmedCorp(contract.customer_name || '', contract.insured_person || '')
         if (!match) continue
-
         discoveredCorpNames.add(match.corpName)
         seenPolicies.set(contract.policy_number, {
-          policyNumber: contract.policy_number,
-          productName: contract.product_name || '-',
-          holderName: contract.customer_name || '-',
-          insuredName: contract.insured_person || '-',
-          contractDate: contract.contract_date || '-',
-          status: contract.payment_status || '-',
-          premium: contract.premium || 0,
-          coverageAmount: 0,
-          memberName: match.corpName,
-          memberRelationship: match.relationship,
-          source: 'manual',
+          policyNumber: contract.policy_number, productName: contract.product_name || '-',
+          holderName: contract.customer_name || '-', insuredName: contract.insured_person || '-',
+          contractDate: contract.contract_date || '-', status: contract.payment_status || '-',
+          premium: contract.premium || 0, coverageAmount: 0,
+          memberName: match.corpName, memberRelationship: match.relationship, source: 'manual',
         })
       }
 

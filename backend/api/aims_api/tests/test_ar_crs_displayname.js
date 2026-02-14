@@ -79,19 +79,19 @@ assertIncludes(
   'Should generate displayName with customer name and issue date'
 );
 
-// 3. 고객명 추출 패턴: "XXX 고객님을 위한"
+// 3. 고객명 추출: "고객님을 위한" 패턴 기반 (Annual/Customer 키워드 윗줄에서 추출)
 assertIncludes(
   pipelineContent,
-  '\\[가-힣\\]\\{2,10\\}.*고객님',
-  'Customer name extraction pattern exists (XXX 고객님을 위한)',
-  'Should extract customer name from AR text'
+  '고객님을 위한',
+  'Customer name extraction pattern exists (고객님을 위한)',
+  'Should extract customer name from line above Annual/Customer keyword'
 );
 
-// 4. 발행기준일 추출 패턴
+// 4. 발행기준일 추출 패턴: 발행...일...(\d{4})
 assertIncludes(
   pipelineContent,
-  '발행기준일.*\\\\d\\{4\\}',
-  'Issue date extraction pattern exists (발행기준일: YYYY-MM-DD)',
+  '발행.*일.*\\(\\\\d\\{4\\}\\)',
+  'Issue date extraction pattern exists (발행일: YYYY-MM-DD)',
   'Should extract issue date from AR text'
 );
 

@@ -454,6 +454,30 @@ export class CustomerService {
       return { exists: false, customer: null };
     }
   }
+
+  /**
+   * 계약 당사자(계약자/피보험자) 이름으로 관련 고객 검색
+   * @since 2026-02-14
+   * AR/CRS/수동계약에서 해당 이름이 계약자 또는 피보험자로 등장하는 고객 목록 반환
+   */
+  static async findCustomersByContractParty(name: string): Promise<Array<{ _id: string; name: string }>> {
+    if (!name || !name.trim()) return [];
+
+    try {
+      const response = await api.get<{
+        success: boolean;
+        customers: Array<{ _id: string; name: string }>;
+      }>(`/api/customers/by-contract-party?name=${encodeURIComponent(name.trim())}`);
+
+      return response.customers || [];
+    } catch (error) {
+      errorReporter.reportApiError(error as Error, {
+        component: 'CustomerService.findCustomersByContractParty',
+        payload: { name }
+      });
+      return [];
+    }
+  }
 }
 
 /**
@@ -527,6 +551,7 @@ export const {
   importCustomers,
   bulkImportCustomers,
   checkDuplicateName,
+  findCustomersByContractParty,
 } = CustomerService;
 
 /**

@@ -886,6 +886,87 @@ router.get('/customers/check-name', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * 계약 당사자(계약자/피보험자) 이름으로 관련 고객 검색 API
+ * @since 2026-02-14
+ *
+ * GET /api/customers/by-contract-party?name=캐치업코리아
+ *
+ * AR/CRS/수동계약에서 계약자 또는 피보험자로 등장하는 고객 목록 반환
+ * → 법인 고객이 관련 개인 고객을 찾을 때 사용
+ */
+router.get('/customers/by-contract-party', authenticateJWT, async (req, res) => {
+  try {
+    const { name } = req.query;
+    const userId = req.user.id;
+
+    if (!name || !name.trim()) {
+      return res.json({ success: true, customers: [] });
+    }
+
+    const partyName = name.trim();
+
+    // 1) AR/CRS 임베디드 데이터에서 계약자/피보험자 검색
+    const embeddedMatches = await db.collection(CUSTOMERS_COLLECTION).find({
+      'meta.created_by': userId,
+      deleted_at: null,
+      $or: [
+        { 'annual_reports.contracts.계약자': partyName },
+        { 'annual_reports.contracts.피보험자': partyName },
+        { 'annual_reports.lapsed_contracts.계약자': partyName },
+        { 'annual_reports.lapsed_contracts.피보험자': partyName },
+        { 'customer_reviews.contractor_name': partyName },
+        { 'customer_reviews.insured_name': partyName },
+      ]
+    }, { projection: { _id: 1, 'personal_info.name': 1 } }).toArray();
+
+    // 2) 수동 계약(contracts 컬렉션)에서 검색
+    const contractMatches = await db.collection(COLLECTIONS.CONTRACTS).distinct('customer_id', {
+      agent_id: new ObjectId(userId),
+      $or: [
+        { customer_name: partyName },
+        { insured_person: partyName },
+      ]
+    });
+
+    // 수동 계약에서 찾은 customer_id로 고객 정보 조회
+    let manualCustomers = [];
+    if (contractMatches.length > 0) {
+      const validIds = contractMatches.filter(id => id && ObjectId.isValid(id)).map(id => new ObjectId(id));
+      if (validIds.length > 0) {
+        manualCustomers = await db.collection(CUSTOMERS_COLLECTION).find({
+          _id: { $in: validIds },
+          'meta.created_by': userId,
+          deleted_at: null,
+        }, { projection: { _id: 1, 'personal_info.name': 1 } }).toArray();
+      }
+    }
+
+    // 3) 결과 병합 및 중복 제거
+    const seen = new Set();
+    const customers = [];
+    for (const c of [...embeddedMatches, ...manualCustomers]) {
+      const id = c._id.toString();
+      if (!seen.has(id)) {
+        seen.add(id);
+        customers.push({
+          _id: id,
+          name: c.personal_info?.name || '',
+        });
+      }
+    }
+
+    res.json({ success: true, customers });
+  } catch (error) {
+    console.error('계약 당사자 검색 오류:', error);
+    backendLogger.error('Customers', '계약 당사자 검색 오류', error);
+    res.status(500).json({
+      success: false,
+      error: '계약 당사자 검색에 실패했습니다.'
+    });
+  }
+});
+
+/**
  * 고객 상세 정보 조회 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
