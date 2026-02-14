@@ -5,10 +5,10 @@
  * 🍎 개인 고객의 가족 구성원 전체 보험 계약 통합 조회
  * - 본인 + 가족관계(배우자, 자녀 등) 구성원의 AR/CRS/수동 계약을 병합
  * - 증권번호 기준 중복 제거 (우선순위: AR > CRS > 수동)
- * - 관계 뱃지, 정렬, 검색, 페이지네이션 지원
+ * - 관계 뱃지, 정렬, 검색 지원 (페이지네이션 없이 전체 스크롤)
  */
 
-import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
+import React, { useCallback, useState, useMemo, useEffect } from 'react'
 import type { Customer } from '@/entities/customer/model'
 import type { Contract } from '@/entities/contract/model'
 import { ContractService } from '@/services/contractService'
@@ -23,7 +23,6 @@ import {
 } from '@/features/customer/api/customerReviewApi'
 import { RelationshipService, type Relationship } from '@/services/relationshipService'
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService'
-import { Dropdown } from '@/shared/ui'
 import SFSymbol, {
   SFSymbolAnimation,
   SFSymbolSize,
@@ -62,17 +61,6 @@ interface FamilyContract {
 }
 
 // ==================== 상수 ====================
-
-const ITEMS_PER_PAGE_OPTIONS_BASE = [
-  { value: 'auto', label: '자동' },
-  { value: '10', label: '10개씩' },
-  { value: '25', label: '25개씩' },
-  { value: '50', label: '50개씩' },
-  { value: '100', label: '100개씩' }
-]
-
-const ROW_HEIGHT = 28
-const ROW_GAP = 1
 
 // 🍎 컬럼 리사이즈 설정 (9칼럼)
 const FAMILY_CONTRACTS_COLUMNS: ColumnConfig[] = [
@@ -137,12 +125,6 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   const [sortField, setSortField] = useState<SortField>('policyNumber')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
-  // 🍎 페이지네이션
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>('auto')
-  const [containerHeight, setContainerHeight] = useState(0)
-  const sectionContainerRef = useRef<HTMLDivElement>(null)
-
   // 🍎 칼럼 기본 폭
   const fcDefaultWidths = useMemo(() => ({
     relation: 55,
@@ -166,52 +148,6 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
     storageKey: 'family-contracts-tab',
     defaultWidths: fcDefaultWidths,
   })
-
-  // 🍎 자동 페이지네이션 계산
-  const autoCalculatedItems = useMemo(() => {
-    if (containerHeight <= 0) return 10
-    const container = sectionContainerRef.current
-    if (!container) return 10
-
-    const headerEl = container.querySelector('.family-contracts-header') as HTMLElement | null
-    const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 28
-    const paginationEl = container.querySelector('.family-contracts__pagination') as HTMLElement | null
-    const paginationHeight = paginationEl ? paginationEl.getBoundingClientRect().height : 26
-    const summaryEl = container.querySelector('.family-contracts__summary') as HTMLElement | null
-    const summaryHeight = summaryEl ? summaryEl.getBoundingClientRect().height : 0
-
-    const fixedHeight = summaryHeight + headerHeight + paginationHeight + 8
-    const availableHeight = containerHeight - fixedHeight
-    return Math.max(1, Math.floor((availableHeight + ROW_GAP) / (ROW_HEIGHT + ROW_GAP)))
-  }, [containerHeight])
-
-  const itemsPerPage = itemsPerPageMode === 'auto' ? autoCalculatedItems : itemsPerPageMode
-
-  // 🍎 컨테이너 높이 측정 (ResizeObserver)
-  useEffect(() => {
-    const container = sectionContainerRef.current
-    if (!container) return
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerHeight(entry.contentRect.height)
-      }
-    })
-    resizeObserver.observe(container)
-    return () => resizeObserver.disconnect()
-  }, [])
-
-  // 🍎 드롭다운 옵션
-  const itemsPerPageOptions = useMemo(() => {
-    return ITEMS_PER_PAGE_OPTIONS_BASE.map(opt => {
-      if (opt.value === 'auto') {
-        return {
-          value: 'auto',
-          label: itemsPerPageMode === 'auto' ? `자동(${autoCalculatedItems})` : '자동'
-        }
-      }
-      return opt
-    })
-  }, [itemsPerPageMode, autoCalculatedItems])
 
   // ==================== 데이터 로드 ====================
 
@@ -402,7 +338,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
     loadFamilyContracts()
   }, [loadFamilyContracts])
 
-  // ==================== 검색 & 정렬 & 페이지네이션 ====================
+  // ==================== 검색 & 정렬 ====================
 
   // 검색 필터링
   const filteredContracts = useMemo(() => {
@@ -472,21 +408,6 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
     return sorted
   }, [filteredContracts, sortField, sortDirection])
 
-  // 페이지네이션
-  const totalPages = Math.max(1, Math.ceil(sortedContracts.length / itemsPerPage))
-  const paginatedContracts = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return sortedContracts.slice(start, start + itemsPerPage)
-  }, [sortedContracts, currentPage, itemsPerPage])
-
-  // 검색어/정렬 변경 시 첫 페이지로
-  useEffect(() => { setCurrentPage(1) }, [searchTerm, sortField, sortDirection])
-
-  // 현재 페이지가 범위 초과 시 조정
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages)
-  }, [currentPage, totalPages])
-
   // 정렬 토글 핸들러
   const handleSort = useCallback((field: SortField) => {
     if (sortField === field) {
@@ -527,7 +448,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   // 로딩 상태
   if (isLoading) {
     return (
-      <div ref={sectionContainerRef} className="family-contracts">
+      <div className="family-contracts">
         <div className="family-contracts__state">
           <SFSymbol
             name="arrow.trianglehead.2.clockwise"
@@ -546,7 +467,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   // 에러 상태
   if (error) {
     return (
-      <div ref={sectionContainerRef} className="family-contracts">
+      <div className="family-contracts">
         <div className="family-contracts__state family-contracts__state--error">
           <SFSymbol
             name="exclamationmark.triangle"
@@ -562,7 +483,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   // 빈 상태: 가족 관계 없음
   if (memberCount <= 1 && familyContracts.length === 0) {
     return (
-      <div ref={sectionContainerRef} className="family-contracts">
+      <div className="family-contracts">
         <div className="family-contracts__state">
           <SFSymbol
             name="person.2"
@@ -581,7 +502,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   // 빈 상태: 계약 없음
   if (familyContracts.length === 0) {
     return (
-      <div ref={sectionContainerRef} className="family-contracts">
+      <div className="family-contracts">
         <div className="family-contracts__state">
           <SFSymbol
             name="doc.text.magnifyingglass"
@@ -595,7 +516,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   }
 
   return (
-    <div ref={sectionContainerRef} className="family-contracts">
+    <div className="family-contracts">
       {/* 🍎 요약 헤더 */}
       <div className="family-contracts__summary">
         <span>
@@ -713,7 +634,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
 
         {/* 리스트 */}
         <div className="family-contracts-list">
-          {paginatedContracts.map((contract) => (
+          {sortedContracts.map((contract) => (
             <div key={contract.policyNumber} className="family-contracts-row">
               <span className="fc-relation">
                 {renderRelationBadge(contract.memberRelationship)}
@@ -735,54 +656,6 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
         </div>
       </div>
 
-      {/* 🍎 페이지네이션 — contract-pagination 패턴 (CustomerFullDetailView.css 오버라이드 자동 적용) */}
-      {sortedContracts.length > 0 && (
-        <div className="contract-pagination">
-          <div className="pagination-limit">
-            <Dropdown
-              value={itemsPerPageMode === 'auto' ? 'auto' : String(itemsPerPageMode)}
-              options={itemsPerPageOptions}
-              onChange={(val) => {
-                if (val === 'auto') {
-                  setItemsPerPageMode('auto')
-                } else {
-                  setItemsPerPageMode(Number(val))
-                }
-                setCurrentPage(1)
-              }}
-              width={70}
-            />
-          </div>
-
-          <div className="pagination-controls">
-            <button
-              type="button"
-              className="pagination-button pagination-button--prev"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage <= 1}
-              aria-label="이전 페이지"
-            >
-              <span className="pagination-arrow">‹</span>
-            </button>
-
-            <div className="pagination-info">
-              <span className="pagination-current">{currentPage}</span>
-              <span className="pagination-separator">/</span>
-              <span className="pagination-total">{totalPages}</span>
-            </div>
-
-            <button
-              type="button"
-              className="pagination-button pagination-button--next"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage >= totalPages}
-              aria-label="다음 페이지"
-            >
-              <span className="pagination-arrow">›</span>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

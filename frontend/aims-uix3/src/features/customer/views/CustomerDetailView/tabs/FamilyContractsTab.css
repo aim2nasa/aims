@@ -381,7 +381,3 @@ html[data-theme="dark"] .fc-status--실효 {
 html[data-theme="dark"] .fc-premium {
   color: var(--color-primary-400) !important;
 }
-
-/* === 페이지네이션 === */
-/* 공용 Pagination.css + CustomerFullDetailView.css 오버라이드 사용 */
-/* .contract-pagination 클래스로 자동 적용됨 */
