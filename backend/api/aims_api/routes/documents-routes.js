@@ -526,7 +526,8 @@ router.get('/documents', authenticateJWT, async (req, res) => {
       })
       .filter(id => id !== null);
 
-    // 문자열 customerId 일괄 수정 (비동기)
+    // Intentional fire-and-forget: 응답 속도를 위해 비동기 후처리.
+    // 실패 시 다음 요청에서 자동 재시도됨 (docsToFix는 매 요청마다 재계산)
     if (docsToFix.length > 0) {
       console.log(`🔧 [AUTO-FIX] ${docsToFix.length}개 문서의 customerId를 문자열→ObjectId로 변환 중...`);
       Promise.all(
@@ -966,7 +967,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       })
       .filter(id => id !== null);
 
-    // 문자열 customerId 일괄 수정 (비동기)
+    // Intentional fire-and-forget: 응답 속도를 위해 비동기 후처리.
+    // 실패 시 다음 요청에서 자동 재시도됨 (docsToFix는 매 요청마다 재계산)
     if (docsToFix.length > 0) {
       console.log(`🔧 [AUTO-FIX] ${docsToFix.length}개 문서의 customerId를 문자열→ObjectId로 변환 중...`);
       Promise.all(
