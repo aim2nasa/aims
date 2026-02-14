@@ -910,7 +910,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                           </button>
                         )}
                         <button type="button" className={`history-tabs__tab ${historyTab === 'corporate' ? 'history-tabs__tab--active' : ''}`} onClick={() => { setHistoryTab('corporate'); setCorporateRefreshTrigger(n => n + 1) }}>
-                          법인{corporateContractCount > 0 && <span className="history-tabs__count">{corporateContractCount}</span>}
+                          법인 <span className="history-tabs__count">{corporateContractCount}</span>
                         </button>
                       </div>
                       <div className="customer-full-detail__section-search">
@@ -1219,9 +1219,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onClick={() => { setHistoryTab('corporate'); setCorporateRefreshTrigger(n => n + 1) }}
                     >
                       법인계약
-                      {corporateContractCount > 0 && (
-                        <span className="history-tabs__count">{corporateContractCount}</span>
-                      )}
+                      <span className="history-tabs__count">{corporateContractCount}</span>
                     </button>
                   </div>
                   {/* 🍎 계약 검색 */}
