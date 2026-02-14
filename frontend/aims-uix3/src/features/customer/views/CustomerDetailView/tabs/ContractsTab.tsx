@@ -95,6 +95,7 @@ const AR_HISTORY_COLUMNS: ColumnConfig[] = [
   { id: 'policy', minWidth: 83, maxWidth: 110 },       // 증권번호
   { id: 'product', minWidth: 110, maxWidth: 440 },     // 보험상품 (1fr)
   { id: 'holder', minWidth: 44, maxWidth: 77 },        // 계약자
+  { id: 'insured', minWidth: 44, maxWidth: 77 },       // 피보험자
   { id: 'date', minWidth: 72, maxWidth: 88 },          // 계약일
   { id: 'status', minWidth: 42, maxWidth: 61 },        // 계약상태
   { id: 'amount', minWidth: 55, maxWidth: 83 },        // 가입금액
@@ -110,6 +111,7 @@ const CR_HISTORY_COLUMNS: ColumnConfig[] = [
   { id: 'policy', minWidth: 83, maxWidth: 130 },       // 증권번호
   { id: 'product', minWidth: 110, maxWidth: 440 },     // 보험상품 (1fr)
   { id: 'contractor', minWidth: 44, maxWidth: 77 },    // 계약자
+  { id: 'insured', minWidth: 44, maxWidth: 77 },       // 피보험자
   { id: 'date', minWidth: 72, maxWidth: 88 },          // 계약일
   { id: 'insuredAmount', minWidth: 66, maxWidth: 105 },// 보험가입금액
   { id: 'accumulated', minWidth: 66, maxWidth: 105 },  // 적립금
@@ -132,6 +134,7 @@ interface CrContractHistory {
   policyNumber: string
   productName: string
   contractorName: string
+  insuredName: string
   contractDate: string
   latestSnapshot: CrContractSnapshot
   snapshots: CrContractSnapshot[]
@@ -158,6 +161,7 @@ function groupCrReviewsByPolicyNumber(reviews: CustomerReview[]): CrContractHist
   const policyMap = new Map<string, {
     productName: string
     contractorName: string
+    insuredName: string
     contractDate: string
     snapshots: CrContractSnapshot[]
   }>()
@@ -186,6 +190,7 @@ function groupCrReviewsByPolicyNumber(reviews: CustomerReview[]): CrContractHist
       policyMap.set(policyNumber, {
         productName: review.product_name || '-',
         contractorName: review.contractor_name || '-',
+        insuredName: review.insured_name || '-',
         contractDate: review.contract_info?.contract_date || '-',
         snapshots: [snapshot]
       })
@@ -201,6 +206,7 @@ function groupCrReviewsByPolicyNumber(reviews: CustomerReview[]): CrContractHist
       policyNumber,
       productName: data.productName,
       contractorName: data.contractorName,
+      insuredName: data.insuredName,
       contractDate: data.contractDate,
       latestSnapshot: data.snapshots[0], // 최신 스냅샷
       snapshots: data.snapshots
@@ -258,12 +264,12 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const [isCrModalOpen, setIsCrModalOpen] = useState(false)
 
   // 🍎 AR 계약 이력 정렬 상태
-  type ArSortField = 'policyNumber' | 'productName' | 'holder' | 'contractDate' | 'status' | 'coverageAmount' | 'insurancePeriod' | 'paymentPeriod' | 'premium' | 'issueDate'
+  type ArSortField = 'policyNumber' | 'productName' | 'holder' | 'insured' | 'contractDate' | 'status' | 'coverageAmount' | 'insurancePeriod' | 'paymentPeriod' | 'premium' | 'issueDate'
   const [arSortField, setArSortField] = useState<ArSortField>('policyNumber')
   const [arSortDirection, setArSortDirection] = useState<SortDirection>('asc')
 
   // 🍎 CRS 계약 이력 정렬 상태
-  type CrSortField = 'policyNumber' | 'productName' | 'contractorName' | 'contractDate' | 'insuredAmount' | 'accumulatedAmount' | 'investmentReturnRate' | 'issueDate'
+  type CrSortField = 'policyNumber' | 'productName' | 'contractorName' | 'insuredName' | 'contractDate' | 'insuredAmount' | 'accumulatedAmount' | 'investmentReturnRate' | 'issueDate'
   const [crSortField, setCrSortField] = useState<CrSortField>('policyNumber')
   const [crSortDirection, setCrSortDirection] = useState<SortDirection>('asc')
 
@@ -729,6 +735,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       policy: 94,
       product: 198,  // 1fr로 동작하므로 기본값은 참고용
       holder: 50,
+      insured: 50,
       date: 75,
       status: 46,
       amount: 61,
@@ -745,6 +752,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     // 각 컬럼별 최대 폭 계산
     let maxPolicy = 0
     let maxHolder = 0
+    let maxInsured = 0
     let maxDate = 0
     let maxStatus = 0
     let maxAmount = 0
@@ -756,6 +764,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     for (const history of contractHistories) {
       maxPolicy = Math.max(maxPolicy, calculateTextWidth(history.policyNumber || ''))
       maxHolder = Math.max(maxHolder, calculateTextWidth(history.holder || ''))
+      maxInsured = Math.max(maxInsured, calculateTextWidth(history.insured || ''))
       maxDate = Math.max(maxDate, calculateTextWidth(history.contractDate || ''))
       maxStatus = Math.max(maxStatus, calculateTextWidth(history.latestSnapshot?.status || ''))
       maxAmount = Math.max(maxAmount, calculateTextWidth(
@@ -776,6 +785,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       policy: clamp(maxPolicy + 24, 83, 110),     // 토글 아이콘 포함
       product: 198,  // 1fr로 동작하므로 고정값
       holder: clamp(maxHolder + 9, 44, 77),
+      insured: clamp(maxInsured + 9, 44, 77),
       date: clamp(maxDate + 9, 72, 88),
       status: clamp(maxStatus + 9, 42, 61),
       amount: clamp(maxAmount + 9, 55, 83),
@@ -804,6 +814,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     policy: 100,
     product: 200,
     contractor: 50,
+    insured: 50,
     date: 75,
     insuredAmount: 90,
     accumulated: 90,
@@ -889,7 +900,8 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     return contractHistories.filter(h =>
       (h.policyNumber || '').toLowerCase().includes(term) ||
       (h.productName || '').toLowerCase().includes(term) ||
-      (h.holder || '').toLowerCase().includes(term)
+      (h.holder || '').toLowerCase().includes(term) ||
+      (h.insured || '').toLowerCase().includes(term)
     )
   }, [contractHistories, searchTerm])
 
@@ -911,6 +923,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         case 'holder':
           aValue = a.holder || ''
           bValue = b.holder || ''
+          break
+        case 'insured':
+          aValue = a.insured || ''
+          bValue = b.insured || ''
           break
         case 'contractDate':
           aValue = a.contractDate || ''
@@ -976,7 +992,8 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     return crContractHistories.filter(h =>
       (h.policyNumber || '').toLowerCase().includes(term) ||
       (h.productName || '').toLowerCase().includes(term) ||
-      (h.contractorName || '').toLowerCase().includes(term)
+      (h.contractorName || '').toLowerCase().includes(term) ||
+      (h.insuredName || '').toLowerCase().includes(term)
     )
   }, [crContractHistories, searchTerm])
 
@@ -998,6 +1015,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         case 'contractorName':
           aValue = a.contractorName || ''
           bValue = b.contractorName || ''
+          break
+        case 'insuredName':
+          aValue = a.insuredName || ''
+          bValue = b.insuredName || ''
           break
         case 'contractDate':
           aValue = a.contractDate || ''
@@ -1121,6 +1142,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
             '--ar-policy-width': `${arColumnWidths['policy'] || arHistoryColumnWidths.policy}px`,
             '--ar-product-width': `${arColumnWidths['product'] || arHistoryColumnWidths.product}px`,
             '--ar-holder-width': `${arColumnWidths['holder'] || arHistoryColumnWidths.holder}px`,
+            '--ar-insured-width': `${arColumnWidths['insured'] || arHistoryColumnWidths.insured}px`,
             '--ar-date-width': `${arColumnWidths['date'] || arHistoryColumnWidths.date}px`,
             '--ar-status-width': `${arColumnWidths['status'] || arHistoryColumnWidths.status}px`,
             '--ar-amount-width': `${arColumnWidths['amount'] || arHistoryColumnWidths.amount}px`,
@@ -1162,6 +1184,16 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
               <span>계약자</span>
               {renderArSortIndicator('holder')}
               <div {...getArResizeHandleProps('holder')} />
+            </div>
+            <div
+              className="contract-history-header__insured resizable-header header-sortable"
+              onClick={() => handleArSort('insured')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>피보험자</span>
+              {renderArSortIndicator('insured')}
+              <div {...getArResizeHandleProps('insured')} />
             </div>
             <div
               className="contract-history-header__date resizable-header header-sortable"
@@ -1271,6 +1303,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                       <span className="contract-history-item__product">{history.productName || '-'}</span>
                     </Tooltip>
                     <span className="contract-history-item__holder">{history.holder || '-'}</span>
+                    <span className="contract-history-item__insured">{history.insured || '-'}</span>
                     <span className="contract-history-item__date">{history.contractDate || '-'}</span>
                     <span className={`contract-history-item__status contract-history-item__status--${(latestSnapshot.status || '').replace(/\s/g, '-')}`}>
                       {latestSnapshot.status || '-'}
@@ -1372,6 +1405,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
             '--cr-policy-width': `${crColumnWidths['policy'] || crHistoryColumnWidths.policy}px`,
             '--cr-product-width': `${crColumnWidths['product'] || crHistoryColumnWidths.product}px`,
             '--cr-contractor-width': `${crColumnWidths['contractor'] || crHistoryColumnWidths.contractor}px`,
+            '--cr-insured-width': `${crColumnWidths['insured'] || crHistoryColumnWidths.insured}px`,
             '--cr-date-width': `${crColumnWidths['date'] || crHistoryColumnWidths.date}px`,
             '--cr-insured-amount-width': `${crColumnWidths['insuredAmount'] || crHistoryColumnWidths.insuredAmount}px`,
             '--cr-accumulated-width': `${crColumnWidths['accumulated'] || crHistoryColumnWidths.accumulated}px`,
@@ -1411,6 +1445,16 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
               <span>계약자</span>
               {renderCrSortIndicator('contractorName')}
               <div {...getCrResizeHandleProps('contractor')} />
+            </div>
+            <div
+              className="cr-contract-history-header__insured resizable-header header-sortable"
+              onClick={() => handleCrSort('insuredName')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>피보험자</span>
+              {renderCrSortIndicator('insuredName')}
+              <div {...getCrResizeHandleProps('insured')} />
             </div>
             <div
               className="cr-contract-history-header__date resizable-header header-sortable"
@@ -1495,6 +1539,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                       <span className="cr-contract-history-item__product">{history.productName || '-'}</span>
                     </Tooltip>
                     <span className="cr-contract-history-item__contractor">{history.contractorName || '-'}</span>
+                    <span className="cr-contract-history-item__insured">{history.insuredName || '-'}</span>
                     <span className="cr-contract-history-item__date">{history.contractDate || '-'}</span>
                     <span className="cr-contract-history-item__insured-amount">
                       {latestSnapshot.insuredAmount ? latestSnapshot.insuredAmount.toLocaleString('ko-KR') : '-'}

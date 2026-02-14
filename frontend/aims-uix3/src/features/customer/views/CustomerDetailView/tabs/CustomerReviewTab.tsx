@@ -23,7 +23,7 @@ import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize';
 import './CustomerReviewTab.css';
 
 // 정렬 필드 타입 (AnnualReportTab 스타일: 계약자, 발행일, 파싱일시, 상품명, 펀드 수, 상태)
-type SortField = 'contractor_name' | 'issue_date' | 'parsed_at' | 'product_name' | 'fund_count' | 'status';
+type SortField = 'contractor_name' | 'insured_name' | 'issue_date' | 'parsed_at' | 'product_name' | 'fund_count' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 interface CustomerReviewTabProps {
@@ -50,9 +50,10 @@ const ROW_GAP = 2;
 const DEFAULT_TABLE_HEADER_HEIGHT = 32;
 const DEFAULT_PAGINATION_HEIGHT = 26;
 
-// 🍎 컬럼 리사이즈 설정 (AnnualReportTab 동일 패턴: 계약자, 발행일, 파싱일시, 상품명, 펀드 수, 상태)
+// 🍎 컬럼 리사이즈 설정 (계약자, 피보험자, 발행일, 파싱일시, 상품명, 펀드 수, 상태)
 const CUSTOMER_REVIEW_COLUMNS: ColumnConfig[] = [
   { id: 'contractor', minWidth: 50, maxWidth: 150 },
+  { id: 'insured', minWidth: 50, maxWidth: 150 },
   { id: 'issueDate', minWidth: 70, maxWidth: 120 },
   { id: 'parsedAt', minWidth: 100, maxWidth: 180 },
   { id: 'product', minWidth: 80, maxWidth: 300 },
@@ -62,6 +63,7 @@ const CUSTOMER_REVIEW_COLUMNS: ColumnConfig[] = [
 
 // 🍎 기본 컬럼 폭
 const DEFAULT_CONTRACTOR_WIDTH = 60;
+const DEFAULT_INSURED_WIDTH = 60;
 const DEFAULT_ISSUE_DATE_WIDTH = 80;
 const DEFAULT_PARSED_AT_WIDTH = 130;
 const DEFAULT_PRODUCT_WIDTH = 120;
@@ -410,11 +412,13 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     const term = searchTerm.toLowerCase().trim();
     return reviews.filter(review => {
       const contractorName = (review.contractor_name || '').toLowerCase();
+      const insuredName = (review.insured_name || '').toLowerCase();
       const productName = (review.product_name || '').toLowerCase();
       const issueDate = CustomerReviewApi.formatDate(review.issue_date).toLowerCase();
       const parsedAt = CustomerReviewApi.formatDateTime(review.parsed_at).toLowerCase();
 
       return contractorName.includes(term) ||
+             insuredName.includes(term) ||
              productName.includes(term) ||
              issueDate.includes(term) ||
              parsedAt.includes(term);
@@ -429,6 +433,9 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
       switch (sortField) {
         case 'contractor_name':
           comparison = (a.contractor_name || '').localeCompare(b.contractor_name || '', 'ko');
+          break;
+        case 'insured_name':
+          comparison = (a.insured_name || '').localeCompare(b.insured_name || '', 'ko');
           break;
         case 'issue_date':
           comparison = new Date(a.issue_date || 0).getTime() - new Date(b.issue_date || 0).getTime();
@@ -556,6 +563,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
         className={`customer-review-table-container${isResizing ? ' is-resizing' : ''}`}
         style={{
           '--contractor-column-width': `${columnWidths['contractor'] || DEFAULT_CONTRACTOR_WIDTH}px`,
+          '--insured-column-width': `${columnWidths['insured'] || DEFAULT_INSURED_WIDTH}px`,
           '--issue-date-column-width': `${columnWidths['issueDate'] || DEFAULT_ISSUE_DATE_WIDTH}px`,
           '--parsed-at-column-width': `${columnWidths['parsedAt'] || DEFAULT_PARSED_AT_WIDTH}px`,
           '--product-column-width': `${columnWidths['product'] || DEFAULT_PRODUCT_WIDTH}px`,
@@ -586,6 +594,18 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
               </span>
             </span>
             <div {...getResizeHandleProps('contractor')} />
+          </div>
+          <div
+            className="header-insured customer-review-table__sortable resizable-header"
+            onClick={() => handleSort('insured_name')}
+          >
+            <span className="customer-review-table__header-content">
+              피보험자
+              <span className={`customer-review-table__sort-icon ${sortField === 'insured_name' ? 'customer-review-table__sort-icon--active' : ''}`}>
+                {sortField === 'insured_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+            <div {...getResizeHandleProps('insured')} />
           </div>
           <div
             className="header-issue-date customer-review-table__sortable resizable-header"
@@ -675,6 +695,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
                   </div>
                 )}
                 <div className="row-contractor">{review.contractor_name || '-'}</div>
+                <div className="row-insured">{review.insured_name || '-'}</div>
                 <div className="row-issue-date">
                   {CustomerReviewApi.formatDate(review.issue_date)}
                 </div>

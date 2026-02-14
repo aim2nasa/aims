@@ -798,7 +798,7 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
   cursor: col-resize;
 }
 
-/* 11컬럼 헤더 - 모든 컬럼 CSS 변수 사용 */
+/* 12컬럼 헤더 - 모든 컬럼 CSS 변수 사용 */
 .contract-history-header {
   display: grid;
   grid-template-columns:
@@ -806,6 +806,7 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
     var(--ar-policy-width, 94px)
     var(--ar-product-width, 198px)
     var(--ar-holder-width, 50px)
+    var(--ar-insured-width, 50px)
     var(--ar-date-width, 75px)
     var(--ar-status-width, 46px)
     var(--ar-amount-width, 61px)
@@ -900,7 +901,7 @@ html[data-theme="dark"] .contract-history-accordion {
   background: var(--color-ios-bg-primary-dark);
 }
 
-/* 아코디언 헤더 (11컬럼 계약 행) - 모든 컬럼 CSS 변수 사용 */
+/* 아코디언 헤더 (12컬럼 계약 행) - 모든 컬럼 CSS 변수 사용 */
 .contract-history-accordion__header {
   display: grid;
   grid-template-columns:
@@ -908,6 +909,7 @@ html[data-theme="dark"] .contract-history-accordion {
     var(--ar-policy-width, 94px)
     var(--ar-product-width, 198px)
     var(--ar-holder-width, 50px)
+    var(--ar-insured-width, 50px)
     var(--ar-date-width, 75px)
     var(--ar-status-width, 46px)
     var(--ar-amount-width, 61px)
@@ -1010,6 +1012,18 @@ html[data-theme="dark"] .contract-history-item__product {
 }
 
 html[data-theme="dark"] .contract-history-item__holder {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 피보험자 */
+.contract-history-item__insured {
+  color: var(--color-ios-text-secondary-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-theme="dark"] .contract-history-item__insured {
   color: var(--color-ios-text-secondary-dark);
 }
 
@@ -1247,7 +1261,7 @@ html[data-theme="dark"] .snapshot-item--changed {
   overflow-x: auto;
 }
 
-/* 9컬럼 헤더 (리사이즈 가능 - CSS 변수 바인딩) */
+/* 10컬럼 헤더 (리사이즈 가능 - CSS 변수 바인딩) */
 .cr-contract-history-header {
   display: grid;
   grid-template-columns:
@@ -1255,6 +1269,7 @@ html[data-theme="dark"] .snapshot-item--changed {
     var(--cr-policy-width, 100px)
     var(--cr-product-width, 200px)
     var(--cr-contractor-width, 50px)
+    var(--cr-insured-width, 50px)
     var(--cr-date-width, 75px)
     var(--cr-insured-amount-width, 90px)
     var(--cr-accumulated-width, 90px)
@@ -1332,6 +1347,7 @@ html[data-theme="dark"] .cr-contract-history-accordion {
     var(--cr-policy-width, 100px)
     var(--cr-product-width, 200px)
     var(--cr-contractor-width, 50px)
+    var(--cr-insured-width, 50px)
     var(--cr-date-width, 75px)
     var(--cr-insured-amount-width, 90px)
     var(--cr-accumulated-width, 90px)
@@ -1412,6 +1428,18 @@ html[data-theme="dark"] .cr-contract-history-item__product {
 }
 
 html[data-theme="dark"] .cr-contract-history-item__contractor {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.cr-contract-history-item__insured {
+  text-align: center;
+  color: var(--color-ios-text-secondary-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-theme="dark"] .cr-contract-history-item__insured {
   color: var(--color-ios-text-secondary-dark);
 }
 

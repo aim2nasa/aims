@@ -137,9 +137,10 @@ html[data-theme="dark"] .customer-review-table-container::-webkit-scrollbar-thum
 
 .customer-review-table-header {
   display: grid;
-  /* 🍎 6칼럼: 계약자(유연), 발행일, 파싱일시, 상품명(유연), 펀드 수, 상태 */
+  /* 🍎 7칼럼: 계약자, 피보험자, 발행일, 파싱일시, 상품명(유연), 펀드 수, 상태 */
   grid-template-columns:
-    minmax(60px, 0.6fr)    /* 계약자 */
+    minmax(50px, 0.5fr)    /* 계약자 */
+    minmax(50px, 0.5fr)    /* 피보험자 */
     104px                   /* 발행일 */
     163px                   /* 파싱일시 */
     minmax(80px, 1fr)      /* 상품명 */
@@ -173,7 +174,8 @@ html[data-theme="dark"] .customer-review-table-header {
 .customer-review-table-header:has(.header-checkbox) {
   grid-template-columns:
     28px                    /* 체크박스 */
-    minmax(60px, 0.6fr)    /* 계약자 */
+    minmax(50px, 0.5fr)    /* 계약자 */
+    minmax(50px, 0.5fr)    /* 피보험자 */
     104px                   /* 발행일 */
     163px                   /* 파싱일시 */
     minmax(80px, 1fr)      /* 상품명 */
@@ -192,6 +194,7 @@ html[data-theme="dark"] .customer-review-table-header {
 
 /* 헤더 칼럼 정렬 (AnnualReportTab 동일) */
 .customer-review-table-header .header-contractor { justify-content: flex-start; }
+.customer-review-table-header .header-insured { justify-content: flex-start; }
 .customer-review-table-header .header-issue-date { justify-content: center; }
 .customer-review-table-header .header-parsed-at { justify-content: center; }
 .customer-review-table-header .header-product { justify-content: flex-start; }
@@ -247,9 +250,10 @@ html[data-theme="dark"] .customer-review-table-header {
 
 .customer-review-row {
   display: grid;
-  /* 🍎 6칼럼: 헤더와 동일 */
+  /* 🍎 7칼럼: 헤더와 동일 */
   grid-template-columns:
-    minmax(60px, 0.6fr)    /* 계약자 */
+    minmax(50px, 0.5fr)    /* 계약자 */
+    minmax(50px, 0.5fr)    /* 피보험자 */
     104px                   /* 발행일 */
     163px                   /* 파싱일시 */
     minmax(80px, 1fr)      /* 상품명 */
@@ -286,7 +290,8 @@ html[data-theme="dark"] .customer-review-row:hover {
 .customer-review-row:has(.row-checkbox) {
   grid-template-columns:
     28px                    /* 체크박스 */
-    minmax(60px, 0.6fr)    /* 계약자 */
+    minmax(50px, 0.5fr)    /* 계약자 */
+    minmax(50px, 0.5fr)    /* 피보험자 */
     104px                   /* 발행일 */
     163px                   /* 파싱일시 */
     minmax(80px, 1fr)      /* 상품명 */
@@ -342,6 +347,14 @@ html[data-theme="dark"] .customer-review-row--selected {
 .header-contractor {
   font-weight: 600;
   color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-insured,
+.header-insured {
+  color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
