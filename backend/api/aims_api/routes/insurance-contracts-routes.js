@@ -435,9 +435,14 @@ router.get('/contracts', authenticateJWTorAPIKey, async (req, res) => {
  * GET /api/contracts/:id
  * 계약 상세 조회
  */
-router.get('/contracts/:id', async (req, res) => {
+router.get('/contracts/:id', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId가 필요합니다.' });
+    }
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -446,8 +451,10 @@ router.get('/contracts/:id', async (req, res) => {
       });
     }
 
+    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
     const contract = await db.collection(CONTRACTS_COLLECTION).findOne({
-      _id: new ObjectId(id)
+      _id: new ObjectId(id),
+      agent_id: agentObjectId
     });
 
     if (!contract) {
@@ -480,13 +487,14 @@ router.get('/contracts/:id', async (req, res) => {
 router.post('/contracts', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const contract = req.body;
+    const userId = req.user.id;
 
-    if (!contract.agent_id) {
-      return res.status(400).json({
-        success: false,
-        error: 'agent_id는 필수입니다.'
-      });
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId가 필요합니다.' });
     }
+
+    // 인가: req.body.agent_id를 무시하고 인증된 사용자 ID를 강제 사용
+    contract.agent_id = userId;
 
     if (!contract.policy_number) {
       return res.status(400).json({
@@ -639,14 +647,15 @@ router.post('/contracts', authenticateJWTorAPIKey, async (req, res) => {
  */
 router.post('/contracts/bulk', authenticateJWTorAPIKey, async (req, res) => {
   try {
-    const { contracts, agent_id } = req.body;
+    const { contracts } = req.body;
+    const userId = req.user.id;
 
-    if (!agent_id) {
-      return res.status(400).json({
-        success: false,
-        error: 'agent_id는 필수입니다.'
-      });
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId가 필요합니다.' });
     }
+
+    // 인가: req.body.agent_id를 무시하고 인증된 사용자 ID를 강제 사용
+    const agent_id = userId;
 
     // agent_id 유효성 검사
     if (!ObjectId.isValid(agent_id)) {
@@ -970,10 +979,15 @@ router.post('/contracts/bulk', authenticateJWTorAPIKey, async (req, res) => {
  * PUT /api/contracts/:id
  * 계약 수정
  */
-router.put('/contracts/:id', async (req, res) => {
+router.put('/contracts/:id', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId가 필요합니다.' });
+    }
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -984,14 +998,16 @@ router.put('/contracts/:id', async (req, res) => {
 
     delete updates._id;
     delete updates.meta;
+    delete updates.agent_id; // 소유권 변경 방지
 
     // ObjectId 필드 변환
     if (updates.customer_id) updates.customer_id = new ObjectId(updates.customer_id);
     if (updates.product_id) updates.product_id = new ObjectId(updates.product_id);
     if (updates.insurer_id) updates.insurer_id = new ObjectId(updates.insurer_id);
 
+    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
     const result = await db.collection(CONTRACTS_COLLECTION).updateOne(
-      { _id: new ObjectId(id) },
+      { _id: new ObjectId(id), agent_id: agentObjectId },
       {
         $set: {
           ...updates,
@@ -1030,6 +1046,11 @@ router.put('/contracts/:id', async (req, res) => {
 router.delete('/contracts/:id', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId가 필요합니다.' });
+    }
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -1038,9 +1059,11 @@ router.delete('/contracts/:id', authenticateJWTorAPIKey, async (req, res) => {
       });
     }
 
-    // 1. 계약 정보 조회 (customer_id 확인)
+    // 1. 계약 정보 조회 (소유권 검증 포함)
+    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
     const contract = await db.collection(CONTRACTS_COLLECTION).findOne({
-      _id: new ObjectId(id)
+      _id: new ObjectId(id),
+      agent_id: agentObjectId
     });
 
     if (!contract) {
@@ -1153,9 +1176,14 @@ router.delete('/contracts/:id', authenticateJWTorAPIKey, async (req, res) => {
  * DELETE /api/contracts/bulk
  * 계약 일괄 삭제
  */
-router.delete('/contracts/bulk', async (req, res) => {
+router.delete('/contracts/bulk', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { ids } = req.body;
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId가 필요합니다.' });
+    }
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
@@ -1173,9 +1201,13 @@ router.delete('/contracts/bulk', async (req, res) => {
       });
     }
 
-    // 1. 삭제할 계약들의 customer_id 조회
+    // 소유권 검증: 자신의 계약만 삭제 가능
+    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
+
+    // 1. 삭제할 계약들의 customer_id 조회 (소유권 필터 포함)
     const contracts = await db.collection(CONTRACTS_COLLECTION).find({
-      _id: { $in: objectIds }
+      _id: { $in: objectIds },
+      agent_id: agentObjectId
     }, { projection: { customer_id: 1 } }).toArray();
 
     // 2. 고객의 contracts 배열에서 이 계약들 참조 제거
@@ -1197,9 +1229,10 @@ router.delete('/contracts/bulk', async (req, res) => {
       }
     }
 
-    // 3. 계약 삭제
+    // 3. 계약 삭제 (소유권 필터 포함)
     const result = await db.collection(CONTRACTS_COLLECTION).deleteMany({
-      _id: { $in: objectIds }
+      _id: { $in: objectIds },
+      agent_id: agentObjectId
     });
 
     res.json({
