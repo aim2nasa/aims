@@ -290,6 +290,9 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
           const memberName = isSelf ? selfName : (relInfo?.name || '')
 
           // --- AR (최우선) ---
+          if (ar.status === 'rejected') {
+            console.error(`[CorporateContracts] AR 조회 실패 (${custId}):`, ar.reason)
+          }
           if (ar.status === 'fulfilled') {
             const arResponse = ar.value as { success?: boolean; data?: { reports: AnnualReport[] } }
             if (arResponse.success && arResponse.data) {
@@ -313,6 +316,9 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
           }
 
           // --- CRS ---
+          if (crs.status === 'rejected') {
+            console.error(`[CorporateContracts] CRS 조회 실패 (${custId}):`, crs.reason)
+          }
           if (crs.status === 'fulfilled') {
             const crsResponse = crs.value as { success?: boolean; data?: { reviews: CustomerReview[] } }
             if (crsResponse.success && crsResponse.data) {
@@ -333,6 +339,9 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
           }
 
           // --- 수동 계약 ---
+          if (manual.status === 'rejected') {
+            console.error(`[CorporateContracts] 수동계약 조회 실패 (${custId}):`, manual.reason)
+          }
           if (manual.status === 'fulfilled') {
             const contracts = manual.value as Contract[]
             if (Array.isArray(contracts)) {
