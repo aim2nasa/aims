@@ -73,7 +73,6 @@ html[data-theme="dark"] .family-contracts__loading-text {
 .family-contracts__table-section {
   display: flex;
   flex-direction: column;
-  gap: 2px;
   overflow-x: auto;
   overflow-y: auto;
   flex: 1;
@@ -127,8 +126,7 @@ html[data-theme="dark"] .family-contracts__table-section::-webkit-scrollbar-thum
   font-size: var(--font-size-caption-2);
   font-weight: 600;
   color: var(--color-ios-text-tertiary-light);
-  background: var(--color-ios-bg-secondary-light);
-  border-radius: 4px;
+  background: var(--color-bg-secondary); /* 🍎 불투명 배경 필수! --color-ios-bg-secondary-light는 rgba(0,0,0,0.04)로 반투명 */
   position: sticky;
   top: 0;
   z-index: 10;
@@ -137,7 +135,7 @@ html[data-theme="dark"] .family-contracts__table-section::-webkit-scrollbar-thum
 
 html[data-theme="dark"] .family-contracts-header {
   color: var(--color-ios-text-tertiary-dark);
-  background: var(--color-ios-bg-secondary-dark);
+  background: var(--color-bg-secondary); /* 🍎 다크모드도 불투명 배경 */
 }
 
 .family-contracts-header > div {
@@ -385,65 +383,5 @@ html[data-theme="dark"] .fc-premium {
 }
 
 /* === 페이지네이션 === */
-.family-contracts__pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px;
-  font-size: var(--font-size-caption-2);
-  color: var(--color-ios-text-tertiary-light);
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .family-contracts__pagination {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.family-contracts__pagination-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.family-contracts__pagination-nav {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.family-contracts__pagination-nav button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: var(--color-ios-text-secondary-light);
-  cursor: pointer;
-  transition: background-color 0.15s ease-out;
-}
-
-html[data-theme="dark"] .family-contracts__pagination-nav button {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.family-contracts__pagination-nav button:hover:not(:disabled) {
-  background: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .family-contracts__pagination-nav button:hover:not(:disabled) {
-  background: var(--color-ios-bg-tertiary-dark);
-}
-
-.family-contracts__pagination-nav button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.family-contracts__page-indicator {
-  font-size: var(--font-size-caption-2);
-  font-variant-numeric: tabular-nums;
-  padding: 0 4px;
-}
+/* 공용 Pagination.css + CustomerFullDetailView.css 오버라이드 사용 */
+/* .contract-pagination 클래스로 자동 적용됨 */

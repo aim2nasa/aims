@@ -735,10 +735,10 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
         </div>
       </div>
 
-      {/* 🍎 페이지네이션 */}
+      {/* 🍎 페이지네이션 — contract-pagination 패턴 (CustomerFullDetailView.css 오버라이드 자동 적용) */}
       {sortedContracts.length > 0 && (
-        <div className="family-contracts__pagination">
-          <div className="family-contracts__pagination-info">
+        <div className="contract-pagination">
+          <div className="pagination-limit">
             <Dropdown
               value={itemsPerPageMode === 'auto' ? 'auto' : String(itemsPerPageMode)}
               options={itemsPerPageOptions}
@@ -750,27 +750,35 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
                 }
                 setCurrentPage(1)
               }}
+              width={70}
             />
           </div>
-          <div className="family-contracts__pagination-nav">
+
+          <div className="pagination-controls">
             <button
               type="button"
+              className="pagination-button pagination-button--prev"
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage <= 1}
               aria-label="이전 페이지"
             >
-              <SFSymbol name="chevron.left" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+              <span className="pagination-arrow">‹</span>
             </button>
-            <span className="family-contracts__page-indicator">
-              {currentPage} / {totalPages}
-            </span>
+
+            <div className="pagination-info">
+              <span className="pagination-current">{currentPage}</span>
+              <span className="pagination-separator">/</span>
+              <span className="pagination-total">{totalPages}</span>
+            </div>
+
             <button
               type="button"
+              className="pagination-button pagination-button--next"
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage >= totalPages}
               aria-label="다음 페이지"
             >
-              <SFSymbol name="chevron.right" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+              <span className="pagination-arrow">›</span>
             </button>
           </div>
         </div>
