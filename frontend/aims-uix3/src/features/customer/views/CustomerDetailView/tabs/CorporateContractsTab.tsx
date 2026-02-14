@@ -248,6 +248,21 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
           }
         }
 
+        // (C) name→relLabel 조회 테이블 (본인 데이터에서 상대방 관계 파악용)
+        const nameToRelLabel = new Map<string, string>()
+        for (const [, info] of uniqueRelated) {
+          if (info.name) nameToRelLabel.set(info.name, info.relLabel)
+        }
+
+        // 본인 데이터에서 상대방의 관계 라벨 결정
+        const resolveRelLabel = (baseLabel: string, isSelfData: boolean, holder: string, insured: string): string => {
+          if (!isSelfData) return baseLabel
+          const otherParty = holder !== selfName ? holder : (insured !== selfName ? insured : '')
+          if (otherParty && nameToRelLabel.has(otherParty)) return nameToRelLabel.get(otherParty)!
+          if (otherParty) return '법인'
+          return baseLabel
+        }
+
         // 자기 자신 + 관련 고객들의 계약 병렬 로드
         const allCustomerIds = [customer._id, ...uniqueRelated.keys()]
         const loadResults = await Promise.all(
@@ -291,7 +306,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
                   holderName: h.holder || '-', insuredName: h.insured || '-',
                   contractDate: h.contractDate || '-', status: h.latestSnapshot.status || '-',
                   premium: h.latestSnapshot.premium || 0, coverageAmount: h.latestSnapshot.coverageAmount || 0,
-                  memberName, memberRelationship: relLabel, source: 'ar',
+                  memberName, memberRelationship: resolveRelLabel(relLabel, isSelf, h.holder || '', h.insured || ''), source: 'ar',
                 })
               }
             }
@@ -311,7 +326,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
                   holderName: review.contractor_name || '-', insuredName: review.insured_name || '-',
                   contractDate: review.contract_info?.contract_date || '-', status: '-',
                   premium: 0, coverageAmount: review.contract_info?.insured_amount ? Math.round(review.contract_info.insured_amount / 10000) : 0,
-                  memberName, memberRelationship: relLabel, source: 'crs',
+                  memberName, memberRelationship: resolveRelLabel(relLabel, isSelf, review.contractor_name || '', review.insured_name || ''), source: 'crs',
                 })
               }
             }
@@ -330,7 +345,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
                   holderName: c.customer_name || '-', insuredName: c.insured_person || '-',
                   contractDate: c.contract_date || '-', status: c.payment_status || '-',
                   premium: c.premium || 0, coverageAmount: 0,
-                  memberName, memberRelationship: relLabel, source: 'manual',
+                  memberName, memberRelationship: resolveRelLabel(relLabel, isSelf, c.customer_name || '', c.insured_person || ''), source: 'manual',
                 })
               }
             }
