@@ -43,6 +43,8 @@ interface FamilyContractsTabProps {
   onSearchChange?: (term: string) => void
   /** 가족 계약 수 변경 콜백 */
   onFamilyContractCountChange?: (count: number) => void
+  /** 탭 클릭 시 데이터 새로고침 트리거 */
+  refreshTrigger?: number
 }
 
 /** 통합 가족 계약 타입 */
@@ -107,7 +109,8 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   customer,
   searchTerm: externalSearchTerm,
   onSearchChange,
-  onFamilyContractCountChange
+  onFamilyContractCountChange,
+  refreshTrigger
 }) => {
   // 🍎 상태
   const [familyContracts, setFamilyContracts] = useState<FamilyContract[]>([])
@@ -337,6 +340,13 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   useEffect(() => {
     loadFamilyContracts()
   }, [loadFamilyContracts])
+
+  // 🍎 탭 클릭 시 데이터 새로고침
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      void loadFamilyContracts()
+    }
+  }, [refreshTrigger, loadFamilyContracts])
 
   // ==================== 검색 & 정렬 ====================
 

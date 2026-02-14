@@ -84,6 +84,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [isCorporateModalVisible, setIsCorporateModalVisible] = useState(false)
   const [annualReportRefreshTrigger, setAnnualReportRefreshTrigger] = useState(0)
   const [customerReviewRefreshTrigger, setCustomerReviewRefreshTrigger] = useState(0)
+  const [familyRefreshTrigger, setFamilyRefreshTrigger] = useState(0)
 
   // 🍎 더보기 토글 (개발자 모드 전용 액션 펼치기)
   const [showExtraActions, setShowExtraActions] = useState(false)
@@ -901,7 +902,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                           변액이력{crHistoryCount > 0 && <span className="history-tabs__count">{crHistoryCount}</span>}
                         </button>
                         {customer.insurance_info?.customer_type === '개인' && (
-                          <button type="button" className={`history-tabs__tab ${historyTab === 'family' ? 'history-tabs__tab--active' : ''}`} onClick={() => setHistoryTab('family')}>
+                          <button type="button" className={`history-tabs__tab ${historyTab === 'family' ? 'history-tabs__tab--active' : ''}`} onClick={() => { setHistoryTab('family'); setFamilyRefreshTrigger(n => n + 1) }}>
                             가족{familyContractCount > 0 && <span className="history-tabs__count">{familyContractCount}</span>}
                           </button>
                         )}
@@ -917,9 +918,13 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       </div>
                     </div>
                     <div className="customer-full-detail__section-content customer-full-detail__section-content--contracts">
-                      {historyTab === 'family' ? (
-                        <FamilyContractsTab customer={customer} searchTerm={contractSearchTerm} onSearchChange={setContractSearchTerm} onFamilyContractCountChange={setFamilyContractCount} />
-                      ) : (
+                      {/* 🍎 FamilyContractsTab: 항상 렌더링 → 카운트 즉시 계산 */}
+                      {customer.insurance_info?.customer_type === '개인' && (
+                        <div className={`history-tab-panel ${historyTab === 'family' ? 'history-tab-panel--active' : ''}`}>
+                          <FamilyContractsTab customer={customer} searchTerm={contractSearchTerm} onSearchChange={setContractSearchTerm} onFamilyContractCountChange={setFamilyContractCount} refreshTrigger={familyRefreshTrigger} />
+                        </div>
+                      )}
+                      {historyTab !== 'family' && (
                         <ContractsTab customer={customer} onContractCountChange={setContractCount} searchTerm={contractSearchTerm} onSearchChange={setContractSearchTerm} refreshTrigger={annualReportRefreshTrigger} historyTab={historyTab} onArHistoryCountChange={setArHistoryCount} onCrHistoryCountChange={setCrHistoryCount} />
                       )}
                     </div>
@@ -1190,7 +1195,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       <button
                         type="button"
                         className={`history-tabs__tab ${historyTab === 'family' ? 'history-tabs__tab--active' : ''}`}
-                        onClick={() => setHistoryTab('family')}
+                        onClick={() => { setHistoryTab('family'); setFamilyRefreshTrigger(n => n + 1) }}
                       >
                         가족 계약
                         {familyContractCount > 0 && (
@@ -1233,14 +1238,20 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   </div>
                 </h2>
                   <div className="customer-full-detail__section-content customer-full-detail__section-content--contracts">
-                    {historyTab === 'family' ? (
-                      <FamilyContractsTab
-                        customer={customer}
-                        searchTerm={contractSearchTerm}
-                        onSearchChange={setContractSearchTerm}
-                        onFamilyContractCountChange={setFamilyContractCount}
-                      />
-                    ) : (
+                    {/* 🍎 FamilyContractsTab: 항상 렌더링 (CSS 숨김) → 카운트가 즉시 계산됨 */}
+                    {customer.insurance_info?.customer_type === '개인' && (
+                      <div className={`history-tab-panel ${historyTab === 'family' ? 'history-tab-panel--active' : ''}`}>
+                        <FamilyContractsTab
+                          customer={customer}
+                          searchTerm={contractSearchTerm}
+                          onSearchChange={setContractSearchTerm}
+                          onFamilyContractCountChange={setFamilyContractCount}
+                          refreshTrigger={familyRefreshTrigger}
+                        />
+                      </div>
+                    )}
+                    {/* 🍎 ContractsTab: 조건부 렌더링 → family에서 복귀 시 재마운트로 자동 refresh */}
+                    {historyTab !== 'family' && (
                       <ContractsTab
                         customer={customer}
                         onContractCountChange={setContractCount}

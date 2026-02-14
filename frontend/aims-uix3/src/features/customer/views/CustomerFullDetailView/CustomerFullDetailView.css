@@ -1084,6 +1084,15 @@ html[data-theme="dark"] .history-tabs__count {
   flex-direction: column;
 }
 
+/* 🍎 보험 이력 탭 패널 (항상 렌더링, 비활성 시 숨김 - 카운트 즉시 계산) */
+.history-tab-panel {
+  display: none;
+}
+
+.history-tab-panel--active {
+  display: block;
+}
+
 /* 🍎 보고서 placeholder (준비 중 상태) */
 .report-placeholder {
   display: flex;
