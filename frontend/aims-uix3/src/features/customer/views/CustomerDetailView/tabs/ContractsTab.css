@@ -1326,6 +1326,7 @@ html[data-theme="dark"] .cr-contract-history-header .header-sortable:hover {
 .cr-contract-history-header__accumulated,
 .cr-contract-history-header__return-rate {
   justify-content: flex-end;
+  padding-right: 8px;
 }
 
 /* CRS 아코디언 */
@@ -1467,6 +1468,7 @@ html[data-theme="dark"] .cr-contract-history-item__date {
   font-weight: 600;
   color: var(--color-primary-600);
   white-space: nowrap;
+  padding-right: 8px;
 }
 
 html[data-theme="dark"] .cr-contract-history-item__return-rate {
@@ -1478,6 +1480,7 @@ html[data-theme="dark"] .cr-contract-history-item__return-rate {
   color: var(--color-ios-text-tertiary-light);
   white-space: nowrap;
   font-size: var(--font-size-caption-2);
+  text-align: center;
 }
 
 html[data-theme="dark"] .cr-contract-history-item__issue-date {
