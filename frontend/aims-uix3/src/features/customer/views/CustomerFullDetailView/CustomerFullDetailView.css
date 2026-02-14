@@ -1849,7 +1849,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .customer
 .customer-full-detail__section-content--report .customer-review-table-header {
   grid-template-columns:
     var(--contractor-column-width, 60px)
-    var(--insured-column-width, 60px)
+    var(--insured-column-width, 70px)
     var(--issue-date-column-width, 80px)
     var(--parsed-at-column-width, 130px)
     var(--product-column-width, 1fr)
@@ -1861,7 +1861,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .customer
   grid-template-columns:
     28px
     var(--contractor-column-width, 60px)
-    var(--insured-column-width, 60px)
+    var(--insured-column-width, 70px)
     var(--issue-date-column-width, 80px)
     var(--parsed-at-column-width, 130px)
     var(--product-column-width, 1fr)
@@ -1872,7 +1872,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .customer
 .customer-full-detail__section-content--report .customer-review-row {
   grid-template-columns:
     var(--contractor-column-width, 60px)
-    var(--insured-column-width, 60px)
+    var(--insured-column-width, 70px)
     var(--issue-date-column-width, 80px)
     var(--parsed-at-column-width, 130px)
     var(--product-column-width, 1fr)
@@ -1884,7 +1884,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .customer
   grid-template-columns:
     28px
     var(--contractor-column-width, 60px)
-    var(--insured-column-width, 60px)
+    var(--insured-column-width, 70px)
     var(--issue-date-column-width, 80px)
     var(--parsed-at-column-width, 130px)
     var(--product-column-width, 1fr)
