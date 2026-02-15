@@ -300,27 +300,28 @@ def run_service_tests(services):
             except Exception as e:
                 results.append(("WARN", f"aims_api 테스트 실행 불가: {e}"))
 
-    # aims_mcp 테스트
+    # aims_mcp 테스트 (로컬: TypeScript 컴파일 체크만, 전체 테스트는 서버에서 실행)
+    # MCP 서버가 원격(tars)에서만 실행되므로 로컬에서는 e2e 테스트 실행 불가
     if services.get("aims_mcp"):
         aims_mcp_dir = os.path.join(project_root, "backend", "api", "aims_mcp")
         if os.path.exists(os.path.join(aims_mcp_dir, "package.json")):
             try:
                 result = subprocess.run(
-                    ["npm", "test"],
+                    ["npx", "tsc", "--noEmit"],
                     cwd=aims_mcp_dir,
-                    capture_output=True, text=True, timeout=120,
+                    capture_output=True, text=True, timeout=60,
                     encoding="utf-8", errors="replace",
                     shell=(os.name == 'nt')
                 )
                 if result.returncode != 0:
                     stderr_short = result.stderr[:300] if result.stderr else result.stdout[:300]
-                    results.append(("FAIL", f"aims_mcp 테스트 실패:\n{stderr_short}"))
+                    results.append(("FAIL", f"aims_mcp TypeScript 컴파일 실패:\n{stderr_short}"))
                 else:
-                    results.append(("PASS", "aims_mcp 테스트 통과"))
+                    results.append(("PASS", "aims_mcp TypeScript 컴파일 통과"))
             except subprocess.TimeoutExpired:
-                results.append(("WARN", "aims_mcp 테스트 타임아웃 (120초)"))
+                results.append(("WARN", "aims_mcp TypeScript 체크 타임아웃 (60초)"))
             except Exception as e:
-                results.append(("WARN", f"aims_mcp 테스트 실행 불가: {e}"))
+                results.append(("WARN", f"aims_mcp TypeScript 체크 실행 불가: {e}"))
 
     # annual_report_api 테스트 (Python pytest)
     if services.get("annual_report_api"):

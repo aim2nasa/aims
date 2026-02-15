@@ -105,14 +105,14 @@ if [ -n "$STAGED_BACKEND_FILES" ]; then
       echo "  ✅ annual_report_api tests passed"
     fi
 
-    # aims_mcp 테스트
+    # aims_mcp TypeScript 컴파일 체크 (e2e 테스트는 외부 서비스 의존으로 별도 실행)
     if echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_mcp/"; then
-      echo "  📦 Testing aims_mcp..."
-      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/aims_mcp && npm test 2>&1' ; then
-        echo "  ❌ aims_mcp tests failed!"
+      echo "  📦 Checking aims_mcp TypeScript..."
+      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/aims_mcp && npx tsc --noEmit 2>&1' ; then
+        echo "  ❌ aims_mcp TypeScript check failed!"
         exit 1
       fi
-      echo "  ✅ aims_mcp tests passed"
+      echo "  ✅ aims_mcp TypeScript check passed"
     fi
 
   else

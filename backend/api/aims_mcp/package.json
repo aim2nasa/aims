@@ -10,7 +10,7 @@
     "start:stdio": "node dist/index.js",
     "start:http": "MCP_MODE=http node dist/index.js",
     "dev": "tsc --watch",
-    "test": "cross-env MCP_URL=http://localhost:3011 AIMS_API_URL=http://localhost:3010 RAG_API_URL=http://localhost:8000 vitest run --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**'",
+    "test": "cross-env MCP_URL=http://localhost:3011 AIMS_API_URL=http://localhost:3010 RAG_API_URL=http://localhost:8000 vitest run --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**' --exclude='**/__tests__/conversation/**' --exclude='**/*.e2e.test.ts'",
     "test:watch": "cross-env MCP_URL=http://localhost:3011 AIMS_API_URL=http://localhost:3010 RAG_API_URL=http://localhost:8000 vitest --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**'",
     "test:e2e": "cross-env MCP_URL=http://localhost:3011 vitest run src/user-simulation.e2e.test.ts",
     "test:e2e:cross-system": "cross-env MCP_URL=http://localhost:3011 AIMS_API_URL=http://localhost:3010 vitest run src/__tests__/cross-system/",

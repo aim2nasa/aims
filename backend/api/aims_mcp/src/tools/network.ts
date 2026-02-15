@@ -216,43 +216,83 @@ export async function handleGetCustomerNetwork(args: unknown) {
 
     const customerMap = new Map(relatedCustomers.map(c => [c._id.toString(), c]));
 
+    // 역방향 관계 타입을 기준 고객 관점으로 반전하는 매핑
+    // 예: 곽지민→곽승철:parent (곽지민 관점) → 곽승철에서 보면 곽지민은 child
+    const REVERSE_TYPE_MAP: Record<string, string> = {
+      spouse: 'spouse', parent: 'child', child: 'parent',
+      uncle_aunt: 'nephew_niece', nephew_niece: 'uncle_aunt',
+      cousin: 'cousin', in_law: 'in_law',
+      friend: 'friend', acquaintance: 'acquaintance', neighbor: 'neighbor',
+      supervisor: 'subordinate', subordinate: 'supervisor',
+      colleague: 'colleague', business_partner: 'business_partner',
+      client: 'service_provider', service_provider: 'client',
+      ceo: 'company', executive: 'company', employee: 'employer',
+      shareholder: 'company', director: 'company',
+      company: 'employee', employer: 'employee'
+    };
+
     // 1차 관계 노드 생성 및 법인 고객 ID 수집
     const relationNodes: RelationNode[] = [];
     const corporateCustomerIds: string[] = [];
-    const processedKeys = new Set<string>();
+    const processedRelatedIds = new Set<string>();
 
-    relationships.forEach(rel => {
-      const fromId = rel.relationship_info?.from_customer_id?.toString();
-      const toId = rel.relationship_info?.to_customer_id?.toString();
-      const isSource = fromId === params.customerId;
-      const relatedId = isSource ? toId : fromId;
-      const relatedCustomer = customerMap.get(relatedId || '');
+    // 정방향 관계 먼저 처리 (from_customer_id = 조회 대상 고객)
+    // 이 방향이 올바른 관계 라벨을 가짐 (곽승철→곽지민:child = "곽지민은 자녀")
+    relationships
+      .filter(rel => rel.relationship_info?.from_customer_id?.toString() === params.customerId)
+      .forEach(rel => {
+        const toId = rel.relationship_info?.to_customer_id?.toString();
+        if (!toId) return;
 
-      const category = rel.relationship_info?.relationship_category;
-      const type = rel.relationship_info?.relationship_type;
+        const relatedCustomer = customerMap.get(toId);
+        const category = rel.relationship_info?.relationship_category;
+        const type = rel.relationship_info?.relationship_type;
+        const customerType = relatedCustomer?.insurance_info?.customer_type;
 
-      // 중복 방지
-      const key = `${relatedId}-${category}-${type}`;
-      if (processedKeys.has(key)) return;
-      processedKeys.add(key);
+        processedRelatedIds.add(toId);
 
-      const customerType = relatedCustomer?.insurance_info?.customer_type;
+        relationNodes.push({
+          id: toId,
+          name: relatedCustomer?.personal_info?.name || '알 수 없음',
+          label: getRelationshipLabel(category, type),
+          category: category || 'other',
+          customerType
+        });
 
-      const node: RelationNode = {
-        id: relatedId || '',
-        name: relatedCustomer?.personal_info?.name || '알 수 없음',
-        label: getRelationshipLabel(category, type),
-        category: category || 'other',
-        customerType
-      };
+        if (category === 'corporate' && customerType === '법인') {
+          corporateCustomerIds.push(toId);
+        }
+      });
 
-      relationNodes.push(node);
+    // 역방향 관계 처리 (to_customer_id = 조회 대상 고객)
+    // 정방향에서 이미 처리된 고객은 건너뜀 (양방향 저장으로 인한 중복 방지)
+    // 역방향만 있는 경우(법인 관계 등) 타입을 반전하여 올바른 관점으로 표시
+    relationships
+      .filter(rel => rel.relationship_info?.to_customer_id?.toString() === params.customerId)
+      .forEach(rel => {
+        const fromId = rel.relationship_info?.from_customer_id?.toString();
+        if (!fromId || processedRelatedIds.has(fromId)) return;
 
-      // 법인 고객이면 2차 관계 조회 대상에 추가
-      if (category === 'corporate' && customerType === '법인') {
-        corporateCustomerIds.push(relatedId || '');
-      }
-    });
+        processedRelatedIds.add(fromId);
+
+        const relatedCustomer = customerMap.get(fromId);
+        const category = rel.relationship_info?.relationship_category;
+        const type = rel.relationship_info?.relationship_type;
+        const flippedType = REVERSE_TYPE_MAP[type] || type;
+        const customerType = relatedCustomer?.insurance_info?.customer_type;
+
+        relationNodes.push({
+          id: fromId,
+          name: relatedCustomer?.personal_info?.name || '알 수 없음',
+          label: getRelationshipLabel(category, flippedType),
+          category: category || 'other',
+          customerType
+        });
+
+        if (category === 'corporate' && customerType === '법인') {
+          corporateCustomerIds.push(fromId);
+        }
+      });
 
     // 2차 관계 조회 (법인 고객들의 관계)
     if (corporateCustomerIds.length > 0) {
