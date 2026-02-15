@@ -1982,4 +1982,10 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
   .chat-panel__header-btn:hover {
     transform: none;
   }
+
+  /* 터치 기기: 삭제 버튼 항상 표시 (hover 불가능하므로) */
+  .chat-panel__session-delete,
+  .chat-panel__saved-question-delete {
+    opacity: 1;
+  }
 }
