@@ -157,3 +157,24 @@
   padding-left: max(0px, env(safe-area-inset-left));
   padding-right: max(0px, env(safe-area-inset-right));
 }
+
+/* ========================================
+ * 🖱️ PC: 데이터 영역 텍스트 선택 허용
+ * - layout.css의 user-select: none을 데이터 표시 영역에서 해제
+ * - 고객 정보, 계약 테이블, 채팅 메시지 등 복사 가능
+ * - 마우스(pointer: fine) 기기에서만 적용
+ * ======================================== */
+
+@media (pointer: fine) {
+  /* 고객 상세 정보 값 (이름, 생년월일, 연락처 등) */
+  .customer-info-grid__value,
+  /* 계약 테이블 셀 데이터 */
+  [class*="contracts-table__cell"],
+  /* AI 채팅 메시지 내용 */
+  .chat-panel__message-content,
+  /* 문의 메시지 내용 */
+  .inquiry-message-content {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
