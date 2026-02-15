@@ -111,46 +111,56 @@
   margin: 0 auto; /* 중앙 정렬 */
 }
 
-/* 최근 활동 (사용 가이드와 동일한 폭 사용) */
-.document-management-view__recent-activity {
-  max-height: 500px;
+/* 최근 활동 테이블 - 카드 경계 유지하며 내부 스크롤
+   ⚠️ 부모 wrapper(.document-management-view__recent-activity)로 특정도를 높여야 함!
+   ContractManagementView.css, CustomerManagementView.css에서 동일 클래스에
+   overflow: hidden을 설정하므로, 특정도 없으면 스크롤이 깨짐 */
+.document-management-view__recent-activity .recent-activity-table {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
+
+  /* 카드 안에서 스크롤: 경계(둥근 모서리+그림자)는 항상 표시
+     50vh: 모바일(740px)→370px(~8행), 데스크톱(1080px)→540px
+     500px 상한: 대형 화면에서 과도하게 커지지 않도록 */
+  max-height: min(500px, 50vh);
+  overflow-x: hidden;
   overflow-y: auto;
 
-  /* iOS 스타일 스크롤바 */
+  /* 스크롤 체이닝 방지: 내부 스크롤이 외부 페이지로 전파되지 않도록 */
+  overscroll-behavior-y: contain;
+
+  /* Firefox용 스크롤바 */
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
+  scrollbar-color: var(--color-text-tertiary) var(--color-bg-tertiary);
 }
 
-/* WebKit 브라우저용 스크롤바 스타일 */
-.document-management-view__recent-activity::-webkit-scrollbar {
+/* WebKit 브라우저용 스크롤바 */
+.document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar {
+  -webkit-appearance: none;
   width: 8px;
 }
 
-.document-management-view__recent-activity::-webkit-scrollbar-track {
-  background: transparent;
+.document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-track {
+  background: var(--color-bg-tertiary);
+  border-radius: 4px;
 }
 
-.document-management-view__recent-activity::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
-  border-radius: var(--radius-full);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-.document-management-view__recent-activity::-webkit-scrollbar-thumb:hover {
+.document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-thumb {
   background-color: var(--color-text-tertiary);
+  border-radius: 4px;
+  min-height: 30px;
 }
 
-/* 최근 활동 테이블 */
-.recent-activity-table {
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
+.document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-secondary);
 }
 
-/* 헤더 */
+/* 헤더 - 스크롤 시 상단 고정 (sticky) */
 .recent-activity-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: grid;
   grid-template-columns: 80px 40px 1fr 80px 80px 120px 100px;
   gap: var(--spacing-3);
@@ -269,7 +279,7 @@
 }
 
 /* 다크 모드 */
-html[data-theme="dark"] .recent-activity-table {
+html[data-theme="dark"] .document-management-view__recent-activity .recent-activity-table {
   background: var(--color-bg-primary);
 }
 
