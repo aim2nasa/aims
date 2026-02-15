@@ -48,7 +48,7 @@ html[data-theme="dark"] .autoclicker-view__hero-icon {
   color: var(--color-text-secondary);
   margin: 0 0 var(--spacing-4) 0;
   line-height: 1.5;
-  white-space: nowrap;
+  word-break: keep-all;
 }
 
 /* 액션 버튼 */
@@ -222,4 +222,15 @@ html[data-theme="dark"] .autoclicker-view__step-number {
   font-size: var(--font-size-caption-1, 12px);
   color: var(--color-text-secondary);
   line-height: 1.5;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 480px) {
+  .autoclicker-view__content {
+    padding: var(--spacing-3) var(--spacing-3);
+  }
+
+  .autoclicker-view__hero {
+    padding: var(--spacing-4) var(--spacing-3);
+  }
 }
