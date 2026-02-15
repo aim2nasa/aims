@@ -559,7 +559,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
             />
             <StatCard
               title="OCR 완료"
-              value={stats?.stages.ocr ?? 0}
+              value={stats?.badgeTypes.OCR ?? 0}
               icon={
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                   <rect x="3" y="2" width="14" height="16" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
