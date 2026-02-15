@@ -314,3 +314,117 @@ html:not([data-theme="dark"]) .guide-icon.folder {
 .guide-tip svg {
   flex-shrink: 0;
 }
+
+/* ==================== 모바일 반응형 (480px 이하) ==================== */
+@media (max-width: 480px) {
+  .folder-drop-zone {
+    padding: var(--spacing-2);
+    gap: var(--spacing-2);
+  }
+
+  /* 가이드 영역 패딩 축소 */
+  .folder-guide {
+    padding: var(--spacing-2);
+    gap: var(--spacing-1);
+  }
+
+  .folder-guide-content {
+    padding: var(--spacing-2);
+  }
+
+  .folder-guide-tree {
+    font-size: 12px;
+  }
+
+  /* 트리 들여쓰기 축소 */
+  .guide-node {
+    padding-left: 16px;
+  }
+
+  .guide-node.root {
+    padding-left: 0;
+  }
+
+  /* 수직선/수평선 위치 조정 */
+  .guide-node:not(.root)::before {
+    left: 5px;
+  }
+
+  .guide-node:not(.root)::after {
+    left: 5px;
+    width: 8px;
+    top: 13px;
+  }
+
+  .guide-node.last::before {
+    height: 13px;
+  }
+
+  /* 노드 내용 줄바꿈 허용 */
+  .guide-node-content {
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 3px 0;
+  }
+
+  .guide-icon {
+    font-size: 13px;
+  }
+
+  .guide-name {
+    font-size: 12px;
+  }
+
+  /* 인라인 설명 배지 숨김 (모바일에서 공간 절약) */
+  .guide-desc {
+    display: none;
+  }
+
+  /* 고객 매칭 배지를 새 줄로 */
+  .guide-match {
+    margin-left: 0;
+    flex-basis: 100%;
+    padding-left: 20px;
+    gap: 4px;
+  }
+
+  .guide-arrow {
+    font-size: 12px;
+  }
+
+  .guide-customer-badge {
+    font-size: 10px;
+    padding: 1px 7px;
+  }
+
+  .guide-note {
+    margin-left: 4px;
+    font-size: 9px;
+    padding: 1px 6px;
+  }
+
+  /* 팁 영역 세로 배치 */
+  .folder-guide-tips {
+    flex-direction: column;
+    gap: var(--spacing-1);
+    padding-top: var(--spacing-1);
+  }
+
+  .guide-tip {
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* 드래그 영역 축소 */
+  .folder-drop-zone-content {
+    gap: var(--spacing-sm);
+  }
+
+  .folder-drop-zone-title {
+    font-size: var(--font-size-caption-1); /* 12px */
+  }
+
+  .folder-drop-zone-description {
+    font-size: var(--font-size-caption-2); /* 11px */
+  }
+}
