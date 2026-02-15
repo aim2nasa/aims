@@ -887,6 +887,50 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     scrollToBottom();
   }, [messages, currentResponse, scrollToBottom]);
 
+  // 📱 모바일 가상 키보드 대응 (ChatGPT 앱 방식)
+  // 키보드가 올라오면: 1) ChatPanel 높이 조정 2) 메시지를 최하단으로 스크롤
+  useEffect(() => {
+    if (!isOpen || window.innerWidth > 768 || !window.visualViewport) return;
+
+    const viewport = window.visualViewport;
+    let prevHeight = viewport.height;
+
+    const handleViewportResize = () => {
+      const panel = panelRef.current;
+      if (!panel) return;
+
+      const currentHeight = viewport.height;
+      const offsetTop = viewport.offsetTop;
+
+      // 키보드가 올라왔으면 패널 높이를 visualViewport에 맞춤
+      panel.style.height = `${currentHeight}px`;
+      panel.style.top = `${offsetTop}px`;
+
+      // 키보드가 올라온 경우 (높이가 줄어든 경우) → 메시지 스크롤
+      if (currentHeight < prevHeight) {
+        requestAnimationFrame(() => scrollToBottom());
+      }
+      prevHeight = currentHeight;
+    };
+
+    // 초기 설정
+    handleViewportResize();
+
+    viewport.addEventListener('resize', handleViewportResize);
+    viewport.addEventListener('scroll', handleViewportResize);
+
+    return () => {
+      viewport.removeEventListener('resize', handleViewportResize);
+      viewport.removeEventListener('scroll', handleViewportResize);
+      // 정리: 인라인 스타일 제거
+      const panel = panelRef.current;
+      if (panel) {
+        panel.style.height = '';
+        panel.style.top = '';
+      }
+    };
+  }, [isOpen, scrollToBottom]);
+
   // 패널 열릴 때 입력창에 자동 포커스 (PC만)
   useEffect(() => {
     if (!isOpen) return;

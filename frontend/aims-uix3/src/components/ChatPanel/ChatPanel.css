@@ -530,6 +530,7 @@ html[data-theme="dark"] .chat-panel__data-stat-value {
 /* ==================== Messages ==================== */
 .chat-panel__messages {
   flex: 1;
+  min-height: 0; /* 🔴 flexbox 축소 필수: 이것 없으면 콘텐츠가 넘칠 때 input-area가 뷰포트 밖으로 밀림 */
   overflow-y: auto;
   overflow-x: hidden;
   padding: 16px;
@@ -1947,13 +1948,16 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
     max-width: 100%;
     border-left: none;
     border-radius: 0;
-    /* 모바일: 전체화면 - top/bottom으로 실제 보이는 영역에 정확히 맞춤
-       100dvh는 브라우저 주소창/하단바를 고려하지 않아 실제 폰에서 잘림 발생
-       top:0 + bottom:0 + height:auto는 position:fixed의 실제 뷰포트에 맞춤 */
+    /* 📱 ChatGPT 앱 방식: visualViewport API로 JS가 height/top을 직접 제어
+       키보드 열릴 때 패널이 키보드 위에 정확히 맞춰짐
+       JS가 아직 로드되지 않은 경우 fallback으로 top:0 + bottom:0 사용 */
     top: 0;
     left: 0;
+    right: 0;
     bottom: 0;
     height: auto;
+    /* 키보드 열릴 때 JS에서 height를 직접 설정하므로 transition 추가 */
+    transition: none;
   }
 
   /* 모바일: 헤더 상단 안전 영역 (노치/상태바 대응) */

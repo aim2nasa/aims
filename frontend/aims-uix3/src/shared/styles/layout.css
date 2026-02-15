@@ -85,8 +85,35 @@
   overflow-x: hidden;
 }
 
-/* 🍎 Responsive Grid - 모바일 최적화 */
+/* 🍎 Responsive - 모바일 최적화 (max-width: 768px) */
 @media (max-width: 768px) {
+  /* 🔴 핵심 1: html/body 스크롤 완전 차단
+     모바일 브라우저에서 페이지 레벨 스크롤을 원천 차단하여 헤더가 항상 보임 */
+  html, body {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+    height: -webkit-fill-available;
+    height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  /* 🔴 핵심 2: 최상위 컨테이너 (.layout-main) 모바일 대응
+     App.tsx가 사용하는 실제 레이아웃 컨테이너 - 100vh → 100dvh로 변경
+     100vh는 모바일에서 주소창 높이를 포함하여 실제 뷰포트보다 크므로 스크롤 유발 */
+  .layout-main {
+    width: 100%;
+    height: -webkit-fill-available;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* 🔴 핵심 3: mainpane-height도 100dvh 기준으로 변경 */
+  :root {
+    --mainpane-height: calc(100dvh - var(--header-height-base));
+  }
+
+  /* Grid 레이아웃 (GridLayout.tsx 사용 시) */
   .layout-main--grid {
     grid-template-areas:
       "header"
@@ -94,11 +121,21 @@
     grid-template-columns: 1fr;
     grid-template-rows: var(--header-height-base) 1fr;
     gap: 0;
+    overflow: hidden;
+    height: -webkit-fill-available;
+    height: 100dvh;
+    padding: 0;
   }
 
   .layout-nav--grid,
   .layout-aside--grid {
     display: none;
+  }
+
+  .layout-main-content--grid {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 }
 
