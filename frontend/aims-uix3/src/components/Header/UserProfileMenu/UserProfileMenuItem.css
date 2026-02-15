@@ -127,3 +127,30 @@ html[data-theme="dark"] .user-profile-menu-item--danger:hover:not(:disabled) {
 html[data-theme="dark"] .user-profile-menu-divider {
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* === 📱 모바일 반응형 === */
+@media (max-width: 768px) {
+  .user-profile-menu-item {
+    gap: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .user-profile-menu-item__icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .user-profile-menu-item .sf-symbol,
+  .user-profile-menu-item .sf-symbol__shape {
+    font-size: 13px;
+  }
+
+  .user-profile-menu-item__label {
+    line-height: 1.2;
+  }
+
+  .user-profile-menu-divider {
+    margin: 3px 0;
+  }
+}

@@ -63,8 +63,12 @@ html[data-theme="dark"] .user-profile-menu {
 
 @media (max-width: 768px) {
   .user-profile-menu {
-    min-width: 260px;
-    max-width: calc(100vw - 32px);
+    min-width: 180px;
+    max-width: 220px;
+  }
+
+  .user-profile-menu__items {
+    padding: 4px;
   }
 }
 

@@ -82,3 +82,27 @@ html[data-theme="dark"] .user-profile-header {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* === 📱 모바일 반응형 === */
+@media (max-width: 768px) {
+  .user-profile-header {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .user-profile-header__avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .user-profile-header__name {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .user-profile-header__email {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+}
