@@ -1947,9 +1947,10 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
     max-width: 100%;
     border-left: none;
     border-radius: 0;
-    /* 모바일: dvh로 가상 키보드 대응 - 키보드 열리면 패널 축소되어 입력창 유지 */
-    top: var(--header-height-base, 50px);
-    height: calc(100dvh - var(--header-height-base, 50px));
+    /* 모바일: 전체화면 - AIMS 헤더 위에 덮어서 AI 어시스턴트만 표시 */
+    top: 0;
+    height: 100dvh;
+    z-index: calc(var(--z-index-header, 100) + 1);
   }
 
   /* 모바일: 분리/새창 버튼 숨김 (전체화면이라 분리 불가, 팝업도 비실용적) */
