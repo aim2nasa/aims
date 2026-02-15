@@ -1113,6 +1113,17 @@ html[data-theme="dark"] .menu-icon--help {
     height: 14px;
     font-size: 9px;
   }
+
+  /* 모바일: 접기/펼치기 제거 - 서브메뉴 항상 펼침 */
+  .icon-chevron {
+    display: none;
+  }
+
+  .sub-menu-container {
+    max-height: 500px;
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 480px) {
