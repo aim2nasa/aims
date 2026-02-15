@@ -269,6 +269,55 @@ html[data-theme="dark"] .initial-filter-bar__selected {
   }
 }
 
+/* === 모바일 폰 세로 (480px 이하): 컴팩트 2줄 랩 그리드 ===
+   360px 화면 기준: 26px 버튼 + 2px gap = 28px/button
+   가용 너비 ~284px → 한 줄에 10개, 한글 19개 = 2줄 표시
+   수평 스크롤 제거 → 모든 초성 한눈에 보기 */
+@media (max-width: 480px) {
+  .initial-filter-bar {
+    gap: 6px;
+    padding: 6px 8px;
+    align-items: flex-start;
+  }
+
+  .initial-filter-bar__initials {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    gap: 2px;
+  }
+
+  .initial-filter-bar__initial {
+    min-width: 24px;
+    height: 24px;
+    font-size: 11px;
+    padding: 0 2px;
+  }
+
+  .initial-filter-bar__type-toggle {
+    min-width: 42px;
+    height: 28px;
+    padding: 0 6px;
+  }
+
+  .initial-filter-bar__type-label {
+    font-size: 10px;
+  }
+
+  .initial-filter-bar__globe-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .initial-filter-bar__selected {
+    height: auto;
+    padding: 3px 6px 3px 8px;
+  }
+
+  .initial-filter-bar__selected-label {
+    font-size: 10px;
+  }
+}
+
 /* === 터치 기기: 초성 버튼 44px 터치 영역 확보 === */
 
 @media (pointer: coarse) {
