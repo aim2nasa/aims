@@ -92,12 +92,20 @@
       "header"
       "main";
     grid-template-columns: 1fr;
-    grid-template-rows: var(--layout-header-height) 1fr;
+    grid-template-rows: var(--header-height-base) 1fr;
+    gap: 0;
   }
 
   .layout-nav--grid,
   .layout-aside--grid {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .layout-main--grid {
+    grid-template-rows: var(--header-height-base) 1fr;
+    gap: 0;
   }
 }
 
@@ -956,3 +964,4 @@ html[data-theme="dark"] .layout-brb-reset:hover {
 .version-update-banner__btn-later:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+

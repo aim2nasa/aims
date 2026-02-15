@@ -517,7 +517,6 @@
 /* 모바일 (768px 이하) */
 @media (max-width: 768px) {
   .header-progressive {
-    height: 44px;
     padding: 0 var(--spacing-2);
     overflow: visible; /* 모바일에서 아바타 잘림 방지 */
   }
@@ -611,7 +610,6 @@
 /* 모바일 (480px 이하) - 컴팩트 헤더: 360px 뷰포트에서 모든 요소가 한 줄에 수용 */
 @media (max-width: 480px) {
   .header-progressive {
-    height: 40px;
     padding: 0 4px;
     overflow: visible; /* 검색 드롭다운이 헤더 밖으로 표시되도록 허용 */
   }
