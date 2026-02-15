@@ -1951,6 +1951,18 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
     top: var(--header-height-base, 50px);
     height: calc(100dvh - var(--header-height-base, 50px));
   }
+
+  /* 모바일: 분리/새창 버튼 숨김 (전체화면이라 분리 불가, 팝업도 비실용적) */
+  .chat-panel__header-btn--detach,
+  .chat-panel__header-btn--popup {
+    display: none;
+  }
+
+  /* 모바일: 입력창 컴팩트화 + 하단 안전 영역 확보 */
+  .chat-panel__input-area {
+    padding: 8px 12px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* 📱 iPad 전용 미디어 쿼리 불필요 - --mainpane-height CSS 변수가 자동 처리

@@ -2104,7 +2104,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             <Tooltip content={isDetached ? "도킹" : "분리"} placement="bottom">
               <button
                 type="button"
-                className={`chat-panel__header-btn ${isDetached ? 'chat-panel__header-btn--active' : ''}`}
+                className={`chat-panel__header-btn chat-panel__header-btn--detach ${isDetached ? 'chat-panel__header-btn--active' : ''}`}
                 onClick={handleToggleDetach}
                 aria-label={isDetached ? "도킹" : "분리"}
               >
@@ -2129,7 +2129,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             <Tooltip content="새 창에서 열기" placement="bottom">
               <button
                 type="button"
-                className="chat-panel__header-btn"
+                className="chat-panel__header-btn chat-panel__header-btn--popup"
                 onClick={handleOpenPopup}
                 aria-label="새 창에서 열기"
               >
