@@ -110,3 +110,47 @@ export const useBackdropClick = (
     }
   }, [backdropClosable, onClose])
 }
+
+/**
+ * Android 뒤로가기 버튼으로 모달 닫기
+ *
+ * 모달이 열릴 때 history state를 push하여 뒤로가기 버튼이
+ * 페이지 이동 대신 모달을 닫도록 합니다.
+ * ESC/backdrop 등 다른 방법으로 닫힌 경우 push한 state를 정리합니다.
+ *
+ * @param visible - 모달 표시 여부
+ * @param onClose - 모달 닫기 핸들러
+ *
+ * @example
+ * ```tsx
+ * useBackButton(visible, onClose)
+ * ```
+ */
+export const useBackButton = (
+  visible: boolean,
+  onClose: () => void
+) => {
+  useEffect(() => {
+    if (!visible) return
+
+    // 뒤로가기 시 페이지 이동 대신 모달 닫기를 위한 dummy state push
+    history.pushState({ _modal: true }, '')
+
+    let closedByBack = false
+
+    const handlePopstate = () => {
+      closedByBack = true
+      onClose()
+    }
+
+    window.addEventListener('popstate', handlePopstate)
+
+    return () => {
+      window.removeEventListener('popstate', handlePopstate)
+      // ESC/backdrop 등 다른 방법으로 닫힌 경우 push한 history 정리
+      if (!closedByBack) {
+        history.back()
+      }
+    }
+  }, [visible, onClose])
+}

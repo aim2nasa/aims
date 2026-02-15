@@ -14,7 +14,7 @@
 
 import React, { useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useEscapeKey, useBodyOverflow, useBackdropClick } from './hooks/useModalCore'
+import { useEscapeKey, useBodyOverflow, useBackdropClick, useBackButton } from './hooks/useModalCore'
 import { CloseButton } from '@/shared/ui/CloseButton'
 import './Modal.css'
 
@@ -79,6 +79,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   // 공통 모달 훅 사용
   useEscapeKey(escapeToClose && visible, onClose)
+  useBackButton(visible, onClose)
   useBodyOverflow(visible)
   const handleBackdropClick = useBackdropClick(backdropClosable, onClose)
 

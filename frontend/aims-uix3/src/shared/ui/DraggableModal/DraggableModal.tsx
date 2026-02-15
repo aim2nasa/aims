@@ -13,7 +13,7 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useModalDragResize } from '../../../hooks/useModalDragResize'
-import { useEscapeKey, useBodyOverflow, useBackdropClick } from '../Modal/hooks/useModalCore'
+import { useEscapeKey, useBodyOverflow, useBackdropClick, useBackButton } from '../Modal/hooks/useModalCore'
 import { CloseButton } from '@/shared/ui/CloseButton'
 import Tooltip from '../Tooltip'
 import './DraggableModal.css'
@@ -120,6 +120,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
 
   // 공통 모달 훅 사용
   useEscapeKey(escapeToClose && visible, onClose)
+  useBackButton(visible, onClose)
   // 투명 모드에서는 body overflow 유지 (배경 스크롤 가능)
   useBodyOverflow(visible && !transparent)
   const handleBackdropClick = useBackdropClick(backdropClosable, onClose)
