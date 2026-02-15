@@ -867,33 +867,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
     return (
       <div className="customer-library-container">
-        {/* 검색 바 */}
-        <div className="customer-library-bar">
-          <div className="search-input-wrapper">
-            <div className="search-icon">
-              <SFSymbol name="magnifyingglass" size={SFSymbolSize.BODY} />
-            </div>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="이름, 전화번호, 이메일로 검색..."
-              value={searchValue}
-              onChange={handleSearchInputChange}
-            />
-            {searchValue && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearSearch}
-                className="search-clear-button"
-                aria-label="검색어 지우기"
-              >
-                <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_1} />
-              </Button>
-            )}
-          </div>
-        </div>
-
         {/* 에러 메시지 */}
         {error && (
           <div className="customer-library-error">
@@ -913,7 +886,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
           </div>
         )}
 
-        {/* 결과 헤더 */}
+        {/* 결과 헤더 + 검색 */}
         {!isLoading && (
           <div className="customer-library-result-header">
             <div className="result-count">
@@ -1009,6 +982,31 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                     </Button>
                   )}
                 </>
+              )}
+            </div>
+
+            {/* 검색 인풋 */}
+            <div className="search-input-wrapper">
+              <div className="search-icon">
+                <SFSymbol name="magnifyingglass" size={SFSymbolSize.BODY} />
+              </div>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="이름, 전화번호, 이메일로 검색..."
+                value={searchValue}
+                onChange={handleSearchInputChange}
+              />
+              {searchValue && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearSearch}
+                  className="search-clear-button"
+                  aria-label="검색어 지우기"
+                >
+                  <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_1} />
+                </Button>
               )}
             </div>
           </div>

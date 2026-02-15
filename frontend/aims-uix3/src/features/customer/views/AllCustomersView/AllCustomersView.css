@@ -17,15 +17,12 @@
 
 /* === 🍎 SEARCH BAR: iOS-style search field with controls === */
 
-.customer-library-bar {
-  width: 100%;
-}
-
 .customer-library-container .search-input-wrapper {
   position: relative;  /* ❌ 표준: 자식 absolute 위치의 기준 */
   display: flex;
   align-items: center;
-  width: 100%;  /* ✅ 현재 폭 유지: 전체 너비 */
+  width: 280px;  /* ✅ placeholder 텍스트가 잘리지 않는 적정 폭 */
+  flex-shrink: 0;
   background-color: transparent;  /* ❌ 표준: 투명 */
   border-radius: 10px;
   padding: 6px 8px;
@@ -165,8 +162,8 @@ html[data-theme="dark"] .customer-library-error {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 0 4px 4px 4px;
-  
 }
 
 .result-count {
