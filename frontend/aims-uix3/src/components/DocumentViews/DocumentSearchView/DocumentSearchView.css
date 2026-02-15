@@ -2367,8 +2367,17 @@ html[data-theme="dark"] .doc-search-highlight--current {
   /* === 고객선택 버튼: 컴팩트 === */
   .customer-select-button {
     height: 28px;
+    min-height: 28px;
     padding: 0 10px;
-    min-width: 70px;
+    min-width: unset;
+    font-size: var(--font-size-caption-1);
+  }
+
+  /* 드롭다운 트리거: 다른 컨트롤과 높이 통일 */
+  .document-search-container .ios-dropdown__trigger {
+    min-height: 28px;
+    height: 28px;
+    padding: 0 10px;
     font-size: var(--font-size-caption-1);
   }
 
@@ -2387,10 +2396,13 @@ html[data-theme="dark"] .doc-search-highlight--current {
     height: 28px;
   }
 
-  /* 검색 버튼: 컴팩트 */
-  .search-button {
+  /* 검색 버튼: 드롭다운/고객선택과 동일한 높이
+     터치 기기 min-height: 44px (line 1398) 오버라이드 필수 */
+  .document-search-container .search-button {
     height: 28px;
+    min-height: 28px;
     padding: 0 10px;
+    min-width: unset;
     font-size: var(--font-size-caption-1);
   }
 
