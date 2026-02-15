@@ -24,7 +24,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, qdrantC
 /**
  * Orphaned Relationships 조회 API (관리용)
  */
-router.get('/admin/orphaned-relationships', async (req, res) => {
+router.get('/admin/orphaned-relationships', authenticateJWT, requireRole('admin'), async (req, res) => {
   try {
     console.log('🔍 Orphaned relationships 조회 시작...');
     
@@ -87,7 +87,7 @@ router.get('/admin/orphaned-relationships', async (req, res) => {
 /**
  * Orphaned Relationships 정리 API (관리용)
  */
-router.delete('/admin/orphaned-relationships', async (req, res) => {
+router.delete('/admin/orphaned-relationships', authenticateJWT, requireRole('admin'), async (req, res) => {
   try {
     console.log('🗑️ Orphaned relationships 정리 시작...');
     
@@ -148,7 +148,7 @@ router.delete('/admin/orphaned-relationships', async (req, res) => {
  * 데이터 무결성 리포트 API
  * 전체 데이터 현황 및 고아(좀비) 참조 탐지
  */
-router.get('/admin/data-integrity-report', async (req, res) => {
+router.get('/admin/data-integrity-report', authenticateJWT, requireRole('admin'), async (req, res) => {
   try {
     console.log('📊 데이터 무결성 리포트 생성 시작...');
 
@@ -233,7 +233,7 @@ router.get('/admin/data-integrity-report', async (req, res) => {
  * 전체 고아 데이터 일괄 정리 API
  * 계약, 관계, 파일 참조의 고아 데이터를 모두 정리
  */
-router.delete('/admin/orphaned-all', async (req, res) => {
+router.delete('/admin/orphaned-all', authenticateJWT, requireRole('admin'), async (req, res) => {
   try {
     console.log('🗑️ 전체 고아 데이터 정리 시작...');
 
