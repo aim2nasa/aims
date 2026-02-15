@@ -13,6 +13,7 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useModalDragResize } from '../../../hooks/useModalDragResize'
+import { useDeviceOrientation } from '../../../hooks/useDeviceOrientation'
 import { useEscapeKey, useBodyOverflow, useBackdropClick, useBackButton } from '../Modal/hooks/useModalCore'
 import { CloseButton } from '@/shared/ui/CloseButton'
 import Tooltip from '../Tooltip'
@@ -101,13 +102,8 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   transparent = false,
   onOpenPopup
 }) => {
-  // 모바일 감지: 인라인 스타일 대신 CSS 미디어쿼리 사용
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  // 모바일 감지: useDeviceOrientation 훅으로 폰 가로 모드도 대응
+  const { isMobileLayout: isMobile } = useDeviceOrientation()
 
   // Drag & Resize 기능
   const modal = useModalDragResize({

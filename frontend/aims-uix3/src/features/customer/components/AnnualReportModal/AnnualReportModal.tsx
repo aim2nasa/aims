@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
 import DraggableModal from '@/shared/ui/DraggableModal';
 import Button from '@/shared/ui/Button';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
@@ -62,14 +63,8 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   // 발행일 드롭다운 상태
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
-  // 모바일 감지
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobileView(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // 모바일 감지: useDeviceOrientation 훅으로 폰 가로 모드도 대응
+  const { isMobileLayout: isMobileView } = useDeviceOrientation();
 
   /**
    * 새 창에서 열기 핸들러

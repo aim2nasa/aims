@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { useDeviceOrientation } from '../hooks/useDeviceOrientation'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../components/SFSymbol'
 import Tooltip from '../shared/ui/Tooltip'
 import type { AnnualReport, InsuranceContract } from '../features/customer/api/annualReportApi'
@@ -24,13 +25,7 @@ const AnnualReportPage: React.FC = () => {
   const [report, setReport] = useState<AnnualReport | null>(null)
   const [customerName, setCustomerName] = useState('')
   const [sortConfig, setSortConfig] = useState<SortConfig>(null)
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768)
-
-  useEffect(() => {
-    const handleResize = () => setIsMobileView(window.innerWidth <= 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  const { isMobileLayout: isMobileView } = useDeviceOrientation()
 
   // 컴포넌트 마운트 시 localStorage에서 데이터 로드
   useEffect(() => {

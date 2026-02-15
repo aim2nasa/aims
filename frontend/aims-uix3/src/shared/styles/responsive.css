@@ -159,6 +159,69 @@
 }
 
 /* ========================================
+ * 📱 폰 가로 모드 대응
+ * - width > 768px이지만 height ≤ 500px인 터치 디바이스
+ * - 모바일과 동일한 유틸리티 규칙 적용
+ * ======================================== */
+
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  /* 모바일과 동일: 숨김 유틸리티 */
+  html .hide-on-mobile {
+    display: none;
+  }
+
+  /* 반응형 테이블 스크롤 */
+  .responsive-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .responsive-table-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .responsive-table-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .responsive-table-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--color-neutral-300);
+    border-radius: 2px;
+  }
+
+  /* 그리드 테이블 최소 폭 */
+  .responsive-grid-table {
+    min-width: var(--responsive-table-min-width, 600px);
+  }
+
+  /* iOS 입력 자동 줌 방지 */
+  html input[type="text"],
+  html input[type="email"],
+  html input[type="password"],
+  html input[type="number"],
+  html input[type="tel"],
+  html input[type="url"],
+  html input[type="search"],
+  html input:not([type]),
+  html select,
+  html textarea {
+    font-size: max(16px, inherit);
+  }
+}
+
+/* show-on-mobile-only: 폰 가로 모드에서도 표시 (JS 기반 isMobileView로 처리하므로 CSS 보완) */
+@media (min-width: 769px) {
+  /* 폰 가로 모드(pointer:coarse + 작은 높이)에서는 show-on-mobile-only 유지 */
+  @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+    html .show-on-mobile-only {
+      display: revert;
+    }
+  }
+}
+
+/* ========================================
  * 🖱️ PC: 데이터 영역 텍스트 선택 허용
  * - layout.css의 user-select: none을 데이터 표시 영역에서 해제
  * - 고객 정보, 계약 테이블, 채팅 메시지 등 복사 가능

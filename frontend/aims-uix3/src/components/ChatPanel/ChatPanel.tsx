@@ -6,6 +6,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { detectDeviceState } from '@/hooks/useDeviceOrientation';
 import { useChatSSE, ChatMessage, ChatEvent, CreditExceededInfo } from '@/shared/hooks/useChatSSE';
 import CreditExceededDialog from '@/shared/ui/CreditExceededDialog';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
@@ -890,7 +891,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   // 📱 모바일 가상 키보드 대응 (ChatGPT 앱 방식)
   // 키보드가 올라오면: 1) ChatPanel 높이 조정 2) 메시지를 최하단으로 스크롤
   useEffect(() => {
-    if (!isOpen || window.innerWidth > 768 || !window.visualViewport) return;
+    if (!isOpen || !detectDeviceState().isMobileLayout || !window.visualViewport) return;
 
     const viewport = window.visualViewport;
     let prevHeight = viewport.height;
@@ -935,7 +936,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   useEffect(() => {
     if (!isOpen) return;
     // 모바일에서는 자동 포커스 비활성화 (가상 키보드가 즉시 올라오는 문제 방지)
-    if (window.innerWidth <= 768) return;
+    if (detectDeviceState().isMobileLayout) return;
 
     // 애니메이션 완료 후 포커스 (300ms transition)
     const timer = setTimeout(() => {
@@ -1577,7 +1578,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         }
 
         const fileName = text.slice(openBracketPos + 1, suffixStart);
-        const isDesktop = window.innerWidth >= 768;
+        const isDesktop = !detectDeviceState().isMobileLayout;
         parts.push(
           <button
             key={`${keyPrefix}-doc-${docId}-${match.index}`}

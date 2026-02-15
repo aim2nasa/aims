@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useDeviceOrientation } from '../../../../hooks/useDeviceOrientation'
 import { CenterPaneView } from '../../../../components/CenterPaneView/CenterPaneView'
 import CustomerEditModal from '../CustomerEditModal'
 import FamilyRelationshipModal from '../../components/FamilyRelationshipModal'
@@ -131,8 +132,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 가족 관계 추가 가능 여부
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false)
 
-  // 🍎 모바일 뷰 감지 (768px 이하에서 탭 기반 레이아웃)
-  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth <= 768)
+  // 🍎 모바일 뷰 감지 (768px 이하 또는 폰 가로 모드에서 탭 기반 레이아웃)
+  const { isMobileLayout: isMobileView } = useDeviceOrientation()
   const [mobileActiveSection, setMobileActiveSection] = useState<'contracts' | 'documents' | 'report' | 'memo'>('contracts')
 
   // 🍎 리사이즈 기본값 및 localStorage 키
@@ -400,14 +401,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     loadCustomerReviewCount()
   }, [customer?._id])
 
-  // 🍎 모바일 뷰포트 감지 리스너
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobileView(window.innerWidth <= 768)
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  // 🍎 모바일 뷰포트 감지: useDeviceOrientation 훅에서 자동 처리
 
   // 🍎 수정 핸들러
   const handleEditClick = useCallback(() => {

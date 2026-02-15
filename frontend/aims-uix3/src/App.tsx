@@ -77,6 +77,7 @@ import { useRightPaneContent } from './hooks/useRightPaneContent'
 import { usePersistentTheme } from './hooks/usePersistentTheme'
 import { useAppUsageData } from './hooks/useAppUsageData'
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
+import { useDeviceOrientation, detectDeviceState } from './hooks/useDeviceOrientation'
 import { API_CONFIG, getAuthHeaders, api } from './shared/lib/api'
 import type { Document as StatusDocument } from './types/documentStatus'
 import { ContextMenu, useContextMenu, type ContextMenuSection } from './shared/ui/ContextMenu'
@@ -180,8 +181,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // iOS 햅틱 피드백 시스템
   const haptic = useHapticFeedback()
 
-  // 모바일 뷰포트 감지 (768px 이하)
-  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth <= 768)
+  // 모바일 뷰포트 + 방향 감지 (폰 가로 모드 대응)
+  const deviceOrientation = useDeviceOrientation()
+  const isMobileView = deviceOrientation.isMobileLayout
+  const isPhoneLandscape = deviceOrientation.isPhoneLandscape
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 
   // 각 레이어별 visibility 상태
@@ -712,10 +715,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     const handleResize = () => {
       setIsResizing(true)
 
-      // 모바일 뷰포트 감지 업데이트
-      const mobile = window.innerWidth <= 768
-      setIsMobileView(mobile)
-      if (!mobile) setMobileDrawerOpen(false)
+      // 모바일→데스크톱 전환 시 드로어 닫기 (즉시 감지로 stale closure 방지)
+      if (!detectDeviceState().isMobileLayout) setMobileDrawerOpen(false)
 
       // 기존 타이머가 있으면 클리어
       if (resizeTimer) {
@@ -1289,7 +1290,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   return (
     <div
-      className="layout-main"
+      className={`layout-main${isPhoneLandscape ? ' layout-main--phone-landscape' : ''}`}
       onContextMenu={handleContextMenu}
       style={{
         // width, height, position은 layout.css에서 관리 (iPad 미디어쿼리 적용을 위해)
@@ -2308,17 +2309,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       {/* 개발자 도구 패널 (DEV 모드에서만 표시) */}
       <DevToolsPanel />
 
-      {/* 첫 방문자 가이드 투어 */}
-      <OnboardingTour
+      {/* 첫 방문자 가이드 투어 - 비활성화 (모바일에서 오히려 불편) */}
+      {/* <OnboardingTour
         steps={ONBOARDING_STEPS}
         onComplete={() => {
-          // 투어 완료 후 문서 등록 화면으로 이동
           handleMenuClick('documents-register')
         }}
-      />
+      /> */}
 
-      {/* 우클릭 가이드 - OnboardingTour 완료 후 표시 */}
-      <RightClickGuide />
+      {/* 우클릭 가이드 - 비활성화 */}
+      {/* <RightClickGuide /> */}
 
       {/* 🍎 전역 컨텍스트 메뉴 */}
       <ContextMenu

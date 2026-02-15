@@ -408,6 +408,101 @@
   }
 }
 
+/* ========================================
+ * 📱 폰 가로 모드 (Phone Landscape) 대응
+ * - width > 768px이지만 height ≤ 500px인 터치 디바이스
+ * - 모바일 레이아웃(1칼럼) 유지 + 컴팩트 헤더(40px)
+ * ======================================== */
+
+/* CSS-only 방어 레이어 (JS가 .layout-main--phone-landscape 클래스도 추가) */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  :root {
+    --header-height-base: 40px;
+    --layout-header-height: 40px;
+    --mainpane-height: calc(100dvh - 40px);
+  }
+
+  html, body {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+    height: -webkit-fill-available;
+    height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  .layout-main {
+    width: 100%;
+    height: -webkit-fill-available;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .layout-main--grid {
+    grid-template-areas:
+      "header"
+      "main";
+    grid-template-columns: 1fr;
+    grid-template-rows: 40px 1fr;
+    gap: 0;
+    overflow: hidden;
+    height: -webkit-fill-available;
+    height: 100dvh;
+    padding: 0;
+  }
+
+  .layout-nav--grid,
+  .layout-aside--grid {
+    display: none;
+  }
+
+  .layout-main-content--grid {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+/* JS 클래스 기반 폰 가로 모드 (컴포넌트 레벨 스타일 상속용) */
+.layout-main--phone-landscape {
+  --header-height-base: 40px;
+  --layout-header-height: 40px;
+  --mainpane-height: calc(100dvh - 40px);
+}
+
+/* 폰 가로 모드: 드로어 너비 확대 (가로 공간 활용) */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .layout-leftpane--mobile-drawer {
+    width: 280px;
+    max-width: 50vw;
+  }
+
+  /* CenterPane 모바일 스타일 유지 */
+  .layout-centerpane {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .layout-centerpane:hover {
+    box-shadow: none;
+  }
+
+  .layout-mainpane {
+    border-radius: 0;
+  }
+
+  .layout-pagination {
+    border-radius: 0;
+  }
+
+  /* RightPane 모바일 오버레이 */
+  .layout-rightpane-container--mobile .layout-rightpane-content {
+    border-radius: 0;
+    box-shadow: none;
+    height: 100%;
+  }
+}
+
 .layout-header {
   top: 0;
   left: 0;

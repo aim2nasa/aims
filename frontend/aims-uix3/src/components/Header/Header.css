@@ -724,6 +724,92 @@
   }
 }
 
+/* 📱 폰 가로 모드 - 울트라 컴팩트 헤더 (40px)
+ * 세로 공간 극대화를 위해 헤더를 최소화 */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .header-progressive {
+    height: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    padding: 0 8px;
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+    overflow: visible;
+  }
+
+  .header-branding {
+    flex: 0 0 auto;
+    min-width: 0;
+    gap: 0;
+  }
+
+  .header-title {
+    font-size: 12px;
+  }
+
+  .header-title__version {
+    display: none;
+  }
+
+  .header-controls {
+    gap: 3px;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .header-control-button {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .header-mobile-menu-btn {
+    width: 24px;
+    height: 24px;
+    margin-right: 2px;
+  }
+
+  .header-mobile-menu-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .header-quick-search-container {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .header-chat-ai-icon {
+    width: 30px;
+    height: 20px;
+  }
+
+  .header-user-avatar {
+    padding: 2px;
+    gap: 0;
+  }
+
+  .header-user-avatar-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .header-user-avatar-skeleton {
+    width: 24px;
+    height: 24px;
+  }
+
+  .header-disclosure-indicator {
+    display: none;
+  }
+
+  .header-user-selector {
+    display: none;
+  }
+}
+
 /* === 테마별 최적화 === */
 
 @media (prefers-reduced-motion: reduce) {

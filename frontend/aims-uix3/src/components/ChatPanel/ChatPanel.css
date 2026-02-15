@@ -1978,6 +1978,36 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
   }
 }
 
+/* 📱 폰 가로 모드: 전체화면 모바일 채팅 패널 유지 */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .chat-panel {
+    min-width: 100%;
+    max-width: 100%;
+    border-left: none;
+    border-radius: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: auto;
+    transition: none;
+  }
+
+  .chat-panel__header {
+    padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  }
+
+  .chat-panel__header-btn--detach,
+  .chat-panel__header-btn--popup {
+    display: none;
+  }
+
+  .chat-panel__input-area {
+    padding: 6px 12px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* 📱 iPad 전용 미디어 쿼리 불필요 - --mainpane-height CSS 변수가 자동 처리
  * layout.css에서 iPad (1024px-1366px)일 때:
  * --mainpane-height: calc(100dvh - 50px) 로 오버라이드됨
