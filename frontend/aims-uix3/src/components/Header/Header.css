@@ -517,29 +517,89 @@
 /* 모바일 (768px 이하) */
 @media (max-width: 768px) {
   .header-progressive {
-    padding: 0 var(--spacing-3);
+    height: 44px;
+    padding: 0 var(--spacing-2);
     overflow: visible; /* 모바일에서 아바타 잘림 방지 */
   }
 
   .header-branding {
-    flex: 0 1 auto; /* 모바일에서 branding 축소 허용 */
+    flex: 0 0 auto; /* branding 고정 */
     min-width: 0;
+    gap: 0;
   }
 
   .header-title {
-    font-size: var(--font-size-callout);
+    font-size: 13px;
     font-family: var(--font-family-display);
+    white-space: nowrap;
+  }
+
+  /* 모바일에서 "UIX3" 숨김 → "AIMS"만 표시 */
+  .header-title__version {
+    display: none;
   }
 
   .header-controls {
-    gap: var(--spacing-2);
-    flex-shrink: 0; /* controls는 절대 축소 안 됨 */
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
   }
 
   .header-control-button {
-    width: 32px;
-    height: 32px;
-    font-size: var(--font-size-footnote);
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  /* 햄버거 버튼 컴팩트 - 타이틀과 밀착 */
+  .header-mobile-menu-btn {
+    width: 24px;
+    height: 24px;
+    margin-right: -4px;
+  }
+
+  .header-mobile-menu-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* 검색바 */
+  .header-quick-search-container {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* AI 아이콘 - 크게 강조 */
+  .header-chat-ai-icon {
+    width: 36px;
+    height: 26px;
+  }
+
+  /* 아바타 */
+  .header-user-avatar {
+    padding: 2px;
+    gap: 0;
+  }
+
+  .header-user-avatar-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .header-user-avatar-skeleton {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* 테마 토글 */
+  .header-theme-container {
+    flex-shrink: 0;
+  }
+
+  /* 프로필 */
+  .header-user-profile {
+    flex-shrink: 0;
   }
 
   /* 모바일에서 레이아웃 제어 버튼 숨김 (데스크톱 전용) */
@@ -551,8 +611,8 @@
 /* 모바일 (480px 이하) - 컴팩트 헤더: 360px 뷰포트에서 모든 요소가 한 줄에 수용 */
 @media (max-width: 480px) {
   .header-progressive {
-    height: 48px;
-    padding: 0 var(--spacing-2);
+    height: 40px;
+    padding: 0 4px;
     overflow: visible; /* 검색 드롭다운이 헤더 밖으로 표시되도록 허용 */
   }
 
@@ -562,58 +622,51 @@
     backdrop-filter: none;
   }
 
-  .header-branding {
-    gap: 0;
-    flex-shrink: 0;
-  }
-
   .header-title {
-    font-size: var(--font-size-footnote);
-    white-space: nowrap;
-  }
-
-  /* 모바일에서 "UIX3" 숨김 → "AIMS"만 표시 */
-  .header-title__version {
-    display: none;
+    font-size: 12px;
   }
 
   .header-controls {
-    gap: 4px;
-    flex: 1; /* 컨트롤 영역이 남은 공간 차지 */
-    min-width: 0;
+    gap: 3px;
     transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
   }
 
   .header-control-button {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
+  }
+
+  .header-mobile-menu-btn {
+    width: 22px;
+    height: 22px;
+    margin-right: -6px;
+  }
+
+  .header-mobile-menu-btn svg {
+    width: 14px;
+    height: 14px;
   }
 
   /* 검색바: 남은 공간을 최대한 차지 */
   .header-quick-search-container {
-    flex: 1;
-    min-width: 0;
     transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
   }
 
-  /* 프로필 아바타 축소: 40px → 32px */
+  /* AI 아이콘 - 테마 토글보다 확실히 크게 */
+  .header-chat-ai-icon {
+    width: 36px;
+    height: 26px;
+  }
+
   .header-user-avatar-circle {
-    width: 32px;
-    height: 32px;
-    font-size: var(--font-size-footnote);
+    width: 26px;
+    height: 26px;
+    font-size: 10px;
   }
 
-  .header-user-avatar {
-    padding: var(--spacing-1);
-    gap: 0;
-  }
-
-  .header-user-profile {
-    flex-shrink: 0;
-  }
-
-  .header-theme-container {
-    flex-shrink: 0;
+  .header-user-avatar-skeleton {
+    width: 26px;
+    height: 26px;
   }
 }
 
@@ -925,4 +978,43 @@
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: loading state */
   font-family: var(--font-family-text);
   font-style: italic;
+}
+
+/* === 📱 모바일 최종 오버라이드 (파일 맨 끝 - cascade 보장) === */
+/* base 스타일이 미디어 쿼리 뒤에 있어 덮어쓰는 문제 해결 */
+
+@media (max-width: 768px) {
+  .header-mobile-menu-btn {
+    width: 24px;
+    height: 24px;
+    margin-right: -4px;
+  }
+
+  .header-mobile-menu-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .header-chat-ai-icon {
+    width: 36px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-mobile-menu-btn {
+    width: 22px;
+    height: 22px;
+    margin-right: -2px;
+  }
+
+  .header-mobile-menu-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .header-chat-ai-icon {
+    width: 36px;
+    height: 26px;
+  }
 }

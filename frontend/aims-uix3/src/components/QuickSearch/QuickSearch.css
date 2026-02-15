@@ -330,7 +330,8 @@ html[data-theme="dark"] .quick-search__advanced-link:hover {
 
 @media (max-width: 480px) {
   .quick-search {
-    width: 100%; /* 컨테이너 전폭 사용 */
+    width: calc(100% - 16px); /* 좌우 여백 확보 */
+    margin-left: 8px;
   }
 
   .quick-search__input-wrapper {
