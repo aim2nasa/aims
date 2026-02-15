@@ -1656,6 +1656,101 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
     transform: none;
   }
 
+  /* ── 문서 행: Grid 2줄 레이아웃 (파일명 잘림 방지) ──
+     1줄: [아이콘] [파일명───────────────────────]
+     2줄: [     ] [고객배지]       [날짜] [유형]
+  */
+  .doc-explorer-tree__document {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    row-gap: 2px;
+    column-gap: 6px;
+    align-items: center;
+  }
+
+  /* 아이콘: 2줄 세로 스팬 */
+  .doc-explorer-tree__doc-icon {
+    grid-row: 1 / 3;
+    grid-column: 1;
+    align-self: start;
+    padding-top: 3px;
+  }
+
+  /* 파일명: 1줄 전체 너비 */
+  .doc-explorer-tree__doc-name {
+    grid-row: 1;
+    grid-column: 2 / -1;
+    min-width: 0;
+  }
+
+  /* 고객 배지: 2줄 좌측 */
+  .doc-explorer-tree__doc-customer {
+    grid-row: 2;
+    grid-column: 2;
+    justify-self: start;
+    margin-left: 0;
+    min-width: unset;
+  }
+
+  /* 날짜: 2줄 우측 */
+  .doc-explorer-tree__doc-date {
+    grid-row: 2;
+    grid-column: 3;
+    min-width: unset;
+    margin-left: 0;
+    text-align: right;
+  }
+
+  /* 유형 배지: 2줄 우측 끝 */
+  .doc-explorer-tree__badge {
+    grid-row: 2;
+    grid-column: 4;
+  }
+
+  /* Recent item도 동일한 Grid 2줄 레이아웃 */
+  .doc-explorer-tree__recent-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    row-gap: 2px;
+    column-gap: 6px;
+    align-items: center;
+  }
+
+  .doc-explorer-tree__recent-item .doc-explorer-tree__doc-icon {
+    grid-row: 1 / 3;
+    grid-column: 1;
+    align-self: start;
+    padding-top: 3px;
+  }
+
+  .doc-explorer-tree__recent-item .doc-explorer-tree__doc-name {
+    grid-row: 1;
+    grid-column: 2 / -1;
+    flex: unset;
+    min-width: 0;
+  }
+
+  .doc-explorer-tree__recent-item .doc-explorer-tree__doc-customer {
+    grid-row: 2;
+    grid-column: 2;
+    justify-self: start;
+    width: auto;
+    margin-left: 0;
+  }
+
+  .doc-explorer-tree__recent-item .doc-explorer-tree__doc-date {
+    grid-row: 2;
+    grid-column: 3;
+    width: auto;
+    margin-left: 0;
+    text-align: right;
+  }
+
+  .doc-explorer-tree__recent-item .doc-explorer-tree__badge {
+    grid-row: 2;
+    grid-column: 4;
+  }
+
   /* 프리뷰 비활성화 (모바일에서 콘텐츠 가림) */
   .hover-preview {
     display: none;
