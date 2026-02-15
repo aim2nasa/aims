@@ -1947,10 +1947,18 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
     max-width: 100%;
     border-left: none;
     border-radius: 0;
-    /* 모바일: 전체화면 - AIMS 헤더 위에 덮어서 AI 어시스턴트만 표시 */
+    /* 모바일: 전체화면 - top/bottom으로 실제 보이는 영역에 정확히 맞춤
+       100dvh는 브라우저 주소창/하단바를 고려하지 않아 실제 폰에서 잘림 발생
+       top:0 + bottom:0 + height:auto는 position:fixed의 실제 뷰포트에 맞춤 */
     top: 0;
-    height: 100dvh;
-    z-index: calc(var(--z-index-header, 100) + 1);
+    left: 0;
+    bottom: 0;
+    height: auto;
+  }
+
+  /* 모바일: 헤더 상단 안전 영역 (노치/상태바 대응) */
+  .chat-panel__header {
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
   }
 
   /* 모바일: 분리/새창 버튼 숨김 (전체화면이라 분리 불가, 팝업도 비실용적) */
