@@ -8,8 +8,11 @@ export default defineConfig({
     port: 5182,
     proxy: {
       '/api': {
-        target: 'http://tars.giize.com:3010',
-        changeOrigin: true
+        target: 'http://100.110.215.65:3010',
+        changeOrigin: true,
+        headers: {
+          'x-api-key': process.env.VITE_API_KEY || ''
+        }
       }
     }
   }

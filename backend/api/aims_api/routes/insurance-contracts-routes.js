@@ -79,7 +79,7 @@ router.get('/insurance-products', async (req, res) => {
  * 1. 같은 기준일의 데이터가 이미 있으면: 해당 기준일 데이터 모두 삭제 후 새 데이터로 대체
  * 2. 다른 기준일이면: productName 기준으로 upsert (기존 상품 업데이트, 새 상품 추가, 없어진 상품 삭제)
  */
-router.post('/insurance-products/bulk', async (req, res) => {
+router.post('/insurance-products/bulk', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { products, surveyDate } = req.body;
 
@@ -183,7 +183,7 @@ router.post('/insurance-products/bulk', async (req, res) => {
  * POST /api/insurance-products
  * 단일 보험상품 등록
  */
-router.post('/insurance-products', async (req, res) => {
+router.post('/insurance-products', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const product = req.body;
 
@@ -224,7 +224,7 @@ router.post('/insurance-products', async (req, res) => {
  * PUT /api/insurance-products/:id
  * 보험상품 수정
  */
-router.put('/insurance-products/:id', async (req, res) => {
+router.put('/insurance-products/:id', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -271,7 +271,7 @@ router.put('/insurance-products/:id', async (req, res) => {
  * DELETE /api/insurance-products/:id
  * 보험상품 삭제
  */
-router.delete('/insurance-products/:id', async (req, res) => {
+router.delete('/insurance-products/:id', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
 

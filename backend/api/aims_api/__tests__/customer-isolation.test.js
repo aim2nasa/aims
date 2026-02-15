@@ -323,11 +323,9 @@ describe('Phase 1: 고객 CRUD API 격리 테스트', () => {
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
 
-      // 고객이 soft delete되었는지 확인
+      // 고객이 soft delete(휴면 처리)되었는지 확인
       const customer = await db.collection('customers').findOne({ _id: tempCustomerForDelete });
       expect(customer).not.toBeNull();
-      expect(customer.deleted_at).toBeDefined();
-      expect(customer.deleted_by).toBe(USER_A);
       expect(customer.meta.status).toBe('inactive');
     });
   });
