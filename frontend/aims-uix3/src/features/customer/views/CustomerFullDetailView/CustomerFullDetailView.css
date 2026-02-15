@@ -1139,6 +1139,13 @@ html[data-theme="dark"] .history-tabs__count {
   overflow: auto; /* 🍎 수직+수평 스크롤 - sticky 헤더 작동 필요 */
 }
 
+/* 🍎 CRS 계약 이력 섹션 - 스크롤 컨테이너 + sticky 헤더 지원 (AR과 동일) */
+.customer-full-detail__section-content--contracts .cr-contract-history-section {
+  flex: 1;
+  min-height: 0;
+  overflow: auto; /* 🍎 수직+수평 스크롤 */
+}
+
 /* 🍎 AR 계약 이력 헤더 - sticky + 불투명 배경 (반투명 변수 오버라이드) */
 .customer-full-detail__section-content--contracts .contract-history-header {
   position: sticky;
@@ -1147,8 +1154,20 @@ html[data-theme="dark"] .history-tabs__count {
   background: var(--color-bg-secondary); /* 🍎 불투명 배경 (#f5f5f7) 필수! */
 }
 
+/* 🍎 CRS 계약 이력 헤더 - sticky + 불투명 배경 */
+.customer-full-detail__section-content--contracts .cr-contract-history-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg-secondary);
+}
+
 html[data-theme="dark"] .customer-full-detail__section-content--contracts .contract-history-header {
   background: var(--color-bg-secondary); /* 🍎 다크모드도 불투명 배경 */
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--contracts .cr-contract-history-header {
+  background: var(--color-bg-secondary);
 }
 
 .customer-full-detail__section-content--contracts .customer-contracts__header {

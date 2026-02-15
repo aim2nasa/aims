@@ -1329,6 +1329,11 @@ html[data-theme="dark"] .cr-contract-history-header .header-sortable:hover {
   padding-right: 8px;
 }
 
+/* CRS 리스트 - 헤더와 동일한 너비 보장 (모바일 수평 스크롤) */
+.cr-contract-history-list {
+  min-width: max-content;
+}
+
 /* CRS 아코디언 */
 .cr-contract-history-accordion {
   background: var(--color-ios-bg-primary-light);
@@ -1712,6 +1717,21 @@ html[data-theme="dark"] .cr-contract-history-snapshot-item--clickable.cr-contrac
     -webkit-overflow-scrolling: touch;
   }
 
+  /* CRS 계약 히스토리 섹션 - 가로 스크롤 */
+  .cr-contract-history-section {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* CRS 헤더/행 - 최소 너비 보장 + 축소 */
+  .cr-contract-history-header,
+  .cr-contract-history-accordion__header {
+    min-width: 700px;
+    font-size: 10px;
+    gap: 4px;
+    padding: 4px 8px;
+  }
+
   /* 스냅샷 테이블 - 축소 */
   .contract-history-snapshots-header,
   .contract-history-snapshot-item {
@@ -1743,6 +1763,12 @@ html[data-theme="dark"] .cr-contract-history-snapshot-item--clickable.cr-contrac
   .contract-history-snapshots-header,
   .contract-history-snapshot-item {
     min-width: 380px;
+  }
+
+  /* CRS 헤더/행 - 480px 이하에서도 동일 최소 너비 */
+  .cr-contract-history-header,
+  .cr-contract-history-accordion__header {
+    min-width: 700px;
   }
 
   .cr-contract-history-snapshots-header,
