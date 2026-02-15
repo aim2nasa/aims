@@ -45,6 +45,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <div className="form-row__input">
             <input
               type="tel"
+              inputMode="tel"
               value={formData.mobile_phone || ''}
               onChange={handlePhoneChange('mobile_phone')}
               placeholder="010-1234-5678"
@@ -59,6 +60,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <div className="form-row__input">
             <input
               type="tel"
+              inputMode="tel"
               value={formData.home_phone || ''}
               onChange={handlePhoneChange('home_phone')}
               placeholder="02-1234-5678"
@@ -73,6 +75,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <div className="form-row__input">
             <input
               type="tel"
+              inputMode="tel"
               value={formData.work_phone || ''}
               onChange={handlePhoneChange('work_phone')}
               placeholder="02-1234-5678"
@@ -87,6 +90,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <div className="form-row__input">
             <input
               type="email"
+              inputMode="email"
               value={formData.email || ''}
               onChange={(e) => onChange('email', e.target.value)}
               placeholder="example@email.com"
