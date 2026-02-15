@@ -553,7 +553,13 @@
   .header-progressive {
     height: 48px;
     padding: 0 var(--spacing-2);
-    overflow: hidden; /* 가로 스크롤 방지 */
+    overflow: visible; /* 검색 드롭다운이 헤더 밖으로 표시되도록 허용 */
+  }
+
+  /* backdrop-filter 제거: position:fixed 드롭다운의 containing block 생성 방지 */
+  .header-progressive--expanded {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .header-branding {
@@ -563,27 +569,31 @@
 
   .header-title {
     font-size: var(--font-size-footnote);
-    max-width: 60px; /* 좁은 화면에서 공간 확보 */
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* 모바일에서 "UIX3" 숨김 → "AIMS"만 표시 */
+  .header-title__version {
+    display: none;
   }
 
   .header-controls {
     gap: 4px;
-    flex-shrink: 1; /* 768px의 flex-shrink: 0 오버라이드 - 컨트롤 축소 허용 */
+    flex: 1; /* 컨트롤 영역이 남은 공간 차지 */
     min-width: 0;
+    transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
   }
 
   .header-control-button {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
 
-  /* 검색바: 남은 공간을 유동적으로 차지 */
+  /* 검색바: 남은 공간을 최대한 차지 */
   .header-quick-search-container {
     flex: 1;
     min-width: 0;
+    transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
   }
 
   /* 프로필 아바타 축소: 40px → 32px */

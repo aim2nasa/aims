@@ -328,6 +328,26 @@ html[data-theme="dark"] .quick-search__advanced-link:hover {
   }
 }
 
+@media (max-width: 480px) {
+  .quick-search {
+    width: 100%; /* 컨테이너 전폭 사용 */
+  }
+
+  .quick-search__input-wrapper {
+    padding: 4px 8px;
+  }
+
+  /* 검색 결과: 헤더 기준 전폭 드롭다운 */
+  .quick-search__results {
+    position: fixed;
+    left: var(--spacing-2);
+    right: var(--spacing-2);
+    top: 52px; /* 헤더(48px) + 간격 */
+    width: auto;
+    max-height: 60vh;
+  }
+}
+
 /* 애니메이션 감소 모드 */
 @media (prefers-reduced-motion: reduce) {
   .quick-search__results {
