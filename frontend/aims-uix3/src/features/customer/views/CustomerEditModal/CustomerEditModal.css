@@ -451,3 +451,31 @@ html[data-theme="dark"] .customer-edit-modal-memo__textarea:focus {
 .customer-edit-modal-memo__textarea::placeholder {
   color: var(--color-text-tertiary);
 }
+
+/* ===== 📱 모바일 반응형 (480px 이하) ===== */
+@media (max-width: 480px) {
+  .customer-edit-modal-container {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .customer-edit-modal-header,
+  .customer-edit-modal-content,
+  .customer-edit-modal-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* 입력 필드: iOS zoom 방지 */
+  .customer-edit-modal-field input,
+  .customer-edit-modal-field select,
+  .customer-edit-modal-memo__textarea {
+    font-size: 16px;
+  }
+
+  /* 푸터: safe-area 대응 */
+  .customer-edit-modal-footer {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+}

@@ -1132,6 +1132,10 @@
   /* Menu System Default (Light Theme) */
   --color-menu-selected-bg: var(--color-menu-selected-bg-light);
   --color-menu-shadow: var(--color-menu-shadow-light);
+
+  /* === RESPONSIVE DESIGN TOKENS === */
+  --touch-target-min: 44px;
+  --responsive-table-min-width: 600px;
 }
 
 /* === DARK THEME OVERRIDES === */

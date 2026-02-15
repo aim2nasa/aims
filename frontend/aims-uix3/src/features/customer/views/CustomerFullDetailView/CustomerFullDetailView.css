@@ -2397,6 +2397,61 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
     display: none;
   }
 
+  /* 🍎 Customer Review 테이블: 파싱일시 숨김, 핵심 칼럼만 표시 */
+  .customer-full-detail .customer-full-detail__section-content--report .customer-review-table-header {
+    grid-template-columns:
+      var(--contractor-column-width, 55px)
+      var(--insured-column-width, 55px)
+      var(--issue-date-column-width, 70px)
+      var(--product-column-width, 1fr)
+      var(--fund-count-column-width, 45px)
+      var(--status-column-width, 35px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .customer-review-table-header:has(.header-checkbox) {
+    grid-template-columns:
+      28px
+      var(--contractor-column-width, 55px)
+      var(--insured-column-width, 55px)
+      var(--issue-date-column-width, 70px)
+      var(--product-column-width, 1fr)
+      var(--fund-count-column-width, 45px)
+      var(--status-column-width, 35px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .customer-review-row {
+    grid-template-columns:
+      var(--contractor-column-width, 55px)
+      var(--insured-column-width, 55px)
+      var(--issue-date-column-width, 70px)
+      var(--product-column-width, 1fr)
+      var(--fund-count-column-width, 45px)
+      var(--status-column-width, 35px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .customer-review-row:has(.row-checkbox) {
+    grid-template-columns:
+      28px
+      var(--contractor-column-width, 55px)
+      var(--insured-column-width, 55px)
+      var(--issue-date-column-width, 70px)
+      var(--product-column-width, 1fr)
+      var(--fund-count-column-width, 45px)
+      var(--status-column-width, 35px);
+  }
+
+  /* Customer Review: 파싱일시 숨김 */
+  .customer-full-detail .customer-full-detail__section-content--report .customer-review-table-header .header-parsed-at,
+  .customer-full-detail .customer-full-detail__section-content--report .customer-review-row .row-parsed-at {
+    display: none;
+  }
+
+  /* 🍎 계약 테이블: 가로 스크롤 허용 */
+  .customer-full-detail .customer-full-detail__section-content--contracts {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* 🍎 레이아웃 리셋 버튼 숨김 (모바일에서 리사이즈 불가하므로) */
   .customer-full-detail .customer-full-detail__reset-layout {
     display: none;
@@ -2472,10 +2527,17 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
     max-width: 100px;
   }
 
-  /* 🍎 문서 테이블: 연결일 숨김 (아이콘 + 파일명 + 작업만) */
-  .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-list-header,
+  /* 🍎 문서 테이블: 카드 레이아웃 (자식 480px 카드와 동기화) */
+  .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-list-header {
+    display: none;
+  }
+
   .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-item {
-    grid-template-columns: 20px 1fr 40px;
+    grid-template-columns: 20px 1fr auto;
+    grid-template-rows: auto auto;
+    height: auto;
+    min-height: 36px;
+    padding: 6px 8px;
   }
 
   .customer-full-detail .customer-full-detail__section-content--documents .header-date,
@@ -2488,43 +2550,29 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
     display: none;
   }
 
-  /* 🍎 Annual Report 테이블: 파싱일시 숨김, 총월보험료/계약수 유지 */
+  /* 🍎 Annual Report 테이블: 카드 레이아웃 (자식 480px 카드와 동기화) */
   .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header {
-    grid-template-columns:
-      var(--owner-column-width, 50px)
-      var(--issue-date-column-width, 70px)
-      var(--premium-column-width, 60px)
-      var(--count-column-width, 30px)
-      var(--status-column-width, 35px);
-  }
-
-  .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header:has(.header-checkbox) {
-    grid-template-columns:
-      28px
-      var(--owner-column-width, 50px)
-      var(--issue-date-column-width, 70px)
-      var(--premium-column-width, 60px)
-      var(--count-column-width, 30px)
-      var(--status-column-width, 35px);
+    display: none;
   }
 
   .customer-full-detail .customer-full-detail__section-content--report .annual-report-row {
-    grid-template-columns:
-      var(--owner-column-width, 50px)
-      var(--issue-date-column-width, 70px)
-      var(--premium-column-width, 60px)
-      var(--count-column-width, 30px)
-      var(--status-column-width, 35px);
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    height: auto;
+    min-height: 36px;
+    padding: 6px 8px;
   }
 
   .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) {
-    grid-template-columns:
-      28px
-      var(--owner-column-width, 50px)
-      var(--issue-date-column-width, 70px)
-      var(--premium-column-width, 60px)
-      var(--count-column-width, 30px)
-      var(--status-column-width, 35px);
+    grid-template-columns: 24px 1fr auto;
+    grid-template-rows: auto auto;
+  }
+
+  /* 🍎 Customer Review 테이블: 카드 레이아웃 (min-width로 가로 스크롤) */
+  .customer-full-detail .customer-full-detail__section-content--report .customer-review-table-header,
+  .customer-full-detail .customer-full-detail__section-content--report .customer-review-row {
+    min-width: 350px;
+    font-size: 10px;
   }
 }
 

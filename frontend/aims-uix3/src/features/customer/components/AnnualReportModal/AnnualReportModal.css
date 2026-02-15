@@ -617,6 +617,43 @@
   }
 }
 
+@media (max-width: 480px) {
+  /* 요약: 1열 */
+  .annual-report-summary {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  /* 테이블: 더 축소 (순번 숨김 → 상품명 + 계약자 + 상태만) */
+  .contracts-table .contracts-table__cell--number {
+    display: none;
+  }
+
+  .contracts-table th,
+  .contracts-table td {
+    padding: 6px 3px;
+    font-size: 10px;
+  }
+
+  /* 상품명: 줄바꿈 허용 */
+  .contracts-table .contracts-table__cell--product {
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  /* 섹션 제목: 컴팩트 */
+  .annual-report-contracts__title {
+    font-size: 11px;
+  }
+
+  /* 센터 상태: 최소 높이 축소 */
+  .annual-report-modal__center {
+    min-height: 120px;
+    font-size: 12px;
+  }
+}
+
 /* ==================== Mobile Card Layout ==================== */
 /* JS 기반 모바일 감지 (isMobileView) - 테이블 대신 카드형 레이아웃 */
 

@@ -1669,3 +1669,84 @@ html[data-theme="dark"] .cr-contract-history-snapshot-item--clickable:hover {
 html[data-theme="dark"] .cr-contract-history-snapshot-item--clickable.cr-contract-history-snapshot-item--changed:hover {
   background: var(--color-ios-yellow-dark-bg, rgba(255, 214, 10, 0.2));
 }
+
+/* ========================================
+ * 📱 반응형: 태블릿/모바일 최적화
+ * ======================================== */
+
+/* 📱 태블릿 (768px 이하) */
+@media (max-width: 768px) {
+  /* 계약 목록 컨테이너 - 가로 스크롤 허용 */
+  .customer-contracts__list-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* AR 아코디언 헤더 - 축소 */
+  .ar-accordion__header {
+    grid-template-columns: 18px 70px 70px 1fr 80px 50px;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    height: 28px;
+  }
+
+  /* AR 계약 테이블 - 가로 스크롤 (부모에서 처리) */
+  .ar-contracts-header,
+  .ar-contract-item {
+    min-width: 700px;
+    font-size: 10px;
+    gap: 4px;
+    padding: 4px 8px;
+  }
+
+  /* 메인 계약 목록 헤더/행 - 가로 스크롤 */
+  .customer-contracts-list-header,
+  .customer-contracts-list-row {
+    min-width: 650px;
+  }
+
+  /* 계약 히스토리 섹션 - 이미 overflow-x: auto 있음 */
+  .contract-history-section {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 스냅샷 테이블 - 축소 */
+  .contract-history-snapshots-header,
+  .contract-history-snapshot-item {
+    grid-template-columns: 70px 50px 55px 45px 45px 70px;
+    gap: 4px;
+    font-size: 10px;
+  }
+
+  /* CRS 스냅샷 테이블 - 축소 */
+  .cr-contract-history-snapshots-header,
+  .cr-contract-history-snapshot-item {
+    grid-template-columns: 70px 80px 80px 60px 80px 60px;
+    gap: 4px;
+    font-size: 10px;
+  }
+}
+
+/* 📱 모바일 폰 (480px 이하) */
+@media (max-width: 480px) {
+  /* AR 아코디언 헤더 - 더 축소 */
+  .ar-accordion__header {
+    grid-template-columns: 16px 60px 60px 1fr 70px 45px;
+    gap: 3px;
+    font-size: 10px;
+    height: 26px;
+  }
+
+  /* 스냅샷 테이블 - 가로 스크롤로 전환 */
+  .contract-history-snapshots-header,
+  .contract-history-snapshot-item {
+    min-width: 380px;
+  }
+
+  .cr-contract-history-snapshots-header,
+  .cr-contract-history-snapshot-item {
+    min-width: 440px;
+  }
+}

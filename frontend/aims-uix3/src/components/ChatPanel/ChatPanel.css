@@ -1958,3 +1958,28 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
  * --mainpane-height: calc(100dvh - 50px) 로 오버라이드됨
  * 따라서 ChatPanel도 자동으로 100dvh 기반 높이를 사용함
  */
+
+/* === 터치 기기: 헤더/입력 버튼 터치 영역 확대 === */
+
+@media (pointer: coarse) {
+  .chat-panel__header-btn {
+    position: relative;
+  }
+
+  .chat-panel__header-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* 터치 기기에서 호버 scale 비활성화 */
+  .chat-panel__header-btn:hover {
+    transform: none;
+  }
+}

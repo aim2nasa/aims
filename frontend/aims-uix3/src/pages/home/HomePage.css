@@ -188,8 +188,22 @@
 }
 
 @media (max-width: 480px) {
-  .stat-card__value {
-    /* font-size: var(--font-size-2xl); () */
+  .stat-card {
+    padding: var(--spacing-3);
+  }
+
+  .quick-action-card {
+    padding: var(--spacing-3);
+  }
+
+  .quick-action-card__icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: var(--spacing-3);
+  }
+
+  .home-recent__content {
+    min-height: 120px;
   }
 }
 

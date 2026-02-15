@@ -839,6 +839,56 @@
   }
 }
 
+@media (max-width: 480px) {
+  /* 테이블: 2칼럼으로 축소 (상품명 + 기준가) */
+  .crm-table__head,
+  .crm-table__row,
+  .crm-table__foot {
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  /* 3열 이상 숨김 */
+  .crm-table__head > *:nth-child(n+3),
+  .crm-table__row > *:nth-child(n+3),
+  .crm-table__foot > *:nth-child(n+3) {
+    display: none;
+  }
+
+  /* 컴팩트 테이블 동일 */
+  .crm-table--compact .crm-table__head,
+  .crm-table--compact .crm-table__row,
+  .crm-table--compact .crm-table__foot {
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+
+  /* 인물 정보: 1열 */
+  .crm-persons {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  /* 카드: 패딩 축소 */
+  .crm-card {
+    padding: 8px;
+  }
+
+  .crm-card__title {
+    font-size: 11px;
+  }
+
+  /* 리스트 아이템: 컴팩트 */
+  .crm-list__item {
+    padding: 4px 0;
+    font-size: 10px;
+  }
+}
+
 /* ==================== Mobile Vertical Layout ==================== */
 /* JS 기반 모바일 감지 (isMobileView) - 3열 → 세로 스택 + 펀드 카드 */
 

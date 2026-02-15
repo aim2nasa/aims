@@ -14,6 +14,9 @@
 /* Typography System - FONT_RULES.md */
 @import './shared/styles/typography.css';
 
+/* Responsive Utilities - 모바일/태블릿 반응형 */
+@import './shared/styles/responsive.css';
+
 /* Component Styles */
 @import './components/Header/Header.css';
 

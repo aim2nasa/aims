@@ -557,3 +557,22 @@ html[data-theme="dark"] .doc-search-highlight {
     border-bottom-color: var(--color-ios-separator-dark);
   }
 }
+
+@media (max-width: 480px) {
+  /* 좌측 패널: 높이 더 축소 */
+  .doc-search-left {
+    max-height: 30vh;
+  }
+
+  /* 검색 입력: iOS zoom 방지 */
+  .doc-search-left input[type="text"],
+  .doc-search-left input[type="search"] {
+    font-size: 16px;
+  }
+
+  /* 검색 결과 아이템: 터치 타겟 확대 */
+  .doc-search-result-item {
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+}

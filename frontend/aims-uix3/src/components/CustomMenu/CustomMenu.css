@@ -752,6 +752,18 @@ html:not([data-theme="dark"]) .custom-menu-item:hover:not(.selected) {
   }
 }
 
+/* 모바일 폰: 터치 타겟 추가 확대 */
+@media (max-width: 480px) {
+  .custom-menu-item {
+    min-height: 48px;
+    padding: 14px 16px;
+  }
+
+  .custom-menu-item.sub-menu {
+    min-height: 44px;
+  }
+}
+
 /* === 🍎 APPLE SIMPLE: CLEAN FADE-IN === */
 
 /*

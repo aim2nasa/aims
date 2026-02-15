@@ -534,3 +534,37 @@ html[data-theme="dark"] .draggable-modal-backdrop--transparent .draggable-modal 
     opacity: 1;
   }
 }
+
+/* === 터치 기기: 헤더 버튼 터치 영역 확대 === */
+
+@media (pointer: coarse) {
+  .draggable-modal__reset-button,
+  .draggable-modal__maximize-button,
+  .draggable-modal__immersive-button,
+  .draggable-modal__popup-button {
+    position: relative;
+  }
+
+  .draggable-modal__reset-button::after,
+  .draggable-modal__maximize-button::after,
+  .draggable-modal__immersive-button::after,
+  .draggable-modal__popup-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* 터치 기기에서 호버 시 scale 효과 비활성화 (터치 후 잔상 방지) */
+  .draggable-modal__reset-button:hover,
+  .draggable-modal__maximize-button:hover,
+  .draggable-modal__immersive-button:hover,
+  .draggable-modal__popup-button:hover {
+    transform: none;
+  }
+}

@@ -443,4 +443,15 @@ html[data-theme="dark"] .document-icon.file-icon--default {
   .document-management-view__actions-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  /* 테이블: 가로 스크롤 전환 */
+  .recent-activity-table {
+    overflow-x: auto;
+  }
+
+  .recent-activity-header,
+  .recent-activity-row {
+    min-width: 500px;
+    font-size: 10px;
+  }
 }

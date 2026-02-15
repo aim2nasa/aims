@@ -447,3 +447,76 @@ html[data-theme="dark"] .customer-review-row--selected {
 .customer-review-table-container.is-resizing * {
   cursor: col-resize;
 }
+
+/* ========================================
+ * 📱 반응형: 태블릿/모바일 최적화
+ * ======================================== */
+
+@media (max-width: 768px) {
+  .customer-review-table-container {
+    overflow-x: auto;
+  }
+
+  /* 7칼럼 → 6칼럼 (파싱일시 숨김) */
+  .customer-review-table-header {
+    grid-template-columns:
+      minmax(45px, 0.5fr)
+      minmax(45px, 0.5fr)
+      85px
+      minmax(70px, 1fr)
+      55px
+      50px;
+    gap: 3px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .customer-review-table-header:has(.header-checkbox) {
+    grid-template-columns:
+      24px
+      minmax(45px, 0.5fr)
+      minmax(45px, 0.5fr)
+      85px
+      minmax(70px, 1fr)
+      55px
+      50px;
+  }
+
+  .customer-review-row {
+    grid-template-columns:
+      minmax(45px, 0.5fr)
+      minmax(45px, 0.5fr)
+      85px
+      minmax(70px, 1fr)
+      55px
+      50px;
+    gap: 3px;
+    padding: 4px 8px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .customer-review-row:has(.row-checkbox) {
+    grid-template-columns:
+      24px
+      minmax(45px, 0.5fr)
+      minmax(45px, 0.5fr)
+      85px
+      minmax(70px, 1fr)
+      55px
+      50px;
+  }
+
+  .customer-review-table-header .header-parsed-at,
+  .customer-review-row .row-parsed-at {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .customer-review-table-header,
+  .customer-review-row {
+    min-width: 400px;
+    font-size: 10px;
+  }
+}

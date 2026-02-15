@@ -326,4 +326,15 @@ html[data-theme="dark"] .recent-activity-empty {
   .contract-management-view__pie-charts-grid {
     grid-template-columns: 1fr;
   }
+
+  /* 테이블: 가로 스크롤 전환 */
+  .recent-activity-table {
+    overflow-x: auto;
+  }
+
+  .contract-recent-activity-header,
+  .contract-recent-activity-row {
+    min-width: 480px;
+    font-size: 10px;
+  }
 }

@@ -1,0 +1,159 @@
+/**
+ * AIMS UIX-3 Responsive Utilities
+ * @since 2026-02-15
+ * @version 1.0.0
+ *
+ * PC, iPad, 모바일 폰 등 모든 디바이스에서 최적의 UX를 제공하기 위한
+ * 공유 반응형 유틸리티 클래스 모음
+ *
+ * 브레이크포인트:
+ *   - 480px: 모바일 폰 (iPhone SE ~ iPhone 16)
+ *   - 768px: 태블릿/모바일 전환점
+ *   - 1024px: iPad / 소형 데스크톱
+ *   - 1366px: iPad Pro / 중형 데스크톱
+ */
+
+/* ========================================
+ * 📱 반응형 테이블 스크롤 래퍼
+ * - 다칼럼 그리드 테이블을 모바일에서 가로 스크롤 가능하게 함
+ * - 데스크톱에서는 아무 영향 없음
+ * ======================================== */
+
+.responsive-table-scroll {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .responsive-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  /* iOS 스타일 얇은 스크롤바 */
+  .responsive-table-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .responsive-table-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .responsive-table-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--color-neutral-300);
+    border-radius: 2px;
+  }
+}
+
+/* ========================================
+ * 🎯 터치 타겟 확대 유틸리티
+ * - WCAG 2.5.5 기준 최소 44x44px 터치 영역
+ * - 시각적 크기는 유지, ::after로 터치 영역만 확대
+ * - 터치 기기에서만 적용 (pointer: coarse)
+ * ======================================== */
+
+@media (pointer: coarse) {
+  /* 아이콘 버튼 터치 영역 확대 (28px → 44px) */
+  .touch-target-44 {
+    position: relative;
+  }
+
+  .touch-target-44::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: var(--touch-target-min, 44px);
+    height: var(--touch-target-min, 44px);
+    min-width: var(--touch-target-min, 44px);
+    min-height: var(--touch-target-min, 44px);
+  }
+}
+
+/* ========================================
+ * 📱 반응형 표시/숨김 유틸리티
+ * ======================================== */
+
+@media (max-width: 768px) {
+  /* 높은 specificity로 display 오버라이드 */
+  html .hide-on-mobile {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  html .show-on-mobile-only {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  html .hide-on-phone {
+    display: none;
+  }
+}
+
+/* ========================================
+ * 📱 iOS 입력 자동 줌 방지
+ * - iOS Safari는 font-size 16px 미만의 input에 자동 줌
+ * - 모바일에서 모든 입력 요소에 최소 16px 적용
+ * ======================================== */
+
+@media (max-width: 768px) {
+  /* html 접두사로 높은 specificity 확보 */
+  html input[type="text"],
+  html input[type="email"],
+  html input[type="password"],
+  html input[type="number"],
+  html input[type="tel"],
+  html input[type="url"],
+  html input[type="search"],
+  html input:not([type]),
+  html select,
+  html textarea {
+    font-size: max(16px, inherit);
+  }
+}
+
+/* ========================================
+ * 📱 모바일 그리드 테이블 축소 유틸리티
+ * - 부모에 이 클래스를 추가하면 자식 그리드가
+ *   모바일에서 최소 폭을 유지하며 스크롤 가능
+ * ======================================== */
+
+@media (max-width: 768px) {
+  .responsive-grid-table {
+    min-width: var(--responsive-table-min-width, 600px);
+  }
+}
+
+/* ========================================
+ * 🍎 터치 디바이스 최적화
+ * ======================================== */
+
+@media (pointer: coarse) {
+  /* 터치 디바이스에서 호버 효과 줄이기 (의도치 않은 호버 방지) */
+  html .touch-no-hover:hover {
+    transform: none;
+    box-shadow: inherit;
+  }
+}
+
+/* ========================================
+ * 📱 모바일 안전 영역 패딩 유틸리티
+ * ======================================== */
+
+.safe-area-bottom {
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
+}
+
+.safe-area-top {
+  padding-top: max(0px, env(safe-area-inset-top));
+}
+
+.safe-area-horizontal {
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
+}
