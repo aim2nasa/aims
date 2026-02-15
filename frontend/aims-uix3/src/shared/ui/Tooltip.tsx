@@ -52,6 +52,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const timeoutRef = useRef<number | undefined>(undefined)
   const triggerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
+  const isTouchRef = useRef(false) // 터치/마우스 이벤트 충돌 방지
 
   /**
    * 툴팁이 표시된 후 위치 계산 (하이브리드: 요소 기반 수직 + 마우스 기반 수평)
@@ -119,6 +120,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
    * 마우스 진입 시 지연 후 툴팁 표시
    */
   const handleMouseEnter = (e: React.MouseEvent) => {
+    if (isTouchRef.current) return // 터치 이벤트 후 발생하는 마우스 이벤트 무시
     if (showOnlyWhenTruncated) {
       const el = triggerRef.current?.firstElementChild as HTMLElement | null
       if (el && el.scrollWidth <= el.clientWidth) return
@@ -133,11 +135,61 @@ export const Tooltip: React.FC<TooltipProps> = ({
    * 마우스 이탈 시 즉시 툴팁 숨김
    */
   const handleMouseLeave = () => {
+    if (isTouchRef.current) return // 터치 이벤트 후 발생하는 마우스 이벤트 무시
     if (timeoutRef.current !== undefined) {
       window.clearTimeout(timeoutRef.current)
     }
     setIsVisible(false)
   }
+
+  /**
+   * 터치 디바이스: 탭으로 툴팁 토글
+   */
+  const handleTouchStart = (e: React.TouchEvent) => {
+    isTouchRef.current = true
+    // 터치 후 500ms간 마우스 이벤트 무시 (브라우저의 터치→마우스 에뮬레이션 방지)
+    window.setTimeout(() => { isTouchRef.current = false }, 500)
+
+    if (showOnlyWhenTruncated) {
+      const el = triggerRef.current?.firstElementChild as HTMLElement | null
+      if (el && el.scrollWidth <= el.clientWidth) return
+    }
+
+    if (isVisible) {
+      setIsVisible(false)
+      return
+    }
+
+    const touch = e.touches[0]
+    if (touch) {
+      setMousePos({ x: touch.clientX, y: touch.clientY })
+    }
+    setIsVisible(true)
+  }
+
+  /**
+   * 터치 디바이스: 외부 터치 시 닫기 + 3초 자동 닫기
+   */
+  useEffect(() => {
+    if (!isVisible) return
+
+    const autoHideTimer = window.setTimeout(() => {
+      setIsVisible(false)
+    }, 3000)
+
+    const handleOutsideTouch = (e: TouchEvent) => {
+      if (triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
+        setIsVisible(false)
+      }
+    }
+
+    document.addEventListener('touchstart', handleOutsideTouch)
+
+    return () => {
+      window.clearTimeout(autoHideTimer)
+      document.removeEventListener('touchstart', handleOutsideTouch)
+    }
+  }, [isVisible])
 
   /**
    * 클린업
@@ -156,6 +208,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const childWithHandlers = React.cloneElement(children, {
     onMouseEnter: handleMouseEnter,
     onMouseLeave: handleMouseLeave,
+    onTouchStart: handleTouchStart,
     'aria-describedby': isVisible ? 'tooltip' : undefined
   } as React.HTMLAttributes<HTMLElement>)
 
