@@ -514,6 +514,46 @@
   }
 }
 
+/* === 📱 모바일 햄버거 메뉴 버튼 === */
+/* 🔴 base 스타일은 반드시 미디어 쿼리 앞에 위치 → cascade로 자연스럽게 오버라이드 */
+
+.header-mobile-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin-right: var(--spacing-1);
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease-out;
+
+  /* 📱 모바일에서 header-controls(검색바)가 branding 영역과 겹칠 때
+     터치 이벤트가 검색 요소에 가려지는 문제 방지.
+     position: relative + z-index로 검색바 위에 배치 */
+  position: relative;
+  z-index: 2;
+}
+
+.header-mobile-menu-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.header-mobile-menu-btn:active {
+  background-color: var(--color-ios-system-gray5-alpha, rgba(0, 0, 0, 0.05));
+}
+
+.header-mobile-menu-btn--active {
+  color: var(--color-primary-500);
+}
+
 /* 모바일 (768px 이하) */
 @media (max-width: 768px) {
   .header-progressive {
@@ -550,16 +590,16 @@
     font-size: 12px;
   }
 
-  /* 햄버거 버튼 컴팩트 - 타이틀과 밀착 */
+  /* 햄버거 버튼 - 잘림 없이 명확하게 표시 */
   .header-mobile-menu-btn {
-    width: 24px;
-    height: 24px;
-    margin-right: -4px;
+    width: 28px;
+    height: 28px;
+    margin-right: 2px;
   }
 
   .header-mobile-menu-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 
   /* 검색바 */
@@ -610,7 +650,9 @@
 /* 모바일 (480px 이하) - 컴팩트 헤더: 360px 뷰포트에서 모든 요소가 한 줄에 수용 */
 @media (max-width: 480px) {
   .header-progressive {
-    padding: 0 4px;
+    padding: 0 8px;
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
     overflow: visible; /* 검색 드롭다운이 헤더 밖으로 표시되도록 허용 */
   }
 
@@ -635,14 +677,14 @@
   }
 
   .header-mobile-menu-btn {
-    width: 22px;
-    height: 22px;
-    margin-right: -6px;
+    width: 26px;
+    height: 26px;
+    margin-right: 2px;
   }
 
   .header-mobile-menu-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
 
   /* 검색바: 남은 공간을 최대한 차지 */
@@ -666,45 +708,6 @@
     width: 26px;
     height: 26px;
   }
-}
-
-/* === 📱 모바일 햄버거 메뉴 버튼 === */
-
-.header-mobile-menu-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  margin-right: var(--spacing-1);
-  border: none;
-  border-radius: var(--radius-md, 8px);
-  background: transparent;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.15s ease-out;
-
-  /* 📱 모바일에서 header-controls(검색바)가 branding 영역과 겹칠 때
-     터치 이벤트가 검색 요소에 가려지는 문제 방지.
-     position: relative + z-index로 검색바 위에 배치 */
-  position: relative;
-  z-index: 2;
-}
-
-.header-mobile-menu-btn svg {
-  width: 22px;
-  height: 22px;
-}
-
-.header-mobile-menu-btn:active {
-  background-color: var(--color-ios-system-gray5-alpha, rgba(0, 0, 0, 0.05));
-}
-
-.header-mobile-menu-btn--active {
-  color: var(--color-primary-500);
 }
 
 /* 모바일에서 Progressive Disclosure 인디케이터 숨김 */
@@ -976,43 +979,4 @@
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: loading state */
   font-family: var(--font-family-text);
   font-style: italic;
-}
-
-/* === 📱 모바일 최종 오버라이드 (파일 맨 끝 - cascade 보장) === */
-/* base 스타일이 미디어 쿼리 뒤에 있어 덮어쓰는 문제 해결 */
-
-@media (max-width: 768px) {
-  .header-mobile-menu-btn {
-    width: 24px;
-    height: 24px;
-    margin-right: -4px;
-  }
-
-  .header-mobile-menu-btn svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .header-chat-ai-icon {
-    width: 36px;
-    height: 26px;
-  }
-}
-
-@media (max-width: 480px) {
-  .header-mobile-menu-btn {
-    width: 22px;
-    height: 22px;
-    margin-right: -2px;
-  }
-
-  .header-mobile-menu-btn svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  .header-chat-ai-icon {
-    width: 36px;
-    height: 26px;
-  }
 }
