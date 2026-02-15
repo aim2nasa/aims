@@ -21,7 +21,7 @@
   position: relative;  /* ❌ 표준: 자식 absolute 위치의 기준 */
   display: flex;
   align-items: center;
-  width: 280px;  /* ✅ placeholder 텍스트가 잘리지 않는 적정 폭 */
+  width: 280px;  /* ✅ 검색 입력 고정 폭 */
   flex-shrink: 0;
   background-color: transparent;  /* ❌ 표준: 투명 */
   border-radius: 10px;
@@ -161,8 +161,7 @@ html[data-theme="dark"] .customer-library-error {
 .customer-library-result-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   padding: 0 4px 4px 4px;
 }
 
