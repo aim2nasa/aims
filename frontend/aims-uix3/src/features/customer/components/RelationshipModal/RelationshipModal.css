@@ -257,7 +257,7 @@
   color: var(--color-accent);
 }
 
-/* ===== 📱 모바일 컴팩트 (가로/세로 동일 적용) ===== */
+/* ===== 📱 모바일 컴팩트 (세로 모드) ===== */
 @media (max-width: 768px) {
   .relationship-modal {
     max-width: 100%;
@@ -302,14 +302,20 @@
     padding: 2px 6px;
   }
 
-  .relationship-modal__selector-button {
+  /* 가족 선택 버튼: min-height 오버라이드 필수 (.button--md의 44px 제거) */
+  .relationship-modal__selector-button.button {
     padding: 6px 10px;
     font-size: 12px;
+    min-height: 36px;
+    height: 36px;
   }
 
-  .relationship-modal__button {
+  /* footer 버튼: min-height 오버라이드 */
+  .relationship-modal__actions .button {
     padding: 6px 12px;
     font-size: 12px;
+    min-height: 32px;
+    height: 32px;
   }
 
   .relationship-modal .form-select {
@@ -318,10 +324,73 @@
   }
 }
 
-/* ===== 📱 모바일 가로보기 - 컨테이너 크기 제약만 (내부 스타일은 480px 블록에서 통합) ===== */
+/* ===== 📱 모바일 가로보기 - 울트라 컴팩트 ===== */
 @media (orientation: landscape) and (max-height: 600px) {
   .relationship-modal {
     max-width: 420px;
     max-height: calc(100dvh - 12px);
+  }
+
+  .relationship-modal .modal__content {
+    padding: 0;
+  }
+
+  .relationship-modal .modal__header {
+    padding: 4px 12px;
+  }
+
+  .relationship-modal .modal__header .modal__title {
+    font-size: 13px;
+  }
+
+  .relationship-modal .modal__footer {
+    padding: 4px 12px;
+  }
+
+  .relationship-modal__body {
+    padding: 6px 12px;
+  }
+
+  .relationship-modal__form {
+    gap: 6px;
+  }
+
+  .relationship-modal__field {
+    gap: 3px;
+  }
+
+  .relationship-modal__field-title {
+    font-size: 11px;
+  }
+
+  .relationship-modal__badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  /* 가족 선택 버튼: 울트라 컴팩트 */
+  .relationship-modal__selector-button.button {
+    padding: 5px 10px;
+    font-size: 12px;
+    min-height: 30px;
+    height: 30px;
+  }
+
+  /* footer 버튼: 울트라 컴팩트 */
+  .relationship-modal__actions .button {
+    padding: 4px 12px;
+    font-size: 12px;
+    min-height: 28px;
+    height: 28px;
+  }
+
+  .relationship-modal .form-select {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  /* 선택된 고객 표시: 컴팩트 */
+  .relationship-modal__selected-customer {
+    padding: 4px 8px;
   }
 }
