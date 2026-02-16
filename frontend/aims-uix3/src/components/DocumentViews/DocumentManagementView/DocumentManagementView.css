@@ -162,7 +162,7 @@
   top: 0;
   z-index: 3; /* 문서 뱃지(z-index:2)보다 위에 표시 */
   display: grid;
-  grid-template-columns: 80px 40px 1fr 80px 80px 120px 100px;
+  grid-template-columns: 80px 1fr 60px 50px 90px 44px;
   gap: var(--spacing-3);
   padding: var(--spacing-3) var(--spacing-4);
   background: var(--color-bg-secondary);
@@ -177,7 +177,7 @@
 /* 데이터 행 */
 .recent-activity-row {
   display: grid;
-  grid-template-columns: 80px 40px 1fr 80px 80px 120px 100px;
+  grid-template-columns: 80px 1fr 60px 50px 90px 44px;
   gap: var(--spacing-3);
   padding: var(--spacing-2) var(--spacing-4);
   align-items: center;
@@ -209,20 +209,15 @@
   text-overflow: ellipsis;
 }
 
-.recent-cell-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .recent-cell-name {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
   font-size: var(--font-size-footnote);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   overflow: hidden;
+  min-width: 0;
 }
 
 .recent-cell-name .document-filename {
@@ -517,10 +512,6 @@ html[data-theme="dark"] .document-icon.file-icon--default {
   }
 
   .recent-cell-activity {
-    flex-shrink: 0;
-  }
-
-  .recent-cell-icon {
     flex-shrink: 0;
   }
 

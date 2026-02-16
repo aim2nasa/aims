@@ -675,11 +675,10 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                 {/* 테이블 헤더 */}
                 <div className="recent-activity-header">
                   <div className="recent-header-activity">활동</div>
-                  <div className="recent-header-icon"></div>
                   <div className="recent-header-name">문서명</div>
-                  <div className="recent-header-size">파일크기</div>
+                  <div className="recent-header-size">크기</div>
                   <div className="recent-header-type">유형</div>
-                  <div className="recent-header-customer">연결고객</div>
+                  <div className="recent-header-customer">고객</div>
                   <div className="recent-header-time">시간</div>
                 </div>
 
@@ -709,14 +708,10 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
 
                   return (
                     <div key={doc._id || String(Math.random())} className="recent-activity-row">
-                      {/* 활동 */}
+                      {/* 활동 (아이콘 + 텍스트) */}
                       <div className="recent-cell-activity">
-                        <span className="activity-text">{activityInfo.text}</span>
-                      </div>
-
-                      {/* 아이콘 */}
-                      <div className="recent-cell-icon">
                         {activityInfo.icon}
+                        <span className="activity-text">{activityInfo.text}</span>
                       </div>
 
                       {/* 문서명 (파일 아이콘 + 뱃지 포함) */}
