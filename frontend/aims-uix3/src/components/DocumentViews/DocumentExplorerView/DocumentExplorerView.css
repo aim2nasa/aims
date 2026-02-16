@@ -1642,17 +1642,47 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
 
 /* === 모바일 반응형 (480px 이하) === */
 @media (max-width: 480px) {
-  /* 툴바: 줄바꿈 허용 + 컴팩트 */
+  /* 툴바: 줄바꿈 허용 + 극도로 컴팩트 */
   .doc-explorer-toolbar {
     flex-wrap: wrap;
-    gap: 4px;
-    padding: 4px 8px;
+    gap: 2px 3px;
+    padding: 3px 8px;
   }
 
-  /* 정렬: 전체 폭 차지하여 별도 줄에 표시 */
+  /* 빠른필터 + 액션 + 정렬을 한 줄에 넣기 위해 내부 간격 최소화 */
+  .doc-explorer-toolbar__quick-filters {
+    gap: 1px;
+  }
+
+  .doc-explorer-toolbar__filter-chip {
+    padding: 1px 4px;
+    font-size: 9px;
+  }
+
+  /* 달력 버튼: 숨김 (공간 절약) */
+  .doc-explorer-toolbar__date-jump {
+    display: none;
+  }
+
+  /* 액션 버튼 컴팩트 */
+  .doc-explorer-toolbar__actions {
+    gap: 1px;
+  }
+
+  .doc-explorer-toolbar__expand-btn,
+  .doc-explorer-toolbar__thumbnail-btn {
+    width: 22px;
+    height: 22px;
+  }
+
+  .doc-explorer-toolbar__filename-mode-btn {
+    padding: 1px 3px;
+    font-size: 9px;
+  }
+
+  /* 정렬: 한 줄에 자연스럽게 배치 */
   .doc-explorer-toolbar__sort {
-    width: 100%;
-    gap: 4px;
+    gap: 1px;
   }
 
   .doc-explorer-toolbar__sort-label {
@@ -1660,11 +1690,11 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
   }
 
   .doc-explorer-toolbar__sort-buttons {
-    gap: 2px;
+    gap: 1px;
   }
 
   .doc-explorer-toolbar__sort-btn {
-    padding: 3px 6px;
+    padding: 1px 3px;
     font-size: 9px;
   }
 
@@ -1677,13 +1707,6 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
   .doc-explorer-toolbar__search {
     max-width: none;
     flex: 1 1 auto;
-  }
-
-  /* 액션 버튼 */
-  .doc-explorer-toolbar__expand-btn,
-  .doc-explorer-toolbar__thumbnail-btn {
-    width: 32px;
-    height: 32px;
   }
 
   /* 트리 컨테이너 */
