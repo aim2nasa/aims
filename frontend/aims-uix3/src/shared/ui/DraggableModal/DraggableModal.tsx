@@ -14,6 +14,7 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useModalDragResize } from '../../../hooks/useModalDragResize'
 import { useDeviceOrientation } from '../../../hooks/useDeviceOrientation'
+import { useVirtualKeyboard } from '../../../hooks/useVirtualKeyboard'
 import { useEscapeKey, useBodyOverflow, useBackdropClick, useBackButton } from '../Modal/hooks/useModalCore'
 import { CloseButton } from '@/shared/ui/CloseButton'
 import Tooltip from '../Tooltip'
@@ -105,6 +106,9 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   // 모바일 감지: useDeviceOrientation 훅으로 폰 가로 모드도 대응
   const { isMobileLayout: isMobile } = useDeviceOrientation()
 
+  // 📱 모바일 가상 키보드 대응 (모든 DraggableModal에 자동 적용)
+  const { isKeyboardOpen, viewportHeight, offsetTop } = useVirtualKeyboard(visible && isMobile)
+
   // Drag & Resize 기능
   const modal = useModalDragResize({
     initialWidth,
@@ -130,8 +134,11 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
       role="presentation"
     >
       <div
-        className={`draggable-modal ${modal.isMaximized ? 'draggable-modal--maximized' : ''} ${modal.isImmersive ? 'draggable-modal--immersive' : ''} ${className}`}
-        style={isMobile ? undefined : modal.modalStyle}
+        className={`draggable-modal ${modal.isMaximized ? 'draggable-modal--maximized' : ''} ${modal.isImmersive ? 'draggable-modal--immersive' : ''} ${isKeyboardOpen ? 'draggable-modal--keyboard-open' : ''} ${className}`}
+        style={isMobile
+          ? (isKeyboardOpen ? { height: `${viewportHeight}px`, maxHeight: `${viewportHeight}px`, top: `${offsetTop}px` } : undefined)
+          : modal.modalStyle
+        }
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

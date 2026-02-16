@@ -13,12 +13,39 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { Customer } from '@/entities/customer/model';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
+import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
 import { DraggableModal } from '../DraggableModal';
 import { Button } from '../Button';
 import { SFSymbol } from '../../../components/SFSymbol/SFSymbol';
 import { SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol/SFSymbol.types';
 import { formatDate } from '@/shared/lib/timeUtils';
 import './CustomerSelectorModal.css';
+
+// 📱 디바이스별 칼럼 구성
+type ColumnKey = 'name' | 'birth' | 'gender' | 'phone' | 'email' | 'address' | 'type';
+
+interface ColumnConfig {
+  widths: number[];
+  keys: ColumnKey[];
+}
+
+// 데스크톱: 7칼럼
+const DESKTOP_COLUMNS: ColumnConfig = {
+  widths: [14, 9, 5, 12, 18, 25, 17],
+  keys: ['name', 'birth', 'gender', 'phone', 'email', 'address', 'type'],
+};
+
+// 모바일 세로: 4칼럼 (이름, 생년월일, 전화, 유형)
+const MOBILE_PORTRAIT_COLUMNS: ColumnConfig = {
+  widths: [30, 22, 28, 20],
+  keys: ['name', 'birth', 'phone', 'type'],
+};
+
+// 모바일 가로: 5칼럼 (이름, 생년월일, 성별, 전화, 유형)
+const MOBILE_LANDSCAPE_COLUMNS: ColumnConfig = {
+  widths: [25, 20, 12, 25, 18],
+  keys: ['name', 'birth', 'gender', 'phone', 'type'],
+};
 
 export interface CustomerSelectorModalProps {
   /** 모달 표시 여부 */
@@ -64,6 +91,16 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   // CustomerDocument 훅 사용
   const { customers: allCustomers, isLoading, loadCustomers } = useCustomerDocument();
 
+  // 📱 디바이스 감지
+  const { isMobileLayout: isMobile, isLandscape, isPhoneLandscape } = useDeviceOrientation();
+
+  // 📱 활성 칼럼 구성 (디바이스별)
+  const activeColumns = useMemo<ColumnConfig>(() => {
+    if (!isMobile) return DESKTOP_COLUMNS;
+    if (isLandscape || isPhoneLandscape) return MOBILE_LANDSCAPE_COLUMNS;
+    return MOBILE_PORTRAIT_COLUMNS;
+  }, [isMobile, isLandscape, isPhoneLandscape]);
+
   // 검색 쿼리
   const [searchQuery, setSearchQuery] = useState('');
   // 활성 탭 ('all' | 'personal' | 'corporate')
@@ -83,9 +120,12 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   // 정렬 상태 (칼럼명, 오름차순/내림차순)
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   // 칼럼 폭 상태 (비율 기반, 합계 100%)
-  // [이름, 생년월일, 성별, 전화, 이메일, 주소, 유형]
-  const initialColumnWidthRatios = [14, 9, 5, 12, 18, 25, 17]; // %
-  const [columnWidthRatios, setColumnWidthRatios] = useState<number[]>(initialColumnWidthRatios);
+  const [columnWidthRatios, setColumnWidthRatios] = useState<number[]>(activeColumns.widths);
+
+  // 디바이스 모드 변경 시 칼럼 비율 리셋
+  useEffect(() => {
+    setColumnWidthRatios(activeColumns.widths);
+  }, [activeColumns]);
 
   // 모달 열릴 때 전체 고객 로드
   useEffect(() => {
@@ -244,8 +284,8 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
 
   // 칼럼 폭 초기화
   const resetColumnWidths = useCallback(() => {
-    setColumnWidthRatios(initialColumnWidthRatios);
-  }, []);
+    setColumnWidthRatios(activeColumns.widths);
+  }, [activeColumns]);
 
   // 표시할 고객 목록 (탭 + 초성 필터링 + 정렬)
   const displayedCustomers = useMemo(() => {
@@ -401,7 +441,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
             placeholder="고객 이름 또는 전화번호 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            autoFocus
+            autoFocus={!isMobile}
           />
         </div>
       </div>
@@ -565,116 +605,55 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
               className="customer-selector-modal__table-header"
               style={{ gridTemplateColumns: columnWidthRatios.map(w => `${w}%`).join(' ') }}
             >
-              <div className="header-name sortable" onClick={() => handleSort('name')}>
-                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
-                  <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
-                </svg>
-                <span>이름</span>
-                {sortConfig?.key === 'name' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
-                <div
-                  className="column-resize-handle"
-                  onMouseDown={(e) => handleColumnResize(e, 0)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="header-birth sortable" onClick={() => handleSort('birth')}>
-                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <rect x="2" y="10" width="12" height="3" rx="0.5" fill="var(--cake-bottom)"/>
-                  <rect x="3" y="7" width="10" height="3" rx="0.5" fill="var(--cake-top)"/>
-                  <rect x="4" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/>
-                  <rect x="6.5" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/>
-                  <rect x="9" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/>
-                  <ellipse cx="4.75" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
-                  <ellipse cx="7.25" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
-                  <ellipse cx="9.75" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
-                </svg>
-                <span>생년월일</span>
-                {sortConfig?.key === 'birth' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
-                <div
-                  className="column-resize-handle"
-                  onMouseDown={(e) => handleColumnResize(e, 1)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="header-gender sortable" onClick={() => handleSort('gender')}>
-                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <circle cx="5" cy="6" r="2" fill="currentColor"/>
-                  <path d="M5 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
-                  <circle cx="11" cy="6" r="2" fill="currentColor"/>
-                  <path d="M11 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
-                </svg>
-                <span>성별</span>
-                {sortConfig?.key === 'gender' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
-                <div
-                  className="column-resize-handle"
-                  onMouseDown={(e) => handleColumnResize(e, 2)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="header-phone sortable" onClick={() => handleSort('phone')}>
-                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
-                </svg>
-                <span>전화</span>
-                {sortConfig?.key === 'phone' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
-                <div
-                  className="column-resize-handle"
-                  onMouseDown={(e) => handleColumnResize(e, 3)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="header-email sortable" onClick={() => handleSort('email')}>
-                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <rect x="1" y="4" width="14" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                  <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                </svg>
-                <span>이메일</span>
-                {sortConfig?.key === 'email' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
-                <div
-                  className="column-resize-handle"
-                  onMouseDown={(e) => handleColumnResize(e, 4)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="header-address sortable" onClick={() => handleSort('address')}>
-                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/>
-                </svg>
-                <span>주소</span>
-                {sortConfig?.key === 'address' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
-                <div
-                  className="column-resize-handle"
-                  onMouseDown={(e) => handleColumnResize(e, 5)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="header-type sortable" onClick={() => handleSort('type')}>
-                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
-                </svg>
-                <span>유형</span>
-                {sortConfig?.key === 'type' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
-                <div
-                  className="column-resize-handle"
-                  onMouseDown={(e) => handleColumnResize(e, 6)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
+              {activeColumns.keys.map((key, colIndex) => {
+                const headerConfig: Record<ColumnKey, { className: string; sortKey: string; label: string; icon: React.ReactNode }> = {
+                  name: {
+                    className: 'header-name', sortKey: 'name', label: '이름',
+                    icon: <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="5" r="2.5" fill="currentColor"/><path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/></svg>,
+                  },
+                  birth: {
+                    className: 'header-birth', sortKey: 'birth', label: '생년월일',
+                    icon: <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16"><rect x="2" y="10" width="12" height="3" rx="0.5" fill="var(--cake-bottom)"/><rect x="3" y="7" width="10" height="3" rx="0.5" fill="var(--cake-top)"/><rect x="4" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/><rect x="6.5" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/><rect x="9" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/><ellipse cx="4.75" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/><ellipse cx="7.25" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/><ellipse cx="9.75" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/></svg>,
+                  },
+                  gender: {
+                    className: 'header-gender', sortKey: 'gender', label: '성별',
+                    icon: <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16"><circle cx="5" cy="6" r="2" fill="currentColor"/><path d="M5 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/><circle cx="11" cy="6" r="2" fill="currentColor"/><path d="M11 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/></svg>,
+                  },
+                  phone: {
+                    className: 'header-phone', sortKey: 'phone', label: '전화',
+                    icon: <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16"><path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/></svg>,
+                  },
+                  email: {
+                    className: 'header-email', sortKey: 'email', label: '이메일',
+                    icon: <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16"><rect x="1" y="4" width="14" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/><path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/></svg>,
+                  },
+                  address: {
+                    className: 'header-address', sortKey: 'address', label: '주소',
+                    icon: <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16"><path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/></svg>,
+                  },
+                  type: {
+                    className: 'header-type', sortKey: 'type', label: '유형',
+                    icon: <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16"><path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/></svg>,
+                  },
+                };
+                const col = headerConfig[key];
+                return (
+                  <div key={key} className={`${col.className} sortable`} onClick={() => handleSort(col.sortKey)}>
+                    {col.icon}
+                    <span>{col.label}</span>
+                    {sortConfig?.key === col.sortKey && (
+                      <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                    {!isMobile && (
+                      <div
+                        className="column-resize-handle"
+                        onMouseDown={(e) => handleColumnResize(e, colIndex)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -703,26 +682,15 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 const isCorporate = customerType === '법인';
                 const isDisabled = disabledCustomerIds?.has(customer._id) || false;
 
-                return (
-                  <div
-                    key={customer._id}
-                    className={`customer-selector-modal__customer-row ${
-                      selectedCustomer?._id === customer._id ? 'selected' : ''
-                    } ${isDisabled ? 'disabled' : ''}`}
-                    style={{ gridTemplateColumns: columnWidthRatios.map(w => `${w}%`).join(' ') }}
-                    onClick={() => handleSelectCustomer(customer)}
-                    onDoubleClick={() => handleDoubleClickCustomer(customer)}
-                    title={isDisabled ? disabledTooltip : undefined}
-                  >
-                    <div className="cell-name">
-                      {customer.personal_info?.name || '이름 없음'}
-                    </div>
-                    <div className="cell-birth">{birthDisplay}</div>
-                    <div className="cell-gender">{genderDisplay}</div>
-                    <div className="cell-phone">{customer.personal_info?.mobile_phone || '-'}</div>
-                    <div className="cell-email" title={email}>{emailDisplay}</div>
-                    <div className="cell-address" title={fullAddress}>{addressDisplay}</div>
-                    <div className="cell-type">
+                const cellRenderers: Record<ColumnKey, React.ReactNode> = {
+                  name: <div key="name" className="cell-name">{customer.personal_info?.name || '이름 없음'}</div>,
+                  birth: <div key="birth" className="cell-birth">{birthDisplay}</div>,
+                  gender: <div key="gender" className="cell-gender">{genderDisplay}</div>,
+                  phone: <div key="phone" className="cell-phone">{customer.personal_info?.mobile_phone || '-'}</div>,
+                  email: <div key="email" className="cell-email" title={email}>{emailDisplay}</div>,
+                  address: <div key="address" className="cell-address" title={fullAddress}>{addressDisplay}</div>,
+                  type: (
+                    <div key="type" className="cell-type">
                       {isCorporate ? (
                         <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon customer-type-icon--corporate">
                           <circle cx="10" cy="10" r="10" opacity="0.2" />
@@ -736,6 +704,21 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                         </svg>
                       )}
                     </div>
+                  ),
+                };
+
+                return (
+                  <div
+                    key={customer._id}
+                    className={`customer-selector-modal__customer-row ${
+                      selectedCustomer?._id === customer._id ? 'selected' : ''
+                    } ${isDisabled ? 'disabled' : ''}`}
+                    style={{ gridTemplateColumns: columnWidthRatios.map(w => `${w}%`).join(' ') }}
+                    onClick={() => handleSelectCustomer(customer)}
+                    onDoubleClick={() => handleDoubleClickCustomer(customer)}
+                    title={isDisabled ? disabledTooltip : undefined}
+                  >
+                    {activeColumns.keys.map(key => cellRenderers[key])}
                   </div>
                 );
               })

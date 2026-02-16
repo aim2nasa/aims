@@ -488,10 +488,16 @@ html[data-theme="dark"] .draggable-modal-backdrop--transparent .draggable-modal 
   .draggable-modal {
     width: 100vw;
     max-width: 100vw;
-    height: 90vh;
-    max-height: 90vh;
+    height: 100dvh;
+    max-height: 100dvh;
     border-radius: 16px 16px 0 0;
     animation: dmSlideUp var(--duration-normal) var(--easing-ease-out);
+  }
+
+  /* 📱 키보드 열림 시: JS가 height/top을 직접 제어, 부드러운 전환 */
+  .draggable-modal--keyboard-open {
+    transition: height 0.15s ease-out, max-height 0.15s ease-out, top 0.15s ease-out;
+    border-radius: 0;
   }
 
   /* 드래그/리사이즈 비활성화 */

@@ -572,6 +572,170 @@ html[data-theme="dark"] .customer-selector-modal__customer-row.selected:hover {
   justify-self: end;
 }
 
+/* ===== 📱 모바일 세로 (768px 이하) ===== */
+
+@media (max-width: 768px) {
+  /* 리스트: 가용 공간 전체 사용 (고정 max-height 제거) */
+  .customer-selector-modal__list {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+  }
+
+  /* 행: 44px 터치 영역 확보 */
+  .customer-selector-modal__customer-row {
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    padding: var(--spacing-2) var(--spacing-3);
+  }
+
+  /* 검색 입력: iOS 자동 줌 방지 (16px 이상) */
+  .customer-selector-modal__search-input {
+    font-size: max(16px, var(--font-size-sm));
+  }
+
+  /* 탭: 컴팩트 */
+  .customer-selector-modal__tabs {
+    margin-bottom: var(--spacing-1);
+  }
+
+  .customer-selector-modal__tab {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+
+  /* 초성 필터: 가로 스크롤 (flex-wrap 제거) */
+  .customer-selector-modal__initials {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: var(--spacing-1) var(--spacing-2);
+    margin-bottom: var(--spacing-2);
+    gap: 3px;
+  }
+
+  .customer-selector-modal__initials::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 초성 버튼: 터치 친화적 크기 */
+  .customer-selector-modal__initial {
+    min-width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .customer-selector-modal__initial-type-toggle {
+    flex-shrink: 0;
+  }
+
+  /* 필터 상태 */
+  .customer-selector-modal__filter-status {
+    flex-shrink: 0;
+  }
+
+  /* 칼럼 리사이즈 핸들: 모바일에서 숨김 */
+  .column-resize-handle {
+    display: none;
+  }
+
+  /* 푸터: safe-area 대응 */
+  .customer-selector-modal__footer-buttons {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ===== 📱 폰 가로 모드 ===== */
+
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .customer-selector-modal__list {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .customer-selector-modal__customer-row {
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+  }
+
+  .customer-selector-modal__search {
+    margin-bottom: var(--spacing-1);
+  }
+
+  .customer-selector-modal__tabs {
+    margin-bottom: var(--spacing-1);
+  }
+
+  .customer-selector-modal__tab {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+
+  /* 초성 필터: 가로 스크롤 + 컴팩트 */
+  .customer-selector-modal__initials {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: var(--spacing-1);
+    gap: 2px;
+    margin-bottom: var(--spacing-1);
+  }
+
+  .customer-selector-modal__initials::-webkit-scrollbar {
+    display: none;
+  }
+
+  .customer-selector-modal__initial {
+    min-width: 26px;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  .column-resize-handle {
+    display: none;
+  }
+}
+
+/* ===== 📱 키보드 열림 시: DraggableModal이 keyboard-open 클래스 추가 ===== */
+
+.draggable-modal--keyboard-open .customer-selector-modal__initials {
+  display: none;
+}
+
+.draggable-modal--keyboard-open .customer-selector-modal__tabs {
+  margin-bottom: 0;
+}
+
+.draggable-modal--keyboard-open .customer-selector-modal__search {
+  margin-bottom: var(--spacing-1);
+}
+
+/* ===== 터치 기기: 초성 버튼 44px 터치 영역 ===== */
+
+@media (pointer: coarse) {
+  .customer-selector-modal__initial,
+  .customer-selector-modal__initial-type-toggle {
+    position: relative;
+  }
+
+  .customer-selector-modal__initial::after,
+  .customer-selector-modal__initial-type-toggle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 /* ===== Animations ===== */
 
 /* 선택 시 애니메이션 제거 */
