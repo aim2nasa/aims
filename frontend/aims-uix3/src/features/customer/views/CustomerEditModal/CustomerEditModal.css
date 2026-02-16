@@ -407,8 +407,8 @@ html[data-theme="dark"] .customer-edit-modal-memo__textarea:focus {
   color: var(--color-text-tertiary);
 }
 
-/* ===== 📱 모바일 반응형 (480px 이하) ===== */
-@media (max-width: 480px) {
+/* ===== 📱 모바일 반응형 (768px 이하) ===== */
+@media (max-width: 768px) {
   .customer-edit-modal {
     max-width: 100%;
     max-height: 95vh;

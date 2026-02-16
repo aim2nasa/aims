@@ -64,19 +64,18 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
   customer,
   onSuccess,
 }) => {
-  // 모바일 가로보기 컴팩트 감지
-  // Samsung Internet 등 모바일 브라우저는 뷰포트 높이가 500px 이상일 수 있음 → 600px으로 확대
+  // 모바일 컴팩트 감지 (가로보기 + 세로 모바일 모두 적용)
   const [isCompact, setIsCompact] = useState(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    return w > h && h <= 600;
+    return (w > h && h <= 600) || w <= 768;
   });
 
   useEffect(() => {
     const check = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      setIsCompact(w > h && h <= 600);
+      setIsCompact((w > h && h <= 600) || w <= 768);
     };
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
