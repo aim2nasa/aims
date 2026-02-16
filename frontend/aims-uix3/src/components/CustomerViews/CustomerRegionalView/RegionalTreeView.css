@@ -642,8 +642,9 @@ html[data-theme="dark"] .type-filter-separator {
     flex-basis: auto;
   }
 
-  /* 전체보기 버튼 숨김 */
+  /* 전체보기 버튼, 라벨("전체 고객", "지역", "구/군") 숨김 */
   .regional-tree-stats .tree-actions { display: none; }
+  .regional-tree-stats .stat-label { display: none; }
 }
 
 /* =============================================
