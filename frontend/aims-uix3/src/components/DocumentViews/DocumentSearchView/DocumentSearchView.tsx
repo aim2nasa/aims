@@ -1814,7 +1814,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                           <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
-                      <h3 className="guide-title">상세 문서검색 사용 방법</h3>
+                      <h3 className="guide-title">사용 방법</h3>
                     </div>
 
                     <div className="guide-content">
@@ -1822,12 +1822,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <div className="guide-step">
                           <span className="step-number">1</span>
                           <div className="step-content">
-                            <h4 className="step-title">고객 선택 (선택사항)</h4>
-                            <p className="step-description">"고객선택" 버튼으로 특정 고객 지정 가능</p>
-                            <p className="step-description">• 미선택: 모든 고객 문서 검색</p>
-                            <p className="step-description">• 선택: 해당 고객 문서만 검색 (더 빠르고 정확)</p>
-                            <p className="step-description">• 최근 선택한 5명이 드롭다운에 표시 (첫 사용시 비어있음)</p>
-                            <p className="step-description">📌 키워드 검색과 질문 검색 모두 지원</p>
+                            <h4 className="step-title">고객 선택</h4>
+                            <p className="step-description">특정 고객을 선택하면 해당 고객 문서만 검색합니다</p>
                           </div>
                         </div>
 
@@ -1845,42 +1841,24 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             <h4 className="step-title">검색 모드 선택</h4>
                             <div className="mode-options">
                               <div className="mode-option">
-                                <span className="mode-badge mode-keyword">키워드 검색 (기본)</span>
-                                <p className="mode-description">• 특정 단어가 포함된 문서를 정확히 찾을 때</p>
-                                <p className="mode-description">• AND: 입력한 모든 키워드가 포함된 문서 검색</p>
-                                <p className="mode-description">• OR: 입력한 키워드 중 하나 이상 포함된 문서 검색</p>
+                                <span className="mode-badge mode-keyword">키워드 검색</span>
+                                <p className="mode-description">AND: 모든 키워드 포함</p>
+                                <p className="mode-description">OR: 하나 이상 포함</p>
                               </div>
                               <div className="mode-option">
                                 <span className="mode-badge mode-ai">질문 검색</span>
-                                <p className="mode-description">• 질문으로 문서에서 답을 찾을 때</p>
-                                <p className="mode-description">• 예: "암 진단 시 보험금 얼마 받나요?"</p>
-                                <p className="mode-description">📌 크레딧을 사용합니다</p>
+                                <p className="mode-description">자연어로 질문하여 답을 검색</p>
+                                <p className="mode-description mode-description--credit">크레딧 사용</p>
                               </div>
                             </div>
-                          </div>
-                        </div>
-
-                        <div className="guide-step">
-                          <span className="step-number">4</span>
-                          <div className="step-content">
-                            <h4 className="step-title">검색 실행</h4>
-                            <p className="step-description">검색 버튼을 클릭하거나 Enter를 눌러주세요</p>
                           </div>
                         </div>
                       </div>
 
                       <div className="guide-tips">
-                        <h4 className="tips-title">
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path className="lightbulb-bulb" d="M12 3C8.68629 3 6 5.68629 6 9C6 11.4363 7.4152 13.5392 9.42857 14.3572V17C9.42857 17.5523 9.87629 18 10.4286 18H13.5714C14.1237 18 14.5714 17.5523 14.5714 17V14.3572C16.5848 13.5392 18 11.4363 18 9C18 5.68629 15.3137 3 12 3Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          검색 팁
-                        </h4>
                         <ul className="tips-list">
-                          <li>특정 고객 문서만 찾는다면 고객을 먼저 선택하세요</li>
-                          <li>AND/OR 모드로 여러 단어 검색 조건을 조절할 수 있습니다</li>
-                          <li>질문 검색은 "보험금 청구 절차는?" 같은 질문형으로 입력하세요</li>
+                          <li>고객을 먼저 선택하면 더 빠르고 정확합니다</li>
+                          <li>질문 검색 예: "암 진단 시 보험금은?"</li>
                         </ul>
                       </div>
                     </div>

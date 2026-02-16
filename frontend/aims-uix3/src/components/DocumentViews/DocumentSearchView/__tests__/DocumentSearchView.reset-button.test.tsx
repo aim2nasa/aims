@@ -197,7 +197,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
 
     // 초기 상태 가이드가 표시되어야 함
     await waitFor(() => {
-      expect(screen.getByText('상세 문서검색 사용 방법')).toBeInTheDocument()
+      expect(screen.getByText('사용 방법')).toBeInTheDocument()
     })
   })
 

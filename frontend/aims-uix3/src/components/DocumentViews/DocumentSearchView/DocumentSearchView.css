@@ -1574,9 +1574,9 @@ html[data-theme="dark"] .search-guide {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 28px;
-  padding-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--color-ios-separator-light);
 }
 
@@ -1624,18 +1624,18 @@ html[data-theme="dark"] .guide-title {
 .guide-content {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 16px;
 }
 
 .guide-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 .guide-step {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-start;
 }
 
@@ -1696,14 +1696,14 @@ html[data-theme="dark"] .step-description {
 
 .mode-options {
   display: flex;
-  gap: 24px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 8px;
   width: 100%;
 }
 
 .mode-option {
   flex: 1;
-  padding: 12px;
+  padding: 10px;
   background: var(--color-ios-bg-tertiary-light);
   border-radius: 10px;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
@@ -1755,12 +1755,22 @@ html[data-theme="dark"] .mode-description {
   color: var(--color-ios-text-tertiary-dark);
 }
 
+.mode-description--credit {
+  font-size: var(--font-size-caption-2);
+  color: var(--color-ios-text-tertiary-light);
+  opacity: 0.7;
+}
+
+html[data-theme="dark"] .mode-description--credit {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
 /* 검색 팁 */
 
 .guide-tips {
-  padding: 16px;
+  padding: 10px 12px;
   background: var(--color-ios-bg-tertiary-light);
-  border-radius: 10px;
+  border-radius: 8px;
   border-left: 3px solid var(--color-ios-blue-light);
 }
 
@@ -1796,8 +1806,8 @@ html[data-theme="dark"] .tips-title {
   font-family: var(--font-family-text);
   font-size: var(--font-size-caption-1); /* 12px - FONT_RULES.md: 리스트 항목 (서브 제목보다 작게) */
   color: var(--color-ios-text-secondary-light);
-  line-height: 1.5;
-  margin-bottom: 8px;
+  line-height: 1.4;
+  margin-bottom: 4px;
 }
 
 html[data-theme="dark"] .tips-list li {
@@ -2427,44 +2437,40 @@ html[data-theme="dark"] .doc-search-highlight--current {
   }
 
   .guide-header {
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    gap: 8px;
-  }
-
-  .guide-title {
-    font-size: var(--font-size-footnote);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    gap: 6px;
   }
 
   .guide-content {
-    gap: 16px;
-  }
-
-  .guide-section {
     gap: 12px;
   }
 
-  .guide-step {
+  .guide-section {
     gap: 10px;
+  }
+
+  .guide-step {
+    gap: 8px;
   }
 
   /* 모드 옵션: 세로 스택 */
   .mode-options {
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
 
   .mode-option {
-    padding: 10px;
+    padding: 8px;
   }
 
   /* 검색 팁: 컴팩트 */
   .guide-tips {
-    padding: 10px;
+    padding: 8px 10px;
   }
 
   .tips-list {
-    padding-left: 16px;
+    padding-left: 14px;
   }
 
   /* 결과 행: 서브타이틀 1줄 제한 */
