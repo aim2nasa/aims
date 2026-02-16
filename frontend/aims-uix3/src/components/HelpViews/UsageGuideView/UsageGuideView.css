@@ -213,6 +213,37 @@
   color: var(--color-ios-cyan, #32ade6);
 }
 
+/* 신규 카테고리 아이콘 색상 (2026-02-16) */
+.usage-guide-view__category-icon--autoclicker {
+  background: transparent;
+  color: var(--color-ios-teal, #30b0c7);
+}
+
+.usage-guide-view__category-icon--ar {
+  background: transparent;
+  color: var(--color-ios-green, #34c759);
+}
+
+.usage-guide-view__category-icon--crs {
+  background: transparent;
+  color: var(--color-ios-purple, #af52de);
+}
+
+.usage-guide-view__category-icon--family-contract {
+  background: transparent;
+  color: var(--color-ios-mint, #00c7be);
+}
+
+.usage-guide-view__category-icon--ai-assistant {
+  background: transparent;
+  color: #bf5af2;
+}
+
+.usage-guide-view__category-icon--mobile {
+  background: transparent;
+  color: var(--color-ios-yellow, #ffcc00);
+}
+
 .usage-guide-view__category-svg {
   width: 18px;
   height: 18px;

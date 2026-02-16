@@ -136,6 +136,61 @@ const DocExplorerIcon = () => (
   </svg>
 );
 
+// AutoClicker - LeftPane CustomMenu 아이콘 동일
+const AutoClickerIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
+    <circle cx="19" cy="5" r="1.5" opacity="0.5"/>
+    <circle cx="21" cy="10" r="1" opacity="0.35"/>
+  </svg>
+);
+
+// AR Annual Report - 고객·계약·문서 등록 페이지 아이콘 동일
+const AnnualReportIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="usage-guide-view__category-svg">
+    <path d="M3 3V21H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M7 16L12 11L15 14L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M17 8H21V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// CRS 변액리포트 - 고객·계약·문서 등록 페이지 아이콘 동일
+const CrsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="usage-guide-view__category-svg">
+    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// 가족·법인계약 (그룹 아이콘)
+const FamilyContractIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <circle cx="9" cy="6" r="3" opacity="0.85"/>
+    <circle cx="17" cy="7" r="2.5" opacity="0.6"/>
+    <path d="M9 11c-3.5 0-6 1.5-6 4v1h12v-1c0-2.5-2.5-4-6-4z" opacity="0.85"/>
+    <path d="M17 11c2.5 0 4 1 4 3v1h-5" opacity="0.6"/>
+    <path d="M12 18h6v1c0 .5-.2 1-.8 1.2l-2.2.8-2.2-.8c-.6-.2-.8-.7-.8-1.2v-1z" opacity="0.5"/>
+  </svg>
+);
+
+// AI 어시스턴트 - 헤더 AI 버튼 아이콘 동일 (말풍선 + AI 텍스트)
+const AiAssistantIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 36 26" fill="none" className="usage-guide-view__category-svg">
+    <path d="M8 2C4.68629 2 2 4.68629 2 8V14C2 17.3137 4.68629 20 8 20H9V24L15 20H28C31.3137 20 34 17.3137 34 14V8C34 4.68629 31.3137 2 28 2H8Z" fill="currentColor" opacity="0.85"/>
+    <text x="18" y="12" textAnchor="middle" dominantBaseline="middle" fill="var(--color-bg-primary, white)" fontSize="12" fontWeight="800" fontFamily="system-ui, -apple-system, sans-serif">AI</text>
+  </svg>
+);
+
+// 모바일 (스마트폰 아이콘)
+const MobileIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <rect x="5" y="1" width="14" height="22" rx="3" opacity="0.85"/>
+    <rect x="7" y="4" width="10" height="14" rx="1" fill="currentColor" opacity="0.3"/>
+    <circle cx="12" cy="20" r="1" fill="currentColor" opacity="0.4"/>
+  </svg>
+);
+
 interface UsageGuideViewProps {
   visible: boolean;
   onClose: () => void;
@@ -152,6 +207,12 @@ const CATEGORY_ICONS: Record<string, ReactNode> = {
   'documents-all': <DocumentsAllIcon />,
   'doc-explorer': <DocExplorerIcon />,
   terminology: <TerminologyIcon />,
+  autoclicker: <AutoClickerIcon />,
+  ar: <AnnualReportIcon />,
+  crs: <CrsIcon />,
+  'family-contract': <FamilyContractIcon />,
+  'ai-assistant': <AiAssistantIcon />,
+  mobile: <MobileIcon />,
 };
 
 

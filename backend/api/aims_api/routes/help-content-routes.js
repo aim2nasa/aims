@@ -25,6 +25,11 @@ const FAQ_CATEGORY_LABELS = {
   'customer-view': '고객 조회',
   'document-view': '문서 조회',
   terminology: '용어 설명',
+  autoclicker: 'AutoClicker',
+  ar: 'Annual Report',
+  crs: '변액리포트',
+  mobile: '모바일',
+  'ai-assistant': 'AI 어시스턴트',
 };
 
 // 사용 가이드 카테고리 라벨 매핑
@@ -38,12 +43,19 @@ const USAGE_GUIDE_CATEGORY_LABELS = {
   'documents-all': '전체문서보기',
   'doc-explorer': '문서 탐색기',
   terminology: '용어 설명',
+  autoclicker: 'AutoClicker',
+  ar: 'Annual Report (AR)',
+  crs: '변액리포트 (CRS)',
+  'family-contract': '가족·법인계약',
+  'ai-assistant': 'AI 어시스턴트',
+  mobile: '모바일 사용법',
 };
 
 // 사용 가이드 카테고리 정렬 순서
 const USAGE_GUIDE_CATEGORY_ORDER = [
   'getting-started', 'doc-register', 'customer-register', 'excel-import',
-  'batch-document', 'customers-all', 'documents-all', 'doc-explorer', 'terminology'
+  'batch-document', 'customers-all', 'documents-all', 'doc-explorer', 'terminology',
+  'autoclicker', 'ar', 'crs', 'family-contract', 'ai-assistant', 'mobile'
 ];
 
 module.exports = (db, authenticateJWT, requireRole) => {
