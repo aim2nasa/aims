@@ -466,8 +466,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   const [expandedKeys, setExpandedKeys] = usePersistedState<string[]>('customer-regional-expanded', ['no-address'])
   const expandedKeysSet = useMemo(() => new Set(expandedKeys), [expandedKeys])
 
-  const [isAllExpanded, setIsAllExpanded] = useState(false)
-
   // 같은 고객 재선택을 감지하기 위한 타임스탬프
   const [selectionTimestamp, setSelectionTimestamp] = useState(0)
 
@@ -888,26 +886,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     return nodes
   }, [regionalGroups])
 
-  // 모두 펼치기/접기 토글 함수
-  const toggleExpandAll = () => {
-    if (isAllExpanded) {
-      // 모두 접기
-      setExpandedKeys([])
-      setIsAllExpanded(false)
-    } else {
-      // 모두 펼치기
-      const allKeys: string[] = []
-      treeData.forEach(node => {
-        allKeys.push(node.key)
-        if (node.children) {
-          node.children.forEach(child => allKeys.push(child.key))
-        }
-      })
-      setExpandedKeys(allKeys)
-      setIsAllExpanded(true)
-    }
-  }
-
   // 노드 확장/축소 토글
   const toggleNode = (key: string) => {
     setExpandedKeys(prev => {
@@ -917,11 +895,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       } else {
         newSet.add(key)
       }
-      // 개별 노드 토글 시 전체 확장 상태 업데이트
-      const totalNodes = treeData.reduce((count, node) => {
-        return count + 1 + (node.children ? node.children.length : 0)
-      }, 0)
-      setIsAllExpanded(newSet.size === totalNodes)
       return Array.from(newSet)
     })
   }
@@ -1286,19 +1259,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       <div className="regional-tree-content">
         {/* 트리 */}
         <div className="regional-tree-container">
-          {/* 모든 폴더 펼치기/접기 버튼 */}
-          <div className="tree-header-actions">
-            <Tooltip content={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}>
-              <button
-                type="button"
-                className="tree-action-btn tree-action-btn--icon-only"
-                onClick={toggleExpandAll}
-                aria-label={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
-              >
-                {isAllExpanded ? '▲' : '▼'}
-              </button>
-            </Tooltip>
-          </div>
           {treeData.map(node => renderTreeNode(node))}
         </div>
 
