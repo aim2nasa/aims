@@ -160,6 +160,18 @@
   }
 }
 
+/* === 📱 모바일 가로보기: 모달 공간 최대화 === */
+/* Portal로 <body>에 렌더링되므로 미디어쿼리로만 타겟팅 가능 */
+@media (orientation: landscape) and (max-height: 600px) {
+  .modal-backdrop {
+    padding: 4px;
+  }
+
+  .modal {
+    max-height: calc(100dvh - 8px);
+  }
+}
+
 /* === REDUCED MOTION === */
 
 @media (prefers-reduced-motion: reduce) {

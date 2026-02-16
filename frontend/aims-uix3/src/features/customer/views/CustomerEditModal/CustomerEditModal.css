@@ -434,3 +434,96 @@ html[data-theme="dark"] .customer-edit-modal-memo__textarea:focus {
     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* ===== 📱 모바일 가로보기 울트라 컴팩트 ===== */
+/* JS가 .customer-edit-modal--compact 클래스를 추가 (w > h && h <= 600px) */
+.customer-edit-modal--compact {
+  max-width: 520px;
+  max-height: calc(100dvh - 12px);
+}
+
+/* 헤더: 울트라 컴팩트 */
+.customer-edit-modal--compact .customer-edit-modal-header {
+  padding: 4px 12px;
+}
+
+.customer-edit-modal--compact .customer-edit-modal-title {
+  font-size: 13px;
+}
+
+/* 탭: 울트라 컴팩트 */
+.customer-edit-modal--compact .customer-edit-modal-tabs {
+  gap: 0;
+}
+
+.customer-edit-modal--compact .customer-edit-modal-tab {
+  padding: 4px 6px;
+  font-size: 11px;
+}
+
+/* 콘텐츠: 스크롤 가능 + 울트라 컴팩트 */
+.customer-edit-modal--compact .customer-edit-modal-content {
+  padding: 6px 12px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* 섹션 제목: 컴팩트 */
+.customer-edit-modal--compact .form-section__title {
+  padding: 2px 0;
+  font-size: 11px;
+}
+
+/* 폼 행: 울트라 컴팩트 간격 */
+.customer-edit-modal--compact .form-section__content {
+  gap: 1px;
+}
+
+.customer-edit-modal--compact .form-row {
+  gap: 1px;
+  padding: 2px 0;
+}
+
+.customer-edit-modal--compact .form-row__label {
+  font-size: 11px;
+  min-width: 52px;
+}
+
+.customer-edit-modal--compact .form-row__input input,
+.customer-edit-modal--compact .form-row__input select {
+  padding: 3px 8px;
+  font-size: 13px;
+}
+
+.customer-edit-modal--compact .radio-group {
+  gap: 10px;
+}
+
+.customer-edit-modal--compact .radio-option span {
+  font-size: 12px;
+}
+
+/* 메모: 1줄 컴팩트 */
+.customer-edit-modal--compact .customer-edit-modal-memo {
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.customer-edit-modal--compact .customer-edit-modal-memo__label {
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.customer-edit-modal--compact .customer-edit-modal-memo__textarea {
+  min-height: unset;
+  height: 28px;
+  padding: 4px 8px;
+  font-size: 12px;
+  resize: none;
+}
+
+/* 푸터: 울트라 컴팩트 */
+.customer-edit-modal--compact .customer-edit-modal-footer {
+  padding: 4px 12px;
+}

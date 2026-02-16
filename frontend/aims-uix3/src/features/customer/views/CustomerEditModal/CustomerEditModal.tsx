@@ -14,7 +14,7 @@
  * - 4개 탭: 기본 정보 / 연락처 정보 / 주소 정보 / 보험 정보
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Customer } from '@/entities/customer';
 import Modal from '@/shared/ui/Modal';
 import Button from '@/shared/ui/Button';
@@ -64,6 +64,24 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
   customer,
   onSuccess,
 }) => {
+  // 모바일 가로보기 컴팩트 감지
+  // Samsung Internet 등 모바일 브라우저는 뷰포트 높이가 500px 이상일 수 있음 → 600px으로 확대
+  const [isCompact, setIsCompact] = useState(() => {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    return w > h && h <= 600;
+  });
+
+  useEffect(() => {
+    const check = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      setIsCompact(w > h && h <= 600);
+    };
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   // Controller Hook
   const {
     formData,
@@ -145,7 +163,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
       size="lg"
       showHeader={false}
       backdropClosable={true}
-      className="customer-edit-modal"
+      className={`customer-edit-modal${isCompact ? ' customer-edit-modal--compact' : ''}`}
     >
       {/* 🍎 헤더 영역 - iOS Title Bar */}
       <div className="customer-edit-modal-header">
