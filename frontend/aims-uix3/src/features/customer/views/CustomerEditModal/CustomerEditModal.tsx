@@ -254,7 +254,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
       <div className="customer-edit-modal-footer">
         <Button
           variant="ghost"
-          size="md"
+          size="sm"
           onClick={onClose}
           disabled={isSubmitting}
           className="customer-edit-modal-button customer-edit-modal-button--cancel"
@@ -263,7 +263,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
         </Button>
         <Button
           variant="primary"
-          size="md"
+          size="sm"
           onClick={handleSaveClick}
           disabled={isSubmitting}
           loading={isSubmitting}

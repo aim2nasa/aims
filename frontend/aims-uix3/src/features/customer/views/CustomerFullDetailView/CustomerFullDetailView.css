@@ -2264,7 +2264,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
   }
 
   /* 🍎 액션 버튼 내 개별 버튼: 축소 방지 */
-  .customer-full-detail .customer-full-detail__actions .btn {
+  .customer-full-detail .customer-full-detail__actions .button {
     flex-shrink: 0;
     white-space: nowrap;
   }
@@ -2882,11 +2882,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
     flex-wrap: nowrap;
   }
 
-  .customer-full-detail__actions .btn {
+  .customer-full-detail__actions .button {
     flex-shrink: 0;
     white-space: nowrap;
-    font-size: 11px;
-    padding: 4px 8px;
   }
 
   /* 🍎 레이아웃 리셋 버튼 숨김 (모바일에서 리사이즈 불가) */
