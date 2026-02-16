@@ -1021,24 +1021,49 @@ html[data-theme="dark"] .document-type {
     padding: 12px;
   }
 
-  .document-item {
-    grid-template-columns: 20px 1fr 60px 28px;
-    gap: 8px;
-    height: 28px;
+  /* 헤더 컴팩트화 */
+  .library-unified-header {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  /* 최근 업데이트 텍스트 숨김 (공간 절약) */
+  .header-right-section .last-updated {
+    display: none;
+  }
+
+  /* 처리 현황 바 숨김 (카드 레이아웃에서 불필요) */
+  .document-library-view .processing-status-bar {
+    display: none;
+  }
+
+  /* 컬럼 헤더 숨김 — DocumentStatusList에서 card layout 사용 */
+  .document-list-header {
+    display: none;
+  }
+}
+
+/* === 폰 가로 모드: 높이 극도 절약 === */
+@media (max-height: 500px) and (min-width: 481px) {
+  .document-library-container {
+    padding: 2px 8px;
+    gap: 2px;
+  }
+
+  .document-library-view {
+    gap: 2px;
+  }
+
+  .library-unified-header {
     padding: 4px 8px;
+    margin-bottom: 0;
+    gap: 4px;
   }
 
-  .document-type {
-    display: none; /* 모바일에서 타입 숨김 */
-  }
-
-  .document-name {
-    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  }
-
-  .document-size,
-  .document-date {
-    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  /* 페이지네이션 컴팩트 */
+  .document-library-view .document-pagination {
+    padding: 2px 0;
+    gap: 4px;
   }
 }
 

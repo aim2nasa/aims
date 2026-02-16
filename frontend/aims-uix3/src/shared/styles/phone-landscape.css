@@ -221,11 +221,51 @@
   display: none;
 }
 
-/* 초성 필터바: 전체 숨김 (가로 모드에서 공간 부족) */
+/* 초성 필터바: 컴팩트 2줄 래핑 (가로 모드) */
 /* AllCustomersView, ContractAllView, DocumentLibraryView,
    DocumentExplorerView, RegionalTreeView, RelationshipView 등 */
 .layout-main--phone-landscape .initial-filter-bar {
-  display: none;
+  gap: 6px;
+  padding: 4px 8px;
+  align-items: flex-start;
+}
+
+.layout-main--phone-landscape .initial-filter-bar__initials {
+  flex-wrap: wrap;
+  overflow-x: visible;
+  gap: 2px;
+}
+
+.layout-main--phone-landscape .initial-filter-bar__initial {
+  min-width: 26px;
+  height: 26px;
+  font-size: 11px;
+  padding: 0 3px;
+  flex-shrink: 0;
+}
+
+.layout-main--phone-landscape .initial-filter-bar__type-toggle {
+  min-width: 40px;
+  height: 26px;
+  padding: 0 6px;
+}
+
+.layout-main--phone-landscape .initial-filter-bar__type-label {
+  font-size: 10px;
+}
+
+.layout-main--phone-landscape .initial-filter-bar__globe-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.layout-main--phone-landscape .initial-filter-bar__selected {
+  height: auto;
+  padding: 3px 6px 3px 8px;
+}
+
+.layout-main--phone-landscape .initial-filter-bar__selected-label {
+  font-size: 10px;
 }
 
 /* 컬럼 헤더 숨김 (카드 레이아웃이므로 불필요) */

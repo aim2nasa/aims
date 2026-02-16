@@ -318,6 +318,56 @@ html[data-theme="dark"] .initial-filter-bar__selected {
   }
 }
 
+/* === 폰 가로 모드: 컴팩트 2줄 래핑 (넓은 가로폭 활용) ===
+   740px 기준: 26px 버튼 + 2px gap = 28px/button
+   가용 너비 ~680px → 한 줄에 ~24개 → 한글 19개 = 1줄 완료
+   영문+숫자는 2줄 */
+@media (max-height: 500px) and (min-width: 481px) {
+  .initial-filter-bar {
+    gap: 6px;
+    padding: 4px 8px;
+    align-items: flex-start;
+  }
+
+  .initial-filter-bar__initials {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    gap: 2px;
+  }
+
+  .initial-filter-bar__initial {
+    min-width: 26px;
+    height: 26px;
+    font-size: 11px;
+    padding: 0 3px;
+    flex-shrink: 0;
+  }
+
+  .initial-filter-bar__type-toggle {
+    min-width: 40px;
+    height: 26px;
+    padding: 0 6px;
+  }
+
+  .initial-filter-bar__type-label {
+    font-size: 10px;
+  }
+
+  .initial-filter-bar__globe-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .initial-filter-bar__selected {
+    height: auto;
+    padding: 3px 6px 3px 8px;
+  }
+
+  .initial-filter-bar__selected-label {
+    font-size: 10px;
+  }
+}
+
 /* === 터치 기기: 초성 버튼 44px 터치 영역 확보 === */
 
 @media (pointer: coarse) {
