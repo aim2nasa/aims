@@ -1088,7 +1088,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 value=""
                 options={recentCustomerOptions}
                 onChange={handleRecentCustomerSelect}
-                width={150}
+                width={115}
                 aria-label="최근 선택한 고객"
               />
             )}

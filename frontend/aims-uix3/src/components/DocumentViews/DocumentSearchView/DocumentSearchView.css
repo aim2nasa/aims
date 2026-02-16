@@ -1398,9 +1398,15 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
 @media (hover: none) and (pointer: coarse) {
   .search-mode-segment,
   .keyword-mode-pill,
-  .search-button,
   .search-result-row {
     min-height: var(--spacing-11); /* 44px - iOS 최소 터치 영역 */
+  }
+
+  /* 검색 툴바 버튼/드롭다운은 높이 통일 (44px 적용 제외) */
+  .document-search-container .search-button,
+  .document-search-container .customer-select-button,
+  .document-search-container .ios-dropdown__trigger {
+    min-height: 28px;
   }
 }
 
@@ -2255,27 +2261,86 @@ html[data-theme="dark"] .doc-search-highlight--current {
   }
 }
 
-/* === 모바일 반응형 (480px 이하) === */
-@media (max-width: 480px) {
+/* === 태블릿/모바일 가로 반응형 (768px 이하) === */
+@media (max-width: 768px) {
   .document-search-container {
-    padding: 8px;
+    padding: 10px;
     gap: 8px;
   }
 
-  /* 검색바: 세로 스택 */
+  /* 검색바: 2행 wrap */
   .search-bar-wrapper {
     flex-wrap: wrap;
     gap: 6px;
   }
 
+  /* 검색 입력: 풀 width 차지 */
   .document-search-container .search-input-wrapper {
     flex: 1 1 100%;
     min-width: 0;
+    order: 2; /* 2행으로 이동 */
+  }
+
+  /* 모든 컨트롤 높이 28px 통일 */
+  .customer-select-button {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 10px;
+    min-width: unset;
+    font-size: var(--font-size-caption-1);
+  }
+
+  .document-search-container .ios-dropdown__trigger {
+    min-height: 28px;
+    height: 28px;
+    padding: 0 8px;
+    font-size: var(--font-size-caption-1);
+  }
+
+  .document-search-container .search-input {
+    height: 28px;
+  }
+
+  .document-search-container .search-button {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 10px;
+    min-width: unset;
+    font-size: var(--font-size-caption-1);
+  }
+
+  .reset-button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .selected-customer-display {
+    min-width: 0;
+    max-width: none;
+    height: 28px;
+    padding: 0 6px;
+    flex-shrink: 1;
+  }
+
+  /* 가이드: 전체 폭 */
+  .search-guide {
+    width: 100%;
+  }
+}
+
+/* === 모바일 반응형 (480px 이하) === */
+@media (max-width: 480px) {
+  .document-search-container {
+    padding: 8px;
+  }
+
+  .document-search-container .search-input-wrapper {
     padding: 2px 4px;
   }
 
   .document-search-container .search-input {
     padding: 3px 6px 3px 24px;
+    font-size: 16px; /* iOS zoom 방지 */
   }
 
   .document-search-container .search-icon {
@@ -2374,54 +2439,6 @@ html[data-theme="dark"] .doc-search-highlight--current {
     padding: 6px 8px;
   }
 
-  /* === 고객선택 버튼: 컴팩트 === */
-  .customer-select-button {
-    height: 28px;
-    min-height: 28px;
-    padding: 0 10px;
-    min-width: unset;
-    font-size: var(--font-size-caption-1);
-  }
-
-  /* 드롭다운 트리거: 다른 컨트롤과 높이 통일 */
-  .document-search-container .ios-dropdown__trigger {
-    min-height: 28px;
-    height: 28px;
-    padding: 0 10px;
-    font-size: var(--font-size-caption-1);
-  }
-
-  /* 선택된 고객: min-width 제거, 유연하게 */
-  .selected-customer-display {
-    min-width: 0;
-    max-width: none;
-    height: 28px;
-    padding: 0 8px;
-    flex-shrink: 1;
-  }
-
-  /* 검색 입력: iOS zoom 방지 */
-  .document-search-container .search-input {
-    font-size: 16px;
-    height: 28px;
-  }
-
-  /* 검색 버튼: 드롭다운/고객선택과 동일한 높이
-     터치 기기 min-height: 44px (line 1398) 오버라이드 필수 */
-  .document-search-container .search-button {
-    height: 28px;
-    min-height: 28px;
-    padding: 0 10px;
-    min-width: unset;
-    font-size: var(--font-size-caption-1);
-  }
-
-  /* 리셋 버튼: 터치 타겟 */
-  .reset-button {
-    width: 28px;
-    height: 28px;
-  }
-
   /* fulltext 버튼: 컴팩트 */
   .fulltext-button {
     height: 28px;
@@ -2429,11 +2446,10 @@ html[data-theme="dark"] .doc-search-highlight--current {
     font-size: var(--font-size-caption-2);
   }
 
-  /* === 가이드 섹션: 전체 폭 + 컴팩트 === */
+  /* === 가이드 섹션: 추가 컴팩트 === */
   .search-guide {
-    width: 100%;
-    padding: 12px;
-    border-radius: 12px;
+    padding: 10px;
+    border-radius: 10px;
   }
 
   .guide-header {
