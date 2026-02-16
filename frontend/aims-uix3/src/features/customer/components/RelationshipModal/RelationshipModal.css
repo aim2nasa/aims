@@ -256,3 +256,43 @@
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
+
+/* ===== 📱 모바일 컴팩트 ===== */
+@media (max-width: 480px) {
+  /* Modal 컴포넌트의 이중 패딩 제거 */
+  .relationship-modal .modal__content {
+    padding: 0;
+  }
+
+  .relationship-modal .modal__header {
+    padding: 10px 14px;
+  }
+
+  .relationship-modal .modal__footer {
+    padding: 8px 14px;
+  }
+
+  .relationship-modal__body {
+    padding: 10px 14px;
+  }
+
+  .relationship-modal__form {
+    gap: 12px;
+  }
+
+  .relationship-modal__field {
+    gap: 6px;
+  }
+
+  .relationship-modal__field-title {
+    font-size: 12px;
+  }
+
+  .relationship-modal__selector-button {
+    padding: 8px 12px;
+  }
+
+  .relationship-modal__button {
+    padding: 8px 14px;
+  }
+}
