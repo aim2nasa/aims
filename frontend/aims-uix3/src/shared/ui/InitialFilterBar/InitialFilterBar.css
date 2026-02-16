@@ -269,10 +269,10 @@ html[data-theme="dark"] .initial-filter-bar__selected {
   }
 }
 
-/* === 모바일 폰 세로 (480px 이하): 컴팩트 2줄 랩 그리드 ===
-   360px 화면 기준: 26px 버튼 + 2px gap = 28px/button
-   가용 너비 ~284px → 한 줄에 10개, 한글 19개 = 2줄 표시
-   수평 스크롤 제거 → 모든 초성 한눈에 보기 */
+/* === 모바일 폰 세로 (480px 이하): CSS Grid 10칼럼 강제 배치 ===
+   CSS Grid repeat(10, 1fr)로 컨테이너 너비와 무관하게 10칼럼 보장
+   한글 19개 = 2줄(10+9), 영문 26개 = 3줄, 숫자 10개 = 1줄
+   flex-wrap 방식은 부모 scrollbar/padding에 따라 3줄로 밀리는 문제 해결 */
 @media (max-width: 480px) {
   .initial-filter-bar {
     gap: 6px;
@@ -281,16 +281,23 @@ html[data-theme="dark"] .initial-filter-bar__selected {
   }
 
   .initial-filter-bar__initials {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
     overflow-x: visible;
     gap: 2px;
   }
 
+  /* Tooltip 래퍼(.tooltip-trigger)가 그리드 셀을 채우도록 */
+  .initial-filter-bar__initials > .tooltip-trigger {
+    display: flex;
+  }
+
   .initial-filter-bar__initial {
-    min-width: 24px;
+    width: 100%;
+    min-width: 0;
     height: 24px;
     font-size: 11px;
-    padding: 0 2px;
+    padding: 0;
   }
 
   .initial-filter-bar__type-toggle {
