@@ -349,6 +349,13 @@ html[data-theme="dark"] .quick-search__advanced-link:hover {
   }
 }
 
+/* 📱 폰 가로 모드 - AIMS와 검색창 사이 간격 확보 */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .quick-search {
+    margin-left: 8px;
+  }
+}
+
 /* 애니메이션 감소 모드 */
 @media (prefers-reduced-motion: reduce) {
   .quick-search__results {
