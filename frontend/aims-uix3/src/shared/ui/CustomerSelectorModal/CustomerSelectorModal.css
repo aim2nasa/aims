@@ -673,29 +673,34 @@ html[data-theme="dark"] .customer-selector-modal__customer-row.selected:hover {
     font-size: var(--font-size-xs);
   }
 
-  /* 초성 필터: CSS Grid 10칼럼 (세로 모드와 동일 패턴) */
+  /* 초성 필터: 가로 모드에서는 1줄 (가로폭 충분) */
   .customer-selector-modal__initials {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    overflow-x: visible;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     padding: var(--spacing-1);
     gap: 2px;
     margin-bottom: var(--spacing-1);
   }
 
+  .customer-selector-modal__initials::-webkit-scrollbar {
+    display: none;
+  }
+
   .customer-selector-modal__initial {
-    width: 100%;
-    min-width: 0;
+    min-width: 26px;
     height: 26px;
+    flex-shrink: 0;
   }
 
   .customer-selector-modal__initial-type-toggle {
-    width: 100%;
-    min-width: 0;
+    flex-shrink: 0;
   }
 
   .customer-selector-modal__filter-status {
-    grid-column: 1 / -1;
+    flex-shrink: 0;
   }
 
   .column-resize-handle {

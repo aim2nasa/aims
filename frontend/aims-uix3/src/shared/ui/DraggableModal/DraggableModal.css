@@ -657,6 +657,20 @@ html[data-theme="dark"] .draggable-modal-backdrop--transparent .draggable-modal 
   border-radius: 0;
 }
 
+/* 폰 가로 모드: 푸터 버튼 컴팩트 (전역) */
+.draggable-modal--phone-landscape .draggable-modal__footer button {
+  padding: 6px 16px;
+  font-size: var(--font-size-xs);
+  height: 32px;
+}
+
+/* 모바일 세로: 푸터 버튼 약간 축소 */
+.draggable-modal--mobile .draggable-modal__footer button {
+  padding: 8px 20px;
+  font-size: var(--font-size-sm);
+  height: 36px;
+}
+
 /* === 터치 기기: 헤더 버튼 터치 영역 확대 === */
 
 @media (pointer: coarse) {
