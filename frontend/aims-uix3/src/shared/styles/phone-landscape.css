@@ -61,18 +61,27 @@
   min-height: 250px;
 }
 
-.layout-main--phone-landscape .customer-full-detail .customer-full-detail__actions {
+/* 🍎 액션 버튼: 아이콘만 표시 + 울트라 컴팩트 */
+.layout-main--phone-landscape .customer-full-detail__actions {
   overflow-x: auto;
   flex-wrap: nowrap;
-  padding: 6px 8px;
+  padding: 2px 8px;
   gap: 4px;
+  border-bottom: none;
 }
 
-.layout-main--phone-landscape .customer-full-detail .customer-full-detail__actions .btn {
+.layout-main--phone-landscape .customer-full-detail__actions .btn {
   flex-shrink: 0;
   white-space: nowrap;
   font-size: 11px;
-  padding: 4px 8px;
+  padding: 2px 6px;
+  min-height: 24px;
+  min-width: 24px;
+}
+
+/* 버튼 텍스트 숨김 → 아이콘만 표시 (툴팁으로 기능 설명) */
+.layout-main--phone-landscape .customer-full-detail__actions .button__content {
+  display: none;
 }
 
 .layout-main--phone-landscape .customer-full-detail .customer-full-detail__reset-layout {
@@ -114,6 +123,147 @@
   font-size: 12px;
   padding: 3px 6px;
   white-space: nowrap;
+}
+
+/* ========================================
+ * 📱 CustomerFullDetailView - 모바일 가로보기 울트라 컴팩트
+ *
+ * 전략: 정보카드 1줄화, 탭 밑줄 스타일, 목록 행 축소
+ * → 콘텐츠 영역 최대화 (문서 1개 → 6~7개 표시)
+ *
+ * Before: 크롬 ~196px, 콘텐츠 ~90px
+ * After:  크롬 ~100px, 콘텐츠 ~190px
+ * ======================================== */
+
+/* 🍎 개인정보 카드: 3행 → 1줄 가로 배치 */
+.layout-main--phone-landscape .customer-full-detail__mobile-info-card {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.layout-main--phone-landscape .customer-full-detail__mobile-info-grid {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2px 12px;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.layout-main--phone-landscape .customer-full-detail__mobile-info-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.layout-main--phone-landscape .mobile-info-item {
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.layout-main--phone-landscape .mobile-info-label {
+  font-size: 10px;
+  min-width: auto;
+}
+
+.layout-main--phone-landscape .mobile-info-value {
+  font-size: 11px;
+}
+
+/* 🍎 섹션 탭: 밑줄 인디케이터로 탭 디자인 명확화 + 컴팩트 */
+.layout-main--phone-landscape .customer-full-detail__mobile-tabs {
+  padding: 0 6px;
+  gap: 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.layout-main--phone-landscape .mobile-tab {
+  padding: 4px 6px;
+  font-size: 11px;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.layout-main--phone-landscape .mobile-tab--active {
+  border-bottom-color: var(--color-primary);
+  box-shadow: none;
+  background: transparent;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.layout-main--phone-landscape .mobile-tab__count {
+  min-width: 14px;
+  height: 14px;
+  font-size: 9px;
+}
+
+/* 🍎 패널 헤더: 컴팩트 */
+.layout-main--phone-landscape .mobile-panel-header {
+  padding: 3px 8px;
+  min-height: 28px;
+  gap: 6px;
+}
+
+.layout-main--phone-landscape .mobile-panel-title {
+  font-size: 12px;
+}
+
+.layout-main--phone-landscape .mobile-panel-header .customer-full-detail__section-search {
+  max-width: 120px;
+}
+
+/* 🍎 문서 리스트: 컴팩트 행 높이 */
+.layout-main--phone-landscape .customer-documents-list-header {
+  height: 24px;
+  min-height: 24px;
+  padding: 2px 8px;
+  font-size: 10px;
+}
+
+.layout-main--phone-landscape .customer-documents-item {
+  height: 26px;
+  min-height: 26px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+/* 🍎 계약 리스트: 컴팩트 행 높이 */
+.layout-main--phone-landscape .customer-contracts-list-header {
+  height: 24px;
+  min-height: 24px;
+  padding: 2px 8px;
+}
+
+.layout-main--phone-landscape .customer-contracts-item {
+  height: 26px;
+  min-height: 26px;
+  padding: 2px 8px;
+}
+
+/* 🍎 보고서 리스트: 컴팩트 행 높이 */
+.layout-main--phone-landscape .annual-report-table-header,
+.layout-main--phone-landscape .customer-review-table-header {
+  height: 24px;
+  min-height: 24px;
+  padding: 2px 8px;
+}
+
+.layout-main--phone-landscape .annual-report-row,
+.layout-main--phone-landscape .customer-review-row {
+  height: 26px;
+  min-height: 26px;
+  padding: 2px 8px;
+}
+
+/* 🍎 페이지네이션: 울트라 컴팩트 */
+.layout-main--phone-landscape .document-pagination {
+  padding: 1px 6px;
+  height: 22px;
+}
+
+.layout-main--phone-landscape .customer-full-detail .document-pagination .pagination-limit {
+  display: none;
 }
 
 /* ========================================
