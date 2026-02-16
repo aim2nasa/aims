@@ -104,7 +104,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   onOpenPopup
 }) => {
   // 모바일 감지: useDeviceOrientation 훅으로 폰 가로 모드도 대응
-  const { isMobileLayout: isMobile } = useDeviceOrientation()
+  const { isMobileLayout: isMobile, isPhoneLandscape } = useDeviceOrientation()
 
   // 📱 모바일 가상 키보드 대응 (모든 DraggableModal에 자동 적용)
   const { isKeyboardOpen, viewportHeight, offsetTop } = useVirtualKeyboard(visible && isMobile)
@@ -134,7 +134,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
       role="presentation"
     >
       <div
-        className={`draggable-modal ${modal.isMaximized ? 'draggable-modal--maximized' : ''} ${modal.isImmersive ? 'draggable-modal--immersive' : ''} ${isKeyboardOpen ? 'draggable-modal--keyboard-open' : ''} ${className}`}
+        className={`draggable-modal ${isMobile ? 'draggable-modal--mobile' : ''} ${isPhoneLandscape ? 'draggable-modal--phone-landscape' : ''} ${modal.isMaximized ? 'draggable-modal--maximized' : ''} ${modal.isImmersive ? 'draggable-modal--immersive' : ''} ${isKeyboardOpen ? 'draggable-modal--keyboard-open' : ''} ${className}`}
         style={isMobile
           ? (isKeyboardOpen ? { height: `${viewportHeight}px`, maxHeight: `${viewportHeight}px`, top: `${offsetTop}px` } : undefined)
           : modal.modalStyle
