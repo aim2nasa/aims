@@ -605,35 +605,33 @@ html[data-theme="dark"] .customer-selector-modal__customer-row.selected:hover {
     font-size: var(--font-size-xs);
   }
 
-  /* 초성 필터: 가로 스크롤 (flex-wrap 제거) */
+  /* 초성 필터: CSS Grid 10칼럼 (2줄 배치, 전체문서보기와 동일 패턴)
+     한글 19개 + 토글 1개 = 20 → Row1: 토글+9개, Row2: 10개
+     flex-wrap는 가용 너비에 따라 줄수 변동 → grid로 강제 고정 */
   .customer-selector-modal__initials {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    overflow-x: visible;
     padding: var(--spacing-1) var(--spacing-2);
     margin-bottom: var(--spacing-2);
     gap: 3px;
   }
 
-  .customer-selector-modal__initials::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* 초성 버튼: 터치 친화적 크기 */
+  /* 초성 버튼: 그리드 셀 채우기 */
   .customer-selector-modal__initial {
-    min-width: 36px;
-    height: 36px;
-    flex-shrink: 0;
+    width: 100%;
+    min-width: 0;
+    height: 32px;
   }
 
   .customer-selector-modal__initial-type-toggle {
-    flex-shrink: 0;
+    width: 100%;
+    min-width: 0;
   }
 
-  /* 필터 상태 */
+  /* 필터 상태: 전체 행 차지 */
   .customer-selector-modal__filter-status {
-    flex-shrink: 0;
+    grid-column: 1 / -1;
   }
 
   /* 칼럼 리사이즈 핸들: 모바일에서 숨김 */
@@ -675,26 +673,29 @@ html[data-theme="dark"] .customer-selector-modal__customer-row.selected:hover {
     font-size: var(--font-size-xs);
   }
 
-  /* 초성 필터: 가로 스크롤 + 컴팩트 */
+  /* 초성 필터: CSS Grid 10칼럼 (세로 모드와 동일 패턴) */
   .customer-selector-modal__initials {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    overflow-x: visible;
     padding: var(--spacing-1);
     gap: 2px;
     margin-bottom: var(--spacing-1);
   }
 
-  .customer-selector-modal__initials::-webkit-scrollbar {
-    display: none;
+  .customer-selector-modal__initial {
+    width: 100%;
+    min-width: 0;
+    height: 26px;
   }
 
-  .customer-selector-modal__initial {
-    min-width: 26px;
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
+  .customer-selector-modal__initial-type-toggle {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .customer-selector-modal__filter-status {
+    grid-column: 1 / -1;
   }
 
   .column-resize-handle {
