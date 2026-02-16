@@ -1649,11 +1649,26 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
     padding: 4px 8px;
   }
 
-  /* 정렬/통계 영역: 모바일에서 숨김 */
+  /* 정렬: 전체 폭 차지하여 별도 줄에 표시 */
   .doc-explorer-toolbar__sort {
+    width: 100%;
+    gap: 4px;
+  }
+
+  .doc-explorer-toolbar__sort-label {
     display: none;
   }
 
+  .doc-explorer-toolbar__sort-buttons {
+    gap: 2px;
+  }
+
+  .doc-explorer-toolbar__sort-btn {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+
+  /* 통계: 모바일에서 숨김 */
   .doc-explorer-toolbar__stats {
     display: none;
   }
