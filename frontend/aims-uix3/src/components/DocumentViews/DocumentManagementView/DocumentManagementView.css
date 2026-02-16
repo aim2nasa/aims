@@ -439,6 +439,13 @@ html[data-theme="dark"] .document-icon.file-icon--default {
   .document-management-view__actions-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+
+  /* 드롭다운 컴팩트 (태블릿/모바일 공통) */
+  .document-management-view__section-header .ios-dropdown__trigger {
+    padding: 4px 8px;
+    min-height: 30px;
+    font-size: var(--font-size-caption-2);
+  }
 }
 
 @media (max-width: 480px) {
