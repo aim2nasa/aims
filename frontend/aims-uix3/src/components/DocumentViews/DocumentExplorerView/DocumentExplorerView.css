@@ -1563,6 +1563,83 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
 
 /* 초성 필터 바: 공용 InitialFilterBar.css 사용 */
 
+/* === 태블릿/가로 모드 반응형 (768px 이하) ===
+   740×360 가로 모드: 툴바 요소가 한 줄에 안 들어감 → 래핑 + 컴팩트화 */
+@media (max-width: 768px) {
+  /* 툴바: 줄바꿈 허용 → 자연스러운 2줄 레이아웃 */
+  .doc-explorer-toolbar {
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    padding: 4px 8px;
+  }
+
+  /* 통계 숨김 (공간 절약) */
+  .doc-explorer-toolbar__stats {
+    display: none;
+  }
+
+  /* 정렬: 컴팩트화 */
+  .doc-explorer-toolbar__sort {
+    gap: 4px;
+  }
+
+  .doc-explorer-toolbar__sort-label {
+    display: none;
+  }
+
+  .doc-explorer-toolbar__sort-buttons {
+    gap: 2px;
+  }
+
+  .doc-explorer-toolbar__sort-btn {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+
+  /* 검색: 최소 폭 축소 */
+  .doc-explorer-toolbar__search {
+    min-width: 60px;
+    max-width: 120px;
+  }
+
+  /* 빠른 필터 칩 컴팩트 */
+  .doc-explorer-toolbar__filter-chip {
+    padding: 2px 6px;
+    font-size: 9px;
+  }
+
+  /* 액션 버튼 컴팩트 */
+  .doc-explorer-toolbar__expand-btn,
+  .doc-explorer-toolbar__thumbnail-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .doc-explorer-toolbar__filename-mode-btn {
+    padding: 2px 6px;
+    font-size: 9px;
+  }
+}
+
+/* === 폰 가로 모드: 높이 극도 절약 ===
+   max-height: 500px → 스크롤 영역 확보 위해 툴바 최소화 */
+@media (max-height: 500px) and (min-width: 481px) {
+  .doc-explorer-toolbar {
+    padding: 2px 8px;
+    gap: 3px 4px;
+  }
+
+  /* 정렬 버튼 더 컴팩트 */
+  .doc-explorer-toolbar__sort-btn {
+    padding: 2px 5px;
+  }
+
+  /* 썸네일 토글 숨김 (콘텐츠 영역 확보) */
+  .doc-explorer-toolbar__thumbnail-btn {
+    display: none;
+  }
+}
+
 /* === 모바일 반응형 (480px 이하) === */
 @media (max-width: 480px) {
   /* 툴바: 줄바꿈 허용 + 컴팩트 */
