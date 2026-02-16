@@ -173,6 +173,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [isSearchInputFocused, setIsSearchInputFocused] = useState(false)
   // 🍎 검색 입력 필드 ref (자동 포커스용)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  // 🍎 프로그래밍적 포커스 시 최근 검색어 드롭다운 억제용 플래그
+  const suppressRecentDropdown = useRef(false)
   // 🍎 문서 행 싱글클릭/더블클릭 구분용 타이머
   const documentClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 🍎 고객명 싱글클릭/더블클릭 구분용 타이머
@@ -218,6 +220,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     if (!visible) return
 
     // 약간의 지연을 두어 DOM이 완전히 렌더링된 후 포커스
+    // 프로그래밍적 포커스 시 최근 검색어 드롭다운 열리지 않도록 플래그 설정
+    suppressRecentDropdown.current = true
     const timer = setTimeout(() => {
       searchInputRef.current?.focus()
     }, 100)
@@ -1121,9 +1125,13 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyPress={handleKeyPress}
               onFocus={() => {
-                // 입력 필드 포커스 시 최근 검색어 드롭다운 열기
+                // 프로그래밍적 포커스(페이지 진입 시 자동 포커스)에서는 드롭다운 열지 않음
+                if (suppressRecentDropdown.current) {
+                  suppressRecentDropdown.current = false
+                  return
+                }
+                // 사용자 클릭에 의한 포커스 시에만 최근 검색어 드롭다운 열기
                 setIsSearchInputFocused(true)
-                // 최근 검색어 다시 불러오기
                 const recent = getRecentSearchQueries()
                 setRecentSearchQueries(recent)
               }}
