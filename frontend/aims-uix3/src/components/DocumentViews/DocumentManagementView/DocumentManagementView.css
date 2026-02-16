@@ -160,7 +160,7 @@
 .recent-activity-header {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 3; /* 문서 뱃지(z-index:2)보다 위에 표시 */
   display: grid;
   grid-template-columns: 80px 40px 1fr 80px 80px 120px 100px;
   gap: var(--spacing-3);
