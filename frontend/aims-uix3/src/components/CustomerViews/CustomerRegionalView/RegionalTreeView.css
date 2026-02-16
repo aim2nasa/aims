@@ -623,46 +623,44 @@ html[data-theme="dark"] .type-filter-separator {
 }
 
 /* =============================================
-   📱 모바일 반응형 (480px 이하)
-   PC: 트리(300px) + 지도(flex:1) 가로 배치
-   모바일: 지도(상단) → 고객 트리(하단 스크롤) 세로 배치
+   📱 모바일 공통: 통계바 1줄 강제
+   세로(360x740) + 가로(740x360) 모두 적용
+   - nowrap으로 1줄 강제
+   - @container(max-width:900px) flex-basis:100% 무효화
+   - 전체보기 버튼 숨김
    ============================================= */
-@media (max-width: 480px) {
+@media (max-width: 480px), ((max-height: 430px) and (orientation: landscape)) {
 
-  /* --- 통계 영역: 1줄 컴팩트 ---
-     [744명] [전체 지역 ▼] [전체 구/군 ▼]
-
-     렌더 체인:
-     .regional-tree-stats (flex, nowrap, 330px usable)
-       stat-item:1st (auto ~50px) → 744명 버튼
-       stat-item:3rd (flex:1 ~134px) → stat-dropdown-group → ios-dropdown(w:100%) → trigger(w:100%)
-       stat-item:5th (flex:1 ~134px) → stat-dropdown-group → ios-dropdown(w:100%) → trigger(w:100%)
-
-     핵심: ios-dropdown은 inline-block 유지 + width:100%만 추가
-     display:block 변경 금지! overflow:hidden 금지!
-     --- */
   .regional-tree-stats {
+    flex-wrap: nowrap;
     padding: 3px var(--spacing-sm);
     gap: 6px;
-    flex-wrap: nowrap;
-    align-items: center;
   }
-
-  /* 불필요 요소 숨김 */
-  .stat-divider { display: none; }
-  .regional-tree-stats .stat-icon { display: none; }
-  .regional-tree-stats .stat-label { display: none; }
-  .stat-checkbox { display: none; }
-  .type-filter-separator { display: none; }
-  .stat-filter-group .type-filter-button:not(:first-child) { display: none; }
-  .regional-tree-stats .tree-actions { display: none; }
 
   /* @container(max-width:900px)의 flex-basis:100% 오버라이드 */
   .stat-item:first-child {
     flex-basis: auto;
   }
 
-  /* 744명 버튼: 드롭다운과 동일 높이 */
+  /* 전체보기 버튼 숨김 */
+  .regional-tree-stats .tree-actions { display: none; }
+}
+
+/* =============================================
+   📱 세로 모드 전용 (480px 이하)
+   통계바 초컴팩트 + 지도/트리 세로 배치
+   ============================================= */
+@media (max-width: 480px) {
+
+  /* --- 통계바: 초컴팩트 (공간 부족) ---
+     [744명] [전체 지역 ▼] [전체 구/군 ▼] */
+  .stat-divider { display: none; }
+  .regional-tree-stats .stat-icon { display: none; }
+  .regional-tree-stats .stat-label { display: none; }
+  .stat-checkbox { display: none; }
+  .type-filter-separator { display: none; }
+  .stat-filter-group .type-filter-button:not(:first-child) { display: none; }
+
   .type-filter-button {
     min-height: 26px;
     padding: 3px 8px;
@@ -672,25 +670,21 @@ html[data-theme="dark"] .type-filter-separator {
     align-items: center;
   }
 
-  /* 드롭다운 stat-item: 남은 공간 균등 분배 */
   .regional-tree-stats > .stat-item:nth-child(3),
   .regional-tree-stats > .stat-item:nth-child(5) {
     flex: 1 1 0;
     min-width: 0;
   }
 
-  /* stat-dropdown-group: stat-item 전체 채움 */
   .stat-dropdown-group {
     flex: 1;
     min-width: 0;
   }
 
-  /* ios-dropdown: inline-block 유지 + 부모 폭 채움 */
   .regional-tree-stats .ios-dropdown {
     width: 100%;
   }
 
-  /* 트리거: 컴팩트 높이 */
   .regional-tree-stats .ios-dropdown__trigger {
     min-height: 26px;
     padding: 3px 8px;
