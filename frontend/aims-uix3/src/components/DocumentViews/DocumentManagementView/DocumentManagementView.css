@@ -422,12 +422,17 @@ html[data-theme="dark"] .document-icon.file-icon--default {
     padding: var(--spacing-4);
   }
 
+  /* 통계 카드: 4개 1줄 */
   .document-management-view__stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-2);
   }
 
+  /* 파이 차트: 2열 유지 + 컴팩트 간격 */
   .document-management-view__pie-charts-grid {
-    grid-template-columns: 1fr;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2);
+    margin-top: var(--spacing-3);
   }
 
   /* 작은 화면에서는 다시 세로 배치 */
@@ -446,6 +451,22 @@ html[data-theme="dark"] .document-icon.file-icon--default {
     min-height: 30px;
     font-size: var(--font-size-caption-2);
   }
+
+  /* 스크롤바 - 모바일 터치 친화적 크기 */
+  .document-management-view__recent-activity .recent-activity-table {
+    scrollbar-width: auto;
+  }
+
+  .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar {
+    width: 14px;
+  }
+
+  .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-thumb {
+    min-height: 48px;
+    border: 3px solid var(--color-bg-tertiary);
+    background-clip: padding-box;
+    border-radius: 7px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -457,9 +478,9 @@ html[data-theme="dark"] .document-icon.file-icon--default {
     margin-bottom: var(--spacing-4);
   }
 
-  /* 통계 카드: 2x2 그리드 (고객관리와 동일) */
+  /* 통계 카드: 4개 1줄 유지 */
   .document-management-view__stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--spacing-2);
   }
 
