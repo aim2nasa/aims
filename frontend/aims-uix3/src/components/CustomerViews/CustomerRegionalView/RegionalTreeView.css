@@ -629,62 +629,72 @@ html[data-theme="dark"] .type-filter-separator {
    ============================================= */
 @media (max-width: 480px) {
 
-  /* --- 통계 영역: 초소형 2줄 레이아웃 ---
-     Row 1: 10명 (개인 10, 법인 0)
-     Row 2: [전체 지역 ▼] [전체 구/군 ▼]  🔄
+  /* --- 통계 영역: 1줄 컴팩트 ---
+     [744명] [전체 지역 ▼] [전체 구/군 ▼]
+
+     렌더 체인:
+     .regional-tree-stats (flex, nowrap, 330px usable)
+       stat-item:1st (auto ~50px) → 744명 버튼
+       stat-item:3rd (flex:1 ~134px) → stat-dropdown-group → ios-dropdown(w:100%) → trigger(w:100%)
+       stat-item:5th (flex:1 ~134px) → stat-dropdown-group → ios-dropdown(w:100%) → trigger(w:100%)
+
+     핵심: ios-dropdown은 inline-block 유지 + width:100%만 추가
+     display:block 변경 금지! overflow:hidden 금지!
      --- */
   .regional-tree-stats {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    gap: 2px var(--spacing-sm);
+    padding: 3px var(--spacing-sm);
+    gap: 6px;
+    flex-wrap: nowrap;
+    align-items: center;
   }
 
-  /* 구분자(·) 숨김 */
-  .stat-divider {
-    display: none;
+  /* 불필요 요소 숨김 */
+  .stat-divider { display: none; }
+  .regional-tree-stats .stat-icon { display: none; }
+  .regional-tree-stats .stat-label { display: none; }
+  .stat-checkbox { display: none; }
+  .type-filter-separator { display: none; }
+  .stat-filter-group .type-filter-button:not(:first-child) { display: none; }
+  .regional-tree-stats .tree-actions { display: none; }
+
+  /* @container(max-width:900px)의 flex-basis:100% 오버라이드 */
+  .stat-item:first-child {
+    flex-basis: auto;
   }
 
-  /* 모든 아이콘 숨김 (공간 절약) */
-  .regional-tree-stats .stat-icon {
-    display: none;
+  /* 744명 버튼: 드롭다운과 동일 높이 */
+  .type-filter-button {
+    min-height: 26px;
+    padding: 3px 8px;
+    font-size: 11px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
   }
 
-  /* 모든 라벨 숨김 (드롭다운/필터 텍스트가 이미 충분) */
-  .regional-tree-stats .stat-label {
-    display: none;
-  }
-
-  /* "빈 지역" / "빈 구/군" 체크박스 숨김 (파워유저 기능 → 모바일 불필요) */
-  .stat-checkbox {
-    display: none;
-  }
-
-  /* Row 1: 전체 고객 필터 → 전체 폭 */
-  .regional-tree-stats > .stat-item:first-child {
-    flex-basis: 100%;
-    min-height: 32px;
-  }
-
-  /* Row 2: 지역/구군 드롭다운 나란히 */
+  /* 드롭다운 stat-item: 남은 공간 균등 분배 */
   .regional-tree-stats > .stat-item:nth-child(3),
   .regional-tree-stats > .stat-item:nth-child(5) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* stat-dropdown-group: stat-item 전체 채움 */
+  .stat-dropdown-group {
     flex: 1;
     min-width: 0;
   }
 
-  /* 드롭다운 터치 타겟 확대 + 전체 폭 */
+  /* ios-dropdown: inline-block 유지 + 부모 폭 채움 */
+  .regional-tree-stats .ios-dropdown {
+    width: 100%;
+  }
+
+  /* 트리거: 컴팩트 높이 */
   .regional-tree-stats .ios-dropdown__trigger {
-    min-height: 36px;
-    padding: var(--spacing-xs) var(--spacing-sm);
-  }
-
-  .stat-dropdown-group {
-    flex: 1;
-  }
-
-  /* 🔄 새로고침 버튼: 터치 타겟 확대 */
-  .tree-action-btn--icon-only {
-    width: 36px;
-    height: 36px;
+    min-height: 26px;
+    padding: 3px 8px;
+    font-size: 11px;
   }
 
   /* --- 메인 콘텐츠: 세로 스택 --- */

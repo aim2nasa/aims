@@ -1215,7 +1215,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
               options={availableRegions}
               onChange={handleRegionChange}
               aria-label="지역 선택"
-              minWidth={120}
             />
             <Tooltip content="고객 없는 지역도 표시">
               <label className="stat-checkbox">
@@ -1239,7 +1238,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
               options={availableDistricts}
               onChange={handleDistrictChange}
               aria-label="구/군 선택"
-              minWidth={110}
             />
             <Tooltip content="고객 없는 구/군도 표시">
               <label className="stat-checkbox">
