@@ -541,6 +541,55 @@ html[data-theme="dark"] .draggable-modal-backdrop--transparent .draggable-modal 
   }
 }
 
+/* === 📱 폰 가로 모드: 전체화면 시트 ===
+   폰 가로 시 width > 768px이므로 위 미디어쿼리에 걸리지 않음.
+   orientation: landscape + max-height: 500px + pointer: coarse로 폰 가로 감지 */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .draggable-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .draggable-modal {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    animation: none;
+  }
+
+  .draggable-modal--keyboard-open {
+    transition: height 0.15s ease-out, max-height 0.15s ease-out, top 0.15s ease-out;
+  }
+
+  .draggable-modal__header {
+    cursor: default;
+    padding: 8px 16px;
+    border-radius: 0;
+  }
+
+  .draggable-modal__content {
+    padding: 8px 16px;
+  }
+
+  .draggable-modal__footer {
+    padding: 8px 16px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    border-radius: 0;
+  }
+
+  .resize-handle {
+    display: none;
+  }
+
+  .draggable-modal__maximize-button,
+  .draggable-modal__reset-button,
+  .draggable-modal__popup-button {
+    display: none;
+  }
+}
+
 /* === 터치 기기: 헤더 버튼 터치 영역 확대 === */
 
 @media (pointer: coarse) {
