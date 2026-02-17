@@ -115,14 +115,15 @@
 /* === 🍎 COLUMN HEADER: 칼럼 헤더 === */
 .customer-documents-list-header {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
-  grid-template-columns:
+  /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/item 공유) */
+  --grid-cols:
     28px                                        /* 유형 아이콘 */
     var(--filename-column-width, 200px)         /* 파일명 (동적) */
     var(--doctype-column-width, 65px)           /* 문서유형 (동적) */
     var(--size-column-width, 50px)              /* 크기 (동적) */
     var(--type-column-width, 42px)              /* 타입 (동적) */
     var(--date-column-width, 68px);              /* 연결일 (동적) */
+  grid-template-columns: var(--grid-cols);
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -304,14 +305,15 @@
 /* === 🍎 LIST ITEM: 문서 아이템 === */
 .customer-documents-item {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
-  grid-template-columns:
+  /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
+  --grid-cols:
     28px                                        /* 유형 아이콘 */
     var(--filename-column-width, 200px)         /* 파일명 (동적) */
     var(--doctype-column-width, 65px)           /* 문서유형 (동적) */
     var(--size-column-width, 50px)              /* 크기 (동적) */
     var(--type-column-width, 42px)              /* 타입 (동적) */
     var(--date-column-width, 68px);              /* 연결일 (동적) */
+  grid-template-columns: var(--grid-cols);
   gap: 4px;
   align-items: center;
   width: 100%;

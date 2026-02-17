@@ -118,8 +118,8 @@ html[data-theme="dark"] .customer-contracts__list-container::-webkit-scrollbar-t
 /* === 🍎 COLUMN HEADER: macOS Finder-style (ContractAllView 동일) === */
 .customer-contracts-list-header {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
-  grid-template-columns:
+  /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/row 공유) */
+  --grid-cols:
     var(--product-column-width, 200px)        /* 상품명 (동적) */
     var(--contract-date-column-width, 100px)  /* 계약일 (동적) */
     var(--policy-number-column-width, 115px)  /* 증권번호 (동적) */
@@ -127,6 +127,7 @@ html[data-theme="dark"] .customer-contracts__list-container::-webkit-scrollbar-t
     var(--payment-day-column-width, 75px)     /* 이체일 (동적) */
     var(--payment-cycle-column-width, 90px)   /* 납입주기 (동적) */
     var(--payment-status-column-width, 100px);/* 납입상태 (동적) */
+  grid-template-columns: var(--grid-cols);
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
@@ -255,8 +256,8 @@ html[data-theme="dark"] .customer-contracts-list-header {
 /* === 🍎 LIST ITEM: 계약 아이템 (ContractAllView 동일) === */
 .customer-contracts-item {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
-  grid-template-columns:
+  /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
+  --grid-cols:
     var(--product-column-width, 200px)        /* 상품명 (동적) */
     var(--contract-date-column-width, 100px)  /* 계약일 (동적) */
     var(--policy-number-column-width, 115px)  /* 증권번호 (동적) */
@@ -264,6 +265,7 @@ html[data-theme="dark"] .customer-contracts-list-header {
     var(--payment-day-column-width, 75px)     /* 이체일 (동적) */
     var(--payment-cycle-column-width, 90px)   /* 납입주기 (동적) */
     var(--payment-status-column-width, 100px);/* 납입상태 (동적) */
+  grid-template-columns: var(--grid-cols);
   gap: 12px;
   align-items: center;
   height: 32px;

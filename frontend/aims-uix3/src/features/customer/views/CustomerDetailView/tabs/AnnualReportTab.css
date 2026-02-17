@@ -307,13 +307,15 @@ html[data-theme="dark"] .annual-report-table-container::-webkit-scrollbar-thumb 
 
 .annual-report-table-header {
   display: grid;
-  grid-template-columns:
+  /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/row/checkbox 공유) */
+  --grid-cols:
     minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
     104px                  /* 발행일 +30% */
     163px                  /* 파싱일시 +30% */
     124px                  /* 총 월보험료 +30% */
     72px                   /* 계약 수 +30% */
     65px;                  /* 상태 +30% */
+  grid-template-columns: var(--grid-cols);
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -338,17 +340,9 @@ html[data-theme="dark"] .annual-report-table-header {
   box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
 }
 
-/* 체크박스 포함 시 그리드 */
+/* 체크박스 포함 시 그리드 - --grid-cols 재사용 (28px 체크박스만 선두 추가) */
 .annual-report-table-header:has(.header-checkbox) {
-  grid-template-columns:
-    28px                   /* 체크박스 */
-    minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
-    104px                  /* 발행일 +30% */
-    163px                  /* 파싱일시 +30% */
-    124px                  /* 총 월보험료 +30% */
-    72px                   /* 계약 수 +30% */
-    65px;                  /* 상태 +30% */
-  gap: 4px;
+  grid-template-columns: 28px var(--grid-cols);
 }
 
 .annual-report-table-header > div {
@@ -379,13 +373,15 @@ html[data-theme="dark"] .annual-report-table-header {
 
 .annual-report-row {
   display: grid;
-  grid-template-columns:
+  /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
+  --grid-cols:
     minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
     104px                  /* 발행일 +30% */
     163px                  /* 파싱일시 +30% */
     124px                  /* 총 월보험료 +30% */
     72px                   /* 계약 수 +30% */
     65px;                  /* 상태 +30% */
+  grid-template-columns: var(--grid-cols);
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -413,17 +409,9 @@ html[data-theme="dark"] .annual-report-row:hover {
   background-color: var(--color-ios-bg-hover-dark);
 }
 
-/* 체크박스 포함 시 그리드 */
+/* 체크박스 포함 시 그리드 - --grid-cols 재사용 */
 .annual-report-row:has(.row-checkbox) {
-  grid-template-columns:
-    28px                   /* 체크박스 */
-    minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
-    104px                  /* 발행일 +30% */
-    163px                  /* 파싱일시 +30% */
-    124px                  /* 총 월보험료 +30% */
-    72px                   /* 계약 수 +30% */
-    65px;                  /* 상태 +30% */
-  gap: 4px;
+  grid-template-columns: 28px var(--grid-cols);
 }
 
 /* === 상태별 스타일 === */

@@ -137,8 +137,8 @@ html[data-theme="dark"] .customer-review-table-container::-webkit-scrollbar-thum
 
 .customer-review-table-header {
   display: grid;
-  /* 🍎 7칼럼: 계약자, 피보험자, 발행일, 파싱일시, 상품명(유연), 펀드 수, 상태 */
-  grid-template-columns:
+  /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/row/checkbox 공유) */
+  --grid-cols:
     minmax(50px, 0.5fr)    /* 계약자 */
     minmax(50px, 0.5fr)    /* 피보험자 */
     104px                   /* 발행일 */
@@ -146,6 +146,7 @@ html[data-theme="dark"] .customer-review-table-container::-webkit-scrollbar-thum
     minmax(80px, 1fr)      /* 상품명 */
     72px                    /* 펀드 수 */
     65px;                   /* 상태 */
+  grid-template-columns: var(--grid-cols);
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -170,18 +171,9 @@ html[data-theme="dark"] .customer-review-table-header {
   box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
 }
 
-/* 체크박스 포함 시 그리드 */
+/* 체크박스 포함 시 그리드 - --grid-cols 재사용 (28px 체크박스만 선두 추가) */
 .customer-review-table-header:has(.header-checkbox) {
-  grid-template-columns:
-    28px                    /* 체크박스 */
-    minmax(50px, 0.5fr)    /* 계약자 */
-    minmax(50px, 0.5fr)    /* 피보험자 */
-    104px                   /* 발행일 */
-    163px                   /* 파싱일시 */
-    minmax(80px, 1fr)      /* 상품명 */
-    72px                    /* 펀드 수 */
-    65px;                   /* 상태 */
-  gap: 4px;
+  grid-template-columns: 28px var(--grid-cols);
 }
 
 .customer-review-table-header > div {
@@ -250,8 +242,8 @@ html[data-theme="dark"] .customer-review-table-header {
 
 .customer-review-row {
   display: grid;
-  /* 🍎 7칼럼: 헤더와 동일 */
-  grid-template-columns:
+  /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
+  --grid-cols:
     minmax(50px, 0.5fr)    /* 계약자 */
     minmax(50px, 0.5fr)    /* 피보험자 */
     104px                   /* 발행일 */
@@ -259,6 +251,7 @@ html[data-theme="dark"] .customer-review-table-header {
     minmax(80px, 1fr)      /* 상품명 */
     72px                    /* 펀드 수 */
     65px;                   /* 상태 */
+  grid-template-columns: var(--grid-cols);
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -286,18 +279,9 @@ html[data-theme="dark"] .customer-review-row:hover {
   background-color: var(--color-ios-bg-hover-dark);
 }
 
-/* 체크박스 포함 시 그리드 */
+/* 체크박스 포함 시 그리드 - --grid-cols 재사용 */
 .customer-review-row:has(.row-checkbox) {
-  grid-template-columns:
-    28px                    /* 체크박스 */
-    minmax(50px, 0.5fr)    /* 계약자 */
-    minmax(50px, 0.5fr)    /* 피보험자 */
-    104px                   /* 발행일 */
-    163px                   /* 파싱일시 */
-    minmax(80px, 1fr)      /* 상품명 */
-    72px                    /* 펀드 수 */
-    65px;                   /* 상태 */
-  gap: 4px;
+  grid-template-columns: 28px var(--grid-cols);
 }
 
 /* === 상태별 스타일 === */
