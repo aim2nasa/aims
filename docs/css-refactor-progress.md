@@ -1,0 +1,157 @@
+# CSS 아키텍처 리팩토링 진행 기록
+
+> **이 문서는 context 부족 시 복구용입니다. 매 단계마다 업데이트합니다.**
+> **새 세션에서 이 파일을 읽고 이어서 진행하세요.**
+
+---
+
+## 프로젝트 목표
+
+CSS 구조를 리팩토링하여 디자인 구현 시 발생하던 specificity 충돌/God Object/하드코딩 문제를 근본적으로 해결.
+
+**핵심 원칙**: 디자인은 1px도 변하지 않으면서 내부 구조만 정리
+
+**참고 문서**: `docs/CSS_REFACTORING_QA.md`, `docs/CSS_ARCHITECTURE_DIAGNOSIS_AND_PLAN.md`
+
+---
+
+## 현재 상태
+
+| 항목 | 값 |
+|------|-----|
+| **main HEAD** | `9cdd5c2d` (원본 상태, 디자인 보존) |
+| **백업 브랜치** | `css-architecture-backup` (이전 시도 8개 커밋 보존) |
+| **현재 단계** | **준비 완료 - Playwright baseline 28개 캡처 성공** |
+| **dev 서버** | `https://localhost:5177` |
+
+---
+
+## Phase 계획
+
+| Phase | 내용 | 상태 | 커밋 |
+|-------|------|------|------|
+| 준비 | Playwright baseline 스크린샷 캡처 | **완료** (28개 전체 통과) | - |
+| Phase 0 | CSS lint 스크립트 도입 | 대기 | - |
+| Phase 1 | @layer 구조 도입 (specificity 제어) | 대기 | - |
+| Phase 2 | God Object 해체 (Context Via Props) | 대기 | - |
+| Phase 3 | 대형 CSS 파일 분할 (500줄 Hard Limit) | 대기 | - |
+| Phase 4 | !important 제거 + 하드코딩 색상 정리 | 대기 | - |
+| Phase 5 | 문서화 + 스킬 등록 | 대기 | - |
+
+---
+
+## 준비 단계: Playwright Baseline 캡처 (완료)
+
+### 결과 요약
+
+| 항목 | 값 |
+|------|-----|
+| **테스트 수** | 28개 (1 setup + 28 visual) |
+| **전체 통과** | 29/29 passed |
+| **실행 시간** | ~9.2분 (테스트당 ~20초) |
+| **스냅샷 위치** | `tests/__snapshots__/visual/` |
+
+### 로그인 방식
+- **API 직접 호출**: `POST /api/dev/ensure-user` + `{email: 'aim2nasa@gmail.com'}` (곽승철 계정)
+- **storageState**: 1회 로그인 → `tests/.auth/storageState.json` 저장 → 전체 테스트 재사용
+- **속도**: 매번 로그인(~1.6분/테스트) → storageState(~20초/테스트), **5.6배 개선**
+
+### 뷰 네비게이션 방식
+- **addInitScript**: React 초기화 전에 `localStorage.setItem('aims_active_document_view', viewKey)` 설정
+- **URL ?view= 파라미터 사용 불가**: storageState의 `aims_active_document_view: 'customers'`가 URL 파라미터를 덮어쓰는 경합 조건 발생
+- **근본 원인**: `useState(persistentState.activeDocumentView)` 초기값이 localStorage에서 오지만, mount useEffect의 URL 파라미터 처리와 activeDocumentView 변경 effect가 경합
+
+### 캡처 대상 (28개)
+
+| # | 범주 | 뷰 이름 | 파일명 |
+|---|------|---------|--------|
+| 01 | 페이지 | 전체 고객 보기 | `01-customers-all.png` |
+| 02 | 페이지 | 지역별 고객 보기 | `02-customers-regional.png` |
+| 03 | 페이지 | 관계별 고객 보기 | `03-customers-relationship.png` |
+| 04 | 페이지 | 고객 계약·문서 등록 | `04-documents-register.png` |
+| 05 | 페이지 | 전체 문서 보기 | `05-documents-library.png` |
+| 06 | 페이지 | 문서 탐색기 | `06-documents-explorer.png` |
+| 07 | 페이지 | 상세 문서검색 | `07-documents-search.png` |
+| 08 | 페이지 | 전체 계약 보기 | `08-contracts-all.png` |
+| 09 | 페이지 | 고객 일괄등록 | `09-customers-batch.png` |
+| 10 | 페이지 | 문서 일괄등록 | `10-documents-batch.png` |
+| 11 | 페이지 | 계정 설정 | `11-account-settings.png` |
+| 12 | 페이지 | FAQ | `12-faq.png` |
+| 13 | 페이지 | 공지사항 | `13-notice.png` |
+| 14 | 페이지 | 고객 상세 - RightPane | `14-customer-detail.png` |
+| 15 | 페이지 | LeftPane 메뉴 | `15-leftpane.png` |
+| 16 | 페이지 | Header 영역 | `16-header.png` |
+| 17 | 다크모드 | 전체 고객 (dark) | `17-customers-all-dark.png` |
+| 18 | 다크모드 | 전체 문서 (dark) | `18-documents-library-dark.png` |
+| 19 | 다크모드 | 전체 계약 (dark) | `19-contracts-all-dark.png` |
+| 20 | 모달 | 고객 정보 수정 모달 | `20-modal-customer-edit.png` |
+| 21 | 모달 | 가족 관계 추가 모달 | `21-modal-family-relation.png` |
+| 22 | 모달 | 지역별 고객 도움말 | `22-modal-help-regional.png` |
+| 23 | 모달 | 관계별 고객 도움말 | `23-modal-help-relationship.png` |
+| 24 | 모달 | 전체 계약 도움말 | `24-modal-help-contracts.png` |
+| 25 | 모달 | 고객 계약·문서 등록 도움말 | `25-modal-help-doc-register.png` |
+| 26 | 모달 | 문서 일괄등록 도움말 | `26-modal-help-batch-upload.png` |
+| 27 | 다크모달 | 고객 정보 수정 (dark) | `27-modal-customer-edit-dark.png` |
+| 28 | 다크모달 | 지역별 도움말 (dark) | `28-modal-help-regional-dark.png` |
+
+### 테스트 실행 방법
+
+```bash
+cd frontend/aims-uix3
+
+# Baseline 생성 (최초 또는 디자인 변경 후)
+npx playwright test tests/visual/css-refactor-regression.spec.ts --update-snapshots
+
+# 비교 실행 (CSS 리팩토링 후 검증)
+npx playwright test tests/visual/css-refactor-regression.spec.ts
+
+# 특정 테스트만 실행
+npx playwright test tests/visual/css-refactor-regression.spec.ts -g "14. 고객 상세"
+```
+
+### 관련 파일
+
+| 파일 | 용도 |
+|------|------|
+| `tests/visual/css-refactor-regression.spec.ts` | 28개 시각적 회귀 테스트 |
+| `tests/auth.setup.ts` | storageState 생성 (1회 로그인) |
+| `tests/fixtures/auth.ts` | API 기반 로그인 로직 |
+| `playwright.config.ts` | Playwright 설정 (storageState, 프로젝트 구조) |
+| `tests/__snapshots__/visual/` | Baseline 스크린샷 |
+| `tests/.auth/storageState.json` | 인증 상태 (gitignored) |
+
+---
+
+## 이전 시도에서 배운 교훈
+
+1. **시각적 검증 없이 일괄 진행 금지** → 매 Phase마다 스크린샷 비교 필수
+2. **@layer 래핑 시 @import 위치 주의** → @import는 반드시 @layer 밖에
+3. **Phase 4-2 색상 치환 시 false positive 주의** → var() fallback, CSS 변수 정의 라인 제외
+4. **CFD.css cross-component selector 이전 시** → compact variant CSS에 grid-template-columns 빠뜨리지 않기
+5. **tokens.css에 --color-error-light 누락** → 이미 수정됨 (ea2dc13c)
+6. **URL ?view= 파라미터 + storageState 경합** → addInitScript로 localStorage 선설정 필요
+
+---
+
+## 각 Phase 완료 조건
+
+1. `npm run build` 성공
+2. Playwright 스크린샷 비교 통과 (baseline과 pixel-level 동일)
+3. 실패 시 → 원인 분석 → 수정 → 재검증 (통과할 때까지 반복)
+4. 통과 후 → 커밋 → 이 문서 업데이트 → 다음 Phase
+
+---
+
+## 다음 단계: Phase 0 (CSS lint 스크립트 도입)
+
+- 하드코딩 색상 탐지, !important 검사, 파일 크기 제한 등
+- `docs/CSS_ARCHITECTURE_DIAGNOSIS_AND_PLAN.md` 참고
+
+---
+
+## 변경 로그
+
+| 시간 | 내용 |
+|------|------|
+| 2026-02-18 01:30 | 문서 생성, 준비 단계 시작 |
+| 2026-02-18 06:00 | Playwright baseline 28개 전체 통과 (9.2분, storageState + addInitScript 방식) |

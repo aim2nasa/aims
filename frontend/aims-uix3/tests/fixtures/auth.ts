@@ -2,112 +2,96 @@ import { Page } from '@playwright/test';
 
 /**
  * 테스트용 인증 헬퍼
+ *
+ * /api/dev/ensure-user API를 직접 호출하여 JWT 토큰을 발급받고
+ * localStorage에 주입하는 방식. 키보드 단축키에 의존하지 않아 안정적.
  */
+
+// 테스트에 사용할 계정 (곽승철)
+const TEST_USER_EMAIL = 'aim2nasa@gmail.com';
 
 /**
- * 개발용 로그인 건너뛰기
- * - Ctrl+Alt+Shift+D로 개발자 모드 활성화
- * - 개발용 로그인 건너뛰기 버튼 클릭
+ * 개발 계정으로 로그인 (API 직접 호출 + localStorage 토큰 주입)
  */
-export async function skipDevLogin(page: Page): Promise<void> {
-  // 이미 로그인 되어 있으면 스킵
-  const isLoggedIn = await page.locator('.header-chat-button, .layout-leftpane').first().isVisible({ timeout: 2000 }).catch(() => false);
-  if (isLoggedIn) {
-    console.log('[Auth] 이미 로그인됨');
-    return;
+export async function loginAndSetup(page: Page): Promise<void> {
+  // 1. 먼저 페이지에 접근하여 도메인 컨텍스트 생성
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+
+  // 2. /api/dev/ensure-user API 호출하여 JWT 토큰 발급 (곽승철 계정)
+  const response = await page.request.post('/api/dev/ensure-user', {
+    headers: { 'Content-Type': 'application/json' },
+    data: { email: TEST_USER_EMAIL },
+  });
+
+  if (!response.ok()) {
+    throw new Error(`[Auth] 개발 계정 API 실패: ${response.status()} ${response.statusText()}`);
   }
 
-  // 로그인 페이지인지 확인
-  const loginPage = page.locator('.login-container, button:has-text("카카오 로그인")').first();
-  if (!await loginPage.isVisible({ timeout: 3000 }).catch(() => false)) {
-    console.log('[Auth] 로그인 페이지 아님');
-    return;
+  const data = await response.json();
+  const token = data.token;
+  const userId = data.user?._id;
+
+  if (!token) {
+    throw new Error('[Auth] API 응답에 토큰 없음');
   }
 
-  // 개발자 모드 활성화 (Ctrl+Alt+Shift+D)
-  await page.keyboard.press('Control+Alt+Shift+D');
-  await page.waitForTimeout(500);
-  console.log('[Auth] 개발자 모드 활성화 시도');
+  console.log(`[Auth] 토큰 발급 완료 (userId: ${userId})`);
 
-  // 개발용 로그인 건너뛰기 버튼 대기 및 클릭
-  const skipLoginButton = page.locator('button:has-text("개발용 로그인 건너뛰기")');
-  if (await skipLoginButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await skipLoginButton.click();
-    console.log('[Auth] 개발용 로그인 버튼 클릭');
-    // 로그인 완료 대기
-    await page.waitForSelector('.header-chat-button, .layout-leftpane', { timeout: 10000 });
-    console.log('[Auth] 로그인 완료');
-  } else {
-    console.log('[Auth] 개발용 로그인 버튼 없음 - 이미 활성화되었거나 다른 상태');
-  }
+  // 3. localStorage에 인증 데이터 주입 (Zustand persist 형식)
+  await page.evaluate(({ token, userId }) => {
+    // Zustand auth store (auth-storage-v2) - partialize로 token만 저장
+    localStorage.setItem('auth-storage-v2', JSON.stringify({
+      state: { token },
+      version: 0,
+    }));
+
+    // 현재 사용자 ID
+    if (userId) {
+      localStorage.setItem('aims-current-user-id', userId);
+    }
+
+    // 온보딩 완료 상태 (가이드 팝업 방지)
+    localStorage.setItem('aims_onboarding_completed', 'true');
+  }, { token, userId });
+
+  // 4. 페이지 새로고침 → 앱이 토큰을 읽고 /api/auth/me로 사용자 정보 조회
+  await page.goto('/');
+  await page.waitForLoadState('networkidle').catch(() => {});
+
+  // 5. 로그인 완료 대기 (메인 UI 표시 확인)
+  await page.waitForSelector('.layout-leftpane, .header-chat-button', { timeout: 15000 });
+  console.log('[Auth] 로그인 + 메인 UI 로드 완료');
+
+  // 6. 온보딩 팝업이 혹시 뜨면 닫기
+  await closeOnboarding(page);
 }
 
 /**
  * 온보딩 가이드 닫기
  */
-export async function closeOnboarding(page: Page): Promise<void> {
-  // 온보딩이 보이는지 확인하고, 보이면 닫기
-  for (let i = 0; i < 5; i++) {
+async function closeOnboarding(page: Page): Promise<void> {
+  for (let i = 0; i < 3; i++) {
     const onboardingTour = page.locator('.onboarding-tour');
     if (!await onboardingTour.isVisible({ timeout: 1000 }).catch(() => false)) {
-      break;
+      return;
     }
 
     console.log(`[Auth] 온보딩 닫기 시도 ${i + 1}`);
 
-    // 방법 1: ESC 키
+    // ESC 키로 닫기
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
 
     if (!await onboardingTour.isVisible({ timeout: 500 }).catch(() => false)) {
-      console.log('[Auth] 온보딩 ESC로 닫힘');
-      break;
+      return;
     }
 
-    // 방법 2: 건너뛰기 버튼 클릭
-    const skipButton = page.locator('.onboarding-tour button:has-text("건너뛰기")');
-    if (await skipButton.isVisible({ timeout: 500 }).catch(() => false)) {
-      await skipButton.click({ force: true });
-      await page.waitForTimeout(500);
-      console.log('[Auth] 온보딩 건너뛰기 버튼 클릭');
-    }
-
-    // 방법 3: 닫기 버튼 클릭
-    const closeButton = page.locator('.onboarding-tour__close, .onboarding-tour button:has-text("닫기")');
-    if (await closeButton.first().isVisible({ timeout: 500 }).catch(() => false)) {
-      await closeButton.first().click({ force: true });
-      await page.waitForTimeout(500);
-      console.log('[Auth] 온보딩 닫기 버튼 클릭');
-    }
-
-    // 방법 4: 오버레이 클릭
-    const overlay = page.locator('.onboarding-tour__overlay');
-    if (await overlay.isVisible({ timeout: 500 }).catch(() => false)) {
-      await overlay.click({ position: { x: 10, y: 10 }, force: true });
-      await page.waitForTimeout(500);
+    // 건너뛰기/닫기 버튼 클릭
+    const closeBtn = page.locator('.onboarding-tour button:has-text("건너뛰기"), .onboarding-tour__close').first();
+    if (await closeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+      await closeBtn.click({ force: true });
+      await page.waitForTimeout(300);
     }
   }
-
-  // 최종 확인
-  const finalCheck = page.locator('.onboarding-tour');
-  if (await finalCheck.isVisible({ timeout: 500 }).catch(() => false)) {
-    console.log('[Auth] 경고: 온보딩이 여전히 표시됨');
-  } else {
-    console.log('[Auth] 온보딩 닫힘 확인');
-  }
-}
-
-/**
- * 전체 로그인 프로세스 (건너뛰기 + 온보딩 닫기)
- */
-export async function loginAndSetup(page: Page): Promise<void> {
-  await page.goto('/');
-
-  // localStorage에 온보딩 완료 상태 미리 설정 (실제 키: aims_onboarding_completed)
-  await page.evaluate(() => {
-    localStorage.setItem('aims_onboarding_completed', 'true');
-  });
-
-  await skipDevLogin(page);
-  await closeOnboarding(page);
 }

@@ -194,38 +194,52 @@ module.exports = function(db, authenticateJWT, generateToken, qdrantClient, qdra
    */
   router.post('/dev/ensure-user', async (req, res) => {
     try {
-      // 개발 계정 고정 ObjectId (항상 동일한 ID 사용)
-      const DEV_USER_ID = new ObjectId('000000000000000000000001');
-      const DEV_USER = {
-        _id: DEV_USER_ID,
-        name: '개발자 (Dev)',
-        email: 'dev@aims.local',
-        role: 'agent',
-        avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Dev&backgroundColor=c0ffc0',
-        authProvider: 'dev',
-        profileCompleted: true,
-        createdAt: new Date(),
-        lastLogin: new Date()
-      };
-
       const usersCollection = db.collection(COLLECTIONS.USERS);
+      let user;
 
-      // 개발 계정 존재 여부 확인
-      let user = await usersCollection.findOne({ _id: DEV_USER_ID });
-
-      if (!user) {
-        // 없으면 생성
-        await usersCollection.insertOne(DEV_USER);
-        user = DEV_USER;
-        console.log(`✅ 개발 전용 계정 생성: ${DEV_USER_ID.toString()}`);
-      } else {
-        // 마지막 로그인 시간 업데이트
+      // 특정 사용자로 로그인 (email 파라미터가 있으면 해당 사용자 조회)
+      const { email } = req.body || {};
+      if (email) {
+        user = await usersCollection.findOne({ email });
+        if (!user) {
+          return res.status(404).json({
+            success: false,
+            message: `사용자를 찾을 수 없음: ${email}`
+          });
+        }
         await usersCollection.updateOne(
-          { _id: DEV_USER_ID },
+          { _id: user._id },
           { $set: { lastLogin: new Date() } }
         );
-        user.lastLogin = new Date();
-        console.log(`ℹ️  개발 전용 계정 존재 확인: ${DEV_USER_ID.toString()}`);
+        console.log(`ℹ️  개발 로그인 (기존 계정): ${user.name} (${email})`);
+      } else {
+        // 기본 개발 계정 사용
+        const DEV_USER_ID = new ObjectId('000000000000000000000001');
+        const DEV_USER = {
+          _id: DEV_USER_ID,
+          name: '개발자 (Dev)',
+          email: 'dev@aims.local',
+          role: 'agent',
+          avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Dev&backgroundColor=c0ffc0',
+          authProvider: 'dev',
+          profileCompleted: true,
+          createdAt: new Date(),
+          lastLogin: new Date()
+        };
+
+        user = await usersCollection.findOne({ _id: DEV_USER_ID });
+        if (!user) {
+          await usersCollection.insertOne(DEV_USER);
+          user = DEV_USER;
+          console.log(`✅ 개발 전용 계정 생성: ${DEV_USER_ID.toString()}`);
+        } else {
+          await usersCollection.updateOne(
+            { _id: DEV_USER_ID },
+            { $set: { lastLogin: new Date() } }
+          );
+          user.lastLogin = new Date();
+          console.log(`ℹ️  개발 전용 계정 존재 확인: ${DEV_USER_ID.toString()}`);
+        }
       }
 
       // 실제 JWT 토큰 발급 (계정 삭제 등 인증 필요 기능에서 사용)
@@ -248,7 +262,7 @@ module.exports = function(db, authenticateJWT, generateToken, qdrantClient, qdra
           profileCompleted: user.profileCompleted
         },
         token,  // JWT 토큰 추가
-        message: '개발 계정 로그인 완료'
+        message: email ? `${user.name} 계정 로그인 완료` : '개발 계정 로그인 완료'
       });
     } catch (error) {
       console.error('❌ 개발 계정 생성/조회 실패:', error);

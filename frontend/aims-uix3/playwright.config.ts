@@ -5,13 +5,15 @@ import { defineConfig, devices } from '@playwright/test';
  * - E2E 테스트
  * - 접근성 테스트 (axe-core)
  * - 시각적 회귀 테스트
+ *
+ * 속도 최적화: setup 프로젝트에서 1회 로그인 → storageState 재사용
  */
 export default defineConfig({
   // 테스트 파일 위치
   testDir: './tests',
 
-  // 각 테스트의 최대 실행 시간 (1시간)
-  timeout: 3600000,
+  // 각 테스트의 최대 실행 시간 (5분)
+  timeout: 300000,
 
   // 각 expect() 호출의 최대 대기 시간 (10초)
   expect: {
@@ -30,7 +32,7 @@ export default defineConfig({
   snapshotDir: './tests/__snapshots__',
   snapshotPathTemplate: '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{ext}',
 
-  // 병렬 실행 비활성화 (순차 실행)
+  // 병렬 실행 비활성화 (순차 실행 - 스크린샷 안정성)
   fullyParallel: false,
   workers: 1,
 
@@ -47,13 +49,14 @@ export default defineConfig({
   // 모든 프로젝트에 공통으로 적용되는 설정
   use: {
     // 기본 URL
-    baseURL: 'http://localhost:5177',
+    baseURL: 'https://localhost:5177',
+    ignoreHTTPSErrors: true,
 
     // 각 액션 실행 전 대기 시간 (밀리초)
-    actionTimeout: 30000,
+    actionTimeout: 15000,
 
-    // 네비게이션 타임아웃 (30초)
-    navigationTimeout: 30000,
+    // 네비게이션 타임아웃 (15초)
+    navigationTimeout: 15000,
 
     // 실패 시 스크린샷 촬영
     screenshot: 'only-on-failure',
@@ -75,28 +78,21 @@ export default defineConfig({
 
   // 테스트 프로젝트 설정
   projects: [
+    // 1. Setup: 로그인 + storageState 저장 (1회만 실행)
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
     },
 
-    // 필요시 다른 브라우저도 추가 가능
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-    //
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
+    // 2. 테스트: storageState 재사용 (로그인 불필요)
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'tests/.auth/storageState.json',
+      },
+      dependencies: ['setup'],
+      testIgnore: /auth\.setup\.ts/,
+    },
   ],
-
-  // 웹 서버 자동 실행 설정 (선택사항)
-  // webServer: {
-  //   command: 'npm run dev',
-  //   url: 'http://localhost:5173',
-  //   reuseExistingServer: !process.env.CI,
-  //   timeout: 120000,
-  // },
 });
