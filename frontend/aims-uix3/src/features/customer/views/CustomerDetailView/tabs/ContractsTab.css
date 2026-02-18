@@ -1782,3 +1782,318 @@
   }
 
 } /* end @layer components */
+
+
+/* ============================================
+   🍎 CustomerFullDetailView context overrides
+   ContractsTab가 고객 상세뷰(CFD) 내부에서 렌더될 때의 컴팩트 스타일.
+   Phase 2에서 CFD.css God Object 해체로 이전됨.
+   ============================================ */
+
+@layer views {
+
+  /* --- Contracts section compact layout --- */
+  .customer-full-detail__section-content--contracts .customer-contracts {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* 🍎 AR 계약 이력 섹션 - 스크롤 컨테이너 + sticky 헤더 지원 */
+  .customer-full-detail__section-content--contracts .contract-history-section {
+    flex: 1;
+    min-height: 0;
+    overflow: auto; /* 🍎 수직+수평 스크롤 - sticky 헤더 작동 필요 */
+  }
+
+  /* 🍎 CRS 계약 이력 섹션 - 스크롤 컨테이너 + sticky 헤더 지원 (AR과 동일) */
+  .customer-full-detail__section-content--contracts .cr-contract-history-section {
+    flex: 1;
+    min-height: 0;
+    overflow: auto; /* 🍎 수직+수평 스크롤 */
+  }
+
+  /* 🍎 AR 계약 이력 헤더 - sticky + 불투명 배경 (반투명 변수 오버라이드) */
+  .customer-full-detail__section-content--contracts .contract-history-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--color-bg-secondary); /* 🍎 불투명 배경 (#f5f5f7) 필수! */
+  }
+
+  /* 🍎 CRS 계약 이력 헤더 - sticky + 불투명 배경 */
+  .customer-full-detail__section-content--contracts .cr-contract-history-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--color-bg-secondary);
+  }
+
+  html[data-theme="dark"] .customer-full-detail__section-content--contracts .contract-history-header {
+    background: var(--color-bg-secondary); /* 🍎 다크모드도 불투명 배경 */
+  }
+
+  html[data-theme="dark"] .customer-full-detail__section-content--contracts .cr-contract-history-header {
+    background: var(--color-bg-secondary);
+  }
+
+  .customer-full-detail__section-content--contracts .customer-contracts__header {
+    display: none;
+  }
+
+  /* 리스트 컨테이너 - 수직/수평 스크롤 */
+  .customer-full-detail__section-content--contracts .customer-contracts__list-container {
+    flex: 1;
+    overflow: auto; /* 🍎 수직+수평 스크롤 */
+    padding: 0;
+  }
+
+  /* 계약 헤더 - grid-template-columns는 컴포넌트 CSS의 --grid-cols에서 상속 (동일 값이므로 중복 제거) */
+  .customer-full-detail__section-content--contracts .customer-contracts-list-header {
+    gap: 6px;
+    padding: 0 10px;
+    height: var(--row-height);
+    min-height: var(--row-height);
+    max-height: var(--row-height);
+    min-width: max-content;
+    font-size: var(--font-header);
+    font-weight: 600;
+    color: var(--label-color);
+    background: var(--color-ios-bg-secondary-light);
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    box-sizing: border-box;
+  }
+
+  html[data-theme="dark"] .customer-full-detail__section-content--contracts .customer-contracts-list-header {
+    background: var(--color-ios-bg-secondary-dark);
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  /* 헤더 아이콘 숨기기 (공간 절약) */
+  .customer-full-detail__section-content--contracts .customer-contracts-list-header .header-icon-svg {
+    display: none;
+  }
+
+  /* 계약 아이템 - grid-template-columns는 컴포넌트 CSS의 --grid-cols에서 상속 (동일 값이므로 중복 제거) */
+  .customer-full-detail__section-content--contracts .customer-contracts-item {
+    gap: 6px;
+    padding: 0 10px;
+    height: var(--row-height);
+    min-height: var(--row-height);
+    max-height: var(--row-height);
+    min-width: max-content;
+    align-items: center;
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    font-size: var(--font-body);
+    box-sizing: border-box;
+  }
+
+  html[data-theme="dark"] .customer-full-detail__section-content--contracts .customer-contracts-item {
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  .customer-full-detail__section-content--contracts .customer-contracts-item:last-child {
+    border-bottom: none;
+  }
+
+  /* 상품명 - 전체 표시 (말줄임 제거) */
+  .customer-full-detail__section-content--contracts .contract-product {
+  }
+
+  /* 계약일, 증권번호 - 통일 규칙에서 처리됨 (UNIFIED TYPOGRAPHY 섹션 참조) */
+  .customer-full-detail__section-content--contracts .contract-date,
+  .customer-full-detail__section-content--contracts .contract-policy {
+    text-align: center;
+  }
+
+  /* 보험료 */
+  .customer-full-detail__section-content--contracts .contract-premium {
+    text-align: right;
+  }
+
+  /* 이체일 */
+  .customer-full-detail__section-content--contracts .contract-payment-day {
+    text-align: center;
+  }
+
+  /* 납입주기 */
+  .customer-full-detail__section-content--contracts .contract-cycle {
+    text-align: center;
+  }
+
+  /* 납입상태 */
+  .customer-full-detail__section-content--contracts .contract-status {
+    text-align: center;
+    font-size: var(--font-micro);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* 빈 상태 */
+  .customer-full-detail__section-content--contracts .customer-contracts__state {
+    padding: 16px;
+    text-align: center;
+    font-size: var(--font-body);
+    color: var(--label-color);
+    height: var(--row-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* 페이지네이션 - 문서/Annual Report와 동일한 스타일 */
+  .customer-full-detail__section-content--contracts .contract-pagination {
+    padding: 2px 8px;
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
+    font-size: var(--font-micro);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--color-ios-separator-light);
+    box-sizing: border-box;
+    margin-top: auto;
+  }
+
+  html[data-theme="dark"] .customer-full-detail__section-content--contracts .contract-pagination {
+    border-top-color: var(--color-ios-separator-dark);
+  }
+
+  /* 드롭다운 - 페이지네이션 높이에 맞춤 */
+  .customer-full-detail__section-content--contracts .pagination-limit {
+    display: flex;
+    align-items: center;
+    height: 20px;
+  }
+
+  /* iOS Dropdown 컴포넌트 스타일 오버라이드 */
+  .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown {
+    width: 100px;
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+
+  .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__trigger {
+    padding: 2px 6px;
+    height: 18px;
+    min-height: 18px;
+    font-size: var(--font-micro);
+    gap: 4px;
+  }
+
+  .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__value {
+    font-size: var(--font-micro);
+  }
+
+  .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__arrow {
+    font-size: var(--font-arrow);
+    margin-left: 4px;
+  }
+
+  /* 드롭다운 메뉴 - 위로 열리도록 강제 (overflow 잘림 방지) */
+  .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__menu {
+    min-width: 70px;
+    top: auto;
+    bottom: calc(100% + 4px);
+  }
+
+  .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__option {
+    padding: 4px 8px;
+    font-size: var(--font-micro);
+  }
+
+  /* 페이지네이션 컨트롤 */
+  .customer-full-detail__section-content--contracts .pagination-controls {
+    flex: none;
+    gap: 4px;
+    align-items: center;
+    height: 100%;
+  }
+
+
+  /* --- Contracts pagination info --- */
+  /* 페이지 정보 글씨 크기 축소 */
+  .customer-full-detail__section-content--contracts .pagination-info {
+    font-size: var(--font-micro);
+    min-width: 30px;
+  }
+
+  /* --- Shared pagination buttons (contracts portion) --- */
+  /* 🍎 페이지네이션 버튼 스타일 */
+  .customer-full-detail__section-content--contracts .pagination-button {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-neutral-700);
+    font-weight: 600;
+  }
+
+  .customer-full-detail__section-content--contracts .pagination-button:hover {
+    opacity: 0.6;
+  }
+
+  .customer-full-detail__section-content--contracts .pagination-button:active,
+  .customer-full-detail__section-content--contracts .pagination-button:focus {
+    background: transparent;
+    outline: none;
+    box-shadow: none;
+  }
+
+  .customer-full-detail__section-content--contracts .pagination-arrow {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+
+  /* --- Typography normalization (contracts) --- */
+  /* 🍎 보험계약 데이터 셀 - 12px, weight 400 */
+  .customer-full-detail .customer-full-detail__section-content--contracts .contract-product,
+  .customer-full-detail .customer-full-detail__section-content--contracts .contract-date,
+  .customer-full-detail .customer-full-detail__section-content--contracts .contract-policy,
+  .customer-full-detail .customer-full-detail__section-content--contracts .contract-premium,
+  .customer-full-detail .customer-full-detail__section-content--contracts .contract-payment-day,
+  .customer-full-detail .customer-full-detail__section-content--contracts .contract-cycle {
+    font-size: var(--font-body);
+    font-weight: var(--weight-normal);
+    color: var(--text-color);
+  }
+
+  /* 🍎 테이블 헤더 행 - 11px, semibold */
+  .customer-full-detail .customer-full-detail__section-content--contracts .customer-contracts-list-header,
+  .customer-full-detail .customer-full-detail__section-content--contracts .customer-contracts-list-header span {
+    font-size: var(--font-header);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* 🍎 상태 배지 - 10px */
+  .customer-full-detail .customer-full-detail__section-content--contracts .contract-status {
+    font-size: var(--font-micro);
+    font-weight: var(--weight-normal);
+  }
+
+  /* 🍎 페이지네이션 - 10px */
+  .customer-full-detail .contract-pagination,
+  .customer-full-detail .contract-pagination .pagination-info,
+  .customer-full-detail .contract-pagination .pagination-limit {
+    font-size: var(--font-micro);
+  }
+
+  /* --- Responsive 768px (contracts) --- */
+  @media (max-width: 768px) {
+    /* 🍎 계약 테이블: 가로 스크롤 허용 */
+    .customer-full-detail .customer-full-detail__section-content--contracts {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+} /* end @layer views (CFD context) */

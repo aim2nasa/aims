@@ -83,3 +83,29 @@
   }
 
 } /* end @layer components */
+
+
+/* ============================================
+   🍎 CustomerFullDetailView context overrides
+   MemosTab가 고객 상세뷰(CFD) 내부에서 렌더될 때의 컴팩트 스타일.
+   Phase 2에서 CFD.css God Object 해체로 이전됨.
+   ============================================ */
+
+@layer views {
+
+  /* --- MemoField full-height overrides --- */
+  /* 🍎 메모 탭에서 memo-field가 전체 높이 채우기 */
+  .customer-info-memos--full .memo-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .customer-info-memos--full .memo-field__textarea {
+    flex: 1;
+    min-height: 100px;
+    resize: none;
+  }
+
+} /* end @layer views (CFD context) */

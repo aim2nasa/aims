@@ -305,3 +305,128 @@
   }
 
 } /* end @layer components */
+
+
+/* ============================================
+   🍎 CustomerFullDetailView context overrides
+   RelationshipsTab가 고객 상세뷰(CFD) 내부에서 렌더될 때의 컴팩트 스타일.
+   Phase 2에서 CFD.css God Object 해체로 이전됨.
+   ============================================ */
+
+@layer views {
+
+  /* --- RelationshipsTable compact overrides --- */
+  .customer-info-family-list .relationships-table-wrapper {
+    border: none;
+    border-radius: 0;
+  }
+
+  /* 관계 테이블 - A행 기준 32px 높이 적용 */
+  .customer-info-family-list .relationships-table {
+    min-width: auto;
+    font-size: var(--font-body);
+  }
+
+  /* 테이블 헤더 - A행 높이 32px 적용 */
+  .customer-info-family-list .relationships-table th {
+    height: var(--row-height);
+    min-height: var(--row-height);
+    max-height: var(--row-height);
+    padding: 0 10px;
+    font-size: var(--font-header);
+    font-weight: 600;
+    color: var(--label-color);
+    background: var(--color-ios-bg-secondary-light);
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    box-sizing: border-box;
+  }
+
+  html[data-theme="dark"] .customer-info-family-list .relationships-table th {
+    background: var(--color-ios-bg-secondary-dark);
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  /* 테이블 데이터 셀 - A행 높이 32px 적용 */
+  .customer-info-family-list .relationships-table td {
+    height: var(--row-height);
+    min-height: var(--row-height);
+    max-height: var(--row-height);
+    padding: 0 10px;
+    font-size: var(--font-body);
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    box-sizing: border-box;
+  }
+
+  html[data-theme="dark"] .customer-info-family-list .relationships-table td {
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  .customer-info-family-list .relationships-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* 관계 카테고리 아이콘 - 크기 축소 */
+  .customer-info-family-list .relationships-category__icon {
+    width: 20px;
+    height: 20px;
+    font-size: var(--font-icon);
+  }
+
+  /* 삭제 버튼 - 크기 축소 */
+  .customer-info-family-list .relationships-action {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* 빈 상태 메시지 */
+  .customer-info-family-list .relationships-state {
+    height: var(--row-height);
+    padding: 0 10px;
+    font-size: var(--font-body);
+    gap: 6px;
+    background: transparent;
+    border-radius: 0;
+  }
+
+  .customer-info-family-list .relationships-state .sf-symbol {
+    font-size: var(--font-icon);
+  }
+
+  /* --- Typography normalization (relationships) --- */
+  /* 🍎 고객정보 테이블 - 모든 셀 */
+  .customer-full-detail .customer-full-detail__section-content .customer-info-table td,
+  .customer-full-detail .customer-full-detail__section-content .customer-info-table__label,
+  .customer-full-detail .customer-full-detail__section-content .customer-info-table__value {
+    font-size: var(--font-body);
+    font-weight: var(--weight-normal);
+    color: var(--text-color);
+  }
+
+  /* 🍎 가족관계 테이블 - 데이터 셀 (td) */
+  .customer-full-detail .customer-full-detail__section-content .relationships-table td {
+    font-size: var(--font-body);
+    font-weight: var(--weight-normal);
+    color: var(--text-color);
+  }
+
+  /* 🍎 가족관계 테이블 - 헤더 셀 (th) - 11px, semibold */
+  .customer-full-detail .customer-full-detail__section-content .relationships-table th {
+    font-size: var(--font-header);
+    font-weight: var(--weight-semibold);
+    color: var(--label-color);
+  }
+
+  /* 🍎 관계유형 텍스트 크기 통일 */
+  .customer-full-detail .customer-full-detail__section-content .relationships-category,
+  .customer-full-detail .customer-full-detail__section-content .relationships-category__reverse,
+  .customer-full-detail .customer-full-detail__section-content .relationships-link {
+    font-size: var(--font-body);
+    font-weight: 400;
+  }
+
+  .customer-full-detail .customer-full-detail__section-content .relationships-category__label {
+    font-size: var(--font-body);
+    font-weight: 400;
+  }
+
+} /* end @layer views (CFD context) */
