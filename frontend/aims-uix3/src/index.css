@@ -19,7 +19,9 @@
 @import './shared/styles/typography.css';
 @import './shared/styles/responsive.css';
 @import './shared/styles/phone-landscape.css';
-@import './components/Header/Header.css';
+@import './components/Header/Header.layout.css';
+@import './components/Header/Header.mobile.css';
+@import './components/Header/Header.extras.css';
 
 @layer reset {
 

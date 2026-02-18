@@ -1,0 +1,458 @@
+@layer components {
+
+  /* === 크기 === */
+  .document-size {
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .document-type {
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  /* === 연결일 === */
+  .status-date {
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+
+  /* === 🍎 페이지네이션 === */
+  /* 기본 스타일: shared/ui/Pagination/Pagination.css
+   * 여기서는 고객 상세 문서 탭 전용 오버라이드만 정의 */
+  .customer-documents .document-pagination {
+    flex-shrink: 0;
+    transform: translateY(6px); /* 구분선 높이 A와 맞춤 - 아래로 6px */
+    position: relative;
+    z-index: 10; /* 드롭다운 메뉴가 배지(z-index: 2) 위에 표시되도록 */
+  }
+
+  html[data-theme="dark"] .customer-documents .document-pagination {
+    border-top-color: var(--color-ios-separator-subtle-dark);
+  }
+
+  .customer-documents .pagination-spacer {
+    flex: 1;
+  }
+
+  /* === 🍎 간편 문서검색 === */
+  /* 🍎 DocumentLibraryView와 동일한 레이아웃을 위해 숨김 처리 */
+  .customer-documents .simple-document-search {
+    display: none;
+  }
+
+  .simple-document-search__label {
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .simple-document-search__input {
+    flex: 1;
+    min-width: 120px;
+    max-width: 225px;
+    height: 24px;
+    padding: 0 var(--spacing-2);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-caption-1);
+    font-family: inherit;
+    transition: border-color var(--duration-ios-quick) var(--easing-ios-default),
+                box-shadow var(--duration-ios-quick) var(--easing-ios-default);
+  }
+
+  .simple-document-search__input::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  .simple-document-search__input:focus {
+    outline: none;
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 2px var(--color-primary-100);
+  }
+
+  [data-theme="dark"] .simple-document-search__input:focus {
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+  }
+
+  .simple-document-search__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-primary-500);
+    color: white;
+    cursor: pointer;
+    transition: background-color var(--duration-ios-quick) var(--easing-ios-default),
+                transform var(--duration-ios-quick) var(--easing-ios-default),
+                opacity var(--duration-ios-quick) var(--easing-ios-default);
+    flex-shrink: 0;
+  }
+
+  .simple-document-search__btn:hover:not(:disabled) {
+    background-color: var(--color-primary-600);
+  }
+
+  .simple-document-search__btn:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  .simple-document-search__btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* 문서 상세 검색 이동 버튼 */
+  .simple-document-search__detail-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background-color var(--duration-ios-quick) var(--easing-ios-default),
+                border-color var(--duration-ios-quick) var(--easing-ios-default),
+                color var(--duration-ios-quick) var(--easing-ios-default),
+                transform var(--duration-ios-quick) var(--easing-ios-default);
+    flex-shrink: 0;
+  }
+
+  .simple-document-search__detail-btn:hover {
+    background-color: var(--color-bg-tertiary);
+    border-color: var(--color-border-primary);
+    color: var(--color-text-primary);
+  }
+
+  .simple-document-search__detail-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* 구분선 */
+  .simple-document-search__divider {
+    color: var(--color-text-tertiary);
+    font-size: 11px;
+    opacity: 0.5;
+    margin: 0 4px;
+    flex-shrink: 0;
+  }
+
+  /* 상세 문서검색 그룹 (라벨 + 버튼) */
+  .simple-document-search__detail-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  /* 상세 문서검색 라벨 */
+  .simple-document-search__detail-label {
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* 🍎 뱃지 스타일은 shared/styles/document-badges.css에서 공통 관리 */
+
+  /* === 🍎 PDF 변환 상태 배지 === */
+  .document-conversion-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-ios-bg-primary-light);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    z-index: 2;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge {
+    border-color: var(--color-ios-bg-primary-dark);
+  }
+
+  /* 완료: 파란색 */
+  .document-conversion-badge--completed {
+    background: var(--color-accent-blue);
+    color: white;
+  }
+
+  .customer-documents-item:hover .document-conversion-badge--completed {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px var(--color-accent-blue);
+  }
+
+  /* 처리 중: 오렌지 + 회전 애니메이션 */
+  .document-conversion-badge--processing {
+    background: var(--color-ios-orange-light);
+    color: white;
+    animation: conversion-spin 1.5s linear infinite;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge--processing {
+    background: var(--color-ios-orange-dark);
+  }
+
+  @keyframes conversion-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* 대기 중: 회색 */
+  .document-conversion-badge--pending {
+    background: var(--color-neutral-400);
+    color: white;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge--pending {
+    background: var(--color-neutral-500);
+  }
+
+  /* 실패: 빨간색 */
+  .document-conversion-badge--failed {
+    background: var(--color-ios-red-light);
+    color: white;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge--failed {
+    background: var(--color-ios-red-dark);
+  }
+
+  .customer-documents-item:hover .document-conversion-badge--failed {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px var(--color-ios-red-light);
+  }
+
+  /* 재시도 버튼 스타일 */
+  button.document-conversion-badge--failed {
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  button.document-conversion-badge--failed:hover:not(:disabled) {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px var(--color-ios-red-light);
+  }
+
+  button.document-conversion-badge--failed:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  /* 재시도 중 상태 */
+  .document-conversion-badge--retrying {
+    background: var(--color-ios-orange-light) !important;
+    animation: conversion-spin 1s linear infinite;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge--retrying {
+    background: var(--color-ios-orange-dark) !important;
+  }
+
+  /* === MEMO BUTTON === */
+
+  .document-notes-btn {
+    width: var(--spacing-4);
+    height: var(--spacing-4);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: var(--spacing-2);
+    padding: 0;
+    font-size: var(--font-size-body);
+    line-height: 1;
+    opacity: 0.7;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  .document-notes-btn:hover {
+    background: transparent;
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  .document-notes-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* === 🍎 DELETE MODE: 삭제 기능 (DocumentLibraryView와 동일) === */
+
+  /* 삭제 아이콘 버튼 */
+  .edit-mode-icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-error);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.9;
+  }
+
+  .edit-mode-icon-button:hover {
+    background: transparent;
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  .edit-mode-icon-button:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+    transform: none;
+    filter: grayscale(100%);
+  }
+
+  .edit-mode-icon-button:disabled:hover {
+    opacity: 0.2;
+    transform: none;
+  }
+
+  html[data-theme="dark"] .edit-mode-icon-button {
+    color: var(--color-error);
+  }
+
+  html[data-theme="dark"] .edit-mode-icon-button:hover {
+    background: transparent;
+    opacity: 1;
+  }
+
+  html[data-theme="dark"] .edit-mode-icon-button:disabled {
+    opacity: 0.15;
+    filter: grayscale(100%);
+  }
+
+  html[data-theme="dark"] .edit-mode-icon-button:disabled:hover {
+    opacity: 0.15;
+    transform: none;
+  }
+
+  .edit-mode-icon-button--active {
+    color: var(--color-success);
+    opacity: 1;
+  }
+
+  html[data-theme="dark"] .edit-mode-icon-button--active {
+    color: var(--color-success);
+  }
+
+  /* 선택된 개수 표시 */
+  .selected-count-inline {
+    font-size: var(--font-size-callout);
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  /* 체크박스 헤더 */
+  .header-checkbox {
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .document-select-all-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary-500);
+  }
+
+  /* 체크박스 래퍼 */
+  .document-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    flex-shrink: 0;
+  }
+
+  .document-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary-500);
+  }
+
+  /* 삭제 모드일 때 그리드 레이아웃 변경 */
+  .customer-documents--delete-mode .customer-documents-list-header {
+    grid-template-columns:
+      20px   /* 체크박스 */
+      28px   /* 유형 아이콘 */
+      minmax(80px, 1fr) /* 파일명 - 유연하게 */
+      55px   /* 문서유형 */
+      40px   /* 크기 */
+      35px   /* 타입 */
+      60px;  /* 연결일 */
+    gap: 3px;
+  }
+
+  .customer-documents--delete-mode .customer-documents-item {
+    grid-template-columns:
+      20px   /* 체크박스 */
+      28px   /* 유형 아이콘 */
+      minmax(80px, 1fr) /* 파일명 - 유연하게 */
+      55px   /* 문서유형 */
+      40px   /* 크기 */
+      35px   /* 타입 */
+      60px;  /* 연결일 */
+    gap: 3px;
+  }
+
+  /* 선택된 문서 하이라이트 */
+  .customer-documents--delete-mode .customer-documents-item--selected {
+    background: var(--color-ios-bg-selected-light);
+  }
+
+  html[data-theme="dark"] .customer-documents--delete-mode .customer-documents-item--selected {
+    background: var(--color-ios-bg-selected-dark);
+  }
+
+  .customer-documents--delete-mode .customer-documents-item--selected:hover {
+    background: var(--color-ios-bg-selected-light);
+  }
+
+  html[data-theme="dark"] .customer-documents--delete-mode .customer-documents-item--selected:hover {
+    background: var(--color-ios-bg-selected-dark);
+  }
+
+} /* end @layer components */

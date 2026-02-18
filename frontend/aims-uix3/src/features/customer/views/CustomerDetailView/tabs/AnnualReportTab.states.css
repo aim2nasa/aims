@@ -1,0 +1,159 @@
+@layer components {
+
+  /* ==================== 🔄 파싱 실패/진행중 상태 스타일 ==================== */
+
+  /* 에러 행 스타일 */
+  .annual-report-row--error {
+    background: var(--color-danger-bg, rgba(239, 68, 68, 0.05));
+  }
+
+  html[data-theme="dark"] .annual-report-row--error {
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .annual-report-row--error:hover {
+    background: var(--color-danger-bg-hover, rgba(239, 68, 68, 0.1));
+  }
+
+  html[data-theme="dark"] .annual-report-row--error:hover {
+    background: rgba(239, 68, 68, 0.15);
+  }
+
+  /* 처리중 행 스타일 */
+  .annual-report-row--processing {
+    background: var(--color-warning-bg, rgba(245, 158, 11, 0.05));
+  }
+
+  html[data-theme="dark"] .annual-report-row--processing {
+    background: rgba(245, 158, 11, 0.1);
+  }
+
+  /* 에러 상태 배지 */
+  .status-badge--error {
+    background: var(--color-danger, #ef4444);
+    color: white;
+  }
+
+  /* 처리중 상태 배지 */
+  .status-badge--processing {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-warning, #f59e0b);
+    color: white;
+  }
+
+  /* 대기중 상태 배지 */
+  .status-badge--pending {
+    background: var(--color-ios-blue, #007aff);
+    color: white;
+  }
+
+  /* 대기중 행 스타일 */
+  .annual-report-row--pending {
+    opacity: 0.8;
+  }
+
+  /* 처리중 스피너 (배지 내부) */
+  .status-spinner {
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* 재시도 버튼 - .row-status 내부에서만 적용 (PDFViewer와 충돌 방지) */
+  .row-status .retry-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    margin-left: 4px;
+    border: none;
+    border-radius: 4px;
+    background: var(--color-primary-500, #3b82f6);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 42px;
+    height: 20px;
+    line-height: 1;
+  }
+
+  .row-status .retry-button:hover {
+    background: var(--color-primary-700, #1d4ed8);
+    transform: scale(1.05);
+  }
+
+  .row-status .retry-button:active {
+    transform: scale(0.95);
+  }
+
+  html[data-theme="dark"] .row-status .retry-button {
+    background: var(--color-primary-400, #60a5fa);
+    color: white;
+  }
+
+  html[data-theme="dark"] .row-status .retry-button:hover {
+    background: var(--color-primary-300, #93c5fd);
+  }
+
+  /* 상태 셀에서 배지와 버튼 정렬 */
+  .row-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  /* 에러 원인 텍스트 */
+  .error-reason {
+    font-size: 10px;
+    color: var(--color-danger, #ef4444);
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: help;
+  }
+
+  html[data-theme="dark"] .error-reason {
+    color: var(--color-danger-400, #f87171);
+  }
+
+  /* 재시도 횟수 표시 [1/3] - 상태 칼럼용 */
+  .row-status .retry-indicator {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-ios-text-secondary-light);
+    background-color: var(--color-ios-fill-tertiary-light);
+    padding: 1px 4px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .row-status .retry-indicator {
+    color: var(--color-ios-text-secondary-dark);
+    background-color: var(--color-ios-fill-tertiary-dark);
+  }
+
+  /* ==================== 🍎 COLUMN RESIZE: 리사이즈 중 상태 ==================== */
+  .annual-report-table-container.is-resizing {
+    cursor: col-resize;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .annual-report-table-container.is-resizing * {
+    cursor: col-resize !important;
+  }
+
+} /* end @layer components */

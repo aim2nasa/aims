@@ -1,0 +1,272 @@
+@layer components {
+
+  /* 🍎 PROGRESSIVE DISCLOSURE: Invisible hover - just like macOS Finder */
+  .file-item--completed:hover {
+    /* No background change - only the checkmark gets more visible */
+    background: transparent;
+  }
+
+  .file-item--completed:hover .file-item__status-compact::before {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* 🍎 FILE TYPE COLORS: Always preserved - never overridden */
+  .file-item--completed .file-item__icon-compact {
+    /* 파일 타입별 색상 100% 유지 - 절대 덮어쓰지 않음 */
+    position: relative;
+  }
+
+  /* 🍎 NAME COMPACT: Primary information column */
+  .file-item__name-compact {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .file-item__name-text {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 600;
+    color: var(--color-ios-text-light);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  html[data-theme="dark"] .file-item__name-text {
+    color: var(--color-ios-text-dark);
+  }
+
+  .file-item__error-inline {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    color: var(--color-success-overlay-icon-light);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .file-item__error-inline {
+    color: var(--color-success-overlay-text-light);
+  }
+
+  .file-item__path-compact {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    color: var(--color-ios-empty-light);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .file-item__path-compact {
+    color: var(--color-ios-empty-dark);
+  }
+
+  /* 🍎 SIZE COMPACT: Fixed width size column */
+  .file-item__size-compact {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-weight: 400;
+    color: var(--color-ios-text-light);
+    text-align: right;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .file-item__size-compact {
+    color: var(--color-ios-text-dark);
+  }
+
+  /* 🍎 TIME COMPACT: Fixed width time column */
+  .file-item__time-compact {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-weight: 400;
+    color: var(--color-file-default-light);
+    text-align: right;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .file-item__time-compact {
+    color: var(--color-file-default-dark);
+  }
+
+  /* 🍎 STATUS COMPACT: Minimal action column */
+  .file-item__status-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative; /* For completion badge positioning */
+  }
+
+  .file-item__progress-compact {
+    width: 20px;
+    height: 2px;
+    background: var(--color-opacity-light-overlay);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  html[data-theme="dark"] .file-item__progress-compact {
+    background: var(--color-overlay-light);
+  }
+
+  .file-item__progress-fill-compact {
+    height: 100%;
+    background: var(--color-ios-spinner-fill-light);
+    border-radius: 1px;
+    transition: width var(--duration-fast) var(--easing-ease-out);
+  }
+
+  html[data-theme="dark"] .file-item__progress-fill-compact {
+    background: var(--color-ios-spinner-fill-dark);
+  }
+
+  .file-item__done-compact {
+    color: var(--color-success-overlay-icon-light);
+  }
+
+  html[data-theme="dark"] .file-item__done-compact {
+    color: var(--color-success-overlay-text-light);
+  }
+
+  .file-item__retry-compact {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    color: var(--color-ios-error-button-light);
+  }
+
+  .file-item__retry-compact:hover {
+    background: var(--color-ios-error-bg-light);
+    color: var(--color-ios-error-text-light);
+  }
+
+  html[data-theme="dark"] .file-item__retry-compact {
+    color: var(--color-success-overlay-icon-light);
+  }
+
+  html[data-theme="dark"] .file-item__retry-compact:hover {
+    background: var(--color-overlay-light);
+    color: var(--color-file-audio-hover-dark);
+  }
+
+  .file-item__cancelled-compact {
+    color: var(--color-ios-empty-light);
+  }
+
+  html[data-theme="dark"] .file-item__cancelled-compact {
+    color: var(--color-ios-empty-dark);
+  }
+
+  /* 🔴 SKIPPED STATUS: Orange/Warning color for skipped files */
+  .file-list__stat--skipped {
+    color: var(--color-warning, #ff9500);
+    background: rgba(255, 149, 0, 0.1);
+  }
+
+  .file-list__stat--skipped.file-list__stat--clickable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
+    background: rgba(255, 149, 0, 0.15);
+  }
+
+  .file-list__stat--skipped.file-list__stat--active {
+    background: rgba(255, 149, 0, 0.2);
+    font-weight: 600;
+    box-shadow: inset 0 1px 2px rgba(255, 149, 0, 0.2);
+  }
+
+  .file-item__skipped-inline {
+    color: var(--color-warning, #ff9500);
+    font-weight: 400;
+    margin-left: 8px;
+    opacity: 0.9;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .file-item__skipped-inline {
+    color: var(--color-warning, #ff9500);
+  }
+
+  .file-item__skipped-compact {
+    color: var(--color-warning, #ff9500);
+  }
+
+  html[data-theme="dark"] .file-item__skipped-compact {
+    color: var(--color-warning, #ff9500);
+  }
+
+  /* 🍎 HOVER EFFECTS: Subtle Progressive Disclosure */
+  .file-item:hover {
+    background: var(--color-overlay-dark);
+    transform: translateY(-0.5px);
+  }
+
+  html[data-theme="dark"] .file-item:hover {
+    background: var(--color-hover-dark);
+  }
+
+  .file-item:hover .file-item__name-text {
+    color: var(--color-ios-text-light);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__name-text {
+    color: var(--color-ios-text-dark);
+  }
+
+  /* 🍎 RESPONSIVE: Tablet and mobile optimization */
+  @media (max-width: 768px) {
+    .file-item {
+      grid-template-columns:
+        20px           /* 아이콘 줄임 */
+        1fr            /* 파일명 */
+        60px           /* 크기 줄임 */
+        28px;          /* 상태만 */
+      gap: 8px;
+      height: 28px;
+      padding: 4px 8px;
+    }
+
+    .file-item__time-compact {
+      display: none; /* 모바일에서 시간 숨김 */
+    }
+
+    .file-item__name-text {
+      /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    }
+
+    .file-item__size-compact {
+      /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    }
+  }
+
+  @media (max-width: 480px) {
+    .file-item {
+      grid-template-columns:
+        18px           /* 아이콘 더 줄임 */
+        1fr            /* 파일명 */
+        24px;          /* 상태만 */
+      gap: 6px;
+      height: 26px;
+      padding: 3px 6px;
+    }
+
+    .file-item__size-compact {
+      display: none; /* 모바일에서 크기 숨김 */
+    }
+
+    .file-item__name-text {
+      /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    }
+  }
+
+} /* end @layer components */

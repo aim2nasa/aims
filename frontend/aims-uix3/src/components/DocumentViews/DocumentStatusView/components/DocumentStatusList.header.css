@@ -1,0 +1,441 @@
+/**
+ * 🍎 DocumentStatusList - DocumentLibrary 리스트 완벽 복제
+ * 극도로 아름답고 효율적인 리스트
+ */
+
+@layer components {
+
+
+  .document-status-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 4px;
+  }
+
+  /* === 🍎 COLUMN HEADER: 문서 처리 현황 헤더 === */
+  .status-list-header {
+    display: grid;
+    grid-template-columns:
+      45px           /* 유형 (아이콘 + 모든 뱃지, 우측정렬) - 배지 공간 확보 */
+      minmax(120px, 1fr)  /* 파일명 (가변, 최소 120px) */
+      90px           /* 문서 유형 (새 칼럼) */
+      70px           /* 크기 */
+      60px           /* 타입 */
+      120px          /* 날짜 (오른쪽 정렬) */
+      80px           /* 상태 (아이콘 + 상태명, 정렬 포함) */
+      110px          /* 연결된 고객 */
+      104px;         /* 액션 버튼 (4개, 고정) */
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--color-neutral-100);  /* 완전 불투명 배경 - 스크롤 시 콘텐츠 겹침 방지 */
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
+  }
+
+  /* 🍎 삭제 모드일 때: 체크박스 열 추가 */
+  .document-status-list--delete-mode .status-list-header {
+    grid-template-columns:
+      24px           /* 체크박스 */
+      45px           /* 유형 (아이콘 + 모든 뱃지, 우측정렬) - 배지 공간 확보 */
+      minmax(120px, 1fr)  /* 파일명 */
+      90px           /* 문서 유형 (새 칼럼) */
+      70px           /* 크기 */
+      60px           /* 타입 */
+      120px          /* 날짜 */
+      80px           /* 상태 */
+      110px          /* 연결된 고객 */
+      104px;         /* 액션 버튼 */
+  }
+
+  html[data-theme="dark"] .status-list-header {
+    background: var(--color-neutral-700);  /* 완전 불투명 다크 배경 - 스크롤 시 콘텐츠 겹침 방지 */
+    color: var(--color-ios-text-secondary-dark);
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
+  }
+
+  .status-list-header > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: column headers */
+    font-family: var(--font-family-text);
+  }
+
+  .status-list-header .header-icon-svg {
+    flex-shrink: 0;
+  }
+
+  /* === 🍎 COLUMN HEADER ALIGNMENT: 중앙 정렬 통일 === */
+  .status-list-header .header-size {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .status-list-header .header-type {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .status-list-header .header-date {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .status-list-header .header-status {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .status-list-header .header-customer {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .status-list-header .header-actions {
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* 🍎 header-filename: 정렬 영역 + 별칭/원본 토글 래퍼 */
+  .status-list-header .header-filename {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .header-filename__sort-area {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    min-width: 0;
+  }
+
+  /* 🍎 파일명 표시 모드 토글 버튼 */
+  .filename-mode-toggle {
+    flex-shrink: 0;
+    padding: 1px 4px;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.2;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    white-space: nowrap;
+  }
+
+  .filename-mode-toggle:hover {
+    color: var(--color-text-secondary);
+    border-color: var(--color-text-tertiary);
+  }
+
+  .filename-mode-toggle:active {
+    opacity: 0.7;
+  }
+
+  /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
+  .header-filename .header-icon-svg {
+    color: var(--color-icon-blue);  /* 파일명 - 파란색 */
+  }
+
+  .header-size .header-icon-svg {
+    color: var(--color-icon-purple);  /* 크기 - 보라색 */
+  }
+
+  .header-type .header-icon-svg {
+    color: var(--color-icon-orange);  /* 타입 - 주황색 */
+  }
+
+  .header-date .header-icon-svg {
+    color: var(--color-icon-green);  /* 날짜 - 초록색 */
+  }
+
+  .header-status .header-icon-svg {
+    color: var(--color-icon-green);  /* 상태 - 초록색 */
+  }
+
+  .header-customer .header-icon-svg {
+    color: var(--color-icon-teal);  /* 고객 - 청록색 */
+  }
+
+  .header-actions .header-icon-svg {
+    color: var(--color-ios-text-tertiary-light);  /* 액션 - 회색 */
+  }
+
+  html[data-theme="dark"] .header-actions .header-icon-svg {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* === 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 === */
+  .header-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease-out;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+  }
+
+  .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+  }
+
+  html[data-theme="dark"] .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+  }
+
+  .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-light);
+  }
+
+  html[data-theme="dark"] .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  /* === 🍎 SORT INDICATOR: 정렬 방향 표시 === */
+  .sort-indicator {
+    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: sort indicators */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    margin-left: 2px;
+    color: var(--color-primary-600);
+    opacity: 0.9;
+  }
+
+  /* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
+  .sort-indicator:not(.sort-indicator--both) {
+    color: var(--color-sort-indicator-active); /* 선택된 정렬 컬럼 강조 */
+    font-weight: 700;
+    opacity: 1;
+  }
+
+  /* 양방향 정렬 인디케이터 - 세로로 쌓기 */
+  .sort-indicator--both {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 0.6;
+    margin-left: 2px;
+    gap: 2px;
+  }
+
+  .sort-indicator--both .sort-arrow {
+    display: block;
+    font-size: var(--font-size-caption-2); /* 11px */
+    line-height: 0.6;
+    height: 6px;
+  }
+
+  html[data-theme="dark"] .sort-indicator {
+    color: var(--color-primary-300);
+  }
+
+  .header-sortable:hover .sort-indicator {
+    opacity: 1;
+  }
+
+  /* === 스크롤바 === */
+  .document-status-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .document-status-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .document-status-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-light);
+    border-radius: 4px;
+    transition: background-color 0.15s ease-out;
+  }
+
+  html[data-theme="dark"] .document-status-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-dark);
+  }
+
+  /* === 로딩 상태 === */
+  .list-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 200px;
+    color: var(--color-ios-text-quaternary-light);
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: loading text */
+    font-family: var(--font-family-text);
+  }
+
+  html[data-theme="dark"] .list-loading {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-ios-spinner-track-light);
+    border-top-color: var(--color-primary-500);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  html[data-theme="dark"] .loading-spinner {
+    border-color: var(--color-ios-spinner-track-dark);
+    border-top-color: var(--color-primary-400);
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* === 에러 상태 === */
+  .list-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 100px;
+    color: var(--color-ios-text-secondary-light);
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: error text */
+    font-family: var(--font-family-text);
+  }
+
+  html[data-theme="dark"] .list-error {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .error-icon {
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: error icons */
+    opacity: 0.6;
+  }
+
+  /* === 빈 상태 === */
+  .list-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 200px;
+  }
+
+  .empty-icon {
+    /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 아이콘/심볼 ) */
+    opacity: 0.2;
+  }
+
+  .empty-message {
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: empty state messages */
+    font-family: var(--font-family-text);
+    color: var(--color-ios-text-quaternary-light);
+    margin: 0;
+  }
+
+  html[data-theme="dark"] .empty-message {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* === 🍎 STATUS ITEM: DocumentLibrary와 동일한 구조 === */
+  .status-item {
+    display: grid;
+    grid-template-columns:
+      45px           /* 유형 (아이콘 + 모든 뱃지, 우측정렬) - 배지 공간 확보 */
+      minmax(120px, 1fr)  /* 파일명 (가변, 최소 120px) */
+      90px           /* 문서 유형 (새 칼럼) */
+      70px           /* 크기 */
+      60px           /* 타입 */
+      120px          /* 날짜 (오른쪽 정렬) */
+      80px           /* 상태 (아이콘 + 상태명, 정렬 포함) */
+      110px          /* 연결된 고객 */
+      104px;         /* 액션 버튼 (4개, 고정) */
+    gap: 10px;
+    align-items: center;
+    height: 40px;
+    padding: 6px 10px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    animation: itemFadeIn 0.25s ease-out;
+    /* overflow: 기본값(visible) - 뱃지 그림자는 .document-icon-wrapper에서 클리핑 */
+  }
+
+  /* 🍎 삭제 모드일 때: 체크박스 열 추가 */
+  .document-status-list--delete-mode .status-item {
+    grid-template-columns:
+      24px           /* 체크박스 */
+      45px           /* 유형 (아이콘 + 모든 뱃지, 우측정렬) - 배지 공간 확보 */
+      minmax(120px, 1fr)  /* 파일명 */
+      90px           /* 문서 유형 (새 칼럼) */
+      70px           /* 크기 */
+      60px           /* 타입 */
+      120px          /* 날짜 */
+      80px           /* 상태 */
+      110px          /* 연결된 고객 */
+      104px;         /* 액션 버튼 */
+  }
+
+  @keyframes itemFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  html[data-theme="dark"] .status-item {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  .status-item:hover {
+    background: var(--color-ios-bg-hover-light);
+    transform: translateY(-1px);
+  }
+
+  html[data-theme="dark"] .status-item:hover {
+    background: var(--color-ios-bg-hover-dark);
+  }
+
+  /* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
+  .status-item.selected,
+  .status-item[data-selected="true"],
+  .status-item--selected,
+  .status-item:active {
+    background: var(--color-ios-bg-selected-light);
+  }
+
+  html[data-theme="dark"] .status-item.selected,
+  html[data-theme="dark"] .status-item[data-selected="true"],
+  html[data-theme="dark"] .status-item--selected,
+  html[data-theme="dark"] .status-item:active {
+    background: var(--color-ios-bg-selected-dark);
+  }
+
+  .status-item--selected:hover {
+    background: var(--color-ios-bg-selected-light);
+  }
+
+  html[data-theme="dark"] .status-item--selected:hover {
+    background: var(--color-ios-bg-selected-dark);
+  }
+
+} /* end @layer components */

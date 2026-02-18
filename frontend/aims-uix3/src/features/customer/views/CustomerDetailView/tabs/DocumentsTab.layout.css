@@ -1,0 +1,499 @@
+/**
+ * 🍎 Customer Documents Tab - CenterPane DocumentLibraryView 디자인 100% 복제
+ * 극도로 아름답고 효율적인 리스트
+ */
+
+ * 🎛️ 수직 레이아웃 조절 변수 (사용자 조절용)
+ * =====================================================
+ * --docs-container-gap: 컨테이너 내부 요소 간격
+ * --docs-header-margin-top: 헤더 상단 마진 (음수 가능)
+ * --docs-header-margin-bottom: 헤더 하단 마진 (음수 가능)
+ * --docs-list-margin-top: 리스트 상단 마진 (음수 가능)
+ */
+
+@layer components {
+
+
+  .customer-documents {
+    --docs-container-gap: 0px; /* 상단 위치 고정용 */
+    --docs-header-margin-top: 4px;
+    --docs-header-margin-bottom: 4px;
+    --docs-list-margin-top: 6px;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--docs-container-gap);
+    height: 100%;
+    padding: 0 16px 16px 16px; /* 좌우/하단 패딩 */
+  }
+
+  /* 🍎 DocumentLibraryView와 수직 레이아웃 맞춤 - 컴팩트 헤더 */
+  .customer-documents__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    flex-shrink: 0;
+    font-size: 10px;
+    padding: 0;
+    margin-top: var(--docs-header-margin-top);
+    margin-bottom: var(--docs-header-margin-bottom);
+  }
+
+  .customer-documents__summary {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    color: var(--color-text-secondary);
+  }
+
+  .customer-documents__count strong {
+    color: var(--color-text-primary);
+  }
+
+  .customer-documents__updated {
+    color: var(--color-text-tertiary);
+  }
+
+  .customer-documents__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  /* === 상태 표시 === */
+  .customer-documents__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-6) var(--spacing-5);
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.02);
+    text-align: center;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+
+  [data-theme="dark"] .customer-documents__state {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  .customer-documents__state--error {
+    color: var(--color-icon-red);
+  }
+
+  .customer-documents__retry {
+    padding: var(--spacing-1) var(--spacing-3);
+    border-radius: 999px;
+    border: 1px solid var(--color-primary-200);
+    background-color: transparent;
+    color: var(--color-primary-600);
+    cursor: pointer;
+    transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
+  }
+
+  .customer-documents__retry:hover {
+    background-color: var(--color-primary-100);
+  }
+
+  /* === 🍎 리스트 컨테이너 - CenterPane 스타일 === */
+  .customer-documents__list-container {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 4px;
+    margin-top: var(--docs-list-margin-top);
+    min-height: 0;
+    width: 100%;
+  }
+
+  /* 🍎 페이지네이션을 하단에 고정 - A와 동일한 레이아웃 */
+  .customer-documents .document-pagination {
+    margin-top: auto;
+  }
+
+  /* === 🍎 COLUMN HEADER: 칼럼 헤더 === */
+  .customer-documents-list-header {
+    display: grid;
+    /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/item 공유) */
+    --grid-cols:
+      28px                                        /* 유형 아이콘 */
+      var(--filename-column-width, 200px)         /* 파일명 (동적) */
+      var(--doctype-column-width, 65px)           /* 문서유형 (동적) */
+      var(--size-column-width, 50px)              /* 크기 (동적) */
+      var(--type-column-width, 42px)              /* 타입 (동적) */
+      var(--date-column-width, 68px);              /* 연결일 (동적) */
+    grid-template-columns: var(--grid-cols);
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    background: var(--color-neutral-100);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 테이블 헤더 */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
+  }
+
+  [data-theme="dark"] .customer-documents-list-header {
+    background: var(--color-neutral-700);
+    color: var(--color-ios-text-secondary-dark);
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
+  }
+
+  .customer-documents-list-header > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .customer-documents-list-header .header-icon-svg {
+    flex-shrink: 0;
+  }
+
+  /* === 🍎 COLUMN HEADER ALIGNMENT: 중앙 정렬 === */
+  .customer-documents-list-header .header-badge-type {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .customer-documents-list-header .header-size {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .customer-documents-list-header .header-date {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .customer-documents-list-header .header-type {
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
+  .header-filename {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .header-filename__sort-area {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    min-width: 0;
+  }
+
+  /* 🍎 파일명 표시 모드 토글 버튼 */
+  .filename-mode-toggle {
+    flex-shrink: 0;
+    padding: 1px 4px;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.2;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    white-space: nowrap;
+  }
+
+  .filename-mode-toggle:hover {
+    color: var(--color-text-secondary);
+    border-color: var(--color-text-tertiary);
+  }
+
+  .filename-mode-toggle:active {
+    opacity: 0.7;
+  }
+
+  .header-filename .header-icon-svg {
+    color: var(--color-icon-blue);  /* 파일명 - 파란색 */
+  }
+
+  .header-size .header-icon-svg {
+    color: var(--color-icon-purple);  /* 크기 - 보라색 */
+  }
+
+  .header-type .header-icon-svg {
+    color: var(--color-icon-orange);  /* 타입 - 오렌지색 */
+  }
+
+  .header-date .header-icon-svg {
+    color: var(--color-icon-green);  /* 날짜 - 초록색 */
+  }
+
+  /* === 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 === */
+  .header-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease-out;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+  }
+
+  .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+  }
+
+  [data-theme="dark"] .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+  }
+
+  .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-light);
+  }
+
+  [data-theme="dark"] .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  /* === 🍎 SORT INDICATOR: 정렬 방향 표시 === */
+  .sort-indicator {
+    font-weight: 600;
+    margin-left: 2px;
+    color: var(--color-primary-600);
+    opacity: 0.9;
+  }
+
+  [data-theme="dark"] .sort-indicator {
+    color: var(--color-primary-300);
+  }
+
+  .header-sortable:hover .sort-indicator {
+    opacity: 1;
+  }
+
+  /* === 스크롤바 === */
+  .customer-documents__list-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .customer-documents__list-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .customer-documents__list-container::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-light);
+    border-radius: 4px;
+    transition: background-color 0.15s ease-out;
+  }
+
+  [data-theme="dark"] .customer-documents__list-container::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-dark);
+  }
+
+  /* === 🍎 LIST ITEM: 문서 아이템 === */
+  .customer-documents-item {
+    display: grid;
+    /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
+    --grid-cols:
+      28px                                        /* 유형 아이콘 */
+      var(--filename-column-width, 200px)         /* 파일명 (동적) */
+      var(--doctype-column-width, 65px)           /* 문서유형 (동적) */
+      var(--size-column-width, 50px)              /* 크기 (동적) */
+      var(--type-column-width, 42px)              /* 타입 (동적) */
+      var(--date-column-width, 68px);              /* 연결일 (동적) */
+    grid-template-columns: var(--grid-cols);
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 6px 10px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 4px;
+    cursor: default;
+    transition:
+      background-color 0.15s ease-out,
+      transform 0.15s ease-out,
+      box-shadow 0.15s ease-out;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+    font-family: var(--font-family-text);
+  }
+
+  [data-theme="dark"] .customer-documents-item {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  .customer-documents-item:hover {
+    background-color: var(--color-ios-bg-hover-light);
+    transform: translateX(2px);
+  }
+
+  [data-theme="dark"] .customer-documents-item:hover {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  /* === 파일 타입 아이콘 === */
+  .document-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .document-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+
+  /* 파일 타입별 색상 */
+  .document-icon.type-pdf {
+    background: rgba(255, 59, 48, 0.15);
+    color: var(--color-icon-red);
+  }
+
+  .document-icon.type-image {
+    background: rgba(52, 199, 89, 0.15);
+    color: var(--color-icon-green);
+  }
+
+  .document-icon.type-word {
+    background: rgba(0, 122, 255, 0.15);
+    color: var(--color-icon-blue);
+  }
+
+  .document-icon.type-excel {
+    background: rgba(52, 199, 89, 0.15);
+    color: var(--color-icon-green);
+  }
+
+  .document-icon.type-text {
+    background: rgba(142, 142, 147, 0.15);
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  .document-icon.type-unknown {
+    background: rgba(142, 142, 147, 0.15);
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  [data-theme="dark"] .document-icon.type-text {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  [data-theme="dark"] .document-icon.type-unknown {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* === 파일명 === */
+  .status-filename {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    color: var(--color-text-primary);
+    font-weight: 600;
+    min-width: 0; /* flex/grid item 텍스트 오버플로우 처리 */
+    overflow: hidden;
+  }
+
+  .status-filename > .tooltip-trigger {
+    min-width: 0;
+    overflow: hidden;
+    flex-shrink: 1;
+  }
+
+  .status-filename-text {
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 80px;
+  }
+
+  .status-filename--clickable {
+    cursor: pointer;
+    transition: color 0.15s ease-out;
+  }
+
+  .status-filename--clickable:hover {
+    color: var(--color-primary-600);
+  }
+
+  [data-theme="dark"] .status-filename--clickable:hover {
+    color: var(--color-primary-400);
+  }
+
+  /* === 🍎 PDF 변환 배지 (파일명 옆 인라인) === */
+  .pdf-conversion-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    flex-shrink: 0;
+    padding: 2px 4px;
+    margin-left: 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    line-height: 1;
+    transition: all 0.2s ease-out;
+    vertical-align: middle;
+  }
+
+  .pdf-badge-text {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+  }
+
+  /* 배지 내 아이콘 (DocumentStatusList.css와 동일) */
+  .pdf-badge-icon {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+  }
+
+  .pdf-badge-icon--spin {
+    animation: pdf-badge-spin 1s linear infinite;
+  }
+
+  @keyframes pdf-badge-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* 완료: 파란색 */
+  .pdf-conversion-badge--completed {
+    background: #007aff;
+    color: #ffffff;
+  }
+
+  html[data-theme="dark"] .pdf-conversion-badge--completed {
+    background: #0a84ff;
+  }
+
+  .customer-documents-item:hover .pdf-conversion-badge--completed {
+    transform: scale(1.05);
+    box-shadow: 0 0 6px #007aff;
+  }
+
+} /* end @layer components */

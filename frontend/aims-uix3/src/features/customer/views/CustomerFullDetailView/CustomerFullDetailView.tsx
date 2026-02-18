@@ -41,7 +41,10 @@ import { formatDate } from '@/shared/lib/timeUtils'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { AddressApi } from '../../api/addressApi'
 import { isRequestCancelledError, setActiveCustomer } from '@/shared/lib/api'
-import './CustomerFullDetailView.css'
+import './CustomerFullDetailView.layout.css';
+import './CustomerFullDetailView.customer-info.css';
+import './CustomerFullDetailView.tabs.css';
+import './CustomerFullDetailView.mobile.css';
 
 interface CustomerFullDetailViewProps {
   visible: boolean

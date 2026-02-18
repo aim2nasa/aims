@@ -8,7 +8,10 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { UploadFile, UploadStatus } from '../types/uploadTypes'
 import { uploadHelpers } from '../services/userContextService'
 import { formatTime } from '@/shared/lib/timeUtils'
-import './FileList.css'
+import './FileList.layout.css';
+import './FileList.icons.css';
+import './FileList.compact.css';
+import './FileList.compact-icons.css';
 
 interface FileListProps {
   files: UploadFile[]

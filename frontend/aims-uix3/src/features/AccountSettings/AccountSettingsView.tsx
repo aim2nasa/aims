@@ -27,7 +27,11 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { formatPhoneNumber } from '@/shared/lib/phoneUtils'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { useUserAccountSSE } from '@/shared/hooks/useUserAccountSSE'
-import './AccountSettingsView.css'
+import './AccountSettingsView.profile.css';
+import './AccountSettingsView.settings.css';
+import './AccountSettingsView.storage.css';
+import './AccountSettingsView.cards.css';
+import './AccountSettingsView.data.css';
 
 export interface AccountSettingsViewProps {
   /** View 표시 여부 */

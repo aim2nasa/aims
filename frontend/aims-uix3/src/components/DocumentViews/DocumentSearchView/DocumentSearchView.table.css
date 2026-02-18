@@ -1,0 +1,488 @@
+@layer components {
+
+  /* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
+  .search-result-row.selected,
+  .search-result-row[data-selected="true"] {
+    background-color: var(--color-ios-bg-selected-light);
+  }
+
+  html[data-theme="dark"] .search-result-row.selected,
+  html[data-theme="dark"] .search-result-row[data-selected="true"] {
+    background-color: var(--color-ios-bg-selected-dark);
+  }
+
+  /* 스태거 애니메이션 */
+  .search-result-row:nth-child(1) { animation-delay: 0s; }
+  .search-result-row:nth-child(2) { animation-delay: 0.03s; }
+  .search-result-row:nth-child(3) { animation-delay: 0.06s; }
+  .search-result-row:nth-child(4) { animation-delay: 0.09s; }
+  .search-result-row:nth-child(5) { animation-delay: 0.12s; }
+  .search-result-row:nth-child(n+6) { animation-delay: 0.15s; }
+
+  /* Row Leading (인덱스) */
+  .row-leading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    margin-right: 12px;
+  }
+
+  .row-index {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .row-index {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* Row Content (아이콘 + 제목 + 요약) */
+  .row-content {
+    flex: 1;
+    min-width: 0; /* 텍스트 오버플로우 방지 */
+  }
+
+  /* 제목 래퍼 (아이콘 + 제목) */
+  .row-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+
+  /* 🍎 파일 타입 아이콘 */
+  .row-title-wrapper .document-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    /* overflow: 기본값(visible) 사용 - 뱃지는 아이콘 bounds 내 위치 */
+  }
+
+  .row-title-wrapper .document-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  .search-result-row:hover .document-icon {
+    transform: scale(1.1);
+  }
+
+  /* 🍎 뱃지 스타일은 shared/styles/document-badges.css에서 공통 관리 */
+  /* DocumentSearchView 전용 오버라이드: 뱃지 인터랙션 활성화 */
+  .document-search-container .document-ar-badge,
+  .document-search-container .document-cr-badge,
+  .document-search-container .document-ocr-badge,
+  .document-search-container .document-txt-badge,
+  .document-search-container .document-bin-badge {
+    pointer-events: auto;
+    cursor: help;
+  }
+
+  .document-search-container .document-ocr-badge {
+    z-index: 10;
+  }
+
+  /* 파일 타입별 색상 (DocumentLibraryView와 동일) */
+  .document-icon.file-type-pdf { background-color: var(--color-file-pdf); color: var(--color-neutral-0); }
+  .document-icon.file-type-image { background-color: var(--color-file-image); color: var(--color-neutral-0); }
+  .document-icon.file-type-excel { background-color: var(--color-file-excel); color: var(--color-neutral-0); }
+  .document-icon.file-type-word { background-color: var(--color-file-word); color: var(--color-neutral-0); }
+  .document-icon.file-type-text { background-color: var(--color-file-text); color: var(--color-neutral-0); }
+  .document-icon.file-type-archive { background-color: var(--color-file-archive); color: var(--color-neutral-0); }
+  .document-icon.file-type-unknown { background-color: var(--color-file-unknown); color: var(--color-neutral-600); }
+
+  /* Container for filename and memo button */
+  .row-title-container {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    gap: 0;
+  }
+
+  .row-title {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  html[data-theme="dark"] .row-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .row-subtitle {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-ios-text-secondary-light);
+    font-weight: 400;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  html[data-theme="dark"] .row-subtitle {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* Row Trailing (고객명 + 상태 아이콘 + 액션 버튼 + 점수 + 화살표) */
+  .row-trailing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+    flex-shrink: 0;
+  }
+
+  /* 🍎 연결된 고객 (DocumentLibrary와 동일한 스타일) */
+  .search-customer {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    max-width: 120px;
+    margin-right: 8px;
+  }
+
+  .search-customer .customer-name {
+    color: var(--color-ios-text-primary-light);
+    font-weight: 600;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .search-customer .customer-name {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .search-customer .customer-none {
+    color: var(--color-ios-text-quaternary-light);
+  }
+
+  html[data-theme="dark"] .search-customer .customer-none {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* 고객명 클릭 가능 버튼 스타일 */
+  .search-customer .customer-name-button {
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    margin: -4px -8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    text-align: center;
+  }
+
+  .search-customer .customer-name-button:hover {
+    background: var(--color-ios-bg-tertiary-light);
+    color: var(--color-primary-600);
+  }
+
+  html[data-theme="dark"] .search-customer .customer-name-button:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+    color: var(--color-primary-400);
+  }
+
+  .search-customer .customer-name-button:active {
+    background: var(--color-ios-bg-hover-light);
+    transform: scale(0.98);
+  }
+
+  html[data-theme="dark"] .search-customer .customer-name-button:active {
+    background: var(--color-ios-bg-hover-dark);
+  }
+
+  /* 🍎 문서 처리 상태 아이콘 (DocumentLibrary와 동일) */
+  .row-trailing .status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+    flex-shrink: 0;
+    cursor: help;
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  .status-icon.status-completed {
+    color: var(--color-ios-green);
+    background-color: var(--color-ios-green-bg-light);
+  }
+
+  html[data-theme="dark"] .status-icon.status-completed {
+    color: var(--color-ios-green-dark);
+    background-color: var(--color-ios-green-bg-dark);
+  }
+
+  .status-icon.status-processing {
+    color: var(--color-ios-blue);
+    background-color: var(--color-ios-blue-bg-light);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  html[data-theme="dark"] .status-icon.status-processing {
+    color: var(--color-ios-blue-dark);
+    background-color: var(--color-ios-blue-bg-dark);
+  }
+
+  .status-icon.status-error {
+    color: var(--color-ios-red);
+    background-color: var(--color-ios-red-bg-light);
+  }
+
+  html[data-theme="dark"] .status-icon.status-error {
+    color: var(--color-ios-red-dark);
+    background-color: var(--color-ios-red-bg-dark);
+  }
+
+  .status-icon.status-pending {
+    color: var(--color-ios-orange);
+    background-color: var(--color-ios-orange-bg-light);
+  }
+
+  html[data-theme="dark"] .status-icon.status-pending {
+    color: var(--color-ios-orange-dark);
+    background-color: var(--color-ios-orange-bg-dark);
+  }
+
+  .status-icon:hover {
+    transform: scale(1.15);
+  }
+
+  /* 🍎 액션 버튼들 (DocumentLibrary와 동일) */
+  .row-actions .action-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: var(--color-ios-text-secondary-light);
+    transition: color 0.18s var(--easing-micro-smooth), transform 0.18s var(--easing-micro-instant);
+  }
+
+  .row-actions .action-button svg {
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+  }
+
+  html[data-theme="dark"] .row-actions .action-button {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .action-button--detail { color: var(--color-primary-600); }
+  html[data-theme="dark"] .action-button--detail { color: var(--color-primary-300); }
+
+  .action-button--summary { color: var(--color-ios-orange); }
+  html[data-theme="dark"] .action-button--summary { color: var(--color-ios-orange); }
+
+  .action-button--full { color: var(--color-primary-700); }
+  html[data-theme="dark"] .action-button--full { color: var(--color-primary-200); }
+
+  .action-button--link { color: var(--color-success-600); }
+  html[data-theme="dark"] .action-button--link { color: var(--color-success-300); }
+
+  .row-actions .action-button:hover {
+    transform: translateY(-1px);
+  }
+
+  .action-button--detail:hover { color: var(--color-primary-700); }
+  html[data-theme="dark"] .action-button--detail:hover { color: var(--color-primary-200); }
+
+  .action-button--summary:hover { color: var(--color-ios-orange-strong, #ff8a3d); }
+  html[data-theme="dark"] .action-button--summary:hover { color: var(--color-ios-orange-light, #ffb97a); }
+
+  .action-button--full:hover { color: var(--color-primary-800); }
+  html[data-theme="dark"] .action-button--full:hover { color: var(--color-primary-100); }
+
+  .action-button--link:hover { color: var(--color-success-700); }
+  html[data-theme="dark"] .action-button--link:hover { color: var(--color-success-200); }
+
+  .row-actions .action-button:active {
+    transform: translateY(0);
+  }
+
+  .row-actions .action-button:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .row-actions .action-button:focus-visible {
+    outline-color: var(--color-primary-300);
+  }
+
+  .row-actions .action-button[data-disabled="true"] {
+    opacity: 0.25;
+    cursor: not-allowed;
+    transform: none;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .row-actions .action-button[data-disabled="true"] {
+    color: var(--color-ios-text-tertiary-dark);
+    opacity: 0.2;
+  }
+
+  .row-actions .action-button[data-disabled="true"]:hover {
+    transform: none;
+  }
+
+  /* 유사도 인디케이터 (색상 원) */
+  .similarity-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: help;
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
+    opacity: 0.9;
+    padding: 3px 6px;
+    border-radius: 6px;
+    background: var(--color-bg-tertiary);
+  }
+
+  .similarity-indicator:hover {
+    opacity: 1;
+    transform: scale(1.03);
+    background: var(--color-bg-secondary);
+  }
+
+  .similarity-icon {
+    font-size: 13px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .similarity-percentage {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--color-text-primary);
+    flex-shrink: 0;
+  }
+
+  .similarity-label {
+    /* 🍎 공간 최적화: 라벨 숨김 (툴팁으로 대체) */
+    display: none;
+  }
+
+  /* 유사도 레벨별 시각적 강조 */
+  .similarity-excellent {
+    filter: drop-shadow(0 0 2px var(--color-similarity-excellent-shadow));
+  }
+
+  .similarity-high {
+    filter: drop-shadow(0 0 1px var(--color-similarity-high-shadow));
+  }
+
+  .similarity-medium {
+    filter: drop-shadow(0 0 1px var(--color-similarity-medium-shadow));
+  }
+
+  .similarity-low {
+    opacity: 0.8;
+  }
+
+  .similarity-very-low {
+    opacity: 0.7;
+  }
+
+  .row-detail {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-ios-text-tertiary-light);
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .row-detail {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .row-chevron {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+    color: var(--color-ios-text-quaternary-light);
+    opacity: 0.3;
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  html[data-theme="dark"] .row-chevron {
+    color: var(--color-ios-text-quaternary-dark);
+    opacity: 0.25;
+  }
+
+  .search-result-row:hover .row-chevron {
+    opacity: 0.8;
+    transform: translateX(2px);
+  }
+
+  html[data-theme="dark"] .search-result-row:hover .row-chevron {
+    opacity: 0.7;
+  }
+
+  /* === 🍎 SCROLLBAR: iOS Style === */
+
+  .search-results-section::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .search-results-section::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .search-results-section::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-light);
+    border-radius: 3px;
+    transition: background-color var(--duration-ios-quick);
+  }
+
+  html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-dark);
+  }
+
+  .search-results-section::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ios-scrollbar-hover-light);
+  }
+
+  html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ios-scrollbar-hover-dark);
+  }
+
+} /* end @layer components */

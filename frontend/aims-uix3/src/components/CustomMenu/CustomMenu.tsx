@@ -5,7 +5,9 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
 import RecentCustomers from '../RecentCustomers'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
-import './CustomMenu.css'
+import './CustomMenu.menu.css';
+import './CustomMenu.states.css';
+import './CustomMenu.colors.css';
 import './CustomMenuTooltip.css'
 
 // SF Symbol 기반 아이콘 컴포넌트들 (애플 디자인 표준 준수)

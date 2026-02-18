@@ -1,0 +1,429 @@
+@layer components {
+
+  /* ==================== Compact Table ==================== */
+  .crm-table--compact {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .crm-table--compact .crm-table__head,
+  .crm-table--compact .crm-table__row,
+  .crm-table--compact .crm-table__foot {
+    grid-template-columns: 2fr 1fr 0.6fr 0.6fr 1fr;
+    gap: 4px;
+  }
+
+  .crm-table--compact .crm-table__head {
+    padding: 6px 10px;
+  }
+
+  .crm-table--compact .crm-table__head .crm-table__cell {
+    font-size: 10px;
+  }
+
+  .crm-table--compact .crm-table__row {
+    padding: 6px 10px;
+  }
+
+  .crm-table--compact .crm-table__cell {
+    font-size: 11px;
+  }
+
+  .crm-table--compact .crm-table__foot {
+    padding: 6px 10px;
+  }
+
+  .crm-table--compact .crm-table__body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* ==================== Empty Small ==================== */
+  .crm-empty-small {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-tertiary);
+    border-radius: 6px;
+    flex: 1;
+  }
+
+  /* ==================== Dual Value Table (기본/추가 납입 표시) ==================== */
+  .crm-table--dual .crm-table__head,
+  .crm-table--dual .crm-table__row,
+  .crm-table--dual .crm-table__foot {
+    grid-template-columns: 1.5fr 1.4fr 1fr 1fr 1.4fr;
+    gap: 4px;
+  }
+
+  .crm-table--compact.crm-table--dual .crm-table__head,
+  .crm-table--compact.crm-table--dual .crm-table__row,
+  .crm-table--compact.crm-table--dual .crm-table__foot {
+    grid-template-columns: 1.5fr 1.4fr 1fr 1fr 1.4fr;
+    gap: 4px;
+  }
+
+  /* Dual header with main/sub text */
+  .crm-table__cell--dual-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: center;
+  }
+
+  .crm-table__header-main {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  .crm-table__header-sub {
+    font-size: 9px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Dual value cell */
+  .crm-table__cell--dual {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* Dual value row (기본납입/추가납입) */
+  .crm-dual-value__basic,
+  .crm-dual-value__additional {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .crm-dual-value__basic {
+    font-size: 10px;
+    color: var(--color-text-primary);
+  }
+
+  .crm-dual-value__additional {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+  }
+
+  /* Label for dual values */
+  .crm-dual-value__label {
+    flex-shrink: 0;
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Amount for dual values */
+  .crm-dual-value__amount {
+    flex: 1;
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .crm-dual-value__additional .crm-dual-value__amount {
+    font-weight: 400;
+  }
+
+  /* Success/Error colors for dual values */
+  .crm-dual-value__basic.crm-value--success .crm-dual-value__amount,
+  .crm-dual-value__additional.crm-value--success .crm-dual-value__amount {
+    color: var(--color-success);
+  }
+
+  .crm-dual-value__basic.crm-value--error .crm-dual-value__amount,
+  .crm-dual-value__additional.crm-value--error .crm-dual-value__amount {
+    color: var(--color-error);
+  }
+
+  /* ============================================
+     🍎 모바일 반응형 (768px 이하)
+     3열 → 1열 스택, 4열 인원 → 2열, 테이블 컴팩트
+     ============================================ */
+
+  @media (max-width: 768px) {
+    /* 🍎 모바일에서 콘텐츠 스크롤 활성화 (overflow: hidden 해제) */
+    .customer-document-preview .customer-document-preview__content {
+      padding: 10px 12px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* 🍎 상품명: 컴팩트 */
+    .crm-product-name,
+    .crm-product-name--centered {
+      font-size: 13px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+
+    /* 🍎 인원 행: 4열 → 2열 */
+    .crm-persons {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+
+    .crm-persons__label {
+      font-size: 10px;
+    }
+
+    .crm-persons__value {
+      font-size: 12px;
+    }
+
+    /* 🍎 인원 인라인: gap 축소, 줄바꿈 */
+    .crm-persons-inline {
+      gap: 10px 16px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+
+    /* 🍎 2열 → 1열 스택 */
+    .crm-two-columns {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    /* 🍎 3열 → 1열 세로 스택 (스크롤) */
+    .crm-three-columns {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .crm-three-columns .crm-card {
+      min-height: 0;
+    }
+
+    /* 🍎 카드: 패딩/마진 축소 */
+    .crm-card {
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+
+    .crm-card__title {
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .crm-card__badge {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+
+    /* 🍎 통계 그리드: gap/패딩 축소 */
+    .crm-stats {
+      gap: 1px;
+    }
+
+    .crm-stat {
+      padding: 8px 10px;
+    }
+
+    .crm-stat__label {
+      font-size: 11px;
+    }
+
+    .crm-stat__value {
+      font-size: 11px;
+    }
+
+    /* 🍎 리스트: 패딩/폰트 축소 */
+    .crm-list__item {
+      padding: 8px 0;
+      font-size: 11px;
+    }
+
+    .crm-list__item--total {
+      margin: 6px -12px;
+      padding: 8px 12px;
+    }
+
+    /* 🍎 테이블: 3열로 축소 (펀드명, 적립금, 배분비율만) */
+    .crm-table__head,
+    .crm-table__row,
+    .crm-table__foot {
+      grid-template-columns: 2fr 1.2fr 0.8fr;
+      gap: 4px;
+    }
+
+    .crm-table__head {
+      padding: 6px 10px;
+    }
+
+    .crm-table__row {
+      padding: 8px 10px;
+    }
+
+    .crm-table__foot {
+      padding: 8px 10px;
+    }
+
+    .crm-table__cell {
+      font-size: 10px;
+    }
+
+    .crm-table__head .crm-table__cell {
+      font-size: 9px;
+    }
+
+    /* 🍎 테이블 4번째, 5번째 컬럼 숨김 (수익률, 투입원금) */
+    .crm-table__head .crm-table__cell:nth-child(n+4),
+    .crm-table__row .crm-table__cell:nth-child(n+4),
+    .crm-table__foot .crm-table__cell:nth-child(n+4) {
+      display: none;
+    }
+
+    /* 🍎 compact 테이블도 동일 적용 */
+    .crm-table--compact .crm-table__head,
+    .crm-table--compact .crm-table__row,
+    .crm-table--compact .crm-table__foot {
+      grid-template-columns: 2fr 1.2fr 0.8fr;
+      gap: 4px;
+    }
+
+    /* 🍎 dual 테이블도 동일 */
+    .crm-table--dual .crm-table__head,
+    .crm-table--dual .crm-table__row,
+    .crm-table--dual .crm-table__foot,
+    .crm-table--compact.crm-table--dual .crm-table__head,
+    .crm-table--compact.crm-table--dual .crm-table__row,
+    .crm-table--compact.crm-table--dual .crm-table__foot {
+      grid-template-columns: 1.5fr 1.4fr 1fr;
+      gap: 4px;
+    }
+
+    /* 🍎 요약 섹션: 컴팩트 */
+    .crm-summary {
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .crm-summary__item {
+      padding: 8px 12px;
+      gap: 3px;
+    }
+
+    .crm-summary__label {
+      font-size: 10px;
+    }
+
+    .crm-summary__value {
+      font-size: 14px;
+    }
+
+    /* 🍎 빈 상태: 패딩 축소 */
+    .crm-empty {
+      padding: 32px 16px;
+    }
+
+    .crm-empty__icon {
+      font-size: 28px;
+    }
+
+    .crm-empty__title {
+      font-size: 13px;
+    }
+
+    .crm-empty__desc {
+      font-size: 12px;
+    }
+
+    .crm-empty-small {
+      padding: 16px 12px;
+      font-size: 11px;
+    }
+
+    /* 🍎 compact 카드: 더 타이트 */
+    .crm-card--compact {
+      padding: 10px;
+    }
+
+    .crm-card--compact .crm-card__title {
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+
+    .crm-list--compact .crm-list__item {
+      padding: 5px 0;
+      font-size: 10px;
+    }
+
+    /* 🍎 dual value: 폰트 축소 */
+    .crm-dual-value__basic,
+    .crm-dual-value__additional {
+      font-size: 9px;
+    }
+
+    .crm-dual-value__label {
+      font-size: 7px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    /* 테이블: 2칼럼으로 축소 (상품명 + 기준가) */
+    .crm-table__head,
+    .crm-table__row,
+    .crm-table__foot {
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px 8px;
+      font-size: 10px;
+    }
+
+    /* 3열 이상 숨김 */
+    .crm-table__head > *:nth-child(n+3),
+    .crm-table__row > *:nth-child(n+3),
+    .crm-table__foot > *:nth-child(n+3) {
+      display: none;
+    }
+
+    /* 컴팩트 테이블 동일 */
+    .crm-table--compact .crm-table__head,
+    .crm-table--compact .crm-table__row,
+    .crm-table--compact .crm-table__foot {
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      padding: 3px 6px;
+      font-size: 9px;
+    }
+
+    /* 인물 정보: 1열 */
+    .crm-persons {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    /* 카드: 패딩 축소 */
+    .crm-card {
+      padding: 8px;
+    }
+
+    .crm-card__title {
+      font-size: 11px;
+    }
+
+    /* 리스트 아이템: 컴팩트 */
+    .crm-list__item {
+      padding: 4px 0;
+      font-size: 10px;
+    }
+  }
+
+} /* end @layer components */

@@ -1,0 +1,448 @@
+@layer components {
+
+  /* === 🍎 FILE TYPE ICON COLORS === */
+  /* PDF Files - Red theme */
+  .file-item__icon.file-icon--pdf {
+    color: var(--color-file-pdf-light);
+  }
+
+  .file-item__icon.file-icon--pdf:hover {
+    color: var(--color-file-pdf-hover-light);
+  }
+
+  /* Image Files - Blue theme */
+  .file-item__icon.file-icon--image {
+    color: var(--color-file-image-light);
+  }
+
+  .file-item__icon.file-icon--image:hover {
+    color: var(--color-file-image-hover-light);
+  }
+
+  /* Video Files - Purple theme */
+  .file-item__icon.file-icon--video {
+    color: var(--color-file-video-light);
+  }
+
+  .file-item__icon.file-icon--video:hover {
+    color: var(--color-file-video-hover-light);
+  }
+
+  /* Audio Files - Pink theme */
+  .file-item__icon.file-icon--audio {
+    color: var(--color-file-audio-light);
+  }
+
+  .file-item__icon.file-icon--audio:hover {
+    color: var(--color-file-audio-hover-light);
+  }
+
+  /* Archive Files - Orange theme */
+  .file-item__icon.file-icon--archive {
+    color: var(--color-file-archive-light);
+  }
+
+  .file-item__icon.file-icon--archive:hover {
+    color: var(--color-file-archive-hover-light);
+  }
+
+  /* Word Documents - Blue theme */
+  .file-item__icon.file-icon--word {
+    color: var(--color-file-word-light);
+  }
+
+  .file-item__icon.file-icon--word:hover {
+    color: var(--color-file-word-hover-light);
+  }
+
+  /* Excel Documents - Green theme */
+  .file-item__icon.file-icon--excel {
+    color: var(--color-file-excel-light);
+  }
+
+  .file-item__icon.file-icon--excel:hover {
+    color: var(--color-file-excel-hover-light);
+  }
+
+  /* PowerPoint Documents - Orange theme */
+  .file-item__icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-light);
+  }
+
+  .file-item__icon.file-icon--powerpoint:hover {
+    color: var(--color-file-powerpoint-hover-light);
+  }
+
+  /* Code Files - Indigo theme */
+  .file-item__icon.file-icon--code {
+    color: var(--color-file-code-light);
+  }
+
+  .file-item__icon.file-icon--code:hover {
+    color: var(--color-file-code-hover-light);
+  }
+
+  /* Text Files - Gray theme */
+  .file-item__icon.file-icon--text {
+    color: var(--color-file-text-light);
+  }
+
+  .file-item__icon.file-icon--text:hover {
+    color: var(--color-file-text-hover-light);
+  }
+
+  /* Executable Files - Dark theme */
+  .file-item__icon.file-icon--executable {
+    color: var(--color-file-executable-light);
+  }
+
+  .file-item__icon.file-icon--executable:hover {
+    color: var(--color-file-executable-hover-light);
+  }
+
+  /* Default Files - Neutral theme */
+  .file-item__icon.file-icon--default {
+    color: var(--color-file-default-light);
+  }
+
+  .file-item__icon.file-icon--default:hover {
+    color: var(--color-file-default-hover-light);
+  }
+
+  /* === 🍎 DARK THEME ICON COLORS === */
+  html[data-theme="dark"] .file-item__icon.file-icon--pdf {
+    color: var(--color-file-pdf-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--pdf:hover {
+    color: var(--color-file-pdf-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--image {
+    color: var(--color-file-image-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--image:hover {
+    color: var(--color-file-image-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--video {
+    color: var(--color-file-video-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--video:hover {
+    color: var(--color-file-video-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--audio {
+    color: var(--color-file-audio-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--audio:hover {
+    color: var(--color-file-audio-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--archive {
+    color: var(--color-file-archive-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--archive:hover {
+    color: var(--color-file-archive-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--word {
+    color: var(--color-file-word-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--word:hover {
+    color: var(--color-file-word-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--excel {
+    color: var(--color-file-excel-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--excel:hover {
+    color: var(--color-file-excel-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--powerpoint:hover {
+    color: var(--color-file-powerpoint-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--code {
+    color: var(--color-file-code-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--code:hover {
+    color: var(--color-file-code-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--text {
+    color: var(--color-file-text-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--text:hover {
+    color: var(--color-file-text-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--executable {
+    color: var(--color-file-executable-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--executable:hover {
+    color: var(--color-file-executable-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--default {
+    color: var(--color-file-default-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--default:hover {
+    color: var(--color-file-default-hover-dark);
+  }
+
+  /* 🍎 INFO: Clean typography */
+  .file-item__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-item__name {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 400;
+    color: var(--color-ios-text-light);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .file-item__name {
+    color: var(--color-ios-text-dark);
+  }
+
+  .file-item__details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    color: var(--color-ios-empty-light);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .file-item__details {
+    color: var(--color-ios-empty-dark);
+  }
+
+  .file-item__size {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .file-item__time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .file-item__path {
+    font-style: italic;
+    opacity: 0.7;
+  }
+
+  /* 🍎 STATUS MESSAGES: Minimal */
+  .file-item__error {
+    margin-top: 3px;
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+    color: var(--color-success-overlay-icon-light);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  .file-item__cancelled {
+    margin-top: 3px;
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+    color: var(--color-ios-empty-light);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-style: italic;
+  }
+
+  html[data-theme="dark"] .file-item__cancelled {
+    color: var(--color-ios-empty-dark);
+  }
+
+  /* 🍎 NATIVE STATUS: macOS Finder style */
+  .file-item__status {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    width: 40px;
+    justify-content: flex-end;
+  }
+
+  /* 🍎 MINIMAL PROGRESS: No decoration */
+  .file-item__progress-minimal {
+    width: 30px;
+    height: 1px;
+    background: var(--color-hover-light);
+    border-radius: 0.5px;
+    overflow: hidden;
+  }
+
+  html[data-theme="dark"] .file-item__progress-minimal {
+    background: var(--color-hover-dark);
+  }
+
+  .file-item__progress-fill {
+    height: 100%;
+    background: var(--color-ios-interactive-light);
+    transition: width 0.3s ease;
+  }
+
+  /* 🍎 COMPLETION: Enhanced visibility with Progressive Disclosure */
+  .file-item__done {
+    color: var(--color-upload-completed-icon-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item__done:hover {
+    color: var(--color-upload-completed-icon-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__done {
+    color: var(--color-upload-completed-icon-dark);
+  }
+
+  html[data-theme="dark"] .file-item__done:hover {
+    color: var(--color-upload-completed-icon-hover-dark);
+  }
+
+  /* 🍎 RETRY: Invisible until needed */
+  .file-item__retry-minimal {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--color-ios-empty-light);
+    border-radius: 2px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: opacity 0.2s ease;
+  }
+
+  .file-item__retry-minimal:hover {
+    color: var(--color-success-overlay-icon-light);
+  }
+
+  /* 🍎 RESPONSIVE: Minimal changes */
+  @media (max-width: 768px) {
+    .file-item {
+      padding: 6px 8px;
+    }
+
+    .file-item__name {
+      /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    }
+
+    .file-item__details {
+      /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+    }
+
+    .file-item__progress-track {
+      width: 30px;
+    }
+
+    .file-item__progress-text {
+      /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 9px deprecated (접근성) ) */
+      min-width: 24px;
+    }
+  }
+
+  /* 🍎 APPLE ANIMATIONS: Subtle completion feedback */
+  @keyframes completionPulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 var(--color-ios-empty-light);
+    }
+    50% {
+      transform: scale(1.01);
+      box-shadow: 0 0 0 4px var(--color-success-overlay-border-light);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  @keyframes progressPulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* Apply completion animation when file becomes completed */
+  .file-item--completed {
+    animation: completionPulse 0.6s ease-out;
+  }
+
+  /* Subtle animation for overall progress bar */
+  .file-list__overall-progress-fill {
+    animation: progressPulse 2s ease-in-out infinite;
+  }
+
+  /* Enhanced transition for file items */
+  .file-item {
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  .file-item:hover {
+    transform: translateY(-0.5px);
+  }
+
+  /* 🍎 ACCESSIBILITY: Maintain minimalism */
+  @media (prefers-reduced-motion: reduce) {
+    .file-item,
+    .file-item__progress-fill,
+    .file-item__action,
+    .file-item--completed,
+    .file-list__overall-progress-fill {
+      transition: none;
+      animation: none;
+      transform: none;
+    }
+
+    .file-item:hover {
+      transform: none;
+    }
+  }
+
+  /* 🍎 HIGH CONTRAST: Subtle increase */
+  @media (prefers-contrast: high) {
+    .file-item__name {
+      color: var(--color-ios-text-light);
+    }
+
+    html[data-theme="dark"] .file-item__name {
+      color: var(--color-ios-text-dark);
+    }
+
+    .file-item__icon {
+      color: var(--color-file-default-light);
+    }
+
+    html[data-theme="dark"] .file-item__icon {
+      color: var(--color-file-default-dark);
+    }
+  }
+
+} /* end @layer components */

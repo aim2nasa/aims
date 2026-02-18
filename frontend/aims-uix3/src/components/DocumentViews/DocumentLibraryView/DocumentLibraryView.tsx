@@ -36,7 +36,10 @@ import DownloadHelper from '../../../utils/downloadHelper'
 import { DocumentProcessingStatusBar } from './DocumentProcessingStatusBar'
 import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
 import { useBatchId } from '@/hooks/useBatchId'
-import './DocumentLibraryView.css'
+import './DocumentLibraryView.header.css';
+import './DocumentLibraryView.list.css';
+import './DocumentLibraryView.icons.css';
+import './DocumentLibraryView.mobile.css';
 import './DocumentLibraryView-delete.css'
 import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar'
 import { usePersistedState } from '@/hooks/usePersistedState'

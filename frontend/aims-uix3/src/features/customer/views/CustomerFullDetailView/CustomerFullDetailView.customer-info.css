@@ -1,0 +1,410 @@
+@layer views {
+
+  /* ============================================
+     🍎 고객 정보 - 테이블 스타일
+     ============================================ */
+
+  .customer-full-detail__section-content--customer-info {
+    display: flex;
+    flex-direction: column;
+    container-type: inline-size;
+  }
+
+  /* 기본정보 테이블 */
+  .customer-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .customer-info-table td {
+    height: var(--row-height);
+    min-height: var(--row-height);
+    max-height: var(--row-height);
+    padding: 0 10px;
+    font-size: var(--font-body);
+    font-weight: var(--weight-body);
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    vertical-align: middle;
+    box-sizing: border-box;
+  }
+
+  html[data-theme="dark"] .customer-info-table td {
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  .customer-info-table__label {
+    width: 70px;
+    color: var(--label-color);
+    background: var(--color-ios-bg-secondary-light);
+  }
+
+  html[data-theme="dark"] .customer-info-table__label {
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  .customer-info-table__value {
+    color: var(--value-color);
+  }
+
+  /* 🍎 컴팩트 레이아웃 (3행, 8열) - 2행 절약 */
+  .customer-info-table--compact {
+    table-layout: auto;
+  }
+
+  .customer-info-table--compact .customer-info-table__label {
+    width: auto;
+    min-width: 50px;
+    max-width: 60px;
+    padding: 0 6px;
+  }
+
+  .customer-info-table--compact .customer-info-table__value {
+    padding: 0 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .customer-info-table__type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    font-size: var(--font-header);
+  }
+
+  html[data-theme="dark"] .customer-info-table__type-badge {
+    background: var(--color-primary-900);
+    color: var(--color-primary-300);
+  }
+
+  /* 🍎 주소 행 - 버튼과 텍스트 배치 (wrapper div에 flex 적용) */
+  .customer-info-table__address-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%; /* 전체 너비 사용 */
+  }
+
+  .customer-info-table__address-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 🍎 주소 변경 이력 버튼 */
+  .customer-info-table__address-history-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    font-size: var(--font-header);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-left: auto; /* 🍎 우측 정렬 */
+  }
+
+  .customer-info-table__address-history-btn:hover {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .customer-info-table__address-history-btn svg {
+  }
+
+  /* 🍎 주소 변경 이력 아이콘 색상 (RightPane과 동일) */
+  .customer-info-table__address-history-icon {
+    color: var(--color-icon-orange);
+  }
+
+  .customer-info-table__address-history-btn:hover .customer-info-table__address-history-icon {
+    color: var(--color-icon-orange);
+  }
+
+  .customer-info-table__address-history-label {
+    display: inline;
+  }
+
+  html[data-theme="dark"] .customer-info-table__address-history-btn {
+    background: var(--color-bg-tertiary-dark, rgba(255, 255, 255, 0.05));
+    border-color: var(--color-border-subtle-dark, rgba(255, 255, 255, 0.1));
+    color: var(--color-text-secondary-dark, rgba(255, 255, 255, 0.7));
+  }
+
+  html[data-theme="dark"] .customer-info-table__address-history-btn:hover {
+    background: var(--color-bg-secondary-dark, rgba(255, 255, 255, 0.1));
+    border-color: var(--color-border-dark, rgba(255, 255, 255, 0.2));
+    color: var(--color-text-primary-dark, #ffffff);
+  }
+
+  /* ============================================
+     🍎 고객 정보 - 반응형 그리드 레이아웃
+     ============================================ */
+
+  .customer-info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px 12px;
+    padding: 8px 10px;
+  }
+
+  .customer-info-grid__item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .customer-info-grid__item--full {
+    grid-column: 1 / -1;
+  }
+
+  .customer-info-grid__label {
+    font-size: var(--font-header);
+    font-weight: var(--weight-header);
+    color: var(--color-text-tertiary);
+  }
+
+  .customer-info-grid__value {
+    font-size: var(--font-body);
+    font-weight: var(--weight-body);
+    color: var(--color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .customer-info-grid__type-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    font-size: var(--font-header);
+  }
+
+  html[data-theme="dark"] .customer-info-grid__type-badge {
+    background: var(--color-primary-900);
+    color: var(--color-primary-300);
+  }
+
+  /* 🍎 주소 행 */
+  .customer-info-grid__address {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: normal;
+  }
+
+  .customer-info-grid__address-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 🍎 주소 검증 상태 아이콘 */
+  .customer-info-grid__verified-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+
+  .customer-info-grid__verified-icon--verified {
+    color: var(--color-success-500, #22c55e);
+  }
+
+  .customer-info-grid__verified-icon--pending {
+    color: var(--color-text-tertiary, #9ca3af);
+  }
+
+  .customer-info-grid__verified-icon--failed {
+    color: var(--color-danger, #ef4444);
+  }
+
+  /* 클릭 가능한 검증 아이콘 (버튼) */
+  button.customer-info-grid__verified-icon--clickable {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  button.customer-info-grid__verified-icon--clickable:hover {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+
+  button.customer-info-grid__verified-icon--clickable:active {
+    transform: scale(0.95);
+  }
+
+  /* 검증 중 스피너 애니메이션 */
+  .customer-info-grid__verified-icon--verifying {
+    color: var(--color-icon-blue, #007aff);
+  }
+
+  .customer-info-grid__verified-icon-spinner {
+    animation: address-verify-spin 1s linear infinite;
+  }
+
+  @keyframes address-verify-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .customer-info-grid__history-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    font-size: var(--font-header);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .customer-info-grid__history-btn:hover {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .customer-info-grid__history-icon {
+    color: var(--color-icon-orange);
+  }
+
+  .customer-info-grid__history-label {
+    display: inline;
+  }
+
+  html[data-theme="dark"] .customer-info-grid__history-btn {
+    background: var(--color-bg-tertiary-dark, rgba(255, 255, 255, 0.05));
+    border-color: var(--color-border-subtle-dark, rgba(255, 255, 255, 0.1));
+    color: var(--color-text-secondary-dark, rgba(255, 255, 255, 0.7));
+  }
+
+  html[data-theme="dark"] .customer-info-grid__history-btn:hover {
+    background: var(--color-bg-secondary-dark, rgba(255, 255, 255, 0.1));
+    border-color: var(--color-border-dark, rgba(255, 255, 255, 0.2));
+    color: var(--color-text-primary-dark, #ffffff);
+  }
+
+  /* 🍎 반응형: 좁은 폭에서 2칼럼 */
+  @media (max-width: 400px) {
+    .customer-info-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* 🍎 컨테이너 쿼리: 부모 폭 기준 반응형 */
+  @container (max-width: 350px) {
+    .customer-info-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @container (max-width: 200px) {
+    .customer-info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* 가족 리스트 - 구분선 없이 연결 */
+  .customer-info-family-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* 관계 테이블 래퍼 - 테두리 제거 */
+  /* ============================================
+     🍎 고객 정보 탭 스타일
+     ============================================ */
+
+  .customer-info-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-left: 2px;
+  }
+
+  .customer-info-tabs__tab {
+    padding: 4px 10px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-title);
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+
+  .customer-info-tabs__tab:hover {
+    color: var(--color-text-secondary);
+  }
+
+  .customer-info-tabs__tab--active {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  /* 활성 탭 하단 인디케이터 */
+  .customer-info-tabs__tab--active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 2px;
+    background: var(--color-primary-500);
+    border-radius: 1px;
+  }
+
+  html[data-theme="dark"] .customer-info-tabs__tab:hover {
+    color: var(--color-text-secondary);
+  }
+
+  html[data-theme="dark"] .customer-info-tabs__tab--active {
+    color: var(--color-text-primary);
+  }
+
+  /* 메모 영역 - 탭 내부 전체 높이 사용 */
+  .customer-info-memos {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .customer-info-memos--full {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    height: 100%;
+  }
+
+  html[data-theme="dark"] .customer-info-memos {
+    /* 다크 모드 스타일 */
+  }
+
+} /* end @layer views */

@@ -1,0 +1,471 @@
+/**
+ * BatchArMappingModal Styles
+ * @description AR 파일 일괄 매핑 모달 스타일
+ */
+
+
+@layer components {
+
+
+  .batch-ar-modal__content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  /* 테이블 모드일 때 - 테이블이 전체 공간 차지 */
+  .batch-ar-modal__content--table {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-height: 0;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  /* ===== Guide (사용자 안내 문구) ===== */
+  .batch-ar-modal__guide {
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-secondary);
+    border-radius: 6px;
+    flex-shrink: 0;
+    line-height: 1.5;
+  }
+
+  .batch-ar-modal__guide-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .batch-ar-modal__guide-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-bg-primary);
+    color: var(--color-text-tertiary);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .batch-ar-modal__guide-help:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .batch-ar-modal__guide-detail {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+  }
+
+  .batch-ar-modal__guide-detail p {
+    margin: 0 0 4px 0;
+    color: var(--color-text-tertiary);
+    font-size: 11px;
+  }
+
+  .batch-ar-modal__guide-detail p:last-child {
+    margin-bottom: 0;
+  }
+
+  .batch-ar-modal__guide-highlight {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--color-warning-bg, rgba(255, 149, 0, 0.15));
+    color: var(--color-warning, #ff9500);
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  /* ===== Summary ===== */
+  .batch-ar-modal__summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+
+  .batch-ar-modal__summary-icon {
+    font-size: 16px;
+  }
+
+  .batch-ar-modal__summary-text {
+    color: var(--color-text-secondary);
+  }
+
+  .batch-ar-modal__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .batch-ar-modal__badge--auto {
+    background: var(--color-success-bg, rgba(52, 199, 89, 0.15));
+    color: var(--color-success, #34c759);
+  }
+
+  .batch-ar-modal__badge--selection {
+    background: var(--color-warning-bg, rgba(255, 149, 0, 0.15));
+    color: var(--color-warning, #ff9500);
+  }
+
+  .batch-ar-modal__badge--new {
+    background: var(--color-info-bg, rgba(0, 122, 255, 0.15));
+    color: var(--color-info, #007aff);
+  }
+
+  /* ===== Groups Container ===== */
+  .batch-ar-modal__groups {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: visible;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 4px;
+    min-height: 0; /* flex 자식이 축소될 수 있도록 */
+  }
+
+  /* ===== Analyzing State - Container ===== */
+  .batch-ar-modal__analyzing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 24px;
+  }
+
+  /* 상단 헤더 */
+  .batch-ar-modal__analyzing-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    flex-shrink: 0;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  .batch-ar-modal__analyzing-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .batch-ar-modal__analyzing-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .batch-ar-modal__analyzing-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .batch-ar-modal__analyzing-count {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  /* 파일 목록 */
+  .batch-ar-modal__file-list {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-primary);
+    width: 100%;
+    max-width: 500px;
+    min-height: 200px;
+    max-height: 400px;
+  }
+
+  .batch-ar-modal__file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.05));
+    font-size: 12px;
+    transition: background-color 0.15s;
+  }
+
+  .batch-ar-modal__file-item:last-child {
+    border-bottom: none;
+  }
+
+  /* 상태별 배경 */
+  .batch-ar-modal__file-item--analyzing {
+    background: linear-gradient(90deg, rgba(0, 122, 255, 0.2) 0%, rgba(0, 122, 255, 0.08) 100%);
+    border-left: 3px solid var(--color-primary);
+    padding-left: 11px;
+    font-weight: 600;
+    animation: highlight-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes highlight-pulse {
+    0%, 100% {
+      background: linear-gradient(90deg, rgba(0, 122, 255, 0.2) 0%, rgba(0, 122, 255, 0.08) 100%);
+    }
+    50% {
+      background: linear-gradient(90deg, rgba(0, 122, 255, 0.3) 0%, rgba(0, 122, 255, 0.15) 100%);
+    }
+  }
+
+  .batch-ar-modal__file-item--completed {
+    background: var(--color-success-bg, rgba(52, 199, 89, 0.08));
+  }
+
+  .batch-ar-modal__file-item--failed {
+    background: var(--color-error-bg, rgba(255, 59, 48, 0.08));
+  }
+
+  /* 상태 아이콘 */
+  .batch-ar-modal__file-status-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .batch-ar-modal__file-item--pending .batch-ar-modal__file-status-icon {
+    color: var(--color-text-tertiary);
+  }
+
+  .batch-ar-modal__file-item--analyzing .batch-ar-modal__file-status-icon {
+    color: var(--color-primary);
+  }
+
+  /* 파일별 스피너 */
+  .batch-ar-modal__file-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: file-spin 0.8s linear infinite;
+  }
+
+  @keyframes file-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .batch-ar-modal__file-item--completed .batch-ar-modal__file-status-icon {
+    color: var(--color-success, #34c759);
+  }
+
+  .batch-ar-modal__file-item--non_ar .batch-ar-modal__file-status-icon {
+    color: var(--color-text-tertiary);
+  }
+
+  .batch-ar-modal__file-item--failed .batch-ar-modal__file-status-icon {
+    color: var(--color-error, #ff3b30);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* 파일명 */
+  .batch-ar-modal__file-name {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text-primary);
+  }
+
+  .batch-ar-modal__file-item--analyzing .batch-ar-modal__file-name {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .batch-ar-modal__file-item--non_ar .batch-ar-modal__file-name,
+  .batch-ar-modal__file-item--failed .batch-ar-modal__file-name {
+    color: var(--color-text-tertiary);
+  }
+
+  /* 상태 텍스트 */
+  .batch-ar-modal__file-status-text {
+    flex-shrink: 0;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .batch-ar-modal__file-item--pending .batch-ar-modal__file-status-text {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-tertiary);
+  }
+
+  .batch-ar-modal__file-item--analyzing .batch-ar-modal__file-status-text {
+    background: var(--color-primary);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .batch-ar-modal__file-item--completed .batch-ar-modal__file-status-text {
+    background: var(--color-success-bg, rgba(52, 199, 89, 0.15));
+    color: var(--color-success, #34c759);
+  }
+
+  .batch-ar-modal__file-item--non_ar .batch-ar-modal__file-status-text {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-tertiary);
+  }
+
+  .batch-ar-modal__file-item--failed .batch-ar-modal__file-status-text {
+    background: var(--color-error-bg, rgba(255, 59, 48, 0.15));
+    color: var(--color-error, #ff3b30);
+  }
+
+  /* Legacy - 기존 analyzing 스타일 (호환성) */
+  .batch-ar-modal__analyzing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 16px;
+    gap: 16px;
+    color: var(--color-text-secondary);
+  }
+
+  .batch-ar-modal__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .batch-ar-modal__current-file {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+
+  /* ===== Warning ===== */
+  .batch-ar-modal__warning {
+    padding: 12px 16px;
+    background: var(--color-warning-bg, rgba(255, 149, 0, 0.1));
+    border-left: 3px solid var(--color-warning, #ff9500);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--color-warning, #ff9500);
+  }
+
+  /* ===== Footer ===== */
+  .batch-ar-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 8px;
+  }
+
+  .batch-ar-modal__progress {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 0;
+    background: transparent;
+  }
+
+  .batch-ar-modal__progress-bar {
+    height: 16px;
+    background: rgba(0, 122, 255, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--color-primary);
+  }
+
+  .batch-ar-modal__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007aff 0%, #5ac8fa 100%);
+    border-radius: 8px;
+    transition: width 0.3s ease;
+    position: relative;
+    box-shadow: 0 0 8px rgba(0, 122, 255, 0.5);
+  }
+
+  /* 프로그레스바 애니메이션 효과 */
+  .batch-ar-modal__progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .batch-ar-modal__progress-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-align: center;
+  }
+
+} /* end @layer components */

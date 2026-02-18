@@ -1,0 +1,318 @@
+@layer components {
+
+  /* === TOGGLE === */
+
+  .account-settings-view__toggle-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+  }
+
+  .account-settings-view__toggle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-3) 0;
+  }
+
+  .account-settings-view__toggle-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    font-size: var(--font-size-footnote);  /* 13px - FONT_SIZE_STANDARDS.md 준수 */
+    color: var(--color-text-primary);
+  }
+
+  .account-settings-view__toggle {
+    position: relative;
+    width: 51px;
+    height: 31px;
+    border: none;
+    border-radius: 16px;
+    background: var(--color-bg-tertiary);
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--easing-ease-out);
+    padding: 0;
+    outline: none;
+  }
+
+  .account-settings-view__toggle:focus {
+    box-shadow: 0 0 0 3px var(--color-accent-blue-translucent);
+  }
+
+  .account-settings-view__toggle--active {
+    background: var(--color-accent-green);
+  }
+
+  .account-settings-view__toggle-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: var(--color-bg-primary);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--duration-fast) var(--easing-ios-spring);
+    display: block;
+  }
+
+  .account-settings-view__toggle--active .account-settings-view__toggle-slider {
+    transform: translateX(20px);
+  }
+
+  /* === ACTIONS === */
+
+  .account-settings-view__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-3);
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .account-settings-view__button {
+    padding: var(--spacing-2) var(--spacing-4);
+    font-size: var(--font-size-footnote);  /* 13px - FONT_SIZE_STANDARDS.md 준수 */
+    font-weight: var(--font-weight-medium);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    outline: none;
+  }
+
+  .account-settings-view__button:focus {
+    box-shadow: 0 0 0 3px var(--color-accent-blue-translucent);
+  }
+
+  .account-settings-view__button--primary {
+    background: var(--color-accent-blue);
+    color: var(--color-text-inverse);
+  }
+
+  .account-settings-view__button--primary:hover {
+    background: var(--color-accent-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .account-settings-view__button--primary:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  .account-settings-view__button--secondary {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+  }
+
+  .account-settings-view__button--secondary:hover {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border-hover);
+  }
+
+  .account-settings-view__button--secondary:active {
+    background: var(--color-bg-quaternary);
+  }
+
+  /* === LINK === */
+
+  .account-settings-view__link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3);
+    width: 100%;
+    font-size: var(--font-size-footnote);  /* 13px - FONT_SIZE_STANDARDS.md 준수 */
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    text-align: left;
+  }
+
+  .account-settings-view__link:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+  }
+
+  .account-settings-view__link--danger {
+    color: var(--color-error);
+  }
+
+  .account-settings-view__link--danger:hover {
+    background: var(--color-error-translucent);
+    color: var(--color-error);
+  }
+
+  .account-settings-view__badge {
+    margin-left: auto;
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-caption-2);  /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-sm);
+  }
+
+  /* === RESPONSIVE === */
+
+  @media (max-width: 1024px) {
+    .account-settings-view__grid {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-5);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .account-settings-view__tabs {
+      flex-wrap: wrap;
+    }
+
+    .account-settings-view__content {
+      padding: var(--spacing-4);
+    }
+
+    .account-settings-view__profile-header {
+      flex-direction: column;
+      text-align: center;
+      align-items: center;
+    }
+
+    .account-settings-view__profile-info {
+      align-items: center;
+    }
+
+    .account-settings-view__avatar {
+      width: 72px;
+      height: 72px;
+    }
+
+    .account-settings-view__grid {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-4);
+    }
+
+    .account-settings-view__edit-button {
+      width: 32px;
+      height: 32px;
+      transform: translateX(calc(50% + 28px));
+    }
+
+    .account-settings-view__edit-button:hover {
+      transform: translateX(calc(50% + 28px)) scale(1.1);
+    }
+  }
+
+  /* === REDUCED MOTION === */
+
+  @media (prefers-reduced-motion: reduce) {
+    .account-settings-view__tab,
+    .account-settings-view__input,
+    .account-settings-view__toggle,
+    .account-settings-view__toggle-slider,
+    .account-settings-view__button,
+    .account-settings-view__link,
+    .account-settings-view__edit-button {
+      transition: none;
+    }
+  }
+  /* === DELETE MODAL === */
+
+  .account-settings-view__delete-modal-footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .account-settings-view__delete-modal-content {
+    text-align: center;
+    padding: 1rem 0;
+  }
+
+  .account-settings-view__delete-modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-bg-error-subtle, rgba(255, 59, 48, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+  }
+
+  .account-settings-view__delete-modal-title {
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .account-settings-view__delete-modal-desc {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+  }
+
+  /* 계정 삭제 확인 입력 */
+  .account-settings-view__delete-confirm-input {
+    margin-top: var(--spacing-4);
+    text-align: left;
+  }
+
+  .account-settings-view__delete-confirm-label {
+    display: block;
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .account-settings-view__delete-confirm-label strong {
+    color: var(--color-text-error, #FF3B30);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .account-settings-view__delete-confirm-field {
+    width: 100%;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-body);
+    color: var(--color-text-primary);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color var(--duration-fast) var(--easing-standard);
+  }
+
+  .account-settings-view__delete-confirm-field::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 0.6;
+  }
+
+  /* 입력 중/값 있을 때 placeholder 완전히 숨김 */
+  .account-settings-view__delete-confirm-field:focus::placeholder,
+  .account-settings-view__delete-confirm-field:not(:placeholder-shown)::placeholder {
+    opacity: 0;
+    color: transparent;
+  }
+
+  /* 브라우저 자동완성 스타일 제거 */
+  .account-settings-view__delete-confirm-field:-webkit-autofill,
+  .account-settings-view__delete-confirm-field:-webkit-autofill:hover,
+  .account-settings-view__delete-confirm-field:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--color-bg-primary) inset !important;
+    -webkit-text-fill-color: var(--color-text-primary) !important;
+  }
+
+  .account-settings-view__delete-confirm-field:focus {
+    border-color: var(--color-text-error, #FF3B30);
+  }
+
+  .account-settings-view__delete-confirm-field:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+} /* end @layer components */

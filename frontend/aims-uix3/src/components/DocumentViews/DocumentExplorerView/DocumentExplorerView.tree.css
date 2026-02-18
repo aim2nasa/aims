@@ -1,0 +1,486 @@
+@layer components {
+
+
+  .doc-explorer-toolbar__date-filter-clear:hover {
+    opacity: 1;
+  }
+
+  /* ============================================
+     Tree Container
+     ============================================ */
+  .doc-explorer-tree-container {
+    flex: 1;
+    overflow: auto;
+    padding: var(--explorer-spacing-md);
+  }
+
+  /* Loading */
+  .doc-explorer-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--explorer-spacing-md);
+    padding: var(--explorer-spacing-xl);
+    color: var(--color-text-secondary);
+  }
+
+  .doc-explorer-loading__spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* ============================================
+     Tree
+     ============================================ */
+  .doc-explorer-tree {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Empty State */
+  .doc-explorer-tree__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--explorer-spacing-md);
+    padding: var(--explorer-spacing-xl) * 2;
+    color: var(--color-text-tertiary);
+  }
+
+  .doc-explorer-tree__empty-icon {
+    opacity: 0.5;
+  }
+
+  .doc-explorer-tree__empty-text {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  /* ============================================
+     Group Node (폴더)
+     ============================================ */
+  .doc-explorer-tree__group {
+    margin-bottom: 2px;
+  }
+
+  .doc-explorer-tree__group-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px var(--explorer-spacing-md);
+    border-radius: var(--explorer-border-radius);
+    cursor: pointer;
+    transition: background-color var(--explorer-transition);
+  }
+
+  /* 그룹 헤더 호버 - 라이트 테마 대비 강화 */
+  .doc-explorer-tree__group-header:hover {
+    background: var(--color-bg-hover);
+  }
+
+  html:not([data-theme="dark"]) .doc-explorer-tree__group-header:hover {
+    background: rgba(0, 0, 0, 0.045);
+  }
+
+  .doc-explorer-tree__group-header:focus {
+    outline: none;
+    background: var(--color-bg-hover);
+  }
+
+  /* 특수 폴더 (태그 없음, 기타) */
+  .doc-explorer-tree__group-header--special .doc-explorer-tree__group-label {
+    color: var(--color-text-tertiary);
+    transform: skewX(-8deg);
+  }
+
+  .doc-explorer-tree__group-header--special .doc-explorer-tree__folder-icon {
+    opacity: 0.6;
+  }
+
+  /* Indentation by level */
+  .doc-explorer-tree__group-header--level-0 {
+    padding-left: var(--explorer-spacing-md);
+  }
+
+  .doc-explorer-tree__group-header--level-1 {
+    padding-left: calc(var(--explorer-spacing-md) + 20px);
+  }
+
+  .doc-explorer-tree__group-header--level-2 {
+    padding-left: calc(var(--explorer-spacing-md) + 40px);
+  }
+
+  /* Chevron */
+  .doc-explorer-tree__chevron {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    transition: transform var(--explorer-transition);
+  }
+
+  /* Chevron Placeholder (자식 없을 때 정렬용) */
+  .doc-explorer-tree__chevron-placeholder {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Folder Icon (내 보관함 스타일) - 라이트 테마 가시성 강화 */
+  .doc-explorer-tree__folder-icon {
+    flex-shrink: 0;
+    font-size: 12px;
+    line-height: 1;
+    /* 라이트 테마에서 이모지 색상 강화 */
+    filter: saturate(1.4) contrast(1.15);
+    text-shadow: 0 0 1px rgba(0, 0, 0, 0.12);
+  }
+
+  /* 다크 테마에서는 원래대로 */
+  html[data-theme="dark"] .doc-explorer-tree__folder-icon {
+    filter: saturate(1.1) brightness(1.05);
+    text-shadow: none;
+  }
+
+  /* Group Label */
+  .doc-explorer-tree__group-label {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Count Badge (legacy) */
+  .doc-explorer-tree__count {
+    flex-shrink: 0;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-tertiary);
+    border-radius: 10px;
+  }
+
+  /* Count Inline (폴더명 옆 인라인 표시) */
+  .doc-explorer-tree__count-inline {
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Children Container */
+  .doc-explorer-tree__children {
+    overflow: hidden;
+  }
+
+  /* ============================================
+     Document Node (파일)
+     ============================================ */
+  .doc-explorer-tree__document {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px var(--explorer-spacing-md);
+    border-radius: var(--explorer-border-radius);
+    cursor: pointer;
+    transition: background-color var(--explorer-transition);
+  }
+
+  /* 문서 호버 - 라이트 테마 대비 강화 */
+  .doc-explorer-tree__document:hover {
+    background: var(--color-bg-hover);
+  }
+
+  html:not([data-theme="dark"]) .doc-explorer-tree__document:hover {
+    background: rgba(0, 0, 0, 0.045);
+  }
+
+  .doc-explorer-tree__document:focus {
+    outline: none;
+    background: var(--color-bg-hover);
+  }
+
+  /* 선택된 문서 - 라이트 테마 대비 강화 */
+  .doc-explorer-tree__document--selected {
+    background: var(--color-selection-bg);
+    border-left: 3px solid var(--color-primary-500);
+    padding-left: calc(var(--explorer-spacing-md) - 3px); /* 테두리 보정 */
+  }
+
+  .doc-explorer-tree__document--selected:hover {
+    background: var(--color-selection-bg-hover);
+  }
+
+  /* 선택된 문서명 강조 (라이트 테마) */
+  html:not([data-theme="dark"]) .doc-explorer-tree__document--selected .doc-explorer-tree__doc-name {
+    color: var(--color-primary-700);
+    font-weight: 600;
+  }
+
+  /* Indentation by level */
+  .doc-explorer-tree__document--level-1 {
+    padding-left: calc(var(--explorer-spacing-md) + 36px);
+  }
+
+  .doc-explorer-tree__document--level-2 {
+    padding-left: calc(var(--explorer-spacing-md) + 56px);
+  }
+
+  .doc-explorer-tree__document--level-3 {
+    padding-left: calc(var(--explorer-spacing-md) + 76px);
+  }
+
+  /* Document Icon */
+  .doc-explorer-tree__doc-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  /* ============================================
+     File Type Icon Colors (확장자별 아이콘 색상)
+     ============================================ */
+
+  /* PDF - Red theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-dark);
+  }
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf,
+  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-hover-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf,
+  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-hover-dark);
+  }
+
+  /* Image - Blue theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+    color: var(--color-file-image-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+    color: var(--color-file-image-dark);
+  }
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image,
+  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+    color: var(--color-file-image-hover-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image,
+  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+    color: var(--color-file-image-hover-dark);
+  }
+
+  /* Word - Blue theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+    color: var(--color-file-word-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+    color: var(--color-file-word-dark);
+  }
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word,
+  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+    color: var(--color-file-word-hover-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word,
+  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+    color: var(--color-file-word-hover-dark);
+  }
+
+  /* Excel - Green theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+    color: var(--color-file-excel-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+    color: var(--color-file-excel-dark);
+  }
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel,
+  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+    color: var(--color-file-excel-hover-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel,
+  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+    color: var(--color-file-excel-hover-dark);
+  }
+
+  /* PowerPoint - Orange theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-dark);
+  }
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint,
+  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint,
+  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-dark);
+  }
+
+  /* Text - Gray theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+    color: var(--color-file-text-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+    color: var(--color-file-text-dark);
+  }
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text,
+  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+    color: var(--color-file-text-hover-light);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text,
+  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+    color: var(--color-file-text-hover-dark);
+  }
+
+  /* Archive - Orange theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--archive {
+    color: var(--color-file-archive-light, #f09000);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--archive {
+    color: var(--color-file-archive-dark, #ffa500);
+  }
+
+  /* Video - Purple theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--video {
+    color: var(--color-file-video-light, #9c27b0);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--video {
+    color: var(--color-file-video-dark, #ce93d8);
+  }
+
+  /* Audio - Pink theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--audio {
+    color: var(--color-file-audio-light, #e91e63);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--audio {
+    color: var(--color-file-audio-dark, #f48fb1);
+  }
+
+  /* Code - Indigo theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--code {
+    color: var(--color-file-code-light, #3f51b5);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--code {
+    color: var(--color-file-code-dark, #9fa8da);
+  }
+
+  /* Executable - Dark theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--executable {
+    color: var(--color-file-executable-light, #424242);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--executable {
+    color: var(--color-file-executable-dark, #9e9e9e);
+  }
+
+  /* Default - Neutral theme */
+  .doc-explorer-tree__doc-icon.document-icon.file-icon--default {
+    color: var(--color-text-tertiary);
+  }
+
+  /* Document Name */
+  .doc-explorer-tree__doc-name {
+    flex: 1;
+    font-size: 11px;
+    color: var(--color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Document Customer */
+  .doc-explorer-tree__doc-customer {
+    flex-shrink: 0;
+    margin-left: var(--explorer-spacing-sm);
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-accent);
+    background: var(--color-accent-bg);
+    border-radius: 8px;
+    min-width: 50px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .doc-explorer-tree__doc-customer--empty {
+    color: var(--color-text-tertiary);
+    background: transparent;
+  }
+
+  /* Document Date */
+  .doc-explorer-tree__doc-date {
+    flex-shrink: 0;
+    margin-left: var(--explorer-spacing-sm);
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    font-variant-numeric: tabular-nums;
+    min-width: 100px;
+    text-align: right;
+  }
+
+  .doc-explorer-tree__doc-date--empty {
+    text-align: center;
+  }
+
+  /* Badge */
+  .doc-explorer-tree__badge {
+    flex-shrink: 0;
+    padding: 1px 4px;
+    font-size: 9px;
+    font-weight: 600;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+
+  .doc-explorer-tree__badge--txt {
+    color: var(--color-green);
+    background: var(--color-green-bg);
+  }
+
+  .doc-explorer-tree__badge--ocr {
+    color: var(--color-purple);
+    background: var(--color-purple-bg);
+  }
+
+  .doc-explorer-tree__badge--bin {
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-tertiary);
+  }
+
+  /* Clickable Customer Badge */
+  .doc-explorer-tree__doc-customer--clickable {
+    cursor: pointer;
+    transition: all var(--explorer-transition);
+  }
+
+  .doc-explorer-tree__doc-customer--clickable:hover {
+    background: var(--color-accent);
+    color: white;
+    transform: scale(1.05);
+  }
+
+} /* end @layer components */

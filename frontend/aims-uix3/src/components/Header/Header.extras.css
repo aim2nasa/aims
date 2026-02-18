@@ -1,0 +1,260 @@
+@layer components {
+
+  /* === 테마별 최적화 === */
+
+  @media (prefers-reduced-motion: reduce) {
+    .header-progressive,
+    .header-control-button,
+    .header-theme-container,
+    .header-title,
+    .header-disclosure-indicator {
+      transition: none;
+    }
+
+    /* 펄스 애니메이션도 비활성화 */
+    .header-disclosure-indicator--pulse {
+      animation: none;
+      opacity: var(--pulse-opacity-max); /* 정적 상태로 표시 */
+    }
+  }
+
+  /* === 🍎 SF Symbols 스타일 아이콘 시스템 === */
+
+  .sf-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    position: relative;
+
+    /* 🍎 SF Symbols 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .sf-symbol__shape {
+    position: relative;
+    color: var(--color-header-text);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  /* 🍎 SF Symbols: gear 아이콘 - 간단한 기어 모양 */
+  .sf-symbol--gear .sf-symbol__shape::before {
+    content: '⚙';
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: gear icon */
+    line-height: 1;
+    color: inherit;
+  }
+
+  /* 🍎 SF Symbols: ellipsis 아이콘 */
+  .sf-symbol--ellipsis .sf-symbol__shape {
+    width: 16px;
+    height: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sf-symbol--ellipsis .sf-symbol__shape::before,
+  .sf-symbol--ellipsis .sf-symbol__shape::after {
+    content: '';
+    width: 3px;
+    height: 3px;
+    background: currentColor;
+    border-radius: 50%;
+  }
+
+  .sf-symbol--ellipsis .sf-symbol__shape::before {
+    margin-right: 3px;
+    box-shadow: 6px 0 0 currentColor;
+  }
+
+  /* === 사용자 프로필 스타일 (항상 표시, Google 스타일) === */
+
+  .header-user-profile {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .header-user-avatar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-full);
+    background: transparent;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .header-user-avatar:hover {
+    background: var(--color-bg-hover);
+  }
+
+  .header-user-avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    /* 유튜브 스타일: 심플하고 일관성 있는 디자인 */
+    background: var(--color-avatar-bg);
+    color: var(--color-avatar-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: avatar initial */
+    text-transform: uppercase;
+    user-select: none;
+    flex-shrink: 0;
+    /* 서브틀한 그림자 */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .header-user-avatar:hover .header-user-avatar-circle {
+    transform: scale(1.08);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  /* 사용자 이미지가 있을 경우를 위한 스타일 */
+  .header-user-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .header-user-name {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: user name in header */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-user-avatar-skeleton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--color-bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    flex-shrink: 0;
+  }
+
+  .header-user-avatar-loading-text {
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: loading text */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+  }
+
+  /* === 터치 기기: 제어 버튼 터치 영역 확대 (44px 최소) === */
+
+  @media (pointer: coarse) {
+    .header-control-button {
+      position: relative;
+    }
+
+    .header-control-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* 터치 기기에서 호버 scale 비활성화 */
+    .header-control-button:hover {
+      transform: none;
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* === 사용자 선택기 스타일 (개발자 모드 전용) === */
+
+  .header-user-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    transition: all var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: user selector */
+    font-family: var(--font-family-text);
+    line-height: 1.2;
+  }
+
+  .header-user-label {
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .header-user-select {
+    padding: var(--spacing-1) var(--spacing-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: select dropdown */
+    font-weight: 600;
+    font-family: var(--font-family-mono);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    outline: none;
+  }
+
+  .header-user-select:hover {
+    border-color: var(--color-primary);
+    background: var(--color-bg-hover);
+  }
+
+  .header-user-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-alpha-10);
+  }
+
+  .header-user-select option {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    padding: var(--spacing-2);
+  }
+
+  .header-user-loading {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: loading state */
+    font-family: var(--font-family-text);
+    font-style: italic;
+  }
+
+} /* end @layer components */

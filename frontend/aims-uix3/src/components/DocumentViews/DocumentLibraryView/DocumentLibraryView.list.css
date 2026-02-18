@@ -1,0 +1,374 @@
+@layer components {
+
+  /* === 🍎 DOCUMENT LIST HEADER: Sortable column headers === */
+
+  .document-list-header {
+    display: grid;
+    grid-template-columns:
+      24px      /* 아이콘 고정 */
+      minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
+      80px      /* 크기 고정 */
+      120px     /* 날짜 고정 */
+      50px      /* 타입 고정 */
+      60px      /* 상태 (넓게) */
+      124px;    /* 액션 버튼 */
+    gap: 12px;
+    align-items: center;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: #4a5568;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid rgba(0, 120, 212, 0.15);
+  }
+
+  html[data-theme="dark"] .document-list-header {
+    background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
+    color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* 삭제 모드일 때 체크박스 칼럼 추가 */
+  .document-library-view--delete-mode .document-list-header {
+    grid-template-columns:
+      24px      /* 체크박스 */
+      24px      /* 아이콘 고정 */
+      minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
+      80px      /* 크기 고정 */
+      120px     /* 날짜 고정 */
+      50px      /* 타입 고정 */
+      60px      /* 상태 (넓게) */
+      124px;    /* 액션 버튼 */
+  }
+
+  .header-checkbox {
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .header-icon {
+    width: 24px;
+  }
+
+  .header-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease-out, color 0.15s ease-out;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* 헤더 아이콘은 절대 축소되지 않음 */
+  .document-list-header .header-icon-svg {
+    flex-shrink: 0;
+  }
+
+  /* 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 */
+  .header-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease-out;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+  }
+
+  .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+  }
+
+  html[data-theme="dark"] .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+  }
+
+  .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-light);
+  }
+
+  html[data-theme="dark"] .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  .header-size,
+  .header-date {
+    text-align: right;
+    justify-content: flex-end;
+  }
+
+  .header-type,
+  .header-status {
+    text-align: center;
+    justify-content: center;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 6px;
+    white-space: nowrap;
+  }
+
+  .header-actions .header-icon-svg {
+    flex-shrink: 0;
+  }
+
+  .header-actions span {
+    flex-shrink: 0;
+  }
+
+  .sort-indicator {
+    font-size: var(--font-size-caption-2); /* 10px - FONT_SIZE_STANDARDS.md: 작은 메타데이터 */
+    font-family: var(--font-family-text);
+    color: var(--color-primary-600);
+    opacity: 0.8;
+    transition: opacity 0.15s ease-out;
+  }
+
+  html[data-theme="dark"] .sort-indicator {
+    color: var(--color-primary-300);
+  }
+
+  .header-sortable:hover .sort-indicator {
+    opacity: 1;
+  }
+
+  /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
+  .header-filename .header-icon-svg {
+    color: var(--color-icon-blue);  /* 파일명 - 파란색 */
+  }
+
+  .header-size .header-icon-svg {
+    color: var(--color-icon-orange);  /* 크기 - 주황색 */
+  }
+
+  .header-date .header-icon-svg {
+    color: var(--color-icon-green);  /* 날짜 - 초록색 */
+  }
+
+  .header-type .header-icon-svg {
+    color: var(--color-icon-purple);  /* 타입 - 보라색 */
+  }
+
+  .header-status .header-icon-svg {
+    color: var(--color-icon-green);  /* 상태 - 초록색 */
+  }
+
+  .header-actions .header-icon-svg {
+    color: var(--color-ios-text-tertiary-light);  /* 액션 - 회색 */
+  }
+
+  html[data-theme="dark"] .header-actions .header-icon-svg {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 🍎 SCROLLBAR: Apple-style subtle */
+  .document-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .document-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .document-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-light);
+    border-radius: 4px;
+    transition: background-color 0.15s ease-out;
+  }
+
+  html[data-theme="dark"] .document-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-dark);
+  }
+
+  .document-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ios-scrollbar-hover-light);
+  }
+
+  html[data-theme="dark"] .document-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ios-scrollbar-hover-dark);
+  }
+
+  /* === 🍎 LOADING STATE: Apple spinner === */
+
+  .document-list-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 200px;
+    color: var(--color-ios-text-quaternary-light);
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .document-list-loading {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  .loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2.5px solid var(--color-ios-spinner-track-light);
+    border-top-color: var(--color-ios-spinner-fill-light);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  html[data-theme="dark"] .loading-spinner {
+    border-color: var(--color-ios-spinner-track-dark);
+    border-top-color: var(--color-ios-spinner-fill-dark);
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* === 🍎 EMPTY STATE: Minimal zen === */
+
+  .document-list-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 200px;
+    color: var(--color-ios-empty-light);
+  }
+
+  html[data-theme="dark"] .document-list-empty {
+    color: var(--color-ios-empty-dark);
+  }
+
+  .empty-icon {
+    opacity: 0.25;
+  }
+
+  .empty-message {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    margin: 0;
+  }
+
+  /* === 🍎 DOCUMENT ITEM: iOS table row - Compact Layout === */
+
+  .document-item {
+    display: grid;
+    grid-template-columns:
+      24px      /* 아이콘 고정 */
+      minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
+      80px      /* 크기 고정 */
+      120px     /* 날짜 고정 */
+      50px      /* 타입 고정 */
+      60px      /* 상태 (넓게) */
+      124px;    /* 액션 버튼 */
+    gap: 12px;
+    align-items: center;
+    height: 32px;
+    padding: 6px 12px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    animation: documentFadeIn 0.3s ease-out;
+  }
+
+  /* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
+  @keyframes documentFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  html[data-theme="dark"] .document-item {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  /* Zebra striping - Apple Mail 스타일 */
+  .document-item:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  .document-item:nth-child(even) {
+    background: rgba(0, 120, 212, 0.03);
+  }
+
+  html[data-theme="dark"] .document-item:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  html[data-theme="dark"] .document-item:nth-child(even) {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .document-item:hover {
+    background: rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
+
+  html[data-theme="dark"] .document-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
+  .document-item.selected,
+  .document-item[data-selected="true"],
+  .document-item:active {
+    background: var(--color-ios-bg-selected-light);
+  }
+
+  html[data-theme="dark"] .document-item.selected,
+  html[data-theme="dark"] .document-item[data-selected="true"],
+  html[data-theme="dark"] .document-item:active {
+    background: var(--color-ios-bg-selected-dark);
+  }
+
+  /* === 🍎 DOCUMENT ICON: File type colors - Compact === */
+
+  .document-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .document-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    transition: color 0.2s ease-out;
+  }
+
+} /* end @layer components */

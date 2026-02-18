@@ -1,0 +1,178 @@
+@layer components {
+
+  /* ==================== Mobile Vertical Layout ==================== */
+  /* JS 기반 모바일 감지 (isMobileView) - 3열 → 세로 스택 + 펀드 카드 */
+
+  .crm-mobile__product {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    background: var(--color-accent-subtle);
+    border-radius: 8px;
+  }
+
+  .crm-mobile__persons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .crm-mobile__person {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 6px 8px;
+    background: var(--color-bg-secondary);
+    border-radius: 6px;
+  }
+
+  .crm-mobile__person-label {
+    font-size: 9px;
+    color: var(--color-text-tertiary);
+    font-weight: 600;
+  }
+
+  .crm-mobile__person-value {
+    font-size: 12px;
+    color: var(--color-text-primary);
+  }
+
+  .crm-mobile__section {
+    margin-bottom: 14px;
+  }
+
+  .crm-mobile__section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-border-light);
+    margin-bottom: 8px;
+  }
+
+  .crm-mobile__section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .crm-mobile__section-header .crm-mobile__section-title {
+    margin: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .crm-mobile__badge {
+    font-size: 10px;
+    color: var(--color-accent);
+    background: var(--color-accent-subtle);
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  .crm-mobile__list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .crm-mobile__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .crm-mobile__item:last-child {
+    border-bottom: none;
+  }
+
+  .crm-mobile__item--highlight {
+    background: var(--color-accent-subtle);
+    padding: 5px 8px;
+    margin: 2px -8px;
+    border-radius: 4px;
+    border-bottom-color: transparent;
+  }
+
+  .crm-mobile__item-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+
+  .crm-mobile__item-value {
+    font-size: 12px;
+    color: var(--color-text-primary);
+    font-weight: 400;
+  }
+
+  .crm-mobile__fund-card {
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .crm-mobile__fund-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .crm-mobile__fund-body {
+    padding: 4px 10px 6px;
+  }
+
+  .crm-mobile__fund-body .crm-mobile__item {
+    padding: 3px 0;
+  }
+
+  .crm-mobile__fund-divider {
+    font-size: 9px;
+    color: var(--color-text-tertiary);
+    font-weight: 600;
+    padding: 4px 0 2px;
+    border-top: 1px dashed var(--color-border-light);
+    margin-top: 2px;
+  }
+
+  .crm-mobile__fund-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--color-accent-subtle);
+    border-radius: 8px;
+    margin-top: 4px;
+  }
+
+  .crm-mobile__fund-total-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .crm-mobile__fund-total-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .crm-mobile__empty {
+    text-align: center;
+    padding: 16px;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+
+} /* end @layer components */

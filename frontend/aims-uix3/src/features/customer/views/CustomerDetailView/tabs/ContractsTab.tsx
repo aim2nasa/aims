@@ -36,7 +36,12 @@ import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
 import { formatDate } from '@/shared/lib/timeUtils'
 import { useAnnualReportSSE } from '@/shared/hooks/useAnnualReportSSE'
 import { CustomerReviewModal } from '@/features/customer/components/CustomerReviewModal'
-import './ContractsTab.css'
+import './ContractsTab.layout.css';
+import './ContractsTab.ar-accordion.css';
+import './ContractsTab.ar-history.css';
+import './ContractsTab.cr-history.css';
+import './ContractsTab.responsive.css';
+import './ContractsTab.cfd-overrides.css';
 
 interface ContractsTabProps {
   customer: Customer

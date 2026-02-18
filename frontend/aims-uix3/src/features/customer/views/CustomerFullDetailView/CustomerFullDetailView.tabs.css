@@ -1,0 +1,490 @@
+@layer views {
+
+  /* ============================================
+     🍎 보고서 탭 스타일 (연간, 고객리뷰 등)
+     ============================================ */
+
+  .report-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-left: 2px;
+  }
+
+  .report-tabs__tab {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-title);
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+
+  .report-tabs__tab:hover {
+    color: var(--color-text-secondary);
+  }
+
+  .report-tabs__tab--active {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  /* 활성 탭 하단 인디케이터 */
+  .report-tabs__tab--active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 2px;
+    background: var(--color-primary-500);
+    border-radius: 1px;
+  }
+
+  /* 탭 내 카운트 배지 */
+  .report-tabs__count {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  html[data-theme="dark"] .report-tabs__count {
+    background: var(--color-primary-900);
+    color: var(--color-primary-300);
+  }
+
+  html[data-theme="dark"] .report-tabs__tab:hover {
+    color: var(--color-text-secondary);
+  }
+
+  html[data-theme="dark"] .report-tabs__tab--active {
+    color: var(--color-text-primary);
+  }
+
+  /* 🍎 보험 이력 탭 버튼 (AR 이력 / 변액 리포트) */
+  .history-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-left: 2px;
+  }
+
+  .history-tabs__tab {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-title);
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+
+  .history-tabs__tab:hover {
+    color: var(--color-text-secondary);
+  }
+
+  .history-tabs__tab--active {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  /* 활성 탭 하단 인디케이터 */
+  .history-tabs__tab--active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 2px;
+    background: var(--color-primary-500);
+    border-radius: 1px;
+  }
+
+  html[data-theme="dark"] .history-tabs__tab:hover {
+    color: var(--color-text-secondary);
+  }
+
+  html[data-theme="dark"] .history-tabs__tab--active {
+    color: var(--color-text-primary);
+  }
+
+  /* 🍎 이력 탭 갯수 배지 */
+  .history-tabs__count {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--color-primary-100);
+    color: var(--color-primary-600);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+    text-align: center;
+  }
+
+  html[data-theme="dark"] .history-tabs__count {
+    background: var(--color-primary-900);
+    color: var(--color-primary-300);
+  }
+
+  /* 🍎 보고서 탭 패널 (항상 렌더링, 비활성 시 숨김 - SSE 실시간 업데이트 유지) */
+  .report-tab-panel {
+    display: none;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .report-tab-panel--active {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 🍎 보험 이력 탭 패널 (항상 렌더링, 비활성 시 숨김 - 카운트 즉시 계산) */
+  .history-tab-panel {
+    display: none;
+  }
+
+  .history-tab-panel--active {
+    display: block;
+  }
+
+  /* 🍎 보고서 placeholder (준비 중 상태) */
+  .report-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px 16px;
+    height: 100%;
+    min-height: 120px;
+    color: var(--color-text-tertiary);
+  }
+
+  .report-placeholder__icon {
+    opacity: 0.4;
+    color: var(--color-text-quaternary);
+  }
+
+  .report-placeholder__text {
+    font-size: var(--font-body);
+    font-weight: 400;
+  }
+
+  /* ============================================
+     🍎 보험계약 섹션 - 통일된 행 높이 + 수평 스크롤
+     ============================================ */
+
+  .customer-full-detail__section-content--contracts {
+    padding: 0;
+    /* overflow: visible 제거 - 문서 섹션과 동일하게 기본값 사용 */
+  }
+
+  /* ============================================
+     🍎 문서 섹션 - 통일된 행 높이 (A행 32px 기준)
+     ============================================ */
+
+  .customer-full-detail__section-content--documents {
+    padding: 0;
+  }
+  /* ============================================
+     🍎 보고서 섹션 - 데이터 기반 칼럼 + 수평스크롤
+     ============================================ */
+
+  .customer-full-detail__section-content--report {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    /* overflow: visible 제거 - 문서 섹션과 동일하게 기본값 사용 */
+  }
+  /* ============================================
+     🍎 고객 아이콘
+     ============================================ */
+
+  .customer-full-detail-icon {
+  }
+
+  .customer-icon--personal {
+    color: var(--color-icon-blue);
+  }
+
+  .customer-icon--corporate {
+    color: var(--color-icon-orange);  /* 전체 고객 보기와 동일 */
+  }
+
+  /* ============================================
+     🍎 UNIFIED TYPOGRAPHY - 최종 오버라이드
+
+     폰트 시스템:
+     - 폰트: SF Pro Text (--font-family)
+     - 크기: Dense Typography Scale (--font-*)
+     - 굵기: 400 normal / 600 semibold
+
+     ⚠️ 중요: 컴포넌트 CSS가 나중에 로드되어 덮어쓰기 때문에,
+     3개 이상 클래스 체인으로 우선순위 확보
+     ============================================ */
+
+  /* 🍎 모든 텍스트 기본 스타일 */
+  .customer-full-detail,
+  .customer-full-detail * {
+    font-family: var(--font-family);
+  }
+  /* 🍎 예외: 섹션 제목 - 13px, semibold */
+  .customer-full-detail .customer-full-detail__section-title {
+    font-size: var(--font-title);
+    font-weight: var(--weight-semibold);
+  }
+  /* ============================================
+     🍎 반응형 - 태블릿 (1000px 이하)
+     ============================================ */
+
+  @media (max-width: 1000px) {
+    .customer-full-detail__row {
+      grid-template-columns: 1fr;
+      grid-auto-rows: auto;
+    }
+
+    .customer-full-detail__row--top,
+    .customer-full-detail__row--bottom {
+      grid-template-columns: 1fr;
+    }
+
+    /* 🍎 리사이즈 핸들 숨김 (터치/태블릿에서 마우스 드래그 불필요) */
+    .customer-full-detail .customer-full-detail__resize-handle {
+      display: none;
+    }
+  }
+  /* ============================================
+     🍎 반응형 - 모바일 (768px 이하)
+     고정 높이 4분할 → 세로 스크롤 스택 레이아웃
+     각 섹션이 적절한 높이를 확보하여 데이터 가독성 확보
+     ============================================ */
+
+  @media (max-width: 768px) {
+    /* 🍎 콘텐츠: 고정높이 flex 분할 → 세로 스크롤 */
+    .customer-full-detail .customer-full-detail__content {
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 4px;
+      gap: 8px;
+    }
+
+    /* 🍎 행: flex 비율 무시, 세로 스택 */
+    .customer-full-detail .customer-full-detail__row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: none;
+      min-height: 0;
+    }
+
+    .customer-full-detail .customer-full-detail__row--top {
+      flex: none;
+    }
+
+    .customer-full-detail .customer-full-detail__row--bottom {
+      flex: none;
+    }
+
+    /* 🍎 섹션: flex 비율 해제, 각자 고유 높이 사용 */
+    .customer-full-detail .customer-full-detail__section {
+      flex: none;
+      min-width: 0;
+    }
+
+    /* 🍎 고객정보 섹션: 내용에 맞게 자동 높이 */
+    .customer-full-detail .customer-full-detail__row--top > .customer-full-detail__section:first-child {
+      min-height: 0;
+      max-height: none;
+    }
+
+    /* 🍎 가족관계 리스트: 모바일에서 스크롤 없이 전체 표시 */
+    .customer-full-detail .customer-info-family-list {
+      overflow-y: visible;
+      max-height: none;
+    }
+
+    /* 🍎 데이터 섹션 (계약/문서/보고서): 고정 높이 + 내부 스크롤 */
+    .customer-full-detail .customer-full-detail__row--top > .customer-full-detail__section:last-child,
+    .customer-full-detail .customer-full-detail__row--bottom > .customer-full-detail__section:first-child,
+    .customer-full-detail .customer-full-detail__row--bottom > .customer-full-detail__section:last-child {
+      height: 300px;
+      min-height: 300px;
+    }
+
+    /* 🍎 액션 버튼: 가로 스크롤 + 컴팩트 */
+    .customer-full-detail .customer-full-detail__actions {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      padding: 6px 8px;
+      gap: 6px;
+    }
+
+    /* 🍎 액션 버튼 내 개별 버튼: 축소 방지 */
+    .customer-full-detail .customer-full-detail__actions .button {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    /* 🍎 섹션 타이틀: 높이 축소, 패딩 축소 */
+    .customer-full-detail .customer-full-detail__section-title {
+      padding: 6px 8px;
+      gap: 4px;
+      height: 30px;
+      min-height: 30px;
+    }
+
+    .customer-full-detail .customer-full-detail__section-title svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+
+    /* 🍎 탭 버튼 크기 축소 (고객정보/보험이력/보고서) */
+    .customer-full-detail .customer-info-tabs__tab {
+      font-size: 12px;
+      padding: 3px 6px;
+    }
+
+    .customer-full-detail .history-tabs__tab {
+      font-size: 11px;
+      padding: 2px 5px;
+      white-space: nowrap;
+    }
+
+    .customer-full-detail .report-tabs__tab {
+      font-size: 12px;
+      padding: 3px 6px;
+      white-space: nowrap;
+    }
+
+    /* 🍎 탭 카운트 배지 축소 */
+    .customer-full-detail .history-tabs__count,
+    .customer-full-detail .report-tabs__count {
+      min-width: 14px;
+      height: 14px;
+      padding: 0 3px;
+      font-size: 9px;
+    }
+
+    /* 🍎 검색창 축소 */
+    .customer-full-detail .customer-full-detail__section-search {
+      width: 100px;
+      max-width: 100px;
+    }
+
+    .customer-full-detail .customer-full-detail__section:has(.customer-full-detail__section-content--contracts) .customer-full-detail__section-search {
+      width: 120px;
+      max-width: 120px;
+    }
+
+    /* 🍎 고객 정보 그리드: 4열 → 2열 */
+    .customer-full-detail .customer-info-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px 10px;
+      padding: 8px 10px;
+    }
+
+    /* 🍎 주소 이력 버튼: 텍스트 숨기고 아이콘만 표시 (공간 절약) */
+    .customer-full-detail .customer-info-grid__history-label {
+      display: none;
+    }
+
+    /* 🍎 레이아웃 리셋 버튼 숨김 (모바일에서 리사이즈 불가하므로) */
+    .customer-full-detail .customer-full-detail__reset-layout {
+      display: none;
+    }
+
+    /* 🍎 섹션 카운트 배지 축소 */
+    .customer-full-detail .customer-full-detail__section-count {
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      font-size: 10px;
+    }
+  }
+  /* ============================================
+     🍎 반응형 - 소형 모바일 (480px 이하)
+     최소 터치 타겟 44px 보장, 극한 컴팩트
+     ============================================ */
+
+  @media (max-width: 480px) {
+    /* 🍎 콘텐츠: 더 좁은 패딩 */
+    .customer-full-detail .customer-full-detail__content {
+      padding: 2px;
+      gap: 6px;
+    }
+
+    /* 🍎 데이터 섹션: 높이 축소 */
+    .customer-full-detail .customer-full-detail__row--top > .customer-full-detail__section:last-child,
+    .customer-full-detail .customer-full-detail__row--bottom > .customer-full-detail__section:first-child,
+    .customer-full-detail .customer-full-detail__row--bottom > .customer-full-detail__section:last-child {
+      height: 260px;
+      min-height: 260px;
+    }
+
+    /* 🍎 액션 버튼: 최소 패딩 */
+    .customer-full-detail .customer-full-detail__actions {
+      padding: 4px 6px;
+      gap: 4px;
+    }
+
+    /* 🍎 고객 정보 그리드: 타이트한 간격 */
+    .customer-full-detail .customer-info-grid {
+      gap: 4px 6px;
+      padding: 6px 8px;
+    }
+
+    /* 🍎 섹션 타이틀: 더 컴팩트 */
+    .customer-full-detail .customer-full-detail__section-title {
+      padding: 4px 6px;
+      height: 28px;
+      min-height: 28px;
+    }
+
+    /* 🍎 탭 버튼 더 축소 */
+    .customer-full-detail .history-tabs__tab {
+      font-size: 10px;
+      padding: 2px 4px;
+    }
+
+    .customer-full-detail .report-tabs__tab {
+      font-size: 11px;
+      padding: 2px 5px;
+    }
+
+    /* 🍎 검색창: 최소 크기 */
+    .customer-full-detail .customer-full-detail__section-search {
+      width: 80px;
+      max-width: 80px;
+    }
+
+    .customer-full-detail .customer-full-detail__section:has(.customer-full-detail__section-content--contracts) .customer-full-detail__section-search {
+      width: 100px;
+      max-width: 100px;
+    }
+
+  }
+
+} /* end @layer views */

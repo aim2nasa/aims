@@ -1,0 +1,370 @@
+@layer components {
+
+  /* === 🍎 FILE TYPE ICON COLORS (CSS 변수 사용) === */
+
+  /* PDF Files - Red theme */
+  .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-hover-dark);
+  }
+
+  /* Image Files - Blue theme */
+  .document-icon.file-icon--image {
+    color: var(--color-file-image-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--image {
+    color: var(--color-file-image-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--image {
+    color: var(--color-file-image-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--image {
+    color: var(--color-file-image-hover-dark);
+  }
+
+  /* Video Files - Purple theme */
+  .document-icon.file-icon--video {
+    color: var(--color-file-video-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--video {
+    color: var(--color-file-video-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--video {
+    color: var(--color-file-video-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--video {
+    color: var(--color-file-video-hover-dark);
+  }
+
+  /* Audio Files - Pink theme */
+  .document-icon.file-icon--audio {
+    color: var(--color-file-audio-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--audio {
+    color: var(--color-file-audio-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--audio {
+    color: var(--color-file-audio-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--audio {
+    color: var(--color-file-audio-hover-dark);
+  }
+
+  /* Archive Files - Orange theme */
+  .document-icon.file-icon--archive {
+    color: var(--color-file-archive-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--archive {
+    color: var(--color-file-archive-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--archive {
+    color: var(--color-file-archive-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--archive {
+    color: var(--color-file-archive-hover-dark);
+  }
+
+  /* Word Documents - Blue theme */
+  .document-icon.file-icon--word {
+    color: var(--color-file-word-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--word {
+    color: var(--color-file-word-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--word {
+    color: var(--color-file-word-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--word {
+    color: var(--color-file-word-hover-dark);
+  }
+
+  /* Excel Documents - Green theme */
+  .document-icon.file-icon--excel {
+    color: var(--color-file-excel-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--excel {
+    color: var(--color-file-excel-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--excel {
+    color: var(--color-file-excel-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--excel {
+    color: var(--color-file-excel-hover-dark);
+  }
+
+  /* PowerPoint Documents - Orange theme */
+  .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-dark);
+  }
+
+  /* Code Files - Indigo theme */
+  .document-icon.file-icon--code {
+    color: var(--color-file-code-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--code {
+    color: var(--color-file-code-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--code {
+    color: var(--color-file-code-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--code {
+    color: var(--color-file-code-hover-dark);
+  }
+
+  /* Text Files - Gray theme */
+  .document-icon.file-icon--text {
+    color: var(--color-file-text-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--text {
+    color: var(--color-file-text-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--text {
+    color: var(--color-file-text-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--text {
+    color: var(--color-file-text-hover-dark);
+  }
+
+  /* Executable Files - Dark theme */
+  .document-icon.file-icon--executable {
+    color: var(--color-file-executable-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--executable {
+    color: var(--color-file-executable-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--executable {
+    color: var(--color-file-executable-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--executable {
+    color: var(--color-file-executable-hover-dark);
+  }
+
+  /* Default - Neutral theme */
+  .document-icon.file-icon--default {
+    color: var(--color-file-default-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--default {
+    color: var(--color-file-default-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--default {
+    color: var(--color-file-default-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--default {
+    color: var(--color-file-default-hover-dark);
+  }
+
+  /* === 🍎 DOCUMENT INFO: Compact one-line layout === */
+
+  .document-info {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .document-name {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  html[data-theme="dark"] .document-name {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  /* 🍎 DOCUMENT SIZE: Fixed width column */
+  .document-size {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-secondary-light);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .document-size {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 🍎 DOCUMENT DATE: Fixed width column */
+  .document-date {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .document-date {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 🍎 DOCUMENT TYPE: Fixed width column */
+  .document-type {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);  /* 🔧 수정: quaternary → secondary (더 진함) */
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .document-type {
+    color: var(--color-ios-text-secondary-dark);  /* 🔧 수정: quaternary → secondary (더 진함) */
+  }
+
+  /* === 🍎 STATUS ICON: Document processing status === */
+  .status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+    flex-shrink: 0;
+    transition: all 0.2s ease-out;
+  }
+
+  .status-icon.status-completed {
+    color: var(--color-success);
+  }
+
+  .status-icon.status-processing {
+    color: var(--color-primary-500);
+    animation: processing-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes processing-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .status-icon.status-error {
+    color: var(--color-error);
+  }
+
+  .status-icon.status-pending {
+    color: var(--color-warning);
+  }
+
+  /* 🍎 HIDE META - Not used in compact layout */
+  .document-meta {
+    display: none;
+  }
+
+  .document-separator {
+    display: none;
+  }
+
+  /* === 🍎 DOCUMENT BADGE: OCR completion - Removed in compact layout === */
+
+  /* === 🍎 RESPONSIVE: iPhone/iPad optimization === */
+
+  @media (max-width: 768px) {
+    .document-search-container {
+      padding: 12px;
+    }
+
+    /* 헤더 컴팩트화 */
+    .library-unified-header {
+      gap: 6px;
+      padding: 6px 8px;
+    }
+
+    /* 최근 업데이트 텍스트 숨김 (공간 절약) */
+    .header-right-section .last-updated {
+      display: none;
+    }
+
+    /* 처리 현황 바 숨김 (카드 레이아웃에서 불필요) */
+    .document-library-view .processing-status-bar {
+      display: none;
+    }
+
+    /* 컬럼 헤더 숨김 — DocumentStatusList에서 card layout 사용 */
+    .document-list-header {
+      display: none;
+    }
+  }
+
+  /* === 폰 가로 모드: 높이 극도 절약 === */
+  @media (max-height: 500px) and (min-width: 481px) {
+    .document-library-container {
+      padding: 2px 8px;
+      gap: 2px;
+    }
+
+    .document-library-view {
+      gap: 2px;
+    }
+
+    .library-unified-header {
+      padding: 4px 8px;
+      margin-bottom: 0;
+      gap: 4px;
+    }
+
+    /* 페이지네이션 컴팩트 */
+    .document-library-view .document-pagination {
+      padding: 2px 0;
+      gap: 4px;
+    }
+  }
+
+} /* end @layer components */

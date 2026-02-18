@@ -26,7 +26,10 @@ import { DocumentNotesModal } from './DocumentNotesModal'
 import { useUserStore } from '../../../../stores/user'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { documentTypesService, type DocumentType } from '../../../../services/documentTypesService'
-import './DocumentStatusList.css'
+import './DocumentStatusList.header.css';
+import './DocumentStatusList.cells.css';
+import './DocumentStatusList.responsive.css';
+import './DocumentStatusList.badges.css';
 
 export interface DocumentStatusListProps {
   documents: Document[]

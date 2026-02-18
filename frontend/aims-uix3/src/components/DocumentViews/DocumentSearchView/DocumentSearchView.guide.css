@@ -1,0 +1,492 @@
+@layer components {
+
+  /* === 🍎 SEARCH GUIDE === */
+
+  .search-guide {
+    width: 61%;
+    max-width: none;
+    margin: 0 auto;
+    padding: 16px;
+    background: var(--color-ios-bg-secondary-light);
+    border-radius: 16px;
+    animation: fadeIn var(--duration-ios-standard) var(--easing-ease-out);
+    text-align: left;
+  }
+
+  html[data-theme="dark"] .search-guide {
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .guide-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .guide-header {
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  .guide-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .guide-icon svg {
+    display: block;
+  }
+
+  /* Lightbulb icon colors (CSS 변수 사용 - CLAUDE.md 준수) */
+  .guide-icon .lightbulb-bulb,
+  .tips-title .lightbulb-bulb {
+    fill: var(--color-icon-lightbulb-fill);
+    stroke: var(--color-icon-lightbulb-stroke);
+  }
+
+  .guide-icon .lightbulb-base,
+  .tips-title .lightbulb-base {
+    stroke: var(--color-icon-lightbulb-stroke);
+  }
+
+  .guide-title {
+    margin: 0;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-subheadline);
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+    letter-spacing: -0.5px;
+  }
+
+  html[data-theme="dark"] .guide-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .guide-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .guide-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .guide-step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .step-number {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-step-number-bg-light);
+    color: var(--color-step-number-text-light);
+    border: 1.5px solid var(--color-step-number-border-light);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-caption-2); /* 11px - 원 크기에 맞게 축소 */
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  html[data-theme="dark"] .step-number {
+    background: var(--color-step-number-bg-dark);
+    color: var(--color-step-number-text-dark);
+    border-color: var(--color-step-number-border-dark);
+  }
+
+  .step-content {
+    flex: 1;
+    padding-top: 2px;
+  }
+
+  .step-title {
+    margin: 0 0 6px;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-footnote); /* 13px - FONT_RULES.md: 서브 제목 (메인 제목 15px보다 작게) */
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+    letter-spacing: -0.3px;
+  }
+
+  html[data-theme="dark"] .step-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .step-description {
+    margin: 0;
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-caption-1); /* 12px - FONT_RULES.md: 설명 (서브 제목보다 작게) */
+    color: var(--color-ios-text-secondary-light);
+    line-height: 1.4;
+  }
+
+  html[data-theme="dark"] .step-description {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 검색 모드 옵션 */
+
+  .mode-options {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    width: 100%;
+  }
+
+  .mode-option {
+    flex: 1;
+    padding: 10px;
+    background: var(--color-ios-bg-tertiary-light);
+    border-radius: 10px;
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  html[data-theme="dark"] .mode-option {
+    background: var(--color-ios-bg-tertiary-dark);
+  }
+
+  .mode-option:hover {
+    background: var(--color-ios-bg-primary-light);
+    transform: translateY(-1px);
+  }
+
+  html[data-theme="dark"] .mode-option:hover {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  .mode-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-caption-1);
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    margin-bottom: 6px;
+  }
+
+  .mode-badge.mode-keyword {
+    background: var(--color-badge-keyword);
+    color: var(--color-badge-text);
+  }
+
+  .mode-badge.mode-ai {
+    background: var(--color-badge-ai);
+    color: var(--color-badge-text);
+  }
+
+  .mode-description {
+    margin: 0;
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-caption-1); /* 12px - FONT_RULES.md: 배지(12px)보다 크면 안됨 */
+    color: var(--color-ios-text-tertiary-light);
+    line-height: 1.3;
+  }
+
+  html[data-theme="dark"] .mode-description {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .mode-description--credit {
+    font-size: var(--font-size-caption-2);
+    color: var(--color-ios-text-tertiary-light);
+    opacity: 0.7;
+  }
+
+  html[data-theme="dark"] .mode-description--credit {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 검색 팁 */
+
+  .guide-tips {
+    padding: 10px 12px;
+    background: var(--color-ios-bg-tertiary-light);
+    border-radius: 8px;
+    border-left: 3px solid var(--color-ios-blue-light);
+  }
+
+  html[data-theme="dark"] .guide-tips {
+    background: var(--color-ios-bg-tertiary-dark);
+    border-left-color: var(--color-ios-blue-dark);
+  }
+
+  .tips-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 12px;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-footnote); /* 13px - FONT_RULES.md: 서브 섹션 제목 (메인 제목 15px보다 작게) */
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+    letter-spacing: -0.3px;
+  }
+
+  html[data-theme="dark"] .tips-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .tips-list {
+    margin: 0;
+    padding-left: 20px;
+    list-style: none;
+  }
+
+  .tips-list li {
+    position: relative;
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-caption-1); /* 12px - FONT_RULES.md: 리스트 항목 (서브 제목보다 작게) */
+    color: var(--color-ios-text-secondary-light);
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+
+  html[data-theme="dark"] .tips-list li {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .tips-list li:last-child {
+    margin-bottom: 0;
+  }
+
+  .tips-list li::before {
+    content: "•";
+    position: absolute;
+    left: -15px;
+    color: var(--color-ios-blue-light);
+    font-weight: 600;
+  }
+
+  html[data-theme="dark"] .tips-list li::before {
+    color: var(--color-ios-blue-dark);
+  }
+
+  /* === 🍎 RECENT SEARCH DROPDOWN: iOS Spotlight Style === */
+
+  .recent-search-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: var(--color-neutral-0); /* ✅ 불투명 흰색 */
+    border-radius: 10px;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.15),
+      0 0 0 0.5px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    overflow: hidden;
+    animation: slideDown 0.2s var(--easing-ease-out);
+  }
+
+  html[data-theme="dark"] .recent-search-dropdown {
+    background-color: var(--color-neutral-800); /* ✅ 불투명 다크 배경 */
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.5),
+      0 0 0 0.5px rgba(255, 255, 255, 0.12);
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .recent-search-header {
+    padding: 8px 12px;
+    font-size: var(--font-size-caption-1); /* 12px */
+    font-weight: 600;
+    color: var(--color-neutral-400); /* ✅ 불투명 미디엄 그레이 */
+    background-color: var(--color-neutral-100); /* ✅ 불투명 라이트 그레이 */
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+  }
+
+  html[data-theme="dark"] .recent-search-header {
+    color: var(--color-neutral-400); /* ✅ 불투명 미디엄 그레이 */
+    background-color: var(--color-neutral-900); /* ✅ 불투명 다크 배경 */
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .recent-search-list {
+    max-height: 280px; /* 7개 항목이 완전히 보이는 높이 (각 40px × 7 = 280px) */
+    overflow-y: auto;
+    background-color: var(--color-neutral-0); /* ✅ 불투명 흰색 */
+  }
+
+  html[data-theme="dark"] .recent-search-list {
+    background-color: var(--color-neutral-800); /* ✅ 불투명 다크 배경 */
+  }
+
+  .recent-search-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    background-color: var(--color-neutral-0); /* ✅ 불투명 흰색 */
+    color: var(--color-neutral-900); /* ✅ 불투명 다크 텍스트 */
+    font-size: var(--font-size-subheadline); /* 15px */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+  }
+
+  html[data-theme="dark"] .recent-search-item {
+    background-color: var(--color-neutral-800); /* ✅ 불투명 다크 배경 */
+    color: var(--color-neutral-50); /* ✅ 불투명 라이트 텍스트 */
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .recent-search-item:last-child {
+    border-bottom: none;
+  }
+
+  .recent-search-item:hover {
+    background-color: var(--color-neutral-100); /* ✅ 불투명 라이트 그레이 호버 */
+  }
+
+  html[data-theme="dark"] .recent-search-item:hover {
+    background-color: var(--color-neutral-700); /* ✅ 불투명 다크 호버 */
+  }
+
+  .recent-search-item:active {
+    background-color: var(--color-neutral-200); /* ✅ 불투명 라이트 그레이 active */
+  }
+
+  html[data-theme="dark"] .recent-search-item:active {
+    background-color: var(--color-neutral-600); /* ✅ 불투명 다크 active */
+  }
+
+  .recent-search-icon {
+    flex-shrink: 0;
+    color: var(--color-neutral-400); /* ✅ 불투명 미디엄 그레이 */
+    font-size: 14px;
+  }
+
+  html[data-theme="dark"] .recent-search-icon {
+    color: var(--color-neutral-400); /* ✅ 불투명 미디엄 그레이 */
+  }
+
+  .recent-search-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* === 🍎 CUSTOMER ICON: 고객 타입 아이콘 (16px - CLAUDE.md 준수) === */
+  .customer-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-right: 6px;
+    transition: color 0.2s ease-out;
+  }
+
+  /* 개인 고객 - 파란색 */
+  .customer-icon--personal {
+    color: var(--color-icon-blue);
+  }
+
+  /* 법인 고객 - 주황색 */
+  .customer-icon--corporate {
+    color: var(--color-icon-orange);
+  }
+
+  /* 🆕 내 보관함 - 노란색 폴더 (Windows Explorer 스타일) */
+  .customer-icon--storage {
+    color: var(--color-folder-yellow);
+    margin-right: 6px;
+    width: 17px;
+    height: 17px;
+  }
+
+  .customer-icon--storage .sf-symbol__shape {
+    font-size: 16.9px;
+  }
+
+  /* 내 보관함 라벨 (클릭 불가) */
+  .customer-name-label--storage {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    cursor: default;
+    opacity: 0.85;
+  }
+
+  .customer-name-label--storage .customer-name-text {
+    color: var(--color-text-secondary);
+    font-style: italic;
+  }
+
+  html[data-theme="dark"] .customer-name-label--storage .customer-name-text {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 고객 이름 버튼 - 아이콘과 텍스트를 같은 줄에 배치 */
+  .customer-name-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    transition: opacity 0.2s ease-out;
+  }
+
+  .customer-name-button:hover {
+    opacity: 0.7;
+  }
+
+  /* 고객 이름 텍스트 */
+  .customer-name-text {
+    color: var(--color-ios-text-primary-light);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  html[data-theme="dark"] .customer-name-text {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+} /* end @layer components */

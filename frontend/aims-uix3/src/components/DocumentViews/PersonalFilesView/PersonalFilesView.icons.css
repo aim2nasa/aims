@@ -1,0 +1,456 @@
+@layer components {
+
+  /* ========================================
+     정렬 가능한 컬럼 헤더 (DocumentSearchView 방식 적용)
+     ======================================== */
+
+  .files-list-header .sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: -4px -8px;
+  }
+
+  .files-list-header .sortable:hover {
+    background: var(--color-ios-bg-tertiary-light);
+    color: var(--color-ios-text-primary-light);
+  }
+
+  html[data-theme="dark"] .files-list-header .sortable:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .files-list-header .sortable.sorted {
+    color: var(--color-ios-interactive-light);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  html[data-theme="dark"] .files-list-header .sortable.sorted {
+    color: var(--color-ios-interactive-dark);
+  }
+
+  /* 정렬 인디케이터 */
+  .files-list-header .sort-indicator {
+    font-size: var(--font-size-caption-2);
+    font-family: var(--font-family-text);
+    margin-left: 2px;
+    opacity: 0.8;
+  }
+
+  /* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
+  .files-list-header .sort-indicator:not(.sort-indicator--both) {
+    color: var(--color-ios-interactive-light);
+    font-weight: 700;
+    opacity: 1;
+  }
+
+  html[data-theme="dark"] .files-list-header .sort-indicator:not(.sort-indicator--both) {
+    color: var(--color-ios-interactive-dark);
+  }
+
+  /* 양방향 정렬 인디케이터 - 세로로 쌓기 */
+  .files-list-header .sort-indicator--both {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 0.6;
+    margin-left: 2px;
+    gap: 2px;
+  }
+
+  .files-list-header .sort-indicator--both .sort-arrow {
+    display: block;
+    font-size: var(--font-size-caption-2);
+    line-height: 0.6;
+    height: 6px;
+  }
+
+  /* 헤더 아이콘 */
+  .files-list-header .header-icon-svg {
+    flex-shrink: 0;
+  }
+
+  /* PDF icon fold stroke color (CSS 변수 사용 - CLAUDE.md 준수) */
+  .header-icon-svg .pdf-icon-fold {
+    stroke: var(--color-icon-pdf-stroke);
+  }
+
+  /* === 파일 타입 아이콘 (DocumentLibrary 스타일 적용) === */
+  .document-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 24px;
+    flex-shrink: 0;
+    margin-right: var(--spacing-2);
+  }
+
+  .document-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    transition: color 0.2s ease-out;
+  }
+
+  /* === 🍎 FILE TYPE ICON COLORS (DocumentLibrary와 동일) === */
+
+  /* PDF Files - Red theme */
+  .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--pdf,
+  .file-grid-item:hover .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--pdf,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-hover-dark);
+  }
+
+  /* Image Files - Blue theme */
+  .document-icon.file-icon--image {
+    color: var(--color-file-image-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--image {
+    color: var(--color-file-image-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--image,
+  .file-grid-item:hover .document-icon.file-icon--image {
+    color: var(--color-file-image-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--image,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--image {
+    color: var(--color-file-image-hover-dark);
+  }
+
+  /* Word Documents - Blue theme */
+  .document-icon.file-icon--word {
+    color: var(--color-file-word-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--word {
+    color: var(--color-file-word-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--word,
+  .file-grid-item:hover .document-icon.file-icon--word {
+    color: var(--color-file-word-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--word,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--word {
+    color: var(--color-file-word-hover-dark);
+  }
+
+  /* Excel Documents - Green theme */
+  .document-icon.file-icon--excel {
+    color: var(--color-file-excel-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--excel {
+    color: var(--color-file-excel-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--excel,
+  .file-grid-item:hover .document-icon.file-icon--excel {
+    color: var(--color-file-excel-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--excel,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--excel {
+    color: var(--color-file-excel-hover-dark);
+  }
+
+  /* PowerPoint Documents - Orange theme */
+  .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--powerpoint,
+  .file-grid-item:hover .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--powerpoint,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-dark);
+  }
+
+  /* Text Files - Gray theme */
+  .document-icon.file-icon--text {
+    color: var(--color-file-text-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--text {
+    color: var(--color-file-text-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--text,
+  .file-grid-item:hover .document-icon.file-icon--text {
+    color: var(--color-file-text-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--text,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--text {
+    color: var(--color-file-text-hover-dark);
+  }
+
+  /* Compressed Files - Purple theme */
+  .document-icon.file-icon--compressed {
+    color: var(--color-file-compressed-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--compressed {
+    color: var(--color-file-compressed-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--compressed,
+  .file-grid-item:hover .document-icon.file-icon--compressed {
+    color: var(--color-file-compressed-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--compressed,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--compressed {
+    color: var(--color-file-compressed-hover-dark);
+  }
+
+  /* Video Files - Purple theme */
+  .document-icon.file-icon--video {
+    color: var(--color-file-video-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--video {
+    color: var(--color-file-video-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--video,
+  .file-grid-item:hover .document-icon.file-icon--video {
+    color: var(--color-file-video-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--video,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--video {
+    color: var(--color-file-video-hover-dark);
+  }
+
+  /* Audio Files - Pink theme */
+  .document-icon.file-icon--audio {
+    color: var(--color-file-audio-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--audio {
+    color: var(--color-file-audio-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--audio,
+  .file-grid-item:hover .document-icon.file-icon--audio {
+    color: var(--color-file-audio-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--audio,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--audio {
+    color: var(--color-file-audio-hover-dark);
+  }
+
+  /* Default Files - Gray theme */
+  .document-icon.file-icon--default {
+    color: var(--color-file-default-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--default {
+    color: var(--color-file-default-dark);
+  }
+
+  .file-list-row:hover .document-icon.file-icon--default,
+  .file-grid-item:hover .document-icon.file-icon--default {
+    color: var(--color-file-default-hover-light);
+  }
+
+  html[data-theme="dark"] .file-list-row:hover .document-icon.file-icon--default,
+  html[data-theme="dark"] .file-grid-item:hover .document-icon.file-icon--default {
+    color: var(--color-file-default-hover-dark);
+  }
+
+  /* 🍎 뱃지 스타일은 shared/styles/document-badges.css에서 공통 관리 */
+
+  /* ===== 액션 버튼 스타일 (DocumentStatusList와 동일) ===== */
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--color-ios-text-secondary-light);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    border-radius: var(--radius-sm);
+    padding: 0;
+  }
+
+  .action-btn svg {
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+  }
+
+  html[data-theme="dark"] .action-btn {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .action-btn--detail { color: var(--color-primary-600); }
+  html[data-theme="dark"] .action-btn--detail { color: var(--color-primary-300); }
+
+  .action-btn--summary { color: var(--color-ios-orange); }
+  html[data-theme="dark"] .action-btn--summary { color: var(--color-ios-orange); }
+
+  .action-btn--full { color: var(--color-primary-700); }
+  html[data-theme="dark"] .action-btn--full { color: var(--color-primary-200); }
+
+  .action-btn--link { color: var(--color-success-600); }
+  html[data-theme="dark"] .action-btn--link { color: var(--color-success-300); }
+
+  .action-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .action-btn--detail:hover { color: var(--color-primary-700); }
+  html[data-theme="dark"] .action-btn--detail:hover { color: var(--color-primary-200); }
+
+  .action-btn--summary:hover { color: var(--color-ios-orange-strong); }
+  html[data-theme="dark"] .action-btn--summary:hover { color: var(--color-ios-orange-light); }
+
+  .action-btn--full:hover { color: var(--color-primary-800); }
+  html[data-theme="dark"] .action-btn--full:hover { color: var(--color-primary-100); }
+
+  .action-btn--link:hover { color: var(--color-success-700); }
+  html[data-theme="dark"] .action-btn--link:hover { color: var(--color-success-200); }
+
+  .action-btn:active {
+    transform: translateY(0);
+  }
+
+  .action-btn:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .action-btn:focus-visible {
+    outline-color: var(--color-primary-300);
+  }
+
+  .action-btn[data-disabled="true"] {
+    opacity: 0.25;
+    cursor: not-allowed;
+    transform: none;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .action-btn[data-disabled="true"] {
+    color: var(--color-ios-text-tertiary-dark);
+    opacity: 0.2;
+  }
+
+  .action-btn[data-disabled="true"]:hover {
+    transform: none;
+  }
+
+  /* 액션 버튼 컨테이너 레이아웃 */
+  .row-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+
+  /* ===== 상태 칼럼 스타일 (DocumentStatusList와 동일) ===== */
+
+  /* 상태 셀 - flex 레이아웃 (아이콘 + 텍스트) */
+  .row-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* 상태 아이콘 */
+  .status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-footnote);
+    flex-shrink: 0;
+  }
+
+  .status-icon.status-completed {
+    color: var(--color-success);
+  }
+
+  .status-icon.status-processing {
+    color: var(--color-primary-500);
+    animation: processing-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes processing-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .status-icon.status-error {
+    color: var(--color-error);
+  }
+
+  .status-icon.status-pending {
+    color: var(--color-warning);
+  }
+
+  .status-icon.status-timeout {
+    color: var(--color-error);
+    opacity: 0.7;
+  }
+
+  /* 상태 텍스트 */
+  .status-text {
+    font-size: var(--font-size-caption-1);
+    font-family: var(--font-family-text);
+    color: var(--color-ios-text-tertiary-light);
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .status-text {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .status-text .progress-text {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--color-primary-500);
+  }
+
+  .status-text .status-label {
+    font-weight: 400;
+  }
+
+} /* end @layer components */

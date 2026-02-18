@@ -14,7 +14,9 @@ import Button from '@/shared/ui/Button';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import { CustomerReviewApi, type CustomerReview } from '../../api/customerReviewApi';
 import { formatDate, formatDateTime } from '@/shared/lib/timeUtils';
-import './CustomerReviewModal.css';
+import './CustomerReviewModal.layout.css';
+import './CustomerReviewModal.compact.css';
+import './CustomerReviewModal.mobile.css';
 
 interface CustomerReviewModalProps {
   isOpen: boolean;

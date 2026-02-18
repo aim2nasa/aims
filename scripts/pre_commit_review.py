@@ -135,17 +135,29 @@ def detect_bandaid_patterns(diff, files):
     # ━━━━━━━━━━━ BLOCK 패턴 (커밋 차단) ━━━━━━━━━━━
 
     # 1. !important 사용 → CSS 파일에서만 감지
-    #    순수 신규 추가만 감지 (들여쓰기 변경 등으로 인한 오탐 방지)
+    #    전체 CSS diff를 집계하여 순수 신규 추가만 감지
+    #    (파일 분할/리네임 시 per-file 카운트는 오탐 발생 → 전체 집계로 해결)
+    total_important_added = 0
+    total_important_removed = 0
+    important_files = []
     for filepath, fdiff in css_diffs:
         added = len(re.findall(r'^\+.*!important', fdiff, re.MULTILINE))
         removed = len(re.findall(r'^-.*!important', fdiff, re.MULTILINE))
         net_new = added - removed
+        total_important_added += added
+        total_important_removed += removed
         if net_new > 0:
-            blocks.append(
-                "!important 사용 감지 ({count}건, {file}) - "
-                "CSS 변수(var(--*)) 또는 specificity로 해결하세요"
-                .format(count=net_new, file=filepath)
-            )
+            important_files.append((filepath, net_new))
+    total_net_new = total_important_added - total_important_removed
+    if total_net_new > 0 and important_files:
+        file_details = ", ".join(
+            "{f}({n}건)".format(f=f, n=n) for f, n in important_files
+        )
+        blocks.append(
+            "!important 순수 신규 추가 감지 (전체 {total}건: {details}) - "
+            "CSS 변수(var(--*)) 또는 specificity로 해결하세요"
+            .format(total=total_net_new, details=file_details)
+        )
 
     # 2. DB 조작만 있고 소스코드 변경 없음
     source_prefixes = [

@@ -16,7 +16,11 @@ import { DocumentExplorerTree } from './DocumentExplorerTree'
 import { InitialFilterBar } from '@/shared/ui/InitialFilterBar'
 import { useDocumentExplorerTree } from './hooks/useDocumentExplorerTree'
 import type { Document } from '@/types/documentStatus'
-import './DocumentExplorerView.css'
+import './DocumentExplorerView.toolbar.css';
+import './DocumentExplorerView.tree.css';
+import './DocumentExplorerView.features.css';
+import './DocumentExplorerView.datejump.css';
+import './DocumentExplorerView.mobile.css';
 
 export interface DocumentExplorerViewProps {
   /** View 표시 여부 */

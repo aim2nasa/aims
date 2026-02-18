@@ -1,0 +1,481 @@
+/**
+ * Excel Refiner View Styles
+ * aims-uix3 CSS 변수 시스템 사용
+ */
+
+@layer components {
+
+
+  .excel-refiner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-bg-secondary);
+  }
+
+  /* === MAIN === */
+
+  .excel-refiner__main {
+    flex: 1;
+    min-height: 0; /* flexbox 스크롤 활성화 */
+    overflow: auto; /* hidden → auto: 내용이 넘치면 스크롤 */
+    display: flex;
+    flex-direction: column;
+    background: var(--color-layout-centerpane-bg);
+  }
+
+  /* === DROPZONE === */
+
+  .excel-refiner__dropzone {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: var(--spacing-2);
+    border: 2px dashed var(--color-upload-zone-border);
+    border-radius: var(--radius-xl);
+    background: var(--color-upload-zone-bg);
+    transition: all var(--duration-fast) var(--easing-default);
+    overflow: auto;
+  }
+
+  .excel-refiner__dropzone--active {
+    border-color: var(--color-primary-500);
+    background: var(--color-selection-bg);
+  }
+
+  .excel-refiner__dropzone-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3);
+    width: 100%;
+  }
+
+  .excel-refiner__dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    gap: var(--spacing-2);
+  }
+
+  .excel-refiner__plus-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-primary-500);
+  }
+
+  .excel-refiner__dropzone-hint {
+    font-size: var(--font-size-footnote); /* 13px - DENSE_TYPOGRAPHY: 섹션 제목 */
+    font-weight: var(--font-weight-semibold); /* 600 - font-weight 500 금지 */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-text-primary);
+    letter-spacing: -0.3px;
+  }
+
+  .excel-refiner__dropzone-subhint {
+    font-size: var(--font-size-caption-1); /* 12px - DENSE_TYPOGRAPHY: 보조 텍스트 */
+    font-weight: var(--font-weight-regular); /* 400 */
+    opacity: 0.6;
+    color: var(--color-text-secondary);
+  }
+
+  .excel-refiner__file-input {
+    display: none;
+  }
+
+  /* === FORMAT GUIDE === */
+
+  .excel-refiner__format-guide {
+    padding: var(--spacing-4);
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-lg);
+  }
+
+  /* 양식 가이드 헤더 */
+  .excel-refiner__format-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .excel-refiner__format-title {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+  }
+
+  /* 양식 가이드 시트 탭 */
+  .excel-refiner__format-tabs {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    margin-bottom: var(--spacing-3);
+    border-bottom: 1px solid var(--color-border-secondary);
+    padding-bottom: 0;
+  }
+
+  .excel-refiner__format-tab {
+    padding: var(--spacing-1) var(--spacing-3);
+    font-size: var(--font-size-caption1); /* 12px */
+    font-weight: var(--font-weight-regular);
+    color: var(--color-text-tertiary);
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-default);
+    position: relative;
+    margin-bottom: -1px;
+  }
+
+  .excel-refiner__format-tab:hover {
+    color: var(--color-text-secondary);
+    background: var(--color-bg-secondary);
+  }
+
+  .excel-refiner__format-tab--active {
+    color: var(--color-success-600);
+    font-weight: var(--font-weight-semibold);
+    background: var(--color-bg-primary);
+    border-color: var(--color-border-secondary);
+    border-bottom-color: var(--color-bg-primary);
+  }
+
+  .excel-refiner__format-guide-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-3);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-footnote); /* 13px - DENSE_TYPOGRAPHY: 섹션 제목 */
+    font-weight: var(--font-weight-semibold); /* 600 */
+  }
+
+  .excel-refiner__format-guide-header > svg {
+    flex-shrink: 0;
+    color: var(--color-success-500);
+  }
+
+  .excel-refiner__format-download {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: var(--spacing-1);
+    color: var(--color-text-tertiary);
+    opacity: 0.7;
+    transition: opacity var(--duration-fast) var(--easing-default);
+  }
+
+  .excel-refiner__format-download:hover {
+    opacity: 1;
+    color: var(--color-primary-500);
+  }
+
+  .excel-refiner__format-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-secondary);
+  }
+
+  html[data-theme="dark"] .excel-refiner__format-table-wrapper {
+    border-color: var(--color-border-primary);
+  }
+
+  .excel-refiner__format-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+  }
+
+  .excel-refiner__format-th {
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+    text-align: left;
+    border-bottom: 2px solid var(--color-border-secondary);
+  }
+
+  html[data-theme="dark"] .excel-refiner__format-th {
+    border-bottom-color: var(--color-border-primary);
+  }
+
+  .excel-refiner__format-th--required {
+    background: var(--color-primary-200);
+    color: var(--color-primary-700);
+    font-weight: 700;
+    border-bottom: 2px solid var(--color-primary-400);
+  }
+
+  html[data-theme="dark"] .excel-refiner__format-th--required {
+    background: var(--color-primary-800);
+    color: var(--color-primary-200);
+    font-weight: 700;
+    border-bottom: 2px solid var(--color-primary-500);
+  }
+
+  .excel-refiner__format-td {
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--color-border-secondary);
+  }
+
+  .excel-refiner__format-td--right {
+    text-align: right;
+  }
+
+  .excel-refiner__format-table tbody tr:last-child .excel-refiner__format-td {
+    border-bottom: none;
+  }
+
+  .excel-refiner__format-table tbody tr:hover .excel-refiner__format-td {
+    background: var(--color-bg-hover);
+  }
+
+  .excel-refiner__format-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-4);
+    margin-top: var(--spacing-3);
+  }
+
+  .excel-refiner__format-legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+  }
+
+  .excel-refiner__format-legend-item--required {
+    color: var(--color-primary-700);
+    font-weight: 600;
+  }
+
+  html[data-theme="dark"] .excel-refiner__format-legend-item--required {
+    color: var(--color-primary-300);
+    font-weight: 600;
+  }
+
+  /* === CONTENT === */
+
+  .excel-refiner__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--color-bg-primary);
+    margin: var(--spacing-4);
+    border-radius: var(--radius-lg);
+  }
+
+  /* === 행1: 헤더바 (파일정보 + 위자드 + 전역버튼) === */
+
+  .excel-refiner__header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-2) var(--spacing-4);
+    border-bottom: 1px solid var(--color-border-primary);
+    background: var(--color-bg-tertiary);
+    min-height: 44px;
+  }
+
+  .excel-refiner__header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    flex-shrink: 0;
+  }
+
+  .excel-refiner__header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    flex-shrink: 0;
+  }
+
+  /* 헤더 아이콘 버튼 */
+  .excel-refiner__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all var(--duration-fast) var(--easing-default);
+  }
+
+  .excel-refiner__icon-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    color: var(--color-text-primary);
+  }
+
+  .excel-refiner__icon-btn--close:hover {
+    color: var(--color-error-500);
+  }
+
+  /* 위자드 컴팩트 (헤더바 내 중앙 배치) */
+  .excel-refiner__wizard-compact {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .excel-refiner__filename {
+    font-size: var(--font-size-footnote); /* 13px - DENSE_TYPOGRAPHY: 섹션 제목 */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    color: var(--color-text-primary);
+  }
+
+  .excel-refiner__row-count {
+    font-size: var(--font-size-caption-1); /* 12px - DENSE_TYPOGRAPHY: 보조 텍스트 */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-secondary);
+  }
+
+  /* === 포맷 준수 배지 === */
+
+  .excel-refiner__compliance-badge {
+    font-size: var(--font-size-caption-2); /* 11px */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: default;
+    -webkit-user-select: none;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .excel-refiner__compliance-badge--compliant {
+    background: var(--color-success-50);
+    color: var(--color-success-600);
+  }
+
+  .excel-refiner__compliance-badge--warning {
+    background: var(--color-warning-50);
+    color: var(--color-warning-700);
+  }
+
+  .excel-refiner__compliance-badge--error {
+    background: transparent;
+    color: var(--color-error-500);
+  }
+
+  /* 다크 테마 */
+  [data-theme="dark"] .excel-refiner__compliance-badge--compliant {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--color-success-400);
+  }
+
+  [data-theme="dark"] .excel-refiner__compliance-badge--warning {
+    background: rgba(234, 179, 8, 0.15);
+    color: var(--color-warning-400);
+  }
+
+  html[data-theme="dark"] .excel-refiner__compliance-badge--error {
+    background: transparent;
+    color: #f87171;
+  }
+
+  /* 규격 위반 사유 메시지 */
+  .excel-refiner__compliance-message {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+  }
+
+  .excel-refiner__compliance-message--error {
+    background: transparent;
+    color: var(--color-error-500);
+  }
+
+  .excel-refiner__compliance-message--warning {
+    background: var(--color-warning-50);
+    color: var(--color-warning-700);
+  }
+
+  html[data-theme="dark"] .excel-refiner__compliance-message--error {
+    background: transparent;
+    color: #f87171;
+  }
+
+  [data-theme="dark"] .excel-refiner__compliance-message--warning {
+    background: var(--color-warning-bg-dark);
+    color: var(--color-warning-400);
+  }
+
+  /* 규격 외 컬럼 안내 (info) */
+  .excel-refiner__extra-columns-info {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--color-info-50);
+    color: var(--color-info-600);
+    margin-left: 8px;
+  }
+
+  [data-theme="dark"] .excel-refiner__extra-columns-info {
+    background: var(--color-info-bg-dark);
+    color: var(--color-primary-400);
+  }
+
+  /* === TABS === */
+
+  .excel-refiner__tabs {
+    display: flex;
+    gap: var(--spacing-1);
+    padding: var(--spacing-2) var(--spacing-4);
+    border-bottom: 1px solid var(--color-border-primary);
+    background: var(--color-bg-secondary);
+    overflow-x: auto;
+  }
+
+  .excel-refiner__tab {
+    padding: var(--spacing-2) var(--spacing-4);
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption-1); /* 12px - DENSE_TYPOGRAPHY: 테이블 데이터 */
+    font-weight: var(--font-weight-regular); /* 400 */
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: all var(--duration-fast) var(--easing-default);
+  }
+
+  .excel-refiner__tab:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .excel-refiner__tab--active {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold); /* 600 */
+  }
+
+} /* end @layer components */

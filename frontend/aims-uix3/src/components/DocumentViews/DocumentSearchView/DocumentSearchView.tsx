@@ -40,7 +40,12 @@ import { getRecentSearchQueries, addRecentSearchQuery, type RecentSearchQuery } 
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import './DocumentSearchView.css'
+import './DocumentSearchView.search.css';
+import './DocumentSearchView.results.css';
+import './DocumentSearchView.table.css';
+import './DocumentSearchView.controls.css';
+import './DocumentSearchView.guide.css';
+import './DocumentSearchView.responsive.css';
 
 interface DocumentSearchViewProps {
   /** View 표시 여부 */

@@ -31,7 +31,12 @@ import SFSymbol, {
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
 import { formatDate } from '@/shared/lib/timeUtils'
-import './FamilyContractsTab.css'
+import './ContractsTab.layout.css';
+import './ContractsTab.ar-accordion.css';
+import './ContractsTab.ar-history.css';
+import './ContractsTab.cr-history.css';
+import './ContractsTab.responsive.css';
+import './ContractsTab.cfd-overrides.css';
 
 // ==================== 타입 정의 ====================
 

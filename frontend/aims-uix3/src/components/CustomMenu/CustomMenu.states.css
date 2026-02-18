@@ -1,0 +1,382 @@
+@layer components {
+
+  /* === HOVER STATES (Progressive Disclosure - Apple Philosophy) === */
+  /*
+  애플 디자인 철학: 메뉴 시스템에서는 호버 효과 완전 제거
+  - macOS Finder, iOS Settings 등 모든 네이티브 앱 동작과 일치
+  - "Clarity(명확성)" 원칙: 선택 상태만이 유일한 시각적 피드백
+  - 호버 효과는 사용자 혼란만 야기함
+
+  애플 네이티브 앱 분석 결과:
+  - Finder: 선택 상태만 존재, 호버 없음
+  - Settings: 선택 상태만 존재, 호버 없음
+  - Music: 선택 상태만 존재, 호버 없음
+  - 결론: 메뉴 시스템에서 호버 효과는 애플 디자인이 아님
+  */
+
+  /* 라이트 테마에서는 호버 효과 추가 - 비즈니스 앱 생산성 */
+  html:not([data-theme="dark"]) .custom-menu-item:hover:not(.selected) {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  /* === 🍎 APPLE STANDARD SELECTION STATES === */
+  .custom-menu-item.selected {
+    /* 애플 표준: 단순한 배경색 변화만 (iOS Settings/Finder 스타일) */
+    background: var(--color-menu-selected-bg-subtle);
+    color: var(--color-menu-selected-text);
+    /* font-weight: var(--font-weight-semibold); (600 → iOS Semibold - 선택 상태 강조 ) */
+
+    /* 애플 스타일: 그림자/변형 효과 완전 제거 */
+    border-radius: 8px;
+
+    /* 애플 철학: 과도한 효과 없이 명확한 선택 표시만 */
+    position: relative;
+  }
+
+  .custom-menu-item.selected .custom-menu-item-text {
+    color: var(--color-menu-selected-text);
+  }
+
+  .custom-menu-item.selected .menu-icon {
+    /* 🍎 애플 표준: 아이콘 크기/위치 변화 없음, 색상 변화만 */
+    /* transform, filter, animation 모두 제거 - 미니멀리즘 준수 */
+  }
+
+  /* 선택 상태에서도 icon-shape 원래 색상 유지 */
+  .custom-menu-item.selected .menu-icon-pink {
+    color: var(--color-ios-pink); /* iOS systemPink - 선택 시에도 원래 색상 유지 */
+  }
+
+  .custom-menu-item.selected .menu-icon-red {
+    color: var(--color-icon-doc-status); /* iOS systemRed - 선택 시에도 원래 색상 유지 */
+  }
+
+  .custom-menu-item.selected .menu-icon-green {
+    color: var(--color-ios-green); /* iOS systemGreen - 선택 시에도 원래 색상 유지 */
+  }
+
+  /* 고객 타입 아이콘 - 선택 시에도 원래 색상 유지 */
+  .custom-menu .custom-menu-item.selected .customer-icon--personal {
+    color: var(--color-icon-blue, #007aff); /* 개인 고객 - 파란색 */
+  }
+
+  .custom-menu .custom-menu-item.selected .customer-icon--corporate {
+    color: var(--color-icon-orange, #ff9500); /* 법인 고객 - 주황색 */
+  }
+
+  /* 🍎 애플 스타일: 모든 메뉴 동일한 선택 상태 - 개별 색상 제거 */
+  /* iOS에서는 모든 메뉴 아이템이 동일한 선택 스타일을 가짐 */
+
+  /* === COLLAPSED TOOLTIPS === */
+  .custom-menu-item.collapsed[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 12px;
+    padding: 8px 12px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border-radius: 6px;
+    /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
+    white-space: nowrap;
+    z-index: var(--z-index-tooltip);
+    opacity: 0.95;
+
+    /* 애플 스타일 그림자 */
+    box-shadow: var(--shadow-tooltip);
+
+    /* 부드러운 나타남 효과 */
+    animation: tooltipAppear var(--duration-fast) var(--easing-ease-out);
+
+    /* 🍎 Performance: 60fps 보장 GPU 가속 */
+    will-change: opacity, transform;
+    transform: translateZ(0);
+    contain: layout style paint;
+    backface-visibility: hidden;
+  }
+
+  @keyframes tooltipAppear {
+    from {
+      opacity: 0;
+      transform: translateY(-50%) translateX(-8px);
+    }
+    to {
+      opacity: 0.95;
+      transform: translateY(-50%) translateX(0);
+    }
+  }
+
+  /* === 🍎 애플 스타일 테마별 아이콘 색상 시스템 === */
+
+  /* Light Theme - iOS/macOS 시스템 컬러 기반 */
+  :root,
+  [data-theme="light"] {
+    /* 기본 메뉴 색상 - iOS systemGray2 기반 */
+    --color-menu-icon-default: var(--color-neutral-400);     /* iOS systemGray2 */
+    --color-menu-text-default: var(--color-text-primary);
+    --color-menu-bg-default: transparent;
+
+    /* 선택 상태 - iOS 시스템 블루 기반 */
+    --color-menu-selected-text: var(--color-neutral-0);      /* 화이트 텍스트 */
+    --color-menu-selected-icon: var(--color-neutral-0);      /* 화이트 아이콘 */
+    --color-menu-selected-bg: var(--color-primary-600);      /* iOS systemBlue */
+    --color-menu-selected-bg-subtle: var(--color-primary-600);
+
+    /* 🎨 고객 관리 섹션 - SF Symbol 아이콘 색상 */
+    --color-menu-icon-user: var(--color-ios-blue);           /* person - iOS systemBlue */
+    --color-menu-icon-list: var(--color-ios-green);          /* list-bullet - iOS systemGreen */
+    --color-menu-icon-location: var(--color-ios-orange);     /* location - iOS systemOrange */
+    --color-menu-icon-team: var(--color-ios-purple);         /* person-2 - iOS systemPurple */
+
+    /* 🎨 문서 관리 섹션 - SF Symbol 아이콘 색상 */
+    --color-menu-icon-doc: var(--color-ios-teal);            /* doc - iOS systemTeal */
+  }
+
+  /* Dark Theme - iOS/macOS 다크모드 시스템 컬러 */
+  [data-theme="dark"] {
+    /* 기본 메뉴 색상 - 다크모드 적응 */
+    --color-menu-icon-default: var(--color-neutral-400);     /* iOS systemGray2 (동일) */
+    --color-menu-text-default: var(--color-text-primary);
+    --color-menu-bg-default: transparent;
+
+    /* 선택 상태 - 다크모드에서 더 밝은 블루 */
+    --color-menu-selected-text: var(--color-neutral-0);
+    --color-menu-selected-icon: var(--color-neutral-0);
+    --color-menu-selected-bg: var(--color-primary-500);      /* 다크모드에서 더 밝게 */
+    --color-menu-selected-bg-subtle: var(--color-primary-500);
+
+    /* 🌙 고객 관리 섹션 - 다크모드 SF Symbol 아이콘 색상 */
+    --color-menu-icon-user: var(--color-ios-blue-dark);      /* person - iOS systemBlue (Dark) */
+    --color-menu-icon-list: var(--color-ios-green-dark);     /* list-bullet - iOS systemGreen (Dark) */
+    --color-menu-icon-location: var(--color-ios-orange-dark); /* location - iOS systemOrange (Dark) */
+    --color-menu-icon-team: var(--color-ios-purple-dark);    /* person-2 - iOS systemPurple (Dark) */
+
+    /* 🌙 문서 관리 섹션 - 다크모드 SF Symbol 아이콘 색상 */
+    --color-menu-icon-doc: var(--color-ios-teal-dark);       /* doc - iOS systemTeal (Dark) */
+  }
+
+  /* === 🎨 SF Symbol 아이콘별 색상 적용 === */
+
+  /* SF Symbol과 연동하여 테마별 색상 자동 적용 */
+  .sf-symbol--person {
+    color: var(--color-menu-icon-user);
+  }
+
+  .sf-symbol--list-bullet {
+    color: var(--color-menu-icon-list);
+  }
+
+  .sf-symbol--location {
+    color: var(--color-menu-icon-location);
+  }
+
+  .sf-symbol--person-2 {
+    color: var(--color-menu-icon-team);
+  }
+
+  .sf-symbol--doc {
+    color: var(--color-menu-icon-doc);
+  }
+
+  .sf-symbol--chart-bar {
+    color: var(--color-menu-icon-dashboard);
+  }
+
+  .sf-symbol--magnifyingglass {
+    color: var(--color-menu-icon-search);
+  }
+
+  /* 고객 등록 (person-fill-badge-plus) - iOS systemGreen 계열 */
+  .sf-symbol--person-fill-badge-plus {
+    color: var(--color-ios-green);
+  }
+
+  /* 선택 상태에서도 SF Symbol 아이콘 원래 색상 유지 */
+
+  /* === 🍎 Apple Design Philosophy: 메뉴 호버 효과 완전 제거 === */
+
+  /*
+   * macOS Finder, iOS Settings 등 모든 Apple 네이티브 앱에서는
+   * 메뉴 아이템에 호버 시 색상 변화나 스케일 효과가 없습니다.
+   *
+   * Progressive Disclosure 원칙:
+   * - 기본: 거의 보이지 않는 서브틀한 표현 (정적 상태 유지)
+   * - 상호작용: 클릭/탭 시에만 선택 상태 표시
+   *
+   * 따라서 모든 호버 효과를 제거하여 순수한 Apple 경험을 구현합니다.
+   */
+
+  /* === ACCESSIBILITY === */
+  /* 키보드 포커스는 selected 상태와 분리하여 처리 */
+  .custom-menu-item:focus-visible {
+    outline: 1px solid var(--color-text-secondary);
+    outline-offset: 1px;
+    border-radius: 6px;
+  }
+
+  /* 마우스 클릭 시에는 포커스 아웃라인 제거 */
+  .custom-menu-item:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* === HIGH CONTRAST MODE === */
+  @media (prefers-contrast: high) {
+    /* 호버 효과 완전 제거 - 애플 철학 준수 */
+
+    .custom-menu-item.selected {
+      border: 2px solid var(--color-menu-user);
+    }
+  }
+
+  /* === REDUCED MOTION SUPPORT === */
+  @media (prefers-reduced-motion: reduce) {
+    .custom-menu-item,
+    .menu-icon,
+    .icon-chevron .icon-shape,
+    .sub-menu-container {
+      transition: none;
+      animation: none;
+    }
+
+    /* 호버 효과 완전 제거 - 애플 철학 준수 */
+
+    .custom-menu-item.selected {
+      transform: translateX(1px); /* 변환 효과는 유지하되 애니메이션 제거 */
+    }
+  }
+
+  /* === RESPONSIVE DESIGN === */
+  @media (max-width: 768px) {
+    /* 📱 모바일: line-height 오버라이드 (1.625 → 1.2) */
+    .custom-menu {
+      line-height: 1.2;
+      height: auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .custom-menu-item {
+      min-height: 30px;
+      padding: 3px 10px;
+      font-size: 12px;
+      line-height: 1.2;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+    }
+
+    .custom-menu-item.sub-menu {
+      min-height: 26px;
+      padding-left: 26px;
+      font-size: 11.5px;
+    }
+
+    .sub-menu-container.expanded {
+      max-height: 400px;
+    }
+
+    .icon-chevron {
+      padding: 5px;
+      margin: -5px -5px -5px auto;
+    }
+
+    .menu-icon {
+      width: 14px;
+      height: 14px;
+      margin-right: 5px;
+    }
+
+    .custom-menu .sf-symbol {
+      font-size: 0.85em;
+    }
+
+    .custom-menu-item-text {
+      margin-left: 2px;
+    }
+
+    .custom-menu__footer {
+      padding: 3px 0 1px;
+    }
+
+    .custom-menu__usage-widget {
+      padding: 2px;
+    }
+
+    .menu-item-badge {
+      min-width: 14px;
+      height: 14px;
+      font-size: 9px;
+      padding: 0 3px;
+    }
+  }
+
+  /* 📱 소형 모바일 폰 (480px 이하) */
+  @media (max-width: 480px) {
+    .custom-menu-item {
+      min-height: 28px;
+      padding: 2px 8px;
+      font-size: 11.5px;
+      line-height: 1.15;
+      border-radius: 4px;
+    }
+
+    .custom-menu-item.sub-menu {
+      min-height: 24px;
+      padding-left: 22px;
+      font-size: 11px;
+    }
+
+    .menu-icon {
+      width: 13px;
+      height: 13px;
+      margin-right: 4px;
+    }
+
+    .custom-menu .sf-symbol {
+      font-size: 0.8em;
+    }
+
+    .icon-chevron {
+      padding: 4px;
+      margin: -4px -4px -4px auto;
+    }
+
+    .custom-menu__footer {
+      padding: 2px 0 0;
+    }
+  }
+
+  /* === 🍎 APPLE SIMPLE: CLEAN FADE-IN === */
+
+  /*
+   * 진짜 애플 스타일: 단순하고 즉각적
+   * - macOS Finder처럼 전체 메뉴가 깔끔하게 나타남
+   * - 복잡한 단계별 애니메이션 없음
+   * - 자연스럽고 빠른 반응성
+   */
+
+  /* LeftPane 펼침 시: 전체 메뉴 페이드인 */
+  .layout-leftpane--expanding .custom-menu {
+    opacity: 0;
+    animation: appleCleanFadeIn var(--duration-fast) var(--easing-ease-out) forwards;
+  }
+
+  /* 애플 표준 페이드인 */
+  @keyframes appleCleanFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* 접힘 시: 즉시 처리 */
+  .layout-leftpane--collapsing .custom-menu {
+    transition: none;
+  }
+
+} /* end @layer components */

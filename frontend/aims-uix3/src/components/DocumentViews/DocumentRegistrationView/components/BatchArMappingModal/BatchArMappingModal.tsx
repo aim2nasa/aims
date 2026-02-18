@@ -23,7 +23,9 @@ import {
   getEffectiveMapping,
 } from '../../utils/arGroupingUtils'
 import { ArFileTable } from './ArFileTable'
-import './BatchArMappingModal.css'
+import './BatchArMappingModal.layout.css';
+import './BatchArMappingModal.content.css';
+import './BatchArMappingModal.results.css';
 
 // ============================================
 // 등록 결과 요약 컴포넌트

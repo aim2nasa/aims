@@ -1,0 +1,385 @@
+@layer components {
+
+  /* === 반응형 === */
+
+  /* 📱 iPad 전용 최적화 (1024px - 1366px: iPad Mini ~ iPad Pro 13") */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    .header-progressive {
+      /* 50px 고정 높이 - layout.css와 동기화 */
+      height: 50px;
+      min-height: 50px;
+      max-height: 50px;
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
+
+    .header-title {
+      font-size: var(--font-size-callout); /* 16px */
+    }
+
+    .header-controls {
+      gap: 12px; /* 16px → 12px 축소 */
+    }
+
+    .header-control-button {
+      width: 30px;
+      height: 30px;
+    }
+
+    /* 아바타 크기 축소 - 50px 헤더에 여유롭게 */
+    .header-user-avatar-circle {
+      width: 32px;
+      height: 32px;
+      font-size: 12px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 32px;
+      height: 32px;
+    }
+
+    /* AI 아이콘 크기 축소 */
+    .header-chat-ai-icon {
+      width: 30px;
+      height: 22px;
+    }
+
+    .header-user-name {
+      font-size: 11px;
+      max-width: 80px;
+    }
+  }
+
+  /* 📱 iPad 세로 높이 제한 (850px 이하) - 더 압축 */
+  @media (min-width: 1024px) and (max-height: 850px) {
+    .header-progressive {
+      height: 50px;
+      min-height: 50px;
+      max-height: 50px;
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+    }
+
+    .header-controls {
+      gap: 8px; /* 더 압축 */
+    }
+
+    .header-control-button {
+      width: 28px;
+      height: 28px;
+    }
+
+    .header-user-avatar-circle {
+      width: 30px;
+      height: 30px;
+      font-size: 11px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 30px;
+      height: 30px;
+    }
+
+    .header-chat-ai-icon {
+      width: 28px;
+      height: 20px;
+    }
+  }
+
+  /* === 📱 모바일 햄버거 메뉴 버튼 === */
+  /* 🔴 base 스타일은 반드시 미디어 쿼리 앞에 위치 → cascade로 자연스럽게 오버라이드 */
+
+  .header-mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    margin-right: var(--spacing-1);
+    border: none;
+    border-radius: var(--radius-md, 8px);
+    background: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.15s ease-out;
+
+    /* 📱 모바일에서 header-controls(검색바)가 branding 영역과 겹칠 때
+       터치 이벤트가 검색 요소에 가려지는 문제 방지.
+       position: relative + z-index로 검색바 위에 배치 */
+    position: relative;
+    z-index: 2;
+  }
+
+  .header-mobile-menu-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .header-mobile-menu-btn:active {
+    background-color: var(--color-ios-system-gray5-alpha, rgba(0, 0, 0, 0.05));
+  }
+
+  .header-mobile-menu-btn--active {
+    color: var(--color-primary-500);
+  }
+
+  /* 모바일 (768px 이하) */
+  @media (max-width: 768px) {
+    .header-progressive {
+      padding: 0 var(--spacing-2);
+      overflow: visible; /* 모바일에서 아바타 잘림 방지 */
+    }
+
+    .header-branding {
+      flex: 0 0 auto; /* branding 고정 */
+      min-width: 0;
+      gap: 0;
+    }
+
+    .header-title {
+      font-size: 13px;
+      font-family: var(--font-family-display);
+      white-space: nowrap;
+    }
+
+    /* 모바일에서 "UIX3" 숨김 → "AIMS"만 표시 */
+    .header-title__version {
+      display: none;
+    }
+
+    .header-controls {
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .header-control-button {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
+
+    /* 햄버거 버튼 - 잘림 없이 명확하게 표시 */
+    .header-mobile-menu-btn {
+      width: 28px;
+      height: 28px;
+      margin-right: 2px;
+    }
+
+    .header-mobile-menu-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* 검색바 */
+    .header-quick-search-container {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* AI 아이콘 - 크게 강조 */
+    .header-chat-ai-icon {
+      width: 36px;
+      height: 26px;
+    }
+
+    /* 아바타 */
+    .header-user-avatar {
+      padding: 2px;
+      gap: 0;
+    }
+
+    .header-user-avatar-circle {
+      width: 28px;
+      height: 28px;
+      font-size: 11px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 28px;
+      height: 28px;
+    }
+
+    /* 테마 토글 */
+    .header-theme-container {
+      flex-shrink: 0;
+    }
+
+    /* 프로필 */
+    .header-user-profile {
+      flex-shrink: 0;
+    }
+
+    /* 모바일에서 레이아웃 제어 버튼 숨김 (데스크톱 전용) */
+    .header-user-selector {
+      display: none;
+    }
+  }
+
+  /* 모바일 (480px 이하) - 컴팩트 헤더: 360px 뷰포트에서 모든 요소가 한 줄에 수용 */
+  @media (max-width: 480px) {
+    .header-progressive {
+      padding: 0 8px;
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+      overflow: visible; /* 검색 드롭다운이 헤더 밖으로 표시되도록 허용 */
+    }
+
+    /* backdrop-filter 제거: position:fixed 드롭다운의 containing block 생성 방지 */
+    .header-progressive--expanded {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    .header-title {
+      font-size: 12px;
+    }
+
+    .header-controls {
+      gap: 3px;
+      transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
+    }
+
+    .header-control-button {
+      width: 26px;
+      height: 26px;
+    }
+
+    .header-mobile-menu-btn {
+      width: 26px;
+      height: 26px;
+      margin-right: 2px;
+    }
+
+    .header-mobile-menu-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* 검색바: 남은 공간을 최대한 차지 */
+    .header-quick-search-container {
+      transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
+    }
+
+    /* AI 아이콘 - 테마 토글보다 확실히 크게 */
+    .header-chat-ai-icon {
+      width: 36px;
+      height: 26px;
+    }
+
+    .header-user-avatar-circle {
+      width: 26px;
+      height: 26px;
+      font-size: 10px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  /* 모바일에서 Progressive Disclosure 인디케이터 숨김 */
+  @media (max-width: 768px) {
+    .header-disclosure-indicator {
+      display: none;
+    }
+
+    /* 모바일에서 헤더 항상 확장 상태 유지 */
+    .header-controls {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+  }
+
+  /* 📱 폰 가로 모드 - 울트라 컴팩트 헤더 (40px)
+   * 세로 공간 극대화를 위해 헤더를 최소화 */
+  @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+    .header-progressive {
+      height: 40px;
+      min-height: 40px;
+      max-height: 40px;
+      padding: 0 8px;
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+      overflow: visible;
+    }
+
+    .header-branding {
+      flex: 0 0 auto;
+      min-width: 0;
+      gap: 0;
+    }
+
+    .header-title {
+      font-size: 12px;
+    }
+
+    .header-title__version {
+      display: none;
+    }
+
+    .header-controls {
+      gap: 3px;
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .header-control-button {
+      width: 24px;
+      height: 24px;
+      font-size: 11px;
+    }
+
+    .header-mobile-menu-btn {
+      width: 24px;
+      height: 24px;
+      margin-right: 2px;
+    }
+
+    .header-mobile-menu-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .header-quick-search-container {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .header-chat-ai-icon {
+      width: 30px;
+      height: 20px;
+    }
+
+    .header-user-avatar {
+      padding: 2px;
+      gap: 0;
+    }
+
+    .header-user-avatar-circle {
+      width: 24px;
+      height: 24px;
+      font-size: 10px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 24px;
+      height: 24px;
+    }
+
+    .header-disclosure-indicator {
+      display: none;
+    }
+
+    .header-user-selector {
+      display: none;
+    }
+  }
+
+} /* end @layer components */

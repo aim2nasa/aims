@@ -38,7 +38,10 @@ import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModa
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { usePersonalFilesSSE } from '@/shared/hooks/usePersonalFilesSSE'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import './PersonalFilesView.css'
+import './PersonalFilesView.layout.css';
+import './PersonalFilesView.list.css';
+import './PersonalFilesView.icons.css';
+import './PersonalFilesView.controls.css';
 
 interface PersonalFilesViewProps {
   visible: boolean

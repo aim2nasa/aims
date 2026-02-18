@@ -1,0 +1,313 @@
+@layer components {
+
+  /* === 🎨 메뉴 아이콘 색상 클래스 (SFSymbol 래퍼용) === */
+
+  /* 문서 업로드 (doc-badge-plus) - iOS systemOrange */
+  .menu-icon-orange {
+    color: var(--color-icon-doc-register); /* iOS systemOrange - #ff9500 */
+  }
+
+  /* 문서 라이브러리 - iOS systemPurple */
+  .menu-icon-purple {
+    color: var(--color-icon-doc-library); /* iOS systemPurple - #af52de */
+  }
+
+  /* 문서 검색 - iOS systemBlue */
+  .menu-icon-blue {
+    color: var(--color-icon-doc-search); /* iOS systemBlue - #007aff */
+  }
+
+  /* 문서 처리 현황 - iOS systemRed */
+  .menu-icon-red {
+    color: var(--color-icon-doc-status); /* iOS systemRed - #ff3b30 */
+  }
+
+  /* 내 파일 - iOS systemGreen */
+  .menu-icon-green {
+    color: var(--color-ios-green); /* iOS systemGreen - #34c759 */
+  }
+
+  /* 내 보관함 - Windows Explorer 폴더 노란색 */
+  .menu-icon-yellow {
+    color: var(--color-folder-yellow); /* Windows Explorer 폴더 노란색 */
+  }
+
+  /* 관계별 보기 - iOS systemPink */
+  .menu-icon-pink {
+    color: var(--color-ios-pink); /* iOS systemPink */
+  }
+
+  /* 문서 일괄등록 - iOS systemCyan */
+  .menu-icon-cyan {
+    color: var(--color-ios-cyan, #32ade6); /* iOS systemCyan */
+  }
+
+  /* 최근 검색 고객 섹션 - iOS systemTeal */
+  .menu-icon-teal {
+    color: var(--color-ios-teal, #30b0c7); /* iOS systemTeal */
+  }
+
+  /* 개인 고객 아이콘 - iOS systemGray */
+  .menu-icon-gray {
+    color: var(--color-neutral-500, #8e8e93); /* iOS systemGray */
+  }
+
+  /* 1:1 문의 - 카카오톡 스타일 */
+  .menu-icon--chat {
+    color: #D4A300; /* 라이트 테마: 진한 금색 (가시성 확보) */
+  }
+
+  html[data-theme="dark"] .menu-icon--chat {
+    color: #FEE500; /* 다크 테마: 카카오톡 공식 노란색 */
+  }
+
+  /* 도움말 - iOS systemGray */
+  .menu-icon--help {
+    color: var(--color-text-secondary, #8e8e93);
+  }
+
+  html[data-theme="dark"] .menu-icon--help {
+    color: #aeaeb2;
+  }
+
+  /* 도움말 아이콘 - 선택 시 흰색 */
+  .custom-menu-item.selected .menu-icon--help {
+    color: white;
+  }
+
+  /* 공지사항 - iOS systemBlue */
+  .menu-icon--notice {
+    color: var(--color-icon-doc-search, #007aff);
+  }
+
+  /* 사용 가이드 - iOS systemGreen */
+  .menu-icon--guide {
+    color: var(--color-ios-green, #34c759);
+  }
+
+  /* FAQ - iOS systemOrange */
+  .menu-icon--faq {
+    color: var(--color-icon-doc-register, #ff9500);
+  }
+
+  /* 공지사항 새 글 배지 (N 표시) */
+  .menu-item-badge--notice {
+    background: var(--color-ios-red, #ff3b30);
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+    padding: 0 4px;
+  }
+
+  /* ━━━ 고객 타입 아이콘 (전체 고객 보기와 동일) ━━━ */
+
+  /* 개인 고객 - 파란색 */
+  .custom-menu .customer-icon--personal {
+    color: var(--color-icon-blue, #007aff);
+  }
+
+  /* 법인 고객 - 주황색 (iOS systemOrange) */
+  .custom-menu .customer-icon--corporate {
+    color: var(--color-icon-orange, #ff9500);
+  }
+
+  /* 선택 상태에서도 menu-icon 클래스 원래 색상 유지 */
+
+  /* === 🍎 macOS STYLE SCROLLING === */
+  .custom-menu {
+    /* Flex 레이아웃: footer가 하단에 고정되도록 */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    overflow-y: auto;
+
+    /* 🍎 macOS 스타일: 스크롤바 완전 숨김 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+
+    /* 🍎 스크롤 체이닝 방지 - 메뉴 영역 내에서만 스크롤 */
+    overscroll-behavior: contain;
+  }
+
+  /* 🍎 macOS 스타일: 스크롤바 완전 숨김 (Chrome/Safari) */
+  .custom-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* === SF Symbol 아이콘 크기 통일 (계약 가져오기 기준 1.3배) === */
+  .custom-menu .sf-symbol {
+    font-size: 1.3em;
+  }
+
+  .custom-menu .sf-symbol__shape {
+    font-size: inherit;
+  }
+
+  /* === 문의 알림 배지 === */
+  .menu-item-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .menu-item-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: var(--color-error);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 9px;
+    line-height: 1;
+  }
+
+  /* === USAGE WIDGET SECTION === */
+  /* 사용량 요약 위젯 (Google Drive 스타일) */
+  .custom-menu__usage-widget {
+    padding: var(--spacing-2) var(--spacing-2);
+    border-top: 1px solid var(--color-separator);
+  }
+
+  /* 축소 모드에서 패딩 조정 */
+  .custom-menu--collapsed .custom-menu__usage-widget {
+    padding: var(--spacing-1);
+    display: flex;
+    justify-content: center;
+  }
+
+  /* === FOOTER SECTION === */
+  /* 버전 표시 + 햄버거 버튼 영역 - LeftPane 최하단 고정 */
+  .custom-menu__footer {
+    margin-top: auto; /* flex container에서 하단으로 밀기 */
+    padding: 8px 0 4px;
+    border-top: 1px solid var(--color-separator);
+    flex-shrink: 0;
+  }
+  /* === RESPONSIVE MENU FOR iPAD === */
+
+  /* 📱 iPad/소형 PC (1024px-1366px) */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    .custom-menu-item {
+      padding: 3px 12px;
+      font-size: 12px;
+    }
+
+    .custom-menu-item.sub-menu {
+      padding-left: var(--spacing-8); /* 32px instead of larger */
+    }
+
+    .menu-icon {
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
+    }
+
+    .custom-menu__footer {
+      padding: 6px 0 2px;
+    }
+
+    .custom-menu__usage-widget {
+      padding: var(--spacing-1);
+    }
+  }
+
+  /* 📱 iPad Mini 전용 (1024px-1100px) - 더 컴팩트하게 */
+  @media (min-width: 1024px) and (max-width: 1100px) {
+    .custom-menu-item {
+      padding: 2px 10px;
+      font-size: 11px;
+    }
+
+    .sub-menu-container.expanded {
+      max-height: 200px; /* Reduced for smaller screens */
+    }
+
+    .menu-icon {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   * 📱 모바일 최종 오버라이드 (파일 맨 끝 - cascade 보장)
+   * 위쪽 base 스타일(.custom-menu .sf-symbol 등)보다 뒤에 위치해야 적용됨
+   * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  @media (max-width: 768px) {
+    .custom-menu {
+      line-height: 1.2;
+      height: auto;
+      min-height: 0;
+    }
+
+    .custom-menu .sf-symbol {
+      font-size: 0.85em;
+    }
+
+    .custom-menu-item {
+      min-height: 30px;
+      padding: 3px 10px;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .custom-menu-item.sub-menu {
+      min-height: 26px;
+      padding-left: 26px;
+      font-size: 11.5px;
+    }
+
+    .menu-icon {
+      width: 14px;
+      height: 14px;
+      margin-right: 5px;
+    }
+
+    .menu-item-badge {
+      min-width: 14px;
+      height: 14px;
+      font-size: 9px;
+    }
+
+    /* 모바일: 접기/펼치기 제거 - 서브메뉴 항상 펼침 */
+    .icon-chevron {
+      display: none;
+    }
+
+    .sub-menu-container {
+      max-height: 500px;
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .custom-menu .sf-symbol {
+      font-size: 0.75em;
+    }
+
+    .custom-menu-item {
+      min-height: 26px;
+      padding: 2px 8px;
+      font-size: 11px;
+      line-height: 1.15;
+    }
+
+    .custom-menu-item.sub-menu {
+      min-height: 22px;
+      padding-left: 22px;
+      font-size: 10.5px;
+    }
+
+    .menu-icon {
+      width: 12px;
+      height: 12px;
+      margin-right: 4px;
+    }
+  }
+
+} /* end @layer components */

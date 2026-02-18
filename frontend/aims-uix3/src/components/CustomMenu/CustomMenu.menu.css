@@ -1,0 +1,468 @@
+/**
+ * AIMS UIX3 - Perfect CustomMenu Implementation
+ * color.png 기반 아름다운 디자인 + 지침 완벽 준수
+ *
+ * 핵심 원칙:
+ * 1. 하드코딩 절대 금지 - CSS 변수만 사용
+ * 2. color.png의 생동감 있는 색상 완벽 구현
+ * 3. 애플 디자인 철학 적용
+ * 4. 완전한 기능 (메인메뉴 토글 포함)
+ */
+
+
+@layer components {
+
+
+  .custom-menu {
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+    /* font-size: var(--font-size-sm); (14px → CSS 변수 ) */
+    line-height: var(--line-height-relaxed);
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-family-system);
+
+    /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-kerning: auto;
+    font-variant-ligatures: common-ligatures;
+
+    /* 🌍 국제화: 완벽한 다국어 지원 */
+    unicode-bidi: isolate;
+    text-size-adjust: 100%;
+
+    /* 🍎 Performance: GPU 가속 최적화 */
+    will-change: transform;
+    transform: translateZ(0);
+    contain: layout style;
+
+    /* 🎨 벡터 렌더링 완벽성 */
+    shape-rendering: geometricPrecision;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+
+    /* 키보드 네비게이션을 위한 포커스 처리 */
+    outline: none;
+  }
+
+  /* === MENU ITEM BASE STYLES === */
+  .custom-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 4px 16px;
+    margin: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--color-text-primary);
+    /* font-size: var(--font-size-footnote); (14px → iOS Footnote ) */
+    line-height: var(--line-height-normal); /* 20px → CSS variable */
+    /* font-weight: var(--font-weight-medium); (500 → iOS Medium ) */
+    position: relative;
+
+    /* color.png 기반 기본 상태 */
+    background: transparent;
+
+    /* 🍎 텍스트 선택 방지 - 부모(.layout-leftpane)에서 상속됨 */
+
+    /* 🍎 애플 스타일: 단순한 배경색 변화만 (macOS Finder 동일) */
+    transition: background-color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* === SUB-MENU STYLES === */
+  .custom-menu-item.sub-menu {
+    padding-left: var(--spacing-11);        /* 44px - iOS 최소 터치 영역 표준 */
+    /* font-size: var(--font-size-footnote); () */   /* 13px - iOS Footnote */
+    /* font-weight: var(--font-weight-normal); () */  /* 400 - iOS Normal */
+    color: var(--color-text-secondary);
+  }
+
+  .sub-menu-container {
+    overflow: hidden;
+    /* 🍎 애플 스타일: 부드러운 슬라이드 다운 애니메이션 */
+    transition:
+      max-height var(--duration-ios-graceful) var(--easing-apple-magic),
+      opacity var(--duration-ios-graceful) var(--easing-apple-magic),
+      transform var(--duration-ios-graceful) var(--easing-apple-magic);
+
+    /* 🍎 Performance: 60fps 보장 GPU 가속 */
+    will-change: max-height, opacity, transform;
+    transform: translateZ(0);
+    contain: layout style paint;
+    backface-visibility: hidden;
+
+    /* 기본 상태: 숨김 */
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  /* 펼쳐진 상태: 부드럽게 슬라이드 다운 */
+  .sub-menu-container.expanded {
+    max-height: 300px; /* 충분한 높이 */
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* 🍎 애플 스타일: 펄스 애니메이션 제거 - 과도한 효과 금지 */
+
+  /* === COLLAPSED STATE === */
+  .custom-menu-item.collapsed {
+    padding: 8px;
+    justify-content: center;
+  }
+
+  .custom-menu-item.collapsed.sub-menu {
+    padding: 6px;
+  }
+
+  /* === VECTOR ICONS SYSTEM (하드코딩 금지 원칙 준수) === */
+  .menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .custom-menu-item.collapsed .menu-icon {
+    margin-right: 0;
+  }
+
+  /* 🍎 User Icon - SF Symbols 감성 벡터 품질 */
+  .icon-user .icon-shape {
+    width: 16px;
+    height: 16px;
+    border-radius: 50% 50% 0 0;
+    background: var(--color-menu-icon-default);
+    position: relative;
+
+    /* 🍎 벡터 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .icon-user .icon-shape::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%) translateZ(0);
+    width: 20px;
+    height: 12px;
+    border-radius: 10px 10px 0 0;
+    background: var(--color-menu-icon-default);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+  }
+
+  /* 🍎 List Icon - SF Symbols 감성 벡터 품질 */
+  .icon-list .icon-shape {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--color-menu-icon-default);
+    border-radius: 2px;
+    position: relative;
+
+    /* 🍎 벡터 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .icon-list .icon-shape::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    height: 2px;
+    background: var(--color-menu-icon-default);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  .icon-list .icon-shape::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 2px;
+    right: 2px;
+    height: 2px;
+    background: var(--color-menu-icon-default);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  /* 🍎 Location Icon - SF Symbols 감성 벡터 품질 */
+  .icon-location .icon-shape {
+    width: 12px;
+    height: 16px;
+    background: var(--color-menu-icon-default);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg) translateZ(0);
+    position: relative;
+
+    /* 🍎 벡터 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    will-change: transform, opacity;
+  }
+
+  .icon-location .icon-shape::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg) translateZ(0);
+    width: 4px;
+    height: 4px;
+    background: var(--color-bg-secondary);
+    border-radius: 50%;
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+  }
+
+  /* 🍎 Team Icon - SF Symbols 감성 벡터 품질 */
+  .icon-team .icon-shape {
+    width: 18px;
+    height: 14px;
+    position: relative;
+
+    /* 🍎 벡터 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .icon-team .icon-shape::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-menu-icon-default);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  .icon-team .icon-shape::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-menu-icon-default);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  /* 🍎 FileText Icon - SF Symbols 감성 벡터 품질 */
+  .icon-file .icon-shape {
+    width: 12px;
+    height: 16px;
+    background: var(--color-menu-icon-default);
+    border-radius: 2px;
+    position: relative;
+
+    /* 🍎 벡터 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .icon-file .icon-shape::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 2px;
+    right: 2px;
+    height: 1px;
+    background: var(--color-bg-secondary);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  .icon-file .icon-shape::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 2px;
+    right: 2px;
+    height: 1px;
+    background: var(--color-bg-secondary);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  /* 🍎 Dashboard Icon - SF Symbols 감성 벡터 품질 */
+  .icon-dashboard .icon-shape {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--color-menu-icon-default);
+    border-radius: 2px;
+    position: relative;
+
+    /* 🍎 벡터 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .icon-dashboard .icon-shape::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 4px;
+    height: 4px;
+    background: var(--color-menu-icon-default);
+    border-radius: 1px;
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  .icon-dashboard .icon-shape::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background: var(--color-menu-icon-default);
+    border-radius: 1px;
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  /* 🍎 Search Icon - SF Symbols 감성 벡터 품질 */
+  .icon-search .icon-shape {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--color-menu-icon-default);
+    border-radius: 50%;
+    position: relative;
+
+    /* 🍎 벡터 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .icon-search .icon-shape::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 6px;
+    height: 2px;
+    background: var(--color-menu-icon-default);
+    border-radius: 1px;
+    transform: rotate(45deg) translateZ(0);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+  }
+
+  /* ChevronDown Icon - 분리된 클릭 영역 */
+  .icon-chevron {
+    margin-left: auto;
+    /* 클릭 영역 확장을 위한 패딩 */
+    padding: 4px;
+    margin: -4px -4px -4px auto;
+    cursor: pointer;
+    border-radius: 4px;
+
+    /* 애플 스타일: 서브틀한 호버 효과 */
+    transition: background-color var(--duration-apple-quick) var(--easing-apple-magic);
+  }
+
+  /* 🍎 Apple Philosophy: chevron 호버 효과 제거
+   * iOS/macOS에서 chevron은 정적 상태를 유지합니다.
+   */
+
+  .icon-chevron .icon-shape {
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--color-menu-icon-default);
+    border-bottom: 2px solid var(--color-menu-icon-default);
+    transform: rotate(45deg) translateZ(0);
+
+    /* 🍎 벡터 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    will-change: transform, opacity;
+    /* 🍎 애플 스타일: 단순한 회전 애니메이션 */
+    transition: transform var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .custom-menu-item.has-children.sub-menu .icon-chevron,
+  .custom-menu-item.collapsed .icon-chevron {
+    display: none;
+  }
+
+  /* Expanded state */
+  .custom-menu-item:has(+ .sub-menu-container) .icon-chevron .icon-shape {
+    transform: rotate(225deg);
+  }
+
+  /* === MENU TEXT === */
+  .custom-menu-item-text {
+    flex: 1;
+    font-weight: inherit;
+    transition: opacity var(--duration-fast) var(--easing-ease-out);
+    margin-left: 4px; /* 아이콘과 텍스트 사이 간격 */
+
+    /* 🍎 텍스트 선택 방지 - 부모(.layout-leftpane)에서 상속됨 */
+  }
+
+  .custom-menu-item.collapsed .custom-menu-item-text {
+    display: none;
+  }
+
+} /* end @layer components */

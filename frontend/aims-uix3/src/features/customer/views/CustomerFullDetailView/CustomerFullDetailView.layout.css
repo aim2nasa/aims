@@ -1,0 +1,433 @@
+/**
+ * 🍎 Customer Full Detail View - 고객 전체 정보 페이지
+ * 4개 섹션: 고객정보(기본+가족) | 보험계약 | 문서 | Annual Report
+ * 2x2 그리드 레이아웃 - Dense Typography System 적용
+ *
+ * @see docs/DENSE_TYPOGRAPHY_SYSTEM.md
+ */
+
+
+@layer views {
+
+
+  .customer-full-detail {
+    /* ========================================
+       📝 폰트 시스템 - SF Pro Text 통일
+       ======================================== */
+
+    /* 폰트 패밀리 - 전체 통일 */
+    --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+
+    /* 폰트 크기 - Dense Typography Scale */
+    --font-title: 13px;      /* 섹션 제목 */
+    --font-body: 12px;       /* 테이블 데이터 (기본) */
+    --font-header: 11px;     /* 테이블 헤더 */
+    --font-caption: 11px;    /* 보조 텍스트 */
+    --font-micro: 10px;      /* 페이지네이션/배지 */
+    --font-icon: 14px;       /* 아이콘 크기 */
+    --font-icon-large: 24px; /* 대형 아이콘 */
+    --font-arrow: 8px;       /* 드롭다운 화살표 */
+
+    /* 폰트 굵기 - 2단계만 사용 */
+    --weight-normal: 400;    /* 일반 텍스트 */
+    --weight-semibold: 600;  /* 헤더/제목 */
+
+    /* 레이아웃 변수 */
+    --row-height: var(--dense-row-height, 32px);
+    --header-height: var(--dense-header-height, 32px);
+    --pagination-height: var(--dense-pagination-height, 26px);
+
+    /* 색상 변수 */
+    --label-color: var(--color-text-tertiary);
+    --value-color: var(--color-text-primary);
+    --text-color: var(--color-text-primary);
+
+    /* 🍎 기존 폰트 변수 매핑 (자식 컴포넌트 호환) */
+    --font-size-footnote: var(--font-title);
+    --font-size-caption-1: var(--font-body);
+    --font-size-caption-2: var(--font-header);
+  }
+
+  .customer-full-detail {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* === 상태 표시 === */
+  .customer-full-detail__state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    color: var(--color-text-secondary);
+    flex: 1;
+  }
+
+  .customer-full-detail__state--error {
+    color: var(--color-icon-red);
+  }
+
+  .customer-full-detail__state--deleted {
+    color: var(--color-text-tertiary);
+  }
+
+  .customer-full-detail__retry,
+  .customer-full-detail__back {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--color-primary-200);
+    background: transparent;
+    color: var(--color-primary-600);
+    cursor: pointer;
+    font-size: var(--font-caption);
+  }
+
+  .customer-full-detail__back:hover,
+  .customer-full-detail__retry:hover {
+    background: var(--color-primary-50);
+  }
+
+  /* === 액션 버튼 === */
+  .customer-full-detail__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    background: var(--color-ios-bg-primary-light);
+  }
+
+  html[data-theme="dark"] .customer-full-detail__actions {
+    border-bottom-color: var(--color-ios-separator-dark);
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  .customer-full-detail__actions-spacer {
+    flex: 1;
+  }
+
+  /* 🍎 레이아웃 리셋 버튼 */
+  .customer-full-detail__reset-layout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .customer-full-detail__reset-layout:hover {
+    background: var(--color-ios-bg-tertiary-light);
+    color: var(--color-primary-500);
+    transform: scale(1.05);
+  }
+
+  html[data-theme="dark"] .customer-full-detail__reset-layout:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+  }
+
+  .customer-full-detail__reset-layout:active {
+    transform: scale(0.95);
+  }
+
+  .customer-full-detail__reset-layout svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* === 콘텐츠 - 2행 레이아웃 (상단/하단 독립 조절) === */
+  .customer-full-detail__content {
+    flex: 1;
+    overflow: hidden;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* === 행 공통 === */
+  .customer-full-detail__row {
+    display: grid;
+    gap: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* === 상단 행 - 고객정보 | 리사이즈 핸들 | 보험계약 === */
+  .customer-full-detail__row--top {
+    grid-template-columns: var(--top-left-width, 38%) 6px 1fr;
+    flex: var(--top-row-flex, 1) 1 0;
+  }
+
+  /* === 하단 행 - 문서 | 리사이즈 핸들 | Annual Report === */
+  .customer-full-detail__row--bottom {
+    grid-template-columns: var(--bottom-left-width, 38%) 6px 1fr;
+    flex: var(--bottom-row-flex, 1) 1 0;
+  }
+
+  /* ============================================
+     🍎 리사이즈 핸들 - 섹션 간 크기 조절
+     ============================================ */
+
+  /* 공통 리사이즈 핸들 스타일 */
+  .customer-full-detail__resize-handle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    transition: background-color 0.15s ease;
+    z-index: 10;
+  }
+
+  .customer-full-detail__resize-handle::after {
+    content: '';
+    position: absolute;
+    border-radius: 2px;
+    background: var(--color-ios-separator-light);
+    opacity: 0.5;
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+  }
+
+  html[data-theme="dark"] .customer-full-detail__resize-handle::after {
+    background: var(--color-ios-separator-dark);
+  }
+
+  .customer-full-detail__resize-handle:hover::after {
+    opacity: 1;
+    background: var(--color-primary-400);
+  }
+
+  /* 수평 리사이즈 핸들 (좌우 크기 조절) */
+  .customer-full-detail__resize-handle--horizontal {
+    cursor: col-resize;
+    width: 6px;
+    height: 100%;
+  }
+
+  .customer-full-detail__resize-handle--horizontal::after {
+    width: 2px;
+    height: 40px;
+    max-height: 50%;
+  }
+
+  /* 수직 리사이즈 핸들 (상하 크기 조절) */
+  .customer-full-detail__resize-handle--vertical {
+    cursor: row-resize;
+    width: 100%;
+    height: 6px;
+  }
+
+  .customer-full-detail__resize-handle--vertical::after {
+    width: 40px;
+    max-width: 20%;
+    height: 2px;
+  }
+
+  /* 드래그 중 상태 */
+  .customer-full-detail__resize-handle--dragging::after {
+    opacity: 1;
+    background: var(--color-primary-500);
+  }
+
+  /* 드래그 중 전체 영역에 커서 유지 */
+  .customer-full-detail--resizing-horizontal {
+    cursor: col-resize;
+  }
+
+  .customer-full-detail--resizing-vertical {
+    cursor: row-resize;
+  }
+
+  .customer-full-detail--resizing-horizontal *,
+  .customer-full-detail--resizing-vertical * {
+    cursor: inherit;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* === 섹션 공통 === */
+  .customer-full-detail__section {
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 8px;
+    border: 1px solid var(--color-ios-separator-light);
+    overflow: hidden; /* 🍎 그리드 아이템이 넘치지 않도록 */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0; /* 🍎 그리드에서 콘텐츠보다 작아질 수 있도록 */
+  }
+
+  html[data-theme="dark"] .customer-full-detail__section {
+    background: var(--color-ios-bg-primary-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  /* === 섹션 헤더 === */
+  .customer-full-detail__section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    margin: 0;
+    font-size: var(--font-title);
+    font-weight: var(--weight-title);
+    color: var(--color-text-primary);
+    background: var(--color-ios-bg-secondary-light);
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    height: var(--header-height);
+  }
+
+  html[data-theme="dark"] .customer-full-detail__section-title {
+    background: var(--color-ios-bg-secondary-dark);
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  .customer-full-detail__section-title svg {
+    width: 14px;
+    height: 14px;
+    color: var(--color-primary-500);
+  }
+
+  .customer-full-detail__section-count {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    font-size: var(--font-caption);
+    font-weight: var(--weight-title);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  html[data-theme="dark"] .customer-full-detail__section-count {
+    background: var(--color-primary-900);
+    color: var(--color-primary-300);
+  }
+
+  /* === 섹션 검색 입력 === */
+  .customer-full-detail__section-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    width: 140px;
+    max-width: 140px;
+  }
+
+  .customer-full-detail__section-search .section-search-icon {
+    position: absolute;
+    left: 6px;
+    color: var(--color-text-quaternary);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .customer-full-detail__section-search .section-search-input {
+    flex: 1;
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg-primary);
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--color-text-primary);
+    outline: none;
+    padding: 3px 22px 3px 22px;
+    transition: border-color 0.2s ease-out, width 0.2s ease-out;
+  }
+
+  .customer-full-detail__section-search .section-search-input::placeholder {
+    color: var(--color-text-quaternary);
+    font-weight: 400;
+  }
+
+  .customer-full-detail__section-search .section-search-input:focus {
+    border-color: var(--color-primary);
+  }
+
+  .customer-full-detail__section-search .section-search-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-text-quaternary);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color 0.15s ease-out;
+  }
+
+  .customer-full-detail__section-search .section-search-clear:hover {
+    color: var(--color-text-secondary);
+  }
+
+  html[data-theme="dark"] .customer-full-detail__section-search .section-search-input {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border);
+  }
+
+  /* 🍎 보험계약 섹션 검색창 - 더 넓게 */
+  .customer-full-detail__section:has(.customer-full-detail__section-content--contracts) .customer-full-detail__section-search {
+    width: 180px;
+    max-width: 180px;
+  }
+
+  /* 🍎 문서 내용 검색 버튼 */
+  .customer-full-detail__content-search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin-left: 4px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    opacity: 0.6;
+  }
+
+  .customer-full-detail__content-search-btn:hover {
+    opacity: 1;
+    color: var(--color-primary-500);
+    transform: scale(1.1);
+  }
+
+  .customer-full-detail__content-search-btn:active {
+    transform: scale(0.95);
+  }
+
+  html[data-theme="dark"] .customer-full-detail__content-search-btn:hover {
+    color: var(--color-primary-400);
+  }
+
+  /* === 섹션 컨텐츠 === */
+  .customer-full-detail__section-content {
+    padding: 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+} /* end @layer views */

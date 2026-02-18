@@ -1,0 +1,280 @@
+@layer components {
+
+  /* === 🍎 DELETE MODE: 삭제 모드 스타일 === */
+
+  /* 삭제 모드 토글 버튼 */
+  .contract-all-view .edit-mode-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-ios-text-tertiary-light);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-right: 8px;
+  }
+
+  html[data-theme="dark"] .contract-all-view .edit-mode-icon-button {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .contract-all-view .edit-mode-icon-button:hover {
+    background: var(--color-ios-bg-tertiary-light);
+    color: var(--color-error-500);
+  }
+
+  html[data-theme="dark"] .contract-all-view .edit-mode-icon-button:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+    color: var(--color-error-400);
+  }
+
+  .contract-all-view .edit-mode-icon-button--active {
+    background: var(--color-success-100);
+    color: var(--color-success-600);
+  }
+
+  html[data-theme="dark"] .contract-all-view .edit-mode-icon-button--active {
+    background: var(--color-success-900);
+    color: var(--color-success-400);
+  }
+
+  .contract-all-view .edit-mode-icon-button--active:hover {
+    background: var(--color-success-200);
+    color: var(--color-success-700);
+  }
+
+  html[data-theme="dark"] .contract-all-view .edit-mode-icon-button--active:hover {
+    background: var(--color-success-800);
+    color: var(--color-success-300);
+  }
+
+  /* 선택 수 인라인 표시 */
+  .contract-all-view .selected-count-inline {
+    margin-left: 12px;
+    margin-right: 8px;
+    font-size: var(--font-size-caption-1);
+    font-weight: 600;
+    color: var(--color-primary-600);
+  }
+
+  html[data-theme="dark"] .contract-all-view .selected-count-inline {
+    color: var(--color-primary-400);
+  }
+
+  /* 체크박스 컬럼 */
+  .header-checkbox,
+  .item-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    flex-shrink: 0;
+  }
+
+  .header-checkbox input,
+  .item-checkbox input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary-500);
+  }
+
+  /* 삭제 모드일 때 헤더 그리드 조정 */
+  .contract-list-header--delete-mode {
+    grid-template-columns:
+      24px                           /* 체크박스 */
+      var(--col-type, 50px)          /* 유형 (개인/법인) */
+      var(--col-customer, 140px)     /* 고객명 */
+      var(--col-product, 200px)      /* 상품명 */
+      var(--col-date, 100px)         /* 계약일 */
+      var(--col-policy, 115px)       /* 증권번호 */
+      var(--col-premium, 100px)      /* 보험료 */
+      var(--col-payment-day, 75px)   /* 이체일 */
+      var(--col-cycle, 90px)         /* 납입주기 */
+      var(--col-insured, 95px)       /* 피보험자 */
+      var(--col-status, 100px);      /* 납입상태 */
+  }
+
+  /* 삭제 모드일 때 계약 행 그리드 조정 */
+  .contract-item--delete-mode {
+    grid-template-columns:
+      24px                           /* 체크박스 */
+      var(--col-type, 50px)          /* 유형 (개인/법인) */
+      var(--col-customer, 140px)     /* 고객명 */
+      var(--col-product, 200px)      /* 상품명 */
+      var(--col-date, 100px)         /* 계약일 */
+      var(--col-policy, 115px)       /* 증권번호 */
+      var(--col-premium, 100px)      /* 보험료 */
+      var(--col-payment-day, 75px)   /* 이체일 */
+      var(--col-cycle, 90px)         /* 납입주기 */
+      var(--col-insured, 95px)       /* 피보험자 */
+      var(--col-status, 100px);      /* 납입상태 */
+  }
+
+  /* 삭제 확인 모달 */
+  .delete-confirm-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .delete-confirm-content p {
+    margin: 0;
+    font-size: var(--font-size-body);
+    color: var(--color-ios-text-primary-light);
+  }
+
+  html[data-theme="dark"] .delete-confirm-content p {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .delete-confirm-content .delete-warning {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-error-600);
+  }
+
+  html[data-theme="dark"] .delete-confirm-content .delete-warning {
+    color: var(--color-error-400);
+  }
+
+  .delete-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* === 모바일 반응형 (480px 이하) === */
+  @media (max-width: 480px) {
+    .contract-all-view {
+      padding: var(--spacing-2);
+      gap: 4px;
+    }
+
+    /* 검색 입력 컴팩트 */
+    .contract-all-view .search-input-wrapper {
+      padding: 2px 4px;
+    }
+
+    .contract-all-view .search-input {
+      padding: 3px 6px 3px 24px;
+    }
+
+    .contract-all-view .search-icon {
+      left: 8px;
+    }
+
+    /* 컬럼 헤더 숨김 */
+    .contract-list-header {
+      display: none;
+    }
+
+    /* 스크롤 래퍼: 가로 스크롤 해제 */
+    .contract-list-scroll-wrapper {
+      overflow-x: visible;
+      min-width: 0;
+    }
+
+    /* 계약 아이템: 카드형 3행 */
+    .contract-item {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      grid-template-rows: auto auto auto;
+      gap: 2px 6px;
+      min-width: 0;
+      height: auto;
+      min-height: var(--spacing-touch-min, 44px);
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 0.5px solid var(--color-ios-separator-light);
+    }
+
+    html[data-theme="dark"] .contract-item {
+      border-color: var(--color-ios-separator-dark);
+    }
+
+    /* Row 1: 유형 아이콘 + 고객명 + 상태 */
+    .contract-item > .contract-type {
+      grid-row: 1;
+      grid-column: 1;
+      width: 20px;
+      height: 20px;
+    }
+
+    .contract-item > .contract-customer {
+      grid-row: 1;
+      grid-column: 2;
+      font-weight: 600;
+      font-size: var(--font-size-footnote);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .contract-item > .contract-payment-status {
+      grid-row: 1;
+      grid-column: 3;
+      text-align: right;
+      font-size: var(--font-size-caption-2);
+    }
+
+    /* Row 2: 상품명 */
+    .contract-item > .contract-product {
+      grid-row: 2;
+      grid-column: 2 / 4;
+      font-size: var(--font-size-caption-2);
+      color: var(--color-text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Row 3: 계약일 + 보험료 */
+    .contract-item > .contract-date {
+      grid-row: 3;
+      grid-column: 2;
+      font-size: var(--font-size-caption-2);
+      color: var(--color-text-tertiary);
+    }
+
+    .contract-item > .contract-premium {
+      grid-row: 3;
+      grid-column: 3;
+      text-align: right;
+      font-size: var(--font-size-caption-2);
+      font-weight: 600;
+    }
+
+    /* 모바일에서 숨김: 증권번호, 이체일, 납입주기, 피보험자 */
+    .contract-item > .contract-policy,
+    .contract-item > .contract-payment-day,
+    .contract-item > .contract-cycle,
+    .contract-item > .contract-insured {
+      display: none;
+    }
+
+    /* 터치 피드백 */
+    .contract-item:active {
+      background: var(--color-bg-hover);
+      transition: background 0.05s ease;
+    }
+
+    .contract-item:hover {
+      transform: none;
+    }
+  }
+
+  /* === 접근성 감소 모션 === */
+  @media (prefers-reduced-motion: reduce) {
+    .loading-spinner {
+      animation: none;
+    }
+    /* 페이지네이션 관련 스타일은 공용 Pagination.css에서 처리 */
+  }
+
+} /* end @layer components */

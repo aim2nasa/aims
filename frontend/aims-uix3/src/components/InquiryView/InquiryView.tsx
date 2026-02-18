@@ -24,7 +24,10 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import Tooltip from '../../shared/ui/Tooltip';
 import { Dropdown } from '../../shared/ui/Dropdown';
 import { formatDateTime } from '@/shared/lib/timeUtils';
-import './InquiryView.css';
+import './InquiryView.list.css';
+import './InquiryView.form.css';
+import './InquiryView.messages.css';
+import './InquiryView.extras.css';
 
 // 줌/팬 설정
 const MIN_ZOOM = 0.5;

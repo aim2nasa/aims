@@ -22,7 +22,9 @@ import type { Customer } from '@/entities/customer'
 import { formatDate } from '@/shared/lib/timeUtils'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { ProductSearchModal } from './components/ProductSearchModal'
-import './ContractAllView.css'
+import './ContractAllView.header.css';
+import './ContractAllView.rows.css';
+import './ContractAllView.modes.css';
 
 interface ContractAllViewProps {
   visible: boolean

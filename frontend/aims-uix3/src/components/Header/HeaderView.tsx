@@ -20,7 +20,9 @@ import { useUserStore } from '../../stores/user'
 import { useAuthStore } from '../../shared/stores/authStore'
 import { UserProfileMenu } from './UserProfileMenu'
 import { QuickSearch } from '../QuickSearch'
-import './Header.css'
+import './Header.layout.css';
+import './Header.mobile.css';
+import './Header.extras.css';
 
 interface HeaderViewProps extends HeaderProps {
   /** Controller에서 제공하는 상태와 핸들러 */

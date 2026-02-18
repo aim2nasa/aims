@@ -26,7 +26,10 @@ import type { Customer } from '@/entities/customer/model';
 import type { CustomerDocumentItem } from '@/services/DocumentService';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize';
-import './AnnualReportTab.css';
+import './AnnualReportTab.layout.css';
+import './AnnualReportTab.table.css';
+import './AnnualReportTab.states.css';
+import './AnnualReportTab.cfd-overrides.css';
 
 // 🍎 정렬 필드 타입
 type SortField = 'customer_name' | 'issue_date' | 'parsed_at' | 'total_monthly_premium' | 'contract_count' | 'status';

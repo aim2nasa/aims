@@ -1,0 +1,437 @@
+@layer components {
+
+  /* === 🍎 고객리뷰 displayName 표시 (파일명 뒤 괄호) === */
+  .display-name-suffix {
+    flex-shrink: 1;
+    color: var(--color-text-tertiary);
+    font-size: 11px;
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pdf-conversion-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    flex-shrink: 0;
+    padding: 2px;
+    border-radius: 3px;
+    font-size: 0; /* 텍스트 숨김 - 아이콘만 표시 */
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    line-height: 1;
+    transition: all 0.2s ease-out;
+    /* 기본 스타일 - 파란색 */
+    background: #007aff;
+    color: #ffffff;
+  }
+
+  /* 배지 내 아이콘 - 크게! */
+  .pdf-badge-icon {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+  }
+
+  /* 배지 내 텍스트 */
+  .pdf-badge-text {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+
+  /* 회전 애니메이션 (처리중) */
+  .pdf-badge-icon--spin {
+    animation: pdf-icon-spin 1s linear infinite;
+  }
+
+  @keyframes pdf-icon-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* 완료: 파란색 */
+  .pdf-conversion-badge--completed {
+    background: #007aff;
+    color: #ffffff;
+  }
+
+  html[data-theme="dark"] .pdf-conversion-badge--completed {
+    background: #0a84ff;
+  }
+
+  .status-item:hover .pdf-conversion-badge--completed {
+    transform: scale(1.05);
+    box-shadow: 0 0 6px #007aff;
+  }
+
+  /* 처리 중: 주황색 + 펄스 */
+  .pdf-conversion-badge--processing {
+    background: #ff9500;
+    color: #ffffff;
+    animation: pdf-badge-pulse 1s ease-in-out infinite;
+  }
+
+  html[data-theme="dark"] .pdf-conversion-badge--processing {
+    background: #ff9f0a;
+  }
+
+  /* 대기 중: 회색 */
+  .pdf-conversion-badge--pending {
+    background: #8e8e93;
+    color: #ffffff;
+  }
+
+  html[data-theme="dark"] .pdf-conversion-badge--pending {
+    background: #636366;
+  }
+
+  /* 실패: 빨간색 - 클릭 가능 */
+  button.pdf-conversion-badge--failed {
+    background: #ff3b30;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+
+  html[data-theme="dark"] button.pdf-conversion-badge--failed {
+    background: #ff453a;
+  }
+
+  button.pdf-conversion-badge--failed:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 0 6px #ff3b30;
+  }
+
+  button.pdf-conversion-badge--failed:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* 재시도 중 */
+  .pdf-conversion-badge--retrying {
+    background: #ff9500;
+    animation: pdf-badge-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes pdf-badge-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* === 기존 아이콘 기반 배지 (레거시) === */
+  html[data-theme="dark"] .document-conversion-badge {
+    border-color: var(--color-ios-bg-primary-dark);
+  }
+
+  /* 완료: 파란색 */
+  .document-conversion-badge--completed {
+    background: var(--color-accent-blue);
+    color: white;
+  }
+
+  .status-item:hover .document-conversion-badge--completed {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px var(--color-accent-blue);
+  }
+
+  /* 처리 중: 오렌지 + 회전 애니메이션 */
+  .document-conversion-badge--processing {
+    background: var(--color-ios-orange-light);
+    color: white;
+    animation: conversion-spin 1.5s linear infinite;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge--processing {
+    background: var(--color-ios-orange-dark);
+  }
+
+  @keyframes conversion-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* 대기 중: 회색 */
+  .document-conversion-badge--pending {
+    background: var(--color-neutral-400);
+    color: white;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge--pending {
+    background: var(--color-neutral-500);
+  }
+
+  /* 실패: 빨간색 */
+  .document-conversion-badge--failed {
+    background: var(--color-ios-red-light);
+    color: white;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge--failed {
+    background: var(--color-ios-red-dark);
+  }
+
+  .status-item:hover .document-conversion-badge--failed {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px var(--color-ios-red-light);
+  }
+
+  /* 재시도 버튼 스타일 */
+  button.document-conversion-badge--failed {
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  button.document-conversion-badge--failed:hover:not(:disabled) {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px var(--color-ios-red-light);
+  }
+
+  button.document-conversion-badge--failed:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  /* 재시도 중 상태 */
+  .document-conversion-badge--retrying {
+    background: var(--color-ios-orange-light) !important;
+    animation: conversion-spin 1s linear infinite;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge--retrying {
+    background: var(--color-ios-orange-dark) !important;
+  }
+
+  /* 변환 가능 상태 (아직 변환 시작되지 않음) */
+  .document-conversion-badge--convertible {
+    background: var(--color-ios-teal-light);
+    color: white;
+  }
+
+  html[data-theme="dark"] .document-conversion-badge--convertible {
+    background: var(--color-ios-teal-dark);
+  }
+
+  .status-item:hover .document-conversion-badge--convertible {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px var(--color-ios-teal-light);
+  }
+
+  /* === 내 파일 표시 === */
+  .customer-id-text {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-style: italic;
+  }
+
+  /* === ACCESSIBILITY === */
+  @media (prefers-reduced-motion: reduce) {
+    .status-item,
+    .status-icon,
+    .action-btn {
+      transition: none;
+      animation: none;
+    }
+
+    .status-item:hover {
+      transform: none;
+    }
+
+    .action-btn:hover {
+      transform: none;
+    }
+
+    .document-notes-btn {
+      transition: none;
+    }
+
+    .document-notes-btn:hover {
+      transform: none;
+    }
+  }
+
+  /* === 🍎 DOCUMENT TYPE COLUMN: 문서 유형 칼럼 스타일 === */
+  .header-doctype {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: var(--font-size-caption-1);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .header-doctype .header-icon-svg {
+    color: var(--color-icon-indigo, #5856d6);
+  }
+
+  /* 문서 유형 셀 */
+  .document-doctype {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  /* 문서 유형 드롭다운 (컴팩트한 인라인 스타일) */
+  .doctype-select {
+    width: 100%;
+    height: 22px;
+    padding: 0 20px 0 6px;
+    font-size: var(--font-size-caption-2);
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);
+    background-color: var(--color-ios-bg-secondary-light);
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 4px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 3l3 4 3-4' fill='none' stroke='%238e8e93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    background-size: 10px;
+    transition: all 0.15s ease-out;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .doctype-select:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+    border-color: var(--color-primary-400);
+  }
+
+  .doctype-select:focus {
+    outline: none;
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 2px var(--color-primary-100);
+  }
+
+  .doctype-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  html[data-theme="dark"] .doctype-select {
+    color: var(--color-ios-text-primary-dark);
+    background-color: var(--color-ios-bg-secondary-dark);
+    border-color: var(--color-ios-separator-dark);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 3l3 4 3-4' fill='none' stroke='%23aeaeb2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+
+  html[data-theme="dark"] .doctype-select:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+    border-color: var(--color-primary-400);
+  }
+
+  html[data-theme="dark"] .doctype-select:focus {
+    border-color: var(--color-primary-400);
+    box-shadow: 0 0 0 2px var(--color-primary-900);
+  }
+
+  /* 문서 유형 레이블 (드롭다운 대신 텍스트로 표시할 때) */
+  .doctype-label {
+    font-size: var(--font-size-caption-2);
+    font-family: var(--font-family-text);
+    color: var(--color-ios-text-secondary-light);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  html[data-theme="dark"] .doctype-label {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 🔒 읽기 전용 문서 유형 (시스템 전용 - annual_report 등) */
+  /* 드롭다운(.doctype-select)과 동일한 크기/정렬로 텍스트 위치 일치 */
+  .doctype-label--readonly {
+    display: block;
+    width: 100%;
+    height: 22px;
+    padding: 0 6px;
+    font-size: var(--font-size-caption-2);
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    color: var(--color-ios-blue-light);
+    background-color: var(--color-semantic-info-light);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    text-align: left;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: not-allowed;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  html[data-theme="dark"] .doctype-label--readonly {
+    background-color: rgba(10, 132, 255, 0.15);
+    color: var(--color-ios-blue-dark);
+  }
+
+  /* === 바이러스 감염 배지 === */
+  /* PDF 배지와 동일한 높이 (14px) */
+  .virus-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 4px;
+    background: #ff3b30;
+    color: #ffffff;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    line-height: 1;
+    flex-shrink: 0;
+    animation: virus-badge-pulse 1.5s ease-in-out infinite;
+  }
+
+  html[data-theme="dark"] .virus-badge {
+    background: #ff453a;
+  }
+
+  .virus-badge-icon {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+  }
+
+  .virus-badge-text {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+  }
+
+  @keyframes virus-badge-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .status-item:hover .virus-badge {
+    transform: scale(1.05);
+    box-shadow: 0 0 8px rgba(255, 59, 48, 0.5);
+  }
+
+} /* end @layer components */

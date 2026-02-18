@@ -1,0 +1,255 @@
+@layer components {
+
+  /* === 🍎 APPLE COMPACT LAYOUT STYLES === */
+
+  /* 🍎 ICON COMPACT: Smaller size for dense layout */
+  .file-item__icon-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* === 🍎 FILE TYPE ICON COLORS - COMPACT VERSION === */
+  /* Progressive Disclosure: Subtle base colors → Vibrant hover states */
+
+  /* PDF Files - Red theme */
+  .file-item__icon-compact.file-icon--pdf {
+    color: var(--color-file-pdf-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--pdf {
+    color: var(--color-file-pdf-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--pdf {
+    color: var(--color-file-pdf-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--pdf {
+    color: var(--color-file-pdf-hover-dark);
+  }
+
+  /* Image Files - Blue theme */
+  .file-item__icon-compact.file-icon--image {
+    color: var(--color-file-image-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--image {
+    color: var(--color-file-image-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--image {
+    color: var(--color-file-image-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--image {
+    color: var(--color-file-image-hover-dark);
+  }
+
+  /* Video Files - Purple theme */
+  .file-item__icon-compact.file-icon--video {
+    color: var(--color-file-video-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--video {
+    color: var(--color-file-video-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--video {
+    color: var(--color-file-video-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--video {
+    color: var(--color-file-video-hover-dark);
+  }
+
+  /* Audio Files - Pink theme */
+  .file-item__icon-compact.file-icon--audio {
+    color: var(--color-file-audio-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--audio {
+    color: var(--color-file-audio-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--audio {
+    color: var(--color-file-audio-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--audio {
+    color: var(--color-file-audio-hover-dark);
+  }
+
+  /* Archive Files - Orange theme */
+  .file-item__icon-compact.file-icon--archive {
+    color: var(--color-file-archive-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--archive {
+    color: var(--color-file-archive-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--archive {
+    color: var(--color-file-archive-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--archive {
+    color: var(--color-file-archive-hover-dark);
+  }
+
+  /* Word Documents - Blue theme */
+  .file-item__icon-compact.file-icon--word {
+    color: var(--color-file-word-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--word {
+    color: var(--color-file-word-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--word {
+    color: var(--color-file-word-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--word {
+    color: var(--color-file-word-hover-dark);
+  }
+
+  /* Excel Documents - Green theme */
+  .file-item__icon-compact.file-icon--excel {
+    color: var(--color-file-excel-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--excel {
+    color: var(--color-file-excel-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--excel {
+    color: var(--color-file-excel-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--excel {
+    color: var(--color-file-excel-hover-dark);
+  }
+
+  /* PowerPoint Documents - Orange theme */
+  .file-item__icon-compact.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-dark);
+  }
+
+  /* Code Files - Indigo theme */
+  .file-item__icon-compact.file-icon--code {
+    color: var(--color-file-code-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--code {
+    color: var(--color-file-code-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--code {
+    color: var(--color-file-code-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--code {
+    color: var(--color-file-code-hover-dark);
+  }
+
+  /* Text Files - Gray theme */
+  .file-item__icon-compact.file-icon--text {
+    color: var(--color-file-text-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--text {
+    color: var(--color-file-text-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--text {
+    color: var(--color-file-text-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--text {
+    color: var(--color-file-text-hover-dark);
+  }
+
+  /* Executable Files - Dark theme */
+  .file-item__icon-compact.file-icon--executable {
+    color: var(--color-file-executable-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--executable {
+    color: var(--color-file-executable-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--executable {
+    color: var(--color-file-executable-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--executable {
+    color: var(--color-file-executable-hover-dark);
+  }
+
+  /* Default Files - Neutral theme */
+  .file-item__icon-compact.file-icon--default {
+    color: var(--color-file-default-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--default {
+    color: var(--color-file-default-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--default {
+    color: var(--color-file-default-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--default {
+    color: var(--color-file-default-hover-dark);
+  }
+
+  /* 🍎 APPLE NATIVE COMPLETION STYLE: Already defined above */
+
+  /* 🍎 COMPLETION BADGE: SF Symbol style minimal badge */
+  .file-item--completed .file-item__status-compact::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2334C759' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.8;
+  }
+
+  html[data-theme="dark"] .file-item--completed .file-item__status-compact::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2330D158' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    opacity: 0.7;
+  }
+
+} /* end @layer components */

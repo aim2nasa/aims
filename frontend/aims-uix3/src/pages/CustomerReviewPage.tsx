@@ -11,7 +11,9 @@ import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../components/SFSymbol'
 import Tooltip from '../shared/ui/Tooltip'
 import { CustomerReviewApi, type CustomerReview } from '../features/customer/api/customerReviewApi'
 import { formatDateTime, formatDate } from '@/shared/lib/timeUtils'
-import '../features/customer/components/CustomerReviewModal/CustomerReviewModal.css'
+import '../features/customer/components/CustomerReviewModal/CustomerReviewModal.layout.css'
+import '../features/customer/components/CustomerReviewModal/CustomerReviewModal.compact.css'
+import '../features/customer/components/CustomerReviewModal/CustomerReviewModal.mobile.css'
 import './CustomerReviewPage.css'
 
 // 상품명에서 "발행" 이후 텍스트 제거

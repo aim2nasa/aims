@@ -1,0 +1,118 @@
+@layer components {
+
+  /* === SHEET TABS (엑셀 스타일) === */
+
+  .excel-refiner__sheet-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    padding: 0 var(--spacing-3);
+    background: var(--color-bg-primary);
+    min-height: 24px;
+  }
+
+  .excel-refiner__sheet-tab {
+    position: relative;
+    padding: 5px 14px;
+    border: 1px solid var(--color-border-secondary);
+    border-bottom: 1px solid var(--color-border-secondary);
+    background: var(--color-neutral-100);
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-caption-1); /* 12px - DENSE_TYPOGRAPHY */
+    font-weight: var(--font-weight-regular); /* 400 */
+    cursor: pointer;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: all var(--duration-fast) var(--easing-default);
+    margin-bottom: -1px;
+  }
+
+  html[data-theme="dark"] .excel-refiner__sheet-tab {
+    background: var(--color-neutral-800);
+  }
+
+  .excel-refiner__sheet-tab:hover:not(.excel-refiner__sheet-tab--active) {
+    background: var(--color-neutral-50);
+    color: var(--color-text-secondary);
+  }
+
+  html[data-theme="dark"] .excel-refiner__sheet-tab:hover:not(.excel-refiner__sheet-tab--active) {
+    background: var(--color-neutral-700);
+  }
+
+  .excel-refiner__sheet-tab--active {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold); /* 600 */
+    border-top: 3px solid var(--color-success-500);
+    border-bottom: 1px solid var(--color-bg-primary);
+    z-index: 1;
+  }
+
+
+
+  /* 시트 탭 검증 상태 */
+  .excel-refiner__sheet-tab--valid {
+    color: var(--color-success-600);
+  }
+
+  .excel-refiner__sheet-tab--valid.excel-refiner__sheet-tab--active {
+    color: var(--color-success-600);
+  }
+
+  .excel-refiner__sheet-tab--invalid {
+    color: var(--color-error-600);
+  }
+
+  .excel-refiner__sheet-tab--invalid.excel-refiner__sheet-tab--active {
+    color: var(--color-error-600);
+  }
+
+  /* 규격 위반 (누락 컬럼) - 빨간색 */
+  .excel-refiner__sheet-tab--format-error {
+    color: var(--color-error-600);
+  }
+
+  .excel-refiner__sheet-tab--format-error.excel-refiner__sheet-tab--active {
+    color: var(--color-error-600);
+    border-top-color: var(--color-error-500);
+  }
+
+  .excel-refiner__sheet-tab--validating {
+    color: var(--color-primary-500);
+  }
+
+  html[data-theme="dark"] .excel-refiner__sheet-tab--valid {
+    color: var(--color-success-400);
+  }
+
+  html[data-theme="dark"] .excel-refiner__sheet-tab--invalid {
+    color: var(--color-error-400);
+  }
+
+  html[data-theme="dark"] .excel-refiner__sheet-tab--format-error {
+    color: var(--color-error-400);
+  }
+
+  html[data-theme="dark"] .excel-refiner__sheet-tab--validating {
+    color: var(--color-primary-400);
+  }
+
+  /* 추가 시트 (표준 규격 외) - 중립적 회색 */
+  .excel-refiner__sheet-tab--extra {
+    color: var(--color-text-tertiary);
+  }
+
+  .excel-refiner__sheet-tab--extra.excel-refiner__sheet-tab--active {
+    color: var(--color-text-tertiary);
+    border-top-color: var(--color-text-tertiary);
+  }
+
+  html[data-theme="dark"] .excel-refiner__sheet-tab--extra {
+    color: var(--color-text-tertiary);
+  }
+
+  html[data-theme="dark"] .excel-refiner__sheet-tab--extra.excel-refiner__sheet-tab--active {
+    border-top-color: var(--color-text-tertiary);
+  }
+
+} /* end @layer components */

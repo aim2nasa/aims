@@ -1,0 +1,456 @@
+@layer components {
+
+  .toolbar-actions .view-mode-toggle .view-mode-button.active {
+    background: transparent;
+    color: var(--color-primary-400);
+    opacity: 1;
+  }
+
+  .toolbar-actions .view-mode-toggle .view-mode-button.active:hover {
+    background: transparent;
+    transform: scale(1.1);
+  }
+
+  /* ===== 파일 목록 컨텐츠 ===== */
+  .files-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-3);
+  }
+
+  /* 빈 상태 */
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-footnote);
+  }
+
+  /* ===== 리스트 뷰 ===== */
+  .files-list {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .files-list-header {
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) 100px 140px 110px 115px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    font-size: var(--font-size-caption-2);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* 🍎 삭제 모드일 때: 체크박스 열 추가 */
+  .files-list--delete-mode .files-list-header {
+    grid-template-columns: 24px minmax(200px, 1fr) 100px 140px 110px 115px;
+  }
+
+  /* 헤더 셀 flex 레이아웃 - 아이콘+텍스트+정렬 인디케이터 한 줄 정렬 */
+  .files-list-header > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* 크기, 수정한 날짜 헤더는 우측 정렬 */
+  .files-list-header .header-size,
+  .files-list-header .header-modified {
+    justify-content: flex-end;
+  }
+
+  .file-list-row {
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) 100px 140px 110px 115px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-4);
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* 🍎 삭제 모드일 때: 체크박스 열 추가 */
+  .files-list--delete-mode .file-list-row {
+    grid-template-columns: 24px minmax(200px, 1fr) 100px 140px 110px 115px;
+  }
+
+  .file-list-row:last-child {
+    border-bottom: none;
+  }
+
+  .file-list-row:hover {
+    background: var(--color-bg-tertiary);
+  }
+
+  .file-list-row.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+
+  .file-list-row.drag-over {
+    background: var(--color-button-primary-bg);
+    opacity: 0.1;
+    border-color: var(--color-button-primary-bg);
+  }
+
+  .row-name {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-footnote);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .row-size,
+  .row-modified {
+    font-size: var(--font-size-footnote);
+    color: var(--color-text-secondary);
+    text-align: right;
+  }
+
+  .row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .download-button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-1);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .download-button:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-button-primary-bg);
+    transform: scale(1.1);
+  }
+
+  .star-icon {
+    color: var(--color-warning);
+    flex-shrink: 0;
+  }
+
+  /* ===== 그리드 뷰 ===== */
+  .files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--spacing-4);
+  }
+
+  .file-grid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-4);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+
+  .file-grid-item:hover {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-button-primary-bg);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .file-grid-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+
+  .file-grid-item.drag-over {
+    background: var(--color-button-primary-bg);
+    opacity: 0.1;
+    border-color: var(--color-button-primary-bg);
+  }
+
+  .grid-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    color: var(--color-text-secondary);
+  }
+
+  .grid-item-name {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    font-size: var(--font-size-footnote);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+    text-align: center;
+    word-break: break-word;
+    width: 100%;
+  }
+
+  .grid-item-info {
+    font-size: var(--font-size-caption-2);
+    color: var(--color-text-tertiary);
+  }
+
+  .grid-download-button {
+    position: absolute;
+    top: var(--spacing-2);
+    right: var(--spacing-2);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    padding: var(--spacing-1);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    opacity: 0;
+  }
+
+  .file-grid-item:hover .grid-download-button {
+    opacity: 1;
+  }
+
+  .grid-download-button:hover {
+    background: var(--color-button-primary-bg);
+    border-color: var(--color-button-primary-bg);
+    color: var(--color-button-primary-text);
+    transform: scale(1.1);
+  }
+
+  /* ===== 컨텍스트 메뉴 ===== */
+  .context-menu {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-1);
+    min-width: 180px;
+  }
+
+  .context-menu button.context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    width: 100%;
+    padding: var(--spacing-2) var(--spacing-3);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-footnote);
+    color: var(--color-text-primary);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    text-align: left;
+  }
+
+  .context-menu button.context-menu-item:hover {
+    background: var(--color-bg-active);
+  }
+
+  /* 아이콘 레이아웃 */
+  .context-menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 아이콘 색상 */
+  .context-menu-icon--rename svg {
+    color: var(--color-info);
+  }
+
+  .context-menu-icon--move svg {
+    color: var(--color-warning);
+  }
+
+  .context-menu-icon--new svg {
+    color: var(--color-success);
+  }
+
+  .context-menu button.context-menu-item--danger {
+    color: var(--color-button-destructive-bg);
+  }
+
+  .context-menu button.context-menu-item--danger:hover {
+    background: var(--color-button-destructive-bg);
+    color: var(--color-button-destructive-text);
+  }
+
+  .context-menu button.context-menu-item--danger:hover .sf-symbol {
+    color: var(--color-button-destructive-text);
+  }
+
+  .context-menu button.context-menu-item--danger:hover .sf-symbol--trash .sf-symbol__shape::before {
+    opacity: 1;
+  }
+
+  /* 반응형 */
+  @media (max-width: 1024px) {
+    .personal-files-view {
+      --sidebar-width: 200px;
+    }
+
+    .search-input {
+      width: 150px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .personal-files-view {
+      grid-template-columns: 1fr;
+    }
+
+    .files-sidebar,
+    .files-resizer {
+      display: none;
+    }
+
+    .files-list-header {
+      grid-template-columns: 1fr 100px;
+    }
+
+    .file-list-row {
+      grid-template-columns: 1fr 100px;
+    }
+
+    .row-size,
+    .row-actions {
+      display: none;
+    }
+
+    .header-size,
+    .header-actions {
+      display: none;
+    }
+
+    .files-grid {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    .grid-download-button {
+      opacity: 1;
+    }
+  }
+
+  /* === 모바일 (480px 이하) === */
+  @media (max-width: 480px) {
+    /* 툴바 컴팩트 */
+    .files-toolbar {
+      padding: var(--spacing-2) var(--spacing-3);
+      gap: var(--spacing-2);
+    }
+
+    /* 컬럼 헤더 숨김 */
+    .files-list-header {
+      display: none;
+    }
+
+    /* 파일 행: 카드형 2행 */
+    .file-list-row {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 2px 6px;
+      padding: 8px 10px;
+      min-height: var(--spacing-touch-min, 44px);
+      border-radius: 8px;
+      border: 0.5px solid var(--color-ios-separator-light);
+      border-bottom: 0.5px solid var(--color-ios-separator-light);
+    }
+
+    html[data-theme="dark"] .file-list-row {
+      border-color: var(--color-ios-separator-dark);
+    }
+
+    /* Row 1: 아이콘 + 파일명 */
+    .file-list-row .row-icon {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    .file-list-row .row-name {
+      grid-row: 1;
+      grid-column: 2 / 4;
+      font-size: var(--font-size-footnote);
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Row 2: 날짜 + 크기 */
+    .file-list-row .row-modified {
+      grid-row: 2;
+      grid-column: 2;
+      font-size: var(--font-size-caption-2);
+      color: var(--color-text-secondary);
+      display: block;
+    }
+
+    .file-list-row .row-size {
+      grid-row: 2;
+      grid-column: 3;
+      font-size: var(--font-size-caption-2);
+      display: block;
+    }
+
+    /* 타입/액션: 숨김 */
+    .file-list-row .row-type,
+    .file-list-row .row-actions {
+      display: none;
+    }
+
+    /* 그리드 뷰: 더 작은 카드 */
+    .files-grid {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: var(--spacing-2);
+    }
+
+    /* 터치 피드백 */
+    .file-list-row:active {
+      background: var(--color-bg-hover);
+      transition: background 0.05s ease;
+    }
+
+    .file-list-row:hover {
+      transform: none;
+    }
+
+    /* 삭제 모드 */
+    .files-list--delete-mode .file-list-row {
+      grid-template-columns: 24px 24px 1fr auto;
+    }
+  }
+
+} /* end @layer components */

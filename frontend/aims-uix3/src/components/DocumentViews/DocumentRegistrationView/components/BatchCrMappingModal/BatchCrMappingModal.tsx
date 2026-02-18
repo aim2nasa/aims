@@ -23,7 +23,9 @@ import {
 } from '../../utils/crGroupingUtils'
 import { CrFileTable } from './CrFileTable'
 // CSS는 AR 스타일 재사용 (Phase 2에서 공통화)
-import '../BatchArMappingModal/BatchArMappingModal.css'
+import '../BatchArMappingModal/BatchArMappingModal.layout.css'
+import '../BatchArMappingModal/BatchArMappingModal.content.css'
+import '../BatchArMappingModal/BatchArMappingModal.results.css'
 
 // ============================================
 // 등록 결과 요약 컴포넌트 (CRS)

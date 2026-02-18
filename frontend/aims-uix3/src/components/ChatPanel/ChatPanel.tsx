@@ -28,7 +28,12 @@ import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCus
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import { api } from '@/shared/lib/api';
-import './ChatPanel.css';
+import './ChatPanel.layout.css';
+import './ChatPanel.sessions.css';
+import './ChatPanel.welcome.css';
+import './ChatPanel.input.css';
+import './ChatPanel.extras.css';
+import './ChatPanel.responsive.css';
 
 // 데이터 변경을 유발하는 MCP 도구 목록
 const DATA_MUTATING_TOOLS = {

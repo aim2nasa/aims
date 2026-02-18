@@ -1,0 +1,457 @@
+/**
+ * Annual Report Tab Styles
+ * @since 2025-10-16
+ *
+ * 🍎 애플 디자인 시스템 준수
+ * - Progressive Disclosure
+ * - Subtle Interactions
+ */
+
+
+@layer components {
+
+
+  .annual-report-tab {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 8px 12px;
+    min-height: 200px;
+  }
+
+  /* ==================== Parsing Notice ==================== */
+
+  .annual-report-parsing-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--color-ios-bg-tertiary-light);
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 8px;
+    animation: noticeSlideIn 0.3s ease-out;
+  }
+
+  html[data-theme="dark"] .annual-report-parsing-notice {
+    background: var(--color-ios-bg-tertiary-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  @keyframes noticeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .parsing-notice-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+  }
+
+  .parsing-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-ios-separator-light);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  html[data-theme="dark"] .parsing-spinner {
+    border-color: var(--color-ios-separator-dark);
+    border-top-color: var(--color-primary);
+  }
+
+  .parsing-notice-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .parsing-notice-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+    margin-bottom: 2px;
+  }
+
+  html[data-theme="dark"] .parsing-notice-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .parsing-notice-description {
+    font-size: 11px;
+    color: var(--color-ios-text-secondary-light);
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  html[data-theme="dark"] .parsing-notice-description {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .parsing-notice-files {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 8px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 6px;
+    max-height: 80px;
+    overflow-y: auto;
+  }
+
+  html[data-theme="dark"] .parsing-notice-files {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  .parsing-file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--color-ios-bg-secondary-light);
+    border-radius: 4px;
+  }
+
+  html[data-theme="dark"] .parsing-file-item {
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  .parsing-file-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .parsing-file-name {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .parsing-file-status {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-primary);
+    white-space: nowrap;
+    padding: 1px 6px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 3px;
+  }
+
+  /* ==================== Actions (Delete Button) ==================== */
+
+  .annual-report-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+    padding: 8px 0;
+  }
+
+  /* ==================== States (Loading, Error, Empty) ==================== */
+
+  .annual-report-tab__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+  }
+
+  .annual-report-tab__loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .annual-report-tab__loading p {
+    color: var(--color-text-secondary);
+    /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
+  }
+
+  .annual-report-tab__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .annual-report-tab__error-icon {
+    /* font-size: var(--font-size-xxlarge-symbol); (48px - FONT_SIZE_STANDARDS.md: 아이콘/심볼 ) */
+    opacity: 0.6;
+  }
+
+  .annual-report-tab__error p {
+    color: var(--color-danger);
+    /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
+    max-width: 400px;
+  }
+
+  .annual-report-tab__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .annual-report-tab__empty-icon {
+    /* font-size: var(--font-size-xxxlarge-symbol); (64px - FONT_SIZE_STANDARDS.md: 이모지 ) */
+    opacity: 0.5;
+    margin-bottom: 20px;
+  }
+
+  .annual-report-tab__empty-title {
+    /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 18px deprecated ) */
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 8px 0;
+  }
+
+  .annual-report-tab__empty-description {
+    /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
+    color: var(--color-text-secondary);
+    max-width: 600px;
+    margin: 0 0 20px 0;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .annual-report-tab__empty-hint {
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    max-width: 500px;
+  }
+
+  .annual-report-tab__empty-hint-text {
+    /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* ==================== Header ==================== */
+
+  .annual-report-tab__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .annual-report-tab__title {
+    /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 20px deprecated ) */
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  /* ==================== 🍎 TABLE CONTAINER - DocumentsTab 스타일 복제 ==================== */
+
+  .annual-report-table-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+  }
+
+  /* 🍎 SCROLLBAR */
+  .annual-report-table-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .annual-report-table-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .annual-report-table-container::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-light);
+    border-radius: 4px;
+  }
+
+  html[data-theme="dark"] .annual-report-table-container::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-dark);
+  }
+
+  /* ==================== 🍎 TABLE HEADER - DocumentsTab 스타일 ==================== */
+
+  .annual-report-table-header {
+    display: grid;
+    /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/row/checkbox 공유) */
+    --grid-cols:
+      minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
+      104px                  /* 발행일 +30% */
+      163px                  /* 파싱일시 +30% */
+      124px                  /* 총 월보험료 +30% */
+      72px                   /* 계약 수 +30% */
+      65px;                  /* 상태 +30% */
+    grid-template-columns: var(--grid-cols);
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    background: var(--color-neutral-100);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: var(--font-size-caption-1); /* 12px - DocumentsTab과 동일 */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .annual-report-table-header {
+    background: var(--color-neutral-700);
+    color: var(--color-ios-text-secondary-dark);
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
+  }
+
+  /* 체크박스 포함 시 그리드 - --grid-cols 재사용 (28px 체크박스만 선두 추가) */
+  .annual-report-table-header:has(.header-checkbox) {
+    grid-template-columns: 28px var(--grid-cols);
+  }
+
+  .annual-report-table-header > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  /* 헤더 칼럼 정렬 */
+  .annual-report-table-header .header-owner { justify-content: flex-start; }
+  .annual-report-table-header .header-issue-date { justify-content: center; }
+  .annual-report-table-header .header-parsed-at { justify-content: center; }
+  .annual-report-table-header .header-premium { justify-content: flex-end; }
+  .annual-report-table-header .header-count { justify-content: center; }
+  .annual-report-table-header .header-status { justify-content: center; }
+
+  /* ==================== 🍎 TABLE BODY ==================== */
+
+  .annual-report-table-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* ==================== 🍎 TABLE ROW - DocumentsTab 스타일 ==================== */
+
+  .annual-report-row {
+    display: grid;
+    /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
+    --grid-cols:
+      minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
+      104px                  /* 발행일 +30% */
+      163px                  /* 파싱일시 +30% */
+      124px                  /* 총 월보험료 +30% */
+      72px                   /* 계약 수 +30% */
+      65px;                  /* 상태 +30% */
+    grid-template-columns: var(--grid-cols);
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 6px 10px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-out, transform 0.15s ease-out, box-shadow 0.15s ease-out;
+    font-size: var(--font-size-footnote); /* 13px - DocumentsTab과 동일 */
+    font-family: var(--font-family-text);
+  }
+
+  html[data-theme="dark"] .annual-report-row {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  .annual-report-row:hover {
+    background-color: var(--color-ios-bg-hover-light);
+    transform: translateX(2px);
+  }
+
+  html[data-theme="dark"] .annual-report-row:hover {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  /* 체크박스 포함 시 그리드 - --grid-cols 재사용 */
+  .annual-report-row:has(.row-checkbox) {
+    grid-template-columns: 28px var(--grid-cols);
+  }
+
+  /* === 상태별 스타일 === */
+  .annual-report-row--latest {
+    background: var(--color-ios-bg-selected-light);
+  }
+
+  html[data-theme="dark"] .annual-report-row--latest {
+    background: var(--color-ios-bg-selected-dark);
+  }
+
+  .annual-report-row--selected {
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  html[data-theme="dark"] .annual-report-row--selected {
+    background: rgba(59, 130, 246, 0.2);
+  }
+
+  /* ==================== 🍎 CHECKBOX CELLS ==================== */
+
+  .header-checkbox,
+  .row-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .row-checkbox {
+    cursor: pointer;
+  }
+
+  .header-checkbox input[type="checkbox"],
+  .row-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+  }
+
+} /* end @layer components */

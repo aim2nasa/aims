@@ -1,0 +1,466 @@
+@layer components {
+
+  /* === TABLE === */
+
+  .excel-refiner__table-container {
+    flex: 1;
+    overflow: auto;
+  }
+
+  .excel-refiner__table {
+    border-collapse: collapse;
+    font-size: var(--font-size-caption-1); /* 12px - DENSE_TYPOGRAPHY: 테이블 데이터 */
+    border: 2px solid transparent;
+  }
+
+  /* 테이블 포맷 준수 상태 테두리 - 실제 데이터 영역 경계 */
+  .excel-refiner__table-container--compliant .excel-refiner__table {
+    border-color: var(--color-success-500);
+  }
+
+  .excel-refiner__table-container--warning .excel-refiner__table {
+    border-color: var(--color-warning-500);
+  }
+
+  .excel-refiner__table-container--error .excel-refiner__table {
+    border-color: var(--color-success-500); /* 테이블 전체는 초록색, 문제 컬럼만 빨간색 */
+  }
+
+  /* 추가 시트 (표준 규격 외) - 중립적 회색 테두리 */
+  .excel-refiner__table-container--extra .excel-refiner__table {
+    border-color: var(--color-text-tertiary);
+  }
+
+  .excel-refiner__th,
+  .excel-refiner__td {
+    text-align: left;
+    border: 1px solid var(--color-border-secondary);
+    white-space: nowrap;
+  }
+
+  /* 테이블 헤더 */
+  .excel-refiner__th {
+    padding: 4px var(--spacing-3);
+    line-height: 1.2;
+  }
+
+  /* 테이블 데이터 셀 */
+  .excel-refiner__td {
+    padding: 4px var(--spacing-3);
+    line-height: 1.2;
+  }
+
+  .excel-refiner__td--right {
+    text-align: right;
+  }
+
+  .excel-refiner__th {
+    position: sticky;
+    top: 0;
+    background: var(--color-bg-tertiary);
+    font-size: var(--font-size-caption-2); /* 11px - DENSE_TYPOGRAPHY: 테이블 헤더 */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    color: var(--color-text-primary);
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .excel-refiner__th:hover {
+    background: var(--color-bg-hover);
+  }
+
+  .excel-refiner__th--row-num,
+  .excel-refiner__td--row-num {
+    width: 48px;
+    text-align: center;
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-secondary);
+  }
+
+  .excel-refiner__th--sortable {
+    cursor: default;
+  }
+
+  /* 선택된 컬럼 헤더 (파란색 테두리) - 특이성 강화 */
+  .excel-refiner__table .excel-refiner__th.excel-refiner__th--selected {
+    outline: 3px solid var(--color-primary-500);
+    outline-offset: -3px;
+    background: var(--color-primary-100);
+  }
+
+  html[data-theme="dark"] .excel-refiner__table .excel-refiner__th.excel-refiner__th--selected {
+    background: var(--color-primary-800);
+    outline-color: var(--color-primary-400);
+  }
+
+  /* 규격 외 컬럼도 선택 가능하도록 커서 추가 */
+  .excel-refiner__th--extra {
+    cursor: pointer;
+  }
+
+  /* 누락된 컬럼 헤더 (빨간색) - 특이성 강화로 우선순위 확보 */
+  .excel-refiner__table .excel-refiner__th.excel-refiner__th--missing {
+    background: var(--color-error-50);
+    color: var(--color-error-600);
+    border-top: 2px solid var(--color-error-500);
+    border-left: 2px solid var(--color-error-500);
+    border-right: 2px solid var(--color-error-500);
+    border-bottom: none;
+  }
+
+  html[data-theme="dark"] .excel-refiner__table .excel-refiner__th.excel-refiner__th--missing {
+    background: var(--color-error-900);
+    color: var(--color-error-300);
+    border-top: 2px solid var(--color-error-500);
+    border-left: 2px solid var(--color-error-500);
+    border-right: 2px solid var(--color-error-500);
+    border-bottom: none;
+  }
+
+  .excel-refiner__th-badge--missing {
+    background: var(--color-error-500);
+    color: var(--color-badge-text);
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  /* 누락된 컬럼 셀 (빨간 테두리) */
+  .excel-refiner__td--missing {
+    background: var(--color-error-50);
+    color: var(--color-error-600);
+    text-align: center;
+    font-style: italic;
+    border-left: 2px solid var(--color-error-500);
+    border-right: 2px solid var(--color-error-500);
+  }
+
+  /* 누락된 컬럼 셀 다크 테마 */
+  html[data-theme="dark"] .excel-refiner__td--missing {
+    background: var(--color-error-900);
+    color: var(--color-error-300);
+  }
+
+  /* 누락된 컬럼 마지막 행 하단 테두리 */
+  .excel-refiner__table tbody tr:last-child .excel-refiner__td--missing {
+    border-bottom: 2px solid var(--color-error-500);
+  }
+
+  /* 규격 외 컬럼 헤더 (회색) - 초록색 border 연속성 끊김 표시 */
+  .excel-refiner__th--extra {
+    background: var(--color-neutral-200);
+    color: var(--color-text-secondary);
+    border-left: 2px dashed var(--color-neutral-400);
+    border-right: 2px dashed var(--color-neutral-400);
+    border-top: 3px solid var(--color-neutral-500); /* 초록색 대신 진한 회색으로 연속성 끊김 */
+  }
+
+  .excel-refiner__th-badge--extra {
+    background: var(--color-neutral-500);
+    color: var(--color-badge-text);
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  /* 규격 외 컬럼 셀 (회색) */
+  .excel-refiner__td--extra {
+    background: var(--color-neutral-200);
+    color: var(--color-text-secondary);
+    border-left: 2px dashed var(--color-neutral-400);
+    border-right: 2px dashed var(--color-neutral-400);
+  }
+
+  /* 규격 외 컬럼 다크 테마 */
+  html[data-theme="dark"] .excel-refiner__th--extra {
+    background: var(--color-neutral-700);
+    color: var(--color-neutral-200);
+    border-left: 2px dashed var(--color-neutral-500);
+    border-right: 2px dashed var(--color-neutral-500);
+    border-top: 3px solid var(--color-neutral-500);
+  }
+
+  html[data-theme="dark"] .excel-refiner__td--extra {
+    background: var(--color-neutral-800);
+    color: var(--color-neutral-300);
+    border-left: 2px dashed var(--color-neutral-500);
+    border-right: 2px dashed var(--color-neutral-500);
+  }
+
+  /* 규격 외 컬럼 마지막 행 하단 테두리 - 초록색 연속성 끊김 */
+  .excel-refiner__table tbody tr:last-child .excel-refiner__td--extra {
+    border-bottom: 2px solid var(--color-neutral-500);
+  }
+
+  .excel-refiner__th-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-1);
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  .excel-refiner__sort-btn {
+    padding: var(--spacing-1);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: var(--font-size-caption-2); /* 11px - DENSE_TYPOGRAPHY: 배지 */
+    color: var(--color-text-tertiary);
+    opacity: 0.5;
+    transition: opacity var(--duration-fast) var(--easing-default);
+  }
+
+  .excel-refiner__sort-btn:hover {
+    opacity: 1;
+    color: var(--color-text-primary);
+  }
+
+  .excel-refiner__th--sorted .excel-refiner__sort-btn {
+    opacity: 1;
+    color: var(--color-primary-600);
+  }
+
+  /* 마지막 클릭된 컬럼 인디케이터 */
+  .excel-refiner__th-last-clicked {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary-500);
+    margin-right: var(--spacing-1);
+    flex-shrink: 0;
+  }
+
+  .excel-refiner__th--clickable .excel-refiner__th-last-clicked {
+    color: var(--color-neutral-0);
+  }
+
+  /* 클릭 가능한 검증 칼럼 - 입체 버튼 스타일 */
+  .excel-refiner__th--clickable {
+    cursor: pointer;
+    background: linear-gradient(
+      to bottom,
+      var(--color-primary-400) 0%,
+      var(--color-primary-500) 50%,
+      var(--color-primary-600) 100%
+    );
+    color: var(--color-neutral-0);
+    box-shadow:
+      inset 0 1px 0 var(--color-primary-300),
+      inset 0 -1px 0 var(--color-primary-700),
+      inset 1px 0 0 var(--color-primary-400),
+      inset -1px 0 0 var(--color-primary-600),
+      0 2px 4px var(--color-primary-700);
+    transition: all var(--duration-fast) var(--easing-default);
+  }
+
+  .excel-refiner__th--clickable:hover {
+    background: linear-gradient(
+      to bottom,
+      var(--color-primary-500) 0%,
+      var(--color-primary-600) 50%,
+      var(--color-primary-700) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 var(--color-primary-400),
+      inset 0 -1px 0 var(--color-primary-800),
+      inset 1px 0 0 var(--color-primary-500),
+      inset -1px 0 0 var(--color-primary-700),
+      0 3px 6px var(--color-primary-800);
+  }
+
+  .excel-refiner__th--clickable:active {
+    background: linear-gradient(
+      to bottom,
+      var(--color-primary-700) 0%,
+      var(--color-primary-600) 50%,
+      var(--color-primary-500) 100%
+    );
+    box-shadow:
+      inset 0 2px 4px var(--color-primary-800),
+      inset 0 -1px 0 var(--color-primary-400);
+  }
+
+  .excel-refiner__th--clickable .excel-refiner__sort-btn {
+    color: var(--color-neutral-0);
+    opacity: 0.8;
+  }
+
+  .excel-refiner__th--clickable:hover .excel-refiner__sort-btn {
+    opacity: 1;
+  }
+
+  html[data-theme="dark"] .excel-refiner__th--clickable {
+    background: linear-gradient(
+      to bottom,
+      var(--color-primary-500) 0%,
+      var(--color-primary-600) 50%,
+      var(--color-primary-700) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 var(--color-primary-400),
+      inset 0 -1px 0 var(--color-primary-800),
+      inset 1px 0 0 var(--color-primary-500),
+      inset -1px 0 0 var(--color-primary-700),
+      0 2px 4px var(--color-neutral-900);
+  }
+
+  html[data-theme="dark"] .excel-refiner__th--clickable:hover {
+    background: linear-gradient(
+      to bottom,
+      var(--color-primary-400) 0%,
+      var(--color-primary-500) 50%,
+      var(--color-primary-600) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 var(--color-primary-300),
+      inset 0 -1px 0 var(--color-primary-700),
+      inset 1px 0 0 var(--color-primary-400),
+      inset -1px 0 0 var(--color-primary-600),
+      0 3px 6px var(--color-neutral-900);
+  }
+
+  html[data-theme="dark"] .excel-refiner__th--clickable:active {
+    background: linear-gradient(
+      to bottom,
+      var(--color-primary-700) 0%,
+      var(--color-primary-600) 50%,
+      var(--color-primary-500) 100%
+    );
+    box-shadow:
+      inset 0 2px 4px var(--color-primary-800),
+      inset 0 -1px 0 var(--color-primary-400);
+  }
+
+  /* 검증 중 (클릭 직후) */
+  .excel-refiner__th--validating {
+    background: var(--color-primary-500);
+    color: var(--color-neutral-0);
+    animation: pulse 0.5s ease-in-out infinite alternate;
+  }
+
+  .excel-refiner__th--validating:hover {
+    background: var(--color-primary-600);
+  }
+
+  @keyframes pulse {
+    from {
+      opacity: 0.8;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* 검증 성공 (오류 없음) */
+  .excel-refiner__th--validation-success {
+    background: var(--color-success-500);
+    color: var(--color-neutral-0);
+  }
+
+  .excel-refiner__th--validation-success:hover {
+    background: var(--color-success-600);
+  }
+
+  html[data-theme="dark"] .excel-refiner__th--validation-success {
+    background: var(--color-success-500);
+    color: var(--color-neutral-0);
+  }
+
+  html[data-theme="dark"] .excel-refiner__th--validation-success:hover {
+    background: var(--color-success-600);
+  }
+
+  /* 검증 오류 있음 */
+  .excel-refiner__th--validation-error {
+    background: var(--color-error-500);
+    color: var(--color-neutral-0);
+  }
+
+  .excel-refiner__th--validation-error:hover {
+    background: var(--color-error-600);
+  }
+
+  html[data-theme="dark"] .excel-refiner__th--validation-error {
+    background: var(--color-error-500);
+    color: var(--color-neutral-0);
+  }
+
+  html[data-theme="dark"] .excel-refiner__th--validation-error:hover {
+    background: var(--color-error-600);
+  }
+
+  .excel-refiner__th-badge-group {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    margin-left: var(--spacing-1);
+  }
+
+  .excel-refiner__th-badge {
+    padding: 1px var(--spacing-1);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-caption-2); /* 11px - DENSE_TYPOGRAPHY: 배지 */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    line-height: var(--line-height-tight);
+  }
+
+  .excel-refiner__th-badge-group .excel-refiner__th-badge {
+    margin-left: 0;
+  }
+
+  .excel-refiner__th:not(:has(.excel-refiner__th-badge-group)) .excel-refiner__th-badge {
+    margin-left: var(--spacing-1);
+  }
+
+  .excel-refiner__th-badge--success {
+    background: var(--color-neutral-0);
+    color: var(--color-success-600);
+  }
+
+  .excel-refiner__th-badge--error {
+    background: var(--color-neutral-0);
+    color: var(--color-error-600);
+  }
+
+  .excel-refiner__th-badge--validating {
+    background: var(--color-neutral-0);
+    color: var(--color-primary-600);
+  }
+
+  .excel-refiner__tr {
+    cursor: pointer;
+  }
+
+  .excel-refiner__tr:hover {
+    background: var(--color-neutral-200);
+  }
+
+  html[data-theme="dark"] .excel-refiner__tr:hover {
+    background: var(--color-bg-hover);
+  }
+
+  .excel-refiner__tr--empty {
+    background: var(--color-row-empty);
+  }
+
+  .excel-refiner__tr--empty:hover {
+    background: var(--color-row-empty-hover);
+  }
+
+  .excel-refiner__tr--duplicate {
+    background: var(--color-row-duplicate);
+  }
+
+  .excel-refiner__tr--duplicate:hover {
+    background: var(--color-row-duplicate-hover);
+  }
+
+} /* end @layer components */

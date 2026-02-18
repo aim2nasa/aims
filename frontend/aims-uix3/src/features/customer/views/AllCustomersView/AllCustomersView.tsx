@@ -20,7 +20,9 @@ import { CustomerService } from '@/services/customerService';
 import type { Customer } from '@/entities/customer/model';
 import { formatDate, formatDateTime } from '@/shared/lib/timeUtils';
 import { errorReporter } from '@/shared/lib/errorReporter';
-import './AllCustomersView.css';
+import './AllCustomersView.header.css';
+import './AllCustomersView.items.css';
+import './AllCustomersView.delete.css';
 
 interface AllCustomersViewProps {
   /** 고객 클릭 핸들러 */

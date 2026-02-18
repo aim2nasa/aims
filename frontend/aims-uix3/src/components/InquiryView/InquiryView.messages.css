@@ -1,0 +1,494 @@
+@layer components {
+
+  /* ===============================================
+     카카오톡 스타일 메시지 (KakaoTalk Style)
+     =============================================== */
+  .inquiry-messages {
+    flex: 1;
+    min-height: 0; /* flexbox 스크롤 활성화 필수 */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 10px;
+    background: var(--color-ios-bg-tertiary-light);
+    border-radius: 8px;
+    /* 와이드 스크린 대응: 채팅 영역 중앙 정렬 */
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  html[data-theme="dark"] .inquiry-messages {
+    background: var(--color-ios-bg-tertiary-dark);
+  }
+
+  /* 메시지 행 (아바타 + 말풍선 + 시간) */
+  .inquiry-message {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: 85%;
+    border: none;
+    background: transparent;
+    padding: 0;
+  }
+
+  /* 사용자 메시지: 오른쪽 정렬 */
+  .inquiry-message--user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  /* 관리자 메시지: 왼쪽 정렬 */
+  .inquiry-message--admin {
+    align-self: flex-start;
+    flex-direction: row;
+  }
+
+  /* 아바타 영역 */
+  .inquiry-message-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* 사용자 아바타: 숨김 (카카오톡처럼 본인은 아바타 없음) */
+  .inquiry-message--user .inquiry-message-avatar {
+    display: none;
+  }
+
+  /* 관리자 아바타: 초록색 배경 */
+  .inquiry-message--admin .inquiry-message-avatar {
+    background: var(--color-success, #34c759);
+    color: white;
+  }
+
+  /* 말풍선 컨테이너 */
+  .inquiry-message-bubble {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* 작성자 이름 */
+  .inquiry-message-author {
+    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    padding-left: 4px;
+  }
+
+  html[data-theme="dark"] .inquiry-message-author {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 사용자 메시지는 이름 숨김 */
+  .inquiry-message--user .inquiry-message-author {
+    display: none;
+  }
+
+  /* 말풍선 본문 */
+  .inquiry-message-content {
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: 12px; /* 폰트 규정: 테이블 데이터 */
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
+  /* 사용자 말풍선: 노란색 (카카오톡 스타일) */
+  .inquiry-message--user .inquiry-message-content {
+    background: #fee500;
+    color: #1a1a1a;
+    border-bottom-right-radius: 4px;
+  }
+
+  /* 관리자 말풍선: 흰색/회색 */
+  .inquiry-message--admin .inquiry-message-content {
+    background: white;
+    color: var(--color-ios-text-primary-light);
+    border: 1px solid var(--color-ios-separator-light);
+    border-bottom-left-radius: 4px;
+  }
+
+  html[data-theme="dark"] .inquiry-message--admin .inquiry-message-content {
+    background: var(--color-ios-bg-secondary-dark);
+    color: var(--color-ios-text-primary-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  /* 시간 표시 */
+  .inquiry-message-date {
+    font-size: 10px; /* 폰트 규정: 배지 */
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+    white-space: nowrap;
+    align-self: flex-end;
+    padding-bottom: 2px;
+  }
+
+  html[data-theme="dark"] .inquiry-message-date {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 헤더는 더이상 사용하지 않음 */
+  .inquiry-message-header {
+    display: none;
+  }
+
+  /* 첨부파일 영역 */
+  .inquiry-message-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* 이미지 첨부파일 - 카카오톡 스타일 */
+  .inquiry-message-image {
+    display: block;
+    max-width: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .inquiry-message-image img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .inquiry-message-image:hover {
+    opacity: 0.9;
+  }
+
+  /* 파일 첨부파일 링크 */
+  .inquiry-message-attachment {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    text-decoration: none;
+    background: transparent;
+    color: var(--color-ios-text-secondary-light);
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+
+  html[data-theme="dark"] .inquiry-message-attachment {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-message-attachment:hover {
+    background: rgba(0, 0, 0, 0.06);
+    opacity: 0.8;
+  }
+
+  html[data-theme="dark"] .inquiry-message-attachment:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* paperclip 아이콘 스타일 */
+  .inquiry-message-attachment svg {
+    flex-shrink: 0;
+    stroke: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-message-attachment svg {
+    stroke: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* Reply form - 컴팩트 */
+  .inquiry-reply-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    background: var(--color-ios-bg-secondary-light);
+    border-radius: 8px;
+    /* 와이드 스크린 대응: 메시지 영역과 동일하게 중앙 정렬 */
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+    flex-shrink: 0; /* 축소 방지 */
+  }
+
+  html[data-theme="dark"] .inquiry-reply-form {
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  .inquiry-reply-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 6px;
+    background: var(--color-bg-primary);
+    color: var(--color-ios-text-primary-light);
+    font-size: 12px; /* 폰트 규정: 테이블 데이터 */
+    font-family: inherit;
+    resize: none;
+    min-height: 44px; /* 축소 */
+    max-height: 80px;
+    line-height: 1.4;
+  }
+
+  html[data-theme="dark"] .inquiry-reply-input {
+    border-color: var(--color-ios-separator-dark);
+    background: var(--color-bg-primary);
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .inquiry-reply-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .inquiry-reply-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .inquiry-reply-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .inquiry-reply-files li {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--color-bg-primary);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-reply-files li {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-reply-files button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border: none;
+    background: transparent;
+    color: var(--color-ios-text-tertiary-light);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+
+  html[data-theme="dark"] .inquiry-reply-files button {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-reply-files button:hover {
+    background: var(--color-error);
+    color: white;
+  }
+
+  /* 🍎 REPLY FILE PREVIEWS - Thumbnail style */
+  .inquiry-reply-file-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .inquiry-reply-file-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: var(--color-bg-primary);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-reply-file-item {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-reply-file-item--image {
+    position: relative;
+    padding: 0;
+    background: transparent;
+    border-radius: var(--radius-md, 8px);
+    overflow: visible;
+  }
+
+  .inquiry-reply-file-thumbnail {
+    display: block;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .inquiry-reply-file-thumbnail {
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  .inquiry-reply-file-name {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .inquiry-reply-file-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
+    color: var(--color-ios-text-tertiary-light);
+    cursor: pointer;
+    border-radius: 50%;
+    margin-left: 4px;
+  }
+
+  html[data-theme="dark"] .inquiry-reply-file-remove {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-reply-file-remove:hover {
+    background: var(--color-error);
+    color: white;
+  }
+
+  .inquiry-reply-file-item--image .inquiry-reply-file-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 12px;
+    margin-left: 0;
+  }
+
+  .inquiry-reply-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .inquiry-attach-btn,
+  .inquiry-send-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-ios-text-secondary-light);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  html[data-theme="dark"] .inquiry-attach-btn,
+  html[data-theme="dark"] .inquiry-send-btn {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-attach-btn:hover,
+  .inquiry-send-btn:hover:not(:disabled) {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+
+  .inquiry-attach-btn svg,
+  .inquiry-send-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+  }
+
+  html[data-theme="dark"] .inquiry-attach-btn svg,
+  html[data-theme="dark"] .inquiry-send-btn svg {
+    stroke: currentColor;
+  }
+
+  .inquiry-send-btn svg {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .inquiry-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Closed status */
+  .inquiry-closed-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    background: var(--color-ios-bg-secondary-light);
+    border-radius: 8px;
+    color: var(--color-ios-text-tertiary-light);
+    font-size: 13px;
+  }
+
+  html[data-theme="dark"] .inquiry-closed-notice {
+    background: var(--color-ios-bg-secondary-dark);
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* Resolved status banner */
+  .inquiry-resolved-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--color-ios-green-light, #34C759);
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.08) 100%);
+    border: 1px solid rgba(52, 199, 89, 0.3);
+    border-radius: 8px;
+    color: var(--color-ios-green-light, #34C759);
+    font-size: 13px;
+    margin-bottom: 0;
+  }
+
+  .inquiry-resolved-banner svg {
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .inquiry-resolved-banner {
+    background: linear-gradient(135deg, rgba(48, 209, 88, 0.15) 0%, rgba(48, 209, 88, 0.08) 100%);
+    border-color: rgba(48, 209, 88, 0.3);
+    color: var(--color-ios-green-dark, #30D158);
+  }
+
+} /* end @layer components */

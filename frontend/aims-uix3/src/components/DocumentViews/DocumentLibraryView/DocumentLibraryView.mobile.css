@@ -1,0 +1,307 @@
+@layer components {
+
+  /* === 모바일 카드형 레이아웃 (480px 이하) === */
+  @media (max-width: 480px) {
+    .document-library-container {
+      padding: 4px 8px;
+      gap: 4px;
+    }
+
+    /* 헤더: 세로 스택 - 컴팩트 */
+    .library-unified-header {
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+    }
+
+    .header-left-section {
+      order: 1;
+      flex-shrink: 0;
+    }
+
+    .header-center-section {
+      order: 3;
+      flex: 1 1 100%;
+      gap: 8px;
+    }
+
+    .header-right-section {
+      order: 2;
+      margin-left: auto;
+      gap: 8px;
+    }
+
+    /* 최근 업데이트 텍스트 숨김 (모바일에서 공간 절약) */
+    .header-right-section .last-updated {
+      display: none;
+    }
+
+    /* 메인 컨테이너 갭 축소 */
+    .document-library-view {
+      gap: 4px;
+    }
+
+    /* 검색 입력 전체 폭 + 컴팩트 */
+    .document-library-view .search-input-wrapper {
+      width: 100%;
+      max-width: 100%;
+      padding: 2px 4px;
+    }
+
+    .document-library-view .search-input {
+      padding: 3px 6px 3px 24px;
+    }
+
+    .document-library-view .search-icon {
+      left: 8px;
+    }
+
+    /* 리스트 테두리 조정 */
+    html:not([data-theme="dark"]) .document-status-list {
+      border: none;
+      border-radius: 0;
+    }
+
+    /* 헤더 margin 축소 → 리스트에 공간 양보 */
+    .library-unified-header {
+      margin-bottom: 0;
+    }
+
+    /* 처리 현황 바 숨김 → 모바일에서 공간 확보 */
+    .document-library-view .processing-status-bar {
+      display: none;
+    }
+
+    /* 페이지네이션: 컴팩트 */
+    .document-library-view .document-pagination {
+      padding: 4px 0;
+      gap: 4px;
+    }
+
+    /* 컬럼 헤더 숨김 - 카드에서는 불필요 */
+    .document-list-header {
+      display: none;
+    }
+
+    /* 문서 아이템: 카드형 2행 레이아웃 */
+    .document-item {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 2px 6px;
+      height: auto;
+      min-height: 44px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 0.5px solid var(--color-ios-separator-light);
+    }
+
+    html[data-theme="dark"] .document-item {
+      border-color: var(--color-ios-separator-dark);
+    }
+
+    /* Row 1: 아이콘 + 파일명 */
+    .document-item .document-icon-wrapper {
+      grid-row: 1 / 3;
+      grid-column: 1;
+      align-self: center;
+    }
+
+    .document-item .document-info {
+      grid-row: 1;
+      grid-column: 2 / 4;
+      font-weight: 600;
+    }
+
+    /* Row 2: 날짜 + 크기 */
+    .document-item .document-date {
+      grid-row: 2;
+      grid-column: 2;
+      text-align: left;
+      font-size: 10px;
+      color: var(--color-text-secondary);
+    }
+
+    .document-item .document-size {
+      grid-row: 2;
+      grid-column: 3;
+      font-size: 10px;
+    }
+
+    /* 모바일에서 숨김: 타입, 상태, 액션 */
+    .document-item .document-type,
+    .document-item .status-icon,
+    .document-item .document-actions {
+      display: none;
+    }
+
+    /* 삭제 모드: 체크박스 포함 */
+    .document-library-view--delete-mode .document-item {
+      grid-template-columns: 24px 24px 1fr auto;
+    }
+
+    .document-library-view--delete-mode .document-item .document-icon-wrapper {
+      grid-column: 2;
+    }
+
+    .document-library-view--delete-mode .document-item .document-info {
+      grid-column: 3 / 5;
+    }
+
+    .document-library-view--delete-mode .document-item .document-date {
+      grid-column: 3;
+    }
+
+    .document-library-view--delete-mode .document-item .document-size {
+      grid-column: 4;
+    }
+
+    /* 터치 피드백 */
+    .document-item:hover {
+      transform: none;
+    }
+
+    .document-item:active {
+      background: var(--color-bg-hover);
+      transition: background 0.05s ease;
+    }
+  }
+
+  /* === 🍎 ACCESSIBILITY === */
+
+  .document-item:focus-visible {
+    outline: 2px solid var(--color-ios-focus-light);
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .document-item:focus-visible {
+    outline-color: var(--color-ios-focus-dark);
+  }
+
+  /* 페이지네이션: 공용 Pagination.css 사용 */
+
+  /* === 🍎 액션 버튼 === */
+  .document-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 1;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 0;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-ios-text-secondary-light);
+    transition: color 0.18s var(--easing-micro-smooth), transform 0.18s var(--easing-micro-instant);
+  }
+
+  .action-btn svg {
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+  }
+
+  html[data-theme="dark"] .action-btn {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .action-btn--detail { color: var(--color-primary-600); }
+  html[data-theme="dark"] .action-btn--detail { color: var(--color-primary-300); }
+
+  .action-btn--summary { color: var(--color-ios-orange); }
+  html[data-theme="dark"] .action-btn--summary { color: var(--color-ios-orange); }
+
+  .action-btn--full { color: var(--color-primary-700); }
+  html[data-theme="dark"] .action-btn--full { color: var(--color-primary-200); }
+
+  .action-btn--link { color: var(--color-success-600); }
+  html[data-theme="dark"] .action-btn--link { color: var(--color-success-300); }
+
+  .action-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .action-btn--summary:hover {
+    color: var(--color-ios-orange-strong, #ff8a3d);
+  }
+
+  html[data-theme="dark"] .action-btn--summary:hover {
+    color: var(--color-ios-orange-light, #ffb97a);
+  }
+
+  .action-btn--full:hover {
+    color: var(--color-primary-800);
+  }
+
+  html[data-theme="dark"] .action-btn--full:hover {
+    color: var(--color-primary-100);
+  }
+
+  .action-btn--link:hover {
+    color: var(--color-success-700);
+  }
+
+  html[data-theme="dark"] .action-btn--link:hover {
+    color: var(--color-success-200);
+  }
+
+  .action-btn:active {
+    transform: translateY(0);
+  }
+
+  .action-btn:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .action-btn:focus-visible {
+    outline-color: var(--color-primary-300);
+  }
+
+  .action-btn[data-disabled="true"] {
+    opacity: 0.25;
+    cursor: not-allowed;
+    transform: none;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .action-btn[data-disabled="true"] {
+    color: var(--color-ios-text-tertiary-dark);
+    opacity: 0.2;
+  }
+
+  .action-btn[data-disabled="true"]:hover {
+    transform: none;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .action-btn[data-disabled="true"]:hover {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 🍎 MOTION REDUCTION: Respect user preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .document-item,
+    .search-input-wrapper,
+    .search-clear-button,
+    .error-dismiss-button,
+    .document-icon {
+      transition: none;
+    }
+
+    .loading-spinner {
+      animation: none;
+    }
+  }
+
+} /* end @layer components */

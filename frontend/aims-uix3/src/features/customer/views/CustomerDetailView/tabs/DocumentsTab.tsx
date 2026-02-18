@@ -39,7 +39,10 @@ import { useCustomerSSE } from '@/shared/hooks/useCustomerSSE'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { documentTypesService, type DocumentType } from '@/services/documentTypesService'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
-import './DocumentsTab.css'
+import './DocumentsTab.layout.css';
+import './DocumentsTab.features.css';
+import './DocumentsTab.extras.css';
+import './DocumentsTab.cfd-overrides.css';
 
 interface DocumentsTabProps {
   customer: Customer

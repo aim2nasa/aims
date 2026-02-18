@@ -1,0 +1,332 @@
+@layer components {
+
+  /* ============================================
+     Date Jump (날짜 점프)
+     ============================================ */
+  .doc-explorer-toolbar__date-jump {
+    position: relative;
+    display: flex;
+    align-items: center;
+    z-index: 1001; /* backdrop(999)보다 높게 설정하여 클릭 가능하게 */
+  }
+
+  .doc-explorer-toolbar__date-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--explorer-border-radius);
+    background: none;
+    background-color: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  .doc-explorer-toolbar__date-btn:hover:not(:disabled) {
+    color: var(--color-accent);
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+
+  .doc-explorer-toolbar__date-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .doc-explorer-toolbar__date-btn--active {
+    color: var(--color-accent);
+  }
+
+  /* Date Picker Backdrop */
+  .doc-explorer-toolbar__date-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+  }
+
+  /* Calendar Popover */
+  .doc-explorer-toolbar__calendar {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    background: rgba(255, 255, 255, 0.85);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    z-index: 1000;
+    animation: calendarFadeIn 150ms ease-out;
+  }
+
+  @keyframes calendarFadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+  }
+
+  html[data-theme="dark"] .doc-explorer-toolbar__calendar {
+    background: rgba(30, 30, 30, 0.85);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Calendar Header */
+  .doc-explorer-toolbar__calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+  }
+
+  .doc-explorer-toolbar__calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    transition: all var(--explorer-transition);
+  }
+
+  .doc-explorer-toolbar__calendar-nav:hover {
+    color: var(--color-accent);
+    background: var(--color-bg-hover);
+  }
+
+  .doc-explorer-toolbar__calendar-title {
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--explorer-transition);
+  }
+
+  .doc-explorer-toolbar__calendar-title:hover {
+    background: var(--color-bg-hover);
+  }
+
+  /* Weekday Header */
+  .doc-explorer-toolbar__calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 8px 8px 4px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .doc-explorer-toolbar__calendar-weekday {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+  }
+
+  .doc-explorer-toolbar__calendar-weekday--sunday {
+    color: var(--color-error);
+  }
+
+  /* Calendar Grid */
+  .doc-explorer-toolbar__calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    padding: 8px;
+  }
+
+  .doc-explorer-toolbar__calendar-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .doc-explorer-toolbar__calendar-day {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    cursor: default;
+    transition: all var(--explorer-transition);
+    position: relative;
+  }
+
+  .doc-explorer-toolbar__calendar-day:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  /* 문서가 있는 날짜 */
+  .doc-explorer-toolbar__calendar-day--has-docs {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+    opacity: 1;
+  }
+
+  .doc-explorer-toolbar__calendar-day--has-docs::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  .doc-explorer-toolbar__calendar-day--has-docs:hover {
+    background: var(--color-primary-500);
+    color: var(--color-text-inverse);
+    opacity: 1;
+  }
+
+  .doc-explorer-toolbar__calendar-day--has-docs:hover::after {
+    background: white;
+  }
+
+  /* 오늘 */
+  .doc-explorer-toolbar__calendar-day--today {
+    border: 2px solid var(--color-accent);
+  }
+
+  /* Calendar Legend */
+  .doc-explorer-toolbar__calendar-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px 12px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .doc-explorer-toolbar__calendar-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+  }
+
+  .doc-explorer-toolbar__calendar-legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  /* 초성 필터 바: 공용 InitialFilterBar.css 사용 */
+
+  /* === 태블릿/가로 모드 반응형 (768px 이하) ===
+     740×360 가로 모드: 툴바 요소가 한 줄에 안 들어감 → 래핑 + 컴팩트화 */
+  @media (max-width: 768px) {
+    /* 툴바: 줄바꿈 허용 → 자연스러운 2줄 레이아웃 */
+    .doc-explorer-toolbar {
+      flex-wrap: wrap;
+      gap: 4px 6px;
+      padding: 4px 8px;
+    }
+
+    /* 통계 숨김 (공간 절약) */
+    .doc-explorer-toolbar__stats {
+      display: none;
+    }
+
+    /* 정렬: 컴팩트화 */
+    .doc-explorer-toolbar__sort {
+      gap: 4px;
+    }
+
+    .doc-explorer-toolbar__sort-label {
+      display: none;
+    }
+
+    .doc-explorer-toolbar__sort-buttons {
+      gap: 2px;
+    }
+
+    .doc-explorer-toolbar__sort-btn {
+      padding: 3px 6px;
+      font-size: 9px;
+    }
+
+    /* 검색: 최소 폭 축소 */
+    .doc-explorer-toolbar__search {
+      min-width: 60px;
+      max-width: 120px;
+    }
+
+    /* 빠른 필터 칩 컴팩트 */
+    .doc-explorer-toolbar__filter-chip {
+      padding: 2px 6px;
+      font-size: 9px;
+    }
+
+    /* 액션 버튼 컴팩트 */
+    .doc-explorer-toolbar__expand-btn,
+    .doc-explorer-toolbar__thumbnail-btn {
+      width: 26px;
+      height: 26px;
+    }
+
+    .doc-explorer-toolbar__filename-mode-btn {
+      padding: 2px 6px;
+      font-size: 9px;
+    }
+  }
+
+  /* === 폰 가로 모드: 높이 극도 절약 ===
+     max-height: 500px → 스크롤 영역 확보 위해 툴바 최소화 */
+  @media (max-height: 500px) and (min-width: 481px) {
+    .doc-explorer-toolbar {
+      padding: 2px 8px;
+      gap: 3px 4px;
+    }
+
+    /* 정렬 버튼 더 컴팩트 */
+    .doc-explorer-toolbar__sort-btn {
+      padding: 2px 5px;
+    }
+
+    /* 썸네일 토글 숨김 (콘텐츠 영역 확보) */
+    .doc-explorer-toolbar__thumbnail-btn {
+      display: none;
+    }
+  }
+
+} /* end @layer components */
