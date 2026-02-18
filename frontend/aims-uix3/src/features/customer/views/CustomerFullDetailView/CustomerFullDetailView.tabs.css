@@ -198,7 +198,16 @@
 
   .customer-full-detail__section-content--contracts {
     padding: 0;
-    /* overflow: visible 제거 - 문서 섹션과 동일하게 기본값 사용 */
+    display: flex;
+    flex-direction: column;
+    /* 🍎 flex 컨테이너로 만들어 history-tab-panel의 높이 체인 전달 */
+    /* → 자식 테이블 섹션이 뷰포트 높이에 맞게 제한됨 → 수평 스크롤바 항상 표시 */
+  }
+
+  /* 🍎 활성 탭 패널이 section-content 높이를 채우도록 flex 확장 */
+  .customer-full-detail__section-content--contracts > .history-tab-panel--active {
+    flex: 1;
+    min-height: 0;
   }
 
   /* ============================================
