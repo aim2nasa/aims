@@ -112,7 +112,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow-y: auto;
   }
 
   /* Form */
@@ -359,6 +359,38 @@
     /* 탭 콘텐츠 패딩 */
     .customer-detail-view__tab-content {
       padding: 0;
+    }
+  }
+
+  /* 📱 모바일 가로모드: 세로 공간 절약 */
+  @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+    .customer-detail-view__inner {
+      padding: var(--spacing-2) var(--spacing-3);
+    }
+
+    .customer-detail-view__actions {
+      margin-bottom: var(--spacing-2);
+      padding-bottom: var(--spacing-2);
+      gap: 6px;
+    }
+
+    .customer-detail-view__actions > .button {
+      min-height: 32px;
+      font-size: var(--font-size-caption-2);
+      padding: 4px 8px;
+    }
+
+    .customer-detail-view__tabs .tabs-bar {
+      margin-bottom: var(--spacing-2);
+    }
+
+    .customer-detail-view .form-row {
+      min-height: 28px;
+      padding: 5px 0;
+    }
+
+    .customer-detail-view .form-section__title {
+      padding: 5px 0;
     }
   }
 
