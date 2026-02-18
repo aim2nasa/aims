@@ -165,6 +165,10 @@
     grid-column: 1 / -1;
   }
 
+  .customer-info-grid__item--wide {
+    grid-column: span 3;
+  }
+
   .customer-info-grid__label {
     font-size: var(--font-header);
     font-weight: var(--weight-header);

@@ -1065,7 +1065,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                           <span className="customer-info-grid__label">휴대폰</span>
                           <span className="customer-info-grid__value">{customer.personal_info?.mobile_phone || '-'}</span>
                         </div>
-                        <div className="customer-info-grid__item">
+                        <div className="customer-info-grid__item customer-info-grid__item--wide">
                           <span className="customer-info-grid__label">이메일</span>
                           <span className="customer-info-grid__value">{customer.personal_info?.email || '-'}</span>
                         </div>
