@@ -1,7 +1,5 @@
 @layer views {
 
-@layer views {
-
   /* --- Documents section compact layout --- */
   .customer-full-detail__section-content--documents .customer-documents {
     display: flex;
@@ -354,7 +352,5 @@
       display: none;
     }
   }
-
-} /* end @layer views (CFD context) */
 
 } /* end @layer views */
