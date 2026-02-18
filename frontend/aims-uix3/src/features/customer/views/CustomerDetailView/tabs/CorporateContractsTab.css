@@ -71,6 +71,7 @@
     overflow-y: auto;
     flex: 1;
     min-height: 0;
+    min-width: 0; /* 🍎 flex 체인 min-width 전파 차단 → overflow-x: auto 스크롤바 활성화 */
   }
 
   .corporate-contracts__table-section.is-resizing {
