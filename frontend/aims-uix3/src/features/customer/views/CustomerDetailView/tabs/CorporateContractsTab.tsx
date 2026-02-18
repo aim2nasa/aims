@@ -718,7 +718,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
 
       {/* 🍎 테이블 */}
       <div
-        className={`corporate-contracts__table-section${isCcResizing ? ' is-resizing' : ''}`}
+        className={`tab-table__scroll corporate-contracts__table-section${isCcResizing ? ' is-resizing' : ''}`}
         style={{
           '--cc-relation-width': `${ccColumnWidths['relation'] || ccDefaultWidths.relation}px`,
           '--cc-policy-width': `${ccColumnWidths['policy'] || ccDefaultWidths.policy}px`,
@@ -732,7 +732,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
         } as React.CSSProperties}
       >
         {/* 헤더 */}
-        <div className="corporate-contracts-header">
+        <div className="tab-table__header corporate-contracts-header">
           <div
             className="resizable-header header-sortable"
             onClick={() => handleSort('memberRelationship')}
@@ -825,9 +825,9 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
         </div>
 
         {/* 리스트 */}
-        <div className="corporate-contracts-list">
+        <div className="tab-table__body corporate-contracts-list">
           {sortedContracts.map((contract) => (
-            <div key={contract.policyNumber} className="corporate-contracts-row">
+            <div key={contract.policyNumber} className="tab-table__row corporate-contracts-row">
               <span className="cc-relation">
                 {renderRelationBadge(contract.memberRelationship)}
               </span>

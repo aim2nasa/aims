@@ -275,84 +275,17 @@
     margin: 0;
   }
 
-  /* ==================== 🍎 TABLE CONTAINER - DocumentsTab 스타일 복제 ==================== */
-
-  .annual-report-table-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 4px;
-  }
-
-  /* 🍎 SCROLLBAR */
-  .annual-report-table-container::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .annual-report-table-container::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .annual-report-table-container::-webkit-scrollbar-thumb {
-    background-color: var(--color-ios-scrollbar-light);
-    border-radius: 4px;
-  }
-
-  html[data-theme="dark"] .annual-report-table-container::-webkit-scrollbar-thumb {
-    background-color: var(--color-ios-scrollbar-dark);
-  }
-
-  /* ==================== 🍎 TABLE HEADER - DocumentsTab 스타일 ==================== */
+  /* ==================== 🍎 TABLE HEADER - 칼럼 정의 ==================== */
+  /* 공통 스타일: tab-table.css (.tab-table__scroll, .tab-table__header) */
 
   .annual-report-table-header {
-    display: grid;
-    /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/row/checkbox 공유) */
     --grid-cols:
       minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
-      104px                  /* 발행일 +30% */
-      163px                  /* 파싱일시 +30% */
-      124px                  /* 총 월보험료 +30% */
-      72px                   /* 계약 수 +30% */
-      65px;                  /* 상태 +30% */
-    grid-template-columns: var(--grid-cols);
-    gap: 4px;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 8px 10px;
-    background: var(--color-neutral-100);
-    border-radius: 4px;
-    margin-bottom: 4px;
-    font-size: var(--font-size-caption-1); /* 12px - DocumentsTab과 동일 */
-    font-family: var(--font-family-text);
-    font-weight: 600;
-    color: var(--color-ios-text-secondary-light);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
-  }
-
-  html[data-theme="dark"] .annual-report-table-header {
-    background: var(--color-neutral-700);
-    color: var(--color-ios-text-secondary-dark);
-    box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
-  }
-
-  /* 체크박스 포함 시 그리드 - --grid-cols 재사용 (28px 체크박스만 선두 추가) */
-  .annual-report-table-header:has(.header-checkbox) {
-    grid-template-columns: 28px var(--grid-cols);
-  }
-
-  .annual-report-table-header > div {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    overflow: hidden;
-    white-space: nowrap;
+      104px                  /* 발행일 */
+      163px                  /* 파싱일시 */
+      124px                  /* 총 월보험료 */
+      72px                   /* 계약 수 */
+      65px;                  /* 상태 */
   }
 
   /* 헤더 칼럼 정렬 */
@@ -363,57 +296,18 @@
   .annual-report-table-header .header-count { justify-content: center; }
   .annual-report-table-header .header-status { justify-content: center; }
 
-  /* ==================== 🍎 TABLE BODY ==================== */
-
-  .annual-report-table-body {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  /* ==================== 🍎 TABLE ROW - DocumentsTab 스타일 ==================== */
+  /* ==================== 🍎 TABLE ROW - 칼럼 정의 ==================== */
+  /* 공통 스타일: tab-table.css (.tab-table__body, .tab-table__row) */
 
   .annual-report-row {
-    display: grid;
-    /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
     --grid-cols:
       minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
-      104px                  /* 발행일 +30% */
-      163px                  /* 파싱일시 +30% */
-      124px                  /* 총 월보험료 +30% */
-      72px                   /* 계약 수 +30% */
-      65px;                  /* 상태 +30% */
-    grid-template-columns: var(--grid-cols);
-    gap: 4px;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-    height: 32px;
-    padding: 6px 10px;
-    background: var(--color-ios-bg-primary-light);
-    border-radius: 4px;
+      104px                  /* 발행일 */
+      163px                  /* 파싱일시 */
+      124px                  /* 총 월보험료 */
+      72px                   /* 계약 수 */
+      65px;                  /* 상태 */
     cursor: pointer;
-    transition: background-color 0.15s ease-out, transform 0.15s ease-out, box-shadow 0.15s ease-out;
-    font-size: var(--font-size-footnote); /* 13px - DocumentsTab과 동일 */
-    font-family: var(--font-family-text);
-  }
-
-  html[data-theme="dark"] .annual-report-row {
-    background: var(--color-ios-bg-primary-dark);
-  }
-
-  .annual-report-row:hover {
-    background-color: var(--color-ios-bg-hover-light);
-    transform: translateX(2px);
-  }
-
-  html[data-theme="dark"] .annual-report-row:hover {
-    background-color: var(--color-ios-bg-hover-dark);
-  }
-
-  /* 체크박스 포함 시 그리드 - --grid-cols 재사용 */
-  .annual-report-row:has(.row-checkbox) {
-    grid-template-columns: 28px var(--grid-cols);
   }
 
   /* === 상태별 스타일 === */
@@ -433,25 +327,6 @@
     background: rgba(59, 130, 246, 0.2);
   }
 
-  /* ==================== 🍎 CHECKBOX CELLS ==================== */
-
-  .header-checkbox,
-  .row-checkbox {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .row-checkbox {
-    cursor: pointer;
-  }
-
-  .header-checkbox input[type="checkbox"],
-  .row-checkbox input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    accent-color: var(--color-primary);
-  }
+  /* 체크박스 스타일: tab-table.css (.tab-table__header .header-checkbox 등) */
 
 } /* end @layer components */

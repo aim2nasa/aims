@@ -1,0 +1,280 @@
+/**
+ * 🍎 Unified Table Styles for Customer Detail Tabs
+ * @since 2026-02-18
+ *
+ * 고객간략보기(CustomerDetailView) 6개 데이터 탭 공통 테이블 스타일
+ * - ContractsTab, DocumentsTab, AnnualReportTab
+ * - CustomerReviewTab, FamilyContractsTab, CorporateContractsTab
+ *
+ * 각 탭은 이 공통 클래스 + 자체 클래스를 듀얼로 사용하며,
+ * 탭 고유 스타일(--grid-cols, 셀 스타일, 상태 배지 등)만 개별 CSS에 정의합니다.
+ *
+ * 사용법:
+ *   <div className="tab-table__scroll {탭고유-container}">
+ *     <div className="tab-table__header {탭고유-header}"> ... </div>
+ *     <div className="tab-table__body {탭고유-body}">
+ *       <div className="tab-table__row {탭고유-row}"> ... </div>
+ *     </div>
+ *   </div>
+ */
+
+@layer components {
+
+  /* ==================== SCROLL CONTAINER ==================== */
+
+  .tab-table__scroll {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+  }
+
+  /* 🍎 Scrollbar */
+  .tab-table__scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .tab-table__scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .tab-table__scroll::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-light);
+    border-radius: 4px;
+  }
+
+  html[data-theme="dark"] .tab-table__scroll::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-dark);
+  }
+
+  .tab-table__scroll::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* ==================== TABLE HEADER ==================== */
+
+  .tab-table__header {
+    display: grid;
+    grid-template-columns: var(--grid-cols);
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    background: var(--color-neutral-100);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: var(--font-size-caption-1);
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .tab-table__header {
+    background: var(--color-neutral-700);
+    color: var(--color-ios-text-secondary-dark);
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
+  }
+
+  /* 체크박스 포함 시 그리드 */
+  .tab-table__header:has(.header-checkbox) {
+    grid-template-columns: 28px var(--grid-cols);
+  }
+
+  /* 헤더 셀 기본 */
+  .tab-table__header > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  /* ==================== SORTABLE HEADER ==================== */
+
+  .tab-table__header .header-sortable {
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background-color 0.15s ease-out;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+  }
+
+  .tab-table__header .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+  }
+
+  html[data-theme="dark"] .tab-table__header .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+  }
+
+  .tab-table__header .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-light);
+  }
+
+  html[data-theme="dark"] .tab-table__header .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  /* ==================== SORT INDICATOR ==================== */
+
+  .tab-table__header .sort-indicator {
+    font-size: var(--font-size-caption-2);
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    margin-left: 2px;
+    color: var(--color-primary-600);
+    opacity: 0.9;
+  }
+
+  html[data-theme="dark"] .tab-table__header .sort-indicator {
+    color: var(--color-primary-300);
+  }
+
+  .tab-table__header .header-sortable:hover .sort-indicator {
+    opacity: 1;
+  }
+
+  /* ==================== TABLE BODY ==================== */
+
+  .tab-table__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* ==================== TABLE ROW ==================== */
+
+  .tab-table__row {
+    display: grid;
+    grid-template-columns: var(--grid-cols);
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 6px 10px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 4px;
+    cursor: default;
+    transition:
+      background-color 0.15s ease-out,
+      transform 0.15s ease-out,
+      box-shadow 0.15s ease-out;
+    font-size: var(--font-size-footnote);
+    font-family: var(--font-family-text);
+  }
+
+  html[data-theme="dark"] .tab-table__row {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  .tab-table__row:hover {
+    background-color: var(--color-ios-bg-hover-light);
+    transform: translateX(2px);
+  }
+
+  html[data-theme="dark"] .tab-table__row:hover {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  /* 체크박스 포함 시 그리드 */
+  .tab-table__row:has(.row-checkbox) {
+    grid-template-columns: 28px var(--grid-cols);
+  }
+
+  /* ==================== ROW CELL DEFAULTS ==================== */
+
+  .tab-table__row > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-ios-text-primary-light);
+  }
+
+  html[data-theme="dark"] .tab-table__row > span {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  /* ==================== CHECKBOX CELLS ==================== */
+
+  .tab-table__header .header-checkbox,
+  .tab-table__row .row-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tab-table__row .row-checkbox {
+    cursor: pointer;
+  }
+
+  .tab-table__header .header-checkbox input[type="checkbox"],
+  .tab-table__row .row-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+  }
+
+  /* ==================== COLUMN RESIZE STATE ==================== */
+
+  .tab-table__scroll.is-resizing {
+    cursor: col-resize;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .tab-table__scroll.is-resizing * {
+    cursor: col-resize;
+  }
+
+  /* ==================== 📱 MOBILE RESPONSIVE (768px) ==================== */
+  /* 공통 모바일 스타일 - 각 탭의 개별 반응형은 칼럼 숨김/재정의만 담당 */
+
+  @media (max-width: 768px) {
+    .tab-table__scroll {
+      overflow-x: auto; /* 수평 스크롤 허용 */
+    }
+
+    .tab-table__header {
+      gap: 3px;
+      padding: 6px 8px;
+      font-size: 10px;
+    }
+
+    .tab-table__row {
+      gap: 3px;
+      padding: 4px 8px;
+      height: 28px;
+      font-size: 11px;
+    }
+
+    /* 페이지네이션 숨김 - div 타입 셀렉터로 specificity 0-1-1 확보
+       (Pagination.css의 .document-pagination 등 0-1-0보다 높음) */
+    div.tab-table__pagination {
+      display: none;
+    }
+  }
+
+  /* ==================== 📱 MOBILE RESPONSIVE (480px) ==================== */
+  /* 모든 탭: 테이블 레이아웃 유지 + 수평 스크롤 */
+
+  @media (max-width: 480px) {
+    .tab-table__header,
+    .tab-table__row {
+      min-width: 400px; /* 수평 스크롤 유도 (칼럼 수에 따라 탭별 오버라이드 가능) */
+    }
+  }
+
+} /* end @layer components */

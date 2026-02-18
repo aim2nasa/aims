@@ -560,7 +560,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
 
       {/* 테이블 컨테이너 */}
       <div
-        className={`customer-review-table-container${isResizing ? ' is-resizing' : ''}`}
+        className={`tab-table__scroll customer-review-table-container${isResizing ? ' is-resizing' : ''}`}
         style={{
           '--contractor-column-width': `${columnWidths['contractor'] || DEFAULT_CONTRACTOR_WIDTH}px`,
           '--insured-column-width': `${columnWidths['insured'] || DEFAULT_INSURED_WIDTH}px`,
@@ -572,7 +572,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
         } as React.CSSProperties}
       >
         {/* 테이블 헤더 (AnnualReportTab 동일 패턴) */}
-        <div className="customer-review-table-header">
+        <div className="tab-table__header customer-review-table-header">
           {isDevMode && (
             <div className="header-checkbox">
               <input
@@ -670,7 +670,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
         </div>
 
         {/* 테이블 바디 */}
-        <div className="customer-review-table-body">
+        <div className="tab-table__body customer-review-table-body">
           {visibleReviews.map((review, idx) => {
             const globalIndex = reviews.indexOf(review);
             const isSelected = selectedIndices.has(globalIndex);
@@ -681,7 +681,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             return (
               <div
                 key={review.source_file_id || `review_${idx}`}
-                className={`customer-review-row ${isSelected ? 'customer-review-row--selected' : ''} ${isError ? 'customer-review-row--error' : ''} ${isProcessing ? 'customer-review-row--processing' : ''} ${isPending ? 'customer-review-row--pending' : ''}`}
+                className={`tab-table__row customer-review-row ${isSelected ? 'customer-review-row--selected' : ''} ${isError ? 'customer-review-row--error' : ''} ${isProcessing ? 'customer-review-row--processing' : ''} ${isPending ? 'customer-review-row--pending' : ''}`}
                 onClick={() => handleViewReview(review)}
               >
                 {isDevMode && (
@@ -742,7 +742,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
       </div>
 
       {/* 페이지네이션 */}
-      <div className="customer-review-pagination">
+      <div className="tab-table__pagination customer-review-pagination">
         <div className="pagination-limit">
           <Dropdown
             value={itemsPerPageMode === 'auto' ? 'auto' : String(itemsPerPageMode)}

@@ -1656,7 +1656,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         <>
           {/* 🍎 리스트 컨테이너 */}
           <div
-            className={`customer-contracts__list-container${isResizing ? ' is-resizing' : ''}`}
+            className={`tab-table__scroll customer-contracts__list-container${isResizing ? ' is-resizing' : ''}`}
             style={{
               '--product-column-width': `${columnWidths['product'] || productColumnWidth}px`,
               '--contract-date-column-width': `${columnWidths['contractDate'] || contractDateColumnWidth}px`,
@@ -1668,7 +1668,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
             } as React.CSSProperties}
           >
             {/* 🍎 칼럼 헤더 */}
-            <div className="customer-contracts-list-header">
+            <div className="tab-table__header customer-contracts-list-header">
               <div
                 className="header-product header-sortable resizable-header"
                 onClick={() => handleSort('product_name')}
@@ -1771,7 +1771,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
             {paginatedContracts.map((contract) => (
               <div
                 key={contract._id}
-                className="customer-contracts-item"
+                className="tab-table__row customer-contracts-item"
               >
                 {/* 상품명 */}
                 <Tooltip
@@ -1823,7 +1823,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
           {/* 🍎 페이지네이션 */}
           {totalPages > 0 && (
-            <div className="contract-pagination">
+            <div className="tab-table__pagination contract-pagination">
               <div className="pagination-limit">
                 <Dropdown
                   value={itemsPerPageMode === 'auto' ? 'auto' : String(itemsPerPageMode)}

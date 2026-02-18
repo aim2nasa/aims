@@ -1,7 +1,8 @@
 /**
  * Customer Review Tab Styles
- * AnnualReportTab과 동일한 6칼럼 스타일 패턴
- * 칼럼: 계약자, 발행일, 파싱일시, 상품명, 펀드 수, 상태
+ * 7칼럼: 계약자, 피보험자, 발행일, 파싱일시, 상품명, 펀드 수, 상태
+ * 공통 스타일: tab-table.css (컨테이너, 스크롤바, 헤더, 바디, 행, 체크박스, 호버)
+ * 탭 고유: --grid-cols, 칼럼 정렬, 정렬 UI, 상태 스타일, 셀 스타일, 배지
  */
 
 @layer components {
@@ -105,41 +106,10 @@
     padding: 4px 0;
   }
 
-  /* ==================== 🍎 TABLE CONTAINER - AnnualReportTab 동일 ==================== */
-
-  .customer-review-table-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 4px;
-  }
-
-  /* 🍎 SCROLLBAR */
-  .customer-review-table-container::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .customer-review-table-container::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .customer-review-table-container::-webkit-scrollbar-thumb {
-    background-color: var(--color-ios-scrollbar-light);
-    border-radius: 4px;
-  }
-
-  html[data-theme="dark"] .customer-review-table-container::-webkit-scrollbar-thumb {
-    background-color: var(--color-ios-scrollbar-dark);
-  }
-
-  /* ==================== 🍎 TABLE HEADER - AnnualReportTab 동일 패턴 ==================== */
+  /* ==================== 🍎 TABLE HEADER - 칼럼 정의 ==================== */
+  /* 공통 스타일: tab-table.css (.tab-table__scroll, .tab-table__header) */
 
   .customer-review-table-header {
-    display: grid;
-    /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/row/checkbox 공유) */
     --grid-cols:
       minmax(50px, 0.5fr)    /* 계약자 */
       minmax(50px, 0.5fr)    /* 피보험자 */
@@ -148,45 +118,9 @@
       minmax(80px, 1fr)      /* 상품명 */
       72px                    /* 펀드 수 */
       65px;                   /* 상태 */
-    grid-template-columns: var(--grid-cols);
-    gap: 4px;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 8px 10px;
-    background: var(--color-neutral-100);
-    border-radius: 4px;
-    margin-bottom: 4px;
-    font-size: var(--font-size-caption-1);
-    font-family: var(--font-family-text);
-    font-weight: 600;
-    color: var(--color-ios-text-secondary-light);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
   }
 
-  html[data-theme="dark"] .customer-review-table-header {
-    background: var(--color-neutral-700);
-    color: var(--color-ios-text-secondary-dark);
-    box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
-  }
-
-  /* 체크박스 포함 시 그리드 - --grid-cols 재사용 (28px 체크박스만 선두 추가) */
-  .customer-review-table-header:has(.header-checkbox) {
-    grid-template-columns: 28px var(--grid-cols);
-  }
-
-  .customer-review-table-header > div {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-
-  /* 헤더 칼럼 정렬 (AnnualReportTab 동일) */
+  /* 헤더 칼럼 정렬 */
   .customer-review-table-header .header-contractor { justify-content: flex-start; }
   .customer-review-table-header .header-insured { justify-content: flex-start; }
   .customer-review-table-header .header-issue-date { justify-content: center; }
@@ -195,20 +129,10 @@
   .customer-review-table-header .header-fund-count { justify-content: center; }
   .customer-review-table-header .header-status { justify-content: center; }
 
-  .header-checkbox {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .header-checkbox input[type="checkbox"] {
-    margin: 0;
-    cursor: pointer;
-  }
-
-  /* 정렬 가능한 헤더 */
+  /* 정렬 가능한 헤더 (탭 고유 클래스) */
   .customer-review-table__sortable {
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
   }
 
@@ -232,19 +156,10 @@
     color: var(--color-accent);
   }
 
-  /* ==================== 🍎 TABLE BODY ==================== */
-
-  .customer-review-table-body {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  /* ==================== 🍎 TABLE ROW - AnnualReportTab 동일 패턴 ==================== */
+  /* ==================== 🍎 TABLE ROW - 칼럼 정의 ==================== */
+  /* 공통 스타일: tab-table.css (.tab-table__body, .tab-table__row) */
 
   .customer-review-row {
-    display: grid;
-    /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
     --grid-cols:
       minmax(50px, 0.5fr)    /* 계약자 */
       minmax(50px, 0.5fr)    /* 피보험자 */
@@ -253,37 +168,7 @@
       minmax(80px, 1fr)      /* 상품명 */
       72px                    /* 펀드 수 */
       65px;                   /* 상태 */
-    grid-template-columns: var(--grid-cols);
-    gap: 4px;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-    height: 32px;
-    padding: 6px 10px;
-    background: var(--color-ios-bg-primary-light);
-    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.15s ease-out, transform 0.15s ease-out, box-shadow 0.15s ease-out;
-    font-size: var(--font-size-footnote);
-    font-family: var(--font-family-text);
-  }
-
-  html[data-theme="dark"] .customer-review-row {
-    background: var(--color-ios-bg-primary-dark);
-  }
-
-  .customer-review-row:hover {
-    background-color: var(--color-ios-bg-hover-light);
-    transform: translateX(2px);
-  }
-
-  html[data-theme="dark"] .customer-review-row:hover {
-    background-color: var(--color-ios-bg-hover-dark);
-  }
-
-  /* 체크박스 포함 시 그리드 - --grid-cols 재사용 */
-  .customer-review-row:has(.row-checkbox) {
-    grid-template-columns: 28px var(--grid-cols);
   }
 
   /* === 상태별 스타일 === */
@@ -306,28 +191,9 @@
     color: var(--color-text-secondary);
   }
 
-  /* ==================== 🍎 CHECKBOX CELLS ==================== */
+  /* 체크박스 스타일: tab-table.css (.tab-table__header .header-checkbox 등) */
 
-  .header-checkbox,
-  .row-checkbox {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .row-checkbox {
-    cursor: pointer;
-  }
-
-  .header-checkbox input[type="checkbox"],
-  .row-checkbox input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    accent-color: var(--color-primary);
-  }
-
-  /* ==================== 🍎 ROW CELLS - AnnualReportTab 동일 패턴 ==================== */
+  /* ==================== 🍎 ROW CELLS ==================== */
 
   .row-contractor,
   .header-contractor {
@@ -421,45 +287,15 @@
     opacity: 0.6;
   }
 
-  /* 페이지네이션 - 공용 Pagination.css 사용 */
-
-  /* 🍎 COLUMN RESIZE: 리사이즈 중 상태 */
-  .customer-review-table-container.is-resizing {
-    cursor: col-resize;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  .customer-review-table-container.is-resizing * {
-    cursor: col-resize;
-  }
-
   /* ========================================
    * 📱 반응형: 태블릿/모바일 최적화
    * ======================================== */
 
+  /* === 📱 768px: 칼럼 재정의 (공통 gap/padding/font: tab-table.css) === */
   @media (max-width: 768px) {
-    .customer-review-table-container {
-      overflow-x: auto;
-    }
-
-    /* 7칼럼 → 6칼럼 (파싱일시 숨김) */
+    /* 6칼럼 (파싱일시 숨김) - --grid-cols 오버라이드 */
     .customer-review-table-header {
-      grid-template-columns:
-        minmax(45px, 0.5fr)
-        minmax(45px, 0.5fr)
-        85px
-        minmax(70px, 1fr)
-        55px
-        50px;
-      gap: 3px;
-      padding: 6px 8px;
-      font-size: 10px;
-    }
-
-    .customer-review-table-header:has(.header-checkbox) {
-      grid-template-columns:
-        24px
+      --grid-cols:
         minmax(45px, 0.5fr)
         minmax(45px, 0.5fr)
         85px
@@ -469,22 +305,7 @@
     }
 
     .customer-review-row {
-      grid-template-columns:
-        minmax(45px, 0.5fr)
-        minmax(45px, 0.5fr)
-        85px
-        minmax(70px, 1fr)
-        55px
-        50px;
-      gap: 3px;
-      padding: 4px 8px;
-      height: 28px;
-      font-size: 11px;
-    }
-
-    .customer-review-row:has(.row-checkbox) {
-      grid-template-columns:
-        24px
+      --grid-cols:
         minmax(45px, 0.5fr)
         minmax(45px, 0.5fr)
         85px
@@ -496,14 +317,6 @@
     .customer-review-table-header .header-parsed-at,
     .customer-review-row .row-parsed-at {
       display: none;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .customer-review-table-header,
-    .customer-review-row {
-      min-width: 400px;
-      font-size: 10px;
     }
   }
 

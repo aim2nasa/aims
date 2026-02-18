@@ -9,7 +9,7 @@
     /* 계약 목록 컨테이너 - 가로 스크롤 허용 */
     .customer-contracts__list-container {
       overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      /* overflow-x: auto → tab-table.css 공통 */
     }
 
     /* AR 아코디언 헤더 - 축소 */
@@ -39,13 +39,13 @@
     /* 계약 히스토리 섹션 - 이미 overflow-x: auto 있음 */
     .contract-history-section {
       overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      /* overflow-x: auto → tab-table.css 공통 */
     }
 
     /* CRS 계약 히스토리 섹션 - 가로 스크롤 */
     .cr-contract-history-section {
       overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      /* overflow-x: auto → tab-table.css 공통 */
     }
 
     /* CRS 헤더/행 - 최소 너비 보장 + 축소 */

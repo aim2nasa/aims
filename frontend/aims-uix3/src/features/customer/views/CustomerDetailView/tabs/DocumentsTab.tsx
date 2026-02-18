@@ -1112,7 +1112,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         <>
           {/* 🍎 리스트 컨테이너 - CenterPane 스타일 */}
           <div
-            className={`customer-documents__list-container${isResizing ? ' is-resizing' : ''}`}
+            className={`tab-table__scroll customer-documents__list-container${isResizing ? ' is-resizing' : ''}`}
             style={{
               '--filename-column-width': `${columnWidths['filename'] || filenameColumnWidth}px`,
               '--doctype-column-width': `${columnWidths['docType'] || DEFAULT_DOCTYPE_WIDTH}px`,
@@ -1122,7 +1122,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
             } as React.CSSProperties}
           >
             {/* 🍎 칼럼 헤더 - CenterPane과 동일 */}
-            <div className="customer-documents-list-header">
+            <div className="tab-table__header customer-documents-list-header">
               {/* 🍎 삭제 모드일 때만 체크박스 표시 */}
               {isDeleteMode && (
                 <div className="header-checkbox">
@@ -1253,7 +1253,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               return (
                 <div
                   key={documentId}
-                  className={`customer-documents-item ${selectedDocumentIds.has(document._id ?? '') ? 'customer-documents-item--selected' : ''}`}
+                  className={`tab-table__row customer-documents-item ${selectedDocumentIds.has(document._id ?? '') ? 'customer-documents-item--selected' : ''}`}
                   onContextMenu={(e) => handleDocumentContextMenu(document, e)}
                 >
                   {/* 🍎 삭제 모드일 때만 체크박스 표시 */}
@@ -1457,7 +1457,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
           {/* 🍎 페이지네이션 */}
           {totalPages > 0 && (
-            <div className="document-pagination">
+            <div className="tab-table__pagination document-pagination">
               <div className="pagination-limit">
                 <Dropdown
                   value={itemsPerPageMode === 'auto' ? 'auto' : String(itemsPerPageMode)}

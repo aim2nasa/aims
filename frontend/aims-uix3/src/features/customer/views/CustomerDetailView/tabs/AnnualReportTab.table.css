@@ -243,6 +243,7 @@
 
   /* ==================== Responsive ==================== */
 
+  /* === 📱 768px: 칼럼 재정의 (공통 gap/padding/font: tab-table.css) === */
   @media (max-width: 768px) {
     .annual-report-tab {
       padding: 8px;
@@ -266,59 +267,23 @@
       flex-direction: column;
     }
 
-    /* 테이블 컨테이너: 가로 스크롤 허용 */
-    .annual-report-table-container {
-      overflow-x: auto;
-    }
-
-    /* 테이블 헤더: 5칼럼 (파싱일시 숨김) */
+    /* 5칼럼 (파싱일시 숨김) - --grid-cols 오버라이드 */
     .annual-report-table-header {
-      grid-template-columns:
+      --grid-cols:
         minmax(60px, 1fr)     /* 소유주 */
         85px                   /* 발행일 */
         100px                  /* 총 월보험료 */
         55px                   /* 계약 수 */
         50px;                  /* 상태 */
-      gap: 3px;
-      padding: 6px 8px;
-      font-size: 10px;
     }
 
-    /* 체크박스 포함 시 */
-    .annual-report-table-header:has(.header-checkbox) {
-      grid-template-columns:
-        24px
-        minmax(60px, 1fr)
-        85px
-        100px
-        55px
-        50px;
-      gap: 3px;
-    }
-
-    /* 테이블 행: 동일 5칼럼 */
     .annual-report-row {
-      grid-template-columns:
+      --grid-cols:
         minmax(60px, 1fr)
         85px
         100px
         55px
         50px;
-      gap: 3px;
-      padding: 4px 8px;
-      height: 28px;
-      font-size: 11px;
-    }
-
-    .annual-report-row:has(.row-checkbox) {
-      grid-template-columns:
-        24px
-        minmax(60px, 1fr)
-        85px
-        100px
-        55px
-        50px;
-      gap: 3px;
     }
 
     /* 파싱일시 숨김 */
@@ -328,20 +293,12 @@
     }
   }
 
+  /* === 📱 480px: 빈 상태 축소 === */
   @media (max-width: 480px) {
     .annual-report-tab {
       padding: 4px;
     }
 
-    /* 🍎 테이블 레이아웃 유지 + 수평 스크롤 (CustomerReviewTab과 동일 패턴)
-       768px 미디어 쿼리의 5칼럼 그리드를 그대로 사용하되 min-width로 수평 스크롤 유도 */
-    .annual-report-table-header,
-    .annual-report-row {
-      min-width: 400px;
-      font-size: 10px;
-    }
-
-    /* 빈 상태: 최소 높이 축소 */
     .annual-report-tab__loading,
     .annual-report-tab__error,
     .annual-report-tab__empty {

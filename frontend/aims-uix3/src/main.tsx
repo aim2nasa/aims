@@ -13,6 +13,7 @@ import './shared/styles/layout.css'
 import './shared/styles/components.css'
 import './shared/styles/document-badges.css'
 import './shared/styles/column-resize.css'
+import './shared/styles/tab-table.css'
 import AppRouter from './AppRouter'
 
 createRoot(document.getElementById('root')!).render(

@@ -136,7 +136,7 @@ describe('고객명 DB 유일성 검증', () => {
     let cssSource: string
 
     beforeAll(() => {
-      const cssPath = path.join(__dirname, '..', 'ExcelRefiner.css')
+      const cssPath = path.join(__dirname, '..', 'ExcelRefiner.editing.css')
       cssSource = fs.readFileSync(cssPath, 'utf-8')
     })
 

@@ -54,20 +54,20 @@ describe('모바일 문서 라이브러리 레이아웃 CSS 검증', () => {
     })
   })
 
-  // ─── DocumentStatusList.css: 768px 카드 레이아웃 고객명 칼럼 ───
-  describe('DocumentStatusList.css 카드 레이아웃 고객명 칼럼', () => {
+  // ─── DocumentStatusList.responsive.css: 768px 카드 레이아웃 고객명 칼럼 ───
+  describe('DocumentStatusList.responsive.css 카드 레이아웃 고객명 칼럼', () => {
     let statusListCSS: string
 
-    it('DocumentStatusList.css 파일을 읽을 수 있어야 함', () => {
+    it('DocumentStatusList.responsive.css 파일을 읽을 수 있어야 함', () => {
       statusListCSS = readCSS(
-        'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.css'
+        'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.responsive.css'
       )
       expect(statusListCSS).toBeTruthy()
     })
 
     it('768px 이하 카드 레이아웃에서 고객명 칼럼이 고정 너비(110px, 6글자 기준)여야 함', () => {
       statusListCSS = readCSS(
-        'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.css'
+        'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.responsive.css'
       )
 
       // @media (max-width: 768px) 블록 내의 .status-item grid-template-columns 추출
@@ -91,7 +91,7 @@ describe('모바일 문서 라이브러리 레이아웃 CSS 검증', () => {
 
     it('삭제 모드에서도 고객명 칼럼이 고정 너비(110px, 6글자 기준)여야 함', () => {
       statusListCSS = readCSS(
-        'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.css'
+        'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.responsive.css'
       )
 
       const mediaBlock768 = extractMediaBlock(statusListCSS, 768)
@@ -112,7 +112,7 @@ describe('모바일 문서 라이브러리 레이아웃 CSS 검증', () => {
 
     it('768px 이하에서 칼럼 헤더가 숨겨져야 함 (카드 레이아웃)', () => {
       statusListCSS = readCSS(
-        'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.css'
+        'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.responsive.css'
       )
 
       const mediaBlock768 = extractMediaBlock(statusListCSS, 768)

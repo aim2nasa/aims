@@ -1,6 +1,8 @@
 /**
  * 🍎 Customer Documents Tab - CenterPane DocumentLibraryView 디자인 100% 복제
  * 극도로 아름답고 효율적인 리스트
+ * 공통 스타일: tab-table.css (컨테이너, 스크롤바, 헤더, 행, 정렬, 호버)
+ * 탭 고유: --grid-cols, 칼럼 정렬, 파일명 모드, 아이콘 색상, 문서 셀 스타일
  */
 
 /* 🎛️ 수직 레이아웃 조절 변수 (사용자 조절용)
@@ -97,16 +99,11 @@
     background-color: var(--color-primary-100);
   }
 
-  /* === 🍎 리스트 컨테이너 - CenterPane 스타일 === */
+  /* === 🍎 리스트 컨테이너 - 탭 고유 속성 === */
+  /* 공통 스타일: tab-table.css (.tab-table__scroll) */
   .customer-documents__list-container {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
     gap: 2px;
-    padding-right: 4px;
     margin-top: var(--docs-list-margin-top);
-    min-height: 0;
     width: 100%;
   }
 
@@ -115,10 +112,9 @@
     margin-top: auto;
   }
 
-  /* === 🍎 COLUMN HEADER: 칼럼 헤더 === */
+  /* === 🍎 COLUMN HEADER - 칼럼 정의 === */
+  /* 공통 스타일: tab-table.css (.tab-table__header) */
   .customer-documents-list-header {
-    display: grid;
-    /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/item 공유) */
     --grid-cols:
       28px                                        /* 유형 아이콘 */
       var(--filename-column-width, 200px)         /* 파일명 (동적) */
@@ -126,37 +122,6 @@
       var(--size-column-width, 50px)              /* 크기 (동적) */
       var(--type-column-width, 42px)              /* 타입 (동적) */
       var(--date-column-width, 68px);              /* 연결일 (동적) */
-    grid-template-columns: var(--grid-cols);
-    gap: 4px;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 8px 10px;
-    background: var(--color-neutral-100);
-    border-radius: 4px;
-    margin-bottom: 4px;
-    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 테이블 헤더 */
-    font-family: var(--font-family-text);
-    font-weight: 600;
-    color: var(--color-ios-text-secondary-light);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
-  }
-
-  [data-theme="dark"] .customer-documents-list-header {
-    background: var(--color-neutral-700);
-    color: var(--color-ios-text-secondary-dark);
-    box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
-  }
-
-  .customer-documents-list-header > div {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    overflow: hidden;
-    white-space: nowrap;
   }
 
   .customer-documents-list-header .header-icon-svg {
@@ -244,71 +209,11 @@
     color: var(--color-icon-green);  /* 날짜 - 초록색 */
   }
 
-  /* === 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 === */
-  .header-sortable {
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.15s ease-out;
-    padding: 4px 6px;
-    margin: -4px -6px;
-    border-radius: 4px;
-  }
+  /* 정렬/인디케이터 공통 스타일: tab-table.css (.tab-table__header .header-sortable, .sort-indicator) */
 
-  .header-sortable:hover {
-    background-color: var(--color-ios-bg-tertiary-light);
-  }
-
-  [data-theme="dark"] .header-sortable:hover {
-    background-color: var(--color-ios-bg-tertiary-dark);
-  }
-
-  .header-sortable:active {
-    background-color: var(--color-ios-bg-hover-light);
-  }
-
-  [data-theme="dark"] .header-sortable:active {
-    background-color: var(--color-ios-bg-hover-dark);
-  }
-
-  /* === 🍎 SORT INDICATOR: 정렬 방향 표시 === */
-  .sort-indicator {
-    font-weight: 600;
-    margin-left: 2px;
-    color: var(--color-primary-600);
-    opacity: 0.9;
-  }
-
-  [data-theme="dark"] .sort-indicator {
-    color: var(--color-primary-300);
-  }
-
-  .header-sortable:hover .sort-indicator {
-    opacity: 1;
-  }
-
-  /* === 스크롤바 === */
-  .customer-documents__list-container::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .customer-documents__list-container::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .customer-documents__list-container::-webkit-scrollbar-thumb {
-    background-color: var(--color-ios-scrollbar-light);
-    border-radius: 4px;
-    transition: background-color 0.15s ease-out;
-  }
-
-  [data-theme="dark"] .customer-documents__list-container::-webkit-scrollbar-thumb {
-    background-color: var(--color-ios-scrollbar-dark);
-  }
-
-  /* === 🍎 LIST ITEM: 문서 아이템 === */
+  /* === 🍎 LIST ITEM - 칼럼 정의 === */
+  /* 공통 스타일: tab-table.css (.tab-table__row) */
   .customer-documents-item {
-    display: grid;
-    /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
     --grid-cols:
       28px                                        /* 유형 아이콘 */
       var(--filename-column-width, 200px)         /* 파일명 (동적) */
@@ -316,35 +221,7 @@
       var(--size-column-width, 50px)              /* 크기 (동적) */
       var(--type-column-width, 42px)              /* 타입 (동적) */
       var(--date-column-width, 68px);              /* 연결일 (동적) */
-    grid-template-columns: var(--grid-cols);
-    gap: 4px;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-    height: 32px;
-    padding: 6px 10px;
-    background: var(--color-ios-bg-primary-light);
-    border-radius: 4px;
     cursor: default;
-    transition:
-      background-color 0.15s ease-out,
-      transform 0.15s ease-out,
-      box-shadow 0.15s ease-out;
-    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-    font-family: var(--font-family-text);
-  }
-
-  [data-theme="dark"] .customer-documents-item {
-    background: var(--color-ios-bg-primary-dark);
-  }
-
-  .customer-documents-item:hover {
-    background-color: var(--color-ios-bg-hover-light);
-    transform: translateX(2px);
-  }
-
-  [data-theme="dark"] .customer-documents-item:hover {
-    background-color: var(--color-ios-bg-hover-dark);
   }
 
   /* === 파일 타입 아이콘 === */

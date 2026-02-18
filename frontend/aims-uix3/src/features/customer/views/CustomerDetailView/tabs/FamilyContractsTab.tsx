@@ -582,7 +582,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
 
       {/* 🍎 테이블 */}
       <div
-        className={`family-contracts__table-section${isFcResizing ? ' is-resizing' : ''}`}
+        className={`tab-table__scroll family-contracts__table-section${isFcResizing ? ' is-resizing' : ''}`}
         style={{
           '--fc-relation-width': `${fcColumnWidths['relation'] || fcDefaultWidths.relation}px`,
           '--fc-policy-width': `${fcColumnWidths['policy'] || fcDefaultWidths.policy}px`,
@@ -596,7 +596,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
         } as React.CSSProperties}
       >
         {/* 헤더 */}
-        <div className="family-contracts-header">
+        <div className="tab-table__header family-contracts-header">
           <div
             className="resizable-header header-sortable"
             onClick={() => handleSort('memberRelationship')}
@@ -689,9 +689,9 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
         </div>
 
         {/* 리스트 */}
-        <div className="family-contracts-list">
+        <div className="tab-table__body family-contracts-list">
           {sortedContracts.map((contract) => (
-            <div key={contract.policyNumber} className="family-contracts-row">
+            <div key={contract.policyNumber} className="tab-table__row family-contracts-row">
               <span className="fc-relation">
                 {renderRelationBadge(contract.memberRelationship)}
               </span>

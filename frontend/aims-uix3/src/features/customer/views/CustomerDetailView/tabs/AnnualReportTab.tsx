@@ -1060,7 +1060,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
 
       {/* 테이블 컨테이너 */}
       <div
-        className={`annual-report-table-container${isResizing ? ' is-resizing' : ''}`}
+        className={`tab-table__scroll annual-report-table-container${isResizing ? ' is-resizing' : ''}`}
         style={{
           '--owner-column-width': `${columnWidths['owner'] || ownerColumnWidth}px`,
           '--issue-date-column-width': `${columnWidths['issueDate'] || DEFAULT_ISSUE_DATE_WIDTH}px`,
@@ -1071,7 +1071,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
         } as React.CSSProperties}
       >
         {/* 테이블 헤더 */}
-        <div className="annual-report-table-header">
+        <div className="tab-table__header annual-report-table-header">
           {isDevMode && (
             <div className="header-checkbox">
               <input
@@ -1157,7 +1157,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
         </div>
 
         {/* 테이블 바디 */}
-        <div className="annual-report-table-body">
+        <div className="tab-table__body annual-report-table-body">
           {visibleReports.map((report) => {
             const globalIndex = reports.indexOf(report);
             const formattedDate = formatDate(report.issue_date);
@@ -1169,7 +1169,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
             return (
               <div
                 key={report.report_id}
-                className={`annual-report-row ${isSelected ? 'annual-report-row--selected' : ''} ${isError ? 'annual-report-row--error' : ''} ${isProcessing ? 'annual-report-row--processing' : ''} ${isPending ? 'annual-report-row--pending' : ''}`}
+                className={`tab-table__row annual-report-row ${isSelected ? 'annual-report-row--selected' : ''} ${isError ? 'annual-report-row--error' : ''} ${isProcessing ? 'annual-report-row--processing' : ''} ${isPending ? 'annual-report-row--pending' : ''}`}
                 onClick={() => handleViewReport(report)}
                 onContextMenu={(e) => handleReportContextMenu(e, report)}
               >
@@ -1241,7 +1241,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       </div>
 
       {/* 페이지네이션 - 항상 표시 (전체보기와 동일) */}
-      <div className="annual-report-pagination">
+      <div className="tab-table__pagination annual-report-pagination">
         {/* 페이지당 항목 수 선택 */}
         <div className="pagination-limit">
           <Dropdown

@@ -1,6 +1,7 @@
 /**
  * 🍎 Family Contracts Tab - 가족 계약 탭 스타일
- * ContractsTab.css의 contract-history 패턴 기반
+ * 공통 스타일: tab-table.css (컨테이너, 스크롤바, 헤더, 바디, 행, 호버)
+ * 탭 고유: --grid-cols (9칼럼), 관계 뱃지, 셀 스타일, 상태 배지
  */
 
 /* === 최상위 컨테이너 === */
@@ -72,50 +73,17 @@
     color: var(--color-ios-text-tertiary-dark);
   }
 
-  /* === 테이블 컨테이너 === */
+  /* === 테이블 컨테이너 - 탭 고유 속성 === */
+  /* 공통 스타일: tab-table.css (.tab-table__scroll) */
   .family-contracts__table-section {
-    display: flex;
-    flex-direction: column;
     overflow-x: auto;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
     min-width: 0; /* 🍎 flex 체인 min-width 전파 차단 → overflow-x: auto 스크롤바 활성화 */
   }
 
-  .family-contracts__table-section.is-resizing {
-    -webkit-user-select: none;
-    user-select: none;
-    cursor: col-resize;
-  }
-
-  /* === 스크롤바 === */
-  .family-contracts__table-section::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .family-contracts__table-section::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .family-contracts__table-section::-webkit-scrollbar-thumb {
-    background-color: var(--color-ios-scrollbar-light);
-    border-radius: 4px;
-  }
-
-  html[data-theme="dark"] .family-contracts__table-section::-webkit-scrollbar-thumb {
-    background-color: var(--color-ios-scrollbar-dark);
-  }
-
-  .family-contracts__table-section::-webkit-scrollbar-corner {
-    background: transparent;
-  }
-
-  /* === 테이블 헤더 (9칼럼) === */
+  /* === 테이블 헤더 (9칼럼) - 칼럼 정의 === */
+  /* 공통 스타일: tab-table.css (.tab-table__header) */
   .family-contracts-header {
-    display: grid;
-    grid-template-columns:
+    --grid-cols:
       var(--fc-relation-width, 55px)
       var(--fc-policy-width, 94px)
       var(--fc-product-width, 198px)
@@ -125,21 +93,7 @@
       var(--fc-status-width, 46px)
       var(--fc-amount-width, 61px)
       var(--fc-premium-width, 83px);
-    gap: 4px;
-    padding: 6px 8px;
-    font-size: var(--font-size-caption-2);
-    font-weight: 600;
-    color: var(--color-ios-text-tertiary-light);
-    background: var(--color-bg-secondary); /* 🍎 불투명 배경 필수! --color-ios-bg-secondary-light는 rgba(0,0,0,0.04)로 반투명 */
-    position: sticky;
-    top: 0;
-    z-index: 10;
     min-width: max-content;
-  }
-
-  html[data-theme="dark"] .family-contracts-header {
-    color: var(--color-ios-text-tertiary-dark);
-    background: var(--color-bg-secondary); /* 🍎 다크모드도 불투명 배경 */
   }
 
   .family-contracts-header > div {
@@ -147,29 +101,11 @@
     overflow: visible;
     text-overflow: ellipsis;
     text-align: center;
-    display: flex;
-    align-items: center;
     justify-content: center;
     gap: 2px;
   }
 
-  /* 정렬 가능한 헤더 */
-  .family-contracts-header .header-sortable {
-    cursor: pointer;
-    -webkit-user-select: none;
-    user-select: none;
-    transition: color 0.15s ease;
-  }
-
-  .family-contracts-header .header-sortable:hover {
-    color: var(--color-ios-text-primary-light);
-  }
-
-  html[data-theme="dark"] .family-contracts-header .header-sortable:hover {
-    color: var(--color-ios-text-primary-dark);
-  }
-
-  /* 정렬 인디케이터 */
+  /* 정렬 인디케이터 (탭 고유 클래스) */
   .fc-sort-indicator {
     font-size: 8px;
     color: var(--color-ios-blue-light);
@@ -180,18 +116,17 @@
     color: var(--color-ios-blue-dark);
   }
 
-  /* === 테이블 리스트 === */
+  /* === 테이블 리스트 - 탭 고유 속성 === */
+  /* 공통 스타일: tab-table.css (.tab-table__body) */
   .family-contracts-list {
-    display: flex;
-    flex-direction: column;
     gap: 1px;
     min-width: max-content;
   }
 
-  /* === 테이블 행 (9칼럼) === */
+  /* === 테이블 행 (9칼럼) - 칼럼 정의 === */
+  /* 공통 스타일: tab-table.css (.tab-table__row) */
   .family-contracts-row {
-    display: grid;
-    grid-template-columns:
+    --grid-cols:
       var(--fc-relation-width, 55px)
       var(--fc-policy-width, 94px)
       var(--fc-product-width, 198px)
@@ -201,37 +136,7 @@
       var(--fc-status-width, 46px)
       var(--fc-amount-width, 61px)
       var(--fc-premium-width, 83px);
-    gap: 4px;
-    align-items: center;
-    padding: 5px 8px;
-    font-size: var(--font-size-caption-1);
-    background: var(--color-ios-bg-primary-light);
-    cursor: default;
-    transition: background-color 0.15s ease-out;
-  }
-
-  html[data-theme="dark"] .family-contracts-row {
-    background: var(--color-ios-bg-primary-dark);
-  }
-
-  .family-contracts-row:hover {
-    background: var(--color-ios-bg-tertiary-light);
-  }
-
-  html[data-theme="dark"] .family-contracts-row:hover {
-    background: var(--color-ios-bg-tertiary-dark);
-  }
-
-  /* === 셀 공통 === */
-  .family-contracts-row > span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--color-ios-text-primary-light);
-  }
-
-  html[data-theme="dark"] .family-contracts-row > span {
-    color: var(--color-ios-text-primary-dark);
+    min-width: max-content;
   }
 
   /* === 관계 뱃지 === */
@@ -386,14 +291,11 @@
     color: var(--color-primary-400);
   }
 
-  /* === 📱 모바일 반응형 (768px 이하) === */
+  /* === 📱 768px: 수평 스크롤 (공통 gap/padding/font: tab-table.css) === */
   @media (max-width: 768px) {
     .family-contracts-header,
     .family-contracts-row {
       min-width: 700px;
-      font-size: 10px;
-      gap: 3px;
-      padding: 4px 6px;
     }
 
     .family-contracts-list {
