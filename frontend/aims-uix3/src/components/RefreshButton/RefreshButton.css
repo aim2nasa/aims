@@ -12,141 +12,145 @@
    기본 버튼 스타일
    ========================================== */
 
-.refresh-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background-color: transparent;
-  color: var(--color-primary-600);
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  user-select: none;
-  position: relative;
-}
+@layer components {
 
-/* 크기 변형 */
-.refresh-button--small {
-  width: 24px;
-  height: 24px;
-  padding: 4px;
-}
-
-.refresh-button--medium {
-  width: 32px;
-  height: 32px;
-  padding: 6px;
-}
-
-.refresh-button--large {
-  width: 40px;
-  height: 40px;
-  padding: 8px;
-}
-
-/* ==========================================
-   상호작용 상태
-   ========================================== */
-
-/* 호버 - 서브틀한 배경 */
-.refresh-button:hover:not(:disabled) {
-  background-color: rgba(0, 122, 255, 0.08);
-}
-
-/* 액티브 - 약간 더 진한 배경 */
-.refresh-button:active:not(:disabled) {
-  background-color: rgba(0, 122, 255, 0.15);
-  transform: scale(0.95);
-}
-
-/* 포커스 - 접근성 */
-.refresh-button:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
-}
-
-/* ==========================================
-   로딩 상태
-   ========================================== */
-
-.refresh-button--loading .refresh-button__icon {
-  animation: refresh-spin 1s linear infinite;
-}
-
-@keyframes refresh-spin {
-  from {
-    transform: rotate(0deg);
+  .refresh-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background-color: transparent;
+    color: var(--color-primary-600);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    user-select: none;
+    position: relative;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
 
-/* 로딩 중 호버 효과 약화 */
-.refresh-button--loading:hover {
-  background-color: rgba(0, 122, 255, 0.05);
-}
-
-/* ==========================================
-   비활성화 상태
-   ========================================== */
-
-.refresh-button--disabled,
-.refresh-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.refresh-button--disabled:hover,
-.refresh-button:disabled:hover {
-  background-color: transparent;
-}
-
-/* ==========================================
-   아이콘 스타일
-   ========================================== */
-
-.refresh-button__icon {
-  flex-shrink: 0;
-  transition: transform var(--duration-fast) var(--easing-ease-out);
-}
-
-/* 호버 시 살짝 회전 (로딩 중이 아닐 때만) */
-.refresh-button:hover:not(:disabled):not(.refresh-button--loading) .refresh-button__icon {
-  transform: rotate(45deg);
-}
-
-/* ==========================================
-   다크 모드
-   ========================================== */
-
-html[data-theme="dark"] .refresh-button {
-  color: rgb(64, 156, 255);
-}
-
-html[data-theme="dark"] .refresh-button:hover:not(:disabled) {
-  background-color: rgba(0, 122, 255, 0.12);
-}
-
-html[data-theme="dark"] .refresh-button:active:not(:disabled) {
-  background-color: rgba(0, 122, 255, 0.20);
-}
-
-html[data-theme="dark"] .refresh-button--disabled,
-html[data-theme="dark"] .refresh-button:disabled {
-  opacity: 0.3;
-}
-
-/* ==========================================
-   반응형
-   ========================================== */
-
-@media (max-width: 768px) {
-  /* 모바일에서는 터치 타겟 최소 크기 보장 */
+  /* 크기 변형 */
   .refresh-button--small {
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+  }
+
+  .refresh-button--medium {
     width: 32px;
     height: 32px;
     padding: 6px;
   }
-}
+
+  .refresh-button--large {
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+  }
+
+  /* ==========================================
+     상호작용 상태
+     ========================================== */
+
+  /* 호버 - 서브틀한 배경 */
+  .refresh-button:hover:not(:disabled) {
+    background-color: rgba(0, 122, 255, 0.08);
+  }
+
+  /* 액티브 - 약간 더 진한 배경 */
+  .refresh-button:active:not(:disabled) {
+    background-color: rgba(0, 122, 255, 0.15);
+    transform: scale(0.95);
+  }
+
+  /* 포커스 - 접근성 */
+  .refresh-button:focus-visible {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: 2px;
+  }
+
+  /* ==========================================
+     로딩 상태
+     ========================================== */
+
+  .refresh-button--loading .refresh-button__icon {
+    animation: refresh-spin 1s linear infinite;
+  }
+
+  @keyframes refresh-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* 로딩 중 호버 효과 약화 */
+  .refresh-button--loading:hover {
+    background-color: rgba(0, 122, 255, 0.05);
+  }
+
+  /* ==========================================
+     비활성화 상태
+     ========================================== */
+
+  .refresh-button--disabled,
+  .refresh-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .refresh-button--disabled:hover,
+  .refresh-button:disabled:hover {
+    background-color: transparent;
+  }
+
+  /* ==========================================
+     아이콘 스타일
+     ========================================== */
+
+  .refresh-button__icon {
+    flex-shrink: 0;
+    transition: transform var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* 호버 시 살짝 회전 (로딩 중이 아닐 때만) */
+  .refresh-button:hover:not(:disabled):not(.refresh-button--loading) .refresh-button__icon {
+    transform: rotate(45deg);
+  }
+
+  /* ==========================================
+     다크 모드
+     ========================================== */
+
+  html[data-theme="dark"] .refresh-button {
+    color: rgb(64, 156, 255);
+  }
+
+  html[data-theme="dark"] .refresh-button:hover:not(:disabled) {
+    background-color: rgba(0, 122, 255, 0.12);
+  }
+
+  html[data-theme="dark"] .refresh-button:active:not(:disabled) {
+    background-color: rgba(0, 122, 255, 0.20);
+  }
+
+  html[data-theme="dark"] .refresh-button--disabled,
+  html[data-theme="dark"] .refresh-button:disabled {
+    opacity: 0.3;
+  }
+
+  /* ==========================================
+     반응형
+     ========================================== */
+
+  @media (max-width: 768px) {
+    /* 모바일에서는 터치 타겟 최소 크기 보장 */
+    .refresh-button--small {
+      width: 32px;
+      height: 32px;
+      padding: 6px;
+    }
+  }
+
+} /* end @layer components */

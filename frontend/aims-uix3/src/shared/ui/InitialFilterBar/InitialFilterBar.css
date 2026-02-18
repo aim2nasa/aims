@@ -3,394 +3,398 @@
  * @description 공용 초성 필터 컴포넌트
  */
 
-.initial-filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: var(--color-bg-secondary);
-  border-top: 1px solid var(--color-border-primary);
-  border-bottom: 1px solid var(--color-border-primary);
-  flex-shrink: 0;
-}
+@layer components {
 
-/* 컴팩트 모드 */
-.initial-filter-bar--compact {
-  padding: 6px 10px;
-  gap: 8px;
-}
-
-/* 초성 타입 섹션 */
-.initial-filter-bar__type-section {
-  flex-shrink: 0;
-}
-
-/* 초성 타입 토글 버튼 */
-.initial-filter-bar__type-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-width: 48px;
-  height: 28px;
-  padding: 0 8px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-primary);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.initial-filter-bar--compact .initial-filter-bar__type-toggle {
-  min-width: 42px;
-  height: 24px;
-  padding: 0 6px;
-}
-
-.initial-filter-bar__type-toggle:hover {
-  background: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
-  border-color: var(--color-primary-500, #007aff);
-}
-
-.initial-filter-bar__type-toggle:hover .initial-filter-bar__globe-icon {
-  color: var(--color-primary-500, #007aff);
-}
-
-.initial-filter-bar__type-toggle:hover .initial-filter-bar__type-label {
-  color: var(--color-primary-500, #007aff);
-}
-
-.initial-filter-bar__globe-icon {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  color: var(--color-text-secondary);
-  transition: color 0.15s ease;
-}
-
-.initial-filter-bar__type-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  line-height: 1;
-  white-space: nowrap;
-  transition: color 0.15s ease;
-}
-
-/* 초성 버튼 컨테이너 */
-.initial-filter-bar__initials {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  flex: 1;
-  flex-wrap: wrap;
-}
-
-/* 초성 버튼 */
-.initial-filter-bar__initial {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 4px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-primary);
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.initial-filter-bar--compact .initial-filter-bar__initial {
-  min-width: 22px;
-  height: 22px;
-  font-size: 10px;
-}
-
-/* 라이트 테마 초성 버튼 대비 강화 */
-html:not([data-theme="dark"]) .initial-filter-bar__initial {
-  border-color: var(--color-border-primary);
-  color: var(--color-neutral-500);
-}
-
-/* 활성 초성 (항목 있음) - 더 진한 강조 */
-html:not([data-theme="dark"]) .initial-filter-bar__initial:not(.initial-filter-bar__initial--empty):not(.initial-filter-bar__initial--active) {
-  color: var(--color-neutral-800);
-  font-weight: 700;
-  border-color: var(--color-neutral-400);
-}
-
-.initial-filter-bar__initial:hover:not(:disabled) {
-  background: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
-  border-color: var(--color-border-secondary, #9ca3af);
-  color: var(--color-text-primary);
-  transform: scale(1.05);
-}
-
-/* 선택된 초성 - 최고 우선순위로 스타일 적용 */
-button.initial-filter-bar__initial.initial-filter-bar__initial--active,
-.initial-filter-bar__initial.initial-filter-bar__initial--active {
-  background: var(--color-primary-500);
-  border-color: var(--color-primary-500);
-  color: var(--color-text-inverse);
-  font-weight: 700;
-  box-shadow: 0 2px 6px var(--color-accent-blue-alpha-30);
-}
-
-/* 라이트모드 선택된 초성 - 최고 우선순위로 흰색 텍스트 보장 */
-html:not([data-theme="dark"]) button.initial-filter-bar__initial.initial-filter-bar__initial--active,
-html:not([data-theme="dark"]) .initial-filter-bar__initial.initial-filter-bar__initial--active {
-  background: var(--color-primary-500);
-  border-color: var(--color-primary-500);
-  color: var(--color-text-inverse);
-}
-
-button.initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled),
-.initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled) {
-  background: var(--color-primary-600);
-  border-color: var(--color-primary-700);
-  color: var(--color-text-inverse);
-  transform: scale(1.05);
-}
-
-/* 항목이 없는 초성 (비활성) */
-.initial-filter-bar__initial--empty {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.initial-filter-bar__initial--empty:hover {
-  transform: none;
-  background: var(--color-bg-primary);
-  border-color: var(--color-border-primary);
-  color: var(--color-text-secondary);
-}
-
-/* 선택된 초성 표시 영역 */
-.initial-filter-bar__selected {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px 4px 12px;
-  background: rgba(0, 122, 255, 0.1);
-  border: 1px solid var(--color-primary-500, #007aff);
-  border-radius: 16px;
-  flex-shrink: 0;
-}
-
-.initial-filter-bar__selected-label {
-  font-size: 11px;
-  color: var(--color-primary-500, #007aff);
-}
-
-.initial-filter-bar__selected-label strong {
-  font-weight: 700;
-}
-
-.initial-filter-bar__clear {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--color-primary-500, #007aff);
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.15s ease;
-}
-
-.initial-filter-bar__clear:hover {
-  opacity: 1;
-}
-
-/* 다크모드 */
-html[data-theme="dark"] .initial-filter-bar {
-  background: var(--color-bg-tertiary);
-}
-
-html[data-theme="dark"] .initial-filter-bar__type-toggle {
-  background: var(--color-bg-secondary);
-  border-color: var(--color-border-secondary);
-}
-
-html[data-theme="dark"] .initial-filter-bar__initial {
-  background: var(--color-bg-secondary);
-  border-color: var(--color-border-secondary);
-}
-
-html[data-theme="dark"] .initial-filter-bar__selected {
-  background: rgba(0, 122, 255, 0.2);
-}
-
-/* === 모바일 반응형 (768px 이하): 수평 스크롤 === */
-@media (max-width: 768px) {
   .initial-filter-bar {
-    gap: 8px;
-    padding: 6px 10px;
-  }
-
-  .initial-filter-bar__initials {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .initial-filter-bar__initials::-webkit-scrollbar {
-    display: none;
-  }
-
-  .initial-filter-bar__type-toggle {
-    min-width: 44px;
-    height: 36px;
-    padding: 0 8px;
-    font-size: var(--font-size-caption-1); /* 13px */
-  }
-
-  .initial-filter-bar__initial {
-    min-width: 36px;
-    height: 36px;
-    font-size: var(--font-size-caption-1); /* 12px -> 13px */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border-primary);
+    border-bottom: 1px solid var(--color-border-primary);
     flex-shrink: 0;
   }
 
-  .initial-filter-bar__selected {
-    padding: 4px 8px 4px 10px;
-    height: 36px;
+  /* 컴팩트 모드 */
+  .initial-filter-bar--compact {
+    padding: 6px 10px;
+    gap: 8px;
   }
 
-  .initial-filter-bar__selected-label {
-    font-size: var(--font-size-caption-2); /* 11px */
-  }
-}
-
-/* === 모바일 폰 세로 (480px 이하): CSS Grid 10칼럼 강제 배치 ===
-   CSS Grid repeat(10, 1fr)로 컨테이너 너비와 무관하게 10칼럼 보장
-   한글 19개 = 2줄(10+9), 영문 26개 = 3줄, 숫자 10개 = 1줄
-   flex-wrap 방식은 부모 scrollbar/padding에 따라 3줄로 밀리는 문제 해결 */
-@media (max-width: 480px) {
-  .initial-filter-bar {
-    gap: 6px;
-    padding: 6px 8px;
-    align-items: flex-start;
+  /* 초성 타입 섹션 */
+  .initial-filter-bar__type-section {
+    flex-shrink: 0;
   }
 
-  .initial-filter-bar__initials {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    overflow-x: visible;
-    gap: 2px;
-  }
-
-  /* Tooltip 래퍼(.tooltip-trigger)가 그리드 셀을 채우도록 */
-  .initial-filter-bar__initials > .tooltip-trigger {
-    display: flex;
-  }
-
-  .initial-filter-bar__initial {
-    width: 100%;
-    min-width: 0;
-    height: 24px;
-    font-size: 11px;
-    padding: 0;
-  }
-
+  /* 초성 타입 토글 버튼 */
   .initial-filter-bar__type-toggle {
-    min-width: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 48px;
     height: 28px;
+    padding: 0 8px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .initial-filter-bar--compact .initial-filter-bar__type-toggle {
+    min-width: 42px;
+    height: 24px;
     padding: 0 6px;
   }
 
-  .initial-filter-bar__type-label {
-    font-size: 10px;
+  .initial-filter-bar__type-toggle:hover {
+    background: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
+    border-color: var(--color-primary-500, #007aff);
+  }
+
+  .initial-filter-bar__type-toggle:hover .initial-filter-bar__globe-icon {
+    color: var(--color-primary-500, #007aff);
+  }
+
+  .initial-filter-bar__type-toggle:hover .initial-filter-bar__type-label {
+    color: var(--color-primary-500, #007aff);
   }
 
   .initial-filter-bar__globe-icon {
-    width: 12px;
-    height: 12px;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    color: var(--color-text-secondary);
+    transition: color 0.15s ease;
   }
 
-  .initial-filter-bar__selected {
-    height: auto;
-    padding: 3px 6px 3px 8px;
+  .initial-filter-bar__type-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1;
+    white-space: nowrap;
+    transition: color 0.15s ease;
   }
 
-  .initial-filter-bar__selected-label {
-    font-size: 10px;
-  }
-}
-
-/* === 폰 가로 모드: 컴팩트 2줄 래핑 (넓은 가로폭 활용) ===
-   740px 기준: 26px 버튼 + 2px gap = 28px/button
-   가용 너비 ~680px → 한 줄에 ~24개 → 한글 19개 = 1줄 완료
-   영문+숫자는 2줄 */
-@media (max-height: 500px) and (min-width: 481px) {
-  .initial-filter-bar {
-    gap: 6px;
-    padding: 4px 8px;
-    align-items: flex-start;
-  }
-
+  /* 초성 버튼 컨테이너 */
   .initial-filter-bar__initials {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
     flex-wrap: wrap;
-    overflow-x: visible;
-    gap: 2px;
   }
 
+  /* 초성 버튼 */
   .initial-filter-bar__initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     min-width: 26px;
     height: 26px;
+    padding: 0 4px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: 4px;
     font-size: 11px;
-    padding: 0 3px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .initial-filter-bar--compact .initial-filter-bar__initial {
+    min-width: 22px;
+    height: 22px;
+    font-size: 10px;
+  }
+
+  /* 라이트 테마 초성 버튼 대비 강화 */
+  html:not([data-theme="dark"]) .initial-filter-bar__initial {
+    border-color: var(--color-border-primary);
+    color: var(--color-neutral-500);
+  }
+
+  /* 활성 초성 (항목 있음) - 더 진한 강조 */
+  html:not([data-theme="dark"]) .initial-filter-bar__initial:not(.initial-filter-bar__initial--empty):not(.initial-filter-bar__initial--active) {
+    color: var(--color-neutral-800);
+    font-weight: 700;
+    border-color: var(--color-neutral-400);
+  }
+
+  .initial-filter-bar__initial:hover:not(:disabled) {
+    background: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
+    border-color: var(--color-border-secondary, #9ca3af);
+    color: var(--color-text-primary);
+    transform: scale(1.05);
+  }
+
+  /* 선택된 초성 - 최고 우선순위로 스타일 적용 */
+  button.initial-filter-bar__initial.initial-filter-bar__initial--active,
+  .initial-filter-bar__initial.initial-filter-bar__initial--active {
+    background: var(--color-primary-500);
+    border-color: var(--color-primary-500);
+    color: var(--color-text-inverse);
+    font-weight: 700;
+    box-shadow: 0 2px 6px var(--color-accent-blue-alpha-30);
+  }
+
+  /* 라이트모드 선택된 초성 - 최고 우선순위로 흰색 텍스트 보장 */
+  html:not([data-theme="dark"]) button.initial-filter-bar__initial.initial-filter-bar__initial--active,
+  html:not([data-theme="dark"]) .initial-filter-bar__initial.initial-filter-bar__initial--active {
+    background: var(--color-primary-500);
+    border-color: var(--color-primary-500);
+    color: var(--color-text-inverse);
+  }
+
+  button.initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled),
+  .initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled) {
+    background: var(--color-primary-600);
+    border-color: var(--color-primary-700);
+    color: var(--color-text-inverse);
+    transform: scale(1.05);
+  }
+
+  /* 항목이 없는 초성 (비활성) */
+  .initial-filter-bar__initial--empty {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .initial-filter-bar__initial--empty:hover {
+    transform: none;
+    background: var(--color-bg-primary);
+    border-color: var(--color-border-primary);
+    color: var(--color-text-secondary);
+  }
+
+  /* 선택된 초성 표시 영역 */
+  .initial-filter-bar__selected {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 12px;
+    background: rgba(0, 122, 255, 0.1);
+    border: 1px solid var(--color-primary-500, #007aff);
+    border-radius: 16px;
     flex-shrink: 0;
   }
 
-  .initial-filter-bar__type-toggle {
-    min-width: 40px;
-    height: 26px;
-    padding: 0 6px;
-  }
-
-  .initial-filter-bar__type-label {
-    font-size: 10px;
-  }
-
-  .initial-filter-bar__globe-icon {
-    width: 12px;
-    height: 12px;
-  }
-
-  .initial-filter-bar__selected {
-    height: auto;
-    padding: 3px 6px 3px 8px;
-  }
-
   .initial-filter-bar__selected-label {
-    font-size: 10px;
-  }
-}
-
-/* === 터치 기기: 초성 버튼 44px 터치 영역 확보 === */
-
-@media (pointer: coarse) {
-  .initial-filter-bar__initial,
-  .initial-filter-bar__type-toggle {
-    position: relative;
+    font-size: 11px;
+    color: var(--color-primary-500, #007aff);
   }
 
-  .initial-filter-bar__initial::after,
-  .initial-filter-bar__type-toggle::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    min-width: 44px;
-    min-height: 44px;
+  .initial-filter-bar__selected-label strong {
+    font-weight: 700;
   }
-}
+
+  .initial-filter-bar__clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-primary-500, #007aff);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+  }
+
+  .initial-filter-bar__clear:hover {
+    opacity: 1;
+  }
+
+  /* 다크모드 */
+  html[data-theme="dark"] .initial-filter-bar {
+    background: var(--color-bg-tertiary);
+  }
+
+  html[data-theme="dark"] .initial-filter-bar__type-toggle {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-secondary);
+  }
+
+  html[data-theme="dark"] .initial-filter-bar__initial {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-secondary);
+  }
+
+  html[data-theme="dark"] .initial-filter-bar__selected {
+    background: rgba(0, 122, 255, 0.2);
+  }
+
+  /* === 모바일 반응형 (768px 이하): 수평 스크롤 === */
+  @media (max-width: 768px) {
+    .initial-filter-bar {
+      gap: 8px;
+      padding: 6px 10px;
+    }
+
+    .initial-filter-bar__initials {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .initial-filter-bar__initials::-webkit-scrollbar {
+      display: none;
+    }
+
+    .initial-filter-bar__type-toggle {
+      min-width: 44px;
+      height: 36px;
+      padding: 0 8px;
+      font-size: var(--font-size-caption-1); /* 13px */
+    }
+
+    .initial-filter-bar__initial {
+      min-width: 36px;
+      height: 36px;
+      font-size: var(--font-size-caption-1); /* 12px -> 13px */
+      flex-shrink: 0;
+    }
+
+    .initial-filter-bar__selected {
+      padding: 4px 8px 4px 10px;
+      height: 36px;
+    }
+
+    .initial-filter-bar__selected-label {
+      font-size: var(--font-size-caption-2); /* 11px */
+    }
+  }
+
+  /* === 모바일 폰 세로 (480px 이하): CSS Grid 10칼럼 강제 배치 ===
+     CSS Grid repeat(10, 1fr)로 컨테이너 너비와 무관하게 10칼럼 보장
+     한글 19개 = 2줄(10+9), 영문 26개 = 3줄, 숫자 10개 = 1줄
+     flex-wrap 방식은 부모 scrollbar/padding에 따라 3줄로 밀리는 문제 해결 */
+  @media (max-width: 480px) {
+    .initial-filter-bar {
+      gap: 6px;
+      padding: 6px 8px;
+      align-items: flex-start;
+    }
+
+    .initial-filter-bar__initials {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      overflow-x: visible;
+      gap: 2px;
+    }
+
+    /* Tooltip 래퍼(.tooltip-trigger)가 그리드 셀을 채우도록 */
+    .initial-filter-bar__initials > .tooltip-trigger {
+      display: flex;
+    }
+
+    .initial-filter-bar__initial {
+      width: 100%;
+      min-width: 0;
+      height: 24px;
+      font-size: 11px;
+      padding: 0;
+    }
+
+    .initial-filter-bar__type-toggle {
+      min-width: 42px;
+      height: 28px;
+      padding: 0 6px;
+    }
+
+    .initial-filter-bar__type-label {
+      font-size: 10px;
+    }
+
+    .initial-filter-bar__globe-icon {
+      width: 12px;
+      height: 12px;
+    }
+
+    .initial-filter-bar__selected {
+      height: auto;
+      padding: 3px 6px 3px 8px;
+    }
+
+    .initial-filter-bar__selected-label {
+      font-size: 10px;
+    }
+  }
+
+  /* === 폰 가로 모드: 컴팩트 2줄 래핑 (넓은 가로폭 활용) ===
+     740px 기준: 26px 버튼 + 2px gap = 28px/button
+     가용 너비 ~680px → 한 줄에 ~24개 → 한글 19개 = 1줄 완료
+     영문+숫자는 2줄 */
+  @media (max-height: 500px) and (min-width: 481px) {
+    .initial-filter-bar {
+      gap: 6px;
+      padding: 4px 8px;
+      align-items: flex-start;
+    }
+
+    .initial-filter-bar__initials {
+      flex-wrap: wrap;
+      overflow-x: visible;
+      gap: 2px;
+    }
+
+    .initial-filter-bar__initial {
+      min-width: 26px;
+      height: 26px;
+      font-size: 11px;
+      padding: 0 3px;
+      flex-shrink: 0;
+    }
+
+    .initial-filter-bar__type-toggle {
+      min-width: 40px;
+      height: 26px;
+      padding: 0 6px;
+    }
+
+    .initial-filter-bar__type-label {
+      font-size: 10px;
+    }
+
+    .initial-filter-bar__globe-icon {
+      width: 12px;
+      height: 12px;
+    }
+
+    .initial-filter-bar__selected {
+      height: auto;
+      padding: 3px 6px 3px 8px;
+    }
+
+    .initial-filter-bar__selected-label {
+      font-size: 10px;
+    }
+  }
+
+  /* === 터치 기기: 초성 버튼 44px 터치 영역 확보 === */
+
+  @media (pointer: coarse) {
+    .initial-filter-bar__initial,
+    .initial-filter-bar__type-toggle {
+      position: relative;
+    }
+
+    .initial-filter-bar__initial::after,
+    .initial-filter-bar__type-toggle::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
+} /* end @layer components */

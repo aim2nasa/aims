@@ -3,342 +3,346 @@
  * @since 2025-12-05
  */
 
-.upload-progress {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-}
+@layer components {
 
-/* 헤더 */
-.upload-progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.upload-progress-title {
-  font-size: var(--font-size-footnote);  /* 13px - 섹션 제목 */
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.upload-progress-controls {
-  display: flex;
-  gap: var(--spacing-xs);
-}
-
-.upload-control-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.upload-control-btn:hover {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
-}
-
-.upload-control-btn.danger:hover {
-  background: var(--color-ios-red-bg, rgba(255, 59, 48, 0.1));
-  color: var(--color-ios-red, #ff3b30);
-}
-
-/* 프로그레스 바 */
-.upload-progress-bar-container {
-  height: 8px;
-  background: var(--color-bg-secondary);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.upload-progress-bar {
-  height: 100%;
-  background: var(--color-ios-blue, #007aff);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.upload-progress-bar.completed {
-  background: var(--color-ios-green, #34c759);
-}
-
-.upload-progress-bar.cancelled {
-  background: var(--color-ios-orange, #ff9500);
-}
-
-/* 통계 */
-.upload-progress-stats {
-  display: flex;
-  gap: 24px;  /* 항목 간 충분한 간격 */
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid var(--color-border-secondary);
-}
-
-.upload-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  min-width: 50px;
-}
-
-.upload-stat-label {
-  font-size: var(--font-size-caption-2);  /* 11px - 라벨 */
-  font-weight: 400;
-  color: var(--color-text-tertiary);
-}
-
-.upload-stat-value {
-  font-size: var(--font-size-footnote);  /* 13px */
-  font-weight: 600;  /* 500 금지 → 600 사용 */
-  color: var(--color-text-primary);
-}
-
-.upload-stat-value.success {
-  color: var(--color-ios-green, #34c759);
-}
-
-.upload-stat-value.error {
-  color: var(--color-ios-red, #ff3b30);
-}
-
-/* 현재 파일 */
-.upload-current-file {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-caption-1);  /* 12px */
-  font-weight: 400;
-}
-
-.upload-current-file-label {
-  color: var(--color-text-tertiary);
-}
-
-.upload-current-file-name {
-  color: var(--color-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-
-/* 실시간 실패 파일 목록 */
-.upload-failed-files {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm);
-  background: var(--color-ios-red-bg, rgba(255, 59, 48, 0.08));
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--color-ios-red, #ff3b30);
-}
-
-.upload-failed-files-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-caption-1);  /* 12px */
-  font-weight: 600;
-  color: var(--color-ios-red, #ff3b30);
-}
-
-.upload-failed-files-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  max-height: 120px;
-  overflow-y: auto;
-  padding-left: var(--spacing-sm);
-  margin-left: var(--spacing-xs);
-  border-left: 1px solid var(--color-border-secondary);
-}
-
-.upload-failed-file-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.upload-failed-file-name {
-  font-size: var(--font-size-caption-1);  /* 12px */
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.upload-failed-file-error {
-  font-size: var(--font-size-caption-2);  /* 11px */
-  font-weight: 400;
-  color: var(--color-ios-red, #ff3b30);
-}
-
-/* 폴더 목록 */
-.upload-folders-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.upload-folders-header {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-caption-2);  /* 11px - 테이블 헤더 */
-  font-weight: 600;
-  color: var(--color-text-tertiary);
-  text-transform: uppercase;
-}
-
-.upload-folder-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-  transition: background 0.15s ease;
-}
-
-.upload-folder-item.uploading {
-  background: var(--color-ios-blue-bg, rgba(0, 122, 255, 0.08));
-}
-
-.upload-folder-item.completed {
-  background: var(--color-ios-green-bg, rgba(52, 199, 89, 0.08));
-}
-
-.upload-folder-item.failed {
-  background: var(--color-ios-red-bg, rgba(255, 59, 48, 0.08));
-}
-
-.upload-folder-item.partial {
-  background: var(--color-ios-orange-bg, rgba(255, 149, 0, 0.08));
-}
-
-.upload-folder-info {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  flex: 1;
-  min-width: 0;
-}
-
-.upload-status-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.upload-status-icon.completed {
-  color: var(--color-ios-green, #34c759);
-}
-
-.upload-status-icon.failed {
-  color: var(--color-ios-red, #ff3b30);
-}
-
-.upload-status-icon.partial {
-  color: var(--color-ios-orange, #ff9500);
-}
-
-.upload-status-icon.uploading {
-  color: var(--color-ios-blue, #007aff);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.upload-status-icon.pending {
-  color: var(--color-text-quaternary);
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+  .upload-progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
   }
-  50% {
-    opacity: 0.5;
+
+  /* 헤더 */
+  .upload-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
-}
 
-.upload-folder-name {
-  font-size: var(--font-size-footnote);  /* 13px */
-  font-weight: 600;  /* 500 금지 → 600 사용 */
-  color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  .upload-progress-title {
+    font-size: var(--font-size-footnote);  /* 13px - 섹션 제목 */
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
 
-.upload-folder-customer {
-  font-size: var(--font-size-caption-1);  /* 12px */
-  font-weight: 400;
-  color: var(--color-text-tertiary);
-  flex-shrink: 0;
-}
+  .upload-progress-controls {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
 
-.upload-folder-progress {
-  font-size: var(--font-size-caption-1);  /* 12px */
-  font-weight: 400;
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
-}
+  .upload-control-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
 
-.upload-folder-failed {
-  font-weight: 400;
-  color: var(--color-ios-red, #ff3b30);
-  margin-left: var(--spacing-xs);
-}
+  .upload-control-btn:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+  }
 
-/* 처리 상태 보기 버튼 */
-.upload-view-documents {
-  display: flex;
-  justify-content: center;
-  padding-top: 32px;
-  margin-top: 24px;
-}
+  .upload-control-btn.danger:hover {
+    background: var(--color-ios-red-bg, rgba(255, 59, 48, 0.1));
+    color: var(--color-ios-red, #ff3b30);
+  }
 
-.upload-view-documents-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-caption-1);  /* 12px */
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
+  /* 프로그레스 바 */
+  .upload-progress-bar-container {
+    height: 8px;
+    background: var(--color-bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+  }
 
-.upload-view-documents-btn:hover {
-  background: var(--color-bg-secondary);
-  border-color: var(--color-border-primary);
-}
+  .upload-progress-bar {
+    height: 100%;
+    background: var(--color-ios-blue, #007aff);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
 
-.upload-view-documents-btn:active {
-  background: var(--color-bg-tertiary);
-}
+  .upload-progress-bar.completed {
+    background: var(--color-ios-green, #34c759);
+  }
 
-html[data-theme="dark"] .upload-view-documents-btn {
-  border-color: var(--color-border-primary);
-}
+  .upload-progress-bar.cancelled {
+    background: var(--color-ios-orange, #ff9500);
+  }
 
-html[data-theme="dark"] .upload-view-documents-btn:hover {
-  border-color: var(--color-purple-500, #8e44ad);
-}
+  /* 통계 */
+  .upload-progress-stats {
+    display: flex;
+    gap: 24px;  /* 항목 간 충분한 간격 */
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-border-secondary);
+  }
+
+  .upload-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 50px;
+  }
+
+  .upload-stat-label {
+    font-size: var(--font-size-caption-2);  /* 11px - 라벨 */
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+  }
+
+  .upload-stat-value {
+    font-size: var(--font-size-footnote);  /* 13px */
+    font-weight: 600;  /* 500 금지 → 600 사용 */
+    color: var(--color-text-primary);
+  }
+
+  .upload-stat-value.success {
+    color: var(--color-ios-green, #34c759);
+  }
+
+  .upload-stat-value.error {
+    color: var(--color-ios-red, #ff3b30);
+  }
+
+  /* 현재 파일 */
+  .upload-current-file {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-caption-1);  /* 12px */
+    font-weight: 400;
+  }
+
+  .upload-current-file-label {
+    color: var(--color-text-tertiary);
+  }
+
+  .upload-current-file-name {
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  /* 실시간 실패 파일 목록 */
+  .upload-failed-files {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    background: var(--color-ios-red-bg, rgba(255, 59, 48, 0.08));
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--color-ios-red, #ff3b30);
+  }
+
+  .upload-failed-files-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-caption-1);  /* 12px */
+    font-weight: 600;
+    color: var(--color-ios-red, #ff3b30);
+  }
+
+  .upload-failed-files-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    max-height: 120px;
+    overflow-y: auto;
+    padding-left: var(--spacing-sm);
+    margin-left: var(--spacing-xs);
+    border-left: 1px solid var(--color-border-secondary);
+  }
+
+  .upload-failed-file-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .upload-failed-file-name {
+    font-size: var(--font-size-caption-1);  /* 12px */
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .upload-failed-file-error {
+    font-size: var(--font-size-caption-2);  /* 11px */
+    font-weight: 400;
+    color: var(--color-ios-red, #ff3b30);
+  }
+
+  /* 폴더 목록 */
+  .upload-folders-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .upload-folders-header {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-caption-2);  /* 11px - 테이블 헤더 */
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+  }
+
+  .upload-folder-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease;
+  }
+
+  .upload-folder-item.uploading {
+    background: var(--color-ios-blue-bg, rgba(0, 122, 255, 0.08));
+  }
+
+  .upload-folder-item.completed {
+    background: var(--color-ios-green-bg, rgba(52, 199, 89, 0.08));
+  }
+
+  .upload-folder-item.failed {
+    background: var(--color-ios-red-bg, rgba(255, 59, 48, 0.08));
+  }
+
+  .upload-folder-item.partial {
+    background: var(--color-ios-orange-bg, rgba(255, 149, 0, 0.08));
+  }
+
+  .upload-folder-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .upload-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .upload-status-icon.completed {
+    color: var(--color-ios-green, #34c759);
+  }
+
+  .upload-status-icon.failed {
+    color: var(--color-ios-red, #ff3b30);
+  }
+
+  .upload-status-icon.partial {
+    color: var(--color-ios-orange, #ff9500);
+  }
+
+  .upload-status-icon.uploading {
+    color: var(--color-ios-blue, #007aff);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .upload-status-icon.pending {
+    color: var(--color-text-quaternary);
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .upload-folder-name {
+    font-size: var(--font-size-footnote);  /* 13px */
+    font-weight: 600;  /* 500 금지 → 600 사용 */
+    color: var(--color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .upload-folder-customer {
+    font-size: var(--font-size-caption-1);  /* 12px */
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+  }
+
+  .upload-folder-progress {
+    font-size: var(--font-size-caption-1);  /* 12px */
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+
+  .upload-folder-failed {
+    font-weight: 400;
+    color: var(--color-ios-red, #ff3b30);
+    margin-left: var(--spacing-xs);
+  }
+
+  /* 처리 상태 보기 버튼 */
+  .upload-view-documents {
+    display: flex;
+    justify-content: center;
+    padding-top: 32px;
+    margin-top: 24px;
+  }
+
+  .upload-view-documents-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-caption-1);  /* 12px */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .upload-view-documents-btn:hover {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-primary);
+  }
+
+  .upload-view-documents-btn:active {
+    background: var(--color-bg-tertiary);
+  }
+
+  html[data-theme="dark"] .upload-view-documents-btn {
+    border-color: var(--color-border-primary);
+  }
+
+  html[data-theme="dark"] .upload-view-documents-btn:hover {
+    border-color: var(--color-purple-500, #8e44ad);
+  }
+
+} /* end @layer components */

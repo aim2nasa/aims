@@ -4,144 +4,149 @@
  */
 
 /* 🍎 HUD CONTAINER: 중앙 오버레이 */
-.feedback-toast {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  z-index: 10000;
 
-  /* 🍎 TRUE APPLE HUD: 테마 무관 검은색 반투명 박스 */
-  background: var(--color-ios-tooltip-bg-light);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+@layer components {
 
-  border-radius: 16px;
-  padding: 24px;
-
-  /* 🍎 중앙 정렬 */
-  transform: translate(-50%, -50%) scale(0.8);
-  opacity: 0;
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
-  /* 🍎 적절한 크기 - 한 문장이 한 줄에 표시되도록 */
-  max-width: 450px;
-  min-width: 350px;
-}
-
-/* 🍎 진짜 애플 HUD는 테마에 상관없이 항상 동일 - 테마별 스타일 불필요 */
-
-/* 🍎 HUD VISIBLE STATE: 애플 스케일 페이드인 */
-.feedback-toast--visible {
-  transform: translate(-50%, -50%) scale(1);
-  opacity: 1;
-}
-
-/* 🍎 HUD CONTENT: 중앙 정렬 콘텐츠 */
-.feedback-toast__content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-}
-
-/* 🍎 HUD ICON: 큰 중앙 아이콘 */
-.feedback-toast__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 아이콘/심볼 ) */
-  color: white;
-}
-
-/* 🍎 HUD MESSAGE: 깔끔한 흰색 텍스트 */
-.feedback-toast__message {
-  color: white;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md ) */
-  font-weight: 600;
-  line-height: 1.2;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.feedback-toast__line {
-  margin-bottom: 4px;
-}
-
-.feedback-toast__line:last-child {
-  margin-bottom: 0;
-}
-
-/* 🍎 HUD CLOSE: 미니멀 X 버튼 (우상단) */
-.feedback-toast__close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-
-  background: var(--color-opacity-scrollbar-light);
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: white;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  transition: all 0.15s ease;
-}
-
-.feedback-toast__close:hover {
-  background: var(--color-ios-empty-light);
-  transform: scale(1.1);
-}
-
-.feedback-toast__close:focus {
-  outline: none;
-  background: var(--color-ios-empty-dark);
-}
-
-/* 🍎 RESPONSIVE: 모바일에서도 중앙 유지 */
-@media (max-width: 768px) {
   .feedback-toast {
-    max-width: 350px;
-    min-width: 280px;
-    padding: 20px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 10000;
+
+    /* 🍎 TRUE APPLE HUD: 테마 무관 검은색 반투명 박스 */
+    background: var(--color-ios-tooltip-bg-light);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    border-radius: 16px;
+    padding: 24px;
+
+    /* 🍎 중앙 정렬 */
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    /* 🍎 적절한 크기 - 한 문장이 한 줄에 표시되도록 */
+    max-width: 450px;
+    min-width: 350px;
   }
 
-  .feedback-toast__message {
-    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
-  }
+  /* 🍎 진짜 애플 HUD는 테마에 상관없이 항상 동일 - 테마별 스타일 불필요 */
 
-  .feedback-toast__icon {
-    /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 28px → 32px ) */
-  }
-}
-
-/* 🍎 ACCESSIBILITY: 모션 줄이기 */
-@media (prefers-reduced-motion: reduce) {
-  .feedback-toast {
-    transition: opacity 0.3s ease;
-  }
-
+  /* 🍎 HUD VISIBLE STATE: 애플 스케일 페이드인 */
   .feedback-toast--visible {
     transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-/* 🍎 HIGH CONTRAST: HUD 스타일 유지 */
-@media (prefers-contrast: high) {
-  .feedback-toast {
-    background: var(--color-ios-tooltip-bg-dark);
+    opacity: 1;
   }
 
+  /* 🍎 HUD CONTENT: 중앙 정렬 콘텐츠 */
+  .feedback-toast__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+
+  /* 🍎 HUD ICON: 큰 중앙 아이콘 */
+  .feedback-toast__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 아이콘/심볼 ) */
+    color: white;
+  }
+
+  /* 🍎 HUD MESSAGE: 깔끔한 흰색 텍스트 */
   .feedback-toast__message {
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md ) */
     font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-}
+
+  .feedback-toast__line {
+    margin-bottom: 4px;
+  }
+
+  .feedback-toast__line:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 🍎 HUD CLOSE: 미니멀 X 버튼 (우상단) */
+  .feedback-toast__close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+
+    background: var(--color-opacity-scrollbar-light);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: white;
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    transition: all 0.15s ease;
+  }
+
+  .feedback-toast__close:hover {
+    background: var(--color-ios-empty-light);
+    transform: scale(1.1);
+  }
+
+  .feedback-toast__close:focus {
+    outline: none;
+    background: var(--color-ios-empty-dark);
+  }
+
+  /* 🍎 RESPONSIVE: 모바일에서도 중앙 유지 */
+  @media (max-width: 768px) {
+    .feedback-toast {
+      max-width: 350px;
+      min-width: 280px;
+      padding: 20px;
+    }
+
+    .feedback-toast__message {
+      /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+    }
+
+    .feedback-toast__icon {
+      /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 28px → 32px ) */
+    }
+  }
+
+  /* 🍎 ACCESSIBILITY: 모션 줄이기 */
+  @media (prefers-reduced-motion: reduce) {
+    .feedback-toast {
+      transition: opacity 0.3s ease;
+    }
+
+    .feedback-toast--visible {
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+  /* 🍎 HIGH CONTRAST: HUD 스타일 유지 */
+  @media (prefers-contrast: high) {
+    .feedback-toast {
+      background: var(--color-ios-tooltip-bg-dark);
+    }
+
+    .feedback-toast__message {
+      font-weight: 600;
+    }
+  }
+
+} /* end @layer components */

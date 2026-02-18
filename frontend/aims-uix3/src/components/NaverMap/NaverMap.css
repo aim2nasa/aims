@@ -5,186 +5,190 @@
  * 애플 디자인 철학을 따르는 네이버 지도 스타일
  */
 
-.naver-map-wrapper {
-  position: relative;
-  width: 100%;
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: var(--color-bg-secondary);
-  box-shadow: var(--shadow-sm);
-}
+@layer components {
 
-.naver-map-container {
-  width: 100%;
-  height: 100%;
-}
-
-/* 로딩 상태 */
-.naver-map-loading {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-secondary);
-  /* font-size: var(--font-size-body); () */
-  z-index: 10;
-}
-
-/* 다크모드 지원 */
-html[data-theme="dark"] .naver-map-wrapper {
-  background-color: var(--color-bg-tertiary);
-}
-
-/* 지도 리셋 버튼 - 애플 스타일 */
-.naver-map-reset-button {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(255, 255, 255, 0.95);
-  border: none;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 100;
-  color: var(--color-text-primary);
-}
-
-.naver-map-reset-button:hover {
-  background-color: rgba(255, 255, 255, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
-}
-
-.naver-map-reset-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.naver-map-reset-button svg {
-  flex-shrink: 0;
-}
-
-/* 다크모드 */
-html[data-theme="dark"] .naver-map-reset-button {
-  background-color: rgba(44, 44, 46, 0.95);
-  color: var(--color-text-primary);
-}
-
-html[data-theme="dark"] .naver-map-reset-button:hover {
-  background-color: rgba(44, 44, 46, 1);
-}
-
-/* 네이버 로고 숨김 (척도 표시는 유지) */
-.naver-map-container a[href*="naver.com/maps"] {
-  display: none !important;
-}
-
-.naver-map-container img[alt*="NAVER"] {
-  display: none !important;
-}
-
-/* 네이버 지도 로고 컨테이너 숨김 */
-.naver-map-container div[style*="absolute"][style*="left"][style*="bottom"] > a {
-  display: none !important;
-}
-
-/* 마커 로딩 프로그레스바 - 애플 스타일 */
-.naver-map-progress {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 280px;
-  background-color: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  z-index: 200;
-  backdrop-filter: blur(10px);
-}
-
-.naver-map-progress-bar {
-  width: 100%;
-  height: 6px;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-
-.naver-map-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #007AFF 0%, #00C7FF 100%);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.naver-map-progress-text {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 600;
-  color: var(--color-text-primary);
-  text-align: center;
-}
-
-/* 다크모드 */
-html[data-theme="dark"] .naver-map-progress {
-  background-color: rgba(44, 44, 46, 0.95);
-}
-
-html[data-theme="dark"] .naver-map-progress-bar {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-html[data-theme="dark"] .naver-map-progress-fill {
-  background: linear-gradient(90deg, #0A84FF 0%, #00D4FF 100%);
-}
-
-/* 선택된 마커 깜빡임 애니메이션 */
-@keyframes marker-blink {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.2);
-  }
-}
-
-.marker-blink {
-  animation: marker-blink 1s ease-in-out infinite;
-}
-
-/* 📱 모바일 반응형 (480px 이하) */
-@media (max-width: 480px) {
-  /* 지도 래퍼: 모서리 둥글림 제거 (전체 폭 사용) */
   .naver-map-wrapper {
-    border-radius: 0;
-    box-shadow: none;
+    position: relative;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    box-shadow: var(--shadow-sm);
   }
 
-  /* 리셋 버튼 위치 조정 */
+  .naver-map-container {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* 로딩 상태 */
+  .naver-map-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    /* font-size: var(--font-size-body); () */
+    z-index: 10;
+  }
+
+  /* 다크모드 지원 */
+  html[data-theme="dark"] .naver-map-wrapper {
+    background-color: var(--color-bg-tertiary);
+  }
+
+  /* 지도 리셋 버튼 - 애플 스타일 */
   .naver-map-reset-button {
-    bottom: var(--spacing-2);
-    left: var(--spacing-2);
-    width: 36px;
-    height: 36px;
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 100;
+    color: var(--color-text-primary);
   }
 
-  /* 프로그레스바: 폭 축소 */
-  .naver-map-progress {
-    width: 220px;
-    padding: var(--spacing-3);
+  .naver-map-reset-button:hover {
+    background-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
   }
-}
+
+  .naver-map-reset-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  .naver-map-reset-button svg {
+    flex-shrink: 0;
+  }
+
+  /* 다크모드 */
+  html[data-theme="dark"] .naver-map-reset-button {
+    background-color: rgba(44, 44, 46, 0.95);
+    color: var(--color-text-primary);
+  }
+
+  html[data-theme="dark"] .naver-map-reset-button:hover {
+    background-color: rgba(44, 44, 46, 1);
+  }
+
+  /* 네이버 로고 숨김 (척도 표시는 유지) */
+  .naver-map-container a[href*="naver.com/maps"] {
+    display: none !important;
+  }
+
+  .naver-map-container img[alt*="NAVER"] {
+    display: none !important;
+  }
+
+  /* 네이버 지도 로고 컨테이너 숨김 */
+  .naver-map-container div[style*="absolute"][style*="left"][style*="bottom"] > a {
+    display: none !important;
+  }
+
+  /* 마커 로딩 프로그레스바 - 애플 스타일 */
+  .naver-map-progress {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 280px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 200;
+    backdrop-filter: blur(10px);
+  }
+
+  .naver-map-progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .naver-map-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007AFF 0%, #00C7FF 100%);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+
+  .naver-map-progress-text {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 600;
+    color: var(--color-text-primary);
+    text-align: center;
+  }
+
+  /* 다크모드 */
+  html[data-theme="dark"] .naver-map-progress {
+    background-color: rgba(44, 44, 46, 0.95);
+  }
+
+  html[data-theme="dark"] .naver-map-progress-bar {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  html[data-theme="dark"] .naver-map-progress-fill {
+    background: linear-gradient(90deg, #0A84FF 0%, #00D4FF 100%);
+  }
+
+  /* 선택된 마커 깜빡임 애니메이션 */
+  @keyframes marker-blink {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(1.2);
+    }
+  }
+
+  .marker-blink {
+    animation: marker-blink 1s ease-in-out infinite;
+  }
+
+  /* 📱 모바일 반응형 (480px 이하) */
+  @media (max-width: 480px) {
+    /* 지도 래퍼: 모서리 둥글림 제거 (전체 폭 사용) */
+    .naver-map-wrapper {
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    /* 리셋 버튼 위치 조정 */
+    .naver-map-reset-button {
+      bottom: var(--spacing-2);
+      left: var(--spacing-2);
+      width: 36px;
+      height: 36px;
+    }
+
+    /* 프로그레스바: 폭 축소 */
+    .naver-map-progress {
+      width: 220px;
+      padding: var(--spacing-3);
+    }
+  }
+
+} /* end @layer components */

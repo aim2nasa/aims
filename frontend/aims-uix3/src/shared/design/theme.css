@@ -8,558 +8,39 @@
  */
 
 /* === Modal System Variables === */
-@import './modal-variables.css';
 
 /* === LIGHT THEME (기본) === */
 
-:root,
-[data-theme="light"] {
-  /* Background Colors */
-  --color-bg-primary: var(--color-neutral-0);
-  --color-bg-secondary: var(--color-neutral-50);
-  --color-bg-card: var(--color-neutral-75);  /* 카드/리스트용 중간 톤 */
-  --color-bg-tertiary: var(--color-neutral-100);
-  --color-bg-hover: var(--color-neutral-100);
-  --color-bg-active: var(--color-neutral-200);
-  --color-bg-disabled: var(--color-neutral-100);
+@import './modal-variables.css';
 
-  /* Text Colors */
-  --color-text-primary: var(--color-neutral-900);
-  --color-text-secondary: var(--color-neutral-600);
-  --color-text-tertiary: var(--color-neutral-400);
-  --color-text-disabled: var(--color-neutral-300);
-  --color-text-inverse: var(--color-neutral-0);
+@layer theme {
 
-  /* Border Colors - 라이트 테마 대비 강화 */
-  --color-border-primary: #d4d6dc;      /* 더 진한 경계선 */
-  --color-border-secondary: #c1c4cc;    /* 더 진한 보조 경계선 */
-  --color-border-focus: var(--color-primary-500);
-  --color-border-error: var(--color-error-500);
-  --color-border-disabled: var(--color-neutral-200);
-
-  /* Button Colors */
-  --color-button-primary-bg: var(--color-primary-600);
-  --color-button-primary-bg-hover: var(--color-primary-700);
-  --color-button-primary-bg-active: var(--color-primary-800);
-  --color-button-primary-text: var(--color-neutral-0);
-
-  --color-button-secondary-bg: var(--color-neutral-0);
-  --color-button-secondary-bg-hover: var(--color-neutral-50);
-  --color-button-secondary-bg-active: var(--color-neutral-100);
-  --color-button-secondary-text: var(--color-neutral-700);
-  --color-button-secondary-border: var(--color-neutral-300);
-
-  --color-button-ghost-bg: transparent;
-  --color-button-ghost-bg-hover: var(--color-neutral-100);
-  --color-button-ghost-bg-active: var(--color-neutral-200);
-  --color-button-ghost-text: var(--color-neutral-700);
-
-  --color-button-destructive-bg: var(--color-error-600);
-  --color-button-destructive-bg-hover: var(--color-error-700);
-  --color-button-destructive-text: var(--color-neutral-0);
-
-  --color-button-dev-bg: rgba(255, 149, 0, 0.15);
-  --color-button-dev-bg-hover: rgba(255, 149, 0, 0.25);
-  --color-button-dev-border: rgba(255, 149, 0, 0.3);
-  --color-button-dev-text: #ff9500;
-  --color-button-dev-shadow: rgba(255, 149, 0, 0.2);
-
-  /* Input Colors */
-  --color-input-bg: var(--color-neutral-0);
-  --color-input-bg-disabled: var(--color-neutral-50);
-  --color-input-border: var(--color-neutral-300);
-  --color-input-border-focus: var(--color-primary-500);
-  --color-input-border-error: var(--color-error-500);
-  --color-input-text: var(--color-neutral-900);
-  --color-input-text-disabled: var(--color-neutral-400);
-  --color-input-placeholder: var(--color-neutral-400);
-
-  /* Status Colors */
-  --color-status-success: var(--color-success-600);
-  --color-status-success-bg: var(--color-success-50);
-  --color-status-warning: var(--color-warning-600);
-  --color-status-warning-bg: var(--color-warning-50);
-  --color-status-error: var(--color-error-600);
-  --color-status-error-bg: var(--color-error-50);
-  --color-status-info: var(--color-info-600);
-  --color-status-info-bg: var(--color-info-50);
-
-  /* Selection Colors (for Excel Refiner & table rows) */
-  --color-selection-bg: var(--color-selection-bg-light);
-  --color-selection-bg-hover: var(--color-selection-bg-light-hover);
-  --color-product-original-selected: var(--color-product-original-selected-light);
-  --color-product-modified-selected: var(--color-product-modified-selected-light);
-  --color-product-unmatched-selected: var(--color-product-unmatched-selected-light);
-
-  /* Effect Colors */
-  --color-effect-vite-glow: #646cffaa;
-  --color-effect-react-glow: #61dafbaa;
-  --color-effect-docs-text: var(--color-neutral-400);
-
-  /* Icon Colors */
-  --color-hamburger-icon: var(--color-hamburger-icon-light);
-
-  /* Folder Icon Colors - 라이트 테마 */
-  --color-folder: var(--color-folder-light);
-  --color-folder-open: var(--color-folder-light-open);
-
-  /* Selection Colors - 라이트 테마 강화 */
-  --color-selection-border: var(--color-selection-border-light);
-  --color-selection-text: var(--color-selection-text-light);
-
-  /* Sort Indicator Colors */
-  --color-sort-indicator-active: var(--color-error-600); /* 선택된 정렬 컬럼 강조 */
-
-  /* Hamburger Button Colors - Light Theme */
-  --color-hamburger-button-bg: var(--color-hamburger-button-bg-light);
-
-  /* Overlay Colors */
-  --color-overlay-modal: rgba(0, 0, 0, 0.5);
-  --color-overlay-backdrop: rgba(255, 255, 255, 0.1);
-
-  /* Modal Text Colors - Light Theme */
-  --color-modal-text-primary: var(--color-text-primary);
-  --color-modal-text-secondary: var(--color-text-secondary);
-
-  /* Layout Colors - Light Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
-  --color-layout-main-bg: var(--color-layout-main-light); /* iOS 라이트 그레이 메인 배경 */
-  --color-layout-header-bg: var(--color-layout-header-light); /* 순수 화이트 미니멀 헤더 */
-  --color-layout-leftpane-bg: var(--color-layout-leftpane-light); /* iOS 시스템 그레이 */
-  --color-layout-mainpane-bg: var(--color-layout-main-light); /* 메인과 동일한 iOS 라이트 그레이 */
-  --color-layout-centerpane-bg: var(--color-layout-content-light); /* 순수 화이트 카드형 배경 */
-  --color-layout-pagination-bg: var(--color-layout-accent-light); /* 라이트 액센트 */
-  --color-layout-brb-bg: var(--color-layout-brb-light); /* 서브틀 그레이 드래그 바 */
-  --color-layout-brb-hover: var(--color-layout-brb-hover-light); /* 호버 시 진한 그레이 */
-  --color-layout-brb-icon: var(--color-layout-brb-icon-light); /* 호버 아이콘 색상 */
-  --color-layout-rightpane-bg: var(--color-layout-rightpane-light); /* CenterPane과 동일한 배경 */
-
-  /* Header Glass Effect Colors - Light Theme (glassmorphism) */
-  --color-header-glass-bg: rgba(255, 255, 255, 0.7); /* 헤더 glassmorphism 배경 */
-  --color-scrollbar-thumb: var(--color-ios-scrollbar-light); /* 스크롤바 thumb */
-  --color-scrollbar-thumb-hover: var(--color-ios-scrollbar-hover-light); /* 스크롤바 thumb 호버 */
-  --color-text-placeholder: var(--color-ios-text-placeholder-light); /* 플레이스홀더 텍스트 */
-
-  /* Gap Controller Colors */
-  --color-gap-button-active: var(--color-error-500);
-  --color-gap-button-inactive: var(--color-neutral-700);
-  --color-gap-button-reset: var(--color-success-500);
-
-  /* === APPLE STYLE HEADER COLORS - LIGHT THEME === */
-
-  /* Progressive Disclosure Header Background - 가시성 개선 */
-  --color-header-bg-subtle: rgba(255, 255, 255, 0.85); /* 충분한 가시성 확보 */
-  --color-header-bg-expanded: rgba(255, 255, 255, 0.98); /* 확장 시 거의 불투명 */
-  --color-header-border-subtle: rgba(229, 229, 234, 0.6); /* 명확한 테두리 */
-  --color-header-border-expanded: rgba(229, 229, 234, 0.9); /* iOS 테두리 확장 */
-
-  /* Header Text */
-  --color-header-title: rgba(26, 26, 26, 0.6); /* 서브틀한 타이틀 */
-
-  /* === 2단계: 서브틀한 시각적 힌트 === */
-  --color-header-hint-subtle: rgba(0, 0, 0, 0.08); /* 극도로 서브틀한 힌트 */
-
-  /* === 3단계: 애플스러운 툴팁 === */
-  --color-tooltip-bg: rgba(255, 255, 255, 0.95); /* 툴팁 배경 */
-  --color-tooltip-text: rgba(26, 26, 26, 0.8); /* 툴팁 텍스트 */
-  --color-tooltip-border: rgba(0, 0, 0, 0.1); /* 툴팁 테두리 */
-  --tooltip-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
-  --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.1); /* 툴팁 그림자 */
-  --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, var(--opacity-shadow-md)); /* 카드 호버 그림자 */
-  --z-index-tooltip: 1000; /* 툴팁 레이어 */
-
-  /* === 4단계: 첫 방문자 펄스 애니메이션 === */
-  --pulse-duration: 3s; /* 애플 스타일 breathing 주기 */
-  --pulse-opacity-min: 0.3; /* 펄스 최소 투명도 (극도로 서브틀) */
-  --pulse-opacity-max: 0.7; /* 펄스 최대 투명도 (인식 가능) */
-  --pulse-scale-min: 1; /* 펄스 최소 크기 */
-  --pulse-scale-max: 1.05; /* 펄스 최대 크기 (미세한 breathing) */
-  --pulse-easing: ease-in-out; /* 자연스러운 breathing 리듬 */
-
-  /* Header Controls */
-  --color-header-control-bg: rgba(255, 255, 255, 0.1);
-  --color-header-control-border: rgba(255, 255, 255, 0.2);
-  --color-header-control-icon: var(--color-neutral-600);
-  --color-header-control-hover: rgba(229, 229, 234, 0.4);
-  --color-header-control-active: rgba(229, 229, 234, 0.6);
-  --color-header-control-border-hover: rgba(209, 213, 219, 0.6);
-  --color-header-control-border-active: rgba(209, 213, 219, 0.8);
-  --color-header-control-icon-active: var(--color-primary-600);
-  --color-header-control-disabled: rgba(243, 244, 246, 0.5);
-  --color-header-control-icon-disabled: var(--color-neutral-300);
-  --color-header-control-border-disabled: rgba(229, 229, 234, 0.3);
-
-  /* Header Control Size */
-  --header-control-size: 32px;
-
-  /* Progressive Disclosure Indicator */
-  --color-header-indicator: rgba(156, 163, 175, 0.6);
-
-  /* User Avatar Colors - Light Theme (유튜브/구글 스타일: 부드러운 색상) */
-  --color-avatar-bg: #5865f2; /* 부드러운 인디고 블루 (양쪽 테마에서 잘 보임) */
-  --color-avatar-text: #ffffff; /* 하얀 텍스트 */
-
-  /* Header Heights and Opacities - Progressive Disclosure 최적화 */
-  --header-height-base: 50px;  /* 충분한 마우스 상호작용 영역 */
-  --header-height-expanded: 70px;
-  --header-opacity-subtle: 0.9;  /* 충분한 가시성 확보 */
-  --header-opacity-expanded: 1;
-  --header-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
-}
-
-/* === DARK THEME === */
-
-[data-theme="dark"] {
-  /* Background Colors */
-  --color-bg-primary: var(--color-neutral-900);
-  --color-bg-secondary: var(--color-neutral-800);
-  --color-bg-card: var(--color-neutral-900);  /* 다크 테마: primary와 동일 */
-  --color-bg-tertiary: var(--color-neutral-700);
-  --color-bg-hover: var(--color-neutral-800);
-  --color-bg-active: var(--color-neutral-700);
-  --color-bg-disabled: var(--color-neutral-800);
-
-  /* Text Colors */
-  --color-text-primary: var(--color-neutral-100);
-  --color-text-secondary: var(--color-neutral-300);
-  --color-text-tertiary: var(--color-neutral-500);
-  --color-text-disabled: var(--color-neutral-600);
-  --color-text-inverse: var(--color-neutral-900);
-
-  /* Border Colors */
-  --color-border-primary: var(--color-neutral-700);
-  --color-border-secondary: var(--color-neutral-600);
-  --color-border-focus: var(--color-primary-400);
-  --color-border-error: var(--color-error-400);
-  --color-border-disabled: var(--color-neutral-700);
-
-  /* Button Colors */
-  --color-button-primary-bg: var(--color-primary-500);
-  --color-button-primary-bg-hover: var(--color-primary-400);
-  --color-button-primary-bg-active: var(--color-primary-300);
-  --color-button-primary-text: var(--color-neutral-0);
-
-  --color-button-secondary-bg: var(--color-neutral-800);
-  --color-button-secondary-bg-hover: var(--color-neutral-700);
-  --color-button-secondary-bg-active: var(--color-neutral-600);
-  --color-button-secondary-text: var(--color-neutral-200);
-  --color-button-secondary-border: var(--color-neutral-600);
-
-  --color-button-ghost-bg: transparent;
-  --color-button-ghost-bg-hover: var(--color-neutral-800);
-  --color-button-ghost-bg-active: var(--color-neutral-700);
-  --color-button-ghost-text: var(--color-neutral-200);
-
-  --color-button-destructive-bg: var(--color-error-600);
-  --color-button-destructive-bg-hover: var(--color-error-500);
-  --color-button-destructive-text: var(--color-neutral-0);
-
-  --color-button-dev-bg: rgba(255, 149, 0, 0.15);
-  --color-button-dev-bg-hover: rgba(255, 149, 0, 0.25);
-  --color-button-dev-border: rgba(255, 149, 0, 0.3);
-  --color-button-dev-text: #ff9500;
-  --color-button-dev-shadow: rgba(255, 149, 0, 0.2);
-
-  /* Input Colors */
-  --color-input-bg: var(--color-neutral-800);
-  --color-input-bg-disabled: var(--color-neutral-900);
-  --color-input-border: var(--color-neutral-600);
-  --color-input-border-focus: var(--color-primary-400);
-  --color-input-border-error: var(--color-error-400);
-  --color-input-text: var(--color-neutral-100);
-  --color-input-text-disabled: var(--color-neutral-500);
-  --color-input-placeholder: var(--color-neutral-500);
-
-  /* Status Colors */
-  --color-status-success: var(--color-success-400);
-  --color-status-success-bg: rgba(34, 197, 94, 0.1);
-  --color-status-warning: var(--color-warning-400);
-  --color-status-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-status-error: var(--color-error-400);
-  --color-status-error-bg: rgba(239, 68, 68, 0.1);
-  --color-status-info: var(--color-info-400);
-  --color-status-info-bg: rgba(59, 130, 246, 0.1);
-
-  /* Selection Colors (for Excel Refiner & table rows) - Dark Theme */
-  --color-selection-bg: var(--color-selection-bg-dark);
-  --color-selection-bg-hover: var(--color-selection-bg-dark-hover);
-  --color-product-original-selected: var(--color-product-original-selected-dark);
-  --color-product-modified-selected: var(--color-product-modified-selected-dark);
-  --color-product-unmatched-selected: var(--color-product-unmatched-selected-dark);
-
-  /* Effect Colors - Dark Theme */
-  --color-effect-vite-glow: #646cffcc;
-  --color-effect-react-glow: #61dafbcc;
-  --color-effect-docs-text: var(--color-neutral-400);
-
-  /* Icon Colors - Dark Theme */
-  --color-hamburger-icon: var(--color-hamburger-icon-dark);
-
-  /* Folder Icon Colors - 다크 테마 */
-  --color-folder: var(--color-folder-dark);
-  --color-folder-open: var(--color-folder-dark-open);
-
-  /* Sort Indicator Colors - Dark Theme */
-  --color-sort-indicator-active: var(--color-error); /* 선택된 정렬 컬럼 강조 */
-
-  /* Hamburger Button Colors - Dark Theme */
-  --color-hamburger-button-bg: var(--color-hamburger-button-bg-dark);
-
-  /* Overlay Colors - Dark Theme */
-  --color-overlay-modal: rgba(0, 0, 0, 0.7);
-  --color-overlay-backdrop: rgba(0, 0, 0, 0.2);
-
-  /* Modal Text Colors - Dark Theme (High Contrast for Visibility) */
-  --color-modal-text-primary: rgba(255, 255, 255, 0.95);
-  --color-modal-text-secondary: rgba(255, 255, 255, 0.8);
-
-  /* Layout Colors - Dark Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
-  --color-layout-main-bg: var(--color-layout-main-dark); /* 순수 블랙 메인 배경 */
-  --color-layout-header-bg: var(--color-layout-header-dark); /* iOS 다크 그레이 헤더 */
-  --color-layout-leftpane-bg: var(--color-layout-leftpane-dark); /* iOS 다크 그레이 */
-  --color-layout-mainpane-bg: var(--color-layout-main-dark); /* 메인과 동일한 순수 블랙 */
-  --color-layout-centerpane-bg: var(--color-layout-content-dark); /* iOS 다크 그레이 카드형 배경 */
-  --color-layout-pagination-bg: var(--color-layout-accent-dark); /* 다크 액센트 */
-  --color-layout-brb-bg: var(--color-layout-brb-dark); /* 서브틀 다크 그레이 드래그 바 */
-  --color-layout-brb-hover: var(--color-layout-brb-hover-dark); /* 호버 시 진한 다크 그레이 */
-  --color-layout-brb-icon: var(--color-layout-brb-icon-dark); /* 호버 아이콘 색상 */
-  --color-layout-rightpane-bg: var(--color-layout-rightpane-dark); /* CenterPane과 동일한 배경 */
-
-  /* Header Glass Effect Colors - Dark Theme (glassmorphism) */
-  --color-header-glass-bg: rgba(28, 28, 30, 0.7); /* 헤더 glassmorphism 배경 */
-  --color-scrollbar-thumb: var(--color-ios-scrollbar-dark); /* 스크롤바 thumb */
-  --color-scrollbar-thumb-hover: var(--color-ios-scrollbar-hover-dark); /* 스크롤바 thumb 호버 */
-  --color-text-placeholder: var(--color-ios-text-placeholder-dark); /* 플레이스홀더 텍스트 */
-
-  /* Gap Controller Colors - Dark Theme */
-  --color-gap-button-active: var(--color-error-400);
-  --color-gap-button-inactive: var(--color-neutral-600);
-  --color-gap-button-reset: var(--color-success-400);
-
-  /* === APPLE STYLE HEADER COLORS - DARK THEME === */
-
-  /* Progressive Disclosure Header Background - iOS systemGray6 기반 */
-  --color-header-bg-subtle: rgba(28, 28, 30, 0.85); /* iOS systemGray6 다크모드 (#1c1c1e) */
-  --color-header-bg-expanded: rgba(28, 28, 30, 0.98); /* 확장 시 거의 불투명 */
-  --color-header-border-subtle: rgba(58, 58, 60, 0.6); /* iOS systemGray4 다크모드 (#3a3a3c) */
-  --color-header-border-expanded: rgba(58, 58, 60, 0.9); /* 다크 테두리 확장 */
-
-  /* Header Text */
-  --color-header-title: rgba(249, 250, 251, 0.6); /* 서브틀한 다크 타이틀 */
-
-  /* === 2단계: 서브틀한 시각적 힌트 === */
-  --color-header-hint-subtle: rgba(255, 255, 255, 0.1); /* 다크 테마 서브틀한 힌트 */
-
-  /* === 3단계: 애플스러운 툴팁 === */
-  --color-tooltip-bg: rgba(28, 28, 30, 0.95); /* 다크 툴팁 배경 */
-  --color-tooltip-text: rgba(249, 250, 251, 0.8); /* 다크 툴팁 텍스트 */
-  --color-tooltip-border: rgba(255, 255, 255, 0.1); /* 다크 툴팁 테두리 */
-  --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.3); /* 다크 툴팁 그림자 */
-  --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, var(--opacity-shadow-2xl)); /* 다크 카드 호버 그림자 */
-
-  /* === 4단계: 첫 방문자 펄스 애니메이션 === */
-  /* 다크 테마에서도 동일한 펄스 변수 사용 (애니메이션 일관성) */
-  --pulse-duration: 3s; /* 애플 스타일 breathing 주기 */
-  --pulse-opacity-min: 0.3; /* 펄스 최소 투명도 */
-  --pulse-opacity-max: 0.7; /* 펄스 최대 투명도 */
-  --pulse-scale-min: 1; /* 펄스 최소 크기 */
-  --pulse-scale-max: 1.05; /* 펄스 최대 크기 */
-  --pulse-easing: ease-in-out; /* 자연스러운 breathing 리듬 */
-
-  /* Header Controls */
-  --color-header-control-bg: rgba(255, 255, 255, 0.05);
-  --color-header-control-border: rgba(255, 255, 255, 0.1);
-  --color-header-control-icon: var(--color-neutral-300);
-  --color-header-control-hover: rgba(75, 85, 99, 0.4);
-  --color-header-control-active: rgba(75, 85, 99, 0.6);
-  --color-header-control-border-hover: rgba(107, 114, 128, 0.6);
-  --color-header-control-border-active: rgba(107, 114, 128, 0.8);
-  --color-header-control-icon-active: var(--color-primary-400);
-  --color-header-control-disabled: rgba(31, 41, 55, 0.5);
-  --color-header-control-icon-disabled: var(--color-neutral-600);
-  --color-header-control-border-disabled: rgba(75, 85, 99, 0.3);
-
-  /* Header Control Size */
-  --header-control-size: 32px;
-
-  /* Progressive Disclosure Indicator */
-  --color-header-indicator: rgba(156, 163, 175, 0.4);
-
-  /* User Avatar Colors - Dark Theme (유튜브/구글 스타일: 라이트와 동일) */
-  --color-avatar-bg: #5865f2; /* 부드러운 인디고 블루 (라이트와 일관성) */
-  --color-avatar-text: #ffffff; /* 하얀 텍스트 */
-
-  /* === APPLE iOS STYLE COLORS - DARK THEME === */
-
-  /* Header Apple-style controls */
-  --color-apple-control-bg: rgba(255, 255, 255, 0.08);
-  --color-apple-control-hover: rgba(255, 255, 255, 0.15);
-  --color-apple-control-border: rgba(255, 255, 255, 0.12);
-
-  /* Apple Glass Effects */
-  --color-apple-glass-dark: rgba(28, 28, 30, 0.8);
-  --color-apple-glass-subtle: rgba(255, 255, 255, 0.05);
-
-  /* Apple Shadows - Dark Theme */
-  --shadow-apple-button: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-apple-button-hover: 0 4px 8px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.25);
-  --shadow-apple-elevated: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0px 1px rgba(0, 0, 0, 0.2);
-
-  /* Liquid Glass Modal - Dark Theme - iOS/macOS 표준 */
-  --color-modal-glass-bg: #2c2c2e;                     /* iOS systemGray6 - 애플 공식 다크 모달 배경 */
-  --color-modal-glass-bg-hover: #3a3a3c;               /* iOS systemGray5 - 호버 시 */
-  --color-modal-glass-border: rgba(255, 255, 255, 0.1);
-  --backdrop-modal-dimming: rgba(0, 0, 0, 0.6);
-
-  /* Header Heights and Opacities - Progressive Disclosure 최적화 */
-  --header-height-base: 50px;  /* 충분한 마우스 상호작용 영역 */
-  --header-height-expanded: 70px;
-  --header-opacity-subtle: 0.9;  /* 충분한 가시성 확보 */
-  --header-opacity-expanded: 1;
-  --header-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
-
-  /* === APPLE iOS STYLE COLORS === */
-
-  /* Header Apple-style controls */
-  --color-apple-control-bg: rgba(255, 255, 255, 0.15);
-  --color-apple-control-hover: rgba(255, 255, 255, 0.25);
-  --color-apple-control-border: rgba(255, 255, 255, 0.2);
-
-  /* Apple Glass Effects */
-  --color-apple-glass-light: rgba(255, 255, 255, 0.8);
-  --color-apple-glass-subtle: rgba(255, 255, 255, 0.1);
-
-  /* Apple Shadows - Light Theme */
-  --shadow-apple-button: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-apple-button-hover: 0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.08);
-  --shadow-apple-elevated: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0px 1px rgba(0, 0, 0, 0.06);
-
-  /* Liquid Glass Modal - Light Theme */
-  --color-modal-glass-bg: rgba(255, 255, 255, 0.95);     /* 텍스트 가독성 향상 */
-  --color-modal-glass-bg-hover: rgba(255, 255, 255, 0.98); /* Progressive Disclosure 호버 */
-  --color-modal-glass-border: rgba(0, 0, 0, 0.1);        /* iOS separatorColor - 라이트 테마 가시성 */
-  --backdrop-modal-dimming: rgba(0, 0, 0, 0.4);
-}
-
-/* === SYSTEM PREFERENCE === */
-
-@media (prefers-color-scheme: dark) {
-  [data-theme="system"] {
-    /* Dark theme variables - same as [data-theme="dark"] */
-    --color-bg-primary: var(--color-neutral-900);
-    --color-bg-secondary: var(--color-neutral-800);
-    --color-bg-card: var(--color-neutral-900);
-    --color-bg-tertiary: var(--color-neutral-700);
-    --color-bg-hover: var(--color-neutral-800);
-    --color-bg-active: var(--color-neutral-700);
-    --color-bg-disabled: var(--color-neutral-800);
-
-    --color-text-primary: var(--color-neutral-100);
-    --color-text-secondary: var(--color-neutral-300);
-    --color-text-tertiary: var(--color-neutral-500);
-    --color-text-disabled: var(--color-neutral-600);
-    --color-text-inverse: var(--color-neutral-900);
-
-    --color-border-primary: var(--color-neutral-700);
-    --color-border-secondary: var(--color-neutral-600);
-    --color-border-focus: var(--color-primary-400);
-    --color-border-error: var(--color-error-400);
-    --color-border-disabled: var(--color-neutral-700);
-
-    --color-button-primary-bg: var(--color-primary-500);
-    --color-button-primary-bg-hover: var(--color-primary-400);
-    --color-button-primary-bg-active: var(--color-primary-300);
-    --color-button-primary-text: var(--color-neutral-0);
-
-    --color-button-secondary-bg: var(--color-neutral-800);
-    --color-button-secondary-bg-hover: var(--color-neutral-700);
-    --color-button-secondary-bg-active: var(--color-neutral-600);
-    --color-button-secondary-text: var(--color-neutral-200);
-    --color-button-secondary-border: var(--color-neutral-600);
-
-    --color-button-ghost-bg: transparent;
-    --color-button-ghost-bg-hover: var(--color-neutral-800);
-    --color-button-ghost-bg-active: var(--color-neutral-700);
-    --color-button-ghost-text: var(--color-neutral-200);
-
-    --color-button-destructive-bg: var(--color-error-600);
-    --color-button-destructive-bg-hover: var(--color-error-500);
-    --color-button-destructive-text: var(--color-neutral-0);
-
-    --color-input-bg: var(--color-neutral-800);
-    --color-input-bg-disabled: var(--color-neutral-900);
-    --color-input-border: var(--color-neutral-600);
-    --color-input-border-focus: var(--color-primary-400);
-    --color-input-border-error: var(--color-error-400);
-    --color-input-text: var(--color-neutral-100);
-    --color-input-text-disabled: var(--color-neutral-500);
-    --color-input-placeholder: var(--color-neutral-500);
-
-    --color-status-success: var(--color-success-400);
-    --color-status-success-bg: rgba(34, 197, 94, 0.1);
-    --color-status-warning: var(--color-warning-400);
-    --color-status-warning-bg: rgba(245, 158, 11, 0.1);
-    --color-status-error: var(--color-error-400);
-    --color-status-error-bg: rgba(239, 68, 68, 0.1);
-    --color-status-info: var(--color-info-400);
-    --color-status-info-bg: rgba(59, 130, 246, 0.1);
-
-    /* Effect Colors - System Dark Theme */
-    --color-effect-vite-glow: #646cffcc;
-    --color-effect-react-glow: #61dafbcc;
-    --color-effect-docs-text: var(--color-neutral-400);
-
-    /* Icon Colors - System Dark Theme */
-    --color-hamburger-icon: var(--color-hamburger-icon-dark);
-
-    /* Hamburger Button Colors - System Dark Theme */
-    --color-hamburger-button-bg: var(--color-hamburger-button-bg-dark);
-
-    /* Modal Text Colors - System Dark Theme (High Contrast for Visibility) */
-    --color-modal-text-primary: rgba(255, 255, 255, 0.95);
-    --color-modal-text-secondary: rgba(255, 255, 255, 0.8);
-
-    /* Layout Colors - System Dark Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
-    --color-layout-main-bg: var(--color-layout-main-dark); /* 순수 블랙 메인 배경 */
-    --color-layout-header-bg: var(--color-layout-header-dark); /* iOS 다크 그레이 헤더 */
-    --color-layout-leftpane-bg: var(--color-layout-leftpane-dark); /* iOS 다크 그레이 */
-    --color-layout-mainpane-bg: var(--color-layout-main-dark); /* 메인과 동일한 순수 블랙 */
-    --color-layout-centerpane-bg: var(--color-layout-content-dark); /* iOS 다크 그레이 카드형 배경 */
-    --color-layout-pagination-bg: var(--color-layout-accent-dark); /* 다크 액센트 */
-    --color-layout-brb-bg: var(--color-layout-brb-dark); /* 서브틀 다크 그레이 드래그 바 */
-    --color-layout-brb-hover: var(--color-layout-brb-hover-dark); /* 호버 시 진한 다크 그레이 */
-    --color-layout-brb-icon: var(--color-layout-brb-icon-dark); /* 호버 아이콘 색상 */
-    --color-layout-rightpane-bg: var(--color-layout-rightpane-dark); /* CenterPane과 동일한 배경 */
-
-    /* Gap Controller Colors - System Dark Theme */
-    --color-gap-button-active: var(--color-error-400);
-    --color-gap-button-inactive: var(--color-neutral-600);
-    --color-gap-button-reset: var(--color-success-400);
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  [data-theme="system"] {
-    /* Light theme variables - same as :root */
+  :root,
+  [data-theme="light"] {
+    /* Background Colors */
     --color-bg-primary: var(--color-neutral-0);
     --color-bg-secondary: var(--color-neutral-50);
-    --color-bg-card: var(--color-neutral-75);
+    --color-bg-card: var(--color-neutral-75);  /* 카드/리스트용 중간 톤 */
     --color-bg-tertiary: var(--color-neutral-100);
     --color-bg-hover: var(--color-neutral-100);
     --color-bg-active: var(--color-neutral-200);
     --color-bg-disabled: var(--color-neutral-100);
 
+    /* Text Colors */
     --color-text-primary: var(--color-neutral-900);
     --color-text-secondary: var(--color-neutral-600);
     --color-text-tertiary: var(--color-neutral-400);
     --color-text-disabled: var(--color-neutral-300);
     --color-text-inverse: var(--color-neutral-0);
 
-    --color-border-primary: #d4d6dc;  /* 라이트 모드 기본 경계 색상 - 통일 */
-    --color-border-secondary: var(--color-neutral-300);
+    /* Border Colors - 라이트 테마 대비 강화 */
+    --color-border-primary: #d4d6dc;      /* 더 진한 경계선 */
+    --color-border-secondary: #c1c4cc;    /* 더 진한 보조 경계선 */
     --color-border-focus: var(--color-primary-500);
     --color-border-error: var(--color-error-500);
     --color-border-disabled: var(--color-neutral-200);
 
+    /* Button Colors */
     --color-button-primary-bg: var(--color-primary-600);
     --color-button-primary-bg-hover: var(--color-primary-700);
     --color-button-primary-bg-active: var(--color-primary-800);
@@ -580,6 +61,13 @@
     --color-button-destructive-bg-hover: var(--color-error-700);
     --color-button-destructive-text: var(--color-neutral-0);
 
+    --color-button-dev-bg: rgba(255, 149, 0, 0.15);
+    --color-button-dev-bg-hover: rgba(255, 149, 0, 0.25);
+    --color-button-dev-border: rgba(255, 149, 0, 0.3);
+    --color-button-dev-text: #ff9500;
+    --color-button-dev-shadow: rgba(255, 149, 0, 0.2);
+
+    /* Input Colors */
     --color-input-bg: var(--color-neutral-0);
     --color-input-bg-disabled: var(--color-neutral-50);
     --color-input-border: var(--color-neutral-300);
@@ -589,6 +77,7 @@
     --color-input-text-disabled: var(--color-neutral-400);
     --color-input-placeholder: var(--color-neutral-400);
 
+    /* Status Colors */
     --color-status-success: var(--color-success-600);
     --color-status-success-bg: var(--color-success-50);
     --color-status-warning: var(--color-warning-600);
@@ -598,18 +87,44 @@
     --color-status-info: var(--color-info-600);
     --color-status-info-bg: var(--color-info-50);
 
-    /* Effect Colors - System Light Theme */
+    /* Selection Colors (for Excel Refiner & table rows) */
+    --color-selection-bg: var(--color-selection-bg-light);
+    --color-selection-bg-hover: var(--color-selection-bg-light-hover);
+    --color-product-original-selected: var(--color-product-original-selected-light);
+    --color-product-modified-selected: var(--color-product-modified-selected-light);
+    --color-product-unmatched-selected: var(--color-product-unmatched-selected-light);
+
+    /* Effect Colors */
     --color-effect-vite-glow: #646cffaa;
     --color-effect-react-glow: #61dafbaa;
     --color-effect-docs-text: var(--color-neutral-400);
 
-    /* Icon Colors - System Light Theme */
+    /* Icon Colors */
     --color-hamburger-icon: var(--color-hamburger-icon-light);
 
-    /* Hamburger Button Colors - System Light Theme */
+    /* Folder Icon Colors - 라이트 테마 */
+    --color-folder: var(--color-folder-light);
+    --color-folder-open: var(--color-folder-light-open);
+
+    /* Selection Colors - 라이트 테마 강화 */
+    --color-selection-border: var(--color-selection-border-light);
+    --color-selection-text: var(--color-selection-text-light);
+
+    /* Sort Indicator Colors */
+    --color-sort-indicator-active: var(--color-error-600); /* 선택된 정렬 컬럼 강조 */
+
+    /* Hamburger Button Colors - Light Theme */
     --color-hamburger-button-bg: var(--color-hamburger-button-bg-light);
 
-    /* Layout Colors - System Light Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
+    /* Overlay Colors */
+    --color-overlay-modal: rgba(0, 0, 0, 0.5);
+    --color-overlay-backdrop: rgba(255, 255, 255, 0.1);
+
+    /* Modal Text Colors - Light Theme */
+    --color-modal-text-primary: var(--color-text-primary);
+    --color-modal-text-secondary: var(--color-text-secondary);
+
+    /* Layout Colors - Light Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
     --color-layout-main-bg: var(--color-layout-main-light); /* iOS 라이트 그레이 메인 배경 */
     --color-layout-header-bg: var(--color-layout-header-light); /* 순수 화이트 미니멀 헤더 */
     --color-layout-leftpane-bg: var(--color-layout-leftpane-light); /* iOS 시스템 그레이 */
@@ -621,47 +136,537 @@
     --color-layout-brb-icon: var(--color-layout-brb-icon-light); /* 호버 아이콘 색상 */
     --color-layout-rightpane-bg: var(--color-layout-rightpane-light); /* CenterPane과 동일한 배경 */
 
-    /* Gap Controller Colors - System Light Theme */
+    /* Header Glass Effect Colors - Light Theme (glassmorphism) */
+    --color-header-glass-bg: rgba(255, 255, 255, 0.7); /* 헤더 glassmorphism 배경 */
+    --color-scrollbar-thumb: var(--color-ios-scrollbar-light); /* 스크롤바 thumb */
+    --color-scrollbar-thumb-hover: var(--color-ios-scrollbar-hover-light); /* 스크롤바 thumb 호버 */
+    --color-text-placeholder: var(--color-ios-text-placeholder-light); /* 플레이스홀더 텍스트 */
+
+    /* Gap Controller Colors */
     --color-gap-button-active: var(--color-error-500);
     --color-gap-button-inactive: var(--color-neutral-700);
     --color-gap-button-reset: var(--color-success-500);
+
+    /* === APPLE STYLE HEADER COLORS - LIGHT THEME === */
+
+    /* Progressive Disclosure Header Background - 가시성 개선 */
+    --color-header-bg-subtle: rgba(255, 255, 255, 0.85); /* 충분한 가시성 확보 */
+    --color-header-bg-expanded: rgba(255, 255, 255, 0.98); /* 확장 시 거의 불투명 */
+    --color-header-border-subtle: rgba(229, 229, 234, 0.6); /* 명확한 테두리 */
+    --color-header-border-expanded: rgba(229, 229, 234, 0.9); /* iOS 테두리 확장 */
+
+    /* Header Text */
+    --color-header-title: rgba(26, 26, 26, 0.6); /* 서브틀한 타이틀 */
+
+    /* === 2단계: 서브틀한 시각적 힌트 === */
+    --color-header-hint-subtle: rgba(0, 0, 0, 0.08); /* 극도로 서브틀한 힌트 */
+
+    /* === 3단계: 애플스러운 툴팁 === */
+    --color-tooltip-bg: rgba(255, 255, 255, 0.95); /* 툴팁 배경 */
+    --color-tooltip-text: rgba(26, 26, 26, 0.8); /* 툴팁 텍스트 */
+    --color-tooltip-border: rgba(0, 0, 0, 0.1); /* 툴팁 테두리 */
+    --tooltip-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
+    --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.1); /* 툴팁 그림자 */
+    --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, var(--opacity-shadow-md)); /* 카드 호버 그림자 */
+    --z-index-tooltip: 1000; /* 툴팁 레이어 */
+
+    /* === 4단계: 첫 방문자 펄스 애니메이션 === */
+    --pulse-duration: 3s; /* 애플 스타일 breathing 주기 */
+    --pulse-opacity-min: 0.3; /* 펄스 최소 투명도 (극도로 서브틀) */
+    --pulse-opacity-max: 0.7; /* 펄스 최대 투명도 (인식 가능) */
+    --pulse-scale-min: 1; /* 펄스 최소 크기 */
+    --pulse-scale-max: 1.05; /* 펄스 최대 크기 (미세한 breathing) */
+    --pulse-easing: ease-in-out; /* 자연스러운 breathing 리듬 */
+
+    /* Header Controls */
+    --color-header-control-bg: rgba(255, 255, 255, 0.1);
+    --color-header-control-border: rgba(255, 255, 255, 0.2);
+    --color-header-control-icon: var(--color-neutral-600);
+    --color-header-control-hover: rgba(229, 229, 234, 0.4);
+    --color-header-control-active: rgba(229, 229, 234, 0.6);
+    --color-header-control-border-hover: rgba(209, 213, 219, 0.6);
+    --color-header-control-border-active: rgba(209, 213, 219, 0.8);
+    --color-header-control-icon-active: var(--color-primary-600);
+    --color-header-control-disabled: rgba(243, 244, 246, 0.5);
+    --color-header-control-icon-disabled: var(--color-neutral-300);
+    --color-header-control-border-disabled: rgba(229, 229, 234, 0.3);
+
+    /* Header Control Size */
+    --header-control-size: 32px;
+
+    /* Progressive Disclosure Indicator */
+    --color-header-indicator: rgba(156, 163, 175, 0.6);
+
+    /* User Avatar Colors - Light Theme (유튜브/구글 스타일: 부드러운 색상) */
+    --color-avatar-bg: #5865f2; /* 부드러운 인디고 블루 (양쪽 테마에서 잘 보임) */
+    --color-avatar-text: #ffffff; /* 하얀 텍스트 */
+
+    /* Header Heights and Opacities - Progressive Disclosure 최적화 */
+    --header-height-base: 50px;  /* 충분한 마우스 상호작용 영역 */
+    --header-height-expanded: 70px;
+    --header-opacity-subtle: 0.9;  /* 충분한 가시성 확보 */
+    --header-opacity-expanded: 1;
+    --header-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
   }
-}
 
-/* === THEME TRANSITIONS === */
-
-*,
-*::before,
-*::after {
-  transition:
-    background-color var(--duration-ios-quick) var(--easing-ios-default),
-    border-color var(--duration-ios-quick) var(--easing-ios-default),
-    color var(--duration-ios-quick) var(--easing-ios-default),
-    box-shadow var(--duration-ios-quick) var(--easing-ios-default);
-}
-
-/* === HIGH CONTRAST MODE SUPPORT === */
-
-@media (prefers-contrast: high) {
-  :root {
-    --color-border-primary: var(--color-neutral-900);
-    --color-border-secondary: var(--color-neutral-800);
-  }
+  /* === DARK THEME === */
 
   [data-theme="dark"] {
-    --color-border-primary: var(--color-neutral-100);
-    --color-border-secondary: var(--color-neutral-200);
+    /* Background Colors */
+    --color-bg-primary: var(--color-neutral-900);
+    --color-bg-secondary: var(--color-neutral-800);
+    --color-bg-card: var(--color-neutral-900);  /* 다크 테마: primary와 동일 */
+    --color-bg-tertiary: var(--color-neutral-700);
+    --color-bg-hover: var(--color-neutral-800);
+    --color-bg-active: var(--color-neutral-700);
+    --color-bg-disabled: var(--color-neutral-800);
+
+    /* Text Colors */
+    --color-text-primary: var(--color-neutral-100);
+    --color-text-secondary: var(--color-neutral-300);
+    --color-text-tertiary: var(--color-neutral-500);
+    --color-text-disabled: var(--color-neutral-600);
+    --color-text-inverse: var(--color-neutral-900);
+
+    /* Border Colors */
+    --color-border-primary: var(--color-neutral-700);
+    --color-border-secondary: var(--color-neutral-600);
+    --color-border-focus: var(--color-primary-400);
+    --color-border-error: var(--color-error-400);
+    --color-border-disabled: var(--color-neutral-700);
+
+    /* Button Colors */
+    --color-button-primary-bg: var(--color-primary-500);
+    --color-button-primary-bg-hover: var(--color-primary-400);
+    --color-button-primary-bg-active: var(--color-primary-300);
+    --color-button-primary-text: var(--color-neutral-0);
+
+    --color-button-secondary-bg: var(--color-neutral-800);
+    --color-button-secondary-bg-hover: var(--color-neutral-700);
+    --color-button-secondary-bg-active: var(--color-neutral-600);
+    --color-button-secondary-text: var(--color-neutral-200);
+    --color-button-secondary-border: var(--color-neutral-600);
+
+    --color-button-ghost-bg: transparent;
+    --color-button-ghost-bg-hover: var(--color-neutral-800);
+    --color-button-ghost-bg-active: var(--color-neutral-700);
+    --color-button-ghost-text: var(--color-neutral-200);
+
+    --color-button-destructive-bg: var(--color-error-600);
+    --color-button-destructive-bg-hover: var(--color-error-500);
+    --color-button-destructive-text: var(--color-neutral-0);
+
+    --color-button-dev-bg: rgba(255, 149, 0, 0.15);
+    --color-button-dev-bg-hover: rgba(255, 149, 0, 0.25);
+    --color-button-dev-border: rgba(255, 149, 0, 0.3);
+    --color-button-dev-text: #ff9500;
+    --color-button-dev-shadow: rgba(255, 149, 0, 0.2);
+
+    /* Input Colors */
+    --color-input-bg: var(--color-neutral-800);
+    --color-input-bg-disabled: var(--color-neutral-900);
+    --color-input-border: var(--color-neutral-600);
+    --color-input-border-focus: var(--color-primary-400);
+    --color-input-border-error: var(--color-error-400);
+    --color-input-text: var(--color-neutral-100);
+    --color-input-text-disabled: var(--color-neutral-500);
+    --color-input-placeholder: var(--color-neutral-500);
+
+    /* Status Colors */
+    --color-status-success: var(--color-success-400);
+    --color-status-success-bg: rgba(34, 197, 94, 0.1);
+    --color-status-warning: var(--color-warning-400);
+    --color-status-warning-bg: rgba(245, 158, 11, 0.1);
+    --color-status-error: var(--color-error-400);
+    --color-status-error-bg: rgba(239, 68, 68, 0.1);
+    --color-status-info: var(--color-info-400);
+    --color-status-info-bg: rgba(59, 130, 246, 0.1);
+
+    /* Selection Colors (for Excel Refiner & table rows) - Dark Theme */
+    --color-selection-bg: var(--color-selection-bg-dark);
+    --color-selection-bg-hover: var(--color-selection-bg-dark-hover);
+    --color-product-original-selected: var(--color-product-original-selected-dark);
+    --color-product-modified-selected: var(--color-product-modified-selected-dark);
+    --color-product-unmatched-selected: var(--color-product-unmatched-selected-dark);
+
+    /* Effect Colors - Dark Theme */
+    --color-effect-vite-glow: #646cffcc;
+    --color-effect-react-glow: #61dafbcc;
+    --color-effect-docs-text: var(--color-neutral-400);
+
+    /* Icon Colors - Dark Theme */
+    --color-hamburger-icon: var(--color-hamburger-icon-dark);
+
+    /* Folder Icon Colors - 다크 테마 */
+    --color-folder: var(--color-folder-dark);
+    --color-folder-open: var(--color-folder-dark-open);
+
+    /* Sort Indicator Colors - Dark Theme */
+    --color-sort-indicator-active: var(--color-error); /* 선택된 정렬 컬럼 강조 */
+
+    /* Hamburger Button Colors - Dark Theme */
+    --color-hamburger-button-bg: var(--color-hamburger-button-bg-dark);
+
+    /* Overlay Colors - Dark Theme */
+    --color-overlay-modal: rgba(0, 0, 0, 0.7);
+    --color-overlay-backdrop: rgba(0, 0, 0, 0.2);
+
+    /* Modal Text Colors - Dark Theme (High Contrast for Visibility) */
+    --color-modal-text-primary: rgba(255, 255, 255, 0.95);
+    --color-modal-text-secondary: rgba(255, 255, 255, 0.8);
+
+    /* Layout Colors - Dark Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
+    --color-layout-main-bg: var(--color-layout-main-dark); /* 순수 블랙 메인 배경 */
+    --color-layout-header-bg: var(--color-layout-header-dark); /* iOS 다크 그레이 헤더 */
+    --color-layout-leftpane-bg: var(--color-layout-leftpane-dark); /* iOS 다크 그레이 */
+    --color-layout-mainpane-bg: var(--color-layout-main-dark); /* 메인과 동일한 순수 블랙 */
+    --color-layout-centerpane-bg: var(--color-layout-content-dark); /* iOS 다크 그레이 카드형 배경 */
+    --color-layout-pagination-bg: var(--color-layout-accent-dark); /* 다크 액센트 */
+    --color-layout-brb-bg: var(--color-layout-brb-dark); /* 서브틀 다크 그레이 드래그 바 */
+    --color-layout-brb-hover: var(--color-layout-brb-hover-dark); /* 호버 시 진한 다크 그레이 */
+    --color-layout-brb-icon: var(--color-layout-brb-icon-dark); /* 호버 아이콘 색상 */
+    --color-layout-rightpane-bg: var(--color-layout-rightpane-dark); /* CenterPane과 동일한 배경 */
+
+    /* Header Glass Effect Colors - Dark Theme (glassmorphism) */
+    --color-header-glass-bg: rgba(28, 28, 30, 0.7); /* 헤더 glassmorphism 배경 */
+    --color-scrollbar-thumb: var(--color-ios-scrollbar-dark); /* 스크롤바 thumb */
+    --color-scrollbar-thumb-hover: var(--color-ios-scrollbar-hover-dark); /* 스크롤바 thumb 호버 */
+    --color-text-placeholder: var(--color-ios-text-placeholder-dark); /* 플레이스홀더 텍스트 */
+
+    /* Gap Controller Colors - Dark Theme */
+    --color-gap-button-active: var(--color-error-400);
+    --color-gap-button-inactive: var(--color-neutral-600);
+    --color-gap-button-reset: var(--color-success-400);
+
+    /* === APPLE STYLE HEADER COLORS - DARK THEME === */
+
+    /* Progressive Disclosure Header Background - iOS systemGray6 기반 */
+    --color-header-bg-subtle: rgba(28, 28, 30, 0.85); /* iOS systemGray6 다크모드 (#1c1c1e) */
+    --color-header-bg-expanded: rgba(28, 28, 30, 0.98); /* 확장 시 거의 불투명 */
+    --color-header-border-subtle: rgba(58, 58, 60, 0.6); /* iOS systemGray4 다크모드 (#3a3a3c) */
+    --color-header-border-expanded: rgba(58, 58, 60, 0.9); /* 다크 테두리 확장 */
+
+    /* Header Text */
+    --color-header-title: rgba(249, 250, 251, 0.6); /* 서브틀한 다크 타이틀 */
+
+    /* === 2단계: 서브틀한 시각적 힌트 === */
+    --color-header-hint-subtle: rgba(255, 255, 255, 0.1); /* 다크 테마 서브틀한 힌트 */
+
+    /* === 3단계: 애플스러운 툴팁 === */
+    --color-tooltip-bg: rgba(28, 28, 30, 0.95); /* 다크 툴팁 배경 */
+    --color-tooltip-text: rgba(249, 250, 251, 0.8); /* 다크 툴팁 텍스트 */
+    --color-tooltip-border: rgba(255, 255, 255, 0.1); /* 다크 툴팁 테두리 */
+    --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.3); /* 다크 툴팁 그림자 */
+    --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, var(--opacity-shadow-2xl)); /* 다크 카드 호버 그림자 */
+
+    /* === 4단계: 첫 방문자 펄스 애니메이션 === */
+    /* 다크 테마에서도 동일한 펄스 변수 사용 (애니메이션 일관성) */
+    --pulse-duration: 3s; /* 애플 스타일 breathing 주기 */
+    --pulse-opacity-min: 0.3; /* 펄스 최소 투명도 */
+    --pulse-opacity-max: 0.7; /* 펄스 최대 투명도 */
+    --pulse-scale-min: 1; /* 펄스 최소 크기 */
+    --pulse-scale-max: 1.05; /* 펄스 최대 크기 */
+    --pulse-easing: ease-in-out; /* 자연스러운 breathing 리듬 */
+
+    /* Header Controls */
+    --color-header-control-bg: rgba(255, 255, 255, 0.05);
+    --color-header-control-border: rgba(255, 255, 255, 0.1);
+    --color-header-control-icon: var(--color-neutral-300);
+    --color-header-control-hover: rgba(75, 85, 99, 0.4);
+    --color-header-control-active: rgba(75, 85, 99, 0.6);
+    --color-header-control-border-hover: rgba(107, 114, 128, 0.6);
+    --color-header-control-border-active: rgba(107, 114, 128, 0.8);
+    --color-header-control-icon-active: var(--color-primary-400);
+    --color-header-control-disabled: rgba(31, 41, 55, 0.5);
+    --color-header-control-icon-disabled: var(--color-neutral-600);
+    --color-header-control-border-disabled: rgba(75, 85, 99, 0.3);
+
+    /* Header Control Size */
+    --header-control-size: 32px;
+
+    /* Progressive Disclosure Indicator */
+    --color-header-indicator: rgba(156, 163, 175, 0.4);
+
+    /* User Avatar Colors - Dark Theme (유튜브/구글 스타일: 라이트와 동일) */
+    --color-avatar-bg: #5865f2; /* 부드러운 인디고 블루 (라이트와 일관성) */
+    --color-avatar-text: #ffffff; /* 하얀 텍스트 */
+
+    /* === APPLE iOS STYLE COLORS - DARK THEME === */
+
+    /* Header Apple-style controls */
+    --color-apple-control-bg: rgba(255, 255, 255, 0.08);
+    --color-apple-control-hover: rgba(255, 255, 255, 0.15);
+    --color-apple-control-border: rgba(255, 255, 255, 0.12);
+
+    /* Apple Glass Effects */
+    --color-apple-glass-dark: rgba(28, 28, 30, 0.8);
+    --color-apple-glass-subtle: rgba(255, 255, 255, 0.05);
+
+    /* Apple Shadows - Dark Theme */
+    --shadow-apple-button: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-apple-button-hover: 0 4px 8px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.25);
+    --shadow-apple-elevated: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0px 1px rgba(0, 0, 0, 0.2);
+
+    /* Liquid Glass Modal - Dark Theme - iOS/macOS 표준 */
+    --color-modal-glass-bg: #2c2c2e;                     /* iOS systemGray6 - 애플 공식 다크 모달 배경 */
+    --color-modal-glass-bg-hover: #3a3a3c;               /* iOS systemGray5 - 호버 시 */
+    --color-modal-glass-border: rgba(255, 255, 255, 0.1);
+    --backdrop-modal-dimming: rgba(0, 0, 0, 0.6);
+
+    /* Header Heights and Opacities - Progressive Disclosure 최적화 */
+    --header-height-base: 50px;  /* 충분한 마우스 상호작용 영역 */
+    --header-height-expanded: 70px;
+    --header-opacity-subtle: 0.9;  /* 충분한 가시성 확보 */
+    --header-opacity-expanded: 1;
+    --header-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
+
+    /* === APPLE iOS STYLE COLORS === */
+
+    /* Header Apple-style controls */
+    --color-apple-control-bg: rgba(255, 255, 255, 0.15);
+    --color-apple-control-hover: rgba(255, 255, 255, 0.25);
+    --color-apple-control-border: rgba(255, 255, 255, 0.2);
+
+    /* Apple Glass Effects */
+    --color-apple-glass-light: rgba(255, 255, 255, 0.8);
+    --color-apple-glass-subtle: rgba(255, 255, 255, 0.1);
+
+    /* Apple Shadows - Light Theme */
+    --shadow-apple-button: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-apple-button-hover: 0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-apple-elevated: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0px 1px rgba(0, 0, 0, 0.06);
+
+    /* Liquid Glass Modal - Light Theme */
+    --color-modal-glass-bg: rgba(255, 255, 255, 0.95);     /* 텍스트 가독성 향상 */
+    --color-modal-glass-bg-hover: rgba(255, 255, 255, 0.98); /* Progressive Disclosure 호버 */
+    --color-modal-glass-border: rgba(0, 0, 0, 0.1);        /* iOS separatorColor - 라이트 테마 가시성 */
+    --backdrop-modal-dimming: rgba(0, 0, 0, 0.4);
   }
-}
 
-/* === REDUCED MOTION SUPPORT === */
+  /* === SYSTEM PREFERENCE === */
 
-@media (prefers-reduced-motion: reduce) {
+  @media (prefers-color-scheme: dark) {
+    [data-theme="system"] {
+      /* Dark theme variables - same as [data-theme="dark"] */
+      --color-bg-primary: var(--color-neutral-900);
+      --color-bg-secondary: var(--color-neutral-800);
+      --color-bg-card: var(--color-neutral-900);
+      --color-bg-tertiary: var(--color-neutral-700);
+      --color-bg-hover: var(--color-neutral-800);
+      --color-bg-active: var(--color-neutral-700);
+      --color-bg-disabled: var(--color-neutral-800);
+
+      --color-text-primary: var(--color-neutral-100);
+      --color-text-secondary: var(--color-neutral-300);
+      --color-text-tertiary: var(--color-neutral-500);
+      --color-text-disabled: var(--color-neutral-600);
+      --color-text-inverse: var(--color-neutral-900);
+
+      --color-border-primary: var(--color-neutral-700);
+      --color-border-secondary: var(--color-neutral-600);
+      --color-border-focus: var(--color-primary-400);
+      --color-border-error: var(--color-error-400);
+      --color-border-disabled: var(--color-neutral-700);
+
+      --color-button-primary-bg: var(--color-primary-500);
+      --color-button-primary-bg-hover: var(--color-primary-400);
+      --color-button-primary-bg-active: var(--color-primary-300);
+      --color-button-primary-text: var(--color-neutral-0);
+
+      --color-button-secondary-bg: var(--color-neutral-800);
+      --color-button-secondary-bg-hover: var(--color-neutral-700);
+      --color-button-secondary-bg-active: var(--color-neutral-600);
+      --color-button-secondary-text: var(--color-neutral-200);
+      --color-button-secondary-border: var(--color-neutral-600);
+
+      --color-button-ghost-bg: transparent;
+      --color-button-ghost-bg-hover: var(--color-neutral-800);
+      --color-button-ghost-bg-active: var(--color-neutral-700);
+      --color-button-ghost-text: var(--color-neutral-200);
+
+      --color-button-destructive-bg: var(--color-error-600);
+      --color-button-destructive-bg-hover: var(--color-error-500);
+      --color-button-destructive-text: var(--color-neutral-0);
+
+      --color-input-bg: var(--color-neutral-800);
+      --color-input-bg-disabled: var(--color-neutral-900);
+      --color-input-border: var(--color-neutral-600);
+      --color-input-border-focus: var(--color-primary-400);
+      --color-input-border-error: var(--color-error-400);
+      --color-input-text: var(--color-neutral-100);
+      --color-input-text-disabled: var(--color-neutral-500);
+      --color-input-placeholder: var(--color-neutral-500);
+
+      --color-status-success: var(--color-success-400);
+      --color-status-success-bg: rgba(34, 197, 94, 0.1);
+      --color-status-warning: var(--color-warning-400);
+      --color-status-warning-bg: rgba(245, 158, 11, 0.1);
+      --color-status-error: var(--color-error-400);
+      --color-status-error-bg: rgba(239, 68, 68, 0.1);
+      --color-status-info: var(--color-info-400);
+      --color-status-info-bg: rgba(59, 130, 246, 0.1);
+
+      /* Effect Colors - System Dark Theme */
+      --color-effect-vite-glow: #646cffcc;
+      --color-effect-react-glow: #61dafbcc;
+      --color-effect-docs-text: var(--color-neutral-400);
+
+      /* Icon Colors - System Dark Theme */
+      --color-hamburger-icon: var(--color-hamburger-icon-dark);
+
+      /* Hamburger Button Colors - System Dark Theme */
+      --color-hamburger-button-bg: var(--color-hamburger-button-bg-dark);
+
+      /* Modal Text Colors - System Dark Theme (High Contrast for Visibility) */
+      --color-modal-text-primary: rgba(255, 255, 255, 0.95);
+      --color-modal-text-secondary: rgba(255, 255, 255, 0.8);
+
+      /* Layout Colors - System Dark Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
+      --color-layout-main-bg: var(--color-layout-main-dark); /* 순수 블랙 메인 배경 */
+      --color-layout-header-bg: var(--color-layout-header-dark); /* iOS 다크 그레이 헤더 */
+      --color-layout-leftpane-bg: var(--color-layout-leftpane-dark); /* iOS 다크 그레이 */
+      --color-layout-mainpane-bg: var(--color-layout-main-dark); /* 메인과 동일한 순수 블랙 */
+      --color-layout-centerpane-bg: var(--color-layout-content-dark); /* iOS 다크 그레이 카드형 배경 */
+      --color-layout-pagination-bg: var(--color-layout-accent-dark); /* 다크 액센트 */
+      --color-layout-brb-bg: var(--color-layout-brb-dark); /* 서브틀 다크 그레이 드래그 바 */
+      --color-layout-brb-hover: var(--color-layout-brb-hover-dark); /* 호버 시 진한 다크 그레이 */
+      --color-layout-brb-icon: var(--color-layout-brb-icon-dark); /* 호버 아이콘 색상 */
+      --color-layout-rightpane-bg: var(--color-layout-rightpane-dark); /* CenterPane과 동일한 배경 */
+
+      /* Gap Controller Colors - System Dark Theme */
+      --color-gap-button-active: var(--color-error-400);
+      --color-gap-button-inactive: var(--color-neutral-600);
+      --color-gap-button-reset: var(--color-success-400);
+    }
+  }
+
+  @media (prefers-color-scheme: light) {
+    [data-theme="system"] {
+      /* Light theme variables - same as :root */
+      --color-bg-primary: var(--color-neutral-0);
+      --color-bg-secondary: var(--color-neutral-50);
+      --color-bg-card: var(--color-neutral-75);
+      --color-bg-tertiary: var(--color-neutral-100);
+      --color-bg-hover: var(--color-neutral-100);
+      --color-bg-active: var(--color-neutral-200);
+      --color-bg-disabled: var(--color-neutral-100);
+
+      --color-text-primary: var(--color-neutral-900);
+      --color-text-secondary: var(--color-neutral-600);
+      --color-text-tertiary: var(--color-neutral-400);
+      --color-text-disabled: var(--color-neutral-300);
+      --color-text-inverse: var(--color-neutral-0);
+
+      --color-border-primary: #d4d6dc;  /* 라이트 모드 기본 경계 색상 - 통일 */
+      --color-border-secondary: var(--color-neutral-300);
+      --color-border-focus: var(--color-primary-500);
+      --color-border-error: var(--color-error-500);
+      --color-border-disabled: var(--color-neutral-200);
+
+      --color-button-primary-bg: var(--color-primary-600);
+      --color-button-primary-bg-hover: var(--color-primary-700);
+      --color-button-primary-bg-active: var(--color-primary-800);
+      --color-button-primary-text: var(--color-neutral-0);
+
+      --color-button-secondary-bg: var(--color-neutral-0);
+      --color-button-secondary-bg-hover: var(--color-neutral-50);
+      --color-button-secondary-bg-active: var(--color-neutral-100);
+      --color-button-secondary-text: var(--color-neutral-700);
+      --color-button-secondary-border: var(--color-neutral-300);
+
+      --color-button-ghost-bg: transparent;
+      --color-button-ghost-bg-hover: var(--color-neutral-100);
+      --color-button-ghost-bg-active: var(--color-neutral-200);
+      --color-button-ghost-text: var(--color-neutral-700);
+
+      --color-button-destructive-bg: var(--color-error-600);
+      --color-button-destructive-bg-hover: var(--color-error-700);
+      --color-button-destructive-text: var(--color-neutral-0);
+
+      --color-input-bg: var(--color-neutral-0);
+      --color-input-bg-disabled: var(--color-neutral-50);
+      --color-input-border: var(--color-neutral-300);
+      --color-input-border-focus: var(--color-primary-500);
+      --color-input-border-error: var(--color-error-500);
+      --color-input-text: var(--color-neutral-900);
+      --color-input-text-disabled: var(--color-neutral-400);
+      --color-input-placeholder: var(--color-neutral-400);
+
+      --color-status-success: var(--color-success-600);
+      --color-status-success-bg: var(--color-success-50);
+      --color-status-warning: var(--color-warning-600);
+      --color-status-warning-bg: var(--color-warning-50);
+      --color-status-error: var(--color-error-600);
+      --color-status-error-bg: var(--color-error-50);
+      --color-status-info: var(--color-info-600);
+      --color-status-info-bg: var(--color-info-50);
+
+      /* Effect Colors - System Light Theme */
+      --color-effect-vite-glow: #646cffaa;
+      --color-effect-react-glow: #61dafbaa;
+      --color-effect-docs-text: var(--color-neutral-400);
+
+      /* Icon Colors - System Light Theme */
+      --color-hamburger-icon: var(--color-hamburger-icon-light);
+
+      /* Hamburger Button Colors - System Light Theme */
+      --color-hamburger-button-bg: var(--color-hamburger-button-bg-light);
+
+      /* Layout Colors - System Light Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
+      --color-layout-main-bg: var(--color-layout-main-light); /* iOS 라이트 그레이 메인 배경 */
+      --color-layout-header-bg: var(--color-layout-header-light); /* 순수 화이트 미니멀 헤더 */
+      --color-layout-leftpane-bg: var(--color-layout-leftpane-light); /* iOS 시스템 그레이 */
+      --color-layout-mainpane-bg: var(--color-layout-main-light); /* 메인과 동일한 iOS 라이트 그레이 */
+      --color-layout-centerpane-bg: var(--color-layout-content-light); /* 순수 화이트 카드형 배경 */
+      --color-layout-pagination-bg: var(--color-layout-accent-light); /* 라이트 액센트 */
+      --color-layout-brb-bg: var(--color-layout-brb-light); /* 서브틀 그레이 드래그 바 */
+      --color-layout-brb-hover: var(--color-layout-brb-hover-light); /* 호버 시 진한 그레이 */
+      --color-layout-brb-icon: var(--color-layout-brb-icon-light); /* 호버 아이콘 색상 */
+      --color-layout-rightpane-bg: var(--color-layout-rightpane-light); /* CenterPane과 동일한 배경 */
+
+      /* Gap Controller Colors - System Light Theme */
+      --color-gap-button-active: var(--color-error-500);
+      --color-gap-button-inactive: var(--color-neutral-700);
+      --color-gap-button-reset: var(--color-success-500);
+    }
+  }
+
+  /* === THEME TRANSITIONS === */
+
   *,
   *::before,
   *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+    transition:
+      background-color var(--duration-ios-quick) var(--easing-ios-default),
+      border-color var(--duration-ios-quick) var(--easing-ios-default),
+      color var(--duration-ios-quick) var(--easing-ios-default),
+      box-shadow var(--duration-ios-quick) var(--easing-ios-default);
   }
-}
+
+  /* === HIGH CONTRAST MODE SUPPORT === */
+
+  @media (prefers-contrast: high) {
+    :root {
+      --color-border-primary: var(--color-neutral-900);
+      --color-border-secondary: var(--color-neutral-800);
+    }
+
+    [data-theme="dark"] {
+      --color-border-primary: var(--color-neutral-100);
+      --color-border-secondary: var(--color-neutral-200);
+    }
+  }
+
+  /* === REDUCED MOTION SUPPORT === */
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+
+} /* end @layer theme */

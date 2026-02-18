@@ -18,246 +18,251 @@
    ======================================== */
 
 /* 모든 텍스트 요소의 기본값 */
-body, div, span, p, a, button, input, textarea, select {
-  font-size: var(--font-size-footnote); /* 13px - 기본 본문 크기 */
-  font-weight: var(--font-weight-regular); /* 400 */
-}
 
-/* 제목 요소의 기본값 */
-h1, h2, h3 {
-  font-size: var(--font-size-subheadline); /* 15px - 기본 제목 크기 */
-  font-weight: var(--font-weight-semibold); /* 600 */
-}
+@layer base {
 
-h4, h5, h6 {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-semibold); /* 600 */
-}
+  body, div, span, p, a, button, input, textarea, select {
+    font-size: var(--font-size-footnote); /* 13px - 기본 본문 크기 */
+    font-weight: var(--font-weight-regular); /* 400 */
+  }
 
-/* ========================================
-   🎯 Tier 1: 페이지/섹션 제목 (15px)
-   ======================================== */
+  /* 제목 요소의 기본값 */
+  h1, h2, h3 {
+    font-size: var(--font-size-subheadline); /* 15px - 기본 제목 크기 */
+    font-weight: var(--font-weight-semibold); /* 600 */
+  }
 
-.typography-page-title {
-  font-size: var(--font-size-subheadline); /* 15px */
-  font-weight: var(--font-weight-semibold); /* 600 */
-  color: var(--color-text-primary);
-  line-height: var(--line-height-tight);
-}
+  h4, h5, h6 {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-semibold); /* 600 */
+  }
 
-.typography-section-title {
-  font-size: var(--font-size-subheadline); /* 15px */
-  font-weight: var(--font-weight-semibold); /* 600 */
-  color: var(--color-text-primary);
-  line-height: var(--line-height-tight);
-}
+  /* ========================================
+     🎯 Tier 1: 페이지/섹션 제목 (15px)
+     ======================================== */
 
-.typography-modal-title {
-  font-size: var(--font-size-subheadline); /* 15px */
-  font-weight: var(--font-weight-semibold); /* 600 */
-  color: var(--color-text-primary);
-  line-height: var(--line-height-tight);
-}
+  .typography-page-title {
+    font-size: var(--font-size-subheadline); /* 15px */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    color: var(--color-text-primary);
+    line-height: var(--line-height-tight);
+  }
 
-.typography-tab-title {
-  font-size: var(--font-size-subheadline); /* 15px */
-  font-weight: var(--font-weight-semibold); /* 600 */
-  color: var(--color-text-primary);
-  line-height: var(--line-height-tight);
-}
+  .typography-section-title {
+    font-size: var(--font-size-subheadline); /* 15px */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    color: var(--color-text-primary);
+    line-height: var(--line-height-tight);
+  }
 
-/* ========================================
-   📝 Tier 2: 본문 및 메인 컨텐츠 (13px)
-   ======================================== */
+  .typography-modal-title {
+    font-size: var(--font-size-subheadline); /* 15px */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    color: var(--color-text-primary);
+    line-height: var(--line-height-tight);
+  }
 
-.typography-body {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-regular); /* 400 */
-  color: var(--color-text-primary);
-  line-height: var(--line-height-normal);
-}
+  .typography-tab-title {
+    font-size: var(--font-size-subheadline); /* 15px */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    color: var(--color-text-primary);
+    line-height: var(--line-height-tight);
+  }
 
-.typography-body-emphasis {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-medium); /* 500 */
-  color: var(--color-text-primary);
-  line-height: var(--line-height-normal);
-}
+  /* ========================================
+     📝 Tier 2: 본문 및 메인 컨텐츠 (13px)
+     ======================================== */
 
-.typography-input {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-regular); /* 400 */
-  color: var(--color-text-primary);
-}
+  .typography-body {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-primary);
+    line-height: var(--line-height-normal);
+  }
 
-.typography-button {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-medium); /* 500 */
-}
+  .typography-body-emphasis {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-medium); /* 500 */
+    color: var(--color-text-primary);
+    line-height: var(--line-height-normal);
+  }
 
-.typography-message {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-regular); /* 400 */
-  color: var(--color-text-secondary);
-  line-height: var(--line-height-relaxed);
-}
+  .typography-input {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-primary);
+  }
 
-.typography-error {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-medium); /* 500 */
-  color: var(--color-error);
-}
+  .typography-button {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-medium); /* 500 */
+  }
 
-.typography-count {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-medium); /* 500 */
-  color: var(--color-text-secondary);
-}
+  .typography-message {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+  }
 
-/* ========================================
-   📌 Tier 3: 보조 정보 (12px)
-   ======================================== */
+  .typography-error {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-medium); /* 500 */
+    color: var(--color-error);
+  }
 
-.typography-table-header {
-  font-size: var(--font-size-caption-1); /* 12px */
-  font-weight: var(--font-weight-semibold); /* 600 */
-  color: var(--color-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
+  .typography-count {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-medium); /* 500 */
+    color: var(--color-text-secondary);
+  }
 
-.typography-label {
-  font-size: var(--font-size-caption-1); /* 12px */
-  font-weight: var(--font-weight-medium); /* 500 */
-  color: var(--color-text-secondary);
-}
+  /* ========================================
+     📌 Tier 3: 보조 정보 (12px)
+     ======================================== */
 
-.typography-tooltip {
-  font-size: var(--font-size-caption-1); /* 12px */
-  font-weight: var(--font-weight-regular); /* 400 */
-  color: var(--color-text-primary);
-}
+  .typography-table-header {
+    font-size: var(--font-size-caption-1); /* 12px */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
 
-.typography-placeholder {
-  font-size: var(--font-size-caption-1); /* 12px */
-  font-weight: var(--font-weight-regular); /* 400 */
-  color: var(--color-text-tertiary);
-}
+  .typography-label {
+    font-size: var(--font-size-caption-1); /* 12px */
+    font-weight: var(--font-weight-medium); /* 500 */
+    color: var(--color-text-secondary);
+  }
 
-/* ========================================
-   🔍 Tier 4: 미세 정보 (11px)
-   ======================================== */
+  .typography-tooltip {
+    font-size: var(--font-size-caption-1); /* 12px */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-primary);
+  }
 
-.typography-caption {
-  font-size: var(--font-size-caption-2); /* 11px */
-  font-weight: var(--font-weight-regular); /* 400 */
-  color: var(--color-text-tertiary);
-}
+  .typography-placeholder {
+    font-size: var(--font-size-caption-1); /* 12px */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-tertiary);
+  }
 
-.typography-metadata {
-  font-size: var(--font-size-caption-2); /* 11px */
-  font-weight: var(--font-weight-regular); /* 400 */
-  color: var(--color-text-tertiary);
-}
+  /* ========================================
+     🔍 Tier 4: 미세 정보 (11px)
+     ======================================== */
 
-.typography-table-cell {
-  font-size: var(--font-size-caption-2); /* 11px */
-  font-weight: var(--font-weight-regular); /* 400 */
-  color: var(--color-text-secondary);
-}
+  .typography-caption {
+    font-size: var(--font-size-caption-2); /* 11px */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-tertiary);
+  }
 
-.typography-badge {
-  font-size: var(--font-size-caption-2); /* 11px */
-  font-weight: var(--font-weight-medium); /* 500 */
-}
+  .typography-metadata {
+    font-size: var(--font-size-caption-2); /* 11px */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-tertiary);
+  }
 
-/* ========================================
-   📐 Tier 5: 심볼 및 아이콘
-   ======================================== */
+  .typography-table-cell {
+    font-size: var(--font-size-caption-2); /* 11px */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-secondary);
+  }
 
-.typography-symbol-large {
-  font-size: var(--font-size-large-symbol); /* 24px */
-  font-weight: var(--font-weight-light); /* 300 */
-}
+  .typography-badge {
+    font-size: var(--font-size-caption-2); /* 11px */
+    font-weight: var(--font-weight-medium); /* 500 */
+  }
 
-.typography-symbol-xlarge {
-  font-size: var(--font-size-xlarge-symbol); /* 32px */
-  font-weight: var(--font-weight-light); /* 300 */
-}
+  /* ========================================
+     📐 Tier 5: 심볼 및 아이콘
+     ======================================== */
 
-.typography-symbol-xxlarge {
-  font-size: var(--font-size-xxlarge-symbol); /* 48px */
-  font-weight: var(--font-weight-light); /* 300 */
-}
+  .typography-symbol-large {
+    font-size: var(--font-size-large-symbol); /* 24px */
+    font-weight: var(--font-weight-light); /* 300 */
+  }
 
-.typography-symbol-xxxlarge {
-  font-size: var(--font-size-xxxlarge-symbol); /* 64px */
-  font-weight: var(--font-weight-light); /* 300 */
-}
+  .typography-symbol-xlarge {
+    font-size: var(--font-size-xlarge-symbol); /* 32px */
+    font-weight: var(--font-weight-light); /* 300 */
+  }
 
-.typography-symbol-jumbo {
-  font-size: var(--font-size-jumbo-symbol); /* 80px */
-  font-weight: var(--font-weight-light); /* 300 */
-}
+  .typography-symbol-xxlarge {
+    font-size: var(--font-size-xxlarge-symbol); /* 48px */
+    font-weight: var(--font-weight-light); /* 300 */
+  }
 
-/* ========================================
-   🎨 특수 스타일 조합
-   ======================================== */
+  .typography-symbol-xxxlarge {
+    font-size: var(--font-size-xxxlarge-symbol); /* 64px */
+    font-weight: var(--font-weight-light); /* 300 */
+  }
 
-/* 빈 상태 제목 */
-.typography-empty-title {
-  font-size: var(--font-size-subheadline); /* 15px */
-  font-weight: var(--font-weight-semibold); /* 600 */
-  color: var(--color-text-secondary);
-  text-align: center;
-}
+  .typography-symbol-jumbo {
+    font-size: var(--font-size-jumbo-symbol); /* 80px */
+    font-weight: var(--font-weight-light); /* 300 */
+  }
 
-/* 빈 상태 메시지 */
-.typography-empty-message {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-regular); /* 400 */
-  color: var(--color-text-tertiary);
-  text-align: center;
-  line-height: var(--line-height-relaxed);
-}
+  /* ========================================
+     🎨 특수 스타일 조합
+     ======================================== */
 
-/* 링크 */
-.typography-link {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-weight: var(--font-weight-medium); /* 500 */
-  color: var(--color-primary);
-  text-decoration: none;
-}
+  /* 빈 상태 제목 */
+  .typography-empty-title {
+    font-size: var(--font-size-subheadline); /* 15px */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    color: var(--color-text-secondary);
+    text-align: center;
+  }
 
-.typography-link:hover {
-  text-decoration: underline;
-}
+  /* 빈 상태 메시지 */
+  .typography-empty-message {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-regular); /* 400 */
+    color: var(--color-text-tertiary);
+    text-align: center;
+    line-height: var(--line-height-relaxed);
+  }
 
-/* 강조 레이블 */
-.typography-label-strong {
-  font-size: var(--font-size-caption-1); /* 12px */
-  font-weight: var(--font-weight-semibold); /* 600 */
-  color: var(--color-text-primary);
-}
+  /* 링크 */
+  .typography-link {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-weight: var(--font-weight-medium); /* 500 */
+    color: var(--color-primary);
+    text-decoration: none;
+  }
 
-/* ========================================
-   ⚠️ 사용 금지 경고
-   ======================================== */
+  .typography-link:hover {
+    text-decoration: underline;
+  }
 
-/**
- * 🚫 절대 하지 마세요:
- *
- * ❌ 컴포넌트별 커스텀 폰트 크기 정의
- * ❌ 하드코딩된 px 값 직접 사용
- * ❌ 각 탭마다 다른 제목 크기
- * ❌ 페이지마다 다른 본문 크기
- *
- * ✅ 대신 이렇게:
- *
- * 제목이 필요하면 → .typography-page-title
- * 본문이 필요하면 → .typography-body
- * 캡션이 필요하면 → .typography-caption
- *
- * 이 클래스들을 사용하면 전체 프로젝트의 타이포그래피가
- * 자동으로 일관성을 유지합니다.
- */
+  /* 강조 레이블 */
+  .typography-label-strong {
+    font-size: var(--font-size-caption-1); /* 12px */
+    font-weight: var(--font-weight-semibold); /* 600 */
+    color: var(--color-text-primary);
+  }
+
+  /* ========================================
+     ⚠️ 사용 금지 경고
+     ======================================== */
+
+  /**
+   * 🚫 절대 하지 마세요:
+   *
+   * ❌ 컴포넌트별 커스텀 폰트 크기 정의
+   * ❌ 하드코딩된 px 값 직접 사용
+   * ❌ 각 탭마다 다른 제목 크기
+   * ❌ 페이지마다 다른 본문 크기
+   *
+   * ✅ 대신 이렇게:
+   *
+   * 제목이 필요하면 → .typography-page-title
+   * 본문이 필요하면 → .typography-body
+   * 캡션이 필요하면 → .typography-caption
+   *
+   * 이 클래스들을 사용하면 전체 프로젝트의 타이포그래피가
+   * 자동으로 일관성을 유지합니다.
+   */
+
+} /* end @layer base */

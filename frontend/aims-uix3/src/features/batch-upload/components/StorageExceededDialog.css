@@ -8,111 +8,116 @@
  */
 
 /* 모달 커스텀 - 너비 조정 */
-.storage-exceeded-modal {
-  max-width: 420px;
-}
 
-/* 콘텐츠 영역 */
-.storage-exceeded-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+@layer components {
 
-/* 용량 정보 */
-.storage-exceeded-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+  .storage-exceeded-modal {
+    max-width: 420px;
+  }
 
-.storage-exceeded-info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  padding: 4px 0;
-}
+  /* 콘텐츠 영역 */
+  .storage-exceeded-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 
-.storage-exceeded-label {
-  color: var(--color-text-tertiary);
-}
+  /* 용량 정보 */
+  .storage-exceeded-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
-.storage-exceeded-value {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-variant-numeric: tabular-nums;
-}
+  .storage-exceeded-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    padding: 4px 0;
+  }
 
-/* 초과 용량 강조 */
-.storage-exceeded-info-row.exceeded {
-  padding: 10px 12px;
-  margin-top: 4px;
-  background: var(--color-error-50);
-  border-radius: 8px;
-}
+  .storage-exceeded-label {
+    color: var(--color-text-tertiary);
+  }
 
-.storage-exceeded-info-row.exceeded .storage-exceeded-label {
-  color: var(--color-error-600);
-  font-weight: 600;
-}
+  .storage-exceeded-value {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+  }
 
-.storage-exceeded-info-row.exceeded .storage-exceeded-value {
-  color: var(--color-error-600);
-  font-weight: 600;
-}
+  /* 초과 용량 강조 */
+  .storage-exceeded-info-row.exceeded {
+    padding: 10px 12px;
+    margin-top: 4px;
+    background: var(--color-error-50);
+    border-radius: 8px;
+  }
 
-/* 스토리지 바 */
-.storage-exceeded-bar {
-  margin: 4px 0;
-}
+  .storage-exceeded-info-row.exceeded .storage-exceeded-label {
+    color: var(--color-error-600);
+    font-weight: 600;
+  }
 
-/* 힌트 박스 */
-.storage-exceeded-hint {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  background: var(--color-info-50);
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--color-info-700);
-}
+  .storage-exceeded-info-row.exceeded .storage-exceeded-value {
+    color: var(--color-error-600);
+    font-weight: 600;
+  }
 
-.storage-exceeded-icon-hint {
-  color: var(--color-info-500);
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-}
+  /* 스토리지 바 */
+  .storage-exceeded-bar {
+    margin: 4px 0;
+  }
 
-/* 버튼 영역 - 세로 배치 */
-.storage-exceeded-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
+  /* 힌트 박스 */
+  .storage-exceeded-hint {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--color-info-50);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--color-info-700);
+  }
 
-.storage-exceeded-actions button {
-  width: 100%;
-  justify-content: center;
-  gap: 8px;
-}
+  .storage-exceeded-icon-hint {
+    color: var(--color-info-500);
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+  }
 
-/* 버튼 아이콘 색상 */
-.storage-exceeded-btn-partial svg {
-  stroke: currentColor;
-}
+  /* 버튼 영역 - 세로 배치 */
+  .storage-exceeded-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
 
-.storage-exceeded-btn-cleanup svg {
-  fill: var(--color-error-500);
-}
+  .storage-exceeded-actions button {
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+  }
 
-.storage-exceeded-btn-upgrade svg {
-  fill: var(--color-success-500);
-}
+  /* 버튼 아이콘 색상 */
+  .storage-exceeded-btn-partial svg {
+    stroke: currentColor;
+  }
 
-.storage-exceeded-btn-upgrade:disabled svg {
-  fill: var(--color-text-disabled);
-}
+  .storage-exceeded-btn-cleanup svg {
+    fill: var(--color-error-500);
+  }
+
+  .storage-exceeded-btn-upgrade svg {
+    fill: var(--color-success-500);
+  }
+
+  .storage-exceeded-btn-upgrade:disabled svg {
+    fill: var(--color-text-disabled);
+  }
+
+} /* end @layer components */

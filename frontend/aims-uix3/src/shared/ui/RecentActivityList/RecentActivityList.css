@@ -6,225 +6,229 @@
  * Progressive Disclosure 원칙 준수
  */
 
-.recent-activity-list {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
-}
+@layer components {
 
-/* 빈 상태 */
-.recent-activity-list--empty {
-  padding: var(--spacing-8) var(--spacing-4);
-  text-align: center;
-}
-
-.recent-activity-list__empty-message {
-  font-size: var(--font-size-footnote);
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* 에러 상태 */
-.recent-activity-list--error {
-  padding: var(--spacing-8) var(--spacing-4);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-2);
-}
-
-.recent-activity-list__error-icon {
-  font-size: var(--font-size-title-1);
-  opacity: 0.5;
-}
-
-.recent-activity-list__error-message {
-  font-size: var(--font-size-footnote);
-  color: var(--color-text-tertiary);
-  margin: 0;
-  opacity: 0.7;
-}
-
-/* 활동 아이템 */
-.recent-activity-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  padding: var(--spacing-4);
-  background: var(--color-bg-card);
-  transition: all var(--duration-fast) var(--easing-ease-out);
-
-  /* Progressive Disclosure: 기본 서브틀 */
-  opacity: 0.92;
-}
-
-/* 클릭 가능한 아이템 */
-.recent-activity-item--clickable {
-  cursor: pointer;
-}
-
-.recent-activity-item--clickable:hover {
-  opacity: 1;
-  background: var(--color-bg-tertiary);
-  transform: translateX(2px);
-}
-
-.recent-activity-item--clickable:active {
-  transform: translateX(0);
-  opacity: 0.95;
-}
-
-/* 키보드 포커스 */
-.recent-activity-item--clickable:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
-  z-index: 1;
-}
-
-/* 아이콘 */
-.recent-activity-item__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  font-size: var(--font-size-title-2);
-  color: var(--color-primary);
-  transition: transform var(--duration-fast) var(--easing-ease-out);
-}
-
-.recent-activity-item--clickable:hover .recent-activity-item__icon {
-  transform: scale(1.05);
-}
-
-/* 콘텐츠 */
-.recent-activity-item__content {
-  flex: 1;
-  min-width: 0; /* 텍스트 오버플로우 처리 */
-}
-
-.recent-activity-item__title {
-  font-size: var(--font-size-footnote);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-activity-item__subtitle {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 타임스탬프 */
-.recent-activity-item__timestamp {
-  flex-shrink: 0;
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-tertiary);
-  font-variant-numeric: tabular-nums; /* 숫자 너비 일정하게 */
-}
-
-/* 구분선 */
-.recent-activity-item__divider {
-  position: absolute;
-  bottom: 0;
-  left: var(--spacing-4);
-  right: 0;
-  height: 1px;
-  background: var(--color-border);
-}
-
-/* 아이콘이 있는 경우 구분선 들여쓰기 */
-.recent-activity-item__icon ~ .recent-activity-item__content ~ .recent-activity-item__timestamp ~ .recent-activity-item__divider {
-  left: calc(var(--spacing-4) + 40px + var(--spacing-3));
-}
-
-/* 로딩 상태 */
-.recent-activity-item--loading {
-  pointer-events: none;
-}
-
-.recent-activity-item__skeleton-title,
-.recent-activity-item__skeleton-subtitle {
-  height: 16px;
-  background: var(--color-bg-tertiary);
-  border-radius: var(--radius-sm);
-  animation: skeleton-pulse 1.5s ease-in-out infinite;
-}
-
-.recent-activity-item__skeleton-title {
-  width: 60%;
-  margin-bottom: var(--spacing-2);
-}
-
-.recent-activity-item__skeleton-subtitle {
-  width: 40%;
-  height: 14px;
-}
-
-@keyframes skeleton-pulse {
-  0%, 100% {
-    opacity: 1;
+  .recent-activity-list {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
   }
-  50% {
+
+  /* 빈 상태 */
+  .recent-activity-list--empty {
+    padding: var(--spacing-8) var(--spacing-4);
+    text-align: center;
+  }
+
+  .recent-activity-list__empty-message {
+    font-size: var(--font-size-footnote);
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  /* 에러 상태 */
+  .recent-activity-list--error {
+    padding: var(--spacing-8) var(--spacing-4);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .recent-activity-list__error-icon {
+    font-size: var(--font-size-title-1);
     opacity: 0.5;
   }
-}
 
-/* 다크 모드 */
-html[data-theme="dark"] .recent-activity-list {
-  /* bg-card가 자동으로 bg-primary로 매핑됨 */
-}
-
-html[data-theme="dark"] .recent-activity-item {
-  /* bg-card가 자동으로 bg-primary로 매핑됨 */
-}
-
-html[data-theme="dark"] .recent-activity-item--clickable:hover {
-  background: var(--color-bg-secondary);
-}
-
-html[data-theme="dark"] .recent-activity-item__divider {
-  background: var(--color-border);
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
-  .recent-activity-item {
-    padding: var(--spacing-3);
+  .recent-activity-list__error-message {
+    font-size: var(--font-size-footnote);
+    color: var(--color-text-tertiary);
+    margin: 0;
+    opacity: 0.7;
   }
 
+  /* 활동 아이템 */
+  .recent-activity-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-4);
+    background: var(--color-bg-card);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+
+    /* Progressive Disclosure: 기본 서브틀 */
+    opacity: 0.92;
+  }
+
+  /* 클릭 가능한 아이템 */
+  .recent-activity-item--clickable {
+    cursor: pointer;
+  }
+
+  .recent-activity-item--clickable:hover {
+    opacity: 1;
+    background: var(--color-bg-tertiary);
+    transform: translateX(2px);
+  }
+
+  .recent-activity-item--clickable:active {
+    transform: translateX(0);
+    opacity: 0.95;
+  }
+
+  /* 키보드 포커스 */
+  .recent-activity-item--clickable:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+    z-index: 1;
+  }
+
+  /* 아이콘 */
   .recent-activity-item__icon {
-    width: 32px;
-    height: 32px;
-    font-size: var(--font-size-title-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    font-size: var(--font-size-title-2);
+    color: var(--color-primary);
+    transition: transform var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .recent-activity-item--clickable:hover .recent-activity-item__icon {
+    transform: scale(1.05);
+  }
+
+  /* 콘텐츠 */
+  .recent-activity-item__content {
+    flex: 1;
+    min-width: 0; /* 텍스트 오버플로우 처리 */
   }
 
   .recent-activity-item__title {
-    font-size: var(--font-size-callout);
+    font-size: var(--font-size-footnote);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .recent-activity-item__subtitle,
+  .recent-activity-item__subtitle {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 타임스탬프 */
   .recent-activity-item__timestamp {
-    font-size: var(--font-size-caption-2);
+    flex-shrink: 0;
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-tertiary);
+    font-variant-numeric: tabular-nums; /* 숫자 너비 일정하게 */
   }
 
+  /* 구분선 */
   .recent-activity-item__divider {
-    left: var(--spacing-3);
+    position: absolute;
+    bottom: 0;
+    left: var(--spacing-4);
+    right: 0;
+    height: 1px;
+    background: var(--color-border);
   }
 
+  /* 아이콘이 있는 경우 구분선 들여쓰기 */
   .recent-activity-item__icon ~ .recent-activity-item__content ~ .recent-activity-item__timestamp ~ .recent-activity-item__divider {
-    left: calc(var(--spacing-3) + 32px + var(--spacing-3));
+    left: calc(var(--spacing-4) + 40px + var(--spacing-3));
   }
-}
+
+  /* 로딩 상태 */
+  .recent-activity-item--loading {
+    pointer-events: none;
+  }
+
+  .recent-activity-item__skeleton-title,
+  .recent-activity-item__skeleton-subtitle {
+    height: 16px;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-sm);
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  .recent-activity-item__skeleton-title {
+    width: 60%;
+    margin-bottom: var(--spacing-2);
+  }
+
+  .recent-activity-item__skeleton-subtitle {
+    width: 40%;
+    height: 14px;
+  }
+
+  @keyframes skeleton-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* 다크 모드 */
+  html[data-theme="dark"] .recent-activity-list {
+    /* bg-card가 자동으로 bg-primary로 매핑됨 */
+  }
+
+  html[data-theme="dark"] .recent-activity-item {
+    /* bg-card가 자동으로 bg-primary로 매핑됨 */
+  }
+
+  html[data-theme="dark"] .recent-activity-item--clickable:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  html[data-theme="dark"] .recent-activity-item__divider {
+    background: var(--color-border);
+  }
+
+  /* 반응형 */
+  @media (max-width: 768px) {
+    .recent-activity-item {
+      padding: var(--spacing-3);
+    }
+
+    .recent-activity-item__icon {
+      width: 32px;
+      height: 32px;
+      font-size: var(--font-size-title-3);
+    }
+
+    .recent-activity-item__title {
+      font-size: var(--font-size-callout);
+    }
+
+    .recent-activity-item__subtitle,
+    .recent-activity-item__timestamp {
+      font-size: var(--font-size-caption-2);
+    }
+
+    .recent-activity-item__divider {
+      left: var(--spacing-3);
+    }
+
+    .recent-activity-item__icon ~ .recent-activity-item__content ~ .recent-activity-item__timestamp ~ .recent-activity-item__divider {
+      left: calc(var(--spacing-3) + 32px + var(--spacing-3));
+    }
+  }
+
+} /* end @layer components */

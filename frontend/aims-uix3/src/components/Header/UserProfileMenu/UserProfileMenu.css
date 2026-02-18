@@ -7,91 +7,95 @@
 
 /* === 메뉴 컨테이너 === */
 
-.user-profile-menu {
-  /* 레이아웃 */
-  min-width: 280px;
-  max-width: 320px;
+@layer components {
 
-  /* 스타일 */
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-large);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08);
-
-  /* 애니메이션 */
-  animation: user-profile-menu-fade-in var(--duration-normal) var(--easing-ease-out);
-  transform-origin: top right;
-
-  /* z-index */
-  z-index: 9999;
-
-  /* iOS 스타일 블러 효과 (선택사항) */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-html[data-theme="dark"] .user-profile-menu {
-  background: rgba(44, 44, 46, 0.95);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.4),
-    0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* === 애니메이션 === */
-
-@keyframes user-profile-menu-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* === 메뉴 아이템 컨테이너 === */
-
-.user-profile-menu__items {
-  padding: 8px;
-}
-
-/* === 반응형 === */
-
-@media (max-width: 768px) {
   .user-profile-menu {
-    min-width: 180px;
-    max-width: 220px;
+    /* 레이아웃 */
+    min-width: 280px;
+    max-width: 320px;
+
+    /* 스타일 */
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.12),
+      0 2px 8px rgba(0, 0, 0, 0.08);
+
+    /* 애니메이션 */
+    animation: user-profile-menu-fade-in var(--duration-normal) var(--easing-ease-out);
+    transform-origin: top right;
+
+    /* z-index */
+    z-index: 9999;
+
+    /* iOS 스타일 블러 효과 (선택사항) */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
+
+  html[data-theme="dark"] .user-profile-menu {
+    background: rgba(44, 44, 46, 0.95);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* === 애니메이션 === */
+
+  @keyframes user-profile-menu-fade-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  /* === 메뉴 아이템 컨테이너 === */
 
   .user-profile-menu__items {
-    padding: 4px;
+    padding: 8px;
   }
-}
 
-/* === 다크 모드 미세 조정 === */
+  /* === 반응형 === */
 
-html[data-theme="dark"] .user-profile-menu {
-  /* 다크 모드에서 약간 더 어둡게 */
-  background: rgba(28, 28, 30, 0.95);
-}
+  @media (max-width: 768px) {
+    .user-profile-menu {
+      min-width: 180px;
+      max-width: 220px;
+    }
 
-/* === 접근성: 포커스 트랩 === */
+    .user-profile-menu__items {
+      padding: 4px;
+    }
+  }
 
-.user-profile-menu:focus-within {
-  /* 메뉴 내부에 포커스가 있을 때 강조 */
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.16),
-    0 2px 8px rgba(0, 0, 0, 0.12),
-    0 0 0 3px rgba(59, 130, 246, 0.2);
-}
+  /* === 다크 모드 미세 조정 === */
 
-html[data-theme="dark"] .user-profile-menu:focus-within {
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.5),
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    0 0 0 3px rgba(59, 130, 246, 0.3);
-}
+  html[data-theme="dark"] .user-profile-menu {
+    /* 다크 모드에서 약간 더 어둡게 */
+    background: rgba(28, 28, 30, 0.95);
+  }
+
+  /* === 접근성: 포커스 트랩 === */
+
+  .user-profile-menu:focus-within {
+    /* 메뉴 내부에 포커스가 있을 때 강조 */
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.16),
+      0 2px 8px rgba(0, 0, 0, 0.12),
+      0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  html[data-theme="dark"] .user-profile-menu:focus-within {
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.5),
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+
+} /* end @layer components */

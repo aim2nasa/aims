@@ -14,383 +14,388 @@
  */
 
 /* 타이틀 (Modal 컴포넌트 title prop에 전달) */
-.relationship-modal__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 모달 제목 */
-  font-family: var(--font-family-display);
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
 
-.relationship-modal__title svg {
-  color: var(--color-icon-red);
-}
+@layer components {
 
-/* 바디 - CustomerEditModal 기준 (padding: 16px 20px) */
-.relationship-modal__body {
-  padding: 16px 20px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.relationship-modal__form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px; /* CustomerEditModal 섹션 간격(14px) 기준 */
-}
-
-/* 폼 섹션 */
-.relationship-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px; /* CustomerEditModal 필드 간격(6px) 기준, 선택 UI 고려 8px */
-}
-
-.relationship-modal__field-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.relationship-modal__field-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 필드 제목 */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.relationship-modal__field-title svg {
-  color: var(--color-icon-blue);
-}
-
-.relationship-modal__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 배지 */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  background-color: rgba(52, 199, 89, 0.15);
-  color: var(--color-icon-green);
-}
-
-.relationship-modal__badge--muted {
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-tertiary);
-}
-
-/* 입력 필드 */
-.relationship-modal__search {
-  position: relative;
-}
-
-.relationship-modal__input {
-  padding-right: 40px;
-}
-
-.relationship-modal__input-affix {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-text-secondary);
-}
-
-.relationship-modal__input-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-secondary);
-}
-
-.relationship-modal__input-clear {
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.relationship-modal__input-clear:hover {
-  color: var(--color-text-primary);
-}
-
-/* 에러 메시지 */
-.relationship-modal__error {
-  padding: 12px;
-  background-color: rgba(255, 59, 48, 0.1);
-  border: 1px solid var(--color-icon-red);
-  border-radius: 8px;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 에러 메시지 */
-  font-family: var(--font-family-text);
-  color: var(--color-icon-red);
-}
-
-/* 성공 메시지 */
-.relationship-modal__success {
-  padding: 12px;
-  background-color: rgba(52, 199, 89, 0.1);
-  border: 1px solid var(--color-icon-green);
-  border-radius: 8px;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 성공 메시지 */
-  font-family: var(--font-family-text);
-  color: var(--color-icon-green);
-}
-
-/* 액션 버튼 */
-.relationship-modal__actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.relationship-modal__button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 버튼 */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.relationship-modal__button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.relationship-modal__button--cancel {
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-}
-
-.relationship-modal__button--cancel:hover:not(:disabled) {
-  background-color: var(--color-bg-hover);
-}
-
-.relationship-modal__button--primary {
-  background-color: var(--color-icon-blue);
-  color: white;
-}
-
-.relationship-modal__button--primary:hover:not(:disabled) {
-  background-color: var(--color-primary-600);
-}
-
-.relationship-modal__button--primary:active:not(:disabled) {
-  background-color: var(--color-primary-700);
-}
-
-/* 선택 버튼 모드 */
-.relationship-modal__selector-button-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.relationship-modal__selector-button {
-  width: 100%;
-}
-
-.relationship-modal__selected-customer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-3);
-  background: var(--color-bg-secondary);
-  border: 1.5px solid var(--color-border-primary);
-  border-radius: var(--border-radius-md);
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-.relationship-modal__selected-customer-info {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  flex: 1;
-}
-
-.relationship-modal__selected-customer-info svg {
-  color: var(--color-icon-primary);
-  flex-shrink: 0;
-}
-
-.relationship-modal__selected-customer-info span {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-}
-
-.relationship-modal__change-button {
-  padding: var(--spacing-1) var(--spacing-3);
-  background: transparent;
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-.relationship-modal__change-button:hover {
-  background: var(--color-bg-tertiary);
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-
-/* ===== 📱 모바일 컴팩트 (세로 모드) ===== */
-@media (max-width: 768px) {
-  .relationship-modal {
-    max-width: 100%;
-    border-radius: 12px 12px 0 0;
+  .relationship-modal__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 모달 제목 */
+    font-family: var(--font-family-display);
+    font-weight: 600;
+    color: var(--color-text-primary);
   }
 
-  .relationship-modal .modal__content {
-    padding: 0;
+  .relationship-modal__title svg {
+    color: var(--color-icon-red);
   }
 
-  .relationship-modal .modal__header {
-    padding: 4px 12px;
-  }
-
-  .relationship-modal .modal__header .modal__title {
-    font-size: 13px;
-  }
-
-  .relationship-modal .modal__footer {
-    padding: 4px 12px;
-    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
-  }
-
+  /* 바디 - CustomerEditModal 기준 (padding: 16px 20px) */
   .relationship-modal__body {
-    padding: 6px 12px;
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
   }
 
   .relationship-modal__form {
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px; /* CustomerEditModal 섹션 간격(14px) 기준 */
   }
 
+  /* 폼 섹션 */
   .relationship-modal__field {
-    gap: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* CustomerEditModal 필드 간격(6px) 기준, 선택 UI 고려 8px */
+  }
+
+  .relationship-modal__field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .relationship-modal__field-title {
-    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 필드 제목 */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .relationship-modal__field-title svg {
+    color: var(--color-icon-blue);
   }
 
   .relationship-modal__badge {
-    font-size: 10px;
-    padding: 2px 6px;
-  }
-
-  /* 가족 선택 버튼: min-height 오버라이드 필수 (.button--md의 44px 제거) */
-  .relationship-modal__selector-button.button {
-    padding: 6px 10px;
-    font-size: 12px;
-    min-height: 36px;
-    height: 36px;
-  }
-
-  /* footer 버튼: min-height 오버라이드 */
-  .relationship-modal__actions .button {
-    padding: 6px 12px;
-    font-size: 12px;
-    min-height: 32px;
-    height: 32px;
-  }
-
-  .relationship-modal .form-select {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 4px 8px;
-    font-size: 12px;
-  }
-}
-
-/* ===== 📱 모바일 가로보기 - 울트라 컴팩트 ===== */
-@media (orientation: landscape) and (max-height: 600px) {
-  .relationship-modal {
-    max-width: 420px;
-    max-height: calc(100dvh - 12px);
+    border-radius: 999px;
+    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 배지 */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    background-color: rgba(52, 199, 89, 0.15);
+    color: var(--color-icon-green);
   }
 
-  .relationship-modal .modal__content {
+  .relationship-modal__badge--muted {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-tertiary);
+  }
+
+  /* 입력 필드 */
+  .relationship-modal__search {
+    position: relative;
+  }
+
+  .relationship-modal__input {
+    padding-right: 40px;
+  }
+
+  .relationship-modal__input-affix {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-secondary);
+  }
+
+  .relationship-modal__input-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+  }
+
+  .relationship-modal__input-clear {
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 0;
   }
 
-  .relationship-modal .modal__header {
-    padding: 4px 12px;
+  .relationship-modal__input-clear:hover {
+    color: var(--color-text-primary);
   }
 
-  .relationship-modal .modal__header .modal__title {
-    font-size: 13px;
+  /* 에러 메시지 */
+  .relationship-modal__error {
+    padding: 12px;
+    background-color: rgba(255, 59, 48, 0.1);
+    border: 1px solid var(--color-icon-red);
+    border-radius: 8px;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 에러 메시지 */
+    font-family: var(--font-family-text);
+    color: var(--color-icon-red);
   }
 
-  .relationship-modal .modal__footer {
-    padding: 4px 12px;
+  /* 성공 메시지 */
+  .relationship-modal__success {
+    padding: 12px;
+    background-color: rgba(52, 199, 89, 0.1);
+    border: 1px solid var(--color-icon-green);
+    border-radius: 8px;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 성공 메시지 */
+    font-family: var(--font-family-text);
+    color: var(--color-icon-green);
   }
 
-  .relationship-modal__body {
-    padding: 6px 12px;
+  /* 액션 버튼 */
+  .relationship-modal__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
   }
 
-  .relationship-modal__form {
+  .relationship-modal__button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 버튼 */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    display: flex;
+    align-items: center;
     gap: 6px;
   }
 
-  .relationship-modal__field {
-    gap: 3px;
+  .relationship-modal__button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
-  .relationship-modal__field-title {
-    font-size: 11px;
+  .relationship-modal__button--cancel {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
   }
 
-  .relationship-modal__badge {
-    font-size: 10px;
-    padding: 2px 6px;
+  .relationship-modal__button--cancel:hover:not(:disabled) {
+    background-color: var(--color-bg-hover);
   }
 
-  /* 가족 선택 버튼: 울트라 컴팩트 */
-  .relationship-modal__selector-button.button {
-    padding: 5px 10px;
-    font-size: 12px;
-    min-height: 30px;
-    height: 30px;
+  .relationship-modal__button--primary {
+    background-color: var(--color-icon-blue);
+    color: white;
   }
 
-  /* footer 버튼: 울트라 컴팩트 */
-  .relationship-modal__actions .button {
-    padding: 4px 12px;
-    font-size: 12px;
-    min-height: 28px;
-    height: 28px;
+  .relationship-modal__button--primary:hover:not(:disabled) {
+    background-color: var(--color-primary-600);
   }
 
-  .relationship-modal .form-select {
-    padding: 4px 8px;
-    font-size: 12px;
+  .relationship-modal__button--primary:active:not(:disabled) {
+    background-color: var(--color-primary-700);
   }
 
-  /* 선택된 고객 표시: 컴팩트 */
+  /* 선택 버튼 모드 */
+  .relationship-modal__selector-button-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  .relationship-modal__selector-button {
+    width: 100%;
+  }
+
   .relationship-modal__selected-customer {
-    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-3);
+    background: var(--color-bg-secondary);
+    border: 1.5px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    transition: all var(--duration-fast) var(--easing-ease-out);
   }
-}
+
+  .relationship-modal__selected-customer-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    flex: 1;
+  }
+
+  .relationship-modal__selected-customer-info svg {
+    color: var(--color-icon-primary);
+    flex-shrink: 0;
+  }
+
+  .relationship-modal__selected-customer-info span {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+  }
+
+  .relationship-modal__change-button {
+    padding: var(--spacing-1) var(--spacing-3);
+    background: transparent;
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .relationship-modal__change-button:hover {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  /* ===== 📱 모바일 컴팩트 (세로 모드) ===== */
+  @media (max-width: 768px) {
+    .relationship-modal {
+      max-width: 100%;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .relationship-modal .modal__content {
+      padding: 0;
+    }
+
+    .relationship-modal .modal__header {
+      padding: 4px 12px;
+    }
+
+    .relationship-modal .modal__header .modal__title {
+      font-size: 13px;
+    }
+
+    .relationship-modal .modal__footer {
+      padding: 4px 12px;
+      padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .relationship-modal__body {
+      padding: 6px 12px;
+    }
+
+    .relationship-modal__form {
+      gap: 8px;
+    }
+
+    .relationship-modal__field {
+      gap: 4px;
+    }
+
+    .relationship-modal__field-title {
+      font-size: 11px;
+    }
+
+    .relationship-modal__badge {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+
+    /* 가족 선택 버튼: min-height 오버라이드 필수 (.button--md의 44px 제거) */
+    .relationship-modal__selector-button.button {
+      padding: 6px 10px;
+      font-size: 12px;
+      min-height: 36px;
+      height: 36px;
+    }
+
+    /* footer 버튼: min-height 오버라이드 */
+    .relationship-modal__actions .button {
+      padding: 6px 12px;
+      font-size: 12px;
+      min-height: 32px;
+      height: 32px;
+    }
+
+    .relationship-modal .form-select {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+  }
+
+  /* ===== 📱 모바일 가로보기 - 울트라 컴팩트 ===== */
+  @media (orientation: landscape) and (max-height: 600px) {
+    .relationship-modal {
+      max-width: 420px;
+      max-height: calc(100dvh - 12px);
+    }
+
+    .relationship-modal .modal__content {
+      padding: 0;
+    }
+
+    .relationship-modal .modal__header {
+      padding: 4px 12px;
+    }
+
+    .relationship-modal .modal__header .modal__title {
+      font-size: 13px;
+    }
+
+    .relationship-modal .modal__footer {
+      padding: 4px 12px;
+    }
+
+    .relationship-modal__body {
+      padding: 6px 12px;
+    }
+
+    .relationship-modal__form {
+      gap: 6px;
+    }
+
+    .relationship-modal__field {
+      gap: 3px;
+    }
+
+    .relationship-modal__field-title {
+      font-size: 11px;
+    }
+
+    .relationship-modal__badge {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+
+    /* 가족 선택 버튼: 울트라 컴팩트 */
+    .relationship-modal__selector-button.button {
+      padding: 5px 10px;
+      font-size: 12px;
+      min-height: 30px;
+      height: 30px;
+    }
+
+    /* footer 버튼: 울트라 컴팩트 */
+    .relationship-modal__actions .button {
+      padding: 4px 12px;
+      font-size: 12px;
+      min-height: 28px;
+      height: 28px;
+    }
+
+    .relationship-modal .form-select {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    /* 선택된 고객 표시: 컴팩트 */
+    .relationship-modal__selected-customer {
+      padding: 4px 8px;
+    }
+  }
+
+} /* end @layer components */

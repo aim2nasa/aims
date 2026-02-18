@@ -5,228 +5,232 @@
 
 /* === 🍎 SEARCH BAR LAYOUT: 편집 버튼 포함 === */
 
-.document-library-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
+@layer components {
 
-.header-center-section .search-input-wrapper {
-  width: 300px;
-  max-width: 300px;
-  min-width: 300px;
-  flex: 0 0 300px;
-  flex-grow: 0;
-  flex-shrink: 0;
-}
+  .document-library-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
 
-/* Tooltip wrapper가 레이아웃에 영향을 주지 않도록 */
-.document-library-bar .tooltip-trigger {
-  display: flex;
-  align-items: center;
-}
+  .header-center-section .search-input-wrapper {
+    width: 300px;
+    max-width: 300px;
+    min-width: 300px;
+    flex: 0 0 300px;
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
 
-/* === 🍎 EDIT MODE BUTTON: 편집 아이콘 버튼 === */
+  /* Tooltip wrapper가 레이아웃에 영향을 주지 않도록 */
+  .document-library-bar .tooltip-trigger {
+    display: flex;
+    align-items: center;
+  }
 
-.edit-mode-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  opacity: 0.7;
-}
+  /* === 🍎 EDIT MODE BUTTON: 편집 아이콘 버튼 === */
 
-.edit-mode-button:hover {
-  background: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-}
+  .edit-mode-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
 
-html[data-theme="dark"] .edit-mode-button:hover {
-  background: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-}
+  .edit-mode-button:hover {
+    background: transparent;
+    opacity: 1;
+    transform: scale(1.1);
+  }
 
-.edit-mode-button--active {
-  background: var(--color-primary-500);
-  color: white;
-}
+  html[data-theme="dark"] .edit-mode-button:hover {
+    background: transparent;
+    opacity: 1;
+    transform: scale(1.1);
+  }
 
-.edit-mode-button--active:hover {
-  background: var(--color-primary-600);
-}
+  .edit-mode-button--active {
+    background: var(--color-primary-500);
+    color: white;
+  }
 
-/* === 🍎 DELETE ACTIONS: 삭제 모드 액션 바 === */
+  .edit-mode-button--active:hover {
+    background: var(--color-primary-600);
+  }
 
-.document-library-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  padding: 8px 12px;
-  background: var(--color-ios-bg-secondary-light);
-  border-radius: 8px;
-}
+  /* === 🍎 DELETE ACTIONS: 삭제 모드 액션 바 === */
 
-html[data-theme="dark"] .document-library-actions {
-  background: var(--color-ios-bg-secondary-dark);
-}
+  .document-library-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: var(--color-ios-bg-secondary-light);
+    border-radius: 8px;
+  }
 
-.actions-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+  html[data-theme="dark"] .document-library-actions {
+    background: var(--color-ios-bg-secondary-dark);
+  }
 
-.selected-count {
-  /* font-size: var(--font-size-callout); () */
-  color: var(--color-text-primary);
-  font-weight: 600;
-}
+  .actions-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-.actions-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+  .selected-count {
+    /* font-size: var(--font-size-callout); () */
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
 
-/* === 🍎 RESULT HEADER LEFT: 체크박스 + 결과 카운트 === */
+  .actions-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-.result-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+  /* === 🍎 RESULT HEADER LEFT: 체크박스 + 결과 카운트 === */
 
-.document-select-all-checkbox {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--color-primary-500);
-}
+  .result-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 
-/* === 🍎 DOCUMENT CHECKBOX === */
+  .document-select-all-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary-500);
+  }
 
-.document-checkbox-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  flex-shrink: 0;
-}
+  /* === 🍎 DOCUMENT CHECKBOX === */
 
-.document-checkbox {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--color-primary-500);
-}
+  .document-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    flex-shrink: 0;
+  }
 
-/* === 🍎 SELECTED STATE: 선택된 문서 하이라이트 === */
+  .document-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary-500);
+  }
 
-.document-library-view--delete-mode .document-item.document-item--selected {
-  background: var(--color-ios-bg-selected-light);
-}
+  /* === 🍎 SELECTED STATE: 선택된 문서 하이라이트 === */
 
-html[data-theme="dark"] .document-library-view--delete-mode .document-item.document-item--selected {
-  background: var(--color-ios-bg-selected-dark);
-}
+  .document-library-view--delete-mode .document-item.document-item--selected {
+    background: var(--color-ios-bg-selected-light);
+  }
 
-.document-library-view--delete-mode .document-item.document-item--selected:hover {
-  background: var(--color-ios-bg-selected-light);
-}
+  html[data-theme="dark"] .document-library-view--delete-mode .document-item.document-item--selected {
+    background: var(--color-ios-bg-selected-dark);
+  }
 
-html[data-theme="dark"] .document-library-view--delete-mode .document-item.document-item--selected:hover {
-  background: var(--color-ios-bg-selected-dark);
-}
+  .document-library-view--delete-mode .document-item.document-item--selected:hover {
+    background: var(--color-ios-bg-selected-light);
+  }
 
-/* === 🍎 EDIT MODE ICON BUTTON: 문서 라이브러리 삭제 버튼 === */
+  html[data-theme="dark"] .document-library-view--delete-mode .document-item.document-item--selected:hover {
+    background: var(--color-ios-bg-selected-dark);
+  }
 
-.edit-mode-icon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  margin: 0;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--color-error);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  opacity: 0.9;
-}
+  /* === 🍎 EDIT MODE ICON BUTTON: 문서 라이브러리 삭제 버튼 === */
 
-.edit-mode-icon-button:hover {
-  background: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-}
+  .edit-mode-icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-error);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.9;
+  }
 
-.edit-mode-icon-button:disabled {
-  opacity: 0.2;
-  cursor: not-allowed;
-  transform: none;
-  filter: grayscale(100%);
-}
+  .edit-mode-icon-button:hover {
+    background: transparent;
+    opacity: 1;
+    transform: scale(1.1);
+  }
 
-.edit-mode-icon-button:disabled:hover {
-  opacity: 0.2;
-  transform: none;
-}
+  .edit-mode-icon-button:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+    transform: none;
+    filter: grayscale(100%);
+  }
 
-html[data-theme="dark"] .edit-mode-icon-button {
-  color: var(--color-error);
-}
+  .edit-mode-icon-button:disabled:hover {
+    opacity: 0.2;
+    transform: none;
+  }
 
-html[data-theme="dark"] .edit-mode-icon-button:hover {
-  background: transparent;
-  opacity: 1;
-}
+  html[data-theme="dark"] .edit-mode-icon-button {
+    color: var(--color-error);
+  }
 
-html[data-theme="dark"] .edit-mode-icon-button:disabled {
-  opacity: 0.15;
-  filter: grayscale(100%);
-}
+  html[data-theme="dark"] .edit-mode-icon-button:hover {
+    background: transparent;
+    opacity: 1;
+  }
 
-html[data-theme="dark"] .edit-mode-icon-button:disabled:hover {
-  opacity: 0.15;
-  transform: none;
-}
+  html[data-theme="dark"] .edit-mode-icon-button:disabled {
+    opacity: 0.15;
+    filter: grayscale(100%);
+  }
 
-.edit-mode-icon-button--active {
-  color: var(--color-success);
-  opacity: 1;
-}
+  html[data-theme="dark"] .edit-mode-icon-button:disabled:hover {
+    opacity: 0.15;
+    transform: none;
+  }
 
-html[data-theme="dark"] .edit-mode-icon-button--active {
-  color: var(--color-success);
-}
+  .edit-mode-icon-button--active {
+    color: var(--color-success);
+    opacity: 1;
+  }
 
-/* === 🍎 GRID LAYOUT UPDATE: 체크박스 열 추가 === */
+  html[data-theme="dark"] .edit-mode-icon-button--active {
+    color: var(--color-success);
+  }
 
-/* 🍎 삭제 모드일 때만: 체크박스 열 추가 */
-.document-library-view--delete-mode .document-item {
-  grid-template-columns:
-    24px      /* 체크박스 */
-    24px      /* 아이콘 고정 */
-    minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
-    80px      /* 크기 고정 */
-    120px     /* 날짜 고정 */
-    50px      /* 타입 고정 */
-    60px      /* 상태 (넓게) */
-    124px;    /* 액션 버튼 */
-}
+  /* === 🍎 GRID LAYOUT UPDATE: 체크박스 열 추가 === */
+
+  /* 🍎 삭제 모드일 때만: 체크박스 열 추가 */
+  .document-library-view--delete-mode .document-item {
+    grid-template-columns:
+      24px      /* 체크박스 */
+      24px      /* 아이콘 고정 */
+      minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
+      80px      /* 크기 고정 */
+      120px     /* 날짜 고정 */
+      50px      /* 타입 고정 */
+      60px      /* 상태 (넓게) */
+      124px;    /* 액션 버튼 */
+  }
+
+} /* end @layer components */

@@ -9,45 +9,49 @@
 
 /* === 🍎 PDF CONTENT AREA (PDF 전용) === */
 
-.pdf-viewer-content {
-  align-items: flex-start; /* PDF는 상단 정렬 (이미지는 center) */
-}
+@layer components {
 
-.pdf-page-container {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: var(--color-ios-bg-primary-light);
-  user-select: none;
-  pointer-events: none;
-}
+  .pdf-viewer-content {
+    align-items: flex-start; /* PDF는 상단 정렬 (이미지는 center) */
+  }
 
-html[data-theme="dark"] .pdf-page-container {
-  border-color: var(--color-ios-separator-dark);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  background-color: var(--color-ios-bg-primary-dark);
-}
+  .pdf-page-container {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--color-ios-bg-primary-light);
+    user-select: none;
+    pointer-events: none;
+  }
 
-/* === 🍎 PDF ERROR STATE (재시도 버튼) === */
+  html[data-theme="dark"] .pdf-page-container {
+    border-color: var(--color-ios-separator-dark);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background-color: var(--color-ios-bg-primary-dark);
+  }
 
-.retry-button {
-  padding: 8px 16px;
-  background-color: var(--color-ios-interactive-light);
-  color: var(--color-ios-bg-primary-light);
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  cursor: pointer;
-  transition: opacity 0.2s ease-out;
-}
+  /* === 🍎 PDF ERROR STATE (재시도 버튼) === */
 
-.retry-button:hover {
-  opacity: 0.8;
-}
+  .retry-button {
+    padding: 8px 16px;
+    background-color: var(--color-ios-interactive-light);
+    color: var(--color-ios-bg-primary-light);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s ease-out;
+  }
 
-html[data-theme="dark"] .retry-button {
-  background-color: var(--color-ios-interactive-dark);
-  color: var(--color-ios-bg-primary-dark);
-}
+  .retry-button:hover {
+    opacity: 0.8;
+  }
+
+  html[data-theme="dark"] .retry-button {
+    background-color: var(--color-ios-interactive-dark);
+    color: var(--color-ios-bg-primary-dark);
+  }
+
+} /* end @layer components */

@@ -1,23 +1,27 @@
-#root {
-  max-width: var(--app-max-width);
-  margin: 0 auto;
-  padding: var(--app-padding);
-  text-align: center;
-}
+@layer components {
 
-.logo {
-  height: var(--logo-height);
-  padding: var(--logo-padding);
-  /* Apple style: Simple, clean logo without flashy effects */
-}
-/* Apple style: Removed flashy glow effects for professional minimalism */
+  #root {
+    max-width: var(--app-max-width);
+    margin: 0 auto;
+    padding: var(--app-padding);
+    text-align: center;
+  }
 
-/* Apple style: Removed distracting spin animation for professional focus */
+  .logo {
+    height: var(--logo-height);
+    padding: var(--logo-padding);
+    /* Apple style: Simple, clean logo without flashy effects */
+  }
+  /* Apple style: Removed flashy glow effects for professional minimalism */
 
-.card {
-  padding: var(--card-padding);
-}
+  /* Apple style: Removed distracting spin animation for professional focus */
 
-.read-the-docs {
-  color: var(--color-effect-docs-text);
-}
+  .card {
+    padding: var(--card-padding);
+  }
+
+  .read-the-docs {
+    color: var(--color-effect-docs-text);
+  }
+
+} /* end @layer components */

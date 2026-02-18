@@ -4,369 +4,373 @@
  */
 
 /* 제목 아이콘 */
-.usage-guide-view__title-icon {
-  color: var(--color-ios-green, #34c759);
-}
 
-/* 콘텐츠 영역 */
-.usage-guide-view__content {
-  padding: var(--spacing-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-}
+@layer components {
 
-/* 검색 영역 */
-.usage-guide-view__search {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
+  .usage-guide-view__title-icon {
+    color: var(--color-ios-green, #34c759);
+  }
 
-.usage-guide-view__search-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--color-text-tertiary);
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  /* 콘텐츠 영역 */
+  .usage-guide-view__content {
+    padding: var(--spacing-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+  }
 
-.usage-guide-view__search-input {
-  width: 100%;
-  padding: 10px 36px 10px 36px;
-  font-size: 13px;
-  border: 1px solid var(--color-separator);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  outline: none;
-  transition: border-color var(--duration-fast) var(--easing-standard),
-              box-shadow var(--duration-fast) var(--easing-standard);
-}
+  /* 검색 영역 */
+  .usage-guide-view__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
 
-.usage-guide-view__search-input:focus {
-  border-color: var(--color-ios-blue, #007aff);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
-}
+  .usage-guide-view__search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-.usage-guide-view__search-input::placeholder {
-  color: var(--color-text-tertiary);
-}
+  .usage-guide-view__search-input {
+    width: 100%;
+    padding: 10px 36px 10px 36px;
+    font-size: 13px;
+    border: 1px solid var(--color-separator);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    outline: none;
+    transition: border-color var(--duration-fast) var(--easing-standard),
+                box-shadow var(--duration-fast) var(--easing-standard);
+  }
 
-.usage-guide-view__search-clear {
-  position: absolute;
-  right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: none;
-  background: var(--color-text-quaternary);
-  border-radius: 50%;
-  color: var(--color-bg-primary);
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity var(--duration-fast) var(--easing-standard);
-}
+  .usage-guide-view__search-input:focus {
+    border-color: var(--color-ios-blue, #007aff);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+  }
 
-.usage-guide-view__search-clear:hover {
-  opacity: 1;
-}
+  .usage-guide-view__search-input::placeholder {
+    color: var(--color-text-tertiary);
+  }
 
-/* 검색 결과 카운트 */
-.usage-guide-view__search-result {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  padding: 0 var(--spacing-1);
-}
+  .usage-guide-view__search-clear {
+    position: absolute;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: var(--color-text-quaternary);
+    border-radius: 50%;
+    color: var(--color-bg-primary);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity var(--duration-fast) var(--easing-standard);
+  }
 
-.usage-guide-view__search-result strong {
-  color: var(--color-ios-blue, #007aff);
-  font-weight: 600;
-}
+  .usage-guide-view__search-clear:hover {
+    opacity: 1;
+  }
 
-/* 카테고리 개수 배지 */
-.usage-guide-view__category-count {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-tertiary);
-  background: var(--color-bg-tertiary);
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-left: auto;
-  margin-right: var(--spacing-2);
-}
+  /* 검색 결과 카운트 */
+  .usage-guide-view__search-result {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    padding: 0 var(--spacing-1);
+  }
 
-/* 카테고리 */
-.usage-guide-view__category {
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
+  .usage-guide-view__search-result strong {
+    color: var(--color-ios-blue, #007aff);
+    font-weight: 600;
+  }
 
-/* 카테고리 헤더 */
-.usage-guide-view__category-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-3);
-  cursor: pointer;
-  transition: background var(--duration-fast) var(--easing-standard);
-}
+  /* 카테고리 개수 배지 */
+  .usage-guide-view__category-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-tertiary);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+    margin-right: var(--spacing-2);
+  }
 
-.usage-guide-view__category-header:hover {
-  background: var(--color-hover-bg);
-}
+  /* 카테고리 */
+  .usage-guide-view__category {
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
 
-.usage-guide-view__category-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-}
+  /* 카테고리 헤더 */
+  .usage-guide-view__category-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--easing-standard);
+  }
 
-/* 카테고리별 아이콘 색상 */
-.usage-guide-view__category-icon--getting-started {
-  background: transparent;
-  color: var(--color-ios-green, #34c759);
-}
+  .usage-guide-view__category-header:hover {
+    background: var(--color-hover-bg);
+  }
 
-.usage-guide-view__category-icon--customer {
-  background: transparent;
-  color: var(--color-ios-blue, #007aff);
-}
+  .usage-guide-view__category-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+  }
 
-.usage-guide-view__category-icon--contract {
-  background: transparent;
-  color: var(--color-ios-indigo, #5856d6);
-}
+  /* 카테고리별 아이콘 색상 */
+  .usage-guide-view__category-icon--getting-started {
+    background: transparent;
+    color: var(--color-ios-green, #34c759);
+  }
 
-.usage-guide-view__category-icon--document {
-  background: transparent;
-  color: var(--color-ios-orange, #ff9500);
-}
+  .usage-guide-view__category-icon--customer {
+    background: transparent;
+    color: var(--color-ios-blue, #007aff);
+  }
 
-.usage-guide-view__category-icon--batch-import {
-  background: transparent;
-  color: var(--color-ios-teal, #5ac8fa);
-}
+  .usage-guide-view__category-icon--contract {
+    background: transparent;
+    color: var(--color-ios-indigo, #5856d6);
+  }
 
-.usage-guide-view__category-icon--advanced {
-  background: transparent;
-  color: var(--color-ios-purple, #af52de);
-}
+  .usage-guide-view__category-icon--document {
+    background: transparent;
+    color: var(--color-ios-orange, #ff9500);
+  }
 
-.usage-guide-view__category-icon--account {
-  background: transparent;
-  color: var(--color-ios-gray, #8e8e93);
-}
+  .usage-guide-view__category-icon--batch-import {
+    background: transparent;
+    color: var(--color-ios-teal, #5ac8fa);
+  }
 
-.usage-guide-view__category-icon--tips {
-  background: transparent;
-  color: var(--color-ios-yellow, #ffcc00);
-}
+  .usage-guide-view__category-icon--advanced {
+    background: transparent;
+    color: var(--color-ios-purple, #af52de);
+  }
 
-.usage-guide-view__category-icon--terminology {
-  background: transparent;
-  color: var(--color-ios-brown, #a2845e);
-}
+  .usage-guide-view__category-icon--account {
+    background: transparent;
+    color: var(--color-ios-gray, #8e8e93);
+  }
 
-/* 신규 카테고리 아이콘 색상 (2026-01-16) */
-.usage-guide-view__category-icon--doc-register {
-  background: transparent;
-  color: var(--color-ios-blue, #007aff);
-}
+  .usage-guide-view__category-icon--tips {
+    background: transparent;
+    color: var(--color-ios-yellow, #ffcc00);
+  }
 
-.usage-guide-view__category-icon--customer-register {
-  background: transparent;
-  color: var(--color-ios-teal, #5ac8fa);
-}
+  .usage-guide-view__category-icon--terminology {
+    background: transparent;
+    color: var(--color-ios-brown, #a2845e);
+  }
 
-.usage-guide-view__category-icon--excel-import {
-  background: transparent;
-  color: var(--color-ios-green, #34c759);
-}
+  /* 신규 카테고리 아이콘 색상 (2026-01-16) */
+  .usage-guide-view__category-icon--doc-register {
+    background: transparent;
+    color: var(--color-ios-blue, #007aff);
+  }
 
-.usage-guide-view__category-icon--batch-document {
-  background: transparent;
-  color: var(--color-ios-orange, #ff9500);
-}
+  .usage-guide-view__category-icon--customer-register {
+    background: transparent;
+    color: var(--color-ios-teal, #5ac8fa);
+  }
 
-.usage-guide-view__category-icon--customers-all {
-  background: transparent;
-  color: var(--color-ios-indigo, #5856d6);
-}
+  .usage-guide-view__category-icon--excel-import {
+    background: transparent;
+    color: var(--color-ios-green, #34c759);
+  }
 
-.usage-guide-view__category-icon--documents-all {
-  background: transparent;
-  color: var(--color-ios-purple, #af52de);
-}
+  .usage-guide-view__category-icon--batch-document {
+    background: transparent;
+    color: var(--color-ios-orange, #ff9500);
+  }
 
-.usage-guide-view__category-icon--doc-explorer {
-  background: transparent;
-  color: var(--color-ios-cyan, #32ade6);
-}
+  .usage-guide-view__category-icon--customers-all {
+    background: transparent;
+    color: var(--color-ios-indigo, #5856d6);
+  }
 
-/* 신규 카테고리 아이콘 색상 (2026-02-16) */
-.usage-guide-view__category-icon--autoclicker {
-  background: transparent;
-  color: var(--color-ios-teal, #30b0c7);
-}
+  .usage-guide-view__category-icon--documents-all {
+    background: transparent;
+    color: var(--color-ios-purple, #af52de);
+  }
 
-.usage-guide-view__category-icon--ar {
-  background: transparent;
-  color: var(--color-ios-green, #34c759);
-}
+  .usage-guide-view__category-icon--doc-explorer {
+    background: transparent;
+    color: var(--color-ios-cyan, #32ade6);
+  }
 
-.usage-guide-view__category-icon--crs {
-  background: transparent;
-  color: var(--color-ios-purple, #af52de);
-}
+  /* 신규 카테고리 아이콘 색상 (2026-02-16) */
+  .usage-guide-view__category-icon--autoclicker {
+    background: transparent;
+    color: var(--color-ios-teal, #30b0c7);
+  }
 
-.usage-guide-view__category-icon--family-contract {
-  background: transparent;
-  color: var(--color-ios-mint, #00c7be);
-}
+  .usage-guide-view__category-icon--ar {
+    background: transparent;
+    color: var(--color-ios-green, #34c759);
+  }
 
-.usage-guide-view__category-icon--ai-assistant {
-  background: transparent;
-  color: #bf5af2;
-}
+  .usage-guide-view__category-icon--crs {
+    background: transparent;
+    color: var(--color-ios-purple, #af52de);
+  }
 
-.usage-guide-view__category-icon--mobile {
-  background: transparent;
-  color: var(--color-ios-yellow, #ffcc00);
-}
+  .usage-guide-view__category-icon--family-contract {
+    background: transparent;
+    color: var(--color-ios-mint, #00c7be);
+  }
 
-.usage-guide-view__category-svg {
-  width: 18px;
-  height: 18px;
-}
+  .usage-guide-view__category-icon--ai-assistant {
+    background: transparent;
+    color: #bf5af2;
+  }
 
-.usage-guide-view__category-title {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
+  .usage-guide-view__category-icon--mobile {
+    background: transparent;
+    color: var(--color-ios-yellow, #ffcc00);
+  }
 
-/* 셰브론 아이콘 */
-.usage-guide-view__chevron {
-  color: var(--color-text-tertiary);
-  transition: transform var(--duration-fast) var(--easing-standard);
-}
+  .usage-guide-view__category-svg {
+    width: 18px;
+    height: 18px;
+  }
 
-.usage-guide-view__category-header.expanded .usage-guide-view__chevron,
-.usage-guide-view__item-header.expanded .usage-guide-view__chevron {
-  transform: rotate(180deg);
-}
+  .usage-guide-view__category-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
 
-/* 아이템 목록 - 들여쓰기 영역에 시각적 연결선 */
-.usage-guide-view__items {
-  border-top: 1px solid var(--color-separator);
-  position: relative;
-}
+  /* 셰브론 아이콘 */
+  .usage-guide-view__chevron {
+    color: var(--color-text-tertiary);
+    transition: transform var(--duration-fast) var(--easing-standard);
+  }
 
-.usage-guide-view__items::before {
-  content: '';
-  position: absolute;
-  left: calc(var(--spacing-4) + 34px); /* bullet 중앙 위치 */
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-separator);
-}
+  .usage-guide-view__category-header.expanded .usage-guide-view__chevron,
+  .usage-guide-view__item-header.expanded .usage-guide-view__chevron {
+    transform: rotate(180deg);
+  }
 
-/* 아이템 */
-.usage-guide-view__item {
-  border-bottom: 1px solid var(--color-separator);
-}
+  /* 아이템 목록 - 들여쓰기 영역에 시각적 연결선 */
+  .usage-guide-view__items {
+    border-top: 1px solid var(--color-separator);
+    position: relative;
+  }
 
-.usage-guide-view__item:last-child {
-  border-bottom: none;
-}
+  .usage-guide-view__items::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--spacing-4) + 34px); /* bullet 중앙 위치 */
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--color-separator);
+  }
 
-/* 아이템 헤더 - 들여쓰기로 계층 구조 표현 */
-.usage-guide-view__item-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-3) var(--spacing-4);
-  padding-left: calc(var(--spacing-4) + 48px); /* 4단계 들여쓰기 */
-  cursor: pointer;
-  transition: background var(--duration-fast) var(--easing-standard);
-  position: relative;
-}
+  /* 아이템 */
+  .usage-guide-view__item {
+    border-bottom: 1px solid var(--color-separator);
+  }
 
-/* 서브메뉴 앞 머리말 표시 (bullet) */
-.usage-guide-view__item-header::before {
-  content: '';
-  position: absolute;
-  left: calc(var(--spacing-4) + 32px);
-  width: 6px;
-  height: 6px;
-  background: var(--color-text-tertiary);
-  border-radius: 50%;
-  opacity: 0.6;
-}
+  .usage-guide-view__item:last-child {
+    border-bottom: none;
+  }
 
-.usage-guide-view__item-header:hover {
-  background: var(--color-hover-bg);
-}
+  /* 아이템 헤더 - 들여쓰기로 계층 구조 표현 */
+  .usage-guide-view__item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-3) var(--spacing-4);
+    padding-left: calc(var(--spacing-4) + 48px); /* 4단계 들여쓰기 */
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--easing-standard);
+    position: relative;
+  }
 
-.usage-guide-view__item-header:hover::before {
-  background: var(--color-ios-blue, #007aff);
-  opacity: 1;
-}
+  /* 서브메뉴 앞 머리말 표시 (bullet) */
+  .usage-guide-view__item-header::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--spacing-4) + 32px);
+    width: 6px;
+    height: 6px;
+    background: var(--color-text-tertiary);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
 
-.usage-guide-view__item-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
+  .usage-guide-view__item-header:hover {
+    background: var(--color-hover-bg);
+  }
 
-/* 아이템 콘텐츠 - 박스 스타일 */
-.usage-guide-view__item-content {
-  margin: 0 var(--spacing-4) var(--spacing-3);
-  margin-left: calc(var(--spacing-4) + 48px); /* 4단계 들여쓰기 */
-  padding: var(--spacing-3);
-  background: rgba(0, 122, 255, 0.04);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--color-ios-blue, #007aff);
-}
+  .usage-guide-view__item-header:hover::before {
+    background: var(--color-ios-blue, #007aff);
+    opacity: 1;
+  }
 
-html[data-theme="dark"] .usage-guide-view__item-content {
-  background: rgba(0, 122, 255, 0.08);
-}
+  .usage-guide-view__item-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
 
-.usage-guide-view__item-description {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-3);
-  line-height: 1.5;
-}
+  /* 아이템 콘텐츠 - 박스 스타일 */
+  .usage-guide-view__item-content {
+    margin: 0 var(--spacing-4) var(--spacing-3);
+    margin-left: calc(var(--spacing-4) + 48px); /* 4단계 들여쓰기 */
+    padding: var(--spacing-3);
+    background: rgba(0, 122, 255, 0.04);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--color-ios-blue, #007aff);
+  }
 
-/* 단계 목록 */
-.usage-guide-view__steps {
-  margin: 0;
-  padding-left: var(--spacing-4);
-  list-style-type: decimal;
-}
+  html[data-theme="dark"] .usage-guide-view__item-content {
+    background: rgba(0, 122, 255, 0.08);
+  }
 
-.usage-guide-view__step {
-  font-size: 12px;
-  color: var(--color-text-primary);
-  line-height: 1.6;
-  margin-bottom: var(--spacing-1);
-}
+  .usage-guide-view__item-description {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-3);
+    line-height: 1.5;
+  }
 
-.usage-guide-view__step:last-child {
-  margin-bottom: 0;
-}
+  /* 단계 목록 */
+  .usage-guide-view__steps {
+    margin: 0;
+    padding-left: var(--spacing-4);
+    list-style-type: decimal;
+  }
 
+  .usage-guide-view__step {
+    font-size: 12px;
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    margin-bottom: var(--spacing-1);
+  }
+
+  .usage-guide-view__step:last-child {
+    margin-bottom: 0;
+  }
+
+} /* end @layer components */

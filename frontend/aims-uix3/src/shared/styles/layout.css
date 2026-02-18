@@ -9,1091 +9,1094 @@
 
 /* === BASE LAYOUT PANE === */
 
-.layout-pane {
-  position: absolute;
-  display: flex;
-  transition: all var(--duration-apple-graceful) var(--easing-ease-in-out);
-  box-sizing: border-box;
-}
+@layer utilities {
 
-.layout-pane--no-transition {
-  transition: none;
-}
-
-/* === SPECIFIC LAYOUT COMPONENTS === */
-
-.layout-main {
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-family-primary);
-  background-color: var(--color-layout-main-bg);
-  /* 🍎 기본 크기 - CSS로 관리하여 미디어쿼리 적용 가능 */
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 🍎 Apple Performance: CSS Grid 기반 레이아웃 시스템 */
-.layout-main--grid {
-  display: grid;
-  grid-template-areas:
-    "header header header"
-    "nav main aside"
-    "nav main aside";
-  grid-template-columns: var(--layout-nav-width) 1fr var(--layout-aside-width);
-  grid-template-rows: var(--layout-header-height) 1fr;
-  gap: var(--layout-gap);
-  width: 100vw;
-  height: 100vh;
-  box-sizing: border-box;
-
-  /* 🍎 iOS Safe Area 완벽 대응 */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-
-  /* 🍎 애플 성능 최적화 */
-  contain: layout style paint;
-  transform: translateZ(0);
-  will-change: grid-template-columns;
-}
-
-/* 🍎 CSS Grid Areas - JavaScript 계산 완전 대체 */
-.layout-header--grid {
-  grid-area: header;
-  z-index: var(--z-index-header);
-}
-
-.layout-nav--grid {
-  grid-area: nav;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.layout-main-content--grid {
-  grid-area: main;
-  overflow: auto;
-  position: relative;
-}
-
-.layout-aside--grid {
-  grid-area: aside;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* 🍎 Responsive - 모바일 최적화 (max-width: 768px) */
-@media (max-width: 768px) {
-  /* 🔴 핵심 1: html/body 스크롤 완전 차단
-     모바일 브라우저에서 페이지 레벨 스크롤을 원천 차단하여 헤더가 항상 보임 */
-  html, body {
-    position: fixed;
-    width: 100%;
-    overflow: hidden;
-    height: -webkit-fill-available;
-    height: 100dvh;
-    overscroll-behavior: none;
+  .layout-pane {
+    position: absolute;
+    display: flex;
+    transition: all var(--duration-apple-graceful) var(--easing-ease-in-out);
+    box-sizing: border-box;
   }
 
-  /* 🔴 핵심 2: 최상위 컨테이너 (.layout-main) 모바일 대응
-     App.tsx가 사용하는 실제 레이아웃 컨테이너 - 100vh → 100dvh로 변경
-     100vh는 모바일에서 주소창 높이를 포함하여 실제 뷰포트보다 크므로 스크롤 유발 */
+  .layout-pane--no-transition {
+    transition: none;
+  }
+
+  /* === SPECIFIC LAYOUT COMPONENTS === */
+
   .layout-main {
-    width: 100%;
-    height: -webkit-fill-available;
-    height: 100dvh;
-    overflow: hidden;
-  }
-
-  /* 🔴 핵심 3: mainpane-height도 100dvh 기준으로 변경 */
-  :root {
-    --mainpane-height: calc(100dvh - var(--header-height-base));
-  }
-
-  /* Grid 레이아웃 (GridLayout.tsx 사용 시) */
-  .layout-main--grid {
-    grid-template-areas:
-      "header"
-      "main";
-    grid-template-columns: 1fr;
-    grid-template-rows: var(--header-height-base) 1fr;
-    gap: 0;
-    overflow: hidden;
-    height: -webkit-fill-available;
-    height: 100dvh;
+    margin: 0;
     padding: 0;
+    font-family: var(--font-family-primary);
+    background-color: var(--color-layout-main-bg);
+    /* 🍎 기본 크기 - CSS로 관리하여 미디어쿼리 적용 가능 */
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
 
-  .layout-nav--grid,
-  .layout-aside--grid {
-    display: none;
+  /* 🍎 Apple Performance: CSS Grid 기반 레이아웃 시스템 */
+  .layout-main--grid {
+    display: grid;
+    grid-template-areas:
+      "header header header"
+      "nav main aside"
+      "nav main aside";
+    grid-template-columns: var(--layout-nav-width) 1fr var(--layout-aside-width);
+    grid-template-rows: var(--layout-header-height) 1fr;
+    gap: var(--layout-gap);
+    width: 100vw;
+    height: 100vh;
+    box-sizing: border-box;
+
+    /* 🍎 iOS Safe Area 완벽 대응 */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+
+    /* 🍎 애플 성능 최적화 */
+    contain: layout style paint;
+    transform: translateZ(0);
+    will-change: grid-template-columns;
+  }
+
+  /* 🍎 CSS Grid Areas - JavaScript 계산 완전 대체 */
+  .layout-header--grid {
+    grid-area: header;
+    z-index: var(--z-index-header);
+  }
+
+  .layout-nav--grid {
+    grid-area: nav;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .layout-main-content--grid {
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-}
-
-@media (max-width: 480px) {
-  .layout-main--grid {
-    grid-template-rows: var(--header-height-base) 1fr;
-    gap: 0;
-  }
-}
-
-/* ========================================
- * 📱 모바일 드로어 네비게이션 시스템
- * - 768px 이하에서 LeftPane → 슬라이드인 오버레이
- * - iOS 표준 사이드바 드로어 패턴
- * ======================================== */
-
-/* 📱 모바일 드로어 백드롭 */
-.mobile-drawer-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: var(--z-index-modal-overlay, 999);
-  animation: mobileBackdropFadeIn 0.25s ease-out;
-  -webkit-tap-highlight-color: transparent;
-}
-
-@keyframes mobileBackdropFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* 📱 모바일 드로어 (LeftPane 오버레이) */
-.layout-leftpane--mobile-drawer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 200px;
-  max-width: 60vw;
-  height: 100vh; /* fallback */
-  height: 100dvh; /* preferred - iOS Safari dynamic viewport */
-  z-index: var(--z-index-modal, 1000);
-  background-color: var(--color-layout-leftpane-bg);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain; /* 스크롤 체이닝 방지 - 드로어 내에서만 스크롤 */
-
-  /* 슬라이드인 트랜지션 */
-  transform: translateX(-100%);
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-
-  /* iOS 스타일 - 모바일 고밀도 패딩 */
-  padding: 6px;
-  padding-top: max(6px, env(safe-area-inset-top));
-  padding-bottom: max(6px, env(safe-area-inset-bottom));
-  padding-left: max(6px, env(safe-area-inset-left));
-
-  /* 폰트 렌더링 */
-  -webkit-font-smoothing: antialiased;
-  font-family: var(--font-family-text);
-
-  /* 터치 최적화 */
-  touch-action: pan-y;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-
-  /* 닫힌 상태: 터치 이벤트 차단 방지
-   * z-index 1000인 드로어가 화면 밖에서도 헤더 위에 위치하여
-   * 햄버거 버튼 터치를 가로챌 수 있음 */
-  pointer-events: none;
-}
-
-/* 📱 드로어 열림 상태 */
-.layout-leftpane--mobile-open {
-  transform: translateX(0);
-  pointer-events: auto; /* 열림 시 터치 활성화 */
-}
-
-/* 📱 모바일 CenterPane 전체폭 조정 */
-@media (max-width: 768px) {
-  .layout-centerpane {
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .layout-centerpane:hover {
-    box-shadow: none;
-  }
-
-  .layout-mainpane {
-    border-radius: 0;
-  }
-
-  /* 모바일에서 Pagination 하단 고정 */
-  .layout-pagination {
-    border-radius: 0;
-  }
-
-  /* 📱 모바일 RightPane: 전체화면 오버레이 */
-  .layout-rightpane-container--mobile {
-    z-index: var(--z-index-modal, 1000);
-    background-color: var(--color-layout-rightpane-bg);
-    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
-                opacity 0.3s ease-out;
-  }
-
-  .layout-rightpane-container--mobile .layout-rightpane-content {
-    border-radius: 0;
-    box-shadow: none;
-    height: 100%;
-  }
-
-  .layout-rightpane-container--mobile.layout-rightpane-container--hidden {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-
-  /* 📱 모바일 RightPane 뒤로가기 헤더 */
-  .mobile-rightpane-header {
-    display: flex;
-    align-items: center;
-    padding: 8px 4px;
-    border-bottom: 0.5px solid var(--color-ios-separator-light);
-    flex-shrink: 0;
-    background: var(--color-bg-primary);
-  }
-
-  .mobile-rightpane-back-btn {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 8px 12px 8px 4px;
-    background: transparent;
-    border: none;
-    color: var(--color-primary-500);
-    font-family: var(--font-family-text);
-    font-size: var(--font-size-body);
-    font-weight: 400;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    min-height: 44px;
-  }
-
-  .mobile-rightpane-back-btn:active {
-    opacity: 0.6;
-  }
-
-  .mobile-rightpane-back-btn svg {
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-  }
-
-  html[data-theme="dark"] .mobile-rightpane-header {
-    border-bottom-color: var(--color-ios-separator-dark);
-  }
-}
-
-/* 🍎 Tablet 최적화 (iPad Mini 제외 - 1024px 이상은 3패널) */
-@media (min-width: 769px) and (max-width: 1023px) {
-  .layout-main--grid {
-    grid-template-areas:
-      "header header"
-      "nav main";
-    grid-template-columns: var(--layout-nav-width) 1fr;
+    grid-area: main;
+    overflow: auto;
+    position: relative;
   }
 
   .layout-aside--grid {
-    display: none;
-  }
-}
-
-/* 📱 iPad 전용 최적화 (1024px - 1366px: iPad Mini ~ iPad Pro 13") */
-@media (min-width: 1024px) and (max-width: 1366px) {
-  /* 🍎 iPad 전용 CSS 변수 오버라이드 */
-  :root {
-    --header-height-base: 50px; /* 60px → 50px 축소 */
-    --layout-header-height: 50px;
-    /* 🍎 핵심: mainpane-height를 100dvh 기반으로 변경 (iOS Safari 100vh 버그 대응) */
-    --mainpane-height: calc(100dvh - 50px);
+    grid-area: aside;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
-  /* 🍎 iPad에서 전체 페이지 스크롤/이동 완전 방지 - fixed 요소(ChatPanel) 정상 동작 보장 */
-  html, body {
-    /* 🔴 핵심: position fixed로 iOS Safari의 뷰포트 자동 조정 완전 차단 */
+  /* 🍎 Responsive - 모바일 최적화 (max-width: 768px) */
+  @media (max-width: 768px) {
+    /* 🔴 핵심 1: html/body 스크롤 완전 차단
+       모바일 브라우저에서 페이지 레벨 스크롤을 원천 차단하여 헤더가 항상 보임 */
+    html, body {
+      position: fixed;
+      width: 100%;
+      overflow: hidden;
+      height: -webkit-fill-available;
+      height: 100dvh;
+      overscroll-behavior: none;
+    }
+
+    /* 🔴 핵심 2: 최상위 컨테이너 (.layout-main) 모바일 대응
+       App.tsx가 사용하는 실제 레이아웃 컨테이너 - 100vh → 100dvh로 변경
+       100vh는 모바일에서 주소창 높이를 포함하여 실제 뷰포트보다 크므로 스크롤 유발 */
+    .layout-main {
+      width: 100%;
+      height: -webkit-fill-available;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* 🔴 핵심 3: mainpane-height도 100dvh 기준으로 변경 */
+    :root {
+      --mainpane-height: calc(100dvh - var(--header-height-base));
+    }
+
+    /* Grid 레이아웃 (GridLayout.tsx 사용 시) */
+    .layout-main--grid {
+      grid-template-areas:
+        "header"
+        "main";
+      grid-template-columns: 1fr;
+      grid-template-rows: var(--header-height-base) 1fr;
+      gap: 0;
+      overflow: hidden;
+      height: -webkit-fill-available;
+      height: 100dvh;
+      padding: 0;
+    }
+
+    .layout-nav--grid,
+    .layout-aside--grid {
+      display: none;
+    }
+
+    .layout-main-content--grid {
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .layout-main--grid {
+      grid-template-rows: var(--header-height-base) 1fr;
+      gap: 0;
+    }
+  }
+
+  /* ========================================
+   * 📱 모바일 드로어 네비게이션 시스템
+   * - 768px 이하에서 LeftPane → 슬라이드인 오버레이
+   * - iOS 표준 사이드바 드로어 패턴
+   * ======================================== */
+
+  /* 📱 모바일 드로어 백드롭 */
+  .mobile-drawer-backdrop {
     position: fixed;
-    width: 100%;
-    overflow: hidden;
-    /* 순서 중요: 폴백 먼저, 최신 표준 나중 (cascade) */
-    height: -webkit-fill-available;
-    height: 100dvh;
-    /* iOS Safari 터치 스크롤 바운스 방지 */
-    overscroll-behavior: none;
-    /* 터치/화살표 스크롤 방지 */
-    touch-action: none;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: var(--z-index-modal-overlay, 999);
+    animation: mobileBackdropFadeIn 0.25s ease-out;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* 🍎 최상위 컨테이너 - Flexbox로 Header 고정 */
-  .layout-main {
-    height: -webkit-fill-available;
-    height: 100dvh;
-    /* Flexbox 레이아웃: Header를 상단에 고정 */
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  @keyframes mobileBackdropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
-  /* 🍎 Header 고정 - 절대 축소 안됨 */
-  .layout-main > .header-progressive,
-  .layout-main > header {
-    flex-shrink: 0;
-    height: 50px;
-    min-height: 50px;
-    max-height: 50px;
-  }
-
-  /* 🍎 전체 레이아웃 - iOS Safari 100vh 버그 대응 */
-  .layout-main--grid {
-    /* iOS Safari: 100vh는 URL바 포함 높이라 실제 뷰포트보다 큼 */
-    /* 순서 중요: 폴백 먼저, 최신 표준 나중 (cascade) */
-    height: -webkit-fill-available; /* Safari 폴백 */
-    height: 100dvh; /* 100dvh (dynamic viewport height) - Safari 15.4+ */
-    max-height: -webkit-fill-available;
-    max-height: 100dvh;
-    overflow: hidden;
-    padding: 0; /* safe-area 패딩 제거 - 레이아웃 충돌 방지 */
-    gap: 8px; /* 16px → 8px 축소 */
-    grid-template-rows: 50px 1fr; /* 헤더 50px 고정 */
-  }
-
-  /* 헤더 높이 강제 고정 */
-  .layout-header--grid {
-    height: 50px;
-    min-height: 50px;
-    max-height: 50px;
-    flex-shrink: 0; /* 절대 축소 안됨 */
-  }
-
-  /* 콘텐츠 영역 - 스크롤은 내부에서만 */
-  .layout-nav--grid,
-  .layout-main-content--grid,
-  .layout-aside--grid {
-    /* dvh 사용으로 정확한 뷰포트 기준 계산 */
-    max-height: calc(100dvh - 58px); /* 50px 헤더 + 8px gap */
+  /* 📱 모바일 드로어 (LeftPane 오버레이) */
+  .layout-leftpane--mobile-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200px;
+    max-width: 60vw;
+    height: 100vh; /* fallback */
+    height: 100dvh; /* preferred - iOS Safari dynamic viewport */
+    z-index: var(--z-index-modal, 1000);
+    background-color: var(--color-layout-leftpane-bg);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
     overflow-y: auto;
     overflow-x: hidden;
+    overscroll-behavior: contain; /* 스크롤 체이닝 방지 - 드로어 내에서만 스크롤 */
+
+    /* 슬라이드인 트랜지션 */
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+
+    /* iOS 스타일 - 모바일 고밀도 패딩 */
+    padding: 6px;
+    padding-top: max(6px, env(safe-area-inset-top));
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    padding-left: max(6px, env(safe-area-inset-left));
+
+    /* 폰트 렌더링 */
+    -webkit-font-smoothing: antialiased;
+    font-family: var(--font-family-text);
+
+    /* 터치 최적화 */
+    touch-action: pan-y;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+
+    /* 닫힌 상태: 터치 이벤트 차단 방지
+     * z-index 1000인 드로어가 화면 밖에서도 헤더 위에 위치하여
+     * 햄버거 버튼 터치를 가로챌 수 있음 */
+    pointer-events: none;
   }
 
-  .layout-leftpane {
-    /* iPad에서 좌우 패딩 축소 */
-    padding-left: max(8px, env(safe-area-inset-left));
-    padding-right: max(8px, env(safe-area-inset-right));
-    padding-top: 4px;
-    padding-bottom: 4px;
-  }
-}
-
-/* 📱 iPad 세로 높이 제한 (850px 이하: iPad Air 13" 등) */
-@media (min-width: 1024px) and (max-height: 850px) {
-  .layout-main--grid {
-    gap: 4px; /* 더 압축 */
-    grid-template-rows: 50px 1fr;
+  /* 📱 드로어 열림 상태 */
+  .layout-leftpane--mobile-open {
+    transform: translateX(0);
+    pointer-events: auto; /* 열림 시 터치 활성화 */
   }
 
-  .layout-nav--grid,
-  .layout-main-content--grid,
-  .layout-aside--grid {
-    max-height: calc(100dvh - 54px); /* 50px 헤더 + 4px gap */
+  /* 📱 모바일 CenterPane 전체폭 조정 */
+  @media (max-width: 768px) {
+    .layout-centerpane {
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .layout-centerpane:hover {
+      box-shadow: none;
+    }
+
+    .layout-mainpane {
+      border-radius: 0;
+    }
+
+    /* 모바일에서 Pagination 하단 고정 */
+    .layout-pagination {
+      border-radius: 0;
+    }
+
+    /* 📱 모바일 RightPane: 전체화면 오버레이 */
+    .layout-rightpane-container--mobile {
+      z-index: var(--z-index-modal, 1000);
+      background-color: var(--color-layout-rightpane-bg);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+                  opacity 0.3s ease-out;
+    }
+
+    .layout-rightpane-container--mobile .layout-rightpane-content {
+      border-radius: 0;
+      box-shadow: none;
+      height: 100%;
+    }
+
+    .layout-rightpane-container--mobile.layout-rightpane-container--hidden {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    /* 📱 모바일 RightPane 뒤로가기 헤더 */
+    .mobile-rightpane-header {
+      display: flex;
+      align-items: center;
+      padding: 8px 4px;
+      border-bottom: 0.5px solid var(--color-ios-separator-light);
+      flex-shrink: 0;
+      background: var(--color-bg-primary);
+    }
+
+    .mobile-rightpane-back-btn {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 12px 8px 4px;
+      background: transparent;
+      border: none;
+      color: var(--color-primary-500);
+      font-family: var(--font-family-text);
+      font-size: var(--font-size-body);
+      font-weight: 400;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+    }
+
+    .mobile-rightpane-back-btn:active {
+      opacity: 0.6;
+    }
+
+    .mobile-rightpane-back-btn svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    html[data-theme="dark"] .mobile-rightpane-header {
+      border-bottom-color: var(--color-ios-separator-dark);
+    }
   }
-}
 
-/* ========================================
- * 📱 폰 가로 모드 (Phone Landscape) 대응
- * - width > 768px이지만 height ≤ 500px인 터치 디바이스
- * - 모바일 레이아웃(1칼럼) 유지 + 컴팩트 헤더(40px)
- * ======================================== */
+  /* 🍎 Tablet 최적화 (iPad Mini 제외 - 1024px 이상은 3패널) */
+  @media (min-width: 769px) and (max-width: 1023px) {
+    .layout-main--grid {
+      grid-template-areas:
+        "header header"
+        "nav main";
+      grid-template-columns: var(--layout-nav-width) 1fr;
+    }
 
-/* CSS-only 방어 레이어 (JS가 .layout-main--phone-landscape 클래스도 추가) */
-@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
-  :root {
+    .layout-aside--grid {
+      display: none;
+    }
+  }
+
+  /* 📱 iPad 전용 최적화 (1024px - 1366px: iPad Mini ~ iPad Pro 13") */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    /* 🍎 iPad 전용 CSS 변수 오버라이드 */
+    :root {
+      --header-height-base: 50px; /* 60px → 50px 축소 */
+      --layout-header-height: 50px;
+      /* 🍎 핵심: mainpane-height를 100dvh 기반으로 변경 (iOS Safari 100vh 버그 대응) */
+      --mainpane-height: calc(100dvh - 50px);
+    }
+
+    /* 🍎 iPad에서 전체 페이지 스크롤/이동 완전 방지 - fixed 요소(ChatPanel) 정상 동작 보장 */
+    html, body {
+      /* 🔴 핵심: position fixed로 iOS Safari의 뷰포트 자동 조정 완전 차단 */
+      position: fixed;
+      width: 100%;
+      overflow: hidden;
+      /* 순서 중요: 폴백 먼저, 최신 표준 나중 (cascade) */
+      height: -webkit-fill-available;
+      height: 100dvh;
+      /* iOS Safari 터치 스크롤 바운스 방지 */
+      overscroll-behavior: none;
+      /* 터치/화살표 스크롤 방지 */
+      touch-action: none;
+    }
+
+    /* 🍎 최상위 컨테이너 - Flexbox로 Header 고정 */
+    .layout-main {
+      height: -webkit-fill-available;
+      height: 100dvh;
+      /* Flexbox 레이아웃: Header를 상단에 고정 */
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 🍎 Header 고정 - 절대 축소 안됨 */
+    .layout-main > .header-progressive,
+    .layout-main > header {
+      flex-shrink: 0;
+      height: 50px;
+      min-height: 50px;
+      max-height: 50px;
+    }
+
+    /* 🍎 전체 레이아웃 - iOS Safari 100vh 버그 대응 */
+    .layout-main--grid {
+      /* iOS Safari: 100vh는 URL바 포함 높이라 실제 뷰포트보다 큼 */
+      /* 순서 중요: 폴백 먼저, 최신 표준 나중 (cascade) */
+      height: -webkit-fill-available; /* Safari 폴백 */
+      height: 100dvh; /* 100dvh (dynamic viewport height) - Safari 15.4+ */
+      max-height: -webkit-fill-available;
+      max-height: 100dvh;
+      overflow: hidden;
+      padding: 0; /* safe-area 패딩 제거 - 레이아웃 충돌 방지 */
+      gap: 8px; /* 16px → 8px 축소 */
+      grid-template-rows: 50px 1fr; /* 헤더 50px 고정 */
+    }
+
+    /* 헤더 높이 강제 고정 */
+    .layout-header--grid {
+      height: 50px;
+      min-height: 50px;
+      max-height: 50px;
+      flex-shrink: 0; /* 절대 축소 안됨 */
+    }
+
+    /* 콘텐츠 영역 - 스크롤은 내부에서만 */
+    .layout-nav--grid,
+    .layout-main-content--grid,
+    .layout-aside--grid {
+      /* dvh 사용으로 정확한 뷰포트 기준 계산 */
+      max-height: calc(100dvh - 58px); /* 50px 헤더 + 8px gap */
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .layout-leftpane {
+      /* iPad에서 좌우 패딩 축소 */
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+  }
+
+  /* 📱 iPad 세로 높이 제한 (850px 이하: iPad Air 13" 등) */
+  @media (min-width: 1024px) and (max-height: 850px) {
+    .layout-main--grid {
+      gap: 4px; /* 더 압축 */
+      grid-template-rows: 50px 1fr;
+    }
+
+    .layout-nav--grid,
+    .layout-main-content--grid,
+    .layout-aside--grid {
+      max-height: calc(100dvh - 54px); /* 50px 헤더 + 4px gap */
+    }
+  }
+
+  /* ========================================
+   * 📱 폰 가로 모드 (Phone Landscape) 대응
+   * - width > 768px이지만 height ≤ 500px인 터치 디바이스
+   * - 모바일 레이아웃(1칼럼) 유지 + 컴팩트 헤더(40px)
+   * ======================================== */
+
+  /* CSS-only 방어 레이어 (JS가 .layout-main--phone-landscape 클래스도 추가) */
+  @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+    :root {
+      --header-height-base: 40px;
+      --layout-header-height: 40px;
+      --mainpane-height: calc(100dvh - 40px);
+    }
+
+    html, body {
+      position: fixed;
+      width: 100%;
+      overflow: hidden;
+      height: -webkit-fill-available;
+      height: 100dvh;
+      overscroll-behavior: none;
+    }
+
+    .layout-main {
+      width: 100%;
+      height: -webkit-fill-available;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .layout-main--grid {
+      grid-template-areas:
+        "header"
+        "main";
+      grid-template-columns: 1fr;
+      grid-template-rows: 40px 1fr;
+      gap: 0;
+      overflow: hidden;
+      height: -webkit-fill-available;
+      height: 100dvh;
+      padding: 0;
+    }
+
+    .layout-nav--grid,
+    .layout-aside--grid {
+      display: none;
+    }
+
+    .layout-main-content--grid {
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+  }
+
+  /* JS 클래스 기반 폰 가로 모드 (컴포넌트 레벨 스타일 상속용) */
+  .layout-main--phone-landscape {
     --header-height-base: 40px;
     --layout-header-height: 40px;
     --mainpane-height: calc(100dvh - 40px);
   }
 
-  html, body {
+  /* 폰 가로 모드: 드로어 너비 확대 (가로 공간 활용) */
+  @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+    .layout-leftpane--mobile-drawer {
+      width: 280px;
+      max-width: 50vw;
+    }
+
+    /* CenterPane 모바일 스타일 유지 */
+    .layout-centerpane {
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .layout-centerpane:hover {
+      box-shadow: none;
+    }
+
+    .layout-mainpane {
+      border-radius: 0;
+    }
+
+    .layout-pagination {
+      border-radius: 0;
+    }
+
+    /* RightPane 모바일 오버레이 */
+    .layout-rightpane-container--mobile .layout-rightpane-content {
+      border-radius: 0;
+      box-shadow: none;
+      height: 100%;
+    }
+  }
+
+  .layout-header {
+    top: 0;
+    left: 0;
+    width: 100vw;
+    /* 🍎 Safe Area 대응: Dynamic Island/노치 공간 확보 */
+    height: calc(60px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    align-items: center;
+    justify-content: space-between;
+    /* 🍎 Safe Area 대응 + RTL 지원 */
+    padding-inline: max(20px, env(safe-area-inset-left)) max(20px, env(safe-area-inset-right));
+    border-bottom: 1px solid var(--color-border-primary);
+    z-index: var(--z-index-header);
+    background: var(--color-layout-header-bg);
+    position: relative;
+    overflow: hidden;
+    /* 애플 스타일: 화려한 애니메이션 제거, 서브틀한 효과만 유지 */
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  .layout-leftpane {
+    top: var(--header-height-base);
+    left: 0;
+    flex-direction: column;
+    /* 🍎 애플 철학: 테두리 제거 - 공간감과 그림자로만 구분 */
+    z-index: var(--z-index-sidebar); /* 🍎 사이드바 최적값 - 과도한 레이어링 방지 */
+    background-color: var(--color-layout-leftpane-bg);
+    /* 🍎 애플 사이드바 디자인 - 정교한 Typography */
+    font-family: var(--font-family-text); /* 텍스트 전용 폰트 사용 */
+    /* font-size: var(--font-size-subheadline-dynamic); (iOS Dynamic Type 지원 ) */
+
+    /* 🍎 Safe Area 대응 - 노치/Dynamic Island 완벽 지원 */
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(2px, env(safe-area-inset-bottom)); /* 최소 여백 - 초컴팩트 */
+
+    /* 🍎 Safari 특화: 폰트 렌더링 최적화 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-radius: 0.625rem; /* 10px - 🍎 macOS Sonoma 실제 측정값 */
+    box-shadow: var(--shadow-sidebar-light); /* 🍎 macOS 사이드바 전용 그림자 */
+
+    /* 🍎 중요: transition 중 가로 overflow 방지, 세로는 스크롤 허용 */
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  /* 🍎 다크 테마 그림자 최적화 */
+  [data-theme="dark"] .layout-leftpane {
+    box-shadow: var(--shadow-sidebar-dark); /* 다크에서 더 진한 그림자 */
+  }
+
+  /* 📱 모바일 드로어: 데스크톱 사이드바 스타일 오버라이드 (specificity 0,2,0 > 0,1,0)
+   * .layout-leftpane 기본 스타일(top, z-index, padding, border-radius)이
+   * .layout-leftpane--mobile-drawer보다 뒤에 정의되어 동일 specificity에서 덮어쓰는 문제 해결 */
+  .layout-leftpane.layout-leftpane--mobile-drawer {
     position: fixed;
-    width: 100%;
-    overflow: hidden;
-    height: -webkit-fill-available;
-    height: 100dvh;
-    overscroll-behavior: none;
+    top: 0;
+    left: 0;
+    z-index: var(--z-index-modal, 1000);
+    border-radius: 0;
+    padding: 12px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-left: max(12px, env(safe-area-inset-left));
   }
 
-  .layout-main {
-    width: 100%;
-    height: -webkit-fill-available;
-    height: 100dvh;
-    overflow: hidden;
+  /* 🍎 애플 철학: 사이드바 컨테이너는 정적 상태 유지 - 호버 효과 없음
+   * macOS Finder, iOS Settings 등 모든 네이티브 사이드바는 호버 시 변화하지 않음
+   * Progressive Enhancement는 기능의 점진적 공개이지, 시각적 효과가 아님
+   */
+
+  .layout-mainpane {
+    top: var(--header-height-base);
+    z-index: var(--z-index-content);
+    background-color: var(--color-layout-mainpane-bg);
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
 
-  .layout-main--grid {
-    grid-template-areas:
-      "header"
-      "main";
-    grid-template-columns: 1fr;
-    grid-template-rows: 40px 1fr;
-    gap: 0;
-    overflow: hidden;
-    height: -webkit-fill-available;
-    height: 100dvh;
-    padding: 0;
+  .layout-centerpane {
+    /* 애플 디자인 가이드라인 표준 패딩 (iOS 앱 기준) */
+    /* Golden Ratio 적용: 조화로운 시각적 균형 */
+    padding-block: var(--spacing-golden-lg); /* ~26px 상하 - 황금비 기반 조화 */
+    padding-inline: var(--spacing-golden-md); /* 16px 좌우 - 황금비 기준값 */
+    box-sizing: border-box;
+    z-index: var(--z-index-elevated);
+    background-color: var(--color-layout-centerpane-bg);
+    /* 애플 스타일 카드형 디자인 */
+    border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
+    box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
+
+    /* 🍎 Safari 특화: Glass Effect 최적화 */
+    -webkit-backdrop-filter: var(--backdrop-glass-light);
+    backdrop-filter: var(--backdrop-glass-light);
+
+    /* 🍎 중요: LeftPane과 완벽한 동기화를 위해 동일한 easing 사용 */
+    transition: left var(--duration-apple-graceful) var(--easing-apple-smooth),
+                width var(--duration-apple-graceful) var(--easing-apple-smooth),
+                box-shadow var(--duration-ios-quick) var(--easing-ios-default);
+
+    /* 🍎 Performance: GPU 가속 최적화 */
+    will-change: left, width, box-shadow, transform;
+    transform: translateZ(0); /* 강제 GPU 레이어 생성 */
+    contain: layout style paint; /* CSS Containment 최적화 */
+    backface-visibility: hidden; /* Subpixel 렌더링 최적화 */
+
+    /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-kerning: auto;
+    font-variant-ligatures: common-ligatures;
+
+    /* 🌍 국제화: 완벽한 다국어 지원 */
+    unicode-bidi: isolate;
+    text-size-adjust: 100%;
+
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
 
-  .layout-nav--grid,
-  .layout-aside--grid {
+  /* 🎯 BRB 드래그 중 transition 비활성화 - CenterPane과 RightPane 완벽 동기화 */
+  .layout-centerpane.no-transition {
+    transition: none !important;
+  }
+
+  .layout-rightpane-container.no-transition {
+    transition: none !important;
+  }
+
+  /* 애플 스타일 Progressive Enhancement - 호버 시 깊이감 증가 */
+  .layout-centerpane:hover {
+    box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
+  }
+
+  .layout-pagination {
+    height: 40px;
+    color: var(--color-text-primary);
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-family-text); /* 텍스트 전용 폰트 */
+    /* font-size: var(--font-size-footnote-dynamic); (iOS Dynamic Type 지원 ) */
+    /* font-weight: var(--font-weight-medium); (San Francisco Medium ) */
+    letter-spacing: -0.08px; /* San Francisco 표준 자간 */
+    box-sizing: border-box;
+    z-index: var(--z-index-elevated);
+    background-color: var(--color-layout-pagination-bg);
+    /* 애플 스타일 카드형 디자인 */
+    border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
+    box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
+    /* Apple Design: Clarity - 정보 계층 구조 명확화 */
+    opacity: 0.85; /* Deference - 콘텐츠를 방해하지 않는 겸손한 존재감 */
+    transition: opacity var(--duration-fast) var(--easing-ease-out),
+                box-shadow var(--duration-ios-quick) var(--easing-ios-default); /* Depth - 자연스러운 시각적 변화 */
+
+    /* 🍎 Performance: GPU 가속 최적화 */
+    will-change: opacity, box-shadow, transform;
+    transform: translateZ(0);
+    contain: layout style paint;
+    backface-visibility: hidden;
+
+    /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-kerning: auto;
+    font-variant-ligatures: common-ligatures;
+
+    /* 🌍 국제화: 완벽한 다국어 지원 */
+    unicode-bidi: isolate;
+    text-size-adjust: 100%;
+
+    /* 🍎 iOS Safari 전용 최적화 */
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    overscroll-behavior: contain;
+
+    /* 🍎 Safe Area 대응 - Golden Ratio 기반 조화로운 간격 */
+    padding-left: max(var(--spacing-golden-md), env(safe-area-inset-left));
+    padding-right: max(var(--spacing-golden-md), env(safe-area-inset-right));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  /* Apple Design: Progressive Enhancement - 필요할 때만 완전히 보임 */
+  .layout-pagination:hover,
+  .layout-pagination:focus-within {
+    opacity: 1; /* 상호작용 시 Clarity 향상 */
+    box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
+  }
+
+  /* 🍎 제안 1: Ghost Mode - 완전히 투명하다가 호버 시에만 극히 서브틀하게 나타남 */
+  .layout-brb {
+    /* 평상시 완전 투명 - "Invisible until you need it" */
+    background-color: transparent;
+    transition: background-color var(--duration-ios-standard) var(--easing-apple-smooth); /* Apple standard easing */
+
+    /* 🍎 Performance: GPU 가속 최적화 */
+    will-change: background-color;
+    transform: translateZ(0); /* 강제 GPU 레이어 생성 */
+    contain: layout style paint; /* CSS Containment: 드래그 성능 최적화 */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: col-resize;
+
+    /* 🎯 UP/DOWN 영역 마스크: 상단 16px, 하단 16px는 안보이게 */
+    clip-path: inset(16px 0 16px 0);
+
+    /* 🎯 2px 폭에 맞는 미세한 라운드 적용 */
+    border-radius: 1px;
+
+    /* 🔬 드래그 상호작용 최적화: 완벽한 터치 반응성 */
+    touch-action: pan-x;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* 그립 인디케이터 완전 제거 - 애플 미니멀리즘 */
+  .layout-brb::before {
     display: none;
   }
 
-  .layout-main-content--grid {
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-}
-
-/* JS 클래스 기반 폰 가로 모드 (컴포넌트 레벨 스타일 상속용) */
-.layout-main--phone-landscape {
-  --header-height-base: 40px;
-  --layout-header-height: 40px;
-  --mainpane-height: calc(100dvh - 40px);
-}
-
-/* 폰 가로 모드: 드로어 너비 확대 (가로 공간 활용) */
-@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
-  .layout-leftpane--mobile-drawer {
-    width: 280px;
-    max-width: 50vw;
-  }
-
-  /* CenterPane 모바일 스타일 유지 */
-  .layout-centerpane {
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .layout-centerpane:hover {
-    box-shadow: none;
-  }
-
-  .layout-mainpane {
-    border-radius: 0;
-  }
-
-  .layout-pagination {
-    border-radius: 0;
-  }
-
-  /* RightPane 모바일 오버레이 */
-  .layout-rightpane-container--mobile .layout-rightpane-content {
-    border-radius: 0;
-    box-shadow: none;
-    height: 100%;
-  }
-}
-
-.layout-header {
-  top: 0;
-  left: 0;
-  width: 100vw;
-  /* 🍎 Safe Area 대응: Dynamic Island/노치 공간 확보 */
-  height: calc(60px + env(safe-area-inset-top));
-  padding-top: env(safe-area-inset-top);
-  align-items: center;
-  justify-content: space-between;
-  /* 🍎 Safe Area 대응 + RTL 지원 */
-  padding-inline: max(20px, env(safe-area-inset-left)) max(20px, env(safe-area-inset-right));
-  border-bottom: 1px solid var(--color-border-primary);
-  z-index: var(--z-index-header);
-  background: var(--color-layout-header-bg);
-  position: relative;
-  overflow: hidden;
-  /* 애플 스타일: 화려한 애니메이션 제거, 서브틀한 효과만 유지 */
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.layout-leftpane {
-  top: var(--header-height-base);
-  left: 0;
-  flex-direction: column;
-  /* 🍎 애플 철학: 테두리 제거 - 공간감과 그림자로만 구분 */
-  z-index: var(--z-index-sidebar); /* 🍎 사이드바 최적값 - 과도한 레이어링 방지 */
-  background-color: var(--color-layout-leftpane-bg);
-  /* 🍎 애플 사이드바 디자인 - 정교한 Typography */
-  font-family: var(--font-family-text); /* 텍스트 전용 폰트 사용 */
-  /* font-size: var(--font-size-subheadline-dynamic); (iOS Dynamic Type 지원 ) */
-
-  /* 🍎 Safe Area 대응 - 노치/Dynamic Island 완벽 지원 */
-  padding-left: max(20px, env(safe-area-inset-left));
-  padding-right: max(20px, env(safe-area-inset-right));
-  padding-top: max(0px, env(safe-area-inset-top));
-  padding-bottom: max(2px, env(safe-area-inset-bottom)); /* 최소 여백 - 초컴팩트 */
-
-  /* 🍎 Safari 특화: 폰트 렌더링 최적화 */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  border-radius: 0.625rem; /* 10px - 🍎 macOS Sonoma 실제 측정값 */
-  box-shadow: var(--shadow-sidebar-light); /* 🍎 macOS 사이드바 전용 그림자 */
-
-  /* 🍎 중요: transition 중 가로 overflow 방지, 세로는 스크롤 허용 */
-  overflow-x: hidden;
-  overflow-y: auto;
-
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 🍎 다크 테마 그림자 최적화 */
-[data-theme="dark"] .layout-leftpane {
-  box-shadow: var(--shadow-sidebar-dark); /* 다크에서 더 진한 그림자 */
-}
-
-/* 📱 모바일 드로어: 데스크톱 사이드바 스타일 오버라이드 (specificity 0,2,0 > 0,1,0)
- * .layout-leftpane 기본 스타일(top, z-index, padding, border-radius)이
- * .layout-leftpane--mobile-drawer보다 뒤에 정의되어 동일 specificity에서 덮어쓰는 문제 해결 */
-.layout-leftpane.layout-leftpane--mobile-drawer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: var(--z-index-modal, 1000);
-  border-radius: 0;
-  padding: 12px;
-  padding-top: max(12px, env(safe-area-inset-top));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  padding-left: max(12px, env(safe-area-inset-left));
-}
-
-/* 🍎 애플 철학: 사이드바 컨테이너는 정적 상태 유지 - 호버 효과 없음
- * macOS Finder, iOS Settings 등 모든 네이티브 사이드바는 호버 시 변화하지 않음
- * Progressive Enhancement는 기능의 점진적 공개이지, 시각적 효과가 아님
- */
-
-.layout-mainpane {
-  top: var(--header-height-base);
-  z-index: var(--z-index-content);
-  background-color: var(--color-layout-mainpane-bg);
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.layout-centerpane {
-  /* 애플 디자인 가이드라인 표준 패딩 (iOS 앱 기준) */
-  /* Golden Ratio 적용: 조화로운 시각적 균형 */
-  padding-block: var(--spacing-golden-lg); /* ~26px 상하 - 황금비 기반 조화 */
-  padding-inline: var(--spacing-golden-md); /* 16px 좌우 - 황금비 기준값 */
-  box-sizing: border-box;
-  z-index: var(--z-index-elevated);
-  background-color: var(--color-layout-centerpane-bg);
-  /* 애플 스타일 카드형 디자인 */
-  border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
-  box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
-
-  /* 🍎 Safari 특화: Glass Effect 최적화 */
-  -webkit-backdrop-filter: var(--backdrop-glass-light);
-  backdrop-filter: var(--backdrop-glass-light);
-
-  /* 🍎 중요: LeftPane과 완벽한 동기화를 위해 동일한 easing 사용 */
-  transition: left var(--duration-apple-graceful) var(--easing-apple-smooth),
-              width var(--duration-apple-graceful) var(--easing-apple-smooth),
-              box-shadow var(--duration-ios-quick) var(--easing-ios-default);
-
-  /* 🍎 Performance: GPU 가속 최적화 */
-  will-change: left, width, box-shadow, transform;
-  transform: translateZ(0); /* 강제 GPU 레이어 생성 */
-  contain: layout style paint; /* CSS Containment 최적화 */
-  backface-visibility: hidden; /* Subpixel 렌더링 최적화 */
-
-  /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-kerning: auto;
-  font-variant-ligatures: common-ligatures;
-
-  /* 🌍 국제화: 완벽한 다국어 지원 */
-  unicode-bidi: isolate;
-  text-size-adjust: 100%;
-
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 🎯 BRB 드래그 중 transition 비활성화 - CenterPane과 RightPane 완벽 동기화 */
-.layout-centerpane.no-transition {
-  transition: none !important;
-}
-
-.layout-rightpane-container.no-transition {
-  transition: none !important;
-}
-
-/* 애플 스타일 Progressive Enhancement - 호버 시 깊이감 증가 */
-.layout-centerpane:hover {
-  box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
-}
-
-.layout-pagination {
-  height: 40px;
-  color: var(--color-text-primary);
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-family-text); /* 텍스트 전용 폰트 */
-  /* font-size: var(--font-size-footnote-dynamic); (iOS Dynamic Type 지원 ) */
-  /* font-weight: var(--font-weight-medium); (San Francisco Medium ) */
-  letter-spacing: -0.08px; /* San Francisco 표준 자간 */
-  box-sizing: border-box;
-  z-index: var(--z-index-elevated);
-  background-color: var(--color-layout-pagination-bg);
-  /* 애플 스타일 카드형 디자인 */
-  border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
-  box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
-  /* Apple Design: Clarity - 정보 계층 구조 명확화 */
-  opacity: 0.85; /* Deference - 콘텐츠를 방해하지 않는 겸손한 존재감 */
-  transition: opacity var(--duration-fast) var(--easing-ease-out),
-              box-shadow var(--duration-ios-quick) var(--easing-ios-default); /* Depth - 자연스러운 시각적 변화 */
-
-  /* 🍎 Performance: GPU 가속 최적화 */
-  will-change: opacity, box-shadow, transform;
-  transform: translateZ(0);
-  contain: layout style paint;
-  backface-visibility: hidden;
-
-  /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-kerning: auto;
-  font-variant-ligatures: common-ligatures;
-
-  /* 🌍 국제화: 완벽한 다국어 지원 */
-  unicode-bidi: isolate;
-  text-size-adjust: 100%;
-
-  /* 🍎 iOS Safari 전용 최적화 */
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  touch-action: manipulation;
-  -webkit-touch-callout: none;
-  overscroll-behavior: contain;
-
-  /* 🍎 Safe Area 대응 - Golden Ratio 기반 조화로운 간격 */
-  padding-left: max(var(--spacing-golden-md), env(safe-area-inset-left));
-  padding-right: max(var(--spacing-golden-md), env(safe-area-inset-right));
-  padding-bottom: max(0px, env(safe-area-inset-bottom));
-
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* Apple Design: Progressive Enhancement - 필요할 때만 완전히 보임 */
-.layout-pagination:hover,
-.layout-pagination:focus-within {
-  opacity: 1; /* 상호작용 시 Clarity 향상 */
-  box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
-}
-
-/* 🍎 제안 1: Ghost Mode - 완전히 투명하다가 호버 시에만 극히 서브틀하게 나타남 */
-.layout-brb {
-  /* 평상시 완전 투명 - "Invisible until you need it" */
-  background-color: transparent;
-  transition: background-color var(--duration-ios-standard) var(--easing-apple-smooth); /* Apple standard easing */
-
-  /* 🍎 Performance: GPU 가속 최적화 */
-  will-change: background-color;
-  transform: translateZ(0); /* 강제 GPU 레이어 생성 */
-  contain: layout style paint; /* CSS Containment: 드래그 성능 최적화 */
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: col-resize;
-
-  /* 🎯 UP/DOWN 영역 마스크: 상단 16px, 하단 16px는 안보이게 */
-  clip-path: inset(16px 0 16px 0);
-
-  /* 🎯 2px 폭에 맞는 미세한 라운드 적용 */
-  border-radius: 1px;
-
-  /* 🔬 드래그 상호작용 최적화: 완벽한 터치 반응성 */
-  touch-action: pan-x;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-
-/* 그립 인디케이터 완전 제거 - 애플 미니멀리즘 */
-.layout-brb::before {
-  display: none;
-}
-
-/* 🍎 애플 스타일 최적 색상 - CenterPane과 RightPane 중간 톤 */
-.layout-brb:hover {
-  /* Light: CenterPane(#ffffff)과 RightPane(#e5e5ea) 중간값 + 구분 가능한 강도 */
-  background-color: var(--color-ios-system-gray4-alpha);  /* iOS systemGray4 기반 서브틀 */
-}
-
-/* 다크 모드 - iOS 표준 Separator 색상 */
-html[data-theme="dark"] .layout-brb:hover {
-  /* Dark: iOS separatorColor와 동일한 표준 색상 */
-  background-color: var(--color-ios-system-gray5-alpha);   /* iOS systemGray5 기반 */
-}
-
-/* 시스템 다크 모드 */
-@media (prefers-color-scheme: dark) {
-  html[data-theme="system"] .layout-brb:hover {
-    background-color: var(--color-ios-system-gray5-alpha);
-  }
-}
-
-.layout-brb--hidden {
-  opacity: 0;
-  cursor: default;
-  /* transform 제거 - 이제 컨테이너에서 함께 애니메이션됨 */
-}
-
-/* === 🍎 BRB RESET BUTTON === */
-
-.layout-brb-reset {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-ios-bg-secondary-light);
-  border: 2px solid var(--color-ios-separator-light);
-  border-radius: 50%;
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
-  cursor: pointer;
-  opacity: 0.5;
-  transition: all 0.2s ease-out;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-html[data-theme="dark"] .layout-brb-reset {
-  background-color: var(--color-ios-bg-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.layout-brb:hover .layout-brb-reset {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.layout-brb-reset:hover {
-  background-color: var(--color-primary-600);
-  border-color: var(--color-primary-600);
-  color: white;
-  transform: translate(-50%, -50%) scale(1.1);
-}
-
-html[data-theme="dark"] .layout-brb-reset:hover {
-  background-color: var(--color-primary-500);
-  border-color: var(--color-primary-500);
-}
-
-.layout-brb-reset:active {
-  transform: translate(-50%, -50%) scale(0.95);
-}
-
-
-.layout-rightpane {
-  z-index: var(--z-index-elevated);
-  overflow: hidden;
-  background-color: var(--color-layout-rightpane-bg);
-  /* transition 완전 제거 - Header-CBR 연동 시 컨테이너에서 처리 */
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.layout-rightpane--hidden {
-  width: 0px !important;
-  opacity: 0;
-  padding: 0px !important;
-  transform: translateX(100px); /* RightPane을 우측으로 이동시켜 완전히 숨김 */
-}
-
-/* CenterPane + RightPane 통합 컨테이너 - 구조적 동기화 */
-.layout-center-right-container {
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 🍎 미닫이문 UX: RightPane + BRB 통합 컨테이너 */
-.layout-rightpane-container {
-  z-index: var(--z-index-elevated);
-  overflow: hidden;
-  background-color: transparent;
-
-  /* 🎯 미닫이문 효과: CenterPane과 동일한 transition (left + width) */
-  /* LeftPane-CenterPane 방식과 완벽하게 동일하게 적용 */
-  /* 🍎 핵심: apple-smooth easing으로 CenterPane과 완벽한 동기화 */
-  transition:
-    left var(--duration-apple-graceful) var(--easing-apple-smooth),
-    width var(--duration-apple-graceful) var(--easing-apple-smooth),
-    opacity var(--duration-apple-graceful) var(--easing-apple-smooth);
-
-  /* 🍎 Performance: GPU 가속 최적화 */
-  will-change: left, width, opacity;
-  transform: translateZ(0); /* GPU 레이어만 생성, translateX 제거 */
-  backface-visibility: hidden;
-
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 🎯 미닫이문 닫힘: width만 0으로 (left는 App.tsx에서 계산된 위치 유지) */
-.layout-rightpane-container--hidden {
-  /* width: 0px는 App.tsx에서 inline style로 설정됨 */
-  opacity: 0;
-  /* left는 변하지 않음 - 자연스러운 우측 슬라이드 아웃 효과 */
-  pointer-events: none; /* 애니메이션 중 클릭 차단 */
-}
-
-.layout-rightpane-content {
-  background-color: var(--color-layout-rightpane-bg);
-  /* 애플 스타일 카드형 디자인 */
-  border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
-  box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
-  /* 호버 시 더 깊은 그림자 효과 */
-  transition: box-shadow var(--duration-ios-quick) var(--easing-ios-default);
-
-  /* 🍎 Performance: GPU 가속 최적화 */
-  will-change: box-shadow, transform;
-  transform: translateZ(0); /* 강제 GPU 레이어 생성 */
-  contain: layout style paint; /* CSS Containment 최적화 */
-  backface-visibility: hidden; /* Subpixel 렌더링 최적화 */
-
-  /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-kerning: auto;
-  font-variant-ligatures: common-ligatures;
-
-  /* 🌍 국제화: 완벽한 다국어 지원 */
-  unicode-bidi: isolate;
-  text-size-adjust: 100%;
-
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 애플 스타일 Progressive Enhancement - 호버 시 깊이감 증가 */
-.layout-rightpane-content:hover {
-  box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
-}
-
-/* === POSITIONING UTILITIES === */
-
-.position-fixed {
-  position: fixed;
-}
-
-.position-absolute {
-  position: absolute;
-}
-
-.z-index-100 { z-index: 100; }
-.z-index-20 { z-index: 20; }
-.z-index-10 { z-index: 10; }
-.z-index-1 { z-index: 1; }
-.z-index-1000 { z-index: 1000; }
-
-/* === ACCESSIBILITY: REDUCED MOTION 완벽 지원 === */
-
-/* 🍎 접근성 우선: 모든 애니메이션 완전 비활성화 */
-@media (prefers-reduced-motion: reduce) {
-  .layout-pane,
-  .layout-centerpane,
-  .layout-pagination,
-  .layout-brb,
-  .layout-rightpane,
-  .layout-rightpane-content,
-  .layout-center-right-container,
-  .layout-rightpane-container {
-    transition: none !important;
-    animation: none !important;
-    transform: none !important;
-    will-change: auto !important;
-  }
-}
-
-/* === ACCESSIBILITY: HIGH CONTRAST 완벽 지원 === */
-
-/* 🍎 고대비 모드: WCAG 2.1 AAA 기준 완벽 준수 */
-@media (prefers-contrast: high) {
-  .layout-centerpane,
-  .layout-rightpane-content,
-  .layout-pagination {
-    border: var(--border-width-md) solid var(--color-border-strong);
-    box-shadow: none; /* 고대비에서 그림자 제거 */
-  }
-
+  /* 🍎 애플 스타일 최적 색상 - CenterPane과 RightPane 중간 톤 */
   .layout-brb:hover {
-    background-color: var(--color-border-strong);
-    border: var(--border-width-sm) solid var(--color-text-primary);
+    /* Light: CenterPane(#ffffff)과 RightPane(#e5e5ea) 중간값 + 구분 가능한 강도 */
+    background-color: var(--color-ios-system-gray4-alpha);  /* iOS systemGray4 기반 서브틀 */
   }
 
-  /* 포커스 링 강화 */
-  .layout-centerpane:focus-within,
-  .layout-pagination:focus-within {
-    outline: var(--border-width-lg) solid var(--color-focus-ring);
-    outline-offset: var(--spacing-1);
-  }
-}
-
-/* === ACCESSIBILITY: FORCED COLORS 완벽 지원 === */
-
-/* 🍎 Windows 고대비 모드: 시스템 색상 자동 적용 */
-@media (forced-colors: active) {
-  .layout-centerpane,
-  .layout-rightpane-content,
-  .layout-pagination {
-    forced-color-adjust: none;
-    background-color: Canvas;
-    color: CanvasText;
-    border-color: ButtonBorder;
+  /* 다크 모드 - iOS 표준 Separator 색상 */
+  html[data-theme="dark"] .layout-brb:hover {
+    /* Dark: iOS separatorColor와 동일한 표준 색상 */
+    background-color: var(--color-ios-system-gray5-alpha);   /* iOS systemGray5 기반 */
   }
 
-  .layout-brb:hover {
-    background-color: Highlight;
-    forced-color-adjust: none;
+  /* 시스템 다크 모드 */
+  @media (prefers-color-scheme: dark) {
+    html[data-theme="system"] .layout-brb:hover {
+      background-color: var(--color-ios-system-gray5-alpha);
+    }
   }
-}
 
-/* === HEADER-CBR 연동 시스템 제거됨 === */
-
-/*
- * Header 높이가 고정되어 더 이상 CBR 요소들을 이동시킬 필요 없음
- * Progressive Disclosure는 시각적 변화만으로 구현
- *
- * 기존 Header-CBR 연동 시스템 완전 제거:
- * - layout-main--header-expanded 클래스는 HeaderView.tsx에서 여전히 사용되지만
- * - CSS에서는 더 이상 아무런 스타일을 적용하지 않음
- * - 이는 애플 디자인 철학 "물리적 공간 변화 없는 Progressive Disclosure"에 부합
- */
-
-/* === APPLE STYLE HEADER EFFECTS === */
-
-/*
- * 화려한 애니메이션 제거됨 (shimmer, glimmer, headerPulse)
- * 애플 디자인 철학: 극도의 미니멀리즘, 서브틀한 효과만 유지
- *
- * 새로운 Header는 Progressive Disclosure 패턴을 사용하며
- * Header.css에서 별도로 관리됨
- */
-
-/* === CENTERPANE PLACEHOLDER ANIMATION === */
-
-/**
- * CenterPane 플레이스홀더 애니메이션
- * 애플 Progressive Disclosure 원칙 적용
- * 서브틀한 페이드인 효과로 자연스러운 등장
- */
-@keyframes centerPanePlaceholderFadeIn {
-  from {
+  .layout-brb--hidden {
     opacity: 0;
-    transform: translateY(-4px); /* 애플 스타일: 서브틀한 상승 효과 */
+    cursor: default;
+    /* transform 제거 - 이제 컨테이너에서 함께 애니메이션됨 */
   }
-  to {
+
+  /* === 🍎 BRB RESET BUTTON === */
+
+  .layout-brb-reset {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-ios-bg-secondary-light);
+    border: 2px solid var(--color-ios-separator-light);
+    border-radius: 50%;
+    /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
+    cursor: pointer;
+    opacity: 0.5;
+    transition: all 0.2s ease-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  html[data-theme="dark"] .layout-brb-reset {
+    background-color: var(--color-ios-bg-secondary-dark);
+    border-color: var(--color-ios-separator-dark);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .layout-brb:hover .layout-brb-reset {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
-}
 
-/* === VERSION UPDATE BANNER === */
+  .layout-brb-reset:hover {
+    background-color: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+    color: white;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
 
-/**
- * 새 버전 알림 배너
- * 프로덕션에서 프론트엔드 버전 불일치 감지 시 표시
- */
-.version-update-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: var(--color-primary-500);
-  color: white;
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  z-index: 10001;
-  font-size: 13px;
-  font-weight: 500;
-}
+  html[data-theme="dark"] .layout-brb-reset:hover {
+    background-color: var(--color-primary-500);
+    border-color: var(--color-primary-500);
+  }
 
-.version-update-banner__btn-refresh {
-  background: white;
-  color: var(--color-primary-500);
-  border: none;
-  border-radius: 4px;
-  padding: 4px 12px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 12px;
-}
+  .layout-brb-reset:active {
+    transform: translate(-50%, -50%) scale(0.95);
+  }
 
-.version-update-banner__btn-refresh:hover {
-  background: var(--color-gray-100);
-}
 
-.version-update-banner__btn-later {
-  background: transparent;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 4px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 12px;
-}
+  .layout-rightpane {
+    z-index: var(--z-index-elevated);
+    overflow: hidden;
+    background-color: var(--color-layout-rightpane-bg);
+    /* transition 완전 제거 - Header-CBR 연동 시 컨테이너에서 처리 */
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
 
-.version-update-banner__btn-later:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
+  .layout-rightpane--hidden {
+    width: 0px !important;
+    opacity: 0;
+    padding: 0px !important;
+    transform: translateX(100px); /* RightPane을 우측으로 이동시켜 완전히 숨김 */
+  }
 
+  /* CenterPane + RightPane 통합 컨테이너 - 구조적 동기화 */
+  .layout-center-right-container {
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  /* 🍎 미닫이문 UX: RightPane + BRB 통합 컨테이너 */
+  .layout-rightpane-container {
+    z-index: var(--z-index-elevated);
+    overflow: hidden;
+    background-color: transparent;
+
+    /* 🎯 미닫이문 효과: CenterPane과 동일한 transition (left + width) */
+    /* LeftPane-CenterPane 방식과 완벽하게 동일하게 적용 */
+    /* 🍎 핵심: apple-smooth easing으로 CenterPane과 완벽한 동기화 */
+    transition:
+      left var(--duration-apple-graceful) var(--easing-apple-smooth),
+      width var(--duration-apple-graceful) var(--easing-apple-smooth),
+      opacity var(--duration-apple-graceful) var(--easing-apple-smooth);
+
+    /* 🍎 Performance: GPU 가속 최적화 */
+    will-change: left, width, opacity;
+    transform: translateZ(0); /* GPU 레이어만 생성, translateX 제거 */
+    backface-visibility: hidden;
+
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  /* 🎯 미닫이문 닫힘: width만 0으로 (left는 App.tsx에서 계산된 위치 유지) */
+  .layout-rightpane-container--hidden {
+    /* width: 0px는 App.tsx에서 inline style로 설정됨 */
+    opacity: 0;
+    /* left는 변하지 않음 - 자연스러운 우측 슬라이드 아웃 효과 */
+    pointer-events: none; /* 애니메이션 중 클릭 차단 */
+  }
+
+  .layout-rightpane-content {
+    background-color: var(--color-layout-rightpane-bg);
+    /* 애플 스타일 카드형 디자인 */
+    border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
+    box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
+    /* 호버 시 더 깊은 그림자 효과 */
+    transition: box-shadow var(--duration-ios-quick) var(--easing-ios-default);
+
+    /* 🍎 Performance: GPU 가속 최적화 */
+    will-change: box-shadow, transform;
+    transform: translateZ(0); /* 강제 GPU 레이어 생성 */
+    contain: layout style paint; /* CSS Containment 최적화 */
+    backface-visibility: hidden; /* Subpixel 렌더링 최적화 */
+
+    /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-kerning: auto;
+    font-variant-ligatures: common-ligatures;
+
+    /* 🌍 국제화: 완벽한 다국어 지원 */
+    unicode-bidi: isolate;
+    text-size-adjust: 100%;
+
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  /* 애플 스타일 Progressive Enhancement - 호버 시 깊이감 증가 */
+  .layout-rightpane-content:hover {
+    box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
+  }
+
+  /* === POSITIONING UTILITIES === */
+
+  .position-fixed {
+    position: fixed;
+  }
+
+  .position-absolute {
+    position: absolute;
+  }
+
+  .z-index-100 { z-index: 100; }
+  .z-index-20 { z-index: 20; }
+  .z-index-10 { z-index: 10; }
+  .z-index-1 { z-index: 1; }
+  .z-index-1000 { z-index: 1000; }
+
+  /* === ACCESSIBILITY: REDUCED MOTION 완벽 지원 === */
+
+  /* 🍎 접근성 우선: 모든 애니메이션 완전 비활성화 */
+  @media (prefers-reduced-motion: reduce) {
+    .layout-pane,
+    .layout-centerpane,
+    .layout-pagination,
+    .layout-brb,
+    .layout-rightpane,
+    .layout-rightpane-content,
+    .layout-center-right-container,
+    .layout-rightpane-container {
+      transition: none !important;
+      animation: none !important;
+      transform: none !important;
+      will-change: auto !important;
+    }
+  }
+
+  /* === ACCESSIBILITY: HIGH CONTRAST 완벽 지원 === */
+
+  /* 🍎 고대비 모드: WCAG 2.1 AAA 기준 완벽 준수 */
+  @media (prefers-contrast: high) {
+    .layout-centerpane,
+    .layout-rightpane-content,
+    .layout-pagination {
+      border: var(--border-width-md) solid var(--color-border-strong);
+      box-shadow: none; /* 고대비에서 그림자 제거 */
+    }
+
+    .layout-brb:hover {
+      background-color: var(--color-border-strong);
+      border: var(--border-width-sm) solid var(--color-text-primary);
+    }
+
+    /* 포커스 링 강화 */
+    .layout-centerpane:focus-within,
+    .layout-pagination:focus-within {
+      outline: var(--border-width-lg) solid var(--color-focus-ring);
+      outline-offset: var(--spacing-1);
+    }
+  }
+
+  /* === ACCESSIBILITY: FORCED COLORS 완벽 지원 === */
+
+  /* 🍎 Windows 고대비 모드: 시스템 색상 자동 적용 */
+  @media (forced-colors: active) {
+    .layout-centerpane,
+    .layout-rightpane-content,
+    .layout-pagination {
+      forced-color-adjust: none;
+      background-color: Canvas;
+      color: CanvasText;
+      border-color: ButtonBorder;
+    }
+
+    .layout-brb:hover {
+      background-color: Highlight;
+      forced-color-adjust: none;
+    }
+  }
+
+  /* === HEADER-CBR 연동 시스템 제거됨 === */
+
+  /*
+   * Header 높이가 고정되어 더 이상 CBR 요소들을 이동시킬 필요 없음
+   * Progressive Disclosure는 시각적 변화만으로 구현
+   *
+   * 기존 Header-CBR 연동 시스템 완전 제거:
+   * - layout-main--header-expanded 클래스는 HeaderView.tsx에서 여전히 사용되지만
+   * - CSS에서는 더 이상 아무런 스타일을 적용하지 않음
+   * - 이는 애플 디자인 철학 "물리적 공간 변화 없는 Progressive Disclosure"에 부합
+   */
+
+  /* === APPLE STYLE HEADER EFFECTS === */
+
+  /*
+   * 화려한 애니메이션 제거됨 (shimmer, glimmer, headerPulse)
+   * 애플 디자인 철학: 극도의 미니멀리즘, 서브틀한 효과만 유지
+   *
+   * 새로운 Header는 Progressive Disclosure 패턴을 사용하며
+   * Header.css에서 별도로 관리됨
+   */
+
+  /* === CENTERPANE PLACEHOLDER ANIMATION === */
+
+  /**
+   * CenterPane 플레이스홀더 애니메이션
+   * 애플 Progressive Disclosure 원칙 적용
+   * 서브틀한 페이드인 효과로 자연스러운 등장
+   */
+  @keyframes centerPanePlaceholderFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px); /* 애플 스타일: 서브틀한 상승 효과 */
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* === VERSION UPDATE BANNER === */
+
+  /**
+   * 새 버전 알림 배너
+   * 프로덕션에서 프론트엔드 버전 불일치 감지 시 표시
+   */
+  .version-update-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-primary-500);
+    color: white;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 10001;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .version-update-banner__btn-refresh {
+    background: white;
+    color: var(--color-primary-500);
+    border: none;
+    border-radius: 4px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .version-update-banner__btn-refresh:hover {
+    background: var(--color-gray-100);
+  }
+
+  .version-update-banner__btn-later {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .version-update-banner__btn-later:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+} /* end @layer utilities */

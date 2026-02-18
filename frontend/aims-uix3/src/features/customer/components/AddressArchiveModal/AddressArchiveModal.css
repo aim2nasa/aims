@@ -6,346 +6,351 @@
  */
 
 /* Overlay */
-.address-archive-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: fadeIn 0.2s ease-out;
-}
 
-[data-theme="dark"] .address-archive-modal-overlay {
-  background-color: rgba(0, 0, 0, 0.6);
-}
+@layer components {
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+  .address-archive-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-out;
   }
-  to {
-    opacity: 1;
+
+  [data-theme="dark"] .address-archive-modal-overlay {
+    background-color: rgba(0, 0, 0, 0.6);
   }
-}
 
-/* Modal Container */
-.address-archive-modal {
-  background-color: var(--color-layout-content-light);
-  border-radius: 12px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  animation: slideUp 0.3s ease-out;
-  display: flex;
-  flex-direction: column;
-}
-
-[data-theme="dark"] .address-archive-modal {
-  background-color: var(--color-layout-content-dark);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-/* Header */
-.address-archive-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--color-layout-brb-light);
-}
-
-[data-theme="dark"] .address-archive-modal__header {
-  border-bottom-color: var(--color-layout-brb-dark);
-}
-
-.address-archive-modal__title {
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 메인 타이틀 (17px deprecated) */
-  font-family: var(--font-family-display);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-[data-theme="dark"] .address-archive-modal__title {
-  color: var(--color-text-primary);
-}
-
-/* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
-
-/* Info Section */
-.address-archive-modal__info {
-  padding: 12px 24px;
-  background-color: var(--color-layout-secondary-light);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 */
-  font-family: var(--font-family-text);
-  color: var(--color-text-secondary);
-  border-bottom: 1px solid var(--color-layout-brb-light);
-}
-
-[data-theme="dark"] .address-archive-modal__info {
-  background-color: var(--color-layout-secondary-dark);
-  border-bottom-color: var(--color-layout-brb-dark);
-  color: var(--color-text-secondary);
-}
-
-.address-archive-modal__info strong {
-  color: var(--color-icon-blue);
-  font-weight: 600;
-}
-
-/* Content Area */
-.address-archive-modal__content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 24px;
-}
-
-/* Error State */
-.address-archive-modal__error {
-  padding: 16px;
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid var(--color-danger);
-  border-radius: 8px;
-  color: var(--color-danger);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
-  font-family: var(--font-family-text);
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-[data-theme="dark"] .address-archive-modal__error {
-  background-color: rgba(239, 68, 68, 0.15);
-}
-
-/* Loading State */
-.address-archive-modal__loading {
-  padding: 40px;
-  text-align: center;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
-  font-family: var(--font-family-text);
-}
-
-/* Empty State */
-.address-archive-modal__empty {
-  padding: 40px;
-  text-align: center;
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
-  font-family: var(--font-family-text);
-}
-
-/* Address Item */
-.address-item {
-  margin-bottom: 16px;
-  padding: 16px;
-  background-color: var(--color-layout-secondary-light);
-  border-radius: 10px;
-  border: 1px solid var(--color-layout-brb-light);
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-[data-theme="dark"] .address-item {
-  background-color: var(--color-layout-secondary-dark);
-  border-color: var(--color-layout-brb-dark);
-}
-
-.address-item:hover {
-  border-color: var(--color-icon-blue);
-}
-
-.address-item--current {
-  border-color: var(--color-icon-green);
-  background-color: rgba(52, 199, 89, 0.05);
-}
-
-[data-theme="dark"] .address-item--current {
-  background-color: rgba(52, 199, 89, 0.1);
-}
-
-/* Address Item Header */
-.address-item__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.address-item__date {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
-  font-family: var(--font-family-text);
-  color: var(--color-text-secondary);
-}
-
-.address-item__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 (10px deprecated) */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-}
-
-.address-item__icon.current {
-  background-color: var(--color-icon-green);
-  color: white;
-}
-
-.address-item__icon.past {
-  background-color: var(--color-layout-accent-light);
-  color: var(--color-text-secondary);
-}
-
-[data-theme="dark"] .address-item__icon.past {
-  background-color: var(--color-layout-accent-dark);
-}
-
-/* Current Badge */
-.address-item__current-badge {
-  padding: 4px 12px;
-  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
-  font-family: var(--font-family-text);
-  border: 1px solid var(--color-icon-green);
-  background-color: transparent;
-  color: var(--color-icon-green);
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: default;
-  pointer-events: none;
-}
-
-/* Past Badge */
-.address-item__past-badge {
-  padding: 4px 12px;
-  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
-  font-family: var(--font-family-text);
-  border: 1px solid var(--color-icon-orange);
-  background-color: transparent;
-  color: var(--color-icon-orange);
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: default;
-  pointer-events: none;
-}
-
-/* Address Content */
-.address-item__content {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.address-item__pin {
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 타이틀 (16px deprecated) */
-  font-family: var(--font-family-display);
-  flex-shrink: 0;
-}
-
-.address-item__text {
-  flex: 1;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
-  font-family: var(--font-family-text);
-  line-height: 1.5;
-  color: var(--color-text-primary);
-  font-weight: 600;
-}
-
-[data-theme="dark"] .address-item__text {
-  color: var(--color-text-primary);
-}
-
-/* 주소 검증 상태 아이콘 (고객 전체보기와 동일) */
-.address-item__verified-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-}
-
-.address-item__verified-icon--verified {
-  color: var(--color-success-500, #22c55e);
-}
-
-.address-item__verified-icon--pending {
-  color: var(--color-text-tertiary, #9ca3af);
-}
-
-.address-item__verified-icon--failed {
-  color: var(--color-danger, #ef4444);
-}
-
-/* Reason & Notes */
-.address-item__reason,
-.address-item__notes {
-  margin-top: 8px;
-  padding: 6px 10px;
-  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
-  font-family: var(--font-family-text);
-  border-radius: 4px;
-}
-
-.address-item__reason {
-  background-color: var(--color-layout-accent-light);
-  color: var(--color-text-secondary);
-  display: inline-block;
-}
-
-[data-theme="dark"] .address-item__reason {
-  background-color: var(--color-layout-accent-dark);
-}
-
-.address-item__notes {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-
-[data-theme="dark"] .address-item__notes {
-  background-color: rgba(59, 130, 246, 0.15);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
+  /* Modal Container */
   .address-archive-modal {
-    width: 95%;
-    max-height: 90vh;
+    background-color: var(--color-layout-content-light);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    animation: slideUp 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
   }
 
-  .address-archive-modal__header,
-  .address-archive-modal__info,
+  [data-theme="dark"] .address-archive-modal {
+    background-color: var(--color-layout-content-dark);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Header */
+  .address-archive-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-layout-brb-light);
+  }
+
+  [data-theme="dark"] .address-archive-modal__header {
+    border-bottom-color: var(--color-layout-brb-dark);
+  }
+
+  .address-archive-modal__title {
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 메인 타이틀 (17px deprecated) */
+    font-family: var(--font-family-display);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  [data-theme="dark"] .address-archive-modal__title {
+    color: var(--color-text-primary);
+  }
+
+  /* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
+
+  /* Info Section */
+  .address-archive-modal__info {
+    padding: 12px 24px;
+    background-color: var(--color-layout-secondary-light);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 */
+    font-family: var(--font-family-text);
+    color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-layout-brb-light);
+  }
+
+  [data-theme="dark"] .address-archive-modal__info {
+    background-color: var(--color-layout-secondary-dark);
+    border-bottom-color: var(--color-layout-brb-dark);
+    color: var(--color-text-secondary);
+  }
+
+  .address-archive-modal__info strong {
+    color: var(--color-icon-blue);
+    font-weight: 600;
+  }
+
+  /* Content Area */
   .address-archive-modal__content {
-    padding-left: 16px;
-    padding-right: 16px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px;
   }
 
-  .address-item {
-    padding: 12px;
+  /* Error State */
+  .address-archive-modal__error {
+    padding: 16px;
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--color-danger);
+    border-radius: 8px;
+    color: var(--color-danger);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
+    font-family: var(--font-family-text);
+    text-align: center;
+    margin-bottom: 16px;
   }
-}
+
+  [data-theme="dark"] .address-archive-modal__error {
+    background-color: rgba(239, 68, 68, 0.15);
+  }
+
+  /* Loading State */
+  .address-archive-modal__loading {
+    padding: 40px;
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
+    font-family: var(--font-family-text);
+  }
+
+  /* Empty State */
+  .address-archive-modal__empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
+    font-family: var(--font-family-text);
+  }
+
+  /* Address Item */
+  .address-item {
+    margin-bottom: 16px;
+    padding: 16px;
+    background-color: var(--color-layout-secondary-light);
+    border-radius: 10px;
+    border: 1px solid var(--color-layout-brb-light);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  [data-theme="dark"] .address-item {
+    background-color: var(--color-layout-secondary-dark);
+    border-color: var(--color-layout-brb-dark);
+  }
+
+  .address-item:hover {
+    border-color: var(--color-icon-blue);
+  }
+
+  .address-item--current {
+    border-color: var(--color-icon-green);
+    background-color: rgba(52, 199, 89, 0.05);
+  }
+
+  [data-theme="dark"] .address-item--current {
+    background-color: rgba(52, 199, 89, 0.1);
+  }
+
+  /* Address Item Header */
+  .address-item__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .address-item__date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+    font-family: var(--font-family-text);
+    color: var(--color-text-secondary);
+  }
+
+  .address-item__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 (10px deprecated) */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+  }
+
+  .address-item__icon.current {
+    background-color: var(--color-icon-green);
+    color: white;
+  }
+
+  .address-item__icon.past {
+    background-color: var(--color-layout-accent-light);
+    color: var(--color-text-secondary);
+  }
+
+  [data-theme="dark"] .address-item__icon.past {
+    background-color: var(--color-layout-accent-dark);
+  }
+
+  /* Current Badge */
+  .address-item__current-badge {
+    padding: 4px 12px;
+    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+    font-family: var(--font-family-text);
+    border: 1px solid var(--color-icon-green);
+    background-color: transparent;
+    color: var(--color-icon-green);
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* Past Badge */
+  .address-item__past-badge {
+    padding: 4px 12px;
+    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+    font-family: var(--font-family-text);
+    border: 1px solid var(--color-icon-orange);
+    background-color: transparent;
+    color: var(--color-icon-orange);
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* Address Content */
+  .address-item__content {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .address-item__pin {
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 타이틀 (16px deprecated) */
+    font-family: var(--font-family-display);
+    flex-shrink: 0;
+  }
+
+  .address-item__text {
+    flex: 1;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
+    font-family: var(--font-family-text);
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  [data-theme="dark"] .address-item__text {
+    color: var(--color-text-primary);
+  }
+
+  /* 주소 검증 상태 아이콘 (고객 전체보기와 동일) */
+  .address-item__verified-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+
+  .address-item__verified-icon--verified {
+    color: var(--color-success-500, #22c55e);
+  }
+
+  .address-item__verified-icon--pending {
+    color: var(--color-text-tertiary, #9ca3af);
+  }
+
+  .address-item__verified-icon--failed {
+    color: var(--color-danger, #ef4444);
+  }
+
+  /* Reason & Notes */
+  .address-item__reason,
+  .address-item__notes {
+    margin-top: 8px;
+    padding: 6px 10px;
+    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+    font-family: var(--font-family-text);
+    border-radius: 4px;
+  }
+
+  .address-item__reason {
+    background-color: var(--color-layout-accent-light);
+    color: var(--color-text-secondary);
+    display: inline-block;
+  }
+
+  [data-theme="dark"] .address-item__reason {
+    background-color: var(--color-layout-accent-dark);
+  }
+
+  .address-item__notes {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--color-text-secondary);
+    font-style: italic;
+  }
+
+  [data-theme="dark"] .address-item__notes {
+    background-color: rgba(59, 130, 246, 0.15);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .address-archive-modal {
+      width: 95%;
+      max-height: 90vh;
+    }
+
+    .address-archive-modal__header,
+    .address-archive-modal__info,
+    .address-archive-modal__content {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .address-item {
+      padding: 12px;
+    }
+  }
+
+} /* end @layer components */

@@ -6,518 +6,522 @@
  * 메인 앱 모달과 완전히 동일한 색상/스타일 적용
  */
 
-.annual-report-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: var(--color-layout-main-bg);
-  color: var(--color-text-primary);
-}
-
-/* 헤더 */
-.annual-report-page__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--color-layout-header-bg);
-  border-bottom: 1px solid var(--color-layout-border);
-  -webkit-app-region: drag; /* 드래그로 창 이동 가능 */
-}
-
-.annual-report-page__header-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  -webkit-app-region: no-drag;
-}
-
-.annual-report-page__header-title h1 {
-  margin: 0;
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-.annual-report-page__header-title p {
-  margin: 0;
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-.annual-report-page__header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  -webkit-app-region: no-drag;
-}
-
-.annual-report-page__action-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.annual-report-page__action-button:hover {
-  background: var(--color-hover-light);
-  color: var(--color-text-primary);
-}
-
-[data-theme="dark"] .annual-report-page__action-button:hover {
-  background: var(--color-hover-dark);
-}
-
-.annual-report-page__close-button:hover {
-  background: var(--color-icon-red);
-  color: white;
-}
-
-/* 메인 콘텐츠 */
-.annual-report-page__content {
-  flex: 1;
-  overflow: auto;
-  padding: 16px;
-  background: var(--color-layout-centerpane-bg);
-}
-
-/* 빈 상태 */
-.annual-report-page__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  height: 100vh;
-  color: var(--color-text-tertiary);
-}
-
-/* Summary Section - AnnualReportModal.css와 동일 */
-.annual-report-page .annual-report-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-  padding: 20px;
-  background: var(--color-layout-content-light);
-  border-radius: 12px;
-  border: 1px solid var(--color-layout-border);
-}
-
-[data-theme="dark"] .annual-report-page .annual-report-summary {
-  background: var(--color-layout-content-dark);
-}
-
-.annual-report-page .annual-report-summary__item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.annual-report-page .annual-report-summary__label {
-  font-size: var(--font-size-caption-1);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-.annual-report-page .annual-report-summary__value {
-  font-size: var(--font-size-footnote);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-.annual-report-page .annual-report-summary__value--primary {
-  color: var(--color-primary);
-}
-
-/* Contracts Section - AnnualReportModal.css와 동일 */
-.annual-report-page .annual-report-contracts {
-  margin-top: 16px;
-}
-
-.annual-report-page .annual-report-contracts__title {
-  font-size: var(--font-size-footnote);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 12px 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-/* Table Wrapper - AnnualReportModal.css와 동일 */
-.annual-report-page .contracts-table-wrapper {
-  overflow-x: auto;
-  border: 1px solid var(--color-layout-border);
-  border-radius: 8px;
-  background: var(--color-layout-content-light);
-}
-
-[data-theme="dark"] .annual-report-page .contracts-table-wrapper {
-  background: var(--color-layout-content-dark);
-}
-
-/* Table - AnnualReportModal.css와 동일 */
-.annual-report-page .contracts-table {
-  width: 100%;
-  min-width: 1200px;
-  border-collapse: collapse;
-  font-size: var(--font-size-caption-2);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-.annual-report-page .contracts-table thead {
-  background: var(--color-layout-secondary-light);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-[data-theme="dark"] .annual-report-page .contracts-table thead {
-  background: var(--color-layout-secondary-dark);
-}
-
-.annual-report-page .contracts-table th {
-  padding: 8px 6px;
-  text-align: left;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  border-bottom: 2px solid var(--color-layout-border);
-  white-space: nowrap;
-  font-size: var(--font-size-caption-1);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.annual-report-page .contracts-table__th--sortable {
-  cursor: pointer;
-  -webkit-user-select: none;
-  user-select: none;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  position: relative;
-}
-
-.annual-report-page .contracts-table__th--sortable:hover {
-  background-color: var(--color-bg-hover);
-  transform: scale(1.02);
-}
-
-[data-theme="dark"] .annual-report-page .contracts-table__th--sortable:hover {
-  background-color: var(--color-hover-dark);
-}
-
-.annual-report-page .contracts-table__th--sorted {
-  background-color: var(--color-primary-ultra-light);
-  font-weight: 700;
-}
-
-[data-theme="dark"] .annual-report-page .contracts-table__th--sorted {
-  background-color: var(--color-primary-alpha-light);
-}
-
-.annual-report-page .contracts-table__sort-icon {
-  opacity: 0.7;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  display: inline-flex;
-  flex-shrink: 0;
-}
-
-.annual-report-page .contracts-table__th--sortable:hover .contracts-table__sort-icon {
-  opacity: 0.9;
-  transform: scale(1.15);
-}
-
-.annual-report-page .contracts-table__th--sorted .contracts-table__sort-icon {
-  opacity: 1;
-  color: var(--color-primary);
-}
-
-.annual-report-page .contracts-table tbody tr {
-  border-bottom: 1px solid var(--color-layout-border);
-  transition: background-color 0.2s ease;
-}
-
-[data-theme="dark"] .annual-report-page .contracts-table tbody tr {
-  border-bottom-color: var(--color-hover-dark);
-}
-
-.annual-report-page .contracts-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.annual-report-page .contracts-table tbody tr:hover {
-  background-color: var(--color-hover-light);
-}
-
-[data-theme="dark"] .annual-report-page .contracts-table tbody tr:hover {
-  background-color: var(--color-hover-dark);
-}
-
-.annual-report-page .contracts-table td {
-  padding: 6px 6px;
-  color: var(--color-text-primary);
-  vertical-align: middle;
-  font-size: var(--font-size-caption-2);
-}
-
-/* Cell Specific Styles - AnnualReportModal.css와 동일 */
-.annual-report-page .contracts-table__cell--number {
-  text-align: center;
-  font-weight: 600;
-  width: 50px;
-}
-
-.annual-report-page .contracts-table__cell--company {
-  font-weight: 600;
-  min-width: 80px;
-}
-
-.annual-report-page .contracts-table__cell--contract-number {
-  font-family: var(--font-mono, 'SF Mono', 'Courier New', monospace);
-  font-size: var(--font-size-caption-1);
-  min-width: 100px;
-}
-
-.annual-report-page .contracts-table__cell--product {
-  min-width: 150px;
-  max-width: 200px;
-  white-space: normal;
-  line-height: 1.4;
-}
-
-.annual-report-page .contracts-table__cell--contractor,
-.annual-report-page .contracts-table__cell--insured {
-  min-width: 70px;
-}
-
-.annual-report-page .contracts-table__cell--date {
-  font-size: var(--font-size-caption-1);
-  min-width: 90px;
-}
-
-.annual-report-page .contracts-table__cell--status {
-  text-align: center;
-  min-width: 70px;
-}
-
-.annual-report-page .contracts-table__cell--coverage {
-  text-align: right;
-  font-weight: 600;
-  color: var(--color-accent);
-  min-width: 80px;
-}
-
-.annual-report-page .contracts-table__cell--period,
-.annual-report-page .contracts-table__cell--payment {
-  font-size: var(--font-size-caption-1);
-  min-width: 70px;
-}
-
-.annual-report-page .contracts-table__cell--premium {
-  text-align: right;
-  font-weight: 600;
-  min-width: 90px;
-}
-
-.annual-report-page .contracts-table__cell--premium-highlight {
-  color: var(--color-primary);
-}
-
-/* Status Badge - AnnualReportModal.css와 동일 */
-.annual-report-page .status-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: var(--font-size-caption-1);
-  font-weight: 600;
-}
-
-.annual-report-page .status-badge.contract-item__status--active {
-  background: var(--color-success-light);
-  color: var(--color-success);
-}
-
-.annual-report-page .status-badge.contract-item__status--inactive {
-  background: var(--color-text-tertiary);
-  color: var(--color-text-secondary);
-}
-
-.annual-report-page .status-badge.contract-item__status--default {
-  background: var(--color-bg-hover);
-  color: var(--color-text-secondary);
-}
-
-/* Footer - AnnualReportModal.css와 동일 */
-.annual-report-page__footer {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-layout-border);
-  text-align: center;
-}
-
-.annual-report-page__footer-text {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-tertiary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-/* ==================== Mobile Card Layout ==================== */
-/* JS 기반 모바일 감지 (isMobileView) - 테이블 대신 카드형 레이아웃 */
-
-.annual-report-page .ar-mobile-summary {
-  display: flex;
-  background: var(--color-layout-content-light);
-  border: 1px solid var(--color-layout-border);
-  border-radius: 10px;
-  padding: 12px 0;
-  margin-bottom: 16px;
-}
-
-[data-theme="dark"] .annual-report-page .ar-mobile-summary {
-  background: var(--color-layout-content-dark);
-}
-
-.annual-report-page .ar-mobile-summary__item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.annual-report-page .ar-mobile-summary__item + .ar-mobile-summary__item {
-  border-left: 1px solid var(--color-layout-border);
-}
-
-.annual-report-page .ar-mobile-summary__label {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  font-weight: 400;
-}
-
-.annual-report-page .ar-mobile-summary__value {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.annual-report-page .ar-mobile-summary__value--primary {
-  color: var(--color-primary);
-}
-
-.annual-report-page .ar-mobile-contracts {
-  margin-bottom: 16px;
-}
-
-.annual-report-page .ar-mobile-contracts__title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 8px 0;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--color-layout-border);
-}
-
-.annual-report-page .ar-mobile-contracts--lapsed {
-  margin-top: 20px;
-}
-
-.annual-report-page .ar-mobile-card {
-  background: var(--color-layout-content-light);
-  border: 1px solid var(--color-layout-border);
-  border-radius: 10px;
-  margin-bottom: 8px;
-  overflow: hidden;
-}
-
-[data-theme="dark"] .annual-report-page .ar-mobile-card {
-  background: var(--color-layout-content-dark);
-}
-
-.annual-report-page .ar-mobile-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 10px 12px 0;
-  gap: 8px;
-}
-
-.annual-report-page .ar-mobile-card__product {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  flex: 1;
-  line-height: 1.3;
-}
-
-.annual-report-page .ar-mobile-card__company {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-  padding: 2px 12px 8px;
-  border-bottom: 1px solid var(--color-layout-border);
-}
-
-.annual-report-page .ar-mobile-card__body {
-  padding: 6px 12px;
-}
-
-.annual-report-page .ar-mobile-card__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 3px 0;
-}
-
-.annual-report-page .ar-mobile-card__label {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
-  min-width: 68px;
-}
-
-.annual-report-page .ar-mobile-card__value {
-  font-size: 11px;
-  color: var(--color-text-primary);
-  text-align: right;
-  flex: 1;
-}
-
-.annual-report-page .ar-mobile-card__premium {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: var(--color-primary-bg);
-  border-top: 1px solid var(--color-layout-border);
-}
-
-.annual-report-page .ar-mobile-card__premium-label {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  font-weight: 600;
-}
-
-.annual-report-page .ar-mobile-card__premium-value {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.annual-report-page .ar-mobile-empty {
-  text-align: center;
-  padding: 24px 16px;
-  font-size: 12px;
-  color: var(--color-text-tertiary);
-}
+@layer components {
+
+  .annual-report-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--color-layout-main-bg);
+    color: var(--color-text-primary);
+  }
+
+  /* 헤더 */
+  .annual-report-page__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--color-layout-header-bg);
+    border-bottom: 1px solid var(--color-layout-border);
+    -webkit-app-region: drag; /* 드래그로 창 이동 가능 */
+  }
+
+  .annual-report-page__header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    -webkit-app-region: no-drag;
+  }
+
+  .annual-report-page__header-title h1 {
+    margin: 0;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  .annual-report-page__header-title p {
+    margin: 0;
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  .annual-report-page__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+  }
+
+  .annual-report-page__action-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .annual-report-page__action-button:hover {
+    background: var(--color-hover-light);
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="dark"] .annual-report-page__action-button:hover {
+    background: var(--color-hover-dark);
+  }
+
+  .annual-report-page__close-button:hover {
+    background: var(--color-icon-red);
+    color: white;
+  }
+
+  /* 메인 콘텐츠 */
+  .annual-report-page__content {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+    background: var(--color-layout-centerpane-bg);
+  }
+
+  /* 빈 상태 */
+  .annual-report-page__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100vh;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Summary Section - AnnualReportModal.css와 동일 */
+  .annual-report-page .annual-report-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: var(--color-layout-content-light);
+    border-radius: 12px;
+    border: 1px solid var(--color-layout-border);
+  }
+
+  [data-theme="dark"] .annual-report-page .annual-report-summary {
+    background: var(--color-layout-content-dark);
+  }
+
+  .annual-report-page .annual-report-summary__item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .annual-report-page .annual-report-summary__label {
+    font-size: var(--font-size-caption-1);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  .annual-report-page .annual-report-summary__value {
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  .annual-report-page .annual-report-summary__value--primary {
+    color: var(--color-primary);
+  }
+
+  /* Contracts Section - AnnualReportModal.css와 동일 */
+  .annual-report-page .annual-report-contracts {
+    margin-top: 16px;
+  }
+
+  .annual-report-page .annual-report-contracts__title {
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 12px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  /* Table Wrapper - AnnualReportModal.css와 동일 */
+  .annual-report-page .contracts-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--color-layout-border);
+    border-radius: 8px;
+    background: var(--color-layout-content-light);
+  }
+
+  [data-theme="dark"] .annual-report-page .contracts-table-wrapper {
+    background: var(--color-layout-content-dark);
+  }
+
+  /* Table - AnnualReportModal.css와 동일 */
+  .annual-report-page .contracts-table {
+    width: 100%;
+    min-width: 1200px;
+    border-collapse: collapse;
+    font-size: var(--font-size-caption-2);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  .annual-report-page .contracts-table thead {
+    background: var(--color-layout-secondary-light);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  [data-theme="dark"] .annual-report-page .contracts-table thead {
+    background: var(--color-layout-secondary-dark);
+  }
+
+  .annual-report-page .contracts-table th {
+    padding: 8px 6px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    border-bottom: 2px solid var(--color-layout-border);
+    white-space: nowrap;
+    font-size: var(--font-size-caption-1);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .annual-report-page .contracts-table__th--sortable {
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    position: relative;
+  }
+
+  .annual-report-page .contracts-table__th--sortable:hover {
+    background-color: var(--color-bg-hover);
+    transform: scale(1.02);
+  }
+
+  [data-theme="dark"] .annual-report-page .contracts-table__th--sortable:hover {
+    background-color: var(--color-hover-dark);
+  }
+
+  .annual-report-page .contracts-table__th--sorted {
+    background-color: var(--color-primary-ultra-light);
+    font-weight: 700;
+  }
+
+  [data-theme="dark"] .annual-report-page .contracts-table__th--sorted {
+    background-color: var(--color-primary-alpha-light);
+  }
+
+  .annual-report-page .contracts-table__sort-icon {
+    opacity: 0.7;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .annual-report-page .contracts-table__th--sortable:hover .contracts-table__sort-icon {
+    opacity: 0.9;
+    transform: scale(1.15);
+  }
+
+  .annual-report-page .contracts-table__th--sorted .contracts-table__sort-icon {
+    opacity: 1;
+    color: var(--color-primary);
+  }
+
+  .annual-report-page .contracts-table tbody tr {
+    border-bottom: 1px solid var(--color-layout-border);
+    transition: background-color 0.2s ease;
+  }
+
+  [data-theme="dark"] .annual-report-page .contracts-table tbody tr {
+    border-bottom-color: var(--color-hover-dark);
+  }
+
+  .annual-report-page .contracts-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .annual-report-page .contracts-table tbody tr:hover {
+    background-color: var(--color-hover-light);
+  }
+
+  [data-theme="dark"] .annual-report-page .contracts-table tbody tr:hover {
+    background-color: var(--color-hover-dark);
+  }
+
+  .annual-report-page .contracts-table td {
+    padding: 6px 6px;
+    color: var(--color-text-primary);
+    vertical-align: middle;
+    font-size: var(--font-size-caption-2);
+  }
+
+  /* Cell Specific Styles - AnnualReportModal.css와 동일 */
+  .annual-report-page .contracts-table__cell--number {
+    text-align: center;
+    font-weight: 600;
+    width: 50px;
+  }
+
+  .annual-report-page .contracts-table__cell--company {
+    font-weight: 600;
+    min-width: 80px;
+  }
+
+  .annual-report-page .contracts-table__cell--contract-number {
+    font-family: var(--font-mono, 'SF Mono', 'Courier New', monospace);
+    font-size: var(--font-size-caption-1);
+    min-width: 100px;
+  }
+
+  .annual-report-page .contracts-table__cell--product {
+    min-width: 150px;
+    max-width: 200px;
+    white-space: normal;
+    line-height: 1.4;
+  }
+
+  .annual-report-page .contracts-table__cell--contractor,
+  .annual-report-page .contracts-table__cell--insured {
+    min-width: 70px;
+  }
+
+  .annual-report-page .contracts-table__cell--date {
+    font-size: var(--font-size-caption-1);
+    min-width: 90px;
+  }
+
+  .annual-report-page .contracts-table__cell--status {
+    text-align: center;
+    min-width: 70px;
+  }
+
+  .annual-report-page .contracts-table__cell--coverage {
+    text-align: right;
+    font-weight: 600;
+    color: var(--color-accent);
+    min-width: 80px;
+  }
+
+  .annual-report-page .contracts-table__cell--period,
+  .annual-report-page .contracts-table__cell--payment {
+    font-size: var(--font-size-caption-1);
+    min-width: 70px;
+  }
+
+  .annual-report-page .contracts-table__cell--premium {
+    text-align: right;
+    font-weight: 600;
+    min-width: 90px;
+  }
+
+  .annual-report-page .contracts-table__cell--premium-highlight {
+    color: var(--color-primary);
+  }
+
+  /* Status Badge - AnnualReportModal.css와 동일 */
+  .annual-report-page .status-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: var(--font-size-caption-1);
+    font-weight: 600;
+  }
+
+  .annual-report-page .status-badge.contract-item__status--active {
+    background: var(--color-success-light);
+    color: var(--color-success);
+  }
+
+  .annual-report-page .status-badge.contract-item__status--inactive {
+    background: var(--color-text-tertiary);
+    color: var(--color-text-secondary);
+  }
+
+  .annual-report-page .status-badge.contract-item__status--default {
+    background: var(--color-bg-hover);
+    color: var(--color-text-secondary);
+  }
+
+  /* Footer - AnnualReportModal.css와 동일 */
+  .annual-report-page__footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-layout-border);
+    text-align: center;
+  }
+
+  .annual-report-page__footer-text {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-tertiary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  /* ==================== Mobile Card Layout ==================== */
+  /* JS 기반 모바일 감지 (isMobileView) - 테이블 대신 카드형 레이아웃 */
+
+  .annual-report-page .ar-mobile-summary {
+    display: flex;
+    background: var(--color-layout-content-light);
+    border: 1px solid var(--color-layout-border);
+    border-radius: 10px;
+    padding: 12px 0;
+    margin-bottom: 16px;
+  }
+
+  [data-theme="dark"] .annual-report-page .ar-mobile-summary {
+    background: var(--color-layout-content-dark);
+  }
+
+  .annual-report-page .ar-mobile-summary__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .annual-report-page .ar-mobile-summary__item + .ar-mobile-summary__item {
+    border-left: 1px solid var(--color-layout-border);
+  }
+
+  .annual-report-page .ar-mobile-summary__label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    font-weight: 400;
+  }
+
+  .annual-report-page .ar-mobile-summary__value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .annual-report-page .ar-mobile-summary__value--primary {
+    color: var(--color-primary);
+  }
+
+  .annual-report-page .ar-mobile-contracts {
+    margin-bottom: 16px;
+  }
+
+  .annual-report-page .ar-mobile-contracts__title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-layout-border);
+  }
+
+  .annual-report-page .ar-mobile-contracts--lapsed {
+    margin-top: 20px;
+  }
+
+  .annual-report-page .ar-mobile-card {
+    background: var(--color-layout-content-light);
+    border: 1px solid var(--color-layout-border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  [data-theme="dark"] .annual-report-page .ar-mobile-card {
+    background: var(--color-layout-content-dark);
+  }
+
+  .annual-report-page .ar-mobile-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px 12px 0;
+    gap: 8px;
+  }
+
+  .annual-report-page .ar-mobile-card__product {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    flex: 1;
+    line-height: 1.3;
+  }
+
+  .annual-report-page .ar-mobile-card__company {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    padding: 2px 12px 8px;
+    border-bottom: 1px solid var(--color-layout-border);
+  }
+
+  .annual-report-page .ar-mobile-card__body {
+    padding: 6px 12px;
+  }
+
+  .annual-report-page .ar-mobile-card__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+  }
+
+  .annual-report-page .ar-mobile-card__label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    min-width: 68px;
+  }
+
+  .annual-report-page .ar-mobile-card__value {
+    font-size: 11px;
+    color: var(--color-text-primary);
+    text-align: right;
+    flex: 1;
+  }
+
+  .annual-report-page .ar-mobile-card__premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--color-primary-bg);
+    border-top: 1px solid var(--color-layout-border);
+  }
+
+  .annual-report-page .ar-mobile-card__premium-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+  }
+
+  .annual-report-page .ar-mobile-card__premium-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+
+  .annual-report-page .ar-mobile-empty {
+    text-align: center;
+    padding: 24px 16px;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+
+} /* end @layer components */

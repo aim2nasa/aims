@@ -5,541 +5,545 @@
  * 문서 관리 대시보드 레이아웃
  */
 
-.document-management-view__content {
-  padding: var(--spacing-6);
-  max-width: 1200px;
-  margin: 0 auto;
-}
+@layer components {
 
-/* 대시보드 섹션 */
-.document-management-view__section {
-  margin-bottom: var(--spacing-8);
-}
-
-.document-management-view__section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-4);
-}
-
-.document-management-view__section-title {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-/* 빠른 액션 아이콘 색상 (LeftPane CustomMenu와 동일) */
-.quick-action-icon-orange {
-  color: var(--color-ios-orange);
-}
-
-.quick-action-icon-purple {
-  color: var(--color-ios-purple);
-}
-
-.quick-action-icon-blue {
-  color: var(--color-ios-blue);
-}
-
-/* 통계 카드 그리드 */
-.document-management-view__stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--spacing-3);
-}
-
-/* 파이 차트 그리드 */
-.document-management-view__pie-charts-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 첫 줄: 파일 타입, 처리 상태 */
-  gap: var(--spacing-6);
-  margin-top: var(--spacing-6);
-  padding: var(--spacing-4);
-}
-
-/* 세 번째 차트 (파일 형식)는 다음 줄에 전체 폭으로 */
-.document-management-view__pie-charts-grid .pie-chart-item:nth-child(3) {
-  grid-column: 1 / -1;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-/* 파일 형식 가로 막대 차트 제목 숨김 (이미 pie-chart-title이 있음) */
-.document-management-view__pie-charts-grid .horizontal-bar-chart__title {
-  display: none;
-}
-
-/* 파일 형식 카테고리 제목 숨김 (카드 내부의 '파일형식' 문구 제거) */
-.document-management-view__pie-charts-grid .horizontal-bar-chart__category-title {
-  display: none;
-}
-
-
-
-/* 파이 차트를 가로로 배치 (차트 좌측, 레전드 우측) */
-.document-management-view__pie-charts-grid .file-type-pie-chart {
-  flex-direction: row;
-  align-items: flex-start;
-  gap: var(--spacing-3);
-}
-
-/* SVG 크기 고정 */
-.document-management-view__pie-charts-grid .file-type-pie-chart__svg {
-  max-width: 180px;
-  flex-shrink: 0;
-}
-
-/* 레전드를 우측에 배치 */
-.document-management-view__pie-charts-grid .file-type-pie-chart__legend {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 빠른 액션 그리드 */
-.document-management-view__actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--spacing-3);
-  max-width: 600px;
-  margin: 0 auto; /* 중앙 정렬 */
-}
-
-/* 최근 활동 테이블 - 카드 경계 유지하며 내부 스크롤
-   ⚠️ 부모 wrapper(.document-management-view__recent-activity)로 특정도를 높여야 함!
-   ContractManagementView.css, CustomerManagementView.css에서 동일 클래스에
-   overflow: hidden을 설정하므로, 특정도 없으면 스크롤이 깨짐 */
-.document-management-view__recent-activity .recent-activity-table {
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
-
-  /* 카드 안에서 스크롤: 경계(둥근 모서리+그림자)는 항상 표시
-     50vh: 모바일(740px)→370px(~8행), 데스크톱(1080px)→540px
-     500px 상한: 대형 화면에서 과도하게 커지지 않도록 */
-  max-height: min(500px, 50vh);
-  overflow-x: hidden;
-  overflow-y: auto;
-
-  /* 스크롤 체이닝 방지: 내부 스크롤이 외부 페이지로 전파되지 않도록 */
-  overscroll-behavior-y: contain;
-
-  /* Firefox용 스크롤바 */
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-text-tertiary) var(--color-bg-tertiary);
-}
-
-/* WebKit 브라우저용 스크롤바 */
-.document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar {
-  -webkit-appearance: none;
-  width: 8px;
-}
-
-.document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-track {
-  background: var(--color-bg-tertiary);
-  border-radius: 4px;
-}
-
-.document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-thumb {
-  background-color: var(--color-text-tertiary);
-  border-radius: 4px;
-  min-height: 30px;
-}
-
-.document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-secondary);
-}
-
-/* 헤더 - 스크롤 시 상단 고정 (sticky) */
-.recent-activity-header {
-  position: sticky;
-  top: 0;
-  z-index: 3; /* 문서 뱃지(z-index:2)보다 위에 표시 */
-  display: grid;
-  grid-template-columns: 80px 1fr 60px 50px 90px 44px;
-  gap: var(--spacing-3);
-  padding: var(--spacing-3) var(--spacing-4);
-  background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
-  font-size: var(--font-size-caption-2);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* 데이터 행 */
-.recent-activity-row {
-  display: grid;
-  grid-template-columns: 80px 1fr 60px 50px 90px 44px;
-  gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-4);
-  align-items: center;
-  border-bottom: 1px solid var(--color-border);
-  transition: background var(--duration-fast) var(--easing-ease-out);
-  min-height: 36px;
-}
-
-.recent-activity-row:last-child {
-  border-bottom: none;
-}
-
-.recent-activity-row:hover {
-  background: var(--color-bg-tertiary);
-}
-
-/* 셀 스타일 */
-.recent-cell-activity {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-}
-
-.recent-cell-activity .activity-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-cell-name {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  font-size: var(--font-size-footnote);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  overflow: hidden;
-  min-width: 0;
-}
-
-.recent-cell-name .document-filename {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-cell-size {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-  text-align: right;
-  white-space: nowrap;
-}
-
-.recent-cell-type {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.recent-cell-customer {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-cell-time {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-tertiary);
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* 로딩/에러/빈 상태 */
-.recent-activity-loading,
-.recent-activity-error,
-.recent-activity-empty {
-  padding: var(--spacing-8) var(--spacing-4);
-  text-align: center;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-footnote);
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-}
-
-.recent-activity-error {
-  color: var(--color-error);
-}
-
-/* 다크 모드 */
-html[data-theme="dark"] .document-management-view__recent-activity .recent-activity-table {
-  background: var(--color-bg-primary);
-}
-
-html[data-theme="dark"] .recent-activity-header {
-  background: var(--color-bg-secondary);
-}
-
-html[data-theme="dark"] .recent-activity-row:hover {
-  background: var(--color-bg-secondary);
-}
-
-/* 파일 타입 아이콘 스타일 (DocumentStatusList와 동일) */
-.document-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  transition: color 0.2s ease-out;
-}
-
-/* PDF Files - Red theme */
-.document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-dark);
-}
-
-/* Image Files - Blue theme */
-.document-icon.file-icon--image {
-  color: var(--color-file-image-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--image {
-  color: var(--color-file-image-dark);
-}
-
-/* Word Documents - Blue theme */
-.document-icon.file-icon--word {
-  color: var(--color-file-word-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--word {
-  color: var(--color-file-word-dark);
-}
-
-/* Excel Documents - Green theme */
-.document-icon.file-icon--excel {
-  color: var(--color-file-excel-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--excel {
-  color: var(--color-file-excel-dark);
-}
-
-/* PowerPoint Documents - Orange theme */
-.document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-dark);
-}
-
-/* Text Files - Gray theme */
-.document-icon.file-icon--text {
-  color: var(--color-file-text-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--text {
-  color: var(--color-file-text-dark);
-}
-
-/* Archive Files - Purple theme */
-.document-icon.file-icon--archive {
-  color: var(--color-file-archive-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--archive {
-  color: var(--color-file-archive-dark);
-}
-
-/* Audio Files - Pink theme */
-.document-icon.file-icon--audio {
-  color: var(--color-file-audio-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--audio {
-  color: var(--color-file-audio-dark);
-}
-
-/* Video Files - Purple theme */
-.document-icon.file-icon--video {
-  color: var(--color-file-video-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--video {
-  color: var(--color-file-video-dark);
-}
-
-/* Code Files - Green theme */
-.document-icon.file-icon--code {
-  color: var(--color-file-code-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--code {
-  color: var(--color-file-code-dark);
-}
-
-/* Default Files - Gray theme */
-.document-icon.file-icon--default {
-  color: var(--color-file-default-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--default {
-  color: var(--color-file-default-dark);
-}
-
-/* === 문서 뱃지 스타일 (DocumentStatusList와 동일) === */
-
-/* 파일 타입 아이콘 wrapper */
-.document-icon-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-/* 🍎 뱃지 스타일은 shared/styles/document-badges.css에서 공통 관리 */
-
-/* 반응형 */
-@media (max-width: 768px) {
   .document-management-view__content {
-    padding: var(--spacing-4);
+    padding: var(--spacing-6);
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
-  /* 통계 카드: 4개 1줄 */
-  .document-management-view__stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-2);
-  }
-
-  /* 파이 차트: 2열 유지 + 컴팩트 간격 */
-  .document-management-view__pie-charts-grid {
-    gap: var(--spacing-3);
-    padding: var(--spacing-2);
-    margin-top: var(--spacing-3);
-  }
-
-  /* 작은 화면에서는 다시 세로 배치 */
-  .document-management-view__pie-charts-grid .file-type-pie-chart {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .document-management-view__actions-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  /* 드롭다운 컴팩트 (태블릿/모바일 공통) */
-  .document-management-view__section-header .ios-dropdown__trigger {
-    padding: 4px 8px;
-    min-height: 30px;
-    font-size: var(--font-size-caption-2);
-  }
-
-  /* 스크롤바 - 모바일 터치 친화적 크기 */
-  .document-management-view__recent-activity .recent-activity-table {
-    scrollbar-width: auto;
-  }
-
-  .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar {
-    width: 14px;
-  }
-
-  .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-thumb {
-    min-height: 48px;
-    border: 3px solid var(--color-bg-tertiary);
-    background-clip: padding-box;
-    border-radius: 7px;
-  }
-}
-
-@media (max-width: 480px) {
-  .document-management-view__content {
-    padding: var(--spacing-3);
-  }
-
+  /* 대시보드 섹션 */
   .document-management-view__section {
+    margin-bottom: var(--spacing-8);
+  }
+
+  .document-management-view__section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: var(--spacing-4);
   }
 
-  /* 통계 카드: 4개 1줄 유지 */
-  .document-management-view__stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-2);
-  }
-
-  /* 파이 차트: 2열 그리드 */
-  .document-management-view__pie-charts-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-3);
-    padding: var(--spacing-2);
-    margin-top: var(--spacing-3);
-  }
-
-  .document-management-view__actions-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  /* 섹션 타이틀 */
   .document-management-view__section-title {
-    font-size: var(--font-size-caption-2);
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
-  /* 최근 활동: 카드형 레이아웃 (고객관리와 동일 패턴) */
-  .recent-activity-header {
+  /* 빠른 액션 아이콘 색상 (LeftPane CustomMenu와 동일) */
+  .quick-action-icon-orange {
+    color: var(--color-ios-orange);
+  }
+
+  .quick-action-icon-purple {
+    color: var(--color-ios-purple);
+  }
+
+  .quick-action-icon-blue {
+    color: var(--color-ios-blue);
+  }
+
+  /* 통계 카드 그리드 */
+  .document-management-view__stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--spacing-3);
+  }
+
+  /* 파이 차트 그리드 */
+  .document-management-view__pie-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 첫 줄: 파일 타입, 처리 상태 */
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-6);
+    padding: var(--spacing-4);
+  }
+
+  /* 세 번째 차트 (파일 형식)는 다음 줄에 전체 폭으로 */
+  .document-management-view__pie-charts-grid .pie-chart-item:nth-child(3) {
+    grid-column: 1 / -1;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* 파일 형식 가로 막대 차트 제목 숨김 (이미 pie-chart-title이 있음) */
+  .document-management-view__pie-charts-grid .horizontal-bar-chart__title {
     display: none;
   }
 
-  .recent-activity-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-1) var(--spacing-2);
-    padding: var(--spacing-2) var(--spacing-3);
-    min-height: var(--spacing-touch-min, 44px);
-    align-items: center;
-    min-width: 0;
+  /* 파일 형식 카테고리 제목 숨김 (카드 내부의 '파일형식' 문구 제거) */
+  .document-management-view__pie-charts-grid .horizontal-bar-chart__category-title {
+    display: none;
   }
 
-  .recent-cell-activity {
+
+
+  /* 파이 차트를 가로로 배치 (차트 좌측, 레전드 우측) */
+  .document-management-view__pie-charts-grid .file-type-pie-chart {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--spacing-3);
+  }
+
+  /* SVG 크기 고정 */
+  .document-management-view__pie-charts-grid .file-type-pie-chart__svg {
+    max-width: 180px;
     flex-shrink: 0;
   }
 
-  .recent-cell-name {
+  /* 레전드를 우측에 배치 */
+  .document-management-view__pie-charts-grid .file-type-pie-chart__legend {
     flex: 1;
     min-width: 0;
   }
 
-  /* 모바일에서 파일크기/유형/연결고객 숨김 */
-  .recent-cell-size,
-  .recent-cell-type,
-  .recent-cell-customer {
-    display: none;
+  /* 빠른 액션 그리드 */
+  .document-management-view__actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--spacing-3);
+    max-width: 600px;
+    margin: 0 auto; /* 중앙 정렬 */
   }
 
-  .recent-cell-time {
-    flex-shrink: 0;
+  /* 최근 활동 테이블 - 카드 경계 유지하며 내부 스크롤
+     ⚠️ 부모 wrapper(.document-management-view__recent-activity)로 특정도를 높여야 함!
+     ContractManagementView.css, CustomerManagementView.css에서 동일 클래스에
+     overflow: hidden을 설정하므로, 특정도 없으면 스크롤이 깨짐 */
+  .document-management-view__recent-activity .recent-activity-table {
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
+
+    /* 카드 안에서 스크롤: 경계(둥근 모서리+그림자)는 항상 표시
+       50vh: 모바일(740px)→370px(~8행), 데스크톱(1080px)→540px
+       500px 상한: 대형 화면에서 과도하게 커지지 않도록 */
+    max-height: min(500px, 50vh);
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    /* 스크롤 체이닝 방지: 내부 스크롤이 외부 페이지로 전파되지 않도록 */
+    overscroll-behavior-y: contain;
+
+    /* Firefox용 스크롤바 */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-text-tertiary) var(--color-bg-tertiary);
+  }
+
+  /* WebKit 브라우저용 스크롤바 */
+  .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 8px;
+  }
+
+  .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-track {
+    background: var(--color-bg-tertiary);
+    border-radius: 4px;
+  }
+
+  .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-thumb {
+    background-color: var(--color-text-tertiary);
+    border-radius: 4px;
+    min-height: 30px;
+  }
+
+  .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-text-secondary);
+  }
+
+  /* 헤더 - 스크롤 시 상단 고정 (sticky) */
+  .recent-activity-header {
+    position: sticky;
+    top: 0;
+    z-index: 3; /* 문서 뱃지(z-index:2)보다 위에 표시 */
+    display: grid;
+    grid-template-columns: 80px 1fr 60px 50px 90px 44px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
     font-size: var(--font-size-caption-2);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
-  /* 드롭다운 컴팩트 */
-  .document-management-view__section-header .ios-dropdown {
+  /* 데이터 행 */
+  .recent-activity-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 60px 50px 90px 44px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-4);
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    transition: background var(--duration-fast) var(--easing-ease-out);
+    min-height: 36px;
+  }
+
+  .recent-activity-row:last-child {
+    border-bottom: none;
+  }
+
+  .recent-activity-row:hover {
+    background: var(--color-bg-tertiary);
+  }
+
+  /* 셀 스타일 */
+  .recent-cell-activity {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+  }
+
+  .recent-cell-activity .activity-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recent-cell-name {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    font-size: var(--font-size-footnote);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    overflow: hidden;
     min-width: 0;
   }
 
-  .document-management-view__section-header .ios-dropdown__trigger {
-    padding: 4px 8px;
-    min-height: 30px;
-    font-size: var(--font-size-caption-2);
+  .recent-cell-name .document-filename {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-}
+
+  .recent-cell-size {
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .recent-cell-type {
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .recent-cell-customer {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recent-cell-time {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-tertiary);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* 로딩/에러/빈 상태 */
+  .recent-activity-loading,
+  .recent-activity-error,
+  .recent-activity-empty {
+    padding: var(--spacing-8) var(--spacing-4);
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-footnote);
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+  }
+
+  .recent-activity-error {
+    color: var(--color-error);
+  }
+
+  /* 다크 모드 */
+  html[data-theme="dark"] .document-management-view__recent-activity .recent-activity-table {
+    background: var(--color-bg-primary);
+  }
+
+  html[data-theme="dark"] .recent-activity-header {
+    background: var(--color-bg-secondary);
+  }
+
+  html[data-theme="dark"] .recent-activity-row:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  /* 파일 타입 아이콘 스타일 (DocumentStatusList와 동일) */
+  .document-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    transition: color 0.2s ease-out;
+  }
+
+  /* PDF Files - Red theme */
+  .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-dark);
+  }
+
+  /* Image Files - Blue theme */
+  .document-icon.file-icon--image {
+    color: var(--color-file-image-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--image {
+    color: var(--color-file-image-dark);
+  }
+
+  /* Word Documents - Blue theme */
+  .document-icon.file-icon--word {
+    color: var(--color-file-word-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--word {
+    color: var(--color-file-word-dark);
+  }
+
+  /* Excel Documents - Green theme */
+  .document-icon.file-icon--excel {
+    color: var(--color-file-excel-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--excel {
+    color: var(--color-file-excel-dark);
+  }
+
+  /* PowerPoint Documents - Orange theme */
+  .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-dark);
+  }
+
+  /* Text Files - Gray theme */
+  .document-icon.file-icon--text {
+    color: var(--color-file-text-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--text {
+    color: var(--color-file-text-dark);
+  }
+
+  /* Archive Files - Purple theme */
+  .document-icon.file-icon--archive {
+    color: var(--color-file-archive-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--archive {
+    color: var(--color-file-archive-dark);
+  }
+
+  /* Audio Files - Pink theme */
+  .document-icon.file-icon--audio {
+    color: var(--color-file-audio-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--audio {
+    color: var(--color-file-audio-dark);
+  }
+
+  /* Video Files - Purple theme */
+  .document-icon.file-icon--video {
+    color: var(--color-file-video-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--video {
+    color: var(--color-file-video-dark);
+  }
+
+  /* Code Files - Green theme */
+  .document-icon.file-icon--code {
+    color: var(--color-file-code-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--code {
+    color: var(--color-file-code-dark);
+  }
+
+  /* Default Files - Gray theme */
+  .document-icon.file-icon--default {
+    color: var(--color-file-default-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--default {
+    color: var(--color-file-default-dark);
+  }
+
+  /* === 문서 뱃지 스타일 (DocumentStatusList와 동일) === */
+
+  /* 파일 타입 아이콘 wrapper */
+  .document-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  /* 🍎 뱃지 스타일은 shared/styles/document-badges.css에서 공통 관리 */
+
+  /* 반응형 */
+  @media (max-width: 768px) {
+    .document-management-view__content {
+      padding: var(--spacing-4);
+    }
+
+    /* 통계 카드: 4개 1줄 */
+    .document-management-view__stats-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-2);
+    }
+
+    /* 파이 차트: 2열 유지 + 컴팩트 간격 */
+    .document-management-view__pie-charts-grid {
+      gap: var(--spacing-3);
+      padding: var(--spacing-2);
+      margin-top: var(--spacing-3);
+    }
+
+    /* 작은 화면에서는 다시 세로 배치 */
+    .document-management-view__pie-charts-grid .file-type-pie-chart {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .document-management-view__actions-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* 드롭다운 컴팩트 (태블릿/모바일 공통) */
+    .document-management-view__section-header .ios-dropdown__trigger {
+      padding: 4px 8px;
+      min-height: 30px;
+      font-size: var(--font-size-caption-2);
+    }
+
+    /* 스크롤바 - 모바일 터치 친화적 크기 */
+    .document-management-view__recent-activity .recent-activity-table {
+      scrollbar-width: auto;
+    }
+
+    .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar {
+      width: 14px;
+    }
+
+    .document-management-view__recent-activity .recent-activity-table::-webkit-scrollbar-thumb {
+      min-height: 48px;
+      border: 3px solid var(--color-bg-tertiary);
+      background-clip: padding-box;
+      border-radius: 7px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .document-management-view__content {
+      padding: var(--spacing-3);
+    }
+
+    .document-management-view__section {
+      margin-bottom: var(--spacing-4);
+    }
+
+    /* 통계 카드: 4개 1줄 유지 */
+    .document-management-view__stats-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-2);
+    }
+
+    /* 파이 차트: 2열 그리드 */
+    .document-management-view__pie-charts-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-3);
+      padding: var(--spacing-2);
+      margin-top: var(--spacing-3);
+    }
+
+    .document-management-view__actions-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* 섹션 타이틀 */
+    .document-management-view__section-title {
+      font-size: var(--font-size-caption-2);
+    }
+
+    /* 최근 활동: 카드형 레이아웃 (고객관리와 동일 패턴) */
+    .recent-activity-header {
+      display: none;
+    }
+
+    .recent-activity-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-1) var(--spacing-2);
+      padding: var(--spacing-2) var(--spacing-3);
+      min-height: var(--spacing-touch-min, 44px);
+      align-items: center;
+      min-width: 0;
+    }
+
+    .recent-cell-activity {
+      flex-shrink: 0;
+    }
+
+    .recent-cell-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* 모바일에서 파일크기/유형/연결고객 숨김 */
+    .recent-cell-size,
+    .recent-cell-type,
+    .recent-cell-customer {
+      display: none;
+    }
+
+    .recent-cell-time {
+      flex-shrink: 0;
+      font-size: var(--font-size-caption-2);
+    }
+
+    /* 드롭다운 컴팩트 */
+    .document-management-view__section-header .ios-dropdown {
+      min-width: 0;
+    }
+
+    .document-management-view__section-header .ios-dropdown__trigger {
+      padding: 4px 8px;
+      min-height: 30px;
+      font-size: var(--font-size-caption-2);
+    }
+  }
+
+} /* end @layer components */

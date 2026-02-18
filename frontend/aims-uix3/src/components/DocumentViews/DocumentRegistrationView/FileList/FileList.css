@@ -4,1371 +4,1376 @@
  */
 
 /* 🍎 CONTAINER: Pure minimal */
-.file-list {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
 
-/* 🍎 HEADER: Ultra-subtle if exists */
-.file-list__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 0 4px 0;
-  border-bottom: 1px solid var(--color-ios-separator-subtle-light);
-  margin-bottom: 8px;
-}
+@layer components {
 
-html[data-theme="dark"] .file-list__header {
-  border-bottom-color: var(--color-ios-separator-subtle-dark);
-}
-
-.file-list__header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.file-list__title {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 600;
-  color: var(--color-file-default-light);
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .file-list__title {
-  color: var(--color-file-default-dark);
-}
-
-/* 🍎 COMPACT TITLE: One-line layout optimization */
-.file-list__title-compact {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 600;
-  color: var(--color-file-default-light);
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: calc(100vw - 400px); /* 오른쪽 여백 확보 */
-}
-
-html[data-theme="dark"] .file-list__title-compact {
-  color: var(--color-file-default-dark);
-}
-
-/* 🍎 STATS: Minimal badges */
-.file-list__stats {
-  display: flex;
-  gap: 8px;
-}
-
-.file-list__stat {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-weight: 400;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--color-overlay-dark);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .file-list__stat {
-  background: var(--color-overlay-dark);
-}
-
-.file-list__stat--completed {
-  color: var(--color-success-overlay-icon-light);
-  background: var(--color-success-overlay-bg-light);
-}
-
-.file-list__stat--uploading {
-  color: var(--color-ios-spinner-fill-light);
-  background: var(--color-hover-light);
-}
-
-.file-list__stat--error {
-  color: var(--color-success-overlay-icon-light);
-  background: var(--color-hover-light);
-}
-
-.file-list__stat--completed {
-  color: var(--color-success-overlay-icon-light);
-  background: var(--color-success-overlay-bg-light);
-}
-
-/* 🍎 CLICKABLE STATS: Apple-style interaction */
-.file-list__stat--clickable {
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease-out;
-  border-radius: 6px;
-}
-
-/* 🍎 COMPLETED BUTTON: Green theme */
-.file-list__stat--completed.file-list__stat--clickable:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px var(--color-success-overlay-border-dark);
-  background: var(--color-active-light);
-}
-
-.file-list__stat--completed.file-list__stat--clickable:active {
-  transform: translateY(-1px);
-  box-shadow: 0 1px 3px var(--color-success-overlay-border-light);
-}
-
-.file-list__stat--completed.file-list__stat--active {
-  background: var(--color-success-overlay-button-bg-light);
-  color: var(--color-file-excel-hover-light);
-  font-weight: 600;
-  box-shadow: inset 0 1px 2px var(--color-success-overlay-border-light);
-}
-
-/* 🍎 ERROR BUTTON: Red theme */
-.file-list__stat--error.file-list__stat--clickable:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px var(--color-ios-error-button-bg-light);
-  background: var(--color-ios-error-bg-dark);
-}
-
-.file-list__stat--error.file-list__stat--clickable:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 3px var(--color-ios-error-button-bg-light);
-}
-
-.file-list__stat--error.file-list__stat--active {
-  background: var(--color-ios-error-button-bg-light);
-  color: var(--color-file-pdf-hover-dark);
-  font-weight: 600;
-  box-shadow: inset 0 1px 2px var(--color-ios-error-button-bg-light);
-}
-
-/* 🍎 DARK MODE: Completed button */
-html[data-theme="dark"] .file-list__stat--completed.file-list__stat--clickable:hover {
-  background: var(--color-success-overlay-button-bg-light);
-  box-shadow: 0 2px 8px var(--color-success-overlay-border-dark);
-}
-
-html[data-theme="dark"] .file-list__stat--completed.file-list__stat--active {
-  background: var(--color-success-overlay-border-dark);
-}
-
-/* 🍎 DARK MODE: Error button */
-html[data-theme="dark"] .file-list__stat--error.file-list__stat--clickable:hover {
-  background: var(--color-ios-error-button-bg-light);
-  box-shadow: 0 2px 8px var(--color-ios-error-button-bg-light);
-}
-
-html[data-theme="dark"] .file-list__stat--error.file-list__stat--active {
-  background: var(--color-ios-error-button-bg-light);
-}
-
-/* 🍎 FILTER STATUS: Apple-style filter indication */
-.file-list__filter-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  margin: 8px 0;
-  background: var(--color-hover-light);
-  border: 1px solid var(--color-active-light);
-  border-radius: 8px;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  animation: filterSlideIn 0.3s ease-out;
-}
-
-html[data-theme="dark"] .file-list__filter-status {
-  background: var(--color-active-light);
-  border-color: var(--color-opacity-border);
-}
-
-.file-list__filter-text {
-  color: var(--color-ios-spinner-fill-light);
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .file-list__filter-text {
-  color: var(--color-ios-spinner-fill-dark);
-}
-
-.file-list__show-all {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  background: none;
-  border: none;
-  color: var(--color-ios-error-button-light);
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease-out;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-.file-list__show-all:hover {
-  background: var(--color-ios-error-bg-light);
-  color: var(--color-file-image-hover-light);
-  transform: translateY(-0.5px);
-}
-
-.file-list__show-all:active {
-  transform: translateY(0);
-  background: var(--color-overlay-light);
-}
-
-html[data-theme="dark"] .file-list__show-all {
-  color: var(--color-ios-spinner-fill-dark);
-}
-
-html[data-theme="dark"] .file-list__show-all:hover {
-  background: var(--color-overlay-light);
-  color: var(--color-file-image-hover-dark);
-}
-
-@keyframes filterSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
+  .file-list {
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
-  to {
-    opacity: 1;
+
+  /* 🍎 HEADER: Ultra-subtle if exists */
+  .file-list__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 4px 0;
+    border-bottom: 1px solid var(--color-ios-separator-subtle-light);
+    margin-bottom: 8px;
+  }
+
+  html[data-theme="dark"] .file-list__header {
+    border-bottom-color: var(--color-ios-separator-subtle-dark);
+  }
+
+  .file-list__header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .file-list__title {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 600;
+    color: var(--color-file-default-light);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .file-list__title {
+    color: var(--color-file-default-dark);
+  }
+
+  /* 🍎 COMPACT TITLE: One-line layout optimization */
+  .file-list__title-compact {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 600;
+    color: var(--color-file-default-light);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100vw - 400px); /* 오른쪽 여백 확보 */
+  }
+
+  html[data-theme="dark"] .file-list__title-compact {
+    color: var(--color-file-default-dark);
+  }
+
+  /* 🍎 STATS: Minimal badges */
+  .file-list__stats {
+    display: flex;
+    gap: 8px;
+  }
+
+  .file-list__stat {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    font-weight: 400;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--color-overlay-dark);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .file-list__stat {
+    background: var(--color-overlay-dark);
+  }
+
+  .file-list__stat--completed {
+    color: var(--color-success-overlay-icon-light);
+    background: var(--color-success-overlay-bg-light);
+  }
+
+  .file-list__stat--uploading {
+    color: var(--color-ios-spinner-fill-light);
+    background: var(--color-hover-light);
+  }
+
+  .file-list__stat--error {
+    color: var(--color-success-overlay-icon-light);
+    background: var(--color-hover-light);
+  }
+
+  .file-list__stat--completed {
+    color: var(--color-success-overlay-icon-light);
+    background: var(--color-success-overlay-bg-light);
+  }
+
+  /* 🍎 CLICKABLE STATS: Apple-style interaction */
+  .file-list__stat--clickable {
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    border-radius: 6px;
+  }
+
+  /* 🍎 COMPLETED BUTTON: Green theme */
+  .file-list__stat--completed.file-list__stat--clickable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px var(--color-success-overlay-border-dark);
+    background: var(--color-active-light);
+  }
+
+  .file-list__stat--completed.file-list__stat--clickable:active {
+    transform: translateY(-1px);
+    box-shadow: 0 1px 3px var(--color-success-overlay-border-light);
+  }
+
+  .file-list__stat--completed.file-list__stat--active {
+    background: var(--color-success-overlay-button-bg-light);
+    color: var(--color-file-excel-hover-light);
+    font-weight: 600;
+    box-shadow: inset 0 1px 2px var(--color-success-overlay-border-light);
+  }
+
+  /* 🍎 ERROR BUTTON: Red theme */
+  .file-list__stat--error.file-list__stat--clickable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px var(--color-ios-error-button-bg-light);
+    background: var(--color-ios-error-bg-dark);
+  }
+
+  .file-list__stat--error.file-list__stat--clickable:active {
     transform: translateY(0);
-  }
-}
-
-/* 🍎 CLEAR BUTTON: Apple-style minimal */
-.file-list__clear {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--color-ios-interactive-light);
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-
-  transition: all 0.15s ease;
-  opacity: 0.7;
-}
-
-.file-list__clear:hover {
-  background: var(--color-hover-light);
-  color: var(--color-ios-error-text-light);
-  opacity: 1;
-}
-
-.file-list__clear-text {
-  margin: 0;
-}
-
-/* 🍎 PROGRESS SUMMARY: Enhanced file status display */
-.file-list__progress-summary {
-  color: var(--color-ios-empty-light);
-  font-weight: 400;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-}
-
-html[data-theme="dark"] .file-list__progress-summary {
-  color: var(--color-ios-empty-dark);
-}
-
-/* 🍎 OVERALL PROGRESS: Multi-file upload progress bar */
-.file-list__overall-progress {
-  width: 100%;
-  height: 2px;
-  background: var(--color-upload-progress-bg-light);
-  border-radius: 1px;
-  overflow: hidden;
-  margin-top: 8px;
-  position: relative;
-}
-
-html[data-theme="dark"] .file-list__overall-progress {
-  background: var(--color-upload-progress-bg-dark);
-}
-
-.file-list__overall-progress-fill {
-  height: 100%;
-  background: var(--color-upload-progress-fill-light);
-  transition: width var(--duration-ios-standard) var(--easing-ease-out);
-  border-radius: 1px;
-}
-
-html[data-theme="dark"] .file-list__overall-progress-fill {
-  background: var(--color-upload-progress-fill-dark);
-}
-
-/* 🍎 COMPLETED INFO: Apple-style completion status */
-.file-item__completed-info {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
-  color: var(--color-upload-completed-text-light);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 3px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  opacity: 0.8;
-  transition: opacity var(--duration-fast) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .file-item__completed-info {
-  color: var(--color-upload-completed-text-dark);
-}
-
-.file-item--completed:hover .file-item__completed-info {
-  opacity: 1;
-}
-
-/* 🍎 ITEMS: Native table rows */
-.file-list__items {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* 🍎 APPLE COMPACT GRID: One-line layout like iOS/macOS table view */
-.file-item {
-  display: grid;
-  grid-template-columns:
-    24px           /* 아이콘 고정 */
-    1fr            /* 파일명 (가변) */
-    80px           /* 크기 고정 */
-    70px           /* 시간 고정 */
-    32px;          /* 상태 고정 */
-  gap: 12px;
-  align-items: center;
-  height: 32px;
-  padding: 6px 12px;
-  background: var(--color-ios-empty-dark);
-  border-radius: 4px;
-  cursor: default;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .file-item {
-  background: var(--color-overlay-dark);
-}
-
-.file-item:hover {
-  background: var(--color-overlay-dark);
-}
-
-html[data-theme="dark"] .file-item:hover {
-  background: var(--color-hover-dark);
-}
-
-/* 🍎 STATES: Minimal color coding */
-.file-item--pending {
-  background: var(--color-ios-empty-dark);
-}
-
-.file-item--uploading {
-  background: var(--color-overlay-dark);
-  border-left: 2px solid var(--color-opacity-scrollbar-light);
-}
-
-/* 🍎 COMPLETED STATE: Invisible by default - Apple Philosophy */
-.file-item--completed {
-  background: transparent;
-  border: none;
-  position: relative;
-}
-
-.file-item--error {
-  background: var(--color-overlay-dark);
-  border-left: 2px solid var(--color-opacity-scrollbar-light);
-}
-
-.file-item--cancelled {
-  background: var(--color-overlay-dark);
-  opacity: 0.5;
-}
-
-html[data-theme="dark"] .file-item--cancelled {
-  background: var(--color-overlay-dark);
-}
-
-/* 🍎 ICON: Apple-style file type colors with Progressive Disclosure */
-.file-item__icon {
-  margin-right: 10px;
-  flex-shrink: 0;
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-/* === 🍎 FILE TYPE ICON COLORS === */
-/* PDF Files - Red theme */
-.file-item__icon.file-icon--pdf {
-  color: var(--color-file-pdf-light);
-}
-
-.file-item__icon.file-icon--pdf:hover {
-  color: var(--color-file-pdf-hover-light);
-}
-
-/* Image Files - Blue theme */
-.file-item__icon.file-icon--image {
-  color: var(--color-file-image-light);
-}
-
-.file-item__icon.file-icon--image:hover {
-  color: var(--color-file-image-hover-light);
-}
-
-/* Video Files - Purple theme */
-.file-item__icon.file-icon--video {
-  color: var(--color-file-video-light);
-}
-
-.file-item__icon.file-icon--video:hover {
-  color: var(--color-file-video-hover-light);
-}
-
-/* Audio Files - Pink theme */
-.file-item__icon.file-icon--audio {
-  color: var(--color-file-audio-light);
-}
-
-.file-item__icon.file-icon--audio:hover {
-  color: var(--color-file-audio-hover-light);
-}
-
-/* Archive Files - Orange theme */
-.file-item__icon.file-icon--archive {
-  color: var(--color-file-archive-light);
-}
-
-.file-item__icon.file-icon--archive:hover {
-  color: var(--color-file-archive-hover-light);
-}
-
-/* Word Documents - Blue theme */
-.file-item__icon.file-icon--word {
-  color: var(--color-file-word-light);
-}
-
-.file-item__icon.file-icon--word:hover {
-  color: var(--color-file-word-hover-light);
-}
-
-/* Excel Documents - Green theme */
-.file-item__icon.file-icon--excel {
-  color: var(--color-file-excel-light);
-}
-
-.file-item__icon.file-icon--excel:hover {
-  color: var(--color-file-excel-hover-light);
-}
-
-/* PowerPoint Documents - Orange theme */
-.file-item__icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-light);
-}
-
-.file-item__icon.file-icon--powerpoint:hover {
-  color: var(--color-file-powerpoint-hover-light);
-}
-
-/* Code Files - Indigo theme */
-.file-item__icon.file-icon--code {
-  color: var(--color-file-code-light);
-}
-
-.file-item__icon.file-icon--code:hover {
-  color: var(--color-file-code-hover-light);
-}
-
-/* Text Files - Gray theme */
-.file-item__icon.file-icon--text {
-  color: var(--color-file-text-light);
-}
-
-.file-item__icon.file-icon--text:hover {
-  color: var(--color-file-text-hover-light);
-}
-
-/* Executable Files - Dark theme */
-.file-item__icon.file-icon--executable {
-  color: var(--color-file-executable-light);
-}
-
-.file-item__icon.file-icon--executable:hover {
-  color: var(--color-file-executable-hover-light);
-}
-
-/* Default Files - Neutral theme */
-.file-item__icon.file-icon--default {
-  color: var(--color-file-default-light);
-}
-
-.file-item__icon.file-icon--default:hover {
-  color: var(--color-file-default-hover-light);
-}
-
-/* === 🍎 DARK THEME ICON COLORS === */
-html[data-theme="dark"] .file-item__icon.file-icon--pdf {
-  color: var(--color-file-pdf-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--pdf:hover {
-  color: var(--color-file-pdf-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--image {
-  color: var(--color-file-image-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--image:hover {
-  color: var(--color-file-image-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--video {
-  color: var(--color-file-video-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--video:hover {
-  color: var(--color-file-video-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--audio {
-  color: var(--color-file-audio-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--audio:hover {
-  color: var(--color-file-audio-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--archive {
-  color: var(--color-file-archive-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--archive:hover {
-  color: var(--color-file-archive-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--word {
-  color: var(--color-file-word-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--word:hover {
-  color: var(--color-file-word-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--excel {
-  color: var(--color-file-excel-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--excel:hover {
-  color: var(--color-file-excel-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--powerpoint:hover {
-  color: var(--color-file-powerpoint-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--code {
-  color: var(--color-file-code-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--code:hover {
-  color: var(--color-file-code-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--text {
-  color: var(--color-file-text-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--text:hover {
-  color: var(--color-file-text-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--executable {
-  color: var(--color-file-executable-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--executable:hover {
-  color: var(--color-file-executable-hover-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--default {
-  color: var(--color-file-default-dark);
-}
-
-html[data-theme="dark"] .file-item__icon.file-icon--default:hover {
-  color: var(--color-file-default-hover-dark);
-}
-
-/* 🍎 INFO: Clean typography */
-.file-item__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.file-item__name {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 400;
-  color: var(--color-ios-text-light);
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .file-item__name {
-  color: var(--color-ios-text-dark);
-}
-
-.file-item__details {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 2px;
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  color: var(--color-ios-empty-light);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .file-item__details {
-  color: var(--color-ios-empty-dark);
-}
-
-.file-item__size {
-  font-variant-numeric: tabular-nums;
-}
-
-.file-item__time {
-  font-variant-numeric: tabular-nums;
-}
-
-.file-item__path {
-  font-style: italic;
-  opacity: 0.7;
-}
-
-/* 🍎 STATUS MESSAGES: Minimal */
-.file-item__error {
-  margin-top: 3px;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
-  color: var(--color-success-overlay-icon-light);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-.file-item__cancelled {
-  margin-top: 3px;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
-  color: var(--color-ios-empty-light);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-style: italic;
-}
-
-html[data-theme="dark"] .file-item__cancelled {
-  color: var(--color-ios-empty-dark);
-}
-
-/* 🍎 NATIVE STATUS: macOS Finder style */
-.file-item__status {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  width: 40px;
-  justify-content: flex-end;
-}
-
-/* 🍎 MINIMAL PROGRESS: No decoration */
-.file-item__progress-minimal {
-  width: 30px;
-  height: 1px;
-  background: var(--color-hover-light);
-  border-radius: 0.5px;
-  overflow: hidden;
-}
-
-html[data-theme="dark"] .file-item__progress-minimal {
-  background: var(--color-hover-dark);
-}
-
-.file-item__progress-fill {
-  height: 100%;
-  background: var(--color-ios-interactive-light);
-  transition: width 0.3s ease;
-}
-
-/* 🍎 COMPLETION: Enhanced visibility with Progressive Disclosure */
-.file-item__done {
-  color: var(--color-upload-completed-icon-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item__done:hover {
-  color: var(--color-upload-completed-icon-hover-light);
-}
-
-html[data-theme="dark"] .file-item__done {
-  color: var(--color-upload-completed-icon-dark);
-}
-
-html[data-theme="dark"] .file-item__done:hover {
-  color: var(--color-upload-completed-icon-hover-dark);
-}
-
-/* 🍎 RETRY: Invisible until needed */
-.file-item__retry-minimal {
-  background: none;
-  border: none;
-  padding: 2px;
-  cursor: pointer;
-  color: var(--color-ios-empty-light);
-  border-radius: 2px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  transition: opacity 0.2s ease;
-}
-
-.file-item__retry-minimal:hover {
-  color: var(--color-success-overlay-icon-light);
-}
-
-/* 🍎 RESPONSIVE: Minimal changes */
-@media (max-width: 768px) {
-  .file-item {
-    padding: 6px 8px;
+    box-shadow: 0 1px 3px var(--color-ios-error-button-bg-light);
   }
 
-  .file-item__name {
+  .file-list__stat--error.file-list__stat--active {
+    background: var(--color-ios-error-button-bg-light);
+    color: var(--color-file-pdf-hover-dark);
+    font-weight: 600;
+    box-shadow: inset 0 1px 2px var(--color-ios-error-button-bg-light);
+  }
+
+  /* 🍎 DARK MODE: Completed button */
+  html[data-theme="dark"] .file-list__stat--completed.file-list__stat--clickable:hover {
+    background: var(--color-success-overlay-button-bg-light);
+    box-shadow: 0 2px 8px var(--color-success-overlay-border-dark);
+  }
+
+  html[data-theme="dark"] .file-list__stat--completed.file-list__stat--active {
+    background: var(--color-success-overlay-border-dark);
+  }
+
+  /* 🍎 DARK MODE: Error button */
+  html[data-theme="dark"] .file-list__stat--error.file-list__stat--clickable:hover {
+    background: var(--color-ios-error-button-bg-light);
+    box-shadow: 0 2px 8px var(--color-ios-error-button-bg-light);
+  }
+
+  html[data-theme="dark"] .file-list__stat--error.file-list__stat--active {
+    background: var(--color-ios-error-button-bg-light);
+  }
+
+  /* 🍎 FILTER STATUS: Apple-style filter indication */
+  .file-list__filter-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    margin: 8px 0;
+    background: var(--color-hover-light);
+    border: 1px solid var(--color-active-light);
+    border-radius: 8px;
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    animation: filterSlideIn 0.3s ease-out;
+  }
+
+  html[data-theme="dark"] .file-list__filter-status {
+    background: var(--color-active-light);
+    border-color: var(--color-opacity-border);
+  }
+
+  .file-list__filter-text {
+    color: var(--color-ios-spinner-fill-light);
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .file-list__filter-text {
+    color: var(--color-ios-spinner-fill-dark);
+  }
+
+  .file-list__show-all {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: none;
+    border: none;
+    color: var(--color-ios-error-button-light);
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease-out;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  .file-list__show-all:hover {
+    background: var(--color-ios-error-bg-light);
+    color: var(--color-file-image-hover-light);
+    transform: translateY(-0.5px);
+  }
+
+  .file-list__show-all:active {
+    transform: translateY(0);
+    background: var(--color-overlay-light);
+  }
+
+  html[data-theme="dark"] .file-list__show-all {
+    color: var(--color-ios-spinner-fill-dark);
+  }
+
+  html[data-theme="dark"] .file-list__show-all:hover {
+    background: var(--color-overlay-light);
+    color: var(--color-file-image-hover-dark);
+  }
+
+  @keyframes filterSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 🍎 CLEAR BUTTON: Apple-style minimal */
+  .file-list__clear {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--color-ios-interactive-light);
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+
+    transition: all 0.15s ease;
+    opacity: 0.7;
+  }
+
+  .file-list__clear:hover {
+    background: var(--color-hover-light);
+    color: var(--color-ios-error-text-light);
+    opacity: 1;
+  }
+
+  .file-list__clear-text {
+    margin: 0;
+  }
+
+  /* 🍎 PROGRESS SUMMARY: Enhanced file status display */
+  .file-list__progress-summary {
+    color: var(--color-ios-empty-light);
+    font-weight: 400;
     /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   }
 
-  .file-item__details {
+  html[data-theme="dark"] .file-list__progress-summary {
+    color: var(--color-ios-empty-dark);
+  }
+
+  /* 🍎 OVERALL PROGRESS: Multi-file upload progress bar */
+  .file-list__overall-progress {
+    width: 100%;
+    height: 2px;
+    background: var(--color-upload-progress-bg-light);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-top: 8px;
+    position: relative;
+  }
+
+  html[data-theme="dark"] .file-list__overall-progress {
+    background: var(--color-upload-progress-bg-dark);
+  }
+
+  .file-list__overall-progress-fill {
+    height: 100%;
+    background: var(--color-upload-progress-fill-light);
+    transition: width var(--duration-ios-standard) var(--easing-ease-out);
+    border-radius: 1px;
+  }
+
+  html[data-theme="dark"] .file-list__overall-progress-fill {
+    background: var(--color-upload-progress-fill-dark);
+  }
+
+  /* 🍎 COMPLETED INFO: Apple-style completion status */
+  .file-item__completed-info {
     /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+    color: var(--color-upload-completed-text-light);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 3px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    opacity: 0.8;
+    transition: opacity var(--duration-fast) var(--easing-ease-out);
   }
 
-  .file-item__progress-track {
-    width: 30px;
+  html[data-theme="dark"] .file-item__completed-info {
+    color: var(--color-upload-completed-text-dark);
   }
 
-  .file-item__progress-text {
-    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 9px deprecated (접근성) ) */
-    min-width: 24px;
-  }
-}
-
-/* 🍎 APPLE ANIMATIONS: Subtle completion feedback */
-@keyframes completionPulse {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 var(--color-ios-empty-light);
-  }
-  50% {
-    transform: scale(1.01);
-    box-shadow: 0 0 0 4px var(--color-success-overlay-border-light);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
-@keyframes progressPulse {
-  0%, 100% {
+  .file-item--completed:hover .file-item__completed-info {
     opacity: 1;
   }
-  50% {
-    opacity: 0.7;
+
+  /* 🍎 ITEMS: Native table rows */
+  .file-list__items {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
-}
 
-/* Apply completion animation when file becomes completed */
-.file-item--completed {
-  animation: completionPulse 0.6s ease-out;
-}
+  /* 🍎 APPLE COMPACT GRID: One-line layout like iOS/macOS table view */
+  .file-item {
+    display: grid;
+    grid-template-columns:
+      24px           /* 아이콘 고정 */
+      1fr            /* 파일명 (가변) */
+      80px           /* 크기 고정 */
+      70px           /* 시간 고정 */
+      32px;          /* 상태 고정 */
+    gap: 12px;
+    align-items: center;
+    height: 32px;
+    padding: 6px 12px;
+    background: var(--color-ios-empty-dark);
+    border-radius: 4px;
+    cursor: default;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
 
-/* Subtle animation for overall progress bar */
-.file-list__overall-progress-fill {
-  animation: progressPulse 2s ease-in-out infinite;
-}
-
-/* Enhanced transition for file items */
-.file-item {
-  transition: all var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-.file-item:hover {
-  transform: translateY(-0.5px);
-}
-
-/* 🍎 ACCESSIBILITY: Maintain minimalism */
-@media (prefers-reduced-motion: reduce) {
-  .file-item,
-  .file-item__progress-fill,
-  .file-item__action,
-  .file-item--completed,
-  .file-list__overall-progress-fill {
-    transition: none;
-    animation: none;
-    transform: none;
+  html[data-theme="dark"] .file-item {
+    background: var(--color-overlay-dark);
   }
 
   .file-item:hover {
-    transform: none;
+    background: var(--color-overlay-dark);
   }
-}
 
-/* 🍎 HIGH CONTRAST: Subtle increase */
-@media (prefers-contrast: high) {
+  html[data-theme="dark"] .file-item:hover {
+    background: var(--color-hover-dark);
+  }
+
+  /* 🍎 STATES: Minimal color coding */
+  .file-item--pending {
+    background: var(--color-ios-empty-dark);
+  }
+
+  .file-item--uploading {
+    background: var(--color-overlay-dark);
+    border-left: 2px solid var(--color-opacity-scrollbar-light);
+  }
+
+  /* 🍎 COMPLETED STATE: Invisible by default - Apple Philosophy */
+  .file-item--completed {
+    background: transparent;
+    border: none;
+    position: relative;
+  }
+
+  .file-item--error {
+    background: var(--color-overlay-dark);
+    border-left: 2px solid var(--color-opacity-scrollbar-light);
+  }
+
+  .file-item--cancelled {
+    background: var(--color-overlay-dark);
+    opacity: 0.5;
+  }
+
+  html[data-theme="dark"] .file-item--cancelled {
+    background: var(--color-overlay-dark);
+  }
+
+  /* 🍎 ICON: Apple-style file type colors with Progressive Disclosure */
+  .file-item__icon {
+    margin-right: 10px;
+    flex-shrink: 0;
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* === 🍎 FILE TYPE ICON COLORS === */
+  /* PDF Files - Red theme */
+  .file-item__icon.file-icon--pdf {
+    color: var(--color-file-pdf-light);
+  }
+
+  .file-item__icon.file-icon--pdf:hover {
+    color: var(--color-file-pdf-hover-light);
+  }
+
+  /* Image Files - Blue theme */
+  .file-item__icon.file-icon--image {
+    color: var(--color-file-image-light);
+  }
+
+  .file-item__icon.file-icon--image:hover {
+    color: var(--color-file-image-hover-light);
+  }
+
+  /* Video Files - Purple theme */
+  .file-item__icon.file-icon--video {
+    color: var(--color-file-video-light);
+  }
+
+  .file-item__icon.file-icon--video:hover {
+    color: var(--color-file-video-hover-light);
+  }
+
+  /* Audio Files - Pink theme */
+  .file-item__icon.file-icon--audio {
+    color: var(--color-file-audio-light);
+  }
+
+  .file-item__icon.file-icon--audio:hover {
+    color: var(--color-file-audio-hover-light);
+  }
+
+  /* Archive Files - Orange theme */
+  .file-item__icon.file-icon--archive {
+    color: var(--color-file-archive-light);
+  }
+
+  .file-item__icon.file-icon--archive:hover {
+    color: var(--color-file-archive-hover-light);
+  }
+
+  /* Word Documents - Blue theme */
+  .file-item__icon.file-icon--word {
+    color: var(--color-file-word-light);
+  }
+
+  .file-item__icon.file-icon--word:hover {
+    color: var(--color-file-word-hover-light);
+  }
+
+  /* Excel Documents - Green theme */
+  .file-item__icon.file-icon--excel {
+    color: var(--color-file-excel-light);
+  }
+
+  .file-item__icon.file-icon--excel:hover {
+    color: var(--color-file-excel-hover-light);
+  }
+
+  /* PowerPoint Documents - Orange theme */
+  .file-item__icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-light);
+  }
+
+  .file-item__icon.file-icon--powerpoint:hover {
+    color: var(--color-file-powerpoint-hover-light);
+  }
+
+  /* Code Files - Indigo theme */
+  .file-item__icon.file-icon--code {
+    color: var(--color-file-code-light);
+  }
+
+  .file-item__icon.file-icon--code:hover {
+    color: var(--color-file-code-hover-light);
+  }
+
+  /* Text Files - Gray theme */
+  .file-item__icon.file-icon--text {
+    color: var(--color-file-text-light);
+  }
+
+  .file-item__icon.file-icon--text:hover {
+    color: var(--color-file-text-hover-light);
+  }
+
+  /* Executable Files - Dark theme */
+  .file-item__icon.file-icon--executable {
+    color: var(--color-file-executable-light);
+  }
+
+  .file-item__icon.file-icon--executable:hover {
+    color: var(--color-file-executable-hover-light);
+  }
+
+  /* Default Files - Neutral theme */
+  .file-item__icon.file-icon--default {
+    color: var(--color-file-default-light);
+  }
+
+  .file-item__icon.file-icon--default:hover {
+    color: var(--color-file-default-hover-light);
+  }
+
+  /* === 🍎 DARK THEME ICON COLORS === */
+  html[data-theme="dark"] .file-item__icon.file-icon--pdf {
+    color: var(--color-file-pdf-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--pdf:hover {
+    color: var(--color-file-pdf-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--image {
+    color: var(--color-file-image-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--image:hover {
+    color: var(--color-file-image-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--video {
+    color: var(--color-file-video-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--video:hover {
+    color: var(--color-file-video-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--audio {
+    color: var(--color-file-audio-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--audio:hover {
+    color: var(--color-file-audio-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--archive {
+    color: var(--color-file-archive-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--archive:hover {
+    color: var(--color-file-archive-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--word {
+    color: var(--color-file-word-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--word:hover {
+    color: var(--color-file-word-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--excel {
+    color: var(--color-file-excel-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--excel:hover {
+    color: var(--color-file-excel-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--powerpoint:hover {
+    color: var(--color-file-powerpoint-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--code {
+    color: var(--color-file-code-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--code:hover {
+    color: var(--color-file-code-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--text {
+    color: var(--color-file-text-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--text:hover {
+    color: var(--color-file-text-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--executable {
+    color: var(--color-file-executable-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--executable:hover {
+    color: var(--color-file-executable-hover-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--default {
+    color: var(--color-file-default-dark);
+  }
+
+  html[data-theme="dark"] .file-item__icon.file-icon--default:hover {
+    color: var(--color-file-default-hover-dark);
+  }
+
+  /* 🍎 INFO: Clean typography */
+  .file-item__info {
+    flex: 1;
+    min-width: 0;
+  }
+
   .file-item__name {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 400;
     color: var(--color-ios-text-light);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   html[data-theme="dark"] .file-item__name {
     color: var(--color-ios-text-dark);
   }
 
-  .file-item__icon {
-    color: var(--color-file-default-light);
+  .file-item__details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    color: var(--color-ios-empty-light);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   }
 
-  html[data-theme="dark"] .file-item__icon {
+  html[data-theme="dark"] .file-item__details {
+    color: var(--color-ios-empty-dark);
+  }
+
+  .file-item__size {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .file-item__time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .file-item__path {
+    font-style: italic;
+    opacity: 0.7;
+  }
+
+  /* 🍎 STATUS MESSAGES: Minimal */
+  .file-item__error {
+    margin-top: 3px;
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+    color: var(--color-success-overlay-icon-light);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  .file-item__cancelled {
+    margin-top: 3px;
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+    color: var(--color-ios-empty-light);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-style: italic;
+  }
+
+  html[data-theme="dark"] .file-item__cancelled {
+    color: var(--color-ios-empty-dark);
+  }
+
+  /* 🍎 NATIVE STATUS: macOS Finder style */
+  .file-item__status {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    width: 40px;
+    justify-content: flex-end;
+  }
+
+  /* 🍎 MINIMAL PROGRESS: No decoration */
+  .file-item__progress-minimal {
+    width: 30px;
+    height: 1px;
+    background: var(--color-hover-light);
+    border-radius: 0.5px;
+    overflow: hidden;
+  }
+
+  html[data-theme="dark"] .file-item__progress-minimal {
+    background: var(--color-hover-dark);
+  }
+
+  .file-item__progress-fill {
+    height: 100%;
+    background: var(--color-ios-interactive-light);
+    transition: width 0.3s ease;
+  }
+
+  /* 🍎 COMPLETION: Enhanced visibility with Progressive Disclosure */
+  .file-item__done {
+    color: var(--color-upload-completed-icon-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item__done:hover {
+    color: var(--color-upload-completed-icon-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__done {
+    color: var(--color-upload-completed-icon-dark);
+  }
+
+  html[data-theme="dark"] .file-item__done:hover {
+    color: var(--color-upload-completed-icon-hover-dark);
+  }
+
+  /* 🍎 RETRY: Invisible until needed */
+  .file-item__retry-minimal {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--color-ios-empty-light);
+    border-radius: 2px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: opacity 0.2s ease;
+  }
+
+  .file-item__retry-minimal:hover {
+    color: var(--color-success-overlay-icon-light);
+  }
+
+  /* 🍎 RESPONSIVE: Minimal changes */
+  @media (max-width: 768px) {
+    .file-item {
+      padding: 6px 8px;
+    }
+
+    .file-item__name {
+      /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    }
+
+    .file-item__details {
+      /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+    }
+
+    .file-item__progress-track {
+      width: 30px;
+    }
+
+    .file-item__progress-text {
+      /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 9px deprecated (접근성) ) */
+      min-width: 24px;
+    }
+  }
+
+  /* 🍎 APPLE ANIMATIONS: Subtle completion feedback */
+  @keyframes completionPulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 var(--color-ios-empty-light);
+    }
+    50% {
+      transform: scale(1.01);
+      box-shadow: 0 0 0 4px var(--color-success-overlay-border-light);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  @keyframes progressPulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* Apply completion animation when file becomes completed */
+  .file-item--completed {
+    animation: completionPulse 0.6s ease-out;
+  }
+
+  /* Subtle animation for overall progress bar */
+  .file-list__overall-progress-fill {
+    animation: progressPulse 2s ease-in-out infinite;
+  }
+
+  /* Enhanced transition for file items */
+  .file-item {
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  .file-item:hover {
+    transform: translateY(-0.5px);
+  }
+
+  /* 🍎 ACCESSIBILITY: Maintain minimalism */
+  @media (prefers-reduced-motion: reduce) {
+    .file-item,
+    .file-item__progress-fill,
+    .file-item__action,
+    .file-item--completed,
+    .file-list__overall-progress-fill {
+      transition: none;
+      animation: none;
+      transform: none;
+    }
+
+    .file-item:hover {
+      transform: none;
+    }
+  }
+
+  /* 🍎 HIGH CONTRAST: Subtle increase */
+  @media (prefers-contrast: high) {
+    .file-item__name {
+      color: var(--color-ios-text-light);
+    }
+
+    html[data-theme="dark"] .file-item__name {
+      color: var(--color-ios-text-dark);
+    }
+
+    .file-item__icon {
+      color: var(--color-file-default-light);
+    }
+
+    html[data-theme="dark"] .file-item__icon {
+      color: var(--color-file-default-dark);
+    }
+  }
+
+  /* === 🍎 APPLE COMPACT LAYOUT STYLES === */
+
+  /* 🍎 ICON COMPACT: Smaller size for dense layout */
+  .file-item__icon-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* === 🍎 FILE TYPE ICON COLORS - COMPACT VERSION === */
+  /* Progressive Disclosure: Subtle base colors → Vibrant hover states */
+
+  /* PDF Files - Red theme */
+  .file-item__icon-compact.file-icon--pdf {
+    color: var(--color-file-pdf-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--pdf {
+    color: var(--color-file-pdf-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--pdf {
+    color: var(--color-file-pdf-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--pdf {
+    color: var(--color-file-pdf-hover-dark);
+  }
+
+  /* Image Files - Blue theme */
+  .file-item__icon-compact.file-icon--image {
+    color: var(--color-file-image-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--image {
+    color: var(--color-file-image-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--image {
+    color: var(--color-file-image-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--image {
+    color: var(--color-file-image-hover-dark);
+  }
+
+  /* Video Files - Purple theme */
+  .file-item__icon-compact.file-icon--video {
+    color: var(--color-file-video-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--video {
+    color: var(--color-file-video-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--video {
+    color: var(--color-file-video-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--video {
+    color: var(--color-file-video-hover-dark);
+  }
+
+  /* Audio Files - Pink theme */
+  .file-item__icon-compact.file-icon--audio {
+    color: var(--color-file-audio-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--audio {
+    color: var(--color-file-audio-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--audio {
+    color: var(--color-file-audio-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--audio {
+    color: var(--color-file-audio-hover-dark);
+  }
+
+  /* Archive Files - Orange theme */
+  .file-item__icon-compact.file-icon--archive {
+    color: var(--color-file-archive-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--archive {
+    color: var(--color-file-archive-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--archive {
+    color: var(--color-file-archive-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--archive {
+    color: var(--color-file-archive-hover-dark);
+  }
+
+  /* Word Documents - Blue theme */
+  .file-item__icon-compact.file-icon--word {
+    color: var(--color-file-word-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--word {
+    color: var(--color-file-word-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--word {
+    color: var(--color-file-word-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--word {
+    color: var(--color-file-word-hover-dark);
+  }
+
+  /* Excel Documents - Green theme */
+  .file-item__icon-compact.file-icon--excel {
+    color: var(--color-file-excel-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--excel {
+    color: var(--color-file-excel-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--excel {
+    color: var(--color-file-excel-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--excel {
+    color: var(--color-file-excel-hover-dark);
+  }
+
+  /* PowerPoint Documents - Orange theme */
+  .file-item__icon-compact.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-dark);
+  }
+
+  /* Code Files - Indigo theme */
+  .file-item__icon-compact.file-icon--code {
+    color: var(--color-file-code-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--code {
+    color: var(--color-file-code-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--code {
+    color: var(--color-file-code-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--code {
+    color: var(--color-file-code-hover-dark);
+  }
+
+  /* Text Files - Gray theme */
+  .file-item__icon-compact.file-icon--text {
+    color: var(--color-file-text-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--text {
+    color: var(--color-file-text-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--text {
+    color: var(--color-file-text-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--text {
+    color: var(--color-file-text-hover-dark);
+  }
+
+  /* Executable Files - Dark theme */
+  .file-item__icon-compact.file-icon--executable {
+    color: var(--color-file-executable-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--executable {
+    color: var(--color-file-executable-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--executable {
+    color: var(--color-file-executable-dark);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--executable {
+    color: var(--color-file-executable-hover-dark);
+  }
+
+  /* Default Files - Neutral theme */
+  .file-item__icon-compact.file-icon--default {
+    color: var(--color-file-default-light);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .file-item:hover .file-item__icon-compact.file-icon--default {
+    color: var(--color-file-default-hover-light);
+  }
+
+  html[data-theme="dark"] .file-item__icon-compact.file-icon--default {
     color: var(--color-file-default-dark);
   }
-}
 
-/* === 🍎 APPLE COMPACT LAYOUT STYLES === */
-
-/* 🍎 ICON COMPACT: Smaller size for dense layout */
-.file-item__icon-compact {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-/* === 🍎 FILE TYPE ICON COLORS - COMPACT VERSION === */
-/* Progressive Disclosure: Subtle base colors → Vibrant hover states */
-
-/* PDF Files - Red theme */
-.file-item__icon-compact.file-icon--pdf {
-  color: var(--color-file-pdf-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--pdf {
-  color: var(--color-file-pdf-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--pdf {
-  color: var(--color-file-pdf-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--pdf {
-  color: var(--color-file-pdf-hover-dark);
-}
-
-/* Image Files - Blue theme */
-.file-item__icon-compact.file-icon--image {
-  color: var(--color-file-image-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--image {
-  color: var(--color-file-image-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--image {
-  color: var(--color-file-image-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--image {
-  color: var(--color-file-image-hover-dark);
-}
-
-/* Video Files - Purple theme */
-.file-item__icon-compact.file-icon--video {
-  color: var(--color-file-video-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--video {
-  color: var(--color-file-video-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--video {
-  color: var(--color-file-video-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--video {
-  color: var(--color-file-video-hover-dark);
-}
-
-/* Audio Files - Pink theme */
-.file-item__icon-compact.file-icon--audio {
-  color: var(--color-file-audio-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--audio {
-  color: var(--color-file-audio-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--audio {
-  color: var(--color-file-audio-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--audio {
-  color: var(--color-file-audio-hover-dark);
-}
-
-/* Archive Files - Orange theme */
-.file-item__icon-compact.file-icon--archive {
-  color: var(--color-file-archive-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--archive {
-  color: var(--color-file-archive-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--archive {
-  color: var(--color-file-archive-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--archive {
-  color: var(--color-file-archive-hover-dark);
-}
-
-/* Word Documents - Blue theme */
-.file-item__icon-compact.file-icon--word {
-  color: var(--color-file-word-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--word {
-  color: var(--color-file-word-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--word {
-  color: var(--color-file-word-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--word {
-  color: var(--color-file-word-hover-dark);
-}
-
-/* Excel Documents - Green theme */
-.file-item__icon-compact.file-icon--excel {
-  color: var(--color-file-excel-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--excel {
-  color: var(--color-file-excel-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--excel {
-  color: var(--color-file-excel-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--excel {
-  color: var(--color-file-excel-hover-dark);
-}
-
-/* PowerPoint Documents - Orange theme */
-.file-item__icon-compact.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-hover-dark);
-}
-
-/* Code Files - Indigo theme */
-.file-item__icon-compact.file-icon--code {
-  color: var(--color-file-code-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--code {
-  color: var(--color-file-code-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--code {
-  color: var(--color-file-code-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--code {
-  color: var(--color-file-code-hover-dark);
-}
-
-/* Text Files - Gray theme */
-.file-item__icon-compact.file-icon--text {
-  color: var(--color-file-text-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--text {
-  color: var(--color-file-text-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--text {
-  color: var(--color-file-text-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--text {
-  color: var(--color-file-text-hover-dark);
-}
-
-/* Executable Files - Dark theme */
-.file-item__icon-compact.file-icon--executable {
-  color: var(--color-file-executable-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--executable {
-  color: var(--color-file-executable-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--executable {
-  color: var(--color-file-executable-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--executable {
-  color: var(--color-file-executable-hover-dark);
-}
-
-/* Default Files - Neutral theme */
-.file-item__icon-compact.file-icon--default {
-  color: var(--color-file-default-light);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.file-item:hover .file-item__icon-compact.file-icon--default {
-  color: var(--color-file-default-hover-light);
-}
-
-html[data-theme="dark"] .file-item__icon-compact.file-icon--default {
-  color: var(--color-file-default-dark);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--default {
-  color: var(--color-file-default-hover-dark);
-}
-
-/* 🍎 APPLE NATIVE COMPLETION STYLE: Already defined above */
-
-/* 🍎 COMPLETION BADGE: SF Symbol style minimal badge */
-.file-item--completed .file-item__status-compact::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 14px;
-  height: 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2334C759' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-  opacity: 0.8;
-}
-
-html[data-theme="dark"] .file-item--completed .file-item__status-compact::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2330D158' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
-  opacity: 0.7;
-}
-
-/* 🍎 PROGRESSIVE DISCLOSURE: Invisible hover - just like macOS Finder */
-.file-item--completed:hover {
-  /* No background change - only the checkmark gets more visible */
-  background: transparent;
-}
-
-.file-item--completed:hover .file-item__status-compact::before {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.1);
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-/* 🍎 FILE TYPE COLORS: Always preserved - never overridden */
-.file-item--completed .file-item__icon-compact {
-  /* 파일 타입별 색상 100% 유지 - 절대 덮어쓰지 않음 */
-  position: relative;
-}
-
-/* 🍎 NAME COMPACT: Primary information column */
-.file-item__name-compact {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 2px;
-}
-
-.file-item__name-text {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 600;
-  color: var(--color-ios-text-light);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.2;
-}
-
-html[data-theme="dark"] .file-item__name-text {
-  color: var(--color-ios-text-dark);
-}
-
-.file-item__error-inline {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  color: var(--color-success-overlay-icon-light);
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .file-item__error-inline {
-  color: var(--color-success-overlay-text-light);
-}
-
-.file-item__path-compact {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  color: var(--color-ios-empty-light);
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .file-item__path-compact {
-  color: var(--color-ios-empty-dark);
-}
-
-/* 🍎 SIZE COMPACT: Fixed width size column */
-.file-item__size-compact {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-weight: 400;
-  color: var(--color-ios-text-light);
-  text-align: right;
-  white-space: nowrap;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .file-item__size-compact {
-  color: var(--color-ios-text-dark);
-}
-
-/* 🍎 TIME COMPACT: Fixed width time column */
-.file-item__time-compact {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-weight: 400;
-  color: var(--color-file-default-light);
-  text-align: right;
-  white-space: nowrap;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .file-item__time-compact {
-  color: var(--color-file-default-dark);
-}
-
-/* 🍎 STATUS COMPACT: Minimal action column */
-.file-item__status-compact {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  position: relative; /* For completion badge positioning */
-}
-
-.file-item__progress-compact {
-  width: 20px;
-  height: 2px;
-  background: var(--color-opacity-light-overlay);
-  border-radius: 1px;
-  overflow: hidden;
-}
-
-html[data-theme="dark"] .file-item__progress-compact {
-  background: var(--color-overlay-light);
-}
-
-.file-item__progress-fill-compact {
-  height: 100%;
-  background: var(--color-ios-spinner-fill-light);
-  border-radius: 1px;
-  transition: width var(--duration-fast) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .file-item__progress-fill-compact {
-  background: var(--color-ios-spinner-fill-dark);
-}
-
-.file-item__done-compact {
-  color: var(--color-success-overlay-icon-light);
-}
-
-html[data-theme="dark"] .file-item__done-compact {
-  color: var(--color-success-overlay-text-light);
-}
-
-.file-item__retry-compact {
-  background: none;
-  border: none;
-  padding: 2px;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  color: var(--color-ios-error-button-light);
-}
-
-.file-item__retry-compact:hover {
-  background: var(--color-ios-error-bg-light);
-  color: var(--color-ios-error-text-light);
-}
-
-html[data-theme="dark"] .file-item__retry-compact {
-  color: var(--color-success-overlay-icon-light);
-}
-
-html[data-theme="dark"] .file-item__retry-compact:hover {
-  background: var(--color-overlay-light);
-  color: var(--color-file-audio-hover-dark);
-}
-
-.file-item__cancelled-compact {
-  color: var(--color-ios-empty-light);
-}
-
-html[data-theme="dark"] .file-item__cancelled-compact {
-  color: var(--color-ios-empty-dark);
-}
-
-/* 🔴 SKIPPED STATUS: Orange/Warning color for skipped files */
-.file-list__stat--skipped {
-  color: var(--color-warning, #ff9500);
-  background: rgba(255, 149, 0, 0.1);
-}
-
-.file-list__stat--skipped.file-list__stat--clickable:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
-  background: rgba(255, 149, 0, 0.15);
-}
-
-.file-list__stat--skipped.file-list__stat--active {
-  background: rgba(255, 149, 0, 0.2);
-  font-weight: 600;
-  box-shadow: inset 0 1px 2px rgba(255, 149, 0, 0.2);
-}
-
-.file-item__skipped-inline {
-  color: var(--color-warning, #ff9500);
-  font-weight: 400;
-  margin-left: 8px;
-  opacity: 0.9;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .file-item__skipped-inline {
-  color: var(--color-warning, #ff9500);
-}
-
-.file-item__skipped-compact {
-  color: var(--color-warning, #ff9500);
-}
-
-html[data-theme="dark"] .file-item__skipped-compact {
-  color: var(--color-warning, #ff9500);
-}
-
-/* 🍎 HOVER EFFECTS: Subtle Progressive Disclosure */
-.file-item:hover {
-  background: var(--color-overlay-dark);
-  transform: translateY(-0.5px);
-}
-
-html[data-theme="dark"] .file-item:hover {
-  background: var(--color-hover-dark);
-}
-
-.file-item:hover .file-item__name-text {
-  color: var(--color-ios-text-light);
-}
-
-html[data-theme="dark"] .file-item:hover .file-item__name-text {
-  color: var(--color-ios-text-dark);
-}
-
-/* 🍎 RESPONSIVE: Tablet and mobile optimization */
-@media (max-width: 768px) {
-  .file-item {
-    grid-template-columns:
-      20px           /* 아이콘 줄임 */
-      1fr            /* 파일명 */
-      60px           /* 크기 줄임 */
-      28px;          /* 상태만 */
-    gap: 8px;
-    height: 28px;
-    padding: 4px 8px;
+  html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--default {
+    color: var(--color-file-default-hover-dark);
   }
 
-  .file-item__time-compact {
-    display: none; /* 모바일에서 시간 숨김 */
+  /* 🍎 APPLE NATIVE COMPLETION STYLE: Already defined above */
+
+  /* 🍎 COMPLETION BADGE: SF Symbol style minimal badge */
+  .file-item--completed .file-item__status-compact::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2334C759' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.8;
+  }
+
+  html[data-theme="dark"] .file-item--completed .file-item__status-compact::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2330D158' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    opacity: 0.7;
+  }
+
+  /* 🍎 PROGRESSIVE DISCLOSURE: Invisible hover - just like macOS Finder */
+  .file-item--completed:hover {
+    /* No background change - only the checkmark gets more visible */
+    background: transparent;
+  }
+
+  .file-item--completed:hover .file-item__status-compact::before {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* 🍎 FILE TYPE COLORS: Always preserved - never overridden */
+  .file-item--completed .file-item__icon-compact {
+    /* 파일 타입별 색상 100% 유지 - 절대 덮어쓰지 않음 */
+    position: relative;
+  }
+
+  /* 🍎 NAME COMPACT: Primary information column */
+  .file-item__name-compact {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
   }
 
   .file-item__name-text {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 600;
+    color: var(--color-ios-text-light);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  html[data-theme="dark"] .file-item__name-text {
+    color: var(--color-ios-text-dark);
+  }
+
+  .file-item__error-inline {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    color: var(--color-success-overlay-icon-light);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .file-item__error-inline {
+    color: var(--color-success-overlay-text-light);
+  }
+
+  .file-item__path-compact {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    color: var(--color-ios-empty-light);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .file-item__path-compact {
+    color: var(--color-ios-empty-dark);
+  }
+
+  /* 🍎 SIZE COMPACT: Fixed width size column */
+  .file-item__size-compact {
     /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-weight: 400;
+    color: var(--color-ios-text-light);
+    text-align: right;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   }
 
-  .file-item__size-compact {
-    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  }
-}
-
-@media (max-width: 480px) {
-  .file-item {
-    grid-template-columns:
-      18px           /* 아이콘 더 줄임 */
-      1fr            /* 파일명 */
-      24px;          /* 상태만 */
-    gap: 6px;
-    height: 26px;
-    padding: 3px 6px;
+  html[data-theme="dark"] .file-item__size-compact {
+    color: var(--color-ios-text-dark);
   }
 
-  .file-item__size-compact {
-    display: none; /* 모바일에서 크기 숨김 */
+  /* 🍎 TIME COMPACT: Fixed width time column */
+  .file-item__time-compact {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-weight: 400;
+    color: var(--color-file-default-light);
+    text-align: right;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   }
 
-  .file-item__name-text {
-    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  html[data-theme="dark"] .file-item__time-compact {
+    color: var(--color-file-default-dark);
   }
-}
+
+  /* 🍎 STATUS COMPACT: Minimal action column */
+  .file-item__status-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative; /* For completion badge positioning */
+  }
+
+  .file-item__progress-compact {
+    width: 20px;
+    height: 2px;
+    background: var(--color-opacity-light-overlay);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  html[data-theme="dark"] .file-item__progress-compact {
+    background: var(--color-overlay-light);
+  }
+
+  .file-item__progress-fill-compact {
+    height: 100%;
+    background: var(--color-ios-spinner-fill-light);
+    border-radius: 1px;
+    transition: width var(--duration-fast) var(--easing-ease-out);
+  }
+
+  html[data-theme="dark"] .file-item__progress-fill-compact {
+    background: var(--color-ios-spinner-fill-dark);
+  }
+
+  .file-item__done-compact {
+    color: var(--color-success-overlay-icon-light);
+  }
+
+  html[data-theme="dark"] .file-item__done-compact {
+    color: var(--color-success-overlay-text-light);
+  }
+
+  .file-item__retry-compact {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    color: var(--color-ios-error-button-light);
+  }
+
+  .file-item__retry-compact:hover {
+    background: var(--color-ios-error-bg-light);
+    color: var(--color-ios-error-text-light);
+  }
+
+  html[data-theme="dark"] .file-item__retry-compact {
+    color: var(--color-success-overlay-icon-light);
+  }
+
+  html[data-theme="dark"] .file-item__retry-compact:hover {
+    background: var(--color-overlay-light);
+    color: var(--color-file-audio-hover-dark);
+  }
+
+  .file-item__cancelled-compact {
+    color: var(--color-ios-empty-light);
+  }
+
+  html[data-theme="dark"] .file-item__cancelled-compact {
+    color: var(--color-ios-empty-dark);
+  }
+
+  /* 🔴 SKIPPED STATUS: Orange/Warning color for skipped files */
+  .file-list__stat--skipped {
+    color: var(--color-warning, #ff9500);
+    background: rgba(255, 149, 0, 0.1);
+  }
+
+  .file-list__stat--skipped.file-list__stat--clickable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
+    background: rgba(255, 149, 0, 0.15);
+  }
+
+  .file-list__stat--skipped.file-list__stat--active {
+    background: rgba(255, 149, 0, 0.2);
+    font-weight: 600;
+    box-shadow: inset 0 1px 2px rgba(255, 149, 0, 0.2);
+  }
+
+  .file-item__skipped-inline {
+    color: var(--color-warning, #ff9500);
+    font-weight: 400;
+    margin-left: 8px;
+    opacity: 0.9;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .file-item__skipped-inline {
+    color: var(--color-warning, #ff9500);
+  }
+
+  .file-item__skipped-compact {
+    color: var(--color-warning, #ff9500);
+  }
+
+  html[data-theme="dark"] .file-item__skipped-compact {
+    color: var(--color-warning, #ff9500);
+  }
+
+  /* 🍎 HOVER EFFECTS: Subtle Progressive Disclosure */
+  .file-item:hover {
+    background: var(--color-overlay-dark);
+    transform: translateY(-0.5px);
+  }
+
+  html[data-theme="dark"] .file-item:hover {
+    background: var(--color-hover-dark);
+  }
+
+  .file-item:hover .file-item__name-text {
+    color: var(--color-ios-text-light);
+  }
+
+  html[data-theme="dark"] .file-item:hover .file-item__name-text {
+    color: var(--color-ios-text-dark);
+  }
+
+  /* 🍎 RESPONSIVE: Tablet and mobile optimization */
+  @media (max-width: 768px) {
+    .file-item {
+      grid-template-columns:
+        20px           /* 아이콘 줄임 */
+        1fr            /* 파일명 */
+        60px           /* 크기 줄임 */
+        28px;          /* 상태만 */
+      gap: 8px;
+      height: 28px;
+      padding: 4px 8px;
+    }
+
+    .file-item__time-compact {
+      display: none; /* 모바일에서 시간 숨김 */
+    }
+
+    .file-item__name-text {
+      /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    }
+
+    .file-item__size-compact {
+      /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    }
+  }
+
+  @media (max-width: 480px) {
+    .file-item {
+      grid-template-columns:
+        18px           /* 아이콘 더 줄임 */
+        1fr            /* 파일명 */
+        24px;          /* 상태만 */
+      gap: 6px;
+      height: 26px;
+      padding: 3px 6px;
+    }
+
+    .file-item__size-compact {
+      display: none; /* 모바일에서 크기 숨김 */
+    }
+
+    .file-item__name-text {
+      /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    }
+  }
+
+} /* end @layer components */

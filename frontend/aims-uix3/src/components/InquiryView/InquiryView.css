@@ -5,1638 +5,1643 @@
  */
 
 /* 🍎 CONTAINER: Pure minimal */
-.inquiry-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: 100%;
-  min-height: 0; /* flexbox 스크롤 활성화 필수 */
-  padding: 12px;
-}
-
-/* === 🍎 SEARCH BAR: iOS-style search field with controls === */
-.inquiry-bar {
-  width: 100%;
-}
-
-.inquiry-container .search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  background-color: transparent;
-  border-radius: 10px;
-  padding: 6px 8px;
-  transition: background-color 0.2s ease-out;
-  overflow: visible;
-}
-
-.inquiry-container .search-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-ios-text-quaternary-light);
-  pointer-events: none;
-  z-index: 1;
-}
-
-html[data-theme="dark"] .inquiry-container .search-icon {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.inquiry-container .search-input {
-  flex: 1;
-  width: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 8px;
-  background: transparent;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
-  outline: none;
-  padding: 4px 8px 4px 26px;
-  transition: border-color 0.2s ease-out;
-}
-
-html[data-theme="dark"] .inquiry-container .search-input {
-  color: var(--color-ios-text-primary-dark);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.inquiry-container .search-input::placeholder {
-  color: var(--color-ios-text-placeholder-light);
-  font-weight: 400;
-}
-
-html[data-theme="dark"] .inquiry-container .search-input::placeholder {
-  color: var(--color-ios-text-placeholder-dark);
-}
-
-/* === 🍎 RESULT HEADER === */
-.inquiry-result-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 4px 4px 4px;
-  border-bottom: 1px solid var(--color-ios-separator-subtle-light);
-}
-
-html[data-theme="dark"] .inquiry-result-header {
-  border-bottom-color: var(--color-ios-separator-subtle-dark);
-}
-
-.inquiry-result-count {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-ios-text-secondary-light);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-
-html[data-theme="dark"] .inquiry-result-count {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* 🍎 STATUS FILTER BUTTON */
-.inquiry-filter-button {
-  background: transparent;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-ios-text-tertiary-light);
-  transition: all 0.15s ease-out;
-  user-select: none;
-}
-
-html[data-theme="dark"] .inquiry-filter-button {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.inquiry-filter-button:hover {
-  background: var(--color-ios-bg-tertiary-light);
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .inquiry-filter-button:hover {
-  background: var(--color-ios-bg-tertiary-dark);
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-filter-button.active {
-  background: var(--color-primary-100);
-  color: var(--color-primary-700);
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .inquiry-filter-button.active {
-  background: var(--color-primary-900);
-  color: var(--color-primary-300);
-}
-
-.inquiry-filter-separator {
-  color: var(--color-ios-text-quaternary-light);
-  user-select: none;
-}
-
-html[data-theme="dark"] .inquiry-filter-separator {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* 🍎 CREATE BUTTON - 필터 줄 우측에 배치 */
-.inquiry-create-button {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 12px;
-  border: none;
-  background: var(--color-primary-600, #007AFF);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-.inquiry-create-button:hover {
-  background: var(--color-primary-700, #0056CC);
-}
-
-html[data-theme="dark"] .inquiry-create-button {
-  background: var(--color-primary-500, #0A84FF);
-}
-
-html[data-theme="dark"] .inquiry-create-button:hover {
-  background: var(--color-primary-400, #409CFF);
-}
-
-/* === 🍎 LIST HEADER: macOS Finder-style === */
-.inquiry-list-header {
-  display: grid;
-  grid-template-columns: 60px 70px 1fr 140px 60px;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  min-height: 28px;
-  background: var(--color-neutral-50);
-  border-bottom: 1px solid var(--color-ios-separator-light);
-  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: var(--color-ios-text-tertiary-light);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-html[data-theme="dark"] .inquiry-list-header {
-  background: var(--color-neutral-700);
-  border-bottom-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* === 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 === */
-.inquiry-header-sortable {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.15s ease-out;
-  padding: 4px 6px;
-  margin: -4px -6px;
-  border-radius: 4px;
-}
-
-.inquiry-header-sortable:hover {
-  background-color: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .inquiry-header-sortable:hover {
-  background-color: var(--color-ios-bg-tertiary-dark);
-}
-
-.inquiry-header-sortable:active {
-  background-color: var(--color-ios-bg-hover-light);
-}
-
-html[data-theme="dark"] .inquiry-header-sortable:active {
-  background-color: var(--color-ios-bg-hover-dark);
-}
-
-/* === 🍎 SORT INDICATOR: 정렬 방향 표시 === */
-.inquiry-sort-indicator {
-  font-size: var(--font-size-caption-2, 11px);
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  margin-left: 2px;
-  color: var(--color-primary-600);
-  opacity: 0.9;
-}
-
-/* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
-.inquiry-sort-indicator:not(.inquiry-sort-indicator--both) {
-  color: var(--color-sort-indicator-active, var(--color-primary-600));
-  font-weight: 700;
-  opacity: 1;
-}
-
-/* 양방향 정렬 인디케이터 - 세로로 쌓기 */
-.inquiry-sort-indicator--both {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  line-height: 0.6;
-  margin-left: 2px;
-  gap: 2px;
-}
-
-.inquiry-sort-indicator--both .inquiry-sort-arrow {
-  display: block;
-  font-size: var(--font-size-caption-2, 11px);
-  line-height: 0.6;
-  height: 6px;
-}
-
-html[data-theme="dark"] .inquiry-sort-indicator {
-  color: var(--color-primary-300);
-}
-
-.inquiry-header-sortable:hover .inquiry-sort-indicator {
-  opacity: 1;
-}
-
-/* === 🍎 INQUIRY LIST === */
-.inquiry-list {
-  min-height: 0;
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-right: 4px;
-}
-
-/* === 🍎 INQUIRY ROW === */
-.inquiry-row {
-  display: grid;
-  grid-template-columns: 60px 70px 1fr 140px 60px;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  min-height: 36px;
-  background: transparent;
-  border: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  border-radius: 6px;
-}
-
-.inquiry-row:hover {
-  background: var(--color-ios-bg-secondary-light);
-}
-
-html[data-theme="dark"] .inquiry-row:hover {
-  background: var(--color-ios-bg-secondary-dark);
-}
-
-/* 🍎 STATUS BADGE */
-.inquiry-status-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 6px;
-  border-radius: 8px;
-  font-size: 10px; /* 폰트 규정: 배지 */
-  font-weight: 400;
-  white-space: nowrap;
-}
-
-.inquiry-status-badge--pending {
-  background: var(--color-warning-50);
-  color: var(--color-warning-600);
-}
-
-.inquiry-status-badge--in_progress {
-  background: var(--color-info-50);
-  color: var(--color-info-600);
-}
-
-.inquiry-status-badge--resolved {
-  background: var(--color-success-50);
-  color: var(--color-success-600);
-}
-
-.inquiry-status-badge--closed {
-  background: var(--color-neutral-bg);
-  color: var(--color-neutral-500);
-}
-
-/* 🍎 CATEGORY BADGE */
-.inquiry-category-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 10px; /* 폰트 규정: 배지 */
-  font-weight: 400;
-  white-space: nowrap;
-}
-
-.inquiry-category-badge--bug {
-  background: var(--color-error-50);
-  color: var(--color-error-600);
-}
-
-.inquiry-category-badge--feature {
-  background: var(--color-info-50);
-  color: var(--color-info-600);
-}
-
-.inquiry-category-badge--question {
-  background: var(--color-success-50);
-  color: var(--color-success-600);
-}
-
-.inquiry-category-badge--other {
-  background: var(--color-neutral-bg);
-  color: var(--color-neutral-500);
-}
-
-/* Row cells */
-.inquiry-row-title {
-  display: flex;
-  align-items: center;
-  font-size: 12px; /* 폰트 규정: 테이블 데이터 */
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .inquiry-row-title {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.inquiry-row-date {
-  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
-  font-weight: 400;
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .inquiry-row-date {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-row-messages {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
-  font-weight: 400;
-  color: var(--color-ios-text-tertiary-light);
-}
-
-html[data-theme="dark"] .inquiry-row-messages {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* === 🍎 EMPTY STATE === */
-.inquiry-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 24px;
-  text-align: center;
-  color: var(--color-ios-text-tertiary-light);
-}
-
-html[data-theme="dark"] .inquiry-empty {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.inquiry-empty-icon {
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.inquiry-empty-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-ios-text-primary-light);
-  margin-bottom: 8px;
-}
-
-html[data-theme="dark"] .inquiry-empty-title {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.inquiry-empty-desc {
-  font-size: 13px;
-  color: var(--color-ios-text-tertiary-light);
-  margin-bottom: 20px;
-}
-
-html[data-theme="dark"] .inquiry-empty-desc {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.inquiry-empty-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: none;
-  background: var(--color-primary);
-  color: white;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.inquiry-empty-button:hover {
-  opacity: 0.9;
-}
-
-/* === 🍎 LOADING === */
-.inquiry-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  color: var(--color-ios-text-tertiary-light);
-  font-size: 13px;
-}
-
-html[data-theme="dark"] .inquiry-loading {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* ===============================================
-   CREATE FORM (슬라이드 패널 형태)
-   =============================================== */
-.inquiry-create-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 4px;
-}
-
-.inquiry-form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.inquiry-form-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .inquiry-form-label {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-form-label-hint {
-  font-weight: 400;
-  color: var(--color-ios-text-tertiary-light);
-  margin-left: 4px;
-}
-
-html[data-theme="dark"] .inquiry-form-label-hint {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.inquiry-form-select,
-.inquiry-form-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-ios-text-primary-light);
-  font-size: 13px;
-  font-family: inherit;
-}
-
-html[data-theme="dark"] .inquiry-form-input {
-  border-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-primary-dark);
-  background-color: var(--color-ios-bg-secondary-dark);
-}
-
-.inquiry-form-select:focus,
-.inquiry-form-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.inquiry-form-textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-ios-text-primary-light);
-  font-size: 13px;
-  font-family: inherit;
-  resize: vertical;
-  min-height: 120px;
-  line-height: 1.5;
-}
-
-html[data-theme="dark"] .inquiry-form-textarea {
-  border-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-primary-dark);
-}
-
-.inquiry-form-textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-/* File drop zone */
-.inquiry-file-drop {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 24px;
-  border: 2px dashed var(--color-ios-separator-light);
-  border-radius: 10px;
-  color: var(--color-ios-text-tertiary-light);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-html[data-theme="dark"] .inquiry-file-drop {
-  border-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.inquiry-file-drop:hover {
-  border-color: var(--color-primary);
-  background: rgba(59, 130, 246, 0.05);
-}
-
-.inquiry-file-drop-text {
-  font-size: 12px;
-}
-
-.inquiry-file-drop-hint {
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-/* File list */
-.inquiry-file-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-  list-style: none;
-  padding: 0;
-}
-
-.inquiry-file-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: var(--color-ios-bg-secondary-light);
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .inquiry-file-item {
-  background: var(--color-ios-bg-secondary-dark);
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-file-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border: none;
-  background: transparent;
-  color: var(--color-ios-text-tertiary-light);
-  cursor: pointer;
-  border-radius: 50%;
-  margin-left: 4px;
-}
-
-html[data-theme="dark"] .inquiry-file-remove {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.inquiry-file-remove:hover {
-  background: var(--color-error);
-  color: white;
-}
-
-/* 🍎 IMAGE THUMBNAIL PREVIEW */
-.inquiry-file-item--image {
-  position: relative;
-  padding: 0;
-  background: transparent;
-  border-radius: var(--radius-md, 8px);
-  overflow: visible;
-}
-
-.inquiry-file-thumbnail {
-  display: block;
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: var(--radius-md, 8px);
-  border: 1px solid var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .inquiry-file-thumbnail {
-  border-color: var(--color-ios-separator-dark);
-}
-
-.inquiry-file-item--image .inquiry-file-remove {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 20px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  font-size: 12px;
-  border-radius: 50%;
-  margin-left: 0;
-}
-
-/* Form actions */
-.inquiry-form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .inquiry-form-actions {
-  border-top-color: var(--color-ios-separator-dark);
-}
-
-.inquiry-form-cancel {
-  padding: 8px 16px;
-  border: 1px solid var(--color-ios-separator-light);
-  background: transparent;
-  color: var(--color-ios-text-secondary-light);
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-html[data-theme="dark"] .inquiry-form-cancel {
-  border-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-form-cancel:hover {
-  background: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .inquiry-form-cancel:hover {
-  background: var(--color-ios-bg-tertiary-dark);
-}
-
-.inquiry-form-submit {
-  padding: 10px 24px;
-  border: none;
-  background: var(--color-primary-600, #007AFF);
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.inquiry-form-submit:hover:not(:disabled) {
-  background: var(--color-primary-700, #0056CC);
-}
-
-html[data-theme="dark"] .inquiry-form-submit {
-  background: var(--color-primary-500, #0A84FF);
-}
-
-html[data-theme="dark"] .inquiry-form-submit:hover:not(:disabled) {
-  background: var(--color-primary-400, #409CFF);
-}
-
-.inquiry-form-submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ===============================================
-   DETAIL VIEW
-   =============================================== */
-.inquiry-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 100%;
-  min-height: 0; /* flexbox 스크롤 활성화 필수 */
-}
-
-/* 🍎 DETAIL TOPBAR: 목록버튼 + 메타정보 한 줄 배치 */
-.inquiry-detail-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-ios-separator-light);
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .inquiry-detail-topbar {
-  border-bottom-color: var(--color-ios-separator-dark);
-}
-
-/* 🍎 목록 버튼 - iOS 스타일 세컨더리 버튼 */
-.inquiry-detail-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 5px 10px;
-  border: 1px solid var(--color-ios-separator-light);
-  background: var(--color-ios-bg-secondary-light);
-  color: var(--color-ios-text-primary-light);
-  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-/* 목록 버튼 내 아이콘 */
-.inquiry-detail-back .inquiry-back-icon {
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .inquiry-detail-back {
-  border-color: var(--color-ios-separator-dark);
-  background: var(--color-ios-bg-tertiary-dark);
-  color: var(--color-ios-text-primary-dark);
-}
-
-.inquiry-detail-back:hover {
-  background: var(--color-ios-bg-tertiary-light);
-  border-color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .inquiry-detail-back:hover {
-  background: var(--color-ios-bg-secondary-dark);
-  border-color: var(--color-ios-text-quaternary-dark);
-}
-
-.inquiry-detail-back:active {
-  transform: scale(0.97);
-}
-
-/* 메타 정보 영역: 배지 + 날짜 */
-.inquiry-detail-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.inquiry-detail-date {
-  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
-  font-weight: 400;
-  color: var(--color-ios-text-tertiary-light);
-  margin-left: 4px;
-}
-
-html[data-theme="dark"] .inquiry-detail-date {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* 문의 제목 - 폰트 규정 준수 */
-.inquiry-detail-title {
-  margin: 4px 0;
-  font-size: 13px; /* 폰트 규정: 섹션 제목 */
-  font-weight: 600;
-  color: var(--color-ios-text-primary-light);
-  line-height: 1.4;
-  letter-spacing: -0.1px;
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .inquiry-detail-title {
-  color: var(--color-ios-text-primary-dark);
-}
-
-/* ===============================================
-   카카오톡 스타일 메시지 (KakaoTalk Style)
-   =============================================== */
-.inquiry-messages {
-  flex: 1;
-  min-height: 0; /* flexbox 스크롤 활성화 필수 */
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 10px;
-  background: var(--color-ios-bg-tertiary-light);
-  border-radius: 8px;
-  /* 와이드 스크린 대응: 채팅 영역 중앙 정렬 */
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-html[data-theme="dark"] .inquiry-messages {
-  background: var(--color-ios-bg-tertiary-dark);
-}
-
-/* 메시지 행 (아바타 + 말풍선 + 시간) */
-.inquiry-message {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  max-width: 85%;
-  border: none;
-  background: transparent;
-  padding: 0;
-}
-
-/* 사용자 메시지: 오른쪽 정렬 */
-.inquiry-message--user {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-/* 관리자 메시지: 왼쪽 정렬 */
-.inquiry-message--admin {
-  align-self: flex-start;
-  flex-direction: row;
-}
-
-/* 아바타 영역 */
-.inquiry-message-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-/* 사용자 아바타: 숨김 (카카오톡처럼 본인은 아바타 없음) */
-.inquiry-message--user .inquiry-message-avatar {
-  display: none;
-}
-
-/* 관리자 아바타: 초록색 배경 */
-.inquiry-message--admin .inquiry-message-avatar {
-  background: var(--color-success, #34c759);
-  color: white;
-}
-
-/* 말풍선 컨테이너 */
-.inquiry-message-bubble {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* 작성자 이름 */
-.inquiry-message-author {
-  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
-  font-weight: 600;
-  color: var(--color-ios-text-secondary-light);
-  padding-left: 4px;
-}
-
-html[data-theme="dark"] .inquiry-message-author {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* 사용자 메시지는 이름 숨김 */
-.inquiry-message--user .inquiry-message-author {
-  display: none;
-}
-
-/* 말풍선 본문 */
-.inquiry-message-content {
-  padding: 8px 12px;
-  border-radius: 14px;
-  font-size: 12px; /* 폰트 규정: 테이블 데이터 */
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-width: 100%;
-}
-
-/* 사용자 말풍선: 노란색 (카카오톡 스타일) */
-.inquiry-message--user .inquiry-message-content {
-  background: #fee500;
-  color: #1a1a1a;
-  border-bottom-right-radius: 4px;
-}
-
-/* 관리자 말풍선: 흰색/회색 */
-.inquiry-message--admin .inquiry-message-content {
-  background: white;
-  color: var(--color-ios-text-primary-light);
-  border: 1px solid var(--color-ios-separator-light);
-  border-bottom-left-radius: 4px;
-}
-
-html[data-theme="dark"] .inquiry-message--admin .inquiry-message-content {
-  background: var(--color-ios-bg-secondary-dark);
-  color: var(--color-ios-text-primary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-/* 시간 표시 */
-.inquiry-message-date {
-  font-size: 10px; /* 폰트 규정: 배지 */
-  font-weight: 400;
-  color: var(--color-ios-text-tertiary-light);
-  white-space: nowrap;
-  align-self: flex-end;
-  padding-bottom: 2px;
-}
-
-html[data-theme="dark"] .inquiry-message-date {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* 헤더는 더이상 사용하지 않음 */
-.inquiry-message-header {
-  display: none;
-}
-
-/* 첨부파일 영역 */
-.inquiry-message-attachments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-/* 이미지 첨부파일 - 카카오톡 스타일 */
-.inquiry-message-image {
-  display: block;
-  max-width: 200px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.inquiry-message-image img {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-}
-
-.inquiry-message-image:hover {
-  opacity: 0.9;
-}
-
-/* 파일 첨부파일 링크 */
-.inquiry-message-attachment {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  text-decoration: none;
-  background: transparent;
-  color: var(--color-ios-text-secondary-light);
-  transition: background 0.15s ease, opacity 0.15s ease;
-}
-
-html[data-theme="dark"] .inquiry-message-attachment {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-message-attachment:hover {
-  background: rgba(0, 0, 0, 0.06);
-  opacity: 0.8;
-}
-
-html[data-theme="dark"] .inquiry-message-attachment:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* paperclip 아이콘 스타일 */
-.inquiry-message-attachment svg {
-  flex-shrink: 0;
-  stroke: var(--color-ios-text-tertiary-light);
-}
-
-html[data-theme="dark"] .inquiry-message-attachment svg {
-  stroke: var(--color-ios-text-tertiary-dark);
-}
-
-/* Reply form - 컴팩트 */
-.inquiry-reply-form {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px;
-  background: var(--color-ios-bg-secondary-light);
-  border-radius: 8px;
-  /* 와이드 스크린 대응: 메시지 영역과 동일하게 중앙 정렬 */
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
-  flex-shrink: 0; /* 축소 방지 */
-}
-
-html[data-theme="dark"] .inquiry-reply-form {
-  background: var(--color-ios-bg-secondary-dark);
-}
-
-.inquiry-reply-input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: 6px;
-  background: var(--color-bg-primary);
-  color: var(--color-ios-text-primary-light);
-  font-size: 12px; /* 폰트 규정: 테이블 데이터 */
-  font-family: inherit;
-  resize: none;
-  min-height: 44px; /* 축소 */
-  max-height: 80px;
-  line-height: 1.4;
-}
-
-html[data-theme="dark"] .inquiry-reply-input {
-  border-color: var(--color-ios-separator-dark);
-  background: var(--color-bg-primary);
-  color: var(--color-ios-text-primary-dark);
-}
-
-.inquiry-reply-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.inquiry-reply-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.inquiry-reply-files {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.inquiry-reply-files li {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: var(--color-bg-primary);
-  border-radius: 4px;
-  font-size: 11px;
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .inquiry-reply-files li {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-reply-files button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  border: none;
-  background: transparent;
-  color: var(--color-ios-text-tertiary-light);
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-html[data-theme="dark"] .inquiry-reply-files button {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.inquiry-reply-files button:hover {
-  background: var(--color-error);
-  color: white;
-}
-
-/* 🍎 REPLY FILE PREVIEWS - Thumbnail style */
-.inquiry-reply-file-previews {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 0;
-}
-
-.inquiry-reply-file-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: var(--color-bg-primary);
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .inquiry-reply-file-item {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-reply-file-item--image {
-  position: relative;
-  padding: 0;
-  background: transparent;
-  border-radius: var(--radius-md, 8px);
-  overflow: visible;
-}
-
-.inquiry-reply-file-thumbnail {
-  display: block;
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: var(--radius-md, 8px);
-  border: 1px solid var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .inquiry-reply-file-thumbnail {
-  border-color: var(--color-ios-separator-dark);
-}
-
-.inquiry-reply-file-name {
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.inquiry-reply-file-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border: none;
-  background: transparent;
-  color: var(--color-ios-text-tertiary-light);
-  cursor: pointer;
-  border-radius: 50%;
-  margin-left: 4px;
-}
-
-html[data-theme="dark"] .inquiry-reply-file-remove {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.inquiry-reply-file-remove:hover {
-  background: var(--color-error);
-  color: white;
-}
-
-.inquiry-reply-file-item--image .inquiry-reply-file-remove {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 20px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  font-size: 12px;
-  margin-left: 0;
-}
-
-.inquiry-reply-buttons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.inquiry-attach-btn,
-.inquiry-send-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--color-ios-text-secondary-light);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-html[data-theme="dark"] .inquiry-attach-btn,
-html[data-theme="dark"] .inquiry-send-btn {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-attach-btn:hover,
-.inquiry-send-btn:hover:not(:disabled) {
-  opacity: 0.7;
-  transform: scale(1.1);
-}
-
-.inquiry-attach-btn svg,
-.inquiry-send-btn svg {
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-}
-
-html[data-theme="dark"] .inquiry-attach-btn svg,
-html[data-theme="dark"] .inquiry-send-btn svg {
-  stroke: currentColor;
-}
-
-.inquiry-send-btn svg {
-  fill: currentColor;
-  stroke: none;
-}
-
-.inquiry-send-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Closed status */
-.inquiry-closed-notice {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 16px;
-  background: var(--color-ios-bg-secondary-light);
-  border-radius: 8px;
-  color: var(--color-ios-text-tertiary-light);
-  font-size: 13px;
-}
-
-html[data-theme="dark"] .inquiry-closed-notice {
-  background: var(--color-ios-bg-secondary-dark);
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* Resolved status banner */
-.inquiry-resolved-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--color-ios-green-light, #34C759);
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.08) 100%);
-  border: 1px solid rgba(52, 199, 89, 0.3);
-  border-radius: 8px;
-  color: var(--color-ios-green-light, #34C759);
-  font-size: 13px;
-  margin-bottom: 0;
-}
-
-.inquiry-resolved-banner svg {
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .inquiry-resolved-banner {
-  background: linear-gradient(135deg, rgba(48, 209, 88, 0.15) 0%, rgba(48, 209, 88, 0.08) 100%);
-  border-color: rgba(48, 209, 88, 0.3);
-  color: var(--color-ios-green-dark, #30D158);
-}
-
-/* === SYSTEM MESSAGE (상태 변경 알림) === */
-.inquiry-message--system {
-  display: flex;
-  justify-content: center;
-  padding: 8px 0;
-}
-
-.inquiry-system-message {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: var(--color-ios-bg-tertiary-light, rgba(0, 0, 0, 0.05));
-  border-radius: 12px;
-  font-size: 11px;
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .inquiry-system-message {
-  background: var(--color-ios-bg-tertiary-dark, rgba(255, 255, 255, 0.08));
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* === TITLE ICON === */
-.inquiry-title-icon {
-  color: #D4A300; /* 라이트 테마: 진한 금색 (가시성 확보) */
-}
-
-html[data-theme="dark"] .inquiry-title-icon {
-  color: #FEE500; /* 다크 테마: 카카오톡 공식 노란색 */
-}
-
-/* === BACK BUTTON (for CenterPaneView titleLeftAccessory) === */
-.inquiry-back-button {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border: none;
-  background: transparent;
-  color: var(--color-ios-text-secondary-light);
-  font-size: 13px;
-  cursor: pointer;
-  border-radius: 4px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .inquiry-back-button {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-back-button:hover {
-  background: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .inquiry-back-button:hover {
-  background: var(--color-ios-bg-tertiary-dark);
-}
-
-/* === 🍎 UNREAD INDICATOR === */
-.inquiry-row--unread {
-  font-weight: 600;
-}
-
-.inquiry-row--unread .inquiry-row-title {
-  font-weight: 600;
-}
-
-.inquiry-row-unread-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: var(--color-primary, #007aff);
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-right: 6px;
-}
-
-/* Utility */
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* ===============================================
-   이미지 미리보기 모달
-   =============================================== */
-.inquiry-image-preview-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.85);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-  animation: inquiryModalFadeIn 0.15s ease;
-}
-
-@keyframes inquiryModalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* 상단 툴바 - 화면에 고정 */
-.inquiry-image-preview-modal__toolbar {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10001;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.7);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  padding: 8px 16px;
-  border-radius: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  animation: inquiryToolbarSlideIn 0.2s ease;
-}
-
-@keyframes inquiryToolbarSlideIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-.inquiry-image-preview-modal__toolbar button {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  font-size: 18px;
-  font-weight: 600;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.inquiry-image-preview-modal__toolbar button:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.05);
-}
-
-.inquiry-image-preview-modal__toolbar button:active {
-  transform: scale(0.95);
-}
-
-/* 리셋 버튼 */
-.inquiry-image-preview-modal__toolbar button.reset-btn {
-  width: auto;
-  padding: 0 16px;
-  border-radius: 18px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* 닫기 버튼 */
-.inquiry-image-preview-modal__toolbar button.close-btn {
-  background: rgba(255, 59, 48, 0.8);
-  margin-left: 8px;
-}
-
-.inquiry-image-preview-modal__toolbar button.close-btn:hover {
-  background: rgba(255, 59, 48, 1);
-}
-
-/* 줌 퍼센트 표시 */
-.inquiry-image-preview-modal__toolbar .zoom-level {
-  color: white;
-  font-size: 13px;
-  font-weight: 600;
-  min-width: 52px;
-  text-align: center;
-  padding: 0 4px;
-}
-
-/* 구분선 */
-.inquiry-image-preview-modal__toolbar .divider {
-  width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.inquiry-image-preview-modal__content {
-  position: relative;
-  max-width: 90vw;
-  max-height: 90vh;
-  animation: inquiryModalScaleIn 0.15s ease;
-}
-
-@keyframes inquiryModalScaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.inquiry-image-preview-modal__content img {
-  display: block;
-  max-width: 90vw;
-  max-height: 85vh;
-  object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-user-drag: none;
-  transition: transform 0.1s ease;
-}
-
-/* 힌트 - 화면 하단에 고정 */
-.inquiry-image-preview-modal__hint {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10001;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 12px;
-  white-space: nowrap;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 8px 16px;
-  border-radius: 16px;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-}
-
-/* 드래그 중 */
-.inquiry-image-preview-modal__content--dragging img {
-  cursor: grabbing !important;
-}
-
-/* 이미지 버튼 스타일 업데이트 */
-.inquiry-message-image {
-  border: none;
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-.inquiry-message-image:hover {
-  transform: scale(1.02);
-}
-
-/* 반응형 */
-@media (max-width: 600px) {
-  .inquiry-image-preview-modal__toolbar {
-    top: 12px;
-    padding: 6px 12px;
+
+@layer components {
+
+  .inquiry-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    min-height: 0; /* flexbox 스크롤 활성화 필수 */
+    padding: 12px;
+  }
+
+  /* === 🍎 SEARCH BAR: iOS-style search field with controls === */
+  .inquiry-bar {
+    width: 100%;
+  }
+
+  .inquiry-container .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background-color: transparent;
+    border-radius: 10px;
+    padding: 6px 8px;
+    transition: background-color 0.2s ease-out;
+    overflow: visible;
+  }
+
+  .inquiry-container .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-ios-text-quaternary-light);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  html[data-theme="dark"] .inquiry-container .search-icon {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  .inquiry-container .search-input {
+    flex: 1;
+    width: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);
+    outline: none;
+    padding: 4px 8px 4px 26px;
+    transition: border-color 0.2s ease-out;
+  }
+
+  html[data-theme="dark"] .inquiry-container .search-input {
+    color: var(--color-ios-text-primary-dark);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .inquiry-container .search-input::placeholder {
+    color: var(--color-ios-text-placeholder-light);
+    font-weight: 400;
+  }
+
+  html[data-theme="dark"] .inquiry-container .search-input::placeholder {
+    color: var(--color-ios-text-placeholder-dark);
+  }
+
+  /* === 🍎 RESULT HEADER === */
+  .inquiry-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 4px 4px;
+    border-bottom: 1px solid var(--color-ios-separator-subtle-light);
+  }
+
+  html[data-theme="dark"] .inquiry-result-header {
+    border-bottom-color: var(--color-ios-separator-subtle-dark);
+  }
+
+  .inquiry-result-count {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-ios-text-secondary-light);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  html[data-theme="dark"] .inquiry-result-count {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 🍎 STATUS FILTER BUTTON */
+  .inquiry-filter-button {
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ios-text-tertiary-light);
+    transition: all 0.15s ease-out;
+    user-select: none;
+  }
+
+  html[data-theme="dark"] .inquiry-filter-button {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-filter-button:hover {
+    background: var(--color-ios-bg-tertiary-light);
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-filter-button:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-filter-button.active {
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    font-weight: 600;
+  }
+
+  html[data-theme="dark"] .inquiry-filter-button.active {
+    background: var(--color-primary-900);
+    color: var(--color-primary-300);
+  }
+
+  .inquiry-filter-separator {
+    color: var(--color-ios-text-quaternary-light);
+    user-select: none;
+  }
+
+  html[data-theme="dark"] .inquiry-filter-separator {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* 🍎 CREATE BUTTON - 필터 줄 우측에 배치 */
+  .inquiry-create-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border: none;
+    background: var(--color-primary-600, #007AFF);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .inquiry-create-button:hover {
+    background: var(--color-primary-700, #0056CC);
+  }
+
+  html[data-theme="dark"] .inquiry-create-button {
+    background: var(--color-primary-500, #0A84FF);
+  }
+
+  html[data-theme="dark"] .inquiry-create-button:hover {
+    background: var(--color-primary-400, #409CFF);
+  }
+
+  /* === 🍎 LIST HEADER: macOS Finder-style === */
+  .inquiry-list-header {
+    display: grid;
+    grid-template-columns: 60px 70px 1fr 140px 60px;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    min-height: 28px;
+    background: var(--color-neutral-50);
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-ios-text-tertiary-light);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  html[data-theme="dark"] .inquiry-list-header {
+    background: var(--color-neutral-700);
+    border-bottom-color: var(--color-ios-separator-dark);
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* === 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 === */
+  .inquiry-header-sortable {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease-out;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+  }
+
+  .inquiry-header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+  }
+
+  .inquiry-header-sortable:active {
+    background-color: var(--color-ios-bg-hover-light);
+  }
+
+  html[data-theme="dark"] .inquiry-header-sortable:active {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  /* === 🍎 SORT INDICATOR: 정렬 방향 표시 === */
+  .inquiry-sort-indicator {
+    font-size: var(--font-size-caption-2, 11px);
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    margin-left: 2px;
+    color: var(--color-primary-600);
+    opacity: 0.9;
+  }
+
+  /* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
+  .inquiry-sort-indicator:not(.inquiry-sort-indicator--both) {
+    color: var(--color-sort-indicator-active, var(--color-primary-600));
+    font-weight: 700;
+    opacity: 1;
+  }
+
+  /* 양방향 정렬 인디케이터 - 세로로 쌓기 */
+  .inquiry-sort-indicator--both {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 0.6;
+    margin-left: 2px;
+    gap: 2px;
+  }
+
+  .inquiry-sort-indicator--both .inquiry-sort-arrow {
+    display: block;
+    font-size: var(--font-size-caption-2, 11px);
+    line-height: 0.6;
+    height: 6px;
+  }
+
+  html[data-theme="dark"] .inquiry-sort-indicator {
+    color: var(--color-primary-300);
+  }
+
+  .inquiry-header-sortable:hover .inquiry-sort-indicator {
+    opacity: 1;
+  }
+
+  /* === 🍎 INQUIRY LIST === */
+  .inquiry-list {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 4px;
+  }
+
+  /* === 🍎 INQUIRY ROW === */
+  .inquiry-row {
+    display: grid;
+    grid-template-columns: 60px 70px 1fr 140px 60px;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    min-height: 36px;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    border-radius: 6px;
+  }
+
+  .inquiry-row:hover {
+    background: var(--color-ios-bg-secondary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-row:hover {
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  /* 🍎 STATUS BADGE */
+  .inquiry-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px; /* 폰트 규정: 배지 */
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  .inquiry-status-badge--pending {
+    background: var(--color-warning-50);
+    color: var(--color-warning-600);
+  }
+
+  .inquiry-status-badge--in_progress {
+    background: var(--color-info-50);
+    color: var(--color-info-600);
+  }
+
+  .inquiry-status-badge--resolved {
+    background: var(--color-success-50);
+    color: var(--color-success-600);
+  }
+
+  .inquiry-status-badge--closed {
+    background: var(--color-neutral-bg);
+    color: var(--color-neutral-500);
+  }
+
+  /* 🍎 CATEGORY BADGE */
+  .inquiry-category-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 10px; /* 폰트 규정: 배지 */
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  .inquiry-category-badge--bug {
+    background: var(--color-error-50);
+    color: var(--color-error-600);
+  }
+
+  .inquiry-category-badge--feature {
+    background: var(--color-info-50);
+    color: var(--color-info-600);
+  }
+
+  .inquiry-category-badge--question {
+    background: var(--color-success-50);
+    color: var(--color-success-600);
+  }
+
+  .inquiry-category-badge--other {
+    background: var(--color-neutral-bg);
+    color: var(--color-neutral-500);
+  }
+
+  /* Row cells */
+  .inquiry-row-title {
+    display: flex;
+    align-items: center;
+    font-size: 12px; /* 폰트 규정: 테이블 데이터 */
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .inquiry-row-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .inquiry-row-date {
+    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-weight: 400;
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-row-date {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-row-messages {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-row-messages {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* === 🍎 EMPTY STATE === */
+  .inquiry-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-empty {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-empty-icon {
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .inquiry-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+    margin-bottom: 8px;
+  }
+
+  html[data-theme="dark"] .inquiry-empty-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .inquiry-empty-desc {
+    font-size: 13px;
+    color: var(--color-ios-text-tertiary-light);
+    margin-bottom: 20px;
+  }
+
+  html[data-theme="dark"] .inquiry-empty-desc {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-empty-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    background: var(--color-primary);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .inquiry-empty-button:hover {
+    opacity: 0.9;
+  }
+
+  /* === 🍎 LOADING === */
+  .inquiry-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: var(--color-ios-text-tertiary-light);
+    font-size: 13px;
+  }
+
+  html[data-theme="dark"] .inquiry-loading {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* ===============================================
+     CREATE FORM (슬라이드 패널 형태)
+     =============================================== */
+  .inquiry-create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 4px;
+  }
+
+  .inquiry-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .inquiry-form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-form-label {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-form-label-hint {
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+    margin-left: 4px;
+  }
+
+  html[data-theme="dark"] .inquiry-form-label-hint {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-form-select,
+  .inquiry-form-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-ios-text-primary-light);
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  html[data-theme="dark"] .inquiry-form-input {
+    border-color: var(--color-ios-separator-dark);
+    color: var(--color-ios-text-primary-dark);
+    background-color: var(--color-ios-bg-secondary-dark);
+  }
+
+  .inquiry-form-select:focus,
+  .inquiry-form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .inquiry-form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-ios-text-primary-light);
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.5;
+  }
+
+  html[data-theme="dark"] .inquiry-form-textarea {
+    border-color: var(--color-ios-separator-dark);
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .inquiry-form-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  /* File drop zone */
+  .inquiry-file-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    border: 2px dashed var(--color-ios-separator-light);
+    border-radius: 10px;
+    color: var(--color-ios-text-tertiary-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  html[data-theme="dark"] .inquiry-file-drop {
+    border-color: var(--color-ios-separator-dark);
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-file-drop:hover {
+    border-color: var(--color-primary);
+    background: rgba(59, 130, 246, 0.05);
+  }
+
+  .inquiry-file-drop-text {
+    font-size: 12px;
+  }
+
+  .inquiry-file-drop-hint {
+    font-size: 11px;
+    opacity: 0.7;
+  }
+
+  /* File list */
+  .inquiry-file-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    list-style: none;
+    padding: 0;
+  }
+
+  .inquiry-file-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--color-ios-bg-secondary-light);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-file-item {
+    background: var(--color-ios-bg-secondary-dark);
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-file-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
+    color: var(--color-ios-text-tertiary-light);
+    cursor: pointer;
+    border-radius: 50%;
+    margin-left: 4px;
+  }
+
+  html[data-theme="dark"] .inquiry-file-remove {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-file-remove:hover {
+    background: var(--color-error);
+    color: white;
+  }
+
+  /* 🍎 IMAGE THUMBNAIL PREVIEW */
+  .inquiry-file-item--image {
+    position: relative;
+    padding: 0;
+    background: transparent;
+    border-radius: var(--radius-md, 8px);
+    overflow: visible;
+  }
+
+  .inquiry-file-thumbnail {
+    display: block;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .inquiry-file-thumbnail {
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  .inquiry-file-item--image .inquiry-file-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 12px;
+    border-radius: 50%;
+    margin-left: 0;
+  }
+
+  /* Form actions */
+  .inquiry-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .inquiry-form-actions {
+    border-top-color: var(--color-ios-separator-dark);
+  }
+
+  .inquiry-form-cancel {
+    padding: 8px 16px;
+    border: 1px solid var(--color-ios-separator-light);
+    background: transparent;
+    color: var(--color-ios-text-secondary-light);
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  html[data-theme="dark"] .inquiry-form-cancel {
+    border-color: var(--color-ios-separator-dark);
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-form-cancel:hover {
+    background: var(--color-ios-bg-tertiary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-form-cancel:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+  }
+
+  .inquiry-form-submit {
+    padding: 10px 24px;
+    border: none;
+    background: var(--color-primary-600, #007AFF);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .inquiry-form-submit:hover:not(:disabled) {
+    background: var(--color-primary-700, #0056CC);
+  }
+
+  html[data-theme="dark"] .inquiry-form-submit {
+    background: var(--color-primary-500, #0A84FF);
+  }
+
+  html[data-theme="dark"] .inquiry-form-submit:hover:not(:disabled) {
+    background: var(--color-primary-400, #409CFF);
+  }
+
+  .inquiry-form-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ===============================================
+     DETAIL VIEW
+     =============================================== */
+  .inquiry-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    min-height: 0; /* flexbox 스크롤 활성화 필수 */
+  }
+
+  /* 🍎 DETAIL TOPBAR: 목록버튼 + 메타정보 한 줄 배치 */
+  .inquiry-detail-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .inquiry-detail-topbar {
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  /* 🍎 목록 버튼 - iOS 스타일 세컨더리 버튼 */
+  .inquiry-detail-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 5px 10px;
+    border: 1px solid var(--color-ios-separator-light);
+    background: var(--color-ios-bg-secondary-light);
+    color: var(--color-ios-text-primary-light);
+    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  /* 목록 버튼 내 아이콘 */
+  .inquiry-detail-back .inquiry-back-icon {
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .inquiry-detail-back {
+    border-color: var(--color-ios-separator-dark);
+    background: var(--color-ios-bg-tertiary-dark);
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .inquiry-detail-back:hover {
+    background: var(--color-ios-bg-tertiary-light);
+    border-color: var(--color-ios-text-quaternary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-detail-back:hover {
+    background: var(--color-ios-bg-secondary-dark);
+    border-color: var(--color-ios-text-quaternary-dark);
+  }
+
+  .inquiry-detail-back:active {
+    transform: scale(0.97);
+  }
+
+  /* 메타 정보 영역: 배지 + 날짜 */
+  .inquiry-detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .inquiry-detail-date {
+    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+    margin-left: 4px;
+  }
+
+  html[data-theme="dark"] .inquiry-detail-date {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 문의 제목 - 폰트 규정 준수 */
+  .inquiry-detail-title {
+    margin: 4px 0;
+    font-size: 13px; /* 폰트 규정: 섹션 제목 */
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+    line-height: 1.4;
+    letter-spacing: -0.1px;
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .inquiry-detail-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  /* ===============================================
+     카카오톡 스타일 메시지 (KakaoTalk Style)
+     =============================================== */
+  .inquiry-messages {
+    flex: 1;
+    min-height: 0; /* flexbox 스크롤 활성화 필수 */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 10px;
+    background: var(--color-ios-bg-tertiary-light);
+    border-radius: 8px;
+    /* 와이드 스크린 대응: 채팅 영역 중앙 정렬 */
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  html[data-theme="dark"] .inquiry-messages {
+    background: var(--color-ios-bg-tertiary-dark);
+  }
+
+  /* 메시지 행 (아바타 + 말풍선 + 시간) */
+  .inquiry-message {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: 85%;
+    border: none;
+    background: transparent;
+    padding: 0;
+  }
+
+  /* 사용자 메시지: 오른쪽 정렬 */
+  .inquiry-message--user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  /* 관리자 메시지: 왼쪽 정렬 */
+  .inquiry-message--admin {
+    align-self: flex-start;
+    flex-direction: row;
+  }
+
+  /* 아바타 영역 */
+  .inquiry-message-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* 사용자 아바타: 숨김 (카카오톡처럼 본인은 아바타 없음) */
+  .inquiry-message--user .inquiry-message-avatar {
+    display: none;
+  }
+
+  /* 관리자 아바타: 초록색 배경 */
+  .inquiry-message--admin .inquiry-message-avatar {
+    background: var(--color-success, #34c759);
+    color: white;
+  }
+
+  /* 말풍선 컨테이너 */
+  .inquiry-message-bubble {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* 작성자 이름 */
+  .inquiry-message-author {
+    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    padding-left: 4px;
+  }
+
+  html[data-theme="dark"] .inquiry-message-author {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 사용자 메시지는 이름 숨김 */
+  .inquiry-message--user .inquiry-message-author {
+    display: none;
+  }
+
+  /* 말풍선 본문 */
+  .inquiry-message-content {
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: 12px; /* 폰트 규정: 테이블 데이터 */
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
+  /* 사용자 말풍선: 노란색 (카카오톡 스타일) */
+  .inquiry-message--user .inquiry-message-content {
+    background: #fee500;
+    color: #1a1a1a;
+    border-bottom-right-radius: 4px;
+  }
+
+  /* 관리자 말풍선: 흰색/회색 */
+  .inquiry-message--admin .inquiry-message-content {
+    background: white;
+    color: var(--color-ios-text-primary-light);
+    border: 1px solid var(--color-ios-separator-light);
+    border-bottom-left-radius: 4px;
+  }
+
+  html[data-theme="dark"] .inquiry-message--admin .inquiry-message-content {
+    background: var(--color-ios-bg-secondary-dark);
+    color: var(--color-ios-text-primary-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  /* 시간 표시 */
+  .inquiry-message-date {
+    font-size: 10px; /* 폰트 규정: 배지 */
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+    white-space: nowrap;
+    align-self: flex-end;
+    padding-bottom: 2px;
+  }
+
+  html[data-theme="dark"] .inquiry-message-date {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 헤더는 더이상 사용하지 않음 */
+  .inquiry-message-header {
+    display: none;
+  }
+
+  /* 첨부파일 영역 */
+  .inquiry-message-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* 이미지 첨부파일 - 카카오톡 스타일 */
+  .inquiry-message-image {
+    display: block;
+    max-width: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .inquiry-message-image img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .inquiry-message-image:hover {
+    opacity: 0.9;
+  }
+
+  /* 파일 첨부파일 링크 */
+  .inquiry-message-attachment {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    text-decoration: none;
+    background: transparent;
+    color: var(--color-ios-text-secondary-light);
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+
+  html[data-theme="dark"] .inquiry-message-attachment {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-message-attachment:hover {
+    background: rgba(0, 0, 0, 0.06);
+    opacity: 0.8;
+  }
+
+  html[data-theme="dark"] .inquiry-message-attachment:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* paperclip 아이콘 스타일 */
+  .inquiry-message-attachment svg {
+    flex-shrink: 0;
+    stroke: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-message-attachment svg {
+    stroke: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* Reply form - 컴팩트 */
+  .inquiry-reply-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    background: var(--color-ios-bg-secondary-light);
+    border-radius: 8px;
+    /* 와이드 스크린 대응: 메시지 영역과 동일하게 중앙 정렬 */
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+    flex-shrink: 0; /* 축소 방지 */
+  }
+
+  html[data-theme="dark"] .inquiry-reply-form {
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  .inquiry-reply-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 6px;
+    background: var(--color-bg-primary);
+    color: var(--color-ios-text-primary-light);
+    font-size: 12px; /* 폰트 규정: 테이블 데이터 */
+    font-family: inherit;
+    resize: none;
+    min-height: 44px; /* 축소 */
+    max-height: 80px;
+    line-height: 1.4;
+  }
+
+  html[data-theme="dark"] .inquiry-reply-input {
+    border-color: var(--color-ios-separator-dark);
+    background: var(--color-bg-primary);
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .inquiry-reply-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .inquiry-reply-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .inquiry-reply-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .inquiry-reply-files li {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--color-bg-primary);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-reply-files li {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-reply-files button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border: none;
+    background: transparent;
+    color: var(--color-ios-text-tertiary-light);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+
+  html[data-theme="dark"] .inquiry-reply-files button {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-reply-files button:hover {
+    background: var(--color-error);
+    color: white;
+  }
+
+  /* 🍎 REPLY FILE PREVIEWS - Thumbnail style */
+  .inquiry-reply-file-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .inquiry-reply-file-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: var(--color-bg-primary);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-reply-file-item {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-reply-file-item--image {
+    position: relative;
+    padding: 0;
+    background: transparent;
+    border-radius: var(--radius-md, 8px);
+    overflow: visible;
+  }
+
+  .inquiry-reply-file-thumbnail {
+    display: block;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .inquiry-reply-file-thumbnail {
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  .inquiry-reply-file-name {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .inquiry-reply-file-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
+    color: var(--color-ios-text-tertiary-light);
+    cursor: pointer;
+    border-radius: 50%;
+    margin-left: 4px;
+  }
+
+  html[data-theme="dark"] .inquiry-reply-file-remove {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .inquiry-reply-file-remove:hover {
+    background: var(--color-error);
+    color: white;
+  }
+
+  .inquiry-reply-file-item--image .inquiry-reply-file-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 12px;
+    margin-left: 0;
+  }
+
+  .inquiry-reply-buttons {
+    display: flex;
+    align-items: center;
     gap: 8px;
   }
 
-  .inquiry-image-preview-modal__toolbar button {
+  .inquiry-attach-btn,
+  .inquiry-send-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 32px;
     height: 32px;
-    font-size: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-ios-text-secondary-light);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease;
   }
 
-  .inquiry-image-preview-modal__toolbar button.reset-btn {
-    padding: 0 12px;
-    font-size: 11px;
+  html[data-theme="dark"] .inquiry-attach-btn,
+  html[data-theme="dark"] .inquiry-send-btn {
+    color: var(--color-ios-text-secondary-dark);
   }
 
-  .inquiry-image-preview-modal__toolbar .zoom-level {
-    font-size: 12px;
-    min-width: 44px;
+  .inquiry-attach-btn:hover,
+  .inquiry-send-btn:hover:not(:disabled) {
+    opacity: 0.7;
+    transform: scale(1.1);
   }
 
-  .inquiry-image-preview-modal__hint {
-    bottom: 16px;
-    font-size: 11px;
+  .inquiry-attach-btn svg,
+  .inquiry-send-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+  }
+
+  html[data-theme="dark"] .inquiry-attach-btn svg,
+  html[data-theme="dark"] .inquiry-send-btn svg {
+    stroke: currentColor;
+  }
+
+  .inquiry-send-btn svg {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .inquiry-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Closed status */
+  .inquiry-closed-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    background: var(--color-ios-bg-secondary-light);
+    border-radius: 8px;
+    color: var(--color-ios-text-tertiary-light);
+    font-size: 13px;
+  }
+
+  html[data-theme="dark"] .inquiry-closed-notice {
+    background: var(--color-ios-bg-secondary-dark);
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* Resolved status banner */
+  .inquiry-resolved-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--color-ios-green-light, #34C759);
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.08) 100%);
+    border: 1px solid rgba(52, 199, 89, 0.3);
+    border-radius: 8px;
+    color: var(--color-ios-green-light, #34C759);
+    font-size: 13px;
+    margin-bottom: 0;
+  }
+
+  .inquiry-resolved-banner svg {
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .inquiry-resolved-banner {
+    background: linear-gradient(135deg, rgba(48, 209, 88, 0.15) 0%, rgba(48, 209, 88, 0.08) 100%);
+    border-color: rgba(48, 209, 88, 0.3);
+    color: var(--color-ios-green-dark, #30D158);
+  }
+
+  /* === SYSTEM MESSAGE (상태 변경 알림) === */
+  .inquiry-message--system {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  .inquiry-system-message {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 6px 12px;
+    background: var(--color-ios-bg-tertiary-light, rgba(0, 0, 0, 0.05));
+    border-radius: 12px;
+    font-size: 11px;
+    color: var(--color-ios-text-secondary-light);
   }
-}
+
+  html[data-theme="dark"] .inquiry-system-message {
+    background: var(--color-ios-bg-tertiary-dark, rgba(255, 255, 255, 0.08));
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* === TITLE ICON === */
+  .inquiry-title-icon {
+    color: #D4A300; /* 라이트 테마: 진한 금색 (가시성 확보) */
+  }
+
+  html[data-theme="dark"] .inquiry-title-icon {
+    color: #FEE500; /* 다크 테마: 카카오톡 공식 노란색 */
+  }
+
+  /* === BACK BUTTON (for CenterPaneView titleLeftAccessory) === */
+  .inquiry-back-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border: none;
+    background: transparent;
+    color: var(--color-ios-text-secondary-light);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .inquiry-back-button {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .inquiry-back-button:hover {
+    background: var(--color-ios-bg-tertiary-light);
+  }
+
+  html[data-theme="dark"] .inquiry-back-button:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+  }
+
+  /* === 🍎 UNREAD INDICATOR === */
+  .inquiry-row--unread {
+    font-weight: 600;
+  }
+
+  .inquiry-row--unread .inquiry-row-title {
+    font-weight: 600;
+  }
+
+  .inquiry-row-unread-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--color-primary, #007aff);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-right: 6px;
+  }
+
+  /* Utility */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ===============================================
+     이미지 미리보기 모달
+     =============================================== */
+  .inquiry-image-preview-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    animation: inquiryModalFadeIn 0.15s ease;
+  }
+
+  @keyframes inquiryModalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* 상단 툴바 - 화면에 고정 */
+  .inquiry-image-preview-modal__toolbar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    padding: 8px 16px;
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: inquiryToolbarSlideIn 0.2s ease;
+  }
+
+  @keyframes inquiryToolbarSlideIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  .inquiry-image-preview-modal__toolbar button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+
+  .inquiry-image-preview-modal__toolbar button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+  }
+
+  .inquiry-image-preview-modal__toolbar button:active {
+    transform: scale(0.95);
+  }
+
+  /* 리셋 버튼 */
+  .inquiry-image-preview-modal__toolbar button.reset-btn {
+    width: auto;
+    padding: 0 16px;
+    border-radius: 18px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* 닫기 버튼 */
+  .inquiry-image-preview-modal__toolbar button.close-btn {
+    background: rgba(255, 59, 48, 0.8);
+    margin-left: 8px;
+  }
+
+  .inquiry-image-preview-modal__toolbar button.close-btn:hover {
+    background: rgba(255, 59, 48, 1);
+  }
+
+  /* 줌 퍼센트 표시 */
+  .inquiry-image-preview-modal__toolbar .zoom-level {
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 52px;
+    text-align: center;
+    padding: 0 4px;
+  }
+
+  /* 구분선 */
+  .inquiry-image-preview-modal__toolbar .divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .inquiry-image-preview-modal__content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    animation: inquiryModalScaleIn 0.15s ease;
+  }
+
+  @keyframes inquiryModalScaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .inquiry-image-preview-modal__content img {
+    display: block;
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    transition: transform 0.1s ease;
+  }
+
+  /* 힌트 - 화면 하단에 고정 */
+  .inquiry-image-preview-modal__hint {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 16px;
+    border-radius: 16px;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+
+  /* 드래그 중 */
+  .inquiry-image-preview-modal__content--dragging img {
+    cursor: grabbing !important;
+  }
+
+  /* 이미지 버튼 스타일 업데이트 */
+  .inquiry-message-image {
+    border: none;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  .inquiry-message-image:hover {
+    transform: scale(1.02);
+  }
+
+  /* 반응형 */
+  @media (max-width: 600px) {
+    .inquiry-image-preview-modal__toolbar {
+      top: 12px;
+      padding: 6px 12px;
+      gap: 8px;
+    }
+
+    .inquiry-image-preview-modal__toolbar button {
+      width: 32px;
+      height: 32px;
+      font-size: 16px;
+    }
+
+    .inquiry-image-preview-modal__toolbar button.reset-btn {
+      padding: 0 12px;
+      font-size: 11px;
+    }
+
+    .inquiry-image-preview-modal__toolbar .zoom-level {
+      font-size: 12px;
+      min-width: 44px;
+    }
+
+    .inquiry-image-preview-modal__hint {
+      bottom: 16px;
+      font-size: 11px;
+      padding: 6px 12px;
+    }
+  }
+
+} /* end @layer components */

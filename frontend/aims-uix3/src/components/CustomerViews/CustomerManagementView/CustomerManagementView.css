@@ -6,440 +6,444 @@
  * 최근 활동 칼럼 폭: 활동 90px, 아이콘 40px, 이름 120px, 연락처 170px, 주소 350px, 시간 60px
  */
 
-.customer-management-view__content {
-  padding: var(--spacing-6);
-  max-width: 1200px;
-  margin: 0 auto;
-}
+@layer components {
 
-/* 대시보드 섹션 */
-.customer-management-view__section {
-  margin-bottom: var(--spacing-8);
-}
-
-.customer-management-view__section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-4);
-}
-
-/* 최근 활동 드롭다운 최소 폭 - "최근 6개월" 기준 */
-.customer-management-view__section-header .ios-dropdown {
-  min-width: 130px;
-}
-
-.customer-management-view__section-title {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-/* 고객 타입 아이콘 */
-.customer-type-icon {
-  margin-right: var(--spacing-1);
-}
-
-/* 빠른 액션 아이콘 색상 (LeftPane CustomMenu와 동일) */
-.quick-action-icon-green {
-  color: var(--color-ios-green);
-}
-
-.quick-action-icon-orange {
-  color: var(--color-ios-orange);
-}
-
-.quick-action-icon-purple {
-  color: var(--color-ios-purple);
-}
-
-/* 통계 카드 그리드 */
-.customer-management-view__stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-4);
-}
-
-/* 관계 통계 카드 래퍼 */
-.stat-card-wrapper {
-  position: relative;
-}
-
-/* 관계 카드의 value 숨기기 (가족/법인만 표시) */
-.stat-card-wrapper .stat-card__value {
-  display: none;
-}
-
-/* 관계 통계 상세 정보 */
-.stat-card-details {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-2);
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  padding: 0 var(--spacing-2);
-  white-space: nowrap;
-}
-
-.stat-card-detail-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  font-size: var(--font-size-caption-1);
-}
-
-.stat-card-detail-label {
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-caption-1);
-}
-
-.stat-card-detail-value {
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-callout);
-  color: var(--color-text-primary);
-}
-
-.stat-card-detail-separator {
-  color: var(--color-text-tertiary);
-  opacity: 0.5;
-  margin: 0 var(--spacing-1);
-  font-size: var(--font-size-caption-1);
-}
-
-/* 파이 차트 그리드 */
-.customer-management-view__pie-charts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-6);
-  margin-top: var(--spacing-6);
-  padding: var(--spacing-4);
-}
-
-
-
-/* 파이 차트를 가로로 배치 (차트 좌측, 레전드 우측) */
-.customer-management-view__pie-charts-grid .file-type-pie-chart {
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 0px;
-}
-
-/* SVG 크기 고정 */
-.customer-management-view__pie-charts-grid .file-type-pie-chart__svg {
-  max-width: 150px;
-  flex-shrink: 0;
-}
-
-/* 레전드를 우측에 배치 */
-.customer-management-view__pie-charts-grid .file-type-pie-chart__legend {
-  flex: 1;
-  min-width: 0;
-  margin-left: -10px;
-}
-
-/* 빠른 액션 그리드 */
-.customer-management-view__actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--spacing-3);
-  max-width: 600px;
-  margin: 0 auto; /* 중앙 정렬 */
-}
-
-/* 최근 활동 - CenterPane 수직 스크롤로 전체 목록 표시 */
-.customer-management-view__recent-activity {
-  /* max-height 없음 - 전체 목록 표시, CenterPane 스크롤 사용 */
-}
-
-/* 최근 활동 테이블 */
-.recent-activity-table {
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
-}
-
-/* 헤더 - 고유한 클래스명, 시간 칼럼 최소화 */
-.customer-recent-activity-header {
-  display: grid;
-  grid-template-columns: 85px 35px 200px 200px 1fr 55px;
-  gap: var(--spacing-3);
-  padding: var(--spacing-3) var(--spacing-4);
-  background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
-  font-size: var(--font-size-caption-2);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* 헤더 개별 칼럼 정렬 */
-.customer-recent-activity-header .recent-header-time {
-  text-align: right;
-}
-
-/* 데이터 행 - 고유한 클래스명, 시간 칼럼 최소화 */
-.customer-recent-activity-row {
-  display: grid;
-  grid-template-columns: 85px 35px 200px 200px 1fr 55px;
-  gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-4);
-  align-items: center;
-  border-bottom: 1px solid var(--color-border);
-  transition: background var(--duration-fast) var(--easing-ease-out);
-  min-height: 36px;
-}
-
-.customer-recent-activity-row:last-child {
-  border-bottom: none;
-}
-
-.customer-recent-activity-row:hover {
-  background: var(--color-bg-tertiary);
-}
-
-/* 셀 스타일 */
-.recent-cell-activity {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-}
-
-.recent-cell-activity .activity-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-cell-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.recent-cell-name {
-  font-size: var(--font-size-footnote);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 클릭 가능한 이름 셀 - 싱글클릭: RightPane, 더블클릭: 전체 정보 */
-.recent-cell-name--clickable {
-  cursor: pointer;
-  color: var(--color-primary-500);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.recent-cell-name--clickable:hover {
-  color: var(--color-primary-600);
-  text-decoration: underline;
-}
-
-.recent-cell-name--clickable:focus {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
-.recent-cell-name--clickable:active {
-  color: var(--color-primary-700);
-}
-
-.recent-cell-phone {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-cell-address {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-cell-time {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-tertiary);
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* 고객 타입 아이콘 색상 */
-.customer-type-icon-personal {
-  color: var(--color-primary-500);
-}
-
-.customer-type-icon-corporate {
-  color: var(--color-warning);
-}
-
-/* 활동 아이콘 색상 */
-.activity-icon-new {
-  color: var(--color-success);
-}
-
-.activity-icon-edit {
-  color: var(--color-text-secondary);
-}
-
-/* 로딩/에러/빈 상태 */
-.recent-activity-loading,
-.recent-activity-error,
-.recent-activity-empty {
-  padding: var(--spacing-8) var(--spacing-4);
-  text-align: center;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-footnote);
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-}
-
-.recent-activity-error {
-  color: var(--color-error);
-}
-
-/* 다크 모드 */
-html[data-theme="dark"] .recent-activity-table {
-  background: var(--color-bg-primary);
-}
-
-html[data-theme="dark"] .customer-recent-activity-header {
-  background: var(--color-bg-secondary);
-}
-
-html[data-theme="dark"] .customer-recent-activity-row:hover {
-  background: var(--color-bg-secondary);
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
   .customer-management-view__content {
-    padding: var(--spacing-4);
+    padding: var(--spacing-6);
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
-  .customer-management-view__stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .customer-management-view__pie-charts-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* 작은 화면에서는 다시 세로 배치 */
-  .customer-management-view__pie-charts-grid .file-type-pie-chart {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .customer-management-view__actions-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .customer-management-view__content {
-    padding: var(--spacing-3);
-  }
-
+  /* 대시보드 섹션 */
   .customer-management-view__section {
+    margin-bottom: var(--spacing-8);
+  }
+
+  .customer-management-view__section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: var(--spacing-4);
   }
 
-  /* 통계 카드: 2x2 그리드 (세로 공간 절약) */
-  .customer-management-view__stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+  /* 최근 활동 드롭다운 최소 폭 - "최근 6개월" 기준 */
+  .customer-management-view__section-header .ios-dropdown {
+    min-width: 130px;
+  }
+
+  .customer-management-view__section-title {
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
     gap: var(--spacing-2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
-  /* 파이 차트: 2열 그리드 (세로 배치 대신) */
-  .customer-management-view__pie-charts-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-3);
-    padding: var(--spacing-2);
-    margin-top: var(--spacing-3);
+  /* 고객 타입 아이콘 */
+  .customer-type-icon {
+    margin-right: var(--spacing-1);
   }
 
-  .customer-management-view__actions-grid {
-    grid-template-columns: repeat(2, 1fr);
+  /* 빠른 액션 아이콘 색상 (LeftPane CustomMenu와 동일) */
+  .quick-action-icon-green {
+    color: var(--color-ios-green);
   }
 
-  /* 관계 카드 상세 정보 컴팩트 */
+  .quick-action-icon-orange {
+    color: var(--color-ios-orange);
+  }
+
+  .quick-action-icon-purple {
+    color: var(--color-ios-purple);
+  }
+
+  /* 통계 카드 그리드 */
+  .customer-management-view__stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-4);
+  }
+
+  /* 관계 통계 카드 래퍼 */
+  .stat-card-wrapper {
+    position: relative;
+  }
+
+  /* 관계 카드의 value 숨기기 (가족/법인만 표시) */
+  .stat-card-wrapper .stat-card__value {
+    display: none;
+  }
+
+  /* 관계 통계 상세 정보 */
   .stat-card-details {
-    font-size: var(--font-size-caption-2);
-    gap: var(--spacing-1);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    padding: 0 var(--spacing-2);
+    white-space: nowrap;
   }
 
-  .stat-card-detail-value {
-    font-size: var(--font-size-footnote);
+  .stat-card-detail-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    font-size: var(--font-size-caption-1);
   }
 
   .stat-card-detail-label {
-    font-size: var(--font-size-caption-2);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption-1);
   }
 
-  /* 최근 활동 테이블: 모바일 카드형 */
-  .customer-recent-activity-header {
-    display: none;
+  .stat-card-detail-value {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-callout);
+    color: var(--color-text-primary);
   }
 
-  .customer-recent-activity-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-1) var(--spacing-2);
-    padding: var(--spacing-2) var(--spacing-3);
-    min-height: var(--spacing-touch-min, 44px);
-    align-items: center;
+  .stat-card-detail-separator {
+    color: var(--color-text-tertiary);
+    opacity: 0.5;
+    margin: 0 var(--spacing-1);
+    font-size: var(--font-size-caption-1);
   }
 
-  .recent-cell-activity {
+  /* 파이 차트 그리드 */
+  .customer-management-view__pie-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-6);
+    padding: var(--spacing-4);
+  }
+
+
+
+  /* 파이 차트를 가로로 배치 (차트 좌측, 레전드 우측) */
+  .customer-management-view__pie-charts-grid .file-type-pie-chart {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0px;
+  }
+
+  /* SVG 크기 고정 */
+  .customer-management-view__pie-charts-grid .file-type-pie-chart__svg {
+    max-width: 150px;
     flex-shrink: 0;
+  }
+
+  /* 레전드를 우측에 배치 */
+  .customer-management-view__pie-charts-grid .file-type-pie-chart__legend {
+    flex: 1;
+    min-width: 0;
+    margin-left: -10px;
+  }
+
+  /* 빠른 액션 그리드 */
+  .customer-management-view__actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--spacing-3);
+    max-width: 600px;
+    margin: 0 auto; /* 중앙 정렬 */
+  }
+
+  /* 최근 활동 - CenterPane 수직 스크롤로 전체 목록 표시 */
+  .customer-management-view__recent-activity {
+    /* max-height 없음 - 전체 목록 표시, CenterPane 스크롤 사용 */
+  }
+
+  /* 최근 활동 테이블 */
+  .recent-activity-table {
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
+  }
+
+  /* 헤더 - 고유한 클래스명, 시간 칼럼 최소화 */
+  .customer-recent-activity-header {
+    display: grid;
+    grid-template-columns: 85px 35px 200px 200px 1fr 55px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    font-size: var(--font-size-caption-2);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* 헤더 개별 칼럼 정렬 */
+  .customer-recent-activity-header .recent-header-time {
+    text-align: right;
+  }
+
+  /* 데이터 행 - 고유한 클래스명, 시간 칼럼 최소화 */
+  .customer-recent-activity-row {
+    display: grid;
+    grid-template-columns: 85px 35px 200px 200px 1fr 55px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-4);
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    transition: background var(--duration-fast) var(--easing-ease-out);
+    min-height: 36px;
+  }
+
+  .customer-recent-activity-row:last-child {
+    border-bottom: none;
+  }
+
+  .customer-recent-activity-row:hover {
+    background: var(--color-bg-tertiary);
+  }
+
+  /* 셀 스타일 */
+  .recent-cell-activity {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+  }
+
+  .recent-cell-activity .activity-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .recent-cell-icon {
-    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .recent-cell-name {
-    flex: 1;
-    min-width: 0;
+    font-size: var(--font-size-footnote);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .recent-cell-phone,
+  /* 클릭 가능한 이름 셀 - 싱글클릭: RightPane, 더블클릭: 전체 정보 */
+  .recent-cell-name--clickable {
+    cursor: pointer;
+    color: var(--color-primary-500);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .recent-cell-name--clickable:hover {
+    color: var(--color-primary-600);
+    text-decoration: underline;
+  }
+
+  .recent-cell-name--clickable:focus {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .recent-cell-name--clickable:active {
+    color: var(--color-primary-700);
+  }
+
+  .recent-cell-phone {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .recent-cell-address {
-    display: none;
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .recent-cell-time {
-    flex-shrink: 0;
-    font-size: var(--font-size-caption-2);
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-tertiary);
+    text-align: right;
+    white-space: nowrap;
   }
 
-  /* 섹션 타이틀 */
-  .customer-management-view__section-title {
-    font-size: var(--font-size-caption-2);
+  /* 고객 타입 아이콘 색상 */
+  .customer-type-icon-personal {
+    color: var(--color-primary-500);
   }
-}
+
+  .customer-type-icon-corporate {
+    color: var(--color-warning);
+  }
+
+  /* 활동 아이콘 색상 */
+  .activity-icon-new {
+    color: var(--color-success);
+  }
+
+  .activity-icon-edit {
+    color: var(--color-text-secondary);
+  }
+
+  /* 로딩/에러/빈 상태 */
+  .recent-activity-loading,
+  .recent-activity-error,
+  .recent-activity-empty {
+    padding: var(--spacing-8) var(--spacing-4);
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-footnote);
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+  }
+
+  .recent-activity-error {
+    color: var(--color-error);
+  }
+
+  /* 다크 모드 */
+  html[data-theme="dark"] .recent-activity-table {
+    background: var(--color-bg-primary);
+  }
+
+  html[data-theme="dark"] .customer-recent-activity-header {
+    background: var(--color-bg-secondary);
+  }
+
+  html[data-theme="dark"] .customer-recent-activity-row:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  /* 반응형 */
+  @media (max-width: 768px) {
+    .customer-management-view__content {
+      padding: var(--spacing-4);
+    }
+
+    .customer-management-view__stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .customer-management-view__pie-charts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    /* 작은 화면에서는 다시 세로 배치 */
+    .customer-management-view__pie-charts-grid .file-type-pie-chart {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .customer-management-view__actions-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .customer-management-view__content {
+      padding: var(--spacing-3);
+    }
+
+    .customer-management-view__section {
+      margin-bottom: var(--spacing-4);
+    }
+
+    /* 통계 카드: 2x2 그리드 (세로 공간 절약) */
+    .customer-management-view__stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-2);
+    }
+
+    /* 파이 차트: 2열 그리드 (세로 배치 대신) */
+    .customer-management-view__pie-charts-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-3);
+      padding: var(--spacing-2);
+      margin-top: var(--spacing-3);
+    }
+
+    .customer-management-view__actions-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* 관계 카드 상세 정보 컴팩트 */
+    .stat-card-details {
+      font-size: var(--font-size-caption-2);
+      gap: var(--spacing-1);
+    }
+
+    .stat-card-detail-value {
+      font-size: var(--font-size-footnote);
+    }
+
+    .stat-card-detail-label {
+      font-size: var(--font-size-caption-2);
+    }
+
+    /* 최근 활동 테이블: 모바일 카드형 */
+    .customer-recent-activity-header {
+      display: none;
+    }
+
+    .customer-recent-activity-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-1) var(--spacing-2);
+      padding: var(--spacing-2) var(--spacing-3);
+      min-height: var(--spacing-touch-min, 44px);
+      align-items: center;
+    }
+
+    .recent-cell-activity {
+      flex-shrink: 0;
+    }
+
+    .recent-cell-icon {
+      flex-shrink: 0;
+    }
+
+    .recent-cell-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .recent-cell-phone,
+    .recent-cell-address {
+      display: none;
+    }
+
+    .recent-cell-time {
+      flex-shrink: 0;
+      font-size: var(--font-size-caption-2);
+    }
+
+    /* 섹션 타이틀 */
+    .customer-management-view__section-title {
+      font-size: var(--font-size-caption-2);
+    }
+  }
+
+} /* end @layer components */

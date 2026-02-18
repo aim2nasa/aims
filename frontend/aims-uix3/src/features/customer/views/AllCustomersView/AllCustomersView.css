@@ -7,1173 +7,1178 @@
  */
 
 /* 🍎 CONTAINER: Pure minimal */
-.customer-library-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 100%;
-  padding: 16px;
-}
 
-/* === 🍎 SEARCH BAR: iOS-style search field with controls === */
-
-.customer-library-container .search-input-wrapper {
-  position: relative;  /* ❌ 표준: 자식 absolute 위치의 기준 */
-  display: flex;
-  align-items: center;
-  width: 280px;  /* ✅ 검색 입력 고정 폭 */
-  flex-shrink: 0;
-  background-color: transparent;  /* ❌ 표준: 투명 */
-  border-radius: 10px;
-  padding: 6px 8px;
-  transition: background-color 0.2s ease-out;
-  overflow: visible;  /* ❌ 표준: 아이콘 잘림 방지 */
-}
-
-html[data-theme="dark"] .customer-library-container .search-input-wrapper {
-  background-color: transparent;  /* ❌ 표준: 투명 */
-}
-
-.customer-library-container .search-input-wrapper:focus-within {
-  background-color: transparent;  /* ❌ 표준: focus 시에도 투명 유지 */
-}
-
-html[data-theme="dark"] .customer-library-container .search-input-wrapper:focus-within {
-  background-color: transparent;  /* ❌ 표준: focus 시에도 투명 유지 */
-}
-
-.customer-library-container .search-icon {
-  position: absolute;  /* ❌ 표준: 절대 위치 */
-  left: 10px;          /* ❌ 표준: 고정 좌표 */
-  top: 50%;            /* ❌ 표준: 세로 중앙 */
-  transform: translateY(-50%);  /* ❌ 표준: 정확한 중앙 정렬 */
-  color: var(--color-ios-text-quaternary-light);  /* ❌ 표준: CSS 변수 */
-  pointer-events: none;  /* ❌ 표준: 클릭 이벤트 무시 */
-  z-index: 1;  /* ❌ 표준: input 위에 표시 */
-}
-
-html[data-theme="dark"] .customer-library-container .search-icon {
-  color: var(--color-ios-text-quaternary-dark);  /* ❌ 표준: CSS 변수 */
-}
-
-.customer-library-container .search-input {
-  flex: 1;
-  width: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.12);  /* ❌ 표준: 미세한 경계선 */
-  border-radius: 8px;
-  background: transparent;  /* ❌ 표준: 투명 배경 */
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 검색 입력 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);  /* ❌ 표준: CSS 변수 */
-  outline: none;
-  padding: 4px 8px 4px 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
-  transition: border-color 0.2s ease-out;
-}
-
-html[data-theme="dark"] .customer-library-container .search-input {
-  color: var(--color-ios-text-primary-dark);  /* ❌ 표준: CSS 변수 */
-  border-color: rgba(255, 255, 255, 0.12);  /* ❌ 표준: 다크 모드 경계선 */
-}
-
-.customer-library-container .search-input::placeholder {
-  color: var(--color-ios-text-placeholder-light);  /* ❌ 표준: CSS 변수 */
-  font-weight: 400;
-}
-
-html[data-theme="dark"] .customer-library-container .search-input::placeholder {
-  color: var(--color-ios-text-placeholder-dark);  /* ❌ 표준: CSS 변수 */
-}
-
-.customer-library-container .search-clear-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  color: var(--color-ios-text-quaternary-light);
-  transition: color 0.15s ease-out;
-  flex-shrink: 0;
-  border-radius: 50%;
-}
-
-html[data-theme="dark"] .customer-library-container .search-clear-button {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.customer-library-container .search-clear-button:hover {
-  color: var(--color-ios-interactive-light);
-  background: var(--color-ios-bg-secondary-light);
-}
-
-html[data-theme="dark"] .customer-library-container .search-clear-button:hover {
-  color: var(--color-ios-interactive-dark);
-  background: var(--color-ios-bg-secondary-dark);
-}
-
-/* === 🍎 ERROR MESSAGE: Apple-style alert === */
-
-.customer-library-error {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  background-color: var(--color-ios-error-bg-light);
-  border-left: 3px solid var(--color-ios-error-border-light);
-  border-radius: 8px;
-  color: var(--color-ios-error-text-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 에러 메시지 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .customer-library-error {
-  background-color: var(--color-ios-error-bg-dark);
-}
-
-.error-icon {
-  flex-shrink: 0;
-}
-
-.error-dismiss-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  padding: 4px;
-  margin-left: auto;
-  cursor: pointer;
-  color: var(--color-ios-error-button-light);
-  opacity: 0.7;
-  transition: opacity 0.15s ease-out;
-  border-radius: 50%;
-}
-
-.error-dismiss-button:hover {
-  opacity: 1;
-  background: var(--color-ios-error-button-bg-light);
-}
-
-/* === 🍎 RESULT HEADER: Minimal count display === */
-
-.customer-library-result-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 0 4px 4px 4px;
-}
-
-.result-count {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 결과 카운트 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-ios-text-secondary-light);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-html[data-theme="dark"] .result-count {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* 🍎 TYPE FILTER BUTTON: Subtle clickable filter */
-.type-filter-button {
-  background: transparent;
-  border: none;
-  padding: 4px 6px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: inherit;
-  font-weight: 600;
-  color: var(--color-ios-text-tertiary-light);
-  transition: all 0.15s ease-out;
-  user-select: none;
-}
-
-html[data-theme="dark"] .type-filter-button {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.type-filter-button:hover {
-  background: var(--color-ios-bg-tertiary-light);
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .type-filter-button:hover {
-  background: var(--color-ios-bg-tertiary-dark);
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.type-filter-button.active {
-  background: var(--color-primary-100);
-  color: var(--color-primary-700);
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .type-filter-button.active {
-  background: var(--color-primary-900);
-  color: var(--color-primary-300);
-}
-
-.type-filter-separator {
-  color: var(--color-ios-text-quaternary-light);
-  user-select: none;
-}
-
-html[data-theme="dark"] .type-filter-separator {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* === 🍎 CUSTOMER LIST: iOS table view === */
-
-.customer-list {
-  min-height: 0; /* 🔥 FIX: flex item이 parent를 넘지 않도록 */
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-right: 4px;
-}
-
-/* 라이트 모드: 리스트 테두리 */
-html:not([data-theme="dark"]) .customer-list {
-  border: 1px solid var(--color-border-primary);
-  border-radius: 6px;
-}
-
-/* === 🍎 COLUMN HEADER: macOS Finder-style === */
-
-.customer-list-header {
-  display: grid;
-  grid-template-columns:
-    50px           /* 유형 (개인/법인 아이콘) */
-    minmax(100px, 1.5fr)  /* 이름 */
-    110px          /* 생년월일 (텍스트 표시) */
-    70px           /* 성별 (텍스트 표시) */
-    120px          /* 전화번호 */
-    minmax(150px, 2fr)  /* 이메일 */
-    minmax(150px, 2fr)  /* 주소 */
-    80px           /* 상태 (텍스트 표시) */
-    160px;         /* 등록일 (YYYY.MM.DD HH:MM:SS) */
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  min-height: 32px;
-  background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
-  border-bottom: 1px solid rgba(0, 120, 212, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 테이블 헤더 */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: #4a5568;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-html[data-theme="dark"] .customer-list-header {
-  background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.customer-list-header > div {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-
-.customer-list-header > div > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex-shrink: 1;
-}
-
-/* 헤더 아이콘은 절대 축소되지 않음 */
-.customer-list-header .header-icon-svg {
-  flex-shrink: 0;
-}
-
-/* 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 */
-.header-sortable {
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.15s ease-out;
-  padding: 4px 6px;
-  margin: -4px -6px;
-  border-radius: 4px;
-}
-
-.header-sortable:hover {
-  background-color: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .header-sortable:hover {
-  background-color: var(--color-ios-bg-tertiary-dark);
-}
-
-.header-sortable:active {
-  background-color: var(--color-ios-bg-hover-light);
-}
-
-html[data-theme="dark"] .header-sortable:active {
-  background-color: var(--color-ios-bg-hover-dark);
-}
-
-/* 정렬 표시 아이콘 */
-.sort-indicator {
-  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: sort indicators */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  margin-left: 2px;
-  color: var(--color-primary-600);
-  opacity: 0.9;
-}
-
-/* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
-.sort-indicator:not(.sort-indicator--both) {
-  color: var(--color-sort-indicator-active); /* 선택된 정렬 컬럼 강조 */
-  font-weight: 700;
-  opacity: 1;
-}
-
-/* 양방향 정렬 인디케이터 - 세로로 쌓기 */
-.sort-indicator--both {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  line-height: 0.6;
-  margin-left: 2px;
-  gap: 2px;
-}
-
-.sort-indicator--both .sort-arrow {
-  display: block;
-  font-size: var(--font-size-caption-2); /* 11px */
-  line-height: 0.6;
-  height: 6px;
-}
-
-html[data-theme="dark"] .sort-indicator {
-  color: var(--color-primary-300);
-}
-
-.header-sortable:hover .sort-indicator {
-  opacity: 1;
-}
-
-/* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
-.header-name .header-icon-svg {
-  color: var(--color-icon-blue);  /* 이름 - 파란색 */
-}
-
-.header-birth .header-icon-svg {
-  color: var(--color-icon-green);  /* 생년월일 - 초록색 */
-  --cake-bottom: var(--color-orange-400);  /* 케이크 아래층 - 갈색 */
-  --cake-top: var(--color-orange-300);     /* 케이크 위층 - 주황색 */
-  --candle: var(--color-error);            /* 촛불 - 빨간색 */
-  --flame: var(--color-warning);           /* 불꽃 - 주황색 */
-}
-
-.header-gender .header-icon-svg {
-  color: var(--color-icon-purple);  /* 성별 - 보라색 */
-}
-
-.header-phone .header-icon-svg {
-  color: var(--color-icon-blue);  /* 전화 - 파란색 */
-}
-
-.header-email .header-icon-svg {
-  color: var(--color-icon-orange);  /* 이메일 - 주황색 */
-}
-
-.header-address .header-icon-svg {
-  color: var(--color-icon-green);  /* 주소 - 초록색 */
-}
-
-.header-type .header-icon-svg {
-  color: var(--color-icon-orange);  /* 유형 - 주황색 */
-}
-
-.header-status .header-icon-svg {
-  color: var(--color-icon-green);  /* 상태 - 초록색 */
-}
-
-.header-created .header-icon-svg {
-  color: var(--color-icon-purple);  /* 등록일 - 보라색 */
-}
-
-/* 🍎 SCROLLBAR: Apple-style subtle */
-.customer-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.customer-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.customer-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-light);
-  border-radius: 4px;
-  transition: background-color 0.15s ease-out;
-}
-
-html[data-theme="dark"] .customer-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-dark);
-}
-
-.customer-list::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-light);
-}
-
-html[data-theme="dark"] .customer-list::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-dark);
-}
-
-/* === 🍎 LOADING STATE: Apple spinner === */
-
-.customer-list-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  height: 200px;
-  color: var(--color-ios-text-quaternary-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 로딩 텍스트 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .customer-list-loading {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.loading-spinner {
-  width: 28px;
-  height: 28px;
-  border: 2.5px solid var(--color-ios-spinner-track-light);
-  border-top-color: var(--color-ios-spinner-fill-light);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-html[data-theme="dark"] .loading-spinner {
-  border-color: var(--color-ios-spinner-track-dark);
-  border-top-color: var(--color-ios-spinner-fill-dark);
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* === 🍎 EMPTY STATE: Minimal zen === */
-
-.customer-list-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  height: 200px;
-  color: var(--color-ios-empty-light);
-}
-
-html[data-theme="dark"] .customer-list-empty {
-  color: var(--color-ios-empty-dark);
-}
-
-.empty-icon {
-  opacity: 0.25;
-}
-
-.empty-message {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 빈 상태 메시지 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  margin: 0;
-}
-
-/* === 🍎 CUSTOMER ITEM: iOS table row - Compact Layout === */
-
-.customer-item {
-  display: grid;
-  grid-template-columns:
-    50px           /* 유형 (개인/법인 아이콘) */
-    minmax(100px, 1.5fr)  /* 이름 */
-    110px          /* 생년월일 (텍스트 표시) */
-    70px           /* 성별 (텍스트 표시) */
-    120px          /* 전화번호 */
-    minmax(150px, 2fr)  /* 이메일 */
-    minmax(150px, 2fr)  /* 주소 */
-    80px           /* 상태 (텍스트 표시) */
-    160px;         /* 등록일 (YYYY.MM.DD HH:MM:SS) */
-  gap: 12px;
-  align-items: center;
-  height: 32px;
-  padding: 6px 12px;
-  background: var(--color-ios-bg-primary-light);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease-out;
-  animation: customerFadeIn 0.3s ease-out;
-}
-
-/* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
-@keyframes customerFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-html[data-theme="dark"] .customer-item {
-  background: var(--color-ios-bg-primary-dark);
-}
-
-/* Zebra striping - Apple Mail 스타일 (더 강한 대비) */
-.customer-item:nth-child(odd) {
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.customer-item:nth-child(even) {
-  background: rgba(0, 120, 212, 0.04);
-}
-
-html[data-theme="dark"] .customer-item:nth-child(odd) {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-html[data-theme="dark"] .customer-item:nth-child(even) {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.customer-item:hover {
-  background: rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-}
-
-html[data-theme="dark"] .customer-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-}
-
-/* === 🍎 SELECTED STATE: macOS Finder 스타일 === */
-.customer-item.selected,
-.customer-item[data-selected="true"],
-.customer-item:active {
-  background: rgba(0, 120, 212, 0.15);
-  box-shadow: inset 3px 0 0 0 #0078d4, inset 0 0 0 1px rgba(0, 120, 212, 0.2);
-}
-
-.customer-item.selected .customer-name,
-.customer-item[data-selected="true"] .customer-name {
-  color: #0055a5;
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .customer-item.selected,
-html[data-theme="dark"] .customer-item[data-selected="true"],
-html[data-theme="dark"] .customer-item:active {
-  background: rgba(142, 142, 147, 0.2);
-  box-shadow: inset 3px 0 0 0 #8e8e93, inset 0 0 0 1px rgba(142, 142, 147, 0.2);
-}
-
-/* === 🍎 CUSTOMER ICON: Person icon (16px - CLAUDE.md 준수) === */
-
-.customer-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  transition: color 0.2s ease-out;
-}
-
-/* 개인 고객 - 파란색 */
-.customer-icon--personal {
-  color: var(--color-icon-blue);
-}
-
-/* 법인 고객 - 주황색 */
-.customer-icon--corporate {
-  color: var(--color-icon-orange);
-}
-
-/* === 🍎 CUSTOMER INFO: Compact one-line layout === */
-
-.customer-info {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-}
-
-.customer-name {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 테이블 메인 데이터 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.2;
-}
-
-html[data-theme="dark"] .customer-name {
-  color: var(--color-ios-text-primary-dark);
-}
-
-/* 🍎 CUSTOMER BIRTH: 생년월일 */
-.customer-birth {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 테이블 보조 데이터 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-tertiary-light);
-  text-align: center;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .customer-birth {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* 🍎 CUSTOMER GENDER: 성별 */
-.customer-gender {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 600;
-  color: var(--color-ios-text-quaternary-light);
-  text-align: center;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .customer-gender {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* 🍎 CUSTOMER PHONE: 전화번호 */
-.customer-phone {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-secondary-light);
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-html[data-theme="dark"] .customer-phone {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* 🍎 CUSTOMER EMAIL: 이메일 */
-.customer-email {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-tertiary-light);
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-html[data-theme="dark"] .customer-email {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* 🍎 CUSTOMER ADDRESS: 주소 */
-.customer-address {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-quaternary-light);
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-html[data-theme="dark"] .customer-address {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* 🍎 CUSTOMER TYPE: 고객 타입 (아이콘 표시) */
-.customer-type {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  flex-shrink: 0;
-}
-
-/* 개인 고객 아이콘 - 파란색 */
-.customer-type .customer-icon--personal {
-  color: var(--color-icon-blue);
-}
-
-/* 법인 고객 아이콘 - 주황색 */
-.customer-type .customer-icon--corporate {
-  color: var(--color-icon-orange);
-}
-
-/* 🍎 CUSTOMER STATUS: 상태 */
-.customer-status {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 600;
-  color: var(--color-ios-text-secondary-light);
-  text-align: center;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .customer-status {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* 🍎 CUSTOMER CREATED: 등록일 */
-.customer-created {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-tertiary-light);
-  text-align: center;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .customer-created {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* === 🍎 RESPONSIVE: iPhone/iPad optimization === */
-
-@media (max-width: 768px) {
-  .customer-item {
-    grid-template-columns: 20px 1fr 60px 28px;
-    gap: 8px;
-    height: 28px;
-    padding: 4px 8px;
-  }
-
-  .customer-type {
-    display: none; /* 모바일에서 타입 숨김 */
-  }
-
-  .customer-name {
-    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  }
-
-  .customer-size,
-  .customer-date {
-    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
-  }
-}
-
-/* === 모바일 카드형 레이아웃 (480px 이하) ===
-   2행 컴팩트 디자인:
-   Row 1: [아이콘] 이름            상태
-   Row 2:          전화번호
-   숨김: 성별, 생년월일, 이메일, 주소, 등록일 */
-@media (max-width: 480px) {
-  /* === 📱 iOS 연락처 스타일 모바일 리디자인 === */
+@layer components {
 
   .customer-library-container {
-    padding: 8px 12px;
-    gap: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    padding: 16px;
   }
 
-  /* 검색: 40px 터치 타겟 + iOS 자동줌 방지 */
+  /* === 🍎 SEARCH BAR: iOS-style search field with controls === */
+
   .customer-library-container .search-input-wrapper {
-    padding: 4px 8px;
+    position: relative;  /* ❌ 표준: 자식 absolute 위치의 기준 */
+    display: flex;
+    align-items: center;
+    width: 280px;  /* ✅ 검색 입력 고정 폭 */
+    flex-shrink: 0;
+    background-color: transparent;  /* ❌ 표준: 투명 */
+    border-radius: 10px;
+    padding: 6px 8px;
+    transition: background-color 0.2s ease-out;
+    overflow: visible;  /* ❌ 표준: 아이콘 잘림 방지 */
   }
 
-  .customer-library-container .search-input {
-    min-height: 40px;
-    padding: 8px 10px 8px 32px;
-    font-size: 16px; /* iOS Safari 자동줌 방지 (16px 미만 시 자동 확대) */
-    border-radius: var(--radius-md);
+  html[data-theme="dark"] .customer-library-container .search-input-wrapper {
+    background-color: transparent;  /* ❌ 표준: 투명 */
+  }
+
+  .customer-library-container .search-input-wrapper:focus-within {
+    background-color: transparent;  /* ❌ 표준: focus 시에도 투명 유지 */
+  }
+
+  html[data-theme="dark"] .customer-library-container .search-input-wrapper:focus-within {
+    background-color: transparent;  /* ❌ 표준: focus 시에도 투명 유지 */
   }
 
   .customer-library-container .search-icon {
-    left: 10px;
+    position: absolute;  /* ❌ 표준: 절대 위치 */
+    left: 10px;          /* ❌ 표준: 고정 좌표 */
+    top: 50%;            /* ❌ 표준: 세로 중앙 */
+    transform: translateY(-50%);  /* ❌ 표준: 정확한 중앙 정렬 */
+    color: var(--color-ios-text-quaternary-light);  /* ❌ 표준: CSS 변수 */
+    pointer-events: none;  /* ❌ 표준: 클릭 이벤트 무시 */
+    z-index: 1;  /* ❌ 표준: input 위에 표시 */
   }
 
-  /* 상태 필터: 수평 스크롤 칩 */
-  .result-count {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    gap: 6px;
-    padding: 2px 0;
+  html[data-theme="dark"] .customer-library-container .search-icon {
+    color: var(--color-ios-text-quaternary-dark);  /* ❌ 표준: CSS 변수 */
   }
 
-  .result-count::-webkit-scrollbar {
-    display: none;
+  .customer-library-container .search-input {
+    flex: 1;
+    width: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.12);  /* ❌ 표준: 미세한 경계선 */
+    border-radius: 8px;
+    background: transparent;  /* ❌ 표준: 투명 배경 */
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 검색 입력 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);  /* ❌ 표준: CSS 변수 */
+    outline: none;
+    padding: 4px 8px 4px 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
+    transition: border-color 0.2s ease-out;
   }
 
-  .type-filter-button {
+  html[data-theme="dark"] .customer-library-container .search-input {
+    color: var(--color-ios-text-primary-dark);  /* ❌ 표준: CSS 변수 */
+    border-color: rgba(255, 255, 255, 0.12);  /* ❌ 표준: 다크 모드 경계선 */
+  }
+
+  .customer-library-container .search-input::placeholder {
+    color: var(--color-ios-text-placeholder-light);  /* ❌ 표준: CSS 변수 */
+    font-weight: 400;
+  }
+
+  html[data-theme="dark"] .customer-library-container .search-input::placeholder {
+    color: var(--color-ios-text-placeholder-dark);  /* ❌ 표준: CSS 변수 */
+  }
+
+  .customer-library-container .search-clear-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--color-ios-text-quaternary-light);
+    transition: color 0.15s ease-out;
     flex-shrink: 0;
-    font-size: var(--font-size-caption-1);
-    padding: 6px 12px;
-    min-height: 34px;
-    border-radius: var(--radius-full, 999px);
+    border-radius: 50%;
+  }
+
+  html[data-theme="dark"] .customer-library-container .search-clear-button {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  .customer-library-container .search-clear-button:hover {
+    color: var(--color-ios-interactive-light);
+    background: var(--color-ios-bg-secondary-light);
+  }
+
+  html[data-theme="dark"] .customer-library-container .search-clear-button:hover {
+    color: var(--color-ios-interactive-dark);
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  /* === 🍎 ERROR MESSAGE: Apple-style alert === */
+
+  .customer-library-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--color-ios-error-bg-light);
+    border-left: 3px solid var(--color-ios-error-border-light);
+    border-radius: 8px;
+    color: var(--color-ios-error-text-light);
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 에러 메시지 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .customer-library-error {
+    background-color: var(--color-ios-error-bg-dark);
+  }
+
+  .error-icon {
+    flex-shrink: 0;
+  }
+
+  .error-dismiss-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    margin-left: auto;
+    cursor: pointer;
+    color: var(--color-ios-error-button-light);
+    opacity: 0.7;
+    transition: opacity 0.15s ease-out;
+    border-radius: 50%;
+  }
+
+  .error-dismiss-button:hover {
+    opacity: 1;
+    background: var(--color-ios-error-button-bg-light);
+  }
+
+  /* === 🍎 RESULT HEADER: Minimal count display === */
+
+  .customer-library-result-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 4px 4px 4px;
+  }
+
+  .result-count {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 결과 카운트 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-ios-text-secondary-light);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  html[data-theme="dark"] .result-count {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 🍎 TYPE FILTER BUTTON: Subtle clickable filter */
+  .type-filter-button {
+    background: transparent;
+    border: none;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-size: inherit;
+    font-weight: 600;
+    color: var(--color-ios-text-tertiary-light);
+    transition: all 0.15s ease-out;
+    user-select: none;
+  }
+
+  html[data-theme="dark"] .type-filter-button {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .type-filter-button:hover {
+    background: var(--color-ios-bg-tertiary-light);
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .type-filter-button:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .type-filter-button.active {
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    font-weight: 600;
+  }
+
+  html[data-theme="dark"] .type-filter-button.active {
+    background: var(--color-primary-900);
+    color: var(--color-primary-300);
   }
 
   .type-filter-separator {
-    flex-shrink: 0;
+    color: var(--color-ios-text-quaternary-light);
+    user-select: none;
   }
 
-  /* 컬럼 헤더 숨김 */
-  .customer-list-header {
-    display: none;
+  html[data-theme="dark"] .type-filter-separator {
+    color: var(--color-ios-text-quaternary-dark);
   }
 
-  /* 리스트: iOS 스타일 간격 */
+  /* === 🍎 CUSTOMER LIST: iOS table view === */
+
   .customer-list {
-    gap: 8px;
-    padding-right: 0;
+    min-height: 0; /* 🔥 FIX: flex item이 parent를 넘지 않도록 */
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 4px;
   }
 
+  /* 라이트 모드: 리스트 테두리 */
   html:not([data-theme="dark"]) .customer-list {
-    border: none;
-    border-radius: 0;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 6px;
   }
 
-  /* === 카드: 2행 그리드 (iOS 연락처 스타일) === */
-  .customer-item {
+  /* === 🍎 COLUMN HEADER: macOS Finder-style === */
+
+  .customer-list-header {
     display: grid;
-    grid-template-columns: 28px 1fr auto;
-    grid-template-rows: auto auto;
-    gap: 4px 10px;
+    grid-template-columns:
+      50px           /* 유형 (개인/법인 아이콘) */
+      minmax(100px, 1.5fr)  /* 이름 */
+      110px          /* 생년월일 (텍스트 표시) */
+      70px           /* 성별 (텍스트 표시) */
+      120px          /* 전화번호 */
+      minmax(150px, 2fr)  /* 이메일 */
+      minmax(150px, 2fr)  /* 주소 */
+      80px           /* 상태 (텍스트 표시) */
+      160px;         /* 등록일 (YYYY.MM.DD HH:MM:SS) */
     align-items: center;
-    height: auto;
-    min-height: 56px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 0.5px solid var(--color-ios-separator-light);
-    background: var(--color-bg-card);
+    gap: 12px;
+    padding: 8px 12px;
+    min-height: 32px;
+    background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
+    border-bottom: 1px solid rgba(0, 120, 212, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 테이블 헤더 */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
 
-  html[data-theme="dark"] .customer-item {
-    border-color: var(--color-ios-separator-dark);
+  html[data-theme="dark"] .customer-list-header {
+    background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
-  .customer-item:hover {
-    transform: none;
-  }
-
-  /* 터치 피드백: 즉시 반응 */
-  .customer-item:active {
-    background: var(--color-bg-hover);
-    transition: background 0.05s ease;
-  }
-
-  /* === Row 1: 아이콘 + 이름 + 생년월일 === */
-  .customer-item > .customer-type {
-    grid-row: 1 / 3;
-    grid-column: 1;
+  .customer-list-header > div {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
+    gap: 4px;
+    min-width: 0;
   }
 
-  .customer-item > .customer-name {
-    grid-row: 1;
-    grid-column: 2;
-    font-weight: 600;
-    font-size: 15px; /* iOS 연락처 이름 크기 */
+  .customer-list-header > div > span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--color-text-primary);
-    line-height: 1.3;
+    flex-shrink: 1;
   }
 
-  /* 생년월일: Row 1 우측 - 동명이인 구분용 */
-  .customer-item > .customer-birth {
+  /* 헤더 아이콘은 절대 축소되지 않음 */
+  .customer-list-header .header-icon-svg {
+    flex-shrink: 0;
+  }
+
+  /* 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 */
+  .header-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease-out;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+  }
+
+  .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+  }
+
+  html[data-theme="dark"] .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+  }
+
+  .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-light);
+  }
+
+  html[data-theme="dark"] .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  /* 정렬 표시 아이콘 */
+  .sort-indicator {
+    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: sort indicators */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    margin-left: 2px;
+    color: var(--color-primary-600);
+    opacity: 0.9;
+  }
+
+  /* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
+  .sort-indicator:not(.sort-indicator--both) {
+    color: var(--color-sort-indicator-active); /* 선택된 정렬 컬럼 강조 */
+    font-weight: 700;
+    opacity: 1;
+  }
+
+  /* 양방향 정렬 인디케이터 - 세로로 쌓기 */
+  .sort-indicator--both {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 0.6;
+    margin-left: 2px;
+    gap: 2px;
+  }
+
+  .sort-indicator--both .sort-arrow {
     display: block;
-    grid-row: 1;
-    grid-column: 3;
-    text-align: right;
-    font-size: var(--font-size-caption-2);
-    color: var(--color-text-tertiary);
+    font-size: var(--font-size-caption-2); /* 11px */
+    line-height: 0.6;
+    height: 6px;
+  }
+
+  html[data-theme="dark"] .sort-indicator {
+    color: var(--color-primary-300);
+  }
+
+  .header-sortable:hover .sort-indicator {
+    opacity: 1;
+  }
+
+  /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
+  .header-name .header-icon-svg {
+    color: var(--color-icon-blue);  /* 이름 - 파란색 */
+  }
+
+  .header-birth .header-icon-svg {
+    color: var(--color-icon-green);  /* 생년월일 - 초록색 */
+    --cake-bottom: var(--color-orange-400);  /* 케이크 아래층 - 갈색 */
+    --cake-top: var(--color-orange-300);     /* 케이크 위층 - 주황색 */
+    --candle: var(--color-error);            /* 촛불 - 빨간색 */
+    --flame: var(--color-warning);           /* 불꽃 - 주황색 */
+  }
+
+  .header-gender .header-icon-svg {
+    color: var(--color-icon-purple);  /* 성별 - 보라색 */
+  }
+
+  .header-phone .header-icon-svg {
+    color: var(--color-icon-blue);  /* 전화 - 파란색 */
+  }
+
+  .header-email .header-icon-svg {
+    color: var(--color-icon-orange);  /* 이메일 - 주황색 */
+  }
+
+  .header-address .header-icon-svg {
+    color: var(--color-icon-green);  /* 주소 - 초록색 */
+  }
+
+  .header-type .header-icon-svg {
+    color: var(--color-icon-orange);  /* 유형 - 주황색 */
+  }
+
+  .header-status .header-icon-svg {
+    color: var(--color-icon-green);  /* 상태 - 초록색 */
+  }
+
+  .header-created .header-icon-svg {
+    color: var(--color-icon-purple);  /* 등록일 - 보라색 */
+  }
+
+  /* 🍎 SCROLLBAR: Apple-style subtle */
+  .customer-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .customer-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .customer-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-light);
+    border-radius: 4px;
+    transition: background-color 0.15s ease-out;
+  }
+
+  html[data-theme="dark"] .customer-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-dark);
+  }
+
+  .customer-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ios-scrollbar-hover-light);
+  }
+
+  html[data-theme="dark"] .customer-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ios-scrollbar-hover-dark);
+  }
+
+  /* === 🍎 LOADING STATE: Apple spinner === */
+
+  .customer-list-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 200px;
+    color: var(--color-ios-text-quaternary-light);
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 로딩 텍스트 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .customer-list-loading {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  .loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2.5px solid var(--color-ios-spinner-track-light);
+    border-top-color: var(--color-ios-spinner-fill-light);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  html[data-theme="dark"] .loading-spinner {
+    border-color: var(--color-ios-spinner-track-dark);
+    border-top-color: var(--color-ios-spinner-fill-dark);
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* === 🍎 EMPTY STATE: Minimal zen === */
+
+  .customer-list-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 200px;
+    color: var(--color-ios-empty-light);
+  }
+
+  html[data-theme="dark"] .customer-list-empty {
+    color: var(--color-ios-empty-dark);
+  }
+
+  .empty-icon {
+    opacity: 0.25;
+  }
+
+  .empty-message {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 빈 상태 메시지 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    margin: 0;
+  }
+
+  /* === 🍎 CUSTOMER ITEM: iOS table row - Compact Layout === */
+
+  .customer-item {
+    display: grid;
+    grid-template-columns:
+      50px           /* 유형 (개인/법인 아이콘) */
+      minmax(100px, 1.5fr)  /* 이름 */
+      110px          /* 생년월일 (텍스트 표시) */
+      70px           /* 성별 (텍스트 표시) */
+      120px          /* 전화번호 */
+      minmax(150px, 2fr)  /* 이메일 */
+      minmax(150px, 2fr)  /* 주소 */
+      80px           /* 상태 (텍스트 표시) */
+      160px;         /* 등록일 (YYYY.MM.DD HH:MM:SS) */
+    gap: 12px;
+    align-items: center;
+    height: 32px;
+    padding: 6px 12px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    animation: customerFadeIn 0.3s ease-out;
+  }
+
+  /* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
+  @keyframes customerFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  html[data-theme="dark"] .customer-item {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  /* Zebra striping - Apple Mail 스타일 (더 강한 대비) */
+  .customer-item:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .customer-item:nth-child(even) {
+    background: rgba(0, 120, 212, 0.04);
+  }
+
+  html[data-theme="dark"] .customer-item:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  html[data-theme="dark"] .customer-item:nth-child(even) {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .customer-item:hover {
+    background: rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
+
+  html[data-theme="dark"] .customer-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+
+  /* === 🍎 SELECTED STATE: macOS Finder 스타일 === */
+  .customer-item.selected,
+  .customer-item[data-selected="true"],
+  .customer-item:active {
+    background: rgba(0, 120, 212, 0.15);
+    box-shadow: inset 3px 0 0 0 #0078d4, inset 0 0 0 1px rgba(0, 120, 212, 0.2);
+  }
+
+  .customer-item.selected .customer-name,
+  .customer-item[data-selected="true"] .customer-name {
+    color: #0055a5;
+    font-weight: 600;
+  }
+
+  html[data-theme="dark"] .customer-item.selected,
+  html[data-theme="dark"] .customer-item[data-selected="true"],
+  html[data-theme="dark"] .customer-item:active {
+    background: rgba(142, 142, 147, 0.2);
+    box-shadow: inset 3px 0 0 0 #8e8e93, inset 0 0 0 1px rgba(142, 142, 147, 0.2);
+  }
+
+  /* === 🍎 CUSTOMER ICON: Person icon (16px - CLAUDE.md 준수) === */
+
+  .customer-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    transition: color 0.2s ease-out;
+  }
+
+  /* 개인 고객 - 파란색 */
+  .customer-icon--personal {
+    color: var(--color-icon-blue);
+  }
+
+  /* 법인 고객 - 주황색 */
+  .customer-icon--corporate {
+    color: var(--color-icon-orange);
+  }
+
+  /* === 🍎 CUSTOMER INFO: Compact one-line layout === */
+
+  .customer-info {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .customer-name {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 테이블 메인 데이터 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  html[data-theme="dark"] .customer-name {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  /* 🍎 CUSTOMER BIRTH: 생년월일 */
+  .customer-birth {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 테이블 보조 데이터 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+    text-align: center;
     white-space: nowrap;
   }
 
-  /* === Row 2: 전화번호 + 상태 === */
-  .customer-item > .customer-phone {
-    grid-row: 2;
-    grid-column: 2;
+  html[data-theme="dark"] .customer-birth {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 🍎 CUSTOMER GENDER: 성별 */
+  .customer-gender {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: var(--color-ios-text-quaternary-light);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .customer-gender {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* 🍎 CUSTOMER PHONE: 전화번호 */
+  .customer-phone {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-secondary-light);
     text-align: left;
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .customer-item > .customer-status {
-    grid-row: 2;
-    grid-column: 3;
-    text-align: right;
+  html[data-theme="dark"] .customer-phone {
+    color: var(--color-ios-text-secondary-dark);
   }
 
-  /* === 모바일에서 숨김 (성별, 이메일, 주소, 등록일) === */
-  .customer-item > .customer-gender,
-  .customer-item > .customer-email,
-  .customer-item > .customer-address,
-  .customer-item > .customer-created {
-    display: none;
+  /* 🍎 CUSTOMER EMAIL: 이메일 */
+  .customer-email {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  /* === 삭제 모드: 체크박스 추가 === */
-  .customer-item:has(.customer-checkbox) {
-    grid-template-columns: 28px 28px 1fr auto;
+  html[data-theme="dark"] .customer-email {
+    color: var(--color-ios-text-tertiary-dark);
   }
 
-  .customer-item > .customer-checkbox {
-    grid-row: 1 / 3;
-    grid-column: 1;
+  /* 🍎 CUSTOMER ADDRESS: 주소 */
+  .customer-address {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-quaternary-light);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  html[data-theme="dark"] .customer-address {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* 🍎 CUSTOMER TYPE: 고객 타입 (아이콘 표시) */
+  .customer-type {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    flex-shrink: 0;
+  }
+
+  /* 개인 고객 아이콘 - 파란색 */
+  .customer-type .customer-icon--personal {
+    color: var(--color-icon-blue);
+  }
+
+  /* 법인 고객 아이콘 - 주황색 */
+  .customer-type .customer-icon--corporate {
+    color: var(--color-icon-orange);
+  }
+
+  /* 🍎 CUSTOMER STATUS: 상태 */
+  .customer-status {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .customer-status {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 🍎 CUSTOMER CREATED: 등록일 */
+  .customer-created {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .customer-created {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* === 🍎 RESPONSIVE: iPhone/iPad optimization === */
+
+  @media (max-width: 768px) {
+    .customer-item {
+      grid-template-columns: 20px 1fr 60px 28px;
+      gap: 8px;
+      height: 28px;
+      padding: 4px 8px;
+    }
+
+    .customer-type {
+      display: none; /* 모바일에서 타입 숨김 */
+    }
+
+    .customer-name {
+      /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    }
+
+    .customer-size,
+    .customer-date {
+      /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
+    }
+  }
+
+  /* === 모바일 카드형 레이아웃 (480px 이하) ===
+     2행 컴팩트 디자인:
+     Row 1: [아이콘] 이름            상태
+     Row 2:          전화번호
+     숨김: 성별, 생년월일, 이메일, 주소, 등록일 */
+  @media (max-width: 480px) {
+    /* === 📱 iOS 연락처 스타일 모바일 리디자인 === */
+
+    .customer-library-container {
+      padding: 8px 12px;
+      gap: 6px;
+    }
+
+    /* 검색: 40px 터치 타겟 + iOS 자동줌 방지 */
+    .customer-library-container .search-input-wrapper {
+      padding: 4px 8px;
+    }
+
+    .customer-library-container .search-input {
+      min-height: 40px;
+      padding: 8px 10px 8px 32px;
+      font-size: 16px; /* iOS Safari 자동줌 방지 (16px 미만 시 자동 확대) */
+      border-radius: var(--radius-md);
+    }
+
+    .customer-library-container .search-icon {
+      left: 10px;
+    }
+
+    /* 상태 필터: 수평 스크롤 칩 */
+    .result-count {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      gap: 6px;
+      padding: 2px 0;
+    }
+
+    .result-count::-webkit-scrollbar {
+      display: none;
+    }
+
+    .type-filter-button {
+      flex-shrink: 0;
+      font-size: var(--font-size-caption-1);
+      padding: 6px 12px;
+      min-height: 34px;
+      border-radius: var(--radius-full, 999px);
+    }
+
+    .type-filter-separator {
+      flex-shrink: 0;
+    }
+
+    /* 컬럼 헤더 숨김 */
+    .customer-list-header {
+      display: none;
+    }
+
+    /* 리스트: iOS 스타일 간격 */
+    .customer-list {
+      gap: 8px;
+      padding-right: 0;
+    }
+
+    html:not([data-theme="dark"]) .customer-list {
+      border: none;
+      border-radius: 0;
+    }
+
+    /* === 카드: 2행 그리드 (iOS 연락처 스타일) === */
+    .customer-item {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 4px 10px;
+      align-items: center;
+      height: auto;
+      min-height: 56px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 0.5px solid var(--color-ios-separator-light);
+      background: var(--color-bg-card);
+    }
+
+    html[data-theme="dark"] .customer-item {
+      border-color: var(--color-ios-separator-dark);
+    }
+
+    .customer-item:hover {
+      transform: none;
+    }
+
+    /* 터치 피드백: 즉시 반응 */
+    .customer-item:active {
+      background: var(--color-bg-hover);
+      transition: background 0.05s ease;
+    }
+
+    /* === Row 1: 아이콘 + 이름 + 생년월일 === */
+    .customer-item > .customer-type {
+      grid-row: 1 / 3;
+      grid-column: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+    }
+
+    .customer-item > .customer-name {
+      grid-row: 1;
+      grid-column: 2;
+      font-weight: 600;
+      font-size: 15px; /* iOS 연락처 이름 크기 */
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-text-primary);
+      line-height: 1.3;
+    }
+
+    /* 생년월일: Row 1 우측 - 동명이인 구분용 */
+    .customer-item > .customer-birth {
+      display: block;
+      grid-row: 1;
+      grid-column: 3;
+      text-align: right;
+      font-size: var(--font-size-caption-2);
+      color: var(--color-text-tertiary);
+      white-space: nowrap;
+    }
+
+    /* === Row 2: 전화번호 + 상태 === */
+    .customer-item > .customer-phone {
+      grid-row: 2;
+      grid-column: 2;
+      text-align: left;
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      line-height: 1.3;
+    }
+
+    .customer-item > .customer-status {
+      grid-row: 2;
+      grid-column: 3;
+      text-align: right;
+    }
+
+    /* === 모바일에서 숨김 (성별, 이메일, 주소, 등록일) === */
+    .customer-item > .customer-gender,
+    .customer-item > .customer-email,
+    .customer-item > .customer-address,
+    .customer-item > .customer-created {
+      display: none;
+    }
+
+    /* === 삭제 모드: 체크박스 추가 === */
+    .customer-item:has(.customer-checkbox) {
+      grid-template-columns: 28px 28px 1fr auto;
+    }
+
+    .customer-item > .customer-checkbox {
+      grid-row: 1 / 3;
+      grid-column: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+    }
+
+    .customer-item:has(.customer-checkbox) > .customer-type {
+      grid-column: 2;
+    }
+
+    .customer-item:has(.customer-checkbox) > .customer-name {
+      grid-column: 3;
+    }
+
+    .customer-item:has(.customer-checkbox) > .customer-birth {
+      grid-column: 4;
+    }
+
+    .customer-item:has(.customer-checkbox) > .customer-phone {
+      grid-column: 3;
+    }
+
+    .customer-item:has(.customer-checkbox) > .customer-status {
+      grid-column: 4;
+    }
+  }
+
+  /* === 🍎 ACCESSIBILITY === */
+
+  .customer-item:focus-visible {
+    outline: 2px solid var(--color-ios-focus-light);
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .customer-item:focus-visible {
+    outline-color: var(--color-ios-focus-dark);
+  }
+
+  /* 페이지네이션: 공용 Pagination.css 사용 */
+
+  /* === 🍎 DELETE MODE: 삭제 모드 스타일 === */
+
+  /* 삭제 모드 토글 버튼 */
+  .customer-library-container .edit-mode-icon-button {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 28px;
     height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-ios-text-tertiary-light);
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    flex-shrink: 0;
+    margin-right: 8px;
   }
 
-  .customer-item:has(.customer-checkbox) > .customer-type {
-    grid-column: 2;
+  html[data-theme="dark"] .customer-library-container .edit-mode-icon-button {
+    color: var(--color-ios-text-tertiary-dark);
   }
 
-  .customer-item:has(.customer-checkbox) > .customer-name {
-    grid-column: 3;
+  .customer-library-container .edit-mode-icon-button:hover {
+    background: var(--color-ios-bg-tertiary-light);
+    color: var(--color-ios-text-secondary-light);
   }
 
-  .customer-item:has(.customer-checkbox) > .customer-birth {
-    grid-column: 4;
+  html[data-theme="dark"] .customer-library-container .edit-mode-icon-button:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+    color: var(--color-ios-text-secondary-dark);
   }
 
-  .customer-item:has(.customer-checkbox) > .customer-phone {
-    grid-column: 3;
+  .customer-library-container .edit-mode-icon-button--active {
+    background: var(--color-success-100);
+    color: var(--color-success-700);
   }
 
-  .customer-item:has(.customer-checkbox) > .customer-status {
-    grid-column: 4;
+  html[data-theme="dark"] .customer-library-container .edit-mode-icon-button--active {
+    background: var(--color-success-900);
+    color: var(--color-success-300);
   }
-}
 
-/* === 🍎 ACCESSIBILITY === */
+  .customer-library-container .edit-mode-icon-button--active:hover {
+    background: var(--color-success-200);
+    color: var(--color-success-800);
+  }
 
-.customer-item:focus-visible {
-  outline: 2px solid var(--color-ios-focus-light);
-  outline-offset: 2px;
-}
+  html[data-theme="dark"] .customer-library-container .edit-mode-icon-button--active:hover {
+    background: var(--color-success-800);
+    color: var(--color-success-200);
+  }
 
-html[data-theme="dark"] .customer-item:focus-visible {
-  outline-color: var(--color-ios-focus-dark);
-}
+  /* 선택된 개수 인라인 표시 */
+  .customer-library-container .selected-count-inline {
+    font-size: var(--font-size-caption-1);
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-error-600);
+    margin-left: 12px;
+    margin-right: 8px;
+  }
 
-/* 페이지네이션: 공용 Pagination.css 사용 */
+  html[data-theme="dark"] .customer-library-container .selected-count-inline {
+    color: var(--color-error-400);
+  }
 
-/* === 🍎 DELETE MODE: 삭제 모드 스타일 === */
+  /* 헤더 체크박스 */
+  .header-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    flex-shrink: 0;
+  }
 
-/* 삭제 모드 토글 버튼 */
-.customer-library-container .edit-mode-icon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-ios-text-tertiary-light);
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-  flex-shrink: 0;
-  margin-right: 8px;
-}
+  .header-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary-600);
+  }
 
-html[data-theme="dark"] .customer-library-container .edit-mode-icon-button {
-  color: var(--color-ios-text-tertiary-dark);
-}
+  /* 고객 행 체크박스 */
+  .customer-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    flex-shrink: 0;
+  }
 
-.customer-library-container .edit-mode-icon-button:hover {
-  background: var(--color-ios-bg-tertiary-light);
-  color: var(--color-ios-text-secondary-light);
-}
+  .customer-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary-600);
+  }
 
-html[data-theme="dark"] .customer-library-container .edit-mode-icon-button:hover {
-  background: var(--color-ios-bg-tertiary-dark);
-  color: var(--color-ios-text-secondary-dark);
-}
+  /* 삭제 모드일 때 헤더 그리드 조정 */
+  .customer-list-header:has(.header-checkbox) {
+    grid-template-columns:
+      24px           /* 체크박스 */
+      50px           /* 유형 (개인/법인 아이콘) */
+      minmax(100px, 1.5fr)  /* 이름 */
+      110px          /* 생년월일 */
+      70px           /* 성별 */
+      120px          /* 전화번호 */
+      minmax(150px, 2fr)  /* 이메일 */
+      minmax(150px, 2fr)  /* 주소 */
+      80px           /* 상태 */
+      160px;         /* 등록일 */
+  }
 
-.customer-library-container .edit-mode-icon-button--active {
-  background: var(--color-success-100);
-  color: var(--color-success-700);
-}
+  /* 삭제 모드일 때 고객 행 그리드 조정 */
+  .customer-item:has(.customer-checkbox) {
+    grid-template-columns:
+      24px           /* 체크박스 */
+      50px           /* 유형 (개인/법인 아이콘) */
+      minmax(100px, 1.5fr)  /* 이름 */
+      110px          /* 생년월일 */
+      70px           /* 성별 */
+      120px          /* 전화번호 */
+      minmax(150px, 2fr)  /* 이메일 */
+      minmax(150px, 2fr)  /* 주소 */
+      80px           /* 상태 */
+      160px;         /* 등록일 */
+  }
 
-html[data-theme="dark"] .customer-library-container .edit-mode-icon-button--active {
-  background: var(--color-success-900);
-  color: var(--color-success-300);
-}
+  /* 선택된 고객 행 스타일 */
+  .customer-item--selected {
+    background: var(--color-primary-50);
+    border: 1px solid var(--color-primary-200);
+  }
 
-.customer-library-container .edit-mode-icon-button--active:hover {
-  background: var(--color-success-200);
-  color: var(--color-success-800);
-}
+  html[data-theme="dark"] .customer-item--selected {
+    background: var(--color-primary-900);
+    border: 1px solid var(--color-primary-700);
+  }
 
-html[data-theme="dark"] .customer-library-container .edit-mode-icon-button--active:hover {
-  background: var(--color-success-800);
-  color: var(--color-success-200);
-}
+  .customer-item--selected:hover {
+    background: var(--color-primary-100);
+  }
 
-/* 선택된 개수 인라인 표시 */
-.customer-library-container .selected-count-inline {
-  font-size: var(--font-size-caption-1);
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: var(--color-error-600);
-  margin-left: 12px;
-  margin-right: 8px;
-}
+  html[data-theme="dark"] .customer-item--selected:hover {
+    background: var(--color-primary-800);
+  }
 
-html[data-theme="dark"] .customer-library-container .selected-count-inline {
-  color: var(--color-error-400);
-}
+  /* 삭제 확인 모달 */
+  .delete-confirm-content {
+    padding: 16px 0;
+    text-align: center;
+  }
 
-/* 헤더 체크박스 */
-.header-checkbox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  flex-shrink: 0;
-}
+  .delete-confirm-content p {
+    margin: 0 0 8px 0;
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-body);
+    color: var(--color-ios-text-primary-light);
+  }
 
-.header-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--color-primary-600);
-}
+  html[data-theme="dark"] .delete-confirm-content p {
+    color: var(--color-ios-text-primary-dark);
+  }
 
-/* 고객 행 체크박스 */
-.customer-checkbox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  flex-shrink: 0;
-}
+  .delete-confirm-content .delete-warning {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-error-600);
+    margin-bottom: 20px;
+  }
 
-.customer-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--color-primary-600);
-}
+  html[data-theme="dark"] .delete-confirm-content .delete-warning {
+    color: var(--color-error-400);
+  }
 
-/* 삭제 모드일 때 헤더 그리드 조정 */
-.customer-list-header:has(.header-checkbox) {
-  grid-template-columns:
-    24px           /* 체크박스 */
-    50px           /* 유형 (개인/법인 아이콘) */
-    minmax(100px, 1.5fr)  /* 이름 */
-    110px          /* 생년월일 */
-    70px           /* 성별 */
-    120px          /* 전화번호 */
-    minmax(150px, 2fr)  /* 이메일 */
-    minmax(150px, 2fr)  /* 주소 */
-    80px           /* 상태 */
-    160px;         /* 등록일 */
-}
+  .delete-confirm-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+  }
 
-/* 삭제 모드일 때 고객 행 그리드 조정 */
-.customer-item:has(.customer-checkbox) {
-  grid-template-columns:
-    24px           /* 체크박스 */
-    50px           /* 유형 (개인/법인 아이콘) */
-    minmax(100px, 1.5fr)  /* 이름 */
-    110px          /* 생년월일 */
-    70px           /* 성별 */
-    120px          /* 전화번호 */
-    minmax(150px, 2fr)  /* 이메일 */
-    minmax(150px, 2fr)  /* 주소 */
-    80px           /* 상태 */
-    160px;         /* 등록일 */
-}
-
-/* 선택된 고객 행 스타일 */
-.customer-item--selected {
-  background: var(--color-primary-50);
-  border: 1px solid var(--color-primary-200);
-}
-
-html[data-theme="dark"] .customer-item--selected {
-  background: var(--color-primary-900);
-  border: 1px solid var(--color-primary-700);
-}
-
-.customer-item--selected:hover {
-  background: var(--color-primary-100);
-}
-
-html[data-theme="dark"] .customer-item--selected:hover {
-  background: var(--color-primary-800);
-}
-
-/* 삭제 확인 모달 */
-.delete-confirm-content {
-  padding: 16px 0;
-  text-align: center;
-}
-
-.delete-confirm-content p {
-  margin: 0 0 8px 0;
-  font-family: var(--font-family-text);
-  font-size: var(--font-size-body);
-  color: var(--color-ios-text-primary-light);
-}
-
-html[data-theme="dark"] .delete-confirm-content p {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.delete-confirm-content .delete-warning {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-error-600);
-  margin-bottom: 20px;
-}
-
-html[data-theme="dark"] .delete-confirm-content .delete-warning {
-  color: var(--color-error-400);
-}
-
-.delete-confirm-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 16px;
-}
+} /* end @layer components */

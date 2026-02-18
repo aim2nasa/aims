@@ -6,120 +6,124 @@
  * CustomerReviewModal.css의 crm-* 클래스를 그대로 활용
  */
 
-.customer-review-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: var(--color-layout-main-bg);
-  color: var(--color-text-primary);
-}
+@layer components {
 
-/* 헤더 */
-.customer-review-page__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--color-layout-header-bg);
-  border-bottom: 1px solid var(--color-layout-border);
-  -webkit-app-region: drag;
-}
+  .customer-review-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--color-layout-main-bg);
+    color: var(--color-text-primary);
+  }
 
-.customer-review-page__header-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  -webkit-app-region: no-drag;
-}
+  /* 헤더 */
+  .customer-review-page__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--color-layout-header-bg);
+    border-bottom: 1px solid var(--color-layout-border);
+    -webkit-app-region: drag;
+  }
 
-.customer-review-page__header-title h1 {
-  margin: 0;
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
+  .customer-review-page__header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    -webkit-app-region: no-drag;
+  }
 
-.customer-review-page__header-title p {
-  margin: 0;
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
+  .customer-review-page__header-title h1 {
+    margin: 0;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
 
-.customer-review-page__header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  -webkit-app-region: no-drag;
-}
+  .customer-review-page__header-title p {
+    margin: 0;
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
 
-.customer-review-page__action-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
+  .customer-review-page__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+  }
 
-.customer-review-page__action-button:hover {
-  background: var(--color-hover-light);
-  color: var(--color-text-primary);
-}
+  .customer-review-page__action-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
 
-[data-theme="dark"] .customer-review-page__action-button:hover {
-  background: var(--color-hover-dark);
-}
+  .customer-review-page__action-button:hover {
+    background: var(--color-hover-light);
+    color: var(--color-text-primary);
+  }
 
-.customer-review-page__close-button:hover {
-  background: var(--color-icon-red);
-  color: white;
-}
+  [data-theme="dark"] .customer-review-page__action-button:hover {
+    background: var(--color-hover-dark);
+  }
 
-/* 메인 콘텐츠 */
-.customer-review-page__content {
-  flex: 1;
-  overflow: auto;
-  padding: 16px;
-  background: var(--color-layout-centerpane-bg);
-  display: flex;
-  flex-direction: column;
-}
+  .customer-review-page__close-button:hover {
+    background: var(--color-icon-red);
+    color: white;
+  }
 
-/* crm-three-columns가 flex:1로 공간을 채우도록 */
-.customer-review-page__content .crm-three-columns {
-  flex: 1;
-  min-height: 0;
-}
+  /* 메인 콘텐츠 */
+  .customer-review-page__content {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+    background: var(--color-layout-centerpane-bg);
+    display: flex;
+    flex-direction: column;
+  }
 
-/* 빈 상태 */
-.customer-review-page__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  height: 100vh;
-  color: var(--color-text-tertiary);
-}
+  /* crm-three-columns가 flex:1로 공간을 채우도록 */
+  .customer-review-page__content .crm-three-columns {
+    flex: 1;
+    min-height: 0;
+  }
 
-/* Footer */
-.customer-review-page__footer {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-layout-border);
-  text-align: center;
-}
+  /* 빈 상태 */
+  .customer-review-page__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100vh;
+    color: var(--color-text-tertiary);
+  }
 
-.customer-review-page__footer-text {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-tertiary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
+  /* Footer */
+  .customer-review-page__footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-layout-border);
+    text-align: center;
+  }
+
+  .customer-review-page__footer-text {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-tertiary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+} /* end @layer components */

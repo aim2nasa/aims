@@ -4,503 +4,507 @@
  * 칼럼: 계약자, 발행일, 파싱일시, 상품명, 펀드 수, 상태
  */
 
-.customer-review-tab {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  gap: 8px;
-}
+@layer components {
+
+  .customer-review-tab {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 8px;
+  }
+
+  /* 로딩 상태 */
+  .customer-review-tab__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  .customer-review-tab__loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: cr-spin 0.8s linear infinite;
+  }
+
+  @keyframes cr-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* 에러 상태 */
+  .customer-review-tab__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  .customer-review-tab__error-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-error-bg);
+    color: var(--color-error);
+    border-radius: 50%;
+    font-weight: 600;
+  }
+
+  /* 빈 상태 */
+  .customer-review-tab__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 8px;
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: 20px;
+  }
+
+  .customer-review-tab__empty-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-tertiary);
+    border-radius: 12px;
+    font-weight: 300;
+  }
+
+  .customer-review-tab__empty-title {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .customer-review-tab__empty-description {
+    color: var(--color-text-secondary);
+    margin: 0;
+    max-width: 280px;
+    line-height: 1.4;
+  }
+
+  /* 삭제 액션 바 */
+  .customer-review-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 4px 0;
+  }
+
+  /* ==================== 🍎 TABLE CONTAINER - AnnualReportTab 동일 ==================== */
 
-/* 로딩 상태 */
-.customer-review-tab__loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 12px;
-  color: var(--color-text-secondary);
-}
-
-.customer-review-tab__loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
-  animation: cr-spin 0.8s linear infinite;
-}
-
-@keyframes cr-spin {
-  to { transform: rotate(360deg); }
-}
-
-/* 에러 상태 */
-.customer-review-tab__error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 12px;
-  color: var(--color-text-secondary);
-}
-
-.customer-review-tab__error-icon {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-error-bg);
-  color: var(--color-error);
-  border-radius: 50%;
-  font-weight: 600;
-}
-
-/* 빈 상태 */
-.customer-review-tab__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 8px;
-  color: var(--color-text-secondary);
-  text-align: center;
-  padding: 20px;
-}
-
-.customer-review-tab__empty-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-tertiary);
-  border-radius: 12px;
-  font-weight: 300;
-}
-
-.customer-review-tab__empty-title {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.customer-review-tab__empty-description {
-  color: var(--color-text-secondary);
-  margin: 0;
-  max-width: 280px;
-  line-height: 1.4;
-}
-
-/* 삭제 액션 바 */
-.customer-review-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 4px 0;
-}
-
-/* ==================== 🍎 TABLE CONTAINER - AnnualReportTab 동일 ==================== */
-
-.customer-review-table-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 4px;
-}
-
-/* 🍎 SCROLLBAR */
-.customer-review-table-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.customer-review-table-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.customer-review-table-container::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-light);
-  border-radius: 4px;
-}
-
-html[data-theme="dark"] .customer-review-table-container::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-dark);
-}
-
-/* ==================== 🍎 TABLE HEADER - AnnualReportTab 동일 패턴 ==================== */
-
-.customer-review-table-header {
-  display: grid;
-  /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/row/checkbox 공유) */
-  --grid-cols:
-    minmax(50px, 0.5fr)    /* 계약자 */
-    minmax(50px, 0.5fr)    /* 피보험자 */
-    104px                   /* 발행일 */
-    163px                   /* 파싱일시 */
-    minmax(80px, 1fr)      /* 상품명 */
-    72px                    /* 펀드 수 */
-    65px;                   /* 상태 */
-  grid-template-columns: var(--grid-cols);
-  gap: 4px;
-  align-items: center;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  background: var(--color-neutral-100);
-  border-radius: 4px;
-  margin-bottom: 4px;
-  font-size: var(--font-size-caption-1);
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: var(--color-ios-text-secondary-light);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .customer-review-table-header {
-  background: var(--color-neutral-700);
-  color: var(--color-ios-text-secondary-dark);
-  box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
-}
-
-/* 체크박스 포함 시 그리드 - --grid-cols 재사용 (28px 체크박스만 선두 추가) */
-.customer-review-table-header:has(.header-checkbox) {
-  grid-template-columns: 28px var(--grid-cols);
-}
-
-.customer-review-table-header > div {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-/* 헤더 칼럼 정렬 (AnnualReportTab 동일) */
-.customer-review-table-header .header-contractor { justify-content: flex-start; }
-.customer-review-table-header .header-insured { justify-content: flex-start; }
-.customer-review-table-header .header-issue-date { justify-content: center; }
-.customer-review-table-header .header-parsed-at { justify-content: center; }
-.customer-review-table-header .header-product { justify-content: flex-start; }
-.customer-review-table-header .header-fund-count { justify-content: center; }
-.customer-review-table-header .header-status { justify-content: center; }
-
-.header-checkbox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-checkbox input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
-}
-
-/* 정렬 가능한 헤더 */
-.customer-review-table__sortable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.customer-review-table__sortable:hover {
-  color: var(--color-text-primary);
-}
-
-.customer-review-table__header-content {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.customer-review-table__sort-icon {
-  opacity: 0.4;
-  transition: opacity 0.15s ease-out, color 0.15s ease-out;
-}
-
-.customer-review-table__sort-icon--active {
-  opacity: 1;
-  color: var(--color-accent);
-}
-
-/* ==================== 🍎 TABLE BODY ==================== */
-
-.customer-review-table-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* ==================== 🍎 TABLE ROW - AnnualReportTab 동일 패턴 ==================== */
-
-.customer-review-row {
-  display: grid;
-  /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
-  --grid-cols:
-    minmax(50px, 0.5fr)    /* 계약자 */
-    minmax(50px, 0.5fr)    /* 피보험자 */
-    104px                   /* 발행일 */
-    163px                   /* 파싱일시 */
-    minmax(80px, 1fr)      /* 상품명 */
-    72px                    /* 펀드 수 */
-    65px;                   /* 상태 */
-  grid-template-columns: var(--grid-cols);
-  gap: 4px;
-  align-items: center;
-  width: 100%;
-  box-sizing: border-box;
-  height: 32px;
-  padding: 6px 10px;
-  background: var(--color-ios-bg-primary-light);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.15s ease-out, transform 0.15s ease-out, box-shadow 0.15s ease-out;
-  font-size: var(--font-size-footnote);
-  font-family: var(--font-family-text);
-}
-
-html[data-theme="dark"] .customer-review-row {
-  background: var(--color-ios-bg-primary-dark);
-}
-
-.customer-review-row:hover {
-  background-color: var(--color-ios-bg-hover-light);
-  transform: translateX(2px);
-}
-
-html[data-theme="dark"] .customer-review-row:hover {
-  background-color: var(--color-ios-bg-hover-dark);
-}
-
-/* 체크박스 포함 시 그리드 - --grid-cols 재사용 */
-.customer-review-row:has(.row-checkbox) {
-  grid-template-columns: 28px var(--grid-cols);
-}
-
-/* === 상태별 스타일 === */
-.customer-review-row--selected {
-  background: rgba(59, 130, 246, 0.1);
-}
-
-html[data-theme="dark"] .customer-review-row--selected {
-  background: rgba(59, 130, 246, 0.2);
-}
-
-.customer-review-row--error {
-  background: var(--color-error-bg);
-  color: var(--color-error);
-}
-
-.customer-review-row--processing,
-.customer-review-row--pending {
-  background: var(--color-warning-bg);
-  color: var(--color-text-secondary);
-}
-
-/* ==================== 🍎 CHECKBOX CELLS ==================== */
-
-.header-checkbox,
-.row-checkbox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.row-checkbox {
-  cursor: pointer;
-}
-
-.header-checkbox input[type="checkbox"],
-.row-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--color-primary);
-}
-
-/* ==================== 🍎 ROW CELLS - AnnualReportTab 동일 패턴 ==================== */
-
-.row-contractor,
-.header-contractor {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.row-insured,
-.header-insured {
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.row-issue-date {
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-secondary);
-}
-
-.row-parsed-at {
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  font-size: 11px;
-  color: var(--color-text-secondary);
-}
-
-.row-product {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-text-secondary);
-}
-
-.row-fund-count {
-  text-align: center;
-  font-size: 11px;
-  color: var(--color-text-secondary);
-}
-
-.row-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-/* ==================== 🍎 STATUS BADGES ==================== */
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status-badge--error {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--color-error);
-}
-
-.status-badge--processing {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--color-warning);
-}
-
-.status-badge--pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--color-warning);
-}
-
-.status-spinner {
-  width: 8px;
-  height: 8px;
-  border: 1.5px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: cr-spin 0.8s linear infinite;
-}
-
-.retry-indicator {
-  font-size: 9px;
-  opacity: 0.6;
-}
-
-/* 페이지네이션 - 공용 Pagination.css 사용 */
-
-/* 🍎 COLUMN RESIZE: 리사이즈 중 상태 */
-.customer-review-table-container.is-resizing {
-  cursor: col-resize;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.customer-review-table-container.is-resizing * {
-  cursor: col-resize;
-}
-
-/* ========================================
- * 📱 반응형: 태블릿/모바일 최적화
- * ======================================== */
-
-@media (max-width: 768px) {
   .customer-review-table-container {
-    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
   }
 
-  /* 7칼럼 → 6칼럼 (파싱일시 숨김) */
+  /* 🍎 SCROLLBAR */
+  .customer-review-table-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .customer-review-table-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .customer-review-table-container::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-light);
+    border-radius: 4px;
+  }
+
+  html[data-theme="dark"] .customer-review-table-container::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-dark);
+  }
+
+  /* ==================== 🍎 TABLE HEADER - AnnualReportTab 동일 패턴 ==================== */
+
   .customer-review-table-header {
-    grid-template-columns:
-      minmax(45px, 0.5fr)
-      minmax(45px, 0.5fr)
-      85px
-      minmax(70px, 1fr)
-      55px
-      50px;
-    gap: 3px;
-    padding: 6px 8px;
-    font-size: 10px;
+    display: grid;
+    /* 🍎 Single Source: --grid-cols 변수로 칼럼 정의 일원화 (header/row/checkbox 공유) */
+    --grid-cols:
+      minmax(50px, 0.5fr)    /* 계약자 */
+      minmax(50px, 0.5fr)    /* 피보험자 */
+      104px                   /* 발행일 */
+      163px                   /* 파싱일시 */
+      minmax(80px, 1fr)      /* 상품명 */
+      72px                    /* 펀드 수 */
+      65px;                   /* 상태 */
+    grid-template-columns: var(--grid-cols);
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    background: var(--color-neutral-100);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: var(--font-size-caption-1);
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
   }
 
+  html[data-theme="dark"] .customer-review-table-header {
+    background: var(--color-neutral-700);
+    color: var(--color-ios-text-secondary-dark);
+    box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
+  }
+
+  /* 체크박스 포함 시 그리드 - --grid-cols 재사용 (28px 체크박스만 선두 추가) */
   .customer-review-table-header:has(.header-checkbox) {
-    grid-template-columns:
-      24px
-      minmax(45px, 0.5fr)
-      minmax(45px, 0.5fr)
-      85px
-      minmax(70px, 1fr)
-      55px
-      50px;
+    grid-template-columns: 28px var(--grid-cols);
   }
+
+  .customer-review-table-header > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  /* 헤더 칼럼 정렬 (AnnualReportTab 동일) */
+  .customer-review-table-header .header-contractor { justify-content: flex-start; }
+  .customer-review-table-header .header-insured { justify-content: flex-start; }
+  .customer-review-table-header .header-issue-date { justify-content: center; }
+  .customer-review-table-header .header-parsed-at { justify-content: center; }
+  .customer-review-table-header .header-product { justify-content: flex-start; }
+  .customer-review-table-header .header-fund-count { justify-content: center; }
+  .customer-review-table-header .header-status { justify-content: center; }
+
+  .header-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .header-checkbox input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+  }
+
+  /* 정렬 가능한 헤더 */
+  .customer-review-table__sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .customer-review-table__sortable:hover {
+    color: var(--color-text-primary);
+  }
+
+  .customer-review-table__header-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .customer-review-table__sort-icon {
+    opacity: 0.4;
+    transition: opacity 0.15s ease-out, color 0.15s ease-out;
+  }
+
+  .customer-review-table__sort-icon--active {
+    opacity: 1;
+    color: var(--color-accent);
+  }
+
+  /* ==================== 🍎 TABLE BODY ==================== */
+
+  .customer-review-table-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* ==================== 🍎 TABLE ROW - AnnualReportTab 동일 패턴 ==================== */
 
   .customer-review-row {
-    grid-template-columns:
-      minmax(45px, 0.5fr)
-      minmax(45px, 0.5fr)
-      85px
-      minmax(70px, 1fr)
-      55px
-      50px;
-    gap: 3px;
-    padding: 4px 8px;
-    height: 28px;
-    font-size: 11px;
+    display: grid;
+    /* 🍎 Single Source: 헤더와 동일한 --grid-cols 변수 사용 */
+    --grid-cols:
+      minmax(50px, 0.5fr)    /* 계약자 */
+      minmax(50px, 0.5fr)    /* 피보험자 */
+      104px                   /* 발행일 */
+      163px                   /* 파싱일시 */
+      minmax(80px, 1fr)      /* 상품명 */
+      72px                    /* 펀드 수 */
+      65px;                   /* 상태 */
+    grid-template-columns: var(--grid-cols);
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 6px 10px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-out, transform 0.15s ease-out, box-shadow 0.15s ease-out;
+    font-size: var(--font-size-footnote);
+    font-family: var(--font-family-text);
   }
 
+  html[data-theme="dark"] .customer-review-row {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  .customer-review-row:hover {
+    background-color: var(--color-ios-bg-hover-light);
+    transform: translateX(2px);
+  }
+
+  html[data-theme="dark"] .customer-review-row:hover {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
+
+  /* 체크박스 포함 시 그리드 - --grid-cols 재사용 */
   .customer-review-row:has(.row-checkbox) {
-    grid-template-columns:
-      24px
-      minmax(45px, 0.5fr)
-      minmax(45px, 0.5fr)
-      85px
-      minmax(70px, 1fr)
-      55px
-      50px;
+    grid-template-columns: 28px var(--grid-cols);
   }
 
-  .customer-review-table-header .header-parsed-at,
-  .customer-review-row .row-parsed-at {
-    display: none;
+  /* === 상태별 스타일 === */
+  .customer-review-row--selected {
+    background: rgba(59, 130, 246, 0.1);
   }
-}
 
-@media (max-width: 480px) {
-  .customer-review-table-header,
-  .customer-review-row {
-    min-width: 400px;
+  html[data-theme="dark"] .customer-review-row--selected {
+    background: rgba(59, 130, 246, 0.2);
+  }
+
+  .customer-review-row--error {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+  }
+
+  .customer-review-row--processing,
+  .customer-review-row--pending {
+    background: var(--color-warning-bg);
+    color: var(--color-text-secondary);
+  }
+
+  /* ==================== 🍎 CHECKBOX CELLS ==================== */
+
+  .header-checkbox,
+  .row-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .row-checkbox {
+    cursor: pointer;
+  }
+
+  .header-checkbox input[type="checkbox"],
+  .row-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+  }
+
+  /* ==================== 🍎 ROW CELLS - AnnualReportTab 동일 패턴 ==================== */
+
+  .row-contractor,
+  .header-contractor {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .row-insured,
+  .header-insured {
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .row-issue-date {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-secondary);
+  }
+
+  .row-parsed-at {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+
+  .row-product {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text-secondary);
+  }
+
+  .row-fund-count {
+    text-align: center;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+
+  .row-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  /* ==================== 🍎 STATUS BADGES ==================== */
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 4px;
     font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
   }
-}
+
+  .status-badge--error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-error);
+  }
+
+  .status-badge--processing {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+  }
+
+  .status-badge--pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+  }
+
+  .status-spinner {
+    width: 8px;
+    height: 8px;
+    border: 1.5px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: cr-spin 0.8s linear infinite;
+  }
+
+  .retry-indicator {
+    font-size: 9px;
+    opacity: 0.6;
+  }
+
+  /* 페이지네이션 - 공용 Pagination.css 사용 */
+
+  /* 🍎 COLUMN RESIZE: 리사이즈 중 상태 */
+  .customer-review-table-container.is-resizing {
+    cursor: col-resize;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .customer-review-table-container.is-resizing * {
+    cursor: col-resize;
+  }
+
+  /* ========================================
+   * 📱 반응형: 태블릿/모바일 최적화
+   * ======================================== */
+
+  @media (max-width: 768px) {
+    .customer-review-table-container {
+      overflow-x: auto;
+    }
+
+    /* 7칼럼 → 6칼럼 (파싱일시 숨김) */
+    .customer-review-table-header {
+      grid-template-columns:
+        minmax(45px, 0.5fr)
+        minmax(45px, 0.5fr)
+        85px
+        minmax(70px, 1fr)
+        55px
+        50px;
+      gap: 3px;
+      padding: 6px 8px;
+      font-size: 10px;
+    }
+
+    .customer-review-table-header:has(.header-checkbox) {
+      grid-template-columns:
+        24px
+        minmax(45px, 0.5fr)
+        minmax(45px, 0.5fr)
+        85px
+        minmax(70px, 1fr)
+        55px
+        50px;
+    }
+
+    .customer-review-row {
+      grid-template-columns:
+        minmax(45px, 0.5fr)
+        minmax(45px, 0.5fr)
+        85px
+        minmax(70px, 1fr)
+        55px
+        50px;
+      gap: 3px;
+      padding: 4px 8px;
+      height: 28px;
+      font-size: 11px;
+    }
+
+    .customer-review-row:has(.row-checkbox) {
+      grid-template-columns:
+        24px
+        minmax(45px, 0.5fr)
+        minmax(45px, 0.5fr)
+        85px
+        minmax(70px, 1fr)
+        55px
+        50px;
+    }
+
+    .customer-review-table-header .header-parsed-at,
+    .customer-review-row .row-parsed-at {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .customer-review-table-header,
+    .customer-review-row {
+      min-width: 400px;
+      font-size: 10px;
+    }
+  }
+
+} /* end @layer components */

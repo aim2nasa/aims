@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import cssReloadPlugin from './vite-plugins/css-reload-plugin.js'
+// @ts-expect-error -- JS plugin without type declarations
+import cssLayerOrderPlugin from './vite-plugins/css-layer-order-plugin.js'
 import path from 'path'
 import { execSync } from 'child_process'
 
@@ -27,7 +29,8 @@ export default defineConfig({
     react(),  // React Fast Refresh 기본 활성화
     tsconfigPaths(),
     basicSsl(),  // 🔧 HTTPS + HTTP/2 활성화 (연결 제한 문제 해결)
-    cssReloadPlugin()  // CSS 변경 시 전체 리로드 강제 (Windows 안정성)
+    cssReloadPlugin(),  // CSS 변경 시 전체 리로드 강제 (Windows 안정성)
+    cssLayerOrderPlugin()  // @layer 순서 선언을 CSS 번들 맨 앞에 삽입
   ],
   // vi.mock에서 @/ 경로 별칭 해석을 위한 resolve 설정
   resolve: {

@@ -7,150 +7,154 @@
 
 /* === 메뉴 아이템 === */
 
-.user-profile-menu-item {
-  /* 레이아웃 */
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 12px 16px;
+@layer components {
 
-  /* 스타일 */
-  background: transparent;
-  border: none;
-  border-radius: var(--border-radius-medium);
-  cursor: pointer;
-
-  /* 텍스트 */
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: menu items */
-  color: var(--color-text-primary);
-  text-align: left;
-
-  /* 전환 효과 */
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-/* 아이콘 스타일 - CustomMenu와 동일한 크기 규정 적용 */
-.user-profile-menu-item__icon {
-  width: 17px;
-  height: 17px;
-  flex-shrink: 0;
-  color: var(--color-text-primary);
-}
-
-/* SF Symbol 아이콘 크기 통일 (CustomMenu 측정값: 16.9px) */
-.user-profile-menu-item .sf-symbol,
-.user-profile-menu-item .sf-symbol__shape {
-  font-size: 16.9px;
-}
-
-/* 아이콘 색상 - CustomMenu와 동일한 iOS 색상 */
-.user-profile-menu-item__icon--green {
-  color: var(--color-ios-green); /* iOS systemGreen - #34c759 */
-}
-
-.user-profile-menu-item__icon--blue {
-  color: var(--color-ios-blue); /* iOS systemBlue - #007aff */
-}
-
-.user-profile-menu-item__icon--orange {
-  color: var(--color-ios-orange); /* iOS systemOrange - #ff9500 */
-}
-
-.user-profile-menu-item__icon--purple {
-  color: var(--color-ios-purple); /* iOS systemPurple - #af52de */
-}
-
-.user-profile-menu-item__icon--yellow {
-  color: var(--color-folder-yellow); /* Windows Explorer 폴더 노란색 */
-}
-
-/* 호버 상태 */
-.user-profile-menu-item:hover:not(:disabled) {
-  background: var(--color-bg-hover);
-  transform: translateX(2px);
-}
-
-/* 포커스 상태 */
-.user-profile-menu-item:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* 활성 상태 */
-.user-profile-menu-item:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-/* 비활성화 상태 */
-.user-profile-menu-item--disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* === 위험한 액션 (로그아웃) === */
-
-.user-profile-menu-item--danger {
-  color: var(--color-error);
-}
-
-.user-profile-menu-item--danger .user-profile-menu-item__icon {
-  color: var(--color-error);
-}
-
-.user-profile-menu-item--danger:hover:not(:disabled) {
-  background: rgba(255, 59, 48, 0.1);
-}
-
-html[data-theme="dark"] .user-profile-menu-item--danger:hover:not(:disabled) {
-  background: rgba(255, 69, 58, 0.15);
-}
-
-/* === 메뉴 아이템 레이블 === */
-
-.user-profile-menu-item__label {
-  flex: 1;
-  font-weight: var(--font-weight-regular);
-  line-height: 1.4;
-}
-
-/* === 구분선 === */
-
-.user-profile-menu-divider {
-  height: 1px;
-  margin: 8px 0;
-  background: var(--color-border);
-  opacity: 0.5;
-}
-
-html[data-theme="dark"] .user-profile-menu-divider {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* === 📱 모바일 반응형 === */
-@media (max-width: 768px) {
   .user-profile-menu-item {
-    gap: 6px;
-    padding: 4px 8px;
-    font-size: 12px;
+    /* 레이아웃 */
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px 16px;
+
+    /* 스타일 */
+    background: transparent;
+    border: none;
+    border-radius: var(--border-radius-medium);
+    cursor: pointer;
+
+    /* 텍스트 */
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: menu items */
+    color: var(--color-text-primary);
+    text-align: left;
+
+    /* 전환 효과 */
+    transition: all var(--duration-fast) var(--easing-ease-out);
   }
 
+  /* 아이콘 스타일 - CustomMenu와 동일한 크기 규정 적용 */
   .user-profile-menu-item__icon {
-    width: 13px;
-    height: 13px;
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    color: var(--color-text-primary);
   }
 
+  /* SF Symbol 아이콘 크기 통일 (CustomMenu 측정값: 16.9px) */
   .user-profile-menu-item .sf-symbol,
   .user-profile-menu-item .sf-symbol__shape {
-    font-size: 13px;
+    font-size: 16.9px;
   }
+
+  /* 아이콘 색상 - CustomMenu와 동일한 iOS 색상 */
+  .user-profile-menu-item__icon--green {
+    color: var(--color-ios-green); /* iOS systemGreen - #34c759 */
+  }
+
+  .user-profile-menu-item__icon--blue {
+    color: var(--color-ios-blue); /* iOS systemBlue - #007aff */
+  }
+
+  .user-profile-menu-item__icon--orange {
+    color: var(--color-ios-orange); /* iOS systemOrange - #ff9500 */
+  }
+
+  .user-profile-menu-item__icon--purple {
+    color: var(--color-ios-purple); /* iOS systemPurple - #af52de */
+  }
+
+  .user-profile-menu-item__icon--yellow {
+    color: var(--color-folder-yellow); /* Windows Explorer 폴더 노란색 */
+  }
+
+  /* 호버 상태 */
+  .user-profile-menu-item:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+    transform: translateX(2px);
+  }
+
+  /* 포커스 상태 */
+  .user-profile-menu-item:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* 활성 상태 */
+  .user-profile-menu-item:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  /* 비활성화 상태 */
+  .user-profile-menu-item--disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* === 위험한 액션 (로그아웃) === */
+
+  .user-profile-menu-item--danger {
+    color: var(--color-error);
+  }
+
+  .user-profile-menu-item--danger .user-profile-menu-item__icon {
+    color: var(--color-error);
+  }
+
+  .user-profile-menu-item--danger:hover:not(:disabled) {
+    background: rgba(255, 59, 48, 0.1);
+  }
+
+  html[data-theme="dark"] .user-profile-menu-item--danger:hover:not(:disabled) {
+    background: rgba(255, 69, 58, 0.15);
+  }
+
+  /* === 메뉴 아이템 레이블 === */
 
   .user-profile-menu-item__label {
-    line-height: 1.2;
+    flex: 1;
+    font-weight: var(--font-weight-regular);
+    line-height: 1.4;
   }
 
+  /* === 구분선 === */
+
   .user-profile-menu-divider {
-    margin: 3px 0;
+    height: 1px;
+    margin: 8px 0;
+    background: var(--color-border);
+    opacity: 0.5;
   }
-}
+
+  html[data-theme="dark"] .user-profile-menu-divider {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* === 📱 모바일 반응형 === */
+  @media (max-width: 768px) {
+    .user-profile-menu-item {
+      gap: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .user-profile-menu-item__icon {
+      width: 13px;
+      height: 13px;
+    }
+
+    .user-profile-menu-item .sf-symbol,
+    .user-profile-menu-item .sf-symbol__shape {
+      font-size: 13px;
+    }
+
+    .user-profile-menu-item__label {
+      line-height: 1.2;
+    }
+
+    .user-profile-menu-divider {
+      margin: 3px 0;
+    }
+  }
+
+} /* end @layer components */

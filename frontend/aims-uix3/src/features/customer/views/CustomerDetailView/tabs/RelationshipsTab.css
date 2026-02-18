@@ -1,303 +1,307 @@
 /* 가족 관계 탭 - 기본정보 탭과 통일된 스타일 */
 
-.relationships-card__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.5rem;
-  padding: 0 var(--spacing-2);
-  /* font-size: var(--font-size-caption-1); () */
-  /* font-weight: var(--font-weight-semibold); () */
-  background-color: var(--color-layout-accent-light);
-  border-radius: 999px;
-  color: var(--color-text-secondary);
-}
+@layer components {
 
-.relationships-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-6) var(--spacing-4);
-  /* font-size: var(--font-size-callout); () */
-  color: var(--color-text-secondary);
-  text-align: center;
-  border-radius: 12px;
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-[data-theme="dark"] .relationships-state {
-  background-color: rgba(255, 255, 255, 0.04);
-}
-
-.relationships-state--error {
-  color: var(--color-icon-red);
-}
-
-.relationships-state--empty {
-  color: var(--color-text-secondary);
-}
-
-.relationships-retry {
-  margin-left: var(--spacing-3);
-  padding: var(--spacing-1) var(--spacing-3);
-  border-radius: 999px;
-  border: 1px solid var(--color-primary-200);
-  background-color: transparent;
-  color: var(--color-primary-600);
-  /* font-size: var(--font-size-caption-1); () */
-  cursor: pointer;
-  transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
-}
-
-.relationships-retry:hover {
-  background-color: var(--color-primary-100);
-}
-
-.relationships-table-wrapper {
-  overflow-x: auto;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-[data-theme="dark"] .relationships-table-wrapper {
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.relationships-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  /* font-size: var(--font-size-footnote); () */
-  color: var(--color-text-primary);
-  min-width: 520px;
-}
-
-.relationships-table thead {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-[data-theme="dark"] .relationships-table thead {
-  background-color: rgba(255, 255, 255, 0.04);
-}
-
-.relationships-table th,
-.relationships-table td {
-  padding: var(--spacing-3);
-  text-align: left;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  vertical-align: middle;
-}
-
-.relationships-table__delete-header {
-  color: var(--color-icon-red);
-  /* font-weight: var(--font-weight-semibold); () */
-}
-
-[data-theme="dark"] .relationships-table th,
-[data-theme="dark"] .relationships-table td {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-
-.relationships-table tbody tr:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-[data-theme="dark"] .relationships-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.relationships-category {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  /* font-weight: var(--font-weight-medium); () */
-  color: var(--color-text-primary);
-}
-
-.relationships-category__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: transparent;
-  color: var(--color-icon-blue);
-}
-
-[data-theme="dark"] .relationships-category__icon {
-  background-color: transparent;
-}
-
-/* 이모지 아이콘 스타일 (관계별 보기와 동일) */
-.relationships-category__icon--emoji {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 18px deprecated ) */
-  color: inherit;
-}
-
-.relationships-category--family .relationships-category__icon {
-  color: var(--color-icon-red);
-  background-color: transparent;
-}
-
-.relationships-category--relative .relationships-category__icon {
-  color: var(--color-icon-orange);
-  background-color: transparent;
-}
-
-.relationships-category--social .relationships-category__icon {
-  color: var(--color-icon-green);
-  background-color: transparent;
-}
-
-.relationships-category--professional .relationships-category__icon {
-  color: var(--color-icon-blue);
-  background-color: transparent;
-}
-
-.relationships-category--corporate .relationships-category__icon {
-  color: var(--color-icon-purple);
-  background-color: transparent;
-}
-
-.relationships-category__reverse {
-  margin-left: var(--spacing-1);
-  /* font-size: var(--font-size-caption-1); () */
-  color: var(--color-text-secondary);
-}
-
-.relationships-link {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  font: inherit;
-  color: var(--color-primary-600);
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-
-.relationships-link:hover {
-  color: var(--color-primary-700);
-}
-
-.relationships-link__type {
-  margin-left: var(--spacing-1);
-  /* font-size: var(--font-size-caption-1); () */
-  color: var(--color-text-secondary);
-}
-
-.relationships-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: none;
-  background-color: transparent;
-  color: var(--color-icon-red);
-  cursor: pointer;
-  transition: color var(--duration-micro-quick) var(--easing-ease-out),
-    transform var(--duration-micro-quick) var(--easing-ease-out);
-}
-
-.relationships-action--danger {
-  color: var(--color-icon-red);
-}
-
-/* ghost 버튼 스타일 오버라이드 - 호버 시 배경 투명 유지 */
-.button--ghost.relationships-action--danger,
-.button--ghost.relationships-action--danger:hover:not(:disabled),
-.button--ghost.relationships-action--danger:active:not(:disabled) {
-  background-color: transparent;
-  border-color: transparent;
-}
-
-.relationships-action--danger:hover {
-  opacity: 0.6;
-}
-
-.relationships-action:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.35);
-}
-
-@media (max-width: 960px) {
-  .relationships-table {
-    min-width: 480px;
+  .relationships-card__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    padding: 0 var(--spacing-2);
+    /* font-size: var(--font-size-caption-1); () */
+    /* font-weight: var(--font-weight-semibold); () */
+    background-color: var(--color-layout-accent-light);
+    border-radius: 999px;
+    color: var(--color-text-secondary);
   }
-}
 
-@media (max-width: 640px) {
+  .relationships-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-6) var(--spacing-4);
+    /* font-size: var(--font-size-callout); () */
+    color: var(--color-text-secondary);
+    text-align: center;
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  [data-theme="dark"] .relationships-state {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  .relationships-state--error {
+    color: var(--color-icon-red);
+  }
+
+  .relationships-state--empty {
+    color: var(--color-text-secondary);
+  }
+
+  .relationships-retry {
+    margin-left: var(--spacing-3);
+    padding: var(--spacing-1) var(--spacing-3);
+    border-radius: 999px;
+    border: 1px solid var(--color-primary-200);
+    background-color: transparent;
+    color: var(--color-primary-600);
+    /* font-size: var(--font-size-caption-1); () */
+    cursor: pointer;
+    transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
+  }
+
+  .relationships-retry:hover {
+    background-color: var(--color-primary-100);
+  }
+
   .relationships-table-wrapper {
-    border-radius: 8px;
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
   }
-}
 
-/* 🍎 정렬 가능한 헤더 스타일 */
-.relationships-table__sortable {
-  cursor: pointer;
-  -webkit-user-select: none;
-  user-select: none;
-  transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
-}
+  [data-theme="dark"] .relationships-table-wrapper {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
 
-.relationships-table__sortable:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-}
+  .relationships-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    /* font-size: var(--font-size-footnote); () */
+    color: var(--color-text-primary);
+    min-width: 520px;
+  }
 
-[data-theme="dark"] .relationships-table__sortable:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-}
+  .relationships-table thead {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
 
-.relationships-table__header-content {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-}
+  [data-theme="dark"] .relationships-table thead {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
 
-.relationships-table__sort-icon {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-  opacity: 0.4;
-  transition: opacity var(--duration-micro-quick) var(--easing-ease-out),
-    color var(--duration-micro-quick) var(--easing-ease-out);
-}
+  .relationships-table th,
+  .relationships-table td {
+    padding: var(--spacing-3);
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    vertical-align: middle;
+  }
 
-.relationships-table__sortable:hover .relationships-table__sort-icon {
-  opacity: 0.7;
-}
+  .relationships-table__delete-header {
+    color: var(--color-icon-red);
+    /* font-weight: var(--font-weight-semibold); () */
+  }
 
-.relationships-table__sort-icon--active {
-  opacity: 1;
-  color: var(--color-primary-600);
-}
+  [data-theme="dark"] .relationships-table th,
+  [data-theme="dark"] .relationships-table td {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
 
-[data-theme="dark"] .relationships-table__sort-icon--active {
-  color: var(--color-primary-400);
-}
+  .relationships-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
 
-/* 🍎 관계 개수 뱃지 */
-.relationships-table__count-badge {
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 8px;
-  background: var(--color-primary-100);
-  color: var(--color-primary-700);
-  font-size: 10px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 4px;
-}
+  [data-theme="dark"] .relationships-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
 
-[data-theme="dark"] .relationships-table__count-badge {
-  background: var(--color-primary-900);
-  color: var(--color-primary-300);
-}
+  .relationships-category {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    /* font-weight: var(--font-weight-medium); () */
+    color: var(--color-text-primary);
+  }
+
+  .relationships-category__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: transparent;
+    color: var(--color-icon-blue);
+  }
+
+  [data-theme="dark"] .relationships-category__icon {
+    background-color: transparent;
+  }
+
+  /* 이모지 아이콘 스타일 (관계별 보기와 동일) */
+  .relationships-category__icon--emoji {
+    /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 18px deprecated ) */
+    color: inherit;
+  }
+
+  .relationships-category--family .relationships-category__icon {
+    color: var(--color-icon-red);
+    background-color: transparent;
+  }
+
+  .relationships-category--relative .relationships-category__icon {
+    color: var(--color-icon-orange);
+    background-color: transparent;
+  }
+
+  .relationships-category--social .relationships-category__icon {
+    color: var(--color-icon-green);
+    background-color: transparent;
+  }
+
+  .relationships-category--professional .relationships-category__icon {
+    color: var(--color-icon-blue);
+    background-color: transparent;
+  }
+
+  .relationships-category--corporate .relationships-category__icon {
+    color: var(--color-icon-purple);
+    background-color: transparent;
+  }
+
+  .relationships-category__reverse {
+    margin-left: var(--spacing-1);
+    /* font-size: var(--font-size-caption-1); () */
+    color: var(--color-text-secondary);
+  }
+
+  .relationships-link {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: var(--color-primary-600);
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .relationships-link:hover {
+    color: var(--color-primary-700);
+  }
+
+  .relationships-link__type {
+    margin-left: var(--spacing-1);
+    /* font-size: var(--font-size-caption-1); () */
+    color: var(--color-text-secondary);
+  }
+
+  .relationships-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background-color: transparent;
+    color: var(--color-icon-red);
+    cursor: pointer;
+    transition: color var(--duration-micro-quick) var(--easing-ease-out),
+      transform var(--duration-micro-quick) var(--easing-ease-out);
+  }
+
+  .relationships-action--danger {
+    color: var(--color-icon-red);
+  }
+
+  /* ghost 버튼 스타일 오버라이드 - 호버 시 배경 투명 유지 */
+  .button--ghost.relationships-action--danger,
+  .button--ghost.relationships-action--danger:hover:not(:disabled),
+  .button--ghost.relationships-action--danger:active:not(:disabled) {
+    background-color: transparent;
+    border-color: transparent;
+  }
+
+  .relationships-action--danger:hover {
+    opacity: 0.6;
+  }
+
+  .relationships-action:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.35);
+  }
+
+  @media (max-width: 960px) {
+    .relationships-table {
+      min-width: 480px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .relationships-table-wrapper {
+      border-radius: 8px;
+    }
+  }
+
+  /* 🍎 정렬 가능한 헤더 스타일 */
+  .relationships-table__sortable {
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
+  }
+
+  .relationships-table__sortable:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+
+  [data-theme="dark"] .relationships-table__sortable:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .relationships-table__header-content {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+  }
+
+  .relationships-table__sort-icon {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    opacity: 0.4;
+    transition: opacity var(--duration-micro-quick) var(--easing-ease-out),
+      color var(--duration-micro-quick) var(--easing-ease-out);
+  }
+
+  .relationships-table__sortable:hover .relationships-table__sort-icon {
+    opacity: 0.7;
+  }
+
+  .relationships-table__sort-icon--active {
+    opacity: 1;
+    color: var(--color-primary-600);
+  }
+
+  [data-theme="dark"] .relationships-table__sort-icon--active {
+    color: var(--color-primary-400);
+  }
+
+  /* 🍎 관계 개수 뱃지 */
+  .relationships-table__count-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    font-size: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+  }
+
+  [data-theme="dark"] .relationships-table__count-badge {
+    background: var(--color-primary-900);
+    color: var(--color-primary-300);
+  }
+
+} /* end @layer components */

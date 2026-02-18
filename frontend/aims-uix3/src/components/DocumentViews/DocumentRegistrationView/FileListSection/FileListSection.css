@@ -6,202 +6,206 @@
  * - 처리로그와 시각적 일관성 유지
  */
 
-.file-list-section {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-section-bg);
-  border: 1px solid var(--color-section-border);
-  border-radius: 8px;
-  overflow: hidden;
-  /* height: 100% 제거 - flex 레이아웃과 충돌 */
-  min-height: 0; /* ✅ flexbox에서 스크롤 활성화 필수 */
-}
+@layer components {
 
-/* Header */
-.file-list-section__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  background: var(--color-section-header-bg);
-  border-bottom: 1px solid var(--color-section-header-border);
-  user-select: none;
-  flex-shrink: 0;
-}
-
-.file-list-section__header-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-}
-
-.file-list-section__header-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.file-list-section__title {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-text-primary);
-  letter-spacing: -0.2px;
-}
-
-.file-list-section__count {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-text-tertiary);
-  background: var(--color-badge-bg);
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 20px;
-  text-align: center;
-}
-
-/* Content Area */
-.file-list-section__content {
-  flex: 1;
-  min-height: 0; /* ✅ flexbox에서 스크롤 활성화 필수 */
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 8px;
-}
-
-/* 자식 요소들 간격 */
-.file-list-section__content > * + * {
-  margin-top: 8px;
-}
-
-/* 🍎 macOS-style scrollbar */
-.file-list-section__content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.file-list-section__content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.file-list-section__content::-webkit-scrollbar-thumb {
-  background: var(--color-section-scrollbar);
-  border-radius: 4px;
-}
-
-.file-list-section__content::-webkit-scrollbar-thumb:hover {
-  background: var(--color-section-scrollbar-hover);
-}
-
-/* Progress Indicator Area */
-.file-list-section__progress {
-  flex-shrink: 0;
-}
-
-/* Empty State */
-.file-list-section__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  text-align: center;
-  padding: 12px 24px;
-  gap: 12px;
-}
-
-.file-list-section__empty-icon {
-  color: var(--color-text-tertiary);
-  opacity: 0.3;
-  margin-bottom: 8px;
-}
-
-.file-list-section__empty-title {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-text-secondary);
-  margin: 0;
-  letter-spacing: -0.2px;
-}
-
-.file-list-section__empty-hint {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-text-tertiary);
-  margin: 0;
-  line-height: 1.6;
-  opacity: 0.8;
-}
-
-/* Success Messages (기존 스타일 재사용) */
-.upload-success {
-  padding: 8px 0;
-  margin: 8px 0;
-  animation: successFadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.upload-success__content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  background: var(--color-success-overlay-bg);
-  border-radius: 6px;
-  border: 1px solid var(--color-success-overlay-border);
-}
-
-.upload-success__icon {
-  color: var(--color-success-overlay-icon);
-  flex-shrink: 0;
-}
-
-.upload-success__text {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-weight: 400;
-  color: var(--color-success-overlay-text);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  flex: 1;
-}
-
-.upload-success__button {
-  background: none;
-  border: none;
-  padding: 2px;
-  border-radius: 3px;
-  cursor: pointer;
-  color: var(--color-success-overlay-button);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.upload-success__button:hover {
-  background: var(--color-success-overlay-button-bg);
-  color: var(--color-success-overlay-button-hover);
-}
-
-@keyframes successFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
+  .file-list-section {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-section-bg);
+    border: 1px solid var(--color-section-border);
+    border-radius: 8px;
+    overflow: hidden;
+    /* height: 100% 제거 - flex 레이아웃과 충돌 */
+    min-height: 0; /* ✅ flexbox에서 스크롤 활성화 필수 */
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
 
-/* Accessibility */
-@media (prefers-reduced-motion: reduce) {
+  /* Header */
+  .file-list-section__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--color-section-header-bg);
+    border-bottom: 1px solid var(--color-section-header-border);
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .file-list-section__header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .file-list-section__header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .file-list-section__title {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-text-primary);
+    letter-spacing: -0.2px;
+  }
+
+  .file-list-section__count {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-text-tertiary);
+    background: var(--color-badge-bg);
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  /* Content Area */
+  .file-list-section__content {
+    flex: 1;
+    min-height: 0; /* ✅ flexbox에서 스크롤 활성화 필수 */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px;
+  }
+
+  /* 자식 요소들 간격 */
+  .file-list-section__content > * + * {
+    margin-top: 8px;
+  }
+
+  /* 🍎 macOS-style scrollbar */
+  .file-list-section__content::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .file-list-section__content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .file-list-section__content::-webkit-scrollbar-thumb {
+    background: var(--color-section-scrollbar);
+    border-radius: 4px;
+  }
+
+  .file-list-section__content::-webkit-scrollbar-thumb:hover {
+    background: var(--color-section-scrollbar-hover);
+  }
+
+  /* Progress Indicator Area */
+  .file-list-section__progress {
+    flex-shrink: 0;
+  }
+
+  /* Empty State */
+  .file-list-section__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    padding: 12px 24px;
+    gap: 12px;
+  }
+
+  .file-list-section__empty-icon {
+    color: var(--color-text-tertiary);
+    opacity: 0.3;
+    margin-bottom: 8px;
+  }
+
+  .file-list-section__empty-title {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-text-secondary);
+    margin: 0;
+    letter-spacing: -0.2px;
+  }
+
+  .file-list-section__empty-hint {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-text-tertiary);
+    margin: 0;
+    line-height: 1.6;
+    opacity: 0.8;
+  }
+
+  /* Success Messages (기존 스타일 재사용) */
   .upload-success {
-    animation: none;
+    padding: 8px 0;
+    margin: 8px 0;
+    animation: successFadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .upload-success__content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    background: var(--color-success-overlay-bg);
+    border-radius: 6px;
+    border: 1px solid var(--color-success-overlay-border);
+  }
+
+  .upload-success__icon {
+    color: var(--color-success-overlay-icon);
+    flex-shrink: 0;
+  }
+
+  .upload-success__text {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-weight: 400;
+    color: var(--color-success-overlay-text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    flex: 1;
   }
 
   .upload-success__button {
-    transition: none;
+    background: none;
+    border: none;
+    padding: 2px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--color-success-overlay-button);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
   }
-}
+
+  .upload-success__button:hover {
+    background: var(--color-success-overlay-button-bg);
+    color: var(--color-success-overlay-button-hover);
+  }
+
+  @keyframes successFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .upload-success {
+      animation: none;
+    }
+
+    .upload-success__button {
+      transition: none;
+    }
+  }
+
+} /* end @layer components */

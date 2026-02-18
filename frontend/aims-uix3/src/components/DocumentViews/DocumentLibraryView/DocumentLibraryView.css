@@ -5,1368 +5,1373 @@
  */
 
 /* 🍎 MAIN CONTAINER: 페이지 스크롤 방지, 브라우저 높이 최대 활용 */
-.document-library-view {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
 
-/* 🍎 CONTAINER: Pure minimal */
-.document-library-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 100%;
-  padding: 16px;
-}
-
-/* === 🍎 UNIFIED HEADER: 편집 + 총 문서 + 검색 + 필터 + 폴링 + 새로고침 (한 줄) === */
-
-.library-unified-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  width: 100%;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: var(--color-ios-bg-primary-light);
-  border-radius: 8px;
-}
-
-html[data-theme="dark"] .library-unified-header {
-  background: var(--color-ios-bg-primary-dark);
-}
-
-/* 왼쪽 섹션: 편집 버튼 + 총 문서 개수 + 삭제 컨트롤 */
-.header-left-section {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
-/* 중앙 섹션: 검색창 + 필터 버튼 */
-.header-center-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  justify-content: flex-start;  /* 🔧 수정: center → flex-start (좌측 정렬) */
-}
-
-/* 오른쪽 섹션: 최근 업데이트 + 폴링 + 새로고침 */
-.header-right-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.document-library-view .search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 300px;  /* 🔧 축소: 350px → 300px */
-  max-width: 300px;
-  background-color: transparent;
-  border-radius: 10px;
-  padding: 6px 8px;
-  transition: background-color 0.2s ease-out;
-  flex-shrink: 1;
-  min-width: 0;
-  overflow: visible;
-}
-
-html[data-theme="dark"] .document-library-view .search-input-wrapper {
-  background-color: transparent;
-}
-
-.document-library-view .search-input-wrapper:focus-within {
-  background-color: transparent;
-}
-
-html[data-theme="dark"] .document-library-view .search-input-wrapper:focus-within {
-  background-color: transparent;
-}
-
-.document-library-view .search-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-ios-text-quaternary-light);
-  pointer-events: none;
-  z-index: 1;
-}
-
-html[data-theme="dark"] .document-library-view .search-icon {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.document-library-view .search-input {
-  flex: 1;
-  width: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 8px;
-  background: transparent;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
-  outline: none;
-  padding: 4px 8px 4px 26px;
-  transition: border-color 0.2s ease-out;
-}
-
-html[data-theme="dark"] .document-library-view .search-input {
-  color: var(--color-ios-text-primary-dark);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.search-input::placeholder {
-  color: var(--color-ios-text-placeholder-light);
-  font-weight: 400;
-}
-
-html[data-theme="dark"] .search-input::placeholder {
-  color: var(--color-ios-text-placeholder-dark);
-}
-
-.search-clear-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  padding: 2px;  /* 🔧 축소: 4px → 2px */
-  cursor: pointer;
-  color: var(--color-ios-text-quaternary-light);
-  transition: color 0.15s ease-out;
-  flex-shrink: 0;
-  border-radius: 50%;
-}
-
-html[data-theme="dark"] .search-clear-button {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.search-clear-button:hover {
-  color: var(--color-ios-interactive-light);
-  background: var(--color-ios-bg-secondary-light);
-}
-
-html[data-theme="dark"] .search-clear-button:hover {
-  color: var(--color-ios-interactive-dark);
-  background: var(--color-ios-bg-secondary-dark);
-}
-
-/* === 🍎 ERROR MESSAGE: Apple-style alert === */
-
-.document-library-error {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  background-color: var(--color-ios-error-bg-light);
-  border-left: 3px solid var(--color-ios-error-border-light);
-  border-radius: 8px;
-  color: var(--color-ios-error-text-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .document-library-error {
-  background-color: var(--color-ios-error-bg-dark);
-}
-
-.error-icon {
-  flex-shrink: 0;
-}
-
-.error-dismiss-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  padding: 4px;
-  margin-left: auto;
-  cursor: pointer;
-  color: var(--color-ios-error-button-light);
-  opacity: 0.7;
-  transition: opacity 0.15s ease-out;
-  border-radius: 50%;
-}
-
-.error-dismiss-button:hover {
-  opacity: 1;
-  background: var(--color-ios-error-button-bg-light);
-}
-
-/* === 🍎 RESULT HEADER: Minimal count display === */
-
-.document-library-result-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 4px 4px 4px;
-  border-bottom: 1px solid var(--color-border-primary);
-}
-
-
-.result-count {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-ios-text-secondary-light);
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .result-count {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* === 🍎 RESULT CONTROLS: Controls group === */
-
-.result-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* 🍎 Last Updated 표시 */
-.result-controls .last-updated {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-ios-text-tertiary-light);
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .result-controls .last-updated {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* 🍎 폴링 토글 버튼 */
-.header-right-section .polling-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  padding: 6px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  opacity: 0.7;
-}
-
-.header-right-section .polling-toggle:hover {
-  background: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.header-right-section .polling-dot {
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
-  font-family: var(--font-family-text);
-  transition: color 0.2s ease;
-}
-
-.header-right-section .dot-active {
-  color: var(--color-ios-green-light); /* 밝은 녹색 - 라이트 테마에서 더 생동감 있게 */
-}
-
-html[data-theme="dark"] .header-right-section .dot-active {
-  color: var(--color-ios-green-dark);
-}
-
-.header-right-section .dot-inactive {
-  color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .header-right-section .dot-inactive {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* === 🍎 SORT SELECTOR: iOS Style Dropdown (커스텀 Dropdown 컴포넌트 사용) === */
-
-.sort-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* .sort-select 스타일 제거됨 - 이제 shared/ui/Dropdown 컴포넌트 사용 */
-
-/* === 🍎 CONTENT WRAPPER: 리스트 영역이 남은 공간 모두 차지 === */
-
-/* DocumentStatusList가 렌더링되는 영역 - flex: 1로 늘어남 */
-.document-status-list {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-right: 4px;
-}
-
-/* 라이트 모드: 리스트 테두리 */
-html:not([data-theme="dark"]) .document-status-list {
-  border: 1px solid var(--color-border-primary);
-  border-radius: 6px;
-}
-
-/* === 🍎 DOCUMENT LIST: iOS table view === */
-
-.document-list {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-right: 4px;
-}
-
-/* === 🍎 DOCUMENT LIST HEADER: Sortable column headers === */
-
-.document-list-header {
-  display: grid;
-  grid-template-columns:
-    24px      /* 아이콘 고정 */
-    minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
-    80px      /* 크기 고정 */
-    120px     /* 날짜 고정 */
-    50px      /* 타입 고정 */
-    60px      /* 상태 (넓게) */
-    124px;    /* 액션 버튼 */
-  gap: 12px;
-  align-items: center;
-  padding: 8px 12px;
-  background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
-  border-radius: 4px;
-  margin-bottom: 4px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 600;
-  color: #4a5568;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  border-bottom: 1px solid rgba(0, 120, 212, 0.15);
-}
-
-html[data-theme="dark"] .document-list-header {
-  background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
-  color: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-/* 삭제 모드일 때 체크박스 칼럼 추가 */
-.document-library-view--delete-mode .document-list-header {
-  grid-template-columns:
-    24px      /* 체크박스 */
-    24px      /* 아이콘 고정 */
-    minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
-    80px      /* 크기 고정 */
-    120px     /* 날짜 고정 */
-    50px      /* 타입 고정 */
-    60px      /* 상태 (넓게) */
-    124px;    /* 액션 버튼 */
-}
-
-.header-checkbox {
-  width: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-icon {
-  width: 24px;
-}
-
-.header-sortable {
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.15s ease-out, color 0.15s ease-out;
-  padding: 4px 6px;
-  margin: -4px -6px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-/* 헤더 아이콘은 절대 축소되지 않음 */
-.document-list-header .header-icon-svg {
-  flex-shrink: 0;
-}
-
-/* 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 */
-.header-sortable {
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.15s ease-out;
-  padding: 4px 6px;
-  margin: -4px -6px;
-  border-radius: 4px;
-}
-
-.header-sortable:hover {
-  background-color: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .header-sortable:hover {
-  background-color: var(--color-ios-bg-tertiary-dark);
-}
-
-.header-sortable:active {
-  background-color: var(--color-ios-bg-hover-light);
-}
-
-html[data-theme="dark"] .header-sortable:active {
-  background-color: var(--color-ios-bg-hover-dark);
-}
-
-.header-size,
-.header-date {
-  text-align: right;
-  justify-content: flex-end;
-}
-
-.header-type,
-.header-status {
-  text-align: center;
-  justify-content: center;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 4px 6px;
-  white-space: nowrap;
-}
-
-.header-actions .header-icon-svg {
-  flex-shrink: 0;
-}
-
-.header-actions span {
-  flex-shrink: 0;
-}
-
-.sort-indicator {
-  font-size: var(--font-size-caption-2); /* 10px - FONT_SIZE_STANDARDS.md: 작은 메타데이터 */
-  font-family: var(--font-family-text);
-  color: var(--color-primary-600);
-  opacity: 0.8;
-  transition: opacity 0.15s ease-out;
-}
-
-html[data-theme="dark"] .sort-indicator {
-  color: var(--color-primary-300);
-}
-
-.header-sortable:hover .sort-indicator {
-  opacity: 1;
-}
-
-/* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
-.header-filename .header-icon-svg {
-  color: var(--color-icon-blue);  /* 파일명 - 파란색 */
-}
-
-.header-size .header-icon-svg {
-  color: var(--color-icon-orange);  /* 크기 - 주황색 */
-}
-
-.header-date .header-icon-svg {
-  color: var(--color-icon-green);  /* 날짜 - 초록색 */
-}
-
-.header-type .header-icon-svg {
-  color: var(--color-icon-purple);  /* 타입 - 보라색 */
-}
-
-.header-status .header-icon-svg {
-  color: var(--color-icon-green);  /* 상태 - 초록색 */
-}
-
-.header-actions .header-icon-svg {
-  color: var(--color-ios-text-tertiary-light);  /* 액션 - 회색 */
-}
-
-html[data-theme="dark"] .header-actions .header-icon-svg {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* 🍎 SCROLLBAR: Apple-style subtle */
-.document-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.document-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.document-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-light);
-  border-radius: 4px;
-  transition: background-color 0.15s ease-out;
-}
-
-html[data-theme="dark"] .document-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-dark);
-}
-
-.document-list::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-light);
-}
-
-html[data-theme="dark"] .document-list::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-dark);
-}
-
-/* === 🍎 LOADING STATE: Apple spinner === */
-
-.document-list-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  height: 200px;
-  color: var(--color-ios-text-quaternary-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .document-list-loading {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.loading-spinner {
-  width: 28px;
-  height: 28px;
-  border: 2.5px solid var(--color-ios-spinner-track-light);
-  border-top-color: var(--color-ios-spinner-fill-light);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-html[data-theme="dark"] .loading-spinner {
-  border-color: var(--color-ios-spinner-track-dark);
-  border-top-color: var(--color-ios-spinner-fill-dark);
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* === 🍎 EMPTY STATE: Minimal zen === */
-
-.document-list-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  height: 200px;
-  color: var(--color-ios-empty-light);
-}
-
-html[data-theme="dark"] .document-list-empty {
-  color: var(--color-ios-empty-dark);
-}
-
-.empty-icon {
-  opacity: 0.25;
-}
-
-.empty-message {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  margin: 0;
-}
-
-/* === 🍎 DOCUMENT ITEM: iOS table row - Compact Layout === */
-
-.document-item {
-  display: grid;
-  grid-template-columns:
-    24px      /* 아이콘 고정 */
-    minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
-    80px      /* 크기 고정 */
-    120px     /* 날짜 고정 */
-    50px      /* 타입 고정 */
-    60px      /* 상태 (넓게) */
-    124px;    /* 액션 버튼 */
-  gap: 12px;
-  align-items: center;
-  height: 32px;
-  padding: 6px 12px;
-  background: var(--color-ios-bg-primary-light);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease-out;
-  animation: documentFadeIn 0.3s ease-out;
-}
-
-/* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
-@keyframes documentFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-html[data-theme="dark"] .document-item {
-  background: var(--color-ios-bg-primary-dark);
-}
-
-/* Zebra striping - Apple Mail 스타일 */
-.document-item:nth-child(odd) {
-  background: rgba(0, 0, 0, 0.02);
-}
-
-.document-item:nth-child(even) {
-  background: rgba(0, 120, 212, 0.03);
-}
-
-html[data-theme="dark"] .document-item:nth-child(odd) {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-html[data-theme="dark"] .document-item:nth-child(even) {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.document-item:hover {
-  background: rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-}
-
-html[data-theme="dark"] .document-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
-.document-item.selected,
-.document-item[data-selected="true"],
-.document-item:active {
-  background: var(--color-ios-bg-selected-light);
-}
-
-html[data-theme="dark"] .document-item.selected,
-html[data-theme="dark"] .document-item[data-selected="true"],
-html[data-theme="dark"] .document-item:active {
-  background: var(--color-ios-bg-selected-dark);
-}
-
-/* === 🍎 DOCUMENT ICON: File type colors - Compact === */
-
-.document-icon-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.document-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  transition: color 0.2s ease-out;
-}
-
-/* === 🍎 FILE TYPE ICON COLORS (CSS 변수 사용) === */
-
-/* PDF Files - Red theme */
-.document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-dark);
-}
-
-.document-item:hover .document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-hover-dark);
-}
-
-/* Image Files - Blue theme */
-.document-icon.file-icon--image {
-  color: var(--color-file-image-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--image {
-  color: var(--color-file-image-dark);
-}
-
-.document-item:hover .document-icon.file-icon--image {
-  color: var(--color-file-image-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--image {
-  color: var(--color-file-image-hover-dark);
-}
-
-/* Video Files - Purple theme */
-.document-icon.file-icon--video {
-  color: var(--color-file-video-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--video {
-  color: var(--color-file-video-dark);
-}
-
-.document-item:hover .document-icon.file-icon--video {
-  color: var(--color-file-video-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--video {
-  color: var(--color-file-video-hover-dark);
-}
-
-/* Audio Files - Pink theme */
-.document-icon.file-icon--audio {
-  color: var(--color-file-audio-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--audio {
-  color: var(--color-file-audio-dark);
-}
-
-.document-item:hover .document-icon.file-icon--audio {
-  color: var(--color-file-audio-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--audio {
-  color: var(--color-file-audio-hover-dark);
-}
-
-/* Archive Files - Orange theme */
-.document-icon.file-icon--archive {
-  color: var(--color-file-archive-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--archive {
-  color: var(--color-file-archive-dark);
-}
-
-.document-item:hover .document-icon.file-icon--archive {
-  color: var(--color-file-archive-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--archive {
-  color: var(--color-file-archive-hover-dark);
-}
-
-/* Word Documents - Blue theme */
-.document-icon.file-icon--word {
-  color: var(--color-file-word-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--word {
-  color: var(--color-file-word-dark);
-}
-
-.document-item:hover .document-icon.file-icon--word {
-  color: var(--color-file-word-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--word {
-  color: var(--color-file-word-hover-dark);
-}
-
-/* Excel Documents - Green theme */
-.document-icon.file-icon--excel {
-  color: var(--color-file-excel-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--excel {
-  color: var(--color-file-excel-dark);
-}
-
-.document-item:hover .document-icon.file-icon--excel {
-  color: var(--color-file-excel-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--excel {
-  color: var(--color-file-excel-hover-dark);
-}
-
-/* PowerPoint Documents - Orange theme */
-.document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-dark);
-}
-
-.document-item:hover .document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-hover-dark);
-}
-
-/* Code Files - Indigo theme */
-.document-icon.file-icon--code {
-  color: var(--color-file-code-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--code {
-  color: var(--color-file-code-dark);
-}
-
-.document-item:hover .document-icon.file-icon--code {
-  color: var(--color-file-code-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--code {
-  color: var(--color-file-code-hover-dark);
-}
-
-/* Text Files - Gray theme */
-.document-icon.file-icon--text {
-  color: var(--color-file-text-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--text {
-  color: var(--color-file-text-dark);
-}
-
-.document-item:hover .document-icon.file-icon--text {
-  color: var(--color-file-text-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--text {
-  color: var(--color-file-text-hover-dark);
-}
-
-/* Executable Files - Dark theme */
-.document-icon.file-icon--executable {
-  color: var(--color-file-executable-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--executable {
-  color: var(--color-file-executable-dark);
-}
-
-.document-item:hover .document-icon.file-icon--executable {
-  color: var(--color-file-executable-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--executable {
-  color: var(--color-file-executable-hover-dark);
-}
-
-/* Default - Neutral theme */
-.document-icon.file-icon--default {
-  color: var(--color-file-default-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--default {
-  color: var(--color-file-default-dark);
-}
-
-.document-item:hover .document-icon.file-icon--default {
-  color: var(--color-file-default-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--default {
-  color: var(--color-file-default-hover-dark);
-}
-
-/* === 🍎 DOCUMENT INFO: Compact one-line layout === */
-
-.document-info {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-}
-
-.document-name {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.2;
-}
-
-html[data-theme="dark"] .document-name {
-  color: var(--color-ios-text-primary-dark);
-}
-
-/* 🍎 DOCUMENT SIZE: Fixed width column */
-.document-size {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-secondary-light);
-  text-align: right;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .document-size {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* 🍎 DOCUMENT DATE: Fixed width column */
-.document-date {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-tertiary-light);
-  text-align: right;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .document-date {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* 🍎 DOCUMENT TYPE: Fixed width column */
-.document-type {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 600;
-  color: var(--color-ios-text-secondary-light);  /* 🔧 수정: quaternary → secondary (더 진함) */
-  text-align: center;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .document-type {
-  color: var(--color-ios-text-secondary-dark);  /* 🔧 수정: quaternary → secondary (더 진함) */
-}
-
-/* === 🍎 STATUS ICON: Document processing status === */
-.status-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
-  flex-shrink: 0;
-  transition: all 0.2s ease-out;
-}
-
-.status-icon.status-completed {
-  color: var(--color-success);
-}
-
-.status-icon.status-processing {
-  color: var(--color-primary-500);
-  animation: processing-pulse 2s ease-in-out infinite;
-}
-
-@keyframes processing-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.status-icon.status-error {
-  color: var(--color-error);
-}
-
-.status-icon.status-pending {
-  color: var(--color-warning);
-}
-
-/* 🍎 HIDE META - Not used in compact layout */
-.document-meta {
-  display: none;
-}
-
-.document-separator {
-  display: none;
-}
-
-/* === 🍎 DOCUMENT BADGE: OCR completion - Removed in compact layout === */
-
-/* === 🍎 RESPONSIVE: iPhone/iPad optimization === */
-
-@media (max-width: 768px) {
-  .document-search-container {
-    padding: 12px;
-  }
-
-  /* 헤더 컴팩트화 */
-  .library-unified-header {
-    gap: 6px;
-    padding: 6px 8px;
-  }
-
-  /* 최근 업데이트 텍스트 숨김 (공간 절약) */
-  .header-right-section .last-updated {
-    display: none;
-  }
-
-  /* 처리 현황 바 숨김 (카드 레이아웃에서 불필요) */
-  .document-library-view .processing-status-bar {
-    display: none;
-  }
-
-  /* 컬럼 헤더 숨김 — DocumentStatusList에서 card layout 사용 */
-  .document-list-header {
-    display: none;
-  }
-}
-
-/* === 폰 가로 모드: 높이 극도 절약 === */
-@media (max-height: 500px) and (min-width: 481px) {
-  .document-library-container {
-    padding: 2px 8px;
-    gap: 2px;
-  }
+@layer components {
 
   .document-library-view {
-    gap: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
   }
 
-  .library-unified-header {
-    padding: 4px 8px;
-    margin-bottom: 0;
-    gap: 4px;
-  }
-
-  /* 페이지네이션 컴팩트 */
-  .document-library-view .document-pagination {
-    padding: 2px 0;
-    gap: 4px;
-  }
-}
-
-/* === 모바일 카드형 레이아웃 (480px 이하) === */
-@media (max-width: 480px) {
+  /* 🍎 CONTAINER: Pure minimal */
   .document-library-container {
-    padding: 4px 8px;
-    gap: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    padding: 16px;
   }
 
-  /* 헤더: 세로 스택 - 컴팩트 */
+  /* === 🍎 UNIFIED HEADER: 편집 + 총 문서 + 검색 + 필터 + 폴링 + 새로고침 (한 줄) === */
+
   .library-unified-header {
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 6px 8px;
-    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 8px;
   }
 
+  html[data-theme="dark"] .library-unified-header {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  /* 왼쪽 섹션: 편집 버튼 + 총 문서 개수 + 삭제 컨트롤 */
   .header-left-section {
-    order: 1;
+    display: flex;
+    align-items: center;
+    gap: 2px;
     flex-shrink: 0;
   }
 
+  /* 중앙 섹션: 검색창 + 필터 버튼 */
   .header-center-section {
-    order: 3;
-    flex: 1 1 100%;
-    gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: flex-start;  /* 🔧 수정: center → flex-start (좌측 정렬) */
   }
 
+  /* 오른쪽 섹션: 최근 업데이트 + 폴링 + 새로고침 */
   .header-right-section {
-    order: 2;
-    margin-left: auto;
-    gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
   }
 
-  /* 최근 업데이트 텍스트 숨김 (모바일에서 공간 절약) */
-  .header-right-section .last-updated {
-    display: none;
-  }
-
-  /* 메인 컨테이너 갭 축소 */
-  .document-library-view {
-    gap: 4px;
-  }
-
-  /* 검색 입력 전체 폭 + 컴팩트 */
   .document-library-view .search-input-wrapper {
-    width: 100%;
-    max-width: 100%;
-    padding: 2px 4px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 300px;  /* 🔧 축소: 350px → 300px */
+    max-width: 300px;
+    background-color: transparent;
+    border-radius: 10px;
+    padding: 6px 8px;
+    transition: background-color 0.2s ease-out;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: visible;
   }
 
-  .document-library-view .search-input {
-    padding: 3px 6px 3px 24px;
+  html[data-theme="dark"] .document-library-view .search-input-wrapper {
+    background-color: transparent;
+  }
+
+  .document-library-view .search-input-wrapper:focus-within {
+    background-color: transparent;
+  }
+
+  html[data-theme="dark"] .document-library-view .search-input-wrapper:focus-within {
+    background-color: transparent;
   }
 
   .document-library-view .search-icon {
-    left: 8px;
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-ios-text-quaternary-light);
+    pointer-events: none;
+    z-index: 1;
   }
 
-  /* 리스트 테두리 조정 */
-  html:not([data-theme="dark"]) .document-status-list {
-    border: none;
-    border-radius: 0;
+  html[data-theme="dark"] .document-library-view .search-icon {
+    color: var(--color-ios-text-quaternary-dark);
   }
 
-  /* 헤더 margin 축소 → 리스트에 공간 양보 */
-  .library-unified-header {
-    margin-bottom: 0;
-  }
-
-  /* 처리 현황 바 숨김 → 모바일에서 공간 확보 */
-  .document-library-view .processing-status-bar {
-    display: none;
-  }
-
-  /* 페이지네이션: 컴팩트 */
-  .document-library-view .document-pagination {
-    padding: 4px 0;
-    gap: 4px;
-  }
-
-  /* 컬럼 헤더 숨김 - 카드에서는 불필요 */
-  .document-list-header {
-    display: none;
-  }
-
-  /* 문서 아이템: 카드형 2행 레이아웃 */
-  .document-item {
-    display: grid;
-    grid-template-columns: 24px 1fr auto;
-    grid-template-rows: auto auto;
-    gap: 2px 6px;
-    height: auto;
-    min-height: 44px;
-    padding: 8px 10px;
+  .document-library-view .search-input {
+    flex: 1;
+    width: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 8px;
-    border: 0.5px solid var(--color-ios-separator-light);
+    background: transparent;
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);
+    outline: none;
+    padding: 4px 8px 4px 26px;
+    transition: border-color 0.2s ease-out;
   }
 
-  html[data-theme="dark"] .document-item {
-    border-color: var(--color-ios-separator-dark);
+  html[data-theme="dark"] .document-library-view .search-input {
+    color: var(--color-ios-text-primary-dark);
+    border-color: rgba(255, 255, 255, 0.12);
   }
 
-  /* Row 1: 아이콘 + 파일명 */
-  .document-item .document-icon-wrapper {
-    grid-row: 1 / 3;
-    grid-column: 1;
-    align-self: center;
+  .search-input::placeholder {
+    color: var(--color-ios-text-placeholder-light);
+    font-weight: 400;
   }
 
-  .document-item .document-info {
-    grid-row: 1;
-    grid-column: 2 / 4;
+  html[data-theme="dark"] .search-input::placeholder {
+    color: var(--color-ios-text-placeholder-dark);
+  }
+
+  .search-clear-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 2px;  /* 🔧 축소: 4px → 2px */
+    cursor: pointer;
+    color: var(--color-ios-text-quaternary-light);
+    transition: color 0.15s ease-out;
+    flex-shrink: 0;
+    border-radius: 50%;
+  }
+
+  html[data-theme="dark"] .search-clear-button {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  .search-clear-button:hover {
+    color: var(--color-ios-interactive-light);
+    background: var(--color-ios-bg-secondary-light);
+  }
+
+  html[data-theme="dark"] .search-clear-button:hover {
+    color: var(--color-ios-interactive-dark);
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  /* === 🍎 ERROR MESSAGE: Apple-style alert === */
+
+  .document-library-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--color-ios-error-bg-light);
+    border-left: 3px solid var(--color-ios-error-border-light);
+    border-radius: 8px;
+    color: var(--color-ios-error-text-light);
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .document-library-error {
+    background-color: var(--color-ios-error-bg-dark);
+  }
+
+  .error-icon {
+    flex-shrink: 0;
+  }
+
+  .error-dismiss-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    margin-left: auto;
+    cursor: pointer;
+    color: var(--color-ios-error-button-light);
+    opacity: 0.7;
+    transition: opacity 0.15s ease-out;
+    border-radius: 50%;
+  }
+
+  .error-dismiss-button:hover {
+    opacity: 1;
+    background: var(--color-ios-error-button-bg-light);
+  }
+
+  /* === 🍎 RESULT HEADER: Minimal count display === */
+
+  .document-library-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 4px 4px;
+    border-bottom: 1px solid var(--color-border-primary);
+  }
+
+
+  .result-count {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-ios-text-secondary-light);
     font-weight: 600;
   }
 
-  /* Row 2: 날짜 + 크기 */
-  .document-item .document-date {
-    grid-row: 2;
-    grid-column: 2;
-    text-align: left;
-    font-size: 10px;
-    color: var(--color-text-secondary);
+  html[data-theme="dark"] .result-count {
+    color: var(--color-ios-text-secondary-dark);
   }
 
-  .document-item .document-size {
-    grid-row: 2;
-    grid-column: 3;
-    font-size: 10px;
+  /* === 🍎 RESULT CONTROLS: Controls group === */
+
+  .result-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
-  /* 모바일에서 숨김: 타입, 상태, 액션 */
-  .document-item .document-type,
-  .document-item .status-icon,
-  .document-item .document-actions {
-    display: none;
+  /* 🍎 Last Updated 표시 */
+  .result-controls .last-updated {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-ios-text-tertiary-light);
+    white-space: nowrap;
   }
 
-  /* 삭제 모드: 체크박스 포함 */
-  .document-library-view--delete-mode .document-item {
-    grid-template-columns: 24px 24px 1fr auto;
+  html[data-theme="dark"] .result-controls .last-updated {
+    color: var(--color-ios-text-tertiary-dark);
   }
 
-  .document-library-view--delete-mode .document-item .document-icon-wrapper {
-    grid-column: 2;
+  /* 🍎 폴링 토글 버튼 */
+  .header-right-section .polling-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    opacity: 0.7;
   }
 
-  .document-library-view--delete-mode .document-item .document-info {
-    grid-column: 3 / 5;
+  .header-right-section .polling-toggle:hover {
+    background: transparent;
+    opacity: 1;
+    transform: scale(1.1);
   }
 
-  .document-library-view--delete-mode .document-item .document-date {
-    grid-column: 3;
+  .header-right-section .polling-dot {
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+    font-family: var(--font-family-text);
+    transition: color 0.2s ease;
   }
 
-  .document-library-view--delete-mode .document-item .document-size {
-    grid-column: 4;
+  .header-right-section .dot-active {
+    color: var(--color-ios-green-light); /* 밝은 녹색 - 라이트 테마에서 더 생동감 있게 */
   }
 
-  /* 터치 피드백 */
-  .document-item:hover {
-    transform: none;
+  html[data-theme="dark"] .header-right-section .dot-active {
+    color: var(--color-ios-green-dark);
   }
 
-  .document-item:active {
-    background: var(--color-bg-hover);
-    transition: background 0.05s ease;
+  .header-right-section .dot-inactive {
+    color: var(--color-ios-text-quaternary-light);
   }
-}
 
-/* === 🍎 ACCESSIBILITY === */
+  html[data-theme="dark"] .header-right-section .dot-inactive {
+    color: var(--color-ios-text-quaternary-dark);
+  }
 
-.document-item:focus-visible {
-  outline: 2px solid var(--color-ios-focus-light);
-  outline-offset: 2px;
-}
+  /* === 🍎 SORT SELECTOR: iOS Style Dropdown (커스텀 Dropdown 컴포넌트 사용) === */
 
-html[data-theme="dark"] .document-item:focus-visible {
-  outline-color: var(--color-ios-focus-dark);
-}
+  .sort-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-/* 페이지네이션: 공용 Pagination.css 사용 */
+  /* .sort-select 스타일 제거됨 - 이제 shared/ui/Dropdown 컴포넌트 사용 */
 
-/* === 🍎 액션 버튼 === */
-.document-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  opacity: 1;
-}
+  /* === 🍎 CONTENT WRAPPER: 리스트 영역이 남은 공간 모두 차지 === */
 
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 0;
-  line-height: 1;
-  cursor: pointer;
-  color: var(--color-ios-text-secondary-light);
-  transition: color 0.18s var(--easing-micro-smooth), transform 0.18s var(--easing-micro-instant);
-}
+  /* DocumentStatusList가 렌더링되는 영역 - flex: 1로 늘어남 */
+  .document-status-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 4px;
+  }
 
-.action-btn svg {
-  width: 20px;
-  height: 20px;
-  pointer-events: none;
-}
+  /* 라이트 모드: 리스트 테두리 */
+  html:not([data-theme="dark"]) .document-status-list {
+    border: 1px solid var(--color-border-primary);
+    border-radius: 6px;
+  }
 
-html[data-theme="dark"] .action-btn {
-  color: var(--color-ios-text-secondary-dark);
-}
+  /* === 🍎 DOCUMENT LIST: iOS table view === */
 
-.action-btn--detail { color: var(--color-primary-600); }
-html[data-theme="dark"] .action-btn--detail { color: var(--color-primary-300); }
+  .document-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 4px;
+  }
 
-.action-btn--summary { color: var(--color-ios-orange); }
-html[data-theme="dark"] .action-btn--summary { color: var(--color-ios-orange); }
+  /* === 🍎 DOCUMENT LIST HEADER: Sortable column headers === */
 
-.action-btn--full { color: var(--color-primary-700); }
-html[data-theme="dark"] .action-btn--full { color: var(--color-primary-200); }
+  .document-list-header {
+    display: grid;
+    grid-template-columns:
+      24px      /* 아이콘 고정 */
+      minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
+      80px      /* 크기 고정 */
+      120px     /* 날짜 고정 */
+      50px      /* 타입 고정 */
+      60px      /* 상태 (넓게) */
+      124px;    /* 액션 버튼 */
+    gap: 12px;
+    align-items: center;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: #4a5568;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid rgba(0, 120, 212, 0.15);
+  }
 
-.action-btn--link { color: var(--color-success-600); }
-html[data-theme="dark"] .action-btn--link { color: var(--color-success-300); }
+  html[data-theme="dark"] .document-list-header {
+    background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
+    color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
 
-.action-btn:hover {
-  transform: translateY(-1px);
-}
+  /* 삭제 모드일 때 체크박스 칼럼 추가 */
+  .document-library-view--delete-mode .document-list-header {
+    grid-template-columns:
+      24px      /* 체크박스 */
+      24px      /* 아이콘 고정 */
+      minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
+      80px      /* 크기 고정 */
+      120px     /* 날짜 고정 */
+      50px      /* 타입 고정 */
+      60px      /* 상태 (넓게) */
+      124px;    /* 액션 버튼 */
+  }
 
-.action-btn--summary:hover {
-  color: var(--color-ios-orange-strong, #ff8a3d);
-}
+  .header-checkbox {
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-html[data-theme="dark"] .action-btn--summary:hover {
-  color: var(--color-ios-orange-light, #ffb97a);
-}
+  .header-icon {
+    width: 24px;
+  }
 
-.action-btn--full:hover {
-  color: var(--color-primary-800);
-}
+  .header-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease-out, color 0.15s ease-out;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
 
-html[data-theme="dark"] .action-btn--full:hover {
-  color: var(--color-primary-100);
-}
+  /* 헤더 아이콘은 절대 축소되지 않음 */
+  .document-list-header .header-icon-svg {
+    flex-shrink: 0;
+  }
 
-.action-btn--link:hover {
-  color: var(--color-success-700);
-}
+  /* 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 */
+  .header-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease-out;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 4px;
+  }
 
-html[data-theme="dark"] .action-btn--link:hover {
-  color: var(--color-success-200);
-}
+  .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+  }
 
-.action-btn:active {
-  transform: translateY(0);
-}
+  html[data-theme="dark"] .header-sortable:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+  }
 
-.action-btn:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-}
+  .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-light);
+  }
 
-html[data-theme="dark"] .action-btn:focus-visible {
-  outline-color: var(--color-primary-300);
-}
+  html[data-theme="dark"] .header-sortable:active {
+    background-color: var(--color-ios-bg-hover-dark);
+  }
 
-.action-btn[data-disabled="true"] {
-  opacity: 0.25;
-  cursor: not-allowed;
-  transform: none;
-  color: var(--color-ios-text-tertiary-light);
-}
+  .header-size,
+  .header-date {
+    text-align: right;
+    justify-content: flex-end;
+  }
 
-html[data-theme="dark"] .action-btn[data-disabled="true"] {
-  color: var(--color-ios-text-tertiary-dark);
-  opacity: 0.2;
-}
+  .header-type,
+  .header-status {
+    text-align: center;
+    justify-content: center;
+  }
 
-.action-btn[data-disabled="true"]:hover {
-  transform: none;
-  color: var(--color-ios-text-tertiary-light);
-}
+  .header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 6px;
+    white-space: nowrap;
+  }
 
-html[data-theme="dark"] .action-btn[data-disabled="true"]:hover {
-  color: var(--color-ios-text-tertiary-dark);
-}
+  .header-actions .header-icon-svg {
+    flex-shrink: 0;
+  }
 
-/* 🍎 MOTION REDUCTION: Respect user preferences */
-@media (prefers-reduced-motion: reduce) {
-  .document-item,
-  .search-input-wrapper,
-  .search-clear-button,
-  .error-dismiss-button,
-  .document-icon {
-    transition: none;
+  .header-actions span {
+    flex-shrink: 0;
+  }
+
+  .sort-indicator {
+    font-size: var(--font-size-caption-2); /* 10px - FONT_SIZE_STANDARDS.md: 작은 메타데이터 */
+    font-family: var(--font-family-text);
+    color: var(--color-primary-600);
+    opacity: 0.8;
+    transition: opacity 0.15s ease-out;
+  }
+
+  html[data-theme="dark"] .sort-indicator {
+    color: var(--color-primary-300);
+  }
+
+  .header-sortable:hover .sort-indicator {
+    opacity: 1;
+  }
+
+  /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
+  .header-filename .header-icon-svg {
+    color: var(--color-icon-blue);  /* 파일명 - 파란색 */
+  }
+
+  .header-size .header-icon-svg {
+    color: var(--color-icon-orange);  /* 크기 - 주황색 */
+  }
+
+  .header-date .header-icon-svg {
+    color: var(--color-icon-green);  /* 날짜 - 초록색 */
+  }
+
+  .header-type .header-icon-svg {
+    color: var(--color-icon-purple);  /* 타입 - 보라색 */
+  }
+
+  .header-status .header-icon-svg {
+    color: var(--color-icon-green);  /* 상태 - 초록색 */
+  }
+
+  .header-actions .header-icon-svg {
+    color: var(--color-ios-text-tertiary-light);  /* 액션 - 회색 */
+  }
+
+  html[data-theme="dark"] .header-actions .header-icon-svg {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 🍎 SCROLLBAR: Apple-style subtle */
+  .document-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .document-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .document-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-light);
+    border-radius: 4px;
+    transition: background-color 0.15s ease-out;
+  }
+
+  html[data-theme="dark"] .document-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-ios-scrollbar-dark);
+  }
+
+  .document-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ios-scrollbar-hover-light);
+  }
+
+  html[data-theme="dark"] .document-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ios-scrollbar-hover-dark);
+  }
+
+  /* === 🍎 LOADING STATE: Apple spinner === */
+
+  .document-list-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 200px;
+    color: var(--color-ios-text-quaternary-light);
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  }
+
+  html[data-theme="dark"] .document-list-loading {
+    color: var(--color-ios-text-quaternary-dark);
   }
 
   .loading-spinner {
-    animation: none;
+    width: 28px;
+    height: 28px;
+    border: 2.5px solid var(--color-ios-spinner-track-light);
+    border-top-color: var(--color-ios-spinner-fill-light);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
   }
-}
+
+  html[data-theme="dark"] .loading-spinner {
+    border-color: var(--color-ios-spinner-track-dark);
+    border-top-color: var(--color-ios-spinner-fill-dark);
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* === 🍎 EMPTY STATE: Minimal zen === */
+
+  .document-list-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 200px;
+    color: var(--color-ios-empty-light);
+  }
+
+  html[data-theme="dark"] .document-list-empty {
+    color: var(--color-ios-empty-dark);
+  }
+
+  .empty-icon {
+    opacity: 0.25;
+  }
+
+  .empty-message {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    margin: 0;
+  }
+
+  /* === 🍎 DOCUMENT ITEM: iOS table row - Compact Layout === */
+
+  .document-item {
+    display: grid;
+    grid-template-columns:
+      24px      /* 아이콘 고정 */
+      minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
+      80px      /* 크기 고정 */
+      120px     /* 날짜 고정 */
+      50px      /* 타입 고정 */
+      60px      /* 상태 (넓게) */
+      124px;    /* 액션 버튼 */
+    gap: 12px;
+    align-items: center;
+    height: 32px;
+    padding: 6px 12px;
+    background: var(--color-ios-bg-primary-light);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    animation: documentFadeIn 0.3s ease-out;
+  }
+
+  /* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
+  @keyframes documentFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  html[data-theme="dark"] .document-item {
+    background: var(--color-ios-bg-primary-dark);
+  }
+
+  /* Zebra striping - Apple Mail 스타일 */
+  .document-item:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  .document-item:nth-child(even) {
+    background: rgba(0, 120, 212, 0.03);
+  }
+
+  html[data-theme="dark"] .document-item:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  html[data-theme="dark"] .document-item:nth-child(even) {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .document-item:hover {
+    background: rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
+
+  html[data-theme="dark"] .document-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
+  .document-item.selected,
+  .document-item[data-selected="true"],
+  .document-item:active {
+    background: var(--color-ios-bg-selected-light);
+  }
+
+  html[data-theme="dark"] .document-item.selected,
+  html[data-theme="dark"] .document-item[data-selected="true"],
+  html[data-theme="dark"] .document-item:active {
+    background: var(--color-ios-bg-selected-dark);
+  }
+
+  /* === 🍎 DOCUMENT ICON: File type colors - Compact === */
+
+  .document-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .document-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    transition: color 0.2s ease-out;
+  }
+
+  /* === 🍎 FILE TYPE ICON COLORS (CSS 변수 사용) === */
+
+  /* PDF Files - Red theme */
+  .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--pdf {
+    color: var(--color-file-pdf-hover-dark);
+  }
+
+  /* Image Files - Blue theme */
+  .document-icon.file-icon--image {
+    color: var(--color-file-image-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--image {
+    color: var(--color-file-image-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--image {
+    color: var(--color-file-image-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--image {
+    color: var(--color-file-image-hover-dark);
+  }
+
+  /* Video Files - Purple theme */
+  .document-icon.file-icon--video {
+    color: var(--color-file-video-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--video {
+    color: var(--color-file-video-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--video {
+    color: var(--color-file-video-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--video {
+    color: var(--color-file-video-hover-dark);
+  }
+
+  /* Audio Files - Pink theme */
+  .document-icon.file-icon--audio {
+    color: var(--color-file-audio-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--audio {
+    color: var(--color-file-audio-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--audio {
+    color: var(--color-file-audio-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--audio {
+    color: var(--color-file-audio-hover-dark);
+  }
+
+  /* Archive Files - Orange theme */
+  .document-icon.file-icon--archive {
+    color: var(--color-file-archive-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--archive {
+    color: var(--color-file-archive-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--archive {
+    color: var(--color-file-archive-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--archive {
+    color: var(--color-file-archive-hover-dark);
+  }
+
+  /* Word Documents - Blue theme */
+  .document-icon.file-icon--word {
+    color: var(--color-file-word-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--word {
+    color: var(--color-file-word-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--word {
+    color: var(--color-file-word-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--word {
+    color: var(--color-file-word-hover-dark);
+  }
+
+  /* Excel Documents - Green theme */
+  .document-icon.file-icon--excel {
+    color: var(--color-file-excel-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--excel {
+    color: var(--color-file-excel-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--excel {
+    color: var(--color-file-excel-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--excel {
+    color: var(--color-file-excel-hover-dark);
+  }
+
+  /* PowerPoint Documents - Orange theme */
+  .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--powerpoint {
+    color: var(--color-file-powerpoint-hover-dark);
+  }
+
+  /* Code Files - Indigo theme */
+  .document-icon.file-icon--code {
+    color: var(--color-file-code-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--code {
+    color: var(--color-file-code-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--code {
+    color: var(--color-file-code-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--code {
+    color: var(--color-file-code-hover-dark);
+  }
+
+  /* Text Files - Gray theme */
+  .document-icon.file-icon--text {
+    color: var(--color-file-text-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--text {
+    color: var(--color-file-text-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--text {
+    color: var(--color-file-text-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--text {
+    color: var(--color-file-text-hover-dark);
+  }
+
+  /* Executable Files - Dark theme */
+  .document-icon.file-icon--executable {
+    color: var(--color-file-executable-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--executable {
+    color: var(--color-file-executable-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--executable {
+    color: var(--color-file-executable-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--executable {
+    color: var(--color-file-executable-hover-dark);
+  }
+
+  /* Default - Neutral theme */
+  .document-icon.file-icon--default {
+    color: var(--color-file-default-light);
+  }
+
+  html[data-theme="dark"] .document-icon.file-icon--default {
+    color: var(--color-file-default-dark);
+  }
+
+  .document-item:hover .document-icon.file-icon--default {
+    color: var(--color-file-default-hover-light);
+  }
+
+  html[data-theme="dark"] .document-item:hover .document-icon.file-icon--default {
+    color: var(--color-file-default-hover-dark);
+  }
+
+  /* === 🍎 DOCUMENT INFO: Compact one-line layout === */
+
+  .document-info {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .document-name {
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  html[data-theme="dark"] .document-name {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  /* 🍎 DOCUMENT SIZE: Fixed width column */
+  .document-size {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-secondary-light);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .document-size {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 🍎 DOCUMENT DATE: Fixed width column */
+  .document-date {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary-light);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .document-date {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 🍎 DOCUMENT TYPE: Fixed width column */
+  .document-type {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);  /* 🔧 수정: quaternary → secondary (더 진함) */
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .document-type {
+    color: var(--color-ios-text-secondary-dark);  /* 🔧 수정: quaternary → secondary (더 진함) */
+  }
+
+  /* === 🍎 STATUS ICON: Document processing status === */
+  .status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+    flex-shrink: 0;
+    transition: all 0.2s ease-out;
+  }
+
+  .status-icon.status-completed {
+    color: var(--color-success);
+  }
+
+  .status-icon.status-processing {
+    color: var(--color-primary-500);
+    animation: processing-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes processing-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .status-icon.status-error {
+    color: var(--color-error);
+  }
+
+  .status-icon.status-pending {
+    color: var(--color-warning);
+  }
+
+  /* 🍎 HIDE META - Not used in compact layout */
+  .document-meta {
+    display: none;
+  }
+
+  .document-separator {
+    display: none;
+  }
+
+  /* === 🍎 DOCUMENT BADGE: OCR completion - Removed in compact layout === */
+
+  /* === 🍎 RESPONSIVE: iPhone/iPad optimization === */
+
+  @media (max-width: 768px) {
+    .document-search-container {
+      padding: 12px;
+    }
+
+    /* 헤더 컴팩트화 */
+    .library-unified-header {
+      gap: 6px;
+      padding: 6px 8px;
+    }
+
+    /* 최근 업데이트 텍스트 숨김 (공간 절약) */
+    .header-right-section .last-updated {
+      display: none;
+    }
+
+    /* 처리 현황 바 숨김 (카드 레이아웃에서 불필요) */
+    .document-library-view .processing-status-bar {
+      display: none;
+    }
+
+    /* 컬럼 헤더 숨김 — DocumentStatusList에서 card layout 사용 */
+    .document-list-header {
+      display: none;
+    }
+  }
+
+  /* === 폰 가로 모드: 높이 극도 절약 === */
+  @media (max-height: 500px) and (min-width: 481px) {
+    .document-library-container {
+      padding: 2px 8px;
+      gap: 2px;
+    }
+
+    .document-library-view {
+      gap: 2px;
+    }
+
+    .library-unified-header {
+      padding: 4px 8px;
+      margin-bottom: 0;
+      gap: 4px;
+    }
+
+    /* 페이지네이션 컴팩트 */
+    .document-library-view .document-pagination {
+      padding: 2px 0;
+      gap: 4px;
+    }
+  }
+
+  /* === 모바일 카드형 레이아웃 (480px 이하) === */
+  @media (max-width: 480px) {
+    .document-library-container {
+      padding: 4px 8px;
+      gap: 4px;
+    }
+
+    /* 헤더: 세로 스택 - 컴팩트 */
+    .library-unified-header {
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+    }
+
+    .header-left-section {
+      order: 1;
+      flex-shrink: 0;
+    }
+
+    .header-center-section {
+      order: 3;
+      flex: 1 1 100%;
+      gap: 8px;
+    }
+
+    .header-right-section {
+      order: 2;
+      margin-left: auto;
+      gap: 8px;
+    }
+
+    /* 최근 업데이트 텍스트 숨김 (모바일에서 공간 절약) */
+    .header-right-section .last-updated {
+      display: none;
+    }
+
+    /* 메인 컨테이너 갭 축소 */
+    .document-library-view {
+      gap: 4px;
+    }
+
+    /* 검색 입력 전체 폭 + 컴팩트 */
+    .document-library-view .search-input-wrapper {
+      width: 100%;
+      max-width: 100%;
+      padding: 2px 4px;
+    }
+
+    .document-library-view .search-input {
+      padding: 3px 6px 3px 24px;
+    }
+
+    .document-library-view .search-icon {
+      left: 8px;
+    }
+
+    /* 리스트 테두리 조정 */
+    html:not([data-theme="dark"]) .document-status-list {
+      border: none;
+      border-radius: 0;
+    }
+
+    /* 헤더 margin 축소 → 리스트에 공간 양보 */
+    .library-unified-header {
+      margin-bottom: 0;
+    }
+
+    /* 처리 현황 바 숨김 → 모바일에서 공간 확보 */
+    .document-library-view .processing-status-bar {
+      display: none;
+    }
+
+    /* 페이지네이션: 컴팩트 */
+    .document-library-view .document-pagination {
+      padding: 4px 0;
+      gap: 4px;
+    }
+
+    /* 컬럼 헤더 숨김 - 카드에서는 불필요 */
+    .document-list-header {
+      display: none;
+    }
+
+    /* 문서 아이템: 카드형 2행 레이아웃 */
+    .document-item {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 2px 6px;
+      height: auto;
+      min-height: 44px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 0.5px solid var(--color-ios-separator-light);
+    }
+
+    html[data-theme="dark"] .document-item {
+      border-color: var(--color-ios-separator-dark);
+    }
+
+    /* Row 1: 아이콘 + 파일명 */
+    .document-item .document-icon-wrapper {
+      grid-row: 1 / 3;
+      grid-column: 1;
+      align-self: center;
+    }
+
+    .document-item .document-info {
+      grid-row: 1;
+      grid-column: 2 / 4;
+      font-weight: 600;
+    }
+
+    /* Row 2: 날짜 + 크기 */
+    .document-item .document-date {
+      grid-row: 2;
+      grid-column: 2;
+      text-align: left;
+      font-size: 10px;
+      color: var(--color-text-secondary);
+    }
+
+    .document-item .document-size {
+      grid-row: 2;
+      grid-column: 3;
+      font-size: 10px;
+    }
+
+    /* 모바일에서 숨김: 타입, 상태, 액션 */
+    .document-item .document-type,
+    .document-item .status-icon,
+    .document-item .document-actions {
+      display: none;
+    }
+
+    /* 삭제 모드: 체크박스 포함 */
+    .document-library-view--delete-mode .document-item {
+      grid-template-columns: 24px 24px 1fr auto;
+    }
+
+    .document-library-view--delete-mode .document-item .document-icon-wrapper {
+      grid-column: 2;
+    }
+
+    .document-library-view--delete-mode .document-item .document-info {
+      grid-column: 3 / 5;
+    }
+
+    .document-library-view--delete-mode .document-item .document-date {
+      grid-column: 3;
+    }
+
+    .document-library-view--delete-mode .document-item .document-size {
+      grid-column: 4;
+    }
+
+    /* 터치 피드백 */
+    .document-item:hover {
+      transform: none;
+    }
+
+    .document-item:active {
+      background: var(--color-bg-hover);
+      transition: background 0.05s ease;
+    }
+  }
+
+  /* === 🍎 ACCESSIBILITY === */
+
+  .document-item:focus-visible {
+    outline: 2px solid var(--color-ios-focus-light);
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .document-item:focus-visible {
+    outline-color: var(--color-ios-focus-dark);
+  }
+
+  /* 페이지네이션: 공용 Pagination.css 사용 */
+
+  /* === 🍎 액션 버튼 === */
+  .document-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 1;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 0;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-ios-text-secondary-light);
+    transition: color 0.18s var(--easing-micro-smooth), transform 0.18s var(--easing-micro-instant);
+  }
+
+  .action-btn svg {
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+  }
+
+  html[data-theme="dark"] .action-btn {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .action-btn--detail { color: var(--color-primary-600); }
+  html[data-theme="dark"] .action-btn--detail { color: var(--color-primary-300); }
+
+  .action-btn--summary { color: var(--color-ios-orange); }
+  html[data-theme="dark"] .action-btn--summary { color: var(--color-ios-orange); }
+
+  .action-btn--full { color: var(--color-primary-700); }
+  html[data-theme="dark"] .action-btn--full { color: var(--color-primary-200); }
+
+  .action-btn--link { color: var(--color-success-600); }
+  html[data-theme="dark"] .action-btn--link { color: var(--color-success-300); }
+
+  .action-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .action-btn--summary:hover {
+    color: var(--color-ios-orange-strong, #ff8a3d);
+  }
+
+  html[data-theme="dark"] .action-btn--summary:hover {
+    color: var(--color-ios-orange-light, #ffb97a);
+  }
+
+  .action-btn--full:hover {
+    color: var(--color-primary-800);
+  }
+
+  html[data-theme="dark"] .action-btn--full:hover {
+    color: var(--color-primary-100);
+  }
+
+  .action-btn--link:hover {
+    color: var(--color-success-700);
+  }
+
+  html[data-theme="dark"] .action-btn--link:hover {
+    color: var(--color-success-200);
+  }
+
+  .action-btn:active {
+    transform: translateY(0);
+  }
+
+  .action-btn:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .action-btn:focus-visible {
+    outline-color: var(--color-primary-300);
+  }
+
+  .action-btn[data-disabled="true"] {
+    opacity: 0.25;
+    cursor: not-allowed;
+    transform: none;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .action-btn[data-disabled="true"] {
+    color: var(--color-ios-text-tertiary-dark);
+    opacity: 0.2;
+  }
+
+  .action-btn[data-disabled="true"]:hover {
+    transform: none;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .action-btn[data-disabled="true"]:hover {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* 🍎 MOTION REDUCTION: Respect user preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .document-item,
+    .search-input-wrapper,
+    .search-clear-button,
+    .error-dismiss-button,
+    .document-icon {
+      transition: none;
+    }
+
+    .loading-spinner {
+      animation: none;
+    }
+  }
+
+} /* end @layer components */

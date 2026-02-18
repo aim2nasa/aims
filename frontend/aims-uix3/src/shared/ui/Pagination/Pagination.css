@@ -9,330 +9,335 @@
 
 /* === PAGINATION CONTAINER === */
 /* 기본 스타일: CenterPane의 전체 보기 페이지들 */
-.pagination,
-.customer-pagination,
-.document-pagination,
-.contract-pagination,
-.table-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-  margin-top: 8px;
-  border-top: 1px solid var(--color-border-primary);
-}
 
-/* 고객 상세 탭용 컨테이너 (RightPane) - 최소 기본 스타일만 정의 */
-/* CustomerFullDetailView.css에서 세부 스타일 오버라이드됨 */
-.customer-review-pagination,
-.annual-report-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+@layer components {
 
-/* 고객 상세 > 계약 탭: iOS 스타일 separator */
-.customer-contracts .contract-pagination {
-  border-top-color: var(--color-ios-separator-subtle-light);
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .customer-contracts .contract-pagination {
-  border-top-color: var(--color-ios-separator-subtle-dark);
-}
-
-/* === PAGINATION LIMIT === */
-.pagination-limit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 전체 보기 페이지 드롭다운 컴팩트 스타일 */
-.pagination-limit .ios-dropdown__trigger {
-  height: 28px;
-  min-height: 28px;
-  padding: 4px 8px;
-}
-
-.pagination-limit .ios-dropdown__value {
-  font-size: 12px;
-}
-
-.pagination-limit .ios-dropdown__menu {
-  padding: 4px 0;
-}
-
-.pagination-limit .ios-dropdown__option {
-  padding: 6px 12px;
-  font-size: 12px;
-  min-height: 28px;
-}
-
-/* === PAGINATION CONTROLS === */
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  justify-content: center;
-  flex: 1;
-}
-
-/* === PAGINATION SPACER === */
-.pagination-spacer {
-  flex: 1;
-}
-
-/* === PAGINATION BUTTON === */
-.pagination-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: transparent;
-}
-
-.pagination-button:hover:not(:disabled) .pagination-arrow {
-  color: var(--color-primary-700);
-  transform: scale(1.15);
-}
-
-html[data-theme="dark"] .pagination-button:hover:not(:disabled) .pagination-arrow {
-  color: var(--color-primary-300);
-}
-
-.pagination-button:active:not(:disabled) {
-  background-color: var(--color-bg-tertiary);
-  transform: scale(0.96);
-}
-
-.pagination-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.3;
-}
-
-/* === PAGINATION ARROW === */
-.pagination-arrow {
-  font-weight: 300;
-  line-height: 1;
-  color: inherit;
-  -webkit-user-select: none;
-  user-select: none;
-  display: inline-block;
-  transition: transform 0.15s ease-out, color 0.15s ease-out;
-}
-
-.pagination-button:disabled .pagination-arrow {
-  color: var(--color-text-quaternary);
-}
-
-/* === PAGINATION ARROW CLICKED STATE === */
-.pagination-arrow--clicked {
-  color: var(--color-primary-700);
-}
-
-html[data-theme="dark"] .pagination-arrow--clicked {
-  color: var(--color-primary-300);
-}
-
-/* === Direction-specific animations === */
-.pagination-button--prev .pagination-arrow--clicked {
-  transform: translateX(-2px) scale(1.05);
-}
-
-.pagination-button--next .pagination-arrow--clicked {
-  transform: translateX(2px) scale(1.05);
-}
-
-/* === PAGINATION INFO === */
-.pagination-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  min-width: 60px;
-  justify-content: center;
-}
-
-.pagination-current {
-  color: var(--color-text-primary);
-  font-weight: 600;
-}
-
-.pagination-separator {
-  color: var(--color-text-quaternary);
-}
-
-.pagination-total {
-  color: var(--color-text-tertiary);
-}
-
-/* ============================================================
-   COMPACT STYLE: 고객 상세 탭 (RightPane) - 공간 제약 영역
-   ============================================================ */
-
-/* Compact 컨테이너: controls gap 축소 */
-.customer-review-pagination .pagination-controls,
-.annual-report-pagination .pagination-controls {
-  gap: 8px;
-}
-
-/* Compact 버튼: 20px 크기 */
-.customer-review-pagination .pagination-button,
-.annual-report-pagination .pagination-button {
-  width: 20px;
-  height: 20px;
-  background: var(--color-bg-secondary);
-  border-radius: 4px;
-}
-
-.customer-review-pagination .pagination-button:hover:not(:disabled),
-.annual-report-pagination .pagination-button:hover:not(:disabled) {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
-}
-
-/* Compact info: gap 축소 */
-.customer-review-pagination .pagination-info,
-.annual-report-pagination .pagination-info {
-  gap: 4px;
-  min-width: auto;
-}
-
-/* Compact separator/total: opacity 스타일 */
-.customer-review-pagination .pagination-separator,
-.annual-report-pagination .pagination-separator {
-  color: var(--color-text-secondary);
-  opacity: 0.5;
-}
-
-.customer-review-pagination .pagination-total,
-.annual-report-pagination .pagination-total {
-  color: var(--color-text-secondary);
-  opacity: 0.7;
-}
-
-/* ============================================================
-   고객 상세 > 계약 탭: iOS 스타일 (표준 크기, iOS 색상)
-   ============================================================ */
-
-/* 계약 탭 버튼: iOS 색상 사용 */
-.customer-contracts .contract-pagination .pagination-button {
-  color: var(--color-ios-text-primary-light);
-}
-
-html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-button {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.customer-contracts .contract-pagination .pagination-button:active:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-button:active:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-dark);
-}
-
-/* 계약 탭 arrow: iOS 스타일 */
-.customer-contracts .contract-pagination .pagination-arrow {
-  font-size: 24px;
-}
-
-html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-arrow {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.customer-contracts .contract-pagination .pagination-button:disabled .pagination-arrow {
-  color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-button:disabled .pagination-arrow {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* 계약 탭 info: iOS 색상 */
-.customer-contracts .contract-pagination .pagination-info {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-info {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.customer-contracts .contract-pagination .pagination-current {
-  color: var(--color-ios-text-primary-light);
-}
-
-html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-current {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.customer-contracts .contract-pagination .pagination-separator {
-  color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-separator {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.customer-contracts .contract-pagination .pagination-total {
-  color: var(--color-ios-text-tertiary-light);
-}
-
-html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-total {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* === 모바일 반응형 (480px 이하) === */
-@media (max-width: 480px) {
   .pagination,
   .customer-pagination,
   .document-pagination,
   .contract-pagination,
   .table-pagination {
-    padding: 12px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 0;
+    margin-top: 8px;
+    border-top: 1px solid var(--color-border-primary);
+  }
+
+  /* 고객 상세 탭용 컨테이너 (RightPane) - 최소 기본 스타일만 정의 */
+  /* CustomerFullDetailView.css에서 세부 스타일 오버라이드됨 */
+  .customer-review-pagination,
+  .annual-report-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* 고객 상세 > 계약 탭: iOS 스타일 separator */
+  .customer-contracts .contract-pagination {
+    border-top-color: var(--color-ios-separator-subtle-light);
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .customer-contracts .contract-pagination {
+    border-top-color: var(--color-ios-separator-subtle-dark);
+  }
+
+  /* === PAGINATION LIMIT === */
+  .pagination-limit {
+    display: flex;
+    align-items: center;
     gap: 8px;
   }
 
-  /* 터치 타겟 확대 */
-  .pagination-button {
-    width: 44px;
-    height: 44px;
+  /* 전체 보기 페이지 드롭다운 컴팩트 스타일 */
+  .pagination-limit .ios-dropdown__trigger {
+    height: 28px;
+    min-height: 28px;
+    padding: 4px 8px;
   }
 
-  .pagination-info {
-    min-width: 60px;
-    gap: 4px;
-    font-size: var(--font-size-caption-1); /* 13px */
+  .pagination-limit .ios-dropdown__value {
+    font-size: 12px;
   }
-}
 
-/* === MOTION REDUCTION === */
-@media (prefers-reduced-motion: reduce) {
+  .pagination-limit .ios-dropdown__menu {
+    padding: 4px 0;
+  }
+
+  .pagination-limit .ios-dropdown__option {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-height: 28px;
+  }
+
+  /* === PAGINATION CONTROLS === */
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: center;
+    flex: 1;
+  }
+
+  /* === PAGINATION SPACER === */
+  .pagination-spacer {
+    flex: 1;
+  }
+
+  /* === PAGINATION BUTTON === */
   .pagination-button {
-    transition: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pagination-button:hover:not(:disabled) {
+    background-color: transparent;
+  }
+
+  .pagination-button:hover:not(:disabled) .pagination-arrow {
+    color: var(--color-primary-700);
+    transform: scale(1.15);
+  }
+
+  html[data-theme="dark"] .pagination-button:hover:not(:disabled) .pagination-arrow {
+    color: var(--color-primary-300);
   }
 
   .pagination-button:active:not(:disabled) {
-    transform: none;
+    background-color: var(--color-bg-tertiary);
+    transform: scale(0.96);
   }
 
-  .pagination-arrow {
-    transition: none;
+  .pagination-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
   }
-}
+
+  /* === PAGINATION ARROW === */
+  .pagination-arrow {
+    font-weight: 300;
+    line-height: 1;
+    color: inherit;
+    -webkit-user-select: none;
+    user-select: none;
+    display: inline-block;
+    transition: transform 0.15s ease-out, color 0.15s ease-out;
+  }
+
+  .pagination-button:disabled .pagination-arrow {
+    color: var(--color-text-quaternary);
+  }
+
+  /* === PAGINATION ARROW CLICKED STATE === */
+  .pagination-arrow--clicked {
+    color: var(--color-primary-700);
+  }
+
+  html[data-theme="dark"] .pagination-arrow--clicked {
+    color: var(--color-primary-300);
+  }
+
+  /* === Direction-specific animations === */
+  .pagination-button--prev .pagination-arrow--clicked {
+    transform: translateX(-2px) scale(1.05);
+  }
+
+  .pagination-button--next .pagination-arrow--clicked {
+    transform: translateX(2px) scale(1.05);
+  }
+
+  /* === PAGINATION INFO === */
+  .pagination-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    min-width: 60px;
+    justify-content: center;
+  }
+
+  .pagination-current {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  .pagination-separator {
+    color: var(--color-text-quaternary);
+  }
+
+  .pagination-total {
+    color: var(--color-text-tertiary);
+  }
+
+  /* ============================================================
+     COMPACT STYLE: 고객 상세 탭 (RightPane) - 공간 제약 영역
+     ============================================================ */
+
+  /* Compact 컨테이너: controls gap 축소 */
+  .customer-review-pagination .pagination-controls,
+  .annual-report-pagination .pagination-controls {
+    gap: 8px;
+  }
+
+  /* Compact 버튼: 20px 크기 */
+  .customer-review-pagination .pagination-button,
+  .annual-report-pagination .pagination-button {
+    width: 20px;
+    height: 20px;
+    background: var(--color-bg-secondary);
+    border-radius: 4px;
+  }
+
+  .customer-review-pagination .pagination-button:hover:not(:disabled),
+  .annual-report-pagination .pagination-button:hover:not(:disabled) {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+  }
+
+  /* Compact info: gap 축소 */
+  .customer-review-pagination .pagination-info,
+  .annual-report-pagination .pagination-info {
+    gap: 4px;
+    min-width: auto;
+  }
+
+  /* Compact separator/total: opacity 스타일 */
+  .customer-review-pagination .pagination-separator,
+  .annual-report-pagination .pagination-separator {
+    color: var(--color-text-secondary);
+    opacity: 0.5;
+  }
+
+  .customer-review-pagination .pagination-total,
+  .annual-report-pagination .pagination-total {
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+  }
+
+  /* ============================================================
+     고객 상세 > 계약 탭: iOS 스타일 (표준 크기, iOS 색상)
+     ============================================================ */
+
+  /* 계약 탭 버튼: iOS 색상 사용 */
+  .customer-contracts .contract-pagination .pagination-button {
+    color: var(--color-ios-text-primary-light);
+  }
+
+  html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-button {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .customer-contracts .contract-pagination .pagination-button:active:not(:disabled) {
+    background-color: var(--color-ios-bg-tertiary-light);
+  }
+
+  html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-button:active:not(:disabled) {
+    background-color: var(--color-ios-bg-tertiary-dark);
+  }
+
+  /* 계약 탭 arrow: iOS 스타일 */
+  .customer-contracts .contract-pagination .pagination-arrow {
+    font-size: 24px;
+  }
+
+  html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-arrow {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .customer-contracts .contract-pagination .pagination-button:disabled .pagination-arrow {
+    color: var(--color-ios-text-quaternary-light);
+  }
+
+  html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-button:disabled .pagination-arrow {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* 계약 탭 info: iOS 색상 */
+  .customer-contracts .contract-pagination .pagination-info {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-info {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .customer-contracts .contract-pagination .pagination-current {
+    color: var(--color-ios-text-primary-light);
+  }
+
+  html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-current {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .customer-contracts .contract-pagination .pagination-separator {
+    color: var(--color-ios-text-quaternary-light);
+  }
+
+  html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-separator {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  .customer-contracts .contract-pagination .pagination-total {
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-total {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* === 모바일 반응형 (480px 이하) === */
+  @media (max-width: 480px) {
+    .pagination,
+    .customer-pagination,
+    .document-pagination,
+    .contract-pagination,
+    .table-pagination {
+      padding: 12px 12px;
+      gap: 8px;
+    }
+
+    /* 터치 타겟 확대 */
+    .pagination-button {
+      width: 44px;
+      height: 44px;
+    }
+
+    .pagination-info {
+      min-width: 60px;
+      gap: 4px;
+      font-size: var(--font-size-caption-1); /* 13px */
+    }
+  }
+
+  /* === MOTION REDUCTION === */
+  @media (prefers-reduced-motion: reduce) {
+    .pagination-button {
+      transition: none;
+    }
+
+    .pagination-button:active:not(:disabled) {
+      transform: none;
+    }
+
+    .pagination-arrow {
+      transition: none;
+    }
+  }
+
+} /* end @layer components */

@@ -9,223 +9,228 @@
  */
 
 /* === DROPDOWN CONTAINER === */
-.ios-dropdown {
-  position: relative;
-  display: inline-block;
-  /* min-width는 각 사용처에서 prop으로 지정 */
-}
 
-/* Disabled 드롭다운 컨테이너 */
-.ios-dropdown--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+@layer components {
 
-/* === TRIGGER BUTTON === */
-.ios-dropdown__trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 6px 12px; /* 여유있는 패딩 */
-  min-height: 38px; /* 버튼과 동일한 높이 */
-  background-color: transparent;
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-md); /* 통일된 라운딩 */
-  color: var(--color-ios-text-primary-light);
-  font-size: var(--font-size-caption-1);
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  cursor: pointer;
-  outline: none;
-  transition: all var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .ios-dropdown__trigger {
-  background-color: transparent;
-  border-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-primary-dark);
-}
-
-.ios-dropdown__trigger:hover {
-  background-color: var(--color-ios-bg-tertiary-light);
-  border-color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .ios-dropdown__trigger:hover {
-  background-color: var(--color-ios-bg-tertiary-dark);
-  border-color: var(--color-ios-text-quaternary-dark);
-}
-
-.ios-dropdown__trigger:focus {
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Disabled 트리거 버튼 스타일 */
-.ios-dropdown__trigger:disabled {
-  cursor: not-allowed;
-  background-color: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .ios-dropdown__trigger:disabled {
-  background-color: var(--color-ios-bg-tertiary-dark);
-}
-
-.ios-dropdown__trigger:disabled:hover {
-  background-color: var(--color-ios-bg-tertiary-light);
-  border-color: var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .ios-dropdown__trigger:disabled:hover {
-  background-color: var(--color-ios-bg-tertiary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-/* === TRIGGER CONTENT === */
-.ios-dropdown__value {
-  flex: 1;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ios-dropdown__arrow {
-  margin-left: 8px;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
-  color: var(--color-ios-text-quaternary-light);
-  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .ios-dropdown__arrow {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* === DROPDOWN MENU === */
-.ios-dropdown__menu {
-  position: absolute;
-  top: calc(100% + 4px); /* 기본: 아래로 펼쳐짐 */
-  left: 0;
-  right: 0;
-  background-color: var(--color-ios-menu-bg-light); /* CSS 변수 사용 */
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-md); /* 통일된 라운딩 */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  z-index: 10000; /* 높은 z-index로 다른 요소 위에 표시 */
-  max-height: 300px; /* 최대 높이 제한 */
-  overflow-y: auto; /* 스크롤 가능 */
-  animation: dropdownFadeInDown var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-/* 위로 펼쳐지는 경우 (공간 부족시) */
-.ios-dropdown__menu--upward {
-  top: auto;
-  bottom: calc(100% + 4px);
-  animation: dropdownFadeInUp var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .ios-dropdown__menu {
-  background-color: var(--color-ios-menu-bg-dark); /* CSS 변수 사용 */
-  border-color: var(--color-ios-separator-dark);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-/* 아래로 펼쳐지는 애니메이션 (기본) */
-@keyframes dropdownFadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-4px); /* 위에서 아래로 */
+  .ios-dropdown {
+    position: relative;
+    display: inline-block;
+    /* min-width는 각 사용처에서 prop으로 지정 */
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  /* Disabled 드롭다운 컨테이너 */
+  .ios-dropdown--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
-}
 
-/* 위로 펼쳐지는 애니메이션 (공간 부족시) */
-@keyframes dropdownFadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(4px); /* 아래에서 위로 */
+  /* === TRIGGER BUTTON === */
+  .ios-dropdown__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 6px 12px; /* 여유있는 패딩 */
+    min-height: 38px; /* 버튼과 동일한 높이 */
+    background-color: transparent;
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: var(--radius-md); /* 통일된 라운딩 */
+    color: var(--color-ios-text-primary-light);
+    font-size: var(--font-size-caption-1);
+    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    cursor: pointer;
+    outline: none;
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  html[data-theme="dark"] .ios-dropdown__trigger {
+    background-color: transparent;
+    border-color: var(--color-ios-separator-dark);
+    color: var(--color-ios-text-primary-dark);
   }
-}
 
-/* === DROPDOWN OPTION === */
-.ios-dropdown__option {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  background-color: transparent;
-  border: none;
-  color: var(--color-ios-text-primary-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  text-align: left;
-  cursor: pointer;
-  outline: none;
-  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
-}
+  .ios-dropdown__trigger:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+    border-color: var(--color-ios-text-quaternary-light);
+  }
 
-html[data-theme="dark"] .ios-dropdown__option {
-  color: var(--color-ios-text-primary-dark);
-}
+  html[data-theme="dark"] .ios-dropdown__trigger:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+    border-color: var(--color-ios-text-quaternary-dark);
+  }
 
-/* 🍎 명확한 하이라이트 색상 - 가시성 개선 */
-.ios-dropdown__option:hover {
-  background-color: var(--color-ios-menu-option-hover-light);
-}
+  .ios-dropdown__trigger:focus {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
 
-html[data-theme="dark"] .ios-dropdown__option:hover {
-  background-color: var(--color-ios-menu-option-hover-dark);
-}
+  /* Disabled 트리거 버튼 스타일 */
+  .ios-dropdown__trigger:disabled {
+    cursor: not-allowed;
+    background-color: var(--color-ios-bg-tertiary-light);
+  }
 
-.ios-dropdown__option:focus {
-  background-color: var(--color-ios-menu-option-hover-light);
-}
+  html[data-theme="dark"] .ios-dropdown__trigger:disabled {
+    background-color: var(--color-ios-bg-tertiary-dark);
+  }
 
-html[data-theme="dark"] .ios-dropdown__option:focus {
-  background-color: var(--color-ios-menu-option-hover-dark);
-}
+  .ios-dropdown__trigger:disabled:hover {
+    background-color: var(--color-ios-bg-tertiary-light);
+    border-color: var(--color-ios-separator-light);
+  }
 
-/* 선택된 옵션은 더 진한 색상으로 명확하게 표시 */
-.ios-dropdown__option--selected {
-  background-color: var(--color-ios-menu-option-selected-light);
-  font-weight: 600; /* 폰트 굵기도 증가 */
-}
+  html[data-theme="dark"] .ios-dropdown__trigger:disabled:hover {
+    background-color: var(--color-ios-bg-tertiary-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
 
-html[data-theme="dark"] .ios-dropdown__option--selected {
-  background-color: var(--color-ios-menu-option-selected-dark);
-}
+  /* === TRIGGER CONTENT === */
+  .ios-dropdown__value {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-/* Disabled 옵션 스타일 (옅은 색상, 클릭 불가) */
-.ios-dropdown__option--disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  pointer-events: none;
-}
+  .ios-dropdown__arrow {
+    margin-left: 8px;
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+    color: var(--color-ios-text-quaternary-light);
+    transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+  }
 
-.ios-dropdown__option--disabled:hover {
-  background-color: transparent;
-}
+  html[data-theme="dark"] .ios-dropdown__arrow {
+    color: var(--color-ios-text-quaternary-dark);
+  }
 
-/* === ACCESSIBILITY === */
-@media (prefers-reduced-motion: reduce) {
+  /* === DROPDOWN MENU === */
   .ios-dropdown__menu {
-    animation: none;
+    position: absolute;
+    top: calc(100% + 4px); /* 기본: 아래로 펼쳐짐 */
+    left: 0;
+    right: 0;
+    background-color: var(--color-ios-menu-bg-light); /* CSS 변수 사용 */
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: var(--radius-md); /* 통일된 라운딩 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    z-index: 10000; /* 높은 z-index로 다른 요소 위에 표시 */
+    max-height: 300px; /* 최대 높이 제한 */
+    overflow-y: auto; /* 스크롤 가능 */
+    animation: dropdownFadeInDown var(--duration-ios-quick) var(--easing-ease-out);
   }
-}
 
-/* 터치 디바이스 최적화 */
-@media (hover: none) and (pointer: coarse) {
-  .ios-dropdown__trigger,
-  .ios-dropdown__option {
-    min-height: 44px; /* iOS 최소 터치 영역 */
+  /* 위로 펼쳐지는 경우 (공간 부족시) */
+  .ios-dropdown__menu--upward {
+    top: auto;
+    bottom: calc(100% + 4px);
+    animation: dropdownFadeInUp var(--duration-ios-quick) var(--easing-ease-out);
   }
-}
+
+  html[data-theme="dark"] .ios-dropdown__menu {
+    background-color: var(--color-ios-menu-bg-dark); /* CSS 변수 사용 */
+    border-color: var(--color-ios-separator-dark);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  /* 아래로 펼쳐지는 애니메이션 (기본) */
+  @keyframes dropdownFadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-4px); /* 위에서 아래로 */
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 위로 펼쳐지는 애니메이션 (공간 부족시) */
+  @keyframes dropdownFadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(4px); /* 아래에서 위로 */
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* === DROPDOWN OPTION === */
+  .ios-dropdown__option {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background-color: transparent;
+    border: none;
+    color: var(--color-ios-text-primary-light);
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+    transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  html[data-theme="dark"] .ios-dropdown__option {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  /* 🍎 명확한 하이라이트 색상 - 가시성 개선 */
+  .ios-dropdown__option:hover {
+    background-color: var(--color-ios-menu-option-hover-light);
+  }
+
+  html[data-theme="dark"] .ios-dropdown__option:hover {
+    background-color: var(--color-ios-menu-option-hover-dark);
+  }
+
+  .ios-dropdown__option:focus {
+    background-color: var(--color-ios-menu-option-hover-light);
+  }
+
+  html[data-theme="dark"] .ios-dropdown__option:focus {
+    background-color: var(--color-ios-menu-option-hover-dark);
+  }
+
+  /* 선택된 옵션은 더 진한 색상으로 명확하게 표시 */
+  .ios-dropdown__option--selected {
+    background-color: var(--color-ios-menu-option-selected-light);
+    font-weight: 600; /* 폰트 굵기도 증가 */
+  }
+
+  html[data-theme="dark"] .ios-dropdown__option--selected {
+    background-color: var(--color-ios-menu-option-selected-dark);
+  }
+
+  /* Disabled 옵션 스타일 (옅은 색상, 클릭 불가) */
+  .ios-dropdown__option--disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .ios-dropdown__option--disabled:hover {
+    background-color: transparent;
+  }
+
+  /* === ACCESSIBILITY === */
+  @media (prefers-reduced-motion: reduce) {
+    .ios-dropdown__menu {
+      animation: none;
+    }
+  }
+
+  /* 터치 디바이스 최적화 */
+  @media (hover: none) and (pointer: coarse) {
+    .ios-dropdown__trigger,
+    .ios-dropdown__option {
+      min-height: 44px; /* iOS 최소 터치 영역 */
+    }
+  }
+
+} /* end @layer components */

@@ -11,71 +11,76 @@
 /* ===== DocumentFullTextModal 전용 스타일 ===== */
 
 /* 모달 바디 */
-.fulltext-modal-body {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 20px;
-  background-color: var(--color-layout-secondary-light);
-  min-height: 0;
-}
 
-html[data-theme="dark"] .fulltext-modal-body {
-  background-color: var(--color-layout-secondary-dark);
-}
+@layer components {
 
-.fulltext-content {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
-  line-height: 1.6;
-  color: var(--color-text-primary);
-  margin: 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-/* 로딩 상태 */
-.fulltext-loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  min-height: 300px;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-body); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
-  font-family: var(--font-family-display);
-}
-
-.fulltext-loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--color-layout-border);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+  .fulltext-modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    background-color: var(--color-layout-secondary-light);
+    min-height: 0;
   }
-}
 
-/* 스크롤바 스타일 (WebKit) */
-.fulltext-modal-body::-webkit-scrollbar {
-  width: 8px;
-}
+  html[data-theme="dark"] .fulltext-modal-body {
+    background-color: var(--color-layout-secondary-dark);
+  }
 
-.fulltext-modal-body::-webkit-scrollbar-track {
-  background: transparent;
-}
+  .fulltext-content {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+    line-height: 1.6;
+    color: var(--color-text-primary);
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
 
-.fulltext-modal-body::-webkit-scrollbar-thumb {
-  background-color: var(--color-layout-border);
-  border-radius: 4px;
-}
+  /* 로딩 상태 */
+  .fulltext-loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 300px;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
+    font-family: var(--font-family-display);
+  }
 
-.fulltext-modal-body::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-tertiary);
-}
+  .fulltext-loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--color-layout-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* 스크롤바 스타일 (WebKit) */
+  .fulltext-modal-body::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .fulltext-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .fulltext-modal-body::-webkit-scrollbar-thumb {
+    background-color: var(--color-layout-border);
+    border-radius: 4px;
+  }
+
+  .fulltext-modal-body::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-text-tertiary);
+  }
+
+} /* end @layer components */

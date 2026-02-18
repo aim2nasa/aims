@@ -8,607 +8,612 @@
  */
 
 /* ===== 모달 컨테이너 - 드롭다운 오버플로우 허용 ===== */
-.document-link-modal.modal {
-  overflow: visible;
-}
 
-/* 모달 크기 조정 (고객 선택과 문서 유형이 한 줄에 표시되도록) */
-.document-link-modal.modal--xl {
-  max-width: 700px; /* 기존 1000px → 700px */
-}
+@layer components {
 
-.document-link-modal.modal--md {
-  max-width: 580px; /* 한 줄 표시를 위해 조정 */
-}
-
-/* ===== 모달 콘텐츠 - 드롭다운이 모달 밖으로 확장 가능 ===== */
-.document-link-modal .modal__content {
-  overflow: visible;
-}
-
-/* ===== 모달 바디 ===== */
-.document-link-modal__content {
-  flex: 1 1 auto;
-  overflow: visible;
-  padding: 16px 20px;
-  background-color: var(--color-layout-secondary-light);
-  min-height: 0;
-  max-height: none;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  overscroll-behavior: none;
-}
-
-html[data-theme="dark"] .document-link-modal__content {
-  background-color: var(--color-layout-secondary-dark);
-}
-
-/* ===== 제목 스타일 (Modal title prop에서 사용) ===== */
-.document-link-modal__title {
-  display: flex;
-  gap: var(--spacing-3);
-  align-items: center;
-}
-
-.document-link-modal__title span {
-  margin: 0;
-  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
-  font-family: var(--font-family-display);
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-/* ===== 콘텐츠 섹션 ===== */
-
-.document-link-modal__section {
-  padding: 0;
-  margin-bottom: var(--spacing-1);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  overflow: visible;
-  position: relative;
-}
-
-.document-link-modal__section:last-child {
-  margin-bottom: 0;
-}
-
-.document-link-modal__section--document {
-  background: transparent;
-  padding: 0;
-  margin-bottom: var(--spacing-1); /* 여백 최소화 */
-  flex-shrink: 0; /* 다른 섹션이 이 섹션을 압축하지 못하게 */
-}
-
-.document-link-modal__section h3 {
-  margin: 0;
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
-  font-family: var(--font-family-display);
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.document-chip {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-1) var(--spacing-2);
-  background: var(--color-bg-secondary);
-  /* font-size: var(--font-size-footnote); () */
-  color: var(--color-text-primary);
-  width: 100%;
-  height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
-  min-height: 36px;
-  max-height: 36px;
-}
-
-html[data-theme="dark"] .document-chip {
-  border-color: var(--color-ios-separator-dark);
-  background: var(--color-layout-secondary-dark);
-}
-
-.document-chip__icon {
-  /* font-size: var(--font-size-callout); () */
-  flex-shrink: 0;
-}
-
-.document-chip__name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.document-chip__status {
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
-  margin-left: var(--spacing-2);
-}
-
-/* ===== 일괄 연결 모드: 문서 리스트 ===== */
-
-.document-link-modal__bulk-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-2) 0;
-  margin-bottom: var(--spacing-1);
-}
-
-.document-link-modal__bulk-count {
-  font-size: var(--font-size-footnote); /* 13px */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.document-link-modal__section--document .document-link-modal__document-list {
-  /* 최대 5개 문서까지 표시 - 메모 공간 확보를 위해 높이 축소 */
-  /* 36px(항목) * 5개 = 180px + padding = 198px */
-  max-height: 198px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-secondary);
-  padding: var(--spacing-3);
-  /* 스크롤바 스타일 */
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-text-tertiary) transparent;
-  /* 플렉스박스 */
-  display: flex;
-  flex-direction: column;
-  gap: 0; /* 아이템 간 간격 제거 */
-  flex-shrink: 0; /* 높이 축소 방지 */
-}
-
-/* 웹킷 브라우저용 스크롤바 스타일 */
-.document-link-modal__document-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.document-link-modal__document-list::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 4px;
-}
-
-.document-link-modal__document-list::-webkit-scrollbar-thumb {
-  background: var(--color-text-tertiary);
-  border-radius: 4px;
-  opacity: 0.5;
-}
-
-.document-link-modal__document-list::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
-  opacity: 0.7;
-}
-
-html[data-theme="dark"] .document-link-modal__document-list {
-  border-color: var(--color-ios-separator-dark);
-  background: var(--color-layout-secondary-dark);
-}
-
-.document-list-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--radius-sm);
-  /* A 영역과 동일한 높이 유지 */
-  height: 36px;
-  min-height: 36px;
-  max-height: 36px;
-  flex-shrink: 0; /* 아이템 축소 방지 */
-  transition: background-color 0.15s ease;
-}
-
-.document-list-item:hover {
-  background: var(--color-bg-hover);
-}
-
-.document-list-item__icon {
-  flex-shrink: 0;
-  font-size: var(--font-size-callout); /* 16px */
-}
-
-.document-list-item__name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--font-size-caption-1); /* 12px */
-  font-family: var(--font-family-text);
-  color: var(--color-text-primary);
-}
-
-.document-list-item__status {
-  flex-shrink: 0;
-  font-size: var(--font-size-caption-2); /* 11px */
-  font-family: var(--font-family-text);
-  color: var(--color-text-secondary);
-  margin-left: var(--spacing-2);
-}
-
-
-/* ===== 고객 선택 & 문서 유형 같은 줄 배치 ===== */
-
-.document-link-modal__main-row {
-  display: flex;
-  flex-direction: row;
-  gap: var(--spacing-4);
-  align-items: center;
-  flex-wrap: nowrap; /* 한 줄 표시 강제 */
-  overflow: visible;
-  position: relative;
-  z-index: 1;
-}
-
-/* ===== 고객 선택 영역 ===== */
-
-.document-link-modal__customer-selection {
-  display: flex;
-  flex-direction: row;
-  gap: var(--spacing-3);
-  align-items: center;
-  flex: 1; /* 가능한 공간 차지 */
-  overflow: visible; /* 드롭다운이 잘리지 않도록 */
-  position: relative; /* 드롭다운 위치 기준 */
-}
-
-/* 고객선택 버튼 높이 (B) - A 영역과 동일 */
-.document-link-modal__customer-selection .button {
-  height: 36px;
-  min-height: 36px;
-  max-height: 36px;
-}
-
-/* 🍎 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
-.document-link-modal__selected-customer {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  flex: 1;
-  height: 36px;
-  min-height: 36px;
-  max-height: 36px;
-  overflow: visible; /* 드롭다운이 잘리지 않도록 */
-  position: relative; /* 드롭다운 위치 기준 */
-}
-
-/* 고객 선택됨: 이름 + X 버튼 컨테이너 */
-.document-link-modal__selected-customer > span.selected-customer-name {
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-lg);
-  padding: 0 var(--spacing-3);
-  background: var(--color-bg-secondary);
-  height: 36px;
-  display: flex;
-  align-items: center;
-  flex: 1;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-size: var(--font-size-footnote);
-  font-family: var(--font-family-text);
-}
-
-html[data-theme="dark"] .document-link-modal__selected-customer > span.selected-customer-name {
-  background: var(--color-layout-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-.clear-customer-button {
-  background: transparent;
-  border: none;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  padding: var(--spacing-1);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘 */
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.clear-customer-button:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-primary);
-  transform: scale(1.1);
-}
-
-/* ===== (사용 안 함) 최근 선택 고객 섹션 - DocumentSearchView 드롭다운 방식 사용 ===== */
-.document-link-modal__recent-customers {
-  margin-top: var(--spacing-2);
-  padding-top: var(--spacing-2);
-}
-
-.recent-customers-header {
-  margin-bottom: var(--spacing-1); /* 간격 축소: 8px → 4px */
-}
-
-.recent-customers-label {
-  font-size: var(--font-size-caption-1); /* 12px */
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.recent-customers-list {
-  display: flex;
-  gap: var(--spacing-2);
-  flex-wrap: wrap;
-  justify-content: center; /* 중앙 정렬 */
-}
-
-.recent-customer-card {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-2); /* 높이 축소 */
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 100px; /* 너비 축소 */
-  max-width: 150px; /* 너비 축소 */
-  height: 25px; /* 높이 30% 축소 (기존 ~36px → 25px) */
-}
-
-html[data-theme="dark"] .recent-customer-card {
-  background: var(--color-layout-secondary-dark);
-  border-color: var(--color-border-dark);
-}
-
-.recent-customer-card:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-primary);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-card-hover-light);
-}
-
-html[data-theme="dark"] .recent-customer-card:hover {
-  background: var(--color-bg-hover-dark);
-  box-shadow: var(--shadow-card-hover-dark);
-}
-
-.recent-customer-icon {
-  font-size: 16px; /* 크기 축소 */
-  flex-shrink: 0;
-}
-
-.recent-customer-name {
-  font-size: var(--font-size-caption-1); /* 12px - 카드 크기에 맞춰 축소 */
-  font-weight: 600;
-  color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1; /* flex 자식으로 직접 배치 */
-}
-
-.document-link-modal__error {
-  margin: 0;
-  /* font-size: var(--font-size-caption-1); () */
-  color: var(--color-error-500);
-}
-
-
-.document-link-modal__form-row {
-  display: flex;
-  gap: var(--spacing-4);
-  flex-wrap: wrap;
-}
-
-.document-link-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1); /* 여백 최소화 */
-  flex: 1;
-  min-width: 220px;
-}
-
-/* 인라인 필드 (레이블과 입력 요소를 한 줄로) */
-.document-link-modal__field--inline {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--spacing-3);
-  position: relative; /* 드롭다운 위치 기준점 */
-  overflow: visible; /* 드롭다운이 필드 밖으로 나갈 수 있도록 */
-}
-
-/* main-row 안의 인라인 필드는 적절한 너비 차지 */
-.document-link-modal__main-row .document-link-modal__field--inline {
-  flex: 1; /* 가능한 공간 차지 */
-}
-
-.document-link-modal__field--inline label {
-  flex-shrink: 0;
-  min-width: auto;
-  white-space: nowrap;
-}
-
-.document-link-modal__field label {
-  /* font-size: var(--font-size-sm); () */
-  color: var(--color-text-primary);
-  /* font-weight: var(--font-weight-medium); () */
-  font-weight: 600;
-}
-
-.document-link-modal__optional {
-  margin-left: var(--spacing-2);
-  /* font-size: var(--font-size-xs); () */
-  color: var(--color-text-tertiary);
-}
-
-.document-link-modal__textarea {
-  width: 100%;
-  min-height: 64px; /* 2줄 높이 - 메모 공간 확대 */
-  height: 64px;
-  max-height: 64px;
-  resize: none; /* 높이 고정을 위해 resize 비활성화 */
-  padding: var(--spacing-2); /* 패딩 조정 */
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-ios-separator-light);
-  background: var(--color-neutral-0);
-  color: var(--color-text-primary);
-  /* font-size: var(--font-size-footnote); () */
-  overflow-y: auto; /* 스크롤 활성화 */
-}
-
-html[data-theme="dark"] .document-link-modal__textarea {
-  background: var(--color-layout-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-  color: var(--color-text-primary);
-}
-
-.document-link-modal__feedback {
-  margin: 0;
-  /* font-size: var(--font-size-footnote); () */
-  color: var(--color-text-secondary);
-}
-
-/* ===== 입력 필드 및 버튼 스타일 ===== */
-
-/* Dropdown 메뉴 높이 제한 (모달 내부) - 모든 드롭다운에 적용 */
-.document-link-modal .ios-dropdown__menu {
-  max-height: 300px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  z-index: 9999;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
-
-/* 고객 선택 드롭다운 메뉴 (더 많은 항목 표시) */
-.document-link-modal__customer-selection .ios-dropdown__menu {
-  max-height: 300px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  z-index: 10000;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
-
-/* 고객 드롭다운 옵션 많을 때 스크롤 명시 */
-.document-link-modal__selected-customer .ios-dropdown .ios-dropdown__menu {
-  max-height: 300px;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  z-index: 10000;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
-
-/* Dropdown 트리거 높이 (D) - A 영역과 동일 */
-.document-link-modal .ios-dropdown__trigger {
-  height: 36px;
-  min-height: 36px;
-  max-height: 36px;
-  padding: 0 12px;
-  box-sizing: border-box;
-}
-
-.document-link-modal .input-container {
-  background-color: var(--color-neutral-0);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-lg);
-  min-height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
-  height: 36px;
-  max-height: 36px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-}
-
-html[data-theme="dark"] .document-link-modal .input-container {
-  background-color: var(--color-layout-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-.document-link-modal .input {
-  height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 36px;
-  max-height: 36px;
-  padding: var(--spacing-2) var(--spacing-3);
-  color: var(--color-text-primary);
-}
-
-.document-link-modal .input.input--with-left-icon {
-  padding-left: calc(var(--spacing-4) + 24px);
-}
-
-.document-link-modal .input.input--with-right-icon {
-  padding-right: calc(var(--spacing-4) + 24px);
-}
-
-.document-link-modal .input-icon {
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.document-link-modal__button {
-  min-width: 96px;
-}
-
-.document-link-modal__button--confirm.button--secondary {
-  background-color: var(--color-button-secondary-bg);
-  border-color: var(--color-button-secondary-border);
-  color: var(--color-button-secondary-text);
-}
-
-.document-link-modal__button--confirm.button--secondary:hover:not(:disabled) {
-  background-color: var(--color-button-secondary-bg-hover);
-}
-
-.document-link-modal__button--confirm.button--secondary:active:not(:disabled) {
-  background-color: var(--color-button-secondary-bg-active);
-}
-
-.document-link-modal__button--cancel.button--ghost {
-  color: var(--color-text-secondary);
-}
-
-html[data-theme="dark"] .document-link-modal__button--cancel.button--ghost {
-  color: var(--color-text-secondary);
-}
-
-/* ===== 스크롤바 스타일 (WebKit) - 모달 바디는 스크롤 없음 ===== */
-
-.document-link-modal__content::-webkit-scrollbar {
-  display: none; /* 스크롤바 숨김 */
-}
-
-@media (max-width: 768px) {
-  .document-link-modal-backdrop {
-    padding: var(--spacing-4);
+  .document-link-modal.modal {
+    overflow: visible;
   }
 
-  .document-link-modal {
-    width: 100%;
-    max-height: 95vh;
+  /* 모달 크기 조정 (고객 선택과 문서 유형이 한 줄에 표시되도록) */
+  .document-link-modal.modal--xl {
+    max-width: 700px; /* 기존 1000px → 700px */
+  }
+
+  .document-link-modal.modal--md {
+    max-width: 580px; /* 한 줄 표시를 위해 조정 */
+  }
+
+  /* ===== 모달 콘텐츠 - 드롭다운이 모달 밖으로 확장 가능 ===== */
+  .document-link-modal .modal__content {
+    overflow: visible;
+  }
+
+  /* ===== 모달 바디 ===== */
+  .document-link-modal__content {
+    flex: 1 1 auto;
+    overflow: visible;
+    padding: 16px 20px;
+    background-color: var(--color-layout-secondary-light);
+    min-height: 0;
+    max-height: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    overscroll-behavior: none;
+  }
+
+  html[data-theme="dark"] .document-link-modal__content {
+    background-color: var(--color-layout-secondary-dark);
+  }
+
+  /* ===== 제목 스타일 (Modal title prop에서 사용) ===== */
+  .document-link-modal__title {
+    display: flex;
+    gap: var(--spacing-3);
+    align-items: center;
+  }
+
+  .document-link-modal__title span {
+    margin: 0;
+    font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
+    font-family: var(--font-family-display);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  /* ===== 콘텐츠 섹션 ===== */
+
+  .document-link-modal__section {
+    padding: 0;
+    margin-bottom: var(--spacing-1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+    overflow: visible;
+    position: relative;
+  }
+
+  .document-link-modal__section:last-child {
+    margin-bottom: 0;
   }
 
   .document-link-modal__section--document {
-    flex-direction: column;
-    align-items: flex-start;
+    background: transparent;
+    padding: 0;
+    margin-bottom: var(--spacing-1); /* 여백 최소화 */
+    flex-shrink: 0; /* 다른 섹션이 이 섹션을 압축하지 못하게 */
   }
 
-  .selected-customer {
-    flex-direction: column;
-    gap: var(--spacing-3);
-    align-items: flex-start;
+  .document-link-modal__section h3 {
+    margin: 0;
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
+    font-family: var(--font-family-display);
+    font-weight: 600;
+    color: var(--color-text-primary);
   }
-}
+
+  .document-chip {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-1) var(--spacing-2);
+    background: var(--color-bg-secondary);
+    /* font-size: var(--font-size-footnote); () */
+    color: var(--color-text-primary);
+    width: 100%;
+    height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
+    min-height: 36px;
+    max-height: 36px;
+  }
+
+  html[data-theme="dark"] .document-chip {
+    border-color: var(--color-ios-separator-dark);
+    background: var(--color-layout-secondary-dark);
+  }
+
+  .document-chip__icon {
+    /* font-size: var(--font-size-callout); () */
+    flex-shrink: 0;
+  }
+
+  .document-chip__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .document-chip__status {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    margin-left: var(--spacing-2);
+  }
+
+  /* ===== 일괄 연결 모드: 문서 리스트 ===== */
+
+  .document-link-modal__bulk-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-2) 0;
+    margin-bottom: var(--spacing-1);
+  }
+
+  .document-link-modal__bulk-count {
+    font-size: var(--font-size-footnote); /* 13px */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .document-link-modal__section--document .document-link-modal__document-list {
+    /* 최대 5개 문서까지 표시 - 메모 공간 확보를 위해 높이 축소 */
+    /* 36px(항목) * 5개 = 180px + padding = 198px */
+    max-height: 198px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-secondary);
+    padding: var(--spacing-3);
+    /* 스크롤바 스타일 */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-text-tertiary) transparent;
+    /* 플렉스박스 */
+    display: flex;
+    flex-direction: column;
+    gap: 0; /* 아이템 간 간격 제거 */
+    flex-shrink: 0; /* 높이 축소 방지 */
+  }
+
+  /* 웹킷 브라우저용 스크롤바 스타일 */
+  .document-link-modal__document-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .document-link-modal__document-list::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+  }
+
+  .document-link-modal__document-list::-webkit-scrollbar-thumb {
+    background: var(--color-text-tertiary);
+    border-radius: 4px;
+    opacity: 0.5;
+  }
+
+  .document-link-modal__document-list::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+    opacity: 0.7;
+  }
+
+  html[data-theme="dark"] .document-link-modal__document-list {
+    border-color: var(--color-ios-separator-dark);
+    background: var(--color-layout-secondary-dark);
+  }
+
+  .document-list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    /* A 영역과 동일한 높이 유지 */
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    flex-shrink: 0; /* 아이템 축소 방지 */
+    transition: background-color 0.15s ease;
+  }
+
+  .document-list-item:hover {
+    background: var(--color-bg-hover);
+  }
+
+  .document-list-item__icon {
+    flex-shrink: 0;
+    font-size: var(--font-size-callout); /* 16px */
+  }
+
+  .document-list-item__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--font-size-caption-1); /* 12px */
+    font-family: var(--font-family-text);
+    color: var(--color-text-primary);
+  }
+
+  .document-list-item__status {
+    flex-shrink: 0;
+    font-size: var(--font-size-caption-2); /* 11px */
+    font-family: var(--font-family-text);
+    color: var(--color-text-secondary);
+    margin-left: var(--spacing-2);
+  }
+
+
+  /* ===== 고객 선택 & 문서 유형 같은 줄 배치 ===== */
+
+  .document-link-modal__main-row {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-4);
+    align-items: center;
+    flex-wrap: nowrap; /* 한 줄 표시 강제 */
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== 고객 선택 영역 ===== */
+
+  .document-link-modal__customer-selection {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-3);
+    align-items: center;
+    flex: 1; /* 가능한 공간 차지 */
+    overflow: visible; /* 드롭다운이 잘리지 않도록 */
+    position: relative; /* 드롭다운 위치 기준 */
+  }
+
+  /* 고객선택 버튼 높이 (B) - A 영역과 동일 */
+  .document-link-modal__customer-selection .button {
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+  }
+
+  /* 🍎 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
+  .document-link-modal__selected-customer {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    flex: 1;
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    overflow: visible; /* 드롭다운이 잘리지 않도록 */
+    position: relative; /* 드롭다운 위치 기준 */
+  }
+
+  /* 고객 선택됨: 이름 + X 버튼 컨테이너 */
+  .document-link-modal__selected-customer > span.selected-customer-name {
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: var(--radius-lg);
+    padding: 0 var(--spacing-3);
+    background: var(--color-bg-secondary);
+    height: 36px;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-footnote);
+    font-family: var(--font-family-text);
+  }
+
+  html[data-theme="dark"] .document-link-modal__selected-customer > span.selected-customer-name {
+    background: var(--color-layout-secondary-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  .clear-customer-button {
+    background: transparent;
+    border: none;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    padding: var(--spacing-1);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘 */
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .clear-customer-button:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+    transform: scale(1.1);
+  }
+
+  /* ===== (사용 안 함) 최근 선택 고객 섹션 - DocumentSearchView 드롭다운 방식 사용 ===== */
+  .document-link-modal__recent-customers {
+    margin-top: var(--spacing-2);
+    padding-top: var(--spacing-2);
+  }
+
+  .recent-customers-header {
+    margin-bottom: var(--spacing-1); /* 간격 축소: 8px → 4px */
+  }
+
+  .recent-customers-label {
+    font-size: var(--font-size-caption-1); /* 12px */
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .recent-customers-list {
+    display: flex;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+    justify-content: center; /* 중앙 정렬 */
+  }
+
+  .recent-customer-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-2); /* 높이 축소 */
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px; /* 너비 축소 */
+    max-width: 150px; /* 너비 축소 */
+    height: 25px; /* 높이 30% 축소 (기존 ~36px → 25px) */
+  }
+
+  html[data-theme="dark"] .recent-customer-card {
+    background: var(--color-layout-secondary-dark);
+    border-color: var(--color-border-dark);
+  }
+
+  .recent-customer-card:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card-hover-light);
+  }
+
+  html[data-theme="dark"] .recent-customer-card:hover {
+    background: var(--color-bg-hover-dark);
+    box-shadow: var(--shadow-card-hover-dark);
+  }
+
+  .recent-customer-icon {
+    font-size: 16px; /* 크기 축소 */
+    flex-shrink: 0;
+  }
+
+  .recent-customer-name {
+    font-size: var(--font-size-caption-1); /* 12px - 카드 크기에 맞춰 축소 */
+    font-weight: 600;
+    color: var(--color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1; /* flex 자식으로 직접 배치 */
+  }
+
+  .document-link-modal__error {
+    margin: 0;
+    /* font-size: var(--font-size-caption-1); () */
+    color: var(--color-error-500);
+  }
+
+
+  .document-link-modal__form-row {
+    display: flex;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+  }
+
+  .document-link-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1); /* 여백 최소화 */
+    flex: 1;
+    min-width: 220px;
+  }
+
+  /* 인라인 필드 (레이블과 입력 요소를 한 줄로) */
+  .document-link-modal__field--inline {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-3);
+    position: relative; /* 드롭다운 위치 기준점 */
+    overflow: visible; /* 드롭다운이 필드 밖으로 나갈 수 있도록 */
+  }
+
+  /* main-row 안의 인라인 필드는 적절한 너비 차지 */
+  .document-link-modal__main-row .document-link-modal__field--inline {
+    flex: 1; /* 가능한 공간 차지 */
+  }
+
+  .document-link-modal__field--inline label {
+    flex-shrink: 0;
+    min-width: auto;
+    white-space: nowrap;
+  }
+
+  .document-link-modal__field label {
+    /* font-size: var(--font-size-sm); () */
+    color: var(--color-text-primary);
+    /* font-weight: var(--font-weight-medium); () */
+    font-weight: 600;
+  }
+
+  .document-link-modal__optional {
+    margin-left: var(--spacing-2);
+    /* font-size: var(--font-size-xs); () */
+    color: var(--color-text-tertiary);
+  }
+
+  .document-link-modal__textarea {
+    width: 100%;
+    min-height: 64px; /* 2줄 높이 - 메모 공간 확대 */
+    height: 64px;
+    max-height: 64px;
+    resize: none; /* 높이 고정을 위해 resize 비활성화 */
+    padding: var(--spacing-2); /* 패딩 조정 */
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-ios-separator-light);
+    background: var(--color-neutral-0);
+    color: var(--color-text-primary);
+    /* font-size: var(--font-size-footnote); () */
+    overflow-y: auto; /* 스크롤 활성화 */
+  }
+
+  html[data-theme="dark"] .document-link-modal__textarea {
+    background: var(--color-layout-secondary-dark);
+    border-color: var(--color-ios-separator-dark);
+    color: var(--color-text-primary);
+  }
+
+  .document-link-modal__feedback {
+    margin: 0;
+    /* font-size: var(--font-size-footnote); () */
+    color: var(--color-text-secondary);
+  }
+
+  /* ===== 입력 필드 및 버튼 스타일 ===== */
+
+  /* Dropdown 메뉴 높이 제한 (모달 내부) - 모든 드롭다운에 적용 */
+  .document-link-modal .ios-dropdown__menu {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 9999;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  /* 고객 선택 드롭다운 메뉴 (더 많은 항목 표시) */
+  .document-link-modal__customer-selection .ios-dropdown__menu {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 10000;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  /* 고객 드롭다운 옵션 많을 때 스크롤 명시 */
+  .document-link-modal__selected-customer .ios-dropdown .ios-dropdown__menu {
+    max-height: 300px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    z-index: 10000;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  /* Dropdown 트리거 높이 (D) - A 영역과 동일 */
+  .document-link-modal .ios-dropdown__trigger {
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    padding: 0 12px;
+    box-sizing: border-box;
+  }
+
+  .document-link-modal .input-container {
+    background-color: var(--color-neutral-0);
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: var(--radius-lg);
+    min-height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
+    height: 36px;
+    max-height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  html[data-theme="dark"] .document-link-modal .input-container {
+    background-color: var(--color-layout-secondary-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  .document-link-modal .input {
+    height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 36px;
+    max-height: 36px;
+    padding: var(--spacing-2) var(--spacing-3);
+    color: var(--color-text-primary);
+  }
+
+  .document-link-modal .input.input--with-left-icon {
+    padding-left: calc(var(--spacing-4) + 24px);
+  }
+
+  .document-link-modal .input.input--with-right-icon {
+    padding-right: calc(var(--spacing-4) + 24px);
+  }
+
+  .document-link-modal .input-icon {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .document-link-modal__button {
+    min-width: 96px;
+  }
+
+  .document-link-modal__button--confirm.button--secondary {
+    background-color: var(--color-button-secondary-bg);
+    border-color: var(--color-button-secondary-border);
+    color: var(--color-button-secondary-text);
+  }
+
+  .document-link-modal__button--confirm.button--secondary:hover:not(:disabled) {
+    background-color: var(--color-button-secondary-bg-hover);
+  }
+
+  .document-link-modal__button--confirm.button--secondary:active:not(:disabled) {
+    background-color: var(--color-button-secondary-bg-active);
+  }
+
+  .document-link-modal__button--cancel.button--ghost {
+    color: var(--color-text-secondary);
+  }
+
+  html[data-theme="dark"] .document-link-modal__button--cancel.button--ghost {
+    color: var(--color-text-secondary);
+  }
+
+  /* ===== 스크롤바 스타일 (WebKit) - 모달 바디는 스크롤 없음 ===== */
+
+  .document-link-modal__content::-webkit-scrollbar {
+    display: none; /* 스크롤바 숨김 */
+  }
+
+  @media (max-width: 768px) {
+    .document-link-modal-backdrop {
+      padding: var(--spacing-4);
+    }
+
+    .document-link-modal {
+      width: 100%;
+      max-height: 95vh;
+    }
+
+    .document-link-modal__section--document {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .selected-customer {
+      flex-direction: column;
+      gap: var(--spacing-3);
+      align-items: flex-start;
+    }
+  }
+
+} /* end @layer components */

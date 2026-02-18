@@ -7,100 +7,105 @@
  */
 
 /* 메인 컨테이너 - RightPane 위 뷰어 창 */
-.base-viewer {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  right: 2px;
-  bottom: 2px;
-  background-color: var(--color-layout-content-light);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--color-layout-accent-light);
-  z-index: var(--z-index-modal);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  /* 🍎 애플 스타일 페이드인 애니메이션 */
-  animation: baseViewerFadeIn var(--duration-normal) var(--easing-ease-out);
-}
 
-/* 다크 테마 지원 */
-html[data-theme="dark"] .base-viewer {
-  background-color: var(--color-layout-content-dark);
-  border-color: var(--color-layout-accent-dark);
-  box-shadow: var(--shadow-dark-xl);
-}
+@layer components {
 
-/* 🍎 헤더 영역 - iOS 스타일 */
-.base-viewer__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 0.5px solid var(--color-layout-accent-light);
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  flex-shrink: 0;
-  min-height: 48px;
-}
-
-html[data-theme="dark"] .base-viewer__header {
-  background-color: rgba(28, 28, 30, 0.8);
-  border-bottom-color: var(--color-layout-accent-dark);
-}
-
-/* 🍎 제목 스타일 */
-.base-viewer__title {
-  margin: 0;
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-header-title);
-  font-family: var(--font-family-display);
-  line-height: var(--line-height-tight);
-  letter-spacing: -0.05px;
-  font-variant-numeric: tabular-nums;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
-
-/* 콘텐츠 영역 - 실제 뷰어 렌더링 */
-.base-viewer__content {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background-color: transparent;
-}
-
-/* 🍎 페이드인 애니메이션 */
-@keyframes baseViewerFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* 🍎 모션 감소 설정 지원 */
-@media (prefers-reduced-motion: reduce) {
   .base-viewer {
-    animation: none;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    background-color: var(--color-layout-content-light);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--color-layout-accent-light);
+    z-index: var(--z-index-modal);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* 🍎 애플 스타일 페이드인 애니메이션 */
+    animation: baseViewerFadeIn var(--duration-normal) var(--easing-ease-out);
   }
 
-  .base-viewer__close-button:hover {
-    transform: none;
+  /* 다크 테마 지원 */
+  html[data-theme="dark"] .base-viewer {
+    background-color: var(--color-layout-content-dark);
+    border-color: var(--color-layout-accent-dark);
+    box-shadow: var(--shadow-dark-xl);
   }
 
-  .base-viewer__close-button:active {
-    transform: none;
+  /* 🍎 헤더 영역 - iOS 스타일 */
+  .base-viewer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--color-layout-accent-light);
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    flex-shrink: 0;
+    min-height: 48px;
   }
-}
+
+  html[data-theme="dark"] .base-viewer__header {
+    background-color: rgba(28, 28, 30, 0.8);
+    border-bottom-color: var(--color-layout-accent-dark);
+  }
+
+  /* 🍎 제목 스타일 */
+  .base-viewer__title {
+    margin: 0;
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-header-title);
+    font-family: var(--font-family-display);
+    line-height: var(--line-height-tight);
+    letter-spacing: -0.05px;
+    font-variant-numeric: tabular-nums;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
+
+  /* 콘텐츠 영역 - 실제 뷰어 렌더링 */
+  .base-viewer__content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+  }
+
+  /* 🍎 페이드인 애니메이션 */
+  @keyframes baseViewerFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* 🍎 모션 감소 설정 지원 */
+  @media (prefers-reduced-motion: reduce) {
+    .base-viewer {
+      animation: none;
+    }
+
+    .base-viewer__close-button:hover {
+      transform: none;
+    }
+
+    .base-viewer__close-button:active {
+      transform: none;
+    }
+  }
+
+} /* end @layer components */

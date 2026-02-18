@@ -9,27 +9,31 @@
 
 /* === 🍎 IMAGE CONTENT AREA (Image 전용) === */
 
-.image-viewer-content {
-  align-items: center; /* 이미지는 중앙 정렬 (PDF는 flex-start) */
-}
+@layer components {
 
-.image-container {
-  transition: transform 0.3s ease-out;
-  will-change: transform;
-}
+  .image-viewer-content {
+    align-items: center; /* 이미지는 중앙 정렬 (PDF는 flex-start) */
+  }
 
-.image-viewer-image {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: 8px;
-  background-color: var(--color-ios-bg-primary-light);
-}
+  .image-container {
+    transition: transform 0.3s ease-out;
+    will-change: transform;
+  }
 
-html[data-theme="dark"] .image-viewer-image {
-  border-color: var(--color-ios-separator-dark);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  background-color: var(--color-ios-bg-primary-dark);
-}
+  .image-viewer-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 8px;
+    background-color: var(--color-ios-bg-primary-light);
+  }
+
+  html[data-theme="dark"] .image-viewer-image {
+    border-color: var(--color-ios-separator-dark);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background-color: var(--color-ios-bg-primary-dark);
+  }
+
+} /* end @layer components */

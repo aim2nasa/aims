@@ -5,336 +5,341 @@
  */
 
 /* === Container === */
-.processing-status-bar {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 0 12px;
-  margin: 0 0 0 0;
-  background: var(--color-bg-secondary);
-  border-radius: 6px;
-  border: 1px solid var(--color-border-primary);
 
-  /* Progressive Disclosure: 숨김 → 표시 전환 */
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition:
-    max-height 0.3s ease,
-    opacity 0.3s ease,
-    padding 0.3s ease,
-    margin 0.3s ease;
-}
+@layer components {
 
-.processing-status-bar--visible {
-  max-height: 72px;
-  opacity: 1;
-  padding: 8px 12px;
-  margin: 0 0 8px 0;
-}
-
-/* === Skeleton Loading === */
-.processing-status-bar--skeleton {
-  max-height: 18px;
-  opacity: 1;
-  padding: 4px 12px;
-  margin: 0 0 8px 0;
-  overflow: hidden;
-}
-
-.psb-skeleton-track {
-  width: 100%;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--color-neutral-200);
-  animation: psb-skeleton-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes psb-skeleton-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
-
-/* === Pipeline Section (좌측: 채우기형 프로그레스바) === */
-.psb-pipeline {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.psb-pipeline-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.psb-pipeline-text {
-  font-size: var(--font-size-caption-2);
-  font-weight: 400;
-  color: var(--color-ios-text-secondary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.psb-pipeline-processing {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-primary-500);
-}
-
-.psb-pipeline-pending {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-neutral-400);
-}
-
-.psb-pipeline-error {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-error);
-}
-
-/* 🔴 크레딧 대기 스타일 - 주황색으로 명확히 구분 */
-.psb-pipeline-credit {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-ios-orange, #f59e0b);
-  cursor: help;
-}
-
-.psb-pipeline-bar {
-  width: 100%;
-  height: 3px;
-  border-radius: 2px;
-  overflow: hidden;
-  background: var(--color-neutral-200);
-}
-
-.psb-pipeline-fill {
-  height: 100%;
-  border-radius: 2px;
-  background: var(--color-success);
-  transition: width 0.5s ease;
-}
-
-.psb-pipeline-fill--active {
-  background: var(--color-primary-500);
-  animation: psb-processing-pulse 2s ease-in-out infinite;
-}
-
-@keyframes psb-processing-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* === 현재 업로드 배치 Section (좌측) === */
-.psb-batch {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.psb-batch-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.psb-batch-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-primary-500);
-  white-space: nowrap;
-}
-
-.psb-batch-text {
-  font-size: var(--font-size-caption-2);
-  font-weight: 400;
-  color: var(--color-ios-text-secondary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* === 구분선 === */
-.psb-divider {
-  width: 1px;
-  height: 32px;
-  background: var(--color-border-primary);
-  flex-shrink: 0;
-}
-
-/* === 전체 라이브러리 Section (우측) === */
-.psb-library {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.psb-library-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-ios-text-tertiary);
-  white-space: nowrap;
-}
-
-.psb-library-stat {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.psb-library-text {
-  font-size: var(--font-size-caption-2);
-  font-weight: 400;
-  color: var(--color-ios-text-secondary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* === AR/CRS Parsing Section (우측) === */
-.psb-parsing {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-shrink: 0;
-  padding-left: 16px;
-  border-left: 1px solid var(--color-border-primary);
-}
-
-.psb-parsing-group {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 130px;
-}
-
-.psb-parsing-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.psb-parsing-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-  height: 16px;
-  border-radius: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.psb-parsing-badge--ar {
-  background: var(--color-badge-ar-bg);
-  color: var(--color-badge-ar);
-}
-
-.psb-parsing-badge--crs {
-  background: var(--color-badge-crs-bg);
-  color: var(--color-primary-600);
-}
-
-.psb-parsing-text {
-  font-size: var(--font-size-caption-2);
-  font-weight: 400;
-  color: var(--color-ios-text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.psb-parsing-failed {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-error);
-}
-
-/* 🔴 AR/CRS 크레딧 대기 스타일 */
-.psb-parsing-credit {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-ios-orange, #f59e0b);
-  cursor: help;
-}
-
-/* 파싱 미니 프로그레스바 */
-.psb-parsing-bar {
-  width: 100%;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--color-neutral-200);
-  overflow: hidden;
-}
-
-.psb-parsing-fill {
-  height: 100%;
-  border-radius: 1px;
-  background: var(--color-success);
-  transition: width 0.5s ease;
-}
-
-.psb-parsing-fill--active {
-  background: var(--color-primary-500);
-  animation: psb-processing-pulse 2s ease-in-out infinite;
-}
-
-/* === Dark Theme === */
-html[data-theme="dark"] .processing-status-bar {
-  background: var(--color-bg-secondary);
-  border-color: var(--color-border-primary);
-}
-
-html[data-theme="dark"] .psb-skeleton-track {
-  background: var(--color-neutral-700);
-}
-
-html[data-theme="dark"] .psb-pipeline-bar {
-  background: var(--color-neutral-700);
-}
-
-html[data-theme="dark"] .psb-parsing-bar {
-  background: var(--color-neutral-700);
-}
-
-html[data-theme="dark"] .psb-parsing-badge--ar {
-  background: var(--color-badge-ar-bg-dark);
-  color: var(--color-badge-ar-dark);
-}
-
-html[data-theme="dark"] .psb-parsing-badge--crs {
-  background: var(--color-badge-crs-bg-dark);
-  color: var(--color-primary-400);
-}
-
-/* === 모바일 반응형 (480px 이하) === */
-@media (max-width: 480px) {
   .processing-status-bar {
-    gap: 8px;
-    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 12px;
+    margin: 0 0 0 0;
+    background: var(--color-bg-secondary);
+    border-radius: 6px;
+    border: 1px solid var(--color-border-primary);
+
+    /* Progressive Disclosure: 숨김 → 표시 전환 */
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      max-height 0.3s ease,
+      opacity 0.3s ease,
+      padding 0.3s ease,
+      margin 0.3s ease;
   }
 
   .processing-status-bar--visible {
-    padding: 6px 8px;
-    max-height: 48px;
+    max-height: 72px;
+    opacity: 1;
+    padding: 8px 12px;
+    margin: 0 0 8px 0;
   }
 
-  /* 구분선 숨김 */
+  /* === Skeleton Loading === */
+  .processing-status-bar--skeleton {
+    max-height: 18px;
+    opacity: 1;
+    padding: 4px 12px;
+    margin: 0 0 8px 0;
+    overflow: hidden;
+  }
+
+  .psb-skeleton-track {
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--color-neutral-200);
+    animation: psb-skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes psb-skeleton-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  /* === Pipeline Section (좌측: 채우기형 프로그레스바) === */
+  .psb-pipeline {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .psb-pipeline-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .psb-pipeline-text {
+    font-size: var(--font-size-caption-2);
+    font-weight: 400;
+    color: var(--color-ios-text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .psb-pipeline-processing {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-primary-500);
+  }
+
+  .psb-pipeline-pending {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-neutral-400);
+  }
+
+  .psb-pipeline-error {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-error);
+  }
+
+  /* 🔴 크레딧 대기 스타일 - 주황색으로 명확히 구분 */
+  .psb-pipeline-credit {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-ios-orange, #f59e0b);
+    cursor: help;
+  }
+
+  .psb-pipeline-bar {
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    overflow: hidden;
+    background: var(--color-neutral-200);
+  }
+
+  .psb-pipeline-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--color-success);
+    transition: width 0.5s ease;
+  }
+
+  .psb-pipeline-fill--active {
+    background: var(--color-primary-500);
+    animation: psb-processing-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes psb-processing-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* === 현재 업로드 배치 Section (좌측) === */
+  .psb-batch {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .psb-batch-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .psb-batch-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-primary-500);
+    white-space: nowrap;
+  }
+
+  .psb-batch-text {
+    font-size: var(--font-size-caption-2);
+    font-weight: 400;
+    color: var(--color-ios-text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* === 구분선 === */
   .psb-divider {
-    display: none;
+    width: 1px;
+    height: 32px;
+    background: var(--color-border-primary);
+    flex-shrink: 0;
   }
 
-  /* 전체 라이브러리: 모바일에서 숨김 (배치만 표시) */
+  /* === 전체 라이브러리 Section (우측) === */
   .psb-library {
-    display: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
   }
 
-  /* AR/CRS 파싱 상세: 모바일에서 숨김 (파이프라인만 표시) */
-  .psb-parsing {
-    display: none;
+  .psb-library-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-ios-text-tertiary);
+    white-space: nowrap;
   }
-}
+
+  .psb-library-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .psb-library-text {
+    font-size: var(--font-size-caption-2);
+    font-weight: 400;
+    color: var(--color-ios-text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* === AR/CRS Parsing Section (우측) === */
+  .psb-parsing {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-shrink: 0;
+    padding-left: 16px;
+    border-left: 1px solid var(--color-border-primary);
+  }
+
+  .psb-parsing-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 130px;
+  }
+
+  .psb-parsing-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .psb-parsing-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    height: 16px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .psb-parsing-badge--ar {
+    background: var(--color-badge-ar-bg);
+    color: var(--color-badge-ar);
+  }
+
+  .psb-parsing-badge--crs {
+    background: var(--color-badge-crs-bg);
+    color: var(--color-primary-600);
+  }
+
+  .psb-parsing-text {
+    font-size: var(--font-size-caption-2);
+    font-weight: 400;
+    color: var(--color-ios-text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .psb-parsing-failed {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-error);
+  }
+
+  /* 🔴 AR/CRS 크레딧 대기 스타일 */
+  .psb-parsing-credit {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-ios-orange, #f59e0b);
+    cursor: help;
+  }
+
+  /* 파싱 미니 프로그레스바 */
+  .psb-parsing-bar {
+    width: 100%;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--color-neutral-200);
+    overflow: hidden;
+  }
+
+  .psb-parsing-fill {
+    height: 100%;
+    border-radius: 1px;
+    background: var(--color-success);
+    transition: width 0.5s ease;
+  }
+
+  .psb-parsing-fill--active {
+    background: var(--color-primary-500);
+    animation: psb-processing-pulse 2s ease-in-out infinite;
+  }
+
+  /* === Dark Theme === */
+  html[data-theme="dark"] .processing-status-bar {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-primary);
+  }
+
+  html[data-theme="dark"] .psb-skeleton-track {
+    background: var(--color-neutral-700);
+  }
+
+  html[data-theme="dark"] .psb-pipeline-bar {
+    background: var(--color-neutral-700);
+  }
+
+  html[data-theme="dark"] .psb-parsing-bar {
+    background: var(--color-neutral-700);
+  }
+
+  html[data-theme="dark"] .psb-parsing-badge--ar {
+    background: var(--color-badge-ar-bg-dark);
+    color: var(--color-badge-ar-dark);
+  }
+
+  html[data-theme="dark"] .psb-parsing-badge--crs {
+    background: var(--color-badge-crs-bg-dark);
+    color: var(--color-primary-400);
+  }
+
+  /* === 모바일 반응형 (480px 이하) === */
+  @media (max-width: 480px) {
+    .processing-status-bar {
+      gap: 8px;
+      padding: 0 8px;
+    }
+
+    .processing-status-bar--visible {
+      padding: 6px 8px;
+      max-height: 48px;
+    }
+
+    /* 구분선 숨김 */
+    .psb-divider {
+      display: none;
+    }
+
+    /* 전체 라이브러리: 모바일에서 숨김 (배치만 표시) */
+    .psb-library {
+      display: none;
+    }
+
+    /* AR/CRS 파싱 상세: 모바일에서 숨김 (파이프라인만 표시) */
+    .psb-parsing {
+      display: none;
+    }
+  }
+
+} /* end @layer components */

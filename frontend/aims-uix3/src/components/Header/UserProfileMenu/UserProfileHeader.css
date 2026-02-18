@@ -7,102 +7,106 @@
 
 /* === 프로필 헤더 === */
 
-.user-profile-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg-secondary);
-}
+@layer components {
 
-html[data-theme="dark"] .user-profile-header {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-/* === 아바타 === */
-
-.user-profile-header__avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  /* Header 아바타와 동일한 색상 사용 */
-  background: var(--color-avatar-bg);
-  color: var(--color-avatar-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-title-3); /* 20px - FONT_SIZE_STANDARDS.md: avatar initial */
-  font-weight: var(--font-weight-semibold);
-}
-
-.user-profile-header__avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.user-profile-header__initial {
-  user-select: none;
-}
-
-/* === 사용자 정보 === */
-
-.user-profile-header__info {
-  flex: 1;
-  min-width: 0; /* 텍스트 오버플로우 방지 */
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* 이름 */
-.user-profile-header__name {
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: user name */
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 이메일 */
-.user-profile-header__email {
-  font-family: var(--font-family-text);
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: email (already correct) */
-  color: var(--color-text-secondary);
-  line-height: 1.3;
-  opacity: 0.8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* === 📱 모바일 반응형 === */
-@media (max-width: 768px) {
   .user-profile-header {
-    gap: 6px;
-    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
   }
+
+  html[data-theme="dark"] .user-profile-header {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* === 아바타 === */
 
   .user-profile-header__avatar {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    /* Header 아바타와 동일한 색상 사용 */
+    background: var(--color-avatar-bg);
+    color: var(--color-avatar-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-title-3); /* 20px - FONT_SIZE_STANDARDS.md: avatar initial */
+    font-weight: var(--font-weight-semibold);
   }
 
+  .user-profile-header__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .user-profile-header__initial {
+    user-select: none;
+  }
+
+  /* === 사용자 정보 === */
+
+  .user-profile-header__info {
+    flex: 1;
+    min-width: 0; /* 텍스트 오버플로우 방지 */
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* 이름 */
   .user-profile-header__name {
-    font-size: 12px;
-    line-height: 1.2;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: user name */
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
+  /* 이메일 */
   .user-profile-header__email {
-    font-size: 10px;
-    line-height: 1.2;
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: email (already correct) */
+    color: var(--color-text-secondary);
+    line-height: 1.3;
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-}
+
+  /* === 📱 모바일 반응형 === */
+  @media (max-width: 768px) {
+    .user-profile-header {
+      gap: 6px;
+      padding: 8px;
+    }
+
+    .user-profile-header__avatar {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
+
+    .user-profile-header__name {
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .user-profile-header__email {
+      font-size: 10px;
+      line-height: 1.2;
+    }
+  }
+
+} /* end @layer components */

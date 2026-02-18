@@ -12,731 +12,735 @@
    전역 변수
    ============================================ */
 
-.regional-tree-view {
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-text-primary: rgba(0, 0, 0, 0.9);
-  --color-text-secondary: rgba(0, 0, 0, 0.6);
-  --color-hover-bg: rgba(0, 0, 0, 0.06);  /* 라이트 테마 호버 강화 */
-  --color-pressed-bg: rgba(0, 0, 0, 0.06);
-  --color-accent: #0078d4;
-  --color-accent-light: rgba(0, 120, 212, 0.1);
-
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-html[data-theme="dark"] .regional-tree-view {
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-text-primary: rgba(255, 255, 255, 0.9);
-  --color-text-secondary: rgba(255, 255, 255, 0.6);
-  --color-hover-bg: rgba(255, 255, 255, 0.05);
-  --color-pressed-bg: rgba(255, 255, 255, 0.08);
-  --color-accent: #8e8e93;
-  --color-accent-light: rgba(142, 142, 147, 0.15);
-}
-
-/* ============================================
-   통계 영역
-   ============================================ */
-
-.regional-tree-stats {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap; /* RightPane 열릴 때 자동으로 줄바꿈 */
-  gap: var(--spacing-md);
-  padding: 8px var(--spacing-md);
-  
-  font-size: var(--font-size-caption-1); /* 12px */
-  font-family: var(--font-family-text);
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.03));
-  container-type: inline-size; /* 컨테이너 쿼리 활성화 */
-}
-
-html[data-theme="dark"] .regional-tree-stats {
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.04));
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: var(--spacing-xs);
-  min-height: 26px; /* 모든 stat-item 동일 높이 */
-}
-
-/* 폭이 좁을 때 (RightPane 열림): 첫 번째 stat-item이 전체 폭 차지 */
-@container (max-width: 900px) {
-  .stat-item:first-child {
-    flex-basis: 100%;
-  }
-
-  /* 첫 번째 구분자 숨김 (두 줄 레이아웃) */
-  .stat-divider:nth-of-type(1) {
-    display: none;
-  }
-}
-
-.stat-filter-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* 드롭다운 + 체크박스 그룹 (한 줄 유지) */
-.stat-dropdown-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.stat-icon {
-  font-size: 13px;
-  opacity: 0.7;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  height: 16px; /* 아이콘 높이 고정 */
-}
-
-.stat-label {
-  color: var(--color-text-secondary);
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-}
-
-.stat-value {
-  color: var(--color-text-primary);
-  font-weight: 600;
-}
-
-.stat-divider {
-  color: var(--color-border);
-  font-weight: 300;
-  display: flex;
-  align-items: center;
-  align-self: center;
-}
-
-/* 드롭다운 컴팩트 스타일 (통계 영역용) */
-.regional-tree-stats .ios-dropdown__trigger {
-  min-height: 26px;
-  padding: 3px 10px;
-  font-size: var(--font-size-caption-1);
-}
-
-.regional-tree-stats .ios-dropdown__arrow {
-  margin-left: 4px;
-}
-
-/* ============================================
-   트리 컨테이너
-   ============================================ */
-
-.regional-tree-content {
-  display: flex;
-  gap: 0;
-  flex: 1;
-  min-height: 0;
-}
-
-.regional-tree-container {
-  flex: 0 0 300px;
-  overflow-y: auto;
-  border-right: 1px solid var(--color-border);
-  padding: var(--spacing-sm);
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.01), transparent);
-}
-
-html[data-theme="dark"] .regional-tree-container {
-  background: linear-gradient(to right, rgba(255, 255, 255, 0.02), transparent);
-}
-
-.regional-map-container {
-  flex: 1;
-  position: relative;
-  min-height: 0;
-}
-
-/* ============================================
-   트리 노드
-   ============================================ */
-
-.tree-node-wrapper {
-  margin: 1px 0;
-}
-
-.tree-node {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  cursor: pointer;
-  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 4px;
-  gap: 10px;
-  position: relative;
-}
-
-.tree-node::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-accent);
-  opacity: 0;
-  transition: opacity 0.1s ease;
-  border-radius: 4px 0 0 4px;
-}
-
-.tree-node:hover {
-  background-color: rgba(0, 0, 0, 0.08);
-}
-
-.tree-node:hover::before {
-  opacity: 0.6;
-}
-
-/* 라이트 테마 호버 - Finder 스타일 */
-html:not([data-theme="dark"]) .tree-node:hover {
-  background-color: rgba(0, 0, 0, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-}
-
-html[data-theme="dark"] .tree-node:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.tree-node:active {
-  background-color: var(--color-pressed-bg);
-}
-
-/* 선택 상태 - macOS Finder 스타일 */
-.tree-node.selected,
-.tree-node--selected {
-  background-color: rgba(0, 120, 212, 0.12);
-}
-
-.tree-node.selected::before,
-.tree-node--selected::before {
-  opacity: 1;
-}
-
-html:not([data-theme="dark"]) .tree-node.selected,
-html:not([data-theme="dark"]) .tree-node--selected {
-  background-color: rgba(0, 120, 212, 0.15);
-  box-shadow: inset 0 0 0 1px rgba(0, 120, 212, 0.2);
-}
-
-html:not([data-theme="dark"]) .tree-node.selected .tree-node-label,
-html:not([data-theme="dark"]) .tree-node--selected .tree-node-label {
-  color: #0055a5;
-  font-weight: 600;
-}
-
-/* 아이콘 */
-.tree-node-chevron {
-  opacity: 0.6;
-  transition: opacity 0.1s ease;
-}
-
-.tree-node:hover .tree-node-chevron {
-  opacity: 1;
-}
-
-.tree-node-folder-icon {
-  font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘/모달 헤더 */
-  opacity: 0.7;
-  transition: opacity 0.1s ease;
-}
-
-/* 라이트 테마에서 폴더 아이콘 가시성 강화 */
-html:not([data-theme="dark"]) .tree-node-folder-icon {
-  filter: saturate(1.4) contrast(1.15);
-}
-
-.tree-node:hover .tree-node-folder-icon {
-  opacity: 1;
-}
-
-.tree-node-spacer {
-  width: 13px;
-}
-
-.tree-node-label {
-  flex: 1;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-family: var(--font-family-text);
-  font-weight: 400;
-  color: var(--color-text-primary);
-  letter-spacing: -0.01em;
-}
-
-.tree-node-badge {
-  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
-  font-family: var(--font-family-text);
-  color: var(--color-text-secondary);
-  font-weight: 600;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 2px 8px;
-  border-radius: 12px;
-  min-width: 24px;
-  text-align: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-html[data-theme="dark"] .tree-node-badge {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.badge-no-address {
-  background: rgba(255, 185, 0, 0.15);
-  color: rgb(201, 138, 0);
-  font-weight: 700;
-}
-
-html[data-theme="dark"] .badge-no-address {
-  background: rgba(255, 185, 0, 0.2);
-  color: rgb(255, 185, 0);
-}
-
-/* ============================================
-   계층 구조
-   ============================================ */
-
-.tree-node-children,
-.tree-node-customers {
-  display: flex;
-  flex-direction: column;
-  padding-left: 20px;
-  margin-left: 8px;
-}
-
-/* ============================================
-   고객 아이템
-   ============================================ */
-
-.tree-customer-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  padding-left: 30px;
-  margin: 1px 0;
-  cursor: pointer;
-  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 4px;
-  position: relative;
-}
-
-.tree-customer-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-accent);
-  opacity: 0;
-  transition: opacity 0.1s ease;
-  border-radius: 4px 0 0 4px;
-}
-
-.tree-customer-item:hover {
-  background-color: var(--color-hover-bg);
-}
-
-.tree-customer-item:hover::before {
-  opacity: 0.3;
-}
-
-.tree-customer-item.selected {
-  background-color: var(--color-accent-light);
-}
-
-.tree-customer-item.selected::before {
-  opacity: 1;
-}
-
-/* Geocoding 실패 고객 (주소 오류로 지도에 표시 불가) */
-.tree-customer-item.geocoding-failed {
-  opacity: 0.7;
-}
-
-.tree-customer-item.geocoding-failed .tree-customer-name {
-  color: var(--color-text-secondary);
-}
-
-.geocoding-failed-badge {
-  margin-left: 4px;
-  font-size: 11px;
-  opacity: 0.8;
-  cursor: help;
-}
-
-.tree-customer-name {
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-family: var(--font-family-text);
-  color: var(--color-text-primary);
-  font-weight: 400;
-}
-
-/* ============================================
-   고객 타입 아이콘
-   ============================================ */
-
-.customer-icon--personal,
-.customer-icon--corporate {
-  opacity: 0.65;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  transition: opacity 0.1s ease;
-}
-
-.tree-customer-item:hover .customer-icon--personal,
-.tree-customer-item:hover .customer-icon--corporate {
-  opacity: 0.9;
-}
-
-/* ============================================
-   트리 액션
-   ============================================ */
-
-.tree-actions {
-  margin-left: auto;
-}
-
-.tree-action-btn {
-  background: transparent;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보/테이블 헤더 */
-  font-family: var(--font-family-text);
-  color: var(--color-text-secondary);
-  opacity: 0.7;
-  transition: all 0.2s ease;
-}
-
-.tree-action-btn--icon-only {
-  width: 14px;
-  height: 14px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tree-action-btn:hover {
-  background: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.tree-action-btn:active {
-  transform: scale(0.95);
-}
-
-/* ============================================
-   로딩 & 빈 상태
-   ============================================ */
-
-.regional-tree-loading,
-.regional-tree-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: calc(var(--spacing-lg) * 3);
-  color: var(--color-text-secondary);
-  gap: var(--spacing-md);
-}
-
-.empty-title {
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
-  font-family: var(--font-family-display);
-  font-weight: 600;
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-.empty-message {
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-family: var(--font-family-text);
-  font-weight: 400;
-  margin: 0;
-  color: var(--color-text-secondary);
-}
-
-/* ============================================
-   스크롤바 - Windows 11 스타일
-   ============================================ */
-
-.regional-tree-container::-webkit-scrollbar {
-  width: 12px;
-}
-
-.regional-tree-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.regional-tree-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 6px;
-  border: 3px solid transparent;
-  background-clip: content-box;
-}
-
-.regional-tree-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
-  background-clip: content-box;
-}
-
-html[data-theme="dark"] .regional-tree-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  background-clip: content-box;
-}
-
-html[data-theme="dark"] .regional-tree-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
-  background-clip: content-box;
-}
-
-/* ============================================
-   고객 유형 필터 버튼 (AllCustomersView와 동일)
-   ============================================ */
-
-/* 🍎 TYPE FILTER BUTTON: Subtle clickable filter */
-.type-filter-button {
-  background: transparent;
-  border: none;
-  padding: 2px 5px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-ios-text-tertiary-light);
-  transition: all 0.15s ease-out;
-  user-select: none;
-}
-
-html[data-theme="dark"] .type-filter-button {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.type-filter-button:hover {
-  background: var(--color-ios-bg-tertiary-light);
-  color: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .type-filter-button:hover {
-  background: var(--color-ios-bg-tertiary-dark);
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.type-filter-button.active {
-  background: var(--color-primary-100);
-  color: var(--color-primary-700);
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .type-filter-button.active {
-  background: var(--color-primary-900);
-  color: var(--color-primary-300);
-}
-
-.type-filter-separator {
-  color: var(--color-ios-text-quaternary-light);
-  user-select: none;
-}
-
-html[data-theme="dark"] .type-filter-separator {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* ============================================
-   체크박스 스타일
-   ============================================ */
-
-.stat-checkbox {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 3px;
-  font-size: 10px;
-  font-family: var(--font-family-text);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.15s ease-out;
-}
-
-.stat-checkbox:hover {
-  color: var(--color-text-primary);
-}
-
-.stat-checkbox input[type="checkbox"] {
-  width: 12px;
-  height: 12px;
-  cursor: pointer;
-  border-radius: 2px;
-  border: 1px solid var(--color-border);
-  transition: all 0.15s ease-out;
-}
-
-.stat-checkbox input[type="checkbox"]:checked {
-  background-color: var(--color-primary-500);
-  border-color: var(--color-primary-500);
-}
-
-.stat-checkbox input[type="checkbox"]:hover {
-  border-color: var(--color-primary-500);
-}
-
-.stat-checkbox-label {
-  white-space: nowrap;
-}
-
-/* =============================================
-   📱 모바일 공통: 통계바 1줄 강제
-   세로(360x740) + 가로(740x360) 모두 적용
-   - nowrap으로 1줄 강제
-   - @container(max-width:900px) flex-basis:100% 무효화
-   - 전체보기 버튼 숨김
-   ============================================= */
-@media (max-width: 480px), ((max-height: 430px) and (orientation: landscape)) {
-
-  .regional-tree-stats {
-    flex-wrap: nowrap;
-    padding: 3px var(--spacing-sm);
-    gap: 6px;
-  }
-
-  /* @container(max-width:900px)의 flex-basis:100% 오버라이드 */
-  .stat-item:first-child {
-    flex-basis: auto;
-  }
-
-  /* 전체보기 버튼, 라벨("전체 고객", "지역", "구/군") 숨김 */
-  .regional-tree-stats .tree-actions { display: none; }
-  .regional-tree-stats .stat-label { display: none; }
-
-}
-
-/* =============================================
-   📱 세로 모드 전용 (480px 이하)
-   통계바 초컴팩트 + 지도/트리 세로 배치
-   ============================================= */
-@media (max-width: 480px) {
-
-  /* --- 통계바: 초컴팩트 (공간 부족) ---
-     [744명] [전체 지역 ▼] [전체 구/군 ▼] */
-  .stat-divider { display: none; }
-  .regional-tree-stats .stat-icon { display: none; }
-  .regional-tree-stats .stat-label { display: none; }
-  .stat-checkbox { display: none; }
-  .type-filter-separator { display: none; }
-  .stat-filter-group .type-filter-button:not(:first-child) { display: none; }
-
-  .type-filter-button {
-    min-height: 26px;
-    padding: 3px 8px;
-    font-size: 11px;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .regional-tree-stats > .stat-item:nth-child(3),
-  .regional-tree-stats > .stat-item:nth-child(5) {
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .stat-dropdown-group {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .regional-tree-stats .ios-dropdown {
-    width: 100%;
-  }
-
-  .regional-tree-stats .ios-dropdown__trigger {
-    min-height: 26px;
-    padding: 3px 8px;
-    font-size: 11px;
-  }
-
-  /* --- 메인 콘텐츠: 세로 스택 --- */
-  .regional-tree-content {
+@layer components {
+
+  .regional-tree-view {
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+
+    --color-border: rgba(0, 0, 0, 0.08);
+    --color-text-primary: rgba(0, 0, 0, 0.9);
+    --color-text-secondary: rgba(0, 0, 0, 0.6);
+    --color-hover-bg: rgba(0, 0, 0, 0.06);  /* 라이트 테마 호버 강화 */
+    --color-pressed-bg: rgba(0, 0, 0, 0.06);
+    --color-accent: #0078d4;
+    --color-accent-light: rgba(0, 120, 212, 0.1);
+
+    height: 100%;
+    display: flex;
     flex-direction: column;
   }
 
-  /* --- 지도: 상단 고정 높이 --- */
-  .regional-map-container {
-    order: -1;           /* 지도를 트리 위로 */
-    flex: none;
-    height: 35vh;
-    min-height: 200px;
-    max-height: 280px;
-    border-bottom: 1px solid var(--color-border);
+  html[data-theme="dark"] .regional-tree-view {
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-text-primary: rgba(255, 255, 255, 0.9);
+    --color-text-secondary: rgba(255, 255, 255, 0.6);
+    --color-hover-bg: rgba(255, 255, 255, 0.05);
+    --color-pressed-bg: rgba(255, 255, 255, 0.08);
+    --color-accent: #8e8e93;
+    --color-accent-light: rgba(142, 142, 147, 0.15);
   }
 
-  /* --- 트리: 하단 스크롤 영역 --- */
-  .regional-tree-container {
+  /* ============================================
+     통계 영역
+     ============================================ */
+
+  .regional-tree-stats {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* RightPane 열릴 때 자동으로 줄바꿈 */
+    gap: var(--spacing-md);
+    padding: 8px var(--spacing-md);
+
+    font-size: var(--font-size-caption-1); /* 12px */
+    font-family: var(--font-family-text);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.03));
+    container-type: inline-size; /* 컨테이너 쿼리 활성화 */
+  }
+
+  html[data-theme="dark"] .regional-tree-stats {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.04));
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: var(--spacing-xs);
+    min-height: 26px; /* 모든 stat-item 동일 높이 */
+  }
+
+  /* 폭이 좁을 때 (RightPane 열림): 첫 번째 stat-item이 전체 폭 차지 */
+  @container (max-width: 900px) {
+    .stat-item:first-child {
+      flex-basis: 100%;
+    }
+
+    /* 첫 번째 구분자 숨김 (두 줄 레이아웃) */
+    .stat-divider:nth-of-type(1) {
+      display: none;
+    }
+  }
+
+  .stat-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* 드롭다운 + 체크박스 그룹 (한 줄 유지) */
+  .stat-dropdown-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .stat-icon {
+    font-size: 13px;
+    opacity: 0.7;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    height: 16px; /* 아이콘 높이 고정 */
+  }
+
+  .stat-label {
+    color: var(--color-text-secondary);
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .stat-value {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  .stat-divider {
+    color: var(--color-border);
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+    align-self: center;
+  }
+
+  /* 드롭다운 컴팩트 스타일 (통계 영역용) */
+  .regional-tree-stats .ios-dropdown__trigger {
+    min-height: 26px;
+    padding: 3px 10px;
+    font-size: var(--font-size-caption-1);
+  }
+
+  .regional-tree-stats .ios-dropdown__arrow {
+    margin-left: 4px;
+  }
+
+  /* ============================================
+     트리 컨테이너
+     ============================================ */
+
+  .regional-tree-content {
+    display: flex;
+    gap: 0;
     flex: 1;
-    border-right: none;  /* 가로 구분선 제거 */
-    padding: var(--spacing-xs);
+    min-height: 0;
   }
 
+  .regional-tree-container {
+    flex: 0 0 300px;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-border);
+    padding: var(--spacing-sm);
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.01), transparent);
+  }
 
-  /* --- 트리 노드: 터치 타겟 확대 --- */
+  html[data-theme="dark"] .regional-tree-container {
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.02), transparent);
+  }
+
+  .regional-map-container {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+  }
+
+  /* ============================================
+     트리 노드
+     ============================================ */
+
+  .tree-node-wrapper {
+    margin: 1px 0;
+  }
+
   .tree-node {
-    min-height: 40px;
-    padding: var(--spacing-sm) var(--spacing-sm);
-    gap: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 4px;
+    gap: 10px;
+    position: relative;
+  }
+
+  .tree-node::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-accent);
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .tree-node:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .tree-node:hover::before {
+    opacity: 0.6;
+  }
+
+  /* 라이트 테마 호버 - Finder 스타일 */
+  html:not([data-theme="dark"]) .tree-node:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
+
+  html[data-theme="dark"] .tree-node:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .tree-node:active {
+    background-color: var(--color-pressed-bg);
+  }
+
+  /* 선택 상태 - macOS Finder 스타일 */
+  .tree-node.selected,
+  .tree-node--selected {
+    background-color: rgba(0, 120, 212, 0.12);
+  }
+
+  .tree-node.selected::before,
+  .tree-node--selected::before {
+    opacity: 1;
+  }
+
+  html:not([data-theme="dark"]) .tree-node.selected,
+  html:not([data-theme="dark"]) .tree-node--selected {
+    background-color: rgba(0, 120, 212, 0.15);
+    box-shadow: inset 0 0 0 1px rgba(0, 120, 212, 0.2);
+  }
+
+  html:not([data-theme="dark"]) .tree-node.selected .tree-node-label,
+  html:not([data-theme="dark"]) .tree-node--selected .tree-node-label {
+    color: #0055a5;
+    font-weight: 600;
+  }
+
+  /* 아이콘 */
+  .tree-node-chevron {
+    opacity: 0.6;
+    transition: opacity 0.1s ease;
+  }
+
+  .tree-node:hover .tree-node-chevron {
+    opacity: 1;
+  }
+
+  .tree-node-folder-icon {
+    font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘/모달 헤더 */
+    opacity: 0.7;
+    transition: opacity 0.1s ease;
+  }
+
+  /* 라이트 테마에서 폴더 아이콘 가시성 강화 */
+  html:not([data-theme="dark"]) .tree-node-folder-icon {
+    filter: saturate(1.4) contrast(1.15);
+  }
+
+  .tree-node:hover .tree-node-folder-icon {
+    opacity: 1;
+  }
+
+  .tree-node-spacer {
+    width: 13px;
   }
 
   .tree-node-label {
-    font-size: var(--font-size-caption-1);
+    flex: 1;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
   }
 
-  /* 계층 들여쓰기 축소 (공간 절약) */
+  .tree-node-badge {
+    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+    font-family: var(--font-family-text);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 24px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  html[data-theme="dark"] .tree-node-badge {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .badge-no-address {
+    background: rgba(255, 185, 0, 0.15);
+    color: rgb(201, 138, 0);
+    font-weight: 700;
+  }
+
+  html[data-theme="dark"] .badge-no-address {
+    background: rgba(255, 185, 0, 0.2);
+    color: rgb(255, 185, 0);
+  }
+
+  /* ============================================
+     계층 구조
+     ============================================ */
+
   .tree-node-children,
   .tree-node-customers {
-    padding-left: var(--spacing-lg);
-    margin-left: var(--spacing-xs);
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+    margin-left: 8px;
   }
 
-  /* --- 고객 아이템: 터치 타겟 확대 --- */
+  /* ============================================
+     고객 아이템
+     ============================================ */
+
   .tree-customer-item {
-    min-height: 40px;
-    padding: var(--spacing-sm);
-    padding-left: 24px;
-    gap: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    padding-left: 30px;
+    margin: 1px 0;
+    cursor: pointer;
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 4px;
+    position: relative;
+  }
+
+  .tree-customer-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-accent);
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .tree-customer-item:hover {
+    background-color: var(--color-hover-bg);
+  }
+
+  .tree-customer-item:hover::before {
+    opacity: 0.3;
+  }
+
+  .tree-customer-item.selected {
+    background-color: var(--color-accent-light);
+  }
+
+  .tree-customer-item.selected::before {
+    opacity: 1;
+  }
+
+  /* Geocoding 실패 고객 (주소 오류로 지도에 표시 불가) */
+  .tree-customer-item.geocoding-failed {
+    opacity: 0.7;
+  }
+
+  .tree-customer-item.geocoding-failed .tree-customer-name {
+    color: var(--color-text-secondary);
+  }
+
+  .geocoding-failed-badge {
+    margin-left: 4px;
+    font-size: 11px;
+    opacity: 0.8;
+    cursor: help;
   }
 
   .tree-customer-name {
-    font-size: var(--font-size-caption-1);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+    font-family: var(--font-family-text);
+    color: var(--color-text-primary);
+    font-weight: 400;
   }
 
-  /* --- 빈 상태 / 로딩: 패딩 축소 --- */
+  /* ============================================
+     고객 타입 아이콘
+     ============================================ */
+
+  .customer-icon--personal,
+  .customer-icon--corporate {
+    opacity: 0.65;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    transition: opacity 0.1s ease;
+  }
+
+  .tree-customer-item:hover .customer-icon--personal,
+  .tree-customer-item:hover .customer-icon--corporate {
+    opacity: 0.9;
+  }
+
+  /* ============================================
+     트리 액션
+     ============================================ */
+
+  .tree-actions {
+    margin-left: auto;
+  }
+
+  .tree-action-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보/테이블 헤더 */
+    font-family: var(--font-family-text);
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
+
+  .tree-action-btn--icon-only {
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tree-action-btn:hover {
+    background: transparent;
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  .tree-action-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* ============================================
+     로딩 & 빈 상태
+     ============================================ */
+
   .regional-tree-loading,
   .regional-tree-empty {
-    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--spacing-lg) * 3);
+    color: var(--color-text-secondary);
+    gap: var(--spacing-md);
   }
-}
+
+  .empty-title {
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
+    font-family: var(--font-family-display);
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text-primary);
+  }
+
+  .empty-message {
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    margin: 0;
+    color: var(--color-text-secondary);
+  }
+
+  /* ============================================
+     스크롤바 - Windows 11 스타일
+     ============================================ */
+
+  .regional-tree-container::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  .regional-tree-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .regional-tree-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  .regional-tree-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+    background-clip: content-box;
+  }
+
+  html[data-theme="dark"] .regional-tree-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    background-clip: content-box;
+  }
+
+  html[data-theme="dark"] .regional-tree-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+    background-clip: content-box;
+  }
+
+  /* ============================================
+     고객 유형 필터 버튼 (AllCustomersView와 동일)
+     ============================================ */
+
+  /* 🍎 TYPE FILTER BUTTON: Subtle clickable filter */
+  .type-filter-button {
+    background: transparent;
+    border: none;
+    padding: 2px 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ios-text-tertiary-light);
+    transition: all 0.15s ease-out;
+    user-select: none;
+  }
+
+  html[data-theme="dark"] .type-filter-button {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .type-filter-button:hover {
+    background: var(--color-ios-bg-tertiary-light);
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .type-filter-button:hover {
+    background: var(--color-ios-bg-tertiary-dark);
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .type-filter-button.active {
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    font-weight: 600;
+  }
+
+  html[data-theme="dark"] .type-filter-button.active {
+    background: var(--color-primary-900);
+    color: var(--color-primary-300);
+  }
+
+  .type-filter-separator {
+    color: var(--color-ios-text-quaternary-light);
+    user-select: none;
+  }
+
+  html[data-theme="dark"] .type-filter-separator {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* ============================================
+     체크박스 스타일
+     ============================================ */
+
+  .stat-checkbox {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 3px;
+    font-size: 10px;
+    font-family: var(--font-family-text);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease-out;
+  }
+
+  .stat-checkbox:hover {
+    color: var(--color-text-primary);
+  }
+
+  .stat-checkbox input[type="checkbox"] {
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    border: 1px solid var(--color-border);
+    transition: all 0.15s ease-out;
+  }
+
+  .stat-checkbox input[type="checkbox"]:checked {
+    background-color: var(--color-primary-500);
+    border-color: var(--color-primary-500);
+  }
+
+  .stat-checkbox input[type="checkbox"]:hover {
+    border-color: var(--color-primary-500);
+  }
+
+  .stat-checkbox-label {
+    white-space: nowrap;
+  }
+
+  /* =============================================
+     📱 모바일 공통: 통계바 1줄 강제
+     세로(360x740) + 가로(740x360) 모두 적용
+     - nowrap으로 1줄 강제
+     - @container(max-width:900px) flex-basis:100% 무효화
+     - 전체보기 버튼 숨김
+     ============================================= */
+  @media (max-width: 480px), ((max-height: 430px) and (orientation: landscape)) {
+
+    .regional-tree-stats {
+      flex-wrap: nowrap;
+      padding: 3px var(--spacing-sm);
+      gap: 6px;
+    }
+
+    /* @container(max-width:900px)의 flex-basis:100% 오버라이드 */
+    .stat-item:first-child {
+      flex-basis: auto;
+    }
+
+    /* 전체보기 버튼, 라벨("전체 고객", "지역", "구/군") 숨김 */
+    .regional-tree-stats .tree-actions { display: none; }
+    .regional-tree-stats .stat-label { display: none; }
+
+  }
+
+  /* =============================================
+     📱 세로 모드 전용 (480px 이하)
+     통계바 초컴팩트 + 지도/트리 세로 배치
+     ============================================= */
+  @media (max-width: 480px) {
+
+    /* --- 통계바: 초컴팩트 (공간 부족) ---
+       [744명] [전체 지역 ▼] [전체 구/군 ▼] */
+    .stat-divider { display: none; }
+    .regional-tree-stats .stat-icon { display: none; }
+    .regional-tree-stats .stat-label { display: none; }
+    .stat-checkbox { display: none; }
+    .type-filter-separator { display: none; }
+    .stat-filter-group .type-filter-button:not(:first-child) { display: none; }
+
+    .type-filter-button {
+      min-height: 26px;
+      padding: 3px 8px;
+      font-size: 11px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .regional-tree-stats > .stat-item:nth-child(3),
+    .regional-tree-stats > .stat-item:nth-child(5) {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .stat-dropdown-group {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .regional-tree-stats .ios-dropdown {
+      width: 100%;
+    }
+
+    .regional-tree-stats .ios-dropdown__trigger {
+      min-height: 26px;
+      padding: 3px 8px;
+      font-size: 11px;
+    }
+
+    /* --- 메인 콘텐츠: 세로 스택 --- */
+    .regional-tree-content {
+      flex-direction: column;
+    }
+
+    /* --- 지도: 상단 고정 높이 --- */
+    .regional-map-container {
+      order: -1;           /* 지도를 트리 위로 */
+      flex: none;
+      height: 35vh;
+      min-height: 200px;
+      max-height: 280px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    /* --- 트리: 하단 스크롤 영역 --- */
+    .regional-tree-container {
+      flex: 1;
+      border-right: none;  /* 가로 구분선 제거 */
+      padding: var(--spacing-xs);
+    }
+
+
+    /* --- 트리 노드: 터치 타겟 확대 --- */
+    .tree-node {
+      min-height: 40px;
+      padding: var(--spacing-sm) var(--spacing-sm);
+      gap: var(--spacing-sm);
+    }
+
+    .tree-node-label {
+      font-size: var(--font-size-caption-1);
+    }
+
+    /* 계층 들여쓰기 축소 (공간 절약) */
+    .tree-node-children,
+    .tree-node-customers {
+      padding-left: var(--spacing-lg);
+      margin-left: var(--spacing-xs);
+    }
+
+    /* --- 고객 아이템: 터치 타겟 확대 --- */
+    .tree-customer-item {
+      min-height: 40px;
+      padding: var(--spacing-sm);
+      padding-left: 24px;
+      gap: var(--spacing-sm);
+    }
+
+    .tree-customer-name {
+      font-size: var(--font-size-caption-1);
+    }
+
+    /* --- 빈 상태 / 로딩: 패딩 축소 --- */
+    .regional-tree-loading,
+    .regional-tree-empty {
+      padding: var(--spacing-lg);
+    }
+  }
+
+} /* end @layer components */

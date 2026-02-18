@@ -4,220 +4,225 @@
  */
 
 /* 🍎 CONTAINER: Start with nothing */
-.file-upload-area {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
 
-/* 🍎 UNIFIED UPLOAD ZONE: Click or Drop - 적정 크기 */
-.file-upload-area__unified-zone {
-  height: 150px; /* 적정 크기 */
-  background: var(--color-upload-zone-bg);
-  border: 2px dashed var(--color-upload-zone-border);
-  border-radius: var(--radius-lg); /* 통일된 라운딩 */
+@layer components {
 
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 20px;
-
-  cursor: pointer;
-  transition: all 0.3s ease;
-  outline: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-
-  /* 🎯 사용자 주의 끌기: 서브틀한 pulse 애니메이션 */
-  animation: uploadZonePulse 3s ease-in-out infinite;
-}
-
-/* 🎯 Pulse 애니메이션 (서브틀함) */
-@keyframes uploadZonePulse {
-  0%, 100% {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  .file-upload-area {
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
-  50% {
-    box-shadow: 0 2px 12px rgba(0, 122, 255, 0.12);
-  }
-}
 
-/* Hover State */
-.file-upload-area__unified-zone:hover:not([aria-disabled="true"]) {
-  background: var(--color-upload-zone-bg-hover);
-  border-color: var(--color-upload-zone-border-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.15);
-  animation: none; /* 호버 시 pulse 중지 */
-}
+  /* 🍎 UNIFIED UPLOAD ZONE: Click or Drop - 적정 크기 */
+  .file-upload-area__unified-zone {
+    height: 150px; /* 적정 크기 */
+    background: var(--color-upload-zone-bg);
+    border: 2px dashed var(--color-upload-zone-border);
+    border-radius: var(--radius-lg); /* 통일된 라운딩 */
 
-/* Focus State */
-.file-upload-area__unified-zone:focus {
-  box-shadow: 0 0 0 3px var(--color-upload-zone-focus);
-}
-
-/* Disabled State */
-.file-upload-area__unified-zone[aria-disabled="true"] {
-  opacity: 1;
-  cursor: not-allowed;
-  background: var(--color-section-bg);
-  border-color: var(--color-text-disabled);
-  border-style: dashed;
-  animation: none;
-}
-
-/* Disabled Content - 고객 선택 안내 */
-.file-upload-area__disabled-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  color: var(--color-text-tertiary);
-}
-
-.file-upload-area__disabled-icon {
-  color: var(--color-text-disabled);
-  opacity: 0.6;
-}
-
-.file-upload-area__disabled-text {
-  font-size: var(--font-size-footnote);
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-text-tertiary);
-  letter-spacing: -0.3px;
-}
-
-/* Dragging State */
-.file-upload-area__unified-zone--dragging {
-  background: var(--color-upload-zone-bg-dragging);
-  border-color: var(--color-upload-zone-border-dragging);
-  border-style: solid;
-  transform: scale(1.02);
-}
-
-/* Unified Content */
-.file-upload-area__unified-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Plus Icon - 적정 크기 */
-.file-upload-area__plus-icon {
-  width: 48px; /* 적정 크기 */
-  height: 48px;
-  border-radius: 24px;
-  background: var(--color-upload-zone-icon);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.file-upload-area__unified-zone:hover:not([aria-disabled="true"]) .file-upload-area__plus-icon {
-  background: var(--color-upload-zone-icon-hover);
-  transform: scale(1.15) rotate(90deg);
-}
-
-/* 🍎 DROP HINTS: Subtle guidance */
-.file-upload-area__drop-hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  opacity: 0.4;
-  transition: opacity 0.2s ease;
-}
-
-.file-upload-area__dropzone:hover .file-upload-area__drop-hint {
-  opacity: 0.7;
-}
-
-.file-upload-area__hint-text {
-  font-size: var(--font-size-footnote); /* 13px - 본문 텍스트 표준 */
-  font-weight: 600; /* 굵게 */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-text-primary);
-  letter-spacing: -0.3px;
-}
-
-html[data-theme="dark"] .file-upload-area__hint-text {
-  color: var(--color-text-primary);
-}
-
-/* 🍎 DROP ACTIVE: Clear feedback */
-.file-upload-area__drop-active {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-ios-spinner-fill-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-/* 🍎 UPLOADING: Minimal indicator */
-.file-upload-area__uploading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-ios-interactive-light);
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-/* 🍎 RESPONSIVE: Clear on mobile */
-@media (max-width: 768px) {
-  .file-upload-area__actions {
+    display: flex;
     flex-direction: column;
-    gap: 8px;
-  }
-
-  .file-upload-area__button {
-    padding: 12px 16px;
-    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
-  }
-
-  .file-upload-area__dropzone {
-    min-height: 60px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     padding: 20px;
+
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    /* 🎯 사용자 주의 끌기: 서브틀한 pulse 애니메이션 */
+    animation: uploadZonePulse 3s ease-in-out infinite;
+  }
+
+  /* 🎯 Pulse 애니메이션 (서브틀함) */
+  @keyframes uploadZonePulse {
+    0%, 100% {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    50% {
+      box-shadow: 0 2px 12px rgba(0, 122, 255, 0.12);
+    }
+  }
+
+  /* Hover State */
+  .file-upload-area__unified-zone:hover:not([aria-disabled="true"]) {
+    background: var(--color-upload-zone-bg-hover);
+    border-color: var(--color-upload-zone-border-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.15);
+    animation: none; /* 호버 시 pulse 중지 */
+  }
+
+  /* Focus State */
+  .file-upload-area__unified-zone:focus {
+    box-shadow: 0 0 0 3px var(--color-upload-zone-focus);
+  }
+
+  /* Disabled State */
+  .file-upload-area__unified-zone[aria-disabled="true"] {
+    opacity: 1;
+    cursor: not-allowed;
+    background: var(--color-section-bg);
+    border-color: var(--color-text-disabled);
+    border-style: dashed;
+    animation: none;
+  }
+
+  /* Disabled Content - 고객 선택 안내 */
+  .file-upload-area__disabled-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-text-tertiary);
+  }
+
+  .file-upload-area__disabled-icon {
+    color: var(--color-text-disabled);
+    opacity: 0.6;
+  }
+
+  .file-upload-area__disabled-text {
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-text-tertiary);
+    letter-spacing: -0.3px;
+  }
+
+  /* Dragging State */
+  .file-upload-area__unified-zone--dragging {
+    background: var(--color-upload-zone-bg-dragging);
+    border-color: var(--color-upload-zone-border-dragging);
+    border-style: solid;
+    transform: scale(1.02);
+  }
+
+  /* Unified Content */
+  .file-upload-area__unified-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Plus Icon - 적정 크기 */
+  .file-upload-area__plus-icon {
+    width: 48px; /* 적정 크기 */
+    height: 48px;
+    border-radius: 24px;
+    background: var(--color-upload-zone-icon);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .file-upload-area__unified-zone:hover:not([aria-disabled="true"]) .file-upload-area__plus-icon {
+    background: var(--color-upload-zone-icon-hover);
+    transform: scale(1.15) rotate(90deg);
+  }
+
+  /* 🍎 DROP HINTS: Subtle guidance */
+  .file-upload-area__drop-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.4;
+    transition: opacity 0.2s ease;
+  }
+
+  .file-upload-area__dropzone:hover .file-upload-area__drop-hint {
+    opacity: 0.7;
   }
 
   .file-upload-area__hint-text {
-    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  }
-}
-
-/* 🍎 ACCESSIBILITY: Maintain clarity */
-@media (prefers-reduced-motion: reduce) {
-  .file-upload-area__button,
-  .file-upload-area__dropzone,
-  .file-upload-area__drop-hint {
-    transition: none;
-  }
-}
-
-/* 🍎 HIGH CONTRAST: Enhanced visibility */
-@media (prefers-contrast: high) {
-  .file-upload-area__dropzone {
-    border-color: var(--color-ios-empty-light);
+    font-size: var(--font-size-footnote); /* 13px - 본문 텍스트 표준 */
+    font-weight: 600; /* 굵게 */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--color-text-primary);
+    letter-spacing: -0.3px;
   }
 
-  html[data-theme="dark"] .file-upload-area__dropzone {
-    border-color: var(--color-ios-empty-dark);
+  html[data-theme="dark"] .file-upload-area__hint-text {
+    color: var(--color-text-primary);
   }
 
-  .file-upload-area__button--secondary {
-    background: var(--color-active-light);
+  /* 🍎 DROP ACTIVE: Clear feedback */
+  .file-upload-area__drop-active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-ios-spinner-fill-light);
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   }
 
-  html[data-theme="dark"] .file-upload-area__button--secondary {
-    background: var(--color-active-dark);
+  /* 🍎 UPLOADING: Minimal indicator */
+  .file-upload-area__uploading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-ios-interactive-light);
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   }
-}
+
+  /* 🍎 RESPONSIVE: Clear on mobile */
+  @media (max-width: 768px) {
+    .file-upload-area__actions {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .file-upload-area__button {
+      padding: 12px 16px;
+      /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+    }
+
+    .file-upload-area__dropzone {
+      min-height: 60px;
+      padding: 20px;
+    }
+
+    .file-upload-area__hint-text {
+      /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    }
+  }
+
+  /* 🍎 ACCESSIBILITY: Maintain clarity */
+  @media (prefers-reduced-motion: reduce) {
+    .file-upload-area__button,
+    .file-upload-area__dropzone,
+    .file-upload-area__drop-hint {
+      transition: none;
+    }
+  }
+
+  /* 🍎 HIGH CONTRAST: Enhanced visibility */
+  @media (prefers-contrast: high) {
+    .file-upload-area__dropzone {
+      border-color: var(--color-ios-empty-light);
+    }
+
+    html[data-theme="dark"] .file-upload-area__dropzone {
+      border-color: var(--color-ios-empty-dark);
+    }
+
+    .file-upload-area__button--secondary {
+      background: var(--color-active-light);
+    }
+
+    html[data-theme="dark"] .file-upload-area__button--secondary {
+      background: var(--color-active-dark);
+    }
+  }
+
+} /* end @layer components */

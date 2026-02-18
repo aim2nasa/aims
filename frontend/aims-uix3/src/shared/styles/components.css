@@ -9,1458 +9,1462 @@
 
 /* === TEXT COMPONENTS === */
 
-.page-title {
-  margin: 0;
-  color: var(--color-text-primary);
-}
+@layer utilities {
 
-.section-heading {
-  margin: 0 0 var(--spacing-golden-sm) 0; /* 10px → Golden Ratio 기반 */
-  color: var(--color-text-primary);
-}
+  .page-title {
+    margin: 0;
+    color: var(--color-text-primary);
+  }
 
-.description-text {
-  margin: 0;
-  color: var(--color-text-secondary);
-  /* font-size: var(--font-size-footnote); (14px → iOS Footnote ) */
-}
+  .section-heading {
+    margin: 0 0 var(--spacing-golden-sm) 0; /* 10px → Golden Ratio 기반 */
+    color: var(--color-text-primary);
+  }
 
-.pagination-status {
-  margin-top: var(--spacing-golden-sm); /* 10px → Golden Ratio 기반 */
-  color: var(--color-text-secondary);
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
+  .description-text {
+    margin: 0;
+    color: var(--color-text-secondary);
+    /* font-size: var(--font-size-footnote); (14px → iOS Footnote ) */
+  }
 
-/* === CONTROL COMPONENTS === */
+  .pagination-status {
+    margin-top: var(--spacing-golden-sm); /* 10px → Golden Ratio 기반 */
+    color: var(--color-text-secondary);
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
 
-.control-label {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1); /* 4px → iOS 표준 토큰 */
-  color: var(--color-text-primary);
-}
+  /* === CONTROL COMPONENTS === */
 
-.control-group {
-  display: flex;
-  gap: var(--spacing-golden-sm); /* 10px → Golden Ratio 기반 */
-  /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
-}
+  .control-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1); /* 4px → iOS 표준 토큰 */
+    color: var(--color-text-primary);
+  }
 
-.control-section {
-  display: flex;
-  gap: var(--spacing-4); /* 15px → 16px iOS 표준 토큰 */
-  align-items: center;
-}
+  .control-group {
+    display: flex;
+    gap: var(--spacing-golden-sm); /* 10px → Golden Ratio 기반 */
+    /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
+  }
 
-/* === BUTTON COMPONENTS === */
+  .control-section {
+    display: flex;
+    gap: var(--spacing-4); /* 15px → 16px iOS 표준 토큰 */
+    align-items: center;
+  }
 
-/* Legacy theme button (deprecated) */
-.theme-toggle-button {
-  background-color: var(--color-button-secondary-bg);
-  color: var(--color-button-secondary-text);
-  border: 1px solid var(--color-button-secondary-border);
-  border-radius: var(--radius-sm); /* 4px → iOS 표준 토큰 */
-  padding: var(--spacing-golden-xs) var(--spacing-3); /* 6px 12px → Golden Ratio 기반 */
-  cursor: pointer;
-  /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
-  margin-left: var(--spacing-4); /* 15px → 16px iOS 표준 토큰 */
-}
+  /* === BUTTON COMPONENTS === */
 
-/* === THEME TOGGLE COMPONENT === */
+  /* Legacy theme button (deprecated) */
+  .theme-toggle-button {
+    background-color: var(--color-button-secondary-bg);
+    color: var(--color-button-secondary-text);
+    border: 1px solid var(--color-button-secondary-border);
+    border-radius: var(--radius-sm); /* 4px → iOS 표준 토큰 */
+    padding: var(--spacing-golden-xs) var(--spacing-3); /* 6px 12px → Golden Ratio 기반 */
+    cursor: pointer;
+    /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
+    margin-left: var(--spacing-4); /* 15px → 16px iOS 표준 토큰 */
+  }
 
-.theme-toggle-container {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-3);
-  margin-left: var(--spacing-4);
-  border-left: 1px solid var(--color-border-primary);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
+  /* === THEME TOGGLE COMPONENT === */
 
-.theme-icon {
-  /* font-size: var(--font-size-callout); (16px → iOS Callout ) */
-  transition: color var(--duration-fast) var(--easing-ease-out);
-  user-select: none;
-}
-
-/* === THEME TOGGLE STATES === */
-
-/* Light 모드 상태 */
-.theme-toggle-container--light .theme-icon-sun {
-  color: var(--color-icon-orange); /* 활성화된 태양 아이콘 */
-}
-
-.theme-toggle-container--light .theme-icon-moon {
-  color: var(--color-text-tertiary); /* 비활성화된 달 아이콘 */
-}
-
-/* Dark 모드 상태 */
-.theme-toggle-container--dark .theme-icon-sun {
-  color: var(--color-text-tertiary); /* 비활성화된 태양 아이콘 */
-}
-
-.theme-toggle-container--dark .theme-icon-moon {
-  color: var(--color-icon-cyan); /* 활성화된 달 아이콘 */
-}
-
-.theme-switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;   /* iOS Control Center 표준 크기 */
-  height: 26px;  /* iOS Control Center 표준 높이 */
-}
-
-/* checkbox 제거됨 - 컨테이너 onClick + --dark/--light 클래스로 상태 관리
-   모바일 브라우저에서 checkbox onChange 미발화 문제 근본 해결 */
-
-.theme-switch-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--color-theme-switch-bg-light);
-  transition: all var(--duration-ios-standard) var(--easing-spring-gentle); /* iOS Spring Physics 배경 전환 */
-  border-radius: 13px; /* iOS Control Center 정확한 border radius */
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15); /* iOS 내부 그림자 */
-}
-
-.theme-switch-slider::before {
-  position: absolute;
-  content: "";
-  height: 22px; /* iOS Control Center 핸들 크기 */
-  width: 22px;
-  left: 2px;
-  top: 2px;
-  background-color: var(--color-theme-switch-handle);
-  transition:
-    transform var(--duration-ios-standard) var(--easing-spring-bouncy), /* iOS Spring Physics 핸들 전환 */
-    box-shadow var(--duration-ios-quick) var(--easing-spring-gentle);
-  border-radius: 50%;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.25),      /* iOS 기본 그림자 */
-    0 1px 3px rgba(0, 0, 0, 0.15);      /* iOS 서브틀 그림자 */
-}
-
-/* 다크 모드 활성 상태 - 컨테이너 --dark 클래스 기반 */
-.theme-toggle-container--dark .theme-switch-slider {
-  background-color: var(--color-theme-switch-bg-dark);
-  box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.25),
-    0 0 0 2px rgba(52, 199, 89, 0.2);
-}
-
-.theme-toggle-container--dark .theme-switch-slider::before {
-  transform: translateX(18px);
-  box-shadow:
-    0 3px 12px rgba(0, 0, 0, 0.35),
-    0 1px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* iOS Control Center 호버 상태 - Spring Physics */
-.theme-switch-slider:hover {
-  transform: scale(1.02); /* 서브틀한 스케일 효과 */
-  transition: transform var(--duration-ios-quick) var(--easing-spring-bouncy); /* 탄력적 스프링 */
-}
-
-/* 포커스 접근성 - 컨테이너 focus-visible 기반 */
-.theme-toggle-container:focus-visible .theme-switch-slider {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.15),
-    0 0 0 4px rgba(59, 130, 246, 0.15);
-}
-
-.theme-toggle-container--dark:focus-visible .theme-switch-slider {
-  box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.25),
-    0 0 0 2px rgba(52, 199, 89, 0.2),
-    0 0 0 4px rgba(52, 199, 89, 0.15);
-}
-
-/* 📱 모바일 768px: 테마 토글 컴팩트 - 아이콘 숨김, 스위치 축소 */
-@media (max-width: 768px) {
   .theme-toggle-container {
-    gap: 0;
-    padding: 2px;
-    margin-left: 0;
-    border-left: none;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+    margin-left: var(--spacing-4);
+    border-left: 1px solid var(--color-border-primary);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .theme-icon {
-    display: none;
+    /* font-size: var(--font-size-callout); (16px → iOS Callout ) */
+    transition: color var(--duration-fast) var(--easing-ease-out);
+    user-select: none;
+  }
+
+  /* === THEME TOGGLE STATES === */
+
+  /* Light 모드 상태 */
+  .theme-toggle-container--light .theme-icon-sun {
+    color: var(--color-icon-orange); /* 활성화된 태양 아이콘 */
+  }
+
+  .theme-toggle-container--light .theme-icon-moon {
+    color: var(--color-text-tertiary); /* 비활성화된 달 아이콘 */
+  }
+
+  /* Dark 모드 상태 */
+  .theme-toggle-container--dark .theme-icon-sun {
+    color: var(--color-text-tertiary); /* 비활성화된 태양 아이콘 */
+  }
+
+  .theme-toggle-container--dark .theme-icon-moon {
+    color: var(--color-icon-cyan); /* 활성화된 달 아이콘 */
   }
 
   .theme-switch {
-    width: 26px;
-    height: 14px;
+    position: relative;
+    display: inline-block;
+    width: 44px;   /* iOS Control Center 표준 크기 */
+    height: 26px;  /* iOS Control Center 표준 높이 */
   }
 
+  /* checkbox 제거됨 - 컨테이너 onClick + --dark/--light 클래스로 상태 관리
+     모바일 브라우저에서 checkbox onChange 미발화 문제 근본 해결 */
+
   .theme-switch-slider {
-    border-radius: 7px;
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-theme-switch-bg-light);
+    transition: all var(--duration-ios-standard) var(--easing-spring-gentle); /* iOS Spring Physics 배경 전환 */
+    border-radius: 13px; /* iOS Control Center 정확한 border radius */
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15); /* iOS 내부 그림자 */
   }
 
   .theme-switch-slider::before {
-    height: 10px;
-    width: 10px;
+    position: absolute;
+    content: "";
+    height: 22px; /* iOS Control Center 핸들 크기 */
+    width: 22px;
+    left: 2px;
+    top: 2px;
+    background-color: var(--color-theme-switch-handle);
+    transition:
+      transform var(--duration-ios-standard) var(--easing-spring-bouncy), /* iOS Spring Physics 핸들 전환 */
+      box-shadow var(--duration-ios-quick) var(--easing-spring-gentle);
+    border-radius: 50%;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.25),      /* iOS 기본 그림자 */
+      0 1px 3px rgba(0, 0, 0, 0.15);      /* iOS 서브틀 그림자 */
+  }
+
+  /* 다크 모드 활성 상태 - 컨테이너 --dark 클래스 기반 */
+  .theme-toggle-container--dark .theme-switch-slider {
+    background-color: var(--color-theme-switch-bg-dark);
+    box-shadow:
+      inset 0 1px 3px rgba(0, 0, 0, 0.25),
+      0 0 0 2px rgba(52, 199, 89, 0.2);
   }
 
   .theme-toggle-container--dark .theme-switch-slider::before {
-    transform: translateX(12px); /* (26 - 10 - 2*2) = 12 */
-  }
-}
-
-.gap-toggle-button {
-  border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
-  cursor: pointer;
-  /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
-  margin-left: 15px;
-  color: var(--color-text-inverse);
-}
-
-.gap-toggle-button--active {
-  background-color: var(--color-gap-button-active);
-}
-
-.gap-toggle-button--inactive {
-  background-color: var(--color-gap-button-inactive);
-}
-
-.layout-control-button {
-  background-color: var(--color-primary);
-  color: var(--color-text-inverse);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-md); /* 8px → iOS 표준 토큰 */
-  padding: var(--spacing-2); /* 8px → iOS 표준 토큰 */
-  cursor: pointer;
-  /* font-size: var(--font-size-callout); (16px → iOS Callout ) */
-  /* font-weight: var(--font-weight-medium); (500 → iOS Medium ) */
-  margin-left: var(--spacing-4); /* 15px → 16px iOS 표준 토큰 */
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  /* 🍎 Phase 1: 마이크로 애니메이션 적용 */
-  transition:
-    transform var(--duration-micro-instant) var(--easing-micro-press-down),
-    box-shadow var(--duration-micro-quick) var(--easing-micro-scale-bounce),
-    background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift);
-
-  /* 성능 최적화 */
-  will-change: transform, box-shadow;
-  backface-visibility: hidden;
-}
-
-.layout-control-button:hover {
-  background-color: var(--color-primary-700);
-  border-color: var(--color-primary-700);
-  transform: translateY(-1px) scale(1.002);
-  box-shadow:
-    0 4px 12px rgba(59, 130, 246, 0.2),
-    0 2px 4px rgba(59, 130, 246, 0.1);
-
-  transition:
-    transform var(--duration-micro-quick) var(--easing-micro-hover-lift),
-    box-shadow var(--duration-micro-smooth) var(--easing-spring-gentle),
-    background-color var(--duration-micro-smooth) var(--easing-apple-smooth);
-}
-
-.layout-control-button:active {
-  transform: scale(0.97) translateY(1px);
-  background-color: var(--color-primary-800);
-  box-shadow:
-    inset 0 2px 4px rgba(59, 130, 246, 0.3),
-    0 0 0 1px rgba(59, 130, 246, 0.1);
-
-  transition:
-    transform var(--duration-micro-instant) var(--easing-micro-press-down),
-    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-    box-shadow var(--duration-micro-instant) var(--easing-micro-press-down);
-}
-
-/* 레이아웃 제어 버튼 비활성화 상태 - 즉각적 피드백 */
-.layout-control-button:disabled {
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-disabled);
-  border-color: var(--color-border-disabled);
-  cursor: not-allowed;
-  opacity: 0.6;
-  transform: none;
-  transition: all 50ms ease-out; /* 즉시 비활성화 피드백 */
-}
-
-.layout-control-button:disabled:hover {
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-disabled);
-  border-color: var(--color-border-disabled);
-  transform: none;
-  box-shadow: none;
-  transition: none; /* 호버 시 애니메이션 제거 */
-}
-
-
-.reset-button {
-  background-color: var(--color-gap-button-reset);
-  color: var(--color-neutral-0);
-  border: 1px solid var(--color-border-primary);
-  border-radius: 4px;
-  padding: 6px 12px;
-  cursor: pointer;
-  /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
-  /* font-weight: var(--font-weight-medium); (500 → iOS Medium ) */
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-.reset-button:hover {
-  background-color: var(--color-gap-button-reset);
-  border-color: var(--color-border-focus);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* === PANEL COMPONENTS === */
-
-.gap-controller-panel {
-  background-color: var(--color-bg-primary);
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: var(--shadow-md);
-  min-width: 220px;
-  /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.panel-title {
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-/* === INPUT COMPONENTS === */
-
-.range-input-group {
-  margin-bottom: 4px;
-}
-
-.range-label {
-  display: block;
-  margin-bottom: 2px;
-  color: var(--color-modal-text-secondary);
-  /* font-size: var(--font-size-footnote); (13px → iOS Footnote ) */
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.range-input {
-  width: 100%;
-}
-
-/* === CARD SYSTEM === */
-
-.card-base {
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  transition: all var(--duration-normal) var(--easing-ease-out);
-  position: relative;
-}
-
-.card-hover:hover {
-  /* 🍎 Phase 1: 마이크로 애니메이션 적용 */
-  transform: translateY(-2px) scale(1.002);
-  box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.12),
-    0 3px 8px rgba(0, 0, 0, 0.08);
-  border-color: var(--color-primary-300);
-
-  transition:
-    transform var(--duration-micro-gentle) var(--easing-spring-gentle),
-    box-shadow var(--duration-micro-smooth) var(--easing-micro-hover-lift),
-    border-color var(--duration-micro-quick) var(--easing-ease-out);
-}
-
-.card-content {
-  padding: var(--spacing-5);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--spacing-4);
-}
-
-.card-title {
-  /* font-size: var(--font-size-lg); () */
-  /* font-weight: var(--font-weight-semibold); () */
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-1) 0;
-}
-
-.card-subtitle {
-  /* font-size: var(--font-size-sm); () */
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* === HEADER SYSTEM === */
-
-.header-primary {
-  background-color: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border-primary);
-  padding: var(--spacing-8) var(--spacing-6);
-}
-
-.header-gradient {
-  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-800) 100%);
-  color: var(--color-neutral-0);
-  padding: var(--spacing-16) var(--spacing-6) var(--spacing-12) var(--spacing-6);
-  text-align: center;
-}
-
-.header-content {
-  max-width: var(--container-max-width);
-  margin: 0 auto;
-}
-
-.header-title {
-  /* font-size: var(--font-size-3xl); () */
-  /* font-weight: var(--font-weight-bold); () */
-  margin: 0 0 var(--spacing-2) 0;
-  color: var(--color-text-primary);
-}
-
-.header-title--large {
-  /* font-size: var(--font-size-4xl); () */
-}
-
-.header-subtitle {
-  /* font-size: var(--font-size-lg); () */
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: var(--line-height-relaxed);
-}
-
-/* === STATUS SYSTEM === */
-
-.status-badge {
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--radius-sm);
-  /* font-size: var(--font-size-xs); () */
-  /* font-weight: var(--font-weight-medium); () */
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
-
-.status-badge--active,
-.status-badge--success {
-  background-color: var(--color-status-success-bg);
-  color: var(--color-status-success);
-}
-
-.status-badge--inactive,
-.status-badge--error {
-  background-color: var(--color-status-error-bg);
-  color: var(--color-status-error);
-}
-
-.status-badge--warning {
-  background-color: var(--color-status-warning-bg);
-  color: var(--color-status-warning);
-}
-
-/* === FORM SYSTEM === */
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-4);
-  margin-bottom: var(--spacing-4);
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.form-field--full {
-  grid-column: 1 / -1;
-}
-
-.form-label {
-  /* font-size: var(--font-size-sm); () */
-  /* font-weight: var(--font-weight-medium); () */
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.form-input,
-.form-select,
-.form-textarea {
-  padding: var(--spacing-3) var(--spacing-4);
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-md);
-  background-color: var(--color-input-bg);
-  color: var(--color-input-text);
-  /* font-size: var(--font-size-base); () */
-  font-family: var(--font-family-primary);
-
-  /* 🍎 Phase 1: 마이크로 애니메이션 적용 */
-  transition:
-    border-color var(--duration-micro-quick) var(--easing-ease-out),
-    box-shadow var(--duration-micro-smooth) var(--easing-micro-focus-ring),
-    transform var(--duration-micro-quick) var(--easing-micro-scale-bounce);
-}
-
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
-  outline: none;
-  transform: scale(1.005);
-  border-color: var(--color-border-focus);
-  box-shadow:
-    0 0 0 2px rgba(59, 130, 246, 0.1),
-    0 2px 8px rgba(59, 130, 246, 0.05);
-
-  transition:
-    all var(--duration-micro-smooth) var(--easing-micro-focus-ring);
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-3);
-  margin-top: var(--spacing-6);
-  padding-top: var(--spacing-4);
-  border-top: 1px solid var(--color-border-primary);
-}
-
-/* === SEARCH SYSTEM === */
-
-.search-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-  max-width: 400px;
-}
-
-.search-input {
-  width: 100%;
-  padding: var(--spacing-3) var(--spacing-4);
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-md);
-  background-color: var(--color-input-bg);
-  color: var(--color-input-text);
-  /* font-size: var(--font-size-base); () */
-  transition: border-color var(--duration-fast) var(--easing-ease-in-out);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.search-input::placeholder {
-  color: var(--color-input-placeholder);
-}
-
-.search-results {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-}
-
-.search-count {
-  /* font-size: var(--font-size-sm); () */
-  color: var(--color-text-secondary);
-}
-
-/* === GRID SYSTEM === */
-
-.grid-container {
-  max-width: var(--container-max-width);
-  margin: 0 auto;
-  padding: 0 var(--spacing-6) var(--spacing-8) var(--spacing-6);
-}
-
-.grid-responsive {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: var(--spacing-6);
-}
-
-.grid-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-6);
-}
-
-/* === ACTIONS BAR === */
-
-.actions-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--spacing-4);
-  padding: var(--spacing-6);
-  max-width: var(--container-max-width);
-  margin: 0 auto;
-}
-
-.actions-left {
-  flex: 1;
-  min-width: 0;
-}
-
-.actions-right {
-  flex-shrink: 0;
-}
-
-/* === HAMBURGER CONTAINER === */
-
-.hamburger-container {
-  margin-top: auto;
-  display: flex;
-  padding-top: 0;
-}
-
-.hamburger-container--collapsed {
-  justify-content: center;
-}
-
-.hamburger-container--expanded {
-  justify-content: flex-end;
-}
-
-/* === LEFTPANE FOOTER === */
-
-.leftpane-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.leftpane-footer__left {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
-}
-
-.leftpane-footer__version {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-  opacity: 0.6;
-  cursor: pointer;
-  user-select: none;
-  transition: opacity var(--duration-fast) var(--easing-standard);
-  text-align: center;
-}
-
-.leftpane-footer__version:hover {
-  opacity: 1;
-}
-
-.leftpane-footer__right {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.leftpane-footer__hamburger-skeleton {
-  width: 32px;
-  height: 32px;
-  background: var(--color-skeleton-base);
-  border-radius: 4px;
-  opacity: 0.6;
-}
-
-/* 축소 상태: 햄버거 버튼만 가운데 표시 */
-.leftpane-footer--collapsed {
-  justify-content: center;
-}
-
-.leftpane-footer__right--centered {
-  flex: none;
-  justify-content: center;
-}
-
-/* === LEFTPANE FOOTER RESPONSIVE === */
-
-/* 📱 iPad/소형 PC (1024px-1366px) */
-@media (min-width: 1024px) and (max-width: 1366px) {
-  .leftpane-footer {
-    gap: 4px;
-    padding: 4px 0;
+    transform: translateX(18px);
+    box-shadow:
+      0 3px 12px rgba(0, 0, 0, 0.35),
+      0 1px 4px rgba(0, 0, 0, 0.2);
   }
 
-  .leftpane-footer__version {
-    font-size: 9px;
+  /* iOS Control Center 호버 상태 - Spring Physics */
+  .theme-switch-slider:hover {
+    transform: scale(1.02); /* 서브틀한 스케일 효과 */
+    transition: transform var(--duration-ios-quick) var(--easing-spring-bouncy); /* 탄력적 스프링 */
   }
-}
 
-/* 📱 iPad Mini 전용 (1024px-1100px) - 더 컴팩트하게 */
-@media (min-width: 1024px) and (max-width: 1100px) {
-  .leftpane-footer {
-    flex-wrap: wrap;
+  /* 포커스 접근성 - 컨테이너 focus-visible 기반 */
+  .theme-toggle-container:focus-visible .theme-switch-slider {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    box-shadow:
+      inset 0 1px 3px rgba(0, 0, 0, 0.15),
+      0 0 0 4px rgba(59, 130, 246, 0.15);
+  }
+
+  .theme-toggle-container--dark:focus-visible .theme-switch-slider {
+    box-shadow:
+      inset 0 1px 3px rgba(0, 0, 0, 0.25),
+      0 0 0 2px rgba(52, 199, 89, 0.2),
+      0 0 0 4px rgba(52, 199, 89, 0.15);
+  }
+
+  /* 📱 모바일 768px: 테마 토글 컴팩트 - 아이콘 숨김, 스위치 축소 */
+  @media (max-width: 768px) {
+    .theme-toggle-container {
+      gap: 0;
+      padding: 2px;
+      margin-left: 0;
+      border-left: none;
+    }
+
+    .theme-icon {
+      display: none;
+    }
+
+    .theme-switch {
+      width: 26px;
+      height: 14px;
+    }
+
+    .theme-switch-slider {
+      border-radius: 7px;
+    }
+
+    .theme-switch-slider::before {
+      height: 10px;
+      width: 10px;
+    }
+
+    .theme-toggle-container--dark .theme-switch-slider::before {
+      transform: translateX(12px); /* (26 - 10 - 2*2) = 12 */
+    }
+  }
+
+  .gap-toggle-button {
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
+    margin-left: 15px;
+    color: var(--color-text-inverse);
+  }
+
+  .gap-toggle-button--active {
+    background-color: var(--color-gap-button-active);
+  }
+
+  .gap-toggle-button--inactive {
+    background-color: var(--color-gap-button-inactive);
+  }
+
+  .layout-control-button {
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-md); /* 8px → iOS 표준 토큰 */
+    padding: var(--spacing-2); /* 8px → iOS 표준 토큰 */
+    cursor: pointer;
+    /* font-size: var(--font-size-callout); (16px → iOS Callout ) */
+    /* font-weight: var(--font-weight-medium); (500 → iOS Medium ) */
+    margin-left: var(--spacing-4); /* 15px → 16px iOS 표준 토큰 */
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    gap: 2px;
+
+    /* 🍎 Phase 1: 마이크로 애니메이션 적용 */
+    transition:
+      transform var(--duration-micro-instant) var(--easing-micro-press-down),
+      box-shadow var(--duration-micro-quick) var(--easing-micro-scale-bounce),
+      background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift);
+
+    /* 성능 최적화 */
+    will-change: transform, box-shadow;
+    backface-visibility: hidden;
   }
 
-  .leftpane-footer__left,
-  .leftpane-footer__right {
-    flex: 0 0 auto;
-  }
-}
+  .layout-control-button:hover {
+    background-color: var(--color-primary-700);
+    border-color: var(--color-primary-700);
+    transform: translateY(-1px) scale(1.002);
+    box-shadow:
+      0 4px 12px rgba(59, 130, 246, 0.2),
+      0 2px 4px rgba(59, 130, 246, 0.1);
 
-/* 📱 iPad 세로 높이 제한 (850px 이하) - 극한 압축 */
-@media (min-width: 1024px) and (max-height: 850px) {
+    transition:
+      transform var(--duration-micro-quick) var(--easing-micro-hover-lift),
+      box-shadow var(--duration-micro-smooth) var(--easing-spring-gentle),
+      background-color var(--duration-micro-smooth) var(--easing-apple-smooth);
+  }
+
+  .layout-control-button:active {
+    transform: scale(0.97) translateY(1px);
+    background-color: var(--color-primary-800);
+    box-shadow:
+      inset 0 2px 4px rgba(59, 130, 246, 0.3),
+      0 0 0 1px rgba(59, 130, 246, 0.1);
+
+    transition:
+      transform var(--duration-micro-instant) var(--easing-micro-press-down),
+      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+      box-shadow var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  /* 레이아웃 제어 버튼 비활성화 상태 - 즉각적 피드백 */
+  .layout-control-button:disabled {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-disabled);
+    border-color: var(--color-border-disabled);
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    transition: all 50ms ease-out; /* 즉시 비활성화 피드백 */
+  }
+
+  .layout-control-button:disabled:hover {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-disabled);
+    border-color: var(--color-border-disabled);
+    transform: none;
+    box-shadow: none;
+    transition: none; /* 호버 시 애니메이션 제거 */
+  }
+
+
+  .reset-button {
+    background-color: var(--color-gap-button-reset);
+    color: var(--color-neutral-0);
+    border: 1px solid var(--color-border-primary);
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
+    /* font-weight: var(--font-weight-medium); (500 → iOS Medium ) */
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .reset-button:hover {
+    background-color: var(--color-gap-button-reset);
+    border-color: var(--color-border-focus);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* === PANEL COMPONENTS === */
+
+  .gap-controller-panel {
+    background-color: var(--color-bg-primary);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    min-width: 220px;
+    /* font-size: var(--font-size-caption-1); (12px → iOS Caption 1 ) */
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .panel-title {
+    margin: 0;
+    color: var(--color-text-primary);
+  }
+
+  /* === INPUT COMPONENTS === */
+
+  .range-input-group {
+    margin-bottom: 4px;
+  }
+
+  .range-label {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--color-modal-text-secondary);
+    /* font-size: var(--font-size-footnote); (13px → iOS Footnote ) */
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  .range-input {
+    width: 100%;
+  }
+
+  /* === CARD SYSTEM === */
+
+  .card-base {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--duration-normal) var(--easing-ease-out);
+    position: relative;
+  }
+
+  .card-hover:hover {
+    /* 🍎 Phase 1: 마이크로 애니메이션 적용 */
+    transform: translateY(-2px) scale(1.002);
+    box-shadow:
+      0 8px 25px rgba(0, 0, 0, 0.12),
+      0 3px 8px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-primary-300);
+
+    transition:
+      transform var(--duration-micro-gentle) var(--easing-spring-gentle),
+      box-shadow var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+      border-color var(--duration-micro-quick) var(--easing-ease-out);
+  }
+
+  .card-content {
+    padding: var(--spacing-5);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-4);
+  }
+
+  .card-title {
+    /* font-size: var(--font-size-lg); () */
+    /* font-weight: var(--font-weight-semibold); () */
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-1) 0;
+  }
+
+  .card-subtitle {
+    /* font-size: var(--font-size-sm); () */
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  /* === HEADER SYSTEM === */
+
+  .header-primary {
+    background-color: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border-primary);
+    padding: var(--spacing-8) var(--spacing-6);
+  }
+
+  .header-gradient {
+    background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-800) 100%);
+    color: var(--color-neutral-0);
+    padding: var(--spacing-16) var(--spacing-6) var(--spacing-12) var(--spacing-6);
+    text-align: center;
+  }
+
+  .header-content {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+  }
+
+  .header-title {
+    /* font-size: var(--font-size-3xl); () */
+    /* font-weight: var(--font-weight-bold); () */
+    margin: 0 0 var(--spacing-2) 0;
+    color: var(--color-text-primary);
+  }
+
+  .header-title--large {
+    /* font-size: var(--font-size-4xl); () */
+  }
+
+  .header-subtitle {
+    /* font-size: var(--font-size-lg); () */
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: var(--line-height-relaxed);
+  }
+
+  /* === STATUS SYSTEM === */
+
+  .status-badge {
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    /* font-size: var(--font-size-xs); () */
+    /* font-weight: var(--font-weight-medium); () */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
+  .status-badge--active,
+  .status-badge--success {
+    background-color: var(--color-status-success-bg);
+    color: var(--color-status-success);
+  }
+
+  .status-badge--inactive,
+  .status-badge--error {
+    background-color: var(--color-status-error-bg);
+    color: var(--color-status-error);
+  }
+
+  .status-badge--warning {
+    background-color: var(--color-status-warning-bg);
+    color: var(--color-status-warning);
+  }
+
+  /* === FORM SYSTEM === */
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-4);
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  .form-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .form-label {
+    /* font-size: var(--font-size-sm); () */
+    /* font-weight: var(--font-weight-medium); () */
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: var(--spacing-3) var(--spacing-4);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    background-color: var(--color-input-bg);
+    color: var(--color-input-text);
+    /* font-size: var(--font-size-base); () */
+    font-family: var(--font-family-primary);
+
+    /* 🍎 Phase 1: 마이크로 애니메이션 적용 */
+    transition:
+      border-color var(--duration-micro-quick) var(--easing-ease-out),
+      box-shadow var(--duration-micro-smooth) var(--easing-micro-focus-ring),
+      transform var(--duration-micro-quick) var(--easing-micro-scale-bounce);
+  }
+
+  .form-input:focus,
+  .form-select:focus,
+  .form-textarea:focus {
+    outline: none;
+    transform: scale(1.005);
+    border-color: var(--color-border-focus);
+    box-shadow:
+      0 0 0 2px rgba(59, 130, 246, 0.1),
+      0 2px 8px rgba(59, 130, 246, 0.05);
+
+    transition:
+      all var(--duration-micro-smooth) var(--easing-micro-focus-ring);
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--color-border-primary);
+  }
+
+  /* === SEARCH SYSTEM === */
+
+  .search-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    max-width: 400px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: var(--spacing-3) var(--spacing-4);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    background-color: var(--color-input-bg);
+    color: var(--color-input-text);
+    /* font-size: var(--font-size-base); () */
+    transition: border-color var(--duration-fast) var(--easing-ease-in-out);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
+
+  .search-input::placeholder {
+    color: var(--color-input-placeholder);
+  }
+
+  .search-results {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .search-count {
+    /* font-size: var(--font-size-sm); () */
+    color: var(--color-text-secondary);
+  }
+
+  /* === GRID SYSTEM === */
+
+  .grid-container {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-6) var(--spacing-8) var(--spacing-6);
+  }
+
+  .grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--spacing-6);
+  }
+
+  .grid-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-6);
+  }
+
+  /* === ACTIONS BAR === */
+
+  .actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-4);
+    padding: var(--spacing-6);
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+  }
+
+  .actions-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .actions-right {
+    flex-shrink: 0;
+  }
+
+  /* === HAMBURGER CONTAINER === */
+
+  .hamburger-container {
+    margin-top: auto;
+    display: flex;
+    padding-top: 0;
+  }
+
+  .hamburger-container--collapsed {
+    justify-content: center;
+  }
+
+  .hamburger-container--expanded {
+    justify-content: flex-end;
+  }
+
+  /* === LEFTPANE FOOTER === */
+
   .leftpane-footer {
-    gap: 2px;
-    padding: 2px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .leftpane-footer__left {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
   }
 
   .leftpane-footer__version {
-    font-size: 8px;
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    opacity: 0.6;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity var(--duration-fast) var(--easing-standard);
+    text-align: center;
+  }
+
+  .leftpane-footer__version:hover {
+    opacity: 1;
+  }
+
+  .leftpane-footer__right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
   }
 
   .leftpane-footer__hamburger-skeleton {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
+    background: var(--color-skeleton-base);
+    border-radius: 4px;
+    opacity: 0.6;
   }
-}
 
-/* === LAYOUT CONTROL MODAL === */
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: var(--color-bg-primary);
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-  max-width: 480px;
-  width: 90%;
-  max-height: 80vh;
-  overflow: hidden;
-  border: 1px solid var(--color-border-primary);
-  transition: box-shadow var(--duration-ios-quick) var(--easing-ios-default);
-}
-
-.modal-content--dragging {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  user-select: none;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border-primary);
-}
-
-.modal-header--draggable {
-  cursor: grab;
-  user-select: none;
-  /* 드래그 이벤트가 확실히 작동하도록 강제 */
-  position: relative;
-  z-index: 10;
-}
-
-.modal-header--draggable:active {
-  cursor: grabbing;
-}
-
-.modal-title {
-  margin: 0;
-  /* font-size: var(--font-size-headline); (18px → iOS Headline ) */
-  /* font-weight: var(--font-weight-semibold); (600 → iOS Semibold ) */
-  color: var(--color-modal-text-primary);
-}
-
-.modal-close-button {
-  background: none;
-  border: none;
-  /* font-size: var(--font-size-title-2); (24px → iOS Title 2 ) */
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all var(--duration-ios-quick) var(--easing-ios-default);
-}
-
-.modal-close-button:hover {
-  color: var(--color-text-primary);
-  background: var(--color-bg-hover);
-}
-
-.modal-body {
-  padding: 20px;
-  overflow-y: auto;
-  max-height: 75vh; /* 최적화: 85vh - 160px ≈ 75vh (160px ≈ 10vh) */
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.modal-control-section {
-  margin-bottom: 24px;
-}
-
-.modal-control-section:last-child {
-  margin-bottom: 0;
-}
-
-.modal-control-section--with-divider {
-  border-top: 1px solid var(--color-border-primary);
-  padding-top: 20px;
-}
-
-.modal-section-title {
-  margin: 0 0 12px 0;
-  /* font-size: var(--font-size-subheadline); (15px → iOS Subheadline ) */
-  /* font-weight: var(--font-weight-semibold); (600 → iOS Semibold ) */
-  color: var(--color-modal-text-primary);
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.checkbox-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 16px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  /* font-size: var(--font-size-footnote); (14px → iOS Footnote ) */
-  color: var(--color-modal-text-secondary);
-  transition: color var(--duration-ios-quick) var(--easing-ios-default);
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.checkbox-label:hover {
-  color: var(--color-modal-text-primary);
-}
-
-.checkbox-label input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
-}
-
-.gap-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.gap-controls {
-  display: flex;
-  gap: 8px;
-}
-
-.gap-sliders {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.modal-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--color-border-primary);
-  display: flex;
-  justify-content: flex-end;
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.button-secondary {
-  padding: 8px 16px;
-  border: 1px solid var(--color-border-primary);
-  border-radius: 6px;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  /* font-size: var(--font-size-footnote); (14px → iOS Footnote ) */
-  /* font-weight: var(--font-weight-medium); (500 → iOS Medium ) */
-  cursor: pointer;
-  transition: all var(--duration-ios-quick) var(--easing-apple-smooth); /* Apple smooth easing */
-}
-
-.button-secondary:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-primary);
-  transform: translateY(-1px); /* Apple-style subtle lift */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle elevation shadow */
-}
-
-.button-secondary:active {
-  transform: translateY(0); /* Return to base position */
-  background: var(--color-bg-pressed);
-}
-
-/* === FLOATING MODAL STYLES === */
-/* 애플 디자인 철학 준수: "Invisible until you need it" + Progressive Disclosure */
-
-.floating-modal {
-  /* === iOS 2025 LIQUID GLASS MODAL === */
-  position: fixed;
-  top: 50%;
-  left: 50%;
-
-  /* Liquid Glass Background - 테마별 조건부 적용 */
-  background: rgba(255, 255, 255, 0.95);  /* 라이트 테마 기본 */
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 24px; /* Apple Guidelines: 24px radius for sheets */
-
-  /* Advanced Backdrop Filter - Liquid Glass Effect */
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-
-  /* iOS Sheet Presentation Shadows */
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
-
-  /* Apple Guidelines Sizing */
-  max-width: 420px;  /* iOS modal 표준 너비 */
-  width: 85%;       /* 모바일 친화적 */
-  max-height: 85vh; /* 화면 비율 고려 - 닫기 버튼 표시 보장 */
-  min-height: 200px; /* 최소 사용성 확보 */
-
-  /* 레이아웃 */
-  overflow: hidden;
-  z-index: var(--z-portal-modal);
-
-  /* transform은 JavaScript에서 완전히 제어 */
-  /* transform 제거됨 */
-  opacity: 1;
-
-  /* 프로페셔널 UI: 텍스트 선택 방지 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-
-  /* Smooth Transitions with Apple Magic */
-  /* transform transition 제외 - 드래그 지원을 위해 */
-  transition:
-    background var(--duration-apple-smooth) var(--easing-apple-magic),
-    box-shadow var(--duration-apple-smooth) var(--easing-apple-magic),
-    backdrop-filter var(--duration-apple-smooth) var(--easing-apple-magic);
-}
-
-/* 다크 테마 전용 모달 배경 */
-[data-theme="dark"] .floating-modal {
-  background: var(--color-neutral-700);  /* 다크 테마: iOS systemGray6 */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .floating-modal:hover {
-  background: var(--color-neutral-600);  /* 다크 테마 호버: iOS systemGray5 */
-}
-
-/* 라이트 테마 호버 */
-.floating-modal:hover {
-  /* === DYNAMIC FOCUS: Progressive Disclosure === */
-  background: rgba(255, 255, 255, 0.98);  /* 라이트 테마 호버: 더 불투명 */
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-}
-
-.floating-modal--dragging {
-  /* === DYNAMIC FOCUS: Deep Engagement === */
-  /* transform은 JavaScript에서 제어하므로 제거 */
-  box-shadow: var(--shadow-sheet-focused);
-  backdrop-filter: var(--backdrop-glass-heavy);
-  -webkit-backdrop-filter: var(--backdrop-glass-heavy);
-
-  /* 드래그 상태 최적화 */
-  user-select: none;
-  cursor: grabbing;
-
-  /* 더 강한 Glass 효과로 집중도 표현 */
-  border-color: var(--color-modal-glass-border);
-
-  /* 성능 최적화 속성들 - 가이드라인 준수 */
-  will-change: transform;
-  backface-visibility: hidden;
-  /* 드래그 중에는 모든 transition 비활성화 */
-  transition: none !important;
-}
-
-/* === APPLE 2025 LIQUID GLASS ANIMATIONS === */
-.floating-modal * {
-  transition-timing-function: var(--easing-apple-magic);
-}
-
-/* Modal Backdrop Dimming Layer */
-.floating-modal::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--backdrop-modal-dimming);
-  z-index: -1;
-  opacity: 0;
-  transition: opacity var(--duration-sheet-animation) var(--easing-apple-magic);
-}
-
-.floating-modal:hover::before {
-  opacity: 1;
-}
-
-/* === iOS DYNAMIC FOCUS STATES === */
-
-/* Focus state - 키보드 네비게이션 */
-.floating-modal:focus-within {
-  /* transform은 JavaScript에서 제어하므로 제거 */
-  box-shadow: var(--shadow-sheet-focused);
-  backdrop-filter: var(--backdrop-glass-heavy);
-  -webkit-backdrop-filter: var(--backdrop-glass-heavy);
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 4px;
-}
-
-/* Active state - 클릭/터치 상호작용 */
-.floating-modal:active {
-  /* transform은 JavaScript에서 제어하므로 제거 */
-  transition-duration: var(--duration-apple-quick);
-}
-
-/* === MODAL ENTRANCE/EXIT ANIMATIONS === */
-
-/* 모달 등장 애니메이션 - iOS Sheet Slide-up */
-@keyframes modalSlideUp {
-  from {
-    transform: translate(-50%, 100%) scale(0.95);
-    opacity: 0;
+  /* 축소 상태: 햄버거 버튼만 가운데 표시 */
+  .leftpane-footer--collapsed {
+    justify-content: center;
   }
-  to {
-    transform: translate(-50%, -50%) scale(var(--scale-modal-default));
-    opacity: 1;
+
+  .leftpane-footer__right--centered {
+    flex: none;
+    justify-content: center;
   }
-}
 
-/* 모달 사라짐 애니메이션 - iOS Sheet Slide-down */
-@keyframes modalSlideDown {
-  from {
-    transform: translate(-50%, -50%) scale(var(--scale-modal-default));
-    opacity: 1;
+  /* === LEFTPANE FOOTER RESPONSIVE === */
+
+  /* 📱 iPad/소형 PC (1024px-1366px) */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    .leftpane-footer {
+      gap: 4px;
+      padding: 4px 0;
+    }
+
+    .leftpane-footer__version {
+      font-size: 9px;
+    }
   }
-  to {
-    transform: translate(-50%, 100%) scale(0.95);
-    opacity: 0;
+
+  /* 📱 iPad Mini 전용 (1024px-1100px) - 더 컴팩트하게 */
+  @media (min-width: 1024px) and (max-width: 1100px) {
+    .leftpane-footer {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .leftpane-footer__left,
+    .leftpane-footer__right {
+      flex: 0 0 auto;
+    }
   }
-}
 
-/* 애니메이션 클래스 */
-.floating-modal--entering {
-  animation: modalSlideUp var(--duration-sheet-animation) var(--easing-sheet-entrance) forwards;
-}
+  /* 📱 iPad 세로 높이 제한 (850px 이하) - 극한 압축 */
+  @media (min-width: 1024px) and (max-height: 850px) {
+    .leftpane-footer {
+      gap: 2px;
+      padding: 2px 0;
+    }
 
-.floating-modal--exiting {
-  animation: modalSlideDown var(--duration-sheet-animation) var(--easing-sheet-dismissal) forwards;
-}
+    .leftpane-footer__version {
+      font-size: 8px;
+    }
 
-/* === MODAL RESPONSIVE === */
+    .leftpane-footer__hamburger-skeleton {
+      width: 28px;
+      height: 28px;
+    }
+  }
 
-@media (max-width: 640px) {
+  /* === LAYOUT CONTROL MODAL === */
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
   .modal-content {
-    max-width: 95%;
-    max-height: 88vh;
+    background: var(--color-bg-primary);
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    max-width: 480px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    border: 1px solid var(--color-border-primary);
+    transition: box-shadow var(--duration-ios-quick) var(--easing-ios-default);
   }
 
-  .floating-modal {
-    max-width: 95%;
-    max-height: 90vh;
-    width: 95%;
-  }
-
-  .modal-body {
-    padding: 16px;
-    max-height: 81vh; /* 최적화: 90vh - 140px ≈ 81vh (140px ≈ 9vh) */
+  .modal-content--dragging {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    user-select: none;
   }
 
   .modal-header {
-    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border-primary);
   }
 
-  .modal-footer {
-    padding: 12px 16px;
+  .modal-header--draggable {
+    cursor: grab;
+    user-select: none;
+    /* 드래그 이벤트가 확실히 작동하도록 강제 */
+    position: relative;
+    z-index: 10;
   }
 
-  .checkbox-grid {
-    grid-template-columns: 1fr;
-    gap: 6px;
+  .modal-header--draggable:active {
+    cursor: grabbing;
   }
 
-  .gap-sliders {
-    gap: 6px;
+  .modal-title {
+    margin: 0;
+    /* font-size: var(--font-size-headline); (18px → iOS Headline ) */
+    /* font-weight: var(--font-weight-semibold); (600 → iOS Semibold ) */
+    color: var(--color-modal-text-primary);
   }
 
-  .modal-control-section {
-    margin-bottom: 20px;
+  .modal-close-button {
+    background: none;
+    border: none;
+    /* font-size: var(--font-size-title-2); (24px → iOS Title 2 ) */
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all var(--duration-ios-quick) var(--easing-ios-default);
   }
-}
 
-@media (max-height: 600px) {
-  .modal-content {
-    max-height: 92vh;
+  .modal-close-button:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
   }
 
   .modal-body {
-    max-height: 86vh; /* 최적화: 92vh - 100px ≈ 86vh (100px ≈ 6vh) */
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 75vh; /* 최적화: 85vh - 160px ≈ 75vh (160px ≈ 10vh) */
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
-}
 
-/* === 🍎 MICRO INTERACTION SYSTEM === */
-/* Phase 1: 마이크로 인터랙션 완벽화 - iOS 17+ 표준 */
+  .modal-control-section {
+    margin-bottom: 24px;
+  }
 
-/* === MICRO BUTTON ANIMATIONS === */
+  .modal-control-section:last-child {
+    margin-bottom: 0;
+  }
 
-.micro-button {
-  transition:
-    transform var(--duration-micro-instant) var(--easing-micro-press-down),
-    box-shadow var(--duration-micro-quick) var(--easing-micro-scale-bounce),
-    background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift);
+  .modal-control-section--with-divider {
+    border-top: 1px solid var(--color-border-primary);
+    padding-top: 20px;
+  }
 
-  /* iOS 네이티브 버튼 기본 상태 */
-  will-change: transform, box-shadow;
-  backface-visibility: hidden;
-}
+  .modal-section-title {
+    margin: 0 0 12px 0;
+    /* font-size: var(--font-size-subheadline); (15px → iOS Subheadline ) */
+    /* font-weight: var(--font-weight-semibold); (600 → iOS Semibold ) */
+    color: var(--color-modal-text-primary);
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
 
-.micro-button:hover {
-  transform: translateY(-1px) scale(1.002);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.15),
-    0 2px 4px rgba(0, 0, 0, 0.08);
-  transition:
-    transform var(--duration-micro-quick) var(--easing-micro-hover-lift),
-    box-shadow var(--duration-micro-smooth) var(--easing-spring-gentle);
-}
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+  }
 
-.micro-button:active {
-  transform: scale(0.97) translateY(1px);
-  box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(0, 0, 0, 0.1);
-  transition:
-    transform var(--duration-micro-instant) var(--easing-micro-press-down),
-    box-shadow var(--duration-micro-instant) var(--easing-micro-press-down);
-}
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    /* font-size: var(--font-size-footnote); (14px → iOS Footnote ) */
+    color: var(--color-modal-text-secondary);
+    transition: color var(--duration-ios-quick) var(--easing-ios-default);
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
 
-.micro-button:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-  transition: outline var(--duration-micro-quick) var(--easing-micro-focus-ring);
-}
+  .checkbox-label:hover {
+    color: var(--color-modal-text-primary);
+  }
 
-/* === MICRO CARD ANIMATIONS === */
+  .checkbox-label input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+  }
 
-.micro-card {
-  transition:
-    transform var(--duration-micro-smooth) var(--easing-spring-gentle),
-    box-shadow var(--duration-micro-gentle) var(--easing-micro-hover-lift),
-    border-color var(--duration-micro-quick) var(--easing-ease-out);
+  .gap-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
 
-  will-change: transform, box-shadow;
-  backface-visibility: hidden;
-}
+  .gap-controls {
+    display: flex;
+    gap: 8px;
+  }
 
-.micro-card:hover {
-  transform: translateY(-2px) scale(1.002);
-  box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.12),
-    0 3px 8px rgba(0, 0, 0, 0.08);
-  border-color: var(--color-primary-300);
+  .gap-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
-  transition:
-    transform var(--duration-micro-gentle) var(--easing-spring-gentle),
-    box-shadow var(--duration-micro-smooth) var(--easing-micro-hover-lift),
-    border-color var(--duration-micro-quick) var(--easing-ease-out);
-}
+  .modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-border-primary);
+    display: flex;
+    justify-content: flex-end;
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
 
-/* === MICRO INPUT ANIMATIONS === */
+  .button-secondary {
+    padding: 8px 16px;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 6px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    /* font-size: var(--font-size-footnote); (14px → iOS Footnote ) */
+    /* font-weight: var(--font-weight-medium); (500 → iOS Medium ) */
+    cursor: pointer;
+    transition: all var(--duration-ios-quick) var(--easing-apple-smooth); /* Apple smooth easing */
+  }
 
-.micro-input {
-  transition:
-    border-color var(--duration-micro-quick) var(--easing-ease-out),
-    box-shadow var(--duration-micro-smooth) var(--easing-micro-focus-ring),
-    transform var(--duration-micro-quick) var(--easing-micro-scale-bounce);
-}
+  .button-secondary:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-primary);
+    transform: translateY(-1px); /* Apple-style subtle lift */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle elevation shadow */
+  }
 
-.micro-input:focus {
-  transform: scale(1.005);
-  border-color: var(--color-primary-500);
-  box-shadow:
-    0 0 0 2px rgba(59, 130, 246, 0.1),
-    0 2px 8px rgba(59, 130, 246, 0.05);
+  .button-secondary:active {
+    transform: translateY(0); /* Return to base position */
+    background: var(--color-bg-pressed);
+  }
 
-  transition:
-    all var(--duration-micro-smooth) var(--easing-micro-focus-ring);
-}
+  /* === FLOATING MODAL STYLES === */
+  /* 애플 디자인 철학 준수: "Invisible until you need it" + Progressive Disclosure */
 
-/* === MICRO PROGRESSIVE DISCLOSURE === */
+  .floating-modal {
+    /* === iOS 2025 LIQUID GLASS MODAL === */
+    position: fixed;
+    top: 50%;
+    left: 50%;
 
-.micro-progressive {
-  opacity: 0.6;
-  transition:
-    opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
-    transform var(--duration-micro-smooth) var(--easing-spring-gentle);
-}
+    /* Liquid Glass Background - 테마별 조건부 적용 */
+    background: rgba(255, 255, 255, 0.95);  /* 라이트 테마 기본 */
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 24px; /* Apple Guidelines: 24px radius for sheets */
 
-.micro-progressive:hover,
-.micro-progressive:focus-within {
-  opacity: 1;
-  transform: translateY(-1px);
-  transition:
-    opacity var(--duration-micro-quick) var(--easing-micro-progressive-expand),
-    transform var(--duration-micro-smooth) var(--easing-spring-gentle);
-}
+    /* Advanced Backdrop Filter - Liquid Glass Effect */
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
 
-.micro-progressive-controls {
-  opacity: 0;
-  transform: translateY(-8px);
-  transition:
-    opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
-    transform var(--duration-micro-smooth) var(--easing-spring-bouncy);
-}
+    /* iOS Sheet Presentation Shadows */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
 
-.micro-progressive:hover .micro-progressive-controls,
-.micro-progressive:focus-within .micro-progressive-controls {
-  opacity: 1;
-  transform: translateY(0);
-  transition:
-    opacity var(--duration-micro-quick) var(--easing-micro-progressive-expand),
-    transform var(--duration-micro-gentle) var(--easing-spring-bouncy);
-}
+    /* Apple Guidelines Sizing */
+    max-width: 420px;  /* iOS modal 표준 너비 */
+    width: 85%;       /* 모바일 친화적 */
+    max-height: 85vh; /* 화면 비율 고려 - 닫기 버튼 표시 보장 */
+    min-height: 200px; /* 최소 사용성 확보 */
 
-/* === MICRO HAPTIC FEEDBACK SIMULATION === */
+    /* 레이아웃 */
+    overflow: hidden;
+    z-index: var(--z-portal-modal);
 
-.micro-haptic-light:active {
-  transform: scale(0.98);
-  transition: transform var(--duration-micro-instant) var(--easing-micro-press-down);
-}
+    /* transform은 JavaScript에서 완전히 제어 */
+    /* transform 제거됨 */
+    opacity: 1;
 
-.micro-haptic-medium:active {
-  transform: scale(0.95);
-  transition: transform var(--duration-micro-instant) var(--easing-micro-press-down);
-}
+    /* 프로페셔널 UI: 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 
-.micro-haptic-heavy:active {
-  transform: scale(0.92);
-  transition: transform var(--duration-micro-instant) var(--easing-micro-press-down);
-}
+    /* Smooth Transitions with Apple Magic */
+    /* transform transition 제외 - 드래그 지원을 위해 */
+    transition:
+      background var(--duration-apple-smooth) var(--easing-apple-magic),
+      box-shadow var(--duration-apple-smooth) var(--easing-apple-magic),
+      backdrop-filter var(--duration-apple-smooth) var(--easing-apple-magic);
+  }
 
-/* === PERFORMANCE OPTIMIZATIONS === */
+  /* 다크 테마 전용 모달 배경 */
+  [data-theme="dark"] .floating-modal {
+    background: var(--color-neutral-700);  /* 다크 테마: iOS systemGray6 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 
-/* 60fps 보장을 위한 최적화 */
-.micro-optimized {
-  will-change: transform, opacity, box-shadow;
-  backface-visibility: hidden;
-  perspective: 1000px;
-  contain: layout style paint;
-}
+  [data-theme="dark"] .floating-modal:hover {
+    background: var(--color-neutral-600);  /* 다크 테마 호버: iOS systemGray5 */
+  }
 
-/* GPU 가속 활성화 */
-.micro-gpu-accelerated {
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-/* === ACCESSIBILITY - FOCUS RING === */
-/* COMPONENT_GUIDE.md 라인 314-322: 포커스 상태 지원 */
+  /* 라이트 테마 호버 */
+  .floating-modal:hover {
+    /* === DYNAMIC FOCUS: Progressive Disclosure === */
+    background: rgba(255, 255, 255, 0.98);  /* 라이트 테마 호버: 더 불투명 */
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+  }
 
-/**
- * focus-ring 공용 클래스
- * 키보드 접근성을 위한 표준 포커스 스타일
- * @see COMPONENT_GUIDE.md 라인 314-322
- */
-.focus-ring {
-  outline: none;
-  transition: box-shadow var(--duration-ios-quick) var(--easing-ease-out);
-}
+  .floating-modal--dragging {
+    /* === DYNAMIC FOCUS: Deep Engagement === */
+    /* transform은 JavaScript에서 제어하므로 제거 */
+    box-shadow: var(--shadow-sheet-focused);
+    backdrop-filter: var(--backdrop-glass-heavy);
+    -webkit-backdrop-filter: var(--backdrop-glass-heavy);
 
-.focus-ring:focus-visible {
-  box-shadow: 0 0 0 3px var(--color-ios-blue-light);
-}
+    /* 드래그 상태 최적화 */
+    user-select: none;
+    cursor: grabbing;
 
-html[data-theme='dark'] .focus-ring:focus-visible {
-  box-shadow: 0 0 0 3px var(--color-ios-blue-dark);
-}
+    /* 더 강한 Glass 효과로 집중도 표현 */
+    border-color: var(--color-modal-glass-border);
 
-/* === HELP MODAL === */
-/* 🍎 Apple 스타일 도움말 모달 */
+    /* 성능 최적화 속성들 - 가이드라인 준수 */
+    will-change: transform;
+    backface-visibility: hidden;
+    /* 드래그 중에는 모든 transition 비활성화 */
+    transition: none !important;
+  }
 
-.help-modal-content {
-  line-height: 1.7;
-  font-size: var(--font-size-footnote, 13px);
-  color: var(--color-text-primary);
-  max-height: 60vh;
-  overflow-y: auto;
-  padding-right: var(--spacing-2);
-}
+  /* === APPLE 2025 LIQUID GLASS ANIMATIONS === */
+  .floating-modal * {
+    transition-timing-function: var(--easing-apple-magic);
+  }
 
-.help-modal-content p {
-  margin: 0 0 var(--spacing-1) 0;
-}
+  /* Modal Backdrop Dimming Layer */
+  .floating-modal::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--backdrop-modal-dimming);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity var(--duration-sheet-animation) var(--easing-apple-magic);
+  }
 
-.help-modal-content ul {
-  padding-left: 0;
-  margin: var(--spacing-1) 0 0 0;
-  list-style-type: none;
-}
+  .floating-modal:hover::before {
+    opacity: 1;
+  }
 
-.help-modal-content li {
-  margin-bottom: var(--spacing-1);
-  color: var(--color-text-secondary);
-  padding-left: 16px;
-  position: relative;
-  line-height: 1.6;
-}
+  /* === iOS DYNAMIC FOCUS STATES === */
 
-.help-modal-content li::before {
-  content: "•";
-  position: absolute;
-  left: 4px;
-  color: var(--color-text-tertiary);
-}
+  /* Focus state - 키보드 네비게이션 */
+  .floating-modal:focus-within {
+    /* transform은 JavaScript에서 제어하므로 제거 */
+    box-shadow: var(--shadow-sheet-focused);
+    backdrop-filter: var(--backdrop-glass-heavy);
+    -webkit-backdrop-filter: var(--backdrop-glass-heavy);
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 4px;
+  }
 
-.help-modal-content strong {
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold, 600);
-}
+  /* Active state - 클릭/터치 상호작용 */
+  .floating-modal:active {
+    /* transform은 JavaScript에서 제어하므로 제거 */
+    transition-duration: var(--duration-apple-quick);
+  }
 
-/* 섹션 카드 스타일 */
-.help-modal-section {
-  margin-top: var(--spacing-4);
-  padding: var(--spacing-3);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-md, 8px);
-  border: 1px solid var(--color-border-subtle);
-}
+  /* === MODAL ENTRANCE/EXIT ANIMATIONS === */
 
-.help-modal-section:first-child {
-  margin-top: 0;
-}
+  /* 모달 등장 애니메이션 - iOS Sheet Slide-up */
+  @keyframes modalSlideUp {
+    from {
+      transform: translate(-50%, 100%) scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, -50%) scale(var(--scale-modal-default));
+      opacity: 1;
+    }
+  }
 
-/* 섹션 제목 */
-.help-modal-section > p:first-child {
-  font-size: var(--font-size-subheadline, 14px);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-2);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-}
+  /* 모달 사라짐 애니메이션 - iOS Sheet Slide-down */
+  @keyframes modalSlideDown {
+    from {
+      transform: translate(-50%, -50%) scale(var(--scale-modal-default));
+      opacity: 1;
+    }
+    to {
+      transform: translate(-50%, 100%) scale(0.95);
+      opacity: 0;
+    }
+  }
 
-/* 다크 테마 */
-html[data-theme='dark'] .help-modal-section {
-  background: var(--color-bg-tertiary);
-  border-color: var(--color-border);
-}
+  /* 애니메이션 클래스 */
+  .floating-modal--entering {
+    animation: modalSlideUp var(--duration-sheet-animation) var(--easing-sheet-entrance) forwards;
+  }
 
-/* 스크롤바 스타일 */
-.help-modal-content::-webkit-scrollbar {
-  width: 6px;
-}
+  .floating-modal--exiting {
+    animation: modalSlideDown var(--duration-sheet-animation) var(--easing-sheet-dismissal) forwards;
+  }
 
-.help-modal-content::-webkit-scrollbar-track {
-  background: transparent;
-}
+  /* === MODAL RESPONSIVE === */
 
-.help-modal-content::-webkit-scrollbar-thumb {
-  background: var(--color-text-quaternary);
-  border-radius: 3px;
-}
+  @media (max-width: 640px) {
+    .modal-content {
+      max-width: 95%;
+      max-height: 88vh;
+    }
 
-.help-modal-content::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-tertiary);
-}
+    .floating-modal {
+      max-width: 95%;
+      max-height: 90vh;
+      width: 95%;
+    }
 
-/* 도움말 아이콘 버튼 */
-.help-icon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  transition: all var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out);
-  margin-left: var(--spacing-2, 8px);
-}
+    .modal-body {
+      padding: 16px;
+      max-height: 81vh; /* 최적화: 90vh - 140px ≈ 81vh (140px ≈ 9vh) */
+    }
 
-.help-icon-button:hover {
-  background: var(--color-bg-active);
-  color: var(--color-primary);
-}
+    .modal-header {
+      padding: 12px 16px;
+    }
 
-.help-icon-button:active {
-  transform: scale(0.95);
-}
+    .modal-footer {
+      padding: 12px 16px;
+    }
+
+    .checkbox-grid {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .gap-sliders {
+      gap: 6px;
+    }
+
+    .modal-control-section {
+      margin-bottom: 20px;
+    }
+  }
+
+  @media (max-height: 600px) {
+    .modal-content {
+      max-height: 92vh;
+    }
+
+    .modal-body {
+      max-height: 86vh; /* 최적화: 92vh - 100px ≈ 86vh (100px ≈ 6vh) */
+    }
+  }
+
+  /* === 🍎 MICRO INTERACTION SYSTEM === */
+  /* Phase 1: 마이크로 인터랙션 완벽화 - iOS 17+ 표준 */
+
+  /* === MICRO BUTTON ANIMATIONS === */
+
+  .micro-button {
+    transition:
+      transform var(--duration-micro-instant) var(--easing-micro-press-down),
+      box-shadow var(--duration-micro-quick) var(--easing-micro-scale-bounce),
+      background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift);
+
+    /* iOS 네이티브 버튼 기본 상태 */
+    will-change: transform, box-shadow;
+    backface-visibility: hidden;
+  }
+
+  .micro-button:hover {
+    transform: translateY(-1px) scale(1.002);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      0 2px 4px rgba(0, 0, 0, 0.08);
+    transition:
+      transform var(--duration-micro-quick) var(--easing-micro-hover-lift),
+      box-shadow var(--duration-micro-smooth) var(--easing-spring-gentle);
+  }
+
+  .micro-button:active {
+    transform: scale(0.97) translateY(1px);
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(0, 0, 0, 0.1);
+    transition:
+      transform var(--duration-micro-instant) var(--easing-micro-press-down),
+      box-shadow var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  .micro-button:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+    transition: outline var(--duration-micro-quick) var(--easing-micro-focus-ring);
+  }
+
+  /* === MICRO CARD ANIMATIONS === */
+
+  .micro-card {
+    transition:
+      transform var(--duration-micro-smooth) var(--easing-spring-gentle),
+      box-shadow var(--duration-micro-gentle) var(--easing-micro-hover-lift),
+      border-color var(--duration-micro-quick) var(--easing-ease-out);
+
+    will-change: transform, box-shadow;
+    backface-visibility: hidden;
+  }
+
+  .micro-card:hover {
+    transform: translateY(-2px) scale(1.002);
+    box-shadow:
+      0 8px 25px rgba(0, 0, 0, 0.12),
+      0 3px 8px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-primary-300);
+
+    transition:
+      transform var(--duration-micro-gentle) var(--easing-spring-gentle),
+      box-shadow var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+      border-color var(--duration-micro-quick) var(--easing-ease-out);
+  }
+
+  /* === MICRO INPUT ANIMATIONS === */
+
+  .micro-input {
+    transition:
+      border-color var(--duration-micro-quick) var(--easing-ease-out),
+      box-shadow var(--duration-micro-smooth) var(--easing-micro-focus-ring),
+      transform var(--duration-micro-quick) var(--easing-micro-scale-bounce);
+  }
+
+  .micro-input:focus {
+    transform: scale(1.005);
+    border-color: var(--color-primary-500);
+    box-shadow:
+      0 0 0 2px rgba(59, 130, 246, 0.1),
+      0 2px 8px rgba(59, 130, 246, 0.05);
+
+    transition:
+      all var(--duration-micro-smooth) var(--easing-micro-focus-ring);
+  }
+
+  /* === MICRO PROGRESSIVE DISCLOSURE === */
+
+  .micro-progressive {
+    opacity: 0.6;
+    transition:
+      opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+      transform var(--duration-micro-smooth) var(--easing-spring-gentle);
+  }
+
+  .micro-progressive:hover,
+  .micro-progressive:focus-within {
+    opacity: 1;
+    transform: translateY(-1px);
+    transition:
+      opacity var(--duration-micro-quick) var(--easing-micro-progressive-expand),
+      transform var(--duration-micro-smooth) var(--easing-spring-gentle);
+  }
+
+  .micro-progressive-controls {
+    opacity: 0;
+    transform: translateY(-8px);
+    transition:
+      opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+      transform var(--duration-micro-smooth) var(--easing-spring-bouncy);
+  }
+
+  .micro-progressive:hover .micro-progressive-controls,
+  .micro-progressive:focus-within .micro-progressive-controls {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity var(--duration-micro-quick) var(--easing-micro-progressive-expand),
+      transform var(--duration-micro-gentle) var(--easing-spring-bouncy);
+  }
+
+  /* === MICRO HAPTIC FEEDBACK SIMULATION === */
+
+  .micro-haptic-light:active {
+    transform: scale(0.98);
+    transition: transform var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  .micro-haptic-medium:active {
+    transform: scale(0.95);
+    transition: transform var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  .micro-haptic-heavy:active {
+    transform: scale(0.92);
+    transition: transform var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  /* === PERFORMANCE OPTIMIZATIONS === */
+
+  /* 60fps 보장을 위한 최적화 */
+  .micro-optimized {
+    will-change: transform, opacity, box-shadow;
+    backface-visibility: hidden;
+    perspective: 1000px;
+    contain: layout style paint;
+  }
+
+  /* GPU 가속 활성화 */
+  .micro-gpu-accelerated {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  /* === ACCESSIBILITY - FOCUS RING === */
+  /* COMPONENT_GUIDE.md 라인 314-322: 포커스 상태 지원 */
+
+  /**
+   * focus-ring 공용 클래스
+   * 키보드 접근성을 위한 표준 포커스 스타일
+   * @see COMPONENT_GUIDE.md 라인 314-322
+   */
+  .focus-ring {
+    outline: none;
+    transition: box-shadow var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  .focus-ring:focus-visible {
+    box-shadow: 0 0 0 3px var(--color-ios-blue-light);
+  }
+
+  html[data-theme='dark'] .focus-ring:focus-visible {
+    box-shadow: 0 0 0 3px var(--color-ios-blue-dark);
+  }
+
+  /* === HELP MODAL === */
+  /* 🍎 Apple 스타일 도움말 모달 */
+
+  .help-modal-content {
+    line-height: 1.7;
+    font-size: var(--font-size-footnote, 13px);
+    color: var(--color-text-primary);
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: var(--spacing-2);
+  }
+
+  .help-modal-content p {
+    margin: 0 0 var(--spacing-1) 0;
+  }
+
+  .help-modal-content ul {
+    padding-left: 0;
+    margin: var(--spacing-1) 0 0 0;
+    list-style-type: none;
+  }
+
+  .help-modal-content li {
+    margin-bottom: var(--spacing-1);
+    color: var(--color-text-secondary);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.6;
+  }
+
+  .help-modal-content li::before {
+    content: "•";
+    position: absolute;
+    left: 4px;
+    color: var(--color-text-tertiary);
+  }
+
+  .help-modal-content strong {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold, 600);
+  }
+
+  /* 섹션 카드 스타일 */
+  .help-modal-section {
+    margin-top: var(--spacing-4);
+    padding: var(--spacing-3);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--color-border-subtle);
+  }
+
+  .help-modal-section:first-child {
+    margin-top: 0;
+  }
+
+  /* 섹션 제목 */
+  .help-modal-section > p:first-child {
+    font-size: var(--font-size-subheadline, 14px);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  /* 다크 테마 */
+  html[data-theme='dark'] .help-modal-section {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border);
+  }
+
+  /* 스크롤바 스타일 */
+  .help-modal-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .help-modal-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .help-modal-content::-webkit-scrollbar-thumb {
+    background: var(--color-text-quaternary);
+    border-radius: 3px;
+  }
+
+  .help-modal-content::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-tertiary);
+  }
+
+  /* 도움말 아이콘 버튼 */
+  .help-icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: var(--radius-sm, 4px);
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out);
+    margin-left: var(--spacing-2, 8px);
+  }
+
+  .help-icon-button:hover {
+    background: var(--color-bg-active);
+    color: var(--color-primary);
+  }
+
+  .help-icon-button:active {
+    transform: scale(0.95);
+  }
+
+} /* end @layer utilities */

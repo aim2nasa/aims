@@ -4,98 +4,103 @@
  */
 
 /* === 기본 스타일 (드롭다운) === */
-.document-type-cell--select {
-  display: block;
-  width: 100%;
-  height: 22px;
-  padding: 0 20px 0 6px;
-  font-size: var(--font-size-caption-2);
-  font-family: var(--font-family-text);
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
-  background-color: var(--color-ios-background-secondary-light);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23666' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  background-size: 8px 5px;
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: 4px;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  text-align: left;
-  line-height: 20px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-.document-type-cell--select:hover:not(:disabled) {
-  border-color: var(--color-ios-blue-light);
-}
+@layer components {
 
-.document-type-cell--select:focus {
-  outline: none;
-  border-color: var(--color-ios-blue-light);
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
-}
+  .document-type-cell--select {
+    display: block;
+    width: 100%;
+    height: 22px;
+    padding: 0 20px 0 6px;
+    font-size: var(--font-size-caption-2);
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    color: var(--color-ios-text-primary-light);
+    background-color: var(--color-ios-background-secondary-light);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23666' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 8px 5px;
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 4px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-align: left;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-.document-type-cell--select:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+  .document-type-cell--select:hover:not(:disabled) {
+    border-color: var(--color-ios-blue-light);
+  }
 
-html[data-theme="dark"] .document-type-cell--select {
-  color: var(--color-ios-text-primary-dark);
-  background-color: var(--color-ios-background-secondary-dark);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23aaa' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
-  border-color: var(--color-ios-separator-dark);
-}
+  .document-type-cell--select:focus {
+    outline: none;
+    border-color: var(--color-ios-blue-light);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+  }
 
-html[data-theme="dark"] .document-type-cell--select:hover:not(:disabled) {
-  border-color: var(--color-ios-blue-dark);
-}
+  .document-type-cell--select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
-/* === 읽기 전용 스타일 (시스템 유형) === */
-.document-type-cell--readonly {
-  display: block;
-  width: 100%;
-  height: 22px;
-  padding: 0 6px;
-  font-size: var(--font-size-caption-2);
-  font-family: var(--font-family-text);
-  font-weight: 400;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  text-align: left;
-  line-height: 20px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: not-allowed;
-  -webkit-user-select: none;
-  user-select: none;
-}
+  html[data-theme="dark"] .document-type-cell--select {
+    color: var(--color-ios-text-primary-dark);
+    background-color: var(--color-ios-background-secondary-dark);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23aaa' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+    border-color: var(--color-ios-separator-dark);
+  }
 
-/* 연간보고서 (Annual Report) - 블루 */
-.document-type-cell--annual_report {
-  background-color: var(--color-semantic-info-light);
-  color: var(--color-ios-blue-light);
-}
+  html[data-theme="dark"] .document-type-cell--select:hover:not(:disabled) {
+    border-color: var(--color-ios-blue-dark);
+  }
 
-html[data-theme="dark"] .document-type-cell--annual_report {
-  background-color: rgba(10, 132, 255, 0.15);
-  color: var(--color-ios-blue-dark);
-}
+  /* === 읽기 전용 스타일 (시스템 유형) === */
+  .document-type-cell--readonly {
+    display: block;
+    width: 100%;
+    height: 22px;
+    padding: 0 6px;
+    font-size: var(--font-size-caption-2);
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    text-align: left;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: not-allowed;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 
-/* 고객리뷰 (Customer Review) - 퍼플 */
-.document-type-cell--customer_review {
-  background-color: rgba(175, 82, 222, 0.1);
-  color: var(--color-ios-purple-light);
-}
+  /* 연간보고서 (Annual Report) - 블루 */
+  .document-type-cell--annual_report {
+    background-color: var(--color-semantic-info-light);
+    color: var(--color-ios-blue-light);
+  }
 
-html[data-theme="dark"] .document-type-cell--customer_review {
-  background-color: rgba(175, 82, 222, 0.15);
-  color: var(--color-ios-purple-dark);
-}
+  html[data-theme="dark"] .document-type-cell--annual_report {
+    background-color: rgba(10, 132, 255, 0.15);
+    color: var(--color-ios-blue-dark);
+  }
+
+  /* 고객리뷰 (Customer Review) - 퍼플 */
+  .document-type-cell--customer_review {
+    background-color: rgba(175, 82, 222, 0.1);
+    color: var(--color-ios-purple-light);
+  }
+
+  html[data-theme="dark"] .document-type-cell--customer_review {
+    background-color: rgba(175, 82, 222, 0.15);
+    color: var(--color-ios-purple-dark);
+  }
+
+} /* end @layer components */

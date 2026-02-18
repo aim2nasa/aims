@@ -4,166 +4,171 @@
  */
 
 /* ===== Input Wrapper ===== */
-.input-wrapper {
-  display: block;
-  width: 100%;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-}
 
-.input-wrapper--full-width {
-  width: 100%;
-}
+@layer components {
 
-/* ===== Input Container ===== */
-.input-container {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-}
+  .input-wrapper {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+  }
 
-/* ===== Input Field ===== */
-.input {
-  display: block;
-  width: 100%;
-  height: 18px;
-  min-height: 18px;
-  max-height: 18px;
-  padding: 0;
-  margin: 0;
+  .input-wrapper--full-width {
+    width: 100%;
+  }
 
-  /* font-size: var(--font-size-footnote); () */
-  font-family: var(--font-family-system);
-  /* font-weight: var(--font-weight-normal); () */
-  line-height: 1.2;
-  -webkit-font-smoothing: antialiased;
+  /* ===== Input Container ===== */
+  .input-container {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+  }
 
-  color: var(--color-text-primary);
-  background-color: transparent;
-
-  border: none;
-  border-radius: 0;
-  outline: none;
-
-  transition: none;
-
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-[data-theme="dark"] .input {
-  color: var(--color-text-primary);
-}
-
-/* Padding adjustments with icons */
-.input--with-left-icon {
-  padding-left: calc(var(--spacing-lg) + 24px);
-}
-
-.input--with-right-icon {
-  padding-right: calc(var(--spacing-lg) + 24px);
-}
-
-/* ===== Input States ===== */
-
-/* Focus State - Progressive Disclosure */
-.input:focus {
-  outline: none;
-}
-
-/* Disabled State */
-.input:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-/* Error State - 최소화 */
-.input-wrapper--error .input {
-  color: var(--color-error-light);
-}
-
-/* ===== Input Icons ===== */
-.input-icon {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 20px;
-  height: 20px;
-
-  color: var(--color-text-tertiary);
-
-  pointer-events: none;
-
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.input-icon--left {
-  left: var(--spacing-md);
-}
-
-.input-icon--right {
-  right: var(--spacing-md);
-}
-
-/* Icon color change on focus */
-.input:focus ~ .input-icon {
-  color: var(--color-primary-500);
-}
-
-/* ===== Error Message ===== */
-.input-error-message {
-  display: none;
-}
-
-/* ===== Placeholder ===== */
-.input::placeholder {
-  color: var(--color-text-tertiary);
-  opacity: 1;
-  /* font-size: var(--font-size-footnote); () */
-  font-family: var(--font-family-system);
-  /* font-weight: var(--font-weight-normal); () */
-  -webkit-font-smoothing: antialiased;
-}
-
-[data-theme="dark"] .input::placeholder {
-  color: var(--color-text-tertiary);
-}
-
-/* ===== Autofill 스타일 오버라이드 ===== */
-.input:-webkit-autofill,
-.input:-webkit-autofill:hover,
-.input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px transparent inset;
-  -webkit-text-fill-color: var(--color-text-primary);
-  transition: background-color 5000s ease-in-out 0s;
-}
-
-/* ===== Accessibility ===== */
-
-/* 포커스 가시성 향상 */
-.input:focus-visible {
-  outline: none;
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
+  /* ===== Input Field ===== */
   .input {
+    display: block;
+    width: 100%;
+    height: 18px;
+    min-height: 18px;
+    max-height: 18px;
+    padding: 0;
+    margin: 0;
+
     /* font-size: var(--font-size-footnote); () */
+    font-family: var(--font-family-system);
+    /* font-weight: var(--font-weight-normal); () */
+    line-height: 1.2;
+    -webkit-font-smoothing: antialiased;
+
+    color: var(--color-text-primary);
+    background-color: transparent;
+
+    border: none;
+    border-radius: 0;
+    outline: none;
+
+    transition: none;
+
+    -webkit-appearance: none;
+    appearance: none;
   }
 
-  .input::placeholder {
-    /* font-size: var(--font-size-footnote); () */
+  [data-theme="dark"] .input {
+    color: var(--color-text-primary);
   }
 
+  /* Padding adjustments with icons */
+  .input--with-left-icon {
+    padding-left: calc(var(--spacing-lg) + 24px);
+  }
+
+  .input--with-right-icon {
+    padding-right: calc(var(--spacing-lg) + 24px);
+  }
+
+  /* ===== Input States ===== */
+
+  /* Focus State - Progressive Disclosure */
+  .input:focus {
+    outline: none;
+  }
+
+  /* Disabled State */
+  .input:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* Error State - 최소화 */
+  .input-wrapper--error .input {
+    color: var(--color-error-light);
+  }
+
+  /* ===== Input Icons ===== */
+  .input-icon {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 20px;
+    height: 20px;
+
+    color: var(--color-text-tertiary);
+
+    pointer-events: none;
+
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .input-icon--left {
+    left: var(--spacing-md);
+  }
+
+  .input-icon--right {
+    right: var(--spacing-md);
+  }
+
+  /* Icon color change on focus */
+  .input:focus ~ .input-icon {
+    color: var(--color-primary-500);
+  }
+
+  /* ===== Error Message ===== */
   .input-error-message {
-    /* font-size: var(--font-size-footnote); () */
+    display: none;
   }
-}
+
+  /* ===== Placeholder ===== */
+  .input::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 1;
+    /* font-size: var(--font-size-footnote); () */
+    font-family: var(--font-family-system);
+    /* font-weight: var(--font-weight-normal); () */
+    -webkit-font-smoothing: antialiased;
+  }
+
+  [data-theme="dark"] .input::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  /* ===== Autofill 스타일 오버라이드 ===== */
+  .input:-webkit-autofill,
+  .input:-webkit-autofill:hover,
+  .input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px transparent inset;
+    -webkit-text-fill-color: var(--color-text-primary);
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* ===== Accessibility ===== */
+
+  /* 포커스 가시성 향상 */
+  .input:focus-visible {
+    outline: none;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .input {
+      /* font-size: var(--font-size-footnote); () */
+    }
+
+    .input::placeholder {
+      /* font-size: var(--font-size-footnote); () */
+    }
+
+    .input-error-message {
+      /* font-size: var(--font-size-footnote); () */
+    }
+  }
+
+} /* end @layer components */

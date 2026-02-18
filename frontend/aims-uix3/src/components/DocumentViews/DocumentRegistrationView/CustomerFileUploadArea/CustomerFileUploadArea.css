@@ -5,381 +5,385 @@
  * 🍎 iOS 스타일 - DocumentLinkModal과 100% 동일한 레이아웃
  */
 
-.customer-file-upload-area {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 0;
-  background: transparent;
-  border-radius: var(--radius-lg);
-  border: none;
-  overflow: visible;
-  max-width: 800px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-}
+@layer components {
 
-/* ===== 하나의 경계 박스: 고객 선택 + 고객 정보 + 문서 유형 + 메모 ===== */
+  .customer-file-upload-area {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    background: transparent;
+    border-radius: var(--radius-lg);
+    border: none;
+    overflow: visible;
+    max-width: 800px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
 
-.customer-file-upload-area__content-box {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  background: transparent;
-  border-radius: var(--radius-md);
-  border: none;
-  overflow: visible; /* 드롭다운 메뉴가 잘리지 않도록 변경 */
-}
+  /* ===== 하나의 경계 박스: 고객 선택 + 고객 정보 + 문서 유형 + 메모 ===== */
 
-html[data-theme="dark"] .customer-file-upload-area__content-box {
-  background: transparent;
-}
+  .customer-file-upload-area__content-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: transparent;
+    border-radius: var(--radius-md);
+    border: none;
+    overflow: visible; /* 드롭다운 메뉴가 잘리지 않도록 변경 */
+  }
 
-/* ===== 첫 번째 행: 고객 선택 + 고객 정보 + 문서 유형 ===== */
+  html[data-theme="dark"] .customer-file-upload-area__content-box {
+    background: transparent;
+  }
 
-.customer-file-upload-area__main-row {
-  display: flex;
-  flex-direction: row;
-  gap: var(--spacing-2);
-  align-items: center;
-  justify-content: flex-start;
-  flex-wrap: nowrap;
-  overflow: visible;
-  position: relative;
-  z-index: 1;
-  padding: var(--spacing-3) var(--spacing-3) var(--spacing-1); /* 하단 패딩만 축소 */
-  background: transparent;
-  border: none;
-}
+  /* ===== 첫 번째 행: 고객 선택 + 고객 정보 + 문서 유형 ===== */
 
-/* 고객 선택 버튼 스타일 */
-.customer-file-upload-area__main-row .button {
-  height: 36px;
-  min-height: 36px;
-  max-height: 36px;
-  font-size: var(--font-size-footnote);
-  font-weight: 600;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+  .customer-file-upload-area__main-row {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-2);
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+    padding: var(--spacing-3) var(--spacing-3) var(--spacing-1); /* 하단 패딩만 축소 */
+    background: transparent;
+    border: none;
+  }
 
-/* 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
-.customer-file-upload-area__selected-customer {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  flex: 1;
-  height: 36px;
-  min-height: 36px;
-  max-height: 36px;
-  overflow: visible;
-  position: relative;
-}
+  /* 고객 선택 버튼 스타일 */
+  .customer-file-upload-area__main-row .button {
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
-/* 고객 선택됨: 이름 + X 버튼 */
-.customer-file-upload-area__selected-customer > .selected-customer-name {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  height: 36px;
-  padding: 8px 12px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-footnote);
-  font-family: var(--font-family-text);
-  transition: all var(--duration-ios-quick) var(--easing-ease-out);
-}
+  /* 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
+  .customer-file-upload-area__selected-customer {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    flex: 1;
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    overflow: visible;
+    position: relative;
+  }
 
-html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selected-customer-name {
-  background: var(--color-layout-content-dark);
-  border-color: var(--color-ios-separator-dark);
-}
+  /* 고객 선택됨: 이름 + X 버튼 */
+  .customer-file-upload-area__selected-customer > .selected-customer-name {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 36px;
+    padding: 8px 12px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-footnote);
+    font-family: var(--font-family-text);
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  }
 
-/* 고객명 텍스트 */
-.selected-customer-name .selected-customer-text {
-  flex: 1;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selected-customer-name {
+    background: var(--color-layout-content-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
 
-/* X 버튼 */
-.customer-file-upload-area .clear-customer-button {
-  background: transparent;
-  border: none;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  padding: 4px;
-  margin-left: 4px;
-  font-size: var(--font-size-footnote);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  border-radius: var(--radius-sm);
-}
+  /* 고객명 텍스트 */
+  .selected-customer-name .selected-customer-text {
+    flex: 1;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.customer-file-upload-area .clear-customer-button:hover:not(:disabled) {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
-  transform: scale(1.1);
-}
+  /* X 버튼 */
+  .customer-file-upload-area .clear-customer-button {
+    background: transparent;
+    border: none;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 4px;
+    font-size: var(--font-size-footnote);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+  }
 
-.customer-file-upload-area .clear-customer-button:active:not(:disabled) {
-  transform: scale(0.95);
-  background: var(--color-bg-quaternary);
-}
+  .customer-file-upload-area .clear-customer-button:hover:not(:disabled) {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    transform: scale(1.1);
+  }
 
-.customer-file-upload-area .clear-customer-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+  .customer-file-upload-area .clear-customer-button:active:not(:disabled) {
+    transform: scale(0.95);
+    background: var(--color-bg-quaternary);
+  }
 
-/* ===== 문서 유형 필드 ===== */
+  .customer-file-upload-area .clear-customer-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 
-.customer-file-upload-area__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  flex: 1; /* 유연한 너비 */
-}
+  /* ===== 문서 유형 필드 ===== */
 
-/* 인라인 필드 (레이블과 입력 요소를 한 줄로) */
-.customer-file-upload-area__field--inline {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--spacing-2);
-  position: relative;
-  overflow: visible;
-}
+  .customer-file-upload-area__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+    flex: 1; /* 유연한 너비 */
+  }
 
-.customer-file-upload-area__field--inline label {
-  flex-shrink: 0;
-  min-width: auto;
-  white-space: nowrap;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-footnote);
-  font-weight: 600;
-}
+  /* 인라인 필드 (레이블과 입력 요소를 한 줄로) */
+  .customer-file-upload-area__field--inline {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-2);
+    position: relative;
+    overflow: visible;
+  }
 
-/* 문서 유형 드롭다운 */
-.customer-file-upload-area__field--inline > div {
-  flex: 1;
-  min-width: 0; /* flexbox 축소 활성화 */
-}
+  .customer-file-upload-area__field--inline label {
+    flex-shrink: 0;
+    min-width: auto;
+    white-space: nowrap;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+  }
 
-/* 드롭다운 트리거 높이 */
-.customer-file-upload-area .ios-dropdown__trigger {
-  height: 32px;
-  min-height: 32px;
-  padding: 4px 10px;
-  font-size: var(--font-size-footnote);
-}
+  /* 문서 유형 드롭다운 */
+  .customer-file-upload-area__field--inline > div {
+    flex: 1;
+    min-width: 0; /* flexbox 축소 활성화 */
+  }
 
-/* 드롭다운 메뉴 높이 제한 */
-.customer-file-upload-area .ios-dropdown__menu {
-  max-height: 300px;
-  min-width: 220px; /* 긴 텍스트도 보이도록 충분한 너비 보장 */
-  width: max-content; /* 내용에 맞춰 자동 조정 */
-  max-width: 300px; /* 너무 넓어지지 않도록 제한 */
-  overflow-y: auto;
-  overflow-x: hidden;
-  z-index: 9999;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
+  /* 드롭다운 트리거 높이 */
+  .customer-file-upload-area .ios-dropdown__trigger {
+    height: 32px;
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: var(--font-size-footnote);
+  }
 
-/* 드롭다운 메뉴 항목 */
-.customer-file-upload-area .ios-dropdown__menu-item {
-  white-space: nowrap; /* 한 줄로 표시 */
-  padding: 8px 16px; /* 여유있는 패딩 */
-}
+  /* 드롭다운 메뉴 높이 제한 */
+  .customer-file-upload-area .ios-dropdown__menu {
+    max-height: 300px;
+    min-width: 220px; /* 긴 텍스트도 보이도록 충분한 너비 보장 */
+    width: max-content; /* 내용에 맞춰 자동 조정 */
+    max-width: 300px; /* 너무 넓어지지 않도록 제한 */
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 9999;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
 
-/* 섹션 레이블 */
-.section-label {
-  font-size: var(--font-size-footnote); /* 13px - 라벨 표준 */
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-sm);
-}
+  /* 드롭다운 메뉴 항목 */
+  .customer-file-upload-area .ios-dropdown__menu-item {
+    white-space: nowrap; /* 한 줄로 표시 */
+    padding: 8px 16px; /* 여유있는 패딩 */
+  }
 
-/* ===== 추가 옵션 섹션 (문서 유형 + 메모) ===== */
+  /* 섹션 레이블 */
+  .section-label {
+    font-size: var(--font-size-footnote); /* 13px - 라벨 표준 */
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-sm);
+  }
 
-.options-section {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin: 0;
-  background: transparent;
-  border-radius: 0;
-  overflow: visible;
-  border: none;
-}
+  /* ===== 추가 옵션 섹션 (문서 유형 + 메모) ===== */
 
-/* 추가 옵션 토글 버튼 */
-.options-section__toggle {
-  width: 100%;
-  padding: var(--spacing-1) var(--spacing-3);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: none;
-}
+  .options-section {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+    border: none;
+  }
 
-.options-section__toggle:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+  /* 추가 옵션 토글 버튼 */
+  .options-section__toggle {
+    width: 100%;
+    padding: var(--spacing-1) var(--spacing-3);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: none;
+  }
 
-/* 추가 옵션 헤더 */
-.options-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
+  .options-section__toggle:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 
-/* 추가 옵션 라벨 */
-.options-label {
-  font-size: var(--font-size-footnote);
-  font-weight: 600;
-  color: var(--color-ios-text-secondary-light);
-  transition: all 0.2s ease;
-}
+  /* 추가 옵션 헤더 */
+  .options-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
 
-html[data-theme="dark"] .options-label {
-  color: var(--color-ios-text-secondary-dark);
-}
+  /* 추가 옵션 라벨 */
+  .options-label {
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    transition: all 0.2s ease;
+  }
 
-/* 추가 옵션 라벨 호버 */
-.options-section__toggle:hover:not(:disabled) .options-label {
-  color: var(--color-ios-text-primary-light);
-  transform: scale(1.05);
-}
+  html[data-theme="dark"] .options-label {
+    color: var(--color-ios-text-secondary-dark);
+  }
 
-html[data-theme="dark"] .options-section__toggle:hover:not(:disabled) .options-label {
-  color: var(--color-ios-text-primary-dark);
-}
+  /* 추가 옵션 라벨 호버 */
+  .options-section__toggle:hover:not(:disabled) .options-label {
+    color: var(--color-ios-text-primary-light);
+    transform: scale(1.05);
+  }
 
-/* 토글 아이콘 */
-.options-toggle-icon {
-  color: var(--color-ios-text-quaternary-light);
-  font-size: var(--font-size-caption-1);
-  transition: all 0.2s ease;
-}
+  html[data-theme="dark"] .options-section__toggle:hover:not(:disabled) .options-label {
+    color: var(--color-ios-text-primary-dark);
+  }
 
-html[data-theme="dark"] .options-toggle-icon {
-  color: var(--color-ios-text-quaternary-dark);
-}
+  /* 토글 아이콘 */
+  .options-toggle-icon {
+    color: var(--color-ios-text-quaternary-light);
+    font-size: var(--font-size-caption-1);
+    transition: all 0.2s ease;
+  }
 
-/* 토글 아이콘 호버 */
-.options-section__toggle:hover:not(:disabled) .options-toggle-icon {
-  color: var(--color-ios-text-primary-light);
-  transform: scale(1.1);
-}
+  html[data-theme="dark"] .options-toggle-icon {
+    color: var(--color-ios-text-quaternary-dark);
+  }
 
-html[data-theme="dark"] .options-section__toggle:hover:not(:disabled) .options-toggle-icon {
-  color: var(--color-ios-text-primary-dark);
-}
+  /* 토글 아이콘 호버 */
+  .options-section__toggle:hover:not(:disabled) .options-toggle-icon {
+    color: var(--color-ios-text-primary-light);
+    transform: scale(1.1);
+  }
 
-/* 추가 옵션 컨텐츠 영역 */
-.options-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-3) var(--spacing-2);
-}
+  html[data-theme="dark"] .options-section__toggle:hover:not(:disabled) .options-toggle-icon {
+    color: var(--color-ios-text-primary-dark);
+  }
 
-/* 추가 옵션 필드 */
-.options-field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+  /* 추가 옵션 컨텐츠 영역 */
+  .options-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-3) var(--spacing-2);
+  }
 
-.options-field__label {
-  font-size: var(--font-size-caption-1);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
+  /* 추가 옵션 필드 */
+  .options-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
 
-/* 메모 입력창 */
-.options-field__textarea {
-  padding: 6px 10px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-footnote);
-  color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  resize: none;
-  height: 36px;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
+  .options-field__label {
+    font-size: var(--font-size-caption-1);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
 
-html[data-theme="dark"] .options-field__textarea {
-  background: var(--color-layout-content-dark);
-  border-color: var(--color-ios-separator-dark);
-}
+  /* 메모 입력창 */
+  .options-field__textarea {
+    padding: 6px 10px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-footnote);
+    color: var(--color-text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    resize: none;
+    height: 36px;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
 
-.options-field__textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-focus-ring);
-}
+  html[data-theme="dark"] .options-field__textarea {
+    background: var(--color-layout-content-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
 
-.options-field__textarea:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+  .options-field__textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-focus-ring);
+  }
 
-.options-field__textarea::placeholder {
-  color: var(--color-text-tertiary);
-}
+  .options-field__textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
-/* ===== 초기화 버튼 (아이콘만) ===== */
+  .options-field__textarea::placeholder {
+    color: var(--color-text-tertiary);
+  }
 
-.customer-file-upload-area__reset-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  color: var(--color-ios-text-tertiary-light);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
+  /* ===== 초기화 버튼 (아이콘만) ===== */
 
-html[data-theme="dark"] .customer-file-upload-area__reset-button {
-  color: var(--color-ios-text-tertiary-dark);
-}
+  .customer-file-upload-area__reset-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    color: var(--color-ios-text-tertiary-light);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
 
-.customer-file-upload-area__reset-button:hover {
-  background: var(--color-ios-fill-tertiary-light);
-  color: var(--color-ios-text-primary-light);
-  transform: rotate(180deg);
-}
+  html[data-theme="dark"] .customer-file-upload-area__reset-button {
+    color: var(--color-ios-text-tertiary-dark);
+  }
 
-html[data-theme="dark"] .customer-file-upload-area__reset-button:hover {
-  background: var(--color-ios-fill-tertiary-dark);
-  color: var(--color-ios-text-primary-dark);
-}
+  .customer-file-upload-area__reset-button:hover {
+    background: var(--color-ios-fill-tertiary-light);
+    color: var(--color-ios-text-primary-light);
+    transform: rotate(180deg);
+  }
 
-.customer-file-upload-area__reset-button:active {
-  transform: rotate(180deg) scale(0.9);
-}
+  html[data-theme="dark"] .customer-file-upload-area__reset-button:hover {
+    background: var(--color-ios-fill-tertiary-dark);
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .customer-file-upload-area__reset-button:active {
+    transform: rotate(180deg) scale(0.9);
+  }
+
+} /* end @layer components */

@@ -2,122 +2,126 @@
  * EmptyState 컴포넌트 스타일
  */
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: var(--spacing-8) var(--spacing-6);
-  gap: var(--spacing-3);
-}
+@layer components {
 
-.empty-state--centered {
-  height: 100%;
-  min-height: 200px;
-}
-
-/* 크기별 패딩 */
-.empty-state--sm {
-  padding: var(--spacing-6) var(--spacing-4);
-  gap: var(--spacing-2);
-}
-
-.empty-state--lg {
-  padding: var(--spacing-12) var(--spacing-8);
-  gap: var(--spacing-4);
-}
-
-/* 아이콘 */
-.empty-state__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-tertiary);
-  margin-bottom: var(--spacing-2);
-}
-
-.empty-state--sm .empty-state__icon {
-  margin-bottom: var(--spacing-1);
-}
-
-.empty-state--lg .empty-state__icon {
-  margin-bottom: var(--spacing-3);
-}
-
-/* 제목 */
-.empty-state__title {
-  margin: 0;
-  font-size: var(--font-size-subheadline);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  line-height: 1.3;
-}
-
-.empty-state--sm .empty-state__title {
-  font-size: var(--font-size-footnote);
-}
-
-.empty-state--lg .empty-state__title {
-  font-size: var(--font-size-title-3);
-}
-
-/* 설명 */
-.empty-state__description {
-  margin: 0;
-  font-size: var(--font-size-footnote);
-  font-weight: 400;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  max-width: 280px;
-}
-
-.empty-state--sm .empty-state__description {
-  font-size: var(--font-size-caption-1);
-  max-width: 200px;
-}
-
-.empty-state--lg .empty-state__description {
-  font-size: var(--font-size-subheadline);
-  max-width: 360px;
-}
-
-/* 액션 버튼 영역 */
-.empty-state__actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-3);
-  margin-top: var(--spacing-3);
-}
-
-.empty-state--sm .empty-state__actions {
-  margin-top: var(--spacing-2);
-  gap: var(--spacing-2);
-}
-
-.empty-state--lg .empty-state__actions {
-  margin-top: var(--spacing-4);
-  gap: var(--spacing-4);
-}
-
-/* 반응형 */
-@media (max-width: 480px) {
-  .empty-state__actions {
+  .empty-state {
+    display: flex;
     flex-direction: column;
-    width: 100%;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--spacing-8) var(--spacing-6);
+    gap: var(--spacing-3);
   }
 
-  .empty-state__actions .button {
-    width: 100%;
+  .empty-state--centered {
+    height: 100%;
+    min-height: 200px;
+  }
+
+  /* 크기별 패딩 */
+  .empty-state--sm {
+    padding: var(--spacing-6) var(--spacing-4);
+    gap: var(--spacing-2);
+  }
+
+  .empty-state--lg {
+    padding: var(--spacing-12) var(--spacing-8);
+    gap: var(--spacing-4);
+  }
+
+  /* 아이콘 */
+  .empty-state__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .empty-state--sm .empty-state__icon {
+    margin-bottom: var(--spacing-1);
+  }
+
+  .empty-state--lg .empty-state__icon {
+    margin-bottom: var(--spacing-3);
+  }
+
+  /* 제목 */
+  .empty-state__title {
+    margin: 0;
+    font-size: var(--font-size-subheadline);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.3;
+  }
+
+  .empty-state--sm .empty-state__title {
+    font-size: var(--font-size-footnote);
+  }
+
+  .empty-state--lg .empty-state__title {
+    font-size: var(--font-size-title-3);
+  }
+
+  /* 설명 */
+  .empty-state__description {
+    margin: 0;
+    font-size: var(--font-size-footnote);
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    max-width: 280px;
+  }
+
+  .empty-state--sm .empty-state__description {
+    font-size: var(--font-size-caption-1);
     max-width: 200px;
   }
-}
 
-/* 모션 감소 설정 */
-@media (prefers-reduced-motion: reduce) {
-  .empty-state__icon {
-    animation: none;
+  .empty-state--lg .empty-state__description {
+    font-size: var(--font-size-subheadline);
+    max-width: 360px;
   }
-}
+
+  /* 액션 버튼 영역 */
+  .empty-state__actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-3);
+  }
+
+  .empty-state--sm .empty-state__actions {
+    margin-top: var(--spacing-2);
+    gap: var(--spacing-2);
+  }
+
+  .empty-state--lg .empty-state__actions {
+    margin-top: var(--spacing-4);
+    gap: var(--spacing-4);
+  }
+
+  /* 반응형 */
+  @media (max-width: 480px) {
+    .empty-state__actions {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .empty-state__actions .button {
+      width: 100%;
+      max-width: 200px;
+    }
+  }
+
+  /* 모션 감소 설정 */
+  @media (prefers-reduced-motion: reduce) {
+    .empty-state__icon {
+      animation: none;
+    }
+  }
+
+} /* end @layer components */

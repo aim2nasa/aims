@@ -8,1061 +8,1066 @@
  */
 
 /* === HeaderTooltip 스타일 임포트 === */
-@import './HeaderTooltip.css';
 
 /* === 4단계: 애플 스타일 Breathing 키프레임 === */
 
-@keyframes header-pulse-breathing {
-  0%, 100% {
-    opacity: var(--pulse-opacity-min);
-    transform: scale(var(--pulse-scale-min));
+@import './HeaderTooltip.css';
+
+@layer components {
+
+  @keyframes header-pulse-breathing {
+    0%, 100% {
+      opacity: var(--pulse-opacity-min);
+      transform: scale(var(--pulse-scale-min));
+    }
+    50% {
+      opacity: var(--pulse-opacity-max);
+      transform: scale(var(--pulse-scale-max));
+    }
   }
-  50% {
-    opacity: var(--pulse-opacity-max);
-    transform: scale(var(--pulse-scale-max));
-  }
-}
 
-/* === PROGRESSIVE DISCLOSURE 핵심 구현 === */
+  /* === PROGRESSIVE DISCLOSURE 핵심 구현 === */
 
-.header-progressive {
-  /* 🍎 그리드 흐름 참여 - absolute 제거로 레이아웃 충돌 해결 */
-  position: relative;
-  width: 100%;
-  height: var(--header-height-base, 60px); /* CSS 변수 사용 - theme.css와 동기화 */
-
-  /* 플렉스 레이아웃 */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  /* 애플 스타일 배경 */
-  background: var(--color-header-bg-subtle);
-  border-bottom: 1px solid var(--color-header-border-subtle);
-
-  /* iOS 17+ 정밀 Progressive Disclosure 전환 */
-  transition:
-    background-color var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
-    border-color var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
-    backdrop-filter var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
-
-  /* 🍎 애플 표준 텍스트 렌더링 */
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-
-  /* 🍎 성능 최적화 (필수만) */
-  will-change: background-color;
-
-  /* 레이어링 */
-  z-index: var(--z-index-header, 100);
-
-  /* 패딩 - Safe Area 지원 */
-  padding-left: max(var(--spacing-4), env(safe-area-inset-left));
-  padding-right: max(var(--spacing-4), env(safe-area-inset-right));
-  padding-top: 0;
-  padding-bottom: 0;
-  box-sizing: border-box;
-
-  /* 포커스 관리 */
-  outline: none;
-
-  /* === 1단계: 애플스러운 마우스 커서 힌트 === */
-  /* 기본 상태: 상호작용 가능함을 암시 */
-  cursor: pointer;
-}
-
-/* === 2단계: 서브틀한 시각적 힌트 === */
-
-.header-progressive::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 60px;
-  height: 2px;
-  background: linear-gradient(90deg,
-    transparent,
-    var(--color-header-indicator),
-    transparent
-  );
-  transform: translateX(-50%);
-  opacity: 0.7; /* 충분히 인식 가능하게 */
-  transition: opacity var(--duration-fast) var(--easing-ease-out);
-  pointer-events: none;
-  user-select: none;
-}
-
-/* === 확장 상태 - 호버/포커스 시 === */
-
-.header-progressive--expanded {
-  /* 물리적 높이 변화 제거 - 시각적 변화만 */
-  background: var(--color-header-bg-expanded);
-  border-bottom: 1px solid var(--color-header-border-expanded);
-
-  /* 애플 스타일 Backdrop Filter 추가 */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-
-  /* 호버 상태: 조작 가능함을 명확히 표시 */
-  cursor: grab;
-}
-
-/* 호버/확장 시 힌트가 사라져 실제 컨트롤 등장을 강조 */
-.header-progressive--expanded::after {
-  opacity: 0;
-}
-
-/* === 제어 요소들 표시 상태 === */
-
-.header-progressive--controls-visible .header-control-button {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.header-progressive--controls-visible .header-theme-container {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* === 애니메이션 중 상태 === */
-
-.header-progressive--animating {
-  /* 애니메이션 중일 때 추가 최적화 */
-  pointer-events: none; /* 애니메이션 중 상호작용 방지 */
-
-  /* 애니메이션 중 커서 혼란 방지 */
-  cursor: default;
-}
-
-.header-progressive--animating * {
-  pointer-events: none;
-}
-
-/* 사용자 아바타는 애니메이션 중에도 클릭 가능하도록 예외 처리 */
-.header-progressive--animating .header-user-avatar {
-  pointer-events: auto;
-}
-
-/* === 브랜딩 영역 === */
-
-.header-branding {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.header-title {
-  margin: 0;
-  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: header title */
-  font-family: var(--font-family-display);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-header-title);
-
-  /* 타이틀은 항상 보임 */
-  opacity: 0.7;
-  transform: translateY(0);
-  transition:
-    opacity var(--duration-normal) var(--easing-ease-out),
-    transform var(--duration-normal) var(--easing-ease-out);
-}
-
-.header-progressive--controls-visible .header-title {
-  opacity: 0.6; /* 매우 서브틀하게 표시 */
-  transform: translateY(0);
-}
-
-/* === 개발자 모드 뱃지 (AIMS UIX3 우측) === */
-
-.header-dev-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 8px;
-  padding: 2px 8px;
-  background: var(--color-dev-mode-bg);
-  border: 1px solid var(--color-dev-mode-border);
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-dev-mode);
-  pointer-events: none;
-  animation: headerDevBadgePulse 2s ease-in-out infinite;
-}
-
-@keyframes headerDevBadgePulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.85;
-    transform: scale(0.98);
-  }
-}
-/* === 제어 영역 === */
-
-.header-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
-}
-
-/* === 제어 버튼 === */
-
-.header-control-button {
-  /* 애플 스타일 기본 */
-  background-color: var(--color-header-control-bg);
-  color: var(--color-header-control-icon);
-  border: 1px solid var(--color-header-control-border);
-  border-radius: var(--radius-md);
-  padding: 0;
-  cursor: pointer;
-  backdrop-filter: var(--header-backdrop-blur);
-
-  /* 크기 */
-  width: var(--header-control-size);
-  height: var(--header-control-size);
-
-  /* 중앙 정렬 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  /* 폰트 */
-  font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: control buttons */
-  font-family: var(--font-family-display);
-  font-weight: var(--font-weight-medium);
-
-  /* iOS 17+ 정밀 Progressive Disclosure 전환 */
-  transition:
-    background-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
-    border-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
-    box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring),
-    opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
-    transform var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
-
-  /* 기본 상태: 투명 */
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.header-control-button:hover {
-  background-color: var(--color-apple-control-hover);
-  border-color: var(--color-apple-control-border);
-  transform: scale(1.02); /* 더 서브틀한 스케일 */
-  box-shadow: var(--shadow-apple-button-hover);
-  transition:
-    background-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
-    border-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
-    transform var(--duration-micro-quick) var(--easing-micro-hover-lift),
-    box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring);
-}
-
-.header-control-button:active {
-  transform: scale(0.98); /* 정밀한 Press State */
-  background-color: var(--color-header-control-active);
-  transition:
-    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-    transform var(--duration-micro-instant) var(--easing-micro-press-down);
-}
-
-.header-control-button:not(:active):not(:hover) {
-  transition:
-    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-    border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-    transform var(--duration-micro-smooth) var(--easing-micro-press-up),
-    box-shadow var(--duration-micro-smooth) var(--easing-micro-press-up);
-}
-
-.header-control-button--active {
-  background-color: var(--color-header-control-active);
-  color: var(--color-header-control-icon-active);
-  border-color: var(--color-header-control-border-active);
-}
-
-.header-control-button:disabled {
-  background-color: var(--color-header-control-disabled);
-  color: var(--color-header-control-icon-disabled);
-  border-color: var(--color-header-control-border-disabled);
-  cursor: not-allowed;
-  opacity: 0.6;
-  transform: none;
-}
-
-/* === 빠른 검색 컨테이너 === */
-
-.header-quick-search-container {
-  /* 항상 표시 */
-  opacity: 1;
-  transform: translateY(0);
-
-  /* 전환 */
-  transition:
-    opacity var(--duration-fast) var(--easing-ease-out),
-    transform var(--duration-fast) var(--easing-ease-out);
-}
-
-/* === AI 채팅 버튼 === */
-
-.header-chat-button {
-  /* 항상 표시 */
-  opacity: 1;
-  transform: translateY(0);
-
-  /* CLAUDE.md: 배경/테두리 투명 */
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-
-  /* 중앙 정렬 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  /* 전환 */
-  transition:
-    opacity var(--duration-fast) var(--easing-ease-out),
-    transform var(--duration-fast) var(--easing-ease-out);
-}
-
-/* 아이콘 래퍼 */
-.header-chat-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
-/* AI 말풍선 커스텀 아이콘 - 테마 토글 슬라이더 높이에 맞춤 */
-.header-chat-ai-icon {
-  width: 36px;
-  height: 26px;
-}
-
-/* CLAUDE.md: 호버시 opacity + scale */
-.header-chat-button:hover {
-  opacity: 0.8;
-  transform: scale(1.1);
-  /* 배경색 변경 금지 */
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-.header-chat-button:active {
-  transform: scale(0.95);
-}
-
-.header-chat-button--active {
-  /* 활성 상태도 투명 배경 유지 */
-  background: transparent;
-}
-
-.header-chat-button--disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.header-chat-button--disabled:hover {
-  transform: none;
-}
-
-/* === 테마 토글 컨테이너 === */
-
-.header-theme-container {
-  /* Progressive Disclosure 전환 */
-  transition:
-    opacity var(--duration-fast) var(--easing-ease-out),
-    transform var(--duration-fast) var(--easing-ease-out);
-
-  /* 기본 상태: 항상 표시 */
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* === Progressive Disclosure 인디케이터 === */
-
-.header-disclosure-indicator {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-
-  /* 스타일링 */
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: disclosure indicator */
-  color: var(--color-header-indicator);
-  opacity: 0.7; /* 원래보다 훨씬 더 명확하게 */
-
-  /* 전환 */
-  transition:
-    opacity var(--duration-fast) var(--easing-ease-out);
-
-  /* 상호작용 방지 */
-  pointer-events: none;
-  user-select: none;
-}
-
-.header-progressive--expanded .header-disclosure-indicator {
-  opacity: 0;
-}
-
-/* === 4단계: 펄스 애니메이션 클래스 === */
-
-.header-disclosure-indicator--pulse {
-  /* Apple-style breathing 애니메이션 적용 */
-  animation: header-pulse-breathing var(--pulse-duration) var(--pulse-easing) infinite;
-
-  /* 기본 opacity 재정의 (애니메이션이 제어) */
-  opacity: var(--pulse-opacity-min);
-
-  /* transform-origin 중앙 고정 */
-  transform-origin: center center;
-}
-
-/* === 접근성 === */
-
-.header-progressive:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
-}
-
-/* === 반응형 === */
-
-/* 📱 iPad 전용 최적화 (1024px - 1366px: iPad Mini ~ iPad Pro 13") */
-@media (min-width: 1024px) and (max-width: 1366px) {
   .header-progressive {
-    /* 50px 고정 높이 - layout.css와 동기화 */
-    height: 50px;
-    min-height: 50px;
-    max-height: 50px;
-    padding-left: max(12px, env(safe-area-inset-left));
-    padding-right: max(12px, env(safe-area-inset-right));
-  }
-
-  .header-title {
-    font-size: var(--font-size-callout); /* 16px */
-  }
-
-  .header-controls {
-    gap: 12px; /* 16px → 12px 축소 */
-  }
-
-  .header-control-button {
-    width: 30px;
-    height: 30px;
-  }
-
-  /* 아바타 크기 축소 - 50px 헤더에 여유롭게 */
-  .header-user-avatar-circle {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
-  }
-
-  .header-user-avatar-skeleton {
-    width: 32px;
-    height: 32px;
-  }
-
-  /* AI 아이콘 크기 축소 */
-  .header-chat-ai-icon {
-    width: 30px;
-    height: 22px;
-  }
-
-  .header-user-name {
-    font-size: 11px;
-    max-width: 80px;
-  }
-}
-
-/* 📱 iPad 세로 높이 제한 (850px 이하) - 더 압축 */
-@media (min-width: 1024px) and (max-height: 850px) {
-  .header-progressive {
-    height: 50px;
-    min-height: 50px;
-    max-height: 50px;
-    padding-left: max(8px, env(safe-area-inset-left));
-    padding-right: max(8px, env(safe-area-inset-right));
-  }
-
-  .header-controls {
-    gap: 8px; /* 더 압축 */
-  }
-
-  .header-control-button {
-    width: 28px;
-    height: 28px;
-  }
-
-  .header-user-avatar-circle {
-    width: 30px;
-    height: 30px;
-    font-size: 11px;
-  }
-
-  .header-user-avatar-skeleton {
-    width: 30px;
-    height: 30px;
-  }
-
-  .header-chat-ai-icon {
-    width: 28px;
-    height: 20px;
-  }
-}
-
-/* === 📱 모바일 햄버거 메뉴 버튼 === */
-/* 🔴 base 스타일은 반드시 미디어 쿼리 앞에 위치 → cascade로 자연스럽게 오버라이드 */
-
-.header-mobile-menu-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  margin-right: var(--spacing-1);
-  border: none;
-  border-radius: var(--radius-md, 8px);
-  background: transparent;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.15s ease-out;
-
-  /* 📱 모바일에서 header-controls(검색바)가 branding 영역과 겹칠 때
-     터치 이벤트가 검색 요소에 가려지는 문제 방지.
-     position: relative + z-index로 검색바 위에 배치 */
-  position: relative;
-  z-index: 2;
-}
-
-.header-mobile-menu-btn svg {
-  width: 22px;
-  height: 22px;
-}
-
-.header-mobile-menu-btn:active {
-  background-color: var(--color-ios-system-gray5-alpha, rgba(0, 0, 0, 0.05));
-}
-
-.header-mobile-menu-btn--active {
-  color: var(--color-primary-500);
-}
-
-/* 모바일 (768px 이하) */
-@media (max-width: 768px) {
-  .header-progressive {
-    padding: 0 var(--spacing-2);
-    overflow: visible; /* 모바일에서 아바타 잘림 방지 */
-  }
-
-  .header-branding {
-    flex: 0 0 auto; /* branding 고정 */
-    min-width: 0;
-    gap: 0;
-  }
-
-  .header-title {
-    font-size: 13px;
-    font-family: var(--font-family-display);
-    white-space: nowrap;
-  }
-
-  /* 모바일에서 "UIX3" 숨김 → "AIMS"만 표시 */
-  .header-title__version {
-    display: none;
-  }
-
-  .header-controls {
-    gap: 4px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .header-control-button {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-
-  /* 햄버거 버튼 - 잘림 없이 명확하게 표시 */
-  .header-mobile-menu-btn {
-    width: 28px;
-    height: 28px;
-    margin-right: 2px;
-  }
-
-  .header-mobile-menu-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  /* 검색바 */
-  .header-quick-search-container {
-    flex: 1;
-    min-width: 0;
-  }
-
-  /* AI 아이콘 - 크게 강조 */
-  .header-chat-ai-icon {
-    width: 36px;
-    height: 26px;
-  }
-
-  /* 아바타 */
-  .header-user-avatar {
-    padding: 2px;
-    gap: 0;
-  }
-
-  .header-user-avatar-circle {
-    width: 28px;
-    height: 28px;
-    font-size: 11px;
-  }
-
-  .header-user-avatar-skeleton {
-    width: 28px;
-    height: 28px;
-  }
-
-  /* 테마 토글 */
-  .header-theme-container {
-    flex-shrink: 0;
-  }
-
-  /* 프로필 */
-  .header-user-profile {
-    flex-shrink: 0;
-  }
-
-  /* 모바일에서 레이아웃 제어 버튼 숨김 (데스크톱 전용) */
-  .header-user-selector {
-    display: none;
-  }
-}
-
-/* 모바일 (480px 이하) - 컴팩트 헤더: 360px 뷰포트에서 모든 요소가 한 줄에 수용 */
-@media (max-width: 480px) {
-  .header-progressive {
-    padding: 0 8px;
-    padding-left: max(8px, env(safe-area-inset-left));
-    padding-right: max(8px, env(safe-area-inset-right));
-    overflow: visible; /* 검색 드롭다운이 헤더 밖으로 표시되도록 허용 */
-  }
-
-  /* backdrop-filter 제거: position:fixed 드롭다운의 containing block 생성 방지 */
-  .header-progressive--expanded {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-
-  .header-title {
-    font-size: 12px;
-  }
-
-  .header-controls {
-    gap: 3px;
-    transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
-  }
-
-  .header-control-button {
-    width: 26px;
-    height: 26px;
-  }
-
-  .header-mobile-menu-btn {
-    width: 26px;
-    height: 26px;
-    margin-right: 2px;
-  }
-
-  .header-mobile-menu-btn svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  /* 검색바: 남은 공간을 최대한 차지 */
-  .header-quick-search-container {
-    transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
-  }
-
-  /* AI 아이콘 - 테마 토글보다 확실히 크게 */
-  .header-chat-ai-icon {
-    width: 36px;
-    height: 26px;
-  }
-
-  .header-user-avatar-circle {
-    width: 26px;
-    height: 26px;
-    font-size: 10px;
-  }
-
-  .header-user-avatar-skeleton {
-    width: 26px;
-    height: 26px;
-  }
-}
-
-/* 모바일에서 Progressive Disclosure 인디케이터 숨김 */
-@media (max-width: 768px) {
-  .header-disclosure-indicator {
-    display: none;
-  }
-
-  /* 모바일에서 헤더 항상 확장 상태 유지 */
-  .header-controls {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-}
-
-/* 📱 폰 가로 모드 - 울트라 컴팩트 헤더 (40px)
- * 세로 공간 극대화를 위해 헤더를 최소화 */
-@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
-  .header-progressive {
-    height: 40px;
-    min-height: 40px;
-    max-height: 40px;
-    padding: 0 8px;
-    padding-left: max(8px, env(safe-area-inset-left));
-    padding-right: max(8px, env(safe-area-inset-right));
-    overflow: visible;
-  }
-
-  .header-branding {
-    flex: 0 0 auto;
-    min-width: 0;
-    gap: 0;
-  }
-
-  .header-title {
-    font-size: 12px;
-  }
-
-  .header-title__version {
-    display: none;
-  }
-
-  .header-controls {
-    gap: 3px;
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .header-control-button {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-  }
-
-  .header-mobile-menu-btn {
-    width: 24px;
-    height: 24px;
-    margin-right: 2px;
-  }
-
-  .header-mobile-menu-btn svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .header-quick-search-container {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .header-chat-ai-icon {
-    width: 30px;
-    height: 20px;
-  }
-
-  .header-user-avatar {
-    padding: 2px;
-    gap: 0;
-  }
-
-  .header-user-avatar-circle {
-    width: 24px;
-    height: 24px;
-    font-size: 10px;
-  }
-
-  .header-user-avatar-skeleton {
-    width: 24px;
-    height: 24px;
-  }
-
-  .header-disclosure-indicator {
-    display: none;
-  }
-
-  .header-user-selector {
-    display: none;
-  }
-}
-
-/* === 테마별 최적화 === */
-
-@media (prefers-reduced-motion: reduce) {
-  .header-progressive,
-  .header-control-button,
-  .header-theme-container,
-  .header-title,
-  .header-disclosure-indicator {
-    transition: none;
-  }
-
-  /* 펄스 애니메이션도 비활성화 */
-  .header-disclosure-indicator--pulse {
-    animation: none;
-    opacity: var(--pulse-opacity-max); /* 정적 상태로 표시 */
-  }
-}
-
-/* === 🍎 SF Symbols 스타일 아이콘 시스템 === */
-
-.sf-symbol {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  position: relative;
-
-  /* 🍎 SF Symbols 품질 최적화 */
-  backface-visibility: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  transform: translateZ(0);
-  will-change: transform, opacity;
-}
-
-.sf-symbol__shape {
-  position: relative;
-  color: var(--color-header-text);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-
-  /* 🍎 서브픽셀 렌더링 최적화 */
-  backface-visibility: hidden;
-  transform: translateZ(0);
-}
-
-/* 🍎 SF Symbols: gear 아이콘 - 간단한 기어 모양 */
-.sf-symbol--gear .sf-symbol__shape::before {
-  content: '⚙';
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: gear icon */
-  line-height: 1;
-  color: inherit;
-}
-
-/* 🍎 SF Symbols: ellipsis 아이콘 */
-.sf-symbol--ellipsis .sf-symbol__shape {
-  width: 16px;
-  height: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sf-symbol--ellipsis .sf-symbol__shape::before,
-.sf-symbol--ellipsis .sf-symbol__shape::after {
-  content: '';
-  width: 3px;
-  height: 3px;
-  background: currentColor;
-  border-radius: 50%;
-}
-
-.sf-symbol--ellipsis .sf-symbol__shape::before {
-  margin-right: 3px;
-  box-shadow: 6px 0 0 currentColor;
-}
-
-/* === 사용자 프로필 스타일 (항상 표시, Google 스타일) === */
-
-.header-user-profile {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-}
-
-.header-user-avatar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--radius-full);
-  background: transparent;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-.header-user-avatar:hover {
-  background: var(--color-bg-hover);
-}
-
-.header-user-avatar-circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  /* 유튜브 스타일: 심플하고 일관성 있는 디자인 */
-  background: var(--color-avatar-bg);
-  color: var(--color-avatar-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: avatar initial */
-  text-transform: uppercase;
-  user-select: none;
-  flex-shrink: 0;
-  /* 서브틀한 그림자 */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-.header-user-avatar:hover .header-user-avatar-circle {
-  transform: scale(1.08);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-/* 사용자 이미지가 있을 경우를 위한 스타일 */
-.header-user-avatar-circle img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.header-user-name {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: user name in header */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  white-space: nowrap;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.header-user-avatar-skeleton {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--color-bg-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-tertiary);
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  flex-shrink: 0;
-}
-
-.header-user-avatar-loading-text {
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: loading text */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: var(--color-text-tertiary);
-}
-
-/* === 터치 기기: 제어 버튼 터치 영역 확대 (44px 최소) === */
-
-@media (pointer: coarse) {
-  .header-control-button {
+    /* 🍎 그리드 흐름 참여 - absolute 제거로 레이아웃 충돌 해결 */
     position: relative;
+    width: 100%;
+    height: var(--header-height-base, 60px); /* CSS 변수 사용 - theme.css와 동기화 */
+
+    /* 플렉스 레이아웃 */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    /* 애플 스타일 배경 */
+    background: var(--color-header-bg-subtle);
+    border-bottom: 1px solid var(--color-header-border-subtle);
+
+    /* iOS 17+ 정밀 Progressive Disclosure 전환 */
+    transition:
+      background-color var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+      border-color var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+      backdrop-filter var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
+
+    /* 🍎 애플 표준 텍스트 렌더링 */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+
+    /* 🍎 성능 최적화 (필수만) */
+    will-change: background-color;
+
+    /* 레이어링 */
+    z-index: var(--z-index-header, 100);
+
+    /* 패딩 - Safe Area 지원 */
+    padding-left: max(var(--spacing-4), env(safe-area-inset-left));
+    padding-right: max(var(--spacing-4), env(safe-area-inset-right));
+    padding-top: 0;
+    padding-bottom: 0;
+    box-sizing: border-box;
+
+    /* 포커스 관리 */
+    outline: none;
+
+    /* === 1단계: 애플스러운 마우스 커서 힌트 === */
+    /* 기본 상태: 상호작용 가능함을 암시 */
+    cursor: pointer;
   }
 
-  .header-control-button::after {
+  /* === 2단계: 서브틀한 시각적 힌트 === */
+
+  .header-progressive::after {
     content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent,
+      var(--color-header-indicator),
+      transparent
+    );
+    transform: translateX(-50%);
+    opacity: 0.7; /* 충분히 인식 가능하게 */
+    transition: opacity var(--duration-fast) var(--easing-ease-out);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* === 확장 상태 - 호버/포커스 시 === */
+
+  .header-progressive--expanded {
+    /* 물리적 높이 변화 제거 - 시각적 변화만 */
+    background: var(--color-header-bg-expanded);
+    border-bottom: 1px solid var(--color-header-border-expanded);
+
+    /* 애플 스타일 Backdrop Filter 추가 */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    /* 호버 상태: 조작 가능함을 명확히 표시 */
+    cursor: grab;
+  }
+
+  /* 호버/확장 시 힌트가 사라져 실제 컨트롤 등장을 강조 */
+  .header-progressive--expanded::after {
+    opacity: 0;
+  }
+
+  /* === 제어 요소들 표시 상태 === */
+
+  .header-progressive--controls-visible .header-control-button {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .header-progressive--controls-visible .header-theme-container {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* === 애니메이션 중 상태 === */
+
+  .header-progressive--animating {
+    /* 애니메이션 중일 때 추가 최적화 */
+    pointer-events: none; /* 애니메이션 중 상호작용 방지 */
+
+    /* 애니메이션 중 커서 혼란 방지 */
+    cursor: default;
+  }
+
+  .header-progressive--animating * {
+    pointer-events: none;
+  }
+
+  /* 사용자 아바타는 애니메이션 중에도 클릭 가능하도록 예외 처리 */
+  .header-progressive--animating .header-user-avatar {
+    pointer-events: auto;
+  }
+
+  /* === 브랜딩 영역 === */
+
+  .header-branding {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .header-title {
+    margin: 0;
+    font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: header title */
+    font-family: var(--font-family-display);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-header-title);
+
+    /* 타이틀은 항상 보임 */
+    opacity: 0.7;
+    transform: translateY(0);
+    transition:
+      opacity var(--duration-normal) var(--easing-ease-out),
+      transform var(--duration-normal) var(--easing-ease-out);
+  }
+
+  .header-progressive--controls-visible .header-title {
+    opacity: 0.6; /* 매우 서브틀하게 표시 */
+    transform: translateY(0);
+  }
+
+  /* === 개발자 모드 뱃지 (AIMS UIX3 우측) === */
+
+  .header-dev-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    padding: 2px 8px;
+    background: var(--color-dev-mode-bg);
+    border: 1px solid var(--color-dev-mode-border);
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-dev-mode);
+    pointer-events: none;
+    animation: headerDevBadgePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes headerDevBadgePulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.85;
+      transform: scale(0.98);
+    }
+  }
+  /* === 제어 영역 === */
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+  }
+
+  /* === 제어 버튼 === */
+
+  .header-control-button {
+    /* 애플 스타일 기본 */
+    background-color: var(--color-header-control-bg);
+    color: var(--color-header-control-icon);
+    border: 1px solid var(--color-header-control-border);
+    border-radius: var(--radius-md);
+    padding: 0;
+    cursor: pointer;
+    backdrop-filter: var(--header-backdrop-blur);
+
+    /* 크기 */
+    width: var(--header-control-size);
+    height: var(--header-control-size);
+
+    /* 중앙 정렬 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* 폰트 */
+    font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: control buttons */
+    font-family: var(--font-family-display);
+    font-weight: var(--font-weight-medium);
+
+    /* iOS 17+ 정밀 Progressive Disclosure 전환 */
+    transition:
+      background-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
+      border-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
+      box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring),
+      opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+      transform var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
+
+    /* 기본 상태: 투명 */
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  .header-control-button:hover {
+    background-color: var(--color-apple-control-hover);
+    border-color: var(--color-apple-control-border);
+    transform: scale(1.02); /* 더 서브틀한 스케일 */
+    box-shadow: var(--shadow-apple-button-hover);
+    transition:
+      background-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
+      border-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
+      transform var(--duration-micro-quick) var(--easing-micro-hover-lift),
+      box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring);
+  }
+
+  .header-control-button:active {
+    transform: scale(0.98); /* 정밀한 Press State */
+    background-color: var(--color-header-control-active);
+    transition:
+      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+      transform var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  .header-control-button:not(:active):not(:hover) {
+    transition:
+      background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+      border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+      transform var(--duration-micro-smooth) var(--easing-micro-press-up),
+      box-shadow var(--duration-micro-smooth) var(--easing-micro-press-up);
+  }
+
+  .header-control-button--active {
+    background-color: var(--color-header-control-active);
+    color: var(--color-header-control-icon-active);
+    border-color: var(--color-header-control-border-active);
+  }
+
+  .header-control-button:disabled {
+    background-color: var(--color-header-control-disabled);
+    color: var(--color-header-control-icon-disabled);
+    border-color: var(--color-header-control-border-disabled);
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+  }
+
+  /* === 빠른 검색 컨테이너 === */
+
+  .header-quick-search-container {
+    /* 항상 표시 */
+    opacity: 1;
+    transform: translateY(0);
+
+    /* 전환 */
+    transition:
+      opacity var(--duration-fast) var(--easing-ease-out),
+      transform var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* === AI 채팅 버튼 === */
+
+  .header-chat-button {
+    /* 항상 표시 */
+    opacity: 1;
+    transform: translateY(0);
+
+    /* CLAUDE.md: 배경/테두리 투명 */
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+
+    /* 중앙 정렬 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* 전환 */
+    transition:
+      opacity var(--duration-fast) var(--easing-ease-out),
+      transform var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* 아이콘 래퍼 */
+  .header-chat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* AI 말풍선 커스텀 아이콘 - 테마 토글 슬라이더 높이에 맞춤 */
+  .header-chat-ai-icon {
+    width: 36px;
+    height: 26px;
+  }
+
+  /* CLAUDE.md: 호버시 opacity + scale */
+  .header-chat-button:hover {
+    opacity: 0.8;
+    transform: scale(1.1);
+    /* 배경색 변경 금지 */
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .header-chat-button:active {
+    transform: scale(0.95);
+  }
+
+  .header-chat-button--active {
+    /* 활성 상태도 투명 배경 유지 */
+    background: transparent;
+  }
+
+  .header-chat-button--disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .header-chat-button--disabled:hover {
+    transform: none;
+  }
+
+  /* === 테마 토글 컨테이너 === */
+
+  .header-theme-container {
+    /* Progressive Disclosure 전환 */
+    transition:
+      opacity var(--duration-fast) var(--easing-ease-out),
+      transform var(--duration-fast) var(--easing-ease-out);
+
+    /* 기본 상태: 항상 표시 */
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* === Progressive Disclosure 인디케이터 === */
+
+  .header-disclosure-indicator {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+
+    /* 스타일링 */
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: disclosure indicator */
+    color: var(--color-header-indicator);
+    opacity: 0.7; /* 원래보다 훨씬 더 명확하게 */
+
+    /* 전환 */
+    transition:
+      opacity var(--duration-fast) var(--easing-ease-out);
+
+    /* 상호작용 방지 */
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .header-progressive--expanded .header-disclosure-indicator {
+    opacity: 0;
+  }
+
+  /* === 4단계: 펄스 애니메이션 클래스 === */
+
+  .header-disclosure-indicator--pulse {
+    /* Apple-style breathing 애니메이션 적용 */
+    animation: header-pulse-breathing var(--pulse-duration) var(--pulse-easing) infinite;
+
+    /* 기본 opacity 재정의 (애니메이션이 제어) */
+    opacity: var(--pulse-opacity-min);
+
+    /* transform-origin 중앙 고정 */
+    transform-origin: center center;
+  }
+
+  /* === 접근성 === */
+
+  .header-progressive:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* === 반응형 === */
+
+  /* 📱 iPad 전용 최적화 (1024px - 1366px: iPad Mini ~ iPad Pro 13") */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    .header-progressive {
+      /* 50px 고정 높이 - layout.css와 동기화 */
+      height: 50px;
+      min-height: 50px;
+      max-height: 50px;
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
+
+    .header-title {
+      font-size: var(--font-size-callout); /* 16px */
+    }
+
+    .header-controls {
+      gap: 12px; /* 16px → 12px 축소 */
+    }
+
+    .header-control-button {
+      width: 30px;
+      height: 30px;
+    }
+
+    /* 아바타 크기 축소 - 50px 헤더에 여유롭게 */
+    .header-user-avatar-circle {
+      width: 32px;
+      height: 32px;
+      font-size: 12px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 32px;
+      height: 32px;
+    }
+
+    /* AI 아이콘 크기 축소 */
+    .header-chat-ai-icon {
+      width: 30px;
+      height: 22px;
+    }
+
+    .header-user-name {
+      font-size: 11px;
+      max-width: 80px;
+    }
+  }
+
+  /* 📱 iPad 세로 높이 제한 (850px 이하) - 더 압축 */
+  @media (min-width: 1024px) and (max-height: 850px) {
+    .header-progressive {
+      height: 50px;
+      min-height: 50px;
+      max-height: 50px;
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+    }
+
+    .header-controls {
+      gap: 8px; /* 더 압축 */
+    }
+
+    .header-control-button {
+      width: 28px;
+      height: 28px;
+    }
+
+    .header-user-avatar-circle {
+      width: 30px;
+      height: 30px;
+      font-size: 11px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 30px;
+      height: 30px;
+    }
+
+    .header-chat-ai-icon {
+      width: 28px;
+      height: 20px;
+    }
+  }
+
+  /* === 📱 모바일 햄버거 메뉴 버튼 === */
+  /* 🔴 base 스타일은 반드시 미디어 쿼리 앞에 위치 → cascade로 자연스럽게 오버라이드 */
+
+  .header-mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 44px;
     height: 44px;
-    min-width: 44px;
-    min-height: 44px;
+    padding: 0;
+    margin-right: var(--spacing-1);
+    border: none;
+    border-radius: var(--radius-md, 8px);
+    background: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.15s ease-out;
+
+    /* 📱 모바일에서 header-controls(검색바)가 branding 영역과 겹칠 때
+       터치 이벤트가 검색 요소에 가려지는 문제 방지.
+       position: relative + z-index로 검색바 위에 배치 */
+    position: relative;
+    z-index: 2;
   }
 
-  /* 터치 기기에서 호버 scale 비활성화 */
-  .header-control-button:hover {
-    transform: none;
+  .header-mobile-menu-btn svg {
+    width: 22px;
+    height: 22px;
   }
-}
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+  .header-mobile-menu-btn:active {
+    background-color: var(--color-ios-system-gray5-alpha, rgba(0, 0, 0, 0.05));
   }
-  50% {
-    opacity: 0.5;
+
+  .header-mobile-menu-btn--active {
+    color: var(--color-primary-500);
   }
-}
 
-/* === 사용자 선택기 스타일 (개발자 모드 전용) === */
+  /* 모바일 (768px 이하) */
+  @media (max-width: 768px) {
+    .header-progressive {
+      padding: 0 var(--spacing-2);
+      overflow: visible; /* 모바일에서 아바타 잘림 방지 */
+    }
 
-.header-user-selector {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-3);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  transition: all var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: user selector */
-  font-family: var(--font-family-text);
-  line-height: 1.2;
-}
+    .header-branding {
+      flex: 0 0 auto; /* branding 고정 */
+      min-width: 0;
+      gap: 0;
+    }
 
-.header-user-label {
-  color: var(--color-text-secondary);
-  font-weight: 600;
-  white-space: nowrap;
-}
+    .header-title {
+      font-size: 13px;
+      font-family: var(--font-family-display);
+      white-space: nowrap;
+    }
 
-.header-user-select {
-  padding: var(--spacing-1) var(--spacing-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: select dropdown */
-  font-weight: 600;
-  font-family: var(--font-family-mono);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  outline: none;
-}
+    /* 모바일에서 "UIX3" 숨김 → "AIMS"만 표시 */
+    .header-title__version {
+      display: none;
+    }
 
-.header-user-select:hover {
-  border-color: var(--color-primary);
-  background: var(--color-bg-hover);
-}
+    .header-controls {
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+    }
 
-.header-user-select:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-alpha-10);
-}
+    .header-control-button {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
 
-.header-user-select option {
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  padding: var(--spacing-2);
-}
+    /* 햄버거 버튼 - 잘림 없이 명확하게 표시 */
+    .header-mobile-menu-btn {
+      width: 28px;
+      height: 28px;
+      margin-right: 2px;
+    }
 
-.header-user-loading {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: loading state */
-  font-family: var(--font-family-text);
-  font-style: italic;
-}
+    .header-mobile-menu-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* 검색바 */
+    .header-quick-search-container {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* AI 아이콘 - 크게 강조 */
+    .header-chat-ai-icon {
+      width: 36px;
+      height: 26px;
+    }
+
+    /* 아바타 */
+    .header-user-avatar {
+      padding: 2px;
+      gap: 0;
+    }
+
+    .header-user-avatar-circle {
+      width: 28px;
+      height: 28px;
+      font-size: 11px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 28px;
+      height: 28px;
+    }
+
+    /* 테마 토글 */
+    .header-theme-container {
+      flex-shrink: 0;
+    }
+
+    /* 프로필 */
+    .header-user-profile {
+      flex-shrink: 0;
+    }
+
+    /* 모바일에서 레이아웃 제어 버튼 숨김 (데스크톱 전용) */
+    .header-user-selector {
+      display: none;
+    }
+  }
+
+  /* 모바일 (480px 이하) - 컴팩트 헤더: 360px 뷰포트에서 모든 요소가 한 줄에 수용 */
+  @media (max-width: 480px) {
+    .header-progressive {
+      padding: 0 8px;
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+      overflow: visible; /* 검색 드롭다운이 헤더 밖으로 표시되도록 허용 */
+    }
+
+    /* backdrop-filter 제거: position:fixed 드롭다운의 containing block 생성 방지 */
+    .header-progressive--expanded {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    .header-title {
+      font-size: 12px;
+    }
+
+    .header-controls {
+      gap: 3px;
+      transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
+    }
+
+    .header-control-button {
+      width: 26px;
+      height: 26px;
+    }
+
+    .header-mobile-menu-btn {
+      width: 26px;
+      height: 26px;
+      margin-right: 2px;
+    }
+
+    .header-mobile-menu-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* 검색바: 남은 공간을 최대한 차지 */
+    .header-quick-search-container {
+      transform: none; /* transform 제거: position:fixed 드롭다운의 containing block 생성 방지 */
+    }
+
+    /* AI 아이콘 - 테마 토글보다 확실히 크게 */
+    .header-chat-ai-icon {
+      width: 36px;
+      height: 26px;
+    }
+
+    .header-user-avatar-circle {
+      width: 26px;
+      height: 26px;
+      font-size: 10px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  /* 모바일에서 Progressive Disclosure 인디케이터 숨김 */
+  @media (max-width: 768px) {
+    .header-disclosure-indicator {
+      display: none;
+    }
+
+    /* 모바일에서 헤더 항상 확장 상태 유지 */
+    .header-controls {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+  }
+
+  /* 📱 폰 가로 모드 - 울트라 컴팩트 헤더 (40px)
+   * 세로 공간 극대화를 위해 헤더를 최소화 */
+  @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+    .header-progressive {
+      height: 40px;
+      min-height: 40px;
+      max-height: 40px;
+      padding: 0 8px;
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+      overflow: visible;
+    }
+
+    .header-branding {
+      flex: 0 0 auto;
+      min-width: 0;
+      gap: 0;
+    }
+
+    .header-title {
+      font-size: 12px;
+    }
+
+    .header-title__version {
+      display: none;
+    }
+
+    .header-controls {
+      gap: 3px;
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .header-control-button {
+      width: 24px;
+      height: 24px;
+      font-size: 11px;
+    }
+
+    .header-mobile-menu-btn {
+      width: 24px;
+      height: 24px;
+      margin-right: 2px;
+    }
+
+    .header-mobile-menu-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .header-quick-search-container {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .header-chat-ai-icon {
+      width: 30px;
+      height: 20px;
+    }
+
+    .header-user-avatar {
+      padding: 2px;
+      gap: 0;
+    }
+
+    .header-user-avatar-circle {
+      width: 24px;
+      height: 24px;
+      font-size: 10px;
+    }
+
+    .header-user-avatar-skeleton {
+      width: 24px;
+      height: 24px;
+    }
+
+    .header-disclosure-indicator {
+      display: none;
+    }
+
+    .header-user-selector {
+      display: none;
+    }
+  }
+
+  /* === 테마별 최적화 === */
+
+  @media (prefers-reduced-motion: reduce) {
+    .header-progressive,
+    .header-control-button,
+    .header-theme-container,
+    .header-title,
+    .header-disclosure-indicator {
+      transition: none;
+    }
+
+    /* 펄스 애니메이션도 비활성화 */
+    .header-disclosure-indicator--pulse {
+      animation: none;
+      opacity: var(--pulse-opacity-max); /* 정적 상태로 표시 */
+    }
+  }
+
+  /* === 🍎 SF Symbols 스타일 아이콘 시스템 === */
+
+  .sf-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    position: relative;
+
+    /* 🍎 SF Symbols 품질 최적화 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .sf-symbol__shape {
+    position: relative;
+    color: var(--color-header-text);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+
+    /* 🍎 서브픽셀 렌더링 최적화 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  /* 🍎 SF Symbols: gear 아이콘 - 간단한 기어 모양 */
+  .sf-symbol--gear .sf-symbol__shape::before {
+    content: '⚙';
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: gear icon */
+    line-height: 1;
+    color: inherit;
+  }
+
+  /* 🍎 SF Symbols: ellipsis 아이콘 */
+  .sf-symbol--ellipsis .sf-symbol__shape {
+    width: 16px;
+    height: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sf-symbol--ellipsis .sf-symbol__shape::before,
+  .sf-symbol--ellipsis .sf-symbol__shape::after {
+    content: '';
+    width: 3px;
+    height: 3px;
+    background: currentColor;
+    border-radius: 50%;
+  }
+
+  .sf-symbol--ellipsis .sf-symbol__shape::before {
+    margin-right: 3px;
+    box-shadow: 6px 0 0 currentColor;
+  }
+
+  /* === 사용자 프로필 스타일 (항상 표시, Google 스타일) === */
+
+  .header-user-profile {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .header-user-avatar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-full);
+    background: transparent;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .header-user-avatar:hover {
+    background: var(--color-bg-hover);
+  }
+
+  .header-user-avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    /* 유튜브 스타일: 심플하고 일관성 있는 디자인 */
+    background: var(--color-avatar-bg);
+    color: var(--color-avatar-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: avatar initial */
+    text-transform: uppercase;
+    user-select: none;
+    flex-shrink: 0;
+    /* 서브틀한 그림자 */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .header-user-avatar:hover .header-user-avatar-circle {
+    transform: scale(1.08);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  /* 사용자 이미지가 있을 경우를 위한 스타일 */
+  .header-user-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .header-user-name {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: user name in header */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-user-avatar-skeleton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--color-bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    flex-shrink: 0;
+  }
+
+  .header-user-avatar-loading-text {
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: loading text */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+  }
+
+  /* === 터치 기기: 제어 버튼 터치 영역 확대 (44px 최소) === */
+
+  @media (pointer: coarse) {
+    .header-control-button {
+      position: relative;
+    }
+
+    .header-control-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* 터치 기기에서 호버 scale 비활성화 */
+    .header-control-button:hover {
+      transform: none;
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* === 사용자 선택기 스타일 (개발자 모드 전용) === */
+
+  .header-user-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    transition: all var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: user selector */
+    font-family: var(--font-family-text);
+    line-height: 1.2;
+  }
+
+  .header-user-label {
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .header-user-select {
+    padding: var(--spacing-1) var(--spacing-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: select dropdown */
+    font-weight: 600;
+    font-family: var(--font-family-mono);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+    outline: none;
+  }
+
+  .header-user-select:hover {
+    border-color: var(--color-primary);
+    background: var(--color-bg-hover);
+  }
+
+  .header-user-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-alpha-10);
+  }
+
+  .header-user-select option {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    padding: var(--spacing-2);
+  }
+
+  .header-user-loading {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: loading state */
+    font-family: var(--font-family-text);
+    font-style: italic;
+  }
+
+} /* end @layer components */

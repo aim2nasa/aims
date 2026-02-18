@@ -4,160 +4,165 @@
  */
 
 /* 모달 컨테이너 */
-.credit-exceeded-modal .modal-content {
-  max-width: 400px;
-}
 
-/* 콘텐츠 영역 */
-.credit-exceeded-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 0;
-}
+@layer components {
 
-/* 경고 아이콘 */
-.credit-exceeded-warning-icon {
-  width: 48px;
-  height: 48px;
-  color: var(--color-warning, #ff9500);
-}
+  .credit-exceeded-modal .modal-content {
+    max-width: 400px;
+  }
 
-.credit-exceeded-warning-icon svg {
-  width: 100%;
-  height: 100%;
-}
+  /* 콘텐츠 영역 */
+  .credit-exceeded-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+  }
 
-/* 메시지 */
-.credit-exceeded-message {
-  font-size: 13px;
-  color: var(--color-text-secondary, #8e8e93);
-  text-align: center;
-  line-height: 1.5;
-  margin: 0;
-}
+  /* 경고 아이콘 */
+  .credit-exceeded-warning-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--color-warning, #ff9500);
+  }
 
-/* 정보 테이블 */
-.credit-exceeded-info {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  background: var(--color-surface-secondary, #f5f5f7);
-  border-radius: 8px;
-}
+  .credit-exceeded-warning-icon svg {
+    width: 100%;
+    height: 100%;
+  }
 
-.credit-exceeded-info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  /* 메시지 */
+  .credit-exceeded-message {
+    font-size: 13px;
+    color: var(--color-text-secondary, #8e8e93);
+    text-align: center;
+    line-height: 1.5;
+    margin: 0;
+  }
 
-.credit-exceeded-label {
-  font-size: 12px;
-  color: var(--color-text-tertiary, #636366);
-}
-
-.credit-exceeded-value {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-primary, #1d1d1f);
-}
-
-.credit-exceeded-value.exceeded {
-  color: var(--color-danger, #ff3b30);
-}
-
-.credit-exceeded-value.tier-badge {
-  padding: 2px 8px;
-  background: var(--color-primary, #007aff);
-  color: white;
-  border-radius: 4px;
-  font-size: 11px;
-}
-
-/* 추가 크레딧 표시 */
-.credit-exceeded-bonus {
-  color: var(--color-accent-green, #34c759);
-  font-weight: 500;
-}
-
-.credit-exceeded-value.bonus {
-  color: var(--color-accent-green, #34c759);
-}
-
-/* 프로그레스 바 */
-.credit-exceeded-progress {
-  width: 100%;
-  height: 6px;
-  background: var(--color-border, #e5e5ea);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.credit-exceeded-progress-bar {
-  height: 100%;
-  background: var(--color-danger, #ff3b30);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-/* 리셋 정보 */
-.credit-exceeded-reset-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--color-text-secondary, #8e8e93);
-}
-
-.credit-exceeded-reset-info svg {
-  width: 14px;
-  height: 14px;
-  opacity: 0.7;
-}
-
-/* 액션 버튼 영역 */
-.credit-exceeded-actions {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.credit-exceeded-actions .btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.credit-exceeded-btn-purchase,
-.credit-exceeded-btn-upgrade {
-  opacity: 0.5;
-}
-
-.credit-exceeded-btn-close {
-  flex: 1.5;
-}
-
-/* 다크 모드 */
-@media (prefers-color-scheme: dark) {
+  /* 정보 테이블 */
   .credit-exceeded-info {
-    background: var(--color-surface-secondary-dark, #2c2c2e);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--color-surface-secondary, #f5f5f7);
+    border-radius: 8px;
+  }
+
+  .credit-exceeded-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .credit-exceeded-label {
-    color: var(--color-text-tertiary-dark, #98989d);
+    font-size: 12px;
+    color: var(--color-text-tertiary, #636366);
   }
 
   .credit-exceeded-value {
-    color: var(--color-text-primary-dark, #f5f5f7);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary, #1d1d1f);
   }
 
-  .credit-exceeded-progress {
-    background: var(--color-border-dark, #3a3a3c);
+  .credit-exceeded-value.exceeded {
+    color: var(--color-danger, #ff3b30);
   }
-}
+
+  .credit-exceeded-value.tier-badge {
+    padding: 2px 8px;
+    background: var(--color-primary, #007aff);
+    color: white;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+
+  /* 추가 크레딧 표시 */
+  .credit-exceeded-bonus {
+    color: var(--color-accent-green, #34c759);
+    font-weight: 500;
+  }
+
+  .credit-exceeded-value.bonus {
+    color: var(--color-accent-green, #34c759);
+  }
+
+  /* 프로그레스 바 */
+  .credit-exceeded-progress {
+    width: 100%;
+    height: 6px;
+    background: var(--color-border, #e5e5ea);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .credit-exceeded-progress-bar {
+    height: 100%;
+    background: var(--color-danger, #ff3b30);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+
+  /* 리셋 정보 */
+  .credit-exceeded-reset-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-text-secondary, #8e8e93);
+  }
+
+  .credit-exceeded-reset-info svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+  }
+
+  /* 액션 버튼 영역 */
+  .credit-exceeded-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .credit-exceeded-actions .btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .credit-exceeded-btn-purchase,
+  .credit-exceeded-btn-upgrade {
+    opacity: 0.5;
+  }
+
+  .credit-exceeded-btn-close {
+    flex: 1.5;
+  }
+
+  /* 다크 모드 */
+  @media (prefers-color-scheme: dark) {
+    .credit-exceeded-info {
+      background: var(--color-surface-secondary-dark, #2c2c2e);
+    }
+
+    .credit-exceeded-label {
+      color: var(--color-text-tertiary-dark, #98989d);
+    }
+
+    .credit-exceeded-value {
+      color: var(--color-text-primary-dark, #f5f5f7);
+    }
+
+    .credit-exceeded-progress {
+      background: var(--color-border-dark, #3a3a3c);
+    }
+  }
+
+} /* end @layer components */

@@ -8,51 +8,55 @@
 
 /* === LIGHT THEME === */
 
-:root,
-[data-theme="light"] {
-  /* === Modal System === */
-  /* Modal Container */
-  --color-modal-bg: var(--color-neutral-0);
-  --color-modal-border: rgba(0, 0, 0, 0.1);
-  --shadow-modal: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
-  --radius-modal: var(--radius-2xl);
+@layer theme {
 
-  /* Modal Backdrop */
-  --color-modal-backdrop: rgba(0, 0, 0, 0.5);
-  --z-index-modal: 1000;
+  :root,
+  [data-theme="light"] {
+    /* === Modal System === */
+    /* Modal Container */
+    --color-modal-bg: var(--color-neutral-0);
+    --color-modal-border: rgba(0, 0, 0, 0.1);
+    --shadow-modal: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+    --radius-modal: var(--radius-2xl);
 
-  /* Modal Header/Footer */
-  --color-modal-header-border: var(--color-ios-separator-light);
-  --color-modal-footer-border: var(--color-ios-separator-light);
+    /* Modal Backdrop */
+    --color-modal-backdrop: rgba(0, 0, 0, 0.5);
+    --z-index-modal: 1000;
 
-  /* Close Button System */
-  --close-button-color: var(--color-neutral-700);
-  --close-button-opacity: 0.85;
-  --close-button-opacity-hover: 1;
-  --close-button-scale-hover: 1.1;
-  --close-button-scale-active: 0.95;
-  --close-button-transition: all 0.2s ease;
-}
+    /* Modal Header/Footer */
+    --color-modal-header-border: var(--color-ios-separator-light);
+    --color-modal-footer-border: var(--color-ios-separator-light);
 
-/* === DARK THEME === */
+    /* Close Button System */
+    --close-button-color: var(--color-neutral-700);
+    --close-button-opacity: 0.85;
+    --close-button-opacity-hover: 1;
+    --close-button-scale-hover: 1.1;
+    --close-button-scale-active: 0.95;
+    --close-button-transition: all 0.2s ease;
+  }
 
-[data-theme="dark"] {
-  /* === Modal System === */
-  /* Modal Container */
-  --color-modal-bg: var(--color-ios-menu-bg-dark);
-  --color-modal-border: rgba(255, 255, 255, 0.15);
-  --shadow-modal: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-  --radius-modal: var(--radius-2xl);
+  /* === DARK THEME === */
 
-  /* Modal Backdrop */
-  --color-modal-backdrop: rgba(0, 0, 0, 0.7);
-  --z-index-modal: 1000;
+  [data-theme="dark"] {
+    /* === Modal System === */
+    /* Modal Container */
+    --color-modal-bg: var(--color-ios-menu-bg-dark);
+    --color-modal-border: rgba(255, 255, 255, 0.15);
+    --shadow-modal: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --radius-modal: var(--radius-2xl);
 
-  /* Modal Header/Footer */
-  --color-modal-header-border: var(--color-ios-separator-dark);
-  --color-modal-footer-border: var(--color-ios-separator-dark);
+    /* Modal Backdrop */
+    --color-modal-backdrop: rgba(0, 0, 0, 0.7);
+    --z-index-modal: 1000;
 
-  /* Close Button System */
-  --close-button-color: var(--color-neutral-300);
-  --close-button-color-dark: var(--color-neutral-300);
-}
+    /* Modal Header/Footer */
+    --color-modal-header-border: var(--color-ios-separator-dark);
+    --color-modal-footer-border: var(--color-ios-separator-dark);
+
+    /* Close Button System */
+    --close-button-color: var(--color-neutral-300);
+    --close-button-color-dark: var(--color-neutral-300);
+  }
+
+} /* end @layer theme */

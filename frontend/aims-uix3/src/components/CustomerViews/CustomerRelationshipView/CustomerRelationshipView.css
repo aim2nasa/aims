@@ -12,721 +12,725 @@
    전역 스타일
    ============================================ */
 
-.customer-relationship-view {
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
+@layer components {
 
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-text-primary: rgba(0, 0, 0, 0.9);
-  --color-text-secondary: rgba(0, 0, 0, 0.6);
-  --color-hover-bg: rgba(0, 0, 0, 0.06);  /* 라이트 테마 호버 강화 */
-  --color-pressed-bg: rgba(0, 0, 0, 0.06);
-  --color-accent: #0078d4;
-  --color-accent-light: rgba(0, 120, 212, 0.1);
-}
+  .customer-relationship-view {
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
 
-html[data-theme="dark"] .customer-relationship-view {
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-text-primary: rgba(255, 255, 255, 0.9);
-  --color-text-secondary: rgba(255, 255, 255, 0.6);
-  --color-hover-bg: rgba(255, 255, 255, 0.05);
-  --color-pressed-bg: rgba(255, 255, 255, 0.08);
-  --color-accent: #8e8e93;
-  --color-accent-light: rgba(142, 142, 147, 0.15);
-}
-
-/* ============================================
-   헤더
-   ============================================ */
-
-.relationship-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px var(--spacing-lg);
-  
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.03));
-}
-
-html[data-theme="dark"] .relationship-header {
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.04));
-}
-
-.relationship-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  letter-spacing: -0.01em;
-}
-
-.relationship-title__icon {
-  opacity: 0.7;
-  flex-shrink: 0;
-  color: var(--color-icon-purple);
-}
-
-.relationship-header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-
-/* ============================================
-   레이아웃 컨테이너 (빠른 가족 등록 패널)
-   ============================================ */
-
-.relationship-view__content {
-  display: flex;
-  height: 100%;
-  gap: var(--spacing-md);
-}
-
-.relationship-view__panel {
-  width: 50%;
-  min-width: 600px;
-  max-width: 800px;
-  border-left: 1px solid var(--color-border);
-  background: var(--color-bg-primary, #fff);
-  overflow: hidden;
-  animation: slideInPanel 0.25s ease-out;
-}
-
-html[data-theme="dark"] .relationship-view__panel {
-  background: var(--color-bg-primary, #1a1a1a);
-}
-
-@keyframes slideInPanel {
-  from {
-    transform: translateX(20px);
-    opacity: 0;
+    --color-border: rgba(0, 0, 0, 0.08);
+    --color-text-primary: rgba(0, 0, 0, 0.9);
+    --color-text-secondary: rgba(0, 0, 0, 0.6);
+    --color-hover-bg: rgba(0, 0, 0, 0.06);  /* 라이트 테마 호버 강화 */
+    --color-pressed-bg: rgba(0, 0, 0, 0.06);
+    --color-accent: #0078d4;
+    --color-accent-light: rgba(0, 120, 212, 0.1);
   }
-  to {
-    transform: translateX(0);
+
+  html[data-theme="dark"] .customer-relationship-view {
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-text-primary: rgba(255, 255, 255, 0.9);
+    --color-text-secondary: rgba(255, 255, 255, 0.6);
+    --color-hover-bg: rgba(255, 255, 255, 0.05);
+    --color-pressed-bg: rgba(255, 255, 255, 0.08);
+    --color-accent: #8e8e93;
+    --color-accent-light: rgba(142, 142, 147, 0.15);
+  }
+
+  /* ============================================
+     헤더
+     ============================================ */
+
+  .relationship-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px var(--spacing-lg);
+
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.03));
+  }
+
+  html[data-theme="dark"] .relationship-header {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.04));
+  }
+
+  .relationship-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+    font-family: var(--font-family-text);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .relationship-title__icon {
+    opacity: 0.7;
+    flex-shrink: 0;
+    color: var(--color-icon-purple);
+  }
+
+  .relationship-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+
+  /* ============================================
+     레이아웃 컨테이너 (빠른 가족 등록 패널)
+     ============================================ */
+
+  .relationship-view__content {
+    display: flex;
+    height: 100%;
+    gap: var(--spacing-md);
+  }
+
+  .relationship-view__panel {
+    width: 50%;
+    min-width: 600px;
+    max-width: 800px;
+    border-left: 1px solid var(--color-border);
+    background: var(--color-bg-primary, #fff);
+    overflow: hidden;
+    animation: slideInPanel 0.25s ease-out;
+  }
+
+  html[data-theme="dark"] .relationship-view__panel {
+    background: var(--color-bg-primary, #1a1a1a);
+  }
+
+  @keyframes slideInPanel {
+    from {
+      transform: translateX(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* 선택된 고객 하이라이트 */
+  .tree-node__label--selected {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  /* ============================================
+     트리 구조
+     ============================================ */
+
+  .relationship-tree {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-sm);
+    overflow-y: auto;
+  }
+
+  .tree-section {
+    padding: var(--spacing-xs) 0;
+  }
+
+  .tree-node {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    margin: 1px 0;
+    cursor: pointer;
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 4px;
+    position: relative;
+  }
+
+  .tree-node::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-accent);
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .tree-node:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .tree-node:hover::before {
+    opacity: 0.6;
+  }
+
+  /* 라이트 테마 호버 - Finder 스타일 */
+  html:not([data-theme="dark"]) .tree-node:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
+
+  html[data-theme="dark"] .tree-node:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .tree-node:active {
+    background-color: var(--color-pressed-bg);
+  }
+
+  /* 선택 상태 - macOS Finder 스타일 */
+  .tree-node.selected,
+  .tree-node--selected {
+    background-color: rgba(0, 120, 212, 0.12);
+  }
+
+  .tree-node.selected::before,
+  .tree-node--selected::before {
     opacity: 1;
   }
-}
 
-/* 선택된 고객 하이라이트 */
-.tree-node__label--selected {
-  color: var(--color-accent);
-  font-weight: 600;
-}
-
-/* ============================================
-   트리 구조
-   ============================================ */
-
-.relationship-tree {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: var(--spacing-sm);
-  overflow-y: auto;
-}
-
-.tree-section {
-  padding: var(--spacing-xs) 0;
-}
-
-.tree-node {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  margin: 1px 0;
-  cursor: pointer;
-  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 4px;
-  position: relative;
-}
-
-.tree-node::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-accent);
-  opacity: 0;
-  transition: opacity 0.1s ease;
-  border-radius: 4px 0 0 4px;
-}
-
-.tree-node:hover {
-  background-color: rgba(0, 0, 0, 0.08);
-}
-
-.tree-node:hover::before {
-  opacity: 0.6;
-}
-
-/* 라이트 테마 호버 - Finder 스타일 */
-html:not([data-theme="dark"]) .tree-node:hover {
-  background-color: rgba(0, 0, 0, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-}
-
-html[data-theme="dark"] .tree-node:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.tree-node:active {
-  background-color: var(--color-pressed-bg);
-}
-
-/* 선택 상태 - macOS Finder 스타일 */
-.tree-node.selected,
-.tree-node--selected {
-  background-color: rgba(0, 120, 212, 0.12);
-}
-
-.tree-node.selected::before,
-.tree-node--selected::before {
-  opacity: 1;
-}
-
-html:not([data-theme="dark"]) .tree-node.selected,
-html:not([data-theme="dark"]) .tree-node--selected {
-  background-color: rgba(0, 120, 212, 0.15);
-  box-shadow: inset 0 0 0 1px rgba(0, 120, 212, 0.2);
-}
-
-html:not([data-theme="dark"]) .tree-node.selected .tree-node__label,
-html:not([data-theme="dark"]) .tree-node--selected .tree-node__label {
-  color: #0055a5;
-  font-weight: 600;
-}
-
-/* 아이콘 */
-.tree-node__icon {
-  font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘 */
-  opacity: 0.7;
-  transition: opacity 0.1s ease;
-}
-
-/* 라이트 테마에서 폴더 아이콘 가시성 강화 */
-html:not([data-theme="dark"]) .tree-node__icon {
-  filter: saturate(1.4) contrast(1.15);
-}
-
-.tree-node:hover .tree-node__icon {
-  opacity: 1;
-}
-
-.tree-node__content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-
-.tree-node__label {
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-family: var(--font-family-text);
-  font-weight: 400;
-  color: var(--color-text-primary);
-  letter-spacing: -0.01em;
-}
-
-.tree-node__label--clickable {
-  cursor: pointer;
-  color: var(--color-text-primary);
-  transition: color 0.1s ease;
-}
-
-.tree-node__label--clickable:hover {
-  color: var(--color-accent);
-}
-
-/* 뱃지 - Windows 11 스타일 */
-.tree-node__badge {
-  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
-  font-family: var(--font-family-text);
-  color: var(--color-text-secondary);
-  font-weight: 600;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 2px 8px;
-  border-radius: 12px;
-  min-width: 24px;
-  text-align: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-html[data-theme="dark"] .tree-node__badge {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* ============================================
-   계층 구조
-   ============================================ */
-
-.tree-children {
-  padding-left: 20px;
-  margin-left: 8px;
-}
-
-.tree-group {
-  margin: 0;
-}
-
-/* ============================================
-   루트 노드
-   ============================================ */
-
-.tree-node--root {
-  font-weight: 600;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  margin-bottom: 4px;
-  background: linear-gradient(135deg, rgba(0, 120, 212, 0.12) 0%, rgba(0, 120, 212, 0.06) 100%);
-  border-left: 3px solid #0078d4;
-  border-radius: 0 6px 6px 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-/* 라이트 테마 - 섹션 헤더 더 강조 */
-html:not([data-theme="dark"]) .tree-node--root {
-  background: linear-gradient(135deg, rgba(0, 120, 212, 0.15) 0%, rgba(0, 120, 212, 0.08) 100%);
-  box-shadow: 0 2px 6px rgba(0, 120, 212, 0.15), 0 1px 2px rgba(0, 0, 0, 0.06);
-}
-
-html[data-theme="dark"] .tree-node--root {
-  background: linear-gradient(135deg, rgba(142, 142, 147, 0.2) 0%, rgba(142, 142, 147, 0.1) 100%);
-  border-left-color: #8e8e93;
-}
-
-.tree-node--root .tree-node__label {
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
-  font-family: var(--font-family-text);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  color: #0055a5;
-}
-
-html[data-theme="dark"] .tree-node--root .tree-node__label {
-  color: #8e8e93;
-}
-
-.tree-node--root .tree-node__icon {
-  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
-  opacity: 1;
-  filter: saturate(1.5) brightness(1.1);
-}
-
-/* ============================================
-   리프 노드
-   ============================================ */
-
-.tree-node--leaf {
-  padding-left: calc(10px + 20px);
-}
-
-.tree-node--member {
-  padding-left: calc(10px + 40px);
-}
-
-/* ============================================
-   검색
-   ============================================ */
-
-.relationship-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.relationship-search-input {
-  width: 220px;
-  padding: 6px 12px;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 입력 */
-  font-family: var(--font-family-text);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.5);
-  color: var(--color-text-primary);
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-html[data-theme="dark"] .relationship-search-input {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.relationship-search-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 0 2px var(--color-accent-light);
-}
-
-html[data-theme="dark"] .relationship-search-input:focus {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.relationship-search-input::placeholder {
-  color: var(--color-text-secondary);
-}
-
-.relationship-search-clear {
-  position: absolute;
-  right: 6px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 3px;
-  transition: all 0.1s ease;
-}
-
-.relationship-search-clear:hover {
-  background: var(--color-hover-bg);
-  color: var(--color-text-primary);
-}
-
-/* ============================================
-   하이라이트
-   ============================================ */
-
-.search-highlight {
-  background-color: var(--color-accent-light);
-  color: var(--color-accent);
-  padding: 1px 3px;
-  border-radius: 2px;
-  font-weight: 600;
-}
-
-/* ============================================
-   관계 정보
-   ============================================ */
-
-.tree-node__relation-toggle {
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-family: var(--font-family-text);
-  cursor: pointer;
-  padding: 4px 6px;
-  opacity: 0.6;
-  transition: all 0.1s ease;
-  border-radius: 3px;
-}
-
-.tree-node__relation-toggle:hover {
-  opacity: 1;
-  background: var(--color-hover-bg);
-}
-
-.relation-list {
-  padding: var(--spacing-sm) 0;
-  padding-left: calc(10px + 40px);
-}
-
-.relation-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: 5px 10px;
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
-  font-family: var(--font-family-text);
-  color: var(--color-text-secondary);
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 4px;
-  margin: 2px 0;
-  border-left: 2px solid var(--color-accent-light);
-}
-
-html[data-theme="dark"] .relation-item {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.relation-item__icon {
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 아이콘 */
-  opacity: 0.7;
-}
-
-.relation-item__text {
-  letter-spacing: -0.01em;
-  font-weight: 400;
-}
-
-/* ============================================
-   트리 컨트롤
-   ============================================ */
-
-.relationship-tree-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.tree-control-button {
-  background: transparent;
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 0;
-  box-shadow: none;
-}
-
-html[data-theme="dark"] .tree-control-button {
-  background: transparent;
-}
-
-.tree-control-button:hover {
-  background: transparent;
-  color: var(--color-text-primary);
-  opacity: 0.8;
-  transform: scale(1.1);
-}
-
-.tree-control-button:active {
-  transform: scale(0.95);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-/* ============================================
-   로딩 & 빈 상태
-   ============================================ */
-
-.relationship-loading,
-.relationship-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: calc(var(--spacing-lg) * 3);
-  color: var(--color-text-secondary);
-  gap: var(--spacing-md);
-}
-
-.loading-text {
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-family: var(--font-family-text);
-  font-weight: 400;
-}
-
-/* ============================================
-   고객 아이콘
-   ============================================ */
-
-.customer-icon--personal,
-.customer-icon--corporate {
-  opacity: 0.65;
-  width: 16px;
-  height: 16px;
-  transition: opacity 0.1s ease;
-}
-
-.tree-node:hover .customer-icon--personal,
-.tree-node:hover .customer-icon--corporate {
-  opacity: 0.9;
-}
-
-/* ============================================
-   특수 노드
-   ============================================ */
-
-.tree-node__label--no-relationship {
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-
-.tree-node__badge--warning {
-  background: rgba(255, 185, 0, 0.15);
-  color: rgb(201, 138, 0);
-  font-weight: 700;
-}
-
-html[data-theme="dark"] .tree-node__badge--warning {
-  background: rgba(255, 185, 0, 0.2);
-  color: rgb(255, 185, 0);
-}
-
-/* ============================================
-   스크롤바 - Windows 11 스타일
-   ============================================ */
-
-.relationship-tree::-webkit-scrollbar {
-  width: 12px;
-}
-
-.relationship-tree::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.relationship-tree::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 6px;
-  border: 3px solid transparent;
-  background-clip: content-box;
-}
-
-.relationship-tree::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
-  background-clip: content-box;
-}
-
-html[data-theme="dark"] .relationship-tree::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  background-clip: content-box;
-}
-
-html[data-theme="dark"] .relationship-tree::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
-  background-clip: content-box;
-}
-
-/* ============================================
-   📱 모바일 반응형 (480px 이하)
-   ============================================ */
-@media (max-width: 480px) {
-  /* 헤더: 한 줄 컴팩트 - 제목 숨기고 검색+컨트롤만 */
-  .relationship-header {
-    padding: 6px var(--spacing-sm);
-    background: none;
+  html:not([data-theme="dark"]) .tree-node.selected,
+  html:not([data-theme="dark"]) .tree-node--selected {
+    background-color: rgba(0, 120, 212, 0.15);
+    box-shadow: inset 0 0 0 1px rgba(0, 120, 212, 0.2);
   }
 
-  /* 제목 숨김: 페이지 제목 "관계별 고객 보기"와 중복 */
-  .relationship-title {
-    display: none;
+  html:not([data-theme="dark"]) .tree-node.selected .tree-node__label,
+  html:not([data-theme="dark"]) .tree-node--selected .tree-node__label {
+    color: #0055a5;
+    font-weight: 600;
   }
 
-  /* 헤더 액션: 전체 폭 */
-  .relationship-header-actions {
+  /* 아이콘 */
+  .tree-node__icon {
+    font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘 */
+    opacity: 0.7;
+    transition: opacity 0.1s ease;
+  }
+
+  /* 라이트 테마에서 폴더 아이콘 가시성 강화 */
+  html:not([data-theme="dark"]) .tree-node__icon {
+    filter: saturate(1.4) contrast(1.15);
+  }
+
+  .tree-node:hover .tree-node__icon {
+    opacity: 1;
+  }
+
+  .tree-node__content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex: 1;
-    min-width: 0;
-    gap: 6px;
   }
 
-  /* 뷰모드 라벨 숨김 (아이콘만 표시) */
-  .relationship-tree-controls > span {
-    display: none;
+  .tree-node__label {
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
   }
 
-  /* 뷰모드 버튼: wrapper inline 24px에 정확히 맞춤, 완전 투명 */
-  .customer-relationship-view .tree-control-button,
-  html[data-theme="dark"] .customer-relationship-view .tree-control-button {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    flex-shrink: 0;
+  .tree-node__label--clickable {
+    cursor: pointer;
+    color: var(--color-text-primary);
+    transition: color 0.1s ease;
   }
 
-  /* 검색: 남은 공간 전부 채우기 */
-  .relationship-search {
-    flex: 1;
-    min-width: 0;
+  .tree-node__label--clickable:hover {
+    color: var(--color-accent);
   }
 
-  .relationship-search-input {
-    width: 100%;
-    height: 32px;
-    font-size: 16px; /* iOS zoom 방지 */
-    padding: 0 var(--spacing-sm);
+  /* 뱃지 - Windows 11 스타일 */
+  .tree-node__badge {
+    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
+    font-family: var(--font-family-text);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 24px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
-  /* 초성 필터: 컴팩트 */
-  .relationship-initial-filter {
-    padding: 2px var(--spacing-sm);
+  html[data-theme="dark"] .tree-node__badge {
+    background: rgba(255, 255, 255, 0.08);
   }
 
-  /* 트리 영역: 패딩 최소화 */
-  .relationship-tree {
-    padding: 2px;
-  }
+  /* ============================================
+     계층 구조
+     ============================================ */
 
-  /* 트리 계층 들여쓰기 축소 */
   .tree-children {
-    padding-left: 10px;
-    margin-left: 2px;
-  }
-
-  /* 트리 섹션 간격 제거 */
-  .tree-section {
-    padding: 0;
-  }
-
-  /* 트리 노드: 컴팩트하되 터치 가능 */
-  .tree-node {
-    min-height: 36px;
-    padding: 4px var(--spacing-sm);
-    margin: 0;
-    border-radius: 4px;
-  }
-
-  /* 루트 노드: 컴팩트 섹션 헤더 */
-  .tree-node--root {
-    min-height: 32px;
-    padding: 4px var(--spacing-sm);
-    margin-bottom: 2px;
-  }
-
-  /* 리프 노드: 들여쓰기 축소 */
-  .tree-node--leaf {
     padding-left: 20px;
+    margin-left: 8px;
+  }
+
+  .tree-group {
+    margin: 0;
+  }
+
+  /* ============================================
+     루트 노드
+     ============================================ */
+
+  .tree-node--root {
+    font-weight: 600;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 4px;
+    background: linear-gradient(135deg, rgba(0, 120, 212, 0.12) 0%, rgba(0, 120, 212, 0.06) 100%);
+    border-left: 3px solid #0078d4;
+    border-radius: 0 6px 6px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 라이트 테마 - 섹션 헤더 더 강조 */
+  html:not([data-theme="dark"]) .tree-node--root {
+    background: linear-gradient(135deg, rgba(0, 120, 212, 0.15) 0%, rgba(0, 120, 212, 0.08) 100%);
+    box-shadow: 0 2px 6px rgba(0, 120, 212, 0.15), 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  html[data-theme="dark"] .tree-node--root {
+    background: linear-gradient(135deg, rgba(142, 142, 147, 0.2) 0%, rgba(142, 142, 147, 0.1) 100%);
+    border-left-color: #8e8e93;
+  }
+
+  .tree-node--root .tree-node__label {
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
+    font-family: var(--font-family-text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: #0055a5;
+  }
+
+  html[data-theme="dark"] .tree-node--root .tree-node__label {
+    color: #8e8e93;
+  }
+
+  .tree-node--root .tree-node__icon {
+    font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
+    opacity: 1;
+    filter: saturate(1.5) brightness(1.1);
+  }
+
+  /* ============================================
+     리프 노드
+     ============================================ */
+
+  .tree-node--leaf {
+    padding-left: calc(10px + 20px);
   }
 
   .tree-node--member {
-    padding-left: 30px;
+    padding-left: calc(10px + 40px);
   }
 
-  /* 관계 목록 들여쓰기 축소 */
+  /* ============================================
+     검색
+     ============================================ */
+
+  .relationship-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .relationship-search-input {
+    width: 220px;
+    padding: 6px 12px;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 입력 */
+    font-family: var(--font-family-text);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--color-text-primary);
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  html[data-theme="dark"] .relationship-search-input {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .relationship-search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 0 2px var(--color-accent-light);
+  }
+
+  html[data-theme="dark"] .relationship-search-input:focus {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .relationship-search-input::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  .relationship-search-clear {
+    position: absolute;
+    right: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: all 0.1s ease;
+  }
+
+  .relationship-search-clear:hover {
+    background: var(--color-hover-bg);
+    color: var(--color-text-primary);
+  }
+
+  /* ============================================
+     하이라이트
+     ============================================ */
+
+  .search-highlight {
+    background-color: var(--color-accent-light);
+    color: var(--color-accent);
+    padding: 1px 3px;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+
+  /* ============================================
+     관계 정보
+     ============================================ */
+
+  .tree-node__relation-toggle {
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+    font-family: var(--font-family-text);
+    cursor: pointer;
+    padding: 4px 6px;
+    opacity: 0.6;
+    transition: all 0.1s ease;
+    border-radius: 3px;
+  }
+
+  .tree-node__relation-toggle:hover {
+    opacity: 1;
+    background: var(--color-hover-bg);
+  }
+
   .relation-list {
-    padding-left: 30px;
-    padding-top: 2px;
-    padding-bottom: 2px;
+    padding: var(--spacing-sm) 0;
+    padding-left: calc(10px + 40px);
   }
 
-  /* 관계 아이템: 컴팩트 */
   .relation-item {
-    padding: 2px var(--spacing-sm);
-    margin: 1px 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 5px 10px;
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+    font-family: var(--font-family-text);
+    color: var(--color-text-secondary);
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+    margin: 2px 0;
+    border-left: 2px solid var(--color-accent-light);
   }
 
-  /* 노드 콘텐츠 간격 축소 */
-  .tree-node__content {
-    gap: 6px;
+  html[data-theme="dark"] .relation-item {
+    background: rgba(255, 255, 255, 0.04);
   }
 
-  /* 패널: 모바일에서 전체화면 오버레이 */
-  .relationship-view__panel {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-    z-index: 200;
-    border-left: none;
+  .relation-item__icon {
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 아이콘 */
+    opacity: 0.7;
   }
 
-  /* 로딩/빈 상태 */
+  .relation-item__text {
+    letter-spacing: -0.01em;
+    font-weight: 400;
+  }
+
+  /* ============================================
+     트리 컨트롤
+     ============================================ */
+
+  .relationship-tree-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .tree-control-button {
+    background: transparent;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+    box-shadow: none;
+  }
+
+  html[data-theme="dark"] .tree-control-button {
+    background: transparent;
+  }
+
+  .tree-control-button:hover {
+    background: transparent;
+    color: var(--color-text-primary);
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+
+  .tree-control-button:active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* ============================================
+     로딩 & 빈 상태
+     ============================================ */
+
   .relationship-loading,
   .relationship-empty {
-    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--spacing-lg) * 3);
+    color: var(--color-text-secondary);
+    gap: var(--spacing-md);
   }
-}
+
+  .loading-text {
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+    font-family: var(--font-family-text);
+    font-weight: 400;
+  }
+
+  /* ============================================
+     고객 아이콘
+     ============================================ */
+
+  .customer-icon--personal,
+  .customer-icon--corporate {
+    opacity: 0.65;
+    width: 16px;
+    height: 16px;
+    transition: opacity 0.1s ease;
+  }
+
+  .tree-node:hover .customer-icon--personal,
+  .tree-node:hover .customer-icon--corporate {
+    opacity: 0.9;
+  }
+
+  /* ============================================
+     특수 노드
+     ============================================ */
+
+  .tree-node__label--no-relationship {
+    color: var(--color-text-secondary);
+    font-style: italic;
+  }
+
+  .tree-node__badge--warning {
+    background: rgba(255, 185, 0, 0.15);
+    color: rgb(201, 138, 0);
+    font-weight: 700;
+  }
+
+  html[data-theme="dark"] .tree-node__badge--warning {
+    background: rgba(255, 185, 0, 0.2);
+    color: rgb(255, 185, 0);
+  }
+
+  /* ============================================
+     스크롤바 - Windows 11 스타일
+     ============================================ */
+
+  .relationship-tree::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  .relationship-tree::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .relationship-tree::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  .relationship-tree::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+    background-clip: content-box;
+  }
+
+  html[data-theme="dark"] .relationship-tree::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    background-clip: content-box;
+  }
+
+  html[data-theme="dark"] .relationship-tree::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+    background-clip: content-box;
+  }
+
+  /* ============================================
+     📱 모바일 반응형 (480px 이하)
+     ============================================ */
+  @media (max-width: 480px) {
+    /* 헤더: 한 줄 컴팩트 - 제목 숨기고 검색+컨트롤만 */
+    .relationship-header {
+      padding: 6px var(--spacing-sm);
+      background: none;
+    }
+
+    /* 제목 숨김: 페이지 제목 "관계별 고객 보기"와 중복 */
+    .relationship-title {
+      display: none;
+    }
+
+    /* 헤더 액션: 전체 폭 */
+    .relationship-header-actions {
+      flex: 1;
+      min-width: 0;
+      gap: 6px;
+    }
+
+    /* 뷰모드 라벨 숨김 (아이콘만 표시) */
+    .relationship-tree-controls > span {
+      display: none;
+    }
+
+    /* 뷰모드 버튼: wrapper inline 24px에 정확히 맞춤, 완전 투명 */
+    .customer-relationship-view .tree-control-button,
+    html[data-theme="dark"] .customer-relationship-view .tree-control-button {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      flex-shrink: 0;
+    }
+
+    /* 검색: 남은 공간 전부 채우기 */
+    .relationship-search {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .relationship-search-input {
+      width: 100%;
+      height: 32px;
+      font-size: 16px; /* iOS zoom 방지 */
+      padding: 0 var(--spacing-sm);
+    }
+
+    /* 초성 필터: 컴팩트 */
+    .relationship-initial-filter {
+      padding: 2px var(--spacing-sm);
+    }
+
+    /* 트리 영역: 패딩 최소화 */
+    .relationship-tree {
+      padding: 2px;
+    }
+
+    /* 트리 계층 들여쓰기 축소 */
+    .tree-children {
+      padding-left: 10px;
+      margin-left: 2px;
+    }
+
+    /* 트리 섹션 간격 제거 */
+    .tree-section {
+      padding: 0;
+    }
+
+    /* 트리 노드: 컴팩트하되 터치 가능 */
+    .tree-node {
+      min-height: 36px;
+      padding: 4px var(--spacing-sm);
+      margin: 0;
+      border-radius: 4px;
+    }
+
+    /* 루트 노드: 컴팩트 섹션 헤더 */
+    .tree-node--root {
+      min-height: 32px;
+      padding: 4px var(--spacing-sm);
+      margin-bottom: 2px;
+    }
+
+    /* 리프 노드: 들여쓰기 축소 */
+    .tree-node--leaf {
+      padding-left: 20px;
+    }
+
+    .tree-node--member {
+      padding-left: 30px;
+    }
+
+    /* 관계 목록 들여쓰기 축소 */
+    .relation-list {
+      padding-left: 30px;
+      padding-top: 2px;
+      padding-bottom: 2px;
+    }
+
+    /* 관계 아이템: 컴팩트 */
+    .relation-item {
+      padding: 2px var(--spacing-sm);
+      margin: 1px 0;
+    }
+
+    /* 노드 콘텐츠 간격 축소 */
+    .tree-node__content {
+      gap: 6px;
+    }
+
+    /* 패널: 모바일에서 전체화면 오버레이 */
+    .relationship-view__panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      min-width: 0;
+      max-width: none;
+      z-index: 200;
+      border-left: none;
+    }
+
+    /* 로딩/빈 상태 */
+    .relationship-loading,
+    .relationship-empty {
+      padding: var(--spacing-lg);
+    }
+  }
+
+} /* end @layer components */

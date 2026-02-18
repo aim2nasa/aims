@@ -7,682 +7,687 @@
  */
 
 /* 메인 콘텐츠 영역 - 전체 페이지 스크롤 방지 */
-.document-registration-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm); /* 8px - 컴팩트한 간격 */
-  height: 100%;
-  min-height: 0; /* ✅ flexbox 스크롤 활성화 필수 */
-  /* overflow는 설정하지 않음 - 자식 요소가 자체 스크롤 처리 */
-}
 
-/* FileUploadArea 고정 높이 */
-.document-registration-content .file-upload-area {
-  flex-shrink: 0; /* 크기 고정 */
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-  /* height는 FileUploadArea 자체 CSS에서 100px로 설정됨 */
-}
+@layer components {
 
-/* 처리 로그 컨테이너 */
-.file-log-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1; /* 🍎 남은 공간 모두 차지 */
-  min-height: 0; /* flex 자식이 overflow 되도록 */
-  gap: 0;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-  border-radius: var(--radius-lg); /* 통일된 라운딩 */
-  overflow: hidden; /* 라운딩 효과 */
-}
-
-/* 처리 로그 영역 */
-.file-log-container .processing-log {
-  flex: 1;
-  min-height: 0;
-}
-
-/* 🍎 등록 방법 안내 스타일 */
-.registration-guide {
-  background: transparent; /* 투명 배경 */
-  border-radius: var(--radius-lg); /* 12px - 통일된 라운딩 */
-  max-width: 1000px; /* 설명 텍스트 줄바꿈 최소화 */
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: -6px; /* 간격 대폭 축소 */
-  overflow: hidden;
-}
-
-html[data-theme="dark"] .registration-guide {
-  background: transparent; /* 투명 배경 */
-}
-
-/* 가이드 토글 버튼 */
-.registration-guide__toggle {
-  width: 100%;
-  padding: 12px 16px 0 16px; /* 하단 패딩 완전 제거 */
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  opacity: 0.7; /* 기본 투명도 */
-  transition: all 0.2s ease;
-}
-
-.registration-guide__toggle:hover {
-  background: transparent; /* 배경은 투명 유지 */
-  opacity: 1; /* 호버 시 완전 불투명 */
-  transform: scale(1.05); /* 5% 크게 (서브틀한 효과) */
-}
-
-html[data-theme="dark"] .registration-guide__toggle:hover {
-  background: transparent; /* 다크모드도 투명 유지 */
-  opacity: 1;
-  transform: scale(1.05);
-}
-
-.registration-guide .guide-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-/* 접힌 상태: 하단 구분선 없음 */
-.registration-guide--collapsed .guide-header {
-  border-bottom: none;
-}
-
-/* 펼쳐진 상태: 하단 구분선 표시 */
-.registration-guide--expanded .guide-header {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .registration-guide--expanded .guide-header {
-  border-bottom-color: var(--color-ios-separator-dark);
-}
-
-/* 토글 아이콘 */
-.guide-toggle-icon {
-  color: var(--color-ios-text-quaternary-light);
-  font-size: var(--font-size-caption-1);
-  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .guide-toggle-icon {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.registration-guide .guide-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-.registration-guide .guide-icon svg {
-  display: block;
-}
-
-/* Lightbulb icon colors */
-.registration-guide .guide-icon .lightbulb-bulb {
-  fill: var(--color-icon-lightbulb-fill);
-  stroke: var(--color-icon-lightbulb-stroke);
-}
-
-.registration-guide .guide-icon .lightbulb-base {
-  stroke: var(--color-icon-lightbulb-stroke);
-}
-
-.registration-guide .guide-title {
-  margin: 0;
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-subheadline);
-  font-weight: 600;
-  color: var(--color-ios-text-primary-light);
-  letter-spacing: -0.5px;
-}
-
-html[data-theme="dark"] .registration-guide .guide-title {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.registration-guide .guide-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
-  padding: 0 16px 16px;
-}
-
-.registration-guide .guide-section {
-  display: flex;
-  flex-direction: row;
-  gap: 24px;
-  max-width: 100%;
-  width: 100%;
-}
-
-.registration-guide .guide-step {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-/* 1번 항목: 텍스트가 짧으므로 고정 폭 */
-.registration-guide .guide-step:first-child {
-  flex: 0 0 auto;
-  min-width: 280px;
-}
-
-/* 2번 항목: 텍스트가 길므로 남은 공간 차지 */
-.registration-guide .guide-step:last-child {
-  flex: 1;
-}
-
-.registration-guide .step-number {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--color-step-number-bg-light);
-  color: var(--color-step-number-text-light);
-  border: 1.5px solid var(--color-step-number-border-light);
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-caption-2);
-  font-weight: 600;
-  line-height: 1;
-}
-
-html[data-theme="dark"] .registration-guide .step-number {
-  background: var(--color-step-number-bg-dark);
-  color: var(--color-step-number-text-dark);
-  border-color: var(--color-step-number-border-dark);
-}
-
-.registration-guide .step-content {
-  flex: 1;
-  padding-top: 0;
-}
-
-.registration-guide .step-title {
-  margin: 0 0 4px;
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-footnote);
-  font-weight: 600;
-  color: var(--color-ios-text-primary-light);
-  letter-spacing: -0.3px;
-}
-
-html[data-theme="dark"] .registration-guide .step-title {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.registration-guide .step-description {
-  margin: 2px 0;
-  font-family: var(--font-family-text);
-  font-size: var(--font-size-caption-1);
-  font-weight: 400;
-  color: var(--color-ios-text-secondary-light);
-  line-height: 1.4;
-  /* 들여쓰기: bullet point(•) 뒤에 정렬 */
-  padding-left: 1.2em;
-  text-indent: -1.2em;
-}
-
-html[data-theme="dark"] .registration-guide .step-description {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* 초기 상태로 되돌리기 버튼 */
-.document-registration-view__reset-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  max-width: 800px;
-  margin: 0 auto var(--spacing-1) auto;
-}
-
-.document-registration-view__reset-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  opacity: 0.7;
-  transition: all 0.2s ease;
-}
-
-.document-registration-view__reset-button:hover {
-  background: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.document-registration-view__reset-button:active {
-  transform: scale(0.95);
-}
-
-.document-registration-view__reset-button svg {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.2s ease;
-}
-
-/* 호버 시 SVG 회전 (45도) */
-.document-registration-view__reset-button:hover svg {
-  transform: rotate(45deg);
-}
-
-/* 🍎 고객 정보 입력 스타일 */
-.customer-info-section {
-  background: transparent; /* 투명 배경 */
-  border-radius: var(--radius-lg); /* 12px - 통일된 라운딩 */
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-  overflow: visible; /* 드롭다운이 잘리지 않도록 */
-}
-
-html[data-theme="dark"] .customer-info-section {
-  background: transparent; /* 투명 배경 */
-}
-
-/* 항상 펼쳐진 고객 선택 영역 */
-.customer-info-section--always-expanded {
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-lg);
-  padding: 0;
-}
-
-html[data-theme="dark"] .customer-info-section--always-expanded {
-  background: transparent;
-}
-
-/* 고객 선택 헤더 (고정 - 토글 없음) */
-.customer-info-header-static {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .customer-info-header-static {
-  border-bottom-color: var(--color-ios-separator-dark);
-}
-
-/* 필수 표시 */
-.customer-info-required {
-  font-size: var(--font-size-caption-1);
-  font-weight: 400;
-  color: var(--color-ios-red);
-  margin-left: 2px;
-}
-
-/* 고객 정보 토글 버튼 (레거시 - 하위 호환용) */
-.customer-info-section__toggle {
-  width: 100%;
-  padding: 12px 16px; /* 여유있는 터치 영역 */
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  opacity: 0.7; /* 기본 투명도 */
-  transition: all 0.2s ease;
-}
-
-.customer-info-section__toggle:hover {
-  background: transparent; /* 배경은 투명 유지 */
-  opacity: 1; /* 호버 시 완전 불투명 */
-  transform: scale(1.05); /* 5% 크게 (서브틀한 효과) */
-}
-
-html[data-theme="dark"] .customer-info-section__toggle:hover {
-  background: transparent; /* 다크모드도 투명 유지 */
-  opacity: 1;
-  transform: scale(1.05);
-}
-
-.customer-info-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-/* 고객 정보 아이콘 */
-.customer-info-icon {
-  font-size: var(--font-size-subheadline); /* 15px - 제목과 동일 */
-  line-height: 1;
-}
-
-/* 고객 미선택 상태: 회색 */
-.customer-info-icon--unselected {
-  color: var(--color-text-tertiary);
-}
-
-/* 고객 선택됨 상태: 파란색 */
-.customer-info-icon--selected {
-  color: var(--color-ios-blue);
-}
-
-/* 고객 정보 제목 */
-.customer-info-title {
-  margin: 0;
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-subheadline);
-  font-weight: 600;
-  color: var(--color-text-tertiary); /* 고객 미선택: 회색 */
-  letter-spacing: -0.5px;
-  transition: color 0.2s ease;
-}
-
-html[data-theme="dark"] .customer-info-title {
-  color: var(--color-text-tertiary);
-}
-
-/* 고객 선택됨 상태: 파란색 강조 */
-.customer-info-title--selected {
-  color: var(--color-ios-blue);
-  font-weight: 700;
-}
-
-html[data-theme="dark"] .customer-info-title--selected {
-  color: var(--color-ios-blue);
-}
-
-/* 토글 아이콘 */
-.customer-info-toggle-icon {
-  color: var(--color-ios-text-quaternary-light);
-  font-size: var(--font-size-caption-1);
-  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .customer-info-toggle-icon {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* 고객 정보 컨텐츠 영역 */
-.customer-info-content {
-  padding: 0 16px 16px; /* 상단 패딩 제거 */
-}
-
-/* 항상 펼쳐진 상태에서는 패딩 없음 (부모에서 처리) */
-.customer-info-section--always-expanded .customer-info-content {
-  padding: 0;
-}
-
-/* 🍎 처리 상태 보기 버튼 */
-.view-status-button-container {
-  display: flex;
-  justify-content: center;
-  gap: var(--spacing-2);
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0;
-}
-
-.view-status-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 20px;
-  font-family: var(--font-family-text);
-  font-size: var(--font-size-footnote);
-  font-weight: 600;
-  color: var(--color-ios-blue);
-  background: transparent;
-  border: 1px solid var(--color-ios-blue);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.view-status-button:hover {
-  background: var(--color-ios-blue);
-  color: white;
-}
-
-.view-status-button:active {
-  transform: scale(0.98);
-}
-
-/* 새 문서 등록 버튼 (secondary) */
-.view-status-button--secondary {
-  color: var(--color-text-secondary);
-  border-color: var(--color-ios-separator-light);
-}
-
-.view-status-button--secondary:hover {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
-}
-
-html[data-theme="dark"] .view-status-button--secondary {
-  border-color: var(--color-ios-separator-dark);
-}
-
-html[data-theme="dark"] .view-status-button--secondary:hover {
-  background: var(--color-bg-quaternary);
-}
-
-/* 🍎 버튼 아이콘 색상 */
-.icon-orange {
-  color: var(--color-icon-doc-register);
-}
-
-.icon-purple {
-  color: var(--color-icon-doc-library);
-}
-
-/* 🎯 문서 유형 선택 영역 - iOS 세그먼트 컨트롤 스타일 */
-.document-type-selection {
-  max-width: 800px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: center;
-  padding: 16px 0;
-}
-
-.document-type-selection__buttons {
-  display: inline-flex;
-  gap: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--color-ios-separator-light);
-  background: rgba(118, 118, 128, 0.12);
-}
-
-html[data-theme="dark"] .document-type-selection__buttons {
-  border-color: var(--color-ios-separator-dark);
-  background: rgba(118, 118, 128, 0.24);
-}
-
-/* 🍎 세그먼트 컨트롤 스타일 버튼 */
-.document-type-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 32px;
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--color-ios-separator-light);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  color: var(--color-ios-text-secondary-light);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-html[data-theme="dark"] .document-type-card {
-  border-right-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.document-type-card:last-child {
-  border-right: none;
-}
-
-.document-type-card:hover {
-  background: rgba(0, 0, 0, 0.03);
-}
-
-html[data-theme="dark"] .document-type-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.document-type-card--selected {
-  background: var(--color-ios-blue);
-  color: white;
-}
-
-.document-type-card--selected:hover {
-  background: var(--color-ios-blue);
-}
-
-html[data-theme="dark"] .document-type-card--selected {
-  background: var(--color-ios-blue);
-  color: white;
-}
-
-.document-type-card__label {
-  font-size: 14px;
-  font-weight: 500;
-  color: inherit;
-}
-
-/* 🎯 문서 유형 아이콘 */
-.document-type-card__icon {
-  flex-shrink: 0;
-  margin-right: 6px;
-}
-
-.document-type-card__icon--orange {
-  color: var(--color-ios-orange);
-}
-
-.document-type-card__icon--green {
-  color: var(--color-ios-green);
-}
-
-.document-type-card__icon--purple {
-  color: var(--color-ios-purple);
-}
-
-/* 선택 시 아이콘 흰색 */
-.document-type-card--selected .document-type-card__icon {
-  color: white;
-}
-
-/* 🍎 RESPONSIVE: Minimal changes */
-@media (max-width: 768px) {
   .document-registration-content {
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm); /* 8px - 컴팩트한 간격 */
+    height: 100%;
+    min-height: 0; /* ✅ flexbox 스크롤 활성화 필수 */
+    /* overflow는 설정하지 않음 - 자식 요소가 자체 스크롤 처리 */
+  }
+
+  /* FileUploadArea 고정 높이 */
+  .document-registration-content .file-upload-area {
+    flex-shrink: 0; /* 크기 고정 */
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    /* height는 FileUploadArea 자체 CSS에서 100px로 설정됨 */
+  }
+
+  /* 처리 로그 컨테이너 */
+  .file-log-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* 🍎 남은 공간 모두 차지 */
+    min-height: 0; /* flex 자식이 overflow 되도록 */
+    gap: 0;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    border-radius: var(--radius-lg); /* 통일된 라운딩 */
+    overflow: hidden; /* 라운딩 효과 */
+  }
+
+  /* 처리 로그 영역 */
+  .file-log-container .processing-log {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* 🍎 등록 방법 안내 스타일 */
+  .registration-guide {
+    background: transparent; /* 투명 배경 */
+    border-radius: var(--radius-lg); /* 12px - 통일된 라운딩 */
+    max-width: 1000px; /* 설명 텍스트 줄바꿈 최소화 */
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: -6px; /* 간격 대폭 축소 */
+    overflow: hidden;
+  }
+
+  html[data-theme="dark"] .registration-guide {
+    background: transparent; /* 투명 배경 */
+  }
+
+  /* 가이드 토글 버튼 */
+  .registration-guide__toggle {
+    width: 100%;
+    padding: 12px 16px 0 16px; /* 하단 패딩 완전 제거 */
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7; /* 기본 투명도 */
+    transition: all 0.2s ease;
+  }
+
+  .registration-guide__toggle:hover {
+    background: transparent; /* 배경은 투명 유지 */
+    opacity: 1; /* 호버 시 완전 불투명 */
+    transform: scale(1.05); /* 5% 크게 (서브틀한 효과) */
+  }
+
+  html[data-theme="dark"] .registration-guide__toggle:hover {
+    background: transparent; /* 다크모드도 투명 유지 */
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  .registration-guide .guide-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* 접힌 상태: 하단 구분선 없음 */
+  .registration-guide--collapsed .guide-header {
+    border-bottom: none;
+  }
+
+  /* 펼쳐진 상태: 하단 구분선 표시 */
+  .registration-guide--expanded .guide-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .registration-guide--expanded .guide-header {
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  /* 토글 아이콘 */
+  .guide-toggle-icon {
+    color: var(--color-ios-text-quaternary-light);
+    font-size: var(--font-size-caption-1);
+    transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  html[data-theme="dark"] .guide-toggle-icon {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  .registration-guide .guide-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .registration-guide .guide-icon svg {
+    display: block;
+  }
+
+  /* Lightbulb icon colors */
+  .registration-guide .guide-icon .lightbulb-bulb {
+    fill: var(--color-icon-lightbulb-fill);
+    stroke: var(--color-icon-lightbulb-stroke);
+  }
+
+  .registration-guide .guide-icon .lightbulb-base {
+    stroke: var(--color-icon-lightbulb-stroke);
+  }
+
+  .registration-guide .guide-title {
+    margin: 0;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-subheadline);
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+    letter-spacing: -0.5px;
+  }
+
+  html[data-theme="dark"] .registration-guide .guide-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .registration-guide .guide-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    padding: 0 16px 16px;
   }
 
   .registration-guide .guide-section {
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .registration-guide .guide-step {
+    display: flex;
     gap: 12px;
+    align-items: flex-start;
+  }
+
+  /* 1번 항목: 텍스트가 짧으므로 고정 폭 */
+  .registration-guide .guide-step:first-child {
+    flex: 0 0 auto;
+    min-width: 280px;
+  }
+
+  /* 2번 항목: 텍스트가 길므로 남은 공간 차지 */
+  .registration-guide .guide-step:last-child {
+    flex: 1;
+  }
+
+  .registration-guide .step-number {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-step-number-bg-light);
+    color: var(--color-step-number-text-light);
+    border: 1.5px solid var(--color-step-number-border-light);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-caption-2);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  html[data-theme="dark"] .registration-guide .step-number {
+    background: var(--color-step-number-bg-dark);
+    color: var(--color-step-number-text-dark);
+    border-color: var(--color-step-number-border-dark);
+  }
+
+  .registration-guide .step-content {
+    flex: 1;
+    padding-top: 0;
+  }
+
+  .registration-guide .step-title {
+    margin: 0 0 4px;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+    letter-spacing: -0.3px;
+  }
+
+  html[data-theme="dark"] .registration-guide .step-title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .registration-guide .step-description {
+    margin: 2px 0;
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-caption-1);
+    font-weight: 400;
+    color: var(--color-ios-text-secondary-light);
+    line-height: 1.4;
+    /* 들여쓰기: bullet point(•) 뒤에 정렬 */
+    padding-left: 1.2em;
+    text-indent: -1.2em;
+  }
+
+  html[data-theme="dark"] .registration-guide .step-description {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  /* 초기 상태로 되돌리기 버튼 */
+  .document-registration-view__reset-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto var(--spacing-1) auto;
+  }
+
+  .document-registration-view__reset-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
+
+  .document-registration-view__reset-button:hover {
+    background: transparent;
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  .document-registration-view__reset-button:active {
+    transform: scale(0.95);
+  }
+
+  .document-registration-view__reset-button svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+  }
+
+  /* 호버 시 SVG 회전 (45도) */
+  .document-registration-view__reset-button:hover svg {
+    transform: rotate(45deg);
+  }
+
+  /* 🍎 고객 정보 입력 스타일 */
+  .customer-info-section {
+    background: transparent; /* 투명 배경 */
+    border-radius: var(--radius-lg); /* 12px - 통일된 라운딩 */
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: visible; /* 드롭다운이 잘리지 않도록 */
+  }
+
+  html[data-theme="dark"] .customer-info-section {
+    background: transparent; /* 투명 배경 */
+  }
+
+  /* 항상 펼쳐진 고객 선택 영역 */
+  .customer-info-section--always-expanded {
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 0;
+  }
+
+  html[data-theme="dark"] .customer-info-section--always-expanded {
+    background: transparent;
+  }
+
+  /* 고객 선택 헤더 (고정 - 토글 없음) */
+  .customer-info-header-static {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .customer-info-header-static {
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  /* 필수 표시 */
+  .customer-info-required {
+    font-size: var(--font-size-caption-1);
+    font-weight: 400;
+    color: var(--color-ios-red);
+    margin-left: 2px;
+  }
+
+  /* 고객 정보 토글 버튼 (레거시 - 하위 호환용) */
+  .customer-info-section__toggle {
+    width: 100%;
+    padding: 12px 16px; /* 여유있는 터치 영역 */
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7; /* 기본 투명도 */
+    transition: all 0.2s ease;
+  }
+
+  .customer-info-section__toggle:hover {
+    background: transparent; /* 배경은 투명 유지 */
+    opacity: 1; /* 호버 시 완전 불투명 */
+    transform: scale(1.05); /* 5% 크게 (서브틀한 효과) */
+  }
+
+  html[data-theme="dark"] .customer-info-section__toggle:hover {
+    background: transparent; /* 다크모드도 투명 유지 */
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  .customer-info-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* 고객 정보 아이콘 */
+  .customer-info-icon {
+    font-size: var(--font-size-subheadline); /* 15px - 제목과 동일 */
+    line-height: 1;
+  }
+
+  /* 고객 미선택 상태: 회색 */
+  .customer-info-icon--unselected {
+    color: var(--color-text-tertiary);
+  }
+
+  /* 고객 선택됨 상태: 파란색 */
+  .customer-info-icon--selected {
+    color: var(--color-ios-blue);
+  }
+
+  /* 고객 정보 제목 */
+  .customer-info-title {
+    margin: 0;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-subheadline);
+    font-weight: 600;
+    color: var(--color-text-tertiary); /* 고객 미선택: 회색 */
+    letter-spacing: -0.5px;
+    transition: color 0.2s ease;
+  }
+
+  html[data-theme="dark"] .customer-info-title {
+    color: var(--color-text-tertiary);
+  }
+
+  /* 고객 선택됨 상태: 파란색 강조 */
+  .customer-info-title--selected {
+    color: var(--color-ios-blue);
+    font-weight: 700;
+  }
+
+  html[data-theme="dark"] .customer-info-title--selected {
+    color: var(--color-ios-blue);
+  }
+
+  /* 토글 아이콘 */
+  .customer-info-toggle-icon {
+    color: var(--color-ios-text-quaternary-light);
+    font-size: var(--font-size-caption-1);
+    transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  html[data-theme="dark"] .customer-info-toggle-icon {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* 고객 정보 컨텐츠 영역 */
+  .customer-info-content {
+    padding: 0 16px 16px; /* 상단 패딩 제거 */
+  }
+
+  /* 항상 펼쳐진 상태에서는 패딩 없음 (부모에서 처리) */
+  .customer-info-section--always-expanded .customer-info-content {
+    padding: 0;
+  }
+
+  /* 🍎 처리 상태 보기 버튼 */
+  .view-status-button-container {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-2);
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  .view-status-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    color: var(--color-ios-blue);
+    background: transparent;
+    border: 1px solid var(--color-ios-blue);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .view-status-button:hover {
+    background: var(--color-ios-blue);
+    color: white;
+  }
+
+  .view-status-button:active {
+    transform: scale(0.98);
+  }
+
+  /* 새 문서 등록 버튼 (secondary) */
+  .view-status-button--secondary {
+    color: var(--color-text-secondary);
+    border-color: var(--color-ios-separator-light);
+  }
+
+  .view-status-button--secondary:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+  }
+
+  html[data-theme="dark"] .view-status-button--secondary {
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  html[data-theme="dark"] .view-status-button--secondary:hover {
+    background: var(--color-bg-quaternary);
+  }
+
+  /* 🍎 버튼 아이콘 색상 */
+  .icon-orange {
+    color: var(--color-icon-doc-register);
+  }
+
+  .icon-purple {
+    color: var(--color-icon-doc-library);
+  }
+
+  /* 🎯 문서 유형 선택 영역 - iOS 세그먼트 컨트롤 스타일 */
+  .document-type-selection {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    padding: 16px 0;
   }
 
   .document-type-selection__buttons {
-    flex-direction: column;
+    display: inline-flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--color-ios-separator-light);
+    background: rgba(118, 118, 128, 0.12);
   }
 
+  html[data-theme="dark"] .document-type-selection__buttons {
+    border-color: var(--color-ios-separator-dark);
+    background: rgba(118, 118, 128, 0.24);
+  }
+
+  /* 🍎 세그먼트 컨트롤 스타일 버튼 */
   .document-type-card {
-    border-right: none;
-    border-bottom: 1px solid var(--color-border-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 32px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--color-ios-separator-light);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: var(--color-ios-text-secondary-light);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  html[data-theme="dark"] .document-type-card {
+    border-right-color: var(--color-ios-separator-dark);
+    color: var(--color-ios-text-secondary-dark);
   }
 
   .document-type-card:last-child {
-    border-bottom: none;
-  }
-}
-
-/* 📱 모바일 480px: 업로드 영역 + 로그 컴팩트 */
-@media (max-width: 480px) {
-  .document-registration-content {
-    gap: var(--spacing-1);
+    border-right: none;
   }
 
-  /* 업로드 영역: 전체 폭, 터치 친화적 */
-  .document-registration-content .file-upload-area {
-    max-width: 100%;
-    margin: 0;
+  .document-type-card:hover {
+    background: rgba(0, 0, 0, 0.03);
   }
 
-  /* 문서 타입 카드: 44px 터치 타겟 */
-  .document-type-card {
-    min-height: 44px;
-    padding: 10px 12px;
+  html[data-theme="dark"] .document-type-card:hover {
+    background: rgba(255, 255, 255, 0.05);
   }
 
-  /* 처리 로그: 전체 폭, 컴팩트 */
-  .file-log-container {
-    max-width: 100%;
-    margin: 0;
-    border-radius: var(--radius-md);
+  .document-type-card--selected {
+    background: var(--color-ios-blue);
+    color: white;
   }
-}
 
-/* 🎯 AR 파일 미발견 경고 메시지 - 토스트 스타일 (상단 중앙) */
-.no-ar-warning {
-  position: fixed;
-  top: 72px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background-color: rgba(0, 0, 0, 0.85);
-  border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  animation: noArWarningSlideDown 0.25s ease-out;
-}
-
-@keyframes noArWarningSlideDown {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-10px);
+  .document-type-card--selected:hover {
+    background: var(--color-ios-blue);
   }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+
+  html[data-theme="dark"] .document-type-card--selected {
+    background: var(--color-ios-blue);
+    color: white;
   }
-}
 
-.no-ar-warning__icon {
-  font-size: 16px;
-  flex-shrink: 0;
-}
+  .document-type-card__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: inherit;
+  }
 
-.no-ar-warning__message {
-  font-size: 14px;
-  color: white;
-  font-weight: 500;
-  white-space: nowrap;
-}
+  /* 🎯 문서 유형 아이콘 */
+  .document-type-card__icon {
+    flex-shrink: 0;
+    margin-right: 6px;
+  }
 
-.no-ar-warning__close {
-  display: none;
-}
+  .document-type-card__icon--orange {
+    color: var(--color-ios-orange);
+  }
+
+  .document-type-card__icon--green {
+    color: var(--color-ios-green);
+  }
+
+  .document-type-card__icon--purple {
+    color: var(--color-ios-purple);
+  }
+
+  /* 선택 시 아이콘 흰색 */
+  .document-type-card--selected .document-type-card__icon {
+    color: white;
+  }
+
+  /* 🍎 RESPONSIVE: Minimal changes */
+  @media (max-width: 768px) {
+    .document-registration-content {
+      gap: 8px;
+    }
+
+    .registration-guide .guide-section {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .document-type-selection__buttons {
+      flex-direction: column;
+    }
+
+    .document-type-card {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border-secondary);
+    }
+
+    .document-type-card:last-child {
+      border-bottom: none;
+    }
+  }
+
+  /* 📱 모바일 480px: 업로드 영역 + 로그 컴팩트 */
+  @media (max-width: 480px) {
+    .document-registration-content {
+      gap: var(--spacing-1);
+    }
+
+    /* 업로드 영역: 전체 폭, 터치 친화적 */
+    .document-registration-content .file-upload-area {
+      max-width: 100%;
+      margin: 0;
+    }
+
+    /* 문서 타입 카드: 44px 터치 타겟 */
+    .document-type-card {
+      min-height: 44px;
+      padding: 10px 12px;
+    }
+
+    /* 처리 로그: 전체 폭, 컴팩트 */
+    .file-log-container {
+      max-width: 100%;
+      margin: 0;
+      border-radius: var(--radius-md);
+    }
+  }
+
+  /* 🎯 AR 파일 미발견 경고 메시지 - 토스트 스타일 (상단 중앙) */
+  .no-ar-warning {
+    position: fixed;
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.85);
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    animation: noArWarningSlideDown 0.25s ease-out;
+  }
+
+  @keyframes noArWarningSlideDown {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  .no-ar-warning__icon {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .no-ar-warning__message {
+    font-size: 14px;
+    color: white;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .no-ar-warning__close {
+    display: none;
+  }
+
+} /* end @layer components */

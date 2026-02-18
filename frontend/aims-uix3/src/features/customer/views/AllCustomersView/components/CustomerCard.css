@@ -7,133 +7,138 @@
  */
 
 /* ===== Customer Card ===== */
-.customer-card {
-  background-color: var(--color-bg-secondary);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--color-border);
 
-  cursor: pointer;
+@layer components {
 
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-.customer-card:hover {
-  border-color: var(--color-border-hover);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.customer-card:active {
-  transform: translateY(0);
-}
-
-.customer-card:focus {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-}
-
-/* ===== Header ===== */
-.customer-card__header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
-
-.customer-card__icon {
-  /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 아이콘/심볼 ) */
-  line-height: 1;
-}
-
-.customer-card__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.customer-card__name {
-  /* font-size: var(--font-size-lg); () */
-  /* font-weight: var(--font-weight-semibold); () */
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.customer-card__type {
-  /* font-size: var(--font-size-sm); () */
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.customer-card__status {
-  /* font-size: var(--font-size-sm); () */
-  /* font-weight: var(--font-weight-medium); () */
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
-}
-
-.customer-card__status--active {
-  background-color: var(--color-success-bg);
-  color: var(--color-success-text);
-}
-
-.customer-card__status--inactive {
-  background-color: var(--color-neutral-bg);
-  color: var(--color-neutral-text);
-}
-
-/* ===== Contact Info ===== */
-.customer-card__contact {
-  /* font-size: var(--font-size-sm); () */
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-md);
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.customer-card__contact p {
-  margin: 0;
-}
-
-/* ===== Meta Info ===== */
-.customer-card__meta {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-
-  /* font-size: var(--font-size-sm); () */
-  color: var(--color-text-tertiary);
-
-  padding-top: var(--spacing-md);
-  border-top: 1px solid var(--color-border);
-}
-
-.customer-card__date,
-.customer-card__age {
-  display: inline-block;
-}
-
-/* ===== Dark Theme ===== */
-html[data-theme="dark"] .customer-card:hover {
-  box-shadow: var(--shadow-lg);
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
   .customer-card {
-    padding: var(--spacing-md);
+    background-color: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-border);
+
+    cursor: pointer;
+
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .customer-card:hover {
+    border-color: var(--color-border-hover);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .customer-card:active {
+    transform: translateY(0);
+  }
+
+  .customer-card:focus {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  /* ===== Header ===== */
+  .customer-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
   }
 
   .customer-card__icon {
-    /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
+    /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 아이콘/심볼 ) */
+    line-height: 1;
+  }
+
+  .customer-card__info {
+    flex: 1;
+    min-width: 0;
   }
 
   .customer-card__name {
-    /* font-size: var(--font-size-base); () */
+    /* font-size: var(--font-size-lg); () */
+    /* font-weight: var(--font-weight-semibold); () */
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-xs) 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-}
+
+  .customer-card__type {
+    /* font-size: var(--font-size-sm); () */
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .customer-card__status {
+    /* font-size: var(--font-size-sm); () */
+    /* font-weight: var(--font-weight-medium); () */
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+  }
+
+  .customer-card__status--active {
+    background-color: var(--color-success-bg);
+    color: var(--color-success-text);
+  }
+
+  .customer-card__status--inactive {
+    background-color: var(--color-neutral-bg);
+    color: var(--color-neutral-text);
+  }
+
+  /* ===== Contact Info ===== */
+  .customer-card__contact {
+    /* font-size: var(--font-size-sm); () */
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-md);
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .customer-card__contact p {
+    margin: 0;
+  }
+
+  /* ===== Meta Info ===== */
+  .customer-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+
+    /* font-size: var(--font-size-sm); () */
+    color: var(--color-text-tertiary);
+
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .customer-card__date,
+  .customer-card__age {
+    display: inline-block;
+  }
+
+  /* ===== Dark Theme ===== */
+  html[data-theme="dark"] .customer-card:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .customer-card {
+      padding: var(--spacing-md);
+    }
+
+    .customer-card__icon {
+      /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
+    }
+
+    .customer-card__name {
+      /* font-size: var(--font-size-base); () */
+    }
+  }
+
+} /* end @layer components */

@@ -4,380 +4,384 @@
  * @version 1.0.0
  */
 
-.button {
-  /* 기본 레이아웃 */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  vertical-align: middle;
-  white-space: nowrap;
-  user-select: none;
+@layer components {
 
-  /* 테두리 */
-  border-width: 1px;
-  border-style: solid;
-  border-radius: var(--radius-md);
-
-  /* 타이포그래피 */
-  font-family: var(--font-family-primary);
-  /* font-weight: var(--font-weight-medium); () */
-  line-height: var(--line-height-normal);
-  text-decoration: none;
-
-  /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-kerning: auto;
-  font-variant-ligatures: common-ligatures;
-  font-feature-settings: var(--font-feature-settings-kerning);
-
-  /* 🌍 국제화: 완벽한 다국어 지원 */
-  unicode-bidi: isolate;
-  text-size-adjust: 100%;
-
-  /* 🍎 Performance: GPU 가속 최적화 */
-  will-change: background-color, color, border-color, transform;
-  transform: translateZ(0);
-  contain: layout style;
-  backface-visibility: hidden;
-
-  /* 상호작용 */
-  cursor: pointer;
-  transition:
-    background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
-    border-color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
-    color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
-    box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring),
-    transform var(--duration-micro-instant) var(--easing-micro-press-down); /* 정밀한 Press State */
-
-  /* 포커스 관리 - WCAG 2.1 AAA 준수 */
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-}
-
-.button:focus-visible {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 2px;
-  box-shadow: var(--shadow-focus-ring);
-}
-
-/* === ACCESSIBILITY FOCUS VARIANTS === */
-
-/* High Contrast 모드 지원 */
-@media (prefers-contrast: high) {
-  .button:focus-visible {
-    outline: 3px solid var(--color-voiceover-focus);
-    box-shadow: var(--shadow-focus-high-contrast);
-  }
-}
-
-/* VoiceOver 사용자 최적화 */
-.button.focus-voiceover:focus-visible {
-  outline: 4px solid var(--color-voiceover-focus);
-  box-shadow: var(--shadow-voiceover-cursor);
-}
-
-/* 모션 감소 사용자 지원 */
-@media (prefers-reduced-motion: reduce) {
-  .button:focus-visible {
-    box-shadow: var(--shadow-focus-reduced-motion);
-    transition: none;
-  }
-}
-
-/* === SIZE VARIANTS === */
-
-.button--sm {
-  gap: var(--spacing-1);
-  padding: 4px 12px;
-  /* font-size: var(--font-size-sm); () */
-  min-height: 1.875rem; /* 44px - iOS 최소 터치 영역 표준 */
-  min-width: auto;  /* 44px - iOS 최소 터치 영역 너비 보장 */
-}
-
-.button--md {
-  gap: var(--spacing-2);
-  padding: var(--spacing-3) var(--spacing-4);
-  /* font-size: var(--font-size-base); () */
-  min-height: 2.75rem; /* 44px - iOS 최소 터치 영역 표준 */
-  min-width: 2.75rem;  /* 44px - iOS 최소 터치 영역 너비 보장 */
-}
-
-.button--lg {
-  gap: var(--spacing-2);
-  padding: var(--spacing-4) var(--spacing-6);
-  /* font-size: var(--font-size-lg); () */
-  min-height: 3rem; /* 48px */
-  min-width: 3rem;  /* 48px - 일관된 터치 영역 보장 */
-}
-
-/* === STYLE VARIANTS === */
-
-/* Primary Button */
-.button--primary {
-  background-color: var(--color-button-primary-bg);
-  border-color: var(--color-button-primary-bg);
-  color: var(--color-button-primary-text);
-}
-
-.button--primary:hover:not(:disabled) {
-  background-color: var(--color-button-primary-bg-hover);
-  border-color: var(--color-button-primary-bg-hover);
-}
-
-.button--primary:active:not(:disabled) {
-  background-color: var(--color-button-primary-bg-active);
-  border-color: var(--color-button-primary-bg-active);
-  transform: translateY(1px) scale(0.98); /* iOS 17+ 정밀 Press State */
-  transition:
-    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-    border-color var(--duration-micro-instant) var(--easing-micro-press-down),
-    transform var(--duration-micro-instant) var(--easing-micro-press-down);
-}
-
-.button--primary:not(:active):not(:disabled) {
-  transition:
-    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-    border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-    transform var(--duration-micro-smooth) var(--easing-micro-press-up);
-}
-
-/* Secondary Button */
-.button--secondary {
-  background-color: var(--color-button-secondary-bg-light);
-  border-color: var(--color-button-secondary-border);
-  color: var(--color-button-secondary-text);
-}
-
-[data-theme="dark"] .button--secondary {
-  background-color: var(--color-button-secondary-bg-dark);
-}
-
-.button--secondary:hover:not(:disabled) {
-  background-color: var(--color-button-secondary-hover-light);
-}
-
-[data-theme="dark"] .button--secondary:hover:not(:disabled) {
-  background-color: var(--color-button-secondary-hover-dark);
-}
-.button--secondary:active:not(:disabled) {
-  background-color: var(--color-button-secondary-bg-active);
-  transform: translateY(1px) scale(0.985); /* 더 서브틀한 Press State */
-  transition:
-    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-    transform var(--duration-micro-instant) var(--easing-micro-press-down);
-}
-
-.button--secondary:not(:active):not(:disabled) {
-  transition:
-    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-    transform var(--duration-micro-smooth) var(--easing-micro-press-up);
-}
-
-/* Ghost Button */
-.button--ghost {
-  background-color: var(--color-button-ghost-bg);
-  border-color: transparent;
-  color: var(--color-button-ghost-text);
-}
-
-.button--ghost:hover:not(:disabled) {
-  background-color: var(--color-button-ghost-bg-hover);
-}
-
-.button--ghost:active:not(:disabled) {
-  background-color: var(--color-button-ghost-bg-active);
-  transform: translateY(0.5px) scale(0.99); /* 매우 서브틀한 Press State */
-  transition:
-    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-    transform var(--duration-micro-instant) var(--easing-micro-press-down);
-}
-
-.button--ghost:not(:active):not(:disabled) {
-  transition:
-    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-    transform var(--duration-micro-smooth) var(--easing-micro-press-up);
-}
-
-/* Destructive Button */
-.button--destructive {
-  background-color: var(--color-button-destructive-bg);
-  border-color: var(--color-button-destructive-bg);
-  color: var(--color-button-destructive-text);
-}
-
-.button--destructive:hover:not(:disabled) {
-  background-color: var(--color-button-destructive-bg-hover);
-  border-color: var(--color-button-destructive-bg-hover);
-}
-
-.button--destructive:active:not(:disabled) {
-  background-color: var(--color-button-destructive-bg-hover);
-  border-color: var(--color-button-destructive-bg-hover);
-  transform: translateY(1.5px) scale(0.975); /* 강조된 Press State (위험한 액션) */
-  transition:
-    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-    border-color var(--duration-micro-instant) var(--easing-micro-press-down),
-    transform var(--duration-micro-instant) var(--easing-micro-press-down);
-}
-
-.button--destructive:not(:active):not(:disabled) {
-  transition:
-    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-    border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-    transform var(--duration-micro-smooth) var(--easing-micro-press-up);
-}
-
-/* Link Button */
-.button--link {
-  background-color: var(--color-button-ghost-bg-light);
-  border-color: transparent;
-  color: var(--color-primary-600);
-  text-decoration: underline;
-  padding: var(--spacing-1) var(--spacing-2);
-  min-height: auto;
-}
-
-.button--link:hover:not(:disabled) {
-  color: var(--color-primary-700);
-  text-decoration: none;
-}
-
-.button--link:active:not(:disabled) {
-  color: var(--color-primary-800);
-}
-
-/* === STATE MODIFIERS === */
-
-/* Disabled State */
-.button:disabled,
-.button--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-/* Loading State */
-.button--loading {
-  cursor: wait;
-}
-
-.button--loading .button__content {
-  opacity: 0.7;
-}
-
-/* Full Width */
-.button--full-width {
-  width: 100%;
-}
-
-/* === ICON ELEMENTS === */
-
-.button__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.button__icon svg {
-  width: 1em;
-  height: 1em;
-}
-
-/* 크기별 아이콘 조정 */
-.button--sm .button__icon svg {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
-.button--md .button__icon svg {
-  width: 1rem;
-  height: 1rem;
-}
-
-.button--lg .button__icon svg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-/* === LOADING SPINNER === */
-
-.button__spinner {
-  flex-shrink: 0;
-  animation: button-spin 1s linear infinite;
-}
-
-.button__spinner--sm {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
-.button__spinner--md {
-  width: 1rem;
-  height: 1rem;
-}
-
-.button__spinner--lg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.button__spinner-path {
-  opacity: 0.75;
-}
-
-@keyframes button-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* === CONTENT === */
-
-.button__content {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* === ACCESSIBILITY === */
-
-@media (prefers-reduced-motion: reduce) {
   .button {
-    transition: none;
+    /* 기본 레이아웃 */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    vertical-align: middle;
+    white-space: nowrap;
+    user-select: none;
+
+    /* 테두리 */
+    border-width: 1px;
+    border-style: solid;
+    border-radius: var(--radius-md);
+
+    /* 타이포그래피 */
+    font-family: var(--font-family-primary);
+    /* font-weight: var(--font-weight-medium); () */
+    line-height: var(--line-height-normal);
+    text-decoration: none;
+
+    /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-kerning: auto;
+    font-variant-ligatures: common-ligatures;
+    font-feature-settings: var(--font-feature-settings-kerning);
+
+    /* 🌍 국제화: 완벽한 다국어 지원 */
+    unicode-bidi: isolate;
+    text-size-adjust: 100%;
+
+    /* 🍎 Performance: GPU 가속 최적화 */
+    will-change: background-color, color, border-color, transform;
+    transform: translateZ(0);
+    contain: layout style;
+    backface-visibility: hidden;
+
+    /* 상호작용 */
+    cursor: pointer;
+    transition:
+      background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+      border-color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+      color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+      box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring),
+      transform var(--duration-micro-instant) var(--easing-micro-press-down); /* 정밀한 Press State */
+
+    /* 포커스 관리 - WCAG 2.1 AAA 준수 */
+    outline: 2px solid transparent;
+    outline-offset: 2px;
   }
+
+  .button:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+    box-shadow: var(--shadow-focus-ring);
+  }
+
+  /* === ACCESSIBILITY FOCUS VARIANTS === */
+
+  /* High Contrast 모드 지원 */
+  @media (prefers-contrast: high) {
+    .button:focus-visible {
+      outline: 3px solid var(--color-voiceover-focus);
+      box-shadow: var(--shadow-focus-high-contrast);
+    }
+  }
+
+  /* VoiceOver 사용자 최적화 */
+  .button.focus-voiceover:focus-visible {
+    outline: 4px solid var(--color-voiceover-focus);
+    box-shadow: var(--shadow-voiceover-cursor);
+  }
+
+  /* 모션 감소 사용자 지원 */
+  @media (prefers-reduced-motion: reduce) {
+    .button:focus-visible {
+      box-shadow: var(--shadow-focus-reduced-motion);
+      transition: none;
+    }
+  }
+
+  /* === SIZE VARIANTS === */
+
+  .button--sm {
+    gap: var(--spacing-1);
+    padding: 4px 12px;
+    /* font-size: var(--font-size-sm); () */
+    min-height: 1.875rem; /* 44px - iOS 최소 터치 영역 표준 */
+    min-width: auto;  /* 44px - iOS 최소 터치 영역 너비 보장 */
+  }
+
+  .button--md {
+    gap: var(--spacing-2);
+    padding: var(--spacing-3) var(--spacing-4);
+    /* font-size: var(--font-size-base); () */
+    min-height: 2.75rem; /* 44px - iOS 최소 터치 영역 표준 */
+    min-width: 2.75rem;  /* 44px - iOS 최소 터치 영역 너비 보장 */
+  }
+
+  .button--lg {
+    gap: var(--spacing-2);
+    padding: var(--spacing-4) var(--spacing-6);
+    /* font-size: var(--font-size-lg); () */
+    min-height: 3rem; /* 48px */
+    min-width: 3rem;  /* 48px - 일관된 터치 영역 보장 */
+  }
+
+  /* === STYLE VARIANTS === */
+
+  /* Primary Button */
+  .button--primary {
+    background-color: var(--color-button-primary-bg);
+    border-color: var(--color-button-primary-bg);
+    color: var(--color-button-primary-text);
+  }
+
+  .button--primary:hover:not(:disabled) {
+    background-color: var(--color-button-primary-bg-hover);
+    border-color: var(--color-button-primary-bg-hover);
+  }
+
+  .button--primary:active:not(:disabled) {
+    background-color: var(--color-button-primary-bg-active);
+    border-color: var(--color-button-primary-bg-active);
+    transform: translateY(1px) scale(0.98); /* iOS 17+ 정밀 Press State */
+    transition:
+      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+      border-color var(--duration-micro-instant) var(--easing-micro-press-down),
+      transform var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  .button--primary:not(:active):not(:disabled) {
+    transition:
+      background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+      border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+      transform var(--duration-micro-smooth) var(--easing-micro-press-up);
+  }
+
+  /* Secondary Button */
+  .button--secondary {
+    background-color: var(--color-button-secondary-bg-light);
+    border-color: var(--color-button-secondary-border);
+    color: var(--color-button-secondary-text);
+  }
+
+  [data-theme="dark"] .button--secondary {
+    background-color: var(--color-button-secondary-bg-dark);
+  }
+
+  .button--secondary:hover:not(:disabled) {
+    background-color: var(--color-button-secondary-hover-light);
+  }
+
+  [data-theme="dark"] .button--secondary:hover:not(:disabled) {
+    background-color: var(--color-button-secondary-hover-dark);
+  }
+  .button--secondary:active:not(:disabled) {
+    background-color: var(--color-button-secondary-bg-active);
+    transform: translateY(1px) scale(0.985); /* 더 서브틀한 Press State */
+    transition:
+      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+      transform var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  .button--secondary:not(:active):not(:disabled) {
+    transition:
+      background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+      transform var(--duration-micro-smooth) var(--easing-micro-press-up);
+  }
+
+  /* Ghost Button */
+  .button--ghost {
+    background-color: var(--color-button-ghost-bg);
+    border-color: transparent;
+    color: var(--color-button-ghost-text);
+  }
+
+  .button--ghost:hover:not(:disabled) {
+    background-color: var(--color-button-ghost-bg-hover);
+  }
+
+  .button--ghost:active:not(:disabled) {
+    background-color: var(--color-button-ghost-bg-active);
+    transform: translateY(0.5px) scale(0.99); /* 매우 서브틀한 Press State */
+    transition:
+      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+      transform var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  .button--ghost:not(:active):not(:disabled) {
+    transition:
+      background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+      transform var(--duration-micro-smooth) var(--easing-micro-press-up);
+  }
+
+  /* Destructive Button */
+  .button--destructive {
+    background-color: var(--color-button-destructive-bg);
+    border-color: var(--color-button-destructive-bg);
+    color: var(--color-button-destructive-text);
+  }
+
+  .button--destructive:hover:not(:disabled) {
+    background-color: var(--color-button-destructive-bg-hover);
+    border-color: var(--color-button-destructive-bg-hover);
+  }
+
+  .button--destructive:active:not(:disabled) {
+    background-color: var(--color-button-destructive-bg-hover);
+    border-color: var(--color-button-destructive-bg-hover);
+    transform: translateY(1.5px) scale(0.975); /* 강조된 Press State (위험한 액션) */
+    transition:
+      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+      border-color var(--duration-micro-instant) var(--easing-micro-press-down),
+      transform var(--duration-micro-instant) var(--easing-micro-press-down);
+  }
+
+  .button--destructive:not(:active):not(:disabled) {
+    transition:
+      background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+      border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+      transform var(--duration-micro-smooth) var(--easing-micro-press-up);
+  }
+
+  /* Link Button */
+  .button--link {
+    background-color: var(--color-button-ghost-bg-light);
+    border-color: transparent;
+    color: var(--color-primary-600);
+    text-decoration: underline;
+    padding: var(--spacing-1) var(--spacing-2);
+    min-height: auto;
+  }
+
+  .button--link:hover:not(:disabled) {
+    color: var(--color-primary-700);
+    text-decoration: none;
+  }
+
+  .button--link:active:not(:disabled) {
+    color: var(--color-primary-800);
+  }
+
+  /* === STATE MODIFIERS === */
+
+  /* Disabled State */
+  .button:disabled,
+  .button--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Loading State */
+  .button--loading {
+    cursor: wait;
+  }
+
+  .button--loading .button__content {
+    opacity: 0.7;
+  }
+
+  /* Full Width */
+  .button--full-width {
+    width: 100%;
+  }
+
+  /* === ICON ELEMENTS === */
+
+  .button__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .button__icon svg {
+    width: 1em;
+    height: 1em;
+  }
+
+  /* 크기별 아이콘 조정 */
+  .button--sm .button__icon svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .button--md .button__icon svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .button--lg .button__icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  /* === LOADING SPINNER === */
 
   .button__spinner {
-    animation: none;
+    flex-shrink: 0;
+    animation: button-spin 1s linear infinite;
   }
 
-  .button:active:not(:disabled) {
-    transform: none;
-  }
-}
-
-/* === HIGH CONTRAST MODE === */
-
-@media (prefers-contrast: high) {
-  .button {
-    border-width: 2px;
+  .button__spinner--sm {
+    width: 0.875rem;
+    height: 0.875rem;
   }
 
-  .button:focus-visible {
-    outline-width: 3px;
+  .button__spinner--md {
+    width: 1rem;
+    height: 1rem;
   }
-}
 
-/* === DARK THEME OVERRIDES === */
+  .button__spinner--lg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
 
-[data-theme="dark"] .button:focus-visible {
-  outline: 2px solid var(--color-border-focus-dark, var(--color-border-focus));
-  outline-offset: 2px;
-  box-shadow: var(--shadow-focus-ring-dark, var(--shadow-focus-ring));
-}
+  .button__spinner-path {
+    opacity: 0.75;
+  }
+
+  @keyframes button-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* === CONTENT === */
+
+  .button__content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* === ACCESSIBILITY === */
+
+  @media (prefers-reduced-motion: reduce) {
+    .button {
+      transition: none;
+    }
+
+    .button__spinner {
+      animation: none;
+    }
+
+    .button:active:not(:disabled) {
+      transform: none;
+    }
+  }
+
+  /* === HIGH CONTRAST MODE === */
+
+  @media (prefers-contrast: high) {
+    .button {
+      border-width: 2px;
+    }
+
+    .button:focus-visible {
+      outline-width: 3px;
+    }
+  }
+
+  /* === DARK THEME OVERRIDES === */
+
+  [data-theme="dark"] .button:focus-visible {
+    outline: 2px solid var(--color-border-focus-dark, var(--color-border-focus));
+    outline-offset: 2px;
+    box-shadow: var(--shadow-focus-ring-dark, var(--shadow-focus-ring));
+  }
+
+} /* end @layer components */

@@ -7,177 +7,181 @@
  * AIMS UIX3 디자인 토큰 및 테마 시스템 준수
  */
 
-.hamburger-button {
-  /* 기본 스타일 - aims-uix2 Button type="text" 스타일 참조 */
-  background-color: transparent;
-  border: none;
-  border-radius: var(--radius-base); /* 6px - iOS 표준 */
-  padding: var(--spacing-2); /* 8px - 터치 영역 개선 */
-  cursor: pointer;
+@layer components {
 
-  /* 레이아웃 */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--spacing-11);  /* 44px - iOS 최소 터치 영역 표준 */
-  height: var(--spacing-11); /* 44px - iOS 최소 터치 영역 표준 */
+  .hamburger-button {
+    /* 기본 스타일 - aims-uix2 Button type="text" 스타일 참조 */
+    background-color: transparent;
+    border: none;
+    border-radius: var(--radius-base); /* 6px - iOS 표준 */
+    padding: var(--spacing-2); /* 8px - 터치 영역 개선 */
+    cursor: pointer;
 
-  /* 🍎 애플 스타일: 그림자 효과 제거 - 미니멀리즘 준수 */
-  box-shadow: none;
+    /* 레이아웃 */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--spacing-11);  /* 44px - iOS 최소 터치 영역 표준 */
+    height: var(--spacing-11); /* 44px - iOS 최소 터치 영역 표준 */
 
-  /* 트랜지션 */
-  transition: background-color var(--duration-fast) var(--easing-ease-out);
+    /* 🍎 애플 스타일: 그림자 효과 제거 - 미니멀리즘 준수 */
+    box-shadow: none;
 
-  /* 🍎 Performance: GPU 가속 최적화 */
-  will-change: background-color;
-  transform: translateZ(0); /* 강제 GPU 레이어 생성 */
-  contain: layout style paint; /* CSS Containment 최적화 */
+    /* 트랜지션 */
+    transition: background-color var(--duration-fast) var(--easing-ease-out);
 
-  /* 🔬 Subpixel Rendering 완벽 정렬 */
-  -webkit-transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
+    /* 🍎 Performance: GPU 가속 최적화 */
+    will-change: background-color;
+    transform: translateZ(0); /* 강제 GPU 레이어 생성 */
+    contain: layout style paint; /* CSS Containment 최적화 */
 
-  /* 🔤 Typography 최적화: 애플 표준 텍스트 렌더링 */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-kerning: auto;
-  font-variant-ligatures: common-ligatures;
+    /* 🔬 Subpixel Rendering 완벽 정렬 */
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
 
-  /* 🌍 국제화: 완벽한 다국어 지원 */
-  unicode-bidi: isolate;
-  text-size-adjust: 100%;
+    /* 🔤 Typography 최적화: 애플 표준 텍스트 렌더링 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-kerning: auto;
+    font-variant-ligatures: common-ligatures;
 
-  /* 색상 - 통일된 CSS 변수 활용 */
-  background-color: transparent;
-  color: var(--color-layout-hamburger-icon);
-  opacity: 0.7;
+    /* 🌍 국제화: 완벽한 다국어 지원 */
+    unicode-bidi: isolate;
+    text-size-adjust: 100%;
 
-  /* 🍎 배경 투명 - box-shadow 제거 */
-  box-shadow: none;
-}
+    /* 색상 - 통일된 CSS 변수 활용 */
+    background-color: transparent;
+    color: var(--color-layout-hamburger-icon);
+    opacity: 0.7;
 
-/* 🍎 애플 스타일 호버 - 투명 배경 유지, opacity + scale 효과만 */
-.hamburger-button:hover {
-  background-color: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-  box-shadow: none;
-}
+    /* 🍎 배경 투명 - box-shadow 제거 */
+    box-shadow: none;
+  }
 
-/* 포커스 상태 - 접근성 고려 */
-.hamburger-button:focus {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 2px;
-}
+  /* 🍎 애플 스타일 호버 - 투명 배경 유지, opacity + scale 효과만 */
+  .hamburger-button:hover {
+    background-color: transparent;
+    opacity: 1;
+    transform: scale(1.1);
+    box-shadow: none;
+  }
 
-.hamburger-button:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 2px var(--color-primary-100);
-}
-
-/* 🍎 애플 스타일 액티브 - 투명 배경 유지, scale 효과만 */
-.hamburger-button:active {
-  background-color: transparent;
-  transform: scale(0.95);
-  box-shadow: none;
-}
-
-/* 햄버거 아이콘 SVG 스타일 */
-.hamburger-icon {
-  /* width: var(--font-size-sm); 14px */
-  /* height: var(--font-size-sm); 14px */
-  color: inherit;
-  transition: color var(--duration-fast) var(--easing-ease-out),
-              transform var(--duration-ios-quick) var(--easing-ios-default);
-
-  /* 🍎 Micro-interaction: 서브틀한 회전 준비 */
-  transform-origin: center;
-
-  /* 🎨 SVG 렌더링 최적화: 완벽한 벡터 품질 */
-  shape-rendering: geometricPrecision;
-  vector-effect: non-scaling-stroke;
-
-  /* 🔬 Pixel-Perfect 렌더링: 1px 선명도 보장 */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-
-  /* 🍎 배경 투명 - interactive 상태의 배경색 제거 */
-  background-color: transparent;
-}
-
-/* SFSymbol interactive 배경 제거 */
-.hamburger-icon.sf-symbol--interactive,
-.hamburger-icon.sf-symbol--interactive:hover,
-.hamburger-icon.sf-symbol--interactive:active {
-  background-color: transparent;
-}
-
-/* 버튼 비활성화 상태 */
-.hamburger-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  background-color: transparent;
-  color: var(--color-text-disabled);
-}
-
-.hamburger-button:disabled:hover {
-  background-color: transparent;
-  /* 🍎 애플 스타일: transform 제거됨 */
-}
-
-/* 🍎 애플 스타일 햄버거 컨테이너 - 자연스러운 여백으로 구분 */
-.hamburger-container {
-  margin-block-start: auto; /* RTL 지원: margin-top → margin-block-start */
-  display: flex;
-  padding-block-start: 0; /* 높이 최소화 - padding 제거 */
-  /* 🍎 애플 철학: border 제거 - 공간으로 구분하는 미니멀 접근 */
-}
-
-.hamburger-container--collapsed {
-  justify-content: center;
-}
-
-.hamburger-container--expanded {
-  justify-content: flex-end;
-}
-
-/* 🍎 Micro-interaction: 클릭 시 서브틀한 회전 (Progressive Disclosure) */
-.hamburger-button--active .hamburger-icon {
-  transform: rotate(90deg);
-}
-
-/* ♿ 접근성: 고대비 모드에서 추가 시각적 피드백 */
-@media (prefers-contrast: high) {
-  .hamburger-button--active {
-    outline: 2px solid var(--color-primary-600);
+  /* 포커스 상태 - 접근성 고려 */
+  .hamburger-button:focus {
+    outline: 2px solid var(--color-border-focus);
     outline-offset: 2px;
   }
-}
 
-/* 다크 테마와 시스템 테마는 tokens.css에서 자동 처리됨 */
-
-/* 고대비 모드 지원 */
-@media (prefers-contrast: high) {
-  .hamburger-button {
-    border: 1px solid var(--color-border-primary);
+  .hamburger-button:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--color-primary-100);
   }
 
-  .hamburger-button:focus {
-    outline-width: 3px;
+  /* 🍎 애플 스타일 액티브 - 투명 배경 유지, scale 효과만 */
+  .hamburger-button:active {
+    background-color: transparent;
+    transform: scale(0.95);
+    box-shadow: none;
   }
-}
 
-/* 🍎 Accessibility: 완벽한 애니메이션 비활성화 지원 */
-@media (prefers-reduced-motion: reduce) {
-  .hamburger-button,
-  .hamburger-icon,
+  /* 햄버거 아이콘 SVG 스타일 */
+  .hamburger-icon {
+    /* width: var(--font-size-sm); 14px */
+    /* height: var(--font-size-sm); 14px */
+    color: inherit;
+    transition: color var(--duration-fast) var(--easing-ease-out),
+                transform var(--duration-ios-quick) var(--easing-ios-default);
+
+    /* 🍎 Micro-interaction: 서브틀한 회전 준비 */
+    transform-origin: center;
+
+    /* 🎨 SVG 렌더링 최적화: 완벽한 벡터 품질 */
+    shape-rendering: geometricPrecision;
+    vector-effect: non-scaling-stroke;
+
+    /* 🔬 Pixel-Perfect 렌더링: 1px 선명도 보장 */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+
+    /* 🍎 배경 투명 - interactive 상태의 배경색 제거 */
+    background-color: transparent;
+  }
+
+  /* SFSymbol interactive 배경 제거 */
+  .hamburger-icon.sf-symbol--interactive,
+  .hamburger-icon.sf-symbol--interactive:hover,
+  .hamburger-icon.sf-symbol--interactive:active {
+    background-color: transparent;
+  }
+
+  /* 버튼 비활성화 상태 */
+  .hamburger-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background-color: transparent;
+    color: var(--color-text-disabled);
+  }
+
+  .hamburger-button:disabled:hover {
+    background-color: transparent;
+    /* 🍎 애플 스타일: transform 제거됨 */
+  }
+
+  /* 🍎 애플 스타일 햄버거 컨테이너 - 자연스러운 여백으로 구분 */
+  .hamburger-container {
+    margin-block-start: auto; /* RTL 지원: margin-top → margin-block-start */
+    display: flex;
+    padding-block-start: 0; /* 높이 최소화 - padding 제거 */
+    /* 🍎 애플 철학: border 제거 - 공간으로 구분하는 미니멀 접근 */
+  }
+
+  .hamburger-container--collapsed {
+    justify-content: center;
+  }
+
+  .hamburger-container--expanded {
+    justify-content: flex-end;
+  }
+
+  /* 🍎 Micro-interaction: 클릭 시 서브틀한 회전 (Progressive Disclosure) */
   .hamburger-button--active .hamburger-icon {
-    transition: none !important;
-    animation: none !important;
-    transform: none !important;
-    will-change: auto !important;
+    transform: rotate(90deg);
   }
-}
+
+  /* ♿ 접근성: 고대비 모드에서 추가 시각적 피드백 */
+  @media (prefers-contrast: high) {
+    .hamburger-button--active {
+      outline: 2px solid var(--color-primary-600);
+      outline-offset: 2px;
+    }
+  }
+
+  /* 다크 테마와 시스템 테마는 tokens.css에서 자동 처리됨 */
+
+  /* 고대비 모드 지원 */
+  @media (prefers-contrast: high) {
+    .hamburger-button {
+      border: 1px solid var(--color-border-primary);
+    }
+
+    .hamburger-button:focus {
+      outline-width: 3px;
+    }
+  }
+
+  /* 🍎 Accessibility: 완벽한 애니메이션 비활성화 지원 */
+  @media (prefers-reduced-motion: reduce) {
+    .hamburger-button,
+    .hamburger-icon,
+    .hamburger-button--active .hamburger-icon {
+      transition: none !important;
+      animation: none !important;
+      transform: none !important;
+      will-change: auto !important;
+    }
+  }
+
+} /* end @layer components */

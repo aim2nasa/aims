@@ -135,13 +135,16 @@ def detect_bandaid_patterns(diff, files):
     # ━━━━━━━━━━━ BLOCK 패턴 (커밋 차단) ━━━━━━━━━━━
 
     # 1. !important 사용 → CSS 파일에서만 감지
+    #    순수 신규 추가만 감지 (들여쓰기 변경 등으로 인한 오탐 방지)
     for filepath, fdiff in css_diffs:
-        matches = re.findall(r'^\+.*!important', fdiff, re.MULTILINE)
-        if matches:
+        added = len(re.findall(r'^\+.*!important', fdiff, re.MULTILINE))
+        removed = len(re.findall(r'^-.*!important', fdiff, re.MULTILINE))
+        net_new = added - removed
+        if net_new > 0:
             blocks.append(
                 "!important 사용 감지 ({count}건, {file}) - "
                 "CSS 변수(var(--*)) 또는 specificity로 해결하세요"
-                .format(count=len(matches), file=filepath)
+                .format(count=net_new, file=filepath)
             )
 
     # 2. DB 조작만 있고 소스코드 변경 없음
@@ -224,17 +227,18 @@ def detect_bandaid_patterns(diff, files):
             )
 
     # 7. 하드코딩된 색상값 → CSS 파일에서만 (variables.css 제외)
+    #    순수 신규 추가만 감지 (들여쓰기 변경 등으로 인한 오탐 방지)
+    COLOR_RE = r'(?:color|background(?:-color)?|border(?:-color)?)\s*:\s*#[0-9a-fA-F]{3,8}'
     for filepath, fdiff in css_diffs:
         if 'variables.css' in filepath:
             continue
-        matches = re.findall(
-            r'^\+\s*(?:color|background(?:-color)?|border(?:-color)?)\s*:\s*#[0-9a-fA-F]{3,8}',
-            fdiff, re.MULTILINE
-        )
-        if matches:
+        added = len(re.findall(r'^\+\s*' + COLOR_RE, fdiff, re.MULTILINE))
+        removed = len(re.findall(r'^-\s*' + COLOR_RE, fdiff, re.MULTILINE))
+        net_new = added - removed
+        if net_new > 0:
             warnings.append(
                 "하드코딩된 색상값 감지 ({count}건, {file}) - var(--color-*) CSS 변수를 사용하세요"
-                .format(count=len(matches), file=filepath)
+                .format(count=net_new, file=filepath)
             )
 
     # 8. 인라인 스타일 색상값 → JS/TS에서만

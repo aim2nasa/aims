@@ -11,51 +11,56 @@
 /* ===== FullTextModal 전용 스타일 ===== */
 
 /* 모달 바디 */
-.fulltext-modal-body {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 20px;
-  background-color: var(--color-layout-secondary-light);
-  min-height: 0;
-}
 
-html[data-theme="dark"] .fulltext-modal-body {
-  background-color: var(--color-layout-secondary-dark);
-}
+@layer components {
 
-.fulltext-content {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
-  line-height: 1.6;
-  color: var(--color-text-primary);
-  margin: 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
+  .fulltext-modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    background-color: var(--color-layout-secondary-light);
+    min-height: 0;
+  }
 
-/* 모달 푸터 */
-.fulltext-modal-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--color-layout-border);
-  display: flex;
-  justify-content: flex-end;
-}
+  html[data-theme="dark"] .fulltext-modal-body {
+    background-color: var(--color-layout-secondary-dark);
+  }
 
-/* 스크롤바 스타일 (WebKit) */
-.fulltext-modal-body::-webkit-scrollbar {
-  width: 8px;
-}
+  .fulltext-content {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+    line-height: 1.6;
+    color: var(--color-text-primary);
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
 
-.fulltext-modal-body::-webkit-scrollbar-track {
-  background: transparent;
-}
+  /* 모달 푸터 */
+  .fulltext-modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-layout-border);
+    display: flex;
+    justify-content: flex-end;
+  }
 
-.fulltext-modal-body::-webkit-scrollbar-thumb {
-  background-color: var(--color-layout-border);
-  border-radius: 4px;
-}
+  /* 스크롤바 스타일 (WebKit) */
+  .fulltext-modal-body::-webkit-scrollbar {
+    width: 8px;
+  }
 
-.fulltext-modal-body::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-tertiary);
-}
+  .fulltext-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .fulltext-modal-body::-webkit-scrollbar-thumb {
+    background-color: var(--color-layout-border);
+    border-radius: 4px;
+  }
+
+  .fulltext-modal-body::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-text-tertiary);
+  }
+
+} /* end @layer components */

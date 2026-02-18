@@ -3,351 +3,355 @@
  * 한 줄 레이아웃, 공간 효율 극대화
  */
 
-.document-status-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 8px 12px;
-  margin-bottom: 4px;
-  background-color: var(--color-ios-bg-secondary-light);
-  border-radius: 8px;
-}
+@layer components {
 
-html[data-theme="dark"] .document-status-header {
-  background-color: var(--color-ios-bg-secondary-dark);
-}
-
-/* === HEADER MAIN ROW === */
-.header-main-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* === LEFT: 필터 + 카운트 === */
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.filter-label {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 600;
-  color: var(--color-ios-text-secondary-light);
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .filter-label {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.result-count {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 600;
-  color: var(--color-ios-text-tertiary-light);
-  font-variant-numeric: tabular-nums;
-}
-
-html[data-theme="dark"] .result-count {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* === SELECTED COUNT INLINE: 삭제 모드 선택 카운트 === */
-.selected-count-inline {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-variant-numeric: tabular-nums;
-  margin-left: 8px;
-}
-
-/* === SPACER === */
-.header-spacer {
-  flex: 1;
-}
-
-/* === RIGHT: Last Updated + 편집 + 폴링 + 새로고침 === */
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* === 🍎 EDIT MODE ICON BUTTON: iOS 스타일 아이콘 버튼 === */
-.edit-mode-icon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--color-primary-500);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-
-.edit-mode-icon-button:hover {
-  background: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-html[data-theme="dark"] .edit-mode-icon-button {
-  color: var(--color-primary-400);
-}
-
-html[data-theme="dark"] .edit-mode-icon-button:hover {
-  background: transparent;
-  opacity: 1;
-}
-
-.edit-mode-icon-button--active {
-  color: var(--color-success);
-  opacity: 1;
-}
-
-html[data-theme="dark"] .edit-mode-icon-button--active {
-  color: var(--color-success);
-}
-
-.last-updated {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-quaternary-light);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .last-updated {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* === SETTINGS TOGGLE BUTTON === */
-.settings-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  color: var(--color-ios-text-secondary-light);
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
-}
-
-html[data-theme="dark"] .settings-toggle {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.settings-toggle:hover {
-  background-color: transparent;
-  color: var(--color-primary);
-  transform: scale(1.1) rotate(45deg);
-}
-
-html[data-theme="dark"] .settings-toggle:hover {
-  background-color: transparent;
-}
-
-.settings-toggle.settings-active {
-  background-color: transparent;
-  color: var(--color-primary);
-  transform: scale(1.1) rotate(90deg);
-}
-
-html[data-theme="dark"] .settings-toggle.settings-active {
-  background-color: transparent;
-}
-
-/* === SETTINGS PANEL === */
-.settings-panel {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  margin-top: 8px;
-  background-color: var(--color-ios-bg-primary-light);
-  border-radius: 6px;
-  border: 1px solid var(--color-ios-separator-light);
-  animation: settingsPanelSlideDown 0.2s ease-out;
-}
-
-html[data-theme="dark"] .settings-panel {
-  background-color: var(--color-ios-bg-primary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-@keyframes settingsPanelSlideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.polling-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
-.polling-toggle:hover {
-  /* Remove hover background to keep icon background invisible */
-  background-color: transparent;
-}
-
-html[data-theme="dark"] .polling-toggle:hover {
-  /* Ensure no background in dark theme as well */
-  background-color: transparent;
-}
-
-.polling-dot {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 8px deprecated (접근성) ) */
-  line-height: 1;
-}
-
-.dot-active {
-  color: var(--color-ios-green-light); /* 밝은 녹색 - 라이트 테마에서 더 생동감 있게 */
-  animation: polling-pulse 2s ease-in-out infinite;
-}
-
-html[data-theme="dark"] .dot-active {
-  color: var(--color-ios-green-dark);
-}
-
-.dot-inactive {
-  color: var(--color-ios-text-quaternary-light);
-  opacity: 0.4;
-}
-
-html[data-theme="dark"] .dot-inactive {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-@keyframes polling-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.refresh-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  color: var(--color-primary-500);
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
-.refresh-button:hover:not(:disabled) {
-  /* Remove hover background to keep icon background invisible */
-  background-color: transparent;
-}
-
-.refresh-button:hover:not(:disabled) .refresh-icon {
-  /* 🍎 Progressive Disclosure: 호버 시 아이콘 색상 진하게 + 스케일 */
-  color: var(--color-primary-700);
-  transform: scale(1.15);
-}
-
-html[data-theme="dark"] .refresh-button:hover:not(:disabled) {
-  /* Ensure no background in dark theme as well */
-  background-color: transparent;
-}
-
-html[data-theme="dark"] .refresh-button:hover:not(:disabled) .refresh-icon {
-  /* 다크 테마에서는 더 밝게 + 스케일 */
-  color: var(--color-primary-300);
-  transform: scale(1.15);
-}
-
-.refresh-button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.refresh-icon {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
-  line-height: 1;
-  display: inline-block;
-  color: inherit;
-  transition: transform 0.3s ease-out, color 0.15s ease-out;
-}
-
-.icon-spinning {
-  animation: refresh-spin 1s linear infinite;
-}
-
-.icon-clicked {
-  /* 🍎 Progressive Disclosure: 클릭 피드백 - 체크마크 표시 */
-  color: var(--color-success);
-  transform: scale(1.1);
-}
-
-html[data-theme="dark"] .icon-clicked {
-  color: var(--color-success);
-}
-
-@keyframes refresh-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* === RESPONSIVE === */
-@media (max-width: 768px) {
   .document-status-header {
-    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    background-color: var(--color-ios-bg-secondary-light);
+    border-radius: 8px;
+  }
+
+  html[data-theme="dark"] .document-status-header {
+    background-color: var(--color-ios-bg-secondary-dark);
+  }
+
+  /* === HEADER MAIN ROW === */
+  .header-main-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* === LEFT: 필터 + 카운트 === */
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .filter-label {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .filter-label {
+    color: var(--color-ios-text-secondary-dark);
   }
 
   .result-count {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: var(--color-ios-text-tertiary-light);
+    font-variant-numeric: tabular-nums;
+  }
+
+  html[data-theme="dark"] .result-count {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* === SELECTED COUNT INLINE: 삭제 모드 선택 카운트 === */
+  .selected-count-inline {
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+    margin-left: 8px;
+  }
+
+  /* === SPACER === */
+  .header-spacer {
+    flex: 1;
+  }
+
+  /* === RIGHT: Last Updated + 편집 + 폴링 + 새로고침 === */
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* === 🍎 EDIT MODE ICON BUTTON: iOS 스타일 아이콘 버튼 === */
+  .edit-mode-icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-primary-500);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  .edit-mode-icon-button:hover {
+    background: transparent;
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  html[data-theme="dark"] .edit-mode-icon-button {
+    color: var(--color-primary-400);
+  }
+
+  html[data-theme="dark"] .edit-mode-icon-button:hover {
+    background: transparent;
+    opacity: 1;
+  }
+
+  .edit-mode-icon-button--active {
+    color: var(--color-success);
+    opacity: 1;
+  }
+
+  html[data-theme="dark"] .edit-mode-icon-button--active {
+    color: var(--color-success);
+  }
+
+  .last-updated {
     /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    color: var(--color-ios-text-quaternary-light);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
-}
 
-/* === ACCESSIBILITY === */
-@media (prefers-reduced-motion: reduce) {
-  .polling-toggle,
-  .refresh-button,
+  html[data-theme="dark"] .last-updated {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* === SETTINGS TOGGLE BUTTON === */
+  .settings-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    color: var(--color-ios-text-secondary-light);
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  }
+
+  html[data-theme="dark"] .settings-toggle {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .settings-toggle:hover {
+    background-color: transparent;
+    color: var(--color-primary);
+    transform: scale(1.1) rotate(45deg);
+  }
+
+  html[data-theme="dark"] .settings-toggle:hover {
+    background-color: transparent;
+  }
+
+  .settings-toggle.settings-active {
+    background-color: transparent;
+    color: var(--color-primary);
+    transform: scale(1.1) rotate(90deg);
+  }
+
+  html[data-theme="dark"] .settings-toggle.settings-active {
+    background-color: transparent;
+  }
+
+  /* === SETTINGS PANEL === */
+  .settings-panel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    background-color: var(--color-ios-bg-primary-light);
+    border-radius: 6px;
+    border: 1px solid var(--color-ios-separator-light);
+    animation: settingsPanelSlideDown 0.2s ease-out;
+  }
+
+  html[data-theme="dark"] .settings-panel {
+    background-color: var(--color-ios-bg-primary-dark);
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  @keyframes settingsPanelSlideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .polling-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+  }
+
+  .polling-toggle:hover {
+    /* Remove hover background to keep icon background invisible */
+    background-color: transparent;
+  }
+
+  html[data-theme="dark"] .polling-toggle:hover {
+    /* Ensure no background in dark theme as well */
+    background-color: transparent;
+  }
+
+  .polling-dot {
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 8px deprecated (접근성) ) */
+    line-height: 1;
+  }
+
+  .dot-active {
+    color: var(--color-ios-green-light); /* 밝은 녹색 - 라이트 테마에서 더 생동감 있게 */
+    animation: polling-pulse 2s ease-in-out infinite;
+  }
+
+  html[data-theme="dark"] .dot-active {
+    color: var(--color-ios-green-dark);
+  }
+
+  .dot-inactive {
+    color: var(--color-ios-text-quaternary-light);
+    opacity: 0.4;
+  }
+
+  html[data-theme="dark"] .dot-inactive {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  @keyframes polling-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .refresh-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    color: var(--color-primary-500);
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+  }
+
+  .refresh-button:hover:not(:disabled) {
+    /* Remove hover background to keep icon background invisible */
+    background-color: transparent;
+  }
+
+  .refresh-button:hover:not(:disabled) .refresh-icon {
+    /* 🍎 Progressive Disclosure: 호버 시 아이콘 색상 진하게 + 스케일 */
+    color: var(--color-primary-700);
+    transform: scale(1.15);
+  }
+
+  html[data-theme="dark"] .refresh-button:hover:not(:disabled) {
+    /* Ensure no background in dark theme as well */
+    background-color: transparent;
+  }
+
+  html[data-theme="dark"] .refresh-button:hover:not(:disabled) .refresh-icon {
+    /* 다크 테마에서는 더 밝게 + 스케일 */
+    color: var(--color-primary-300);
+    transform: scale(1.15);
+  }
+
+  .refresh-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
   .refresh-icon {
-    transition: none;
-    animation: none;
+    /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
+    line-height: 1;
+    display: inline-block;
+    color: inherit;
+    transition: transform 0.3s ease-out, color 0.15s ease-out;
   }
 
-  .dot-active,
   .icon-spinning {
-    animation: none;
+    animation: refresh-spin 1s linear infinite;
   }
-}
+
+  .icon-clicked {
+    /* 🍎 Progressive Disclosure: 클릭 피드백 - 체크마크 표시 */
+    color: var(--color-success);
+    transform: scale(1.1);
+  }
+
+  html[data-theme="dark"] .icon-clicked {
+    color: var(--color-success);
+  }
+
+  @keyframes refresh-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 768px) {
+    .document-status-header {
+      padding: 6px 10px;
+    }
+
+    .result-count {
+      /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+    }
+  }
+
+  /* === ACCESSIBILITY === */
+  @media (prefers-reduced-motion: reduce) {
+    .polling-toggle,
+    .refresh-button,
+    .refresh-icon {
+      transition: none;
+      animation: none;
+    }
+
+    .dot-active,
+    .icon-spinning {
+      animation: none;
+    }
+  }
+
+} /* end @layer components */

@@ -8,387 +8,392 @@
  */
 
 /* 메인 컨테이너 - CenterPane 위 오버레이 */
-.center-pane-view {
-  position: absolute;
-  top: var(--margin-top);
-  left: var(--margin-left);
-  right: var(--margin-right);
-  bottom: var(--margin-bottom);
-  background-color: var(--color-layout-content-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-layout-accent-light);
-  z-index: var(--z-index-modal);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  /* 🍎 iOS 스타일 뷰 전환 애니메이션 */
-  animation: centerPaneViewSlideIn var(--duration-ios-standard, 300ms) var(--easing-ios-default, cubic-bezier(0.25, 0.1, 0.25, 1));
-}
 
-/* 다크 테마 지원 */
-html[data-theme="dark"] .center-pane-view {
-  background-color: var(--color-layout-content-dark);
-  border-color: var(--color-layout-accent-dark);
-  box-shadow: var(--shadow-dark-lg);
-}
+@layer components {
 
-/* 헤더 영역 - 애플 Ultra-Subtle 스타일 */
-.center-pane-view__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* 타이틀과 액세서리 양쪽 배치 */
-  padding: 20px 24px; /* 애플 표준: 8의 배수 그리드 시스템 */
-  border-bottom: 0.5px solid var(--color-layout-accent-light); /* Ultra-subtle 구분선 */
-  background-color: var(--color-header-glass-bg); /* 테마별 glassmorphism 배경 */
-  backdrop-filter: blur(10px); /* 애플 glassmorphism */
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .center-pane-view__header {
-  border-bottom-color: var(--color-layout-accent-dark);
-}
-
-/* 페이지 설명 */
-.center-pane-view__description {
-  margin: 0;
-  padding: 12px 24px;
-  font-size: var(--font-size-footnote); /* 13px */
-  color: var(--color-text-secondary);
-  background-color: var(--color-bg-secondary);
-  border-bottom: 0.5px solid var(--color-layout-accent-light);
-  line-height: 1.4;
-}
-
-html[data-theme="dark"] .center-pane-view__description {
-  border-bottom-color: var(--color-layout-accent-dark);
-}
-
-/* Breadcrumb 영역 */
-.center-pane-view__breadcrumb {
-  padding: 8px 24px 0;
-  flex-shrink: 0;
-}
-
-/* 왼쪽 액세서리 (돌아가기 버튼 등) */
-.center-pane-view__title-left-accessory {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  margin-right: 12px;
-}
-
-/* 제목 스타일 - 애플 정제된 타이포그래피 */
-.center-pane-view__title {
-  margin: 0;
-  display: flex; /* 아이콘과 텍스트 수직 중앙 정렬 */
-  align-items: center;
-  gap: 8px; /* 아이콘과 텍스트 간격 */
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-header-title); /* 60% 투명도 애플 서브틀 색상 */
-  font-family: var(--font-family-display);
-  line-height: var(--line-height-tight);
-  letter-spacing: -0.05px; /* 애플 스타일 정제된 자간 */
-  font-variant-numeric: tabular-nums; /* 숫자 정렬 개선 */
-}
-
-/* X 버튼 관련 스타일 완전 제거 - 애플 미니멀 디자인 적용 */
-/* .center-pane-view__close-button 관련 스타일 모두 삭제됨 */
-
-/* 제목 바로 뒤 액션 버튼 (뷰 전환 등) */
-.center-pane-view__title-action {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 4px;
-}
-
-.center-pane-view__title-action .view-switch-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-.center-pane-view__title-action .view-switch-button:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-primary-600);
-}
-
-.center-pane-view__title-action .view-switch-button:active {
-  transform: scale(0.92);
-}
-
-.center-pane-view__title-action .view-switch-button svg {
-  width: 14px;
-  height: 14px;
-}
-
-/* 콘텐츠 영역 - 애플 표준 패딩 시스템 */
-.center-pane-view__content {
-  flex: 1;
-  min-height: 0; /* ✅ flexbox 스크롤 활성화 필수 */
-  padding: 24px; /* 애플 표준: 8의 배수 그리드 (일관된 패딩) */
-  overflow-y: auto; /* ✅ 원래대로 복원 - 다른 View들의 스크롤 보존 */
-  color: var(--color-text-primary);
-  /* 애플 스타일 스크롤바 */
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-scrollbar-thumb) transparent; /* 테마별 서브틀한 스크롤바 */
-}
-
-/* 애플 스타일 Ultra-Subtle 스크롤바 */
-.center-pane-view__content::-webkit-scrollbar {
-  width: 6px; /* 더 얇은 스크롤바 */
-}
-
-.center-pane-view__content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.center-pane-view__content::-webkit-scrollbar-thumb {
-  background-color: var(--color-scrollbar-thumb); /* 테마별 서브틀한 스크롤바 */
-  border-radius: 3px;
-  transition: background-color 0.2s ease;
-}
-
-.center-pane-view__content::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-scrollbar-thumb-hover); /* 테마별 호버 색상 */
-}
-
-/* 플레이스홀더 영역 - 애플 Ultra-Subtle 스타일 */
-.center-pane-view__placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  text-align: center;
-  color: var(--color-text-placeholder); /* 테마별 서브틀한 색상 */
-  gap: 16px; /* 8의 배수 그리드 시스템 */
-  padding: 40px; /* 여유로운 패딩 */
-}
-
-.center-pane-view__placeholder p {
-  margin: 0;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 플레이스홀더 */
-  font-weight: var(--font-weight-regular);
-  font-family: var(--font-family-text);
-  line-height: 1.4;
-  letter-spacing: 0.02px; /* 가독성 향상 */
-  max-width: 240px; /* 적절한 줄바꿈 */
-}
-
-/* 🍎 iOS 스타일 뷰 전환 애니메이션 */
-@keyframes centerPaneViewSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-}
-
-/* 기존 FadeIn 애니메이션 (하위 호환성) */
-@keyframes centerPaneViewFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.98) translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* 반응형 디자인 - 애플 표준 브레이크포인트 */
-@media (max-width: 768px) {
   .center-pane-view {
-    --margin-top: 8px;
-    --margin-bottom: 8px;
-    --margin-left: 8px;
-    --margin-right: 8px;
+    position: absolute;
+    top: var(--margin-top);
+    left: var(--margin-left);
+    right: var(--margin-right);
+    bottom: var(--margin-bottom);
+    background-color: var(--color-layout-content-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-layout-accent-light);
+    z-index: var(--z-index-modal);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* 🍎 iOS 스타일 뷰 전환 애니메이션 */
+    animation: centerPaneViewSlideIn var(--duration-ios-standard, 300ms) var(--easing-ios-default, cubic-bezier(0.25, 0.1, 0.25, 1));
   }
 
+  /* 다크 테마 지원 */
+  html[data-theme="dark"] .center-pane-view {
+    background-color: var(--color-layout-content-dark);
+    border-color: var(--color-layout-accent-dark);
+    box-shadow: var(--shadow-dark-lg);
+  }
+
+  /* 헤더 영역 - 애플 Ultra-Subtle 스타일 */
   .center-pane-view__header {
-    padding: 16px 20px; /* 모바일에서 더 컴팩트 */
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* 타이틀과 액세서리 양쪽 배치 */
+    padding: 20px 24px; /* 애플 표준: 8의 배수 그리드 시스템 */
+    border-bottom: 0.5px solid var(--color-layout-accent-light); /* Ultra-subtle 구분선 */
+    background-color: var(--color-header-glass-bg); /* 테마별 glassmorphism 배경 */
+    backdrop-filter: blur(10px); /* 애플 glassmorphism */
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    flex-shrink: 0;
   }
 
-  .center-pane-view__content {
-    padding: 20px; /* 일관된 패딩 */
+  html[data-theme="dark"] .center-pane-view__header {
+    border-bottom-color: var(--color-layout-accent-dark);
   }
 
+  /* 페이지 설명 */
+  .center-pane-view__description {
+    margin: 0;
+    padding: 12px 24px;
+    font-size: var(--font-size-footnote); /* 13px */
+    color: var(--color-text-secondary);
+    background-color: var(--color-bg-secondary);
+    border-bottom: 0.5px solid var(--color-layout-accent-light);
+    line-height: 1.4;
+  }
+
+  html[data-theme="dark"] .center-pane-view__description {
+    border-bottom-color: var(--color-layout-accent-dark);
+  }
+
+  /* Breadcrumb 영역 */
+  .center-pane-view__breadcrumb {
+    padding: 8px 24px 0;
+    flex-shrink: 0;
+  }
+
+  /* 왼쪽 액세서리 (돌아가기 버튼 등) */
+  .center-pane-view__title-left-accessory {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+
+  /* 제목 스타일 - 애플 정제된 타이포그래피 */
   .center-pane-view__title {
-    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 모바일 제목 */
-    letter-spacing: -0.02px;
+    margin: 0;
+    display: flex; /* 아이콘과 텍스트 수직 중앙 정렬 */
+    align-items: center;
+    gap: 8px; /* 아이콘과 텍스트 간격 */
+    font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-header-title); /* 60% 투명도 애플 서브틀 색상 */
+    font-family: var(--font-family-display);
+    line-height: var(--line-height-tight);
+    letter-spacing: -0.05px; /* 애플 스타일 정제된 자간 */
+    font-variant-numeric: tabular-nums; /* 숫자 정렬 개선 */
   }
 
+  /* X 버튼 관련 스타일 완전 제거 - 애플 미니멀 디자인 적용 */
+  /* .center-pane-view__close-button 관련 스타일 모두 삭제됨 */
+
+  /* 제목 바로 뒤 액션 버튼 (뷰 전환 등) */
+  .center-pane-view__title-action {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+  }
+
+  .center-pane-view__title-action .view-switch-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .center-pane-view__title-action .view-switch-button:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-primary-600);
+  }
+
+  .center-pane-view__title-action .view-switch-button:active {
+    transform: scale(0.92);
+  }
+
+  .center-pane-view__title-action .view-switch-button svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* 콘텐츠 영역 - 애플 표준 패딩 시스템 */
+  .center-pane-view__content {
+    flex: 1;
+    min-height: 0; /* ✅ flexbox 스크롤 활성화 필수 */
+    padding: 24px; /* 애플 표준: 8의 배수 그리드 (일관된 패딩) */
+    overflow-y: auto; /* ✅ 원래대로 복원 - 다른 View들의 스크롤 보존 */
+    color: var(--color-text-primary);
+    /* 애플 스타일 스크롤바 */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb) transparent; /* 테마별 서브틀한 스크롤바 */
+  }
+
+  /* 애플 스타일 Ultra-Subtle 스크롤바 */
+  .center-pane-view__content::-webkit-scrollbar {
+    width: 6px; /* 더 얇은 스크롤바 */
+  }
+
+  .center-pane-view__content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .center-pane-view__content::-webkit-scrollbar-thumb {
+    background-color: var(--color-scrollbar-thumb); /* 테마별 서브틀한 스크롤바 */
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+  }
+
+  .center-pane-view__content::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-scrollbar-thumb-hover); /* 테마별 호버 색상 */
+  }
+
+  /* 플레이스홀더 영역 - 애플 Ultra-Subtle 스타일 */
   .center-pane-view__placeholder {
-    padding: 32px 20px;
-    gap: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: var(--color-text-placeholder); /* 테마별 서브틀한 색상 */
+    gap: 16px; /* 8의 배수 그리드 시스템 */
+    padding: 40px; /* 여유로운 패딩 */
   }
 
   .center-pane-view__placeholder p {
-    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 모바일 플레이스홀더 */
-  }
-}
-
-/* 모바일 (480px 이하) - 컴팩트 레이아웃 */
-@media (max-width: 480px) {
-  .center-pane-view {
-    --margin-top: 0px;
-    --margin-bottom: 0px;
-    --margin-left: 0px;
-    --margin-right: 0px;
-    border-radius: 0;
+    margin: 0;
+    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 플레이스홀더 */
+    font-weight: var(--font-weight-regular);
+    font-family: var(--font-family-text);
+    line-height: 1.4;
+    letter-spacing: 0.02px; /* 가독성 향상 */
+    max-width: 240px; /* 적절한 줄바꿈 */
   }
 
-  .center-pane-view__header {
-    padding: 6px 12px;
+  /* 🍎 iOS 스타일 뷰 전환 애니메이션 */
+  @keyframes centerPaneViewSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(20px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
   }
 
-  .center-pane-view__content {
-    padding: 8px;
+  /* 기존 FadeIn 애니메이션 (하위 호환성) */
+  @keyframes centerPaneViewFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.98) translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
   }
 
-  .center-pane-view__breadcrumb {
-    display: none;
+  /* 반응형 디자인 - 애플 표준 브레이크포인트 */
+  @media (max-width: 768px) {
+    .center-pane-view {
+      --margin-top: 8px;
+      --margin-bottom: 8px;
+      --margin-left: 8px;
+      --margin-right: 8px;
+    }
+
+    .center-pane-view__header {
+      padding: 16px 20px; /* 모바일에서 더 컴팩트 */
+    }
+
+    .center-pane-view__content {
+      padding: 20px; /* 일관된 패딩 */
+    }
+
+    .center-pane-view__title {
+      font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 모바일 제목 */
+      letter-spacing: -0.02px;
+    }
+
+    .center-pane-view__placeholder {
+      padding: 32px 20px;
+      gap: 12px;
+    }
+
+    .center-pane-view__placeholder p {
+      font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 모바일 플레이스홀더 */
+    }
   }
 
-  /* 타이틀 아이콘 축소 */
+  /* 모바일 (480px 이하) - 컴팩트 레이아웃 */
+  @media (max-width: 480px) {
+    .center-pane-view {
+      --margin-top: 0px;
+      --margin-bottom: 0px;
+      --margin-left: 0px;
+      --margin-right: 0px;
+      border-radius: 0;
+    }
+
+    .center-pane-view__header {
+      padding: 6px 12px;
+    }
+
+    .center-pane-view__content {
+      padding: 8px;
+    }
+
+    .center-pane-view__breadcrumb {
+      display: none;
+    }
+
+    /* 타이틀 아이콘 축소 */
+    .center-pane-view__title-icon .sf-symbol {
+      font-size: 1.1em;
+    }
+
+    .center-pane-view__description {
+      padding: 8px 12px;
+      font-size: var(--font-size-caption-1); /* 12px */
+    }
+  }
+
+  /* 고대비 모드 지원 */
+  @media (prefers-contrast: high) {
+    .center-pane-view {
+      border-width: 2px;
+    }
+
+    .center-pane-view__title {
+      color: var(--color-text-primary);
+      /* font-weight: var(--font-weight-semibold); () */
+    }
+  }
+
+  /* 애니메이션 감소 모드 지원 */
+  @media (prefers-reduced-motion: reduce) {
+    .center-pane-view {
+      animation: none;
+    }
+  }
+  /* 제목 아이콘 스타일 */
+  .center-pane-view__title-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    /* opacity 제거: LeftPane과 동일한 색상 유지 */
+  }
+
+  /* SF Symbol 아이콘 크기 통일 (LeftPane CustomMenu와 동일: 1.3em) */
   .center-pane-view__title-icon .sf-symbol {
-    font-size: 1.1em;
+    font-size: 1.3em;
   }
 
-  .center-pane-view__description {
-    padding: 8px 12px;
-    font-size: var(--font-size-caption-1); /* 12px */
-  }
-}
-
-/* 고대비 모드 지원 */
-@media (prefers-contrast: high) {
-  .center-pane-view {
-    border-width: 2px;
+  .center-pane-view__title-icon .sf-symbol__shape {
+    font-size: inherit;
   }
 
-  .center-pane-view__title {
-    color: var(--color-text-primary);
-    /* font-weight: var(--font-weight-semibold); () */
+
+  /* 제목 아이콘 색상 클래스 유지 (CustomMenu와 동일) */
+  .center-pane-view__title-icon .menu-icon-pink {
+    color: var(--color-ios-pink); /* iOS systemPink */
   }
-}
 
-/* 애니메이션 감소 모드 지원 */
-@media (prefers-reduced-motion: reduce) {
-  .center-pane-view {
-    animation: none;
+  .center-pane-view__title-icon .menu-icon-red {
+    color: var(--color-icon-doc-status); /* iOS systemRed */
   }
-}
-/* 제목 아이콘 스타일 */
-.center-pane-view__title-icon {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  /* opacity 제거: LeftPane과 동일한 색상 유지 */
-}
 
-/* SF Symbol 아이콘 크기 통일 (LeftPane CustomMenu와 동일: 1.3em) */
-.center-pane-view__title-icon .sf-symbol {
-  font-size: 1.3em;
-}
+  .center-pane-view__title-icon .menu-icon-green {
+    color: var(--color-ios-green); /* iOS systemGreen */
+  }
 
-.center-pane-view__title-icon .sf-symbol__shape {
-  font-size: inherit;
-}
+  .center-pane-view__title-icon .menu-icon-purple {
+    color: var(--color-ios-purple, #AF52DE); /* iOS systemPurple */
+  }
 
+  /* 제목 액세서리 스타일 (새로고침 버튼 등) */
+  .center-pane-view__title-accessory {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-/* 제목 아이콘 색상 클래스 유지 (CustomMenu와 동일) */
-.center-pane-view__title-icon .menu-icon-pink {
-  color: var(--color-ios-pink); /* iOS systemPink */
-}
-
-.center-pane-view__title-icon .menu-icon-red {
-  color: var(--color-icon-doc-status); /* iOS systemRed */
-}
-
-.center-pane-view__title-icon .menu-icon-green {
-  color: var(--color-ios-green); /* iOS systemGreen */
-}
-
-.center-pane-view__title-icon .menu-icon-purple {
-  color: var(--color-ios-purple, #AF52DE); /* iOS systemPurple */
-}
-
-/* 제목 액세서리 스타일 (새로고침 버튼 등) */
-.center-pane-view__title-accessory {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 🍎 돌아가기 아이콘 버튼 - 타이틀 옆에 배치 */
-.back-icon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-.back-icon-button:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-primary);
-}
-
-.back-icon-button:active {
-  transform: scale(0.95);
-}
-
-.back-icon-button svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* === 터치 기기: 아이콘 버튼 터치 영역 확대 (44px 최소) === */
-
-@media (pointer: coarse) {
-  .center-pane-view__title-action .view-switch-button,
+  /* 🍎 돌아가기 아이콘 버튼 - 타이틀 옆에 배치 */
   .back-icon-button {
-    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--duration-ios-quick) var(--easing-ease-out);
   }
 
-  .center-pane-view__title-action .view-switch-button::after,
-  .back-icon-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-  }
-
-  /* 터치 기기에서 호버 scale 비활성화 */
-  .center-pane-view__title-action .view-switch-button:hover,
   .back-icon-button:hover {
-    transform: none;
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
   }
-}
+
+  .back-icon-button:active {
+    transform: scale(0.95);
+  }
+
+  .back-icon-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* === 터치 기기: 아이콘 버튼 터치 영역 확대 (44px 최소) === */
+
+  @media (pointer: coarse) {
+    .center-pane-view__title-action .view-switch-button,
+    .back-icon-button {
+      position: relative;
+    }
+
+    .center-pane-view__title-action .view-switch-button::after,
+    .back-icon-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* 터치 기기에서 호버 scale 비활성화 */
+    .center-pane-view__title-action .view-switch-button:hover,
+    .back-icon-button:hover {
+      transform: none;
+    }
+  }
+
+} /* end @layer components */

@@ -6,335 +6,339 @@
  * CustomerManagementView 스타일 패턴 준수
  */
 
-.contract-management-view__content {
-  padding: var(--spacing-6);
-  max-width: 1200px;
-  margin: 0 auto;
-}
+@layer components {
 
-/* 대시보드 섹션 */
-.contract-management-view__section {
-  margin-bottom: var(--spacing-8);
-}
-
-.contract-management-view__section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-4);
-}
-
-.contract-management-view__section-title {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-/* 통계 카드 그리드 */
-.contract-management-view__stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-4);
-}
-
-/* 파이 차트 그리드 */
-.contract-management-view__pie-charts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-6);
-  margin-top: var(--spacing-6);
-  padding: var(--spacing-4);
-}
-
-/* 파이 차트를 가로로 배치 (차트 좌측, 레전드 우측) */
-.contract-management-view__pie-charts-grid .file-type-pie-chart {
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 0px;
-}
-
-/* SVG 크기 고정 */
-.contract-management-view__pie-charts-grid .file-type-pie-chart__svg {
-  max-width: 150px;
-  flex-shrink: 0;
-}
-
-/* 레전드를 우측에 배치 */
-.contract-management-view__pie-charts-grid .file-type-pie-chart__legend {
-  flex: 1;
-  min-width: 0;
-  margin-left: -10px;
-}
-
-/* 최근 활동 - CenterPane 수직 스크롤로 전체 목록 표시 */
-.contract-management-view__recent-activity {
-  /* max-height 없음 - 전체 목록 표시, CenterPane 스크롤 사용 */
-}
-
-/* 최근 활동 테이블 - 라이트 모드 테두리 적용 */
-.recent-activity-table {
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-border-secondary);
-}
-
-/* 헤더 - 6개 칼럼 */
-.contract-recent-activity-header {
-  display: grid;
-  grid-template-columns: 85px 150px 1fr 120px 80px 60px;
-  gap: var(--spacing-3);
-  padding: var(--spacing-3) var(--spacing-4);
-  background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
-  font-size: var(--font-size-caption-2);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* 헤더 개별 칼럼 정렬 */
-.contract-recent-activity-header .recent-header-time {
-  text-align: right;
-}
-
-.contract-recent-activity-header .recent-header-premium {
-  text-align: right;
-}
-
-/* 데이터 행 - 6개 칼럼 */
-.contract-recent-activity-row {
-  display: grid;
-  grid-template-columns: 85px 150px 1fr 120px 80px 60px;
-  gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-4);
-  align-items: center;
-  border-bottom: 1px solid var(--color-border);
-  transition: background var(--duration-fast) var(--easing-ease-out);
-  min-height: 36px;
-}
-
-.contract-recent-activity-row:last-child {
-  border-bottom: none;
-}
-
-.contract-recent-activity-row:hover {
-  background: var(--color-bg-tertiary);
-}
-
-/* 셀 스타일 */
-.recent-cell-activity {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-}
-
-.recent-cell-activity .activity-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-cell-customer {
-  font-size: var(--font-size-footnote);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 클릭 가능한 고객명 셀 - 싱글클릭: RightPane, 더블클릭: 전체 정보 */
-.recent-cell-customer--clickable {
-  cursor: pointer;
-  color: var(--color-primary-500);
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.recent-cell-customer--clickable:hover {
-  color: var(--color-primary-600);
-  text-decoration: underline;
-}
-
-.recent-cell-customer--clickable:focus {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
-.recent-cell-customer--clickable:active {
-  color: var(--color-primary-700);
-}
-
-.recent-cell-product {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-cell-premium {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-medium);
-  text-align: right;
-  white-space: nowrap;
-}
-
-.recent-cell-status {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-medium);
-  text-align: center;
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--radius-sm);
-}
-
-.recent-cell-status.status-active {
-  color: var(--color-success);
-  background: var(--color-success-bg);
-}
-
-.recent-cell-status.status-overdue {
-  color: var(--color-error);
-  background: var(--color-error-bg);
-}
-
-.recent-cell-status.status-unknown {
-  color: var(--color-text-tertiary);
-  background: var(--color-bg-tertiary);
-}
-
-.recent-cell-time {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-tertiary);
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* 활동 아이콘 색상 */
-.activity-icon-new {
-  color: var(--color-success);
-}
-
-.activity-icon-edit {
-  color: var(--color-text-secondary);
-}
-
-/* 로딩/에러/빈 상태 - 라이트 모드 테두리 적용 */
-.recent-activity-loading,
-.recent-activity-error,
-.recent-activity-empty {
-  padding: var(--spacing-8) var(--spacing-4);
-  text-align: center;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-footnote);
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-secondary);
-}
-
-.recent-activity-error {
-  color: var(--color-error);
-}
-
-/* 다크 모드 */
-html[data-theme="dark"] .recent-activity-table {
-  background: var(--color-bg-primary);
-  border-color: var(--color-border);
-}
-
-html[data-theme="dark"] .contract-recent-activity-header {
-  background: var(--color-bg-secondary);
-}
-
-html[data-theme="dark"] .contract-recent-activity-row:hover {
-  background: var(--color-bg-secondary);
-}
-
-html[data-theme="dark"] .recent-activity-loading,
-html[data-theme="dark"] .recent-activity-error,
-html[data-theme="dark"] .recent-activity-empty {
-  border-color: var(--color-border);
-}
-
-/* 아이콘 색상 클래스 */
-.menu-icon-blue {
-  color: var(--color-ios-blue);
-}
-
-.menu-icon-purple {
-  color: var(--color-ios-purple);
-}
-
-.menu-icon-green {
-  color: var(--color-ios-green);
-}
-
-.menu-icon-orange {
-  color: var(--color-ios-orange);
-}
-
-.menu-icon-pink {
-  color: var(--color-ios-pink);
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
   .contract-management-view__content {
+    padding: var(--spacing-6);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* 대시보드 섹션 */
+  .contract-management-view__section {
+    margin-bottom: var(--spacing-8);
+  }
+
+  .contract-management-view__section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-4);
+  }
+
+  .contract-management-view__section-title {
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* 통계 카드 그리드 */
+  .contract-management-view__stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-4);
+  }
+
+  /* 파이 차트 그리드 */
+  .contract-management-view__pie-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-6);
     padding: var(--spacing-4);
   }
 
-  .contract-management-view__stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .contract-management-view__pie-charts-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* 작은 화면에서는 다시 세로 배치 */
+  /* 파이 차트를 가로로 배치 (차트 좌측, 레전드 우측) */
   .contract-management-view__pie-charts-grid .file-type-pie-chart {
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0px;
   }
 
-  /* 테이블 칼럼 조정 */
-  .contract-recent-activity-header,
-  .contract-recent-activity-row {
-    grid-template-columns: 70px 100px 1fr 90px 70px 50px;
-    gap: var(--spacing-2);
-    font-size: var(--font-size-caption-2);
-  }
-}
-
-@media (max-width: 480px) {
-  .contract-management-view__stats-grid {
-    grid-template-columns: 1fr;
+  /* SVG 크기 고정 */
+  .contract-management-view__pie-charts-grid .file-type-pie-chart__svg {
+    max-width: 150px;
+    flex-shrink: 0;
   }
 
-  .contract-management-view__pie-charts-grid {
-    grid-template-columns: 1fr;
+  /* 레전드를 우측에 배치 */
+  .contract-management-view__pie-charts-grid .file-type-pie-chart__legend {
+    flex: 1;
+    min-width: 0;
+    margin-left: -10px;
   }
 
-  /* 테이블: 가로 스크롤 전환 */
+  /* 최근 활동 - CenterPane 수직 스크롤로 전체 목록 표시 */
+  .contract-management-view__recent-activity {
+    /* max-height 없음 - 전체 목록 표시, CenterPane 스크롤 사용 */
+  }
+
+  /* 최근 활동 테이블 - 라이트 모드 테두리 적용 */
   .recent-activity-table {
-    overflow-x: auto;
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border-secondary);
   }
 
-  .contract-recent-activity-header,
-  .contract-recent-activity-row {
-    min-width: 480px;
-    font-size: 10px;
+  /* 헤더 - 6개 칼럼 */
+  .contract-recent-activity-header {
+    display: grid;
+    grid-template-columns: 85px 150px 1fr 120px 80px 60px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    font-size: var(--font-size-caption-2);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
-}
+
+  /* 헤더 개별 칼럼 정렬 */
+  .contract-recent-activity-header .recent-header-time {
+    text-align: right;
+  }
+
+  .contract-recent-activity-header .recent-header-premium {
+    text-align: right;
+  }
+
+  /* 데이터 행 - 6개 칼럼 */
+  .contract-recent-activity-row {
+    display: grid;
+    grid-template-columns: 85px 150px 1fr 120px 80px 60px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-4);
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    transition: background var(--duration-fast) var(--easing-ease-out);
+    min-height: 36px;
+  }
+
+  .contract-recent-activity-row:last-child {
+    border-bottom: none;
+  }
+
+  .contract-recent-activity-row:hover {
+    background: var(--color-bg-tertiary);
+  }
+
+  /* 셀 스타일 */
+  .recent-cell-activity {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+  }
+
+  .recent-cell-activity .activity-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recent-cell-customer {
+    font-size: var(--font-size-footnote);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 클릭 가능한 고객명 셀 - 싱글클릭: RightPane, 더블클릭: 전체 정보 */
+  .recent-cell-customer--clickable {
+    cursor: pointer;
+    color: var(--color-primary-500);
+    transition: color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .recent-cell-customer--clickable:hover {
+    color: var(--color-primary-600);
+    text-decoration: underline;
+  }
+
+  .recent-cell-customer--clickable:focus {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .recent-cell-customer--clickable:active {
+    color: var(--color-primary-700);
+  }
+
+  .recent-cell-product {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recent-cell-premium {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .recent-cell-status {
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-medium);
+    text-align: center;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+  }
+
+  .recent-cell-status.status-active {
+    color: var(--color-success);
+    background: var(--color-success-bg);
+  }
+
+  .recent-cell-status.status-overdue {
+    color: var(--color-error);
+    background: var(--color-error-bg);
+  }
+
+  .recent-cell-status.status-unknown {
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-tertiary);
+  }
+
+  .recent-cell-time {
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-tertiary);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* 활동 아이콘 색상 */
+  .activity-icon-new {
+    color: var(--color-success);
+  }
+
+  .activity-icon-edit {
+    color: var(--color-text-secondary);
+  }
+
+  /* 로딩/에러/빈 상태 - 라이트 모드 테두리 적용 */
+  .recent-activity-loading,
+  .recent-activity-error,
+  .recent-activity-empty {
+    padding: var(--spacing-8) var(--spacing-4);
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-footnote);
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-secondary);
+  }
+
+  .recent-activity-error {
+    color: var(--color-error);
+  }
+
+  /* 다크 모드 */
+  html[data-theme="dark"] .recent-activity-table {
+    background: var(--color-bg-primary);
+    border-color: var(--color-border);
+  }
+
+  html[data-theme="dark"] .contract-recent-activity-header {
+    background: var(--color-bg-secondary);
+  }
+
+  html[data-theme="dark"] .contract-recent-activity-row:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  html[data-theme="dark"] .recent-activity-loading,
+  html[data-theme="dark"] .recent-activity-error,
+  html[data-theme="dark"] .recent-activity-empty {
+    border-color: var(--color-border);
+  }
+
+  /* 아이콘 색상 클래스 */
+  .menu-icon-blue {
+    color: var(--color-ios-blue);
+  }
+
+  .menu-icon-purple {
+    color: var(--color-ios-purple);
+  }
+
+  .menu-icon-green {
+    color: var(--color-ios-green);
+  }
+
+  .menu-icon-orange {
+    color: var(--color-ios-orange);
+  }
+
+  .menu-icon-pink {
+    color: var(--color-ios-pink);
+  }
+
+  /* 반응형 */
+  @media (max-width: 768px) {
+    .contract-management-view__content {
+      padding: var(--spacing-4);
+    }
+
+    .contract-management-view__stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .contract-management-view__pie-charts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    /* 작은 화면에서는 다시 세로 배치 */
+    .contract-management-view__pie-charts-grid .file-type-pie-chart {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 테이블 칼럼 조정 */
+    .contract-recent-activity-header,
+    .contract-recent-activity-row {
+      grid-template-columns: 70px 100px 1fr 90px 70px 50px;
+      gap: var(--spacing-2);
+      font-size: var(--font-size-caption-2);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .contract-management-view__stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .contract-management-view__pie-charts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    /* 테이블: 가로 스크롤 전환 */
+    .recent-activity-table {
+      overflow-x: auto;
+    }
+
+    .contract-recent-activity-header,
+    .contract-recent-activity-row {
+      min-width: 480px;
+      font-size: 10px;
+    }
+  }
+
+} /* end @layer components */

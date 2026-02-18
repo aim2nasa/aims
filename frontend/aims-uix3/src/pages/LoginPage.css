@@ -2,180 +2,184 @@
  * 로그인 페이지 스타일
  */
 
-.login-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: var(--color-bg-primary);
-}
+@layer components {
 
-.login-container {
-  width: 100%;
-  max-width: 400px;
-  padding: 48px 32px;
-  background: var(--color-bg-secondary);
-  border-radius: 16px;
-  box-shadow: 0 2px 8px var(--color-shadow-light);
-}
+  .login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--color-bg-primary);
+  }
 
-.login-header {
-  text-align: center;
-  margin-bottom: 48px;
-}
+  .login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 48px 32px;
+    background: var(--color-bg-secondary);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px var(--color-shadow-light);
+  }
 
-.login-header h1 {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 8px 0;
-}
+  .login-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
 
-.login-header p {
-  font-size: 15px;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
+  .login-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 8px 0;
+  }
 
-.login-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+  .login-header p {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
 
-/* 소셜 로그인 버튼 그룹 */
-.social-login-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+  .login-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 
-/* 공통 소셜 로그인 버튼 스타일 */
-.social-login-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  padding: 14px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+  /* 소셜 로그인 버튼 그룹 */
+  .social-login-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-.social-login-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
+  /* 공통 소셜 로그인 버튼 스타일 */
+  .social-login-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
 
-.social-login-button:active {
-  transform: translateY(0);
-}
+  .social-login-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
 
-.social-login-button svg {
-  flex-shrink: 0;
-}
+  .social-login-button:active {
+    transform: translateY(0);
+  }
 
-/* 카카오 로그인 버튼 */
-.kakao-login-button {
-  background: #FEE500;
-  color: #371D1E;
-}
+  .social-login-button svg {
+    flex-shrink: 0;
+  }
 
-.kakao-login-button:hover {
-  background: #FDD835;
-}
+  /* 카카오 로그인 버튼 */
+  .kakao-login-button {
+    background: #FEE500;
+    color: #371D1E;
+  }
 
-/* 네이버 로그인 버튼 */
-.naver-login-button {
-  background: #03C75A;
-  color: #FFFFFF;
-}
+  .kakao-login-button:hover {
+    background: #FDD835;
+  }
 
-.naver-login-button:hover {
-  background: #02B350;
-}
+  /* 네이버 로그인 버튼 */
+  .naver-login-button {
+    background: #03C75A;
+    color: #FFFFFF;
+  }
 
-/* 구글 로그인 버튼 */
-.google-login-button {
-  background: #FFFFFF;
-  color: #3c4043;
-  border: 1px solid #dadce0;
-}
+  .naver-login-button:hover {
+    background: #02B350;
+  }
 
-.google-login-button:hover {
-  background: #f8f9fa;
-  border-color: #c6c6c6;
-}
+  /* 구글 로그인 버튼 */
+  .google-login-button {
+    background: #FFFFFF;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+  }
 
-/* 다른 계정으로 로그인 버튼 - 테두리 스타일 */
-.kakao-login-button--secondary {
-  background: transparent;
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
+  .google-login-button:hover {
+    background: #f8f9fa;
+    border-color: #c6c6c6;
+  }
 
-.kakao-login-button--secondary:hover {
-  background: var(--color-bg-tertiary);
-  transform: translateY(-1px);
-  box-shadow: none;
-}
+  /* 다른 계정으로 로그인 버튼 - 테두리 스타일 */
+  .kakao-login-button--secondary {
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+  }
 
-.kakao-login-button--secondary svg path {
-  fill: var(--color-text-secondary);
-}
+  .kakao-login-button--secondary:hover {
+    background: var(--color-bg-tertiary);
+    transform: translateY(-1px);
+    box-shadow: none;
+  }
 
-/* 다른 계정으로 로그인 섹션 */
-.switch-account-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 4px;
-  flex-wrap: nowrap;
-}
+  .kakao-login-button--secondary svg path {
+    fill: var(--color-text-secondary);
+  }
 
-.switch-account-divider {
-  color: var(--color-text-quaternary);
-  font-size: 12px;
-  flex-shrink: 0;
-}
+  /* 다른 계정으로 로그인 섹션 */
+  .switch-account-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: nowrap;
+  }
 
-/* 다른 계정으로 로그인 링크 */
-.switch-account-button {
-  background: none;
-  border: none;
-  color: var(--color-text-tertiary);
-  font-size: 12px;
-  cursor: pointer;
-  padding: 8px 4px;
-  transition: color 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+  .switch-account-divider {
+    color: var(--color-text-quaternary);
+    font-size: 12px;
+    flex-shrink: 0;
+  }
 
-.switch-account-button:hover {
-  color: var(--color-text-secondary);
-  text-decoration: underline;
-}
+  /* 다른 계정으로 로그인 링크 */
+  .switch-account-button {
+    background: none;
+    border: none;
+    color: var(--color-text-tertiary);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 8px 4px;
+    transition: color 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
-/* 개발용 로그인 건너뛰기 버튼 */
-.dev-login-button {
-  margin-top: 16px;
-  background: var(--color-button-dev-bg);
-  border: 1px solid var(--color-button-dev-border);
-  color: var(--color-button-dev-text);
-}
+  .switch-account-button:hover {
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+  }
 
-.dev-login-button:hover {
-  background: var(--color-button-dev-bg-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--color-button-dev-shadow);
-}
+  /* 개발용 로그인 건너뛰기 버튼 */
+  .dev-login-button {
+    margin-top: 16px;
+    background: var(--color-button-dev-bg);
+    border: 1px solid var(--color-button-dev-border);
+    color: var(--color-button-dev-text);
+  }
 
-.dev-login-button .dev-icon {
-  font-size: 14px;
-}
+  .dev-login-button:hover {
+    background: var(--color-button-dev-bg-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--color-button-dev-shadow);
+  }
+
+  .dev-login-button .dev-icon {
+    font-size: 14px;
+  }
+
+} /* end @layer components */

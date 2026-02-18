@@ -11,47 +11,52 @@
 /* ===== DocumentSummaryModal 전용 스타일 ===== */
 
 /* 로딩 상태 */
-.summary-loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  min-height: 200px;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-body); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
-  font-family: var(--font-family-display);
-}
 
-.summary-loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--color-layout-border);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
+@layer components {
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+  .summary-loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 200px;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
+    font-family: var(--font-family-display);
   }
-}
 
-/* 스크롤바 스타일 (WebKit) */
-.fulltext-modal-body::-webkit-scrollbar {
-  width: 8px;
-}
+  .summary-loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--color-layout-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
 
-.fulltext-modal-body::-webkit-scrollbar-track {
-  background: transparent;
-}
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 
-.fulltext-modal-body::-webkit-scrollbar-thumb {
-  background-color: var(--color-layout-border);
-  border-radius: 4px;
-}
+  /* 스크롤바 스타일 (WebKit) */
+  .fulltext-modal-body::-webkit-scrollbar {
+    width: 8px;
+  }
 
-.fulltext-modal-body::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-tertiary);
-}
+  .fulltext-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .fulltext-modal-body::-webkit-scrollbar-thumb {
+    background-color: var(--color-layout-border);
+    border-radius: 4px;
+  }
+
+  .fulltext-modal-body::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-text-tertiary);
+  }
+
+} /* end @layer components */

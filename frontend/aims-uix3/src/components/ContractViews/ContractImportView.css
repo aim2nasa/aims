@@ -3,25 +3,29 @@
  * 계약 가져오기 뷰 스타일
  */
 
-.contract-import-view {
-  padding: 0;
-  height: 100%;
-  overflow: auto;
-}
+@layer components {
 
-/* CenterPaneView content padding 오버라이드 */
-.center-pane-view:has(.contract-import-view) .center-pane-view__content {
-  padding: var(--spacing-2);
-}
+  .contract-import-view {
+    padding: 0;
+    height: 100%;
+    overflow: auto;
+  }
 
-/* 📱 모바일 (480px 이하) */
-@media (max-width: 480px) {
+  /* CenterPaneView content padding 오버라이드 */
   .center-pane-view:has(.contract-import-view) .center-pane-view__content {
-    padding: var(--spacing-1);
+    padding: var(--spacing-2);
   }
 
-  .center-pane-view:has(.contract-import-view) .center-pane-view__description {
-    padding: var(--spacing-2) var(--spacing-3);
-    font-size: var(--font-size-caption-1);
+  /* 📱 모바일 (480px 이하) */
+  @media (max-width: 480px) {
+    .center-pane-view:has(.contract-import-view) .center-pane-view__content {
+      padding: var(--spacing-1);
+    }
+
+    .center-pane-view:has(.contract-import-view) .center-pane-view__description {
+      padding: var(--spacing-2) var(--spacing-3);
+      font-size: var(--font-size-caption-1);
+    }
   }
-}
+
+} /* end @layer components */

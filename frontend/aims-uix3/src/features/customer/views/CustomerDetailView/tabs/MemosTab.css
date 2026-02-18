@@ -1,81 +1,85 @@
 /* 메모 필드 - 단일 메모 Apple 스타일 */
 
-.memo-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-}
+@layer components {
 
-/* 헤더 */
-.memo-field__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+  .memo-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+  }
 
-.memo-field__title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  font-size: var(--font-caption);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
+  /* 헤더 */
+  .memo-field__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
 
-/* 저장 버튼 */
-.memo-field__save {
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: none;
-  background-color: var(--color-primary-600);
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color var(--duration-micro-quick) var(--easing-ease-out),
-    opacity var(--duration-micro-quick) var(--easing-ease-out);
-}
+  .memo-field__title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    font-size: var(--font-caption);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
 
-.memo-field__save:hover:not(:disabled) {
-  background-color: var(--color-primary-700);
-}
+  /* 저장 버튼 */
+  .memo-field__save {
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: none;
+    background-color: var(--color-primary-600);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--duration-micro-quick) var(--easing-ease-out),
+      opacity var(--duration-micro-quick) var(--easing-ease-out);
+  }
 
-.memo-field__save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+  .memo-field__save:hover:not(:disabled) {
+    background-color: var(--color-primary-700);
+  }
 
-/* 텍스트영역 */
-.memo-field__textarea {
-  width: 100%;
-  padding: var(--spacing-2);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  background-color: var(--color-layout-primary);
-  font-size: var(--font-caption);
-  font-family: inherit;
-  color: var(--color-text-primary);
-  resize: vertical;
-  min-height: 36px;
-  transition: border-color var(--duration-micro-quick) var(--easing-ease-out),
-    box-shadow var(--duration-micro-quick) var(--easing-ease-out);
-}
+  .memo-field__save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
-.memo-field__textarea:focus {
-  outline: none;
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
-}
+  /* 텍스트영역 */
+  .memo-field__textarea {
+    width: 100%;
+    padding: var(--spacing-2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background-color: var(--color-layout-primary);
+    font-size: var(--font-caption);
+    font-family: inherit;
+    color: var(--color-text-primary);
+    resize: vertical;
+    min-height: 36px;
+    transition: border-color var(--duration-micro-quick) var(--easing-ease-out),
+      box-shadow var(--duration-micro-quick) var(--easing-ease-out);
+  }
 
-.memo-field__textarea::placeholder {
-  color: var(--color-text-tertiary);
-}
+  .memo-field__textarea:focus {
+    outline: none;
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+  }
 
-.memo-field__textarea:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+  .memo-field__textarea::placeholder {
+    color: var(--color-text-tertiary);
+  }
 
-[data-theme="dark"] .memo-field__textarea {
-  border-color: rgba(255, 255, 255, 0.1);
-}
+  .memo-field__textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  [data-theme="dark"] .memo-field__textarea {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+} /* end @layer components */
