@@ -116,9 +116,10 @@ export const useAddressArchiveController = (
    */
   const open = useCallback(() => {
     setIsOpen(true);
-    // 이미 로드된 데이터가 있으므로 다시 로드하지 않음
-    // 필요시 여기서 다시 loadAddressHistory를 호출할 수 있음
-  }, []);
+    if (customerId) {
+      loadAddressHistory(customerId);
+    }
+  }, [customerId, loadAddressHistory]);
 
   /**
    * 주소 보관소 모달 닫기

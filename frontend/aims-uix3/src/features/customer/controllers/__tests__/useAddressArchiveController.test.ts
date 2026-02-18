@@ -309,7 +309,8 @@ describe('useAddressArchiveController', () => {
 
     it('open → 로드 실패 → 재시도 → 성공 플로우가 정상 작동해야 함', async () => {
       vi.mocked(AddressService.getAddressHistory)
-        .mockRejectedValueOnce(new Error('첫 번째 실패'))
+        .mockRejectedValueOnce(new Error('첫 번째 실패'))   // useEffect auto-load
+        .mockRejectedValueOnce(new Error('첫 번째 실패'))   // open() calls load
         .mockResolvedValueOnce(mockAddressHistory);
 
       const { result } = renderHook(() =>
@@ -347,9 +348,10 @@ describe('useAddressArchiveController', () => {
         }
       ];
 
-      vi.mocked(AddressService.getAddressHistory)
-        .mockResolvedValueOnce(mockAddressHistory)
-        .mockResolvedValueOnce(anotherHistory);
+      vi.mocked(AddressService.getAddressHistory).mockImplementation((id) => {
+        if (id === anotherCustomerId) return Promise.resolve(anotherHistory);
+        return Promise.resolve(mockAddressHistory);
+      });
 
       const { result, rerender } = renderHook(
         ({ customerId }) => useAddressArchiveController(customerId),
