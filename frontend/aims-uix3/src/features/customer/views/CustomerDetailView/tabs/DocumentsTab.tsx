@@ -250,6 +250,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   // ⚠️ CustomerFullDetailView에서는 .customer-documents__header가 display:none으로 숨겨지고
   //    페이지네이션 높이도 26px로 오버라이드됨. 따라서 실제 DOM 요소 높이를 측정해야 함.
   const autoCalculatedItems = useMemo(() => {
+    // 📱 모바일(≤768px): 페이지네이션 숨김 → 전체 표시 (스크롤 처리)
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
+      return 9999
+    }
     if (containerHeight <= 0) return 10 // 기본값
 
     const container = sectionContainerRef.current

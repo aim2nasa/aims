@@ -139,6 +139,10 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
 
   // 자동 모드일 때 컨테이너 높이 기반 항목 수 계산
   const autoCalculatedItems = useMemo(() => {
+    // 📱 모바일(≤768px): 페이지네이션 숨김 → 전체 표시 (스크롤 처리)
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
+      return 9999;
+    }
     if (containerHeight <= 0) return 10;
 
     const container = sectionContainerRef.current;

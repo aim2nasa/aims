@@ -236,6 +236,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산 (ContractsTab/DocumentsTab과 동일한 DOM 측정 방식)
   // ⚠️ CustomerFullDetailView에서는 일부 요소가 display:none으로 숨겨지므로 실제 DOM 요소 높이를 측정해야 함.
   const autoCalculatedItems = useMemo(() => {
+    // 📱 모바일(≤768px): 페이지네이션 숨김 → 전체 표시 (스크롤 처리)
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
+      return 9999;
+    }
     if (containerHeight <= 0) return 10; // 기본값
 
     const container = sectionContainerRef.current;
