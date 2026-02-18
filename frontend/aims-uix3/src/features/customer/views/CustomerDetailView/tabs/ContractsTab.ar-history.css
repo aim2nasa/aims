@@ -40,17 +40,17 @@
     font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-ios-text-tertiary-light);
-    background: var(--color-ios-bg-secondary-light);
+    background: var(--color-neutral-100);
     border-radius: 4px;
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 100;
     min-width: max-content;  /* 수평 스크롤 시 잘림 방지 */
   }
 
   html[data-theme="dark"] .contract-history-header {
     color: var(--color-ios-text-tertiary-dark);
-    background: var(--color-ios-bg-secondary-dark);
+    background: var(--color-neutral-700);
   }
 
   /* 헤더 셀 공통 */
