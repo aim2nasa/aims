@@ -106,7 +106,7 @@
 
   .customer-item.selected .customer-name,
   .customer-item[data-selected="true"] .customer-name {
-    color: #0055a5;
+    color: var(--color-primary-700);
     font-weight: 600;
   }
 

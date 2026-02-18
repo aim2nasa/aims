@@ -342,14 +342,14 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* === 보험상품 === */
-  .cc-product {
+  /* === 보험상품 === (row prefix로 > span specificity 극복) */
+  .corporate-contracts-row .cc-product {
     font-weight: 600;
-    color: var(--color-ios-text-secondary-light) !important;
+    color: var(--color-ios-text-secondary-light);
   }
 
-  html[data-theme="dark"] .cc-product {
-    color: var(--color-ios-text-secondary-dark) !important;
+  html[data-theme="dark"] .corporate-contracts-row .cc-product {
+    color: var(--color-ios-text-secondary-dark);
   }
 
   /* === 계약자 / 피보험자 === */
@@ -359,15 +359,15 @@
   }
 
   /* 법인 구성원인 경우 강조 */
-  .cc-holder--corp,
-  .cc-insured--corp {
+  .corporate-contracts-row .cc-holder--corp,
+  .corporate-contracts-row .cc-insured--corp {
     font-weight: 600;
-    color: var(--color-warning-600) !important;
+    color: var(--color-warning-600);
   }
 
-  html[data-theme="dark"] .cc-holder--corp,
-  html[data-theme="dark"] .cc-insured--corp {
-    color: var(--color-warning-400) !important;
+  html[data-theme="dark"] .corporate-contracts-row .cc-holder--corp,
+  html[data-theme="dark"] .corporate-contracts-row .cc-insured--corp {
+    color: var(--color-warning-400);
   }
 
   /* === 계약일 === */
@@ -413,15 +413,15 @@
   }
 
   /* === 보험료 === */
-  .cc-premium {
+  .corporate-contracts-row .cc-premium {
     text-align: right;
     font-variant-numeric: tabular-nums;
     font-weight: 600;
-    color: var(--color-primary-600) !important;
+    color: var(--color-primary-600);
   }
 
-  html[data-theme="dark"] .cc-premium {
-    color: var(--color-primary-400) !important;
+  html[data-theme="dark"] .corporate-contracts-row .cc-premium {
+    color: var(--color-primary-400);
   }
 
 } /* end @layer components */

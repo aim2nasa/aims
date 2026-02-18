@@ -405,18 +405,18 @@
     opacity: 0.2;
   }
 
-  /* 🔴 크레딧 부족 상태: 버튼 비활성화 */
+  /* 🔴 크레딧 부족 상태: 버튼 비활성화 (source order로 variant hover보다 후순위) */
   .action-btn--disabled,
   .action-btn--disabled:hover {
     opacity: 0.3;
     cursor: not-allowed;
-    transform: none !important;
-    color: var(--color-ios-text-tertiary-light) !important;
+    transform: none;
+    color: var(--color-ios-text-tertiary-light);
   }
 
   html[data-theme="dark"] .action-btn--disabled,
   html[data-theme="dark"] .action-btn--disabled:hover {
-    color: var(--color-ios-text-tertiary-dark) !important;
+    color: var(--color-ios-text-tertiary-dark);
     opacity: 0.25;
   }
 

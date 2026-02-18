@@ -2,7 +2,7 @@
 
   /* ==================== Session List ==================== */
   .chat-panel__session-list {
-    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+    border-bottom: 1px solid var(--color-chat-accent-alpha-15);
     background: rgba(255, 255, 255, 0.5);
     max-height: 280px;
     overflow-y: auto;
@@ -17,7 +17,7 @@
     font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-secondary);
-    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+    border-bottom: 1px solid var(--color-chat-accent-alpha-10);
   }
 
   .chat-panel__session-loading {
@@ -43,15 +43,15 @@
     padding: 10px 16px;
     cursor: pointer;
     transition: background 0.15s ease;
-    border-bottom: 1px solid rgba(139, 92, 246, 0.05);
+    border-bottom: 1px solid var(--color-chat-accent-alpha-05);
   }
 
   .chat-panel__session-item:hover {
-    background: rgba(139, 92, 246, 0.08);
+    background: var(--color-chat-accent-alpha-08);
   }
 
   .chat-panel__session-item--active {
-    background: rgba(139, 92, 246, 0.12);
+    background: var(--color-chat-accent-alpha-12);
   }
 
   .chat-panel__session-info {
@@ -125,7 +125,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
+    background: linear-gradient(135deg, var(--color-chat-accent-alpha-15) 0%, var(--color-chat-cyan-alpha-10) 100%);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     z-index: 10;
@@ -219,7 +219,7 @@
   .chat-panel__data-stat-value {
     font-size: 28px;
     font-weight: 700;
-    background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
+    background: linear-gradient(135deg, var(--color-chat-accent) 0%, #06B6D4 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -234,7 +234,7 @@
 
   /* Dark Theme - Data Overlay */
   html[data-theme="dark"] .chat-panel__data-overlay {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(6, 182, 212, 0.12) 100%);
+    background: linear-gradient(135deg, var(--color-chat-accent-alpha-20) 0%, var(--color-chat-cyan-alpha-12) 100%);
   }
 
   html[data-theme="dark"] .chat-panel__data-overlay-content {
@@ -243,7 +243,7 @@
   }
 
   html[data-theme="dark"] .chat-panel__data-stat-value {
-    background: linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%);
+    background: linear-gradient(135deg, var(--color-chat-accent-light) 0%, #22d3ee 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

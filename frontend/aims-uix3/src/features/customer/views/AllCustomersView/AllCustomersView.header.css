@@ -273,7 +273,7 @@
     font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 테이블 헤더 */
     font-family: var(--font-family-text);
     font-weight: 600;
-    color: #4a5568;
+    color: var(--color-neutral-600);
     text-transform: uppercase;
     letter-spacing: 0.3px;
     position: sticky;

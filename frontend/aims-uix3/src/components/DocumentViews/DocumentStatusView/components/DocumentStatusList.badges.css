@@ -25,8 +25,8 @@
     line-height: 1;
     transition: all 0.2s ease-out;
     /* 기본 스타일 - 파란색 */
-    background: #007aff;
-    color: #ffffff;
+    background: var(--color-icon-blue);
+    color: var(--color-neutral-0);
   }
 
   /* 배지 내 아이콘 - 크게! */
@@ -55,44 +55,44 @@
 
   /* 완료: 파란색 */
   .pdf-conversion-badge--completed {
-    background: #007aff;
-    color: #ffffff;
+    background: var(--color-icon-blue);
+    color: var(--color-neutral-0);
   }
 
   html[data-theme="dark"] .pdf-conversion-badge--completed {
-    background: #0a84ff;
+    background: var(--color-ios-blue-dark);
   }
 
   .status-item:hover .pdf-conversion-badge--completed {
     transform: scale(1.05);
-    box-shadow: 0 0 6px #007aff;
+    box-shadow: 0 0 6px var(--color-icon-blue);
   }
 
   /* 처리 중: 주황색 + 펄스 */
   .pdf-conversion-badge--processing {
-    background: #ff9500;
-    color: #ffffff;
+    background: var(--color-ios-orange-light);
+    color: var(--color-neutral-0);
     animation: pdf-badge-pulse 1s ease-in-out infinite;
   }
 
   html[data-theme="dark"] .pdf-conversion-badge--processing {
-    background: #ff9f0a;
+    background: var(--color-ios-orange-dark);
   }
 
   /* 대기 중: 회색 */
   .pdf-conversion-badge--pending {
-    background: #8e8e93;
-    color: #ffffff;
+    background: var(--color-ios-gray-light);
+    color: var(--color-neutral-0);
   }
 
   html[data-theme="dark"] .pdf-conversion-badge--pending {
-    background: #636366;
+    background: var(--color-ios-gray-dark);
   }
 
   /* 실패: 빨간색 - 클릭 가능 */
   button.pdf-conversion-badge--failed {
-    background: #ff3b30;
-    color: #ffffff;
+    background: var(--color-ios-red-light);
+    color: var(--color-neutral-0);
     border: none;
     cursor: pointer;
     padding: 2px 6px;
@@ -105,12 +105,12 @@
   }
 
   html[data-theme="dark"] button.pdf-conversion-badge--failed {
-    background: #ff453a;
+    background: var(--color-ios-red-dark);
   }
 
   button.pdf-conversion-badge--failed:hover:not(:disabled) {
     transform: scale(1.1);
-    box-shadow: 0 0 6px #ff3b30;
+    box-shadow: 0 0 6px var(--color-ios-red-light);
   }
 
   button.pdf-conversion-badge--failed:disabled {
@@ -120,7 +120,7 @@
 
   /* 재시도 중 */
   .pdf-conversion-badge--retrying {
-    background: #ff9500;
+    background: var(--color-ios-orange-light);
     animation: pdf-badge-pulse 1s ease-in-out infinite;
   }
 
@@ -207,14 +207,16 @@
     opacity: 0.7;
   }
 
-  /* 재시도 중 상태 */
+  /* 재시도 중 상태 (button. prefix로 button.--failed specificity 매칭) */
+  button.document-conversion-badge--retrying,
   .document-conversion-badge--retrying {
-    background: var(--color-ios-orange-light) !important;
+    background: var(--color-ios-orange-light);
     animation: conversion-spin 1s linear infinite;
   }
 
+  html[data-theme="dark"] button.document-conversion-badge--retrying,
   html[data-theme="dark"] .document-conversion-badge--retrying {
-    background: var(--color-ios-orange-dark) !important;
+    background: var(--color-ios-orange-dark);
   }
 
   /* 변환 가능 상태 (아직 변환 시작되지 않음) */
@@ -396,8 +398,8 @@
     align-items: center;
     gap: 2px;
     padding: 1px 4px;
-    background: #ff3b30;
-    color: #ffffff;
+    background: var(--color-ios-red-light);
+    color: var(--color-neutral-0);
     border-radius: 3px;
     font-size: 9px;
     font-weight: 600;
@@ -408,7 +410,7 @@
   }
 
   html[data-theme="dark"] .virus-badge {
-    background: #ff453a;
+    background: var(--color-ios-red-dark);
   }
 
   .virus-badge-icon {

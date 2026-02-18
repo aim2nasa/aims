@@ -337,32 +337,32 @@
     background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
   }
 
-  .ar-file-table__tr:hover {
-    background: var(--color-bg-hover, rgba(0, 0, 0, 0.05)) !important;
+  .ar-file-table__table tbody .ar-file-table__tr:hover {
+    background: var(--color-bg-hover, rgba(0, 0, 0, 0.05));
   }
 
-  .ar-file-table__tr--selected {
-    background: var(--color-primary-bg, rgba(0, 122, 255, 0.12)) !important;
+  .ar-file-table__table tbody .ar-file-table__tr--selected {
+    background: var(--color-primary-bg, rgba(0, 122, 255, 0.12));
   }
 
-  .ar-file-table__tr--selected .ar-file-table__td {
-    color: #1c1c1e !important;
+  .ar-file-table__table tbody .ar-file-table__tr--selected .ar-file-table__td {
+    color: var(--color-text-primary, #1c1c1e);
   }
 
-  .ar-file-table__tr--selected:hover {
-    background: var(--color-primary-bg, rgba(0, 122, 255, 0.18)) !important;
+  .ar-file-table__table tbody .ar-file-table__tr--selected:hover {
+    background: var(--color-primary-bg, rgba(0, 122, 255, 0.18));
   }
 
   .ar-file-table__tr--excluded {
     opacity: 0.5;
   }
 
-  .ar-file-table__tr--duplicate {
-    background: var(--color-error-bg, rgba(255, 59, 48, 0.08)) !important;
+  .ar-file-table__table tbody .ar-file-table__tr--duplicate {
+    background: var(--color-error-bg, rgba(255, 59, 48, 0.08));
   }
 
-  .ar-file-table__tr--duplicate:hover {
-    background: var(--color-error-bg, rgba(255, 59, 48, 0.12)) !important;
+  .ar-file-table__table tbody .ar-file-table__tr--duplicate:hover {
+    background: var(--color-error-bg, rgba(255, 59, 48, 0.12));
   }
 
   /* 다른 고객명 파일이 선택되어 있을 때 비활성화 */
@@ -812,28 +812,28 @@
     background: var(--color-neutral-900, rgba(255, 255, 255, 0.03));
   }
 
-  html[data-theme="dark"] .ar-file-table__tr:hover {
-    background: var(--color-neutral-800, rgba(255, 255, 255, 0.08)) !important;
+  html[data-theme="dark"] .ar-file-table__table tbody .ar-file-table__tr:hover {
+    background: var(--color-neutral-800, rgba(255, 255, 255, 0.08));
   }
 
-  html[data-theme="dark"] .ar-file-table__tr--selected {
-    background: var(--color-primary-900, rgba(0, 122, 255, 0.2)) !important;
+  html[data-theme="dark"] .ar-file-table__table tbody .ar-file-table__tr--selected {
+    background: var(--color-primary-900, rgba(0, 122, 255, 0.2));
   }
 
-  html[data-theme="dark"] .ar-file-table__tr--selected .ar-file-table__td {
-    color: var(--color-text-primary) !important;
+  html[data-theme="dark"] .ar-file-table__table tbody .ar-file-table__tr--selected .ar-file-table__td {
+    color: var(--color-text-primary);
   }
 
-  html[data-theme="dark"] .ar-file-table__tr--selected:hover {
-    background: var(--color-primary-800, rgba(0, 122, 255, 0.3)) !important;
+  html[data-theme="dark"] .ar-file-table__table tbody .ar-file-table__tr--selected:hover {
+    background: var(--color-primary-800, rgba(0, 122, 255, 0.3));
   }
 
-  html[data-theme="dark"] .ar-file-table__tr--duplicate {
-    background: rgba(255, 59, 48, 0.15) !important;
+  html[data-theme="dark"] .ar-file-table__table tbody .ar-file-table__tr--duplicate {
+    background: rgba(255, 59, 48, 0.15);
   }
 
-  html[data-theme="dark"] .ar-file-table__tr--duplicate:hover {
-    background: rgba(255, 59, 48, 0.2) !important;
+  html[data-theme="dark"] .ar-file-table__table tbody .ar-file-table__tr--duplicate:hover {
+    background: rgba(255, 59, 48, 0.2);
   }
 
   html[data-theme="dark"] .ar-file-table__tr--disabled {

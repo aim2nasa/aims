@@ -1135,6 +1135,38 @@
     --color-menu-selected-bg: var(--color-menu-selected-bg-light);
     --color-menu-shadow: var(--color-menu-shadow-light);
 
+    /* === ChatPanel / AI Assistant Purple Theme === */
+    --color-chat-accent: #8b5cf6;
+    --color-chat-accent-light: #a78bfa;
+    --color-chat-accent-alpha-05: rgba(139, 92, 246, 0.05);
+    --color-chat-accent-alpha-08: rgba(139, 92, 246, 0.08);
+    --color-chat-accent-alpha-10: rgba(139, 92, 246, 0.1);
+    --color-chat-accent-alpha-12: rgba(139, 92, 246, 0.12);
+    --color-chat-accent-alpha-15: rgba(139, 92, 246, 0.15);
+    --color-chat-accent-alpha-20: rgba(139, 92, 246, 0.2);
+    --color-chat-accent-alpha-25: rgba(139, 92, 246, 0.25);
+    --color-chat-accent-alpha-30: rgba(139, 92, 246, 0.3);
+    --color-chat-accent-alpha-40: rgba(139, 92, 246, 0.4);
+    --color-chat-accent-alpha-50: rgba(139, 92, 246, 0.5);
+    --color-chat-accent-alpha-80: rgba(139, 92, 246, 0.8);
+    --color-chat-accent-alpha-18: rgba(139, 92, 246, 0.18);
+    --color-chat-accent-alpha-35: rgba(139, 92, 246, 0.35);
+    --color-chat-accent-alpha-60: rgba(139, 92, 246, 0.6);
+    --color-chat-cyan-alpha-10: rgba(6, 182, 212, 0.1);
+    --color-chat-cyan-alpha-12: rgba(6, 182, 212, 0.12);
+    --color-chat-cyan-alpha-15: rgba(6, 182, 212, 0.15);
+    --color-chat-cyan-alpha-20: rgba(6, 182, 212, 0.2);
+
+    /* === Missing iOS Color Pairs === */
+    --color-ios-orange-light: #ff9500;
+    --color-ios-red-light: #ff3b30;
+    --color-ios-red-dark: #ff453a;
+    --color-ios-gray-light: #8e8e93;
+    --color-ios-gray-dark: #636366;
+
+    /* === Error Scale Extension === */
+    --color-error-400: #f87171;
+
     /* === RESPONSIVE DESIGN TOKENS === */
     --touch-target-min: 44px;
     --responsive-table-min-width: 600px;

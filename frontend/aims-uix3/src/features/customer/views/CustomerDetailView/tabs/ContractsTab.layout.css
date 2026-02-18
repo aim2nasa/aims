@@ -135,7 +135,7 @@
     gap: 12px;
     padding: 8px 12px;
     height: 32px;
-    background: #f5f6f7;
+    background: var(--color-bg-tertiary);
     border-bottom: 1px solid var(--color-ios-separator-light);
     font-size: var(--font-size-caption-1);
     font-family: var(--font-family-text);
@@ -149,7 +149,7 @@
   }
 
   html[data-theme="dark"] .customer-contracts-list-header {
-    background: #374151;
+    background: var(--color-neutral-700, #374151);
     border-bottom-color: var(--color-ios-separator-dark);
     color: var(--color-ios-text-tertiary-dark);
   }

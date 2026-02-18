@@ -228,9 +228,10 @@
     opacity: 0.85;
   }
 
-  /* Warning Row State */
-  .form-row--warning {
-    border-bottom-color: var(--color-icon-orange) !important;
+  /* Warning Row State (focus-within과 동일 상황에서도 warning 색상 유지) */
+  .form-row--warning,
+  .form-row--warning:focus-within {
+    border-bottom-color: var(--color-icon-orange);
   }
 
   /* Input with Status Indicator */

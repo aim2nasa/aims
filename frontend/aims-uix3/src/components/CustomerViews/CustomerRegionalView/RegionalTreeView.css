@@ -242,7 +242,7 @@
 
   html:not([data-theme="dark"]) .tree-node.selected .tree-node-label,
   html:not([data-theme="dark"]) .tree-node--selected .tree-node-label {
-    color: #0055a5;
+    color: var(--color-primary-700);
     font-weight: 600;
   }
 

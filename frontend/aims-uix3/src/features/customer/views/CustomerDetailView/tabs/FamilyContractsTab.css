@@ -303,14 +303,14 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* === 보험상품 === */
-  .fc-product {
+  /* === 보험상품 === (row prefix로 > span specificity 극복) */
+  .family-contracts-row .fc-product {
     font-weight: 600;
-    color: var(--color-ios-text-secondary-light) !important;
+    color: var(--color-ios-text-secondary-light);
   }
 
-  html[data-theme="dark"] .fc-product {
-    color: var(--color-ios-text-secondary-dark) !important;
+  html[data-theme="dark"] .family-contracts-row .fc-product {
+    color: var(--color-ios-text-secondary-dark);
   }
 
   /* === 계약자 / 피보험자 === */
@@ -320,15 +320,15 @@
   }
 
   /* 가족 구성원인 경우 강조 */
-  .fc-holder--family,
-  .fc-insured--family {
+  .family-contracts-row .fc-holder--family,
+  .family-contracts-row .fc-insured--family {
     font-weight: 600;
-    color: var(--color-primary-600) !important;
+    color: var(--color-primary-600);
   }
 
-  html[data-theme="dark"] .fc-holder--family,
-  html[data-theme="dark"] .fc-insured--family {
-    color: var(--color-primary-400) !important;
+  html[data-theme="dark"] .family-contracts-row .fc-holder--family,
+  html[data-theme="dark"] .family-contracts-row .fc-insured--family {
+    color: var(--color-primary-400);
   }
 
   /* === 계약일 === */
@@ -374,15 +374,15 @@
   }
 
   /* === 보험료 === */
-  .fc-premium {
+  .family-contracts-row .fc-premium {
     text-align: right;
     font-variant-numeric: tabular-nums;
     font-weight: 600;
-    color: var(--color-primary-600) !important;
+    color: var(--color-primary-600);
   }
 
-  html[data-theme="dark"] .fc-premium {
-    color: var(--color-primary-400) !important;
+  html[data-theme="dark"] .family-contracts-row .fc-premium {
+    color: var(--color-primary-400);
   }
 
 } /* end @layer components */

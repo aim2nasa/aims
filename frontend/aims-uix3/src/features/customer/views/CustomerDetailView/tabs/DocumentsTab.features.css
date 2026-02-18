@@ -267,14 +267,16 @@
     opacity: 0.7;
   }
 
-  /* 재시도 중 상태 */
+  /* 재시도 중 상태 (button. prefix로 button.--failed specificity 매칭) */
+  button.document-conversion-badge--retrying,
   .document-conversion-badge--retrying {
-    background: var(--color-ios-orange-light) !important;
+    background: var(--color-ios-orange-light);
     animation: conversion-spin 1s linear infinite;
   }
 
+  html[data-theme="dark"] button.document-conversion-badge--retrying,
   html[data-theme="dark"] .document-conversion-badge--retrying {
-    background: var(--color-ios-orange-dark) !important;
+    background: var(--color-ios-orange-dark);
   }
 
   /* === MEMO BUTTON === */

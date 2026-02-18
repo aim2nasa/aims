@@ -43,7 +43,7 @@
     margin: 0 -16px;
     padding: 0 12px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+    scrollbar-color: var(--color-chat-accent-alpha-30) transparent;
   }
 
   .chat-panel__welcome-features::-webkit-scrollbar {
@@ -55,7 +55,7 @@
   }
 
   .chat-panel__welcome-features::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.3);
+    background: var(--color-chat-accent-alpha-30);
     border-radius: 2px;
   }
 
@@ -73,7 +73,7 @@
   }
 
   .chat-panel__welcome-feature:hover {
-    background: rgba(139, 92, 246, 0.12);
+    background: var(--color-chat-accent-alpha-12);
     transform: translateX(2px);
   }
 
@@ -160,47 +160,47 @@
 
   /* Primary Feature - 바로 채팅하기 (강조) */
   .chat-panel__welcome-feature--primary {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    background: linear-gradient(135deg, var(--color-chat-accent-alpha-15) 0%, var(--color-chat-cyan-alpha-10) 100%);
+    border: 1px solid var(--color-chat-accent-alpha-25);
     margin-bottom: 2px;
     padding: 6px 10px;
   }
 
   .chat-panel__welcome-feature--primary:hover {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(6, 182, 212, 0.15) 100%);
-    border-color: rgba(139, 92, 246, 0.4);
+    background: linear-gradient(135deg, var(--color-chat-accent-alpha-25) 0%, var(--color-chat-cyan-alpha-15) 100%);
+    border-color: var(--color-chat-accent-alpha-40);
   }
 
   .chat-panel__welcome-feature--primary .chat-panel__welcome-feature-title {
-    color: #8B5CF6;
+    color: var(--color-chat-accent);
   }
 
   /* Dark Theme - Primary Feature */
   html[data-theme="dark"] .chat-panel__welcome-feature--primary {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(6, 182, 212, 0.12) 100%);
-    border-color: rgba(139, 92, 246, 0.35);
+    background: linear-gradient(135deg, var(--color-chat-accent-alpha-20) 0%, var(--color-chat-cyan-alpha-12) 100%);
+    border-color: var(--color-chat-accent-alpha-35);
   }
 
   html[data-theme="dark"] .chat-panel__welcome-feature--primary:hover {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(6, 182, 212, 0.2) 100%);
+    background: linear-gradient(135deg, var(--color-chat-accent-alpha-30) 0%, var(--color-chat-cyan-alpha-20) 100%);
   }
 
   html[data-theme="dark"] .chat-panel__welcome-feature--primary .chat-panel__welcome-feature-title {
-    color: #a78bfa;
+    color: var(--color-chat-accent-light);
   }
 
   /* Secondary Feature - 사용 가능한 기능 보기 (빈 상태에서 사용) */
   .chat-panel__welcome-feature--secondary {
     background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid var(--color-chat-accent-alpha-20);
     margin-top: 16px;
     width: auto;
     max-width: 280px;
   }
 
   .chat-panel__welcome-feature--secondary:hover {
-    background: rgba(139, 92, 246, 0.1);
-    border-color: rgba(139, 92, 246, 0.35);
+    background: var(--color-chat-accent-alpha-10);
+    border-color: var(--color-chat-accent-alpha-35);
   }
 
   .chat-panel__welcome-feature--secondary .chat-panel__welcome-feature-title {
@@ -210,11 +210,11 @@
   /* Dark Theme - Secondary Feature */
   html[data-theme="dark"] .chat-panel__welcome-feature--secondary {
     background: rgba(30, 26, 46, 0.8);
-    border-color: rgba(139, 92, 246, 0.25);
+    border-color: var(--color-chat-accent-alpha-25);
   }
 
   html[data-theme="dark"] .chat-panel__welcome-feature--secondary:hover {
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--color-chat-accent-alpha-15);
   }
 
   html[data-theme="dark"] .chat-panel__welcome-feature--secondary .chat-panel__welcome-feature-title {
@@ -241,7 +241,7 @@
   }
 
   .chat-panel__welcome-mode-toggle button:hover {
-    background: rgba(139, 92, 246, 0.1);
+    background: var(--color-chat-accent-alpha-10);
   }
 
   /* Mode Toggle - Empty State */
@@ -258,13 +258,13 @@
   }
 
   .chat-panel__empty-mode-toggle:hover {
-    background: rgba(139, 92, 246, 0.1);
+    background: var(--color-chat-accent-alpha-10);
   }
 
   /* Dark Theme - Mode Toggle */
   html[data-theme="dark"] .chat-panel__welcome-mode-toggle button:hover,
   html[data-theme="dark"] .chat-panel__empty-mode-toggle:hover {
-    background: rgba(139, 92, 246, 0.2);
+    background: var(--color-chat-accent-alpha-20);
   }
 
   /* Dark Theme - Welcome */
@@ -273,7 +273,7 @@
   }
 
   html[data-theme="dark"] .chat-panel__welcome-feature:hover {
-    background: rgba(139, 92, 246, 0.18);
+    background: var(--color-chat-accent-alpha-18);
   }
 
   /* Features Header - 기능 목록 설명 */
@@ -294,7 +294,7 @@
     gap: 4px;
     margin-top: 8px;
     padding: 4px;
-    background: rgba(139, 92, 246, 0.08);
+    background: var(--color-chat-accent-alpha-08);
     border-radius: 8px;
   }
 
@@ -323,7 +323,7 @@
   }
 
   html[data-theme="dark"] .chat-panel__question-tabs {
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--color-chat-accent-alpha-15);
   }
 
   html[data-theme="dark"] .chat-panel__question-tab:hover {

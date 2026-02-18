@@ -161,12 +161,12 @@
 
   html[data-theme="dark"] .chat-panel__context-menu {
     background: rgba(30, 26, 46, 0.95);
-    border-color: rgba(139, 92, 246, 0.2);
+    border-color: var(--color-chat-accent-alpha-20);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   }
 
   html[data-theme="dark"] .chat-panel__context-menu-item:hover {
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--color-chat-accent-alpha-15);
   }
 
   /* ==================== 변경된 값 하이라이트 ==================== */
@@ -177,7 +177,7 @@
   }
 
   html[data-theme="dark"] .chat-panel__changed-value {
-    color: #f87171;
+    color: var(--color-error-400);
   }
 
   /* ==================== 마크다운 테이블 ==================== */
@@ -224,8 +224,8 @@
     display: inline;
     padding: 2px 6px;
     margin: 0 2px;
-    background: rgba(139, 92, 246, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    background: var(--color-chat-accent-alpha-10);
+    border: 1px solid var(--color-chat-accent-alpha-20);
     border-radius: 4px;
     color: var(--color-accent-primary, #8b5cf6);
     font-size: inherit;
@@ -236,8 +236,8 @@
   }
 
   .chat-panel__doc-link:hover {
-    background: rgba(139, 92, 246, 0.2);
-    border-color: rgba(139, 92, 246, 0.4);
+    background: var(--color-chat-accent-alpha-20);
+    border-color: var(--color-chat-accent-alpha-40);
     transform: translateY(-1px);
   }
 
@@ -246,13 +246,13 @@
   }
 
   html[data-theme="dark"] .chat-panel__doc-link {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: var(--color-chat-accent-alpha-15);
+    border-color: var(--color-chat-accent-alpha-30);
   }
 
   html[data-theme="dark"] .chat-panel__doc-link:hover {
-    background: rgba(139, 92, 246, 0.25);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: var(--color-chat-accent-alpha-25);
+    border-color: var(--color-chat-accent-alpha-50);
   }
 
   /* ==================== Example Modal ==================== */

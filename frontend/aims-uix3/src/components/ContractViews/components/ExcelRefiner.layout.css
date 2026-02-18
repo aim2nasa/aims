@@ -398,7 +398,7 @@
 
   html[data-theme="dark"] .excel-refiner__compliance-badge--error {
     background: transparent;
-    color: #f87171;
+    color: var(--color-error-400);
   }
 
   /* 규격 위반 사유 메시지 */
@@ -421,7 +421,7 @@
 
   html[data-theme="dark"] .excel-refiner__compliance-message--error {
     background: transparent;
-    color: #f87171;
+    color: var(--color-error-400);
   }
 
   [data-theme="dark"] .excel-refiner__compliance-message--warning {
