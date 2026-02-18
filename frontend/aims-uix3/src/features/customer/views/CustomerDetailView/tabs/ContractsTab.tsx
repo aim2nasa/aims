@@ -390,16 +390,14 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     try {
       const data = await ContractService.getContractsByCustomer(customer._id)
       setContracts(data)
-      onContractCountChange?.(data.length)
     } catch (err) {
       console.error('[ContractsTab] 계약 로드 실패:', err)
       errorReporter.reportApiError(err as Error, { component: 'ContractsTab.loadContracts', payload: { customerId: customer._id } })
       setError(err instanceof Error ? err.message : '계약 정보를 불러올 수 없습니다.')
-      onContractCountChange?.(0)
     } finally {
       setIsLoading(false)
     }
-  }, [customer?._id, onContractCountChange])
+  }, [customer?._id])
 
   // 🍎 AR 데이터 로드
   const loadArReports = useCallback(async () => {
@@ -506,6 +504,36 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       window.removeEventListener('contractChanged', handleContractChanged)
     }
   }, [loadContracts])
+
+  // 🍎 고유 계약 수 계산 (증권번호 기준 중복 제거: API 계약 + AR/CR 이력)
+  const effectiveContractCount = useMemo(() => {
+    const policyNumbers = new Set<string>()
+
+    // API 계약
+    contracts.forEach(c => {
+      if (c.policy_number) policyNumbers.add(c.policy_number)
+    })
+
+    // AR/CR 이력 계약
+    if (historyTab === 'ar') {
+      contractHistories.forEach(h => {
+        if (h.policyNumber) policyNumbers.add(h.policyNumber)
+      })
+    } else {
+      crContractHistories.forEach(h => {
+        if (h.policyNumber) policyNumbers.add(h.policyNumber)
+      })
+    }
+
+    // 증권번호 없는 API 계약도 카운트 (policy_number가 빈 문자열일 경우)
+    const apiWithoutPolicy = contracts.filter(c => !c.policy_number).length
+    return policyNumbers.size + apiWithoutPolicy
+  }, [contracts, contractHistories, crContractHistories, historyTab])
+
+  // 🍎 탭 헤더 카운트 갱신 (API 계약 + AR/CR 이력 합산)
+  useEffect(() => {
+    onContractCountChange?.(effectiveContractCount)
+  }, [effectiveContractCount, onContractCountChange])
 
   // 🍎 검색어 변경 시 첫 페이지로 이동
   useEffect(() => {
@@ -1132,7 +1160,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       <div className="customer-contracts__header">
         <div className="customer-contracts__summary">
           <span className="customer-contracts__count">
-            총 <strong>{contracts.length}</strong>건
+            총 <strong>{effectiveContractCount}</strong>건
           </span>
           {contracts.length > 0 && (
             <span className="customer-contracts__total-premium">
