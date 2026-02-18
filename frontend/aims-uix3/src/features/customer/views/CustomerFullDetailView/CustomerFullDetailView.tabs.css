@@ -24,6 +24,9 @@
     cursor: pointer;
     transition: all 0.15s ease;
     position: relative;
+    word-break: keep-all;
+    text-align: center;
+    line-height: 1.25;
   }
 
   .report-tabs__tab:hover {
@@ -97,6 +100,9 @@
     cursor: pointer;
     transition: all 0.15s ease;
     position: relative;
+    word-break: keep-all;
+    text-align: center;
+    line-height: 1.25;
   }
 
   .history-tabs__tab:hover {
