@@ -11,19 +11,105 @@ description: AIMS CSS 작성 규칙. 스타일 수정, CSS 작성, 색상 변경
 
 | 금지 | 대안 |
 |------|------|
-| `#ffffff`, `#000000` 등 HEX 색상 | `var(--color-*)` CSS 변수 |
-| `rgba()`, `rgb()` 직접 사용 | `var(--color-*)` CSS 변수 |
-| `!important` | 선택자 우선순위 조정 |
+| `!important` | @layer 순서 / 셀렉터 specificity 조정 |
+| HEX 색상 직접 사용 (`#ffffff`) | `var(--color-*)` CSS 변수 |
+| `rgba()`, `rgb()` 직접 사용 | `var(--color-*-alpha-XX)` CSS 변수 |
 | inline style 색상값 | className 사용 |
-| 컴포넌트별 CSS 변수 정의 | `variables.css`에서만 정의 |
+| `font-weight: 500` | 400 또는 600만 사용 |
+| 500줄 초과 CSS 파일 | 분할 필수 |
+
+**예외**: 카카오/네이버 브랜드 가이드라인 고정값, `var(--xxx, rgba(...))` 형태의 fallback, box-shadow의 미세 rgba
+
+## @layer 필수 래핑
+
+**모든 CSS 파일은 @layer로 래핑해야 합니다.**
+
+```css
+/* 컴포넌트 CSS → @layer components */
+@layer components {
+  .my-component { ... }
+}
+
+/* 뷰 컨텍스트 오버라이드 → @layer views */
+@layer views {
+  .parent-view .my-component { ... }
+}
+```
+
+### Layer 순서 (낮은 → 높은 우선순위)
+
+```
+reset → tokens → theme → base → utilities → components → views → responsive
+```
+
+| Layer | 용도 |
+|-------|------|
+| `components` | 컴포넌트 기본 스타일 |
+| `views` | 부모 뷰에서 자식 컴포넌트 오버라이드 |
+| `responsive` | @media 쿼리 |
+
+### !important 대신 @layer 활용
+
+```css
+/* 잘못됨 - !important */
+.modal { z-index: 9999 !important; }
+
+/* 올바름 - @layer views가 @layer components보다 높은 우선순위 */
+@layer views {
+  .parent .modal { z-index: 9999; }
+}
+```
 
 ## CSS 변수 정의 위치
 
-**유일한 정의 파일**: `frontend/aims-uix3/src/styles/variables.css`
+| 대상 | 정의 위치 |
+|------|-----------|
+| 전역 디자인 토큰 | `src/shared/design/tokens.css` |
+| 테마 오버라이드 | `src/shared/design/theme.css` |
+| 모달 변수 | `src/shared/design/modal-variables.css` |
+| 컴포넌트 전용 변수 | 해당 컴포넌트 CSS 파일 |
 
 새 색상이 필요한 경우:
-1. `variables.css`에 변수 추가
+1. `tokens.css`에 변수 추가
 2. 컴포넌트에서 `var(--새변수)` 사용
+
+## --grid-cols 패턴 (테이블 컴포넌트)
+
+테이블 칼럼은 **`--grid-cols` CSS 변수로 1곳에서만 정의**합니다.
+
+```css
+/* 컴포넌트 CSS - 칼럼 정의 (Single Source) */
+.table-header, .table-row {
+  --grid-cols: 1fr 80px 120px;
+  grid-template-columns: var(--grid-cols);
+}
+
+/* checkbox 변형 - 자동 확장 */
+.table-header:has(.checkbox), .table-row:has(.checkbox) {
+  grid-template-columns: 28px var(--grid-cols);
+}
+```
+
+**칼럼 추가 시**: `--grid-cols` 값만 수정 (1~2곳)
+
+## CSS 파일 분할 규칙
+
+### 500줄 Hard Limit
+
+모든 CSS 파일은 **500줄 이하**를 유지합니다.
+
+### 분할 명명 규칙: `OriginalName.section-name.css`
+
+| 접미사 | 용도 |
+|--------|------|
+| `.layout.css` | 루트 컨테이너, flex/grid 구조 |
+| `.header.css` | 헤더/툴바 영역 |
+| `.table.css` | 데이터 그리드/테이블 |
+| `.list.css` | 리스트 컨테이너와 아이템 |
+| `.states.css` | 로딩/에러/빈 상태 |
+| `.modals.css` | 모달 다이얼로그 |
+| `.responsive.css` | @media 쿼리 블록 |
+| `.cfd-overrides.css` | @layer views 블록 |
 
 ## 아이콘 규칙
 
@@ -34,15 +120,7 @@ description: AIMS CSS 작성 규칙. 스타일 수정, CSS 작성, 색상 변경
 | 배경 | `transparent` (투명) |
 | 호버 효과 | `opacity` + `scale`만 허용 |
 
-**호버 시 금지**: 배경색 변경
-
-## font-weight 규칙
-
-| 허용 | 금지 |
-|------|------|
-| 400, 600 | 500 |
-
-`font-weight: 500` 사용 금지
+호버 시 배경색 변경 **금지**
 
 ## 타이포그래피 (Dense System)
 
@@ -53,12 +131,13 @@ description: AIMS CSS 작성 규칙. 스타일 수정, CSS 작성, 색상 변경
 | 테이블 헤더 | 11px | 600 |
 | 배지 | 10px | 400 |
 
-## 자주 사용하는 CSS 변수 예시
+## 자주 사용하는 CSS 변수
 
 ```css
 /* 배경 */
-var(--color-background)
-var(--color-background-secondary)
+var(--color-bg-primary)
+var(--color-bg-secondary)
+var(--color-bg-tertiary)
 var(--color-surface)
 
 /* 텍스트 */
@@ -78,42 +157,34 @@ var(--color-accent)
 var(--color-success)
 var(--color-warning)
 var(--color-error)
+var(--color-error-400)
+
+/* ChatPanel */
+var(--color-chat-accent)
+var(--color-chat-accent-light)
+var(--color-chat-accent-alpha-XX)
+
+/* iOS */
+var(--color-ios-orange-light)
+var(--color-ios-red-light)
+var(--color-ios-gray-light)
 ```
 
-## 위반 예시와 수정
+## 칼럼 추가 시 체크리스트
 
-### 위반 1: HEX 색상 직접 사용
-```css
-/* 잘못됨 */
-.button { background: #007AFF; }
-
-/* 올바름 */
-.button { background: var(--color-primary); }
-```
-
-### 위반 2: !important 사용
-```css
-/* 잘못됨 */
-.modal { z-index: 9999 !important; }
-
-/* 올바름 - 선택자 구체화 */
-.app .modal-container .modal { z-index: 9999; }
-```
-
-### 위반 3: inline style 색상
-```tsx
-/* 잘못됨 */
-<div style={{ color: '#333' }}>텍스트</div>
-
-/* 올바름 */
-<div className="text-primary">텍스트</div>
-```
+1. `--grid-cols` 값 수정 (컴포넌트 CSS)
+2. `@layer views` 블록에서도 `--grid-cols` 수정 (있을 경우)
+3. `grep "grid-template-columns"` 로 다른 오버라이드 확인
+4. Playwright 시각적 회귀 테스트 실행
 
 ## 캐싱 문제 해결
 
-아이콘이나 스타일이 반영되지 않을 때:
 ```bash
 rm -rf node_modules/.vite dist .vite
 npm run dev
 # 브라우저: Ctrl+Shift+R (하드 새로고침)
 ```
+
+## 상세 문서
+
+`frontend/aims-uix3/docs/CSS_SYSTEM.md` 참조
