@@ -149,6 +149,21 @@ const backStack: BackModalEntry[] = []
 let popstateHandlerInstalled = false
 let popstateIgnoreCount = 0
 
+/**
+ * 모달 cleanup에서 history.back() 호출 중인지 확인 + 자동 리셋.
+ * App.tsx의 popstate 핸들러가 호출하여 모달 cleanup으로 인한
+ * popstate 이벤트를 무시합니다 (뷰 전환 방지).
+ */
+let _modalCleanupBack = false
+
+export function consumeModalCleanupBack(): boolean {
+  if (_modalCleanupBack) {
+    _modalCleanupBack = false
+    return true
+  }
+  return false
+}
+
 function ensurePopstateHandler() {
   if (popstateHandlerInstalled) return
   popstateHandlerInstalled = true
@@ -211,9 +226,10 @@ export const useBackButton = (
     return () => {
       const index = backStack.indexOf(entry)
       if (index !== -1) {
-        // ESC/backdrop으로 닫힌 경우 → history 정리 필요
+        // ESC/backdrop/버튼으로 닫힌 경우 → history 정리 필요
         backStack.splice(index, 1)
         popstateIgnoreCount++
+        _modalCleanupBack = true
         history.back()
       }
       // index === -1: 뒤로가기로 닫힌 경우 → 전역 핸들러가 이미 스택에서 제거함

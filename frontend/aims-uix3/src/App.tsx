@@ -23,6 +23,7 @@ import type { Customer as _Customer } from './entities/customer'
 import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/version'
 import { checkFrontendVersionMismatch } from './services/versionService'
 import { errorReporter } from './shared/lib/errorReporter'
+import { consumeModalCleanupBack } from './shared/ui/Modal/hooks/useModalCore'
 
 // Lazy loading으로 성능 최적화
 const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
@@ -588,6 +589,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 🍎 브라우저 뒤로가기/앞으로가기 처리 (popstate)
   useEffect(() => {
     const handlePopState = () => {
+      // 모달 닫기(ESC/버튼)로 인한 history.back()은 무시 (뷰 전환 방지)
+      if (consumeModalCleanupBack()) return
+
       const urlParams = new URLSearchParams(window.location.search)
       const urlView = urlParams.get('view')
       const urlCustomerId = urlParams.get('customerId')
