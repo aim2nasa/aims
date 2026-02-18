@@ -456,25 +456,66 @@
 
   /* --- Responsive 480px (report) --- */
   @media (max-width: 480px) {
-    /* 🍎 Annual Report 테이블: 카드 레이아웃 (자식 480px 카드와 동기화) */
+    /* 🍎 Annual Report 테이블: 테이블 레이아웃 유지 + 수평 스크롤 (Customer Review와 동일 패턴)
+       - components 레이어의 카드 레이아웃을 테이블 1행 레이아웃으로 오버라이드
+       - 칼럼 헤더 표시 유지 (display:none 오버라이드)
+       - min-width로 수평 스크롤 유도 */
     .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header {
-      display: none;
+      display: grid;
+      min-width: 350px;
+      font-size: 10px;
     }
 
     .customer-full-detail .customer-full-detail__section-content--report .annual-report-row {
-      grid-template-columns: 1fr auto;
-      grid-template-rows: auto auto;
-      height: auto;
-      min-height: 36px;
-      padding: 6px 8px;
+      grid-template-columns: var(--grid-cols);
+      grid-template-rows: auto;
+      min-width: 350px;
+      font-size: 10px;
+      height: var(--row-height);
+      min-height: var(--row-height);
+      max-height: var(--row-height);
+      padding: 0 10px;
+      border-radius: 0;
+      border: none;
+      border-bottom: 1px solid var(--color-ios-separator-light);
     }
 
     .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) {
-      grid-template-columns: 24px 1fr auto;
-      grid-template-rows: auto auto;
+      grid-template-columns: 28px var(--grid-cols);
+      grid-template-rows: auto;
     }
 
-    /* 🍎 Customer Review 테이블: 카드 레이아웃 (min-width로 가로 스크롤) */
+    /* 카드형 grid 배치 초기화 → 자동 배치 (components 레이어 480px 카드 레이아웃 오버라이드) */
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row .row-owner,
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row .row-issue-date,
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row .row-premium,
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row .row-count,
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row .row-status {
+      grid-row: auto;
+      grid-column: auto;
+    }
+
+    /* 발행일: 카드형 left → 테이블형 center 복원 */
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row .row-issue-date {
+      text-align: center;
+    }
+
+    /* 계약수 칼럼 표시 복원 (카드형에서 숨김 → 테이블형에서 표시) */
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row .row-count {
+      display: block;
+    }
+
+    /* 체크박스 변형: 셀 배치 초기화 */
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) .row-checkbox,
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) .row-owner,
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) .row-issue-date,
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) .row-premium,
+    .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) .row-status {
+      grid-row: auto;
+      grid-column: auto;
+    }
+
+    /* 🍎 Customer Review 테이블: 테이블 레이아웃 유지 (min-width로 가로 스크롤) */
     .customer-full-detail .customer-full-detail__section-content--report .customer-review-table-header,
     .customer-full-detail .customer-full-detail__section-content--report .customer-review-row {
       min-width: 350px;
