@@ -385,4 +385,24 @@
     color: var(--color-primary-400);
   }
 
+  /* === 📱 모바일 반응형 (768px 이하) === */
+  @media (max-width: 768px) {
+    .family-contracts-header,
+    .family-contracts-row {
+      min-width: 700px;
+      font-size: 10px;
+      gap: 3px;
+      padding: 4px 6px;
+    }
+
+    .family-contracts-list {
+      min-width: 700px;
+    }
+
+    .fc-relation-badge {
+      font-size: 9px;
+      padding: 1px 4px;
+    }
+  }
+
 } /* end @layer components */
