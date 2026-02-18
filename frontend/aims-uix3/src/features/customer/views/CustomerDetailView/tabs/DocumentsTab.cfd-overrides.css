@@ -14,9 +14,10 @@
 
   .customer-full-detail__section-content--documents .customer-documents__list-container {
     flex: 1;
-    overflow-y: auto;
+    overflow: auto; /* 🍎 수직+수평 스크롤 (AR이력 탭과 동일) */
     gap: 0;
     padding: 0;
+    min-width: 0; /* flex 체인 min-width 전파 차단 → overflow-x 스크롤바 활성화 */
   }
 
   /* 문서 리스트 헤더 - A행 높이 32px - --grid-cols 오버라이드로 Single Source 유지 */
@@ -334,22 +335,50 @@
 
   /* --- Responsive 480px (documents) --- */
   @media (max-width: 480px) {
-    /* 🍎 문서 테이블: 카드 레이아웃 (자식 480px 카드와 동기화) */
+    /* 🍎 테이블 레이아웃 유지 + 수평 스크롤 (AR이력 ContractsTab 패턴)
+       - @layer components (extras.css)의 카드 2행 레이아웃을 테이블 1행으로 오버라이드
+       - 칼럼 헤더 표시 유지 (display:none 오버라이드)
+       - 연결일 표시 유지
+       - 고정 폭 칼럼 3개 (아이콘 20px | 파일명 300px | 연결일 100px)
+       - min-width: max-content → 수평 스크롤 유도 */
+
+    /* 칼럼 헤더: display:grid 복원 (extras.css display:none 오버라이드) */
     .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-list-header {
-      display: none;
+      display: grid;
+      grid-template-columns: 20px 300px 100px;
+      min-width: max-content;
     }
 
+    /* 아이템: 테이블 1행 레이아웃 (extras.css 카드 2행 레이아웃 오버라이드) */
     .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-item {
-      grid-template-columns: 20px 1fr auto;
-      grid-template-rows: auto auto;
-      height: auto;
-      min-height: 36px;
-      padding: 6px 8px;
+      grid-template-columns: 20px 300px 100px;
+      grid-template-rows: auto;
+      min-width: max-content;
+      height: var(--row-height);
+      min-height: var(--row-height);
+      max-height: var(--row-height);
+      padding: 0 10px;
+      border: none;
+      border-radius: 0;
     }
 
-    .customer-full-detail .customer-full-detail__section-content--documents .header-date,
-    .customer-full-detail .customer-full-detail__section-content--documents .status-date {
-      display: none;
+    /* 아이콘: 카드형 row-span 제거 → 자동 배치 */
+    .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-item .document-icon-wrapper {
+      grid-row: auto;
+      grid-column: auto;
+    }
+
+    /* 파일명: 카드형 grid 위치 제거 → 자동 배치 */
+    .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-item .status-filename {
+      grid-row: auto;
+      grid-column: auto;
+    }
+
+    /* 연결일: 카드형 grid 위치 제거 → 자동 배치 + 중앙 정렬 */
+    .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-item .status-date {
+      grid-row: auto;
+      grid-column: auto;
+      text-align: center;
     }
   }
 
