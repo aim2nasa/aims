@@ -50,7 +50,7 @@
   }
 
   .customer-detail-view__actions > .button {
-    flex: 1;
+    flex: none;
     min-width: 0;
   }
 
