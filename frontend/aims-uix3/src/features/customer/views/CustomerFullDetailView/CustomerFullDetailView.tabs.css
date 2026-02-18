@@ -342,18 +342,31 @@
       min-height: 300px;
     }
 
-    /* 🍎 액션 버튼: 가로 스크롤 + 컴팩트 */
+    /* 🍎 액션 버튼: 한 줄 가로 배치 + 균등 분할 */
     .customer-full-detail .customer-full-detail__actions {
-      overflow-x: auto;
+      display: flex;
+      flex-direction: row;
       flex-wrap: nowrap;
+      overflow-x: hidden;
       padding: 6px 8px;
       gap: 6px;
     }
 
-    /* 🍎 액션 버튼 내 개별 버튼: 축소 방지 */
+    /* 🍎 Tooltip 래퍼: 균등 분할 */
+    .customer-full-detail .customer-full-detail__actions > .tooltip-trigger {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* 🍎 버튼: 래퍼 전체 너비 사용 */
     .customer-full-detail .customer-full-detail__actions .button {
-      flex-shrink: 0;
+      width: 100%;
       white-space: nowrap;
+    }
+
+    /* 🍎 spacer 숨김 */
+    .customer-full-detail .customer-full-detail__actions > .customer-full-detail__actions-spacer {
+      display: none;
     }
 
     /* 🍎 섹션 타이틀: 높이 축소, 패딩 축소 */

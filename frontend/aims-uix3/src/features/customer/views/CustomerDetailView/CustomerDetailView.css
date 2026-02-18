@@ -40,12 +40,18 @@
   /* 🍎 액션 버튼 영역 */
   .customer-detail-view__actions {
     display: flex;
-    justify-content: flex-end;
+    flex-direction: row;
+    flex-wrap: nowrap;
     gap: 8px;
     margin-bottom: var(--spacing-4);
     padding-bottom: var(--spacing-4);
     border-bottom: 1px solid var(--color-layout-brb-light);
     flex-shrink: 0;
+  }
+
+  .customer-detail-view__actions > .button {
+    flex: 1;
+    min-width: 0;
   }
 
   /* 🍎 탭 바 고정 (축소 방지) + 7탭 수용 폭 확장 */
@@ -310,12 +316,14 @@
     }
 
     .customer-detail-view__actions {
-      flex-direction: column;
+      flex-direction: row;
+      flex-wrap: nowrap;
       gap: 6px;
     }
 
-    .customer-detail-view__action-button {
-      width: 100%;
+    .customer-detail-view__actions > .button {
+      flex: 1;
+      min-width: 0;
     }
   }
 

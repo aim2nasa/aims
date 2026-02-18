@@ -202,18 +202,32 @@
     overflow-y: auto;
   }
 
-  /* 🍎 모바일에서 액션 버튼 컴팩트화 */
+  /* 🍎 모바일에서 액션 버튼: 한 줄 가로 배치 + 균등 분할 */
   @media (max-width: 768px) {
-    .customer-full-detail__actions {
-      padding: 6px 8px;
-      gap: 4px;
-      overflow-x: auto;
+    .customer-full-detail .customer-full-detail__actions {
+      display: flex;
+      flex-direction: row;
       flex-wrap: nowrap;
+      padding: 6px 8px;
+      gap: 6px;
+      overflow-x: hidden;
     }
 
-    .customer-full-detail__actions .button {
-      flex-shrink: 0;
+    /* 🍎 Tooltip 래퍼: 균등 분할 */
+    .customer-full-detail .customer-full-detail__actions > .tooltip-trigger {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* 🍎 버튼: 래퍼 전체 너비 사용 */
+    .customer-full-detail .customer-full-detail__actions .button {
+      width: 100%;
       white-space: nowrap;
+    }
+
+    /* 🍎 spacer 숨김 (모바일에서 불필요) */
+    .customer-full-detail .customer-full-detail__actions > .customer-full-detail__actions-spacer {
+      display: none;
     }
 
     /* 🍎 레이아웃 리셋 버튼 숨김 (모바일에서 리사이즈 불가) */

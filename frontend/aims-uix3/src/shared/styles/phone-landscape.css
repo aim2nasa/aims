@@ -63,17 +63,25 @@
     min-height: 250px;
   }
 
-  /* 🍎 액션 버튼: 아이콘만 표시 + 울트라 컴팩트 */
+  /* 🍎 액션 버튼: 한 줄 가로 배치 + 균등 분할 */
   .layout-main--phone-landscape .customer-full-detail__actions {
-    overflow-x: auto;
+    display: flex;
+    flex-direction: row;
     flex-wrap: nowrap;
+    overflow-x: hidden;
     padding: 2px 8px;
     gap: 4px;
     border-bottom: none;
   }
 
+  /* 🍎 Tooltip 래퍼: 균등 분할 */
+  .layout-main--phone-landscape .customer-full-detail__actions > .tooltip-trigger {
+    flex: 1;
+    min-width: 0;
+  }
+
   .layout-main--phone-landscape .customer-full-detail__actions .button {
-    flex-shrink: 0;
+    width: 100%;
     white-space: nowrap;
     padding: 2px 8px;
     min-height: 28px;
@@ -82,6 +90,11 @@
   /* 버튼 텍스트: 컴팩트 폰트 */
   .layout-main--phone-landscape .customer-full-detail__actions .button__content {
     font-size: 11px;
+  }
+
+  /* 🍎 spacer/리셋 버튼 숨김 */
+  .layout-main--phone-landscape .customer-full-detail__actions > .customer-full-detail__actions-spacer {
+    display: none;
   }
 
   .layout-main--phone-landscape .customer-full-detail .customer-full-detail__reset-layout {

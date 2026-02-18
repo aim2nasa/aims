@@ -129,3 +129,37 @@
   }
 
 } /* end @layer utilities */
+
+/* 🍎 모바일: 액션 버튼 한 줄 가로 배치 (unlayered → 모든 @layer보다 우선) */
+@media (max-width: 768px) {
+  .customer-detail-view__actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .customer-detail-view__actions > .button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .customer-full-detail .customer-full-detail__actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .customer-full-detail .customer-full-detail__actions > .tooltip-trigger {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .customer-full-detail .customer-full-detail__actions .button {
+    width: 100%;
+  }
+
+  .customer-full-detail .customer-full-detail__actions > .customer-full-detail__actions-spacer {
+    display: none;
+  }
+}
