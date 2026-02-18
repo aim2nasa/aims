@@ -1064,7 +1064,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
 
     // 🖥️ 데스크톱: 기존 3패널 레이아웃
-    const leftPaneWidth = leftPaneCollapsed ? 60 : 250
+    const leftPaneWidth = leftPaneCollapsed ? 60 : 224
     const leftPaneWidthVar = `${leftPaneWidth}px` // 🍎 transition 동기화: 실제 픽셀 값 사용
     const mainPaneWidth = `calc(100vw - ${leftPaneWidthVar})`
 
@@ -1506,10 +1506,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               top: `calc(var(--header-height-base) + var(--gap-top))`,
               width: layoutDimensions.leftPaneWidthVar,
               height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
-              paddingTop: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
-              paddingRight: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
+              paddingTop: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-4)',
+              paddingRight: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-3)',
               paddingBottom: 'var(--spacing-2)',
-              paddingLeft: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
+              paddingLeft: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-3)',
               transition: isResizing ? 'none' : 'width var(--duration-apple-graceful) var(--easing-apple-smooth), padding var(--duration-apple-graceful) var(--easing-apple-smooth)'
             }}
           >
