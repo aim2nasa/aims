@@ -1,13 +1,13 @@
 /**
  * AIMS UIX-3 Tabs Styles
  * @since 2025-10-09
- * @version 2.0.0 - Modern underline indicator design
+ * @version 2.1.0 - Modern underline indicator + icon-only with count
  *
  * Clean, single-layer tab design:
  * - No container background (eliminates double-layer issue)
  * - Active tab: bottom indicator line + full opacity
  * - Inactive tab: subtle opacity, no background
- * - Icon-only mode: floating label popup on click
+ * - Icon-only mode (<=640px or landscape mobile): icon(count) + floating label popup
  */
 
 @layer components {
@@ -121,14 +121,27 @@
     align-items: center;
   }
 
-  /* === Tab Count === */
+  /* === Tab Count (icon-only mode: visible next to icon) === */
   .tabs-bar__tab-count {
+    display: none;
+    font-size: 10px;
+    font-weight: 600;
+    opacity: 0.6;
+    margin-left: -2px;
+  }
+
+  .tabs-bar__tab--active .tabs-bar__tab-count {
+    opacity: 0.85;
+  }
+
+  /* === Tab Count Inline (text mode: inside label) === */
+  .tabs-bar__tab-count--inline {
     opacity: 0.6;
     font-size: 12px;
     margin-left: 2px;
   }
 
-  .tabs-bar__tab--active .tabs-bar__tab-count {
+  .tabs-bar__tab--active .tabs-bar__tab-count--inline {
     opacity: 0.8;
   }
 
@@ -180,15 +193,51 @@
     }
   }
 
-  /* === Responsive: 640px - Icon Only === */
+  /* ============================================================
+   * Icon-Only Mode: <=640px portrait OR landscape mobile
+   * - Labels hidden, icons shown with count: icon(N)
+   * - Click shows floating label popup
+   * ============================================================ */
+
+  /* === Portrait narrow (<=640px) === */
   @media (max-width: 640px) {
     .tabs-bar__tab {
       padding: 8px 6px;
       font-size: 12px;
+      gap: 1px;
     }
 
     .tabs-bar__tab-label {
       display: none;
+    }
+
+    .tabs-bar__tab-count {
+      display: inline;
+    }
+
+    .tabs-bar__tab-icon {
+      font-size: 16px;
+    }
+  }
+
+  /* === Landscape mobile (orientation + small height + touch) === */
+  @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+    .tabs-bar {
+      max-width: 100%;
+    }
+
+    .tabs-bar__tab {
+      padding: 6px 4px;
+      font-size: 11px;
+      gap: 1px;
+    }
+
+    .tabs-bar__tab-label {
+      display: none;
+    }
+
+    .tabs-bar__tab-count {
+      display: inline;
     }
 
     .tabs-bar__tab-icon {

@@ -69,13 +69,18 @@ export const Tabs: React.FC<TabsProps> = ({
   const popupTimerRef = useRef<number | undefined>(undefined);
   const isIconOnlyRef = useRef(false);
 
-  // Track icon-only mode via media query (labels hidden at <=640px)
+  // Track icon-only mode via media query (<=640px OR landscape mobile)
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)');
-    isIconOnlyRef.current = mq.matches;
-    const handler = (e: MediaQueryListEvent) => { isIconOnlyRef.current = e.matches; };
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    const mqNarrow = window.matchMedia('(max-width: 640px)');
+    const mqLandscape = window.matchMedia('(orientation: landscape) and (max-height: 500px) and (pointer: coarse)');
+    const update = () => { isIconOnlyRef.current = mqNarrow.matches || mqLandscape.matches; };
+    update();
+    mqNarrow.addEventListener('change', update);
+    mqLandscape.addEventListener('change', update);
+    return () => {
+      mqNarrow.removeEventListener('change', update);
+      mqLandscape.removeEventListener('change', update);
+    };
   }, []);
 
   // Cleanup popup timer
@@ -129,10 +134,13 @@ export const Tabs: React.FC<TabsProps> = ({
               data-tab-key={tab.key}
             >
               {tab.icon && <span className="tabs-bar__tab-icon">{tab.icon}</span>}
+              {tab.count !== undefined && (
+                <span className="tabs-bar__tab-count">({tab.count})</span>
+              )}
               <span className="tabs-bar__tab-label">
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className="tabs-bar__tab-count"> ({tab.count})</span>
+                  <span className="tabs-bar__tab-count--inline"> ({tab.count})</span>
                 )}
               </span>
             </button>
