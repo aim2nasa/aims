@@ -1,13 +1,12 @@
 /**
  * AIMS UIX-3 Tabs Styles
  * @since 2025-10-09
- * @version 2.1.0 - Modern underline indicator + icon-only with count
+ * @version 3.0.0 - Modern underline indicator with icon + label
  *
  * Clean, single-layer tab design:
  * - No container background (eliminates double-layer issue)
  * - Active tab: bottom indicator line + full opacity
  * - Inactive tab: subtle opacity, no background
- * - Icon-only mode (<=640px or landscape mobile): icon(count) + floating label popup
  */
 
 @layer components {
@@ -21,7 +20,7 @@
     gap: 0;
     box-shadow: none;
     margin-bottom: var(--spacing-md);
-    max-width: 500px;
+    max-width: 600px;
     margin-left: auto;
     margin-right: auto;
     border-bottom: 1px solid var(--color-layout-brb-light);
@@ -121,24 +120,11 @@
     align-items: center;
   }
 
-  /* === Tab Count (icon-only mode: visible next to icon) === */
-  .tabs-bar__tab-count {
-    display: none;
-    font-size: 10px;
-    font-weight: 600;
-    opacity: 0.6;
-    margin-left: -2px;
-  }
-
-  .tabs-bar__tab--active .tabs-bar__tab-count {
-    opacity: 0.85;
-  }
-
-  /* === Tab Count Inline (text mode: inside label) === */
+  /* === Tab Count Inline (inside label) === */
   .tabs-bar__tab-count--inline {
     opacity: 0.6;
     font-size: 12px;
-    margin-left: 2px;
+    margin-left: 3px;
   }
 
   .tabs-bar__tab--active .tabs-bar__tab-count--inline {
@@ -155,68 +141,28 @@
     outline-offset: -2px;
   }
 
-  /* === Label Popup (icon-only mode) === */
-  .tabs-bar__label-popup {
-    position: fixed;
-    top: var(--popup-top);
-    left: var(--popup-left);
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.78);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 5px 10px;
-    border-radius: 6px;
-    white-space: nowrap;
-    z-index: 9999;
-    pointer-events: none;
-    animation: tabs-popup-in 0.2s var(--easing-ease-out);
-    font-family: var(--font-family-system);
-    -webkit-font-smoothing: antialiased;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  [data-theme="dark"] .tabs-bar__label-popup {
-    background: rgba(255, 255, 255, 0.18);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
-
-  @keyframes tabs-popup-in {
-    from {
-      opacity: 0;
-      transform: translateX(-50%) translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-  }
-
   /* ============================================================
-   * Icon-Only Mode: <=640px portrait OR landscape mobile
-   * - Labels hidden, icons shown with count: icon(N)
-   * - Click shows floating label popup
+   * Responsive: Mobile
    * ============================================================ */
 
   /* === Portrait narrow (<=640px) === */
   @media (max-width: 640px) {
+    .tabs-bar {
+      max-width: 100%;
+      gap: 4px;
+    }
+
     .tabs-bar__tab {
+      flex: 1 1 auto;
       padding: 8px 6px;
-      font-size: 12px;
-      gap: 1px;
-    }
-
-    .tabs-bar__tab-label {
-      display: none;
-    }
-
-    .tabs-bar__tab-count {
-      display: inline;
+      font-size: 11px;
+      gap: 2px;
+      min-width: 0;
     }
 
     .tabs-bar__tab-icon {
-      font-size: 16px;
+      font-size: 14px;
+      flex-shrink: 0;
     }
   }
 
@@ -224,24 +170,20 @@
   @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
     .tabs-bar {
       max-width: 100%;
+      gap: 4px;
     }
 
     .tabs-bar__tab {
-      padding: 6px 4px;
+      flex: 1 1 auto;
+      padding: 6px 6px;
       font-size: 11px;
-      gap: 1px;
-    }
-
-    .tabs-bar__tab-label {
-      display: none;
-    }
-
-    .tabs-bar__tab-count {
-      display: inline;
+      gap: 2px;
+      min-width: 0;
     }
 
     .tabs-bar__tab-icon {
-      font-size: 16px;
+      font-size: 14px;
+      flex-shrink: 0;
     }
   }
 

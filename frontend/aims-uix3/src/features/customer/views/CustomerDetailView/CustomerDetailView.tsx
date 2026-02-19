@@ -431,7 +431,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     const baseTabs: Tab[] = [
       {
         key: 'info',
-        label: '기본 정보',
+        label: '기본정보',
         icon: (
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
             <circle cx="8" cy="5" r="2.5"/>
@@ -456,7 +456,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     } else {
       baseTabs.push({
         key: 'relationships',
-        label: '가족 관계',
+        label: '가족관계',
         icon: (
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
             <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
@@ -469,7 +469,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     // 보험 계약 탭 추가
     baseTabs.push({
       key: 'contracts',
-      label: '보험 계약',
+      label: '보험계약',
       icon: (
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
           <rect x="2" y="2" width="12" height="12" rx="2"/>
@@ -510,7 +510,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       },
       {
         key: 'annual_report',
-        label: 'Annual Report',
+        label: 'AR',
         icon: (
           <svg
             width="14"
@@ -535,7 +535,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       },
       {
         key: 'customer_review',
-        label: '변액 리포트',
+        label: 'CRS',
         icon: (
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
             {/* Document outline */}
