@@ -24,7 +24,6 @@ describe('Auth API', () => {
     Object.defineProperty(window, 'location', {
       value: {
         origin: 'http://localhost:5177',
-        href: '',
         get href() { return mockHref },
         set href(value: string) { mockHref = value }
       },
