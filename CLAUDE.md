@@ -626,6 +626,7 @@ npm run dev
 | `deploy-monitor` | 배포 후 헬스체크 | 배포 완료 후 |
 | `test-analyzer` | 테스트 실패 분석 | 테스트 실패 시 |
 | `gini` | **SW 품질 검증 (Quality Gate)** | 아키텍처 변경, 인프라 수정, 미봉책 의심 시 |
+| `alex` | **세계 최고 SW 개발자/아키텍트** | 복잡한 설계+구현, 대규모 변경, "Alex" 호출 시 |
 
 ### 🔴 지니 (Gini) - SW Quality Engineer
 
