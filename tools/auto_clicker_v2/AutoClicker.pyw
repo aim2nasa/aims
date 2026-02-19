@@ -9,6 +9,10 @@
      - 패키징/개발 환경의 경로 해석 결과를 출력
   4. URI Scheme 모드: AutoClicker.exe "aims-ac://start?token=NONCE"
      - AIMS 웹에서 URI 호출 시 Windows가 실행 (Phase 1 토큰 인증)
+  5. MetDO Reader 모드: AutoClicker.exe --run-metdo <screenshot_path>
+     - SikuliX가 고객 상세정보 OCR 호출 시 사용 (stdout으로 JSON 출력)
+  6. 리포트 생성 모드: AutoClicker.exe --run-reports <output_dir>
+     - SikuliX 완료 후 AIMS 엑셀 + JSON + 실행결과 엑셀 생성
 """
 import sys
 import os
@@ -69,6 +73,27 @@ elif len(sys.argv) >= 2 and sys.argv[1] == "--run-ocr":
     sys.argv = [sys.argv[0]] + sys.argv[2:]
     from ocr.upstage_ocr_api import main as ocr_main
     sys.exit(ocr_main())
+
+elif len(sys.argv) >= 3 and sys.argv[1] == "--run-metdo":
+    # MetDO Reader 프록시 모드: SikuliX → AutoClicker.exe --run-metdo <screenshot>
+    # stdout으로 JSON 출력 (SikuliX subprocess에서 캡처)
+    screenshot_path = sys.argv[2]
+    sys.argv = [sys.argv[0], screenshot_path, "--json"]
+    # metdo_reader를 번들 내 또는 상위 디렉토리에서 찾아 실행
+    metdo_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "metdo_reader")
+    if not os.path.isdir(metdo_dir):
+        metdo_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "metdo_reader")
+    sys.path.insert(0, metdo_dir)
+    from read_customer import main as metdo_main
+    sys.exit(metdo_main())
+
+elif len(sys.argv) >= 3 and sys.argv[1] == "--run-reports":
+    # 리포트 생성 모드: SikuliX → AutoClicker.exe --run-reports <output_dir>
+    output_dir = sys.argv[2]
+    sys.argv = [sys.argv[0], output_dir]
+    from generate_reports import main as reports_main
+    reports_main()
+    sys.exit(0)
 
 elif len(sys.argv) >= 2 and sys.argv[1].startswith("aims-ac://"):
     # URI Scheme 모드: AIMS 웹 → aims-ac://start?token=NONCE → AC 실행

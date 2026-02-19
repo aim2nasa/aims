@@ -771,6 +771,8 @@ def click_all_rows_with_scroll():
     Returns:
         int: 선택한 행 개수
     """
+    global global_screenshot_counter
+
     log(u"")
     log(u"    === 변액보험리포트 순차 클릭 시작 (이미지 매칭 기반) ===")
 
@@ -866,7 +868,6 @@ def click_all_rows_with_scroll():
             scroll_before_region = Region(int(base_x + 50), int(header_y + 30), 400, 30)
             scroll_before_img = None
             try:
-                global global_screenshot_counter
                 global_screenshot_counter += 1
                 seq_num = global_screenshot_counter
 
@@ -1029,8 +1030,6 @@ def click_all_rows_with_scroll():
 
                 # 스크린샷 저장 (전역 순서 번호 + 전체 화면)
                 try:
-                    global global_screenshot_counter
-
                     # 전체 화면 스크린샷 (전역 순서용)
                     global_screenshot_counter += 1
                     seq_num = global_screenshot_counter
@@ -1245,6 +1244,11 @@ def download_annual_report():
     """
     log(u"")
     log(u"[7단계] Annual Report 다운로드")
+
+    # AR PDF 저장 전 디렉토리 스냅샷 (파일명 추적용)
+    ar_pdf_files_before = set()
+    if PDF_DOWNLOAD_DIR and os.path.isdir(PDF_DOWNLOAD_DIR):
+        ar_pdf_files_before = set(f for f in os.listdir(PDF_DOWNLOAD_DIR) if f.lower().endswith('.pdf'))
 
     MAX_RETRY = 3
     pdf_loaded = False
@@ -1512,7 +1516,15 @@ def download_annual_report():
         raise NavigationResetRequired(u"AR PDF 뷰어 닫기 실패")
 
     log(u"    Annual Report 다운로드 완료")
-    return {'exists': True, 'saved': True, 'reason': u'다운로드 완료'}
+    # 새로 저장된 AR PDF 파일명 감지
+    ar_saved_files = []
+    if PDF_DOWNLOAD_DIR and os.path.isdir(PDF_DOWNLOAD_DIR):
+        ar_pdf_files_after = set(f for f in os.listdir(PDF_DOWNLOAD_DIR) if f.lower().endswith('.pdf'))
+        new_ar_files = ar_pdf_files_after - ar_pdf_files_before
+        if new_ar_files:
+            ar_saved_files = sorted(new_ar_files)
+            log(u"    [파일명] %s" % u", ".join(ar_saved_files))
+    return {'exists': True, 'saved': True, 'reason': u'다운로드 완료', 'saved_files': ar_saved_files}
 
 
 def recover_to_report_list(report_number):
@@ -1757,8 +1769,14 @@ def save_report_pdf(report_number):
         'success': False,
         'saved': False,
         'duplicate': False,
-        'error': None
+        'error': None,
+        'saved_filename': None
     }
+
+    # PDF 저장 전 디렉토리 스냅샷 (파일명 추적용)
+    pdf_files_before = set()
+    if PDF_DOWNLOAD_DIR and os.path.isdir(PDF_DOWNLOAD_DIR):
+        pdf_files_before = set(f for f in os.listdir(PDF_DOWNLOAD_DIR) if f.lower().endswith('.pdf'))
 
     log(u"")
     log(u"    ===== PDF 저장 시작 [보고서 #%d] =====" % report_number)
@@ -2109,6 +2127,13 @@ def save_report_pdf(report_number):
             result['success'] = True
             capture_step_screenshot(report_number, "saved")
             log(u"        [VERIFIED] 변액리포트 #%d 저장 완료 확인 (저장 다이얼로그 정상 닫힘)" % report_number)
+            # 새로 저장된 PDF 파일명 감지
+            if PDF_DOWNLOAD_DIR and os.path.isdir(PDF_DOWNLOAD_DIR):
+                pdf_files_after = set(f for f in os.listdir(PDF_DOWNLOAD_DIR) if f.lower().endswith('.pdf'))
+                new_files = pdf_files_after - pdf_files_before
+                if new_files:
+                    result['saved_filename'] = sorted(new_files)[0]
+                    log(u"        [파일명] %s" % result['saved_filename'])
 
         # Step 9-10: PDF 뷰어 닫기 (포커스 확보 + 3회 재시도)
         # ★ 근본 원인: PDF 저장 후 포커스가 PDF 뷰어에서 이탈할 수 있음
@@ -2950,6 +2975,9 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     var_metlife_err = sum(1 for r in save_results if r.get('error') and u'MetLife' in (r.get('error') or u''))
     var_other_err = sum(1 for r in save_results if r.get('error') and u'MetLife' not in (r.get('error') or u''))
 
+    # CRS PDF 저장 파일명 수집
+    crs_saved_files = [r.get('saved_filename') for r in save_results if r.get('saved') and r.get('saved_filename')]
+
     customer_result = {
         'customer_name': customer_name or u'',
         'variable_insurance': {
@@ -2960,6 +2988,7 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             'no_variable_contract': var_no_contract > 0,
             'metlife_errors': var_metlife_err,
             'error_details': [r.get('error') for r in save_results if r.get('error')],
+            'saved_files': crs_saved_files,
         },
         'annual_report': ar_result if isinstance(ar_result, dict) else {'exists': None, 'saved': False, 'reason': u'unknown'},
         'issues': [],

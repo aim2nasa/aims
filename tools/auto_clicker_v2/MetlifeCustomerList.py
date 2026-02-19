@@ -25,6 +25,8 @@ setFindFailedResponse(ABORT)  # 이미지 못 찾으면 즉시 중단
 SCRIPT_DIR = os.environ.get("AC_HOME", r"D:\aims\tools\auto_clicker_v2")
 _DEFAULT_CAPTURE_BASE = os.path.join(SCRIPT_DIR, "output")
 OCR_SCRIPT = os.path.join(SCRIPT_DIR, "ocr", "upstage_ocr_api.py")
+# metdo_reader: 고객 상세정보 OCR (고객등록/조회 페이지 스크린샷 → 상세정보 추출)
+METDO_READER_SCRIPT = os.path.join(os.path.dirname(SCRIPT_DIR), "metdo_reader", "read_customer.py")
 # 패키징 모드: AC_EXE_PATH가 설정되면 AutoClicker.exe --run-ocr 사용 (system Python 불필요)
 _AC_EXE_PATH = os.environ.get("AC_EXE_PATH", "")
 
@@ -403,6 +405,89 @@ def find_any(*imgs):
             return img
     log("[ERROR] 다음 이미지 중 하나도 찾을 수 없음: " + str(imgs))
     exit(1)
+
+
+def capture_customer_detail(customer_name):
+    """
+    고객등록/조회 페이지 스크린샷 → metdo_reader OCR → 고객 상세정보 반환
+
+    고객을 클릭하면 표시되는 '고객등록/조회' 페이지에서
+    전체 화면 스크린샷을 캡처하고, metdo_reader를 통해
+    전화번호, 이메일, 주소, 개인/법인 구분 등 상세정보를 추출합니다.
+
+    Args:
+        customer_name: 고객명 (파일명 및 로그용)
+
+    Returns:
+        dict: 상세정보 dict (metdo_reader JSON 출력)
+              {'customer_type': '개인', 'name': '홍길동', 'mobile_phone': '010-...', ...}
+              실패 시 None
+    """
+    import shutil
+    # 안전한 파일명 생성 (특수문자 제거)
+    safe_name = customer_name.replace("/", "_").replace("\\", "_").replace(":", "_")
+    screenshot_path = os.path.join(CAPTURE_DIR, u"detail_%s.png" % safe_name)
+
+    try:
+        # 1. 전체 화면 캡처 (SikuliX capture)
+        temp = capture(SCREEN)
+        shutil.copy(temp, screenshot_path)
+        log(u"        [고객상세] 스크린샷 저장: %s" % os.path.basename(screenshot_path))
+
+        # 2. metdo_reader 호출 (subprocess)
+        ocr_env = os.environ.copy()
+        ocr_start = time.time()
+
+        if _AC_EXE_PATH:
+            # 패키징 모드: AutoClicker.exe --run-metdo <screenshot> → stdout JSON
+            cmd = [_AC_EXE_PATH, "--run-metdo", screenshot_path]
+        else:
+            # 개발 모드: system Python으로 metdo_reader 직접 호출
+            cmd = ["python", METDO_READER_SCRIPT, screenshot_path, "--json"]
+
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=ocr_env)
+        stdout_data, stderr_data = proc.communicate()
+        ocr_elapsed = time.time() - ocr_start
+
+        if proc.returncode != 0:
+            log(u"        [고객상세] OCR 실패 (exit code: %d, %.1f초)" % (proc.returncode, ocr_elapsed))
+            if stderr_data:
+                log(u"        [고객상세] stderr: %s" % stderr_data[:200])
+            return None
+
+        # 3. JSON 파싱
+        # stdout에서 JSON 부분만 추출 (metdo_reader는 로그 + JSON 출력)
+        json_str = stdout_data.strip()
+        # 마지막 줄이 JSON 객체인 경우를 위해 역순 검색
+        lines = json_str.split('\n')
+        json_data = None
+        for line in reversed(lines):
+            line = line.strip()
+            if line.startswith('{') and line.endswith('}'):
+                try:
+                    json_data = json.loads(line)
+                    break
+                except:
+                    continue
+
+        if not json_data:
+            # 전체를 JSON으로 파싱 시도
+            try:
+                json_data = json.loads(json_str)
+            except:
+                log(u"        [고객상세] JSON 파싱 실패 (%.1f초)" % ocr_elapsed)
+                return None
+
+        log(u"        [고객상세] OCR 완료 (%.1f초) → %s, %s" % (
+            ocr_elapsed,
+            json_data.get('customer_type', '?'),
+            json_data.get('name', '?')
+        ))
+        return json_data
+
+    except Exception as e:
+        log(u"        [고객상세] 예외 발생: %s" % e)
+        return None
 
 
 def capture_and_ocr(chosung_name, page_num):
@@ -898,6 +983,11 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                     log(u"        [NO-OCR] 빈 행 감지 (행 %d) → 나머지 행 스킵" % (row_index + 1))
                     break
 
+            # 고객 상세정보 캡처 (고객등록/조회 페이지에서 metdo_reader OCR)
+            _customer_detail = None
+            if not alert_occurred:
+                _customer_detail = capture_customer_detail(name)
+
             # 고객통합뷰 모드인 경우 리포트 다운로드 (알림이 없었을 때만)
             if INTEGRATED_VIEW_ENABLED:
                 if alert_occurred:
@@ -909,8 +999,20 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                         from verify_customer_integrated_view import verify_customer_integrated_view
                         view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
                         log(u"        -> 고객통합뷰 처리 완료")
-                        # 결과 수집 (초성별 summary용)
+                        # 고객 상세정보 병합
                         if isinstance(view_result, dict):
+                            if _customer_detail:
+                                view_result['customer_detail'] = _customer_detail
+                            # OCR 목록에서 획득한 기본정보도 기록 (metdo_reader 실패 시 폴백)
+                            if not _customer_detail and i < len(customers):
+                                ocr_row = customers[skip_count + i] if (skip_count + i) < len(customers) else {}
+                                view_result['customer_detail_fallback'] = {
+                                    'name': name,
+                                    'customer_type': u'법인' if ocr_row.get(u'성별') == u'미사용' else u'개인',
+                                    'mobile_phone': ocr_row.get(u'휴대폰', u''),
+                                    'birth_date': ocr_row.get(u'생년월일', u''),
+                                    'gender': ocr_row.get(u'성별', u''),
+                                }
                             _chosung_customer_results.append(view_result)
                     except Exception as e:
                         # Jython/SikuliX 모듈 로딩 특성상 클래스명으로 비교
@@ -1395,6 +1497,16 @@ def generate_chosung_summary(chosung_name, total_rows, total_errors, error_custo
 
     log(u"=" * 70)
 
+    # ★ 초성별 고객 결과 JSON 저장 (리셋 전 디스크에 영속화)
+    if results:
+        results_json_path = os.path.join(CAPTURE_DIR, u"customer_results_%s.json" % chosung_name)
+        try:
+            with codecs.open(results_json_path, "w", "utf-8") as f:
+                json.dump(results, f, ensure_ascii=False, indent=2)
+            log(u"  [저장] 고객 결과 JSON: %s (%d명)" % (os.path.basename(results_json_path), len(results)))
+        except Exception as e:
+            log(u"  [ERROR] 고객 결과 JSON 저장 실패: %s" % e)
+
     # 결과 초기화 (다음 초성용)
     _chosung_customer_results = []
 
@@ -1754,6 +1866,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                         # 알림 팝업 확인
                                         alert_occurred = dismiss_alert_if_exists()
 
+                                        # 고객 상세정보 캡처 (13번째 행)
+                                        _last_customer_detail = None
+                                        if not alert_occurred:
+                                            _last_customer_detail = capture_customer_detail(name)
+
                                         # 고객통합뷰 모드인 경우 리포트 다운로드 (정상 처리와 동일)
                                         if INTEGRATED_VIEW_ENABLED:
                                             if alert_occurred:
@@ -1766,6 +1883,8 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                     view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
                                                     log(u"        -> 고객통합뷰 처리 완료")
                                                     if isinstance(view_result, dict):
+                                                        if _last_customer_detail:
+                                                            view_result['customer_detail'] = _last_customer_detail
                                                         _chosung_customer_results.append(view_result)
                                                 except Exception as e2:
                                                     err_type_name = e2.__class__.__name__
@@ -2037,6 +2156,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                 # 알림 팝업 확인
                                 alert_occurred = dismiss_alert_if_exists()
 
+                                # 고객 상세정보 캡처 (16번째 행)
+                                _last16_customer_detail = None
+                                if not alert_occurred:
+                                    _last16_customer_detail = capture_customer_detail(name)
+
                                 # 고객통합뷰 모드인 경우 리포트 다운로드 (정상 처리와 동일)
                                 if INTEGRATED_VIEW_ENABLED:
                                     if alert_occurred:
@@ -2048,6 +2172,8 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                             view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
                                             log(u"        -> 고객통합뷰 처리 완료")
                                             if isinstance(view_result, dict):
+                                                if _last16_customer_detail:
+                                                    view_result['customer_detail'] = _last16_customer_detail
                                                 _chosung_customer_results.append(view_result)
                                         except Exception as e:
                                             err_type_name = e.__class__.__name__
@@ -2228,6 +2354,32 @@ if all_error_customers:
 else:
     log(u"")
     log(u"[OK] 오류 없이 완료!")
+
+log("=" * 60)
+
+# ★ 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)
+if INTEGRATED_VIEW_ENABLED and not SCROLL_TEST:
+    GENERATE_REPORTS_SCRIPT = os.path.join(SCRIPT_DIR, "generate_reports.py")
+    if os.path.exists(GENERATE_REPORTS_SCRIPT):
+        log(u"")
+        log(u"[3단계] 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)...")
+        try:
+            if _AC_EXE_PATH:
+                # 패키징 모드: AutoClicker.exe --run-reports <output_dir>
+                report_cmd = [_AC_EXE_PATH, "--run-reports", CAPTURE_DIR]
+            else:
+                # 개발 모드: system Python으로 직접 호출
+                report_cmd = ["python", GENERATE_REPORTS_SCRIPT, CAPTURE_DIR]
+            report_result = subprocess.call(report_cmd)
+            if report_result == 0:
+                log(u"[3단계 완료] 리포트 생성 성공")
+            else:
+                log(u"[3단계 WARNING] 리포트 생성 실패 (exit code: %d)" % report_result)
+        except Exception as e:
+            log(u"[3단계 ERROR] 리포트 생성 중 예외: %s" % e)
+    else:
+        log(u"")
+        log(u"[3단계 SKIP] generate_reports.py 없음 → 리포트 생성 건너뜀")
 
 log("=" * 60)
 
