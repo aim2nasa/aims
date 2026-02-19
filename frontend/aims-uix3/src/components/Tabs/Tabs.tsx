@@ -90,10 +90,11 @@ export const Tabs: React.FC<TabsProps> = ({
             onClick={() => handleTabClick(tab)}
             disabled={tab.disabled}
             data-tab-key={tab.key}
+            data-tooltip={`${tab.label}${tab.count !== undefined ? ` ${tab.count}` : ''}`}
           >
             {tab.icon && <span className="tabs-bar__tab-icon">{tab.icon}</span>}
             <span className="tabs-bar__tab-label">
-              {tab.label}
+              <span className="tabs-bar__tab-label-text">{tab.label}</span>
               {tab.count !== undefined && (
                 <span className="tabs-bar__tab-count--inline">{tab.count}</span>
               )}

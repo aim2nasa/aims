@@ -100,6 +100,10 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    /* 세로모드 탭 툴팁이 탭 콘텐츠에 가려지지 않도록 stacking context 생성
+       tabs-bar z-index: 10보다 낮은 값으로 설정 */
+    position: relative;
+    z-index: 0;
   }
 
   /* 🍎 탭 패널 - 항상 렌더링하되 숨김 처리 */

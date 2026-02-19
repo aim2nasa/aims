@@ -150,6 +150,9 @@
     .tabs-bar {
       max-width: 100%;
       gap: 4px;
+      /* auto margin 제거: flex column 부모에서 stretch로 전체 너비 사용 */
+      margin-left: 0;
+      margin-right: 0;
     }
 
     .tabs-bar__tab {
@@ -163,6 +166,59 @@
     .tabs-bar__tab-icon {
       font-size: 14px;
       flex-shrink: 0;
+    }
+  }
+
+  /* === Portrait narrow: icon-only with hover tooltip === */
+  @media (max-width: 640px) and (orientation: portrait) {
+    /* 탭 바를 콘텐츠 영역 위에 올려 툴팁이 가려지지 않도록 */
+    .tabs-bar {
+      position: relative;
+      z-index: 10;
+    }
+
+    /* 아이콘이 있는 탭: 라벨 텍스트만 숨김, 카운트는 유지 */
+    .tabs-bar__tab-icon + .tabs-bar__tab-label .tabs-bar__tab-label-text {
+      display: none;
+    }
+
+    /* 카운트만 남을 때 왼쪽 마진 제거 */
+    .tabs-bar__tab-icon + .tabs-bar__tab-label .tabs-bar__tab-count--inline {
+      margin-left: 0;
+      font-size: 10px;
+    }
+
+    /* 호버 툴팁 (숨김 상태) */
+    .tabs-bar__tab[data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 3px 8px;
+      background: var(--color-surface-elevated, #fff);
+      color: var(--color-text-primary);
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 6px;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease, visibility 0.15s ease;
+    }
+
+    [data-theme="dark"] .tabs-bar__tab[data-tooltip]::after {
+      background: var(--color-surface-elevated, #2c2c2e);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* 호버 시 툴팁 표시 */
+    .tabs-bar__tab:hover::after {
+      opacity: 1;
+      visibility: visible;
     }
   }
 
