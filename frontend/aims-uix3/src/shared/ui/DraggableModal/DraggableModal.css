@@ -176,7 +176,7 @@
   }
 
   .draggable-modal__title {
-    font-size: var(--font-size-lg);
+    font-size: clamp(10px, 2.5vw, var(--font-size-lg));
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-primary);
     margin: 0;
@@ -625,6 +625,7 @@
     padding: 8px 12px;
     border-radius: 16px 16px 0 0;
   }
+
 
   .draggable-modal--mobile .draggable-modal__content {
     padding: 10px 12px;

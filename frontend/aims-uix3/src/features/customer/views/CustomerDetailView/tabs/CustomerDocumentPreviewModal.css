@@ -50,7 +50,7 @@
 
   .customer-document-preview__title h2 {
     margin: 0;
-    font-size: var(--font-size-title-3); /* 20px - FONT_SIZE_STANDARDS.md: 제목 */
+    font-size: inherit; /* DraggableModal의 clamp() 상속 */
     font-family: var(--font-family-display);
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-primary);
