@@ -4,8 +4,11 @@
  *
  * 검증 항목:
  * 1. 가로 모드에서 초성 필터바가 숨겨지지 않는지
- * 2. 768px 이하 카드 레이아웃에서 고객명 칼럼이 최소 110px 확보되는지 (6글자 기준)
- * 3. 삭제 모드에서도 고객명 칼럼 너비가 보장되는지
+ * 2. 768px 이하 가로 스크롤 테이블 레이아웃 검증 (commit 1b8c3dd3 이후 방식)
+ *    - overflow-x: auto 적용으로 가로 스크롤 가능 여부
+ *    - .status-list-header min-width: 850px (헤더가 살아있고 가로 스크롤로 접근 가능)
+ *    - .status-item min-width: 850px
+ * 3. 삭제 모드에서도 가로 스크롤 너비(880px) 보장
  */
 
 import { describe, it, expect } from 'vitest'
@@ -17,6 +20,34 @@ const AIMS_UIX3 = resolve(__dirname, '../../../../../..')
 
 function readCSS(relativePath: string): string {
   return readFileSync(resolve(AIMS_UIX3, relativePath), 'utf-8')
+}
+
+/**
+ * @media (max-width: Npx) 블록의 내용을 추출
+ * 주의: new RegExp 문자열 방식으로 \s 사용 시 tsx 변환 버그 발생.
+ * 반드시 String.indexOf + 직접 탐색 방식 사용.
+ */
+function extractMediaBlock(css: string, maxWidth: number): string | null {
+  const marker = `@media (max-width: ${maxWidth}px)`
+  const markerIdx = css.indexOf(marker)
+  if (markerIdx === -1) return null
+
+  // @media ... { 의 { 위치 찾기
+  const braceIdx = css.indexOf('{', markerIdx)
+  if (braceIdx === -1) return null
+
+  // depth 추적으로 닫는 } 찾기
+  let depth = 1
+  let i = braceIdx + 1
+  const start = i
+
+  while (i < css.length && depth > 0) {
+    if (css[i] === '{') depth++
+    if (css[i] === '}') depth--
+    i++
+  }
+
+  return css.slice(start, i - 1)
 }
 
 describe('모바일 문서 라이브러리 레이아웃 CSS 검증', () => {
@@ -54,8 +85,9 @@ describe('모바일 문서 라이브러리 레이아웃 CSS 검증', () => {
     })
   })
 
-  // ─── DocumentStatusList.responsive.css: 768px 카드 레이아웃 고객명 칼럼 ───
-  describe('DocumentStatusList.responsive.css 카드 레이아웃 고객명 칼럼', () => {
+  // ─── DocumentStatusList.responsive.css: 768px 가로 스크롤 테이블 레이아웃 ───
+  // commit 1b8c3dd3: 카드 레이아웃 → 가로 스크롤 테이블 방식으로 전환
+  describe('DocumentStatusList.responsive.css 가로 스크롤 테이블 레이아웃', () => {
     let statusListCSS: string
 
     it('DocumentStatusList.responsive.css 파일을 읽을 수 있어야 함', () => {
@@ -65,31 +97,19 @@ describe('모바일 문서 라이브러리 레이아웃 CSS 검증', () => {
       expect(statusListCSS).toBeTruthy()
     })
 
-    it('768px 이하 카드 레이아웃에서 고객명 칼럼이 고정 너비(110px, 6글자 기준)여야 함', () => {
+    it('768px 이하에서 가로 스크롤이 활성화되어야 함', () => {
       statusListCSS = readCSS(
         'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.responsive.css'
       )
 
-      // @media (max-width: 768px) 블록 내의 .status-item grid-template-columns 추출
       const mediaBlock768 = extractMediaBlock(statusListCSS, 768)
       expect(mediaBlock768).toBeTruthy()
 
-      // .status-item 의 grid-template-columns 추출
-      const gridMatch = mediaBlock768!.match(
-        /\.status-item\s*\{[^}]*grid-template-columns\s*:\s*([^;]+)/
-      )
-      expect(gridMatch).toBeTruthy()
-
-      const gridColumns = gridMatch![1].trim()
-      // 마지막 칼럼(고객명)이 고정 너비 또는 최소 너비 보장
-      const lastColumn = gridColumns.split(/\s+/).pop()!
-      const numericWidth = parsePixelValue(lastColumn)
-
-      // 고객명 칼럼이 최소 110px 이상이어야 한글 6글자 + 아이콘 표시 가능
-      expect(numericWidth).toBeGreaterThanOrEqual(110)
+      // .document-status-list 블록에 overflow-x: auto 확인
+      expect(mediaBlock768).toMatch(/\.document-status-list\s*\{[^}]*overflow-x\s*:\s*auto/)
     })
 
-    it('삭제 모드에서도 고객명 칼럼이 고정 너비(110px, 6글자 기준)여야 함', () => {
+    it('768px 이하에서 헤더가 충분한 min-width(850px)를 가져야 함 (가로 스크롤 테이블)', () => {
       statusListCSS = readCSS(
         'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.responsive.css'
       )
@@ -97,20 +117,16 @@ describe('모바일 문서 라이브러리 레이아웃 CSS 검증', () => {
       const mediaBlock768 = extractMediaBlock(statusListCSS, 768)
       expect(mediaBlock768).toBeTruthy()
 
-      // 삭제 모드 grid-template-columns 추출
-      const deleteGridMatch = mediaBlock768!.match(
-        /--delete-mode\s+\.status-item\s*\{[^}]*grid-template-columns\s*:\s*([^;]+)/
+      // .status-list-header { min-width: 850px } 확인 (가로 스크롤 방식에서 헤더는 숨기지 않음)
+      const headerMinWidthMatch = mediaBlock768!.match(
+        /\.status-list-header\s*\{[^}]*min-width\s*:\s*(\d+)px/
       )
-      expect(deleteGridMatch).toBeTruthy()
-
-      const gridColumns = deleteGridMatch![1].trim()
-      const lastColumn = gridColumns.split(/\s+/).pop()!
-      const numericWidth = parsePixelValue(lastColumn)
-
-      expect(numericWidth).toBeGreaterThanOrEqual(110)
+      expect(headerMinWidthMatch).toBeTruthy()
+      const headerMinWidth = parseInt(headerMinWidthMatch![1], 10)
+      expect(headerMinWidth).toBeGreaterThanOrEqual(800)
     })
 
-    it('768px 이하에서 칼럼 헤더가 숨겨져야 함 (카드 레이아웃)', () => {
+    it('768px 이하에서 status-item이 충분한 min-width(850px)를 가져야 함', () => {
       statusListCSS = readCSS(
         'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.responsive.css'
       )
@@ -118,49 +134,31 @@ describe('모바일 문서 라이브러리 레이아웃 CSS 검증', () => {
       const mediaBlock768 = extractMediaBlock(statusListCSS, 768)
       expect(mediaBlock768).toBeTruthy()
 
-      // .status-list-header { display: none } 확인
-      expect(mediaBlock768).toMatch(/\.status-list-header\s*\{[^}]*display\s*:\s*none/)
+      // .status-item { min-width: 850px } 확인
+      const itemMinWidthMatch = mediaBlock768!.match(
+        /\.status-item\s*\{[^}]*min-width\s*:\s*(\d+)px/
+      )
+      expect(itemMinWidthMatch).toBeTruthy()
+      const itemMinWidth = parseInt(itemMinWidthMatch![1], 10)
+      expect(itemMinWidth).toBeGreaterThanOrEqual(800)
+    })
+
+    it('삭제 모드에서도 충분한 min-width(880px)가 보장되어야 함', () => {
+      statusListCSS = readCSS(
+        'src/components/DocumentViews/DocumentStatusView/components/DocumentStatusList.responsive.css'
+      )
+
+      const mediaBlock768 = extractMediaBlock(statusListCSS, 768)
+      expect(mediaBlock768).toBeTruthy()
+
+      // 삭제 모드에서도 min-width 보장 확인
+      // .document-status-list--delete-mode .status-item { min-width: 880px } 패턴
+      const deleteModeMinWidthMatch = mediaBlock768!.match(
+        /--delete-mode\s+\.status-item[^{]*\{[^}]*min-width\s*:\s*(\d+)px/
+      )
+      expect(deleteModeMinWidthMatch).toBeTruthy()
+      const deleteModeMinWidth = parseInt(deleteModeMinWidthMatch![1], 10)
+      expect(deleteModeMinWidth).toBeGreaterThanOrEqual(850)
     })
   })
 })
-
-/**
- * @media (max-width: Npx) 블록의 내용을 추출
- */
-function extractMediaBlock(css: string, maxWidth: number): string | null {
-  const pattern = new RegExp(
-    `@media\\s*\\([^)]*max-width\\s*:\\s*${maxWidth}px[^)]*\\)\\s*\\{`,
-    'g'
-  )
-  const match = pattern.exec(css)
-  if (!match) return null
-
-  let depth = 1
-  let i = match.index + match[0].length
-  const start = i
-
-  while (i < css.length && depth > 0) {
-    if (css[i] === '{') depth++
-    if (css[i] === '}') depth--
-    i++
-  }
-
-  return css.slice(start, i - 1)
-}
-
-/**
- * CSS 값에서 px 수치를 추출
- * "70px" → 70, "minmax(54px, auto)" → 54
- */
-function parsePixelValue(value: string): number {
-  // minmax(Npx, ...) 패턴
-  const minmaxMatch = value.match(/minmax\s*\(\s*(\d+)px/)
-  if (minmaxMatch) return parseInt(minmaxMatch[1], 10)
-
-  // 직접 Npx 패턴
-  const directMatch = value.match(/^(\d+)px$/)
-  if (directMatch) return parseInt(directMatch[1], 10)
-
-  // auto 등 px가 아닌 값은 0으로 반환 (고정 너비 아님)
-  return 0
-}
