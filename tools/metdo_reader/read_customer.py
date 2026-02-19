@@ -232,11 +232,19 @@ def clean_address_section(raw: str) -> str:
     if not raw:
         return None
     s = raw
+    # OCR 마크다운/HTML 태그 오염 제거 — 태그 시작 지점에서 잘라내기
+    # (Upstage OCR이 이미지 설명을 마크다운으로 포함시킴)
+    for marker in ['![', '<figure', '<figcaption', '<img', '<p ', '<div']:
+        cut = s.find(marker)
+        if cut >= 0:
+            s = s[:cut]
     # ▼/▽ 제거
     s = s.replace("\u25bc", "").replace("\u25bd", "")
     # 끼어든 폼 라벨+값 패턴 제거 (자택전화/직장전화/팩스번호 + 선택/번호)
+    # 주의: 전화번호 패턴을 정확히 매칭해야 함 — 탐욕적 매칭 금지!
+    # 이전 버그: 0\d[\d\s\-]* 가 "02 3285 7889 32" 전부 매칭 → 주소 번지 "32" 소실
     for label in ["자택전화", "직장전화", "팩스번호"]:
-        s = re.sub(label + r'\s*(선택[\s]*|0\d[\d\s\-]*)', '', s)
+        s = re.sub(label + r'\s*(선택[\s]*|0\d{1,2}[\s\-]*\d{3,4}[\s\-]*\d{4})', '', s)
         # 라벨만 남은 경우도 제거
         s = s.replace(label, '')
     # Q (검색 아이콘) 제거 — 단독 Q만 (주소에 포함된 Q는 보존)
