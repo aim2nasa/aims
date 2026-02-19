@@ -87,12 +87,24 @@ def load_customer_results(output_dir):
 
 
 def get_customer_detail(result):
-    """customer_result에서 상세정보 추출 (metdo_reader 우선, 폴백 사용)"""
-    detail = result.get("customer_detail")
-    if detail:
-        return detail
-    # metdo_reader 실패 시 폴백 데이터 사용
-    return result.get("customer_detail_fallback", {})
+    """customer_result에서 상세정보 추출 (detail + fallback 병합)
+
+    데이터 소스:
+      - customer_detail: metdo_reader OCR (고객상세 페이지) → 주소, 사업자번호
+      - customer_detail_fallback: 테이블 OCR (고객목록 페이지) → 이메일, 휴대폰
+
+    병합 규칙: fallback을 기본으로, detail의 비어있지 않은 값으로 덮어쓰기
+    → 이메일은 테이블 OCR에서, 주소는 metdo_reader에서 가져옴
+    """
+    detail = result.get("customer_detail") or {}
+    fallback = result.get("customer_detail_fallback") or {}
+    # fallback 기본 + detail에서 비어있지 않은 값으로 덮어쓰기
+    merged = {}
+    merged.update(fallback)
+    for k, v in detail.items():
+        if v:
+            merged[k] = v
+    return merged
 
 
 def normalize_gender(gender_raw):

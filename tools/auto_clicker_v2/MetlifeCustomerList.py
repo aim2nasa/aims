@@ -472,11 +472,12 @@ def capture_customer_detail(customer_name):
             return None
 
         # 3. JSON 파싱
-        # stdout에서 JSON 부분만 추출 (metdo_reader는 로그 + JSON 출력)
+        # stdout에서 JSON 부분만 추출 (metdo_reader는 로그 + multi-line JSON 출력)
         json_str = stdout_data.strip()
-        # 마지막 줄이 JSON 객체인 경우를 위해 역순 검색
-        lines = json_str.split('\n')
         json_data = None
+
+        # 방법 1: single-line JSON (한 줄에 {...})
+        lines = json_str.split('\n')
         for line in reversed(lines):
             line = line.strip()
             if line.startswith('{') and line.endswith('}'):
@@ -486,13 +487,28 @@ def capture_customer_detail(customer_name):
                 except:
                     continue
 
+        # 방법 2: multi-line JSON (indent=2 등) — 중괄호 매칭으로 추출
         if not json_data:
-            # 전체를 JSON으로 파싱 시도
-            try:
-                json_data = json.loads(json_str)
-            except:
-                log(u"        [고객상세] JSON 파싱 실패 (%.1f초)" % ocr_elapsed)
-                return None
+            last_close = json_str.rfind('}')
+            if last_close >= 0:
+                depth = 0
+                for i in range(last_close, -1, -1):
+                    if json_str[i] == '}':
+                        depth += 1
+                    elif json_str[i] == '{':
+                        depth -= 1
+                        if depth == 0:
+                            try:
+                                json_data = json.loads(json_str[i:last_close + 1])
+                            except:
+                                pass
+                            break
+
+        if not json_data:
+            log(u"        [고객상세] JSON 파싱 실패 (%.1f초)" % ocr_elapsed)
+            if json_str:
+                log(u"        [고객상세] stdout 앞 200자: %s" % json_str[:200])
+            return None
 
         log(u"        [고객상세] OCR 완료 (%.1f초) → %s, %s" % (
             ocr_elapsed,
@@ -550,7 +566,7 @@ def capture_and_ocr(chosung_name, page_num):
     try:
         # 환경변수에 CAPTURE_DIR 추가하여 OCR 스크립트에 전달
         ocr_env = os.environ.copy()
-        ocr_env["METLIFE_CAPTURE_DIR"] = CAPTURE_DIR
+        ocr_env["METLIFE_CAPTURE_DIR"] = DEV_DIR
         if _AC_EXE_PATH:
             # 패키징 모드: AutoClicker.exe --run-ocr <image> <output>
             result = subprocess.call([_AC_EXE_PATH, "--run-ocr", cropped_path, json_path], env=ocr_env)
@@ -1019,16 +1035,16 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                         if isinstance(view_result, dict):
                             if _customer_detail:
                                 view_result['customer_detail'] = _customer_detail
-                            # OCR 목록에서 획득한 기본정보도 기록 (metdo_reader 실패 시 폴백)
-                            if not _customer_detail and i < len(customers):
-                                ocr_row = customers[skip_count + i] if (skip_count + i) < len(customers) else {}
-                                view_result['customer_detail_fallback'] = {
-                                    'name': name,
-                                    'customer_type': u'법인' if ocr_row.get(u'성별') == u'미사용' else u'개인',
-                                    'mobile_phone': ocr_row.get(u'휴대폰', u''),
-                                    'birth_date': ocr_row.get(u'생년월일', u''),
-                                    'gender': ocr_row.get(u'성별', u''),
-                                }
+                            # 테이블 OCR 데이터는 항상 기록 (이메일 등 — metdo_reader와 병합됨)
+                            # customer는 루프 변수 — 재조회 없음
+                            view_result['customer_detail_fallback'] = {
+                                'name': name,
+                                'customer_type': u'법인' if customer.get(u'성별') == u'미사용' else u'개인',
+                                'mobile_phone': customer.get(u'휴대폰', u''),
+                                'birth_date': customer.get(u'생년월일', u''),
+                                'gender': customer.get(u'성별', u''),
+                                'email': customer.get(u'이메일', u''),
+                            }
                             _chosung_customer_results.append(view_result)
                     except Exception as e:
                         # Jython/SikuliX 모듈 로딩 특성상 클래스명으로 비교
@@ -1901,6 +1917,16 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                     if isinstance(view_result, dict):
                                                         if _last_customer_detail:
                                                             view_result['customer_detail'] = _last_customer_detail
+                                                        # 테이블 OCR 데이터 (이메일 등 — metdo_reader와 병합됨)
+                                                        ocr_row = extra if extra else {}
+                                                        view_result['customer_detail_fallback'] = {
+                                                            'name': name,
+                                                            'customer_type': u'법인' if ocr_row.get(u'성별') == u'미사용' else u'개인',
+                                                            'mobile_phone': ocr_row.get(u'휴대폰', u''),
+                                                            'birth_date': ocr_row.get(u'생년월일', u''),
+                                                            'gender': ocr_row.get(u'성별', u''),
+                                                            'email': ocr_row.get(u'이메일', u''),
+                                                        }
                                                         _chosung_customer_results.append(view_result)
                                                 except Exception as e2:
                                                     err_type_name = e2.__class__.__name__
@@ -2190,6 +2216,16 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                             if isinstance(view_result, dict):
                                                 if _last16_customer_detail:
                                                     view_result['customer_detail'] = _last16_customer_detail
+                                                # 테이블 OCR 데이터 (이메일 등 — metdo_reader와 병합됨)
+                                                ocr_row = extra_customer if extra_customer else {}
+                                                view_result['customer_detail_fallback'] = {
+                                                    'name': name,
+                                                    'customer_type': u'법인' if ocr_row.get(u'성별') == u'미사용' else u'개인',
+                                                    'mobile_phone': ocr_row.get(u'휴대폰', u''),
+                                                    'birth_date': ocr_row.get(u'생년월일', u''),
+                                                    'gender': ocr_row.get(u'성별', u''),
+                                                    'email': ocr_row.get(u'이메일', u''),
+                                                }
                                                 _chosung_customer_results.append(view_result)
                                         except Exception as e:
                                             err_type_name = e.__class__.__name__
