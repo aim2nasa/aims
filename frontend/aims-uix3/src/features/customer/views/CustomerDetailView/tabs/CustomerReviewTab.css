@@ -147,15 +147,7 @@
     gap: 4px;
   }
 
-  .customer-review-table__sort-icon {
-    opacity: 0.4;
-    transition: opacity 0.15s ease-out, color 0.15s ease-out;
-  }
-
-  .customer-review-table__sort-icon--active {
-    opacity: 1;
-    color: var(--color-accent);
-  }
+  /* 정렬 표시 → 공유 SortIndicator 컴포넌트로 통일 */
 
   /* ==================== 🍎 TABLE ROW - 칼럼 정의 ==================== */
   /* 공통 스타일: tab-table.css (.tab-table__body, .tab-table__row) */

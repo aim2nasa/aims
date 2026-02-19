@@ -11,6 +11,7 @@
 import React, { useCallback, useState, useMemo, useEffect } from 'react'
 import type { Customer } from '@/entities/customer/model'
 import type { Contract } from '@/entities/contract/model'
+import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { ContractService } from '@/services/contractService'
 import {
   AnnualReportApi,
@@ -474,13 +475,10 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
     }
   }, [sortField])
 
-  // 정렬 인디케이터
-  const renderSortIndicator = useCallback((field: SortField) => {
-    if (sortField === field) {
-      return <span className="fc-sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-    }
-    return null
-  }, [sortField, sortDirection])
+  // 정렬 인디케이터 → 공유 SortIndicator 컴포넌트 사용
+  const renderSortIndicatorEl = useCallback((field: SortField) => {
+    return <SortIndicator field={field} currentSortField={sortField} sortDirection={sortDirection} />
+}, [sortField, sortDirection])
 
   // 금액 포맷
   const formatAmount = (amount: number): string => {
@@ -604,7 +602,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
             tabIndex={0}
           >
             <span>관계</span>
-            {renderSortIndicator('memberRelationship')}
+            {renderSortIndicatorEl('memberRelationship')}
             <div {...getFcResizeHandleProps('relation')} />
           </div>
           <div
@@ -614,7 +612,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
             tabIndex={0}
           >
             <span>증권번호</span>
-            {renderSortIndicator('policyNumber')}
+            {renderSortIndicatorEl('policyNumber')}
             <div {...getFcResizeHandleProps('policy')} />
           </div>
           <div
@@ -624,7 +622,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
             tabIndex={0}
           >
             <span>보험상품</span>
-            {renderSortIndicator('productName')}
+            {renderSortIndicatorEl('productName')}
             <div {...getFcResizeHandleProps('product')} />
           </div>
           <div
@@ -634,7 +632,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
             tabIndex={0}
           >
             <span>계약자</span>
-            {renderSortIndicator('holderName')}
+            {renderSortIndicatorEl('holderName')}
             <div {...getFcResizeHandleProps('holder')} />
           </div>
           <div
@@ -644,7 +642,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
             tabIndex={0}
           >
             <span>피보험자</span>
-            {renderSortIndicator('insuredName')}
+            {renderSortIndicatorEl('insuredName')}
             <div {...getFcResizeHandleProps('insured')} />
           </div>
           <div
@@ -654,7 +652,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
             tabIndex={0}
           >
             <span>계약일</span>
-            {renderSortIndicator('contractDate')}
+            {renderSortIndicatorEl('contractDate')}
             <div {...getFcResizeHandleProps('date')} />
           </div>
           <div
@@ -664,7 +662,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
             tabIndex={0}
           >
             <span>상태</span>
-            {renderSortIndicator('status')}
+            {renderSortIndicatorEl('status')}
             <div {...getFcResizeHandleProps('status')} />
           </div>
           <div
@@ -674,7 +672,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
             tabIndex={0}
           >
             <span>가입금액</span>
-            {renderSortIndicator('coverageAmount')}
+            {renderSortIndicatorEl('coverageAmount')}
             <div {...getFcResizeHandleProps('amount')} />
           </div>
           <div
@@ -684,7 +682,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
             tabIndex={0}
           >
             <span>보험료</span>
-            {renderSortIndicator('premium')}
+            {renderSortIndicatorEl('premium')}
           </div>
         </div>
 

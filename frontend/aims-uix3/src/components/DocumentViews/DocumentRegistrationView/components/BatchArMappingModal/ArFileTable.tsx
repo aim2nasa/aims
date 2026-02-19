@@ -19,6 +19,7 @@ import {
   isRowMappedWithMap,
   getRowMappingDisplayTextWithMap,
 } from '../../utils/arGroupingUtils'
+import { SortIndicator } from '@/shared/ui/SortIndicator'
 import './ArFileTable.css'
 
 // ===== 타입 정의 =====
@@ -655,10 +656,9 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [openDropdownId, bulkDropdownOpen, closeDropdown, closeBulkDropdown])
 
-  // 헤더 정렬 아이콘 렌더
+  // 헤더 정렬 아이콘 렌더 (공유 컴포넌트)
   const renderSortIcon = (field: ArTableSortField) => {
-    if (sortField !== field) return null
-    return <span className="ar-file-table__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+    return <SortIndicator field={field} currentSortField={sortField} sortDirection={sortDirection} />
   }
 
   // 헤더 클래스

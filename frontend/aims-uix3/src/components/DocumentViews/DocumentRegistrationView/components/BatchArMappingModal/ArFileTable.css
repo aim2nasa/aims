@@ -285,10 +285,7 @@
     background: var(--color-primary-bg, rgba(0, 122, 255, 0.05));
   }
 
-  .ar-file-table__sort-icon {
-    margin-left: 4px;
-    font-size: 8px;
-  }
+  /* 정렬 인디케이터: 공유 SortIndicator 컴포넌트 사용 */
 
   /* ===== 컬럼 리사이즈 핸들 ===== */
   .ar-file-table__th {

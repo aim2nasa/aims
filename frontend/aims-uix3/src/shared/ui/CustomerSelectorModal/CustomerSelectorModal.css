@@ -367,14 +367,7 @@
     color: var(--color-text-primary);
   }
 
-  /* 정렬 인디케이터 */
-  .sort-indicator {
-    margin-left: 2px;
-    font-size: var(--font-size-caption-2); /* 10px - FONT_SIZE_STANDARDS.md: 작은 메타데이터 */
-    font-family: var(--font-family-text);
-    color: var(--color-accent);
-    flex-shrink: 0;
-  }
+  /* 정렬 인디케이터: 공유 SortIndicator 컴포넌트 사용 */
 
   /* 헤더 아이콘은 절대 축소되지 않음 */
   .customer-selector-modal__table-header .header-icon-svg {

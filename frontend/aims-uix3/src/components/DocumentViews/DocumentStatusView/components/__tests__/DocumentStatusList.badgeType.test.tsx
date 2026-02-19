@@ -73,7 +73,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       expect(header).toHaveAttribute('aria-label', '유형으로 정렬')
     })
 
-    it('badgeType 정렬 인디케이터가 표시되어야 함', () => {
+    it('badgeType 비활성 시 정렬 인디케이터가 표시되지 않아야 함', () => {
       const mockDocuments: Document[] = [
         createMockDocument({ filename: 'test1.pdf' })
       ]
@@ -92,9 +92,10 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       )
 
       const header = container.querySelector('.header-badge-type')
-      const indicator = header?.querySelector('.sort-indicator--both')
-      expect(indicator).toBeInTheDocument()
-      expect(indicator?.querySelectorAll('.sort-arrow')).toHaveLength(2)
+      const indicator = header?.querySelector('.sort-indicator')
+
+      // 통일 규칙: 비활성 칼럼에는 인디케이터 없음
+      expect(indicator).toBeNull()
     })
 
     it('badgeType 정렬 활성화 시 올바른 인디케이터 표시', () => {

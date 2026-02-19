@@ -336,7 +336,7 @@ describe('DocumentStatusList - 연결된 고객 칼럼 정렬 테스트 (커밋 
       expect(sortIndicator?.textContent).toBe('▼')
     })
 
-    it('sortField가 "customer"가 아니면 양방향 정렬 인디케이터(↕)가 표시되어야 함', () => {
+    it('sortField가 "customer"가 아니면 정렬 인디케이터가 표시되지 않아야 함', () => {
       render(
         <DocumentStatusList
           documents={createMockDocumentsWithCustomers()}
@@ -356,12 +356,11 @@ describe('DocumentStatusList - 연결된 고객 칼럼 정렬 테스트 (커밋 
       const customerHeader = document.querySelector('.header-customer')
       const sortIndicator = customerHeader?.querySelector('.sort-indicator')
 
-      expect(sortIndicator).toBeInTheDocument()
-      expect(sortIndicator?.textContent).toBe('▲▼')
-      expect(sortIndicator).toHaveClass('sort-indicator--both')
+      // 통일 규칙: 비활성 칼럼에는 인디케이터 없음
+      expect(sortIndicator).toBeNull()
     })
 
-    it('sortField가 null이면 양방향 정렬 인디케이터(↕)가 표시되어야 함', () => {
+    it('sortField가 null이면 정렬 인디케이터가 표시되지 않아야 함', () => {
       render(
         <DocumentStatusList
           documents={createMockDocumentsWithCustomers()}
@@ -381,9 +380,8 @@ describe('DocumentStatusList - 연결된 고객 칼럼 정렬 테스트 (커밋 
       const customerHeader = document.querySelector('.header-customer')
       const sortIndicator = customerHeader?.querySelector('.sort-indicator')
 
-      expect(sortIndicator).toBeInTheDocument()
-      expect(sortIndicator?.textContent).toBe('▲▼')
-      expect(sortIndicator).toHaveClass('sort-indicator--both')
+      // 통일 규칙: 비활성 칼럼에는 인디케이터 없음
+      expect(sortIndicator).toBeNull()
     })
   })
 
@@ -567,12 +565,10 @@ describe('DocumentStatusList - 연결된 고객 칼럼 정렬 테스트 (커밋 
         />
       )
 
-      // Verify bidirectional sort indicator on customer column when not sorted
+      // 통일 규칙: 비활성 칼럼에는 인디케이터 없음
       let customerHeader = document.querySelector('.header-customer')
       let sortIndicator = customerHeader?.querySelector('.sort-indicator')
-      expect(sortIndicator).toBeInTheDocument()
-      expect(sortIndicator?.textContent).toBe('▲▼')
-      expect(sortIndicator).toHaveClass('sort-indicator--both')
+      expect(sortIndicator).toBeNull()
 
       // Change sort to customer
       rerender(

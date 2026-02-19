@@ -81,27 +81,7 @@
     color: var(--color-ios-text-primary-dark);
   }
 
-  /* AR 정렬 인디케이터 */
-  .ar-sort-indicator {
-    font-size: 8px;
-    color: var(--color-ios-blue-light);
-    margin-left: 2px;
-  }
-
-  html[data-theme="dark"] .ar-sort-indicator {
-    color: var(--color-ios-blue-dark);
-  }
-
-  /* CRS 정렬 인디케이터 */
-  .cr-sort-indicator {
-    font-size: 8px;
-    color: var(--color-ios-blue-light);
-    margin-left: 2px;
-  }
-
-  html[data-theme="dark"] .cr-sort-indicator {
-    color: var(--color-ios-blue-dark);
-  }
+  /* AR/CRS 정렬 표시 → 공유 SortIndicator 컴포넌트로 통일 */
 
   /* contract-history-header는 전역 column-resize.css 스타일 사용
      (.resizable-header, .column-resize-handle) */

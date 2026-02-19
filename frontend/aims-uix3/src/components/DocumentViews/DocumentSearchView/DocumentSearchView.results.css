@@ -261,38 +261,7 @@
     color: var(--color-ios-interactive-dark);
   }
 
-  /* 정렬 인디케이터 */
-  .search-results-column-header .sort-indicator {
-    font-size: var(--font-size-caption-2); /* 10px - FONT_SIZE_STANDARDS.md: 작은 메타데이터 */
-    font-family: var(--font-family-text);
-    margin-left: 2px;
-    opacity: 0.8;
-  }
-
-  /* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
-  .search-results-column-header .sort-indicator:not(.sort-indicator--both) {
-    color: var(--color-sort-indicator-active); /* 선택된 정렬 컬럼 강조 */
-    font-weight: 700;
-    opacity: 1;
-  }
-
-  /* 양방향 정렬 인디케이터 - 세로로 쌓기 */
-  .search-results-column-header .sort-indicator--both {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    line-height: 0.6;
-    margin-left: 2px;
-    gap: 2px;
-  }
-
-  .search-results-column-header .sort-indicator--both .sort-arrow {
-    display: block;
-    font-size: var(--font-size-caption-2); /* 11px */
-    line-height: 0.6;
-    height: 6px;
-  }
+  /* 정렬 표시 → 공유 SortIndicator 컴포넌트로 통일 */
 
   /* === 🍎 RESULTS TABLE VIEW: iOS Native Style === */
 

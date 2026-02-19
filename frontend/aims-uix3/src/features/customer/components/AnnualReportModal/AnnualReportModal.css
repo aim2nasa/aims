@@ -316,25 +316,7 @@
     background-color: var(--color-primary-alpha-light);
   }
 
-  /* 정렬 아이콘 스타일 - 명확하게 표시 */
-  .contracts-table__sort-icon {
-    opacity: 0.7;
-    transition: all var(--duration-fast) var(--easing-ease-out);
-    display: inline-flex;
-    flex-shrink: 0;
-  }
-
-  /* 호버 시 아이콘 강조 */
-  .contracts-table__th--sortable:hover .contracts-table__sort-icon {
-    opacity: 0.9;
-    transform: scale(1.15);
-  }
-
-  /* 활성 정렬 아이콘 */
-  .contracts-table__th--sortable.contracts-table__th--sorted .contracts-table__sort-icon {
-    opacity: 1;
-    color: var(--color-primary);
-  }
+  /* 정렬 인디케이터: 공유 SortIndicator 컴포넌트 사용 */
 
   [data-theme="dark"] .contracts-table th {
     border-bottom-color: var(--color-ios-separator-dark);

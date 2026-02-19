@@ -333,48 +333,7 @@
     background-color: var(--color-ios-bg-hover-dark);
   }
 
-  /* 정렬 표시 아이콘 */
-  .sort-indicator {
-    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: sort indicators */
-    font-family: var(--font-family-text);
-    font-weight: 600;
-    margin-left: 2px;
-    color: var(--color-primary-600);
-    opacity: 0.9;
-  }
-
-  /* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
-  .sort-indicator:not(.sort-indicator--both) {
-    color: var(--color-sort-indicator-active); /* 선택된 정렬 컬럼 강조 */
-    font-weight: 700;
-    opacity: 1;
-  }
-
-  /* 양방향 정렬 인디케이터 - 세로로 쌓기 */
-  .sort-indicator--both {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    line-height: 0.6;
-    margin-left: 2px;
-    gap: 2px;
-  }
-
-  .sort-indicator--both .sort-arrow {
-    display: block;
-    font-size: var(--font-size-caption-2); /* 11px */
-    line-height: 0.6;
-    height: 6px;
-  }
-
-  html[data-theme="dark"] .sort-indicator {
-    color: var(--color-primary-300);
-  }
-
-  .header-sortable:hover .sort-indicator {
-    opacity: 1;
-  }
+  /* 정렬 표시 → 공유 SortIndicator 컴포넌트(shared/ui/SortIndicator)로 통일 */
 
   /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
   .header-name .header-icon-svg {

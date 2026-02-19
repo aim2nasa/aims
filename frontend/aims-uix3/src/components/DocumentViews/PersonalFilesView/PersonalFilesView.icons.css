@@ -32,42 +32,7 @@
     color: var(--color-ios-interactive-dark);
   }
 
-  /* 정렬 인디케이터 */
-  .files-list-header .sort-indicator {
-    font-size: var(--font-size-caption-2);
-    font-family: var(--font-family-text);
-    margin-left: 2px;
-    opacity: 0.8;
-  }
-
-  /* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
-  .files-list-header .sort-indicator:not(.sort-indicator--both) {
-    color: var(--color-ios-interactive-light);
-    font-weight: 700;
-    opacity: 1;
-  }
-
-  html[data-theme="dark"] .files-list-header .sort-indicator:not(.sort-indicator--both) {
-    color: var(--color-ios-interactive-dark);
-  }
-
-  /* 양방향 정렬 인디케이터 - 세로로 쌓기 */
-  .files-list-header .sort-indicator--both {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    line-height: 0.6;
-    margin-left: 2px;
-    gap: 2px;
-  }
-
-  .files-list-header .sort-indicator--both .sort-arrow {
-    display: block;
-    font-size: var(--font-size-caption-2);
-    line-height: 0.6;
-    height: 6px;
-  }
+  /* 정렬 인디케이터: 공유 SortIndicator 컴포넌트 사용 */
 
   /* 헤더 아이콘 */
   .files-list-header .header-icon-svg {

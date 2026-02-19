@@ -13,6 +13,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Customer } from '@/entities/customer/model'
 import { Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection, DocumentTypeCell, DocumentTypeBadge } from '@/shared/ui'
+import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { Dropdown } from '@/shared/ui'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import SFSymbol, {
@@ -1155,9 +1156,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
                   </svg>
                   <span>파일명</span>
-                  {sortField === 'originalName' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
+                  <SortIndicator field="originalName" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
                 {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
                 <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}>
@@ -1189,9 +1188,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <path d="M2 3h12v2H2V3zm0 4h8v2H2V7zm0 4h10v2H2v-2z" fill="currentColor"/>
                 </svg>
                 <span>문서유형</span>
-                {sortField === 'docType' && (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <SortIndicator field="docType" currentSortField={sortField} sortDirection={sortDirection} />
                 <div {...getResizeHandleProps('docType')} />
               </div>
               <div
@@ -1206,9 +1203,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <path d="M8 2v6l4 2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                 </svg>
                 <span>크기</span>
-                {sortField === 'fileSize' && (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <SortIndicator field="fileSize" currentSortField={sortField} sortDirection={sortDirection} />
                 <div {...getResizeHandleProps('size')} />
               </div>
               <div
@@ -1223,9 +1218,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <path d="M5 5h2M5 8h4M5 11h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                 </svg>
                 <span>타입</span>
-                {sortField === 'mimeType' && (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <SortIndicator field="mimeType" currentSortField={sortField} sortDirection={sortDirection} />
                 <div {...getResizeHandleProps('type')} />
               </div>
               <div
@@ -1240,9 +1233,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <path d="M2 6h12M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                 </svg>
                 <span>연결일</span>
-                {sortField === 'linkedAt' && (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <SortIndicator field="linkedAt" currentSortField={sortField} sortDirection={sortDirection} />
                 <div {...getResizeHandleProps('date')} />
               </div>
             </div>

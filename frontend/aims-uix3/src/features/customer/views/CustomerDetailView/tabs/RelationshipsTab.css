@@ -91,16 +91,7 @@
     color: var(--color-text-primary);
   }
 
-  /* 정렬 아이콘 (기본: 연하게 / 활성: 강조색) */
-  .relationships-table__sort-icon {
-    opacity: 0.4;
-    transition: opacity 0.15s ease-out, color 0.15s ease-out;
-  }
-
-  .relationships-table__sort-icon--active {
-    opacity: 1;
-    color: var(--color-accent);
-  }
+  /* 정렬 인디케이터: 공유 SortIndicator 컴포넌트 사용 */
 
   /* ==================== ROW CELLS ==================== */
 

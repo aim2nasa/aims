@@ -10,6 +10,7 @@
 import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import type { Customer } from '@/entities/customer/model'
 import type { Contract } from '@/entities/contract/model'
+import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { ContractService } from '@/services/contractService'
 import { ContractUtils } from '@/entities/contract/model'
 import {
@@ -1003,12 +1004,9 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     })
   }, [filteredContractHistories, arSortField, arSortDirection])
 
-  // 🍎 AR 정렬 인디케이터 렌더링
+  // 🍎 AR 정렬 인디케이터 렌더링 → 공유 SortIndicator 컴포넌트 사용
   const renderArSortIndicator = (field: typeof arSortField) => {
-    if (arSortField === field) {
-      return <span className="ar-sort-indicator">{arSortDirection === 'asc' ? '▲' : '▼'}</span>
-    }
-    return null
+    return <SortIndicator field={field} currentSortField={arSortField} sortDirection={arSortDirection} />
   }
 
   // 🍎 CRS 계약 이력 정렬 핸들러
@@ -1087,12 +1085,9 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     })
   }, [filteredCrContractHistories, crSortField, crSortDirection])
 
-  // 🍎 CRS 정렬 인디케이터 렌더링
+  // 🍎 CRS 정렬 인디케이터 렌더링 → 공유 SortIndicator 컴포넌트 사용
   const renderCrSortIndicator = (field: CrSortField) => {
-    if (crSortField === field) {
-      return <span className="cr-sort-indicator">{crSortDirection === 'asc' ? '▲' : '▼'}</span>
-    }
-    return null
+    return <SortIndicator field={field} currentSortField={crSortField} sortDirection={crSortDirection} />
   }
 
   const renderState = () => {
@@ -1147,12 +1142,9 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     return null
   }
 
-  // 🍎 정렬 인디케이터 렌더링
+  // 🍎 정렬 인디케이터 렌더링 → 공유 SortIndicator 컴포넌트 사용
   const renderSortIndicator = (field: SortField) => {
-    if (sortField === field) {
-      return <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-    }
-    return null
+    return <SortIndicator field={field} currentSortField={sortField} sortDirection={sortDirection} />
   }
 
   return (

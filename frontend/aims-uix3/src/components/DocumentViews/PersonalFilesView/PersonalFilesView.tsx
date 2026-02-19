@@ -38,6 +38,7 @@ import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModa
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { usePersonalFilesSSE } from '@/shared/hooks/usePersonalFilesSSE'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import './PersonalFilesView.layout.css';
 import './PersonalFilesView.list.css';
 import './PersonalFilesView.icons.css';
@@ -2077,16 +2078,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       <path className="pdf-icon-fold" d="M9 1v3h3" strokeWidth="0.8" fill="none"/>
                     </svg>
                     <span>이름</span>
-                    {sortBy === 'name' ? (
-                      <span className="sort-indicator" aria-hidden="true">
-                        {sortDirection === 'asc' ? '▲' : '▼'}
-                      </span>
-                    ) : (
-                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
-                        <span className="sort-arrow">▲</span>
-                        <span className="sort-arrow">▼</span>
-                      </span>
-                    )}
+                    <SortIndicator field="name" currentSortField={sortBy} sortDirection={sortDirection} />
                   </div>
                   <div
                     className={`header-size sortable ${sortBy === 'size' ? 'sorted' : ''}`}
@@ -2106,16 +2098,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       <rect x="6" y="7" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                     </svg>
                     <span>크기</span>
-                    {sortBy === 'size' ? (
-                      <span className="sort-indicator" aria-hidden="true">
-                        {sortDirection === 'asc' ? '▲' : '▼'}
-                      </span>
-                    ) : (
-                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
-                        <span className="sort-arrow">▲</span>
-                        <span className="sort-arrow">▼</span>
-                      </span>
-                    )}
+                    <SortIndicator field="size" currentSortField={sortBy} sortDirection={sortDirection} />
                   </div>
                   <div
                     className={`header-modified sortable ${sortBy === 'createdAt' ? 'sorted' : ''}`}
@@ -2136,16 +2119,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       <path d="M5 1.5v3M11 1.5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                     </svg>
                     <span>수정한 날짜</span>
-                    {sortBy === 'createdAt' ? (
-                      <span className="sort-indicator" aria-hidden="true">
-                        {sortDirection === 'asc' ? '▲' : '▼'}
-                      </span>
-                    ) : (
-                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
-                        <span className="sort-arrow">▲</span>
-                        <span className="sort-arrow">▼</span>
-                      </span>
-                    )}
+                    <SortIndicator field="createdAt" currentSortField={sortBy} sortDirection={sortDirection} />
                   </div>
                   <div
                     className={`header-status sortable ${sortBy === 'status' ? 'sorted' : ''}`}
@@ -2165,16 +2139,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     <span>상태</span>
-                    {sortBy === 'status' ? (
-                      <span className="sort-indicator" aria-hidden="true">
-                        {sortDirection === 'asc' ? '▲' : '▼'}
-                      </span>
-                    ) : (
-                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
-                        <span className="sort-arrow">▲</span>
-                        <span className="sort-arrow">▼</span>
-                      </span>
-                    )}
+                    <SortIndicator field="status" currentSortField={sortBy} sortDirection={sortDirection} />
                   </div>
                   <div className="header-actions">
                     <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">

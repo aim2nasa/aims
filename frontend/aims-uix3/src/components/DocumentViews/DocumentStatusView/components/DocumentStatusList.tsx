@@ -10,6 +10,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { Tooltip, DocumentTypeCell, DocumentTypeBadge } from '@/shared/ui'
 import Button from '@/shared/ui/Button'
+import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
@@ -547,16 +548,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           aria-label={onColumnSort ? '유형으로 정렬' : undefined}
         >
           <span>유형</span>
-          {onColumnSort && (
-            sortField === 'badgeType' ? (
-              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-            ) : (
-              <span className="sort-indicator sort-indicator--both">
-                <span className="sort-arrow">▲</span>
-                <span className="sort-arrow">▼</span>
-              </span>
-            )
-          )}
+          {onColumnSort && <SortIndicator field="badgeType" currentSortField={sortField} sortDirection={sortDirection} />}
         </div>
         <div className="header-filename">
           <div
@@ -571,16 +563,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
             </svg>
             <span>파일명</span>
-            {onColumnSort && (
-              sortField === 'filename' ? (
-                <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-              ) : (
-                <span className="sort-indicator sort-indicator--both">
-                  <span className="sort-arrow">▲</span>
-                  <span className="sort-arrow">▼</span>
-                </span>
-              )
-            )}
+            {onColumnSort && <SortIndicator field="filename" currentSortField={sortField} sortDirection={sortDirection} />}
           </div>
           {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
           {onFilenameModeChange && (
@@ -612,16 +595,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             <path d="M2 3h12v2H2V3zm0 4h8v2H2V7zm0 4h10v2H2v-2z" fill="currentColor"/>
           </svg>
           <span>문서 유형</span>
-          {onColumnSort && (
-            sortField === 'docType' ? (
-              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-            ) : (
-              <span className="sort-indicator sort-indicator--both">
-                <span className="sort-arrow">▲</span>
-                <span className="sort-arrow">▼</span>
-              </span>
-            )
-          )}
+          {onColumnSort && <SortIndicator field="docType" currentSortField={sortField} sortDirection={sortDirection} />}
         </div>
         <div
           className={`header-size ${onColumnSort ? 'header-sortable' : ''}`}
@@ -635,16 +609,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             <path d="M8 2v6l4 2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
           </svg>
           <span>크기</span>
-          {onColumnSort && (
-            sortField === 'fileSize' ? (
-              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-            ) : (
-              <span className="sort-indicator sort-indicator--both">
-                <span className="sort-arrow">▲</span>
-                <span className="sort-arrow">▼</span>
-              </span>
-            )
-          )}
+          {onColumnSort && <SortIndicator field="fileSize" currentSortField={sortField} sortDirection={sortDirection} />}
         </div>
         <div
           className={`header-type ${onColumnSort ? 'header-sortable' : ''}`}
@@ -657,16 +622,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
           </svg>
           <span>타입</span>
-          {onColumnSort && (
-            sortField === 'mimeType' ? (
-              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-            ) : (
-              <span className="sort-indicator sort-indicator--both">
-                <span className="sort-arrow">▲</span>
-                <span className="sort-arrow">▼</span>
-              </span>
-            )
-          )}
+          {onColumnSort && <SortIndicator field="mimeType" currentSortField={sortField} sortDirection={sortDirection} />}
         </div>
         <div
           className={`header-date ${onColumnSort ? 'header-sortable' : ''}`}
@@ -680,16 +636,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             <path d="M2 6h12M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
           </svg>
           <span>업로드 날짜</span>
-          {onColumnSort && (
-            sortField === 'uploadDate' ? (
-              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-            ) : (
-              <span className="sort-indicator sort-indicator--both">
-                <span className="sort-arrow">▲</span>
-                <span className="sort-arrow">▼</span>
-              </span>
-            )
-          )}
+          {onColumnSort && <SortIndicator field="uploadDate" currentSortField={sortField} sortDirection={sortDirection} />}
         </div>
         <div
           className={`header-status ${onColumnSort ? 'header-sortable' : ''}`}
@@ -703,16 +650,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <span>상태</span>
-          {onColumnSort && (
-            sortField === 'status' ? (
-              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-            ) : (
-              <span className="sort-indicator sort-indicator--both">
-                <span className="sort-arrow">▲</span>
-                <span className="sort-arrow">▼</span>
-              </span>
-            )
-          )}
+          {onColumnSort && <SortIndicator field="status" currentSortField={sortField} sortDirection={sortDirection} />}
         </div>
         <div
           className={`header-customer ${onColumnSort ? 'header-sortable' : ''}`}
@@ -726,16 +664,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
           </svg>
           <span>연결된 고객</span>
-          {onColumnSort && (
-            sortField === 'customer' ? (
-              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-            ) : (
-              <span className="sort-indicator sort-indicator--both">
-                <span className="sort-arrow">▲</span>
-                <span className="sort-arrow">▼</span>
-              </span>
-            )
-          )}
+          {onColumnSort && <SortIndicator field="customer" currentSortField={sortField} sortDirection={sortDirection} />}
         </div>
         <div className="header-actions">
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">

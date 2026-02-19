@@ -18,6 +18,7 @@ import { SFSymbol } from '../../../SFSymbol/SFSymbol';
 import { SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol/SFSymbol.types';
 import { formatDate } from '@/shared/lib/timeUtils';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import './QuickFamilyAssignPanel.css';
 
 /** 패널 모드 */
@@ -638,33 +639,23 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
             <div className="quick-family-assign-panel__table-header">
               <div className="header-name sortable" onClick={() => handleSort('name')}>
                 <span>이름</span>
-                {sortConfig?.key === 'name' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <SortIndicator field="name" currentSortField={sortConfig?.key ?? null} sortDirection={sortConfig?.direction} />
               </div>
               <div className="header-birth sortable" onClick={() => handleSort('birth')}>
                 <span>생년월일</span>
-                {sortConfig?.key === 'birth' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <SortIndicator field="birth" currentSortField={sortConfig?.key ?? null} sortDirection={sortConfig?.direction} />
               </div>
               <div className="header-gender sortable" onClick={() => handleSort('gender')}>
                 <span>성별</span>
-                {sortConfig?.key === 'gender' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <SortIndicator field="gender" currentSortField={sortConfig?.key ?? null} sortDirection={sortConfig?.direction} />
               </div>
               <div className="header-phone sortable" onClick={() => handleSort('phone')}>
                 <span>전화</span>
-                {sortConfig?.key === 'phone' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <SortIndicator field="phone" currentSortField={sortConfig?.key ?? null} sortDirection={sortConfig?.direction} />
               </div>
               <div className="header-address sortable" onClick={() => handleSort('address')}>
                 <span>주소</span>
-                {sortConfig?.key === 'address' && (
-                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <SortIndicator field="address" currentSortField={sortConfig?.key ?? null} sortDirection={sortConfig?.direction} />
               </div>
             </div>
 

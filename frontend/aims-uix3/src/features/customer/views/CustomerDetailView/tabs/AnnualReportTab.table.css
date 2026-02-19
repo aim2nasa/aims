@@ -324,14 +324,6 @@
     gap: 4px;
   }
 
-  .annual-report-table__sort-icon {
-    opacity: 0.4;
-    transition: opacity 0.15s ease-out, color 0.15s ease-out;
-  }
-
-  .annual-report-table__sort-icon--active {
-    opacity: 1;
-    color: var(--color-accent);
-  }
+  /* 정렬 표시 → 공유 SortIndicator 컴포넌트로 통일 */
 
 } /* end @layer components */

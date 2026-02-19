@@ -6,6 +6,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import {
   getInquiries,
   getInquiry,
@@ -342,21 +343,9 @@ export default function InquiryView({
     });
   }, [inquiriesData?.inquiries, sortField, sortDirection]);
 
-  // 정렬 아이콘 렌더링
+  // 정렬 아이콘 렌더링 → 공유 SortIndicator 컴포넌트 사용
   const renderSortIndicator = (field: SortField) => {
-    if (sortField === field) {
-      return (
-        <span className="inquiry-sort-indicator">
-          {sortDirection === 'asc' ? '▲' : '▼'}
-        </span>
-      );
-    }
-    return (
-      <span className="inquiry-sort-indicator inquiry-sort-indicator--both">
-        <span className="inquiry-sort-arrow">▲</span>
-        <span className="inquiry-sort-arrow">▼</span>
-      </span>
-    );
+    return <SortIndicator field={field} currentSortField={sortField} sortDirection={sortDirection} />;
   };
 
   // 동적 타이틀

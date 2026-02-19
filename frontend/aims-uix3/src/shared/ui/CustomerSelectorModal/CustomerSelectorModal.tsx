@@ -19,6 +19,7 @@ import { Button } from '../Button';
 import { SFSymbol } from '../../../components/SFSymbol/SFSymbol';
 import { SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol/SFSymbol.types';
 import { formatDate } from '@/shared/lib/timeUtils';
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import './CustomerSelectorModal.css';
 
 // 📱 디바이스별 칼럼 구성
@@ -641,9 +642,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                   <div key={key} className={`${col.className} sortable`} onClick={() => handleSort(col.sortKey)}>
                     {col.icon}
                     <span>{col.label}</span>
-                    {sortConfig?.key === col.sortKey && (
-                      <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                    )}
+                    <SortIndicator field={col.sortKey} currentSortField={sortConfig?.key ?? null} sortDirection={sortConfig?.direction} />
                     {!isMobile && (
                       <div
                         className="column-resize-handle"

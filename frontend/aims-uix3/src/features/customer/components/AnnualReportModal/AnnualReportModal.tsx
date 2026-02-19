@@ -19,6 +19,7 @@ import Tooltip from '../../../../shared/ui/Tooltip';
 import type { AnnualReport, InsuranceContract } from '../../api/annualReportApi';
 import { AnnualReportApi } from '../../api/annualReportApi';
 import { formatDateTime, formatDate } from '@/shared/lib/timeUtils';
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import './AnnualReportModal.css';
 
 /**
@@ -165,38 +166,10 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
   };
 
   /**
-   * 정렬 아이콘 렌더링
+   * 정렬 아이콘 렌더링 (공유 컴포넌트)
    */
   const renderSortIcon = (columnKey: keyof InsuranceContract) => {
-    if (!sortConfig || sortConfig.key !== columnKey) {
-      return (
-        <Tooltip content="클릭하여 정렬">
-          <span className="contracts-table__sort-icon">
-            <SFSymbol
-              name="arrow.up.arrow.down"
-              size={SFSymbolSize.CAPTION_2}
-              weight={SFSymbolWeight.REGULAR}
-              decorative={true}
-            />
-          </span>
-        </Tooltip>
-      );
-    }
-
-    const tooltipText = sortConfig.direction === 'asc' ? '오름차순 정렬 중' : '내림차순 정렬 중';
-
-    return (
-      <Tooltip content={tooltipText}>
-        <span className="contracts-table__sort-icon">
-          <SFSymbol
-            name={sortConfig.direction === 'asc' ? 'chevron.up' : 'chevron.down'}
-            size={SFSymbolSize.CAPTION_2}
-            weight={SFSymbolWeight.SEMIBOLD}
-            decorative={true}
-          />
-        </span>
-      </Tooltip>
-    );
+    return <SortIndicator field={columnKey} currentSortField={sortConfig?.key ?? null} sortDirection={sortConfig?.direction} />;
   };
 
   /**

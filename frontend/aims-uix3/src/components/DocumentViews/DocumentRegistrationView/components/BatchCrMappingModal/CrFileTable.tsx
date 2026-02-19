@@ -21,6 +21,7 @@ import {
   getRowMappingDisplayTextWithMap,
 } from '../../utils/crGroupingUtils'
 // CSS는 AR 스타일 재사용 (Phase 2에서 공통화)
+import { SortIndicator } from '@/shared/ui/SortIndicator'
 import '../BatchArMappingModal/ArFileTable.css'
 
 // ===== 타입 정의 =====
@@ -668,10 +669,9 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [openDropdownId, bulkDropdownOpen, closeDropdown, closeBulkDropdown])
 
-  // 헤더 정렬 아이콘 렌더
+  // 헤더 정렬 아이콘 렌더 (공유 컴포넌트)
   const renderSortIcon = (field: CrTableSortField) => {
-    if (sortField !== field) return null
-    return <span className="ar-file-table__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+    return <SortIndicator field={field} currentSortField={sortField} sortDirection={sortDirection} />
   }
 
   // 헤더 클래스

@@ -96,16 +96,7 @@
     gap: 2px;
   }
 
-  /* 정렬 인디케이터 (탭 고유 클래스) */
-  .cc-sort-indicator {
-    font-size: 8px;
-    color: var(--color-ios-blue-light);
-    margin-left: 2px;
-  }
-
-  html[data-theme="dark"] .cc-sort-indicator {
-    color: var(--color-ios-blue-dark);
-  }
+  /* 정렬 인디케이터: 공유 SortIndicator 컴포넌트 사용 */
 
   /* === 테이블 리스트 - 탭 고유 속성 === */
   /* 공통 스타일: tab-table.css (.tab-table__body) */

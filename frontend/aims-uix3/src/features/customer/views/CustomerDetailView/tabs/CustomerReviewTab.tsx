@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import { CustomerReviewModal } from '@/features/customer/components/CustomerReviewModal';
 import { CustomerReviewApi, type CustomerReview } from '@/features/customer/api/customerReviewApi';
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
@@ -593,9 +594,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
           >
             <span className="customer-review-table__header-content">
               계약자
-              <span className={`customer-review-table__sort-icon ${sortField === 'contractor_name' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'contractor_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="contractor_name" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('contractor')} />
           </div>
@@ -605,9 +604,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
           >
             <span className="customer-review-table__header-content">
               피보험자
-              <span className={`customer-review-table__sort-icon ${sortField === 'insured_name' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'insured_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="insured_name" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('insured')} />
           </div>
@@ -617,9 +614,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
           >
             <span className="customer-review-table__header-content">
               발행일
-              <span className={`customer-review-table__sort-icon ${sortField === 'issue_date' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'issue_date' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="issue_date" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('issueDate')} />
           </div>
@@ -629,9 +624,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
           >
             <span className="customer-review-table__header-content">
               파싱일시
-              <span className={`customer-review-table__sort-icon ${sortField === 'parsed_at' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'parsed_at' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="parsed_at" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('parsedAt')} />
           </div>
@@ -641,9 +634,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
           >
             <span className="customer-review-table__header-content">
               상품명
-              <span className={`customer-review-table__sort-icon ${sortField === 'product_name' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'product_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="product_name" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('product')} />
           </div>
@@ -653,9 +644,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
           >
             <span className="customer-review-table__header-content">
               펀드 수
-              <span className={`customer-review-table__sort-icon ${sortField === 'fund_count' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'fund_count' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="fund_count" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('fundCount')} />
           </div>
@@ -665,9 +654,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
           >
             <span className="customer-review-table__header-content">
               상태
-              <span className={`customer-review-table__sort-icon ${sortField === 'status' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'status' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="status" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('status')} />
           </div>

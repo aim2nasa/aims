@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import { ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui/ContextMenu';
 import { useToastContext } from '@/shared/ui/Toast';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
@@ -1092,9 +1093,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           >
             <span className="annual-report-table__header-content">
               소유주
-              <span className={`annual-report-table__sort-icon ${sortField === 'customer_name' ? 'annual-report-table__sort-icon--active' : ''}`}>
-                {sortField === 'customer_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="customer_name" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('owner')} />
           </div>
@@ -1104,9 +1103,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           >
             <span className="annual-report-table__header-content">
               발행일
-              <span className={`annual-report-table__sort-icon ${sortField === 'issue_date' ? 'annual-report-table__sort-icon--active' : ''}`}>
-                {sortField === 'issue_date' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="issue_date" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('issueDate')} />
           </div>
@@ -1116,9 +1113,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           >
             <span className="annual-report-table__header-content">
               파싱일시
-              <span className={`annual-report-table__sort-icon ${sortField === 'parsed_at' ? 'annual-report-table__sort-icon--active' : ''}`}>
-                {sortField === 'parsed_at' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="parsed_at" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('parsedAt')} />
           </div>
@@ -1128,9 +1123,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           >
             <span className="annual-report-table__header-content">
               총 월보험료
-              <span className={`annual-report-table__sort-icon ${sortField === 'total_monthly_premium' ? 'annual-report-table__sort-icon--active' : ''}`}>
-                {sortField === 'total_monthly_premium' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="total_monthly_premium" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('premium')} />
           </div>
@@ -1140,9 +1133,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           >
             <span className="annual-report-table__header-content">
               계약 수
-              <span className={`annual-report-table__sort-icon ${sortField === 'contract_count' ? 'annual-report-table__sort-icon--active' : ''}`}>
-                {sortField === 'contract_count' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="contract_count" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('count')} />
           </div>
@@ -1152,9 +1143,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           >
             <span className="annual-report-table__header-content">
               상태
-              <span className={`annual-report-table__sort-icon ${sortField === 'status' ? 'annual-report-table__sort-icon--active' : ''}`}>
-                {sortField === 'status' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
+              <SortIndicator field="status" currentSortField={sortField} sortDirection={sortDirection} />
             </span>
             <div {...getResizeHandleProps('status')} />
           </div>

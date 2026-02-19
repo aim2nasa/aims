@@ -392,10 +392,7 @@
     color: var(--color-text-primary);
   }
 
-  .quick-family-assign-panel__table-header .sort-indicator {
-    font-size: 9px;
-    opacity: 0.7;
-  }
+  /* 정렬 인디케이터: 공유 SortIndicator 컴포넌트 사용 */
 
   /* 테이블 바디 */
   .quick-family-assign-panel__table-body {

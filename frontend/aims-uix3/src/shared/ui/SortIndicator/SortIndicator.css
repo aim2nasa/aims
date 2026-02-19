@@ -1,0 +1,11 @@
+/* ==================== SORT INDICATOR (공유) ==================== */
+
+.sort-indicator {
+  font-size: 8px;
+  font-family: var(--font-family-text);
+  font-weight: 600;
+  margin-left: 2px;
+  color: var(--color-sort-indicator-active);
+  line-height: 1;
+  vertical-align: middle;
+}

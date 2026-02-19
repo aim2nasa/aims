@@ -11,6 +11,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Button from '@/shared/ui/Button'
+import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { Dropdown, InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import Modal from '@/shared/ui/Modal'
@@ -732,23 +733,9 @@ export default function ContractAllView({
     '--col-status': `${columnWidths.status}px`,
   } as React.CSSProperties), [columnWidths])
 
-  // 정렬 인디케이터 (DocumentLibraryView 동일 패턴)
+  // 정렬 인디케이터 → 공유 SortIndicator 컴포넌트 사용
   const renderSortIndicator = (field: SortField) => {
-    if (sortField === field) {
-      // 현재 정렬 중인 컬럼: 단일 화살표
-      return (
-        <span className="sort-indicator">
-          {sortDirection === 'asc' ? '▲' : '▼'}
-        </span>
-      )
-    }
-    // 정렬되지 않은 컬럼: 양방향 화살표
-    return (
-      <span className="sort-indicator sort-indicator--both">
-        <span className="sort-arrow">▲</span>
-        <span className="sort-arrow">▼</span>
-      </span>
-    )
+    return <SortIndicator field={field} currentSortField={sortField} sortDirection={sortDirection} />
   }
 
   const isEmpty = contracts.length === 0 && !isLoading

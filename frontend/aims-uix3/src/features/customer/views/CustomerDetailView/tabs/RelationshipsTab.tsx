@@ -24,6 +24,7 @@ import SFSymbol, {
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import Tooltip from '@/shared/ui/Tooltip';
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import './RelationshipsTab.css';
 
 
@@ -257,9 +258,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
             >
               <span className="relationships-table__header-content">
                 관계 유형
-                <span className={`relationships-table__sort-icon ${sortField === 'relationshipType' ? 'relationships-table__sort-icon--active' : ''}`}>
-                  {sortField === 'relationshipType' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-                </span>
+                <SortIndicator field="relationshipType" currentSortField={sortField} sortDirection={sortDirection} />
                 {relationshipsCount > 0 && (
                   <span className="relationships-table__count-badge">{relationshipsCount}</span>
                 )}
@@ -271,9 +270,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
             >
               <span className="relationships-table__header-content">
                 관련 고객
-                <span className={`relationships-table__sort-icon ${sortField === 'relatedCustomer' ? 'relationships-table__sort-icon--active' : ''}`}>
-                  {sortField === 'relatedCustomer' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-                </span>
+                <SortIndicator field="relatedCustomer" currentSortField={sortField} sortDirection={sortDirection} />
               </span>
             </div>
             <div
@@ -282,9 +279,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
             >
               <span className="relationships-table__header-content">
                 등록일
-                <span className={`relationships-table__sort-icon ${sortField === 'createdAt' ? 'relationships-table__sort-icon--active' : ''}`}>
-                  {sortField === 'createdAt' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-                </span>
+                <SortIndicator field="createdAt" currentSortField={sortField} sortDirection={sortDirection} />
               </span>
             </div>
             <div className="header-rel-delete">{deleteHeaderLabel}</div>

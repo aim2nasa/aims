@@ -33,6 +33,7 @@ import SFSymbol, {
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
 import { formatDate } from '@/shared/lib/timeUtils'
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import './CorporateContractsTab.css';
 
 // ==================== 타입 정의 ====================
@@ -629,12 +630,9 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
     }
   }, [sortField])
 
-  // 정렬 인디케이터
-  const renderSortIndicator = useCallback((field: SortField) => {
-    if (sortField === field) {
-      return <span className="cc-sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-    }
-    return null
+  // 정렬 인디케이터 (공유 컴포넌트)
+  const renderSortIndicatorEl = useCallback((field: SortField) => {
+    return <SortIndicator field={field} currentSortField={sortField} sortDirection={sortDirection} />
   }, [sortField, sortDirection])
 
   // 금액 포맷
@@ -740,7 +738,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
             tabIndex={0}
           >
             <span>관계</span>
-            {renderSortIndicator('memberRelationship')}
+            {renderSortIndicatorEl('memberRelationship')}
             <div {...getCcResizeHandleProps('relation')} />
           </div>
           <div
@@ -750,7 +748,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
             tabIndex={0}
           >
             <span>증권번호</span>
-            {renderSortIndicator('policyNumber')}
+            {renderSortIndicatorEl('policyNumber')}
             <div {...getCcResizeHandleProps('policy')} />
           </div>
           <div
@@ -760,7 +758,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
             tabIndex={0}
           >
             <span>보험상품</span>
-            {renderSortIndicator('productName')}
+            {renderSortIndicatorEl('productName')}
             <div {...getCcResizeHandleProps('product')} />
           </div>
           <div
@@ -770,7 +768,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
             tabIndex={0}
           >
             <span>계약자</span>
-            {renderSortIndicator('holderName')}
+            {renderSortIndicatorEl('holderName')}
             <div {...getCcResizeHandleProps('holder')} />
           </div>
           <div
@@ -780,7 +778,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
             tabIndex={0}
           >
             <span>피보험자</span>
-            {renderSortIndicator('insuredName')}
+            {renderSortIndicatorEl('insuredName')}
             <div {...getCcResizeHandleProps('insured')} />
           </div>
           <div
@@ -790,7 +788,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
             tabIndex={0}
           >
             <span>계약일</span>
-            {renderSortIndicator('contractDate')}
+            {renderSortIndicatorEl('contractDate')}
             <div {...getCcResizeHandleProps('date')} />
           </div>
           <div
@@ -800,7 +798,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
             tabIndex={0}
           >
             <span>상태</span>
-            {renderSortIndicator('status')}
+            {renderSortIndicatorEl('status')}
             <div {...getCcResizeHandleProps('status')} />
           </div>
           <div
@@ -810,7 +808,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
             tabIndex={0}
           >
             <span>가입금액</span>
-            {renderSortIndicator('coverageAmount')}
+            {renderSortIndicatorEl('coverageAmount')}
             <div {...getCcResizeHandleProps('amount')} />
           </div>
           <div
@@ -820,7 +818,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
             tabIndex={0}
           >
             <span>보험료</span>
-            {renderSortIndicator('premium')}
+            {renderSortIndicatorEl('premium')}
           </div>
         </div>
 

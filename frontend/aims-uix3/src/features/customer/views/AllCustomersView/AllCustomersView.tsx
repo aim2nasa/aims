@@ -13,6 +13,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import { Dropdown, Tooltip, Modal, ContextMenu, useContextMenu, type ContextMenuSection, InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui';
 import Button from '@/shared/ui/Button';
+import { SortIndicator } from '@/shared/ui/SortIndicator';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
@@ -1050,14 +1051,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               )}
               <div className="header-type header-sortable" onClick={() => handleColumnSort('type')}>
                 <span>유형</span>
-                {sortField === 'type' ? (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                ) : (
-                  <span className="sort-indicator sort-indicator--both">
-                    <span className="sort-arrow">▲</span>
-                    <span className="sort-arrow">▼</span>
-                  </span>
-                )}
+                <SortIndicator field="type" currentSortField={sortField} sortDirection={sortDirection} />
               </div>
               <div className="header-name header-sortable" onClick={() => handleColumnSort('name')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -1065,14 +1059,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
                 </svg>
                 <span>이름</span>
-                {sortField === 'name' ? (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                ) : (
-                  <span className="sort-indicator sort-indicator--both">
-                    <span className="sort-arrow">▲</span>
-                    <span className="sort-arrow">▼</span>
-                  </span>
-                )}
+                <SortIndicator field="name" currentSortField={sortField} sortDirection={sortDirection} />
               </div>
               <div className="header-birth header-sortable" onClick={() => handleColumnSort('birth')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -1086,14 +1073,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <ellipse cx="11.25" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
                 </svg>
                 <span>생년월일</span>
-                {sortField === 'birth' ? (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                ) : (
-                  <span className="sort-indicator sort-indicator--both">
-                    <span className="sort-arrow">▲</span>
-                    <span className="sort-arrow">▼</span>
-                  </span>
-                )}
+                <SortIndicator field="birth" currentSortField={sortField} sortDirection={sortDirection} />
               </div>
               <div className="header-gender header-sortable" onClick={() => handleColumnSort('gender')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -1103,28 +1083,14 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M11 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
                 </svg>
                 <span>성별</span>
-                {sortField === 'gender' ? (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                ) : (
-                  <span className="sort-indicator sort-indicator--both">
-                    <span className="sort-arrow">▲</span>
-                    <span className="sort-arrow">▼</span>
-                  </span>
-                )}
+                <SortIndicator field="gender" currentSortField={sortField} sortDirection={sortDirection} />
               </div>
               <div className="header-phone header-sortable" onClick={() => handleColumnSort('phone')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
                 </svg>
                 <span>휴대폰</span>
-                {sortField === 'phone' ? (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                ) : (
-                  <span className="sort-indicator sort-indicator--both">
-                    <span className="sort-arrow">▲</span>
-                    <span className="sort-arrow">▼</span>
-                  </span>
-                )}
+                <SortIndicator field="phone" currentSortField={sortField} sortDirection={sortDirection} />
               </div>
               <div className="header-email header-sortable" onClick={() => handleColumnSort('email')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -1132,28 +1098,14 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                 </svg>
                 <span>이메일</span>
-                {sortField === 'email' ? (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                ) : (
-                  <span className="sort-indicator sort-indicator--both">
-                    <span className="sort-arrow">▲</span>
-                    <span className="sort-arrow">▼</span>
-                  </span>
-                )}
+                <SortIndicator field="email" currentSortField={sortField} sortDirection={sortDirection} />
               </div>
               <div className="header-address header-sortable" onClick={() => handleColumnSort('address')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/>
                 </svg>
                 <span>주소</span>
-                {sortField === 'address' ? (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                ) : (
-                  <span className="sort-indicator sort-indicator--both">
-                    <span className="sort-arrow">▲</span>
-                    <span className="sort-arrow">▼</span>
-                  </span>
-                )}
+                <SortIndicator field="address" currentSortField={sortField} sortDirection={sortDirection} />
               </div>
               <div className="header-status header-sortable" onClick={() => handleColumnSort('status')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -1161,14 +1113,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none"/>
                 </svg>
                 <span>상태</span>
-                {sortField === 'status' ? (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                ) : (
-                  <span className="sort-indicator sort-indicator--both">
-                    <span className="sort-arrow">▲</span>
-                    <span className="sort-arrow">▼</span>
-                  </span>
-                )}
+                <SortIndicator field="status" currentSortField={sortField} sortDirection={sortDirection} />
               </div>
               <div className="header-created header-sortable" onClick={() => handleColumnSort('created')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -1176,14 +1121,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M8 4v4h3" stroke="white" strokeWidth="1" fill="none"/>
                 </svg>
                 <span>등록일</span>
-                {sortField === 'created' ? (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                ) : (
-                  <span className="sort-indicator sort-indicator--both">
-                    <span className="sort-arrow">▲</span>
-                    <span className="sort-arrow">▼</span>
-                  </span>
-                )}
+                <SortIndicator field="created" currentSortField={sortField} sortDirection={sortDirection} />
               </div>
             </div>
           )}

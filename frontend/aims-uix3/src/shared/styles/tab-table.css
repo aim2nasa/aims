@@ -126,24 +126,9 @@
     background-color: var(--color-ios-bg-hover-dark);
   }
 
-  /* ==================== SORT INDICATOR ==================== */
-
-  .tab-table__header .sort-indicator {
-    font-size: var(--font-size-caption-2);
-    font-family: var(--font-family-text);
-    font-weight: 600;
-    margin-left: 2px;
-    color: var(--color-primary-600);
-    opacity: 0.9;
-  }
-
-  html[data-theme="dark"] .tab-table__header .sort-indicator {
-    color: var(--color-primary-300);
-  }
-
-  .tab-table__header .header-sortable:hover .sort-indicator {
-    opacity: 1;
-  }
+  /* ==================== SORT INDICATOR ====================
+     공유 SortIndicator 컴포넌트(shared/ui/SortIndicator)가 기본 스타일 담당.
+  ======================================================== */
 
   /* ==================== TABLE BODY ==================== */
 
