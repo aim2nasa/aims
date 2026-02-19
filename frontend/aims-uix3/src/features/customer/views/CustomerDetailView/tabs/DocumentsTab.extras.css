@@ -126,30 +126,27 @@
    * ======================================== */
 
   /* === 📱 768px: 칼럼 재정의 (공통 gap/padding/font: tab-table.css) === */
+  /* 🍎 다른 탭(AnnualReport, CustomerReview)과 동일하게 minmax()/1fr 사용
+   *    JS 픽셀 고정값(var(--filename-column-width)) 대신 유연한 그리드로 전환
+   *    → 뷰포트에 맞춰 자동 조절 → 수평 스크롤 없음 → 헤더 배경 끊김 방지 */
   @media (max-width: 768px) {
     .customer-documents {
       padding: 0 8px 8px 8px;
     }
 
-    /* 4칼럼 (문서유형, 타입 숨김) - --grid-cols 오버라이드 */
-    .customer-documents-list-header {
-      --grid-cols:
-        24px                                        /* 유형 아이콘 */
-        var(--filename-column-width, 160px)         /* 파일명 */
-        var(--size-column-width, 45px)              /* 크기 */
-        var(--date-column-width, 65px);             /* 연결일 */
-    }
-
+    /* 4칼럼 (문서유형, 타입 숨김) - 수평 스크롤 허용, 칼럼 넓게 */
+    .customer-documents-list-header,
     .customer-documents-item {
       --grid-cols:
-        24px
-        var(--filename-column-width, 160px)
-        var(--size-column-width, 45px)
-        var(--date-column-width, 65px);
+        24px                       /* 유형 아이콘 */
+        minmax(300px, 1fr)         /* 파일명 - 넓게 (이름 잘림 최소화) */
+        70px                       /* 크기 */
+        120px;                     /* 연결일 */
+      min-width: 540px; /* 헤더 배경이 전체 칼럼 커버하도록 최소 너비 보장 */
     }
 
     /* 문서유형, 타입 칼럼 숨김 */
-    .customer-documents-list-header .header-badge-type,
+    .customer-documents-list-header .header-doctype,
     .customer-documents-list-header .header-type,
     .customer-documents-item .document-doctype,
     .customer-documents-item .document-type {
@@ -158,15 +155,15 @@
 
     /* 삭제 모드: 체크박스 추가 그리드 */
     .customer-documents--delete-mode .customer-documents-list-header {
-      grid-template-columns: 20px 24px minmax(80px, 1fr) 45px 65px;
+      grid-template-columns: 20px 24px minmax(280px, 1fr) 70px 120px;
     }
 
     .customer-documents--delete-mode .customer-documents-item {
-      grid-template-columns: 20px 24px minmax(80px, 1fr) 45px 65px;
+      grid-template-columns: 20px 24px minmax(280px, 1fr) 70px 120px;
     }
 
     /* 삭제 모드에서도 문서유형, 타입 숨김 */
-    .customer-documents--delete-mode .customer-documents-list-header .header-badge-type,
+    .customer-documents--delete-mode .customer-documents-list-header .header-doctype,
     .customer-documents--delete-mode .customer-documents-list-header .header-type,
     .customer-documents--delete-mode .customer-documents-item .document-doctype,
     .customer-documents--delete-mode .customer-documents-item .document-type {
@@ -174,16 +171,15 @@
     }
   }
 
-  /* 📱 480px: 테이블 레이아웃 유지 + 수평 스크롤 (다른 탭과 통일) */
+  /* 📱 480px: 유연한 그리드 유지 + 폰트 축소 */
   @media (max-width: 480px) {
     .customer-documents {
       padding: 0 4px 4px 4px;
     }
 
-    /* 칼럼 헤더 표시 유지 (다른 탭과 동일하게 테이블 형태) */
     .customer-documents-list-header,
     .customer-documents-item {
-      min-width: 350px;
+      min-width: 540px; /* 768px과 동일 - 헤더 배경 커버 보장 */
       font-size: 10px;
     }
   }

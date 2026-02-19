@@ -130,7 +130,7 @@
   }
 
   /* === 🍎 COLUMN HEADER ALIGNMENT: 중앙 정렬 === */
-  .customer-documents-list-header .header-badge-type {
+  .customer-documents-list-header .header-doctype {
     justify-content: center;
     text-align: center;
   }
