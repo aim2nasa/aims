@@ -1,5 +1,6 @@
 # hotkey.py - Ctrl+Alt+F11/F12 글로벌 핫키로 화면 캡처
 # Windows RegisterHotKey API 사용 (관리자 권한 불필요, 훅 안정성 보장)
+# 캡처된 이미지는 D:/tmp에 파일로 저장 (클립보드 복사는 MetSquare 차단으로 비활성)
 import ctypes
 import ctypes.wintypes
 import subprocess
@@ -39,7 +40,7 @@ def on_capture(monitor):
     log_msg(f"Hotkey pressed: monitor {monitor}")
     try:
         result = subprocess.run(
-            [PYTHON, CAPTURE_SCRIPT, "--monitor", str(monitor)],
+            [PYTHON, CAPTURE_SCRIPT, "--monitor", str(monitor), "--no-clipboard"],
             capture_output=True, text=True, timeout=10,
             creationflags=subprocess.CREATE_NO_WINDOW
         )

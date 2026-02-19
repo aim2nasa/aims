@@ -142,6 +142,7 @@ if __name__ == "__main__":
     parser.add_argument("--monitor", default="1", help="1=왼쪽모니터, 2=오른쪽모니터, all=전체")
     parser.add_argument("--output", default=None, help="저장 경로 (미지정 시 자동 번호)")
     parser.add_argument("--dir", default="D:/tmp", help="자동 번호 저장 디렉토리")
+    parser.add_argument("--no-clipboard", action="store_true", help="클립보드 복사 안 함 (hotkey.py에서 대신 처리)")
     args = parser.parse_args()
 
     save_dir = args.dir
@@ -164,7 +165,7 @@ if __name__ == "__main__":
             sys.exit(1)
         ok = capture_monitor(mon_map[user_num], user_num, output_path)
 
-    if ok:
+    if ok and not args.no_clipboard:
         try:
             copy_to_clipboard(output_path)
         except Exception as e:
