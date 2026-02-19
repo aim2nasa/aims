@@ -563,4 +563,30 @@
     height: 14px;
   }
 
+  /* 📱 세로모드: 폼 콘텐츠 한 페이지 표시 (스크롤 최소화) */
+  @media (max-width: 640px) and (orientation: portrait) {
+    .customer-detail-view__actions {
+      margin-bottom: var(--spacing-2);
+      padding-bottom: var(--spacing-2);
+    }
+
+    .tabs-bar.customer-detail-view__tabs {
+      margin-bottom: var(--spacing-2);
+    }
+
+    /* 읽기 전용 폼: 44px 터치 타겟 불필요 → 컴팩트 */
+    .customer-detail-view .form-row {
+      min-height: 0;
+      padding: 4px 0;
+    }
+
+    .customer-detail-view .form-section__title {
+      padding: 4px 0;
+    }
+
+    .customer-detail-view .form-row--memo {
+      padding: 4px 0;
+    }
+  }
+
 } /* end @layer components */
