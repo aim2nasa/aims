@@ -169,7 +169,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
+    padding: 10px 16px;
     border-bottom: 1px solid var(--color-layout-border);
     border-radius: 12px 12px 0 0;
     flex-shrink: 0;
@@ -336,7 +336,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 20px;
+    padding: 16px;
     background-color: var(--color-layout-secondary-light);
     min-height: 0;
   }
@@ -366,14 +366,22 @@
   /* ===== Footer ===== */
 
   .draggable-modal__footer {
-    padding: 16px 20px;
+    padding: 6px 16px;
     border-top: 1px solid var(--color-layout-border);
     border-radius: 0 0 12px 12px;
     display: flex;
     justify-content: flex-end;
-    gap: var(--spacing-3);
+    gap: var(--spacing-2);
     background-color: var(--color-layout-content-light);
     flex-shrink: 0;
+  }
+
+  /* 푸터 버튼 컴팩트: 44px → 28px */
+  .draggable-modal__footer .button {
+    padding: 4px 14px;
+    min-height: 28px;
+    min-width: auto;
+    font-size: 13px;
   }
 
   html[data-theme="dark"] .draggable-modal__footer {
@@ -505,17 +513,17 @@
     /* 드래그/리사이즈 비활성화 */
     .draggable-modal__header {
       cursor: default;
-      padding: 12px 16px;
+      padding: 8px 12px;
       border-radius: 16px 16px 0 0;
     }
 
     .draggable-modal__content {
-      padding: 12px 16px;
+      padding: 10px 12px;
     }
 
     .draggable-modal__footer {
-      padding: 12px 16px;
-      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      padding: 6px 12px;
+      padding-bottom: max(6px, env(safe-area-inset-bottom));
       border-radius: 0;
     }
 
@@ -567,17 +575,17 @@
 
     .draggable-modal__header {
       cursor: default;
-      padding: 8px 16px;
+      padding: 6px 12px;
       border-radius: 0;
     }
 
     .draggable-modal__content {
-      padding: 8px 16px;
+      padding: 6px 12px;
     }
 
     .draggable-modal__footer {
-      padding: 8px 16px;
-      padding-bottom: max(8px, env(safe-area-inset-bottom));
+      padding: 4px 12px;
+      padding-bottom: max(4px, env(safe-area-inset-bottom));
       border-radius: 0;
     }
 
@@ -614,17 +622,17 @@
 
   .draggable-modal--mobile .draggable-modal__header {
     cursor: default;
-    padding: 12px 16px;
+    padding: 8px 12px;
     border-radius: 16px 16px 0 0;
   }
 
   .draggable-modal--mobile .draggable-modal__content {
-    padding: 12px 16px;
+    padding: 10px 12px;
   }
 
   .draggable-modal--mobile .draggable-modal__footer {
-    padding: 12px 16px;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding: 6px 12px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
     border-radius: 0;
   }
 
@@ -645,17 +653,17 @@
   }
 
   .draggable-modal--phone-landscape .draggable-modal__header {
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 0;
   }
 
   .draggable-modal--phone-landscape .draggable-modal__content {
-    padding: 8px 16px;
+    padding: 6px 12px;
   }
 
   .draggable-modal--phone-landscape .draggable-modal__footer {
-    padding: 8px 16px;
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding: 4px 12px;
+    padding-bottom: max(4px, env(safe-area-inset-bottom));
     border-radius: 0;
   }
 
@@ -668,12 +676,12 @@
     min-width: auto;
   }
 
-  /* 모바일 세로: 푸터 버튼 약간 축소 */
+  /* 모바일 세로: 푸터 버튼 컴팩트 */
   .draggable-modal--mobile .draggable-modal__footer .button {
-    padding: 8px 20px;
+    padding: 6px 16px;
     font-size: 13px;
-    height: 36px;
-    min-height: 36px;
+    height: 32px;
+    min-height: 32px;
   }
 
   /* === 터치 기기: 헤더 버튼 터치 영역 확대 === */
