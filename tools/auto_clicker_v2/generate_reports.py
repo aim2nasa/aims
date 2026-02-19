@@ -3,9 +3,9 @@
 AC v2 리포트 생성기
 
 초성별 customer_results_*.json 파일을 읽어:
-1. AIMS 고객일괄등록 호환 엑셀 (customer_import.xlsx)
-2. 동일 내용 JSON (customer_import.json)
-3. 고객별 실행결과 엑셀 (execution_report.xlsx)
+1. AIMS 고객일괄등록 호환 엑셀 (customer_import_{timestamp}.xlsx)
+2. 동일 내용 JSON (customer_import_{timestamp}.json)
+3. 고객별 실행결과 엑셀 (execution_report_{timestamp}.xlsx)
 
 Usage:
     python generate_reports.py <output_base_dir> [--chosung ㄱ,ㄴ,ㄷ]
@@ -24,6 +24,7 @@ from datetime import datetime
 try:
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
 except ImportError:
     print("[ERROR] openpyxl not installed. Run: pip install openpyxl")
     sys.exit(1)
@@ -35,11 +36,12 @@ except ImportError:
 PERSONAL_COLUMNS = ["고객명", "이메일", "휴대폰", "주소", "성별", "생년월일"]
 CORPORATE_COLUMNS = ["고객명", "이메일", "대표전화", "주소", "사업자번호", "대표자명"]
 
+# 실행결과 통합 시트 컬럼
 REPORT_COLUMNS = [
-    "고객명", "구분", "휴대폰", "이메일", "주소", "성별", "생년월일",
-    "CRS 수", "CRS 파일명",
-    "AR 수", "AR 파일명",
-    "처리상태"
+    "고객명", "구분", "생년월일", "보험나이", "성별", "이메일", "휴대폰",
+    "주소", "개인/법인", "사업자번호",
+    "Annual Report", "AR 파일명",
+    "변액리포트", "CRS 파일명",
 ]
 
 # 스타일 상수
@@ -91,7 +93,7 @@ def get_customer_detail(result):
 
     데이터 소스:
       - customer_detail: metdo_reader OCR (고객상세 페이지) → 주소, 사업자번호
-      - customer_detail_fallback: 테이블 OCR (고객목록 페이지) → 이메일, 휴대폰
+      - customer_detail_fallback: 테이블 OCR (고객목록 페이지) → 이메일, 휴대폰, 구분, 보험나이
 
     병합 규칙: fallback을 기본으로, detail의 비어있지 않은 값으로 덮어쓰기
     → 이메일은 테이블 OCR에서, 주소는 metdo_reader에서 가져옴
@@ -191,11 +193,11 @@ def auto_column_width(ws, columns, data_list):
             # 한글 문자는 2배 너비
             char_len = sum(2 if ord(c) > 127 else 1 for c in val)
             max_len = max(max_len, char_len)
-        ws.column_dimensions[chr(64 + col_idx) if col_idx <= 26 else "A"].width = min(max_len + 4, 50)
+        ws.column_dimensions[get_column_letter(col_idx)].width = min(max_len + 4, 50)
 
 
 def generate_customer_import_excel(personal, corporate, output_path):
-    """AIMS 고객일괄등록 호환 엑셀 생성"""
+    """AIMS 고객일괄등록 호환 엑셀 생성 (개인/법인 탭 분리)"""
     wb = Workbook()
     wb.remove(wb.active)  # 기본 시트 제거
 
@@ -241,8 +243,61 @@ def generate_customer_import_json(personal, corporate, output_path):
     return True
 
 
+# ──────────────────────────────────────────────────────────
+# 실행결과 엑셀 (통합 단일 시트)
+# ──────────────────────────────────────────────────────────
+
+def format_ar_display(ar_info):
+    """Annual Report 표시값과 파일명 반환
+
+    Returns:
+        (display_text, filenames_text)
+        - display_text: "0", "1", "이미 다운로드됨"
+        - filenames_text: 파일명 (쉼표 구분)
+    """
+    if not ar_info or not ar_info.get("exists"):
+        return "0", ""
+    if ar_info.get("saved"):
+        saved_files = ar_info.get("saved_files", [])
+        if saved_files:
+            return "1", ", ".join(saved_files)
+        # saved=True이지만 새 파일 없음 → 이미 다운로드되어 있었음
+        return "이미 다운로드됨", ""
+    return "0", ""
+
+
+def format_crs_display(var_info):
+    """변액리포트(CRS) 표시값과 파일명 반환
+
+    Returns:
+        (display_text, filenames_text)
+        - display_text: "0", "3", "이미 다운로드됨 (2건)", "3 (2건 이미 다운로드됨)"
+        - filenames_text: 새로 저장된 파일명 (쉼표 구분)
+    """
+    if not var_info or not var_info.get("exists"):
+        return "0", ""
+    saved = var_info.get("saved", 0)
+    dup = var_info.get("duplicate", 0)
+    total = saved + dup
+    saved_files = var_info.get("saved_files", [])
+    filenames = ", ".join(saved_files) if saved_files else ""
+
+    if total == 0:
+        return "0", ""
+    if dup == 0:
+        # 모두 새로 저장
+        return str(total), filenames
+    if saved == 0:
+        # 모두 이미 다운로드됨
+        if total == 1:
+            return "이미 다운로드됨", ""
+        return "이미 다운로드됨 (%d건)" % total, ""
+    # 혼합: 일부 새로 저장 + 일부 이미 다운로드됨
+    return "%d (%d건 이미 다운로드됨)" % (total, dup), filenames
+
+
 def generate_execution_report(results, output_path):
-    """고객별 실행결과 엑셀 생성"""
+    """고객별 실행결과 엑셀 생성 (통합 단일 시트)"""
     wb = Workbook()
     ws = wb.active
     ws.title = "실행결과"
@@ -255,36 +310,37 @@ def generate_execution_report(results, output_path):
         name = result.get("customer_name", "") or detail.get("name", "")
         ctype = detail.get("customer_type", "개인")
 
-        # CRS (변액리포트) 정보
-        var_info = result.get("variable_insurance", {})
-        crs_saved = var_info.get("saved", 0)
-        crs_files = var_info.get("saved_files", [])
-        crs_filenames = ", ".join(crs_files) if crs_files else ""
+        # 주소: metdo_reader에서만 가져옴 → 없으면 "-"
+        address = (detail.get("home_address", "") or detail.get("business_address", "")
+                   or detail.get("hq_address", "") or detail.get("work_address", ""))
 
-        # AR 정보
+        # 사업자번호: 법인만 해당, 개인은 N/A
+        if ctype == "법인":
+            biz_num = detail.get("business_number", "") or "-"
+        else:
+            biz_num = "N/A"
+
+        # AR / CRS
         ar_info = result.get("annual_report", {})
-        ar_saved = 1 if ar_info.get("saved") else 0
-        ar_files = ar_info.get("saved_files", [])
-        ar_filenames = ", ".join(ar_files) if ar_files else ""
-
-        # 처리 상태
-        issues = result.get("issues", [])
-        status = "완료" if not issues else "문제 있음: " + "; ".join(issues[:2])
+        var_info = result.get("variable_insurance", {})
+        ar_display, ar_files = format_ar_display(ar_info)
+        crs_display, crs_files = format_crs_display(var_info)
 
         row_data = {
             "고객명": name,
-            "구분": ctype,
-            "휴대폰": detail.get("mobile_phone", "") or "",
-            "이메일": detail.get("email", "") or "",
-            "주소": (detail.get("home_address", "") or detail.get("business_address", "") or
-                    detail.get("work_address", "") or ""),
-            "성별": normalize_gender(detail.get("gender", "")),
-            "생년월일": normalize_birth_date(detail.get("birth_date", "")),
-            "CRS 수": crs_saved,
-            "CRS 파일명": crs_filenames,
-            "AR 수": ar_saved,
-            "AR 파일명": ar_filenames,
-            "처리상태": status,
+            "구분": detail.get("gubun", "") or "-",
+            "생년월일": normalize_birth_date(detail.get("birth_date", "")) or "-",
+            "보험나이": detail.get("insurance_age", "") or "-",
+            "성별": normalize_gender(detail.get("gender", "")) or "-",
+            "이메일": detail.get("email", "") or "-",
+            "휴대폰": detail.get("mobile_phone", "") or "-",
+            "주소": address or "-",
+            "개인/법인": ctype,
+            "사업자번호": biz_num,
+            "Annual Report": ar_display,
+            "AR 파일명": ar_files,
+            "변액리포트": crs_display,
+            "CRS 파일명": crs_files,
         }
         all_row_data.append(row_data)
 
@@ -297,9 +353,9 @@ def generate_execution_report(results, output_path):
 
     auto_column_width(ws, REPORT_COLUMNS, all_row_data)
 
-    # 컬럼 너비 수동 보정 (파일명은 넓게)
-    ws.column_dimensions["I"].width = 40  # CRS 파일명
-    ws.column_dimensions["K"].width = 40  # AR 파일명
+    # 파일명 컬럼 너비 수동 보정
+    ws.column_dimensions["L"].width = 40  # AR 파일명 (12번째)
+    ws.column_dimensions["N"].width = 40  # CRS 파일명 (14번째)
 
     wb.save(output_path)
     print("  [생성] %s (%d명)" % (os.path.basename(output_path), len(results)))
@@ -316,6 +372,9 @@ def main():
     if not os.path.isdir(output_dir):
         print("[ERROR] 디렉토리가 존재하지 않습니다: %s" % output_dir)
         sys.exit(1)
+
+    # 파일명 타임스탬프
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
 
     print("=" * 60)
     print("AC v2 리포트 생성기")
@@ -339,21 +398,21 @@ def main():
     print("  개인: %d명, 법인: %d명" % (len(personal), len(corporate)))
     print()
 
-    # 3. AIMS 고객일괄등록 엑셀 생성
+    # 3. AIMS 고객일괄등록 엑셀 생성 (개인/법인 탭 분리)
     print("[3단계] AIMS 고객일괄등록 엑셀 생성")
-    excel_path = os.path.join(output_dir, "customer_import.xlsx")
+    excel_path = os.path.join(output_dir, "customer_import_%s.xlsx" % timestamp)
     generate_customer_import_excel(personal, corporate, excel_path)
     print()
 
     # 4. 통합 JSON 생성
     print("[4단계] 통합 JSON 생성")
-    json_path = os.path.join(output_dir, "customer_import.json")
+    json_path = os.path.join(output_dir, "customer_import_%s.json" % timestamp)
     generate_customer_import_json(personal, corporate, json_path)
     print()
 
-    # 5. 고객별 실행결과 엑셀 생성
+    # 5. 고객별 실행결과 엑셀 생성 (통합 단일 시트)
     print("[5단계] 고객별 실행결과 엑셀 생성")
-    report_path = os.path.join(output_dir, "execution_report.xlsx")
+    report_path = os.path.join(output_dir, "execution_report_%s.xlsx" % timestamp)
     generate_execution_report(results, report_path)
     print()
 

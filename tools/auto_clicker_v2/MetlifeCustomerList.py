@@ -1040,6 +1040,8 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                             view_result['customer_detail_fallback'] = {
                                 'name': name,
                                 'customer_type': u'법인' if customer.get(u'성별') == u'미사용' else u'개인',
+                                'gubun': customer.get(u'구분', u''),
+                                'insurance_age': customer.get(u'보험나이', u''),
                                 'mobile_phone': customer.get(u'휴대폰', u''),
                                 'birth_date': customer.get(u'생년월일', u''),
                                 'gender': customer.get(u'성별', u''),
@@ -1922,6 +1924,8 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                         view_result['customer_detail_fallback'] = {
                                                             'name': name,
                                                             'customer_type': u'법인' if ocr_row.get(u'성별') == u'미사용' else u'개인',
+                                                            'gubun': ocr_row.get(u'구분', u''),
+                                                            'insurance_age': ocr_row.get(u'보험나이', u''),
                                                             'mobile_phone': ocr_row.get(u'휴대폰', u''),
                                                             'birth_date': ocr_row.get(u'생년월일', u''),
                                                             'gender': ocr_row.get(u'성별', u''),
@@ -2221,6 +2225,8 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                 view_result['customer_detail_fallback'] = {
                                                     'name': name,
                                                     'customer_type': u'법인' if ocr_row.get(u'성별') == u'미사용' else u'개인',
+                                                    'gubun': ocr_row.get(u'구분', u''),
+                                                    'insurance_age': ocr_row.get(u'보험나이', u''),
                                                     'mobile_phone': ocr_row.get(u'휴대폰', u''),
                                                     'birth_date': ocr_row.get(u'생년월일', u''),
                                                     'gender': ocr_row.get(u'성별', u''),
