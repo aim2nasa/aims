@@ -1,146 +1,39 @@
 @layer components {
 
-  /* === RESPONSIVE: ≤768px — 1줄 카드형 레이아웃 ===
-     가로 모드(740×360) + 소형 태블릿: 테이블 헤더 제거, 컴팩트 1줄 카드
-     [아이콘] 파일명 ··· 날짜 | 상태아이콘 | 고객명 */
+  /* === RESPONSIVE: ≤768px — 가로 스크롤 테이블 ===
+     데스크톱 테이블 유지 + min-width로 가로 스크롤 */
   @media (max-width: 768px) {
-    /* 칼럼 헤더 숨김 — 카드에서 불필요 */
-    .status-list-header {
-      display: none;
-    }
-
     .document-status-list {
-      gap: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      gap: 2px;
       padding-right: 0;
     }
 
-    /* 1줄 카드형: icon | filename | date | status | customer(fixed 110px, 6글자 기준) */
-    .status-item {
-      grid-template-columns: 40px 1fr auto auto 110px;
-      grid-template-rows: 1fr;
-      gap: 0 8px;
-      align-items: center;
-      height: 40px;
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 0.5px solid var(--color-ios-separator-light);
-      flex-shrink: 0;
+    .status-list-header {
+      min-width: 850px;
+      font-size: 10px;
+      padding: 6px 8px;
+      gap: 6px;
     }
 
-    html[data-theme="dark"] .status-item {
-      border-color: var(--color-ios-separator-dark);
+    .status-item {
+      min-width: 850px;
+      height: 34px;
+      padding: 4px 8px;
+      gap: 6px;
     }
 
     .status-item:hover {
       transform: none;
     }
 
-    .status-item:active {
-      background: var(--color-bg-hover);
-      transition: background 0.05s ease;
-    }
-
-    /* Col 1: 아이콘 */
-    .status-item > .document-icon-wrapper {
-      grid-column: 1;
-      grid-row: 1;
-      align-self: center;
-    }
-
-    /* Col 2: 파일명 (flex → ellipsis) */
-    .status-item > .status-filename {
-      grid-column: 2;
-      grid-row: 1;
-      min-width: 0;
-      font-size: 12px;
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      line-height: 1.4;
-    }
-
-    /* Col 3: 날짜 */
-    .status-item > .status-date {
-      grid-column: 3;
-      grid-row: 1;
-      text-align: right;
-      font-size: 10px;
-      color: var(--color-text-secondary);
-      white-space: nowrap;
-      min-width: 0;
-    }
-
-    /* Col 4: 상태 */
-    .status-item > .status-cell {
-      grid-column: 4;
-      grid-row: 1;
-      justify-content: center;
-      font-size: 10px;
-    }
-
-    /* Col 5: 고객명 — 고정 110px (아이콘 16px + 6글자 기준) */
-    .status-item > .status-customer {
-      grid-column: 5;
-      grid-row: 1;
-      justify-content: flex-end;
-      text-align: right;
-      font-size: 10px;
-      width: 110px;
-      overflow: visible;
-    }
-
-    /* 모바일 카드: 버튼 패딩/마진 제거 → 공간 절약 */
-    .status-item > .status-customer .customer-name-button {
-      padding: 0;
-      margin: 0;
-      gap: 2px;
-      max-width: 110px;
-    }
-
-    .status-item > .status-customer .customer-name-text {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* 숨김: 크기, MIME타입, 문서유형, 액션 */
-    .status-item > .document-size,
-    .status-item > .document-type,
-    .status-item > .document-doctype,
-    .status-item > .status-actions {
-      display: none;
-    }
-
-    /* 삭제/일괄연결 모드: 체크박스 열 추가 */
-    .document-status-list--delete-mode .status-item {
-      grid-template-columns: 24px 40px 1fr auto auto 110px;
-    }
-
-    .document-status-list--delete-mode .status-item > .document-checkbox-wrapper {
-      grid-column: 1;
-      grid-row: 1;
-    }
-
-    .document-status-list--delete-mode .status-item > .document-icon-wrapper {
-      grid-column: 2;
-      grid-row: 1;
-    }
-
-    .document-status-list--delete-mode .status-item > .status-filename {
-      grid-column: 3;
-    }
-
-    .document-status-list--delete-mode .status-item > .status-date {
-      grid-column: 4;
-    }
-
-    .document-status-list--delete-mode .status-item > .status-cell {
-      grid-column: 5;
-    }
-
-    .document-status-list--delete-mode .status-item > .status-customer {
-      grid-column: 6;
+    /* 삭제/일괄연결 모드도 동일 min-width */
+    .document-status-list--delete-mode .status-list-header,
+    .document-status-list--delete-mode .status-item,
+    .document-status-list--bulk-link-mode .status-list-header,
+    .document-status-list--bulk-link-mode .status-item {
+      min-width: 880px;
     }
   }
 
@@ -157,113 +50,38 @@
     }
   }
 
-  /* === 폰 세로 모드 (480px 이하): 2줄 카드형 ===
-     Row 1: [아이콘] 파일명
-     Row 2:          날짜 · 상태 · 고객
-     숨김: 크기, MIME타입, 문서유형, 액션 (탭/컨텍스트 메뉴로 접근) */
+  /* === 폰 세로 모드 (480px 이하): 가로 스크롤 테이블 === */
   @media (max-width: 480px) {
-    /* 리스트 간격 확대 (Samsung 폰트 스케일링 대응) */
     .document-status-list {
-      gap: 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      gap: 2px;
     }
 
-    /* 2행 카드형 — 768px의 1줄 카드를 오버라이드 */
+    .status-list-header {
+      min-width: 850px;
+      font-size: 10px;
+      padding: 6px 8px;
+      gap: 6px;
+    }
+
     .status-item {
-      grid-template-columns: 40px minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
-      grid-template-rows: auto auto;
-      gap: 10px 8px;
-      height: auto;
-      min-height: 64px;
-      padding: 16px 14px;
-      border-radius: 8px;
+      min-width: 850px;
+      height: 34px;
+      padding: 4px 8px;
+      gap: 6px;
     }
 
-    /* === 아이콘: Row 1~2 span → 뱃지(AR/CR) 잘림 방지 === */
-    .status-item > .document-icon-wrapper {
-      grid-row: 1 / 3;
-      grid-column: 1;
-      width: 24px;
-      height: auto;
-      align-self: center;
-      overflow: hidden;
+    .status-item:hover {
+      transform: none;
     }
 
-    .status-item > .status-filename {
-      grid-row: 1;
-      grid-column: 2 / 5;
-      font-size: var(--font-size-caption-1);
-      font-weight: 600;
-    }
-
-    /* === Row 2: 날짜 · 상태 · 고객 === */
-    .status-item > .status-date {
-      grid-row: 2;
-      grid-column: 2;
-      text-align: left;
-      line-height: 1.4;
-    }
-
-    .status-item > .status-cell {
-      grid-row: 2;
-      grid-column: 3;
-      justify-content: flex-start;
-      line-height: 1.4;
-    }
-
-    .status-item > .status-customer {
-      grid-row: 2;
-      grid-column: 4;
-      justify-content: flex-start;
-      text-align: left;
-      max-width: none;
-      line-height: 1.4;
-    }
-
-    /* === 삭제/일괄연결 모드: 체크박스 추가 === */
-    .status-item > .document-checkbox-wrapper {
-      grid-row: 1;
-      grid-column: 1;
-    }
-
+    /* 삭제/일괄연결 모드 */
+    .document-status-list--delete-mode .status-list-header,
     .document-status-list--delete-mode .status-item,
+    .document-status-list--bulk-link-mode .status-list-header,
     .document-status-list--bulk-link-mode .status-item {
-      grid-template-columns: 24px 40px minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
-    }
-
-    .document-status-list--delete-mode .status-item > .document-icon-wrapper,
-    .document-status-list--bulk-link-mode .status-item > .document-icon-wrapper {
-      grid-row: 1 / 3;
-      grid-column: 2;
-    }
-
-    .document-status-list--delete-mode .status-item > .status-filename,
-    .document-status-list--bulk-link-mode .status-item > .status-filename {
-      grid-column: 3 / 6;
-    }
-
-    .document-status-list--delete-mode .status-item > .status-date,
-    .document-status-list--bulk-link-mode .status-item > .status-date {
-      grid-column: 3;
-    }
-
-    .document-status-list--delete-mode .status-item > .status-cell,
-    .document-status-list--bulk-link-mode .status-item > .status-cell {
-      grid-column: 4;
-    }
-
-    .document-status-list--delete-mode .status-item > .status-customer,
-    .document-status-list--bulk-link-mode .status-item > .status-customer {
-      grid-column: 5;
-    }
-
-    /* 배지: hover 애니메이션 비활성화 */
-    .status-item:hover .document-ar-badge,
-    .status-item:hover .document-cr-badge,
-    .status-item:hover .document-ocr-badge,
-    .status-item:hover .document-txt-badge,
-    .status-item:hover .document-bin-badge {
-      transform: translateX(-50%);
-      box-shadow: none;
+      min-width: 880px;
     }
   }
 
