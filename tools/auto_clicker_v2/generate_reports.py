@@ -59,13 +59,19 @@ THIN_BORDER = Border(
 def load_customer_results(output_dir):
     """초성별 customer_results_*.json 파일 로드 후 통합"""
     all_results = []
-    pattern = os.path.join(output_dir, "customer_results_*.json")
-    json_files = sorted(glob.glob(pattern))
+    json_files = []
 
-    if not json_files:
-        # 하위 디렉토리 탐색 (output/ㄱ/customer_results_ㄱ.json 구조)
-        pattern = os.path.join(output_dir, "*", "customer_results_*.json")
+    # 탐색 순서: 직접 → dev/ → 하위 디렉토리 → 하위/dev/
+    search_patterns = [
+        os.path.join(output_dir, "customer_results_*.json"),
+        os.path.join(output_dir, "dev", "customer_results_*.json"),
+        os.path.join(output_dir, "*", "customer_results_*.json"),
+        os.path.join(output_dir, "*", "dev", "customer_results_*.json"),
+    ]
+    for pattern in search_patterns:
         json_files = sorted(glob.glob(pattern))
+        if json_files:
+            break
 
     for json_path in json_files:
         try:
@@ -231,6 +237,7 @@ def generate_execution_report(results, output_path):
 
     apply_header_style(ws, REPORT_COLUMNS)
 
+    all_row_data = []
     for row_idx, result in enumerate(results, 2):
         detail = get_customer_detail(result)
         name = result.get("customer_name", "") or detail.get("name", "")
@@ -240,13 +247,13 @@ def generate_execution_report(results, output_path):
         var_info = result.get("variable_insurance", {})
         crs_saved = var_info.get("saved", 0)
         crs_files = var_info.get("saved_files", [])
-        crs_filenames = "\n".join(crs_files) if crs_files else ""
+        crs_filenames = ", ".join(crs_files) if crs_files else ""
 
         # AR 정보
         ar_info = result.get("annual_report", {})
         ar_saved = 1 if ar_info.get("saved") else 0
         ar_files = ar_info.get("saved_files", [])
-        ar_filenames = "\n".join(ar_files) if ar_files else ""
+        ar_filenames = ", ".join(ar_files) if ar_files else ""
 
         # 처리 상태
         issues = result.get("issues", [])
@@ -267,6 +274,7 @@ def generate_execution_report(results, output_path):
             "AR 파일명": ar_filenames,
             "처리상태": status,
         }
+        all_row_data.append(row_data)
 
         for col_idx, col_name in enumerate(REPORT_COLUMNS, 1):
             value = row_data.get(col_name, "")
@@ -275,7 +283,7 @@ def generate_execution_report(results, output_path):
             cell.alignment = DATA_ALIGNMENT
             cell.border = THIN_BORDER
 
-    auto_column_width(ws, REPORT_COLUMNS, [])
+    auto_column_width(ws, REPORT_COLUMNS, all_row_data)
 
     # 컬럼 너비 수동 보정 (파일명은 넓게)
     ws.column_dimensions["I"].width = 40  # CRS 파일명

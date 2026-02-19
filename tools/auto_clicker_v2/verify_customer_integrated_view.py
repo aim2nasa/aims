@@ -2562,10 +2562,13 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     # 외부에서 호출 시 출력 경로 설정 (스크린샷/에러/로그)
     global SCREENSHOT_DIR, ERROR_DIR, ERROR_LOG_FILE, LOG_FILE
     if output_dir:
-        SCREENSHOT_DIR = os.path.join(output_dir, "screenshots")
-        ERROR_DIR = os.path.join(output_dir, "errors")
+        dev_dir = os.path.join(output_dir, "dev")
+        if not os.path.exists(dev_dir):
+            os.makedirs(dev_dir)
+        SCREENSHOT_DIR = os.path.join(dev_dir, "screenshots")
+        ERROR_DIR = os.path.join(dev_dir, "errors")
         ERROR_LOG_FILE = os.path.join(ERROR_DIR, "error_log.txt")
-        LOG_FILE = os.path.join(output_dir, "debug_log.txt")
+        LOG_FILE = os.path.join(dev_dir, "debug_log.txt")
         if not os.path.exists(SCREENSHOT_DIR):
             os.makedirs(SCREENSHOT_DIR)
         if not os.path.exists(ERROR_DIR):

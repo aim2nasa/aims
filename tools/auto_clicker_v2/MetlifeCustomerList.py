@@ -86,11 +86,24 @@ else:
 if not os.path.exists(CAPTURE_DIR):
     os.makedirs(CAPTURE_DIR)
 
+# DEV_MODE 판별: 패키징=프로덕션, 소스=개발, 환경변수로 오버라이드
+_is_frozen = getattr(sys, 'frozen', False)
+DEV_MODE = not _is_frozen
+if os.environ.get("AC_DEV_MODE", "").strip() == "1":
+    DEV_MODE = True
+elif os.environ.get("AC_DEV_MODE", "").strip() == "0":
+    DEV_MODE = False
+
+# DEV_DIR: 디버그 파일 저장 경로 (항상 생성, 프로덕션이면 완료 후 삭제)
+DEV_DIR = os.path.join(CAPTURE_DIR, "dev")
+if not os.path.exists(DEV_DIR):
+    os.makedirs(DEV_DIR)
+
 # 로그 파일 설정 (중복 방지: 날짜시간 + 순번)
 import datetime
 _now = datetime.datetime.now()
 _date_str = _now.strftime("%Y%m%d_%H%M%S")
-_log_base = os.path.join(CAPTURE_DIR, u"run_%s" % _date_str)
+_log_base = os.path.join(DEV_DIR, u"run_%s" % _date_str)
 _log_seq = 0
 LOG_FILE = u"%s.log" % _log_base
 while os.path.exists(LOG_FILE):
@@ -169,7 +182,7 @@ def type(target, *args):
 
 # 진단 모드 설정 (클릭 위치 분석용 스크린샷 저장)
 DIAGNOSTIC_MODE = True  # True면 클릭 전 스크린샷 저장
-DIAGNOSTIC_DIR = os.path.join(CAPTURE_DIR, "diagnostic")
+DIAGNOSTIC_DIR = os.path.join(DEV_DIR, "diagnostic")
 if DIAGNOSTIC_MODE and not os.path.exists(DIAGNOSTIC_DIR):
     os.makedirs(DIAGNOSTIC_DIR)
 _diagnostic_counter = [0]  # 스크린샷 순번
@@ -270,7 +283,7 @@ def _take_crash_screenshot(label):
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         temp_path = capture(SCREEN)
         if temp_path:
-            dest = os.path.join(CAPTURE_DIR, u"CRASH_%s_%s.png" % (label, ts))
+            dest = os.path.join(DEV_DIR, u"CRASH_%s_%s.png" % (label, ts))
             # 디버그 마커가 있으면 스크린샷에 오버레이
             if _debug_markers:
                 try:
@@ -426,7 +439,7 @@ def capture_customer_detail(customer_name):
     import shutil
     # 안전한 파일명 생성 (특수문자 제거)
     safe_name = customer_name.replace("/", "_").replace("\\", "_").replace(":", "_")
-    screenshot_path = os.path.join(CAPTURE_DIR, u"detail_%s.png" % safe_name)
+    screenshot_path = os.path.join(DEV_DIR, u"detail_%s.png" % safe_name)
 
     try:
         # 1. 전체 화면 캡처 (SikuliX capture)
@@ -500,7 +513,7 @@ def capture_and_ocr(chosung_name, page_num):
     """
     timestamp = int(time.time())
     capture_filename = u"page_%s_%d_%d.png" % (chosung_name, page_num, timestamp)
-    capture_path = os.path.join(CAPTURE_DIR, capture_filename)
+    capture_path = os.path.join(DEV_DIR, capture_filename)
     json_path = capture_path.replace(".png", ".json")
 
     log(u"  [OCR] ----------------------------------------")
@@ -520,7 +533,7 @@ def capture_and_ocr(chosung_name, page_num):
     table_region = Region(TABLE_REGION_X, TABLE_REGION_Y, TABLE_REGION_WIDTH, TABLE_REGION_HEIGHT)
     captured_cropped = capture(table_region)
     cropped_filename = capture_filename.replace(".png", "_cropped.png")
-    cropped_path = os.path.join(CAPTURE_DIR, cropped_filename)
+    cropped_path = os.path.join(DEV_DIR, cropped_filename)
     shutil.copy(captured_cropped, cropped_path)
     log(u"  [OCR]   - 크롭: %s" % cropped_filename)
 
@@ -1340,13 +1353,13 @@ _only_all_done = False  # 모든 해당 고객 처리 완료 여부
 # 스크롤 테스트 디렉토리 (SCROLL_TEST 모드에서 페이지별 스크린샷 저장)
 SCROLL_TEST_DIR = None
 if SCROLL_TEST:
-    SCROLL_TEST_DIR = os.path.join(CAPTURE_DIR, "scroll_test")
+    SCROLL_TEST_DIR = os.path.join(DEV_DIR, "scroll_test")
     if not os.path.exists(SCROLL_TEST_DIR):
         os.makedirs(SCROLL_TEST_DIR)
 
 # 에러/체크포인트 파일 경로
-ERROR_FILE = os.path.join(CAPTURE_DIR, u"errors.json")
-CHECKPOINT_FILE = os.path.join(CAPTURE_DIR, u"checkpoint.json")
+ERROR_FILE = os.path.join(DEV_DIR, u"errors.json")
+CHECKPOINT_FILE = os.path.join(DEV_DIR, u"checkpoint.json")
 
 # 재개 위치 정보 (--resume 모드에서 사용)
 _resume_info = None
@@ -1499,7 +1512,7 @@ def generate_chosung_summary(chosung_name, total_rows, total_errors, error_custo
 
     # ★ 초성별 고객 결과 JSON 저장 (리셋 전 디스크에 영속화)
     if results:
-        results_json_path = os.path.join(CAPTURE_DIR, u"customer_results_%s.json" % chosung_name)
+        results_json_path = os.path.join(DEV_DIR, u"customer_results_%s.json" % chosung_name)
         try:
             with codecs.open(results_json_path, "w", "utf-8") as f:
                 json.dump(results, f, ensure_ascii=False, indent=2)
@@ -2292,7 +2305,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             log(u"  " + u"#" * 50)
             # 진단용: 다음 버튼 없음 시점의 전체 화면 캡처
             try:
-                diag_path = os.path.join(CAPTURE_DIR, "DIAG_no_next_btn_nav%d_%s.png" % (nav_page, chosung_name))
+                diag_path = os.path.join(DEV_DIR, "DIAG_no_next_btn_nav%d_%s.png" % (nav_page, chosung_name))
                 diag_cap = capture(Screen())
                 import shutil
                 shutil.copy(diag_cap, diag_path)
@@ -2383,5 +2396,15 @@ if INTEGRATED_VIEW_ENABLED and not SCROLL_TEST:
 
 log("=" * 60)
 
-# 로그 파일 닫기
-_close_log_file()
+# 프로덕션 모드: dev 폴더 삭제 (깔끔한 출력)
+if not DEV_MODE:
+    _close_log_file()  # 로그 파일 핸들 먼저 닫기
+    import shutil as _shutil
+    if os.path.exists(DEV_DIR):
+        try:
+            _shutil.rmtree(DEV_DIR)
+        except:
+            pass
+else:
+    # 로그 파일 닫기
+    _close_log_file()
