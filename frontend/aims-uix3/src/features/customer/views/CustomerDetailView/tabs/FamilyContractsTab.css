@@ -291,15 +291,26 @@
     color: var(--color-primary-400);
   }
 
-  /* === 📱 768px: 수평 스크롤 (공통 gap/padding/font: tab-table.css) === */
+  /* === 📱 768px: 수평 스크롤 + 가입금액/보험료 칼럼 확대 === */
+  /* 동일 패턴: DocumentsTab(3927f9bb), CustomerReviewTab(fbf24e88) */
   @media (max-width: 768px) {
     .family-contracts-header,
     .family-contracts-row {
-      min-width: 700px;
+      --grid-cols:
+        50px                    /* 관계 */
+        85px                    /* 증권번호 */
+        minmax(150px, 1fr)     /* 보험상품 */
+        48px                    /* 계약자 */
+        48px                    /* 피보험자 */
+        75px                    /* 계약일 */
+        44px                    /* 상태 */
+        80px                    /* 가입금액 (+31%) */
+        95px;                   /* 보험료 (+14%) */
+      min-width: 760px;        /* 헤더 배경이 보험료 칼럼까지 완전 커버 */
     }
 
     .family-contracts-list {
-      min-width: 700px;
+      min-width: 760px;
     }
 
     .fc-relation-badge {
