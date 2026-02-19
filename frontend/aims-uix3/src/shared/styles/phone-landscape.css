@@ -300,10 +300,10 @@
     grid-template-columns: 1fr 100px;
   }
 
-  .layout-main--phone-landscape .row-size,
-  .layout-main--phone-landscape .row-actions,
-  .layout-main--phone-landscape .header-size,
-  .layout-main--phone-landscape .header-actions {
+  .layout-main--phone-landscape .file-list-row .row-size,
+  .layout-main--phone-landscape .file-list-row .row-actions,
+  .layout-main--phone-landscape .files-list-header .header-size,
+  .layout-main--phone-landscape .files-list-header .header-actions {
     display: none;
   }
 
