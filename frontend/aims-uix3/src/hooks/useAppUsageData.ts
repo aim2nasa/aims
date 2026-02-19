@@ -3,6 +3,7 @@
  * App.tsx에서 분리됨 - 저장소 및 AI 사용량 데이터 패칭
  */
 import { useState, useEffect, useCallback } from 'react'
+import { logger } from '@/shared/lib/logger'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import { getMyAIUsage, type AIUsageData } from '@/services/aiUsageService'
 import { errorReporter } from '@/shared/lib/errorReporter'
@@ -29,17 +30,17 @@ export function useAppUsageData(): UseAppUsageDataReturn {
 
   const fetchUsageData = useCallback(async () => {
     try {
-      console.log('[useAppUsageData] 사용량 데이터 로드 시작')
+      logger.debug('useAppUsageData', '사용량 데이터 로드 시작')
       setLoading(true)
       const [storageResult, aiResult] = await Promise.all([
         getMyStorageInfo(),
         getMyAIUsage()
       ])
-      console.log('[useAppUsageData] 사용량 데이터 로드 완료:', { tier: storageResult.tier, tierName: storageResult.tierName })
+      logger.debug('useAppUsageData', '사용량 데이터 로드 완료', { tier: storageResult.tier, tierName: storageResult.tierName })
       setStorageInfo(storageResult)
       setAIUsage(aiResult)
     } catch (error) {
-      console.error('[useAppUsageData] 사용량 데이터 로드 실패:', error)
+      logger.error('useAppUsageData', '사용량 데이터 로드 실패', error)
       errorReporter.reportApiError(error as Error, { component: 'useAppUsageData' })
     } finally {
       setLoading(false)

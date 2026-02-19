@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
+import { logger } from '@/shared/lib/logger';
 
 /**
  * iOS Dynamic Type 크기 단계
@@ -106,10 +107,10 @@ export function useDynamicType() {
           document.body.setAttribute('data-text-size', detectedSize);
         }
 
-        console.log(`[DynamicType] 감지된 크기: ${detectedSize} (스케일: ${systemScaleFactor})`);
+        logger.debug('DynamicType', `감지된 크기: ${detectedSize} (스케일: ${systemScaleFactor})`);
 
       } catch (error) {
-        console.warn('[DynamicType] 시스템 텍스트 크기 감지 실패:', error);
+        logger.warn('DynamicType', '시스템 텍스트 크기 감지 실패', error);
         // 기본값으로 폴백
         setCurrentSize('Large');
         setScaleFactor(1.0);
@@ -256,7 +257,7 @@ export function initializeDynamicType() {
     document.head.appendChild(style);
   }
 
-  console.log('[DynamicType] iOS Dynamic Type 시스템 초기화 완료');
+  logger.debug('DynamicType', 'iOS Dynamic Type 시스템 초기화 완료');
 }
 
 export default useDynamicType;

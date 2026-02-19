@@ -7,6 +7,8 @@
  * 타임아웃, 에러 처리, 요청/응답 인터셉터 제공
  */
 
+import { logger } from './logger';
+
 // API 로그 디버그 모드 (필요시 true로 변경)
 const API_DEBUG = false;
 
@@ -63,8 +65,8 @@ function cancelStaleCustomerRequests(newCustomerId: string): void {
     }
   }
 
-  if (cancelledCount > 0 && import.meta.env.DEV) {
-    console.log(`[API] 🚫 고객 전환 (${oldCustomerId.slice(-6)} → ${newCustomerId.slice(-6)}): ${cancelledCount}개 요청 취소`);
+  if (cancelledCount > 0) {
+    logger.debug('API', `고객 전환 (${oldCustomerId.slice(-6)} → ${newCustomerId.slice(-6)}): ${cancelledCount}개 요청 취소`);
   }
 }
 
@@ -86,11 +88,7 @@ function cancelStaleCustomerRequests(newCustomerId: string): void {
  * ```
  */
 export function setActiveCustomer(customerId: string): void {
-  console.log('🔥🔥🔥 [API] setActiveCustomer 호출됨:', {
-    customerId: customerId,
-    customerIdLast6: customerId?.slice(-6),
-    previousActiveCustomer: activeCustomerId?.slice(-6)
-  });
+  logger.debug('API', `setActiveCustomer: ${customerId?.slice(-6)} ← prev: ${activeCustomerId?.slice(-6)}`);
   if (!customerId) return;
   cancelStaleCustomerRequests(customerId);
 }
@@ -451,8 +449,8 @@ export async function apiRequest<T = unknown>(
     // 이미 동일한 GET 요청이 진행 중이면 기존 Promise 반환
     const existingRequest = pendingGetRequests.get(url);
     if (existingRequest) {
-      if (import.meta.env.DEV && API_DEBUG) {
-        console.log(`[API] ♻️ 중복 요청 재사용: ${url}`);
+      if (API_DEBUG) {
+        logger.debug('API', `중복 요청 재사용: ${url}`);
       }
       return existingRequest as Promise<T>;
     }
@@ -462,8 +460,8 @@ export async function apiRequest<T = unknown>(
   const currentUserId = typeof window !== 'undefined'
     ? (() => {
         const storedId = localStorage.getItem('aims-current-user-id');
-        if (!storedId && import.meta.env.DEV) {
-          console.warn('[API] ⚠️ 사용자 ID가 localStorage에 없습니다. x-user-id 헤더가 빈 값으로 전송됩니다.');
+        if (!storedId) {
+          logger.debug('API', '사용자 ID가 localStorage에 없습니다. x-user-id 헤더가 빈 값으로 전송됩니다.');
         }
         return storedId || '';
       })()
@@ -504,8 +502,8 @@ export async function apiRequest<T = unknown>(
   }
 
   // 요청 전 로그 (개발 환경에서만)
-  if (import.meta.env.DEV && API_DEBUG) {
-    console.log(`🌐 API Request: ${method} ${url}`);
+  if (API_DEBUG) {
+    logger.debug('API', `Request: ${method} ${url}`);
   }
 
   // 요청 실행 (GET은 중복 방지 추적)

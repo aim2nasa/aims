@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { logger } from '@/shared/lib/logger'
 import { errorReporter } from '@/shared/lib/errorReporter'
 
 /**
@@ -61,13 +62,9 @@ const saveTheme = (theme: Theme): void => {
 
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme)
-    if (import.meta.env.DEV) {
-      console.log(`[Theme] 테마 설정 저장: ${theme}`)
-    }
+    logger.debug('Theme', `테마 설정 저장: ${theme}`)
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('[Theme] localStorage 저장 실패:', error)
-    }
+    logger.error('Theme', 'localStorage 저장 실패', error)
     errorReporter.reportApiError(error as Error, { component: 'usePersistentTheme.saveTheme' })
   }
 }

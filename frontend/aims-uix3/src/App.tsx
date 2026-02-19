@@ -23,6 +23,7 @@ import type { Customer as _Customer } from './entities/customer'
 import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/version'
 import { checkFrontendVersionMismatch } from './services/versionService'
 import { errorReporter } from './shared/lib/errorReporter'
+import { logger } from './shared/lib/logger'
 import { consumeModalCleanupBack } from './shared/ui/Modal/hooks/useModalCore'
 
 // Lazy loading으로 성능 최적화
@@ -303,13 +304,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   useUserAccountSSE(sseUserId, refreshUsageData, {
     enabled: !!sseUserId,
     onTierChanged: (event) => {
-      console.log('[App] 티어 변경 알림 수신:', event)
+      logger.debug('App', '티어 변경 알림 수신', event)
     }
   })
 
   // 디버그: storageInfo 상태 변화 로그
   useEffect(() => {
-    console.log('[App] usageStorageInfo 변경됨:', usageStorageInfo?.tier, usageStorageInfo?.tierName)
+    logger.debug('App', `usageStorageInfo 변경됨: ${usageStorageInfo?.tier} ${usageStorageInfo?.tierName}`)
   }, [usageStorageInfo])
 
   // 고객 전체보기 새로고침을 위한 ref
@@ -409,7 +410,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         const user = await getCurrentUser()
         updateCurrentUser(user)
       } catch (error) {
-        console.error('❌ 초기 사용자 정보 로드 실패:', error)
+        logger.error('App', '초기 사용자 정보 로드 실패', error)
         errorReporter.reportApiError(error as Error, { component: 'App.loadCurrentUser' })
       }
     }
@@ -491,7 +492,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     // iPad 등에서 다른 사용자 데이터가 보일 때 사용
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('reset') === '1') {
-      console.log('[App] 캐시 초기화 요청 감지 - localStorage/sessionStorage 클리어')
+      logger.debug('App', '캐시 초기화 요청 감지 - localStorage/sessionStorage 클리어')
       localStorage.clear()
       sessionStorage.clear()
       // 파라미터 제거 후 리다이렉트
@@ -537,11 +538,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             setRightPaneContentType('customer')
             setRightPaneVisible(true)
             if (import.meta.env.DEV) {
-              console.log('[App] URL에서 고객 정보 복원 완료:', customer)
+              logger.debug('App', 'URL에서 고객 정보 복원 완료', customer)
             }
           })
           .catch(error => {
-            console.error('[App] URL에서 고객 정보 복원 실패:', error)
+            logger.error('App', 'URL에서 고객 정보 복원 실패', error)
             errorReporter.reportApiError(error as Error, { component: 'App.restoreCustomerFromURL' })
             // URL에서 잘못된 고객 ID 제거
             updateURLParams({ customerId: null })
@@ -575,11 +576,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           setRightPaneContentType('document')
           setRightPaneVisible(true)
           if (import.meta.env.DEV) {
-            console.log('[App] URL에서 문서 정보 복원 완료:', selected)
+            logger.debug('App', 'URL에서 문서 정보 복원 완료', selected)
           }
         })
         .catch(error => {
-          console.error('[App] URL에서 문서 정보 복원 실패:', error)
+          logger.error('App', 'URL에서 문서 정보 복원 실패', error)
           errorReporter.reportApiError(error as Error, { component: 'App.restoreDocumentFromURL' })
           updateURLParams({ documentId: null })
         })
@@ -611,7 +612,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       }
 
       if (import.meta.env.DEV) {
-        console.log('[App] popstate 이벤트 처리:', { view: viewToRestore, customerId: urlCustomerId })
+        logger.debug('App', 'popstate 이벤트 처리', { view: viewToRestore, customerId: urlCustomerId })
       }
     }
 
@@ -653,16 +654,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const { isHapticEnabled } = haptic
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log('[App] iOS 네이티브 시스템 초기화 상태', {
-        dynamicType: {
-          currentSize,
-          scaleFactor,
-          isAccessibilitySize
-        },
-        hapticEnabled: isHapticEnabled
-      })
-    }
+    logger.debug('App', 'iOS 네이티브 시스템 초기화 상태', {
+      dynamicType: { currentSize, scaleFactor, isAccessibilitySize },
+      hapticEnabled: isHapticEnabled
+    })
   }, [currentSize, scaleFactor, isAccessibilitySize, isHapticEnabled])
 
   // 햅틱 피드백을 전역적으로 사용할 수 있도록 window 객체에 바인딩
@@ -819,7 +814,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       const customer = await CustomerService.getCustomer(customerId)
       addRecentCustomer(customer)
     } catch (error) {
-      console.error('[App] 최근 고객 순서 업데이트 실패:', error)
+      logger.error('App', '최근 고객 순서 업데이트 실패', error)
       errorReporter.reportApiError(error as Error, { component: 'App.handleSwitchToDetailView' })
     }
   }, [updateURLParams, addRecentCustomer])
@@ -839,7 +834,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setRightPaneContentType('customer')
       setRightPaneVisible(true)
     } catch (error) {
-      console.error('[App] 간략보기 전환 실패:', error)
+      logger.error('App', '간략보기 전환 실패', error)
       errorReporter.reportApiError(error as Error, { component: 'App.handleSwitchToCompactView' })
     }
 
@@ -953,7 +948,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setPreviewModalDocument(previewDoc)
       setPreviewModalVisible(true)
     } catch (error) {
-      console.error('[handleDocumentPreviewModal] 문서 로드 오류:', error)
+      logger.error('App', '문서 프리뷰 모달 로드 오류', error)
       errorReporter.reportApiError(error as Error, { component: 'App.handleDocumentPreviewModal' })
     }
   }, [])
@@ -983,7 +978,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setPreviewModalDocument(previewDoc)
       setPreviewModalVisible(true)
     } catch (error) {
-      console.error('[handleDocumentPreviewModalFromSearch] 문서 로드 오류:', error)
+      logger.error('App', '검색 문서 프리뷰 모달 로드 오류', error)
       errorReporter.reportApiError(error as Error, { component: 'App.handleDocumentPreviewModalFromSearch' })
     }
   }, [])
@@ -996,27 +991,19 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // localStorage에 상태 저장
       try {
         localStorage.setItem('aims-leftPaneCollapsed', String(newCollapsed))
-        if (import.meta.env.DEV) {
-          console.log('[App] LeftPane 상태 저장:', newCollapsed)
-        }
+        logger.debug('App', `LeftPane 상태 저장: ${newCollapsed}`)
       } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('[App] LeftPane 상태 저장 실패:', error)
-          errorReporter.reportApiError(error as Error, { component: 'App.toggleLeftPane' })
-        }
+        logger.error('App', 'LeftPane 상태 저장 실패', error)
+        errorReporter.reportApiError(error as Error, { component: 'App.toggleLeftPane' })
       }
 
       // 애니메이션 상태 설정
-      if (import.meta.env.DEV) {
-        console.log('[App] 애니메이션 상태 변경:', newCollapsed ? 'collapsing' : 'expanding')
-      }
+      logger.debug('App', `애니메이션 상태 변경: ${newCollapsed ? 'collapsing' : 'expanding'}`)
       setLeftPaneAnimationState(newCollapsed ? 'collapsing' : 'expanding')
 
       // 모든 단계적 애니메이션 완료 후 idle 상태로 복귀
       setTimeout(() => {
-        if (import.meta.env.DEV) {
-          console.log('[App] 애니메이션 상태 idle로 복귀')
-        }
+        logger.debug('App', '애니메이션 상태 idle로 복귀')
         setLeftPaneAnimationState('idle')
       }, 1000) // 전체 전동 커튼 효과 완료 시간 (600ms + 충분한 여유)
 
@@ -1479,7 +1466,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                               window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
                             }
                           } catch (err) {
-                            console.error('버전 복사 실패:', err)
+                            logger.error('App', '버전 복사 실패', err)
                             errorReporter.reportApiError(err as Error, { component: 'App.copyVersion' })
                           }
                         }}
@@ -1553,7 +1540,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                                 window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
                               }
                             } catch (err) {
-                              console.error('버전 복사 실패:', err)
+                              logger.error('App', '버전 복사 실패', err)
                               errorReporter.reportApiError(err as Error, { component: 'App.copyVersion' })
                             }
                           }}

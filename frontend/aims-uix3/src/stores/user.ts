@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/shared/lib/logger';
 import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
@@ -44,12 +45,12 @@ let currentUserId = typeof window !== 'undefined'
   ? (() => {
       const storedId = localStorage.getItem('aims-current-user-id');
       if (!storedId) {
-        console.warn('[UserStore] ⚠️ 사용자 ID가 localStorage에 없습니다. 로그인이 필요합니다.');
+        logger.debug('UserStore', '사용자 ID가 localStorage에 없습니다. 로그인이 필요합니다.');
         return '';
       }
       // 🔒 보안: MongoDB ObjectId 형식 검증
       if (!isValidMongoObjectId(storedId)) {
-        console.error('[UserStore] ⚠️ 유효하지 않은 사용자 ID 형식:', storedId);
+        logger.error('UserStore', `유효하지 않은 사용자 ID 형식: ${storedId}`);
         localStorage.removeItem('aims-current-user-id');
         return '';
       }
@@ -91,7 +92,7 @@ export function syncUserIdFromStorage(): void {
   if (storedUserId && storedUserId !== currentUserId) {
     // 🔒 보안: MongoDB ObjectId 형식 검증
     if (!isValidMongoObjectId(storedUserId)) {
-      console.error('[UserStore] ⚠️ 유효하지 않은 사용자 ID 형식 (syncUserIdFromStorage):', storedUserId);
+      logger.error('UserStore', `유효하지 않은 사용자 ID 형식 (syncUserIdFromStorage): ${storedUserId}`);
       localStorage.removeItem('aims-current-user-id');
       return;
     }
@@ -162,7 +163,7 @@ export function useUserStore() {
         if (result.success) {
           setAvailableUsers(result.data);
         } else {
-          console.error('❌ 사용자 목록 로드 실패:', result.error);
+          logger.error('UserStore', `사용자 목록 로드 실패: ${result.error}`);
           errorReporter.reportApiError(new Error(`사용자 목록 로드 실패: ${result.error}`), { component: 'UserStore.fetchUsers.result' });
           // 실패 시 빈 배열 (하드코딩된 테스트 사용자 제거)
           setAvailableUsers([]);
@@ -171,7 +172,7 @@ export function useUserStore() {
         // 브라우저 환경에서만 에러 처리 및 setState 호출
         if (typeof window === 'undefined') return;
 
-        console.error('❌ 사용자 목록 API 호출 실패:', error);
+        logger.error('UserStore', '사용자 목록 API 호출 실패', error);
         errorReporter.reportApiError(error as Error, { component: 'UserStore.fetchUsers' });
         // 실패 시 빈 배열 (하드코딩된 테스트 사용자 제거)
         setAvailableUsers([]);
@@ -229,9 +230,9 @@ export function useUserStore() {
       // 식별된 키들 삭제
       keysToRemove.forEach(key => localStorage.removeItem(key));
 
-      console.log(`[UserStore] 사용자 데이터 정리 완료: ${keysToRemove.length}개 항목 삭제`);
+      logger.debug('UserStore', `사용자 데이터 정리 완료: ${keysToRemove.length}개 항목 삭제`);
     } catch (error) {
-      console.error('[UserStore] 사용자 데이터 정리 실패:', error);
+      logger.error('UserStore', '사용자 데이터 정리 실패', error);
       errorReporter.reportApiError(error as Error, { component: 'UserStore.clearPreviousUserData' });
     }
   };

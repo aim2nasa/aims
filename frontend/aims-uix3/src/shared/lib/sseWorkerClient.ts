@@ -6,6 +6,7 @@
  */
 
 import { getAuthToken } from './api'
+import { logger } from './logger'
 
 // 타입 정의
 export interface SSEEvent {
@@ -64,7 +65,7 @@ class SSEWorkerClient {
     if (this.isSupported) {
       this.initWorker()
     } else {
-      console.warn('[SSE-Client] SharedWorker not supported, using polyfill')
+      logger.debug('SSE-Client', 'SharedWorker not supported, using polyfill')
     }
   }
 
@@ -94,9 +95,9 @@ class SSEWorkerClient {
       }
 
       this.isInitialized = true
-      console.log('[SSE-Client] SharedWorker initialized')
+      logger.debug('SSE-Client', 'SharedWorker initialized')
     } catch (error) {
-      console.error('[SSE-Client] SharedWorker initialization failed:', error)
+      logger.error('SSE-Client', 'SharedWorker initialization failed', error)
       this.isSupported = false
     }
   }
@@ -107,16 +108,14 @@ class SSEWorkerClient {
   private handleWorkerMessage(event: MessageEvent<WorkerResponse>) {
     const { type, payload } = event.data
 
-    // 🔍 DEBUG: 모든 Worker 메시지 로깅
-    console.log(`[SSE-Client] Worker 메시지 수신 - type: ${type}, payload:`, payload)
+    logger.debug('SSE-Client', `Worker 메시지 수신 - type: ${type}`, payload)
 
     if (type === 'event' && payload.streamKey && payload.eventType) {
-      // 🔍 DEBUG: 이벤트 수신 상세 로깅
-      console.log(`[SSE-Client] 🎯 SSE 이벤트 수신 - streamKey: ${payload.streamKey}, eventType: ${payload.eventType}, data:`, payload.data)
+      logger.debug('SSE-Client', `SSE 이벤트 수신 - streamKey: ${payload.streamKey}, eventType: ${payload.eventType}`, payload.data)
 
       // SSE 이벤트를 리스너들에게 전달
       const callbacks = this.listeners.get(payload.streamKey)
-      console.log(`[SSE-Client] 리스너 조회 - streamKey: ${payload.streamKey}, 등록된 리스너: ${callbacks?.size || 0}개`)
+      logger.debug('SSE-Client', `리스너 조회 - streamKey: ${payload.streamKey}, 등록된 리스너: ${callbacks?.size || 0}개`)
 
       if (callbacks) {
         const sseEvent: SSEEvent = {
@@ -128,17 +127,17 @@ class SSEWorkerClient {
           try {
             cb(sseEvent)
           } catch (error) {
-            console.error('[SSE-Client] Callback error:', error)
+            logger.error('SSE-Client', 'Callback error', error)
           }
         })
       } else {
-        console.warn(`[SSE-Client] ⚠️ 리스너 없음! streamKey: ${payload.streamKey}`)
-        console.log(`[SSE-Client] 현재 등록된 리스너 키 목록:`, Array.from(this.listeners.keys()))
+        logger.debug('SSE-Client', `리스너 없음 - streamKey: ${payload.streamKey}`)
+        logger.debug('SSE-Client', '현재 등록된 리스너 키 목록', Array.from(this.listeners.keys()))
       }
     } else if (type === 'subscribed') {
-      console.log('[SSE-Client] ✅ Subscribed:', payload.streamKey)
+      logger.debug('SSE-Client', `Subscribed: ${payload.streamKey}`)
     } else if (type === 'unsubscribed') {
-      console.log('[SSE-Client] ❌ Unsubscribed:', payload.streamKey)
+      logger.debug('SSE-Client', `Unsubscribed: ${payload.streamKey}`)
     } else if (type === 'pong') {
       // ping 응답, 무시
     }
@@ -164,17 +163,16 @@ class SSEWorkerClient {
     // 토큰을 subscribe 시점에 직접 전달 (레이스 컨디션 방지)
     const token = getAuthToken()
 
-    // 🔍 DEBUG: 구독 요청 상세 로깅
-    console.log(`[SSE-Client] 📡 구독 요청 - streamKey: ${streamKey}, endpoint: ${endpoint}, params:`, params, `token: ${token ? '있음' : '없음'}`)
+    logger.debug('SSE-Client', `구독 요청 - streamKey: ${streamKey}, endpoint: ${endpoint}, token: ${token ? '있음' : '없음'}`, params)
 
     if (this.isSupported && this.port) {
-      console.log(`[SSE-Client] SharedWorker로 구독 메시지 전송`)
+      logger.debug('SSE-Client', 'SharedWorker로 구독 메시지 전송')
       this.port.postMessage({
         type: 'subscribe',
         payload: { streamKey, endpoint, params, token: token || '' }
       } as WorkerMessage)
     } else {
-      console.log(`[SSE-Client] Polyfill 모드로 구독`)
+      logger.debug('SSE-Client', 'Polyfill 모드로 구독')
       // 폴백: 직접 EventSource 사용
       this.polyfillSubscribe(streamKey, endpoint, params)
     }
@@ -208,14 +206,13 @@ class SSEWorkerClient {
     }
     this.listeners.get(streamKey)!.add(callback)
 
-    // 🔍 DEBUG: 리스너 등록 로깅
-    console.log(`[SSE-Client] 👂 리스너 등록 - streamKey: ${streamKey}, 총 리스너: ${this.listeners.get(streamKey)!.size}개`)
-    console.log(`[SSE-Client] 현재 등록된 모든 streamKey:`, Array.from(this.listeners.keys()))
+    logger.debug('SSE-Client', `리스너 등록 - streamKey: ${streamKey}, 총 리스너: ${this.listeners.get(streamKey)!.size}개`)
+    logger.debug('SSE-Client', '현재 등록된 모든 streamKey', Array.from(this.listeners.keys()))
 
     // 해제 함수 반환
     return () => {
       this.listeners.get(streamKey)?.delete(callback)
-      console.log(`[SSE-Client] 👋 리스너 해제 - streamKey: ${streamKey}, 남은 리스너: ${this.listeners.get(streamKey)?.size || 0}개`)
+      logger.debug('SSE-Client', `리스너 해제 - streamKey: ${streamKey}, 남은 리스너: ${this.listeners.get(streamKey)?.size || 0}개`)
     }
   }
 
@@ -294,7 +291,7 @@ class SSEWorkerClient {
       }
     })
 
-    console.log('[SSE-Client Polyfill] Connecting:', streamKey)
+    logger.debug('SSE-Client', `Polyfill connecting: ${streamKey}`)
 
     const eventSource = new EventSource(url.toString())
 
@@ -320,7 +317,7 @@ class SSEWorkerClient {
       }
       conn.eventSource.close()
       this.polyfillConnections.delete(streamKey)
-      console.log('[SSE-Client Polyfill] Disconnected:', streamKey)
+      logger.debug('SSE-Client', `Polyfill disconnected: ${streamKey}`)
     }
   }
 
@@ -336,7 +333,7 @@ class SSEWorkerClient {
         const data = JSON.parse(e.data)
         this.emitPolyfillEvent(streamKey, eventType, data)
       } catch (error) {
-        console.error(`[SSE-Client Polyfill] ${eventType} parse error:`, error)
+        logger.error('SSE-Client', `Polyfill ${eventType} parse error`, error)
       }
     }
 
@@ -357,7 +354,7 @@ class SSEWorkerClient {
 
     // 오류 처리 및 재연결
     eventSource.onerror = () => {
-      console.error('[SSE-Client Polyfill] Connection error:', streamKey)
+      logger.error('SSE-Client', `Polyfill connection error: ${streamKey}`)
       eventSource.close()
 
       // 에러 이벤트 전달
@@ -366,7 +363,7 @@ class SSEWorkerClient {
       // 재연결 시도
       if (this.polyfillConnections.has(streamKey)) {
         conn.retryTimeout = setTimeout(() => {
-          console.log('[SSE-Client Polyfill] Reconnecting:', streamKey)
+          logger.debug('SSE-Client', `Polyfill reconnecting: ${streamKey}`)
           this.polyfillUnsubscribe(streamKey)
           this.polyfillSubscribe(streamKey, conn.endpoint, conn.params)
         }, RECONNECT_DELAY)
@@ -385,7 +382,7 @@ class SSEWorkerClient {
         try {
           cb(event)
         } catch (error) {
-          console.error('[SSE-Client Polyfill] Callback error:', error)
+          logger.error('SSE-Client', 'Polyfill callback error', error)
         }
       })
     }

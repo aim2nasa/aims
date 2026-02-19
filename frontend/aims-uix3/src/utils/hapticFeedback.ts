@@ -3,6 +3,8 @@
  * Apple 표준 햅틱 패턴 구현
  */
 
+import { logger } from '@/shared/lib/logger'
+
 export type HapticFeedbackType = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' | 'selection'
 
 /**
@@ -49,7 +51,7 @@ class iOSHapticFeedback {
       navigator.vibrate?.(pattern)
     } catch (error) {
       // 햅틱 실패는 조용히 무시
-      console.debug('Haptic feedback failed:', error)
+      logger.debug('Haptic', 'feedback failed', error)
     }
   }
 

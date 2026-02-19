@@ -6,6 +6,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { sseClient, type SSEEvent } from '../lib/sseWorkerClient'
+import { logger } from '../lib/logger'
 
 export interface UseSSESubscriptionOptions<T = unknown> {
   /** 스트림 고유 키 (예: 'documents:status-list', 'customer:123:documents') */
@@ -104,8 +105,7 @@ export function useSSESubscription<T = unknown>(
   const connect = useCallback(() => {
     if (!enabled || !streamKey) return
 
-    // 🔍 DEBUG: 연결 시작 로깅
-    console.log(`[useSSESubscription] 🚀 연결 시작 - streamKey: ${streamKey}, endpoint: ${endpointRef.current}`)
+    logger.debug('useSSESubscription', `연결 시작 - streamKey: ${streamKey}, endpoint: ${endpointRef.current}`)
 
     // 인증 토큰 동기화
     sseClient.syncAuthToken()
@@ -114,21 +114,20 @@ export function useSSESubscription<T = unknown>(
     const unsubscribe = sseClient.on(streamKey, (event: SSEEvent) => {
       const { eventType, data } = event
 
-      // 🔍 DEBUG: 이벤트 수신 로깅
-      console.log(`[useSSESubscription] 📥 이벤트 수신 - streamKey: ${streamKey}, eventType: ${eventType}, data:`, data)
+      logger.debug('useSSESubscription', `이벤트 수신 - streamKey: ${streamKey}, eventType: ${eventType}`, data)
 
       if (eventType === 'connected') {
-        console.log(`[useSSESubscription] ✅ 연결 성공 - streamKey: ${streamKey}`)
+        logger.debug('useSSESubscription', `연결 성공 - streamKey: ${streamKey}`)
         setIsConnected(true)
         onConnectRef.current?.(data)
       } else if (eventType === 'error') {
-        console.log(`[useSSESubscription] ❌ 연결 오류 - streamKey: ${streamKey}`)
+        logger.debug('useSSESubscription', `연결 오류 - streamKey: ${streamKey}`)
         setIsConnected(false)
         onErrorRef.current?.(new Error((data as { message?: string })?.message || 'SSE error'))
         // 재연결은 SharedWorker가 exponential backoff로 무한 재시도
       } else {
         // 일반 이벤트
-        console.log(`[useSSESubscription] 🎯 일반 이벤트 전달 - eventType: ${eventType}`)
+        logger.debug('useSSESubscription', `일반 이벤트 전달 - eventType: ${eventType}`)
         onEventRef.current?.(eventType, data as T)
       }
     })

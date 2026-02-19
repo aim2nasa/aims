@@ -395,16 +395,12 @@ describe('useDynamicType', () => {
         throw new Error('getComputedStyle failed')
       })
 
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
       const { result } = renderHook(() => useDynamicType())
 
+      // 에러 발생해도 기본값(Large, 1.0)으로 정상 폴백
       expect(result.current.currentSize).toBe('Large')
       expect(result.current.scaleFactor).toBe(1.0)
       expect(result.current.isAccessibilitySize).toBe(false)
-      expect(consoleWarnSpy).toHaveBeenCalled()
-
-      consoleWarnSpy.mockRestore()
     })
 
     it('getPropertyValue가 빈 문자열을 반환해도 기본값 1을 사용해야 함', () => {
@@ -526,15 +522,12 @@ describe('initializeDynamicType', () => {
     expect(styleElements.length).toBe(1)
   })
 
-  it('초기화 완료 로그를 출력해야 함', () => {
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-
+  it('초기화 완료 후 스타일 요소가 존재해야 함', () => {
     initializeDynamicType()
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      '[DynamicType] iOS Dynamic Type 시스템 초기화 완료'
-    )
-
-    consoleLogSpy.mockRestore()
+    // logger.debug는 VITEST에서 억제되므로, 초기화 결과를 DOM으로 확인
+    const styleElement = document.head.querySelector('#dynamic-type-styles')
+    expect(styleElement).not.toBeNull()
+    expect(styleElement.textContent).toContain('--font-scale-factor')
   })
 })

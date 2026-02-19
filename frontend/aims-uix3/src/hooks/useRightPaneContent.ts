@@ -16,6 +16,7 @@ import type { SelectedDocument, DocumentComputedData } from '../utils/documentTr
 import { toSmartSearchDocumentResponse, buildSelectedDocument } from '../utils/documentTransformers'
 import { CustomerService } from '@/services/customerService'
 import { api } from '@/shared/lib/api'
+import { logger } from '@/shared/lib/logger'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 
@@ -158,11 +159,9 @@ export function useRightPaneContent(
       const computed = result.data.computed ?? null
       const selected = buildSelectedDocument(documentId, rawDocument, computed)
       setSelectedDocument(selected)
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] 문서 새로고침 완료:', documentId)
-      }
+      logger.debug('useRightPaneContent', `문서 새로고침 완료: ${documentId}`)
     } catch (error) {
-      console.error('[useRightPaneContent] 문서 새로고침 실패:', error)
+      logger.error('useRightPaneContent', '문서 새로고침 실패', error)
       errorReporter.reportApiError(error as Error, { component: 'useRightPaneContent.refreshDocument', payload: { documentId } })
     }
   }, [])
@@ -189,15 +188,11 @@ export function useRightPaneContent(
     const wasHidden = !prevVisibleRef.current
     const isNowVisible = rightPaneVisible
 
-    if (import.meta.env.DEV) {
-      console.log('[useRightPaneContent] visibility change:', { wasHidden, isNowVisible, prevVisible: prevVisibleRef.current })
-    }
+    logger.debug('useRightPaneContent', 'visibility change', { wasHidden, isNowVisible, prevVisible: prevVisibleRef.current })
 
     // 숨김 → 표시 전환 시 트리거 증가 (탭들이 이 트리거를 감지하여 새로고침)
     if (wasHidden && isNowVisible) {
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] RightPane 표시됨 - refreshTrigger 증가')
-      }
+      logger.debug('useRightPaneContent', 'RightPane 표시됨 - refreshTrigger 증가')
       setRightPaneRefreshTrigger(prev => prev + 1)
     }
 
@@ -208,9 +203,7 @@ export function useRightPaneContent(
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && rightPaneVisible) {
-        if (import.meta.env.DEV) {
-          console.log('[useRightPaneContent] 탭 활성화됨 - refreshTrigger 증가')
-        }
+        logger.debug('useRightPaneContent', '탭 활성화됨 - refreshTrigger 증가')
         setRightPaneRefreshTrigger(prev => prev + 1)
       }
     }
@@ -224,9 +217,7 @@ export function useRightPaneContent(
   // AI 어시스턴트 데이터 변경 시 RightPane 고객 정보 새로고침
   useEffect(() => {
     const handleAIDataChanged = async () => {
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] AI 어시스턴트 데이터 변경 감지')
-      }
+      logger.debug('useRightPaneContent', 'AI 어시스턴트 데이터 변경 감지')
 
       // 현재 선택된 고객이 있으면 새로고침
       const currentCustomer = selectedCustomerRef.current
@@ -234,11 +225,9 @@ export function useRightPaneContent(
         try {
           const customer = await CustomerService.getCustomer(currentCustomer._id)
           setSelectedCustomer(customer)
-          if (import.meta.env.DEV) {
-            console.log('[useRightPaneContent] AI 변경 후 고객 정보 새로고침 완료')
-          }
+          logger.debug('useRightPaneContent', 'AI 변경 후 고객 정보 새로고침 완료')
         } catch (error) {
-          console.error('[useRightPaneContent] AI 변경 후 고객 정보 새로고침 실패:', error)
+          logger.error('useRightPaneContent', 'AI 변경 후 고객 정보 새로고침 실패', error)
         }
       }
 
@@ -254,9 +243,7 @@ export function useRightPaneContent(
 
   // 문서 클릭 핸들러 - RightPane 열기 및 문서 프리뷰
   const handleDocumentClick = useCallback(async (documentId: string) => {
-    if (import.meta.env.DEV) {
-      console.log('[useRightPaneContent] 문서 클릭:', documentId)
-    }
+    logger.debug('useRightPaneContent', `문서 클릭: ${documentId}`)
 
     try {
       // /api/documents/:id/status API로 문서 상세 정보 조회
@@ -267,54 +254,30 @@ export function useRightPaneContent(
           computed?: DocumentComputedData
         }
       }>(`/api/documents/${documentId}/status`)
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] API 응답:', result)
-      }
+      logger.debug('useRightPaneContent', 'API 응답', result)
 
       if (!result.success || !result.data) {
-        if (import.meta.env.DEV) {
-          console.warn('[useRightPaneContent] 문서 데이터가 없습니다.')
-        }
+        logger.debug('useRightPaneContent', '문서 데이터가 없습니다.')
         return
       }
 
       // result.data.raw를 SmartSearchDocumentResponse로 변환
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] result.data.raw:', result.data.raw)
-        console.log('[useRightPaneContent] result.data.computed:', result.data.computed)
-        console.log(
-          '[useRightPaneContent] result.data.raw.ocr:',
-          (result.data.raw as Record<string, unknown>)?.['ocr']
-        )
-      }
+      logger.debug('useRightPaneContent', 'result.data.raw', result.data.raw)
 
       const rawDocument = toSmartSearchDocumentResponse(result.data.raw)
       if (!rawDocument) {
-        if (import.meta.env.DEV) {
-          console.warn(
-            '[useRightPaneContent] 문서 응답이 예상한 형태가 아닙니다.',
-            result.data.raw
-          )
-        }
+        logger.debug('useRightPaneContent', '문서 응답이 예상한 형태가 아닙니다.', result.data.raw)
         return
       }
 
       // computed 데이터 추출 (PDF 변환 정보 포함)
       const computed = result.data.computed ?? null
 
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] rawDocument after conversion:', rawDocument)
-        console.log('[useRightPaneContent] rawDocument.ocr:', rawDocument.ocr)
-      }
+      logger.debug('useRightPaneContent', 'rawDocument after conversion', rawDocument)
 
       const selected = buildSelectedDocument(documentId, rawDocument, computed)
 
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] 구성된 document 객체:', selected)
-        console.log('[useRightPaneContent] selected.ocr:', selected.ocr)
-        console.log('[useRightPaneContent] fileUrl:', selected.fileUrl)
-        console.log('[useRightPaneContent] previewFileUrl:', selected.previewFileUrl)
-      }
+      logger.debug('useRightPaneContent', '구성된 document 객체', { fileUrl: selected.fileUrl, previewFileUrl: selected.previewFileUrl })
 
       setSelectedDocument(selected)
       setRightPaneContentType('document')
@@ -325,7 +288,7 @@ export function useRightPaneContent(
       // URL에 문서 ID 저장
       updateURLParams({ documentId, customerId: null })
     } catch (error) {
-      console.error('[useRightPaneContent] 문서 로드 오류:', error)
+      logger.error('useRightPaneContent', '문서 로드 오류', error)
       errorReporter.reportApiError(error as Error, { component: 'useRightPaneContent.handleDocumentClick', payload: { documentId } })
     }
   }, [updateURLParams])
@@ -335,9 +298,7 @@ export function useRightPaneContent(
   // initialTab: 선택적으로 초기 탭 지정 (예: 'contracts' - 계약 탭으로 열기)
   const handleCustomerClick = useCallback(
     async (customerId: string | null, customerData?: Customer, initialTab?: string) => {
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] 고객 클릭:', customerId, customerData, initialTab)
-      }
+      logger.debug('useRightPaneContent', `고객 클릭: ${customerId}`, { initialTab })
 
       // customerId가 null이면 RightPane 닫기
       if (!customerId) {
@@ -439,19 +400,15 @@ export function useRightPaneContent(
     try {
       const customer = await CustomerService.getCustomer(selectedCustomer._id)
       setSelectedCustomer(customer)
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] 고객 상세정보 새로고침 완료')
-      }
+      logger.debug('useRightPaneContent', '고객 상세정보 새로고침 완료')
 
       // 고객 전체보기도 새로고침
       if (customerAllViewRefreshRef?.current) {
         customerAllViewRefreshRef.current()
-        if (import.meta.env.DEV) {
-          console.log('[useRightPaneContent] 고객 전체보기 새로고침 완료')
-        }
+        logger.debug('useRightPaneContent', '고객 전체보기 새로고침 완료')
       }
     } catch (error) {
-      console.error('[useRightPaneContent] 고객 정보 새로고침 실패:', error)
+      logger.error('useRightPaneContent', '고객 정보 새로고침 실패', error)
       errorReporter.reportApiError(error as Error, { component: 'useRightPaneContent.handleCustomerRefresh', payload: { customerId: selectedCustomer?._id } })
     }
   }, [selectedCustomer, customerAllViewRefreshRef])
@@ -461,9 +418,7 @@ export function useRightPaneContent(
     // 고객 전체보기만 새로고침 (selectedCustomer는 이미 없음)
     if (customerAllViewRefreshRef?.current) {
       customerAllViewRefreshRef.current()
-      if (import.meta.env.DEV) {
-        console.log('[useRightPaneContent] 고객 삭제 후 전체보기 새로고침 완료')
-      }
+      logger.debug('useRightPaneContent', '고객 삭제 후 전체보기 새로고침 완료')
     }
   }, [customerAllViewRefreshRef])
 

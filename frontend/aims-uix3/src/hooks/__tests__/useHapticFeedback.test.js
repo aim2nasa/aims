@@ -185,8 +185,10 @@ describe('useHapticFeedback', () => {
         result.current.triggerHaptic('invalid-type')
       })
 
+      // logger.warn('[Haptic]', '알 수 없는 햅틱 타입: ...') → console.warn에 2개 인자
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] 알 수 없는 햅틱 타입:')
+        expect.stringContaining('Haptic'),
+        expect.stringContaining('알 수 없는 햅틱 타입:'),
       )
       expect(vibrateSpy).not.toHaveBeenCalled()
 
@@ -314,92 +316,69 @@ describe('useHapticFeedback', () => {
   describe('편의 함수', () => {
     it('success() 함수가 SUCCESS 햅틱을 실행해야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.success()
       })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] success 피드백 실행')
-      )
-
-      consoleLogSpy.mockRestore()
+      // 시각적 햅틱 피드백: CSS class와 CSS variable로 확인
+      expect(document.body.classList.contains('haptic-success')).toBe(true)
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.8')
     })
 
     it('error() 함수가 ERROR 햅틱을 실행해야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.error()
       })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] error 피드백 실행')
-      )
-
-      consoleLogSpy.mockRestore()
+      expect(document.body.classList.contains('haptic-error')).toBe(true)
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('1')
     })
 
     it('warning() 함수가 WARNING 햅틱을 실행해야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.warning()
       })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] warning 피드백 실행')
-      )
-
-      consoleLogSpy.mockRestore()
+      expect(document.body.classList.contains('haptic-warning')).toBe(true)
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.85')
     })
 
     it('selection() 함수가 SELECTION 햅틱을 실행해야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.selection()
       })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] selection 피드백 실행')
-      )
-
-      consoleLogSpy.mockRestore()
+      expect(document.body.classList.contains('haptic-selection')).toBe(true)
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.6')
     })
 
     it('buttonPress() 함수가 MEDIUM 햅틱을 실행해야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.buttonPress()
       })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] medium 피드백 실행')
-      )
-
-      consoleLogSpy.mockRestore()
+      expect(document.body.classList.contains('haptic-medium')).toBe(true)
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.7')
     })
 
     it('lightTouch() 함수가 LIGHT 햅틱을 실행해야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.lightTouch()
       })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] light 피드백 실행')
-      )
-
-      consoleLogSpy.mockRestore()
+      expect(document.body.classList.contains('haptic-light')).toBe(true)
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.5')
     })
   })
 
@@ -420,7 +399,6 @@ describe('useHapticFeedback', () => {
 
     it('원본 핸들러 없이도 햅틱을 실행해야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       const wrappedHandler = result.current.withHaptic(HAPTIC_TYPES.MEDIUM)
 
@@ -428,11 +406,8 @@ describe('useHapticFeedback', () => {
         wrappedHandler({ target: {} })
       })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] medium 피드백 실행')
-      )
-
-      consoleLogSpy.mockRestore()
+      // 시각적 햅틱이 실행되었는지 CSS class로 확인
+      expect(document.body.classList.contains('haptic-medium')).toBe(true)
     })
 
     it('withHaptic으로 생성한 핸들러를 여러 번 호출할 수 있어야 함', () => {
@@ -455,7 +430,6 @@ describe('useHapticFeedback', () => {
     it('DOM 요소에 햅틱을 바인딩할 수 있어야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
       const button = document.createElement('button')
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.bindHapticToElement(button, HAPTIC_TYPES.MEDIUM, 'click')
@@ -464,18 +438,14 @@ describe('useHapticFeedback', () => {
       // 클릭 시뮬레이션
       button.click()
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] medium 피드백 실행')
-      )
-
-      consoleLogSpy.mockRestore()
+      // 시각적 햅틱이 실행되었는지 CSS class로 확인
+      expect(document.body.classList.contains('haptic-medium')).toBe(true)
     })
 
     it('비활성화된 요소는 햅틱을 실행하지 않아야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
       const button = document.createElement('button')
       button.disabled = true
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.bindHapticToElement(button, HAPTIC_TYPES.MEDIUM, 'click')
@@ -483,16 +453,14 @@ describe('useHapticFeedback', () => {
 
       button.click()
 
-      expect(consoleLogSpy).not.toHaveBeenCalled()
-
-      consoleLogSpy.mockRestore()
+      // 비활성화된 요소는 CSS class가 추가되지 않아야 함
+      expect(document.body.classList.contains('haptic-medium')).toBe(false)
     })
 
     it('aria-disabled된 요소는 햅틱을 실행하지 않아야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
       const button = document.createElement('button')
       button.setAttribute('aria-disabled', 'true')
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.bindHapticToElement(button, HAPTIC_TYPES.MEDIUM, 'click')
@@ -500,15 +468,12 @@ describe('useHapticFeedback', () => {
 
       button.click()
 
-      expect(consoleLogSpy).not.toHaveBeenCalled()
-
-      consoleLogSpy.mockRestore()
+      expect(document.body.classList.contains('haptic-medium')).toBe(false)
     })
 
     it('cleanup 함수로 이벤트 리스너를 제거할 수 있어야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
       const button = document.createElement('button')
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       let cleanup
       act(() => {
@@ -522,9 +487,7 @@ describe('useHapticFeedback', () => {
       button.click()
 
       // cleanup 후에는 햅틱이 실행되지 않아야 함
-      expect(consoleLogSpy).not.toHaveBeenCalled()
-
-      consoleLogSpy.mockRestore()
+      expect(document.body.classList.contains('haptic-medium')).toBe(false)
     })
 
     it('null 요소를 전달하면 아무 작업도 하지 않아야 함', () => {
@@ -571,19 +534,17 @@ describe('useHapticFeedback', () => {
       expect(localStorage.getItem('aims-haptic-intensity')).toBe('0.3')
     })
 
-    it('설정 업데이트 로그를 출력해야 함', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    it('설정 업데이트가 상태와 localStorage에 반영되어야 함', () => {
       const { result } = renderHook(() => useHapticFeedback())
 
       act(() => {
         result.current.updateHapticSettings(true, 0.8)
       })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] 설정 업데이트 - 활성화: true, 강도: 0.8')
-      )
-
-      consoleLogSpy.mockRestore()
+      expect(result.current.isHapticEnabled).toBe(true)
+      expect(result.current.hapticIntensity).toBe(0.8)
+      expect(localStorage.getItem('aims-haptic-enabled')).toBe('true')
+      expect(localStorage.getItem('aims-haptic-intensity')).toBe('0.8')
     })
   })
 
@@ -591,23 +552,24 @@ describe('useHapticFeedback', () => {
     it('모든 햅틱 타입을 순차적으로 테스트해야 함', () => {
       vi.useFakeTimers()
       const { result } = renderHook(() => useHapticFeedback())
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       act(() => {
         result.current.testHaptic()
       })
 
-      // 각 타입마다 300ms 간격
-      const hapticTypesCount = Object.values(HAPTIC_TYPES).length
+      // 각 타입마다 300ms 간격 → 마지막 타입 직전까지 진행 후 CSS class 확인
+      const allTypes = Object.values(HAPTIC_TYPES)
+      const hapticTypesCount = allTypes.length
 
+      // 마지막 타입이 트리거되는 시점까지만 진행 (cleanup timer 실행 전)
       act(() => {
-        vi.advanceTimersByTime(hapticTypesCount * 300)
+        vi.advanceTimersByTime((hapticTypesCount - 1) * 300 + 1)
       })
 
-      // 모든 햅틱 타입이 실행되었는지 확인
-      expect(consoleLogSpy).toHaveBeenCalledTimes(hapticTypesCount)
+      // 마지막 타입의 CSS class가 존재해야 함 (cleanup timer가 아직 실행되지 않음)
+      const lastType = allTypes[allTypes.length - 1]
+      expect(document.body.classList.contains(`haptic-${lastType}`)).toBe(true)
 
-      consoleLogSpy.mockRestore()
       vi.useRealTimers()
     })
   })
@@ -630,20 +592,15 @@ describe('useHapticFeedback', () => {
         throw new Error('Vibration failed')
       })
 
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
       const { result } = renderHook(() => useHapticFeedback())
 
       act(() => {
         result.current.triggerHaptic(HAPTIC_TYPES.LIGHT)
       })
 
-      // vibrate() 실패 시 triggerVisualHaptic()으로 대체되므로
-      // 경고 대신 정상 로그가 출력됨
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] light 피드백 실행')
-      )
-
-      consoleLogSpy.mockRestore()
+      // vibrate() 실패 시 triggerVisualHaptic()으로 대체 → CSS class 확인
+      expect(document.body.classList.contains('haptic-light')).toBe(true)
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.5')
     })
   })
 })
@@ -687,16 +644,13 @@ describe('initializeHapticStyles', () => {
     expect(styleElements.length).toBe(1)
   })
 
-  it('초기화 완료 로그를 출력해야 함', () => {
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-
+  it('초기화 완료 후 스타일 요소가 존재해야 함', () => {
     initializeHapticStyles()
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      '[Haptic] 햅틱 피드백 CSS 스타일 초기화 완료'
-    )
-
-    consoleLogSpy.mockRestore()
+    // logger.debug는 VITEST에서 억제되므로, 초기화 결과를 DOM으로 확인
+    const styleElement = document.head.querySelector('#haptic-styles')
+    expect(styleElement).not.toBeNull()
+    expect(styleElement.textContent).toContain('--haptic-intensity')
   })
 })
 

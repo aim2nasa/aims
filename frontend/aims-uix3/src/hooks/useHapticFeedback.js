@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { logger } from '@/shared/lib/logger';
 
 /**
  * iOS 햅틱 피드백 타입 정의
@@ -69,7 +70,7 @@ export function useHapticFeedback() {
     const handleMotionChange = (e) => {
       setIsReducedMotion(e.matches);
       if (e.matches) {
-        console.log('[Haptic] 모션 감소 모드 활성화 - 햅틱 강도 감소');
+        logger.debug('Haptic', '모션 감소 모드 활성화 - 햅틱 강도 감소');
         setHapticIntensity(0.5); // 모션 감소 시 햅틱도 감소
       } else {
         setHapticIntensity(1.0);
@@ -104,7 +105,7 @@ export function useHapticFeedback() {
 
     const config = HAPTIC_CONFIG[type];
     if (!config) {
-      console.warn(`[Haptic] 알 수 없는 햅틱 타입: ${type}`);
+      logger.warn('Haptic', `알 수 없는 햅틱 타입: ${type}`);
       return;
     }
 
@@ -117,10 +118,10 @@ export function useHapticFeedback() {
       // TODO: 실제 모바일 앱으로 패키징할 때 Vibration API 활성화
       triggerVisualHaptic(type, intensity);
 
-      console.log(`[Haptic] ${type} 피드백 실행 (강도: ${intensity.toFixed(2)})`);
+      logger.debug('Haptic', `${type} 피드백 실행 (강도: ${intensity.toFixed(2)})`);
 
     } catch (error) {
-      console.warn('[Haptic] 햅틱 피드백 실행 실패:', error);
+      logger.warn('Haptic', '햅틱 피드백 실행 실패', error);
     }
   }, [isHapticEnabled, hapticIntensity]);
 
@@ -231,7 +232,7 @@ export function useHapticFeedback() {
       localStorage.setItem('aims-haptic-intensity', intensity.toString());
     }
 
-    console.log(`[Haptic] 설정 업데이트 - 활성화: ${enabled}, 강도: ${intensity}`);
+    logger.debug('Haptic', `설정 업데이트 - 활성화: ${enabled}, 강도: ${intensity}`);
   }, [hapticIntensity]);
 
   /**
@@ -352,7 +353,7 @@ export function initializeHapticStyles() {
     document.head.appendChild(style);
   }
 
-  console.log('[Haptic] 햅틱 피드백 CSS 스타일 초기화 완료');
+  logger.debug('Haptic', '햅틱 피드백 CSS 스타일 초기화 완료');
 }
 
 export default useHapticFeedback;
