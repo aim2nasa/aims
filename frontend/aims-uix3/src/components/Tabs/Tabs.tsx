@@ -1,14 +1,16 @@
 /**
  * AIMS UIX-3 Tabs Component
  * @since 2025-10-09
- * @version 1.0.0
+ * @version 2.0.0 - Modern underline indicator + icon-only label popup
  *
- * 🍎 iOS/macOS Segmented Control 스타일의 탭 컴포넌트
- * - Progressive Disclosure: 현재 탭만 강조, 나머지는 서브틀
- * - Apple 디자인 철학 완벽 구현
+ * Clean tab navigation:
+ * - Underline indicator on active tab (no double-layer backgrounds)
+ * - Icon-only mode (<=640px): click shows floating label popup
+ * - Progressive Disclosure philosophy
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import './Tabs.css';
 
 export interface Tab {
@@ -30,7 +32,9 @@ export interface TabsProps {
 /**
  * Tabs Component
  *
- * iOS Segmented Control 스타일의 탭 네비게이션을 제공합니다.
+ * Modern underline-indicator tab navigation.
+ * In icon-only mode (mobile <=640px), clicking a tab shows a
+ * brief floating label popup identifying the tab.
  *
  * @example
  * ```tsx
@@ -59,49 +63,97 @@ export const Tabs: React.FC<TabsProps> = ({
   // 제어/비제어 컴포넌트 패턴
   const activeKey = controlledActiveKey !== undefined ? controlledActiveKey : uncontrolledActiveKey;
 
-  const handleTabClick = useCallback((tabKey: string, disabled?: boolean) => {
-    if (disabled) return;
+  // Icon-only mode label popup
+  const [labelPopup, setLabelPopup] = useState<string | null>(null);
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
+  const popupTimerRef = useRef<number | undefined>(undefined);
+  const isIconOnlyRef = useRef(false);
+
+  // Track icon-only mode via media query (labels hidden at <=640px)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    isIconOnlyRef.current = mq.matches;
+    const handler = (e: MediaQueryListEvent) => { isIconOnlyRef.current = e.matches; };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Cleanup popup timer
+  useEffect(() => {
+    return () => {
+      if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+    };
+  }, []);
+
+  const handleTabClick = useCallback((tab: Tab, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (tab.disabled) return;
 
     if (controlledActiveKey === undefined) {
-      setUncontrolledActiveKey(tabKey);
+      setUncontrolledActiveKey(tab.key);
     }
 
-    onChange?.(tabKey);
+    onChange?.(tab.key);
+
+    // Show label popup in icon-only mode
+    if (isIconOnlyRef.current) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+      const labelText = tab.count !== undefined ? `${tab.label} (${tab.count})` : tab.label;
+      setPopupPos({ top: rect.bottom + 6, left: rect.left + rect.width / 2 });
+      setLabelPopup(labelText);
+      popupTimerRef.current = window.setTimeout(() => setLabelPopup(null), 1500);
+    }
   }, [controlledActiveKey, onChange]);
 
   return (
-    <div className={`tabs-bar ${className}`} role="tablist">
-      {tabs.map((tab) => {
-        const isActive = tab.key === activeKey;
-        const tabClasses = [
-          'tabs-bar__tab',
-          isActive && 'tabs-bar__tab--active',
-          tab.disabled && 'tabs-bar__tab--disabled'
-        ].filter(Boolean).join(' ');
+    <>
+      <div className={`tabs-bar ${className}`} role="tablist">
+        {tabs.map((tab) => {
+          const isActive = tab.key === activeKey;
+          const tabClasses = [
+            'tabs-bar__tab',
+            isActive && 'tabs-bar__tab--active',
+            tab.disabled && 'tabs-bar__tab--disabled'
+          ].filter(Boolean).join(' ');
 
-        return (
-          <button
-            key={tab.key}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            aria-disabled={tab.disabled}
-            className={tabClasses}
-            onClick={() => handleTabClick(tab.key, tab.disabled)}
-            disabled={tab.disabled}
-            data-tab-key={tab.key}
-          >
-            {tab.icon && <span className="tabs-bar__tab-icon">{tab.icon}</span>}
-            <span className="tabs-bar__tab-label">
-              {tab.label}
-              {tab.count !== undefined && (
-                <span className="tabs-bar__tab-count"> ({tab.count})</span>
-              )}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={isActive ? 'true' : 'false'}
+              aria-disabled={tab.disabled ? 'true' : undefined}
+              className={tabClasses}
+              onClick={(e) => handleTabClick(tab, e)}
+              disabled={tab.disabled}
+              data-tab-key={tab.key}
+            >
+              {tab.icon && <span className="tabs-bar__tab-icon">{tab.icon}</span>}
+              <span className="tabs-bar__tab-label">
+                {tab.label}
+                {tab.count !== undefined && (
+                  <span className="tabs-bar__tab-count"> ({tab.count})</span>
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Label popup for icon-only mode (portal to body to avoid overflow clipping) */}
+      {labelPopup && createPortal(
+        <div
+          className="tabs-bar__label-popup"
+          style={{
+            '--popup-top': `${popupPos.top}px`,
+            '--popup-left': `${popupPos.left}px`,
+          } as React.CSSProperties}
+        >
+          {labelPopup}
+        </div>,
+        document.body
+      )}
+    </>
   );
 };
 

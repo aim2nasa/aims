@@ -380,7 +380,7 @@
       padding: 4px 8px;
     }
 
-    .customer-detail-view__tabs .tabs-bar {
+    .tabs-bar.customer-detail-view__tabs {
       margin-bottom: var(--spacing-2);
     }
 
