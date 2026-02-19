@@ -1294,6 +1294,43 @@ if __name__ == "__main__":
         else:
             sys.exit(1)
 
+    # MetDO Reader 서브프로세스 모드: 고객 상세정보 OCR
+    # MetlifeCustomerList.py → subprocess.call([AutoClicker.exe, "--run-metdo", screenshot])
+    if "--run-metdo" in sys.argv:
+        _metdo_idx = sys.argv.index("--run-metdo")
+        if _metdo_idx + 1 < len(sys.argv):
+            _screenshot_path = sys.argv[_metdo_idx + 1]
+            sys.argv = [sys.argv[0], _screenshot_path, "--json"]
+            # metdo_reader 모듈 경로 (frozen: _MEIPASS/metdo_reader, dev: ../metdo_reader)
+            if getattr(sys, 'frozen', False):
+                _metdo_dir = os.path.join(sys._MEIPASS, 'metdo_reader')
+            else:
+                _metdo_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'metdo_reader')
+            sys.path.insert(0, _metdo_dir)
+            from read_customer import main as _metdo_main
+            sys.exit(_metdo_main())
+        else:
+            sys.exit(1)
+
+    # 리포트 생성 서브프로세스 모드: AIMS 엑셀/JSON/실행결과 생성
+    # MetlifeCustomerList.py → subprocess.call([AutoClicker.exe, "--run-reports", output_dir])
+    if "--run-reports" in sys.argv:
+        _reports_idx = sys.argv.index("--run-reports")
+        if _reports_idx + 1 < len(sys.argv):
+            _output_dir = sys.argv[_reports_idx + 1]
+            sys.argv = [sys.argv[0], _output_dir]
+            # generate_reports 모듈 경로 (frozen: _MEIPASS, dev: 현재 디렉토리)
+            if getattr(sys, 'frozen', False):
+                _reports_dir = sys._MEIPASS
+            else:
+                _reports_dir = os.path.dirname(os.path.abspath(__file__))
+            sys.path.insert(0, _reports_dir)
+            from generate_reports import main as _reports_main
+            _reports_main()
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
     # URI Scheme 감지: aims-ac:// 로 시작하는 인자가 있으면 URI 핸들러로 분기
     uri_arg = next((a for a in sys.argv[1:] if a.startswith("aims-ac://")), None)
     if uri_arg:
