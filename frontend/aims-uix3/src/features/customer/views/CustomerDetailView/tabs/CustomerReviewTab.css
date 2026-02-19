@@ -294,30 +294,33 @@
 
   /* === 📱 768px: 칼럼 재정의 (공통 gap/padding/font: tab-table.css) === */
   @media (max-width: 768px) {
-    /* 6칼럼 (파싱일시 숨김) - --grid-cols 오버라이드 */
-    .customer-review-table-header {
-      --grid-cols:
-        minmax(45px, 0.5fr)
-        minmax(45px, 0.5fr)
-        85px
-        minmax(70px, 1fr)
-        55px
-        50px;
-    }
-
+    /* 6칼럼 (파싱일시 숨김) - --grid-cols 오버라이드
+     * 정렬 아이콘(▼) 표시를 위해 계약자/피보험자 최소 폭 확보
+     * 상품명은 긴 텍스트 대응을 위해 대폭 확대 */
+    .customer-review-table-header,
     .customer-review-row {
       --grid-cols:
-        minmax(45px, 0.5fr)
-        minmax(45px, 0.5fr)
-        85px
-        minmax(70px, 1fr)
-        55px
-        50px;
+        60px                    /* 계약자 */
+        75px                    /* 피보험자 (+15%) */
+        80px                    /* 발행일 */
+        minmax(300px, 1fr)     /* 상품명 (+15%) */
+        60px                    /* 펀드 수 (+10%) */
+        55px;                   /* 상태 (여유 공백 포함) */
+      min-width: 670px;        /* 헤더 배경이 상태 칼럼 우측까지 완전 커버 */
     }
 
     .customer-review-table-header .header-parsed-at,
     .customer-review-row .row-parsed-at {
       display: none;
+    }
+
+    /* 피보험자 목록 중앙정렬 */
+    .row-insured {
+      text-align: center;
+    }
+
+    .header-insured {
+      justify-content: center;
     }
   }
 
