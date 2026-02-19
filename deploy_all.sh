@@ -13,6 +13,15 @@ NC='\033[0m'
 AIMS_DIR="$HOME/aims"
 TOTAL_START=$(date +%s)
 
+# 공유 API 키 로드 (Single Source of Truth)
+SHARED_ENV="$AIMS_DIR/.env.shared"
+if [ -f "$SHARED_ENV" ]; then
+  export $(cat "$SHARED_ENV" | grep -v '^#' | grep -v '^$' | xargs)
+  echo "공유 환경변수 로드: $SHARED_ENV"
+else
+  echo -e "${YELLOW}⚠️  $SHARED_ENV 파일이 없습니다. API 키가 누락될 수 있습니다.${NC}"
+fi
+
 # 시간 포맷 함수
 format_time() {
     local seconds=$1
@@ -45,7 +54,7 @@ echo "=== AIMS 전체 배포 시작 ==="
 echo ""
 
 # 1. Git 정리 및 Pull
-run_step 1 "Git 정리 및 Pull" "cd '$AIMS_DIR' && git checkout -- . && git clean -fd -e deploy_all.sh -e '**/.build_hash' -e '**/.requirements_hash' && git pull"
+run_step 1 "Git 정리 및 Pull" "cd '$AIMS_DIR' && git checkout -- . && git clean -fd -e deploy_all.sh -e '**/.build_hash' -e '**/.requirements_hash' -e .env.shared && git pull"
 
 # 2. aims_api
 run_step 2 "aims_api 배포" "cd '$AIMS_DIR/backend/api/aims_api' && ./deploy_aims_api.sh"

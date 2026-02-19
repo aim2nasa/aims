@@ -12,15 +12,15 @@ CONTAINER_NAME="aims-rag-api"
 IMAGE_NAME="aims-rag-api"
 HASH_FILE=".build_hash"
 
-# 환경변수 로드 (우선순위: .env > ~/.bashrc)
+# 환경변수 로드 (우선순위: .env > .env.shared)
 if [ -f .env ]; then
   export $(cat .env | grep -v '^#' | xargs)
 fi
 
-# .bashrc에서 OPENAI_API_KEY 로드 (비대화형 쉘 대응)
-if [ -z "$OPENAI_API_KEY" ] && [ -f ~/.bashrc ]; then
-  OPENAI_API_KEY=$(grep "OPENAI_API_KEY" ~/.bashrc | cut -d= -f2 | tr -d '"' | head -1)
-  export OPENAI_API_KEY
+# 공유 API 키 로드 (독립 실행 대비 - deploy_all.sh에서 이미 로드됨)
+AIMS_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+if [ -z "$OPENAI_API_KEY" ] && [ -f "$AIMS_DIR/.env.shared" ]; then
+  export $(cat "$AIMS_DIR/.env.shared" | grep -v '^#' | grep -v '^$' | xargs)
 fi
 
 # 버전 정보 가져오기

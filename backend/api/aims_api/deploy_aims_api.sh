@@ -19,6 +19,12 @@ if [ -f .env ]; then
   export $(cat .env | grep -v '^#' | xargs)
 fi
 
+# 공유 API 키 로드 (독립 실행 대비 - deploy_all.sh에서 이미 로드됨)
+AIMS_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+if [ -z "$OPENAI_API_KEY" ] && [ -f "$AIMS_DIR/.env.shared" ]; then
+  export $(cat "$AIMS_DIR/.env.shared" | grep -v '^#' | grep -v '^$' | xargs)
+fi
+
 # 버전 정보 가져오기
 GIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

@@ -6,6 +6,7 @@ set -e  # 오류 발생 시 즉시 종료
 
 PROCESS_NAME="annual_report_api"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AIMS_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 MAIN_PY="$SCRIPT_DIR/main.py"
 VENV_PYTHON="$SCRIPT_DIR/venv/bin/python"
 LOG_DIR="$SCRIPT_DIR/logs"
@@ -100,17 +101,21 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
     echo "   다음 환경 변수를 설정해주세요:"
     echo "   - MONGO_URI"
     echo "   - DB_NAME"
-    echo "   - OPENAI_API_KEY"
     echo "   - OPENAI_MODEL"
     exit 1
+fi
+
+# 공유 API 키 로드 (.env.shared가 Single Source of Truth)
+if [ -f "$AIMS_DIR/.env.shared" ]; then
+  export $(cat "$AIMS_DIR/.env.shared" | grep -v '^#' | grep -v '^$' | xargs)
 fi
 
 # 4. 새 프로세스 시작 (백그라운드)
 echo "🚀 새 프로세스 시작..."
 cd "$SCRIPT_DIR"
 
-# .env 파일 로드 후 실행
-nohup $VENV_PYTHON $MAIN_PY >> "$LOG_FILE" 2>&1 &
+# .env 파일 로드 + 공유 키 환경변수 전달
+OPENAI_API_KEY="$OPENAI_API_KEY" nohup $VENV_PYTHON $MAIN_PY >> "$LOG_FILE" 2>&1 &
 PID=$!
 
 # 5. 헬스체크 (자동)
