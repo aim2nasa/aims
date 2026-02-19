@@ -244,113 +244,108 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   const deleteHeaderLabel = isBusinessCustomer ? '관계 삭제' : '가족 삭제';
 
   return (
-    <div className="form-section">
-      <div className="form-section__content">
-        {renderState()}
+    <div className="relationships-tab">
+      {renderState()}
 
-        {rows.length > 0 && (
-          <div className="relationships-table-wrapper">
-            <table className="relationships-table">
-              <thead>
-                <tr>
-                  <th
-                    className="relationships-table__sortable"
-                    onClick={() => handleSort('relationshipType')}
-                  >
-                    <span className="relationships-table__header-content">
-                      관계 유형
-                      <span className={`relationships-table__sort-icon ${sortField === 'relationshipType' ? 'relationships-table__sort-icon--active' : ''}`}>
-                        {sortField === 'relationshipType' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-                      </span>
-                      {relationshipsCount > 0 && (
-                        <span className="relationships-table__count-badge">{relationshipsCount}</span>
+      {rows.length > 0 && (
+        <div className="tab-table__scroll relationships-table-container">
+          {/* 테이블 헤더 */}
+          <div className="tab-table__header relationships-table-header">
+            <div
+              className="header-rel-type relationships-table__sortable"
+              onClick={() => handleSort('relationshipType')}
+            >
+              <span className="relationships-table__header-content">
+                관계 유형
+                <span className={`relationships-table__sort-icon ${sortField === 'relationshipType' ? 'relationships-table__sort-icon--active' : ''}`}>
+                  {sortField === 'relationshipType' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+                </span>
+                {relationshipsCount > 0 && (
+                  <span className="relationships-table__count-badge">{relationshipsCount}</span>
+                )}
+              </span>
+            </div>
+            <div
+              className="header-rel-customer relationships-table__sortable"
+              onClick={() => handleSort('relatedCustomer')}
+            >
+              <span className="relationships-table__header-content">
+                관련 고객
+                <span className={`relationships-table__sort-icon ${sortField === 'relatedCustomer' ? 'relationships-table__sort-icon--active' : ''}`}>
+                  {sortField === 'relatedCustomer' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+                </span>
+              </span>
+            </div>
+            <div
+              className="header-rel-date relationships-table__sortable"
+              onClick={() => handleSort('createdAt')}
+            >
+              <span className="relationships-table__header-content">
+                등록일
+                <span className={`relationships-table__sort-icon ${sortField === 'createdAt' ? 'relationships-table__sort-icon--active' : ''}`}>
+                  {sortField === 'createdAt' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+                </span>
+              </span>
+            </div>
+            <div className="header-rel-delete">{deleteHeaderLabel}</div>
+          </div>
+
+          {/* 테이블 바디 */}
+          <div className="tab-table__body relationships-table-body">
+            {rows.map((row) => (
+              <div key={row.key} className="tab-table__row relationships-row">
+                <div className="row-rel-type">
+                  <span className={`relationships-category relationships-category--${row.category}`}>
+                    <span className="relationships-category__icon relationships-category__icon--emoji">
+                      {row.relationIcon}
+                    </span>
+                    <span className="relationships-category__label">
+                      {getRelationshipTypeLabel(row.relationship)}
+                      {row.isReversed && (
+                        <span className="relationships-category__reverse">(역방향)</span>
                       )}
                     </span>
-                  </th>
-                  <th
-                    className="relationships-table__sortable"
-                    onClick={() => handleSort('relatedCustomer')}
-                  >
-                    <span className="relationships-table__header-content">
-                      관련 고객
-                      <span className={`relationships-table__sort-icon ${sortField === 'relatedCustomer' ? 'relationships-table__sort-icon--active' : ''}`}>
-                        {sortField === 'relatedCustomer' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-                      </span>
-                    </span>
-                  </th>
-                  <th
-                    className="relationships-table__sortable"
-                    onClick={() => handleSort('createdAt')}
-                  >
-                    <span className="relationships-table__header-content">
-                      등록일
-                      <span className={`relationships-table__sort-icon ${sortField === 'createdAt' ? 'relationships-table__sort-icon--active' : ''}`}>
-                        {sortField === 'createdAt' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-                      </span>
-                    </span>
-                  </th>
-                  <th className="relationships-table__delete-header">{deleteHeaderLabel}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => {
-                  return (
-                    <tr key={row.key}>
-                      <td>
-                        <div className={`relationships-category relationships-category--${row.category}`}>
-                          <span className="relationships-category__icon relationships-category__icon--emoji">
-                            {row.relationIcon}
-                          </span>
-                          <span className="relationships-category__label">
-                            {getRelationshipTypeLabel(row.relationship)}
-                            {row.isReversed && (
-                              <span className="relationships-category__reverse">(역방향)</span>
-                            )}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        {row.relatedCustomer ? (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            onClick={() => handleCustomerSelect(row.relatedCustomer)}
-                            onDoubleClick={() => handleCustomerDoubleClick(row.relatedCustomer)}
-                            className="relationships-link"
-                          >
-                            {row.relatedCustomer.personal_info?.name || '이름 없음'}
-                          </Button>
-                        ) : (
-                          <span>알 수 없음</span>
-                        )}
-                      </td>
-                      <td>{row.createdAt}</td>
-                      <td>
-                        <Tooltip content="관계 삭제">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(row.key)}
-                            className="relationships-action relationships-action--danger"
-                            aria-label="관계 삭제"
-                          >
-                            <SFSymbol
-                              name="trash"
-                              size={SFSymbolSize.TITLE_3}
-                              weight={SFSymbolWeight.SEMIBOLD}
-                              decorative
-                            />
-                          </Button>
-                        </Tooltip>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </span>
+                </div>
+                <div className="row-rel-customer">
+                  {row.relatedCustomer ? (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => handleCustomerSelect(row.relatedCustomer)}
+                      onDoubleClick={() => handleCustomerDoubleClick(row.relatedCustomer)}
+                      className="relationships-link"
+                    >
+                      {row.relatedCustomer.personal_info?.name || '이름 없음'}
+                    </Button>
+                  ) : (
+                    <span className="relationships-unknown">알 수 없음</span>
+                  )}
+                </div>
+                <span className="row-rel-date">{row.createdAt}</span>
+                <div className="row-rel-delete">
+                  <Tooltip content="관계 삭제">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(row.key)}
+                      className="relationships-action relationships-action--danger"
+                      aria-label="관계 삭제"
+                    >
+                      <SFSymbol
+                        name="trash"
+                        size={SFSymbolSize.TITLE_3}
+                        weight={SFSymbolWeight.SEMIBOLD}
+                        decorative
+                      />
+                    </Button>
+                  </Tooltip>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <AppleConfirmModal state={confirmController.state} actions={confirmController.actions} />
     </div>

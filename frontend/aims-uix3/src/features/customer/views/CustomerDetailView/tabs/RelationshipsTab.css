@@ -1,35 +1,34 @@
-/* 가족 관계 탭 - 기본정보 탭과 통일된 스타일 */
+/**
+ * 가족 관계 탭 - CSS Grid 기반 (tab-table.css 공통 패턴)
+ * 4칼럼: 관계유형, 관련고객, 등록일, 삭제
+ * 공통 스타일: tab-table.css (컨테이너, 스크롤바, 헤더, 바디, 행, 호버)
+ * 탭 고유: --grid-cols, 카테고리 아이콘, 정렬 UI, 카운트 뱃지
+ */
 
 @layer components {
 
-  .relationships-card__count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 1.5rem;
-    padding: 0 var(--spacing-2);
-    /* font-size: var(--font-size-caption-1); () */
-    /* font-weight: var(--font-weight-semibold); () */
-    background-color: var(--color-layout-accent-light);
-    border-radius: 999px;
-    color: var(--color-text-secondary);
+  /* ==================== TAB CONTAINER ==================== */
+
+  .relationships-tab {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    gap: 8px;
   }
+
+  /* ==================== 상태 표시 (로딩/에러/빈) ==================== */
 
   .relationships-state {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-2);
-    padding: var(--spacing-6) var(--spacing-4);
-    /* font-size: var(--font-size-callout); () */
+    height: 100%;
+    gap: 8px;
     color: var(--color-text-secondary);
     text-align: center;
-    border-radius: 12px;
-    background-color: rgba(0, 0, 0, 0.02);
-  }
-
-  [data-theme="dark"] .relationships-state {
-    background-color: rgba(255, 255, 255, 0.04);
+    padding: 20px;
   }
 
   .relationships-state--error {
@@ -41,133 +40,157 @@
   }
 
   .relationships-retry {
-    margin-left: var(--spacing-3);
-    padding: var(--spacing-1) var(--spacing-3);
-    border-radius: 999px;
-    border: 1px solid var(--color-primary-200);
-    background-color: transparent;
-    color: var(--color-primary-600);
-    /* font-size: var(--font-size-caption-1); () */
-    cursor: pointer;
-    transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
+    margin-top: var(--spacing-2);
   }
 
-  .relationships-retry:hover {
-    background-color: var(--color-primary-100);
-  }
+  /* ==================== SCROLL CONTAINER (수평 스크롤 허용) ==================== */
 
-  .relationships-table-wrapper {
+  .relationships-table-container {
     overflow-x: auto;
-    border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
   }
 
-  [data-theme="dark"] .relationships-table-wrapper {
-    border-color: rgba(255, 255, 255, 0.08);
+  /* ==================== GRID COLUMNS ==================== */
+
+  .relationships-table-header {
+    --grid-cols:
+      minmax(100px, 1fr)      /* 관계 유형 */
+      minmax(70px, 0.8fr)     /* 관련 고객 */
+      90px                     /* 등록일 */
+      76px;                    /* 삭제 (가족 삭제/관계 삭제) */
+    min-width: 420px;
   }
 
-  .relationships-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    /* font-size: var(--font-size-footnote); () */
-    color: var(--color-text-primary);
-    min-width: 520px;
+  .relationships-row {
+    --grid-cols:
+      minmax(100px, 1fr)      /* 관계 유형 */
+      minmax(70px, 0.8fr)     /* 관련 고객 */
+      90px                     /* 등록일 */
+      76px;                    /* 삭제 */
+    min-width: 420px;
   }
 
-  .relationships-table thead {
-    background-color: rgba(0, 0, 0, 0.02);
-  }
+  /* ==================== HEADER CELLS ==================== */
 
-  [data-theme="dark"] .relationships-table thead {
-    background-color: rgba(255, 255, 255, 0.04);
-  }
-
-  .relationships-table th,
-  .relationships-table td {
-    padding: var(--spacing-3);
-    text-align: left;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    vertical-align: middle;
-  }
-
-  .relationships-table__delete-header {
+  .header-rel-type { justify-content: flex-start; }
+  .header-rel-customer { justify-content: flex-start; }
+  .header-rel-date { justify-content: center; }
+  .header-rel-delete {
+    justify-content: center;
     color: var(--color-icon-red);
-    /* font-weight: var(--font-weight-semibold); () */
+    overflow: visible;
   }
 
-  [data-theme="dark"] .relationships-table th,
-  [data-theme="dark"] .relationships-table td {
-    border-bottom-color: rgba(255, 255, 255, 0.08);
+  /* 정렬 가능한 헤더 (CustomerReviewTab 동일 패턴) */
+  .relationships-table__sortable {
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
-  .relationships-table tbody tr:hover {
-    background-color: rgba(0, 0, 0, 0.02);
+  .relationships-table__sortable:hover {
+    color: var(--color-text-primary);
   }
 
-  [data-theme="dark"] .relationships-table tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+  /* 정렬 아이콘 (기본: 연하게 / 활성: 강조색) */
+  .relationships-table__sort-icon {
+    opacity: 0.4;
+    transition: opacity 0.15s ease-out, color 0.15s ease-out;
   }
+
+  .relationships-table__sort-icon--active {
+    opacity: 1;
+    color: var(--color-accent);
+  }
+
+  /* ==================== ROW CELLS ==================== */
+
+  .row-rel-type {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .row-rel-customer {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row-rel-date {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-secondary);
+  }
+
+  .row-rel-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ==================== 관계 카테고리 아이콘 ==================== */
 
   .relationships-category {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-2);
-    /* font-weight: var(--font-weight-medium); () */
     color: var(--color-text-primary);
+    overflow: hidden;
   }
 
   .relationships-category__icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
     border-radius: 50%;
     background-color: transparent;
     color: var(--color-icon-blue);
   }
 
-  [data-theme="dark"] .relationships-category__icon {
-    background-color: transparent;
-  }
-
-  /* 이모지 아이콘 스타일 (관계별 보기와 동일) */
   .relationships-category__icon--emoji {
-    /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 18px deprecated ) */
+    font-size: 14px;
     color: inherit;
   }
 
+  .relationships-category__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 카테고리별 아이콘 색상 */
   .relationships-category--family .relationships-category__icon {
     color: var(--color-icon-red);
-    background-color: transparent;
   }
 
   .relationships-category--relative .relationships-category__icon {
     color: var(--color-icon-orange);
-    background-color: transparent;
   }
 
   .relationships-category--social .relationships-category__icon {
     color: var(--color-icon-green);
-    background-color: transparent;
   }
 
   .relationships-category--professional .relationships-category__icon {
     color: var(--color-icon-blue);
-    background-color: transparent;
   }
 
   .relationships-category--corporate .relationships-category__icon {
     color: var(--color-icon-purple);
-    background-color: transparent;
   }
 
   .relationships-category__reverse {
     margin-left: var(--spacing-1);
-    /* font-size: var(--font-size-caption-1); () */
-    color: var(--color-text-secondary);
+    font-size: 10px;
+    color: var(--color-text-tertiary);
   }
+
+  /* ==================== 관련 고객 링크 ==================== */
 
   .relationships-link {
     background: none;
@@ -180,35 +203,33 @@
     text-decoration: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .relationships-link:hover {
     color: var(--color-primary-700);
   }
 
-  .relationships-link__type {
-    margin-left: var(--spacing-1);
-    /* font-size: var(--font-size-caption-1); () */
-    color: var(--color-text-secondary);
+  .relationships-unknown {
+    color: var(--color-text-tertiary);
   }
+
+  /* ==================== 삭제 버튼 ==================== */
 
   .relationships-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 6px;
     border: none;
     background-color: transparent;
     color: var(--color-icon-red);
     cursor: pointer;
-    transition: color var(--duration-micro-quick) var(--easing-ease-out),
-      transform var(--duration-micro-quick) var(--easing-ease-out);
-  }
-
-  .relationships-action--danger {
-    color: var(--color-icon-red);
+    transition: opacity var(--duration-micro-quick) var(--easing-ease-out);
   }
 
   /* ghost 버튼 스타일 오버라이드 - 호버 시 배경 투명 유지 */
@@ -228,62 +249,14 @@
     box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.35);
   }
 
-  @media (max-width: 960px) {
-    .relationships-table {
-      min-width: 480px;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .relationships-table-wrapper {
-      border-radius: 8px;
-    }
-  }
-
-  /* 🍎 정렬 가능한 헤더 스타일 */
-  .relationships-table__sortable {
-    cursor: pointer;
-    -webkit-user-select: none;
-    user-select: none;
-    transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
-  }
-
-  .relationships-table__sortable:hover {
-    background-color: rgba(0, 0, 0, 0.04);
-  }
-
-  [data-theme="dark"] .relationships-table__sortable:hover {
-    background-color: rgba(255, 255, 255, 0.06);
-  }
+  /* ==================== 헤더 콘텐츠 & 카운트 뱃지 ==================== */
 
   .relationships-table__header-content {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: var(--spacing-1);
+    gap: 4px;
   }
 
-  .relationships-table__sort-icon {
-    font-size: 10px;
-    color: var(--color-text-tertiary);
-    opacity: 0.4;
-    transition: opacity var(--duration-micro-quick) var(--easing-ease-out),
-      color var(--duration-micro-quick) var(--easing-ease-out);
-  }
-
-  .relationships-table__sortable:hover .relationships-table__sort-icon {
-    opacity: 0.7;
-  }
-
-  .relationships-table__sort-icon--active {
-    opacity: 1;
-    color: var(--color-primary-600);
-  }
-
-  [data-theme="dark"] .relationships-table__sort-icon--active {
-    color: var(--color-primary-400);
-  }
-
-  /* 🍎 관계 개수 뱃지 */
   .relationships-table__count-badge {
     min-width: 16px;
     height: 16px;
@@ -296,12 +269,26 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-left: 4px;
+    margin-left: 2px;
   }
 
   [data-theme="dark"] .relationships-table__count-badge {
     background: var(--color-primary-900);
     color: var(--color-primary-300);
+  }
+
+  /* ==================== 반응형 ==================== */
+
+  @media (max-width: 768px) {
+    .relationships-table-header,
+    .relationships-row {
+      --grid-cols:
+        minmax(90px, 1fr)     /* 관계 유형 */
+        minmax(60px, 0.8fr)   /* 관련 고객 */
+        80px                   /* 등록일 */
+        60px;                  /* 삭제 */
+      min-width: 380px;
+    }
   }
 
 } /* end @layer components */
@@ -310,113 +297,92 @@
 /* ============================================
    🍎 CustomerFullDetailView context overrides
    RelationshipsTab가 고객 상세뷰(CFD) 내부에서 렌더될 때의 컴팩트 스타일.
-   Phase 2에서 CFD.css God Object 해체로 이전됨.
    ============================================ */
 
 @layer views {
 
-  /* --- RelationshipsTable compact overrides --- */
-  .customer-info-family-list .relationships-table-wrapper {
-    border: none;
-    border-radius: 0;
+  /* --- 탭 컨테이너 --- */
+  .customer-info-family-list .relationships-tab {
+    gap: 0;
   }
 
-  /* 관계 테이블 - A행 기준 32px 높이 적용 */
-  .customer-info-family-list .relationships-table {
-    min-width: auto;
-    font-size: var(--font-body);
+  /* --- 스크롤 컨테이너 --- */
+  .customer-info-family-list .tab-table__scroll {
+    padding-right: 0;
   }
 
-  /* 테이블 헤더 - A행 높이 32px 적용 */
-  .customer-info-family-list .relationships-table th {
+  /* --- 테이블 헤더 --- */
+  .customer-info-family-list .tab-table__header {
     height: var(--row-height);
     min-height: var(--row-height);
-    max-height: var(--row-height);
     padding: 0 10px;
     font-size: var(--font-header);
     font-weight: 600;
     color: var(--label-color);
     background: var(--color-ios-bg-secondary-light);
+    border-radius: 0;
+    margin-bottom: 0;
+    box-shadow: none;
     border-bottom: 1px solid var(--color-ios-separator-light);
-    box-sizing: border-box;
   }
 
-  html[data-theme="dark"] .customer-info-family-list .relationships-table th {
+  html[data-theme="dark"] .customer-info-family-list .tab-table__header {
     background: var(--color-ios-bg-secondary-dark);
     border-bottom-color: var(--color-ios-separator-dark);
   }
 
-  /* 테이블 데이터 셀 - A행 높이 32px 적용 */
-  .customer-info-family-list .relationships-table td {
+  /* --- 테이블 행 --- */
+  .customer-info-family-list .tab-table__row {
     height: var(--row-height);
-    min-height: var(--row-height);
-    max-height: var(--row-height);
     padding: 0 10px;
     font-size: var(--font-body);
+    border-radius: 0;
     border-bottom: 1px solid var(--color-ios-separator-light);
-    box-sizing: border-box;
   }
 
-  html[data-theme="dark"] .customer-info-family-list .relationships-table td {
+  html[data-theme="dark"] .customer-info-family-list .tab-table__row {
     border-bottom-color: var(--color-ios-separator-dark);
   }
 
-  .customer-info-family-list .relationships-table tbody tr:last-child td {
+  .customer-info-family-list .tab-table__row:hover {
+    transform: none;
+  }
+
+  .customer-info-family-list .tab-table__body {
+    gap: 0;
+  }
+
+  .customer-info-family-list .tab-table__body .tab-table__row:last-child {
     border-bottom: none;
   }
 
-  /* 관계 카테고리 아이콘 - 크기 축소 */
+  /* --- 아이콘 크기 축소 --- */
   .customer-info-family-list .relationships-category__icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     font-size: var(--font-icon);
   }
 
-  /* 삭제 버튼 - 크기 축소 */
+  /* --- 삭제 버튼 크기 축소 --- */
   .customer-info-family-list .relationships-action {
     width: 24px;
     height: 24px;
   }
 
-  /* 빈 상태 메시지 */
+  /* --- 빈 상태 메시지 --- */
   .customer-info-family-list .relationships-state {
     height: var(--row-height);
     padding: 0 10px;
     font-size: var(--font-body);
     gap: 6px;
-    background: transparent;
-    border-radius: 0;
+    flex-direction: row;
   }
 
   .customer-info-family-list .relationships-state .sf-symbol {
     font-size: var(--font-icon);
   }
 
-  /* --- Typography normalization (relationships) --- */
-  /* 🍎 고객정보 테이블 - 모든 셀 */
-  .customer-full-detail .customer-full-detail__section-content .customer-info-table td,
-  .customer-full-detail .customer-full-detail__section-content .customer-info-table__label,
-  .customer-full-detail .customer-full-detail__section-content .customer-info-table__value {
-    font-size: var(--font-body);
-    font-weight: var(--weight-normal);
-    color: var(--text-color);
-  }
-
-  /* 🍎 가족관계 테이블 - 데이터 셀 (td) */
-  .customer-full-detail .customer-full-detail__section-content .relationships-table td {
-    font-size: var(--font-body);
-    font-weight: var(--weight-normal);
-    color: var(--text-color);
-  }
-
-  /* 🍎 가족관계 테이블 - 헤더 셀 (th) - 11px, semibold */
-  .customer-full-detail .customer-full-detail__section-content .relationships-table th {
-    font-size: var(--font-header);
-    font-weight: var(--weight-semibold);
-    color: var(--label-color);
-  }
-
-  /* 🍎 관계유형 텍스트 크기 통일 */
+  /* --- Typography normalization --- */
   .customer-full-detail .customer-full-detail__section-content .relationships-category,
   .customer-full-detail .customer-full-detail__section-content .relationships-category__reverse,
   .customer-full-detail .customer-full-detail__section-content .relationships-link {
