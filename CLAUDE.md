@@ -228,6 +228,40 @@ ssh rossi@100.110.215.65 'curl -s "http://localhost:3010/api/endpoint" | python3
 cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
 ```
 
+### 9-1. 🔑 API 키 관리 (Single Source of Truth)
+**모든 외부 API 키는 `.env.shared` 한 곳에서만 정의한다!**
+
+| 항목 | 값 |
+|------|-----|
+| **파일 위치** | `~/aims/.env.shared` (서버) |
+| **Git 추적** | `.gitignore`에 등록 (커밋 금지) |
+| **사용 서비스** | aims_api, aims_rag_api, document_pipeline, annual_report_api |
+
+```bash
+# ~/aims/.env.shared (서버에만 존재)
+OPENAI_API_KEY=sk-proj-...
+```
+
+**키 변경 절차:**
+1. `~/aims/.env.shared` 수정
+2. `cd ~/aims && ./deploy_all.sh` 실행
+3. 끝! (개별 `.env` 수정 불필요)
+
+**키 로드 흐름:**
+```
+.env.shared ──► deploy_all.sh (export)
+                 ├── aims_api (Docker -e)
+                 ├── aims_rag_api (Docker -e)
+                 ├── document_pipeline (PM2 env)
+                 └── annual_report_api (nohup env)
+```
+
+**절대 금지:**
+- ❌ 개별 서비스 `.env` 파일에 `OPENAI_API_KEY` 직접 기입
+- ❌ `~/.bashrc`에 API 키 저장 (대화형 쉘 전용)
+
+**배경:** 과거에 키가 `~/.bashrc`, `document_pipeline/.env`, `annual_report_api/.env` 3곳에 분산 저장되어 키 변경 시 일부 서비스만 반영되는 장애 발생 (2026-02-19)
+
 ### 10. 🚀 전체 배포 (Full Deploy)
 **요청 방법**: `"전체 배포"` 또는 `"deploy all"`
 
