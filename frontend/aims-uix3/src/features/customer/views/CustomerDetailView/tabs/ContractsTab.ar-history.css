@@ -29,10 +29,10 @@
       var(--ar-holder-width, 50px)
       var(--ar-insured-width, 50px)
       var(--ar-date-width, 75px)
-      var(--ar-status-width, 46px)
-      var(--ar-amount-width, 61px)
-      var(--ar-period-width, 53px)
-      var(--ar-payment-width, 46px)
+      var(--ar-status-width, 53px)
+      var(--ar-amount-width, 70px)
+      var(--ar-period-width, 67px)
+      var(--ar-payment-width, 51px)
       var(--ar-premium-width, 83px)
       var(--ar-issue-date-width, 80px);
     gap: 4px;
@@ -132,10 +132,10 @@
       var(--ar-holder-width, 50px)
       var(--ar-insured-width, 50px)
       var(--ar-date-width, 75px)
-      var(--ar-status-width, 46px)
-      var(--ar-amount-width, 61px)
-      var(--ar-period-width, 53px)
-      var(--ar-payment-width, 46px)
+      var(--ar-status-width, 53px)
+      var(--ar-amount-width, 70px)
+      var(--ar-period-width, 67px)
+      var(--ar-payment-width, 51px)
       var(--ar-premium-width, 83px)
       var(--ar-issue-date-width, 80px);
     gap: 4px;

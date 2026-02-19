@@ -102,10 +102,10 @@ const AR_HISTORY_COLUMNS: ColumnConfig[] = [
   { id: 'holder', minWidth: 44, maxWidth: 77 },        // 계약자
   { id: 'insured', minWidth: 44, maxWidth: 77 },       // 피보험자
   { id: 'date', minWidth: 72, maxWidth: 88 },          // 계약일
-  { id: 'status', minWidth: 42, maxWidth: 61 },        // 계약상태
-  { id: 'amount', minWidth: 55, maxWidth: 83 },        // 가입금액
-  { id: 'period', minWidth: 50, maxWidth: 77 },        // 보험기간
-  { id: 'payment', minWidth: 42, maxWidth: 66 },       // 납입기간
+  { id: 'status', minWidth: 48, maxWidth: 70 },        // 계약상태 (+15%)
+  { id: 'amount', minWidth: 63, maxWidth: 95 },        // 가입금액 (+15%)
+  { id: 'period', minWidth: 64, maxWidth: 98 },        // 보험기간 (+15%+10%)
+  { id: 'payment', minWidth: 46, maxWidth: 73 },       // 납입기간 (+10%)
   { id: 'premium', minWidth: 66, maxWidth: 105 },      // 보험료
   { id: 'issueDate', minWidth: 72, maxWidth: 95 },     // 발행일 (AR 기준일)
 ]
@@ -774,10 +774,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       holder: 50,
       insured: 50,
       date: 75,
-      status: 46,
-      amount: 61,
-      period: 53,
-      payment: 46,
+      status: 53,
+      amount: 70,
+      period: 67,
+      payment: 51,
       premium: 83,
       issueDate: 80,  // 발행일 (YYYY.MM.DD 형식)
     }
