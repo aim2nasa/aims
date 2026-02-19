@@ -86,9 +86,12 @@ else:
 if not os.path.exists(CAPTURE_DIR):
     os.makedirs(CAPTURE_DIR)
 
-# DEV_MODE 판별: 패키징=프로덕션, 소스=개발, 환경변수로 오버라이드
-_is_frozen = getattr(sys, 'frozen', False)
-DEV_MODE = not _is_frozen
+# DEV_MODE 판별: AC_EXE_PATH 존재=패키징(프로덕션), 미존재=소스(개발)
+# 주의: sys.frozen은 PyInstaller exe 내부에서만 True.
+#        이 스크립트는 SikuliX Jython에서 실행되므로 sys.frozen은 항상 False!
+#        따라서 gui_main.py가 설정하는 AC_EXE_PATH 환경변수로 판별한다.
+_is_packaged = bool(os.environ.get("AC_EXE_PATH", ""))
+DEV_MODE = not _is_packaged
 if os.environ.get("AC_DEV_MODE", "").strip() == "1":
     DEV_MODE = True
 elif os.environ.get("AC_DEV_MODE", "").strip() == "0":
@@ -2373,16 +2376,20 @@ log("=" * 60)
 # ★ 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)
 if INTEGRATED_VIEW_ENABLED and not SCROLL_TEST:
     GENERATE_REPORTS_SCRIPT = os.path.join(SCRIPT_DIR, "generate_reports.py")
-    if os.path.exists(GENERATE_REPORTS_SCRIPT):
+    # 패키징 모드: generate_reports.py는 exe 내부에 번들되어 독립 파일로 존재하지 않음
+    # → _AC_EXE_PATH가 있으면 .py 파일 존재 여부와 무관하게 exe --run-reports 사용
+    if _AC_EXE_PATH:
+        report_cmd = [_AC_EXE_PATH, "--run-reports", CAPTURE_DIR]
+    elif os.path.exists(GENERATE_REPORTS_SCRIPT):
+        report_cmd = ["python", GENERATE_REPORTS_SCRIPT, CAPTURE_DIR]
+    else:
+        report_cmd = None
+
+    if report_cmd:
         log(u"")
         log(u"[3단계] 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)...")
+        log(u"  명령: %s" % " ".join(report_cmd))
         try:
-            if _AC_EXE_PATH:
-                # 패키징 모드: AutoClicker.exe --run-reports <output_dir>
-                report_cmd = [_AC_EXE_PATH, "--run-reports", CAPTURE_DIR]
-            else:
-                # 개발 모드: system Python으로 직접 호출
-                report_cmd = ["python", GENERATE_REPORTS_SCRIPT, CAPTURE_DIR]
             report_result = subprocess.call(report_cmd)
             if report_result == 0:
                 log(u"[3단계 완료] 리포트 생성 성공")
@@ -2392,7 +2399,7 @@ if INTEGRATED_VIEW_ENABLED and not SCROLL_TEST:
             log(u"[3단계 ERROR] 리포트 생성 중 예외: %s" % e)
     else:
         log(u"")
-        log(u"[3단계 SKIP] generate_reports.py 없음 → 리포트 생성 건너뜀")
+        log(u"[3단계 SKIP] generate_reports.py 없음 + AC_EXE_PATH 없음 → 리포트 생성 건너뜀")
 
 log("=" * 60)
 
