@@ -415,6 +415,24 @@ router.post('/customers', authenticateJWTorAPIKey, async (req, res) => {
 });
 
 /**
+ * 주소 문자열을 AIMS 주소 체계로 정규화
+ * metdo 등 외부 소스에서 "06189 서울 강남구 도곡로93길 12" 형태로 들어오는 경우
+ * → postal_code: "06189", address1: "서울 강남구 도곡로93길 12" 로 분리
+ */
+function normalizeAddress(rawAddress) {
+  if (!rawAddress || typeof rawAddress !== 'string') return null;
+  const trimmed = rawAddress.trim();
+  if (!trimmed) return null;
+
+  // 5~6자리 숫자 + 공백 + 나머지 → 우편번호 분리
+  const match = trimmed.match(/^(\d{5,6})\s+(.+)/);
+  if (match) {
+    return { postal_code: match[1], address1: match[2] };
+  }
+  return { address1: trimmed };
+}
+
+/**
  * POST /api/customers/bulk
  * 고객 일괄 등록/업데이트 (Excel Import용)
  * - 고객명 기준 upsert: 존재하면 업데이트, 없으면 생성
@@ -494,15 +512,22 @@ router.post('/customers/bulk', authenticateJWT, async (req, res) => {
           }
 
           // 주소 비교/업데이트
-          if (customer.address && customer.address !== existingCustomer.personal_info?.address?.address1) {
-            if (!hasPersonalInfo) {
-              updateFields['personal_info'] = { name: existingCustomer.personal_info?.name || customer.name, address: { address1: customer.address } };
-            } else if (existingCustomer.personal_info?.address === null || existingCustomer.personal_info?.address === undefined) {
-              updateFields['personal_info.address'] = { address1: customer.address };
-            } else {
-              updateFields['personal_info.address.address1'] = customer.address;
+          if (customer.address) {
+            const normalized = normalizeAddress(customer.address);
+            const existingAddr = existingCustomer.personal_info?.address;
+            if (normalized && normalized.address1 !== existingAddr?.address1) {
+              if (!hasPersonalInfo) {
+                updateFields['personal_info'] = { name: existingCustomer.personal_info?.name || customer.name, address: normalized };
+              } else if (existingAddr === null || existingAddr === undefined) {
+                updateFields['personal_info.address'] = normalized;
+              } else {
+                updateFields['personal_info.address.address1'] = normalized.address1;
+                if (normalized.postal_code) {
+                  updateFields['personal_info.address.postal_code'] = normalized.postal_code;
+                }
+              }
+              changes.push('주소');
             }
-            changes.push('주소');
           }
 
           // 성별 비교/업데이트 (개인 고객만)
@@ -584,7 +609,7 @@ router.post('/customers/bulk', authenticateJWT, async (req, res) => {
               email: customer.email || undefined,
               gender: normalizedGender,
               birth_date: customer.birth_date || undefined,
-              address: customer.address ? { address1: customer.address } : undefined
+              address: customer.address ? normalizeAddress(customer.address) : undefined
             },
             insurance_info: {
               customer_type: customer.customer_type || '개인'

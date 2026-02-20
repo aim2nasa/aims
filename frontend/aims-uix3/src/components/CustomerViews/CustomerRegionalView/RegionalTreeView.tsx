@@ -631,7 +631,9 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         noAddressCustomers.push(customer)
         return
       }
-      const parts = address.split(' ')
+      // 선행 우편번호(5~6자리) 제거 후 파싱 (metdo 등 외부 소스 호환)
+      const cleaned = address.replace(/^\d{5,6}\s+/, '')
+      const parts = cleaned.split(' ')
       const rawCity = parts[0] || '기타'
       const district = parts[1] || '기타구'
 
