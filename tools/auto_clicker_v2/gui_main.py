@@ -13,6 +13,7 @@ from tkinter import filedialog, messagebox
 
 from app_state import AppState
 from data_source import LiveProcessSource
+from notification_blocker import NotificationBlocker
 from path_helper import get_app_dir, get_version_file, get_output_dir, is_frozen
 
 _BASE_DIR = get_app_dir()
@@ -151,6 +152,10 @@ class AutoClickerApp(ctk.CTk):
             raise SystemExit(0)
 
         super().__init__()
+
+        # ── 알림 차단: 이전 크래시로 남은 차단 상태 복원 ──
+        NotificationBlocker.recover_if_needed()
+        self._notif_blocker = NotificationBlocker()
 
         self.title(f"AutoClicker v{_VERSION}")
         self._target_monitor = 0  # 0=자동, 1=모니터1, 2=모니터2
@@ -649,6 +654,10 @@ class AutoClickerApp(ctk.CTk):
             )
             return
 
+        # ── 알림 차단 시작 (SikuliX 실행 전) ──
+        self._notif_blocker.update_ac_hwnd(self.winfo_id())
+        self._notif_blocker.block()
+
         chosung = self._get_chosung_arg()
         self._source = LiveProcessSource(
             chosung=chosung, save_dir=self._save_dir,
@@ -689,6 +698,8 @@ class AutoClickerApp(ctk.CTk):
         self._debug_log("_stop", f"paused={self._source._paused if self._source else 'N/A'}")
         if self._source:
             self._source.stop()
+        # ── 알림 차단 해제 (원래 설정 복원) ──
+        self._notif_blocker.restore()
         self._run_btn.configure(
             text="실행", fg_color="#2d7d46", hover_color="#3a9957",
             state="normal",
@@ -704,7 +715,9 @@ class AutoClickerApp(ctk.CTk):
             self._apply_titlebar_style()
 
     def _on_close(self):
-        """앱 종료: 창 위치/모니터 저장 → SikuliX 프로세스 정리 → 앱 닫기"""
+        """앱 종료: 알림 복원 → 창 위치/모니터 저장 → SikuliX 프로세스 정리 → 앱 닫기"""
+        # ── 알림 차단 해제 (원래 설정 복원) ──
+        self._notif_blocker.restore()
         try:
             self._settings["window_x"] = self.winfo_x()
             self._settings["window_y"] = self.winfo_y()
@@ -783,6 +796,9 @@ class AutoClickerApp(ctk.CTk):
         )
 
         if source_done:
+            # ── 알림 차단 해제 (AC 실행 완료 → 원래 설정 복원) ──
+            self._notif_blocker.restore()
+
             self._debug_log("_poll_update SOURCE_DONE",
                             f"is_complete={self._state.is_complete}, "
                             f"is_running={self._source.is_running() if self._source else 'N/A'}, "
