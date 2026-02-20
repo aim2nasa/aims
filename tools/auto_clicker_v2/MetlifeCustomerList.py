@@ -97,10 +97,24 @@ if os.environ.get("AC_DEV_MODE", "").strip() == "1":
 elif os.environ.get("AC_DEV_MODE", "").strip() == "0":
     DEV_MODE = False
 
-# DEV_DIR: 디버그 파일 저장 경로 (항상 생성, 프로덕션이면 완료 후 삭제)
+# DEV_DIR: 디버그 파일 저장 경로 (항상 생성, 프로덕션이면 종료 시 삭제)
 DEV_DIR = os.path.join(CAPTURE_DIR, "dev")
 if not os.path.exists(DEV_DIR):
     os.makedirs(DEV_DIR)
+
+# atexit: 프로덕션 모드에서 종료 시 dev 폴더 정리
+# FATAL 크래시 (raise SystemExit) 포함 모든 종료 경로에서 실행됨
+import atexit as _atexit
+def _cleanup_on_exit():
+    _close_log_file()  # 중복 호출 안전 (핸들 None 체크)
+    if not DEV_MODE:
+        import shutil as _sh
+        if os.path.exists(DEV_DIR):
+            try:
+                _sh.rmtree(DEV_DIR)
+            except:
+                pass
+_atexit.register(_cleanup_on_exit)
 
 # 로그 파일 설정 (중복 방지: 날짜시간 + 순번)
 import datetime
@@ -629,11 +643,11 @@ def print_customer_table(customers, chosung_name, page_num):
     for i, c in enumerate(customers):
         # Jython 유니코드 키 호환
         name = c.get(u"고객명", "") or ""
-        gubun = c.get(u"구분", "") or ""
-        birth = c.get(u"생년월일", "") or ""
-        age = c.get(u"보험나이", "") or ""
-        gender = c.get(u"성별", "") or ""
-        phone = c.get(u"휴대폰", "") or ""
+        gubun = c.get(u"구분", "") or "-"
+        birth = c.get(u"생년월일", "") or "-"
+        age = c.get(u"보험나이", "") or "-"
+        gender = c.get(u"성별", "") or "-"
+        phone = c.get(u"휴대폰", "") or "-"
         log(u"  [OCR]  %2d  %-8s  %-4s  %-10s  %4s  %-4s  %s" % (i+1, name[:8], gubun[:4], birth[:10], age[:4], gender[:4], phone[:14]))
 
     log(u"  [OCR] ================================================")
@@ -2445,15 +2459,4 @@ if INTEGRATED_VIEW_ENABLED and not SCROLL_TEST:
 
 log("=" * 60)
 
-# 프로덕션 모드: dev 폴더 삭제 (깔끔한 출력)
-if not DEV_MODE:
-    _close_log_file()  # 로그 파일 핸들 먼저 닫기
-    import shutil as _shutil
-    if os.path.exists(DEV_DIR):
-        try:
-            _shutil.rmtree(DEV_DIR)
-        except:
-            pass
-else:
-    # 로그 파일 닫기
-    _close_log_file()
+# dev 폴더 정리 및 로그 닫기는 atexit 핸들러(_cleanup_on_exit)에서 처리

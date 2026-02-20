@@ -44,7 +44,7 @@ _PATTERNS = {
     "ocr_response": re.compile(r"^\s+\[OCR\] 3/4\. API 응답 \((.+?)초\)$"),
     "ocr_result": re.compile(r"^\s+\[OCR\] 4/4\. (\d+)명 인식 완료$"),
     "ocr_table_row": re.compile(
-        r"^\s+\[OCR\]\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S*)\s+(\S*)\s+(\S*)\s+(\S+)$"
+        r"^\s+\[OCR\]\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)$"
     ),
 
     # 고객통합뷰 (customer_done보다 먼저 매칭되어야 함)
@@ -173,11 +173,11 @@ def _extract_data(event_type: str, m: re.Match) -> dict:
         return {
             "no": int(groups[0]),
             "name": groups[1],
-            "type": groups[2],
-            "birth": groups[3],
-            "age": groups[4],
-            "gender": groups[5],
-            "phone": groups[6],
+            "type": groups[2] if groups[2] != "-" else "",
+            "birth": groups[3] if groups[3] != "-" else "",
+            "age": groups[4] if groups[4] != "-" else "",
+            "gender": groups[5] if groups[5] != "-" else "",
+            "phone": groups[6] if groups[6] != "-" else "",
         }
     elif event_type == "customer_process_start":
         return {"count": int(groups[0]), "dup_skip": int(groups[1])}
