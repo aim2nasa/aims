@@ -22,13 +22,7 @@ import argparse
 from pathlib import Path
 
 import httpx
-
-# Windows 콘솔 인코딩 문제 방지
-if sys.stdout and hasattr(sys.stdout, 'fileno'):
-    try:
-        sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)
-    except Exception:
-        pass
+from html.parser import HTMLParser
 
 # ──────────────────────────────────────────────────────────
 # Upstage API 설정
@@ -260,6 +254,52 @@ def clean_address_section(raw: str) -> str:
 
 
 # ──────────────────────────────────────────────────────────
+# HTML → 클린 텍스트 변환
+# ──────────────────────────────────────────────────────────
+
+def extract_text_from_html(html: str) -> str:
+    """HTML OCR 출력에서 클린 텍스트 추출.
+
+    Upstage OCR는 nexacro 폼을 3열 테이블로 해석하여 TEXT 출력에서
+    동일 내용을 3번 반복(|로 구분)하는 문제가 있음.
+    HTML 출력은 <td colspan="3">로 정확하게 표현하므로
+    셀 텍스트가 1번만 나타남.
+
+    이 함수는 HTML에서 figure/figcaption(이미지 설명)을 제외한
+    모든 텍스트를 추출하여 기존 텍스트 파싱 로직과 호환되는
+    클린 텍스트를 생성합니다.
+    """
+    class _TextExtractor(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.parts = []
+            self._figure_depth = 0
+
+        def handle_starttag(self, tag, attrs):
+            if tag == 'figure':
+                self._figure_depth += 1
+            if tag in ('tr', 'br'):
+                self.parts.append('\n')
+
+        def handle_endtag(self, tag):
+            if tag == 'figure':
+                self._figure_depth -= 1
+            if tag in ('p', 'header', 'footer', 'td', 'th', 'table'):
+                self.parts.append('\n')
+
+        def handle_data(self, data):
+            if self._figure_depth == 0:
+                self.parts.append(data)
+
+    extractor = _TextExtractor()
+    extractor.feed(html)
+    text = ''.join(extractor.parts)
+    # 연속 빈 줄 정리
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
+# ──────────────────────────────────────────────────────────
 # 고객 유형 감지
 # ──────────────────────────────────────────────────────────
 
@@ -351,7 +391,7 @@ def parse_personal(text: str) -> dict:
     idx = text.find("직장주소")
     if idx >= 0:
         section = find_between(text, "직장주소", [
-            "직장명", "세부정보"
+            "팩스번호", "직장명", "부서명", "세부정보"
         ], max_chars=400)
         addr = clean_address_section(section)
         if addr:
@@ -445,11 +485,21 @@ def parse_corporate(text: str) -> dict:
 # ──────────────────────────────────────────────────────────
 
 def parse_customer_info(ocr_result: dict) -> dict:
-    """OCR 결과에서 고객 정보 파싱"""
+    """OCR 결과에서 고객 정보 파싱.
+
+    HTML 출력을 우선 사용하여 테이블 3열 반복/파이프 문제를 회피합니다.
+    HTML이 없으면 TEXT 출력으로 폴백합니다.
+    """
     text = ""
     content = ocr_result.get("content", {})
     if isinstance(content, dict):
-        text = content.get("text", "")
+        # HTML 출력 우선 사용 (테이블 반복 문제 없음)
+        html = content.get("html", "")
+        if html:
+            text = extract_text_from_html(html)
+        # HTML이 없거나 추출 실패 시 TEXT 폴백
+        if not text:
+            text = content.get("text", "")
     if not text:
         text = ocr_result.get("text", "")
 
@@ -535,6 +585,13 @@ def pretty_print(result: dict, filename: str):
 # ──────────────────────────────────────────────────────────
 
 def main():
+    # Windows 콘솔 인코딩 문제 방지 (CLI 실행 시에만)
+    if sys.stdout and hasattr(sys.stdout, 'fileno'):
+        try:
+            sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)
+        except Exception:
+            pass
+
     argp = argparse.ArgumentParser(
         description="MetDO 고객정보 OCR 파싱 도구",
         formatter_class=argparse.RawDescriptionHelpFormatter,
