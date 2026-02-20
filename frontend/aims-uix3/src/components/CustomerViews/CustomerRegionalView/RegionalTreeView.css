@@ -678,11 +678,10 @@
   }
 
   .regional-tree-content {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .regional-map-container {
-    order: -1;
     flex: none;
     height: 35vh;
     min-height: 200px;
