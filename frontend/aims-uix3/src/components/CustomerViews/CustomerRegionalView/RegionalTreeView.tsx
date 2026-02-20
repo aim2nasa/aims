@@ -1259,12 +1259,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       />
 
       <div className="regional-tree-content">
-        {/* 트리 */}
-        <div className="regional-tree-container">
-          {treeData.map(node => renderTreeNode(node))}
-        </div>
-
-        {/* 지도 */}
+        {/* 지도 (모바일: DOM 순서대로 위에 표시, 데스크톱: CSS order로 오른쪽 배치) */}
         <div className="regional-map-container">
           <NaverMap
             customers={initialFilteredCustomers}
@@ -1286,6 +1281,11 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
             height="100%"
             onGeocodingFailedCustomersChange={setGeocodingFailedCustomers}
           />
+        </div>
+
+        {/* 트리 (데스크톱: CSS order로 왼쪽 배치) */}
+        <div className="regional-tree-container">
+          {treeData.map(node => renderTreeNode(node))}
         </div>
       </div>
       {/* 주소 입력 모달 */}

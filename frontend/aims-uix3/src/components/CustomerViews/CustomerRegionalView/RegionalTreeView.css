@@ -152,6 +152,7 @@
   }
 
   .regional-tree-container {
+    order: -1; /* DOM: 지도→트리, 데스크톱 시각: 트리(왼)→지도(오) */
     flex: 0 0 300px;
     overflow-y: auto;
     border-right: 1px solid var(--color-border);
@@ -678,7 +679,7 @@
   }
 
   .regional-tree-content {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 
   .regional-map-container {
