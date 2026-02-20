@@ -164,12 +164,12 @@ def extract_phone(text: str, label: str) -> str:
 
 
 def normalize_email(raw: str) -> str:
-    """이메일 정규화: bkkangS23 @ naver.com → bkkangS23@naver.com"""
+    """이메일 정규화: bkkangS23 @ naver.com → bkkangS23@naver.com → 소문자 변환"""
     # 1차: 이미 @ 포함된 경우
     cleaned = raw.replace(" ", "")
     match = re.search(r'[\w.%+\-]+@[\w.\-]+\.\w{2,}', cleaned)
     if match:
-        return match.group()
+        return match.group().lower()
 
     # 2차: OCR이 @ 기호를 누락한 경우 (예: "bkkang523 naver.com")
     # "로컬파트 도메인.tld" 패턴을 찾아서 @ 삽입
@@ -177,7 +177,7 @@ def normalize_email(raw: str) -> str:
     if match:
         local_part = match.group(1)
         domain = match.group(2)
-        return f"{local_part}@{domain}"
+        return f"{local_part}@{domain}".lower()
 
     return None
 

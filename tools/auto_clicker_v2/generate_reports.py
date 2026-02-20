@@ -15,6 +15,7 @@ Examples:
     python generate_reports.py D:\\aims\\tools\\auto_clicker_v2\\output\\ㄴ,ㄷ,ㅁ
 """
 import os
+import re
 import sys
 import json
 import glob
@@ -42,6 +43,7 @@ REPORT_COLUMNS = [
     "주소", "개인/법인", "사업자번호",
     "Annual Report", "AR 파일명",
     "변액리포트", "CRS 파일명",
+    "비고",
 ]
 
 # 스타일 상수
@@ -146,7 +148,8 @@ def classify_customers(results):
                 "고객명": name,
                 "이메일": detail.get("email", "") or "",
                 "대표전화": detail.get("work_phone", "") or detail.get("mobile_phone", "") or "",
-                "주소": detail.get("business_address", "") or detail.get("hq_address", "") or "",
+                # 법인 주소: 본점소재지(1순위) → 사업장소재지(2순위)
+                "주소": detail.get("hq_address", "") or detail.get("business_address", "") or "",
                 "사업자번호": detail.get("business_number", "") or "",
                 "대표자명": "",  # metdo_reader에서 추출 불가
             })
@@ -296,6 +299,103 @@ def format_crs_display(var_info):
     return "%d (%d건 이미 다운로드됨)" % (total, dup), filenames
 
 
+def generate_remarks(result, name_counts, name_seq_num=0):
+    """고객 결과에 대한 비고(remarks) 생성
+
+    검사 항목:
+      1. 동명이인/중복 계약 (같은 이름 여러 행 → 순번 표시)
+      2. 데이터 소스 차이 (detail vs fallback에서 값이 온 경우)
+      3. 주소 품질 경고 (파이프, 테이블 데이터 오염)
+      4. AR/CRS 특이사항 — 비고 칼럼 단독으로도 주의사항 파악 가능하도록
+         AR/CRS 칼럼의 "이미 다운로드됨" 정보를 의도적으로 중복 표시
+      5. customer_detail OCR 실패
+
+    Args:
+        result: 고객 한 명의 결과 dict
+        name_counts: {고객명: 출현횟수} dict (동명이인 감지용)
+        name_seq_num: 같은 이름의 몇 번째인지 (1-based, 호출부에서 계산)
+
+    Returns:
+        str: 비고 텍스트 (개행 구분)
+    """
+    notes = []
+    detail_raw = result.get("customer_detail") or {}
+    fallback_raw = result.get("customer_detail_fallback") or {}
+    name = result.get("customer_name", "") or ""
+
+    # 1. 동명이인/중복 계약 (순번 표시)
+    if name and name_counts.get(name, 0) > 1:
+        total = name_counts[name]
+        notes.append("동일인 %d/%d" % (name_seq_num, total))
+
+    # 2. customer_detail OCR 실패
+    if not detail_raw:
+        notes.append("상세페이지 OCR 실패")
+
+    # 3. 데이터 소스 차이 — 의미 있는 필드만 비교
+    source_diffs = []
+    # 휴대폰: fallback(테이블)에 없고 detail(상세페이지)에만 있는 경우
+    fb_phone = fallback_raw.get("mobile_phone", "") or ""
+    dt_phone = detail_raw.get("mobile_phone", "") or ""
+    if dt_phone and not fb_phone:
+        source_diffs.append("휴대폰: 상세페이지에서 추출")
+    elif fb_phone and dt_phone and fb_phone != dt_phone:
+        source_diffs.append("휴대폰: 목록=%s, 상세=%s" % (fb_phone, dt_phone))
+
+    # 이메일: detail에만 있고 fallback에 없는 경우 (보통은 fallback에서 옴)
+    fb_email = fallback_raw.get("email", "") or ""
+    dt_email = detail_raw.get("email", "") or ""
+    if dt_email and not fb_email:
+        source_diffs.append("이메일: 상세페이지에서 추출")
+
+    # 성별: fallback이 "미사용"인데 detail이 있는 경우
+    fb_gender = fallback_raw.get("gender", "") or ""
+    dt_gender = detail_raw.get("gender", "") or ""
+    if fb_gender == "미사용" and dt_gender and dt_gender != "미사용":
+        source_diffs.append("성별: 상세페이지에서 추출 (%s)" % dt_gender)
+
+    if source_diffs:
+        notes.extend(source_diffs)
+
+    # 4. 주소 품질 경고 + 주소 소스 추적
+    merged = get_customer_detail(result)
+    ctype = merged.get("customer_type", "개인")
+    if ctype == "법인":
+        # 법인: 본점소재지(1순위) → 사업장소재지(2순위)
+        address = merged.get("hq_address", "") or merged.get("business_address", "")
+        if not merged.get("hq_address") and merged.get("business_address"):
+            notes.append("주소: 사업장소재지 사용 (본점소재지 없음)")
+    else:
+        # 개인: 자택주소(1순위) → 직장주소(2순위)
+        address = merged.get("home_address", "") or merged.get("work_address", "")
+        if not merged.get("home_address") and merged.get("work_address"):
+            notes.append("주소: 직장주소 사용 (자택주소 없음)")
+    if address:
+        if "|" in address:
+            notes.append("주소: 파이프(|) 문자 포함 (OCR 반복 인식 가능성)")
+        if len(address) > 150:
+            notes.append("주소: 비정상 길이 (%d자)" % len(address))
+        # 테이블 데이터 오염 감지 (고객 목록의 이름/전화번호가 주소에 포함)
+        if re.search(r'\d{3}-\d{3,4}-\d{4}', address):
+            notes.append("주소: 전화번호 패턴 감지 (테이블 데이터 오염 가능)")
+
+    # 5. AR 특이사항
+    ar_info = result.get("annual_report", {})
+    if ar_info:
+        ar_display, _ = format_ar_display(ar_info)
+        if ar_display == "이미 다운로드됨":
+            notes.append("AR: 이미 다운로드됨")
+
+    # 6. CRS 특이사항
+    var_info = result.get("variable_insurance", {})
+    if var_info:
+        crs_display, _ = format_crs_display(var_info)
+        if "이미 다운로드됨" in crs_display:
+            notes.append("CRS: %s" % crs_display)
+
+    return "\n".join(notes)
+
+
 def generate_execution_report(results, output_path):
     """고객별 실행결과 엑셀 생성 (통합 단일 시트)"""
     wb = Workbook()
@@ -304,15 +404,34 @@ def generate_execution_report(results, output_path):
 
     apply_header_style(ws, REPORT_COLUMNS)
 
+    # 동명이인 감지용 이름 카운트
+    name_counts = {}
+    for result in results:
+        n = result.get("customer_name", "") or ""
+        if n:
+            name_counts[n] = name_counts.get(n, 0) + 1
+
+    # 동명이인 순번 추적 (이름별 등장 순서)
+    name_seq = {}
+
     all_row_data = []
     for row_idx, result in enumerate(results, 2):
         detail = get_customer_detail(result)
         name = result.get("customer_name", "") or detail.get("name", "")
         ctype = detail.get("customer_type", "개인")
 
-        # 주소: metdo_reader에서만 가져옴 → 없으면 "-"
-        address = (detail.get("home_address", "") or detail.get("business_address", "")
-                   or detail.get("hq_address", "") or detail.get("work_address", ""))
+        # 동명이인 순번 계산
+        if name:
+            name_seq[name] = name_seq.get(name, 0) + 1
+        seq_num = name_seq.get(name, 1)
+
+        # 주소: 고객 유형별 우선순위
+        if ctype == "법인":
+            # 법인: 본점소재지(1순위) → 사업장소재지(2순위)
+            address = detail.get("hq_address", "") or detail.get("business_address", "")
+        else:
+            # 개인: 자택주소(1순위) → 직장주소(2순위)
+            address = detail.get("home_address", "") or detail.get("work_address", "")
 
         # 사업자번호: 법인만 해당, 개인은 N/A
         if ctype == "법인":
@@ -325,6 +444,9 @@ def generate_execution_report(results, output_path):
         var_info = result.get("variable_insurance", {})
         ar_display, ar_files = format_ar_display(ar_info)
         crs_display, crs_files = format_crs_display(var_info)
+
+        # 비고 생성
+        remarks = generate_remarks(result, name_counts, seq_num)
 
         row_data = {
             "고객명": name,
@@ -341,6 +463,7 @@ def generate_execution_report(results, output_path):
             "AR 파일명": ar_files,
             "변액리포트": crs_display,
             "CRS 파일명": crs_files,
+            "비고": remarks,
         }
         all_row_data.append(row_data)
 
@@ -356,6 +479,7 @@ def generate_execution_report(results, output_path):
     # 파일명 컬럼 너비 수동 보정
     ws.column_dimensions["L"].width = 40  # AR 파일명 (12번째)
     ws.column_dimensions["N"].width = 40  # CRS 파일명 (14번째)
+    ws.column_dimensions["O"].width = 50  # 비고 (15번째)
 
     wb.save(output_path)
     print("  [생성] %s (%d명)" % (os.path.basename(output_path), len(results)))
