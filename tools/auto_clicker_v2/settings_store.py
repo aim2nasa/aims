@@ -61,6 +61,13 @@ def load_settings() -> dict:
         except FileNotFoundError:
             pass
 
+        # dev_mode (개발자 모드)
+        try:
+            val, _ = winreg.QueryValueEx(key, "DevMode")
+            result["dev_mode"] = bool(val)
+        except FileNotFoundError:
+            pass
+
     except FileNotFoundError:
         pass
     finally:
@@ -98,5 +105,8 @@ def save_settings(settings: dict, save_dir: str = "") -> None:
 
         # monitor
         winreg.SetValueEx(key, "Monitor", 0, winreg.REG_DWORD, settings.get("monitor", 0))
+
+        # dev_mode (개발자 모드)
+        winreg.SetValueEx(key, "DevMode", 0, winreg.REG_DWORD, 1 if settings.get("dev_mode") else 0)
     finally:
         winreg.CloseKey(key)

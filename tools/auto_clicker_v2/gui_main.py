@@ -64,6 +64,9 @@ NORMAL_HEIGHT = 440
 NORMAL_X = 1376
 NORMAL_Y = 454
 
+# 개발자 모드 PIN (Ctrl+Shift+D → PIN 입력 2단계)
+_DEV_PIN = "3007"
+
 _CHOSUNGS = ["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ","기타"]
 
 _CHOSUNGS_FULL = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"]
@@ -169,6 +172,7 @@ class AutoClickerApp(ctk.CTk):
         self._source: LiveProcessSource | None = None
         self._update_interval = 100
         self._is_compact = False
+        self._dev_mode = False
         self._cli_args = cli_args
         self._settings = {
             'chosungs': set(_CHOSUNGS),   # 기본: 전체 선택
@@ -196,6 +200,12 @@ class AutoClickerApp(ctk.CTk):
         if _saved and 'monitor' in _saved:
             self._target_monitor = _saved['monitor']
 
+        # 개발자 모드 복원 (GUI 설정 > 환경변수 > 자동판별)
+        if _saved and _saved.get('dev_mode'):
+            self._dev_mode = True
+            os.environ["AC_DEV_MODE"] = "1"
+            self._update_title()
+
         # CLI 인수로 설정 오버라이드 (최우선)
         if cli_args:
             if cli_args.start_from:
@@ -220,6 +230,8 @@ class AutoClickerApp(ctk.CTk):
         self.attributes("-topmost", True)
 
         self._build_ui()
+        # 개발자 모드 단축키 (Ctrl+Shift+D → PIN 입력 2단계)
+        self.bind("<Control-Shift-D>", self._toggle_dev_mode)
         # 앱 닫기(X) = 실행 중인 SikuliX 프로세스 강제 종료 후 종료
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         # 설정 요약 라벨 갱신 (레지스트리/CLI 모두 반영)
@@ -247,6 +259,34 @@ class AutoClickerApp(ctk.CTk):
                 f.write(line)
         except Exception:
             pass
+
+    # ===== 개발자 모드 =====
+
+    def _update_title(self):
+        """타이틀바 텍스트 갱신 (dev 모드 시 [DEV] suffix)"""
+        suffix = " [DEV]" if self._dev_mode else ""
+        self.title(f"AutoClicker v{_VERSION}{suffix}")
+
+    def _toggle_dev_mode(self, event=None):
+        """개발자 모드 토글 (Ctrl+Shift+D → PIN 입력 2단계)"""
+        # 실행 중에는 토글 불가
+        if self._source and self._source.is_running():
+            return
+
+        # 2단계: PIN 입력
+        dlg = ctk.CTkInputDialog(
+            title="인증",
+            text="코드를 입력하세요:",
+        )
+        pin = dlg.get_input()
+        if pin != _DEV_PIN:
+            return
+
+        self._dev_mode = not self._dev_mode
+        os.environ["AC_DEV_MODE"] = "1" if self._dev_mode else "0"
+        self._settings["dev_mode"] = self._dev_mode
+        self._update_title()
+        save_settings(self._settings, self._save_dir)
 
     # ===== 해상도 감지 =====
 
@@ -616,7 +656,7 @@ class AutoClickerApp(ctk.CTk):
         # 일반 모드: 타이틀바 복원 (topmost는 항상 유지)
         if not self._is_compact:
             self.overrideredirect(False)
-            self.title(f"AutoClicker v{_VERSION}")
+            self._update_title()
             self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
             self._apply_titlebar_style()
 
@@ -740,7 +780,7 @@ class AutoClickerApp(ctk.CTk):
             # 완료 → 일반 모드: 타이틀바 복원 (topmost는 항상 유지)
             if not self._is_compact:
                 self.overrideredirect(False)
-                self.title(f"AutoClicker v{_VERSION}")
+                self._update_title()
                 self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
                 self._apply_titlebar_style()
         else:
@@ -784,7 +824,7 @@ class AutoClickerApp(ctk.CTk):
 
         self._compact_panel.pack_forget()
         self.overrideredirect(False)
-        self.title(f"AutoClicker v{_VERSION}")
+        self._update_title()
         self._apply_titlebar_style()
 
         # topmost는 항상 유지
