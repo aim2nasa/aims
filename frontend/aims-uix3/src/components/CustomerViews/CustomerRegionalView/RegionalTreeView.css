@@ -612,135 +612,119 @@
     white-space: nowrap;
   }
 
-  /* =============================================
-     📱 모바일 공통: 통계바 1줄 강제
-     세로(360x740) + 가로(740x360) 모두 적용
-     - nowrap으로 1줄 강제
-     - @container(max-width:900px) flex-basis:100% 무효화
-     - 전체보기 버튼 숨김
-     ============================================= */
-  @media (max-width: 480px), ((max-height: 430px) and (orientation: landscape)) {
-
-    .regional-tree-stats {
-      flex-wrap: nowrap;
-      padding: 3px var(--spacing-sm);
-      gap: 6px;
-    }
-
-    /* @container(max-width:900px)의 flex-basis:100% 오버라이드 */
-    .stat-item:first-child {
-      flex-basis: auto;
-    }
-
-    /* 전체보기 버튼, 라벨("전체 고객", "지역", "구/군") 숨김 */
-    .regional-tree-stats .tree-actions { display: none; }
-    .regional-tree-stats .stat-label { display: none; }
-
-  }
-
-  /* =============================================
-     📱 세로 모드 전용 (480px 이하)
-     통계바 초컴팩트 + 지도/트리 세로 배치
-     ============================================= */
-  @media (max-width: 480px) {
-
-    /* --- 통계바: 초컴팩트 (공간 부족) ---
-       [744명] [전체 지역 ▼] [전체 구/군 ▼] */
-    .stat-divider { display: none; }
-    .regional-tree-stats .stat-icon { display: none; }
-    .regional-tree-stats .stat-label { display: none; }
-    .stat-checkbox { display: none; }
-    .type-filter-separator { display: none; }
-    .stat-filter-group .type-filter-button:not(:first-child) { display: none; }
-
-    .type-filter-button {
-      min-height: 26px;
-      padding: 3px 8px;
-      font-size: 11px;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .regional-tree-stats > .stat-item:nth-child(3),
-    .regional-tree-stats > .stat-item:nth-child(5) {
-      flex: 1 1 0;
-      min-width: 0;
-    }
-
-    .stat-dropdown-group {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .regional-tree-stats .ios-dropdown {
-      width: 100%;
-    }
-
-    .regional-tree-stats .ios-dropdown__trigger {
-      min-height: 26px;
-      padding: 3px 8px;
-      font-size: 11px;
-    }
-
-    /* --- 메인 콘텐츠: 세로 스택 --- */
-    .regional-tree-content {
-      flex-direction: column;
-    }
-
-    /* --- 지도: 상단 고정 높이 --- */
-    .regional-map-container {
-      order: -1;           /* 지도를 트리 위로 */
-      flex: none;
-      height: 35vh;
-      min-height: 200px;
-      max-height: 280px;
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    /* --- 트리: 하단 스크롤 영역 --- */
-    .regional-tree-container {
-      flex: 1;
-      border-right: none;  /* 가로 구분선 제거 */
-      padding: var(--spacing-xs);
-    }
-
-
-    /* --- 트리 노드: 터치 타겟 확대 --- */
-    .tree-node {
-      min-height: 40px;
-      padding: var(--spacing-sm) var(--spacing-sm);
-      gap: var(--spacing-sm);
-    }
-
-    .tree-node-label {
-      font-size: var(--font-size-caption-1);
-    }
-
-    /* 계층 들여쓰기 축소 (공간 절약) */
-    .tree-node-children,
-    .tree-node-customers {
-      padding-left: var(--spacing-lg);
-      margin-left: var(--spacing-xs);
-    }
-
-    /* --- 고객 아이템: 터치 타겟 확대 --- */
-    .tree-customer-item {
-      min-height: 40px;
-      padding: var(--spacing-sm);
-      padding-left: 24px;
-      gap: var(--spacing-sm);
-    }
-
-    .tree-customer-name {
-      font-size: var(--font-size-caption-1);
-    }
-
-    /* --- 빈 상태 / 로딩: 패딩 축소 --- */
-    .regional-tree-loading,
-    .regional-tree-empty {
-      padding: var(--spacing-lg);
-    }
-  }
-
 } /* end @layer components */
+
+/* =============================================
+   📱 모바일 공통: 통계바 1줄 강제
+   @layer 밖에 배치 (Samsung Internet 호환)
+   ============================================= */
+@media (max-width: 480px), ((max-height: 430px) and (orientation: landscape)) {
+
+  .regional-tree-stats {
+    flex-wrap: nowrap;
+    padding: 3px 8px;
+    gap: 6px;
+  }
+
+  .stat-item:first-child {
+    flex-basis: auto;
+  }
+
+  .regional-tree-stats .tree-actions { display: none; }
+  .regional-tree-stats .stat-label { display: none; }
+
+}
+
+/* =============================================
+   📱 세로 모드 전용 (480px 이하)
+   ============================================= */
+@media (max-width: 480px) {
+
+  .stat-divider { display: none; }
+  .regional-tree-stats .stat-icon { display: none; }
+  .regional-tree-stats .stat-label { display: none; }
+  .stat-checkbox { display: none; }
+  .type-filter-separator { display: none; }
+  .stat-filter-group .type-filter-button:not(:first-child) { display: none; }
+
+  .type-filter-button {
+    min-height: 26px;
+    padding: 3px 8px;
+    font-size: 11px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .regional-tree-stats > .stat-item:nth-child(3),
+  .regional-tree-stats > .stat-item:nth-child(5) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .stat-dropdown-group {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .regional-tree-stats .ios-dropdown {
+    width: 100%;
+  }
+
+  .regional-tree-stats .ios-dropdown__trigger {
+    min-height: 26px;
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .regional-tree-content {
+    flex-direction: column;
+  }
+
+  .regional-map-container {
+    order: -1;
+    flex: none;
+    height: 35vh;
+    min-height: 200px;
+    max-height: 280px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .regional-tree-container {
+    flex: 1;
+    border-right: none;
+    padding: 4px;
+  }
+
+  .tree-node {
+    min-height: 40px;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .tree-node-label {
+    font-size: 12px;
+  }
+
+  .tree-node-children,
+  .tree-node-customers {
+    padding-left: 16px;
+    margin-left: 4px;
+  }
+
+  .tree-customer-item {
+    min-height: 40px;
+    padding: 8px;
+    padding-left: 24px;
+    gap: 8px;
+  }
+
+  .tree-customer-name {
+    font-size: 12px;
+  }
+
+  .regional-tree-loading,
+  .regional-tree-empty {
+    padding: 16px;
+  }
+}
