@@ -21,7 +21,7 @@ import os
 import sys
 import time
 import shutil
-from java.awt import Robot, Color, BasicStroke, Font
+from java.awt import Robot, Color, BasicStroke, Font, MouseInfo
 from java.awt.event import KeyEvent
 from java.awt.image import BufferedImage
 from javax.imageio import ImageIO
@@ -52,31 +52,189 @@ try:
 except NameError:
     pass  # 외부 import 시 SikuliX 전역 객체가 없을 수 있음
 
-# ===== SikuliX 함수 래핑: 모든 UI 조작 전에 자동으로 일시정지 체크 =====
-_PAUSE_SIGNAL_PATH = os.path.join(os.environ.get("AC_HOME", r"D:\aims\tools\auto_clicker_v2"), ".pause_signal")
-_sikuli_click = click
-_sikuli_type = type    # SikuliX 원본 type(키보드 입력) 보존
-_sikuli_paste = paste  # SikuliX 원본 paste 보존
+# ===== 일시정지 신호 파일 체크 (GUI ↔ SikuliX IPC) =====
+_AC_HOME = os.environ.get("AC_HOME", r"D:\aims\tools\auto_clicker_v2")
+_PAUSE_SIGNAL_PATH = os.path.join(_AC_HOME, ".pause_signal")
 
-def _wait_if_paused():
-    """공통 일시정지 대기 루프"""
+# ===== SikuliX 원본 함수 보존 (래핑 전) =====
+_sikuli_click = click
+_sikuli_type = type
+_sikuli_paste = paste
+_sikuli_find = find
+_sikuli_exists = exists
+_sikuli_wheel = wheel
+_sikuli_findAll = findAll
+_sikuli_sleep = sleep
+
+# ===== 멀티 모니터: 메인 스크립트에서 감지한 화면 재사용 =====
+_active_screen_id = int(os.environ.get("AC_SCREEN", "0"))
+
+def _scr():
+    """활성 화면(Screen) 반환."""
+    return Screen(_active_screen_id)
+
+# ===== 일시정지 상태 플래그 =====
+_in_recovery = False
+_in_critical_section = False
+
+# MetLife 로고 이미지 경로 (포커스 검증용)
+_IMG_METLIFE_LOGO = "img/1769598099792.png"
+
+
+def _focus_metlife_window():
+    """MetLife 브라우저 창을 최상위로 (App.focus → Alt+Tab 폴백 → 검증)"""
+    for title in [u"메트라이프", u"MetLife", u"metlife"]:
+        try:
+            App.focus(title)
+            log(u"    [PAUSE] App.focus('%s') 성공" % title)
+            return
+        except:
+            continue
+
+    log(u"    [PAUSE] App.focus 실패 → Alt+Tab")
+    _robot.keyPress(KeyEvent.VK_ALT)
+    time.sleep(0.1)
+    _robot.keyPress(KeyEvent.VK_TAB)
+    _robot.keyRelease(KeyEvent.VK_TAB)
+    _robot.keyRelease(KeyEvent.VK_ALT)
+    time.sleep(0.5)
+
+    if _scr().exists(_IMG_METLIFE_LOGO, 2):
+        log(u"    [PAUSE] MetLife 창 포커스 복원 확인됨")
+    else:
+        log(u"    [PAUSE] [WARN] MetLife 창 포커스 불확실")
+
+
+def _recover_after_resume():
+    """재개 후 MetLife 창 포커스 + 통합뷰 컨텍스트 잔여 UI 정리.
+    주의: 원본(비래핑) 함수만 사용 — 재귀 방지."""
+    _focus_metlife_window()
+    time.sleep(1)
+
+    # 통합뷰 특화: 잔여 다이얼로그/뷰어 정리 (최대 3라운드)
+    for cleanup_round in range(1, 4):
+        cleaned = False
+        # Windows 저장 다이얼로그가 열려있으면 ESC로 닫기
+        try:
+            if _scr().exists(IMG_SAVE_S_BTN, 1):
+                log(u"    [PAUSE] 저장 다이얼로그 감지 → ESC 닫기 [%d/3]" % cleanup_round)
+                _scr().type(Key.ESC)
+                time.sleep(1)
+                cleaned = True
+        except:
+            pass
+        # PDF 뷰어는 recovery에서 닫지 않음!
+        # 이유: _focus_metlife_window() 후 Alt+F4가 MetLife 브라우저에 전송되어
+        # 브라우저 자체가 닫히는 치명적 버그 발생 (2026-02-20 확인)
+        # PDF 닫기는 메인 코드(step 7-7)에서 critical section 안에서 안전하게 처리
+        # 알림 팝업
+        try:
+            if _scr().exists(IMG_ALERT_CONFIRM_BTN, 1):
+                _scr().click(IMG_ALERT_CONFIRM_BTN)
+                time.sleep(0.5)
+                cleaned = True
+        except:
+            pass
+        if not cleaned:
+            break  # 정리할 것이 없으면 종료
+
+    log(u"    [PAUSE] 화면 복구 완료")
+
+
+def check_pause():
+    """일시정지 체크. 재개 시 마우스 복원 + 화면 복구 후 True 반환."""
+    global _in_recovery
+
+    if not os.path.exists(_PAUSE_SIGNAL_PATH):
+        return False
+
+    # 위험 구간(PDF 저장, Alt+F4 등)에서는 일시정지 지연
+    if _in_critical_section:
+        return False
+
+    # 일시정지 직전 마우스 위치 저장
+    try:
+        pos = MouseInfo.getPointerInfo().getLocation()
+        saved_x, saved_y = pos.x, pos.y
+    except:
+        saved_x, saved_y = None, None
+
+    log(u"    [PAUSE] 일시정지 감지 (마우스: %s,%s) → 재개 대기 중..." % (saved_x, saved_y))
     while os.path.exists(_PAUSE_SIGNAL_PATH):
         time.sleep(0.5)
 
+    # 재개: 마우스 위치 복원
+    if saved_x is not None:
+        log(u"    [PAUSE] 마우스 복원: (%d,%d)" % (saved_x, saved_y))
+        _robot.mouseMove(saved_x, saved_y)
+        time.sleep(0.5)
+
+    # 복구 실행 (재귀 방지)
+    if not _in_recovery:
+        _in_recovery = True
+        try:
+            _recover_after_resume()
+        except:
+            pass
+        finally:
+            _in_recovery = False
+
+    log(u"    [PAUSE] 재개 완료")
+    return True
+
+
+def enter_critical_section():
+    """일시정지 불가 구간 진입. check_pause()가 즉시 반환."""
+    global _in_critical_section
+    _in_critical_section = True
+
+
+def exit_critical_section():
+    """일시정지 불가 구간 종료. 축적된 일시정지 신호 즉시 처리."""
+    global _in_critical_section
+    _in_critical_section = False
+    check_pause()
+
+
+# ===== SikuliX 함수 래핑: 일시정지 체크 + 올바른 화면 사용 =====
 def click(target, *args):
-    """SikuliX click 래퍼 - 클릭 전 항상 일시정지 체크"""
-    _wait_if_paused()
-    return _sikuli_click(target, *args)
+    check_pause()
+    return _scr().click(target, *args)
 
 def type(target, *args):
-    """SikuliX type 래퍼 - 키 입력 전 항상 일시정지 체크"""
-    _wait_if_paused()
-    return _sikuli_type(target, *args)
+    check_pause()
+    return _scr().type(target, *args)
 
 def paste(target, *args):
-    """SikuliX paste 래퍼 - 붙여넣기 전 항상 일시정지 체크"""
-    _wait_if_paused()
-    return _sikuli_paste(target, *args)
+    check_pause()
+    return _scr().paste(target, *args)
+
+def find(target, *args):
+    check_pause()
+    return _scr().find(target, *args)
+
+def exists(target, *args):
+    check_pause()
+    return _scr().exists(target, *args)
+
+def wheel(target, *args):
+    check_pause()
+    return _scr().wheel(target, *args)
+
+def findAll(target, *args):
+    check_pause()
+    return _scr().findAll(target, *args)
+
+def sleep(seconds):
+    """pause-aware sleep. 0.5초 단위로 일시정지 체크."""
+    elapsed = 0.0
+    interval = 0.5
+    while elapsed < seconds:
+        remaining = seconds - elapsed
+        wait = min(interval, remaining)
+        time.sleep(wait)
+        elapsed += wait
+        check_pause()
 
 # 경로 설정 (동적 감지 - auto_clicker_v2 기준)
 # 주의: 모듈 레벨에서 폴더 생성하지 않음! output_dir로 전달받아 verify_customer_integrated_view() 내에서 생성
@@ -170,6 +328,9 @@ def navigate_save_dialog_to_dir():
     원리: 파일명 필드 맨 앞에 경로를 삽입하여 전체 경로 완성
     예: "filename.pdf" → "D:\\path\\to\\dir\\filename.pdf"
     Windows 저장 다이얼로그는 전체 경로가 주어지면 해당 폴더에 저장함
+
+    Critical Section: 저장 다이얼로그 조작 중 일시정지하면 paste()가
+    엉뚱한 창으로 갈 수 있으므로 구간 전체를 보호.
     """
     if not PDF_DOWNLOAD_DIR:
         return
@@ -177,11 +338,15 @@ def navigate_save_dialog_to_dir():
     win_path = PDF_DOWNLOAD_DIR.replace("/", "\\")
     log(u"        [경로 설정] %s" % win_path)
     # 파일명 입력란에 포커스가 있는 상태에서 맨 앞으로 이동 후 경로 삽입
-    sleep(0.5)
-    type(Key.HOME)  # 커서를 파일명 맨 앞으로 이동
-    sleep(0.3)
-    paste(win_path + "\\")  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
-    sleep(0.3)
+    enter_critical_section()
+    try:
+        sleep(0.5)
+        type(Key.HOME)  # 커서를 파일명 맨 앞으로 이동
+        sleep(0.3)
+        paste(win_path + "\\")  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
+        sleep(0.3)
+    finally:
+        exit_critical_section()
 
 
 LOG_FILE = None  # verify_customer_integrated_view()에서 output_dir로 설정
@@ -1184,16 +1349,20 @@ def _cleanup_annual_report_retry():
     # 1. PDF 뷰어가 열려있으면 닫기
     if exists(IMG_PDF_SAVE_BTN, 2):
         log(u"    [상태 정리] PDF 뷰어 감지 - Alt+F4로 닫기")
-        type(Key.F4, Key.ALT)
-        sleep(1)
-        if exists(IMG_YES_BTN, 2):
-            yes_match = find(IMG_YES_BTN)
-            yx = int(yes_match.getCenter().getX())
-            yy = int(yes_match.getCenter().getY())
-            click(yes_match)
-            log(u"    [상태 정리] 예(Y) 클릭: (%d, %d)" % (yx, yy))
-            capture_with_click_marker(yx, yy, "cleanup_yes", 0, "step7_cleanup_yes")
+        enter_critical_section()
+        try:
+            type(Key.F4, Key.ALT)
             sleep(1)
+            if exists(IMG_YES_BTN, 2):
+                yes_match = find(IMG_YES_BTN)
+                yx = int(yes_match.getCenter().getX())
+                yy = int(yes_match.getCenter().getY())
+                click(yes_match)
+                log(u"    [상태 정리] 예(Y) 클릭: (%d, %d)" % (yx, yy))
+                capture_with_click_marker(yx, yy, "cleanup_yes", 0, "step7_cleanup_yes")
+                sleep(1)
+        finally:
+            exit_critical_section()
 
     # 2. 알림 팝업이 있으면 닫기
     if exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 2):
@@ -1365,6 +1534,9 @@ def download_annual_report():
     take_screenshot(u"step7_annual_report_loaded")
     log(u"    PDF 로딩 완료")
 
+    # ★ Critical Section: PDF 저장 구간 (pause 시 recover가 저장 다이얼로그를 닫아버리는 버그 방지)
+    enter_critical_section()
+
     # 7-4: PDF 저장 아이콘 클릭 + 검증
     log(u"    PDF 저장 버튼 클릭...")
     take_screenshot(u"step7_before_save_icon")
@@ -1397,6 +1569,7 @@ def download_annual_report():
                 take_screenshot(u"step7_ALERT_POPUP_save_dialog")
                 click(IMG_ALERT_CONFIRM_BTN)
                 sleep(1)
+            exit_critical_section()
             raise NavigationResetRequired(u"AR PDF 저장 다이얼로그 열기 실패")
 
     # 7-5: 저장 경로 설정 + 저장(S) 버튼 클릭
@@ -1456,40 +1629,47 @@ def download_annual_report():
         if exists(IMG_SAVE_S_BTN, 2):
             log(u"    [FATAL] 저장(S) 버튼 아직 표시됨 - AR PDF 저장 실행 안 됨!")
             take_screenshot(u"step7_save_NOT_completed")
+            exit_critical_section()
             raise NavigationResetRequired(u"Annual Report PDF 저장 실패 (저장 다이얼로그 미닫힘)")
         take_screenshot(u"step7_annual_report_saved")
         log(u"    [VERIFIED] Annual Report 저장 완료 확인 (저장 다이얼로그 정상 닫힘)")
+
+    exit_critical_section()
 
     # 7-7: PDF 닫기 (포커스 확보 + Alt+F4 + 검증 + 3회 재시도)
     pdf_closed = False
     for close_attempt in range(1, 4):
         log(u"    PDF 닫기 (Alt+F4)... [시도 %d/3]" % close_attempt)
 
-        # ★ 포커스 확보: PDF 뷰어 영역 클릭 후 Alt+F4
-        if exists(IMG_PDF_SAVE_BTN, 2):
-            pdf_icon = find(IMG_PDF_SAVE_BTN)
-            click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
-            sleep(0.5)
+        # ★ 포커스 확보 + Alt+F4 + 확인 다이얼로그 → Critical Section
+        enter_critical_section()
+        try:
+            if exists(IMG_PDF_SAVE_BTN, 2):
+                pdf_icon = find(IMG_PDF_SAVE_BTN)
+                click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
+                sleep(0.5)
 
-        type(Key.F4, Key.ALT)
-        sleep(WAIT_MEDIUM)
+            type(Key.F4, Key.ALT)
+            sleep(WAIT_MEDIUM)
 
-        # 7-8: 예(Y) 클릭 (저장 확인 / ezPDF 종료 확인)
-        yes_btn_pattern = Pattern(IMG_YES_BTN).similar(0.55)
-        if exists(yes_btn_pattern, 7):
-            log(u"    예(Y) 클릭...")
-            yes_match = find(yes_btn_pattern)
-            yes_x = int(yes_match.getCenter().getX())
-            yes_y = int(yes_match.getCenter().getY())
-            log(u"        [좌표] 예(Y) 버튼 클릭: (%d, %d)" % (yes_x, yes_y))
-            click(yes_match)
-            capture_with_click_marker(yes_x, yes_y, "yes_btn", 0, "step7_yes_confirm")
-            sleep(WAIT_SHORT)
-        elif exists(IMG_PDF_SAVE_BTN, 0):
-            # PDF 뷰어 아직 열림 → Alt+Y 키보드 폴백
-            log(u"    [폴백] 예(Y) 이미지 미매칭 → Alt+Y 키보드 시도")
-            type("y", Key.ALT)
-            sleep(WAIT_SHORT)
+            # 7-8: 예(Y) 클릭 (저장 확인 / ezPDF 종료 확인)
+            yes_btn_pattern = Pattern(IMG_YES_BTN).similar(0.55)
+            if exists(yes_btn_pattern, 7):
+                log(u"    예(Y) 클릭...")
+                yes_match = find(yes_btn_pattern)
+                yes_x = int(yes_match.getCenter().getX())
+                yes_y = int(yes_match.getCenter().getY())
+                log(u"        [좌표] 예(Y) 버튼 클릭: (%d, %d)" % (yes_x, yes_y))
+                click(yes_match)
+                capture_with_click_marker(yes_x, yes_y, "yes_btn", 0, "step7_yes_confirm")
+                sleep(WAIT_SHORT)
+            elif exists(IMG_PDF_SAVE_BTN, 0):
+                # PDF 뷰어 아직 열림 → Alt+Y 키보드 폴백
+                log(u"    [폴백] 예(Y) 이미지 미매칭 → Alt+Y 키보드 시도")
+                type("y", Key.ALT)
+                sleep(WAIT_SHORT)
+        finally:
+            exit_critical_section()
 
         # 검증: PDF 저장 아이콘이 사라졌으면 PDF 뷰어가 닫힌 것
         sleep(WAIT_SHORT)
@@ -1601,24 +1781,28 @@ def recover_to_report_list(report_number):
     while exists(IMG_PDF_SAVE_BTN, 2) and pdf_close_count < 5:
         pdf_close_count += 1
         log(u"        -> PDF 뷰어 열려있음 [%d번째] - Alt+F4로 닫기" % pdf_close_count)
-        type(Key.F4, Key.ALT)
-        sleep(2)
-        capture_error_screenshot(report_number, "recovery_after_altf4_%d" % pdf_close_count)
-
-        # "예(Y)" 확인 버튼 클릭 (저장하지 않고 닫기)
-        if exists(IMG_YES_BTN, 3):
-            yes_match = find(IMG_YES_BTN)
-            yx = int(yes_match.getCenter().getX())
-            yy = int(yes_match.getCenter().getY())
-            click(yes_match)
-            log(u"        -> 예(Y) 버튼 클릭: (%d, %d)" % (yx, yy))
-            capture_with_click_marker(yx, yy, "yes_btn_%d" % pdf_close_count, report_number, "recovery_yes")
+        enter_critical_section()
+        try:
+            type(Key.F4, Key.ALT)
             sleep(2)
-        else:
-            # 예 버튼 못 찾으면 Enter 키로 시도
-            type(Key.ENTER)
-            log(u"        -> Enter 키로 확인 (예(Y) 버튼 미발견)")
-            sleep(1)
+            capture_error_screenshot(report_number, "recovery_after_altf4_%d" % pdf_close_count)
+
+            # "예(Y)" 확인 버튼 클릭 (저장하지 않고 닫기)
+            if exists(IMG_YES_BTN, 3):
+                yes_match = find(IMG_YES_BTN)
+                yx = int(yes_match.getCenter().getX())
+                yy = int(yes_match.getCenter().getY())
+                click(yes_match)
+                log(u"        -> 예(Y) 버튼 클릭: (%d, %d)" % (yx, yy))
+                capture_with_click_marker(yx, yy, "yes_btn_%d" % pdf_close_count, report_number, "recovery_yes")
+                sleep(2)
+            else:
+                # 예 버튼 못 찾으면 Enter 키로 시도
+                type(Key.ENTER)
+                log(u"        -> Enter 키로 확인 (예(Y) 버튼 미발견)")
+                sleep(1)
+        finally:
+            exit_critical_section()
 
     if pdf_close_count > 0:
         log(u"        -> PDF 뷰어 %d개 닫음" % pdf_close_count)
@@ -1980,14 +2164,18 @@ def save_report_pdf(report_number):
 
                 if not recovery_ok:
                     log(u"    [WARN] 복구 실패! 추가 조치 시도...")
-                    for force_try in range(3):
-                        type(Key.ESC)
-                        sleep(0.5)
-                    type(Key.F4, Key.ALT)
-                    sleep(2)
-                    if exists(IMG_YES_BTN, 2):
-                        click(IMG_YES_BTN)
-                        sleep(1)
+                    enter_critical_section()
+                    try:
+                        for force_try in range(3):
+                            type(Key.ESC)
+                            sleep(0.5)
+                        type(Key.F4, Key.ALT)
+                        sleep(2)
+                        if exists(IMG_YES_BTN, 2):
+                            click(IMG_YES_BTN)
+                            sleep(1)
+                    finally:
+                        exit_critical_section()
                     capture_error_screenshot(report_number, "force_recovery")
 
                 result['error'] = u"MetLife 처리중 오류 (스킵)"
@@ -2018,6 +2206,9 @@ def save_report_pdf(report_number):
                 raise NavigationResetRequired(
                     u"변액리포트 #%d: 미리보기 %d회 재클릭 PDF 로딩 실패 (%d초 경과)" % (report_number, click_count, total_waited)
                 )
+
+        # ★ Critical Section: PDF 저장 구간 (pause 시 recover가 저장 다이얼로그를 닫아버리는 버그 방지)
+        enter_critical_section()
 
         # Step 6: PDF 저장 아이콘 클릭 + 검증
         log(u"    [6/11] PDF 저장 아이콘 클릭...")
@@ -2053,6 +2244,7 @@ def save_report_pdf(report_number):
                     take_screenshot(u"ALERT_POPUP_save_dialog")
                     click(IMG_ALERT_CONFIRM_BTN)
                     sleep(1)
+                exit_critical_section()
                 log_error(report_number, u"저장 다이얼로그 열기 실패")
                 recover_to_report_list(report_number)
                 raise NavigationResetRequired(u"변액리포트 #%d: 저장 다이얼로그 열기 실패" % report_number)
@@ -2120,6 +2312,7 @@ def save_report_pdf(report_number):
                     take_screenshot(u"ALERT_POPUP_save_not_completed")
                     click(IMG_ALERT_CONFIRM_BTN)
                     sleep(1)
+                exit_critical_section()
                 log_error(report_number, u"PDF 저장 실행 안 됨 (저장 다이얼로그 미닫힘)")
                 recover_to_report_list(report_number)
                 raise NavigationResetRequired(u"변액리포트 #%d: PDF 저장 실행 안 됨" % report_number)
@@ -2135,6 +2328,8 @@ def save_report_pdf(report_number):
                     result['saved_filename'] = sorted(new_files)[0]
                     log(u"        [파일명] %s" % result['saved_filename'])
 
+        exit_critical_section()
+
         # Step 9-10: PDF 뷰어 닫기 (포커스 확보 + 3회 재시도)
         # ★ 근본 원인: PDF 저장 후 포커스가 PDF 뷰어에서 이탈할 수 있음
         #   Alt+F4가 바탕화면에 전달되면 Windows 종료 다이얼로그가 나타남
@@ -2144,31 +2339,36 @@ def save_report_pdf(report_number):
         for close_attempt in range(1, 4):
             log(u"        [시도 %d/3] PDF 뷰어 닫기..." % close_attempt)
 
-            # 포커스 확보: PDF 뷰어 타이틀바 영역 클릭
-            if exists(IMG_PDF_SAVE_BTN, 2):
-                pdf_icon = find(IMG_PDF_SAVE_BTN)
-                # 저장 아이콘 옆 빈 영역 클릭 (메뉴 안 열리도록)
-                click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
-                sleep(0.5)
+            # ★ Alt+F4 + 확인 다이얼로그 → Critical Section
+            enter_critical_section()
+            try:
+                # 포커스 확보: PDF 뷰어 타이틀바 영역 클릭
+                if exists(IMG_PDF_SAVE_BTN, 2):
+                    pdf_icon = find(IMG_PDF_SAVE_BTN)
+                    # 저장 아이콘 옆 빈 영역 클릭 (메뉴 안 열리도록)
+                    click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
+                    sleep(0.5)
 
-            type(Key.F4, Key.ALT)
-            sleep(2)
+                type(Key.F4, Key.ALT)
+                sleep(2)
 
-            # 예(Y) 확인 클릭 (저장 확인 / ezPDF 종료 확인)
-            yes_btn_pattern = Pattern(IMG_YES_BTN).similar(0.55)
-            if exists(yes_btn_pattern, 7):
-                yes_match = find(yes_btn_pattern)
-                ymx = int(yes_match.getCenter().getX())
-                ymy = int(yes_match.getCenter().getY())
-                click(yes_match)
-                log(u"        [좌표] 예(Y) 클릭: (%d, %d)" % (ymx, ymy))
-                capture_with_click_marker(ymx, ymy, "yes_btn", report_number, "yes_clicked")
-                sleep(2)
-            elif exists(IMG_PDF_SAVE_BTN, 0):
-                # PDF 뷰어 아직 열림 → Alt+Y 키보드 폴백
-                log(u"        [폴백] 예(Y) 이미지 미매칭 → Alt+Y 키보드 시도")
-                type("y", Key.ALT)
-                sleep(2)
+                # 예(Y) 확인 클릭 (저장 확인 / ezPDF 종료 확인)
+                yes_btn_pattern = Pattern(IMG_YES_BTN).similar(0.55)
+                if exists(yes_btn_pattern, 7):
+                    yes_match = find(yes_btn_pattern)
+                    ymx = int(yes_match.getCenter().getX())
+                    ymy = int(yes_match.getCenter().getY())
+                    click(yes_match)
+                    log(u"        [좌표] 예(Y) 클릭: (%d, %d)" % (ymx, ymy))
+                    capture_with_click_marker(ymx, ymy, "yes_btn", report_number, "yes_clicked")
+                    sleep(2)
+                elif exists(IMG_PDF_SAVE_BTN, 0):
+                    # PDF 뷰어 아직 열림 → Alt+Y 키보드 폴백
+                    log(u"        [폴백] 예(Y) 이미지 미매칭 → Alt+Y 키보드 시도")
+                    type("y", Key.ALT)
+                    sleep(2)
+            finally:
+                exit_critical_section()
 
             # 검증: PDF 뷰어 닫혔는지 확인
             if not exists(IMG_PDF_SAVE_BTN, 3):
@@ -2620,19 +2820,23 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
         # PDF 뷰어가 열려있으면 닫기
         if exists(IMG_PDF_SAVE_BTN, 1):
             log(u"    [복구] PDF 뷰어 열림 감지 → Alt+F4로 닫기 [%d/3]" % cleanup_round)
-            # PDF 뷰어 영역 클릭으로 포커스 확보
-            pdf_icon = find(IMG_PDF_SAVE_BTN)
-            click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
-            sleep(0.5)
-            type(Key.F4, Key.ALT)
-            sleep(2)
-            # 종료 확인 다이얼로그 처리
-            if exists(IMG_YES_BTN, 3):
-                click(find(IMG_YES_BTN))
-                sleep(1)
-            else:
-                type(Key.ENTER)
-                sleep(1)
+            enter_critical_section()
+            try:
+                # PDF 뷰어 영역 클릭으로 포커스 확보
+                pdf_icon = find(IMG_PDF_SAVE_BTN)
+                click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
+                sleep(0.5)
+                type(Key.F4, Key.ALT)
+                sleep(2)
+                # 종료 확인 다이얼로그 처리
+                if exists(IMG_YES_BTN, 3):
+                    click(find(IMG_YES_BTN))
+                    sleep(1)
+                else:
+                    type(Key.ENTER)
+                    sleep(1)
+            finally:
+                exit_critical_section()
             continue  # 다른 잔재가 더 있을 수 있으므로 다시 확인
         else:
             break  # PDF 뷰어 없음 → 정리 완료

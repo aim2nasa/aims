@@ -10,7 +10,7 @@ import subprocess
 import json
 import codecs
 import traceback
-from java.awt import Robot
+from java.awt import Robot, MouseInfo
 from java.awt.event import KeyEvent
 
 # Java Robot 인스턴스 (Page Up 키 입력용)
@@ -173,28 +173,207 @@ _AC_HOME = os.environ.get("AC_HOME", r"D:\aims\tools\auto_clicker_v2")
 _PAUSE_SIGNAL = os.path.join(_AC_HOME, ".pause_signal")
 log(u"[IPC] AC_HOME=%s, PAUSE_SIGNAL=%s" % (_AC_HOME, _PAUSE_SIGNAL))
 
-def check_pause():
-    """GUI 일시정지 신호 파일이 존재하면 삭제될 때까지 대기"""
-    if not os.path.exists(_PAUSE_SIGNAL):
+# ===== SikuliX 원본 함수 보존 (래핑 전) =====
+_sikuli_click = click
+_sikuli_type = type
+_sikuli_find = find
+_sikuli_exists = exists
+_sikuli_sleep = sleep
+
+# ===== 멀티 모니터 자동 감지 =====
+_active_screen_id = 0  # MetLife가 보이는 화면 ID (자동 감지)
+
+def _scr():
+    """활성 화면(Screen) 반환. 모든 SikuliX 조작은 이 화면에서 수행."""
+    return Screen(_active_screen_id)
+
+def _detect_active_screen():
+    """모든 모니터를 스캔하여 MetLife가 보이는 화면 자동 감지."""
+    global _active_screen_id
+    num = Screen.getNumberScreens()
+    log(u"    [SCREEN] %d개 모니터 감지됨" % num)
+
+    # 환경변수 AC_SCREEN으로 강제 지정 가능
+    env_scr = os.environ.get("AC_SCREEN")
+    if env_scr is not None:
+        _active_screen_id = int(env_scr)
+        log(u"    [SCREEN] 환경변수 AC_SCREEN=%d 사용" % _active_screen_id)
         return
-    log(u"    [PAUSE] 일시정지 감지 → 재개 대기 중...")
+
+    # MetLife 로고 이미지로 자동 감지
+    _logo = "img/1769598099792.png"
+    for i in range(num):
+        s = Screen(i)
+        if s.exists(_logo, 2):
+            _active_screen_id = i
+            os.environ["AC_SCREEN"] = str(i)
+            log(u"    [SCREEN] MetLife 감지: Screen(%d)" % i)
+            return
+
+    # 폴백: Screen(0)
+    log(u"    [SCREEN] MetLife 미감지 → 기본 Screen(0)")
+    _active_screen_id = 0
+
+    # 통합뷰 스크립트에도 전달 (import 시 환경변수에서 읽음)
+    os.environ["AC_SCREEN"] = str(_active_screen_id)
+
+# ===== 일시정지 상태 플래그 =====
+_in_recovery = False        # 복구 중 재귀 방지
+_in_critical_section = False  # 위험 구간 보호 (PDF 저장 등)
+
+# MetLife 로고 이미지 경로 (포커스 검증용 — IMG 상수 정의 전이므로 직접 지정)
+_IMG_METLIFE_LOGO = "img/1769598099792.png"
+
+
+def _focus_metlife_window():
+    """MetLife 브라우저 창을 최상위로 (App.focus → Alt+Tab 폴백 → 검증)"""
+    # 전략 1: SikuliX App.focus()로 창 제목 매칭
+    for title in [u"메트라이프", u"MetLife", u"metlife"]:
+        try:
+            App.focus(title)
+            log(u"    [PAUSE] App.focus('%s') 성공" % title)
+            return
+        except:
+            continue
+
+    # 전략 2: Alt+Tab (마지막 활성 창으로 전환)
+    log(u"    [PAUSE] App.focus 실패 → Alt+Tab")
+    _robot.keyPress(KeyEvent.VK_ALT)
+    time.sleep(0.1)
+    _robot.keyPress(KeyEvent.VK_TAB)
+    _robot.keyRelease(KeyEvent.VK_TAB)
+    _robot.keyRelease(KeyEvent.VK_ALT)
+    time.sleep(0.5)
+
+    # 검증: MetLife 화면이 실제로 보이는지 확인
+    if _scr().exists(_IMG_METLIFE_LOGO, 2):
+        log(u"    [PAUSE] MetLife 창 포커스 복원 확인됨")
+    else:
+        log(u"    [PAUSE] [WARN] MetLife 창 포커스 불확실")
+
+
+def _recover_after_resume():
+    """재개 후 MetLife 브라우저 창 포커스 복원 + 잔여 UI 정리.
+    주의: 원본(비래핑) 함수만 사용 — 재귀 방지."""
+    _focus_metlife_window()
+    time.sleep(1)  # 포커스 전환 안정화
+
+    # 잔여 알림 팝업 정리
+    try:
+        # IMG_ALERT_OK는 하단에서 정의되며, 이 함수는 실행 시점에서 참조
+        if _scr().exists(IMG_ALERT_OK, 1):
+            _scr().click(IMG_ALERT_OK)
+            time.sleep(0.5)
+    except:
+        pass
+
+    log(u"    [PAUSE] 화면 복구 완료")
+
+
+def check_pause():
+    """일시정지 체크. 재개 시 마우스 복원 + 화면 복구 후 True 반환."""
+    global _in_recovery
+
+    if not os.path.exists(_PAUSE_SIGNAL):
+        return False
+
+    # 위험 구간(PDF 저장, Alt+F4 등)에서는 일시정지 지연
+    if _in_critical_section:
+        return False
+
+    # 일시정지 직전 마우스 위치 저장
+    try:
+        pos = MouseInfo.getPointerInfo().getLocation()
+        saved_x, saved_y = pos.x, pos.y
+    except:
+        saved_x, saved_y = None, None
+
+    log(u"    [PAUSE] 일시정지 감지 (마우스: %s,%s) → 재개 대기 중..." % (saved_x, saved_y))
     while os.path.exists(_PAUSE_SIGNAL):
         time.sleep(0.5)
-    log(u"    [PAUSE] 재개됨!")
 
-# ===== SikuliX 함수 래핑: 모든 UI 조작 전에 자동으로 일시정지 체크 =====
-_sikuli_click = click  # SikuliX 원본 click 보존
-_sikuli_type = type    # SikuliX 원본 type(키보드 입력) 보존
+    # 재개: 마우스 위치 복원 → 스크립트 마우스 제어권 회수
+    if saved_x is not None:
+        log(u"    [PAUSE] 마우스 복원: (%d,%d)" % (saved_x, saved_y))
+        _robot.mouseMove(saved_x, saved_y)
+        time.sleep(0.5)  # 마우스 안정화
 
-def click(target, *args):
-    """SikuliX click 래퍼 - 클릭 전 항상 일시정지 체크"""
+    # 복구 실행 (재귀 방지: _in_recovery True이면 스킵)
+    if not _in_recovery:
+        _in_recovery = True
+        try:
+            _recover_after_resume()
+        except:
+            pass
+        finally:
+            _in_recovery = False
+
+    log(u"    [PAUSE] 재개 완료")
+    return True
+
+
+def _verify_customer_list_after_resume():
+    """일시정지 재개 후 고객 목록 화면 확인 및 복구.
+    IMG_CUSTNAME, IMG_CLOSE_BTN 등은 L1221+에서 정의."""
+    if not _scr().exists(IMG_CUSTNAME, 3):
+        log(u"    [PAUSE] 고객 목록 화면 아님 → 복구 시도")
+        try:
+            if _scr().exists(IMG_CLOSE_BTN, 2):
+                _scr().click(IMG_CLOSE_BTN)
+                time.sleep(2)
+            dismiss_alert_if_exists()
+        except:
+            pass
+        if not _scr().exists(IMG_CUSTNAME, 3):
+            _scr().type(Key.ESC)
+            time.sleep(2)
+            dismiss_alert_if_exists()
+        if _scr().exists(IMG_CUSTNAME, 3):
+            log(u"    [PAUSE] 고객 목록 복구 성공")
+        else:
+            log(u"    [PAUSE] [WARN] 고객 목록 미복구 — 계속 진행")
+
+
+def enter_critical_section():
+    """일시정지 불가 구간 진입. check_pause()가 즉시 반환."""
+    global _in_critical_section
+    _in_critical_section = True
+
+
+def exit_critical_section():
+    """일시정지 불가 구간 종료. 축적된 일시정지 신호 즉시 처리."""
+    global _in_critical_section
+    _in_critical_section = False
     check_pause()
-    return _sikuli_click(target, *args)
+
+
+# ===== SikuliX 함수 래핑: 모든 UI 조작 전에 일시정지 체크 + 올바른 화면 사용 =====
+def click(target, *args):
+    check_pause()
+    return _scr().click(target, *args)
 
 def type(target, *args):
-    """SikuliX type 래퍼 - 키 입력 전 항상 일시정지 체크"""
     check_pause()
-    return _sikuli_type(target, *args)
+    return _scr().type(target, *args)
+
+def find(target, *args):
+    check_pause()
+    return _scr().find(target, *args)
+
+def exists(target, *args):
+    check_pause()
+    return _scr().exists(target, *args)
+
+def sleep(seconds):
+    """pause-aware sleep. 0.5초 단위로 일시정지 체크."""
+    elapsed = 0.0
+    interval = 0.5
+    while elapsed < seconds:
+        remaining = seconds - elapsed
+        wait = min(interval, remaining)
+        time.sleep(wait)
+        elapsed += wait
+        check_pause()
 
 
 # 진단 모드 설정 (클릭 위치 분석용 스크린샷 저장)
@@ -220,7 +399,7 @@ def save_click_diagnostic(click_x, click_y, customer_name, page_num, row_idx):
         seq = _diagnostic_counter[0]
 
         # 스크린샷 캡처
-        screen = Screen()
+        screen = _scr()
         img = screen.capture()
         buffered_img = img.getImage()
 
@@ -992,7 +1171,9 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                     return processed, error_customers, current_base_y
                 continue
 
-        check_pause()  # GUI 일시정지 체크
+        _was_paused = check_pause()  # GUI 일시정지 체크
+        if _was_paused:
+            _verify_customer_list_after_resume()
 
         log(u"        [%d/%d] %s 클릭..." % (i + 1, total_to_process, name))
 
@@ -1625,71 +1806,92 @@ log("=" * 60)
 
 start_time = time.time()
 
+# 멀티 모니터 자동 감지 — MetLife가 보이는 화면 탐색
+_detect_active_screen()
+
 ###########################################
-# 1단계: 고객목록조회 메뉴 진입
+# 1단계: 고객목록조회 메뉴 진입 (최대 3회 재시도)
 ###########################################
-log(u"\n[1단계] 고객목록조회 진입")
+_NAV_MAX_RETRY = 3
+_nav_success = False
 
-try:
-    log(u"  [1-1] 메인 화면으로 이동...")
-    click("img/1769598099792.png")  # MetLife 로고 [100% 줌]
-    log(u"  [1-1] 메인 화면 로딩 대기 (10초)...")
-    sleep(10)
-
-    # 공지사항 팝업 닫기 (레이어링 대응 - 모두 닫을 때까지 반복)
-    log(u"  [1-1a] 공지사항 팝업 확인...")
-    dismiss_notice_popups()
-
-    log(u"  [1-2] 고객관리 클릭...")
-    _mgmt = find("img/1769598228284.png")  # 고객관리 탭 [100% 줌]
-    _debug_mark_click(_mgmt.getTarget().x, _mgmt.getTarget().y, "1-2 mgmt tab")
-    click(_mgmt)
-    sleep(5)  # 서브메뉴 열릴 시간 확보
-
-    # "고객등록 >"과 "고객관리 >"가 시각적으로 유사하여 오매칭 발생
-    # → 드롭다운은 고객관리 탭 아래~오른쪽에 나타남
-    #   상위 2행(계약정보, 고객등록)만 포함하여 "고객관리 >"(3번째 행) 제외
-    # → 템플릿도 현재 화면에서 재캡처 (기존 이미지는 렌더링 차이로 매칭 실패)
-    log(u"  [1-3] 고객등록 클릭...")
-    _dd_region = Region(int(_mgmt.x), int(_mgmt.y + _mgmt.h), int(_mgmt.w) + 60, 75)
-    _debug_mark_region(_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h, "1-3 search")
-    log(u"  [DEBUG] 고객관리 탭: x=%d y=%d w=%d h=%d" % (_mgmt.x, _mgmt.y, _mgmt.w, _mgmt.h))
-    log(u"  [DEBUG] 검색 영역: x=%d y=%d w=%d h=%d" % (_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h))
-    _dd_region.click("img/customer_reg_menu.png")  # 고객등록 [100% 줌] (재캡처 템플릿)
+for _nav_attempt in range(1, _NAV_MAX_RETRY + 1):
     try:
-        _lm = _dd_region.getLastMatch()
-        _debug_mark_click(_lm.getTarget().x, _lm.getTarget().y, "1-3 reg click")
-    except:
-        pass
-    sleep(3)
+        log(u"\n[1단계] 고객목록조회 진입 (시도 %d/%d)" % (_nav_attempt, _NAV_MAX_RETRY))
 
-    log(u"  [1-4] 고객목록조회 클릭...")
-    click("img/1769598272319.png")  # 고객목록조회 [100% 줌]
-    sleep(5)
+        log(u"  [1-1] 메인 화면으로 이동...")
+        click("img/1769598099792.png")  # MetLife 로고 [100% 줌]
+        log(u"  [1-1] 메인 화면 로딩 대기 (10초)...")
+        sleep(10)
 
-except:
-    # bare except: Java 예외(SikuliX FindFailed) + Python 예외 모두 캐치
-    exc_info = sys.exc_info()
-    _crash_log(u"")
-    _crash_log(u"=" * 60)
-    _crash_log(u"[FATAL] 1단계 네비게이션 실패 - 프로그램 종료")
-    _crash_log(u"=" * 60)
-    _crash_log(u"오류 타입: %s" % exc_info[0])
-    _crash_log(u"오류 내용: %s" % exc_info[1])
-    _crash_log(u"화면이 고객목록조회 메뉴에 접근 가능한 상태인지 확인하세요.")
-    _crash_log(u"")
-    _crash_log(u"스택 트레이스:")
-    try:
-        tb_str = traceback.format_exc()
-        for line in tb_str.split("\n"):
-            if line.strip():
-                _crash_log(u"  %s" % line)
+        # 공지사항 팝업 닫기 (레이어링 대응 - 모두 닫을 때까지 반복)
+        log(u"  [1-1a] 공지사항 팝업 확인...")
+        dismiss_notice_popups()
+
+        log(u"  [1-2] 고객관리 클릭...")
+        _mgmt = find("img/1769598228284.png")  # 고객관리 탭 [100% 줌]
+        _debug_mark_click(_mgmt.getTarget().x, _mgmt.getTarget().y, "1-2 mgmt tab")
+        click(_mgmt)
+        sleep(5)  # 서브메뉴 열릴 시간 확보
+
+        # "고객등록 >"과 "고객관리 >"가 시각적으로 유사하여 오매칭 발생
+        # → 드롭다운은 고객관리 탭 아래~오른쪽에 나타남
+        #   상위 2행(계약정보, 고객등록)만 포함하여 "고객관리 >"(3번째 행) 제외
+        # → 템플릿도 현재 화면에서 재캡처 (기존 이미지는 렌더링 차이로 매칭 실패)
+        log(u"  [1-3] 고객등록 클릭...")
+        _dd_region = Region(int(_mgmt.x), int(_mgmt.y + _mgmt.h), int(_mgmt.w) + 60, 75)
+        _debug_mark_region(_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h, "1-3 search")
+        log(u"  [DEBUG] 고객관리 탭: x=%d y=%d w=%d h=%d" % (_mgmt.x, _mgmt.y, _mgmt.w, _mgmt.h))
+        log(u"  [DEBUG] 검색 영역: x=%d y=%d w=%d h=%d" % (_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h))
+        check_pause()  # Region.click은 래핑 불가 — 수동 체크
+        _dd_region.click("img/customer_reg_menu.png")  # 고객등록 [100% 줌] (재캡처 템플릿)
+        try:
+            _lm = _dd_region.getLastMatch()
+            _debug_mark_click(_lm.getTarget().x, _lm.getTarget().y, "1-3 reg click")
+        except:
+            pass
+        sleep(3)
+
+        log(u"  [1-4] 고객목록조회 클릭...")
+        click("img/1769598272319.png")  # 고객목록조회 [100% 줌]
+        sleep(5)
+
+        _nav_success = True
+        break  # 성공 시 재시도 루프 탈출
+
     except:
-        pass
-    _crash_log(u"=" * 60)
-    _take_crash_screenshot(u"FATAL_navigation_failed")
-    _close_log_file()
-    raise SystemExit(1)
+        # bare except: Java 예외(SikuliX FindFailed) + Python 예외 모두 캐치
+        exc_info = sys.exc_info()
+        log(u"  [1단계] 시도 %d 실패: %s" % (_nav_attempt, exc_info[1]))
+        _take_crash_screenshot(u"nav_retry_%d" % _nav_attempt)
+
+        if _nav_attempt < _NAV_MAX_RETRY:
+            _wait = 5 * _nav_attempt
+            log(u"  [1단계] %d초 후 재시도..." % _wait)
+            sleep(_wait)
+            _recover_after_resume()
+        else:
+            # 최종 실패 → 크래시 처리
+            _crash_log(u"")
+            _crash_log(u"=" * 60)
+            _crash_log(u"[FATAL] 1단계 네비게이션 %d회 재시도 모두 실패 - 프로그램 종료" % _NAV_MAX_RETRY)
+            _crash_log(u"=" * 60)
+            _crash_log(u"오류 타입: %s" % exc_info[0])
+            _crash_log(u"오류 내용: %s" % exc_info[1])
+            _crash_log(u"화면이 고객목록조회 메뉴에 접근 가능한 상태인지 확인하세요.")
+            _crash_log(u"")
+            _crash_log(u"스택 트레이스:")
+            try:
+                tb_str = traceback.format_exc()
+                for line in tb_str.split("\n"):
+                    if line.strip():
+                        _crash_log(u"  %s" % line)
+            except:
+                pass
+            _crash_log(u"=" * 60)
+            _take_crash_screenshot(u"FATAL_navigation_failed")
+            _close_log_file()
+            raise SystemExit(1)
 
 log(u"[1단계 완료]")
 
@@ -1904,7 +2106,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                     except:
                                         pass
 
-                                    check_pause()  # GUI 일시정지 체크
+                                    _was_paused = check_pause()  # GUI 일시정지 체크
+                                    if _was_paused:
+                                        _verify_customer_list_after_resume()
                                     log(u"        [LAST] %s 클릭..." % name)
                                     try:
                                         row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))
@@ -2206,7 +2410,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                             except:
                                 pass
 
-                            check_pause()  # GUI 일시정지 체크
+                            _was_paused = check_pause()  # GUI 일시정지 체크
+                            if _was_paused:
+                                _verify_customer_list_after_resume()
                             log(u"        [LAST] %s 클릭..." % name)
                             try:
                                 row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))  # 16번째 행
@@ -2316,7 +2522,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 break  # 스크롤 루프 탈출
 
             # 6. 스크롤 (Page Down 키)
-            check_pause()  # GUI 일시정지 체크
+            _was_paused = check_pause()  # GUI 일시정지 체크
+            if _was_paused:
+                _verify_customer_list_after_resume()
             log(u"    [SCROLL] Page Down 스크롤...")
             scroll_page_down()
 
@@ -2365,7 +2573,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             # 진단용: 다음 버튼 없음 시점의 전체 화면 캡처
             try:
                 diag_path = os.path.join(DEV_DIR, "DIAG_no_next_btn_nav%d_%s.png" % (nav_page, chosung_name))
-                diag_cap = capture(Screen())
+                diag_cap = capture(_scr())
                 import shutil
                 shutil.copy(diag_cap, diag_path)
                 log(u"  [DIAG] 다음버튼 없음 진단 캡처: %s" % diag_path)
