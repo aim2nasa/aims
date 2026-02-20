@@ -613,118 +613,118 @@
     white-space: nowrap;
   }
 
+  /* =============================================
+     📱 모바일 공통: 통계바 1줄 강제
+     @layer 안에 배치 (production 빌드 호환)
+     ============================================= */
+  @media (max-width: 480px), ((max-height: 430px) and (orientation: landscape)) {
+
+    .regional-tree-stats {
+      flex-wrap: nowrap;
+      padding: 3px 8px;
+      gap: 6px;
+    }
+
+    .stat-item:first-child {
+      flex-basis: auto;
+    }
+
+    .regional-tree-stats .tree-actions { display: none; }
+    .regional-tree-stats .stat-label { display: none; }
+
+  }
+
+  /* =============================================
+     📱 세로 모드 전용 (480px 이하)
+     ============================================= */
+  @media (max-width: 480px) {
+
+    .stat-divider { display: none; }
+    .regional-tree-stats .stat-icon { display: none; }
+    .regional-tree-stats .stat-label { display: none; }
+    .stat-checkbox { display: none; }
+    .type-filter-separator { display: none; }
+    .stat-filter-group .type-filter-button:not(:first-child) { display: none; }
+
+    .type-filter-button {
+      min-height: 26px;
+      padding: 3px 8px;
+      font-size: 11px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .regional-tree-stats > .stat-item:nth-child(3),
+    .regional-tree-stats > .stat-item:nth-child(5) {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .stat-dropdown-group {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .regional-tree-stats .ios-dropdown {
+      width: 100%;
+    }
+
+    .regional-tree-stats .ios-dropdown__trigger {
+      min-height: 26px;
+      padding: 3px 8px;
+      font-size: 11px;
+    }
+
+    .regional-tree-content {
+      flex-direction: column;
+    }
+
+    .regional-map-container {
+      flex: none;
+      height: 35vh;
+      min-height: 200px;
+      max-height: 280px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .regional-tree-container {
+      flex: 1;
+      border-right: none;
+      padding: 4px;
+    }
+
+    .tree-node {
+      min-height: 40px;
+      padding: 8px;
+      gap: 8px;
+    }
+
+    .tree-node-label {
+      font-size: 12px;
+    }
+
+    .tree-node-children,
+    .tree-node-customers {
+      padding-left: 16px;
+      margin-left: 4px;
+    }
+
+    .tree-customer-item {
+      min-height: 40px;
+      padding: 8px;
+      padding-left: 24px;
+      gap: 8px;
+    }
+
+    .tree-customer-name {
+      font-size: 12px;
+    }
+
+    .regional-tree-loading,
+    .regional-tree-empty {
+      padding: 16px;
+    }
+  }
+
 } /* end @layer components */
-
-/* =============================================
-   📱 모바일 공통: 통계바 1줄 강제
-   @layer 밖에 배치 (Samsung Internet 호환)
-   ============================================= */
-@media (max-width: 480px), ((max-height: 430px) and (orientation: landscape)) {
-
-  .regional-tree-stats {
-    flex-wrap: nowrap;
-    padding: 3px 8px;
-    gap: 6px;
-  }
-
-  .stat-item:first-child {
-    flex-basis: auto;
-  }
-
-  .regional-tree-stats .tree-actions { display: none; }
-  .regional-tree-stats .stat-label { display: none; }
-
-}
-
-/* =============================================
-   📱 세로 모드 전용 (480px 이하)
-   ============================================= */
-@media (max-width: 480px) {
-
-  .stat-divider { display: none; }
-  .regional-tree-stats .stat-icon { display: none; }
-  .regional-tree-stats .stat-label { display: none; }
-  .stat-checkbox { display: none; }
-  .type-filter-separator { display: none; }
-  .stat-filter-group .type-filter-button:not(:first-child) { display: none; }
-
-  .type-filter-button {
-    min-height: 26px;
-    padding: 3px 8px;
-    font-size: 11px;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .regional-tree-stats > .stat-item:nth-child(3),
-  .regional-tree-stats > .stat-item:nth-child(5) {
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .stat-dropdown-group {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .regional-tree-stats .ios-dropdown {
-    width: 100%;
-  }
-
-  .regional-tree-stats .ios-dropdown__trigger {
-    min-height: 26px;
-    padding: 3px 8px;
-    font-size: 11px;
-  }
-
-  .regional-tree-content {
-    flex-direction: column;
-  }
-
-  .regional-map-container {
-    flex: none;
-    height: 35vh;
-    min-height: 200px;
-    max-height: 280px;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .regional-tree-container {
-    flex: 1;
-    border-right: none;
-    padding: 4px;
-  }
-
-  .tree-node {
-    min-height: 40px;
-    padding: 8px;
-    gap: 8px;
-  }
-
-  .tree-node-label {
-    font-size: 12px;
-  }
-
-  .tree-node-children,
-  .tree-node-customers {
-    padding-left: 16px;
-    margin-left: 4px;
-  }
-
-  .tree-customer-item {
-    min-height: 40px;
-    padding: 8px;
-    padding-left: 24px;
-    gap: 8px;
-  }
-
-  .tree-customer-name {
-    font-size: 12px;
-  }
-
-  .regional-tree-loading,
-  .regional-tree-empty {
-    padding: 16px;
-  }
-}

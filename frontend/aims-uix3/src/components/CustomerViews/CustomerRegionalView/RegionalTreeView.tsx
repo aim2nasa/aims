@@ -1151,12 +1151,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   return (
     <div className="regional-tree-view">
 
-      {/* DEBUG: 실제 viewport 확인용 (임시) */}
-      <div style={{ background: '#ff0', padding: '4px 8px', fontSize: '11px', fontFamily: 'monospace' }}>
-        VP: {typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : '?'}
-        | DPR: {typeof window !== 'undefined' ? window.devicePixelRatio : '?'}
-      </div>
-
       {/* 통계 - 클릭 가능한 필터 */}
       <div className="regional-tree-stats">
         <div className="stat-item">
