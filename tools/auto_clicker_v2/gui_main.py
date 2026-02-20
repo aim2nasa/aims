@@ -64,8 +64,9 @@ NORMAL_HEIGHT = 440
 NORMAL_X = 1376
 NORMAL_Y = 454
 
-# 개발자 모드 PIN (Ctrl+Shift+D → PIN 입력 2단계)
-_DEV_PIN = "3007"
+# 개발자 모드 PIN 해시 (Ctrl+Shift+D → PIN 입력 2단계)
+import hashlib as _hashlib
+_DEV_PIN_HASH = "7e66b5dd3d158d14ba3300cad5702ee6d72befaec37890eed25c91687bb649df"
 
 _CHOSUNGS = ["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ","기타"]
 
@@ -179,6 +180,7 @@ class AutoClickerApp(ctk.CTk):
             'mode': 'normal',              # normal / start_from / only / resume
             'target': '',                  # start_from, only 시 고객명
             'no_ocr': False,               # False=OCR 사용, True=OCR 비활성화
+            'dev_mode': False,             # 개발자 모드
         }
 
         # 레지스트리 저장값으로 오버라이드 (기본값 < 레지스트리 < CLI)
@@ -201,9 +203,11 @@ class AutoClickerApp(ctk.CTk):
             self._target_monitor = _saved['monitor']
 
         # 개발자 모드 복원 (GUI 설정 > 환경변수 > 자동판별)
-        if _saved and _saved.get('dev_mode'):
-            self._dev_mode = True
-            os.environ["AC_DEV_MODE"] = "1"
+        if _saved and 'dev_mode' in _saved:
+            self._dev_mode = bool(_saved['dev_mode'])
+            self._settings['dev_mode'] = self._dev_mode
+        os.environ["AC_DEV_MODE"] = "1" if self._dev_mode else "0"
+        if self._dev_mode:
             self._update_title()
 
         # CLI 인수로 설정 오버라이드 (최우선)
@@ -273,20 +277,59 @@ class AutoClickerApp(ctk.CTk):
         if self._source and self._source.is_running():
             return
 
-        # 2단계: PIN 입력
-        dlg = ctk.CTkInputDialog(
-            title="인증",
-            text="코드를 입력하세요:",
-        )
-        pin = dlg.get_input()
-        if pin != _DEV_PIN:
-            return
+        # 2단계: PIN 입력 (topmost 다이얼로그)
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("인증")
+        dlg.resizable(False, False)
+        dlg.attributes("-topmost", True)
+        dlg.grab_set()
 
-        self._dev_mode = not self._dev_mode
-        os.environ["AC_DEV_MODE"] = "1" if self._dev_mode else "0"
-        self._settings["dev_mode"] = self._dev_mode
-        self._update_title()
-        save_settings(self._settings, self._save_dir)
+        dlg_w, dlg_h = 280, 150
+        px = self.winfo_x() + (self.winfo_width() - dlg_w) // 2
+        py = self.winfo_y() + (self.winfo_height() - dlg_h) // 2
+        dlg.geometry(f"{dlg_w}x{dlg_h}+{px}+{py}")
+
+        ctk.CTkLabel(
+            dlg, text="코드를 입력하세요:",
+            font=ctk.CTkFont(family=_FONT, size=12),
+        ).pack(pady=(16, 8))
+
+        pin_var = ctk.StringVar()
+        entry = ctk.CTkEntry(
+            dlg, textvariable=pin_var, width=160, height=32,
+            font=ctk.CTkFont(family=_FONT, size=13),
+            show="*",
+        )
+        entry.pack(pady=(0, 12))
+        entry.focus_set()
+
+        def _confirm(event=None):
+            pin_hash = _hashlib.sha256(pin_var.get().encode()).hexdigest()
+            if pin_hash != _DEV_PIN_HASH:
+                dlg.destroy()
+                return
+            dlg.destroy()
+            self._dev_mode = not self._dev_mode
+            os.environ["AC_DEV_MODE"] = "1" if self._dev_mode else "0"
+            self._settings["dev_mode"] = self._dev_mode
+            self._update_title()
+            save_settings(self._settings, self._save_dir)
+
+        entry.bind("<Return>", _confirm)
+
+        btn_frame = ctk.CTkFrame(dlg, fg_color="transparent")
+        btn_frame.pack(pady=(0, 12))
+        ctk.CTkButton(
+            btn_frame, text="확인", width=80, height=30,
+            font=ctk.CTkFont(family=_FONT, size=12),
+            command=_confirm,
+        ).pack(side="left", padx=4)
+        ctk.CTkButton(
+            btn_frame, text="취소", width=80, height=30,
+            font=ctk.CTkFont(family=_FONT, size=12),
+            fg_color="gray30", hover_color="gray40",
+            command=dlg.destroy,
+        ).pack(side="left", padx=4)
 
     # ===== 해상도 감지 =====
 
