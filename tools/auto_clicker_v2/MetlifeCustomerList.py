@@ -1247,7 +1247,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                                 'gender': customer.get(u'성별', u''),
                                 'email': customer.get(u'이메일', u''),
                             }
-                            _chosung_customer_results.append(view_result)
+                            _append_customer_result(view_result, chosung_name)
                     except Exception as e:
                         # Jython/SikuliX 모듈 로딩 특성상 클래스명으로 비교
                         # (cross-module 예외 클래스 identity 불일치 문제 회피)
@@ -1581,6 +1581,7 @@ if SCROLL_TEST:
 # 에러/체크포인트 파일 경로 (CAPTURE_DIR에 저장 — 재개/리포트에 필요한 상태 데이터)
 ERROR_FILE = os.path.join(CAPTURE_DIR, u"errors.json")
 CHECKPOINT_FILE = os.path.join(CAPTURE_DIR, u"checkpoint.json")
+PROGRESS_LOG = os.path.join(CAPTURE_DIR, u"progress.log")
 
 # 재개 위치 정보 (--resume 모드에서 사용)
 _resume_info = None
@@ -1622,6 +1623,7 @@ def save_error(customer_name, error_msg, chosung, nav_page, scroll_page, row_in_
             json.dump(errors, f, ensure_ascii=False, indent=2)
 
         log(u"    [ERROR_LOG] 오류 기록됨: %s (N%d-S%d-R%d)" % (customer_name, nav_page, scroll_page, row_in_page))
+        log_progress(u"[오류] %s \u2014 %s" % (customer_name, error_msg))
     except Exception as e:
         log(u"    [ERROR_LOG] 오류 기록 실패: %s" % str(e))
 
@@ -1643,6 +1645,67 @@ def save_checkpoint(customer_name, chosung, nav_page, scroll_page, row_in_page):
             json.dump(checkpoint, f, ensure_ascii=False, indent=2)
     except Exception as e:
         log(u"    [CHECKPOINT] 저장 실패: %s" % str(e))
+
+
+def log_progress(msg):
+    """프로덕션 진행 로그 — 산출물 처리 위주 간결 기록 (CAPTURE_DIR/progress.log)"""
+    try:
+        import datetime
+        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        line = u"%s %s" % (ts, msg)
+        with codecs.open(PROGRESS_LOG, "a", "utf-8") as f:
+            f.write(line + u"\n")
+            f.flush()
+    except Exception:
+        pass  # 진행 로그 실패가 실행을 막으면 안 됨
+
+
+def _save_results_incremental(chosung_name):
+    """고객 결과를 즉시 디스크에 저장 (크래시 대비 증분 저장)"""
+    if not _chosung_customer_results:
+        return
+    try:
+        path = os.path.join(CAPTURE_DIR, u"customer_results_%s.json" % chosung_name)
+        with codecs.open(path, "w", "utf-8") as f:
+            json.dump(_chosung_customer_results, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass  # 증분 저장 실패가 실행을 막으면 안 됨
+
+
+def _append_customer_result(view_result, chosung_name):
+    """고객 결과를 _chosung_customer_results에 추가 (중복 방지) + 로그 + 증분 저장.
+
+    --resume 시 이전 결과가 복원된 상태에서 checkpoint 불일치로
+    동일 고객이 재처리될 수 있으므로, customer_name 기준 중복 감지.
+    중복 시 기존 항목을 최신 결과로 교체.
+    """
+    global _chosung_customer_results
+    cname = view_result.get(u"customer_name", u"")
+    # 중복 감지: 같은 이름의 기존 항목을 최신 결과로 교체
+    for i, existing in enumerate(_chosung_customer_results):
+        if existing.get(u"customer_name") == cname:
+            _chosung_customer_results[i] = view_result
+            log(u"    [DEDUP] 중복 고객 교체: %s" % cname)
+            _save_results_incremental(chosung_name)
+            return
+    _chosung_customer_results.append(view_result)
+    _log_customer_progress(view_result, chosung_name)
+
+
+def _log_customer_progress(view_result, chosung_name):
+    """고객 처리 완료 시 progress.log 기록 + 증분 저장"""
+    try:
+        cname = view_result.get(u"customer_name", u"?")
+        ar = view_result.get(u"annual_report", {})
+        vi = view_result.get(u"variable_insurance", {})
+        ar_text = u"AR:저장" if ar.get(u"saved") else (u"AR:미존재" if not ar.get(u"exists") else u"AR:실패")
+        vi_saved = vi.get(u"saved", 0)
+        vi_text = u"변액:%d건저장" % vi_saved if vi_saved else (u"변액:없음" if not vi.get(u"exists") else u"변액:실패")
+        idx = len(_chosung_customer_results)
+        log_progress(u"[고객] %s \u2014 %s %s (%d명완료)" % (cname, vi_text, ar_text, idx))
+    except Exception:
+        pass
+    _save_results_incremental(chosung_name)
 
 
 # ★ 초성별 고객통합뷰 처리 결과 수집용
@@ -1916,6 +1979,19 @@ ocr_consecutive_failures = 0  # 연속 실패 카운터
 for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     chosung_start_time = time.time()
     _chosung_customer_results = []  # 초성별 결과 초기화
+    # --resume: 이전 증분 저장된 결과가 있으면 복원
+    if RESUME_MODE:
+        _prev_results_path = os.path.join(CAPTURE_DIR, u"customer_results_%s.json" % chosung_name)
+        if os.path.exists(_prev_results_path):
+            try:
+                with codecs.open(_prev_results_path, "r", "utf-8") as _rf:
+                    _prev = json.load(_rf)
+                if _prev and isinstance(_prev, list):
+                    _chosung_customer_results = _prev
+                    log(u"  [RESUME] 이전 결과 복원: [%s] %d명" % (chosung_name, len(_prev)))
+            except Exception:
+                pass
+    log_progress(u"[시작] 초성: %s" % chosung_name)
     log(u"\n  === [%s] 초성 처리 시작 ===" % chosung_name)
     log(u"  [%s] 버튼 클릭..." % chosung_name)
     try:
@@ -2154,7 +2230,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                             'gender': ocr_row.get(u'성별', u''),
                                                             'email': ocr_row.get(u'이메일', u''),
                                                         }
-                                                        _chosung_customer_results.append(view_result)
+                                                        _append_customer_result(view_result, chosung_name)
                                                 except Exception as e2:
                                                     err_type_name = e2.__class__.__name__
                                                     err_msg = u"%s" % e2
@@ -2457,7 +2533,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                     'gender': ocr_row.get(u'성별', u''),
                                                     'email': ocr_row.get(u'이메일', u''),
                                                 }
-                                                _chosung_customer_results.append(view_result)
+                                                _append_customer_result(view_result, chosung_name)
                                         except Exception as e:
                                             err_type_name = e.__class__.__name__
                                             err_msg = u"%s" % e
@@ -2592,6 +2668,8 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         chosung_name, total_rows, total_errors, error_customers,
         nav_page, global_page, chosung_elapsed
     )
+    _saved = len(_chosung_customer_results)
+    log_progress(u"[초성완료] %s \u2014 %d명 처리 (저장:%d, 오류:%d)" % (chosung_name, total_rows, _saved, total_errors))
 
     # 전체 통계에 합산
     all_total_rows += total_rows
@@ -2612,6 +2690,7 @@ if SCROLL_TEST:
 else:
     log(u"초성 버튼 테스트 완료!")
 log(u"소요 시간: %d분 %d초" % (minutes, seconds))
+log_progress(u"[완료] 전체 \u2014 %d명 처리, 오류:%d명, 소요: %d분 %d초" % (all_total_rows, len(all_error_customers), minutes, seconds))
 log(u"총 행수: %d행, 오류: %d명" % (all_total_rows, len(all_error_customers)))
 log(u"캡처/OCR 결과: %s" % CAPTURE_DIR)
 log(u"로그 파일: %s" % LOG_FILE)

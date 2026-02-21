@@ -580,7 +580,15 @@ class AutoClickerApp(ctk.CTk):
         )
         # self._auto_compact_cb.pack(side="left", padx=(6, 0), pady=5)  # 임시 숨김
 
-        # 상태 표시 (우측)
+        # 버전 (toolbar 최우측 — 타이틀바 없을 때도 표시)
+        self._toolbar_version = ctk.CTkLabel(
+            self._toolbar, text=f"v{_VERSION}",
+            font=ctk.CTkFont(family=_FONT, size=9),
+            text_color="gray45"
+        )
+        self._toolbar_version.pack(side="right", padx=(0, 6), pady=3)
+
+        # 상태 표시 (우측, 버전 왼쪽)
         self._status_label = ctk.CTkLabel(
             self._toolbar, text="대기 중",
             font=ctk.CTkFont(family=_FONT, size=11), text_color="gray60"
@@ -640,6 +648,7 @@ class AutoClickerApp(ctk.CTk):
             self,
             on_toggle=self._toggle_compact,
         )
+        self._compact_panel.set_version(_VERSION)
 
     def _build_normal_content(self):
         self._normal_frame = ctk.CTkFrame(self, fg_color="transparent")

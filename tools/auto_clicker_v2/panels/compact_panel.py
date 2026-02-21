@@ -92,13 +92,21 @@ class CompactPanel(ctk.CTkFrame):
         self._activity_label.bind("<Button-1>", self._start_drag)
         self._activity_label.bind("<B1-Motion>", self._do_drag)
 
-        # 소요시간 (우측)
+        # 버전 (최우측 고정)
+        self._version_label = ctk.CTkLabel(
+            self, text="",
+            font=ctk.CTkFont(family=_FONT, size=9),
+            text_color="gray45"
+        )
+        self._version_label.pack(side="right", padx=(0, 4), pady=3)
+
+        # 소요시간 (버전 왼쪽)
         self._time_label = ctk.CTkLabel(
             self, text="",
             font=ctk.CTkFont(family=_FONT, size=10),
             text_color="gray60"
         )
-        self._time_label.pack(side="right", padx=(0, 4), pady=3)
+        self._time_label.pack(side="right", padx=(0, 2), pady=3)
 
     # --- 드래그 이동 ---
 
@@ -122,6 +130,10 @@ class CompactPanel(ctk.CTkFrame):
     def set_user_info(self, text: str):
         """사용자 정보 표시 ([DEV] 사용자명)"""
         self._user_info_label.configure(text=text)
+
+    def set_version(self, version: str):
+        """버전 표시"""
+        self._version_label.configure(text=f"v{version}")
 
     def set_chosung(self, chosung: str):
         """선택한 초성 표시"""
