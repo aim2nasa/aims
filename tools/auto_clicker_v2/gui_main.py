@@ -147,6 +147,12 @@ class AutoClickerApp(ctk.CTk):
             import tkinter as _tk
             _tmp = _tk.Tk()
             _tmp.withdraw()
+            try:
+                _ico = os.path.join(sys._MEIPASS, "autoclicker.ico") if getattr(sys, "frozen", False) else os.path.join(_BASE_DIR, "autoclicker.ico")
+                if os.path.exists(_ico):
+                    _tmp.iconbitmap(_ico)
+            except Exception:
+                pass
             messagebox.showwarning("AutoClicker", "이미 실행 중입니다.\n기존 창을 사용하세요.", parent=_tmp)
             _tmp.destroy()
             raise SystemExit(0)

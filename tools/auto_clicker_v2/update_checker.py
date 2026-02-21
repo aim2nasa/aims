@@ -156,6 +156,17 @@ def download_with_progress(url: str, version: str) -> str:
     root.resizable(False, False)
     root.attributes("-topmost", True)
 
+    # 커스텀 아이콘 적용
+    try:
+        if getattr(sys, "frozen", False):
+            _ico = os.path.join(sys._MEIPASS, "autoclicker.ico")
+        else:
+            _ico = os.path.join(os.path.dirname(__file__), "autoclicker.ico")
+        if os.path.exists(_ico):
+            root.iconbitmap(_ico)
+    except Exception:
+        pass
+
     # 브라우저가 있는 모니터(주 모니터) 중앙에 배치
     w, h = 360, 120
     sx = root.winfo_screenwidth() // 2 - w // 2
