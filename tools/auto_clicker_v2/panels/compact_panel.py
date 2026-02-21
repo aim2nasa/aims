@@ -45,6 +45,15 @@ class CompactPanel(ctk.CTkFrame):
         )
         self._toggle_btn.pack(side="left", padx=(3, 4), pady=3)
 
+        # 사용자 정보 ([DEV] 사용자명 — 타이틀바 없을 때 대체 표시)
+        self._user_info_label = ctk.CTkLabel(
+            self, text="",
+            font=ctk.CTkFont(family=_FONT, size=10),
+            text_color="#5dade2",
+        )
+        # 텍스트가 비어있으면 공간 차지 안 함 (pack 후 빈 텍스트면 자동 축소)
+        self._user_info_label.pack(side="left", padx=(0, 4), pady=3)
+
         # 선택한 초성
         self._chosung_label = ctk.CTkLabel(
             self, text="",
@@ -109,6 +118,10 @@ class CompactPanel(ctk.CTkFrame):
             self._on_toggle()
 
     # --- 외부에서 호출하는 상태 동기화 ---
+
+    def set_user_info(self, text: str):
+        """사용자 정보 표시 ([DEV] 사용자명)"""
+        self._user_info_label.configure(text=text)
 
     def set_chosung(self, chosung: str):
         """선택한 초성 표시"""

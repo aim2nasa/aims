@@ -179,6 +179,7 @@ class AutoClickerApp(ctk.CTk):
         self._update_interval = 100
         self._is_compact = False
         self._dev_mode = False
+        self._user_name = ""
         self._cli_args = cli_args
         self._settings = {
             'chosungs': set(_CHOSUNGS),   # 기본: 전체 선택
@@ -239,6 +240,8 @@ class AutoClickerApp(ctk.CTk):
         self.attributes("-topmost", True)
 
         self._build_ui()
+        # _build_ui 완료 후 toolbar/compact 라벨에 DEV 모드 초기 상태 반영
+        self._update_user_info()
         # 개발자 모드 단축키 (Ctrl+Shift+D → PIN 입력 2단계)
         self.bind("<Control-Shift-D>", self._toggle_dev_mode)
         # 앱 닫기(X) = 실행 중인 SikuliX 프로세스 강제 종료 후 종료
@@ -272,9 +275,29 @@ class AutoClickerApp(ctk.CTk):
     # ===== 개발자 모드 =====
 
     def _update_title(self):
-        """타이틀바 텍스트 갱신 (dev 모드 시 [DEV] suffix)"""
+        """타이틀바 텍스트 갱신 (dev 모드 시 [DEV] suffix, 인증 시 사용자 이름)"""
         suffix = " [DEV]" if self._dev_mode else ""
-        self.title(f"AutoClicker v{_VERSION}{suffix}")
+        name_part = f" — {self._user_name}" if self._user_name else ""
+        self.title(f"AutoClicker v{_VERSION}{suffix}{name_part}")
+        self._update_user_info()
+
+    def _update_user_info(self):
+        """툴바 + 컴팩트 패널의 사용자 정보 라벨 갱신 (타이틀바 없을 때 대체 표시)"""
+        parts = []
+        if self._dev_mode:
+            parts.append("[DEV]")
+        if self._user_name:
+            parts.append(self._user_name)
+        text = " ".join(parts)
+        if hasattr(self, "_user_info_label"):
+            self._user_info_label.configure(text=text)
+        if hasattr(self, "_compact_panel"):
+            self._compact_panel.set_user_info(text)
+
+    def set_user_name(self, name: str):
+        """인증된 사용자 이름 저장 및 타이틀 갱신"""
+        self._user_name = name
+        self._update_title()
 
     def _toggle_dev_mode(self, event=None):
         """개발자 모드 토글 (Ctrl+Shift+D → PIN 입력 2단계)"""
@@ -513,6 +536,14 @@ class AutoClickerApp(ctk.CTk):
             fg_color="#2d7d46", hover_color="#3a9957"
         )
         self._run_btn.pack(side="left", padx=(0, 4), pady=3)
+
+        # 사용자 정보 라벨 (DEV 모드 + 인증 사용자명 — 타이틀바 없을 때도 표시)
+        self._user_info_label = ctk.CTkLabel(
+            self._toolbar, text="",
+            font=ctk.CTkFont(family=_FONT, size=10),
+            text_color="#5dade2",
+        )
+        self._user_info_label.pack(side="left", padx=(4, 0), pady=3)
 
         # 컴팩트 모드 토글
         self._compact_btn = ctk.CTkButton(
@@ -1472,7 +1503,7 @@ if __name__ == "__main__":
     app = AutoClickerApp(cli_args=cli_args, authenticated=authenticated)
 
     if user_name:
-        app.title(f"{app.title()} — {user_name}")
+        app.set_user_name(user_name)
 
     # tkinter 콜백 예외도 파일에 기록
     def _tk_exception_handler(exc_type, exc_value, exc_tb):
