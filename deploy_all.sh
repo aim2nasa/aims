@@ -54,7 +54,7 @@ echo "=== AIMS 전체 배포 시작 ==="
 echo ""
 
 # 1. Git 정리 및 Pull
-run_step 1 "Git 정리 및 Pull" "cd '$AIMS_DIR' && git checkout -- . && git clean -fd -e deploy_all.sh -e '**/.build_hash' -e '**/.requirements_hash' -e .env.shared && git pull"
+run_step 1 "Git 정리 및 Pull" "cd '$AIMS_DIR' && git checkout -- . && git clean -fd -e deploy_all.sh -e '**/.build_hash' -e '**/.requirements_hash' -e .env.shared -e '**/public/installers/**' && git pull"
 
 # 2. aims_api
 run_step 2 "aims_api 배포" "cd '$AIMS_DIR/backend/api/aims_api' && ./deploy_aims_api.sh"
