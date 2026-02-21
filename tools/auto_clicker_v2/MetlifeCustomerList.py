@@ -97,13 +97,18 @@ if os.environ.get("AC_DEV_MODE", "").strip() == "1":
 elif os.environ.get("AC_DEV_MODE", "").strip() == "0":
     DEV_MODE = False
 
-# DEV_DIR: 디버그 파일 저장 경로 (항상 생성, 프로덕션이면 종료 시 삭제)
-DEV_DIR = os.path.join(CAPTURE_DIR, "dev")
+# DEV_DIR: 디버그 파일 저장 경로
+# - DEV_MODE: CAPTURE_DIR/dev 에 영구 보존
+# - 프로덕션: 시스템 임시 디렉토리 사용 (종료/크래시 시에도 사용자 폴더 오염 없음)
+if DEV_MODE:
+    DEV_DIR = os.path.join(CAPTURE_DIR, "dev")
+else:
+    import tempfile as _tf
+    DEV_DIR = _tf.mkdtemp(prefix="ac_run_")
 if not os.path.exists(DEV_DIR):
     os.makedirs(DEV_DIR)
 
-# atexit: 프로덕션 모드에서 종료 시 dev 폴더 정리
-# FATAL 크래시 (raise SystemExit) 포함 모든 종료 경로에서 실행됨
+# atexit: 프로덕션 모드에서 종료 시 임시 폴더 정리
 import atexit as _atexit
 def _cleanup_on_exit():
     _close_log_file()  # 중복 호출 안전 (핸들 None 체크)
@@ -377,7 +382,7 @@ def sleep(seconds):
 
 
 # 진단 모드 설정 (클릭 위치 분석용 스크린샷 저장)
-DIAGNOSTIC_MODE = True  # True면 클릭 전 스크린샷 저장
+DIAGNOSTIC_MODE = DEV_MODE  # DEV 모드에서만 클릭 전 스크린샷 저장
 DIAGNOSTIC_DIR = os.path.join(DEV_DIR, "diagnostic")
 if DIAGNOSTIC_MODE and not os.path.exists(DIAGNOSTIC_DIR):
     os.makedirs(DIAGNOSTIC_DIR)
@@ -1224,7 +1229,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                     log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                     try:
                         from verify_customer_integrated_view import verify_customer_integrated_view
-                        view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
+                        view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=DEV_DIR)
                         log(u"        -> 고객통합뷰 처리 완료")
                         # 고객 상세정보 병합
                         if isinstance(view_result, dict):
@@ -1573,9 +1578,9 @@ if SCROLL_TEST:
     if not os.path.exists(SCROLL_TEST_DIR):
         os.makedirs(SCROLL_TEST_DIR)
 
-# 에러/체크포인트 파일 경로
-ERROR_FILE = os.path.join(DEV_DIR, u"errors.json")
-CHECKPOINT_FILE = os.path.join(DEV_DIR, u"checkpoint.json")
+# 에러/체크포인트 파일 경로 (CAPTURE_DIR에 저장 — 재개/리포트에 필요한 상태 데이터)
+ERROR_FILE = os.path.join(CAPTURE_DIR, u"errors.json")
+CHECKPOINT_FILE = os.path.join(CAPTURE_DIR, u"checkpoint.json")
 
 # 재개 위치 정보 (--resume 모드에서 사용)
 _resume_info = None
@@ -1728,7 +1733,7 @@ def generate_chosung_summary(chosung_name, total_rows, total_errors, error_custo
 
     # ★ 초성별 고객 결과 JSON 저장 (리셋 전 디스크에 영속화)
     if results:
-        results_json_path = os.path.join(DEV_DIR, u"customer_results_%s.json" % chosung_name)
+        results_json_path = os.path.join(CAPTURE_DIR, u"customer_results_%s.json" % chosung_name)
         try:
             with codecs.open(results_json_path, "w", "utf-8") as f:
                 json.dump(results, f, ensure_ascii=False, indent=2)
@@ -2132,7 +2137,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                 log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                                                 try:
                                                     from verify_customer_integrated_view import verify_customer_integrated_view
-                                                    view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
+                                                    view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=DEV_DIR)
                                                     log(u"        -> 고객통합뷰 처리 완료")
                                                     if isinstance(view_result, dict):
                                                         if _last_customer_detail:
@@ -2435,7 +2440,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                         log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                                         try:
                                             from verify_customer_integrated_view import verify_customer_integrated_view
-                                            view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
+                                            view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=DEV_DIR)
                                             log(u"        -> 고객통합뷰 처리 완료")
                                             if isinstance(view_result, dict):
                                                 if _last16_customer_detail:
