@@ -339,6 +339,7 @@ class NotificationBlocker:
             subprocess.Popen(
                 ["taskkill", "/f", "/im", "ShellExperienceHost.exe"],
                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                creationflags=subprocess.CREATE_NO_WINDOW,
             )
             self._log("ShellExperienceHost 종료 요청 (비동기)")
         except Exception as e:
