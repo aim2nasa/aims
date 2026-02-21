@@ -1463,7 +1463,13 @@ if __name__ == "__main__":
         _reports_idx = sys.argv.index("--run-reports")
         if _reports_idx + 1 < len(sys.argv):
             _output_dir = sys.argv[_reports_idx + 1]
-            sys.argv = [sys.argv[0], _output_dir]
+            _new_argv = [sys.argv[0], _output_dir]
+            # --timestamp를 위치 무관하게 파싱하여 전달
+            if "--timestamp" in sys.argv:
+                _ts_idx = sys.argv.index("--timestamp")
+                if _ts_idx + 1 < len(sys.argv):
+                    _new_argv.extend(["--timestamp", sys.argv[_ts_idx + 1]])
+            sys.argv = _new_argv
             # generate_reports 모듈 경로 (frozen: _MEIPASS, dev: 현재 디렉토리)
             if getattr(sys, 'frozen', False):
                 _reports_dir = sys._MEIPASS

@@ -88,9 +88,15 @@ elif len(sys.argv) >= 3 and sys.argv[1] == "--run-metdo":
     sys.exit(metdo_main())
 
 elif len(sys.argv) >= 3 and sys.argv[1] == "--run-reports":
-    # 리포트 생성 모드: SikuliX → AutoClicker.exe --run-reports <output_dir>
+    # 리포트 생성 모드: SikuliX → AutoClicker.exe --run-reports <output_dir> [--timestamp TS]
     output_dir = sys.argv[2]
-    sys.argv = [sys.argv[0], output_dir]
+    new_argv = [sys.argv[0], output_dir]
+    # --timestamp를 위치 무관하게 파싱하여 전달
+    if "--timestamp" in sys.argv:
+        _ts_idx = sys.argv.index("--timestamp")
+        if _ts_idx + 1 < len(sys.argv):
+            new_argv.extend(["--timestamp", sys.argv[_ts_idx + 1]])
+    sys.argv = new_argv
     from generate_reports import main as reports_main
     reports_main()
     sys.exit(0)
