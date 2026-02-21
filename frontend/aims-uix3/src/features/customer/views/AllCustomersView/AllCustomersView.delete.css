@@ -34,7 +34,6 @@
     .customer-item:has(.customer-checkbox) > .customer-status {
       grid-column: 4;
     }
-  }
 
   /* === 🍎 ACCESSIBILITY === */
 
