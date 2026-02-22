@@ -1164,6 +1164,14 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
         if not name:
             continue
 
+        # 방어적 중복 감지: 스크롤 dedup 실패 시에도 이미 처리된 고객 재처리 방지
+        if _is_already_processed(name):
+            log(u"        [%d/%d] %s 스킵 (이미 처리됨 — 방어적 중복 감지)" % (i + 1, total_to_process, name))
+            # current_click_y를 갱신하지 않음 → 다음 처리 행이 get_row_y()로 절대 좌표 계산
+            # (실제 행 선택 없이 Arrow Down 하면 커서 위치 불확정)
+            current_click_y = None
+            continue
+
         # --start-from 모드: 지정된 고객을 찾을 때까지 스킵 (해당 고객 포함 처리)
         global _start_from_found
         if START_FROM_MODE and not _start_from_found:
@@ -1777,6 +1785,19 @@ def _log_customer_progress(view_result, chosung_name):
 _chosung_customer_results = []
 
 
+def _is_already_processed(name):
+    """이미 처리된 고객인지 확인 (방어적 중복 감지).
+
+    정확한 이름 일치만 허용. OCR 오류 허용(퍼지 매칭)은 스크롤 dedup에서만 처리.
+    (스크롤 dedup은 동일 물리 페이지 비교이므로 안전하지만,
+     방어적 dedup은 전체 결과 대상이므로 다른 고객과 충돌 위험)
+    """
+    for r in _chosung_customer_results:
+        if r.get(u"customer_name", u"") == name:
+            return True
+    return False
+
+
 def generate_chosung_summary(chosung_name, total_rows, total_errors, error_customers, nav_page, global_page, elapsed_sec):
     """
     초성 처리 완료 후 Summary + 문제 Report 출력
@@ -2042,6 +2063,42 @@ log(u"[1단계 완료]")
 ###########################################
 # 2단계: 초성 버튼 클릭 및 고객 처리
 ###########################################
+
+# ── 스크롤 중복 감지용 퍼지 매칭 유틸 ──
+
+def _fuzzy_row_match(row_a, row_b):
+    """두 행 (이름, 생년월일) 퍼지 비교. OCR 오류 1글자까지 허용."""
+    name_a, birth_a = row_a
+    name_b, birth_b = row_b
+    # 완전 일치
+    if name_a == name_b and birth_a == birth_b:
+        return True
+    # 생년월일 일치 + 이름 길이 같고 1글자 이하 차이
+    if birth_a and birth_b and birth_a == birth_b and len(name_a) == len(name_b):
+        diff = sum(1 for a, b in zip(name_a, name_b) if a != b)
+        if diff <= 1:
+            return True
+    return False
+
+
+def _fuzzy_overlap_match(prev_rows, curr_rows, overlap):
+    """이전 페이지 끝 overlap행과 현재 페이지 시작 overlap행 퍼지 비교.
+
+    overlap >= 3: 최대 1행 불일치 허용 (OCR 불안정 보완)
+    overlap < 3: 모든 행 퍼지 일치 필요 (작은 샘플에서 1행 오류 = 50~100% 오류율)
+    """
+    prev_slice = prev_rows[-overlap:]
+    curr_slice = curr_rows[:overlap]
+    max_mismatches = 1 if overlap >= 3 else 0
+    mismatches = 0
+    for a, b in zip(prev_slice, curr_slice):
+        if not _fuzzy_row_match(a, b):
+            mismatches += 1
+            if mismatches > max_mismatches:
+                return False
+    return True
+
+
 log(u"\n[2단계] 초성 버튼 및 고객 처리")
 
 # 전체 통계 (모든 초성 합산)
@@ -2395,13 +2452,12 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                     if name:
                         current_rows.append((name, birth))
 
-                # 스크롤 중복 감지: 이전 페이지 끝과 현재 페이지 시작 비교
+                # 스크롤 중복 감지: 이전 페이지 끝과 현재 페이지 시작 퍼지 비교
+                # (OCR 오류로 같은 이름이 다르게 읽히는 경우 허용)
                 scroll_dups = 0
                 if prev_page_rows:
-                    # 이전 페이지 끝 N행과 현재 페이지 시작 N행이 얼마나 겹치는지 확인
                     for overlap in range(min(len(prev_page_rows), len(current_rows)), 0, -1):
-                        # 이전 페이지 끝 overlap행 vs 현재 페이지 시작 overlap행
-                        if prev_page_rows[-overlap:] == current_rows[:overlap]:
+                        if _fuzzy_overlap_match(prev_page_rows, current_rows, overlap):
                             scroll_dups = overlap
                             break
 
