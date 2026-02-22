@@ -1164,14 +1164,6 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
         if not name:
             continue
 
-        # 방어적 중복 감지: 스크롤 dedup 실패 시에도 이미 처리된 고객 재처리 방지
-        if _is_already_processed(name):
-            log(u"        [%d/%d] %s 스킵 (이미 처리됨 — 방어적 중복 감지)" % (i + 1, total_to_process, name))
-            # current_click_y를 갱신하지 않음 → 다음 처리 행이 get_row_y()로 절대 좌표 계산
-            # (실제 행 선택 없이 Arrow Down 하면 커서 위치 불확정)
-            current_click_y = None
-            continue
-
         # --start-from 모드: 지정된 고객을 찾을 때까지 스킵 (해당 고객 포함 처리)
         global _start_from_found
         if START_FROM_MODE and not _start_from_found:
@@ -1746,22 +1738,11 @@ def _trigger_incremental_reports():
 
 
 def _append_customer_result(view_result, chosung_name):
-    """고객 결과를 _chosung_customer_results에 추가 (중복 방지) + 로그 + 증분 저장.
+    """고객 결과를 _chosung_customer_results에 추가 + 로그 + 증분 저장.
 
-    --resume 시 이전 결과가 복원된 상태에서 checkpoint 불일치로
-    동일 고객이 재처리될 수 있으므로, customer_name 기준 중복 감지.
-    중복 시 기존 항목을 최신 결과로 교체.
+    동명 고객도 각각 별도 결과로 저장 (행 단위 기계적 처리 원칙).
     """
     global _chosung_customer_results
-    cname = view_result.get(u"customer_name", u"")
-    # 중복 감지: 같은 이름의 기존 항목을 최신 결과로 교체
-    for i, existing in enumerate(_chosung_customer_results):
-        if existing.get(u"customer_name") == cname:
-            _chosung_customer_results[i] = view_result
-            log(u"    [DEDUP] 중복 고객 교체: %s" % cname)
-            _save_results_incremental(chosung_name)
-            _trigger_incremental_reports()
-            return
     _chosung_customer_results.append(view_result)
     _log_customer_progress(view_result, chosung_name)
 
@@ -1786,18 +1767,6 @@ def _log_customer_progress(view_result, chosung_name):
 # ★ 초성별 고객통합뷰 처리 결과 수집용
 _chosung_customer_results = []
 
-
-def _is_already_processed(name):
-    """이미 처리된 고객인지 확인 (방어적 중복 감지).
-
-    정확한 이름 일치만 허용. OCR 오류 허용(퍼지 매칭)은 스크롤 dedup에서만 처리.
-    (스크롤 dedup은 동일 물리 페이지 비교이므로 안전하지만,
-     방어적 dedup은 전체 결과 대상이므로 다른 고객과 충돌 위험)
-    """
-    for r in _chosung_customer_results:
-        if r.get(u"customer_name", u"") == name:
-            return True
-    return False
 
 
 def generate_chosung_summary(chosung_name, total_rows, total_errors, error_customers, nav_page, global_page, elapsed_sec):
