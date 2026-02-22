@@ -762,3 +762,34 @@ Phase 2 (보류 — 실제 고비용 파일 발생 시에만):
 - 프론트엔드에서 파일 선택 시점에 사전 검증은 하고 있으나, 결과 화면의 실패 항목 처리가 부적절
 - ZIP 파일은 크기와 무관하게 UNSUPPORTED_MIME_TYPES로 거부됨 (별도 이슈)
 - Gini 취약점 발견은 업로드 제한과 무관하게 현재도 존재하는 구조적 문제
+
+---
+
+## 다음 단계 진행 가이드
+
+### Phase 0 시작 (B1~B4 버그 수정)
+```
+"Phase 0 시작해. B2(fail-open)부터."
+```
+- B2 fail-open→fail-closed 수정이 가장 시급
+- 이후 B1(estimated_pages), B3(owner_id), B4(서버사이드 검증), streaming upload 순서
+
+### Phase 1 시작 (업로드 제한 상향)
+```
+"Phase 1 시작해. Nginx/프론트엔드 제한 상향."
+```
+- Phase 0 + streaming upload 완료 후 진행
+- Nginx `client_max_body_size` 및 프론트엔드 제한을 500MB로 상향
+
+### Phase 2 상세 설계 (AI 처리 임계값 UX)
+```
+"Phase 2 상세 설계 해. 상태 다이어그램부터."
+```
+- 미결 사항 6건 (상태 전이, 임계값, UX 흐름, 일괄 업로드 UI, TTL, 소급 적용)
+- 실제 고비용 파일 발생 시 진행
+
+### 현재 상태 확인
+```
+"업로드 50MB 이슈 현재 상태 알려줘."
+```
+- 이 문서(`docs/issues/ISSUE-upload-50mb-limit-ux.md`)를 읽어서 현황 브리핑
