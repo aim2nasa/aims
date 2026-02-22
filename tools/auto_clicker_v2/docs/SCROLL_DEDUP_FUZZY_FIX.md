@@ -1,7 +1,7 @@
-# 스크롤 중복 감지 퍼지 매칭 수정
+# 스크롤 중복 감지 수정 (첫 행 건너뛰기 + exact match)
 
 **날짜**: 2026-02-22
-**버전**: v0.1.83
+**버전**: v0.1.83 → v0.1.84
 **파일**: `MetlifeCustomerList.py`
 
 ---
@@ -11,100 +11,76 @@
 ㅊ 초성 이어하기(resume) 실행 시:
 - **시작 고객**: 최한준 (39명 중 35번째)
 - **예상 결과**: 최한준, 최현사, 최현지, 최혜진, 최희정 (5명)
-- **실제 결과**: 최유미, 최유진, 최윤정, 최은정, 최은화 등 **잘못된 고객** 처리 후 멈추지 않고 계속 진행
+- **실제 결과**: 잘못된 고객 처리 후 멈추지 않고 계속 진행
 
 ## 원인
 
-### 스크롤 페이지 전환 시 OCR 불일치
+### 스크롤 시 첫 행이 잘려 보이는 물리적 현상
 
-Nexacro 그리드에서 Page Down으로 스크롤할 때, 이전 페이지 끝과 현재 페이지 시작의 겹치는 행(overlap)을 비교하여 중복을 감지한다.
+Page Down 스크롤은 정수 행 단위로 정확히 되지 않을 수 있다.
+스크롤된 페이지의 **첫 번째 행이 반쯤 잘려서 표시**되며, OCR이 이를 부정확하게 읽는다.
 
-**문제**: SikuliX OCR(Upstage API)이 **같은 텍스트를 다르게 읽는 경우** 발생:
+| 페이지 | 1행 OCR 결과 | 실제 | 원인 |
+|--------|-------------|------|------|
+| 3페이지 | 최유미 | 최유미 | 완전히 보임 |
+| 4페이지 | **죄유미** | 최유미 | **잘려 보임** |
 
-| 페이지 | OCR 결과 | 실제 이름 |
-|--------|----------|-----------|
-| 3페이지 | 최유미 | 최유미 |
-| 4페이지 | **죄유미** | 최유미 |
+**이것은 OCR 오류가 아니라 물리적 표시 문제다.**
 
-기존 코드는 **exact match**(`==`)로 비교했기 때문에:
-```python
-# 기존 코드 (exact match)
-if prev_page_rows[-overlap:] == current_rows[:overlap]:
-    scroll_dups = overlap
-    break
-```
+### v0.1.83의 잘못된 접근 (overfitting)
 
-`최유미 != 죄유미` → overlap 감지 실패 → `scroll_dups = 0` → 이미 처리한 고객을 **새로운 고객으로 오인** → 재처리 + 잘못된 행 클릭.
+v0.1.83에서는 이 문제를 퍼지 매칭(1글자 차이 허용)으로 해결하려 했다.
+이는 증상에 대한 band-aid fix이며, 임의 임계값에 의존하는 overfitting이었다.
 
-## 해결
+## 해결 (v0.1.84)
 
-### 1. 퍼지 행 비교 (`_fuzzy_row_match`)
+### 핵심 원리
 
-두 행 (이름, 생년월일) 비교 시 OCR 오류 1글자까지 허용:
+잘릴 수 있는 첫 행은 비교에서 **제외**하고, 완전히 보이는 2~12번째 행으로 **exact match**한다.
 
 ```python
-def _fuzzy_row_match(row_a, row_b):
-    name_a, birth_a = row_a
-    name_b, birth_b = row_b
-    if name_a == name_b and birth_a == birth_b:
-        return True
-    # 생년월일 일치 + 이름 길이 동일 + 1글자 차이 이하
-    if birth_a and birth_b and birth_a == birth_b and len(name_a) == len(name_b):
-        diff = sum(1 for a, b in zip(name_a, name_b) if a != b)
-        if diff <= 1:
-            return True
-    return False
+def _find_scroll_overlap(prev_rows, curr_rows):
+    reliable = curr_rows[1:]  # 2번째 행부터 (항상 완전히 보임)
+
+    # reliable의 최장 prefix가 prev_rows의 suffix와 일치하는 길이 찾기
+    for match_len in range(min(len(prev_rows), len(reliable)), 0, -1):
+        if reliable[:match_len] == prev_rows[-match_len:]:
+            return match_len + 1  # +1 = 잘린 첫 행 (overlap의 일부)
+
+    # 첫 행만 겹칠 수 있음 (잘리지 않은 경우)
+    if curr_rows[0] == prev_rows[-1]:
+        return 1
+
+    return 0
 ```
 
-**안전장치**: 생년월일이 반드시 일치해야 하므로 다른 고객과의 오인 가능성 최소화.
+### 왜 이것이 올바른가
 
-### 2. 퍼지 오버랩 비교 (`_fuzzy_overlap_match`)
+- **퍼지 매칭 제거**: 임의 임계값 없음, exact match만 사용
+- **일반화**: 첫 행이 잘리든 안 잘리든 동일하게 동작
+- **물리적 사실 기반**: "스크롤 시 첫 행만 잘릴 수 있다"는 Nexacro 그리드의 물리적 제약
 
-overlap 크기에 따라 허용 불일치 수 조절:
+### 알려진 한계
 
-| overlap 크기 | 허용 불일치 행 수 | 근거 |
-|-------------|-----------------|------|
-| >= 3행 | 최대 1행 | 1행 오류 = 33% 이하 오류율 |
-| < 3행 | 0행 (모두 일치) | 1행 오류 = 50~100% 오류율 → 위험 |
-
-### 3. 방어적 중복 감지 (`_is_already_processed`)
-
-스크롤 dedup이 실패하더라도, 이미 처리된 고객의 **정확한 이름 일치**로 재처리 방지:
-
-```python
-def _is_already_processed(name):
-    for r in _chosung_customer_results:
-        if r.get("customer_name", "") == name:
-            return True
-    return False
-```
-
-- 퍼지 매칭 **미사용** (방어적 dedup은 전체 결과 대상이므로 다른 고객과 충돌 위험)
-- 스킵 시 `current_click_y = None` 설정 (실제 행 선택 없이 Arrow Down 사용 방지)
-
-## 수정 요약
-
-| 계층 | 매칭 방식 | 역할 |
-|------|----------|------|
-| 1차: 스크롤 dedup | 퍼지 매칭 (생년월일+이름 1글자 허용) | 페이지 전환 시 겹침 행 수 정확히 산출 |
-| 2차: 방어적 dedup | 정확 매칭 (이름 exact) | 1차 실패 시 안전망 |
+overlap=1이고 첫 행이 잘린 경우 감지 불가 (overlap=0으로 처리).
+방어적 dedup(`_is_already_processed`)이 안전망으로 작동.
 
 ## 검증
 
-| 검증 단계 | 결과 |
-|-----------|------|
-| Mock 테스트 46건 | ALL PASS |
-| Gini 품질 검증 | PASS (3회차) |
-| 통합 시뮬레이션 29건 | ALL PASS |
-| DEV 모드 실환경 테스트 (ㅊ 이어하기) | PASS - 5명 정확히 처리 |
+| 단계 | 결과 |
+|------|------|
+| Mock 테스트 26건 | ALL PASS |
+| Gini 품질 검수 | PASS |
+| 시뮬레이션 22건 (실제 로그 재현) | ALL PASS |
+| Alex/Gini 독립 분석 | 양측 PASS, overfitting 없음 확인 |
 
-### 실환경 테스트 핵심 로그
+### 실환경 데이터 검증 (3→4페이지 전환)
 
 ```
-[N1-S3] 페이지 3: 최유미 (정상 OCR)
-[N1-S4] 페이지 4: 죄유미 (OCR 오류) → 퍼지 매칭으로 10행 중복 정확 감지
-  → 새로운 2행(최현지, 최혜진)만 처리
-[N1-S5] 페이지 5: 12행 전부 중복 → 스크롤 끝 감지
-  → 13번째 행 최희정 처리
-결과: 최한준, 최현사, 최현지, 최혜진, 최희정 (5명) 정확히 처리 완료
+3페이지: 최유미(정확), 최유진, 최윤정, ..., 최한준, 최현사
+4페이지: 죄유미(잘림), 최유진, 최윤정, ..., 최한준, 최현사, 최현지, 최혜진
+
+reliable = [최유진, ..., 최현사] (9행 exact match)
+overlap = 9 + 1 = 10
+새로운 행 = [최현지, 최혜진]
 ```

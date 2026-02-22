@@ -2064,39 +2064,40 @@ log(u"[1단계 완료]")
 # 2단계: 초성 버튼 클릭 및 고객 처리
 ###########################################
 
-# ── 스크롤 중복 감지용 퍼지 매칭 유틸 ──
+# ── 스크롤 중복 감지: 첫 행 건너뛰기 + exact match ──
 
-def _fuzzy_row_match(row_a, row_b):
-    """두 행 (이름, 생년월일) 퍼지 비교. OCR 오류 1글자까지 허용."""
-    name_a, birth_a = row_a
-    name_b, birth_b = row_b
-    # 완전 일치
-    if name_a == name_b and birth_a == birth_b:
-        return True
-    # 생년월일 일치 + 이름 길이 같고 1글자 이하 차이
-    if birth_a and birth_b and birth_a == birth_b and len(name_a) == len(name_b):
-        diff = sum(1 for a, b in zip(name_a, name_b) if a != b)
-        if diff <= 1:
-            return True
-    return False
+def _find_scroll_overlap(prev_rows, curr_rows):
+    """이전 페이지와 현재 페이지의 overlap 행 수를 계산.
 
+    Page Down 스크롤 시 첫 행이 잘려 보일 수 있으므로 비교에서 제외하고,
+    나머지 행(2번째~)으로 exact match하여 overlap을 산출한다.
+    첫 행이 잘리지 않는 경우에도 동일하게 동작한다.
 
-def _fuzzy_overlap_match(prev_rows, curr_rows, overlap):
-    """이전 페이지 끝 overlap행과 현재 페이지 시작 overlap행 퍼지 비교.
+    Args:
+        prev_rows: 이전 페이지 행 리스트 [(name, birth), ...]
+        curr_rows: 현재 페이지 행 리스트 [(name, birth), ...]
 
-    overlap >= 3: 최대 1행 불일치 허용 (OCR 불안정 보완)
-    overlap < 3: 모든 행 퍼지 일치 필요 (작은 샘플에서 1행 오류 = 50~100% 오류율)
+    Returns:
+        int: overlap 행 수 (0이면 겹침 없음)
     """
-    prev_slice = prev_rows[-overlap:]
-    curr_slice = curr_rows[:overlap]
-    max_mismatches = 1 if overlap >= 3 else 0
-    mismatches = 0
-    for a, b in zip(prev_slice, curr_slice):
-        if not _fuzzy_row_match(a, b):
-            mismatches += 1
-            if mismatches > max_mismatches:
-                return False
-    return True
+    if not prev_rows or len(curr_rows) < 2:
+        return 0
+
+    # 현재 페이지 2번째 행부터 (항상 완전히 보이는 신뢰 가능한 행)
+    reliable = curr_rows[1:]
+
+    # reliable의 최장 prefix가 prev_rows의 suffix와 일치하는 길이 찾기
+    for match_len in range(min(len(prev_rows), len(reliable)), 0, -1):
+        if reliable[:match_len] == prev_rows[-match_len:]:
+            # match_len행이 겹침 + 첫 행 1개 (잘렸든 아니든 overlap의 일부)
+            overlap = match_len + 1
+            return min(overlap, len(curr_rows))
+
+    # reliable에서 매칭 없음 -- 첫 행만 겹칠 수 있음
+    if curr_rows[0] == prev_rows[-1]:
+        return 1
+
+    return 0
 
 
 log(u"\n[2단계] 초성 버튼 및 고객 처리")
@@ -2452,14 +2453,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                     if name:
                         current_rows.append((name, birth))
 
-                # 스크롤 중복 감지: 이전 페이지 끝과 현재 페이지 시작 퍼지 비교
-                # (OCR 오류로 같은 이름이 다르게 읽히는 경우 허용)
-                scroll_dups = 0
-                if prev_page_rows:
-                    for overlap in range(min(len(prev_page_rows), len(current_rows)), 0, -1):
-                        if _fuzzy_overlap_match(prev_page_rows, current_rows, overlap):
-                            scroll_dups = overlap
-                            break
+                # 스크롤 중복 감지: 첫 행 건너뛰기 + exact match
+                # (스크롤 시 첫 행이 잘려 보일 수 있으므로 2번째 행부터 비교)
+                scroll_dups = _find_scroll_overlap(prev_page_rows, current_rows)
 
                 page_rows = len(current_rows) - scroll_dups
                 total_rows += page_rows
