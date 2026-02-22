@@ -1293,8 +1293,10 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                             _crash_log(u"    " + u"=" * 60)
                             _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
                             # 에러 + 체크포인트 저장
+                            # 오류 고객은 재개 시 재시도해야 하므로 row - 1 저장
+                            # (resume 스킵: row <= checkpoint_row → row-1이면 오류 고객 포함)
                             save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
-                            save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
+                            save_checkpoint(name, chosung_name, nav_page, scroll_page, max(0, row_in_page - 1))
                             _close_log_file()
                             raise SystemExit(1)
                         else:

@@ -2041,9 +2041,9 @@ def save_report_pdf(report_number):
         # Step 4+5: 미리보기 버튼 클릭 + PDF 로딩 (짧은 주기 재클릭 방식)
         # 전략: 10초 간격으로 PDF 로딩 확인, 미리보기 버튼이 아직 보이면 재클릭
         # 기존: 3회 × 긴 대기(50/60/120초) = 총 ~230초, 클릭 3회
-        # 개선: 최대 90초, 10초마다 확인 + 재클릭 → 클릭 최대 ~8회
+        # 개선: 최대 150초, 10초마다 확인 + 재클릭 → 클릭 최대 ~14회
         PREVIEW_POLL = 10   # PDF 로딩 확인 주기 (초)
-        PREVIEW_MAX = 90    # 최대 총 대기 시간 (초)
+        PREVIEW_MAX = 150   # 최대 총 대기 시간 (초)
         log(u"    [4/11] 미리보기 버튼 클릭 + PDF 로딩 (최대 %d초, %d초마다 재클릭)..." % (PREVIEW_MAX, PREVIEW_POLL))
         pdf_loaded = False
         metlife_error_in_retry = False
