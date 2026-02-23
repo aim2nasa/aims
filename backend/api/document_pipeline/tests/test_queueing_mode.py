@@ -36,11 +36,13 @@ class TestQueueingModeDocCreation:
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
 
-        with patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
+        with patch("routers.doc_prep_main._stream_upload_to_disk", return_value=("/tmp/stream_temp.pdf", 7)), \
+             patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
-             patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
-             patch("services.temp_file_service.TempFileService.save", return_value="/tmp/temp.pdf"), \
-             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"):
+             patch("services.file_service.FileService.save_from_path", return_value=("saved.pdf", "/data/saved.pdf")), \
+             patch("services.temp_file_service.TempFileService.save_from_path", return_value="/tmp/temp.pdf"), \
+             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"), \
+             patch("os.path.exists", return_value=False):
             response = await client.post(
                 "/webhook/docprep-main",
                 data={"userId": "user1"},
@@ -57,11 +59,13 @@ class TestQueueingModeDocCreation:
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
 
-        with patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
+        with patch("routers.doc_prep_main._stream_upload_to_disk", return_value=("/tmp/stream_temp.pdf", 7)), \
+             patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
-             patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
-             patch("services.temp_file_service.TempFileService.save", return_value="/tmp/temp.pdf"), \
-             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"):
+             patch("services.file_service.FileService.save_from_path", return_value=("saved.pdf", "/data/saved.pdf")), \
+             patch("services.temp_file_service.TempFileService.save_from_path", return_value="/tmp/temp.pdf"), \
+             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"), \
+             patch("os.path.exists", return_value=False):
             await client.post(
                 "/webhook/docprep-main",
                 data={"userId": "user1"},
@@ -78,11 +82,13 @@ class TestQueueingModeDocCreation:
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
         customer_oid = str(ObjectId())
 
-        with patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
+        with patch("routers.doc_prep_main._stream_upload_to_disk", return_value=("/tmp/stream_temp.pdf", 7)), \
+             patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
-             patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
-             patch("services.temp_file_service.TempFileService.save", return_value="/tmp/temp.pdf"), \
-             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"):
+             patch("services.file_service.FileService.save_from_path", return_value=("saved.pdf", "/data/saved.pdf")), \
+             patch("services.temp_file_service.TempFileService.save_from_path", return_value="/tmp/temp.pdf"), \
+             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"), \
+             patch("os.path.exists", return_value=False):
             await client.post(
                 "/webhook/docprep-main",
                 data={"userId": "user1", "customerId": customer_oid},
@@ -97,11 +103,13 @@ class TestQueueingModeDocCreation:
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
 
-        with patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
+        with patch("routers.doc_prep_main._stream_upload_to_disk", return_value=("/tmp/stream_temp.pdf", 7)), \
+             patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
-             patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
-             patch("services.temp_file_service.TempFileService.save", return_value="/tmp/temp.pdf"), \
-             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"):
+             patch("services.file_service.FileService.save_from_path", return_value=("saved.pdf", "/data/saved.pdf")), \
+             patch("services.temp_file_service.TempFileService.save_from_path", return_value="/tmp/temp.pdf"), \
+             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"), \
+             patch("os.path.exists", return_value=False):
             await client.post(
                 "/webhook/docprep-main",
                 data={"userId": "user1", "batchId": "batch_abc"},
@@ -133,11 +141,13 @@ class TestQueueingModeEnqueue:
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
 
-        with patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
+        with patch("routers.doc_prep_main._stream_upload_to_disk", return_value=("/tmp/stream_temp.pdf", 7)), \
+             patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
-             patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
-             patch("services.temp_file_service.TempFileService.save", return_value="/tmp/temp.pdf"), \
-             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123") as mock_enqueue:
+             patch("services.file_service.FileService.save_from_path", return_value=("saved.pdf", "/data/saved.pdf")), \
+             patch("services.temp_file_service.TempFileService.save_from_path", return_value="/tmp/temp.pdf"), \
+             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123") as mock_enqueue, \
+             patch("os.path.exists", return_value=False):
             await client.post(
                 "/webhook/docprep-main",
                 data={"userId": "user1"},
@@ -151,11 +161,13 @@ class TestQueueingModeEnqueue:
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
 
-        with patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
+        with patch("routers.doc_prep_main._stream_upload_to_disk", return_value=("/tmp/stream_temp.pdf", 7)), \
+             patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
-             patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
-             patch("services.temp_file_service.TempFileService.save", return_value="/tmp/temp.pdf"), \
-             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"):
+             patch("services.file_service.FileService.save_from_path", return_value=("saved.pdf", "/data/saved.pdf")), \
+             patch("services.temp_file_service.TempFileService.save_from_path", return_value="/tmp/temp.pdf"), \
+             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123"), \
+             patch("os.path.exists", return_value=False):
             response = await client.post(
                 "/webhook/docprep-main",
                 data={"userId": "user1"},
@@ -189,11 +201,13 @@ class TestQueueingModeEnqueue:
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
 
-        with patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
+        with patch("routers.doc_prep_main._stream_upload_to_disk", return_value=("/tmp/stream_temp.pdf", 7)), \
+             patch("routers.doc_prep_main.check_credit_for_upload", return_value={"allowed": True}), \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
-             patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
-             patch("services.temp_file_service.TempFileService.save", return_value="/tmp/my_temp.pdf"), \
-             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123") as mock_enqueue:
+             patch("services.file_service.FileService.save_from_path", return_value=("saved.pdf", "/data/saved.pdf")), \
+             patch("services.temp_file_service.TempFileService.save_from_path", return_value="/tmp/my_temp.pdf"), \
+             patch("services.upload_queue_service.UploadQueueService.enqueue", return_value="queue_123") as mock_enqueue, \
+             patch("os.path.exists", return_value=False):
             await client.post(
                 "/webhook/docprep-main",
                 data={"userId": "user1"},

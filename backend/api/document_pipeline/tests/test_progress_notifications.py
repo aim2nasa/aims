@@ -322,4 +322,5 @@ class TestProgressSequence:
             )
 
         assert progress_values == [20, 40, 50, 60, 80, 100]
-        assert result["status"] == 415
+        assert result["status"] == "completed"
+        assert result["processingSkipReason"] == "unsupported_format"

@@ -1011,7 +1011,8 @@ class TestSummarizeText:
         mock_response.usage = mock_usage
 
         with patch.object(OpenAIService, "_get_client") as mock_get_client, \
-             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log:
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log, \
+             patch("services.openai_service.check_credit_for_summary", new_callable=AsyncMock, return_value={"allowed": True}):
 
             mock_client = AsyncMock()
             mock_client.chat.completions.create.return_value = mock_response
@@ -1218,7 +1219,8 @@ class TestSummarizeText:
         mock_response.usage = mock_usage
 
         with patch.object(OpenAIService, "_get_client") as mock_get_client, \
-             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log:
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log, \
+             patch("services.openai_service.check_credit_for_summary", new_callable=AsyncMock, return_value={"allowed": True}):
 
             mock_client = AsyncMock()
             mock_client.chat.completions.create.return_value = mock_response

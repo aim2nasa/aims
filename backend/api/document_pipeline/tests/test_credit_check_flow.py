@@ -201,7 +201,7 @@ class TestCreditPendingDocCreation:
                  "allowed": False, "reason": "credit_exhausted", "credits_remaining": 0,
              }), \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
-             patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")) as mock_save, \
+             patch("services.file_service.FileService.save_from_path", return_value=("saved.pdf", "/data/saved.pdf")) as mock_save, \
              patch("services.meta_service.MetaService.extract_metadata", return_value={
                  "extracted_text": "", "mime_type": "application/pdf", "num_pages": 1,
                  "file_hash": "abc", "error": None,

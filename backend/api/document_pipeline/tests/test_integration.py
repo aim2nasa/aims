@@ -374,14 +374,13 @@ class TestN8NResponseCompatibility:
                 data={"userId": "test_user"}
             )
 
-            # 동기 처리 모드에서는 HTTP 200 반환, body에 status: 415 포함
+            # Phase 1: unsupported MIME → HTTP 200 + processingSkipReason
             assert response.status_code == 200
             data = response.json()
 
-            # n8n 415 응답 형식 (body에 포함)
-            assert data["warn"] == True
-            assert data["status"] == 415
-            assert "userMessage" in data
+            assert data["result"] == "success"
+            assert data["status"] == "completed"
+            assert data["processingSkipReason"] == "unsupported_format"
             assert "mime" in data
             assert "filename" in data
             assert "document_id" in data

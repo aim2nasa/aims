@@ -226,8 +226,6 @@ async def doc_prep_main(
                 logger.warning(f"[SHADOW] No shadow_saved_name provided, generated: {simulated_filename}")
 
             # 임시 파일로 메타데이터 추출
-            import tempfile
-            import os
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(original_name)[1]) as tmp:
                 tmp.write(file_content)
                 tmp_path = tmp.name

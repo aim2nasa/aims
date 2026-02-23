@@ -417,13 +417,13 @@ class TestDocPrepMainErrors:
                 data={"userId": "test_user_123"}
             )
 
-            # 동기 처리 모드에서는 HTTP 200 반환, body에 status: 415 포함
+            # Phase 1: unsupported MIME → HTTP 200 + processingSkipReason
             assert response.status_code == 200
             data = response.json()
 
-            assert data["warn"] == True
-            assert data["status"] == 415
-            assert "OCR 생략" in data["userMessage"]
+            assert data["result"] == "success"
+            assert data["status"] == "completed"
+            assert data["processingSkipReason"] == "unsupported_format"
             assert data["mime"] == "application/zip"
 
     @pytest.mark.asyncio
