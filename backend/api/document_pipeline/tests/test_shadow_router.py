@@ -14,6 +14,13 @@ from unittest.mock import patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
 from bson import ObjectId
 
+# routers/__init__.py가 "from routers.shadow_router import router as shadow_router"로
+# 모듈명을 shadowing하므로 patch("routers.shadow_router.X") 대신 patch.object 사용
+# import X.Y as Z도 shadowed attribute를 반환하므로 sys.modules에서 직접 가져옴
+import sys
+import routers.shadow_router  # noqa: F401 - ensure module is loaded
+shadow_router_module = sys.modules["routers.shadow_router"]
+
 
 class TestServiceMode:
     """서비스 모드 관리 테스트"""
@@ -36,7 +43,7 @@ class TestServiceMode:
     @pytest.mark.asyncio
     async def test_set_mode_to_n8n(self, client, reset_shadow_mode):
         """n8n 모드로 전환"""
-        with patch("routers.shadow_router._log_mode_change") as mock_log:
+        with patch.object(shadow_router_module, "_log_mode_change") as mock_log:
             mock_log.return_value = None
 
             response = await client.post(
@@ -53,7 +60,7 @@ class TestServiceMode:
     @pytest.mark.asyncio
     async def test_set_mode_to_fastapi(self, client, reset_shadow_mode):
         """FastAPI 모드로 전환"""
-        with patch("routers.shadow_router._log_mode_change") as mock_log:
+        with patch.object(shadow_router_module, "_log_mode_change") as mock_log:
             mock_log.return_value = None
 
             response = await client.post(
@@ -70,7 +77,7 @@ class TestServiceMode:
     @pytest.mark.asyncio
     async def test_set_mode_to_shadow(self, client, reset_shadow_mode):
         """Shadow 모드로 전환"""
-        with patch("routers.shadow_router._log_mode_change") as mock_log:
+        with patch.object(shadow_router_module, "_log_mode_change") as mock_log:
             mock_log.return_value = None
 
             response = await client.post(
@@ -135,7 +142,7 @@ class TestMetricsAPI:
     @pytest.mark.asyncio
     async def test_get_metrics(self, client, reset_shadow_mode):
         """메트릭 통계 조회"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             # Summary aggregation mock
             async def mock_aggregate_summary(pipeline):
@@ -190,7 +197,7 @@ class TestMetricsAPI:
     @pytest.mark.asyncio
     async def test_get_metrics_empty(self, client, reset_shadow_mode):
         """빈 메트릭 조회"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             async def empty_aggregate(pipeline):
                 return
@@ -211,7 +218,7 @@ class TestMetricsAPI:
     @pytest.mark.asyncio
     async def test_get_realtime_metrics(self, client, reset_shadow_mode):
         """실시간 메트릭 조회"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             mock_docs = [
                 {
@@ -257,7 +264,7 @@ class TestMetricsAPI:
     @pytest.mark.asyncio
     async def test_get_metrics_history(self, client, reset_shadow_mode):
         """메트릭 히스토리 조회 (차트용)"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             async def mock_aggregate(pipeline):
                 yield {
@@ -286,7 +293,7 @@ class TestMismatchesAPI:
     @pytest.mark.asyncio
     async def test_get_mismatches(self, client, reset_shadow_mode):
         """불일치 목록 조회"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             mock_docs = [
                 {
@@ -323,7 +330,7 @@ class TestMismatchesAPI:
     @pytest.mark.asyncio
     async def test_get_mismatches_filtered(self, client, reset_shadow_mode):
         """불일치 목록 필터링 조회"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             async def mock_cursor_iter():
                 return
@@ -346,7 +353,7 @@ class TestMismatchesAPI:
     @pytest.mark.asyncio
     async def test_resolve_mismatch(self, client, reset_shadow_mode):
         """불일치 해결 처리"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             mock_result = MagicMock()
             mock_result.modified_count = 1
@@ -371,7 +378,7 @@ class TestMismatchesAPI:
     @pytest.mark.asyncio
     async def test_resolve_mismatch_not_found(self, client, reset_shadow_mode):
         """존재하지 않는 불일치 해결 시도"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             mock_result = MagicMock()
             mock_result.modified_count = 0
@@ -394,7 +401,7 @@ class TestMismatchesAPI:
     @pytest.mark.asyncio
     async def test_delete_resolved_mismatches(self, client, reset_shadow_mode):
         """해결된 불일치 삭제"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             mock_result = MagicMock()
             mock_result.deleted_count = 5
@@ -418,7 +425,7 @@ class TestStatsAPI:
     @pytest.mark.asyncio
     async def test_get_stats(self, client, reset_shadow_mode):
         """Shadow Mode 통계 조회"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             # Setup mocks for multiple collections
             # Use MagicMock as base, set async methods individually
@@ -492,7 +499,7 @@ class TestStatsAPI:
     @pytest.mark.asyncio
     async def test_reset_stats(self, client, reset_shadow_mode):
         """통계 초기화"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             mock_result = MagicMock()
             mock_result.deleted_count = 10
@@ -575,7 +582,7 @@ class TestSwitchReadiness:
     @pytest.mark.asyncio
     async def test_switch_readiness_criteria(self, client, reset_shadow_mode):
         """전환 준비 상태 기준 확인"""
-        with patch("routers.shadow_router.MongoService") as mock_mongo:
+        with patch.object(shadow_router_module, "MongoService") as mock_mongo:
 
             # Use MagicMock as base, set async methods individually
             mock_collection = MagicMock()

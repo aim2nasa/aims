@@ -30,9 +30,9 @@ class TestUploadWorkerInit:
 
     def test_init_default_values(self):
         """기본값으로 초기화되어야 함"""
-        with patch("workers.upload_worker.get_settings") as mock_settings:
-            mock_settings.return_value.UPLOAD_QUEUE_MAX_CONCURRENT = 3
-            mock_settings.return_value.UPLOAD_QUEUE_POLL_INTERVAL = 1.0
+        with patch("workers.upload_worker.settings") as mock_settings:
+            mock_settings.UPLOAD_QUEUE_MAX_CONCURRENT = 3
+            mock_settings.UPLOAD_QUEUE_POLL_INTERVAL = 1.0
 
             worker = UploadWorker()
 
@@ -43,9 +43,9 @@ class TestUploadWorkerInit:
 
     def test_init_semaphore_created(self):
         """동시성 제한용 세마포어가 생성되어야 함"""
-        with patch("workers.upload_worker.get_settings") as mock_settings:
-            mock_settings.return_value.UPLOAD_QUEUE_MAX_CONCURRENT = 5
-            mock_settings.return_value.UPLOAD_QUEUE_POLL_INTERVAL = 1.0
+        with patch("workers.upload_worker.settings") as mock_settings:
+            mock_settings.UPLOAD_QUEUE_MAX_CONCURRENT = 5
+            mock_settings.UPLOAD_QUEUE_POLL_INTERVAL = 1.0
 
             worker = UploadWorker()
 
@@ -121,11 +121,11 @@ class TestUploadWorkerProcessBatch:
     @pytest.mark.asyncio
     async def test_process_batch_respects_max_concurrent(self):
         """동시 처리 수가 max_concurrent를 넘지 않아야 함"""
-        with patch("workers.upload_worker.get_settings") as mock_settings, \
+        with patch("workers.upload_worker.settings") as mock_settings, \
              patch("workers.upload_worker.UploadQueueService") as mock_queue:
 
-            mock_settings.return_value.UPLOAD_QUEUE_MAX_CONCURRENT = 2
-            mock_settings.return_value.UPLOAD_QUEUE_POLL_INTERVAL = 0.01
+            mock_settings.UPLOAD_QUEUE_MAX_CONCURRENT = 2
+            mock_settings.UPLOAD_QUEUE_POLL_INTERVAL = 0.01
 
             # Create jobs
             jobs = [
@@ -241,9 +241,9 @@ class TestUploadWorkerGetStatus:
 
     def test_get_status_returns_correct_info(self):
         """상태 정보가 올바르게 반환되어야 함"""
-        with patch("workers.upload_worker.get_settings") as mock_settings:
-            mock_settings.return_value.UPLOAD_QUEUE_MAX_CONCURRENT = 5
-            mock_settings.return_value.UPLOAD_QUEUE_POLL_INTERVAL = 1.0
+        with patch("workers.upload_worker.settings") as mock_settings:
+            mock_settings.UPLOAD_QUEUE_MAX_CONCURRENT = 5
+            mock_settings.UPLOAD_QUEUE_POLL_INTERVAL = 1.0
 
             worker = UploadWorker()
             worker.running = True

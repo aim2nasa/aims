@@ -158,7 +158,7 @@ class TestReadFile:
     @pytest.mark.asyncio
     async def test_read_file_as_text(self):
         """텍스트 반환"""
-        with tempfile.NamedTemporaryFile(delete=False, mode='w', suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(delete=False, mode='w', suffix='.txt', encoding='utf-8') as f:
             f.write("한글 텍스트")
             f.flush()
             temp_path = f.name

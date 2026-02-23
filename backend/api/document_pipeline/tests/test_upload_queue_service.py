@@ -237,6 +237,10 @@ class TestUploadQueueServiceReschedule:
             mock_result = MagicMock()
             mock_result.modified_count = 1
             mock_collection.update_one.return_value = mock_result
+            mock_collection.find_one = AsyncMock(return_value={
+                "retry_count": 0,
+                "max_retries": 3,
+            })
             mock_get_col.return_value = mock_collection
 
             await UploadQueueService.reschedule("507f1f77bcf86cd799439011", "Retry error")
@@ -298,9 +302,9 @@ class TestUploadQueueServiceDeleteCompletedJobs:
 
             assert count == 10
 
-            # Verify query targets completed jobs
+            # Verify query targets completed and failed jobs
             call_args = mock_collection.delete_many.call_args[0][0]
-            assert call_args["status"] == "completed"
+            assert call_args["status"] == {"$in": ["completed", "failed"]}
 
 
 class TestUploadQueueServiceConstants:
