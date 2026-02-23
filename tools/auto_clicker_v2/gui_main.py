@@ -693,6 +693,7 @@ class AutoClickerApp(ctk.CTk):
 
         mode = self._settings['mode']
         target = self._settings['target']
+        self._debug_log("_start", f"mode={mode}, scroll_test={mode == 'scroll_test'}, target={target!r}")
         if mode in ('start_from', 'only') and not target:
             messagebox.showwarning(
                 "설정 오류",
