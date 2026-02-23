@@ -138,10 +138,13 @@ class OCRWorker:
                 )
                 if response.status_code == 200:
                     return response.json()
-                return {"allowed": True}  # Default to allowed if API fails
+                logger.warning(f"[QuotaCheck] API 호출 실패 (fail-closed): {response.status_code}")
+                # fail-closed: API 실패 시 OCR 처리 보류 (안전 우선)
+                return {"allowed": False, "reason": "api_error_fallback"}
         except Exception as e:
-            logger.warning(f"Quota check failed: {e}, allowing by default")
-            return {"allowed": True}
+            logger.warning(f"[QuotaCheck] 오류 (fail-closed): {e}")
+            # fail-closed: 오류 시 OCR 처리 보류 (aims_api 복구 후 재시도)
+            return {"allowed": False, "reason": "quota_check_error"}
 
     async def _process_ocr(self, file_path: str) -> Dict[str, Any]:
         """Process OCR using Upstage service"""

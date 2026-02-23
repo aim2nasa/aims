@@ -60,14 +60,14 @@ def check_credit_for_embedding(owner_id: str, estimated_pages: int = 1) -> Dict:
         if response.status_code == 200:
             return response.json()
         else:
-            print(f"[CreditCheck] API 호출 실패: {response.status_code}")
-            # fail-open: API 실패 시 허용
-            return {"allowed": True, "reason": "api_error_fallback"}
+            print(f"[CreditCheck] API 호출 실패 (fail-closed): {response.status_code}")
+            # fail-closed: API 실패 시 처리 보류 (안전 우선)
+            return {"allowed": False, "reason": "api_error_fallback"}
 
     except Exception as e:
-        print(f"[CreditCheck] 오류 (fail-open): {e}")
-        # fail-open: 오류 시 허용 (크레딧 체크 실패로 처리 막지 않음)
-        return {"allowed": True, "reason": "error_fallback", "error": str(e)}
+        print(f"[CreditCheck] 오류 (fail-closed): {e}")
+        # fail-closed: 오류 시 처리 보류 (aims_api 복구 후 자동 재처리)
+        return {"allowed": False, "reason": "error_fallback", "error": str(e)}
 
 
 def trigger_virus_scan(doc_id: str, owner_id: str) -> bool:
@@ -243,7 +243,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     estimated_pages = doc_data.get('ocr', {}).get('page_count', 1) or 1
                     credit_check = check_credit_for_embedding(owner_id, estimated_pages)
 
-                    if not credit_check.get('allowed', True):
+                    if not credit_check.get('allowed', False):
                         # 크레딧 부족: credit_pending 상태로 변경
                         print(f"[CREDIT_PENDING] 문서 ID: {doc_id} - 크레딧 부족 (남은: {credit_check.get('credits_remaining', 0)}, 필요: {credit_check.get('estimated_credits', 0)})")
                         collection.update_one(

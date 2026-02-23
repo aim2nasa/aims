@@ -70,8 +70,8 @@ class TestCheckCreditForUpload:
 
         assert result["allowed"] is False
 
-    async def test_fail_open_on_api_error_status(self):
-        """API HTTP 500 → fail-open (allowed=True)"""
+    async def test_fail_closed_on_api_error_status(self):
+        """API HTTP 500 → fail-closed (allowed=False) — 안전 우선"""
         from routers.doc_prep_main import check_credit_for_upload
 
         with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
@@ -85,11 +85,11 @@ class TestCheckCreditForUpload:
 
             result = await check_credit_for_upload("test_user", 1)
 
-        assert result["allowed"] is True
+        assert result["allowed"] is False
         assert result["reason"] == "api_error_fallback"
 
-    async def test_fail_open_on_timeout(self):
-        """API 타임아웃 → fail-open (allowed=True)"""
+    async def test_fail_closed_on_timeout(self):
+        """API 타임아웃 → fail-closed (allowed=False) — 안전 우선"""
         from routers.doc_prep_main import check_credit_for_upload
         import httpx as real_httpx
 
@@ -102,11 +102,11 @@ class TestCheckCreditForUpload:
 
             result = await check_credit_for_upload("test_user", 1)
 
-        assert result["allowed"] is True
+        assert result["allowed"] is False
         assert result["reason"] == "error_fallback"
 
-    async def test_fail_open_on_connection_error(self):
-        """API 연결 실패 → fail-open (allowed=True)"""
+    async def test_fail_closed_on_connection_error(self):
+        """API 연결 실패 → fail-closed (allowed=False) — 안전 우선"""
         from routers.doc_prep_main import check_credit_for_upload
         import httpx as real_httpx
 
@@ -119,7 +119,7 @@ class TestCheckCreditForUpload:
 
             result = await check_credit_for_upload("test_user", 1)
 
-        assert result["allowed"] is True
+        assert result["allowed"] is False
         assert result["reason"] == "error_fallback"
 
     async def test_api_url_and_headers(self):

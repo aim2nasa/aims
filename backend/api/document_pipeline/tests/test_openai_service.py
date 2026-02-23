@@ -3,7 +3,7 @@ OpenAI Service Unit Tests
 @since 2026-02-05
 
 테스트 범위:
-1. check_credit_for_summary - 크레딧 체크 (fail-open 패턴)
+1. check_credit_for_summary - 크레딧 체크 (fail-closed 패턴)
 2. OpenAIService._log_token_usage - 토큰 로깅
 3. OpenAIService.summarize_text - 텍스트 요약
 4. OpenAIService.extract_tags - 태그 추출
@@ -203,12 +203,12 @@ class TestCheckCreditForSummary:
             assert result["days_until_reset"] == 7
 
     # ========================================
-    # API 호출 실패 → fail-open (허용)
+    # API 호출 실패 → fail-closed (보류)
     # ========================================
 
     @pytest.mark.asyncio
-    async def test_api_error_status_code_fallback_allowed(self):
-        """API 응답 상태 코드 오류 시 fail-open (allowed=True)"""
+    async def test_api_error_status_code_fail_closed(self):
+        """API 응답 상태 코드 오류 시 fail-closed (allowed=False) — 안전 우선"""
         mock_response = MagicMock()
         mock_response.status_code = 500  # 서버 오류
 
@@ -221,12 +221,12 @@ class TestCheckCreditForSummary:
 
             result = await check_credit_for_summary("user-123", 1000)
 
-            assert result["allowed"] is True
+            assert result["allowed"] is False
             assert result["reason"] == "api_error_fallback"
 
     @pytest.mark.asyncio
-    async def test_api_404_error_fallback_allowed(self):
-        """API 404 오류 시 fail-open"""
+    async def test_api_404_error_fail_closed(self):
+        """API 404 오류 시 fail-closed"""
         mock_response = MagicMock()
         mock_response.status_code = 404
 
@@ -239,12 +239,12 @@ class TestCheckCreditForSummary:
 
             result = await check_credit_for_summary("user-123", 1000)
 
-            assert result["allowed"] is True
+            assert result["allowed"] is False
             assert result["reason"] == "api_error_fallback"
 
     @pytest.mark.asyncio
-    async def test_api_503_service_unavailable_fallback(self):
-        """API 503 서비스 불가 시 fail-open"""
+    async def test_api_503_service_unavailable_fail_closed(self):
+        """API 503 서비스 불가 시 fail-closed"""
         mock_response = MagicMock()
         mock_response.status_code = 503
 
@@ -257,15 +257,15 @@ class TestCheckCreditForSummary:
 
             result = await check_credit_for_summary("user-123", 1000)
 
-            assert result["allowed"] is True
+            assert result["allowed"] is False
 
     # ========================================
-    # 네트워크 예외 → fail-open (허용)
+    # 네트워크 예외 → fail-closed (보류)
     # ========================================
 
     @pytest.mark.asyncio
-    async def test_network_exception_fallback_allowed(self):
-        """네트워크 예외 시 fail-open (allowed=True)"""
+    async def test_network_exception_fail_closed(self):
+        """네트워크 예외 시 fail-closed (allowed=False) — 안전 우선"""
         with patch("httpx.AsyncClient") as mock_client:
             mock_client_instance = AsyncMock()
             mock_client_instance.post.side_effect = Exception("Connection refused")
@@ -275,13 +275,13 @@ class TestCheckCreditForSummary:
 
             result = await check_credit_for_summary("user-123", 1000)
 
-            assert result["allowed"] is True
+            assert result["allowed"] is False
             assert result["reason"] == "error_fallback"
             assert "Connection refused" in result.get("error", "")
 
     @pytest.mark.asyncio
-    async def test_timeout_exception_fallback_allowed(self):
-        """타임아웃 예외 시 fail-open"""
+    async def test_timeout_exception_fail_closed(self):
+        """타임아웃 예외 시 fail-closed"""
         import httpx
 
         with patch("httpx.AsyncClient") as mock_client:
@@ -293,12 +293,12 @@ class TestCheckCreditForSummary:
 
             result = await check_credit_for_summary("user-123", 1000)
 
-            assert result["allowed"] is True
+            assert result["allowed"] is False
             assert result["reason"] == "error_fallback"
 
     @pytest.mark.asyncio
-    async def test_connection_error_fallback_allowed(self):
-        """연결 오류 시 fail-open"""
+    async def test_connection_error_fail_closed(self):
+        """연결 오류 시 fail-closed"""
         import httpx
 
         with patch("httpx.AsyncClient") as mock_client:
@@ -310,7 +310,7 @@ class TestCheckCreditForSummary:
 
             result = await check_credit_for_summary("user-123", 1000)
 
-            assert result["allowed"] is True
+            assert result["allowed"] is False
 
     # ========================================
     # 토큰 추정 계산 검증

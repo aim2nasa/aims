@@ -139,14 +139,14 @@ def check_credit_for_rag(user_id: str, estimated_tokens: int = 1000) -> dict:
         if response.status_code == 200:
             return response.json()
         else:
-            print(f"[CreditCheck] API 호출 실패: {response.status_code}")
-            # fail-open: API 실패 시 허용
-            return {"allowed": True, "reason": "api_error_fallback"}
+            print(f"[CreditCheck] API 호출 실패 (fail-closed): {response.status_code}")
+            # fail-closed: API 실패 시 처리 보류 (안전 우선)
+            return {"allowed": False, "reason": "api_error_fallback"}
 
     except Exception as e:
-        print(f"[CreditCheck] 오류 (fail-open): {e}")
-        # fail-open: 오류 시 허용
-        return {"allowed": True, "reason": "error_fallback", "error": str(e)}
+        print(f"[CreditCheck] 오류 (fail-closed): {e}")
+        # fail-closed: 오류 시 처리 보류 (aims_api 복구 후 재시도)
+        return {"allowed": False, "reason": "error_fallback", "error": str(e)}
 
 def get_rag_model() -> str:
     """
@@ -350,7 +350,7 @@ async def search_endpoint(request: SearchRequest):
     # 🔴 크레딧 체크 (semantic 검색만 - AI 토큰 소비)
     if request.search_mode == "semantic" and request.user_id:
         credit_check = check_credit_for_rag(request.user_id, estimated_tokens=2000)
-        if not credit_check.get("allowed", True):
+        if not credit_check.get("allowed", False):
             print(f"[CREDIT_EXCEEDED] RAG 검색 차단: user_id={request.user_id}, remaining={credit_check.get('credits_remaining', 0)}")
             raise HTTPException(
                 status_code=402,  # Payment Required

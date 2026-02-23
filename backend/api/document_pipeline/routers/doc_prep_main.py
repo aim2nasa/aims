@@ -79,14 +79,14 @@ async def check_credit_for_upload(user_id: str, estimated_pages: int = 1) -> Dic
             if response.status_code == 200:
                 return response.json()
             else:
-                logger.warning(f"[CreditCheck] API 호출 실패: {response.status_code}")
-                # fail-open: API 실패 시 허용
-                return {"allowed": True, "reason": "api_error_fallback"}
+                logger.warning(f"[CreditCheck] API 호출 실패 (fail-closed): {response.status_code}")
+                # fail-closed: API 실패 시 처리 보류 (credit_pending 경로로 진입)
+                return {"allowed": False, "reason": "api_error_fallback"}
 
     except Exception as e:
-        logger.warning(f"[CreditCheck] 오류 (fail-open): {e}")
-        # fail-open: 오류 시 허용 (크레딧 체크 실패로 업로드 막지 않음)
-        return {"allowed": True, "reason": "error_fallback", "error": str(e)}
+        logger.warning(f"[CreditCheck] 오류 (fail-closed): {e}")
+        # fail-closed: 오류 시 처리 보류 (안전 우선 — aims_api 복구 후 자동 재처리)
+        return {"allowed": False, "reason": "error_fallback", "error": str(e)}
 router = APIRouter()
 settings = get_settings()
 
@@ -244,7 +244,7 @@ async def doc_prep_main(
             # 예상 페이지 수 추정 (1페이지 기본, PDF는 나중에 정확히 계산)
             estimated_pages = 1
             credit_check = await check_credit_for_upload(userId, estimated_pages)
-            is_credit_pending = not credit_check.get("allowed", True)
+            is_credit_pending = not credit_check.get("allowed", False)
 
             if is_credit_pending:
                 logger.info(f"[CreditPending] 크레딧 부족으로 처리 보류: userId={userId}, reason={credit_check.get('reason')}")
