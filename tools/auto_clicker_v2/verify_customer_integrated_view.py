@@ -364,24 +364,23 @@ def navigate_save_dialog_to_dir():
     예: "filename.pdf" → "D:\\path\\to\\dir\\filename.pdf"
     Windows 저장 다이얼로그는 전체 경로가 주어지면 해당 폴더에 저장함
 
-    Critical Section: 저장 다이얼로그 조작 중 일시정지하면 paste()가
-    엉뚱한 창으로 갈 수 있으므로 구간 전체를 보호.
+    주의: 호출자(caller)가 반드시 critical_section을 관리해야 함.
+    이 함수 내부에서 CS를 enter/exit하면 호출자의 CS가 조기 해제되는 중첩 버그 발생.
     """
     if not PDF_DOWNLOAD_DIR:
         return
     # 반드시 백슬래시 사용 (Windows 저장 다이얼로그는 forward slash 미지원)
     win_path = PDF_DOWNLOAD_DIR.replace("/", "\\")
     log(u"        [경로 설정] %s" % win_path)
-    # 파일명 입력란에 포커스가 있는 상태에서 맨 앞으로 이동 후 경로 삽입
-    enter_critical_section()
-    try:
-        sleep(0.5)
-        type(Key.HOME)  # 커서를 파일명 맨 앞으로 이동
-        sleep(0.3)
-        paste(win_path + "\\")  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
-        sleep(0.3)
-    finally:
-        exit_critical_section()
+    # 파일명 입력란: Windows Save As는 파일명이 전체 선택된 상태로 열림
+    # End → 선택 해제 + 커서 맨 끝 → Home → 커서 맨 앞 → paste로 경로 삽입
+    sleep(0.5)
+    type(Key.END)    # 선택 해제 보장 (선택된 상태에서 Home만 보내면 실패 시 paste가 선택 대체)
+    sleep(0.2)
+    type(Key.HOME)   # 커서를 파일명 맨 앞으로 이동
+    sleep(0.3)
+    paste(win_path + "\\")  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
+    sleep(0.3)
 
 
 LOG_FILE = None  # verify_customer_integrated_view()에서 output_dir로 설정
@@ -1625,9 +1624,22 @@ def download_annual_report():
     navigate_save_dialog_to_dir()
     save_s_match = exists(IMG_SAVE_S_BTN, 5)
     if not save_s_match:
-        log(u"    [ERROR] 저장(S) 버튼을 찾을 수 없음")
-        exit_critical_section()
-        raise NavigationResetRequired(u"저장(S) 버튼 미발견")
+        # 재시도: 저장 다이얼로그가 간헐적으로 닫히는 현상 대응
+        log(u"    [WARN] 경로 설정 후 저장(S) 버튼 미발견 - 저장 아이콘 재클릭 재시도...")
+        take_screenshot(u"step7_save_btn_lost_after_navigate")
+        retry_save_icon = exists(IMG_PDF_SAVE_BTN, 3)
+        if retry_save_icon:
+            log(u"    [재시도] PDF 뷰어 열림 확인 - 저장 아이콘 재클릭")
+            click(retry_save_icon)
+            sleep(2)
+            if exists(IMG_SAVE_S_BTN, 5):
+                log(u"    [재시도] 저장 다이얼로그 재표시 성공 - navigate 재실행")
+                navigate_save_dialog_to_dir()
+                save_s_match = exists(IMG_SAVE_S_BTN, 5)
+        if not save_s_match:
+            log(u"    [ERROR] 저장(S) 버튼 재시도 후에도 미발견")
+            exit_critical_section()
+            raise NavigationResetRequired(u"저장(S) 버튼 미발견")
     ss_x = int(save_s_match.getCenter().getX())
     ss_y = int(save_s_match.getCenter().getY())
     log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ss_x, ss_y))
@@ -2332,10 +2344,23 @@ def save_report_pdf(report_number):
         navigate_save_dialog_to_dir()
         save_s_match = exists(IMG_SAVE_S_BTN, 5)
         if not save_s_match:
-            log(u"        [ERROR] 저장(S) 버튼을 찾을 수 없음")
-            exit_critical_section()
-            recover_to_report_list(report_number)
-            raise NavigationResetRequired(u"변액리포트 #%d: 저장(S) 버튼 미발견" % report_number)
+            # 재시도: 저장 다이얼로그가 간헐적으로 닫히는 현상 대응
+            log(u"        [WARN] 경로 설정 후 저장(S) 버튼 미발견 - 저장 아이콘 재클릭 재시도...")
+            capture_step_screenshot(report_number, "save_btn_lost_after_navigate")
+            retry_save_icon = exists(IMG_PDF_SAVE_BTN, 3)
+            if retry_save_icon:
+                log(u"        [재시도] PDF 뷰어 열림 확인 - 저장 아이콘 재클릭")
+                click(retry_save_icon)
+                sleep(2)
+                if exists(IMG_SAVE_S_BTN, 5):
+                    log(u"        [재시도] 저장 다이얼로그 재표시 성공 - navigate 재실행")
+                    navigate_save_dialog_to_dir()
+                    save_s_match = exists(IMG_SAVE_S_BTN, 5)
+            if not save_s_match:
+                log(u"        [ERROR] 저장(S) 버튼 재시도 후에도 미발견")
+                exit_critical_section()
+                recover_to_report_list(report_number)
+                raise NavigationResetRequired(u"변액리포트 #%d: 저장(S) 버튼 미발견" % report_number)
         ssx = int(save_s_match.getCenter().getX())
         ssy = int(save_s_match.getCenter().getY())
         log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ssx, ssy))
