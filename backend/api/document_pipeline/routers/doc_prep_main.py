@@ -25,6 +25,10 @@ from services.openai_service import OpenAIService
 from services.redis_service import RedisService
 from services.temp_file_service import TempFileService
 from services.upload_queue_service import UploadQueueService
+from services.pdf_conversion_text_service import (
+    is_convertible_mime,
+    convert_and_extract_text,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -148,44 +152,50 @@ async def doc_prep_main(
                 meta_result = await MetaService.extract_metadata(tmp_path)
                 # n8n이 생성한 파일명으로 교체
                 meta_result["filename"] = simulated_filename
+
+                if meta_result.get("error"):
+                    return JSONResponse(
+                        status_code=meta_result.get("status", 500),
+                        content=meta_result
+                    )
+
+                mime_type = meta_result.get("mime_type", "")
+                full_text = meta_result.get("extracted_text", "")
+
+                # MIME 타입별 응답 시뮬레이션
+                if mime_type == "text/plain":
+                    return {"exitCode": 0, "stderr": ""}
+
+                if mime_type in UNSUPPORTED_MIME_TYPES:
+                    return JSONResponse(
+                        status_code=415,
+                        content={
+                            "warn": True,
+                            "status": 415,
+                            "userMessage": "OCR 생략: 지원하지 않는 문서 형식입니다.",
+                            "mime": mime_type,
+                            "filename": original_name,
+                            "document_id": "shadow_simulated"
+                        }
+                    )
+
+                # PDF 변환 텍스트 추출 (HWP, DOC 등 - 임시 파일 삭제 전에 수행)
+                if (not full_text or len(full_text.strip()) == 0) and is_convertible_mime(mime_type):
+                    converted_text = await convert_and_extract_text(tmp_path)
+                    if converted_text and converted_text.strip():
+                        full_text = converted_text
+
+                if not full_text or len(full_text.strip()) == 0:
+                    return {
+                        "result": "success",
+                        "document_id": "shadow_simulated",
+                        "ocr": {
+                            "status": "queued",
+                            "queued_at": datetime.utcnow().isoformat()
+                        }
+                    }
             finally:
                 os.unlink(tmp_path)  # 임시 파일 삭제
-
-            if meta_result.get("error"):
-                return JSONResponse(
-                    status_code=meta_result.get("status", 500),
-                    content=meta_result
-                )
-
-            mime_type = meta_result.get("mime_type", "")
-            full_text = meta_result.get("extracted_text", "")
-
-            # MIME 타입별 응답 시뮬레이션
-            if mime_type == "text/plain":
-                return {"exitCode": 0, "stderr": ""}
-
-            if mime_type in UNSUPPORTED_MIME_TYPES:
-                return JSONResponse(
-                    status_code=415,
-                    content={
-                        "warn": True,
-                        "status": 415,
-                        "userMessage": "OCR 생략: 지원하지 않는 문서 형식입니다.",
-                        "mime": mime_type,
-                        "filename": original_name,
-                        "document_id": "shadow_simulated"
-                    }
-                )
-
-            if not full_text or len(full_text.strip()) == 0:
-                return {
-                    "result": "success",
-                    "document_id": "shadow_simulated",
-                    "ocr": {
-                        "status": "queued",
-                        "queued_at": datetime.utcnow().isoformat()
-                    }
-                }
 
             # 텍스트 추출 성공 - 요약 생성
             summary_result = await OpenAIService.summarize_text(
@@ -332,6 +342,14 @@ async def doc_prep_main(
                     meta_result = await MetaService.extract_metadata(dest_path)
                     full_text = meta_result.get("extracted_text", "")
                     detected_mime = meta_result.get("mime_type", "")
+
+                    # PDF 변환 텍스트 추출 (HWP, DOC 등 - 크레딧 소모 없음)
+                    if (not full_text or len(full_text.strip()) == 0) and is_convertible_mime(detected_mime):
+                        logger.info(f"[CreditPending] PDF 변환 텍스트 추출 시도: {original_name} (MIME: {detected_mime})")
+                        converted_text = await convert_and_extract_text(dest_path)
+                        if converted_text and converted_text.strip():
+                            full_text = converted_text
+                            logger.info(f"[CreditPending] PDF 변환 텍스트 추출 성공: {len(full_text)} chars")
 
                     # 메타 정보 업데이트 (🔴 full_text 포함 - 크레딧 충전 후 임베딩 처리용)
                     meta_update = {
@@ -1147,6 +1165,21 @@ async def process_document_pipeline(
 
         # Get summary if text was extracted
         full_text = meta_result.get("extracted_text", "")
+        detected_mime = meta_result.get("mime_type", "")
+
+        # PDF 변환 텍스트 추출: 직접 파서로 텍스트가 없고 변환 가능한 형식인 경우
+        # HWP, DOC, PPT, ODT, ODS, ODP, RTF → pdf_converter → PyMuPDF → 텍스트
+        if (not full_text or len(full_text.strip()) == 0) and is_convertible_mime(detected_mime):
+            await _notify_progress(doc_id, user_id, 50, "convert", "PDF 변환 후 텍스트 추출 중")
+            logger.info(f"[PDF변환텍스트] 직접 파서 없음, PDF 변환 시도: {doc_id} (MIME: {detected_mime})")
+
+            converted_text = await convert_and_extract_text(dest_path)
+            if converted_text and converted_text.strip():
+                full_text = converted_text
+                logger.info(f"[PDF변환텍스트] 성공: {doc_id} ({len(full_text)} chars)")
+            else:
+                logger.info(f"[PDF변환텍스트] 텍스트 추출 실패, OCR fallback: {doc_id}")
+
         summary = ""
         tags = []
 

@@ -46,6 +46,14 @@ class Settings(BaseSettings):
     WEBHOOK_API_KEY: str = "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
     INTERNAL_API_KEY: str = "aims-internal-token-logging-key-2024"  # 크레딧 체크 API용
 
+    # PDF Converter
+    PDF_CONVERTER_HOST: str = "localhost"
+    PDF_CONVERTER_PORT: int = 8005
+
+    @property
+    def PDF_CONVERTER_URL(self) -> str:
+        return f"http://{self.PDF_CONVERTER_HOST}:{self.PDF_CONVERTER_PORT}"
+
     # Server
     HOST: str = "0.0.0.0"
     PORT: int = 8100
