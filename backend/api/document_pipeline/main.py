@@ -4,10 +4,14 @@ FastAPI replacement for n8n workflows
 """
 import asyncio
 import logging
+import shutil
+import time
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+import httpx
 
 from config import get_settings
 from services.mongo_service import MongoService
@@ -15,6 +19,7 @@ from services.upload_queue_service import UploadQueueService
 from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_meta_router, smart_search_router, doc_prep_main_router, shadow_router
 from workers.error_logger import error_logger
 from workers.upload_worker import upload_worker
+from workers.pipeline_metrics import pipeline_metrics
 
 # Configure logging
 logging.basicConfig(
@@ -105,6 +110,101 @@ async def health_check():
         "service": "document_pipeline",
         "version": "1.0.0"
     }
+
+
+# Deep health check (의존성 전체 검증)
+@app.get("/health/deep")
+async def health_check_deep():
+    """
+    Deep Health Check — 의존성 전체 검증.
+
+    aims_health_monitor가 60초 간격으로 호출.
+    하나라도 critical 실패하면 HTTP 503 반환.
+    """
+    start = time.time()
+    settings = get_settings()
+    checks = {}
+    healthy = True
+
+    # 1. MongoDB: ping + 실제 쿼리
+    try:
+        t = time.time()
+        db = MongoService.get_db()
+        await db.command("ping")
+        await db["files"].find_one({}, max_time_ms=3000)
+        checks["mongodb"] = {"status": "ok", "latency_ms": round((time.time() - t) * 1000)}
+    except Exception as e:
+        checks["mongodb"] = {"status": "error", "error": str(e)}
+        healthy = False
+
+    # 2. pdf_converter: GET /health
+    try:
+        t = time.time()
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f"{settings.PDF_CONVERTER_URL}/health")
+        if resp.status_code == 200:
+            checks["pdf_converter"] = {"status": "ok", "latency_ms": round((time.time() - t) * 1000)}
+        else:
+            checks["pdf_converter"] = {"status": "error", "error": "HTTP %d" % resp.status_code}
+            healthy = False
+    except Exception as e:
+        checks["pdf_converter"] = {"status": "error", "error": str(e)}
+        healthy = False
+
+    # 3. 디스크 공간 (1GB 미만 시 unhealthy)
+    try:
+        disk = shutil.disk_usage(settings.FILE_BASE_PATH)
+        free_gb = disk.free / (1024 ** 3)
+        checks["disk"] = {
+            "status": "ok" if free_gb > 1.0 else "error",
+            "free_gb": round(free_gb, 2),
+            "usage_percent": round(disk.used / disk.total * 100, 1),
+        }
+        if free_gb <= 1.0:
+            healthy = False
+    except Exception as e:
+        checks["disk"] = {"status": "error", "error": str(e)}
+
+    # 4. Upload Worker 상태
+    if settings.UPLOAD_QUEUE_ENABLED:
+        status = upload_worker.get_status()
+        worker_ok = status.get("running", False)
+        checks["upload_worker"] = {
+            "status": "ok" if worker_ok else "error",
+            "active_tasks": status.get("active_tasks", 0),
+        }
+        if not worker_ok:
+            healthy = False
+
+    # 5. 큐 적체 (warning 수준, 200 유지)
+    if settings.UPLOAD_QUEUE_ENABLED:
+        try:
+            qs = await UploadQueueService.get_queue_stats()
+            pending = qs.get("pending", 0)
+            checks["queue"] = {
+                "status": "ok" if pending <= 50 else "warning",
+                "pending": pending,
+                "processing": qs.get("processing", 0),
+                "failed": qs.get("failed", 0),
+            }
+        except Exception as e:
+            checks["queue"] = {"status": "error", "error": str(e)}
+
+    # 6. 처리 메트릭
+    metrics = pipeline_metrics.get_summary()
+
+    total_ms = round((time.time() - start) * 1000)
+    result = {
+        "status": "healthy" if healthy else "unhealthy",
+        "checks": checks,
+        "metrics": metrics,
+        "totalLatency": total_ms,
+        "version": "1.0.0",
+    }
+
+    if not healthy:
+        return JSONResponse(status_code=503, content=result)
+    return result
 
 
 # Queue status endpoint

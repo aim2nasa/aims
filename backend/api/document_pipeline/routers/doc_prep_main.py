@@ -1077,6 +1077,14 @@ async def process_document_pipeline(
     """
     doc_id = existing_doc_id
 
+    # 메트릭 기록 시작
+    from workers.pipeline_metrics import pipeline_metrics
+    metric_record = pipeline_metrics.record_start(
+        doc_id=existing_doc_id or "pending",
+        mime_type=mime_type or "",
+        file_size=len(file_content),
+    )
+
     try:
         files_collection = MongoService.get_collection("files")
 
@@ -1310,6 +1318,7 @@ async def process_document_pipeline(
             # Progress: 100% - text/plain processing complete (no OCR needed)
             await _notify_progress(doc_id, user_id, 100, "complete", "텍스트 파일 처리 완료")
 
+            pipeline_metrics.record_success(metric_record)
             return {
                 "exitCode": 0,
                 "stderr": "",
@@ -1334,6 +1343,7 @@ async def process_document_pipeline(
             # Progress: 100% - Unsupported MIME, OCR skipped
             await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료 (OCR 생략)")
 
+            pipeline_metrics.record_success(metric_record)
             return {
                 "warn": True,
                 "status": 415,
@@ -1372,6 +1382,9 @@ async def process_document_pipeline(
             # Progress: 70% - OCR queued
             await _notify_progress(doc_id, user_id, 70, "ocr", "OCR 대기열에 추가됨")
 
+            # 메트릭: 성공 기록 (OCR는 별도 처리)
+            pipeline_metrics.record_success(metric_record)
+
             return {
                 "result": "success",
                 "document_id": doc_id,
@@ -1393,6 +1406,9 @@ async def process_document_pipeline(
         # Send completion notification
         await _notify_document_complete(doc_id, user_id)
 
+        # 메트릭: 성공 기록
+        pipeline_metrics.record_success(metric_record)
+
         return {
             "result": "success",
             "document_id": doc_id,
@@ -1412,6 +1428,9 @@ async def process_document_pipeline(
 
     except Exception as e:
         logger.error(f"Error in process_document_pipeline: {e}", exc_info=True)
+
+        # 메트릭: 에러 기록
+        await pipeline_metrics.record_error(metric_record, type(e).__name__)
 
         # Save error to MongoDB if we have a doc_id
         if doc_id:

@@ -19,7 +19,7 @@ export const MONITORED_SERVICES: ServiceConfig[] = [
   { port: 8002, service: 'pdf_proxy', description: 'PDF 프록시', healthEndpoint: '/health' },
   { port: 8004, service: 'annual_report_api', description: '연간보고서 API', healthEndpoint: '/health' },
   { port: 8005, service: 'pdf_converter', description: 'PDF 변환 서버', healthEndpoint: '/health' },
-  { port: 8100, service: 'document_pipeline', description: 'Document Pipeline API', healthEndpoint: '/health' },
+  { port: 8100, service: 'document_pipeline', description: 'Document Pipeline API', healthEndpoint: '/health/deep', timeout: 10000 },
 
   // Tier 3: Workflow
   { port: 5678, service: 'n8n', description: '워크플로우 엔진', healthEndpoint: '/healthz' },
