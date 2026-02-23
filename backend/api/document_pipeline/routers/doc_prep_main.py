@@ -58,6 +58,28 @@ def _extract_page_count(file_content: bytes, content_type: Optional[str]) -> int
         return 1
 
 
+def _validate_file_size(file_size: int, filename: str, max_size_mb: int) -> Optional[JSONResponse]:
+    """
+    파일 크기 검증 (서버사이드 방어 계층)
+
+    초과 시 JSONResponse(413) 반환, 이내 시 None 반환.
+    """
+    max_size_bytes = max_size_mb * 1024 * 1024
+    if file_size > max_size_bytes:
+        file_size_mb = round(file_size / (1024 * 1024), 1)
+        logger.warning(f"[FileSize] 파일 크기 초과: {filename} ({file_size_mb}MB > {max_size_mb}MB)")
+        return JSONResponse(
+            status_code=413,
+            content={
+                "result": "error",
+                "status": 413,
+                "userMessage": f"파일 크기({file_size_mb}MB)가 제한({max_size_mb}MB)을 초과합니다.",
+                "filename": filename
+            }
+        )
+    return None
+
+
 async def check_credit_for_upload(user_id: str, estimated_pages: int = 1) -> Dict[str, Any]:
     """
     문서 업로드 전 크레딧 체크 (aims_api 내부 API 호출)
@@ -154,6 +176,11 @@ async def doc_prep_main(
         try:
             file_content = await file.read()
             original_name = file.filename or "unknown"
+
+            # 🔴 파일 크기 검증 (B4: Shadow mode에서도 검증)
+            size_error = _validate_file_size(len(file_content), original_name, settings.MAX_UPLOAD_SIZE_MB)
+            if size_error:
+                return size_error
 
             # n8n이 전달한 파일명 사용 (없으면 자체 생성 - 비교용)
             if shadow_saved_name:
@@ -256,6 +283,11 @@ async def doc_prep_main(
         # 파일 내용 읽기
         file_content = await file.read()
         original_name = file.filename or "unknown"
+
+        # 🔴 파일 크기 검증 (B4: Nginx만 의존하지 않는 서버사이드 방어)
+        size_error = _validate_file_size(len(file_content), original_name, settings.MAX_UPLOAD_SIZE_MB)
+        if size_error:
+            return size_error
 
         # 큐잉 모드 확인
         if settings.UPLOAD_QUEUE_ENABLED:
