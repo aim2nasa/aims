@@ -48,7 +48,10 @@ _robot = Robot()
 # SikuliX 설정 (외부 import 시에도 안전하게 처리)
 try:
     Settings.ActionLogs = True  # 디버깅용 로그 활성화
-    setFindFailedResponse(ABORT)
+    # ABORT → SKIP: ABORT 모드는 SikuliX IDE가 exists() 내부 find() 실패를
+    # 인터셉트하여 Python except를 우회하고 스크립트를 강제 종료하는 버그 유발.
+    # SKIP 모드: find() 실패 시 null 반환 → Python 레벨에서 안전하게 처리.
+    setFindFailedResponse(SKIP)
 except NameError:
     pass  # 외부 import 시 SikuliX 전역 객체가 없을 수 있음
 
@@ -129,8 +132,9 @@ def _recover_after_resume():
         # PDF 닫기는 메인 코드(step 7-7)에서 critical section 안에서 안전하게 처리
         # 알림 팝업
         try:
-            if _scr().exists(IMG_ALERT_CONFIRM_BTN, 1):
-                _scr().click(IMG_ALERT_CONFIRM_BTN)
+            _m_alert = _scr().exists(IMG_ALERT_CONFIRM_BTN, 1)
+            if _m_alert:
+                _scr().click(_m_alert)
                 time.sleep(0.5)
                 cleaned = True
         except:
@@ -198,32 +202,63 @@ def exit_critical_section():
 
 # ===== SikuliX 함수 래핑: 일시정지 체크 + 올바른 화면 사용 =====
 def click(target, *args):
-    check_pause()
-    return _scr().click(target, *args)
+    try:
+        check_pause()
+        return _scr().click(target, *args)
+    except:
+        return None
 
 def type(target, *args):
-    check_pause()
-    return _scr().type(target, *args)
+    try:
+        check_pause()
+        return _scr().type(target, *args)
+    except:
+        return None
 
 def paste(target, *args):
-    check_pause()
-    return _scr().paste(target, *args)
+    try:
+        check_pause()
+        return _scr().paste(target, *args)
+    except:
+        return None
 
 def find(target, *args):
-    check_pause()
-    return _scr().find(target, *args)
+    try:
+        check_pause()
+        return _scr().find(target, *args)
+    except:
+        return None
 
 def exists(target, *args):
+    try:
+        check_pause()
+        return _scr().exists(target, *args)
+    except:
+        # SikuliX SKIP 모드에서도 특수 화면 상태(브라우저 다이얼로그 등)에서
+        # Java 예외가 escape될 수 있음 → None 반환으로 안전하게 처리
+        return None
+
+def wait(target, *args):
     check_pause()
-    return _scr().exists(target, *args)
+    result = _scr().wait(target, *args)
+    # SKIP 모드: 타임아웃 시 null(None) 반환 → 호출부 except로 보내야 함
+    if result is None:
+        raise Exception("wait() timeout (SKIP mode): %s" % str(target))
+    return result
 
 def wheel(target, *args):
-    check_pause()
-    return _scr().wheel(target, *args)
+    try:
+        check_pause()
+        return _scr().wheel(target, *args)
+    except:
+        return None
 
 def findAll(target, *args):
-    check_pause()
-    return _scr().findAll(target, *args)
+    try:
+        check_pause()
+        return _scr().findAll(target, *args)
+    except:
+        return None
 
 def sleep(seconds):
     """pause-aware sleep. 0.5초 단위로 일시정지 체크."""
@@ -231,9 +266,9 @@ def sleep(seconds):
     interval = 0.5
     while elapsed < seconds:
         remaining = seconds - elapsed
-        wait = min(interval, remaining)
-        time.sleep(wait)
-        elapsed += wait
+        chunk = min(interval, remaining)
+        time.sleep(chunk)
+        elapsed += chunk
         check_pause()
 
 # 경로 설정 (동적 감지 - auto_clicker_v2 기준)
@@ -565,11 +600,11 @@ def get_row_click_positions():
     Returns:
         tuple: (base_x, first_row_y, header_match) 또는 실패 시 (None, None, None)
     """
-    if not exists(IMG_REPORT_HEADER, 5):
+    header_match = exists(IMG_REPORT_HEADER, 5)
+    if not header_match:
         log(u"    [ERROR] 증권번호 헤더를 찾을 수 없습니다.")
         return None, None, None
 
-    header_match = find(IMG_REPORT_HEADER)
     header_x = header_match.getCenter().getX()
     header_y = header_match.getCenter().getY()
 
@@ -942,11 +977,11 @@ def click_all_rows_with_scroll():
     log(u"    === 변액보험리포트 순차 클릭 시작 (이미지 매칭 기반) ===")
 
     # 헤더 찾기
-    if not exists(IMG_REPORT_HEADER, 5):
+    header_match = exists(IMG_REPORT_HEADER, 5)
+    if not header_match:
         log(u"    [ERROR] 증권번호 헤더를 찾을 수 없습니다.")
         return 0
 
-    header_match = find(IMG_REPORT_HEADER)
     header_x = header_match.getCenter().getX()
     header_y = header_match.getCenter().getY()
     log(u"    [기준점] 헤더 위치: (%d, %d)" % (header_x, header_y))
@@ -990,8 +1025,8 @@ def click_all_rows_with_scroll():
 
         try:
             # 헤더 재탐색 (스크롤 후 위치 변경 대응)
-            if exists(IMG_REPORT_HEADER, 2):
-                header_match = find(IMG_REPORT_HEADER)
+            header_match = exists(IMG_REPORT_HEADER, 2)
+            if header_match:
                 header_y = header_match.getCenter().getY()
                 base_x = header_match.getCenter().getX() + HEADER_TO_CHECKBOX_X
                 search_region = Region(int(base_x - 40), int(header_y + 15), 80, 350)
@@ -1233,12 +1268,14 @@ def click_all_rows_with_scroll():
                     sleep(WAIT_MEDIUM)
 
                 # 알림 팝업 처리 (메트라이프 버그: 두 번 클릭 필요)
-                if exists(IMG_ALERT_CONFIRM_BTN, 1):
-                    click(IMG_ALERT_CONFIRM_BTN)
+                _alert1 = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                if _alert1:
+                    click(_alert1)
                     log(u"        [WARN] 알림 팝업 첫 번째 클릭")
                     sleep(1)
-                    if exists(IMG_ALERT_CONFIRM_BTN, 1):
-                        click(IMG_ALERT_CONFIRM_BTN)
+                    _alert2 = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                    if _alert2:
+                        click(_alert2)
                         log(u"        [WARN] 알림 팝업 두 번째 클릭")
                         sleep(1)
             else:
@@ -1353,8 +1390,8 @@ def _cleanup_annual_report_retry():
         try:
             type(Key.F4, Key.ALT)
             sleep(1)
-            if exists(IMG_YES_BTN, 2):
-                yes_match = find(IMG_YES_BTN)
+            yes_match = exists(IMG_YES_BTN, 2)
+            if yes_match:
                 yx = int(yes_match.getCenter().getX())
                 yy = int(yes_match.getCenter().getY())
                 click(yes_match)
@@ -1365,9 +1402,9 @@ def _cleanup_annual_report_retry():
             exit_critical_section()
 
     # 2. 알림 팝업이 있으면 닫기
-    if exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 2):
+    confirm_m = exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 2)
+    if confirm_m:
         log(u"    [상태 정리] 알림 팝업 감지 - 확인 클릭")
-        confirm_m = find(IMG_NO_ANNUAL_REPORT_CONFIRM)
         cmx = int(confirm_m.getCenter().getX())
         cmy = int(confirm_m.getCenter().getY())
         click(confirm_m)
@@ -1433,12 +1470,12 @@ def download_annual_report():
         log(u"    [Annual Report 버튼] 찾는 중... [시도 %d/%d]" % (attempt, MAX_RETRY))
         take_screenshot(u"step7_before_annual_report_btn" if attempt == 1 else u"step7_retry%d_before_btn" % attempt)
 
-        if not exists(IMG_ANNUAL_REPORT_BTN, 10):
+        ar_match = exists(IMG_ANNUAL_REPORT_BTN, 10)
+        if not ar_match:
             log(u"    [WARN] Annual Report 버튼을 찾을 수 없음 - 스킵")
             take_screenshot(u"step7_annual_report_btn_not_found")
             return {'exists': None, 'saved': False, 'reason': u'AR 버튼 미발견'}
 
-        ar_match = find(IMG_ANNUAL_REPORT_BTN)
         ar_x = int(ar_match.getCenter().getX())
         ar_y = int(ar_match.getCenter().getY())
         log(u"    [Annual Report 버튼] 이미지 매칭 성공: (%d, %d) [이미지: %s]" % (ar_x, ar_y, str(IMG_ANNUAL_REPORT_BTN)))
@@ -1490,8 +1527,8 @@ def download_annual_report():
         # 알림 확인 → AR 미존재 처리
         if ar_not_exist:
             take_screenshot(u"step7_no_annual_report_alert")
-            if exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 3):
-                confirm_match = find(IMG_NO_ANNUAL_REPORT_CONFIRM)
+            confirm_match = exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 3)
+            if confirm_match:
                 cx = int(confirm_match.getCenter().getX())
                 cy = int(confirm_match.getCenter().getY())
                 click(confirm_match)
@@ -1524,10 +1561,11 @@ def download_annual_report():
         log(u"    [FATAL] Annual Report PDF 로딩 최종 실패 - %d회 시도 모두 타임아웃" % MAX_RETRY)
         take_screenshot(u"step7_annual_report_FATAL_timeout")
         # 알림 팝업 확인 (MetDo 서비스 오류 등)
-        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+        _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+        if _alert:
             log(u"    [ALERT] MetDo 알림 팝업 감지!")
             take_screenshot(u"step7_ALERT_POPUP_detected")
-            click(IMG_ALERT_CONFIRM_BTN)
+            click(_alert)
             sleep(1)
         raise NavigationResetRequired(u"Annual Report PDF 로딩 %d회 타임아웃" % MAX_RETRY)
 
@@ -1540,7 +1578,11 @@ def download_annual_report():
     # 7-4: PDF 저장 아이콘 클릭 + 검증
     log(u"    PDF 저장 버튼 클릭...")
     take_screenshot(u"step7_before_save_icon")
-    save_match = find(IMG_PDF_SAVE_BTN)
+    save_match = exists(IMG_PDF_SAVE_BTN, 5)
+    if not save_match:
+        log(u"    [ERROR] PDF 저장 버튼을 찾을 수 없음")
+        exit_critical_section()
+        raise NavigationResetRequired(u"PDF 저장 버튼 미발견")
     save_x = int(save_match.getCenter().getX())
     save_y = int(save_match.getCenter().getY())
     log(u"        [좌표] PDF 저장 아이콘 클릭: (%d, %d)" % (save_x, save_y))
@@ -1553,7 +1595,11 @@ def download_annual_report():
         log(u"    [WARN] 저장 다이얼로그 미표시 - 저장 아이콘 재클릭...")
         take_screenshot(u"step7_save_dialog_not_opened")
         # 재시도: PDF 뷰어에 포커스 후 재클릭
-        save_match2 = find(IMG_PDF_SAVE_BTN)
+        save_match2 = exists(IMG_PDF_SAVE_BTN, 3)
+        if not save_match2:
+            log(u"    [ERROR] PDF 저장 버튼 재클릭 실패")
+            exit_critical_section()
+            raise NavigationResetRequired(u"PDF 저장 버튼 재클릭 실패")
         save_x2 = int(save_match2.getCenter().getX())
         save_y2 = int(save_match2.getCenter().getY())
         click(save_match2)
@@ -1564,10 +1610,11 @@ def download_annual_report():
             log(u"    [FATAL] 저장 다이얼로그 2회 실패 → 종료 요청")
             take_screenshot(u"step7_save_dialog_FATAL")
             # 알림 팝업 확인 (MetDo 서비스 오류 등)
-            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+            if _alert:
                 log(u"    [ALERT] MetDo 알림 팝업 감지!")
                 take_screenshot(u"step7_ALERT_POPUP_save_dialog")
-                click(IMG_ALERT_CONFIRM_BTN)
+                click(_alert)
                 sleep(1)
             exit_critical_section()
             raise NavigationResetRequired(u"AR PDF 저장 다이얼로그 열기 실패")
@@ -1576,7 +1623,11 @@ def download_annual_report():
     log(u"    저장(S) 버튼 클릭...")
     take_screenshot(u"step7_before_save_s_btn")
     navigate_save_dialog_to_dir()
-    save_s_match = find(IMG_SAVE_S_BTN)
+    save_s_match = exists(IMG_SAVE_S_BTN, 5)
+    if not save_s_match:
+        log(u"    [ERROR] 저장(S) 버튼을 찾을 수 없음")
+        exit_critical_section()
+        raise NavigationResetRequired(u"저장(S) 버튼 미발견")
     ss_x = int(save_s_match.getCenter().getX())
     ss_y = int(save_s_match.getCenter().getY())
     log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ss_x, ss_y))
@@ -1603,16 +1654,20 @@ def download_annual_report():
         # ★ CASE A: 중복 파일 → 덮어쓰기 취소
         log(u"    동일 파일 존재 - 덮어쓰기 취소")
         # 아직 아니요(N) 버튼이 보이면 클릭 (Alt+N 폴백으로 이미 닫혔을 수 있음)
-        if exists(no_btn_pattern, 1):
-            no_match = find(no_btn_pattern)
+        no_match = exists(no_btn_pattern, 1)
+        if no_match:
             no_x = int(no_match.getCenter().getX())
             no_y = int(no_match.getCenter().getY())
             log(u"        [좌표] 아니요(N) 버튼 클릭: (%d, %d)" % (no_x, no_y))
             click(no_match)
             capture_with_click_marker(no_x, no_y, "no_btn", 0, "step7_no_overwrite")
             sleep(0.5)
-        if exists(IMG_CANCEL_BTN, 3):
-            cancel_match = find(IMG_CANCEL_BTN)
+        else:
+            log(u"        [폴백] 아니요(N) 버튼 미감지 → Alt+N 키보드 시도")
+            type("n", Key.ALT)
+            sleep(1)
+        cancel_match = exists(IMG_CANCEL_BTN, 3)
+        if cancel_match:
             cancel_x = int(cancel_match.getCenter().getX())
             cancel_y = int(cancel_match.getCenter().getY())
             log(u"        [좌표] 취소 버튼 클릭: (%d, %d)" % (cancel_x, cancel_y))
@@ -1644,8 +1699,8 @@ def download_annual_report():
         # ★ 포커스 확보 + Alt+F4 + 확인 다이얼로그 → Critical Section
         enter_critical_section()
         try:
-            if exists(IMG_PDF_SAVE_BTN, 2):
-                pdf_icon = find(IMG_PDF_SAVE_BTN)
+            pdf_icon = exists(IMG_PDF_SAVE_BTN, 2)
+            if pdf_icon:
                 click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
                 sleep(0.5)
 
@@ -1654,9 +1709,9 @@ def download_annual_report():
 
             # 7-8: 예(Y) 클릭 (저장 확인 / ezPDF 종료 확인)
             yes_btn_pattern = Pattern(IMG_YES_BTN).similar(0.55)
-            if exists(yes_btn_pattern, 7):
+            yes_match = exists(yes_btn_pattern, 7)
+            if yes_match:
                 log(u"    예(Y) 클릭...")
-                yes_match = find(yes_btn_pattern)
                 yes_x = int(yes_match.getCenter().getX())
                 yes_y = int(yes_match.getCenter().getY())
                 log(u"        [좌표] 예(Y) 버튼 클릭: (%d, %d)" % (yes_x, yes_y))
@@ -1688,10 +1743,11 @@ def download_annual_report():
         log(u"    [FATAL] PDF 뷰어 3회 닫기 실패 → 종료 요청")
         take_screenshot(u"step7_pdf_close_FATAL")
         # 알림 팝업 확인 (MetDo 서비스 오류 등)
-        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+        _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+        if _alert:
             log(u"    [ALERT] MetDo 알림 팝업 감지!")
             take_screenshot(u"step7_ALERT_POPUP_pdf_close")
-            click(IMG_ALERT_CONFIRM_BTN)
+            click(_alert)
             sleep(1)
         raise NavigationResetRequired(u"AR PDF 뷰어 닫기 실패")
 
@@ -1752,8 +1808,8 @@ def recover_to_report_list(report_number):
     alert_pattern = Pattern(IMG_ALERT_CONFIRM_BTN).similar(0.7)
     alert_closed = 0
     for attempt in range(3):  # 최대 3번 (중첩 알림 대비)
-        if exists(alert_pattern, 2):
-            alert_match = find(alert_pattern)
+        alert_match = exists(alert_pattern, 2)
+        if alert_match:
             ax = int(alert_match.getCenter().getX())
             ay = int(alert_match.getCenter().getY())
             log(u"        -> 알림 확인 버튼 감지: (%d, %d) [%d번째]" % (ax, ay, attempt + 1))
@@ -1788,8 +1844,8 @@ def recover_to_report_list(report_number):
             capture_error_screenshot(report_number, "recovery_after_altf4_%d" % pdf_close_count)
 
             # "예(Y)" 확인 버튼 클릭 (저장하지 않고 닫기)
-            if exists(IMG_YES_BTN, 3):
-                yes_match = find(IMG_YES_BTN)
+            yes_match = exists(IMG_YES_BTN, 3)
+            if yes_match:
                 yx = int(yes_match.getCenter().getX())
                 yy = int(yes_match.getCenter().getY())
                 click(yes_match)
@@ -1819,8 +1875,8 @@ def recover_to_report_list(report_number):
     else:
         print_closed = False
         # 방법 1: 보고서인쇄 창 X 버튼 이미지 매칭
-        if exists(IMG_PRINT_REPORT_CLOSE_BTN, 3):
-            pc_match = find(IMG_PRINT_REPORT_CLOSE_BTN)
+        pc_match = exists(IMG_PRINT_REPORT_CLOSE_BTN, 3)
+        if pc_match:
             pcx = int(pc_match.getCenter().getX())
             pcy = int(pc_match.getCenter().getY())
             click(pc_match)
@@ -1828,21 +1884,22 @@ def recover_to_report_list(report_number):
             capture_with_click_marker(pcx, pcy, "print_close", report_number, "recovery_print_close")
             sleep(2)
             print_closed = True
-        elif exists(IMG_REPORT_PRINT_X_BTN, 3):
-            pc_match2 = find(IMG_REPORT_PRINT_X_BTN)
-            pcx2 = int(pc_match2.getCenter().getX())
-            pcy2 = int(pc_match2.getCenter().getY())
-            click(pc_match2)
-            log(u"        -> 보고서인쇄 X 버튼 클릭 (대체): (%d, %d)" % (pcx2, pcy2))
-            capture_with_click_marker(pcx2, pcy2, "print_close_alt", report_number, "recovery_print_close")
-            sleep(2)
-            print_closed = True
+        else:
+            pc_match2 = exists(IMG_REPORT_PRINT_X_BTN, 3)
+            if pc_match2:
+                pcx2 = int(pc_match2.getCenter().getX())
+                pcy2 = int(pc_match2.getCenter().getY())
+                click(pc_match2)
+                log(u"        -> 보고서인쇄 X 버튼 클릭 (대체): (%d, %d)" % (pcx2, pcy2))
+                capture_with_click_marker(pcx2, pcy2, "print_close_alt", report_number, "recovery_print_close")
+                sleep(2)
+                print_closed = True
 
         if not print_closed:
             # 방법 2: 미리보기 버튼 기준 상대 좌표로 X 버튼 클릭
             preview_pattern = Pattern(IMG_PREVIEW_BTN).similar(0.8)
-            if exists(preview_pattern, 2):
-                preview_match = find(preview_pattern)
+            preview_match = exists(preview_pattern, 2)
+            if preview_match:
                 close_x = int(preview_match.getCenter().getX() + PREVIEW_TO_CLOSE_X)
                 close_y = int(preview_match.getCenter().getY() + PREVIEW_TO_CLOSE_Y)
                 click(Location(close_x, close_y))
@@ -1873,22 +1930,25 @@ def recover_to_report_list(report_number):
     if exists(IMG_PREVIEW_BTN, 1):
         log(u"        -> 보고서인쇄 모달 아직 열려있음! 닫기 재시도...")
         modal_closed = False
-        if exists(IMG_PRINT_REPORT_CLOSE_BTN, 2):
-            click(find(IMG_PRINT_REPORT_CLOSE_BTN))
+        _pc = exists(IMG_PRINT_REPORT_CLOSE_BTN, 2)
+        if _pc:
+            click(_pc)
             log(u"        -> 보고서인쇄 X 버튼 클릭 (재시도)")
             sleep(2)
             modal_closed = True
-        elif exists(IMG_REPORT_PRINT_X_BTN, 2):
-            click(find(IMG_REPORT_PRINT_X_BTN))
-            log(u"        -> 보고서인쇄 X 버튼 클릭 (대체 이미지, 재시도)")
-            sleep(2)
-            modal_closed = True
+        else:
+            _pc2 = exists(IMG_REPORT_PRINT_X_BTN, 2)
+            if _pc2:
+                click(_pc2)
+                log(u"        -> 보고서인쇄 X 버튼 클릭 (대체 이미지, 재시도)")
+                sleep(2)
+                modal_closed = True
 
         if not modal_closed:
             # 미리보기 버튼 기준 상대좌표로 X 버튼 클릭
             preview_pattern_retry = Pattern(IMG_PREVIEW_BTN).similar(0.8)
-            if exists(preview_pattern_retry, 1):
-                preview_m = find(preview_pattern_retry)
+            preview_m = exists(preview_pattern_retry, 1)
+            if preview_m:
                 cx = int(preview_m.getCenter().getX() + PREVIEW_TO_CLOSE_X)
                 cy = int(preview_m.getCenter().getY() + PREVIEW_TO_CLOSE_Y)
                 click(Location(cx, cy))
@@ -1902,8 +1962,8 @@ def recover_to_report_list(report_number):
         log(u"        -> 변액보험리포트 목록 확인 안됨 (보고서인쇄 모달도 없음)")
 
     # 혹시 알림 팝업이 추가로 떴을 수 있음
-    if exists(alert_pattern, 2):
-        alert_match2 = find(alert_pattern)
+    alert_match2 = exists(alert_pattern, 2)
+    if alert_match2:
         click(alert_match2)
         log(u"        -> 추가 알림 팝업 닫기")
         sleep(1)
@@ -1968,12 +2028,14 @@ def save_report_pdf(report_number):
     try:
         # Step 0: > 버튼 찾기 (기준점)
         log(u"    [0/11] > 버튼 찾기 (기준점)...")
-        if not exists(IMG_ARROW_RIGHT_BTN, 5):
+        arrow_match = exists(IMG_ARROW_RIGHT_BTN, 5)
+        if not arrow_match:
             # 알림 팝업 확인 (MetDo 서비스 오류 등)
-            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+            if _alert:
                 log(u"    [ALERT] MetDo 알림 팝업 감지!")
                 take_screenshot(u"ALERT_POPUP_arrow_btn")
-                click(IMG_ALERT_CONFIRM_BTN)
+                click(_alert)
                 sleep(1)
                 raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
             result['error'] = u"> 버튼 못 찾음"
@@ -1983,7 +2045,6 @@ def save_report_pdf(report_number):
             # Stack rewinding → NavigationResetRequired (코드 검증 실패 → 종료)
             recover_to_report_list(report_number)
             raise NavigationResetRequired(u"변액리포트 #%d: > 버튼 찾기 실패" % report_number)
-        arrow_match = find(IMG_ARROW_RIGHT_BTN)
         arrow_x = arrow_match.getCenter().getX()
         arrow_y = arrow_match.getCenter().getY()
         log(u"        > 버튼 위치: (%d, %d)" % (arrow_x, arrow_y))
@@ -1997,8 +2058,8 @@ def save_report_pdf(report_number):
 
         # 이미지 매칭으로 체크박스 찾아서 클릭 (유사도 0.7로 낮춤)
         contract_pattern = Pattern(IMG_CONTRACT_INFO_CHECK).similar(0.7)
-        if exists(contract_pattern, 3):
-            contract_match = find(contract_pattern)
+        contract_match = exists(contract_pattern, 3)
+        if contract_match:
             log(u"        [이미지매칭] 계약사항및기타 발견: (%d, %d)" % (
                 contract_match.getCenter().getX(), contract_match.getCenter().getY()))
             click(contract_match)
@@ -2016,8 +2077,8 @@ def save_report_pdf(report_number):
 
         # 이미지 매칭으로 체크박스 찾아서 클릭 (유사도 0.7로 낮춤)
         fund_pattern = Pattern(IMG_FUND_HISTORY_CHECK).similar(0.7)
-        if exists(fund_pattern, 3):
-            fund_match = find(fund_pattern)
+        fund_match = exists(fund_pattern, 3)
+        if fund_match:
             log(u"        [이미지매칭] 펀드이력관리 발견: (%d, %d)" % (
                 fund_match.getCenter().getX(), fund_match.getCenter().getY()))
             click(fund_match)
@@ -2051,10 +2112,11 @@ def save_report_pdf(report_number):
         preview_pattern = Pattern(IMG_PREVIEW_PDF_BTN).similar(0.8)
         if not exists(preview_pattern, 5):
             # 알림 팝업 확인 (MetDo 서비스 오류 등)
-            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+            if _alert:
                 log(u"    [ALERT] MetDo 알림 팝업 감지!")
                 take_screenshot(u"ALERT_POPUP_preview_btn")
-                click(IMG_ALERT_CONFIRM_BTN)
+                click(_alert)
                 sleep(1)
                 raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
             result['error'] = u"미리보기 버튼 못 찾음"
@@ -2073,14 +2135,20 @@ def save_report_pdf(report_number):
 
         while total_waited < PREVIEW_MAX:
             # 미리보기 버튼이 보이면 → 클릭 (미등록 또는 첫 시도)
-            if exists(preview_pattern, 2):
-                preview_match = find(preview_pattern)
+            preview_match = exists(preview_pattern, 2)
+            if preview_match:
                 preview_x = int(preview_match.getCenter().getX())
                 preview_y = int(preview_match.getCenter().getY())
                 click_count += 1
                 log(u"        [클릭 %d] 미리보기 버튼: (%d, %d)" % (click_count, preview_x, preview_y))
-                click(preview_match)
-                capture_with_click_marker(preview_x, preview_y, "preview_btn", report_number, "preview_clicked_%d" % click_count)
+                # 클릭~화면전환 구간 보호: 클릭 직후 화면이 전환되는 동안
+                # check_pause()가 실행되면 예상치 못한 화면 상태를 만날 수 있음
+                enter_critical_section()
+                try:
+                    click(preview_match)
+                    capture_with_click_marker(preview_x, preview_y, "preview_btn", report_number, "preview_clicked_%d" % click_count)
+                finally:
+                    exit_critical_section()
             else:
                 log(u"        [대기] 미리보기 버튼 사라짐 → PDF 로딩 중...")
 
@@ -2133,9 +2201,9 @@ def save_report_pdf(report_number):
             if metlife_explicit_error:
                 # === MetLife 명시적 오류 → 확인 클릭 후 다음 보고서로 스킵 ===
                 log(u"        [MetLife 오류] 처리중 오류 발생 확인 → 확인 클릭 후 다음 보고서로")
-                if exists(alert_confirm_pattern, 2):
+                alert_match1 = exists(alert_confirm_pattern, 2)
+                if alert_match1:
                     # 첫 번째 클릭
-                    alert_match1 = find(alert_confirm_pattern)
                     am1x = int(alert_match1.getCenter().getX())
                     am1y = int(alert_match1.getCenter().getY())
                     click(alert_match1)
@@ -2143,8 +2211,8 @@ def save_report_pdf(report_number):
                     capture_with_click_marker(am1x, am1y, "alert_confirm_1", report_number, "timeout_alert1")
                     sleep(1)
                     # 두 번째 클릭 (메트라이프 사이트 버그 대응)
-                    if exists(alert_confirm_pattern, 2):
-                        alert_match2 = find(alert_confirm_pattern)
+                    alert_match2 = exists(alert_confirm_pattern, 2)
+                    if alert_match2:
                         am2x = int(alert_match2.getCenter().getX())
                         am2y = int(alert_match2.getCenter().getY())
                         click(alert_match2)
@@ -2171,8 +2239,9 @@ def save_report_pdf(report_number):
                             sleep(0.5)
                         type(Key.F4, Key.ALT)
                         sleep(2)
-                        if exists(IMG_YES_BTN, 2):
-                            click(IMG_YES_BTN)
+                        _yes = exists(IMG_YES_BTN, 2)
+                        if _yes:
+                            click(_yes)
                             sleep(1)
                     finally:
                         exit_critical_section()
@@ -2196,10 +2265,11 @@ def save_report_pdf(report_number):
                 log(u"        [FATAL] 미리보기 %d회 재클릭 모두 PDF 로딩 실패 (%d초 경과) → 프로그램 종료" % (click_count, PREVIEW_MAX))
                 capture_error_screenshot(report_number, "timeout_no_metlife_error")
                 # 알림 팝업 확인 (MetDo 서비스 오류 등)
-                if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                if _alert:
                     log(u"    [ALERT] MetDo 알림 팝업 감지!")
                     take_screenshot(u"ALERT_POPUP_pdf_timeout")
-                    click(IMG_ALERT_CONFIRM_BTN)
+                    click(_alert)
                     sleep(1)
                 copy_report_screenshots_to_error_folder(report_number)
                 recover_to_report_list(report_number)
@@ -2213,7 +2283,12 @@ def save_report_pdf(report_number):
         # Step 6: PDF 저장 아이콘 클릭 + 검증
         log(u"    [6/11] PDF 저장 아이콘 클릭...")
         capture_step_screenshot(report_number, "before_save_icon")
-        save_btn_match = find(IMG_PDF_SAVE_BTN)
+        save_btn_match = exists(IMG_PDF_SAVE_BTN, 5)
+        if not save_btn_match:
+            log(u"        [ERROR] PDF 저장 버튼을 찾을 수 없음")
+            exit_critical_section()
+            recover_to_report_list(report_number)
+            raise NavigationResetRequired(u"변액리포트 #%d: PDF 저장 버튼 미발견" % report_number)
         sbx = int(save_btn_match.getCenter().getX())
         sby = int(save_btn_match.getCenter().getY())
         log(u"        [좌표] 저장 아이콘 클릭: (%d, %d)" % (sbx, sby))
@@ -2227,8 +2302,8 @@ def save_report_pdf(report_number):
             log(u"        [WARN] 저장 다이얼로그 미표시 - 저장 아이콘 재클릭...")
             capture_step_screenshot(report_number, "save_dialog_not_opened")
             # 재시도: 저장 아이콘 다시 찾아서 클릭
-            if exists(IMG_PDF_SAVE_BTN, 3):
-                retry_match = find(IMG_PDF_SAVE_BTN)
+            retry_match = exists(IMG_PDF_SAVE_BTN, 3)
+            if retry_match:
                 rx = int(retry_match.getCenter().getX())
                 ry = int(retry_match.getCenter().getY())
                 click(retry_match)
@@ -2239,10 +2314,11 @@ def save_report_pdf(report_number):
                 log(u"        [FATAL] 저장 다이얼로그 2회 실패")
                 capture_error_screenshot(report_number, "save_dialog_FATAL")
                 # 알림 팝업 확인 (MetDo 서비스 오류 등)
-                if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                if _alert:
                     log(u"    [ALERT] MetDo 알림 팝업 감지!")
                     take_screenshot(u"ALERT_POPUP_save_dialog")
-                    click(IMG_ALERT_CONFIRM_BTN)
+                    click(_alert)
                     sleep(1)
                 exit_critical_section()
                 log_error(report_number, u"저장 다이얼로그 열기 실패")
@@ -2254,7 +2330,12 @@ def save_report_pdf(report_number):
         log(u"    [7/11] 저장(S) 버튼 클릭...")
         capture_step_screenshot(report_number, "before_save_btn")
         navigate_save_dialog_to_dir()
-        save_s_match = find(IMG_SAVE_S_BTN)
+        save_s_match = exists(IMG_SAVE_S_BTN, 5)
+        if not save_s_match:
+            log(u"        [ERROR] 저장(S) 버튼을 찾을 수 없음")
+            exit_critical_section()
+            recover_to_report_list(report_number)
+            raise NavigationResetRequired(u"변액리포트 #%d: 저장(S) 버튼 미발견" % report_number)
         ssx = int(save_s_match.getCenter().getX())
         ssy = int(save_s_match.getCenter().getY())
         log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ssx, ssy))
@@ -2282,16 +2363,20 @@ def save_report_pdf(report_number):
             # ★ CASE A: 중복 파일 → 덮어쓰기 취소
             log(u"        -> 동일 파일 존재! 스킵 처리...")
             capture_step_screenshot(report_number, "duplicate")
-            if exists(no_btn_pattern, 1):
-                no_match = find(no_btn_pattern)
+            no_match = exists(no_btn_pattern, 1)
+            if no_match:
                 no_x = int(no_match.getCenter().getX())
                 no_y = int(no_match.getCenter().getY())
                 click(no_match)
                 capture_with_click_marker(no_x, no_y, "no_btn", report_number, "no_overwrite_clicked")
                 log(u"        [좌표] 아니요(N) 클릭: (%d, %d)" % (no_x, no_y))
                 sleep(WAIT_MEDIUM)
-            if exists(IMG_CANCEL_BTN, 3):
-                cancel_match = find(IMG_CANCEL_BTN)
+            else:
+                log(u"        [폴백] 아니요(N) 버튼 미감지 → Alt+N 키보드 시도")
+                type("n", Key.ALT)
+                sleep(1)
+            cancel_match = exists(IMG_CANCEL_BTN, 3)
+            if cancel_match:
                 cancel_x = int(cancel_match.getCenter().getX())
                 cancel_y = int(cancel_match.getCenter().getY())
                 click(cancel_match)
@@ -2307,10 +2392,11 @@ def save_report_pdf(report_number):
                 log(u"        [FATAL] 저장(S) 버튼 아직 표시됨 - 저장 실행 안 됨")
                 capture_error_screenshot(report_number, "save_not_completed")
                 # 알림 팝업 확인 (MetDo 서비스 오류 등)
-                if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                if _alert:
                     log(u"    [ALERT] MetDo 알림 팝업 감지!")
                     take_screenshot(u"ALERT_POPUP_save_not_completed")
-                    click(IMG_ALERT_CONFIRM_BTN)
+                    click(_alert)
                     sleep(1)
                 exit_critical_section()
                 log_error(report_number, u"PDF 저장 실행 안 됨 (저장 다이얼로그 미닫힘)")
@@ -2343,8 +2429,8 @@ def save_report_pdf(report_number):
             enter_critical_section()
             try:
                 # 포커스 확보: PDF 뷰어 타이틀바 영역 클릭
-                if exists(IMG_PDF_SAVE_BTN, 2):
-                    pdf_icon = find(IMG_PDF_SAVE_BTN)
+                pdf_icon = exists(IMG_PDF_SAVE_BTN, 2)
+                if pdf_icon:
                     # 저장 아이콘 옆 빈 영역 클릭 (메뉴 안 열리도록)
                     click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
                     sleep(0.5)
@@ -2354,8 +2440,8 @@ def save_report_pdf(report_number):
 
                 # 예(Y) 확인 클릭 (저장 확인 / ezPDF 종료 확인)
                 yes_btn_pattern = Pattern(IMG_YES_BTN).similar(0.55)
-                if exists(yes_btn_pattern, 7):
-                    yes_match = find(yes_btn_pattern)
+                yes_match = exists(yes_btn_pattern, 7)
+                if yes_match:
                     ymx = int(yes_match.getCenter().getX())
                     ymy = int(yes_match.getCenter().getY())
                     click(yes_match)
@@ -2386,10 +2472,11 @@ def save_report_pdf(report_number):
             log(u"        [FATAL] PDF 뷰어 3회 닫기 실패!")
             capture_error_screenshot(report_number, "pdf_viewer_not_closed")
             # 알림 팝업 확인 (MetDo 서비스 오류 등)
-            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+            if _alert:
                 log(u"    [ALERT] MetDo 알림 팝업 감지!")
                 take_screenshot(u"ALERT_POPUP_pdf_viewer_close")
-                click(IMG_ALERT_CONFIRM_BTN)
+                click(_alert)
                 sleep(1)
             log_error(report_number, u"PDF 뷰어 닫기 실패")
             recover_to_report_list(report_number)
@@ -2401,8 +2488,8 @@ def save_report_pdf(report_number):
 
         # 이미지 매칭 우선 시도
         x_btn_clicked = False
-        if exists(IMG_PRINT_REPORT_CLOSE_BTN, 3):
-            x_match = find(IMG_PRINT_REPORT_CLOSE_BTN)
+        x_match = exists(IMG_PRINT_REPORT_CLOSE_BTN, 3)
+        if x_match:
             xmx = int(x_match.getCenter().getX())
             xmy = int(x_match.getCenter().getY())
             log(u"        -> 이미지 매칭으로 X 버튼 찾음: (%d, %d)" % (xmx, xmy))
@@ -2411,25 +2498,27 @@ def save_report_pdf(report_number):
             x_btn_clicked = True
             sleep(2)
             capture_step_screenshot(report_number, "after_close_x")
-        elif exists(IMG_REPORT_PRINT_X_BTN, 3):
-            x_match2 = find(IMG_REPORT_PRINT_X_BTN)
-            xmx2 = int(x_match2.getCenter().getX())
-            xmy2 = int(x_match2.getCenter().getY())
-            log(u"        -> 대체 이미지로 X 버튼 찾음: (%d, %d)" % (xmx2, xmy2))
-            click(x_match2)
-            capture_with_click_marker(xmx2, xmy2, "print_close_x_alt", report_number, "close_x_alt_clicked")
-            x_btn_clicked = True
-            sleep(2)
-            capture_step_screenshot(report_number, "after_close_x")
+        else:
+            x_match2 = exists(IMG_REPORT_PRINT_X_BTN, 3)
+            if x_match2:
+                xmx2 = int(x_match2.getCenter().getX())
+                xmy2 = int(x_match2.getCenter().getY())
+                log(u"        -> 대체 이미지로 X 버튼 찾음: (%d, %d)" % (xmx2, xmy2))
+                click(x_match2)
+                capture_with_click_marker(xmx2, xmy2, "print_close_x_alt", report_number, "close_x_alt_clicked")
+                x_btn_clicked = True
+                sleep(2)
+                capture_step_screenshot(report_number, "after_close_x")
 
         # 이미지 매칭 실패 시 상대 좌표로 시도
-        if not x_btn_clicked and exists(IMG_ARROW_RIGHT_BTN, 3):
-            arrow_match2 = find(IMG_ARROW_RIGHT_BTN)
-            close_x = int(arrow_match2.getCenter().getX() + ARROW_TO_CLOSE_BTN_X)
-            close_y = int(arrow_match2.getCenter().getY() + ARROW_TO_CLOSE_BTN_Y)
-            log(u"        -> 상대 좌표로 X 버튼 클릭: (%d, %d)" % (close_x, close_y))
-            click(Location(close_x, close_y))
-            capture_with_click_marker(close_x, close_y, "print_close_offset", report_number, "close_x_offset")
+        if not x_btn_clicked:
+            arrow_match2 = exists(IMG_ARROW_RIGHT_BTN, 3)
+            if arrow_match2:
+                close_x = int(arrow_match2.getCenter().getX() + ARROW_TO_CLOSE_BTN_X)
+                close_y = int(arrow_match2.getCenter().getY() + ARROW_TO_CLOSE_BTN_Y)
+                log(u"        -> 상대 좌표로 X 버튼 클릭: (%d, %d)" % (close_x, close_y))
+                click(Location(close_x, close_y))
+                capture_with_click_marker(close_x, close_y, "print_close_offset", report_number, "close_x_offset")
             x_btn_clicked = True
             sleep(2)
             capture_step_screenshot(report_number, "after_close_x")
@@ -2459,14 +2548,17 @@ def save_report_pdf(report_number):
     except NavigationResetRequired:
         raise  # 코드 검증 실패 → 상위로 전파 (절대 삼키지 않음)
     except Exception as e:
+        # Critical Section 안전 해제: 예상치 못한 예외 시 _in_critical_section 고착 방지
+        exit_critical_section()
         result['error'] = u"%s" % e
         log(u"    [FATAL] PDF 저장 예외: %s" % result['error'])
         capture_error_screenshot(report_number, "exception")
         # 알림 팝업 확인 (MetDo 서비스 오류 등)
-        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+        _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+        if _alert:
             log(u"    [ALERT] MetDo 알림 팝업 감지!")
             take_screenshot(u"ALERT_POPUP_exception")
-            click(IMG_ALERT_CONFIRM_BTN)
+            click(_alert)
             sleep(1)
         log_error(report_number, result['error'])
         # Stack rewinding → NavigationResetRequired (코드 검증 실패 → 종료)
@@ -2575,8 +2667,8 @@ def click_print_report_close_btn():
     """
     # 방법 1: 미리보기 버튼 기준 상대 좌표로 X 버튼 클릭
     preview_pattern = Pattern(IMG_PREVIEW_BTN).similar(0.8)
-    if exists(preview_pattern, 2):
-        preview_match = find(preview_pattern)
+    preview_match = exists(preview_pattern, 2)
+    if preview_match:
         preview_x = preview_match.getCenter().getX()
         preview_y = preview_match.getCenter().getY()
 
@@ -2716,8 +2808,8 @@ def wait_and_click(img, description, wait_time=10, report_num=0, capture_click=T
     """
     log(u"    [%s] 찾는 중 (최대 %d초)..." % (description, wait_time))
     try:
-        if exists(img, wait_time):
-            match = find(img)
+        match = exists(img, wait_time)
+        if match:
             mx = int(match.getCenter().getX())
             my = int(match.getCenter().getY())
             log(u"    [%s] 이미지 매칭 성공: (%d, %d) [이미지: %s]" % (description, mx, my, str(img)))
@@ -2732,10 +2824,11 @@ def wait_and_click(img, description, wait_time=10, report_num=0, capture_click=T
             # 매칭 실패 시 현재 화면 캡처
             capture_search_failure(description, str(img), wait_time, report_num, "wait_and_click_fail")
             # 알림 팝업 확인 (MetDo "서비스처리 중 오류" 등 - 어디서든 발생 가능)
-            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+            if _alert:
                 log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 프로그램 종료")
                 take_screenshot(u"ALERT_POPUP_in_wait_and_click")
-                click(IMG_ALERT_CONFIRM_BTN)
+                click(_alert)
                 sleep(1)
                 raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
             return False
@@ -2821,14 +2914,16 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             enter_critical_section()
             try:
                 # PDF 뷰어 영역 클릭으로 포커스 확보
-                pdf_icon = find(IMG_PDF_SAVE_BTN)
-                click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
+                pdf_icon = exists(IMG_PDF_SAVE_BTN, 2)
+                if pdf_icon:
+                    click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
                 sleep(0.5)
                 type(Key.F4, Key.ALT)
                 sleep(2)
                 # 종료 확인 다이얼로그 처리
-                if exists(IMG_YES_BTN, 3):
-                    click(find(IMG_YES_BTN))
+                _yes = exists(IMG_YES_BTN, 3)
+                if _yes:
+                    click(_yes)
                     sleep(1)
                 else:
                     type(Key.ENTER)
@@ -2847,8 +2942,9 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
         log(u"    [복구] 고객통합뷰가 이미 열려있음 → X 버튼으로 닫고 다시 열기")
         take_screenshot(u"step1_already_open")
         # 고객통합뷰 닫기
-        if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 5):
-            click(find(IMG_INTEGRATED_VIEW_CLOSE_BTN))
+        _close = exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 5)
+        if _close:
+            click(_close)
             sleep(WAIT_MEDIUM)
             log(u"    [복구] 고객통합뷰 닫기 완료")
         else:
@@ -2901,10 +2997,11 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             log(u"    [검증 실패] 고객통합뷰 미열림 (시도 %d/3)" % attempt)
             take_screenshot(u"step2_verify_fail_attempt_%d" % attempt)
             # 알림 팝업 확인 (MetDo "서비스처리 중 오류" 등)
-            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+            if _alert:
                 log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 프로그램 종료")
                 take_screenshot(u"step2_ALERT_POPUP_detected_verify")
-                click(IMG_ALERT_CONFIRM_BTN)
+                click(_alert)
                 sleep(1)
                 raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
             sleep(WAIT_SHORT)
@@ -2915,10 +3012,11 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
         log(u"    [FATAL] 고객통합뷰 3회 클릭 실패 → 프로그램 종료 요청")
         take_screenshot(u"step2_all_attempts_failed")
         # 알림 팝업 확인 (MetDo 서비스 오류 등)
-        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+        _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+        if _alert:
             log(u"    [ALERT] MetDo 알림 팝업 감지!")
             take_screenshot(u"step2_ALERT_POPUP_all_failed")
-            click(IMG_ALERT_CONFIRM_BTN)
+            click(_alert)
             sleep(1)
         raise NavigationResetRequired(u"고객통합뷰 3회 클릭 실패")
 
@@ -2968,8 +3066,8 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
 
         # 확인 버튼 클릭 (좌표 로깅 + 클릭 마커)
         log(u"    변액계약이 존재하지 않습니다 - 확인 버튼 클릭")
-        if exists(IMG_NO_VARIABLE_CONTRACT_CONFIRM, 3):
-            confirm_match = find(IMG_NO_VARIABLE_CONTRACT_CONFIRM)
+        confirm_match = exists(IMG_NO_VARIABLE_CONTRACT_CONFIRM, 3)
+        if confirm_match:
             cmx = int(confirm_match.getCenter().getX())
             cmy = int(confirm_match.getCenter().getY())
             click(confirm_match)
@@ -2978,8 +3076,9 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             sleep(0.5)
             # 더블클릭 대응: 알림창이 아직 있으면 한 번 더 클릭
             try:
-                if exists(IMG_NO_VARIABLE_CONTRACT_CONFIRM, 1):
-                    click(IMG_NO_VARIABLE_CONTRACT_CONFIRM)
+                _nvc = exists(IMG_NO_VARIABLE_CONTRACT_CONFIRM, 1)
+                if _nvc:
+                    click(_nvc)
             except:
                 pass  # 이미 닫혔으면 무시
         sleep(WAIT_SHORT)
@@ -3007,9 +3106,9 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             variable_insurance_exists = False  # 알 수 없는 상태, 안전하게 False
 
             # 혹시 늦게 나타난 알림창 재확인
-            if exists(IMG_ALERT_CONFIRM_BTN, 3):
+            alert_match = exists(IMG_ALERT_CONFIRM_BTN, 3)
+            if alert_match:
                 log(u"    -> 늦게 나타난 알림창 감지 - 확인 클릭")
-                alert_match = find(IMG_ALERT_CONFIRM_BTN)
                 amx = int(alert_match.getCenter().getX())
                 amy = int(alert_match.getCenter().getY())
                 click(alert_match)
@@ -3018,8 +3117,9 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
                 sleep(0.3)
                 # 더블클릭 대응
                 try:
-                    if exists(IMG_ALERT_CONFIRM_BTN, 1):
-                        click(IMG_ALERT_CONFIRM_BTN)
+                    _alert2 = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                    if _alert2:
+                        click(_alert2)
                 except:
                     pass
                 sleep(WAIT_SHORT)
@@ -3046,8 +3146,8 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             log(u"    [시도2] '선택' 버튼 기준 상대좌표로 X 버튼 클릭 시도...")
             try:
                 select_btn_pattern = Pattern(IMG_SELECT_BTN).similar(0.7)
-                if exists(select_btn_pattern, 5):
-                    select_match = find(select_btn_pattern)
+                select_match = exists(select_btn_pattern, 5)
+                if select_match:
                     sx = int(select_match.getCenter().getX())
                     sy = int(select_match.getCenter().getY())
                     # X 버튼은 "선택" 버튼 기준 dx=+13, dy=-62 위치 (실측 검증 완료)
@@ -3076,7 +3176,9 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             # 재시도: 선택 버튼 상대좌표로 X 클릭
             log(u"    [재시도] 선택 버튼 상대좌표로 X 버튼 재클릭...")
             try:
-                select_match = find(select_btn_pattern)
+                select_match = exists(select_btn_pattern, 3)
+                if not select_match:
+                    raise Exception("select_btn not found for retry")
                 sx = int(select_match.getCenter().getX())
                 sy = int(select_match.getCenter().getY())
                 x_btn_x = sx + 13
@@ -3123,7 +3225,12 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
         sleep(0.1)
     sleep(WAIT_SHORT)
 
-    ar_result = download_annual_report()
+    try:
+        ar_result = download_annual_report()
+    except:
+        # Safety: AR 함수 내 Critical Section이 해제되지 않은 채 예외 발생 시 안전 해제
+        exit_critical_section()
+        raise
 
     # 8단계: 고객통합뷰 X 버튼 클릭 + 닫힘 검증
     log(u"")
@@ -3160,10 +3267,11 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
         log(u"    [FATAL] 고객통합뷰 닫기 3회 실패 → 종료 요청")
         take_screenshot(u"step8_close_FATAL")
         # 알림 팝업 확인 (MetDo 서비스 오류 등)
-        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+        _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+        if _alert:
             log(u"    [ALERT] MetDo 알림 팝업 감지!")
             take_screenshot(u"step8_ALERT_POPUP_close_failed")
-            click(IMG_ALERT_CONFIRM_BTN)
+            click(_alert)
             sleep(1)
         raise NavigationResetRequired(u"고객통합뷰 닫기 실패")
 
