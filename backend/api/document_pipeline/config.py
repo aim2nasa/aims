@@ -68,9 +68,6 @@ class Settings(BaseSettings):
     UPLOAD_QUEUE_STALE_TIMEOUT_MINUTES: int = 30  # 타임아웃된 작업 복구
     UPLOAD_QUEUE_ENABLED: bool = True  # 큐잉 활성화 여부 (롤백용)
 
-    # File Size Limit
-    MAX_UPLOAD_SIZE_MB: int = 50  # 서버사이드 파일 크기 제한 (MB)
-
 
 @lru_cache()
 def get_settings() -> Settings:

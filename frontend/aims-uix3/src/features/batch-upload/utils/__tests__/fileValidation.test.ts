@@ -1,6 +1,7 @@
 /**
  * 파일 검증 유틸리티 테스트
  * @since 2025-12-05
+ * @version 2.0.0 - Phase 1: 개별 파일 크기 제한 제거
  */
 
 import { describe, test, expect } from 'vitest'
@@ -14,7 +15,6 @@ import {
   validateBatch,
   formatFileSize,
 } from '../fileValidation'
-import { FILE_SIZE_LIMITS, TIER_LIMITS } from '../../types'
 
 /**
  * 테스트용 File 객체 생성 헬퍼
@@ -96,19 +96,14 @@ describe('fileValidation', () => {
   })
 
   describe('isFileSizeValid', () => {
-    const MAX_SIZE = FILE_SIZE_LIMITS.MAX_SINGLE_FILE // 50MB
-
-    test('50MB 이하는 유효하다', () => {
+    test('양수 크기는 유효하다 (Phase 1: 크기 제한 없음)', () => {
       expect(isFileSizeValid(1)).toBe(true)
       expect(isFileSizeValid(1024)).toBe(true)
       expect(isFileSizeValid(1024 * 1024)).toBe(true)       // 1MB
       expect(isFileSizeValid(10 * 1024 * 1024)).toBe(true)  // 10MB
-      expect(isFileSizeValid(MAX_SIZE)).toBe(true)          // 50MB 정확히
-    })
-
-    test('50MB 초과는 유효하지 않다', () => {
-      expect(isFileSizeValid(MAX_SIZE + 1)).toBe(false)
-      expect(isFileSizeValid(100 * 1024 * 1024)).toBe(false) // 100MB
+      expect(isFileSizeValid(50 * 1024 * 1024)).toBe(true)  // 50MB
+      expect(isFileSizeValid(100 * 1024 * 1024)).toBe(true) // 100MB
+      expect(isFileSizeValid(500 * 1024 * 1024)).toBe(true) // 500MB
     })
 
     test('0 또는 음수는 유효하지 않다', () => {
@@ -118,20 +113,27 @@ describe('fileValidation', () => {
   })
 
   describe('isBatchSizeValid', () => {
-    test('등급별 한도 이하는 유효하다', () => {
-      const freeTrialLimit = TIER_LIMITS.FREE_TRIAL.maxBatchUpload
-      expect(isBatchSizeValid(freeTrialLimit, freeTrialLimit)).toBe(true)
-      expect(isBatchSizeValid(freeTrialLimit - 1, freeTrialLimit)).toBe(true)
+    test('한도 이하는 유효하다', () => {
+      const limit = 100 * 1024 * 1024 // 100MB
+      expect(isBatchSizeValid(limit, limit)).toBe(true)
+      expect(isBatchSizeValid(limit - 1, limit)).toBe(true)
     })
 
-    test('등급별 한도 초과는 유효하지 않다', () => {
-      const freeTrialLimit = TIER_LIMITS.FREE_TRIAL.maxBatchUpload
-      expect(isBatchSizeValid(freeTrialLimit + 1, freeTrialLimit)).toBe(false)
+    test('한도 초과는 유효하지 않다', () => {
+      const limit = 100 * 1024 * 1024 // 100MB
+      expect(isBatchSizeValid(limit + 1, limit)).toBe(false)
     })
 
     test('0 또는 음수는 유효하지 않다', () => {
-      expect(isBatchSizeValid(0, TIER_LIMITS.STANDARD.maxBatchUpload)).toBe(false)
-      expect(isBatchSizeValid(-1, TIER_LIMITS.STANDARD.maxBatchUpload)).toBe(false)
+      const limit = 500 * 1024 * 1024 // 500MB
+      expect(isBatchSizeValid(0, limit)).toBe(false)
+      expect(isBatchSizeValid(-1, limit)).toBe(false)
+    })
+
+    test('tierLimit이 -1이면 무제한 (0바이트 초과이면 유효)', () => {
+      expect(isBatchSizeValid(100 * 1024 * 1024, -1)).toBe(true) // 100MB
+      expect(isBatchSizeValid(1, -1)).toBe(true)
+      expect(isBatchSizeValid(0, -1)).toBe(false) // 0바이트는 여전히 무효
     })
   })
 
@@ -152,18 +154,15 @@ describe('fileValidation', () => {
       expect(result.message).toContain('.exe')
     })
 
-    test('크기 초과 파일은 size_exceeded 사유를 반환한다', () => {
-      const largeSize = FILE_SIZE_LIMITS.MAX_SINGLE_FILE + 1
-      const file = createMockFile('large.pdf', largeSize)
-      const result = validateFile(file)
-      expect(result.valid).toBe(false)
-      expect(result.reason).toBe('size_exceeded')
-      expect(result.message).toContain('MB')
+    test('큰 파일도 통과한다 (Phase 1: 크기 제한 없음)', () => {
+      const largeFile = createMockFile('large.pdf', 100 * 1024 * 1024) // 100MB
+      const result = validateFile(largeFile)
+      expect(result.valid).toBe(true)
     })
   })
 
   describe('validateBatch', () => {
-    const tierLimit = TIER_LIMITS.STANDARD.maxBatchUpload // 500MB
+    const tierLimit = 500 * 1024 * 1024 // 500MB (remaining_bytes 기반)
 
     test('모든 파일이 유효하면 validFiles에 포함된다', () => {
       const files = [
@@ -187,18 +186,6 @@ describe('fileValidation', () => {
       expect(result.validFiles).toHaveLength(1)
       expect(result.invalidFiles).toHaveLength(2)
       expect(result.invalidFiles[0].reason).toBe('blocked_extension')
-    })
-
-    test('크기 초과 파일은 invalidFiles에 포함된다', () => {
-      const largeSize = FILE_SIZE_LIMITS.MAX_SINGLE_FILE + 1
-      const files = [
-        createMockFile('normal.pdf', 1024),
-        createMockFile('large.pdf', largeSize),
-      ]
-      const result = validateBatch(files, tierLimit)
-      expect(result.validFiles).toHaveLength(1)
-      expect(result.invalidFiles).toHaveLength(1)
-      expect(result.invalidFiles[0].reason).toBe('size_exceeded')
     })
 
     test('배치 총 크기가 한도를 초과하면 isBatchSizeExceeded가 true다', () => {

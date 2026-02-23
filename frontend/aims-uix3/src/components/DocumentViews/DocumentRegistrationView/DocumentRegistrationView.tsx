@@ -973,11 +973,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     if (invalidFiles.length > 0) {
       const invalidCount = invalidFiles.length
-      const sizeLimitMB = Math.round(uploadConfig.limits.maxFileSize / (1024 * 1024))
 
       // 🍎 애플 스타일 확인 모달 - 검증 실패 파일 안내
       const confirmed = await showAppleConfirm(
-        `총 ${newUploadFiles.length}개의 파일 중 ${invalidCount}개의 파일이 검증에 실패했습니다 (크기 초과 ${sizeLimitMB}MB, 차단된 확장자, 위조 파일 등). 해당 파일들은 업로드에서 제외됩니다.`,
+        `총 ${newUploadFiles.length}개의 파일 중 ${invalidCount}개의 파일이 검증에 실패했습니다 (차단된 확장자, 위조 파일 등). 해당 파일들은 업로드에서 제외됩니다.`,
         undefined, // 타이틀 없음
         {
           linkText: '검증 실패 파일들',
@@ -988,10 +987,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               size: uploadFile.fileSize
             }))
 
-            // mod2.png 모달 표시
-            await showOversizedFilesModal(fileList, uploadConfig.limits.maxFileSize)
+            // 검증 실패 파일 목록 모달 표시
+            await showOversizedFilesModal(fileList, 0)
 
-            // mod2.png에서 "확인" 후 mod1.png 모달로 다시 돌아오기
             // 링크 클릭 후에는 아무것도 하지 않음 (모달이 열린 상태 유지)
           },
           showConfirmButton: true // "취소" "확인" 두 버튼 유지
@@ -1513,7 +1511,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   /**
    * 업로드 상태 변경 콜백
    */
-  const handleStatusChange = useCallback((fileId: string, status: UploadStatus, error?: string) => {
+  const handleStatusChange = useCallback((fileId: string, status: UploadStatus, error?: string, retryable?: boolean) => {
     console.log(`🔍 [handleStatusChange] fileId=${fileId}, status=${status}`);
 
     // 🔍 상태 업데이트 전에 파일 정보 미리 찾기
@@ -1528,7 +1526,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       const updatedFiles = prev.files.map(f => {
         let result = f
         if (f.id === fileId) {
-          result = { ...f, status, error }
+          result = { ...f, status, error, retryable }
 
           if (status === 'completed' || status === 'warning') {
             result.completedAt = new Date()
@@ -1649,8 +1647,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       handleProgressRef.current(event)
     }
 
-    const stableStatusCallback = (fileId: string, status: UploadStatus, error?: string) => {
-      handleStatusChangeRef.current(fileId, status, error)
+    const stableStatusCallback = (fileId: string, status: UploadStatus, error?: string, retryable?: boolean) => {
+      handleStatusChangeRef.current(fileId, status, error, retryable)
     }
 
     const unsubscribeProgress = uploadService.setProgressCallback(stableProgressCallback, 'DocumentRegistrationView')
@@ -1718,7 +1716,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const fileSelectionOptions = useMemo(() => ({
     multiple: true,
     directory: true,
-    maxFileSize: uploadConfig.limits.maxFileSize,
     maxFileCount: uploadConfig.limits.maxFileCount,
     // AR/CRS 모드에서는 PDF만 허용
     accept: (documentTypeMode === 'annual_report' || documentTypeMode === 'customer_review')

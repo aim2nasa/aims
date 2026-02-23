@@ -23,7 +23,7 @@ import { getAuthToken } from '@/shared/lib/api'
  * 업로드 진행률 콜백 타입
  */
 type ProgressCallback = (event: UploadProgressEvent) => void
-type StatusCallback = (fileId: string, status: UploadStatus, error?: string) => void
+type StatusCallback = (fileId: string, status: UploadStatus, error?: string, retryable?: boolean) => void
 
 interface ErrorWithResponse extends Error {
   response?: DocPrepResponse
@@ -227,7 +227,7 @@ export class UploadService {
           this.activeUploads.delete(id)
           const errorMessage = `🛡️ 바이러스 감지: ${scanResult.virusName || '알 수 없는 위협'}`
           console.warn(`[UploadService] ⚠️ ${errorMessage} - 파일: ${file.name}`)
-          this.statusCallbacks.forEach(callback => callback(id, 'error', errorMessage))
+          this.statusCallbacks.forEach(callback => callback(id, 'error', errorMessage, false))
           this.resolveFile(id, {
             fileId: id,
             success: false,
@@ -323,17 +323,22 @@ export class UploadService {
         } else {
           const response = (error as ErrorWithResponse).response
           const errorMessage = this.getErrorMessage(error, response)
-          this.statusCallbacks.forEach(callback => callback(id, 'error', errorMessage))
+          // 영구 실패 판별: 재시도해도 결과가 같은 에러는 retryable: false
+          const isPermanentFailure = error.message.includes('HTTP 413')
+            || error.message.includes('HTTP 415')
+            || error.message.includes('HTTP 422')
+            || errorMessage.includes('용량')
+          this.statusCallbacks.forEach(callback => callback(id, 'error', errorMessage, !isPermanentFailure))
           console.error(`[UploadService] 파일 업로드 실패: ${file.name}`, error)
           errorReporter.reportApiError(error, { component: 'UploadService.uploadFile', payload: { fileName: file.name, customerId } })
           this.resolveFile(id, {
             fileId: id,
             success: false,
-            error: { fileId: id, fileName: file.name, message: errorMessage, retryable: true },
+            error: { fileId: id, fileName: file.name, message: errorMessage, retryable: !isPermanentFailure },
           })
         }
       } else {
-        this.statusCallbacks.forEach(callback => callback(id, 'error', '알 수 없는 오류가 발생했습니다'))
+        this.statusCallbacks.forEach(callback => callback(id, 'error', '알 수 없는 오류가 발생했습니다', false))
         console.error(`[UploadService] 알 수 없는 오류: ${file.name}`, error)
         errorReporter.reportApiError(new Error('Unknown upload error'), { component: 'UploadService.uploadFile', payload: { fileName: file.name, customerId } })
         this.resolveFile(id, {
@@ -647,17 +652,9 @@ export const uploadService = new UploadService()
 export const fileValidator = {
   /**
    * 파일 크기 검증
+   * Phase 1: 개별 파일 크기 제한 없음 — 사용자별 저장 용량 쿼터로 관리
    */
-  validateSize(file: File): { valid: boolean; error?: string } {
-    const maxSize = uploadConfig.limits.maxFileSize
-
-    if (file.size > maxSize) {
-      return {
-        valid: false,
-        error: `${Math.round(maxSize / (1024 * 1024))}MB 초과`
-      }
-    }
-
+  validateSize(_file: File): { valid: boolean; error?: string } {
     return { valid: true }
   },
 

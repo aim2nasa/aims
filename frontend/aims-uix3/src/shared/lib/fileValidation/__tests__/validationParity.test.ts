@@ -1,13 +1,14 @@
 /**
  * 파일 검증 동일성 테스트
  * @since 2025-12-14
+ * @version 2.0.0 - Phase 1: 개별 파일 크기 제한 제거
  *
  * 목적: 새 문서 등록과 문서 일괄등록에서 동일한 파일에 대해
  * 100% 동일한 검증 결과가 나오는지 증명
  *
  * 검증 항목:
  * 1. 확장자 검증 - 동일한 blocked/allowed 목록 사용
- * 2. 파일 크기 검증 - 동일한 50MB 제한
+ * 2. 파일 크기 검증 - 0바이트만 거부 (크기 상한은 쿼터로 관리)
  * 3. MIME 타입 검증 - 동일한 확장자-MIME 매핑
  * 4. 중복 파일 검사 - 동일한 SHA-256 해시 로직
  */
@@ -23,7 +24,6 @@ import {
   getFileExtension as getFileExtensionShared,
   isBlockedExtension as isBlockedExtensionShared,
   isFileSizeValid as isFileSizeValidShared,
-  FILE_SIZE_LIMITS as FILE_SIZE_LIMITS_SHARED,
 } from '../index'
 
 // batch-upload 모듈 (문서 일괄등록에서 사용)
@@ -91,6 +91,7 @@ describe('파일 검증 동일성 테스트', () => {
       })
     })
 
+    // Phase 1: 0바이트만 거부, 나머지는 모두 통과
     const testSizes = [0, 1024, 50 * 1024 * 1024, 51 * 1024 * 1024, 100 * 1024 * 1024]
 
     testSizes.forEach((size) => {
@@ -120,8 +121,8 @@ describe('파일 검증 동일성 테스트', () => {
       { name: 'installer.msi', type: 'application/x-msi', size: 2048 },
     ]
 
-    // 무효한 파일들 (크기)
-    const oversizedFiles = [
+    // Phase 1: 큰 파일도 이제 유효 (크기 제한 없음)
+    const largeFiles = [
       { name: 'huge.pdf', type: 'application/pdf', size: 51 * 1024 * 1024 },
       { name: 'giant.jpg', type: 'image/jpeg', size: 100 * 1024 * 1024 },
     ]
@@ -164,20 +165,15 @@ describe('파일 검증 동일성 테스트', () => {
       })
     })
 
-    oversizedFiles.forEach((fileProps) => {
-      it(`크기 초과 "${fileProps.name}": 양쪽 모두 valid=false, reason=size_exceeded`, () => {
+    largeFiles.forEach((fileProps) => {
+      it(`큰 파일 "${fileProps.name}": 양쪽 모두 valid=true (Phase 1: 크기 제한 없음)`, () => {
         const file = createMockFile(fileProps)
 
         const resultShared = validateFileShared(file)
         const resultBatch = validateFileBatch(file)
 
-        expect(resultShared.valid).toBe(false)
-        expect(resultBatch.valid).toBe(false)
-
-        if (!resultShared.valid && !resultBatch.valid) {
-          expect(resultShared.reason).toBe('size_exceeded')
-          expect(resultBatch.reason).toBe('size_exceeded')
-        }
+        expect(resultShared.valid).toBe(true)
+        expect(resultBatch.valid).toBe(true)
       })
     })
   })

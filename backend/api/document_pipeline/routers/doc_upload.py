@@ -3,11 +3,9 @@ DocUpload Router - File Upload Handler
 Replaces n8n DocUpload workflow
 """
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import JSONResponse
 from typing import Optional
 import logging
 
-from config import get_settings
 from services.file_service import FileService
 from models.document import UploadResponse
 
@@ -41,21 +39,7 @@ async def upload_document(
         # Read file content
         content = await file.read()
 
-        # 🔴 파일 크기 검증 (B4: 서버사이드 방어)
-        settings = get_settings()
-        max_size_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-        if len(content) > max_size_bytes:
-            file_size_mb = round(len(content) / (1024 * 1024), 1)
-            return JSONResponse(
-                status_code=413,
-                content={
-                    "result": "error",
-                    "status": 413,
-                    "userMessage": f"파일 크기({file_size_mb}MB)가 제한({settings.MAX_UPLOAD_SIZE_MB}MB)을 초과합니다.",
-                    "filename": file.filename
-                }
-            )
-
+        # 파일 크기 제한은 Nginx 서버 블록(10G)이 담당하며, 여기서는 제한하지 않는다.
         if len(content) == 0:
             return UploadResponse(
                 result="error",

@@ -11,33 +11,29 @@ export interface AgentTier {
   _id: string
   name: '무료체험' | '일반' | '프리미엄' | 'VIP'
   maxStorageBytes: number      // 5GB, 30GB, 50GB, 100GB
-  maxBatchUploadBytes: number  // 100MB, 500MB, 1GB, 2GB
   trialDays: number | null     // 30 (무료체험) or null (유료)
   isDefault: boolean           // 신규 가입 시 기본 등급 여부
 }
 
 /**
  * 설계사 등급별 저장량 한도 (바이트 단위)
+ * Phase 1: maxBatchUpload 제거 — API의 remaining_bytes가 유일한 제한
  */
 export const TIER_LIMITS = {
   FREE_TRIAL: {
     maxStorage: 5 * 1024 * 1024 * 1024,       // 5GB
-    maxBatchUpload: 100 * 1024 * 1024,        // 100MB
     trialDays: 30,
   },
   STANDARD: {
     maxStorage: 30 * 1024 * 1024 * 1024,      // 30GB
-    maxBatchUpload: 500 * 1024 * 1024,        // 500MB
     trialDays: null,
   },
   PREMIUM: {
     maxStorage: 50 * 1024 * 1024 * 1024,      // 50GB
-    maxBatchUpload: 1024 * 1024 * 1024,       // 1GB
     trialDays: null,
   },
   VIP: {
     maxStorage: 100 * 1024 * 1024 * 1024,     // 100GB
-    maxBatchUpload: 2 * 1024 * 1024 * 1024,   // 2GB
     trialDays: null,
   },
 } as const
@@ -183,7 +179,6 @@ export interface UploadProgress {
 
 /**
  * 파일 크기 제한 상수
+ * Phase 1: 개별 파일 크기 제한 없음 — 저장 용량 쿼터로 관리
  */
-export const FILE_SIZE_LIMITS = {
-  MAX_SINGLE_FILE: 50 * 1024 * 1024,  // 50MB
-} as const
+export const FILE_SIZE_LIMITS = {} as const

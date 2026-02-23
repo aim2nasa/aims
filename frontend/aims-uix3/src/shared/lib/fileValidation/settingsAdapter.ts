@@ -11,7 +11,7 @@ import {
   invalidateSettingsCache,
   type FileValidationSettings,
 } from '@/services/settingsService'
-import { BLOCKED_EXTENSIONS, FILE_SIZE_LIMITS } from './constants'
+import { BLOCKED_EXTENSIONS } from './constants'
 
 // ============================================
 // 로컬 설정 캐시
@@ -25,10 +25,10 @@ const DEFAULT_SETTINGS: FileValidationSettings = {
     description: '위험한 확장자 차단',
   },
   fileSizeValidation: {
-    enabled: true,
-    maxSizeBytes: FILE_SIZE_LIMITS.MAX_SINGLE_FILE,
-    maxSizeMB: 50,
-    description: '파일 크기 제한',
+    enabled: false,
+    maxSizeBytes: 0,
+    maxSizeMB: 0,
+    description: '파일 크기 제한 (Phase 1: 비활성화 — 저장 용량 쿼터로 관리)',
   },
   mimeTypeValidation: {
     enabled: true,

@@ -56,7 +56,7 @@ describe('티어 권한 철칙 검증 (Frontend)', () => {
         ocr_used_this_month: 5,
         ocr_remaining: 995,
         ocr_is_unlimited: false,
-        max_batch_upload_bytes: 524288000  // 500MB
+        // max_batch_upload_bytes 제거됨 (Phase 1)
       }
 
       mockApi.get.mockResolvedValueOnce({
@@ -69,7 +69,7 @@ describe('티어 권한 철칙 검증 (Frontend)', () => {
       expect(mockApi.get).toHaveBeenCalledWith('/api/users/me/storage')
       expect(result.tier).toBe('standard')
       expect(result.tierName).toBe('일반')
-      expect(result.max_batch_upload_bytes).toBe(524288000)
+      expect(result.remaining_bytes).toBeDefined()
     })
 
     it('무료체험 tier 정보가 올바르게 반환되어야 함', async () => {
@@ -86,7 +86,7 @@ describe('티어 권한 철칙 검증 (Frontend)', () => {
         ocr_used_this_month: 0,
         ocr_remaining: 100,
         ocr_is_unlimited: false,
-        max_batch_upload_bytes: 104857600  // 100MB
+        // max_batch_upload_bytes 제거됨 (Phase 1)
       }
 
       mockApi.get.mockResolvedValueOnce({
@@ -97,7 +97,7 @@ describe('티어 권한 철칙 검증 (Frontend)', () => {
       const result = await getMyStorageInfo()
 
       expect(result.tier).toBe('free_trial')
-      expect(result.max_batch_upload_bytes).toBe(104857600)
+      expect(result.remaining_bytes).toBeDefined()
     })
 
     it('admin tier는 무제한(-1)이어야 함', async () => {
@@ -114,7 +114,7 @@ describe('티어 권한 철칙 검증 (Frontend)', () => {
         ocr_used_this_month: 10,
         ocr_remaining: -1,
         ocr_is_unlimited: true,
-        max_batch_upload_bytes: -1
+        // max_batch_upload_bytes 제거됨 (Phase 1)
       }
 
       mockApi.get.mockResolvedValueOnce({
@@ -126,13 +126,12 @@ describe('티어 권한 철칙 검증 (Frontend)', () => {
 
       expect(result.tier).toBe('admin')
       expect(result.is_unlimited).toBe(true)
-      expect(result.max_batch_upload_bytes).toBe(-1)
+      expect(result.is_unlimited).toBe(true)
     })
   })
 
   describe('2. StorageInfo 인터페이스 검증', () => {
-    it('StorageInfo에 max_batch_upload_bytes 필드가 있어야 함', () => {
-      // TypeScript 컴파일러가 이미 검증하지만 명시적으로 테스트
+    it('StorageInfo에 remaining_bytes 필드가 있어야 함', () => {
       const storageInfo: StorageInfo = {
         tier: 'standard',
         tierName: '일반',
@@ -146,11 +145,10 @@ describe('티어 권한 철칙 검증 (Frontend)', () => {
         ocr_used_this_month: 0,
         ocr_remaining: 100,
         ocr_is_unlimited: false,
-        max_batch_upload_bytes: 500 * 1024 * 1024
       }
 
-      expect(storageInfo.max_batch_upload_bytes).toBeDefined()
-      expect(typeof storageInfo.max_batch_upload_bytes).toBe('number')
+      expect(storageInfo.remaining_bytes).toBeDefined()
+      expect(typeof storageInfo.remaining_bytes).toBe('number')
     })
   })
 
@@ -183,8 +181,8 @@ describe('BatchDocumentUploadView 티어 제한 검증', () => {
       // TIER_LIMITS import가 없어야 함
       expect(content).not.toMatch(/import\s*{\s*[^}]*TIER_LIMITS[^}]*}\s*from/)
 
-      // tierLimit이 storageInfo에서 가져와야 함
-      expect(content).toContain('storageInfo?.max_batch_upload_bytes')
+      // tierLimit이 storageInfo에서 가져와야 함 (remaining_bytes 기반)
+      expect(content).toContain('storageInfo?.remaining_bytes')
     }
   })
 

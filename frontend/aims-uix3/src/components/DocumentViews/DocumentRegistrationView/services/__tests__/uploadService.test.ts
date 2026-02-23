@@ -382,23 +382,10 @@ describe('fileValidator', () => {
     })
 
     it('허용 크기를 초과한 파일은 실패해야 함', () => {
-      // 50MB 초과 파일 (실제로 큰 파일을 만들지 않고 Object.defineProperty 사용)
+      // Phase 1: 개별 파일 크기 제한 없음 — 대용량 파일도 통과
       const file = new File(['content'], 'large.pdf')
       Object.defineProperty(file, 'size', {
-        value: 60 * 1024 * 1024, // 60MB
-        writable: false
-      })
-
-      const result = fileValidator.validateSize(file)
-
-      expect(result.valid).toBe(false)
-      expect(result.error).toContain('50MB 초과')
-    })
-
-    it('정확히 최대 크기인 파일은 통과해야 함', () => {
-      const file = new File(['content'], 'exact.pdf')
-      Object.defineProperty(file, 'size', {
-        value: uploadConfig.limits.maxFileSize,
+        value: 500 * 1024 * 1024, // 500MB
         writable: false
       })
 
@@ -429,18 +416,17 @@ describe('fileValidator', () => {
       expect(result.errors).toHaveLength(0)
     })
 
-    it('크기 초과 파일은 에러를 반환해야 함', () => {
+    it('대용량 파일도 검증을 통과해야 함 (Phase 1: 크기 제한 없음)', () => {
       const file = new File(['content'], 'large.pdf')
       Object.defineProperty(file, 'size', {
-        value: 60 * 1024 * 1024, // 60MB
+        value: 500 * 1024 * 1024, // 500MB
         writable: false
       })
 
       const result = fileValidator.validateFile(file)
 
-      expect(result.valid).toBe(false)
-      expect(result.errors.length).toBeGreaterThan(0)
-      expect(result.errors[0]).toContain('50MB 초과')
+      expect(result.valid).toBe(true)
+      expect(result.errors).toHaveLength(0)
     })
   })
 

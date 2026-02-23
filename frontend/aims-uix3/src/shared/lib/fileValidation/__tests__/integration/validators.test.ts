@@ -72,15 +72,14 @@ describe('validateFile 통합 테스트', () => {
     })
   })
 
-  describe('파일 크기 초과 거부', () => {
-    it('50MB 초과 파일', () => {
+  describe('파일 크기 검증', () => {
+    it('큰 파일도 통과 (Phase 1: 크기 제한 없음)', () => {
       const file = createMockFile('huge.pdf', 51 * 1024 * 1024, 'application/pdf')
       const result = validateFile(file)
-      expect(result.valid).toBe(false)
-      expect(result.reason).toBe('size_exceeded')
+      expect(result.valid).toBe(true)
     })
 
-    it('0바이트 파일', () => {
+    it('0바이트 파일 거부', () => {
       const file = createMockFile('empty.txt', 0, 'text/plain')
       const result = validateFile(file)
       expect(result.valid).toBe(false)
@@ -113,12 +112,12 @@ describe('validateFile 통합 테스트', () => {
       expect(result.reason).toBe('blocked_extension') // size_exceeded가 아님
     })
 
-    it('크기 검사는 MIME 검사보다 먼저', () => {
-      // 크기 초과가 MIME 불일치보다 먼저 체크됨
+    it('크기 제한 없을 때 MIME 검사까지 도달', () => {
+      // Phase 1: 크기 제한 없으므로 MIME 불일치 검증까지 도달
       const file = createMockFile('huge.pdf', 100 * 1024 * 1024, 'image/jpeg')
       const result = validateFile(file)
       expect(result.valid).toBe(false)
-      expect(result.reason).toBe('size_exceeded') // mime_mismatch가 아님
+      expect(result.reason).toBe('mime_mismatch')
     })
   })
 
@@ -177,13 +176,12 @@ describe('validateFiles 배치 통합 테스트', () => {
   it('모든 파일 무효', () => {
     const files = [
       createMockFile('virus.exe', 1024, 'application/x-msdownload'),
-      createMockFile('huge.pdf', 100 * 1024 * 1024, 'application/pdf'),
       createMockFile('fake.jpg', 1024, 'application/pdf'),
     ]
 
     const { validFiles, invalidFiles } = validateFiles(files)
     expect(validFiles).toHaveLength(0)
-    expect(invalidFiles).toHaveLength(3)
+    expect(invalidFiles).toHaveLength(2)
   })
 
   it('옵션 전달', () => {

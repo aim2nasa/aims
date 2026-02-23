@@ -89,25 +89,21 @@ STREAMING_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 async def _stream_upload_to_disk(
     upload_file: UploadFile,
-    max_size_mb: int
-) -> Union[Tuple[str, int], JSONResponse]:
+) -> Tuple[str, int]:
     """
     UploadFile을 청크 단위로 디스크에 스트리밍 저장.
 
     메모리에 전체 파일을 적재하지 않고 디스크에 직접 쓴다 (OOM 방지).
-    스트리밍 중 크기 초과 시 즉시 중단 + 임시 파일 삭제 + 413 반환.
+    파일 크기 제한은 Nginx 서버 블록(10G)이 담당하며, 여기서는 제한하지 않는다.
+    사용자별 용량 쿼터 체크는 저장 완료 후 별도로 수행한다.
 
     Returns:
-        성공 시: (temp_path, file_size) 튜플
-        실패 시: JSONResponse(413)
+        (temp_path, file_size) 튜플
     """
-    max_size_bytes = max_size_mb * 1024 * 1024
     fd, temp_path = tempfile.mkstemp(prefix="upload_")
     os.close(fd)
     file_size = 0
-    filename = upload_file.filename or "unknown"
 
-    exceeded = False
     try:
         with open(temp_path, 'wb') as f:
             while True:
@@ -115,52 +111,13 @@ async def _stream_upload_to_disk(
                 if not chunk:
                     break
                 file_size += len(chunk)
-                if file_size > max_size_bytes:
-                    exceeded = True
-                    break
                 f.write(chunk)
-        # with 블록 종료 후 파일 핸들 안전하게 닫힌 상태에서 처리
-        if exceeded:
-            os.unlink(temp_path)
-            file_size_mb = round(file_size / (1024 * 1024), 1)
-            logger.warning(f"[Streaming] 파일 크기 초과: {filename} ({file_size_mb}MB > {max_size_mb}MB)")
-            return JSONResponse(
-                status_code=413,
-                content={
-                    "result": "error",
-                    "status": 413,
-                    "userMessage": f"파일 크기({file_size_mb}MB)가 제한({max_size_mb}MB)을 초과합니다.",
-                    "filename": filename
-                }
-            )
         return (temp_path, file_size)
     except Exception as e:
         # 스트리밍 실패 시 임시 파일 정리
         if os.path.exists(temp_path):
             os.unlink(temp_path)
         raise
-
-
-def _validate_file_size(file_size: int, filename: str, max_size_mb: int) -> Optional[JSONResponse]:
-    """
-    파일 크기 검증 (서버사이드 방어 계층)
-
-    초과 시 JSONResponse(413) 반환, 이내 시 None 반환.
-    """
-    max_size_bytes = max_size_mb * 1024 * 1024
-    if file_size > max_size_bytes:
-        file_size_mb = round(file_size / (1024 * 1024), 1)
-        logger.warning(f"[FileSize] 파일 크기 초과: {filename} ({file_size_mb}MB > {max_size_mb}MB)")
-        return JSONResponse(
-            status_code=413,
-            content={
-                "result": "error",
-                "status": 413,
-                "userMessage": f"파일 크기({file_size_mb}MB)가 제한({max_size_mb}MB)을 초과합니다.",
-                "filename": filename
-            }
-        )
-    return None
 
 
 async def check_credit_for_upload(user_id: str, estimated_pages: int = 1) -> Dict[str, Any]:
@@ -260,11 +217,6 @@ async def doc_prep_main(
             file_content = await file.read()
             original_name = file.filename or "unknown"
 
-            # 🔴 파일 크기 검증 (B4: Shadow mode에서도 검증)
-            size_error = _validate_file_size(len(file_content), original_name, settings.MAX_UPLOAD_SIZE_MB)
-            if size_error:
-                return size_error
-
             # n8n이 전달한 파일명 사용 (없으면 자체 생성 - 비교용)
             if shadow_saved_name:
                 simulated_filename = shadow_saved_name
@@ -299,17 +251,14 @@ async def doc_prep_main(
                     return {"exitCode": 0, "stderr": ""}
 
                 if mime_type in UNSUPPORTED_MIME_TYPES:
-                    return JSONResponse(
-                        status_code=415,
-                        content={
-                            "warn": True,
-                            "status": 415,
-                            "userMessage": "OCR 생략: 지원하지 않는 문서 형식입니다.",
-                            "mime": mime_type,
-                            "filename": original_name,
-                            "document_id": "shadow_simulated"
-                        }
-                    )
+                    return {
+                        "result": "success",
+                        "document_id": "shadow_simulated",
+                        "status": "completed",
+                        "processingSkipReason": "unsupported_format",
+                        "mime": mime_type,
+                        "filename": original_name
+                    }
 
                 # PDF 변환 텍스트 추출 (HWP, DOC 등 - 임시 파일 삭제 전에 수행)
                 if (not full_text or len(full_text.strip()) == 0) and is_convertible_mime(mime_type):
@@ -364,11 +313,9 @@ async def doc_prep_main(
 
     try:
         # 🔴 스트리밍 업로드: 메모리에 전체 적재하지 않고 디스크에 직접 저장 (OOM 방지)
+        # 파일 크기 제한 없음 — 사용자별 저장 용량 쿼터로 관리 (Nginx 10G가 인프라 보호)
         original_name = file.filename or "unknown"
-        stream_result = await _stream_upload_to_disk(file, settings.MAX_UPLOAD_SIZE_MB)
-        if isinstance(stream_result, JSONResponse):
-            return stream_result  # 413 크기 초과
-        stream_temp_path, file_size = stream_result
+        stream_temp_path, file_size = await _stream_upload_to_disk(file)
 
         # 큐잉 모드 확인
         if settings.UPLOAD_QUEUE_ENABLED:
@@ -1476,32 +1423,34 @@ async def process_document_pipeline(
                 "document_id": doc_id
             }
 
-        # Case 2: Unsupported MIME type
+        # Case 2: Unsupported MIME type → 파일 보관만 (AI 처리 스킵)
         if detected_mime in UNSUPPORTED_MIME_TYPES:
-            logger.warning(f"Unsupported MIME type: {detected_mime} for {doc_id}")
+            logger.info(f"[UnsupportedFormat] 지원하지 않는 형식, 보관만: {detected_mime} for {doc_id}")
 
-            # Progress: 60% - Checking file type
             await _notify_progress(doc_id, user_id, 60, "check", "파일 형식 확인 중")
-
-            # Progress: 80% - Updating database
             await _notify_progress(doc_id, user_id, 80, "update", "처리 상태 업데이트 중")
 
             await files_collection.update_one(
                 {"_id": ObjectId(doc_id)},
-                {"$set": {"ocr.warn": "Skipped OCR due to unsupported MIME type"}}
+                {"$set": {
+                    "processingSkipReason": "unsupported_format",
+                    "overallStatus": "completed",
+                    "status": "completed",
+                    "meta.mime": detected_mime,
+                }}
             )
 
-            # Progress: 100% - Unsupported MIME, OCR skipped
-            await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료 (OCR 생략)")
+            await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료 (보관)")
+            await _notify_document_complete(doc_id, user_id)
 
             pipeline_metrics.record_success(metric_record)
             return {
-                "warn": True,
-                "status": 415,
-                "userMessage": "OCR 생략: 지원하지 않는 문서 형식입니다.",
+                "result": "success",
+                "document_id": doc_id,
+                "status": "completed",
+                "processingSkipReason": "unsupported_format",
                 "mime": detected_mime,
-                "filename": original_name,
-                "document_id": doc_id
+                "filename": original_name
             }
 
         # Case 3: Check if OCR is needed (no text extracted)

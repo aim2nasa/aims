@@ -220,8 +220,8 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
         {file.status === 'error' && file.error && (
           <span className="file-item__error">{file.error}</span>
         )}
-        {/* 바이러스 감지 에러는 재시도 불가 */}
-        {file.status === 'error' && onRetryFile && !file.error?.includes('바이러스 감지') && (
+        {/* 영구 실패(바이러스, 용량 부족 등)는 재시도 불가 */}
+        {file.status === 'error' && onRetryFile && file.retryable !== false && !file.error?.includes('바이러스 감지') && (
           <button
             type="button"
             className="file-item__retry"

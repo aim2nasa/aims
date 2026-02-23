@@ -8,7 +8,7 @@
  * - 수정: 공통 모듈 사용으로 확장자 + 크기 + MIME 검증 포함
  */
 
-import { FILE_SIZE_LIMITS, type FileValidationResult } from '../types'
+import { type FileValidationResult } from '../types'
 import {
   validateFile as validateFileCommon,
   BLOCKED_EXTENSIONS as BLOCKED_EXTENSIONS_COMMON,
@@ -28,17 +28,18 @@ export const isFileSizeValid = isFileSizeValidCommon
 /**
  * 배치 총 크기가 등급별 한도 내인지 확인
  * @param totalBytes 배치 총 크기 (바이트)
- * @param tierLimit 등급별 배치 업로드 한도 (바이트)
+ * @param tierLimit 등급별 배치 업로드 한도 (바이트). -1이면 무제한 (관리자)
  * @returns 유효하면 true
  */
 export function isBatchSizeValid(totalBytes: number, tierLimit: number): boolean {
+  if (tierLimit < 0) return totalBytes > 0
   return totalBytes > 0 && totalBytes <= tierLimit
 }
 
 /**
  * 단일 파일 검증 (공통 모듈 사용)
  * - 확장자 검증 (위험 확장자 차단)
- * - 파일 크기 검증 (50MB)
+ * - 파일 크기 검증 (0바이트 거부)
  * - MIME 타입 검증 (확장자 위조 탐지) ← 추가됨!
  *
  * @param file File 객체

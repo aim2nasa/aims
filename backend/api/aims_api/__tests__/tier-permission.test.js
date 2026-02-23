@@ -41,8 +41,8 @@ describe('티어 권한 철칙 검증', () => {
       expect(storageQuotaServiceCode).toContain('tierName: tierDef.name');
     });
 
-    it('사용자 스토리지 조회 시 max_batch_upload_bytes가 포함되어야 함', () => {
-      expect(storageQuotaServiceCode).toContain('max_batch_upload_bytes: maxBatchUploadBytes');
+    it('사용자 스토리지 조회 시 remaining_bytes가 계산되어야 함', () => {
+      expect(storageQuotaServiceCode).toContain('remaining_bytes:');
     });
   });
 
@@ -88,17 +88,9 @@ describe('티어 권한 철칙 검증', () => {
       expect(storageQuotaServiceCode).toMatch(/module\.exports\s*=\s*\{[^}]*DEFAULT_TIER/);
     });
 
-    it('티어별 max_batch_upload_bytes가 정의되어야 함', () => {
-      expect(storageQuotaServiceCode).toContain('max_batch_upload_bytes: 100 * MB');  // free_trial
-      expect(storageQuotaServiceCode).toContain('max_batch_upload_bytes: 500 * MB');  // standard
-      expect(storageQuotaServiceCode).toContain('max_batch_upload_bytes: 1 * GB');    // premium
-      expect(storageQuotaServiceCode).toContain('max_batch_upload_bytes: 2 * GB');    // vip
-      expect(storageQuotaServiceCode).toContain('max_batch_upload_bytes: -1');        // admin (무제한)
-    });
-
     it('admin 티어는 무제한(-1)이어야 함', () => {
       expect(storageQuotaServiceCode).toContain(
-        "admin: { name: '관리자', quota_bytes: -1, credit_quota: -1, ocr_quota: -1, ocr_page_quota: -1, max_batch_upload_bytes: -1"
+        "admin: { name: '관리자', quota_bytes: -1, credit_quota: -1, ocr_quota: -1, ocr_page_quota: -1"
       );
     });
   });
@@ -137,7 +129,6 @@ describe('티어 권한 철칙 검증', () => {
       // tierDef에서 값을 읽어오는지 확인
       expect(storageQuotaServiceCode).toContain('tierDef.quota_bytes');
       expect(storageQuotaServiceCode).toContain('tierDef.ocr_quota');
-      expect(storageQuotaServiceCode).toContain('tierDef.max_batch_upload_bytes');
     });
 
     it('admin 사용자는 무제한(-1) 처리되어야 함', () => {

@@ -151,8 +151,6 @@ export interface StorageInfo {
   // 하위 호환성 (deprecated)
   ocr_quota: number
   ocr_used_this_month: number
-  // 일괄 업로드 제한 (bytes, -1이면 무제한)
-  max_batch_upload_bytes: number
 }
 
 /**

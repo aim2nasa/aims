@@ -180,8 +180,8 @@ export const uploadConfig = {
   // 업로드 제한
   limits: {
     maxConcurrentUploads: 3,        // 최대 동시 업로드
-    maxFileSize: 50 * 1024 * 1024, // 50MB (Nginx 제한에 맞춤)
     maxFileCount: 100,              // 최대 파일 개수
+    // maxFileSize 제거됨 — 사용자별 저장 용량 쿼터로 관리 (Phase 1)
     allowedMimeTypes: [             // 허용 파일 형식
       'application/pdf',
       'image/jpeg',
@@ -230,8 +230,9 @@ export const uploadHelpers = {
 
   /**
    * 파일 크기가 허용 범위인지 확인
+   * Phase 1: 개별 파일 크기 제한 없음 — 사용자별 저장 용량 쿼터로 관리
    */
-  isAllowedFileSize(size: number): boolean {
-    return size <= uploadConfig.limits.maxFileSize
+  isAllowedFileSize(_size: number): boolean {
+    return true
   }
 }

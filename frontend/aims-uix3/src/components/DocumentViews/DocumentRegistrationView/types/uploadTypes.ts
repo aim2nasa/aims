@@ -40,6 +40,8 @@ export interface UploadFile {
   progress: number
   /** 에러 메시지 (있는 경우) */
   error?: string | undefined
+  /** 재시도 가능 여부 (에러 시) */
+  retryable?: boolean | undefined
   /** 업로드 완료 시간 */
   completedAt?: Date | undefined
   /** 파일이 폴더에서 온 경우의 상대 경로 */
@@ -140,12 +142,18 @@ export interface DocPrepResponse {
   exitCode?: number
   stderr?: string
 
+  // 성공/경고 - 결과 구분
+  result?: string
+
   // 경고 케이스 - 지원하지 않는 파일 형식
   warn?: boolean
   status?: number
   userMessage?: string
   mime?: string
   filename?: string
+
+  // Phase 1: AI 처리 스킵 사유 (파일은 보관, AI 처리만 건너뜀)
+  processingSkipReason?: 'unsupported_format' | string
 
   // 에러 케이스 - 업로드/처리 실패
   error?: {

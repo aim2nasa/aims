@@ -171,9 +171,9 @@ export default function BatchDocumentUploadView({
     handleDuplicateAction,
   } = useBatchUpload()
 
-  // 현재 사용자의 등급별 배치 업로드 한도 (API에서 조회)
-  // -1이면 무제한, 0이면 아직 로드되지 않음
-  const tierLimit = storageInfo?.max_batch_upload_bytes ?? 0
+  // max_batch_upload_bytes 제거됨 — 저장 용량 쿼터(remaining_bytes)로 관리
+  // remaining_bytes를 tierLimit으로 사용 (-1이면 무제한)
+  const tierLimit = storageInfo?.remaining_bytes ?? 0
 
   // 초기화 시 sessionStorage에서 상태 복원
   useEffect(() => {

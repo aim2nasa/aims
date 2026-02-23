@@ -30,14 +30,14 @@ export const extensionValidatorPlugin: FileValidator = {
 /**
  * 파일 크기 검증 플러그인
  *
- * 50MB를 초과하는 파일을 차단합니다.
+ * 0바이트(빈 파일)를 차단합니다. Phase 1: 개별 크기 상한 없음.
  * Priority: 20
  */
 export const fileSizeValidatorPlugin: FileValidator = {
   name: 'fileSize',
   priority: 20,
   enabled: true,
-  description: '파일 크기 제한 (50MB)',
+  description: '빈 파일 차단 (Phase 1: 크기 상한 없음)',
   validate: validateFileSize,
 }
 

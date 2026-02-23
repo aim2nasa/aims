@@ -48,10 +48,10 @@ describe('settingsService', () => {
       description: '실행 파일 차단',
     },
     fileSizeValidation: {
-      enabled: true,
-      maxSizeBytes: 52428800, // 50MB
-      maxSizeMB: 50,
-      description: '최대 파일 크기 제한',
+      enabled: false,
+      maxSizeBytes: 0,
+      maxSizeMB: 0,
+      description: '파일 크기 제한 (Phase 1: 비활성화)',
     },
     mimeTypeValidation: {
       enabled: true,

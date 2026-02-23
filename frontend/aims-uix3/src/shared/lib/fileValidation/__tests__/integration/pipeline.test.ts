@@ -96,7 +96,7 @@ describe('validateFilesSync 통합 파이프라인', () => {
       expect(result.invalidFiles.every(f => f.reason === 'blocked_extension')).toBe(true)
     })
 
-    it('파일 크기 초과 제외', () => {
+    it('큰 파일도 통과 (Phase 1: 크기 제한 없음)', () => {
       const files = [
         createMockFile('small.pdf', 1024, 'application/pdf'),
         createMockFile('huge.pdf', 51 * 1024 * 1024, 'application/pdf'), // > 50MB
@@ -105,9 +105,8 @@ describe('validateFilesSync 통합 파이프라인', () => {
 
       const result = validateFilesSync(files, storage)
 
-      expect(result.validFiles).toHaveLength(1)
-      expect(result.invalidFiles).toHaveLength(1)
-      expect(result.invalidFiles[0].reason).toBe('size_exceeded')
+      expect(result.validFiles).toHaveLength(2)
+      expect(result.invalidFiles).toHaveLength(0)
     })
 
     it('MIME 타입 불일치 제외', () => {
@@ -140,15 +139,15 @@ describe('validateFilesSync 통합 파이프라인', () => {
       const files = [
         createMockFile('good.pdf', 1024, 'application/pdf'),
         createMockFile('virus.exe', 1024, 'application/x-msdownload'),
-        createMockFile('huge.pdf', 100 * 1024 * 1024, 'application/pdf'),
+        createMockFile('huge.pdf', 100 * 1024 * 1024, 'application/pdf'), // Phase 1: 크기 제한 없음 → 유효
         createMockFile('fake.jpg', 1024, 'application/pdf'),
       ]
       const storage = createStorageInfo(0, 1000 * 1024 * 1024)
 
       const result = validateFilesSync(files, storage)
 
-      expect(result.validFiles).toHaveLength(1)
-      expect(result.invalidFiles).toHaveLength(3)
+      expect(result.validFiles).toHaveLength(2) // good.pdf + huge.pdf
+      expect(result.invalidFiles).toHaveLength(2) // virus.exe + fake.jpg
     })
   })
 
