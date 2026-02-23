@@ -36,6 +36,28 @@ logger = logging.getLogger(__name__)
 CREDIT_CHECK_URL = None  # 런타임에 설정
 
 
+def _extract_page_count(file_content: bytes, content_type: Optional[str]) -> int:
+    """
+    파일 바이트에서 페이지 수 추출 (크레딧 체크용)
+
+    PDF → fitz(PyMuPDF)로 실제 페이지 수 추출
+    비PDF / 파싱 실패 → 1 (안전한 기본값)
+    """
+    if not content_type or content_type != "application/pdf" or not file_content:
+        return 1
+    try:
+        import fitz
+        pdf_doc = fitz.open(stream=file_content, filetype="pdf")
+        try:
+            page_count = len(pdf_doc)
+            return max(page_count, 1)
+        finally:
+            pdf_doc.close()
+    except Exception as e:
+        logger.warning(f"[PageCount] PDF 페이지 수 추출 실패 (기본값 1 사용): {e}")
+        return 1
+
+
 async def check_credit_for_upload(user_id: str, estimated_pages: int = 1) -> Dict[str, Any]:
     """
     문서 업로드 전 크레딧 체크 (aims_api 내부 API 호출)
@@ -241,8 +263,8 @@ async def doc_prep_main(
             logger.info(f"Queueing upload for userId: {userId}, file: {original_name}")
 
             # 🔴 0. 크레딧 체크 (EMBEDDING_CREDIT_POLICY.md 참조)
-            # 예상 페이지 수 추정 (1페이지 기본, PDF는 나중에 정확히 계산)
-            estimated_pages = 1
+            # PDF → 실제 페이지 수, 비PDF → 1 (B1 수정: 하드코딩 제거)
+            estimated_pages = _extract_page_count(file_content, file.content_type)
             credit_check = await check_credit_for_upload(userId, estimated_pages)
             is_credit_pending = not credit_check.get("allowed", False)
 
