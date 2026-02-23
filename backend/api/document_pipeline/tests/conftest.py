@@ -493,3 +493,43 @@ def mock_httpx_client():
         mock_client.__aexit__.return_value = None
         mock.return_value = mock_client
         yield mock_client
+
+
+# ========================================
+# AR/CRS Sample Text Fixtures
+# ========================================
+
+@pytest.fixture
+def ar_text_sample():
+    """AR (Annual Review Report) 샘플 텍스트 — 실제 PDF 파싱 결과와 유사"""
+    return (
+        "MetLife\n"
+        "홍길동 고객님을 위한\n"
+        "Annual Review Report\n"
+        "\n"
+        "보유계약 현황\n"
+        "메트라이프생명 보험계약 현황\n"
+        "\n"
+        "계약번호   상품명           계약일      보험기간\n"
+        "12345678   종합보장보험     2020.01.15  2020.01~2050.01\n"
+        "\n"
+        "발행(기준)일: 2026년 1월 15일\n"
+    )
+
+
+@pytest.fixture
+def crs_text_sample():
+    """CRS (Customer Review Service) 샘플 텍스트 — 실제 PDF 파싱 결과와 유사"""
+    return (
+        "메트라이프\n"
+        "김철수 고객님을 위한\n"
+        "Customer Review Service\n"
+        "\n"
+        "변액 적립금 현황\n"
+        "투자수익률 및 펀드 배분 현황\n"
+        "\n"
+        "계약번호: 98765432\n"
+        "계약자: 김철수\n"
+        "메트라이프 변액종합보험\n"
+        "발행(기준)일: 2026년 2월 10일\n"
+    )
