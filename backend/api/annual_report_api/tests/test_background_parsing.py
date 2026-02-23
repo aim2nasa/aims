@@ -22,7 +22,7 @@ AR 백그라운드 파싱 기능 유닛 테스트
 """
 
 import pytest
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from bson import ObjectId
 from pymongo import MongoClient
 import os
@@ -38,7 +38,11 @@ CUSTOMERS_COLLECTION = "customers"
 @pytest.fixture(scope="module")
 def mongo_client():
     """MongoDB 클라이언트 픽스처"""
-    client = MongoClient(TEST_MONGO_URI)
+    try:
+        client = MongoClient(TEST_MONGO_URI, serverSelectionTimeoutMS=3000)
+        client.admin.command("ping")
+    except Exception:
+        pytest.skip("MongoDB not available")
     yield client
     client.close()
 
@@ -118,8 +122,8 @@ class TestARBackgroundParsingStatus:
             "personal_info": {"name": "테스트BG고객1"},
             "annual_reports": [],
             "meta": {
-                "created_at": datetime.now(UTC),
-                "updated_at": datetime.now(UTC)
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
             }
         })
 
@@ -129,7 +133,7 @@ class TestARBackgroundParsingStatus:
             {
                 "$set": {
                     "ar_parsing_status": "processing",
-                    "ar_parsing_started_at": datetime.now(UTC)
+                    "ar_parsing_started_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -145,7 +149,7 @@ class TestARBackgroundParsingStatus:
             {
                 "$set": {
                     "ar_parsing_status": "completed",
-                    "ar_parsing_completed_at": datetime.now(UTC)
+                    "ar_parsing_completed_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -253,8 +257,8 @@ class TestARBackgroundParsingQuery:
             "personal_info": {"name": "테스트BG고객2"},
             "annual_reports": [],
             "meta": {
-                "created_at": datetime.now(UTC),
-                "updated_at": datetime.now(UTC)
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
             }
         })
 
@@ -268,7 +272,7 @@ class TestARBackgroundParsingQuery:
                 "customer_relation": {"customer_id": customer_id},
                 "upload": {
                     "destPath": f"/tmp/test-ar-{i}.pdf",
-                    "uploaded_at": datetime.now(UTC)
+                    "uploaded_at": datetime.now(timezone.utc)
                 }
             })
 
@@ -302,8 +306,8 @@ class TestARBackgroundParsingQuery:
                 "personal_info": {"name": f"테스트BG고객{cust_id}"},
                 "annual_reports": [],
                 "meta": {
-                    "created_at": datetime.now(UTC),
-                    "updated_at": datetime.now(UTC)
+                    "created_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc)
                 }
             })
 
@@ -353,8 +357,8 @@ class TestARBackgroundParsingQuery:
                 {"issue_date": datetime(2024, 1, 1), "assets": {"total": 1000000}}
             ],
             "meta": {
-                "created_at": datetime.now(UTC),
-                "updated_at": datetime.now(UTC)
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
             }
         })
 
@@ -435,8 +439,8 @@ class TestARBackgroundParsingResult:
             "personal_info": {"name": "테스트BG고객4"},
             "annual_reports": [],
             "meta": {
-                "created_at": datetime.now(UTC),
-                "updated_at": datetime.now(UTC)
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
             }
         })
 
@@ -459,7 +463,7 @@ class TestARBackgroundParsingResult:
             {"_id": customer_id},
             {
                 "$push": {"annual_reports": parsing_result},
-                "$set": {"meta.updated_at": datetime.now(UTC)}
+                "$set": {"meta.updated_at": datetime.now(timezone.utc)}
             }
         )
 
@@ -482,8 +486,8 @@ class TestARBackgroundParsingResult:
             "personal_info": {"name": "테스트BG고객5"},
             "annual_reports": [],
             "meta": {
-                "created_at": datetime.now(UTC),
-                "updated_at": datetime.now(UTC)
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
             }
         })
 
@@ -512,7 +516,7 @@ class TestARBackgroundParsingResult:
                 {"_id": customer_id},
                 {
                     "$push": {"annual_reports": result},
-                    "$set": {"meta.updated_at": datetime.now(UTC)}
+                    "$set": {"meta.updated_at": datetime.now(timezone.utc)}
                 }
             )
 
@@ -537,8 +541,8 @@ class TestARBackgroundParsingCount:
             "personal_info": {"name": "테스트BG고객6"},
             "annual_reports": [],
             "meta": {
-                "created_at": datetime.now(UTC),
-                "updated_at": datetime.now(UTC)
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
             }
         })
 

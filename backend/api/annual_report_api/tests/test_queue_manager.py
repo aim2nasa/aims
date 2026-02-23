@@ -14,7 +14,11 @@ def test_db():
     """테스트용 MongoDB 연결"""
     import os
     mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-    client = MongoClient(mongo_uri)
+    try:
+        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=3000)
+        client.admin.command("ping")
+    except Exception:
+        pytest.skip("MongoDB not available")
     db = client["test_ar_queue"]
     yield db
     # 테스트 후 정리

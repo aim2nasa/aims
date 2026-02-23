@@ -98,7 +98,7 @@ if [ -n "$STAGED_BACKEND_FILES" ]; then
     # annual_report_api 테스트
     if echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/annual_report_api/"; then
       echo "  📦 Testing annual_report_api..."
-      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/annual_report_api && python3 -m pytest -v --tb=short 2>&1' ; then
+      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/annual_report_api && source venv/bin/activate && python3 -m pytest -v --tb=short 2>&1' ; then
         echo "  ❌ annual_report_api tests failed!"
         exit 1
       fi

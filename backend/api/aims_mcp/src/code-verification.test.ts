@@ -242,12 +242,10 @@ describe('MCP 소스 코드 검증', () => {
       // delete_customer_memo는 deprecated되어 단순 에러 반환만 함
       { name: 'memos.ts', handlers: ['add_customer_memo', 'list_customer_memos'] },
       { name: 'birthdays.ts', handlers: ['find_birthday_customers'] },
-      { name: 'contracts.ts', handlers: ['list_contracts', 'get_contract_details', 'create_contract'] },
+      { name: 'contracts.ts', handlers: ['list_contracts', 'get_contract_details'] },
       { name: 'documents.ts', handlers: ['search_documents', 'get_document', 'list_customer_documents'] },
-      { name: 'expiring.ts', handlers: ['find_expiring_contracts'] },
       { name: 'network.ts', handlers: ['get_customer_network'] },
-      { name: 'products.ts', handlers: ['search_products', 'get_product_details'] },
-      { name: 'statistics.ts', handlers: ['get_statistics'] }
+      { name: 'products.ts', handlers: ['search_products'] }
     ];
 
     describe('formatZodError 일관성', () => {

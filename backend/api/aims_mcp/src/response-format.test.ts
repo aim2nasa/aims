@@ -25,8 +25,6 @@ describe('응답 포맷 일관성', () => {
       './tools/contracts.ts',
       './tools/documents.ts',
       './tools/birthdays.ts',
-      './tools/expiring.ts',
-      './tools/statistics.ts',
       './tools/products.ts',
     ];
 

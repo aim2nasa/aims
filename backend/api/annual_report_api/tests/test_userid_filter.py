@@ -20,7 +20,7 @@ test_userid_filter.py
 import pytest
 from fastapi.testclient import TestClient
 from bson import ObjectId
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 import sys
 import os
 import io

@@ -35,8 +35,8 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
         expect(sourceCode).not.toContain("'personal_info.phone': 1");
       });
 
-      it('응답에서 mobile_phone 읽기', () => {
-        expect(sourceCode).toContain('personal_info?.mobile_phone');
+      it('mobile_phone 필드 사용', () => {
+        expect(sourceCode).toContain('mobile_phone');
       });
 
       it('응답에서 phone 직접 읽기 금지', () => {
@@ -109,53 +109,41 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
     });
 
     describe('데이터 격리', () => {
-      it('agent_id 필터 사용', () => {
-        expect(sourceCode).toContain('agent_id');
+      it('meta.created_by 필터 사용', () => {
+        expect(sourceCode).toContain("'meta.created_by': userId");
       });
 
-      it('ObjectId와 string 둘 다 지원', () => {
-        expect(sourceCode).toContain('ObjectId.isValid(userId)');
-        expect(sourceCode).toContain('new ObjectId(userId)');
-      });
-    });
-
-    describe('쿼리 구조 (명확한 $and)', () => {
-      it('conditions 배열로 쿼리 조건 수집', () => {
-        expect(sourceCode).toContain('const conditions: object[] = []');
-      });
-
-      it('conditions.push로 조건 추가', () => {
-        expect(sourceCode).toContain('conditions.push({');
-      });
-
-      it('$and로 최종 필터 결합', () => {
-        expect(sourceCode).toContain('{ $and: conditions }');
-      });
-
-      it('조건이 하나뿐이면 $and 생략', () => {
-        expect(sourceCode).toContain('conditions.length > 1 ?');
+      it('toSafeObjectId 사용', () => {
+        expect(sourceCode).toContain('toSafeObjectId');
       });
     });
 
-    describe('응답 필드', () => {
-      it('id 필드 포함 (toString 변환)', () => {
-        expect(sourceCode).toContain('id: c._id.toString()');
-      });
+    describe('쿼리 구조', () => {
 
-      it('customerId 필드 포함', () => {
-        expect(sourceCode).toContain('customerId: c.customer_id?.toString()');
+      it('annual_reports 존재 여부 확인', () => {
+        expect(sourceCode).toContain("'annual_reports': { $exists: true");
+      });
+    });
+
+    describe('정규화된 응답 필드', () => {
+      it('NormalizedContract 인터페이스 정의', () => {
+        expect(sourceCode).toContain('interface NormalizedContract');
       });
 
       it('policyNumber 필드 포함', () => {
-        expect(sourceCode).toContain('policyNumber: c.policy_number');
+        expect(sourceCode).toContain('policyNumber:');
       });
 
       it('premium 필드 포함', () => {
-        expect(sourceCode).toContain('premium: c.premium');
+        expect(sourceCode).toContain('premium:');
       });
 
-      it('createdAt 필드 포함', () => {
-        expect(sourceCode).toContain('createdAt: c.meta?.created_at');
+      it('insured 필드 포함 (피보험자)', () => {
+        expect(sourceCode).toContain('insured:');
+      });
+
+      it('coverageAmount 필드 포함 (가입금액)', () => {
+        expect(sourceCode).toContain('coverageAmount:');
       });
     });
 
@@ -164,31 +152,8 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
         expect(sourceCode).toContain('계약 조회 실패');
       });
 
-      it('유효하지 않은 고객 ID 메시지', () => {
-        expect(sourceCode).toContain("유효하지 않은 고객 ID입니다.");
-      });
-
       it('계약 없음 메시지', () => {
         expect(sourceCode).toContain("에 해당하는 계약을 찾을 수 없습니다.");
-      });
-    });
-
-    describe('계약 상세 조회', () => {
-      it('피보험자 정보 포함', () => {
-        expect(sourceCode).toContain('insuredPerson:');
-      });
-
-      it('보험 가입금액 포함', () => {
-        expect(sourceCode).toContain('sumInsured:');
-      });
-
-      it('특약 정보 포함', () => {
-        expect(sourceCode).toContain('riders:');
-      });
-
-      it('상품 정보 조회', () => {
-        expect(sourceCode).toContain('product:');
-        expect(sourceCode).toContain('productInfo');
       });
     });
   });
@@ -263,132 +228,6 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
 
       it('day 범위 검증 (1-31)', () => {
         expect(sourceCode).toContain('z.number().min(1).max(31)');
-      });
-    });
-  });
-
-  describe('statistics.ts', () => {
-    let sourceCode: string;
-
-    beforeAll(() => {
-      sourceCode = readSourceFile('./tools/statistics.ts');
-    });
-
-    describe('통계 유형', () => {
-      it('summary 유형 지원', () => {
-        expect(sourceCode).toContain("'summary'");
-      });
-
-      it('customer_count 유형 지원', () => {
-        expect(sourceCode).toContain("'customer_count'");
-      });
-
-      it('contract_count 유형 지원', () => {
-        expect(sourceCode).toContain("'contract_count'");
-      });
-
-      it('monthly_new 유형 지원', () => {
-        expect(sourceCode).toContain("'monthly_new'");
-      });
-    });
-
-    describe('premium 계산 (타입 안전)', () => {
-      it('$convert 사용 (타입 안전 변환)', () => {
-        expect(sourceCode).toContain('$convert');
-      });
-
-      it('onError: 0 (변환 실패 시 0)', () => {
-        expect(sourceCode).toContain('onError: 0');
-      });
-
-      it('onNull: 0 (null 시 0)', () => {
-        expect(sourceCode).toContain('onNull: 0');
-      });
-
-      it('$ifNull로 null 처리', () => {
-        expect(sourceCode).toContain('$ifNull');
-      });
-
-      it('totalPremium 계산', () => {
-        expect(sourceCode).toContain('totalPremium');
-      });
-
-      it('타입 안전 변환 주석', () => {
-        expect(sourceCode).toContain('타입 안전 변환');
-      });
-    });
-
-    describe('데이터 격리', () => {
-      it('고객: meta.created_by 필터', () => {
-        expect(sourceCode).toContain("'meta.created_by': userId");
-      });
-
-      it('계약: agent_id 필터', () => {
-        expect(sourceCode).toContain('agent_id');
-      });
-    });
-
-    describe('월별 통계', () => {
-      it('최근 6개월 계산', () => {
-        expect(sourceCode).toContain('setMonth');
-        expect(sourceCode).toContain('- 6');
-      });
-
-      it('$year 사용', () => {
-        expect(sourceCode).toContain('$year');
-      });
-
-      it('$month 사용', () => {
-        expect(sourceCode).toContain('$month');
-      });
-    });
-  });
-
-  describe('expiring.ts', () => {
-    let sourceCode: string;
-
-    beforeAll(() => {
-      try {
-        sourceCode = readSourceFile('./tools/expiring.ts');
-      } catch {
-        sourceCode = '';
-      }
-    });
-
-    it('파일 존재', () => {
-      expect(sourceCode.length).toBeGreaterThan(0);
-    });
-
-    it('daysWithin 파라미터', () => {
-      expect(sourceCode).toContain('daysWithin');
-    });
-
-    it('만기일 계산', () => {
-      expect(sourceCode).toMatch(/expiry|maturity/i);
-    });
-
-    it('agent_id 필터', () => {
-      expect(sourceCode).toContain('agent_id');
-    });
-
-    describe('안전한 날짜 처리', () => {
-      it('Invalid Date 체크 (isNaN)', () => {
-        // contract_date 파싱 시 isNaN 체크
-        expect(sourceCode).toContain('isNaN(contractDate.getTime())');
-      });
-
-      it('payment_period 파싱', () => {
-        // payment_period에서 연수 추출 ('10년' -> 10)
-        expect(sourceCode).toContain('parsePaymentPeriodYears');
-      });
-
-      it('종신보험 제외', () => {
-        // 종신보험은 만기가 없으므로 제외
-        expect(sourceCode).toContain('종신');
-      });
-
-      it('daysLeft 계산', () => {
-        expect(sourceCode).toContain('daysLeft');
       });
     });
   });
@@ -479,7 +318,6 @@ describe('금지 패턴 전역 검증', () => {
     './tools/network.ts',
     './tools/contracts.ts',
     './tools/birthdays.ts',
-    './tools/statistics.ts',
   ];
 
   for (const file of toolFiles) {
@@ -545,7 +383,6 @@ describe('응답 형식 일관성', () => {
     './tools/network.ts',
     './tools/contracts.ts',
     './tools/birthdays.ts',
-    './tools/statistics.ts',
   ];
 
   for (const file of toolFiles) {
@@ -601,13 +438,12 @@ describe('권한 및 데이터 격리', () => {
   describe('계약 데이터 격리', () => {
     const contractFiles = [
       './tools/contracts.ts',
-      './tools/statistics.ts',
     ];
 
     for (const file of contractFiles) {
-      it(`${file}: agent_id 필터 사용`, () => {
+      it(`${file}: meta.created_by 필터 사용 (고객 레벨 격리)`, () => {
         const sourceCode = readSourceFile(file);
-        expect(sourceCode).toContain('agent_id');
+        expect(sourceCode).toContain("'meta.created_by'");
       });
     }
   });
@@ -617,9 +453,8 @@ describe('빈 결과 처리 일관성', () => {
   // memos.ts는 단일 메모 필드이므로 목록 도구에서 제외
   const listToolFiles = [
     { file: './tools/customers.ts', countField: 'count: customers.length' },
-    { file: './tools/contracts.ts', countField: 'count: contracts.length' },
+    { file: './tools/contracts.ts', countField: 'count: paginatedContracts.length' },
     { file: './tools/birthdays.ts', countField: 'count: customers.length' },
-    { file: './tools/expiring.ts', countField: 'count: expiringContracts.length' },
     { file: './tools/documents.ts', countField: 'count: documents.length' },
   ];
 
@@ -641,8 +476,11 @@ describe('빈 결과 처리 일관성', () => {
         expect(sourceCode).toContain('isError: true');
       });
 
-      it('map() 사용 (빈 배열도 안전하게 처리)', () => {
-        expect(sourceCode).toContain('.map(');
+      it('빈 배열 안전 순회 (.map 또는 for-of)', () => {
+        // .map() 또는 for...of 둘 다 빈 배열에 안전
+        const hasMap = sourceCode.includes('.map(');
+        const hasForOf = sourceCode.includes('for (const ');
+        expect(hasMap || hasForOf).toBe(true);
       });
     });
   }

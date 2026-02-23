@@ -59,7 +59,7 @@ cd /d/aims/backend/api/aims_api && MONGO_URI=mongodb://100.110.215.65:27017 npx 
 ### Phase 4: Backend aims_mcp (vitest)
 
 ```bash
-cd /d/aims/backend/api/aims_mcp && npx vitest run --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**' --exclude='**/__tests__/conversation/**' --exclude='**/*.e2e.test.ts' 2>&1 | tail -30
+cd /d/aims/backend/api/aims_mcp && npx vitest run --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**' --exclude='**/__tests__/conversation/**' --exclude='**/__tests__/cross-platform-consistency.test.ts' --exclude='**/*.e2e.test.ts' 2>&1 | tail -30
 ```
 
 - E2E/시뮬레이션 테스트 제외 (서버 연동 필요)

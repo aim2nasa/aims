@@ -154,6 +154,7 @@ export async function handleSearchProducts(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅
     console.error('[MCP] search_products 에러:', error);
     sendErrorLog('aims_mcp', 'search_products 에러', error);
     const errorMessage = error instanceof ZodError

@@ -11,7 +11,7 @@ AR 파싱 결과 보장 테스트
 """
 
 import pytest
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from bson import ObjectId
 from pymongo import MongoClient
 import os
@@ -33,7 +33,11 @@ TEST_DB_NAME = "docupload"
 @pytest.fixture(scope="module")
 def mongo_client():
     """MongoDB 클라이언트 픽스처"""
-    client = MongoClient(TEST_MONGO_URI)
+    try:
+        client = MongoClient(TEST_MONGO_URI, serverSelectionTimeoutMS=3000)
+        client.admin.command("ping")
+    except Exception:
+        pytest.skip("MongoDB not available")
     yield client
     client.close()
 
@@ -88,7 +92,7 @@ def ar_document_pending(files_collection, customers_collection, created_ids):
         "_id": customer_id,
         "personal_info": {"name": "테스트ARG고객1"},
         "annual_reports": [],
-        "meta": {"created_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
+        "meta": {"created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
     })
 
     files_collection.insert_one({
@@ -99,7 +103,7 @@ def ar_document_pending(files_collection, customers_collection, created_ids):
         "upload": {
             "originalName": "테스트ARG고객1보유계약현황202508.pdf",
             "destPath": "/tmp/test-ar-pending.pdf",
-            "uploaded_at": datetime.now(UTC)
+            "uploaded_at": datetime.now(timezone.utc)
         }
     })
 
@@ -119,7 +123,7 @@ def ar_document_with_error(files_collection, customers_collection, created_ids):
         "_id": customer_id,
         "personal_info": {"name": "테스트ARG고객2"},
         "annual_reports": [],
-        "meta": {"created_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
+        "meta": {"created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
     })
 
     files_collection.insert_one({
@@ -130,7 +134,7 @@ def ar_document_with_error(files_collection, customers_collection, created_ids):
         "customerId": customer_id,
         "upload": {
             "originalName": "테스트ARG고객2보유계약현황202508.pdf",
-            "uploaded_at": datetime.now(UTC)
+            "uploaded_at": datetime.now(timezone.utc)
         }
     })
 
@@ -150,7 +154,7 @@ def ar_document_processing(files_collection, customers_collection, created_ids):
         "_id": customer_id,
         "personal_info": {"name": "테스트ARG고객3"},
         "annual_reports": [],
-        "meta": {"created_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
+        "meta": {"created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
     })
 
     files_collection.insert_one({
@@ -160,7 +164,7 @@ def ar_document_processing(files_collection, customers_collection, created_ids):
         "customerId": customer_id,
         "upload": {
             "originalName": "테스트ARG고객3보유계약현황202508.pdf",
-            "uploaded_at": datetime.now(UTC)
+            "uploaded_at": datetime.now(timezone.utc)
         }
     })
 
@@ -183,14 +187,14 @@ def ar_document_completed(files_collection, customers_collection, created_ids):
         "annual_reports": [{
             "source_file_id": document_id,
             "customer_name": "테스트ARG고객4",
-            "issue_date": datetime(2025, 8, 1, tzinfo=UTC),  # UTC timezone 추가
+            "issue_date": datetime(2025, 8, 1, tzinfo=timezone.utc),  # UTC timezone 추가
             "total_monthly_premium": 100000,
             "total_contracts": 3,
             "contracts": [],
-            "uploaded_at": datetime.now(UTC).isoformat(),
-            "parsed_at": datetime.now(UTC).isoformat()
+            "uploaded_at": datetime.now(timezone.utc).isoformat(),
+            "parsed_at": datetime.now(timezone.utc).isoformat()
         }],
-        "meta": {"created_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
+        "meta": {"created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
     })
 
     files_collection.insert_one({
@@ -200,7 +204,7 @@ def ar_document_completed(files_collection, customers_collection, created_ids):
         "customerId": customer_id,
         "upload": {
             "originalName": "테스트ARG고객4보유계약현황202508.pdf",
-            "uploaded_at": datetime.now(UTC)
+            "uploaded_at": datetime.now(timezone.utc)
         }
     })
 
@@ -213,10 +217,10 @@ def ar_document_completed(files_collection, customers_collection, created_ids):
 class TestARErrorScenarios:
     """각 에러 시나리오에서 올바른 상태 전이 검증"""
 
-    @patch('routes.background.parse_annual_report')
+    @patch('routes.background.get_parser')
     @patch('os.path.exists')
     def test_file_not_found_sets_error_status(
-        self, mock_exists, mock_parse, db, files_collection, ar_document_pending
+        self, mock_exists, mock_get_parser, db, files_collection, ar_document_pending
     ):
         """파일 경로 없음 → ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
@@ -236,41 +240,40 @@ class TestARErrorScenarios:
         assert doc["ar_parsing_status"] == "error"
         assert doc.get("ar_parsing_error") is not None
 
-    @patch('routes.background.parse_annual_report')
+    @patch('routes.background.find_contract_table_end_page', return_value=2)
+    @patch('routes.background.get_parser')
     @patch('os.path.exists')
     def test_openai_rate_limit_sets_error_status(
-        self, mock_exists, mock_parse, db, files_collection, ar_document_pending
+        self, mock_exists, mock_get_parser, mock_end_page, db, files_collection, ar_document_pending
     ):
         """OpenAI 429 Rate Limit → ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
-        # 파일 존재함
         mock_exists.return_value = True
-        # OpenAI Rate Limit 에러 반환
-        mock_parse.return_value = {"error": "Rate limit exceeded (429)"}
+        # get_parser() returns a parser function; parser function returns error
+        mock_get_parser.return_value.return_value = {"error": "Rate limit exceeded (429)"}
 
-        # parse_single_ar_document 호출
         result = parse_single_ar_document(db, file_id, customer_id)
 
-        # 검증
         assert result["success"] == False
 
         doc = files_collection.find_one({"_id": ObjectId(file_id)})
         assert doc["ar_parsing_status"] == "error"
         assert "Rate limit" in doc.get("ar_parsing_error", "")
 
-    @patch('routes.background.parse_annual_report')
+    @patch('routes.background.find_contract_table_end_page', return_value=2)
+    @patch('routes.background.get_parser')
     @patch('os.path.exists')
     def test_openai_timeout_sets_error_status(
-        self, mock_exists, mock_parse, db, files_collection, ar_document_pending
+        self, mock_exists, mock_get_parser, mock_end_page, db, files_collection, ar_document_pending
     ):
         """OpenAI 타임아웃 → ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
         mock_exists.return_value = True
-        mock_parse.return_value = {"error": "Request timeout after 60s"}
+        mock_get_parser.return_value.return_value = {"error": "Request timeout after 60s"}
 
         result = parse_single_ar_document(db, file_id, customer_id)
 
@@ -280,17 +283,18 @@ class TestARErrorScenarios:
         assert doc["ar_parsing_status"] == "error"
         assert "timeout" in doc.get("ar_parsing_error", "").lower()
 
-    @patch('routes.background.parse_annual_report')
+    @patch('routes.background.find_contract_table_end_page', return_value=2)
+    @patch('routes.background.get_parser')
     @patch('os.path.exists')
     def test_json_parse_error_sets_error_status(
-        self, mock_exists, mock_parse, db, files_collection, ar_document_pending
+        self, mock_exists, mock_get_parser, mock_end_page, db, files_collection, ar_document_pending
     ):
         """LLM 응답 JSON 파싱 실패 → ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
         mock_exists.return_value = True
-        mock_parse.return_value = {"error": "JSON 파싱 실패: Expecting value"}
+        mock_get_parser.return_value.return_value = {"error": "JSON 파싱 실패: Expecting value"}
 
         result = parse_single_ar_document(db, file_id, customer_id)
 
@@ -300,18 +304,22 @@ class TestARErrorScenarios:
         assert doc["ar_parsing_status"] == "error"
         assert "JSON" in doc.get("ar_parsing_error", "")
 
+    @patch('routes.background.extract_customer_info_from_first_page', return_value={})
     @patch('routes.background.save_annual_report')
-    @patch('routes.background.parse_annual_report')
+    @patch('routes.background.find_contract_table_end_page', return_value=2)
+    @patch('routes.background.get_parser')
     @patch('os.path.exists')
     def test_db_save_failure_sets_error_status(
-        self, mock_exists, mock_parse, mock_save, db, files_collection, ar_document_pending
+        self, mock_exists, mock_get_parser, mock_end_page, mock_save, mock_extract,
+        db, files_collection, ar_document_pending
     ):
         """MongoDB 저장 실패 → ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
         mock_exists.return_value = True
-        mock_parse.return_value = {
+        # Parser returns valid result (no "error" key)
+        mock_get_parser.return_value.return_value = {
             "보유계약 현황": [],
             "부활가능 실효계약": [],
             "총_월보험료": 0
@@ -326,17 +334,18 @@ class TestARErrorScenarios:
         assert doc["ar_parsing_status"] == "error"
         assert doc.get("ar_parsing_error") is not None
 
-    @patch('routes.background.parse_annual_report')
+    @patch('routes.background.find_contract_table_end_page', return_value=2)
+    @patch('routes.background.get_parser')
     @patch('os.path.exists')
     def test_unexpected_exception_sets_error_status(
-        self, mock_exists, mock_parse, db, files_collection, ar_document_pending
+        self, mock_exists, mock_get_parser, mock_end_page, db, files_collection, ar_document_pending
     ):
         """예상치 못한 예외 → ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
         mock_exists.return_value = True
-        mock_parse.side_effect = Exception("Unexpected error occurred")
+        mock_get_parser.return_value.side_effect = Exception("Unexpected error occurred")
 
         result = parse_single_ar_document(db, file_id, customer_id)
 
@@ -404,14 +413,14 @@ class TestGetAnnualReportsIncludesAll:
             "annual_reports": [{
                 "source_file_id": ObjectId(),
                 "customer_name": "테스트ARG고객Mixed",
-                "issue_date": datetime(2025, 1, 1, tzinfo=UTC),  # UTC timezone 추가
+                "issue_date": datetime(2025, 1, 1, tzinfo=timezone.utc),  # UTC timezone 추가
                 "total_monthly_premium": 50000,
                 "total_contracts": 2,
                 "contracts": [],
-                "uploaded_at": datetime.now(UTC).isoformat(),
-                "parsed_at": datetime.now(UTC).isoformat()
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+                "parsed_at": datetime.now(timezone.utc).isoformat()
             }],
-            "meta": {"created_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
+            "meta": {"created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
         })
 
         # error 상태 문서
@@ -423,7 +432,7 @@ class TestGetAnnualReportsIncludesAll:
             "ar_parsing_status": "error",
             "ar_parsing_error": "Rate limit exceeded",
             "customerId": customer_id,
-            "upload": {"originalName": "error_doc.pdf", "uploaded_at": datetime.now(UTC)}
+            "upload": {"originalName": "error_doc.pdf", "uploaded_at": datetime.now(timezone.utc)}
         })
 
         # processing 상태 문서
@@ -434,7 +443,7 @@ class TestGetAnnualReportsIncludesAll:
             "is_annual_report": True,
             "ar_parsing_status": "processing",
             "customerId": customer_id,
-            "upload": {"originalName": "processing_doc.pdf", "uploaded_at": datetime.now(UTC)}
+            "upload": {"originalName": "processing_doc.pdf", "uploaded_at": datetime.now(timezone.utc)}
         })
 
         # 조회
@@ -476,7 +485,7 @@ class TestGetAnnualReportsIncludesAll:
             "_id": customer_id,
             "personal_info": {"name": "테스트ARG고객All"},
             "annual_reports": [],
-            "meta": {"created_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
+            "meta": {"created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
         })
 
         # 3개의 AR 문서 생성 (각각 다른 상태)
@@ -493,7 +502,7 @@ class TestGetAnnualReportsIncludesAll:
                 "is_annual_report": True,
                 "ar_parsing_status": status,
                 "customerId": customer_id,
-                "upload": {"originalName": f"doc_{i}.pdf", "uploaded_at": datetime.now(UTC)}
+                "upload": {"originalName": f"doc_{i}.pdf", "uploaded_at": datetime.now(timezone.utc)}
             }
 
             if status == "error":
@@ -542,7 +551,7 @@ class TestRetryParsing:
                 "$set": {
                     "ar_parsing_status": "pending",
                     "ar_parsing_error": None,
-                    "ar_parsing_retry_at": datetime.now(UTC)
+                    "ar_parsing_retry_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -588,10 +597,11 @@ class TestARInvariant:
         ("json_parse_error", {"error": "JSON 파싱 실패: Expecting value"}),
         ("db_save_error", {"error": "DB 저장 실패"}),
     ])
-    @patch('routes.background.parse_annual_report')
+    @patch('routes.background.find_contract_table_end_page', return_value=2)
+    @patch('routes.background.get_parser')
     @patch('os.path.exists')
     def test_ar_always_leaves_result(
-        self, mock_exists, mock_parse, error_scenario, error_mock,
+        self, mock_exists, mock_get_parser, mock_end_page, error_scenario, error_mock,
         db, files_collection, customers_collection, created_ids
     ):
         """
@@ -610,7 +620,7 @@ class TestARInvariant:
             "_id": customer_id,
             "personal_info": {"name": f"테스트ARG_{error_scenario}"},
             "annual_reports": [],
-            "meta": {"created_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
+            "meta": {"created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
         })
 
         files_collection.insert_one({
@@ -621,7 +631,7 @@ class TestARInvariant:
             "upload": {
                 "originalName": f"test_{error_scenario}.pdf",
                 "destPath": f"/tmp/test_{error_scenario}.pdf",
-                "uploaded_at": datetime.now(UTC)
+                "uploaded_at": datetime.now(timezone.utc)
             }
         })
 
@@ -630,7 +640,8 @@ class TestARInvariant:
             mock_exists.return_value = False
         else:
             mock_exists.return_value = True
-            mock_parse.return_value = error_mock
+            # get_parser() returns parser function; parser function returns error
+            mock_get_parser.return_value.return_value = error_mock
 
         # 파싱 실행
         result = parse_single_ar_document(db, str(document_id), str(customer_id))
@@ -673,11 +684,11 @@ class TestARCompleteness:
             "annual_reports": [{
                 "source_file_id": ObjectId(),
                 "customer_name": "테스트ARG_완전성",
-                "issue_date": datetime(2025, 6, 1, tzinfo=UTC),  # UTC timezone 추가
-                "uploaded_at": datetime.now(UTC).isoformat(),
-                "parsed_at": datetime.now(UTC).isoformat()
+                "issue_date": datetime(2025, 6, 1, tzinfo=timezone.utc),  # UTC timezone 추가
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+                "parsed_at": datetime.now(timezone.utc).isoformat()
             }],
-            "meta": {"created_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
+            "meta": {"created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
         })
 
         # 다양한 상태의 AR 문서 생성
@@ -696,7 +707,7 @@ class TestARCompleteness:
                 "is_annual_report": True,
                 "ar_parsing_status": status,
                 "customerId": customer_id,
-                "upload": {"originalName": f"{status}_doc.pdf", "uploaded_at": datetime.now(UTC)}
+                "upload": {"originalName": f"{status}_doc.pdf", "uploaded_at": datetime.now(timezone.utc)}
             }
 
             if error_msg:

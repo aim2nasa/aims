@@ -261,6 +261,7 @@ export async function handleListContracts(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅
     console.error('[MCP] list_contracts 에러:', error);
     sendErrorLog('aims_mcp', 'list_contracts 에러', error);
     const errorMessage = error instanceof ZodError
@@ -384,6 +385,7 @@ export async function handleGetContractDetails(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅
     console.error('[MCP] get_contract_details 에러:', error);
     sendErrorLog('aims_mcp', 'get_contract_details 에러', error);
     const errorMessage = error instanceof ZodError
