@@ -242,7 +242,7 @@ class OpenAIService:
             return {"summary": f"요약 생성 실패: {str(e)}", "tags": [], "truncated": truncated}
 
     @classmethod
-    async def extract_tags(cls, text: str) -> List[str]:
+    async def extract_tags(cls, text: str, owner_id: Optional[str] = None, document_id: Optional[str] = None) -> List[str]:
         """Extract keywords as tags from text"""
-        result = await cls.summarize_text(text)
+        result = await cls.summarize_text(text, owner_id=owner_id, document_id=document_id)
         return result.get("tags", [])

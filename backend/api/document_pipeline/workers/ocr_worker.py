@@ -98,7 +98,7 @@ class OCRWorker:
             })
 
             # 4. Process OCR
-            ocr_result = await self._process_ocr(file_path)
+            ocr_result = await self._process_ocr(file_path, owner_id=owner_id, doc_id=doc_id)
 
             if ocr_result.get("error"):
                 await self._handle_ocr_error(msg, ocr_result, queued_at)
@@ -146,7 +146,7 @@ class OCRWorker:
             # fail-closed: 오류 시 OCR 처리 보류 (aims_api 복구 후 재시도)
             return {"allowed": False, "reason": "quota_check_error"}
 
-    async def _process_ocr(self, file_path: str) -> Dict[str, Any]:
+    async def _process_ocr(self, file_path: str, owner_id: Optional[str] = None, doc_id: Optional[str] = None) -> Dict[str, Any]:
         """Process OCR using Upstage service"""
         try:
             if not os.path.exists(file_path):
@@ -171,7 +171,9 @@ class OCRWorker:
             if ocr_result.get("full_text"):
                 try:
                     result = await self.openai_service.summarize_text(
-                        ocr_result["full_text"]
+                        ocr_result["full_text"],
+                        owner_id=owner_id,
+                        document_id=doc_id
                     )
                     summary = result.get("summary")
                     tags = result.get("tags", [])
