@@ -2,7 +2,9 @@
 Temp File Service
 임시 파일 저장/읽기/삭제 관리
 """
+import asyncio
 import os
+import shutil
 import uuid
 import logging
 import aiofiles
@@ -54,6 +56,22 @@ class TempFileService:
             await f.write(content)
 
         logger.debug(f"Saved temp file: {temp_path}")
+        return str(temp_path)
+
+    @classmethod
+    async def save_from_path(cls, source_path: str, original_name: str) -> str:
+        """
+        소스 파일을 큐용 임시 디렉토리로 복사 (스트리밍 업로드용).
+
+        메모리에 파일을 적재하지 않고 디스크 간 직접 복사.
+        """
+        temp_dir = cls._ensure_temp_dir()
+        temp_filename = cls._generate_temp_filename(original_name)
+        temp_path = temp_dir / temp_filename
+        await asyncio.get_running_loop().run_in_executor(
+            None, shutil.copy2, source_path, str(temp_path)
+        )
+        logger.debug(f"Copied to temp file: {temp_path}")
         return str(temp_path)
 
     @classmethod

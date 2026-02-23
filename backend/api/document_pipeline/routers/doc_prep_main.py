@@ -7,9 +7,11 @@ Main orchestrator for document processing pipeline
 - UPLOAD_QUEUE_ENABLED=False: 기존 동기 처리 (롤백용)
 """
 import logging
+import os
 import re
+import tempfile
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple, Union
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from bson import ObjectId
@@ -56,6 +58,87 @@ def _extract_page_count(file_content: bytes, content_type: Optional[str]) -> int
     except Exception as e:
         logger.warning(f"[PageCount] PDF 페이지 수 추출 실패 (기본값 1 사용): {e}")
         return 1
+
+
+def _extract_page_count_from_path(file_path: str, content_type: Optional[str]) -> int:
+    """
+    디스크 파일 경로에서 PDF 페이지 수 추출 (스트리밍 모드용)
+
+    PDF → fitz(PyMuPDF)로 파일 경로에서 직접 열어 페이지 수 추출
+    비PDF / 파싱 실패 / 파일 없음 → 1 (안전한 기본값)
+    """
+    if not content_type or content_type != "application/pdf":
+        return 1
+    if not file_path or not os.path.exists(file_path):
+        return 1
+    try:
+        import fitz
+        pdf_doc = fitz.open(file_path)
+        try:
+            page_count = len(pdf_doc)
+            return max(page_count, 1)
+        finally:
+            pdf_doc.close()
+    except Exception as e:
+        logger.warning(f"[PageCount] PDF 페이지 수 추출 실패 (기본값 1 사용): {e}")
+        return 1
+
+
+STREAMING_CHUNK_SIZE = 1024 * 1024  # 1MB
+
+
+async def _stream_upload_to_disk(
+    upload_file: UploadFile,
+    max_size_mb: int
+) -> Union[Tuple[str, int], JSONResponse]:
+    """
+    UploadFile을 청크 단위로 디스크에 스트리밍 저장.
+
+    메모리에 전체 파일을 적재하지 않고 디스크에 직접 쓴다 (OOM 방지).
+    스트리밍 중 크기 초과 시 즉시 중단 + 임시 파일 삭제 + 413 반환.
+
+    Returns:
+        성공 시: (temp_path, file_size) 튜플
+        실패 시: JSONResponse(413)
+    """
+    max_size_bytes = max_size_mb * 1024 * 1024
+    fd, temp_path = tempfile.mkstemp(prefix="upload_")
+    os.close(fd)
+    file_size = 0
+    filename = upload_file.filename or "unknown"
+
+    exceeded = False
+    try:
+        with open(temp_path, 'wb') as f:
+            while True:
+                chunk = await upload_file.read(STREAMING_CHUNK_SIZE)
+                if not chunk:
+                    break
+                file_size += len(chunk)
+                if file_size > max_size_bytes:
+                    exceeded = True
+                    break
+                f.write(chunk)
+        # with 블록 종료 후 파일 핸들 안전하게 닫힌 상태에서 처리
+        if exceeded:
+            os.unlink(temp_path)
+            file_size_mb = round(file_size / (1024 * 1024), 1)
+            logger.warning(f"[Streaming] 파일 크기 초과: {filename} ({file_size_mb}MB > {max_size_mb}MB)")
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "result": "error",
+                    "status": 413,
+                    "userMessage": f"파일 크기({file_size_mb}MB)가 제한({max_size_mb}MB)을 초과합니다.",
+                    "filename": filename
+                }
+            )
+        return (temp_path, file_size)
+    except Exception as e:
+        # 스트리밍 실패 시 임시 파일 정리
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+        raise
 
 
 def _validate_file_size(file_size: int, filename: str, max_size_mb: int) -> Optional[JSONResponse]:
@@ -280,14 +363,12 @@ async def doc_prep_main(
             raise HTTPException(status_code=500, detail=str(e))
 
     try:
-        # 파일 내용 읽기
-        file_content = await file.read()
+        # 🔴 스트리밍 업로드: 메모리에 전체 적재하지 않고 디스크에 직접 저장 (OOM 방지)
         original_name = file.filename or "unknown"
-
-        # 🔴 파일 크기 검증 (B4: Nginx만 의존하지 않는 서버사이드 방어)
-        size_error = _validate_file_size(len(file_content), original_name, settings.MAX_UPLOAD_SIZE_MB)
-        if size_error:
-            return size_error
+        stream_result = await _stream_upload_to_disk(file, settings.MAX_UPLOAD_SIZE_MB)
+        if isinstance(stream_result, JSONResponse):
+            return stream_result  # 413 크기 초과
+        stream_temp_path, file_size = stream_result
 
         # 큐잉 모드 확인
         if settings.UPLOAD_QUEUE_ENABLED:
@@ -295,8 +376,8 @@ async def doc_prep_main(
             logger.info(f"Queueing upload for userId: {userId}, file: {original_name}")
 
             # 🔴 0. 크레딧 체크 (EMBEDDING_CREDIT_POLICY.md 참조)
-            # PDF → 실제 페이지 수, 비PDF → 1 (B1 수정: 하드코딩 제거)
-            estimated_pages = _extract_page_count(file_content, file.content_type)
+            # PDF → 실제 페이지 수, 비PDF → 1 (B1 수정: 디스크 파일 경로 기반)
+            estimated_pages = _extract_page_count_from_path(stream_temp_path, file.content_type)
             credit_check = await check_credit_for_upload(userId, estimated_pages)
             is_credit_pending = not credit_check.get("allowed", False)
 
@@ -317,11 +398,11 @@ async def doc_prep_main(
                     "upload": {
                         "originalName": original_name,
                         "uploaded_at": datetime.utcnow().isoformat(),
-                        "fileSize": len(file_content),
+                        "fileSize": file_size,
                         "mimeType": file.content_type
                     },
                     "meta": {
-                        "size_bytes": len(file_content),
+                        "size_bytes": file_size,
                         "mime": file.content_type,
                         "filename": original_name
                     },
@@ -371,12 +452,11 @@ async def doc_prep_main(
             doc_id = str(result.inserted_id)
             logger.info(f"Created document: {doc_id} (credit_pending={is_credit_pending})")
 
-            # 2. 파일 저장 (크레딧 상태와 무관하게 항상 저장)
-            saved_name, dest_path = await FileService.save_file(
-                content=file_content,
+            # 2. 파일 저장 (스트리밍 temp 파일을 최종 경로로 이동 — 메모리 적재 없음)
+            saved_name, dest_path = await FileService.save_from_path(
+                source_path=stream_temp_path,
                 original_name=original_name,
-                user_id=userId,
-                source_path=source_path
+                user_id=userId
             )
             logger.info(f"Saved file: {saved_name} to {dest_path}")
 
@@ -461,6 +541,10 @@ async def doc_prep_main(
                 except Exception as meta_error:
                     logger.error(f"[CreditPending] 메타 추출 실패: {meta_error}", exc_info=True)
 
+                # 스트리밍 temp 파일 정리 (파일은 이미 dest_path에 복사됨)
+                if os.path.exists(stream_temp_path):
+                    os.unlink(stream_temp_path)
+
                 return {
                     "result": "success",
                     "status": "credit_pending",
@@ -473,15 +557,18 @@ async def doc_prep_main(
                     }
                 }
 
-            # 3. 임시 파일 저장 (큐 처리용)
-            temp_path = await TempFileService.save(file_content, original_name)
+            # 3. 큐용 임시 파일 저장 (스트리밍 temp → 큐 temp 복사, 워커가 처리 후 삭제)
+            temp_path = await TempFileService.save_from_path(stream_temp_path, original_name)
+            # 스트리밍 temp 파일 정리 (파일은 dest_path + temp_path에 복사됨)
+            if os.path.exists(stream_temp_path):
+                os.unlink(stream_temp_path)
 
             # 4. 큐에 작업 등록 (document_id 포함)
             queue_id = await UploadQueueService.enqueue(
                 file_data={
                     "temp_path": temp_path,
                     "original_filename": original_name,
-                    "file_size": len(file_content),
+                    "file_size": file_size,
                     "mime_type": file.content_type
                 },
                 request_data={
@@ -508,6 +595,13 @@ async def doc_prep_main(
         # 동기 처리 모드 (UPLOAD_QUEUE_ENABLED=False 또는 롤백용)
         logger.info(f"Processing document synchronously for userId: {userId}, customerId: {customerId}")
 
+        # 동기 모드에서는 디스크에서 파일을 읽어 기존 함수에 전달
+        with open(stream_temp_path, 'rb') as f:
+            file_content = f.read()
+        # 스트리밍 temp 파일 정리
+        if os.path.exists(stream_temp_path):
+            os.unlink(stream_temp_path)
+
         return await process_document_pipeline(
             file_content=file_content,
             original_name=original_name,
@@ -519,6 +613,9 @@ async def doc_prep_main(
 
     except Exception as e:
         logger.error(f"Error in doc_prep_main: {e}", exc_info=True)
+        # 예외 시 스트리밍 temp 파일 정리
+        if 'stream_temp_path' in locals() and os.path.exists(stream_temp_path):
+            os.unlink(stream_temp_path)
         raise HTTPException(status_code=500, detail=str(e))
 
 

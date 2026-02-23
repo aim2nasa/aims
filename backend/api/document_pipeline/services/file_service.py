@@ -1,8 +1,10 @@
 """
 File Storage Service
 """
+import asyncio
 import os
 import hashlib
+import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple
@@ -54,6 +56,31 @@ class FileService:
 
         async with aiofiles.open(dest_path, 'wb') as f:
             await f.write(content)
+
+        return saved_name, str(dest_path)
+
+    @classmethod
+    async def save_from_path(
+        cls,
+        source_path: str,
+        original_name: str,
+        user_id: str,
+    ) -> Tuple[str, str]:
+        """
+        소스 파일을 사용자 디렉토리로 복사 (스트리밍 업로드용).
+
+        메모리에 파일을 적재하지 않고 디스크 간 직접 복사하여 대용량 파일 지원.
+        원본 파일은 유지 (큐 워커가 별도 삭제).
+        """
+        saved_name = cls._generate_filename(original_name)
+        user_path = cls._get_user_path(user_id)
+
+        os.makedirs(user_path, exist_ok=True)
+
+        dest_path = user_path / saved_name
+        await asyncio.get_running_loop().run_in_executor(
+            None, shutil.copy2, source_path, str(dest_path)
+        )
 
         return saved_name, str(dest_path)
 
