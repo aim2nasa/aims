@@ -1052,7 +1052,11 @@ def click_all_rows_with_scroll():
                 if exists(alert_single_pattern, 2):
                     log(u"    [ALERT] '한개의 증번만 선택이 가능합니다' 알림 감지!")
                     take_screenshot(u"ALERT_dual_select_report%02d" % total_clicked)
-                    recovered = recover_from_dual_select(total_clicked)
+                    # 전체 리포트 수 계산: 첫 화면 행 수 + 스크롤 후 새 행 수
+                    total_reports_count = clicks_before_scroll + len(matches_sorted)
+                    if total_reports_count < total_clicked:
+                        total_reports_count = total_clicked  # 최소한 현재까지 클릭한 수 이상
+                    recovered = recover_from_dual_select(total_clicked, total_reports_count)
                     if not recovered:
                         log(u"    [ERROR] 중복 선택 복구 실패 - 이 보고서 스킵")
                         save_results.append({
@@ -1766,7 +1770,7 @@ def recover_to_report_list(report_number):
         return False
 
 
-def recover_from_dual_select(target_report_num):
+def recover_from_dual_select(target_report_num, total_reports):
     """
     "한개의 증번만 선택이 가능합니다" 알림 복구
 
@@ -1774,11 +1778,12 @@ def recover_from_dual_select(target_report_num):
       1. 알림 확인 클릭
       2. 변액보험리포트 모달 닫기
       3. 변액보험리포트 재진입 (체크 상태 초기화)
-      4. 타겟 행으로 스크롤
+      4. 타겟 행으로 스크롤 (확정적 계산 기반)
       5. 타겟 체크박스만 클릭 + 선택
 
     Args:
         target_report_num: 처리하려던 보고서 번호 (1-based)
+        total_reports: 전체 리포트 수 (리스트 전체 행 수)
 
     Returns:
         bool: 복구 성공 여부
@@ -1787,7 +1792,7 @@ def recover_from_dual_select(target_report_num):
 
     log(u"")
     log(u"    " + u"=" * 60)
-    log(u"    [복구] 중복 선택 복구 시작 (목표: 보고서 #%d)" % target_report_num)
+    log(u"    [복구] 중복 선택 복구 시작 (목표: 보고서 #%d, 전체: %d건)" % (target_report_num, total_reports))
     log(u"    " + u"=" * 60)
 
     # Step 1: 알림 확인 클릭
@@ -1852,27 +1857,47 @@ def recover_from_dual_select(target_report_num):
         return False
     log(u"    [복구 3/5] 변액보험리포트 재진입 성공")
 
-    # Step 4: 타겟 행으로 스크롤
-    log(u"    [복구 4/5] 타겟 행으로 이동 (행 #%d)..." % target_report_num)
-    rows_per_scroll = 5  # wheel(WHEEL_DOWN, 5)의 대략적 스크롤량
-    scrolls_done = 0
+    # Step 4: 타겟 행으로 스크롤 (확정적 계산 기반)
+    log(u"    [복구 4/5] 타겟 행으로 이동 (행 #%d, 전체 %d건)..." % (target_report_num, total_reports))
 
-    if target_report_num > VISIBLE_ROWS:
-        scrolls_needed = (target_report_num - VISIBLE_ROWS + rows_per_scroll - 1) // rows_per_scroll
-        log(u"    [복구 4/5] %d회 스크롤 필요" % scrolls_needed)
+    # 인덱스 사전 계산: total_reports 기반 확정 값
+    visible_count = min(total_reports, VISIBLE_ROWS)
+    # 끝까지 스크롤 시 첫 번째 보이는 행 (1-based)
+    first_visible_at_end = total_reports - visible_count + 1
 
+    if target_report_num <= VISIBLE_ROWS:
+        # 스크롤 불필요: 첫 화면에 target이 보임
+        needs_scroll = False
+        first_visible = 1
+        log(u"    [복구 4/5] 스크롤 불필요 (첫 페이지, target=%d <= VISIBLE=%d)" % (target_report_num, VISIBLE_ROWS))
+    elif target_report_num >= first_visible_at_end:
+        # 끝까지 스크롤하면 target이 보임
+        needs_scroll = True
+        first_visible = first_visible_at_end
+        # 충분한 틱으로 끝까지 스크롤 (1틱 = 약 3행, 보수적으로 계산)
+        rows_to_end = total_reports - VISIBLE_ROWS
+        scroll_ticks = max(5, (rows_to_end + 2) // 3 + 2)
+        scroll_ticks = min(scroll_ticks, 10)  # 상한
+        log(u"    [복구 4/5] 끝까지 스크롤 (first_visible=%d, %d틱)" % (first_visible, scroll_ticks))
+    else:
+        # 대규모 리스트: 끝까지 스크롤하면 target이 안 보임
+        # target이 화면 첫 행이 되도록 부분 스크롤
+        needs_scroll = True
+        first_visible = target_report_num
+        rows_to_target = target_report_num - 1
+        scroll_ticks = max(1, (rows_to_target + 2) // 3)
+        scroll_ticks = min(scroll_ticks, 10)  # 상한
+        log(u"    [복구 4/5] 부분 스크롤 (target=%d, first_visible=%d, %d틱)" % (target_report_num, first_visible, scroll_ticks))
+
+    if needs_scroll:
         header_match = find(IMG_REPORT_HEADER)
         table_center_x = int(header_match.getCenter().getX()) + 200
         table_center_y = int(header_match.getCenter().getY()) + 150
 
-        for i in range(scrolls_needed):
-            click(Location(table_center_x, table_center_y))
-            sleep(0.3)
-            wheel(WHEEL_DOWN, 5)
-            sleep(1.0)
-            scrolls_done += 1
-    else:
-        log(u"    [복구 4/5] 스크롤 불필요 (첫 페이지)")
+        click(Location(table_center_x, table_center_y))
+        sleep(0.3)
+        wheel(WHEEL_DOWN, scroll_ticks)
+        sleep(1.5)
 
     # Step 5: 타겟 체크박스 클릭 + 선택
     log(u"    [복구 5/5] 타겟 체크박스 클릭...")
@@ -1892,15 +1917,19 @@ def recover_from_dual_select(target_report_num):
         log(u"    [복구 실패] 체크박스 없음")
         return False
 
-    # 인덱스 계산: 모달 재진입 후 모든 체크박스가 unchecked 상태
+    # 인덱스 계산: total_reports 기반 확정 값 (추정 아님)
     if target_report_num <= VISIBLE_ROWS:
         idx = target_report_num - 1
     else:
-        rows_scrolled = scrolls_done * rows_per_scroll
-        idx = target_report_num - 1 - rows_scrolled
-        idx = max(0, min(idx, len(matches) - 1))
+        idx = target_report_num - first_visible
 
-    log(u"    [복구] 체크박스 선택: 인덱스 %d/%d (목표 행 #%d)" % (idx + 1, len(matches), target_report_num))
+    # 안전장치: idx 범위 검증
+    if idx < 0 or idx >= len(matches):
+        log(u"    [WARN] 인덱스 범위 초과! idx=%d, matches=%d, target=#%d, first_visible=%d" % (idx, len(matches), target_report_num, first_visible))
+        idx = max(0, min(idx, len(matches) - 1))
+        log(u"    [WARN] 보정된 인덱스: %d" % idx)
+
+    log(u"    [복구] 체크박스 선택: 인덱스 %d/%d (목표 행 #%d, first_visible=%d)" % (idx + 1, len(matches), target_report_num, first_visible))
     target_match = matches[idx]
     click(target_match.getCenter())
     sleep(2.0)
