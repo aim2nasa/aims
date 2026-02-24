@@ -91,7 +91,7 @@ IMG_INTEGRATED_VIEW_CLOSE_BTN = "img/1769492160505.png"  # 고객통합뷰 X 버
 IMG_VARIABLE_INSURANCE_REPORT_BTN = "img/1769492311473.png"  # 변액보험리포트 버튼
 IMG_VARIABLE_REPORT_CLOSE_BTN = "img/1769493031653.png"  # 변액보험리포트 팝업 X 버튼
 IMG_ALERT_CONFIRM_BTN = "img/1769516264265.png"  # 알림 팝업 확인 버튼
-IMG_ALERT_MESSAGE = "img/1769516255683.png"  # 알림 메시지 "한개의 증번만 선택이 가능합니다"
+IMG_ALERT_SINGLE_SELECT = "img/alert_single_select_only.png"  # "한개의 증번만 선택이 가능합니다" 알림 텍스트
 # 변액보험 없음 관련 이미지
 IMG_NO_VARIABLE_CONTRACT_ALERT = "img/1769593341011.png"  # "변액계약이 존재하지 않습니다" 메시지
 IMG_NO_VARIABLE_CONTRACT_CONFIRM = "img/1769593349127.png"  # 알림창 확인 버튼
@@ -1047,6 +1047,26 @@ def click_all_rows_with_scroll():
                 log(u"        -> 선택 버튼 클릭")
                 sleep(WAIT_MEDIUM)
 
+                # ★ "한개의 증번만 선택이 가능합니다" 알림 감지 + 복구
+                alert_single_pattern = Pattern(IMG_ALERT_SINGLE_SELECT).similar(0.7)
+                if exists(alert_single_pattern, 2):
+                    log(u"    [ALERT] '한개의 증번만 선택이 가능합니다' 알림 감지!")
+                    take_screenshot(u"ALERT_dual_select_report%02d" % total_clicked)
+                    recovered = recover_from_dual_select(total_clicked)
+                    if not recovered:
+                        log(u"    [ERROR] 중복 선택 복구 실패 - 이 보고서 스킵")
+                        save_results.append({
+                            'report_num': total_clicked,
+                            'success': False,
+                            'saved': False,
+                            'duplicate': False,
+                            'error': u'중복 선택 복구 실패',
+                            'saved_filename': None
+                        })
+                        # 변액보험리포트 목록으로 복귀 시도
+                        recover_to_report_list(total_clicked)
+                        continue
+
                 # [NEW] PDF 저장 수행
                 pdf_result = save_report_pdf(total_clicked)
                 save_results.append(pdf_result)
@@ -1743,6 +1763,175 @@ def recover_to_report_list(report_number):
         log(u"    [복구 실패] 잔여상태: 보고서인쇄모달=%s, PDF뷰어=%s" % (remaining_modal, remaining_pdf))
         log(u"    [복구 실패] 오류 스크린샷 폴더: %s" % ERROR_DIR)
         log(u"    " + u"=" * 50)
+        return False
+
+
+def recover_from_dual_select(target_report_num):
+    """
+    "한개의 증번만 선택이 가능합니다" 알림 복구
+
+    스크롤 후 이전 체크가 남아 있어 2개 이상 선택된 경우:
+      1. 알림 확인 클릭
+      2. 변액보험리포트 모달 닫기
+      3. 변액보험리포트 재진입 (체크 상태 초기화)
+      4. 타겟 행으로 스크롤
+      5. 타겟 체크박스만 클릭 + 선택
+
+    Args:
+        target_report_num: 처리하려던 보고서 번호 (1-based)
+
+    Returns:
+        bool: 복구 성공 여부
+    """
+    global global_screenshot_counter
+
+    log(u"")
+    log(u"    " + u"=" * 60)
+    log(u"    [복구] 중복 선택 복구 시작 (목표: 보고서 #%d)" % target_report_num)
+    log(u"    " + u"=" * 60)
+
+    # Step 1: 알림 확인 클릭
+    log(u"    [복구 1/5] 알림 확인 클릭...")
+    try:
+        if exists(IMG_ALERT_CONFIRM_BTN, 2):
+            click(IMG_ALERT_CONFIRM_BTN)
+            log(u"    [복구 1/5] 확인 클릭 완료")
+            sleep(1)
+            # MetLife 버그: 두 번째 확인 필요한 경우
+            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                click(IMG_ALERT_CONFIRM_BTN)
+                sleep(1)
+    except:
+        pass
+
+    # Step 2: 변액보험리포트 모달 닫기
+    log(u"    [복구 2/5] 변액보험리포트 모달 닫기...")
+    take_screenshot(u"recovery_before_close_modal")
+    closed = False
+    try:
+        report_close_pattern = Pattern(IMG_VARIABLE_REPORT_CLOSE_BTN).similar(0.7)
+        if exists(report_close_pattern, 3):
+            click(report_close_pattern)
+            closed = True
+            log(u"    [복구 2/5] X 버튼으로 닫기 성공")
+    except:
+        pass
+
+    if not closed:
+        # 대안: 선택 버튼 기준 상대좌표로 X 버튼 클릭
+        try:
+            select_btn_pattern = Pattern(IMG_SELECT_BTN).similar(0.7)
+            if exists(select_btn_pattern, 3):
+                select_match = find(select_btn_pattern)
+                sx = int(select_match.getCenter().getX())
+                sy = int(select_match.getCenter().getY())
+                x_btn_x = sx + 13
+                x_btn_y = sy - 62
+                click(Location(x_btn_x, x_btn_y))
+                closed = True
+                log(u"    [복구 2/5] 상대좌표로 닫기 성공 (%d, %d)" % (x_btn_x, x_btn_y))
+        except:
+            pass
+
+    if not closed:
+        log(u"    [복구 실패] 변액보험리포트 모달 닫기 실패")
+        return False
+
+    sleep(WAIT_MEDIUM)
+
+    # Step 3: 변액보험리포트 재진입
+    log(u"    [복구 3/5] 변액보험리포트 재진입...")
+    if not exists(IMG_VARIABLE_INSURANCE_REPORT_BTN, 10):
+        log(u"    [복구 실패] 변액보험리포트 버튼 미발견")
+        return False
+    click(find(IMG_VARIABLE_INSURANCE_REPORT_BTN))
+    sleep(WAIT_MEDIUM)
+
+    if not exists(IMG_REPORT_HEADER, 10):
+        log(u"    [복구 실패] 리포트 헤더 미발견")
+        return False
+    log(u"    [복구 3/5] 변액보험리포트 재진입 성공")
+
+    # Step 4: 타겟 행으로 스크롤
+    log(u"    [복구 4/5] 타겟 행으로 이동 (행 #%d)..." % target_report_num)
+    rows_per_scroll = 5  # wheel(WHEEL_DOWN, 5)의 대략적 스크롤량
+    scrolls_done = 0
+
+    if target_report_num > VISIBLE_ROWS:
+        scrolls_needed = (target_report_num - VISIBLE_ROWS + rows_per_scroll - 1) // rows_per_scroll
+        log(u"    [복구 4/5] %d회 스크롤 필요" % scrolls_needed)
+
+        header_match = find(IMG_REPORT_HEADER)
+        table_center_x = int(header_match.getCenter().getX()) + 200
+        table_center_y = int(header_match.getCenter().getY()) + 150
+
+        for i in range(scrolls_needed):
+            click(Location(table_center_x, table_center_y))
+            sleep(0.3)
+            wheel(WHEEL_DOWN, 5)
+            sleep(1.0)
+            scrolls_done += 1
+    else:
+        log(u"    [복구 4/5] 스크롤 불필요 (첫 페이지)")
+
+    # Step 5: 타겟 체크박스 클릭 + 선택
+    log(u"    [복구 5/5] 타겟 체크박스 클릭...")
+    header_match = find(IMG_REPORT_HEADER)
+    header_y = header_match.getCenter().getY()
+    base_x = int(header_match.getCenter().getX()) + HEADER_TO_CHECKBOX_X
+    search_reg = Region(int(base_x - 40), int(header_y + 15), 80, 350)
+
+    unchecked_pattern = Pattern(IMG_CHECKBOX_UNCHECKED).similar(0.7)
+    try:
+        matches = sorted(list(search_reg.findAll(unchecked_pattern)), key=lambda m: m.getCenter().getY())
+    except:
+        log(u"    [복구 실패] unchecked 체크박스 미발견")
+        return False
+
+    if not matches:
+        log(u"    [복구 실패] 체크박스 없음")
+        return False
+
+    # 인덱스 계산: 모달 재진입 후 모든 체크박스가 unchecked 상태
+    if target_report_num <= VISIBLE_ROWS:
+        idx = target_report_num - 1
+    else:
+        rows_scrolled = scrolls_done * rows_per_scroll
+        idx = target_report_num - 1 - rows_scrolled
+        idx = max(0, min(idx, len(matches) - 1))
+
+    log(u"    [복구] 체크박스 선택: 인덱스 %d/%d (목표 행 #%d)" % (idx + 1, len(matches), target_report_num))
+    target_match = matches[idx]
+    click(target_match.getCenter())
+    sleep(2.0)
+
+    # 스크린샷 저장
+    take_screenshot(u"recovery_checkbox_clicked_report%02d" % target_report_num)
+
+    # 선택 버튼 클릭
+    select_pattern = Pattern(IMG_SELECT_BTN).similar(0.7)
+    if exists(select_pattern, 3):
+        click(select_pattern)
+        log(u"    [복구 5/5] 선택 버튼 클릭")
+        sleep(WAIT_MEDIUM)
+
+        # ★ 복구 후에도 같은 알림이 다시 뜨면 최종 실패
+        alert_pattern = Pattern(IMG_ALERT_SINGLE_SELECT).similar(0.7)
+        if exists(alert_pattern, 2):
+            log(u"    [복구 실패] 재진입 후에도 중복 선택 알림 발생!")
+            take_screenshot(u"recovery_FAILED_still_dual_select")
+            # 알림 닫기
+            if exists(IMG_ALERT_CONFIRM_BTN, 2):
+                click(IMG_ALERT_CONFIRM_BTN)
+                sleep(1)
+            return False
+
+        log(u"")
+        log(u"    [복구 성공!] 보고서 #%d 선택 완료" % target_report_num)
+        log(u"    " + u"=" * 60)
+        return True
+    else:
+        log(u"    [복구 실패] 선택 버튼 미발견")
         return False
 
 
