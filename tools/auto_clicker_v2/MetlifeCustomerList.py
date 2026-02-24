@@ -1265,45 +1265,19 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                             }
                             _append_customer_result(view_result, chosung_name)
                     except Exception as e:
-                        # Jython/SikuliX 모듈 로딩 특성상 클래스명으로 비교
-                        # (cross-module 예외 클래스 identity 불일치 문제 회피)
-                        # 주의: SikuliX가 type()을 키보드 입력 함수로 오버라이드하므로 __class__ 사용
-                        err_type_name = e.__class__.__name__
                         err_msg = u"%s" % e
-                        if err_type_name == 'NavigationResetRequired':
-                            # === 검증 실패 → 프로그램 종료 ===
-                            _crash_log(u"")
-                            _crash_log(u"    " + u"=" * 60)
-                            _crash_log(u"    [FATAL] 검증 실패 - 프로그램 종료")
-                            _crash_log(u"    " + u"=" * 60)
-                            _crash_log(u"    고객명: %s" % name)
-                            _crash_log(u"    초성: %s" % chosung_name)
-                            _crash_log(u"    위치: N%d-S%d-R%d" % (nav_page, scroll_page, row_in_page))
-                            _crash_log(u"    원인: %s" % err_msg)
-                            _crash_log(u"    ")
-                            _crash_log(u"    → 문제 분석 후 --start-from '%s' 옵션으로 재개하세요." % name)
-                            _crash_log(u"    " + u"=" * 60)
-                            _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
-                            # 에러 + 체크포인트 저장
-                            # 오류 고객은 재개 시 재시도해야 하므로 row - 1 저장
-                            # (resume 스킵: row <= checkpoint_row → row-1이면 오류 고객 포함)
-                            save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
-                            save_checkpoint(name, chosung_name, nav_page, scroll_page, max(0, row_in_page - 1))
-                            _close_log_file()
-                            raise SystemExit(1)
-                        else:
-                            log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
-                            # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
-                            try:
-                                from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                                if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                    click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                    log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
-                                    sleep(2)
-                            except:
-                                pass  # 이미 닫혀있으면 무시
-                            # 오류 기록
-                            save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
+                        log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
+                        # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                        try:
+                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                sleep(2)
+                        except:
+                            pass  # 이미 닫혀있으면 무시
+                        # 오류 기록
+                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
                     except:
                         # Java 예외 (SikuliX FindFailed 등) - Python except Exception으로 안 잡힘
                         exc_info = sys.exc_info()
@@ -1367,12 +1341,6 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
         except SystemExit:
             raise  # SystemExit는 절대 삼키지 않음 → 프로그램 종료
         except Exception as e:
-            # NavigationResetRequired가 inner try에서 안 잡혔을 경우 대비
-            err_type_name = e.__class__.__name__
-            if err_type_name == 'NavigationResetRequired':
-                log(u"        -> [FATAL] 검증 실패 (outer catch): %s" % e)
-                _close_log_file()
-                raise SystemExit(1)
             err_msg = u"%s" % e if isinstance(e, BaseException) else unicode(e)
             log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, err_msg))
             error_customers.append({
@@ -2337,33 +2305,17 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                         }
                                                         _append_customer_result(view_result, chosung_name)
                                                 except Exception as e2:
-                                                    err_type_name = e2.__class__.__name__
                                                     err_msg = u"%s" % e2
-                                                    if err_type_name == 'NavigationResetRequired':
-                                                        _crash_log(u"")
-                                                        _crash_log(u"    " + u"=" * 60)
-                                                        _crash_log(u"    [FATAL] 검증 실패 - 프로그램 종료")
-                                                        _crash_log(u"    " + u"=" * 60)
-                                                        _crash_log(u"    고객명: %s" % name)
-                                                        _crash_log(u"    초성: %s" % chosung_name)
-                                                        _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
-                                                        _crash_log(u"    원인: %s" % err_msg)
-                                                        _crash_log(u"    " + u"=" * 60)
-                                                        _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
-                                                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                                        _close_log_file()
-                                                        raise SystemExit(1)
-                                                    else:
-                                                        log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
-                                                        try:
-                                                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                                                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                                                log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
-                                                                sleep(2)
-                                                        except:
-                                                            pass
-                                                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                    log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
+                                                    try:
+                                                        from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                                        if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                                            click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                                            log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                                            sleep(2)
+                                                    except:
+                                                        pass
+                                                    save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
                                                 except:
                                                     exc_info = sys.exc_info()
                                                     _crash_log(u"")
@@ -2634,33 +2586,17 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                 }
                                                 _append_customer_result(view_result, chosung_name)
                                         except Exception as e:
-                                            err_type_name = e.__class__.__name__
                                             err_msg = u"%s" % e
-                                            if err_type_name == 'NavigationResetRequired':
-                                                _crash_log(u"")
-                                                _crash_log(u"    " + u"=" * 60)
-                                                _crash_log(u"    [FATAL] 검증 실패 - 프로그램 종료")
-                                                _crash_log(u"    " + u"=" * 60)
-                                                _crash_log(u"    고객명: %s" % name)
-                                                _crash_log(u"    초성: %s" % chosung_name)
-                                                _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
-                                                _crash_log(u"    원인: %s" % err_msg)
-                                                _crash_log(u"    " + u"=" * 60)
-                                                _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
-                                                save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                                _close_log_file()
-                                                raise SystemExit(1)
-                                            else:
-                                                log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
-                                                try:
-                                                    from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                                                    if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                                        click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                                        log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
-                                                        sleep(2)
-                                                except:
-                                                    pass
-                                                save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                            log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
+                                            try:
+                                                from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                                if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                                    click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                                    log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                                    sleep(2)
+                                            except:
+                                                pass
+                                            save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
                                         except:
                                             exc_info = sys.exc_info()
                                             _crash_log(u"")

@@ -38,10 +38,6 @@ class IntegratedViewError(Exception):
     """고객통합뷰 처리 중 복구 불가능한 오류 (스킵 후 다음 고객 처리 계속)"""
     pass
 
-class NavigationResetRequired(Exception):
-    """검증 실패 → 상위 메뉴 네비게이션 리셋 필요 (호출부에서 복구 시도)"""
-    pass
-
 # Java Robot 인스턴스 (Page Up 키 입력용)
 _robot = Robot()
 
@@ -403,7 +399,7 @@ def log(msg):
         # Java 레벨 flush 필요 (subprocess.PIPE 실시간 전달용)
         from java.lang import System as _JS
         _JS.out.flush()
-    except:
+    except Exception:
         pass
 
     # 파일 저장 (output_dir 설정 전에는 스킵)
@@ -716,7 +712,7 @@ def is_row_checked(base_x, row_y, debug_dir=None, debug_idx=None):
                         os.path.join(debug_dir, "chk_%03d_%s_blue%d.png" % (debug_idx, status, blue_pixels)))
 
         return is_checked
-    except:
+    except Exception:
         return False
 
 
@@ -751,7 +747,7 @@ def find_highlight_y(table_region):
             max_y = max(blue_counts, key=blue_counts.get)
             return table_region.y + max_y
         return -1
-    except:
+    except Exception:
         return -1
 
 
@@ -898,7 +894,7 @@ def find_selected_row_y(table_region):
             max_y = max(blue_rows, key=lambda x: x[1])[0]
             return table_region.y + max_y
         return -1
-    except:
+    except Exception:
         return -1
 
 
@@ -1081,7 +1077,7 @@ def click_all_rows_with_scroll():
                 # 비교용 부분 캡처 (별도 저장)
                 scroll_before_capture = Screen().capture(scroll_before_region)
                 scroll_before_img = scroll_before_capture.getFile()
-            except:
+            except Exception:
                 pass
 
             # 테이블 영역 클릭 후 마우스 휠로 스크롤
@@ -1110,7 +1106,7 @@ def click_all_rows_with_scroll():
                 # 비교용 부분 캡처 (별도 저장)
                 scroll_after_capture = Screen().capture(scroll_before_region)
                 scroll_after_img = scroll_after_capture.getFile()
-            except:
+            except Exception:
                 pass
 
             # 스크롤 효과 검증
@@ -1130,7 +1126,7 @@ def click_all_rows_with_scroll():
                     if diff_percent < 5.0:
                         log(u"    [END] 스크롤 효과 없음 - 리스트 끝 도달")
                         break
-                except:
+                except Exception:
                     pass
 
             # ★ 스크롤 후 체크된 행 해제 (중복 선택 방지)
@@ -1246,7 +1242,7 @@ def click_all_rows_with_scroll():
                 log(u"        -> 선택 버튼 클릭")
                 sleep(WAIT_MEDIUM)
 
-                # [NEW] PDF 저장 수행
+                # [NEW] PDF 저장 수행 — 개별 보고서 실패 시 result에 에러 포함하여 반환
                 pdf_result = save_report_pdf(total_clicked)
                 save_results.append(pdf_result)
 
@@ -1257,6 +1253,14 @@ def click_all_rows_with_scroll():
                         log(u"        -> 중복 파일 스킵")
                 else:
                     log(u"        [ERROR] PDF 저장 실패: %s" % pdf_result.get('error', 'unknown'))
+                    # 실패 시 보고서 목록 복귀 확인 후 다음 보고서로 계속
+                    if not exists(IMG_REPORT_HEADER, 5):
+                        log(u"        [WARN] 보고서 목록 미복귀 - 복구 재시도")
+                        try:
+                            recover_to_report_list(total_clicked)
+                        except Exception:
+                            pass
+                    continue
 
                 # 변액보험리포트 창 복귀 대기
                 if exists(IMG_REPORT_HEADER, 15):
@@ -1566,142 +1570,137 @@ def download_annual_report():
             take_screenshot(u"step7_ALERT_POPUP_detected")
             click(_alert)
             sleep(1)
-        raise NavigationResetRequired(u"Annual Report PDF 로딩 %d회 타임아웃" % MAX_RETRY)
+        return {'exists': True, 'saved': False, 'reason': u"Annual Report PDF 로딩 %d회 타임아웃" % MAX_RETRY}
 
     take_screenshot(u"step7_annual_report_loaded")
     log(u"    PDF 로딩 완료")
 
     # ★ Critical Section: PDF 저장 구간 (pause 시 recover가 저장 다이얼로그를 닫아버리는 버그 방지)
     enter_critical_section()
+    try:
+        # 7-4: PDF 저장 아이콘 클릭 + 검증
+        log(u"    PDF 저장 버튼 클릭...")
+        take_screenshot(u"step7_before_save_icon")
+        save_match = exists(IMG_PDF_SAVE_BTN, 5)
+        if not save_match:
+            log(u"    [ERROR] PDF 저장 버튼을 찾을 수 없음")
+            return {'exists': True, 'saved': False, 'reason': u"PDF 저장 버튼 미발견"}
+        save_x = int(save_match.getCenter().getX())
+        save_y = int(save_match.getCenter().getY())
+        log(u"        [좌표] PDF 저장 아이콘 클릭: (%d, %d)" % (save_x, save_y))
+        click(save_match)
+        capture_with_click_marker(save_x, save_y, "pdf_save_icon", 0, "step7_save_icon")
+        sleep(WAIT_SHORT)
 
-    # 7-4: PDF 저장 아이콘 클릭 + 검증
-    log(u"    PDF 저장 버튼 클릭...")
-    take_screenshot(u"step7_before_save_icon")
-    save_match = exists(IMG_PDF_SAVE_BTN, 5)
-    if not save_match:
-        log(u"    [ERROR] PDF 저장 버튼을 찾을 수 없음")
-        exit_critical_section()
-        raise NavigationResetRequired(u"PDF 저장 버튼 미발견")
-    save_x = int(save_match.getCenter().getX())
-    save_y = int(save_match.getCenter().getY())
-    log(u"        [좌표] PDF 저장 아이콘 클릭: (%d, %d)" % (save_x, save_y))
-    click(save_match)
-    capture_with_click_marker(save_x, save_y, "pdf_save_icon", 0, "step7_save_icon")
-    sleep(WAIT_SHORT)
-
-    # 검증: 저장(S) 버튼이 나타나야 함
-    if not exists(IMG_SAVE_S_BTN, 5):
-        log(u"    [WARN] 저장 다이얼로그 미표시 - 저장 아이콘 재클릭...")
-        take_screenshot(u"step7_save_dialog_not_opened")
-        # 재시도: PDF 뷰어에 포커스 후 재클릭
-        save_match2 = exists(IMG_PDF_SAVE_BTN, 3)
-        if not save_match2:
-            log(u"    [ERROR] PDF 저장 버튼 재클릭 실패")
-            exit_critical_section()
-            raise NavigationResetRequired(u"PDF 저장 버튼 재클릭 실패")
-        save_x2 = int(save_match2.getCenter().getX())
-        save_y2 = int(save_match2.getCenter().getY())
-        click(save_match2)
-        capture_with_click_marker(save_x2, save_y2, "pdf_save_icon_retry", 0, "step7_save_icon_retry")
-        log(u"        [재시도] 저장 아이콘 재클릭: (%d, %d)" % (save_x2, save_y2))
-        sleep(WAIT_MEDIUM)
+        # 검증: 저장(S) 버튼이 나타나야 함
         if not exists(IMG_SAVE_S_BTN, 5):
-            log(u"    [FATAL] 저장 다이얼로그 2회 실패 → 종료 요청")
-            take_screenshot(u"step7_save_dialog_FATAL")
-            # 알림 팝업 확인 (MetDo 서비스 오류 등)
-            _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
-            if _alert:
-                log(u"    [ALERT] MetDo 알림 팝업 감지!")
-                take_screenshot(u"step7_ALERT_POPUP_save_dialog")
-                click(_alert)
-                sleep(1)
-            exit_critical_section()
-            raise NavigationResetRequired(u"AR PDF 저장 다이얼로그 열기 실패")
+            log(u"    [WARN] 저장 다이얼로그 미표시 - 저장 아이콘 재클릭...")
+            take_screenshot(u"step7_save_dialog_not_opened")
+            # 재시도: PDF 뷰어에 포커스 후 재클릭
+            save_match2 = exists(IMG_PDF_SAVE_BTN, 3)
+            if not save_match2:
+                log(u"    [ERROR] PDF 저장 버튼 재클릭 실패")
+                return {'exists': True, 'saved': False, 'reason': u"PDF 저장 버튼 재클릭 실패"}
+            save_x2 = int(save_match2.getCenter().getX())
+            save_y2 = int(save_match2.getCenter().getY())
+            click(save_match2)
+            capture_with_click_marker(save_x2, save_y2, "pdf_save_icon_retry", 0, "step7_save_icon_retry")
+            log(u"        [재시도] 저장 아이콘 재클릭: (%d, %d)" % (save_x2, save_y2))
+            sleep(WAIT_MEDIUM)
+            if not exists(IMG_SAVE_S_BTN, 5):
+                log(u"    [FATAL] 저장 다이얼로그 2회 실패 → 종료 요청")
+                take_screenshot(u"step7_save_dialog_FATAL")
+                # 알림 팝업 확인 (MetDo 서비스 오류 등)
+                _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                if _alert:
+                    log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                    take_screenshot(u"step7_ALERT_POPUP_save_dialog")
+                    click(_alert)
+                    sleep(1)
+                return {'exists': True, 'saved': False, 'reason': u"AR PDF 저장 다이얼로그 열기 실패"}
 
-    # 7-5: 저장 경로 설정 + 저장(S) 버튼 클릭
-    log(u"    저장(S) 버튼 클릭...")
-    take_screenshot(u"step7_before_save_s_btn")
-    navigate_save_dialog_to_dir()
-    save_s_match = exists(IMG_SAVE_S_BTN, 5)
-    if not save_s_match:
-        # 재시도: 저장 다이얼로그가 간헐적으로 닫히는 현상 대응
-        log(u"    [WARN] 경로 설정 후 저장(S) 버튼 미발견 - 저장 아이콘 재클릭 재시도...")
-        take_screenshot(u"step7_save_btn_lost_after_navigate")
-        retry_save_icon = exists(IMG_PDF_SAVE_BTN, 3)
-        if retry_save_icon:
-            log(u"    [재시도] PDF 뷰어 열림 확인 - 저장 아이콘 재클릭")
-            click(retry_save_icon)
-            sleep(2)
-            if exists(IMG_SAVE_S_BTN, 5):
-                log(u"    [재시도] 저장 다이얼로그 재표시 성공 - navigate 재실행")
-                navigate_save_dialog_to_dir()
-                save_s_match = exists(IMG_SAVE_S_BTN, 5)
+        # 7-5: 저장 경로 설정 + 저장(S) 버튼 클릭
+        log(u"    저장(S) 버튼 클릭...")
+        take_screenshot(u"step7_before_save_s_btn")
+        navigate_save_dialog_to_dir()
+        save_s_match = exists(IMG_SAVE_S_BTN, 5)
         if not save_s_match:
-            log(u"    [ERROR] 저장(S) 버튼 재시도 후에도 미발견")
-            exit_critical_section()
-            raise NavigationResetRequired(u"저장(S) 버튼 미발견")
-    ss_x = int(save_s_match.getCenter().getX())
-    ss_y = int(save_s_match.getCenter().getY())
-    log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ss_x, ss_y))
-    click(save_s_match)
-    capture_with_click_marker(ss_x, ss_y, "save_s_btn", 0, "step7_save_s")
-    sleep(WAIT_SHORT)
+            # 재시도: 저장 다이얼로그가 간헐적으로 닫히는 현상 대응
+            log(u"    [WARN] 경로 설정 후 저장(S) 버튼 미발견 - 저장 아이콘 재클릭 재시도...")
+            take_screenshot(u"step7_save_btn_lost_after_navigate")
+            retry_save_icon = exists(IMG_PDF_SAVE_BTN, 3)
+            if retry_save_icon:
+                log(u"    [재시도] PDF 뷰어 열림 확인 - 저장 아이콘 재클릭")
+                click(retry_save_icon)
+                sleep(2)
+                if exists(IMG_SAVE_S_BTN, 5):
+                    log(u"    [재시도] 저장 다이얼로그 재표시 성공 - navigate 재실행")
+                    navigate_save_dialog_to_dir()
+                    save_s_match = exists(IMG_SAVE_S_BTN, 5)
+            if not save_s_match:
+                log(u"    [ERROR] 저장(S) 버튼 재시도 후에도 미발견")
+                return {'exists': True, 'saved': False, 'reason': u"저장(S) 버튼 미발견"}
+        ss_x = int(save_s_match.getCenter().getX())
+        ss_y = int(save_s_match.getCenter().getY())
+        log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ss_x, ss_y))
+        click(save_s_match)
+        capture_with_click_marker(ss_x, ss_y, "save_s_btn", 0, "step7_save_s")
+        sleep(WAIT_SHORT)
 
-    # 7-6: 저장 결과 검증 (100% 확신 필수 - 저장 성공 또는 중복 스킵)
-    no_btn_pattern = Pattern(IMG_NO_BTN).similar(0.55)
-    overwrite_detected = exists(no_btn_pattern, 3)
+        # 7-6: 저장 결과 검증 (100% 확신 필수 - 저장 성공 또는 중복 스킵)
+        no_btn_pattern = Pattern(IMG_NO_BTN).similar(0.55)
+        overwrite_detected = exists(no_btn_pattern, 3)
 
-    if not overwrite_detected and exists(IMG_SAVE_S_BTN, 1):
-        # 이미지 매칭 실패했지만 저장 다이얼로그가 아직 열려있음 → 키보드 폴백
-        log(u"    [폴백] 아니요(N) 이미지 미매칭 → Alt+N 키보드 시도")
-        take_screenshot(u"step7_no_btn_fallback")
-        type("n", Key.ALT)
-        sleep(1)
-        # Alt+N으로 덮어쓰기 거부 성공 여부 확인
-        if exists(IMG_CANCEL_BTN, 3):
-            overwrite_detected = True
-            log(u"    [폴백 성공] Alt+N으로 덮어쓰기 다이얼로그 닫힘")
-
-    if overwrite_detected:
-        # ★ CASE A: 중복 파일 → 덮어쓰기 취소
-        log(u"    동일 파일 존재 - 덮어쓰기 취소")
-        # 아직 아니요(N) 버튼이 보이면 클릭 (Alt+N 폴백으로 이미 닫혔을 수 있음)
-        no_match = exists(no_btn_pattern, 1)
-        if no_match:
-            no_x = int(no_match.getCenter().getX())
-            no_y = int(no_match.getCenter().getY())
-            log(u"        [좌표] 아니요(N) 버튼 클릭: (%d, %d)" % (no_x, no_y))
-            click(no_match)
-            capture_with_click_marker(no_x, no_y, "no_btn", 0, "step7_no_overwrite")
-            sleep(0.5)
-        else:
-            log(u"        [폴백] 아니요(N) 버튼 미감지 → Alt+N 키보드 시도")
+        if not overwrite_detected and exists(IMG_SAVE_S_BTN, 1):
+            # 이미지 매칭 실패했지만 저장 다이얼로그가 아직 열려있음 → 키보드 폴백
+            log(u"    [폴백] 아니요(N) 이미지 미매칭 → Alt+N 키보드 시도")
+            take_screenshot(u"step7_no_btn_fallback")
             type("n", Key.ALT)
             sleep(1)
-        cancel_match = exists(IMG_CANCEL_BTN, 3)
-        if cancel_match:
-            cancel_x = int(cancel_match.getCenter().getX())
-            cancel_y = int(cancel_match.getCenter().getY())
-            log(u"        [좌표] 취소 버튼 클릭: (%d, %d)" % (cancel_x, cancel_y))
-            click(cancel_match)
-            capture_with_click_marker(cancel_x, cancel_y, "cancel_btn", 0, "step7_cancel")
-        sleep(WAIT_SHORT)
-        take_screenshot(u"step7_annual_report_duplicate")
-        log(u"    [VERIFIED] Annual Report 중복 파일 확인 → 스킵 완료")
-    else:
-        # ★ CASE B: 저장 실행됨 → 저장 다이얼로그 닫힘 검증 필수
-        log(u"    PDF 저장 중...")
-        sleep(2)
-        # 검증: 저장(S) 버튼이 사라졌으면 저장 다이얼로그가 닫힌 것 = 저장 실행됨
-        if exists(IMG_SAVE_S_BTN, 2):
-            log(u"    [FATAL] 저장(S) 버튼 아직 표시됨 - AR PDF 저장 실행 안 됨!")
-            take_screenshot(u"step7_save_NOT_completed")
-            exit_critical_section()
-            raise NavigationResetRequired(u"Annual Report PDF 저장 실패 (저장 다이얼로그 미닫힘)")
-        take_screenshot(u"step7_annual_report_saved")
-        log(u"    [VERIFIED] Annual Report 저장 완료 확인 (저장 다이얼로그 정상 닫힘)")
+            # Alt+N으로 덮어쓰기 거부 성공 여부 확인
+            if exists(IMG_CANCEL_BTN, 3):
+                overwrite_detected = True
+                log(u"    [폴백 성공] Alt+N으로 덮어쓰기 다이얼로그 닫힘")
 
-    exit_critical_section()
+        if overwrite_detected:
+            # ★ CASE A: 중복 파일 → 덮어쓰기 취소
+            log(u"    동일 파일 존재 - 덮어쓰기 취소")
+            # 아직 아니요(N) 버튼이 보이면 클릭 (Alt+N 폴백으로 이미 닫혔을 수 있음)
+            no_match = exists(no_btn_pattern, 1)
+            if no_match:
+                no_x = int(no_match.getCenter().getX())
+                no_y = int(no_match.getCenter().getY())
+                log(u"        [좌표] 아니요(N) 버튼 클릭: (%d, %d)" % (no_x, no_y))
+                click(no_match)
+                capture_with_click_marker(no_x, no_y, "no_btn", 0, "step7_no_overwrite")
+                sleep(0.5)
+            else:
+                log(u"        [폴백] 아니요(N) 버튼 미감지 → Alt+N 키보드 시도")
+                type("n", Key.ALT)
+                sleep(1)
+            cancel_match = exists(IMG_CANCEL_BTN, 3)
+            if cancel_match:
+                cancel_x = int(cancel_match.getCenter().getX())
+                cancel_y = int(cancel_match.getCenter().getY())
+                log(u"        [좌표] 취소 버튼 클릭: (%d, %d)" % (cancel_x, cancel_y))
+                click(cancel_match)
+                capture_with_click_marker(cancel_x, cancel_y, "cancel_btn", 0, "step7_cancel")
+            sleep(WAIT_SHORT)
+            take_screenshot(u"step7_annual_report_duplicate")
+            log(u"    [VERIFIED] Annual Report 중복 파일 확인 → 스킵 완료")
+        else:
+            # ★ CASE B: 저장 실행됨 → 저장 다이얼로그 닫힘 검증 필수
+            log(u"    PDF 저장 중...")
+            sleep(2)
+            # 검증: 저장(S) 버튼이 사라졌으면 저장 다이얼로그가 닫힌 것 = 저장 실행됨
+            if exists(IMG_SAVE_S_BTN, 2):
+                log(u"    [FATAL] 저장(S) 버튼 아직 표시됨 - AR PDF 저장 실행 안 됨!")
+                take_screenshot(u"step7_save_NOT_completed")
+                return {'exists': True, 'saved': False, 'reason': u"Annual Report PDF 저장 실패 (저장 다이얼로그 미닫힘)"}
+            take_screenshot(u"step7_annual_report_saved")
+            log(u"    [VERIFIED] Annual Report 저장 완료 확인 (저장 다이얼로그 정상 닫힘)")
+    finally:
+        exit_critical_section()
 
     # 7-7: PDF 닫기 (포커스 확보 + Alt+F4 + 검증 + 3회 재시도)
     pdf_closed = False
@@ -1761,7 +1760,7 @@ def download_annual_report():
             take_screenshot(u"step7_ALERT_POPUP_pdf_close")
             click(_alert)
             sleep(1)
-        raise NavigationResetRequired(u"AR PDF 뷰어 닫기 실패")
+        return {'exists': True, 'saved': False, 'reason': u"AR PDF 뷰어 닫기 실패"}
 
     log(u"    Annual Report 다운로드 완료")
     # 새로 저장된 AR PDF 파일명 감지
@@ -2042,21 +2041,31 @@ def save_report_pdf(report_number):
         log(u"    [0/11] > 버튼 찾기 (기준점)...")
         arrow_match = exists(IMG_ARROW_RIGHT_BTN, 5)
         if not arrow_match:
-            # 알림 팝업 확인 (MetDo 서비스 오류 등)
+            # 알림 팝업 확인 (MetDo 서비스 오류 등) → 확인 클릭 후 스킵
             _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
             if _alert:
-                log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                log(u"    [ALERT] MetDo 알림 팝업 감지 - 확인 클릭 후 다음 보고서로 스킵")
                 take_screenshot(u"ALERT_POPUP_arrow_btn")
                 click(_alert)
                 sleep(1)
-                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
+                # 두 번째 클릭 (메트라이프 버그 대응)
+                _alert2 = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                if _alert2:
+                    click(_alert2)
+                    sleep(1)
+                capture_error_screenshot(report_number, "alert_after_confirm")
+                copy_report_screenshots_to_error_folder(report_number)
+                recover_to_report_list(report_number)
+                result['error'] = u"MetDo 알림 팝업 (스킵)"
+                log(u"    [INFO] 보고서 #%d MetDo 알림 팝업 스킵 - 다음 보고서로 진행" % report_number)
+                return result
             result['error'] = u"> 버튼 못 찾음"
             log(u"        [FATAL] %s" % result['error'])
             capture_error_screenshot(report_number, "arrow_btn_not_found")
             log_error(report_number, result['error'])
-            # Stack rewinding → NavigationResetRequired (코드 검증 실패 → 종료)
             recover_to_report_list(report_number)
-            raise NavigationResetRequired(u"변액리포트 #%d: > 버튼 찾기 실패" % report_number)
+            result['error'] = u"변액리포트 #%d: > 버튼 찾기 실패" % report_number
+            return result
         arrow_x = arrow_match.getCenter().getX()
         arrow_y = arrow_match.getCenter().getY()
         log(u"        > 버튼 위치: (%d, %d)" % (arrow_x, arrow_y))
@@ -2123,20 +2132,30 @@ def save_report_pdf(report_number):
 
         preview_pattern = Pattern(IMG_PREVIEW_PDF_BTN).similar(0.8)
         if not exists(preview_pattern, 5):
-            # 알림 팝업 확인 (MetDo 서비스 오류 등)
+            # 알림 팝업 확인 (MetDo 서비스 오류 등) → 확인 클릭 후 스킵
             _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
             if _alert:
-                log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                log(u"    [ALERT] MetDo 알림 팝업 감지 - 확인 클릭 후 다음 보고서로 스킵")
                 take_screenshot(u"ALERT_POPUP_preview_btn")
                 click(_alert)
                 sleep(1)
-                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
+                _alert2 = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                if _alert2:
+                    click(_alert2)
+                    sleep(1)
+                capture_error_screenshot(report_number, "alert_after_confirm")
+                copy_report_screenshots_to_error_folder(report_number)
+                recover_to_report_list(report_number)
+                result['error'] = u"MetDo 알림 팝업 (스킵)"
+                log(u"    [INFO] 보고서 #%d MetDo 알림 팝업 스킵 - 다음 보고서로 진행" % report_number)
+                return result
             result['error'] = u"미리보기 버튼 못 찾음"
             log(u"        [FATAL] %s" % result['error'])
             capture_error_screenshot(report_number, "preview_btn_not_found")
             log_error(report_number, result['error'])
             recover_to_report_list(report_number)
-            raise NavigationResetRequired(u"변액리포트 #%d: 미리보기 버튼 찾기 실패" % report_number)
+            result['error'] = u"변액리포트 #%d: 미리보기 버튼 찾기 실패" % report_number
+            return result
 
         # 첫 클릭 전 JS 초기화 대기 (버튼은 보이지만 이벤트 핸들러 미바인딩 가능)
         log(u"        [안정화] 페이지 초기화 대기 (12초)...")
@@ -2171,7 +2190,7 @@ def save_report_pdf(report_number):
                 capture_step_screenshot(report_number, "preview")
                 pdf_loaded = True
                 break
-            except:
+            except Exception:
                 total_waited += PREVIEW_POLL
                 log(u"        [미로딩] %d/%d초 경과 (클릭 %d회)" % (total_waited, PREVIEW_MAX, click_count))
 
@@ -2274,7 +2293,7 @@ def save_report_pdf(report_number):
                 log(u"        ║  PDF 저장 아이콘: 미출현                    ║")
                 log(u"        ╚══════════════════════════════════════════════╝")
                 log(u"")
-                log(u"        [FATAL] 미리보기 %d회 재클릭 모두 PDF 로딩 실패 (%d초 경과) → 프로그램 종료" % (click_count, PREVIEW_MAX))
+                log(u"        [FATAL] 미리보기 %d회 재클릭 모두 PDF 로딩 실패 (%d초 경과) → 상위 복구 처리" % (click_count, PREVIEW_MAX))
                 capture_error_screenshot(report_number, "timeout_no_metlife_error")
                 # 알림 팝업 확인 (MetDo 서비스 오류 등)
                 _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
@@ -2285,161 +2304,170 @@ def save_report_pdf(report_number):
                     sleep(1)
                 copy_report_screenshots_to_error_folder(report_number)
                 recover_to_report_list(report_number)
-                raise NavigationResetRequired(
-                    u"변액리포트 #%d: 미리보기 %d회 재클릭 PDF 로딩 실패 (%d초 경과)" % (report_number, click_count, total_waited)
-                )
+                result['error'] = u"변액리포트 #%d: 미리보기 %d회 재클릭 PDF 로딩 실패 (%d초 경과)" % (report_number, click_count, total_waited)
+                return result
 
         # ★ Critical Section: PDF 저장 구간 (pause 시 recover가 저장 다이얼로그를 닫아버리는 버그 방지)
         enter_critical_section()
+        _cs_active = True
+        try:
+            # Step 6: PDF 저장 아이콘 클릭 + 검증
+            log(u"    [6/11] PDF 저장 아이콘 클릭...")
+            capture_step_screenshot(report_number, "before_save_icon")
+            save_btn_match = exists(IMG_PDF_SAVE_BTN, 5)
+            if not save_btn_match:
+                log(u"        [ERROR] PDF 저장 버튼을 찾을 수 없음")
+                _cs_active = False
+                exit_critical_section()
+                recover_to_report_list(report_number)
+                result['error'] = u"변액리포트 #%d: PDF 저장 버튼 미발견" % report_number
+                return result
+            sbx = int(save_btn_match.getCenter().getX())
+            sby = int(save_btn_match.getCenter().getY())
+            log(u"        [좌표] 저장 아이콘 클릭: (%d, %d)" % (sbx, sby))
+            click(save_btn_match)
+            capture_with_click_marker(sbx, sby, "pdf_save_icon", report_number, "save_icon_clicked")
+            sleep(2)
+            capture_step_screenshot(report_number, "after_save_icon")
 
-        # Step 6: PDF 저장 아이콘 클릭 + 검증
-        log(u"    [6/11] PDF 저장 아이콘 클릭...")
-        capture_step_screenshot(report_number, "before_save_icon")
-        save_btn_match = exists(IMG_PDF_SAVE_BTN, 5)
-        if not save_btn_match:
-            log(u"        [ERROR] PDF 저장 버튼을 찾을 수 없음")
-            exit_critical_section()
-            recover_to_report_list(report_number)
-            raise NavigationResetRequired(u"변액리포트 #%d: PDF 저장 버튼 미발견" % report_number)
-        sbx = int(save_btn_match.getCenter().getX())
-        sby = int(save_btn_match.getCenter().getY())
-        log(u"        [좌표] 저장 아이콘 클릭: (%d, %d)" % (sbx, sby))
-        click(save_btn_match)
-        capture_with_click_marker(sbx, sby, "pdf_save_icon", report_number, "save_icon_clicked")
-        sleep(2)
-        capture_step_screenshot(report_number, "after_save_icon")
-
-        # 검증: 저장(S) 버튼이 나타나야 저장 다이얼로그가 열린 것
-        if not exists(IMG_SAVE_S_BTN, 5):
-            log(u"        [WARN] 저장 다이얼로그 미표시 - 저장 아이콘 재클릭...")
-            capture_step_screenshot(report_number, "save_dialog_not_opened")
-            # 재시도: 저장 아이콘 다시 찾아서 클릭
-            retry_match = exists(IMG_PDF_SAVE_BTN, 3)
-            if retry_match:
-                rx = int(retry_match.getCenter().getX())
-                ry = int(retry_match.getCenter().getY())
-                click(retry_match)
-                capture_with_click_marker(rx, ry, "pdf_save_icon_retry", report_number, "save_icon_retry")
-                log(u"        [재시도] 저장 아이콘 재클릭: (%d, %d)" % (rx, ry))
-                sleep(3)
+            # 검증: 저장(S) 버튼이 나타나야 저장 다이얼로그가 열린 것
             if not exists(IMG_SAVE_S_BTN, 5):
-                log(u"        [FATAL] 저장 다이얼로그 2회 실패")
-                capture_error_screenshot(report_number, "save_dialog_FATAL")
-                # 알림 팝업 확인 (MetDo 서비스 오류 등)
-                _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
-                if _alert:
-                    log(u"    [ALERT] MetDo 알림 팝업 감지!")
-                    take_screenshot(u"ALERT_POPUP_save_dialog")
-                    click(_alert)
-                    sleep(1)
-                exit_critical_section()
-                log_error(report_number, u"저장 다이얼로그 열기 실패")
-                recover_to_report_list(report_number)
-                raise NavigationResetRequired(u"변액리포트 #%d: 저장 다이얼로그 열기 실패" % report_number)
-            log(u"        [검증 성공] 재시도 후 저장 다이얼로그 열림")
+                log(u"        [WARN] 저장 다이얼로그 미표시 - 저장 아이콘 재클릭...")
+                capture_step_screenshot(report_number, "save_dialog_not_opened")
+                # 재시도: 저장 아이콘 다시 찾아서 클릭
+                retry_match = exists(IMG_PDF_SAVE_BTN, 3)
+                if retry_match:
+                    rx = int(retry_match.getCenter().getX())
+                    ry = int(retry_match.getCenter().getY())
+                    click(retry_match)
+                    capture_with_click_marker(rx, ry, "pdf_save_icon_retry", report_number, "save_icon_retry")
+                    log(u"        [재시도] 저장 아이콘 재클릭: (%d, %d)" % (rx, ry))
+                    sleep(3)
+                if not exists(IMG_SAVE_S_BTN, 5):
+                    log(u"        [FATAL] 저장 다이얼로그 2회 실패")
+                    capture_error_screenshot(report_number, "save_dialog_FATAL")
+                    # 알림 팝업 확인 (MetDo 서비스 오류 등)
+                    _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                    if _alert:
+                        log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                        take_screenshot(u"ALERT_POPUP_save_dialog")
+                        click(_alert)
+                        sleep(1)
+                    _cs_active = False
+                    exit_critical_section()
+                    log_error(report_number, u"저장 다이얼로그 열기 실패")
+                    recover_to_report_list(report_number)
+                    result['error'] = u"변액리포트 #%d: 저장 다이얼로그 열기 실패" % report_number
+                    return result
+                log(u"        [검증 성공] 재시도 후 저장 다이얼로그 열림")
 
-        # Step 7: 저장 경로 설정 + 저장(S) 버튼 클릭
-        log(u"    [7/11] 저장(S) 버튼 클릭...")
-        capture_step_screenshot(report_number, "before_save_btn")
-        navigate_save_dialog_to_dir()
-        save_s_match = exists(IMG_SAVE_S_BTN, 5)
-        if not save_s_match:
-            # 재시도: 저장 다이얼로그가 간헐적으로 닫히는 현상 대응
-            log(u"        [WARN] 경로 설정 후 저장(S) 버튼 미발견 - 저장 아이콘 재클릭 재시도...")
-            capture_step_screenshot(report_number, "save_btn_lost_after_navigate")
-            retry_save_icon = exists(IMG_PDF_SAVE_BTN, 3)
-            if retry_save_icon:
-                log(u"        [재시도] PDF 뷰어 열림 확인 - 저장 아이콘 재클릭")
-                click(retry_save_icon)
-                sleep(2)
-                if exists(IMG_SAVE_S_BTN, 5):
-                    log(u"        [재시도] 저장 다이얼로그 재표시 성공 - navigate 재실행")
-                    navigate_save_dialog_to_dir()
-                    save_s_match = exists(IMG_SAVE_S_BTN, 5)
+            # Step 7: 저장 경로 설정 + 저장(S) 버튼 클릭
+            log(u"    [7/11] 저장(S) 버튼 클릭...")
+            capture_step_screenshot(report_number, "before_save_btn")
+            navigate_save_dialog_to_dir()
+            save_s_match = exists(IMG_SAVE_S_BTN, 5)
             if not save_s_match:
-                log(u"        [ERROR] 저장(S) 버튼 재시도 후에도 미발견")
-                exit_critical_section()
-                recover_to_report_list(report_number)
-                raise NavigationResetRequired(u"변액리포트 #%d: 저장(S) 버튼 미발견" % report_number)
-        ssx = int(save_s_match.getCenter().getX())
-        ssy = int(save_s_match.getCenter().getY())
-        log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ssx, ssy))
-        click(save_s_match)
-        capture_with_click_marker(ssx, ssy, "save_s_btn", report_number, "save_s_clicked")
-        sleep(3)
-        capture_step_screenshot(report_number, "after_save_btn")
+                # 재시도: 저장 다이얼로그가 간헐적으로 닫히는 현상 대응
+                log(u"        [WARN] 경로 설정 후 저장(S) 버튼 미발견 - 저장 아이콘 재클릭 재시도...")
+                capture_step_screenshot(report_number, "save_btn_lost_after_navigate")
+                retry_save_icon = exists(IMG_PDF_SAVE_BTN, 3)
+                if retry_save_icon:
+                    log(u"        [재시도] PDF 뷰어 열림 확인 - 저장 아이콘 재클릭")
+                    click(retry_save_icon)
+                    sleep(2)
+                    if exists(IMG_SAVE_S_BTN, 5):
+                        log(u"        [재시도] 저장 다이얼로그 재표시 성공 - navigate 재실행")
+                        navigate_save_dialog_to_dir()
+                        save_s_match = exists(IMG_SAVE_S_BTN, 5)
+                if not save_s_match:
+                    log(u"        [ERROR] 저장(S) 버튼 재시도 후에도 미발견")
+                    _cs_active = False
+                    exit_critical_section()
+                    recover_to_report_list(report_number)
+                    result['error'] = u"변액리포트 #%d: 저장(S) 버튼 미발견" % report_number
+                    return result
+            ssx = int(save_s_match.getCenter().getX())
+            ssy = int(save_s_match.getCenter().getY())
+            log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ssx, ssy))
+            click(save_s_match)
+            capture_with_click_marker(ssx, ssy, "save_s_btn", report_number, "save_s_clicked")
+            sleep(3)
+            capture_step_screenshot(report_number, "after_save_btn")
 
-        # Step 8: 저장 결과 검증 (100% 확신 필수 - 저장 성공 또는 중복 스킵)
-        log(u"    [8/11] 저장 완료 확인...")
-        no_btn_pattern = Pattern(IMG_NO_BTN).similar(0.55)
-        overwrite_detected = exists(no_btn_pattern, 3)
+            # Step 8: 저장 결과 검증 (100% 확신 필수 - 저장 성공 또는 중복 스킵)
+            log(u"    [8/11] 저장 완료 확인...")
+            no_btn_pattern = Pattern(IMG_NO_BTN).similar(0.55)
+            overwrite_detected = exists(no_btn_pattern, 3)
 
-        if not overwrite_detected and exists(IMG_SAVE_S_BTN, 1):
-            # 이미지 매칭 실패했지만 저장 다이얼로그가 아직 열려있음 → 키보드 폴백
-            log(u"        [폴백] 아니요(N) 이미지 미매칭 → Alt+N 키보드 시도")
-            capture_step_screenshot(report_number, "no_btn_fallback")
-            type("n", Key.ALT)
-            sleep(1)
-            if exists(IMG_CANCEL_BTN, 3):
-                overwrite_detected = True
-                log(u"        [폴백 성공] Alt+N으로 덮어쓰기 다이얼로그 닫힘")
-
-        if overwrite_detected:
-            # ★ CASE A: 중복 파일 → 덮어쓰기 취소
-            log(u"        -> 동일 파일 존재! 스킵 처리...")
-            capture_step_screenshot(report_number, "duplicate")
-            no_match = exists(no_btn_pattern, 1)
-            if no_match:
-                no_x = int(no_match.getCenter().getX())
-                no_y = int(no_match.getCenter().getY())
-                click(no_match)
-                capture_with_click_marker(no_x, no_y, "no_btn", report_number, "no_overwrite_clicked")
-                log(u"        [좌표] 아니요(N) 클릭: (%d, %d)" % (no_x, no_y))
-                sleep(WAIT_MEDIUM)
-            else:
-                log(u"        [폴백] 아니요(N) 버튼 미감지 → Alt+N 키보드 시도")
+            if not overwrite_detected and exists(IMG_SAVE_S_BTN, 1):
+                # 이미지 매칭 실패했지만 저장 다이얼로그가 아직 열려있음 → 키보드 폴백
+                log(u"        [폴백] 아니요(N) 이미지 미매칭 → Alt+N 키보드 시도")
+                capture_step_screenshot(report_number, "no_btn_fallback")
                 type("n", Key.ALT)
                 sleep(1)
-            cancel_match = exists(IMG_CANCEL_BTN, 3)
-            if cancel_match:
-                cancel_x = int(cancel_match.getCenter().getX())
-                cancel_y = int(cancel_match.getCenter().getY())
-                click(cancel_match)
-                capture_with_click_marker(cancel_x, cancel_y, "cancel_btn", report_number, "cancel_clicked")
-                log(u"        [좌표] 취소 클릭: (%d, %d)" % (cancel_x, cancel_y))
-                sleep(WAIT_MEDIUM)
-            result['duplicate'] = True
-            result['success'] = True
-            log(u"        [VERIFIED] 변액리포트 #%d 중복 파일 확인 → 스킵 완료" % report_number)
-        else:
-            # ★ CASE B: 저장 실행됨 → 저장 다이얼로그 닫힘 검증 필수
-            if exists(IMG_SAVE_S_BTN, 2):
-                log(u"        [FATAL] 저장(S) 버튼 아직 표시됨 - 저장 실행 안 됨")
-                capture_error_screenshot(report_number, "save_not_completed")
-                # 알림 팝업 확인 (MetDo 서비스 오류 등)
-                _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
-                if _alert:
-                    log(u"    [ALERT] MetDo 알림 팝업 감지!")
-                    take_screenshot(u"ALERT_POPUP_save_not_completed")
-                    click(_alert)
-                    sleep(1)
-                exit_critical_section()
-                log_error(report_number, u"PDF 저장 실행 안 됨 (저장 다이얼로그 미닫힘)")
-                recover_to_report_list(report_number)
-                raise NavigationResetRequired(u"변액리포트 #%d: PDF 저장 실행 안 됨" % report_number)
-            result['saved'] = True
-            result['success'] = True
-            capture_step_screenshot(report_number, "saved")
-            log(u"        [VERIFIED] 변액리포트 #%d 저장 완료 확인 (저장 다이얼로그 정상 닫힘)" % report_number)
-            # 새로 저장된 PDF 파일명 감지
-            if PDF_DOWNLOAD_DIR and os.path.isdir(PDF_DOWNLOAD_DIR):
-                pdf_files_after = set(f for f in os.listdir(PDF_DOWNLOAD_DIR) if f.lower().endswith('.pdf'))
-                new_files = pdf_files_after - pdf_files_before
-                if new_files:
-                    result['saved_filename'] = sorted(new_files)[0]
-                    log(u"        [파일명] %s" % result['saved_filename'])
+                if exists(IMG_CANCEL_BTN, 3):
+                    overwrite_detected = True
+                    log(u"        [폴백 성공] Alt+N으로 덮어쓰기 다이얼로그 닫힘")
 
-        exit_critical_section()
+            if overwrite_detected:
+                # ★ CASE A: 중복 파일 → 덮어쓰기 취소
+                log(u"        -> 동일 파일 존재! 스킵 처리...")
+                capture_step_screenshot(report_number, "duplicate")
+                no_match = exists(no_btn_pattern, 1)
+                if no_match:
+                    no_x = int(no_match.getCenter().getX())
+                    no_y = int(no_match.getCenter().getY())
+                    click(no_match)
+                    capture_with_click_marker(no_x, no_y, "no_btn", report_number, "no_overwrite_clicked")
+                    log(u"        [좌표] 아니요(N) 클릭: (%d, %d)" % (no_x, no_y))
+                    sleep(WAIT_MEDIUM)
+                else:
+                    log(u"        [폴백] 아니요(N) 버튼 미감지 → Alt+N 키보드 시도")
+                    type("n", Key.ALT)
+                    sleep(1)
+                cancel_match = exists(IMG_CANCEL_BTN, 3)
+                if cancel_match:
+                    cancel_x = int(cancel_match.getCenter().getX())
+                    cancel_y = int(cancel_match.getCenter().getY())
+                    click(cancel_match)
+                    capture_with_click_marker(cancel_x, cancel_y, "cancel_btn", report_number, "cancel_clicked")
+                    log(u"        [좌표] 취소 클릭: (%d, %d)" % (cancel_x, cancel_y))
+                    sleep(WAIT_MEDIUM)
+                result['duplicate'] = True
+                result['success'] = True
+                log(u"        [VERIFIED] 변액리포트 #%d 중복 파일 확인 → 스킵 완료" % report_number)
+            else:
+                # ★ CASE B: 저장 실행됨 → 저장 다이얼로그 닫힘 검증 필수
+                if exists(IMG_SAVE_S_BTN, 2):
+                    log(u"        [FATAL] 저장(S) 버튼 아직 표시됨 - 저장 실행 안 됨")
+                    capture_error_screenshot(report_number, "save_not_completed")
+                    # 알림 팝업 확인 (MetDo 서비스 오류 등)
+                    _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                    if _alert:
+                        log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                        take_screenshot(u"ALERT_POPUP_save_not_completed")
+                        click(_alert)
+                        sleep(1)
+                    _cs_active = False
+                    exit_critical_section()
+                    log_error(report_number, u"PDF 저장 실행 안 됨 (저장 다이얼로그 미닫힘)")
+                    recover_to_report_list(report_number)
+                    result['error'] = u"변액리포트 #%d: PDF 저장 실행 안 됨" % report_number
+                    return result
+                result['saved'] = True
+                result['success'] = True
+                capture_step_screenshot(report_number, "saved")
+                log(u"        [VERIFIED] 변액리포트 #%d 저장 완료 확인 (저장 다이얼로그 정상 닫힘)" % report_number)
+                # 새로 저장된 PDF 파일명 감지
+                if PDF_DOWNLOAD_DIR and os.path.isdir(PDF_DOWNLOAD_DIR):
+                    pdf_files_after = set(f for f in os.listdir(PDF_DOWNLOAD_DIR) if f.lower().endswith('.pdf'))
+                    new_files = pdf_files_after - pdf_files_before
+                    if new_files:
+                        result['saved_filename'] = sorted(new_files)[0]
+                        log(u"        [파일명] %s" % result['saved_filename'])
+        finally:
+            if _cs_active:
+                exit_critical_section()
 
         # Step 9-10: PDF 뷰어 닫기 (포커스 확보 + 3회 재시도)
         # ★ 근본 원인: PDF 저장 후 포커스가 PDF 뷰어에서 이탈할 수 있음
@@ -2505,7 +2533,8 @@ def save_report_pdf(report_number):
                 sleep(1)
             log_error(report_number, u"PDF 뷰어 닫기 실패")
             recover_to_report_list(report_number)
-            raise NavigationResetRequired(u"변액리포트 #%d: PDF 뷰어 닫기 실패" % report_number)
+            result['error'] = u"변액리포트 #%d: PDF 뷰어 닫기 실패" % report_number
+            return result
 
         # Step 11: 보고서인쇄 창 X 버튼 클릭
         log(u"    [11/11] 보고서인쇄 창 X 버튼 클릭...")
@@ -2570,8 +2599,6 @@ def save_report_pdf(report_number):
         log(u"    ===== PDF 저장 완료 [보고서 #%d] =====" % report_number)
         return result
 
-    except NavigationResetRequired:
-        raise  # 코드 검증 실패 → 상위로 전파 (절대 삼키지 않음)
     except Exception as e:
         # Critical Section 안전 해제: 예상치 못한 예외 시 _in_critical_section 고착 방지
         exit_critical_section()
@@ -2586,9 +2613,8 @@ def save_report_pdf(report_number):
             click(_alert)
             sleep(1)
         log_error(report_number, result['error'])
-        # Stack rewinding → NavigationResetRequired (코드 검증 실패 → 종료)
         recover_to_report_list(report_number)
-        raise NavigationResetRequired(u"변액리포트 #%d: 예외 - %s" % (report_number, result['error']))
+        return result
 
 
 def print_final_report():
@@ -2851,14 +2877,12 @@ def wait_and_click(img, description, wait_time=10, report_num=0, capture_click=T
             # 알림 팝업 확인 (MetDo "서비스처리 중 오류" 등 - 어디서든 발생 가능)
             _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
             if _alert:
-                log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 프로그램 종료")
+                log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 상위 복구 처리")
                 take_screenshot(u"ALERT_POPUP_in_wait_and_click")
                 click(_alert)
                 sleep(1)
-                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
+                return False
             return False
-    except NavigationResetRequired:
-        raise  # 알림 팝업 감지 시 상위로 전파
     except Exception as e:
         log(u"    [ERROR] %s 클릭 실패: %s (이미지: %s)" % (description, str(e), str(img)))
         capture_search_failure(description, str(img), wait_time, report_num, "wait_and_click_exception")
@@ -3024,17 +3048,18 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             # 알림 팝업 확인 (MetDo "서비스처리 중 오류" 등)
             _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
             if _alert:
-                log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 프로그램 종료")
+                log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 상위 복구 처리")
                 take_screenshot(u"step2_ALERT_POPUP_detected_verify")
                 click(_alert)
                 sleep(1)
-                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
+                integrated_view_opened = False
+                break
             sleep(WAIT_SHORT)
             type(Key.ESC)  # 혹시 열린 팝업 닫기
             sleep(WAIT_SHORT)
 
     if not integrated_view_opened:
-        log(u"    [FATAL] 고객통합뷰 3회 클릭 실패 → 프로그램 종료 요청")
+        log(u"    [FATAL] 고객통합뷰 3회 클릭 실패 → 상위 복구 처리 요청")
         take_screenshot(u"step2_all_attempts_failed")
         # 알림 팝업 확인 (MetDo 서비스 오류 등)
         _alert = exists(IMG_ALERT_CONFIRM_BTN, 1)
@@ -3043,7 +3068,15 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             take_screenshot(u"step2_ALERT_POPUP_all_failed")
             click(_alert)
             sleep(1)
-        raise NavigationResetRequired(u"고객통합뷰 3회 클릭 실패")
+        return {
+            'customer_name': CURRENT_CUSTOMER_NAME or u'',
+            'error': u"고객통합뷰 3회 클릭 실패",
+            'variable_insurance': {'exists': False, 'total_reports': 0, 'saved': 0, 'duplicate': 0,
+                                   'no_variable_contract': False, 'metlife_errors': 0, 'error_details': [],
+                                   'saved_files': []},
+            'annual_report': {'exists': None, 'saved': False, 'reason': u'고객통합뷰 열기 실패'},
+            'issues': [u"고객통합뷰 열기 실패"],
+        }
 
     # 3단계는 2단계에 통합됨 (스크롤 맨 위로 이동)
     log(u"")
@@ -3104,7 +3137,7 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
                 _nvc = exists(IMG_NO_VARIABLE_CONTRACT_CONFIRM, 1)
                 if _nvc:
                     click(_nvc)
-            except:
+            except Exception:
                 pass  # 이미 닫혔으면 무시
         sleep(WAIT_SHORT)
 
@@ -3145,7 +3178,7 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
                     _alert2 = exists(IMG_ALERT_CONFIRM_BTN, 1)
                     if _alert2:
                         click(_alert2)
-                except:
+                except Exception:
                     pass
                 sleep(WAIT_SHORT)
             else:
@@ -3250,12 +3283,7 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
         sleep(0.1)
     sleep(WAIT_SHORT)
 
-    try:
-        ar_result = download_annual_report()
-    except:
-        # Safety: AR 함수 내 Critical Section이 해제되지 않은 채 예외 발생 시 안전 해제
-        exit_critical_section()
-        raise
+    ar_result = download_annual_report()
 
     # 8단계: 고객통합뷰 X 버튼 클릭 + 닫힘 검증
     log(u"")
@@ -3298,7 +3326,22 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
             take_screenshot(u"step8_ALERT_POPUP_close_failed")
             click(_alert)
             sleep(1)
-        raise NavigationResetRequired(u"고객통합뷰 닫기 실패")
+        return {
+            'customer_name': CURRENT_CUSTOMER_NAME or u'',
+            'error': u"고객통합뷰 닫기 실패",
+            'variable_insurance': {
+                'exists': variable_insurance_exists,
+                'total_reports': len([r for r in save_results if not r.get('no_variable_contract')]),
+                'saved': sum(1 for r in save_results if r.get('saved')),
+                'duplicate': sum(1 for r in save_results if r.get('duplicate')),
+                'no_variable_contract': any(r.get('no_variable_contract') for r in save_results),
+                'metlife_errors': sum(1 for r in save_results if r.get('error') and u'MetLife' in (r.get('error') or u'')),
+                'error_details': [r.get('error') for r in save_results if r.get('error')],
+                'saved_files': [r.get('saved_filename') for r in save_results if r.get('saved') and r.get('saved_filename')],
+            },
+            'annual_report': ar_result if isinstance(ar_result, dict) else {'exists': None, 'saved': False, 'reason': u'unknown'},
+            'issues': [u"고객통합뷰 닫기 실패"],
+        }
 
     # 9단계: 완료 - 결과 집계
     log(u"")
@@ -3348,13 +3391,14 @@ if __name__ == "__main__":
     _standalone_output = os.path.join(SCRIPT_DIR, "output", "standalone")
 
     try:
-        success = verify_customer_integrated_view(
+        result = verify_customer_integrated_view(
             output_dir=_standalone_output,
             pdf_save_dir=os.path.join(_standalone_output, "pdf"),
         )
     except IntegratedViewError as e:
         log(u"[FATAL] 단독 실행 중 복구 불가 오류: %s" % unicode(e))
-        success = False
+        result = None
 
+    success = isinstance(result, dict) and not result.get('error')
     log(u"=== 실행 종료 ===")
     sys.exit(0 if success else 1)
