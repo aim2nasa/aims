@@ -1082,7 +1082,7 @@ def click_all_rows_with_scroll():
                 # 변액보험리포트 창 복귀 대기
                 if exists(IMG_REPORT_HEADER, 15):
                     log(u"        -> 변액보험리포트 창 복귀 확인")
-                    sleep(1.0)
+                    sleep(3.0)  # MetDo 이전 선택 상태 정리 대기 (중복 선택 방지)
                 else:
                     log(u"        [WARN] 변액보험리포트 창 복귀 지연")
                     sleep(WAIT_MEDIUM)
