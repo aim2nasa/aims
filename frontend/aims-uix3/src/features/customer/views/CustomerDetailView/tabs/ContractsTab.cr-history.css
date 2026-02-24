@@ -249,6 +249,11 @@
     border-top: 1px solid var(--color-ios-separator-light);
   }
 
+  /* 스냅샷 행 Tooltip 래퍼 — block으로 전환하여 행 분리 */
+  .cr-contract-history-accordion__content > .tooltip-trigger {
+    display: block;
+  }
+
   html[data-theme="dark"] .cr-contract-history-accordion__content {
     background: var(--color-ios-bg-secondary-dark);
     border-top-color: var(--color-ios-separator-dark);
@@ -279,7 +284,7 @@
   /* CRS 스냅샷 헤더 (6컬럼) */
   .cr-contract-history-snapshots-header {
     display: grid;
-    grid-template-columns: 80px 90px 90px 70px 90px 70px;
+    grid-template-columns: 80px 1fr 1fr 70px 1fr 70px;
     gap: 6px;
     padding: 4px 0 6px;
     font-size: var(--font-size-caption-2);
@@ -305,7 +310,7 @@
   /* CRS 스냅샷 아이템 (6컬럼) */
   .cr-contract-history-snapshot-item {
     display: grid;
-    grid-template-columns: 80px 90px 90px 70px 90px 70px;
+    grid-template-columns: 80px 1fr 1fr 70px 1fr 70px;
     gap: 6px;
     padding: 4px 0;
     font-size: var(--font-size-caption-2);
