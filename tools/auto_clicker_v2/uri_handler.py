@@ -75,26 +75,11 @@ def verify_token(token: str) -> dict:
         return {"success": False, "message": f"요청 오류: {e}"}
 
 
-def _set_ac_icon(root):
-    """숨겨진 root 창에 AutoClicker 아이콘 적용 (messagebox 상속용)"""
-    try:
-        import sys, os
-        if getattr(sys, "frozen", False):
-            ico = os.path.join(sys._MEIPASS, "autoclicker.ico")
-        else:
-            ico = os.path.join(os.path.dirname(__file__), "autoclicker.ico")
-        if os.path.exists(ico):
-            root.iconbitmap(ico)
-    except Exception:
-        pass
-
-
 def _show_error(title: str, message: str):
     """tkinter messagebox로 오류 표시 (GUI 시작 전)"""
     import tkinter as tk
     root = tk.Tk()
     root.withdraw()
-    _set_ac_icon(root)
     from tkinter import messagebox
     messagebox.showerror(title, message, parent=root)
     root.destroy()
@@ -105,7 +90,6 @@ def _show_info(title: str, message: str):
     import tkinter as tk
     root = tk.Tk()
     root.withdraw()
-    _set_ac_icon(root)
     from tkinter import messagebox
     messagebox.showinfo(title, message, parent=root)
     root.destroy()
@@ -171,6 +155,7 @@ def handle_uri_launch(uri: str) -> int:
     # 5. GUI 시작
     from gui_main import AutoClickerApp
     app = AutoClickerApp(cli_args=cli_args, authenticated=True)
-    app.set_user_name(user.get('name', ''))
+    # 타이틀에 사용자 이름 표시
+    app.title(f"{app.title()} — {user.get('name', '')}")
     app.mainloop()
     return 0

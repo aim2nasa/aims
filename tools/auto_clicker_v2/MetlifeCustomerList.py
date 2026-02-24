@@ -10,7 +10,7 @@ import subprocess
 import json
 import codecs
 import traceback
-from java.awt import Robot, MouseInfo
+from java.awt import Robot
 from java.awt.event import KeyEvent
 
 # Java Robot 인스턴스 (Page Up 키 입력용)
@@ -97,34 +97,16 @@ if os.environ.get("AC_DEV_MODE", "").strip() == "1":
 elif os.environ.get("AC_DEV_MODE", "").strip() == "0":
     DEV_MODE = False
 
-# DEV_DIR: 디버그 파일 저장 경로
-# - DEV_MODE: CAPTURE_DIR/dev 에 영구 보존
-# - 프로덕션: 시스템 임시 디렉토리 사용 (종료/크래시 시에도 사용자 폴더 오염 없음)
-if DEV_MODE:
-    DEV_DIR = os.path.join(CAPTURE_DIR, "dev")
-else:
-    import tempfile as _tf
-    DEV_DIR = _tf.mkdtemp(prefix="ac_run_")
+# DEV_DIR: 디버그 파일 저장 경로 (항상 생성, 프로덕션이면 종료 시 삭제)
+DEV_DIR = os.path.join(CAPTURE_DIR, "dev")
 if not os.path.exists(DEV_DIR):
     os.makedirs(DEV_DIR)
 
-# atexit: 프로덕션 모드에서 종료 시 임시 폴더 정리
+# atexit: 프로덕션 모드에서 종료 시 dev 폴더 정리
+# FATAL 크래시 (raise SystemExit) 포함 모든 종료 경로에서 실행됨
 import atexit as _atexit
 def _cleanup_on_exit():
     _close_log_file()  # 중복 호출 안전 (핸들 None 체크)
-    # 증분 리포트 비동기 프로세스 정리
-    global _devnull_handle, _report_proc
-    if _report_proc is not None and _report_proc.poll() is None:
-        try:
-            _report_proc.terminate()
-        except Exception:
-            pass
-    if _devnull_handle is not None:
-        try:
-            _devnull_handle.close()
-        except Exception:
-            pass
-        _devnull_handle = None
     if not DEV_MODE:
         import shutil as _sh
         if os.path.exists(DEV_DIR):
@@ -138,9 +120,6 @@ _atexit.register(_cleanup_on_exit)
 import datetime
 _now = datetime.datetime.now()
 _date_str = _now.strftime("%Y%m%d_%H%M%S")
-# 리포트 파일명 고정 타임스탬프 (증분 갱신 시 동일 파일명으로 덮어쓰기)
-_REPORT_TIMESTAMP = _now.strftime("%Y%m%d_%H%M")
-GENERATE_REPORTS_SCRIPT = os.path.join(SCRIPT_DIR, "generate_reports.py")
 _log_base = os.path.join(DEV_DIR, u"run_%s" % _date_str)
 _log_seq = 0
 LOG_FILE = u"%s.log" % _log_base
@@ -194,211 +173,32 @@ _AC_HOME = os.environ.get("AC_HOME", r"D:\aims\tools\auto_clicker_v2")
 _PAUSE_SIGNAL = os.path.join(_AC_HOME, ".pause_signal")
 log(u"[IPC] AC_HOME=%s, PAUSE_SIGNAL=%s" % (_AC_HOME, _PAUSE_SIGNAL))
 
-# ===== SikuliX 원본 함수 보존 (래핑 전) =====
-_sikuli_click = click
-_sikuli_type = type
-_sikuli_find = find
-_sikuli_exists = exists
-_sikuli_sleep = sleep
-
-# ===== 멀티 모니터 자동 감지 =====
-_active_screen_id = 0  # MetLife가 보이는 화면 ID (자동 감지)
-
-def _scr():
-    """활성 화면(Screen) 반환. 모든 SikuliX 조작은 이 화면에서 수행."""
-    return Screen(_active_screen_id)
-
-def _detect_active_screen():
-    """모든 모니터를 스캔하여 MetLife가 보이는 화면 자동 감지."""
-    global _active_screen_id
-    num = Screen.getNumberScreens()
-    log(u"    [SCREEN] %d개 모니터 감지됨" % num)
-
-    # 환경변수 AC_SCREEN으로 강제 지정 가능
-    env_scr = os.environ.get("AC_SCREEN")
-    if env_scr is not None:
-        _active_screen_id = int(env_scr)
-        log(u"    [SCREEN] 환경변수 AC_SCREEN=%d 사용" % _active_screen_id)
-        return
-
-    # MetLife 로고 이미지로 자동 감지
-    _logo = "img/1769598099792.png"
-    for i in range(num):
-        s = Screen(i)
-        if s.exists(_logo, 2):
-            _active_screen_id = i
-            os.environ["AC_SCREEN"] = str(i)
-            log(u"    [SCREEN] MetLife 감지: Screen(%d)" % i)
-            return
-
-    # 폴백: Screen(0)
-    log(u"    [SCREEN] MetLife 미감지 → 기본 Screen(0)")
-    _active_screen_id = 0
-
-    # 통합뷰 스크립트에도 전달 (import 시 환경변수에서 읽음)
-    os.environ["AC_SCREEN"] = str(_active_screen_id)
-
-# ===== 일시정지 상태 플래그 =====
-_in_recovery = False        # 복구 중 재귀 방지
-_in_critical_section = False  # 위험 구간 보호 (PDF 저장 등)
-
-# MetLife 로고 이미지 경로 (포커스 검증용 — IMG 상수 정의 전이므로 직접 지정)
-_IMG_METLIFE_LOGO = "img/1769598099792.png"
-
-
-def _focus_metlife_window():
-    """MetLife 브라우저 창을 최상위로 (App.focus → Alt+Tab 폴백 → 검증)"""
-    # 전략 1: SikuliX App.focus()로 창 제목 매칭
-    for title in [u"메트라이프", u"MetLife", u"metlife"]:
-        try:
-            App.focus(title)
-            log(u"    [PAUSE] App.focus('%s') 성공" % title)
-            return
-        except:
-            continue
-
-    # 전략 2: Alt+Tab (마지막 활성 창으로 전환)
-    log(u"    [PAUSE] App.focus 실패 → Alt+Tab")
-    _robot.keyPress(KeyEvent.VK_ALT)
-    time.sleep(0.1)
-    _robot.keyPress(KeyEvent.VK_TAB)
-    _robot.keyRelease(KeyEvent.VK_TAB)
-    _robot.keyRelease(KeyEvent.VK_ALT)
-    time.sleep(0.5)
-
-    # 검증: MetLife 화면이 실제로 보이는지 확인
-    if _scr().exists(_IMG_METLIFE_LOGO, 2):
-        log(u"    [PAUSE] MetLife 창 포커스 복원 확인됨")
-    else:
-        log(u"    [PAUSE] [WARN] MetLife 창 포커스 불확실")
-
-
-def _recover_after_resume():
-    """재개 후 MetLife 브라우저 창 포커스 복원 + 잔여 UI 정리.
-    주의: 원본(비래핑) 함수만 사용 — 재귀 방지."""
-    _focus_metlife_window()
-    time.sleep(1)  # 포커스 전환 안정화
-
-    # 잔여 알림 팝업 정리
-    try:
-        # IMG_ALERT_OK는 하단에서 정의되며, 이 함수는 실행 시점에서 참조
-        if _scr().exists(IMG_ALERT_OK, 1):
-            _scr().click(IMG_ALERT_OK)
-            time.sleep(0.5)
-    except:
-        pass
-
-    log(u"    [PAUSE] 화면 복구 완료")
-
-
 def check_pause():
-    """일시정지 체크. 재개 시 마우스 복원 + 화면 복구 후 True 반환."""
-    global _in_recovery
-
+    """GUI 일시정지 신호 파일이 존재하면 삭제될 때까지 대기"""
     if not os.path.exists(_PAUSE_SIGNAL):
-        return False
-
-    # 위험 구간(PDF 저장, Alt+F4 등)에서는 일시정지 지연
-    if _in_critical_section:
-        return False
-
-    # 일시정지 직전 마우스 위치 저장
-    try:
-        pos = MouseInfo.getPointerInfo().getLocation()
-        saved_x, saved_y = pos.x, pos.y
-    except:
-        saved_x, saved_y = None, None
-
-    log(u"    [PAUSE] 일시정지 감지 (마우스: %s,%s) → 재개 대기 중..." % (saved_x, saved_y))
+        return
+    log(u"    [PAUSE] 일시정지 감지 → 재개 대기 중...")
     while os.path.exists(_PAUSE_SIGNAL):
         time.sleep(0.5)
+    log(u"    [PAUSE] 재개됨!")
 
-    # 재개: 마우스 위치 복원 → 스크립트 마우스 제어권 회수
-    if saved_x is not None:
-        log(u"    [PAUSE] 마우스 복원: (%d,%d)" % (saved_x, saved_y))
-        _robot.mouseMove(saved_x, saved_y)
-        time.sleep(0.5)  # 마우스 안정화
+# ===== SikuliX 함수 래핑: 모든 UI 조작 전에 자동으로 일시정지 체크 =====
+_sikuli_click = click  # SikuliX 원본 click 보존
+_sikuli_type = type    # SikuliX 원본 type(키보드 입력) 보존
 
-    # 복구 실행 (재귀 방지: _in_recovery True이면 스킵)
-    if not _in_recovery:
-        _in_recovery = True
-        try:
-            _recover_after_resume()
-        except:
-            pass
-        finally:
-            _in_recovery = False
-
-    log(u"    [PAUSE] 재개 완료")
-    return True
-
-
-def _verify_customer_list_after_resume():
-    """일시정지 재개 후 고객 목록 화면 확인 및 복구.
-    IMG_CUSTNAME, IMG_CLOSE_BTN 등은 L1221+에서 정의."""
-    if not _scr().exists(IMG_CUSTNAME, 3):
-        log(u"    [PAUSE] 고객 목록 화면 아님 → 복구 시도")
-        try:
-            if _scr().exists(IMG_CLOSE_BTN, 2):
-                _scr().click(IMG_CLOSE_BTN)
-                time.sleep(2)
-            dismiss_alert_if_exists()
-        except:
-            pass
-        if not _scr().exists(IMG_CUSTNAME, 3):
-            _scr().type(Key.ESC)
-            time.sleep(2)
-            dismiss_alert_if_exists()
-        if _scr().exists(IMG_CUSTNAME, 3):
-            log(u"    [PAUSE] 고객 목록 복구 성공")
-        else:
-            log(u"    [PAUSE] [WARN] 고객 목록 미복구 — 계속 진행")
-
-
-def enter_critical_section():
-    """일시정지 불가 구간 진입. check_pause()가 즉시 반환."""
-    global _in_critical_section
-    _in_critical_section = True
-
-
-def exit_critical_section():
-    """일시정지 불가 구간 종료. 축적된 일시정지 신호 즉시 처리."""
-    global _in_critical_section
-    _in_critical_section = False
-    check_pause()
-
-
-# ===== SikuliX 함수 래핑: 모든 UI 조작 전에 일시정지 체크 + 올바른 화면 사용 =====
 def click(target, *args):
+    """SikuliX click 래퍼 - 클릭 전 항상 일시정지 체크"""
     check_pause()
-    return _scr().click(target, *args)
+    return _sikuli_click(target, *args)
 
 def type(target, *args):
+    """SikuliX type 래퍼 - 키 입력 전 항상 일시정지 체크"""
     check_pause()
-    return _scr().type(target, *args)
-
-def find(target, *args):
-    check_pause()
-    return _scr().find(target, *args)
-
-def exists(target, *args):
-    check_pause()
-    return _scr().exists(target, *args)
-
-def sleep(seconds):
-    """pause-aware sleep. 0.5초 단위로 일시정지 체크."""
-    elapsed = 0.0
-    interval = 0.5
-    while elapsed < seconds:
-        remaining = seconds - elapsed
-        wait = min(interval, remaining)
-        time.sleep(wait)
-        elapsed += wait
-        check_pause()
+    return _sikuli_type(target, *args)
 
 
 # 진단 모드 설정 (클릭 위치 분석용 스크린샷 저장)
-DIAGNOSTIC_MODE = DEV_MODE  # DEV 모드에서만 클릭 전 스크린샷 저장
+DIAGNOSTIC_MODE = True  # True면 클릭 전 스크린샷 저장
 DIAGNOSTIC_DIR = os.path.join(DEV_DIR, "diagnostic")
 if DIAGNOSTIC_MODE and not os.path.exists(DIAGNOSTIC_DIR):
     os.makedirs(DIAGNOSTIC_DIR)
@@ -420,7 +220,7 @@ def save_click_diagnostic(click_x, click_y, customer_name, page_num, row_idx):
         seq = _diagnostic_counter[0]
 
         # 스크린샷 캡처
-        screen = _scr()
+        screen = Screen()
         img = screen.capture()
         buffered_img = img.getImage()
 
@@ -590,14 +390,14 @@ sys.excepthook = _global_exception_handler
 
 
 def _fatal_crash(context, chosung, exception=None):
-    """인프라 크래시 시 상세 로그 → run_*.log + debug_log.txt + 프로세스 종료
+    """인프라 크래시 시 상세 로그 → run_*.log + debug_log.txt + 프로그램 종료
 
     SikuliX FindFailed는 Java 예외이므로 except Exception으로 잡히지 않음.
     bare except: + sys.exc_info()로 잡아야 함.
     """
     _crash_log(u"")
     _crash_log(u"=" * 60)
-    _crash_log(u"[FATAL] 크래시 발생 - 프로세스 종료")
+    _crash_log(u"[FATAL] 크래시 발생 - 프로그램 종료")
     _crash_log(u"=" * 60)
     _crash_log(u"위치: %s" % context)
     _crash_log(u"초성: %s" % chosung)
@@ -624,7 +424,7 @@ def _fatal_crash(context, chosung, exception=None):
     _crash_log(u"=" * 60)
     _take_crash_screenshot(u"FATAL")
     _close_log_file()
-    sys.exit(1)
+    raise SystemExit(1)
 
 
 # 헬퍼 함수
@@ -1192,9 +992,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                     return processed, error_customers, current_base_y
                 continue
 
-        _was_paused = check_pause()  # GUI 일시정지 체크
-        if _was_paused:
-            _verify_customer_list_after_resume()
+        check_pause()  # GUI 일시정지 체크
 
         log(u"        [%d/%d] %s 클릭..." % (i + 1, total_to_process, name))
 
@@ -1245,7 +1043,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                     log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                     try:
                         from verify_customer_integrated_view import verify_customer_integrated_view
-                        view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=DEV_DIR)
+                        view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
                         log(u"        -> 고객통합뷰 처리 완료")
                         # 고객 상세정보 병합
                         if isinstance(view_result, dict):
@@ -1263,50 +1061,65 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                                 'gender': customer.get(u'성별', u''),
                                 'email': customer.get(u'이메일', u''),
                             }
-                            _append_customer_result(view_result, chosung_name)
+                            _chosung_customer_results.append(view_result)
                     except Exception as e:
+                        # Jython/SikuliX 모듈 로딩 특성상 클래스명으로 비교
+                        # (cross-module 예외 클래스 identity 불일치 문제 회피)
+                        # 주의: SikuliX가 type()을 키보드 입력 함수로 오버라이드하므로 __class__ 사용
+                        err_type_name = e.__class__.__name__
                         err_msg = u"%s" % e
-                        log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
-                        # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
-                        try:
-                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
-                                sleep(2)
-                        except:
-                            pass  # 이미 닫혀있으면 무시
-                        # 오류 기록
-                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
-                    except:
-                        # Java 예외 (SikuliX FindFailed 등) - 이 고객 스킵, 다음 고객으로 계속
-                        try:
-                            exc_info = sys.exc_info()
+                        if err_type_name == 'NavigationResetRequired':
+                            # === 검증 실패 → 프로그램 종료 ===
                             _crash_log(u"")
                             _crash_log(u"    " + u"=" * 60)
-                            _crash_log(u"    [ERROR] 고객통합뷰 Java 예외 - 다음 고객으로 계속")
+                            _crash_log(u"    [FATAL] 검증 실패 - 프로그램 종료")
                             _crash_log(u"    " + u"=" * 60)
                             _crash_log(u"    고객명: %s" % name)
                             _crash_log(u"    초성: %s" % chosung_name)
                             _crash_log(u"    위치: N%d-S%d-R%d" % (nav_page, scroll_page, row_in_page))
-                            try:
-                                _crash_log(u"    오류 타입: %s" % exc_info[0])
-                                _crash_log(u"    오류 내용: %s" % exc_info[1])
-                            except:
-                                pass
+                            _crash_log(u"    원인: %s" % err_msg)
+                            _crash_log(u"    ")
+                            _crash_log(u"    → 문제 분석 후 --start-from '%s' 옵션으로 재개하세요." % name)
                             _crash_log(u"    " + u"=" * 60)
-                            _take_crash_screenshot(u"java_exception_%s" % name)
-                            save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, row_in_page)
-                        except:
-                            pass  # OOM 등으로 로깅조차 실패 시 무시하고 다음 고객으로
-                        # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                            _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
+                            # 에러 + 체크포인트 저장
+                            save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
+                            save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
+                            _close_log_file()
+                            raise SystemExit(1)
+                        else:
+                            log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
+                            # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                            try:
+                                from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                    click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                    log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                    sleep(2)
+                            except:
+                                pass  # 이미 닫혀있으면 무시
+                            # 오류 기록
+                            save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
+                    except:
+                        # Java 예외 (SikuliX FindFailed 등) - Python except Exception으로 안 잡힘
+                        exc_info = sys.exc_info()
+                        _crash_log(u"")
+                        _crash_log(u"    " + u"=" * 60)
+                        _crash_log(u"    [FATAL] 고객통합뷰 Java 예외 - 프로그램 종료")
+                        _crash_log(u"    " + u"=" * 60)
+                        _crash_log(u"    고객명: %s" % name)
+                        _crash_log(u"    초성: %s" % chosung_name)
+                        _crash_log(u"    위치: N%d-S%d-R%d" % (nav_page, scroll_page, row_in_page))
                         try:
-                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                sleep(2)
+                            _crash_log(u"    오류 타입: %s" % exc_info[0])
+                            _crash_log(u"    오류 내용: %s" % exc_info[1])
                         except:
                             pass
+                        _crash_log(u"    " + u"=" * 60)
+                        _take_crash_screenshot(u"FATAL_java_exception_%s" % name)
+                        save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, row_in_page)
+                        _close_log_file()
+                        raise SystemExit(1)
                     sleep(2)  # 화면 안정화 대기
 
             # 종료(x) 버튼 클릭
@@ -1348,8 +1161,14 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
 
         except SystemExit:
-            raise  # SystemExit는 절대 삼키지 않음 → 프로세스 종료
+            raise  # SystemExit는 절대 삼키지 않음 → 프로그램 종료
         except Exception as e:
+            # NavigationResetRequired가 inner try에서 안 잡혔을 경우 대비
+            err_type_name = e.__class__.__name__
+            if err_type_name == 'NavigationResetRequired':
+                log(u"        -> [FATAL] 검증 실패 (outer catch): %s" % e)
+                _close_log_file()
+                raise SystemExit(1)
             err_msg = u"%s" % e if isinstance(e, BaseException) else unicode(e)
             log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, err_msg))
             error_customers.append({
@@ -1363,33 +1182,24 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             # 오류 발생 고객 저장
             save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
         except:
-            # Java 예외 (SikuliX FindFailed 등) - outer 레벨, 다음 고객으로 계속
+            # Java 예외 (SikuliX FindFailed 등) - outer 레벨
+            exc_info = sys.exc_info()
+            _crash_log(u"")
+            _crash_log(u"=" * 60)
+            _crash_log(u"[FATAL] 고객 처리 중 Java 예외 - 프로그램 종료")
+            _crash_log(u"=" * 60)
+            _crash_log(u"고객명: %s" % name)
+            _crash_log(u"초성: %s" % chosung_name)
             try:
-                exc_info = sys.exc_info()
-                _crash_log(u"")
-                _crash_log(u"=" * 60)
-                _crash_log(u"[ERROR] 고객 처리 중 Java 예외 - 다음 고객으로 계속")
-                _crash_log(u"=" * 60)
-                _crash_log(u"고객명: %s" % name)
-                _crash_log(u"초성: %s" % chosung_name)
-                try:
-                    _crash_log(u"오류 타입: %s" % exc_info[0])
-                    _crash_log(u"오류 내용: %s" % exc_info[1])
-                except:
-                    pass
-                _crash_log(u"=" * 60)
-                _take_crash_screenshot(u"java_exception_outer_%s" % name)
-                save_error(name, u"Java exception (outer)", chosung_name, nav_page, scroll_page, row_in_page)
-            except:
-                pass  # OOM 등으로 로깅조차 실패 시 무시하고 다음 고객으로
-            # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
-            try:
-                from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                    click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                    sleep(2)
+                _crash_log(u"오류 타입: %s" % exc_info[0])
+                _crash_log(u"오류 내용: %s" % exc_info[1])
             except:
                 pass
+            _crash_log(u"=" * 60)
+            _take_crash_screenshot(u"FATAL_outer_java_%s" % name)
+            save_error(name, u"Java exception (outer)", chosung_name, nav_page, scroll_page, row_in_page)
+            _close_log_file()
+            raise SystemExit(1)
 
     log(u"      [고객처리] %d명 처리 완료" % processed)
     return processed, error_customers, current_base_y
@@ -1582,10 +1392,9 @@ if SCROLL_TEST:
     if not os.path.exists(SCROLL_TEST_DIR):
         os.makedirs(SCROLL_TEST_DIR)
 
-# 에러/체크포인트 파일 경로 (CAPTURE_DIR에 저장 — 재개/리포트에 필요한 상태 데이터)
-ERROR_FILE = os.path.join(CAPTURE_DIR, u"errors.json")
-CHECKPOINT_FILE = os.path.join(CAPTURE_DIR, u"checkpoint.json")
-PROGRESS_LOG = os.path.join(CAPTURE_DIR, u"progress.log")
+# 에러/체크포인트 파일 경로
+ERROR_FILE = os.path.join(DEV_DIR, u"errors.json")
+CHECKPOINT_FILE = os.path.join(DEV_DIR, u"checkpoint.json")
 
 # 재개 위치 정보 (--resume 모드에서 사용)
 _resume_info = None
@@ -1627,7 +1436,6 @@ def save_error(customer_name, error_msg, chosung, nav_page, scroll_page, row_in_
             json.dump(errors, f, ensure_ascii=False, indent=2)
 
         log(u"    [ERROR_LOG] 오류 기록됨: %s (N%d-S%d-R%d)" % (customer_name, nav_page, scroll_page, row_in_page))
-        log_progress(u"[오류] %s \u2014 %s" % (customer_name, error_msg))
     except Exception as e:
         log(u"    [ERROR_LOG] 오류 기록 실패: %s" % str(e))
 
@@ -1651,108 +1459,8 @@ def save_checkpoint(customer_name, chosung, nav_page, scroll_page, row_in_page):
         log(u"    [CHECKPOINT] 저장 실패: %s" % str(e))
 
 
-def log_progress(msg):
-    """프로덕션 진행 로그 — 산출물 처리 위주 간결 기록 (CAPTURE_DIR/progress.log)"""
-    try:
-        import datetime
-        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        line = u"%s %s" % (ts, msg)
-        with codecs.open(PROGRESS_LOG, "a", "utf-8") as f:
-            f.write(line + u"\n")
-            f.flush()
-    except Exception:
-        pass  # 진행 로그 실패가 실행을 막으면 안 됨
-
-
-def _jython_safe_replace(tmp_path, target_path):
-    """Jython 2.7 호환 atomic 파일 교체 (os.replace는 Python 3.3+에서만 지원)"""
-    try:
-        if os.path.exists(target_path):
-            os.remove(target_path)
-        os.rename(tmp_path, target_path)
-    except Exception:
-        pass  # rename 실패 시 tmp 파일 잔존 (다음 시도에서 덮어쓰기)
-
-
-def _save_results_incremental(chosung_name):
-    """고객 결과를 즉시 디스크에 저장 (크래시 대비 증분 저장, atomic write)"""
-    if not _chosung_customer_results:
-        return
-    try:
-        path = os.path.join(CAPTURE_DIR, u"customer_results_%s.json" % chosung_name)
-        tmp_path = path + u".tmp"
-        with codecs.open(tmp_path, "w", "utf-8") as f:
-            json.dump(_chosung_customer_results, f, ensure_ascii=False, indent=2)
-        _jython_safe_replace(tmp_path, path)
-    except Exception:
-        pass  # 증분 저장 실패가 실행을 막으면 안 됨
-
-
-# ── 증분 리포트 비동기 생성 ──────────────────────────────
-_report_proc = None   # 비동기 subprocess (Popen 객체)
-_devnull_handle = None  # /dev/null 핸들 (atexit에서 정리)
-
-
-def _trigger_incremental_reports():
-    """고객 처리 완료 시마다 비동기(non-blocking) subprocess로 리포트 갱신.
-
-    - INTEGRATED_VIEW_ENABLED이 아니거나 SCROLL_TEST 시 스킵
-    - 이전 subprocess가 아직 실행 중이면 스킵 (누적 방지)
-    - Fire-and-forget: 실패해도 메인 처리에 영향 없음
-    """
-    global _report_proc, _devnull_handle
-    try:
-        if not INTEGRATED_VIEW_ENABLED or SCROLL_TEST:
-            return
-        # 이전 프로세스 아직 실행 중이면 스킵
-        if _report_proc is not None and _report_proc.poll() is None:
-            return
-        if _AC_EXE_PATH:
-            cmd = [_AC_EXE_PATH, "--run-reports", CAPTURE_DIR,
-                   "--timestamp", _REPORT_TIMESTAMP]
-        elif os.path.exists(GENERATE_REPORTS_SCRIPT):
-            cmd = ["python", GENERATE_REPORTS_SCRIPT, CAPTURE_DIR,
-                   "--timestamp", _REPORT_TIMESTAMP]
-        else:
-            return
-        if _devnull_handle is None:
-            _devnull_handle = open(os.devnull, 'w')
-        _report_proc = subprocess.Popen(
-            cmd, stdout=_devnull_handle, stderr=_devnull_handle)
-    except Exception:
-        pass  # 증분 리포트 실패가 메인 처리를 막으면 안 됨
-
-
-def _append_customer_result(view_result, chosung_name):
-    """고객 결과를 _chosung_customer_results에 추가 + 로그 + 증분 저장.
-
-    동명 고객도 각각 별도 결과로 저장 (행 단위 기계적 처리 원칙).
-    """
-    global _chosung_customer_results
-    _chosung_customer_results.append(view_result)
-    _log_customer_progress(view_result, chosung_name)
-
-
-def _log_customer_progress(view_result, chosung_name):
-    """고객 처리 완료 시 progress.log 기록 + 증분 저장"""
-    try:
-        cname = view_result.get(u"customer_name", u"?")
-        ar = view_result.get(u"annual_report", {})
-        vi = view_result.get(u"variable_insurance", {})
-        ar_text = u"AR:저장" if ar.get(u"saved") else (u"AR:미존재" if not ar.get(u"exists") else u"AR:실패")
-        vi_saved = vi.get(u"saved", 0)
-        vi_text = u"변액:%d건저장" % vi_saved if vi_saved else (u"변액:없음" if not vi.get(u"exists") else u"변액:실패")
-        idx = len(_chosung_customer_results)
-        log_progress(u"[고객] %s \u2014 %s %s (%d명완료)" % (cname, vi_text, ar_text, idx))
-    except Exception:
-        pass
-    _save_results_incremental(chosung_name)
-    _trigger_incremental_reports()
-
-
 # ★ 초성별 고객통합뷰 처리 결과 수집용
 _chosung_customer_results = []
-
 
 
 def generate_chosung_summary(chosung_name, total_rows, total_errors, error_customers, nav_page, global_page, elapsed_sec):
@@ -1837,26 +1545,15 @@ def generate_chosung_summary(chosung_name, total_rows, total_errors, error_custo
 
     log(u"=" * 70)
 
-    # ★ 초성별 고객 결과 JSON 저장 (리셋 전 디스크에 영속화, atomic write)
+    # ★ 초성별 고객 결과 JSON 저장 (리셋 전 디스크에 영속화)
     if results:
-        results_json_path = os.path.join(CAPTURE_DIR, u"customer_results_%s.json" % chosung_name)
-        tmp_path = results_json_path + u".tmp"
+        results_json_path = os.path.join(DEV_DIR, u"customer_results_%s.json" % chosung_name)
         try:
-            with codecs.open(tmp_path, "w", "utf-8") as f:
+            with codecs.open(results_json_path, "w", "utf-8") as f:
                 json.dump(results, f, ensure_ascii=False, indent=2)
-            _jython_safe_replace(tmp_path, results_json_path)
             log(u"  [저장] 고객 결과 JSON: %s (%d명)" % (os.path.basename(results_json_path), len(results)))
         except Exception as e:
             log(u"  [ERROR] 고객 결과 JSON 저장 실패: %s" % e)
-
-    # 진행 중인 비동기 리포트 프로세스 완료 대기 (다음 초성 시작 전)
-    if _report_proc is not None and _report_proc.poll() is None:
-        try:
-            _deadline = time.time() + 30
-            while _report_proc.poll() is None and time.time() < _deadline:
-                time.sleep(0.5)
-        except Exception:
-            pass
 
     # 결과 초기화 (다음 초성용)
     _chosung_customer_results = []
@@ -1928,135 +1625,77 @@ log("=" * 60)
 
 start_time = time.time()
 
-# 멀티 모니터 자동 감지 — MetLife가 보이는 화면 탐색
-_detect_active_screen()
-
 ###########################################
-# 1단계: 고객목록조회 메뉴 진입 (최대 3회 재시도)
+# 1단계: 고객목록조회 메뉴 진입
 ###########################################
-_NAV_MAX_RETRY = 3
-_nav_success = False
+log(u"\n[1단계] 고객목록조회 진입")
 
-for _nav_attempt in range(1, _NAV_MAX_RETRY + 1):
+try:
+    log(u"  [1-1] 메인 화면으로 이동...")
+    click("img/1769598099792.png")  # MetLife 로고 [100% 줌]
+    log(u"  [1-1] 메인 화면 로딩 대기 (10초)...")
+    sleep(10)
+
+    # 공지사항 팝업 닫기 (레이어링 대응 - 모두 닫을 때까지 반복)
+    log(u"  [1-1a] 공지사항 팝업 확인...")
+    dismiss_notice_popups()
+
+    log(u"  [1-2] 고객관리 클릭...")
+    _mgmt = find("img/1769598228284.png")  # 고객관리 탭 [100% 줌]
+    _debug_mark_click(_mgmt.getTarget().x, _mgmt.getTarget().y, "1-2 mgmt tab")
+    click(_mgmt)
+    sleep(5)  # 서브메뉴 열릴 시간 확보
+
+    # "고객등록 >"과 "고객관리 >"가 시각적으로 유사하여 오매칭 발생
+    # → 드롭다운은 고객관리 탭 아래~오른쪽에 나타남
+    #   상위 2행(계약정보, 고객등록)만 포함하여 "고객관리 >"(3번째 행) 제외
+    # → 템플릿도 현재 화면에서 재캡처 (기존 이미지는 렌더링 차이로 매칭 실패)
+    log(u"  [1-3] 고객등록 클릭...")
+    _dd_region = Region(int(_mgmt.x), int(_mgmt.y + _mgmt.h), int(_mgmt.w) + 60, 75)
+    _debug_mark_region(_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h, "1-3 search")
+    log(u"  [DEBUG] 고객관리 탭: x=%d y=%d w=%d h=%d" % (_mgmt.x, _mgmt.y, _mgmt.w, _mgmt.h))
+    log(u"  [DEBUG] 검색 영역: x=%d y=%d w=%d h=%d" % (_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h))
+    _dd_region.click("img/customer_reg_menu.png")  # 고객등록 [100% 줌] (재캡처 템플릿)
     try:
-        log(u"\n[1단계] 고객목록조회 진입 (시도 %d/%d)" % (_nav_attempt, _NAV_MAX_RETRY))
-
-        log(u"  [1-1] 메인 화면으로 이동...")
-        click("img/1769598099792.png")  # MetLife 로고 [100% 줌]
-        log(u"  [1-1] 메인 화면 로딩 대기 (10초)...")
-        sleep(10)
-
-        # 공지사항 팝업 닫기 (레이어링 대응 - 모두 닫을 때까지 반복)
-        log(u"  [1-1a] 공지사항 팝업 확인...")
-        dismiss_notice_popups()
-
-        log(u"  [1-2] 고객관리 클릭...")
-        _mgmt = find("img/1769598228284.png")  # 고객관리 탭 [100% 줌]
-        _debug_mark_click(_mgmt.getTarget().x, _mgmt.getTarget().y, "1-2 mgmt tab")
-        click(_mgmt)
-        sleep(5)  # 서브메뉴 열릴 시간 확보
-
-        # "고객등록 >"과 "고객관리 >"가 시각적으로 유사하여 오매칭 발생
-        # → 드롭다운은 고객관리 탭 아래~오른쪽에 나타남
-        #   상위 2행(계약정보, 고객등록)만 포함하여 "고객관리 >"(3번째 행) 제외
-        # → 템플릿도 현재 화면에서 재캡처 (기존 이미지는 렌더링 차이로 매칭 실패)
-        log(u"  [1-3] 고객등록 클릭...")
-        _dd_region = Region(int(_mgmt.x), int(_mgmt.y + _mgmt.h), int(_mgmt.w) + 60, 75)
-        _debug_mark_region(_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h, "1-3 search")
-        log(u"  [DEBUG] 고객관리 탭: x=%d y=%d w=%d h=%d" % (_mgmt.x, _mgmt.y, _mgmt.w, _mgmt.h))
-        log(u"  [DEBUG] 검색 영역: x=%d y=%d w=%d h=%d" % (_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h))
-        check_pause()  # Region.click은 래핑 불가 — 수동 체크
-        _dd_region.click("img/customer_reg_menu.png")  # 고객등록 [100% 줌] (재캡처 템플릿)
-        try:
-            _lm = _dd_region.getLastMatch()
-            _debug_mark_click(_lm.getTarget().x, _lm.getTarget().y, "1-3 reg click")
-        except:
-            pass
-        sleep(3)
-
-        log(u"  [1-4] 고객목록조회 클릭...")
-        click("img/1769598272319.png")  # 고객목록조회 [100% 줌]
-        sleep(5)
-
-        _nav_success = True
-        break  # 성공 시 재시도 루프 탈출
-
+        _lm = _dd_region.getLastMatch()
+        _debug_mark_click(_lm.getTarget().x, _lm.getTarget().y, "1-3 reg click")
     except:
-        # bare except: Java 예외(SikuliX FindFailed) + Python 예외 모두 캐치
-        exc_info = sys.exc_info()
-        log(u"  [1단계] 시도 %d 실패: %s" % (_nav_attempt, exc_info[1]))
-        _take_crash_screenshot(u"nav_retry_%d" % _nav_attempt)
+        pass
+    sleep(3)
 
-        if _nav_attempt < _NAV_MAX_RETRY:
-            _wait = 5 * _nav_attempt
-            log(u"  [1단계] %d초 후 재시도..." % _wait)
-            sleep(_wait)
-            _recover_after_resume()
-        else:
-            # 최종 실패 → 크래시 처리
-            _crash_log(u"")
-            _crash_log(u"=" * 60)
-            _crash_log(u"[FATAL] 1단계 네비게이션 %d회 재시도 모두 실패 - 프로세스 종료" % _NAV_MAX_RETRY)
-            _crash_log(u"=" * 60)
-            _crash_log(u"오류 타입: %s" % exc_info[0])
-            _crash_log(u"오류 내용: %s" % exc_info[1])
-            _crash_log(u"화면이 고객목록조회 메뉴에 접근 가능한 상태인지 확인하세요.")
-            _crash_log(u"")
-            _crash_log(u"스택 트레이스:")
-            try:
-                tb_str = traceback.format_exc()
-                for line in tb_str.split("\n"):
-                    if line.strip():
-                        _crash_log(u"  %s" % line)
-            except:
-                pass
-            _crash_log(u"=" * 60)
-            _take_crash_screenshot(u"FATAL_navigation_failed")
-            _close_log_file()
-            sys.exit(1)
+    log(u"  [1-4] 고객목록조회 클릭...")
+    click("img/1769598272319.png")  # 고객목록조회 [100% 줌]
+    sleep(5)
+
+except:
+    # bare except: Java 예외(SikuliX FindFailed) + Python 예외 모두 캐치
+    exc_info = sys.exc_info()
+    _crash_log(u"")
+    _crash_log(u"=" * 60)
+    _crash_log(u"[FATAL] 1단계 네비게이션 실패 - 프로그램 종료")
+    _crash_log(u"=" * 60)
+    _crash_log(u"오류 타입: %s" % exc_info[0])
+    _crash_log(u"오류 내용: %s" % exc_info[1])
+    _crash_log(u"화면이 고객목록조회 메뉴에 접근 가능한 상태인지 확인하세요.")
+    _crash_log(u"")
+    _crash_log(u"스택 트레이스:")
+    try:
+        tb_str = traceback.format_exc()
+        for line in tb_str.split("\n"):
+            if line.strip():
+                _crash_log(u"  %s" % line)
+    except:
+        pass
+    _crash_log(u"=" * 60)
+    _take_crash_screenshot(u"FATAL_navigation_failed")
+    _close_log_file()
+    raise SystemExit(1)
 
 log(u"[1단계 완료]")
 
 ###########################################
 # 2단계: 초성 버튼 클릭 및 고객 처리
 ###########################################
-
-# ── 스크롤 중복 감지: 첫 행 건너뛰기 + exact match ──
-
-def _find_scroll_overlap(prev_rows, curr_rows):
-    """이전 페이지와 현재 페이지의 overlap 행 수를 계산.
-
-    Page Down 스크롤 시 첫 행이 잘려 보일 수 있으므로 비교에서 제외하고,
-    나머지 행(2번째~)으로 exact match하여 overlap을 산출한다.
-    첫 행이 잘리지 않는 경우에도 동일하게 동작한다.
-
-    Args:
-        prev_rows: 이전 페이지 행 리스트 [(name, birth), ...]
-        curr_rows: 현재 페이지 행 리스트 [(name, birth), ...]
-
-    Returns:
-        int: overlap 행 수 (0이면 겹침 없음)
-    """
-    if not prev_rows or len(curr_rows) < 2:
-        return 0
-
-    # 현재 페이지 2번째 행부터 (항상 완전히 보이는 신뢰 가능한 행)
-    reliable = curr_rows[1:]
-
-    # reliable의 최장 prefix가 prev_rows의 suffix와 일치하는 길이 찾기
-    for match_len in range(min(len(prev_rows), len(reliable)), 0, -1):
-        if reliable[:match_len] == prev_rows[-match_len:]:
-            # match_len행이 겹침 + 첫 행 1개 (잘렸든 아니든 overlap의 일부)
-            overlap = match_len + 1
-            return min(overlap, len(curr_rows))
-
-    # reliable에서 매칭 없음 -- 첫 행만 겹칠 수 있음
-    if curr_rows[0] == prev_rows[-1]:
-        return 1
-
-    return 0
-
-
 log(u"\n[2단계] 초성 버튼 및 고객 처리")
 
 # 전체 통계 (모든 초성 합산)
@@ -2070,19 +1709,6 @@ ocr_consecutive_failures = 0  # 연속 실패 카운터
 for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     chosung_start_time = time.time()
     _chosung_customer_results = []  # 초성별 결과 초기화
-    # --resume: 이전 증분 저장된 결과가 있으면 복원
-    if RESUME_MODE:
-        _prev_results_path = os.path.join(CAPTURE_DIR, u"customer_results_%s.json" % chosung_name)
-        if os.path.exists(_prev_results_path):
-            try:
-                with codecs.open(_prev_results_path, "r", "utf-8") as _rf:
-                    _prev = json.load(_rf)
-                if _prev and isinstance(_prev, list):
-                    _chosung_customer_results = _prev
-                    log(u"  [RESUME] 이전 결과 복원: [%s] %d명" % (chosung_name, len(_prev)))
-            except Exception:
-                pass
-    log_progress(u"[시작] 초성: %s" % chosung_name)
     log(u"\n  === [%s] 초성 처리 시작 ===" % chosung_name)
     log(u"  [%s] 버튼 클릭..." % chosung_name)
     try:
@@ -2235,7 +1861,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                         if ocr_consecutive_failures >= MAX_OCR_FAILURES:
                             log(u"")
                             log(u"=" * 60)
-                            log(u"[FATAL] OCR %d회 연속 실패 - 프로세스 종료!" % MAX_OCR_FAILURES)
+                            log(u"[FATAL] OCR %d회 연속 실패 - 프로그램 종료!" % MAX_OCR_FAILURES)
                             log(u"        Upstage API 장애 가능성 있음")
                             log(u"        잠시 후 다시 시도하세요")
                             log(u"=" * 60)
@@ -2278,9 +1904,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                     except:
                                         pass
 
-                                    _was_paused = check_pause()  # GUI 일시정지 체크
-                                    if _was_paused:
-                                        _verify_customer_list_after_resume()
+                                    check_pause()  # GUI 일시정지 체크
                                     log(u"        [LAST] %s 클릭..." % name)
                                     try:
                                         row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))
@@ -2304,7 +1928,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                 log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                                                 try:
                                                     from verify_customer_integrated_view import verify_customer_integrated_view
-                                                    view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=DEV_DIR)
+                                                    view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
                                                     log(u"        -> 고객통합뷰 처리 완료")
                                                     if isinstance(view_result, dict):
                                                         if _last_customer_detail:
@@ -2321,48 +1945,54 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                             'gender': ocr_row.get(u'성별', u''),
                                                             'email': ocr_row.get(u'이메일', u''),
                                                         }
-                                                        _append_customer_result(view_result, chosung_name)
+                                                        _chosung_customer_results.append(view_result)
                                                 except Exception as e2:
+                                                    err_type_name = e2.__class__.__name__
                                                     err_msg = u"%s" % e2
-                                                    log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
-                                                    try:
-                                                        from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                                                        if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                                            click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                                            log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
-                                                            sleep(2)
-                                                    except:
-                                                        pass
-                                                    save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                                except:
-                                                    # Java 예외 (OOM, SikuliX 내부 오류 등) - 이 고객 스킵, 다음 고객으로 계속
-                                                    try:
-                                                        exc_info = sys.exc_info()
+                                                    if err_type_name == 'NavigationResetRequired':
                                                         _crash_log(u"")
                                                         _crash_log(u"    " + u"=" * 60)
-                                                        _crash_log(u"    [ERROR] 고객통합뷰 Java 예외 - 다음 고객으로 계속")
+                                                        _crash_log(u"    [FATAL] 검증 실패 - 프로그램 종료")
                                                         _crash_log(u"    " + u"=" * 60)
                                                         _crash_log(u"    고객명: %s" % name)
                                                         _crash_log(u"    초성: %s" % chosung_name)
                                                         _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                                        _crash_log(u"    원인: %s" % err_msg)
+                                                        _crash_log(u"    " + u"=" * 60)
+                                                        _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
+                                                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                        _close_log_file()
+                                                        raise SystemExit(1)
+                                                    else:
+                                                        log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
                                                         try:
-                                                            _crash_log(u"    오류 타입: %s" % exc_info[0])
-                                                            _crash_log(u"    오류 내용: %s" % exc_info[1])
+                                                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                                                log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                                                sleep(2)
                                                         except:
                                                             pass
-                                                        _crash_log(u"    " + u"=" * 60)
-                                                        _take_crash_screenshot(u"java_exception_%s" % name)
-                                                        save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                                    except:
-                                                        pass  # OOM 등으로 로깅조차 실패 시 무시하고 다음 고객으로
-                                                    # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                                                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                except:
+                                                    exc_info = sys.exc_info()
+                                                    _crash_log(u"")
+                                                    _crash_log(u"    " + u"=" * 60)
+                                                    _crash_log(u"    [FATAL] 고객통합뷰 Java 예외 - 프로그램 종료")
+                                                    _crash_log(u"    " + u"=" * 60)
+                                                    _crash_log(u"    고객명: %s" % name)
+                                                    _crash_log(u"    초성: %s" % chosung_name)
+                                                    _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
                                                     try:
-                                                        from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                                                        if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                                            click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                                            sleep(2)
+                                                        _crash_log(u"    오류 타입: %s" % exc_info[0])
+                                                        _crash_log(u"    오류 내용: %s" % exc_info[1])
                                                     except:
                                                         pass
+                                                    _crash_log(u"    " + u"=" * 60)
+                                                    _take_crash_screenshot(u"FATAL_java_exception_%s" % name)
+                                                    save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                    _close_log_file()
+                                                    raise SystemExit(1)
                                                 sleep(2)  # 화면 안정화 대기
 
                                         log(u"        -> 종료(x) 클릭...")
@@ -2380,21 +2010,6 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                             u"고객명": name,
                                             u"오류": str(e)
                                         })
-                                    except:
-                                        # Java Error (OOM 등) — post-VCIV cleanup 중 발생, 다음으로 계속
-                                        try:
-                                            _crash_log(u"[ERROR] 고객 처리 중 Java 예외 (last row) - 계속")
-                                            save_error(name, u"Java exception (last row)", chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                        except:
-                                            pass
-                                        # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
-                                        try:
-                                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                                sleep(2)
-                                        except:
-                                            pass
                         break  # 스크롤 루프 탈출
                 else:
                     # OCR 성공 시 연속 실패 카운터 리셋
@@ -2419,9 +2034,15 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                     if name:
                         current_rows.append((name, birth))
 
-                # 스크롤 중복 감지: 첫 행 건너뛰기 + exact match
-                # (스크롤 시 첫 행이 잘려 보일 수 있으므로 2번째 행부터 비교)
-                scroll_dups = _find_scroll_overlap(prev_page_rows, current_rows)
+                # 스크롤 중복 감지: 이전 페이지 끝과 현재 페이지 시작 비교
+                scroll_dups = 0
+                if prev_page_rows:
+                    # 이전 페이지 끝 N행과 현재 페이지 시작 N행이 얼마나 겹치는지 확인
+                    for overlap in range(min(len(prev_page_rows), len(current_rows)), 0, -1):
+                        # 이전 페이지 끝 overlap행 vs 현재 페이지 시작 overlap행
+                        if prev_page_rows[-overlap:] == current_rows[:overlap]:
+                            scroll_dups = overlap
+                            break
 
                 page_rows = len(current_rows) - scroll_dups
                 total_rows += page_rows
@@ -2517,7 +2138,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
                 # --only 모드: 대상 고객 처리 완료 시 즉시 종료
                 if ONLY_MODE and _only_all_done:
-                    log(u"\n    *** --only 모드: '%s' 처리 완료 (%d명) → 프로세스 종료 ***" % (ONLY_CUSTOMER, _only_found_count))
+                    log(u"\n    *** --only 모드: '%s' 처리 완료 (%d명) → 프로그램 종료 ***" % (ONLY_CUSTOMER, _only_found_count))
                     break
 
                 # No-OCR 모드: 빈 행 감지 시 스크롤 루프 탈출
@@ -2585,9 +2206,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                             except:
                                 pass
 
-                            _was_paused = check_pause()  # GUI 일시정지 체크
-                            if _was_paused:
-                                _verify_customer_list_after_resume()
+                            check_pause()  # GUI 일시정지 체크
                             log(u"        [LAST] %s 클릭..." % name)
                             try:
                                 row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))  # 16번째 행
@@ -2610,7 +2229,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                         log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                                         try:
                                             from verify_customer_integrated_view import verify_customer_integrated_view
-                                            view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=DEV_DIR)
+                                            view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
                                             log(u"        -> 고객통합뷰 처리 완료")
                                             if isinstance(view_result, dict):
                                                 if _last16_customer_detail:
@@ -2627,48 +2246,54 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                     'gender': ocr_row.get(u'성별', u''),
                                                     'email': ocr_row.get(u'이메일', u''),
                                                 }
-                                                _append_customer_result(view_result, chosung_name)
+                                                _chosung_customer_results.append(view_result)
                                         except Exception as e:
+                                            err_type_name = e.__class__.__name__
                                             err_msg = u"%s" % e
-                                            log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
-                                            try:
-                                                from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                                                if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                                    click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                                    log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
-                                                    sleep(2)
-                                            except:
-                                                pass
-                                            save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                        except:
-                                            # Java 예외 (OOM, SikuliX 내부 오류 등) - 이 고객 스킵, 다음 고객으로 계속
-                                            try:
-                                                exc_info = sys.exc_info()
+                                            if err_type_name == 'NavigationResetRequired':
                                                 _crash_log(u"")
                                                 _crash_log(u"    " + u"=" * 60)
-                                                _crash_log(u"    [ERROR] 고객통합뷰 Java 예외 - 다음 고객으로 계속")
+                                                _crash_log(u"    [FATAL] 검증 실패 - 프로그램 종료")
                                                 _crash_log(u"    " + u"=" * 60)
                                                 _crash_log(u"    고객명: %s" % name)
                                                 _crash_log(u"    초성: %s" % chosung_name)
                                                 _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                                _crash_log(u"    원인: %s" % err_msg)
+                                                _crash_log(u"    " + u"=" * 60)
+                                                _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
+                                                save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                _close_log_file()
+                                                raise SystemExit(1)
+                                            else:
+                                                log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
                                                 try:
-                                                    _crash_log(u"    오류 타입: %s" % exc_info[0])
-                                                    _crash_log(u"    오류 내용: %s" % exc_info[1])
+                                                    from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                                    if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                                        click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                                        log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                                        sleep(2)
                                                 except:
                                                     pass
-                                                _crash_log(u"    " + u"=" * 60)
-                                                _take_crash_screenshot(u"java_exception_%s" % name)
-                                                save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                            except:
-                                                pass  # OOM 등으로 로깅조차 실패 시 무시하고 다음 고객으로
-                                            # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                                                save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                        except:
+                                            exc_info = sys.exc_info()
+                                            _crash_log(u"")
+                                            _crash_log(u"    " + u"=" * 60)
+                                            _crash_log(u"    [FATAL] 고객통합뷰 Java 예외 - 프로그램 종료")
+                                            _crash_log(u"    " + u"=" * 60)
+                                            _crash_log(u"    고객명: %s" % name)
+                                            _crash_log(u"    초성: %s" % chosung_name)
+                                            _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
                                             try:
-                                                from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                                                if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                                    click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                                    sleep(2)
+                                                _crash_log(u"    오류 타입: %s" % exc_info[0])
+                                                _crash_log(u"    오류 내용: %s" % exc_info[1])
                                             except:
                                                 pass
+                                            _crash_log(u"    " + u"=" * 60)
+                                            _take_crash_screenshot(u"FATAL_java_exception_%s" % name)
+                                            save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                            _close_log_file()
+                                            raise SystemExit(1)
                                         sleep(2)  # 화면 안정화 대기
 
                                 log(u"        -> 종료(x) 클릭...")
@@ -2686,29 +2311,12 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                     u"고객명": name,
                                     u"오류": str(e)
                                 })
-                            except:
-                                # Java Error (OOM 등) — post-VCIV cleanup 중 발생, 다음으로 계속
-                                try:
-                                    _crash_log(u"[ERROR] 고객 처리 중 Java 예외 (16th row) - 계속")
-                                    save_error(name, u"Java exception (16th row)", chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                except:
-                                    pass
-                                # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
-                                try:
-                                    from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                                    if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                        click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                        sleep(2)
-                                except:
-                                    pass
 
                 log(u"    [네비 %d] 스크롤 페이지 %d개 완료" % (nav_page, scroll_page))
                 break  # 스크롤 루프 탈출
 
             # 6. 스크롤 (Page Down 키)
-            _was_paused = check_pause()  # GUI 일시정지 체크
-            if _was_paused:
-                _verify_customer_list_after_resume()
+            check_pause()  # GUI 일시정지 체크
             log(u"    [SCROLL] Page Down 스크롤...")
             scroll_page_down()
 
@@ -2744,10 +2352,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 header = find(IMG_CUSTNAME)
                 scroll_to_top(header)
             except:
-                try:
-                    _fatal_crash(u"다음 페이지 후 스크롤 맨 위 이동", chosung_name)
-                except Exception:
-                    pass  # _fatal_crash 내부에서 sys.exit(1) 호출됨 — 여기는 로깅 실패 시만
+                _fatal_crash(u"다음 페이지 후 스크롤 맨 위 이동", chosung_name)
             log(u"  [SCROLL] 스크롤 맨 위 완료")
 
             nav_page += 1
@@ -2760,7 +2365,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             # 진단용: 다음 버튼 없음 시점의 전체 화면 캡처
             try:
                 diag_path = os.path.join(DEV_DIR, "DIAG_no_next_btn_nav%d_%s.png" % (nav_page, chosung_name))
-                diag_cap = capture(_scr())
+                diag_cap = capture(Screen())
                 import shutil
                 shutil.copy(diag_cap, diag_path)
                 log(u"  [DIAG] 다음버튼 없음 진단 캡처: %s" % diag_path)
@@ -2774,8 +2379,6 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         chosung_name, total_rows, total_errors, error_customers,
         nav_page, global_page, chosung_elapsed
     )
-    _saved = len(_chosung_customer_results)
-    log_progress(u"[초성완료] %s \u2014 %d명 처리 (저장:%d, 오류:%d)" % (chosung_name, total_rows, _saved, total_errors))
 
     # 전체 통계에 합산
     all_total_rows += total_rows
@@ -2796,7 +2399,6 @@ if SCROLL_TEST:
 else:
     log(u"초성 버튼 테스트 완료!")
 log(u"소요 시간: %d분 %d초" % (minutes, seconds))
-log_progress(u"[완료] 전체 \u2014 %d명 처리, 오류:%d명, 소요: %d분 %d초" % (all_total_rows, len(all_error_customers), minutes, seconds))
 log(u"총 행수: %d행, 오류: %d명" % (all_total_rows, len(all_error_customers)))
 log(u"캡처/OCR 결과: %s" % CAPTURE_DIR)
 log(u"로그 파일: %s" % LOG_FILE)
@@ -2827,33 +2429,21 @@ else:
 
 log("=" * 60)
 
-# ★ 최종 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)
-# 증분 갱신으로 이미 최신 파일이 있지만, 마지막 비동기 프로세스가
-# 스킵됐을 수 있으므로 blocking으로 최종 1회 더 생성한다.
+# ★ 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)
 if INTEGRATED_VIEW_ENABLED and not SCROLL_TEST:
-    # 진행 중인 비동기 리포트 프로세스가 있으면 완료 대기
-    # Jython 2.7: wait(timeout=) 미지원 → polling 방식 사용
-    if _report_proc is not None and _report_proc.poll() is None:
-        try:
-            _deadline = time.time() + 30
-            while _report_proc.poll() is None and time.time() < _deadline:
-                time.sleep(0.5)
-        except Exception:
-            pass
+    GENERATE_REPORTS_SCRIPT = os.path.join(SCRIPT_DIR, "generate_reports.py")
     # 패키징 모드: generate_reports.py는 exe 내부에 번들되어 독립 파일로 존재하지 않음
     # → _AC_EXE_PATH가 있으면 .py 파일 존재 여부와 무관하게 exe --run-reports 사용
     if _AC_EXE_PATH:
-        report_cmd = [_AC_EXE_PATH, "--run-reports", CAPTURE_DIR,
-                      "--timestamp", _REPORT_TIMESTAMP]
+        report_cmd = [_AC_EXE_PATH, "--run-reports", CAPTURE_DIR]
     elif os.path.exists(GENERATE_REPORTS_SCRIPT):
-        report_cmd = ["python", GENERATE_REPORTS_SCRIPT, CAPTURE_DIR,
-                      "--timestamp", _REPORT_TIMESTAMP]
+        report_cmd = ["python", GENERATE_REPORTS_SCRIPT, CAPTURE_DIR]
     else:
         report_cmd = None
 
     if report_cmd:
         log(u"")
-        log(u"[3단계] 최종 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)...")
+        log(u"[3단계] 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)...")
         log(u"  명령: %s" % " ".join(report_cmd))
         try:
             report_result = subprocess.call(report_cmd)

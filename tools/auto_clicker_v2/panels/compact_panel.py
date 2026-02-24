@@ -45,15 +45,6 @@ class CompactPanel(ctk.CTkFrame):
         )
         self._toggle_btn.pack(side="left", padx=(3, 4), pady=3)
 
-        # 사용자 정보 ([DEV] 사용자명 — 타이틀바 없을 때 대체 표시)
-        self._user_info_label = ctk.CTkLabel(
-            self, text="",
-            font=ctk.CTkFont(family=_FONT, size=10),
-            text_color="#5dade2",
-        )
-        # 텍스트가 비어있으면 공간 차지 안 함 (pack 후 빈 텍스트면 자동 축소)
-        self._user_info_label.pack(side="left", padx=(0, 4), pady=3)
-
         # 선택한 초성
         self._chosung_label = ctk.CTkLabel(
             self, text="",
@@ -92,21 +83,13 @@ class CompactPanel(ctk.CTkFrame):
         self._activity_label.bind("<Button-1>", self._start_drag)
         self._activity_label.bind("<B1-Motion>", self._do_drag)
 
-        # 버전 (최우측 고정)
-        self._version_label = ctk.CTkLabel(
-            self, text="",
-            font=ctk.CTkFont(family=_FONT, size=9),
-            text_color="gray45"
-        )
-        self._version_label.pack(side="right", padx=(0, 4), pady=3)
-
-        # 소요시간 (버전 왼쪽)
+        # 소요시간 (우측)
         self._time_label = ctk.CTkLabel(
             self, text="",
             font=ctk.CTkFont(family=_FONT, size=10),
             text_color="gray60"
         )
-        self._time_label.pack(side="right", padx=(0, 2), pady=3)
+        self._time_label.pack(side="right", padx=(0, 4), pady=3)
 
     # --- 드래그 이동 ---
 
@@ -126,14 +109,6 @@ class CompactPanel(ctk.CTkFrame):
             self._on_toggle()
 
     # --- 외부에서 호출하는 상태 동기화 ---
-
-    def set_user_info(self, text: str):
-        """사용자 정보 표시 ([DEV] 사용자명)"""
-        self._user_info_label.configure(text=text)
-
-    def set_version(self, version: str):
-        """버전 표시"""
-        self._version_label.configure(text=f"v{version}")
 
     def set_chosung(self, chosung: str):
         """선택한 초성 표시"""

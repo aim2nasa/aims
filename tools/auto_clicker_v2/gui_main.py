@@ -13,7 +13,6 @@ from tkinter import filedialog, messagebox
 
 from app_state import AppState
 from data_source import LiveProcessSource
-from notification_blocker import NotificationBlocker
 from path_helper import get_app_dir, get_version_file, get_output_dir, is_frozen
 
 _BASE_DIR = get_app_dir()
@@ -147,21 +146,11 @@ class AutoClickerApp(ctk.CTk):
             import tkinter as _tk
             _tmp = _tk.Tk()
             _tmp.withdraw()
-            try:
-                _ico = os.path.join(sys._MEIPASS, "autoclicker.ico") if getattr(sys, "frozen", False) else os.path.join(_BASE_DIR, "autoclicker.ico")
-                if os.path.exists(_ico):
-                    _tmp.iconbitmap(_ico)
-            except Exception:
-                pass
             messagebox.showwarning("AutoClicker", "이미 실행 중입니다.\n기존 창을 사용하세요.", parent=_tmp)
             _tmp.destroy()
             raise SystemExit(0)
 
         super().__init__()
-
-        # ── 알림 차단: 이전 크래시로 남은 차단 상태 복원 ──
-        NotificationBlocker.recover_if_needed()
-        self._notif_blocker = NotificationBlocker()
 
         self.title(f"AutoClicker v{_VERSION}")
         self._target_monitor = 0  # 0=자동, 1=모니터1, 2=모니터2
@@ -185,7 +174,6 @@ class AutoClickerApp(ctk.CTk):
         self._update_interval = 100
         self._is_compact = False
         self._dev_mode = False
-        self._user_name = ""
         self._cli_args = cli_args
         self._settings = {
             'chosungs': set(_CHOSUNGS),   # 기본: 전체 선택
@@ -246,8 +234,6 @@ class AutoClickerApp(ctk.CTk):
         self.attributes("-topmost", True)
 
         self._build_ui()
-        # _build_ui 완료 후 toolbar/compact 라벨에 DEV 모드 초기 상태 반영
-        self._update_user_info()
         # 개발자 모드 단축키 (Ctrl+Shift+D → PIN 입력 2단계)
         self.bind("<Control-Shift-D>", self._toggle_dev_mode)
         # 앱 닫기(X) = 실행 중인 SikuliX 프로세스 강제 종료 후 종료
@@ -281,29 +267,9 @@ class AutoClickerApp(ctk.CTk):
     # ===== 개발자 모드 =====
 
     def _update_title(self):
-        """타이틀바 텍스트 갱신 (dev 모드 시 [DEV] suffix, 인증 시 사용자 이름)"""
+        """타이틀바 텍스트 갱신 (dev 모드 시 [DEV] suffix)"""
         suffix = " [DEV]" if self._dev_mode else ""
-        name_part = f" — {self._user_name}" if self._user_name else ""
-        self.title(f"AutoClicker v{_VERSION}{suffix}{name_part}")
-        self._update_user_info()
-
-    def _update_user_info(self):
-        """툴바 + 컴팩트 패널의 사용자 정보 라벨 갱신 (타이틀바 없을 때 대체 표시)"""
-        parts = []
-        if self._dev_mode:
-            parts.append("[DEV]")
-        if self._user_name:
-            parts.append(self._user_name)
-        text = " ".join(parts)
-        if hasattr(self, "_user_info_label"):
-            self._user_info_label.configure(text=text)
-        if hasattr(self, "_compact_panel"):
-            self._compact_panel.set_user_info(text)
-
-    def set_user_name(self, name: str):
-        """인증된 사용자 이름 저장 및 타이틀 갱신"""
-        self._user_name = name
-        self._update_title()
+        self.title(f"AutoClicker v{_VERSION}{suffix}")
 
     def _toggle_dev_mode(self, event=None):
         """개발자 모드 토글 (Ctrl+Shift+D → PIN 입력 2단계)"""
@@ -543,14 +509,6 @@ class AutoClickerApp(ctk.CTk):
         )
         self._run_btn.pack(side="left", padx=(0, 4), pady=3)
 
-        # 사용자 정보 라벨 (DEV 모드 + 인증 사용자명 — 타이틀바 없을 때도 표시)
-        self._user_info_label = ctk.CTkLabel(
-            self._toolbar, text="",
-            font=ctk.CTkFont(family=_FONT, size=10),
-            text_color="#5dade2",
-        )
-        self._user_info_label.pack(side="left", padx=(4, 0), pady=3)
-
         # 컴팩트 모드 토글
         self._compact_btn = ctk.CTkButton(
             self._toolbar, text="\u2199 축소", width=56, height=22,
@@ -580,15 +538,7 @@ class AutoClickerApp(ctk.CTk):
         )
         # self._auto_compact_cb.pack(side="left", padx=(6, 0), pady=5)  # 임시 숨김
 
-        # 버전 (toolbar 최우측 — 타이틀바 없을 때도 표시)
-        self._toolbar_version = ctk.CTkLabel(
-            self._toolbar, text=f"v{_VERSION}",
-            font=ctk.CTkFont(family=_FONT, size=9),
-            text_color="gray45"
-        )
-        self._toolbar_version.pack(side="right", padx=(0, 6), pady=3)
-
-        # 상태 표시 (우측, 버전 왼쪽)
+        # 상태 표시 (우측)
         self._status_label = ctk.CTkLabel(
             self._toolbar, text="대기 중",
             font=ctk.CTkFont(family=_FONT, size=11), text_color="gray60"
@@ -648,7 +598,6 @@ class AutoClickerApp(ctk.CTk):
             self,
             on_toggle=self._toggle_compact,
         )
-        self._compact_panel.set_version(_VERSION)
 
     def _build_normal_content(self):
         self._normal_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -693,17 +642,12 @@ class AutoClickerApp(ctk.CTk):
 
         mode = self._settings['mode']
         target = self._settings['target']
-        self._debug_log("_start", f"mode={mode}, scroll_test={mode == 'scroll_test'}, target={target!r}")
         if mode in ('start_from', 'only') and not target:
             messagebox.showwarning(
                 "설정 오류",
                 "고객명을 입력해주세요.\n[설정] 버튼에서 고객명을 입력해주세요.",
             )
             return
-
-        # ── 알림 차단 시작 (SikuliX 실행 전) ──
-        self._notif_blocker.update_ac_hwnd(self.winfo_id())
-        self._notif_blocker.block()
 
         chosung = self._get_chosung_arg()
         self._source = LiveProcessSource(
@@ -745,8 +689,6 @@ class AutoClickerApp(ctk.CTk):
         self._debug_log("_stop", f"paused={self._source._paused if self._source else 'N/A'}")
         if self._source:
             self._source.stop()
-        # ── 알림 차단 해제 (원래 설정 복원) ──
-        self._notif_blocker.restore()
         self._run_btn.configure(
             text="실행", fg_color="#2d7d46", hover_color="#3a9957",
             state="normal",
@@ -762,9 +704,7 @@ class AutoClickerApp(ctk.CTk):
             self._apply_titlebar_style()
 
     def _on_close(self):
-        """앱 종료: 알림 복원 → 창 위치/모니터 저장 → SikuliX 프로세스 정리 → 앱 닫기"""
-        # ── 알림 차단 해제 (원래 설정 복원) ──
-        self._notif_blocker.restore()
+        """앱 종료: 창 위치/모니터 저장 → SikuliX 프로세스 정리 → 앱 닫기"""
         try:
             self._settings["window_x"] = self.winfo_x()
             self._settings["window_y"] = self.winfo_y()
@@ -843,9 +783,6 @@ class AutoClickerApp(ctk.CTk):
         )
 
         if source_done:
-            # ── 알림 차단 해제 (AC 실행 완료 → 원래 설정 복원) ──
-            self._notif_blocker.restore()
-
             self._debug_log("_poll_update SOURCE_DONE",
                             f"is_complete={self._state.is_complete}, "
                             f"is_running={self._source.is_running() if self._source else 'N/A'}, "
@@ -1464,13 +1401,7 @@ if __name__ == "__main__":
         _reports_idx = sys.argv.index("--run-reports")
         if _reports_idx + 1 < len(sys.argv):
             _output_dir = sys.argv[_reports_idx + 1]
-            _new_argv = [sys.argv[0], _output_dir]
-            # --timestamp를 위치 무관하게 파싱하여 전달
-            if "--timestamp" in sys.argv:
-                _ts_idx = sys.argv.index("--timestamp")
-                if _ts_idx + 1 < len(sys.argv):
-                    _new_argv.extend(["--timestamp", sys.argv[_ts_idx + 1]])
-            sys.argv = _new_argv
+            sys.argv = [sys.argv[0], _output_dir]
             # generate_reports 모듈 경로 (frozen: _MEIPASS, dev: 현재 디렉토리)
             if getattr(sys, 'frozen', False):
                 _reports_dir = sys._MEIPASS
@@ -1525,7 +1456,7 @@ if __name__ == "__main__":
     app = AutoClickerApp(cli_args=cli_args, authenticated=authenticated)
 
     if user_name:
-        app.set_user_name(user_name)
+        app.title(f"{app.title()} — {user_name}")
 
     # tkinter 콜백 예외도 파일에 기록
     def _tk_exception_handler(exc_type, exc_value, exc_tb):

@@ -80,7 +80,9 @@ Source: "updater.bat"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{app}\output"
 
 [Icons]
-; 바탕화면 바로가기 없음 — URI Scheme(aims-ac://)으로만 실행
+; 바탕화면 바로가기 (선택)
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; \
+    Comment: "AIMS AutoClicker - 보험사 자동수집 도구"
 
 [Registry]
 ; aims-ac:// URI Scheme 등록 (HKCU - 관리자 권한 불필요)
