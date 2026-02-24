@@ -590,14 +590,14 @@ sys.excepthook = _global_exception_handler
 
 
 def _fatal_crash(context, chosung, exception=None):
-    """인프라 크래시 시 상세 로그 → run_*.log + debug_log.txt + 프로그램 종료
+    """인프라 크래시 시 상세 로그 → run_*.log + debug_log.txt + 프로세스 종료
 
     SikuliX FindFailed는 Java 예외이므로 except Exception으로 잡히지 않음.
     bare except: + sys.exc_info()로 잡아야 함.
     """
     _crash_log(u"")
     _crash_log(u"=" * 60)
-    _crash_log(u"[FATAL] 크래시 발생 - 프로그램 종료")
+    _crash_log(u"[FATAL] 크래시 발생 - 프로세스 종료")
     _crash_log(u"=" * 60)
     _crash_log(u"위치: %s" % context)
     _crash_log(u"초성: %s" % chosung)
@@ -624,7 +624,7 @@ def _fatal_crash(context, chosung, exception=None):
     _crash_log(u"=" * 60)
     _take_crash_screenshot(u"FATAL")
     _close_log_file()
-    raise SystemExit(1)
+    sys.exit(1)
 
 
 # 헬퍼 함수
@@ -1279,25 +1279,34 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                         # 오류 기록
                         save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
                     except:
-                        # Java 예외 (SikuliX FindFailed 등) - Python except Exception으로 안 잡힘
-                        exc_info = sys.exc_info()
-                        _crash_log(u"")
-                        _crash_log(u"    " + u"=" * 60)
-                        _crash_log(u"    [FATAL] 고객통합뷰 Java 예외 - 프로그램 종료")
-                        _crash_log(u"    " + u"=" * 60)
-                        _crash_log(u"    고객명: %s" % name)
-                        _crash_log(u"    초성: %s" % chosung_name)
-                        _crash_log(u"    위치: N%d-S%d-R%d" % (nav_page, scroll_page, row_in_page))
+                        # Java 예외 (SikuliX FindFailed 등) - 이 고객 스킵, 다음 고객으로 계속
                         try:
-                            _crash_log(u"    오류 타입: %s" % exc_info[0])
-                            _crash_log(u"    오류 내용: %s" % exc_info[1])
+                            exc_info = sys.exc_info()
+                            _crash_log(u"")
+                            _crash_log(u"    " + u"=" * 60)
+                            _crash_log(u"    [ERROR] 고객통합뷰 Java 예외 - 다음 고객으로 계속")
+                            _crash_log(u"    " + u"=" * 60)
+                            _crash_log(u"    고객명: %s" % name)
+                            _crash_log(u"    초성: %s" % chosung_name)
+                            _crash_log(u"    위치: N%d-S%d-R%d" % (nav_page, scroll_page, row_in_page))
+                            try:
+                                _crash_log(u"    오류 타입: %s" % exc_info[0])
+                                _crash_log(u"    오류 내용: %s" % exc_info[1])
+                            except:
+                                pass
+                            _crash_log(u"    " + u"=" * 60)
+                            _take_crash_screenshot(u"java_exception_%s" % name)
+                            save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, row_in_page)
+                        except:
+                            pass  # OOM 등으로 로깅조차 실패 시 무시하고 다음 고객으로
+                        # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                        try:
+                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                sleep(2)
                         except:
                             pass
-                        _crash_log(u"    " + u"=" * 60)
-                        _take_crash_screenshot(u"FATAL_java_exception_%s" % name)
-                        save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, row_in_page)
-                        _close_log_file()
-                        raise SystemExit(1)
                     sleep(2)  # 화면 안정화 대기
 
             # 종료(x) 버튼 클릭
@@ -1339,7 +1348,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
 
         except SystemExit:
-            raise  # SystemExit는 절대 삼키지 않음 → 프로그램 종료
+            raise  # SystemExit는 절대 삼키지 않음 → 프로세스 종료
         except Exception as e:
             err_msg = u"%s" % e if isinstance(e, BaseException) else unicode(e)
             log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, err_msg))
@@ -1354,24 +1363,33 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             # 오류 발생 고객 저장
             save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
         except:
-            # Java 예외 (SikuliX FindFailed 등) - outer 레벨
-            exc_info = sys.exc_info()
-            _crash_log(u"")
-            _crash_log(u"=" * 60)
-            _crash_log(u"[FATAL] 고객 처리 중 Java 예외 - 프로그램 종료")
-            _crash_log(u"=" * 60)
-            _crash_log(u"고객명: %s" % name)
-            _crash_log(u"초성: %s" % chosung_name)
+            # Java 예외 (SikuliX FindFailed 등) - outer 레벨, 다음 고객으로 계속
             try:
-                _crash_log(u"오류 타입: %s" % exc_info[0])
-                _crash_log(u"오류 내용: %s" % exc_info[1])
+                exc_info = sys.exc_info()
+                _crash_log(u"")
+                _crash_log(u"=" * 60)
+                _crash_log(u"[ERROR] 고객 처리 중 Java 예외 - 다음 고객으로 계속")
+                _crash_log(u"=" * 60)
+                _crash_log(u"고객명: %s" % name)
+                _crash_log(u"초성: %s" % chosung_name)
+                try:
+                    _crash_log(u"오류 타입: %s" % exc_info[0])
+                    _crash_log(u"오류 내용: %s" % exc_info[1])
+                except:
+                    pass
+                _crash_log(u"=" * 60)
+                _take_crash_screenshot(u"java_exception_outer_%s" % name)
+                save_error(name, u"Java exception (outer)", chosung_name, nav_page, scroll_page, row_in_page)
+            except:
+                pass  # OOM 등으로 로깅조차 실패 시 무시하고 다음 고객으로
+            # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+            try:
+                from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                    click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                    sleep(2)
             except:
                 pass
-            _crash_log(u"=" * 60)
-            _take_crash_screenshot(u"FATAL_outer_java_%s" % name)
-            save_error(name, u"Java exception (outer)", chosung_name, nav_page, scroll_page, row_in_page)
-            _close_log_file()
-            raise SystemExit(1)
 
     log(u"      [고객처리] %d명 처리 완료" % processed)
     return processed, error_customers, current_base_y
@@ -1978,7 +1996,7 @@ for _nav_attempt in range(1, _NAV_MAX_RETRY + 1):
             # 최종 실패 → 크래시 처리
             _crash_log(u"")
             _crash_log(u"=" * 60)
-            _crash_log(u"[FATAL] 1단계 네비게이션 %d회 재시도 모두 실패 - 프로그램 종료" % _NAV_MAX_RETRY)
+            _crash_log(u"[FATAL] 1단계 네비게이션 %d회 재시도 모두 실패 - 프로세스 종료" % _NAV_MAX_RETRY)
             _crash_log(u"=" * 60)
             _crash_log(u"오류 타입: %s" % exc_info[0])
             _crash_log(u"오류 내용: %s" % exc_info[1])
@@ -1995,7 +2013,7 @@ for _nav_attempt in range(1, _NAV_MAX_RETRY + 1):
             _crash_log(u"=" * 60)
             _take_crash_screenshot(u"FATAL_navigation_failed")
             _close_log_file()
-            raise SystemExit(1)
+            sys.exit(1)
 
 log(u"[1단계 완료]")
 
@@ -2217,7 +2235,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                         if ocr_consecutive_failures >= MAX_OCR_FAILURES:
                             log(u"")
                             log(u"=" * 60)
-                            log(u"[FATAL] OCR %d회 연속 실패 - 프로그램 종료!" % MAX_OCR_FAILURES)
+                            log(u"[FATAL] OCR %d회 연속 실패 - 프로세스 종료!" % MAX_OCR_FAILURES)
                             log(u"        Upstage API 장애 가능성 있음")
                             log(u"        잠시 후 다시 시도하세요")
                             log(u"=" * 60)
@@ -2317,24 +2335,34 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                         pass
                                                     save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
                                                 except:
-                                                    exc_info = sys.exc_info()
-                                                    _crash_log(u"")
-                                                    _crash_log(u"    " + u"=" * 60)
-                                                    _crash_log(u"    [FATAL] 고객통합뷰 Java 예외 - 프로그램 종료")
-                                                    _crash_log(u"    " + u"=" * 60)
-                                                    _crash_log(u"    고객명: %s" % name)
-                                                    _crash_log(u"    초성: %s" % chosung_name)
-                                                    _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                                    # Java 예외 (OOM, SikuliX 내부 오류 등) - 이 고객 스킵, 다음 고객으로 계속
                                                     try:
-                                                        _crash_log(u"    오류 타입: %s" % exc_info[0])
-                                                        _crash_log(u"    오류 내용: %s" % exc_info[1])
+                                                        exc_info = sys.exc_info()
+                                                        _crash_log(u"")
+                                                        _crash_log(u"    " + u"=" * 60)
+                                                        _crash_log(u"    [ERROR] 고객통합뷰 Java 예외 - 다음 고객으로 계속")
+                                                        _crash_log(u"    " + u"=" * 60)
+                                                        _crash_log(u"    고객명: %s" % name)
+                                                        _crash_log(u"    초성: %s" % chosung_name)
+                                                        _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                                        try:
+                                                            _crash_log(u"    오류 타입: %s" % exc_info[0])
+                                                            _crash_log(u"    오류 내용: %s" % exc_info[1])
+                                                        except:
+                                                            pass
+                                                        _crash_log(u"    " + u"=" * 60)
+                                                        _take_crash_screenshot(u"java_exception_%s" % name)
+                                                        save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                    except:
+                                                        pass  # OOM 등으로 로깅조차 실패 시 무시하고 다음 고객으로
+                                                    # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                                                    try:
+                                                        from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                                        if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                                            click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                                            sleep(2)
                                                     except:
                                                         pass
-                                                    _crash_log(u"    " + u"=" * 60)
-                                                    _take_crash_screenshot(u"FATAL_java_exception_%s" % name)
-                                                    save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                                    _close_log_file()
-                                                    raise SystemExit(1)
                                                 sleep(2)  # 화면 안정화 대기
 
                                         log(u"        -> 종료(x) 클릭...")
@@ -2352,6 +2380,21 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                             u"고객명": name,
                                             u"오류": str(e)
                                         })
+                                    except:
+                                        # Java Error (OOM 등) — post-VCIV cleanup 중 발생, 다음으로 계속
+                                        try:
+                                            _crash_log(u"[ERROR] 고객 처리 중 Java 예외 (last row) - 계속")
+                                            save_error(name, u"Java exception (last row)", chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                        except:
+                                            pass
+                                        # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                                        try:
+                                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                                sleep(2)
+                                        except:
+                                            pass
                         break  # 스크롤 루프 탈출
                 else:
                     # OCR 성공 시 연속 실패 카운터 리셋
@@ -2474,7 +2517,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
                 # --only 모드: 대상 고객 처리 완료 시 즉시 종료
                 if ONLY_MODE and _only_all_done:
-                    log(u"\n    *** --only 모드: '%s' 처리 완료 (%d명) → 프로그램 종료 ***" % (ONLY_CUSTOMER, _only_found_count))
+                    log(u"\n    *** --only 모드: '%s' 처리 완료 (%d명) → 프로세스 종료 ***" % (ONLY_CUSTOMER, _only_found_count))
                     break
 
                 # No-OCR 모드: 빈 행 감지 시 스크롤 루프 탈출
@@ -2598,24 +2641,34 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                 pass
                                             save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
                                         except:
-                                            exc_info = sys.exc_info()
-                                            _crash_log(u"")
-                                            _crash_log(u"    " + u"=" * 60)
-                                            _crash_log(u"    [FATAL] 고객통합뷰 Java 예외 - 프로그램 종료")
-                                            _crash_log(u"    " + u"=" * 60)
-                                            _crash_log(u"    고객명: %s" % name)
-                                            _crash_log(u"    초성: %s" % chosung_name)
-                                            _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                            # Java 예외 (OOM, SikuliX 내부 오류 등) - 이 고객 스킵, 다음 고객으로 계속
                                             try:
-                                                _crash_log(u"    오류 타입: %s" % exc_info[0])
-                                                _crash_log(u"    오류 내용: %s" % exc_info[1])
+                                                exc_info = sys.exc_info()
+                                                _crash_log(u"")
+                                                _crash_log(u"    " + u"=" * 60)
+                                                _crash_log(u"    [ERROR] 고객통합뷰 Java 예외 - 다음 고객으로 계속")
+                                                _crash_log(u"    " + u"=" * 60)
+                                                _crash_log(u"    고객명: %s" % name)
+                                                _crash_log(u"    초성: %s" % chosung_name)
+                                                _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                                try:
+                                                    _crash_log(u"    오류 타입: %s" % exc_info[0])
+                                                    _crash_log(u"    오류 내용: %s" % exc_info[1])
+                                                except:
+                                                    pass
+                                                _crash_log(u"    " + u"=" * 60)
+                                                _take_crash_screenshot(u"java_exception_%s" % name)
+                                                save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                            except:
+                                                pass  # OOM 등으로 로깅조차 실패 시 무시하고 다음 고객으로
+                                            # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                                            try:
+                                                from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                                if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                                    click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                                    sleep(2)
                                             except:
                                                 pass
-                                            _crash_log(u"    " + u"=" * 60)
-                                            _take_crash_screenshot(u"FATAL_java_exception_%s" % name)
-                                            save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
-                                            _close_log_file()
-                                            raise SystemExit(1)
                                         sleep(2)  # 화면 안정화 대기
 
                                 log(u"        -> 종료(x) 클릭...")
@@ -2633,6 +2686,21 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                     u"고객명": name,
                                     u"오류": str(e)
                                 })
+                            except:
+                                # Java Error (OOM 등) — post-VCIV cleanup 중 발생, 다음으로 계속
+                                try:
+                                    _crash_log(u"[ERROR] 고객 처리 중 Java 예외 (16th row) - 계속")
+                                    save_error(name, u"Java exception (16th row)", chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                except:
+                                    pass
+                                # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                                try:
+                                    from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                    if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                        click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                        sleep(2)
+                                except:
+                                    pass
 
                 log(u"    [네비 %d] 스크롤 페이지 %d개 완료" % (nav_page, scroll_page))
                 break  # 스크롤 루프 탈출
@@ -2676,7 +2744,10 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 header = find(IMG_CUSTNAME)
                 scroll_to_top(header)
             except:
-                _fatal_crash(u"다음 페이지 후 스크롤 맨 위 이동", chosung_name)
+                try:
+                    _fatal_crash(u"다음 페이지 후 스크롤 맨 위 이동", chosung_name)
+                except Exception:
+                    pass  # _fatal_crash 내부에서 sys.exit(1) 호출됨 — 여기는 로깅 실패 시만
             log(u"  [SCROLL] 스크롤 맨 위 완료")
 
             nav_page += 1

@@ -17,6 +17,7 @@
   java -jar sikulixide.jar -r verify_customer_integrated_view.py
 """
 
+import gc
 import os
 import sys
 import time
@@ -408,6 +409,19 @@ def log(msg):
             f.write(msg_unicode + u"\n")
 
 
+def cleanup_java_memory():
+    """Java 힙 메모리 정리 — 고객 처리 후 호출하여 OOM 방지"""
+    try:
+        from java.lang import System as JavaSystem
+        JavaSystem.gc()
+    except:
+        pass
+    try:
+        gc.collect()
+    except:
+        pass
+
+
 def log_error(report_number, error_msg):
     """
     오류 발생 시 별도 로그 파일에 기록
@@ -462,6 +476,7 @@ def capture_error_screenshot(report_number, step_name):
         # screenshots 폴더에도 동시 저장 (번호 연속성 보장)
         screenshots_path = os.path.join(SCREENSHOT_DIR, filename)
         shutil.copy(capture_file, screenshots_path)
+        capture = None  # Java BufferedImage 참조 해제
         log(u"    [ERROR SCREENSHOT #%03d] %s" % (seq_num, filename))
         return screenshot_path
     except Exception as e:
@@ -525,6 +540,7 @@ def capture_and_exit(reason):
         filename = "%03d_ERROR.png" % seq_num
         screenshot_path = os.path.join(SCREENSHOT_DIR, filename)
         shutil.copy(capture.getFile(), screenshot_path)
+        capture = None  # Java BufferedImage 참조 해제
         log(u"    [스크린샷 #%03d] %s" % (seq_num, filename))
     except Exception as e:
         log(u"    [WARN] 스크린샷 저장 실패: %s" % str(e))
@@ -1073,10 +1089,12 @@ def click_all_rows_with_scroll():
                 full_path = os.path.join(SCREENSHOT_DIR, full_filename)
                 shutil.copy(full_capture.getFile(), full_path)
                 log(u"    [스크린샷 #%03d] %s" % (seq_num, full_filename))
+                full_capture = None  # Java BufferedImage 참조 해제
 
                 # 비교용 부분 캡처 (별도 저장)
                 scroll_before_capture = Screen().capture(scroll_before_region)
                 scroll_before_img = scroll_before_capture.getFile()
+                scroll_before_capture = None  # Java BufferedImage 참조 해제
             except Exception:
                 pass
 
@@ -1102,10 +1120,12 @@ def click_all_rows_with_scroll():
                 full_path = os.path.join(SCREENSHOT_DIR, full_filename)
                 shutil.copy(full_capture.getFile(), full_path)
                 log(u"    [스크린샷 #%03d] %s" % (seq_num, full_filename))
+                full_capture = None  # Java BufferedImage 참조 해제
 
                 # 비교용 부분 캡처 (별도 저장)
                 scroll_after_capture = Screen().capture(scroll_before_region)
                 scroll_after_img = scroll_after_capture.getFile()
+                scroll_after_capture = None  # Java BufferedImage 참조 해제
             except Exception:
                 pass
 
@@ -1234,6 +1254,7 @@ def click_all_rows_with_scroll():
                     screenshot_path = os.path.join(SCREENSHOT_DIR, full_filename)
                     shutil.copy(full_capture.getFile(), screenshot_path)
                     log(u"        [스크린샷 #%03d] %s" % (seq_num, full_filename))
+                    full_capture = None  # Java BufferedImage 참조 해제
                 except Exception as e:
                     log(u"        [WARN] 스크린샷 저장 실패: %s" % str(e))
 
@@ -1254,33 +1275,43 @@ def click_all_rows_with_scroll():
                 else:
                     log(u"        [ERROR] PDF 저장 실패: %s" % pdf_result.get('error', 'unknown'))
                     # 실패 시 보고서 목록 복귀 확인 후 다음 보고서로 계속
-                    if not exists(IMG_REPORT_HEADER, 5):
-                        log(u"        [WARN] 보고서 목록 미복귀 - 복구 재시도")
-                        try:
-                            recover_to_report_list(total_clicked)
-                        except Exception:
-                            pass
+                    try:
+                        if not exists(IMG_REPORT_HEADER, 5):
+                            log(u"        [WARN] 보고서 목록 미복귀 - 복구 재시도")
+                            try:
+                                recover_to_report_list(total_clicked)
+                            except Exception:
+                                pass
+                    except:
+                        log(u"        [WARN] 보고서 목록 복귀 확인 중 오류 - 다음 보고서로 계속")
                     continue
 
-                # 변액보험리포트 창 복귀 대기
-                if exists(IMG_REPORT_HEADER, 15):
-                    log(u"        -> 변액보험리포트 창 복귀 확인")
-                    sleep(1.0)
-                else:
-                    log(u"        [WARN] 변액보험리포트 창 복귀 지연")
-                    sleep(WAIT_MEDIUM)
+                # 변액보험리포트 창 복귀 대기 + 알림 처리 (Java 오류 방어)
+                try:
+                    if exists(IMG_REPORT_HEADER, 15):
+                        log(u"        -> 변액보험리포트 창 복귀 확인")
+                        sleep(1.0)
+                    else:
+                        log(u"        [WARN] 변액보험리포트 창 복귀 지연")
+                        sleep(WAIT_MEDIUM)
 
-                # 알림 팝업 처리 (메트라이프 버그: 두 번 클릭 필요)
-                _alert1 = exists(IMG_ALERT_CONFIRM_BTN, 1)
-                if _alert1:
-                    click(_alert1)
-                    log(u"        [WARN] 알림 팝업 첫 번째 클릭")
-                    sleep(1)
-                    _alert2 = exists(IMG_ALERT_CONFIRM_BTN, 1)
-                    if _alert2:
-                        click(_alert2)
-                        log(u"        [WARN] 알림 팝업 두 번째 클릭")
+                    # 알림 팝업 처리 (메트라이프 버그: 두 번 클릭 필요)
+                    _alert1 = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                    if _alert1:
+                        click(_alert1)
+                        log(u"        [WARN] 알림 팝업 첫 번째 클릭")
                         sleep(1)
+                        _alert2 = exists(IMG_ALERT_CONFIRM_BTN, 1)
+                        if _alert2:
+                            click(_alert2)
+                            log(u"        [WARN] 알림 팝업 두 번째 클릭")
+                            sleep(1)
+                except:
+                    log(u"        [WARN] 보고서 목록 복귀 확인 중 오류 - 다음 보고서로 계속")
+
+                # 주기적 Java 메모리 정리 (스크린샷 BufferedImage 누적 OOM 방지)
+                if total_clicked % 5 == 0:
+                    cleanup_java_memory()
             else:
                 log(u"    [SKIP] 선택 버튼 안 나타남 - 빈 행 또는 이미 처리됨")
 
@@ -1358,6 +1389,7 @@ def capture_step_screenshot(report_num, step_name):
         filename = "%03d_report%02d_%s.png" % (seq_num, report_num, step_name)
         filepath = os.path.join(SCREENSHOT_DIR, filename)
         shutil.copy(capture.getFile(), filepath)
+        capture = None  # Java BufferedImage 참조 해제
         log(u"        [스크린샷 #%03d] %s" % (seq_num, filename))
         return filepath
     except Exception as e:
@@ -2774,6 +2806,7 @@ def capture_with_click_marker(click_x, click_y, label, report_num=0, step_name="
         screen = Screen()
         capture = screen.capture(screen.getBounds())
         img = ImageIO.read(File(capture.getFile()))
+        capture = None  # Java BufferedImage 참조 해제 (img는 별도 객체)
         g2d = img.createGraphics()
 
         # 빨간색 십자선 + 원
@@ -2833,6 +2866,7 @@ def capture_search_failure(description, img_path, wait_time, report_num=0, step_
         filename = "%03d_NOTFOUND_report%02d_%s_%dsec.png" % (seq_num, report_num, step_name, wait_time)
         filepath = os.path.join(SCREENSHOT_DIR, filename)
         shutil.copy(capture.getFile(), filepath)
+        capture = None  # Java BufferedImage 참조 해제
 
         log(u"    [SEARCH FAIL #%03d] '%s' 이미지 매칭 실패 (대기: %d초)" % (seq_num, description, wait_time))
         log(u"    [SEARCH FAIL #%03d] 이미지 파일: %s" % (seq_num, img_path))
@@ -2891,7 +2925,7 @@ def wait_and_click(img, description, wait_time=10, report_num=0, capture_click=T
 
 def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, output_dir=None):
     """
-    고객통합뷰 진입/종료 검증
+    고객통합뷰 진입/종료 검증 (메모리 정리 포함)
 
     Args:
         pdf_save_dir: PDF 저장 디렉토리 (None이면 기본 위치)
@@ -2901,6 +2935,14 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     Returns:
         bool: 검증 성공 여부
     """
+    try:
+        return _verify_customer_integrated_view_inner(pdf_save_dir, customer_name, output_dir)
+    finally:
+        cleanup_java_memory()
+
+
+def _verify_customer_integrated_view_inner(pdf_save_dir=None, customer_name=None, output_dir=None):
+    """고객통합뷰 진입/종료 검증 — 실제 구현"""
     # 외부에서 호출 시 출력 경로 설정 (스크린샷/에러/로그)
     # output_dir은 호출자의 DEV_DIR을 직접 전달받음 (dev/ 하위 폴더 중복 생성 방지)
     global SCREENSHOT_DIR, ERROR_DIR, ERROR_LOG_FILE, LOG_FILE
