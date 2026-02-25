@@ -31,6 +31,8 @@ Compression=lzma2/ultra64
 SolidCompression=yes
 ; UI
 WizardStyle=modern
+SetupIconFile=..\autoclicker.ico
+UninstallDisplayIcon={app}\{#MyAppExeName}
 ; 언인스톨러
 UninstallDisplayName={#MyAppName}
 ; 사일런트 업데이트 지원
