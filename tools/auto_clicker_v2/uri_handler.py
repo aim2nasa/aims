@@ -155,7 +155,8 @@ def handle_uri_launch(uri: str) -> int:
     # 5. GUI 시작
     from gui_main import AutoClickerApp
     app = AutoClickerApp(cli_args=cli_args, authenticated=True)
-    # 타이틀에 사용자 이름 표시
-    app.title(f"{app.title()} — {user.get('name', '')}")
+    # 사용자 이름 설정 → 타이틀바에 상시 표시
+    app._user_name = user.get("name", "")
+    app._update_title()
     app.mainloop()
     return 0

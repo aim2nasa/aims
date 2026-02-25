@@ -153,7 +153,9 @@ class AutoClickerApp(ctk.CTk):
 
         super().__init__()
 
-        self.title(f"AutoClicker v{_VERSION}")
+        self._user_name = ""  # 로그인 사용자명 (_update_title 전에 초기화)
+        self._dev_mode = False
+        self._update_title()
         self._target_monitor = 0  # 0=자동, 1=모니터1, 2=모니터2
         self.resizable(False, False)
 
@@ -174,7 +176,6 @@ class AutoClickerApp(ctk.CTk):
         self._source: LiveProcessSource | None = None
         self._update_interval = 100
         self._is_compact = False
-        self._dev_mode = False
         self._progress_logger: ProgressLogger | None = None
         self._cli_args = cli_args
         self._settings = {
@@ -269,9 +270,10 @@ class AutoClickerApp(ctk.CTk):
     # ===== 개발자 모드 =====
 
     def _update_title(self):
-        """타이틀바 텍스트 갱신 (dev 모드 시 [DEV] suffix)"""
+        """타이틀바 텍스트 갱신 (사용자명 + dev 모드 suffix)"""
         suffix = " [DEV]" if self._dev_mode else ""
-        self.title(f"AutoClicker v{_VERSION}{suffix}")
+        user = f" — {self._user_name}" if self._user_name else ""
+        self.title(f"AutoClicker v{_VERSION}{user}{suffix}")
 
     def _toggle_dev_mode(self, event=None):
         """개발자 모드 토글 (Ctrl+Shift+D → PIN 입력 2단계)"""
@@ -1483,7 +1485,8 @@ if __name__ == "__main__":
     app = AutoClickerApp(cli_args=cli_args, authenticated=authenticated)
 
     if user_name:
-        app.title(f"{app.title()} — {user_name}")
+        app._user_name = user_name
+        app._update_title()
 
     # tkinter 콜백 예외도 파일에 기록
     def _tk_exception_handler(exc_type, exc_value, exc_tb):
