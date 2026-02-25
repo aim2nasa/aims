@@ -53,6 +53,7 @@ from panels.customer_table import CustomerTablePanel
 from panels.log_view import LogViewPanel
 from panels.pdf_result import PdfResultPanel
 from panels.compact_panel import CompactPanel
+from progress_logger import ProgressLogger
 from settings_store import load_settings, save_settings
 
 COMPACT_HEIGHT = 47
@@ -174,6 +175,7 @@ class AutoClickerApp(ctk.CTk):
         self._update_interval = 100
         self._is_compact = False
         self._dev_mode = False
+        self._progress_logger: ProgressLogger | None = None
         self._cli_args = cli_args
         self._settings = {
             'chosungs': set(_CHOSUNGS),   # 기본: 전체 선택
@@ -538,12 +540,20 @@ class AutoClickerApp(ctk.CTk):
         )
         # self._auto_compact_cb.pack(side="left", padx=(6, 0), pady=5)  # 임시 숨김
 
+        # 버전 표시 (우측 끝)
+        self._version_label = ctk.CTkLabel(
+            self._toolbar, text=f"v{_VERSION}",
+            font=ctk.CTkFont(family=_FONT, size=9),
+            text_color="gray45",
+        )
+        self._version_label.pack(side="right", padx=(0, 6), pady=5)
+
         # 상태 표시 (우측)
         self._status_label = ctk.CTkLabel(
             self._toolbar, text="대기 중",
             font=ctk.CTkFont(family=_FONT, size=11), text_color="gray60"
         )
-        self._status_label.pack(side="right", padx=8, pady=5)
+        self._status_label.pack(side="right", padx=(8, 2), pady=5)
 
         # 미인증 + 프로덕션 빌드 → 설정/실행 버튼 비활성화
         if is_frozen() and not self._authenticated:
@@ -659,6 +669,10 @@ class AutoClickerApp(ctk.CTk):
             scroll_test=(mode == 'scroll_test'),
         )
 
+        # 프로덕션 진행 로그 (save_dir/progress.log)
+        progress_log_path = os.path.join(self._save_dir, "progress.log")
+        self._progress_logger = ProgressLogger(progress_log_path, chosung, mode)
+
         label = chosung or "전체"
         self._compact_panel.set_chosung(chosung)
         self._compact_panel.set_file_loaded(f"실행 중")
@@ -689,6 +703,10 @@ class AutoClickerApp(ctk.CTk):
         self._debug_log("_stop", f"paused={self._source._paused if self._source else 'N/A'}")
         if self._source:
             self._source.stop()
+        if self._progress_logger:
+            self._progress_logger._write("[중지] 사용자 중지")
+            self._progress_logger.close()
+            self._progress_logger = None
         self._run_btn.configure(
             text="실행", fg_color="#2d7d46", hover_color="#3a9957",
             state="normal",
@@ -764,6 +782,8 @@ class AutoClickerApp(ctk.CTk):
 
     def _on_event(self, event):
         self._state.process_event(event)
+        if self._progress_logger:
+            self._progress_logger.process_event(event)
 
     def _poll_update(self):
         # 실행 중 위치 강제 고정 (드래그 방지)
@@ -820,6 +840,13 @@ class AutoClickerApp(ctk.CTk):
                 state="normal",
             )
             self._close_btn.pack_forget()
+            # 프로덕션 로그 마무리
+            if self._progress_logger:
+                if not self._state.elapsed_time:
+                    # complete_time 이벤트 없이 종료된 경우 (크래시 등)
+                    self._progress_logger.write_summary()
+                self._progress_logger.close()
+                self._progress_logger = None
             # 완료 → 일반 모드: 타이틀바 복원 (topmost는 항상 유지)
             if not self._is_compact:
                 self.overrideredirect(False)

@@ -8,9 +8,20 @@
 - -toolwindow: 얇은 타이틀바, 드래그 내장, 싱글/듀얼 모니터 호환
 
 표시 형식:
-[⊞] 1명 | 팽재남: 변액:없음 AR:저장 | AR 다운로드 완료 | 3:25
+[⊞] 1명 | 팽재남: 변액:없음 AR:저장 | AR 다운로드 완료 | 3:25 v0.1.98
 """
 import customtkinter as ctk
+
+from path_helper import get_version_file
+
+
+def _read_version() -> str:
+    try:
+        with open(get_version_file(), "r") as f:
+            return f.read().strip()
+    except Exception:
+        return "0.0.0"
+
 
 # 통일 폰트
 _FONT = "맑은 고딕"
@@ -83,13 +94,21 @@ class CompactPanel(ctk.CTkFrame):
         self._activity_label.bind("<Button-1>", self._start_drag)
         self._activity_label.bind("<B1-Motion>", self._do_drag)
 
+        # 버전 표시 (우측 끝)
+        self._version_label = ctk.CTkLabel(
+            self, text=f"v{_read_version()}",
+            font=ctk.CTkFont(family=_FONT, size=9),
+            text_color="gray45",
+        )
+        self._version_label.pack(side="right", padx=(0, 4), pady=3)
+
         # 소요시간 (우측)
         self._time_label = ctk.CTkLabel(
             self, text="",
             font=ctk.CTkFont(family=_FONT, size=10),
             text_color="gray60"
         )
-        self._time_label.pack(side="right", padx=(0, 4), pady=3)
+        self._time_label.pack(side="right", padx=(0, 2), pady=3)
 
     # --- 드래그 이동 ---
 
