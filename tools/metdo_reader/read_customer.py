@@ -23,6 +23,13 @@ from pathlib import Path
 
 import httpx
 from html.parser import HTMLParser
+from io import BytesIO
+
+try:
+    from PIL import Image
+    _HAS_PIL = True
+except ImportError:
+    _HAS_PIL = False
 
 # ──────────────────────────────────────────────────────────
 # Upstage API 설정
@@ -34,11 +41,41 @@ MAX_RETRIES = 3
 RETRY_DELAYS = [5, 10, 20]
 RETRIABLE_STATUS_CODES = {500, 502, 503, 504, 429}
 
+# AC 콘솔 NORMAL 모드 X 좌표 (gui_main.py NORMAL_X=1376)
+# 이 값보다 넓은 이미지는 크롭하여 AC 콘솔 영역 제거
+_METDO_MAX_WIDTH = 1370
+
+
+def _crop_metdo_region(file_content: bytes) -> bytes:
+    """이미지가 MetDO + AC 콘솔 합성 화면이면 왼쪽 MetDO 영역만 크롭.
+
+    AC 콘솔은 x=1376부터 시작하므로, 1370px 이하로 크롭하면
+    OCR에 AC 콘솔 데이터가 포함되지 않습니다.
+    이미 크롭된 이미지(1370px 이하)는 그대로 반환합니다.
+    """
+    if not _HAS_PIL:
+        return file_content
+
+    img = Image.open(BytesIO(file_content))
+    w, h = img.size
+    if w <= _METDO_MAX_WIDTH:
+        return file_content
+
+    cropped = img.crop((0, 0, _METDO_MAX_WIDTH, h))
+    buf = BytesIO()
+    fmt = img.format or "PNG"
+    cropped.save(buf, format=fmt)
+    print(f"  이미지 크롭: {w}x{h} → {_METDO_MAX_WIDTH}x{h} (AC 콘솔 영역 제거)")
+    return buf.getvalue()
+
 
 def call_upstage_enhanced(image_path: str) -> dict:
     """Upstage Document Digitization API 호출 (Enhanced 모드) - 재시도 로직 포함"""
     with open(image_path, "rb") as f:
         file_content = f.read()
+
+    # AC 콘솔 영역 제거 (전체 화면 캡처인 경우)
+    file_content = _crop_metdo_region(file_content)
 
     filename = Path(image_path).name
     file_size_kb = len(file_content) / 1024
@@ -225,6 +262,14 @@ def clean_address_section(raw: str) -> str:
     """주소 섹션에서 끼어든 폼 라벨/UI 요소를 제거하고 주소만 추출"""
     if not raw:
         return None
+    # AC 콘솔 테이블 데이터 오염 감지 (방어적 검증)
+    # OCR이 AC 콘솔을 <figure>로 감싸지 않은 경우 테이블 데이터가 주소에 혼입됨
+    # 오염 시작점 이전의 실제 주소는 보존 (예: "18144 경기 오산시... No 고객명..." → "18144 경기 오산시...")
+    _AC_CONSOLE_PATTERNS = ["No 고객명", "[처리중]", "[스킬]", "[완료]", "스크립트 저장"]
+    for pat in _AC_CONSOLE_PATTERNS:
+        cut = raw.find(pat)
+        if cut >= 0:
+            raw = raw[:cut]
     s = raw
     # OCR 마크다운/HTML 태그 오염 제거 — 태그 시작 지점에서 잘라내기
     # (Upstage OCR이 이미지 설명을 마크다운으로 포함시킴)
