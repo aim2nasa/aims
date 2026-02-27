@@ -85,6 +85,13 @@ function simulateCustomerUpdate(existingCustomer, customer) {
     }
     changes.push('주소');
   }
+  // 주소 명시적 삭제: 엑셀에 주소 칼럼이 있지만 값이 비어있는 경우
+  else if (customer.address === '' && existingCustomer.personal_info?.address) {
+    if (hasPersonalInfo) {
+      updateFields['personal_info.address'] = null;
+      changes.push('주소 삭제');
+    }
+  }
 
   // 성별 비교/업데이트
   if (customer.gender) {
@@ -414,6 +421,83 @@ describe('고객 일괄등록 - MongoDB null 필드 업데이트', () => {
 
     const updatedDoc = await customersCollection.findOne({ _id: insertResult.insertedId });
     expect(updatedDoc.personal_info.address.address1).toBe('서울시 영등포구 여의도동 123');
+  });
+});
+
+// =============================================================================
+// 고객 일괄등록 - 주소 삭제 테스트
+// =============================================================================
+
+describe('고객 일괄등록 - 빈 주소로 기존 주소 삭제', () => {
+
+  test('빈 주소(\'\')로 기존 주소 삭제', async () => {
+    // Given: 주소가 있는 고객
+    const insertResult = await customersCollection.insertOne({
+      personal_info: { name: '주소삭제테스트', address: { address1: '서울시 강남구 역삼동' } },
+      insurance_info: { customer_type: '개인' },
+      meta: { created_at: new Date(), status: 'active' }
+    });
+
+    const existingDoc = await customersCollection.findOne({ _id: insertResult.insertedId });
+    expect(existingDoc.personal_info.address.address1).toBe('서울시 강남구 역삼동');
+
+    // When: 빈 주소로 업데이트 (엑셀에 주소 칼럼은 있지만 값이 비어있음)
+    const updateData = { name: '주소삭제테스트', address: '' };
+    const { changes, updateFields } = simulateCustomerUpdate(existingDoc, updateData);
+
+    // Then: 주소 삭제 변경사항 감지
+    expect(changes).toContain('주소 삭제');
+    expect(updateFields['personal_info.address']).toBeNull();
+
+    // 실제 업데이트 수행
+    await customersCollection.updateOne(
+      { _id: insertResult.insertedId },
+      { $set: updateFields }
+    );
+
+    const updatedDoc = await customersCollection.findOne({ _id: insertResult.insertedId });
+    expect(updatedDoc.personal_info.address).toBeNull();
+  });
+
+  test('undefined 주소(칼럼 없음)는 기존 주소 유지', async () => {
+    // Given: 주소가 있는 고객
+    const insertResult = await customersCollection.insertOne({
+      personal_info: { name: '주소유지테스트', address: { address1: '부산시 해운대구' } },
+      insurance_info: { customer_type: '개인' },
+      meta: { created_at: new Date(), status: 'active' }
+    });
+
+    const existingDoc = await customersCollection.findOne({ _id: insertResult.insertedId });
+
+    // When: address 속성 자체가 없음 (엑셀에 주소 칼럼 없음)
+    const updateData = { name: '주소유지테스트' };
+    const { changes, updateFields } = simulateCustomerUpdate(existingDoc, updateData);
+
+    // Then: 주소 관련 변경 없음
+    expect(changes).not.toContain('주소');
+    expect(changes).not.toContain('주소 삭제');
+    expect(updateFields['personal_info.address']).toBeUndefined();
+    expect(updateFields['personal_info.address.address1']).toBeUndefined();
+  });
+
+  test('이미 주소가 null인 고객에 빈 주소 전송 → 변경 없음', async () => {
+    // Given: 주소가 이미 null인 고객
+    const insertResult = await customersCollection.insertOne({
+      personal_info: { name: '주소없음테스트', address: null },
+      insurance_info: { customer_type: '개인' },
+      meta: { created_at: new Date(), status: 'active' }
+    });
+
+    const existingDoc = await customersCollection.findOne({ _id: insertResult.insertedId });
+    expect(existingDoc.personal_info.address).toBeNull();
+
+    // When: 빈 주소 전송 (이미 null이므로 변경 불필요)
+    const updateData = { name: '주소없음테스트', address: '' };
+    const { changes, updateFields } = simulateCustomerUpdate(existingDoc, updateData);
+
+    // Then: 변경 없음 (이미 null이므로 불필요한 업데이트 방지)
+    expect(changes).not.toContain('주소 삭제');
+    expect(updateFields['personal_info.address']).toBeUndefined();
   });
 });
 

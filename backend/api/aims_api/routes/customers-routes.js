@@ -529,6 +529,13 @@ router.post('/customers/bulk', authenticateJWT, async (req, res) => {
               changes.push('주소');
             }
           }
+          // 주소 명시적 삭제: 엑셀에 주소 칼럼이 있지만 값이 비어있는 경우
+          else if (customer.address === '' && existingCustomer.personal_info?.address) {
+            if (hasPersonalInfo) {
+              updateFields['personal_info.address'] = null;
+              changes.push('주소 삭제');
+            }
+          }
 
           // 성별 비교/업데이트 (개인 고객만)
           if (customer.gender) {

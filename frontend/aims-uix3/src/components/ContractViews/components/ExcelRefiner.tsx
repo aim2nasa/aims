@@ -2191,7 +2191,7 @@ export function ExcelRefiner() {
           }
           if (addressIdx !== -1) {
             const addr = cellToString(row[addressIdx] as CellValue).trim()
-            if (addr) customer.address = addr
+            customer.address = addr  // 빈 문자열도 명시적으로 전달 (주소 삭제 의도)
           }
           if (genderIdx !== -1) {
             const gender = cellToString(row[genderIdx] as CellValue).trim()
@@ -2232,7 +2232,7 @@ export function ExcelRefiner() {
           }
           if (addressIdx !== -1) {
             const addr = cellToString(row[addressIdx] as CellValue).trim()
-            if (addr) customer.address = addr
+            customer.address = addr  // 빈 문자열도 명시적으로 전달 (주소 삭제 의도)
           }
           allCustomers.push(customer)
           법인고객Count++
