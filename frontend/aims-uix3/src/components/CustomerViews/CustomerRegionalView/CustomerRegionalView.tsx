@@ -25,6 +25,8 @@ interface CustomerRegionalViewProps {
   selectedCustomer?: Customer | null
   /** 뷰 이동 핸들러 */
   onNavigate?: (viewKey: string) => void
+  /** 고객 더블클릭 핸들러 (전체보기 이동) */
+  onCustomerDoubleClick?: (customerId: string) => void
 }
 
 /**
@@ -49,7 +51,8 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   onClose,
   onCustomerClick,
   selectedCustomer,
-  onNavigate
+  onNavigate,
+  onCustomerDoubleClick
 }) => {
   // Document-View 패턴: CustomerDocument 구독
   const { customers, isLoading, loadCustomers, refresh } = useCustomerDocument()
@@ -135,6 +138,7 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
             await refresh({ limit: 10000 })
           }}
           {...(onNavigate && { onNavigate })}
+          onCustomerDoubleClick={onCustomerDoubleClick}
         />
       </CenterPaneView>
 

@@ -13,7 +13,7 @@
  * />
  * ```
  */
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import type { Customer } from '../../../entities/customer/model'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { usePersistedState } from '@/hooks/usePersistedState'
@@ -428,6 +428,8 @@ interface RegionalTreeViewProps {
   onRefresh?: () => void | Promise<void>
   /** 뷰 이동 핸들러 */
   onNavigate?: (viewKey: string) => void
+  /** 고객 더블클릭 시 호출 (전체보기 이동) */
+  onCustomerDoubleClick?: (customerId: string) => void
 }
 
 /**
@@ -460,7 +462,8 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   onCustomerClickFromMap,
   loading = false,
   onRefresh,
-  onNavigate
+  onNavigate,
+  onCustomerDoubleClick
 }) => {
   // F5 이후에도 트리 확장 상태 유지
   const [expandedKeys, setExpandedKeys] = usePersistedState<string[]>('customer-regional-expanded', ['no-address'])
@@ -497,6 +500,18 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
 
   // Geocoding 실패 고객 ID 목록 (지도에 표시 불가)
   const [geocodingFailedCustomers, setGeocodingFailedCustomers] = useState<Set<string>>(new Set())
+
+  // 싱글클릭/더블클릭 구분을 위한 타이머
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current)
+      }
+    }
+  }, [])
 
   // 1단계: 타입 필터만 적용된 고객 목록 (드롭다운 옵션 계산용)
   const typeFilteredCustomers = useMemo(() => {
@@ -901,10 +916,10 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     })
   }
 
-  // 고객 선택 핸들러
+  // 싱글클릭 핸들러 (더블클릭과 구분하기 위해 딜레이)
   const handleCustomerClick = (customer: Customer) => {
     if (onCustomerSelect && customer._id) {
-      // Geocoding 실패한 고객인 경우: 주소 수정 모달 열기
+      // Geocoding 실패한 고객인 경우: 즉시 주소 수정 모달 열기
       if (geocodingFailedCustomers.has(customer._id)) {
         setSelectedCustomerForAddress(customer)
         setIsAddressModalForGeocodingFailure(true)
@@ -912,27 +927,9 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         return
       }
 
-      // 해당 고객이 속한 폴더들을 자동으로 펼치기
+      // 주소 없는 고객인 경우: 즉시 주소 입력 모달 열기
       const address = customer.personal_info?.address?.address1
-      if (address) {
-        const parts = address.split(' ')
-        const rawCity = parts[0] || ''
-        const district = parts[1] || ''
-
-        if (rawCity && district) {
-          const city = normalizeProvinceName(rawCity)
-          const districtKey = `${city}-${district}`
-
-          // 시/도와 시/군/구 노드를 expandedKeys에 추가
-          setExpandedKeys(prev => {
-            const newSet = new Set(prev)
-            newSet.add(city) // 시/도 펼치기
-            newSet.add(districtKey) // 시/군/구 펼치기
-            return Array.from(newSet)
-          })
-        }
-      } else {
-        // 주소 없는 고객인 경우 "주소 미입력" 폴더 펼치기
+      if (!address) {
         setSelectedCustomerForAddress(customer)
         setIsAddressModalForGeocodingFailure(false)
         setIsAddressModalOpen(true)
@@ -941,15 +938,47 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           newSet.add('no-address')
           return Array.from(newSet)
         })
-        return // 모달에서 주소 입력 후 다시 처리
+        return
       }
 
-      // 로컬 선택 상태 업데이트 (지도 표시용)
-      setLocalSelectedCustomerId(customer._id)
+      // 정상 고객: 300ms 딜레이 (더블클릭 구분)
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = setTimeout(() => {
+        // 해당 고객이 속한 폴더들을 자동으로 펼치기
+        const parts = address.split(' ')
+        const rawCity = parts[0] || ''
+        const district = parts[1] || ''
 
-      onCustomerSelect(customer._id)
-      // 같은 고객을 다시 선택해도 지도가 이동하도록 타임스탬프 업데이트
-      setSelectionTimestamp(Date.now())
+        if (rawCity && district) {
+          const city = normalizeProvinceName(rawCity)
+          const districtKey = `${city}-${district}`
+
+          setExpandedKeys(prev => {
+            const newSet = new Set(prev)
+            newSet.add(city)
+            newSet.add(districtKey)
+            return Array.from(newSet)
+          })
+        }
+
+        // 로컬 선택 상태 업데이트 (지도 표시용)
+        setLocalSelectedCustomerId(customer._id!)
+
+        onCustomerSelect(customer._id!)
+        setSelectionTimestamp(Date.now())
+        clickTimerRef.current = null
+      }, 300)
+    }
+  }
+
+  // 더블클릭 핸들러 (싱글클릭 타이머 취소 후 전체보기)
+  const handleCustomerDoubleClick = (customer: Customer) => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
+    if (customer._id) {
+      onCustomerDoubleClick?.(customer._id)
     }
   }
 
@@ -1085,6 +1114,10 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
                   onClick={(e) => {
                     e.stopPropagation()
                     handleCustomerClick(customer)
+                  }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation()
+                    handleCustomerDoubleClick(customer)
                   }}
                 >
                   {getCustomerTypeIcon(customer)}
@@ -1303,11 +1336,12 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     </div>
   )
 }, (prevProps, nextProps) => {
-  // 커스텀 비교 함수: 고객 목록 길이와 선택된 ID만 비교
+  // 커스텀 비교 함수: 고객 목록 길이, 선택된 ID, 콜백 함수 비교
   return (
     prevProps.customers.length === nextProps.customers.length &&
     prevProps.selectedCustomerId === nextProps.selectedCustomerId &&
-    prevProps.loading === nextProps.loading
+    prevProps.loading === nextProps.loading &&
+    prevProps.onCustomerDoubleClick === nextProps.onCustomerDoubleClick
   )
 })
 

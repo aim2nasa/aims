@@ -1712,6 +1712,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onCustomerClick={handleCustomerClick}
               selectedCustomer={selectedCustomer}
               onNavigate={handleMenuClick}
+              onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
             />
           </Suspense>
 
