@@ -120,6 +120,9 @@ _atexit.register(_cleanup_on_exit)
 import datetime
 _now = datetime.datetime.now()
 _date_str = _now.strftime("%Y%m%d_%H%M%S")
+# 리포트 파일명 고정 타임스탬프 (증분 갱신 시 동일 파일명으로 덮어쓰기)
+_REPORT_TIMESTAMP = _now.strftime("%Y%m%d_%H%M")
+GENERATE_REPORTS_SCRIPT = os.path.join(SCRIPT_DIR, "generate_reports.py")
 _log_base = os.path.join(DEV_DIR, u"run_%s" % _date_str)
 _log_seq = 0
 LOG_FILE = u"%s.log" % _log_base
@@ -1062,6 +1065,8 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                                 'email': customer.get(u'이메일', u''),
                             }
                             _chosung_customer_results.append(view_result)
+                            _save_results_incremental(chosung_name)
+                            _trigger_sync_reports()
                     except Exception as e:
                         # Jython/SikuliX 모듈 로딩 특성상 클래스명으로 비교
                         # (cross-module 예외 클래스 identity 불일치 문제 회피)
@@ -1463,6 +1468,54 @@ def save_checkpoint(customer_name, chosung, nav_page, scroll_page, row_in_page):
 _chosung_customer_results = []
 
 
+def _jython_safe_replace(tmp_path, target_path):
+    """Jython 2.7 호환 atomic 파일 교체 (os.replace는 Python 3.3+에서만 지원)"""
+    try:
+        if os.path.exists(target_path):
+            os.remove(target_path)
+        os.rename(tmp_path, target_path)
+    except Exception:
+        pass  # rename 실패 시 tmp 파일 잔존 (다음 시도에서 덮어쓰기)
+
+
+def _save_results_incremental(chosung_name):
+    """고객 결과를 즉시 디스크에 저장 (크래시 대비 증분 저장, atomic write)"""
+    if not _chosung_customer_results:
+        return
+    try:
+        path = os.path.join(DEV_DIR, u"customer_results_%s.json" % chosung_name)
+        tmp_path = path + u".tmp"
+        with codecs.open(tmp_path, "w", "utf-8") as f:
+            json.dump(_chosung_customer_results, f, ensure_ascii=False, indent=2)
+        _jython_safe_replace(tmp_path, path)
+    except Exception:
+        pass  # 증분 저장 실패가 실행을 막으면 안 됨
+
+
+def _trigger_sync_reports():
+    """고객 처리 완료 시마다 동기(blocking) subprocess로 리포트 갱신.
+
+    - INTEGRATED_VIEW_ENABLED이 아니거나 SCROLL_TEST 시 스킵
+    - subprocess.call (blocking): 완료 후 다음 고객 처리 진행
+    - 실패해도 메인 처리에 영향 없음
+    """
+    try:
+        if not INTEGRATED_VIEW_ENABLED or SCROLL_TEST:
+            return
+        if _AC_EXE_PATH:
+            cmd = [_AC_EXE_PATH, "--run-reports", CAPTURE_DIR,
+                   "--timestamp", _REPORT_TIMESTAMP]
+        elif os.path.exists(GENERATE_REPORTS_SCRIPT):
+            cmd = ["python", GENERATE_REPORTS_SCRIPT, CAPTURE_DIR,
+                   "--timestamp", _REPORT_TIMESTAMP]
+        else:
+            return
+        with open(os.devnull, 'w') as _devnull:
+            subprocess.call(cmd, stdout=_devnull, stderr=_devnull)
+    except Exception:
+        pass  # 증분 리포트 실패가 메인 처리를 막으면 안 됨
+
+
 def generate_chosung_summary(chosung_name, total_rows, total_errors, error_customers, nav_page, global_page, elapsed_sec):
     """
     초성 처리 완료 후 Summary + 문제 Report 출력
@@ -1545,12 +1598,14 @@ def generate_chosung_summary(chosung_name, total_rows, total_errors, error_custo
 
     log(u"=" * 70)
 
-    # ★ 초성별 고객 결과 JSON 저장 (리셋 전 디스크에 영속화)
+    # ★ 초성별 고객 결과 JSON 저장 (리셋 전 디스크에 영속화, atomic write)
     if results:
         results_json_path = os.path.join(DEV_DIR, u"customer_results_%s.json" % chosung_name)
+        tmp_path = results_json_path + u".tmp"
         try:
-            with codecs.open(results_json_path, "w", "utf-8") as f:
+            with codecs.open(tmp_path, "w", "utf-8") as f:
                 json.dump(results, f, ensure_ascii=False, indent=2)
+            _jython_safe_replace(tmp_path, results_json_path)
             log(u"  [저장] 고객 결과 JSON: %s (%d명)" % (os.path.basename(results_json_path), len(results)))
         except Exception as e:
             log(u"  [ERROR] 고객 결과 JSON 저장 실패: %s" % e)
@@ -1946,6 +2001,8 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                             'email': ocr_row.get(u'이메일', u''),
                                                         }
                                                         _chosung_customer_results.append(view_result)
+                                                        _save_results_incremental(chosung_name)
+                                                        _trigger_sync_reports()
                                                 except Exception as e2:
                                                     err_type_name = e2.__class__.__name__
                                                     err_msg = u"%s" % e2
@@ -2247,6 +2304,8 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                                     'email': ocr_row.get(u'이메일', u''),
                                                 }
                                                 _chosung_customer_results.append(view_result)
+                                                _save_results_incremental(chosung_name)
+                                                _trigger_sync_reports()
                                         except Exception as e:
                                             err_type_name = e.__class__.__name__
                                             err_msg = u"%s" % e
@@ -2429,21 +2488,24 @@ else:
 
 log("=" * 60)
 
-# ★ 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)
+# ★ 최종 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)
+# 증분 갱신으로 이미 최신 파일이 있지만, 마지막 고객의 리포트가
+# 반영되지 않았을 수 있으므로 blocking으로 최종 1회 더 생성한다.
 if INTEGRATED_VIEW_ENABLED and not SCROLL_TEST:
-    GENERATE_REPORTS_SCRIPT = os.path.join(SCRIPT_DIR, "generate_reports.py")
     # 패키징 모드: generate_reports.py는 exe 내부에 번들되어 독립 파일로 존재하지 않음
     # → _AC_EXE_PATH가 있으면 .py 파일 존재 여부와 무관하게 exe --run-reports 사용
     if _AC_EXE_PATH:
-        report_cmd = [_AC_EXE_PATH, "--run-reports", CAPTURE_DIR]
+        report_cmd = [_AC_EXE_PATH, "--run-reports", CAPTURE_DIR,
+                      "--timestamp", _REPORT_TIMESTAMP]
     elif os.path.exists(GENERATE_REPORTS_SCRIPT):
-        report_cmd = ["python", GENERATE_REPORTS_SCRIPT, CAPTURE_DIR]
+        report_cmd = ["python", GENERATE_REPORTS_SCRIPT, CAPTURE_DIR,
+                      "--timestamp", _REPORT_TIMESTAMP]
     else:
         report_cmd = None
 
     if report_cmd:
         log(u"")
-        log(u"[3단계] 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)...")
+        log(u"[3단계] 최종 리포트 생성 (AIMS 엑셀 + JSON + 실행결과 엑셀)...")
         log(u"  명령: %s" % " ".join(report_cmd))
         try:
             report_result = subprocess.call(report_cmd)

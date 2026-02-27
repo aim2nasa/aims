@@ -60,6 +60,50 @@ THIN_BORDER = Border(
 )
 
 
+# ──────────────────────────────────────────────────────────
+# Atomic Write 유틸리티 (증분 갱신 시 파일 손상 방지)
+# 주의: 이 파일은 항상 시스템 CPython 3으로 실행됨 (Jython 아님)
+#   - MetlifeCustomerList.py(Jython)에서 subprocess.call로 호출
+#   - os.replace()는 Python 3.3+에서 지원 → 여기서는 안전
+# ──────────────────────────────────────────────────────────
+
+def _safe_save_workbook(wb, output_path):
+    """엑셀 파일을 .tmp에 먼저 쓴 후 os.replace()로 원자적 교체"""
+    tmp_path = output_path + ".tmp"
+    try:
+        wb.save(tmp_path)
+        os.replace(tmp_path, output_path)
+    except PermissionError:
+        print("  [WARN] %s 사용 중 → %s에 최신 데이터 저장됨" % (
+            os.path.basename(output_path), os.path.basename(tmp_path)))
+    except Exception as e:
+        print("  [WARN] 파일 저장/교체 실패: %s" % e)
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
+
+
+def _safe_write_json(data, output_path):
+    """JSON 파일을 .tmp에 먼저 쓴 후 os.replace()로 원자적 교체"""
+    tmp_path = output_path + ".tmp"
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, output_path)
+    except PermissionError:
+        print("  [WARN] %s 사용 중 → %s에 최신 데이터 저장됨" % (
+            os.path.basename(output_path), os.path.basename(tmp_path)))
+    except Exception as e:
+        print("  [WARN] 파일 저장/교체 실패: %s" % e)
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
+
+
 def load_customer_results(output_dir):
     """초성별 customer_results_*.json 파일 로드 후 통합"""
     all_results = []
@@ -217,10 +261,11 @@ def generate_customer_import_excel(personal, corporate, output_path):
         auto_column_width(ws, CORPORATE_COLUMNS, corporate)
 
     if not personal and not corporate:
-        print("  [WARN] 개인/법인 고객 데이터가 없습니다.")
-        return False
+        # 빈 데이터: 헤더만 있는 개인고객 시트 생성 (증분 모드 파일 존재 보장)
+        ws = wb.create_sheet("개인고객")
+        apply_header_style(ws, PERSONAL_COLUMNS)
 
-    wb.save(output_path)
+    _safe_save_workbook(wb, output_path)
     print("  [생성] %s (개인: %d명, 법인: %d명)" % (
         os.path.basename(output_path), len(personal), len(corporate)))
     return True
@@ -239,8 +284,7 @@ def generate_customer_import_json(personal, corporate, output_path):
         }
     }
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    _safe_write_json(data, output_path)
 
     print("  [생성] %s" % os.path.basename(output_path))
     return True
@@ -481,7 +525,7 @@ def generate_execution_report(results, output_path):
     ws.column_dimensions["N"].width = 40  # CRS 파일명 (14번째)
     ws.column_dimensions["O"].width = 50  # 비고 (15번째)
 
-    wb.save(output_path)
+    _safe_save_workbook(wb, output_path)
     print("  [생성] %s (%d명)" % (os.path.basename(output_path), len(results)))
     return True
 
@@ -490,6 +534,7 @@ def main():
     parser = argparse.ArgumentParser(description="AC v2 리포트 생성기")
     parser.add_argument("output_dir", help="출력 베이스 디렉토리 (customer_results_*.json이 있는 경로)")
     parser.add_argument("--chosung", help="초성 필터 (쉼표 구분, 예: ㄱ,ㄴ,ㄷ)")
+    parser.add_argument("--timestamp", help="파일명에 사용할 고정 타임스탬프 (예: 20260222_1430)")
     args = parser.parse_args()
 
     output_dir = args.output_dir
@@ -497,8 +542,8 @@ def main():
         print("[ERROR] 디렉토리가 존재하지 않습니다: %s" % output_dir)
         sys.exit(1)
 
-    # 파일명 타임스탬프
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    # 파일명 타임스탬프: --timestamp 지정 시 고정값 사용 (증분 갱신 시 동일 파일명 유지)
+    timestamp = args.timestamp or datetime.now().strftime("%Y%m%d_%H%M")
 
     print("=" * 60)
     print("AC v2 리포트 생성기")
@@ -510,9 +555,14 @@ def main():
     print("[1단계] 고객 결과 JSON 로드")
     results = load_customer_results(output_dir)
     if not results:
-        print("  [WARN] 로드된 고객 결과가 없습니다.")
-        print("  확인: customer_results_*.json 파일이 존재하는지 확인하세요.")
-        sys.exit(0)
+        if args.timestamp:
+            # 증분 모드: 아직 결과가 없어도 빈 리포트 생성 (파일 존재 보장)
+            print("  [INFO] 아직 고객 결과가 없습니다. 빈 리포트를 생성합니다.")
+            results = []
+        else:
+            print("  [WARN] 로드된 고객 결과가 없습니다.")
+            print("  확인: customer_results_*.json 파일이 존재하는지 확인하세요.")
+            sys.exit(0)
     print("  총 %d명 로드 완료" % len(results))
     print()
 
