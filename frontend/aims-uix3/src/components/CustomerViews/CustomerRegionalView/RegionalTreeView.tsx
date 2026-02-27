@@ -843,17 +843,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     const { groups, noAddressCustomers } = regionalGroups
     const nodes: TreeNodeData[] = []
 
-    // 주소 없는 고객 (상단에 배치)
-    if (noAddressCustomers.length > 0) {
-      nodes.push({
-        key: 'no-address',
-        label: '주소 미입력',
-        type: 'no-address',
-        count: noAddressCustomers.length,
-        customers: noAddressCustomers
-      })
-    }
-
     // 도시별 노드
     Object.keys(groups).sort().forEach(city => {
       const districts = groups[city] ?? {}
@@ -884,6 +873,17 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         children: districtNodes
       })
     })
+
+    // 주소 없는 고객 (최하단에 배치)
+    if (noAddressCustomers.length > 0) {
+      nodes.push({
+        key: 'no-address',
+        label: '주소 미입력',
+        type: 'no-address',
+        count: noAddressCustomers.length,
+        customers: noAddressCustomers
+      })
+    }
 
     return nodes
   }, [regionalGroups])
