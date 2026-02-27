@@ -54,7 +54,7 @@ import { getEffectiveMapping as getCrEffectiveMapping } from './utils/crGrouping
 import { BatchUploadApi } from '@/features/batch-upload/api/batchUploadApi'
 import type { ArFileTableRow } from './types/arBatchTypes'
 import type { CrFileTableRow } from './types/crBatchTypes'
-import { setBatchId } from '@/hooks/useBatchId'
+import { getBatchId, setBatchId } from '@/hooks/useBatchId'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -558,12 +558,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // 🔴 중복 처리 일괄 적용 설정 초기화
     duplicateApplyAllRef.current = null
 
-    // 🔴 업로드 묶음 ID 생성 (현재 세션 진행률 추적용)
-    // setBatchId()가 모든 구독자에게 알림 → DocumentLibraryView 즉시 반영
-    const newBatchId = `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    // 🔴 업로드 묶음 ID: 활성 배치가 있으면 재사용 (AR 처리중 CRS 업로드 시 누적 표시)
+    // 항상 setBatchId 호출 → StatusBar의 cleanup 타이머를 취소하여 경쟁 조건 방지
+    const existingBatchId = getBatchId()
+    const newBatchId = existingBatchId || `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     setBatchId(newBatchId)
     if (import.meta.env.DEV) {
-      console.log(`[DocumentRegistrationView] 새 배치 ID 생성: ${newBatchId}`)
+      console.log(`[DocumentRegistrationView] 배치 ID: ${newBatchId}${existingBatchId ? ' (기존 재사용)' : ' (신규)'}`)
     }
 
     // 🎯🎯🎯 AR 배치 모드: 제일 먼저 체크! (uploadState 건드리기 전에 처리)

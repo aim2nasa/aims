@@ -4,13 +4,17 @@
  *
  * 핵심 UX 원칙:
  * - "이번 업로드"는 현재 진행 중인 배치만 표시
- * - 배치 100% 완료 → 자동 정리 (DocumentProcessingStatusBar에서 처리)
- * - 새 업로드 시작 → 새 배치로 즉시 전환
+ * - 배치 100% 완료 → 2초 후 자동 정리 (DocumentProcessingStatusBar에서 처리)
+ * - 진행 중 새 업로드 시작 → 기존 배치에 누적 (동일 batchId 재사용)
+ * - 완료 후 새 업로드 시작 → 새 배치로 전환
  */
 
 import { useSyncExternalStore } from 'react'
 
 const BATCH_ID_KEY = 'aims-current-batch-id'
+
+// setBatchId 마지막 호출 시각 (경쟁 조건 감지용)
+let lastSetTime = 0
 
 // sessionStorage 변경 구독자 관리
 const subscribers = new Set<() => void>()
@@ -48,7 +52,15 @@ if (typeof window !== 'undefined') {
  */
 export function setBatchId(batchId: string): void {
   sessionStorage.setItem(BATCH_ID_KEY, batchId)
+  lastSetTime = Date.now()
   notifyBatchIdChange()
+}
+
+/**
+ * 마지막 setBatchId 호출 시각 (cleanup 타이머 경쟁 조건 감지용)
+ */
+export function getLastBatchSetTime(): number {
+  return lastSetTime
 }
 
 /**

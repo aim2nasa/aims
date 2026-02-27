@@ -6,7 +6,7 @@
 
 import { useMemo, useEffect, useRef } from 'react'
 import type { DocumentStatistics, ParsingStats } from '@/types/documentStatistics'
-import { clearBatchId, getBatchId } from '@/hooks/useBatchId'
+import { clearBatchId, getBatchId, getLastBatchSetTime } from '@/hooks/useBatchId'
 import './DocumentProcessingStatusBar.css'
 
 interface DocumentProcessingStatusBarProps {
@@ -64,6 +64,8 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
   // 🔴 배치 완료 시 자동 정리 (2초 딜레이 후)
   // 조건: 100% 완료 + 진행 중/대기 중 없음 + credit_pending 없음
   const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const batchTotalRef = useRef(batchTotal)
+  batchTotalRef.current = batchTotal
   const shouldCleanup = hasBatch &&
                         batchPct === 100 &&
                         batchProcessing === 0 &&
@@ -76,9 +78,14 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
       if (cleanupTimerRef.current) return
 
       const currentBatchId = getBatchId()
+      const snapshotTotal = batchTotal
+      const snapshotTime = Date.now()
       cleanupTimerRef.current = setTimeout(() => {
-        // 새 업로드가 시작되지 않았는지 확인
-        if (getBatchId() === currentBatchId) {
+        // 새 업로드가 시작되지 않았는지 확인:
+        // 1) batchId 변경, 2) 배치 크기 증가, 3) 타이머 시작 후 setBatchId 호출됨
+        if (getBatchId() === currentBatchId &&
+            batchTotalRef.current <= snapshotTotal &&
+            getLastBatchSetTime() <= snapshotTime) {
           clearBatchId()
         }
         cleanupTimerRef.current = null
@@ -91,7 +98,7 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
         cleanupTimerRef.current = null
       }
     }
-  }, [shouldCleanup])
+  }, [shouldCleanup, batchTotal])
 
   // 표시 여부 결정
   const isVisible = useMemo(() => {

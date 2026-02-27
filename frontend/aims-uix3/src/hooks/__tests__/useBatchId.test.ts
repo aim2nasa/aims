@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useBatchId, setBatchId, clearBatchId, getBatchId } from '../useBatchId'
+import { useBatchId, setBatchId, clearBatchId, getBatchId, getLastBatchSetTime } from '../useBatchId'
 
 describe('useBatchId', () => {
   const BATCH_ID_KEY = 'aims-current-batch-id'
@@ -279,6 +279,77 @@ describe('useBatchId', () => {
         setBatchId('second-batch')
       })
       expect(result.current).toBe('second-batch')
+    })
+
+    it('진행 중 새 업로드 시 기존 배치 재사용 시나리오', () => {
+      // AR 업로드 시작
+      act(() => {
+        setBatchId('batch-ar')
+      })
+      expect(getBatchId()).toBe('batch-ar')
+      const timeAfterAr = getLastBatchSetTime()
+
+      // CRS 업로드 시작 (기존 배치 재사용)
+      const existingBatchId = getBatchId()
+      expect(existingBatchId).toBe('batch-ar')
+
+      act(() => {
+        setBatchId(existingBatchId!)
+      })
+      // batchId 동일하게 유지
+      expect(getBatchId()).toBe('batch-ar')
+      // lastSetTime은 갱신됨
+      expect(getLastBatchSetTime()).toBeGreaterThanOrEqual(timeAfterAr)
+    })
+  })
+
+  describe('getLastBatchSetTime', () => {
+    it('setBatchId 호출 전에는 이전 호출 시각 또는 0을 반환', () => {
+      // 모듈 레벨 변수이므로 다른 테스트에서 이미 설정되었을 수 있음
+      expect(typeof getLastBatchSetTime()).toBe('number')
+    })
+
+    it('setBatchId 호출 후 현재 시각 이상의 값을 반환해야 함', () => {
+      const before = Date.now()
+      setBatchId('timing-test')
+      const after = Date.now()
+
+      const lastSetTime = getLastBatchSetTime()
+      expect(lastSetTime).toBeGreaterThanOrEqual(before)
+      expect(lastSetTime).toBeLessThanOrEqual(after)
+    })
+
+    it('연속 setBatchId 호출 시 마지막 호출 시각을 반환해야 함', () => {
+      setBatchId('first')
+      const firstTime = getLastBatchSetTime()
+
+      setBatchId('second')
+      const secondTime = getLastBatchSetTime()
+
+      expect(secondTime).toBeGreaterThanOrEqual(firstTime)
+    })
+
+    it('clearBatchId는 lastSetTime에 영향을 주지 않아야 함', () => {
+      setBatchId('before-clear')
+      const timeBeforeClear = getLastBatchSetTime()
+
+      clearBatchId()
+
+      expect(getLastBatchSetTime()).toBe(timeBeforeClear)
+    })
+
+    it('cleanup 타이머 경쟁 조건 가드: 타이머 시작 후 setBatchId → snapshotTime 비교로 감지', () => {
+      // 시나리오: 배치 100% 완료 → 타이머 시작 → 새 업로드 시작(기존 batchId 재사용)
+      setBatchId('batch-complete')
+      const snapshotTime = Date.now() // 타이머 시작 시각
+
+      // 새 업로드 시작 (기존 batchId 재사용 — setBatchId 다시 호출)
+      setBatchId('batch-complete')
+      const lastSetAfterReuse = getLastBatchSetTime()
+
+      // 가드 조건: getLastBatchSetTime() > snapshotTime
+      // → lastSetTime이 snapshotTime 이후이므로 clearBatchId 차단
+      expect(lastSetAfterReuse).toBeGreaterThanOrEqual(snapshotTime)
     })
   })
 })
