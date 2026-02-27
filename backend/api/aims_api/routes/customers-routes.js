@@ -27,6 +27,35 @@ const {
 const { prepareDocumentResponse, analyzeDocumentStatus, isConvertibleFile } = require('../lib/documentStatusHelper');
 const createPdfConversionTrigger = require('../lib/pdfConversionTrigger');
 
+/**
+ * 카카오 API로 주소 자동 검증
+ * @param {string} address1 - 도로명주소
+ * @returns {Promise<'verified'|'failed'>} 검증 결과
+ */
+async function verifyAddressViaKakao(address1) {
+  if (!address1 || !address1.trim()) return 'failed';
+  try {
+    const kakaoApiKey = process.env.KAKAO_REST_API_KEY
+      ? `KakaoAK ${process.env.KAKAO_REST_API_KEY}`
+      : 'KakaoAK 0e0db455dcbf09ba1309daad71af4174';
+    const response = await axios.get('https://dapi.kakao.com/v2/local/search/address.json', {
+      params: { query: address1.trim(), page: 1, size: 10, analyze_type: 'similar' },
+      headers: { 'Authorization': kakaoApiKey },
+      timeout: 5000
+    });
+    if (!response.data?.documents?.length) return 'failed';
+    const normalizedInput = address1.trim().replace(/\s+/g, ' ').toLowerCase();
+    return response.data.documents.some(doc => {
+      const roadAddr = (doc.road_address?.address_name || '').toLowerCase();
+      return roadAddr.includes(normalizedInput) ||
+             normalizedInput.includes(roadAddr.split(' ').slice(0, 3).join(' '));
+    }) ? 'verified' : 'failed';
+  } catch (error) {
+    console.error('[verifyAddressViaKakao] 검증 실패:', error.message);
+    return 'failed';
+  }
+}
+
 module.exports = function(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, qdrantCollection, upload) {
   const router = express.Router();
   const QDRANT_COLLECTION = qdrantCollection;
@@ -516,6 +545,8 @@ router.post('/customers/bulk', authenticateJWT, async (req, res) => {
             const normalized = normalizeAddress(customer.address);
             const existingAddr = existingCustomer.personal_info?.address;
             if (normalized && normalized.address1 !== existingAddr?.address1) {
+              // 주소 자동 검증
+              normalized.verification_status = await verifyAddressViaKakao(normalized.address1);
               if (!hasPersonalInfo) {
                 updateFields['personal_info'] = { name: existingCustomer.personal_info?.name || customer.name, address: normalized };
               } else if (existingAddr === null || existingAddr === undefined) {
@@ -1119,6 +1150,17 @@ router.put('/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
 
         await db.collection('address_history').insertOne(historyRecord);
         console.log(`✅ 고객 ${id}의 이전 주소가 보관소에 저장됨`);
+      }
+    }
+
+    // 주소 자동 검증: 주소가 변경되었고 verification_status가 명시적으로 전달되지 않은 경우
+    if (newAddress && newAddress.address1) {
+      const needsVerification = addressChanged ||
+        !oldAddress ||
+        (!newAddress.verification_status || newAddress.verification_status === 'pending');
+      if (needsVerification && newAddress.verification_status !== 'verified' && newAddress.verification_status !== 'failed') {
+        newAddress.verification_status = await verifyAddressViaKakao(newAddress.address1);
+        console.log(`🔍 고객 ${id} 주소 자동 검증: ${newAddress.verification_status}`);
       }
     }
 
@@ -4597,6 +4639,75 @@ router.delete('/customers/:id/memos/:memoId', authenticateJWT, async (req, res) 
   }
 });
 
+
+  // ============================================
+  // 주소 일괄 검증 API (기존 pending 데이터 마이그레이션용)
+  // ============================================
+  router.post('/customers/verify-addresses', authenticateJWT, async (req, res) => {
+    try {
+      // verification_status가 없거나 pending인 고객 중 주소가 있는 고객 조회
+      const customers = await db.collection(CUSTOMERS_COLLECTION).find({
+        'personal_info.address.address1': { $exists: true, $ne: null, $ne: '' },
+        $or: [
+          { 'personal_info.address.verification_status': { $exists: false } },
+          { 'personal_info.address.verification_status': 'pending' },
+          { 'personal_info.address.verification_status': null }
+        ]
+      }).project({
+        _id: 1,
+        'personal_info.address': 1,
+        'personal_info.name': 1
+      }).toArray();
+
+      console.log(`🔍 주소 일괄 검증 시작: ${customers.length}건`);
+
+      let verified = 0;
+      let failed = 0;
+      let errors = 0;
+
+      for (const customer of customers) {
+        try {
+          const address1 = customer.personal_info?.address?.address1;
+          if (!address1) continue;
+
+          const result = await verifyAddressViaKakao(address1);
+
+          await db.collection(CUSTOMERS_COLLECTION).updateOne(
+            { _id: customer._id },
+            { $set: { 'personal_info.address.verification_status': result } }
+          );
+
+          if (result === 'verified') verified++;
+          else failed++;
+
+          // 카카오 API rate limit 방지 (100ms 간격)
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (err) {
+          errors++;
+          console.error(`❌ 고객 ${customer._id} 검증 실패:`, err.message);
+        }
+      }
+
+      console.log(`✅ 주소 일괄 검증 완료: verified=${verified}, failed=${failed}, errors=${errors}`);
+
+      res.json({
+        success: true,
+        data: {
+          total: customers.length,
+          verified,
+          failed,
+          errors
+        }
+      });
+    } catch (error) {
+      console.error('🚨 주소 일괄 검증 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: '주소 일괄 검증에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
 
   return router;
 };
