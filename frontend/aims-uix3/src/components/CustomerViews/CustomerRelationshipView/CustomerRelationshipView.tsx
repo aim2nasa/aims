@@ -1127,50 +1127,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
               {expandedNodes.has('family') && (
                 <div className="tree-children">
-                  {/* 가족관계 미설정 섹션 - 가족 폴더 내 최상단 (숨기기 모드 시 미표시) */}
-                  {!hideUnassigned && noFamilyRelationshipCustomers.length > 0 && (
-                    <div className="tree-group">
-                      <div
-                        className="tree-node tree-node--group"
-                        onClick={() => toggleNode('no-family-relationship')}
-                      >
-                        <span className="tree-node__icon">
-                          ⚠️
-                        </span>
-                        <div className="tree-node__content">
-                          <span className="tree-node__label tree-node__label--no-relationship">
-                            가족관계 미설정
-                          </span>
-                          <span className="tree-node__badge tree-node__badge--warning">
-                            {noFamilyRelationshipCustomers.length}
-                          </span>
-                        </div>
-                      </div>
-
-                      {expandedNodes.has('no-family-relationship') && (
-                        <div className="tree-children">
-                          {noFamilyRelationshipCustomers.map((customer) => (
-                            <div key={customer._id} className="tree-node tree-node--leaf">
-                              <span className="tree-node__icon">
-                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal" style={{ opacity: 0.5 }}>
-                                  <circle cx="10" cy="10" r="10" opacity="0.2" />
-                                  <circle cx="10" cy="7" r="3" />
-                                  <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                                </svg>
-                              </span>
-                              <span
-                                className={`tree-node__label tree-node__label--clickable ${selectedUnassignedCustomer?._id === customer._id ? "tree-node__label--selected" : ""}`}
-                                onClick={(e) => { e.stopPropagation(); onCustomerSelect?.(null, undefined); setSelectedUnassignedCorporate(null); setSelectedUnassignedCustomer(customer); }}
-                              >
-                                {highlightText(customer.personal_info?.name || '이름없음')}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {/* 가족 그룹 목록 (초성 필터는 상단 InitialFilterBar로 처리) */}
                   {Object.entries(filteredStructuredData.가족그룹)
                     .sort(([, a], [, b]) => {
@@ -1287,6 +1243,50 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                         </div>
                       );
                     })}
+
+                  {/* 가족관계 미설정 섹션 - 가족 폴더 내 최하단 (숨기기 모드 시 미표시) */}
+                  {!hideUnassigned && noFamilyRelationshipCustomers.length > 0 && (
+                    <div className="tree-group">
+                      <div
+                        className="tree-node tree-node--group"
+                        onClick={() => toggleNode('no-family-relationship')}
+                      >
+                        <span className="tree-node__icon">
+                          ⚠️
+                        </span>
+                        <div className="tree-node__content">
+                          <span className="tree-node__label tree-node__label--no-relationship">
+                            가족관계 미설정
+                          </span>
+                          <span className="tree-node__badge tree-node__badge--warning">
+                            {noFamilyRelationshipCustomers.length}
+                          </span>
+                        </div>
+                      </div>
+
+                      {expandedNodes.has('no-family-relationship') && (
+                        <div className="tree-children">
+                          {noFamilyRelationshipCustomers.map((customer) => (
+                            <div key={customer._id} className="tree-node tree-node--leaf">
+                              <span className="tree-node__icon">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal" style={{ opacity: 0.5 }}>
+                                  <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                  <circle cx="10" cy="7" r="3" />
+                                  <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                                </svg>
+                              </span>
+                              <span
+                                className={`tree-node__label tree-node__label--clickable ${selectedUnassignedCustomer?._id === customer._id ? "tree-node__label--selected" : ""}`}
+                                onClick={(e) => { e.stopPropagation(); onCustomerSelect?.(null, undefined); setSelectedUnassignedCorporate(null); setSelectedUnassignedCustomer(customer); }}
+                              >
+                                {highlightText(customer.personal_info?.name || '이름없음')}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1310,57 +1310,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
               {expandedNodes.has('corporate') && (
                 <div className="tree-children">
-                  {/* 관계자 미설정 섹션 - 법인 폴더 내 최상단 (숨기기 모드 시 미표시) */}
-                  {!hideUnassigned && noCorporateRelationshipCustomers.length > 0 && (
-                    <div className="tree-group">
-                      <div
-                        className="tree-node tree-node--group"
-                        onClick={() => toggleNode('no-corporate-relationship')}
-                      >
-                        <span className="tree-node__icon">
-                          ⚠️
-                        </span>
-                        <div className="tree-node__content">
-                          <span className="tree-node__label tree-node__label--no-relationship">
-                            관계자 미설정
-                          </span>
-                          <span className="tree-node__badge tree-node__badge--warning">
-                            {noCorporateRelationshipCustomers.length}
-                          </span>
-                        </div>
-                      </div>
-
-                      {expandedNodes.has('no-corporate-relationship') && (
-                        <div className="tree-children">
-                          {noCorporateRelationshipCustomers.map((customer) => (
-                            <div key={customer._id} className="tree-node tree-node--leaf">
-                              <span className="tree-node__icon">
-                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate" style={{ opacity: 0.5 }}>
-                                  <rect x="2" y="4" width="16" height="14" rx="2" opacity="0.2" />
-                                  <rect x="5" y="7" width="4" height="3" rx="0.5" />
-                                  <rect x="11" y="7" width="4" height="3" rx="0.5" />
-                                  <rect x="5" y="12" width="4" height="3" rx="0.5" />
-                                  <rect x="11" y="12" width="4" height="3" rx="0.5" />
-                                </svg>
-                              </span>
-                              <span
-                                className={`tree-node__label tree-node__label--clickable ${selectedUnassignedCorporate?._id === customer._id ? "tree-node__label--selected" : ""}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onCustomerSelect?.(null, undefined);
-                                  setSelectedUnassignedCustomer(null);
-                                  setSelectedUnassignedCorporate(customer);
-                                }}
-                              >
-                                {highlightText(customer.personal_info?.name || '회사명없음')}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {corporateEntries
                     .sort(([, a], [, b]) => {
                       const nameA = a.company.personal_info?.name || '';
@@ -1424,6 +1373,57 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                       );
                     })
 				}
+
+                  {/* 관계자 미설정 섹션 - 법인 폴더 내 최하단 (숨기기 모드 시 미표시) */}
+                  {!hideUnassigned && noCorporateRelationshipCustomers.length > 0 && (
+                    <div className="tree-group">
+                      <div
+                        className="tree-node tree-node--group"
+                        onClick={() => toggleNode('no-corporate-relationship')}
+                      >
+                        <span className="tree-node__icon">
+                          ⚠️
+                        </span>
+                        <div className="tree-node__content">
+                          <span className="tree-node__label tree-node__label--no-relationship">
+                            관계자 미설정
+                          </span>
+                          <span className="tree-node__badge tree-node__badge--warning">
+                            {noCorporateRelationshipCustomers.length}
+                          </span>
+                        </div>
+                      </div>
+
+                      {expandedNodes.has('no-corporate-relationship') && (
+                        <div className="tree-children">
+                          {noCorporateRelationshipCustomers.map((customer) => (
+                            <div key={customer._id} className="tree-node tree-node--leaf">
+                              <span className="tree-node__icon">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate" style={{ opacity: 0.5 }}>
+                                  <rect x="2" y="4" width="16" height="14" rx="2" opacity="0.2" />
+                                  <rect x="5" y="7" width="4" height="3" rx="0.5" />
+                                  <rect x="11" y="7" width="4" height="3" rx="0.5" />
+                                  <rect x="5" y="12" width="4" height="3" rx="0.5" />
+                                  <rect x="11" y="12" width="4" height="3" rx="0.5" />
+                                </svg>
+                              </span>
+                              <span
+                                className={`tree-node__label tree-node__label--clickable ${selectedUnassignedCorporate?._id === customer._id ? "tree-node__label--selected" : ""}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCustomerSelect?.(null, undefined);
+                                  setSelectedUnassignedCustomer(null);
+                                  setSelectedUnassignedCorporate(customer);
+                                }}
+                              >
+                                {highlightText(customer.personal_info?.name || '회사명없음')}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
