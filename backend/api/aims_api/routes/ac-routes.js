@@ -7,12 +7,14 @@
  * 엔드포인트:
  *   POST /api/ac/request-token  — 1회용 nonce 발급 (JWT 필수)
  *   POST /api/ac/verify-token   — nonce 검증 (인증 불필요)
- *   GET  /api/ac/latest-version — 최신 AC 버전 정보 (인증 불필요)
+ *   GET  /api/ac/latest-version     — 최신 AC 버전 정보 (인증 불필요)
+ *   GET  /api/ac/download-installer — 인스톨러 다운로드 (인증 불필요)
  *
  * @since 2026-02-12
  */
 
 const express = require('express');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { ObjectId } = require('mongodb');
 const backendLogger = require('../lib/backendLogger');
@@ -178,6 +180,39 @@ module.exports = function(db, authenticateJWT) {
         success: false,
         message: '버전 정보를 조회할 수 없습니다.',
       });
+    }
+  });
+
+  /**
+   * GET /api/ac/download-installer
+   * 최신 AC 인스톨러 파일 다운로드
+   *
+   * 인증: 불필요 (공개)
+   * nginx가 /public/ 경로를 백엔드로 프록시하지 않으므로
+   * /api/ 경로를 통해 파일을 스트리밍한다.
+   */
+  router.get('/download-installer', async (req, res) => {
+    try {
+      const config = await db.collection('config').findOne({ _id: 'ac_latest_version' });
+
+      if (!config || !config.installerUrl) {
+        return res.status(404).json({ success: false, message: '인스톨러를 찾을 수 없습니다.' });
+      }
+
+      // installerUrl: "/public/installers/AIMS_AutoClicker_Setup_X.Y.Z.exe"
+      const relativePath = config.installerUrl.replace(/^\/public\//, '');
+      const filePath = path.join(__dirname, '..', 'public', relativePath);
+      const fileName = path.basename(filePath);
+
+      res.download(filePath, fileName, (err) => {
+        if (err && !res.headersSent) {
+          backendLogger.error('AC', `인스톨러 다운로드 실패: ${filePath}`, err);
+          res.status(404).json({ success: false, message: '인스톨러 파일을 찾을 수 없습니다.' });
+        }
+      });
+    } catch (error) {
+      backendLogger.error('AC', '인스톨러 다운로드 오류', error);
+      res.status(500).json({ success: false, message: '다운로드에 실패했습니다.' });
     }
   });
 

@@ -63,7 +63,7 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
   const downloadInstaller = useCallback(() => {
     if (versionInfo?.installerUrl) {
       const a = document.createElement('a')
-      a.href = versionInfo.installerUrl
+      a.href = '/api/ac/download-installer'
       a.download = ''
       a.click()
     }
