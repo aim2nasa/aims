@@ -612,7 +612,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
       className="customer-document-preview"
       onOpenPopup={handleOpenPopup}
     >
-      <main className="customer-document-preview__content">
+      <main className="customer-document-preview__content annual-report-modal__body">
         {renderContent()}
       </main>
     </DraggableModal>
