@@ -130,6 +130,10 @@
   }
 
   /* 드롭다운 컴팩트 스타일 (통계 영역용) */
+  .regional-tree-stats .ios-dropdown {
+    min-width: 80px;
+  }
+
   .regional-tree-stats .ios-dropdown__trigger {
     min-height: 26px;
     padding: 3px 10px;
@@ -669,11 +673,12 @@
 
     .stat-dropdown-group {
       flex: 1;
-      min-width: 0;
+      min-width: 80px;
     }
 
     .regional-tree-stats .ios-dropdown {
       width: 100%;
+      min-width: 80px;
     }
 
     .regional-tree-stats .ios-dropdown__trigger {

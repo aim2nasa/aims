@@ -77,6 +77,34 @@ const PROVINCE_NORMALIZATION_MAP: { [key: string]: string } = {
 }
 
 /**
+ * 광역시/도 간략 표시명
+ * 내부 키는 정식 명칭 유지, UI 표시만 간략화
+ */
+const PROVINCE_SHORT_NAME: { [key: string]: string } = {
+  '서울특별시': '서울시',
+  '부산광역시': '부산시',
+  '대구광역시': '대구시',
+  '인천광역시': '인천시',
+  '광주광역시': '광주시',
+  '대전광역시': '대전시',
+  '울산광역시': '울산시',
+  '세종특별자치시': '세종시',
+  '경기도': '경기도',
+  '강원특별자치도': '강원도',
+  '충청북도': '충북',
+  '충청남도': '충남',
+  '전북특별자치도': '전북',
+  '전라남도': '전남',
+  '경상북도': '경북',
+  '경상남도': '경남',
+  '제주특별자치도': '제주도',
+}
+
+const getProvinceShortName = (province: string): string => {
+  return PROVINCE_SHORT_NAME[province] || province
+}
+
+/**
  * 전체 한국 광역시/도 목록 (17개)
  * 드롭다운에 항상 표시될 전체 지역 목록
  */
@@ -583,10 +611,10 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       : ALL_PROVINCES.filter(province => registeredRegions.has(province)) // 고객 있는 지역만
 
     return [
-      { value: '', label: '전체 지역' },
+      { value: '', label: '전체' },
       ...provinces.map(province => ({
         value: province,
-        label: province,
+        label: getProvinceShortName(province),
         // 체크박스 ON이면 모든 지역 선택 가능, OFF이면 고객 있는 지역만 표시되므로 항상 선택 가능
         disabled: false
       }))
@@ -882,7 +910,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
 
       nodes.push({
         key: city,
-        label: city,
+        label: getProvinceShortName(city),
         type: 'city',
         count: cityCustomers.length,
         children: districtNodes
