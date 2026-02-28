@@ -355,35 +355,23 @@ def scroll_to_top(scroll_count=20):
     """
     페이지를 맨 위로 스크롤
 
-    이미지 매칭 기반 상대좌표로 웹 콘텐츠 영역에 포커스 확보 후 Page Up.
-    절대좌표(300,250) 방식은 Chrome 레이아웃 차이(북마크바 등)로
-    kitten PC에서 Chrome 툴바를 클릭하여 스크롤이 웹페이지에 전달되지 않음.
+    고객통합뷰(Nexacro)는 Page Up/Ctrl+Home에 반응하지 않음 (w, k 모두 확인).
+    마우스 휠만 동작하므로 Java Robot mouseWheel() 직접 호출.
+    SikuliX wheel()은 kitten에서 비동작하나 _robot.mouseWheel()은
+    동일한 Java Robot의 SendInput 호출로 동작 기대.
 
     Args:
-        scroll_count: Page Up 횟수
+        scroll_count: 휠 반복 횟수 (1회당 3 notch)
     """
-    # 이미지 매칭으로 웹 콘텐츠 영역 포커스 확보 (Chrome 레이아웃 차이 대응)
-    # exists()가 Match 객체를 직접 반환하므로 find() 이중 호출 불필요
-    ref_match = exists(IMG_VARIABLE_INSURANCE_REPORT_BTN, 2)
-    if not ref_match:
-        ref_match = exists(IMG_CUSTOMER_INTEGRATED_VIEW_BTN, 2)
-
-    if ref_match:
-        # 이미지 왼쪽 아래 영역 클릭 (확실히 웹 콘텐츠 영역, 버튼은 항상 x>300)
-        fx = max(50, int(ref_match.getCenter().getX()) - 200)
-        fy = int(ref_match.getCenter().getY()) + 50
-        click(Location(fx, fy))
-        log(u"    포커스 클릭: (%d, %d) - 이미지 기준 상대좌표" % (fx, fy))
-    else:
-        click(Location(300, 250))
-        log(u"    포커스 클릭: (300, 250) - fallback 절대좌표")
+    focus_x = 300
+    focus_y = 250
+    click(Location(focus_x, focus_y))
+    log(u"    포커스 클릭: (%d, %d)" % (focus_x, focus_y))
     sleep(0.3)
 
-    # Java Robot Page Up으로 맨 위로 이동 (wheel()은 kitten에서 비동작)
-    log(u"    Page UP x %d..." % scroll_count)
+    log(u"    마우스 휠 UP x %d..." % scroll_count)
     for i in range(scroll_count):
-        _robot.keyPress(KeyEvent.VK_PAGE_UP)
-        _robot.keyRelease(KeyEvent.VK_PAGE_UP)
+        _robot.mouseWheel(-3)  # negative = scroll up
         sleep(0.1)
     sleep(0.5)
 
