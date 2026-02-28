@@ -3,6 +3,7 @@
 데이터 소스: 로그 파일 리플레이 / 실시간 프로세스 stdout
 """
 import datetime
+import io
 import os
 import subprocess
 import threading
@@ -15,10 +16,20 @@ from path_helper import get_app_dir, get_java_exe, get_sikulix_jar, get_sikulix_
 
 _APP_DIR = get_app_dir()
 
+# PROD 모드 판정: 패키징(AC_EXE_PATH 존재) + DEV_MODE 미설정
+_is_packaged_ds = bool(os.environ.get("AC_EXE_PATH", ""))
+_DS_DEV_MODE = not _is_packaged_ds
+if os.environ.get("AC_DEV_MODE", "").strip() == "1":
+    _DS_DEV_MODE = True
+elif os.environ.get("AC_DEV_MODE", "").strip() == "0":
+    _DS_DEV_MODE = False
+
 
 def _ds_log(action: str, detail: str):
-    """data_source 디버그 로그"""
+    """data_source 디버그 로그 (PROD: 메모리만, DEV: 파일)"""
     ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    if not _DS_DEV_MODE:
+        return  # PROD: 디스크 쓰기 안 함
     try:
         with open(os.path.join(_APP_DIR, "debug_trace.log"), "a", encoding="utf-8") as f:
             f.write(f"[{ts}] DS.{action}: {detail}\n")
@@ -285,10 +296,15 @@ class LiveProcessSource(DataSource):
 
     def _read_stdout(self) -> None:
         """백그라운드 스레드: stdout raw bytes → 인코딩 감지 → parse_line → 콜백"""
-        raw_log_path = os.path.join(_APP_DIR, "live_raw_stdout.log")
-        raw_log = open(raw_log_path, "w", encoding="utf-8")
-        hex_log_path = os.path.join(_APP_DIR, "live_raw_hex.log")
-        hex_log = open(hex_log_path, "w", encoding="ascii")
+        if _DS_DEV_MODE:
+            raw_log_path = os.path.join(_APP_DIR, "live_raw_stdout.log")
+            raw_log = open(raw_log_path, "w", encoding="utf-8")
+            hex_log_path = os.path.join(_APP_DIR, "live_raw_hex.log")
+            hex_log = open(hex_log_path, "w", encoding="ascii")
+        else:
+            # PROD: 디스크 쓰기 안 함, 메모리에도 누적하지 않음
+            raw_log = None
+            hex_log = None
 
         line_no = 0
         proc = self._process
@@ -323,14 +339,16 @@ class LiveProcessSource(DataSource):
                             _ds_log("_read_stdout", f"resumed at line #{line_no}")
                             _pause_entered = False
 
-                    # hex 덤프 (경로 깨짐 디버깅용)
-                    hex_str = raw_bytes.rstrip().hex()
-                    hex_log.write(f"{line_no:04d} | {hex_str}\n")
-                    hex_log.flush()
+                    # hex 덤프 (경로 깨짐 디버깅용, DEV에서만)
+                    if hex_log is not None:
+                        hex_str = raw_bytes.rstrip().hex()
+                        hex_log.write(f"{line_no:04d} | {hex_str}\n")
+                        hex_log.flush()
 
                     line = self._decode_line(raw_bytes)
-                    raw_log.write(f"{ts} | {line_no:04d} | paused={self._paused} | {line}\n")
-                    raw_log.flush()
+                    if raw_log is not None:
+                        raw_log.write(f"{ts} | {line_no:04d} | paused={self._paused} | {line}\n")
+                        raw_log.flush()
 
                     event = parse_line(line, line_no)
                     if event and self._on_event:
@@ -338,7 +356,8 @@ class LiveProcessSource(DataSource):
         except (OSError, ValueError):
             pass  # 프로세스 종료 시 stdout 파이프 끊김 → 정상
         except Exception as e:
-            raw_log.write(f"\n!!! EXCEPTION: {e}\n")
+            if raw_log is not None:
+                raw_log.write(f"\n!!! EXCEPTION: {e}\n")
         finally:
             rc = None
             try:
@@ -348,7 +367,9 @@ class LiveProcessSource(DataSource):
                 pass
             self._exit_code = rc
             _ds_log("_read_stdout FINALLY", f"exit_code={rc}, lines={line_no}, setting _running=False")
-            raw_log.write(f"\n=== PROCESS EXIT (code={rc}, lines={line_no}) ===\n")
-            raw_log.close()
-            hex_log.close()
+            if raw_log is not None:
+                raw_log.write(f"\n=== PROCESS EXIT (code={rc}, lines={line_no}) ===\n")
+                raw_log.close()
+            if hex_log is not None:
+                hex_log.close()
             self._running = False

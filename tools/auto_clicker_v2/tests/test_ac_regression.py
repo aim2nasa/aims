@@ -10,6 +10,7 @@ AC 코드(Jython/SikuliX 전용)를 CPython에서 테스트하기 위해
 import os
 import re
 import ast
+import struct
 import textwrap
 
 import pytest
@@ -454,4 +455,318 @@ class TestPdfFocusDirection:
         assert len(calls) >= 5, (
             f"_focus_and_close_pdf() 호출 {len(calls)}건 (기대: 5건 이상). "
             "모든 PDF 닫기 위치에서 헬퍼 함수를 사용해야 함."
+        )
+
+
+# ══════════════════════════════════════════════════════════════
+# 9. PROD 암호화 진단 시스템 회귀 테스트
+# ══════════════════════════════════════════════════════════════
+
+SECURE_DIAG_PY = os.path.join(AC_DIR, "secure_diag.py")
+ACDUMP_READER_PY = os.path.join(AC_DIR, "acdump_reader.py")
+DATA_SOURCE_PY = os.path.join(AC_DIR, "data_source.py")
+GUI_MAIN_PY = os.path.join(AC_DIR, "gui_main.py")
+
+
+class TestProdEncryptionFiles:
+    """PROD 암호화 진단 시스템 필수 파일 존재 여부"""
+
+    def test_secure_diag_exists(self):
+        """secure_diag.py (Jython 암호화 writer) 존재"""
+        assert os.path.exists(SECURE_DIAG_PY), "secure_diag.py 파일 없음"
+
+    def test_acdump_reader_exists(self):
+        """acdump_reader.py (CPython 복호화 도구) 존재"""
+        assert os.path.exists(ACDUMP_READER_PY), "acdump_reader.py 파일 없음"
+
+
+class TestAcdumpReaderFormat:
+    """acdump_reader.py가 올바른 바이너리 포맷을 읽는지 검증"""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        self.tmp_path = tmp_path
+        # acdump_reader.py에서 read_entries, _MAGIC 가져오기
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("acdump_reader", ACDUMP_READER_PY)
+        self.reader = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.reader)
+
+    def _make_acdump(self, entries):
+        """테스트용 .acdump 파일 생성 (AES-256-CBC 암호화)"""
+        filepath = str(self.tmp_path / "test.acdump")
+        key_hex = self.reader._DEFAULT_KEY
+
+        # cryptography 패키지 사용 (CPython 테스트 환경)
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        from cryptography.hazmat.primitives import padding as crypto_padding
+
+        key_bytes = bytes.fromhex(key_hex[:64])
+
+        with open(filepath, "wb") as f:
+            f.write(b"ACDUMP01")
+            for entry_type, name, data in entries:
+                # payload = [name_len:2][name:UTF-8][data]
+                name_bytes = name.encode("utf-8")
+                payload = struct.pack(">H", len(name_bytes)) + name_bytes + data
+
+                # PKCS7 패딩 + AES-256-CBC 암호화
+                iv = os.urandom(16)
+                padder = crypto_padding.PKCS7(128).padder()
+                padded = padder.update(payload) + padder.finalize()
+                cipher = Cipher(algorithms.AES(key_bytes), modes.CBC(iv))
+                encryptor = cipher.encryptor()
+                encrypted = encryptor.update(padded) + encryptor.finalize()
+
+                f.write(bytes([entry_type]))
+                f.write(iv)
+                f.write(struct.pack(">I", len(encrypted)))
+                f.write(encrypted)
+        return filepath
+
+    def test_magic_header_validation(self):
+        """잘못된 매직 헤더 → ValueError"""
+        bad_file = str(self.tmp_path / "bad.acdump")
+        with open(bad_file, "wb") as f:
+            f.write(b"BADMAGIC")
+        with pytest.raises(ValueError, match="매직 헤더 불일치"):
+            list(self.reader.read_entries(bad_file, self.reader._DEFAULT_KEY))
+
+    def test_single_log_entry(self):
+        """LOG 엔트리 1개 암호화 → 복호화 왕복"""
+        filepath = self._make_acdump([
+            (0x02, "log", "테스트 로그 메시지".encode("utf-8")),
+        ])
+        entries = list(self.reader.read_entries(filepath, self.reader._DEFAULT_KEY))
+        assert len(entries) == 1
+        entry_type, name, data = entries[0]
+        assert entry_type == 0x02
+        assert name == "log"
+        assert data.decode("utf-8") == "테스트 로그 메시지"
+
+    def test_multiple_entry_types(self):
+        """여러 엔트리 타입 (SYSTEM_INFO, LOG, IMAGE, JSON) 복호화"""
+        filepath = self._make_acdump([
+            (0x01, "system_info", "OS=Windows".encode("utf-8")),
+            (0x02, "log", "line 1".encode("utf-8")),
+            (0x02, "log", "line 2".encode("utf-8")),
+            (0x03, "error_001.png", b"\x89PNG\r\n\x1a\n" + b"\x00" * 100),
+            (0x04, "checkpoint.json", '{"step":5}'.encode("utf-8")),
+        ])
+        entries = list(self.reader.read_entries(filepath, self.reader._DEFAULT_KEY))
+        assert len(entries) == 5
+        assert entries[0][0] == 0x01  # SYSTEM_INFO
+        assert entries[1][0] == 0x02  # LOG
+        assert entries[2][0] == 0x02  # LOG
+        assert entries[3][0] == 0x03  # IMAGE
+        assert entries[4][0] == 0x04  # JSON
+        assert entries[3][1] == "error_001.png"
+        assert entries[4][2].decode("utf-8") == '{"step":5}'
+
+    def test_extract_output(self):
+        """extract() 함수가 파일을 올바르게 추출하는지"""
+        filepath = self._make_acdump([
+            (0x01, "system_info", "OS=Test".encode("utf-8")),
+            (0x02, "log", "log line A".encode("utf-8")),
+            (0x02, "log", "log line B".encode("utf-8")),
+            (0x04, "data.json", '{"key":"val"}'.encode("utf-8")),
+        ])
+        output_dir = str(self.tmp_path / "extracted")
+        counts = self.reader.extract(filepath, self.reader._DEFAULT_KEY, output_dir)
+        assert counts[0x01] == 1
+        assert counts[0x02] == 2
+        assert counts[0x04] == 1
+
+        # system_info.txt 검증
+        with open(os.path.join(output_dir, "system_info.txt"), encoding="utf-8") as f:
+            assert "OS=Test" in f.read()
+
+        # merged_log.txt 검증
+        with open(os.path.join(output_dir, "merged_log.txt"), encoding="utf-8") as f:
+            content = f.read()
+            assert "log line A" in content
+            assert "log line B" in content
+
+    def test_empty_file_no_entries(self):
+        """매직 헤더만 있고 엔트리 없는 파일"""
+        filepath = str(self.tmp_path / "empty.acdump")
+        with open(filepath, "wb") as f:
+            f.write(b"ACDUMP01")
+        entries = list(self.reader.read_entries(filepath, self.reader._DEFAULT_KEY))
+        assert len(entries) == 0
+
+    def test_type_names_coverage(self):
+        """TYPE_NAMES 상수가 4개 타입을 모두 포함"""
+        assert 0x01 in self.reader.TYPE_NAMES
+        assert 0x02 in self.reader.TYPE_NAMES
+        assert 0x03 in self.reader.TYPE_NAMES
+        assert 0x04 in self.reader.TYPE_NAMES
+
+
+class TestProdModeGuards:
+    """PROD 모드에서 평문 파일이 생성되지 않도록 가드가 존재하는지 소스 코드 검증"""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.mcl_src = _read_source(MCL_PY)
+        self.verify_src = _read_source(VERIFY_PY)
+        self.ds_src = _read_source(DATA_SOURCE_PY)
+        self.gui_src = _read_source(GUI_MAIN_PY)
+
+    def test_mcl_dev_dir_conditional(self):
+        """MetlifeCustomerList.py에서 DEV_DIR이 PROD에서 None이 되는지"""
+        assert "DEV_DIR = None" in self.mcl_src, (
+            "DEV_DIR = None 할당이 없음. PROD에서 dev/ 폴더가 생성될 수 있음."
+        )
+
+    def test_mcl_imports_secure_diag(self):
+        """MetlifeCustomerList.py에서 secure_diag를 import하는지"""
+        assert "from secure_diag import DiagWriter" in self.mcl_src, (
+            "secure_diag import 없음. PROD 암호화 writer가 사용되지 않을 수 있음."
+        )
+
+    def test_mcl_diag_write_log(self):
+        """MetlifeCustomerList.py log()에 _diag.write_log 분기 존재"""
+        assert "_diag.write_log(" in self.mcl_src, (
+            "log()에 _diag.write_log() 호출 없음. PROD 로그가 암호화되지 않을 수 있음."
+        )
+
+    def test_mcl_diag_write_image(self):
+        """MetlifeCustomerList.py에 _diag.write_image 호출 존재"""
+        assert "_diag.write_image(" in self.mcl_src, (
+            "_diag.write_image() 호출 없음. PROD 스크린샷이 암호화되지 않을 수 있음."
+        )
+
+    def test_mcl_diag_write_json(self):
+        """MetlifeCustomerList.py에 _diag.write_json 호출 존재"""
+        assert "_diag.write_json(" in self.mcl_src, (
+            "_diag.write_json() 호출 없음. PROD JSON이 암호화되지 않을 수 있음."
+        )
+
+    def test_mcl_diag_delete_on_exit(self):
+        """MetlifeCustomerList.py에 _diag.delete() 호출 존재 (정상 종료 시 삭제)"""
+        assert "_diag.delete()" in self.mcl_src, (
+            "_diag.delete() 호출 없음. 정상 종료 시 .acdump 파일이 남을 수 있음."
+        )
+
+    def test_verify_prod_guard(self):
+        """verify_customer_integrated_view.py에 PROD 모드 가드 존재"""
+        assert "_VCIV_DEV_MODE" in self.verify_src, (
+            "_VCIV_DEV_MODE 변수 없음. PROD 모드 감지가 안 될 수 있음."
+        )
+        assert "_VCIV_DIAG" in self.verify_src, (
+            "_VCIV_DIAG 변수 없음. PROD 암호화 writer가 사용되지 않을 수 있음."
+        )
+
+    def test_verify_step_screenshot_guard(self):
+        """capture_step_screenshot()에 PROD no-op 가드 존재"""
+        func_src = _extract_function_source(self.verify_src, "capture_step_screenshot")
+        assert func_src is not None, "capture_step_screenshot 함수를 찾을 수 없음"
+        assert "_VCIV_DEV_MODE" in func_src, (
+            "capture_step_screenshot()에 PROD 가드 없음. "
+            "PROD에서 불필요한 단계별 스크린샷이 저장될 수 있음."
+        )
+
+    def test_ds_prod_guard(self):
+        """data_source.py에 PROD 모드 가드 존재"""
+        assert "_DS_DEV_MODE" in self.ds_src, (
+            "_DS_DEV_MODE 변수 없음. PROD에서 debug_trace.log가 디스크에 쓰일 수 있음."
+        )
+
+    def test_ds_live_raw_conditional(self):
+        """data_source.py _read_stdout()에 PROD 디스크 쓰기 안 함 분기 존재"""
+        assert "raw_log = None" in self.ds_src, (
+            "raw_log = None 없음. PROD에서 live_raw 로그가 디스크에 쓰일 수 있음."
+        )
+
+    def test_gui_acdump_cleanup(self):
+        """gui_main.py에 .acdump 정리 코드 존재"""
+        assert ".ac_*.acdump" in self.gui_src, (
+            "gui_main.py에 .acdump glob 패턴 없음. 정상 종료 시 파일 정리가 안 될 수 있음."
+        )
+
+    def test_gui_diag_status_label(self):
+        """gui_main.py 크래시 시 진단파일 저장됨 라벨 존재"""
+        assert "진단파일 저장됨" in self.gui_src, (
+            "gui_main.py에 '진단파일 저장됨' 텍스트 없음. "
+            "크래시 시 사용자에게 진단파일 존재 알림이 안 될 수 있음."
+        )
+
+    def test_capture_and_exit_prod_guard(self):
+        """capture_and_exit()에 PROD 가드 존재 (SCREENSHOT_DIR=None 크래시 방지)"""
+        func_src = _extract_function_source(self.verify_src, "capture_and_exit")
+        assert func_src is not None, "capture_and_exit 함수를 찾을 수 없음"
+        assert "_VCIV_DEV_MODE" in func_src or "_VCIV_DIAG" in func_src, (
+            "capture_and_exit()에 PROD 가드 없음. "
+            "PROD에서 SCREENSHOT_DIR=None → TypeError 크래시 발생."
+        )
+
+    def test_is_row_checked_prod_guard(self):
+        """is_row_checked()에 PROD 가드 존재"""
+        func_src = _extract_function_source(self.verify_src, "is_row_checked")
+        assert func_src is not None, "is_row_checked 함수를 찾을 수 없음"
+        assert "_VCIV_DEV_MODE" in func_src, (
+            "is_row_checked()에 PROD 가드 없음. "
+            "PROD에서 SCREENSHOT_DIR=None → TypeError 크래시 발생."
+        )
+
+    def test_copy_report_screenshots_prod_guard(self):
+        """copy_report_screenshots_to_error_folder()에 PROD 가드 존재"""
+        func_src = _extract_function_source(self.verify_src, "copy_report_screenshots_to_error_folder")
+        assert func_src is not None, "copy_report_screenshots_to_error_folder 함수를 찾을 수 없음"
+        assert "_VCIV_DEV_MODE" in func_src, (
+            "copy_report_screenshots_to_error_folder()에 PROD 가드 없음. "
+            "PROD에서 SCREENSHOT_DIR=None → TypeError 크래시 발생."
+        )
+
+    def test_no_bare_screenshot_dir_join(self):
+        """SCREENSHOT_DIR을 _VCIV_DEV_MODE 가드 없이 직접 os.path.join하지 않는지 검증"""
+        # SCREENSHOT_DIR 사용 라인에서 가드 없이 직접 접근하는 패턴 탐색
+        # 함수 상단의 early return 가드도 포함하여 검사
+        lines = self.verify_src.split('\n')
+        unguarded = []
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if 'os.path.join(SCREENSHOT_DIR' in stripped and not stripped.startswith('#'):
+                # 이 라인 이전 30줄 내에 _VCIV_DEV_MODE 가드가 있는지 확인
+                # (함수 상단의 early return 또는 직전의 if 블록 포함)
+                context = '\n'.join(lines[max(0, i-31):i])
+                if '_VCIV_DEV_MODE' not in context and 'if SCREENSHOT_DIR' not in context:
+                    unguarded.append(f"  L{i}: {stripped}")
+        assert len(unguarded) == 0, (
+            f"PROD 가드 없이 SCREENSHOT_DIR을 직접 사용하는 {len(unguarded)}곳 발견:\n" +
+            "\n".join(unguarded)
+        )
+
+
+class TestEncryptionKeyConsistency:
+    """암호화 키가 모든 관련 파일에서 일치하는지 검증"""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.mcl_src = _read_source(MCL_PY)
+        self.reader_src = _read_source(ACDUMP_READER_PY)
+        self.gui_src = _read_source(GUI_MAIN_PY)
+        self.secure_src = _read_source(SECURE_DIAG_PY)
+
+    def _extract_key(self, source, label=""):
+        """소스에서 64자 hex 키 문자열 추출"""
+        match = re.search(r'"(7e66b5dd[0-9a-f]{56})"', source)
+        assert match is not None, f"키를 찾을 수 없음 ({label})"
+        return match.group(1)
+
+    def test_mcl_and_reader_key_match(self):
+        """MetlifeCustomerList.py와 acdump_reader.py의 키 일치"""
+        mcl_key = self._extract_key(self.mcl_src, "MCL")
+        reader_key = self._extract_key(self.reader_src, "reader")
+        assert mcl_key == reader_key, (
+            f"키 불일치: MCL={mcl_key[:16]}... vs reader={reader_key[:16]}..."
+        )
+
+    def test_gui_and_reader_key_match(self):
+        """gui_main.py(_DEV_PIN_HASH)와 acdump_reader.py의 키 일치"""
+        gui_key = self._extract_key(self.gui_src, "gui_main")
+        reader_key = self._extract_key(self.reader_src, "reader")
+        assert gui_key == reader_key, (
+            f"키 불일치: gui={gui_key[:16]}... vs reader={reader_key[:16]}..."
         )

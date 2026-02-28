@@ -4,6 +4,7 @@
 컴팩트 모드: 실행 중 자동 전환, 극소형 상태바
 """
 import ctypes
+import glob
 import os
 import sys
 import shutil
@@ -854,12 +855,22 @@ class AutoClickerApp(ctk.CTk):
                     reason_parts.append(f"원인: {self._state.crash_reason}")
                 reason_text = " | ".join(reason_parts) if reason_parts else "알 수 없는 오류"
 
+                # PROD 크래시: .acdump 진단파일 존재 여부 확인
+                has_diag = bool(glob.glob(os.path.join(self._save_dir, ".ac_*.acdump")))
+                diag_suffix = " | 진단파일 저장됨" if has_diag else ""
+
                 self._status_label.configure(
-                    text=f"FATAL: {reason_text}",
+                    text=f"FATAL: {reason_text}{diag_suffix}",
                     text_color="#e74c3c",
                 )
                 self._compact_panel.set_play_state("crashed")
             else:
+                # 정상 종료: .acdump 파일 정리 (이중 안전 — SikuliX에서 이미 삭제했어야 함)
+                for acdump in glob.glob(os.path.join(self._save_dir, ".ac_*.acdump")):
+                    try:
+                        os.remove(acdump)
+                    except OSError:
+                        pass
                 self._status_label.configure(text="완료", text_color="#4CAF50")
                 self._compact_panel.set_play_state("complete")
             self._run_btn.configure(

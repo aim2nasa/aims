@@ -97,45 +97,79 @@ if os.environ.get("AC_DEV_MODE", "").strip() == "1":
 elif os.environ.get("AC_DEV_MODE", "").strip() == "0":
     DEV_MODE = False
 
-# DEV_DIR: 디버그 파일 저장 경로 (항상 생성, 프로덕션이면 종료 시 삭제)
-DEV_DIR = os.path.join(CAPTURE_DIR, "dev")
-if not os.path.exists(DEV_DIR):
-    os.makedirs(DEV_DIR)
-
-# atexit: 프로덕션 모드에서 종료 시 dev 폴더 정리
-# FATAL 크래시 (raise SystemExit) 포함 모든 종료 경로에서 실행됨
-import atexit as _atexit
-def _cleanup_on_exit():
-    _close_log_file()  # 중복 호출 안전 (핸들 None 체크)
-    if not DEV_MODE:
-        import shutil as _sh
-        if os.path.exists(DEV_DIR):
-            try:
-                _sh.rmtree(DEV_DIR)
-            except:
-                pass
-_atexit.register(_cleanup_on_exit)
-
-# 로그 파일 설정 (중복 방지: 날짜시간 + 순번)
+# ============================================================
+# DEV_DIR / PROD 암호화 진단 초기화
+# ============================================================
 import datetime
 _now = datetime.datetime.now()
 _date_str = _now.strftime("%Y%m%d_%H%M%S")
 # 리포트 파일명 고정 타임스탬프 (증분 갱신 시 동일 파일명으로 덮어쓰기)
 _REPORT_TIMESTAMP = _now.strftime("%Y%m%d_%H%M")
 GENERATE_REPORTS_SCRIPT = os.path.join(SCRIPT_DIR, "generate_reports.py")
-_log_base = os.path.join(DEV_DIR, u"run_%s" % _date_str)
-_log_seq = 0
-LOG_FILE = u"%s.log" % _log_base
-while os.path.exists(LOG_FILE):
-    _log_seq += 1
-    LOG_FILE = u"%s_%d.log" % (_log_base, _log_seq)
+
+# PROD 암호화 진단 writer (secure_diag.py)
+_diag = None  # DiagWriter 인스턴스 (PROD에서만 사용)
+_acdump_path = None  # .acdump 파일 경로
+
+if DEV_MODE:
+    # DEV: 기존과 동일 — dev/ 폴더에 평문 저장
+    DEV_DIR = os.path.join(CAPTURE_DIR, "dev")
+    if not os.path.exists(DEV_DIR):
+        os.makedirs(DEV_DIR)
+else:
+    # PROD: dev/ 폴더 생성하지 않음 — 단일 암호화 .acdump 파일 사용
+    DEV_DIR = None
+    try:
+        from secure_diag import DiagWriter
+        _acdump_path = os.path.join(CAPTURE_DIR, ".ac_%s.acdump" % _date_str)
+        _KEY_HEX = "7e66b5dd3d158d14ba3300cad5702ee6d72befaec37890eed25c91687bb649df"
+        _diag = DiagWriter(_acdump_path, _KEY_HEX)
+        # 시스템 정보 기록
+        import platform as _pf
+        _sys_info = u"OS=%s\nUser=%s\nTime=%s\nAC_HOME=%s\nSave=%s" % (
+            _pf.platform(), os.environ.get("AC_USER", "?"), _date_str,
+            os.environ.get("AC_HOME", "?"), CAPTURE_DIR)
+        _diag.write_entry(0x01, u"system_info", _sys_info)
+    except Exception as _e:
+        print("[WARN] PROD DiagWriter init failed: %s" % str(_e))
+        _diag = None
+
+# verify_customer_integrated_view에 PROD 설정 전달
+try:
+    import verify_customer_integrated_view as _vciv_mod
+    _vciv_mod._VCIV_DIAG = _diag
+except:
+    pass
+
+# atexit: 종료 시 정리
+import atexit as _atexit
+def _cleanup_on_exit():
+    if DEV_MODE:
+        _close_log_file()  # 중복 호출 안전 (핸들 None 체크)
+        # DEV: dev/ 폴더 보존 (삭제하지 않음)
+    else:
+        # PROD 정상 종료: .acdump 삭제 (흔적 없음)
+        if _diag:
+            _diag.delete()
+_atexit.register(_cleanup_on_exit)
+
+# 로그 파일 설정 (DEV 모드에서만 사용)
 _log_file_handle = None
+LOG_FILE = None
+
+if DEV_MODE:
+    _log_base = os.path.join(DEV_DIR, u"run_%s" % _date_str)
+    _log_seq = 0
+    LOG_FILE = u"%s.log" % _log_base
+    while os.path.exists(LOG_FILE):
+        _log_seq += 1
+        LOG_FILE = u"%s_%d.log" % (_log_base, _log_seq)
 
 
 def _open_log_file():
-    """로그 파일 핸들 열기"""
+    """로그 파일 핸들 열기 (DEV 모드에서만 사용)"""
     global _log_file_handle
-    if _log_file_handle is None:
+    if _log_file_handle is None and LOG_FILE:
         _log_file_handle = codecs.open(LOG_FILE, "w", "utf-8")
     return _log_file_handle
 
@@ -159,16 +193,24 @@ def log(msg):
     except:
         pass  # 콘솔 출력 실패 무시
 
-    try:
-        f = _open_log_file()
-        if f and not f.closed:
-            if isinstance(msg, unicode):
-                f.write(msg + u"\n")
-            else:
-                f.write(unicode(msg, "utf-8") + u"\n")
-            f.flush()
-    except:
-        pass  # 파일 쓰기 실패 무시 (프로세스 종료 시 발생 가능)
+    if DEV_MODE:
+        # DEV: 평문 파일에 쓰기
+        try:
+            f = _open_log_file()
+            if f and not f.closed:
+                if isinstance(msg, unicode):
+                    f.write(msg + u"\n")
+                else:
+                    f.write(unicode(msg, "utf-8") + u"\n")
+                f.flush()
+        except:
+            pass  # 파일 쓰기 실패 무시
+    elif _diag:
+        # PROD: .acdump에 암호화 append
+        try:
+            _diag.write_log(msg if isinstance(msg, unicode) else unicode(msg, "utf-8"))
+        except:
+            pass
 
 
 # ===== 일시정지 신호 파일 체크 (GUI ↔ SikuliX IPC) =====
@@ -200,17 +242,19 @@ def type(target, *args):
     return _sikuli_type(target, *args)
 
 
-# 진단 모드 설정 (클릭 위치 분석용 스크린샷 저장)
-DIAGNOSTIC_MODE = True  # True면 클릭 전 스크린샷 저장
-DIAGNOSTIC_DIR = os.path.join(DEV_DIR, "diagnostic")
-if DIAGNOSTIC_MODE and not os.path.exists(DIAGNOSTIC_DIR):
-    os.makedirs(DIAGNOSTIC_DIR)
+# 진단 모드 설정 (클릭 위치 분석용 스크린샷 저장, DEV only)
+DIAGNOSTIC_MODE = DEV_MODE  # PROD에서는 클릭 진단 비활성화
+DIAGNOSTIC_DIR = None
+if DIAGNOSTIC_MODE and DEV_DIR:
+    DIAGNOSTIC_DIR = os.path.join(DEV_DIR, "diagnostic")
+    if not os.path.exists(DIAGNOSTIC_DIR):
+        os.makedirs(DIAGNOSTIC_DIR)
 _diagnostic_counter = [0]  # 스크린샷 순번
 
 
 def save_click_diagnostic(click_x, click_y, customer_name, page_num, row_idx):
-    """클릭 위치 진단용 스크린샷 저장 (클릭 위치에 빨간 점 표시)"""
-    if not DIAGNOSTIC_MODE:
+    """클릭 위치 진단용 스크린샷 저장 (클릭 위치에 빨간 점 표시, DEV only)"""
+    if not DIAGNOSTIC_MODE or not DEV_DIR:
         return None
 
     try:
@@ -263,21 +307,23 @@ def save_click_diagnostic(click_x, click_y, customer_name, page_num, row_idx):
         return None
 
 
-DEBUG_LOG_FILE = os.path.join(SCRIPT_DIR, "debug_log.txt")
+DEBUG_LOG_FILE = os.path.join(SCRIPT_DIR, "debug_log.txt") if DEV_MODE else None
 
 
 def _crash_log(msg):
     """크래시 로그를 run_*.log + debug_log.txt 양쪽에 기록"""
-    log(msg)  # run_*.log + 콘솔
-    try:
-        with codecs.open(DEBUG_LOG_FILE, "a", "utf-8") as f:
-            if isinstance(msg, unicode):
-                f.write(msg + u"\n")
-            else:
-                f.write(unicode(msg, "utf-8") + u"\n")
-            f.flush()
-    except:
-        pass
+    log(msg)  # run_*.log(DEV) 또는 .acdump(PROD) + 콘솔
+    if DEV_MODE and DEBUG_LOG_FILE:
+        try:
+            with codecs.open(DEBUG_LOG_FILE, "a", "utf-8") as f:
+                if isinstance(msg, unicode):
+                    f.write(msg + u"\n")
+                else:
+                    f.write(unicode(msg, "utf-8") + u"\n")
+                f.flush()
+        except:
+            pass
+    # PROD: log()가 이미 _diag.write_log()로 기록하므로 추가 처리 불필요
 
 
 # 디버그: 마지막 클릭/검색 위치 추적 (크래시 스크린샷에 오버레이용)
@@ -302,48 +348,58 @@ def _take_crash_screenshot(label):
     try:
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         temp_path = capture(SCREEN)
-        if temp_path:
-            dest = os.path.join(DEV_DIR, u"CRASH_%s_%s.png" % (label, ts))
-            # 디버그 마커가 있으면 스크린샷에 오버레이
-            if _debug_markers:
-                try:
-                    from javax.imageio import ImageIO
-                    from java.io import File as JFile
-                    from java.awt import Color, BasicStroke, Font, RenderingHints
-                    bimg = ImageIO.read(JFile(temp_path))
-                    g = bimg.createGraphics()
-                    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-                    for mtype, mx, my, mw, mh, mlabel in _debug_markers:
-                        if mtype == "click":
-                            # 빨간 십자 + 원
-                            g.setColor(Color.RED)
-                            g.setStroke(BasicStroke(2))
-                            g.drawLine(mx - 15, my, mx + 15, my)
-                            g.drawLine(mx, my - 15, mx, my + 15)
-                            g.drawOval(mx - 12, my - 12, 24, 24)
-                            if mlabel:
-                                g.setFont(Font("SansSerif", Font.BOLD, 12))
-                                g.drawString(mlabel, mx + 16, my - 4)
-                        elif mtype == "region":
-                            # 노란 사각형 (검색 영역)
-                            g.setColor(Color.YELLOW)
-                            g.setStroke(BasicStroke(2))
-                            g.drawRect(mx, my, mw, mh)
-                            if mlabel:
-                                g.setFont(Font("SansSerif", Font.BOLD, 12))
-                                g.drawString(mlabel, mx, my - 4)
-                    g.dispose()
-                    ImageIO.write(bimg, "png", JFile(dest))
-                    log(u"[CRASH 스크린샷] %s (마커 %d개)" % (dest, len(_debug_markers)))
-                except:
-                    # Java AWT 실패 시 원본 저장
-                    import shutil
-                    shutil.copy(temp_path, dest)
-                    log(u"[CRASH 스크린샷] %s (마커 오버레이 실패)" % dest)
-            else:
-                import shutil
-                shutil.copy(temp_path, dest)
-                log(u"[CRASH 스크린샷] %s" % dest)
+        if not temp_path:
+            return
+        filename = u"CRASH_%s_%s.png" % (label, ts)
+
+        # 디버그 마커 오버레이 (마커가 있으면)
+        final_path = temp_path  # 기본: SikuliX temp
+        if _debug_markers:
+            try:
+                from javax.imageio import ImageIO
+                from java.io import File as JFile
+                from java.awt import Color, BasicStroke, Font, RenderingHints
+                bimg = ImageIO.read(JFile(temp_path))
+                g = bimg.createGraphics()
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+                for mtype, mx, my, mw, mh, mlabel in _debug_markers:
+                    if mtype == "click":
+                        g.setColor(Color.RED)
+                        g.setStroke(BasicStroke(2))
+                        g.drawLine(mx - 15, my, mx + 15, my)
+                        g.drawLine(mx, my - 15, mx, my + 15)
+                        g.drawOval(mx - 12, my - 12, 24, 24)
+                        if mlabel:
+                            g.setFont(Font("SansSerif", Font.BOLD, 12))
+                            g.drawString(mlabel, mx + 16, my - 4)
+                    elif mtype == "region":
+                        g.setColor(Color.YELLOW)
+                        g.setStroke(BasicStroke(2))
+                        g.drawRect(mx, my, mw, mh)
+                        if mlabel:
+                            g.setFont(Font("SansSerif", Font.BOLD, 12))
+                            g.drawString(mlabel, mx, my - 4)
+                g.dispose()
+                # 마커 적용된 이미지를 temp 파일로 저장
+                import tempfile as _tf
+                _marker_tmp = _tf.NamedTemporaryFile(suffix=".png", delete=False)
+                _marker_tmp.close()
+                ImageIO.write(bimg, "png", JFile(_marker_tmp.name))
+                final_path = _marker_tmp.name
+                log(u"[CRASH 스크린샷] %s (마커 %d개)" % (filename, len(_debug_markers)))
+            except:
+                log(u"[CRASH 스크린샷] %s (마커 오버레이 실패)" % filename)
+
+        if DEV_MODE and DEV_DIR:
+            # DEV: dev/ 폴더에 평문 저장
+            import shutil
+            dest = os.path.join(DEV_DIR, filename)
+            shutil.copy(final_path, dest)
+            log(u"[CRASH 스크린샷] %s" % dest)
+        elif _diag:
+            # PROD: .acdump에 암호화 저장
+            _diag.write_image(filename, final_path)
+            log(u"[CRASH 스크린샷] 암호화 저장: %s" % filename)
     except:
         log(u"[WARN] 크래시 스크린샷 저장 실패")
 
@@ -459,13 +515,20 @@ def capture_customer_detail(customer_name):
     import shutil
     # 안전한 파일명 생성 (특수문자 제거)
     safe_name = customer_name.replace("/", "_").replace("\\", "_").replace(":", "_")
-    screenshot_path = os.path.join(DEV_DIR, u"detail_%s.png" % safe_name)
 
     try:
         # 1. 전체 화면 캡처 (SikuliX capture)
         temp = capture(SCREEN)
-        shutil.copy(temp, screenshot_path)
-        log(u"        [고객상세] 스크린샷 저장: %s" % os.path.basename(screenshot_path))
+
+        if DEV_MODE and DEV_DIR:
+            screenshot_path = os.path.join(DEV_DIR, u"detail_%s.png" % safe_name)
+            shutil.copy(temp, screenshot_path)
+        else:
+            # PROD: SikuliX temp 파일을 그대로 사용 (OCR 후 .acdump에 암호화)
+            screenshot_path = temp
+            if _diag:
+                _diag.write_image(u"detail_%s.png" % safe_name, temp)
+        log(u"        [고객상세] 스크린샷 저장: detail_%s.png" % safe_name)
 
         # 2. metdo_reader 호출 (subprocess)
         ocr_env = os.environ.copy()
@@ -549,17 +612,35 @@ def capture_and_ocr(chosung_name, page_num):
     """
     timestamp = int(time.time())
     capture_filename = u"page_%s_%d_%d.png" % (chosung_name, page_num, timestamp)
-    capture_path = os.path.join(DEV_DIR, capture_filename)
-    json_path = capture_path.replace(".png", ".json")
+    cropped_filename = capture_filename.replace(".png", "_cropped.png")
+
+    import shutil
+
+    if DEV_MODE and DEV_DIR:
+        capture_path = os.path.join(DEV_DIR, capture_filename)
+        cropped_path = os.path.join(DEV_DIR, cropped_filename)
+        json_path = cropped_path.replace(".png", ".json")
+        _ocr_env_dir = DEV_DIR
+    else:
+        # PROD: temp 디렉토리에 임시 파일 (OCR subprocess 입출력용)
+        import tempfile as _tf
+        _prod_tmp = _tf.mkdtemp(prefix="ac_ocr_")
+        capture_path = os.path.join(_prod_tmp, capture_filename)
+        cropped_path = os.path.join(_prod_tmp, cropped_filename)
+        json_path = cropped_path.replace(".png", ".json")
+        _ocr_env_dir = _prod_tmp
 
     log(u"  [OCR] ----------------------------------------")
     log(u"  [OCR] 1/4. 화면 캡처")
 
     # 1. 전체 화면 캡처 (원본 보관용)
-    import shutil
     captured_full = capture(SCREEN)
     shutil.copy(captured_full, capture_path)
     log(u"  [OCR]   - 원본: %s" % capture_filename)
+
+    # PROD: 원본 캡처를 .acdump에 암호화 저장
+    if not DEV_MODE and _diag:
+        _diag.write_image(capture_filename, capture_path)
 
     # 2. 테이블 영역만 크롭 (필터 영역 + AutoClicker 영역 제외)
     TABLE_REGION_X = 20
@@ -568,10 +649,12 @@ def capture_and_ocr(chosung_name, page_num):
     TABLE_REGION_HEIGHT = 590
     table_region = Region(TABLE_REGION_X, TABLE_REGION_Y, TABLE_REGION_WIDTH, TABLE_REGION_HEIGHT)
     captured_cropped = capture(table_region)
-    cropped_filename = capture_filename.replace(".png", "_cropped.png")
-    cropped_path = os.path.join(DEV_DIR, cropped_filename)
     shutil.copy(captured_cropped, cropped_path)
     log(u"  [OCR]   - 크롭: %s" % cropped_filename)
+
+    # PROD: 크롭 캡처를 .acdump에 암호화 저장
+    if not DEV_MODE and _diag:
+        _diag.write_image(cropped_filename, cropped_path)
 
     # 크롭된 이미지로 OCR 수행
     json_path = cropped_path.replace(".png", ".json")
@@ -583,7 +666,7 @@ def capture_and_ocr(chosung_name, page_num):
     try:
         # 환경변수에 CAPTURE_DIR 추가하여 OCR 스크립트에 전달
         ocr_env = os.environ.copy()
-        ocr_env["METLIFE_CAPTURE_DIR"] = DEV_DIR
+        ocr_env["METLIFE_CAPTURE_DIR"] = _ocr_env_dir
         if _AC_EXE_PATH:
             # 패키징 모드: AutoClicker.exe --run-ocr <image> <output>
             result = subprocess.call([_AC_EXE_PATH, "--run-ocr", cropped_path, json_path], env=ocr_env)
@@ -604,12 +687,30 @@ def capture_and_ocr(chosung_name, page_num):
     if os.path.exists(json_path):
         with codecs.open(json_path, "r", "utf-8") as f:
             customers = json.load(f)
+        # PROD: OCR 결과 JSON을 .acdump에 암호화 저장
+        if not DEV_MODE and _diag:
+            with codecs.open(json_path, "r", "utf-8") as f:
+                _diag.write_json(cropped_filename.replace(".png", ".json"), f.read())
         log(u"  [OCR] 4/4. %d명 인식 완료" % len(customers))
         log(u"  [OCR] ----------------------------------------")
+        # PROD: temp 디렉토리 정리
+        if not DEV_MODE:
+            try:
+                import shutil as _sh_ocr
+                _sh_ocr.rmtree(_ocr_env_dir)
+            except:
+                pass
         return customers, json_path
     else:
         log(u"  [OCR] ERROR: JSON 없음")
         log(u"  [OCR] ----------------------------------------")
+        # PROD: temp 디렉토리 정리
+        if not DEV_MODE:
+            try:
+                import shutil as _sh_ocr
+                _sh_ocr.rmtree(_ocr_env_dir)
+            except:
+                pass
         return [], json_path
 
 
@@ -1390,16 +1491,16 @@ ONLY_MODE = ONLY_CUSTOMER is not None
 _only_found_count = 0  # 해당 고객 처리 횟수
 _only_all_done = False  # 모든 해당 고객 처리 완료 여부
 
-# 스크롤 테스트 디렉토리 (SCROLL_TEST 모드에서 페이지별 스크린샷 저장)
+# 스크롤 테스트 디렉토리 (SCROLL_TEST 모드에서 페이지별 스크린샷 저장, DEV only)
 SCROLL_TEST_DIR = None
-if SCROLL_TEST:
+if SCROLL_TEST and DEV_MODE and DEV_DIR:
     SCROLL_TEST_DIR = os.path.join(DEV_DIR, "scroll_test")
     if not os.path.exists(SCROLL_TEST_DIR):
         os.makedirs(SCROLL_TEST_DIR)
 
-# 에러/체크포인트 파일 경로
-ERROR_FILE = os.path.join(DEV_DIR, u"errors.json")
-CHECKPOINT_FILE = os.path.join(DEV_DIR, u"checkpoint.json")
+# 에러/체크포인트 파일 경로 (DEV: 평문 파일, PROD: .acdump에 암호화)
+ERROR_FILE = os.path.join(DEV_DIR, u"errors.json") if DEV_DIR else None
+CHECKPOINT_FILE = os.path.join(DEV_DIR, u"checkpoint.json") if DEV_DIR else None
 
 # 재개 위치 정보 (--resume 모드에서 사용)
 _resume_info = None
@@ -1408,7 +1509,7 @@ _skip_until_row = -1  # 이 행까지 스킵 (해당 행 포함)
 
 def load_checkpoint():
     """checkpoint.json에서 마지막 위치 로드"""
-    if not os.path.exists(CHECKPOINT_FILE):
+    if not CHECKPOINT_FILE or not os.path.exists(CHECKPOINT_FILE):
         return None
     try:
         with codecs.open(CHECKPOINT_FILE, "r", "utf-8") as f:
@@ -1418,27 +1519,36 @@ def load_checkpoint():
         return None
 
 
+# PROD용 에러 목록 (메모리 보관, .acdump에 기록)
+_prod_errors = []
+
+
 def save_error(customer_name, error_msg, chosung, nav_page, scroll_page, row_in_page):
     """오류 발생 고객을 errors.json에 기록 (위치 정보 포함)"""
     try:
-        errors = []
-        if os.path.exists(ERROR_FILE):
-            with codecs.open(ERROR_FILE, "r", "utf-8") as f:
-                errors = json.load(f)
-
-        import datetime
-        errors.append({
+        import datetime as _dt
+        error_entry = {
             u"고객명": customer_name,
             u"초성": chosung,
             u"네비페이지": nav_page,
             u"스크롤페이지": scroll_page,
             u"행": row_in_page,
             u"오류": error_msg,
-            u"시간": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
+            u"시간": _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
 
-        with codecs.open(ERROR_FILE, "w", "utf-8") as f:
-            json.dump(errors, f, ensure_ascii=False, indent=2)
+        if DEV_MODE and ERROR_FILE:
+            errors = []
+            if os.path.exists(ERROR_FILE):
+                with codecs.open(ERROR_FILE, "r", "utf-8") as f:
+                    errors = json.load(f)
+            errors.append(error_entry)
+            with codecs.open(ERROR_FILE, "w", "utf-8") as f:
+                json.dump(errors, f, ensure_ascii=False, indent=2)
+        elif _diag:
+            # PROD: .acdump에 암호화 저장
+            _prod_errors.append(error_entry)
+            _diag.write_json(u"errors.json", json.dumps(_prod_errors, ensure_ascii=False, indent=2))
 
         log(u"    [ERROR_LOG] 오류 기록됨: %s (N%d-S%d-R%d)" % (customer_name, nav_page, scroll_page, row_in_page))
     except Exception as e:
@@ -1448,18 +1558,22 @@ def save_error(customer_name, error_msg, chosung, nav_page, scroll_page, row_in_
 def save_checkpoint(customer_name, chosung, nav_page, scroll_page, row_in_page):
     """마지막 성공 고객을 checkpoint.json에 기록 (위치 정보 포함)"""
     try:
-        import datetime
+        import datetime as _dt
         checkpoint = {
             u"마지막고객": customer_name,
             u"초성": chosung,
             u"네비페이지": nav_page,
             u"스크롤페이지": scroll_page,
             u"행": row_in_page,
-            u"시간": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            u"시간": _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
-        with codecs.open(CHECKPOINT_FILE, "w", "utf-8") as f:
-            json.dump(checkpoint, f, ensure_ascii=False, indent=2)
+        if DEV_MODE and CHECKPOINT_FILE:
+            with codecs.open(CHECKPOINT_FILE, "w", "utf-8") as f:
+                json.dump(checkpoint, f, ensure_ascii=False, indent=2)
+        elif _diag:
+            # PROD: .acdump에 암호화 저장
+            _diag.write_json(u"checkpoint.json", json.dumps(checkpoint, ensure_ascii=False, indent=2))
     except Exception as e:
         log(u"    [CHECKPOINT] 저장 실패: %s" % str(e))
 
@@ -1483,11 +1597,17 @@ def _save_results_incremental(chosung_name):
     if not _chosung_customer_results:
         return
     try:
-        path = os.path.join(DEV_DIR, u"customer_results_%s.json" % chosung_name)
-        tmp_path = path + u".tmp"
-        with codecs.open(tmp_path, "w", "utf-8") as f:
-            json.dump(_chosung_customer_results, f, ensure_ascii=False, indent=2)
-        _jython_safe_replace(tmp_path, path)
+        if DEV_MODE and DEV_DIR:
+            path = os.path.join(DEV_DIR, u"customer_results_%s.json" % chosung_name)
+            tmp_path = path + u".tmp"
+            with codecs.open(tmp_path, "w", "utf-8") as f:
+                json.dump(_chosung_customer_results, f, ensure_ascii=False, indent=2)
+            _jython_safe_replace(tmp_path, path)
+        elif _diag:
+            # PROD: .acdump에 암호화 저장
+            _diag.write_json(
+                u"customer_results_%s.json" % chosung_name,
+                json.dumps(_chosung_customer_results, ensure_ascii=False, indent=2))
     except Exception:
         pass  # 증분 저장 실패가 실행을 막으면 안 됨
 
@@ -1600,15 +1720,23 @@ def generate_chosung_summary(chosung_name, total_rows, total_errors, error_custo
 
     # ★ 초성별 고객 결과 JSON 저장 (리셋 전 디스크에 영속화, atomic write)
     if results:
-        results_json_path = os.path.join(DEV_DIR, u"customer_results_%s.json" % chosung_name)
-        tmp_path = results_json_path + u".tmp"
-        try:
-            with codecs.open(tmp_path, "w", "utf-8") as f:
-                json.dump(results, f, ensure_ascii=False, indent=2)
-            _jython_safe_replace(tmp_path, results_json_path)
-            log(u"  [저장] 고객 결과 JSON: %s (%d명)" % (os.path.basename(results_json_path), len(results)))
-        except Exception as e:
-            log(u"  [ERROR] 고객 결과 JSON 저장 실패: %s" % e)
+        _results_name = u"customer_results_%s.json" % chosung_name
+        if DEV_MODE and DEV_DIR:
+            results_json_path = os.path.join(DEV_DIR, _results_name)
+            tmp_path = results_json_path + u".tmp"
+            try:
+                with codecs.open(tmp_path, "w", "utf-8") as f:
+                    json.dump(results, f, ensure_ascii=False, indent=2)
+                _jython_safe_replace(tmp_path, results_json_path)
+                log(u"  [저장] 고객 결과 JSON: %s (%d명)" % (_results_name, len(results)))
+            except Exception as e:
+                log(u"  [ERROR] 고객 결과 JSON 저장 실패: %s" % e)
+        elif _diag:
+            try:
+                _diag.write_json(_results_name, json.dumps(results, ensure_ascii=False, indent=2))
+                log(u"  [저장] 고객 결과 JSON (암호화): %s (%d명)" % (_results_name, len(results)))
+            except Exception as e:
+                log(u"  [ERROR] 고객 결과 JSON 저장 실패: %s" % e)
 
     # 결과 초기화 (다음 초성용)
     _chosung_customer_results = []
@@ -2422,14 +2550,15 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             log(u"  #  초성 [%s] 모든 페이지 처리 완료!" % chosung_name)
             log(u"  " + u"#" * 50)
             # 진단용: 다음 버튼 없음 시점의 전체 화면 캡처
-            try:
-                diag_path = os.path.join(DEV_DIR, "DIAG_no_next_btn_nav%d_%s.png" % (nav_page, chosung_name))
-                diag_cap = capture(Screen())
-                import shutil
-                shutil.copy(diag_cap, diag_path)
-                log(u"  [DIAG] 다음버튼 없음 진단 캡처: %s" % diag_path)
-            except Exception as e:
-                log(u"  [DIAG] 진단 캡처 실패: %s" % str(e))
+            if DEV_MODE and DEV_DIR:
+                try:
+                    diag_path = os.path.join(DEV_DIR, "DIAG_no_next_btn_nav%d_%s.png" % (nav_page, chosung_name))
+                    diag_cap = capture(Screen())
+                    import shutil
+                    shutil.copy(diag_cap, diag_path)
+                    log(u"  [DIAG] 다음버튼 없음 진단 캡처: %s" % diag_path)
+                except Exception as e:
+                    log(u"  [DIAG] 진단 캡처 실패: %s" % str(e))
             break  # 네비 루프 탈출
 
     # 초성 처리 완료 Summary + 문제 Report
