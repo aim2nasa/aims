@@ -165,11 +165,10 @@ CURRENT_CUSTOMER_NAME = None  # 현재 처리 중인 고객명 (파일명에 사
 
 
 def navigate_save_dialog_to_dir(target_dir=None):
-    """저장 다이얼로그에서 지정된 경로로 파일 저장 (설정된 경우에만)
+    """저장 다이얼로그에서 지정된 폴더로 이동 (주소표시줄 방식)
 
-    원리: 파일명 필드 맨 앞에 경로를 삽입하여 전체 경로 완성
-    예: "filename.pdf" → "D:\\path\\to\\dir\\filename.pdf"
-    Windows 저장 다이얼로그는 전체 경로가 주어지면 해당 폴더에 저장함
+    원리: Alt+D로 주소표시줄에 포커스 → 경로 입력 → Enter로 폴더 이동
+    파일명 필드를 건드리지 않으므로 포커스/타이밍 문제 없음
 
     Args:
         target_dir: 저장 경로. None이면 PDF_DOWNLOAD_DIR 사용.
@@ -180,12 +179,14 @@ def navigate_save_dialog_to_dir(target_dir=None):
     # 반드시 백슬래시 사용 (Windows 저장 다이얼로그는 forward slash 미지원)
     win_path = save_dir.replace("/", "\\")
     log(u"        [경로 설정] %s" % win_path)
-    # 파일명 입력란에 포커스가 있는 상태에서 맨 앞으로 이동 후 경로 삽입
+    # 주소표시줄로 폴더 이동 (파일명 필드 직접 수정보다 안정적)
     sleep(0.5)
-    type(Key.HOME)  # 커서를 파일명 맨 앞으로 이동
-    sleep(0.3)
-    paste(win_path + "\\")  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
-    sleep(0.3)
+    type("d", Key.ALT)   # 주소표시줄 포커스
+    sleep(0.5)
+    paste(win_path)       # 경로 입력
+    sleep(0.5)
+    type(Key.ENTER)       # 해당 폴더로 이동
+    sleep(1.0)            # 폴더 이동 완료 대기
 
 
 LOG_FILE = None  # verify_customer_integrated_view()에서 output_dir로 설정
