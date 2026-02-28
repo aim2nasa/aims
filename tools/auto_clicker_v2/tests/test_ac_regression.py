@@ -399,3 +399,59 @@ class TestTimestampArgPreservation:
         assert '_new_argv.extend(["--timestamp"' in self.source, (
             "_new_argv에 --timestamp extend 코드가 없음"
         )
+
+
+# ══════════════════════════════════════════════════════════════
+# 8. PDF 포커스 방향 회귀 방지 테스트
+# ══════════════════════════════════════════════════════════════
+
+class TestPdfFocusDirection:
+    """
+    PDF 뷰어 포커스 확보 시 X+80(우측) 사용 금지.
+    AC 콘솔(x=1376~, topmost)과 겹쳐 포커스 탈취 발생.
+
+    수정: Y+150(아래쪽, PDF 본문 영역) 클릭으로 변경.
+    배경: 2026-02-28 전효선 "AR PDF 뷰어 닫기 실패" 장애
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.source = _read_source(VERIFY_PY)
+
+    def test_no_x_plus_80_pattern(self):
+        """getX() + 80 패턴이 소스에 없어야 함 (AC 콘솔 겹침 방지)"""
+        matches = re.findall(r'getX\(\)\s*\)\s*\+\s*80', self.source)
+        assert len(matches) == 0, (
+            f"getX() + 80 패턴 {len(matches)}건 발견. "
+            "AC 콘솔(x=1376~)과 겹쳐 포커스 탈취. Y+150(아래쪽) 사용 필수."
+        )
+
+    def test_focus_and_close_pdf_exists(self):
+        """_focus_and_close_pdf 헬퍼 함수가 존재하는지"""
+        assert "def _focus_and_close_pdf()" in self.source, (
+            "_focus_and_close_pdf() 함수가 정의되어 있지 않음"
+        )
+
+    def test_focus_uses_y_offset(self):
+        """_focus_and_close_pdf()가 Y방향 오프셋을 사용하는지"""
+        func_src = _extract_function_source(self.source, "_focus_and_close_pdf")
+        assert func_src is not None, "_focus_and_close_pdf 함수를 찾을 수 없음"
+        assert "getY()" in func_src, (
+            "_focus_and_close_pdf()에 getY() 호출 없음. Y방향 오프셋 필수."
+        )
+
+    def test_taskkill_fallback_exists(self):
+        """_taskkill_pdf 최후 수단 함수가 존재하는지"""
+        assert "def _taskkill_pdf()" in self.source, (
+            "_taskkill_pdf() 함수가 정의되어 있지 않음. "
+            "3회 닫기 실패 시 taskkill fallback 필수."
+        )
+
+    def test_all_pdf_close_use_helper(self):
+        """모든 PDF 닫기 위치에서 _focus_and_close_pdf()를 호출하는지"""
+        calls = re.findall(r'_focus_and_close_pdf\(\)', self.source)
+        # 최소 5곳 (AR, CRS, Recovery, Crash recovery, Cleanup)
+        assert len(calls) >= 5, (
+            f"_focus_and_close_pdf() 호출 {len(calls)}건 (기대: 5건 이상). "
+            "모든 PDF 닫기 위치에서 헬퍼 함수를 사용해야 함."
+        )
