@@ -93,6 +93,14 @@ ssh rossi@100.110.215.65 'curl -s http://localhost:3010/api/ac/latest-version'
 
 응답에서 `latest`가 새 VERSION과 일치하는지 확인합니다.
 
+### Phase 8: 서버 구버전 정리
+
+업로드 완료 후 서버의 이전 인스톨러 파일을 삭제합니다 (최신 1개만 유지).
+
+```bash
+ssh rossi@100.110.215.65 'cd /home/rossi/aims/backend/api/aims_api/public/installers/ && ls -1 AIMS_AutoClicker_Setup_*.exe | sort -V | head -n -1 | xargs rm -v 2>/dev/null; echo "남은 파일:"; ls -lh AIMS_AutoClicker_Setup_*.exe'
+```
+
 ## 결과 보고
 
 | 단계 | 결과 |
@@ -103,6 +111,7 @@ ssh rossi@100.110.215.65 'curl -s http://localhost:3010/api/ac/latest-version'
 | 서버 업로드 | ✅ |
 | MongoDB | ✅ latest: {VERSION} |
 | API 검증 | ✅ |
+| 구버전 정리 | ✅ (최신 1개만 유지) |
 
 ## 주의사항
 
