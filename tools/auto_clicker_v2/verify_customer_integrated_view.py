@@ -2347,17 +2347,30 @@ def save_report_pdf(report_number):
                 log_error(report_number, u"PDF 저장 실행 안 됨 (저장 다이얼로그 미닫힘)")
                 recover_to_report_list(report_number)
                 raise NavigationResetRequired(u"변액리포트 #%d: PDF 저장 실행 안 됨" % report_number)
-            result['saved'] = True
-            result['success'] = True
             capture_step_screenshot(report_number, "saved")
-            log(u"        [VERIFIED] 변액리포트 #%d 저장 완료 확인 (저장 다이얼로그 정상 닫힘)" % report_number)
-            # 새로 저장된 PDF 파일명 감지
+            log(u"        [INFO] 변액리포트 #%d 저장 다이얼로그 정상 닫힘" % report_number)
+            # ★ 디스크에 실제 파일 존재 여부로 저장 성공 판정
             if crs_save_dir and os.path.isdir(crs_save_dir):
+                sleep(1)  # 파일 쓰기 완료 대기
                 pdf_files_after = set(f for f in os.listdir(crs_save_dir) if f.lower().endswith('.pdf'))
                 new_files = pdf_files_after - pdf_files_before
                 if new_files:
+                    result['saved'] = True
+                    result['success'] = True
                     result['saved_filename'] = sorted(new_files)[0]
                     log(u"        [파일명] %s" % result['saved_filename'])
+                    log(u"        [VERIFIED] 변액리포트 #%d 저장 완료 (디스크 확인)" % report_number)
+                else:
+                    result['saved'] = False
+                    result['success'] = False
+                    result['error'] = u"PDF 파일 디스크 미생성 (사일런트 실패)"
+                    log(u"        [WARNING] 변액리포트 #%d 저장 다이얼로그 닫혔으나 디스크에 새 파일 없음!" % report_number)
+                    log_error(report_number, u"PDF 파일 디스크 미생성 (사일런트 실패)")
+            else:
+                # 저장 디렉토리 미지정 시 다이얼로그 기준 (기존 동작 유지)
+                result['saved'] = True
+                result['success'] = True
+                log(u"        [VERIFIED] 변액리포트 #%d 저장 완료 (다이얼로그 기준)" % report_number)
 
         # Step 9-10: PDF 뷰어 닫기 (포커스 확보 + 3회 재시도)
         # ★ 근본 원인: PDF 저장 후 포커스가 PDF 뷰어에서 이탈할 수 있음
