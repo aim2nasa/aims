@@ -353,23 +353,37 @@ def capture_and_exit(reason):
 
 def scroll_to_top(scroll_count=20):
     """
-    마우스 휠로 스크롤을 맨 위로 이동
+    페이지를 맨 위로 스크롤
+
+    이미지 매칭 기반 상대좌표로 웹 콘텐츠 영역에 포커스 확보 후 Page Up.
+    절대좌표(300,250) 방식은 Chrome 레이아웃 차이(북마크바 등)로
+    kitten PC에서 Chrome 툴바를 클릭하여 스크롤이 웹페이지에 전달되지 않음.
 
     Args:
-        scroll_count: 휠 스크롤 횟수
+        scroll_count: Page Up 횟수
     """
-    # 페이지 전체 영역 클릭하여 포커스 확보 (왼쪽 상단 - 내부 테이블이 아닌 페이지 자체)
-    # 화면 중앙 클릭 시 통합접촉이력 테이블 내부에 클릭되어 그 테이블만 스크롤됨
-    focus_x = 300  # 왼쪽 영역 (고객 정보 패널 좌측)
-    focus_y = 250  # 상단 영역 (변액보험리포트 버튼 근처)
-    click(Location(focus_x, focus_y))
-    log(u"    포커스 클릭: (%d, %d) - 페이지 좌상단" % (focus_x, focus_y))
+    # 이미지 매칭으로 웹 콘텐츠 영역 포커스 확보 (Chrome 레이아웃 차이 대응)
+    # exists()가 Match 객체를 직접 반환하므로 find() 이중 호출 불필요
+    ref_match = exists(IMG_VARIABLE_INSURANCE_REPORT_BTN, 2)
+    if not ref_match:
+        ref_match = exists(IMG_CUSTOMER_INTEGRATED_VIEW_BTN, 2)
+
+    if ref_match:
+        # 이미지 왼쪽 아래 영역 클릭 (확실히 웹 콘텐츠 영역, 버튼은 항상 x>300)
+        fx = max(50, int(ref_match.getCenter().getX()) - 200)
+        fy = int(ref_match.getCenter().getY()) + 50
+        click(Location(fx, fy))
+        log(u"    포커스 클릭: (%d, %d) - 이미지 기준 상대좌표" % (fx, fy))
+    else:
+        click(Location(300, 250))
+        log(u"    포커스 클릭: (300, 250) - fallback 절대좌표")
     sleep(0.3)
 
-    # 마우스 휠 UP으로 맨 위로 이동
-    log(u"    마우스 휠 UP x %d..." % scroll_count)
+    # Java Robot Page Up으로 맨 위로 이동 (wheel()은 kitten에서 비동작)
+    log(u"    Page UP x %d..." % scroll_count)
     for i in range(scroll_count):
-        wheel(WHEEL_UP, 3)
+        _robot.keyPress(KeyEvent.VK_PAGE_UP)
+        _robot.keyRelease(KeyEvent.VK_PAGE_UP)
         sleep(0.1)
     sleep(0.5)
 
@@ -1247,16 +1261,10 @@ def _cleanup_annual_report_retry():
     sleep(0.5)
 
     # 4. 페이지 포커스 확보 + 스크롤 위로 이동
-    # 기존 scroll_to_top() 패턴과 동일: 좌상단 클릭 후 휠 업
+    # PDF 뷰어 닫힘 직후 Chrome 포커스 회복 대기 (이미지 매칭 fallback 방지)
     log(u"    [상태 정리] 페이지 포커스 확보 + 스크롤 위로...")
-    focus_x, focus_y = 300, 250
-    click(Location(focus_x, focus_y))
-    log(u"    [상태 정리] 포커스 클릭: (%d, %d)" % (focus_x, focus_y))
-    capture_with_click_marker(focus_x, focus_y, "cleanup_focus", 0, "step7_cleanup_focus")
-    sleep(0.3)
-    for _ in range(5):
-        wheel(WHEEL_UP, 3)
-        sleep(0.1)
+    exists(IMG_VARIABLE_INSURANCE_REPORT_BTN, 3)
+    scroll_to_top(5)
     sleep(WAIT_SHORT)
 
     take_screenshot(u"step7_retry_cleanup_done")
@@ -3166,16 +3174,8 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     # 7단계: Annual Report 다운로드
     # 포커스 안정화: 변액보험리포트 팝업 닫기 직후 브라우저 포커스가 불안정할 수 있음
     log(u"")
-    log(u"    [포커스 안정화] 페이지 좌상단 클릭 + 스크롤 위로...")
-    focus_x, focus_y = 300, 250
-    click(Location(focus_x, focus_y))
-    log(u"    [포커스 안정화] 클릭: (%d, %d)" % (focus_x, focus_y))
-    capture_with_click_marker(focus_x, focus_y, "focus_stabilize", 0, "step7_focus")
-    sleep(0.3)
-    # 스크롤 위로 이동 (Annual Report 버튼이 상단에 있으므로)
-    for _ in range(5):
-        wheel(WHEEL_UP, 3)
-        sleep(0.1)
+    log(u"    [포커스 안정화] 스크롤 위로 이동...")
+    scroll_to_top(5)
     sleep(WAIT_SHORT)
 
     ar_result = download_annual_report()
