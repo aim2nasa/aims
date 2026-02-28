@@ -102,6 +102,14 @@ class CompactPanel(ctk.CTkFrame):
         )
         self._version_label.pack(side="right", padx=(0, 4), pady=3)
 
+        # 사용자 + DEV 표시 (버전 왼쪽, 항상 노출)
+        self._user_label = ctk.CTkLabel(
+            self, text="",
+            font=ctk.CTkFont(family=_FONT, size=9),
+            text_color="#5dade2",
+        )
+        self._user_label.pack(side="right", padx=(0, 2), pady=3)
+
         # 소요시간 (우측)
         self._time_label = ctk.CTkLabel(
             self, text="",
@@ -128,6 +136,15 @@ class CompactPanel(ctk.CTkFrame):
             self._on_toggle()
 
     # --- 외부에서 호출하는 상태 동기화 ---
+
+    def set_user_name(self, name: str, dev_mode: bool = False):
+        """사용자명 + DEV 모드 표시"""
+        text = name or ""
+        if dev_mode and text:
+            text += " [DEV]"
+        elif dev_mode:
+            text = "[DEV]"
+        self._user_label.configure(text=text)
 
     def set_chosung(self, chosung: str):
         """선택한 초성 표시"""

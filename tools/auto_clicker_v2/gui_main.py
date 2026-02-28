@@ -276,10 +276,21 @@ class AutoClickerApp(ctk.CTk):
     # ===== 개발자 모드 =====
 
     def _update_title(self):
-        """타이틀바 텍스트 갱신 (사용자명 + dev 모드 suffix)"""
+        """타이틀바 + UI 라벨 갱신 (사용자명 + dev 모드)"""
         suffix = " [DEV]" if self._dev_mode else ""
         user = f" — {self._user_name}" if self._user_name else ""
         self.title(f"AutoClicker v{_VERSION}{user}{suffix}")
+        # UI 라벨 갱신 (overrideredirect 시 타이틀바 안 보이므로)
+        if hasattr(self, "_user_label"):
+            label = self._user_name or ""
+            if self._dev_mode and label:
+                label += " [DEV]"
+            elif self._dev_mode:
+                label = "[DEV]"
+            self._user_label.configure(text=label)
+        if hasattr(self, "_compact_panel"):
+            self._compact_panel.set_user_name(
+                self._user_name, self._dev_mode)
 
     def _toggle_dev_mode(self, event=None):
         """개발자 모드 토글 (Ctrl+Shift+D → PIN 입력 2단계)"""
@@ -555,6 +566,14 @@ class AutoClickerApp(ctk.CTk):
             text_color="gray45",
         )
         self._version_label.pack(side="right", padx=(0, 6), pady=5)
+
+        # 사용자 + DEV 표시 (버전 왼쪽, 항상 노출)
+        self._user_label = ctk.CTkLabel(
+            self._toolbar, text="",
+            font=ctk.CTkFont(family=_FONT, size=9),
+            text_color="#5dade2",
+        )
+        self._user_label.pack(side="right", padx=(0, 4), pady=5)
 
         # 상태 표시 (우측)
         self._status_label = ctk.CTkLabel(
