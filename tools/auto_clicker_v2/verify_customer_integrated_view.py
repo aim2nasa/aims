@@ -1703,7 +1703,7 @@ def recover_to_report_list(report_number):
     # ★ 포커스 확보: Y+150(아래쪽, PDF 본문) 클릭. 기존에는 포커스 확보 없이 Alt+F4
     log(u"        [복구 3/6] PDF 뷰어 닫기 시도...")
     pdf_close_count = 0
-    while exists(IMG_PDF_SAVE_BTN, 2) and pdf_close_count < 5:
+    while exists(IMG_PDF_SAVE_BTN, 2) and pdf_close_count < 15:
         pdf_close_count += 1
         log(u"        -> PDF 뷰어 열려있음 [%d번째] - 닫기 시도" % pdf_close_count)
         _focus_and_close_pdf()
@@ -2141,10 +2141,12 @@ def save_report_pdf(report_number):
         # Step 4+5: 미리보기 버튼 클릭 + PDF 로딩 (짧은 주기 재클릭 방식)
         # 전략: 10초 간격으로 PDF 로딩 확인, 미리보기 버튼이 아직 보이면 재클릭
         # 기존: 3회 × 긴 대기(50/60/120초) = 총 ~230초, 클릭 3회
-        # 개선: 최대 90초, 10초마다 확인 + 재클릭 → 클릭 최대 ~8회
+        # 개선: 최대 90초, 10초마다 확인 + 재클릭 → 클릭 최대 3회/30초 간격
         PREVIEW_POLL = 10   # PDF 로딩 확인 주기 (초)
         PREVIEW_MAX = 90    # 최대 총 대기 시간 (초)
-        log(u"    [4/11] 미리보기 버튼 클릭 + PDF 로딩 (최대 %d초, %d초마다 재클릭)..." % (PREVIEW_MAX, PREVIEW_POLL))
+        MAX_PREVIEW_CLICKS = 3     # 미리보기 재클릭 최대 횟수
+        MIN_RECLICK_INTERVAL = 30  # 재클릭 최소 간격 (초) — 서버 응답 충분 대기
+        log(u"    [4/11] 미리보기 버튼 클릭 + PDF 로딩 (최대 %d초, 재클릭 최대 %d회/%d초 간격)..." % (PREVIEW_MAX, MAX_PREVIEW_CLICKS, MIN_RECLICK_INTERVAL))
         pdf_loaded = False
         metlife_error_in_retry = False
 
@@ -2170,17 +2172,26 @@ def save_report_pdf(report_number):
 
         total_waited = 0
         click_count = 0
+        last_click_waited = -MIN_RECLICK_INTERVAL  # 첫 클릭은 즉시 허용
 
         while total_waited < PREVIEW_MAX:
-            # 미리보기 버튼이 보이면 → 클릭 (미등록 또는 첫 시도)
+            # 미리보기 버튼이 보이면 → 재클릭 조건 판단 (횟수 + 간격 제한)
             if exists(preview_pattern, 2):
-                preview_match = find(preview_pattern)
-                preview_x = int(preview_match.getCenter().getX())
-                preview_y = int(preview_match.getCenter().getY())
-                click_count += 1
-                log(u"        [클릭 %d] 미리보기 버튼: (%d, %d)" % (click_count, preview_x, preview_y))
-                click(preview_match)
-                capture_with_click_marker(preview_x, preview_y, "preview_btn", report_number, "preview_clicked_%d" % click_count)
+                time_since_last = total_waited - last_click_waited
+                can_click = click_count < MAX_PREVIEW_CLICKS and time_since_last >= MIN_RECLICK_INTERVAL
+                if can_click:
+                    preview_match = find(preview_pattern)
+                    preview_x = int(preview_match.getCenter().getX())
+                    preview_y = int(preview_match.getCenter().getY())
+                    click_count += 1
+                    last_click_waited = total_waited
+                    log(u"        [클릭 %d/%d] 미리보기 버튼: (%d, %d)" % (click_count, MAX_PREVIEW_CLICKS, preview_x, preview_y))
+                    click(preview_match)
+                    capture_with_click_marker(preview_x, preview_y, "preview_btn", report_number, "preview_clicked_%d" % click_count)
+                elif click_count >= MAX_PREVIEW_CLICKS:
+                    log(u"        [재클릭 차단] 최대 %d회 도달 — PDF 로딩 대기만 수행" % MAX_PREVIEW_CLICKS)
+                else:
+                    log(u"        [재클릭 대기] 마지막 클릭 후 %d/%d초 경과" % (time_since_last, MIN_RECLICK_INTERVAL))
             else:
                 log(u"        [대기] 미리보기 버튼 사라짐 → PDF 로딩 중...")
 
@@ -2415,9 +2426,26 @@ def save_report_pdf(report_number):
             log(u"        [INFO] 변액리포트 #%d 저장 다이얼로그 정상 닫힘" % report_number)
             # ★ 디스크에 실제 파일 존재 여부로 저장 성공 판정
             if crs_save_dir and os.path.isdir(crs_save_dir):
-                sleep(1)  # 파일 쓰기 완료 대기
-                pdf_files_after = set(f for f in os.listdir(crs_save_dir) if f.lower().endswith('.pdf'))
-                new_files = pdf_files_after - pdf_files_before
+                # ★ 디스크 파일 쓰기 완료 폴링 (기존 sleep(1) 단발 → 최대 10초 반복 확인)
+                DISK_CHECK_MAX = 10
+                DISK_CHECK_POLL = 0.5
+                disk_waited = 0.0
+                new_files = set()
+                while disk_waited < DISK_CHECK_MAX:
+                    sleep(DISK_CHECK_POLL)
+                    disk_waited += DISK_CHECK_POLL
+                    pdf_files_after = set(f for f in os.listdir(crs_save_dir) if f.lower().endswith('.pdf'))
+                    new_files = pdf_files_after - pdf_files_before
+                    if new_files:
+                        # 파일 크기 안정화 확인 (쓰기 완료 판정)
+                        first_file = sorted(new_files)[0]
+                        file_path = os.path.join(crs_save_dir, first_file)
+                        size1 = os.path.getsize(file_path)
+                        sleep(0.5)
+                        size2 = os.path.getsize(file_path)
+                        if size1 == size2 and size1 > 0:
+                            log(u"        [디스크] 파일 쓰기 완료 확인 (%.1f초 경과)" % disk_waited)
+                            break
                 if new_files:
                     result['saved'] = True
                     result['success'] = True
@@ -2427,8 +2455,8 @@ def save_report_pdf(report_number):
                 else:
                     result['saved'] = False
                     result['success'] = False
-                    result['error'] = u"PDF 파일 디스크 미생성 (사일런트 실패)"
-                    log(u"        [WARNING] 변액리포트 #%d 저장 다이얼로그 닫혔으나 디스크에 새 파일 없음!" % report_number)
+                    result['error'] = u"PDF 파일 디스크 미생성 (사일런트 실패, %d초 대기)" % DISK_CHECK_MAX
+                    log(u"        [WARNING] 변액리포트 #%d 저장 다이얼로그 닫혔으나 디스크에 새 파일 없음! (%d초 대기)" % (report_number, DISK_CHECK_MAX))
                     log_error(report_number, u"PDF 파일 디스크 미생성 (사일런트 실패)")
             else:
                 # 저장 디렉토리 미지정 시 다이얼로그 기준 (기존 동작 유지)
@@ -2445,6 +2473,18 @@ def save_report_pdf(report_number):
             if _focus_and_close_pdf():
                 log(u"        -> PDF 뷰어 정상 종료 확인")
                 pdf_viewer_closed = True
+                # ★ 재클릭이 있었다면 추가 PDF 팝업 확인 (중복 서버 응답 대비)
+                if click_count > 1:
+                    log(u"        [추가 검사] 재클릭 %d회 → 중복 PDF 팝업 확인..." % click_count)
+                    for extra_check in range(1, 4):
+                        sleep(5)  # 서버 지연 응답 대기
+                        if exists(IMG_PDF_SAVE_BTN, 3):
+                            log(u"        [추가 PDF 발견 %d] 중복 팝업 닫기 시도..." % extra_check)
+                            take_screenshot(u"extra_pdf_popup_%d" % extra_check)
+                            _focus_and_close_pdf()
+                        else:
+                            log(u"        [추가 검사 %d/3] 추가 PDF 없음 — 완료" % extra_check)
+                            break
                 break
             else:
                 log(u"        [WARN] PDF 뷰어 아직 열려있음 (시도 %d/3)" % close_attempt)
