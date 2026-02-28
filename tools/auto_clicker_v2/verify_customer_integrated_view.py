@@ -165,10 +165,10 @@ CURRENT_CUSTOMER_NAME = None  # 현재 처리 중인 고객명 (파일명에 사
 
 
 def navigate_save_dialog_to_dir(target_dir=None):
-    """저장 다이얼로그에서 지정된 폴더로 이동 (주소표시줄 방식)
+    """저장 다이얼로그에서 지정된 경로로 파일 저장
 
-    원리: Alt+D로 주소표시줄에 포커스 → 경로 입력 → Enter로 폴더 이동
-    파일명 필드를 건드리지 않으므로 포커스/타이밍 문제 없음
+    원리: Tab→Shift+Tab으로 파일명 필드 포커스 확보 → HOME으로 커서 맨 앞 →
+    경로\를 파일명 앞에 paste 삽입 → 결과: 경로\파일명.pdf
 
     Args:
         target_dir: 저장 경로. None이면 PDF_DOWNLOAD_DIR 사용.
@@ -178,15 +178,22 @@ def navigate_save_dialog_to_dir(target_dir=None):
         return
     # 반드시 백슬래시 사용 (Windows 저장 다이얼로그는 forward slash 미지원)
     win_path = save_dir.replace("/", "\\")
-    log(u"        [경로 설정] %s" % win_path)
-    # 주소표시줄로 폴더 이동 (파일명 필드 직접 수정보다 안정적)
+    paste_text = win_path + "\\"
+    log(u"        [경로 설정] target_dir=%s" % save_dir)
+    log(u"        [경로 설정] paste할 문자열: '%s'" % paste_text)
+    # 파일명 필드 포커스 확보 + 기존 파일명 앞에 경로 삽입
     sleep(0.5)
-    type("d", Key.ALT)   # 주소표시줄 포커스
+    # Tab으로 파일명 필드에 포커스 강제 이동 (포커스 누락 방지)
+    type(Key.TAB)
+    sleep(0.3)
+    type(Key.TAB, Key.SHIFT)  # Shift+Tab: 다시 파일명 필드로 복귀
+    sleep(0.3)
+    type(Key.HOME)  # 커서를 파일명 맨 앞으로 이동
     sleep(0.5)
-    paste(win_path)       # 경로 입력
-    sleep(0.5)
-    type(Key.ENTER)       # 해당 폴더로 이동
-    sleep(1.0)            # 폴더 이동 완료 대기
+    paste(paste_text)  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
+    log(u"        [경로 설정] paste 완료, 1.0초 대기 중...")
+    sleep(1.0)  # paste 완료 + 경로 해석 대기 (세션 첫 호출 고려)
+    log(u"        [경로 설정] 경로 주입 완료")
 
 
 LOG_FILE = None  # verify_customer_integrated_view()에서 output_dir로 설정
@@ -1431,8 +1438,11 @@ def download_annual_report():
 
     # 7-5: 저장 경로 설정 + 저장(S) 버튼 클릭
     log(u"    저장(S) 버튼 클릭...")
+    log(u"        [DEBUG] AR 저장 경로: ar_save_dir='%s'" % ar_save_dir)
+    log(u"        [DEBUG] AR — navigate_save_dialog_to_dir() 호출 직전")
     take_screenshot(u"step7_before_save_s_btn")
     navigate_save_dialog_to_dir(ar_save_dir)
+    log(u"        [DEBUG] AR — navigate_save_dialog_to_dir() 완료, 저장(S) 버튼 찾는 중...")
     save_s_match = find(IMG_SAVE_S_BTN)
     ss_x = int(save_s_match.getCenter().getX())
     ss_y = int(save_s_match.getCenter().getY())
@@ -2285,13 +2295,17 @@ def save_report_pdf(report_number):
 
         # Step 7: 저장 경로 설정 + 저장(S) 버튼 클릭
         log(u"    [7/11] 저장(S) 버튼 클릭...")
+        log(u"        [DEBUG] CRS 저장 경로: crs_save_dir='%s'" % crs_save_dir)
+        log(u"        [DEBUG] 리포트 #%d — navigate_save_dialog_to_dir() 호출 직전" % report_number)
         capture_step_screenshot(report_number, "before_save_btn")
         navigate_save_dialog_to_dir(crs_save_dir)
+        log(u"        [DEBUG] 리포트 #%d — navigate_save_dialog_to_dir() 완료, 저장(S) 버튼 찾는 중..." % report_number)
         save_s_match = find(IMG_SAVE_S_BTN)
         ssx = int(save_s_match.getCenter().getX())
         ssy = int(save_s_match.getCenter().getY())
         log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ssx, ssy))
         click(save_s_match)
+        log(u"        [DEBUG] 리포트 #%d — 저장(S) 클릭 완료, 3초 대기..." % report_number)
         capture_with_click_marker(ssx, ssy, "save_s_btn", report_number, "save_s_clicked")
         sleep(3)
         capture_step_screenshot(report_number, "after_save_btn")
