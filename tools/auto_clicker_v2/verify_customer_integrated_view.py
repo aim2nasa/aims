@@ -78,6 +78,24 @@ def paste(target, *args):
     _wait_if_paused()
     return _sikuli_paste(target, *args)
 
+# ===== 브라우저 포커스 자동 복구 =====
+def ensure_browser_focus():
+    """MetLife 브라우저(Chrome)를 최상위 활성 윈도우로 복구.
+
+    TeamViewer 등으로 브라우저가 비활성화되면 SikuliX 클릭이
+    JavaScript 이벤트를 발동시키지 못함. 주요 클릭 전에 호출하여
+    브라우저 포커스를 보장한다.
+    """
+    try:
+        App.focus("Chrome")
+    except Exception:
+        try:
+            log(u"    [포커스] App.focus 실패 → Alt+Tab fallback")
+            _sikuli_type(Key.TAB, Key.ALT)
+        except Exception as e:
+            log(u"    [포커스] 포커스 복구 실패 (무시): %s" % str(e))
+    sleep(0.3)
+
 # 경로 설정 (동적 감지 - auto_clicker_v2 기준)
 # 주의: 모듈 레벨에서 폴더 생성하지 않음! output_dir로 전달받아 verify_customer_integrated_view() 내에서 생성
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -462,6 +480,7 @@ def scroll_to_top(scroll_count=20):
     Args:
         scroll_count: 휠 반복 횟수 (1회당 3 notch)
     """
+    ensure_browser_focus()  # 스크롤 전 브라우저 포커스 복구
     focus_x = 300
     focus_y = 250
     click(Location(focus_x, focus_y))
@@ -889,6 +908,7 @@ def click_all_rows_with_scroll():
 
     log(u"")
     log(u"    === 변액보험리포트 순차 클릭 시작 (이미지 매칭 기반) ===")
+    ensure_browser_focus()  # 체크박스/선택 버튼 클릭 전 포커스 복구
 
     # 헤더 찾기
     if not exists(IMG_REPORT_HEADER, 5):
@@ -1392,6 +1412,7 @@ def download_annual_report():
             _cleanup_annual_report_retry()
 
         # 7-1: Annual Report 버튼 찾기 & 클릭 (좌표 로깅 + 클릭 마커)
+        ensure_browser_focus()  # AR 버튼 클릭 전 포커스 복구
         log(u"    [Annual Report 버튼] 찾는 중... [시도 %d/%d]" % (attempt, MAX_RETRY))
         take_screenshot(u"step7_before_annual_report_btn" if attempt == 1 else u"step7_retry%d_before_btn" % attempt)
 
@@ -1655,6 +1676,7 @@ def recover_to_report_list(report_number):
     log(u"    " + u"=" * 50)
     log(u"    [복구 시작] 변액보험리포트 목록으로 복귀 중...")
     log(u"    " + u"=" * 50)
+    ensure_browser_focus()  # 에러 복구 시 포커스 유실 가능성 높음
     capture_error_screenshot(report_number, "recovery_start")
 
     # Step 0: 현재 상태 분석
@@ -1863,6 +1885,7 @@ def recover_from_dual_select(target_report_num, total_reports):
     log(u"    " + u"=" * 60)
     log(u"    [복구] 중복 선택 복구 시작 (목표: 보고서 #%d, 전체: %d건)" % (target_report_num, total_reports))
     log(u"    " + u"=" * 60)
+    ensure_browser_focus()  # 중복 선택 복구 시 포커스 확보
 
     # Step 1: 알림 확인 클릭
     log(u"    [복구 1/5] 알림 확인 클릭...")
@@ -2080,6 +2103,7 @@ def save_report_pdf(report_number):
 
     log(u"")
     log(u"    ===== PDF 저장 시작 [보고서 #%d] =====" % report_number)
+    ensure_browser_focus()  # Step 1~3 체크박스/버튼 클릭 전 포커스 복구
 
     try:
         # Step 0: > 버튼 찾기 (기준점)
@@ -2166,6 +2190,7 @@ def save_report_pdf(report_number):
         pdf_loaded = False
         metlife_error_in_retry = False
 
+        ensure_browser_focus()  # 미리보기 클릭 전 포커스 복구
         preview_pattern = Pattern(IMG_PREVIEW_PDF_BTN).similar(0.8)
         if not exists(preview_pattern, 5):
             # 알림 팝업 확인 (MetDo 서비스 오류 등)
@@ -2332,6 +2357,7 @@ def save_report_pdf(report_number):
 
         # Step 6: PDF 저장 아이콘 클릭 + 검증
         log(u"    [6/11] PDF 저장 아이콘 클릭...")
+        ensure_browser_focus()  # PDF 저장 클릭 전 포커스 복구
         capture_step_screenshot(report_number, "before_save_icon")
         save_btn_match = find(IMG_PDF_SAVE_BTN)
         sbx = int(save_btn_match.getCenter().getX())
@@ -2583,6 +2609,7 @@ def save_report_pdf(report_number):
 
         # Step 11: 보고서인쇄 창 X 버튼 클릭
         log(u"    [11/11] 보고서인쇄 창 X 버튼 클릭...")
+        ensure_browser_focus()  # X 버튼 클릭 전 포커스 복구
         capture_step_screenshot(report_number, "before_close_x")
 
         # 이미지 매칭 우선 시도
@@ -2759,6 +2786,7 @@ def click_print_report_close_btn():
     Returns:
         bool: 클릭 성공 여부
     """
+    ensure_browser_focus()  # X 버튼 클릭 전 포커스 복구
     # 방법 1: 미리보기 버튼 기준 상대 좌표로 X 버튼 클릭
     preview_pattern = Pattern(IMG_PREVIEW_BTN).similar(0.8)
     if exists(preview_pattern, 2):
@@ -3063,6 +3091,7 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     integrated_view_opened = False
     for attempt in range(1, 4):
         log(u"    [시도 %d/3] 고객통합뷰 버튼 클릭..." % attempt)
+        ensure_browser_focus()  # 브라우저 포커스 복구 (FATAL 방지)
 
         if not wait_and_click(IMG_CUSTOMER_INTEGRATED_VIEW_BTN, u"고객통합뷰 버튼"):
             log(u"    [ERROR] 고객통합뷰 버튼 찾기 실패")
@@ -3126,6 +3155,7 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     # 4단계: 변액보험리포트 클릭
     log(u"")
     log(u"[4단계] 변액보험리포트 클릭")
+    ensure_browser_focus()  # 변액보험리포트 버튼 클릭 전 포커스 복구
     if not wait_and_click(IMG_VARIABLE_INSURANCE_REPORT_BTN, u"변액보험리포트 버튼", 25):
         capture_and_exit(u"변액보험리포트 버튼을 찾을 수 없음 - 고객통합뷰 미로딩 또는 화면 전환 실패")
 
@@ -3226,6 +3256,7 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     # 6단계: 변액보험리포트 팝업 X 버튼 클릭 (변액보험이 있는 경우에만)
     log(u"")
     log(u"[6단계] 변액보험리포트 팝업 X 버튼 클릭")
+    ensure_browser_focus()  # X 버튼 클릭 전 포커스 복구
     if not variable_insurance_exists:
         log(u"    -> 변액보험이 없어 팝업이 없음, 스킵")
     else:
@@ -3324,6 +3355,7 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     step8_closed = False
     for attempt in range(1, 4):
         log(u"    [시도 %d/3] 고객통합뷰 X 버튼 클릭..." % attempt)
+        ensure_browser_focus()  # 고객통합뷰 X 버튼 클릭 전 포커스 복구
         if not wait_and_click(IMG_INTEGRATED_VIEW_CLOSE_BTN, u"고객통합뷰 X 버튼"):
             log(u"    [ERROR] 고객통합뷰 X 버튼 찾기 실패")
             take_screenshot(u"step8_x_not_found_%d" % attempt)
