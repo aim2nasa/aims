@@ -92,6 +92,10 @@ cd /d/aims/tools/auto_clicker_v2 && python -m pytest tests/test_ac_regression.py
 - 스크롤 회귀 방지 (mouseWheel 사용 확인)
 - 좌표 계산/상수 정합성
 - CRS 저장 검증 로직
+- 포커스 자동 복구 (ensure_browser_focus 14곳 적용)
+- PDF 미리보기 중복 팝업 방지 (재클릭 3회/30초 제한)
+- 타이틀바 다크모드 (DWM 지연 적용 + SWP_FRAMECHANGED)
+- CRS 저장 다이얼로그 Alt+N 포커스 확보
 
 ## 선택 옵션
 
@@ -133,9 +137,9 @@ command > /d/tmp/test_suite_N.txt 2>&1; echo "EXIT_CODE=$?"
 | 4 | Backend aims_mcp (vitest) | 32 | PASS | 3.8s |
 | 5 | Backend document_pipeline (pytest) | 403 | PASS | 18.5s |
 | 6 | Backend annual_report_api (pytest) | 24 | PASS | 6.1s |
-| 7 | AutoClicker regression (pytest) | 43 | PASS | 0.1s |
+| 7 | AutoClicker regression (pytest) | 95 | PASS | 0.4s |
 
-**총 테스트: ~717개 | 전체 PASS | 총 소요: 54.1s**
+**총 테스트: ~769+개 | 전체 PASS | 총 소요: ~55s**
 ```
 
 실패한 스위트가 있으면:

@@ -770,3 +770,271 @@ class TestEncryptionKeyConsistency:
         assert gui_key == reader_key, (
             f"키 불일치: gui={gui_key[:16]}... vs reader={reader_key[:16]}..."
         )
+
+
+# ══════════════════════════════════════════════════════════════
+# 포커스 자동 복구 회귀 테스트 (v0.1.122, 커밋 700b86b4)
+# ══════════════════════════════════════════════════════════════
+
+class TestEnsureBrowserFocus:
+    """
+    ensure_browser_focus() 함수가 모든 주요 클릭 지점에 배치되어 있는지 검증.
+
+    배경: TeamViewer 원격 접속 시 MetLife 브라우저가 비활성화되면
+    SikuliX 클릭이 JavaScript 이벤트를 발동시키지 못함 → FATAL.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.verify_src = _read_source(VERIFY_PY)
+
+    def test_ensure_browser_focus_function_exists(self):
+        """ensure_browser_focus() 함수 정의 존재"""
+        assert "def ensure_browser_focus():" in self.verify_src, (
+            "ensure_browser_focus() 함수가 verify_customer_integrated_view.py에 없음"
+        )
+
+    def test_ensure_browser_focus_uses_app_focus(self):
+        """ensure_browser_focus()가 App.focus('Chrome')을 호출"""
+        func_src = _extract_function_source(self.verify_src, "ensure_browser_focus")
+        assert func_src is not None, "ensure_browser_focus 함수를 찾을 수 없음"
+        assert 'App.focus("Chrome")' in func_src or "App.focus('Chrome')" in func_src, (
+            "ensure_browser_focus()가 App.focus('Chrome')을 호출하지 않음"
+        )
+
+    def test_ensure_browser_focus_has_alt_tab_fallback(self):
+        """ensure_browser_focus()에 Alt+Tab 폴백 존재"""
+        func_src = _extract_function_source(self.verify_src, "ensure_browser_focus")
+        assert func_src is not None
+        assert "Key.TAB" in func_src and "Key.ALT" in func_src, (
+            "ensure_browser_focus()에 Alt+Tab 폴백이 없음"
+        )
+
+    def test_ensure_browser_focus_minimum_call_count(self):
+        """ensure_browser_focus() 호출이 최소 10곳 이상 (14곳 적용됨)"""
+        # 함수 정의 자체는 제외하고 호출만 카운트
+        call_count = self.verify_src.count("ensure_browser_focus()")
+        definition_count = self.verify_src.count("def ensure_browser_focus()")
+        actual_calls = call_count - definition_count
+        assert actual_calls >= 10, (
+            f"ensure_browser_focus() 호출이 {actual_calls}곳뿐. "
+            f"최소 10곳 이상 필요 (현재 14곳 적용)."
+        )
+
+    def test_scroll_to_top_has_focus(self):
+        """scroll_to_top()에 ensure_browser_focus() 호출 존재"""
+        func_src = _extract_function_source(self.verify_src, "scroll_to_top")
+        assert func_src is not None, "scroll_to_top 함수를 찾을 수 없음"
+        assert "ensure_browser_focus()" in func_src, (
+            "scroll_to_top()에 ensure_browser_focus()가 없음. "
+            "스크롤 전 브라우저 포커스 복구 필수."
+        )
+
+    def test_click_all_rows_has_focus(self):
+        """click_all_rows_with_scroll()에 ensure_browser_focus() 호출 존재"""
+        func_src = _extract_function_source(self.verify_src, "click_all_rows_with_scroll")
+        assert func_src is not None, "click_all_rows_with_scroll 함수를 찾을 수 없음"
+        assert "ensure_browser_focus()" in func_src, (
+            "click_all_rows_with_scroll()에 ensure_browser_focus()가 없음. "
+            "행 클릭 전 브라우저 포커스 복구 필수."
+        )
+
+    def test_save_report_pdf_has_focus(self):
+        """save_report_pdf()에 ensure_browser_focus() 호출 존재"""
+        func_src = _extract_function_source(self.verify_src, "save_report_pdf")
+        assert func_src is not None, "save_report_pdf 함수를 찾을 수 없음"
+        assert "ensure_browser_focus()" in func_src, (
+            "save_report_pdf()에 ensure_browser_focus()가 없음. "
+            "PDF 저장 과정에서 포커스 유실 시 저장 실패."
+        )
+
+    def test_recover_to_report_list_has_focus(self):
+        """recover_to_report_list()에 ensure_browser_focus() 호출 존재"""
+        func_src = _extract_function_source(self.verify_src, "recover_to_report_list")
+        assert func_src is not None, "recover_to_report_list 함수를 찾을 수 없음"
+        assert "ensure_browser_focus()" in func_src, (
+            "recover_to_report_list()에 ensure_browser_focus()가 없음. "
+            "에러 복구 시 포커스 유실 가능성 높음."
+        )
+
+
+# ══════════════════════════════════════════════════════════════
+# PDF 미리보기 중복 팝업 방지 회귀 테스트 (v0.1.119, 커밋 af6ae8d4)
+# ══════════════════════════════════════════════════════════════
+
+class TestPdfPreviewReclickLimit:
+    """
+    미리보기 버튼 재클릭 횟수/간격 제한 검증.
+
+    배경: PREVIEW_POLL 루프에서 미리보기 버튼을 무제한 재클릭하면
+    서버에 중복 요청 → 복수 PDF 팝업 생성 → 꼬임.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.verify_src = _read_source(VERIFY_PY)
+
+    def _extract_local_constant(self, const_name):
+        """함수 내부 로컬 상수도 추출 (들여쓰기 포함)"""
+        pattern = re.compile(
+            r'^\s+' + re.escape(const_name) + r'\s*=\s*(.+?)(?:\s*#.*)?$',
+            re.MULTILINE
+        )
+        match = pattern.search(self.verify_src)
+        if match:
+            try:
+                return eval(match.group(1).strip())
+            except Exception:
+                return match.group(1).strip()
+        return None
+
+    def test_max_preview_clicks_constant(self):
+        """MAX_PREVIEW_CLICKS 상수 존재 (재클릭 최대 횟수)"""
+        assert "MAX_PREVIEW_CLICKS" in self.verify_src, (
+            "MAX_PREVIEW_CLICKS 상수가 없음. 재클릭 무제한 → 중복 팝업 위험."
+        )
+        val = self._extract_local_constant("MAX_PREVIEW_CLICKS")
+        assert val is not None, "MAX_PREVIEW_CLICKS 값을 추출할 수 없음"
+        assert val == 3, f"MAX_PREVIEW_CLICKS는 3이어야 함 (현재: {val})"
+
+    def test_min_reclick_interval_constant(self):
+        """MIN_RECLICK_INTERVAL 상수 존재 (재클릭 최소 간격)"""
+        assert "MIN_RECLICK_INTERVAL" in self.verify_src, (
+            "MIN_RECLICK_INTERVAL 상수가 없음. 서버 응답 충분 대기 필수."
+        )
+        val = self._extract_local_constant("MIN_RECLICK_INTERVAL")
+        assert val is not None, "MIN_RECLICK_INTERVAL 값을 추출할 수 없음"
+        assert val == 30, f"MIN_RECLICK_INTERVAL는 30초여야 함 (현재: {val})"
+
+    def test_preview_max_timeout(self):
+        """PREVIEW_MAX 상수 존재 (최대 총 대기 시간)"""
+        val = self._extract_local_constant("PREVIEW_MAX")
+        assert val is not None, "PREVIEW_MAX 값을 추출할 수 없음"
+        assert val == 90, f"PREVIEW_MAX는 90초여야 함 (현재: {val})"
+
+    def test_preview_poll_interval(self):
+        """PREVIEW_POLL 상수 존재 (PDF 로딩 확인 주기)"""
+        val = self._extract_local_constant("PREVIEW_POLL")
+        assert val is not None, "PREVIEW_POLL 값을 추출할 수 없음"
+        assert val == 10, f"PREVIEW_POLL는 10초여야 함 (현재: {val})"
+
+    def test_click_count_guard_in_source(self):
+        """재클릭 횟수 제한 가드 코드 존재"""
+        assert "click_count < MAX_PREVIEW_CLICKS" in self.verify_src, (
+            "재클릭 횟수 제한 가드(click_count < MAX_PREVIEW_CLICKS)가 소스에 없음"
+        )
+
+    def test_reclick_interval_guard_in_source(self):
+        """재클릭 간격 제한 가드 코드 존재"""
+        assert "time_since_last" in self.verify_src and "MIN_RECLICK_INTERVAL" in self.verify_src, (
+            "재클릭 간격 제한 가드(time_since_last >= MIN_RECLICK_INTERVAL)가 소스에 없음"
+        )
+
+
+# ══════════════════════════════════════════════════════════════
+# 타이틀바 다크모드 회귀 테스트 (v0.1.121, 커밋 d4161b21)
+# ══════════════════════════════════════════════════════════════
+
+class TestTitlebarDarkMode:
+    """
+    타이틀바 다크모드 적용 타이밍 검증.
+
+    배경: overrideredirect(False) 복원 후 DWM 속성을 즉시 적용하면
+    프레임이 아직 갱신되지 않아 타이틀바가 하얀색으로 표시됨.
+    해결: _apply_titlebar_style() 80ms 지연 호출 + SWP_FRAMECHANGED.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.gui_src = _read_source(GUI_MAIN_PY)
+
+    def test_apply_titlebar_style_function_exists(self):
+        """_apply_titlebar_style() 함수 정의 존재"""
+        assert "def _apply_titlebar_style(self):" in self.gui_src, (
+            "_apply_titlebar_style() 함수가 gui_main.py에 없음"
+        )
+
+    def _extract_method_source(self, method_name):
+        """클래스 메서드(들여쓰기된 def) 소스 추출"""
+        pattern = re.compile(
+            r'^(\s+def\s+' + re.escape(method_name) + r'\s*\(.*?\):\s*\n(?:(?:\s+.*|[ \t]*)\n)*)',
+            re.MULTILINE
+        )
+        match = pattern.search(self.gui_src)
+        if match:
+            return match.group(1)
+        return None
+
+    def test_dwm_dark_mode_attribute(self):
+        """DWMWA_USE_IMMERSIVE_DARK_MODE(20) 사용"""
+        func_src = self._extract_method_source("_apply_titlebar_style")
+        assert func_src is not None, "_apply_titlebar_style 메서드를 찾을 수 없음"
+        assert "DWMWA_USE_IMMERSIVE_DARK_MODE" in func_src, (
+            "DWM 다크모드 속성(DWMWA_USE_IMMERSIVE_DARK_MODE)이 없음"
+        )
+        assert "= 20" in func_src, (
+            "DWMWA_USE_IMMERSIVE_DARK_MODE 값이 20이 아님"
+        )
+
+    def test_frame_changed_flag(self):
+        """SWP_FRAMECHANGED 프레임 강제 갱신 플래그 존재"""
+        func_src = self._extract_method_source("_apply_titlebar_style")
+        assert func_src is not None, "_apply_titlebar_style 메서드를 찾을 수 없음"
+        assert "SWP_FRAMECHANGED" in func_src, (
+            "SWP_FRAMECHANGED 플래그가 없음. "
+            "overrideredirect 복원 후 DWM 속성 반영을 위해 필수."
+        )
+
+    def test_delayed_call_after_overrideredirect(self):
+        """overrideredirect(False) 후 _apply_titlebar_style이 지연 호출됨"""
+        # self.after(80, self._apply_titlebar_style) 패턴 확인
+        pattern = re.compile(r'self\.after\(\s*\d+\s*,\s*self\._apply_titlebar_style\s*\)')
+        matches = pattern.findall(self.gui_src)
+        assert len(matches) >= 2, (
+            f"_apply_titlebar_style 지연 호출이 {len(matches)}곳뿐. "
+            "overrideredirect(False) 복원 후 최소 2곳에서 지연 호출 필요."
+        )
+
+    def test_delay_is_at_least_50ms(self):
+        """지연 시간이 최소 50ms 이상"""
+        pattern = re.compile(r'self\.after\(\s*(\d+)\s*,\s*self\._apply_titlebar_style\s*\)')
+        for match in pattern.finditer(self.gui_src):
+            delay = int(match.group(1))
+            assert delay >= 50, (
+                f"_apply_titlebar_style 지연 시간이 {delay}ms. "
+                "최소 50ms 이상이어야 DWM이 프레임을 반영할 수 있음."
+            )
+
+
+# ══════════════════════════════════════════════════════════════
+# CRS 저장 다이얼로그 Alt+N 회귀 테스트 (v0.1.120, 커밋 6b1bf529)
+# ══════════════════════════════════════════════════════════════
+
+class TestCrsSaveDialogAltN:
+    """
+    저장 다이얼로그에서 Alt+N으로 파일 이름(N) 필드 포커스 확보 검증.
+
+    배경: Tab/Shift+Tab으로는 포커스가 확실하지 않아
+    이전 폴더(AR)에 저장되는 버그 발생.
+    Alt+N = Windows 표준 "파일 이름(N)" 단축키로 확실한 포커스 확보.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.verify_src = _read_source(VERIFY_PY)
+
+    def test_navigate_save_dialog_function_exists(self):
+        """navigate_save_dialog_to_dir() 함수 존재"""
+        assert "def navigate_save_dialog_to_dir(" in self.verify_src, (
+            "navigate_save_dialog_to_dir() 함수가 없음"
+        )
+
+    def test_alt_n_shortcut_in_save_dialog(self):
+        """저장 다이얼로그에서 Alt+N 단축키 사용"""
+        func_src = _extract_function_source(self.verify_src, "navigate_save_dialog_to_dir")
+        assert func_src is not None, "navigate_save_dialog_to_dir 함수를 찾을 수 없음"
+        # Alt+N = Key.N with Key.ALT modifier
+        assert "Key.ALT" in func_src, (
+            "navigate_save_dialog_to_dir()에 Alt 키 사용이 없음. "
+            "Alt+N으로 파일 이름(N) 필드 포커스 확보 필수."
+        )
