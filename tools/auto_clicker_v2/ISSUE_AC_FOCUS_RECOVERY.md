@@ -1,6 +1,8 @@
 # AC 포커스 자동 복구 이슈
 
-## 상태: 대기 (PDF 재클릭 수정 테스트 완료 후 진행)
+## 상태: RESOLVED (커밋 700b86b4)
+- 해결일: 2026.03.01
+- ensure_browser_focus() 14곳 적용, regression 테스트 21개 PASS (커밋 59dbe5e6)
 
 ## 문제
 AC(SikuliX) 실행 중 TeamViewer 등으로 kitten에 접속하여 다른 작업을 하면,
