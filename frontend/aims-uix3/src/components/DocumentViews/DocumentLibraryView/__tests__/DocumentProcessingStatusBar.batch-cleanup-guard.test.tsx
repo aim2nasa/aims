@@ -409,4 +409,84 @@ describe('DocumentProcessingStatusBar — batch cleanup 3-guard', () => {
       expect(clearBatchId).not.toHaveBeenCalled()
     })
   })
+
+  describe('batchStatistics=null 시 배치 섹션 미표시 (stale data 방지)', () => {
+    it('batchStatistics가 null이면 "이번 업로드" 섹션이 렌더되지 않음', () => {
+      mockBatchId = null // clearBatchId 호출 후 상태
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats({ processing: 1 }), // 라이브러리에 처리 중 있음 → isVisible=true
+        batchStatistics: null,
+        isLoading: false,
+      }))
+
+      // 배치 섹션이 없어야 함
+      expect(container.querySelector('.psb-batch')).toBeNull()
+      expect(container.querySelector('.psb-batch-label')).toBeNull()
+    })
+
+    it('라이브러리에 활성 파싱이 있어도, batchStatistics가 null이면 배치 섹션만 숨김', () => {
+      mockBatchId = null
+
+      const libraryStats = makeStats({
+        processing: 2,
+        arParsing: { total: 100, completed: 90, processing: 5, pending: 5, failed: 0 },
+      })
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: libraryStats,
+        batchStatistics: null,
+        isLoading: false,
+      }))
+
+      // 배치 섹션은 없어야 함
+      expect(container.querySelector('.psb-batch')).toBeNull()
+      // 전체 라이브러리 섹션은 있어야 함 (AR 파싱 활성)
+      expect(container.querySelector('.psb-library')).not.toBeNull()
+    })
+
+    it('clearBatchId 후 batchStatistics=null → 배치 섹션 즉시 제거 (stale data 문제 재현)', () => {
+      mockBatchId = 'batch-stale'
+      mockLastSetTime = Date.now() - 10000
+
+      // 1단계: 배치 완료 상태로 렌더
+      const completeBatchStats = makeBatchStats({
+        total: 20,
+        completed: 20,
+        processing: 0,
+        pending: 0,
+        credit_pending: 0,
+      })
+
+      const libraryStats = makeStats({
+        processing: 1, // 라이브러리에 처리 중 있음 → isVisible=true
+        crsParsing: { total: 704, completed: 703, processing: 1, pending: 0, failed: 0 },
+      })
+
+      const { container, rerender } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: libraryStats,
+        batchStatistics: completeBatchStats,
+        isLoading: false,
+      }))
+
+      // 배치 섹션이 있어야 함
+      expect(container.querySelector('.psb-batch')).not.toBeNull()
+
+      // 2단계: clearBatchId 호출 후 → batchStatistics=null로 rerender
+      act(() => { vi.advanceTimersByTime(2000) })
+
+      act(() => {
+        rerender(createElement(DocumentProcessingStatusBar, {
+          statistics: libraryStats,
+          batchStatistics: null, // DocumentLibraryView에서 currentBatchId ? batchStats : null
+          isLoading: false,
+        }))
+      })
+
+      // 배치 섹션 즉시 제거됨
+      expect(container.querySelector('.psb-batch')).toBeNull()
+      // 라이브러리 섹션은 유지 (CRS 파싱 활성)
+      expect(container.querySelector('.psb-library')).not.toBeNull()
+    })
+  })
 })

@@ -554,7 +554,7 @@ const DocumentLibraryContent: React.FC<{
       {/* 문서 처리 현황 Status Bar (2분할: 현재 업로드 + 전체 라이브러리) */}
       <DocumentProcessingStatusBar
         statistics={docStats}
-        batchStatistics={batchStats}
+        batchStatistics={currentBatchId ? batchStats : null}
         isLoading={statsLoading || batchLoading}
       />
 

@@ -109,6 +109,11 @@ export function useDocumentStatistics(options: UseDocumentStatisticsOptions | bo
     mountedRef.current = true
     if (enabled) {
       fetchStatistics()
+    } else {
+      // 🔴 enabled=false 전환 시 stale data 초기화
+      // (배치 통계 비활성화 후 이전 결과가 남는 버그 방지)
+      setStatistics(null)
+      setIsLoading(false)
     }
     return () => {
       mountedRef.current = false
