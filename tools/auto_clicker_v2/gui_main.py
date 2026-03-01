@@ -747,7 +747,7 @@ class AutoClickerApp(ctk.CTk):
             self.overrideredirect(False)
             self._update_title()
             self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
-            self._apply_titlebar_style()
+            self.after(80, self._apply_titlebar_style)
 
     def _on_close(self):
         """앱 종료: 창 위치/모니터 저장 → SikuliX 프로세스 정리 → 앱 닫기"""
@@ -890,7 +890,7 @@ class AutoClickerApp(ctk.CTk):
                 self.overrideredirect(False)
                 self._update_title()
                 self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
-                self._apply_titlebar_style()
+                self.after(80, self._apply_titlebar_style)
         else:
             # 카운트다운 진행 중이거나 소스 실행 중 → 폴링 계속
             self.after(self._update_interval, self._poll_update)
@@ -933,7 +933,7 @@ class AutoClickerApp(ctk.CTk):
         self._compact_panel.pack_forget()
         self.overrideredirect(False)
         self._update_title()
-        self._apply_titlebar_style()
+        self.after(80, self._apply_titlebar_style)
 
         # topmost는 항상 유지
         self._toolbar.pack(fill="x", padx=4, pady=(4, 0))
@@ -1320,7 +1320,7 @@ class AutoClickerApp(ctk.CTk):
         try:
             self.update_idletasks()
             hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
-            # 다크 타이틀바
+            # 다크 타이틀바 (20: Windows 10 20H1+ / Windows 11)
             DWMWA_USE_IMMERSIVE_DARK_MODE = 20
             val = ctypes.c_int(1)
             ctypes.windll.dwmapi.DwmSetWindowAttribute(
@@ -1333,6 +1333,15 @@ class AutoClickerApp(ctk.CTk):
             style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
             ctypes.windll.user32.SetWindowLongW(
                 hwnd, GWL_STYLE, style & ~WS_MINIMIZEBOX
+            )
+            # 프레임 강제 갱신 — overrideredirect 복원 후 DWM 속성 반영
+            SWP_FRAMECHANGED = 0x0020
+            SWP_NOMOVE = 0x0002
+            SWP_NOSIZE = 0x0001
+            SWP_NOZORDER = 0x0004
+            ctypes.windll.user32.SetWindowPos(
+                hwnd, 0, 0, 0, 0, 0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
             )
         except Exception:
             pass
