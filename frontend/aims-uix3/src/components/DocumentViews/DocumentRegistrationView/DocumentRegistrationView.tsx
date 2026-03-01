@@ -2542,6 +2542,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
           const { groups } = arBatch.tableState
 
+          // 해시 중복 파일 집계 (분석 단계에서 감지된 중복 — 결과 통계에 반영)
+          const hashDuplicateRows = rows.filter(row =>
+            row.fileInfo.included && row.fileInfo.duplicateStatus.isHashDuplicate
+          )
+
           // 등록할 파일 수 계산 (포함되고 중복 아닌 파일만)
           const filesToRegister = rows.filter(row => {
             if (!row.fileInfo.included || row.fileInfo.duplicateStatus.isHashDuplicate) return false
@@ -2549,7 +2554,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             return mapping.customerId || mapping.newCustomerName
           })
 
-          if (filesToRegister.length === 0) {
+          if (filesToRegister.length === 0 && hashDuplicateRows.length === 0) {
             addLog('warning', '등록할 파일이 없습니다')
             arBatch.closeModal()
             return
@@ -2565,6 +2570,29 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           const failedFiles: Array<{ fileName: string; error: string }> = []
           const existingCustomerIds = new Set<string>()
           const registrationStartedAt = Date.now()
+
+          // 해시 중복 파일을 건너뜀 카운트에 포함
+          for (const row of hashDuplicateRows) {
+            skippedCount++
+            skippedFiles.push({ fileName: row.fileInfo.file.name, reason: '중복 파일 (동일한 문서가 이미 존재)' })
+          }
+
+          // 해시 중복만 있고 등록할 파일이 없는 경우 → 결과 요약만 표시
+          if (filesToRegister.length === 0) {
+            addLog('info', `AR 일괄 등록: 모든 파일이 중복 (${skippedCount}개)`)
+            arBatch.setRegistrationResult({
+              successCount: 0,
+              errorCount: 0,
+              skippedCount,
+              newCustomerCount: 0,
+              existingCustomerCount: 0,
+              skippedFiles,
+              failedFiles: [],
+              startedAt: registrationStartedAt,
+              completedAt: Date.now(),
+            })
+            return
+          }
 
           // ═══════════════════════════════════════════════════
           // 🚀 3-Phase 사전 준비 (순차 → 병렬)
@@ -2985,6 +3013,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
           const { groups } = crBatch.tableState
 
+          // 해시 중복 파일 집계 (분석 단계에서 감지된 중복 — 결과 통계에 반영)
+          const hashDuplicateRows = rows.filter(row =>
+            row.fileInfo.included && row.fileInfo.duplicateStatus.isHashDuplicate
+          )
+
           // 등록할 파일 수 계산 (포함되고 중복 아닌 파일만)
           const filesToRegister = rows.filter(row => {
             if (!row.fileInfo.included || row.fileInfo.duplicateStatus.isHashDuplicate) return false
@@ -2992,7 +3025,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             return mapping.customerId || mapping.newCustomerName
           })
 
-          if (filesToRegister.length === 0) {
+          if (filesToRegister.length === 0 && hashDuplicateRows.length === 0) {
             addLog('warning', '등록할 파일이 없습니다')
             crBatch.closeModal()
             return
@@ -3009,6 +3042,30 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           const failedFiles: Array<{ fileName: string; error: string }> = []
           const existingCustomerIds = new Set<string>()
           const registrationStartedAt = Date.now()
+
+          // 해시 중복 파일을 건너뜀 카운트에 포함
+          for (const row of hashDuplicateRows) {
+            skippedCount++
+            skippedFiles.push({ fileName: row.fileInfo.file.name, reason: '중복 파일 (동일한 문서가 이미 존재)' })
+          }
+
+          // 해시 중복만 있고 등록할 파일이 없는 경우 → 결과 요약만 표시
+          if (filesToRegister.length === 0) {
+            uploadService.setBatchUploadActive(false)
+            addLog('info', `CRS 일괄 등록: 모든 파일이 중복 (${skippedCount}개)`)
+            crBatch.setRegistrationResult({
+              successCount: 0,
+              errorCount: 0,
+              skippedCount,
+              newCustomerCount: 0,
+              existingCustomerCount: 0,
+              skippedFiles,
+              failedFiles: [],
+              startedAt: registrationStartedAt,
+              completedAt: Date.now(),
+            })
+            return
+          }
 
           // 새 고객 생성을 위한 캐시 (같은 이름의 새 고객은 한 번만 생성)
           const newCustomerCache = new Map<string, string>() // name -> customerId
