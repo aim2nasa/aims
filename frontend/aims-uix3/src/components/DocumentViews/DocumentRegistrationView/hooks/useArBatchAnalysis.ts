@@ -181,6 +181,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
       completedFiles: 0,
       groups: [],
       analyzingFiles: analyzingFilesData.slice(),
+      registrationResult: undefined,
     }))
 
     // 테이블 상태도 초기화 (이전 분석 결과 제거)
@@ -410,6 +411,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
       isOpen: false,
       isAnalyzing: false,
       isProcessing: false,
+      registrationResult: undefined,
     }))
   }, [])
 

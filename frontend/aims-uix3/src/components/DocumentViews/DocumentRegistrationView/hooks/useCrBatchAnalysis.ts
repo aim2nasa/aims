@@ -172,6 +172,7 @@ export function useCrBatchAnalysis(options: UseCrBatchAnalysisOptions): UseCrBat
       completedFiles: 0,
       groups: [],
       analyzingFiles: analyzingFilesData.slice(),
+      registrationResult: undefined,
     }))
 
     // 테이블 상태도 초기화 (이전 분석 결과 제거)
@@ -397,6 +398,7 @@ export function useCrBatchAnalysis(options: UseCrBatchAnalysisOptions): UseCrBat
       isOpen: false,
       isAnalyzing: false,
       isProcessing: false,
+      registrationResult: undefined,
     }))
   }, [])
 
