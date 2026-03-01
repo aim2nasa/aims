@@ -239,8 +239,15 @@ def _taskkill_pdf():
 def navigate_save_dialog_to_dir(target_dir=None):
     """저장 다이얼로그에서 지정된 경로로 파일 저장
 
-    원리: Tab→Shift+Tab으로 파일명 필드 포커스 확보 → HOME으로 커서 맨 앞 →
+    원리: Alt+N으로 파일명 필드에 확실한 포커스 확보 → HOME으로 커서 맨 앞 →
     경로\를 파일명 앞에 paste 삽입 → 결과: 경로\파일명.pdf
+
+    ★ 기존 Tab→Shift+Tab 방식은 세션 첫 CRS 저장 시 포커스 실패로
+      AR 폴더에 잘못 저장되는 버그 유발 (BUG_AC_CRS_FIRST_REPORT_SAVE_FAIL)
+    ★ Alt+D 주소표시줄 방식은 Enter 후 파일목록 포커스 이동으로
+      리포트 #2,#3 저장 실패 리그레션 유발 (09dd3cde에서 철회)
+    ★ Alt+N은 Windows 표준 "파일 이름(N)" 단축키로, 현재 포커스 위치와
+      무관하게 항상 파일명 필드로 이동. Enter 불필요 → 리그레션 없음.
 
     Args:
         target_dir: 저장 경로. None이면 PDF_DOWNLOAD_DIR 사용.
@@ -253,18 +260,15 @@ def navigate_save_dialog_to_dir(target_dir=None):
     paste_text = win_path + "\\"
     log(u"        [경로 설정] target_dir=%s" % save_dir)
     log(u"        [경로 설정] paste할 문자열: '%s'" % paste_text)
-    # 파일명 필드 포커스 확보 + 기존 파일명 앞에 경로 삽입
+    # ★ 파일명 필드 포커스 확보: Alt+N (Windows 표준 "파일 이름(N)" 단축키)
     sleep(0.5)
-    # Tab으로 파일명 필드에 포커스 강제 이동 (포커스 누락 방지)
-    type(Key.TAB)
-    sleep(0.3)
-    type(Key.TAB, Key.SHIFT)  # Shift+Tab: 다시 파일명 필드로 복귀
-    sleep(0.3)
+    type("n", Key.ALT)  # 파일명 필드에 확실한 포커스 (포커스 위치 무관)
+    sleep(0.5)
     type(Key.HOME)  # 커서를 파일명 맨 앞으로 이동
-    sleep(0.5)
+    sleep(0.3)
     paste(paste_text)  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
     log(u"        [경로 설정] paste 완료, 1.0초 대기 중...")
-    sleep(1.0)  # paste 완료 + 경로 해석 대기 (세션 첫 호출 고려)
+    sleep(1.0)  # paste 완료 + 경로 해석 대기
     log(u"        [경로 설정] 경로 주입 완료")
 
 
@@ -2062,6 +2066,18 @@ def save_report_pdf(report_number):
     if crs_save_dir and os.path.isdir(crs_save_dir):
         pdf_files_before = set(f for f in os.listdir(crs_save_dir) if f.lower().endswith('.pdf'))
 
+    # ★ B안: 사일런트 실패 복구용 — AR 폴더/상위 폴더 스냅샷
+    # CRS 저장이 잘못된 폴더에 저장될 경우 감지하기 위해 사전 스냅샷 필요
+    ar_save_dir = os.path.join(PDF_DOWNLOAD_DIR, "AR") if PDF_DOWNLOAD_DIR else None
+    ar_files_before_crs = set()
+    if ar_save_dir and os.path.isdir(ar_save_dir):
+        ar_files_before_crs = set(f for f in os.listdir(ar_save_dir) if f.lower().endswith('.pdf'))
+    parent_files_before_crs = set()
+    if PDF_DOWNLOAD_DIR and os.path.isdir(PDF_DOWNLOAD_DIR):
+        parent_files_before_crs = set(
+            f for f in os.listdir(PDF_DOWNLOAD_DIR)
+            if f.lower().endswith('.pdf') and os.path.isfile(os.path.join(PDF_DOWNLOAD_DIR, f)))
+
     log(u"")
     log(u"    ===== PDF 저장 시작 [보고서 #%d] =====" % report_number)
 
@@ -2453,11 +2469,68 @@ def save_report_pdf(report_number):
                     log(u"        [파일명] %s" % result['saved_filename'])
                     log(u"        [VERIFIED] 변액리포트 #%d 저장 완료 (디스크 확인)" % report_number)
                 else:
-                    result['saved'] = False
-                    result['success'] = False
-                    result['error'] = u"PDF 파일 디스크 미생성 (사일런트 실패, %d초 대기)" % DISK_CHECK_MAX
-                    log(u"        [WARNING] 변액리포트 #%d 저장 다이얼로그 닫혔으나 디스크에 새 파일 없음! (%d초 대기)" % (report_number, DISK_CHECK_MAX))
-                    log_error(report_number, u"PDF 파일 디스크 미생성 (사일런트 실패)")
+                    # ★ B안: 사일런트 실패 복구 — AR/상위 폴더에서 잘못 저장된 파일 탐색 후 이동
+                    log(u"        [WARNING] CRS 폴더에 새 파일 없음 → AR/상위 폴더 복구 시도...")
+                    _recovered = False
+
+                    # 1) AR 폴더에서 잘못 저장된 파일 탐색
+                    if ar_save_dir and os.path.isdir(ar_save_dir):
+                        ar_files_after = set(f for f in os.listdir(ar_save_dir) if f.lower().endswith('.pdf'))
+                        new_ar_files = ar_files_after - ar_files_before_crs
+                        if new_ar_files:
+                            log(u"        [복구] AR 폴더에서 새 파일 %d개 발견!" % len(new_ar_files))
+                            _move_ok = True
+                            for misplaced_file in sorted(new_ar_files):
+                                src = os.path.join(ar_save_dir, misplaced_file)
+                                dst = os.path.join(crs_save_dir, misplaced_file)
+                                try:
+                                    shutil.move(src, dst)
+                                    log(u"        [복구] AR→CRS 이동: %s" % misplaced_file)
+                                except (IOError, OSError) as move_err:
+                                    log(u"        [복구 실패] 파일 이동 오류: %s — %s" % (misplaced_file, str(move_err)))
+                                    _move_ok = False
+                                    break
+                            if _move_ok:
+                                _recovered = True
+                                result['saved'] = True
+                                result['success'] = True
+                                result['saved_filename'] = sorted(new_ar_files)[0]
+                                result['recovered_from'] = 'AR'
+                                log(u"        [VERIFIED] 변액리포트 #%d 복구 완료 (AR→CRS 이동)" % report_number)
+
+                    # 2) 상위 폴더에서 잘못 저장된 파일 탐색
+                    if not _recovered and PDF_DOWNLOAD_DIR and os.path.isdir(PDF_DOWNLOAD_DIR):
+                        parent_files_after = set(
+                            f for f in os.listdir(PDF_DOWNLOAD_DIR)
+                            if f.lower().endswith('.pdf') and os.path.isfile(os.path.join(PDF_DOWNLOAD_DIR, f)))
+                        new_parent_files = parent_files_after - parent_files_before_crs
+                        if new_parent_files:
+                            log(u"        [복구] 상위 폴더에서 새 파일 %d개 발견!" % len(new_parent_files))
+                            _move_ok = True
+                            for misplaced_file in sorted(new_parent_files):
+                                src = os.path.join(PDF_DOWNLOAD_DIR, misplaced_file)
+                                dst = os.path.join(crs_save_dir, misplaced_file)
+                                try:
+                                    shutil.move(src, dst)
+                                    log(u"        [복구] 상위폴더→CRS 이동: %s" % misplaced_file)
+                                except (IOError, OSError) as move_err:
+                                    log(u"        [복구 실패] 파일 이동 오류: %s — %s" % (misplaced_file, str(move_err)))
+                                    _move_ok = False
+                                    break
+                            if _move_ok:
+                                _recovered = True
+                                result['saved'] = True
+                                result['success'] = True
+                                result['saved_filename'] = sorted(new_parent_files)[0]
+                                result['recovered_from'] = 'parent'
+                                log(u"        [VERIFIED] 변액리포트 #%d 복구 완료 (상위폴더→CRS 이동)" % report_number)
+
+                    if not _recovered:
+                        result['saved'] = False
+                        result['success'] = False
+                        result['error'] = u"PDF 파일 디스크 미생성 (사일런트 실패, %d초 대기, 복구 실패)" % DISK_CHECK_MAX
+                        log(u"        [FATAL] 변액리포트 #%d 사일런트 실패 — CRS/AR/상위 폴더 모두 새 파일 없음 (%d초 대기)" % (report_number, DISK_CHECK_MAX))
+                        log_error(report_number, u"PDF 파일 디스크 미생성 (사일런트 실패, 복구 실패)")
             else:
                 # 저장 디렉토리 미지정 시 다이얼로그 기준 (기존 동작 유지)
                 result['saved'] = True
