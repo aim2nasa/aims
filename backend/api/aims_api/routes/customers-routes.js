@@ -172,10 +172,12 @@ router.get('/customers', authenticateJWTorAPIKey, async (req, res) => {
         decodedSearch = search; // 디코딩 실패 시 원본 사용
       }
 
+      // regex 특수문자 이스케이프 — (주), [주] 등이 정상 검색되도록
+      const escapedSearch = decodedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       filter.$or = [
-        { 'personal_info.name': { $regex: decodedSearch, $options: 'i' } },
-        { 'personal_info.mobile_phone': { $regex: decodedSearch, $options: 'i' } },
-        { 'personal_info.email': { $regex: decodedSearch, $options: 'i' } }
+        { 'personal_info.name': { $regex: escapedSearch, $options: 'i' } },
+        { 'personal_info.mobile_phone': { $regex: escapedSearch, $options: 'i' } },
+        { 'personal_info.email': { $regex: escapedSearch, $options: 'i' } }
       ];
     }
 
