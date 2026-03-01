@@ -206,6 +206,77 @@ describe('useDocumentStatistics', () => {
     })
   })
 
+  describe('enabled 전환 시 stale data 초기화 (regression: da00487d)', () => {
+    it('enabled true→false 전환 시 statistics가 null로 초기화되어야 함', async () => {
+      const mockStats = { completed: 20, processing: 0, pending: 0, total: 20 }
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ success: true, data: mockStats })
+      })
+
+      const useDocumentStatistics = await importHook()
+
+      // 1단계: enabled=true, batchId 있음 → 데이터 로드
+      const { result, rerender } = renderHook(
+        ({ enabled, batchId }: { enabled: boolean; batchId: string | null }) =>
+          useDocumentStatistics({ enabled, batchId }),
+        { initialProps: { enabled: true, batchId: 'batch-test' } }
+      )
+
+      await waitFor(() => {
+        expect(result.current.statistics).not.toBeNull()
+        expect(result.current.statistics?.completed).toBe(20)
+      })
+
+      // 2단계: enabled=false (clearBatchId 시뮬레이션) → statistics null 초기화
+      rerender({ enabled: false, batchId: null })
+
+      await waitFor(() => {
+        expect(result.current.statistics).toBeNull()
+        expect(result.current.isLoading).toBe(false)
+      })
+    })
+
+    it('enabled false→true 재전환 시 새로운 데이터를 조회해야 함', async () => {
+      let callCount = 0
+      mockFetch.mockImplementation(() => {
+        callCount++
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ success: true, data: { completed: callCount * 10 } })
+        })
+      })
+
+      const useDocumentStatistics = await importHook()
+
+      // 1단계: enabled=true → 데이터 로드
+      const { result, rerender } = renderHook(
+        ({ enabled, batchId }: { enabled: boolean; batchId: string | null }) =>
+          useDocumentStatistics({ enabled, batchId }),
+        { initialProps: { enabled: true, batchId: 'batch-1' } }
+      )
+
+      await waitFor(() => {
+        expect(result.current.statistics?.completed).toBe(10)
+      })
+
+      // 2단계: enabled=false → null
+      rerender({ enabled: false, batchId: null })
+
+      await waitFor(() => {
+        expect(result.current.statistics).toBeNull()
+      })
+
+      // 3단계: enabled=true (새 배치) → 새 데이터 조회
+      rerender({ enabled: true, batchId: 'batch-2' })
+
+      await waitFor(() => {
+        expect(result.current.statistics).not.toBeNull()
+        expect(result.current.statistics?.completed).toBe(20) // 두 번째 호출의 데이터
+      })
+    })
+  })
+
   describe('반환값 구조', () => {
     it('statistics, isLoading, refresh를 반환해야 함', async () => {
       mockFetch.mockResolvedValue({
