@@ -13,6 +13,7 @@ const router = express.Router();
 const { ObjectId } = require('mongodb');
 const multer = require('multer');
 const path = require('path');
+const { escapeRegex } = require('../lib/helpers');
 const fs = require('fs').promises;
 const { authenticateJWTWithQuery } = require('../middleware/auth');
 const backendLogger = require('../lib/backendLogger');
@@ -974,10 +975,11 @@ module.exports = (db, authenticateJWT, requireRole) => {
       }
 
       if (search) {
+        const escapedSearch = escapeRegex(search);
         query.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { userName: { $regex: search, $options: 'i' } },
-          { userEmail: { $regex: search, $options: 'i' } }
+          { title: { $regex: escapedSearch, $options: 'i' } },
+          { userName: { $regex: escapedSearch, $options: 'i' } },
+          { userEmail: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 

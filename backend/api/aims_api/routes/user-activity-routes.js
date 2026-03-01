@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 const backendLogger = require('../lib/backendLogger');
+const { escapeRegex } = require('../lib/helpers');
 const { DEFAULT_TIER, getTierDefinitions } = require('../lib/storageQuotaService');
 const { OCR_PRICE_PER_PAGE_USD } = require('../lib/ocrPricing');
 
@@ -62,9 +63,10 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         userQuery.role = roleFilter;  // 특정 역할만 조회
       }
       if (search) {
+        const escapedSearch = escapeRegex(search);
         userQuery.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { email: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
       if (tierFilter) {

@@ -15,6 +15,7 @@
 
 const crypto = require('crypto');
 const { ObjectId } = require('mongodb');
+const { escapeRegex } = require('./helpers');
 
 // 로그 레벨 정의
 const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
@@ -371,14 +372,15 @@ class ErrorLogger {
       }
     }
     if (search) {
+      const escapedSearch = escapeRegex(search);
       query.$or = [
-        { message: { $regex: search, $options: 'i' } },
-        { 'error.message': { $regex: search, $options: 'i' } },
-        { 'error.type': { $regex: search, $options: 'i' } },
-        { 'source.url': { $regex: search, $options: 'i' } },
-        { 'source.endpoint': { $regex: search, $options: 'i' } },
-        { 'source.component': { $regex: search, $options: 'i' } },
-        { 'actor.name': { $regex: search, $options: 'i' } }
+        { message: { $regex: escapedSearch, $options: 'i' } },
+        { 'error.message': { $regex: escapedSearch, $options: 'i' } },
+        { 'error.type': { $regex: escapedSearch, $options: 'i' } },
+        { 'source.url': { $regex: escapedSearch, $options: 'i' } },
+        { 'source.endpoint': { $regex: escapedSearch, $options: 'i' } },
+        { 'source.component': { $regex: escapedSearch, $options: 'i' } },
+        { 'actor.name': { $regex: escapedSearch, $options: 'i' } }
       ];
     }
 

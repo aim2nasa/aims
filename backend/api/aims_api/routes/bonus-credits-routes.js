@@ -8,6 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
+const { escapeRegex } = require('../lib/helpers');
 
 // 크레딧 서비스
 const {
@@ -337,9 +338,10 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         filter['bonus_credits.balance'] = { $gt: 0 };
       }
       if (search) {
+        const escapedSearch = escapeRegex(search);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { email: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 

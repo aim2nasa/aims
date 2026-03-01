@@ -684,16 +684,17 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
     }
 
     if (search) {
+      const escapedSearch = escapeRegex(search);
       // 🍎 searchField에 따라 검색 대상 필드 결정
       if (searchField === 'displayName') {
         // 별칭 모드: displayName 우선, 없으면 originalName도 포함 (OR 검색)
         filter['$or'] = [
-          { displayName: { $regex: search, $options: 'i' } },
-          { 'upload.originalName': { $regex: search, $options: 'i' } }
+          { displayName: { $regex: escapedSearch, $options: 'i' } },
+          { 'upload.originalName': { $regex: escapedSearch, $options: 'i' } }
         ];
       } else {
         // 원본 모드 (기본값): originalName에서만 검색
-        filter['upload.originalName'] = { $regex: search, $options: 'i' };
+        filter['upload.originalName'] = { $regex: escapedSearch, $options: 'i' };
       }
     }
 

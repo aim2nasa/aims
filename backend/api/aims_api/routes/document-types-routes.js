@@ -11,6 +11,7 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 const backendLogger = require('../lib/backendLogger');
+const { escapeRegex } = require('../lib/helpers');
 
 // 기본 문서 유형 (초기 데이터)
 const DEFAULT_DOCUMENT_TYPES = [
@@ -121,10 +122,11 @@ module.exports = (db, authenticateJWT, requireRole) => {
 
       const query = {};
       if (search) {
+        const escapedSearch = escapeRegex(search);
         query.$or = [
-          { value: { $regex: search, $options: 'i' } },
-          { label: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } }
+          { value: { $regex: escapedSearch, $options: 'i' } },
+          { label: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 

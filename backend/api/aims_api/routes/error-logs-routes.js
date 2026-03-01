@@ -12,6 +12,7 @@ const jwt = require('jsonwebtoken');
 const systemLogger = require('../lib/errorLogger');
 const activityLogger = require('../lib/activityLogger');
 const sseBroadcast = require('../lib/sseBroadcast');
+const { escapeRegex } = require('../lib/helpers');
 
 // ==================== SSE 클라이언트 관리 ====================
 // 공유 SSE 모듈 사용
@@ -616,10 +617,11 @@ module.exports = function(db, authenticateJWT, requireRole) {
           if (endDate) activityQuery.timestamp.$lte = new Date(endDate);
         }
         if (search) {
+          const escapedSearch = escapeRegex(search);
           activityQuery.$or = [
-            { 'action.description': { $regex: search, $options: 'i' } },
-            { 'action.target.entity_name': { $regex: search, $options: 'i' } },
-            { 'action.category': { $regex: search, $options: 'i' } }
+            { 'action.description': { $regex: escapedSearch, $options: 'i' } },
+            { 'action.target.entity_name': { $regex: escapedSearch, $options: 'i' } },
+            { 'action.category': { $regex: escapedSearch, $options: 'i' } }
           ];
         }
         // type이 backend이면 activity 포함, frontend면 activity 제외

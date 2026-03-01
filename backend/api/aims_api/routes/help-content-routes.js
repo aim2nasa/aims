@@ -11,6 +11,7 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 const backendLogger = require('../lib/backendLogger');
+const { escapeRegex } = require('../lib/helpers');
 
 // 카테고리 상수 (기본값, DB에서 동적으로 조회 가능)
 const NOTICE_CATEGORIES = ['system', 'product', 'policy', 'event'];
@@ -160,9 +161,10 @@ module.exports = (db, authenticateJWT, requireRole) => {
         query.isPublished = isPublished === 'true';
       }
       if (search) {
+        const escapedSearch = escapeRegex(search);
         query.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { content: { $regex: search, $options: 'i' } }
+          { title: { $regex: escapedSearch, $options: 'i' } },
+          { content: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -877,9 +879,10 @@ module.exports = (db, authenticateJWT, requireRole) => {
         query.isPublished = isPublished === 'true';
       }
       if (search) {
+        const escapedSearch = escapeRegex(search);
         query.$or = [
-          { question: { $regex: search, $options: 'i' } },
-          { answer: { $regex: search, $options: 'i' } }
+          { question: { $regex: escapedSearch, $options: 'i' } },
+          { answer: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 

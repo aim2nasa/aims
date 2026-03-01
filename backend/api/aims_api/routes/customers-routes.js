@@ -173,7 +173,7 @@ router.get('/customers', authenticateJWTorAPIKey, async (req, res) => {
       }
 
       // regex 특수문자 이스케이프 — (주), [주] 등이 정상 검색되도록
-      const escapedSearch = decodedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedSearch = escapeRegex(decodedSearch);
       filter.$or = [
         { 'personal_info.name': { $regex: escapedSearch, $options: 'i' } },
         { 'personal_info.mobile_phone': { $regex: escapedSearch, $options: 'i' } },
@@ -208,7 +208,7 @@ router.get('/customers', authenticateJWTorAPIKey, async (req, res) => {
           $not: { $regex: `^(${koreanRegions.join('|')})`, $options: 'i' }
         };
       } else {
-        filter['personal_info.address.address1'] = { $regex: `^${region}`, $options: 'i' };
+        filter['personal_info.address.address1'] = { $regex: `^${escapeRegex(region)}`, $options: 'i' };
       }
     }
     
@@ -926,7 +926,7 @@ router.get('/customers/check-name', authenticateJWT, async (req, res) => {
     const existing = await db.collection(CUSTOMERS_COLLECTION)
       .findOne({
         'meta.created_by': userId,
-        'personal_info.name': { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+        'personal_info.name': { $regex: new RegExp(`^${escapeRegex(trimmedName)}$`, 'i') }
       });
 
     res.json({

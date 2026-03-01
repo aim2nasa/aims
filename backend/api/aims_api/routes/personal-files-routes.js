@@ -13,6 +13,7 @@ const router = express.Router();
 const { MongoClient, ObjectId } = require('mongodb');
 const multer = require('multer');
 const path = require('path');
+const { escapeRegex } = require('../lib/helpers');
 const fs = require('fs').promises;
 const axios = require('axios');
 const { checkUploadAllowed } = require('../lib/storageQuotaService');
@@ -878,7 +879,7 @@ router.get('/search', authenticateToken, async (req, res) => {
 
     // 검색어가 있으면 이름 검색 (대소문자 무시)
     if (q) {
-      query.name = { $regex: q, $options: 'i' };
+      query.name = { $regex: escapeRegex(q), $options: 'i' };
     }
 
     // 파일 타입 필터
