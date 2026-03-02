@@ -133,7 +133,25 @@ export default defineConfig({
         // 청크 파일명에 hash 추가 (예: DocumentSearchView-QnFOKP7v.js)
         chunkFileNames: 'assets/[name]-[hash].js',
         // 정적 에셋에 hash 추가 (예: style-DpVtKAcz.css)
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        // 핵심 vendor 번들만 분리 (앱 코드 변경 시에도 vendor 캐시 유지)
+        // lazy-loaded 라이브러리(pdf.js 등)는 Vite 자동 코드스플릿에 위임
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // React 코어 (항상 필요, ~185KB)
+            if (/[\\/](react|react-dom|scheduler)[\\/]/.test(id)) {
+              return 'vendor-react'
+            }
+            // TanStack Query (항상 필요, ~35KB)
+            if (id.includes('@tanstack/')) {
+              return 'vendor-tanstack'
+            }
+            // Zustand (항상 필요, ~3KB)
+            if (id.includes('zustand/')) {
+              return 'vendor-state'
+            }
+          }
+        }
       }
     }
   },

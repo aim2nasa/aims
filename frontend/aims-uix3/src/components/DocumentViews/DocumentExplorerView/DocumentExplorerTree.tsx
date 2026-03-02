@@ -57,7 +57,7 @@ export interface DocumentExplorerTreeProps {
   searchTerm?: string
   /** 썸네일 미리보기 활성화 여부 */
   thumbnailEnabled?: boolean
-  /** 🍎 파일명 표시 모드 */
+  /** 파일명 표시 모드 */
   filenameMode?: 'display' | 'original'
   onFilenameModeChange?: (mode: 'display' | 'original') => void
 }
@@ -104,6 +104,313 @@ const highlightText = (text: string, searchTerm: string): React.ReactNode => {
 
   return parts.length > 0 ? <>{parts}</> : text
 }
+
+// 날짜/시간 포맷 (MM.DD HH:mm:ss) — 순수 함수이므로 컴포넌트 바깥에 정의
+const formatDateTime = (dateStr: string): string => {
+  try {
+    const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return ''
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${month}.${day} ${hours}:${minutes}:${seconds}`
+  } catch {
+    return ''
+  }
+}
+
+// filenameMode에 따라 문서 표시명 결정 — 순수 함수이므로 컴포넌트 바깥에 정의
+const getDocName = (doc: Document, filenameMode: 'display' | 'original'): { showName: string; altName: string } => {
+  const originalName = DocumentStatusService.extractOriginalFilename(doc)
+  const hasDisplay = Boolean(doc.displayName)
+  const showName = filenameMode === 'display' && hasDisplay
+    ? doc.displayName!
+    : originalName
+  const altName = filenameMode === 'display' && hasDisplay
+    ? `원본: ${originalName}`
+    : (hasDisplay ? `별칭: ${doc.displayName}` : '')
+  return { showName, altName }
+}
+
+// ─────────────────────────────────────────────────────────────
+// DocumentNode: 문서 노드 React.memo 컴포넌트
+// ─────────────────────────────────────────────────────────────
+
+interface DocumentNodeProps {
+  node: DocumentTreeNode
+  level: number
+  selectedDocumentId: string | null
+  focusedKey: string | null
+  searchTerm: string
+  filenameMode: 'display' | 'original'
+  onDocumentClick: (doc: Document, e: React.MouseEvent, nodeKey?: string) => void
+  onDocumentMouseEnter: (doc: Document, e: React.MouseEvent) => void
+  onDocumentMouseMove: (doc: Document, e: React.MouseEvent) => void
+  onDocumentMouseLeave: () => void
+  onCustomerBadgeClick: (e: React.MouseEvent, customerName: string) => void
+}
+
+const DocumentNode = React.memo<DocumentNodeProps>(({
+  node,
+  level,
+  selectedDocumentId,
+  focusedKey,
+  searchTerm,
+  filenameMode,
+  onDocumentClick,
+  onDocumentMouseEnter,
+  onDocumentMouseMove,
+  onDocumentMouseLeave,
+  onCustomerBadgeClick,
+}) => {
+  const doc = node.document
+  if (!doc) return null
+
+  const docId = doc._id || doc.id || ''
+  const isSelected = selectedDocumentId === docId
+  const isFocused = focusedKey === node.key
+  const customerName = doc.customer_relation?.customer_name
+  const documentDate = getDocumentDate(doc)
+  const filename = DocumentStatusService.extractFilename(doc)
+  const { showName, altName } = getDocName(doc, filenameMode)
+
+  return (
+    <div
+      data-node-key={node.key}
+      className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}`}
+      onClick={(e) => onDocumentClick(doc, e, node.key)}
+      onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
+      onMouseMove={(e) => onDocumentMouseMove(doc, e)}
+      onMouseLeave={onDocumentMouseLeave}
+      role="treeitem"
+      tabIndex={-1}
+      aria-selected={isSelected}
+    >
+      {/* 문서 아이콘 (확장자에 따른 아이콘) */}
+      <span className={`doc-explorer-tree__doc-icon document-icon ${DocumentUtils.getFileTypeClass(doc.mimeType, filename)}`}>
+        <SFSymbol
+          name={DocumentUtils.getFileIcon(doc.mimeType, filename)}
+          size={SFSymbolSize.CAPTION_1}
+          weight={SFSymbolWeight.REGULAR}
+        />
+      </span>
+
+      {/* 문서명: filenameMode에 따라 별칭/원본 전환 */}
+      <span className="doc-explorer-tree__doc-name" title={altName || showName}>
+        {highlightText(showName, searchTerm)}
+      </span>
+
+      {/* 고객명 (클릭 시 해당 고객 문서만 필터) */}
+      <span
+        className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
+        title={customerName ? `${customerName} 문서만 보기` : '-'}
+        onClick={customerName ? (e) => onCustomerBadgeClick(e, customerName) : undefined}
+      >
+        {customerName ? highlightText(customerName, searchTerm) : '-'}
+      </span>
+
+      {/* 날짜/시간 */}
+      <span
+        className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
+        title={documentDate || '-'}
+      >
+        {documentDate ? formatDateTime(documentDate) : '-'}
+      </span>
+
+      {/* 유형 배지 */}
+      <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
+        {doc.badgeType || 'BIN'}
+      </span>
+    </div>
+  )
+})
+
+DocumentNode.displayName = 'DocumentNode'
+
+// ─────────────────────────────────────────────────────────────
+// GroupNode: 그룹 노드 React.memo 컴포넌트
+// ─────────────────────────────────────────────────────────────
+
+interface GroupNodeProps {
+  node: DocumentTreeNode
+  level: number
+  expandedKeys: Set<string>
+  focusedKey: string | null
+  searchTerm: string
+  selectedDocumentId: string | null
+  filenameMode: 'display' | 'original'
+  onGroupClick: (key: string) => void
+  onDocumentClick: (doc: Document, e: React.MouseEvent, nodeKey?: string) => void
+  onDocumentMouseEnter: (doc: Document, e: React.MouseEvent) => void
+  onDocumentMouseMove: (doc: Document, e: React.MouseEvent) => void
+  onDocumentMouseLeave: () => void
+  onCustomerBadgeClick: (e: React.MouseEvent, customerName: string) => void
+}
+
+const GroupNode = React.memo<GroupNodeProps>(({
+  node,
+  level,
+  expandedKeys,
+  focusedKey,
+  searchTerm,
+  selectedDocumentId,
+  filenameMode,
+  onGroupClick,
+  onDocumentClick,
+  onDocumentMouseEnter,
+  onDocumentMouseMove,
+  onDocumentMouseLeave,
+  onCustomerBadgeClick,
+}) => {
+  const isExpanded = expandedKeys.has(node.key)
+  const hasChildren = node.children && node.children.length > 0
+  const isSpecial = node.metadata?.isSpecial
+  const isFocused = focusedKey === node.key
+
+  return (
+    <div className="doc-explorer-tree__group">
+      <div
+        data-node-key={node.key}
+        className={`doc-explorer-tree__group-header doc-explorer-tree__group-header--level-${level}${isSpecial ? ' doc-explorer-tree__group-header--special' : ''}${isFocused ? ' doc-explorer-tree__group-header--focused' : ''}`}
+        onClick={() => onGroupClick(node.key)}
+        role="treeitem"
+        tabIndex={-1}
+        aria-expanded={isExpanded}
+        aria-selected={isFocused}
+      >
+        {/* 펼치기/접기 아이콘 - 자식이 있을 때만 표시 (윈도우 탐색기 스타일) */}
+        {hasChildren ? (
+          <span className="doc-explorer-tree__chevron">
+            <SFSymbol
+              name={isExpanded ? 'chevron.down' : 'chevron.right'}
+              size={SFSymbolSize.CAPTION_2}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative
+            />
+          </span>
+        ) : (
+          <span className="doc-explorer-tree__chevron-placeholder" />
+        )}
+
+        {/* 폴더 아이콘 (내 보관함 스타일) */}
+        <span className="doc-explorer-tree__folder-icon">
+          {isExpanded ? '\uD83D\uDCC2' : '\uD83D\uDCC1'}
+        </span>
+
+        {/* 그룹 라벨 + 문서 수 */}
+        <span className="doc-explorer-tree__group-label">
+          {highlightText(node.label, searchTerm)}
+          {node.count !== undefined && (
+            <span className="doc-explorer-tree__count-inline"> ({node.count}건)</span>
+          )}
+        </span>
+      </div>
+
+      {/* 자식 노드 */}
+      {isExpanded && hasChildren && (
+        <div className="doc-explorer-tree__children" role="group">
+          {node.children!.map((child) => (
+            <TreeNode
+              key={child.key}
+              node={child}
+              level={level + 1}
+              expandedKeys={expandedKeys}
+              focusedKey={focusedKey}
+              searchTerm={searchTerm}
+              selectedDocumentId={selectedDocumentId}
+              filenameMode={filenameMode}
+              onGroupClick={onGroupClick}
+              onDocumentClick={onDocumentClick}
+              onDocumentMouseEnter={onDocumentMouseEnter}
+              onDocumentMouseMove={onDocumentMouseMove}
+              onDocumentMouseLeave={onDocumentMouseLeave}
+              onCustomerBadgeClick={onCustomerBadgeClick}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+})
+
+GroupNode.displayName = 'GroupNode'
+
+// ─────────────────────────────────────────────────────────────
+// TreeNode: 노드 타입에 따라 GroupNode/DocumentNode 분기
+// ─────────────────────────────────────────────────────────────
+
+interface TreeNodeProps {
+  node: DocumentTreeNode
+  level: number
+  expandedKeys: Set<string>
+  focusedKey: string | null
+  searchTerm: string
+  selectedDocumentId: string | null
+  filenameMode: 'display' | 'original'
+  onGroupClick: (key: string) => void
+  onDocumentClick: (doc: Document, e: React.MouseEvent, nodeKey?: string) => void
+  onDocumentMouseEnter: (doc: Document, e: React.MouseEvent) => void
+  onDocumentMouseMove: (doc: Document, e: React.MouseEvent) => void
+  onDocumentMouseLeave: () => void
+  onCustomerBadgeClick: (e: React.MouseEvent, customerName: string) => void
+}
+
+const TreeNode: React.FC<TreeNodeProps> = ({
+  node,
+  level,
+  expandedKeys,
+  focusedKey,
+  searchTerm,
+  selectedDocumentId,
+  filenameMode,
+  onGroupClick,
+  onDocumentClick,
+  onDocumentMouseEnter,
+  onDocumentMouseMove,
+  onDocumentMouseLeave,
+  onCustomerBadgeClick,
+}) => {
+  if (node.type === 'document') {
+    return (
+      <DocumentNode
+        node={node}
+        level={level}
+        selectedDocumentId={selectedDocumentId}
+        focusedKey={focusedKey}
+        searchTerm={searchTerm}
+        filenameMode={filenameMode}
+        onDocumentClick={onDocumentClick}
+        onDocumentMouseEnter={onDocumentMouseEnter}
+        onDocumentMouseMove={onDocumentMouseMove}
+        onDocumentMouseLeave={onDocumentMouseLeave}
+        onCustomerBadgeClick={onCustomerBadgeClick}
+      />
+    )
+  }
+  return (
+    <GroupNode
+      node={node}
+      level={level}
+      expandedKeys={expandedKeys}
+      focusedKey={focusedKey}
+      searchTerm={searchTerm}
+      selectedDocumentId={selectedDocumentId}
+      filenameMode={filenameMode}
+      onGroupClick={onGroupClick}
+      onDocumentClick={onDocumentClick}
+      onDocumentMouseEnter={onDocumentMouseEnter}
+      onDocumentMouseMove={onDocumentMouseMove}
+      onDocumentMouseLeave={onDocumentMouseLeave}
+      onCustomerBadgeClick={onCustomerBadgeClick}
+    />
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// DocumentExplorerTree: 메인 트리 컴포넌트
+// ─────────────────────────────────────────────────────────────
 
 export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   nodes,
@@ -296,168 +603,6 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     }, 30)
   }, [])
 
-  // 그룹 노드 렌더링
-  const renderGroupNode = (node: DocumentTreeNode, level: number): React.ReactNode => {
-    const isExpanded = expandedKeys.has(node.key)
-    const hasChildren = node.children && node.children.length > 0
-    const isSpecial = node.metadata?.isSpecial
-    const isFocused = focusedKey === node.key
-
-    return (
-      <div key={node.key} className="doc-explorer-tree__group">
-        <div
-          data-node-key={node.key}
-          className={`doc-explorer-tree__group-header doc-explorer-tree__group-header--level-${level}${isSpecial ? ' doc-explorer-tree__group-header--special' : ''}${isFocused ? ' doc-explorer-tree__group-header--focused' : ''}`}
-          onClick={() => handleGroupClick(node.key)}
-          role="treeitem"
-          tabIndex={-1}
-          aria-expanded={isExpanded}
-          aria-selected={isFocused}
-        >
-          {/* 펼치기/접기 아이콘 - 자식이 있을 때만 표시 (윈도우 탐색기 스타일) */}
-          {hasChildren ? (
-            <span className="doc-explorer-tree__chevron">
-              <SFSymbol
-                name={isExpanded ? 'chevron.down' : 'chevron.right'}
-                size={SFSymbolSize.CAPTION_2}
-                weight={SFSymbolWeight.MEDIUM}
-                decorative
-              />
-            </span>
-          ) : (
-            <span className="doc-explorer-tree__chevron-placeholder" />
-          )}
-
-          {/* 폴더 아이콘 (내 보관함 스타일) */}
-          <span className="doc-explorer-tree__folder-icon">
-            {isExpanded ? '📂' : '📁'}
-          </span>
-
-          {/* 그룹 라벨 + 문서 수 */}
-          <span className="doc-explorer-tree__group-label">
-            {highlightText(node.label, searchTerm)}
-            {node.count !== undefined && (
-              <span className="doc-explorer-tree__count-inline"> ({node.count}건)</span>
-            )}
-          </span>
-        </div>
-
-        {/* 자식 노드 */}
-        {isExpanded && hasChildren && (
-          <div className="doc-explorer-tree__children" role="group">
-            {node.children!.map((child) => renderNode(child, level + 1))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // 🍎 filenameMode에 따라 문서 표시명 결정
-  const getDocName = (doc: Document): { showName: string; altName: string } => {
-    const originalName = DocumentStatusService.extractOriginalFilename(doc)
-    const hasDisplay = Boolean(doc.displayName)
-    const showName = filenameMode === 'display' && hasDisplay
-      ? doc.displayName!
-      : originalName
-    const altName = filenameMode === 'display' && hasDisplay
-      ? `원본: ${originalName}`
-      : (hasDisplay ? `별칭: ${doc.displayName}` : '')
-    return { showName, altName }
-  }
-
-  // 날짜/시간 포맷 (MM.DD HH:mm:ss)
-  const formatDateTime = (dateStr: string): string => {
-    try {
-      const date = new Date(dateStr)
-      if (isNaN(date.getTime())) return ''
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      const seconds = String(date.getSeconds()).padStart(2, '0')
-      return `${month}.${day} ${hours}:${minutes}:${seconds}`
-    } catch {
-      return ''
-    }
-  }
-
-  // 문서 노드 렌더링
-  const renderDocumentNode = (node: DocumentTreeNode, level: number): React.ReactNode => {
-    const doc = node.document
-    if (!doc) return null
-
-    const docId = doc._id || doc.id || ''
-    const isSelected = selectedDocumentId === docId
-    const isFocused = focusedKey === node.key
-    const customerName = doc.customer_relation?.customer_name
-    const documentDate = getDocumentDate(doc)
-    const filename = DocumentStatusService.extractFilename(doc)
-
-    return (
-      <div
-        key={node.key}
-        data-node-key={node.key}
-        className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}`}
-        onClick={(e) => handleDocumentClick(doc, e, node.key)}
-        onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
-        onMouseMove={(e) => handleDocumentMouseMove(doc, e)}
-        onMouseLeave={handleDocumentMouseLeave}
-        role="treeitem"
-        tabIndex={-1}
-        aria-selected={isSelected}
-      >
-        {/* 문서 아이콘 (확장자에 따른 아이콘) */}
-        <span className={`doc-explorer-tree__doc-icon document-icon ${DocumentUtils.getFileTypeClass(doc.mimeType, filename)}`}>
-          <SFSymbol
-            name={DocumentUtils.getFileIcon(doc.mimeType, filename)}
-            size={SFSymbolSize.CAPTION_1}
-            weight={SFSymbolWeight.REGULAR}
-          />
-        </span>
-
-        {/* 🍎 문서명: filenameMode에 따라 별칭/원본 전환 */}
-        {(() => {
-          const { showName, altName } = getDocName(doc)
-          return (
-            <span className="doc-explorer-tree__doc-name" title={altName || showName}>
-              {highlightText(showName, searchTerm)}
-            </span>
-          )
-        })()}
-
-        {/* 고객명 (클릭 시 해당 고객 문서만 필터) */}
-        <span
-          className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
-          title={customerName ? `${customerName} 문서만 보기` : '-'}
-          onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
-        >
-          {customerName ? highlightText(customerName, searchTerm) : '-'}
-        </span>
-
-        {/* 날짜/시간 */}
-        <span
-          className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
-          title={documentDate || '-'}
-        >
-          {documentDate ? formatDateTime(documentDate) : '-'}
-        </span>
-
-        {/* 유형 배지 */}
-        <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
-          {doc.badgeType || 'BIN'}
-        </span>
-      </div>
-    )
-  }
-
-  // 노드 렌더링 (타입에 따라 분기)
-  const renderNode = (node: DocumentTreeNode, level: number): React.ReactNode => {
-    if (node.type === 'document') {
-      return renderDocumentNode(node, level)
-    }
-    return renderGroupNode(node, level)
-  }
-
   // 최근 본 문서 정렬 (훅은 조건부 리턴 전에 호출해야 함)
   const sortedRecentDocuments = useMemo(() => {
     if (recentDocuments.length === 0) return []
@@ -540,7 +685,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
               const customerName = doc.customer_relation?.customer_name
               const documentDate = getDocumentDate(doc)
               const filename = DocumentStatusService.extractFilename(doc)
-              const { showName, altName } = getDocName(doc)
+              const { showName, altName } = getDocName(doc, filenameMode)
 
               return (
                 <div
@@ -562,7 +707,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                     />
                   </span>
 
-                  {/* 🍎 문서명: filenameMode에 따라 별칭/원본 전환 */}
+                  {/* 문서명: filenameMode에 따라 별칭/원본 전환 */}
                   <span className="doc-explorer-tree__doc-name" title={altName || showName}>
                     {highlightText(showName, searchTerm)}
                   </span>
@@ -622,7 +767,24 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         onKeyDown={keyboardHandleKeyDown}
       >
         {renderRecentDocuments()}
-        {nodes.map((node) => renderNode(node, 0))}
+        {nodes.map((node) => (
+          <TreeNode
+            key={node.key}
+            node={node}
+            level={0}
+            expandedKeys={expandedKeys}
+            focusedKey={focusedKey}
+            searchTerm={searchTerm}
+            selectedDocumentId={selectedDocumentId}
+            filenameMode={filenameMode}
+            onGroupClick={handleGroupClick}
+            onDocumentClick={handleDocumentClick}
+            onDocumentMouseEnter={handleDocumentMouseEnter}
+            onDocumentMouseMove={handleDocumentMouseMove}
+            onDocumentMouseLeave={handleDocumentMouseLeave}
+            onCustomerBadgeClick={handleCustomerBadgeClick}
+          />
+        ))}
       </div>
       {/* 호버 시 썸네일 표시 (thumbnailEnabled일 때만) */}
       {thumbnailEnabled && (
