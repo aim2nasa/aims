@@ -468,3 +468,66 @@ frontend/aims-uix3/tests/performance/
 ### 13.5. Before 측정 결과
 
 > 벤치마크 첫 실행 후 여기에 기록 예정.
+
+---
+
+## 14. 성능 개선 작업 이력
+
+### 2026-03-02: P0 + P1 구현 완료
+
+#### 1단계 커밋 (dd79e707) — P0 #1, #2
+
+| # | 조치 | 변경 파일 | 변경 내용 |
+|---|------|----------|-----------|
+| P0 #1 | CSS 코드스플릿 활성화 | `vite.config.ts` | `cssCodeSplit: false` → `true` |
+| P0 #2 | 문서 탐색기 페이지 크기 축소 | `DocumentExplorerView.tsx` | `initialItemsPerPage` 10000 → 500 |
+
+**빌드 결과**:
+- CSS: 1.3MB 단일 파일 → 48개 뷰별 CSS (메인 467KB + 뷰별 0.2~151KB)
+- `@layer` 순서 선언 정상 유지 확인
+
+#### 2단계 커밋 (484667e6) — P0 #3, #4, #5
+
+| # | 조치 | 변경 파일 | 변경 내용 |
+|---|------|----------|-----------|
+| P0 #3 | flushSync 제거 → rAF throttle | `DocumentExplorerTree.tsx` | mouseEnter: flushSync → forceHoverUpdate, mouseMove: rAF throttle (프레임당 최대 1회) |
+| P0 #4 | production console.log 제거 | `DocumentStatusProvider.tsx` | 정렬 핸들러 내 console.log 3개 삭제 |
+| P0 #5 | hasProcessingDocuments useMemo | `DocumentStatusProvider.tsx` | `documents.some(...)` → `useMemo(() => documents.some(...), [documents])` |
+
+**테스트 결과**: 122개 테스트 ALL PASS (8개 테스트 파일)
+
+#### 3단계 커밋 (5269aba4) — P1 #6, #7, #8
+
+| # | 조치 | 변경 파일 | 변경 내용 |
+|---|------|----------|-----------|
+| P1 #6 | vendor 번들 분리 | `vite.config.ts` | `manualChunks`: vendor-react(185KB), vendor-tanstack(35KB), vendor-state(3KB) 분리 |
+| P1 #7 | DocumentStatusList 행 React.memo | `DocumentStatusList.tsx` | `DocumentStatusRow` memo 컴포넌트 추출, per-row boolean 변환(isSelected/isUpdating/isRetrying) |
+| P1 #8 | DocumentExplorerTree React.memo | `DocumentExplorerTree.tsx` | `DocumentNode`/`GroupNode`/`TreeNode` memo 컴포넌트 추출, `formatDateTime`/`getDocName` 순수함수 추출 |
+
+**빌드 결과**:
+- 메인 번들: 588KB → 364KB (-38%), vendor 캐시 분리
+- 순환 참조 경고: 없음
+- lazy 청크(pdf.js, ProductSearchModal 등): 영향 없음
+
+#### 번들 크기 변화 요약
+
+| 항목 | Before | After | 변화 |
+|------|--------|-------|------|
+| CSS (초기 로드) | 1,343KB (단일) | ~467KB (메인) + 뷰별 온디맨드 | **-65%** |
+| 메인 JS 번들 | 588KB (vendor 혼합) | 364KB (앱 코드만) | **-38%** |
+| vendor-react | (메인에 포함) | 185KB (별도 캐시) | 업데이트 시 재다운로드 불필요 |
+| vendor-tanstack | (메인에 포함) | 35KB (별도 캐시) | 업데이트 시 재다운로드 불필요 |
+| 문서 탐색기 DOM | 60,000+ (10,000개 로드) | ~3,000 (500개 로드) | **-95%** |
+| hover 동기 렌더 | 50회/초 (flushSync) | 0회/초 (rAF throttle) | **-100%** |
+| 리스트 행 리렌더 | 전체 행 (memo 없음) | 변경된 행만 (React.memo) | **-90%+** |
+| 트리 노드 리렌더 | 전체 트리 (함수 재호출) | 변경된 노드만 (React.memo) | **-90%+** |
+
+#### 미적용 항목
+
+| # | 조치 | 사유 |
+|---|------|------|
+| P1 #9 | fetchCustomerTypes 배치 API | 백엔드 API 추가 필요 (별도 작업) |
+| P2 #10 | App.tsx Zustand 이관 | 대규모 리팩토링, 별도 판단 필요 |
+| P2 #11 | react-virtual 도입 | 가상화 라이브러리 도입, 별도 작업 |
+| P2 #12 | Context 분할 | 대규모 리팩토링, 별도 판단 필요 |
+| P3 #13~15 | SSE/API 최적화 | 후속 작업으로 검토 |
