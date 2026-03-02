@@ -458,11 +458,11 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   // → SSE 정상, SSE 끊김, SSE zombie 모든 실패 모드에서 동작
   // → 모든 문서가 완료되면 자동 중단 (오버헤드 0)
   const freshnessIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const hasProcessingDocuments = documents.some(doc => {
+  const hasProcessingDocuments = useMemo(() => documents.some(doc => {
     const progress = doc.progress ?? 0
     const status = doc.overallStatus
     return progress < 100 && status !== 'completed' && status !== 'error'
-  })
+  }), [documents])
 
   useEffect(() => {
     if (hasProcessingDocuments && isPollingEnabled) {
@@ -577,15 +577,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
   // 🍎 Sort Handler
   const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType') => {
-    console.log(`🔍 [정렬 클릭] field=${field}, 현재 sortField=${sortField}, sortDirection=${sortDirection}`)
     if (sortField === field) {
       // Same field: toggle direction
       const newDirection = sortDirection === 'asc' ? 'desc' : 'asc'
-      console.log(`🔄 [정렬 방향 변경] ${sortDirection} → ${newDirection}`)
       setSortDirection(newDirection)
     } else {
       // New field: set field and default to asc
-      console.log(`🆕 [정렬 필드 변경] ${sortField} → ${field} (direction: asc)`)
       setSortField(field)
       setSortDirection('asc')
     }

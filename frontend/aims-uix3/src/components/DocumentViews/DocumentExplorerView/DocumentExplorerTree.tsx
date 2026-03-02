@@ -12,7 +12,7 @@
  */
 
 import React, { useCallback, useRef, useMemo, useEffect, useState, useReducer } from 'react'
-import { flushSync } from 'react-dom'
+// flushSync 제거 — 마우스 이벤트마다 동기 렌더링 강제하면 저사양 PC에서 프리징 발생
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
@@ -134,6 +134,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     position: { x: number; y: number }
   } | null>(null)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const rafRef = useRef<number | null>(null)
 
   // 최근 본 문서 섹션 펼침/접힘 상태 (localStorage에 저장)
   const [isRecentExpanded, setIsRecentExpanded] = useState(() => {
@@ -176,6 +177,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
       focusedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     }
   }, [focusedKey])
+
+  // rAF / leave 타이머 cleanup
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current)
+    }
+  }, [])
 
   // 문서 클릭 핸들러 (싱글/더블클릭 구분)
   const handleDocumentClick = useCallback(
@@ -240,16 +249,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         clearTimeout(leaveTimerRef.current)
         leaveTimerRef.current = null
       }
-      // ref로 동기적 업데이트 + flushSync로 즉시 렌더링 (batching 방지)
+      // ref로 동기적 업데이트 + React batching으로 자연스럽게 렌더
       hoverStateRef.current = { document: doc, position: { x: e.clientX, y: e.clientY } }
-      flushSync(() => {
-        forceHoverUpdate()
-      })
+      forceHoverUpdate()
     },
     []
   )
 
-  // 마우스 이동 시 위치 업데이트 (+ leave 타이머 취소)
+  // 마우스 이동 시 위치 업데이트 (rAF throttle로 초당 ~60회 렌더 → 1회)
   const handleDocumentMouseMove = useCallback(
     (doc: Document, e: React.MouseEvent) => {
       // mouseEnter가 안 들어올 수 있으므로, mouseMove에서도 leave 타이머 취소
@@ -258,16 +265,18 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         leaveTimerRef.current = null
       }
 
-      // hover 상태가 없으면 flushSync로 즉시 표시 (mouseEnter가 누락된 경우)
-      const needsFlush = !hoverStateRef.current
+      const needsImmediate = !hoverStateRef.current
       hoverStateRef.current = { document: doc, position: { x: e.clientX, y: e.clientY } }
 
-      if (needsFlush) {
-        flushSync(() => {
-          forceHoverUpdate()
-        })
-      } else {
+      if (needsImmediate) {
+        // hover 상태가 없으면 즉시 표시 (mouseEnter가 누락된 경우)
         forceHoverUpdate()
+      } else if (!rafRef.current) {
+        // 위치만 업데이트: rAF로 throttle (프레임당 최대 1회 렌더)
+        rafRef.current = requestAnimationFrame(() => {
+          forceHoverUpdate()
+          rafRef.current = null
+        })
       }
     },
     []
