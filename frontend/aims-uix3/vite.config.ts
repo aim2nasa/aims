@@ -122,7 +122,7 @@ export default defineConfig({
   },
   // 빌드 최적화
   build: {
-    cssCodeSplit: false,
+    cssCodeSplit: true,
     // 청크 크기 경고 임계값 상향 (빌드 안정성)
     chunkSizeWarningLimit: 1000,
     // 명시적 hash 기반 캐시 무효화 (브라우저 캐싱 방지)
