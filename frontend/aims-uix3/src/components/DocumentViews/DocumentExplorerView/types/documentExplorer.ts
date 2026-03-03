@@ -33,7 +33,7 @@ export const ALPHABET_INITIALS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', '
 /**
  * 숫자 초성 목록
  */
-export const NUMBER_INITIALS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
+export const NUMBER_INITIALS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '#'] as const
 
 /**
  * 빠른 필터 라벨

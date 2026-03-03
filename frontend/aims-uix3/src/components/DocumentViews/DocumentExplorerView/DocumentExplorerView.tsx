@@ -16,6 +16,7 @@ import { DocumentExplorerToolbar } from './DocumentExplorerToolbar'
 import { DocumentExplorerTree } from './DocumentExplorerTree'
 import { InitialFilterBar } from '@/shared/ui/InitialFilterBar'
 import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from './types/documentExplorer'
+import type { InitialType } from './types/documentExplorer'
 import { useDocumentExplorerTree } from './hooks/useDocumentExplorerTree'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
@@ -47,7 +48,9 @@ const DocumentExplorerContent: React.FC<{
   onCustomerClick?: (customerId: string) => void
   selectedInitial: string | null
   onSelectedInitialChange: (initial: string | null) => void
-}> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick, selectedInitial, onSelectedInitialChange }) => {
+  initialType: InitialType
+  onInitialTypeChange: (type: InitialType) => void
+}> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange }) => {
   const { state, actions } = useDocumentStatusContext()
 
   // 🍎 파일명 표시 모드 (별칭/원본) - localStorage 동기화
@@ -102,7 +105,6 @@ const DocumentExplorerContent: React.FC<{
     customerFilter,
     dateFilter,
     thumbnailEnabled,
-    initialType,
     setGroupBy,
     toggleNode,
     toggleExpandAll,
@@ -117,7 +119,6 @@ const DocumentExplorerContent: React.FC<{
     getAvailableDates,
     clearDateFilter,
     setThumbnailEnabled,
-    setInitialType,
   } = useDocumentExplorerTree({
     documents: state.documents,
     isLoading: state.isLoading,
@@ -192,7 +193,7 @@ const DocumentExplorerContent: React.FC<{
       {/* 초성 필터 바 - 공용 컴포넌트 사용 */}
       <InitialFilterBar
         initialType={initialType}
-        onInitialTypeChange={setInitialType}
+        onInitialTypeChange={onInitialTypeChange}
         selectedInitial={selectedInitial}
         onSelectedInitialChange={onSelectedInitialChange}
         initialCounts={serverInitialCounts}
@@ -243,6 +244,13 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
 }) => {
   const breadcrumbItems = getBreadcrumbItems('documents-explorer')
   const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('doc-explorer-selected-initial', null)
+  const [initialType, setInitialType] = usePersistedState<InitialType>('doc-explorer-initial-type', 'korean')
+
+  // 탭 전환 시 선택된 초성 초기화
+  const handleInitialTypeChange = useCallback((type: InitialType) => {
+    setInitialType(type)
+    setSelectedInitial(null)
+  }, [setInitialType, setSelectedInitial])
 
   return (
     <CenterPaneView
@@ -251,13 +259,15 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
       breadcrumbItems={breadcrumbItems}
       onClose={onClose}
     >
-      <DocumentStatusProvider searchQuery="" fileScope="excludeMyFiles" initialItemsPerPage={500} initialFilter={selectedInitial}>
+      <DocumentStatusProvider searchQuery="" fileScope="excludeMyFiles" initialItemsPerPage={500} initialFilter={selectedInitial} initialTypeFilter={initialType}>
         <DocumentExplorerContent
           onDocumentClick={onDocumentClick}
           onDocumentDoubleClick={onDocumentDoubleClick}
           onCustomerClick={onCustomerClick}
           selectedInitial={selectedInitial}
           onSelectedInitialChange={setSelectedInitial}
+          initialType={initialType}
+          onInitialTypeChange={handleInitialTypeChange}
         />
       </DocumentStatusProvider>
     </CenterPaneView>

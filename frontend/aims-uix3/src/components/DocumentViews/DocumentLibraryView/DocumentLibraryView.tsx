@@ -767,6 +767,13 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 초성 필터 상태 (F5 이후에도 유지)
   const [initialType, setInitialType] = usePersistedState<InitialType>('document-library-initial-type', 'korean')
   const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('document-library-selected-initial', null)
+
+  // 탭 전환 시 선택된 초성 초기화
+  const handleInitialTypeChange = React.useCallback((type: InitialType) => {
+    setInitialType(type)
+    setSelectedInitial(null)
+  }, [setInitialType, setSelectedInitial])
+
   const [isDocumentLinkModalVisible, setIsDocumentLinkModalVisible] = React.useState(false)
   const [selectedDocumentsForLink, setSelectedDocumentsForLink] = React.useState<any[]>([])
 
@@ -967,10 +974,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         )}
 
         {/* 🍎 타겟 영역: 상단 바 + 헤더 + 문서 리스트 + 페이지네이션 */}
-        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles" initialFilter={selectedInitial}>
+        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles" initialFilter={selectedInitial} initialTypeFilter={initialType}>
           <DocumentLibraryContent
             initialType={initialType}
-            onInitialTypeChange={setInitialType}
+            onInitialTypeChange={handleInitialTypeChange}
             selectedInitial={selectedInitial}
             onSelectedInitialChange={setSelectedInitial}
             isDeleteMode={isDeleteMode}

@@ -30,6 +30,8 @@ interface DocumentStatusProviderProps {
   initialItemsPerPage?: number
   /** 초성 필터 (고객명 기준 서버사이드 필터링) */
   initialFilter?: string | null
+  /** 초성 타입 필터 (한글/영문/숫자 카테고리 서버사이드 필터링) */
+  initialTypeFilter?: string | null
 }
 
 /**
@@ -41,7 +43,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   searchQuery = '',
   fileScope = 'all',
   initialItemsPerPage,
-  initialFilter
+  initialFilter,
+  initialTypeFilter
 }) => {
   // State - 캐시된 데이터로 초기화 (네비게이션 시 빈 화면 방지)
   const [documents, setDocuments] = useState<Document[]>(documentCache)
@@ -96,6 +99,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     initialFilterRef.current = initialFilter
   }, [initialFilter])
 
+  // 📝 초성 타입 필터 ref (카테고리 필터)
+  const initialTypeFilterRef = useRef(initialTypeFilter)
+  useEffect(() => {
+    initialTypeFilterRef.current = initialTypeFilter
+  }, [initialTypeFilter])
+
   /**
    * 문서 목록 가져오기
    * 🍎 페이지네이션 기반: 현재 페이지와 페이지당 항목 수에 따라 데이터 가져오기
@@ -143,7 +152,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         // 🍎 검색 대상 필드도 전달 (별칭/원본 모드에 따라)
         const searchFieldParam = searchQuery ? searchField : undefined
         const initialParam = initialFilterRef.current || undefined
-        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam, searchFieldParam, undefined, initialParam)
+        const initialTypeParam = initialTypeFilterRef.current || undefined
+        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam, searchFieldParam, undefined, initialParam, initialTypeParam)
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 🍎 백엔드 pagination 정보 저장 + 캐시 업데이트
@@ -405,6 +415,20 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFilter])
+
+  /**
+   * 📝 초성 타입 필터 변경 시 1페이지로 리셋 + 재조회
+   */
+  useEffect(() => {
+    if (isInitialMountRef.current) return
+    if (typeof window === 'undefined') return
+    if (currentPage !== 1) {
+      setCurrentPage(1)
+    } else {
+      fetchDocumentsRef.current(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTypeFilter])
 
   // 🔄 SSE 훅 사용 (실시간 업데이트)
   // - document-list-change: 문서 업로드/삭제/연결 변경 시 즉시 반영

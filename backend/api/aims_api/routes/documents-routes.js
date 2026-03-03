@@ -738,7 +738,7 @@ router.get('/documents/status/initials', authenticateJWT, async (req, res) => {
  */
 router.get('/documents/status', authenticateJWT, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField, period, initial } = req.query;
+    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField, period, initial, initialType } = req.query;
     const skip = (page - 1) * limit;
 
     // (정렬 디버깅 로그 제거됨 — 성능 최적화)
@@ -813,6 +813,47 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       }
     }
 
+    // 📝 initialType 카테고리 필터 (탭 선택 = 카테고리 필터)
+    const VALID_INITIAL_TYPES = ['korean', 'alphabet', 'number'];
+    if (initialType && !VALID_INITIAL_TYPES.includes(initialType)) {
+      return res.status(400).json({ success: false, message: 'Invalid initialType' });
+    }
+    if (initialType && !initial) {
+      let nameFilter = null;
+      if (initialType === 'korean') {
+        nameFilter = { $gte: '가', $lt: '\uD7A4' };
+      } else if (initialType === 'alphabet') {
+        nameFilter = { $regex: /^[A-Za-z]/ };
+      } else if (initialType === 'number') {
+        // 숫자 + 특수문자 = 한글도 영문도 아닌 모든 것
+        nameFilter = { $not: { $regex: /^[가-힣A-Za-z]/ } };
+      }
+
+      if (nameFilter) {
+        const matchingCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
+          .find({ 'meta.created_by': userId, 'personal_info.name': nameFilter })
+          .project({ _id: 1 })
+          .toArray();
+
+        if (matchingCustomers.length > 0) {
+          filter['customerId'] = { $in: matchingCustomers.map(c => c._id) };
+        } else {
+          return res.json({
+            success: true,
+            data: {
+              documents: [],
+              pagination: {
+                currentPage: parseInt(page),
+                totalPages: 0,
+                totalCount: 0,
+                limit: parseInt(limit)
+              }
+            }
+          });
+        }
+      }
+    }
+
     // 📝 초성 필터 (고객명 기준 — 서버사이드)
     if (initial && typeof initial === 'string' && initial.length === 1) {
       let nameFilter = null;
@@ -834,6 +875,10 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       // 숫자 (0-9)
       else if (code >= 48 && code <= 57) {
         nameFilter = { $regex: `^${escapeRegex(initial)}` };
+      }
+      // '#' = 특수문자 (한글, 영문, 숫자 모두 아닌 것)
+      else if (initial === '#') {
+        nameFilter = { $not: { $regex: /^[가-힣ㄱ-ㅎA-Za-z0-9]/ } };
       }
 
       if (nameFilter) {

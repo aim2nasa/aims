@@ -6,7 +6,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import type { Document } from '@/types/documentStatus'
-import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData, DocumentTreeNode, QuickFilterType, InitialType } from '../types/documentExplorer'
+import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData, DocumentTreeNode, QuickFilterType } from '../types/documentExplorer'
 import { buildTree, collectAllKeys, filterDocuments, sortTreeNodes, getDocumentDate } from '../utils/treeBuilders'
 
 const MAX_RECENT_DOCUMENTS = 5
@@ -37,8 +37,6 @@ export interface UseDocumentExplorerTreeResult {
   customerFilter: string | null
   dateFilter: Date | null
   thumbnailEnabled: boolean
-  /** 초성 필터 타입 (한글/영문/숫자) */
-  initialType: InitialType
 
   // Actions
   setGroupBy: (groupBy: DocumentGroupBy) => void
@@ -58,8 +56,6 @@ export interface UseDocumentExplorerTreeResult {
   getAvailableDates: () => Date[]
   clearDateFilter: () => void
   setThumbnailEnabled: (enabled: boolean) => void
-  /** 초성 타입 변경 */
-  setInitialType: (type: InitialType) => void
 }
 
 /**
@@ -106,10 +102,6 @@ export function useDocumentExplorerTree({
   const [thumbnailEnabled, setThumbnailEnabledState] = usePersistedState<boolean>(
     'doc-explorer-thumbnail-enabled',
     true // 기본값: 활성화
-  )
-  const [initialType, setInitialTypeState] = usePersistedState<InitialType>(
-    'doc-explorer-initial-type',
-    'korean' // 기본값: 한글
   )
   // Non-persisted states
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
@@ -370,14 +362,6 @@ export function useDocumentExplorerTree({
     setSearchTermState('')
   }, [setQuickFilterState, setSearchTermState])
 
-  // 초성 타입 변경
-  const setInitialType = useCallback(
-    (type: InitialType) => {
-      setInitialTypeState(type)
-    },
-    [setInitialTypeState]
-  )
-
   // 날짜 필터 해제
   const clearDateFilter = useCallback(() => {
     setDateFilter(null)
@@ -486,7 +470,6 @@ export function useDocumentExplorerTree({
     customerFilter,
     dateFilter,
     thumbnailEnabled,
-    initialType,
 
     // Actions
     setGroupBy,
@@ -506,6 +489,5 @@ export function useDocumentExplorerTree({
     getAvailableDates,
     clearDateFilter,
     setThumbnailEnabled,
-    setInitialType,
   }
 }

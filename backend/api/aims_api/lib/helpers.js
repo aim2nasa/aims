@@ -159,7 +159,8 @@ function getInitialFromChar(char) {
   if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) return char.toUpperCase();
   // 숫자 (0-9)
   if (code >= 48 && code <= 57) return char;
-  return null;
+  // 특수문자 → '#'으로 통일
+  return '#';
 }
 
 /**

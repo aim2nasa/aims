@@ -284,7 +284,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // fileScope
           undefined, // searchField
           undefined, // period
-          undefined  // initial
+          undefined, // initial
+          undefined  // initialType
         )
       })
     })
@@ -328,7 +329,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // fileScope
           undefined, // searchField
           undefined, // period
-          undefined  // initial
+          undefined, // initial
+          undefined  // initialType
         )
       })
     })
@@ -435,7 +437,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // fileScope
           'displayName', // searchField
           undefined, // period
-          undefined  // initial
+          undefined, // initial
+          undefined  // initialType
         )
       })
     })
@@ -475,7 +478,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // fileScope
           undefined, // searchField
           undefined, // period
-          undefined  // initial
+          undefined, // initial
+          undefined  // initialType
         )
       })
     })
@@ -518,7 +522,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
             undefined, // fileScope
             undefined, // searchField
             undefined, // period
-            undefined  // initial
+            undefined, // initial
+            undefined  // initialType
           )
         })
       }
