@@ -103,6 +103,7 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
   } = useQuery({
     queryKey: ['contracts-list', { limit: 1000 }],
     queryFn: () => ContractService.getContracts({ limit: 1000 }),
+    enabled: visible,
   });
 
   // 계약 통계 계산

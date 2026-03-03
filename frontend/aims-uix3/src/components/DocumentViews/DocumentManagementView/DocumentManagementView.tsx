@@ -114,6 +114,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   } = useQuery({
     queryKey: ['documentStatistics'],
     queryFn: getDocumentStatistics,
+    enabled: visible,
   });
 
   // 전체 문서 목록 조회 (문서 유형 통계 및 최근 활동용)
@@ -125,6 +126,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     queryKey: ['allDocumentsForStats'],
     queryFn: () =>
       DocumentStatusService.getRecentDocuments(1, 10000, 'uploadTime_desc'), // 전체 조회
+    enabled: visible,
   });
 
 

@@ -182,13 +182,14 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return map;
   }, [documentCustomerMap, relationships]);
 
-  // 초기 데이터 로드
+  // 초기 데이터 로드 (visible일 때만)
   useEffect(() => {
+    if (!visible) return;
     if (import.meta.env.DEV) {
       console.log('[CustomerRelationshipView] Document 구독 및 초기 데이터 로드');
     }
     loadCustomers({ limit: 10000, page: 1, status: 'all' });
-  }, [loadCustomers]);
+  }, [visible, loadCustomers]);
 
   const loadRelationshipsData = useCallback(async () => {
     try {

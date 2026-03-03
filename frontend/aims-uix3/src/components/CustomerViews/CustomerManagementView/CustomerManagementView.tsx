@@ -113,6 +113,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       getCustomers({
         limit: 1000, // 통계 계산을 위해 많은 수 가져오기
       }),
+    enabled: visible,
   });
 
   // 관계 데이터 조회 (관계 매핑 통계용)
@@ -123,6 +124,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     queryKey: ['allRelationships'],
     queryFn: getAllRelationshipsWithCustomers,
     staleTime: 5 * 60 * 1000, // 5분간 캐시 유지
+    enabled: visible,
   });
 
   // 고객 통계 계산

@@ -71,13 +71,14 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
     return map
   }, [customers])
 
-  // 초기 데이터 로드
+  // 초기 데이터 로드 (visible일 때만)
   useEffect(() => {
+    if (!visible) return
     if (import.meta.env.DEV) {
       console.log('[CustomerRegionalView] Document 구독 및 초기 데이터 로드')
     }
     loadCustomers({ limit: 10000, page: 1, status: 'all' })
-  }, [loadCustomers])
+  }, [visible, loadCustomers])
 
   // Note: customerChanged 이벤트 리스너는 불필요
   // CustomerRegionalView는 useCustomerDocument 훅을 통해 CustomerDocument를 구독하므로

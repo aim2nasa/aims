@@ -80,6 +80,7 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
   } = useQuery({
     queryKey: ['allCustomers'],
     queryFn: () => getCustomers({ limit: 1000 }),
+    enabled: visible,
   })
 
   // 문서 통계 조회
@@ -89,6 +90,7 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
   } = useQuery({
     queryKey: ['documentStatistics'],
     queryFn: getDocumentStatistics,
+    enabled: visible,
   })
 
   // 계약 통계 조회
@@ -98,6 +100,7 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
   } = useQuery({
     queryKey: ['contracts-list', { limit: 1 }],
     queryFn: () => ContractService.getContracts({ limit: 1 }),
+    enabled: visible,
   })
 
   // 통계 계산
