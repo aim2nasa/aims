@@ -135,3 +135,162 @@
 
 - `npm run build`: ✅ 성공
 - `npm run test`: ✅ 4,389 tests passed (207 test files)
+
+### 3-5. 커밋
+
+- **커밋**: `a7a10e4b` — `perf: Phase 1 — Status API 응답 경량화 (full_text 제외, -87%)`
+- **배포**: 13/13 단계 완료
+
+---
+
+## 4. Phase 2 실행 — Customers API 서버사이드 전환
+
+### 4-1. Before 측정 (서버 로컬)
+
+| limit | 응답 크기 | 서버 응답 시간 |
+|-------|----------|--------------|
+| 15 | 7,900 B | 0.011s |
+| 100 | 52,185 B | 0.020s |
+| **10000** | **2,650,727 B (2.65 MB)** | **0.251s** |
+
+### 4-2. 구현 변경 내역
+
+**백엔드** (`customers-routes.js`):
+- `sort` 파라미터 추가 (18개 정렬 기준: name/birth/gender/phone/email/address/type/status/created × asc/desc)
+- `initial` 파라미터 추가 (한글 초성 ㄱ-ㅎ + 영문 A-Z + 숫자 0-9 필터)
+- `stats` 통계 응답 추가 (activePersonal/activeCorporate/inactivePersonal/inactiveCorporate)
+- `Promise.all` 병렬 쿼리 (customers + totalCount + stats)
+
+**프론트엔드**:
+- `AllCustomersView.tsx`: 클라이언트 필터/정렬/페이지네이션 체인 제거 → 서버사이드 위임
+- `CustomerSelectorModal.tsx`: `limit=10000` → `limit=100` + 서버사이드 검색/초성필터
+- `CustomerDocument.ts`: `refresh()` 기본 limit 10000 → 100
+
+### 4-3. After 측정 (서버 로컬)
+
+| 파라미터 | 응답 크기 | 서버 응답 시간 |
+|---------|----------|--------------|
+| limit=15 (기본 페이지) | **7,900 B** | **0.011s** |
+| limit=15 + sort=name_asc | 7,800 B | 0.013s |
+| limit=15 + initial=ㄱ | 7,200 B | 0.012s |
+| limit=15 + search=김보성 | 1,200 B | 0.008s |
+
+**개선율**: limit=10000 (2.65MB) → limit=15 (7.9KB) = **-99.7%**
+
+### 4-4. 검증
+
+- `npm run build`: ✅ 성공
+- `npm run test`: ✅ 4,389 tests passed
+- API 기능 (sort/initial/search/stats): ✅ 모두 정상
+- 정렬: MongoDB `.sort().skip().limit()` — 전체 데이터 정렬 후 페이지네이션 적용 확인
+
+### 4-5. 커밋
+
+- **커밋**: `b889c3b8` — `perf: Phase 2 — Customers API 서버사이드 전환 (limit=10000 제거, -99.7%)`
+- **배포**: 13/13 단계 완료, v0.1.41
+
+---
+
+## 5. Phase 3 실행 — 비활성 뷰 API 호출 제거 (visible 가드)
+
+### 5-1. 문제 발견
+
+Phase 2 배포 후 S PC 실측에서 **모든 페이지에서 동일한 heavy API 호출 발생** 확인:
+
+| 불필요 API | 소스 컴포넌트 | 크기 |
+|-----------|-------------|------|
+| `customers?limit=10000` | CustomerRegionalView | ~2.7 MB |
+| `customers?limit=10000` | CustomerRelationshipView | ~2.7 MB |
+| `customers?limit=1000` | CustomerManagementView | ~0.9 MB |
+| `customers?limit=1000` | QuickActionsView | ~0.9 MB |
+| `status?limit=10000` | DocumentManagementView | ~4.2 MB |
+| `relationships` | CustomerRelationshipView, CustomerManagementView | ~0.8 MB |
+| `contracts?limit=1000` | ContractManagementView | ~0.3 MB |
+| **합계** | | **~10.3 MB** |
+
+### 5-2. 근본 원인
+
+`App.tsx`가 **모든 뷰를 동시에 마운트**하고 `visible` prop으로 CSS 숨김만 적용:
+
+```tsx
+// App.tsx 라인 1676-1797 — 모든 뷰가 항상 마운트
+<CustomerRegionalView visible={activeDocumentView === 'customers-regional'} />
+<CustomerRelationshipView visible={activeDocumentView === 'customers-relationship'} />
+<QuickActionsView visible={activeDocumentView === 'quick-actions'} />
+// ... 24개 뷰 모두 동시 마운트
+```
+
+→ 비활성 뷰도 마운트 시 `useQuery`/`useEffect`에서 API 호출 → 매 페이지 로드 시 ~10.3MB 낭비
+
+### 5-3. 수정 내역 (6개 컴포넌트)
+
+| 컴포넌트 | 수정 | 제거된 낭비 API |
+|---------|------|---------------|
+| DocumentManagementView | `useQuery` x2에 `enabled: visible` | statistics + status(10000건) |
+| CustomerManagementView | `useQuery` x2에 `enabled: visible` | customers(1000) + relationships |
+| ContractManagementView | `useQuery` x1에 `enabled: visible` | contracts(1000) |
+| QuickActionsView | `useQuery` x3에 `enabled: visible` | customers(1000) + statistics + contracts |
+| CustomerRegionalView | `useEffect`에 `if (!visible) return` + deps에 visible 추가 | customers(10000) |
+| CustomerRelationshipView | `useEffect`에 `if (!visible) return` + deps에 visible 추가 | customers(10000) + relationships |
+
+### 5-4. S PC 실측 — Before/After 비교
+
+> Before: Phase 2 배포 직후 (비활성 뷰 API 미제어)
+> After: Phase 3 배포 후 (visible 가드 적용)
+
+| 페이지 | Before 전송량 | After 전송량 | 전송량 개선 | Before Finish | After Finish | 속도 개선 |
+|--------|-------------|------------|-----------|--------------|-------------|----------|
+| 전체 고객 보기 | ~10.3 MB | **4.2 MB** | **-59%** | ~30s+ | **14.10s** | **-53%** |
+| 지역별 고객 보기 | ~10.3 MB | **8.2 MB** | **-20%** | **72s** | **33.81s** | **-53%** |
+| 관계별 고객 보기 | ~10.3 MB | **7.7 MB** | **-25%** | **38.05s** | **24.09s** | **-37%** |
+| 전체 문서 보기 | **20.9 MB** | **5.1 MB** | **-76%** | **72s** | **14.55s** | **-80%** |
+| 문서 탐색기 | **14.5 MB** | **7.6 MB** | **-48%** | **30.14s** | **18.05s** | **-40%** |
+| 상세 문서검색 | **14.5 MB** | **4.2 MB** | **-71%** | **30.14s** | **34.34s** | 유사 |
+| 고객 전체보기 | **14.7 MB** | **5.1 MB** | **-65%** | **33.08s** | **13.35s** | **-60%** |
+
+**평균 전송량 -52%, 평균 Finish -46% 개선**
+
+### 5-5. 검증
+
+- `npm run build`: ✅ 성공
+- `npm run test`: ✅ 4,389 tests passed (207 test files)
+
+### 5-6. 커밋
+
+- **커밋**: `c36d4b29` — `perf: Phase 3 — 비활성 뷰 API 호출 제거 (visible 가드 추가)`
+- **배포**: 13/13 단계 완료
+
+---
+
+## 6. 전체 최적화 종합 (최초 → Phase 3 After)
+
+### 최초 상태 vs Phase 3 After — S PC 실측
+
+| 페이지 | 최초 전송량 | Phase 3 전송량 | 전송량 개선 | 최초 Finish | Phase 3 Finish | 속도 개선 |
+|--------|-----------|--------------|-----------|------------|---------------|----------|
+| 전체 고객 보기 | ~42 MB+ | **4.2 MB** | **-90%** | ~2 min+ | **14.10s** | **-88%** |
+| 지역별 고객 보기 | ~42 MB+ | **8.2 MB** | **-80%** | ~2 min+ | **33.81s** | **-72%** |
+| 관계별 고객 보기 | ~42 MB+ | **7.7 MB** | **-82%** | ~2 min+ | **24.09s** | **-80%** |
+| 전체 문서 보기 | ~53 MB+ | **5.1 MB** | **-90%** | ~2.5 min+ | **14.55s** | **-90%** |
+| 문서 탐색기 | ~46 MB+ | **7.6 MB** | **-83%** | ~2 min+ | **18.05s** | **-85%** |
+| 상세 문서검색 | ~46 MB+ | **4.2 MB** | **-91%** | ~2 min+ | **34.34s** | **-71%** |
+| 고객 전체보기 | ~46 MB+ | **5.1 MB** | **-89%** | ~2 min+ | **13.35s** | **-89%** |
+
+> 최초 상태: Phase 1 전 Status API 32MB + 비활성 뷰 customers 10000 + relationships 등 모두 합산
+
+### 3 Phase 요약
+
+| Phase | 커밋 | 핵심 변경 | 핵심 효과 |
+|-------|------|---------|----------|
+| **Phase 1** | `a7a10e4b` | Status API full_text 제거 | 32MB → 4.2MB (**-87%**) |
+| **Phase 2** | `b889c3b8` | Customers API 서버사이드 전환 | 2.65MB → 7.9KB (**-99.7%**) |
+| **Phase 3** | `c36d4b29` | 비활성 뷰 API 호출 제거 | 매 페이지 ~10.3MB 낭비 제거 (**-52%**) |
+
+### 남은 최적화 기회
+
+| 항목 | 현재 | 가능한 개선 | 우선순위 |
+|------|------|-----------|---------|
+| 지역별 고객 보기 geocode | 고객별 geocode API 수백 건 | 좌표 캐싱 (DB 저장) | 중 |
+| 문서 탐색기 SSE 폴링 | 434 요청/18초 | SSE 연결 최적화, 폴링 간격 조정 | 중 |
+| JS 번들 | 4~5 MB (정적) | 추가 코드 스플리팅, 트리 쉐이킹 | 하 |
+| 지역/관계 뷰 limit=10000 | 전체 로드 필수 | 점진적 로딩 (가상 스크롤) | 하 |
