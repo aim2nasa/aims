@@ -34,6 +34,24 @@ class HybridSearchEngine:
         # 🔥 Phase 4: 마지막 임베딩 응답 저장 (토큰 추적용)
         self.last_embedding_response = None
 
+    def resolve_customer_from_entities(self, entities: List[str], user_id: str) -> Optional[str]:
+        """
+        쿼리 엔터티에서 고객명을 찾아 customer_id 자동 매칭.
+        customers 컬렉션에서 personal_info.name과 정확히 일치하는 고객을 찾는다.
+        """
+        if not entities:
+            return None
+        customers_coll = self.db["customers"]
+        for entity in entities:
+            customer = customers_coll.find_one({
+                "personal_info.name": entity,
+                "meta.created_by": user_id,
+                "meta.status": "active"
+            })
+            if customer:
+                return str(customer["_id"])
+        return None
+
     def search(self, query: str, query_intent: Dict, user_id: str, customer_id: Optional[str] = None, top_k: int = 5) -> List[Dict]:
         """
         쿼리 의도에 따라 적절한 검색 수행

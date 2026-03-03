@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import requests
 import json
+import asyncio
 
 # 🔥 Phase 1: 하이브리드 검색 추가
 from query_analyzer import QueryAnalyzer
@@ -412,32 +413,46 @@ async def search_endpoint(request: SearchRequest):
             query_intent = query_analyzer.analyze(request.query)
             timing["query_analysis_time"] = time.time() - analysis_start
             print(f"📊 쿼리 유형: {query_intent['query_type']}")
-            print(f"🔍 고객 필터: customer_id={request.customer_id if request.customer_id else '전체'}")
+            # 고객명 자동 매칭: 엔터티에서 고객명 감지 → customer_id 자동 필터링
+            search_customer_id = request.customer_id
+            if not search_customer_id and query_intent.get("entities"):
+                resolved = hybrid_engine.resolve_customer_from_entities(
+                    query_intent["entities"], request.user_id
+                )
+                if resolved:
+                    search_customer_id = resolved
+                    print(f"🔍 고객명 자동 매칭: {query_intent['entities']} → customer_id={resolved}")
+            print(f"🔍 고객 필터: customer_id={search_customer_id if search_customer_id else '전체'}")
 
             # 2단계: 하이브리드 검색 (offset + top_k + 여유분 가져오기)
             # 🔥 페이지네이션: offset을 고려하여 충분한 결과 가져오기
             effective_top_k = request.top_k if request.top_k is not None else 30
             fetch_count = max(50, request.offset + effective_top_k + 10)  # 최소 50개 또는 필요한 만큼
             search_start = time.time()
-            search_results = hybrid_engine.search(
+            search_results = await asyncio.to_thread(
+                hybrid_engine.search,
                 query=request.query,
                 query_intent=query_intent,
                 user_id=request.user_id,
-                customer_id=request.customer_id,  # 🔥 고객별 필터링 추가
+                customer_id=search_customer_id,
                 top_k=fetch_count  # 페이지네이션을 위해 더 많이 가져오기
             )
             timing["search_time"] = time.time() - search_start
 
-            # 3단계: Cross-Encoder 재순위화 (상위 50개만 — CPU에서 전체 재순위화 시 1분+ 소요)
+            # 3단계: Cross-Encoder 재순위화 (asyncio.to_thread로 이벤트 루프 블로킹 방지)
             RERANK_LIMIT = 50
             rerank_start = time.time()
             if len(search_results) <= RERANK_LIMIT:
-                all_reranked = reranker.rerank(request.query, search_results, top_k=len(search_results))
+                all_reranked = await asyncio.to_thread(
+                    reranker.rerank, request.query, search_results, len(search_results)
+                )
             else:
                 # 상위 50개만 정밀 재순위화, 나머지는 원본 벡터 유사도 순서 유지
                 top_candidates = search_results[:RERANK_LIMIT]
                 remaining = search_results[RERANK_LIMIT:]
-                reranked_top = reranker.rerank(request.query, top_candidates, top_k=len(top_candidates))
+                reranked_top = await asyncio.to_thread(
+                    reranker.rerank, request.query, top_candidates, len(top_candidates)
+                )
                 # 나머지에 원본 점수 기반 final_score 부여 (재순위화 결과보다 아래)
                 min_reranked_score = min(r.get("final_score", 0) for r in reranked_top) if reranked_top else 0
                 for i, result in enumerate(remaining):
