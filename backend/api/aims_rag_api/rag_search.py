@@ -287,33 +287,44 @@ def deduplicate_by_document(search_results: List) -> List[Dict]:
     return results
 
 # 4. LLM을 사용하여 답변 생성하는 함수 (토큰 추적 추가)
-def generate_answer_with_llm(query: str, search_results: List[Dict]) -> tuple:
+def generate_answer_with_llm(query: str, search_results: List[Dict], relationship_context: Optional[str] = None) -> tuple:
     """
     검색 결과를 바탕으로 LLM 답변 생성
 
     Args:
         query: 사용자 질문
         search_results: 검색 결과 리스트
+        relationship_context: 고객 관계 정보 텍스트 (optional)
 
     Returns:
         tuple: (answer_text, openai_response) - 답변과 응답 객체 (토큰 추적용)
     """
-    if not search_results:
+    if not search_results and not relationship_context:
         return "관련 문서를 찾을 수 없습니다.", None
 
     # 검색 결과를 바탕으로 컨텍스트 생성
     context = ""
+
+    # 고객 관계 정보가 있으면 문서 컨텍스트 앞에 배치
+    if relationship_context:
+        context += f"{relationship_context}\n\n"
+
     for i, result in enumerate(search_results):
-        # 🔥 수정: 하이브리드 검색 결과는 이미 Dict 형태
         payload = result.get('payload', result)
         preview = payload.get('preview', '')
         original_name = payload.get('original_name', '알 수 없는 문서')
         context += f"--- 문서 조각 {i+1} (출처: {original_name}) ---\n{preview}\n\n"
 
-    # LLM에게 전달할 시스템 프롬프트 및 사용자 프롬프트 구성
+    # 시스템 프롬프트: 관계 정보 포함 시 확장
+    system_prompt = (
+        "너는 보험 설계사를 지원하는 AI 어시스턴트로, 주어진 문서 내용과 고객 관계 정보를 바탕으로 "
+        "사용자의 질문에 대해 친절하고 명확하게 답변해야 해. "
+        "고객 관계 정보가 제공되면 이를 참고하여 답변하되, 제공된 정보에 없는 내용은 추가하거나 추측하지 마."
+    )
+
     messages = [
-        {"role": "system", "content": "너는 AI 자동화 솔루션 전문가로, 주어진 문서 내용을 바탕으로 사용자의 질문에 대해 친절하고 명확하게 답변해야 해. 문서 내용에 없는 정보는 절대 추가하거나 추측해서는 안 돼."},
-        {"role": "user", "content": f"다음 문서를 참고해서 질문에 답해줘. 질문: '{query}'\n\n문서:\n{context}"}
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": f"다음 정보를 참고해서 질문에 답해줘. 질문: '{query}'\n\n{context}"}
     ]
 
     try:
@@ -422,20 +433,45 @@ async def search_endpoint(request: SearchRequest):
                 if resolved:
                     search_customer_id = resolved
                     print(f"🔍 고객명 자동 매칭: {query_intent['entities']} → customer_id={resolved}")
-            print(f"🔍 고객 필터: customer_id={search_customer_id if search_customer_id else '전체'}")
+
+            # 1-b단계: 고객 관계 정보 조회 (customer_id 매칭 시 항상 수행)
+            relationship_context = None
+            search_customer_ids = None
+            if search_customer_id:
+                rel_start = time.time()
+                rel_data = await asyncio.to_thread(
+                    hybrid_engine.get_customer_relationships,
+                    search_customer_id, request.user_id
+                )
+                timing["relationship_lookup_time"] = time.time() - rel_start
+
+                # 관계 정보가 있으면 LLM 컨텍스트 문자열 생성
+                if rel_data["relationships"]:
+                    lines = [f"--- 고객 관계 정보 ---", f"{rel_data['customer_name']}의 관계:"]
+                    for r in rel_data["relationships"]:
+                        lines.append(f"- {r['type']}: {r['name']}")
+                    relationship_context = "\n".join(lines)
+
+                    # 검색 범위 확장: 기준 고객 + 관련 고객 전체
+                    search_customer_ids = [search_customer_id] + rel_data["related_customer_ids"]
+                    print(f"🔍 고객 필터 확장: {len(search_customer_ids)}명 (본인 + 관계 {len(rel_data['relationships'])}명)")
+                else:
+                    print(f"🔍 고객 필터: customer_id={search_customer_id} (관계 없음)")
+            else:
+                print(f"🔍 고객 필터: 전체")
 
             # 2단계: 하이브리드 검색 (offset + top_k + 여유분 가져오기)
-            # 🔥 페이지네이션: offset을 고려하여 충분한 결과 가져오기
             effective_top_k = request.top_k if request.top_k is not None else 30
-            fetch_count = max(50, request.offset + effective_top_k + 10)  # 최소 50개 또는 필요한 만큼
+            fetch_count = max(50, request.offset + effective_top_k + 10)
             search_start = time.time()
             search_results = await asyncio.to_thread(
                 hybrid_engine.search,
                 query=request.query,
                 query_intent=query_intent,
                 user_id=request.user_id,
-                customer_id=search_customer_id,
-                top_k=fetch_count  # 페이지네이션을 위해 더 많이 가져오기
+                customer_id=search_customer_id if not search_customer_ids else None,
+                customer_ids=search_customer_ids,
+                top_k=fetch_count
             )
             timing["search_time"] = time.time() - search_start
 
@@ -473,7 +509,7 @@ async def search_endpoint(request: SearchRequest):
             # 4단계: LLM 답변 생성 (상위 5개만 컨텍스트로 사용 — 토큰 절약)
             LLM_CONTEXT_LIMIT = 5
             llm_start = time.time()
-            final_answer, llm_response = generate_answer_with_llm(request.query, top_results[:LLM_CONTEXT_LIMIT])
+            final_answer, llm_response = generate_answer_with_llm(request.query, top_results[:LLM_CONTEXT_LIMIT], relationship_context)
             timing["llm_time"] = time.time() - llm_start
 
             # 전체 시간 계산

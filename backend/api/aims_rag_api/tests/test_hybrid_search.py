@@ -167,8 +167,8 @@ class TestEntitySearch:
             "metadata_keywords": ["테스트"]
         }
 
-        customer_id = "507f1f77bcf86cd799439099"
-        engine._entity_search(query_intent, "user123", customer_id, top_k=5)
+        customer_ids = ["507f1f77bcf86cd799439099"]
+        engine._entity_search(query_intent, "user123", customer_ids, top_k=5)
 
         # find() 호출 시 customerId 필터 확인
         call_args = mock_collection.find.call_args

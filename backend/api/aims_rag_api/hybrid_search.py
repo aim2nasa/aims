@@ -13,7 +13,22 @@ from pymongo import MongoClient
 from qdrant_client import QdrantClient, models
 from openai import OpenAI
 import re
+from bson import ObjectId
 from system_logger import send_error_log
+
+
+# 관계 유형 한글 라벨 (customer-relationships-routes.js RELATIONSHIP_TYPES와 동기화)
+RELATIONSHIP_LABELS = {
+    "spouse": "배우자", "parent": "부모", "child": "자녀",
+    "uncle_aunt": "삼촌/이모", "nephew_niece": "조카", "cousin": "사촌",
+    "in_law": "처가/시가", "friend": "친구", "acquaintance": "지인",
+    "neighbor": "이웃", "supervisor": "상사", "subordinate": "부하",
+    "colleague": "동료", "business_partner": "사업파트너",
+    "client": "클라이언트", "service_provider": "서비스제공자",
+    "ceo": "대표이사", "executive": "임원", "employee": "직원",
+    "shareholder": "주주", "director": "이사", "company": "회사",
+    "employer": "고용주"
+}
 
 
 class HybridSearchEngine:
@@ -52,7 +67,139 @@ class HybridSearchEngine:
                 return str(customer["_id"])
         return None
 
-    def search(self, query: str, query_intent: Dict, user_id: str, customer_id: Optional[str] = None, top_k: int = 5) -> List[Dict]:
+    def get_customer_relationships(self, customer_id: str, user_id: str) -> Dict:
+        """
+        고객의 관계 정보 조회 (customer_relationships 컬렉션)
+
+        양방향 조회: from_customer_id = customer_id OR to_customer_id = customer_id
+        관련 고객명을 customers 컬렉션에서 batch 조회
+
+        Args:
+            customer_id: 기준 고객 ID
+            user_id: 사용자 ID (데이터 격리용)
+
+        Returns:
+            {
+                "customer_name": "곽승철",
+                "relationships": [
+                    {"name": "김영희", "type": "배우자", "category": "family", "customer_id": "..."},
+                    ...
+                ],
+                "related_customer_ids": ["id1", "id2", ...]
+            }
+        """
+        try:
+            cust_obj_id = ObjectId(customer_id)
+            rel_coll = self.db["customer_relationships"]
+            customers_coll = self.db["customers"]
+
+            # 기준 고객명 조회
+            base_customer = customers_coll.find_one(
+                {"_id": cust_obj_id},
+                {"personal_info.name": 1}
+            )
+            customer_name = ""
+            if base_customer:
+                customer_name = (base_customer.get("personal_info") or {}).get("name", "")
+
+            # 양방향 관계 조회
+            relationships_raw = list(rel_coll.find({
+                "$or": [
+                    {"relationship_info.from_customer_id": cust_obj_id},
+                    {"relationship_info.to_customer_id": cust_obj_id}
+                ],
+                "relationship_info.status": "active"
+            }))
+
+            if not relationships_raw:
+                return {
+                    "customer_name": customer_name,
+                    "relationships": [],
+                    "related_customer_ids": []
+                }
+
+            # 관련 고객 ID 수집 (기준 고객 제외)
+            related_ids = set()
+            for rel in relationships_raw:
+                info = rel.get("relationship_info", {})
+                from_id = info.get("from_customer_id")
+                to_id = info.get("to_customer_id")
+                if from_id and str(from_id) != customer_id:
+                    related_ids.add(from_id)
+                if to_id and str(to_id) != customer_id:
+                    related_ids.add(to_id)
+
+            # 관련 고객명 batch 조회
+            name_map = {}
+            if related_ids:
+                related_customers = customers_coll.find(
+                    {"_id": {"$in": list(related_ids)}},
+                    {"personal_info.name": 1}
+                )
+                for cust in related_customers:
+                    name_map[str(cust["_id"])] = (cust.get("personal_info") or {}).get("name", "알 수 없음")
+
+            # 관계 정보 정리 (양방향 레코드 중복 제거)
+            relationships = []
+            seen_other_ids = set()  # 동일 상대방 중복 방지
+            for rel in relationships_raw:
+                info = rel.get("relationship_info", {})
+                from_id = str(info.get("from_customer_id", ""))
+                to_id = str(info.get("to_customer_id", ""))
+                rel_type = info.get("relationship_type", "")
+                rel_category = info.get("relationship_category", "")
+
+                # 관계 방향에 따라 상대방 결정 및 라벨 설정
+                if from_id == customer_id:
+                    other_id = to_id
+                    display_type = RELATIONSHIP_LABELS.get(rel_type, rel_type)
+                else:
+                    other_id = from_id
+                    reverse_map = {
+                        "parent": "child", "child": "parent",
+                        "uncle_aunt": "nephew_niece", "nephew_niece": "uncle_aunt",
+                        "supervisor": "subordinate", "subordinate": "supervisor",
+                        "client": "service_provider", "service_provider": "client",
+                        "ceo": "company", "company": "ceo",
+                        "executive": "company", "employee": "employer",
+                        "employer": "employee"
+                    }
+                    reversed_type = reverse_map.get(rel_type, rel_type)
+                    display_type = RELATIONSHIP_LABELS.get(reversed_type, reversed_type)
+
+                # 양방향 관계 중복 제거: 같은 상대방은 한 번만
+                if other_id in seen_other_ids:
+                    continue
+                seen_other_ids.add(other_id)
+
+                other_name = name_map.get(other_id, "알 수 없음")
+                relationships.append({
+                    "name": other_name,
+                    "type": display_type,
+                    "category": rel_category,
+                    "customer_id": other_id
+                })
+
+            related_customer_ids = [r["customer_id"] for r in relationships]
+
+            print(f"👨‍👩‍👧‍👦 고객 관계 조회: {customer_name} → {len(relationships)}명 ({', '.join(r['type'] + ':' + r['name'] for r in relationships)})")
+
+            return {
+                "customer_name": customer_name,
+                "relationships": relationships,
+                "related_customer_ids": related_customer_ids
+            }
+
+        except Exception as e:
+            print(f"⚠️ 고객 관계 조회 실패 (무시하고 진행): {e}")
+            send_error_log("aims_rag_api", f"고객 관계 조회 오류: {e}", e)
+            return {
+                "customer_name": "",
+                "relationships": [],
+                "related_customer_ids": []
+            }
+
+    def search(self, query: str, query_intent: Dict, user_id: str, customer_id: Optional[str] = None, customer_ids: Optional[List[str]] = None, top_k: int = 5) -> List[Dict]:
         """
         쿼리 의도에 따라 적절한 검색 수행
 
@@ -60,27 +207,28 @@ class HybridSearchEngine:
             query: 사용자 검색 쿼리
             query_intent: 쿼리 분석 결과 (QueryAnalyzer.analyze() 반환값)
             user_id: 사용자 ID (문서 필터링용)
-            customer_id: 고객 ID (특정 고객 문서만 검색, optional)
+            customer_id: 고객 ID (단일 고객, 하위 호환)
+            customer_ids: 고객 ID 리스트 (복수 고객 — 관계 확장 검색용)
             top_k: 반환할 최대 결과 수
 
         Returns:
             검색 결과 리스트 (score 기준 내림차순 정렬)
         """
+        # customer_ids 우선, 없으면 customer_id를 리스트로 변환
+        effective_ids = customer_ids or ([customer_id] if customer_id else None)
+
         query_type = query_intent["query_type"]
 
         if query_type == "entity":
-            # 개체명 쿼리: 메타데이터 검색 우선
-            return self._entity_search(query_intent, user_id, customer_id, top_k)
+            return self._entity_search(query_intent, user_id, effective_ids, top_k)
 
         elif query_type == "concept":
-            # 개념 쿼리: 벡터 검색
-            return self._vector_search(query, user_id, customer_id, top_k)
+            return self._vector_search(query, user_id, effective_ids, top_k)
 
         else:  # mixed
-            # 혼합 쿼리: 두 방법 병합
-            return self._hybrid_search(query, query_intent, user_id, customer_id, top_k)
+            return self._hybrid_search(query, query_intent, user_id, effective_ids, top_k)
 
-    def _entity_search(self, query_intent: Dict, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
+    def _entity_search(self, query_intent: Dict, user_id: str, customer_ids: Optional[List[str]], top_k: int) -> List[Dict]:
         """
         개체명 검색: MongoDB 메타데이터 기반
 
@@ -104,7 +252,7 @@ class HybridSearchEngine:
         regex_pattern = "|".join([re.escape(term) for term in search_terms])
 
         mongo_filter = {
-            "ownerId": user_id,  # 🔥 수정: owner_id → ownerId
+            "ownerId": user_id,
             "$or": [
                 {"upload.originalName": {"$regex": regex_pattern, "$options": "i"}},
                 {"meta.full_text": {"$regex": regex_pattern, "$options": "i"}},
@@ -115,10 +263,12 @@ class HybridSearchEngine:
             ]
         }
 
-        # 🔥 고객별 필터링 추가 (customerId 필드 사용)
-        if customer_id:
-            from bson import ObjectId
-            mongo_filter["customerId"] = ObjectId(customer_id)
+        # 고객별 필터링 (단일 또는 복수 고객 지원)
+        if customer_ids:
+            if len(customer_ids) == 1:
+                mongo_filter["customerId"] = ObjectId(customer_ids[0])
+            else:
+                mongo_filter["customerId"] = {"$in": [ObjectId(cid) for cid in customer_ids]}
 
         results = []
         for doc in self.collection.find(mongo_filter).limit(top_k * 2):  # 여유있게 가져오기
@@ -176,15 +326,13 @@ class HybridSearchEngine:
         results.sort(key=lambda x: (-x["score"], x["doc_id"]))
         return results[:top_k]
 
-    def _vector_search(self, query: str, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
+    def _vector_search(self, query: str, user_id: str, customer_ids: Optional[List[str]], top_k: int) -> List[Dict]:
         """
         벡터 검색: Qdrant 의미 검색
 
-        🔥 고객 필터링: Qdrant payload에 customer_id가 없는 기존 문서가 많으므로,
-        Qdrant에서 owner_id만 필터링하고, MongoDB에서 customer_id 후처리 필터링 수행
+        고객 필터링: Qdrant payload에 customer_id가 없는 기존 문서가 많으므로,
+        Qdrant에서 owner_id만 필터링하고, MongoDB에서 customer_ids 후처리 필터링 수행
         """
-        from bson import ObjectId
-
         # 쿼리 임베딩
         try:
             response = self.openai_client.embeddings.create(
@@ -192,7 +340,6 @@ class HybridSearchEngine:
                 model="text-embedding-3-small"
             )
             query_vector = response.data[0].embedding
-            # 🔥 Phase 4: 임베딩 응답 저장 (토큰 추적용)
             self.last_embedding_response = response
         except Exception as e:
             print(f"❌ 쿼리 임베딩 중 오류 발생: {e}")
@@ -200,9 +347,8 @@ class HybridSearchEngine:
             self.last_embedding_response = None
             return []
 
-        # Qdrant 검색 (owner_id만 필터링, customer_id는 MongoDB에서 후처리)
-        # 🔥 고객 필터링이 있으면 더 많이 가져와서 후처리
-        qdrant_limit = top_k * 3 if customer_id else top_k
+        # Qdrant 검색 (owner_id만 필터링, customer_ids는 MongoDB에서 후처리)
+        qdrant_limit = top_k * 3 if customer_ids else top_k
         filter_conditions = [models.FieldCondition(key="owner_id", match=models.MatchValue(value=user_id))]
 
         try:
@@ -231,24 +377,26 @@ class HybridSearchEngine:
                     "payload": hit.payload
                 }
 
-        # 🔥 고객 필터링: MongoDB에서 customerId 확인
-        # Note: 문서-고객 연결은 customerId 필드 사용 (customer_relation.customer_id가 아님!)
-        if customer_id and doc_map:
+        # 고객 필터링: MongoDB에서 customerId 확인 (단일 또는 복수)
+        if customer_ids and doc_map:
             doc_ids = list(doc_map.keys())
             try:
-                # MongoDB에서 해당 문서들의 customerId 조회
+                if len(customer_ids) == 1:
+                    cust_filter = {"customerId": ObjectId(customer_ids[0])}
+                else:
+                    cust_filter = {"customerId": {"$in": [ObjectId(cid) for cid in customer_ids]}}
+
                 customer_filter_docs = self.collection.find(
                     {
                         "_id": {"$in": [ObjectId(d) for d in doc_ids]},
-                        "customerId": ObjectId(customer_id)
+                        **cust_filter
                     },
                     {"_id": 1}
                 )
                 valid_doc_ids = set(str(doc["_id"]) for doc in customer_filter_docs)
 
-                # 해당 고객의 문서만 필터링
                 doc_map = {k: v for k, v in doc_map.items() if k in valid_doc_ids}
-                print(f"🔍 고객 필터링 후: {len(valid_doc_ids)}개 문서 (원본: {len(doc_ids)}개)")
+                print(f"🔍 고객 필터링 후: {len(valid_doc_ids)}개 문서 (원본: {len(doc_ids)}개, 고객수: {len(customer_ids)})")
             except Exception as e:
                 print(f"⚠️ MongoDB 고객 필터링 오류 (무시하고 진행): {e}")
                 send_error_log("aims_rag_api", f"MongoDB 고객 필터링 오류: {e}", e)
@@ -258,7 +406,7 @@ class HybridSearchEngine:
         results.sort(key=lambda x: (-x["score"], x["doc_id"]))
         return results[:top_k]
 
-    def _hybrid_search(self, query: str, query_intent: Dict, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
+    def _hybrid_search(self, query: str, query_intent: Dict, user_id: str, customer_ids: Optional[List[str]], top_k: int) -> List[Dict]:
         """
         하이브리드 검색: 메타데이터 + 벡터 검색 병합
 
@@ -267,8 +415,8 @@ class HybridSearchEngine:
         - 벡터 검색: 40%
         """
         # 두 방법으로 검색 (더 많이 가져오기)
-        entity_results = self._entity_search(query_intent, user_id, customer_id, top_k * 2)
-        vector_results = self._vector_search(query, user_id, customer_id, top_k * 2)
+        entity_results = self._entity_search(query_intent, user_id, customer_ids, top_k * 2)
+        vector_results = self._vector_search(query, user_id, customer_ids, top_k * 2)
 
         # 문서별로 병합 (최고 점수 유지)
         doc_scores = {}
