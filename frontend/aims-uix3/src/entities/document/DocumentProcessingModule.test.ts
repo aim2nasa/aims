@@ -7,6 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { DocumentProcessingModule } from './DocumentProcessingModule';
+import { DocumentStatusService } from '../../services/DocumentStatusService';
 import type { Document, MetaData, OcrData, DocEmbedData, UploadData } from '../../types/documentStatus';
 
 // ============================================
@@ -440,5 +441,147 @@ describe('DocumentProcessingModule 통합 테스트', () => {
     });
 
     expect(DocumentProcessingModule.extractFullText(doc)).toBe('파싱된 객체');
+  });
+});
+
+// ============================================
+// _hasMetaText/_hasOcrText 플래그 테스트 (Phase 1 경량화 API 호환)
+// — 목록 API에서 full_text가 제거되고 boolean 플래그만 전달되는 시나리오
+// ============================================
+describe('_hasMetaText/_hasOcrText 플래그 기반 동작', () => {
+  describe('getProcessingStatus — 플래그 기반 상태 판정', () => {
+    it('_hasMetaText=true, full_text 없음 → upload completed + meta completed + ocr pending이면 completed', () => {
+      const uploadData: UploadData = { status: 'completed' };
+      const metaData: MetaData = { meta_status: 'ok' };
+      const doc = createMockDocument({
+        upload: JSON.stringify(uploadData),
+        meta: JSON.stringify(metaData),
+        stages: {
+          meta: JSON.stringify({ status: 'completed' } as MetaData),
+          ocr: JSON.stringify({ status: 'pending' } as OcrData),
+        },
+        _hasMetaText: true,
+      } as any);
+
+      const status = DocumentProcessingModule.getProcessingStatus(doc);
+      expect(status.status).toBe('completed');
+    });
+
+    it('_hasMetaText=false, full_text 없음 → meta completed지만 ocrStatus=pending이면 completed 아님', () => {
+      const uploadData: UploadData = { status: 'completed' };
+      const metaData: MetaData = { meta_status: 'ok' };
+      const doc = createMockDocument({
+        upload: JSON.stringify(uploadData),
+        meta: JSON.stringify(metaData),
+        stages: {
+          meta: JSON.stringify({ status: 'completed' } as MetaData),
+          ocr: JSON.stringify({ status: 'pending' } as OcrData),
+        },
+        _hasMetaText: false,
+      } as any);
+
+      const status = DocumentProcessingModule.getProcessingStatus(doc);
+      // _hasMetaText=false이므로 meta_fulltext 경로로 completed 판정 안 됨
+      expect(status.status).not.toBe('completed');
+    });
+
+    it('_hasOcrText=true → hasMetaFullText 경로에서 hasOcrText가 true이면 completed 아님 (OCR 미완료)', () => {
+      // upload processing (upload completed 블록 스킵) → meta ok → hasMetaFullText + hasOcrText
+      const uploadData: UploadData = { status: 'processing' };
+      const metaData: MetaData = { meta_status: 'ok' };
+      const doc = createMockDocument({
+        upload: JSON.stringify(uploadData),
+        meta: JSON.stringify(metaData),
+        _hasMetaText: true,
+        _hasOcrText: true,
+      } as any);
+
+      const status = DocumentProcessingModule.getProcessingStatus(doc);
+      // _hasOcrText=true이므로 meta_fulltext만으로 completed 아님 (OCR 경로 대기)
+      expect(status.status).toBe('processing');
+    });
+
+    it('_hasMetaText=true, _hasOcrText=false → OCR 불필요, meta_fulltext만으로 completed', () => {
+      // upload processing → meta ok → hasMetaFullText=true, hasOcrText=false → completed
+      const uploadData: UploadData = { status: 'processing' };
+      const metaData: MetaData = { meta_status: 'ok' };
+      const doc = createMockDocument({
+        upload: JSON.stringify(uploadData),
+        meta: JSON.stringify(metaData),
+        _hasMetaText: true,
+        _hasOcrText: false,
+      } as any);
+
+      const status = DocumentProcessingModule.getProcessingStatus(doc);
+      expect(status.status).toBe('completed');
+    });
+  });
+
+  describe('extractProgress (DocumentStatusService) — 플래그 기반 75% 판정', () => {
+    it('_hasMetaText=true, progress=50 → embed 미완료지만 meta stage completed이면 100', () => {
+      const uploadData: UploadData = { status: 'completed' };
+      const metaData: MetaData = { meta_status: 'ok' };
+      const doc = createMockDocument({
+        upload: JSON.stringify(uploadData),
+        meta: JSON.stringify(metaData),
+        stages: {
+          meta: JSON.stringify({ status: 'completed' } as MetaData),
+        },
+        progress: 50,
+        _hasMetaText: true,
+      } as any);
+
+      const progress = DocumentStatusService.extractProgress(doc);
+      // _hasMetaText + meta stage completed → 100
+      expect(progress).toBe(100);
+    });
+
+    it('_hasMetaText=false, progress=50 → 50 그대로 반환', () => {
+      const uploadData: UploadData = { status: 'completed' };
+      const metaData: MetaData = { meta_status: 'ok' };
+      const doc = createMockDocument({
+        upload: JSON.stringify(uploadData),
+        meta: JSON.stringify(metaData),
+        stages: {
+          meta: JSON.stringify({ status: 'completed' } as MetaData),
+        },
+        progress: 50,
+        _hasMetaText: false,
+      } as any);
+
+      const progress = DocumentStatusService.extractProgress(doc);
+      // _hasMetaText=false → 100이 아님
+      expect(progress).toBe(50);
+    });
+  });
+
+  describe('extractSummary — _hasMetaText 플래그 기반 경로 선택', () => {
+    it('_hasMetaText=true, full_text 없음, summary 있음 → meta summary 반환', () => {
+      const metaData: MetaData = {
+        meta_status: 'ok',
+        summary: '이것은 요약입니다.',
+      };
+      const doc = createMockDocument({
+        meta: JSON.stringify(metaData),
+        _hasMetaText: true,
+      } as any);
+
+      const result = DocumentProcessingModule.extractSummary(doc);
+      expect(result).toBe('이것은 요약입니다.');
+    });
+
+    it('_hasMetaText=true, full_text 없음, summary 없음 → null (full_text fallback 불가)', () => {
+      const metaData: MetaData = {
+        meta_status: 'ok',
+      };
+      const doc = createMockDocument({
+        meta: JSON.stringify(metaData),
+        _hasMetaText: true,
+      } as any);
+
+      // full_text가 없으므로 200자 fallback 불가. ocr도 없으므로 null
+      const result = DocumentProcessingModule.extractSummary(doc);
+      expect(result).toBeNull();
+    });
   });
 });

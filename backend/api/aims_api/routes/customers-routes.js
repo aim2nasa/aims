@@ -355,7 +355,7 @@ router.get('/customers', authenticateJWTorAPIKey, async (req, res) => {
         customers,
         pagination: {
           currentPage: parseInt(page),
-          totalPages: Math.ceil(totalCount / limit),
+          totalPages: Math.ceil(totalCount / parseInt(limit)),
           totalCount,
           limit: parseInt(limit)
         },

@@ -30,6 +30,33 @@ module.exports = function(db, analyticsDb, authenticateJWT, upload, qdrantClient
   // PDF 변환 오케스트레이션 (공유 모듈)
   const { convertDocumentInBackground, triggerPdfConversionIfNeeded } = createPdfConversionTrigger(db);
 
+  // 🔧 full_text 제거 + badgeType 플래그: aggregation 파이프라인 공용 스테이지
+  const TEXT_FLAG_STAGES = [
+    { $addFields: {
+      _hasMetaText: {
+        $cond: {
+          if: { $and: [
+            { $ne: [{ $ifNull: ['$meta.full_text', null] }, null] },
+            { $ne: ['$meta.full_text', ''] }
+          ]},
+          then: true,
+          else: false
+        }
+      },
+      _hasOcrText: {
+        $cond: {
+          if: { $and: [
+            { $ne: [{ $ifNull: ['$ocr.full_text', null] }, null] },
+            { $ne: ['$ocr.full_text', ''] }
+          ]},
+          then: true,
+          else: false
+        }
+      }
+    }},
+    { $project: { 'meta.full_text': 0, 'ocr.full_text': 0 } }
+  ];
+
 // ========================
 // PDF 변환 프록시 엔드포인트 (POC용)
 // ========================
@@ -621,7 +648,7 @@ router.get('/documents', authenticateJWT, async (req, res) => {
         documents: transformedDocuments,
         pagination: {
           currentPage: parseInt(page),
-          totalPages: Math.ceil(totalCount / limit),
+          totalPages: Math.ceil(totalCount / parseInt(limit)),
           totalCount: parseInt(totalCount),
           hasNext: (page * limit) < totalCount,
           hasPrev: page > 1
@@ -701,33 +728,6 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
     let documents;
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(filter);
 
-    // 🔧 full_text 제거 + badgeType 플래그: 모든 파이프라인 끝에 추가
-    const textFlagStages = [
-      { $addFields: {
-        _hasMetaText: {
-          $cond: {
-            if: { $and: [
-              { $ne: [{ $ifNull: ['$meta.full_text', null] }, null] },
-              { $ne: ['$meta.full_text', ''] }
-            ]},
-            then: true,
-            else: false
-          }
-        },
-        _hasOcrText: {
-          $cond: {
-            if: { $and: [
-              { $ne: [{ $ifNull: ['$ocr.full_text', null] }, null] },
-              { $ne: ['$ocr.full_text', ''] }
-            ]},
-            then: true,
-            else: false
-          }
-        }
-      }},
-      { $project: { 'meta.full_text': 0, 'ocr.full_text': 0 } }
-    ];
-
     // fileSize, mimeType, customer 정렬은 aggregation 사용
     if (sort === 'customer_asc' || sort === 'customer_desc') {
       // customer 정렬: customers 컬렉션과 join하여 고객 이름으로 정렬
@@ -761,7 +761,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         },
         { $skip: skip },
         { $limit: parseInt(limit) },
-        ...textFlagStages
+        ...TEXT_FLAG_STAGES
       ]).toArray();
     } else if (sort === 'fileSize_asc' || sort === 'fileSize_desc') {
       const sortOrder = sort === 'fileSize_asc' ? 1 : -1;
@@ -775,7 +775,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $sort: { size_bytes_num: sortOrder, 'upload.uploaded_at': -1 } },
         { $skip: skip },
         { $limit: parseInt(limit) },
-        ...textFlagStages
+        ...TEXT_FLAG_STAGES
       ]).toArray();
     } else if (sort === 'mimeType_asc' || sort === 'mimeType_desc') {
       // mimeType 정렬: 확장자 알파벳 순
@@ -798,7 +798,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $sort: { fileExtension: sortOrder, 'upload.originalName': 1 } },
         { $skip: skip },
         { $limit: parseInt(limit) },
-        ...textFlagStages
+        ...TEXT_FLAG_STAGES
       ]).toArray();
     } else if (sort === 'badgeType_asc' || sort === 'badgeType_desc') {
       // badgeType 정렬: OCR/TXT/BIN 타입별 정렬
@@ -873,7 +873,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $sort: { badgeType: sortOrder, 'upload.uploaded_at': -1 } },
         { $skip: skip },
         { $limit: parseInt(limit) },
-        ...textFlagStages
+        ...TEXT_FLAG_STAGES
       ]).toArray();
     } else if (sort === 'docType_asc' || sort === 'docType_desc') {
       // 🏷️ docType 정렬: 한글 라벨 기준 가나다순 정렬 (미지정은 맨 뒤로)
@@ -925,7 +925,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $skip: skip },
         { $limit: parseInt(limit) },
         { $project: { docType_info: 0, docType_label: 0, _normalized_docType: 0 } },
-        ...textFlagStages
+        ...TEXT_FLAG_STAGES
       ], { collation: { locale: 'ko' } }).toArray();
     } else if (sort === 'uploadDate_asc' || sort === 'uploadDate_desc' || !sort) {
       // 🔧 uploadDate 정렬: Date/String 혼합 타입 대응을 위해 $toDate 사용
@@ -941,7 +941,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $skip: skip },
         { $limit: parseInt(limit) },
         { $project: { uploaded_at_normalized: 0 } },
-        ...textFlagStages
+        ...TEXT_FLAG_STAGES
       ]).toArray();
     } else {
       // 일반 정렬 조건 구성 (status, filename)
@@ -961,7 +961,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $sort: sortCriteria },
         { $skip: skip },
         { $limit: parseInt(limit) },
-        ...textFlagStages
+        ...TEXT_FLAG_STAGES
       ]).toArray();
     }
 
@@ -1142,7 +1142,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         documents: filteredDocuments,
         pagination: {
           currentPage: parseInt(page),
-          totalPages: Math.ceil(totalCount / limit),
+          totalPages: Math.ceil(totalCount / parseInt(limit)),
           totalCount,
           limit: parseInt(limit)
         }
@@ -1310,35 +1310,9 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
       filter.batchId = batchId;
     }
 
-    // 🔧 full_text 제거: aggregation으로 _hasMetaText/_hasOcrText 플래그 추가 + full_text 제외
-    const textFlagStagesForStats = [
-      { $addFields: {
-        _hasMetaText: {
-          $cond: {
-            if: { $and: [
-              { $ne: [{ $ifNull: ['$meta.full_text', null] }, null] },
-              { $ne: ['$meta.full_text', ''] }
-            ]},
-            then: true,
-            else: false
-          }
-        },
-        _hasOcrText: {
-          $cond: {
-            if: { $and: [
-              { $ne: [{ $ifNull: ['$ocr.full_text', null] }, null] },
-              { $ne: ['$ocr.full_text', ''] }
-            ]},
-            then: true,
-            else: false
-          }
-        }
-      }},
-      { $project: { 'meta.full_text': 0, 'ocr.full_text': 0 } }
-    ];
     const documents = await db.collection(COLLECTION_NAME).aggregate([
       { $match: filter },
-      ...textFlagStagesForStats
+      ...TEXT_FLAG_STAGES
     ]).toArray();
 
     const stats = {

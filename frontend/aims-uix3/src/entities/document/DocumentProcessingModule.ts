@@ -314,7 +314,7 @@ export class DocumentProcessingModule {
     const metaStageStatus = metaStage?.status
     const metaStatus = metaData?.meta_status
     const metaFullTextContent = metaStage?.full_text ?? metaData?.full_text
-    const metaFullText = Boolean(metaFullTextContent) || Boolean((document as Partial<Document>)._hasMetaText)
+    const hasMetaFullText = Boolean(metaFullTextContent) || Boolean((document as Partial<Document>)._hasMetaText)
 
     const ocrStage = parseStage<OcrData>(document.stages?.ocr)
     const ocrData = parseStage<OcrData>(document.ocr)
@@ -332,7 +332,7 @@ export class DocumentProcessingModule {
       }
 
       if (
-        metaFullText &&
+        hasMetaFullText &&
         metaStageStatus === 'completed' &&
         ocrStatus === 'pending'
       ) {
@@ -379,7 +379,7 @@ export class DocumentProcessingModule {
     }
 
     const hasOcrText = ocrData?.full_text || (document as Partial<Document>)._hasOcrText
-    if (metaFullText && !textData?.full_text && !hasOcrText) {
+    if (hasMetaFullText && !textData?.full_text && !hasOcrText) {
       return 'completed'
     }
 

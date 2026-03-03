@@ -89,7 +89,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   title = '고객 선택',
   filterCustomerType,
 }) => {
-  // Server-side data state (직접 API 호출, limit=10000 제거)
+  // Server-side data state (직접 API 호출, limit=100 서버사이드)
   const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState<{ activePersonal: number; activeCorporate: number; inactivePersonal: number; inactiveCorporate: number } | null>(null);

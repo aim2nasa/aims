@@ -206,9 +206,10 @@ export default function ContractAllView({
     }
   }, [visible, loadContracts])
 
-  // contractChanged 이벤트 리스너 (계약 삭제/추가 시 자동 새로고침)
+  // contractChanged 이벤트 리스너 (계약 삭제/추가 시 자동 새로고침, visible일 때만)
   useEffect(() => {
     const handleContractChange = () => {
+      if (!visible) return
       if (import.meta.env.DEV) {
         console.log('[ContractAllView] contractChanged 이벤트 수신 - 계약 데이터 새로고침')
       }
@@ -219,7 +220,7 @@ export default function ContractAllView({
     return () => {
       window.removeEventListener('contractChanged', handleContractChange)
     }
-  }, [loadContracts])
+  }, [visible, loadContracts])
 
   // 🍎 고객명 클릭 핸들러 - 300ms 후 RightPane에 표시 (더블클릭 대기)
   const handleCustomerClick = useCallback(async (contract: Contract, e: React.MouseEvent) => {

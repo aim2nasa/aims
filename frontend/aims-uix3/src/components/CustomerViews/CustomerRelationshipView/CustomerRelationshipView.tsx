@@ -254,16 +254,18 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     }
   }, [documentCustomerMap]);
 
-  // 관계 데이터 로드 (고객 데이터 로드 후)
+  // 관계 데이터 로드 (고객 데이터 로드 후, visible일 때만)
   useEffect(() => {
+    if (!visible) return;
     if (relationships.length === 0 && allCustomers.length > 0) {
       loadRelationshipsData();
     }
-  }, [allCustomers.length, relationships.length, loadRelationshipsData]);
+  }, [visible, allCustomers.length, relationships.length, loadRelationshipsData]);
 
   // relationshipChanged 이벤트 수신하여 관계 데이터 새로고침
   // Note: refresh() 호출은 불필요 - 관계 변경은 고객 데이터에 영향 없음
   useEffect(() => {
+    if (!visible) return;
     const handleRelationshipChange = async () => {
       if (import.meta.env.DEV) {
         console.log('[CustomerRelationshipView] relationshipChanged 이벤트 수신 - 관계 데이터 새로고침');
@@ -276,13 +278,14 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return () => {
       window.removeEventListener('relationshipChanged', handleRelationshipChange);
     };
-  }, [loadRelationshipsData]);
+  }, [visible, loadRelationshipsData]);
 
   // customerChanged 이벤트 수신하여 관계 데이터만 새로고침 (고객 추가/수정/삭제 시)
   // Note: refresh() 호출은 불필요 - CustomerRelationshipView는 useCustomerDocument 훅을 통해
   // CustomerDocument를 구독하므로 고객 데이터는 Document-View 패턴으로 자동 업데이트됨
   // refresh()를 추가하면 중복 API 호출로 인한 경쟁 조건(race condition) 발생
   useEffect(() => {
+    if (!visible) return;
     const handleCustomerChange = async () => {
       if (import.meta.env.DEV) {
         console.log('[CustomerRelationshipView] customerChanged 이벤트 수신 - 관계 데이터 새로고침');
@@ -295,7 +298,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return () => {
       window.removeEventListener('customerChanged', handleCustomerChange);
     };
-  }, [loadRelationshipsData]);
+  }, [visible, loadRelationshipsData]);
 
   const loading = customersLoading || relationshipsLoading;
   // 데이터 구조화
