@@ -28,6 +28,8 @@ interface DocumentStatusProviderProps {
   fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles'
   /** 초기 페이지당 항목 수 (문서 탐색기는 전체 문서 필요하므로 큰 값 사용) */
   initialItemsPerPage?: number
+  /** 초성 필터 (고객명 기준 서버사이드 필터링) */
+  initialFilter?: string | null
 }
 
 /**
@@ -38,7 +40,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   initialFiles = [],
   searchQuery = '',
   fileScope = 'all',
-  initialItemsPerPage
+  initialItemsPerPage,
+  initialFilter
 }) => {
   // State - 캐시된 데이터로 초기화 (네비게이션 시 빈 화면 방지)
   const [documents, setDocuments] = useState<Document[]>(documentCache)
@@ -87,6 +90,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null>('uploadDate')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
+  // 📝 초성 필터 ref (prop 변경 추적, fetchDocuments 의존성 증가 방지)
+  const initialFilterRef = useRef(initialFilter)
+  useEffect(() => {
+    initialFilterRef.current = initialFilter
+  }, [initialFilter])
+
   /**
    * 문서 목록 가져오기
    * 🍎 페이지네이션 기반: 현재 페이지와 페이지당 항목 수에 따라 데이터 가져오기
@@ -133,7 +142,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         // 🍎 파일 범위 필터도 백엔드로 전달
         // 🍎 검색 대상 필드도 전달 (별칭/원본 모드에 따라)
         const searchFieldParam = searchQuery ? searchField : undefined
-        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam, searchFieldParam)
+        const initialParam = initialFilterRef.current || undefined
+        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam, searchFieldParam, undefined, initialParam)
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 🍎 백엔드 pagination 정보 저장 + 캐시 업데이트
@@ -379,6 +389,22 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     // 정렬/페이지/검색어/검색필드 변경 시 즉시 재조회
     fetchDocumentsRef.current(false)
   }, [sortField, sortDirection, currentPage, itemsPerPage, searchTerm, searchField])
+
+  /**
+   * 📝 초성 필터 변경 시 1페이지로 리셋 + 재조회
+   */
+  useEffect(() => {
+    if (isInitialMountRef.current) return
+    if (typeof window === 'undefined') return
+    if (currentPage !== 1) {
+      // 페이지를 1로 리셋 → currentPage useEffect가 자동 fetch 실행
+      setCurrentPage(1)
+    } else {
+      // 이미 1페이지 → setCurrentPage는 no-op이므로 수동 fetch
+      fetchDocumentsRef.current(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFilter])
 
   // 🔄 SSE 훅 사용 (실시간 업데이트)
   // - document-list-change: 문서 업로드/삭제/연결 변경 시 즉시 반영

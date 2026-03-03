@@ -84,7 +84,7 @@
     display: flex;
     align-items: center;
     gap: 3px;
-    flex: 1;
+    /* flex: 1 제거 → 자연 너비, 선택 배지가 초성 바로 뒤에 위치 */
     flex-wrap: wrap;
   }
 

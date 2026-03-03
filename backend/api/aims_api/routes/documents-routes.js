@@ -11,7 +11,7 @@ const axios = require('axios');
 const { COLLECTIONS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
-const { escapeRegex, toSafeObjectId, isBinaryMimeType } = require('../lib/helpers');
+const { escapeRegex, toSafeObjectId, isBinaryMimeType, getInitialFromChar, CHOSUNG_RANGE_MAP } = require('../lib/helpers');
 const activityLogger = require('../lib/activityLogger');
 const sseManager = require('../lib/sseManager');
 const { notifyCustomerDocSubscribers, notifyDocumentStatusSubscribers, notifyDocumentListSubscribers, notifyPersonalFilesSubscribers, sendSSE } = sseManager;
@@ -667,11 +667,78 @@ router.get('/documents', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * 문서 초성 카운트 조회 API
+ * DB 전체 문서의 연결된 고객명 초성별 카운트 반환
+ * GET /api/documents/status/initials?fileScope=excludeMyFiles
+ */
+router.get('/documents/status/initials', authenticateJWT, async (req, res) => {
+  try {
+    const { fileScope = 'excludeMyFiles' } = req.query;
+    const userId = req.user.id;
+
+    // /documents/status와 동일한 base filter 구성
+    let filter;
+    if (fileScope === 'onlyMyFiles') {
+      filter = {
+        ownerId: userId,
+        $expr: { $eq: [{ $toString: '$customerId' }, userId] }
+      };
+    } else if (fileScope === 'all') {
+      filter = { ownerId: userId };
+    } else {
+      // excludeMyFiles (기본값)
+      filter = {
+        ownerId: userId,
+        customerId: { $exists: true, $ne: null },
+        $expr: { $ne: [{ $toString: '$customerId' }, userId] }
+      };
+    }
+
+    // 1. customerId별 문서 수 집계
+    const docCountsByCustomer = await db.collection(COLLECTION_NAME).aggregate([
+      { $match: filter },
+      { $group: { _id: '$customerId', count: { $sum: 1 } } }
+    ]).toArray();
+
+    // 2. 고객 이름 조회
+    const validIds = docCountsByCustomer.map(d => d._id).filter(id => id != null);
+    const customers = validIds.length > 0
+      ? await db.collection(COLLECTIONS.CUSTOMERS)
+          .find({ _id: { $in: validIds } })
+          .project({ _id: 1, 'personal_info.name': 1 })
+          .toArray()
+      : [];
+
+    // 3. 초성별 문서 수 카운트
+    const customerNameMap = new Map();
+    customers.forEach(c => customerNameMap.set(String(c._id), c.personal_info?.name || ''));
+
+    const initials = {};
+    docCountsByCustomer.forEach(d => {
+      const name = customerNameMap.get(String(d._id));
+      if (!name) return;
+      const initial = getInitialFromChar(name.charAt(0));
+      if (initial) {
+        initials[initial] = (initials[initial] || 0) + d.count;
+      }
+    });
+
+    res.json({ success: true, data: { initials } });
+  } catch (error) {
+    backendLogger.error('Documents', '초성 카운트 조회 오류', error);
+    res.status(500).json({
+      success: false,
+      error: '초성 카운트 조회에 실패했습니다.'
+    });
+  }
+});
+
+/**
  * 모든 문서의 상태를 조회하는 API
  */
 router.get('/documents/status', authenticateJWT, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField, period } = req.query;
+    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField, period, initial } = req.query;
     const skip = (page - 1) * limit;
 
     // (정렬 디버깅 로그 제거됨 — 성능 최적화)
@@ -743,6 +810,55 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         filter.$expr = { $and: [filter.$expr, periodExpr] };
       } else {
         filter.$expr = periodExpr;
+      }
+    }
+
+    // 📝 초성 필터 (고객명 기준 — 서버사이드)
+    if (initial && typeof initial === 'string' && initial.length === 1) {
+      let nameFilter = null;
+      const code = initial.charCodeAt(0);
+
+      // 한글 자모 (ㄱ-ㅎ: U+3131-U+314E)
+      if (code >= 0x3131 && code <= 0x314E) {
+        const range = CHOSUNG_RANGE_MAP[initial];
+        if (range) {
+          nameFilter = { $gte: range[0], $lt: range[1] };
+        }
+      }
+      // 영문 (A-Z, a-z)
+      else if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+        const upper = initial.toUpperCase();
+        const lower = initial.toLowerCase();
+        nameFilter = { $regex: `^[${escapeRegex(upper)}${escapeRegex(lower)}]` };
+      }
+      // 숫자 (0-9)
+      else if (code >= 48 && code <= 57) {
+        nameFilter = { $regex: `^${escapeRegex(initial)}` };
+      }
+
+      if (nameFilter) {
+        const matchingCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
+          .find({ 'meta.created_by': userId, 'personal_info.name': nameFilter })
+          .project({ _id: 1 })
+          .toArray();
+
+        if (matchingCustomers.length > 0) {
+          filter['customerId'] = { $in: matchingCustomers.map(c => c._id) };
+        } else {
+          // 매칭 고객 없음 → 빈 결과 즉시 반환
+          return res.json({
+            success: true,
+            data: {
+              documents: [],
+              pagination: {
+                currentPage: parseInt(page),
+                totalPages: 0,
+                totalCount: 0,
+                limit: parseInt(limit)
+              }
+            }
+          });
+        }
       }
     }
 

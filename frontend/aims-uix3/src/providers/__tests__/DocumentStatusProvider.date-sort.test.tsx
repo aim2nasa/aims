@@ -204,7 +204,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
         undefined, // searchQuery
         undefined, // customerLink
         undefined, // fileScope
-        undefined  // searchField
+        undefined, // searchField
+        undefined, // period
+        undefined  // initial
       )
     })
   })
@@ -240,7 +242,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined,
           undefined,
           undefined,
-          undefined
+          undefined,
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -289,7 +293,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined,
           undefined,
           undefined,
-          undefined
+          undefined,
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -409,7 +415,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           '문서',
           undefined,
           undefined,
-          'displayName'
+          'displayName',
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -444,7 +452,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined,
           undefined,
           undefined,
-          undefined
+          undefined,
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -489,7 +499,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined,
           undefined,
           undefined,
-          undefined
+          undefined,
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -551,7 +563,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
         undefined,
         undefined,
         undefined,
-        undefined
+        undefined,
+        undefined, // period
+        undefined  // initial
       )
     })
 
@@ -593,7 +607,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined,
           undefined,
           undefined,
-          undefined
+          undefined,
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -623,7 +639,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
         undefined,
         undefined,
         undefined,
-        undefined
+        undefined,
+        undefined, // period
+        undefined  // initial
       )
 
       // 문서가 로드되었는지 확인
@@ -653,7 +671,9 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined,
           undefined,
           undefined,
-          undefined
+          undefined,
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -706,7 +726,9 @@ describe('DocumentStatusProvider - 모든 정렬 필드 테스트', () => {
           undefined,
           undefined,
           undefined,
-          undefined
+          undefined,
+          undefined, // period
+          undefined  // initial
         )
       })
     }

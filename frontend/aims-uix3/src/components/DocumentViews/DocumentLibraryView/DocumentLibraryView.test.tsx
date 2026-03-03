@@ -163,6 +163,7 @@ vi.mock('@/services/DocumentStatusService', () => ({
     getStatusLabel: (status: string) => status === 'completed' ? '완료' : '처리 중',
     getStatusIcon: (status: string) => status === 'completed' ? '✓' : '⋯',
     formatUploadDate: (date: string) => new Date(date).toLocaleDateString('ko-KR'),
+    getDocumentInitials: vi.fn().mockResolvedValue({}),
   },
 }))
 

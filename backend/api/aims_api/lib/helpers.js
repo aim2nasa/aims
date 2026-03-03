@@ -140,10 +140,48 @@ function isBinaryMimeType(mimeType) {
   return BIN_MIME_TYPES.includes(mimeType.toLowerCase());
 }
 
+/**
+ * 한글/영문/숫자 초성 추출 헬퍼
+ * @param {string} char - 첫 번째 문자
+ * @returns {string|null} 초성 문자 또는 null
+ */
+function getInitialFromChar(char) {
+  if (!char) return null;
+  const code = char.charCodeAt(0);
+  // 한글 완성형 (가~힣)
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    return INITIALS[Math.floor((code - 0xAC00) / 588)] || null;
+  }
+  // 한글 자모 (ㄱ~ㅎ)
+  if (code >= 0x3131 && code <= 0x314E) return char;
+  // 영문 (A-Z, a-z)
+  if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) return char.toUpperCase();
+  // 숫자 (0-9)
+  if (code >= 48 && code <= 57) return char;
+  return null;
+}
+
+/**
+ * 초성 필터용 고객 이름 범위 맵
+ * 한글 초성 → [시작 음절, 끝 음절) 범위
+ */
+const CHOSUNG_RANGE_MAP = {
+  'ㄱ': ['가', '나'], 'ㄲ': ['까', '나'], 'ㄴ': ['나', '다'],
+  'ㄷ': ['다', '라'], 'ㄸ': ['따', '라'], 'ㄹ': ['라', '마'],
+  'ㅁ': ['마', '바'], 'ㅂ': ['바', '사'], 'ㅃ': ['빠', '사'],
+  'ㅅ': ['사', '아'], 'ㅆ': ['싸', '아'], 'ㅇ': ['아', '자'],
+  'ㅈ': ['자', '차'], 'ㅉ': ['짜', '차'], 'ㅊ': ['차', '카'],
+  'ㅋ': ['카', '타'], 'ㅌ': ['타', '파'], 'ㅍ': ['파', '하'],
+  'ㅎ': ['하', '\uD7A4'],
+};
+
 module.exports = {
   escapeRegex,
   sanitizeHtml,
   toSafeObjectId,
   flattenObject,
   isBinaryMimeType,
+  getInitialFromChar,
+  CHOSUNG_RANGE_MAP,
 };

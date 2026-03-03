@@ -93,7 +93,7 @@ export class DocumentStatusService {
    * @param customerLink 고객 연결 필터 ('linked' | 'unlinked' | undefined)
    * @param fileScope 파일 범위 필터 ('all' | 'excludeMyFiles' | 'onlyMyFiles')
    */
-  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string, search?: string, customerLink?: 'linked' | 'unlinked', fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles', searchField?: 'displayName' | 'originalName', period?: string): Promise<DocumentStatusResponse> {
+  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string, search?: string, customerLink?: 'linked' | 'unlinked', fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles', searchField?: 'displayName' | 'originalName', period?: string, initial?: string): Promise<DocumentStatusResponse> {
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -117,6 +117,9 @@ export class DocumentStatusService {
       if (period) {
         params.append('period', period)
       }
+      if (initial) {
+        params.append('initial', initial)
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/documents/status?${params.toString()}`, {
         method: 'GET',
@@ -137,6 +140,38 @@ export class DocumentStatusService {
       console.error('[DocumentStatusService] Get documents failed:', error)
       errorReporter.reportApiError(error as Error, { component: 'DocumentStatusService.getRecentDocuments' })
       throw error
+    }
+  }
+
+  /**
+   * 문서 초성 카운트 조회 (DB 전체 대상)
+   * @param fileScope 파일 범위 필터
+   * @returns 초성별 카운트 (예: { 'ㄱ': 3, 'ㅋ': 1 })
+   */
+  static async getDocumentInitials(fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles'): Promise<Record<string, number>> {
+    try {
+      const params = new URLSearchParams()
+      if (fileScope) params.append('fileScope', fileScope)
+
+      const response = await fetch(`${API_BASE_URL}/api/documents/status/initials?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        mode: 'cors'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      return data.success ? (data.data?.initials || {}) : {}
+    } catch (error) {
+      console.error('[DocumentStatusService] Get initials failed:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusService.getDocumentInitials' })
+      return {}
     }
   }
 

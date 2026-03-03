@@ -12,7 +12,7 @@ const fs = require('fs');
 const { COLLECTIONS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
-const { sanitizeHtml, flattenObject, escapeRegex } = require('../lib/helpers');
+const { sanitizeHtml, flattenObject, escapeRegex, CHOSUNG_RANGE_MAP } = require('../lib/helpers');
 const activityLogger = require('../lib/activityLogger');
 const sseManager = require('../lib/sseManager');
 const {
@@ -277,22 +277,13 @@ router.get('/customers', authenticateJWTorAPIKey, async (req, res) => {
     }
 
     // Initial consonant filter (초성/알파벳/숫자)
-    if (initial) {
+    if (initial && typeof initial === 'string' && initial.length === 1) {
       let nameFilter = null;
       const code = initial.charCodeAt(0);
 
       // Korean consonant (ㄱ-ㅎ: U+3131-U+314E)
       if (code >= 0x3131 && code <= 0x314E) {
-        const rangeMap = {
-          'ㄱ': ['가', '나'], 'ㄲ': ['까', '나'], 'ㄴ': ['나', '다'],
-          'ㄷ': ['다', '라'], 'ㄸ': ['따', '라'], 'ㄹ': ['라', '마'],
-          'ㅁ': ['마', '바'], 'ㅂ': ['바', '사'], 'ㅃ': ['빠', '사'],
-          'ㅅ': ['사', '아'], 'ㅆ': ['싸', '아'], 'ㅇ': ['아', '자'],
-          'ㅈ': ['자', '차'], 'ㅉ': ['짜', '차'], 'ㅊ': ['차', '카'],
-          'ㅋ': ['카', '타'], 'ㅌ': ['타', '파'], 'ㅍ': ['파', '하'],
-          'ㅎ': ['하', '\uD7A4'],
-        };
-        const range = rangeMap[initial];
+        const range = CHOSUNG_RANGE_MAP[initial];
         if (range) {
           nameFilter = { $gte: range[0], $lt: range[1] };
         }

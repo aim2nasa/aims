@@ -282,7 +282,9 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // searchQuery
           undefined, // customerLink
           undefined, // fileScope
-          undefined  // searchField
+          undefined, // searchField
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -324,7 +326,9 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // search
           undefined, // customerLink
           undefined, // fileScope
-          undefined  // searchField
+          undefined, // searchField
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -429,7 +433,9 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           '김보성', // search
           undefined, // customerLink
           undefined, // fileScope
-          'displayName'  // searchField
+          'displayName', // searchField
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -467,7 +473,9 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // search
           undefined, // customerLink
           undefined, // fileScope
-          undefined  // searchField
+          undefined, // searchField
+          undefined, // period
+          undefined  // initial
         )
       })
     })
@@ -508,7 +516,9 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
             undefined, // search
             undefined, // customerLink
             undefined, // fileScope
-            undefined  // searchField
+            undefined, // searchField
+            undefined, // period
+            undefined  // initial
           )
         })
       }

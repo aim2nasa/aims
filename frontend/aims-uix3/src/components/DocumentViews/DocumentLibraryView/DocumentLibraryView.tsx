@@ -41,7 +41,8 @@ import './DocumentLibraryView.list.css';
 import './DocumentLibraryView.icons.css';
 import './DocumentLibraryView.mobile.css';
 import './DocumentLibraryView-delete.css'
-import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar'
+import { InitialFilterBar, type InitialType } from '@/shared/ui/InitialFilterBar'
+import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from '@/shared/ui/InitialFilterBar/types'
 import { usePersistedState } from '@/hooks/usePersistedState'
 
 interface DocumentLibraryViewProps {
@@ -133,48 +134,31 @@ const DocumentLibraryContent: React.FC<{
     batchId: currentBatchId
   })
 
-  // 초성 필터가 적용된 문서 목록 (연결된 고객명 기준)
-  const initialFilteredDocuments = React.useMemo(() => {
-    const getCustomerName = (doc: Document) => {
-      // 연결된 고객명으로 필터 (초성 필터는 고객명에만 적용)
-      return doc.customer_relation?.customer_name || ''
-    }
-    return filterByInitial(controller.filteredDocuments, selectedInitial, getCustomerName)
-  }, [controller.filteredDocuments, selectedInitial])
+  // 📝 서버사이드 초성 카운트 (DB 전체 대상)
+  const [serverInitialCounts, setServerInitialCounts] = React.useState<Map<string, number>>(new Map())
 
-  // 페이지네이션이 적용된 초성 필터 결과
-  // 초성 필터가 없으면 API에서 이미 페이지네이션된 데이터 사용
-  // 초성 필터가 있으면 클라이언트에서 페이지네이션 적용
-  const paginatedFilteredDocuments = React.useMemo(() => {
-    if (!selectedInitial) {
-      // 초성 필터 없음: API가 이미 페이지네이션한 결과 사용
-      return controller.filteredDocuments
-    }
-    // 초성 필터 있음: 클라이언트에서 페이지네이션
-    const startIndex = (controller.currentPage - 1) * controller.itemsPerPage
-    const endIndex = startIndex + controller.itemsPerPage
-    return initialFilteredDocuments.slice(startIndex, endIndex)
-  }, [selectedInitial, controller.filteredDocuments, initialFilteredDocuments, controller.currentPage, controller.itemsPerPage])
+  const fetchInitialCounts = React.useCallback(async () => {
+    const counts = await DocumentStatusService.getDocumentInitials('excludeMyFiles')
+    const map = new Map<string, number>()
+    KOREAN_INITIALS.forEach(i => map.set(i, 0))
+    ALPHABET_INITIALS.forEach(i => map.set(i, 0))
+    NUMBER_INITIALS.forEach(i => map.set(i, 0))
+    Object.entries(counts).forEach(([k, v]) => map.set(k, v as number))
+    setServerInitialCounts(map)
+  }, [])
 
-  // 초성 필터 적용 후 총 페이지 수
-  // 초성 필터가 없으면 API의 totalPages 사용, 있으면 로컬 계산
-  const filteredTotalPages = React.useMemo(() => {
-    if (!selectedInitial) {
-      // 초성 필터 없음: API의 totalPages 사용
-      return state.totalPages
-    }
-    // 초성 필터 있음: 로컬에서 계산 (클라이언트 필터링)
-    return Math.max(1, Math.ceil(initialFilteredDocuments.length / controller.itemsPerPage))
-  }, [selectedInitial, state.totalPages, initialFilteredDocuments.length, controller.itemsPerPage])
+  React.useEffect(() => { fetchInitialCounts() }, [fetchInitialCounts])
 
-  // 초성 카운트 계산 (연결된 고객명 기준)
-  const initialCounts = React.useMemo(() => {
-    const getCustomerName = (doc: Document) => {
-      // 연결된 고객명으로 카운트 (초성 필터는 고객명에만 적용)
-      return doc.customer_relation?.customer_name || ''
+  // SSE/문서 변경 시 초성 카운트 갱신
+  React.useEffect(() => {
+    const handleRefresh = () => { void fetchInitialCounts() }
+    window.addEventListener('documentLinked', handleRefresh)
+    window.addEventListener('refresh-document-library', handleRefresh)
+    return () => {
+      window.removeEventListener('documentLinked', handleRefresh)
+      window.removeEventListener('refresh-document-library', handleRefresh)
     }
-    return calculateInitialCounts(controller.filteredDocuments, getCustomerName)
-  }, [controller.filteredDocuments])
+  }, [fetchInitialCounts])
 
   // 🍎 Optimistic Update 함수를 외부로 노출
   React.useEffect(() => {
@@ -346,7 +330,7 @@ const DocumentLibraryContent: React.FC<{
   // 🍎 전체 선택 핸들러 (Context의 documents 사용)
   const handleSelectAll = React.useCallback((checked: boolean) => {
     if (checked) {
-      const allIds = paginatedFilteredDocuments
+      const allIds = controller.filteredDocuments
         .map(doc => doc._id ?? doc.id ?? '')
         .filter(id => id !== '')
       onSelectAllIds(allIds)
@@ -564,7 +548,7 @@ const DocumentLibraryContent: React.FC<{
         onInitialTypeChange={onInitialTypeChange}
         selectedInitial={selectedInitial}
         onSelectedInitialChange={onSelectedInitialChange}
-        initialCounts={initialCounts}
+        initialCounts={serverInitialCounts}
         countLabel="개"
         targetLabel="문서"
         className="library-initial-filter"
@@ -572,9 +556,9 @@ const DocumentLibraryContent: React.FC<{
 
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
       <DocumentStatusList
-        documents={paginatedFilteredDocuments}
+        documents={controller.filteredDocuments}
         isLoading={controller.isLoading}
-        isEmpty={initialFilteredDocuments.length === 0}
+        isEmpty={controller.filteredDocuments.length === 0 && !state.isLoading}
         error={controller.error}
         {...(onDocumentClick ? { onDocumentClick } : {})}
         {...(onDocumentDoubleClick ? { onDocumentDoubleClick } : {})}
@@ -614,7 +598,7 @@ const DocumentLibraryContent: React.FC<{
           </div>
 
           {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
-          {filteredTotalPages > 1 && (
+          {state.totalPages > 1 && (
             <div className="pagination-controls">
               <button
                 className="pagination-button pagination-button--prev"
@@ -630,13 +614,13 @@ const DocumentLibraryContent: React.FC<{
               <div className="pagination-info">
                 <span className="pagination-current">{controller.currentPage}</span>
                 <span className="pagination-separator">/</span>
-                <span className="pagination-total">{filteredTotalPages}</span>
+                <span className="pagination-total">{state.totalPages}</span>
               </div>
 
               <button
                 className="pagination-button pagination-button--next"
                 onClick={() => handlePageChangeWithFeedback(controller.currentPage + 1, 'next')}
-                disabled={controller.currentPage === filteredTotalPages}
+                disabled={controller.currentPage === state.totalPages}
                 aria-label="다음 페이지"
               >
                 <span className={`pagination-arrow ${clickedButton === 'next' ? 'pagination-arrow--clicked' : ''}`}>
@@ -647,7 +631,7 @@ const DocumentLibraryContent: React.FC<{
           )}
 
           {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
-          {filteredTotalPages <= 1 && <div className="pagination-spacer"></div>}
+          {state.totalPages <= 1 && <div className="pagination-spacer"></div>}
         </div>
       )}
 
@@ -983,7 +967,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         )}
 
         {/* 🍎 타겟 영역: 상단 바 + 헤더 + 문서 리스트 + 페이지네이션 */}
-        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles">
+        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles" initialFilter={selectedInitial}>
           <DocumentLibraryContent
             initialType={initialType}
             onInitialTypeChange={setInitialType}
