@@ -185,11 +185,11 @@ export class DocumentStatusService {
    * @returns 고객 요약 + 초성 카운트 + (초성 선택 시) 문서 목록
    */
   static async getExplorerTree(fileScope?: string, initial?: string): Promise<{
-    customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string }>;
+    customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string | null }>;
     totalCustomers: number;
     totalDocuments: number;
     initials: Record<string, number>;
-    documents?: any[];
+    documents?: Document[];
   }> {
     try {
       const params = new URLSearchParams()

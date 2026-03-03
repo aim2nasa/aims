@@ -4,19 +4,21 @@
  *
  * 문서 탐색기 View 컴포넌트
  * 윈도우 탐색기 스타일의 트리 구조로 문서를 분류별로 탐색
+ *
+ * 데이터 소스: explorer-tree API (서버사이드 집계)
+ * - 초성 미선택: 고객 요약 (~30KB)
+ * - 초성 선택: 고객 + 해당 초성 문서 전체 (limit 없음)
  */
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
-import { DocumentStatusProvider } from '@/providers/DocumentStatusProvider'
-import { useDocumentStatusContext } from '@/contexts/DocumentStatusContext'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { DocumentExplorerToolbar } from './DocumentExplorerToolbar'
 import { DocumentExplorerTree } from './DocumentExplorerTree'
 import { InitialFilterBar } from '@/shared/ui/InitialFilterBar'
 import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from './types/documentExplorer'
-import type { InitialType } from './types/documentExplorer'
+import type { InitialType, DocumentTreeNode, DocumentTreeData } from './types/documentExplorer'
 import { useDocumentExplorerTree } from './hooks/useDocumentExplorerTree'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
@@ -39,6 +41,15 @@ export interface DocumentExplorerViewProps {
   onCustomerClick?: (customerId: string) => void
 }
 
+/** explorer-tree API 응답 타입 */
+interface ExplorerTreeData {
+  customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string | null }>
+  totalCustomers: number
+  totalDocuments: number
+  initials: Record<string, number>
+  documents?: Document[]
+}
+
 /**
  * 문서 탐색기 내부 컨텐츠 컴포넌트
  */
@@ -51,9 +62,8 @@ const DocumentExplorerContent: React.FC<{
   initialType: InitialType
   onInitialTypeChange: (type: InitialType) => void
 }> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange }) => {
-  const { state, actions } = useDocumentStatusContext()
 
-  // 🍎 파일명 표시 모드 (별칭/원본) - localStorage 동기화
+  // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
     if (typeof window === 'undefined') return 'display'
     return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
@@ -64,30 +74,57 @@ const DocumentExplorerContent: React.FC<{
     localStorage.setItem('aims-filename-mode', mode)
   }, [])
 
-  // 서버사이드 초성 카운트 (DB 전체 대상)
-  const [serverInitialCounts, setServerInitialCounts] = React.useState<Map<string, number>>(new Map())
+  // === explorer-tree API 데이터 (DocumentStatusProvider 대체) ===
+  const [explorerData, setExplorerData] = useState<ExplorerTreeData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const fetchInitialCounts = React.useCallback(async () => {
-    const counts = await DocumentStatusService.getDocumentInitials('excludeMyFiles')
-    const map = new Map<string, number>()
-    KOREAN_INITIALS.forEach(i => map.set(i, 0))
-    ALPHABET_INITIALS.forEach(i => map.set(i, 0))
-    NUMBER_INITIALS.forEach(i => map.set(i, 0))
-    Object.entries(counts).forEach(([k, v]) => map.set(k, v as number))
-    setServerInitialCounts(map)
+  const fetchExplorerTree = useCallback(async (initial: string | null) => {
+    setIsLoading(true)
+    try {
+      const data = await DocumentStatusService.getExplorerTree('excludeMyFiles', initial || undefined)
+      setExplorerData(data)
+    } catch (error) {
+      console.error('Explorer tree fetch failed:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }, [])
 
-  React.useEffect(() => { fetchInitialCounts() }, [fetchInitialCounts])
+  // selectedInitial 변경 시 재조회
+  useEffect(() => { fetchExplorerTree(selectedInitial) }, [fetchExplorerTree, selectedInitial])
 
-  React.useEffect(() => {
-    const handleRefresh = () => { void fetchInitialCounts() }
+  // 이벤트 기반 새로고침 — ref로 최신 selectedInitial 참조 (Race Condition 방지)
+  const selectedInitialRef = useRef(selectedInitial)
+  useEffect(() => { selectedInitialRef.current = selectedInitial }, [selectedInitial])
+
+  useEffect(() => {
+    const handleRefresh = () => { void fetchExplorerTree(selectedInitialRef.current) }
     window.addEventListener('documentLinked', handleRefresh)
     window.addEventListener('refresh-document-library', handleRefresh)
     return () => {
       window.removeEventListener('documentLinked', handleRefresh)
       window.removeEventListener('refresh-document-library', handleRefresh)
     }
-  }, [fetchInitialCounts])
+  }, [fetchExplorerTree])
+
+  // 초성 카운트: explorer-tree 응답에서 추출 (별도 API 불필요)
+  const serverInitialCounts = useMemo(() => {
+    const map = new Map<string, number>()
+    KOREAN_INITIALS.forEach(i => map.set(i, 0))
+    ALPHABET_INITIALS.forEach(i => map.set(i, 0))
+    NUMBER_INITIALS.forEach(i => map.set(i, 0))
+    if (explorerData?.initials) {
+      Object.entries(explorerData.initials).forEach(([k, v]) => map.set(k, v))
+    }
+    return map
+  }, [explorerData?.initials])
+
+  // 초성 선택 시: explorer-tree에서 받은 documents를 useDocumentExplorerTree에 전달
+  // 초성 미선택 시: documents는 빈 배열 (고객 요약 트리를 별도 빌드)
+  const documents = useMemo(() => {
+    if (!selectedInitial || !explorerData?.documents) return []
+    return explorerData.documents
+  }, [selectedInitial, explorerData?.documents])
 
   const {
     groupBy,
@@ -95,8 +132,7 @@ const DocumentExplorerContent: React.FC<{
     searchTerm,
     selectedDocumentId,
     isAllExpanded,
-    treeData,
-    isLoading,
+    treeData: docTreeData,
     minTagCount,
     sortBy,
     sortDirection,
@@ -120,17 +156,70 @@ const DocumentExplorerContent: React.FC<{
     clearDateFilter,
     setThumbnailEnabled,
   } = useDocumentExplorerTree({
-    documents: state.documents,
-    isLoading: state.isLoading,
+    documents,
+    isLoading,
     filenameMode,
   })
+
+  // 초성 미선택 시: 고객 요약 트리 빌드 (서버 데이터 그대로 렌더링)
+  // initialType(탭)에 따라 해당 카테고리 고객만 필터링
+  const customerSummaryTree = useMemo<DocumentTreeData | null>(() => {
+    if (selectedInitial || !explorerData?.customers) return null
+
+    let customers = explorerData.customers
+
+    // 탭(한글/영문/숫자)에 따라 고객 필터링
+    const koreanSet: Set<string> = new Set(KOREAN_INITIALS)
+    const alphabetSet: Set<string> = new Set(ALPHABET_INITIALS)
+    const numberSet: Set<string> = new Set(NUMBER_INITIALS)
+
+    if (initialType === 'korean') {
+      customers = customers.filter(c => koreanSet.has(c.initial))
+    } else if (initialType === 'alphabet') {
+      customers = customers.filter(c => alphabetSet.has(c.initial))
+    } else if (initialType === 'number') {
+      customers = customers.filter(c => numberSet.has(c.initial))
+    }
+
+    // 검색어로 고객명 필터
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase()
+      customers = customers.filter(c => c.name.toLowerCase().includes(lower))
+    }
+
+    const nodes: DocumentTreeNode[] = customers.map(c => ({
+      key: `customer-${c.customerId}`,
+      label: c.name,
+      type: 'group' as const,
+      icon: /^[가-힣]/.test(c.name) ? 'person.fill' : 'building.2.fill',
+      count: c.docCount,
+      children: [],
+      metadata: {
+        customerId: c.customerId,
+        customerType: (/^[가-힣]/.test(c.name) ? 'personal' : 'corporate') as 'personal' | 'corporate',
+      }
+    }))
+
+    const totalDocs = customers.reduce((sum, c) => sum + c.docCount, 0)
+
+    return {
+      nodes,
+      totalDocuments: totalDocs,
+      groupStats: { groupCount: customers.length }
+    }
+  }, [selectedInitial, explorerData?.customers, searchTerm, initialType])
+
+  // 최종 트리 데이터: 초성 선택 여부에 따라 분기
+  const treeData = selectedInitial
+    ? docTreeData
+    : (customerSummaryTree || { nodes: [], totalDocuments: 0, groupStats: { groupCount: 0 } })
 
   // 문서 클릭 핸들러
   const handleDocumentClick = useCallback(
     (doc: Document) => {
       const docId = doc._id || doc.id || ''
       setSelectedDocumentId(docId)
-      addToRecentDocuments(docId) // 최근 본 문서에 추가
+      addToRecentDocuments(docId)
       onDocumentClick?.(docId)
     },
     [onDocumentClick, setSelectedDocumentId, addToRecentDocuments]
@@ -154,8 +243,8 @@ const DocumentExplorerContent: React.FC<{
 
   // 새로고침 핸들러
   const handleRefresh = useCallback(() => {
-    actions.refreshDocuments()
-  }, [actions])
+    void fetchExplorerTree(selectedInitial)
+  }, [fetchExplorerTree, selectedInitial])
 
   return (
     <div className="doc-explorer-content">
@@ -203,7 +292,7 @@ const DocumentExplorerContent: React.FC<{
 
       {/* 트리 뷰 */}
       <div className="doc-explorer-tree-container">
-        {isLoading && state.documents.length === 0 ? (
+        {isLoading && !explorerData ? (
           <div className="doc-explorer-loading">
             <div className="doc-explorer-loading__spinner" />
             <p>문서를 불러오는 중...</p>
@@ -234,6 +323,7 @@ const DocumentExplorerContent: React.FC<{
 
 /**
  * 문서 탐색기 View
+ * DocumentStatusProvider 제거 — explorer-tree API로 직접 데이터 조회
  */
 export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
   visible,
@@ -259,17 +349,15 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
       breadcrumbItems={breadcrumbItems}
       onClose={onClose}
     >
-      <DocumentStatusProvider searchQuery="" fileScope="excludeMyFiles" initialItemsPerPage={500} initialFilter={selectedInitial}>
-        <DocumentExplorerContent
-          onDocumentClick={onDocumentClick}
-          onDocumentDoubleClick={onDocumentDoubleClick}
-          onCustomerClick={onCustomerClick}
-          selectedInitial={selectedInitial}
-          onSelectedInitialChange={setSelectedInitial}
-          initialType={initialType}
-          onInitialTypeChange={handleInitialTypeChange}
-        />
-      </DocumentStatusProvider>
+      <DocumentExplorerContent
+        onDocumentClick={onDocumentClick}
+        onDocumentDoubleClick={onDocumentDoubleClick}
+        onCustomerClick={onCustomerClick}
+        selectedInitial={selectedInitial}
+        onSelectedInitialChange={setSelectedInitial}
+        initialType={initialType}
+        onInitialTypeChange={handleInitialTypeChange}
+      />
     </CenterPaneView>
   )
 }
