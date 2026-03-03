@@ -92,11 +92,11 @@ const KEYWORD_MODE_OPTIONS: DropdownOption[] = [
 
 // AI 검색 결과 개수 옵션 정의
 const TOP_K_OPTIONS: DropdownOption[] = [
-  { value: '3', label: '상위 3개' },
   { value: '5', label: '상위 5개' },
   { value: '10', label: '상위 10개' },
-  { value: '15', label: '상위 15개' },
-  { value: '20', label: '상위 20개' },
+  { value: '25', label: '상위 25개' },
+  { value: '50', label: '상위 50개' },
+  { value: '100', label: '상위 100개' },
 ]
 
 export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({

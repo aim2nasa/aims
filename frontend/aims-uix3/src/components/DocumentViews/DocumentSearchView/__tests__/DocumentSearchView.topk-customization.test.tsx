@@ -7,7 +7,7 @@
  *
  * 테스트 범위:
  * - Progressive Disclosure (AI 검색 모드일 때만 topK 드롭다운 표시)
- * - topK 드롭다운 옵션 (3, 5, 10, 15, 20)
+ * - topK 드롭다운 옵션 (5, 10, 25, 50, 100)
  * - topK 기본값 (10)
  * - topK 값 변경 시 상태 업데이트
  * - sessionStorage 저장 및 복원
@@ -161,7 +161,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
   })
 
   describe('[회귀 방지] topK 드롭다운 옵션', () => {
-    it('상위 3, 5, 10, 15, 20개 옵션이 모두 있어야 함', async () => {
+    it('상위 5, 10, 25, 50, 100개 옵션이 모두 있어야 함', async () => {
       const user = userEvent.setup()
       const { container } = renderComponent()
 
@@ -185,11 +185,11 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
 
       // 모든 옵션 확인
       await waitFor(() => {
-        expect(screen.getByRole('option', { name: '상위 3개' })).toBeInTheDocument()
         expect(screen.getByRole('option', { name: '상위 5개' })).toBeInTheDocument()
         expect(screen.getByRole('option', { name: '상위 10개' })).toBeInTheDocument()
-        expect(screen.getByRole('option', { name: '상위 15개' })).toBeInTheDocument()
-        expect(screen.getByRole('option', { name: '상위 20개' })).toBeInTheDocument()
+        expect(screen.getByRole('option', { name: '상위 25개' })).toBeInTheDocument()
+        expect(screen.getByRole('option', { name: '상위 50개' })).toBeInTheDocument()
+        expect(screen.getByRole('option', { name: '상위 100개' })).toBeInTheDocument()
       })
     })
 
@@ -227,18 +227,18 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
-      // topK를 20으로 변경
+      // topK를 50으로 변경
       const topKDropdown = container.querySelector('[aria-label="AI 검색 결과 개수 선택"]')
       const topKTrigger = topKDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(topKTrigger)
 
-      const topK20Option = await screen.findByRole('option', { name: '상위 20개' })
-      await user.click(topK20Option)
+      const topK50Option = await screen.findByRole('option', { name: '상위 50개' })
+      await user.click(topK50Option)
 
       // 선택된 값 확인
       await waitFor(() => {
         const topKValue = topKDropdown?.querySelector('.ios-dropdown__value')
-        expect(topKValue).toHaveTextContent('상위 20개')
+        expect(topKValue).toHaveTextContent('상위 50개')
       })
     })
 
@@ -258,18 +258,18 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const topKTrigger = topKDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       const getTopKValue = () => topKDropdown?.querySelector('.ios-dropdown__value')
 
-      // 3 → 5 → 15 → 10 순서로 변경
-      await user.click(topKTrigger)
-      await user.click(await screen.findByRole('option', { name: '상위 3개' }))
-      expect(getTopKValue()).toHaveTextContent('상위 3개')
-
+      // 5 → 25 → 50 → 10 순서로 변경
       await user.click(topKTrigger)
       await user.click(await screen.findByRole('option', { name: '상위 5개' }))
       expect(getTopKValue()).toHaveTextContent('상위 5개')
 
       await user.click(topKTrigger)
-      await user.click(await screen.findByRole('option', { name: '상위 15개' }))
-      expect(getTopKValue()).toHaveTextContent('상위 15개')
+      await user.click(await screen.findByRole('option', { name: '상위 25개' }))
+      expect(getTopKValue()).toHaveTextContent('상위 25개')
+
+      await user.click(topKTrigger)
+      await user.click(await screen.findByRole('option', { name: '상위 50개' }))
+      expect(getTopKValue()).toHaveTextContent('상위 50개')
 
       await user.click(topKTrigger)
       await user.click(await screen.findByRole('option', { name: '상위 10개' }))
@@ -306,8 +306,8 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
     })
 
     it('sessionStorage에 저장된 topK 값이 복원되어야 함', async () => {
-      // sessionStorage에 topK 15 저장
-      sessionStorage.setItem('document-search-top-k', '15')
+      // sessionStorage에 topK 25 저장
+      sessionStorage.setItem('document-search-top-k', '25')
 
       const user = userEvent.setup()
       const { container } = renderComponent()
@@ -320,18 +320,18 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
-      // topK 드롭다운의 값이 15로 복원되어야 함
+      // topK 드롭다운의 값이 25로 복원되어야 함
       await waitFor(() => {
         const topKDropdown = container.querySelector('[aria-label="AI 검색 결과 개수 선택"]')
         const topKValue = topKDropdown?.querySelector('.ios-dropdown__value')
-        expect(topKValue).toHaveTextContent('상위 15개')
+        expect(topKValue).toHaveTextContent('상위 25개')
       })
     })
 
     it('페이지 새로고침 후에도 topK 값이 유지되어야 함', async () => {
       const user = userEvent.setup()
 
-      // 첫 번째 렌더: topK를 3으로 설정
+      // 첫 번째 렌더: topK를 5로 설정
       const { unmount: unmount1, container: container1 } = renderComponent()
 
       const searchModeDropdown1 = container1.querySelector('[aria-label="검색 모드 선택"]')
@@ -345,16 +345,16 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const topKTrigger1 = topKDropdown1?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(topKTrigger1)
 
-      const topK3Option = await screen.findByRole('option', { name: '상위 3개' })
-      await user.click(topK3Option)
+      const topK5Option = await screen.findByRole('option', { name: '상위 5개' })
+      await user.click(topK5Option)
 
       await waitFor(() => {
-        expect(sessionStorage.getItem('document-search-top-k')).toBe('3')
+        expect(sessionStorage.getItem('document-search-top-k')).toBe('5')
       })
 
       unmount1()
 
-      // 두 번째 렌더: topK가 3으로 유지되어야 함
+      // 두 번째 렌더: topK가 5로 유지되어야 함
       const { container: container2 } = renderComponent()
 
       const searchModeDropdown2 = container2.querySelector('[aria-label="검색 모드 선택"]')
@@ -367,7 +367,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       await waitFor(() => {
         const topKDropdown2 = container2.querySelector('[aria-label="AI 검색 결과 개수 선택"]')
         const topKValue2 = topKDropdown2?.querySelector('.ios-dropdown__value')
-        expect(topKValue2).toHaveTextContent('상위 3개')
+        expect(topKValue2).toHaveTextContent('상위 5개')
       })
     })
   })

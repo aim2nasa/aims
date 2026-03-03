@@ -182,7 +182,7 @@ class SearchRequest(BaseModel):
     search_mode: str = "semantic"
     user_id: Optional[str] = None
     customer_id: Optional[str] = None
-    top_k: Optional[int] = Field(None, ge=1, le=50)  # 결과 개수 제한 (1~50, None=기본값 사용)
+    top_k: Optional[int] = Field(None, ge=1, le=100)  # 결과 개수 제한 (1~100, None=기본값 사용)
     offset: int = 0  # 페이지네이션: 건너뛸 결과 수
 
 class UnifiedSearchResponse(BaseModel):
