@@ -179,6 +179,46 @@ export class DocumentStatusService {
   }
 
   /**
+   * 문서 탐색기 트리 조회 (서버사이드 집계)
+   * @param fileScope 파일 범위 필터
+   * @param initial 초성 필터 (설정 시 해당 초성의 문서도 반환)
+   * @returns 고객 요약 + 초성 카운트 + (초성 선택 시) 문서 목록
+   */
+  static async getExplorerTree(fileScope?: string, initial?: string): Promise<{
+    customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string }>;
+    totalCustomers: number;
+    totalDocuments: number;
+    initials: Record<string, number>;
+    documents?: any[];
+  }> {
+    try {
+      const params = new URLSearchParams()
+      if (fileScope) params.append('fileScope', fileScope)
+      if (initial) params.append('initial', initial)
+
+      const response = await fetch(`${API_BASE_URL}/api/documents/status/explorer-tree?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        mode: 'cors'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      return data.success ? data.data : { customers: [], totalCustomers: 0, totalDocuments: 0, initials: {} }
+    } catch (error) {
+      console.error('[DocumentStatusService] Get explorer tree failed:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusService.getExplorerTree' })
+      return { customers: [], totalCustomers: 0, totalDocuments: 0, initials: {} }
+    }
+  }
+
+  /**
    * 특정 문서 상태 조회
    */
   static async getDocumentStatus(documentId: string): Promise<DocumentDetailResponse> {

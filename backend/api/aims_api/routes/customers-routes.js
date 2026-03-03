@@ -12,7 +12,7 @@ const fs = require('fs');
 const { COLLECTIONS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
-const { sanitizeHtml, flattenObject, escapeRegex, CHOSUNG_RANGE_MAP } = require('../lib/helpers');
+const { sanitizeHtml, flattenObject, escapeRegex, CHOSUNG_RANGE_MAP, getInitialFromChar } = require('../lib/helpers');
 const activityLogger = require('../lib/activityLogger');
 const sseManager = require('../lib/sseManager');
 const {
@@ -127,6 +127,48 @@ router.get('/customers/stats', authenticateJWTorAPIKey, async (req, res) => {
     console.error('[Customers Stats] Error:', error);
     backendLogger.error('Customers', '고객 통계 조회 오류', error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 고객 초성별 카운트 조회 API
+ * GET /api/customers/initials
+ * 인증된 사용자의 고객을 이름 초성별로 집계하여 반환
+ */
+router.get('/customers/initials', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId required' });
+    }
+
+    // 삭제된 고객 제외
+    const baseFilter = { 'meta.created_by': userId, deleted_at: null };
+
+    // 고객 이름만 조회
+    const customers = await db.collection(CUSTOMERS_COLLECTION)
+      .find(baseFilter)
+      .project({ 'personal_info.name': 1 })
+      .toArray();
+
+    // 초성별 카운트 집계
+    const initials = {};
+    customers.forEach(c => {
+      const name = c.personal_info?.name;
+      if (!name) return;
+      const initial = getInitialFromChar(name.charAt(0));
+      if (initial) {
+        initials[initial] = (initials[initial] || 0) + 1;
+      }
+    });
+
+    res.json({ success: true, data: { initials } });
+  } catch (error) {
+    backendLogger.error('Customers', '고객 초성 카운트 조회 오류', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 초성 카운트 조회에 실패했습니다.'
+    });
   }
 });
 

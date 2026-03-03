@@ -734,6 +734,217 @@ router.get('/documents/status/initials', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * 문서 탐색기 트리 데이터 조회 API
+ * 고객별 문서 수, 최신 업로드 일시, 초성별 카운트를 한 번에 반환
+ * initial 파라미터 지정 시 해당 초성 고객의 문서 목록도 포함
+ * GET /api/documents/status/explorer-tree?fileScope=excludeMyFiles&initial=ㄱ
+ */
+router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) => {
+  try {
+    const { fileScope = 'excludeMyFiles', initial } = req.query;
+    const userId = req.user.id;
+
+    // fileScope 필터 구성 (initials 엔드포인트와 동일 패턴)
+    let filter;
+    if (fileScope === 'onlyMyFiles') {
+      filter = {
+        ownerId: userId,
+        $expr: { $eq: [{ $toString: '$customerId' }, userId] }
+      };
+    } else if (fileScope === 'all') {
+      filter = { ownerId: userId };
+    } else {
+      // excludeMyFiles (기본값)
+      filter = {
+        ownerId: userId,
+        customerId: { $exists: true, $ne: null },
+        $expr: { $ne: [{ $toString: '$customerId' }, userId] }
+      };
+    }
+
+    // 1. customerId별 문서 수 + 최신 업로드 일시 집계
+    const docStatsByCustomer = await db.collection(COLLECTION_NAME).aggregate([
+      { $match: filter },
+      { $group: {
+        _id: '$customerId',
+        docCount: { $sum: 1 },
+        latestUpload: { $max: { $toDate: { $ifNull: ['$upload.uploaded_at', new Date(0)] } } }
+      }}
+    ]).toArray();
+
+    // 2. 고객 이름 조회
+    const validIds = docStatsByCustomer.map(d => d._id).filter(id => id != null);
+    const customers = validIds.length > 0
+      ? await db.collection(COLLECTIONS.CUSTOMERS)
+          .find({ _id: { $in: validIds } })
+          .project({ _id: 1, 'personal_info.name': 1 })
+          .toArray()
+      : [];
+
+    const customerNameMap = new Map();
+    customers.forEach(c => customerNameMap.set(String(c._id), c.personal_info?.name || ''));
+
+    // 3. 초성별 문서 수 카운트 + 고객 리스트 구성
+    const initials = {};
+    let totalDocuments = 0;
+    const customerList = [];
+
+    docStatsByCustomer.forEach(d => {
+      const customerId = String(d._id);
+      const name = customerNameMap.get(customerId);
+      if (!name) return;
+
+      const customerInitial = getInitialFromChar(name.charAt(0));
+      if (!customerInitial) return;
+
+      // 초성별 문서 수 누적
+      initials[customerInitial] = (initials[customerInitial] || 0) + d.docCount;
+      totalDocuments += d.docCount;
+
+      customerList.push({
+        customerId,
+        name,
+        initial: customerInitial,
+        docCount: d.docCount,
+        latestUpload: d.latestUpload
+      });
+    });
+
+    // 고객명 가나다순 정렬
+    customerList.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+
+    // 4. initial 파라미터가 있으면 해당 초성 고객의 문서 목록 포함
+    let documents = undefined;
+    if (initial && typeof initial === 'string' && initial.length === 1) {
+      // 해당 초성에 속하는 고객 ID 필터링
+      const filteredCustomerIds = customerList
+        .filter(c => c.initial === initial)
+        .map(c => c.customerId);
+
+      if (filteredCustomerIds.length > 0) {
+        // customerId를 ObjectId로 변환
+        const customerObjectIds = filteredCustomerIds
+          .map(id => toSafeObjectId(id))
+          .filter(id => id !== null);
+
+        if (customerObjectIds.length > 0) {
+          // customerObjectIds는 이미 ownerId 기반 집계를 거쳐 도출된 값이므로
+          // $expr 없이 ownerId + customerId 조건만으로 충분
+          const docFilter = {
+            ownerId: userId,
+            customerId: { $in: customerObjectIds }
+          };
+
+          const rawDocs = await db.collection(COLLECTION_NAME).aggregate([
+            { $match: docFilter },
+            { $sort: { 'upload.uploaded_at': -1 } },
+            ...TEXT_FLAG_STAGES
+          ]).toArray();
+
+          // 고객 이름 맵 구성 (응답 매핑용)
+          const customerMap = {};
+          customerList
+            .filter(c => c.initial === initial)
+            .forEach(c => { customerMap[c.customerId] = c.name; });
+
+          // 응답 매핑 — /documents/status 엔드포인트와 동일 형식
+          documents = rawDocs.map(doc => {
+            let customerRelation = null;
+            const effectiveCustomerId = doc.customerId;
+            if (effectiveCustomerId) {
+              const cid = effectiveCustomerId.toString();
+              customerRelation = {
+                customer_id: cid,
+                customer_name: customerMap[cid] || null,
+                notes: doc.customer_notes || ''
+              };
+            }
+
+            const statusInfo = analyzeDocumentStatus(doc);
+
+            // badgeType 계산
+            let badgeType = doc.badgeType;
+            if (!badgeType) {
+              if (doc._hasMetaText) badgeType = 'TXT';
+              else if (doc._hasOcrText) badgeType = 'OCR';
+              else badgeType = 'BIN';
+            }
+
+            return {
+              _id: doc._id,
+              originalName: doc.upload?.originalName || 'Unknown File',
+              displayName: doc.displayName || null,
+              uploadedAt: normalizeTimestamp(doc.upload?.uploaded_at),
+              fileSize: doc.meta?.size_bytes,
+              mimeType: doc.meta?.mime,
+              is_annual_report: doc.is_annual_report,
+              is_customer_review: doc.is_customer_review,
+              customer_relation: customerRelation,
+              badgeType,
+              _hasMetaText: doc._hasMetaText || false,
+              _hasOcrText: doc._hasOcrText || false,
+              conversionStatus: doc.upload?.conversion_status || null,
+              isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),
+              upload: doc.upload ? {
+                originalName: doc.upload.originalName,
+                uploaded_at: doc.upload.uploaded_at,
+                destPath: doc.upload.destPath,
+                convPdfPath: doc.upload.convPdfPath,
+                conversion_status: doc.upload.conversion_status,
+              } : null,
+              meta: doc.meta ? {
+                mime: doc.meta.mime,
+                size_bytes: doc.meta.size_bytes,
+                pdf_pages: doc.meta.pdf_pages,
+                meta_status: doc.meta.meta_status,
+                summary: doc.meta.summary,
+                created_at: doc.meta.created_at,
+              } : null,
+              ocr: doc.ocr ? {
+                status: doc.ocr.status,
+                confidence: doc.ocr.confidence,
+                done_at: doc.ocr.done_at,
+              } : null,
+              docembed: doc.docembed,
+              ownerId: doc.ownerId || null,
+              customerId: doc.customerId || null,
+              folderId: doc.folderId || null,
+              document_type: doc.document_type || null,
+              document_type_auto: doc.document_type_auto || false,
+              virusScan: doc.virusScan || null,
+              ...statusInfo
+            };
+          });
+        }
+      }
+
+      // 문서가 없으면 빈 배열
+      if (!documents) documents = [];
+    }
+
+    const responseData = {
+      customers: customerList,
+      totalCustomers: customerList.length,
+      totalDocuments,
+      initials
+    };
+
+    // initial이 지정된 경우에만 documents 포함
+    if (documents !== undefined) {
+      responseData.documents = documents;
+    }
+
+    res.json({ success: true, data: responseData });
+  } catch (error) {
+    backendLogger.error('Documents', '탐색기 트리 데이터 조회 오류', error);
+    res.status(500).json({
+      success: false,
+      error: '탐색기 트리 데이터 조회에 실패했습니다.'
+    });
+  }
+});
+
+/**
  * 모든 문서의 상태를 조회하는 API
  */
 router.get('/documents/status', authenticateJWT, async (req, res) => {

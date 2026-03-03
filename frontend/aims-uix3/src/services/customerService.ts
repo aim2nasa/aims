@@ -456,6 +456,25 @@ export class CustomerService {
   }
 
   /**
+   * 고객 초성 카운트 조회 (서버사이드 집계)
+   * @returns 초성별 고객 수 (예: { 'ㄱ': 5, 'A': 2 })
+   */
+  static async getCustomerInitials(): Promise<Record<string, number>> {
+    try {
+      const response = await api.get<{
+        success: boolean;
+        data: { initials: Record<string, number> };
+      }>('/api/customers/initials');
+
+      return response?.data?.initials || {};
+    } catch (error) {
+      console.error('[CustomerService] Get customer initials failed:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerService.getCustomerInitials' });
+      return {};
+    }
+  }
+
+  /**
    * 계약 당사자(계약자/피보험자) 이름으로 관련 고객 검색
    * @since 2026-02-14
    * AR/CRS/수동계약에서 해당 이름이 계약자 또는 피보험자로 등장하는 고객 목록 반환
@@ -552,6 +571,7 @@ export const {
   bulkImportCustomers,
   checkDuplicateName,
   findCustomersByContractParty,
+  getCustomerInitials,
 } = CustomerService;
 
 /**

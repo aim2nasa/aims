@@ -259,7 +259,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
       breadcrumbItems={breadcrumbItems}
       onClose={onClose}
     >
-      <DocumentStatusProvider searchQuery="" fileScope="excludeMyFiles" initialItemsPerPage={500} initialFilter={selectedInitial} initialTypeFilter={initialType}>
+      <DocumentStatusProvider searchQuery="" fileScope="excludeMyFiles" initialItemsPerPage={500} initialFilter={selectedInitial}>
         <DocumentExplorerContent
           onDocumentClick={onDocumentClick}
           onDocumentDoubleClick={onDocumentDoubleClick}

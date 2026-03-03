@@ -11,7 +11,7 @@ import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect, u
 import { useQueryClient } from '@tanstack/react-query';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
-import { Dropdown, Tooltip, Modal, ContextMenu, useContextMenu, type ContextMenuSection, InitialFilterBar, type InitialType } from '@/shared/ui';
+import { Dropdown, Tooltip, Modal, ContextMenu, useContextMenu, type ContextMenuSection, InitialFilterBar, type InitialType, KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from '@/shared/ui';
 import Button from '@/shared/ui/Button';
 import { SortIndicator } from '@/shared/ui/SortIndicator';
 import { usePersistedState } from '@/hooks/usePersistedState';
@@ -265,8 +265,21 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     // === Server provides filtered/sorted/paginated data directly ===
     // No client-side filtering chain needed (filteredCustomers, sortedCustomers, visibleCustomers)
 
-    // Empty initialCounts for InitialFilterBar (server-side filtering, counts not available client-side)
-    const initialCounts = useMemo(() => new Map<string, number>(), []);
+    // 서버사이드 초성 카운트 (DB 전체 고객 대상)
+    const [initialCounts, setInitialCounts] = useState<Map<string, number>>(new Map());
+
+    useEffect(() => {
+      CustomerService.getCustomerInitials()
+        .then(counts => {
+          const map = new Map<string, number>();
+          KOREAN_INITIALS.forEach(i => map.set(i, 0));
+          ALPHABET_INITIALS.forEach(i => map.set(i, 0));
+          NUMBER_INITIALS.forEach(i => map.set(i, 0));
+          Object.entries(counts).forEach(([k, v]) => map.set(k, v));
+          setInitialCounts(map);
+        })
+        .catch(() => {});
+    }, [fetchKey]);
 
     // Server pagination is the source of truth
     const totalCustomers = serverPagination.totalCount;
@@ -513,6 +526,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       setStatusFilter(filter);
       setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
     };
+
+    // 탭 전환 시 선택된 초성 초기화
+    const handleInitialTypeChange = useCallback((type: InitialType) => {
+      setInitialType(type);
+      setSelectedInitial(null);
+      setCurrentPage(1);
+    }, [setInitialType, setSelectedInitial, setCurrentPage]);
 
     // 삭제 모드 핸들러
     const handleToggleDeleteMode = () => {
@@ -850,7 +870,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         {!isLoading && (
           <InitialFilterBar
             initialType={initialType}
-            onInitialTypeChange={setInitialType}
+            onInitialTypeChange={handleInitialTypeChange}
             selectedInitial={selectedInitial}
             onSelectedInitialChange={(initial) => {
               setSelectedInitial(initial);

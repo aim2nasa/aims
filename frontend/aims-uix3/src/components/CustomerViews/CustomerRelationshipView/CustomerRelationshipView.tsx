@@ -121,6 +121,12 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   const [initialType, setInitialType] = usePersistedState<InitialType>('customer-relationship-initial-type', 'korean');
   const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('customer-relationship-selected-initial', null);
 
+  // 탭 전환 시 선택된 초성 초기화
+  const handleInitialTypeChange = useCallback((type: InitialType) => {
+    setInitialType(type);
+    setSelectedInitial(null);
+  }, [setInitialType, setSelectedInitial]);
+
   // 미설정 고객 숨기기: 'relationships' 모드일 때 자동 적용
   const hideUnassigned = viewMode === 'relationships';
 
@@ -1103,7 +1109,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
           {/* 초성 필터 바 */}
           <InitialFilterBar
             initialType={initialType}
-            onInitialTypeChange={setInitialType}
+            onInitialTypeChange={handleInitialTypeChange}
             selectedInitial={selectedInitial}
             onSelectedInitialChange={setSelectedInitial}
             initialCounts={initialCounts}
