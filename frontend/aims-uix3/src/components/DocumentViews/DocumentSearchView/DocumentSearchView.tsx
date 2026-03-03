@@ -914,6 +914,18 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   }, [query])
 
   /**
+   * 🍎 파일명(제목)에서 매칭된 키워드 목록 반환
+   */
+  const getFilenameKeywordMatches = useCallback((item: SearchResultItem): string[] => {
+    const filename = SearchService.getDisplayName(item) || SearchService.getOriginalName(item)
+    if (!filename) return []
+
+    const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
+    const filenameLower = filename.toLowerCase()
+    return keywords.filter(k => filenameLower.includes(k.toLowerCase()))
+  }, [query])
+
+  /**
    * 🍎 특정 매칭 인덱스의 스니펫 추출 (검색어 위치 탐색용)
    * matchIdx번째 매칭 위치 주변 텍스트와 현재 키워드의 스니펫 내 위치를 반환
    */
@@ -1915,9 +1927,11 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       {/* 🍎 검색어 위치 모달 (키워드 검색 전용) */}
       {selectedDocumentForKeywordLocation && (() => {
         const totalMatches = getAllKeywordMatches(selectedDocumentForKeywordLocation).length
+        const filenameMatches = getFilenameKeywordMatches(selectedDocumentForKeywordLocation)
         const currentIndex = keywordMatchIndex
         const hasPrev = currentIndex > 0
         const hasNext = currentIndex < totalMatches - 1
+        const filename = (filenameMode === 'display' && SearchService.getDisplayName(selectedDocumentForKeywordLocation)) || SearchService.getOriginalName(selectedDocumentForKeywordLocation)
 
         return (
           <DraggableModal
@@ -1944,57 +1958,89 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             <div className="keyword-location-modal-content">
               <div className="keyword-location-modal-header">
                 <span className="keyword-location-filename">
-                  {(filenameMode === 'display' && SearchService.getDisplayName(selectedDocumentForKeywordLocation)) || SearchService.getOriginalName(selectedDocumentForKeywordLocation)}
+                  {filename}
                 </span>
                 <span className="keyword-location-query">
                   검색어: <strong>{query}</strong>
                 </span>
               </div>
 
-              {/* 🍎 검색 결과 개수 및 탐색 UI */}
-              <div className="keyword-location-nav">
-                <button
-                  type="button"
-                  className="keyword-location-nav-btn"
-                  onClick={() => setKeywordMatchIndex(prev => Math.max(0, prev - 1))}
-                  disabled={!hasPrev}
-                  aria-label="이전 결과"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
-                  </svg>
-                </button>
+              {/* 🍎 매칭 요약: 제목/본문 각각 표시 */}
+              <div className="keyword-location-summary">
+                <div className={`keyword-location-summary-item ${filenameMatches.length > 0 ? 'keyword-location-summary-item--match' : ''}`}>
+                  <span className="keyword-location-summary-label">제목</span>
+                  <span className="keyword-location-summary-count">
+                    {filenameMatches.length > 0
+                      ? `${filenameMatches.length}건 일치`
+                      : '일치 없음'}
+                  </span>
+                </div>
+                <div className={`keyword-location-summary-item ${totalMatches > 0 ? 'keyword-location-summary-item--match' : ''}`}>
+                  <span className="keyword-location-summary-label">본문</span>
+                  <span className="keyword-location-summary-count">
+                    {totalMatches > 0 ? `${totalMatches}건 일치` : '일치 없음'}
+                  </span>
+                </div>
+              </div>
 
-                <span className="keyword-location-counter">
-                  {totalMatches > 0 ? (
-                    <>
+              {/* 🍎 제목 매칭 영역 */}
+              {filenameMatches.length > 0 && (
+                <div className="keyword-location-section">
+                  <div className="keyword-location-section-label">제목에서 발견</div>
+                  <div className="keyword-location-section-content">
+                    {highlightKeywordsNormal(filename, filenameMatches)}
+                  </div>
+                </div>
+              )}
+
+              {/* 🍎 본문 매칭 영역 */}
+              <div className="keyword-location-section keyword-location-section--body">
+                <div className="keyword-location-section-label">
+                  본문{totalMatches > 0 ? ` (${totalMatches}건)` : ''}
+                </div>
+
+                {totalMatches > 0 && (
+                  <div className="keyword-location-nav">
+                    <button
+                      type="button"
+                      className="keyword-location-nav-btn"
+                      onClick={() => setKeywordMatchIndex(prev => Math.max(0, prev - 1))}
+                      disabled={!hasPrev}
+                      aria-label="이전 결과"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                    </button>
+
+                    <span className="keyword-location-counter">
                       <strong>{currentIndex + 1}</strong>
                       <span className="keyword-location-separator">/</span>
                       <span>{totalMatches}</span>
-                    </>
-                  ) : (
-                    <span className="keyword-location-no-match">발견된 결과 없음</span>
+                    </span>
+
+                    <button
+                      type="button"
+                      className="keyword-location-nav-btn"
+                      onClick={() => setKeywordMatchIndex(prev => Math.min(totalMatches - 1, prev + 1))}
+                      disabled={!hasNext}
+                      aria-label="다음 결과"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+                <div className="keyword-location-text">
+                  {totalMatches > 0 ? (() => {
+                    const { snippet, currentKeywordOffset, currentKeywordLength } = getTextSnippetAtIndex(selectedDocumentForKeywordLocation, currentIndex)
+                    return highlightKeywordsWithCurrent(snippet, currentKeywordOffset, currentKeywordLength)
+                  })() : (
+                    <span className="keyword-location-no-match">본문에서 발견된 결과 없음</span>
                   )}
-                </span>
-
-                <button
-                  type="button"
-                  className="keyword-location-nav-btn"
-                  onClick={() => setKeywordMatchIndex(prev => Math.min(totalMatches - 1, prev + 1))}
-                  disabled={!hasNext}
-                  aria-label="다음 결과"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-                  </svg>
-                </button>
-              </div>
-
-              <div className="keyword-location-text">
-                {(() => {
-                  const { snippet, currentKeywordOffset, currentKeywordLength } = getTextSnippetAtIndex(selectedDocumentForKeywordLocation, currentIndex)
-                  return highlightKeywordsWithCurrent(snippet, currentKeywordOffset, currentKeywordLength)
-                })()}
+                </div>
               </div>
             </div>
           </DraggableModal>

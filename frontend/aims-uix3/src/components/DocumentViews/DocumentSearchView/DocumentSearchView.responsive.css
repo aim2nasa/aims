@@ -98,19 +98,106 @@
     color: var(--color-ios-text-primary-dark);
   }
 
+  /* 🍎 매칭 요약 (제목/본문) */
+  .keyword-location-summary {
+    display: flex;
+    gap: 8px;
+  }
+
+  .keyword-location-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--color-ios-bg-secondary-light);
+    font-size: 11px;
+  }
+
+  html[data-theme="dark"] .keyword-location-summary-item {
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  .keyword-location-summary-item--match {
+    background: var(--color-ios-system-green-light-bg, rgba(52, 199, 89, 0.12));
+  }
+
+  html[data-theme="dark"] .keyword-location-summary-item--match {
+    background: rgba(48, 209, 88, 0.15);
+  }
+
+  .keyword-location-summary-label {
+    font-weight: 600;
+    color: var(--color-ios-text-primary-light);
+  }
+
+  html[data-theme="dark"] .keyword-location-summary-label {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .keyword-location-summary-count {
+    color: var(--color-ios-text-secondary-light);
+  }
+
+  html[data-theme="dark"] .keyword-location-summary-count {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .keyword-location-summary-item--match .keyword-location-summary-count {
+    color: var(--color-ios-system-green-light, #34c759);
+    font-weight: 600;
+  }
+
+  html[data-theme="dark"] .keyword-location-summary-item--match .keyword-location-summary-count {
+    color: var(--color-ios-system-green-dark, #30d158);
+  }
+
+  /* 🍎 섹션 (제목/본문 영역) */
+  .keyword-location-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .keyword-location-section--body {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .keyword-location-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-ios-text-secondary-light);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  html[data-theme="dark"] .keyword-location-section-label {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .keyword-location-section-content {
+    padding: 8px 12px;
+    background: var(--color-ios-bg-secondary-light);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-ios-text-primary-light);
+    word-break: break-word;
+  }
+
+  html[data-theme="dark"] .keyword-location-section-content {
+    background: var(--color-ios-bg-secondary-dark);
+    color: var(--color-ios-text-primary-dark);
+  }
+
   /* 🍎 검색어 위치 탐색 UI */
   .keyword-location-nav {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    padding: 8px 0;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--color-ios-separator-light);
-  }
-
-  html[data-theme="dark"] .keyword-location-nav {
-    border-bottom-color: var(--color-ios-separator-dark);
+    padding: 4px 0;
   }
 
   .keyword-location-nav-btn {
