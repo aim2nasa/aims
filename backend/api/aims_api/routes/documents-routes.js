@@ -647,8 +647,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
     const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField } = req.query;
     const skip = (page - 1) * limit;
 
-    // 🔍 정렬 파라미터 디버깅
-    console.error(`\n🔍🔍🔍 [정렬 디버깅] sort=${sort}, page=${page}, limit=${limit}, fileScope=${fileScope}`);
+    // (정렬 디버깅 로그 제거됨 — 성능 최적화)
 
     // userId 추출 (헤더 또는 쿼리)
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
@@ -698,14 +697,36 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       }
     }
 
-    // 🔍 필터 디버깅
-    console.log(`\n🔍 [/api/documents/status] fileScope=${fileScope}, userId=${userId}`);
-    console.log(`🔍 Filter: ${JSON.stringify(filter, null, 2)}`);
-
     // 문서 조회 및 정렬
     let documents;
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(filter);
-    console.log(`🔍 Total count: ${totalCount}`);
+
+    // 🔧 full_text 제거 + badgeType 플래그: 모든 파이프라인 끝에 추가
+    const textFlagStages = [
+      { $addFields: {
+        _hasMetaText: {
+          $cond: {
+            if: { $and: [
+              { $ne: [{ $ifNull: ['$meta.full_text', null] }, null] },
+              { $ne: ['$meta.full_text', ''] }
+            ]},
+            then: true,
+            else: false
+          }
+        },
+        _hasOcrText: {
+          $cond: {
+            if: { $and: [
+              { $ne: [{ $ifNull: ['$ocr.full_text', null] }, null] },
+              { $ne: ['$ocr.full_text', ''] }
+            ]},
+            then: true,
+            else: false
+          }
+        }
+      }},
+      { $project: { 'meta.full_text': 0, 'ocr.full_text': 0 } }
+    ];
 
     // fileSize, mimeType, customer 정렬은 aggregation 사용
     if (sort === 'customer_asc' || sort === 'customer_desc') {
@@ -739,7 +760,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
           }
         },
         { $skip: skip },
-        { $limit: parseInt(limit) }
+        { $limit: parseInt(limit) },
+        ...textFlagStages
       ]).toArray();
     } else if (sort === 'fileSize_asc' || sort === 'fileSize_desc') {
       const sortOrder = sort === 'fileSize_asc' ? 1 : -1;
@@ -752,7 +774,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         },
         { $sort: { size_bytes_num: sortOrder, 'upload.uploaded_at': -1 } },
         { $skip: skip },
-        { $limit: parseInt(limit) }
+        { $limit: parseInt(limit) },
+        ...textFlagStages
       ]).toArray();
     } else if (sort === 'mimeType_asc' || sort === 'mimeType_desc') {
       // mimeType 정렬: 확장자 알파벳 순
@@ -774,11 +797,11 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         },
         { $sort: { fileExtension: sortOrder, 'upload.originalName': 1 } },
         { $skip: skip },
-        { $limit: parseInt(limit) }
+        { $limit: parseInt(limit) },
+        ...textFlagStages
       ]).toArray();
     } else if (sort === 'badgeType_asc' || sort === 'badgeType_desc') {
       // badgeType 정렬: OCR/TXT/BIN 타입별 정렬
-      console.error(`\n⚡⚡⚡ [badgeType 정렬 실행] sort=${sort}, sortOrder=${sort === 'badgeType_asc' ? 1 : -1}`);
       const sortOrder = sort === 'badgeType_asc' ? 1 : -1;
       documents = await db.collection(COLLECTION_NAME).aggregate([
         { $match: filter },
@@ -849,18 +872,9 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         },
         { $sort: { badgeType: sortOrder, 'upload.uploaded_at': -1 } },
         { $skip: skip },
-        { $limit: parseInt(limit) }
+        { $limit: parseInt(limit) },
+        ...textFlagStages
       ]).toArray();
-
-      // 디버깅: badgeType 계산 결과 확인
-      if (documents.length > 0) {
-        console.error('📊📊📊 [badgeType 정렬 결과]');
-        documents.slice(0, 5).forEach(doc => {
-          const hasMetaFullText = doc.meta?.full_text ? 'O' : 'X';
-          const hasOcrFullText = doc.ocr?.full_text ? 'O' : 'X';
-          console.error(`  - ${doc.upload?.originalName}: badgeType=${doc.badgeType}, meta.full_text=${hasMetaFullText}, ocr.full_text=${hasOcrFullText}, ocr.confidence=${doc.ocr?.confidence}`);
-        });
-      }
     } else if (sort === 'docType_asc' || sort === 'docType_desc') {
       // 🏷️ docType 정렬: 한글 라벨 기준 가나다순 정렬 (미지정은 맨 뒤로)
       const sortOrder = sort === 'docType_asc' ? 1 : -1;
@@ -910,7 +924,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $sort: { docType_label: sortOrder, 'upload.uploaded_at': -1 } },
         { $skip: skip },
         { $limit: parseInt(limit) },
-        { $project: { docType_info: 0, docType_label: 0, _normalized_docType: 0 } }
+        { $project: { docType_info: 0, docType_label: 0, _normalized_docType: 0 } },
+        ...textFlagStages
       ], { collation: { locale: 'ko' } }).toArray();
     } else if (sort === 'uploadDate_asc' || sort === 'uploadDate_desc' || !sort) {
       // 🔧 uploadDate 정렬: Date/String 혼합 타입 대응을 위해 $toDate 사용
@@ -925,7 +940,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $sort: { uploaded_at_normalized: sortOrder } },
         { $skip: skip },
         { $limit: parseInt(limit) },
-        { $project: { uploaded_at_normalized: 0 } }
+        { $project: { uploaded_at_normalized: 0 } },
+        ...textFlagStages
       ]).toArray();
     } else {
       // 일반 정렬 조건 구성 (status, filename)
@@ -940,12 +956,13 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         sortCriteria = { 'upload.originalName': -1, 'upload.uploaded_at': -1 };
       }
 
-      documents = await db.collection(COLLECTION_NAME)
-        .find(filter)
-        .sort(sortCriteria)
-        .skip(skip)
-        .limit(parseInt(limit))
-        .toArray();
+      documents = await db.collection(COLLECTION_NAME).aggregate([
+        { $match: filter },
+        { $sort: sortCriteria },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        ...textFlagStages
+      ]).toArray();
     }
 
     // customerId가 있는 문서의 customer_id 수집
@@ -1050,15 +1067,15 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       // 기존 analyzeDocumentStatus 방식대로 응답 구성
       const statusInfo = analyzeDocumentStatus(doc);
 
-      // badgeType 계산 (MongoDB aggregation 결과 없으면 JavaScript로 계산)
+      // badgeType 계산 (MongoDB aggregation 결과 없으면 _hasMetaText/_hasOcrText 플래그 사용)
       let badgeType = doc.badgeType;
       if (!badgeType) {
-        // Level 1: meta.full_text에 실제 데이터가 있으면 TXT
-        if (doc.meta?.full_text && doc.meta.full_text.trim().length > 0) {
+        // Level 1: meta.full_text에 실제 데이터가 있으면 TXT (_hasMetaText는 aggregation에서 계산)
+        if (doc._hasMetaText) {
           badgeType = 'TXT';
         }
-        // Level 2: ocr.full_text 있으면 OCR (MIME 무관)
-        else if (doc.ocr?.full_text) {
+        // Level 2: ocr.full_text 있으면 OCR (_hasOcrText는 aggregation에서 계산)
+        else if (doc._hasOcrText) {
           badgeType = 'OCR';
         }
         // Level 3: 나머지 BIN
@@ -1078,11 +1095,30 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         is_customer_review: doc.is_customer_review,
         customer_relation: customerRelation,
         badgeType: badgeType,  // 🔥 항상 badgeType 포함
+        _hasMetaText: doc._hasMetaText || false,  // 🔧 full_text 제거 대신 존재 플래그
+        _hasOcrText: doc._hasOcrText || false,    // 🔧 full_text 제거 대신 존재 플래그
         conversionStatus: doc.upload?.conversion_status || null,  // 🔥 PDF 변환 상태
         isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),   // 🔥 PDF 변환 가능 여부 (destPath 없으면 originalName으로 확인)
-        upload: doc.upload,  // 🔥 프론트엔드에서 upload.conversion_status 접근용
-        meta: doc.meta,
-        ocr: doc.ocr,
+        upload: doc.upload ? {
+          originalName: doc.upload.originalName,
+          uploaded_at: doc.upload.uploaded_at,
+          destPath: doc.upload.destPath,
+          convPdfPath: doc.upload.convPdfPath,
+          conversion_status: doc.upload.conversion_status,
+        } : null,
+        meta: doc.meta ? {
+          mime: doc.meta.mime,
+          size_bytes: doc.meta.size_bytes,
+          pdf_pages: doc.meta.pdf_pages,
+          meta_status: doc.meta.meta_status,
+          summary: doc.meta.summary,
+          created_at: doc.meta.created_at,
+        } : null,
+        ocr: doc.ocr ? {
+          status: doc.ocr.status,
+          confidence: doc.ocr.confidence,
+          done_at: doc.ocr.done_at,
+        } : null,
         docembed: doc.docembed,
         ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
         customerId: doc.customerId || null,  // 🆕 내 파일 기능
@@ -1274,7 +1310,36 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
       filter.batchId = batchId;
     }
 
-    const documents = await db.collection(COLLECTION_NAME).find(filter).toArray();
+    // 🔧 full_text 제거: aggregation으로 _hasMetaText/_hasOcrText 플래그 추가 + full_text 제외
+    const textFlagStagesForStats = [
+      { $addFields: {
+        _hasMetaText: {
+          $cond: {
+            if: { $and: [
+              { $ne: [{ $ifNull: ['$meta.full_text', null] }, null] },
+              { $ne: ['$meta.full_text', ''] }
+            ]},
+            then: true,
+            else: false
+          }
+        },
+        _hasOcrText: {
+          $cond: {
+            if: { $and: [
+              { $ne: [{ $ifNull: ['$ocr.full_text', null] }, null] },
+              { $ne: ['$ocr.full_text', ''] }
+            ]},
+            then: true,
+            else: false
+          }
+        }
+      }},
+      { $project: { 'meta.full_text': 0, 'ocr.full_text': 0 } }
+    ];
+    const documents = await db.collection(COLLECTION_NAME).aggregate([
+      { $match: filter },
+      ...textFlagStagesForStats
+    ]).toArray();
 
     const stats = {
       total: documents.length,
@@ -1325,19 +1390,19 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
       if (currentStage >= 4) stats.stages.ocr++;
       if (currentStage >= 5) stats.stages.docembed++;
 
-      // badgeType 계산 (FILE_BADGE_SYSTEM.md OCR 비용 최적화)
+      // badgeType 계산 (_hasMetaText/_hasOcrText 플래그 사용 — full_text는 $project로 제거됨)
       let badgeType = 'BIN';
 
-      // Level 1: meta.full_text 확인
-      if (doc.meta?.full_text && doc.meta.full_text.trim().length > 0) {
+      // Level 1: meta.full_text 존재 확인 (_hasMetaText 플래그)
+      if (doc._hasMetaText) {
         badgeType = 'TXT';
       }
       // Level 2: 명백한 BIN MIME 체크 (OCR 건너뜀 💰)
       else if (isBinaryMimeType(doc.metadata?.mimetype)) {
         badgeType = 'BIN';
       }
-      // Level 3: OCR 텍스트 확인
-      else if (doc.ocr?.full_text) {
+      // Level 3: OCR 텍스트 확인 (_hasOcrText 플래그)
+      else if (doc._hasOcrText) {
         badgeType = 'OCR';
       }
       // Level 4: 나머지 모두 BIN (기본값 유지)

@@ -193,6 +193,10 @@ export interface Document {
   // Badge Type (TXT, OCR, BIN)
   badgeType?: 'TXT' | 'OCR' | 'BIN'
 
+  // full_text 존재 플래그 (status API 경량화: full_text 제거 대신 boolean 전달)
+  _hasMetaText?: boolean
+  _hasOcrText?: boolean
+
   // 문서 유형 (docType / document_type)
   docType?: string | null
   docTypeLabel?: string | null

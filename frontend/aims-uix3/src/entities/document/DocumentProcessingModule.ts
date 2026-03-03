@@ -137,13 +137,17 @@ export class DocumentProcessingModule {
       typeof value === 'string' ? value : undefined
 
     // meta에 full_text가 있는 경우 - meta summary 사용
-    if (metaData && metaData.full_text && metaData.full_text.trim()) {
-      if (metaData.summary && metaData.summary !== 'null') {
+    // _hasMetaText: status API 경량화로 full_text 제거 시 존재 플래그로 대체
+    const hasMetaText = (metaData && metaData.full_text && metaData.full_text.trim()) || (document as Partial<Document>)._hasMetaText
+    if (hasMetaText) {
+      if (metaData?.summary && metaData.summary !== 'null') {
         return metaData.summary
       }
-      // meta summary가 없으면 meta full_text의 앞부분 사용
-      const cleanText = metaData.full_text.trim()
-      return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText
+      // full_text가 실제 존재하는 경우에만 앞부분 사용 (개별 문서 API)
+      if (metaData?.full_text) {
+        const cleanText = metaData.full_text.trim()
+        return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText
+      }
     }
 
     // meta에 full_text가 없는 경우 - ocr summary 사용
@@ -309,7 +313,8 @@ export class DocumentProcessingModule {
     const metaData = parseStage<MetaData>(document.meta)
     const metaStageStatus = metaStage?.status
     const metaStatus = metaData?.meta_status
-    const metaFullText = metaStage?.full_text ?? metaData?.full_text
+    const metaFullTextContent = metaStage?.full_text ?? metaData?.full_text
+    const metaFullText = Boolean(metaFullTextContent) || Boolean((document as Partial<Document>)._hasMetaText)
 
     const ocrStage = parseStage<OcrData>(document.stages?.ocr)
     const ocrData = parseStage<OcrData>(document.ocr)
@@ -373,7 +378,8 @@ export class DocumentProcessingModule {
       return 'error'
     }
 
-    if (metaFullText && !textData?.full_text && !ocrData?.full_text) {
+    const hasOcrText = ocrData?.full_text || (document as Partial<Document>)._hasOcrText
+    if (metaFullText && !textData?.full_text && !hasOcrText) {
       return 'completed'
     }
 

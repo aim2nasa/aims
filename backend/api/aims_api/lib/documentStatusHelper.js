@@ -129,7 +129,7 @@ function prepareDocumentResponse(doc) {
   // 🔴 PRIORITY: document_pipeline에서 설정한 progress 필드 우선 사용
   // (폴링 시 즉각적인 상태 반영을 위해)
   if (doc.progress !== undefined && doc.progress !== null) {
-    const hasMetaText = doc.meta && doc.meta.full_text;
+    const hasMetaText = (doc.meta && doc.meta.full_text) || doc._hasMetaText;
 
     // 🔴 credit_pending 상태 체크 (크레딧 부족으로 처리 보류)
     if (doc.progressStage === 'credit_pending' || doc.status === 'credit_pending' || doc.overallStatus === 'credit_pending') {
@@ -209,7 +209,7 @@ function prepareDocumentResponse(doc) {
   }
 
   // 🧮 2. 계산된 UI 값
-  const hasMetaText = doc.meta && doc.meta.full_text;
+  const hasMetaText = (doc.meta && doc.meta.full_text) || doc._hasMetaText;
   const isUnsupported = isUnsupportedMimeType(doc.meta?.mime);
 
   // 비지원 MIME 타입은 upload + meta만 (OCR/임베딩 불가)

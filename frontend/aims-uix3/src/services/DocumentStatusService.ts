@@ -403,7 +403,8 @@ export class DocumentStatusService {
     const metaStage = parseStage<MetaData>(document.stages?.meta)
     const metaData = parseStage<MetaData>(document.meta)
     const metaStageStatus = metaStage?.status
-    const metaFullText = metaStage?.full_text ?? metaData?.full_text
+    const metaFullTextContent = metaStage?.full_text ?? metaData?.full_text
+    const hasMetaText = Boolean(metaFullTextContent) || Boolean((document as Partial<Document>)._hasMetaText)
 
     const uploadStage = parseStage<UploadData>(document.stages?.upload)
     const uploadData = parseStage<UploadData>(document.upload)
@@ -416,7 +417,7 @@ export class DocumentStatusService {
         embedStatus === 'completed' ||
         docEmbedStatus === 'completed' ||
         docEmbedStatus === 'done'
-      const metaFullTextCompleted = Boolean(metaFullText) && metaStageStatus === 'completed'
+      const metaFullTextCompleted = hasMetaText && metaStageStatus === 'completed'
 
       if (embedCompleted || metaFullTextCompleted) {
         return 100
@@ -436,7 +437,7 @@ export class DocumentStatusService {
       return 100
     }
 
-    if (metaOk && metaData?.full_text) {
+    if (metaOk && hasMetaText) {
       return 75
     }
 
@@ -537,8 +538,8 @@ export class DocumentStatusService {
         return { badges, pathType, expectedStages }
       }
 
-      // DocMeta에서 full_text가 추출된 경우
-      if (metaData.full_text && metaData.full_text.trim().length > 0) {
+      // DocMeta에서 full_text가 추출된 경우 (_hasMetaText: 경량화 API 플래그)
+      if ((metaData.full_text && metaData.full_text.trim().length > 0) || (document as Partial<Document>)._hasMetaText) {
         pathType = 'meta_fulltext'
         expectedStages = ['U', 'M', 'E']
       }
