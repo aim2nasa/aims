@@ -52,19 +52,43 @@ class HybridSearchEngine:
     def resolve_customer_from_entities(self, entities: List[str], user_id: str) -> Optional[str]:
         """
         쿼리 엔터티에서 고객명을 찾아 customer_id 자동 매칭.
-        customers 컬렉션에서 personal_info.name과 정확히 일치하는 고객을 찾는다.
+
+        1순위: 정확 매칭 (personal_info.name == entity)
+        2순위: 부분 매칭 ($regex, 결과 1건일 때만, 2글자 이상)
         """
         if not entities:
             return None
         customers_coll = self.db["customers"]
+        base_filter = {
+            "meta.created_by": user_id,
+            "meta.status": "active"
+        }
+
+        # 1순위: 정확 매칭 (기존 동작)
         for entity in entities:
             customer = customers_coll.find_one({
-                "personal_info.name": entity,
-                "meta.created_by": user_id,
-                "meta.status": "active"
+                **base_filter,
+                "personal_info.name": entity
             })
             if customer:
                 return str(customer["_id"])
+
+        # 2순위: 부분 매칭 (2글자 이상, 단건 매칭만)
+        for entity in entities:
+            if len(entity) < 2:
+                continue
+
+            escaped = re.escape(entity)
+            candidates = list(customers_coll.find(
+                {**base_filter, "personal_info.name": {"$regex": escaped, "$options": "i"}},
+                {"_id": 1, "personal_info.name": 1}
+            ).limit(2))  # 1건인지 판별용 (2건 이상이면 모호하므로 매칭 안 함)
+
+            if len(candidates) == 1:
+                matched_name = (candidates[0].get("personal_info") or {}).get("name", "")
+                print(f"🔍 고객명 부분 매칭: '{entity}' → '{matched_name}'")
+                return str(candidates[0]["_id"])
+
         return None
 
     def get_customer_relationships(self, customer_id: str, user_id: str) -> Dict:
@@ -102,13 +126,14 @@ class HybridSearchEngine:
             if base_customer:
                 customer_name = (base_customer.get("personal_info") or {}).get("name", "")
 
-            # 양방향 관계 조회
+            # 양방향 관계 조회 (소유자 격리: 해당 설계사의 관계만)
             relationships_raw = list(rel_coll.find({
                 "$or": [
                     {"relationship_info.from_customer_id": cust_obj_id},
                     {"relationship_info.to_customer_id": cust_obj_id}
                 ],
-                "relationship_info.status": "active"
+                "relationship_info.status": "active",
+                "meta.created_by": user_id
             }))
 
             if not relationships_raw:
