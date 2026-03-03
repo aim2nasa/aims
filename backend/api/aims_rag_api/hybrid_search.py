@@ -219,14 +219,37 @@ class HybridSearchEngine:
 
         query_type = query_intent["query_type"]
 
+        # 관계 확장 시 항상 하이브리드 검색 강제
+        # 이유: entity 검색은 기준 고객명("곽승철") 키워드만 매칭하므로
+        # 가족(송유미, 곽지민)의 문서를 찾을 수 없음.
+        # 벡터 검색을 병행해야 가족 문서 집합 내 유사도 검색이 가능.
+        if customer_ids and len(customer_ids) > 1:
+            return self._hybrid_search(query, query_intent, user_id, effective_ids, top_k)
+
         if query_type == "entity":
             return self._entity_search(query_intent, user_id, effective_ids, top_k)
-
         elif query_type == "concept":
             return self._vector_search(query, user_id, effective_ids, top_k)
-
         else:  # mixed
             return self._hybrid_search(query, query_intent, user_id, effective_ids, top_k)
+
+    def _resolve_customer_doc_ids(self, user_id: str, customer_ids: List[str]) -> List[str]:
+        """
+        고객들의 문서 ID 목록을 MongoDB에서 조회
+
+        Qdrant 벡터 검색 시 doc_id 필터로 사용하여,
+        해당 고객들의 문서 집합 안에서만 유사도 검색을 수행한다.
+        """
+        if len(customer_ids) == 1:
+            cust_filter = {"customerId": ObjectId(customer_ids[0])}
+        else:
+            cust_filter = {"customerId": {"$in": [ObjectId(cid) for cid in customer_ids]}}
+
+        docs = self.collection.find(
+            {"ownerId": user_id, **cust_filter},
+            {"_id": 1}
+        )
+        return [str(doc["_id"]) for doc in docs]
 
     def _entity_search(self, query_intent: Dict, user_id: str, customer_ids: Optional[List[str]], top_k: int) -> List[Dict]:
         """
@@ -330,8 +353,10 @@ class HybridSearchEngine:
         """
         벡터 검색: Qdrant 의미 검색
 
-        고객 필터링: Qdrant payload에 customer_id가 없는 기존 문서가 많으므로,
-        Qdrant에서 owner_id만 필터링하고, MongoDB에서 customer_ids 후처리 필터링 수행
+        고객 필터링 전략:
+        - customer_ids 지정 시: MongoDB에서 해당 고객들의 doc_ids를 먼저 조회한 뒤,
+          Qdrant에서 그 문서 집합 안에서만 유사도 검색 수행 (관계 확장 검색에 핵심)
+        - customer_ids 미지정 시: owner_id만 필터링하여 전체 문서 대상 검색
         """
         # 쿼리 임베딩
         try:
@@ -347,9 +372,24 @@ class HybridSearchEngine:
             self.last_embedding_response = None
             return []
 
-        # Qdrant 검색 (owner_id만 필터링, customer_ids는 MongoDB에서 후처리)
-        qdrant_limit = top_k * 3 if customer_ids else top_k
+        # Qdrant 필터 구성
         filter_conditions = [models.FieldCondition(key="owner_id", match=models.MatchValue(value=user_id))]
+
+        if customer_ids:
+            # 고객 문서 집합을 먼저 확정 → 그 안에서 유사도 검색
+            target_doc_ids = self._resolve_customer_doc_ids(user_id, customer_ids)
+            if not target_doc_ids:
+                print(f"🔍 고객 문서 없음 (고객수: {len(customer_ids)})")
+                return []
+
+            filter_conditions.append(
+                models.FieldCondition(key="doc_id", match=models.MatchAny(any=target_doc_ids))
+            )
+            # 문서 수 × 청크 배수 (문서당 여러 청크 존재)
+            qdrant_limit = max(top_k, len(target_doc_ids) * 5)
+            print(f"🔍 고객 문서 집합: {len(target_doc_ids)}개 문서 내 유사도 검색 (고객수: {len(customer_ids)})")
+        else:
+            qdrant_limit = top_k
 
         try:
             search_results = self.qdrant_client.search(
@@ -377,32 +417,7 @@ class HybridSearchEngine:
                     "payload": hit.payload
                 }
 
-        # 고객 필터링: MongoDB에서 customerId 확인 (단일 또는 복수)
-        if customer_ids and doc_map:
-            doc_ids = list(doc_map.keys())
-            try:
-                if len(customer_ids) == 1:
-                    cust_filter = {"customerId": ObjectId(customer_ids[0])}
-                else:
-                    cust_filter = {"customerId": {"$in": [ObjectId(cid) for cid in customer_ids]}}
-
-                customer_filter_docs = self.collection.find(
-                    {
-                        "_id": {"$in": [ObjectId(d) for d in doc_ids]},
-                        **cust_filter
-                    },
-                    {"_id": 1}
-                )
-                valid_doc_ids = set(str(doc["_id"]) for doc in customer_filter_docs)
-
-                doc_map = {k: v for k, v in doc_map.items() if k in valid_doc_ids}
-                print(f"🔍 고객 필터링 후: {len(valid_doc_ids)}개 문서 (원본: {len(doc_ids)}개, 고객수: {len(customer_ids)})")
-            except Exception as e:
-                print(f"⚠️ MongoDB 고객 필터링 오류 (무시하고 진행): {e}")
-                send_error_log("aims_rag_api", f"MongoDB 고객 필터링 오류: {e}", e)
-
         results = list(doc_map.values())
-        # 점수 기준 정렬 (같은 점수일 경우 doc_id로 일관된 순서 보장)
         results.sort(key=lambda x: (-x["score"], x["doc_id"]))
         return results[:top_k]
 
