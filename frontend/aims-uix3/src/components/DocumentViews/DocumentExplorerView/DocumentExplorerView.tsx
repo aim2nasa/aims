@@ -11,10 +11,13 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { DocumentStatusProvider } from '@/providers/DocumentStatusProvider'
 import { useDocumentStatusContext } from '@/contexts/DocumentStatusContext'
+import { usePersistedState } from '@/hooks/usePersistedState'
 import { DocumentExplorerToolbar } from './DocumentExplorerToolbar'
 import { DocumentExplorerTree } from './DocumentExplorerTree'
 import { InitialFilterBar } from '@/shared/ui/InitialFilterBar'
+import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from './types/documentExplorer'
 import { useDocumentExplorerTree } from './hooks/useDocumentExplorerTree'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
 import './DocumentExplorerView.toolbar.css';
 import './DocumentExplorerView.tree.css';
@@ -42,7 +45,9 @@ const DocumentExplorerContent: React.FC<{
   onDocumentClick?: (documentId: string) => void
   onDocumentDoubleClick?: (document: Document) => void
   onCustomerClick?: (customerId: string) => void
-}> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick }) => {
+  selectedInitial: string | null
+  onSelectedInitialChange: (initial: string | null) => void
+}> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick, selectedInitial, onSelectedInitialChange }) => {
   const { state, actions } = useDocumentStatusContext()
 
   // 🍎 파일명 표시 모드 (별칭/원본) - localStorage 동기화
@@ -55,6 +60,31 @@ const DocumentExplorerContent: React.FC<{
     setFilenameMode(mode)
     localStorage.setItem('aims-filename-mode', mode)
   }, [])
+
+  // 서버사이드 초성 카운트 (DB 전체 대상)
+  const [serverInitialCounts, setServerInitialCounts] = React.useState<Map<string, number>>(new Map())
+
+  const fetchInitialCounts = React.useCallback(async () => {
+    const counts = await DocumentStatusService.getDocumentInitials('excludeMyFiles')
+    const map = new Map<string, number>()
+    KOREAN_INITIALS.forEach(i => map.set(i, 0))
+    ALPHABET_INITIALS.forEach(i => map.set(i, 0))
+    NUMBER_INITIALS.forEach(i => map.set(i, 0))
+    Object.entries(counts).forEach(([k, v]) => map.set(k, v as number))
+    setServerInitialCounts(map)
+  }, [])
+
+  React.useEffect(() => { fetchInitialCounts() }, [fetchInitialCounts])
+
+  React.useEffect(() => {
+    const handleRefresh = () => { void fetchInitialCounts() }
+    window.addEventListener('documentLinked', handleRefresh)
+    window.addEventListener('refresh-document-library', handleRefresh)
+    return () => {
+      window.removeEventListener('documentLinked', handleRefresh)
+      window.removeEventListener('refresh-document-library', handleRefresh)
+    }
+  }, [fetchInitialCounts])
 
   const {
     groupBy,
@@ -73,8 +103,6 @@ const DocumentExplorerContent: React.FC<{
     dateFilter,
     thumbnailEnabled,
     initialType,
-    selectedInitial,
-    initialCustomerCounts,
     setGroupBy,
     toggleNode,
     toggleExpandAll,
@@ -90,7 +118,6 @@ const DocumentExplorerContent: React.FC<{
     clearDateFilter,
     setThumbnailEnabled,
     setInitialType,
-    setSelectedInitial,
   } = useDocumentExplorerTree({
     documents: state.documents,
     isLoading: state.isLoading,
@@ -167,8 +194,8 @@ const DocumentExplorerContent: React.FC<{
         initialType={initialType}
         onInitialTypeChange={setInitialType}
         selectedInitial={selectedInitial}
-        onSelectedInitialChange={setSelectedInitial}
-        initialCounts={initialCustomerCounts}
+        onSelectedInitialChange={onSelectedInitialChange}
+        initialCounts={serverInitialCounts}
         countLabel="건"
         targetLabel="고객"
       />
@@ -215,6 +242,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
   onCustomerClick,
 }) => {
   const breadcrumbItems = getBreadcrumbItems('documents-explorer')
+  const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('doc-explorer-selected-initial', null)
 
   return (
     <CenterPaneView
@@ -223,11 +251,13 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
       breadcrumbItems={breadcrumbItems}
       onClose={onClose}
     >
-      <DocumentStatusProvider searchQuery="" fileScope="excludeMyFiles" initialItemsPerPage={500}>
+      <DocumentStatusProvider searchQuery="" fileScope="excludeMyFiles" initialItemsPerPage={500} initialFilter={selectedInitial}>
         <DocumentExplorerContent
           onDocumentClick={onDocumentClick}
           onDocumentDoubleClick={onDocumentDoubleClick}
           onCustomerClick={onCustomerClick}
+          selectedInitial={selectedInitial}
+          onSelectedInitialChange={setSelectedInitial}
         />
       </DocumentStatusProvider>
     </CenterPaneView>

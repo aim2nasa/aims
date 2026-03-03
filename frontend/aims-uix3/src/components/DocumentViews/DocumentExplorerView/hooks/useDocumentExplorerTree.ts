@@ -7,8 +7,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import type { Document } from '@/types/documentStatus'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData, DocumentTreeNode, QuickFilterType, InitialType } from '../types/documentExplorer'
-import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from '../types/documentExplorer'
-import { buildTree, collectAllKeys, filterDocuments, sortTreeNodes, getDocumentDate, getNameInitial } from '../utils/treeBuilders'
+import { buildTree, collectAllKeys, filterDocuments, sortTreeNodes, getDocumentDate } from '../utils/treeBuilders'
 
 const MAX_RECENT_DOCUMENTS = 5
 
@@ -40,10 +39,6 @@ export interface UseDocumentExplorerTreeResult {
   thumbnailEnabled: boolean
   /** 초성 필터 타입 (한글/영문/숫자) */
   initialType: InitialType
-  /** 선택된 초성 */
-  selectedInitial: string | null
-  /** 초성별 고객 카운트 (호버 시 표시용) */
-  initialCustomerCounts: Map<string, number>
 
   // Actions
   setGroupBy: (groupBy: DocumentGroupBy) => void
@@ -65,8 +60,6 @@ export interface UseDocumentExplorerTreeResult {
   setThumbnailEnabled: (enabled: boolean) => void
   /** 초성 타입 변경 */
   setInitialType: (type: InitialType) => void
-  /** 초성 선택/해제 */
-  setSelectedInitial: (initial: string | null) => void
 }
 
 /**
@@ -118,11 +111,6 @@ export function useDocumentExplorerTree({
     'doc-explorer-initial-type',
     'korean' // 기본값: 한글
   )
-  const [selectedInitial, setSelectedInitialState] = usePersistedState<string | null>(
-    'doc-explorer-selected-initial',
-    null // 기본값: 전체
-  )
-
   // Non-persisted states
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   const [isAllExpanded, setIsAllExpanded] = useState(false)
@@ -135,50 +123,6 @@ export function useDocumentExplorerTree({
       .map((id) => documents.find((doc) => (doc._id || doc.id) === id))
       .filter((doc): doc is Document => doc !== undefined)
   }, [recentDocumentIds, documents])
-
-  // 초성별 고객 카운트 계산
-  const initialCustomerCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-
-    // 고객명 목록 추출 (중복 제거)
-    const customerNames = new Set<string>()
-    documents.forEach((doc) => {
-      const customerName = doc.customer_relation?.customer_name
-      if (customerName) {
-        customerNames.add(customerName)
-      }
-    })
-
-    // 현재 initialType에 해당하는 초성 목록
-    const initials = initialType === 'korean'
-      ? KOREAN_INITIALS
-      : initialType === 'alphabet'
-        ? ALPHABET_INITIALS
-        : NUMBER_INITIALS
-
-    // 각 초성별 고객 수 계산
-    initials.forEach((initial) => {
-      const count = Array.from(customerNames).filter((name) =>
-        getNameInitial(name, initialType) === initial
-      ).length
-      counts.set(initial, count)
-    })
-
-    return counts
-  }, [documents, initialType])
-
-  // 초성 필터 적용 (고객명 기준)
-  const applyInitialFilter = useCallback(
-    (docs: Document[], initial: string | null, type: InitialType): Document[] => {
-      if (!initial) return docs
-
-      return docs.filter((doc) => {
-        const customerName = doc.customer_relation?.customer_name || ''
-        return getNameInitial(customerName, type) === initial
-      })
-    },
-    []
-  )
 
   // 빠른 필터 적용
   const applyQuickFilter = useCallback(
@@ -243,9 +187,8 @@ export function useDocumentExplorerTree({
     result = applyQuickFilter(result, quickFilter)
     result = applyCustomerFilter(result, customerFilter)
     result = applyDateFilter(result, dateFilter)
-    result = applyInitialFilter(result, selectedInitial, initialType)
     return result
-  }, [documents, searchTerm, quickFilter, customerFilter, dateFilter, selectedInitial, initialType, applyQuickFilter, applyCustomerFilter, applyDateFilter, applyInitialFilter])
+  }, [documents, searchTerm, quickFilter, customerFilter, dateFilter, applyQuickFilter, applyCustomerFilter, applyDateFilter])
 
   // 트리 데이터 빌드 (정렬 적용)
   // 검색어가 있을 때도 그룹핑 유지, 매칭 그룹을 상단에 표시
@@ -425,24 +368,14 @@ export function useDocumentExplorerTree({
     setCustomerFilterState(null)
     setDateFilter(null)
     setSearchTermState('')
-    setSelectedInitialState(null)
-  }, [setQuickFilterState, setSearchTermState, setSelectedInitialState])
+  }, [setQuickFilterState, setSearchTermState])
 
   // 초성 타입 변경
   const setInitialType = useCallback(
     (type: InitialType) => {
       setInitialTypeState(type)
-      setSelectedInitialState(null) // 타입 변경 시 선택 초기화
     },
-    [setInitialTypeState, setSelectedInitialState]
-  )
-
-  // 초성 선택/해제
-  const setSelectedInitial = useCallback(
-    (initial: string | null) => {
-      setSelectedInitialState(initial)
-    },
-    [setSelectedInitialState]
+    [setInitialTypeState]
   )
 
   // 날짜 필터 해제
@@ -554,8 +487,6 @@ export function useDocumentExplorerTree({
     dateFilter,
     thumbnailEnabled,
     initialType,
-    selectedInitial,
-    initialCustomerCounts,
 
     // Actions
     setGroupBy,
@@ -576,6 +507,5 @@ export function useDocumentExplorerTree({
     clearDateFilter,
     setThumbnailEnabled,
     setInitialType,
-    setSelectedInitial,
   }
 }
