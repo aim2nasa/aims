@@ -1691,7 +1691,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
                       {/* 🍎 액션 버튼들 */}
                       <div className="row-actions">
-                        {/* 🍎 상세 보기 버튼 */}
+                        {/* 🍎 상세 보기 버튼 (개발자 모드 전용) */}
+                        {isDevMode && (
                         <Tooltip content="상세 보기">
                           <button
                             className="action-button action-button--detail"
@@ -1704,6 +1705,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <EyeIcon />
                       </button>
                     </Tooltip>
+                        )}
 
                     {/* 🍎 요약 보기 버튼 */}
                     <Tooltip content="요약 보기">
