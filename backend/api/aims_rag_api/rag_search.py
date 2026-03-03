@@ -6,7 +6,7 @@ from openai import OpenAI
 from qdrant_client import QdrantClient, models
 # 💡 T11 변경 사항 시작
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import requests
 import json
 
@@ -181,7 +181,7 @@ class SearchRequest(BaseModel):
     search_mode: str = "semantic"
     user_id: Optional[str] = None
     customer_id: Optional[str] = None
-    top_k: Optional[int] = None  # 결과 개수 제한 (None=전체 반환)
+    top_k: Optional[int] = Field(None, ge=1, le=50)  # 결과 개수 제한 (1~50, None=기본값 사용)
     offset: int = 0  # 페이지네이션: 건너뛸 결과 수
 
 class UnifiedSearchResponse(BaseModel):
@@ -416,7 +416,7 @@ async def search_endpoint(request: SearchRequest):
 
             # 2단계: 하이브리드 검색 (offset + top_k + 여유분 가져오기)
             # 🔥 페이지네이션: offset을 고려하여 충분한 결과 가져오기
-            effective_top_k = request.top_k if request.top_k is not None else 200
+            effective_top_k = request.top_k if request.top_k is not None else 30
             fetch_count = max(50, request.offset + effective_top_k + 10)  # 최소 50개 또는 필요한 만큼
             search_start = time.time()
             search_results = hybrid_engine.search(

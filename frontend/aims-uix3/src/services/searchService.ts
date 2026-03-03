@@ -214,123 +214,12 @@ export class SearchService {
         }
       }
 
-      // 키워드 검색의 경우 MongoDB에서 customer_relation 조회 후 customer_name 보강
+      // 키워드 검색: 백엔드(SmartSearch)에서 customer_relation 포함하여 반환하므로
+      // 프론트엔드에서 개별 API 호출 없이 그대로 사용
       if (query.search_mode === 'keyword' && data.search_results && data.search_results.length > 0) {
-        // 1단계: 각 검색 결과에 대해 MongoDB에서 customer_relation 조회
-        const enrichedWithRelation = await Promise.all(
-          data.search_results.map(async (item: SearchResultItem) => {
-            // 이미 customer_relation이 있으면 그대로 반환
-            if (item.customer_relation) return item
-
-            // _id로 문서 상태 조회하여 customer_relation 가져오기
-            const docId = ('_id' in item && item._id) || ('id' in item && item.id)
-            if (!docId) return item
-
-            try {
-              // 🔥 getAuthToken 사용으로 v1/v2 호환
-              const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-              const token = getAuthToken();
-              const docResponse = await fetch(`/api/documents/${docId}/status`, {
-                headers: {
-                  'x-user-id': currentUserId,
-                  ...(token && { Authorization: `Bearer ${token}` })
-                }
-              })
-              if (!docResponse.ok) return item
-
-              const docData = await docResponse.json()
-              if (!docData.success || !docData.data?.raw?.customer_relation) return item
-
-              return {
-                ...item,
-                customer_relation: docData.data.raw.customer_relation,
-                ...(docData.data.raw.displayName && { displayName: docData.data.raw.displayName })  // 🍎 별칭
-              }
-            } catch (error) {
-              console.error(`[SearchService] 키워드 검색 - 문서 ${docId} customer_relation 조회 오류:`, error)
-              errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments.keywordEnrich', payload: { docId } })
-              return item
-            }
-          })
-        )
-
-        // 2단계: customer_name 보강 (customer_relation이 있지만 customer_name이 없는 경우)
-        // ⭐ 유효한 customerId만 API 조회 (플레이스홀더 ID 제외)
-        const customerIds = new Set<string>()
-        const invalidCustomerIds = new Set<string>()  // 🆕 내 보관함용
-        enrichedWithRelation.forEach((item) => {
-          if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
-            const customerId = String(item.customer_relation.customer_id)
-            if (isValidCustomerId(customerId)) {
-              customerIds.add(customerId)
-            } else {
-              invalidCustomerIds.add(customerId)  // 플레이스홀더 ID → 내 보관함
-            }
-          }
-        })
-
-        // customer_name + customer_type 일괄 조회 (효율적! 유효한 ID만)
-        const customerMap: Record<string, { name: string | null; type: string | null }> = {}
-        if (customerIds.size > 0) {
-          await Promise.all(
-            Array.from(customerIds).map(async (customerId) => {
-              try {
-                // ⭐ 설계사별 고객 데이터 격리 (🔥 getAuthToken 사용으로 v1/v2 호환)
-                const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-                const tokenForCustomer = getAuthToken();
-                const customerResponse = await fetch(`/api/customers/${customerId}`, {
-                  headers: {
-                    'x-user-id': currentUserId,
-                    ...(tokenForCustomer && { Authorization: `Bearer ${tokenForCustomer}` })
-                  }
-                })
-                if (customerResponse.ok) {
-                  const customerData = await customerResponse.json()
-                  if (customerData.success && customerData.data) {
-                    customerMap[customerId] = {
-                      name: customerData.data.personal_info?.name || null,
-                      type: customerData.data.insurance_info?.customer_type || null
-                    }
-                  }
-                }
-              } catch (error) {
-                console.error(`[SearchService] 고객 ${customerId} 조회 오류:`, error)
-                errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments.keywordCustomer', payload: { customerId } })
-              }
-            })
-          )
-        }
-
-        // 🆕 유효하지 않은 customerId는 "내 보관함"으로 표시
-        invalidCustomerIds.forEach((customerId) => {
-          customerMap[customerId] = {
-            name: MY_STORAGE_DISPLAY_NAME,
-            type: MY_STORAGE_MARKER
-          }
-        })
-
-        // 검색 결과에 customer_name + customer_type 추가
-        const enrichedResults = enrichedWithRelation.map((item) => {
-          if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
-            const customerId = String(item.customer_relation.customer_id)
-            const customerInfo = customerMap[customerId]
-            if (customerInfo) {
-              return {
-                ...item,
-                customer_relation: {
-                  ...item.customer_relation,
-                  customer_name: customerInfo.name,
-                  customer_type: customerInfo.type
-                }
-              }
-            }
-          }
-          return item
-        })
-
         return {
           answer: data.answer || null,
-          search_results: enrichedResults,
+          search_results: data.search_results,
           search_mode: query.search_mode,
         }
       }

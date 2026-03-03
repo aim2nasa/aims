@@ -249,10 +249,11 @@ describe('useDocumentSearch', () => {
         expect(result.current.isLoading).toBe(false)
       })
 
-      // semantic 모드에서는 mode 파라미터가 포함되지 않음 (top_k는 서버 결정)
+      // semantic 모드에서는 mode 파라미터가 포함되지 않고, top_k가 포함됨
       expect(SearchService.searchDocuments).toHaveBeenCalledWith({
         query: '시맨틱 검색',
-        search_mode: 'semantic'
+        search_mode: 'semantic',
+        top_k: 10
       })
       expect(result.current.results).toEqual(mockResults)
       expect(result.current.answer).toBeNull()
@@ -599,7 +600,8 @@ describe('useDocumentSearch', () => {
       })
       expect(SearchService.searchDocuments).toHaveBeenNthCalledWith(2, {
         query: '테스트',
-        search_mode: 'semantic'
+        search_mode: 'semantic',
+        top_k: 10
       })
     })
   })

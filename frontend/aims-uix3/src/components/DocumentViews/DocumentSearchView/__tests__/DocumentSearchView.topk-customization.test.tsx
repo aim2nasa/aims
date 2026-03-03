@@ -373,7 +373,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
   })
 
   describe('[회귀 방지] API 요청 검증', () => {
-    it('AI 검색 시에도 top_k가 API 요청에 포함되지 않아야 함 (서버 결정)', async () => {
+    it('AI 검색 시 top_k가 API 요청에 포함되어야 함', async () => {
       const user = userEvent.setup()
       const { container } = renderComponent()
 
@@ -390,17 +390,15 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       await user.type(searchInput, 'AI 검색 테스트')
       await user.keyboard('{Enter}')
 
-      // API 호출 확인 — top_k는 서버가 결정하므로 프론트엔드에서 보내지 않음
+      // API 호출 확인 — semantic 검색 시 top_k가 포함됨
       await waitFor(() => {
         expect(mockSearchDocuments).toHaveBeenCalledWith(
           expect.objectContaining({
             query: 'AI 검색 테스트',
-            search_mode: 'semantic'
+            search_mode: 'semantic',
+            top_k: 10
           })
         )
-
-        const callArgs = mockSearchDocuments.mock.calls[0]![0]
-        expect(callArgs).not.toHaveProperty('top_k')
       })
     })
 

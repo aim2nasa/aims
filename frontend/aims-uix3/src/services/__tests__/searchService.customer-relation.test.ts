@@ -273,3 +273,203 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
     });
   });
 });
+
+
+describe('SearchService - 키워드 검색 customer_relation (N+1 제거)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    global.fetch = vi.fn();
+    localStorageMock.clear();
+    Object.defineProperty(global, 'localStorage', { value: localStorageMock, writable: true });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('키워드 검색 결과에 백엔드가 반환한 customer_relation이 그대로 전달된다', async () => {
+    const mockSearchResponse = {
+      search_results: [
+        {
+          _id: 'doc1',
+          upload: { originalName: 'test.pdf' },
+          customer_relation: {
+            customer_id: '507f1f77bcf86cd799439011',
+            customer_name: '홍길동',
+            customer_type: '개인'
+          }
+        },
+        {
+          _id: 'doc2',
+          upload: { originalName: 'test2.pdf' },
+          customer_relation: {
+            customer_id: '507f1f77bcf86cd799439012',
+            customer_name: '김영희',
+            customer_type: '법인'
+          }
+        }
+      ],
+      search_mode: 'keyword'
+    };
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSearchResponse
+      } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '테스트',
+      search_mode: 'keyword',
+      mode: 'AND'
+    });
+
+    // 백엔드에서 반환한 customer_relation이 그대로 전달됨
+    expect((result.search_results[0] as any).customer_relation).toEqual({
+      customer_id: '507f1f77bcf86cd799439011',
+      customer_name: '홍길동',
+      customer_type: '개인'
+    });
+    expect((result.search_results[1] as any).customer_relation).toEqual({
+      customer_id: '507f1f77bcf86cd799439012',
+      customer_name: '김영희',
+      customer_type: '법인'
+    });
+
+    // N+1 개별 API 호출이 없어야 함 (RAG API 호출 1건만)
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('키워드 검색 결과에 customer_name이 null인 경우에도 정상 반환된다', async () => {
+    const mockSearchResponse = {
+      search_results: [
+        {
+          _id: 'doc1',
+          upload: { originalName: 'test.pdf' },
+          customer_relation: {
+            customer_id: '507f1f77bcf86cd799439011',
+            customer_name: null,
+            customer_type: null
+          }
+        }
+      ],
+      search_mode: 'keyword'
+    };
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSearchResponse
+      } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '테스트',
+      search_mode: 'keyword'
+    });
+
+    // customer_name이 null이어도 customer_relation은 반환됨
+    expect((result.search_results[0] as any).customer_relation.customer_id).toBe('507f1f77bcf86cd799439011');
+    expect((result.search_results[0] as any).customer_relation.customer_name).toBeNull();
+
+    // 추가 API 호출 없음
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('키워드 검색 결과에 "내 보관함" (플레이스홀더 ID)이 포함되면 정상 처리된다', async () => {
+    const mockSearchResponse = {
+      search_results: [
+        {
+          _id: 'doc1',
+          upload: { originalName: 'my-file.pdf' },
+          customer_relation: {
+            customer_id: '000000000000000000000001',
+            customer_name: '내 보관함',
+            customer_type: '__MY_STORAGE__'
+          }
+        }
+      ],
+      search_mode: 'keyword'
+    };
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSearchResponse
+      } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '테스트',
+      search_mode: 'keyword'
+    });
+
+    // "내 보관함" 처리가 백엔드에서 완료됨
+    expect((result.search_results[0] as any).customer_relation.customer_name).toBe('내 보관함');
+    expect((result.search_results[0] as any).customer_relation.customer_type).toBe('__MY_STORAGE__');
+
+    // 추가 API 호출 없음
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('키워드 검색 시 customer_relation 없는 결과도 정상 반환된다', async () => {
+    const mockSearchResponse = {
+      search_results: [
+        {
+          _id: 'doc1',
+          upload: { originalName: 'orphan.pdf' }
+          // customer_relation 없음 (customerId 없는 문서)
+        }
+      ],
+      search_mode: 'keyword'
+    };
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSearchResponse
+      } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '테스트',
+      search_mode: 'keyword'
+    });
+
+    // customer_relation이 없어도 결과 반환
+    expect(result.search_results).toHaveLength(1);
+    expect((result.search_results[0] as any).customer_relation).toBeUndefined();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('키워드 검색 시 2000+ 결과에도 개별 API 호출이 발생하지 않는다', async () => {
+    // 대량 결과 시뮬레이션
+    const largeResults = Array.from({ length: 2000 }, (_, i) => ({
+      _id: `doc${i}`,
+      upload: { originalName: `file${i}.pdf` },
+      customer_relation: {
+        customer_id: `507f1f77bcf86cd79943${String(i % 100).padStart(4, '0')}`,
+        customer_name: `고객${i % 100}`,
+        customer_type: '개인'
+      }
+    }));
+
+    const mockSearchResponse = {
+      search_results: largeResults,
+      search_mode: 'keyword'
+    };
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSearchResponse
+      } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '테스트',
+      search_mode: 'keyword'
+    });
+
+    // 2000개 결과 모두 반환
+    expect(result.search_results).toHaveLength(2000);
+    // RAG API 호출 1건만 (N+1 없음!)
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+});

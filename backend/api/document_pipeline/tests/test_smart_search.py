@@ -488,11 +488,11 @@ class TestSmartSearchResponseFormat:
             assert data[0]["customerId"] == str(customer_id)
 
     @pytest.mark.asyncio
-    async def test_result_limit(self, client):
-        """결과 수 제한 (100개)"""
+    async def test_no_result_limit(self, client):
+        """결과 수 제한 없음 (키워드 검색은 전체 반환)"""
         with patch("routers.smart_search.MongoService") as mock_mongo:
 
-            # 100개 이상의 결과
+            # 150개 결과 — 제한 없이 모두 반환
             mock_results = [
                 {
                     "_id": ObjectId(),
@@ -503,8 +503,7 @@ class TestSmartSearchResponseFormat:
             ]
 
             mock_cursor = MagicMock()
-            # to_list(length=100)으로 제한됨
-            mock_cursor.to_list = AsyncMock(return_value=mock_results[:100])
+            mock_cursor.to_list = AsyncMock(return_value=mock_results)
 
             mock_collection = MagicMock()
             mock_collection.find.return_value = mock_cursor
@@ -521,5 +520,5 @@ class TestSmartSearchResponseFormat:
             assert response.status_code == 200
             data = response.json()
 
-            # 최대 100개로 제한
-            assert len(data) <= 100
+            # 전체 결과 반환 (제한 없음)
+            assert len(data) == 150

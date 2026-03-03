@@ -82,6 +82,7 @@ docker run -d \
   --name $CONTAINER_NAME \
   -p 8000:8000 \
   --network=host \
+  --restart=unless-stopped \
   -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
   $IMAGE_NAME
 
