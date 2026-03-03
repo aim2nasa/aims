@@ -428,9 +428,23 @@ async def search_endpoint(request: SearchRequest):
             )
             timing["search_time"] = time.time() - search_start
 
-            # 3단계: Cross-Encoder 재순위화 (전체 결과 재순위화)
+            # 3단계: Cross-Encoder 재순위화 (상위 50개만 — CPU에서 전체 재순위화 시 1분+ 소요)
+            RERANK_LIMIT = 50
             rerank_start = time.time()
-            all_reranked = reranker.rerank(request.query, search_results, top_k=len(search_results))  # 전체 재순위화
+            if len(search_results) <= RERANK_LIMIT:
+                all_reranked = reranker.rerank(request.query, search_results, top_k=len(search_results))
+            else:
+                # 상위 50개만 정밀 재순위화, 나머지는 원본 벡터 유사도 순서 유지
+                top_candidates = search_results[:RERANK_LIMIT]
+                remaining = search_results[RERANK_LIMIT:]
+                reranked_top = reranker.rerank(request.query, top_candidates, top_k=len(top_candidates))
+                # 나머지에 원본 점수 기반 final_score 부여 (재순위화 결과보다 아래)
+                min_reranked_score = min(r.get("final_score", 0) for r in reranked_top) if reranked_top else 0
+                for i, result in enumerate(remaining):
+                    result["rerank_score"] = 0.0
+                    result["original_score"] = result.get("score", 0.0)
+                    result["final_score"] = min_reranked_score - 0.001 * (i + 1)
+                all_reranked = reranked_top + remaining
             timing["rerank_time"] = time.time() - rerank_start
 
             # 🔥 페이지네이션: offset 적용하여 결과 슬라이싱
@@ -441,9 +455,10 @@ async def search_endpoint(request: SearchRequest):
                 top_results = all_reranked[request.offset:]
             print(f"✅ 재순위화 완료: 전체 {total_reranked}개 중 {len(top_results)}개 반환 (offset={request.offset}, top_k={request.top_k})")
 
-            # 4단계: LLM 답변 생성
+            # 4단계: LLM 답변 생성 (상위 5개만 컨텍스트로 사용 — 토큰 절약)
+            LLM_CONTEXT_LIMIT = 5
             llm_start = time.time()
-            final_answer, llm_response = generate_answer_with_llm(request.query, top_results)
+            final_answer, llm_response = generate_answer_with_llm(request.query, top_results[:LLM_CONTEXT_LIMIT])
             timing["llm_time"] = time.time() - llm_start
 
             # 전체 시간 계산
