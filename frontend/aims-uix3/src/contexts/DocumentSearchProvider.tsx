@@ -19,7 +19,6 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
   const [searchMode, setSearchMode] = usePersistedState<SearchMode>('document-search-mode', 'keyword')
   const [keywordMode, setKeywordMode] = usePersistedState<KeywordMode>('document-search-keyword-mode', 'AND')
   const [customerId, setCustomerId] = useState<string | null>(null)
-  const [topK, setTopK] = usePersistedState<number>('document-search-top-k', 10)
   // 검색 결과는 대량 데이터(2000+건)이므로 sessionStorage 저장 불가 (5MB 한도 초과)
   const [results, setResults] = useState<DocumentSearchContextValue['results']>([])
   const [answer, setAnswer] = useState<string | null>(null)
@@ -45,7 +44,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
         query: query.trim(),
         search_mode: searchMode,
         ...(searchMode === 'keyword' && { mode: keywordMode }),
-        ...(searchMode === 'semantic' && { top_k: topK }),
+        // semantic 모드: top_k 미전송 → 백엔드가 전체 결과 반환
         ...(customerId && { customer_id: customerId })
       }
 
@@ -61,7 +60,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     } finally {
       setIsLoading(false)
     }
-  }, [keywordMode, query, searchMode, customerId, topK])
+  }, [keywordMode, query, searchMode, customerId])
 
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value)
@@ -81,10 +80,6 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     setCustomerId(id)
   }, [])
 
-  const handleTopKChange = useCallback((value: number) => {
-    setTopK(value)
-  }, [])
-
   const handleReset = useCallback(() => {
     setQuery('')
     setResults([])
@@ -99,7 +94,6 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     searchMode,
     keywordMode,
     customerId,
-    topK,
     results,
     answer,
     isLoading,
@@ -110,7 +104,6 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     handleSearchModeChange,
     handleKeywordModeChange,
     handleCustomerIdChange,
-    handleTopKChange,
     handleReset
   }
 

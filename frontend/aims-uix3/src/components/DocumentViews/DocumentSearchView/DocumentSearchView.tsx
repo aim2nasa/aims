@@ -90,14 +90,6 @@ const KEYWORD_MODE_OPTIONS: DropdownOption[] = [
   { value: 'OR', label: 'OR' },
 ]
 
-// AI 검색 결과 개수 옵션 정의
-const TOP_K_OPTIONS: DropdownOption[] = [
-  { value: '5', label: '상위 5개' },
-  { value: '10', label: '상위 10개' },
-  { value: '25', label: '상위 25개' },
-  { value: '50', label: '상위 50개' },
-  { value: '100', label: '상위 100개' },
-]
 
 export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   visible,
@@ -118,7 +110,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     searchMode,
     keywordMode,
     customerId,
-    topK,
     results,
     answer,
     isLoading,
@@ -129,7 +120,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     handleSearchModeChange,
     handleKeywordModeChange,
     handleCustomerIdChange,
-    handleTopKChange,
     handleReset,
   } = useDocumentSearch()
 
@@ -1214,17 +1204,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               onChange={(value) => handleKeywordModeChange(value as KeywordMode)}
               aria-label="키워드 모드 선택"
               width={75}
-            />
-          )}
-
-          {/* 🍎 Progressive Disclosure: AI 검색 시 결과 개수 선택 */}
-          {searchMode === 'semantic' && (
-            <Dropdown
-              value={String(topK)}
-              options={TOP_K_OPTIONS}
-              onChange={(value) => handleTopKChange(Number(value))}
-              aria-label="AI 검색 결과 개수 선택"
-              width={110}
             />
           )}
 

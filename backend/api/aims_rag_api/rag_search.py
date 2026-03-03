@@ -460,9 +460,11 @@ async def search_endpoint(request: SearchRequest):
             else:
                 print(f"🔍 고객 필터: 전체")
 
-            # 2단계: 하이브리드 검색 (offset + top_k + 여유분 가져오기)
-            effective_top_k = request.top_k if request.top_k is not None else 30
-            fetch_count = max(50, request.offset + effective_top_k + 10)
+            # 2단계: 하이브리드 검색 (top_k=None이면 전체 결과 반환)
+            if request.top_k is not None:
+                fetch_count = max(50, request.offset + request.top_k + 10)
+            else:
+                fetch_count = 500  # top_k 미지정 시 충분한 수의 결과 가져오기
             search_start = time.time()
             search_results = await asyncio.to_thread(
                 hybrid_engine.search,

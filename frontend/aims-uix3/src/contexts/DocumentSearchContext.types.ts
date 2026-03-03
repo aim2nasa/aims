@@ -14,7 +14,6 @@ export interface DocumentSearchContextValue {
   searchMode: SearchMode
   keywordMode: KeywordMode
   customerId: string | null
-  topK: number
   results: SearchResultItem[]
   answer: string | null
   isLoading: boolean
@@ -27,7 +26,6 @@ export interface DocumentSearchContextValue {
   handleSearchModeChange: (mode: SearchMode) => void
   handleKeywordModeChange: (mode: KeywordMode) => void
   handleCustomerIdChange: (customerId: string | null) => void
-  handleTopKChange: (topK: number) => void
   handleReset: () => void
 }
 
