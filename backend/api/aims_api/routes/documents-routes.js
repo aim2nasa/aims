@@ -671,7 +671,7 @@ router.get('/documents', authenticateJWT, async (req, res) => {
  */
 router.get('/documents/status', authenticateJWT, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField } = req.query;
+    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField, period } = req.query;
     const skip = (page - 1) * limit;
 
     // (정렬 디버깅 로그 제거됨 — 성능 최적화)
@@ -721,6 +721,28 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       } else {
         // 원본 모드 (기본값): originalName에서만 검색
         filter['upload.originalName'] = { $regex: escapedSearch, $options: 'i' };
+      }
+    }
+
+    // 📊 기간 필터 (DocumentManagementView 최근 활동용)
+    const VALID_PERIODS = ['1week', '1month', '3months', '6months', '1year'];
+    if (period && VALID_PERIODS.includes(period)) {
+      const cutoff = new Date();
+      switch (period) {
+        case '1week': cutoff.setDate(cutoff.getDate() - 7); break;
+        case '1month': cutoff.setMonth(cutoff.getMonth() - 1); break;
+        case '3months': cutoff.setMonth(cutoff.getMonth() - 3); break;
+        case '6months': cutoff.setMonth(cutoff.getMonth() - 6); break;
+        case '1year': cutoff.setFullYear(cutoff.getFullYear() - 1); break;
+      }
+      const periodExpr = { $gte: [
+        { $toDate: { $ifNull: ['$upload.uploaded_at', new Date(0)] } },
+        cutoff
+      ]};
+      if (filter.$expr) {
+        filter.$expr = { $and: [filter.$expr, periodExpr] };
+      } else {
+        filter.$expr = periodExpr;
       }
     }
 
@@ -1310,10 +1332,40 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
       filter.batchId = batchId;
     }
 
-    const documents = await db.collection(COLLECTION_NAME).aggregate([
-      { $match: filter },
-      ...TEXT_FLAG_STAGES
-    ]).toArray();
+    // 📊 파일 타입 분포 집계를 기존 통계와 병렬 실행 (batchId 없을 때만)
+    const [documents, fileTypeDistribution] = await Promise.all([
+      db.collection(COLLECTION_NAME).aggregate([
+        { $match: filter },
+        ...TEXT_FLAG_STAGES
+      ]).toArray(),
+      !batchId ? db.collection(COLLECTION_NAME).aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            _filename: { $toLower: { $ifNull: ['$upload.originalName', ''] } }
+          }
+        },
+        {
+          $addFields: {
+            _parts: { $split: ['$_filename', '.'] }
+          }
+        },
+        {
+          $addFields: {
+            _extension: {
+              $cond: {
+                if: { $gt: [{ $size: '$_parts' }, 1] },
+                then: { $toUpper: { $arrayElemAt: ['$_parts', -1] } },
+                else: 'UNKNOWN'
+              }
+            }
+          }
+        },
+        { $group: { _id: '$_extension', count: { $sum: 1 } } },
+        { $project: { _id: 0, label: '$_id', count: 1 } },
+        { $sort: { count: -1 } }
+      ]).toArray() : Promise.resolve([])
+    ]);
 
     const stats = {
       total: documents.length,
@@ -1412,6 +1464,11 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
         }
       }
     });
+
+    // 📊 파일 타입 분포 추가 (batchId 없을 때)
+    if (!batchId) {
+      stats.fileTypeDistribution = fileTypeDistribution;
+    }
 
     res.json({
       success: true,

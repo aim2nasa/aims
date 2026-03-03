@@ -26,10 +26,10 @@ vi.mock('@/services/DocumentService', () => ({
   }
 }))
 
-// Mock DocumentStatusService
+// Mock DocumentStatusService (최근 활동 서버사이드 조회)
 vi.mock('@/services/DocumentStatusService', () => ({
   DocumentStatusService: {
-    getAllDocuments: vi.fn().mockResolvedValue({ documents: [] })
+    getRecentDocuments: vi.fn().mockResolvedValue({ documents: [], pagination: { totalCount: 0 } })
   }
 }))
 

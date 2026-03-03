@@ -633,6 +633,7 @@ export class DocumentService {
         OCR: Number(stats.badgeTypes?.OCR) || 0,
         BIN: Number(stats.badgeTypes?.BIN) || 0,
       },
+      fileTypeDistribution: Array.isArray(stats.fileTypeDistribution) ? stats.fileTypeDistribution : [],
     };
   }
 
@@ -920,6 +921,7 @@ export interface DocumentStatistics {
     OCR: number;
     BIN: number;
   };
+  fileTypeDistribution?: Array<{ label: string; count: number }>;
 }
 
 /**

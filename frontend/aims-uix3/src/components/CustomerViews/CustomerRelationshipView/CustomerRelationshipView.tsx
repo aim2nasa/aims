@@ -1443,6 +1443,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                   setSelectedUnassignedCustomer(null);
                 }}
                 onClose={() => setSelectedUnassignedCustomer(null)}
+                initialCustomers={allCustomers}
+                initialRelationships={relationships}
               />
             </div>
           )}
@@ -1457,6 +1459,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                   setSelectedUnassignedCorporate(null);
                 }}
                 onClose={() => setSelectedUnassignedCorporate(null)}
+                initialCustomers={allCustomers}
+                initialRelationships={relationships}
               />
             </div>
           )}

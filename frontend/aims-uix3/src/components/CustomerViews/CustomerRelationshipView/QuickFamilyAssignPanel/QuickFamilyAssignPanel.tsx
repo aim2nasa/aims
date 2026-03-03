@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { RelationshipService, type CreateRelationshipData } from '@/services/relationshipService';
+import { RelationshipService, type CreateRelationshipData, type Relationship } from '@/services/relationshipService';
 import { CustomerService } from '@/services/customerService';
 import { CustomerUtils, type Customer } from '@/entities/customer/model';
 import Button from '@/shared/ui/Button';
@@ -33,6 +33,10 @@ interface QuickFamilyAssignPanelProps {
   onClose: () => void;
   /** 패널 모드: 가족 등록 또는 법인 구성원 등록 */
   mode?: PanelMode;
+  /** 📊 부모 뷰에서 이미 로드한 고객 목록 (중복 API 호출 방지) */
+  initialCustomers?: Customer[];
+  /** 📊 부모 뷰에서 이미 로드한 관계 데이터 (중복 API 호출 방지) */
+  initialRelationships?: Relationship[];
 }
 
 /** 가족 관계 유형 */
@@ -57,6 +61,8 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
   onComplete,
   onClose,
   mode = 'family',
+  initialCustomers,
+  initialRelationships,
 }) => {
   // 모드별 설정
   const isCorporateMode = mode === 'corporate';
@@ -104,14 +110,24 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
 
     const loadAllData = async () => {
       try {
-        // 고객 목록과 가족 관계를 병렬로 로드
-        const [customersResponse, relationshipsResponse] = await Promise.all([
-          CustomerService.getCustomers({ limit: 10000, page: 1 }),
-          RelationshipService.getAllRelationshipsWithCustomers()
-        ]);
+        // 📊 부모 뷰에서 데이터를 전달받았으면 API 호출 생략 (-2.7MB)
+        let customersList: Customer[];
+        let relationshipsList: Relationship[];
+
+        if (initialCustomers && initialRelationships) {
+          customersList = initialCustomers;
+          relationshipsList = initialRelationships;
+        } else {
+          const [customersResponse, relationshipsResponse] = await Promise.all([
+            CustomerService.getCustomers({ limit: 10000, page: 1 }),
+            RelationshipService.getAllRelationshipsWithCustomers()
+          ]);
+          customersList = customersResponse.customers;
+          relationshipsList = relationshipsResponse.relationships;
+        }
 
         // 고객 목록 설정
-        setAllCustomers(customersResponse.customers);
+        setAllCustomers(customersList);
         setCustomersLoading(false);
 
         // 가족 관계 ID 추출
@@ -119,7 +135,7 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         const representativeIds = new Set<string>(); // 가족 대표 (family_representative 필드)
         const employeeIds = new Set<string>(); // 법인 관계자 (corporate)
 
-        relationshipsResponse.relationships.forEach(rel => {
+        relationshipsList.forEach(rel => {
           const category = rel.relationship_info?.relationship_category;
 
           // from_customer ID 추출

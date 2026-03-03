@@ -40,6 +40,8 @@ export function useDocumentStatusListSSE(
   // 콜백을 ref로 저장하여 의존성 문제 해결
   const onRefreshRef = useRef(onRefresh)
   const onDocumentChangeRef = useRef(onDocumentChange)
+  // 📊 debounce 타이머 (SSE 이벤트 폭격 방지)
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 최신 콜백 참조 유지
   useEffect(() => {
@@ -49,6 +51,26 @@ export function useDocumentStatusListSSE(
   useEffect(() => {
     onDocumentChangeRef.current = onDocumentChange
   }, [onDocumentChange])
+
+  // 📊 debounced refresh: 500ms 내 중복 호출을 하나로 병합
+  const debouncedRefresh = useCallback((delay: number = 500) => {
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current)
+    }
+    refreshTimerRef.current = setTimeout(() => {
+      refreshTimerRef.current = null
+      onRefreshRef.current()
+    }, delay)
+  }, [])
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current)
+      }
+    }
+  }, [])
 
   // 이벤트 핸들러
   const handleEvent = useCallback((eventType: string, data: unknown) => {
@@ -63,14 +85,12 @@ export function useDocumentStatusListSSE(
         // 콜백 호출
         onDocumentChangeRef.current?.(eventData)
 
-        // 🔄 webhook에서 overallStatus를 직접 업데이트하므로 즉시 새로고침
-        // 약간의 지연(300ms)은 MongoDB write → read 완료 보장용
-        setTimeout(() => {
-          if (import.meta.env.DEV) {
-            console.log('[DocumentStatusListSSE] fetchDocuments 호출 시작')
-          }
-          onRefreshRef.current()
-        }, 300)
+        // 🔄 webhook에서 overallStatus를 직접 업데이트하므로 새로고침
+        // 📊 debounce로 연속 이벤트 시 API 호출 병합
+        if (import.meta.env.DEV) {
+          console.log('[DocumentStatusListSSE] fetchDocuments debounced 호출')
+        }
+        debouncedRefresh(500)
       } catch (error) {
         console.error('[DocumentStatusListSSE] document-list-change 이벤트 처리 실패:', error)
         errorReporter.reportApiError(error as Error, { component: 'useDocumentStatusListSSE.documentListChange' })
@@ -91,14 +111,11 @@ export function useDocumentStatusListSSE(
         if (onDocumentChangeRef.current) {
           onDocumentChangeRef.current(eventData)
           // 🛡️ 안전장치: 3초 후 최종 상태 확인 (SSE 누락/불일치 자동 복구)
-          setTimeout(() => {
-            onRefreshRef.current()
-          }, 3000)
+          // 📊 debounce로 연속 progress 이벤트 시 API 호출 병합
+          debouncedRefresh(3000)
         } else {
-          // fallback: 콜백이 없으면 딜레이 후 새로고침
-          setTimeout(() => {
-            onRefreshRef.current()
-          }, 300)
+          // fallback: 콜백이 없으면 debounce 후 새로고침
+          debouncedRefresh(500)
         }
       } catch (error) {
         console.error('[DocumentStatusListSSE] document-progress 이벤트 처리 실패:', error)
@@ -115,8 +132,8 @@ export function useDocumentStatusListSSE(
     if (import.meta.env.DEV) {
       console.log('[DocumentStatusListSSE] 연결됨:', data)
     }
-    // 연결 즉시 최신 상태 조회 (놓친 이벤트 복구)
-    onRefreshRef.current()
+    // 연결 즉시 최신 상태 조회 (놓친 이벤트 복구, 짧은 debounce)
+    debouncedRefresh(300)
   }, [])
 
   // 오류 핸들러

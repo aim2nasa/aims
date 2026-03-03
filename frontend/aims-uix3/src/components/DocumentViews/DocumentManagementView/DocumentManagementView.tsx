@@ -117,15 +117,15 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     enabled: visible,
   });
 
-  // 전체 문서 목록 조회 (문서 유형 통계 및 최근 활동용)
+  // 📊 최근 활동 문서 조회 (서버사이드 기간 필터링, 최대 200건)
   const {
-    data: allDocuments,
+    data: recentDocumentsData,
     isLoading: isRecentLoading,
     isError: isRecentError,
   } = useQuery({
-    queryKey: ['allDocumentsForStats'],
+    queryKey: ['recentDocumentsForManagement', activityPeriod],
     queryFn: () =>
-      DocumentStatusService.getRecentDocuments(1, 10000, 'uploadTime_desc'), // 전체 조회
+      DocumentStatusService.getRecentDocuments(1, 200, 'uploadTime_desc', undefined, undefined, undefined, undefined, activityPeriod),
     enabled: visible,
   });
 
@@ -212,83 +212,11 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     return null;
   };
 
-  /**
-   * 기간별 문서 개수 계산
-   */
-  const getDocumentCountByPeriod = (period: ActivityPeriod): number => {
-    if (!allDocuments?.documents) return 0;
+  // 📊 기간별 문서 개수 (서버사이드 totalCount 사용)
+  const recentDocumentCount = recentDocumentsData?.pagination?.totalCount ?? recentDocumentsData?.documents?.length ?? 0;
 
-    const now = new Date();
-    const cutoff = new Date();
-
-    switch (period) {
-      case '1week':
-        cutoff.setDate(now.getDate() - 7);
-        break;
-      case '1month':
-        cutoff.setMonth(now.getMonth() - 1);
-        break;
-      case '3months':
-        cutoff.setMonth(now.getMonth() - 3);
-        break;
-      case '6months':
-        cutoff.setMonth(now.getMonth() - 6);
-        break;
-      case '1year':
-        cutoff.setFullYear(now.getFullYear() - 1);
-        break;
-    }
-
-    return allDocuments.documents.filter((doc) => {
-      const docDate = getDocumentDate(doc as any);
-      if (!docDate) return false;
-      return docDate >= cutoff;
-    }).length;
-  };
-
-  /**
-   * 최근 문서 목록 (테이블 표시용, 기간 필터링 적용)
-   */
-  const recentDocumentList = useMemo(() => {
-    if (!allDocuments?.documents) return [];
-
-    // 기간 계산
-    const now = new Date();
-    const cutoffDate = new Date();
-
-    switch (activityPeriod) {
-      case '1week':
-        cutoffDate.setDate(now.getDate() - 7);
-        break;
-      case '1month':
-        cutoffDate.setMonth(now.getMonth() - 1);
-        break;
-      case '3months':
-        cutoffDate.setMonth(now.getMonth() - 3);
-        break;
-      case '6months':
-        cutoffDate.setMonth(now.getMonth() - 6);
-        break;
-      case '1year':
-        cutoffDate.setFullYear(now.getFullYear() - 1);
-        break;
-    }
-
-    // 기간 내 문서 필터링 및 정렬 (최신순)
-    const filtered = allDocuments.documents.filter((doc) => {
-      const docDate = getDocumentDate(doc as any);
-      if (!docDate) return false;
-      return docDate >= cutoffDate;
-    });
-
-    // 날짜 기준 내림차순 정렬 (최신이 위로)
-    return filtered.sort((a, b) => {
-      const dateA = getDocumentDate(a as any);
-      const dateB = getDocumentDate(b as any);
-      if (!dateA || !dateB) return 0;
-      return dateB.getTime() - dateA.getTime();
-    });
-  }, [allDocuments, activityPeriod]);
+  // 📊 최근 문서 목록 (서버사이드 기간 필터 + 정렬 완료)
+  const recentDocumentList = recentDocumentsData?.documents ?? [];
 
   /**
    * 시간 표시 포맷 (상대 시간)
@@ -404,30 +332,18 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     ].filter(item => item.count > 0); // 0인 항목은 제외
   }, [stats]);
 
-  // 실제 문서 타입 데이터 (MIME type 기반)
+  // 📊 문서 타입 분포 (서버사이드 집계 사용)
   const actualFileTypePieData: FileTypeData[] = useMemo(() => {
-    if (!allDocuments?.documents) return [];
-
-    const typeCounts: Record<string, number> = {};
-
-    allDocuments.documents.forEach(doc => {
-      const fileType = getFileTypeCategory(doc.mimeType, doc.filename || doc.originalName);
-      typeCounts[fileType] = (typeCounts[fileType] || 0) + 1;
-    });
+    if (!stats?.fileTypeDistribution?.length) return [];
 
     const typeColors: Record<string, string> = {
-      // PDF
       'PDF': 'var(--color-error)',
-      // Word 계열 - 파란색
       'DOCX': 'var(--color-primary-500)',
       'DOC': 'var(--color-ios-blue)',
-      // Excel 계열 - 녹색
       'XLSX': 'var(--color-success)',
       'XLS': 'var(--color-ios-green)',
-      // PowerPoint 계열 - 주황색
       'PPTX': 'var(--color-warning)',
       'PPT': 'var(--color-ios-orange)',
-      // 이미지 계열 - 하늘색/보라색
       'JPG': 'var(--color-ios-blue)',
       'JPEG': 'var(--color-ios-blue)',
       'PNG': 'var(--color-ios-teal)',
@@ -436,31 +352,26 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       'WEBP': 'var(--color-ios-cyan)',
       'TIFF': 'var(--color-ios-purple)',
       'IMAGE': 'var(--color-ios-blue)',
-      // 압축 파일 계열 - 보라색
       'ZIP': 'var(--color-ios-purple)',
       'RAR': 'var(--color-ios-purple)',
       '7Z': 'var(--color-ios-purple)',
       'TAR': 'var(--color-ios-indigo)',
       'GZ': 'var(--color-ios-indigo)',
-      // PostScript
       'PS': 'var(--color-ios-orange)',
       'EPS': 'var(--color-ios-orange)',
-      // 텍스트
       'TXT': 'var(--color-neutral-600)',
-      // 기타
       'UNKNOWN': 'var(--color-text-tertiary)'
     };
 
-    return Object.entries(typeCounts)
-      .map(([label, count]) => ({
+    return stats.fileTypeDistribution
+      .map(({ label, count }) => ({
         label,
         count,
         color: typeColors[label] || 'var(--color-text-tertiary)',
         description: `${label.toLowerCase()} 파일`
       }))
-      .sort((a, b) => b.count - a.count) // 개수 많은 순으로 정렬
       .filter(item => item.count > 0);
-  }, [allDocuments]);
+  }, [stats]);
 
   // 사용 가이드 섹션
   const guideSections: GuideSection[] = [
@@ -651,7 +562,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                 <circle cx="10" cy="10" r="9" fill="var(--color-success)"/>
                 <path d="M10 5v5l3.5 3.5" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
               </svg>
-              최근 활동 ({getDocumentCountByPeriod(activityPeriod)}개)
+              최근 활동 ({recentDocumentCount}개)
             </h2>
             <Dropdown
               value={activityPeriod}
