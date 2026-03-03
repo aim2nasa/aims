@@ -11,10 +11,9 @@ import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect, u
 import { useQueryClient } from '@tanstack/react-query';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
-import { Dropdown, Tooltip, Modal, ContextMenu, useContextMenu, type ContextMenuSection, InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui';
+import { Dropdown, Tooltip, Modal, ContextMenu, useContextMenu, type ContextMenuSection, InitialFilterBar, type InitialType } from '@/shared/ui';
 import Button from '@/shared/ui/Button';
 import { SortIndicator } from '@/shared/ui/SortIndicator';
-import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { CustomerService } from '@/services/customerService';
@@ -135,30 +134,103 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       customerContextMenu.open(event);
     }, [customerContextMenu]);
 
-    // Document-View 패턴: CustomerDocument 구독
-    const {
-      customers: allCustomers,
-      isLoading,
-      error,
-      loadCustomers,
-      refresh,
-      lastUpdated,
-    } = useCustomerDocument();
+    // === Server-side paginated data ===
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [serverPagination, setServerPagination] = useState({
+      currentPage: 1, totalPages: 1, totalCount: 0, limit: 15,
+    });
+    const [stats, setStats] = useState<{
+      activePersonal: number; activeCorporate: number;
+      inactivePersonal: number; inactiveCorporate: number;
+    } | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [lastUpdated, setLastUpdated] = useState(0);
 
-    // 초기 데이터 로드 (모든 고객 불러오기: status=all)
-    // dependency를 빈 배열로 설정하여 Strict Mode에서도 최종 마운트 시 한 번만 실행
+    // Debounced search (300ms delay for server-side search)
+    const [debouncedSearch, setDebouncedSearch] = useState(searchValue);
     useEffect(() => {
-      if (import.meta.env.DEV) {
-        console.log('[AllCustomersView] Document 구독 및 초기 데이터 로드');
-      }
-      loadCustomers({ limit: 10000, page: 1, status: 'all' });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+      const timer = setTimeout(() => {
+        setDebouncedSearch(searchValue);
+        // 검색어 변경 시 첫 페이지로 이동 (기존 값과 다를 때만)
+        if (searchValue !== debouncedSearch) {
+          setCurrentPage(1);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchValue]);
 
-    // Note: customerChanged 이벤트 리스너는 불필요
-    // AllCustomersView는 useCustomerDocument 훅을 통해 CustomerDocument를 구독하므로
-    // Document가 변경되면 자동으로 업데이트됨 (Document-View 패턴)
-    // 이벤트 리스너를 추가하면 중복 API 호출로 인한 경쟁 조건(race condition) 발생
+    // Fetch counter for forced re-fetch after CRUD
+    const [fetchKey, setFetchKey] = useState(0);
+
+    // Build server-side query from current filter state
+    const apiQuery = useMemo(() => {
+      let apiStatus: string;
+      let apiCustomerType: '개인' | '법인' | undefined;
+      switch (statusFilter) {
+        case 'active': apiStatus = 'active'; break;
+        case 'inactive': apiStatus = 'inactive'; break;
+        case 'active-personal': apiStatus = 'active'; apiCustomerType = '개인'; break;
+        case 'active-corporate': apiStatus = 'active'; apiCustomerType = '법인'; break;
+        case 'inactive-personal': apiStatus = 'inactive'; apiCustomerType = '개인'; break;
+        case 'inactive-corporate': apiStatus = 'inactive'; apiCustomerType = '법인'; break;
+        default: apiStatus = 'all';
+      }
+      return {
+        page: currentPage,
+        limit: parseInt(itemsPerPage),
+        status: apiStatus,
+        customerType: apiCustomerType,
+        search: debouncedSearch.trim() || undefined,
+        sort: sortField ? `${sortField}_${sortDirection}` : undefined,
+        initial: selectedInitial || undefined,
+      };
+    }, [currentPage, itemsPerPage, statusFilter, debouncedSearch, sortField, sortDirection, selectedInitial]);
+
+    // Fetch customers from server
+    useEffect(() => {
+      let cancelled = false;
+      const fetchData = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          if (import.meta.env.DEV) {
+            console.log('[AllCustomersView] 서버사이드 데이터 로드:', apiQuery);
+          }
+          const response = await CustomerService.getCustomers(apiQuery);
+          if (cancelled) return;
+          setCustomers(response.customers);
+          if (response.pagination) {
+            setServerPagination({
+              currentPage: response.pagination.currentPage ?? 1,
+              totalPages: response.pagination.totalPages ?? 1,
+              totalCount: response.pagination.totalCount ?? response.customers.length,
+              limit: response.pagination.limit ?? parseInt(itemsPerPage),
+            });
+          }
+          if (response.stats) {
+            setStats(response.stats);
+          }
+          setLastUpdated(Date.now());
+        } catch (err) {
+          if (cancelled) return;
+          console.error('[AllCustomersView] 데이터 로드 실패:', err);
+          errorReporter.reportApiError(err as Error, { component: 'AllCustomersView.fetchData' });
+          setError(err instanceof Error ? err.message : '고객 목록 로드 실패');
+        } finally {
+          if (!cancelled) setIsLoading(false);
+        }
+      };
+      fetchData();
+      return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [apiQuery, fetchKey]);
+
+    // Refresh: re-fetch current page (after CRUD operations)
+    const refresh = useCallback(() => {
+      setFetchKey(k => k + 1);
+    }, []);
 
     // 🍎 AI 어시스턴트에서 데이터 변경 시 자동 새로고침
     useEffect(() => {
@@ -166,13 +238,10 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         if (import.meta.env.DEV) {
           console.log('[AllCustomersView] AI 어시스턴트 데이터 변경 감지, 새로고침');
         }
-        refresh({ limit: 10000, page: 1, status: 'all' });
+        refresh();
       };
-
       window.addEventListener('aiAssistantDataChanged', handleAIDataChanged);
-      return () => {
-        window.removeEventListener('aiAssistantDataChanged', handleAIDataChanged);
-      };
+      return () => window.removeEventListener('aiAssistantDataChanged', handleAIDataChanged);
     }, [refresh]);
 
     // 🍎 휴면 처리/복원 후 활성 필터로 자동 전환
@@ -193,215 +262,19 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       };
     }, [setStatusFilter, setCurrentPage]);
 
-    // 검색 및 유형 필터링된 고객 목록
-    const filteredCustomers = useMemo(() => {
-      let customers = allCustomers;
+    // === Server provides filtered/sorted/paginated data directly ===
+    // No client-side filtering chain needed (filteredCustomers, sortedCustomers, visibleCustomers)
 
-      // 상태+유형 통합 필터링
-      switch (statusFilter) {
-        case 'active':
-          customers = customers.filter(c => c.meta?.status === 'active');
-          break;
-        case 'inactive':
-          customers = customers.filter(c => c.meta?.status === 'inactive');
-          break;
-        case 'active-personal':
-          customers = customers.filter(c => c.meta?.status === 'active' && c.insurance_info?.customer_type === '개인');
-          break;
-        case 'active-corporate':
-          customers = customers.filter(c => c.meta?.status === 'active' && c.insurance_info?.customer_type === '법인');
-          break;
-        case 'inactive-personal':
-          customers = customers.filter(c => c.meta?.status === 'inactive' && c.insurance_info?.customer_type === '개인');
-          break;
-        case 'inactive-corporate':
-          customers = customers.filter(c => c.meta?.status === 'inactive' && c.insurance_info?.customer_type === '법인');
-          break;
-        // 'all'이면 필터링하지 않음
-      }
+    // Empty initialCounts for InitialFilterBar (server-side filtering, counts not available client-side)
+    const initialCounts = useMemo(() => new Map<string, number>(), []);
 
-      // 검색 필터링
-      if (searchValue.trim()) {
-        const searchLower = searchValue.toLowerCase().trim();
-        customers = customers.filter(customer => {
-          const name = customer.personal_info?.name?.toLowerCase() || '';
-          const phone = customer.personal_info?.mobile_phone?.replace(/-/g, '') || '';
-          const email = customer.personal_info?.email?.toLowerCase() || '';
-
-          return (
-            name.includes(searchLower) ||
-            phone.includes(searchLower) ||
-            email.includes(searchLower)
-          );
-        });
-      }
-
-      return customers;
-    }, [allCustomers, searchValue, statusFilter]);
-
-
-
-    // 초성별 고객 카운트 계산 (초성 필터 적용 전 기준)
-    const initialCounts = useMemo(() => {
-      let baseCustomers = allCustomers;
-
-      // 상태+유형 필터링 적용 (filteredCustomers와 동일한 로직)
-      switch (statusFilter) {
-        case 'active':
-          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'active');
-          break;
-        case 'inactive':
-          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'inactive');
-          break;
-        case 'active-personal':
-          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'active' && c.insurance_info?.customer_type === '개인');
-          break;
-        case 'active-corporate':
-          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'active' && c.insurance_info?.customer_type === '법인');
-          break;
-        case 'inactive-personal':
-          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'inactive' && c.insurance_info?.customer_type === '개인');
-          break;
-        case 'inactive-corporate':
-          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'inactive' && c.insurance_info?.customer_type === '법인');
-          break;
-      }
-
-      // 검색 필터링 적용
-      if (searchValue.trim()) {
-        const searchLower = searchValue.toLowerCase().trim();
-        baseCustomers = baseCustomers.filter(customer => {
-          const name = customer.personal_info?.name?.toLowerCase() || '';
-          const phone = customer.personal_info?.mobile_phone?.replace(/-/g, '') || '';
-          const email = customer.personal_info?.email?.toLowerCase() || '';
-          return name.includes(searchLower) || phone.includes(searchLower) || email.includes(searchLower);
-        });
-      }
-
-      return calculateInitialCounts(baseCustomers, (c) => c.personal_info?.name || '');
-    }, [allCustomers, statusFilter, searchValue]);
-
-    // 초성 필터 적용된 고객 목록
-    const initialFilteredCustomers = useMemo(() => {
-      return filterByInitial(filteredCustomers, selectedInitial, (c) => c.personal_info?.name || '');
-    }, [filteredCustomers, selectedInitial]);
-
-    // 정렬된 고객 목록 (페이지네이션 적용 전)
-    const sortedCustomers = useMemo(() => {
-      const sorted = [...initialFilteredCustomers];
-
-      // 칼럼 정렬이 활성화된 경우
-      if (sortField) {
-        sorted.sort((a, b) => {
-          let compareResult = 0;
-
-          switch (sortField) {
-            case 'name': {
-              const nameA = a.personal_info?.name || '';
-              const nameB = b.personal_info?.name || '';
-              compareResult = nameA.localeCompare(nameB, 'ko');
-              break;
-            }
-            case 'birth': {
-              const dateA = a.personal_info?.birth_date ? new Date(a.personal_info.birth_date).getTime() : 0;
-              const dateB = b.personal_info?.birth_date ? new Date(b.personal_info.birth_date).getTime() : 0;
-              compareResult = dateA - dateB;
-              break;
-            }
-            case 'gender': {
-              const genderA = a.personal_info?.gender || '';
-              const genderB = b.personal_info?.gender || '';
-              compareResult = genderA.localeCompare(genderB, 'ko');
-              break;
-            }
-            case 'phone': {
-              const phoneA = a.personal_info?.mobile_phone || '';
-              const phoneB = b.personal_info?.mobile_phone || '';
-              compareResult = phoneA.localeCompare(phoneB);
-              break;
-            }
-            case 'email': {
-              const emailA = a.personal_info?.email || '';
-              const emailB = b.personal_info?.email || '';
-              compareResult = emailA.localeCompare(emailB);
-              break;
-            }
-            case 'address': {
-              const addressA = a.personal_info?.address?.address1 || '';
-              const addressB = b.personal_info?.address?.address1 || '';
-              compareResult = addressA.localeCompare(addressB, 'ko');
-              break;
-            }
-            case 'type': {
-              const typeA = a.insurance_info?.customer_type || '';
-              const typeB = b.insurance_info?.customer_type || '';
-              compareResult = typeA.localeCompare(typeB, 'ko');
-              break;
-            }
-            case 'status': {
-              const statusA = a.meta?.status || '';
-              const statusB = b.meta?.status || '';
-              compareResult = statusA.localeCompare(statusB);
-              break;
-            }
-            case 'created': {
-              const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
-              const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
-              compareResult = dateA - dateB;
-              break;
-            }
-          }
-
-          return sortDirection === 'asc' ? compareResult : -compareResult;
-        });
-      } else {
-        // 정렬 없을 때 기본값: 최신순 (등록일 내림차순)
-        sorted.sort((a, b) => {
-          const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
-          const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
-          return dateB - dateA;
-        });
-      }
-
-      return sorted;
-    }, [initialFilteredCustomers, sortField, sortDirection]);
-
-    const itemsPerPageNumber = useMemo(() => {
-      const parsed = parseInt(itemsPerPage, 10);
-      return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
-    }, [itemsPerPage]);
-
-    const totalCustomers = sortedCustomers.length;
+    // Server pagination is the source of truth
+    const totalCustomers = serverPagination.totalCount;
     const isEmpty = totalCustomers === 0 && !isLoading;
+    const pagination = serverPagination;
 
-    // 로컬 pagination 계산
-    const pagination = useMemo(() => {
-      const totalPages = Math.max(1, Math.ceil(totalCustomers / itemsPerPageNumber));
-      const safeCurrentPage = Math.min(currentPage, totalPages);
-
-      return {
-        currentPage: safeCurrentPage,
-        totalPages,
-        limit: itemsPerPageNumber,
-        total: totalCustomers,
-      };
-    }, [currentPage, itemsPerPageNumber, totalCustomers]);
-
-    useEffect(() => {
-      const totalPages = Math.max(1, Math.ceil(totalCustomers / itemsPerPageNumber));
-
-      if (currentPage > totalPages) {
-        setCurrentPage(totalPages);
-      }
-    }, [currentPage, itemsPerPageNumber, totalCustomers]);
-
-    const currentPageForView = pagination.currentPage;
-
-    // 현재 페이지에 표시할 고객들
-    const visibleCustomers = useMemo(() => {
-      const offset = (currentPageForView - 1) * itemsPerPageNumber;
-      return sortedCustomers.slice(offset, offset + itemsPerPageNumber);
-    }, [sortedCustomers, currentPageForView, itemsPerPageNumber]);
+    // Visible customers = the page returned by server
+    const visibleCustomers = customers;
 
     // 🍎 고객 컨텍스트 메뉴 섹션
     const customerContextMenuSections: ContextMenuSection[] = useMemo(() => {
@@ -561,66 +434,24 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       ];
     }, [contextMenuCustomer, onCustomerClick, onCustomerDoubleClick, isDevMode, isDeleteMode, showAlert, refresh]);
 
-    // 개인/법인 고객 수 계산 (활성/휴면/전체 모두)
-    // 초기 로드가 완료된 후에만 계산 (lastUpdated > 0)
+    // Stats from server (type/status breakdown)
     const typeCounts = useMemo(() => {
-      if (import.meta.env.DEV) {
-        console.log('[AllCustomersView] typeCounts 계산 시작, lastUpdated:', lastUpdated, 'allCustomers.length:', allCustomers.length);
-        console.log('[AllCustomersView] allCustomers:', allCustomers.map(c => ({
-          name: c.personal_info?.name,
-          type: c.insurance_info?.customer_type,
-          status: c.meta?.status
-        })));
-      }
-
-      // 아직 초기 데이터 로드가 완료되지 않았으면 빈 카운트 반환
-      // - lastUpdated === 0: 아직 한 번도 로드되지 않음
-      // - isLoading === true: 로딩 중
-      // 둘 중 하나라도 true면 데이터가 완전하지 않으므로 빈 카운트 반환
-      if (lastUpdated === 0 || isLoading) {
+      if (!stats || lastUpdated === 0) {
         return {
           active: { personal: 0, corporate: 0 },
           inactive: { personal: 0, corporate: 0 },
-          all: { personal: 0, corporate: 0 }
+          all: { personal: 0, corporate: 0 },
         };
       }
-
-      const activeCustomers = allCustomers.filter(c => c.meta?.status === 'active');
-      const inactiveCustomers = allCustomers.filter(c => c.meta?.status === 'inactive');
-
-      const result = {
-        active: {
-          personal: activeCustomers.filter(c => c.insurance_info?.customer_type === '개인').length,
-          corporate: activeCustomers.filter(c => c.insurance_info?.customer_type === '법인').length,
-        },
-        inactive: {
-          personal: inactiveCustomers.filter(c => c.insurance_info?.customer_type === '개인').length,
-          corporate: inactiveCustomers.filter(c => c.insurance_info?.customer_type === '법인').length,
-        },
+      return {
+        active: { personal: stats.activePersonal, corporate: stats.activeCorporate },
+        inactive: { personal: stats.inactivePersonal, corporate: stats.inactiveCorporate },
         all: {
-          personal: allCustomers.filter(c => c.insurance_info?.customer_type === '개인').length,
-          corporate: allCustomers.filter(c => c.insurance_info?.customer_type === '법인').length,
-        }
+          personal: stats.activePersonal + stats.inactivePersonal,
+          corporate: stats.activeCorporate + stats.inactiveCorporate,
+        },
       };
-
-      if (import.meta.env.DEV) {
-        console.log('[AllCustomersView] typeCounts 계산 완료:', result);
-      }
-
-      return result;
-    }, [allCustomers, lastUpdated]);
-
-    // 필터링된 고객 수 계산 (테이블에 보이는 고객)
-    const filteredCount = useMemo(() => {
-      return filteredCustomers.length;
-    }, [filteredCustomers]);
-
-    // 활성/휴면 고객 수 계산 (전체 기준)
-    const statusCounts = useMemo(() => {
-      const active = allCustomers.filter(c => c.meta?.status === 'active').length;
-      const inactive = allCustomers.filter(c => c.meta?.status === 'inactive').length;
-      return { active, inactive, total: allCustomers.length };
-    }, [allCustomers]);
+    }, [stats, lastUpdated]);
 
     // refresh 함수를 부모에게 노출
     useImperativeHandle(ref, () => ({
@@ -628,14 +459,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     }), [refresh]);
 
     const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setSearchValue(value);
-      setCurrentPage(1); // 검색 시 첫 페이지로 이동
+      setSearchValue(e.target.value);
+      // 페이지 리셋은 debounce effect에서 처리
     };
 
     const handleClearSearch = () => {
       setSearchValue('');
-      setCurrentPage(1);
+      // 페이지 리셋은 debounce effect에서 처리
     };
 
     const handleItemsPerPageChange = (value: string) => {
@@ -656,18 +486,18 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     };
 
     const handlePrevPage = () => {
-      if (currentPageForView > 1) {
+      if (pagination.currentPage > 1) {
         setPrevArrowClicked(true);
         setTimeout(() => setPrevArrowClicked(false), 150);
-        setCurrentPage(currentPageForView - 1);
+        setCurrentPage(pagination.currentPage - 1);
       }
     };
 
     const handleNextPage = () => {
-      if (currentPageForView < pagination.totalPages) {
+      if (pagination.currentPage < pagination.totalPages) {
         setNextArrowClicked(true);
         setTimeout(() => setNextArrowClicked(false), 150);
-        setCurrentPage(currentPageForView + 1);
+        setCurrentPage(pagination.currentPage + 1);
       }
     };
 
@@ -744,7 +574,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         }
 
         // 삭제 완료 후 새로고침 및 상태 초기화
-        await refresh({ limit: 10000, page: 1 });
+        refresh();
         setSelectedCustomerIds(new Set());
         setIsDeleteMode(false);
 
@@ -768,7 +598,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const handleDeleteAll = () => {
       setDeleteAllConfirmModal({
         isOpen: true,
-        totalCount: allCustomers.length
+        totalCount: serverPagination.totalCount
       });
     };
 
@@ -785,7 +615,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         });
 
         // 삭제 완료 후 새로고침 및 상태 초기화
-        await refresh({ limit: 10000, page: 1 });
+        refresh();
         setSelectedCustomerIds(new Set());
         setIsDeleteMode(false);
 
@@ -880,7 +710,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => refresh({ limit: 10000, page: 1 })}
+              onClick={() => refresh()}
               className="error-dismiss-button"
               aria-label="에러 닫기"
             >
@@ -1005,7 +835,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                       variant="destructive"
                       size="sm"
                       onClick={handleDeleteAll}
-                      disabled={isDeleting || allCustomers.length === 0}
+                      disabled={isDeleting || serverPagination.totalCount === 0}
                     >
                       전체 삭제
                     </Button>

@@ -450,15 +450,16 @@ export class CustomerDocument {
 
   /**
    * 전체 데이터 새로고침
-   * 기본값: limit: 10000, page: 1 (전체 데이터 로드)
-   * Zod 스키마의 기본 limit: 20이 적용되는 것을 방지
+   * 호출처에서 명시적으로 limit을 전달해야 함
+   * RegionalView/RelationshipView: limit=10000 (전체 데이터 필요)
+   * AllCustomersView: 서버사이드 페이지네이션 사용 (CustomerDocument 미사용)
    */
   async refresh(query?: Partial<CustomerSearchQuery>): Promise<void> {
     if (import.meta.env.DEV) {
       console.log('[CustomerDocument] 전체 데이터 새로고침');
     }
-    // 기본 query 설정 (limit이 없으면 10000, status='all' 적용)
-    const defaultQuery = { limit: 10000, page: 1, status: 'all' as const };
+    // 기본 query 설정 (limit이 없으면 100, status='all' 적용)
+    const defaultQuery = { limit: 100, page: 1, status: 'all' as const };
     const mergedQuery = query ? { ...defaultQuery, ...query } : defaultQuery;
     await this.loadCustomers(mergedQuery);
   }

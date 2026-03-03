@@ -10,9 +10,9 @@
  * - 실시간 검색 기능
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Customer } from '@/entities/customer/model';
-import { useCustomerDocument } from '@/hooks/useCustomerDocument';
+import { CustomerService } from '@/services/customerService';
 import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
 import { DraggableModal } from '../DraggableModal';
 import { Button } from '../Button';
@@ -89,8 +89,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   title = '고객 선택',
   filterCustomerType,
 }) => {
-  // CustomerDocument 훅 사용
-  const { customers: allCustomers, isLoading, loadCustomers } = useCustomerDocument();
+  // Server-side data state (직접 API 호출, limit=10000 제거)
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [stats, setStats] = useState<{ activePersonal: number; activeCorporate: number; inactivePersonal: number; inactiveCorporate: number } | null>(null);
+  const fetchIdRef = useRef(0);
 
   // 📱 디바이스 감지
   const { isMobileLayout: isMobile, isLandscape, isPhoneLandscape } = useDeviceOrientation();
@@ -128,14 +131,32 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     setColumnWidthRatios(activeColumns.widths);
   }, [activeColumns]);
 
-  // 모달 열릴 때 전체 고객 로드
+  // 서버사이드 데이터 로드 함수
+  const fetchCustomers = useCallback(async (query: Partial<import('@/entities/customer/model').CustomerSearchQuery>) => {
+    const id = ++fetchIdRef.current;
+    setIsLoading(true);
+    try {
+      const response = await CustomerService.getCustomers(query);
+      if (fetchIdRef.current !== id) return; // stale response
+      setAllCustomers(response.customers);
+      if (response.stats) {
+        setStats(response.stats);
+      }
+    } catch (err) {
+      if (fetchIdRef.current !== id) return;
+      console.error('[CustomerSelectorModal] 데이터 로드 실패:', err);
+    } finally {
+      if (fetchIdRef.current === id) setIsLoading(false);
+    }
+  }, []);
+
+  // 모달 열릴 때 초기 데이터 로드 (100건, 서버사이드)
   useEffect(() => {
     if (visible) {
-      console.log('[CustomerSelectorModal] 고객 데이터 로딩 시작');
-      loadCustomers({ limit: 10000, page: 1, status: 'all' });
+      const customerType = filterCustomerType === '개인' ? '개인' : filterCustomerType === '법인' ? '법인' : undefined;
+      fetchCustomers({ limit: 100, page: 1, status: 'all', customerType });
       setSelectedCustomer(null);
       setSearchQuery('');
-      // filterCustomerType이 설정되어 있으면 해당 타입으로 고정
       if (filterCustomerType === '개인') {
         setActiveTab('personal');
       } else if (filterCustomerType === '법인') {
@@ -144,7 +165,23 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
         setActiveTab('all');
       }
     }
-  }, [visible, loadCustomers, filterCustomerType]);
+  }, [visible, fetchCustomers, filterCustomerType]);
+
+  // 검색어/초성 변경 시 서버사이드 재요청 (debounce 300ms)
+  useEffect(() => {
+    if (!visible) return;
+    const timer = setTimeout(() => {
+      fetchCustomers({
+        limit: 100,
+        page: 1,
+        status: 'all',
+        search: searchQuery.trim() || undefined,
+        initial: selectedInitial || undefined,
+        customerType: filterCustomerType || undefined,
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedInitial, visible, fetchCustomers, filterCustomerType]);
 
   // 개인/법인으로 분류 및 정렬
   const { personalCustomers, corporateCustomers } = useMemo(() => {
@@ -175,20 +212,6 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
 
   // 검색 중인지 여부
   const isSearching = searchQuery.trim().length > 0;
-
-  // 검색 필터링
-  const searchResults = useMemo(() => {
-    if (!isSearching) {
-      return [];
-    }
-
-    const query = searchQuery.toLowerCase().trim();
-    return allCustomers.filter(customer => {
-      const name = customer.personal_info?.name?.toLowerCase() || '';
-      const phone = customer.personal_info?.mobile_phone?.replace(/-/g, '') || '';
-      return name.includes(query) || phone.includes(query);
-    });
-  }, [allCustomers, searchQuery, isSearching]);
 
   // 한글 초성 추출 함수
   const getInitialConsonant = (name: string): string => {
@@ -288,12 +311,13 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     setColumnWidthRatios(activeColumns.widths);
   }, [activeColumns]);
 
-  // 표시할 고객 목록 (탭 + 초성 필터링 + 정렬)
+  // 표시할 고객 목록 (탭 + 정렬, 검색/초성 필터는 서버사이드)
   const displayedCustomers = useMemo(() => {
     let customers: Customer[];
 
     if (isSearching) {
-      customers = searchResults;
+      // 서버에서 이미 검색 필터링됨 → allCustomers 그대로 사용
+      customers = allCustomers;
     } else {
       switch (activeTab) {
         case 'personal':
@@ -308,13 +332,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       }
     }
 
-    // 초성 필터 적용
-    if (selectedInitial && !isSearching) {
-      customers = customers.filter(customer => {
-        const name = customer.personal_info?.name || '';
-        return getNameInitial(name, initialType) === selectedInitial;
-      });
-    }
+    // 초성 필터는 서버사이드로 이전 (fetchCustomers에서 initial 파라미터 전달)
 
     // 정렬 적용
     if (sortConfig) {
@@ -365,7 +383,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     }
 
     return customers;
-  }, [activeTab, allCustomers, personalCustomers, corporateCustomers, isSearching, searchResults, selectedInitial, initialType, sortConfig]);
+  }, [activeTab, allCustomers, personalCustomers, corporateCustomers, isSearching, sortConfig]);
 
   // 고객 선택
   const handleSelectCustomer = useCallback((customer: Customer) => {
@@ -462,7 +480,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 className="customer-selector-modal__tab-icon"
                 decorative
               />
-              전체 ({allCustomers.length})
+              전체 ({stats ? stats.activePersonal + stats.activeCorporate + stats.inactivePersonal + stats.inactiveCorporate : allCustomers.length})
             </button>
             <button
               className={`customer-selector-modal__tab ${activeTab === 'personal' ? 'active' : ''}`}
@@ -475,7 +493,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 className="customer-selector-modal__tab-icon"
                 decorative
               />
-              개인 ({personalCustomers.length})
+              개인 ({stats ? stats.activePersonal + stats.inactivePersonal : personalCustomers.length})
             </button>
             <button
               className={`customer-selector-modal__tab ${activeTab === 'corporate' ? 'active' : ''}`}
@@ -488,7 +506,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 className="customer-selector-modal__tab-icon"
                 decorative
               />
-              법인 ({corporateCustomers.length})
+              법인 ({stats ? stats.activeCorporate + stats.inactiveCorporate : corporateCustomers.length})
             </button>
           </div>
 

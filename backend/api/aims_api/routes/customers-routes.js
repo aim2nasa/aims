@@ -153,9 +153,34 @@ router.get('/customers', authenticateJWTorAPIKey, async (req, res) => {
       region,
       startDate,
       endDate,
-      hasDocuments
+      hasDocuments,
+      sort,
+      initial,
     } = req.query;
     const skip = (page - 1) * limit;
+
+    // Sort criteria mapping
+    const sortMap = {
+      'name_asc': { 'personal_info.name': 1 },
+      'name_desc': { 'personal_info.name': -1 },
+      'birth_asc': { 'personal_info.birth_date': 1 },
+      'birth_desc': { 'personal_info.birth_date': -1 },
+      'gender_asc': { 'personal_info.gender': 1 },
+      'gender_desc': { 'personal_info.gender': -1 },
+      'phone_asc': { 'personal_info.mobile_phone': 1 },
+      'phone_desc': { 'personal_info.mobile_phone': -1 },
+      'email_asc': { 'personal_info.email': 1 },
+      'email_desc': { 'personal_info.email': -1 },
+      'address_asc': { 'personal_info.address.address1': 1 },
+      'address_desc': { 'personal_info.address.address1': -1 },
+      'type_asc': { 'insurance_info.customer_type': 1 },
+      'type_desc': { 'insurance_info.customer_type': -1 },
+      'status_asc': { 'meta.status': 1 },
+      'status_desc': { 'meta.status': -1 },
+      'created_asc': { 'meta.created_at': 1 },
+      'created_desc': { 'meta.created_at': -1 },
+    };
+    const sortCriteria = (sort && sortMap[sort]) || { 'meta.created_at': -1 };
 
     // ⭐ created_by 필터 추가 (사용자 계정 기능)
     let filter = {
@@ -251,14 +276,78 @@ router.get('/customers', authenticateJWTorAPIKey, async (req, res) => {
       }
     }
 
-    const customers = await db.collection(CUSTOMERS_COLLECTION)
-      .find(filter)
-      .sort({ 'meta.created_at': -1 })
-      .skip(skip)
-      .limit(parseInt(limit))
-      .toArray();
+    // Initial consonant filter (초성/알파벳/숫자)
+    if (initial) {
+      let nameFilter = null;
+      const code = initial.charCodeAt(0);
 
-    const totalCount = await db.collection(CUSTOMERS_COLLECTION).countDocuments(filter);
+      // Korean consonant (ㄱ-ㅎ: U+3131-U+314E)
+      if (code >= 0x3131 && code <= 0x314E) {
+        const rangeMap = {
+          'ㄱ': ['가', '나'], 'ㄲ': ['까', '나'], 'ㄴ': ['나', '다'],
+          'ㄷ': ['다', '라'], 'ㄸ': ['따', '라'], 'ㄹ': ['라', '마'],
+          'ㅁ': ['마', '바'], 'ㅂ': ['바', '사'], 'ㅃ': ['빠', '사'],
+          'ㅅ': ['사', '아'], 'ㅆ': ['싸', '아'], 'ㅇ': ['아', '자'],
+          'ㅈ': ['자', '차'], 'ㅉ': ['짜', '차'], 'ㅊ': ['차', '카'],
+          'ㅋ': ['카', '타'], 'ㅌ': ['타', '파'], 'ㅍ': ['파', '하'],
+          'ㅎ': ['하', '\uD7A4'],
+        };
+        const range = rangeMap[initial];
+        if (range) {
+          nameFilter = { $gte: range[0], $lt: range[1] };
+        }
+      }
+      // Alphabet (A-Z, a-z)
+      else if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+        const upper = initial.toUpperCase();
+        const lower = initial.toLowerCase();
+        nameFilter = { $regex: `^[${escapeRegex(upper)}${escapeRegex(lower)}]` };
+      }
+      // Number (0-9)
+      else if (code >= 48 && code <= 57) {
+        nameFilter = { $regex: `^${escapeRegex(initial)}` };
+      }
+
+      if (nameFilter) {
+        if (filter.$and) {
+          filter.$and.push({ 'personal_info.name': nameFilter });
+        } else if (filter.$or) {
+          filter = { $and: [filter, { 'personal_info.name': nameFilter }] };
+        } else {
+          filter['personal_info.name'] = nameFilter;
+        }
+      }
+    }
+
+    // Parallel query: customers + count + stats
+    const [customers, totalCount, statsResult] = await Promise.all([
+      db.collection(CUSTOMERS_COLLECTION)
+        .find(filter)
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .toArray(),
+      db.collection(CUSTOMERS_COLLECTION).countDocuments(filter),
+      // Stats: type/status breakdown (unfiltered, base filter only)
+      db.collection(CUSTOMERS_COLLECTION).aggregate([
+        { $match: { 'meta.created_by': userId, deleted_at: null } },
+        { $group: {
+          _id: { status: '$meta.status', type: '$insurance_info.customer_type' },
+          count: { $sum: 1 }
+        }}
+      ]).toArray()
+    ]);
+
+    // Process stats into structured object
+    const stats = { activePersonal: 0, activeCorporate: 0, inactivePersonal: 0, inactiveCorporate: 0 };
+    for (const s of statsResult) {
+      const st = s._id.status || 'active';
+      const tp = s._id.type || '개인';
+      if (st === 'active' && tp === '개인') stats.activePersonal = s.count;
+      else if (st === 'active' && tp === '법인') stats.activeCorporate = s.count;
+      else if (st === 'inactive' && tp === '개인') stats.inactivePersonal = s.count;
+      else if (st === 'inactive' && tp === '법인') stats.inactiveCorporate = s.count;
+    }
 
     res.json({
       success: true,
@@ -269,7 +358,8 @@ router.get('/customers', authenticateJWTorAPIKey, async (req, res) => {
           totalPages: Math.ceil(totalCount / limit),
           totalCount,
           limit: parseInt(limit)
-        }
+        },
+        stats
       }
     });
   } catch (error) {

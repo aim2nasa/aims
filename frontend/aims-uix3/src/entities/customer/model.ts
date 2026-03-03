@@ -146,6 +146,8 @@ export const CustomerSearchQuerySchema = z.object({
   endDate: z.string().optional(),
   hasDocuments: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
+  sort: z.string().optional(),
+  initial: z.string().optional(),
 });
 
 /**
@@ -172,6 +174,12 @@ export const CustomerSearchPaginationSchema = z.object({
 export const CustomerSearchResponseSchema = z.object({
   customers: z.array(CustomerSchema),
   pagination: CustomerSearchPaginationSchema.optional(),
+  stats: z.object({
+    activePersonal: z.number(),
+    activeCorporate: z.number(),
+    inactivePersonal: z.number(),
+    inactiveCorporate: z.number(),
+  }).optional(),
   tags: z.array(z.string()).optional(),
   availableTags: z.array(z.string()).optional(),
   filters: z.object({
