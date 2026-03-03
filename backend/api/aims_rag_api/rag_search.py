@@ -192,8 +192,8 @@ class UnifiedSearchResponse(BaseModel):
     has_more: Optional[bool] = None  # 페이지네이션: 더 많은 결과 존재 여부
     log_id: Optional[str] = None  # 검색 로그 ID (피드백 제출 시 사용)
 
-# 보안: 내부망에서만 n8n 접근 (host 네트워크 모드로 localhost 직접 접근)
-SMARTSEARCH_API_URL = "http://localhost:5678/webhook/smartsearch"
+# SmartSearch: document_pipeline FastAPI (n8n 사용 안함 — CLAUDE.md 준수)
+SMARTSEARCH_API_URL = "http://localhost:8100/webhook/smartsearch"
 # 💡 T11 변경 사항 끝
 
 # 1. 쿼리 임베딩 함수 (토큰 추적 추가)
