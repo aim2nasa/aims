@@ -524,13 +524,15 @@ frontend/aims-uix3/tests/performance/
 
 #### 미적용 항목
 
-| # | 조치 | 사유 |
-|---|------|------|
-| P1 #9 | fetchCustomerTypes 배치 API | 백엔드 API 추가 필요 (별도 작업) |
-| P2 #10 | App.tsx Zustand 이관 | 대규모 리팩토링, 별도 판단 필요 |
-| P2 #11 | react-virtual 도입 | 가상화 라이브러리 도입, 별도 작업 |
-| P2 #12 | Context 분할 | 대규모 리팩토링, 별도 판단 필요 |
-| P3 #13~15 | SSE/API 최적화 | 후속 작업으로 검토 |
+| # | 조치 | 사유 | 우선순위 |
+|---|------|------|----------|
+| **P0-NEW-1** | **limit=10000 → 서버사이드 페이지네이션** | S 실측: 서버 응답 12.83s + 다운로드 1.2min. 화면에 15개만 표시하면서 10,000건 전체 요청. 대상: `status`, `customers` API. **응답 32MB — S 체감 로딩의 단일 최대 병목** | **최우선** |
+| **P0-NEW-2** | **geocode API 호출 최적화** | W 실측: geocode 건별 호출 6.47s × N건 (지역별 고객 보기). 주소→좌표 변환을 건별 API 호출 → 배치 호출 또는 좌표 캐싱으로 전환 필요 | **최우선** |
+| P1 #9 | fetchCustomerTypes 배치 API | 백엔드 API 추가 필요 (별도 작업) | 중 |
+| P2 #10 | App.tsx Zustand 이관 | 대규모 리팩토링, 별도 판단 필요 | 낮 |
+| P2 #11 | react-virtual 도입 | 가상화 라이브러리 도입, 별도 작업 | 중 |
+| P2 #12 | Context 분할 | 대규모 리팩토링, 별도 판단 필요 | 낮 |
+| P3 #13~15 | SSE/API 최적화 | 후속 작업으로 검토 | 낮 |
 
 ---
 
@@ -554,6 +556,105 @@ frontend/aims-uix3/tests/performance/
 - Chrome DevTools → Performance 탭 (CPU 4x slowdown으로 S 시뮬레이션 대체 가능)
 - 체감 측정 (프리징 여부, 반응 속도)
 
-#### 테스트 결과
+#### 테스트 결과 (2026-03-03 측정)
 
-> 테스트 완료 후 여기에 기록 예정.
+**측정 조건**: Chrome DevTools Network 탭, Disable cache 체크, Ctrl+Shift+R 강력 새로고침
+**측정 지표**: DOMContentLoaded (HTML+CSS+JS 파싱 완료 시점)
+
+##### 페이지별 DOMContentLoaded 비교
+
+| # | 페이지 | W (고사양) | S (저사양) | 배율 | 비고 |
+|---|--------|-----------|-----------|------|------|
+| 1 | 상세 문서검색 | 143ms | 3.7s | 26x | DOMContentLoaded 기준 |
+| 2 | 전체 고객 보기 | 238ms | 2.91s | 12x | DOMContentLoaded 기준. 화면 완전 표시는 훨씬 느림 |
+| 3 | 지역별 고객 보기 | 248ms | 2.79s | 11x | DOMContentLoaded 기준. 화면 완전 표시는 훨씬 느림 |
+| 4 | 문서 현황 | - | - | - | 측정 예정 |
+| 5 | 고객 상세 | - | - | - | 측정 예정 |
+| 6 | 법인 계약 탭 | - | - | - | 측정 예정 |
+
+##### W(고사양) vs S(저사양) 하드웨어
+
+| | W (wondercastle) | S (송유미 PC) |
+|---|---|---|
+| CPU | i7 (최신) | i5-4590T @ 2.0GHz (2014) |
+| RAM | 32GB DDR5 | 8GB DDR3 |
+| GPU | 전용 GPU | Intel HD 4600 (내장) |
+
+##### 분석
+- S의 DOMContentLoaded 3~4초는 **CPU의 JS 파싱+실행 속도**가 병목 (네트워크 아님)
+- 26배 차이는 하드웨어 세대 차이(DDR3 vs DDR5, 2014 vs 최신 CPU)로 인한 것
+- 추가 개선 여지: 코드 스플리팅(lazy loading), react-virtual(가상 스크롤)로 JS 파싱량 자체를 줄이는 것이 S에 가장 효과적
+
+##### [핵심 발견] limit=10000 API 병목 (전체 고객 보기)
+
+전체 고객 보기 페이지에서 DOMContentLoaded(2.91s) 이후에도 화면이 완전히 뜨기까지 **훨씬 더 오래 걸리는 현상** 확인.
+
+**원인**: `status?page=1&limit=10000` API 요청의 Timing 분석 (S 실측):
+
+| 단계 | 시간 | 설명 |
+|------|------|------|
+| Queueing | 5.59ms | 정상 |
+| Stalled | 11.25ms | 정상 |
+| Request sent | 0.38ms | 정상 |
+| **Waiting for server response** | **12.83s** | 서버가 10,000건 조회+직렬화 |
+| **Content Download** | **1.2 min** | 거대한 JSON 응답 다운로드 |
+| **합계** | **1.4 min** | |
+
+**근본 원인**: 화면에 15개만 표시하면서 `limit=10000`으로 전체 데이터를 한 번에 요청하는 구조.
+- 서버: 10,000건 MongoDB 조회+JSON 직렬화 → 13초
+- 네트워크: 수십 MB JSON 전송 → 1.2분 (S의 네트워크/CPU 파싱 속도)
+- 클라이언트: JSON 파싱 + React 렌더링 → 추가 수초
+
+**영향받는 API** (S 실측):
+- `status?page=1&limit=10000&sort=uploadTime_...` — **32,778 KB (32MB)**, 1.2 min (DocumentStatusService)
+- `customers?page=1&limit=10000&status=all` — 고객 목록
+
+**핵심**: `status` API가 **모든 페이지 진입 시 글로벌로 호출**됨 (DocumentStatusService).
+어떤 페이지를 가든 이 32MB API 1건이 S를 1.4분간 묶어두는 구조.
+→ DOMContentLoaded(2~4초)와 무관하게 **실제 체감 로딩은 1분 이상**.
+
+##### W vs S 병목 지점 차이 (지역별 고객 보기 기준)
+
+| API | W (고사양) | S (저사양) | 비고 |
+|-----|-----------|-----------|------|
+| `status?limit=10000` (32MB) | 5.15s | **1.2 min (72s)** | 같은 API, PC 성능 차이로 14배 |
+| `geocode` (1.3KB × N건) | **6.47s** (W 병목) | geocode 이전에 이미 멈춤 | 지도 좌표 변환, 건별 호출 |
+| DOMContentLoaded | 660ms | 2.79s | |
+| Load | 669ms | - | |
+
+- **W**: CPU/네트워크가 빨라 32MB도 5초에 처리 → geocode 다건 호출(6.47s)이 오히려 병목
+- **S**: 32MB 처리에 1.2분(72초) 소요 → geocode까지 도달 전에 이미 체감 지연 발생
+- 결론: **같은 API라도 PC 성능에 따라 병목 지점이 달라짐**. S 개선의 핵심은 status API 데이터량 축소.
+
+**개선 방안**: `limit=10000` → 서버사이드 페이지네이션(limit=100~500)으로 전환 시 극적 개선 예상.
+이 작업은 프론트엔드 CSS/번들 최적화와 별개의 **API 데이터량 최적화** 영역임.
+
+---
+
+### S 실환경 테스트 최종 결론 (2026-03-03)
+
+#### 주범: `/api/documents/status?page=1&limit=10000&sort=uploadTime_desc`
+
+```
+GET /api/documents/status?page=1&limit=10000
+- 응답 크기: 32,778 KB (32MB)
+- W 응답 시간: 5.15s
+- S 응답 시간: 1.2 min (72s)
+- 호출 주체: DocumentStatusService (글로벌 — 모든 페이지 진입 시 호출)
+```
+
+**이 API 하나가 S 체감 속도의 80% 이상을 결정함.**
+
+- 모든 페이지(상세 문서검색, 전체 고객 보기, 지역별 고객 보기 등)에서 동일하게 호출
+- DOMContentLoaded(2~4초)는 빠르게 완료되지만, 이 API 응답 완료까지 화면 데이터 미표시
+- 프론트엔드 최적화(CSS 분할, vendor 분리, React.memo)는 DOMContentLoaded에만 효과
+- **실제 체감 개선을 위해서는 이 API의 데이터량 축소가 필수**
+
+#### 개선 우선순위 재정리
+
+| 순위 | 작업 | 예상 효과 (S 기준) |
+|------|------|-------------------|
+| **1** | `status` API: limit=10000 → 서버사이드 페이지네이션 | 1.2min → 수초 (체감 **10배 이상** 개선) |
+| **2** | `customers` API: limit=10000 → 서버사이드 페이지네이션 | 추가 개선 |
+| **3** | geocode 배치/캐싱 | 지역별 고객 보기 지도 로딩 개선 |
+| 4 | react-virtual, Context 분할 등 | DOMContentLoaded 추가 단축 |
