@@ -181,7 +181,7 @@ class SearchRequest(BaseModel):
     search_mode: str = "semantic"
     user_id: Optional[str] = None
     customer_id: Optional[str] = None
-    top_k: int = 10  # AI 검색 결과 개수 (기본 10개)
+    top_k: Optional[int] = None  # 결과 개수 제한 (None=전체 반환)
     offset: int = 0  # 페이지네이션: 건너뛸 결과 수
 
 class UnifiedSearchResponse(BaseModel):
@@ -374,9 +374,15 @@ async def search_endpoint(request: SearchRequest):
             # 응답 구조를 통일된 형식으로 변경 + 페이지네이션 적용
             raw_results = response.json()
 
-            # 🔥 페이지네이션: offset과 top_k 적용
+            # 🔥 페이지네이션: offset과 top_k 적용 (top_k=None이면 전체 반환)
             total_count = len(raw_results) if isinstance(raw_results, list) else 0
-            paginated_results = raw_results[request.offset:request.offset + request.top_k] if isinstance(raw_results, list) else raw_results
+            if isinstance(raw_results, list):
+                if request.top_k is not None:
+                    paginated_results = raw_results[request.offset:request.offset + request.top_k]
+                else:
+                    paginated_results = raw_results[request.offset:]
+            else:
+                paginated_results = raw_results
             has_more = (request.offset + len(paginated_results)) < total_count
 
             print(f"✅ 키워드 검색 완료: 전체 {total_count}개 중 {len(paginated_results)}개 반환 (offset={request.offset}, top_k={request.top_k})")
@@ -410,7 +416,8 @@ async def search_endpoint(request: SearchRequest):
 
             # 2단계: 하이브리드 검색 (offset + top_k + 여유분 가져오기)
             # 🔥 페이지네이션: offset을 고려하여 충분한 결과 가져오기
-            fetch_count = max(50, request.offset + request.top_k + 10)  # 최소 50개 또는 필요한 만큼
+            effective_top_k = request.top_k if request.top_k is not None else 200
+            fetch_count = max(50, request.offset + effective_top_k + 10)  # 최소 50개 또는 필요한 만큼
             search_start = time.time()
             search_results = hybrid_engine.search(
                 query=request.query,
@@ -428,7 +435,10 @@ async def search_endpoint(request: SearchRequest):
 
             # 🔥 페이지네이션: offset 적용하여 결과 슬라이싱
             total_reranked = len(all_reranked)
-            top_results = all_reranked[request.offset:request.offset + request.top_k]
+            if request.top_k is not None:
+                top_results = all_reranked[request.offset:request.offset + request.top_k]
+            else:
+                top_results = all_reranked[request.offset:]
             print(f"✅ 재순위화 완료: 전체 {total_reranked}개 중 {len(top_results)}개 반환 (offset={request.offset}, top_k={request.top_k})")
 
             # 4단계: LLM 답변 생성

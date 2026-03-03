@@ -373,7 +373,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
   })
 
   describe('[회귀 방지] API 요청 검증', () => {
-    it('AI 검색 시 선택한 topK 값이 API 요청에 포함되어야 함', async () => {
+    it('AI 검색 시에도 top_k가 API 요청에 포함되지 않아야 함 (서버 결정)', async () => {
       const user = userEvent.setup()
       const { container } = renderComponent()
 
@@ -385,28 +385,22 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
-      // topK를 15로 변경
-      const topKDropdown = container.querySelector('[aria-label="AI 검색 결과 개수 선택"]')
-      const topKTrigger = topKDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
-      await user.click(topKTrigger)
-
-      const topK15Option = await screen.findByRole('option', { name: '상위 15개' })
-      await user.click(topK15Option)
-
       // 검색어 입력
       const searchInput = screen.getByPlaceholderText(/상세 문서검색/i)
       await user.type(searchInput, 'AI 검색 테스트')
       await user.keyboard('{Enter}')
 
-      // API 호출 확인
+      // API 호출 확인 — top_k는 서버가 결정하므로 프론트엔드에서 보내지 않음
       await waitFor(() => {
         expect(mockSearchDocuments).toHaveBeenCalledWith(
           expect.objectContaining({
             query: 'AI 검색 테스트',
-            search_mode: 'semantic',
-            top_k: 15
+            search_mode: 'semantic'
           })
         )
+
+        const callArgs = mockSearchDocuments.mock.calls[0]![0]
+        expect(callArgs).not.toHaveProperty('top_k')
       })
     })
 

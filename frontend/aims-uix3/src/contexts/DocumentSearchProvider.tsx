@@ -44,8 +44,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
         query: query.trim(),
         search_mode: searchMode,
         ...(searchMode === 'keyword' && { mode: keywordMode }),
-        ...(customerId && { customer_id: customerId }),
-        ...(searchMode === 'semantic' && { top_k: topK })
+        ...(customerId && { customer_id: customerId })
       }
 
       const response = await SearchService.searchDocuments(searchQuery)
@@ -60,7 +59,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     } finally {
       setIsLoading(false)
     }
-  }, [keywordMode, query, searchMode, customerId, topK])
+  }, [keywordMode, query, searchMode, customerId])
 
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value)
