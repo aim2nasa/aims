@@ -182,7 +182,7 @@ async def _enrich_customer_relations(results: List[Dict[str, Any]], user_id: str
             customers_collection = MongoService.get_collection("customers")
             object_ids = [ObjectId(cid) for cid in valid_customer_ids.keys()]
             cursor = customers_collection.find(
-                {"_id": {"$in": object_ids}, "ownerId": user_id},
+                {"_id": {"$in": object_ids}, "meta.created_by": user_id},
                 {"personal_info.name": 1, "insurance_info.customer_type": 1}
             )
             async for customer in cursor:
