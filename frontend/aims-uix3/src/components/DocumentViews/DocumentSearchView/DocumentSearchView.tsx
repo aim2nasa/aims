@@ -1935,10 +1935,11 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 <span>검색어 위치</span>
               </div>
             }
-            initialWidth={600}
-            initialHeight={400}
+            initialWidth={800}
+            initialHeight={600}
             minWidth={400}
             minHeight={300}
+            storageKey="keyword-location-modal"
           >
             <div className="keyword-location-modal-content">
               <div className="keyword-location-modal-header">
