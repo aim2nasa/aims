@@ -308,8 +308,11 @@ function buildTagSubgroups(docs: Document[], minTagCount: number = 1): { tagNode
   const mainTags: Array<[string, Document[]]> = []
   const otherTags: Array<[string, Document[]]> = []
 
+  // AR/CRS는 시스템 태그 — 건수와 무관하게 항상 메인 레벨 표시
+  const SYSTEM_TAGS = new Set(['AR', 'CRS'])
+
   sortedTags.forEach(([tag, tagDocs]) => {
-    if (tagDocs.length > minTagCount) {
+    if (SYSTEM_TAGS.has(tag) || tagDocs.length > minTagCount) {
       mainTags.push([tag, tagDocs])
     } else {
       otherTags.push([tag, tagDocs])
