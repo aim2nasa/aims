@@ -740,7 +740,7 @@ async def _detect_and_process_annual_report(
 
         await files_collection.update_one(
             {"_id": ObjectId(doc_id)},
-            {"$set": update_fields}
+            {"$set": update_fields, "$addToSet": {"tags": "AR"}}
         )
 
         logger.info(f"✅ AR 플래그 설정 완료: doc_id={doc_id}, customer_id={customer_id}")
@@ -978,7 +978,7 @@ async def _detect_and_process_customer_review(
 
         await files_collection.update_one(
             {"_id": ObjectId(doc_id)},
-            {"$set": update_fields}
+            {"$set": update_fields, "$addToSet": {"tags": "CRS"}}
         )
 
         logger.info(f"✅ CRS 플래그 설정 완료: doc_id={doc_id}, customer_id={customer_id}")
