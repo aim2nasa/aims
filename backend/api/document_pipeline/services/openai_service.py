@@ -185,12 +185,13 @@ class OpenAIService:
         if truncated:
             text = text[:10000]
 
-        prompt = f"""다음 문서를 3-5줄로 요약하고, 핵심 키워드 태그를 3-5개 추출해주세요.
+        prompt = f"""다음 문서를 3-5줄로 요약하고, 핵심 키워드 태그를 3-5개 추출하고, 문서 내용을 대표하는 짧은 제목(최대 40자, 한국어)을 생성해주세요.
 
 문서:
 {text}
 
 응답 형식:
+제목: [짧은 제목]
 요약: [요약 내용]
 태그: [태그1], [태그2], [태그3]"""
 
@@ -220,12 +221,15 @@ class OpenAIService:
                 )
 
             # Parse response
+            title = ""
             summary = ""
             tags = []
 
             lines = content.strip().split("\n")
             for line in lines:
-                if line.startswith("요약:"):
+                if line.startswith("제목:"):
+                    title = line[3:].strip()
+                elif line.startswith("요약:"):
                     summary = line[3:].strip()
                 elif line.startswith("태그:"):
                     tag_str = line[3:].strip()
@@ -235,7 +239,7 @@ class OpenAIService:
             if not summary:
                 summary = content[:500]
 
-            return {"summary": summary, "tags": tags, "truncated": truncated}
+            return {"summary": summary, "tags": tags, "title": title, "truncated": truncated}
 
         except Exception as e:
             # Return error message as summary

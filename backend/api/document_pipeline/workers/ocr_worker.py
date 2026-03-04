@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 import httpx
 import os
+import re
 import sys
 
 # Add project root to path
@@ -187,6 +188,7 @@ class OCRWorker:
                 "full_text": ocr_result.get("full_text"),
                 "summary": summary,
                 "tags": tags,
+                "title": result.get("title") if result else None,
                 "num_pages": ocr_result.get("num_pages", 1)
             }
 
@@ -255,8 +257,8 @@ class OCRWorker:
         owner_id = msg["owner_id"]
         message_id = msg["message_id"]
 
-        # Update MongoDB with OCR results
-        await self._update_ocr_status(file_id, {
+        # Build OCR update
+        ocr_update = {
             "ocr.status": "done",
             "ocr.queued_at": queued_at,
             "ocr.done_at": datetime.utcnow().isoformat(),
@@ -265,7 +267,32 @@ class OCRWorker:
             "ocr.summary": ocr_result.get("summary"),
             "ocr.tags": ocr_result.get("tags", []),
             "ocr.page_count": ocr_result.get("num_pages", page_count)
-        })
+        }
+
+        # Generate displayName from OCR title (only if not already set)
+        title = ocr_result.get("title")
+        if title:
+            try:
+                collection = MongoService.get_collection("files")
+                doc = await collection.find_one(
+                    {"_id": ObjectId(file_id)},
+                    {"displayName": 1, "upload.originalName": 1}
+                )
+                if doc and not doc.get("displayName"):
+                    original_name = doc.get("upload", {}).get("originalName", "")
+                    ext = os.path.splitext(original_name)[1].lower() if original_name else ""
+                    safe_title = re.sub(r'[\\/:*?"<>|]', '', title)
+                    safe_title = re.sub(r'\s+', ' ', safe_title).strip()
+                    if len(safe_title) > 40:
+                        safe_title = safe_title[:40].rstrip()
+                    display_name = f"{safe_title}{ext}" if ext else safe_title
+                    ocr_update["displayName"] = display_name
+                    logger.info(f"OCR displayName generated: {original_name} -> {display_name}")
+            except Exception as e:
+                logger.warning(f"displayName generation failed: {e}")
+
+        # Update MongoDB with OCR results
+        await self._update_ocr_status(file_id, ocr_update)
 
         # Log OCR usage
         await self._log_ocr_usage(
