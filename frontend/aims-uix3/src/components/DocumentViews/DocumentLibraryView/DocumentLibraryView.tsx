@@ -886,12 +886,24 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       })
       if (data.summary) {
         const { completed, skipped, failed } = data.summary
-        alert(`별칭 생성 완료: ${completed}건 완료, ${skipped}건 스킵, ${failed}건 실패`)
+        await confirmModal.actions.openModal({
+          title: '별칭 생성 완료',
+          message: `${completed}건 완료, ${skipped}건 스킵, ${failed}건 실패`,
+          confirmText: '확인',
+          showCancel: false,
+          iconType: completed > 0 ? 'success' : 'info',
+        })
       }
       window.location.reload()
     } catch (err) {
       console.error('별칭 생성 실패:', err)
-      alert('별칭 생성 중 오류가 발생했습니다.')
+      await confirmModal.actions.openModal({
+        title: '오류',
+        message: '별칭 생성 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'error',
+      })
     } finally {
       setIsGeneratingAliases(false)
     }
