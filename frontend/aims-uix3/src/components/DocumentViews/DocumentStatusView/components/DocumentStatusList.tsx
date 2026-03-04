@@ -45,6 +45,7 @@ interface DocumentStatusRowProps {
   // 모드
   isDeleteMode: boolean
   isBulkLinkMode: boolean
+  isAliasMode: boolean
   isDevMode: boolean
   // 사용자 ID (내 파일 판별)
   userId: string | null
@@ -77,6 +78,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   isRetryingOcr,
   isDeleteMode,
   isBulkLinkMode,
+  isAliasMode,
   isDevMode,
   userId,
   documentTypes,
@@ -124,7 +126,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
       className={`status-item ${isSelected ? 'status-item--selected' : ''}`}
       data-context-menu="document"
       onClick={() => {
-        if (isDeleteMode || isBulkLinkMode) return
+        if (isDeleteMode || isBulkLinkMode || isAliasMode) return
         if (!documentId) return
         if (documentClickTimer.current) {
           clearTimeout(documentClickTimer.current)
@@ -137,7 +139,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
         }, 250)
       }}
       onDoubleClick={() => {
-        if (isDeleteMode || isBulkLinkMode) return
+        if (isDeleteMode || isBulkLinkMode || isAliasMode) return
         if (documentClickTimer.current) {
           clearTimeout(documentClickTimer.current)
           documentClickTimer.current = null
@@ -158,7 +160,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          if (documentId && onDocumentClick && !isDeleteMode && !isBulkLinkMode) {
+          if (documentId && onDocumentClick && !isDeleteMode && !isBulkLinkMode && !isAliasMode) {
             onDocumentClick(documentId)
           }
         }
@@ -175,8 +177,8 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
           }
         }
 
-        // 삭제 모드 또는 일괄 연결 모드 (미연결 문서)
-        if (isDeleteMode || isBulkLinkMode) {
+        // 삭제 모드, 일괄 연결 모드, 또는 별칭 모드 (미연결 문서)
+        if (isDeleteMode || isBulkLinkMode || isAliasMode) {
           return (
             <div
               className="document-checkbox-wrapper"
@@ -631,6 +633,8 @@ export interface DocumentStatusListProps {
   onSelectDocument?: (documentId: string, event: React.MouseEvent) => void
   // 🍎 Bulk link mode props
   isBulkLinkMode?: boolean
+  // 🍎 Alias mode props
+  isAliasMode?: boolean
   // 🍎 Customer click handler
   onCustomerClick?: (customerId: string) => void
   // 🍎 Customer double click handler (전체보기 페이지로 이동)
@@ -801,6 +805,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onColumnSort,
   isDeleteMode = false,
   isBulkLinkMode = false,
+  isAliasMode = false,
   selectedDocumentIds = new Set(),
   onSelectAll,
   onSelectDocument,
@@ -1088,11 +1093,11 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
   // 리스트 렌더링
   return (
-    <div className={`document-status-list ${isDeleteMode || isBulkLinkMode ? 'document-status-list--delete-mode' : ''}`}>
+    <div className={`document-status-list ${isDeleteMode || isBulkLinkMode || isAliasMode ? 'document-status-list--delete-mode' : ''}`}>
       {/* 🍎 칼럼 헤더 - 스티키 포지셔닝으로 항상 보임 */}
       <div className="status-list-header">
-        {/* 🍎 삭제 모드 또는 일괄 연결 모드: 전체 선택 체크박스 */}
-        {(isDeleteMode || isBulkLinkMode) && (
+        {/* 🍎 삭제 모드, 일괄 연결 모드, 또는 별칭 모드: 전체 선택 체크박스 */}
+        {(isDeleteMode || isBulkLinkMode || isAliasMode) && (
           <div className="header-checkbox">
             <input
               type="checkbox"
@@ -1262,6 +1267,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             isRetryingOcr={retryingOcrDocumentId === documentId}
             isDeleteMode={isDeleteMode}
             isBulkLinkMode={isBulkLinkMode}
+            isAliasMode={isAliasMode}
             isDevMode={isDevMode}
             userId={userId}
             documentTypes={documentTypes}

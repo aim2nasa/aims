@@ -86,28 +86,40 @@ const DocumentLibraryContent: React.FC<{
   onSelectedInitialChange: (initial: string | null) => void
   isDeleteMode: boolean
   isBulkLinkMode: boolean
+  isAliasMode: boolean
   selectedDocumentIds: Set<string>
   onSelectAllIds: (ids: string[]) => void
   onSelectDocument: (documentId: string, event: React.MouseEvent) => void
   onToggleDeleteMode: () => void
   onToggleBulkLinkMode: () => void
+  onToggleAliasMode: () => void
   onDocumentClick?: (documentId: string) => void
   onDocumentDoubleClick?: (document: Document) => void
   onDeleteSelected: () => void
   onDeleteSingleDocument: (documentId: string, documentName: string) => Promise<void>
   onDeleteAll?: () => void
   isDeleting: boolean
+  isGeneratingAliases: boolean
+  onGenerateAliases: (forceRegenerate: boolean) => void
   onCustomerClick?: (customerId: string) => void
   onCustomerDoubleClick?: (customerId: string) => void
   onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
   onNavigate?: (viewKey: string) => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, onDeleteAll, isDeleting, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, onDeleteAll, isDeleting, isGeneratingAliases, onGenerateAliases, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
 
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
+
+  // 🍎 별칭 생성 모드: 기존 별칭 포함 여부
+  const [forceRegenerateAlias, setForceRegenerateAlias] = React.useState(false)
+
+  // 별칭 모드 종료 시 체크박스 초기화
+  React.useEffect(() => {
+    if (!isAliasMode) setForceRegenerateAlias(false)
+  }, [isAliasMode])
 
   // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
   const [filenameMode, setFilenameMode] = React.useState<'display' | 'original'>(() => {
@@ -368,7 +380,7 @@ const DocumentLibraryContent: React.FC<{
                 type="button"
                 className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
                 onClick={onToggleBulkLinkMode}
-                disabled={isDeleteMode}
+                disabled={isDeleteMode || isAliasMode}
                 aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
               >
                 {isBulkLinkMode ? (
@@ -382,13 +394,30 @@ const DocumentLibraryContent: React.FC<{
             </Tooltip>
           )}
 
+          {/* 별칭 생성 버튼 — 눈에 보이는 Button 컴포넌트 */}
+          <Button
+            variant={isAliasMode ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={onToggleAliasMode}
+            disabled={isDeleteMode || isBulkLinkMode}
+            aria-label={isAliasMode ? '별칭 완료' : '별칭 생성'}
+          >
+            <SFSymbol
+              name="sparkles"
+              size={SFSymbolSize.CAPTION_2}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative={true}
+            />
+            {isAliasMode ? '완료' : '별칭AI'}
+          </Button>
+
           {/* 삭제 버튼 */}
           <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
             <button
               type="button"
               className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
               onClick={onToggleDeleteMode}
-              disabled={isBulkLinkMode}
+              disabled={isBulkLinkMode || isAliasMode}
               aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
             >
               {isDeleteMode ? (
@@ -466,6 +495,31 @@ const DocumentLibraryContent: React.FC<{
               >
                 연결
               </Button>
+            </>
+          )}
+
+          {/* 별칭 생성 모드일 때: 선택된 개수 + 별칭 생성 버튼 + 기존 별칭 포함 체크박스 */}
+          {isAliasMode && (
+            <>
+              <span className="selected-count-inline">
+                {selectedDocumentIds.size}개 선택됨
+              </span>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => onGenerateAliases(forceRegenerateAlias)}
+                disabled={isGeneratingAliases || selectedDocumentIds.size === 0}
+              >
+                {isGeneratingAliases ? '생성 중...' : '별칭 생성'}
+              </Button>
+              <label className="alias-force-label">
+                <input
+                  type="checkbox"
+                  checked={forceRegenerateAlias}
+                  onChange={(e) => setForceRegenerateAlias(e.target.checked)}
+                />
+                <span>기존 별칭 포함</span>
+              </label>
             </>
           )}
         </div>
@@ -571,6 +625,7 @@ const DocumentLibraryContent: React.FC<{
         onColumnSort={controller.handleColumnSort}
         isDeleteMode={isDeleteMode}
         isBulkLinkMode={isBulkLinkMode}
+        isAliasMode={isAliasMode}
         selectedDocumentIds={selectedDocumentIds}
         onSelectAll={handleSelectAll}
         onSelectDocument={onSelectDocument}
@@ -764,6 +819,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 🍎 고객 일괄 연결 기능 상태
   const [isBulkLinkMode, setIsBulkLinkMode] = React.useState(false)
 
+  // 🍎 별칭 일괄 생성 기능 상태
+  const [isAliasMode, setIsAliasMode] = React.useState(false)
+  const [isGeneratingAliases, setIsGeneratingAliases] = React.useState(false)
+
   // 초성 필터 상태 (F5 이후에도 유지)
   const [initialType, setInitialType] = usePersistedState<InitialType>('document-library-initial-type', 'korean')
   const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('document-library-selected-initial', null)
@@ -803,6 +862,40 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       setIsDeleteMode(false)
     }
   }, [isBulkLinkMode, isDeleteMode])
+
+  // 🍎 별칭 생성 모드 토글 핸들러
+  const handleToggleAliasMode = React.useCallback(() => {
+    if (isAliasMode) {
+      setSelectedDocumentIds(new Set())
+    }
+    setIsAliasMode(!isAliasMode)
+    if (!isAliasMode) {
+      setIsDeleteMode(false)
+      setIsBulkLinkMode(false)
+    }
+  }, [isAliasMode])
+
+  // 🍎 별칭 일괄 생성 핸들러
+  const handleGenerateAliases = React.useCallback(async (forceRegenerate: boolean) => {
+    if (selectedDocumentIds.size === 0) return
+    setIsGeneratingAliases(true)
+    try {
+      const data = await api.post<{ summary?: { completed: number; skipped: number; failed: number } }>('/api/batch-display-names', {
+        document_ids: Array.from(selectedDocumentIds),
+        force_regenerate: forceRegenerate,
+      })
+      if (data.summary) {
+        const { completed, skipped, failed } = data.summary
+        alert(`별칭 생성 완료: ${completed}건 완료, ${skipped}건 스킵, ${failed}건 실패`)
+      }
+      window.location.reload()
+    } catch (err) {
+      console.error('별칭 생성 실패:', err)
+      alert('별칭 생성 중 오류가 발생했습니다.')
+    } finally {
+      setIsGeneratingAliases(false)
+    }
+  }, [selectedDocumentIds])
 
   // 🍎 전체 선택/해제 핸들러 (DocumentLibraryContent에서 ID 배열 전달받음)
   const handleSelectAllIds = React.useCallback((ids: string[]) => {
@@ -982,15 +1075,19 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onSelectedInitialChange={setSelectedInitial}
             isDeleteMode={isDeleteMode}
             isBulkLinkMode={isBulkLinkMode}
+            isAliasMode={isAliasMode}
             selectedDocumentIds={selectedDocumentIds}
             onSelectAllIds={handleSelectAllIds}
             onSelectDocument={handleSelectDocument}
             onToggleDeleteMode={handleToggleDeleteMode}
             onToggleBulkLinkMode={handleToggleBulkLinkMode}
+            onToggleAliasMode={handleToggleAliasMode}
             onDeleteSelected={handleDeleteSelected}
             onDeleteSingleDocument={handleDeleteSingleDocument}
             onDeleteAll={handleDeleteAllDocuments}
             isDeleting={isDeleting}
+            isGeneratingAliases={isGeneratingAliases}
+            onGenerateAliases={handleGenerateAliases}
             onBulkLinkClick={(documents) => {
               setSelectedDocumentsForLink(documents)
               setIsDocumentLinkModalVisible(true)

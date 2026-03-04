@@ -16,7 +16,7 @@ import httpx
 from config import get_settings
 from services.mongo_service import MongoService
 from services.upload_queue_service import UploadQueueService
-from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_meta_router, smart_search_router, doc_prep_main_router, shadow_router
+from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_meta_router, smart_search_router, doc_prep_main_router, shadow_router, doc_display_name_router
 from workers.error_logger import error_logger
 from workers.upload_worker import upload_worker
 from workers.pipeline_metrics import pipeline_metrics
@@ -236,6 +236,8 @@ app.include_router(doc_ocr_router, prefix="/webhook", tags=["Document OCR"])
 app.include_router(doc_meta_router, prefix="/webhook", tags=["Document Metadata"])
 app.include_router(smart_search_router, prefix="/webhook", tags=["Smart Search"])
 app.include_router(doc_prep_main_router, prefix="/webhook", tags=["Document Prep Main"])
+
+app.include_router(doc_display_name_router, prefix="/webhook", tags=["Document Display Name"])
 
 # Shadow Mode router - n8n과 FastAPI 동시 호출 비교
 app.include_router(shadow_router, prefix="/shadow", tags=["Shadow Mode"])

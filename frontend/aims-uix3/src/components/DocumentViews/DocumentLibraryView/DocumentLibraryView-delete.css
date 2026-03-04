@@ -233,4 +233,23 @@
       124px;    /* 액션 버튼 */
   }
 
+  /* === 🍎 ALIAS MODE: 별칭 생성 모드 === */
+
+  .alias-force-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .alias-force-label input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    accent-color: var(--color-primary-500);
+    cursor: pointer;
+  }
+
 } /* end @layer components */

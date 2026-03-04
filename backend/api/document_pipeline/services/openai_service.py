@@ -246,6 +246,92 @@ class OpenAIService:
             return {"summary": f"요약 생성 실패: {str(e)}", "tags": [], "truncated": truncated}
 
     @classmethod
+    async def generate_title_only(
+        cls,
+        text: str,
+        owner_id: Optional[str] = None,
+        document_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        경량 제목 추출 (displayName 생성용)
+
+        summarize_text()와 달리 제목만 생성하므로 토큰 사용량이 적다.
+        - 입력: 최대 3000자
+        - 출력: max_tokens=60
+        - 모델: gpt-4o-mini
+
+        Args:
+            text: 문서 텍스트
+            owner_id: 문서 소유자 ID (크레딧 체크용)
+            document_id: 문서 ID (토큰 로깅용)
+
+        Returns:
+            {"title": str|None, "error": str|None}
+        """
+        # 크레딧 체크
+        if owner_id:
+            estimated_tokens = min(len(text) * 2, 3000)
+            credit_check = await check_credit_for_summary(owner_id, estimated_tokens)
+
+            if not credit_check.get("allowed", False):
+                logger.warning(
+                    f"[CREDIT_EXCEEDED] Title 생성 스킵: owner_id={owner_id}, "
+                    f"remaining={credit_check.get('credits_remaining', 0)}"
+                )
+                return {"title": None, "error": "credit_exceeded"}
+
+        # 입력 텍스트 3000자 제한
+        if len(text) > 3000:
+            text = text[:3000]
+
+        prompt = f"""다음 문서의 내용을 대표하는 짧은 제목을 한국어로 생성해주세요.
+- 최대 40자
+- 핵심 내용을 담은 명확한 제목
+- 제목만 출력 (다른 설명 없이)
+
+문서:
+{text}"""
+
+        try:
+            client = cls._get_client()
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "문서 제목 생성 전문가입니다. 제목만 출력합니다."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=60,
+                temperature=0.3
+            )
+
+            title = response.choices[0].message.content.strip()
+
+            # 토큰 사용량 로깅
+            if response.usage and (owner_id or document_id):
+                await cls._log_token_usage(
+                    user_id=owner_id,
+                    document_id=document_id,
+                    model="gpt-4o-mini",
+                    prompt_tokens=response.usage.prompt_tokens,
+                    completion_tokens=response.usage.completion_tokens,
+                    total_tokens=response.usage.total_tokens
+                )
+                logger.info(
+                    f"[TitleGen] 토큰 사용: prompt={response.usage.prompt_tokens}, "
+                    f"completion={response.usage.completion_tokens}, "
+                    f"total={response.usage.total_tokens}"
+                )
+
+            if not title:
+                return {"title": None, "error": "empty_response"}
+
+            return {"title": title, "error": None}
+
+        except Exception as e:
+            logger.error(f"[TitleGen] 제목 생성 실패: doc_id={document_id}, error={e}", exc_info=True)
+            return {"title": None, "error": "title_generation_failed"}
+
+    @classmethod
     async def extract_tags(cls, text: str, owner_id: Optional[str] = None, document_id: Optional[str] = None) -> List[str]:
         """Extract keywords as tags from text"""
         result = await cls.summarize_text(text, owner_id=owner_id, document_id=document_id)

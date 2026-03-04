@@ -98,6 +98,43 @@ router.post('/n8n/docprep', authenticateJWT, async (req, res) => {
   }
 });
 
+// ==================== Batch Display Name Generation Proxy ====================
+/**
+ * 일괄 별칭(displayName) 생성 프록시 엔드포인트
+ * document_pipeline의 batch-display-names API로 전달
+ */
+router.post("/batch-display-names", authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'userId required' });
+    }
+
+    const { document_ids, force_regenerate } = req.body;
+    if (!document_ids || !Array.isArray(document_ids) || document_ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'document_ids 배열 필수' });
+    }
+
+    console.log(`🏷️ [별칭 생성 프록시] 요청: ${document_ids.length}건, userId: ${userId}, force: ${!!force_regenerate}`);
+
+    const response = await axios.post(
+      `${DOCUMENT_PIPELINE_URL}/webhook/batch-display-names`,
+      { document_ids, user_id: userId, force_regenerate: !!force_regenerate },
+      { headers: { 'Content-Type': 'application/json' }, timeout: 120000 }
+    );
+
+    console.log(`✅ [별칭 생성 프록시] 완료:`, response.data?.summary);
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ [별칭 생성 프록시] 실패:", error.message);
+    backendLogger.error('BatchDisplayName', '별칭 생성 프록시 실패', error);
+    res.status(error.response?.status || 500).json({
+      success: false,
+      error: "별칭 생성 실패"
+    });
+  }
+});
+
 // ==================== AR Background Parsing Proxy ====================
 /**
  * AR 백그라운드 파싱 프록시 엔드포인트

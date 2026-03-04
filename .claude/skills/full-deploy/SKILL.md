@@ -6,7 +6,7 @@ user_invocable: true
 
 # AIMS 전체 배포 스킬
 
-서버에 최신 코드를 pull하고 전체 서비스(13단계)를 배포합니다.
+서버에 최신 코드를 pull하고 전체 서비스(14단계)를 배포합니다.
 
 ## 트리거
 
@@ -46,7 +46,7 @@ ssh rossi@100.110.215.65 'cd ~/aims && ./deploy_all.sh > /tmp/deploy_result.txt 
 ssh rossi@100.110.215.65 'cat /tmp/deploy_result.txt'
 ```
 
-13단계 각각의 "완료" 여부를 파싱합니다.
+14단계 각각의 "완료" 여부를 파싱합니다.
 
 ### Phase 4: 서비스 헬스체크
 
@@ -68,11 +68,12 @@ ssh rossi@100.110.215.65 'echo "=== pm2 ===" && pm2 list && echo "=== health ===
 | 6 | aims_mcp (3011) | ✅/❌ |
 | 7 | aims_health_monitor (3012) | ✅/❌ |
 | 8 | pdf_converter (8005) | ✅/❌ |
-| 9 | n8n 워크플로우 | ✅/❌ |
-| 10 | Frontend | ✅/❌ |
-| 11 | Admin | ✅/❌ |
-| 12 | 서비스 상태 | ✅/❌ |
-| 13 | Docker 정리 | ✅/❌ |
+| 9 | document_pipeline (8100) | ✅/❌ |
+| 10 | n8n 워크플로우 | ✅/❌ |
+| 11 | Frontend | ✅/❌ |
+| 12 | Admin | ✅/❌ |
+| 13 | 서비스 상태 | ✅/❌ |
+| 14 | Docker 정리 | ✅/❌ |
 | - | 헬스체크 | ✅/❌ |
 
 배포 실패 시 해당 단계와 에러 메시지를 표시합니다.
