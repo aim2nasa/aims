@@ -39,7 +39,7 @@ JSON 응답: { type: "diagnosis", confidence: 0.85, title: "...", summary: "..."
 ## 분류 트리 (전체 조감도)
 
 ```
-📁 AIMS 표준 문서 분류 체계 (9대분류, 44소분류)
+📁 AIMS 표준 문서 분류 체계 (9대분류, 45소분류)
 │
 ├── 1. 보험계약 (insurance) ─────────────────── 10개
 │   ├── 청약서 ············· application          686건
@@ -98,9 +98,10 @@ JSON 응답: { type: "diagnosis", confidence: 0.85, title: "...", summary: "..."
 │   ├── 계약서 ············· contract             218건
 │   └── 법률서류 ··········· legal_document        24건
 │
-└── 9. 기타 (general) ───────────────────────── 3개
+└── 9. 기타 (general) ───────────────────────── 4개
     ├── 메모 ··············· memo                 134건
     ├── 일반문서 ··········· general                -
+    ├── 분류불가 ··········· unclassifiable          -     비문서/내용불명 (로고, 디자인, 번호파일 등)
     └── 미지정 ············· unspecified          134건  [시스템]
 ```
 
@@ -158,6 +159,75 @@ JSON 응답: { type: "diagnosis", confidence: 0.85, title: "...", summary: "..."
 - **누락 유형 없음**: 실제 폴더에서 발견된 모든 문서 유형이 분류 체계에 포함됨
 - **폴더 구조 ≠ 문서 유형**: `블루고객`, `해지고객` 등은 고객 상태 분류이며 문서 유형이 아님
 - **파일 포맷 ≠ 문서 유형**: `.hwp`, `.pptx` 등은 포맷이며, 내용 기반으로 분류
+
+### 분류 시뮬레이션 (캐치업코리아 440건)
+
+법인 고객 "캐치업코리아"의 실제 문서 440건을 파일명 기반으로 분류한 시뮬레이션입니다.
+
+```
+📁 캐치업코리아 분류 시뮬레이션 (440건)
+│
+├── 1. 보험계약 (insurance) ──────────────── 141건 (32.0%)
+│   ├── policy ··············· 62건  증권_운전자보험.pdf, 가입증.pdf
+│   ├── application ·········· 32건  김보성청약서.pdf, 자동차청약서.jpg
+│   ├── coverage_analysis ···· 20건  보험 가입현황.xlsx, 증권분석.xlsx
+│   ├── proposal ············· 9건   법인 종합재무컨설팅 제안서.ppt
+│   ├── plan_design ·········· 8건   캐치업코리아-낙하리-가입설계서.pdf
+│   ├── change_request ······· 5건   계약내용변경신청서.pdf, 담보삭제요청서.pdf
+│   ├── surrender ············ 2건   캐치업직원해지서류20240824.pdf
+│   ├── terms ················ 2건   캐치업 상품설명서.pdf
+│   └── annual_report ········ 1건   annualReport 김보성201409.ppt [시스템]
+│
+├── 2. 보험금청구 (claim) ────────────────── 22건 (5.0%)
+│   ├── claim_form ··········· 10건  안영미백병원보험금청구서.pdf
+│   ├── medical_receipt ······ 6건   안영미병원비영수증.pdf
+│   ├── diagnosis ············ 3건   김보성진단서(망막박리2023.02).pdf
+│   ├── hospital_cert ········ 2건   안영미(대장용종시술확인서).pdf
+│   └── accident_cert ········ 1건   체육시설업자배상책임공제_사고통지서.pdf
+│
+├── 3. 신분/증빙 (identity) ──────────────── 22건 (5.0%)
+│   ├── id_card ·············· 12건  김보성신분증.pdf, 박지우운전면허증.jpg
+│   ├── bank_account ········· 5건   김보성통장.pdf, 캐치업국민은행통장.jpg
+│   ├── consent_form ········· 2건   서약서.pdf
+│   ├── business_card ········ 2건   김보성명함.jpg, 유아영명함.png
+│   └── seal_signature ······· 1건   캐치업법인인감.jpg
+│
+├── 4. 재정/세무 (financial) ──────────────── 27건 (6.1%)
+│   ├── tax_document ········· 10건  세무조정계산서.pdf, 부가세신고서.pdf
+│   ├── financial_statement ·· 6건   표준손익계산서.pdf, 재무상태표.pdf
+│   ├── transaction_proof ···· 5건   거래내역증명서.pdf, 잔고증명서.pdf
+│   ├── income_proof ········· 3건   원천징수영수증.pdf
+│   └── employment_cert ······ 3건   재직증명서(캐치업구본미).xlsx
+│
+├── 5. 건강/의료 (medical) ───────────────── 7건 (1.6%)
+│   ├── health_checkup ······· 6건   건강검진(김보성).pdf, 암검진066.jpg
+│   └── medical_record ······· 1건   박지우검사결과지.pdf
+│
+├── 6. 자산 (asset) ──────────────────────── 24건 (5.5%)
+│   ├── vehicle_registry ····· 14건  자동차등록증(캐치업코리아).pdf
+│   ├── business_registry ···· 6건   (주)캐치업코리아_사업자등록증.pdf
+│   └── property_registry ···· 4건   등기부등본_(주)캐치업코리아.pdf
+│
+├── 7. 법인 (corporate) ─────────────────── 92건 (20.9%)
+│   ├── hr_document ·········· 65건  근로계약서.xlsx, 급여대장.xlsx, 취업규칙.hwp
+│   ├── corp_registry ········ 12건  정관_캐치업코리아.hwp, 중소기업확인서.pdf
+│   ├── shareholder ·········· 8건   캐치업코리아 주주명부.pdf
+│   ├── pension ·············· 4건   퇴직연금 부담금 내역.xls
+│   └── business_plan ········ 3건   캐치업사업계획서최종.pptx
+│
+├── 8. 법률 (legal) ──────────────────────── 5건 (1.1%)
+│   ├── contract ············· 3건   주식명의신탁 약정서.docx
+│   └── legal_document ······· 2건   판결문_유헌종.pdf
+│
+└── 9. 기타 (general) ────────────────────── 100건 (22.7%)
+    ├── unclassifiable ······· 72건  img001~041.jpg, 로고.jpg, 사은품.pptx
+    ├── general ·············· 24건  유아영.xlsx, 캐치업사업비내역서.pdf
+    └── memo ················· 4건   김보성 메모 정리.docx, 김보성메모.pdf
+```
+
+> - 법인 고객 특성상 `hr_document`(65건)와 `policy`(62건, 자동차 가입증 다수)가 최다
+> - `unclassifiable`(72건): 번호만 있는 이미지(img001~041), 로고, 디자인 등 비문서 파일
+> - 실제 AI 분류 시 이미지 내용 인식으로 `unclassifiable` 감소 예상
 
 ---
 
@@ -670,7 +740,8 @@ AI가 document_type을 결정할 때 사용하는 판단 기준입니다.
 | 유형 | 이 문서인가? | 아닌 경우 |
 |------|------------|----------|
 | `memo` 메모 | 상담 기록, 고객 메모. "메모", 자유 텍스트 기록 | 보장 분석 내용이면 `coverage_analysis` |
-| `general` 일반문서 | 위 어디에도 해당하지 않는 문서 | 최대한 구체적 유형을 선택할 것 |
+| `general` 일반문서 | 문서이지만 위 어디에도 해당하지 않는 것 | 최대한 구체적 유형을 선택할 것 |
+| `unclassifiable` 분류불가 | 문서가 아니거나 내용 파악이 불가능. 로고, 디자인, 번호만 있는 이미지 등 | 문서 내용이 있으면 `general` |
 
 ### 모호한 경우 우선순위 규칙
 
@@ -714,7 +785,7 @@ AI가 document_type을 결정할 때 사용하는 판단 기준입니다.
 문서를 분류하세요.
 
 [유형 목록] 정확히 1개 선택:
-application=청약서, policy=보험증권, terms=약관, plan_design=설계서, proposal=제안서, coverage_analysis=보장분석, change_request=계약변경, surrender=해지서류, claim_form=보험금청구서, diagnosis=진단서/소견서, medical_receipt=진료비영수증, accident_cert=사고증명서, hospital_cert=입퇴원확인서, id_card=신분증, family_cert=가족관계서류, seal_signature=인감/서명, bank_account=통장사본, power_of_attorney=위임장, consent_form=동의서/서약서, business_card=명함, income_proof=소득증빙, employment_cert=재직증명, financial_statement=재무제표, tax_document=세무서류, transaction_proof=거래증빙, health_checkup=건강검진결과, medical_record=의무기록, property_registry=부동산등기, vehicle_registry=자동차등록, business_registry=사업자등록, corp_registry=법인등기/정관, shareholder=주주/지분, meeting_minutes=의사록, hr_document=인사/노무, pension=퇴직연금, business_plan=사업계획서, inheritance_gift=상속/증여, contract=계약서(보험외), legal_document=법률서류, memo=메모/상담기록, general=기타
+application=청약서, policy=보험증권, terms=약관, plan_design=설계서, proposal=제안서, coverage_analysis=보장분석, change_request=계약변경, surrender=해지서류, claim_form=보험금청구서, diagnosis=진단서/소견서, medical_receipt=진료비영수증, accident_cert=사고증명서, hospital_cert=입퇴원확인서, id_card=신분증, family_cert=가족관계서류, seal_signature=인감/서명, bank_account=통장사본, power_of_attorney=위임장, consent_form=동의서/서약서, business_card=명함, income_proof=소득증빙, employment_cert=재직증명, financial_statement=재무제표, tax_document=세무서류, transaction_proof=거래증빙, health_checkup=건강검진결과, medical_record=의무기록, property_registry=부동산등기, vehicle_registry=자동차등록, business_registry=사업자등록, corp_registry=법인등기/정관, shareholder=주주/지분, meeting_minutes=의사록, hr_document=인사/노무, pension=퇴직연금, business_plan=사업계획서, inheritance_gift=상속/증여, contract=계약서(보험외), legal_document=법률서류, memo=메모/상담기록, general=기타, unclassifiable=분류불가(비문서/내용불명)
 
 [규칙]
 - 주된 목적 기준 1개만 선택. 보조 정보는 tags에
