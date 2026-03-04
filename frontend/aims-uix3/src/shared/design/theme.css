@@ -22,8 +22,9 @@
     --color-bg-secondary: var(--color-neutral-50);
     --color-bg-card: var(--color-neutral-75);  /* 카드/리스트용 중간 톤 */
     --color-bg-tertiary: var(--color-neutral-100);
-    --color-bg-hover: var(--color-neutral-100);
-    --color-bg-active: var(--color-neutral-200);
+    --color-bg-hover: rgba(59, 130, 246, 0.20);
+    --color-bg-active: rgba(59, 130, 246, 0.28);
+    --color-hover-bg: var(--color-bg-hover); /* 글로벌 별칭 — 컴포넌트에서 var(--color-hover-bg) 참조용 */
     --color-bg-disabled: var(--color-neutral-100);
 
     /* Text Colors */
@@ -219,6 +220,7 @@
     --color-bg-tertiary: var(--color-neutral-700);
     --color-bg-hover: var(--color-neutral-800);
     --color-bg-active: var(--color-neutral-700);
+    --color-hover-bg: var(--color-bg-hover); /* 글로벌 별칭 */
     --color-bg-disabled: var(--color-neutral-800);
 
     /* Text Colors */
@@ -454,6 +456,7 @@
       --color-bg-tertiary: var(--color-neutral-700);
       --color-bg-hover: var(--color-neutral-800);
       --color-bg-active: var(--color-neutral-700);
+      --color-hover-bg: var(--color-bg-hover); /* 글로벌 별칭 */
       --color-bg-disabled: var(--color-neutral-800);
 
       --color-text-primary: var(--color-neutral-100);
@@ -547,8 +550,9 @@
       --color-bg-secondary: var(--color-neutral-50);
       --color-bg-card: var(--color-neutral-75);
       --color-bg-tertiary: var(--color-neutral-100);
-      --color-bg-hover: var(--color-neutral-100);
-      --color-bg-active: var(--color-neutral-200);
+      --color-bg-hover: rgba(59, 130, 246, 0.20);
+      --color-bg-active: rgba(59, 130, 246, 0.28);
+      --color-hover-bg: var(--color-bg-hover); /* 글로벌 별칭 */
       --color-bg-disabled: var(--color-neutral-100);
 
       --color-text-primary: var(--color-neutral-900);

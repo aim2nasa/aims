@@ -87,7 +87,7 @@
   }
 
   .account-settings__advanced-button:hover:not(:disabled) {
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
     border-color: var(--color-accent-blue);
     box-shadow: 0 1px 4px rgba(59, 130, 246, 0.1);
   }

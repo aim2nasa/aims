@@ -40,7 +40,7 @@
 
   .account-settings-view__tab:hover:not(.account-settings-view__tab--active) {
     color: var(--color-text-primary);
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
     border-color: var(--color-border-hover);
     transform: translateY(-1px);
   }

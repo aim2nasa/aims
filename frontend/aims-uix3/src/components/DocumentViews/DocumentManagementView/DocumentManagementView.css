@@ -193,7 +193,7 @@
   }
 
   .recent-activity-row:hover {
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
   }
 
   /* 셀 스타일 */

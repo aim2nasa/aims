@@ -84,10 +84,6 @@
     background: var(--color-bg-hover);
   }
 
-  html:not([data-theme="dark"]) .doc-explorer-tree__group-header:hover {
-    background: rgba(0, 0, 0, 0.045);
-  }
-
   .doc-explorer-tree__group-header:focus {
     outline: none;
     background: var(--color-bg-hover);
@@ -200,10 +196,6 @@
   /* 문서 호버 - 라이트 테마 대비 강화 */
   .doc-explorer-tree__document:hover {
     background: var(--color-bg-hover);
-  }
-
-  html:not([data-theme="dark"]) .doc-explorer-tree__document:hover {
-    background: rgba(0, 0, 0, 0.045);
   }
 
   .doc-explorer-tree__document:focus {

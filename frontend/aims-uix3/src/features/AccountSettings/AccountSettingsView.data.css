@@ -207,7 +207,7 @@
   }
 
   .account-settings-view__action-btn:hover:not(:disabled) {
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
     border-color: var(--color-border-hover);
   }
 

@@ -16,7 +16,7 @@
 
   /* 라이트 테마에서는 호버 효과 추가 - 비즈니스 앱 생산성 */
   html:not([data-theme="dark"]) .custom-menu-item:hover:not(.selected) {
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--color-bg-hover);
   }
 
   /* === 🍎 APPLE STANDARD SELECTION STATES === */

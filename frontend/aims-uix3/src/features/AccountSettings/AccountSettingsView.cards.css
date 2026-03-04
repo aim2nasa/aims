@@ -23,7 +23,7 @@
   }
 
   .settings-action-card:hover:not(:disabled) {
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
     border-color: var(--color-border-hover);
   }
 
@@ -113,7 +113,7 @@
   }
 
   .settings-toggle-card__item:hover {
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
   }
 
   .settings-toggle-card__icon {

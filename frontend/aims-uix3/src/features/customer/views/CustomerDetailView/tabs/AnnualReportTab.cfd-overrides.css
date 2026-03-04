@@ -98,6 +98,7 @@
   .customer-full-detail__section-content--report .annual-report-row:hover,
   .customer-full-detail__section-content--report .customer-review-row:hover {
     transform: none;
+    background-color: var(--color-ios-bg-hover-light);
   }
 
   /* 정렬 인디케이터: 공유 SortIndicator 컴포넌트 사용 */

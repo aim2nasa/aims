@@ -109,7 +109,7 @@
   }
 
   .account-settings-view__button--secondary:hover {
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
     border-color: var(--color-border-hover);
   }
 

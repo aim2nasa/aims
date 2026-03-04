@@ -91,7 +91,7 @@
   }
 
   .file-list-row:hover {
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
   }
 
   .file-list-row.dragging {
@@ -144,7 +144,7 @@
   }
 
   .download-button:hover {
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
     color: var(--color-button-primary-bg);
     transform: scale(1.1);
   }
@@ -177,7 +177,7 @@
   }
 
   .file-grid-item:hover {
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-hover);
     border-color: var(--color-button-primary-bg);
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
