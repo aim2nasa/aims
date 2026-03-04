@@ -349,7 +349,7 @@ const DocumentLibraryContent: React.FC<{
     } else {
       onSelectAllIds([])
     }
-  }, [controller.paginatedDocuments, onSelectAllIds])
+  }, [controller.filteredDocuments, onSelectAllIds])
 
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
@@ -371,145 +371,42 @@ const DocumentLibraryContent: React.FC<{
     <>
       {/* 🍎 통합 헤더: 총 문서 개수 + 검색창 + 필터 버튼 + 편집 + 실시간 + 새로고침 (한 줄) */}
       <div className="library-unified-header">
-        {/* 왼쪽: 고객 일괄 연결 버튼 + 삭제 버튼 + 총 문서 개수 */}
+        {/* 왼쪽: 모드별 컨트롤 + 총 문서 개수 */}
         <div className="header-left-section">
-          {/* 고객 일괄 연결 버튼 (개발자 모드에서만 표시) */}
-          {isDevMode && (
-            <Tooltip content={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}>
-              <button
-                type="button"
-                className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
-                onClick={onToggleBulkLinkMode}
-                disabled={isDeleteMode || isAliasMode}
-                aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
+          {/* === 별칭 모드: A+B 통합 그룹 === */}
+          {isAliasMode ? (
+            <div className="alias-mode-group">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={onToggleAliasMode}
+                aria-label="별칭 완료"
               >
-                {isBulkLinkMode ? (
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                ) : (
-                  <LinkIcon width={13} height={13} />
-                )}
-              </button>
-            </Tooltip>
-          )}
-
-          {/* 별칭 생성 버튼 — 눈에 보이는 Button 컴포넌트 */}
-          <Button
-            variant={isAliasMode ? 'primary' : 'ghost'}
-            size="sm"
-            onClick={onToggleAliasMode}
-            disabled={isDeleteMode || isBulkLinkMode}
-            aria-label={isAliasMode ? '별칭 완료' : '별칭 생성'}
-          >
-            <SFSymbol
-              name="sparkles"
-              size={SFSymbolSize.CAPTION_2}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative={true}
-            />
-            {isAliasMode ? '완료' : '별칭AI'}
-          </Button>
-
-          {/* 삭제 버튼 */}
-          <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
-            <button
-              type="button"
-              className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
-              onClick={onToggleDeleteMode}
-              disabled={isBulkLinkMode || isAliasMode}
-              aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
-            >
-              {isDeleteMode ? (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ) : (
                 <SFSymbol
-                  name="trash"
-                  size={SFSymbolSize.CAPTION_1}
+                  name="checkmark"
+                  size={SFSymbolSize.CAPTION_2}
                   weight={SFSymbolWeight.MEDIUM}
                   decorative={true}
                 />
-              )}
-            </button>
-          </Tooltip>
-
-          {/* 총 문서 개수 및 현재 표시 범위 */}
-          <span className="result-count">
-            {state.totalCount > 0 ? (
-              <>
-                {((state.currentPage - 1) * state.itemsPerPage) + 1}-
-                {Math.min(state.currentPage * state.itemsPerPage, state.totalCount)}
-                {' / '}총 {state.totalCount}개
-              </>
-            ) : (
-              '문서 없음'
-            )}
-          </span>
-
-          {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
-          {isDeleteMode && (
-            <>
-              <span className="selected-count-inline">
-                {selectedDocumentIds.size}개 선택됨
-              </span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={onDeleteSelected}
-                disabled={isDeleting || selectedDocumentIds.size === 0}
-              >
-                {isDeleting ? '삭제 중...' : '삭제'}
+                완료
               </Button>
-              {import.meta.env.DEV && onDeleteAll && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={onDeleteAll}
-                  disabled={isDeleting || state.totalCount === 0}
-                >
-                  전체 삭제 ({state.totalCount})
-                </Button>
-              )}
-            </>
-          )}
-
-          {/* 일괄 연결 모드일 때: 선택된 개수 + 연결 버튼 */}
-          {isBulkLinkMode && (
-            <>
-              <span className="selected-count-inline">
+              <span className="alias-mode-divider" />
+              <span className="alias-mode-count">
                 {selectedDocumentIds.size}개 선택됨
               </span>
               <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  // 선택된 문서 ID에 해당하는 Document 객체들을 가져오기
-                  const selectedDocs = state.documents.filter(doc =>
-                    selectedDocumentIds.has(doc._id || '')
-                  )
-                  onBulkLinkClick(selectedDocs)
-                }}
-                disabled={selectedDocumentIds.size === 0}
-              >
-                연결
-              </Button>
-            </>
-          )}
-
-          {/* 별칭 생성 모드일 때: 선택된 개수 + 별칭 생성 버튼 + 기존 별칭 포함 체크박스 */}
-          {isAliasMode && (
-            <>
-              <span className="selected-count-inline">
-                {selectedDocumentIds.size}개 선택됨
-              </span>
-              <Button
-                variant="primary"
+                variant="ghost"
                 size="sm"
                 onClick={() => onGenerateAliases(forceRegenerateAlias)}
                 disabled={isGeneratingAliases || selectedDocumentIds.size === 0}
+                className="alias-generate-button"
               >
+                <SFSymbol
+                  name="sparkles"
+                  size={SFSymbolSize.CAPTION_2}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
                 {isGeneratingAliases ? '생성 중...' : '별칭 생성'}
               </Button>
               <label className="alias-force-label">
@@ -520,6 +417,146 @@ const DocumentLibraryContent: React.FC<{
                 />
                 <span>기존 별칭 포함</span>
               </label>
+              <span className="alias-mode-divider" />
+              {/* 총 문서 개수 — AB 다음에 위치 */}
+              <span className="result-count">
+                {state.totalCount > 0 ? (
+                  <>
+                    {((state.currentPage - 1) * state.itemsPerPage) + 1}-
+                    {Math.min(state.currentPage * state.itemsPerPage, state.totalCount)}
+                    {' / '}총 {state.totalCount}개
+                  </>
+                ) : (
+                  '문서 없음'
+                )}
+              </span>
+            </div>
+          ) : (
+            <>
+              {/* === 일반 모드: 기존 레이아웃 === */}
+              {/* 고객 일괄 연결 버튼 (개발자 모드에서만 표시) */}
+              {isDevMode && (
+                <Tooltip content={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}>
+                  <button
+                    type="button"
+                    className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
+                    onClick={onToggleBulkLinkMode}
+                    disabled={isDeleteMode}
+                    aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
+                  >
+                    {isBulkLinkMode ? (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <LinkIcon width={13} height={13} />
+                    )}
+                  </button>
+                </Tooltip>
+              )}
+
+              {/* 별칭 생성 버튼 */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggleAliasMode}
+                disabled={isDeleteMode || isBulkLinkMode}
+                aria-label="별칭 생성"
+              >
+                <SFSymbol
+                  name="sparkles"
+                  size={SFSymbolSize.CAPTION_2}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
+                별칭AI
+              </Button>
+
+              {/* 삭제 버튼 */}
+              <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
+                <button
+                  type="button"
+                  className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
+                  onClick={onToggleDeleteMode}
+                  disabled={isBulkLinkMode}
+                  aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
+                >
+                  {isDeleteMode ? (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <SFSymbol
+                      name="trash"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                      decorative={true}
+                    />
+                  )}
+                </button>
+              </Tooltip>
+
+              {/* 총 문서 개수 및 현재 표시 범위 */}
+              <span className="result-count">
+                {state.totalCount > 0 ? (
+                  <>
+                    {((state.currentPage - 1) * state.itemsPerPage) + 1}-
+                    {Math.min(state.currentPage * state.itemsPerPage, state.totalCount)}
+                    {' / '}총 {state.totalCount}개
+                  </>
+                ) : (
+                  '문서 없음'
+                )}
+              </span>
+
+              {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
+              {isDeleteMode && (
+                <>
+                  <span className="selected-count-inline">
+                    {selectedDocumentIds.size}개 선택됨
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={onDeleteSelected}
+                    disabled={isDeleting || selectedDocumentIds.size === 0}
+                  >
+                    {isDeleting ? '삭제 중...' : '삭제'}
+                  </Button>
+                  {import.meta.env.DEV && onDeleteAll && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={onDeleteAll}
+                      disabled={isDeleting || state.totalCount === 0}
+                    >
+                      전체 삭제 ({state.totalCount})
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {/* 일괄 연결 모드일 때: 선택된 개수 + 연결 버튼 */}
+              {isBulkLinkMode && (
+                <>
+                  <span className="selected-count-inline">
+                    {selectedDocumentIds.size}개 선택됨
+                  </span>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      const selectedDocs = state.documents.filter(doc =>
+                        selectedDocumentIds.has(doc._id || '')
+                      )
+                      onBulkLinkClick(selectedDocs)
+                    }}
+                    disabled={selectedDocumentIds.size === 0}
+                  >
+                    연결
+                  </Button>
+                </>
+              )}
             </>
           )}
         </div>

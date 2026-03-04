@@ -233,16 +233,53 @@
       124px;    /* 액션 버튼 */
   }
 
-  /* === 🍎 ALIAS MODE: 별칭 생성 모드 === */
+  /* === 🍎 ALIAS MODE: 별칭 생성 모드 통합 그룹 === */
+
+  .alias-mode-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .alias-mode-divider {
+    width: 1px;
+    height: 14px;
+    background: var(--color-border-primary);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  .alias-mode-count {
+    font-size: 12px;
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    color: var(--color-ios-text-secondary-light);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  html[data-theme="dark"] .alias-mode-count {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .alias-generate-button:not(:disabled) {
+    color: var(--color-primary-500);
+  }
 
   .alias-force-label {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
-    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    color: var(--color-ios-text-secondary-light);
     cursor: pointer;
     white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .alias-force-label {
+    color: var(--color-ios-text-secondary-dark);
   }
 
   .alias-force-label input[type="checkbox"] {
