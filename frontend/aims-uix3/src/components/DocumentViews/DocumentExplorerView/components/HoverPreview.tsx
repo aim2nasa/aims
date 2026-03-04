@@ -13,9 +13,12 @@ import { createPortal } from 'react-dom'
 import type { Document } from '@/types/documentStatus'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 
-// 딜레이 없이 즉시 표시
-const THUMBNAIL_WIDTH = 200
-const THUMBNAIL_HEIGHT = 283 // A4 비율 (200 * 1.414)
+// 썸네일 크기 설정
+const A4_RATIO = 1.414
+const MIN_THUMBNAIL_WIDTH = 140
+const MAX_THUMBNAIL_WIDTH = 300
+const THUMBNAIL_REQUEST_WIDTH = 300 // API 요청 시 고정 해상도 (최대 크기로 요청 후 CSS로 축소)
+const REGION_PADDING = 16 // 영역 양쪽 여백
 const PDF_PROXY_BASE = '/pdf-proxy' // Vite proxy를 통해 접근
 
 // ★ 모듈 레벨 이미지 캐시 - 컴포넌트가 언마운트되어도 유지됨
@@ -117,11 +120,12 @@ function getThumbnailPath(doc: Document): string | null {
 }
 
 /**
- * 고정 영역 내 위치 계산
- * X: 화면 중앙 ~ ext 컬럼 직전 영역에 고정 배치
- * Y: 마우스 위치를 따라 상하 이동 (뷰포트 경계 클리핑)
+ * 가용 영역 기반 레이아웃 계산
+ * - 영역: 화면 중앙 ~ ext 컬럼 직전
+ * - 썸네일 크기: 영역 너비에 비례 (min~max 제한, A4 비율 유지)
+ * - Y: 마우스 위치를 따라 상하 이동
  */
-function calculatePosition(_mouseX: number, mouseY: number): { x: number; y: number } {
+function calculateLayout(_mouseX: number, mouseY: number): { x: number; y: number; width: number; height: number } {
   const viewportHeight = window.innerHeight
   const viewportCenter = window.innerWidth / 2
 
@@ -129,32 +133,30 @@ function calculatePosition(_mouseX: number, mouseY: number): { x: number; y: num
   const extElement = globalThis.document.querySelector('.doc-explorer-tree__doc-ext')
   const rightBound = extElement
     ? extElement.getBoundingClientRect().left - 8
-    : viewportCenter + THUMBNAIL_WIDTH + 40
+    : viewportCenter + MAX_THUMBNAIL_WIDTH + REGION_PADDING * 2
 
-  // X: 영역 내에서 썸네일을 중앙 정렬
+  // 가용 영역 너비에서 양쪽 패딩을 뺀 실제 사용 가능 너비
   const regionWidth = rightBound - viewportCenter
-  let x: number
-  if (regionWidth >= THUMBNAIL_WIDTH) {
-    x = viewportCenter + (regionWidth - THUMBNAIL_WIDTH) / 2
-  } else {
-    // 영역이 좁으면 왼쪽 경계에 맞춤
-    x = viewportCenter
-  }
+  const availableWidth = regionWidth - REGION_PADDING * 2
+
+  // 썸네일 너비: 가용 공간에 비례, min/max 제한
+  const width = Math.max(MIN_THUMBNAIL_WIDTH, Math.min(MAX_THUMBNAIL_WIDTH, availableWidth))
+  const height = Math.round(width * A4_RATIO)
+
+  // X: 영역 내에서 중앙 정렬
+  const x = viewportCenter + (regionWidth - width) / 2
 
   // Y: 마우스 위치 기준 수직 중앙 정렬
-  let y = mouseY - THUMBNAIL_HEIGHT / 2
+  let y = mouseY - height / 2
 
-  // 아래로 넘어가면 위로 조정
-  if (y + THUMBNAIL_HEIGHT > viewportHeight - 10) {
-    y = viewportHeight - THUMBNAIL_HEIGHT - 10
+  if (y + height > viewportHeight - 10) {
+    y = viewportHeight - height - 10
   }
-
-  // 위로 넘어가면 아래로 조정
   if (y < 10) {
     y = 10
   }
 
-  return { x, y }
+  return { x, y, width, height }
 }
 
 /**
@@ -172,7 +174,7 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
   // 썸네일 경로 계산
   const thumbnailPath = document ? getThumbnailPath(document) : null
   const thumbnailUrl = thumbnailPath
-    ? `${PDF_PROXY_BASE}/thumbnail/${thumbnailPath}?width=${THUMBNAIL_WIDTH}`
+    ? `${PDF_PROXY_BASE}/thumbnail/${thumbnailPath}?width=${THUMBNAIL_REQUEST_WIDTH}`
     : null
 
   // ★ 캐시 확인 - 이미 로드된 이미지는 즉시 표시
@@ -232,8 +234,8 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
     return null
   }
 
-  // 마우스 위치 기반으로 실시간 계산
-  const displayPosition = calculatePosition(position.x, position.y)
+  // 마우스 위치 기반으로 실시간 계산 (위치 + 동적 크기)
+  const layout = calculateLayout(position.x, position.y)
 
   // ★ 캐시된 이미지이거나 이미 로드된 경우: 로딩 스피너 없이 즉시 표시
   const showSpinner = !isImageCached && !imageLoaded && !imageError
@@ -245,14 +247,14 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
       className="hover-preview hover-preview--icon"
       style={{
         position: 'fixed',
-        left: displayPosition.x,
-        top: displayPosition.y,
+        left: layout.x,
+        top: layout.y,
         zIndex: 10000,
       }}
     >
       <div
         className="hover-preview__file-icon"
-        style={{ backgroundColor: fileTypeIcon.color }}
+        style={{ backgroundColor: fileTypeIcon.color, width: layout.width, height: layout.width * 0.6 }}
       >
         <span className="hover-preview__file-icon-emoji">{fileTypeIcon.icon}</span>
         <span className="hover-preview__file-icon-label">{fileTypeIcon.label}</span>
@@ -267,12 +269,12 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
       className="hover-preview"
       style={{
         position: 'fixed',
-        left: displayPosition.x,
-        top: displayPosition.y,
+        left: layout.x,
+        top: layout.y,
         zIndex: 10000,
       }}
     >
-      <div className="hover-preview__content">
+      <div className="hover-preview__content" style={{ minWidth: layout.width, minHeight: layout.width * 0.7 }}>
         {showSpinner && (
           <div className="hover-preview__loading">
             <span className="hover-preview__spinner" />
@@ -288,6 +290,7 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
           src={thumbnailUrl!}
           alt="문서 미리보기"
           className={`hover-preview__image ${(imageLoaded || isImageCached) ? 'hover-preview__image--loaded' : ''}`}
+          style={{ maxWidth: layout.width, maxHeight: layout.height }}
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
