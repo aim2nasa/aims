@@ -117,22 +117,32 @@ function getThumbnailPath(doc: Document): string | null {
 }
 
 /**
- * 화면 경계를 고려한 위치 계산
- * 썸네일을 마우스 오른쪽 옆에 표시 (수직 중앙 정렬)
+ * 고정 영역 내 위치 계산
+ * X: 화면 중앙 ~ ext 컬럼 직전 영역에 고정 배치
+ * Y: 마우스 위치를 따라 상하 이동 (뷰포트 경계 클리핑)
  */
-function calculatePosition(mouseX: number, mouseY: number): { x: number; y: number } {
-  const viewportWidth = window.innerWidth
+function calculatePosition(_mouseX: number, mouseY: number): { x: number; y: number } {
   const viewportHeight = window.innerHeight
-  const gap = 12 // 마우스와 썸네일 사이 간격
+  const viewportCenter = window.innerWidth / 2
 
-  // 기본: 마우스 오른쪽, 수직 중앙 정렬
-  let x = mouseX + gap
-  let y = mouseY - THUMBNAIL_HEIGHT / 2
+  // ext 컬럼의 왼쪽 가장자리를 찾아 우측 경계로 사용
+  const extElement = globalThis.document.querySelector('.doc-explorer-tree__doc-ext')
+  const rightBound = extElement
+    ? extElement.getBoundingClientRect().left - 8
+    : viewportCenter + THUMBNAIL_WIDTH + 40
 
-  // 오른쪽으로 넘어가면 왼쪽에 표시
-  if (x + THUMBNAIL_WIDTH > viewportWidth - 10) {
-    x = mouseX - THUMBNAIL_WIDTH - gap
+  // X: 영역 내에서 썸네일을 중앙 정렬
+  const regionWidth = rightBound - viewportCenter
+  let x: number
+  if (regionWidth >= THUMBNAIL_WIDTH) {
+    x = viewportCenter + (regionWidth - THUMBNAIL_WIDTH) / 2
+  } else {
+    // 영역이 좁으면 왼쪽 경계에 맞춤
+    x = viewportCenter
   }
+
+  // Y: 마우스 위치 기준 수직 중앙 정렬
+  let y = mouseY - THUMBNAIL_HEIGHT / 2
 
   // 아래로 넘어가면 위로 조정
   if (y + THUMBNAIL_HEIGHT > viewportHeight - 10) {
@@ -142,11 +152,6 @@ function calculatePosition(mouseX: number, mouseY: number): { x: number; y: numb
   // 위로 넘어가면 아래로 조정
   if (y < 10) {
     y = 10
-  }
-
-  // 왼쪽으로 넘어가면 오른쪽으로 조정
-  if (x < 10) {
-    x = 10
   }
 
   return { x, y }

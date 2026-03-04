@@ -193,9 +193,6 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       data-node-key={node.key}
       className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}`}
       onClick={(e) => onDocumentClick(doc, e, node.key)}
-      onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
-      onMouseMove={(e) => onDocumentMouseMove(doc, e)}
-      onMouseLeave={onDocumentMouseLeave}
       role="treeitem"
       tabIndex={-1}
       aria-selected={isSelected}
@@ -211,7 +208,14 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
 
       {/* 문서명: filenameMode에 따라 별칭/원본 전환 */}
       <span className="doc-explorer-tree__doc-name" title={altName || showName}>
-        {highlightText(showName, searchTerm)}
+        <span
+          className="doc-explorer-tree__doc-name-text"
+          onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
+          onMouseMove={(e) => onDocumentMouseMove(doc, e)}
+          onMouseLeave={onDocumentMouseLeave}
+        >
+          {highlightText(showName, searchTerm)}
+        </span>
       </span>
 
       {/* 파일 타입 (JPG, PDF 등) */}
@@ -770,9 +774,6 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   key={`recent-${docId}`}
                   className={`doc-explorer-tree__recent-item ${isSelected ? 'doc-explorer-tree__recent-item--selected' : ''}`}
                   onClick={(e) => handleDocumentClick(doc, e)}
-                  onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
-                  onMouseMove={(e) => handleDocumentMouseMove(doc, e)}
-                  onMouseLeave={handleDocumentMouseLeave}
                   role="button"
                   tabIndex={0}
                 >
@@ -787,7 +788,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
 
                   {/* 문서명: filenameMode에 따라 별칭/원본 전환 */}
                   <span className="doc-explorer-tree__doc-name" title={altName || showName}>
-                    {highlightText(showName, searchTerm)}
+                    <span
+                      className="doc-explorer-tree__doc-name-text"
+                      onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
+                      onMouseMove={(e) => handleDocumentMouseMove(doc, e)}
+                      onMouseLeave={handleDocumentMouseLeave}
+                    >
+                      {highlightText(showName, searchTerm)}
+                    </span>
                   </span>
 
                   {/* 파일 타입 */}
