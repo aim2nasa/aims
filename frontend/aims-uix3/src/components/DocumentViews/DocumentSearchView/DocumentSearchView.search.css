@@ -274,6 +274,14 @@
     cursor: not-allowed;
   }
 
+  .search-button--cancel {
+    background-color: var(--color-neutral-500);
+  }
+
+  .search-button--cancel:hover {
+    background-color: var(--color-neutral-600);
+  }
+
   /* === 🍎 Dropdown 높이 오버라이드: 다른 페이지와 일관된 컨트롤 높이 === */
   .document-search-container .ios-dropdown__trigger {
     min-height: 30px;

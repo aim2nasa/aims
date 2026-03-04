@@ -208,7 +208,7 @@ describe('useDocumentSearch', () => {
         query: '테스트',
         search_mode: 'keyword',
         mode: 'AND'
-      })
+      }, expect.any(AbortSignal))
       expect(result.current.results).toEqual(mockResults)
       expect(result.current.answer).toBe('검색 결과 답변')
       expect(result.current.lastSearchMode).toBe('keyword')
@@ -253,7 +253,7 @@ describe('useDocumentSearch', () => {
       expect(SearchService.searchDocuments).toHaveBeenCalledWith({
         query: '시맨틱 검색',
         search_mode: 'semantic',
-      })
+      }, expect.any(AbortSignal))
       expect(result.current.results).toEqual(mockResults)
       expect(result.current.answer).toBeNull()
       expect(result.current.lastSearchMode).toBe('semantic')
@@ -284,8 +284,8 @@ describe('useDocumentSearch', () => {
       expect(SearchService.searchDocuments).toHaveBeenCalledWith({
         query: '공백 포함',
         search_mode: 'keyword',
-        mode: 'AND'
-      })
+        mode: 'AND',
+      }, expect.any(AbortSignal))
     })
 
     it('검색 전 이전 결과를 초기화해야 함', async () => {
@@ -596,11 +596,11 @@ describe('useDocumentSearch', () => {
         query: '테스트',
         search_mode: 'keyword',
         mode: 'AND'
-      })
+      }, expect.any(AbortSignal))
       expect(SearchService.searchDocuments).toHaveBeenNthCalledWith(2, {
         query: '테스트',
         search_mode: 'semantic',
-      })
+      }, expect.any(AbortSignal))
     })
   })
 })

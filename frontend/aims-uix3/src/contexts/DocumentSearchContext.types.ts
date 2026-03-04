@@ -27,6 +27,7 @@ export interface DocumentSearchContextValue {
   handleKeywordModeChange: (mode: KeywordMode) => void
   handleCustomerIdChange: (customerId: string | null) => void
   handleReset: () => void
+  handleCancel: () => void
 }
 
 export const DocumentSearchContext = createContext<DocumentSearchContextValue | undefined>(undefined)

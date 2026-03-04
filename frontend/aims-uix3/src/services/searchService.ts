@@ -54,7 +54,7 @@ export class SearchService {
    * @param query 검색 쿼리 파라미터
    * @returns 검색 결과
    */
-  static async searchDocuments(query: SearchQuery): Promise<SearchResponse> {
+  static async searchDocuments(query: SearchQuery, signal?: AbortSignal): Promise<SearchResponse> {
     try {
       // 현재 사용자 ID 가져오기
       const userId = typeof window !== 'undefined'
@@ -73,6 +73,7 @@ export class SearchService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(queryWithUser),
+        signal,
       })
 
       if (!response.ok) {
@@ -96,7 +97,8 @@ export class SearchService {
                 headers: {
                   'x-user-id': userId,
                   ...(token && { Authorization: `Bearer ${token}` })
-                }
+                },
+                signal,
               })
               if (!docResponse.ok) {
                 console.warn(`[SearchService] 문서 ${docId} 조회 실패`)
@@ -161,7 +163,8 @@ export class SearchService {
                   headers: {
                     'x-user-id': currentUserId,
                     ...(tokenForCustomer && { Authorization: `Bearer ${tokenForCustomer}` })
-                  }
+                  },
+                  signal,
                 })
                 if (customerResponse.ok) {
                   const customerData = await customerResponse.json()

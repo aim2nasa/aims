@@ -121,6 +121,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     handleKeywordModeChange,
     handleCustomerIdChange,
     handleReset,
+    handleCancel,
   } = useDocumentSearch()
 
   // Full Text 모달 상태 (기존 - 검색 결과용)
@@ -1238,26 +1239,37 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             </Tooltip>
           )}
 
-          {/* 검색 버튼 */}
-          <button
-            className="search-button"
-            onClick={() => {
-              // 검색 실행 시 현재 선택된 고객 저장
-              setLastSearchCustomer(selectedCustomer)
-              // 검색어를 최근 목록에 추가
-              if (query.trim()) {
-                addRecentSearchQuery(query.trim())
-                setRecentSearchQueries(getRecentSearchQueries())
-              }
-              handleSearch()
-              // 드롭다운 닫기
-              setIsSearchInputFocused(false)
-            }}
-            disabled={isLoading}
-            aria-label={isLoading ? '검색 중' : '검색 실행'}
-          >
-            {isLoading ? '검색 중...' : '검색'}
-          </button>
+          {/* 검색/취소 버튼 */}
+          {isLoading ? (
+            <button
+              className="search-button search-button--cancel"
+              onClick={() => {
+                handleCancel()
+              }}
+              aria-label="검색 취소"
+            >
+              취소
+            </button>
+          ) : (
+            <button
+              className="search-button"
+              onClick={() => {
+                // 검색 실행 시 현재 선택된 고객 저장
+                setLastSearchCustomer(selectedCustomer)
+                // 검색어를 최근 목록에 추가
+                if (query.trim()) {
+                  addRecentSearchQuery(query.trim())
+                  setRecentSearchQueries(getRecentSearchQueries())
+                }
+                handleSearch()
+                // 드롭다운 닫기
+                setIsSearchInputFocused(false)
+              }}
+              aria-label="검색 실행"
+            >
+              검색
+            </button>
+          )}
         </div>
 
         {/* 에러 메시지 */}
