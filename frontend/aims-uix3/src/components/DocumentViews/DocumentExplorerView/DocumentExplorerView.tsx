@@ -214,6 +214,55 @@ const DocumentExplorerContent: React.FC<{
     ? docTreeData
     : (customerSummaryTree || { nodes: [], totalDocuments: 0, groupStats: { groupCount: 0 } })
 
+  // 요약 모드: 고객 키 → 초성 매핑 (폴더 클릭 시 초성 전환용)
+  const customerInitialMap = useMemo(() => {
+    const map = new Map<string, string>()
+    if (explorerData?.customers) {
+      explorerData.customers.forEach(c => {
+        map.set(`customer-${c.customerId}`, c.initial)
+      })
+    }
+    return map
+  }, [explorerData?.customers])
+
+  // 요약 모드 고객 폴더 클릭 후, 초성 전환 완료 시 자동 펼침할 키
+  const pendingExpandKeyRef = useRef<string | null>(null)
+
+  // 초성 전환 후 데이터 로드 완료 → 대기 중인 폴더 자동 펼침
+  useEffect(() => {
+    if (!selectedInitial || !pendingExpandKeyRef.current) return
+    if (isLoading) return // 아직 로드 중
+
+    const key = pendingExpandKeyRef.current
+    pendingExpandKeyRef.current = null
+
+    // 해당 고객 폴더가 트리에 있으면 펼치기
+    const nodeExists = treeData.nodes.some(n => n.key === key)
+    if (nodeExists) {
+      toggleNode(key)
+    }
+  }, [selectedInitial, isLoading, treeData.nodes, toggleNode])
+
+  // onToggleNode 래핑: 요약 모드에서 고객 폴더 클릭 시 초성 전환
+  const handleToggleNode = useCallback(
+    (key: string) => {
+      // 요약 모드(초성 미선택)이고, 고객 노드이면 초성으로 전환
+      if (!selectedInitial && customerInitialMap.has(key)) {
+        const initial = customerInitialMap.get(key)!
+        pendingExpandKeyRef.current = key
+        // 검색어 클리어: 검색 자동 펼침 effect와의 충돌 방지
+        if (searchTerm) {
+          setSearchTerm('')
+        }
+        onSelectedInitialChange(initial)
+        return
+      }
+      // 그 외: 기존 토글 동작
+      toggleNode(key)
+    },
+    [selectedInitial, customerInitialMap, toggleNode, onSelectedInitialChange, searchTerm, setSearchTerm]
+  )
+
   // 문서 클릭 핸들러
   const handleDocumentClick = useCallback(
     (doc: Document) => {
@@ -303,7 +352,7 @@ const DocumentExplorerContent: React.FC<{
             expandedKeys={expandedKeys}
             selectedDocumentId={selectedDocumentId}
             groupBy={groupBy}
-            onToggleNode={toggleNode}
+            onToggleNode={handleToggleNode}
             onDocumentClick={handleDocumentClick}
             onDocumentDoubleClick={handleDocumentDoubleClick}
             onCustomerClick={handleCustomerClick}

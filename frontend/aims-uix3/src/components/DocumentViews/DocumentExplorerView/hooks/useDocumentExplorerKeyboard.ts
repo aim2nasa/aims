@@ -77,6 +77,10 @@ export function useDocumentExplorerKeyboard({
     [nodes, expandedKeys]
   )
 
+  // flattenedNodes를 ref로 추적 (useEffect에서 의존성 없이 최신 값 참조)
+  const flattenedNodesRef = useRef(flattenedNodes)
+  flattenedNodesRef.current = flattenedNodes
+
   // 포커스 키 계산 (항상 유효한 값 반환)
   const focusedKey = useMemo(() => {
     if (flattenedNodes.length === 0) return null
@@ -91,17 +95,12 @@ export function useDocumentExplorerKeyboard({
       return focusedKeyRef.current
     }
 
-    // 3. 선택된 문서가 있으면 해당 문서로
-    if (selectedDocumentId) {
-      const selectedNode = flattenedNodes.find(
-        fn => fn.node.document?._id === selectedDocumentId || fn.node.document?.id === selectedDocumentId
-      )
-      if (selectedNode) return selectedNode.node.key
-    }
+    // 3. selectedDocumentId fallback 제거 — useEffect에서 단일 처리
+    // (flattenedNodes 변경 시마다 이전 선택 문서로 포커스가 되돌아가는 버그 방지)
 
     // 4. 첫 번째 노드로 폴백
     return flattenedNodes[0].node.key
-  }, [flattenedNodes, focusedKeyState, selectedDocumentId])
+  }, [flattenedNodes, focusedKeyState])
 
   // focusedKey가 변경되면 ref와 state 동기화
   useEffect(() => {
@@ -111,17 +110,22 @@ export function useDocumentExplorerKeyboard({
   }, [focusedKey])
 
   // selectedDocumentId 변경 시 해당 문서로 포커스 이동 (검색 시 자동 포커스)
+  // 주의: flattenedNodes를 의존성에서 제거 — ref로 참조
+  // flattenedNodes가 의존성에 있으면, 다른 폴더 토글 시에도 이전 선택 문서로
+  // 포커스가 되돌아가는 버그 발생 (스크롤이 엉뚱한 문서로 점프)
   useEffect(() => {
     if (!selectedDocumentId) return
 
-    const selectedNode = flattenedNodes.find(
+    const currentNodes = flattenedNodesRef.current
+    const selectedNode = currentNodes.find(
       fn => fn.node.document?._id === selectedDocumentId || fn.node.document?.id === selectedDocumentId
     )
     if (selectedNode) {
       focusedKeyRef.current = selectedNode.node.key
       setFocusedKeyState(selectedNode.node.key)
     }
-  }, [selectedDocumentId, flattenedNodes])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDocumentId])
 
   // 포커스 설정 함수
   const setFocusedKey = useCallback((key: string | null) => {
