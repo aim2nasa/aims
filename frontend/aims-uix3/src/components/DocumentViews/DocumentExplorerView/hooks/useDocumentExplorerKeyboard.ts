@@ -34,6 +34,9 @@ export interface UseDocumentExplorerKeyboardResult {
   setFocusedKey: (key: string | null) => void
   handleKeyDown: (e: React.KeyboardEvent) => void
   flattenedNodes: FlattenedNode[]
+  /** 키보드 탐색으로 포커스 변경 시 true (스크롤 필요), 마우스 클릭 시 false */
+  needsScroll: boolean
+  clearNeedsScroll: () => void
 }
 
 /**
@@ -133,10 +136,21 @@ export function useDocumentExplorerKeyboard({
     setFocusedKeyState(key)
   }, [])
 
-  // 특정 인덱스의 노드로 포커스 이동
+  // 키보드 탐색에 의한 포커스 변경 시 스크롤 필요 플래그
+  const needsScrollRef = useRef(false)
+  const [needsScroll, setNeedsScroll] = useState(false)
+
+  const clearNeedsScroll = useCallback(() => {
+    needsScrollRef.current = false
+    setNeedsScroll(false)
+  }, [])
+
+  // 특정 인덱스의 노드로 포커스 이동 (키보드 전용 → 스크롤 트리거)
   const focusNode = useCallback((index: number) => {
     if (index < 0 || index >= flattenedNodes.length) return
 
+    needsScrollRef.current = true
+    setNeedsScroll(true)
     const node = flattenedNodes[index].node
     setFocusedKey(node.key)
   }, [flattenedNodes, setFocusedKey])
@@ -269,5 +283,7 @@ export function useDocumentExplorerKeyboard({
     setFocusedKey,
     handleKeyDown,
     flattenedNodes,
+    needsScroll,
+    clearNeedsScroll,
   }
 }

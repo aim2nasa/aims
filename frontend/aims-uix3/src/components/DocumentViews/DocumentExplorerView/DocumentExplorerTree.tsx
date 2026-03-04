@@ -463,6 +463,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     focusedKey,
     setFocusedKey,
     handleKeyDown: keyboardHandleKeyDown,
+    needsScroll,
+    clearNeedsScroll,
   } = useDocumentExplorerKeyboard({
     nodes,
     expandedKeys,
@@ -472,9 +474,9 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     onDocumentDoubleClick,
   })
 
-  // 포커스된 요소로 스크롤
+  // 키보드 탐색 시에만 포커스 요소로 스크롤 (마우스 클릭은 스크롤 불필요)
   useEffect(() => {
-    if (!focusedKey || !treeContainerRef.current) return
+    if (!needsScroll || !focusedKey || !treeContainerRef.current) return
 
     const focusedElement = treeContainerRef.current.querySelector(
       `[data-node-key="${focusedKey}"]`
@@ -483,7 +485,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     if (focusedElement) {
       focusedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     }
-  }, [focusedKey])
+    clearNeedsScroll()
+  }, [needsScroll, focusedKey, clearNeedsScroll])
 
   // rAF / leave 타이머 cleanup
   useEffect(() => {
