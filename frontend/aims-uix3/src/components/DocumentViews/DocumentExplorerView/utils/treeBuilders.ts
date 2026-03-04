@@ -284,8 +284,7 @@ function buildTagSubgroups(docs: Document[], minTagCount: number = 1): { tagNode
   const noTag: Document[] = []
 
   docs.forEach((doc) => {
-    const meta = (doc as unknown as { meta?: { tags?: string[] } }).meta
-    const tags = meta?.tags
+    const tags = (doc as unknown as { tags?: string[] }).tags
     if (tags && tags.length > 0) {
       // 모든 태그에 문서 추가 (중복 표시)
       tags.forEach((tag) => {
@@ -423,9 +422,8 @@ function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentT
   const noTag: Document[] = []
 
   documents.forEach((doc) => {
-    // 태그는 meta.tags에 저장됨
-    const meta = (doc as unknown as { meta?: { tags?: string[] } }).meta
-    const tags = meta?.tags
+    // 태그는 최상위 tags 배열에 저장됨
+    const tags = (doc as unknown as { tags?: string[] }).tags
     if (tags && tags.length > 0) {
       tags.forEach((tag: string) => {
         if (!tagGroups.has(tag)) {
