@@ -231,7 +231,7 @@ function buildCustomerTagTree(documents: Document[], minTagCount: number = 1): D
 
   // 미연결 문서 (맨 위) - 태그별 서브그룹
   if (unlinked.length > 0) {
-    const { tagNodes, subgroupCount } = buildTagSubgroups(unlinked, minTagCount)
+    const { tagNodes, subgroupCount } = buildTagSubgroups(unlinked, minTagCount, 'unlinked')
     totalSubgroups += subgroupCount
     nodes.push({
       key: 'unlinked',
@@ -248,7 +248,7 @@ function buildCustomerTagTree(documents: Document[], minTagCount: number = 1): D
     .sort((a, b) => a[0].localeCompare(b[0], 'ko'))
     .forEach(([customerName, { docs, customerId, customerType }]) => {
       const isCorpo = customerType === 'corporate'
-      const { tagNodes, subgroupCount } = buildTagSubgroups(docs, minTagCount)
+      const { tagNodes, subgroupCount } = buildTagSubgroups(docs, minTagCount, customerId || customerName)
       totalSubgroups += subgroupCount
 
       nodes.push({
@@ -279,7 +279,7 @@ function buildCustomerTagTree(documents: Document[], minTagCount: number = 1): D
  * 문서 목록을 태그별 서브그룹으로 분류 (고객>태그별용)
  * - minTagCount 이하의 태그는 "기타" 폴더로 그룹화
  */
-function buildTagSubgroups(docs: Document[], minTagCount: number = 1): { tagNodes: DocumentTreeNode[]; subgroupCount: number } {
+function buildTagSubgroups(docs: Document[], minTagCount: number = 1, parentKey: string = ''): { tagNodes: DocumentTreeNode[]; subgroupCount: number } {
   const tagGroups = new Map<string, Document[]>()
   const noTag: Document[] = []
 
@@ -319,10 +319,13 @@ function buildTagSubgroups(docs: Document[], minTagCount: number = 1): { tagNode
     }
   })
 
+  // 키 프리픽스: parentKey가 있으면 유니크하게
+  const kp = parentKey ? `${parentKey}-` : ''
+
   // 메인 태그 노드 (문서 수 내림차순)
   mainTags.forEach(([tag, tagDocs]) => {
     tagNodes.push({
-      key: `tag-${tag}`,
+      key: `${kp}tag-${tag}`,
       label: tag,
       type: 'subgroup',
       icon: 'tag.fill',
@@ -335,7 +338,7 @@ function buildTagSubgroups(docs: Document[], minTagCount: number = 1): { tagNode
   // 기타 폴더 (minTagCount건 이하 태그들)
   if (otherTags.length > 0) {
     const otherChildren: DocumentTreeNode[] = otherTags.map(([tag, tagDocs]) => ({
-      key: `tag-${tag}`,
+      key: `${kp}tag-${tag}`,
       label: tag,
       type: 'subgroup' as const,
       icon: 'tag',
@@ -345,7 +348,7 @@ function buildTagSubgroups(docs: Document[], minTagCount: number = 1): { tagNode
     }))
 
     tagNodes.push({
-      key: 'other-tags',
+      key: `${kp}other-tags`,
       label: '기타',
       type: 'subgroup',
       icon: 'ellipsis.circle.fill',
@@ -358,7 +361,7 @@ function buildTagSubgroups(docs: Document[], minTagCount: number = 1): { tagNode
   // 태그 없음 (맨 아래)
   if (noTag.length > 0) {
     tagNodes.push({
-      key: 'no-tag',
+      key: `${kp}no-tag`,
       label: '태그 없음',
       type: 'subgroup',
       icon: 'tag.slash',
