@@ -98,58 +98,54 @@
     color: var(--color-ios-text-primary-dark);
   }
 
-  /* 🍎 매칭 요약 (제목/본문) */
-  .keyword-location-summary {
+  /* 🍎 매칭 요약 — 텍스트 행 포맷 */
+  .keyword-location-summary-text {
     display: flex;
-    gap: 8px;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 12px;
+    font-family: var(--font-family-text);
   }
 
-  .keyword-location-summary-item {
+  .keyword-location-summary-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    background: var(--color-ios-bg-secondary-light);
-    font-size: 11px;
-  }
-
-  html[data-theme="dark"] .keyword-location-summary-item {
-    background: var(--color-ios-bg-secondary-dark);
-  }
-
-  .keyword-location-summary-item--match {
-    background: var(--color-ios-system-green-light-bg, rgba(52, 199, 89, 0.12));
-  }
-
-  html[data-theme="dark"] .keyword-location-summary-item--match {
-    background: rgba(48, 209, 88, 0.15);
+    gap: 4px;
   }
 
   .keyword-location-summary-label {
     font-weight: 600;
     color: var(--color-ios-text-primary-light);
+    flex-shrink: 0;
   }
 
   html[data-theme="dark"] .keyword-location-summary-label {
     color: var(--color-ios-text-primary-dark);
   }
 
-  .keyword-location-summary-count {
-    color: var(--color-ios-text-secondary-light);
+  .keyword-location-summary-value {
+    color: var(--color-ios-text-tertiary-light);
   }
 
-  html[data-theme="dark"] .keyword-location-summary-count {
-    color: var(--color-ios-text-secondary-dark);
+  html[data-theme="dark"] .keyword-location-summary-value {
+    color: var(--color-ios-text-tertiary-dark);
   }
 
-  .keyword-location-summary-item--match .keyword-location-summary-count {
+  .keyword-location-summary-value--match {
     color: var(--color-ios-system-green-light, #34c759);
     font-weight: 600;
   }
 
-  html[data-theme="dark"] .keyword-location-summary-item--match .keyword-location-summary-count {
+  html[data-theme="dark"] .keyword-location-summary-value--match {
     color: var(--color-ios-system-green-dark, #30d158);
+  }
+
+  .keyword-location-summary-separator {
+    color: var(--color-ios-text-quaternary-light);
+  }
+
+  html[data-theme="dark"] .keyword-location-summary-separator {
+    color: var(--color-ios-text-quaternary-dark);
   }
 
   /* 🍎 섹션 (제목/본문 영역) */
@@ -269,6 +265,18 @@
 
   html[data-theme="dark"] .keyword-location-no-match {
     color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .keyword-location-body-preview {
+    font-size: 12px;
+    color: var(--color-ios-text-secondary-light);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  html[data-theme="dark"] .keyword-location-body-preview {
+    color: var(--color-ios-text-secondary-dark);
   }
 
   /* 검색어 하이라이트 스타일 */

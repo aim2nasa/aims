@@ -904,15 +904,25 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   }, [query])
 
   /**
-   * 🍎 파일명(제목)에서 매칭된 키워드 목록 반환
+   * 🍎 파일명(제목)에서 매칭된 키워드 — 별칭/원본 분리 반환
    */
-  const getFilenameKeywordMatches = useCallback((item: SearchResultItem): string[] => {
-    const filename = SearchService.getDisplayName(item) || SearchService.getOriginalName(item)
-    if (!filename) return []
-
+  const getFilenameKeywordMatchesDetailed = useCallback((item: SearchResultItem): {
+    displayMatches: string[]
+    originalMatches: string[]
+    displayName: string
+    originalName: string
+  } => {
+    const displayName = SearchService.getDisplayName(item) || ''
+    const originalName = SearchService.getOriginalName(item) || ''
     const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
-    const filenameLower = filename.toLowerCase()
-    return keywords.filter(k => filenameLower.includes(k.toLowerCase()))
+    const displayLower = displayName.toLowerCase()
+    const originalLower = originalName.toLowerCase()
+    return {
+      displayMatches: displayName ? keywords.filter(k => displayLower.includes(k.toLowerCase())) : [],
+      originalMatches: originalName ? keywords.filter(k => originalLower.includes(k.toLowerCase())) : [],
+      displayName,
+      originalName,
+    }
   }, [query])
 
   /**
@@ -1908,11 +1918,12 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       {/* 🍎 검색어 위치 모달 (키워드 검색 전용) */}
       {selectedDocumentForKeywordLocation && (() => {
         const totalMatches = getAllKeywordMatches(selectedDocumentForKeywordLocation).length
-        const filenameMatches = getFilenameKeywordMatches(selectedDocumentForKeywordLocation)
+        const { displayMatches, originalMatches, displayName, originalName } = getFilenameKeywordMatchesDetailed(selectedDocumentForKeywordLocation)
+        const hasAnyTitleMatch = displayMatches.length > 0 || originalMatches.length > 0
         const currentIndex = keywordMatchIndex
         const hasPrev = currentIndex > 0
         const hasNext = currentIndex < totalMatches - 1
-        const filename = (filenameMode === 'display' && SearchService.getDisplayName(selectedDocumentForKeywordLocation)) || SearchService.getOriginalName(selectedDocumentForKeywordLocation)
+        const filename = (filenameMode === 'display' && displayName) || originalName
 
         return (
           <DraggableModal
@@ -1946,30 +1957,46 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 </span>
               </div>
 
-              {/* 🍎 매칭 요약: 제목/본문 각각 표시 */}
-              <div className="keyword-location-summary">
-                <div className={`keyword-location-summary-item ${filenameMatches.length > 0 ? 'keyword-location-summary-item--match' : ''}`}>
-                  <span className="keyword-location-summary-label">제목</span>
-                  <span className="keyword-location-summary-count">
-                    {filenameMatches.length > 0
-                      ? `${filenameMatches.length}건 일치`
-                      : '일치 없음'}
+              {/* 🍎 매칭 요약: 파일명(원본/별칭) + 본문 — 2줄 텍스트 */}
+              <div className="keyword-location-summary-text">
+                <div className="keyword-location-summary-row">
+                  <span className="keyword-location-summary-label">파일명:</span>
+                  <span className={`keyword-location-summary-value ${originalMatches.length > 0 ? 'keyword-location-summary-value--match' : ''}`}>
+                    원본 {originalMatches.length > 0 ? `${originalMatches.length}건 일치` : '일치 없음'}
                   </span>
+                  {displayName && (
+                    <>
+                      <span className="keyword-location-summary-separator">,</span>
+                      <span className={`keyword-location-summary-value ${displayMatches.length > 0 ? 'keyword-location-summary-value--match' : ''}`}>
+                        별칭 {displayMatches.length > 0 ? `${displayMatches.length}건 일치` : '일치 없음'}
+                      </span>
+                    </>
+                  )}
                 </div>
-                <div className={`keyword-location-summary-item ${totalMatches > 0 ? 'keyword-location-summary-item--match' : ''}`}>
-                  <span className="keyword-location-summary-label">본문</span>
-                  <span className="keyword-location-summary-count">
+                <div className="keyword-location-summary-row">
+                  <span className="keyword-location-summary-label">본문:</span>
+                  <span className={`keyword-location-summary-value ${totalMatches > 0 ? 'keyword-location-summary-value--match' : ''}`}>
                     {totalMatches > 0 ? `${totalMatches}건 일치` : '일치 없음'}
                   </span>
                 </div>
               </div>
 
-              {/* 🍎 제목 매칭 영역 */}
-              {filenameMatches.length > 0 && (
+              {/* 🍎 별칭 매칭 영역 */}
+              {displayMatches.length > 0 && (
                 <div className="keyword-location-section">
-                  <div className="keyword-location-section-label">제목에서 발견</div>
+                  <div className="keyword-location-section-label">별칭에서 발견</div>
                   <div className="keyword-location-section-content">
-                    {highlightKeywordsNormal(filename, filenameMatches)}
+                    {highlightKeywordsNormal(displayName, displayMatches)}
+                  </div>
+                </div>
+              )}
+
+              {/* 🍎 원본 제목 매칭 영역 */}
+              {originalMatches.length > 0 && (
+                <div className="keyword-location-section">
+                  <div className="keyword-location-section-label">원본 제목에서 발견</div>
+                  <div className="keyword-location-section-content">
+                    {highlightKeywordsNormal(originalName, originalMatches)}
                   </div>
                 </div>
               )}
@@ -2018,9 +2045,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   {totalMatches > 0 ? (() => {
                     const { snippet, currentKeywordOffset, currentKeywordLength } = getTextSnippetAtIndex(selectedDocumentForKeywordLocation, currentIndex)
                     return highlightKeywordsWithCurrent(snippet, currentKeywordOffset, currentKeywordLength)
-                  })() : (
-                    <span className="keyword-location-no-match">본문에서 발견된 결과 없음</span>
-                  )}
+                  })() : (() => {
+                    const bodyText = (selectedDocumentForKeywordLocation as any).ocr?.full_text ||
+                                     (selectedDocumentForKeywordLocation as any).meta?.full_text ||
+                                     (selectedDocumentForKeywordLocation as any).text?.full_text || ''
+                    return bodyText
+                      ? <span className="keyword-location-body-preview">{bodyText}</span>
+                      : <span className="keyword-location-no-match">본문 텍스트 없음</span>
+                  })()}
                 </div>
               </div>
             </div>
