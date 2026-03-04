@@ -21,6 +21,8 @@ import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from './types/doc
 import type { InitialType, DocumentTreeNode, DocumentTreeData } from './types/documentExplorer'
 import { useDocumentExplorerTree } from './hooks/useDocumentExplorerTree'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
+import { DocumentSummaryModal } from '../DocumentStatusView/components/DocumentSummaryModal'
+import { DocumentFullTextModal } from '../DocumentStatusView/components/DocumentFullTextModal'
 import type { Document } from '@/types/documentStatus'
 import './DocumentExplorerView.toolbar.css';
 import './DocumentExplorerView.tree.css';
@@ -290,6 +292,13 @@ const DocumentExplorerContent: React.FC<{
     [onDocumentDoubleClick]
   )
 
+  // 요약/전체텍스트 모달 상태
+  const [summaryDoc, setSummaryDoc] = useState<Document | null>(null)
+  const [fullTextDoc, setFullTextDoc] = useState<Document | null>(null)
+
+  const handleSummaryClick = useCallback((doc: Document) => setSummaryDoc(doc), [])
+  const handleFullTextClick = useCallback((doc: Document) => setFullTextDoc(doc), [])
+
   // 새로고침 핸들러
   const handleRefresh = useCallback(() => {
     void fetchExplorerTree(selectedInitial)
@@ -363,9 +372,25 @@ const DocumentExplorerContent: React.FC<{
             thumbnailEnabled={thumbnailEnabled}
             filenameMode={filenameMode}
             onFilenameModeChange={handleFilenameModeChange}
+            onSummaryClick={handleSummaryClick}
+            onFullTextClick={handleFullTextClick}
           />
         )}
       </div>
+
+      {/* 요약 모달 */}
+      <DocumentSummaryModal
+        visible={summaryDoc !== null}
+        onClose={() => setSummaryDoc(null)}
+        document={summaryDoc}
+      />
+
+      {/* 전체 텍스트 모달 */}
+      <DocumentFullTextModal
+        visible={fullTextDoc !== null}
+        onClose={() => setFullTextDoc(null)}
+        document={fullTextDoc}
+      />
     </div>
   )
 }

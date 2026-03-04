@@ -16,6 +16,7 @@ import React, { useCallback, useRef, useMemo, useEffect, useState, useReducer } 
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
+import { SummaryIcon, DocumentIcon } from '../components/DocumentActionIcons'
 import type { Document } from '@/types/documentStatus'
 import type { DocumentTreeNode, DocumentGroupBy, DocumentSortBy, SortDirection } from './types/documentExplorer'
 import { useDocumentExplorerKeyboard } from './hooks/useDocumentExplorerKeyboard'
@@ -60,6 +61,10 @@ export interface DocumentExplorerTreeProps {
   /** 파일명 표시 모드 */
   filenameMode?: 'display' | 'original'
   onFilenameModeChange?: (mode: 'display' | 'original') => void
+  /** 요약 보기 핸들러 */
+  onSummaryClick?: (document: Document) => void
+  /** 전체 텍스트 보기 핸들러 */
+  onFullTextClick?: (document: Document) => void
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -150,6 +155,8 @@ interface DocumentNodeProps {
   onDocumentMouseMove: (doc: Document, e: React.MouseEvent) => void
   onDocumentMouseLeave: () => void
   onCustomerBadgeClick: (e: React.MouseEvent, customerName: string) => void
+  onSummaryClick?: (doc: Document) => void
+  onFullTextClick?: (doc: Document) => void
 }
 
 const DocumentNode = React.memo<DocumentNodeProps>(({
@@ -164,6 +171,8 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   onDocumentMouseMove,
   onDocumentMouseLeave,
   onCustomerBadgeClick,
+  onSummaryClick,
+  onFullTextClick,
 }) => {
   const doc = node.document
   if (!doc) return null
@@ -172,9 +181,12 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   const isSelected = selectedDocumentId === docId
   const isFocused = focusedKey === node.key
   const customerName = doc.customer_relation?.customer_name
+  const customerType = doc.customer_relation?.customer_type
   const documentDate = getDocumentDate(doc)
   const filename = DocumentStatusService.extractFilename(doc)
   const { showName, altName } = getDocName(doc, filenameMode)
+  const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : ''
+  const fileSize = DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(doc))
 
   return (
     <div
@@ -202,12 +214,36 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
         {highlightText(showName, searchTerm)}
       </span>
 
-      {/* 고객명 (클릭 시 해당 고객 문서만 필터) */}
+      {/* 파일 타입 (JPG, PDF 등) */}
+      <span className="doc-explorer-tree__doc-ext" title={fileExt || '-'}>
+        {fileExt || '-'}
+      </span>
+
+      {/* 파일 크기 */}
+      <span className="doc-explorer-tree__doc-size">
+        {fileSize}
+      </span>
+
+      {/* 고객명 (클릭 시 해당 고객 문서만 필터) + 개인/법인 아이콘 */}
       <span
         className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
         title={customerName ? `${customerName} 문서만 보기` : '-'}
         onClick={customerName ? (e) => onCustomerBadgeClick(e, customerName) : undefined}
       >
+        {customerName && (
+          <span className="doc-explorer-tree__customer-type-icon">
+            {customerType === '법인' ? (
+              <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+              </svg>
+            ) : (
+              <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                <circle cx="10" cy="7" r="3" />
+                <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+              </svg>
+            )}
+          </span>
+        )}
         {customerName ? highlightText(customerName, searchTerm) : '-'}
       </span>
 
@@ -222,6 +258,26 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       {/* 유형 배지 */}
       <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
         {doc.badgeType || 'BIN'}
+      </span>
+
+      {/* 액션 버튼 (요약/전체텍스트) */}
+      <span className="doc-explorer-tree__doc-actions">
+        <button
+          type="button"
+          className="doc-explorer-tree__action-btn"
+          title="요약 보기"
+          onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
+        >
+          <SummaryIcon width={13} height={13} />
+        </button>
+        <button
+          type="button"
+          className="doc-explorer-tree__action-btn"
+          title="전체 텍스트 보기"
+          onClick={(e) => { e.stopPropagation(); onFullTextClick?.(doc) }}
+        >
+          <DocumentIcon width={13} height={13} />
+        </button>
       </span>
     </div>
   )
@@ -247,6 +303,8 @@ interface GroupNodeProps {
   onDocumentMouseMove: (doc: Document, e: React.MouseEvent) => void
   onDocumentMouseLeave: () => void
   onCustomerBadgeClick: (e: React.MouseEvent, customerName: string) => void
+  onSummaryClick?: (doc: Document) => void
+  onFullTextClick?: (doc: Document) => void
 }
 
 const GroupNode = React.memo<GroupNodeProps>(({
@@ -263,6 +321,8 @@ const GroupNode = React.memo<GroupNodeProps>(({
   onDocumentMouseMove,
   onDocumentMouseLeave,
   onCustomerBadgeClick,
+  onSummaryClick,
+  onFullTextClick,
 }) => {
   const isExpanded = expandedKeys.has(node.key)
   const hasChildren = node.children && node.children.length > 0
@@ -327,6 +387,8 @@ const GroupNode = React.memo<GroupNodeProps>(({
               onDocumentMouseMove={onDocumentMouseMove}
               onDocumentMouseLeave={onDocumentMouseLeave}
               onCustomerBadgeClick={onCustomerBadgeClick}
+              onSummaryClick={onSummaryClick}
+              onFullTextClick={onFullTextClick}
             />
           ))}
         </div>
@@ -355,6 +417,8 @@ interface TreeNodeProps {
   onDocumentMouseMove: (doc: Document, e: React.MouseEvent) => void
   onDocumentMouseLeave: () => void
   onCustomerBadgeClick: (e: React.MouseEvent, customerName: string) => void
+  onSummaryClick?: (doc: Document) => void
+  onFullTextClick?: (doc: Document) => void
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -371,6 +435,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onDocumentMouseMove,
   onDocumentMouseLeave,
   onCustomerBadgeClick,
+  onSummaryClick,
+  onFullTextClick,
 }) => {
   if (node.type === 'document') {
     return (
@@ -386,6 +452,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
         onDocumentMouseMove={onDocumentMouseMove}
         onDocumentMouseLeave={onDocumentMouseLeave}
         onCustomerBadgeClick={onCustomerBadgeClick}
+        onSummaryClick={onSummaryClick}
+        onFullTextClick={onFullTextClick}
       />
     )
   }
@@ -404,6 +472,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       onDocumentMouseMove={onDocumentMouseMove}
       onDocumentMouseLeave={onDocumentMouseLeave}
       onCustomerBadgeClick={onCustomerBadgeClick}
+      onSummaryClick={onSummaryClick}
+      onFullTextClick={onFullTextClick}
     />
   )
 }
@@ -428,6 +498,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   thumbnailEnabled = true,
   filenameMode = 'display',
   onFilenameModeChange,
+  onSummaryClick,
+  onFullTextClick,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -686,9 +758,12 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
               const docId = doc._id || doc.id || ''
               const isSelected = selectedDocumentId === docId
               const customerName = doc.customer_relation?.customer_name
+              const customerType = doc.customer_relation?.customer_type
               const documentDate = getDocumentDate(doc)
               const filename = DocumentStatusService.extractFilename(doc)
               const { showName, altName } = getDocName(doc, filenameMode)
+              const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : ''
+              const fileSize = DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(doc))
 
               return (
                 <div
@@ -715,12 +790,36 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                     {highlightText(showName, searchTerm)}
                   </span>
 
-                  {/* 고객명 */}
+                  {/* 파일 타입 */}
+                  <span className="doc-explorer-tree__doc-ext" title={fileExt || '-'}>
+                    {fileExt || '-'}
+                  </span>
+
+                  {/* 파일 크기 */}
+                  <span className="doc-explorer-tree__doc-size">
+                    {fileSize}
+                  </span>
+
+                  {/* 고객명 + 개인/법인 아이콘 */}
                   <span
                     className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
                     title={customerName ? `${customerName} 문서만 보기` : '-'}
                     onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
                   >
+                    {customerName && (
+                      <span className="doc-explorer-tree__customer-type-icon">
+                        {customerType === '법인' ? (
+                          <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                          </svg>
+                        ) : (
+                          <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                            <circle cx="10" cy="7" r="3" />
+                            <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                          </svg>
+                        )}
+                      </span>
+                    )}
                     {customerName ? highlightText(customerName, searchTerm) : '-'}
                   </span>
 
@@ -735,6 +834,26 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   {/* 유형 배지 */}
                   <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
                     {doc.badgeType || 'BIN'}
+                  </span>
+
+                  {/* 액션 버튼 */}
+                  <span className="doc-explorer-tree__doc-actions">
+                    <button
+                      type="button"
+                      className="doc-explorer-tree__action-btn"
+                      title="요약 보기"
+                      onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
+                    >
+                      <SummaryIcon width={13} height={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="doc-explorer-tree__action-btn"
+                      title="전체 텍스트 보기"
+                      onClick={(e) => { e.stopPropagation(); onFullTextClick?.(doc) }}
+                    >
+                      <DocumentIcon width={13} height={13} />
+                    </button>
                   </span>
                 </div>
               )
@@ -786,6 +905,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             onDocumentMouseMove={handleDocumentMouseMove}
             onDocumentMouseLeave={handleDocumentMouseLeave}
             onCustomerBadgeClick={handleCustomerBadgeClick}
+            onSummaryClick={onSummaryClick}
+            onFullTextClick={onFullTextClick}
           />
         ))}
       </div>

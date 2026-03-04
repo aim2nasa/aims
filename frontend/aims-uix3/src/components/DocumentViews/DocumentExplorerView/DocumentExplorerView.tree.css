@@ -483,4 +483,78 @@
     transform: scale(1.05);
   }
 
+  /* Customer Type Icon (개인/법인) */
+  .doc-explorer-tree__customer-type-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 10px;
+    height: 10px;
+    margin-right: calc(var(--spacing-1) / 2);
+    flex-shrink: 0;
+    opacity: 0.7;
+    vertical-align: middle;
+  }
+
+  .doc-explorer-tree__doc-customer {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* File Extension (JPG, PDF 등) */
+  .doc-explorer-tree__doc-ext {
+    flex-shrink: 0;
+    margin-left: var(--explorer-spacing-sm);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    min-width: 28px;
+    text-align: center;
+  }
+
+  /* File Size */
+  .doc-explorer-tree__doc-size {
+    flex-shrink: 0;
+    margin-left: var(--explorer-spacing-sm);
+    font-size: 9px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    font-variant-numeric: tabular-nums;
+    min-width: 52px;
+    text-align: right;
+  }
+
+  /* Action Buttons (요약/전체텍스트) */
+  .doc-explorer-tree__doc-actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing-1) / 2);
+    margin-left: var(--explorer-spacing-sm);
+  }
+
+  .doc-explorer-tree__action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm, 4px);
+    background: transparent;
+    cursor: pointer;
+    transition: background var(--explorer-transition), transform var(--explorer-transition);
+  }
+
+  .doc-explorer-tree__action-btn:hover {
+    background: var(--color-bg-active);
+    transform: scale(1.1);
+  }
+
+  .doc-explorer-tree__action-btn:active {
+    transform: scale(0.95);
+  }
+
 } /* end @layer components */

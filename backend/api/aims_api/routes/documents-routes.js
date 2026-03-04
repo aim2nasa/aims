@@ -773,17 +773,21 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
       }}
     ]).toArray();
 
-    // 2. 고객 이름 조회
+    // 2. 고객 이름 + customer_type 조회
     const validIds = docStatsByCustomer.map(d => d._id).filter(id => id != null);
     const customers = validIds.length > 0
       ? await db.collection(COLLECTIONS.CUSTOMERS)
           .find({ _id: { $in: validIds } })
-          .project({ _id: 1, 'personal_info.name': 1 })
+          .project({ _id: 1, 'personal_info.name': 1, 'insurance_info.customer_type': 1 })
           .toArray()
       : [];
 
     const customerNameMap = new Map();
-    customers.forEach(c => customerNameMap.set(String(c._id), c.personal_info?.name || ''));
+    const customerTypeMap = new Map();
+    customers.forEach(c => {
+      customerNameMap.set(String(c._id), c.personal_info?.name || '');
+      customerTypeMap.set(String(c._id), c.insurance_info?.customer_type || null);
+    });
 
     // 3. 초성별 문서 수 카운트 + 고객 리스트 구성
     const initials = {};
@@ -807,7 +811,8 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
         name,
         initial: customerInitial,
         docCount: d.docCount,
-        latestUpload: d.latestUpload
+        latestUpload: d.latestUpload,
+        customerType: customerTypeMap.get(customerId) || null
       });
     });
 
@@ -842,11 +847,15 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
             ...TEXT_FLAG_STAGES
           ]).toArray();
 
-          // 고객 이름 맵 구성 (응답 매핑용)
+          // 고객 이름 + customer_type 맵 구성 (응답 매핑용)
           const customerMap = {};
+          const customerTypeMapByInitial = {};
           customerList
             .filter(c => c.initial === initial)
-            .forEach(c => { customerMap[c.customerId] = c.name; });
+            .forEach(c => {
+              customerMap[c.customerId] = c.name;
+              customerTypeMapByInitial[c.customerId] = c.customerType;
+            });
 
           // 응답 매핑 — /documents/status 엔드포인트와 동일 형식
           documents = rawDocs.map(doc => {
@@ -857,6 +866,7 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
               customerRelation = {
                 customer_id: cid,
                 customer_name: customerMap[cid] || null,
+                customer_type: customerTypeMapByInitial[cid] || null,
                 notes: doc.customer_notes || ''
               };
             }
