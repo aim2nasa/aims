@@ -106,7 +106,7 @@ JSON 응답: { type: "diagnosis", confidence: 0.85, title: "...", summary: "..."
 | 코드 변경 범위 | `OpenAIService.summarize_text()` 프롬프트 교체 |
 | temperature | 0 (동일 문서 → 동일 분류 결과 보장) |
 | AR/CRS 처리 | AI가 아닌 시스템 규칙으로 감지 (기존 유지) |
-| 구현 상태 | **미구현** — 설계 완료, 코드 변경 전 |
+| 구현 상태 | **구현 완료** — 프롬프트 분류 + 관계자 문서 탭 |
 
 ---
 

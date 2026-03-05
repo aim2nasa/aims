@@ -100,28 +100,42 @@ CLASSIFICATION_SYSTEM_PROMPT = (
     "보험설계사 문서분류기. JSON만 응답. annual_report/customer_review/unspecified 선택 금지."
 )
 
-CLASSIFICATION_USER_PROMPT = """문서를 분류하세요.
+CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를 분류하세요.
 
-[유형 목록] 정확히 1개 선택:
-application=청약서, policy=보험증권, terms=약관, plan_design=설계서, proposal=제안서, coverage_analysis=보장분석, change_request=계약변경, surrender=해지서류, claim_form=보험금청구서, diagnosis=진단서/소견서, medical_receipt=진료비영수증, accident_cert=사고증명서, hospital_cert=입퇴원확인서, id_card=신분증, family_cert=가족관계서류, seal_signature=인감/서명, bank_account=통장사본, power_of_attorney=위임장, consent_form=동의서/서약서, business_card=명함, income_proof=소득증빙, employment_cert=재직증명, financial_statement=재무제표, tax_document=세무서류, transaction_proof=거래증빙, health_checkup=건강검진결과, medical_record=의무기록, property_registry=부동산등기, vehicle_registry=자동차등록, business_registry=사업자등록, corp_registry=법인등기/정관, shareholder=주주/지분, meeting_minutes=의사록, hr_document=인사/노무, pension=퇴직연금, business_plan=사업계획서, inheritance_gift=상속/증여, contract=계약서(보험외), legal_document=법률서류, memo=메모/상담기록, general=기타, unclassifiable=분류불가(비문서/내용불명)
+[유형 목록 — 9개 대분류, 42개 소분류 중 정확히 1개 선택]
 
-[규칙]
-- 주된 목적 기준 1개만 선택. 보조 정보는 tags에
-- 가입 전 설계=plan_design, 가입 후 분석=coverage_analysis
-- 확신 없으면 general
+1. 보험계약: application=청약서/가입신청서, policy=보험증권/보험가입확인서, terms=약관/보통약관, plan_design=설계서/보험설계, proposal=제안서/가입제안서, coverage_analysis=보장분석/보장범위분석, change_request=계약변경/감액/특약해지, surrender=해지서류/해지환급금
+2. 보험금청구: claim_form=보험금청구서/청구절차안내, diagnosis=진단서/소견서(의사발급), medical_receipt=진료비영수증/진료비계산서/약제비계산서, accident_cert=사고증명서/교통사고사실확인원, hospital_cert=입퇴원확인서/통원확인서
+3. 고객신원: id_card=신분증/주민등록증/운전면허/여권, family_cert=가족관계증명서/주민등록등본/혼인관계, seal_signature=인감증명/서명확인, bank_account=통장사본/계좌개설확인서, power_of_attorney=위임장/대리청구, consent_form=동의서/서약서/개인정보동의, business_card=명함
+4. 재무/소득: income_proof=소득금액증명/급여명세서, employment_cert=재직증명서/경력증명서, financial_statement=재무제표/손익계산서/대차대조표, tax_document=종합소득세/세무신고서/원천징수영수증, transaction_proof=거래명세서/입금확인서
+5. 건강/의료: health_checkup=건강검진결과/종합검진/암검진, medical_record=의무기록/검사결과지/처방전
+6. 재산/등록: property_registry=부동산등기/건축물대장, vehicle_registry=자동차등록/차량등록원부, business_registry=사업자등록증
+7. 법인: corp_registry=법인등기/정관, shareholder=주주명부/지분증명, meeting_minutes=이사회의사록/주총의사록, hr_document=이력서/근로계약서/급여대장/인사발령/노무서류, pension=퇴직연금/DC형/DB형/가입자명부/확정기여형/확정급여형, business_plan=사업계획서/투자제안서, inheritance_gift=상속/증여/유언장
+8. 일반계약/법률: contract=임대차계약/용역계약/매매계약(보험외), legal_document=법률서류/내용증명/소장/변호사의견서
+9. 기타: memo=메모/상담기록/고객노트, general=위 유형에 해당하지 않는 문서, unclassifiable=비문서/내용없음/판독불가
 
-[혼동 주의]
-- diagnosis=의사 발급 진단/소견, medical_record=의무기록사본/검사결과지
-- income_proof=소득 금액 명시, employment_cert=재직/경력 사실만 증명
-- hr_document=법인 인사서류(근로계약/급여대장), employment_cert=개인 재직증명
-- corp_registry=정관/법인등기, business_registry=사업자등록증
-- contract=보험 외 일반계약, application=보험 청약서
+[분류 규칙]
+1. 문서의 주된 목적 기준으로 1개만 선택. 보조 정보는 tags에 기록
+2. 가입 전 설계=plan_design, 가입 후 기존보험 분석=coverage_analysis
+3. general은 마지막 수단! 42개 유형 중 하나라도 해당하면 반드시 그것을 선택
+4. 텍스트가 짧아도 키워드가 특정 유형과 명확히 매칭되면 해당 유형 선택
+
+[혼동 주의 — 반드시 구분]
+- application(청약서: 가입 신청) vs policy(증권: 계약 체결 확인)
+- diagnosis(의사 발급 진단서/소견서) vs medical_record(의무기록사본/검사결과지)
+- income_proof(소득 금액 명시 증명) vs employment_cert(재직/경력 사실만 증명)
+- hr_document(법인 인사서류: 이력서/근로계약서/급여대장) vs employment_cert(개인 재직증명)
+- corp_registry(정관/법인등기) vs business_registry(사업자등록증)
+- contract(보험 외 일반계약) vs application(보험 청약서)
+- pension(퇴직연금/DC/DB/가입자명부) vs hr_document(일반 인사서류)
+- financial_statement(재무제표/손익계산서) vs tax_document(세무신고/납부)
+- proposal(가입제안서) vs plan_design(설계서/보험비교표)
 
 [문서]
 {text}
 
-JSON:
-{{"type":"diagnosis","confidence":0.85,"title":"홍길동 진단서(30자이내)","summary":"3~5줄요약","tags":["키워드1","키워드2"]}}"""
+JSON (반드시 이 형식):
+{{"type":"diagnosis","confidence":0.85,"title":"홍길동 진단서(30자이내 핵심제목)","summary":"3~5줄 요약","tags":["키워드1","키워드2"]}}"""
 
 # 태그 정규화 사전 (@see docs/DOCUMENT_TAXONOMY.md)
 TAG_NORMALIZATION = {

@@ -288,6 +288,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // CustomerDocumentExplorerView 상태 (CenterPane에서 고객별 문서 탐색기 표시)
   const [explorerCustomerId, setExplorerCustomerId] = useState<string | null>(null)
   const [explorerCustomerName, setExplorerCustomerName] = useState<string | null>(null)
+  const [explorerCustomerType, setExplorerCustomerType] = useState<'개인' | '법인'>('개인')
 
   // 문서 프리뷰 모달 상태
   const [previewModalVisible, setPreviewModalVisible] = useState(false)
@@ -409,6 +410,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     customerAllViewRefreshRef,
     setExplorerCustomerId,
     setExplorerCustomerName,
+    setExplorerCustomerType,
   })
 
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 숨김
@@ -541,9 +543,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         setFullDetailCustomerId(urlCustomerId)
       } else if (urlView === 'customer-document-explorer') {
         setExplorerCustomerId(urlCustomerId)
-        // 고객명 조회
+        // 고객명/유형 조회
         CustomerService.getCustomer(urlCustomerId)
-          .then(customer => setExplorerCustomerName(customer.personal_info?.name || null))
+          .then(customer => {
+            setExplorerCustomerName(customer.personal_info?.name || null)
+            setExplorerCustomerType(customer.insurance_info?.customer_type || '개인')
+          })
           .catch(() => setExplorerCustomerName(null))
       } else {
         // 일반 고객 선택 (RightPane에 표시)
@@ -1765,6 +1770,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'customer-document-explorer'}
               customerId={explorerCustomerId}
               customerName={explorerCustomerName}
+              customerType={explorerCustomerType}
               onClose={handleCollapseExplorer}
               onCollapse={handleCollapseExplorer}
             />

@@ -58,6 +58,8 @@ export interface UseRightPaneContentOptions {
   setExplorerCustomerId?: (id: string | null) => void
   /** 탐색기 고객명 설정 함수 */
   setExplorerCustomerName?: (name: string | null) => void
+  /** 탐색기 고객 유형 설정 함수 */
+  setExplorerCustomerType?: (type: '개인' | '법인') => void
 }
 
 /**
@@ -81,7 +83,7 @@ export interface UseRightPaneContentReturn {
   ) => Promise<void>
   handleOpenFullDetail: (customerId: string) => void
   handleCloseFullDetail: () => void
-  handleExpandToExplorer: (customerId: string, customerName: string) => void
+  handleExpandToExplorer: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   handleCollapseExplorer: () => void
   handleCustomerRefresh: () => Promise<void>
   handleCustomerDelete: () => void
@@ -127,6 +129,7 @@ export function useRightPaneContent(
     customerAllViewRefreshRef,
     setExplorerCustomerId,
     setExplorerCustomerName,
+    setExplorerCustomerType,
   } = options
 
   // 최근 검색 고객 스토어
@@ -405,7 +408,7 @@ export function useRightPaneContent(
 
   // 고객별 문서 탐색기(CenterPane) 열기 핸들러
   const handleExpandToExplorer = useCallback(
-    (customerId: string, customerName: string) => {
+    (customerId: string, customerName: string, customerType?: '개인' | '법인') => {
       // 현재 전체 UI 상태 저장 (축소 버튼에서 복원용)
       explorerPreviousUIStateRef.current = {
         view: activeDocumentView,
@@ -422,6 +425,7 @@ export function useRightPaneContent(
       // CustomerDocumentExplorerView 표시
       setExplorerCustomerId?.(customerId)
       setExplorerCustomerName?.(customerName)
+      setExplorerCustomerType?.(customerType || '개인')
       setActiveDocumentView('customer-document-explorer')
 
       updateURLParams({ view: 'customer-document-explorer', customerId, tab: null })
@@ -435,6 +439,7 @@ export function useRightPaneContent(
       setActiveDocumentView,
       setExplorerCustomerId,
       setExplorerCustomerName,
+      setExplorerCustomerType,
     ]
   )
 

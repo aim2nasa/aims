@@ -299,6 +299,7 @@ class OCRWorker:
             "ocr.page_count": ocr_result.get("num_pages", page_count),
             "meta.document_type": ocr_result.get("document_type", "general"),
             "meta.confidence": ocr_result.get("doc_confidence", 0.0),
+            "status": "completed",
         }
 
         # Generate displayName (only if not already set)

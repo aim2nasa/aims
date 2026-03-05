@@ -1,5 +1,34 @@
 @layer components {
 
+  /* === 탭 헤더 === */
+  .cde-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 var(--spacing-4);
+    border-bottom: 1px solid var(--color-border-primary);
+  }
+
+  .cde-tabs__tab {
+    padding: var(--spacing-2) var(--spacing-4);
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+  }
+
+  .cde-tabs__tab:hover {
+    color: var(--color-text-secondary);
+  }
+
+  .cde-tabs__tab--active {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-accent);
+  }
+
   /* === 헤더 액션 버튼들 === */
   .cde-header-actions {
     display: flex;
@@ -184,6 +213,60 @@
     font-size: 10px;
     color: var(--color-text-tertiary);
     text-align: right;
+  }
+
+  /* === 관계자/가족 그룹 === */
+  .cde-person {
+    margin-bottom: var(--spacing-2);
+  }
+
+  .cde-person__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    width: 100%;
+    padding: 7px var(--spacing-3);
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.1s ease-out;
+    text-align: left;
+  }
+
+  .cde-person__header:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  .cde-person__icon {
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .cde-person__name {
+    flex-shrink: 0;
+  }
+
+  .cde-person__relation {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+  }
+
+  .cde-person__count {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+  }
+
+  .cde-person__content {
+    padding-left: 12px;
   }
 
 } /* end @layer components */
