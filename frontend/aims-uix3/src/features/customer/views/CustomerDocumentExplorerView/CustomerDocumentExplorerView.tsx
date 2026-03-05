@@ -18,6 +18,12 @@ import {
   getDocumentTypeLabel,
 } from '@/shared/constants/documentCategories'
 import { formatDateTimeCompact } from '@/shared/lib/timeUtils'
+import { DocumentUtils } from '@/entities/document/model'
+import { DocumentSummaryModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentSummaryModal'
+import { DocumentFullTextModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentFullTextModal'
+import { CustomerDocumentPreviewModal } from '@/features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'
+import DownloadHelper from '../../../../utils/downloadHelper'
+import type { Document } from '@/types/documentStatus'
 import type { Customer } from '@/entities/customer/model'
 import './CustomerDocumentExplorerView.css'
 
@@ -81,6 +87,18 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
   child: '자녀',
   shareholder: '주주',
   director: '이사',
+}
+
+/** CustomerDocumentItem → Document 변환 (모달에서 _id로 API 조회하므로 최소 필드만) */
+function customerDocToDocument(doc: CustomerDocumentItem): Document {
+  return {
+    _id: doc._id,
+    originalName: doc.originalName,
+    displayName: doc.displayName,
+    mimeType: doc.mimeType,
+    status: doc.status as Document['status'],
+    fileSize: doc.fileSize,
+  }
 }
 
 /**
@@ -158,6 +176,10 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   // 펼침 상태: "cat:insurance" 또는 "st:insurance/annual_report" 형식
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => new Set())
 
+  // 모달 상태
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
+  const [activeModal, setActiveModal] = useState<'summary' | 'fulltext' | null>(null)
+
   // 관계자 문서 탭 상태
   const [relatedGroups, setRelatedGroups] = useState<RelatedPersonGroup[]>([])
   const [relatedLoading, setRelatedLoading] = useState(false)
@@ -167,6 +189,11 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     documents,
     isLoading,
     error,
+    previewState,
+    previewTarget,
+    openPreview,
+    closePreview,
+    retryPreview,
   } = useCustomerDocumentsController(visible ? customerId : null)
 
   // 2단 트리 구성: 대분류 -> 소분류 -> 문서
@@ -286,6 +313,36 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     }
   }, [categoryGroups, relatedGroups, activeTab])
 
+  const handleDocClick = useCallback((doc: CustomerDocumentItem) => {
+    void openPreview(doc)
+  }, [openPreview])
+
+  const handleSummaryClick = useCallback((doc: CustomerDocumentItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedDocument(customerDocToDocument(doc))
+    setActiveModal('summary')
+  }, [])
+
+  const handleFullTextClick = useCallback((doc: CustomerDocumentItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedDocument(customerDocToDocument(doc))
+    setActiveModal('fulltext')
+  }, [])
+
+  const handleModalClose = useCallback(() => {
+    setActiveModal(null)
+    setSelectedDocument(null)
+  }, [])
+
+  const handleDownload = useCallback(async () => {
+    const preview = previewState.data
+    if (!preview?.rawDetail) return
+    await DownloadHelper.downloadDocument({
+      _id: preview.id,
+      ...(preview.rawDetail as Record<string, unknown>)
+    })
+  }, [previewState.data])
+
   const allExpanded = activeTab === 'my'
     ? categoryGroups.length > 0 && categoryGroups.every(g => expandedNodes.has(`cat:${g.value}`))
     : relatedGroups.length > 0 && relatedGroups.every(g => expandedNodes.has(`person:${g.customerId}`))
@@ -365,25 +422,54 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                       {/* 문서 목록 */}
                       {isStExpanded && (
                         <div className="cde-subtype__docs">
-                          {subType.documents.map(doc => (
-                            <div key={doc._id} className="cde-doc-row">
-                              <span className="cde-doc-row__icon">
-                                <SFSymbol
-                                  name="doc"
-                                  size={SFSymbolSize.CAPTION_2}
-                                  weight={SFSymbolWeight.MEDIUM}
-                                  color={group.color}
-                                  decorative={true}
-                                />
-                              </span>
-                              <span className="cde-doc-row__name" title={doc.originalName}>
-                                {doc.originalName}
-                              </span>
-                              <span className="cde-doc-row__date">
-                                {doc.linkedAt ? formatDateTimeCompact(doc.linkedAt) : '-'}
-                              </span>
-                            </div>
-                          ))}
+                          {subType.documents.map(doc => {
+                            const fileIcon = DocumentUtils.getFileIcon(doc.mimeType, doc.originalName)
+                            const fileClass = DocumentUtils.getFileTypeClass(doc.mimeType, doc.originalName)
+                            return (
+                              <div
+                                key={doc._id}
+                                className="cde-doc-row"
+                                onClick={() => handleDocClick(doc)}
+                              >
+                                <span className={`cde-doc-row__icon ${fileClass}`}>
+                                  <SFSymbol
+                                    name={fileIcon}
+                                    size={SFSymbolSize.CAPTION_2}
+                                    weight={SFSymbolWeight.MEDIUM}
+                                    decorative={true}
+                                  />
+                                </span>
+                                <span className="cde-doc-row__name" title={doc.originalName}>
+                                  {doc.originalName}
+                                </span>
+                                <span className="cde-doc-row__date">
+                                  {doc.linkedAt ? formatDateTimeCompact(doc.linkedAt) : '-'}
+                                </span>
+                                <span className="cde-doc-row__actions">
+                                  <Tooltip content="요약">
+                                    <button
+                                      type="button"
+                                      className="cde-doc-row__action-btn"
+                                      onClick={(e) => handleSummaryClick(doc, e)}
+                                      aria-label="요약 보기"
+                                    >
+                                      <SFSymbol name="text.quote" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+                                    </button>
+                                  </Tooltip>
+                                  <Tooltip content="전체 텍스트">
+                                    <button
+                                      type="button"
+                                      className="cde-doc-row__action-btn"
+                                      onClick={(e) => handleFullTextClick(doc, e)}
+                                      aria-label="전체 텍스트 보기"
+                                    >
+                                      <SFSymbol name="doc.plaintext" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+                                    </button>
+                                  </Tooltip>
+                                </span>
+                              </div>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
@@ -576,6 +662,29 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
 
       {/* 관계자/가족 문서 탭 */}
       {activeTab === 'related' && renderRelatedTab()}
+
+      {/* 문서 프리뷰 모달 */}
+      <CustomerDocumentPreviewModal
+        visible={previewState.isOpen}
+        isLoading={previewState.isLoading}
+        error={previewState.error}
+        document={previewState.data}
+        onClose={closePreview}
+        {...(previewTarget ? { onRetry: () => { void retryPreview() } } : {})}
+        {...(previewState.data?.rawDetail ? { onDownload: handleDownload } : {})}
+      />
+
+      {/* 요약 / 전체 텍스트 모달 */}
+      <DocumentSummaryModal
+        visible={activeModal === 'summary'}
+        onClose={handleModalClose}
+        document={selectedDocument}
+      />
+      <DocumentFullTextModal
+        visible={activeModal === 'fulltext'}
+        onClose={handleModalClose}
+        document={selectedDocument}
+      />
     </CenterPaneView>
   )
 }
