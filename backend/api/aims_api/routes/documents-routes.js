@@ -638,8 +638,8 @@ router.get('/documents', authenticateJWT, async (req, res) => {
         ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
         customerId: doc.customerId || null,  // 🆕 내 파일 기능
         tags: doc.tags || [],
-        document_type: doc.document_type || null,  // 🏷️ 문서 유형
-        document_type_auto: doc.document_type_auto || false  // 🏷️ 자동 분류 여부
+        document_type: doc.document_type || (doc.meta && doc.meta.document_type) || null,  // 🏷️ 문서 유형
+        document_type_auto: doc.document_type_auto || (doc.meta && doc.meta.document_type_auto) || false  // 🏷️ 자동 분류 여부
       };
     });
 
@@ -921,8 +921,8 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
               customerId: doc.customerId || null,
               folderId: doc.folderId || null,
               tags: doc.tags || [],
-              document_type: doc.document_type || null,
-              document_type_auto: doc.document_type_auto || false,
+              document_type: doc.document_type || (doc.meta && doc.meta.document_type) || null,
+              document_type_auto: doc.document_type_auto || (doc.meta && doc.meta.document_type_auto) || false,
               virusScan: doc.virusScan || null,
               ...statusInfo
             };
@@ -1530,8 +1530,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         customerId: doc.customerId || null,  // 🆕 내 파일 기능
         folderId: doc.folderId || null,  // 🆕 내 파일 폴더 구조
         tags: doc.tags || [],
-        document_type: doc.document_type || null,  // 🏷️ 문서 유형
-        document_type_auto: doc.document_type_auto || false,  // 🏷️ 자동 분류 여부
+        document_type: doc.document_type || (doc.meta && doc.meta.document_type) || null,  // 🏷️ 문서 유형
+        document_type_auto: doc.document_type_auto || (doc.meta && doc.meta.document_type_auto) || false,  // 🏷️ 자동 분류 여부
         virusScan: doc.virusScan || null,  // 🔴 바이러스 스캔 정보
         ...statusInfo
       };
