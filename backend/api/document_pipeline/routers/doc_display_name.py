@@ -262,7 +262,9 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
                 continue
 
             # 7. displayName 정리
-            original_name = doc.get("originalName") or doc.get("original_name") or ""
+            upload_obj = doc.get("upload")
+            upload_original = upload_obj.get("originalName", "") if isinstance(upload_obj, dict) else ""
+            original_name = doc.get("originalName") or doc.get("original_name") or upload_original or ""
             display_name = sanitize_display_name(title, original_name)
 
             if not display_name:

@@ -37,6 +37,8 @@ class OCRWorker:
         self.running = False
         self.poll_interval = 5  # seconds
         self.aims_api_url = settings.AIMS_API_URL
+        self.upstage_service = UpstageService()
+        self.openai_service = OpenAIService()
 
     async def start(self):
         """Start the OCR worker loop"""
@@ -45,12 +47,28 @@ class OCRWorker:
 
         await RedisService.connect()
 
+        # Recover pending messages from previous crash (PEL)
+        try:
+            pending = await RedisService.claim_pending_messages(min_idle_ms=30000)
+            for msg in pending:
+                logger.info(f"Recovering pending OCR job: file_id={msg['file_id']}")
+                await self._process_message(msg)
+        except Exception as e:
+            logger.error(f"PEL recovery failed: {e}", exc_info=True)
+
+        logger.info("OCR Worker entering poll loop")
+
         while self.running:
             try:
                 await self._process_next_job()
+            except asyncio.CancelledError:
+                logger.warning("OCR Worker task cancelled")
+                break
             except Exception as e:
-                logger.error(f"OCR Worker error: {e}")
+                logger.error(f"OCR Worker error: {e}", exc_info=True)
                 await asyncio.sleep(self.poll_interval)
+
+        logger.info("OCR Worker loop exited")
 
     async def stop(self):
         """Stop the OCR worker"""
@@ -59,7 +77,12 @@ class OCRWorker:
 
     async def _process_next_job(self):
         """Process the next job from Redis stream"""
-        messages = await RedisService.read_stream(count=1, block=5000)
+        try:
+            messages = await RedisService.read_stream(count=1, block=5000)
+        except Exception as e:
+            logger.error(f"OCR Worker read_stream failed: {e}", exc_info=True)
+            await asyncio.sleep(self.poll_interval)
+            return
 
         if not messages:
             return
@@ -107,7 +130,7 @@ class OCRWorker:
                 await self._handle_ocr_success(msg, ocr_result, queued_at, page_count)
 
         except Exception as e:
-            logger.error(f"OCR processing failed: {e}")
+            logger.error(f"OCR processing failed: {e}", exc_info=True)
             await self._handle_ocr_error(msg, {"statusCode": 500, "statusMessage": str(e)}, queued_at)
 
     async def _get_page_count(self, file_path: str) -> int:
@@ -278,17 +301,33 @@ class OCRWorker:
             "meta.confidence": ocr_result.get("doc_confidence", 0.0),
         }
 
-        # Generate displayName from OCR title (only if not already set)
-        title = ocr_result.get("title")
-        if title:
-            try:
-                collection = MongoService.get_collection("files")
-                doc = await collection.find_one(
-                    {"_id": ObjectId(file_id)},
-                    {"displayName": 1, "upload.originalName": 1}
-                )
-                if doc and not doc.get("displayName"):
-                    original_name = doc.get("upload", {}).get("originalName", "")
+        # Generate displayName (only if not already set)
+        try:
+            collection = MongoService.get_collection("files")
+            doc = await collection.find_one(
+                {"_id": ObjectId(file_id)},
+                {"displayName": 1, "upload.originalName": 1}
+            )
+            if doc and not doc.get("displayName"):
+                original_name = doc.get("upload", {}).get("originalName", "")
+                full_text = ocr_result.get("full_text", "")
+
+                # 1순위: summarize_text에서 받은 title
+                title = ocr_result.get("title")
+
+                # 2순위: title이 없으면 generate_title_only로 경량 생성
+                if not title and full_text and len(full_text.strip()) >= 10:
+                    try:
+                        title_result = await OpenAIService.generate_title_only(
+                            text=full_text,
+                            owner_id=owner_id,
+                            document_id=doc_id
+                        )
+                        title = title_result.get("title")
+                    except Exception as e:
+                        logger.warning(f"generate_title_only failed: {e}")
+
+                if title:
                     ext = os.path.splitext(original_name)[1].lower() if original_name else ""
                     safe_title = re.sub(r'[\\/:*?"<>|]', '', title)
                     safe_title = re.sub(r'\s+', ' ', safe_title).strip()
@@ -297,8 +336,8 @@ class OCRWorker:
                     display_name = f"{safe_title}{ext}" if ext else safe_title
                     ocr_update["displayName"] = display_name
                     logger.info(f"OCR displayName generated: {original_name} -> {display_name}")
-            except Exception as e:
-                logger.warning(f"displayName generation failed: {e}")
+        except Exception as e:
+            logger.warning(f"displayName generation failed: {e}")
 
         # Update MongoDB with OCR results
         await self._update_ocr_status(file_id, ocr_update)

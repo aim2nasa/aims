@@ -81,7 +81,8 @@ run_step 8 "pdf_converter 배포" "cd '$AIMS_DIR/tools/convert' && ./deploy_pdf_
 run_step 9 "document_pipeline 배포" "cd '$AIMS_DIR/backend/api/document_pipeline' && bash deploy_document_pipeline.sh"
 
 # 10. n8n 워크플로우
-run_step 10 "n8n 워크플로우 배포" "cd '$AIMS_DIR/backend/n8n_flows' && source ~/.profile 2>/dev/null || true && ./deploy_n8n_workflows.sh"
+# [DISABLED] n8n은 AIMS에서 사용하지 않음 (2026-03-05)
+# run_step 10 "n8n 워크플로우 배포" "cd '$AIMS_DIR/backend/n8n_flows' && source ~/.profile 2>/dev/null || true && ./deploy_n8n_workflows.sh"
 
 # 11. Frontend (메인)
 run_step 11 "Frontend 배포" "cd '$AIMS_DIR/frontend/aims-uix3' && ./deploy_aims_frontend.sh"

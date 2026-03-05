@@ -9,6 +9,9 @@ venv/
 # Log files
 scripts/*.log
 
+# Playwright MCP
+.playwright-mcp/
+
 temp_downloads
 
 # Claude Code local settings (개인 설정만 배제, skills는 공유)

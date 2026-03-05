@@ -20,6 +20,7 @@ from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_m
 from workers.error_logger import error_logger
 from workers.upload_worker import upload_worker
 from workers.pdf_conversion_worker import pdf_conversion_worker
+from workers.ocr_worker import ocr_worker
 from workers.pipeline_metrics import pipeline_metrics
 
 # Configure logging
@@ -28,6 +29,10 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+# Background task references (prevent GC of asyncio tasks)
+_background_tasks = set()
 
 
 @asynccontextmanager
@@ -42,30 +47,45 @@ async def lifespan(app: FastAPI):
 
     # Start Upload Worker (if queue enabled)
     if settings.UPLOAD_QUEUE_ENABLED:
-        asyncio.create_task(upload_worker.start())
+        task = asyncio.create_task(upload_worker.start())
+        _background_tasks.add(task)
+        task.add_done_callback(_background_tasks.discard)
         logger.info(f"Upload Worker started: {upload_worker.worker_id}")
     else:
         logger.info("Upload Queue disabled, skipping worker startup")
 
     # Start PDF Conversion Worker
     if settings.PDF_CONV_QUEUE_ENABLED:
-        asyncio.create_task(pdf_conversion_worker.start())
+        task = asyncio.create_task(pdf_conversion_worker.start())
+        _background_tasks.add(task)
+        task.add_done_callback(_background_tasks.discard)
         logger.info(f"PDF Conversion Worker started: {pdf_conversion_worker.worker_id}")
+
+    # Start OCR Worker (Redis stream consumer)
+    task = asyncio.create_task(ocr_worker.start())
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
+    logger.info("OCR Worker started")
 
     yield
 
     # Shutdown
     logger.info("Shutting down Document Pipeline API...")
 
-    # Stop Upload Worker
+    # Signal all workers to stop
     if settings.UPLOAD_QUEUE_ENABLED:
         upload_worker.stop()
-        logger.info("Upload Worker stopped")
-
-    # Stop PDF Conversion Worker
     if settings.PDF_CONV_QUEUE_ENABLED:
         pdf_conversion_worker.stop()
-        logger.info("PDF Conversion Worker stopped")
+    await ocr_worker.stop()
+
+    # Cancel and await all background tasks (graceful shutdown)
+    tasks_snapshot = list(_background_tasks)
+    for task in tasks_snapshot:
+        task.cancel()
+    if tasks_snapshot:
+        await asyncio.gather(*tasks_snapshot, return_exceptions=True)
+    logger.info("All workers stopped")
 
     await MongoService.disconnect()
     logger.info("MongoDB disconnected")

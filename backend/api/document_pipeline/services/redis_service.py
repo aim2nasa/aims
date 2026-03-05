@@ -47,6 +47,31 @@ class RedisService:
                 else:
                     raise
 
+            # Remove stale consumers (prevent message theft by rogue processes)
+            await cls._cleanup_stale_consumers()
+
+    @classmethod
+    async def _cleanup_stale_consumers(cls):
+        """Remove all consumers except our own from the consumer group.
+        Prevents rogue processes (e.g., legacy n8n) from stealing messages."""
+        try:
+            consumers = await cls._client.xinfo_consumers(
+                cls.STREAM_NAME, cls.CONSUMER_GROUP
+            )
+            for consumer in consumers:
+                name = consumer.get("name", "")
+                if name and name != cls.CONSUMER_NAME:
+                    pending = consumer.get("pending", 0)
+                    await cls._client.xgroup_delconsumer(
+                        cls.STREAM_NAME, cls.CONSUMER_GROUP, name
+                    )
+                    logger.warning(
+                        f"Removed stale consumer '{name}' "
+                        f"(pending={pending}) from {cls.CONSUMER_GROUP}"
+                    )
+        except Exception as e:
+            logger.error(f"Stale consumer cleanup failed: {e}", exc_info=True)
+
     @classmethod
     async def disconnect(cls):
         """Close Redis connection"""
@@ -54,6 +79,64 @@ class RedisService:
             await cls._client.close()
             cls._client = None
             logger.info("Redis disconnected")
+
+    @classmethod
+    async def claim_pending_messages(cls, min_idle_ms: int = 30000) -> List[Dict[str, Any]]:
+        """
+        Claim and return pending messages from PEL (Pending Entry List).
+        Called at Worker startup to recover messages from previous crash.
+
+        Args:
+            min_idle_ms: Minimum idle time in ms before claiming (default 30s)
+
+        Returns:
+            List of parsed messages (same format as read_stream)
+        """
+        if cls._client is None:
+            await cls.connect()
+
+        try:
+            result = await cls._client.xautoclaim(
+                name=cls.STREAM_NAME,
+                groupname=cls.CONSUMER_GROUP,
+                consumername=cls.CONSUMER_NAME,
+                min_idle_time=min_idle_ms,
+                start_id="0-0",
+                count=50
+            )
+
+            if not result or len(result) < 2:
+                return []
+
+            # xautoclaim returns: [next_start_id, [(id, data), ...], deleted_ids]
+            stream_messages = result[1]
+            if not stream_messages:
+                return []
+
+            messages = []
+            for message_id, data in stream_messages:
+                if not data:
+                    # Deleted message in PEL — just ACK and skip
+                    await cls._client.xack(cls.STREAM_NAME, cls.CONSUMER_GROUP, message_id)
+                    continue
+                parsed = {
+                    "message_id": message_id,
+                    "file_id": data.get("file_id", ""),
+                    "file_path": data.get("file_path", ""),
+                    "doc_id": data.get("doc_id", ""),
+                    "owner_id": data.get("owner_id", ""),
+                    "queued_at": data.get("queued_at", "")
+                }
+                messages.append(parsed)
+
+            if messages:
+                logger.info(f"Claimed {len(messages)} pending messages from PEL")
+
+            return messages
+
+        except Exception as e:
+            logger.error(f"Redis claim_pending error: {e}", exc_info=True)
+            return []
 
     @classmethod
     async def read_stream(cls, count: int = 1, block: int = 5000) -> List[Dict[str, Any]]:
@@ -72,42 +155,40 @@ class RedisService:
             - doc_id
             - owner_id
             - queued_at
+
+        Raises:
+            Exception: Redis connection/read errors (caller must handle)
         """
         if cls._client is None:
             await cls.connect()
 
-        try:
-            # XREADGROUP GROUP ocr_consumer_group worker-1 COUNT 1 BLOCK 5000 STREAMS ocr_stream >
-            result = await cls._client.xreadgroup(
-                groupname=cls.CONSUMER_GROUP,
-                consumername=cls.CONSUMER_NAME,
-                streams={cls.STREAM_NAME: ">"},
-                count=count,
-                block=block
-            )
+        # XREADGROUP GROUP ocr_consumer_group worker-fastapi COUNT 1 BLOCK 5000 STREAMS ocr_stream >
+        result = await cls._client.xreadgroup(
+            groupname=cls.CONSUMER_GROUP,
+            consumername=cls.CONSUMER_NAME,
+            streams={cls.STREAM_NAME: ">"},
+            count=count,
+            block=block
+        )
 
-            if not result:
-                return []
-
-            messages = []
-            for stream_name, stream_messages in result:
-                for message_id, data in stream_messages:
-                    parsed = {
-                        "message_id": message_id,
-                        "file_id": data.get("file_id", ""),
-                        "file_path": data.get("file_path", ""),
-                        "doc_id": data.get("doc_id", ""),
-                        "owner_id": data.get("owner_id", ""),
-                        "queued_at": data.get("queued_at", "")
-                    }
-                    messages.append(parsed)
-                    logger.debug(f"Read message: {message_id}")
-
-            return messages
-
-        except Exception as e:
-            logger.error(f"Redis read error: {e}")
+        if not result:
             return []
+
+        messages = []
+        for stream_name, stream_messages in result:
+            for message_id, data in stream_messages:
+                parsed = {
+                    "message_id": message_id,
+                    "file_id": data.get("file_id", ""),
+                    "file_path": data.get("file_path", ""),
+                    "doc_id": data.get("doc_id", ""),
+                    "owner_id": data.get("owner_id", ""),
+                    "queued_at": data.get("queued_at", "")
+                }
+                messages.append(parsed)
+                logger.debug(f"Read message: {message_id}")
+
+        return messages
 
     @classmethod
     async def ack_and_delete(cls, message_id: str):
