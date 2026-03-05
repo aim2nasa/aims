@@ -8,7 +8,7 @@
  * - 일괄 적용 체크박스
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './DuplicateDialog.css'
 
 /**
@@ -46,6 +46,21 @@ export default function DuplicateDialog({
   remainingCount = 0,
 }: DuplicateDialogProps) {
   const [applyToAll, setApplyToAll] = useState(false)
+  const AUTO_SKIP_SECONDS = 10
+  const [countdown, setCountdown] = useState(AUTO_SKIP_SECONDS)
+  const countdownRef = useRef(AUTO_SKIP_SECONDS)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      countdownRef.current -= 1
+      setCountdown(countdownRef.current)
+      if (countdownRef.current <= 0) {
+        clearInterval(timer)
+        onAction('skip', true)
+      }
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [onAction])
 
   const handleAction = (action: DuplicateAction) => {
     onAction(action, applyToAll)
@@ -114,7 +129,7 @@ export default function DuplicateDialog({
             className="duplicate-dialog-btn primary"
             onClick={() => handleAction('skip')}
           >
-            건너뛰기
+            건너뛰기 ({countdown}초)
           </button>
         </div>
       </div>

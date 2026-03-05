@@ -211,7 +211,7 @@ describe('BatchDocumentUploadView - Duplicate Dialog Integration', () => {
         />
       )
 
-      fireEvent.click(screen.getByText('건너뛰기'))
+      fireEvent.click(screen.getByText(/건너뛰기/))
 
       expect(mockHandleDuplicateAction).toHaveBeenCalledWith('skip', false)
     })
@@ -294,7 +294,7 @@ describe('BatchDocumentUploadView - Duplicate Dialog Integration', () => {
       fireEvent.click(checkbox)
 
       // 건너뛰기 클릭
-      fireEvent.click(screen.getByText('건너뛰기'))
+      fireEvent.click(screen.getByText(/건너뛰기/))
 
       expect(mockHandleDuplicateAction).toHaveBeenCalledWith('skip', true)
     })

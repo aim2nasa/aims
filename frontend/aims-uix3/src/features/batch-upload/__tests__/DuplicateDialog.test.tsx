@@ -3,8 +3,8 @@
  * @since 2025-12-05
  */
 
-import { describe, test, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import DuplicateDialog, { type DuplicateFile } from '../components/DuplicateDialog'
 
 /**
@@ -28,6 +28,11 @@ describe('DuplicateDialog', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   describe('렌더링', () => {
@@ -107,8 +112,26 @@ describe('DuplicateDialog', () => {
         />
       )
 
-      fireEvent.click(screen.getByText('건너뛰기'))
+      fireEvent.click(screen.getByText(/건너뛰기/))
       expect(mockOnAction).toHaveBeenCalledWith('skip', false)
+    })
+
+    test('10초 후 자동으로 건너뛰기 (applyToAll=true)', () => {
+      render(
+        <DuplicateDialog
+          file={createMockDuplicateFile()}
+          onAction={mockOnAction}
+          onCancel={mockOnCancel}
+        />
+      )
+
+      expect(mockOnAction).not.toHaveBeenCalled()
+
+      act(() => {
+        vi.advanceTimersByTime(10000)
+      })
+
+      expect(mockOnAction).toHaveBeenCalledWith('skip', true)
     })
 
     // Note: 덮어쓰기/둘다유지 버튼은 hash 기반 중복 검사에서 무의미하므로 제거됨
@@ -143,7 +166,7 @@ describe('DuplicateDialog', () => {
       fireEvent.click(screen.getByRole('checkbox'))
 
       // 건너뛰기 클릭
-      fireEvent.click(screen.getByText('건너뛰기'))
+      fireEvent.click(screen.getByText(/건너뛰기/))
       expect(mockOnAction).toHaveBeenCalledWith('skip', true)
     })
   })
