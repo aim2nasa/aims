@@ -1,0 +1,21 @@
+{
+  "snapshot_time": "2026-03-05T18:45:45.547Z",
+  "issue": "ISSUE-8",
+  "description": "Large PDF summary JSON parsing bug",
+  "document": {
+    "id": "69a9c5a61377f935dd1a79b3",
+    "name": "포트폴리오_구본미.pdf",
+    "sizeBytes": 272688186,
+    "pdfPages": 21,
+    "mime": "application/pdf",
+    "status": "completed",
+    "overallStatus": "completed",
+    "docType": "unclassifiable",
+    "confidence": 1,
+    "summary": "{\"type\":\"unclassifiable\",\"confidence\":1.0,\"title\":\"\",\"summary\":\"\",\"tags\":[]}",
+    "fullTextLen": 17926,
+    "tags": [],
+    "ocrStatus": null,
+    "embedStatus": "done"
+  }
+}

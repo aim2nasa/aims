@@ -1,0 +1,74 @@
+{
+  "snapshot_time": "2026-03-05T18:45:56.579Z",
+  "issue": "ISSUE-7",
+  "description": "Duplicate file detection - UI display",
+  "count": 6,
+  "documents": [
+    {
+      "id": "69a9c5471377f935dd1a763c",
+      "name": "캐치업-운전자.pdf",
+      "status": "failed",
+      "overallStatus": "processing",
+      "progressMessage": "동일한 파일이 이미 등록되어 있습니다.",
+      "fileSize": null,
+      "fileHash": null,
+      "mime": null,
+      "createdAt": "2026-03-05T18:02:47.667Z"
+    },
+    {
+      "id": "69a9c5631377f935dd1a7802",
+      "name": "21년 세무조정계산서_캐치업코리아.pdf",
+      "status": "failed",
+      "overallStatus": "processing",
+      "progressMessage": "동일한 파일이 이미 등록되어 있습니다.",
+      "fileSize": null,
+      "fileHash": null,
+      "mime": null,
+      "createdAt": "2026-03-05T18:03:15.278Z"
+    },
+    {
+      "id": "69a9c5781377f935dd1a78d6",
+      "name": "3204가입증.pdf",
+      "status": "failed",
+      "overallStatus": "processing",
+      "progressMessage": "동일한 파일이 이미 등록되어 있습니다.",
+      "fileSize": null,
+      "fileHash": null,
+      "mime": null,
+      "createdAt": "2026-03-05T18:03:36.140Z"
+    },
+    {
+      "id": "69a9c57b1377f935dd1a78ec",
+      "name": "캐치업 가입증-1.pdf",
+      "status": "failed",
+      "overallStatus": "processing",
+      "progressMessage": "동일한 파일이 이미 등록되어 있습니다.",
+      "fileSize": null,
+      "fileHash": null,
+      "mime": null,
+      "createdAt": "2026-03-05T18:03:39.448Z"
+    },
+    {
+      "id": "69a9c57e1377f935dd1a790a",
+      "name": "캐치업3184 청약서-1.pdf",
+      "status": "failed",
+      "overallStatus": "processing",
+      "progressMessage": "동일한 파일이 이미 등록되어 있습니다.",
+      "fileSize": null,
+      "fileHash": null,
+      "mime": null,
+      "createdAt": "2026-03-05T18:03:42.997Z"
+    },
+    {
+      "id": "69a9c57f1377f935dd1a7913",
+      "name": "캐치업3184 청약서.pdf",
+      "status": "failed",
+      "overallStatus": "processing",
+      "progressMessage": "동일한 파일이 이미 등록되어 있습니다.",
+      "fileSize": null,
+      "fileHash": null,
+      "mime": null,
+      "createdAt": "2026-03-05T18:03:43.355Z"
+    }
+  ]
+}
