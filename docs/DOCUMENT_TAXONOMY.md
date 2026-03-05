@@ -42,6 +42,74 @@ JSON 응답: { type: "diagnosis", confidence: 0.85, title: "...", summary: "..."
 
 ---
 
+## 분류 처리 흐름
+
+### 현재 (As-Is) — 요약만 수행
+
+```
+사용자가 고객 화면에서 PDF 업로드
+    │
+    ▼ ① 프론트엔드 → document_pipeline (FastAPI :8100)
+    │   - 파일 저장 + MongoDB에 문서 레코드 생성
+    │   - customer_id = 현재 보고 있는 고객
+    │
+    ▼ ② doc_prep_main.py — 텍스트 추출
+    │   - PDF에서 텍스트 추출 (pdfplumber)
+    │   - AR/CRS 감지: PDF 텍스트 패턴으로 판별 (시스템 규칙, AI 아님)
+    │     → AR이면 document_type = "annual_report"
+    │     → CRS이면 document_type = "customer_review"
+    │
+    ▼ ③ OpenAIService.summarize_text() — AI 호출 1회
+    │   - 모델: gpt-4o-mini
+    │   - 입력: 문서 텍스트 (최대 10,000자)
+    │   - 출력: { title, summary, tags }
+    │   ※ document_type 분류는 수행하지 않음
+    │
+    ▼ ④ MongoDB 저장
+        - meta.summary, meta.tags, meta.title 저장
+        - AR/CRS만 document_type이 설정됨
+        - 일반 문서는 document_type 없음 (= "unspecified")
+```
+
+### 변경 후 (To-Be) — 요약 + 분류 동시 수행
+
+```
+사용자가 고객 화면에서 PDF 업로드
+    │
+    ▼ ① ② 동일 (파일 저장 + 텍스트 추출 + AR/CRS 시스템 감지)
+    │
+    ▼ ③ OpenAIService.summarize_text() — AI 호출 1회 (프롬프트 변경)
+    │   - 기존: "요약해주세요" → { title, summary, tags }
+    │   - 변경: "요약 + 분류해주세요" → { type, confidence, title, summary, tags }
+    │
+    │   ┌──────────────────────────────────────────────────┐
+    │   │ 시스템: "보험설계사 문서분류기. JSON만 응답."       │
+    │   │ 유저: 42개 유형 목록 + 규칙 + 문서 텍스트          │
+    │   │ → JSON: { type, confidence, title, summary, tags } │
+    │   └──────────────────────────────────────────────────┘
+    │   - 추가 API 호출: 0회 (기존 1회 그대로)
+    │   - 추가 비용: 문서당 +$0.00013 (프롬프트 503토큰 추가)
+    │
+    ▼ ④ 후처리 + MongoDB 저장
+        - AR/CRS 시스템 감지 > AI 분류 (시스템이 우선)
+        - AI가 annual_report/customer_review/unspecified 반환 → general로 교체
+        - type이 42개 목록에 없으면 → general
+        - tags 정규화 (보험사명 통일 등)
+        - 결과: meta.document_type, meta.confidence 추가 저장
+```
+
+### 핵심 포인트
+
+| 항목 | 설명 |
+|------|------|
+| API 호출 횟수 | 변경 없음 — 기존 요약 호출에 분류를 합침 |
+| 코드 변경 범위 | `OpenAIService.summarize_text()` 프롬프트 교체 |
+| temperature | 0 (동일 문서 → 동일 분류 결과 보장) |
+| AR/CRS 처리 | AI가 아닌 시스템 규칙으로 감지 (기존 유지) |
+| 구현 상태 | **미구현** — 설계 완료, 코드 변경 전 |
+
+---
+
 ## 문서-고객-관계 모델 [v3.2-experimental]
 
 > **이 섹션은 실험적 설계입니다.** 구현 여부 미정이며, 사용 패턴 관찰 후 정식 버전으로 승격할지 결정합니다.
