@@ -1287,6 +1287,9 @@ async def process_document_pipeline(
         summary = ""
         tags = []
 
+        ai_document_type = "general"
+        ai_confidence = 0.0
+
         if full_text and len(full_text.strip()) > 0:
             summary_result = await OpenAIService.summarize_text(
                 full_text,
@@ -1295,6 +1298,8 @@ async def process_document_pipeline(
             )
             summary = summary_result.get("summary", "")
             tags = summary_result.get("tags", [])
+            ai_document_type = summary_result.get("document_type", "general")
+            ai_confidence = summary_result.get("confidence", 0.0)
 
         # Update MongoDB with meta info
         meta_update = {
@@ -1307,6 +1312,8 @@ async def process_document_pipeline(
             "meta.full_text": full_text or "",
             "meta.summary": summary,
             "meta.tags": tags,
+            "meta.document_type": ai_document_type,
+            "meta.confidence": ai_confidence,
             "meta.length": len(full_text) if full_text else 0,
             "meta.meta_status": "done",
             # Image EXIF metadata

@@ -35,6 +35,8 @@ class SummaryResponse(BaseModel):
     length: int
     truncated: bool = False
     tags: List[str] = []
+    document_type: str = "general"
+    confidence: float = 0.0
 
 
 class MetaRequest(BaseModel):
@@ -73,6 +75,8 @@ class OCRResponse(BaseModel):
     confidence: Optional[float] = None
     summary: Optional[str] = None
     tags: List[str] = []
+    document_type: str = "general"
+    doc_confidence: float = 0.0
     full_text: Optional[str] = None
     num_pages: Optional[int] = None
     pages: List[dict] = []

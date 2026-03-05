@@ -82,6 +82,9 @@ async def process_ocr(
         summary = None
         tags = []
 
+        document_type = "general"
+        doc_confidence = 0.0
+
         if ocr_result.get("full_text"):
             try:
                 result = await openai_service.summarize_text(
@@ -91,6 +94,8 @@ async def process_ocr(
                 )
                 summary = result.get("summary")
                 tags = result.get("tags", [])
+                document_type = result.get("document_type", "general")
+                doc_confidence = result.get("confidence", 0.0)
             except Exception as e:
                 logger.warning(f"Summary generation failed: {e}")
 
@@ -107,6 +112,8 @@ async def process_ocr(
             "confidence": ocr_result.get("confidence"),
             "summary": summary,
             "tags": tags,
+            "document_type": document_type,
+            "doc_confidence": doc_confidence,
             "full_text": ocr_result.get("full_text"),
             "num_pages": ocr_result.get("num_pages"),
             "pages": ocr_result.get("pages", [])

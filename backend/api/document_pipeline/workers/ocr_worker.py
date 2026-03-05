@@ -169,6 +169,9 @@ class OCRWorker:
             # Generate summary if text was extracted
             summary = None
             tags = []
+            result = None
+            document_type = "general"
+            doc_confidence = 0.0
             if ocr_result.get("full_text"):
                 try:
                     result = await self.openai_service.summarize_text(
@@ -178,6 +181,8 @@ class OCRWorker:
                     )
                     summary = result.get("summary")
                     tags = result.get("tags", [])
+                    document_type = result.get("document_type", "general")
+                    doc_confidence = result.get("confidence", 0.0)
                 except Exception as e:
                     logger.warning(f"Summary generation failed: {e}")
 
@@ -189,6 +194,8 @@ class OCRWorker:
                 "summary": summary,
                 "tags": tags,
                 "title": result.get("title") if result else None,
+                "document_type": document_type,
+                "doc_confidence": doc_confidence,
                 "num_pages": ocr_result.get("num_pages", 1)
             }
 
@@ -266,7 +273,9 @@ class OCRWorker:
             "ocr.full_text": ocr_result.get("full_text"),
             "ocr.summary": ocr_result.get("summary"),
             "ocr.tags": ocr_result.get("tags", []),
-            "ocr.page_count": ocr_result.get("num_pages", page_count)
+            "ocr.page_count": ocr_result.get("num_pages", page_count),
+            "meta.document_type": ocr_result.get("document_type", "general"),
+            "meta.confidence": ocr_result.get("doc_confidence", 0.0),
         }
 
         # Generate displayName from OCR title (only if not already set)

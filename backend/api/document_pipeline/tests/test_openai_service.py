@@ -746,14 +746,14 @@ class TestSummarizeText:
 
     @pytest.mark.asyncio
     async def test_basic_summarization(self):
-        """기본 요약 생성"""
+        """기본 요약 생성 (JSON 분류 통합)"""
         mock_usage = MagicMock()
         mock_usage.prompt_tokens = 500
         mock_usage.completion_tokens = 100
         mock_usage.total_tokens = 600
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 테스트 요약입니다.\n태그: 테스트, 문서, AI"
+        mock_message.content = '{"type":"general","confidence":0.9,"title":"테스트 제목","summary":"테스트 요약입니다.","tags":["테스트","문서","AI"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -774,6 +774,8 @@ class TestSummarizeText:
             assert "summary" in result
             assert "tags" in result
             assert result["summary"] == "테스트 요약입니다."
+            assert result["document_type"] == "general"
+            assert result["confidence"] == 0.9
 
     @pytest.mark.asyncio
     async def test_tags_extraction(self):
@@ -784,7 +786,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 600
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 문서 요약\n태그: [보험], [계약], [금융]"
+        mock_message.content = '{"type":"policy","confidence":0.8,"title":"보험 계약서","summary":"문서 요약","tags":["보험","계약","금융"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -842,7 +844,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 600
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 정상 요약\n태그: 테스트"
+        mock_message.content = '{"type":"general","confidence":0.7,"title":"정상 제목","summary":"정상 요약","tags":["테스트"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -882,7 +884,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 5100
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 긴 문서 요약\n태그: 장문"
+        mock_message.content = '{"type":"general","confidence":0.6,"title":"긴 문서","summary":"긴 문서 요약","tags":["장문"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -919,7 +921,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 2600
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 짧은 문서\n태그: 테스트"
+        mock_message.content = '{"type":"memo","confidence":0.75,"title":"짧은 문서","summary":"짧은 문서","tags":["테스트"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -964,7 +966,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 600
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 테스트\n태그: 테스트"
+        mock_message.content = '{"type":"general","confidence":0.7,"title":"테스트","summary":"테스트","tags":["테스트"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -1001,7 +1003,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 600
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 테스트\n태그: 테스트"
+        mock_message.content = '{"type":"general","confidence":0.7,"title":"테스트","summary":"테스트","tags":["테스트"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -1038,7 +1040,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 600
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 테스트\n태그: 테스트"
+        mock_message.content = '{"type":"general","confidence":0.7,"title":"테스트","summary":"테스트","tags":["테스트"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -1071,7 +1073,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 70
 
         mock_message = MagicMock()
-        mock_message.content = "요약: \n태그: "
+        mock_message.content = '{"type":"general","confidence":0.0,"title":"","summary":"","tags":[]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -1095,14 +1097,14 @@ class TestSummarizeText:
 
     @pytest.mark.asyncio
     async def test_response_parsing_fallback(self):
-        """응답 파싱 실패 시 fallback"""
+        """JSON 파싱 실패 시 fallback"""
         mock_usage = MagicMock()
         mock_usage.prompt_tokens = 500
         mock_usage.completion_tokens = 100
         mock_usage.total_tokens = 600
 
         mock_message = MagicMock()
-        mock_message.content = "이것은 형식이 맞지 않는 응답입니다."  # 요약: 태그: 형식 없음
+        mock_message.content = "이것은 JSON이 아닌 응답입니다."
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -1121,9 +1123,11 @@ class TestSummarizeText:
 
             result = await OpenAIService.summarize_text("테스트 텍스트")
 
-            # Fallback: content[:500]이 summary로 사용됨
-            assert result["summary"] == "이것은 형식이 맞지 않는 응답입니다."
+            # Fallback: JSON 파싱 실패 → content[:500]이 summary, document_type=general
+            assert result["summary"] == "이것은 JSON이 아닌 응답입니다."
             assert result["tags"] == []
+            assert result["document_type"] == "general"
+            assert result["confidence"] == 0.0
 
     @pytest.mark.asyncio
     async def test_max_length_parameter(self):
@@ -1134,7 +1138,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 700
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 긴 요약\n태그: 테스트"
+        mock_message.content = '{"type":"general","confidence":0.7,"title":"긴 제목","summary":"긴 요약","tags":["테스트"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -1172,7 +1176,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 5100
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 한글 문서\n태그: 한글"
+        mock_message.content = '{"type":"general","confidence":0.7,"title":"한글 문서","summary":"한글 문서","tags":["한글"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -1209,7 +1213,7 @@ class TestSummarizeText:
         mock_usage.total_tokens = 600
 
         mock_message = MagicMock()
-        mock_message.content = "요약: 테스트\n태그: 테스트"
+        mock_message.content = '{"type":"general","confidence":0.7,"title":"테스트","summary":"테스트","tags":["테스트"]}'
 
         mock_choice = MagicMock()
         mock_choice.message = mock_message
@@ -1238,6 +1242,227 @@ class TestSummarizeText:
             assert call_kwargs["prompt_tokens"] == 500
             assert call_kwargs["completion_tokens"] == 100
             assert call_kwargs["total_tokens"] == 600
+
+
+# =============================================================================
+# 3.5. 문서 분류 테스트
+# =============================================================================
+
+class TestDocumentClassification:
+    """문서 분류 (DOCUMENT_TAXONOMY.md 1단계) 테스트"""
+
+    def _make_mock_response(self, content_json: str):
+        """JSON 응답 mock 생성 헬퍼"""
+        mock_usage = MagicMock()
+        mock_usage.prompt_tokens = 600
+        mock_usage.completion_tokens = 150
+        mock_usage.total_tokens = 750
+
+        mock_message = MagicMock()
+        mock_message.content = content_json
+
+        mock_choice = MagicMock()
+        mock_choice.message = mock_message
+
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
+        mock_response.usage = mock_usage
+        return mock_response
+
+    @pytest.mark.asyncio
+    async def test_valid_type_returned(self):
+        """유효한 document_type이 그대로 반환됨"""
+        resp = self._make_mock_response(
+            '{"type":"diagnosis","confidence":0.95,"title":"진단서","summary":"진단 내용","tags":["진단"]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = resp
+            mock_get_client.return_value = mock_client
+
+            result = await OpenAIService.summarize_text("진단서 텍스트")
+
+            assert result["document_type"] == "diagnosis"
+            assert result["confidence"] == 0.95
+
+    @pytest.mark.asyncio
+    async def test_system_only_type_replaced_with_general(self):
+        """annual_report/customer_review/unspecified → general로 교체"""
+        for sys_type in ["annual_report", "customer_review", "unspecified"]:
+            resp = self._make_mock_response(
+                f'{{"type":"{sys_type}","confidence":0.9,"title":"제목","summary":"요약","tags":[]}}'
+            )
+
+            with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+                 patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
+                mock_client = AsyncMock()
+                mock_client.chat.completions.create.return_value = resp
+                mock_get_client.return_value = mock_client
+
+                result = await OpenAIService.summarize_text("텍스트")
+
+                assert result["document_type"] == "general", f"{sys_type}이 general로 교체되어야 함"
+
+    @pytest.mark.asyncio
+    async def test_unknown_type_replaced_with_general(self):
+        """목록에 없는 임의 type → general"""
+        resp = self._make_mock_response(
+            '{"type":"unknown_type_abc","confidence":0.5,"title":"제목","summary":"요약","tags":[]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = resp
+            mock_get_client.return_value = mock_client
+
+            result = await OpenAIService.summarize_text("텍스트")
+
+            assert result["document_type"] == "general"
+
+    @pytest.mark.asyncio
+    async def test_confidence_clamped_to_0_1(self):
+        """confidence가 0~1 범위로 클램핑됨"""
+        resp = self._make_mock_response(
+            '{"type":"policy","confidence":1.5,"title":"제목","summary":"요약","tags":[]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = resp
+            mock_get_client.return_value = mock_client
+
+            result = await OpenAIService.summarize_text("텍스트")
+
+            assert result["confidence"] == 1.0
+
+    @pytest.mark.asyncio
+    async def test_confidence_negative_clamped_to_zero(self):
+        """음수 confidence → 0.0"""
+        resp = self._make_mock_response(
+            '{"type":"policy","confidence":-0.5,"title":"제목","summary":"요약","tags":[]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = resp
+            mock_get_client.return_value = mock_client
+
+            result = await OpenAIService.summarize_text("텍스트")
+
+            assert result["confidence"] == 0.0
+
+    @pytest.mark.asyncio
+    async def test_tag_normalization(self):
+        """태그 정규화 (보험사명 통일)"""
+        resp = self._make_mock_response(
+            '{"type":"policy","confidence":0.9,"title":"제목","summary":"요약","tags":["메트라이프생명","실비","삼성생명보험"]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = resp
+            mock_get_client.return_value = mock_client
+
+            result = await OpenAIService.summarize_text("텍스트")
+
+            assert "메트라이프" in result["tags"]
+            assert "실손보험" in result["tags"]
+            assert "삼성생명" in result["tags"]
+            assert "메트라이프생명" not in result["tags"]
+
+    @pytest.mark.asyncio
+    async def test_tag_deduplication(self):
+        """태그 중복 제거"""
+        resp = self._make_mock_response(
+            '{"type":"general","confidence":0.5,"title":"제목","summary":"요약","tags":["보험","보험","계약"]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = resp
+            mock_get_client.return_value = mock_client
+
+            result = await OpenAIService.summarize_text("텍스트")
+
+            assert result["tags"].count("보험") == 1
+
+    @pytest.mark.asyncio
+    async def test_temperature_zero(self):
+        """temperature=0 으로 호출 (일관성 보장)"""
+        resp = self._make_mock_response(
+            '{"type":"general","confidence":0.5,"title":"제목","summary":"요약","tags":[]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = resp
+            mock_get_client.return_value = mock_client
+
+            await OpenAIService.summarize_text("텍스트")
+
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["temperature"] == 0
+
+    @pytest.mark.asyncio
+    async def test_response_format_json_object(self):
+        """response_format=json_object로 호출"""
+        resp = self._make_mock_response(
+            '{"type":"general","confidence":0.5,"title":"제목","summary":"요약","tags":[]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = resp
+            mock_get_client.return_value = mock_client
+
+            await OpenAIService.summarize_text("텍스트")
+
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["response_format"] == {"type": "json_object"}
+
+    @pytest.mark.asyncio
+    async def test_all_42_valid_types(self):
+        """42개 유효 유형 모두 검증"""
+        from services.openai_service import VALID_DOCUMENT_TYPES
+        assert len(VALID_DOCUMENT_TYPES) == 42
+
+        for doc_type in VALID_DOCUMENT_TYPES:
+            result = OpenAIService._validate_document_type(doc_type)
+            assert result == doc_type, f"{doc_type}이 유효 타입으로 인정되어야 함"
+
+    @pytest.mark.asyncio
+    async def test_credit_skipped_includes_document_type(self):
+        """크레딧 부족 시에도 document_type=general 반환"""
+        with patch("services.openai_service.check_credit_for_summary", new_callable=AsyncMock) as mock_check:
+            mock_check.return_value = {"allowed": False, "credits_remaining": 0, "days_until_reset": 5}
+
+            result = await OpenAIService.summarize_text("텍스트", owner_id="user-123")
+
+            assert result["credit_skipped"] is True
+            assert result["document_type"] == "general"
+            assert result["confidence"] == 0.0
+
+    @pytest.mark.asyncio
+    async def test_api_error_includes_document_type(self):
+        """API 오류 시에도 document_type=general 반환"""
+        with patch.object(OpenAIService, "_get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.side_effect = Exception("API Error")
+            mock_get_client.return_value = mock_client
+
+            result = await OpenAIService.summarize_text("텍스트")
+
+            assert result["document_type"] == "general"
+            assert result["confidence"] == 0.0
 
 
 # =============================================================================

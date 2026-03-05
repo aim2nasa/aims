@@ -62,7 +62,7 @@ async def summarize_document(request: SummaryRequest):
         # Check if text is too long
         truncated = len(full_text) > 10000
 
-        # Generate summary
+        # Generate summary + classification
         result = await openai_service.summarize_text(
             full_text,
             owner_id=request.user_id,
@@ -70,17 +70,21 @@ async def summarize_document(request: SummaryRequest):
         )
         summary = result.get("summary", "")
         tags = result.get("tags", [])
+        document_type = result.get("document_type", "general")
+        confidence = result.get("confidence", 0.0)
 
         logger.info(
             f"Summary generated: {len(full_text)} chars -> {len(summary)} chars, "
-            f"tags: {tags}"
+            f"tags: {tags}, type: {document_type}, confidence: {confidence:.2f}"
         )
 
         return SummaryResponse(
             summary=summary,
             length=len(summary),
             truncated=truncated,
-            tags=tags
+            tags=tags,
+            document_type=document_type,
+            confidence=confidence
         )
 
     except Exception as e:
