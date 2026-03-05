@@ -42,11 +42,17 @@ class PdfConversionQueueService:
             [("status", 1), ("created_at", 1)],
             name="idx_status_created"
         )
+        # document_id가 string인 경우만 중복 방지 (text_extraction은 document_id=null)
+        # sparse=True는 필드가 null이면 여전히 인덱스에 포함되므로 partialFilterExpression 사용
+        try:
+            await collection.drop_index("idx_dedup")
+        except Exception:
+            pass  # 인덱스가 없을 수 있음
         await collection.create_index(
             [("document_id", 1), ("job_type", 1)],
             unique=True,
-            sparse=True,
-            name="idx_dedup"
+            name="idx_dedup_v2",
+            partialFilterExpression={"document_id": {"$type": "string"}},
         )
         await collection.create_index(
             [("status", 1), ("started_at", 1)],
