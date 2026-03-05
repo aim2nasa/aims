@@ -63,7 +63,7 @@
     color: var(--color-text-primary);
   }
 
-  /* === 카테고리 폴더 === */
+  /* === 대분류 (Level 1) === */
   .cde-category {
     margin-bottom: 1px;
   }
@@ -102,17 +102,60 @@
     flex-shrink: 0;
   }
 
-  /* === 문서 행 === */
-  .cde-category__docs {
+  /* === 소분류 컨테이너 (Level 2) === */
+  .cde-subtypes {
+    padding-left: 16px;
+  }
+
+  .cde-subtype {
+    margin-bottom: 1px;
+  }
+
+  .cde-subtype__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    width: 100%;
+    padding: 4px var(--spacing-3);
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.1s ease-out;
+    text-align: left;
+  }
+
+  .cde-subtype__header:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  .cde-subtype__label {
+    flex: 1;
+    min-width: 0;
+    color: var(--color-text-secondary);
+  }
+
+  .cde-subtype__count {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+  }
+
+  /* === 문서 행 (Level 3) === */
+  .cde-subtype__docs {
     padding-left: 20px;
   }
 
   .cde-doc-row {
     display: grid;
-    grid-template-columns: 24px 1fr 100px 130px;
+    grid-template-columns: 20px 1fr 120px;
     align-items: center;
     gap: var(--spacing-2);
-    padding: 4px var(--spacing-3);
+    padding: 3px var(--spacing-3);
     border-radius: 4px;
     font-size: 12px;
     color: var(--color-text-primary);
@@ -129,30 +172,12 @@
     justify-content: center;
   }
 
-  .cde-doc-row__icon .document-icon {
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-  }
-
   .cde-doc-row__name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
     font-weight: 400;
-  }
-
-  .cde-doc-row__type {
-    font-size: 10px;
-    color: var(--color-text-tertiary);
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .cde-doc-row__date {
