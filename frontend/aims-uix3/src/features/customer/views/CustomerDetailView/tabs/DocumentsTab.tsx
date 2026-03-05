@@ -40,6 +40,8 @@ import { useCustomerSSE } from '@/shared/hooks/useCustomerSSE'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { documentTypesService, type DocumentType } from '@/services/documentTypesService'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
+import { getCategoryForType } from '@/shared/constants/documentCategories'
+import { DocumentCategoryFilter } from './DocumentCategoryFilter'
 import './DocumentsTab.layout.css';
 import './DocumentsTab.features.css';
 import './DocumentsTab.extras.css';
@@ -60,6 +62,8 @@ interface DocumentsTabProps {
   onNavigate?: (menuKey: string) => void
   /** 외부 새로고침 트리거 (RightPane visibility 변경 시) */
   refreshTrigger?: number
+  /** 문서 탐색기 확대 핸들러 (CenterPane으로 전환) */
+  onExpandToExplorer?: () => void
 }
 
 // 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
@@ -109,6 +113,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   onSearchChange,
   onNavigate,
   refreshTrigger,
+  onExpandToExplorer,
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -133,6 +138,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     enabled: Boolean(customer?._id),
     ...(onDocumentCountChange ? { onDocumentsChange: onDocumentCountChange } : {}),
   })
+
+  // 카테고리 필터 상태
+  const [selectedCategory, setSelectedCategory] = useState('')
 
   // 🍎 페이지네이션 상태 ('auto' 또는 숫자)
   const [currentPage, setCurrentPage] = useState(1)
@@ -274,12 +282,16 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     const measuredPaginationHeight = pagination ? pagination.getBoundingClientRect().height : 0
     const paginationHeight = measuredPaginationHeight > 0 ? measuredPaginationHeight : DEFAULT_PAGINATION_HEIGHT
 
+    // 카테고리 필터 바 높이 측정
+    const filterBar = container.querySelector('.document-category-filter-bar') as HTMLElement | null
+    const filterBarHeight = filterBar ? filterBar.getBoundingClientRect().height : 0
+
     // 컨테이너 gap 측정 (요약 헤더가 보일 때만 적용)
     const containerStyle = getComputedStyle(container)
     const gap = parseFloat(containerStyle.gap) || 0
 
     // fixedHeight 계산: 실제 보이는 요소들의 높이 합
-    const fixedHeight = summaryHeight + (summaryHeight > 0 ? gap : 0) + listHeaderHeight + paginationHeight
+    const fixedHeight = summaryHeight + (summaryHeight > 0 ? gap : 0) + filterBarHeight + listHeaderHeight + paginationHeight
     const availableHeight = containerHeight - fixedHeight
 
     // N개 행의 총 높이 = N * ROW_HEIGHT + (N-1) * ROW_GAP
@@ -514,13 +526,27 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
   // 🍎 검색어로 필터링된 문서 목록
   const filteredDocuments = useMemo(() => {
-    if (!searchTerm.trim()) return documents
-    const term = searchTerm.toLowerCase().trim()
-    return documents.filter(doc =>
-      (doc.displayName ?? '').toLowerCase().includes(term) ||
-      (doc.originalName ?? '').toLowerCase().includes(term)
-    )
-  }, [documents, searchTerm])
+    let result = documents
+
+    // 카테고리 필터
+    if (selectedCategory) {
+      result = result.filter(doc => {
+        const docType = doc.document_type || (doc.isAnnualReport ? 'annual_report' : '')
+        return getCategoryForType(docType) === selectedCategory
+      })
+    }
+
+    // 검색어 필터
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim()
+      result = result.filter(doc =>
+        (doc.displayName ?? '').toLowerCase().includes(term) ||
+        (doc.originalName ?? '').toLowerCase().includes(term)
+      )
+    }
+
+    return result
+  }, [documents, searchTerm, selectedCategory])
 
   // 🍎 문서유형 정렬용 라벨 맵 생성 (한글 라벨 기준 가나다순 - 백엔드와 동일)
   const docTypeLabelMap = useMemo(() => {
@@ -1110,6 +1136,37 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
           )}
         </div>
       </div>
+
+      {/* 카테고리 필터 + 확대 버튼 (.customer-documents__header 바깥 배치 - CFD override 회피) */}
+      {!isEmpty && documents.length > 0 && (
+        <div className="document-category-filter-bar">
+          <DocumentCategoryFilter
+            documents={documents}
+            selectedCategory={selectedCategory}
+            onCategoryChange={(cat) => {
+              setSelectedCategory(cat)
+              setCurrentPage(1)
+            }}
+          />
+          {onExpandToExplorer && (
+            <Tooltip content="문서 탐색기로 확대">
+              <button
+                type="button"
+                className="document-expand-btn"
+                onClick={onExpandToExplorer}
+                aria-label="문서 탐색기 확대"
+              >
+                <SFSymbol
+                  name="arrow.up.left.and.arrow.down.right"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
+              </button>
+            </Tooltip>
+          )}
+        </div>
+      )}
 
       {renderState()}
 
