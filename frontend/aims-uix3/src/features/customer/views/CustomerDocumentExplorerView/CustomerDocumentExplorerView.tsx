@@ -21,8 +21,6 @@ import { formatDateTimeCompact } from '@/shared/lib/timeUtils'
 import { DocumentUtils } from '@/entities/document/model'
 import { DocumentSummaryModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentSummaryModal'
 import { DocumentFullTextModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentFullTextModal'
-import { CustomerDocumentPreviewModal } from '@/features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'
-import DownloadHelper from '../../../../utils/downloadHelper'
 import type { Document } from '@/types/documentStatus'
 import type { Customer } from '@/entities/customer/model'
 import './CustomerDocumentExplorerView.css'
@@ -34,6 +32,8 @@ interface CustomerDocumentExplorerViewProps {
   customerType?: '개인' | '법인'
   onClose: () => void
   onCollapse: () => void
+  /** 문서 클릭 시 RightPane 프리뷰 (App에서 handleDocumentClick 전달) */
+  onDocumentClick?: (documentId: string) => void
 }
 
 /** 소분류 그룹 */
@@ -171,6 +171,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   customerType = '개인',
   onClose,
   onCollapse,
+  onDocumentClick,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('my')
   // 펼침 상태: "cat:insurance" 또는 "st:insurance/annual_report" 형식
@@ -189,11 +190,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     documents,
     isLoading,
     error,
-    previewState,
-    previewTarget,
-    openPreview,
-    closePreview,
-    retryPreview,
   } = useCustomerDocumentsController(visible ? customerId : null)
 
   // 2단 트리 구성: 대분류 -> 소분류 -> 문서
@@ -314,8 +310,10 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   }, [categoryGroups, relatedGroups, activeTab])
 
   const handleDocClick = useCallback((doc: CustomerDocumentItem) => {
-    void openPreview(doc)
-  }, [openPreview])
+    if (onDocumentClick && doc._id) {
+      onDocumentClick(doc._id)
+    }
+  }, [onDocumentClick])
 
   const handleSummaryClick = useCallback((doc: CustomerDocumentItem, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -333,15 +331,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     setActiveModal(null)
     setSelectedDocument(null)
   }, [])
-
-  const handleDownload = useCallback(async () => {
-    const preview = previewState.data
-    if (!preview?.rawDetail) return
-    await DownloadHelper.downloadDocument({
-      _id: preview.id,
-      ...(preview.rawDetail as Record<string, unknown>)
-    })
-  }, [previewState.data])
 
   const allExpanded = activeTab === 'my'
     ? categoryGroups.length > 0 && categoryGroups.every(g => expandedNodes.has(`cat:${g.value}`))
@@ -662,17 +651,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
 
       {/* 관계자/가족 문서 탭 */}
       {activeTab === 'related' && renderRelatedTab()}
-
-      {/* 문서 프리뷰 모달 */}
-      <CustomerDocumentPreviewModal
-        visible={previewState.isOpen}
-        isLoading={previewState.isLoading}
-        error={previewState.error}
-        document={previewState.data}
-        onClose={closePreview}
-        {...(previewTarget ? { onRetry: () => { void retryPreview() } } : {})}
-        {...(previewState.data?.rawDetail ? { onDownload: handleDownload } : {})}
-      />
 
       {/* 요약 / 전체 텍스트 모달 */}
       <DocumentSummaryModal

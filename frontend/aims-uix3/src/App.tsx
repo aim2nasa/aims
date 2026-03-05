@@ -437,8 +437,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     // 단, 관계자 클릭 시 RightPane에 고객 상세 표시를 위해 selectedCustomer 체크
     if (activeDocumentView === "customers-full-detail" || activeDocumentView === "customer-document-explorer") {
       setPaginationVisible(false)
-      // selectedCustomer가 없을 때만 RightPane 숨김 (관계자 클릭 시 RightPane 열림)
-      if (!selectedCustomer) {
+      // selectedCustomer/selectedDocument 모두 없을 때만 RightPane 숨김
+      // (관계자 클릭 시 RightPane 열림, 문서 클릭 시 프리뷰 열림)
+      if (!selectedCustomer && !selectedDocument) {
         setRightPaneVisible(false)
       }
     } else if (activeDocumentView === "documents" ||
@@ -1773,6 +1774,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               customerType={explorerCustomerType}
               onClose={handleCollapseExplorer}
               onCollapse={handleCollapseExplorer}
+              onDocumentClick={handleDocumentClick}
             />
           </Suspense>
 
