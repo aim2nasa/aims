@@ -114,7 +114,7 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 5. 건강/의료: health_checkup=건강검진결과/종합검진/암검진, medical_record=의무기록/검사결과지/처방전
 6. 재산/등록: property_registry=부동산등기부등본/건축물대장, vehicle_registry=자동차등록/차량등록원부, business_registry=사업자등록증/사업자등록증명원
 7. 법인: corp_registry=법인등기부등본/법인등기사항전부증명서/정관/법인인감증명서/중소기업확인서, shareholder=주주명부/지분증명, meeting_minutes=이사회의사록/주총의사록, hr_document=이력서/근로계약서/급여대장/인사발령/노무서류/취업규칙, pension=퇴직연금/DC형/DB형/가입자명부/확정기여형/확정급여형/부담금내역, business_plan=사업계획서/투자제안서, inheritance_gift=상속/증여/유언장
-8. 일반계약/법률: contract=임대차계약/용역계약/매매계약(보험외), legal_document=법률서류/내용증명/소장/변호사의견서
+8. 일반계약/법률: contract=임대차계약/용역계약/매매계약(보험외), legal_document=법률서류/내용증명/소장/변호사의견서/출석통지서/공문/징계서류
 9. 기타: memo=메모/상담기록/고객노트, general=위 유형에 해당하지 않는 일반 문서/안내문/가이드, unclassifiable=비문서/내용없음/판독불가/보험업무와 전혀 무관(사은품·사무용품·로고·디자인)
 
 [분류 규칙]
