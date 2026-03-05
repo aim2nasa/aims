@@ -174,6 +174,33 @@
     flex-shrink: 0;
   }
 
+  /* === 파일명 모드 토글 (전체문서보기 동일) === */
+  .cde-filename-toggle {
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 1px 4px;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.2;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  .cde-filename-toggle:hover {
+    color: var(--color-text-secondary);
+    border-color: var(--color-text-tertiary);
+  }
+
+  .cde-filename-toggle:active {
+    opacity: 0.7;
+  }
+
   /* === 문서 행 (Level 3) === */
   .cde-subtype__docs {
     padding-left: 20px;
@@ -181,10 +208,10 @@
 
   .cde-doc-row {
     display: grid;
-    grid-template-columns: 20px 1fr 80px 40px;
+    grid-template-columns: 16px 1fr 36px 70px 140px 44px;
     align-items: center;
-    gap: var(--spacing-2);
-    padding: 3px var(--spacing-3);
+    gap: var(--spacing-1);
+    padding: 4px var(--spacing-3);
     border-radius: 4px;
     font-size: 12px;
     color: var(--color-text-primary);
@@ -225,10 +252,30 @@
     font-weight: 400;
   }
 
-  .cde-doc-row__date {
+  /* 메타 정보 — 각각 고정 칼럼 */
+  .cde-doc-row__type {
     font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
     color: var(--color-text-tertiary);
     text-align: right;
+    white-space: nowrap;
+  }
+
+  .cde-doc-row__size {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .cde-doc-row__date {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    text-align: right;
+    white-space: nowrap;
   }
 
   /* 호버 시 액션 버튼 */
@@ -236,6 +283,7 @@
     display: flex;
     align-items: center;
     gap: 2px;
+    flex-shrink: 0;
     opacity: 0;
     transition: opacity 0.15s ease-out;
   }
@@ -253,16 +301,14 @@
     border: none;
     border-radius: 4px;
     background: transparent;
-    color: var(--color-text-tertiary);
     cursor: pointer;
     padding: 0;
     transition: all 0.15s ease-out;
   }
 
   .cde-doc-row__action-btn:hover {
-    color: var(--color-text-primary);
     opacity: 0.8;
-    transform: scale(1.05);
+    transform: scale(1.1);
   }
 
   /* === 관계자/가족 그룹 === */

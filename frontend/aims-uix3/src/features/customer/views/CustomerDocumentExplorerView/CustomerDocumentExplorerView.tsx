@@ -21,6 +21,7 @@ import { formatDateTimeCompact } from '@/shared/lib/timeUtils'
 import { DocumentUtils } from '@/entities/document/model'
 import { DocumentSummaryModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentSummaryModal'
 import { DocumentFullTextModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentFullTextModal'
+import { SummaryIcon, DocumentIcon } from '@/components/DocumentViews/components/DocumentActionIcons'
 import type { Document } from '@/types/documentStatus'
 import type { Customer } from '@/entities/customer/model'
 import './CustomerDocumentExplorerView.css'
@@ -176,6 +177,11 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   const [activeTab, setActiveTab] = useState<TabType>('my')
   // 펼침 상태: "cat:insurance" 또는 "st:insurance/annual_report" 형식
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => new Set())
+  // 파일명 모드: localStorage로 전역 동기화 (전체문서보기와 동일 키)
+  const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
 
   // 모달 상태
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
@@ -414,6 +420,15 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                           {subType.documents.map(doc => {
                             const fileIcon = DocumentUtils.getFileIcon(doc.mimeType, doc.originalName)
                             const fileClass = DocumentUtils.getFileTypeClass(doc.mimeType, doc.originalName)
+                            const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : '-'
+                            const fileSize = doc.fileSize ? DocumentUtils.formatFileSize(doc.fileSize) : '-'
+                            const hasDisplay = Boolean(doc.displayName)
+                            const showName = filenameMode === 'display' && hasDisplay
+                              ? doc.displayName!
+                              : doc.originalName
+                            const altName = filenameMode === 'display' && hasDisplay
+                              ? `원본: ${doc.originalName}`
+                              : (hasDisplay ? `별칭: ${doc.displayName}` : '')
                             return (
                               <div
                                 key={doc._id}
@@ -428,31 +443,37 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                     decorative={true}
                                   />
                                 </span>
-                                <span className="cde-doc-row__name" title={doc.originalName}>
-                                  {doc.originalName}
-                                </span>
+                                {altName ? (
+                                  <Tooltip content={altName}>
+                                    <span className="cde-doc-row__name">{showName}</span>
+                                  </Tooltip>
+                                ) : (
+                                  <span className="cde-doc-row__name" title={doc.originalName}>{showName}</span>
+                                )}
+                                <span className="cde-doc-row__type">{fileExt}</span>
+                                <span className="cde-doc-row__size">{fileSize}</span>
                                 <span className="cde-doc-row__date">
                                   {doc.linkedAt ? formatDateTimeCompact(doc.linkedAt) : '-'}
                                 </span>
                                 <span className="cde-doc-row__actions">
-                                  <Tooltip content="요약">
+                                  <Tooltip content="요약 보기">
                                     <button
                                       type="button"
                                       className="cde-doc-row__action-btn"
                                       onClick={(e) => handleSummaryClick(doc, e)}
                                       aria-label="요약 보기"
                                     >
-                                      <SFSymbol name="text.quote" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+                                      <SummaryIcon />
                                     </button>
                                   </Tooltip>
-                                  <Tooltip content="전체 텍스트">
+                                  <Tooltip content="전체 텍스트 보기">
                                     <button
                                       type="button"
                                       className="cde-doc-row__action-btn"
                                       onClick={(e) => handleFullTextClick(doc, e)}
                                       aria-label="전체 텍스트 보기"
                                     >
-                                      <SFSymbol name="doc.plaintext" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+                                      <DocumentIcon />
                                     </button>
                                   </Tooltip>
                                 </span>
@@ -612,6 +633,20 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
         >
           {relatedTabLabel}
         </button>
+        <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}>
+          <button
+            type="button"
+            className="cde-filename-toggle"
+            onClick={() => setFilenameMode(prev => {
+              const next = prev === 'display' ? 'original' : 'display'
+              localStorage.setItem('aims-filename-mode', next)
+              return next
+            })}
+            aria-label={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
+          >
+            {filenameMode === 'display' ? '별칭' : '원본'}
+          </button>
+        </Tooltip>
       </div>
 
       {/* 내 문서 탭 */}
