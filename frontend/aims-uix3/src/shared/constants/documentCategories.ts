@@ -154,8 +154,7 @@ const TYPE_TO_CATEGORY: Record<string, string> = {
   unclassifiable: 'general',
   unspecified: 'general',
 
-  // 기존 DB의 레거시 타입 매핑
-  income_employment: 'financial',
+  // 기존 DB의 레거시 타입 매핑 (DB 정리 후 유지 — 혹시 남은 데이터 방어)
   claim: 'claim',
 }
 
@@ -173,7 +172,7 @@ export function getCategoryForType(documentType: string | undefined | null): str
  */
 export function getDocumentTypeLabel(documentType: string | undefined | null): string {
   if (!documentType) return '미지정'
-  return DOCUMENT_TYPE_LABELS[documentType] ?? documentType
+  return DOCUMENT_TYPE_LABELS[documentType] ?? '기타'
 }
 
 /**

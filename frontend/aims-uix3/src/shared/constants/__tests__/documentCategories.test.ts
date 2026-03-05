@@ -75,7 +75,6 @@ describe('documentCategories', () => {
     })
 
     it('레거시 타입도 올바르게 매핑된다', () => {
-      expect(getCategoryForType('income_employment')).toBe('financial')
       expect(getCategoryForType('claim')).toBe('claim')
     })
 
