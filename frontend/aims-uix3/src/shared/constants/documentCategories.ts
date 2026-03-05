@@ -7,19 +7,20 @@ export interface DocumentCategory {
   value: string
   label: string
   icon: string
+  color: string
 }
 
 /** 9개 대분류 카테고리 정의 (표시 순서) */
 export const DOCUMENT_CATEGORIES: DocumentCategory[] = [
-  { value: 'insurance', label: '보험계약', icon: 'shield' },
-  { value: 'claim', label: '보험금청구', icon: 'cross.case' },
-  { value: 'identity', label: '신분/증빙', icon: 'person.text.rectangle' },
-  { value: 'financial', label: '재정/세무', icon: 'wonsign.circle' },
-  { value: 'medical', label: '건강/의료', icon: 'heart.text.square' },
-  { value: 'asset', label: '자산', icon: 'building.2' },
-  { value: 'corporate', label: '법인', icon: 'building.columns' },
-  { value: 'legal', label: '법률', icon: 'scale.3d' },
-  { value: 'general', label: '기타', icon: 'doc' },
+  { value: 'insurance', label: '보험계약', icon: 'shield', color: '#2563eb' },
+  { value: 'claim', label: '보험금청구', icon: 'cross.case', color: '#dc2626' },
+  { value: 'identity', label: '신분/증빙', icon: 'person.text.rectangle', color: '#7c3aed' },
+  { value: 'financial', label: '재정/세무', icon: 'wonsign.circle', color: '#059669' },
+  { value: 'medical', label: '건강/의료', icon: 'heart.text.square', color: '#e11d48' },
+  { value: 'asset', label: '자산', icon: 'building.2', color: '#d97706' },
+  { value: 'corporate', label: '법인', icon: 'building.columns', color: '#0891b2' },
+  { value: 'legal', label: '법률', icon: 'scale.3d', color: '#4f46e5' },
+  { value: 'general', label: '기타', icon: 'doc', color: '#6b7280' },
 ]
 
 /** document_type → category 매핑 */

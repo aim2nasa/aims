@@ -38,6 +38,7 @@ interface CustomerDetailViewProps {
   onDelete?: () => void;
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void;
   onOpenFullDetail?: (customerId: string) => void;
+  onExpandToExplorer?: (customerId: string, customerName: string) => void;
   onDocumentLibraryRefresh?: () => Promise<void>;
   /** RightPane visibility 변경 시 새로고침 트리거 */
   refreshTrigger?: number;
@@ -54,6 +55,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   onDelete,
   onSelectCustomer,
   onOpenFullDetail,
+  onExpandToExplorer,
   onDocumentLibraryRefresh,
   refreshTrigger,
   gapLeft = 2,
@@ -570,6 +572,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             {...(onDocumentLibraryRefresh ? { onDocumentLibraryRefresh } : {})}
             onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
             onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)}
+            onExpandToExplorer={onExpandToExplorer ? () => onExpandToExplorer(customer._id, customer.personal_info?.name || '') : undefined}
           />
         </div>
 

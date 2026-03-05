@@ -53,6 +53,7 @@ const ImageViewer = lazy(() => import('./components/ImageViewer'))
 const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
 const CustomerDetailView = lazy(() => import('./features/customer/views/CustomerDetailView'))
 const CustomerFullDetailView = lazy(() => import('./features/customer/views/CustomerFullDetailView'))
+const CustomerDocumentExplorerView = lazy(() => import('./features/customer/views/CustomerDocumentExplorerView/CustomerDocumentExplorerView'))
 const AccountSettingsView = lazy(() => import('./features/AccountSettings/AccountSettingsView'))
 const InquiryView = lazy(() => import('./components/InquiryView/InquiryView'))
 const NoticeView = lazy(() => import('./components/HelpViews/NoticeView/NoticeView'))
@@ -284,6 +285,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // CustomerFullDetailView 상태 (CenterPane에서 고객 전체 정보 표시)
   const [fullDetailCustomerId, setFullDetailCustomerId] = useState<string | null>(null)
 
+  // CustomerDocumentExplorerView 상태 (CenterPane에서 고객별 문서 탐색기 표시)
+  const [explorerCustomerId, setExplorerCustomerId] = useState<string | null>(null)
+  const [explorerCustomerName, setExplorerCustomerName] = useState<string | null>(null)
+
   // 문서 프리뷰 모달 상태
   const [previewModalVisible, setPreviewModalVisible] = useState(false)
   const [previewModalDocument, setPreviewModalDocument] = useState<PreviewDocumentInfo | null>(null)
@@ -387,6 +392,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     handleCustomerClick,
     handleOpenFullDetail,
     handleCloseFullDetail,
+    handleExpandToExplorer,
+    handleCollapseExplorer,
     handleCustomerRefresh,
     handleCustomerDelete,
     toggleRightPane,
@@ -400,6 +407,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     setActiveDocumentView,
     setFullDetailCustomerId,
     customerAllViewRefreshRef,
+    setExplorerCustomerId,
+    setExplorerCustomerName,
   })
 
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 숨김
@@ -424,7 +433,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   useEffect(() => {
     // 🍎 customers-full-detail은 전체 정보를 CenterPane에 표시
     // 단, 관계자 클릭 시 RightPane에 고객 상세 표시를 위해 selectedCustomer 체크
-    if (activeDocumentView === "customers-full-detail") {
+    if (activeDocumentView === "customers-full-detail" || activeDocumentView === "customer-document-explorer") {
       setPaginationVisible(false)
       // selectedCustomer가 없을 때만 RightPane 숨김 (관계자 클릭 시 RightPane 열림)
       if (!selectedCustomer) {
@@ -530,6 +539,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // 🍎 customers-full-detail 뷰일 때는 fullDetailCustomerId 설정
       if (urlView === 'customers-full-detail') {
         setFullDetailCustomerId(urlCustomerId)
+      } else if (urlView === 'customer-document-explorer') {
+        setExplorerCustomerId(urlCustomerId)
+        // 고객명 조회
+        CustomerService.getCustomer(urlCustomerId)
+          .then(customer => setExplorerCustomerName(customer.personal_info?.name || null))
+          .catch(() => setExplorerCustomerName(null))
       } else {
         // 일반 고객 선택 (RightPane에 표시)
         CustomerService.getCustomer(urlCustomerId)
@@ -1741,6 +1756,17 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onNavigateToFullDetail={(customerId) => handleOpenFullDetail(customerId)}
               onNavigate={handleMenuClick}
               onSwitchToCompactView={handleSwitchToCompactView}
+              onExpandToExplorer={handleExpandToExplorer}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <CustomerDocumentExplorerView
+              visible={activeDocumentView === 'customer-document-explorer'}
+              customerId={explorerCustomerId}
+              customerName={explorerCustomerName}
+              onClose={handleCollapseExplorer}
+              onCollapse={handleCollapseExplorer}
             />
           </Suspense>
 
@@ -2029,6 +2055,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 onDelete={handleCustomerDelete}
                 onSelectCustomer={handleCustomerClick}
                 onOpenFullDetail={handleOpenFullDetail}
+                onExpandToExplorer={handleExpandToExplorer}
                 refreshTrigger={rightPaneRefreshTrigger}
                 {...(documentLibraryRefreshRef.current ? { onDocumentLibraryRefresh: documentLibraryRefreshRef.current } : {})}
                 gapLeft={gapValues.gapLeft}

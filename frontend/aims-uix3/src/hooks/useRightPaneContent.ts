@@ -54,6 +54,10 @@ export interface UseRightPaneContentOptions {
   setFullDetailCustomerId: (id: string | null) => void
   /** 고객 전체보기 새로고침 ref */
   customerAllViewRefreshRef?: React.MutableRefObject<(() => void) | null>
+  /** 탐색기 고객 ID 설정 함수 */
+  setExplorerCustomerId?: (id: string | null) => void
+  /** 탐색기 고객명 설정 함수 */
+  setExplorerCustomerName?: (name: string | null) => void
 }
 
 /**
@@ -77,6 +81,8 @@ export interface UseRightPaneContentReturn {
   ) => Promise<void>
   handleOpenFullDetail: (customerId: string) => void
   handleCloseFullDetail: () => void
+  handleExpandToExplorer: (customerId: string, customerName: string) => void
+  handleCollapseExplorer: () => void
   handleCustomerRefresh: () => Promise<void>
   handleCustomerDelete: () => void
   toggleRightPane: () => void
@@ -119,6 +125,8 @@ export function useRightPaneContent(
     setActiveDocumentView,
     setFullDetailCustomerId,
     customerAllViewRefreshRef,
+    setExplorerCustomerId,
+    setExplorerCustomerName,
   } = options
 
   // 최근 검색 고객 스토어
@@ -136,7 +144,9 @@ export function useRightPaneContent(
   const [rightPaneRefreshTrigger, setRightPaneRefreshTrigger] = useState(0)
 
   // 전체 정보 뷰 열기 전 UI 상태 저장 (돌아가기 버튼용)
-  const previousUIStateRef = useRef<PreviousUIState | null>(null)
+  const fullDetailPreviousUIStateRef = useRef<PreviousUIState | null>(null)
+  // 문서 탐색기 열기 전 UI 상태 저장 (축소 버튼용)
+  const explorerPreviousUIStateRef = useRef<PreviousUIState | null>(null)
 
   // 이전 visible 상태 추적 (숨김 → 표시 감지용)
   const prevVisibleRef = useRef(false)
@@ -339,7 +349,7 @@ export function useRightPaneContent(
   const handleOpenFullDetail = useCallback(
     (customerId: string) => {
       // 현재 전체 UI 상태 저장 (돌아가기 버튼에서 복원용)
-      previousUIStateRef.current = {
+      fullDetailPreviousUIStateRef.current = {
         view: activeDocumentView,
         customer: selectedCustomer,
         rightPaneVisible: rightPaneVisible,
@@ -375,7 +385,7 @@ export function useRightPaneContent(
     setFullDetailCustomerId(null)
 
     // 이전 전체 UI 상태 복원
-    const prevState = previousUIStateRef.current
+    const prevState = fullDetailPreviousUIStateRef.current
     if (prevState) {
       setActiveDocumentView(prevState.view || 'customers-all')
       setSelectedCustomer(prevState.customer)
@@ -385,13 +395,71 @@ export function useRightPaneContent(
         view: prevState.view || 'customers-all',
         customerId: prevState.customer?._id || null,
       })
-      previousUIStateRef.current = null
+      fullDetailPreviousUIStateRef.current = null
     } else {
       // 폴백: 저장된 상태가 없으면 고객 전체보기로
       setActiveDocumentView('customers-all')
       updateURLParams({ view: 'customers-all', customerId: null })
     }
   }, [updateURLParams, setActiveDocumentView, setFullDetailCustomerId])
+
+  // 고객별 문서 탐색기(CenterPane) 열기 핸들러
+  const handleExpandToExplorer = useCallback(
+    (customerId: string, customerName: string) => {
+      // 현재 전체 UI 상태 저장 (축소 버튼에서 복원용)
+      explorerPreviousUIStateRef.current = {
+        view: activeDocumentView,
+        customer: selectedCustomer,
+        rightPaneVisible: rightPaneVisible,
+        rightPaneContentType: rightPaneContentType,
+      }
+
+      // RightPane 완전히 닫기
+      setSelectedCustomer(null)
+      setRightPaneContentType(null)
+      setRightPaneVisible(false)
+
+      // CustomerDocumentExplorerView 표시
+      setExplorerCustomerId?.(customerId)
+      setExplorerCustomerName?.(customerName)
+      setActiveDocumentView('customer-document-explorer')
+
+      updateURLParams({ view: 'customer-document-explorer', customerId, tab: null })
+    },
+    [
+      updateURLParams,
+      activeDocumentView,
+      selectedCustomer,
+      rightPaneVisible,
+      rightPaneContentType,
+      setActiveDocumentView,
+      setExplorerCustomerId,
+      setExplorerCustomerName,
+    ]
+  )
+
+  // 고객별 문서 탐색기(CenterPane) 닫기 핸들러
+  const handleCollapseExplorer = useCallback(() => {
+    setExplorerCustomerId?.(null)
+    setExplorerCustomerName?.(null)
+
+    // 이전 전체 UI 상태 복원
+    const prevState = explorerPreviousUIStateRef.current
+    if (prevState) {
+      setActiveDocumentView(prevState.view || 'customers-all')
+      setSelectedCustomer(prevState.customer)
+      setRightPaneContentType(prevState.rightPaneContentType)
+      setRightPaneVisible(prevState.rightPaneVisible)
+      updateURLParams({
+        view: prevState.view || 'customers-all',
+        customerId: prevState.customer?._id || null,
+      })
+      explorerPreviousUIStateRef.current = null
+    } else {
+      setActiveDocumentView('customers-all')
+      updateURLParams({ view: 'customers-all', customerId: null })
+    }
+  }, [updateURLParams, setActiveDocumentView, setExplorerCustomerId, setExplorerCustomerName])
 
   // 고객 정보 새로고침 핸들러 (수정 시 사용)
   const handleCustomerRefresh = useCallback(async () => {
@@ -435,6 +503,8 @@ export function useRightPaneContent(
     handleCustomerClick,
     handleOpenFullDetail,
     handleCloseFullDetail,
+    handleExpandToExplorer,
+    handleCollapseExplorer,
     handleCustomerRefresh,
     handleCustomerDelete,
     toggleRightPane,

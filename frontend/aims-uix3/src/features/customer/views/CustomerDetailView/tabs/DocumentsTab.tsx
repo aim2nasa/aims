@@ -1138,16 +1138,18 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       </div>
 
       {/* 카테고리 필터 + 확대 버튼 (.customer-documents__header 바깥 배치 - CFD override 회피) */}
-      {!isEmpty && documents.length > 0 && (
+      {(!isEmpty && documents.length > 0 || onExpandToExplorer) && (
         <div className="document-category-filter-bar">
-          <DocumentCategoryFilter
-            documents={documents}
-            selectedCategory={selectedCategory}
-            onCategoryChange={(cat) => {
-              setSelectedCategory(cat)
-              setCurrentPage(1)
-            }}
-          />
+          {!isEmpty && documents.length > 0 && (
+            <DocumentCategoryFilter
+              documents={documents}
+              selectedCategory={selectedCategory}
+              onCategoryChange={(cat) => {
+                setSelectedCategory(cat)
+                setCurrentPage(1)
+              }}
+            />
+          )}
           {onExpandToExplorer && (
             <Tooltip content="문서 탐색기로 확대">
               <button
@@ -1157,7 +1159,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 aria-label="문서 탐색기 확대"
               >
                 <SFSymbol
-                  name="arrow.up.left.and.arrow.down.right"
+                  name="arrow.up.right.square"
                   size={SFSymbolSize.CAPTION_1}
                   weight={SFSymbolWeight.MEDIUM}
                   decorative={true}

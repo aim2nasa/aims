@@ -59,6 +59,8 @@ interface CustomerFullDetailViewProps {
   onNavigate?: (menuKey: string) => void
   /** 간략 보기로 전환 (customers-all + customerId 유지) */
   onSwitchToCompactView?: (customerId: string) => void
+  /** 문서 탐색기 확대 */
+  onExpandToExplorer?: (customerId: string, customerName: string) => void
 }
 
 export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
@@ -69,7 +71,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   onSelectCustomer,
   onNavigateToFullDetail,
   onNavigate,
-  onSwitchToCompactView
+  onSwitchToCompactView,
+  onExpandToExplorer,
 }) => {
   // 🍎 상태 관리
   const [customer, setCustomer] = useState<Customer | null>(null)
@@ -953,7 +956,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       </div>
                     </div>
                     <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
-                      <DocumentsTab customer={customer} onDocumentCountChange={setDocumentCount} onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)} onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)} searchTerm={documentSearchTerm} onSearchChange={setDocumentSearchTerm} onNavigate={onNavigate} />
+                      <DocumentsTab customer={customer} onDocumentCountChange={setDocumentCount} onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)} onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)} searchTerm={documentSearchTerm} onSearchChange={setDocumentSearchTerm} onNavigate={onNavigate} onExpandToExplorer={onExpandToExplorer && customer ? () => onExpandToExplorer(customer._id, customer.personal_info?.name || '') : undefined} />
                     </div>
                   </div>
 
@@ -1368,6 +1371,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       searchTerm={documentSearchTerm}
                       onSearchChange={setDocumentSearchTerm}
                       onNavigate={onNavigate}
+                      onExpandToExplorer={onExpandToExplorer && customer ? () => onExpandToExplorer(customer._id, customer.personal_info?.name || '') : undefined}
                     />
                   </div>
                 </section>
