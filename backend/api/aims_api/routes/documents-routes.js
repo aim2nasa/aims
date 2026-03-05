@@ -2819,5 +2819,54 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
 });
 
 
+  // ==================== 내부 API ====================
+
+  /**
+   * PDF 변환 완료 알림 (document_pipeline Worker → aims-api SSE)
+   * Worker가 변환 완료/실패 시 호출하여 프론트엔드에 SSE 알림 발송
+   */
+  router.post('/internal/notify-conversion', async (req, res) => {
+    try {
+      const apiKey = req.headers['x-api-key'];
+      const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'aims-internal-token-logging-key-2024';
+      if (apiKey !== INTERNAL_API_KEY) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+
+      const { documentId, status } = req.body;
+      if (!documentId || !status) {
+        return res.status(400).json({ success: false, message: 'documentId and status required' });
+      }
+
+      const ALLOWED_STATUSES = ['completed', 'failed'];
+      if (!ALLOWED_STATUSES.includes(status)) {
+        return res.status(400).json({ success: false, message: 'Invalid status' });
+      }
+
+      // 문서의 customerId 조회하여 SSE 알림 발송
+      const doc = await db.collection(COLLECTION_NAME).findOne(
+        { _id: new ObjectId(documentId) },
+        { projection: { customerId: 1, 'upload.originalName': 1 } }
+      );
+
+      if (doc && doc.customerId) {
+        notifyCustomerDocSubscribers(doc.customerId.toString(), 'document-status-change', {
+          type: 'conversion',
+          status: status,
+          customerId: doc.customerId.toString(),
+          documentId: documentId,
+          documentName: doc.upload?.originalName || 'Unknown',
+          timestamp: utcNowISO()
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[내부API] notify-conversion 오류:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+
   return router;
 };

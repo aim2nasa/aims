@@ -1,8 +1,10 @@
 """
 PDF 변환 텍스트 추출 서비스 테스트
 
-n8n→FastAPI 마이그레이션 시 누락된 HWP/DOC/PPT 등의 텍스트 추출 기능 복원 검증.
+n8n->FastAPI 마이그레이션 시 누락된 HWP/DOC/PPT 등의 텍스트 추출 기능 복원 검증.
 이 테스트가 실패하면 해당 형식의 문서가 OCR 큐로 잘못 전송될 수 있음 (불필요한 AI 비용).
+
+v2.0: 큐 기반 변환으로 전환 (직접 HTTP 호출 -> 큐 enqueue + poll-wait)
 
 @since 2026-02-23
 @issue HWP/DOC/PPT 등 변환 가능 파일이 OCR 대신 PDF 변환 후 텍스트 추출되어야 함
@@ -14,11 +16,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+from bson import ObjectId
 from services.pdf_conversion_text_service import (
     is_convertible_mime,
     convert_and_extract_text,
     CONVERTIBLE_MIMES,
-    _extract_text_from_pdf_bytes,
 )
 
 
@@ -77,41 +79,36 @@ class TestConvertibleMimeClassification:
 
 
 # ========================================
-# PDF 변환 텍스트 추출 테스트
+# PDF 변환 텍스트 추출 테스트 (큐 기반)
 # ========================================
 
 class TestConvertAndExtractText:
-    """PDF 변환 후 텍스트 추출 검증 (pdf_converter mocked)"""
+    """큐 기반 PDF 변환 후 텍스트 추출 검증"""
 
     @pytest.mark.asyncio
     async def test_successful_conversion_and_extraction(self, tmp_path):
-        """정상 변환 + 텍스트 추출"""
-        # 더미 HWP 파일 생성
+        """정상 변환 + 텍스트 추출 (큐 경유)"""
         hwp_file = tmp_path / "test.hwp"
         hwp_file.write_bytes(b"fake hwp content")
 
-        # PDF 변환 응답 mock (PDF 바이트 반환)
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = b"fake pdf bytes"
+        queue_id = str(ObjectId())
+        completed_job = {
+            "_id": ObjectId(queue_id),
+            "status": "completed",
+            "result": {"extracted_text": "HWP에서 추출된 텍스트입니다."},
+        }
 
-        with patch("services.pdf_conversion_text_service.httpx.AsyncClient") as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.post.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_cls.return_value = mock_client
+        with patch(
+            "services.pdf_conversion_queue_service.PdfConversionQueueService"
+        ) as mock_queue:
+            mock_queue.enqueue = AsyncMock(return_value=queue_id)
+            mock_queue.wait_for_result = AsyncMock(return_value=completed_job)
 
-            # PyMuPDF 텍스트 추출 mock
-            with patch(
-                "services.pdf_conversion_text_service._extract_text_from_pdf_bytes"
-            ) as mock_extract:
-                mock_extract.return_value = "HWP에서 추출된 텍스트입니다."
+            result = await convert_and_extract_text(str(hwp_file))
 
-                result = await convert_and_extract_text(str(hwp_file))
-
-                assert result == "HWP에서 추출된 텍스트입니다."
-                mock_client.post.assert_called_once()
+            assert result == "HWP에서 추출된 텍스트입니다."
+            mock_queue.enqueue.assert_called_once()
+            mock_queue.wait_for_result.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_file_not_found(self):
@@ -120,125 +117,118 @@ class TestConvertAndExtractText:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_converter_returns_error(self, tmp_path):
-        """pdf_converter가 에러 반환"""
+    async def test_conversion_failed_in_queue(self, tmp_path):
+        """큐에서 변환 실패"""
         hwp_file = tmp_path / "test.hwp"
         hwp_file.write_bytes(b"fake hwp content")
 
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.content = b"Internal Server Error"
+        queue_id = str(ObjectId())
+        failed_job = {
+            "_id": ObjectId(queue_id),
+            "status": "failed",
+            "error_message": "LibreOffice 변환 오류",
+        }
 
-        with patch("services.pdf_conversion_text_service.httpx.AsyncClient") as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.post.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_cls.return_value = mock_client
+        with patch(
+            "services.pdf_conversion_queue_service.PdfConversionQueueService"
+        ) as mock_queue:
+            mock_queue.enqueue = AsyncMock(return_value=queue_id)
+            mock_queue.wait_for_result = AsyncMock(return_value=failed_job)
 
             result = await convert_and_extract_text(str(hwp_file))
             assert result is None
 
     @pytest.mark.asyncio
-    async def test_converter_timeout(self, tmp_path):
-        """pdf_converter 타임아웃"""
-        import httpx
-
+    async def test_queue_timeout(self, tmp_path):
+        """큐 대기 타임아웃"""
         hwp_file = tmp_path / "test.hwp"
         hwp_file.write_bytes(b"fake hwp content")
 
-        with patch("services.pdf_conversion_text_service.httpx.AsyncClient") as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.post.side_effect = httpx.TimeoutException("timeout")
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_cls.return_value = mock_client
+        queue_id = str(ObjectId())
 
-            result = await convert_and_extract_text(str(hwp_file))
-            assert result is None
-
-    @pytest.mark.asyncio
-    async def test_converter_connection_error(self, tmp_path):
-        """pdf_converter 연결 실패"""
-        import httpx
-
-        hwp_file = tmp_path / "test.hwp"
-        hwp_file.write_bytes(b"fake hwp content")
-
-        with patch("services.pdf_conversion_text_service.httpx.AsyncClient") as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.post.side_effect = httpx.ConnectError("connection refused")
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_cls.return_value = mock_client
-
-            result = await convert_and_extract_text(str(hwp_file))
-            assert result is None
-
-    @pytest.mark.asyncio
-    async def test_empty_pdf_response(self, tmp_path):
-        """빈 PDF 응답"""
-        hwp_file = tmp_path / "test.hwp"
-        hwp_file.write_bytes(b"fake hwp content")
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = b""
-
-        with patch("services.pdf_conversion_text_service.httpx.AsyncClient") as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.post.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_cls.return_value = mock_client
+        with patch(
+            "services.pdf_conversion_queue_service.PdfConversionQueueService"
+        ) as mock_queue:
+            mock_queue.enqueue = AsyncMock(return_value=queue_id)
+            mock_queue.wait_for_result = AsyncMock(return_value=None)
 
             result = await convert_and_extract_text(str(hwp_file))
             assert result is None
 
     @pytest.mark.asyncio
     async def test_scanned_pdf_no_text(self, tmp_path):
-        """변환된 PDF에 텍스트가 없는 경우 (스캔 문서 → OCR fallback)"""
+        """변환된 PDF에 텍스트가 없는 경우 (스캔 문서 -> OCR fallback)"""
         hwp_file = tmp_path / "test.hwp"
         hwp_file.write_bytes(b"fake hwp content")
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = b"pdf with no text"
+        queue_id = str(ObjectId())
+        completed_job = {
+            "_id": ObjectId(queue_id),
+            "status": "completed",
+            "result": {"extracted_text": None},
+        }
 
-        with patch("services.pdf_conversion_text_service.httpx.AsyncClient") as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.post.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_cls.return_value = mock_client
+        with patch(
+            "services.pdf_conversion_queue_service.PdfConversionQueueService"
+        ) as mock_queue:
+            mock_queue.enqueue = AsyncMock(return_value=queue_id)
+            mock_queue.wait_for_result = AsyncMock(return_value=completed_job)
 
-            with patch(
-                "services.pdf_conversion_text_service._extract_text_from_pdf_bytes"
-            ) as mock_extract:
-                mock_extract.return_value = None  # 텍스트 없음
+            result = await convert_and_extract_text(str(hwp_file))
+            assert result is None
 
-                result = await convert_and_extract_text(str(hwp_file))
-                assert result is None
+    @pytest.mark.asyncio
+    async def test_enqueue_sends_correct_params(self, tmp_path):
+        """큐 등록 시 올바른 파라미터 전달"""
+        hwp_file = tmp_path / "test.hwp"
+        hwp_file.write_bytes(b"fake hwp content")
+
+        queue_id = str(ObjectId())
+        completed_job = {
+            "_id": ObjectId(queue_id),
+            "status": "completed",
+            "result": {"extracted_text": "text"},
+        }
+
+        with patch(
+            "services.pdf_conversion_queue_service.PdfConversionQueueService"
+        ) as mock_queue:
+            mock_queue.enqueue = AsyncMock(return_value=queue_id)
+            mock_queue.wait_for_result = AsyncMock(return_value=completed_job)
+
+            await convert_and_extract_text(str(hwp_file))
+
+            mock_queue.enqueue.assert_called_once_with(
+                job_type="text_extraction",
+                input_path=str(hwp_file),
+                original_name="test.hwp",
+                caller="document_pipeline",
+            )
 
 
 # ========================================
-# PyMuPDF 텍스트 추출 테스트
+# PyMuPDF 텍스트 추출 테스트 (Worker에서 사용)
 # ========================================
 
 class TestExtractTextFromPdfBytes:
-    """PyMuPDF PDF 바이트 텍스트 추출 검증"""
+    """PyMuPDF PDF 바이트 텍스트 추출 검증 (Worker 내부 함수)"""
+
+    def _get_extract_fn(self):
+        from workers.pdf_conversion_worker import PdfConversionWorker
+        worker = PdfConversionWorker.__new__(PdfConversionWorker)
+        return worker._extract_text_from_pdf_bytes
 
     def test_valid_pdf_with_text(self):
         """텍스트가 포함된 PDF에서 추출"""
         import fitz
         doc = fitz.open()
         page = doc.new_page()
-        # PyMuPDF 기본 폰트는 CJK 미지원 → 영문 텍스트로 테스트
         page.insert_text((72, 72), "Hello World test document.")
         pdf_bytes = doc.tobytes()
         doc.close()
 
-        result = _extract_text_from_pdf_bytes(pdf_bytes)
+        extract = self._get_extract_fn()
+        result = extract(pdf_bytes)
         assert result is not None
         assert "Hello World" in result
 
@@ -246,16 +236,18 @@ class TestExtractTextFromPdfBytes:
         """빈 PDF (텍스트 없음)"""
         import fitz
         doc = fitz.open()
-        doc.new_page()  # 빈 페이지만
+        doc.new_page()
         pdf_bytes = doc.tobytes()
         doc.close()
 
-        result = _extract_text_from_pdf_bytes(pdf_bytes)
+        extract = self._get_extract_fn()
+        result = extract(pdf_bytes)
         assert result is None
 
     def test_invalid_pdf_bytes(self):
         """잘못된 PDF 바이트"""
-        result = _extract_text_from_pdf_bytes(b"not a pdf")
+        extract = self._get_extract_fn()
+        result = extract(b"not a pdf")
         assert result is None
 
     def test_multi_page_pdf(self):
@@ -268,7 +260,8 @@ class TestExtractTextFromPdfBytes:
         pdf_bytes = doc.tobytes()
         doc.close()
 
-        result = _extract_text_from_pdf_bytes(pdf_bytes)
+        extract = self._get_extract_fn()
+        result = extract(pdf_bytes)
         assert result is not None
         assert "Page 1" in result
         assert "Page 3" in result

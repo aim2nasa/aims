@@ -23,77 +23,47 @@ const COLLECTION_NAME = COLLECTIONS.FILES;
 module.exports = function createPdfConversionTrigger(db) {
 
   /**
-   * 문서를 백그라운드에서 PDF로 변환
+   * 문서를 PDF 변환 큐에 등록
+   *
+   * 실제 변환은 document_pipeline의 PdfConversionWorker가 수행.
+   * DB 상태 업데이트 및 SSE 알림도 Worker가 처리.
+   *
    * @param {ObjectId|string} fileId - 파일 ID
    * @param {string} inputPath - 원본 파일 경로
    */
   async function convertDocumentInBackground(fileId, inputPath) {
     const fileIdStr = fileId.toString();
-
-    // SSE 알림용: 문서의 customerId 조회
-    const notifyDocumentStatusChange = async (status) => {
-      try {
-        const doc = await db.collection(COLLECTION_NAME).findOne({ _id: new ObjectId(fileIdStr) });
-        if (doc && doc.customerId) {
-          notifyCustomerDocSubscribers(doc.customerId.toString(), 'document-status-change', {
-            type: 'conversion',
-            status: status,
-            customerId: doc.customerId.toString(),
-            documentId: fileIdStr,
-            documentName: doc.upload?.originalName || 'Unknown',
-            timestamp: utcNowISO()
-          });
-        }
-      } catch (err) {
-        console.error(`[PDF변환] SSE 알림 실패 (${fileIdStr}):`, err.message);
-      }
-    };
+    const path = require('path');
 
     try {
-      // 1. 상태를 processing으로 업데이트
-      await db.collection(COLLECTION_NAME).updateOne(
-        { _id: new ObjectId(fileIdStr) },
-        { $set: { 'upload.conversion_status': 'processing' } }
-      );
-      // SSE 알림: processing 시작
-      await notifyDocumentStatusChange('processing');
-
-      console.log(`[PDF변환] 변환 시작: ${inputPath}`);
-
-      // 2. PDF 변환 실행
-      const pdfPath = await pdfConversionService.convertDocument(inputPath);
-
-      // 3. 성공 시 DB 업데이트
-      await db.collection(COLLECTION_NAME).updateOne(
-        { _id: new ObjectId(fileIdStr) },
+      // pdf_conversion_queue에 작업 등록 (upsert: 중복 방지)
+      await db.collection('pdf_conversion_queue').updateOne(
+        { document_id: fileIdStr, job_type: 'preview_pdf' },
         {
-          $set: {
-            'upload.convPdfPath': pdfPath,
-            'upload.converted_at': utcNowDate(),
-            'upload.conversion_status': 'completed'
+          $setOnInsert: {
+            status: 'pending',
+            document_id: fileIdStr,
+            job_type: 'preview_pdf',
+            input_path: inputPath,
+            original_name: path.basename(inputPath),
+            caller: 'aims_api',
+            callback_data: {},
+            result: null,
+            created_at: new Date(),
+            started_at: null,
+            completed_at: null,
+            worker_id: null,
+            retry_count: 0,
+            error_message: null,
+            process_after: null,
           }
-        }
+        },
+        { upsert: true }
       );
-      // SSE 알림: 변환 완료
-      await notifyDocumentStatusChange('completed');
-
-      console.log(`[PDF변환] 변환 완료: ${pdfPath}`);
+      console.log(`[PDF변환] 큐 등록: ${fileIdStr} (${path.basename(inputPath)})`);
     } catch (error) {
-      console.error(`[PDF변환] 변환 실패 (${fileIdStr}): ${error.message}`);
-      backendLogger.error('Documents', `[PDF변환] 변환 실패 (${fileIdStr})`, error);
-
-      // 4. 실패 시 에러 기록
-      await db.collection(COLLECTION_NAME).updateOne(
-        { _id: new ObjectId(fileIdStr) },
-        {
-          $set: {
-            'upload.conversion_status': 'failed',
-            'upload.conversion_error': error.message
-          }
-        }
-      );
-      // SSE 알림: 변환 실패
-      await notifyDocumentStatusChange('failed');
+      console.error(`[PDF변환] 큐 등록 실패 (${fileIdStr}):`, error.message);
+      backendLogger.error('Documents', `[PDF변환] 큐 등록 실패 (${fileIdStr})`, error);
     }
   }
 

@@ -68,6 +68,14 @@ class Settings(BaseSettings):
     UPLOAD_QUEUE_STALE_TIMEOUT_MINUTES: int = 30  # 타임아웃된 작업 복구
     UPLOAD_QUEUE_ENABLED: bool = True  # 큐잉 활성화 여부 (롤백용)
 
+    # PDF Conversion Queue Settings
+    PDF_CONV_QUEUE_COLLECTION: str = "pdf_conversion_queue"
+    PDF_CONV_QUEUE_MAX_RETRIES: int = 2
+    PDF_CONV_QUEUE_RETRY_BASE_DELAY: float = 5.0  # 초 (5→10 지수 백오프)
+    PDF_CONV_QUEUE_POLL_INTERVAL: float = 1.0  # 큐 폴링 간격 (초)
+    PDF_CONV_QUEUE_STALE_TIMEOUT_MINUTES: int = 5  # stale 작업 복구
+    PDF_CONV_QUEUE_ENABLED: bool = True  # PDF 변환 큐 활성화
+
 
 @lru_cache()
 def get_settings() -> Settings:

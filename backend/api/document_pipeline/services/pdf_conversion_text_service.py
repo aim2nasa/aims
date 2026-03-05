@@ -2,17 +2,14 @@
 PDF Conversion Text Extraction Service
 
 직접 파서가 없는 문서 형식(HWP, DOC, PPT, ODT 등)을
-pdf_converter(:8005)로 PDF 변환 후 PyMuPDF로 텍스트 추출.
+PDF 변환 큐를 통해 순차적으로 변환 후 텍스트 추출.
 
-n8n 시절 enhanced_file_analyzer.js의 extractHwpText() 기능을
-FastAPI document_pipeline으로 이식.
+변환 큐(PdfConversionQueueService)에 작업을 등록하고
+PdfConversionWorker가 처리할 때까지 poll-wait.
 """
 import logging
 import os
 from typing import Optional
-
-import httpx
-import fitz  # PyMuPDF
 
 from config import get_settings
 
@@ -39,14 +36,17 @@ def is_convertible_mime(mime_type: str) -> bool:
 
 async def convert_and_extract_text(
     file_path: str,
-    timeout: float = 120.0,
+    timeout: float = 180.0,
 ) -> Optional[str]:
     """
-    파일을 pdf_converter로 변환 후 텍스트 추출.
+    PDF 변환 큐를 통해 파일 변환 후 텍스트 추출.
+
+    PdfConversionWorker가 순차 처리하므로 동시 요청으로 인한
+    타임아웃이 발생하지 않음.
 
     Args:
         file_path: 원본 파일 경로
-        timeout: 변환 타임아웃 (초)
+        timeout: 변환 대기 타임아웃 (초, 큐 대기 + 변환 시간 포함)
 
     Returns:
         추출된 텍스트 또는 None (변환/추출 실패 시)
@@ -56,70 +56,48 @@ async def convert_and_extract_text(
         return None
 
     filename = os.path.basename(file_path)
-    convert_url = f"{settings.PDF_CONVERTER_URL}/convert"
 
     try:
-        # 1. pdf_converter로 파일 전송 → PDF 수신
-        logger.info(f"[PDF변환텍스트] 변환 시작: {filename}")
+        from services.pdf_conversion_queue_service import PdfConversionQueueService
 
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            with open(file_path, "rb") as f:
-                files = {"file": (filename, f, "application/octet-stream")}
-                response = await client.post(convert_url, files=files)
+        logger.info(f"[PDF변환텍스트] 큐 등록: {filename}")
 
-            if response.status_code != 200:
-                logger.warning(
-                    f"[PDF변환텍스트] 변환 실패 ({response.status_code}): {filename}"
-                )
-                return None
+        # 1. 변환 큐에 등록
+        queue_id = await PdfConversionQueueService.enqueue(
+            job_type="text_extraction",
+            input_path=file_path,
+            original_name=filename,
+            caller="document_pipeline",
+        )
 
-            pdf_bytes = response.content
+        # 2. 결과 대기 (Worker가 처리할 때까지 poll-wait)
+        job = await PdfConversionQueueService.wait_for_result(
+            queue_id, timeout=timeout
+        )
 
-            if not pdf_bytes or len(pdf_bytes) == 0:
-                logger.warning(f"[PDF변환텍스트] 빈 PDF 수신: {filename}")
-                return None
-
-        # 2. PyMuPDF로 변환된 PDF에서 텍스트 추출
-        text = _extract_text_from_pdf_bytes(pdf_bytes)
-
-        if text and text.strip():
-            logger.info(
-                f"[PDF변환텍스트] 텍스트 추출 성공: {filename} "
-                f"({len(text)} chars)"
-            )
-            return text
-        else:
-            logger.warning(f"[PDF변환텍스트] 텍스트 없음 (스캔 문서?): {filename}")
+        if not job:
+            logger.error(f"[PDF변환텍스트] 큐 대기 타임아웃: {filename}")
             return None
 
-    except httpx.TimeoutException:
-        logger.error(f"[PDF변환텍스트] 변환 타임아웃: {filename}")
-        return None
-    except httpx.ConnectError:
-        logger.error(
-            f"[PDF변환텍스트] pdf_converter 연결 실패 "
-            f"({settings.PDF_CONVERTER_URL}): {filename}"
-        )
-        return None
+        if job["status"] == "completed":
+            result = job.get("result", {})
+            text = result.get("extracted_text")
+            if text and text.strip():
+                logger.info(
+                    f"[PDF변환텍스트] 텍스트 추출 성공: {filename} "
+                    f"({len(text)} chars)"
+                )
+                return text
+            else:
+                logger.warning(f"[PDF변환텍스트] 텍스트 없음 (스캔 문서?): {filename}")
+                return None
+        else:
+            logger.error(
+                f"[PDF변환텍스트] 변환 실패: {filename} - "
+                f"{job.get('error_message', 'unknown')}"
+            )
+            return None
+
     except Exception as e:
         logger.error(f"[PDF변환텍스트] 예외: {filename} - {e}")
-        return None
-
-
-def _extract_text_from_pdf_bytes(pdf_bytes: bytes) -> Optional[str]:
-    """PyMuPDF로 PDF 바이트에서 텍스트 추출"""
-    try:
-        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-        try:
-            text_parts = []
-            for page in doc:
-                text_parts.append(page.get_text())
-        finally:
-            doc.close()
-
-        full_text = "\n".join(text_parts)
-        return full_text if full_text.strip() else None
-
-    except Exception as e:
-        logger.error(f"[PDF변환텍스트] PyMuPDF 추출 실패: {e}")
         return None

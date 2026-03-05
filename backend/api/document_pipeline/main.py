@@ -19,6 +19,7 @@ from services.upload_queue_service import UploadQueueService
 from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_meta_router, smart_search_router, doc_prep_main_router, shadow_router, doc_display_name_router
 from workers.error_logger import error_logger
 from workers.upload_worker import upload_worker
+from workers.pdf_conversion_worker import pdf_conversion_worker
 from workers.pipeline_metrics import pipeline_metrics
 
 # Configure logging
@@ -46,6 +47,11 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("Upload Queue disabled, skipping worker startup")
 
+    # Start PDF Conversion Worker
+    if settings.PDF_CONV_QUEUE_ENABLED:
+        asyncio.create_task(pdf_conversion_worker.start())
+        logger.info(f"PDF Conversion Worker started: {pdf_conversion_worker.worker_id}")
+
     yield
 
     # Shutdown
@@ -55,6 +61,11 @@ async def lifespan(app: FastAPI):
     if settings.UPLOAD_QUEUE_ENABLED:
         upload_worker.stop()
         logger.info("Upload Worker stopped")
+
+    # Stop PDF Conversion Worker
+    if settings.PDF_CONV_QUEUE_ENABLED:
+        pdf_conversion_worker.stop()
+        logger.info("PDF Conversion Worker stopped")
 
     await MongoService.disconnect()
     logger.info("MongoDB disconnected")
@@ -190,7 +201,28 @@ async def health_check_deep():
         except Exception as e:
             checks["queue"] = {"status": "error", "error": str(e)}
 
-    # 6. 처리 메트릭
+    # 6. PDF 변환 큐 상태
+    if settings.PDF_CONV_QUEUE_ENABLED:
+        from services.pdf_conversion_queue_service import PdfConversionQueueService
+        try:
+            pcs = pdf_conversion_worker.get_status()
+            pq_stats = await PdfConversionQueueService.get_queue_stats()
+            checks["pdf_conversion_worker"] = {
+                "status": "ok" if pcs.get("running", False) else "error",
+                "current_job": pcs.get("current_job_id"),
+            }
+            checks["pdf_conversion_queue"] = {
+                "status": "ok" if pq_stats.get("pending", 0) <= 20 else "warning",
+                "pending": pq_stats.get("pending", 0),
+                "processing": pq_stats.get("processing", 0),
+                "failed": pq_stats.get("failed", 0),
+            }
+            if not pcs.get("running", False):
+                healthy = False
+        except Exception as e:
+            checks["pdf_conversion"] = {"status": "error", "error": str(e)}
+
+    # 7. 처리 메트릭
     metrics = pipeline_metrics.get_summary()
 
     total_ms = round((time.time() - start) * 1000)
