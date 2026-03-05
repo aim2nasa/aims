@@ -401,26 +401,30 @@
     flex-shrink: 0;
   }
 
-  /* 카테고리 필터 드롭다운 — 인라인 텍스트 스타일 */
+  /* 카테고리 필터 드롭다운 — 컴팩트 + 테두리 */
   .document-category-filter .ios-dropdown__trigger {
-    padding: 1px 4px;
+    padding: 1px 6px;
     min-height: unset;
     height: auto;
     font-size: 10px;
-    border: none;
-    border-radius: 3px;
+    border: 1px solid var(--color-ios-separator-light);
+    border-radius: 4px;
     gap: 2px;
     background: transparent;
     color: var(--color-text-secondary);
   }
 
+  html[data-theme="dark"] .document-category-filter .ios-dropdown__trigger {
+    border-color: var(--color-ios-separator-dark);
+  }
+
   .document-category-filter .ios-dropdown__trigger:hover {
     background: var(--color-bg-secondary);
+    border-color: var(--color-ios-text-quaternary-light);
   }
 
   .document-category-filter .ios-dropdown__trigger:focus {
     box-shadow: none;
-    border: none;
   }
 
   .document-category-filter .ios-dropdown__value {
