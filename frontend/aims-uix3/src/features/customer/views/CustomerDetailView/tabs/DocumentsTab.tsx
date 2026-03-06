@@ -1148,12 +1148,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 onClick={onExpandToExplorer}
                 aria-label="문서 탐색기 확대"
               >
-                <SFSymbol
-                  name="arrow.up.right.square"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
+                <span className="document-expand-btn__icon">📂</span>
                 <span className="document-expand-btn__label">문서 탐색기</span>
               </button>
             )}
