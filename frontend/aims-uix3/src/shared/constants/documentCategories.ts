@@ -181,3 +181,20 @@ export function getDocumentTypeLabel(documentType: string | undefined | null): s
 export function getCategoryInfo(categoryValue: string): DocumentCategory | undefined {
   return DOCUMENT_CATEGORIES.find(c => c.value === categoryValue)
 }
+
+/** 대분류별 소분류 그룹 목록 (시스템 유형 annual_report, customer_review 제외) */
+export interface DocumentTypeGroup {
+  category: DocumentCategory
+  types: Array<{ value: string; label: string }>
+}
+
+const SYSTEM_TYPES = new Set(['annual_report', 'customer_review'])
+
+export function getGroupedDocumentTypes(): DocumentTypeGroup[] {
+  return DOCUMENT_CATEGORIES.map(cat => ({
+    category: cat,
+    types: Object.entries(TYPE_TO_CATEGORY)
+      .filter(([typeValue, catValue]) => catValue === cat.value && !SYSTEM_TYPES.has(typeValue))
+      .map(([typeValue]) => ({ value: typeValue, label: DOCUMENT_TYPE_LABELS[typeValue] ?? typeValue }))
+  })).filter(group => group.types.length > 0)
+}

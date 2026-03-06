@@ -26,7 +26,7 @@ import {
 import { DocumentNotesModal } from './DocumentNotesModal'
 import { useUserStore } from '../../../../stores/user'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import { documentTypesService, type DocumentType } from '../../../../services/documentTypesService'
+import { documentTypesService } from '../../../../services/documentTypesService'
 import './DocumentStatusList.header.css';
 import './DocumentStatusList.cells.css';
 import './DocumentStatusList.responsive.css';
@@ -49,8 +49,6 @@ interface DocumentStatusRowProps {
   isDevMode: boolean
   // 사용자 ID (내 파일 판별)
   userId: string | null
-  // 문서 유형 목록
-  documentTypes: DocumentType[]
   // 파일명 표시 모드
   filenameMode: 'display' | 'original'
   // 콜백
@@ -81,7 +79,6 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   isAliasMode,
   isDevMode,
   userId,
-  documentTypes,
   filenameMode,
   onDocumentClick,
   onDocumentDoubleClick,
@@ -383,7 +380,6 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
           documentType={document.docType || document.document_type}
           isAnnualReport={document.is_annual_report}
           isCustomerReview={document.is_customer_review}
-          documentTypes={documentTypes}
           onChange={(newType) => {
             const docId = document._id || document.id
             if (docId) {
@@ -824,22 +820,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   // 현재 로그인한 사용자 ID (내 파일 기능용)
   const { userId } = useUserStore()
 
-  // 🍎 문서 유형 목록 상태
-  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([])
   const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
-
-  // 🍎 문서 유형 목록 로드
-  useEffect(() => {
-    const loadDocumentTypes = async () => {
-      try {
-        const types = await documentTypesService.getDocumentTypes(false) // 시스템 유형 제외
-        setDocumentTypes(types)
-      } catch (error) {
-        console.error('[DocumentStatusList] 문서 유형 로드 실패:', error)
-      }
-    }
-    loadDocumentTypes()
-  }, [])
 
   // 메모 모달 상태 관리
   const [notesModalVisible, setNotesModalVisible] = useState(false)
@@ -1270,7 +1251,6 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             isAliasMode={isAliasMode}
             isDevMode={isDevMode}
             userId={userId}
-            documentTypes={documentTypes}
             filenameMode={filenameMode}
             onDocumentClick={onDocumentClick}
             onDocumentDoubleClick={onDocumentDoubleClick}

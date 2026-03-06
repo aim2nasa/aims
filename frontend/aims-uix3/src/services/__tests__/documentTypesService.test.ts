@@ -3,21 +3,14 @@
  * @since 2026-02-05
  *
  * 테스트 범위:
- * 1. getDocumentTypes - 문서 유형 목록 조회
- * 2. toDropdownOptions - 드롭다운 옵션 변환
- * 3. updateDocumentType - 문서 유형 수동 변경
- * 4. autoClassifyDocument - 문서 유형 자동 분류
- * 5. getTypeLabel - 유형 value로 label 찾기
+ * 1. updateDocumentType - 문서 유형 수동 변경
+ * 2. autoClassifyDocument - 문서 유형 자동 분류
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  getDocumentTypes,
-  toDropdownOptions,
   updateDocumentType,
   autoClassifyDocument,
-  getTypeLabel,
-  type DocumentType,
 } from '../documentTypesService';
 
 // Mock api
@@ -42,151 +35,8 @@ describe('documentTypesService', () => {
     vi.clearAllMocks();
   });
 
-  // 테스트용 문서 유형 데이터
-  const mockDocumentTypes: DocumentType[] = [
-    {
-      _id: '1',
-      value: 'unspecified',
-      label: '미지정',
-      description: '기본 유형',
-      isSystem: true,
-      order: 0,
-    },
-    {
-      _id: '2',
-      value: 'annual_report',
-      label: '연간 보고서',
-      description: 'AR 문서',
-      isSystem: true,
-      order: 1,
-    },
-    {
-      _id: '3',
-      value: 'contract',
-      label: '계약서',
-      description: '계약 문서',
-      isSystem: false,
-      order: 2,
-    },
-    {
-      _id: '4',
-      value: 'proposal',
-      label: '제안서',
-      description: '제안 문서',
-      isSystem: false,
-      order: 3,
-    },
-  ];
-
   // =============================================================================
-  // 1. getDocumentTypes 테스트
-  // =============================================================================
-
-  describe('getDocumentTypes', () => {
-    it('기본값으로 시스템 유형 포함하여 조회해야 함', async () => {
-      mockApi.get.mockResolvedValue({
-        success: true,
-        data: mockDocumentTypes,
-      });
-
-      const result = await getDocumentTypes();
-
-      expect(mockApi.get).toHaveBeenCalledWith('/api/document-types?includeSystem=true');
-      expect(result).toEqual(mockDocumentTypes);
-    });
-
-    it('시스템 유형 제외하여 조회해야 함', async () => {
-      mockApi.get.mockResolvedValue({
-        success: true,
-        data: mockDocumentTypes.filter((dt) => !dt.isSystem),
-      });
-
-      const result = await getDocumentTypes(false);
-
-      expect(mockApi.get).toHaveBeenCalledWith('/api/document-types?includeSystem=false');
-      expect(result).toHaveLength(2);
-    });
-
-    it('빈 결과를 처리해야 함', async () => {
-      mockApi.get.mockResolvedValue({
-        success: true,
-        data: [],
-      });
-
-      const result = await getDocumentTypes();
-
-      expect(result).toEqual([]);
-    });
-  });
-
-  // =============================================================================
-  // 2. toDropdownOptions 테스트
-  // =============================================================================
-
-  describe('toDropdownOptions', () => {
-    it('annual_report를 제외해야 함', () => {
-      const result = toDropdownOptions(mockDocumentTypes);
-
-      const values = result.map((opt) => opt.value);
-      expect(values).not.toContain('annual_report');
-    });
-
-    it('unspecified (시스템 유형)는 포함해야 함', () => {
-      const result = toDropdownOptions(mockDocumentTypes);
-
-      const values = result.map((opt) => opt.value);
-      expect(values).toContain('unspecified');
-    });
-
-    it('order 순서로 정렬해야 함', () => {
-      const result = toDropdownOptions(mockDocumentTypes);
-
-      expect(result[0].value).toBe('unspecified'); // order: 0
-      expect(result[1].value).toBe('contract'); // order: 2
-      expect(result[2].value).toBe('proposal'); // order: 3
-    });
-
-    it('value와 label만 포함해야 함', () => {
-      const result = toDropdownOptions(mockDocumentTypes);
-
-      result.forEach((opt) => {
-        expect(Object.keys(opt)).toEqual(['value', 'label']);
-      });
-    });
-
-    it('빈 배열을 처리해야 함', () => {
-      const result = toDropdownOptions([]);
-
-      expect(result).toEqual([]);
-    });
-
-    it('모든 항목이 시스템 유형이어도 unspecified만 포함해야 함', () => {
-      const systemOnlyTypes: DocumentType[] = [
-        {
-          _id: '1',
-          value: 'unspecified',
-          label: '미지정',
-          isSystem: true,
-          order: 0,
-        },
-        {
-          _id: '2',
-          value: 'annual_report',
-          label: '연간 보고서',
-          isSystem: true,
-          order: 1,
-        },
-      ];
-
-      const result = toDropdownOptions(systemOnlyTypes);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].value).toBe('unspecified');
-    });
-  });
-
-  // =============================================================================
-  // 3. updateDocumentType 테스트
+  // 1. updateDocumentType 테스트
   // =============================================================================
 
   describe('updateDocumentType', () => {
@@ -227,7 +77,7 @@ describe('documentTypesService', () => {
   });
 
   // =============================================================================
-  // 4. autoClassifyDocument 테스트
+  // 2. autoClassifyDocument 테스트
   // =============================================================================
 
   describe('autoClassifyDocument', () => {
@@ -300,54 +150,6 @@ describe('documentTypesService', () => {
       expect(result.suggestedType).toBeNull();
       expect(result.confidence).toBe(0);
       expect(result.matchedKeywords).toEqual([]);
-    });
-  });
-
-  // =============================================================================
-  // 5. getTypeLabel 테스트
-  // =============================================================================
-
-  describe('getTypeLabel', () => {
-    it('value로 label을 찾아야 함', () => {
-      const result = getTypeLabel(mockDocumentTypes, 'contract');
-
-      expect(result).toBe('계약서');
-    });
-
-    it('unspecified → 미지정', () => {
-      const result = getTypeLabel(mockDocumentTypes, 'unspecified');
-
-      expect(result).toBe('미지정');
-    });
-
-    it('null value → 미지정', () => {
-      const result = getTypeLabel(mockDocumentTypes, null);
-
-      expect(result).toBe('미지정');
-    });
-
-    it('undefined value → 미지정', () => {
-      const result = getTypeLabel(mockDocumentTypes, undefined);
-
-      expect(result).toBe('미지정');
-    });
-
-    it('빈 문자열 value → 미지정', () => {
-      const result = getTypeLabel(mockDocumentTypes, '');
-
-      expect(result).toBe('미지정');
-    });
-
-    it('존재하지 않는 value → value 그대로 반환', () => {
-      const result = getTypeLabel(mockDocumentTypes, 'unknown_type');
-
-      expect(result).toBe('unknown_type');
-    });
-
-    it('빈 문서 유형 배열에서 조회 → value 그대로 반환', () => {
-      const result = getTypeLabel([], 'contract');
-
-      expect(result).toBe('contract');
     });
   });
 });

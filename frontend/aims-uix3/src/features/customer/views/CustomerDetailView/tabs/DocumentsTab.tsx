@@ -39,9 +39,9 @@ import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { DocumentContentSearchModal } from '../../../components/DocumentContentSearchModal'
 import { useCustomerSSE } from '@/shared/hooks/useCustomerSSE'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import { documentTypesService, type DocumentType } from '@/services/documentTypesService'
+import { documentTypesService } from '@/services/documentTypesService'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
-import { getCategoryForType } from '@/shared/constants/documentCategories'
+import { getCategoryForType, DOCUMENT_TYPE_LABELS } from '@/shared/constants/documentCategories'
 import { DocumentCategoryFilter } from './DocumentCategoryFilter'
 import './DocumentsTab.layout.css';
 import './DocumentsTab.features.css';
@@ -161,22 +161,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
   })
 
-  // 🍎 문서 유형 목록 상태
-  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([])
   const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
-
-  // 🍎 문서 유형 목록 로드
-  useEffect(() => {
-    const loadDocumentTypes = async () => {
-      try {
-        const types = await documentTypesService.getDocumentTypes(false) // 시스템 유형 제외
-        setDocumentTypes(types)
-      } catch (error) {
-        console.error('[DocumentsTab] 문서 유형 로드 실패:', error)
-      }
-    }
-    loadDocumentTypes()
-  }, [])
 
   /**
    * 🍎 문서 유형 변경 핸들러
@@ -555,17 +540,14 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   // 🍎 문서유형 정렬용 라벨 맵 생성 (한글 라벨 기준 가나다순 - 백엔드와 동일)
   const docTypeLabelMap = useMemo(() => {
     const map = new Map<string, string>()
-    // 미지정은 '미지정' 한글 라벨로 변환 (백엔드와 동일)
     map.set('', '미지정')
     map.set('unspecified', '미지정')
-    // DB에서 가져온 문서유형의 value → label 매핑
-    documentTypes.forEach((dt) => {
-      map.set(dt.value, dt.label)
+    // 정적 상수에서 직접 가져옴
+    Object.entries(DOCUMENT_TYPE_LABELS).forEach(([value, label]) => {
+      map.set(value, label)
     })
-    // 연간보고서는 '연간보고서' 라벨
-    map.set('annual_report', 'Annual Report')
     return map
-  }, [documentTypes])
+  }, [])
 
   // 🍎 정렬된 문서 목록
   const sortedDocuments = useMemo(() => {
@@ -1498,7 +1480,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     <DocumentTypeCell
                       documentType={document.document_type}
                       isAnnualReport={document.isAnnualReport}
-                      documentTypes={documentTypes}
                       onChange={(newType) => {
                         const docId = document._id
                         if (docId) {

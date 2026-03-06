@@ -1,0 +1,197 @@
+/**
+ * DocumentTypePickerModal - 문서유형 2단 선택 모달 스타일
+ */
+
+@layer components {
+
+  /* 모달 content padding 제거 (패널 레이아웃 때문) */
+  .doc-type-picker-modal .modal__content {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* === 검색 === */
+  .doc-type-picker__search {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .doc-type-picker__search {
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  .doc-type-picker__search-input {
+    width: 100%;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 13px;
+    font-family: var(--font-family-text);
+    color: var(--color-ios-text-primary-light);
+    background-color: var(--color-ios-background-tertiary-light);
+    border: none;
+    border-radius: 8px;
+    outline: none;
+  }
+
+  .doc-type-picker__search-input::placeholder {
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .doc-type-picker__search-input {
+    color: var(--color-ios-text-primary-dark);
+    background-color: var(--color-ios-background-tertiary-dark);
+  }
+
+  html[data-theme="dark"] .doc-type-picker__search-input::placeholder {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  /* === 2단 패널 === */
+  .doc-type-picker__panels {
+    display: flex;
+    height: 320px;
+  }
+
+  /* 좌측: 대분류 */
+  .doc-type-picker__categories {
+    width: 120px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--color-ios-separator-light);
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  html[data-theme="dark"] .doc-type-picker__categories {
+    border-right-color: var(--color-ios-separator-dark);
+  }
+
+  .doc-type-picker__category {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 400;
+    font-family: var(--font-family-text);
+    color: var(--color-ios-text-primary-light);
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .doc-type-picker__category:hover {
+    background-color: var(--color-ios-background-tertiary-light);
+  }
+
+  .doc-type-picker__category--active {
+    font-weight: 600;
+    color: var(--color-ios-blue-light);
+    background-color: var(--color-semantic-info-light);
+  }
+
+  html[data-theme="dark"] .doc-type-picker__category {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  html[data-theme="dark"] .doc-type-picker__category:hover {
+    background-color: var(--color-ios-background-tertiary-dark);
+  }
+
+  html[data-theme="dark"] .doc-type-picker__category--active {
+    color: var(--color-ios-blue-dark);
+    background-color: rgba(10, 132, 255, 0.15);
+  }
+
+  /* 우측: 소분류 */
+  .doc-type-picker__types {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  /* === 공통 아이템 === */
+  .doc-type-picker__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 400;
+    font-family: var(--font-family-text);
+    color: var(--color-ios-text-primary-light);
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .doc-type-picker__item:hover {
+    background-color: var(--color-ios-background-tertiary-light);
+  }
+
+  .doc-type-picker__item--selected {
+    color: var(--color-ios-blue-light);
+    font-weight: 600;
+  }
+
+  html[data-theme="dark"] .doc-type-picker__item {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  html[data-theme="dark"] .doc-type-picker__item:hover {
+    background-color: var(--color-ios-background-tertiary-dark);
+  }
+
+  html[data-theme="dark"] .doc-type-picker__item--selected {
+    color: var(--color-ios-blue-dark);
+  }
+
+  .doc-type-picker__item-label {
+    flex: 1;
+  }
+
+  .doc-type-picker__item-category {
+    font-size: 10px;
+    color: var(--color-ios-text-tertiary-light);
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .doc-type-picker__item-category {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .doc-type-picker__check {
+    color: var(--color-ios-blue-light);
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .doc-type-picker__check {
+    color: var(--color-ios-blue-dark);
+  }
+
+  /* === 검색 결과 === */
+  .doc-type-picker__search-results {
+    height: 320px;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  .doc-type-picker__empty {
+    padding: 24px 16px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--color-ios-text-tertiary-light);
+  }
+
+  html[data-theme="dark"] .doc-type-picker__empty {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+} /* end @layer components */

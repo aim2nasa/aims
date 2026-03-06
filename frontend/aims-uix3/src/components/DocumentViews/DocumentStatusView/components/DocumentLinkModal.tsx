@@ -9,7 +9,6 @@
  */
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import type { Document, DocumentCustomerRelation } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import type { Customer } from '@/entities/customer'
@@ -21,7 +20,7 @@ import { useRecentCustomersStore, type RecentCustomer } from '@/shared/store/use
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem } from '@/entities/search'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import { documentTypesService } from '@/services/documentTypesService'
+import { DOCUMENT_TYPE_LABELS } from '@/shared/constants/documentCategories'
 import './DocumentLinkModal.css'
 
 interface DocumentLinkModalProps {
@@ -39,15 +38,11 @@ interface DocumentLinkModalProps {
   }) => Promise<DocumentCustomerRelation | undefined>
 }
 
-// 폴백용 기본 문서 유형 (API 실패 시 사용)
-const FALLBACK_RELATIONSHIP_OPTIONS: DropdownOption[] = [
-  { value: 'general', label: '일반 문서' },
-  { value: 'contract', label: '계약서' },
-  { value: 'claim', label: '보험금청구서' },
-  { value: 'proposal', label: '제안서' },
-  { value: 'id_verification', label: '신분증명서' },
-  { value: 'medical', label: '의료서류' }
-]
+// 시스템 유형 제외한 문서유형 옵션 (정적 상수)
+const SYSTEM_TYPES = new Set(['annual_report', 'customer_review', 'unspecified'])
+const RELATIONSHIP_OPTIONS: DropdownOption[] = Object.entries(DOCUMENT_TYPE_LABELS)
+  .filter(([value]) => !SYSTEM_TYPES.has(value))
+  .map(([value, label]) => ({ value, label }))
 
 export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   visible,
@@ -67,28 +62,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   // 최근 선택한 고객 목록 (전역 상태)
   const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
 
-  // 문서 유형 API 조회 (5분 캐시)
-  const { data: documentTypes } = useQuery({
-    queryKey: ['document-types'],
-    queryFn: () => documentTypesService.getDocumentTypes(true),
-    staleTime: 5 * 60 * 1000, // 5분
-    gcTime: 10 * 60 * 1000, // 10분
-  })
-
-  // 문서 유형 드롭다운 옵션 생성 (unspecified 제외)
-  const relationshipOptions = useMemo<DropdownOption[]>(() => {
-    if (!documentTypes || documentTypes.length === 0) {
-      return FALLBACK_RELATIONSHIP_OPTIONS
-    }
-    // unspecified와 annual_report 제외
-    return documentTypes
-      .filter(dt => !dt.isSystem && dt.value !== 'unspecified')
-      .sort((a, b) => a.order - b.order)
-      .map(dt => ({
-        value: dt.value,
-        label: dt.label
-      }))
-  }, [documentTypes])
+  const relationshipOptions = RELATIONSHIP_OPTIONS
 
   // 단일 문서 또는 여러 문서 배열 처리
   const targetDocuments = useMemo(() => {
