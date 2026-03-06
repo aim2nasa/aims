@@ -1460,6 +1460,30 @@ async def process_document_pipeline(
 
         # Case 3: Check if OCR is needed (no text extracted)
         if not full_text or len(full_text.strip()) == 0:
+            # 변환 가능한 포맷(HWP, DOC, PPT 등)이 변환 실패한 경우 → OCR에 보내지 않고 보관 처리
+            if is_convertible_mime(detected_mime):
+                logger.warning(f"[ConvertFailed] {detected_mime} 변환 실패, OCR 불가 → 보관 처리: {doc_id}")
+                await files_collection.update_one(
+                    {"_id": ObjectId(doc_id)},
+                    {"$set": {
+                        "processingSkipReason": "conversion_failed",
+                        "overallStatus": "completed",
+                        "status": "completed",
+                        "meta.mime": detected_mime,
+                    }}
+                )
+                await _notify_progress(doc_id, user_id, 100, "complete", "PDF 변환 실패 (보관)")
+                await _notify_document_complete(doc_id, user_id)
+                pipeline_metrics.record_success(metric_record)
+                return {
+                    "result": "success",
+                    "document_id": doc_id,
+                    "status": "completed",
+                    "processingSkipReason": "conversion_failed",
+                    "mime": detected_mime,
+                    "filename": original_name
+                }
+
             # Progress: 60% - OCR needed
             await _notify_progress(doc_id, user_id, 60, "ocr", "OCR 처리 준비 중")
             logger.info(f"Queueing OCR for document: {doc_id}")

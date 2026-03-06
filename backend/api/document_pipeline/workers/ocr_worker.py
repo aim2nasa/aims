@@ -300,6 +300,9 @@ class OCRWorker:
             "meta.document_type": ocr_result.get("document_type", "general"),
             "meta.confidence": ocr_result.get("doc_confidence", 0.0),
             "status": "completed",
+            "progress": 100,
+            "progressStage": "complete",
+            "progressMessage": "OCR 처리 완료",
         }
 
         # Generate displayName (only if not already set)
@@ -374,7 +377,12 @@ class OCRWorker:
             "ocr.queued_at": queued_at,
             "ocr.failed_at": datetime.utcnow().isoformat(),
             "ocr.statusCode": ocr_result.get("status", 500),
-            "ocr.statusMessage": ocr_result.get("userMessage", "Unknown error")
+            "ocr.statusMessage": ocr_result.get("userMessage", "Unknown error"),
+            "progress": -1,
+            "progressStage": "error",
+            "progressMessage": "OCR 처리 실패",
+            "status": "failed",
+            "overallStatus": "error",
         })
 
         # Log OCR usage with error

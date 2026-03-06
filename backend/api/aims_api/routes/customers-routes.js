@@ -3511,13 +3511,21 @@ router.post('/webhooks/document-processing-complete', async (req, res) => {
           newOverallStatus = 'processing';
         }
 
+        // OCR이 아직 진행 중이면 completed 처리 보류
+        if ((status === 'completed' || status === 'done') &&
+            doc.ocr && (doc.ocr.status === 'queued' || doc.ocr.status === 'running')) {
+          console.log(`[SSE-DocStatus] OCR 진행 중(${doc.ocr.status}), overallStatus 업데이트 보류: ${documentIdStr}`);
+          newOverallStatus = 'processing';
+        }
+
         // 🔥 빈 텍스트 체크: OCR 완료 + 텍스트 없음 → 임베딩 스킵하고 바로 완료 처리
         const hasText = (doc.meta?.full_text && doc.meta.full_text.trim() !== '') ||
                         (doc.ocr?.full_text && doc.ocr.full_text.trim() !== '') ||
                         (doc.text?.full_text && doc.text.full_text.trim() !== '');
 
         if ((status === 'completed' || status === 'done') && !hasText &&
-            (!doc.docembed || (doc.docembed.status !== 'done' && doc.docembed.status !== 'skipped'))) {
+            (!doc.docembed || (doc.docembed.status !== 'done' && doc.docembed.status !== 'skipped')) &&
+            !(doc.ocr && (doc.ocr.status === 'queued' || doc.ocr.status === 'running'))) {
           console.log(`[SSE-DocStatus] 빈 텍스트 감지 → 임베딩 스킵 처리: ${documentIdStr}`);
           newOverallStatus = 'completed';
           // docembed도 바로 skip 처리
