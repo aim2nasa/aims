@@ -266,6 +266,7 @@
     flex-direction: column;
     min-height: 0;
     min-width: 0; /* 🍎 그리드에서 콘텐츠보다 작아질 수 있도록 */
+    container-type: inline-size; /* 🍎 탭 레이블 축약을 위한 컨테이너 쿼리 */
   }
 
   html[data-theme="dark"] .customer-full-detail__section {
@@ -354,14 +355,15 @@
   .customer-full-detail__section-search .section-search-input {
     flex: 1;
     width: 100%;
-    border: 1px solid var(--color-border);
+    height: 22px;
+    border: 1px solid var(--color-border-primary);
     border-radius: 6px;
     background: var(--color-bg-primary);
     font-size: 11px;
     line-height: 1.4;
     color: var(--color-text-primary);
     outline: none;
-    padding: 3px 22px 3px 22px;
+    padding: 0 22px;
     transition: border-color 0.2s ease-out, width 0.2s ease-out;
   }
 
@@ -443,6 +445,20 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+  }
+
+  /* === 탭 레이블 축약 (컨테이너 쿼리) === */
+  .tab-label--short {
+    display: none;
+  }
+
+  @container (max-width: 480px) {
+    .tab-label--full {
+      display: none;
+    }
+    .tab-label--short {
+      display: inline;
+    }
   }
 
 } /* end @layer views */

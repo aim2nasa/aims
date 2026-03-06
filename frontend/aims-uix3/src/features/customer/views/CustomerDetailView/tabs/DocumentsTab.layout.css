@@ -403,12 +403,13 @@
 
   /* 카테고리 필터 드롭다운 — 컴팩트 + 테두리 */
   .document-category-filter .ios-dropdown__trigger {
-    padding: 1px 6px;
+    padding: 0 8px;
     min-height: unset;
-    height: auto;
+    height: 22px;
+    min-width: 72px;
     font-size: 10px;
-    border: 1px solid var(--color-ios-separator-light);
-    border-radius: 4px;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 6px;
     gap: 2px;
     background: transparent;
     color: var(--color-text-secondary);
@@ -439,22 +440,23 @@
   }
 
   .document-category-filter .ios-dropdown__option {
-    padding: 4px 8px;
+    padding: 4px 10px;
     font-size: 10px;
+    white-space: nowrap;
   }
 
   .document-category-filter .ios-dropdown__menu {
-    min-width: 80px;
+    min-width: 108px;
   }
 
   .document-expand-btn {
     display: flex;
     align-items: center;
     gap: 3px;
-    padding: 2px 8px 2px 5px;
+    padding: 0 8px 0 5px;
     height: 22px;
-    border: 1px solid var(--color-border-secondary);
-    border-radius: 4px;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 6px;
     background: transparent;
     color: var(--color-text-tertiary);
     cursor: pointer;

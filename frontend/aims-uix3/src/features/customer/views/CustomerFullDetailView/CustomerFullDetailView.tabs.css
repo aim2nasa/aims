@@ -142,11 +142,12 @@
     padding: 0 4px;
     border-radius: 8px;
     background: var(--color-primary-100);
-    color: var(--color-primary-600);
+    color: var(--color-primary-700);
     font-size: 10px;
     font-weight: 600;
-    line-height: 16px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   html[data-theme="dark"] .history-tabs__count {

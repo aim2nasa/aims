@@ -1189,7 +1189,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       className={`history-tabs__tab ${historyTab === 'ar' ? 'history-tabs__tab--active' : ''}`}
                       onClick={() => setHistoryTab('ar')}
                     >
-                      Annual Report{'\u00A0'}이력
+                      <span className="tab-label--full">Annual Report{'\u00A0'}이력</span>
+                      <span className="tab-label--short">AR이력</span>
                       {arHistoryCount > 0 && (
                         <span className="history-tabs__count">{arHistoryCount}</span>
                       )}
@@ -1199,7 +1200,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       className={`history-tabs__tab ${historyTab === 'cr' ? 'history-tabs__tab--active' : ''}`}
                       onClick={() => setHistoryTab('cr')}
                     >
-                      변액 리포트{'\u00A0'}이력
+                      <span className="tab-label--full">변액 리포트{'\u00A0'}이력</span>
+                      <span className="tab-label--short">변액이력</span>
                       {crHistoryCount > 0 && (
                         <span className="history-tabs__count">{crHistoryCount}</span>
                       )}
@@ -1210,7 +1212,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                         className={`history-tabs__tab ${historyTab === 'family' ? 'history-tabs__tab--active' : ''}`}
                         onClick={() => { setHistoryTab('family'); setFamilyRefreshTrigger(n => n + 1) }}
                       >
-                        가족 계약
+                        <span className="tab-label--full">가족 계약</span>
+                        <span className="tab-label--short">가족</span>
                         {familyContractCount > 0 && (
                           <span className="history-tabs__count">{familyContractCount}</span>
                         )}
@@ -1221,7 +1224,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       className={`history-tabs__tab ${historyTab === 'corporate' ? 'history-tabs__tab--active' : ''}`}
                       onClick={() => { setHistoryTab('corporate'); setCorporateRefreshTrigger(n => n + 1) }}
                     >
-                      법인 계약
+                      <span className="tab-label--full">법인 계약</span>
+                      <span className="tab-label--short">법인</span>
                       <span className="history-tabs__count">{corporateContractCount}</span>
                     </button>
                   </div>
@@ -1413,7 +1417,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       className={`report-tabs__tab ${reportTab === 'annual' ? 'report-tabs__tab--active' : ''}`}
                       onClick={() => setReportTab('annual')}
                     >
-                      Annual Report
+                      <span className="tab-label--full">Annual Report</span>
+                      <span className="tab-label--short">AR</span>
                       {annualReportCount > 0 && (
                         <span className="report-tabs__count">{annualReportCount}</span>
                       )}
@@ -1423,7 +1428,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       className={`report-tabs__tab ${reportTab === 'review' ? 'report-tabs__tab--active' : ''}`}
                       onClick={() => setReportTab('review')}
                     >
-                      변액 리포트
+                      <span className="tab-label--full">변액 리포트</span>
+                      <span className="tab-label--short">변액</span>
                       {customerReviewCount > 0 && (
                         <span className="report-tabs__count">{customerReviewCount}</span>
                       )}
