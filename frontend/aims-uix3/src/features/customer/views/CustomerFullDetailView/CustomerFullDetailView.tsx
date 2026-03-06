@@ -114,6 +114,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 문서 검색 상태
   const [documentSearchTerm, setDocumentSearchTerm] = useState('')
 
+  // 🍎 문서 필터바 포탈 타겟 (섹션 헤더에 필터를 통합 표시)
+  const [docFilterBarEl, setDocFilterBarEl] = useState<HTMLDivElement | null>(null)
+
   // 🍎 Annual Report 검색 상태
   const [annualReportSearchTerm, setAnnualReportSearchTerm] = useState('')
 
@@ -1316,6 +1319,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   {documentCount > 0 && (
                     <span className="customer-full-detail__section-count">{documentCount}</span>
                   )}
+                  {/* 🍎 분류 드롭다운 + 확대 버튼 (DocumentsTab에서 포탈로 렌더링) */}
+                  <div ref={setDocFilterBarEl} className="customer-full-detail__doc-filter-slot" />
                   {/* 🍎 파일명 검색 */}
                   <div className="customer-full-detail__section-search">
                     <SFSymbol
@@ -1372,6 +1377,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onSearchChange={setDocumentSearchTerm}
                       onNavigate={onNavigate}
                       onExpandToExplorer={onExpandToExplorer && customer ? () => onExpandToExplorer(customer._id, customer.personal_info?.name || '', customer.insurance_info?.customer_type || '개인') : undefined}
+                      filterBarPortalTarget={docFilterBarEl}
                     />
                   </div>
                 </section>

@@ -9,6 +9,7 @@
  */
 
 import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Customer } from '@/entities/customer/model'
@@ -64,6 +65,8 @@ interface DocumentsTabProps {
   refreshTrigger?: number
   /** 문서 탐색기 확대 핸들러 (CenterPane으로 전환) */
   onExpandToExplorer?: () => void
+  /** 필터바를 외부 컨테이너(섹션 헤더)에 포탈 렌더링할 타겟 */
+  filterBarPortalTarget?: HTMLElement | null
 }
 
 // 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
@@ -114,6 +117,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   onNavigate,
   refreshTrigger,
   onExpandToExplorer,
+  filterBarPortalTarget,
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -1137,38 +1141,55 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         </div>
       </div>
 
-      {/* 카테고리 필터 + 확대 버튼 (.customer-documents__header 바깥 배치 - CFD override 회피) */}
-      {(!isEmpty && documents.length > 0 || onExpandToExplorer) && (
-        <div className="document-category-filter-bar">
-          {!isEmpty && documents.length > 0 && (
-            <DocumentCategoryFilter
-              documents={documents}
-              selectedCategory={selectedCategory}
-              onCategoryChange={(cat) => {
-                setSelectedCategory(cat)
-                setCurrentPage(1)
-              }}
-            />
-          )}
-          {onExpandToExplorer && (
-            <Tooltip content="문서 탐색기로 확대">
-              <button
-                type="button"
-                className="document-expand-btn"
-                onClick={onExpandToExplorer}
-                aria-label="문서 탐색기 확대"
-              >
-                <SFSymbol
-                  name="arrow.up.right.square"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
-              </button>
-            </Tooltip>
-          )}
-        </div>
-      )}
+      {/* 카테고리 필터 + 확대 버튼 */}
+      {(() => {
+        const showFilter = !isEmpty && documents.length > 0
+        const showExpand = !!onExpandToExplorer
+        if (!showFilter && !showExpand) return null
+
+        const filterBarContent = (
+          <>
+            {showFilter && (
+              <DocumentCategoryFilter
+                documents={documents}
+                selectedCategory={selectedCategory}
+                onCategoryChange={(cat) => {
+                  setSelectedCategory(cat)
+                  setCurrentPage(1)
+                }}
+              />
+            )}
+            {showExpand && (
+              <Tooltip content="문서 탐색기로 확대">
+                <button
+                  type="button"
+                  className="document-expand-btn"
+                  onClick={onExpandToExplorer}
+                  aria-label="문서 탐색기 확대"
+                >
+                  <SFSymbol
+                    name="arrow.up.right.square"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                </button>
+              </Tooltip>
+            )}
+          </>
+        )
+
+        // 포탈 타겟이 있으면 섹션 헤더에 렌더링, 없으면 인라인 렌더링
+        if (filterBarPortalTarget) {
+          return createPortal(filterBarContent, filterBarPortalTarget)
+        }
+
+        return (
+          <div className="document-category-filter-bar">
+            {filterBarContent}
+          </div>
+        )
+      })()}
 
       {renderState()}
 

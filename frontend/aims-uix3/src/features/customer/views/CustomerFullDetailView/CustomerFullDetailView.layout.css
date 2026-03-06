@@ -313,6 +313,21 @@
     justify-content: center;
   }
 
+  /* 🍎 문서 필터 슬롯 — 섹션 헤더에 분류 드롭다운+확대 버튼 통합 */
+  .customer-full-detail__doc-filter-slot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 2px;
+  }
+
+  /* 슬롯 내부 SVG — 섹션 타이틀 기본 스타일(14px, primary) 오버라이드 방지 */
+  .customer-full-detail__doc-filter-slot svg {
+    width: auto;
+    height: auto;
+    color: inherit;
+  }
+
   html[data-theme="dark"] .customer-full-detail__section-count {
     background: var(--color-primary-900);
     color: var(--color-primary-300);
