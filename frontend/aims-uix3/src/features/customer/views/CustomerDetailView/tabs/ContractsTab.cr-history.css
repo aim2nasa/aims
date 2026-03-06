@@ -119,11 +119,11 @@
   }
 
   .cr-contract-history-accordion__header:hover {
-    background: var(--color-ios-bg-secondary-light);
+    background: var(--color-bg-hover);
   }
 
   html[data-theme="dark"] .cr-contract-history-accordion__header:hover {
-    background: var(--color-ios-bg-secondary-dark);
+    background: var(--color-bg-hover);
   }
 
   .cr-contract-history-accordion__header--expanded {
@@ -414,11 +414,11 @@
   }
 
   .cr-contract-history-snapshot-item--clickable:hover {
-    background: var(--color-ios-hover-overlay-light);
+    background: var(--color-bg-hover);
   }
 
   html[data-theme="dark"] .cr-contract-history-snapshot-item--clickable:hover {
-    background: var(--color-ios-hover-overlay-dark);
+    background: var(--color-bg-hover);
   }
 
   /* 변경된 행 + 클릭 가능 호버 조합 */
