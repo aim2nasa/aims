@@ -1063,6 +1063,7 @@ async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str
         # 🔴 에러 상태 처리 (progress == -1)
         if progress == -1 and stage == "error":
             update_fields["status"] = "failed"
+            update_fields["overallStatus"] = "error"
             update_fields["error"] = {
                 "statusCode": 409,
                 "statusMessage": message,

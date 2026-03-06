@@ -82,8 +82,43 @@ class TestNotifyProgress:
 
         set_data = mock_files_collection.update_one.call_args[0][1]["$set"]
         assert set_data["status"] == "failed"
+        assert set_data["overallStatus"] == "error"
         assert "error" in set_data
         assert set_data["error"]["statusMessage"] == "중복 파일"
+
+    async def test_normal_progress_no_overallStatus(self, mock_files_collection):
+        """일반 progress(50)에서는 overallStatus가 설정되지 않음"""
+        from routers.doc_prep_main import _notify_progress
+
+        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+             patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=None)
+            mock_httpx.return_value = mock_client
+
+            await _notify_progress(TEST_DOC_ID, "user1", 50, "meta", "메타 추출 중")
+
+        set_data = mock_files_collection.update_one.call_args[0][1]["$set"]
+        assert "overallStatus" not in set_data
+
+    async def test_complete_progress_no_overallStatus(self, mock_files_collection):
+        """progress=100 완료 시에도 overallStatus는 설정되지 않음"""
+        from routers.doc_prep_main import _notify_progress
+
+        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+             patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=None)
+            mock_httpx.return_value = mock_client
+
+            await _notify_progress(TEST_DOC_ID, "user1", 100, "complete", "처리 완료")
+
+        set_data = mock_files_collection.update_one.call_args[0][1]["$set"]
+        assert "overallStatus" not in set_data
 
     async def test_sse_webhook_called(self, mock_files_collection):
         """SSE webhook 호출 확인"""
