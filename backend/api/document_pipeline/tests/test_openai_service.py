@@ -1466,6 +1466,147 @@ class TestDocumentClassification:
 
 
 # =============================================================================
+# 3-1. summarize_text - 빈 summary fallback 테스트 (ISSUE-8)
+# =============================================================================
+
+class TestSummarizeTextEmptySummaryFallback:
+    """OpenAI가 빈 summary를 반환할 때 fallback 로직 테스트 (ISSUE-8)
+
+    근본 원인: 기존 코드는 빈 summary 시 content[:500] (raw JSON 응답)을 저장했음.
+    수정: unclassifiable이면 안내 메시지, 그 외는 원본 텍스트 앞 200자 사용.
+    """
+
+    def _make_mock_response(self, content_json: str):
+        """OpenAI 응답 mock 객체 생성 헬퍼"""
+        mock_usage = MagicMock()
+        mock_usage.prompt_tokens = 500
+        mock_usage.completion_tokens = 100
+        mock_usage.total_tokens = 600
+
+        mock_message = MagicMock()
+        mock_message.content = content_json
+
+        mock_choice = MagicMock()
+        mock_choice.message = mock_message
+
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
+        mock_response.usage = mock_usage
+        return mock_response
+
+    @pytest.mark.asyncio
+    async def test_empty_summary_unclassifiable_returns_guidance_message(self):
+        """unclassifiable + 빈 summary → '문서 유형을 식별할 수 없습니다.' 반환"""
+        mock_response = self._make_mock_response(
+            '{"type":"unclassifiable","confidence":1.0,"title":"","summary":"","tags":[]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log:
+
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_get_client.return_value = mock_client
+            mock_log.return_value = True
+
+            result = await OpenAIService.summarize_text("원본 텍스트 내용입니다.")
+
+            assert result["summary"] == "문서 유형을 식별할 수 없습니다."
+            assert result["document_type"] == "unclassifiable"
+            # raw JSON이 summary에 들어가지 않아야 함
+            assert "{" not in result["summary"]
+
+    @pytest.mark.asyncio
+    async def test_empty_summary_general_type_returns_text_prefix(self):
+        """general + 빈 summary → 원본 텍스트 앞 200자 + '...' 반환"""
+        long_text = "보험 계약서 내용입니다. " * 50  # 200자 초과
+        mock_response = self._make_mock_response(
+            '{"type":"general","confidence":0.8,"title":"","summary":"","tags":[]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log:
+
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_get_client.return_value = mock_client
+            mock_log.return_value = True
+
+            result = await OpenAIService.summarize_text(long_text)
+
+            assert result["summary"].endswith("...")
+            assert len(result["summary"]) <= 203  # 200자 + "..."
+            assert result["document_type"] == "general"
+            # raw JSON이 아닌 원본 텍스트가 들어가야 함
+            assert "보험 계약서" in result["summary"]
+            assert "{" not in result["summary"]
+
+    @pytest.mark.asyncio
+    async def test_empty_summary_short_text_no_ellipsis(self):
+        """빈 summary + 200자 이하 텍스트 → 말줄임표 없이 원본 텍스트 반환"""
+        short_text = "짧은 문서 내용"
+        mock_response = self._make_mock_response(
+            '{"type":"general","confidence":0.5,"title":"","summary":"","tags":[]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log:
+
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_get_client.return_value = mock_client
+            mock_log.return_value = True
+
+            result = await OpenAIService.summarize_text(short_text)
+
+            assert result["summary"] == "짧은 문서 내용"
+            assert not result["summary"].endswith("...")
+
+    @pytest.mark.asyncio
+    async def test_normal_summary_not_affected(self):
+        """정상 summary 반환 시 기존 동작 유지 (변경 없음)"""
+        mock_response = self._make_mock_response(
+            '{"type":"policy","confidence":0.95,"title":"보험 증권","summary":"이 문서는 2025년 보험 증권입니다.","tags":["보험","증권"]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log:
+
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_get_client.return_value = mock_client
+            mock_log.return_value = True
+
+            result = await OpenAIService.summarize_text("원본 텍스트")
+
+            assert result["summary"] == "이 문서는 2025년 보험 증권입니다."
+            assert result["document_type"] == "policy"
+
+    @pytest.mark.asyncio
+    async def test_empty_summary_no_raw_json_in_result(self):
+        """핵심 검증: 어떤 경우에도 raw JSON 문자열이 summary에 저장되지 않음"""
+        # unclassifiable 케이스
+        mock_response = self._make_mock_response(
+            '{"type":"unclassifiable","confidence":1.0,"title":"","summary":"","tags":[]}'
+        )
+
+        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
+             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log:
+
+            mock_client = AsyncMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_get_client.return_value = mock_client
+            mock_log.return_value = True
+
+            result = await OpenAIService.summarize_text("테스트 텍스트")
+
+            # summary에 JSON 구조가 포함되지 않아야 함
+            assert '"type"' not in result["summary"]
+            assert '"confidence"' not in result["summary"]
+            assert '"summary"' not in result["summary"]
+
+
+# =============================================================================
 # 4. OpenAIService.extract_tags 테스트 (5개)
 # =============================================================================
 

@@ -354,7 +354,10 @@ class OpenAIService:
             tags = cls._normalize_tags(tags)
 
             if not summary:
-                summary = content[:500]
+                if doc_type == "unclassifiable":
+                    summary = "문서 유형을 식별할 수 없습니다."
+                else:
+                    summary = text[:200].strip() + ("..." if len(text) > 200 else "")
 
             logger.info(f"[Classification] doc_id={document_id}, type={doc_type}, confidence={confidence:.2f}")
 
