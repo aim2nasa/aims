@@ -361,6 +361,7 @@
     cursor: pointer;
     transition: all 0.15s ease;
     position: relative;
+    white-space: nowrap;
   }
 
   .customer-info-tabs__tab:hover {
