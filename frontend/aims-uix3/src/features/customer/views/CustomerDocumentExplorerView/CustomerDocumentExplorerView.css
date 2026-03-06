@@ -101,6 +101,89 @@
     background: var(--color-bg-secondary);
   }
 
+  /* === 검색 (요약 바 내 통합) === */
+  .cde-summary__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .cde-search__input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+    height: 22px;
+    width: 120px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: 5px;
+    transition: border-color 0.15s ease-out, width 0.2s ease-out;
+  }
+
+  .cde-search__input-wrap:focus-within {
+    width: 180px;
+    border-color: var(--color-primary-500);
+  }
+
+  .cde-search__icon {
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+  }
+
+  .cde-search__input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 11px;
+    color: var(--color-text-primary);
+  }
+
+  .cde-search__input::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  .cde-search__clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: color 0.12s ease-out;
+  }
+
+  .cde-search__clear:hover {
+    color: var(--color-text-secondary);
+  }
+
+  .cde-search__content-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s ease-out;
+  }
+
+  .cde-search__content-btn:hover {
+    color: var(--color-primary-600);
+    border-color: var(--color-primary-400);
+    background: var(--color-bg-secondary);
+  }
+
   /* === 상태 표시 (로딩/에러/빈 상태) === */
   .cde-state {
     display: flex;

@@ -21,6 +21,7 @@ import { formatDateTimeCompact } from '@/shared/lib/timeUtils'
 import { DocumentUtils } from '@/entities/document/model'
 import { DocumentSummaryModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentSummaryModal'
 import { DocumentFullTextModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentFullTextModal'
+import { DocumentContentSearchModal } from '@/features/customer/components/DocumentContentSearchModal'
 import { SummaryIcon, DocumentIcon } from '@/components/DocumentViews/components/DocumentActionIcons'
 import type { Document } from '@/types/documentStatus'
 import type { Customer } from '@/entities/customer/model'
@@ -182,10 +183,13 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     if (typeof window === 'undefined') return 'display'
     return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
   })
+  // 파일명 검색
+  const [searchTerm, setSearchTerm] = useState('')
 
   // 모달 상태
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [activeModal, setActiveModal] = useState<'summary' | 'fulltext' | null>(null)
+  const [isContentSearchOpen, setIsContentSearchOpen] = useState(false)
 
   // 관계자 문서 탭 상태
   const [relatedGroups, setRelatedGroups] = useState<RelatedPersonGroup[]>([])
@@ -198,21 +202,43 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     error,
   } = useCustomerDocumentsController(visible ? customerId : null)
 
+  // 검색어로 문서 필터링
+  const filteredDocuments = useMemo(() => {
+    if (!searchTerm.trim()) return documents
+    const term = searchTerm.trim().toLowerCase()
+    return documents.filter(doc =>
+      doc.originalName?.toLowerCase().includes(term) ||
+      doc.displayName?.toLowerCase().includes(term)
+    )
+  }, [documents, searchTerm])
+
   // 2단 트리 구성: 대분류 -> 소분류 -> 문서
   const categoryGroups = useMemo<CategoryGroup[]>(() => {
-    return buildCategoryGroups(documents)
-  }, [documents])
+    return buildCategoryGroups(filteredDocuments)
+  }, [filteredDocuments])
 
-  // 초기 진입 시 대분류 모두 펼치기
+  // 초기 진입 시 대분류 모두 펼치기 / 검색 시 매칭 노드 자동 펼침
   useEffect(() => {
     if (categoryGroups.length > 0) {
-      setExpandedNodes(prev => {
-        // 이미 노드가 있으면 사용자가 조작한 상태이므로 유지
-        if (prev.size > 0) return prev
-        return new Set(categoryGroups.map(g => `cat:${g.value}`))
-      })
+      if (searchTerm.trim()) {
+        // 검색 중: 대분류 + 소분류 모두 펼침
+        const allKeys = new Set<string>()
+        for (const g of categoryGroups) {
+          allKeys.add(`cat:${g.value}`)
+          for (const st of g.subTypes) {
+            allKeys.add(`st:${g.value}/${st.typeValue}`)
+          }
+        }
+        setExpandedNodes(allKeys)
+      } else {
+        setExpandedNodes(prev => {
+          // 이미 노드가 있으면 사용자가 조작한 상태이므로 유지
+          if (prev.size > 0) return prev
+          return new Set(categoryGroups.map(g => `cat:${g.value}`))
+        })
+      }
     }
-  }, [categoryGroups])
+  }, [categoryGroups, searchTerm])
 
   // 관계자/가족 문서 로드
   useEffect(() => {
@@ -650,7 +676,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
       onClose={onClose}
       className="customer-document-explorer"
     >
-      {/* 탭 헤더 (세그먼트 컨트롤) */}
+      {/* 탭 헤더 */}
       <div className="cde-tabs">
         <div className="cde-tabs__segment">
           <button
@@ -701,32 +727,80 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
             </div>
           )}
 
-          {!isLoading && !error && categoryGroups.length === 0 && (
+          {!isLoading && !error && documents.length === 0 && (
             <div className="cde-state">
               <SFSymbol name="doc" size={SFSymbolSize.BODY} weight={SFSymbolWeight.MEDIUM} decorative={true} />
               <span>문서가 없습니다</span>
             </div>
           )}
 
-          {!isLoading && !error && categoryGroups.length > 0 && (
+          {!isLoading && !error && documents.length > 0 && (
             <div className="cde-tree">
+              {/* 요약 + 검색 도구 바 */}
               <div className="cde-summary">
-                <span>총 <strong>{documents.length}</strong>건 · {categoryGroups.length}개 분류</span>
-                <button
-                  type="button"
-                  className="cde-expand-all-btn"
-                  onClick={toggleAll}
-                  aria-label={allExpanded ? '모두 접기' : '모두 펼치기'}
-                >
-                  <SFSymbol
-                    name={allExpanded ? 'chevron.up' : 'chevron.down'}
-                    size={SFSymbolSize.CAPTION_2}
-                    weight={SFSymbolWeight.MEDIUM}
-                    decorative={true}
-                  />
-                  <span>{allExpanded ? '모두 접기' : '모두 펼치기'}</span>
-                </button>
+                <span>
+                  {searchTerm.trim()
+                    ? <>검색 결과 <strong>{filteredDocuments.length}</strong>건 / 전체 {documents.length}건</>
+                    : <>총 <strong>{documents.length}</strong>건 · {categoryGroups.length}개 분류</>
+                  }
+                </span>
+                <div className="cde-summary__actions">
+                  <div className="cde-search__input-wrap">
+                    <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} className="cde-search__icon" decorative={true} />
+                    <input
+                      type="text"
+                      className="cde-search__input"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="파일명 검색"
+                    />
+                    {searchTerm && (
+                      <button type="button" className="cde-search__clear" onClick={() => setSearchTerm('')} aria-label="지우기">
+                        <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+                      </button>
+                    )}
+                  </div>
+                  {customerId && (
+                    <Tooltip content="문서 내용 검색">
+                      <button
+                        type="button"
+                        className="cde-search__content-btn"
+                        onClick={() => setIsContentSearchOpen(true)}
+                        aria-label="문서 내용 검색"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001l3.85 3.85a1 1 0 001.415-1.414l-3.867-3.834zm-5.598.724a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/>
+                          <path d="M4.5 7h3M6 5.5v3" stroke="var(--color-bg-primary)" strokeWidth="0.8" fill="none"/>
+                        </svg>
+                      </button>
+                    </Tooltip>
+                  )}
+                  <button
+                    type="button"
+                    className="cde-expand-all-btn"
+                    onClick={toggleAll}
+                    aria-label={allExpanded ? '모두 접기' : '모두 펼치기'}
+                  >
+                    <SFSymbol
+                      name={allExpanded ? 'chevron.up' : 'chevron.down'}
+                      size={SFSymbolSize.CAPTION_2}
+                      weight={SFSymbolWeight.MEDIUM}
+                      decorative={true}
+                    />
+                    <span>{allExpanded ? '모두 접기' : '모두 펼치기'}</span>
+                  </button>
+                </div>
               </div>
+
+              {/* 검색 결과 없음 */}
+              {categoryGroups.length === 0 && searchTerm.trim() && (
+                <div className="cde-state">
+                  <SFSymbol name="magnifyingglass" size={SFSymbolSize.BODY} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+                  <span>"{searchTerm.trim()}" 검색 결과가 없습니다</span>
+                </div>
+              )}
+
+              {/* 트리 */}
               {renderCategoryTree(categoryGroups)}
             </div>
           )}
@@ -747,6 +821,14 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
         onClose={handleModalClose}
         document={selectedDocument}
       />
+      {customerId && (
+        <DocumentContentSearchModal
+          isOpen={isContentSearchOpen}
+          onClose={() => setIsContentSearchOpen(false)}
+          customerId={customerId}
+          customerName={customerName || '고객'}
+        />
+      )}
     </CenterPaneView>
   )
 }
