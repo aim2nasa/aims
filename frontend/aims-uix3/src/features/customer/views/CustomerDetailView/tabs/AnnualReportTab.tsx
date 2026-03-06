@@ -959,7 +959,6 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
         )}
 
         <div className="annual-report-tab__empty">
-          <div className="annual-report-tab__empty-icon">📄</div>
           <h3 className="annual-report-tab__empty-title">
             {pendingCount > 0 ? '분석이 완료되면 여기에 표시됩니다' : 'Annual Report가 없습니다'}
           </h3>

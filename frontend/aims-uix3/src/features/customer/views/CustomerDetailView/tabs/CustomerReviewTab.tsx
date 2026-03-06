@@ -513,7 +513,6 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     return (
       <div ref={sectionContainerRef} className="customer-review-tab">
         <div className="customer-review-tab__empty">
-          <div className="customer-review-tab__empty-icon">+</div>
           <h3 className="customer-review-tab__empty-title">Customer Review가 없습니다</h3>
           <p className="customer-review-tab__empty-description">
             Customer Review Service 문서를 업로드하면 자동 분석하여 여기에 표시됩니다.
