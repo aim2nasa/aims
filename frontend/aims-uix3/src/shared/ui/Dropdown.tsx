@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import './Dropdown.css';
 
 export interface DropdownOption {
@@ -41,30 +42,51 @@ export const Dropdown: React.FC<DropdownProps> = ({
   disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number; upward: boolean }>({ top: 0, left: 0, width: 0, upward: false });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // 선택된 옵션 찾기
   const selectedOption = options.find(opt => opt.value === value);
 
-  // 드롭다운 위치 계산 (위/아래)
+  // 드롭다운 위치 계산 (포탈 기반 — viewport 좌표)
   useEffect(() => {
-    if (isOpen && dropdownRef.current && menuRef.current) {
+    if (isOpen && dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect();
-      const menuHeight = menuRef.current.offsetHeight;
+      const menuHeight = menuRef.current?.offsetHeight || 200;
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
+      const upward = spaceBelow < menuHeight && spaceAbove > spaceBelow;
 
-      // 아래 공간이 충분하면 아래로, 아니면 위로
-      setOpenUpward(spaceBelow < menuHeight && spaceAbove > spaceBelow);
+      setMenuPos({
+        top: upward ? rect.top + window.scrollY : rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+        upward,
+      });
     }
   }, [isOpen]);
+
+  // 포탈 메뉴 위치 재계산 (upward 시 메뉴 높이 확정 후)
+  useEffect(() => {
+    if (isOpen && menuRef.current && menuPos.upward && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const menuHeight = menuRef.current.offsetHeight;
+      setMenuPos(prev => ({
+        ...prev,
+        top: rect.top + window.scrollY - menuHeight - 4,
+      }));
+    }
+  }, [isOpen, menuPos.upward]);
 
   // 외부 클릭 감지
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        menuRef.current && !menuRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -128,12 +150,18 @@ export const Dropdown: React.FC<DropdownProps> = ({
         </span>
       </button>
 
-      {/* Dropdown 옵션 리스트 */}
-      {isOpen && (
+      {/* Dropdown 옵션 리스트 — body 포탈로 overflow:hidden 부모 우회 */}
+      {isOpen && createPortal(
         <div
           ref={menuRef}
-          className={`ios-dropdown__menu ${openUpward ? 'ios-dropdown__menu--upward' : ''}`}
+          className={`ios-dropdown__menu ios-dropdown__menu--portal ${menuPos.upward ? 'ios-dropdown__menu--upward' : ''}`}
           role="listbox"
+          style={{
+            position: 'absolute',
+            top: `${menuPos.top}px`,
+            left: `${menuPos.left}px`,
+            minWidth: `${menuPos.width}px`,
+          }}
         >
           {options.map((option) => (
             <button
@@ -151,7 +179,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
               {option.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

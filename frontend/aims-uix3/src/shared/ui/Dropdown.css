@@ -122,11 +122,22 @@
     animation: dropdownFadeInDown var(--duration-ios-quick) var(--easing-ease-out);
   }
 
+  /* 포탈 모드: body에 렌더링 — 부모 overflow:hidden 우회 */
+  .ios-dropdown__menu--portal {
+    top: auto;
+    left: auto;
+    right: auto;
+  }
+
   /* 위로 펼쳐지는 경우 (공간 부족시) */
   .ios-dropdown__menu--upward {
     top: auto;
     bottom: calc(100% + 4px);
     animation: dropdownFadeInUp var(--duration-ios-quick) var(--easing-ease-out);
+  }
+
+  .ios-dropdown__menu--portal.ios-dropdown__menu--upward {
+    bottom: auto;
   }
 
   html[data-theme="dark"] .ios-dropdown__menu {
@@ -167,7 +178,7 @@
     background-color: transparent;
     border: none;
     color: var(--color-ios-text-primary-light);
-    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+    font-size: var(--font-size-caption-1);
     font-weight: 400;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     text-align: left;
