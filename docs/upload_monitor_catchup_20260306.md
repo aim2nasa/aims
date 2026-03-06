@@ -850,3 +850,51 @@ doc_prep_main.py:1362 → _notify_progress(-1, "error", ...) → status="failed"
 - 기존 /data HDD 1.8TB는 데이터 디스크로 이전 장착 가능
 
 **가장 체감 큰 업그레이드: OS 디스크 SSD/NVMe 전환** — 현재 P99 5초의 상당 부분이 HDD I/O 병목일 가능성 높음.
+
+---
+
+## 이슈 해결 결과 (2026-03-07)
+
+### 해결 완료 (6건)
+
+| 이슈 | 커밋 | 수정 내용 | 검증 |
+|------|------|----------|------|
+| **ISSUE-1** | `7caf297f` (ISSUE-6+9에 포함) | HWP 변환 실패 → OCR fallback 경로 차단으로 핵심 원인(stuck) 해결 | pytest PASS |
+| **ISSUE-2** | `7fd8d051` | FE: `isSystemFileName()` + BE: HTTP 400 반환. SSOT: `file-validation-constants.json` | pytest 10개 + vitest 24개 PASS |
+| **ISSUE-6+9** | `7caf297f` | (1) `ocr_worker.py`: 성공 시 `progress:100/progressStage:complete`, 실패 시 `progress:-1/overallStatus:error` (2) `doc_prep_main.py`: `is_convertible_mime()` 체크 → HWP/DOC/PPT OCR 전송 방지 (3) `customers-routes.js`: webhook에서 `ocr.status`가 queued/running이면 completed 보류 | pytest 4개 PASS |
+| **ISSUE-7** | `0174d772` | `_notify_progress()`에서 `progress==-1 && stage=="error"` 시 `overallStatus:"error"` 설정 | pytest 3개 PASS |
+| **ISSUE-8** | `1f1eda63` | `openai_service.py` fallback: unclassifiable → 안내 메시지, 그 외 → `text[:200]` (raw JSON 저장 방지) | pytest 5개 PASS |
+| 테스트 수정 | `06a9b5af` | `test_pipeline_routing.py`: HWP 변환 실패 테스트를 새 동작(OCR 방지→보관)에 맞게 수정 | pytest PASS |
+
+### 해당 없음 (3건)
+
+| 이슈 | 사유 |
+|------|------|
+| **ISSUE-3** | 이슈 아님 — 텍스트가 없거나 의미 없는 문서(빈 이미지, 손글씨, 명함 사진)를 "분류 불가"로 판정한 것은 AI의 정상 동작. 분류할 수 없는 문서를 분류 불가로 판정하는 것이 올바른 결과 |
+| **ISSUE-4** | 이슈 아님 — JPG BIN 뱃지는 OCR 대기 중 임시 상태, OCR 완료 후 자동 해결 |
+| **ISSUE-5** | ISSUE-2와 중복 |
+
+### 배포 후 1회성 DB 패치 (167건 stuck 문서 복구)
+
+```javascript
+// ocr.status=done인데 progress=70에서 멈춘 문서 → completed
+db.files.updateMany(
+  { progress: 70, progressStage: "ocr", "ocr.status": "done" },
+  { $set: { progress: 100, progressStage: "complete" } }
+)
+
+// ocr.status=error인데 progress=70에서 멈춘 문서 → error
+db.files.updateMany(
+  { progress: 70, progressStage: "ocr", "ocr.status": "error" },
+  { $set: { progress: -1, progressStage: "error", overallStatus: "error", status: "failed" } }
+)
+```
+
+### 전체 테스트 결과
+
+| 테스트 | 결과 |
+|--------|------|
+| document_pipeline pytest (96건) | ALL PASS |
+| aims_api jest (989건) | ALL PASS |
+| frontend vitest (24건) | ALL PASS |
+| pipeline_routing (326건) | ALL PASS |
