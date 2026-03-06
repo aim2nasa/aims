@@ -187,7 +187,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
           </button>
         )}
         <h1 className="header-title">
-          AIMS<span className="header-title__version"> UIX3</span>
+          AIMS
         </h1>
         {/* Developer Mode Badge - AIMS UIX3 우측 */}
         {isDevMode && (
