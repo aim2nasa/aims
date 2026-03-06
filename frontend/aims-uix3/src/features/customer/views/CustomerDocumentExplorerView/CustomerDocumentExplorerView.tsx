@@ -585,27 +585,95 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
 
     const totalDocs = relatedGroups.reduce((sum, g) => sum + g.totalCount, 0)
 
+    // 검색어로 관계자 문서 필터링
+    const filteredRelatedGroups = searchTerm.trim()
+      ? relatedGroups.map(person => {
+          const term = searchTerm.trim().toLowerCase()
+          const filtered = person.documents.filter(doc =>
+            doc.originalName?.toLowerCase().includes(term) ||
+            doc.displayName?.toLowerCase().includes(term)
+          )
+          if (filtered.length === 0) return null
+          return {
+            ...person,
+            documents: filtered,
+            categoryGroups: buildCategoryGroups(filtered),
+            totalCount: filtered.length,
+          }
+        }).filter(Boolean) as RelatedPersonGroup[]
+      : relatedGroups
+
+    const filteredTotalDocs = filteredRelatedGroups.reduce((sum, g) => sum + g.totalCount, 0)
+
     return (
       <div className="cde-tree">
         <div className="cde-summary">
-          <span>{relatedGroups.length}명 · 총 <strong>{totalDocs}</strong>건</span>
-          <button
-            type="button"
-            className="cde-expand-all-btn"
-            onClick={toggleAll}
-            aria-label={allExpanded ? '모두 접기' : '모두 펼치기'}
-          >
-            <SFSymbol
-              name={allExpanded ? 'chevron.up' : 'chevron.down'}
-              size={SFSymbolSize.CAPTION_2}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative={true}
-            />
-            <span>{allExpanded ? '모두 접기' : '모두 펼치기'}</span>
-          </button>
+          <span>
+            {searchTerm.trim()
+              ? <>검색 결과 <strong>{filteredTotalDocs}</strong>건 / 전체 {totalDocs}건</>
+              : <>{relatedGroups.length}명 · 총 <strong>{totalDocs}</strong>건</>
+            }
+          </span>
+          <div className="cde-summary__actions">
+            <div className="cde-search__input-wrap">
+              <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} color="var(--color-primary-500)" className="cde-search__icon" decorative={true} />
+              <input
+                type="text"
+                className="cde-search__input"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="파일명 검색"
+              />
+              {searchTerm && (
+                <button type="button" className="cde-search__clear" onClick={() => setSearchTerm('')} aria-label="지우기">
+                  <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+                </button>
+              )}
+            </div>
+            {customerId && (
+              <button
+                type="button"
+                className="cde-expand-all-btn"
+                onClick={() => setIsContentSearchOpen(true)}
+                aria-label="내용 검색"
+              >
+                <SFSymbol
+                  name="doc.text"
+                  size={SFSymbolSize.CAPTION_2}
+                  weight={SFSymbolWeight.MEDIUM}
+                  color="var(--color-success-600)"
+                  decorative={true}
+                />
+                <span>내용 검색</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="cde-expand-all-btn"
+              onClick={toggleAll}
+              aria-label={allExpanded ? '모두 접기' : '모두 펼치기'}
+            >
+              <SFSymbol
+                name={allExpanded ? 'chevron.up' : 'chevron.down'}
+                size={SFSymbolSize.CAPTION_2}
+                weight={SFSymbolWeight.MEDIUM}
+                color="var(--color-text-secondary)"
+                decorative={true}
+              />
+              <span>{allExpanded ? '모두 접기' : '모두 펼치기'}</span>
+            </button>
+          </div>
         </div>
 
-        {relatedGroups.map(person => {
+        {/* 검색 결과 없음 */}
+        {filteredRelatedGroups.length === 0 && searchTerm.trim() && (
+          <div className="cde-state">
+            <SFSymbol name="magnifyingglass" size={SFSymbolSize.BODY} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+            <span>"{searchTerm.trim()}" 검색 결과가 없습니다</span>
+          </div>
+        )}
+
+        {filteredRelatedGroups.map(person => {
           const personKey = `person:${person.customerId}`
           const isPersonExpanded = expandedNodes.has(personKey)
 
@@ -668,6 +736,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
             name="chevron.left"
             size={SFSymbolSize.CAPTION_1}
             weight={SFSymbolWeight.MEDIUM}
+            color="var(--color-primary-500)"
             decorative={true}
           />
           <span>돌아가기</span>
@@ -684,6 +753,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
             className={`cde-tabs__tab ${activeTab === 'my' ? 'cde-tabs__tab--active' : ''}`}
             onClick={() => setActiveTab('my')}
           >
+            <SFSymbol name="doc" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} color="var(--color-primary-500)" decorative={true} />
             내 문서
           </button>
           <button
@@ -691,6 +761,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
             className={`cde-tabs__tab ${activeTab === 'related' ? 'cde-tabs__tab--active' : ''}`}
             onClick={() => setActiveTab('related')}
           >
+            <SFSymbol name={customerType === '법인' ? 'person.2' : 'heart'} size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} color="var(--color-warning-500)" decorative={true} />
             {relatedTabLabel}
           </button>
         </div>
@@ -746,7 +817,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                 </span>
                 <div className="cde-summary__actions">
                   <div className="cde-search__input-wrap">
-                    <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} className="cde-search__icon" decorative={true} />
+                    <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} color="var(--color-primary-500)" className="cde-search__icon" decorative={true} />
                     <input
                       type="text"
                       className="cde-search__input"
@@ -761,19 +832,21 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                     )}
                   </div>
                   {customerId && (
-                    <Tooltip content="문서 내용 검색">
-                      <button
-                        type="button"
-                        className="cde-search__content-btn"
-                        onClick={() => setIsContentSearchOpen(true)}
-                        aria-label="문서 내용 검색"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
-                          <path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001l3.85 3.85a1 1 0 001.415-1.414l-3.867-3.834zm-5.598.724a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/>
-                          <path d="M4.5 7h3M6 5.5v3" stroke="var(--color-bg-primary)" strokeWidth="0.8" fill="none"/>
-                        </svg>
-                      </button>
-                    </Tooltip>
+                    <button
+                      type="button"
+                      className="cde-expand-all-btn"
+                      onClick={() => setIsContentSearchOpen(true)}
+                      aria-label="내용 검색"
+                    >
+                      <SFSymbol
+                        name="doc.text"
+                        size={SFSymbolSize.CAPTION_2}
+                        weight={SFSymbolWeight.MEDIUM}
+                        color="var(--color-success-600)"
+                        decorative={true}
+                      />
+                      <span>내용 검색</span>
+                    </button>
                   )}
                   <button
                     type="button"
@@ -785,6 +858,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                       name={allExpanded ? 'chevron.up' : 'chevron.down'}
                       size={SFSymbolSize.CAPTION_2}
                       weight={SFSymbolWeight.MEDIUM}
+                      color="var(--color-text-secondary)"
                       decorative={true}
                     />
                     <span>{allExpanded ? '모두 접기' : '모두 펼치기'}</span>
