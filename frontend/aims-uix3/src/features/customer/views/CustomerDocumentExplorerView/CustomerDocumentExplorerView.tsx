@@ -527,7 +527,21 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     return (
       <div className="cde-tree">
         <div className="cde-summary">
-          {relatedGroups.length}명 · 총 <strong>{totalDocs}</strong>건
+          <span>{relatedGroups.length}명 · 총 <strong>{totalDocs}</strong>건</span>
+          <button
+            type="button"
+            className="cde-expand-all-btn"
+            onClick={toggleAll}
+            aria-label={allExpanded ? '모두 접기' : '모두 펼치기'}
+          >
+            <SFSymbol
+              name={allExpanded ? 'chevron.up' : 'chevron.down'}
+              size={SFSymbolSize.CAPTION_2}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative={true}
+            />
+            <span>{allExpanded ? '모두 접기' : '모두 펼치기'}</span>
+          </button>
         </div>
 
         {relatedGroups.map(person => {
@@ -581,37 +595,20 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
         />
       }
       titleAccessory={
-        <div className="cde-header-actions">
-          <Tooltip content={allExpanded ? '모두 접기' : '모두 펼치기'}>
-            <button
-              type="button"
-              className="cde-header-btn"
-              onClick={toggleAll}
-              aria-label={allExpanded ? '모두 접기' : '모두 펼치기'}
-            >
-              <SFSymbol
-                name={allExpanded ? 'chevron.up' : 'chevron.down'}
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-                decorative={true}
-              />
-            </button>
-          </Tooltip>
-          <button
-            type="button"
-            className="cde-back-btn"
-            onClick={onCollapse}
-            aria-label="돌아가기"
-          >
-            <SFSymbol
-              name="chevron.left"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative={true}
-            />
-            <span>돌아가기</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className="cde-back-btn"
+          onClick={onCollapse}
+          aria-label="돌아가기"
+        >
+          <SFSymbol
+            name="chevron.left"
+            size={SFSymbolSize.CAPTION_1}
+            weight={SFSymbolWeight.MEDIUM}
+            decorative={true}
+          />
+          <span>돌아가기</span>
+        </button>
       }
       onClose={onClose}
       className="customer-document-explorer"
@@ -675,7 +672,21 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
           {!isLoading && !error && categoryGroups.length > 0 && (
             <div className="cde-tree">
               <div className="cde-summary">
-                총 <strong>{documents.length}</strong>건 · {categoryGroups.length}개 분류
+                <span>총 <strong>{documents.length}</strong>건 · {categoryGroups.length}개 분류</span>
+                <button
+                  type="button"
+                  className="cde-expand-all-btn"
+                  onClick={toggleAll}
+                  aria-label={allExpanded ? '모두 접기' : '모두 펼치기'}
+                >
+                  <SFSymbol
+                    name={allExpanded ? 'chevron.up' : 'chevron.down'}
+                    size={SFSymbolSize.CAPTION_2}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                  <span>{allExpanded ? '모두 접기' : '모두 펼치기'}</span>
+                </button>
               </div>
               {renderCategoryTree(categoryGroups)}
             </div>

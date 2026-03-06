@@ -29,33 +29,7 @@
     border-bottom-color: var(--color-accent);
   }
 
-  /* === 헤더 액션 버튼들 === */
-  .cde-header-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-  }
-
-  .cde-header-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border: 1px solid var(--color-border-secondary);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--color-text-tertiary);
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-  }
-
-  .cde-header-btn:hover {
-    color: var(--color-text-primary);
-    border-color: var(--color-text-tertiary);
-    background: var(--color-bg-secondary);
-  }
-
+  /* === 돌아가기 버튼 === */
   .cde-back-btn {
     display: flex;
     align-items: center;
@@ -105,6 +79,9 @@
   }
 
   .cde-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     font-size: 11px;
     color: var(--color-text-tertiary);
     padding: var(--spacing-2) var(--spacing-3);
@@ -114,6 +91,32 @@
 
   .cde-summary strong {
     color: var(--color-text-primary);
+  }
+
+  /* === 모두 펼치기/접기 버튼 (요약줄 우측) === */
+  .cde-expand-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px 1px 4px;
+    height: 20px;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1;
+    white-space: nowrap;
+    transition: all 0.15s ease-out;
+    flex-shrink: 0;
+  }
+
+  .cde-expand-all-btn:hover {
+    color: var(--color-text-secondary);
+    border-color: var(--color-text-tertiary);
+    background: var(--color-bg-secondary);
   }
 
   /* === 대분류 (Level 1) === */
