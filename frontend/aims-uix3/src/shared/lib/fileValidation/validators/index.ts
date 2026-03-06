@@ -10,6 +10,7 @@
 export {
   getFileExtension,
   isBlockedExtension,
+  isSystemFileName,
   validateExtension,
 } from './extensionValidator'
 

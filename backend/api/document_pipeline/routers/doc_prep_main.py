@@ -6,6 +6,7 @@ Main orchestrator for document processing pipeline
 - UPLOAD_QUEUE_ENABLED=True: 요청을 MongoDB 큐에 저장 후 즉시 응답
 - UPLOAD_QUEUE_ENABLED=False: 기존 동기 처리 (롤백용)
 """
+import json
 import logging
 import os
 import re
@@ -181,6 +182,23 @@ UNSUPPORTED_MIME_TYPES = [
     "application/octet-stream"
 ]
 
+# 시스템 파일명 목록 — Single Source of Truth: shared/file-validation-constants.json
+def _load_system_file_names() -> set:
+    json_path = os.path.join(os.path.dirname(__file__), "../../aims_api/file-validation-constants.json")
+    try:
+        with open(json_path, encoding="utf-8") as f:
+            return set(json.load(f).get("systemFileNames", []))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"Thumbs.db", "thumbs.db", ".DS_Store", "desktop.ini", "Desktop.ini", "ehthumbs.db", "ehthumbs_vista.db"}
+
+SYSTEM_FILE_NAMES = _load_system_file_names()
+
+
+def _is_system_file(filename: str) -> bool:
+    """시스템 파일명인지 확인 (경로 포함 시 basename 추출)"""
+    basename = os.path.basename(filename)
+    return basename in SYSTEM_FILE_NAMES
+
 
 @router.post("/docprep-main")
 async def doc_prep_main(
@@ -208,6 +226,14 @@ async def doc_prep_main(
     """
     settings = get_settings()
     doc_id = None
+
+    # 시스템 파일 차단 (Thumbs.db, .DS_Store 등 — 폴더 드래그앤드롭 시 혼입 방지)
+    original_filename = file.filename or "unknown"
+    if _is_system_file(original_filename):
+        raise HTTPException(
+            status_code=400,
+            detail=f"시스템 파일은 업로드할 수 없습니다: {original_filename}"
+        )
 
     # Shadow mode: 문서 생성 없이 메타데이터 추출 및 응답 시뮬레이션만 수행
     if shadow:

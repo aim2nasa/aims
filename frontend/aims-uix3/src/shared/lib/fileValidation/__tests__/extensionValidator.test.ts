@@ -7,9 +7,10 @@ import { describe, it, expect } from 'vitest'
 import {
   getFileExtension,
   isBlockedExtension,
+  isSystemFileName,
   validateExtension,
 } from '../validators/extensionValidator'
-import { BLOCKED_EXTENSIONS } from '../constants'
+import { BLOCKED_EXTENSIONS, SYSTEM_FILE_NAMES } from '../constants'
 
 describe('getFileExtension', () => {
   it('일반 파일명에서 확장자 추출', () => {
@@ -93,6 +94,35 @@ describe('isBlockedExtension', () => {
   })
 })
 
+describe('isSystemFileName', () => {
+  it('Windows 시스템 파일 감지', () => {
+    expect(isSystemFileName('Thumbs.db')).toBe(true)
+    expect(isSystemFileName('thumbs.db')).toBe(true)
+    expect(isSystemFileName('desktop.ini')).toBe(true)
+    expect(isSystemFileName('Desktop.ini')).toBe(true)
+    expect(isSystemFileName('ehthumbs.db')).toBe(true)
+    expect(isSystemFileName('ehthumbs_vista.db')).toBe(true)
+  })
+
+  it('macOS 시스템 파일 감지', () => {
+    expect(isSystemFileName('.DS_Store')).toBe(true)
+  })
+
+  it('일반 파일은 통과', () => {
+    expect(isSystemFileName('document.pdf')).toBe(false)
+    expect(isSystemFileName('image.jpg')).toBe(false)
+    expect(isSystemFileName('report.xlsx')).toBe(false)
+    expect(isSystemFileName('thumbs.pdf')).toBe(false)
+    expect(isSystemFileName('my_thumbs.db')).toBe(false)
+  })
+
+  it('모든 시스템 파일명 테스트', () => {
+    for (const name of SYSTEM_FILE_NAMES) {
+      expect(isSystemFileName(name)).toBe(true)
+    }
+  })
+})
+
 describe('validateExtension', () => {
   // 테스트용 File 객체 생성 헬퍼
   const createMockFile = (name: string, size: number = 1000): File => {
@@ -129,6 +159,41 @@ describe('validateExtension', () => {
     const file = createMockFile('README')
     const result = validateExtension(file)
 
+    expect(result.valid).toBe(true)
+  })
+
+  it('시스템 파일 거부 — Thumbs.db', () => {
+    const file = createMockFile('Thumbs.db')
+    const result = validateExtension(file)
+
+    expect(result.valid).toBe(false)
+    expect(result.reason).toBe('blocked_extension')
+    expect(result.message).toContain('시스템 파일')
+  })
+
+  it('시스템 파일 거부 — .DS_Store', () => {
+    const file = createMockFile('.DS_Store')
+    const result = validateExtension(file)
+
+    expect(result.valid).toBe(false)
+    expect(result.reason).toBe('blocked_extension')
+    expect(result.message).toContain('시스템 파일')
+  })
+
+  it('시스템 파일 거부 — desktop.ini', () => {
+    const file = createMockFile('desktop.ini')
+    const result = validateExtension(file)
+
+    expect(result.valid).toBe(false)
+    expect(result.reason).toBe('blocked_extension')
+    expect(result.message).toContain('시스템 파일')
+  })
+
+  it('시스템 파일과 이름이 유사하지만 다른 파일은 통과', () => {
+    const file = createMockFile('my_thumbs.db')
+    const result = validateExtension(file)
+
+    // db 확장자는 차단 확장자가 아니므로 통과해야 함
     expect(result.valid).toBe(true)
   })
 })

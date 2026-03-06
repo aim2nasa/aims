@@ -13,6 +13,12 @@
     "desktop",
     "pl", "rb", "py", "pyc", "pyo"
   ],
+  "systemFileNames": [
+    "Thumbs.db", "thumbs.db",
+    ".DS_Store",
+    "desktop.ini", "Desktop.ini",
+    "ehthumbs.db", "ehthumbs_vista.db"
+  ],
   "dangerousMimeTypes": [
     "application/x-msdownload",
     "application/x-msdos-program",

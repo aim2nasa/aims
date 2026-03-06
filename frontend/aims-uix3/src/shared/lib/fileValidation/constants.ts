@@ -14,6 +14,14 @@ import sharedConstants from '../../../../../../shared/file-validation-constants.
 export const BLOCKED_EXTENSIONS = sharedConstants.blockedExtensions as readonly string[]
 
 /**
+ * 시스템 파일명 목록
+ * OS가 자동 생성하는 파일 (Thumbs.db, .DS_Store 등)
+ * 폴더 드래그앤드롭 시 함께 업로드되는 것을 방지
+ * @see shared/file-validation-constants.json
+ */
+export const SYSTEM_FILE_NAMES = sharedConstants.systemFileNames as readonly string[]
+
+/**
  * 허용되는 일반 문서 확장자 (참고용)
  */
 export const ALLOWED_DOCUMENT_EXTENSIONS = [

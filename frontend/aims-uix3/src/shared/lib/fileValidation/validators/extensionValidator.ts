@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import { BLOCKED_EXTENSIONS } from '../constants'
+import { BLOCKED_EXTENSIONS, SYSTEM_FILE_NAMES } from '../constants'
 import type { FileValidationResult } from '../types'
 
 /**
@@ -33,11 +33,34 @@ export function isBlockedExtension(filename: string): boolean {
 }
 
 /**
+ * 시스템 파일명인지 확인
+ * OS가 자동 생성하는 파일 (Thumbs.db, .DS_Store 등)
+ * @param filename 파일명
+ * @returns 시스템 파일이면 true
+ */
+export function isSystemFileName(filename: string): boolean {
+  const trimmed = filename.trim()
+  // 경로 구분자가 포함된 경우 파일명만 추출
+  const basename = trimmed.split(/[/\\]/).pop() || trimmed
+  return (SYSTEM_FILE_NAMES as readonly string[]).includes(basename)
+}
+
+/**
  * 파일 확장자 검증
  * @param file File 객체
  * @returns FileValidationResult
  */
 export function validateExtension(file: File): FileValidationResult {
+  // 시스템 파일 체크 (Thumbs.db, .DS_Store 등)
+  if (isSystemFileName(file.name)) {
+    return {
+      valid: false,
+      file,
+      reason: 'blocked_extension',
+      message: `시스템 파일은 업로드할 수 없습니다: ${file.name}`,
+    }
+  }
+
   if (isBlockedExtension(file.name)) {
     const ext = getFileExtension(file.name)
     return {
