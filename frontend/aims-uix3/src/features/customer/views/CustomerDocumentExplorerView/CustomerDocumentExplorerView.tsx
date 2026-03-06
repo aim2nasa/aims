@@ -240,6 +240,44 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     }
   }, [categoryGroups, searchTerm])
 
+  // 관계자 문서 검색 필터링
+  const filteredRelatedGroups = useMemo<RelatedPersonGroup[]>(() => {
+    if (!searchTerm.trim()) return relatedGroups
+    const term = searchTerm.trim().toLowerCase()
+    return relatedGroups.map(person => {
+      const filtered = person.documents.filter(doc =>
+        doc.originalName?.toLowerCase().includes(term) ||
+        doc.displayName?.toLowerCase().includes(term)
+      )
+      if (filtered.length === 0) return null
+      return {
+        ...person,
+        documents: filtered,
+        categoryGroups: buildCategoryGroups(filtered),
+        totalCount: filtered.length,
+      }
+    }).filter(Boolean) as RelatedPersonGroup[]
+  }, [relatedGroups, searchTerm])
+
+  // 관계자 탭 검색 시 자동 확장
+  useEffect(() => {
+    if (activeTab !== 'related' || !searchTerm.trim()) return
+    if (filteredRelatedGroups.length === 0) return
+
+    const allKeys = new Set<string>()
+    for (const person of filteredRelatedGroups) {
+      allKeys.add(`person:${person.customerId}`)
+      const prefix = `p${person.customerId}:`
+      for (const g of person.categoryGroups) {
+        allKeys.add(`${prefix}cat:${g.value}`)
+        for (const st of g.subTypes) {
+          allKeys.add(`${prefix}st:${g.value}/${st.typeValue}`)
+        }
+      }
+    }
+    setExpandedNodes(allKeys)
+  }, [filteredRelatedGroups, searchTerm, activeTab])
+
   // 관계자/가족 문서 로드
   useEffect(() => {
     if (!visible || !customerId || activeTab !== 'related') return
@@ -584,25 +622,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     }
 
     const totalDocs = relatedGroups.reduce((sum, g) => sum + g.totalCount, 0)
-
-    // 검색어로 관계자 문서 필터링
-    const filteredRelatedGroups = searchTerm.trim()
-      ? relatedGroups.map(person => {
-          const term = searchTerm.trim().toLowerCase()
-          const filtered = person.documents.filter(doc =>
-            doc.originalName?.toLowerCase().includes(term) ||
-            doc.displayName?.toLowerCase().includes(term)
-          )
-          if (filtered.length === 0) return null
-          return {
-            ...person,
-            documents: filtered,
-            categoryGroups: buildCategoryGroups(filtered),
-            totalCount: filtered.length,
-          }
-        }).filter(Boolean) as RelatedPersonGroup[]
-      : relatedGroups
-
     const filteredTotalDocs = filteredRelatedGroups.reduce((sum, g) => sum + g.totalCount, 0)
 
     return (
