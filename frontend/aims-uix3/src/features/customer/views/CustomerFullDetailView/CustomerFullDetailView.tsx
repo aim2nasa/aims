@@ -671,19 +671,17 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       titleIcon={customer ? getCustomerTypeIcon() : undefined}
       titleAction={
         onSwitchToCompactView && customerId ? (
-          <Tooltip content="간략 보기로 전환" placement="bottom">
-            <button
-              type="button"
-              className="view-switch-button view-switch-button--compact"
-              onClick={() => onSwitchToCompactView(customerId)}
-              aria-label="간략 보기"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                {/* 단일 박스 아이콘 (간략 보기) - 전체보기 사각형 하나와 동일 크기 */}
-                <rect x="5" y="5" width="6" height="6" rx="1" />
-              </svg>
-            </button>
-          </Tooltip>
+          <button
+            type="button"
+            className="view-switch-button view-switch-button--compact"
+            onClick={() => onSwitchToCompactView(customerId)}
+            aria-label="간략 보기"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <rect x="5" y="5" width="6" height="6" rx="1" />
+            </svg>
+            <span className="view-switch-button__label">작게 보기</span>
+          </button>
         ) : undefined
       }
       titleAccessory={

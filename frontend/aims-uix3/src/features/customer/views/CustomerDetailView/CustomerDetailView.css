@@ -534,19 +534,23 @@
   }
 
   .customer-detail-title .view-switch-button {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    margin-left: 4px;
+    gap: 3px;
+    height: 22px;
+    margin-left: 6px;
+    padding: 0 7px 0 5px;
     border: none;
-    border-radius: 5px;
-    background: transparent;
+    border-radius: 11px;
+    background: var(--color-bg-secondary);
     color: var(--color-text-tertiary);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
     cursor: pointer;
     transition: all var(--duration-fast) var(--easing-ease-out);
     flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .customer-detail-title .view-switch-button:hover {
@@ -555,12 +559,13 @@
   }
 
   .customer-detail-title .view-switch-button:active {
-    transform: scale(0.92);
+    transform: scale(0.96);
   }
 
   .customer-detail-title .view-switch-button svg {
-    width: 14px;
-    height: 14px;
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
   }
 
   /* 📱 세로모드: 폼 콘텐츠 한 페이지 표시 (스크롤 최소화) */
