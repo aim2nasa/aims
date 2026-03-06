@@ -11,7 +11,7 @@
  * - DocumentsTab (고객 상세 > 문서 탭)
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import { getDocumentTypeLabel } from '@/shared/constants/documentCategories'
 import { DocumentTypePickerModal } from './DocumentTypePickerModal'
 import './DocumentTypeCell.css'
@@ -60,6 +60,7 @@ export const DocumentTypeCell: React.FC<DocumentTypeCellProps> = ({
   disabled = false
 }) => {
   const [pickerVisible, setPickerVisible] = useState(false)
+  const triggerRef = useRef<HTMLSpanElement>(null)
   const systemType = getSystemType(documentType, isAnnualReport, isCustomerReview)
 
   const handleClick = useCallback(() => {
@@ -91,6 +92,7 @@ export const DocumentTypeCell: React.FC<DocumentTypeCellProps> = ({
   return (
     <>
       <span
+        ref={triggerRef}
         className={`document-type-cell document-type-cell--label ${isClickable ? 'document-type-cell--clickable' : ''} ${isUpdating ? 'document-type-cell--updating' : ''}`}
         onClick={handleClick}
         {...(isClickable ? { role: 'button', tabIndex: 0, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } } } : {})}
@@ -102,6 +104,7 @@ export const DocumentTypeCell: React.FC<DocumentTypeCellProps> = ({
         <DocumentTypePickerModal
           visible={pickerVisible}
           currentType={documentType}
+          triggerRef={triggerRef}
           onSelect={handleSelect}
           onClose={() => setPickerVisible(false)}
         />

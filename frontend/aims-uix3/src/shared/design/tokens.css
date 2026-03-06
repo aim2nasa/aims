@@ -887,6 +887,7 @@
     /* === iOS System Colors - Customer Menu Icons === */
     /* Light Theme - iOS Human Interface Guidelines 표준 색상 */
     --color-ios-blue: #007aff;           /* iOS systemBlue */
+    --color-ios-blue-light: #007aff;     /* iOS systemBlue Light (라이트 테마 명시용) */
     --color-ios-green: #34c759;          /* iOS systemGreen */
     --color-ios-green-light: #30d158;    /* iOS systemGreen 밝은 버전 (라이트 테마용) */
     --color-ios-orange: #ff9500;         /* iOS systemOrange */
