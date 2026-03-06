@@ -1540,6 +1540,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
             onClose={() => setIsDocContentSearchModalOpen(false)}
             customerId={customer._id}
             customerName={customer.personal_info?.name || ''}
+            customerType={customer.insurance_info?.customer_type}
           />
         </>
       )}

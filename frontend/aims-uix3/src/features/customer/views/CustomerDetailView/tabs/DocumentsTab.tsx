@@ -1663,6 +1663,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         }}
         customerId={customer._id}
         customerName={customer.personal_info?.name ?? ''}
+        customerType={customer.insurance_info?.customer_type}
         initialQuery={simpleSearchQuery}
       />
 

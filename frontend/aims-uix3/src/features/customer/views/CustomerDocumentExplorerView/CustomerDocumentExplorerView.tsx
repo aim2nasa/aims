@@ -920,6 +920,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
           onClose={() => setIsContentSearchOpen(false)}
           customerId={customerId}
           customerName={customerName || '고객'}
+          customerType={customerType}
         />
       )}
     </CenterPaneView>

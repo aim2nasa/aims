@@ -22,6 +22,9 @@
   }
 
   .doc-search-modal-title__customer {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     margin-left: 8px;
     font-size: 11px;
     font-weight: 400;
@@ -29,6 +32,14 @@
     background: var(--color-ios-bg-tertiary-light);
     padding: 2px 8px;
     border-radius: 4px;
+  }
+
+  .doc-search-modal-title__customer .customer-icon--personal {
+    color: var(--color-icon-blue);
+  }
+
+  .doc-search-modal-title__customer .customer-icon--corporate {
+    color: var(--color-icon-orange);
   }
 
   html[data-theme="dark"] .doc-search-modal-title__customer {

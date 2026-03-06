@@ -26,6 +26,8 @@ interface DocumentContentSearchModalProps {
   customerId: string
   /** 고객 이름 */
   customerName: string
+  /** 고객 유형 (개인/법인) */
+  customerType?: '개인' | '법인'
   /** 초기 검색어 (간편 문서검색에서 전달) */
   initialQuery?: string
 }
@@ -35,6 +37,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
   onClose,
   customerId,
   customerName,
+  customerType = '개인',
   initialQuery = ''
 }) => {
   // 🍎 상태
@@ -450,7 +453,21 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
         weight={SFSymbolWeight.MEDIUM}
       />
       <span>간편 문서 검색</span>
-      <span className="doc-search-modal-title__customer">{customerName}</span>
+      <span className="doc-search-modal-title__customer">
+        {customerType === '법인' ? (
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
+            <circle cx="10" cy="10" r="10" opacity="0.2" />
+            <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+          </svg>
+        ) : (
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+            <circle cx="10" cy="10" r="10" opacity="0.2" />
+            <circle cx="10" cy="7" r="3" />
+            <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+          </svg>
+        )}
+        {customerName}
+      </span>
     </div>
   )
 
