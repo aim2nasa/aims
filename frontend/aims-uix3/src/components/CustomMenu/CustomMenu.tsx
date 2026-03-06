@@ -92,7 +92,7 @@ const MenuIcons = {
       weight={SFSymbolWeight.MEDIUM}
     />
   ),
-  // 문서 탐색기 아이콘 (폴더 트리 구조) - SVG 직접 사용
+  // 고객별 문서함 아이콘 (폴더 트리 구조) - SVG 직접 사용
   FolderTree: () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--folder-tree">
       <path d="M2 4h6l2 2h10a1 1 0 011 1v3H2V5a1 1 0 011-1z" opacity="0.9"/>
@@ -578,8 +578,8 @@ const CustomMenu = ({
         {
           key: 'documents-explorer',
           icon: <span className="menu-icon-green"><MenuIcons.FolderTree /></span>,
-          label: '문서 탐색기',
-          tooltipTitle: '트리 구조로 문서를 탐색합니다',
+          label: '고객별 문서함',
+          tooltipTitle: '고객별로 문서를 모아 볼 수 있습니다',
         },
         {
           key: 'documents-search',

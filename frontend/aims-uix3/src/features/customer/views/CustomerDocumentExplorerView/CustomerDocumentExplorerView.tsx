@@ -735,7 +735,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   return (
     <CenterPaneView
       visible={visible}
-      title={`${customerName || '고객'} 문서 탐색기`}
+      title={`${customerName || '고객'} 문서 분류`}
       titleIcon={
         <SFSymbol
           name="doc"

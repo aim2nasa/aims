@@ -419,7 +419,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
   return (
     <CenterPaneView
       visible={visible}
-      title="문서 탐색기"
+      title="고객별 문서함"
       breadcrumbItems={breadcrumbItems}
       onClose={onClose}
     >
