@@ -46,6 +46,11 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
   const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null)
   const [infoTab, setInfoTab] = useState<'summary' | 'snippet'>('summary')
   const [leftPanelWidth, setLeftPanelWidth] = useState(320)
+  // 🍎 파일명 표시 모드 (별칭/원본)
+  const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
   // 🍎 프리뷰 관련 상태
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewType, setPreviewType] = useState<'pdf' | 'image' | null>(null)
@@ -212,9 +217,14 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     }
   }, [handleSearch])
 
-  // 🍎 파일명 추출
+  // 🍎 파일명 추출 (원본)
   const getFileName = (item: SearchResultItem): string => {
     return SearchService.getOriginalName(item) || '이름 없음'
+  }
+
+  // 🍎 표시 파일명 (별칭 우선, 없으면 원본)
+  const getShowName = (item: SearchResultItem): string => {
+    return SearchService.getDisplayName(item) || getFileName(item)
   }
 
   // 🍎 문서 ID 추출
@@ -565,7 +575,19 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
             {!isLoading && results.length > 0 && (
               <>
                 <div className="doc-search-left__results-count">
-                  {results.length}건
+                  <span>{results.length}건</span>
+                  <button
+                    type="button"
+                    className="doc-search-left__mode-btn"
+                    onClick={() => {
+                      const next = filenameMode === 'display' ? 'original' : 'display'
+                      setFilenameMode(next)
+                      localStorage.setItem('aims-filename-mode', next)
+                    }}
+                    title={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
+                  >
+                    {filenameMode === 'display' ? '별칭' : '원본'}
+                  </button>
                 </div>
                 <div className="doc-search-left__results-list">
                   {results.map((item, index) => {
@@ -578,12 +600,13 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
                         type="button"
                         className={`doc-search-item ${isSelected ? 'doc-search-item--selected' : ''}`}
                         onClick={() => handleSelectItem(item)}
+                        title={filenameMode === 'display' ? `원본: ${getFileName(item)}` : (SearchService.getDisplayName(item) ? `별칭: ${SearchService.getDisplayName(item)}` : '')}
                       >
                         <span className={`doc-search-item__badge ${badge.className}`}>
                           {badge.label}
                         </span>
                         <span className="doc-search-item__name">
-                          {getFileName(item)}
+                          {filenameMode === 'display' ? getShowName(item) : getFileName(item)}
                         </span>
                       </button>
                     )
@@ -621,8 +644,8 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
                 <span className={`doc-search-right__badge ${getFileTypeBadge(selectedItem).className}`}>
                   {getFileTypeBadge(selectedItem).label}
                 </span>
-                <div className="doc-search-right__title">
-                  {getFileName(selectedItem)}
+                <div className="doc-search-right__title" title={filenameMode === 'display' ? `원본: ${getFileName(selectedItem)}` : (SearchService.getDisplayName(selectedItem) ? `별칭: ${SearchService.getDisplayName(selectedItem)}` : '')}>
+                  {filenameMode === 'display' ? getShowName(selectedItem) : getFileName(selectedItem)}
                 </div>
                 {getFileUrl(selectedItem) && (
                   <a

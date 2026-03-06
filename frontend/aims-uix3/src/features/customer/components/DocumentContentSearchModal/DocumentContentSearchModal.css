@@ -210,6 +210,24 @@
     color: var(--color-text-tertiary);
     border-bottom: 1px solid var(--color-ios-separator-light);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .doc-search-left__mode-btn {
+    font-size: 10px;
+    font-weight: 400;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--color-border-primary);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .doc-search-left__mode-btn:hover {
+    background: var(--color-bg-tertiary);
   }
 
   html[data-theme="dark"] .doc-search-left__results-count {
