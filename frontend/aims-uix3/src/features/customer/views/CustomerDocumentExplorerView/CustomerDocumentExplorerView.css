@@ -160,7 +160,9 @@
 
   /* === 소분류 컨테이너 (Level 2) === */
   .cde-subtypes {
-    padding-left: 16px;
+    padding-left: 20px;
+    margin-left: 14px;
+    border-left: 1px solid var(--color-border-primary);
   }
 
   .cde-subtype {
@@ -230,7 +232,9 @@
 
   /* === 문서 행 (Level 3) === */
   .cde-subtype__docs {
-    padding-left: 20px;
+    padding-left: 16px;
+    margin-left: 14px;
+    border-left: 1px solid var(--color-border-primary);
   }
 
   .cde-doc-row {
@@ -238,10 +242,10 @@
     grid-template-columns: 16px 1fr 36px 70px 140px 44px;
     align-items: center;
     gap: var(--spacing-1);
-    padding: 4px var(--spacing-3);
+    padding: 3px var(--spacing-3);
     border-radius: 4px;
-    font-size: 12px;
-    color: var(--color-text-primary);
+    font-size: 11px;
+    color: var(--color-text-secondary);
     cursor: pointer;
     transition: background-color 0.1s ease-out;
   }
@@ -389,7 +393,9 @@
   }
 
   .cde-person__content {
-    padding-left: 12px;
+    padding-left: 16px;
+    margin-left: 14px;
+    border-left: 1px solid var(--color-border-primary);
   }
 
 } /* end @layer components */
