@@ -1160,21 +1160,20 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               />
             )}
             {showExpand && (
-              <Tooltip content="문서 탐색기로 확대">
-                <button
-                  type="button"
-                  className="document-expand-btn"
-                  onClick={onExpandToExplorer}
-                  aria-label="문서 탐색기 확대"
-                >
-                  <SFSymbol
-                    name="arrow.up.right.square"
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.MEDIUM}
-                    decorative={true}
-                  />
-                </button>
-              </Tooltip>
+              <button
+                type="button"
+                className="document-expand-btn"
+                onClick={onExpandToExplorer}
+                aria-label="문서 탐색기 확대"
+              >
+                <SFSymbol
+                  name="arrow.up.right.square"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
+                <span className="document-expand-btn__label">문서 탐색기</span>
+              </button>
             )}
           </>
         )

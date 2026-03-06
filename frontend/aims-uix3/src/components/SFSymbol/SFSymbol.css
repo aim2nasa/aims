@@ -840,6 +840,24 @@
     -webkit-mask-size: contain;
   }
 
+  /* chevron.left - 왼쪽 화살표 (chevron.right 수평 반전) */
+  .sf-symbol--chevron-left .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.35em;
+    height: 0.8em;
+
+    /* iOS 표준 화살표 (왼쪽) */
+    background: currentColor;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M30 5L5 30l25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M30 5L5 30l25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+  }
+
   /* arrow.up.arrow.down - 양방향 정렬 화살표 */
   .sf-symbol--arrow-up-arrow-down .sf-symbol__shape::before {
     content: '';

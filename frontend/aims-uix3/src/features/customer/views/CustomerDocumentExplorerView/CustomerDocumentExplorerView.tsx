@@ -597,21 +597,20 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
               />
             </button>
           </Tooltip>
-          <Tooltip content="간략 뷰로 축소">
-            <button
-              type="button"
-              className="cde-header-btn"
-              onClick={onCollapse}
-              aria-label="간략 뷰로 축소"
-            >
-              <SFSymbol
-                name="xmark"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-                decorative={true}
-              />
-            </button>
-          </Tooltip>
+          <button
+            type="button"
+            className="cde-back-btn"
+            onClick={onCollapse}
+            aria-label="돌아가기"
+          >
+            <SFSymbol
+              name="chevron.left"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative={true}
+            />
+            <span>돌아가기</span>
+          </button>
         </div>
       }
       onClose={onClose}

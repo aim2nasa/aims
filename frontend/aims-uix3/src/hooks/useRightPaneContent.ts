@@ -33,6 +33,8 @@ interface PreviousUIState {
   customer: Customer | null
   rightPaneVisible: boolean
   rightPaneContentType: RightPaneContentType
+  /** 탐색기에서 돌아갈 때 사용할 고객 ID (탐색기 전용) */
+  explorerCustomerId?: string
 }
 
 /**
@@ -415,6 +417,7 @@ export function useRightPaneContent(
         customer: selectedCustomer,
         rightPaneVisible: rightPaneVisible,
         rightPaneContentType: rightPaneContentType,
+        explorerCustomerId: customerId,
       }
 
       // RightPane 완전히 닫기
@@ -451,16 +454,19 @@ export function useRightPaneContent(
     // 이전 전체 UI 상태 복원
     const prevState = explorerPreviousUIStateRef.current
     if (prevState) {
-      setActiveDocumentView(prevState.view || 'customers-all')
+      const returnView = prevState.view || 'customers-full-detail'
+      const returnCustomerId = prevState.customer?._id || prevState.explorerCustomerId || null
+      setActiveDocumentView(returnView)
       setSelectedCustomer(prevState.customer)
       setRightPaneContentType(prevState.rightPaneContentType)
       setRightPaneVisible(prevState.rightPaneVisible)
       updateURLParams({
-        view: prevState.view || 'customers-all',
-        customerId: prevState.customer?._id || null,
+        view: returnView,
+        customerId: returnCustomerId,
       })
       explorerPreviousUIStateRef.current = null
     } else {
+      // prevState가 없는 경우 (URL 직접 접근 등) → 고객 목록으로 이동
       setActiveDocumentView('customers-all')
       updateURLParams({ view: 'customers-all', customerId: null })
     }

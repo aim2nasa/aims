@@ -56,6 +56,30 @@
     background: var(--color-bg-secondary);
   }
 
+  .cde-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px 2px 5px;
+    height: 26px;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1;
+    white-space: nowrap;
+    transition: all 0.15s ease-out;
+  }
+
+  .cde-back-btn:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-text-tertiary);
+    background: var(--color-bg-secondary);
+  }
+
   /* === 상태 표시 (로딩/에러/빈 상태) === */
   .cde-state {
     display: flex;
