@@ -203,6 +203,17 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     return buildCategoryGroups(documents)
   }, [documents])
 
+  // 초기 진입 시 대분류 모두 펼치기
+  useEffect(() => {
+    if (categoryGroups.length > 0) {
+      setExpandedNodes(prev => {
+        // 이미 노드가 있으면 사용자가 조작한 상태이므로 유지
+        if (prev.size > 0) return prev
+        return new Set(categoryGroups.map(g => `cat:${g.value}`))
+      })
+    }
+  }, [categoryGroups])
+
   // 관계자/가족 문서 로드
   useEffect(() => {
     if (!visible || !customerId || activeTab !== 'related') return
@@ -264,6 +275,22 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
 
         if (!cancelled) {
           setRelatedGroups(groups)
+          // 관계자 탭 진입 시 관계자 + 대분류까지 자동 펼치기
+          if (groups.length > 0) {
+            setExpandedNodes(prev => {
+              const personKeys = groups.map(g => `person:${g.customerId}`)
+              const hasPersonKeys = personKeys.some(k => prev.has(k))
+              if (hasPersonKeys) return prev
+              const next = new Set(prev)
+              for (const g of groups) {
+                next.add(`person:${g.customerId}`)
+                for (const cat of g.categoryGroups) {
+                  next.add(`p${g.customerId}:cat:${cat.value}`)
+                }
+              }
+              return next
+            })
+          }
         }
       } catch {
         if (!cancelled) {
