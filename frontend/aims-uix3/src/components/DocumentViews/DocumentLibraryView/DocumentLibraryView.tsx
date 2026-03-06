@@ -456,21 +456,24 @@ const DocumentLibraryContent: React.FC<{
               )}
 
               {/* 별칭 생성 버튼 */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleAliasMode}
-                disabled={isDeleteMode || isBulkLinkMode}
-                aria-label="별칭 생성"
-              >
-                <SFSymbol
-                  name="sparkles"
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
-                별칭AI
-              </Button>
+              <Tooltip content="AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="alias-ai-button"
+                  onClick={onToggleAliasMode}
+                  disabled={isDeleteMode || isBulkLinkMode}
+                  aria-label="별칭 생성"
+                >
+                  <SFSymbol
+                    name="sparkles"
+                    size={SFSymbolSize.CAPTION_2}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                  별칭AI
+                </Button>
+              </Tooltip>
 
               {/* 삭제 버튼 */}
               <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>

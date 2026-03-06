@@ -289,4 +289,57 @@
     cursor: pointer;
   }
 
+  /* === 별칭AI 버튼: Apple Intelligence 스타일 === */
+
+  .alias-ai-button.button {
+    background: linear-gradient(135deg, #7b5af2, #5856d6, #af52de);
+    border: none;
+    color: #fff;
+    gap: 4px;
+    padding: 4px 12px;
+    min-height: 24px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(88, 86, 214, 0.35);
+    transition:
+      opacity 0.15s ease-out,
+      transform 0.15s ease-out,
+      box-shadow 0.15s ease-out;
+  }
+
+  .alias-ai-button.button .button__icon svg {
+    color: #fff;
+  }
+
+  .alias-ai-button.button:hover:not(:disabled) {
+    opacity: 0.92;
+    transform: scale(1.04);
+    box-shadow: 0 2px 8px rgba(88, 86, 214, 0.45);
+  }
+
+  .alias-ai-button.button:active:not(:disabled) {
+    opacity: 0.8;
+    transform: translateY(0.5px) scale(0.98);
+    box-shadow: 0 1px 3px rgba(88, 86, 214, 0.3);
+  }
+
+  .alias-ai-button.button:disabled {
+    opacity: 0.35;
+    box-shadow: none;
+  }
+
+  html[data-theme="dark"] .alias-ai-button.button {
+    background: linear-gradient(135deg, #8b6af2, #5e5ce6, #bf5af2);
+    box-shadow: 0 1px 4px rgba(94, 92, 230, 0.4);
+  }
+
+  html[data-theme="dark"] .alias-ai-button.button:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(94, 92, 230, 0.5);
+  }
+
+  html[data-theme="dark"] .alias-ai-button.button .button__icon svg {
+    color: #fff;
+  }
+
 } /* end @layer components */
