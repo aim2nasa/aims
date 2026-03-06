@@ -1,23 +1,41 @@
 @layer components {
 
-  /* === 탭 헤더 === */
+  /* =============================================
+   * Customer Document Explorer — Complete Redesign
+   * Apple-inspired file explorer aesthetic
+   * ============================================= */
+
+  /* === Segment Control (탭) === */
   .cde-tabs {
     display: flex;
-    gap: 0;
-    padding: 0 var(--spacing-4);
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-4);
     border-bottom: 1px solid var(--color-border-primary);
   }
 
+  .cde-tabs__segment {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--color-border-primary);
+  }
+
   .cde-tabs__tab {
-    padding: var(--spacing-2) var(--spacing-4);
+    position: relative;
+    padding: 5px 14px;
     border: none;
-    border-bottom: 2px solid transparent;
+    border-radius: 6px;
     background: transparent;
     color: var(--color-text-tertiary);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s ease-out;
+    transition: all 0.2s ease-out;
+    white-space: nowrap;
+    line-height: 1.3;
   }
 
   .cde-tabs__tab:hover {
@@ -25,8 +43,37 @@
   }
 
   .cde-tabs__tab--active {
+    background: var(--color-bg-primary);
     color: var(--color-text-primary);
-    border-bottom-color: var(--color-accent);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0.5px 1px rgba(0, 0, 0, 0.06);
+  }
+
+  :root[data-theme="dark"] .cde-tabs__tab--active {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  /* === 파일명 모드 토글 === */
+  .cde-filename-toggle {
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 6px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    white-space: nowrap;
+  }
+
+  .cde-filename-toggle:hover {
+    color: var(--color-text-secondary);
+    border-color: var(--color-border-secondary);
+    background: var(--color-bg-tertiary);
   }
 
   /* === 돌아가기 버튼 === */
@@ -36,7 +83,7 @@
     gap: 3px;
     padding: 2px 8px 2px 5px;
     height: 26px;
-    border: 1px solid var(--color-border-secondary);
+    border: 1px solid var(--color-border-primary);
     border-radius: 6px;
     background: transparent;
     color: var(--color-text-tertiary);
@@ -50,23 +97,24 @@
 
   .cde-back-btn:hover {
     color: var(--color-text-primary);
-    border-color: var(--color-text-tertiary);
+    border-color: var(--color-border-secondary);
     background: var(--color-bg-secondary);
   }
 
   /* === 상태 표시 (로딩/에러/빈 상태) === */
   .cde-state {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-3);
-    padding: var(--spacing-8);
-    color: var(--color-text-secondary);
+    gap: var(--spacing-2);
+    padding: var(--spacing-10) var(--spacing-4);
+    color: var(--color-text-tertiary);
     font-size: 13px;
   }
 
   .cde-state--error {
-    color: var(--color-icon-red);
+    color: var(--color-error);
   }
 
   /* === 트리 컨테이너 === */
@@ -75,33 +123,38 @@
     flex-direction: column;
     gap: 0;
     overflow-y: auto;
-    padding: 0 var(--spacing-4);
+    padding: 0 var(--spacing-3);
   }
 
+  /* === 요약 바 === */
   .cde-summary {
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-size: 11px;
     color: var(--color-text-tertiary);
-    padding: var(--spacing-2) var(--spacing-3);
-    border-bottom: 1px solid var(--color-border-primary);
-    margin-bottom: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-2);
+    margin-bottom: 2px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--color-bg-primary);
   }
 
   .cde-summary strong {
     color: var(--color-text-primary);
+    font-weight: 600;
   }
 
-  /* === 모두 펼치기/접기 버튼 (요약줄 우측) === */
+  /* === 모두 펼치기/접기 버튼 === */
   .cde-expand-all-btn {
     display: flex;
     align-items: center;
     gap: 3px;
-    padding: 1px 6px 1px 4px;
-    height: 20px;
-    border: 1px solid var(--color-border-secondary);
-    border-radius: 4px;
+    padding: 2px 8px 2px 5px;
+    height: 22px;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 5px;
     background: transparent;
     color: var(--color-text-tertiary);
     cursor: pointer;
@@ -115,13 +168,13 @@
 
   .cde-expand-all-btn:hover {
     color: var(--color-text-secondary);
-    border-color: var(--color-text-tertiary);
+    border-color: var(--color-border-secondary);
     background: var(--color-bg-secondary);
   }
 
-  /* === 대분류 (Level 1) === */
+  /* === 대분류 (카테고리) === */
   .cde-category {
-    margin-bottom: 1px;
+    margin-bottom: 2px;
   }
 
   .cde-category__header {
@@ -129,20 +182,48 @@
     align-items: center;
     gap: var(--spacing-2);
     width: 100%;
-    padding: 6px var(--spacing-3);
+    padding: 7px var(--spacing-2) 7px var(--spacing-3);
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     background: transparent;
     color: var(--color-text-primary);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.1s ease-out;
+    transition: background-color 0.12s ease-out;
     text-align: left;
+    position: relative;
+  }
+
+  .cde-category__header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 5px;
+    bottom: 5px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--cde-cat-color, var(--color-text-tertiary));
+    opacity: 0.6;
+    transition: opacity 0.15s ease-out;
   }
 
   .cde-category__header:hover {
-    background: var(--color-bg-secondary);
+    background: color-mix(in srgb, var(--cde-cat-color, var(--color-text-tertiary)) 6%, transparent);
+  }
+
+  .cde-category__header:hover::before {
+    opacity: 1;
+  }
+
+  .cde-category__chevron {
+    flex-shrink: 0;
+    transition: transform 0.15s ease-out;
+  }
+
+  .cde-category__icon {
+    flex-shrink: 0;
+    opacity: 0.85;
   }
 
   .cde-category__label {
@@ -152,17 +233,22 @@
   }
 
   .cde-category__count {
-    font-size: 11px;
-    font-weight: 400;
+    font-size: 10px;
+    font-weight: 600;
     color: var(--color-text-tertiary);
+    background: var(--color-bg-secondary);
+    padding: 1px 6px;
+    border-radius: 10px;
     flex-shrink: 0;
+    min-width: 28px;
+    text-align: center;
   }
 
-  /* === 소분류 컨테이너 (Level 2) === */
+  /* === 소분류 컨테이너 === */
   .cde-subtypes {
-    padding-left: 20px;
-    margin-left: 14px;
-    border-left: 1px solid var(--color-border-primary);
+    padding-left: 24px;
+    margin-left: 5px;
+    border-left: 2px solid color-mix(in srgb, var(--cde-cat-color, var(--color-border-primary)) 25%, transparent);
   }
 
   .cde-subtype {
@@ -172,17 +258,17 @@
   .cde-subtype__header {
     display: flex;
     align-items: center;
-    gap: var(--spacing-2);
+    gap: 6px;
     width: 100%;
-    padding: 4px var(--spacing-3);
+    padding: 4px var(--spacing-2);
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     background: transparent;
-    color: var(--color-text-primary);
+    color: var(--color-text-secondary);
     font-size: 12px;
     font-weight: 400;
     cursor: pointer;
-    transition: background-color 0.1s ease-out;
+    transition: background-color 0.12s ease-out;
     text-align: left;
   }
 
@@ -190,10 +276,19 @@
     background: var(--color-bg-secondary);
   }
 
+  .cde-subtype__chevron {
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+
+  .cde-subtype__icon {
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
   .cde-subtype__label {
     flex: 1;
     min-width: 0;
-    color: var(--color-text-secondary);
   }
 
   .cde-subtype__count {
@@ -203,51 +298,24 @@
     flex-shrink: 0;
   }
 
-  /* === 파일명 모드 토글 (전체문서보기 동일) === */
-  .cde-filename-toggle {
-    margin-left: auto;
-    flex-shrink: 0;
-    padding: 1px 4px;
-    font-size: 9px;
-    font-weight: 600;
-    line-height: 1.2;
-    border: 1px solid var(--color-border-secondary);
-    border-radius: 3px;
-    background: transparent;
-    color: var(--color-text-tertiary);
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-    white-space: nowrap;
-    align-self: center;
-  }
-
-  .cde-filename-toggle:hover {
-    color: var(--color-text-secondary);
-    border-color: var(--color-text-tertiary);
-  }
-
-  .cde-filename-toggle:active {
-    opacity: 0.7;
-  }
-
-  /* === 문서 행 (Level 3) === */
+  /* === 문서 행 === */
   .cde-subtype__docs {
-    padding-left: 16px;
-    margin-left: 14px;
-    border-left: 1px solid var(--color-border-primary);
+    padding-left: 20px;
+    margin-left: 5px;
+    border-left: 2px solid color-mix(in srgb, var(--cde-cat-color, var(--color-border-primary)) 15%, transparent);
   }
 
   .cde-doc-row {
     display: grid;
-    grid-template-columns: 16px 1fr 36px 70px 140px 44px;
+    grid-template-columns: 16px 1fr 36px 70px 88px 44px;
     align-items: center;
-    gap: var(--spacing-1);
-    padding: 3px var(--spacing-3);
-    border-radius: 4px;
+    gap: 4px;
+    padding: 4px var(--spacing-2);
+    border-radius: 6px;
     font-size: 11px;
     color: var(--color-text-secondary);
     cursor: pointer;
-    transition: background-color 0.1s ease-out;
+    transition: background-color 0.12s ease-out;
   }
 
   .cde-doc-row:hover {
@@ -283,7 +351,6 @@
     font-weight: 400;
   }
 
-  /* 메타 정보 — 각각 고정 칼럼 */
   .cde-doc-row__type {
     font-size: 10px;
     font-weight: 600;
@@ -316,7 +383,7 @@
     gap: 2px;
     flex-shrink: 0;
     opacity: 0;
-    transition: opacity 0.15s ease-out;
+    transition: opacity 0.12s ease-out;
   }
 
   .cde-doc-row:hover .cde-doc-row__actions {
@@ -344,7 +411,7 @@
 
   /* === 관계자/가족 그룹 === */
   .cde-person {
-    margin-bottom: var(--spacing-2);
+    margin-bottom: 2px;
   }
 
   .cde-person__header {
@@ -354,13 +421,13 @@
     width: 100%;
     padding: 7px var(--spacing-3);
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     background: transparent;
     color: var(--color-text-primary);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.1s ease-out;
+    transition: background-color 0.12s ease-out;
     text-align: left;
   }
 
@@ -368,8 +435,13 @@
     background: var(--color-bg-secondary);
   }
 
+  .cde-person__chevron {
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+
   .cde-person__icon {
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1;
     flex-shrink: 0;
   }
@@ -379,23 +451,32 @@
   }
 
   .cde-person__relation {
-    font-size: 11px;
-    font-weight: 400;
+    font-size: 10px;
+    font-weight: 600;
     color: var(--color-text-tertiary);
+    background: var(--color-bg-secondary);
+    padding: 1px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border-primary);
   }
 
   .cde-person__count {
     margin-left: auto;
-    font-size: 11px;
-    font-weight: 400;
+    font-size: 10px;
+    font-weight: 600;
     color: var(--color-text-tertiary);
+    background: var(--color-bg-secondary);
+    padding: 1px 6px;
+    border-radius: 10px;
     flex-shrink: 0;
+    min-width: 28px;
+    text-align: center;
   }
 
   .cde-person__content {
-    padding-left: 16px;
-    margin-left: 14px;
-    border-left: 1px solid var(--color-border-primary);
+    padding-left: 20px;
+    margin-left: 16px;
+    border-left: 2px solid var(--color-border-primary);
   }
 
 } /* end @layer components */

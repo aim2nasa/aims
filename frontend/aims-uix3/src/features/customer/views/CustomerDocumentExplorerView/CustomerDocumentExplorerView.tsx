@@ -389,22 +389,26 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
               onClick={() => toggleNode(catKey)}
               aria-expanded={isCatExpanded}
             >
-              <SFSymbol
-                name={isCatExpanded ? 'chevron.down' : 'chevron.right'}
-                size={SFSymbolSize.CAPTION_2}
-                weight={SFSymbolWeight.SEMIBOLD}
-                color={group.color}
-                decorative={true}
-              />
-              <SFSymbol
-                name="folder"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-                color={group.color}
-                decorative={true}
-              />
+              <span className="cde-category__chevron">
+                <SFSymbol
+                  name={isCatExpanded ? 'chevron.down' : 'chevron.right'}
+                  size={SFSymbolSize.CAPTION_2}
+                  weight={SFSymbolWeight.SEMIBOLD}
+                  color={group.color}
+                  decorative={true}
+                />
+              </span>
+              <span className="cde-category__icon">
+                <SFSymbol
+                  name={group.icon}
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  color={group.color}
+                  decorative={true}
+                />
+              </span>
               <span className="cde-category__label">{group.label}</span>
-              <span className="cde-category__count">({group.totalCount}건)</span>
+              <span className="cde-category__count">{group.totalCount}</span>
             </button>
 
             {/* 소분류 목록 */}
@@ -423,22 +427,26 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                         onClick={() => toggleNode(stKey)}
                         aria-expanded={isStExpanded}
                       >
-                        <SFSymbol
-                          name={isStExpanded ? 'chevron.down' : 'chevron.right'}
-                          size={SFSymbolSize.CAPTION_2}
-                          weight={SFSymbolWeight.MEDIUM}
-                          color={group.color}
-                          decorative={true}
-                        />
-                        <SFSymbol
-                          name="folder"
-                          size={SFSymbolSize.CAPTION_2}
-                          weight={SFSymbolWeight.MEDIUM}
-                          color={group.color}
-                          decorative={true}
-                        />
+                        <span className="cde-subtype__chevron">
+                          <SFSymbol
+                            name={isStExpanded ? 'chevron.down' : 'chevron.right'}
+                            size={SFSymbolSize.CAPTION_2}
+                            weight={SFSymbolWeight.MEDIUM}
+                            color={group.color}
+                            decorative={true}
+                          />
+                        </span>
+                        <span className="cde-subtype__icon">
+                          <SFSymbol
+                            name="folder"
+                            size={SFSymbolSize.CAPTION_2}
+                            weight={SFSymbolWeight.MEDIUM}
+                            color={group.color}
+                            decorative={true}
+                          />
+                        </span>
                         <span className="cde-subtype__label">{subType.label}</span>
-                        <span className="cde-subtype__count">({subType.documents.length}건)</span>
+                        <span className="cde-subtype__count">{subType.documents.length}</span>
                       </button>
 
                       {/* 문서 목록 */}
@@ -584,16 +592,18 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                 onClick={() => toggleNode(personKey)}
                 aria-expanded={isPersonExpanded}
               >
-                <SFSymbol
-                  name={isPersonExpanded ? 'chevron.down' : 'chevron.right'}
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.SEMIBOLD}
-                  decorative={true}
-                />
+                <span className="cde-person__chevron">
+                  <SFSymbol
+                    name={isPersonExpanded ? 'chevron.down' : 'chevron.right'}
+                    size={SFSymbolSize.CAPTION_2}
+                    weight={SFSymbolWeight.SEMIBOLD}
+                    decorative={true}
+                  />
+                </span>
                 <span className="cde-person__icon">{person.icon}</span>
                 <span className="cde-person__name">{person.name}</span>
-                <span className="cde-person__relation">({person.relationshipLabel})</span>
-                <span className="cde-person__count">{person.totalCount}건</span>
+                <span className="cde-person__relation">{person.relationshipLabel}</span>
+                <span className="cde-person__count">{person.totalCount}</span>
               </button>
 
               {/* 관계자 내 카테고리 트리 */}
@@ -615,7 +625,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
       title={`${customerName || '고객'} 문서 탐색기`}
       titleIcon={
         <SFSymbol
-          name="folder"
+          name="doc"
           size={SFSymbolSize.CALLOUT}
           weight={SFSymbolWeight.MEDIUM}
           decorative={true}
@@ -640,22 +650,24 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
       onClose={onClose}
       className="customer-document-explorer"
     >
-      {/* 탭 헤더 */}
+      {/* 탭 헤더 (세그먼트 컨트롤) */}
       <div className="cde-tabs">
-        <button
-          type="button"
-          className={`cde-tabs__tab ${activeTab === 'my' ? 'cde-tabs__tab--active' : ''}`}
-          onClick={() => setActiveTab('my')}
-        >
-          내 문서
-        </button>
-        <button
-          type="button"
-          className={`cde-tabs__tab ${activeTab === 'related' ? 'cde-tabs__tab--active' : ''}`}
-          onClick={() => setActiveTab('related')}
-        >
-          {relatedTabLabel}
-        </button>
+        <div className="cde-tabs__segment">
+          <button
+            type="button"
+            className={`cde-tabs__tab ${activeTab === 'my' ? 'cde-tabs__tab--active' : ''}`}
+            onClick={() => setActiveTab('my')}
+          >
+            내 문서
+          </button>
+          <button
+            type="button"
+            className={`cde-tabs__tab ${activeTab === 'related' ? 'cde-tabs__tab--active' : ''}`}
+            onClick={() => setActiveTab('related')}
+          >
+            {relatedTabLabel}
+          </button>
+        </div>
         <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}>
           <button
             type="button"
