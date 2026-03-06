@@ -310,7 +310,7 @@
     font-size: var(--font-header);
     font-weight: 600;
     color: var(--label-color);
-    background: var(--color-ios-bg-secondary-light);
+    background: var(--color-neutral-100);
     border-radius: 0;
     margin-bottom: 0;
     box-shadow: none;
@@ -318,7 +318,7 @@
   }
 
   html[data-theme="dark"] .customer-info-family-list .tab-table__header {
-    background: var(--color-ios-bg-secondary-dark);
+    background: var(--color-neutral-800);
     border-bottom-color: var(--color-ios-separator-dark);
   }
 
