@@ -1146,10 +1146,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 type="button"
                 className="document-expand-btn"
                 onClick={onExpandToExplorer}
-                aria-label="문서 분류 보기"
+                aria-label="문서 분류함 보기"
               >
                 <span className="document-expand-btn__icon">📂</span>
-                <span className="document-expand-btn__label">문서 분류</span>
+                <span className="document-expand-btn__label">문서 분류함</span>
               </button>
             )}
           </>
