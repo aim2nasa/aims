@@ -198,10 +198,10 @@ class TestPipelineRouting:
                 assert result.get("status") == "completed" or result.get("result") == "success"
 
     @pytest.mark.asyncio
-    async def test_hwp_with_conversion_failure_falls_back_to_ocr(
+    async def test_hwp_with_conversion_failure_skips_ocr_and_archives(
         self, mock_pipeline_deps
     ):
-        """PDF 변환 실패 시 OCR fallback"""
+        """PDF 변환 실패한 HWP는 OCR에 보내지 않고 보관 처리"""
         from routers.doc_prep_main import process_document_pipeline
 
         with patch("routers.doc_prep_main.MetaService") as mock_meta:
@@ -232,8 +232,8 @@ class TestPipelineRouting:
                 # PDF 변환 시도함
                 mock_convert.assert_called_once()
 
-                # 변환 실패 → OCR 큐로 fallback
-                mock_pipeline_deps["redis"].add_to_stream.assert_called_once()
+                # 변환 실패한 HWP → OCR 큐로 보내지 않음 (보관 처리)
+                mock_pipeline_deps["redis"].add_to_stream.assert_not_called()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("mime,extension", [
