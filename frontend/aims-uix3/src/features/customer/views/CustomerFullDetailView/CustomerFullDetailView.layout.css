@@ -447,18 +447,19 @@
     overflow-x: hidden;
   }
 
-  /* === 탭 레이블 축약 (컨테이너 쿼리) === */
-  .tab-label--short {
+} /* end @layer views */
+
+/* === 탭 레이블 축약 (컨테이너 쿼리) ===
+   @layer 밖에 배치 — @container는 레이어 내부에서 동작이 불안정 */
+.tab-label--short {
+  display: none;
+}
+
+@container (max-width: 700px) {
+  .tab-label--full {
     display: none;
   }
-
-  @container (max-width: 480px) {
-    .tab-label--full {
-      display: none;
-    }
-    .tab-label--short {
-      display: inline;
-    }
+  .tab-label--short {
+    display: inline;
   }
-
-} /* end @layer views */
+}
