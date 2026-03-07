@@ -316,8 +316,8 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
           const relIcon = RELATIONSHIP_ICONS[relType] || '\uD83D\uDC64'
 
           try {
-            // 관계자의 문서 조회
-            const result = await DocumentService.getCustomerDocuments(relatedId)
+            // 관계자의 문서 조회 (includeRelated: 법인에서 업로드한 AR/CRS도 포함)
+            const result = await DocumentService.getCustomerDocuments(relatedId, { includeRelated: true })
             if (cancelled) return
 
             if (result.documents.length > 0) {
@@ -438,7 +438,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   if (!visible) return null
 
   /** 카테고리 트리 렌더링 (내 문서 / 관계자 내부 공통) */
-  const renderCategoryTree = (groups: CategoryGroup[], prefix: string = '') => (
+  const renderCategoryTree = (groups: CategoryGroup[], prefix: string = '', ownerCustomerId?: string) => (
     <>
       {groups.map(group => {
         const catKey = `${prefix}cat:${group.value}`
@@ -548,6 +548,13 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                   </Tooltip>
                                 ) : (
                                   <span className="cde-doc-row__name" title={doc.originalName}>{showName}</span>
+                                )}
+                                {ownerCustomerId && doc.customerId && doc.customerId !== ownerCustomerId && (
+                                  <Tooltip content="다른 고객 문서함에서 연결됨">
+                                    <span className="cde-doc-row__linked-badge">
+                                      <SFSymbol name="link" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+                                    </span>
+                                  </Tooltip>
                                 )}
                                 <span className="cde-doc-row__type">{fileExt}</span>
                                 <span className="cde-doc-row__size">{fileSize}</span>
@@ -722,7 +729,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
               {/* 관계자 내 카테고리 트리 */}
               {isPersonExpanded && (
                 <div className="cde-person__content">
-                  {renderCategoryTree(person.categoryGroups, `p${person.customerId}:`)}
+                  {renderCategoryTree(person.categoryGroups, `p${person.customerId}:`, person.customerId)}
                 </div>
               )}
             </div>

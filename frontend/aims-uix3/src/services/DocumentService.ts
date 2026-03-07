@@ -106,6 +106,8 @@ export interface CustomerDocumentItem {
   document_type_confidence?: number;
   // Annual Report 분석 상태
   ar_parsing_status?: 'pending' | 'processing' | 'completed' | 'failed';
+  // 문서 소유 고객 ID (원본/링크 구분용)
+  customerId?: string;
 }
 
 export interface CustomerDocumentsResult {
@@ -372,12 +374,15 @@ export class DocumentService {
   /**
    * 특정 고객과 연결된 문서 목록 조회
    */
-  static async getCustomerDocuments(customerId: string): Promise<CustomerDocumentsResult> {
+  static async getCustomerDocuments(customerId: string, options?: { includeRelated?: boolean }): Promise<CustomerDocumentsResult> {
     if (!customerId.trim()) {
       throw new Error('고객 ID가 필요합니다');
     }
 
-    const response = await api.get<unknown>(ENDPOINTS.CUSTOMER_DOCUMENTS(customerId));
+    const url = options?.includeRelated
+      ? `${ENDPOINTS.CUSTOMER_DOCUMENTS(customerId)}?includeRelated=true`
+      : ENDPOINTS.CUSTOMER_DOCUMENTS(customerId);
+    const response = await api.get<unknown>(url);
 
     const collectDocuments = (value: unknown): CustomerDocumentItem[] => {
       if (!Array.isArray(value)) {
@@ -468,6 +473,10 @@ export class DocumentService {
           // 🍎 Annual Report 분석 상태 추출
           const arParsingStatus = toString(item['ar_parsing_status']) as CustomerDocumentItem['ar_parsing_status'];
           if (arParsingStatus) result.ar_parsing_status = arParsingStatus;
+
+          // 문서 소유 고객 ID (원본/링크 구분용)
+          const docCustomerId = toString(item['customerId']);
+          if (docCustomerId) result.customerId = docCustomerId;
 
           return result;
         })

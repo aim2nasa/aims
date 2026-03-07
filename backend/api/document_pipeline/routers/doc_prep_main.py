@@ -642,7 +642,7 @@ async def _detect_and_process_annual_report(
 
         if not is_annual_report:
             logger.debug(f"AR 패턴 불일치: doc_id={doc_id}, required={matched_required}, optional={matched_optional}")
-            return {"is_annual_report": False, "customer_id": None, "customer_name": None}
+            return {"is_annual_report": False, "related_customer_id": None, "customer_name": None}
 
         logger.info(f"🔍 AR 감지: doc_id={doc_id}, 매칭={matched_required + matched_optional}")
 
@@ -684,15 +684,16 @@ async def _detect_and_process_annual_report(
         if issue_date:
             logger.info(f"📅 발행기준일: {issue_date}")
 
-        # 4. 고객 생성/검색
-        customer_id = None
+        # 4. 관련 고객 검색 (relatedCustomerId 설정용 — customerId는 변경하지 않음)
+        # AR은 개인의 보유계약현황이므로, 법인에 업로드해도 개인 고객을 연결한다.
+        # 단, customerId(소유권)는 업로드한 고객에 그대로 유지하고 relatedCustomerId로만 연결.
+        related_customer_id = None
         if customer_name and user_id:
             try:
                 async with httpx.AsyncClient() as client:
-                    # 고객 검색 (이름으로)
                     search_response = await client.get(
-                        f"{settings.AIMS_API_URL}/api/customers/search",
-                        params={"q": customer_name, "userId": user_id},
+                        f"{settings.AIMS_API_URL}/api/customers",
+                        params={"search": customer_name, "userId": user_id},
                         headers={"X-API-Key": settings.WEBHOOK_API_KEY},
                         timeout=10.0
                     )
@@ -710,31 +711,12 @@ async def _detect_and_process_annual_report(
                                 break
 
                         if exact_match:
-                            customer_id = exact_match.get("_id")
-                            logger.info(f"✅ 기존 고객 발견: {customer_name} (ID: {customer_id})")
-                        else:
-                            # 새 고객 생성
-                            create_response = await client.post(
-                                f"{settings.AIMS_API_URL}/api/customers",
-                                json={
-                                    "personal_info": {"name": customer_name},
-                                    "insurance_info": {"customer_type": "개인"},
-                                    "userId": user_id
-                                },
-                                headers={"X-API-Key": settings.WEBHOOK_API_KEY},
-                                timeout=10.0
-                            )
-
-                            if create_response.status_code in [200, 201]:
-                                new_customer = create_response.json()
-                                customer_id = new_customer.get("_id")
-                                logger.info(f"✅ 새 고객 생성: {customer_name} (ID: {customer_id})")
-                            else:
-                                logger.warning(f"고객 생성 실패: {create_response.text}")
+                            related_customer_id = exact_match.get("_id")
+                            logger.info(f"✅ AR 관련 고객 발견: {customer_name} (ID: {related_customer_id})")
                     else:
-                        logger.warning(f"고객 검색 실패: {search_response.text}")
+                        logger.warning(f"AR 관련 고객 검색 실패: {search_response.text}")
             except Exception as e:
-                logger.warning(f"고객 생성/검색 중 오류: {e}")
+                logger.warning(f"AR 관련 고객 검색 중 오류: {e}")
 
         # 5. displayName 생성 (AR)
         # 형식: {고객명}_AR_{YYYY-MM-DD}.pdf
@@ -757,9 +739,9 @@ async def _detect_and_process_annual_report(
         if display_name:
             update_fields["displayName"] = display_name
 
-        if customer_id:
-            # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
-            update_fields["customerId"] = ObjectId(customer_id) if ObjectId.is_valid(customer_id) else customer_id
+        if related_customer_id and ObjectId.is_valid(related_customer_id):
+            # relatedCustomerId: AR 문서의 실제 대상 개인 고객 (소유권 이전 없이 연결만)
+            update_fields["relatedCustomerId"] = ObjectId(related_customer_id)
 
         if issue_date:
             update_fields["ar_issue_date"] = issue_date
@@ -769,36 +751,36 @@ async def _detect_and_process_annual_report(
             {"$set": update_fields, "$addToSet": {"tags": "AR"}}
         )
 
-        logger.info(f"✅ AR 플래그 설정 완료: doc_id={doc_id}, customer_id={customer_id}")
+        logger.info(f"✅ AR 플래그 설정 완료: doc_id={doc_id}, related_customer_id={related_customer_id}")
 
         # 🔴 [ROOT FIX] AR 감지 즉시 SSE 알림 → 프론트엔드가 "파싱 대기 중" 즉시 표시
-        if customer_id:
+        if related_customer_id:
             try:
                 async with httpx.AsyncClient() as sse_client:
                     await sse_client.post(
                         f"{settings.AIMS_API_URL}/api/webhooks/ar-status-change",
                         json={
-                            "customer_id": str(customer_id),
+                            "customer_id": str(related_customer_id),
                             "file_id": doc_id,
                             "status": "pending"
                         },
                         headers={"X-API-Key": settings.WEBHOOK_API_KEY},
                         timeout=5.0
                     )
-                    logger.info(f"📡 AR 감지 SSE 알림 전송: customer_id={customer_id}, doc_id={doc_id}")
+                    logger.info(f"📡 AR 감지 SSE 알림 전송: related_customer_id={related_customer_id}, doc_id={doc_id}")
             except Exception as sse_err:
                 logger.warning(f"⚠️ AR 감지 SSE 알림 실패 (무시): {sse_err}")
 
         return {
             "is_annual_report": True,
-            "customer_id": customer_id,
+            "related_customer_id": related_customer_id,
             "customer_name": customer_name,
             "issue_date": issue_date
         }
 
     except Exception as e:
         logger.error(f"AR 자동 감지 중 오류: {e}", exc_info=True)
-        return {"is_annual_report": False, "customer_id": None, "customer_name": None}
+        return {"is_annual_report": False, "related_customer_id": None, "customer_name": None}
 
 
 async def _detect_and_process_customer_review(
@@ -927,15 +909,14 @@ async def _detect_and_process_customer_review(
             display_name = f"{customer_name}_CRS_{issue_date}.pdf"
             logger.info(f"📄 CRS displayName 생성 (상품명 없음): {display_name}")
 
-        # 4. 고객 생성/검색 (AR과 동일한 로직)
-        customer_id = None
+        # 4. 관련 고객 검색 (relatedCustomerId 설정용 — customerId는 변경하지 않음)
+        related_customer_id = None
         if customer_name and user_id:
             try:
                 async with httpx.AsyncClient() as client:
-                    # 고객 검색 (이름으로)
                     search_response = await client.get(
-                        f"{settings.AIMS_API_URL}/api/customers/search",
-                        params={"q": customer_name, "userId": user_id},
+                        f"{settings.AIMS_API_URL}/api/customers",
+                        params={"search": customer_name, "userId": user_id},
                         headers={"X-API-Key": settings.WEBHOOK_API_KEY},
                         timeout=10.0
                     )
@@ -953,41 +934,18 @@ async def _detect_and_process_customer_review(
                                 break
 
                         if exact_match:
-                            customer_id = exact_match.get("_id")
-                            logger.info(f"✅ CRS 기존 고객 발견: {customer_name} (ID: {customer_id})")
-                        else:
-                            # 새 고객 생성
-                            create_response = await client.post(
-                                f"{settings.AIMS_API_URL}/api/customers",
-                                json={
-                                    "personal_info": {"name": customer_name},
-                                    "insurance_info": {"customer_type": "개인"},
-                                    "userId": user_id
-                                },
-                                headers={"X-API-Key": settings.WEBHOOK_API_KEY},
-                                timeout=10.0
-                            )
-
-                            if create_response.status_code in [200, 201]:
-                                new_customer = create_response.json()
-                                customer_id = new_customer.get("_id")
-                                logger.info(f"✅ CRS 새 고객 생성: {customer_name} (ID: {customer_id})")
-                            else:
-                                logger.warning(f"CRS 고객 생성 실패: {create_response.text}")
+                            related_customer_id = exact_match.get("_id")
+                            logger.info(f"✅ CRS 관련 고객 발견: {customer_name} (ID: {related_customer_id})")
                     else:
-                        logger.warning(f"CRS 고객 검색 실패: {search_response.text}")
+                        logger.warning(f"CRS 관련 고객 검색 실패: {search_response.text}")
             except Exception as e:
-                logger.warning(f"CRS 고객 생성/검색 중 오류: {e}")
+                logger.warning(f"CRS 관련 고객 검색 중 오류: {e}")
 
         # 5. DB 업데이트
-        # ⚠️ cr_parsing_status는 "pending"으로 설정!
-        # - CRS 감지(is_customer_review=True)와 CRS 파싱(계약 정보 추출)은 다름
-        # - annual_report_api가 "pending" 상태를 스캔하여 실제 파싱 수행
-        # - 파싱 완료 후 annual_report_api가 "completed"로 변경
         update_fields = {
             "is_customer_review": True,
             "document_type": "customer_review",
-            "cr_parsing_status": "pending",  # CRS 파싱 대기 (annual_report_api가 처리)
+            "cr_parsing_status": "pending",
             "cr_metadata": {
                 "contractor_name": customer_name,
                 "product_name": product_name,
@@ -998,39 +956,36 @@ async def _detect_and_process_customer_review(
         if display_name:
             update_fields["displayName"] = display_name
 
-        if customer_id:
-            # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
-            update_fields["customerId"] = ObjectId(customer_id) if ObjectId.is_valid(customer_id) else customer_id
+        if related_customer_id and ObjectId.is_valid(related_customer_id):
+            update_fields["relatedCustomerId"] = ObjectId(related_customer_id)
 
         await files_collection.update_one(
             {"_id": ObjectId(doc_id)},
             {"$set": update_fields, "$addToSet": {"tags": "CRS"}}
         )
 
-        logger.info(f"✅ CRS 플래그 설정 완료: doc_id={doc_id}, customer_id={customer_id}")
+        logger.info(f"✅ CRS 플래그 설정 완료: doc_id={doc_id}, related_customer_id={related_customer_id}")
 
-        # 🔴 [ROOT FIX] CRS 감지 즉시 SSE 알림 → 프론트엔드가 "파싱 대기 중" 즉시 표시
-        # 이 알림 없이는 annual_report_api 파싱 완료(10~35초 후)까지 프론트엔드가 알 수 없음
-        if customer_id:
+        if related_customer_id:
             try:
                 async with httpx.AsyncClient() as sse_client:
                     await sse_client.post(
                         f"{settings.AIMS_API_URL}/api/webhooks/cr-status-change",
                         json={
-                            "customer_id": str(customer_id),
+                            "customer_id": str(related_customer_id),
                             "file_id": doc_id,
                             "status": "pending"
                         },
                         headers={"X-API-Key": settings.WEBHOOK_API_KEY},
                         timeout=5.0
                     )
-                    logger.info(f"📡 CRS 감지 SSE 알림 전송: customer_id={customer_id}, doc_id={doc_id}")
+                    logger.info(f"📡 CRS 감지 SSE 알림 전송: related_customer_id={related_customer_id}, doc_id={doc_id}")
             except Exception as sse_err:
                 logger.warning(f"⚠️ CRS 감지 SSE 알림 실패 (무시): {sse_err}")
 
         return {
             "is_customer_review": True,
-            "customer_id": customer_id,
+            "related_customer_id": related_customer_id,
             "customer_name": customer_name,
             "product_name": product_name,
             "issue_date": issue_date,
@@ -1408,7 +1363,7 @@ async def process_document_pipeline(
                 )
                 if ar_detection.get("is_annual_report"):
                     is_ar_detected = True
-                    logger.info(f"✅ AR 자동 감지 완료: doc_id={doc_id}, customer_id={ar_detection.get('customer_id')}")
+                    logger.info(f"✅ AR 자동 감지 완료: doc_id={doc_id}, related_customer_id={ar_detection.get('related_customer_id')}")
             except Exception as ar_err:
                 logger.error(f"❌ AR 감지 예외 (문서 처리 계속): doc_id={doc_id}, error={ar_err}", exc_info=True)
 
@@ -1422,7 +1377,7 @@ async def process_document_pipeline(
                         files_collection=files_collection
                     )
                     if crs_detection.get("is_customer_review"):
-                        logger.info(f"✅ CRS 자동 감지 완료: doc_id={doc_id}, customer_id={crs_detection.get('customer_id')}")
+                        logger.info(f"✅ CRS 자동 감지 완료: doc_id={doc_id}, related_customer_id={crs_detection.get('related_customer_id')}")
                 except Exception as crs_err:
                     logger.error(f"❌ CRS 감지 예외 (문서 처리 계속): doc_id={doc_id}, error={crs_err}", exc_info=True)
 

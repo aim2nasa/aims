@@ -2482,10 +2482,23 @@ router.get('/customers/:id/documents', authenticateJWT, async (req, res) => {
     }
 
     // 🔥 Single Source of Truth: files.customerId로 직접 조회 (customers.documents[] 의존성 제거)
-    // 이제 AR 문서와 일반 문서가 동일한 방식으로 조회됨
-    const query = { customerId: new ObjectId(id) };
-    if (userId) {
-      query.ownerId = userId;
+    // includeRelated=true: relatedCustomerId로 연결된 문서도 함께 조회 (관계자 문서 탭용)
+    const includeRelated = req.query.includeRelated === 'true';
+    const customerOid = new ObjectId(id);
+    let query;
+    if (includeRelated && userId) {
+      // $or + ownerId를 $and로 명시적 결합 (소유자 격리 보장)
+      query = {
+        $and: [
+          { $or: [{ customerId: customerOid }, { relatedCustomerId: customerOid }] },
+          { ownerId: userId }
+        ]
+      };
+    } else {
+      query = { customerId: customerOid };
+      if (userId) {
+        query.ownerId = userId;
+      }
     }
 
     // 🔧 Date/String 혼합 타입 대응을 위해 $toDate 사용
@@ -2539,6 +2552,8 @@ router.get('/customers/:id/documents', authenticateJWT, async (req, res) => {
         document_type: doc.document_type || (doc.meta && doc.meta.document_type) || null,
         document_type_auto: doc.document_type_auto || (doc.meta && doc.meta.document_type_auto) || false,
         document_type_confidence: doc.document_type_confidence || (doc.meta && doc.meta.document_type_confidence) || null,
+        // 문서 소유 고객 ID (원본/링크 구분용 — 관계자 문서 탭에서 사용)
+        customerId: doc.customerId?.toString() || null,
         ...statusInfo
       };
     });
