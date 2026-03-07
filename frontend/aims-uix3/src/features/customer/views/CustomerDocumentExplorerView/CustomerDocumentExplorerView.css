@@ -373,7 +373,7 @@
 
   .cde-doc-row {
     display: grid;
-    grid-template-columns: 16px 1fr 72px 50px 76px 44px;
+    grid-template-columns: 16px 1fr 76px 52px 118px 42px;
     align-items: center;
     gap: 4px;
     padding: 4px var(--spacing-2);
@@ -468,6 +468,8 @@
     color: var(--color-text-tertiary);
     text-align: right;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* 호버 시 액션 버튼 */
