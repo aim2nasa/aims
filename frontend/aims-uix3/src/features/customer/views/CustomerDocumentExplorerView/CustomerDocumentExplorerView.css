@@ -425,12 +425,18 @@
     font-weight: 400;
   }
 
+  .cde-doc-row__origin-badge {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+  }
+
   .cde-doc-row__linked-badge {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
-    color: var(--color-tint-blue);
-    opacity: 0.85;
+    color: var(--color-ios-blue);
   }
 
   .cde-doc-row__type {
