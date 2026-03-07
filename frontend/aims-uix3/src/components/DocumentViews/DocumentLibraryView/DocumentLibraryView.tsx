@@ -23,8 +23,6 @@ import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFull
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { AppleConfirmModal } from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
-import RefreshButton from '../../RefreshButton/RefreshButton'
-import { formatDateTime } from '@/shared/lib/timeUtils'
 import { api, ApiError } from '@/shared/lib/api'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { LinkIcon } from '../components/DocumentActionIcons'
@@ -192,12 +190,6 @@ const DocumentLibraryContent: React.FC<{
     }
     prevBulkLinkModeRef.current = isBulkLinkMode
   }, [isBulkLinkMode])
-
-  // 마지막 업데이트 시간 포맷팅
-  const formatLastUpdated = React.useCallback((date: Date | null): string => {
-    if (!date) return ''
-    return formatDateTime(date)
-  }, [])
 
   // 🍎 문서 컨텍스트 메뉴
   const documentContextMenu = useContextMenu()
@@ -600,33 +592,7 @@ const DocumentLibraryContent: React.FC<{
 
         </div>
 
-        {/* 오른쪽: 최근 업데이트 + 폴링 + 새로고침 */}
-        <div className="header-right-section">
-          {controller.lastUpdated && (
-            <span className="last-updated">
-              최근 업데이트: {formatLastUpdated(controller.lastUpdated)}
-            </span>
-          )}
-
-          <Tooltip content={controller.isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
-            <button
-              className={`polling-toggle ${controller.isPollingEnabled ? 'polling-active' : 'polling-inactive'}`}
-              onClick={controller.togglePolling}
-              aria-label={controller.isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
-            >
-              <span className={`polling-dot ${controller.isPollingEnabled ? 'dot-active' : 'dot-inactive'}`}>●</span>
-            </button>
-          </Tooltip>
-
-          <RefreshButton
-            onClick={async () => {
-              await controller.refreshDocuments();
-            }}
-            loading={controller.isLoading}
-            tooltip="문서 현황 새로고침"
-            size="small"
-          />
-        </div>
+        {/* 오른쪽 영역: SSE 실시간 업데이트로 자동 갱신되므로 수동 컨트롤 불필요 */}
       </div>
 
       {/* 문서 처리 현황 Status Bar (2분할: 현재 업로드 + 전체 라이브러리) */}

@@ -6,19 +6,12 @@
  * 공간 효율성 극대화
  */
 
-import React, { useMemo, useCallback } from 'react'
+import React from 'react'
 import { Tooltip, Button } from '@/shared/ui'
-import RefreshButton from '../../../RefreshButton/RefreshButton'
-import { formatDateTime } from '@/shared/lib/timeUtils'
 import './DocumentStatusHeader.css'
 
 interface DocumentStatusHeaderProps {
-  isPollingEnabled: boolean
-  onTogglePolling: () => void
-  onRefresh: () => void
-  isLoading: boolean
   documentsCount: number
-  lastUpdated: Date | null
   // 🍎 편집 모드 (DocumentLibrary용)
   showEditButton?: boolean
   isEditMode?: boolean
@@ -32,12 +25,7 @@ interface DocumentStatusHeaderProps {
 }
 
 export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
-  isPollingEnabled,
-  onTogglePolling,
-  onRefresh,
-  isLoading,
   documentsCount,
-  lastUpdated,
   showEditButton = false,
   isEditMode = false,
   onToggleEditMode,
@@ -46,17 +34,6 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   isDeleting = false,
   showDocumentsCount = true
 }) => {
-
-  /**
-   * 마지막 업데이트 시간 포맷팅
-   * "YYYY.MM.DD HH:mm:ss" 형식으로 표시
-   */
-  const formatLastUpdated = useCallback((date: Date | null): string => {
-    if (!date) return ''
-    return formatDateTime(date)
-  }, [])
-
-  const lastUpdatedLabel = useMemo(() => formatLastUpdated(lastUpdated), [formatLastUpdated, lastUpdated])
 
   return (
     <div className="document-status-header">
@@ -114,34 +91,6 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
 
         {/* 중앙: 여백 */}
         <div className="header-spacer" />
-
-        {/* 오른쪽: Last Updated + 폴링 토글 + 새로고침 */}
-        <div className="header-right">
-          {lastUpdated && (
-            <span className="last-updated">
-              최근 업데이트: {lastUpdatedLabel}
-            </span>
-          )}
-
-          <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
-            <button
-              className={"polling-toggle " + (isPollingEnabled ? 'polling-active' : 'polling-inactive')}
-              onClick={onTogglePolling}
-              aria-label={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
-            >
-              <span className={"polling-dot " + (isPollingEnabled ? 'dot-active' : 'dot-inactive')}>●</span>
-            </button>
-          </Tooltip>
-
-          <RefreshButton
-            onClick={async () => {
-              await onRefresh();
-            }}
-            loading={isLoading}
-            tooltip="문서 현황 새로고침"
-            size="small"
-          />
-        </div>
       </div>
     </div>
   )

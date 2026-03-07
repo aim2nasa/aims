@@ -69,11 +69,12 @@ export function usePersonalFilesSSE(
     }
   }, [userId])
 
-  // 연결 성공 핸들러
+  // 연결 성공 핸들러 — 재연결 시 놓친 이벤트 복구를 위해 자동 재조회
   const handleConnect = useCallback((data: unknown) => {
     if (import.meta.env.DEV) {
       console.log('[PersonalFilesSSE] 연결됨:', data)
     }
+    onRefreshRef.current()
   }, [])
 
   // 오류 핸들러

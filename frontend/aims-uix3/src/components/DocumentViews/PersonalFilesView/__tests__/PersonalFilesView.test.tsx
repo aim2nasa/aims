@@ -413,36 +413,7 @@ describe('PersonalFilesView', () => {
     })
   })
 
-  describe('툴바', () => {
-    test('새로고침 버튼이 있음', async () => {
-      render(
-        <PersonalFilesView
-          visible={true}
-          onClose={vi.fn()}
-        />
-      )
-
-      await waitFor(() => {
-        const refreshButton = screen.getByLabelText('새로고침')
-        expect(refreshButton).toBeInTheDocument()
-      })
-    })
-
-    test('폴링 토글 버튼이 있음', async () => {
-      render(
-        <PersonalFilesView
-          visible={true}
-          onClose={vi.fn()}
-        />
-      )
-
-      await waitFor(() => {
-        // 폴링 관련 버튼이 있음 (aria-label에 "실시간" 또는 "업데이트" 포함)
-        const pollingButton = document.querySelector('[aria-label*="실시간"], [aria-label*="업데이트"], .polling-toggle')
-        expect(pollingButton).toBeTruthy()
-      })
-    })
-  })
+  // 새로고침/폴링 토글 버튼 테스트 제거됨 (SSE 자동 갱신으로 대체, 수동 컨트롤 불필요)
 
   describe('툴바 컨트롤', () => {
     test('툴바 영역이 있음', async () => {

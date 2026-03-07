@@ -23,7 +23,7 @@ import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { DocumentUtils } from '@/entities/document'
 import type { Document } from '../../../types/documentStatus'
 import { uploadService } from '../DocumentRegistrationView/services/uploadService'
-import { formatDate, formatTime } from '@/shared/lib/timeUtils'
+import { formatDate } from '@/shared/lib/timeUtils'
 import type { UploadFile } from '../DocumentRegistrationView/types/uploadTypes'
 import {
   EyeIcon,
@@ -159,9 +159,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const breadcrumbRef = useRef<HTMLDivElement>(null)
   const [breadcrumbWidth, setBreadcrumbWidth] = useState(0)
 
-  // SSE 관련 상태
-  const [isSSEEnabled, setIsSSEEnabled] = useState(true)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  // SSE 항상 활성화 (수동 토글 제거)
 
   // 현재 사용자 ID
   const userId = typeof window !== 'undefined'
@@ -405,9 +403,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         return isSame ? prev : data.breadcrumbs
       })
 
-      // 🍎 마지막 업데이트 시간 기록 (문서 라이브러리와 동일)
-      setLastUpdated(new Date())
-
       // 🍎 좌측 트리 업데이트 (변경 감지 추가)
       setItems(prev => {
         let newItems: PersonalFileItem[]
@@ -497,9 +492,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   }, [loadFolderContents, currentFolderId])
 
   usePersonalFilesSSE(
-    visible && isSSEEnabled ? userId : null,
+    visible ? userId : null,
     handleSSERefresh,
-    { enabled: visible && isSSEEnabled }
+    { enabled: visible }
   )
 
   // 검색 debounce (500ms) - 필터/정렬은 클라이언트에서 처리
@@ -582,17 +577,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       observer.disconnect()
     }
   }, [breadcrumbs])
-
-  // SSE 토글
-  const toggleSSE = useCallback(() => {
-    setIsSSEEnabled((prev) => !prev)
-  }, [])
-
-  // 마지막 업데이트 시간 포맷팅 (시분초만 표시)
-  const formatLastUpdated = useCallback((date: Date | null): string => {
-    if (!date) return ''
-    return formatTime(date)
-  }, [])
 
   // 폴더 확장/축소
   const toggleFolder = useCallback(async (folderId: string) => {
@@ -1964,43 +1948,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 </Tooltip>
               </div>
 
-              {/* SSE 컨트롤 영역 */}
-              <div className="toolbar-divider" />
-
-              {/* 최근 업데이트 시간 */}
-              {lastUpdated && (
-                <span className="last-updated">
-                  {formatLastUpdated(lastUpdated)}
-                </span>
-              )}
-
-              {/* SSE 토글 버튼 */}
-              <Tooltip content={isSSEEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
-                <button
-                  className={`polling-toggle ${isSSEEnabled ? 'polling-active' : 'polling-inactive'}`}
-                  onClick={toggleSSE}
-                  aria-label={isSSEEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
-                >
-                  <span className={`polling-dot ${isSSEEnabled ? 'dot-active' : 'dot-inactive'}`}>●</span>
-                </button>
-              </Tooltip>
-
-              {/* 새로고침 버튼 */}
-              <Tooltip content="새로고침">
-                <button
-                  className="refresh-button"
-                  onClick={() => loadFolderContents(currentFolderId)}
-                  disabled={loading}
-                  aria-label="새로고침"
-                >
-                  <SFSymbol
-                    name="arrow.clockwise"
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.MEDIUM}
-                    decorative={true}
-                  />
-                </button>
-              </Tooltip>
+              {/* SSE 실시간 업데이트로 자동 갱신되므로 수동 컨트롤 불필요 */}
             </div>
           </div>
 

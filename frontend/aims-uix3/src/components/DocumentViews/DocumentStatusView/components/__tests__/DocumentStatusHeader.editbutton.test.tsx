@@ -17,12 +17,7 @@ import { DocumentStatusHeader } from '../DocumentStatusHeader'
 
 describe('DocumentStatusHeader - 편집 버튼 재배치 테스트 (커밋 c8c49b7)', () => {
   const defaultProps = {
-    isPollingEnabled: false,
-    onTogglePolling: vi.fn(),
-    onRefresh: vi.fn(),
-    isLoading: false,
     documentsCount: 10,
-    lastUpdated: new Date('2025-01-15T10:00:00'),
   }
 
   describe('편집 버튼 표시 제어', () => {
@@ -333,7 +328,6 @@ describe('DocumentStatusHeader - 편집 버튼 재배치 테스트 (커밋 c8c49
           showEditButton={true}
           isEditMode={false}
           onToggleEditMode={vi.fn()}
-          isPollingEnabled={true}
           documentsCount={42}
         />
       )
@@ -346,8 +340,8 @@ describe('DocumentStatusHeader - 편집 버튼 재배치 테스트 (커밋 c8c49
       const resultCount = container.querySelector('.result-count')
       expect(resultCount?.textContent).toContain('42')
 
-      // 폴링 UI 존재 (DocumentStatusHeader에 포함된 다른 기능)
-      expect(container.querySelector('.header-right')).not.toBeNull()
+      // 폴링/새로고침 UI 제거됨 (SSE 자동 갱신으로 대체)
+      expect(container.querySelector('.header-right')).toBeNull()
     })
   })
 })
