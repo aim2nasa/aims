@@ -39,7 +39,7 @@ export {
   deleteDocument,
   searchDocuments,
   getDocumentsByCustomer,
-  getDocumentTags,
+
   getDocumentStats,
   uploadDocument,
   downloadDocument,

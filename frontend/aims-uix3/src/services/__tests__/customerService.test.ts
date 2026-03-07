@@ -511,118 +511,7 @@ describe('CustomerService', () => {
     })
   })
 
-  // ===== 8. getCustomersByTags() - 태그별 고객 조회 =====
-
-  describe('getCustomersByTags', () => {
-    it('특정 태그를 가진 고객을 조회해야 함', async () => {
-      const mockResponse = {
-        customers: [mockCustomer],
-        pagination: {
-          page: 1,
-          total: 1,
-        },
-      }
-
-      vi.mocked(api.get).mockResolvedValueOnce(mockResponse)
-
-      const result = await CustomerService.getCustomersByTags(['VIP'])
-
-      expect(api.get).toHaveBeenCalledWith(
-        expect.stringMatching(/tags=VIP/)
-      )
-      expect(result.customers).toHaveLength(1)
-    })
-
-    it('여러 태그로 검색할 수 있어야 함', async () => {
-      const mockResponse = {
-        customers: [mockCustomer],
-        pagination: {
-          page: 1,
-          total: 1,
-        },
-      }
-
-      vi.mocked(api.get).mockResolvedValueOnce(mockResponse)
-
-      await CustomerService.getCustomersByTags(['VIP', '고액자산가'])
-
-      expect(api.get).toHaveBeenCalledWith(
-        expect.stringMatching(/tags=VIP/)
-      )
-      expect(api.get).toHaveBeenCalledWith(
-        expect.stringMatching(/tags=%EA%B3%A0%EC%95%A1%EC%9E%90%EC%82%B0%EA%B0%80/)
-      )
-    })
-
-    it('빈 태그 배열에 대해 에러를 던져야 함', async () => {
-      await expect(CustomerService.getCustomersByTags([])).rejects.toThrow(
-        '최소 하나의 태그가 필요합니다'
-      )
-      expect(api.get).not.toHaveBeenCalled()
-    })
-
-    it('공백 태그를 필터링해야 함', async () => {
-      const mockResponse = {
-        customers: [mockCustomer],
-        pagination: {
-          page: 1,
-          total: 1,
-        },
-      }
-
-      vi.mocked(api.get).mockResolvedValueOnce(mockResponse)
-
-      await CustomerService.getCustomersByTags(['VIP', '   ', '고액자산가'])
-
-      expect(api.get).toHaveBeenCalledWith(
-        expect.stringMatching(/tags=VIP/)
-      )
-      expect(api.get).toHaveBeenCalledWith(
-        expect.stringMatching(/tags=%EA%B3%A0%EC%95%A1%EC%9E%90%EC%82%B0%EA%B0%80/)
-      )
-    })
-  })
-
-  // ===== 9. getCustomerTags() - 사용 중인 태그 조회 =====
-
-  describe('getCustomerTags', () => {
-    it('사용 중인 모든 태그를 반환해야 함', async () => {
-      const mockTags = ['VIP', '일반고객', '고액자산가']
-
-      vi.mocked(api.get).mockResolvedValueOnce(mockTags)
-
-      const result = await CustomerService.getCustomerTags()
-
-      expect(api.get).toHaveBeenCalledWith('/api/customers/tags')
-      expect(result).toEqual(mockTags)
-    })
-
-    it('빈 배열을 처리해야 함', async () => {
-      vi.mocked(api.get).mockResolvedValueOnce([])
-
-      const result = await CustomerService.getCustomerTags()
-
-      expect(result).toEqual([])
-    })
-
-    it('문자열이 아닌 항목을 필터링해야 함', async () => {
-      vi.mocked(api.get).mockResolvedValueOnce(['VIP', null, undefined, 123, 'valid'])
-
-      const result = await CustomerService.getCustomerTags()
-
-      expect(result).toEqual(['VIP', 'valid'])
-    })
-
-    it('배열이 아닌 응답에 대해 에러를 던져야 함', async () => {
-      vi.mocked(api.get).mockResolvedValueOnce({ tags: ['VIP'] })
-
-      await expect(CustomerService.getCustomerTags()).rejects.toThrow(
-        'Invalid tags response format'
-      )
-    })
-  })
-
-  // ===== 10. getCustomerStats() - 고객 통계 조회 =====
+  // ===== 8. getCustomerStats() - 고객 통계 조회 =====
 
   describe('getCustomerStats', () => {
     it('고객 통계를 반환해야 함', async () => {
@@ -631,11 +520,6 @@ describe('CustomerService', () => {
         active: 90,
         inactive: 10,
         newThisMonth: 5,
-        totalTags: 20,
-        mostUsedTags: [
-          { tag: 'VIP', count: 30 },
-          { tag: '일반고객', count: 60 },
-        ],
       }
 
       vi.mocked(api.get).mockResolvedValueOnce(mockStats)
@@ -645,7 +529,6 @@ describe('CustomerService', () => {
       expect(api.get).toHaveBeenCalledWith('/api/customers/stats')
       expect(result.total).toBe(100)
       expect(result.active).toBe(90)
-      expect(result.mostUsedTags).toHaveLength(2)
     })
 
     it('숫자 필드를 올바르게 변환해야 함', async () => {
@@ -654,8 +537,6 @@ describe('CustomerService', () => {
         active: '90',
         inactive: null,
         newThisMonth: undefined,
-        totalTags: 20,
-        mostUsedTags: [],
       }
 
       vi.mocked(api.get).mockResolvedValueOnce(mockStats)

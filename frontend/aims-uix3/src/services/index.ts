@@ -17,8 +17,6 @@ export {
   deleteCustomer,
   restoreCustomer,
   searchCustomers,
-  getCustomersByTags,
-  getCustomerTags,
   getCustomerStats,
   exportCustomers,
   importCustomers,

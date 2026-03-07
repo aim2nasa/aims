@@ -652,46 +652,7 @@ describe('DocumentService', () => {
   })
 
   // ============================================================================
-  // 11. getDocumentTags() - 태그 목록 조회
-  // ============================================================================
-  describe('getDocumentTags', () => {
-    it('사용 중인 태그 목록을 조회해야 함', async () => {
-      const mockTags = ['보험', '계약서', '청구서']
-      vi.mocked(api.get).mockResolvedValue(mockTags)
-
-      const result = await DocumentService.getDocumentTags()
-
-      expect(api.get).toHaveBeenCalledWith('/api/documents/tags')
-      expect(result).toEqual(mockTags)
-    })
-
-    it('배열이 아닌 응답은 에러를 던져야 함', async () => {
-      vi.mocked(api.get).mockResolvedValue({ tags: [] })
-
-      await expect(DocumentService.getDocumentTags()).rejects.toThrow(
-        'Invalid tags response format'
-      )
-    })
-
-    it('문자열이 아닌 요소는 필터링해야 함', async () => {
-      vi.mocked(api.get).mockResolvedValue(['valid', 123, null, 'tag2'])
-
-      const result = await DocumentService.getDocumentTags()
-
-      expect(result).toEqual(['valid', 'tag2'])
-    })
-
-    it('빈 배열을 처리해야 함', async () => {
-      vi.mocked(api.get).mockResolvedValue([])
-
-      const result = await DocumentService.getDocumentTags()
-
-      expect(result).toEqual([])
-    })
-  })
-
-  // ============================================================================
-  // 12. getDocumentStats() - 문서 통계 조회
+  // 11. getDocumentStats() - 문서 통계 조회
   // ============================================================================
   describe('getDocumentStats', () => {
     it('문서 통계를 조회해야 함', async () => {
@@ -703,10 +664,6 @@ describe('DocumentService', () => {
         totalSize: 1024000,
         ocrCompleted: 70,
         ocrPending: 30,
-        mostUsedTags: [
-          { tag: '보험', count: 50 },
-          { tag: '계약서', count: 30 },
-        ],
       }
 
       vi.mocked(api.get).mockResolvedValue(mockStats)
@@ -726,7 +683,6 @@ describe('DocumentService', () => {
         totalSize: '1024',
         ocrCompleted: NaN,
         ocrPending: 10,
-        mostUsedTags: [],
       }
 
       vi.mocked(api.get).mockResolvedValue(mockStats)
@@ -739,19 +695,6 @@ describe('DocumentService', () => {
       expect(result.deleted).toBe(5)
       expect(result.totalSize).toBe(1024)
       expect(result.ocrCompleted).toBe(0)
-    })
-
-    it('mostUsedTags가 배열이 아니면 빈 배열로 설정해야 함', async () => {
-      const mockStats = {
-        total: 100,
-        mostUsedTags: null,
-      }
-
-      vi.mocked(api.get).mockResolvedValue(mockStats)
-
-      const result = await DocumentService.getDocumentStats()
-
-      expect(result.mostUsedTags).toEqual([])
     })
 
     it('응답이 객체가 아니면 에러를 던져야 함', async () => {

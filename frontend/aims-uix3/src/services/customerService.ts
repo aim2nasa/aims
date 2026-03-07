@@ -26,7 +26,7 @@ const ENDPOINTS = {
   CUSTOMERS: '/api/customers',
   CUSTOMER: (id: string) => `/api/customers/${id}`,
   CUSTOMER_SEARCH: '/api/customers/search',
-  CUSTOMER_TAGS: '/api/customers/tags',
+
   CUSTOMER_STATS: '/api/customers/stats',
   CUSTOMER_EXPORT: '/api/customers/export',
   CUSTOMER_IMPORT: '/api/customers/import',
@@ -253,40 +253,6 @@ export class CustomerService {
   }
 
   /**
-   * 태그별 고객 조회
-   */
-  static async getCustomersByTags(
-    tags: string[],
-    options: Partial<CustomerSearchQuery> = {}
-  ): Promise<CustomerSearchResponse> {
-    if (tags.length === 0) {
-      throw new Error('최소 하나의 태그가 필요합니다');
-    }
-
-    const validatedOptions = CustomerUtils.validateSearchQuery(options);
-    const query: CustomerSearchQuery = {
-      ...validatedOptions,
-      tags: tags.filter(tag => tag.trim()),
-    };
-
-    return CustomerService.getCustomers(query);
-  }
-
-  /**
-   * 사용 중인 모든 태그 조회
-   */
-  static async getCustomerTags(): Promise<string[]> {
-    const response = await api.get<string[]>(ENDPOINTS.CUSTOMER_TAGS);
-
-    // 기본 검증 (문자열 배열인지 확인)
-    if (!Array.isArray(response)) {
-      throw new Error('Invalid tags response format');
-    }
-
-    return response.filter((tag): tag is string => typeof tag === 'string');
-  }
-
-  /**
    * 고객 통계 조회
    */
   static async getCustomerStats(): Promise<CustomerStats> {
@@ -302,8 +268,6 @@ export class CustomerService {
       active: Number(response.active) || 0,
       inactive: Number(response.inactive) || 0,
       newThisMonth: Number(response.newThisMonth) || 0,
-      totalTags: Number(response.totalTags) || 0,
-      mostUsedTags: Array.isArray(response.mostUsedTags) ? response.mostUsedTags : [],
     };
   }
 
@@ -507,8 +471,6 @@ export interface CustomerStats {
   active: number;
   inactive: number;
   newThisMonth: number;
-  totalTags: number;
-  mostUsedTags: Array<{ tag: string; count: number }>;
 }
 
 /**
@@ -563,8 +525,6 @@ export const {
   permanentDeleteCustomer,
   restoreCustomer,
   searchCustomers,
-  getCustomersByTags,
-  getCustomerTags,
   getCustomerStats,
   exportCustomers,
   importCustomers,

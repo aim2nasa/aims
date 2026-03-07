@@ -28,7 +28,7 @@ const ENDPOINTS = {
   DOCUMENTS: '/api/documents',
   DOCUMENT: (id: string) => `/api/documents/${id}`,
   DOCUMENT_SEARCH: '/api/documents/search',
-  DOCUMENT_TAGS: '/api/documents/tags',
+
   DOCUMENT_STATS: '/api/documents/stats',
   DOCUMENT_STATISTICS: '/api/documents/statistics',
   DOCUMENT_UPLOAD: '/api/documents/upload',
@@ -567,20 +567,6 @@ export class DocumentService {
   }
 
   /**
-   * 사용 중인 모든 태그 조회
-   */
-  static async getDocumentTags(): Promise<string[]> {
-    const response = await api.get<string[]>(ENDPOINTS.DOCUMENT_TAGS);
-
-    // 기본 검증 (문자열 배열인지 확인)
-    if (!Array.isArray(response)) {
-      throw new Error('Invalid tags response format');
-    }
-
-    return response.filter((tag): tag is string => typeof tag === 'string');
-  }
-
-  /**
    * 문서 통계 조회
    */
   static async getDocumentStats(): Promise<DocumentStats> {
@@ -599,7 +585,6 @@ export class DocumentService {
       totalSize: Number(response.totalSize) || 0,
       ocrCompleted: Number(response.ocrCompleted) || 0,
       ocrPending: Number(response.ocrPending) || 0,
-      mostUsedTags: Array.isArray(response.mostUsedTags) ? response.mostUsedTags : [],
     };
   }
 
@@ -911,7 +896,6 @@ export interface DocumentStats {
   totalSize: number;
   ocrCompleted: number;
   ocrPending: number;
-  mostUsedTags: Array<{ tag: string; count: number }>;
 }
 
 /**
@@ -981,7 +965,6 @@ export const {
   deleteDocument,
   searchDocuments,
   getDocumentsByCustomer,
-  getDocumentTags,
   getDocumentStats,
   getDocumentStatistics,
   uploadDocument,
