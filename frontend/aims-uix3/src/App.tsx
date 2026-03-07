@@ -2126,34 +2126,35 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span>{fileName}</span>
                         {nameLabel && (
-                          <button
-                            type="button"
-                            title={rpFilenameMode === 'display'
-                              ? `별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환\n원본: ${originalName}`
-                              : `원본 파일명 표시 중 · 클릭하면 별칭으로 전환\n별칭: ${selectedDocument.displayName}`}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setRpFilenameMode(prev => {
-                                const next = prev === 'display' ? 'original' : 'display'
-                                localStorage.setItem('aims-filename-mode', next)
-                                return next
-                              })
-                            }}
-                            style={{
-                              flexShrink: 0,
-                              padding: '1px 5px',
-                              fontSize: '9px',
-                              fontWeight: 600,
-                              lineHeight: '1.2',
-                              border: '1px solid var(--color-border-primary)',
-                              borderRadius: '4px',
-                              background: 'var(--color-bg-secondary)',
-                              color: 'var(--color-text-tertiary)',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {nameLabel}
-                          </button>
+                          <Tooltip content={rpFilenameMode === 'display'
+                            ? `AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환`
+                            : `원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환`}>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setRpFilenameMode(prev => {
+                                  const next = prev === 'display' ? 'original' : 'display'
+                                  localStorage.setItem('aims-filename-mode', next)
+                                  return next
+                                })
+                              }}
+                              style={{
+                                flexShrink: 0,
+                                padding: '1px 5px',
+                                fontSize: '9px',
+                                fontWeight: 600,
+                                lineHeight: '1.2',
+                                border: '1px solid var(--color-border-primary)',
+                                borderRadius: '4px',
+                                background: 'var(--color-bg-secondary)',
+                                color: 'var(--color-text-tertiary)',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {nameLabel}
+                            </button>
+                          </Tooltip>
                         )}
                       </div>
                       {hasSubtitle && (
