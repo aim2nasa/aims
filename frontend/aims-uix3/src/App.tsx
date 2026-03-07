@@ -286,9 +286,26 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [fullDetailCustomerId, setFullDetailCustomerId] = useState<string | null>(null)
 
   // CustomerDocumentExplorerView 상태 (CenterPane에서 고객별 문서 탐색기 표시)
-  const [explorerCustomerId, setExplorerCustomerId] = useState<string | null>(null)
+  // 초기값: URL → localStorage 순으로 복원 (하드 리프레시 대비)
+  const [explorerCustomerId, setExplorerCustomerIdRaw] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('view') === 'customer-document-explorer') {
+      return params.get('customerId') || localStorage.getItem('aims-explorer-customerId')
+    }
+    return null
+  })
   const [explorerCustomerName, setExplorerCustomerName] = useState<string | null>(null)
   const [explorerCustomerType, setExplorerCustomerType] = useState<'개인' | '법인'>('개인')
+
+  // explorerCustomerId setter: localStorage에도 동기화
+  const setExplorerCustomerId = useCallback((id: string | null) => {
+    if (id) {
+      localStorage.setItem('aims-explorer-customerId', id)
+    } else {
+      localStorage.removeItem('aims-explorer-customerId')
+    }
+    setExplorerCustomerIdRaw(id)
+  }, [])
 
   // 문서 프리뷰 모달 상태
   const [previewModalVisible, setPreviewModalVisible] = useState(false)
@@ -536,22 +553,36 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       viewToRestore = 'customers'
     }
 
+    // 🍎 customer-document-explorer: URL에 customerId 없으면 localStorage에서 복원
+    const explorerFallbackId = viewToRestore === 'customer-document-explorer' && !urlCustomerId
+      ? localStorage.getItem('aims-explorer-customerId')
+      : null
+    if (viewToRestore === 'customer-document-explorer' && !urlCustomerId && !explorerFallbackId) {
+      viewToRestore = 'customers'
+    }
+
     setActiveDocumentView(viewToRestore)
 
     // RightPane가 불필요한 뷰는 닫기
-    if (!urlCustomerId && !urlDocumentId) {
+    const effectiveCustomerId = urlCustomerId || explorerFallbackId
+    if (!effectiveCustomerId && !urlDocumentId) {
       setRightPaneVisible(false)
     }
 
-    // 고객 ID가 URL에 있으면 고객 정보 로드
-    if (urlCustomerId) {
+    // 고객 ID로 정보 복원
+    const restoreCustomerId = urlCustomerId || explorerFallbackId
+    if (restoreCustomerId) {
       // 🍎 customers-full-detail 뷰일 때는 fullDetailCustomerId 설정
       if (urlView === 'customers-full-detail') {
-        setFullDetailCustomerId(urlCustomerId)
-      } else if (urlView === 'customer-document-explorer') {
-        setExplorerCustomerId(urlCustomerId)
+        setFullDetailCustomerId(restoreCustomerId)
+      } else if (viewToRestore === 'customer-document-explorer') {
+        // explorerCustomerId는 useState 초기값에서 이미 복원됨 — 중복 설정 불필요
+        // URL에 customerId가 없었다면 URL 복원
+        if (!urlCustomerId) {
+          updateURLParams({ customerId: restoreCustomerId })
+        }
         // 고객명/유형 조회
-        CustomerService.getCustomer(urlCustomerId)
+        CustomerService.getCustomer(restoreCustomerId)
           .then(customer => {
             setExplorerCustomerName(customer.personal_info?.name || null)
             setExplorerCustomerType(customer.insurance_info?.customer_type || '개인')
@@ -559,7 +590,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           .catch(() => setExplorerCustomerName(null))
       } else {
         // 일반 고객 선택 (RightPane에 표시)
-        CustomerService.getCustomer(urlCustomerId)
+        CustomerService.getCustomer(restoreCustomerId)
           .then(customer => {
             setSelectedCustomer(customer)
             setRightPaneContentType('customer')
