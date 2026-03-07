@@ -570,12 +570,6 @@ const CustomMenu = ({
       tooltipTitle: '문서',
       children: collapsed ? undefined : [
         {
-          key: 'documents-library',
-          icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
-          label: '전체 문서 보기',
-          tooltipTitle: '모든 문서를 보여줍니다',
-        },
-        {
           key: 'documents-explorer',
           icon: <span className="menu-icon-green"><MenuIcons.FolderTree /></span>,
           label: '고객별 문서함',
@@ -586,18 +580,18 @@ const CustomMenu = ({
           icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
           label: '상세 문서검색',
           tooltipTitle: '상세 문서검색 페이지로 이동합니다',
+        },
+        {
+          key: 'documents-library',
+          icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
+          label: '전체 문서 보기',
+          tooltipTitle: '모든 문서를 보여줍니다',
         }
       ]
     },
 
     // collapsed 상태에서 문서 서브메뉴 표시
     ...(collapsed ? [
-      {
-        key: 'documents-library',
-        icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
-        label: '',
-        tooltipTitle: '모든 문서를 보여줍니다',
-      },
       {
         key: 'documents-explorer',
         icon: <span className="menu-icon-green"><MenuIcons.FolderTree /></span>,
@@ -609,6 +603,12 @@ const CustomMenu = ({
         icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
         label: '',
         tooltipTitle: '상세 문서검색',
+      },
+      {
+        key: 'documents-library',
+        icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
+        label: '',
+        tooltipTitle: '모든 문서를 보여줍니다',
       }
     ] : []),
 
