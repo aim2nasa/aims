@@ -87,11 +87,9 @@ async def smart_search(request: SearchRequest):
                 "upload.originalName",
                 "ocr.full_text",
                 "ocr.summary",
-                "ocr.tags",
                 "meta.filename",
                 "meta.full_text",
                 "meta.summary",
-                "meta.tags",
                 "text.full_text",
                 "customer_relation.notes"
             ]

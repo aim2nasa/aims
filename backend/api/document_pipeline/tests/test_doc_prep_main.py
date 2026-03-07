@@ -67,8 +67,7 @@ class TestDocPrepMainSuccess:
 
             # OpenAI mock
             mock_openai.summarize_text = AsyncMock(return_value={
-                "summary": "테스트 문서 요약입니다.",
-                "tags": ["테스트", "문서"]
+                "summary": "테스트 문서 요약입니다."
             })
 
             # Request
@@ -138,8 +137,7 @@ class TestDocPrepMainSuccess:
 
             # OpenAI not called when no text
             mock_openai.summarize_text = AsyncMock(return_value={
-                "summary": "",
-                "tags": []
+                "summary": ""
             })
 
             # Redis mock
@@ -327,8 +325,7 @@ class TestDocPrepMainWithCustomer:
 
             # OpenAI mock
             mock_openai.summarize_text = AsyncMock(return_value={
-                "summary": "고객 문서 요약",
-                "tags": ["고객"]
+                "summary": "고객 문서 요약"
             })
 
             response = await client.post(
@@ -494,8 +491,7 @@ class TestDocPrepMainShadowMode:
 
             # OpenAI mock
             mock_openai.summarize_text = AsyncMock(return_value={
-                "summary": "Shadow mode summary",
-                "tags": ["shadow"]
+                "summary": "Shadow mode summary"
             })
 
             response = await client.post(
@@ -594,8 +590,7 @@ class TestDocPrepMainMongoDBUpdates:
 
             # OpenAI mock
             mock_openai.summarize_text = AsyncMock(return_value={
-                "summary": "Summary",
-                "tags": []
+                "summary": "Summary"
             })
 
             response = await client.post(
@@ -664,8 +659,7 @@ class TestDocPrepMainMongoDBUpdates:
 
             # OpenAI mock
             mock_openai.summarize_text = AsyncMock(return_value={
-                "summary": "Document summary",
-                "tags": ["tag1", "tag2"]
+                "summary": "Document summary"
             })
 
             sample_pdf.seek(0)
@@ -689,6 +683,5 @@ class TestDocPrepMainMongoDBUpdates:
                     assert update_data["meta.size_bytes"] == 99999
                     assert update_data["meta.pdf_pages"] == 10
                     assert "meta.summary" in update_data
-                    assert "meta.tags" in update_data
 
             assert meta_update_found, "Meta update was not found in MongoDB calls"

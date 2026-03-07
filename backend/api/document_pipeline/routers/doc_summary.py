@@ -51,12 +51,11 @@ async def summarize_document(request: SummaryRequest):
 
         if not full_text or len(full_text.strip()) == 0:
             # n8n 호환: 빈 텍스트 시 안내 메시지 반환
-            empty_msg = "입력된 텍스트가 없습니다. 요약 및 태그 추출을 위해 원문 내용을 제공해 주세요."
+            empty_msg = "입력된 텍스트가 없습니다. 요약을 위해 원문 내용을 제공해 주세요."
             return SummaryResponse(
                 summary=empty_msg,
                 length=len(empty_msg),
-                truncated=False,
-                tags=[]
+                truncated=False
             )
 
         # Check if text is too long
@@ -69,20 +68,18 @@ async def summarize_document(request: SummaryRequest):
             document_id=doc_id
         )
         summary = result.get("summary", "")
-        tags = result.get("tags", [])
         document_type = result.get("document_type", "general")
         confidence = result.get("confidence", 0.0)
 
         logger.info(
             f"Summary generated: {len(full_text)} chars -> {len(summary)} chars, "
-            f"tags: {tags}, type: {document_type}, confidence: {confidence:.2f}"
+            f"type: {document_type}, confidence: {confidence:.2f}"
         )
 
         return SummaryResponse(
             summary=summary,
             length=len(summary),
             truncated=truncated,
-            tags=tags,
             document_type=document_type,
             confidence=confidence
         )

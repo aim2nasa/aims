@@ -1267,7 +1267,6 @@ async def process_document_pipeline(
                 logger.info(f"[PDF변환텍스트] 텍스트 추출 실패, OCR fallback: {doc_id}")
 
         summary = ""
-        tags = []
 
         ai_document_type = "general"
         ai_confidence = 0.0
@@ -1279,7 +1278,6 @@ async def process_document_pipeline(
                 document_id=doc_id
             )
             summary = summary_result.get("summary", "")
-            tags = summary_result.get("tags", [])
             ai_document_type = summary_result.get("document_type", "general")
             ai_confidence = summary_result.get("confidence", 0.0)
 
@@ -1293,7 +1291,6 @@ async def process_document_pipeline(
             "meta.pdf_pages": meta_result.get("num_pages"),
             "meta.full_text": full_text or "",
             "meta.summary": summary,
-            "meta.tags": tags,
             "meta.document_type": ai_document_type,
             "meta.confidence": ai_confidence,
             "meta.length": len(full_text) if full_text else 0,

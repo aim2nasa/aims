@@ -191,7 +191,6 @@ class OCRWorker:
 
             # Generate summary if text was extracted
             summary = None
-            tags = []
             result = None
             document_type = "general"
             doc_confidence = 0.0
@@ -203,7 +202,6 @@ class OCRWorker:
                         document_id=doc_id
                     )
                     summary = result.get("summary")
-                    tags = result.get("tags", [])
                     document_type = result.get("document_type", "general")
                     doc_confidence = result.get("confidence", 0.0)
                 except Exception as e:
@@ -215,7 +213,6 @@ class OCRWorker:
                 "confidence": ocr_result.get("confidence"),
                 "full_text": ocr_result.get("full_text"),
                 "summary": summary,
-                "tags": tags,
                 "title": result.get("title") if result else None,
                 "document_type": document_type,
                 "doc_confidence": doc_confidence,
@@ -295,7 +292,6 @@ class OCRWorker:
             "ocr.confidence": ocr_result.get("confidence"),
             "ocr.full_text": ocr_result.get("full_text"),
             "ocr.summary": ocr_result.get("summary"),
-            "ocr.tags": ocr_result.get("tags", []),
             "ocr.page_count": ocr_result.get("num_pages", page_count),
             "meta.document_type": ocr_result.get("document_type", "general"),
             "meta.confidence": ocr_result.get("doc_confidence", 0.0),

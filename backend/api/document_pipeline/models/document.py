@@ -34,7 +34,6 @@ class SummaryResponse(BaseModel):
     summary: str
     length: int
     truncated: bool = False
-    tags: List[str] = []
     document_type: str = "general"
     confidence: float = 0.0
 
@@ -57,7 +56,6 @@ class MetaResponse(BaseModel):
     pdf_pages: Optional[int] = None
     extracted_text: Optional[str] = None
     summary: Optional[str] = None
-    tags: List[str] = []
     file_hash: Optional[str] = None
     pdf_text_ratio: Optional[float] = None
     length: Optional[int] = None
@@ -74,7 +72,6 @@ class OCRResponse(BaseModel):
     userMessage: str
     confidence: Optional[float] = None
     summary: Optional[str] = None
-    tags: List[str] = []
     document_type: str = "general"
     doc_confidence: float = 0.0
     full_text: Optional[str] = None

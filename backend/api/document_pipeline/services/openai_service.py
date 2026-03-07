@@ -118,7 +118,7 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 9. 기타: memo=메모/상담기록/고객노트, general=위 유형에 해당하지 않는 일반 문서/안내문/가이드, unclassifiable=비문서/내용없음/판독불가/보험업무와 전혀 무관(사은품·사무용품·로고·디자인)
 
 [분류 규칙]
-1. 문서의 주된 목적 기준으로 1개만 선택. 보조 정보는 tags에 기록
+1. 문서의 주된 목적 기준으로 1개만 선택
 2. 가입 전 설계=plan_design, 가입 후 기존보험 분석=coverage_analysis
 3. general은 마지막 수단! 42개 유형 중 하나라도 해당하면 반드시 그것을 선택
 4. 텍스트가 짧아도 키워드가 특정 유형과 명확히 매칭되면 해당 유형 선택
@@ -147,21 +147,7 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 {text}
 
 JSON (반드시 이 형식):
-{{"type":"diagnosis","confidence":0.85,"title":"홍길동 진단서(30자이내 핵심제목)","summary":"3~5줄 요약","tags":["키워드1","키워드2"]}}"""
-
-# 태그 정규화 사전 (@see docs/DOCUMENT_TAXONOMY.md)
-TAG_NORMALIZATION = {
-    "메트라이프생명": "메트라이프", "MetLife": "메트라이프",
-    "삼성생명보험": "삼성생명", "삼성화재해상": "삼성화재",
-    "한화생명보험": "한화생명", "교보생명보험": "교보생명",
-    "DB손해보험": "DB손보", "현대해상화재": "현대해상",
-    "KB손해보험": "KB손보", "NH농협생명": "NH생명",
-    "흥국생명보험": "흥국생명", "ABL생명": "ABL생명",
-    "AIA생명": "AIA생명", "처브라이프": "처브",
-    "종신": "종신보험", "실손의료": "실손보험", "실비": "실손보험",
-    "운전자": "운전자보험", "자동차": "자동차보험",
-}
-
+{{"type":"diagnosis","confidence":0.85,"title":"홍길동 진단서(30자이내 핵심제목)","summary":"3~5줄 요약"}}"""
 
 class OpenAIService:
     """OpenAI service using class methods"""
@@ -241,21 +227,6 @@ class OpenAIService:
             return False
 
     @classmethod
-    def _normalize_tags(cls, tags: List[str]) -> List[str]:
-        """태그 정규화: 사전 매핑 + 중복 제거"""
-        normalized = []
-        seen = set()
-        for tag in tags:
-            tag = tag.strip()
-            if not tag:
-                continue
-            tag = TAG_NORMALIZATION.get(tag, tag)
-            if tag.lower() not in seen:
-                seen.add(tag.lower())
-                normalized.append(tag)
-        return normalized
-
-    @classmethod
     def _validate_document_type(cls, doc_type: Optional[str]) -> str:
         """AI 분류 결과 검증: 유효하지 않거나 시스템 전용이면 general 반환"""
         if not doc_type or doc_type in SYSTEM_ONLY_TYPES or doc_type not in VALID_DOCUMENT_TYPES:
@@ -271,8 +242,8 @@ class OpenAIService:
         document_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Summarize text, extract tags, and classify document type.
-        Returns {"summary": str, "tags": list, "title": str, "document_type": str, "confidence": float, "truncated": bool}
+        Summarize text and classify document type.
+        Returns {"summary": str, "title": str, "document_type": str, "confidence": float, "truncated": bool}
 
         @see docs/DOCUMENT_TAXONOMY.md - AI 분류 기준 (프롬프트 가이드)
         """
@@ -284,7 +255,6 @@ class OpenAIService:
                 logger.warning(f"[CREDIT_EXCEEDED] Summary 스킵: owner_id={owner_id}, remaining={credit_check.get('credits_remaining', 0)}")
                 return {
                     "summary": "크레딧 부족으로 요약이 생략되었습니다.",
-                    "tags": [],
                     "title": "",
                     "document_type": "general",
                     "confidence": 0.0,
@@ -332,7 +302,6 @@ class OpenAIService:
                 logger.warning(f"[Classification] JSON 파싱 실패, fallback: {content[:200]}")
                 return {
                     "summary": content[:500],
-                    "tags": [],
                     "title": "",
                     "document_type": "general",
                     "confidence": 0.0,
@@ -348,10 +317,6 @@ class OpenAIService:
 
             title = parsed.get("title", "")
             summary = parsed.get("summary", "")
-            tags = parsed.get("tags", [])
-            if not isinstance(tags, list):
-                tags = []
-            tags = cls._normalize_tags(tags)
 
             if not summary:
                 if doc_type == "unclassifiable":
@@ -363,7 +328,6 @@ class OpenAIService:
 
             return {
                 "summary": summary,
-                "tags": tags,
                 "title": title,
                 "document_type": doc_type,
                 "confidence": confidence,
@@ -373,7 +337,6 @@ class OpenAIService:
         except Exception as e:
             return {
                 "summary": f"요약 생성 실패: {str(e)}",
-                "tags": [],
                 "title": "",
                 "document_type": "general",
                 "confidence": 0.0,
@@ -466,8 +429,3 @@ class OpenAIService:
             logger.error(f"[TitleGen] 제목 생성 실패: doc_id={document_id}, error={e}", exc_info=True)
             return {"title": None, "error": "title_generation_failed"}
 
-    @classmethod
-    async def extract_tags(cls, text: str, owner_id: Optional[str] = None, document_id: Optional[str] = None) -> List[str]:
-        """Extract keywords as tags from text"""
-        result = await cls.summarize_text(text, owner_id=owner_id, document_id=document_id)
-        return result.get("tags", [])

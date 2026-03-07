@@ -5,8 +5,7 @@ OpenAI Service Unit Tests
 테스트 범위:
 1. check_credit_for_summary - 크레딧 체크 (fail-closed 패턴)
 2. OpenAIService._log_token_usage - 토큰 로깅
-3. OpenAIService.summarize_text - 텍스트 요약
-4. OpenAIService.extract_tags - 태그 추출
+3. OpenAIService.summarize_text - 텍스트 요약 및 문서 분류
 
 @priority CRITICAL - 과금/크레딧 관련 핵심 서비스
 @see docs/EMBEDDING_CREDIT_POLICY.md
@@ -772,41 +771,9 @@ class TestSummarizeText:
             result = await OpenAIService.summarize_text("테스트 텍스트입니다.")
 
             assert "summary" in result
-            assert "tags" in result
             assert result["summary"] == "테스트 요약입니다."
             assert result["document_type"] == "general"
             assert result["confidence"] == 0.9
-
-    @pytest.mark.asyncio
-    async def test_tags_extraction(self):
-        """태그 추출"""
-        mock_usage = MagicMock()
-        mock_usage.prompt_tokens = 500
-        mock_usage.completion_tokens = 100
-        mock_usage.total_tokens = 600
-
-        mock_message = MagicMock()
-        mock_message.content = '{"type":"policy","confidence":0.8,"title":"보험 계약서","summary":"문서 요약","tags":["보험","계약","금융"]}'
-
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
-        mock_response.usage = mock_usage
-
-        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
-             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock) as mock_log:
-            mock_client = AsyncMock()
-            mock_client.chat.completions.create.return_value = mock_response
-            mock_get_client.return_value = mock_client
-            mock_log.return_value = True
-
-            result = await OpenAIService.summarize_text("보험 계약서입니다.")
-
-            assert "보험" in result["tags"]
-            assert "계약" in result["tags"]
-            assert "금융" in result["tags"]
 
     @pytest.mark.asyncio
     async def test_credit_check_insufficient_skips_summary(self):
@@ -827,7 +794,6 @@ class TestSummarizeText:
 
             assert result["credit_skipped"] is True
             assert result["summary"] == "크레딧 부족으로 요약이 생략되었습니다."
-            assert result["tags"] == []
             assert result["credits_remaining"] == 0
 
     @pytest.mark.asyncio
@@ -953,7 +919,6 @@ class TestSummarizeText:
             result = await OpenAIService.summarize_text("테스트 텍스트")
 
             assert "요약 생성 실패" in result["summary"]
-            assert result["tags"] == []
 
     @pytest.mark.asyncio
     async def test_owner_id_passed_to_credit_check(self):
@@ -1093,7 +1058,6 @@ class TestSummarizeText:
             result = await OpenAIService.summarize_text("")
 
             assert "summary" in result
-            assert "tags" in result
 
     @pytest.mark.asyncio
     async def test_response_parsing_fallback(self):
@@ -1125,7 +1089,6 @@ class TestSummarizeText:
 
             # Fallback: JSON 파싱 실패 → content[:500]이 summary, document_type=general
             assert result["summary"] == "이것은 JSON이 아닌 응답입니다."
-            assert result["tags"] == []
             assert result["document_type"] == "general"
             assert result["confidence"] == 0.0
 
@@ -1357,43 +1320,6 @@ class TestDocumentClassification:
             assert result["confidence"] == 0.0
 
     @pytest.mark.asyncio
-    async def test_tag_normalization(self):
-        """태그 정규화 (보험사명 통일)"""
-        resp = self._make_mock_response(
-            '{"type":"policy","confidence":0.9,"title":"제목","summary":"요약","tags":["메트라이프생명","실비","삼성생명보험"]}'
-        )
-
-        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
-             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
-            mock_client = AsyncMock()
-            mock_client.chat.completions.create.return_value = resp
-            mock_get_client.return_value = mock_client
-
-            result = await OpenAIService.summarize_text("텍스트")
-
-            assert "메트라이프" in result["tags"]
-            assert "실손보험" in result["tags"]
-            assert "삼성생명" in result["tags"]
-            assert "메트라이프생명" not in result["tags"]
-
-    @pytest.mark.asyncio
-    async def test_tag_deduplication(self):
-        """태그 중복 제거"""
-        resp = self._make_mock_response(
-            '{"type":"general","confidence":0.5,"title":"제목","summary":"요약","tags":["보험","보험","계약"]}'
-        )
-
-        with patch.object(OpenAIService, "_get_client") as mock_get_client, \
-             patch.object(OpenAIService, "_log_token_usage", new_callable=AsyncMock, return_value=True):
-            mock_client = AsyncMock()
-            mock_client.chat.completions.create.return_value = resp
-            mock_get_client.return_value = mock_client
-
-            result = await OpenAIService.summarize_text("텍스트")
-
-            assert result["tags"].count("보험") == 1
-
-    @pytest.mark.asyncio
     async def test_temperature_zero(self):
         """temperature=0 으로 호출 (일관성 보장)"""
         resp = self._make_mock_response(
@@ -1606,86 +1532,3 @@ class TestSummarizeTextEmptySummaryFallback:
             assert '"summary"' not in result["summary"]
 
 
-# =============================================================================
-# 4. OpenAIService.extract_tags 테스트 (5개)
-# =============================================================================
-
-class TestExtractTags:
-    """태그 추출 테스트"""
-
-    @pytest.mark.asyncio
-    async def test_extract_tags_calls_summarize(self):
-        """extract_tags는 summarize_text를 호출"""
-        with patch.object(OpenAIService, "summarize_text", new_callable=AsyncMock) as mock_summarize:
-            mock_summarize.return_value = {
-                "summary": "테스트 요약",
-                "tags": ["보험", "계약", "금융"],
-                "truncated": False
-            }
-
-            result = await OpenAIService.extract_tags("텍스트입니다.")
-
-            mock_summarize.assert_called_once()
-            assert result == ["보험", "계약", "금융"]
-
-    @pytest.mark.asyncio
-    async def test_extract_tags_returns_empty_on_error(self):
-        """에러 시 빈 리스트 반환"""
-        with patch.object(OpenAIService, "summarize_text", new_callable=AsyncMock) as mock_summarize:
-            mock_summarize.return_value = {
-                "summary": "요약 실패",
-                "tags": [],
-                "truncated": False
-            }
-
-            result = await OpenAIService.extract_tags("텍스트입니다.")
-
-            assert result == []
-
-    @pytest.mark.asyncio
-    async def test_extract_tags_handles_none_tags(self):
-        """tags가 None일 때 None 반환 (dict.get() 동작)
-
-        Note: result.get("tags", [])는 key가 존재하면 None도 그대로 반환.
-        이 테스트는 현재 코드 동작을 문서화함.
-        """
-        with patch.object(OpenAIService, "summarize_text", new_callable=AsyncMock) as mock_summarize:
-            mock_summarize.return_value = {
-                "summary": "요약",
-                "tags": None,
-                "truncated": False
-            }
-
-            result = await OpenAIService.extract_tags("텍스트입니다.")
-
-            # dict.get()은 key 존재 시 None도 그대로 반환
-            assert result is None
-
-    @pytest.mark.asyncio
-    async def test_extract_tags_with_credit_skipped(self):
-        """크레딧 스킵 시 빈 태그"""
-        with patch.object(OpenAIService, "summarize_text", new_callable=AsyncMock) as mock_summarize:
-            mock_summarize.return_value = {
-                "summary": "크레딧 부족",
-                "tags": [],
-                "credit_skipped": True,
-                "truncated": False
-            }
-
-            result = await OpenAIService.extract_tags("텍스트입니다.")
-
-            assert result == []
-
-    @pytest.mark.asyncio
-    async def test_extract_tags_returns_list_type(self):
-        """항상 리스트 타입 반환"""
-        with patch.object(OpenAIService, "summarize_text", new_callable=AsyncMock) as mock_summarize:
-            mock_summarize.return_value = {
-                "summary": "요약",
-                "tags": ["태그1", "태그2"],
-                "truncated": False
-            }
-
-            result = await OpenAIService.extract_tags("텍스트입니다.")
-
-            assert isinstance(result, list)
