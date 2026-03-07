@@ -9,7 +9,10 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { CenterPaneView } from '@/components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { Tooltip } from '@/shared/ui'
+import { DocumentTypeCell } from '@/shared/ui/DocumentTypeCell/DocumentTypeCell'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
+import { documentTypesService } from '@/services/documentTypesService'
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { RelationshipService, type Relationship } from '@/services/relationshipService'
 import { DocumentService, type CustomerDocumentItem } from '@/services/DocumentService'
 import {
@@ -200,7 +203,75 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     documents,
     isLoading,
     error,
+    refresh,
+    updateDocumentLocally,
   } = useCustomerDocumentsController(visible ? customerId : null)
+
+  const { showAlert } = useAppleConfirm()
+  const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
+
+  /** 문서 유형 변경 핸들러 (낙관적 업데이트 + 자동 펼침) */
+  const handleDocTypeChange = useCallback(async (documentId: string, newType: string, treePrefix: string = '') => {
+    if (updatingDocTypeId) return
+
+    const previousType = treePrefix
+      ? relatedGroups.flatMap(p => p.documents).find(d => d._id === documentId)?.document_type
+      : documents.find(d => d._id === documentId)?.document_type
+    updateDocumentLocally(documentId, { document_type: newType === 'unspecified' ? undefined : newType })
+
+    // 관계자 탭: relatedGroups 로컬 업데이트
+    if (treePrefix) {
+      setRelatedGroups(prev => prev.map(person => ({
+        ...person,
+        documents: person.documents.map(doc =>
+          doc._id === documentId ? { ...doc, document_type: newType === 'unspecified' ? undefined : newType } : doc
+        ),
+        categoryGroups: buildCategoryGroups(
+          person.documents.map(doc =>
+            doc._id === documentId ? { ...doc, document_type: newType === 'unspecified' ? undefined : newType } : doc
+          )
+        ),
+      })))
+    }
+
+    // 새 소분류 자동 펼침
+    const newCat = getCategoryForType(newType)
+    setExpandedNodes(prev => {
+      const next = new Set(prev)
+      next.add(`${treePrefix}cat:${newCat}`)
+      next.add(`${treePrefix}st:${newCat}/${newType}`)
+      return next
+    })
+
+    setUpdatingDocTypeId(documentId)
+    try {
+      await documentTypesService.updateDocumentType(documentId, newType)
+      void refresh()
+    } catch (error) {
+      console.error('[DocumentExplorer] 문서 유형 변경 실패:', error)
+      updateDocumentLocally(documentId, { document_type: previousType })
+      if (treePrefix) {
+        setRelatedGroups(prev => prev.map(person => ({
+          ...person,
+          documents: person.documents.map(doc =>
+            doc._id === documentId ? { ...doc, document_type: previousType } : doc
+          ),
+          categoryGroups: buildCategoryGroups(
+            person.documents.map(doc =>
+              doc._id === documentId ? { ...doc, document_type: previousType } : doc
+            )
+          ),
+        })))
+      }
+      await showAlert({
+        title: '변경 실패',
+        message: '문서 유형 변경에 실패했습니다.',
+        confirmText: '확인'
+      })
+    } finally {
+      setUpdatingDocTypeId(null)
+    }
+  }, [updatingDocTypeId, documents, relatedGroups, updateDocumentLocally, refresh, showAlert])
 
   // 검색어로 문서 필터링
   const filteredDocuments = useMemo(() => {
@@ -519,7 +590,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                           {subType.documents.map(doc => {
                             const fileIcon = DocumentUtils.getFileIcon(doc.mimeType, doc.originalName)
                             const fileClass = DocumentUtils.getFileTypeClass(doc.mimeType, doc.originalName)
-                            const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : '-'
                             const fileSize = doc.fileSize ? DocumentUtils.formatFileSize(doc.fileSize) : '-'
                             const hasDisplay = Boolean(doc.displayName)
                             const showName = filenameMode === 'display' && hasDisplay
@@ -565,7 +635,19 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                     </Tooltip>
                                   )}
                                 </span>
-                                <span className="cde-doc-row__type">{fileExt}</span>
+                                <span className="cde-doc-row__doctype" onClick={(e) => e.stopPropagation()}>
+                                  <DocumentTypeCell
+                                    documentType={doc.document_type}
+                                    isAnnualReport={doc.isAnnualReport}
+                                    isCustomerReview={doc.document_type === 'customer_review'}
+                                    onChange={(newType) => {
+                                      if (doc._id) {
+                                        handleDocTypeChange(doc._id, newType, prefix)
+                                      }
+                                    }}
+                                    isUpdating={updatingDocTypeId === doc._id}
+                                  />
+                                </span>
                                 <span className="cde-doc-row__size">{fileSize}</span>
                                 <span className="cde-doc-row__date">
                                   {doc.linkedAt ? formatDateTimeCompact(doc.linkedAt) : '-'}

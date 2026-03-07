@@ -373,7 +373,7 @@
 
   .cde-doc-row {
     display: grid;
-    grid-template-columns: 16px 1fr 36px 70px 88px 44px;
+    grid-template-columns: 16px 1fr 72px 50px 76px 44px;
     align-items: center;
     gap: 4px;
     padding: 4px var(--spacing-2);
@@ -439,12 +439,18 @@
     color: var(--color-ios-blue);
   }
 
-  .cde-doc-row__type {
+  .cde-doc-row__doctype {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .cde-doc-row__doctype .document-type-cell {
     font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: var(--color-text-tertiary);
-    text-align: right;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
