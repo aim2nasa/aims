@@ -800,7 +800,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
             {relatedTabLabel}
           </button>
         </div>
-        <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}>
+        <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}>
           <button
             type="button"
             className="cde-filename-toggle"
@@ -809,7 +809,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
               localStorage.setItem('aims-filename-mode', next)
               return next
             })}
-            aria-label={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
+            aria-label={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}
           >
             {filenameMode === 'display' ? '별칭' : '원본'}
           </button>

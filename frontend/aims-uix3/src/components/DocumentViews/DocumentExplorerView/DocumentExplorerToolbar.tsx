@@ -508,12 +508,12 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
         </Tooltip>
 
         {/* 🍎 파일명 표시 모드 토글 (별칭/원본) */}
-        <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'} placement="bottom">
+        <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'} placement="bottom">
           <button
             type="button"
             className="doc-explorer-toolbar__filename-mode-btn"
             onClick={() => onFilenameModeChange(filenameMode === 'display' ? 'original' : 'display')}
-            aria-label={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
+            aria-label={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}
           >
             {filenameMode === 'display' ? '별칭' : '원본'}
           </button>

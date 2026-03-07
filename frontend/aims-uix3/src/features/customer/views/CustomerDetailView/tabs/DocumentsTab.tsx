@@ -1215,7 +1215,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <SortIndicator field="originalName" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
                 {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
-                <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}>
+                <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}>
                   <button
                     type="button"
                     className="filename-mode-toggle"
@@ -1225,7 +1225,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                       setFilenameMode(next)
                       localStorage.setItem('aims-filename-mode', next)
                     }}
-                    aria-label={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
+                    aria-label={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}
                   >
                     {filenameMode === 'display' ? '별칭' : '원본'}
                   </button>
