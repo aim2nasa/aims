@@ -551,7 +551,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                     <span className="cde-doc-row__name" title={doc.originalName}>{showName}</span>
                                   )}
                                   {doc.relatedCustomerId && (
-                                    <Tooltip content={doc.customerId === customerId ? `원본: ${customerName} 내 문서` : '다른 고객 문서함에서 연결됨'}>
+                                    <Tooltip content={`원본: ${customerName} ${group.label} > ${subType.label}`}>
                                       <span className="cde-doc-row__linked-badge">
                                         <SFSymbol name="paperclip" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
                                       </span>
