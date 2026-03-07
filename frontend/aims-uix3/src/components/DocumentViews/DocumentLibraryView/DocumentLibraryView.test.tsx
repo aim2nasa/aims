@@ -95,7 +95,7 @@ const mockDocumentStatusContext = {
     summaryModalOpen: false,
     fullTextModalOpen: false,
     linkModalOpen: false,
-    isPollingEnabled: true,
+    // polling removed - SSE always on
     pollingInterval: 3000,
   },
   actions: {
@@ -115,7 +115,7 @@ const mockDocumentStatusContext = {
     closeFullTextModal: vi.fn(),
     openLinkModal: vi.fn(),
     closeLinkModal: vi.fn(),
-    togglePolling: vi.fn(),
+    // togglePolling removed - SSE always on
   },
 }
 

@@ -39,8 +39,6 @@ vi.mock('../../../../contexts/DocumentStatusContext', () => ({
       isLoading: false,
       error: null,
       searchTerm: mockSearchQuery,
-      lastUpdated: null,
-      isPollingEnabled: false,
       apiHealth: null,
       currentPage: 1,
       itemsPerPage: 10,
@@ -57,9 +55,6 @@ vi.mock('../../../../contexts/DocumentStatusContext', () => ({
       setSelectedDocument: vi.fn(),
       setLoading: vi.fn(),
       setError: vi.fn(),
-      setLastUpdated: vi.fn(),
-      setPollingEnabled: vi.fn(),
-      togglePolling: vi.fn(),
       setApiHealth: vi.fn(),
       fetchDocuments: vi.fn(),
       refreshDocuments: vi.fn(),
@@ -83,7 +78,7 @@ vi.mock('../../../../controllers/useDocumentStatusController', () => ({
     isLoading: false,
     error: null,
     totalCount: 0,
-    lastUpdated: null,
+    // lastUpdated removed
     paginatedDocuments: [],
     filteredDocuments: [],
     totalPages: 1,
@@ -94,8 +89,7 @@ vi.mock('../../../../controllers/useDocumentStatusController', () => ({
     handlePageChange: vi.fn(),
     handleLimitChange: vi.fn(),
     handleColumnSort: vi.fn(),
-    isPollingEnabled: false,
-    togglePolling: vi.fn(),
+    // polling removed
     refreshDocuments: vi.fn(),
   })
 }))

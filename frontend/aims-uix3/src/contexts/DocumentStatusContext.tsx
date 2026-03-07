@@ -16,8 +16,6 @@ export interface DocumentStatusState {
   isLoading: boolean
   error: string | null
   searchTerm: string
-  lastUpdated: Date | null
-  isPollingEnabled: boolean
   apiHealth: boolean | null
   // 🍎 Pagination State
   currentPage: number
@@ -42,9 +40,6 @@ export interface DocumentStatusActions {
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   setSearchTerm: (term: string) => void
-  setLastUpdated: (date: Date) => void
-  setPollingEnabled: (enabled: boolean) => void
-  togglePolling: () => void
   setApiHealth: (health: boolean | null) => void
   fetchDocuments: (isInitialLoad?: boolean) => Promise<void>
   refreshDocuments: () => Promise<void>

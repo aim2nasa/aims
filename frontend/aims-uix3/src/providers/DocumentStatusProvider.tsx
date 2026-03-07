@@ -54,9 +54,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [isLoading, setLoading] = useState<boolean>(documentCache.length === 0)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState<string>(searchQuery)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-  // 🔄 SSE 실시간 업데이트 활성화 여부 (기존 isPollingEnabled와 호환 유지)
-  const [isPollingEnabled, setPollingEnabled] = useState<boolean>(true)
   const [apiHealth, setApiHealth] = useState<boolean | null>(null)
 
   // 🍎 Pagination State
@@ -229,7 +226,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           return finalDocs
         })
 
-        setLastUpdated(new Date())
       } catch (err) {
         if (!silent && typeof window !== 'undefined') {
           setError('문서 목록을 불러올 수 없습니다.')
@@ -314,13 +310,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const refreshDocuments = useCallback(async () => {
     await fetchDocuments(false)
   }, [fetchDocuments])
-
-  /**
-   * 폴링 토글
-   */
-  const togglePolling = useCallback(() => {
-    setPollingEnabled((prev) => !prev)
-  }, [])
 
   /**
    * API 헬스 체크
@@ -440,7 +429,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       checkApiHealthRef.current()
     },
     {
-      enabled: isPollingEnabled,
+      enabled: true,
       // 🔧 FIX: SSE 이벤트에서 받은 progress 값을 직접 상태에 반영
       // API 재호출 없이 즉시 UI 업데이트 (MongoDB 동기화 지연 문제 해결)
       onDocumentChange: (event) => {
@@ -515,7 +504,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }), [documents])
 
   useEffect(() => {
-    if (hasProcessingDocuments && isPollingEnabled) {
+    if (hasProcessingDocuments) {
       freshnessIntervalRef.current = setInterval(() => {
         fetchDocumentsRef.current(false, true)
       }, 30000)
@@ -526,7 +515,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         freshnessIntervalRef.current = null
       }
     }
-  }, [hasProcessingDocuments, isPollingEnabled])
+  }, [hasProcessingDocuments])
 
   /**
    * 🔍 검색 및 필터링
@@ -713,8 +702,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       isLoading,
       error,
       searchTerm,
-      lastUpdated,
-      isPollingEnabled,
       apiHealth,
       currentPage,
       itemsPerPage,
@@ -732,8 +719,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       isLoading,
       error,
       searchTerm,
-      lastUpdated,
-      isPollingEnabled,
       apiHealth,
       currentPage,
       itemsPerPage,
@@ -755,9 +740,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       setLoading,
       setError,
       setSearchTerm,
-      setLastUpdated,
-      setPollingEnabled,
-      togglePolling,
       setApiHealth,
       fetchDocuments,
       refreshDocuments,
@@ -776,7 +758,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     [
       fetchDocuments,
       refreshDocuments,
-      togglePolling,
       checkApiHealth,
       handlePageChange,
       handleLimitChange,

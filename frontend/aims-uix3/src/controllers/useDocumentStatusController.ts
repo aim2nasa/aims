@@ -190,9 +190,7 @@ export const useDocumentStatusController = () => {
     filteredDocuments: state.filteredDocuments,
     isLoading: state.isLoading,
     error: state.error,
-    isPollingEnabled: state.isPollingEnabled,
     apiHealth: state.apiHealth,
-    lastUpdated: state.lastUpdated,
 
     // 🍎 Pagination State
     currentPage: state.currentPage,
@@ -206,7 +204,6 @@ export const useDocumentStatusController = () => {
     sortDirection: state.sortDirection,
 
     // Context Actions
-    togglePolling: actions.togglePolling,
     refreshDocuments: actions.refreshDocuments,
 
     // 🍎 Pagination Actions

@@ -78,13 +78,6 @@
     flex: 1;
   }
 
-  /* === RIGHT: Last Updated + 편집 + 폴링 + 새로고침 === */
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
   /* === 🍎 EDIT MODE ICON BUTTON: iOS 스타일 아이콘 버튼 === */
   .edit-mode-icon-button {
     display: flex;
@@ -125,19 +118,6 @@
 
   html[data-theme="dark"] .edit-mode-icon-button--active {
     color: var(--color-success);
-  }
-
-  .last-updated {
-    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-weight: 400;
-    color: var(--color-ios-text-quaternary-light);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-
-  html[data-theme="dark"] .last-updated {
-    color: var(--color-ios-text-quaternary-dark);
   }
 
   /* === SETTINGS TOGGLE BUTTON === */
@@ -209,125 +189,6 @@
     }
   }
 
-  .polling-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: 6px;
-    background-color: transparent;
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-  }
-
-  .polling-toggle:hover {
-    /* Remove hover background to keep icon background invisible */
-    background-color: transparent;
-  }
-
-  html[data-theme="dark"] .polling-toggle:hover {
-    /* Ensure no background in dark theme as well */
-    background-color: transparent;
-  }
-
-  .polling-dot {
-    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 8px deprecated (접근성) ) */
-    line-height: 1;
-  }
-
-  .dot-active {
-    color: var(--color-ios-green-light); /* 밝은 녹색 - 라이트 테마에서 더 생동감 있게 */
-    animation: polling-pulse 2s ease-in-out infinite;
-  }
-
-  html[data-theme="dark"] .dot-active {
-    color: var(--color-ios-green-dark);
-  }
-
-  .dot-inactive {
-    color: var(--color-ios-text-quaternary-light);
-    opacity: 0.4;
-  }
-
-  html[data-theme="dark"] .dot-inactive {
-    color: var(--color-ios-text-quaternary-dark);
-  }
-
-  @keyframes polling-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  .refresh-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: 6px;
-    background-color: transparent;
-    color: var(--color-primary-500);
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-  }
-
-  .refresh-button:hover:not(:disabled) {
-    /* Remove hover background to keep icon background invisible */
-    background-color: transparent;
-  }
-
-  .refresh-button:hover:not(:disabled) .refresh-icon {
-    /* 🍎 Progressive Disclosure: 호버 시 아이콘 색상 진하게 + 스케일 */
-    color: var(--color-primary-700);
-    transform: scale(1.15);
-  }
-
-  html[data-theme="dark"] .refresh-button:hover:not(:disabled) {
-    /* Ensure no background in dark theme as well */
-    background-color: transparent;
-  }
-
-  html[data-theme="dark"] .refresh-button:hover:not(:disabled) .refresh-icon {
-    /* 다크 테마에서는 더 밝게 + 스케일 */
-    color: var(--color-primary-300);
-    transform: scale(1.15);
-  }
-
-  .refresh-button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  .refresh-icon {
-    /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
-    line-height: 1;
-    display: inline-block;
-    color: inherit;
-    transition: transform 0.3s ease-out, color 0.15s ease-out;
-  }
-
-  .icon-spinning {
-    animation: refresh-spin 1s linear infinite;
-  }
-
-  .icon-clicked {
-    /* 🍎 Progressive Disclosure: 클릭 피드백 - 체크마크 표시 */
-    color: var(--color-success);
-    transform: scale(1.1);
-  }
-
-  html[data-theme="dark"] .icon-clicked {
-    color: var(--color-success);
-  }
-
-  @keyframes refresh-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
   /* === RESPONSIVE === */
   @media (max-width: 768px) {
     .document-status-header {
@@ -341,16 +202,8 @@
 
   /* === ACCESSIBILITY === */
   @media (prefers-reduced-motion: reduce) {
-    .polling-toggle,
-    .refresh-button,
-    .refresh-icon {
+    .settings-toggle {
       transition: none;
-      animation: none;
-    }
-
-    .dot-active,
-    .icon-spinning {
-      animation: none;
     }
   }
 

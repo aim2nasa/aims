@@ -26,8 +26,6 @@ const mockContextValue = {
     filteredDocuments: [] as Document[],
     isLoading: false,
     error: null,
-    isPollingEnabled: false,
-    lastUpdated: null,
     selectedDocument: null,
     searchTerm: '',
     apiHealth: true,
@@ -37,7 +35,6 @@ const mockContextValue = {
     paginatedDocuments: [] as Document[],
   },
   actions: {
-    togglePolling: vi.fn(),
     refreshDocuments: vi.fn(),
     handlePageChange: vi.fn(),
     handleLimitChange: vi.fn(),
@@ -79,13 +76,12 @@ describe('useDocumentStatusController', () => {
       expect(result.current.filteredDocuments).toEqual([])
       expect(result.current.isLoading).toBe(false)
       expect(result.current.error).toBeNull()
-      expect(result.current.isPollingEnabled).toBe(false)
+      expect(result.current.apiHealth).toBe(true)
     })
 
     it('Context actions를 올바르게 노출한다', () => {
       const { result } = renderHook(() => useDocumentStatusController())
 
-      expect(result.current.togglePolling).toBeDefined()
       expect(result.current.refreshDocuments).toBeDefined()
     })
   })
@@ -212,16 +208,6 @@ describe('useDocumentStatusController', () => {
   })
 
   describe('Context Actions 통합', () => {
-    it('togglePolling를 올바르게 호출한다', () => {
-      const { result } = renderHook(() => useDocumentStatusController())
-
-      act(() => {
-        result.current.togglePolling()
-      })
-
-      expect(mockContextValue.actions.togglePolling).toHaveBeenCalled()
-    })
-
     it('refreshDocuments를 올바르게 호출한다', () => {
       const { result } = renderHook(() => useDocumentStatusController())
 
