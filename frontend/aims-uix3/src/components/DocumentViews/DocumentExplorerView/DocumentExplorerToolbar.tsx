@@ -28,9 +28,6 @@ export interface DocumentExplorerToolbarProps {
   totalDocuments: number
   groupCount: number
   isLoading?: boolean
-  /** 기타 분류 최소 기준 (태그별 분류 시) */
-  minTagCount: number
-  onMinTagCountChange: (value: number) => void
   /** 정렬 기준 */
   sortBy: DocumentSortBy
   sortDirection: SortDirection
@@ -57,9 +54,7 @@ export interface DocumentExplorerToolbarProps {
 
 const GROUP_BY_OPTIONS: DropdownOption[] = [
   { value: 'customer', label: '고객별' },
-  { value: 'customerTag', label: '고객>태그별' },
   { value: 'badgeType', label: '문서유형별' },
-  { value: 'tag', label: '태그별' },
   { value: 'date', label: '날짜별' },
 ]
 
@@ -79,8 +74,6 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   totalDocuments,
   groupCount,
   isLoading = false,
-  minTagCount,
-  onMinTagCountChange,
   sortBy,
   sortDirection,
   onSortByChange,
@@ -215,33 +208,6 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
           onChange={handleGroupByChange}
         />
       </div>
-
-      {/* 기타 분류 기준 (태그별/고객>태그별 분류 시에만 표시) */}
-      {(groupBy === 'tag' || groupBy === 'customerTag') && (
-        <Tooltip content={`${minTagCount}건 이하 태그는 기타로 분류`} placement="bottom">
-          <div className="doc-explorer-toolbar__min-count">
-            <button
-              type="button"
-              className="doc-explorer-toolbar__stepper-btn"
-              onClick={() => minTagCount > 1 && onMinTagCountChange(minTagCount - 1)}
-              disabled={minTagCount <= 1}
-              aria-label="기타 분류 기준 감소"
-            >
-              −
-            </button>
-            <span className="doc-explorer-toolbar__stepper-value">{minTagCount}</span>
-            <button
-              type="button"
-              className="doc-explorer-toolbar__stepper-btn"
-              onClick={() => minTagCount < 99 && onMinTagCountChange(minTagCount + 1)}
-              disabled={minTagCount >= 99}
-              aria-label="기타 분류 기준 증가"
-            >
-              +
-            </button>
-          </div>
-        </Tooltip>
-      )}
 
       {/* 검색 입력 */}
       <div className="doc-explorer-toolbar__search">

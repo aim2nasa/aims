@@ -8,7 +8,7 @@ import type { Document } from '@/types/documentStatus'
 /**
  * 문서 분류 기준
  */
-export type DocumentGroupBy = 'customer' | 'badgeType' | 'tag' | 'date' | 'customerTag'
+export type DocumentGroupBy = 'customer' | 'badgeType' | 'date'
 
 /**
  * 빠른 필터 타입
@@ -68,11 +68,9 @@ export const SORT_BY_LABELS: Record<DocumentSortBy, string> = {
  * 분류 기준별 라벨
  */
 export const GROUP_BY_LABELS: Record<DocumentGroupBy, string> = {
-  customer: '고객',
+  customer: '고객별',
   badgeType: '문서유형별',
-  tag: '태그별',
   date: '날짜별',
-  customerTag: '고객>태그별',
 }
 
 /**
@@ -103,10 +101,9 @@ export interface DocumentTreeNode {
     customerId?: string
     customerType?: 'personal' | 'corporate'
     badgeType?: 'TXT' | 'OCR' | 'BIN'
-    tag?: string
     year?: number
     month?: number
-    /** 특수 폴더 여부 (태그 없음, 기타 등) */
+    /** 특수 폴더 여부 (기타 등) */
     isSpecial?: boolean
     /** 업로드 날짜 (날짜별 분류 시) */
     uploadedAt?: string

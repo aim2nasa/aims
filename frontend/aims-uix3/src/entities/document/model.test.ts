@@ -2,11 +2,11 @@
  * Document Model Tests
  * @since 2025-10-14
  *
- * DocumentUtils 및 DocumentTagUtils 테스트
+ * DocumentUtils 테스트
  */
 
 import { describe, it, expect } from 'vitest';
-import { DocumentUtils, DocumentTagUtils, type Document } from './model';
+import { DocumentUtils, type Document } from './model';
 
 // ============================================
 // DocumentUtils.getDisplayName 테스트
@@ -490,101 +490,3 @@ describe('DocumentUtils 정렬 함수', () => {
   });
 });
 
-// ============================================
-// DocumentTagUtils 테스트
-// ============================================
-describe('DocumentTagUtils', () => {
-  const createDoc = (tags: string[] = []): Document => ({
-    _id: 'doc-1',
-    filename: 'file.pdf',
-    tags,
-    createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-01-01T00:00:00Z',
-  } as Document);
-
-  describe('addTag', () => {
-    it('새 태그를 추가한다', () => {
-      const doc = createDoc(['기존태그']);
-      const updated = DocumentTagUtils.addTag(doc, '새태그');
-
-      expect(updated.tags).toEqual(['기존태그', '새태그']);
-    });
-
-    it('이미 존재하는 태그는 추가하지 않는다', () => {
-      const doc = createDoc(['기존태그']);
-      const updated = DocumentTagUtils.addTag(doc, '기존태그');
-
-      expect(updated.tags).toEqual(['기존태그']);
-    });
-
-    it('원본 문서를 변경하지 않는다', () => {
-      const doc = createDoc(['기존태그']);
-      const updated = DocumentTagUtils.addTag(doc, '새태그');
-
-      expect(doc.tags).toEqual(['기존태그']); // 원본은 변경 안 됨
-      expect(updated.tags).toEqual(['기존태그', '새태그']);
-    });
-  });
-
-  describe('removeTag', () => {
-    it('태그를 제거한다', () => {
-      const doc = createDoc(['태그1', '태그2', '태그3']);
-      const updated = DocumentTagUtils.removeTag(doc, '태그2');
-
-      expect(updated.tags).toEqual(['태그1', '태그3']);
-    });
-
-    it('존재하지 않는 태그를 제거해도 에러가 발생하지 않는다', () => {
-      const doc = createDoc(['태그1']);
-      const updated = DocumentTagUtils.removeTag(doc, '없는태그');
-
-      expect(updated.tags).toEqual(['태그1']);
-    });
-
-    it('원본 문서를 변경하지 않는다', () => {
-      const doc = createDoc(['태그1', '태그2']);
-      const updated = DocumentTagUtils.removeTag(doc, '태그1');
-
-      expect(doc.tags).toEqual(['태그1', '태그2']); // 원본은 변경 안 됨
-      expect(updated.tags).toEqual(['태그2']);
-    });
-  });
-
-  describe('toggleTag', () => {
-    it('없는 태그는 추가한다', () => {
-      const doc = createDoc(['태그1']);
-      const updated = DocumentTagUtils.toggleTag(doc, '태그2');
-
-      expect(updated.tags).toEqual(['태그1', '태그2']);
-    });
-
-    it('있는 태그는 제거한다', () => {
-      const doc = createDoc(['태그1', '태그2']);
-      const updated = DocumentTagUtils.toggleTag(doc, '태그1');
-
-      expect(updated.tags).toEqual(['태그2']);
-    });
-
-    it('원본 문서를 변경하지 않는다', () => {
-      const doc = createDoc(['태그1']);
-      const updated = DocumentTagUtils.toggleTag(doc, '태그1');
-
-      expect(doc.tags).toEqual(['태그1']); // 원본은 변경 안 됨
-      expect(updated.tags).toEqual([]);
-    });
-  });
-
-  describe('COMMON_TAGS', () => {
-    it('자주 사용되는 태그 목록을 제공한다', () => {
-      expect(DocumentTagUtils.COMMON_TAGS).toContain('보험청구서');
-      expect(DocumentTagUtils.COMMON_TAGS).toContain('진단서');
-      expect(DocumentTagUtils.COMMON_TAGS).toContain('처방전');
-      expect(DocumentTagUtils.COMMON_TAGS).toContain('영수증');
-      expect(DocumentTagUtils.COMMON_TAGS).toContain('계약서');
-      expect(DocumentTagUtils.COMMON_TAGS).toContain('신분증');
-      expect(DocumentTagUtils.COMMON_TAGS).toContain('주민등록등본');
-      expect(DocumentTagUtils.COMMON_TAGS).toContain('통장사본');
-      expect(DocumentTagUtils.COMMON_TAGS).toContain('기타서류');
-    });
-  });
-});

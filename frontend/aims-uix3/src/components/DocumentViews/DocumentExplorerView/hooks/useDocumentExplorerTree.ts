@@ -28,7 +28,6 @@ export interface UseDocumentExplorerTreeResult {
   treeData: DocumentTreeData
   filteredDocuments: Document[]
   isLoading: boolean
-  minTagCount: number
   sortBy: DocumentSortBy
   sortDirection: SortDirection
   quickFilter: QuickFilterType
@@ -45,7 +44,6 @@ export interface UseDocumentExplorerTreeResult {
   setSearchTerm: (term: string) => void
   setSelectedDocumentId: (id: string | null) => void
   expandToDocument: (documentId: string) => void
-  setMinTagCount: (value: number) => void
   setSortBy: (sortBy: DocumentSortBy) => void
   toggleSortDirection: () => void
   setQuickFilter: (filter: QuickFilterType) => void
@@ -78,10 +76,6 @@ export function useDocumentExplorerTree({
   const [searchTerm, setSearchTermState] = usePersistedState<string>(
     'doc-explorer-search',
     ''
-  )
-  const [minTagCount, setMinTagCountState] = usePersistedState<number>(
-    'doc-explorer-min-tag-count',
-    1
   )
   const [sortBy, setSortByState] = usePersistedState<DocumentSortBy>(
     'doc-explorer-sort-by',
@@ -185,7 +179,7 @@ export function useDocumentExplorerTree({
   // 트리 데이터 빌드 (정렬 적용)
   // 검색어가 있을 때도 그룹핑 유지, 매칭 그룹을 상단에 표시
   const treeData = useMemo(() => {
-    const tree = buildTree(filteredDocuments, groupBy, minTagCount)
+    const tree = buildTree(filteredDocuments, groupBy)
 
     // 검색어가 있을 때 매칭 그룹을 상단으로 정렬
     let sortedNodes = tree.nodes
@@ -202,7 +196,7 @@ export function useDocumentExplorerTree({
     // 문서 노드에 정렬 적용
     sortedNodes = sortTreeNodes(sortedNodes, sortBy, sortDirection, filenameMode)
     return { ...tree, nodes: sortedNodes }
-  }, [filteredDocuments, groupBy, minTagCount, sortBy, sortDirection, searchTerm, filenameMode])
+  }, [filteredDocuments, groupBy, sortBy, sortDirection, searchTerm, filenameMode])
 
   // expandedKeys를 Set으로 변환
   const expandedKeysSet = useMemo(() => new Set(expandedKeys), [expandedKeys])
@@ -285,14 +279,6 @@ export function useDocumentExplorerTree({
       setSearchTermState(term)
     },
     [setSearchTermState]
-  )
-
-  // 기타 분류 최소 기준 설정
-  const setMinTagCount = useCallback(
-    (value: number) => {
-      setMinTagCountState(value)
-    },
-    [setMinTagCountState]
   )
 
   // 정렬 기준 설정
@@ -461,7 +447,6 @@ export function useDocumentExplorerTree({
     treeData,
     filteredDocuments,
     isLoading,
-    minTagCount,
     sortBy,
     sortDirection,
     quickFilter,
@@ -478,7 +463,6 @@ export function useDocumentExplorerTree({
     setSearchTerm,
     setSelectedDocumentId,
     expandToDocument,
-    setMinTagCount,
     setSortBy,
     toggleSortDirection,
     setQuickFilter,

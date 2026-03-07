@@ -23,7 +23,6 @@ export {
   DocumentSearchQuerySchema,
   DocumentSearchResponseSchema,
   DocumentUtils,
-  DocumentTagUtils,
 } from './model';
 
 // API 함수 내보내기

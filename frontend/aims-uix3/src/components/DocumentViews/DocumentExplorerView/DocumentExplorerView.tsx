@@ -160,7 +160,6 @@ const DocumentExplorerContent: React.FC<{
     selectedDocumentId,
     isAllExpanded,
     treeData: docTreeData,
-    minTagCount,
     sortBy,
     sortDirection,
     quickFilter,
@@ -173,7 +172,6 @@ const DocumentExplorerContent: React.FC<{
     toggleExpandAll,
     setSearchTerm,
     setSelectedDocumentId,
-    setMinTagCount,
     setSortBy,
     setQuickFilter,
     addToRecentDocuments,
@@ -343,8 +341,6 @@ const DocumentExplorerContent: React.FC<{
         totalDocuments={treeData.totalDocuments}
         groupCount={treeData.groupStats.groupCount}
         isLoading={isLoading}
-        minTagCount={minTagCount}
-        onMinTagCountChange={setMinTagCount}
         sortBy={sortBy}
         sortDirection={sortDirection}
         onSortByChange={setSortBy}

@@ -83,46 +83,6 @@
     font-size: 10px;
   }
 
-  /* 기타 분류 기준 (Stepper) */
-  .doc-explorer-toolbar__min-count {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  .doc-explorer-toolbar__stepper-btn {
-    width: 18px;
-    height: 18px;
-    padding: 0;
-    border: 1px solid var(--color-border);
-    border-radius: 3px;
-    background: var(--color-bg-primary);
-    color: var(--color-text-primary);
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1;
-    cursor: pointer;
-    transition: all var(--explorer-transition);
-  }
-
-  .doc-explorer-toolbar__stepper-btn:hover:not(:disabled) {
-    background: var(--color-bg-hover);
-    border-color: var(--color-text-tertiary);
-  }
-
-  .doc-explorer-toolbar__stepper-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .doc-explorer-toolbar__stepper-value {
-    min-width: 16px;
-    text-align: center;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-  }
-
   /* Sort Buttons */
   .doc-explorer-toolbar__sort {
     display: flex;
