@@ -542,20 +542,22 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                     decorative={true}
                                   />
                                 </span>
-                                {altName ? (
-                                  <Tooltip content={altName}>
-                                    <span className="cde-doc-row__name">{showName}</span>
-                                  </Tooltip>
-                                ) : (
-                                  <span className="cde-doc-row__name" title={doc.originalName}>{showName}</span>
-                                )}
-                                {ownerCustomerId && doc.customerId && doc.customerId !== ownerCustomerId && (
-                                  <Tooltip content="다른 고객 문서함에서 연결됨">
-                                    <span className="cde-doc-row__linked-badge">
-                                      <SFSymbol name="link" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
-                                    </span>
-                                  </Tooltip>
-                                )}
+                                <span className="cde-doc-row__name-cell">
+                                  {altName ? (
+                                    <Tooltip content={altName}>
+                                      <span className="cde-doc-row__name">{showName}</span>
+                                    </Tooltip>
+                                  ) : (
+                                    <span className="cde-doc-row__name" title={doc.originalName}>{showName}</span>
+                                  )}
+                                  {ownerCustomerId && doc.customerId && doc.customerId !== ownerCustomerId && (
+                                    <Tooltip content="다른 고객 문서함에서 연결됨">
+                                      <span className="cde-doc-row__linked-badge">
+                                        <SFSymbol name="link" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+                                      </span>
+                                    </Tooltip>
+                                  )}
+                                </span>
                                 <span className="cde-doc-row__type">{fileExt}</span>
                                 <span className="cde-doc-row__size">{fileSize}</span>
                                 <span className="cde-doc-row__date">

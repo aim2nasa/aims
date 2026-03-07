@@ -409,6 +409,14 @@
   :root[data-theme="dark"] .cde-doc-row__icon.file-icon--text { color: var(--color-file-text-dark); }
   :root[data-theme="dark"] .cde-doc-row__icon.file-icon--default { color: var(--color-file-default-dark); }
 
+  .cde-doc-row__name-cell {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .cde-doc-row__name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -423,7 +431,6 @@
     flex-shrink: 0;
     color: var(--color-text-tertiary);
     opacity: 0.6;
-    margin-left: 2px;
   }
 
   .cde-doc-row__type {
