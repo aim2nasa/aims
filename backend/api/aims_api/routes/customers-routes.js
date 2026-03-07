@@ -780,7 +780,6 @@ router.post('/customers/bulk', authenticateJWT, async (req, res) => {
             contracts: [],
             documents: [],
             consultations: [],
-            tags: [],
             meta: {
               created_at: now,
               updated_at: now,
