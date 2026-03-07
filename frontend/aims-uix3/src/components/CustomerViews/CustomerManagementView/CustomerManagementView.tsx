@@ -653,10 +653,9 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     {
       icon: (
         <SFSymbol
-          name="person-2"
+          name="person.2"
           size={SFSymbolSize.CALLOUT}
           weight={SFSymbolWeight.MEDIUM}
-          style={{ color: 'var(--color-ios-purple)' }}
         />
       ),
       title: '관계별 고객 보기',

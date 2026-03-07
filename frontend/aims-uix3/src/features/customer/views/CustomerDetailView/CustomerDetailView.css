@@ -213,7 +213,7 @@
   }
 
   .customer-detail-view .form-section__title--relationships svg {
-    color: var(--color-menu-icon-team); /* 관계별 보기와 동일 - purple */
+    color: var(--color-menu-icon-team); /* 관계별 보기와 동일 - pink */
   }
 
   .customer-detail-view .form-section__title--memo svg {
@@ -432,7 +432,7 @@
   }
 
   .customer-detail-view .tabs-bar__tab[data-tab-key="relationships"] svg {
-    color: var(--color-menu-icon-team); /* 관계별 보기(person-2)와 동일 - purple */
+    color: var(--color-menu-icon-team); /* 관계별 보기(person-2)와 동일 - pink */
   }
 
   .customer-detail-view .tabs-bar__tab[data-tab-key="documents"] svg {

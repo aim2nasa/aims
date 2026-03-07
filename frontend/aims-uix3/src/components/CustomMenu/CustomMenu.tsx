@@ -35,7 +35,7 @@ const MenuIcons = {
   ),
   Team: () => (
     <SFSymbol
-      name="heart-fill"
+      name="person.2"
       size={SFSymbolSize.CALLOUT}
       weight={SFSymbolWeight.MEDIUM}
     />

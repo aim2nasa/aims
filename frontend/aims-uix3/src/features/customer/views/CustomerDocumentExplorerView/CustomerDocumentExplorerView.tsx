@@ -780,7 +780,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
             className={`cde-tabs__tab ${activeTab === 'related' ? 'cde-tabs__tab--active' : ''}`}
             onClick={() => setActiveTab('related')}
           >
-            <SFSymbol name={customerType === '법인' ? 'person.2' : 'heart'} size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} color="var(--color-warning-500)" decorative={true} />
+            <SFSymbol name="person.2" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
             {relatedTabLabel}
           </button>
         </div>

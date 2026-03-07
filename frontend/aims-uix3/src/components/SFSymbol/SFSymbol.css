@@ -1607,22 +1607,7 @@
     content: none;
   }
 
-  /* PERSON.2 (Switch Account) SYMBOL - 계정 전환 아이콘 */
-  .sf-symbol--person-2 .sf-symbol__shape::before {
-    content: '👥';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 1.1em;
-    line-height: 1;
-    opacity: 1;
-    filter: grayscale(100%);
-  }
-
-  .sf-symbol--person-2 .sf-symbol__shape::after {
-    content: none;
-  }
+  /* PERSON.2 중복 정의 제거됨 — 676번 줄의 SVG mask 버전 사용 */
 
   /* PHONE SYMBOL - 전화 아이콘 */
   .sf-symbol--phone .sf-symbol__shape::before {
