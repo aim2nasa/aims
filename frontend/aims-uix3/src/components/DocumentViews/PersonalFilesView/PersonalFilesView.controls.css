@@ -1,6 +1,6 @@
 @layer components {
 
-  /* ===== 폴링 및 새로고침 컨트롤 ===== */
+  /* ===== 툴바 컨트롤 ===== */
 
   /* 툴바 divider */
   .toolbar-actions .toolbar-divider {
@@ -9,93 +9,6 @@
     background: var(--color-border);
     margin: 0 8px;
     flex-shrink: 0;
-  }
-
-  /* Last Updated 표시 */
-  .toolbar-actions .last-updated {
-    font-size: var(--font-size-caption-1);
-    color: var(--color-ios-text-tertiary-light);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  html[data-theme="dark"] .toolbar-actions .last-updated {
-    color: var(--color-ios-text-tertiary-dark);
-  }
-
-  /* 폴링 토글 버튼 */
-  .toolbar-actions .polling-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    padding: 6px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    opacity: 0.7;
-    flex-shrink: 0;
-  }
-
-  .toolbar-actions .polling-toggle:hover {
-    background: transparent;
-    opacity: 1;
-    transform: scale(1.1);
-  }
-
-  .toolbar-actions .polling-dot {
-    font-size: var(--font-size-caption-1);
-    font-family: var(--font-family-text);
-    transition: color 0.2s ease;
-  }
-
-  .toolbar-actions .dot-active {
-    color: var(--color-ios-green-light);
-  }
-
-  html[data-theme="dark"] .toolbar-actions .dot-active {
-    color: var(--color-ios-green-dark);
-  }
-
-  .toolbar-actions .dot-inactive {
-    color: var(--color-ios-text-quaternary-light);
-  }
-
-  html[data-theme="dark"] .toolbar-actions .dot-inactive {
-    color: var(--color-ios-text-quaternary-dark);
-  }
-
-  /* 새로고침 버튼 */
-  .toolbar-actions .refresh-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    padding: 6px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    opacity: 0.7;
-    flex-shrink: 0;
-    color: var(--color-text-secondary);
-  }
-
-  .toolbar-actions .refresh-button:hover {
-    background: transparent;
-    opacity: 1;
-    transform: scale(1.1);
-  }
-
-  .toolbar-actions .refresh-button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .toolbar-actions .refresh-button:disabled:hover {
-    transform: none;
   }
 
   /* === 🍎 DELETE MODE: 체크박스 스타일 === */

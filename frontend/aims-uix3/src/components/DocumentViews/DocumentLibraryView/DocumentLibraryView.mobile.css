@@ -32,11 +32,6 @@
       gap: 8px;
     }
 
-    /* 최근 업데이트 텍스트 숨김 (모바일에서 공간 절약) */
-    .header-right-section .last-updated {
-      display: none;
-    }
-
     /* 메인 컨테이너 갭 축소 */
     .document-library-view {
       gap: 4px;

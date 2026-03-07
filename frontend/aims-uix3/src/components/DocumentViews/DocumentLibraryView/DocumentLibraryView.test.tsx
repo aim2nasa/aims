@@ -248,10 +248,6 @@ vi.mock('../components/DocumentActionIcons', () => ({
   SummaryIcon: () => <span data-testid="summary-icon">📝</span>,
 }))
 
-vi.mock('../../RefreshButton/RefreshButton', () => ({
-  default: () => <button data-testid="refresh-button">새로고침</button>,
-}))
-
 vi.mock('../DocumentStatusView/components/DocumentDetailModal', () => ({
   default: () => null,
 }))

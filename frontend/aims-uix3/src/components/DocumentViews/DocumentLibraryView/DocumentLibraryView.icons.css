@@ -327,11 +327,6 @@
       padding: 6px 8px;
     }
 
-    /* 최근 업데이트 텍스트 숨김 (공간 절약) */
-    .header-right-section .last-updated {
-      display: none;
-    }
-
     /* 처리 현황 바 숨김 (카드 레이아웃에서 불필요) */
     .document-library-view .processing-status-bar {
       display: none;
