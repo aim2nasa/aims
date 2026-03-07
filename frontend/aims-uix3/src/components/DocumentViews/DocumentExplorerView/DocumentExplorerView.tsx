@@ -29,6 +29,7 @@ import './DocumentExplorerView.tree.css';
 import './DocumentExplorerView.features.css';
 import './DocumentExplorerView.datejump.css';
 import './DocumentExplorerView.mobile.css';
+import { useDocumentActions } from '@/hooks/useDocumentActions'
 
 export interface DocumentExplorerViewProps {
   /** View 표시 여부 */
@@ -64,6 +65,30 @@ const DocumentExplorerContent: React.FC<{
   initialType: InitialType
   onInitialTypeChange: (type: InitialType) => void
 }> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange }) => {
+
+  // 호버 액션: 문서 삭제/이름변경
+  const documentActions = useDocumentActions()
+  const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
+
+  const handleRenameClick = useCallback((doc: Document) => {
+    const docId = doc._id || doc.id
+    if (docId) setRenamingDocumentId(docId)
+  }, [])
+
+  const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
+    setRenamingDocumentId(null)
+    await documentActions.renameDocument(documentId, newName)
+  }, [documentActions])
+
+  const handleRenameCancel = useCallback(() => {
+    setRenamingDocumentId(null)
+  }, [])
+
+  const handleHoverDeleteClick = useCallback((doc: Document) => {
+    const docId = doc._id || doc.id
+    const docName = doc.displayName || DocumentStatusService.extractOriginalFilename(doc)
+    if (docId) documentActions.deleteDocument(docId, docName)
+  }, [documentActions])
 
   // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
@@ -374,6 +399,11 @@ const DocumentExplorerContent: React.FC<{
             onFilenameModeChange={handleFilenameModeChange}
             onSummaryClick={handleSummaryClick}
             onFullTextClick={handleFullTextClick}
+            onRenameClick={handleRenameClick}
+            onDeleteClick={handleHoverDeleteClick}
+            renamingDocumentId={renamingDocumentId}
+            onRenameConfirm={handleRenameConfirm}
+            onRenameCancel={handleRenameCancel}
           />
         )}
       </div>

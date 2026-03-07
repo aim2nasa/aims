@@ -28,6 +28,9 @@ import { DocumentContentSearchModal } from '@/features/customer/components/Docum
 import { SummaryIcon, DocumentIcon } from '@/components/DocumentViews/components/DocumentActionIcons'
 import type { Document } from '@/types/documentStatus'
 import type { Customer } from '@/entities/customer/model'
+import { useDocumentActions } from '@/hooks/useDocumentActions'
+import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
 import './CustomerDocumentExplorerView.css'
 
 interface CustomerDocumentExplorerViewProps {
@@ -188,6 +191,28 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   })
   // 파일명 검색
   const [searchTerm, setSearchTerm] = useState('')
+
+  // 호버 액션: 문서 삭제/이름변경
+  const documentActions = useDocumentActions()
+  const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
+
+  const handleRenameClick = useCallback((doc: { _id?: string; displayName?: string; originalName?: string }) => {
+    if (doc._id) setRenamingDocumentId(doc._id)
+  }, [])
+
+  const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
+    setRenamingDocumentId(null)
+    await documentActions.renameDocument(documentId, newName)
+  }, [documentActions])
+
+  const handleRenameCancel = useCallback(() => {
+    setRenamingDocumentId(null)
+  }, [])
+
+  const handleHoverDeleteClick = useCallback((doc: { _id?: string; displayName?: string; originalName?: string }) => {
+    const docName = doc.displayName || doc.originalName || ''
+    if (doc._id) documentActions.deleteDocument(doc._id, docName)
+  }, [documentActions])
 
   // 모달 상태
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
@@ -638,12 +663,44 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                   />
                                 </span>
                                 <span className="cde-doc-row__name-cell">
-                                  {altName ? (
-                                    <Tooltip content={altName}>
-                                      <span className="cde-doc-row__name">{showName}</span>
-                                    </Tooltip>
+                                  {renamingDocumentId && doc._id && renamingDocumentId === doc._id ? (
+                                    <InlineRenameInput
+                                      currentName={doc.displayName || doc.originalName || ''}
+                                      onConfirm={(newName) => handleRenameConfirm(doc._id!, newName)}
+                                      onCancel={handleRenameCancel}
+                                    />
                                   ) : (
-                                    <span className="cde-doc-row__name" title={doc.originalName}>{showName}</span>
+                                    <>
+                                      {altName ? (
+                                        <Tooltip content={altName}>
+                                          <span className="cde-doc-row__name">{showName}</span>
+                                        </Tooltip>
+                                      ) : (
+                                        <span className="cde-doc-row__name" title={doc.originalName}>{showName}</span>
+                                      )}
+                                      <span className="cde-doc-row__hover-actions" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                          type="button"
+                                          className="cde-doc-row__hover-btn cde-doc-row__hover-btn--rename"
+                                          title="이름 변경"
+                                          onClick={(e) => { e.stopPropagation(); handleRenameClick(doc) }}
+                                        >
+                                          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                                            <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                          </svg>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="cde-doc-row__hover-btn cde-doc-row__hover-btn--delete"
+                                          title="삭제"
+                                          onClick={(e) => { e.stopPropagation(); handleHoverDeleteClick(doc) }}
+                                        >
+                                          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                                            <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                                          </svg>
+                                        </button>
+                                      </span>
+                                    </>
                                   )}
                                   {doc.relatedCustomerId && !prefix && (
                                     <Tooltip content={`${relatedGroups.find(g => g.customerId === doc.relatedCustomerId)?.name || '관계자'}에게 링크됨`}>

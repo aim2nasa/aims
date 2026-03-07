@@ -2313,6 +2313,44 @@ router.post('/documents/set-cr-flag', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * 문서 별칭(displayName) 변경 API
+ * - displayName만 변경, originalName과 파일시스템은 불변
+ */
+router.patch('/documents/:id/display-name', authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { displayName } = req.body;
+    const userId = req.user.id;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, error: '유효하지 않은 문서 ID입니다.' });
+    }
+    if (typeof displayName !== 'string' || displayName.trim().length === 0) {
+      return res.status(400).json({ success: false, error: '문서 이름은 비어있을 수 없습니다.' });
+    }
+    if (displayName.trim().length > 200) {
+      return res.status(400).json({ success: false, error: '문서 이름은 200자를 초과할 수 없습니다.' });
+    }
+
+    const document = await db.collection(COLLECTION_NAME)
+      .findOne({ _id: new ObjectId(id), ownerId: userId });
+    if (!document) {
+      return res.status(403).json({ success: false, error: '문서를 찾을 수 없거나 접근 권한이 없습니다.' });
+    }
+
+    await db.collection(COLLECTION_NAME).updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { displayName: displayName.trim() } }
+    );
+
+    res.json({ success: true, displayName: displayName.trim() });
+  } catch (error) {
+    console.error('문서 이름 변경 실패:', error);
+    res.status(500).json({ success: false, error: '문서 이름 변경에 실패했습니다.' });
+  }
+});
+
+/**
  * 문서 삭제 API (단일 문서)
  */
 /**

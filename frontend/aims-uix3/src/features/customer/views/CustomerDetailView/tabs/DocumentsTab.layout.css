@@ -483,4 +483,56 @@
     opacity: 0.85;
   }
 
+  /* 호버 시 이름변경/삭제 아이콘 */
+  .status-filename-hover-actions {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    margin-left: 4px;
+    flex-shrink: 0;
+  }
+
+  .customer-documents-item:hover .status-filename-hover-actions {
+    display: flex;
+  }
+
+  .hover-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm, 4px);
+    background: transparent;
+    cursor: pointer;
+    color: var(--color-ios-text-tertiary-light);
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  html[data-theme="dark"] .hover-action-btn {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .hover-action-btn:hover {
+    background: var(--color-bg-active);
+  }
+
+  .hover-action-btn--rename:hover {
+    color: var(--color-primary-600);
+  }
+
+  html[data-theme="dark"] .hover-action-btn--rename:hover {
+    color: var(--color-primary-300);
+  }
+
+  .hover-action-btn--delete:hover {
+    color: var(--color-danger-600, #dc2626);
+  }
+
+  html[data-theme="dark"] .hover-action-btn--delete:hover {
+    color: var(--color-danger-400, #f87171);
+  }
+
 } /* end @layer components */

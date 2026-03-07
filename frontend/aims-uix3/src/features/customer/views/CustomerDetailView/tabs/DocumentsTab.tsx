@@ -47,6 +47,8 @@ import './DocumentsTab.layout.css';
 import './DocumentsTab.features.css';
 import './DocumentsTab.extras.css';
 import './DocumentsTab.cfd-overrides.css';
+import { useDocumentActions } from '@/hooks/useDocumentActions'
+import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
 
 interface DocumentsTabProps {
   customer: Customer
@@ -142,6 +144,28 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     enabled: Boolean(customer?._id),
     ...(onDocumentCountChange ? { onDocumentsChange: onDocumentCountChange } : {}),
   })
+
+  // 호버 액션: 문서 삭제/이름변경
+  const documentActions = useDocumentActions()
+  const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
+
+  const handleRenameClick = useCallback((doc: CustomerDocumentItem) => {
+    if (doc._id) setRenamingDocumentId(doc._id)
+  }, [])
+
+  const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
+    setRenamingDocumentId(null)
+    await documentActions.renameDocument(documentId, newName)
+  }, [documentActions])
+
+  const handleRenameCancel = useCallback(() => {
+    setRenamingDocumentId(null)
+  }, [])
+
+  const handleHoverDeleteClick = useCallback((doc: CustomerDocumentItem) => {
+    const docName = doc.displayName || DocumentStatusService.extractOriginalFilename(doc as any)
+    if (doc._id) documentActions.deleteDocument(doc._id, docName)
+  }, [documentActions])
 
   // 카테고리 필터 상태
   const [selectedCategory, setSelectedCategory] = useState('')
@@ -1363,7 +1387,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                       }
                     }}
                   >
-                    {/* 🍎 파일명 표시: filenameMode에 따라 원본/별칭 전환 */}
+                    {/* 🍎 파일명 표시: filenameMode에 따라 원본/별칭 전환 (또는 인라인 편집) */}
                     {(() => {
                       const hasDisplay = Boolean(document.displayName)
                       const showName = filenameMode === 'display' && hasDisplay
@@ -1373,14 +1397,55 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         ? `원본: ${document.originalName ?? ''}`
                         : (hasDisplay ? `별칭: ${document.displayName}` : '')
 
-                      return altName ? (
-                        <Tooltip content={altName}>
-                          <span className="status-filename-text">{showName}</span>
-                        </Tooltip>
-                      ) : (
-                        <Tooltip content={showName} showOnlyWhenTruncated>
-                          <span className="status-filename-text">{showName}</span>
-                        </Tooltip>
+                      // 인라인 이름변경 모드
+                      if (renamingDocumentId && document._id && renamingDocumentId === document._id) {
+                        return (
+                          <InlineRenameInput
+                            currentName={document.displayName || document.originalName || ''}
+                            onConfirm={(newName) => handleRenameConfirm(document._id!, newName)}
+                            onCancel={handleRenameCancel}
+                          />
+                        )
+                      }
+
+                      return (
+                        <>
+                          {altName ? (
+                            <Tooltip content={altName}>
+                              <span className="status-filename-text">{showName}</span>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip content={showName} showOnlyWhenTruncated>
+                              <span className="status-filename-text">{showName}</span>
+                            </Tooltip>
+                          )}
+                          <span className="status-filename-hover-actions" onClick={(e) => e.stopPropagation()}>
+                            <Tooltip content="이름 변경">
+                              <button
+                                type="button"
+                                className="hover-action-btn hover-action-btn--rename"
+                                onClick={(e) => { e.stopPropagation(); handleRenameClick(document) }}
+                                aria-label="이름 변경"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                  <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            </Tooltip>
+                            <Tooltip content="삭제">
+                              <button
+                                type="button"
+                                className="hover-action-btn hover-action-btn--delete"
+                                onClick={(e) => { e.stopPropagation(); handleHoverDeleteClick(document) }}
+                                aria-label="삭제"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                  <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            </Tooltip>
+                          </span>
+                        </>
                       )
                     })()}
                     {/* 🍎 PDF 변환 배지 - DocumentStatusList.tsx와 동일 */}

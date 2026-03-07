@@ -42,6 +42,7 @@ import './DocumentLibraryView-delete.css'
 import { InitialFilterBar, type InitialType } from '@/shared/ui/InitialFilterBar'
 import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from '@/shared/ui/InitialFilterBar/types'
 import { usePersistedState } from '@/hooks/usePersistedState'
+import { useDocumentActions } from '@/hooks/useDocumentActions'
 
 interface DocumentLibraryViewProps {
   /** View 표시 여부 */
@@ -107,6 +108,30 @@ const DocumentLibraryContent: React.FC<{
 }> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, onDeleteAll, isDeleting, isGeneratingAliases, onGenerateAliases, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
+
+  // 호버 액션: 문서 삭제/이름변경
+  const documentActions = useDocumentActions()
+  const [renamingDocumentId, setRenamingDocumentId] = React.useState<string | null>(null)
+
+  const handleRenameClick = React.useCallback((document: Document) => {
+    const docId = document._id || document.id
+    if (docId) setRenamingDocumentId(docId)
+  }, [])
+
+  const handleRenameConfirm = React.useCallback(async (documentId: string, newName: string) => {
+    setRenamingDocumentId(null)
+    await documentActions.renameDocument(documentId, newName)
+  }, [documentActions])
+
+  const handleRenameCancel = React.useCallback(() => {
+    setRenamingDocumentId(null)
+  }, [])
+
+  const handleHoverDeleteClick = React.useCallback((document: Document) => {
+    const docId = document._id || document.id
+    const docName = document.displayName || DocumentStatusService.extractOriginalFilename(document)
+    if (docId) documentActions.deleteDocument(docId, docName)
+  }, [documentActions])
 
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
@@ -642,6 +667,11 @@ const DocumentLibraryContent: React.FC<{
         onRefresh={controller.refreshDocuments}
         filenameMode={filenameMode}
         onFilenameModeChange={handleFilenameModeChange}
+        onRenameClick={handleRenameClick}
+        onDeleteClick={handleHoverDeleteClick}
+        renamingDocumentId={renamingDocumentId}
+        onRenameConfirm={handleRenameConfirm}
+        onRenameCancel={handleRenameCancel}
       />
 
       {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}

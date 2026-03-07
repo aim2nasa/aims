@@ -41,6 +41,8 @@ import { getRecentSearchQueries, addRecentSearchQuery, type RecentSearchQuery } 
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { useDocumentActions } from '@/hooks/useDocumentActions'
+import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
 import './DocumentSearchView.search.css';
 import './DocumentSearchView.results.css';
 import './DocumentSearchView.table.css';
@@ -123,6 +125,34 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     handleReset,
     handleCancel,
   } = useDocumentSearch()
+
+  // 호버 액션: 문서 삭제/이름변경
+  const documentActions = useDocumentActions()
+  const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
+
+  const getSearchItemId = useCallback((item: SearchResultItem): string | undefined => {
+    return ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined)
+  }, [])
+
+  const handleRenameClick = useCallback((item: SearchResultItem) => {
+    const docId = getSearchItemId(item)
+    if (docId) setRenamingDocumentId(docId)
+  }, [getSearchItemId])
+
+  const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
+    setRenamingDocumentId(null)
+    await documentActions.renameDocument(documentId, newName)
+  }, [documentActions])
+
+  const handleRenameCancel = useCallback(() => {
+    setRenamingDocumentId(null)
+  }, [])
+
+  const handleHoverDeleteClick = useCallback((item: SearchResultItem) => {
+    const docId = getSearchItemId(item)
+    const docName = ('displayName' in item ? item.displayName : undefined) || DocumentStatusService.extractOriginalFilename(item as unknown as Record<string, unknown>)
+    if (docId) documentActions.deleteDocument(docId, docName)
+  }, [documentActions, getSearchItemId])
 
   // Full Text 모달 상태 (기존 - 검색 결과용)
   const [isFullTextModalVisible, setIsFullTextModalVisible] = useState(false)
@@ -1565,14 +1595,56 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             })()}
                           </div>
                           <div className="row-title-container">
-                            {/* 🍎 filenameMode에 따라 별칭/원본 전환 표시 */}
-                            {altName ? (
-                              <Tooltip content={altName}>
-                                <span className="row-title">{showName}</span>
-                              </Tooltip>
-                            ) : (
-                              <span className="row-title">{showName}</span>
-                            )}
+                            {/* 🍎 filenameMode에 따라 별칭/원본 전환 표시 (또는 인라인 편집) */}
+                            {(() => {
+                              const docId = getSearchItemId(item)
+                              if (renamingDocumentId && docId && renamingDocumentId === docId) {
+                                return (
+                                  <InlineRenameInput
+                                    currentName={('displayName' in item ? item.displayName : undefined) || originalName}
+                                    onConfirm={(newName) => handleRenameConfirm(docId, newName)}
+                                    onCancel={handleRenameCancel}
+                                  />
+                                )
+                              }
+                              return (
+                                <>
+                                  {altName ? (
+                                    <Tooltip content={altName}>
+                                      <span className="row-title">{showName}</span>
+                                    </Tooltip>
+                                  ) : (
+                                    <span className="row-title">{showName}</span>
+                                  )}
+                                  <span className="search-hover-actions" onClick={(e) => e.stopPropagation()}>
+                                    <Tooltip content="이름 변경">
+                                      <button
+                                        type="button"
+                                        className="hover-action-btn hover-action-btn--rename"
+                                        onClick={(e) => { e.stopPropagation(); handleRenameClick(item) }}
+                                        aria-label="이름 변경"
+                                      >
+                                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                          <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </button>
+                                    </Tooltip>
+                                    <Tooltip content="삭제">
+                                      <button
+                                        type="button"
+                                        className="hover-action-btn hover-action-btn--delete"
+                                        onClick={(e) => { e.stopPropagation(); handleHoverDeleteClick(item) }}
+                                        aria-label="삭제"
+                                      >
+                                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                          <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </button>
+                                    </Tooltip>
+                                  </span>
+                                </>
+                              )
+                            })()}
                             {/* 메모 버튼: customer_relation에 notes가 있는 경우에만 표시 */}
                             {('customer_relation' in item && item.customer_relation?.notes &&
                              typeof item.customer_relation.notes === 'string' &&

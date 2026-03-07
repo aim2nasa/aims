@@ -23,6 +23,7 @@ import {
   LinkIcon,
   SummaryIcon
 } from '../../components/DocumentActionIcons'
+import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
 import { DocumentNotesModal } from './DocumentNotesModal'
 import { useUserStore } from '../../../../stores/user'
 import { errorReporter } from '@/shared/lib/errorReporter'
@@ -65,6 +66,12 @@ interface DocumentStatusRowProps {
   onRetryPdfConversion: (documentId: string, e: React.MouseEvent) => void
   onRetryOcr: (documentId: string, e: React.MouseEvent) => void
   onDocTypeChange: (documentId: string, newType: string) => void
+  // 호버 액션: 이름변경/삭제
+  onRenameClick?: (document: Document) => void
+  onDeleteClick?: (document: Document) => void
+  renamingDocumentId?: string | null
+  onRenameConfirm?: (documentId: string, newName: string) => void
+  onRenameCancel?: () => void
 }
 
 const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
@@ -93,6 +100,11 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   onRetryPdfConversion,
   onRetryOcr,
   onDocTypeChange,
+  onRenameClick,
+  onDeleteClick,
+  renamingDocumentId,
+  onRenameConfirm,
+  onRenameCancel,
 }) => {
   // 각 Row 내부에서 싱글/더블클릭 타이머를 자체 관리
   const documentClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -229,9 +241,9 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
         <DocumentTypeBadge document={document as any} isCreditPending={isCreditPending} />
       </div>
 
-      {/* 파일명 + PDF 변환 상태 아이콘 */}
+      {/* 파일명 + PDF 변환 상태 아이콘 + 호버 액션 */}
       <div className="status-filename">
-        {/* filenameMode에 따라 별칭/원본 전환 표시 */}
+        {/* filenameMode에 따라 별칭/원본 전환 표시 (또는 인라인 편집) */}
         {(() => {
           const hasDisplay = Boolean(document.displayName)
           const originalName = DocumentStatusService.extractOriginalFilename(document)
@@ -241,13 +253,58 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
           const altName = filenameMode === 'display' && hasDisplay
             ? `원본: ${originalName}`
             : (hasDisplay ? `별칭: ${document.displayName}` : '')
+          const docId = document._id || document.id
 
-          return altName ? (
-            <Tooltip content={altName}>
-              <span className="status-filename-text">{showName}</span>
-            </Tooltip>
-          ) : (
-            <span className="status-filename-text">{showName}</span>
+          // 인라인 이름변경 모드
+          if (renamingDocumentId && docId && renamingDocumentId === docId) {
+            return (
+              <InlineRenameInput
+                currentName={document.displayName || originalName}
+                onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
+                onCancel={() => onRenameCancel?.()}
+              />
+            )
+          }
+
+          return (
+            <>
+              {altName ? (
+                <Tooltip content={altName}>
+                  <span className="status-filename-text">{showName}</span>
+                </Tooltip>
+              ) : (
+                <span className="status-filename-text">{showName}</span>
+              )}
+              {/* 호버 시 이름변경/삭제 아이콘 */}
+              {onRenameClick && onDeleteClick && (
+                <span className="status-filename-hover-actions" onClick={(e) => e.stopPropagation()}>
+                  <Tooltip content="이름 변경">
+                    <button
+                      type="button"
+                      className="hover-action-btn hover-action-btn--rename"
+                      onClick={(e) => { e.stopPropagation(); onRenameClick(document) }}
+                      aria-label="이름 변경"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="삭제">
+                    <button
+                      type="button"
+                      className="hover-action-btn hover-action-btn--delete"
+                      onClick={(e) => { e.stopPropagation(); onDeleteClick(document) }}
+                      aria-label="삭제"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </Tooltip>
+                </span>
+              )}
+            </>
           )
         })()}
         {/* PDF 변환 상태 배지 (변환 대상 파일에만 표시) */}
@@ -644,6 +701,12 @@ export interface DocumentStatusListProps {
   // 🍎 파일명 표시 모드
   filenameMode?: 'display' | 'original'
   onFilenameModeChange?: (mode: 'display' | 'original') => void
+  // 호버 액션: 이름변경/삭제
+  onRenameClick?: (document: Document) => void
+  onDeleteClick?: (document: Document) => void
+  renamingDocumentId?: string | null
+  onRenameConfirm?: (documentId: string, newName: string) => void
+  onRenameCancel?: () => void
 }
 
 /**
@@ -811,7 +874,12 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onNavigate,
   onRowContextMenu,
   filenameMode = 'display',
-  onFilenameModeChange
+  onFilenameModeChange,
+  onRenameClick,
+  onDeleteClick,
+  renamingDocumentId,
+  onRenameConfirm,
+  onRenameCancel,
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -1265,6 +1333,11 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             onRetryPdfConversion={handleRetryPdfConversion}
             onRetryOcr={handleRetryOcr}
             onDocTypeChange={handleDocTypeChange}
+            onRenameClick={onRenameClick}
+            onDeleteClick={onDeleteClick}
+            renamingDocumentId={renamingDocumentId}
+            onRenameConfirm={onRenameConfirm}
+            onRenameCancel={onRenameCancel}
           />
         )
       })}

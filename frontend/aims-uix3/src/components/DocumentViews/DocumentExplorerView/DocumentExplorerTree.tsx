@@ -17,6 +17,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { SummaryIcon, DocumentIcon } from '../components/DocumentActionIcons'
+import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
 import type { Document } from '@/types/documentStatus'
 import type { DocumentTreeNode, DocumentGroupBy, DocumentSortBy, SortDirection } from './types/documentExplorer'
 import { useDocumentExplorerKeyboard } from './hooks/useDocumentExplorerKeyboard'
@@ -65,6 +66,16 @@ export interface DocumentExplorerTreeProps {
   onSummaryClick?: (document: Document) => void
   /** 전체 텍스트 보기 핸들러 */
   onFullTextClick?: (document: Document) => void
+  /** 이름변경 클릭 핸들러 */
+  onRenameClick?: (document: Document) => void
+  /** 삭제 클릭 핸들러 */
+  onDeleteClick?: (document: Document) => void
+  /** 현재 이름변경 중인 문서 ID */
+  renamingDocumentId?: string | null
+  /** 이름변경 확인 */
+  onRenameConfirm?: (documentId: string, newName: string) => void
+  /** 이름변경 취소 */
+  onRenameCancel?: () => void
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -157,6 +168,11 @@ interface DocumentNodeProps {
   onCustomerBadgeClick: (e: React.MouseEvent, customerName: string) => void
   onSummaryClick?: (doc: Document) => void
   onFullTextClick?: (doc: Document) => void
+  onRenameClick?: (doc: Document) => void
+  onDeleteClick?: (doc: Document) => void
+  renamingDocumentId?: string | null
+  onRenameConfirm?: (documentId: string, newName: string) => void
+  onRenameCancel?: () => void
 }
 
 const DocumentNode = React.memo<DocumentNodeProps>(({
@@ -173,6 +189,11 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   onCustomerBadgeClick,
   onSummaryClick,
   onFullTextClick,
+  onRenameClick,
+  onDeleteClick,
+  renamingDocumentId,
+  onRenameConfirm,
+  onRenameCancel,
 }) => {
   const doc = node.document
   if (!doc) return null
@@ -206,16 +227,50 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
         />
       </span>
 
-      {/* 문서명: filenameMode에 따라 별칭/원본 전환 */}
+      {/* 문서명: filenameMode에 따라 별칭/원본 전환 (또는 인라인 편집) */}
       <span className="doc-explorer-tree__doc-name" title={altName || showName}>
-        <span
-          className="doc-explorer-tree__doc-name-text"
-          onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
-          onMouseMove={(e) => onDocumentMouseMove(doc, e)}
-          onMouseLeave={onDocumentMouseLeave}
-        >
-          {highlightText(showName, searchTerm)}
-        </span>
+        {renamingDocumentId && renamingDocumentId === docId ? (
+          <InlineRenameInput
+            currentName={doc.displayName || DocumentStatusService.extractOriginalFilename(doc)}
+            onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
+            onCancel={() => onRenameCancel?.()}
+          />
+        ) : (
+          <>
+            <span
+              className="doc-explorer-tree__doc-name-text"
+              onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
+              onMouseMove={(e) => onDocumentMouseMove(doc, e)}
+              onMouseLeave={onDocumentMouseLeave}
+            >
+              {highlightText(showName, searchTerm)}
+            </span>
+            {onRenameClick && onDeleteClick && (
+              <span className="doc-explorer-tree__hover-actions" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--rename"
+                  title="이름 변경"
+                  onClick={(e) => { e.stopPropagation(); onRenameClick(doc) }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--delete"
+                  title="삭제"
+                  onClick={(e) => { e.stopPropagation(); onDeleteClick(doc) }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </span>
+            )}
+          </>
+        )}
       </span>
 
       {/* 파일 타입 (JPG, PDF 등) */}
@@ -309,6 +364,11 @@ interface GroupNodeProps {
   onCustomerBadgeClick: (e: React.MouseEvent, customerName: string) => void
   onSummaryClick?: (doc: Document) => void
   onFullTextClick?: (doc: Document) => void
+  onRenameClick?: (doc: Document) => void
+  onDeleteClick?: (doc: Document) => void
+  renamingDocumentId?: string | null
+  onRenameConfirm?: (documentId: string, newName: string) => void
+  onRenameCancel?: () => void
 }
 
 const GroupNode = React.memo<GroupNodeProps>(({
@@ -327,6 +387,11 @@ const GroupNode = React.memo<GroupNodeProps>(({
   onCustomerBadgeClick,
   onSummaryClick,
   onFullTextClick,
+  onRenameClick,
+  onDeleteClick,
+  renamingDocumentId,
+  onRenameConfirm,
+  onRenameCancel,
 }) => {
   const isExpanded = expandedKeys.has(node.key)
   const hasChildren = node.children && node.children.length > 0
@@ -393,6 +458,11 @@ const GroupNode = React.memo<GroupNodeProps>(({
               onCustomerBadgeClick={onCustomerBadgeClick}
               onSummaryClick={onSummaryClick}
               onFullTextClick={onFullTextClick}
+              onRenameClick={onRenameClick}
+              onDeleteClick={onDeleteClick}
+              renamingDocumentId={renamingDocumentId}
+              onRenameConfirm={onRenameConfirm}
+              onRenameCancel={onRenameCancel}
             />
           ))}
         </div>
@@ -423,6 +493,11 @@ interface TreeNodeProps {
   onCustomerBadgeClick: (e: React.MouseEvent, customerName: string) => void
   onSummaryClick?: (doc: Document) => void
   onFullTextClick?: (doc: Document) => void
+  onRenameClick?: (doc: Document) => void
+  onDeleteClick?: (doc: Document) => void
+  renamingDocumentId?: string | null
+  onRenameConfirm?: (documentId: string, newName: string) => void
+  onRenameCancel?: () => void
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -441,6 +516,11 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onCustomerBadgeClick,
   onSummaryClick,
   onFullTextClick,
+  onRenameClick,
+  onDeleteClick,
+  renamingDocumentId,
+  onRenameConfirm,
+  onRenameCancel,
 }) => {
   if (node.type === 'document') {
     return (
@@ -458,6 +538,11 @@ const TreeNode: React.FC<TreeNodeProps> = ({
         onCustomerBadgeClick={onCustomerBadgeClick}
         onSummaryClick={onSummaryClick}
         onFullTextClick={onFullTextClick}
+        onRenameClick={onRenameClick}
+        onDeleteClick={onDeleteClick}
+        renamingDocumentId={renamingDocumentId}
+        onRenameConfirm={onRenameConfirm}
+        onRenameCancel={onRenameCancel}
       />
     )
   }
@@ -504,6 +589,11 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onFilenameModeChange,
   onSummaryClick,
   onFullTextClick,
+  onRenameClick,
+  onDeleteClick,
+  renamingDocumentId,
+  onRenameConfirm,
+  onRenameCancel,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -915,6 +1005,11 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             onCustomerBadgeClick={handleCustomerBadgeClick}
             onSummaryClick={onSummaryClick}
             onFullTextClick={onFullTextClick}
+            onRenameClick={onRenameClick}
+            onDeleteClick={onDeleteClick}
+            renamingDocumentId={renamingDocumentId}
+            onRenameConfirm={onRenameConfirm}
+            onRenameCancel={onRenameCancel}
           />
         ))}
       </div>

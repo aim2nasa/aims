@@ -549,4 +549,60 @@
     transform: scale(0.95);
   }
 
+  /* Hover actions (이름변경/삭제) */
+  .doc-explorer-tree__hover-actions {
+    display: none;
+    align-items: center;
+    gap: 1px;
+    margin-left: 4px;
+    flex-shrink: 0;
+  }
+
+  .doc-explorer-tree__document:hover .doc-explorer-tree__hover-actions {
+    display: flex;
+  }
+
+  .doc-explorer-tree__hover-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm, 4px);
+    background: transparent;
+    cursor: pointer;
+    color: var(--color-ios-text-tertiary-light);
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  html[data-theme="dark"] .doc-explorer-tree__hover-btn {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .doc-explorer-tree__hover-btn:hover {
+    background: var(--color-bg-active);
+  }
+
+  .doc-explorer-tree__hover-btn--rename:hover {
+    color: var(--color-primary-600);
+  }
+
+  html[data-theme="dark"] .doc-explorer-tree__hover-btn--rename:hover {
+    color: var(--color-primary-300);
+  }
+
+  .doc-explorer-tree__hover-btn--delete:hover {
+    color: var(--color-danger-600, #dc2626);
+  }
+
+  html[data-theme="dark"] .doc-explorer-tree__hover-btn--delete:hover {
+    color: var(--color-danger-400, #f87171);
+  }
+
+  .doc-explorer-tree__hover-btn:active {
+    transform: scale(0.9);
+  }
+
 } /* end @layer components */
