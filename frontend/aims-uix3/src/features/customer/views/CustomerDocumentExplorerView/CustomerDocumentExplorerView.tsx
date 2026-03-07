@@ -311,6 +311,24 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     }
   }, [categoryGroups, searchTerm])
 
+  // 관계자 탭 초기 진입 시 대분류 모두 펼치기
+  useEffect(() => {
+    if (activeTab !== 'related' || relatedGroups.length === 0 || searchTerm.trim()) return
+    setExpandedNodes(prev => {
+      // 이미 관계자 노드가 펼쳐져 있으면 사용자가 조작한 상태이므로 유지
+      const hasRelatedNodes = [...prev].some(k => k.startsWith('person:'))
+      if (hasRelatedNodes) return prev
+      const allKeys = new Set(prev)
+      relatedGroups.forEach(g => {
+        allKeys.add(`person:${g.customerId}`)
+        g.categoryGroups.forEach(cat => {
+          allKeys.add(`p${g.customerId}:cat:${cat.value}`)
+        })
+      })
+      return allKeys
+    })
+  }, [relatedGroups, activeTab, searchTerm])
+
   // 관계자 문서 검색 필터링
   const filteredRelatedGroups = useMemo<RelatedPersonGroup[]>(() => {
     if (!searchTerm.trim()) return relatedGroups
@@ -454,7 +472,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     })
   }, [])
 
-  // 전체 펼침: 대분류만 (소분류는 접힌 상태)
+  // 전체 펼침/접기: 대분류까지만 (소분류 폴더 헤더는 보이되 파일 목록은 접힌 상태)
   const toggleAll = useCallback(() => {
     if (activeTab === 'my') {
       setExpandedNodes(prev => {
@@ -472,7 +490,14 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
         if (allExpanded) {
           return new Set()
         }
-        return new Set(personKeys)
+        const allKeys = new Set<string>()
+        relatedGroups.forEach(g => {
+          allKeys.add(`person:${g.customerId}`)
+          g.categoryGroups.forEach(cat => {
+            allKeys.add(`p${g.customerId}:cat:${cat.value}`)
+          })
+        })
+        return allKeys
       })
     }
   }, [categoryGroups, relatedGroups, activeTab])
