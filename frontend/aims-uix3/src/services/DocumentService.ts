@@ -108,6 +108,8 @@ export interface CustomerDocumentItem {
   ar_parsing_status?: 'pending' | 'processing' | 'completed' | 'failed';
   // 문서 소유 고객 ID (원본/링크 구분용)
   customerId?: string;
+  // 관계자 연결 고객 ID (AR/CRS에서 피보험자로 감지된 고객)
+  relatedCustomerId?: string;
 }
 
 export interface CustomerDocumentsResult {
@@ -477,6 +479,10 @@ export class DocumentService {
           // 문서 소유 고객 ID (원본/링크 구분용)
           const docCustomerId = toString(item['customerId']);
           if (docCustomerId) result.customerId = docCustomerId;
+
+          // 관계자 연결 고객 ID
+          const docRelatedCustomerId = toString(item['relatedCustomerId']);
+          if (docRelatedCustomerId) result.relatedCustomerId = docRelatedCustomerId;
 
           return result;
         })

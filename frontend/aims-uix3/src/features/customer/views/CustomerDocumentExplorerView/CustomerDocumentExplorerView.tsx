@@ -438,7 +438,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   if (!visible) return null
 
   /** 카테고리 트리 렌더링 (내 문서 / 관계자 내부 공통) */
-  const renderCategoryTree = (groups: CategoryGroup[], prefix: string = '', ownerCustomerId?: string) => (
+  const renderCategoryTree = (groups: CategoryGroup[], prefix: string = '') => (
     <>
       {groups.map(group => {
         const catKey = `${prefix}cat:${group.value}`
@@ -550,7 +550,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                   ) : (
                                     <span className="cde-doc-row__name" title={doc.originalName}>{showName}</span>
                                   )}
-                                  {ownerCustomerId && doc.customerId && doc.customerId !== ownerCustomerId && (
+                                  {doc.relatedCustomerId && (
                                     <Tooltip content="다른 고객 문서함에서 연결됨">
                                       <span className="cde-doc-row__linked-badge">
                                         <SFSymbol name="link" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative={true} />
@@ -731,7 +731,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
               {/* 관계자 내 카테고리 트리 */}
               {isPersonExpanded && (
                 <div className="cde-person__content">
-                  {renderCategoryTree(person.categoryGroups, `p${person.customerId}:`, person.customerId)}
+                  {renderCategoryTree(person.categoryGroups, `p${person.customerId}:`)}
                 </div>
               )}
             </div>

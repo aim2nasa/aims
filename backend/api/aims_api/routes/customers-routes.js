@@ -2554,6 +2554,8 @@ router.get('/customers/:id/documents', authenticateJWT, async (req, res) => {
         document_type_confidence: doc.document_type_confidence || (doc.meta && doc.meta.document_type_confidence) || null,
         // 문서 소유 고객 ID (원본/링크 구분용 — 관계자 문서 탭에서 사용)
         customerId: doc.customerId?.toString() || null,
+        // 관계자 연결 고객 ID (AR/CRS에서 피보험자로 감지된 고객)
+        relatedCustomerId: doc.relatedCustomerId?.toString() || null,
         ...statusInfo
       };
     });
