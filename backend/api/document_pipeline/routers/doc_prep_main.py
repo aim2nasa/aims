@@ -700,7 +700,7 @@ async def _detect_and_process_annual_report(
 
                     if search_response.status_code == 200:
                         search_result = search_response.json()
-                        customers = search_result.get("customers", [])
+                        customers = search_result.get("data", {}).get("customers", [])
 
                         # 정확히 일치하는 고객 찾기
                         exact_match = None
@@ -923,7 +923,7 @@ async def _detect_and_process_customer_review(
 
                     if search_response.status_code == 200:
                         search_result = search_response.json()
-                        customers = search_result.get("customers", [])
+                        customers = search_result.get("data", {}).get("customers", [])
 
                         # 정확히 일치하는 고객 찾기
                         exact_match = None
