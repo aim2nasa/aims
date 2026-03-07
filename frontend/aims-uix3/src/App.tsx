@@ -413,6 +413,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     setExplorerCustomerType,
   })
 
+  // RP 파일명 모드: localStorage 초기값 동기화
+  const [rpFilenameMode, setRpFilenameMode] = useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
+
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 숨김
   // 초기 로딩 시 사용자 정보를 전역 상태에 로드 (앱 시작 시 1회만 실행)
   useEffect(() => {
@@ -2080,10 +2086,17 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               <BaseViewer
                 visible={true}
                 title={(() => {
-                  const fileName = selectedDocument.upload?.originalName ||
+                  const originalName = selectedDocument.upload?.originalName ||
                                    selectedDocument.payload?.originalName ||
                                    selectedDocument.meta?.originalName ||
                                    '파일'
+                  const hasDisplayName = !!selectedDocument.displayName && selectedDocument.displayName !== originalName
+                  const fileName = hasDisplayName && rpFilenameMode === 'display'
+                    ? selectedDocument.displayName!
+                    : originalName
+                  const nameLabel = hasDisplayName
+                    ? (rpFilenameMode === 'display' ? '별칭' : '원본')
+                    : null
 
                   // OCR 신뢰도 계산
                   const ocrData = selectedDocument.ocr as { confidence?: unknown } | undefined
@@ -2106,44 +2119,75 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   const isConverted = selectedDocument.isConverted
                   const originalExt = selectedDocument.originalExtension?.toUpperCase()
 
-                  // 서브타이틀: PDF 변환 정보 또는 OCR 정보가 있을 때만 표시
-                  if (!isConverted && !ocrInfo) {
-                    return fileName
-                  }
+                  const hasSubtitle = isConverted || ocrInfo
 
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <div>{fileName}</div>
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: '400',
-                        color: 'var(--color-text-tertiary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        flexWrap: 'wrap'
-                      }}>
-                        {isConverted && (
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '3px',
-                            padding: '1px 5px',
-                            backgroundColor: 'var(--color-accent-blue-subtle)',
-                            color: 'var(--color-accent-blue)',
-                            borderRadius: '4px',
-                            fontSize: '10px',
-                            fontWeight: '500'
-                          }}>
-                            PDF 변환됨{originalExt ? ` · 원본 ${originalExt}` : ''}
-                          </span>
-                        )}
-                        {ocrInfo && (
-                          <span style={{ opacity: 0.7 }}>
-                            OCR {ocrInfo.percent}% · {ocrInfo.label}
-                          </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>{fileName}</span>
+                        {nameLabel && (
+                          <button
+                            type="button"
+                            title={rpFilenameMode === 'display'
+                              ? `별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환\n원본: ${originalName}`
+                              : `원본 파일명 표시 중 · 클릭하면 별칭으로 전환\n별칭: ${selectedDocument.displayName}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setRpFilenameMode(prev => {
+                                const next = prev === 'display' ? 'original' : 'display'
+                                localStorage.setItem('aims-filename-mode', next)
+                                return next
+                              })
+                            }}
+                            style={{
+                              flexShrink: 0,
+                              padding: '1px 5px',
+                              fontSize: '9px',
+                              fontWeight: 600,
+                              lineHeight: '1.2',
+                              border: '1px solid var(--color-border-primary)',
+                              borderRadius: '4px',
+                              background: 'var(--color-bg-secondary)',
+                              color: 'var(--color-text-tertiary)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {nameLabel}
+                          </button>
                         )}
                       </div>
+                      {hasSubtitle && (
+                        <div style={{
+                          fontSize: '11px',
+                          fontWeight: '400',
+                          color: 'var(--color-text-tertiary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          flexWrap: 'wrap'
+                        }}>
+                          {isConverted && (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              padding: '1px 5px',
+                              backgroundColor: 'var(--color-accent-blue-subtle)',
+                              color: 'var(--color-accent-blue)',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontWeight: '500'
+                            }}>
+                              PDF 변환됨{originalExt ? ` · 원본 ${originalExt}` : ''}
+                            </span>
+                          )}
+                          {ocrInfo && (
+                            <span style={{ opacity: 0.7 }}>
+                              OCR {ocrInfo.percent}% · {ocrInfo.label}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )
                 })()}

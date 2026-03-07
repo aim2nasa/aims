@@ -41,6 +41,7 @@ export interface SmartSearchDocumentResponse {
   ocr?: unknown
   document_type?: string
   document_type_auto?: boolean
+  displayName?: string
   // 🔴 바이러스 스캔 정보
   virusScan?: {
     status?: 'pending' | 'clean' | 'infected' | 'deleted' | 'error'
@@ -94,6 +95,8 @@ export interface SelectedDocument {
   document_type?: string
   /** 문서 유형 자동 분류 여부 */
   document_type_auto?: boolean
+  /** AI가 생성한 별칭 */
+  displayName?: string
 }
 
 /**
@@ -180,7 +183,9 @@ export const toSmartSearchDocumentResponse = (value: unknown): SmartSearchDocume
     ? (record['virusScan'] as SmartSearchDocumentResponse['virusScan'])
     : undefined
 
-  return { upload, payload, meta, ocr, document_type, document_type_auto, virusScan }
+  const displayName = typeof record['displayName'] === 'string' && record['displayName'] ? record['displayName'] : undefined
+
+  return { upload, payload, meta, ocr, document_type, document_type_auto, virusScan, displayName }
 }
 
 /** API computed 응답 타입 */
@@ -302,6 +307,11 @@ export const buildSelectedDocument = (
   }
   if (raw.document_type_auto !== undefined) {
     selected.document_type_auto = raw.document_type_auto
+  }
+
+  // 별칭(displayName) 복사
+  if (raw.displayName) {
+    selected.displayName = raw.displayName
   }
 
   // 🔴 바이러스 스캔 정보 복사
