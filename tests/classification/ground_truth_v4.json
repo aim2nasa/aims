@@ -84,13 +84,6 @@
     "folder": "1_보험계약/1.1_보험증권"
   },
   {
-    "filename": "증권_퍼펙트플러스종합.pdf",
-    "type": "policy",
-    "category": "insurance",
-    "extension": ".pdf",
-    "folder": "1_보험계약/1.1_보험증권"
-  },
-  {
     "filename": "증권_퍼펙트플러스종합_1.pdf",
     "type": "policy",
     "category": "insurance",
@@ -329,13 +322,6 @@
     "folder": "1_보험계약/1.4_가입설계서"
   },
   {
-    "filename": "캐치업-운전자(안영미).pdf",
-    "type": "plan_design",
-    "category": "insurance",
-    "extension": ".pdf",
-    "folder": "1_보험계약/1.4_가입설계서"
-  },
-  {
     "filename": "캐치업-운전자.pdf",
     "type": "plan_design",
     "category": "insurance",
@@ -413,13 +399,6 @@
     "folder": "1_보험계약/1.4_가입설계서"
   },
   {
-    "filename": "캐치업코리아2022법인컨설팅제안202209수정_1.pptx",
-    "type": "plan_design",
-    "category": "insurance",
-    "extension": ".pptx",
-    "folder": "1_보험계약/1.4_가입설계서"
-  },
-  {
     "filename": "캐치업코리아설계서-1.pdf",
     "type": "plan_design",
     "category": "insurance",
@@ -483,13 +462,6 @@
     "folder": "1_보험계약/1.7_기타보험관련"
   },
   {
-    "filename": "김보성,안영미01_1.pdf",
-    "type": "insurance_etc",
-    "category": "insurance",
-    "extension": ".pdf",
-    "folder": "1_보험계약/1.7_기타보험관련"
-  },
-  {
     "filename": "김보성내역.xlsx",
     "type": "insurance_etc",
     "category": "insurance",
@@ -533,20 +505,6 @@
   },
   {
     "filename": "캐치업 질권설정변경신청서.pdf",
-    "type": "insurance_etc",
-    "category": "insurance",
-    "extension": ".pdf",
-    "folder": "1_보험계약/1.7_기타보험관련"
-  },
-  {
-    "filename": "캐치업 질권설정변경신청서_1.pdf",
-    "type": "insurance_etc",
-    "category": "insurance",
-    "extension": ".pdf",
-    "folder": "1_보험계약/1.7_기타보험관련"
-  },
-  {
-    "filename": "캐치업-운전자(안영미).pdf",
     "type": "insurance_etc",
     "category": "insurance",
     "extension": ".pdf",
@@ -1400,13 +1358,6 @@
     "folder": "6_법인/6.1_기본서류"
   },
   {
-    "filename": "등기부등본_(주)캐치업코리아_250326(변경완료).pdf",
-    "type": "corp_basic",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.1_기본서류"
-  },
-  {
     "filename": "법인서류012.jpg",
     "type": "corp_basic",
     "category": "corporate",
@@ -1484,13 +1435,6 @@
     "folder": "6_법인/6.1_기본서류"
   },
   {
-    "filename": "사업자등록증(브라운스톤).pdf",
-    "type": "corp_basic",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.1_기본서류"
-  },
-  {
     "filename": "설립5천-서울,발기설립-김보성대표.xls",
     "type": "corp_basic",
     "category": "corporate",
@@ -1502,13 +1446,6 @@
     "type": "corp_basic",
     "category": "corporate",
     "extension": ".xls",
-    "folder": "6_법인/6.1_기본서류"
-  },
-  {
-    "filename": "유아영명함.png",
-    "type": "corp_basic",
-    "category": "corporate",
-    "extension": ".png",
     "folder": "6_법인/6.1_기본서류"
   },
   {
@@ -1694,20 +1631,6 @@
     "folder": "6_법인/6.2_인사노무"
   },
   {
-    "filename": "(주)캐치업코리아_4대보험가입자명부20240402_1.pdf",
-    "type": "hr_document",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.2_인사노무"
-  },
-  {
-    "filename": "(주)캐치업코리아_4대보험가입자명부_1.pdf",
-    "type": "hr_document",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.2_인사노무"
-  },
-  {
     "filename": "20130409_121226표준취업규칙(최종).hwp",
     "type": "hr_document",
     "category": "corporate",
@@ -1737,13 +1660,6 @@
   },
   {
     "filename": "4대보험가입자명부2022.9.20.pdf",
-    "type": "hr_document",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.2_인사노무"
-  },
-  {
-    "filename": "4대보험가입자명부_1.pdf",
     "type": "hr_document",
     "category": "corporate",
     "extension": ".pdf",
@@ -1852,13 +1768,6 @@
     "type": "hr_document",
     "category": "corporate",
     "extension": ".xlsx",
-    "folder": "6_법인/6.2_인사노무"
-  },
-  {
-    "filename": "근로재계약서 2024.4.1.pdf",
-    "type": "hr_document",
-    "category": "corporate",
-    "extension": ".pdf",
     "folder": "6_법인/6.2_인사노무"
   },
   {
@@ -2051,13 +1960,6 @@
     "folder": "6_법인/6.2_인사노무"
   },
   {
-    "filename": "재직증명서_1.xlsx",
-    "type": "hr_document",
-    "category": "corporate",
-    "extension": ".xlsx",
-    "folder": "6_법인/6.2_인사노무"
-  },
-  {
     "filename": "제12장 재해보상취업규칙.hwp",
     "type": "hr_document",
     "category": "corporate",
@@ -2142,13 +2044,6 @@
     "folder": "6_법인/6.2_인사노무"
   },
   {
-    "filename": "취업규칙_1.hwp",
-    "type": "hr_document",
-    "category": "corporate",
-    "extension": ".hwp",
-    "folder": "6_법인/6.2_인사노무"
-  },
-  {
     "filename": "캐치업고용지원금신청서.pdf",
     "type": "hr_document",
     "category": "corporate",
@@ -2174,13 +2069,6 @@
     "type": "hr_document",
     "category": "corporate",
     "extension": ".xlsx",
-    "folder": "6_법인/6.2_인사노무"
-  },
-  {
-    "filename": "캐치업취업규칙.hwp",
-    "type": "hr_document",
-    "category": "corporate",
-    "extension": ".hwp",
     "folder": "6_법인/6.2_인사노무"
   },
   {
@@ -2352,21 +2240,7 @@
     "folder": "6_법인/6.3_세무"
   },
   {
-    "filename": "21년 세무조정계산서_캐치업코리아.pdf",
-    "type": "corp_tax",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.3_세무"
-  },
-  {
     "filename": "라이콘재무제표확인(2023년).pdf",
-    "type": "corp_tax",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.3_세무"
-  },
-  {
-    "filename": "라이콘재무제표확인(2023년)_1.pdf",
     "type": "corp_tax",
     "category": "corporate",
     "extension": ".pdf",
@@ -2388,13 +2262,6 @@
   },
   {
     "filename": "재무상태표 가결산 내역_캐치업코리아 (1).pdf",
-    "type": "corp_tax",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.3_세무"
-  },
-  {
-    "filename": "재무상태표 가결산 내역_캐치업코리아.pdf",
     "type": "corp_tax",
     "category": "corporate",
     "extension": ".pdf",
@@ -2485,13 +2352,6 @@
     "folder": "6_법인/6.3_세무"
   },
   {
-    "filename": "0396가입증.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "0396가입증_1.pdf",
     "type": "corp_asset",
     "category": "corporate",
@@ -2506,21 +2366,7 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "08하 7454 자동차등록증_1.jpeg",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".jpeg",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "160구3184벤츠전기차등록증.jpg",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".jpg",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "160구3184자동차등록증.jpg",
     "type": "corp_asset",
     "category": "corporate",
     "extension": ".jpg",
@@ -2534,42 +2380,7 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "3184가입증_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "3204가입증-1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "3204가입증-1_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "3204가입증.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "3204가입증_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "8621가입증.pdf",
     "type": "corp_asset",
     "category": "corporate",
     "extension": ".pdf",
@@ -2597,27 +2408,6 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "90도3455자동차등록증1_1.jpg",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".jpg",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "90도3455자동차등록증_1.jpg",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".jpg",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "90도3455자동차청약서.jpg",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".jpg",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "90도3455자동차청약서_1.jpg",
     "type": "corp_asset",
     "category": "corporate",
@@ -2626,13 +2416,6 @@
   },
   {
     "filename": "9894가입증.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "9894가입증_1.pdf",
     "type": "corp_asset",
     "category": "corporate",
     "extension": ".pdf",
@@ -2667,27 +2450,6 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "박지우님가입증-1_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "박지우님가입증.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "박지우님가입증_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "박지우자동차청약서.pdf",
     "type": "corp_asset",
     "category": "corporate",
@@ -2695,28 +2457,7 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "자동차등록원부(렉스턴).jpg",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".jpg",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "자동차등록원부(렉스턴)1.jpg",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".jpg",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "자동차등록증(캐치업코리아).pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "자동차등록증(캐치업코리아)_1.pdf",
     "type": "corp_asset",
     "category": "corporate",
     "extension": ".pdf",
@@ -2751,20 +2492,6 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "캐치업 bmw_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업 가입증 (1).pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "캐치업 가입증 (1)_1.pdf",
     "type": "corp_asset",
     "category": "corporate",
@@ -2772,35 +2499,7 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "캐치업 가입증-1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업 가입증-1_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "캐치업 가입증.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업 가입증_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업 렉스턴 가입증.pdf",
     "type": "corp_asset",
     "category": "corporate",
     "extension": ".pdf",
@@ -2821,20 +2520,6 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "캐치업 스타렉스-1_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업 스타렉스.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "캐치업 스타렉스_1.pdf",
     "type": "corp_asset",
     "category": "corporate",
@@ -2849,28 +2534,7 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "캐치업 청약서_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "캐치업 포터 가입증.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업 포터 가입증_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업3184 청약서-1.pdf",
     "type": "corp_asset",
     "category": "corporate",
     "extension": ".pdf",
@@ -2884,56 +2548,7 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "캐치업3184 청약서-2.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업3184 청약서-2_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업3184 청약서.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업3184 청약서_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "캐치업_권리이전등록신청_납부고지서 (1).pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업_권리이전등록신청_납부고지서 (1)_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업_권리이전등록신청_납부고지서.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업_권리이전등록신청_납부고지서_1.pdf",
     "type": "corp_asset",
     "category": "corporate",
     "extension": ".pdf",
@@ -2948,20 +2563,6 @@
   },
   {
     "filename": "캐치업_등록증재발급신청_납부고지서.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업_등록증재발급신청_납부고지서_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업_등록증재발급신청_납부고지서_2.pdf",
     "type": "corp_asset",
     "category": "corporate",
     "extension": ".pdf",
@@ -3017,21 +2618,7 @@
     "folder": "6_법인/6.4_법인자산"
   },
   {
-    "filename": "캐치업증권_1.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
     "filename": "캐치업코리아자동차증권.pdf",
-    "type": "corp_asset",
-    "category": "corporate",
-    "extension": ".pdf",
-    "folder": "6_법인/6.4_법인자산"
-  },
-  {
-    "filename": "캐치업코리아자동차증권_1.pdf",
     "type": "corp_asset",
     "category": "corporate",
     "extension": ".pdf",

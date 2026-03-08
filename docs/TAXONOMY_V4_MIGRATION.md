@@ -608,53 +608,34 @@ db.files.aggregate([
 
 ```
 === 파이프라인 이슈 먼저 해결 (BLOCKER) ===
-Step 0.  캐치업코리아 446건 AIMS 업로드 + 파이프라인 처리 ← 현재 진행 중
-  └─ ISSUE-1: 프로그레스바 미표시 (Minor)
-  └─ ISSUE-2: 중복 해시 파일 거부 31건 (Major)
-  └─ ISSUE-3: 중복 에러 후 고아 데이터 (Warning)
-  └─ ISSUE-4: status 미전환 111건 — confidence=0, general (Major)
-  ※ 위 이슈들을 모두 클리어한 뒤 v4 작업 진행
+Step 0.  캐치업코리아 446건 AIMS 업로드 + 파이프라인 처리 ✅ 완료
+  └─ ISSUE-1: 프로그레스바 미표시 ✅ (커밋 8f2da2e8)
+  └─ ISSUE-2: 중복 파일 UX 개선 ✅ (커밋 40223c33)
+  └─ ISSUE-3: 고아 데이터 확인 ✅ (0건 확인, 코드 정상)
+  └─ ISSUE-4: status 미전환 수정 ✅ (커밋 aab4c218)
 
 === v4 마이그레이션 본 작업 ===
-Step 1.  Ground Truth JSON Gini 이슈 해결 → 커밋
+Step 1.  Ground Truth JSON 정리 (446→387건) → 커밋 ← 현재 진행 중
 Step 2.  프론트엔드 수정 (documentCategories.ts + 테스트) → Gini 검수 → 커밋
 Step 3.  백엔드 코드 수정 (VALID_DOCUMENT_TYPES + SYSTEM_PROMPT) → Gini 검수 → 커밋
-Step 4.  분류 프롬프트 튜닝 (446건 전량 일치까지 무한 반복) → Gini 검수 → 커밋
+Step 4.  분류 프롬프트 튜닝 (387건 전량 일치까지 무한 반복) → Gini 검수 → 커밋
 Step 5.  DB 마이그레이션 → Gini 검수 → 커밋
 Step 6.  빌드 + 테스트 + 배포
 ```
 
-### Step 0: 파이프라인 처리 (진행 중)
+### Step 0: 파이프라인 처리 (✅ 완료)
 
-- **시작**: 2026-03-08 18:17 KST
-- **샘플 소스**: `C:\Users\rossi\캐치업코리아\` (7대분류/24소분류 폴더)
-- **로컬 파일**: 446건 (PDF 249, IMG 103, Office 88, 기타 6)
-- **DB 도착**: 412건 (31건 중복 해시로 거부됨)
-- **처리 상태**: 아래 표 참조
+- **시작/완료**: 2026-03-08 18:17~18:34 KST (약 17분)
+- **로컬 파일**: 446건 → **DB 등록**: 387건 (59건 해시 중복 건너뜀)
+- **최종 상태**: 387건 전부 `status=completed`, `overallStatus=completed`
+- **이슈 4건 모두 해결**: 상세는 `docs/2026-03-08_PIPELINE_PROCESSING_SUMMARY.md`
 
-| 시간 (KST) | 총건수 | completed | processing | 완료율 |
-|------------|--------|-----------|------------|--------|
-| 18:17 | 0 | 0 | 0 | - |
-| 18:18 | 181 | 32 | 149 | 18% |
-| 18:19 | 365 | 53 | 312 | 15% |
-| 18:20 | 415 | 78 | 337 | 19% |
-| 18:25 | 412 | 145 | 267 | 35% |
-
-#### 발견된 이슈 (상세: `2026-03-08_PIPELINE_MONITORING.md`)
-
-| # | 이슈 | 심각도 | 상태 |
-|---|------|--------|------|
-| ISSUE-1 | 업로드 프로그레스바 미표시 | Minor | 미해결 |
-| ISSUE-2 | 중복 해시 파일 거부 393건 (31건 누락) | Major | 조사 중 |
-| ISSUE-3 | 중복 에러 후 고아 데이터 가능성 | Warning | 확인 필요 |
-| ISSUE-4 | status=processing인데 overallStatus=completed (113건, confidence=0, general) | Major | 조사 중 |
-
-### Step 1: Ground Truth JSON (완료)
+### Step 1: Ground Truth JSON (진행 중)
 
 - **파일**: `tests/classification/ground_truth_v4.json`
-- **건수**: 446건 (24개 소분류, 0건 폴더 3개)
-- **Gini 검수**: FAIL — 동일 파일명 중복(plan_design/insurance_etc) + annual_report 1건 포함 이슈
-- **커밋**: 미완 (Gini 이슈 해결 후)
+- **정리**: 446건 → 387건 (DB 미등록 58건 제거 + 중복 파일명 1건 해소)
+- **타입 분포**: 21개 타입, annual_report 1건 포함 (시스템 타입)
+- **Gini 검수**: 대기 중
 
 ### Step 2: 프론트엔드 수정 (대기)
 
@@ -662,8 +643,8 @@ Step 6.  빌드 + 테스트 + 배포
 
 ### Step 4: 프롬프트 튜닝 (대기)
 
-- Step 0 파이프라인 완료 후 DB에서 full_text 추출하여 진행
-- 446건 Ground Truth 대비 전량 일치까지 반복
+- DB에서 full_text 추출하여 진행
+- 387건 Ground Truth 대비 전량 일치까지 반복
 
 ### Step 5: DB 마이그레이션 (대기)
 
