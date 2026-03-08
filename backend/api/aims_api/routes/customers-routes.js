@@ -1944,20 +1944,32 @@ router.post('/customers/:id/documents', authenticateJWTorAPIKey, async (req, res
       }
     }
 
-    // 고객에 문서 연결 추가
-    const documentLink = {
-      document_id: new ObjectId(document_id),
-      upload_date: utcNowDate(),
-      notes: notes || ''
-    };
+    // 고객에 문서 연결 추가 (중복 체크 후)
+    const docObjectId = new ObjectId(document_id);
+    const alreadyLinked = await db.collection(CUSTOMERS_COLLECTION).findOne({
+      _id: new ObjectId(id),
+      'documents.document_id': docObjectId
+    });
 
-    await db.collection(CUSTOMERS_COLLECTION).updateOne(
-      { _id: new ObjectId(id) },
-      { 
-        $push: { documents: documentLink },
-        $set: { 'meta.updated_at': utcNowDate() }
-      }
-    );
+    if (!alreadyLinked) {
+      const documentLink = {
+        document_id: docObjectId,
+        upload_date: utcNowDate(),
+        notes: notes || ''
+      };
+
+      await db.collection(CUSTOMERS_COLLECTION).updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $push: { documents: documentLink },
+          $set: { 'meta.updated_at': utcNowDate() }
+        }
+      );
+    } else {
+      // 이미 연결된 문서: 후속 처리(files.customerId 업데이트, Qdrant 동기화, AR 파싱 큐) 모두 스킵
+      console.log(`ℹ️ [고객-문서 연결] 이미 연결됨, 중복 push 방지: customer=${id}, document=${document_id}`);
+      return res.json({ success: true, message: '이미 연결된 문서입니다.' });
+    }
 
     // 문서에도 고객 연결 정보 추가
     await db.collection(COLLECTION_NAME).updateOne(
