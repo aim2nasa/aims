@@ -19,6 +19,7 @@ const { prepareDocumentResponse, isConvertibleFile, analyzeDocumentStatus } = re
 const createPdfConversionTrigger = require('../lib/pdfConversionTrigger');
 
 const COLLECTION_NAME = COLLECTIONS.FILES;
+const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
 
 module.exports = function(db, analyticsDb, authenticateJWT, upload, qdrantClient, qdrantCollection) {
   const router = express.Router();
