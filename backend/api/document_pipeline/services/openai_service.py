@@ -79,18 +79,20 @@ async def check_credit_for_summary(user_id: str, estimated_tokens: int = 1000) -
 # @see docs/DOCUMENT_TAXONOMY.md
 
 VALID_DOCUMENT_TYPES = {
-    "application", "policy", "terms", "plan_design", "proposal",
-    "coverage_analysis", "change_request", "surrender",
-    "claim_form", "diagnosis", "medical_receipt", "accident_cert", "hospital_cert",
-    "id_card", "family_cert", "seal_signature", "bank_account",
-    "power_of_attorney", "consent_form", "business_card",
-    "income_proof", "employment_cert", "financial_statement", "tax_document", "transaction_proof",
-    "health_checkup", "medical_record",
-    "property_registry", "vehicle_registry", "business_registry",
-    "corp_registry", "shareholder", "meeting_minutes", "hr_document",
-    "pension", "business_plan", "inheritance_gift",
-    "contract", "legal_document",
-    "memo", "general", "unclassifiable",
+    # 1. 보험계약 (insurance)
+    "policy", "coverage_analysis", "application", "plan_design", "insurance_etc",
+    # 2. 보험금 청구 (claim)
+    "diagnosis", "medical_receipt", "claim_form", "consent_delegation",
+    # 3. 신분/증명 (identity)
+    "id_card", "family_cert", "personal_docs",
+    # 4. 건강/의료 (medical)
+    "health_checkup",
+    # 5. 자산 (asset)
+    "asset_document", "inheritance_gift",
+    # 6. 법인 (corporate)
+    "corp_basic", "hr_document", "corp_tax", "corp_asset", "legal_document",
+    # 7. 기타 (etc)
+    "general", "unclassifiable",
 }
 
 # AI 분류에서 이 값이 나오면 general로 교체 (시스템 전용 유형)
@@ -99,55 +101,50 @@ SYSTEM_ONLY_TYPES = {"annual_report", "customer_review", "unspecified"}
 CLASSIFICATION_SYSTEM_PROMPT = (
     "보험설계사 문서분류기. JSON만 응답. "
     "annual_report/customer_review/unspecified 선택 금지. "
-    "general은 42개 유형 어디에도 해당하지 않을 때만 선택. "
+    "general은 22개 유형 어디에도 해당하지 않을 때만 선택. "
     "텍스트가 없거나 판독 불가하면 반드시 unclassifiable 선택."
 )
 
 CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를 분류하세요.
 
-[유형 목록 — 9개 대분류, 42개 소분류 중 정확히 1개 선택]
+[유형 목록 — 7대분류, 22소분류 중 정확히 1개 선택]
 
-1. 보험계약: application=청약서/가입신청서/자필서명청약, policy=보험증권/보험가입확인서/증권번호기재확인서, terms=약관/보통약관, plan_design=가입설계서/보험설계/보험비교표/보장비교표(보험료·보장내용 수치 비교 문서), proposal=제안서/가입제안서/상품설명서(고객에게 보내는 종합 제안), coverage_analysis=보장분석/보장범위분석/보장내역(기존가입 보험의 보장 분석·현황), change_request=계약변경/감액/특약해지, surrender=해지서류/해지환급금
-2. 보험금청구: claim_form=보험금청구서/청구절차안내, diagnosis=진단서/소견서(의사발급), medical_receipt=진료비영수증/진료비계산서/약제비계산서, accident_cert=사고증명서/교통사고사실확인원, hospital_cert=입퇴원확인서/통원확인서
-3. 고객신원: id_card=신분증/주민등록증/운전면허/여권, family_cert=가족관계증명서/주민등록등본/혼인관계, seal_signature=인감증명서/서명확인/본인서명사실확인서, bank_account=통장사본/계좌개설확인서/금융거래확인서/금융거래내역, power_of_attorney=위임장/대리청구, consent_form=동의서/서약서/개인정보동의/자필서명확인서/자필서류, business_card=명함
-4. 재무/소득: income_proof=소득금액증명/급여명세서, employment_cert=재직증명서/경력증명서, financial_statement=재무제표/손익계산서/대차대조표, tax_document=종합소득세/세무신고서/원천징수영수증/부가가치세신고서/과세표준증명원, transaction_proof=거래명세서/입금확인서/비용내역서/사업비내역서/경비정산서/거래내역증명서
-5. 건강/의료: health_checkup=건강검진결과/종합검진/암검진, medical_record=의무기록/검사결과지/처방전
-6. 재산/등록: property_registry=부동산등기부등본/건축물대장, vehicle_registry=자동차등록/차량등록원부, business_registry=사업자등록증/사업자등록증명원
-7. 법인: corp_registry=법인등기부등본/법인등기사항전부증명서/정관/법인인감증명서/중소기업확인서, shareholder=주주명부/지분증명, meeting_minutes=이사회의사록/주총의사록, hr_document=이력서/근로계약서/급여대장/인사발령/노무서류/취업규칙, pension=퇴직연금/DC형/DB형/가입자명부/확정기여형/확정급여형/부담금내역, business_plan=사업계획서/투자제안서, inheritance_gift=상속/증여/유언장
-8. 일반계약/법률: contract=임대차계약/용역계약/매매계약(보험외), legal_document=법률서류/내용증명/소장/변호사의견서/출석통지서/공문/징계서류
-9. 기타: memo=메모/상담기록/고객노트, general=위 유형에 해당하지 않는 일반 문서/안내문/가이드, unclassifiable=비문서/내용없음/판독불가/보험업무와 전혀 무관(사은품·사무용품·로고·디자인)
+1. 보험계약(insurance): policy=보험증권/보험가입확인서/증권번호기재확인서, coverage_analysis=보장분석/보장범위분석/보장내역(기존가입 보험의 보장 분석·현황), application=청약서/가입신청서/자필서명청약, plan_design=가입설계서/보험설계/보험비교표/보장비교표/제안서/가입제안서/상품설명서(보험료·보장내용 수치 비교 또는 종합 제안 문서), insurance_etc=약관/보통약관/계약변경/감액/특약해지/해지서류/해지환급금/기타 보험관련
+2. 보험금청구(claim): diagnosis=진단서/소견서/입퇴원확인서/통원확인서/의무기록/검사결과지/처방전(의사 발급 의료 문서), medical_receipt=진료비영수증/진료비계산서/약제비계산서, claim_form=보험금청구서/청구절차안내/사고증명서/교통사고사실확인원, consent_delegation=동의서/서약서/개인정보동의/자필서명확인서/자필서류/위임장/대리청구/인감위임
+3. 신분/증명(identity): id_card=신분증/주민등록증/운전면허/여권, family_cert=가족관계증명서/주민등록등본/혼인관계, personal_docs=통장사본/계좌개설확인서/금융거래확인서/인감증명서/서명확인/본인서명사실확인서/명함
+4. 건강/의료(medical): health_checkup=건강검진결과/종합검진/암검진
+5. 자산(asset): asset_document=소득금액증명/급여명세서/재직증명서/경력증명서/재무제표/손익계산서/거래명세서/입금확인서/부동산등기부등본/건축물대장/자동차등록/사업자등록증(개인 자산·소득·재직·재무·등기 관련), inheritance_gift=상속/증여/유언장
+6. 법인(corporate): corp_basic=법인등기부등본/등기사항전부증명서/정관/법인인감증명서/중소기업확인서/주주명부/지분증명/이사회의사록/주총의사록, hr_document=이력서/근로계약서/급여대장/인사발령/노무서류/취업규칙/퇴직연금/DC형/DB형/가입자명부, corp_tax=종합소득세/세무신고서/원천징수영수증/부가가치세신고서/과세표준증명원(세금 신고·납부 서류), corp_asset=법인 명의 부동산/자동차/자산 관련 서류, legal_document=법률서류/내용증명/소장/변호사의견서/공문/임대차계약/용역계약/매매계약/사업계획서/투자제안서
+7. 기타(etc): general=위 유형에 해당하지 않는 일반 문서/안내문/가이드/메모/상담기록/고객노트, unclassifiable=비문서/내용없음/판독불가/보험업무와 전혀 무관(사은품·사무용품·로고·디자인)
 
 [분류 규칙]
 1. 문서의 주된 목적 기준으로 1개만 선택
 2. 가입 전 설계=plan_design, 가입 후 기존보험 분석=coverage_analysis
-3. general은 마지막 수단! 42개 유형 중 하나라도 해당하면 반드시 그것을 선택
+3. general은 마지막 수단! 22개 유형 중 하나라도 해당하면 반드시 그것을 선택
 4. 텍스트가 짧아도 키워드가 특정 유형과 명확히 매칭되면 해당 유형 선택
 5. 텍스트가 없거나 의미 있는 단어가 10자 미만이면 unclassifiable (general 아님)
 6. 서식 양식(빈 칸/예시명)이라도 문서 유형이 명확하면 해당 유형으로 분류 (unclassifiable 아님)
 
 [혼동 주의 — 반드시 구분]
-- plan_design(설계서: 보험료·보장내용·보험기간이 수치표로 나열된 설계 문서. "가입제안서"라는 제목이 없으면 plan_design) vs proposal(제안서: "가입제안서"라는 제목이 명시된 종합 제안 문서)
+- plan_design(설계서/제안서: 보험료·보장내용·보험기간이 수치표로 나열된 설계/제안 문서) vs coverage_analysis(보장분석: 기존 가입 보험의 보장 분석·현황)
 - application(청약서: 가입 신청, "청약" 키워드 핵심) vs policy(증권: 계약 체결 확인, 증권번호·보험기간 확정)
-- consent_form(동의서/서약서/자필서명확인서) vs application(청약서). "자필서류"는 consent_form
-- diagnosis(의사 발급 진단서/소견서) vs medical_record(의무기록사본/검사결과지)
-- income_proof(소득 금액 명시 증명) vs employment_cert(재직/경력 사실만 증명)
-- hr_document(법인 인사서류: 이력서/근로계약서/급여대장) vs employment_cert(개인 재직증명)
-- corp_registry(정관/법인등기부등본/등기사항전부증명서) vs business_registry(사업자등록증만 해당). "등기부등본" "등기사항전부증명서"는 반드시 corp_registry
-- property_registry(부동산등기부등본) vs corp_registry(법인등기부등본). 부동산이면 property_registry
-- contract(보험 외 일반계약) vs application(보험 청약서)
-- pension(퇴직연금/DC/DB/가입자명부/부담금내역) vs hr_document(일반 인사서류)
-- financial_statement(재무제표/손익계산서) vs tax_document(세무신고/납부)
+- consent_delegation(동의서/서약서/자필서명확인서/위임장/대리청구) vs application(청약서). "자필서류"는 consent_delegation
+- diagnosis(의사 발급 의료 문서: 진단서/소견서/입퇴원확인서/의무기록) vs health_checkup(건강검진결과/종합검진)
+- asset_document(개인 자산/소득/재직/재무/등기 관련) vs corp_tax(세금 신고·납부 서류)
+- asset_document(개인 명의 부동산/자동차) vs corp_asset(법인 명의 부동산/자동차)
+- corp_basic(법인등기부등본/정관/주주명부/의사록) vs asset_document(사업자등록증/개인 재산 등기)
+- hr_document(법인 인사/노무: 근로계약서/급여대장/퇴직연금) vs asset_document(개인 재직증명/소득증명)
+- personal_docs(통장사본/인감증명/명함) vs asset_document(재무제표/거래증빙)
+- coverage_analysis(기존 보험의 보장내역/보장분석 현황) vs policy(보험증권: 보험사가 발행한 공식 증권. "보험증권" "증권번호" "피보험자" "보험기간"이 있고 보험사 직인/발행일이 있는 공식 문서)
+- personal_docs(금융거래확인서: 문서 제목이 "금융거래확인서"이면 내용과 무관하게 personal_docs) vs asset_document(거래명세서: 상거래 매매·용역·입금 내역서)
 - general(안내문/가이드/기타 업무 문서) vs unclassifiable(판독불가/보험업무 무관). 비용안내·준비서류안내=general
-- general(분류 가능한 기타 문서) vs hr_document(인사서류). 일반 안내문은 general
-- coverage_analysis(기존 보험의 보장내역/보장분석 현황. "보장내역" "보장분석" 키워드가 있거나, 여러 특약의 계약금·보험료·보기/납기가 표로 나열된 현황) vs policy(보험증권: 보험사가 발행한 공식 증권. "보험증권" "증권번호" "피보험자" "보험기간"이 있고 보험사 직인/발행일이 있는 공식 문서)
-- bank_account vs transaction_proof: 문서 제목이 "금융거래확인서"이면 내용(대출현황·담보·예금)과 무관하게 반드시 bank_account. transaction_proof는 상거래 매매·용역·입금 내역서에만 해당
-- tax_document(부가가치세신고서/종합소득세/원천징수) vs financial_statement(재무제표/손익계산서). 세금 신고·납부 서류면 tax_document
 
 [문서]
 {text}
 
 JSON (반드시 이 형식):
 {{"type":"diagnosis","confidence":0.85,"title":"홍길동 진단서(30자이내 핵심제목)","summary":"3~5줄 요약"}}"""
+
 
 class OpenAIService:
     """OpenAI service using class methods"""
