@@ -87,10 +87,78 @@
     color: var(--color-ios-red, #ff3b30);
   }
 
+  .upload-summary-stat-value.skipped {
+    color: var(--color-ios-orange, #ff9500);
+  }
+
   .upload-summary-stat-label {
     font-size: var(--font-size-caption-1);  /* 12px - 라벨 */
     font-weight: 400;
     color: var(--color-text-tertiary);
+  }
+
+  /* 건너뛴 파일 섹션 */
+  .upload-summary-skipped {
+    width: 100%;
+    max-width: 500px;
+    text-align: left;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .upload-summary-skipped-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: var(--spacing-sm) 0;
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .upload-summary-skipped-toggle:hover {
+    color: var(--color-text-primary);
+  }
+
+  .upload-summary-skipped-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    max-height: 160px;
+    overflow-y: auto;
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+  }
+
+  .upload-summary-skipped-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xs) 0;
+  }
+
+  .upload-summary-skipped-filename {
+    font-size: var(--font-size-caption-1);
+    font-weight: 400;
+    color: var(--color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .upload-summary-skipped-customer {
+    font-size: var(--font-size-caption-2);
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    margin-left: var(--spacing-md);
+    flex-shrink: 0;
   }
 
   /* 실패 목록 */

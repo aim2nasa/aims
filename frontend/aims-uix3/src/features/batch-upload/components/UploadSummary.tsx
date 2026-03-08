@@ -6,6 +6,7 @@
  * 업로드 완료 후 요약 표시 컴포넌트
  */
 
+import { useState } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
 import type { BatchUploadProgress } from '../hooks/useBatchUpload'
 import './UploadSummary.css'
@@ -18,9 +19,10 @@ interface UploadSummaryProps {
 }
 
 export default function UploadSummary({ progress, onClose, onRetryFailed, onViewDocuments }: UploadSummaryProps) {
-  const { totalFiles, completedFiles, failedFiles, folders, state } = progress
+  const { totalFiles, completedFiles, failedFiles, skippedFiles, folders, state } = progress
+  const [showSkippedFiles, setShowSkippedFiles] = useState(false)
 
-  const isFullSuccess = failedFiles === 0 && completedFiles === totalFiles
+  const isFullSuccess = failedFiles === 0 && (completedFiles + skippedFiles) === totalFiles
   const isPartialSuccess = completedFiles > 0 && failedFiles > 0
   const isFullFailure = completedFiles === 0 && failedFiles > 0
   const isCancelled = state === 'cancelled'
@@ -57,7 +59,9 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
         icon: 'checkmark-circle-fill',
         iconClass: 'success',
         title: '업로드 완료!',
-        description: `${completedFiles}개 파일이 ${folders.length}명의 고객에게 등록되었습니다.`,
+        description: skippedFiles > 0
+          ? `${completedFiles}개 파일 등록, ${skippedFiles}개 건너뜀 (중복)`
+          : `${completedFiles}개 파일이 ${folders.length}명의 고객에게 등록되었습니다.`,
       }
     }
     if (isPartialSuccess) {
@@ -119,6 +123,12 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
           <span className="upload-summary-stat-value success">{completedFiles}개</span>
           <span className="upload-summary-stat-label">성공</span>
         </div>
+        {skippedFiles > 0 && (
+          <div className="upload-summary-stat">
+            <span className="upload-summary-stat-value skipped">{skippedFiles}개</span>
+            <span className="upload-summary-stat-label">건너뜀 (중복)</span>
+          </div>
+        )}
         {failedFiles > 0 && (
           <div className="upload-summary-stat">
             <span className="upload-summary-stat-value error">{failedFiles}개</span>
@@ -130,6 +140,36 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
           <span className="upload-summary-stat-label">소요 시간</span>
         </div>
       </div>
+
+      {/* 건너뛴 파일 목록 (접기/펼치기) */}
+      {skippedFiles > 0 && (
+        <div className="upload-summary-skipped">
+          <button
+            type="button"
+            className="upload-summary-skipped-toggle"
+            onClick={() => setShowSkippedFiles(!showSkippedFiles)}
+          >
+            <SFSymbol
+              name={showSkippedFiles ? 'chevron-down' : 'chevron-right'}
+              size={SFSymbolSize.CAPTION_2}
+              weight={SFSymbolWeight.MEDIUM}
+            />
+            <span>건너뛴 파일 {skippedFiles}건 (중복)</span>
+          </button>
+          {showSkippedFiles && (
+            <div className="upload-summary-skipped-list">
+              {progress.files
+                .filter((f) => f.status === 'skipped')
+                .map((file) => (
+                  <div key={file.fileId} className="upload-summary-skipped-item">
+                    <span className="upload-summary-skipped-filename">{file.fileName}</span>
+                    <span className="upload-summary-skipped-customer">{file.customerName}</span>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 실패 목록 */}
       {failedFolders.length > 0 && (

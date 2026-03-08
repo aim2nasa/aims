@@ -79,6 +79,11 @@ export default function DuplicateDialog({
         {/* 헤더 */}
         <div className="duplicate-dialog-header">
           <h2 className="duplicate-dialog-title">중복 파일 발견</h2>
+          {remainingCount > 0 && (
+            <span className="duplicate-dialog-remaining">
+              남은 중복 파일: {remainingCount}건
+            </span>
+          )}
         </div>
 
         {/* 파일 정보 */}
