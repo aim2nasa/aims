@@ -1,0 +1,2711 @@
+[
+  {
+    "filename": "2024화재보험정리.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "교하로501-증권-30만원.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "김보성 증권분석.xlsx",
+    "type": "coverage_analysis",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "김보성 증권분석1.xls",
+    "type": "coverage_analysis",
+    "category": "insurance",
+    "extension": ".xls",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "김보성낙마사고보험20240528.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "방촌로1172-5-증권-100만원.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "방촌로1172-5-증권-150만원.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "브라운스톤-증권-10만원.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "암보험001.jpg",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".jpg",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "암보험002.jpg",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".jpg",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "증권_운전자보험.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "증권_운전자보험(안영미).pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "증권_퍼펙트플러스종합_1.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "캐치업(구본미)증권.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "캐치업코리아-증권&입금내역.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "캐치업화재보험지급내역서20240813.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "해외여행자보험증권.pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "현대증권_상해실비(안영미).pdf",
+    "type": "policy",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.1_보험증권"
+  },
+  {
+    "filename": "안영미보험분석(1).xlsx",
+    "type": "coverage_analysis",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.2_보장분석"
+  },
+  {
+    "filename": "김보성님운전자보험청약서.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "김보성청약서.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "김선희청약서20240808.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "김혜경청약서20240808.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "박지우청약서20240808.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "안희정청약서20240808.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "유아영청약서20240808.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "유아영청약서20240817.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "이승준청약서20240808.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "이찬형청약서20240816.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "캐치업(구본미)청약서 20230604.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "캐치업윤명희청약서.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "캐치업청약서 (1).pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "캐치업청약서.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "캐치업코리아 화재보험청약서)자필용.pdf",
+    "type": "application",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.3_청약서"
+  },
+  {
+    "filename": "김보성 종신제안_1.xlsx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "김보성 종신제안.xlsx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "김보성5억 제안.pptx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pptx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "김보성5억 제안(최종).pptx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pptx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "김보성님-운전자보험-20250515.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "김보성님-운전자상해보험-10년납90세만기-제안2.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "김보성님-운전자상해보험-10년납90세만기.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "법인 종합재무컨설팅 제안서(캐치업코리아).ppt",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".ppt",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "안영미고객 암.xlsx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "안영미님-운전자상해보험-10년납90세만기-제안2.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "안영미님-운전자상해보험-10년납90세만기.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "유아영.xlsx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업-운전자.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업.pptx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pptx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업김보성대표치매간병.xlsx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업자동차견적.jpg",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".jpg",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업코리아 제안서.pptx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pptx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업코리아 제안서(원본).pptx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pptx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업코리아-낙하리_현대해상.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업코리아-낙하리_DB손보.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업코리아-낙하리-가입설계서-250만.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업코리아-낙하리-가입설계서-30만.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업코리아2022법인컨설팅제안202209수정.pptx",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pptx",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업코리아설계서-1.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "캐치업코리아설계서.pdf",
+    "type": "plan_design",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.4_가입설계서"
+  },
+  {
+    "filename": "annualReport 김보성201409.ppt",
+    "type": "annual_report",
+    "category": "insurance",
+    "extension": ".ppt",
+    "folder": "1_보험계약/1.5_AR"
+  },
+  {
+    "filename": "2024가입보험정리20241119.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "계약내용변경신청서.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "계약자변경서류028.jpg",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".jpg",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "김보성,안영미01.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "김보성내역.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "김보성대표님 계약내용2014.3.25.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "김보성대표님 동행.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "김보성적립금현황20220810.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "라이콘코리아법인보험자료.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업 상품설명서.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업 질권설정변경신청서.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2019.03메트라이프보험 가입현황(세무사제출용).pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2022.08보험 가입현황.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2023.01메트라이프보험 가입현황.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2023.01메트라이프보험 가입현황(사망보험금).xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2023.01보험 가입현황.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2023.02보험 가입현황(세무서제출용).xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2024.03메트라이프보험 가입현황.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2024.03메트라이프보험 가입현황(세무사제출용).xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2024.08메트라이프보험 가입현황(안영미).xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업20240802메트라이프보험 직원가입내용.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업2025.03보험 가입현황(세무서제출용2024).xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업단체상해보험명단20151226.xlsx",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".xlsx",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업상품설명서.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업직원보험청구시필요서류.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업직원해지서류20240824.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업코리아 2021.11.25.hwp",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".hwp",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업코리아 담보삭제요청서.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업코리아 보험가입내역정리202303.png",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".png",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업코리아-자필서류-20230329.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "캐치업코리아-자필서류-20240813.pdf",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".pdf",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "해지서류098.jpg",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".jpg",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "cUbMU8d2lSmqxKDzENDksk_i_ea075343e024.png",
+    "type": "insurance_etc",
+    "category": "insurance",
+    "extension": ".png",
+    "folder": "1_보험계약/1.7_기타보험관련"
+  },
+  {
+    "filename": "KakaoTalk_20240411_112918705_01.png",
+    "type": "personal_docs",
+    "category": "identity",
+    "extension": ".png",
+    "folder": "3_신분증명/3.3_기타개인서류"
+  },
+  {
+    "filename": "김보성진단서.pdf",
+    "type": "diagnosis",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.1_진단서_소견서"
+  },
+  {
+    "filename": "김보성진단서(망막박리2023.02).pdf",
+    "type": "diagnosis",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.1_진단서_소견서"
+  },
+  {
+    "filename": "안영미(대장용종시술확인서20230913).pdf",
+    "type": "diagnosis",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.1_진단서_소견서"
+  },
+  {
+    "filename": "안영미진단서20230913.pdf",
+    "type": "diagnosis",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.1_진단서_소견서"
+  },
+  {
+    "filename": "안희정수술확인서.jpg",
+    "type": "diagnosis",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.1_진단서_소견서"
+  },
+  {
+    "filename": "캐치업(박지우수면무호흡수술확인서20230105).pdf",
+    "type": "diagnosis",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.1_진단서_소견서"
+  },
+  {
+    "filename": "img006.jpg",
+    "type": "diagnosis",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.1_진단서_소견서"
+  },
+  {
+    "filename": "(주)캐치업코리아 원천징수영수증.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "(주)캐치업코리아 원천징수영수증(2024세무자료한투).pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "21년 원천영수증_안영미님.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "안영미병원비영수증.pdf",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "안영미병원영수증(자생한방20230313).pdf",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "안영미영수증.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "안영미진료비내역서(견갑골자연의원202311).pdf",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "안영미진료비영수증.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "퇴직금지급 영수증.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img005.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img008.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img009.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img011.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img012.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img014.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img015.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img016.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img018.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img019.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img020.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img021.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img022.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img023.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img024.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img025.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img027.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img028.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img030.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img031.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img032.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img033.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img034.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img035.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img037.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img038.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img039.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img040.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "img041.jpg",
+    "type": "medical_receipt",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.2_진료비영수증"
+  },
+  {
+    "filename": "삼성화재 보험금청구 151224-안영미.pdf",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "안영미20241219관절증보험금청구.pdf",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "안영미백병원보험금청구서.pdf",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "안영미백병원보험금청구서1.pdf",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "임신중여성야간및휴일근로청구서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "청구서류001.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "청구서류002.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "청구서류003.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "청구서류004.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "체육시설업자배상책임공제_사고통지서(캐치업).pdf",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "img004.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "img007.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "img010.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "img013.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "img026.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "img029.jpg",
+    "type": "claim_form",
+    "category": "claim",
+    "extension": ".jpg",
+    "folder": "2_보험금청구/2.3_보험금청구서"
+  },
+  {
+    "filename": "산후1년미만여성야간및휴일근로동의서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.4_위임장_동의서"
+  },
+  {
+    "filename": "여성근로자야간및휴일근로동의서(5인이상).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "2_보험금청구/2.4_위임장_동의서"
+  },
+  {
+    "filename": "캐치업코리아-고객거래확인서,FATCA확인서.zip",
+    "type": "consent_delegation",
+    "category": "claim",
+    "extension": ".zip",
+    "folder": "2_보험금청구/2.4_위임장_동의서"
+  },
+  {
+    "filename": "구본미(신분증).pdf",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".pdf",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "김보성신분증.pdf",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".pdf",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "김보성통장,신분증.pdf",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".pdf",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "김태연신분증자료.pdf",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".pdf",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "박지우신분증.pdf",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".pdf",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "박지우운전면허증.jpg",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".jpg",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "안영미신분증.jpg",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".jpg",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "안영미신분증.ppt",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".ppt",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "유아영신분증1.jpg",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".jpg",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "유아영신분증2.jpg",
+    "type": "id_card",
+    "category": "identity",
+    "extension": ".jpg",
+    "folder": "3_신분증명/3.1_신분증"
+  },
+  {
+    "filename": "구본미(가족주민번호).pdf",
+    "type": "family_cert",
+    "category": "identity",
+    "extension": ".pdf",
+    "folder": "3_신분증명/3.2_가족관계서류"
+  },
+  {
+    "filename": "img001.jpg",
+    "type": "family_cert",
+    "category": "identity",
+    "extension": ".jpg",
+    "folder": "3_신분증명/3.2_가족관계서류"
+  },
+  {
+    "filename": "김보성명함.jpg",
+    "type": "personal_docs",
+    "category": "identity",
+    "extension": ".jpg",
+    "folder": "3_신분증명/3.3_기타개인서류"
+  },
+  {
+    "filename": "김보성통장.pdf",
+    "type": "personal_docs",
+    "category": "identity",
+    "extension": ".pdf",
+    "folder": "3_신분증명/3.3_기타개인서류"
+  },
+  {
+    "filename": "김보성통장사본출력_20230809153530.pdf",
+    "type": "personal_docs",
+    "category": "identity",
+    "extension": ".pdf",
+    "folder": "3_신분증명/3.3_기타개인서류"
+  },
+  {
+    "filename": "안영미자격증.JPG",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "3_신분증명/3.3_기타개인서류"
+  },
+  {
+    "filename": "안영미통장.jpg",
+    "type": "personal_docs",
+    "category": "identity",
+    "extension": ".jpg",
+    "folder": "3_신분증명/3.3_기타개인서류"
+  },
+  {
+    "filename": "2022.9.27건강검진(김보성).pdf",
+    "type": "health_checkup",
+    "category": "medical",
+    "extension": ".pdf",
+    "folder": "4_건강의료/4.1_건강검진결과"
+  },
+  {
+    "filename": "2022.9.27건강검진(안영미).pdf",
+    "type": "health_checkup",
+    "category": "medical",
+    "extension": ".pdf",
+    "folder": "4_건강의료/4.1_건강검진결과"
+  },
+  {
+    "filename": "박지우검사결과지.pdf",
+    "type": "health_checkup",
+    "category": "medical",
+    "extension": ".pdf",
+    "folder": "4_건강의료/4.1_건강검진결과"
+  },
+  {
+    "filename": "안영미건강검진결과(20221031).pdf",
+    "type": "health_checkup",
+    "category": "medical",
+    "extension": ".pdf",
+    "folder": "4_건강의료/4.1_건강검진결과"
+  },
+  {
+    "filename": "안영미건강검진결과(20230811).pdf",
+    "type": "health_checkup",
+    "category": "medical",
+    "extension": ".pdf",
+    "folder": "4_건강의료/4.1_건강검진결과"
+  },
+  {
+    "filename": "안영미건강검진결과202308.pdf",
+    "type": "health_checkup",
+    "category": "medical",
+    "extension": ".pdf",
+    "folder": "4_건강의료/4.1_건강검진결과"
+  },
+  {
+    "filename": "암검진066.jpg",
+    "type": "health_checkup",
+    "category": "medical",
+    "extension": ".jpg",
+    "folder": "4_건강의료/4.1_건강검진결과"
+  },
+  {
+    "filename": "암검진067.jpg",
+    "type": "health_checkup",
+    "category": "medical",
+    "extension": ".jpg",
+    "folder": "4_건강의료/4.1_건강검진결과"
+  },
+  {
+    "filename": "낙하리-건물가액평가.pdf",
+    "type": "asset_document",
+    "category": "asset",
+    "extension": ".pdf",
+    "folder": "5_자산/5.1_자산관련서류"
+  },
+  {
+    "filename": "라이콘코리아등기부등본.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "5_자산/5.1_자산관련서류"
+  },
+  {
+    "filename": "라이콘코리아사업자등록증주주명부.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "5_자산/5.1_자산관련서류"
+  },
+  {
+    "filename": "종합소득세신고서_김보성님.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "5_자산/5.1_자산관련서류"
+  },
+  {
+    "filename": "(완료)등기부등본_(주)캐치업코리아_250326.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "(주)캐치업코리아_사업자등록증_231218_1.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "(주)캐치업코리아_사업자등록증_231218.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "[비용+준비서류 안내]_(주)캐치업코리아_250318.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "3.정관및인증서2021.12.5.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "개정정관-캐치업코리아201404.docx",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".docx",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "개정정관(자사주).hwp",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "법인서류012.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "법인서류013.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "법인서류014.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "법인서류015.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "법인서류016.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "법인서류017.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "법인서류018.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "법인서류019.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "법인확인서(최종본).pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "사업자등록증(브라운스톤)-1.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "사업자등록증(브라운스톤).jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "설립5천-서울,발기설립-김보성대표.xls",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".xls",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "설립5천-서울,발기설립-송유미대표.xls",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".xls",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "정    관-캐치업코리아.hwp",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "정관_(최근샘플).hwp",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "정관_캐치업코리아.hwp",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "주식명의신탁 약정서-고은숙.docx",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".docx",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "주식명의신탁 약정서-박시원.docx",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".docx",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "주식명의신탁 약정서.docx",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".docx",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "중소기업기준검토표_캐치업코리아.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "중소기업확인서2024.4.5.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "중소기업확인서2024.4.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업국민은행통장.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업로고.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업법인인감.jpg",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업코리아 주주명부.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업코리아_권리이전등록완료.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업코리아(연구전담부서인증).pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업코리아(특허등록완료).pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업코리아연구소서상담지.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업코리아주식회사_주식양수도계약서_고은숙_김태연.doc",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".doc",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업코리아주주명부.xlsx",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업코리아주주명부2022.pdf",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업통장.png",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".png",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "캐치업포멧.ai",
+    "type": "corp_basic",
+    "category": "corporate",
+    "extension": ".ai",
+    "folder": "6_법인/6.1_기본서류"
+  },
+  {
+    "filename": "(주)캐치업코리아 2025. 02월 퇴직연금 부담금 내역_1.xls",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xls",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "(주)캐치업코리아 2025. 02월 퇴직연금 부담금 내역.xls",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xls",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "(주)캐치업코리아_4대보험가입자명부.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "(주)캐치업코리아_4대보험가입자명부20240402.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "20130409_121226표준취업규칙(최종).hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "2024년퇴직연금부담금납입확인서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "4대보험가입자명부.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "4대보험가입자명부2022.11.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "4대보험가입자명부2022.9.20.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "결근계.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "결근사유서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "경고장.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "경업 금지 서약서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "경위서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "고용노동부 근로감독시 점검사항.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "구본미 이력서 2023.3.23.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "구본미.jpg",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "구본미졸업증명서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "근로계약서_1.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "근로계약서_2.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "근로계약서.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "근로자명부 집단서식.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "근로자명부(노동부서식).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "근로자명부전체.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "근로재계약서 2024.4.1_1.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "근태계(참고).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "급여대장.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "급여대장(샘플130130).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "김보성안영미퇴직연금2024.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "라이콘코리아근로계약서(송유미).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "별첨 1.2 근로자명부(개별식).hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "별첨 19 사직서.hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "병가원(참고).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "복직원.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "부근로자명.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "브로우바복무규정2.hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "비밀유지 서약서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "사업주가 알아야 할 사항.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "사직원.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "서약서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "선택적보상휴가제합의서(5인이상).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "성희롱예방교육일지.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "시말서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "업무인수인계확인서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "연차휴가 관리대장.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "연차휴가 대체사용 합의서(5인이상).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "연차휴가사용촉진서(5인이상).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "월급근로계약서-(주)캐치업코리아.xls",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xls",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "재직증명서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "재직증명서.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "재직증명서(캐치업구본미).xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "제12장 재해보상취업규칙.hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "조퇴외출신청서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "지각이유서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "징계 의결서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "징계대장.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "징계요구서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "징계위원회출석통지서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "징계처분 통지서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "출장신고서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "취업규칙.hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "취업규칙018.jpg",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "취업규칙019.jpg",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "캐치업고용지원금신청서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "캐치업근무자현황.docx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".docx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "캐치업급여.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "캐치업직원명단.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "캐치업취업규칙_1.hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "캐치업코리아 표준취업규칙(최종).hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "캐치업코리아노무규정.zip",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".zip",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "캐치업코리아직원명단.xlsx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "퇴직금 중간정산 신청서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "퇴직금 중간정산 신청서120704.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "포괄근로계약서-5인이상.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "포괄근로계약서(갑을제외일반5인미만용).hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "포트폴리오_구본미.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "표준취업규칙(최종).hwp",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".hwp",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "표지.pptx",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pptx",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "해고예고 통지서.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "휴가(직)원.pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "휴가신청서(참고).pdf",
+    "type": "hr_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.2_인사노무"
+  },
+  {
+    "filename": "(주)캐치업코리아 거래내역증명서.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "(주)캐치업코리아 거래내역증명서(2024세무자료한투).pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "(주)캐치업코리아 세무검토보고_220913_윤태성sp(송유미fsr).pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "(주)캐치업코리아 잔고증명서.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "(주)캐치업코리아 잔고증명서(2024세무한투).pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "0190_주식회사 캐치업코리아_법인2019년_일괄출력.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "2018년표준손익계산서.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "20나23987_(22.01.14)판결문_001001.판결문_유헌종.pdf",
+    "type": "legal_document",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "20년 세무조정계산서_캐치업코리아.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "21년 세무조정계산서_캐치업코리아 (1).pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "라이콘재무제표확인(2023년).pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "손익(주)라이콘코리아.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "손익(주)캐치업코리아.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "재무상태표 가결산 내역_캐치업코리아 (1).pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업2022.08재산현황_1.xlsx",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업2022.08재산현황.xlsx",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업사업비내역서.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업세무서제출서류20151230.xlsx",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업재무제표확인(2023년).pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업주당가치평가자료202208221.png",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".png",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업주당가치평가자료202208222.png",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".png",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업주당가치평가자료202208223.png",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".png",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업주당가치평가자료202208224.png",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".png",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업코리아 요청자료.zip",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".zip",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업코리아_부가세신고서_1기예정.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "캐치업코리아_부가세신고서_1기확정.pdf",
+    "type": "corp_tax",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.3_세무"
+  },
+  {
+    "filename": "0396가입증_1.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "08하 7454 자동차등록증.jpeg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpeg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "160구3184벤츠전기차등록증.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "3184가입증.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "3204가입증-1.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "8621가입증_1.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "90도3455자동차등록증.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "90도3455자동차등록증1.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "90도3455자동차청약서_1.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "9894가입증.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "박지우님가입증-1.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "박지우자동차청약서.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "자동차등록증(캐치업코리아).pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "자동차청약서(캐치업).jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "자동차청약서001.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "자동차청약서002.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업 가입증 (1)_1.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업 가입증.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업 렉스턴 가입증_1.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업 스타렉스_1.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업 스타렉스-1.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업 청약서.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업 포터 가입증.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업 bmw.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업_권리이전등록신청_납부고지서 (1).pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업_등록증재발급수수료_보정요구서.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업_등록증재발급신청_납부고지서.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업3184 청약서-1_1.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업자동차 증권(70나0396)2023.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업자동차만기202211기준.xlsx",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업자동차만기202312기준.xlsx",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".xlsx",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업자동차증권.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업자동차증권(10거8621)2023.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업자동차증권(160구3184)2023.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업증권.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "캐치업코리아자동차증권.pdf",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".pdf",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "i_42e274d0fd36.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "i_951e220d0c9b.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "i_ec3a3dbd1097.jpg",
+    "type": "corp_asset",
+    "category": "corporate",
+    "extension": ".jpg",
+    "folder": "6_법인/6.4_법인자산"
+  },
+  {
+    "filename": "2018컨설팅자료.zip",
+    "type": "legal_document",
+    "category": "corporate",
+    "extension": ".zip",
+    "folder": "6_법인/6.5_기타법률서류"
+  },
+  {
+    "filename": "서울중앙 2019가합585938 김보성.zip",
+    "type": "legal_document",
+    "category": "corporate",
+    "extension": ".zip",
+    "folder": "6_법인/6.5_기타법률서류"
+  },
+  {
+    "filename": "실버화장품.pptx",
+    "type": "legal_document",
+    "category": "corporate",
+    "extension": ".pptx",
+    "folder": "6_법인/6.5_기타법률서류"
+  },
+  {
+    "filename": "캐치업사업계획서최종.pptx",
+    "type": "legal_document",
+    "category": "corporate",
+    "extension": ".pptx",
+    "folder": "6_법인/6.5_기타법률서류"
+  },
+  {
+    "filename": "캐치업사업계획서최종다른버젼.pptx",
+    "type": "legal_document",
+    "category": "corporate",
+    "extension": ".pptx",
+    "folder": "6_법인/6.5_기타법률서류"
+  },
+  {
+    "filename": "김보성 대표님-액자디자인.jpg",
+    "type": "general",
+    "category": "etc",
+    "extension": ".jpg",
+    "folder": "7_기타/7.1_일반문서"
+  },
+  {
+    "filename": "김보성 대표님인터뷰액자.pdf",
+    "type": "general",
+    "category": "etc",
+    "extension": ".pdf",
+    "folder": "7_기타/7.1_일반문서"
+  },
+  {
+    "filename": "김보성 메모 정리.docx",
+    "type": "general",
+    "category": "etc",
+    "extension": ".docx",
+    "folder": "7_기타/7.1_일반문서"
+  },
+  {
+    "filename": "김보성메모.pdf",
+    "type": "general",
+    "category": "etc",
+    "extension": ".pdf",
+    "folder": "7_기타/7.1_일반문서"
+  },
+  {
+    "filename": "마장사은품.pptx",
+    "type": "general",
+    "category": "etc",
+    "extension": ".pptx",
+    "folder": "7_기타/7.1_일반문서"
+  },
+  {
+    "filename": "캐치업(장재석메모).pdf",
+    "type": "general",
+    "category": "etc",
+    "extension": ".pdf",
+    "folder": "7_기타/7.1_일반문서"
+  },
+  {
+    "filename": "캔버스보관렉.pptx",
+    "type": "general",
+    "category": "etc",
+    "extension": ".pptx",
+    "folder": "7_기타/7.1_일반문서"
+  }
+]
