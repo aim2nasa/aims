@@ -997,6 +997,45 @@ async def _detect_and_process_customer_review(
         return {"is_customer_review": False}
 
 
+async def _cleanup_failed_document(doc_id: str, customer_id: Optional[str], dest_path: Optional[str]):
+    """
+    문서 처리 실패 시 cleanup: DB 레코드 + 고객 연결 + 디스크 파일 삭제.
+    DuplicateKeyError 등 파이프라인 중간 실패 시 고아 데이터 방지.
+    """
+    try:
+        files_collection = MongoService.get_collection("files")
+
+        # 1. customers.documents에서 해당 문서 참조 제거
+        if customer_id:
+            try:
+                customers_collection = MongoService.get_collection("customers")
+                await customers_collection.update_one(
+                    {"_id": ObjectId(customer_id)},
+                    {"$pull": {"documents": {"document_id": ObjectId(doc_id)}}}
+                )
+                logger.info(f"🧹 Cleanup: 고객({customer_id})에서 문서({doc_id}) 연결 제거 완료")
+            except Exception as e:
+                logger.error(f"🧹 Cleanup 실패 (고객 연결 제거): doc_id={doc_id}, error={e}")
+
+        # 2. 디스크 파일 삭제
+        if dest_path and os.path.exists(dest_path):
+            try:
+                os.unlink(dest_path)
+                logger.info(f"🧹 Cleanup: 디스크 파일 삭제 완료 ({dest_path})")
+            except Exception as e:
+                logger.error(f"🧹 Cleanup 실패 (디스크 파일 삭제): path={dest_path}, error={e}")
+
+        # 3. files 컬렉션에서 문서 레코드 삭제
+        try:
+            await files_collection.delete_one({"_id": ObjectId(doc_id)})
+            logger.info(f"🧹 Cleanup: files 레코드 삭제 완료 (doc_id={doc_id})")
+        except Exception as e:
+            logger.error(f"🧹 Cleanup 실패 (files 레코드 삭제): doc_id={doc_id}, error={e}")
+
+    except Exception as e:
+        logger.error(f"🧹 Cleanup 전체 실패: doc_id={doc_id}, error={e}")
+
+
 async def _connect_document_to_customer(customer_id: str, doc_id: str, user_id: str):
     """Connect document to customer via internal API call"""
     import httpx
@@ -1154,6 +1193,9 @@ async def process_document_pipeline(
         처리 결과 dict
     """
     doc_id = existing_doc_id
+    dest_path: Optional[str] = None
+    customer_connected = False  # 고객 연결 완료 추적 (cleanup 판단용)
+    cleanup_done = False  # cleanup 완료 추적 (이중 호출 방지용)
 
     # 메트릭 기록 시작
     from workers.pipeline_metrics import pipeline_metrics
@@ -1227,6 +1269,7 @@ async def process_document_pipeline(
         # Connect document to customer if customer_id provided
         if customer_id:
             await _connect_document_to_customer(customer_id, doc_id, user_id)
+            customer_connected = True
 
         # Progress: 20% - Upload complete
         await _notify_progress(doc_id, user_id, 20, "upload", "파일 업로드 완료")
@@ -1335,10 +1378,13 @@ async def process_document_pipeline(
                 {"$set": meta_update}
             )
         except DuplicateKeyError as e:
-            # 중복 에러 발생 시 SSE로 에러 전달
+            # 중복 에러 발생 시 SSE 에러 전달 후 cleanup 수행
+            # (cleanup이 files 레코드를 삭제하므로 notify_progress를 먼저 호출)
             error_msg = "동일한 파일이 이미 등록되어 있습니다."
             logger.error(f"🔴 중복 파일 에러: {doc_id} - {error_msg}")
             await _notify_progress(doc_id, user_id, -1, "error", error_msg)
+            await _cleanup_failed_document(doc_id, customer_id, dest_path)
+            cleanup_done = True
             raise Exception(error_msg) from e
 
         detected_mime = meta_result.get("mime_type", "")
@@ -1541,7 +1587,8 @@ async def process_document_pipeline(
         await pipeline_metrics.record_error(metric_record, type(e).__name__)
 
         # Save error to MongoDB if we have a doc_id
-        if doc_id:
+        # cleanup_done=True면 이미 DuplicateKeyError 핸들러에서 레코드가 삭제되었으므로 스킵
+        if doc_id and not cleanup_done:
             try:
                 files_collection = MongoService.get_collection("files")
                 await files_collection.update_one(
@@ -1554,5 +1601,12 @@ async def process_document_pipeline(
                 )
             except Exception as save_error:
                 logger.error(f"Failed to save error to MongoDB: {save_error}")
+
+            # 고객 연결이 완료된 상태에서 에러 발생 시 고아 데이터 방지를 위해 cleanup
+            if customer_connected:
+                try:
+                    await _cleanup_failed_document(doc_id, customer_id, dest_path)
+                except Exception as cleanup_error:
+                    logger.error(f"Failed to cleanup after error: {cleanup_error}")
 
         raise
