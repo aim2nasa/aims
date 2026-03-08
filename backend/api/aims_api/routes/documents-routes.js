@@ -2096,8 +2096,11 @@ router.patch('/documents/set-annual-report', authenticateJWT, async (req, res) =
     }
 
     // 📊 초기 overallStatus 설정 (전체문서보기에서 진행 상태 표시)
-    updateFields.overallStatus = 'processing';
-    updateFields.overallStatusUpdatedAt = new Date();
+    // BUG-3 수정: status=failed 또는 overallStatus=error인 문서는 overallStatus를 덮어쓰지 않음
+    if (document.status !== 'failed' && document.overallStatus !== 'error') {
+      updateFields.overallStatus = 'processing';
+      updateFields.overallStatusUpdatedAt = new Date();
+    }
 
     // 메타데이터가 제공된 경우 추가
     if (metadata) {
@@ -2238,8 +2241,11 @@ router.post('/documents/set-cr-flag', authenticateJWT, async (req, res) => {
     }
 
     // 초기 overallStatus 설정
-    updateFields.overallStatus = 'processing';
-    updateFields.overallStatusUpdatedAt = new Date();
+    // BUG-3 수정: status=failed 또는 overallStatus=error인 문서는 overallStatus를 덮어쓰지 않음
+    if (document.status !== 'failed' && document.overallStatus !== 'error') {
+      updateFields.overallStatus = 'processing';
+      updateFields.overallStatusUpdatedAt = new Date();
+    }
 
     // 메타데이터가 제공된 경우 추가
     if (metadata) {
