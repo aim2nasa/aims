@@ -129,6 +129,7 @@ def process_credit_pending_documents():
                 files_collection.update_one(
                     {"_id": doc_id},
                     {"$set": {
+                        "status": "pending",
                         "overallStatus": "pending",
                         "docembed.status": "pending",
                         "docembed.reprocessed_from_credit_pending": True,

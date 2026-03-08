@@ -257,6 +257,7 @@ class OCRWorker:
         await self._update_ocr_status(file_id, {
             "ocr.status": "quota_exceeded",
             "ocr.quota_message": quota_message,
+            "status": "failed",
             "overallStatus": "error",
             "stages.ocr.status": "error",
             "stages.ocr.message": "OCR 한도 초과",

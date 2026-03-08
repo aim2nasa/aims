@@ -177,13 +177,18 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
         collection = db[collection_name]
 
         # 1단계: 불일치 상태 자동 수정
-        # docembed.status가 done/skipped인데 overallStatus가 completed가 아닌 경우 수정
+        # docembed.status가 done/skipped인데 overallStatus 또는 status가 completed가 아닌 경우 수정
         inconsistent_filter = {
-            '$or': [
-                {'docembed.status': 'done'},
-                {'docembed.status': 'skipped'}
-            ],
-            'overallStatus': {'$ne': 'completed'}
+            '$and': [
+                {'$or': [
+                    {'docembed.status': 'done'},
+                    {'docembed.status': 'skipped'}
+                ]},
+                {'$or': [
+                    {'overallStatus': {'$ne': 'completed'}},
+                    {'status': {'$ne': 'completed'}}
+                ]}
+            ]
         }
         inconsistent_count = collection.count_documents(inconsistent_filter)
         if inconsistent_count > 0:
@@ -191,6 +196,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
             collection.update_many(
                 inconsistent_filter,
                 {'$set': {
+                    'status': 'completed',
                     'overallStatus': 'completed',
                     'overallStatusUpdatedAt': datetime.now(timezone.utc)
                 }}
@@ -259,6 +265,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                                         'estimated_credits': credit_check.get('estimated_credits', 0)
                                     }
                                 },
+                                'status': 'credit_pending',
                                 'overallStatus': 'credit_pending',
                                 'overallStatusUpdatedAt': datetime.now(timezone.utc)
                             }}
@@ -291,6 +298,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                                 'chunks': 0,
                                 'updated_at': datetime.now(timezone.utc).isoformat()
                             },
+                            'status': 'completed',
                             'overallStatus': 'completed',
                             'overallStatusUpdatedAt': datetime.now(timezone.utc)
                         }}
@@ -335,11 +343,12 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                             'text_source': text_source,  # 텍스트 소스 기록
                             'updated_at': datetime.now(timezone.utc).isoformat()
                         },
-                        'overallStatus': 'completed',  # 임베딩 완료 = 전체 처리 완료
+                        'status': 'completed',  # 임베딩 완료 = 전체 처리 완료
+                        'overallStatus': 'completed',
                         'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}
                 )
-                print(f"--- 문서 ID: {doc_id} 처리 완료 (overallStatus: completed) ---")
+                print(f"--- 문서 ID: {doc_id} 처리 완료 (status+overallStatus: completed) ---")
 
                 # 바이러스 스캔 트리거 (임베딩 완료 후 자동 스캔)
                 trigger_virus_scan(doc_id, owner_id)
@@ -355,6 +364,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                         'docembed.error_message': e.message,
                         'docembed.failed_at': datetime.now(timezone.utc).isoformat(),
                         'docembed.retry_count': prev_retry + 1,
+                        'status': 'failed',
                         'overallStatus': 'error',
                         'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}
@@ -375,6 +385,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                         'docembed.error_message': str(e),
                         'docembed.failed_at': datetime.now(timezone.utc).isoformat(),
                         'docembed.retry_count': prev_retry + 1,
+                        'status': 'failed',
                         'overallStatus': 'error',
                         'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}

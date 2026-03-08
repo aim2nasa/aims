@@ -1283,7 +1283,11 @@ async def process_document_pipeline(
             logger.warning(f"Metadata extraction failed: {meta_result}")
             await files_collection.update_one(
                 {"_id": ObjectId(doc_id)},
-                {"$set": {"meta.error": meta_result.get("message", "Unknown error")}}
+                {"$set": {
+                    "status": "failed",
+                    "overallStatus": "error",
+                    "meta.error": meta_result.get("message", "Unknown error")
+                }}
             )
             return {
                 "result": "error",
@@ -1594,6 +1598,8 @@ async def process_document_pipeline(
                 await files_collection.update_one(
                     {"_id": ObjectId(doc_id)},
                     {"$set": {
+                        "status": "failed",
+                        "overallStatus": "error",
                         "error.statusCode": 500,
                         "error.statusMessage": str(e),
                         "error.timestamp": datetime.utcnow().isoformat()
