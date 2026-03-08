@@ -187,6 +187,35 @@ describe('라우트 모듈 로딩 검증', () => {
     );
   });
 
+  describe('컬렉션 상수 정의 검증', () => {
+    /**
+     * Regression: CUSTOMERS_COLLECTION 미정의로 인한 고아 참조 버그 방지
+     * documents-routes.js에서 사용하는 모든 _COLLECTION 상수가 const로 정의되어 있는지 검증
+     */
+    test.each(FACTORY_ROUTE_MODULES)(
+      '$name: 사용된 _COLLECTION 상수가 모두 정의되어 있어야 함',
+      ({ path: modulePath }) => {
+        const fs = require('fs');
+        const path = require('path');
+        const routeContent = fs.readFileSync(
+          path.resolve(__dirname, '..', 'routes', path.basename(modulePath) + '.js'),
+          'utf-8'
+        );
+
+        // 파일 내에서 사용되는 _COLLECTION 패턴의 상수를 찾음
+        const usedConstants = routeContent.match(/\b[A-Z_]+_COLLECTION\b/g);
+        if (!usedConstants) return; // _COLLECTION 상수를 사용하지 않는 모듈은 스킵
+
+        const uniqueConstants = [...new Set(usedConstants)];
+
+        for (const constant of uniqueConstants) {
+          const isDefinedAsConst = new RegExp(`const\\s+${constant}\\s*=`).test(routeContent);
+          expect(isDefinedAsConst).toBe(true);
+        }
+      }
+    );
+  });
+
   describe('기존 라우트 모듈 (직접 export 패턴)', () => {
     const DIRECT_ROUTE_MODULES = [
       'auth',

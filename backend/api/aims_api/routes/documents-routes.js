@@ -2392,7 +2392,7 @@ router.delete('/documents/:id', authenticateJWT, async (req, res) => {
         console.log(`✅ 고객 참조 정리: ${customersUpdateResult.modifiedCount}명의 고객에서 문서 참조 제거`);
       }
     } catch (customerError) {
-      console.warn('⚠️ 고객 참조 정리 실패:', customerError.message);
+      console.error(`❌ 고객 참조 정리 실패 (doc_id=${id}):`, customerError.message);
       // 고객 참조 정리 실패해도 문서 삭제는 진행
     }
     // ========================================
@@ -2698,7 +2698,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
         console.log(`✅ [문서 삭제] 고객 참조 정리: ${customersUpdateResult.modifiedCount}명의 고객에서 문서 참조 제거`);
       }
     } catch (customerError) {
-      console.warn('⚠️ [문서 삭제] 고객 참조 정리 실패:', customerError.message);
+      console.error(`❌ [문서 삭제] 고객 참조 정리 실패 (doc_ids=${ownedDocIds.join(',')}):`, customerError.message);
       // 고객 참조 정리 실패해도 문서 삭제는 진행
     }
     // ========================================

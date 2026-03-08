@@ -19,6 +19,7 @@ const { utcNowISO } = require('../lib/timeUtils');
 module.exports = function(db, authenticateJWTorAPIKey) {
   const router = express.Router();
   const INSURANCE_PRODUCTS_COLLECTION = 'insurance_products';
+  const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
 
 /**
  * GET /api/insurance-products

@@ -463,6 +463,41 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
     });
   });
 
+  describe('Regression: CUSTOMERS_COLLECTION 상수 정의 검증', () => {
+    /**
+     * 이번 버그의 근본 원인: documents-routes.js에서 CUSTOMERS_COLLECTION 상수가
+     * 미정의 상태로 배포되어 ReferenceError 발생 → catch에서 침묵 → 고아 참조 누적
+     *
+     * 이 테스트는 라우트 소스 코드를 정적 분석하여
+     * 삭제 로직에서 사용하는 CUSTOMERS_COLLECTION이 정의되어 있는지 확인합니다.
+     */
+    test('documents-routes.js에서 CUSTOMERS_COLLECTION 상수가 정의되어 있어야 함', () => {
+      const fs = require('fs');
+      const path = require('path');
+      const routeContent = fs.readFileSync(
+        path.join(__dirname, '..', 'routes', 'documents-routes.js'),
+        'utf-8'
+      );
+
+      // CUSTOMERS_COLLECTION이 const로 정의되어 있는지 확인
+      expect(routeContent).toMatch(/const\s+CUSTOMERS_COLLECTION\s*=/);
+    });
+
+    test('고객 참조 정리 실패 시 console.error로 로깅해야 함 (warn 아님)', () => {
+      const fs = require('fs');
+      const path = require('path');
+      const routeContent = fs.readFileSync(
+        path.join(__dirname, '..', 'routes', 'documents-routes.js'),
+        'utf-8'
+      );
+
+      // 고객 참조 정리 catch 블록에서 console.error 사용 확인
+      expect(routeContent).toMatch(/console\.error\(.*고객 참조 정리 실패/);
+      // console.warn이 아닌지 확인
+      expect(routeContent).not.toMatch(/console\.warn\(.*고객 참조 정리 실패/);
+    });
+  });
+
   describe('복수 문서 삭제 (DELETE /api/documents)', () => {
 
     test('복수 문서 삭제 시 모든 고객의 documents 배열에서 참조 제거', async () => {
