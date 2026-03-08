@@ -235,14 +235,23 @@ db.files.updateMany(
 
 ---
 
-## 버그 상태 요약 (2026-03-08 기준)
+## 버그 상태 요약 (2026-03-08 최종)
 
-| 버그 | 심각도 | 상태 | 비고 |
-|------|--------|------|------|
-| BUG-1 | CRITICAL | ✅ **수정 완료** | 커밋 c5b4cf81, 176819d5. 과거 누적분 1,103건 정리 필요 |
-| BUG-2 | CRITICAL | ❌ 미수정 | DuplicateKeyError cleanup 코드 추가 필요 |
-| BUG-3 | MAJOR | ❌ 미수정 | 경로 B(코드 확인됨) 수정 + 경로 A 추가 조사 필요 |
-| BUG-4 | MAJOR | ❌ 미수정 | customers-routes.js $push 중복 체크 추가 필요 |
+| 버그 | 심각도 | 상태 | 커밋 | Gini 검수 |
+|------|--------|------|------|-----------|
+| BUG-1 | CRITICAL | ✅ **수정+정리 완료** | c5b4cf81, 176819d5 | PASS |
+| BUG-2 | CRITICAL | ✅ **수정+정리 완료** | e88d55ac | 3차 PASS |
+| BUG-3 | MAJOR | ✅ **수정+정리 완료** | c9fb882e | 1차 PASS |
+| BUG-4 | MAJOR | ✅ **수정+정리 완료** | d9eb7149 | 3차 PASS |
+
+### 데이터 정리 실행 결과 (2026-03-08)
+- overallStatus 불일치 수정: **33건** (status=failed → overallStatus=error)
+- BUG-2 실패 파일 cleanup: **32건** (고객 참조 제거 + 디스크 파일 삭제 + DB 레코드 삭제)
+- customers.documents 중복 제거: **45건** (캐치업코리아)
+- customers.documents 고아 참조 제거: **966건** (캐치업코리아 963건, 곽승철/김보성/안영미 각 1건)
+- 캐치업코리아 정합성 확인: documents 배열 384건 = files 컬렉션 384건 (**완전 일치**)
+
+### 전체 배포: 2026-03-08 완료 (deploy_all.sh 14/14 단계)
 
 > **핵심 발견 (4차 검증)**: BUG-2의 32건과 BUG-3의 32건은 **완전히 동일한 문서**. 즉 DuplicateKeyError로 실패한 파일이 cleanup 안 된 채 남아있고, 이후 overallStatus가 "processing"으로 덮어씌워진 것.
 
