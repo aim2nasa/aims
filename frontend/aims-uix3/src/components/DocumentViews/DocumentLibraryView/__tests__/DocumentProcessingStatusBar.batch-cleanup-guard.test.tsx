@@ -410,6 +410,39 @@ describe('DocumentProcessingStatusBar — batch cleanup 3-guard', () => {
     })
   })
 
+  describe('에러로 미완료된 배치 — 프로그레스바 표시 유지', () => {
+    it('processing=0, pending=0, error > 0, batchPct < 100이면 프로그레스바가 표시되어야 함', () => {
+      mockBatchId = 'batch-with-errors'
+      mockLastSetTime = Date.now() - 10000
+
+      // 10건 중 7건 완료, 3건 에러 → batchPct = 70% < 100 → batchIsActive = true
+      const batchStats = makeBatchStats({
+        total: 10,
+        completed: 7,
+        processing: 0,
+        pending: 0,
+        error: 3,
+        credit_pending: 0,
+      })
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats({ total: 10 }),
+        batchStatistics: batchStats,
+        isLoading: false,
+      }))
+
+      // 배치 섹션이 표시되어야 함 (에러로 미완료)
+      expect(container.querySelector('.psb-batch')).not.toBeNull()
+
+      // 5초 경과해도 clearBatchId가 호출되지 않아야 함 (shouldCleanup = false)
+      act(() => { vi.advanceTimersByTime(5000) })
+      expect(clearBatchId).not.toHaveBeenCalled()
+
+      // batchId가 유지됨
+      expect(mockBatchId).toBe('batch-with-errors')
+    })
+  })
+
   describe('batchStatistics=null 시 배치 섹션 미표시 (stale data 방지)', () => {
     it('batchStatistics가 null이면 "이번 업로드" 섹션이 렌더되지 않음', () => {
       mockBatchId = null // clearBatchId 호출 후 상태

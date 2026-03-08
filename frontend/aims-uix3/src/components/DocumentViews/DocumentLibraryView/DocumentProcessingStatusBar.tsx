@@ -105,8 +105,10 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
     if (!statistics) return false
     if (statistics.total === 0) return false
 
-    // 현재 배치가 진행 중이면 표시
-    if (hasBatch && (batchProcessing > 0 || batchPending > 0 || batchCreditPending > 0)) {
+    // 현재 배치가 활성(미완료) 상태면 표시
+    // batchIsActive = batchPct < 100 || batchCreditPending > 0
+    // (processing/pending이 0이더라도 error 등으로 미완료 상태일 수 있음)
+    if (hasBatch && batchIsActive) {
       return true
     }
 
@@ -119,7 +121,7 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
       (crsParsing.processing > 0 || crsParsing.pending > 0 || crsParsing.failed > 0 || (crsParsing.credit_pending ?? 0) > 0)
 
     return hasActiveProcessing || hasActiveArParsing || hasActiveCrsParsing
-  }, [statistics, hasBatch, batchProcessing, batchPending, batchCreditPending, arParsing, crsParsing])
+  }, [statistics, hasBatch, batchIsActive, arParsing, crsParsing])
 
   // 스켈레톤 로딩 상태
   if (isLoading && !statistics) {
