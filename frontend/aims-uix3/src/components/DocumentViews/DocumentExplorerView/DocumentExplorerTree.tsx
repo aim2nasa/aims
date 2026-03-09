@@ -86,6 +86,14 @@ export interface DocumentExplorerTreeProps {
   onSelectDocument?: (documentId: string) => void
   /** 고객 노드 컨텍스트 메뉴 (고객 상세 이동) */
   onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent) => void
+  /** 고객 상세 보기 (미니 카드 "상세" 버튼) */
+  onCustomerDetailClick?: (customerId: string, customerName: string) => void
+  /** 고객 문서 분류함 열기 (미니 카드 "분류함" 버튼) */
+  onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
+  /** 간편 문서 검색 모달 열기 */
+  onOpenQuickSearch?: (customerId: string, customerName: string) => void
+  /** 전체 정보 보기 (URL 네비게이션) */
+  onOpenFullDetail?: (customerId: string) => void
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -268,42 +276,42 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
             onCancel={() => onRenameCancel?.()}
           />
         ) : (
-          <>
-            <span
-              className="doc-explorer-tree__doc-name-text"
-              onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
-              onMouseMove={(e) => onDocumentMouseMove(doc, e)}
-              onMouseLeave={onDocumentMouseLeave}
-            >
-              {highlightText(showName, searchTerm)}
-            </span>
-            {onRenameClick && onDeleteClick && (
-              <span className="doc-explorer-tree__hover-actions" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--rename"
-                  title="이름 변경"
-                  onClick={(e) => { e.stopPropagation(); onRenameClick(doc) }}
-                >
-                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                    <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--delete"
-                  title="삭제"
-                  onClick={(e) => { e.stopPropagation(); onDeleteClick(doc) }}
-                >
-                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </span>
-            )}
-          </>
+          <span
+            className="doc-explorer-tree__doc-name-text"
+            onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
+            onMouseMove={(e) => onDocumentMouseMove(doc, e)}
+            onMouseLeave={onDocumentMouseLeave}
+          >
+            {highlightText(showName, searchTerm)}
+          </span>
         )}
       </span>
+
+      {/* 편집/삭제 아이콘 — doc-name 밖에 배치하여 줄바꿈 방지 */}
+      {!(renamingDocumentId && renamingDocumentId === docId) && onRenameClick && onDeleteClick && (
+        <span className="doc-explorer-tree__hover-actions" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--rename"
+            title="이름 변경"
+            onClick={(e) => { e.stopPropagation(); onRenameClick(doc) }}
+          >
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--delete"
+            title="삭제"
+            onClick={(e) => { e.stopPropagation(); onDeleteClick(doc) }}
+          >
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </span>
+      )}
 
       {/* 파일 타입 (JPG, PDF 등) */}
       <span className="doc-explorer-tree__doc-ext" title={fileExt || '-'}>
@@ -406,6 +414,10 @@ interface GroupNodeProps {
   selectedDocumentIds?: Set<string>
   onCheckToggle?: (documentId: string) => void
   onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent) => void
+  onCustomerDetailClick?: (customerId: string, customerName: string) => void
+  onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
+  onOpenQuickSearch?: (customerId: string, customerName: string) => void
+  onOpenFullDetail?: (customerId: string) => void
 }
 
 const GroupNode = React.memo<GroupNodeProps>(({
@@ -434,11 +446,34 @@ const GroupNode = React.memo<GroupNodeProps>(({
   selectedDocumentIds,
   onCheckToggle,
   onCustomerContextMenu,
+  onCustomerDetailClick,
+  onCustomerExplorerClick,
+  onOpenQuickSearch,
+  onOpenFullDetail,
 }) => {
   const isExpanded = expandedKeys.has(node.key)
   const hasChildren = node.children && node.children.length > 0
   const isSpecial = node.metadata?.isSpecial
   const isFocused = focusedKey === node.key
+
+  // 고객 레벨 액션 메뉴 상태
+  const [showActionMenu, setShowActionMenu] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
+
+  // 외부 클릭 시 메뉴 닫기
+  useEffect(() => {
+    if (!showActionMenu) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
+        setShowActionMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showActionMenu])
+
+  // 고객 노드 여부 (level 0 + customerId)
+  const isCustomerNode = level === 0 && !!node.metadata?.customerId
 
   return (
     <div className="doc-explorer-tree__group">
@@ -493,7 +528,151 @@ const GroupNode = React.memo<GroupNodeProps>(({
             ))}
           </span>
         )}
+
+        {/* 고객 노드: 더보기 액션 버튼 (⋮) */}
+        {isCustomerNode && (
+          <div className="doc-explorer-tree__customer-action-wrapper" ref={actionMenuRef}>
+            <button
+              type="button"
+              className="doc-explorer-tree__customer-action-trigger"
+              title="고객 메뉴"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowActionMenu(prev => !prev)
+              }}
+            >
+              ⋮
+            </button>
+            {showActionMenu && (
+              <div className="doc-explorer-tree__customer-action-menu">
+                {/* 미니보기 */}
+                {onCustomerDetailClick && (
+                  <button
+                    type="button"
+                    className="doc-explorer-tree__customer-action-item"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowActionMenu(false)
+                      onCustomerDetailClick(node.metadata!.customerId!, node.label)
+                    }}
+                  >
+                    <span className="doc-explorer-tree__customer-action-icon">👤</span>
+                    미니보기
+                  </button>
+                )}
+                {/* 전체 정보 */}
+                {onOpenFullDetail && (
+                  <button
+                    type="button"
+                    className="doc-explorer-tree__customer-action-item"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowActionMenu(false)
+                      onOpenFullDetail(node.metadata!.customerId!)
+                    }}
+                  >
+                    <span className="doc-explorer-tree__customer-action-icon">📋</span>
+                    전체 정보
+                  </button>
+                )}
+                {/* 문서 분류함 */}
+                {onCustomerExplorerClick && (
+                  <button
+                    type="button"
+                    className="doc-explorer-tree__customer-action-item"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowActionMenu(false)
+                      onCustomerExplorerClick(
+                        node.metadata!.customerId!,
+                        node.label,
+                        node.metadata!.customerType === 'corporate' ? '법인' : '개인'
+                      )
+                    }}
+                  >
+                    <span className="doc-explorer-tree__customer-action-icon">📂</span>
+                    문서 분류함
+                  </button>
+                )}
+                {/* 간편 검색 */}
+                {onOpenQuickSearch && (
+                  <button
+                    type="button"
+                    className="doc-explorer-tree__customer-action-item"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowActionMenu(false)
+                      onOpenQuickSearch(node.metadata!.customerId!, node.label)
+                    }}
+                  >
+                    <span className="doc-explorer-tree__customer-action-icon">🔍</span>
+                    간편 검색
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* 고객 미니 정보 카드 (고객 노드 펼침 시 상단 표시) */}
+      {isExpanded && node.metadata?.customerId && (
+        <div className="doc-explorer-tree__customer-card">
+          <div className="doc-explorer-tree__customer-card-info">
+            {/* 고객 유형 아이콘 */}
+            <span className="doc-explorer-tree__customer-card-type-icon">
+              {node.metadata.customerType === 'corporate' ? (
+                <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                </svg>
+              ) : (
+                <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor">
+                  <circle cx="10" cy="7" r="3" />
+                  <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                </svg>
+              )}
+            </span>
+            {/* 고객명 */}
+            <span className="doc-explorer-tree__customer-card-name">{node.label}</span>
+            <span className="doc-explorer-tree__customer-card-sep">&middot;</span>
+            {/* 고객 유형 */}
+            <span className="doc-explorer-tree__customer-card-type">
+              {node.metadata.customerType === 'corporate' ? '법인' : '개인'}
+            </span>
+            <span className="doc-explorer-tree__customer-card-sep">&middot;</span>
+            {/* 문서 수 */}
+            <span className="doc-explorer-tree__customer-card-count">{node.count ?? 0}건</span>
+          </div>
+          {/* 빠른 액션 버튼 */}
+          <div className="doc-explorer-tree__customer-card-actions">
+            {onCustomerDetailClick && node.metadata.customerId && (
+              <button
+                type="button"
+                className="doc-explorer-tree__customer-card-btn"
+                onClick={(e) => { e.stopPropagation(); onCustomerDetailClick(node.metadata!.customerId!, node.label) }}
+              >
+                상세
+              </button>
+            )}
+            {onCustomerExplorerClick && node.metadata.customerId && (
+              <button
+                type="button"
+                className="doc-explorer-tree__customer-card-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCustomerExplorerClick(
+                    node.metadata!.customerId!,
+                    node.label,
+                    node.metadata!.customerType === 'corporate' ? '법인' : '개인'
+                  )
+                }}
+              >
+                분류함
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 자식 노드 */}
       {isExpanded && hasChildren && (
@@ -526,6 +705,10 @@ const GroupNode = React.memo<GroupNodeProps>(({
               selectedDocumentIds={selectedDocumentIds}
               onCheckToggle={onCheckToggle}
               onCustomerContextMenu={onCustomerContextMenu}
+              onCustomerDetailClick={onCustomerDetailClick}
+              onCustomerExplorerClick={onCustomerExplorerClick}
+              onOpenQuickSearch={onOpenQuickSearch}
+              onOpenFullDetail={onOpenFullDetail}
             />
           ))}
         </div>
@@ -566,6 +749,10 @@ interface TreeNodeProps {
   selectedDocumentIds?: Set<string>
   onCheckToggle?: (documentId: string) => void
   onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent) => void
+  onCustomerDetailClick?: (customerId: string, customerName: string) => void
+  onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
+  onOpenQuickSearch?: (customerId: string, customerName: string) => void
+  onOpenFullDetail?: (customerId: string) => void
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -594,6 +781,10 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   selectedDocumentIds,
   onCheckToggle,
   onCustomerContextMenu,
+  onCustomerDetailClick,
+  onCustomerExplorerClick,
+  onOpenQuickSearch,
+  onOpenFullDetail,
 }) => {
   if (node.type === 'document') {
     const docId = node.document?._id || node.document?.id || ''
@@ -651,6 +842,10 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       selectedDocumentIds={selectedDocumentIds}
       onCheckToggle={onCheckToggle}
       onCustomerContextMenu={onCustomerContextMenu}
+      onCustomerDetailClick={onCustomerDetailClick}
+      onCustomerExplorerClick={onCustomerExplorerClick}
+      onOpenQuickSearch={onOpenQuickSearch}
+      onOpenFullDetail={onOpenFullDetail}
     />
   )
 }
@@ -687,6 +882,10 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   selectedDocumentIds,
   onSelectDocument,
   onCustomerContextMenu,
+  onCustomerDetailClick,
+  onCustomerExplorerClick,
+  onOpenQuickSearch,
+  onOpenFullDetail,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -1109,6 +1308,10 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             selectedDocumentIds={selectedDocumentIds}
             onCheckToggle={onSelectDocument}
             onCustomerContextMenu={onCustomerContextMenu}
+            onCustomerDetailClick={onCustomerDetailClick}
+            onCustomerExplorerClick={onCustomerExplorerClick}
+            onOpenQuickSearch={onOpenQuickSearch}
+            onOpenFullDetail={onOpenFullDetail}
           />
         ))}
       </div>

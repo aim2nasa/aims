@@ -1709,6 +1709,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onDocumentClick={handleDocumentClick}
               onDocumentDoubleClick={handleDocumentPreviewModal}
               onCustomerClick={handleCustomerClick}
+              onCustomerExplorerClick={handleExpandToExplorer}
             />
           </Suspense>
 

@@ -42,6 +42,7 @@ import './DocumentExplorerView.mobile.css';
 import { useDocumentActions } from '@/hooks/useDocumentActions'
 import { api } from '@/shared/lib/api'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
+import { DocumentContentSearchModal } from '@/features/customer/components/DocumentContentSearchModal/DocumentContentSearchModal'
 
 export interface DocumentExplorerViewProps {
   /** View 표시 여부 */
@@ -54,6 +55,8 @@ export interface DocumentExplorerViewProps {
   onDocumentDoubleClick?: (document: Document) => void
   /** 고객 클릭 핸들러 */
   onCustomerClick?: (customerId: string) => void
+  /** 고객 문서 분류함 열기 */
+  onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
 }
 
 /** explorer-tree API 응답 타입 */
@@ -72,11 +75,12 @@ const DocumentExplorerContent: React.FC<{
   onDocumentClick?: (documentId: string) => void
   onDocumentDoubleClick?: (document: Document) => void
   onCustomerClick?: (customerId: string) => void
+  onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   selectedInitial: string | null
   onSelectedInitialChange: (initial: string | null) => void
   initialType: InitialType
   onInitialTypeChange: (type: InitialType) => void
-}> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange }) => {
+}> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange }) => {
 
   // 호버 액션: 문서 삭제/이름변경
   const documentActions = useDocumentActions()
@@ -179,16 +183,38 @@ const DocumentExplorerContent: React.FC<{
     customerContextMenu.open(event)
   }, [customerContextMenu])
 
+  // 고객 미니 카드: "상세" 버튼 → RightPane 고객 상세
+  const handleCustomerDetailClick = useCallback((customerId: string, _customerName: string) => {
+    onCustomerClick?.(customerId)
+  }, [onCustomerClick])
+
+  // 간편 문서 검색 모달 상태
+  const [contentSearchModalOpen, setContentSearchModalOpen] = useState(false)
+  const [contentSearchCustomerId, setContentSearchCustomerId] = useState('')
+  const [contentSearchCustomerName, setContentSearchCustomerName] = useState('')
+
+  // 고객 컨텍스트 메뉴 — 뷰 네비게이션 핸들러
+  const navigateToView = useCallback((view: string, customerId: string) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('view', view)
+    url.searchParams.set('customerId', customerId)
+    url.searchParams.delete('tab')
+    url.searchParams.delete('documentId')
+    window.history.pushState({}, '', url.toString())
+    // App.tsx의 popstate 핸들러가 뷰 전환 처리
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, [])
+
   // 고객 컨텍스트 메뉴 섹션
   const customerContextMenuSections: ContextMenuSection[] = useMemo(() => {
     if (!contextMenuCustomer) return []
     return [
       {
-        id: 'navigate',
+        id: 'view',
         items: [
           {
-            id: 'customer-detail',
-            label: `${contextMenuCustomer.name} 상세 보기`,
+            id: 'customer-mini',
+            label: '고객 미니보기',
             icon: (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -198,11 +224,57 @@ const DocumentExplorerContent: React.FC<{
             onClick: () => {
               onCustomerClick?.(contextMenuCustomer.id)
             }
+          },
+          {
+            id: 'full-detail',
+            label: '전체 정보 보기',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <path d="M3 9h18" />
+                <path d="M9 21V9" />
+              </svg>
+            ),
+            onClick: () => {
+              navigateToView('customers-full-detail', contextMenuCustomer.id)
+            }
+          }
+        ]
+      },
+      {
+        id: 'document',
+        items: [
+          {
+            id: 'document-explorer',
+            label: '문서 분류함 열기',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+            ),
+            onClick: () => {
+              navigateToView('customer-document-explorer', contextMenuCustomer.id)
+            }
+          },
+          {
+            id: 'content-search',
+            label: '간편 문서 검색',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+            ),
+            onClick: () => {
+              setContentSearchCustomerId(contextMenuCustomer.id)
+              setContentSearchCustomerName(contextMenuCustomer.name)
+              setContentSearchModalOpen(true)
+            }
           }
         ]
       }
     ]
-  }, [contextMenuCustomer, onCustomerClick])
+  }, [contextMenuCustomer, onCustomerClick, navigateToView])
 
   // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
@@ -980,6 +1052,16 @@ const DocumentExplorerContent: React.FC<{
             selectedDocumentIds={selectedDocumentIds}
             onSelectDocument={handleSelectDocument}
             onCustomerContextMenu={handleCustomerContextMenu}
+            onCustomerDetailClick={handleCustomerDetailClick}
+            onCustomerExplorerClick={onCustomerExplorerClick}
+            onOpenQuickSearch={(customerId, customerName) => {
+              setContentSearchCustomerId(customerId)
+              setContentSearchCustomerName(customerName)
+              setContentSearchModalOpen(true)
+            }}
+            onOpenFullDetail={(customerId) => {
+              navigateToView('customers-full-detail', customerId)
+            }}
           />
         )}
       </div>
@@ -1105,6 +1187,14 @@ const DocumentExplorerContent: React.FC<{
         onSelect={handleDocumentTypeChange}
         onClose={() => setTypePickerVisible(false)}
       />
+
+      {/* 간편 문서 검색 모달 (고객 컨텍스트 메뉴에서 열림) */}
+      <DocumentContentSearchModal
+        isOpen={contentSearchModalOpen}
+        onClose={() => setContentSearchModalOpen(false)}
+        customerId={contentSearchCustomerId}
+        customerName={contentSearchCustomerName}
+      />
     </div>
   )
 }
@@ -1119,6 +1209,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
   onDocumentClick,
   onDocumentDoubleClick,
   onCustomerClick,
+  onCustomerExplorerClick,
 }) => {
   const breadcrumbItems = getBreadcrumbItems('documents-explorer')
   const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('doc-explorer-selected-initial', null)
@@ -1141,6 +1232,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
         onDocumentClick={onDocumentClick}
         onDocumentDoubleClick={onDocumentDoubleClick}
         onCustomerClick={onCustomerClick}
+        onCustomerExplorerClick={onCustomerExplorerClick}
         selectedInitial={selectedInitial}
         onSelectedInitialChange={setSelectedInitial}
         initialType={initialType}

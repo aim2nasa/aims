@@ -266,6 +266,39 @@
     opacity: 1;
   }
 
+  /* Quick Search Button (간편 문서 검색) */
+  .doc-explorer-toolbar__quick-search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    flex-shrink: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 0 4px 4px 0;
+    background: var(--color-bg-primary);
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all 150ms ease;
+    margin-left: -1px;
+  }
+
+  .doc-explorer-toolbar__quick-search-btn:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    background: var(--color-accent-bg);
+  }
+
+  .doc-explorer-toolbar__quick-search-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* 간편검색 버튼이 있을 때 검색 입력의 오른쪽 border-radius 제거 */
+  .doc-explorer-toolbar__search-group:has(.doc-explorer-toolbar__quick-search-btn) .doc-explorer-toolbar__search-input {
+    border-radius: 0;
+  }
+
   /* Actions */
   .doc-explorer-toolbar__actions {
     display: flex;

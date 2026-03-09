@@ -70,6 +70,8 @@ export interface DocumentExplorerToolbarProps {
   onEditModeChange?: (mode: EditModeType) => void
   /** 선택된 문서 수 */
   selectedCount?: number
+  /** 간편 문서 검색 모달 열기 콜백 */
+  onOpenQuickSearch?: () => void
 }
 
 const GROUP_BY_OPTIONS: DropdownOption[] = [
@@ -130,6 +132,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   editMode = 'none',
   onEditModeChange,
   selectedCount = 0,
+  onOpenQuickSearch,
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -383,6 +386,25 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
             </div>
           )}
         </div>
+
+        {/* 간편 문서 검색 버튼 */}
+        {onOpenQuickSearch && (
+          <Tooltip content="간편 문서 검색 (미리보기 포함)" placement="bottom">
+            <button
+              type="button"
+              className="doc-explorer-toolbar__quick-search-btn"
+              onClick={onOpenQuickSearch}
+              aria-label="간편 문서 검색"
+            >
+              <SFSymbol
+                name="doc.text.magnifyingglass"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.REGULAR}
+                decorative
+              />
+            </button>
+          </Tooltip>
+        )}
       </div>
 
       {/* 빠른 필터 칩 */}
