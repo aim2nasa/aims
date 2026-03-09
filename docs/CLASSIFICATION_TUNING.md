@@ -205,11 +205,34 @@ OCR 인식 실패 또는 텍스트 부족으로 분류 불가 판정.
 #### 잔존 오분류 (21건)
 - corp_tax → insurance_etc: 3건 (경비처리/손비처리/납입증명서)
 - corp_asset → policy: 3건 (개인용 자동차 가입증, 법인 맥락 부재)
-- unclassifiable: 4건 (OCR 실패, 개선 불가)
+- unclassifiable: 4건 (**OCR 실패가 아님! 아래 M5 참조**)
 - corp_asset → insurance_etc: 2건 (건물가액평가/담보삭제)
 - 기타 산발: 9건
 
 ### M5 방향 (M4 기반)
+
+#### ★ 핵심 발견: unclassifiable 4건은 OCR 실패가 아니다! (2026-03-09)
+
+**근본 원인**: `ocr_worker.py:199`에서 `summarize_text(ocr_result["full_text"])`로 **OCR 텍스트만** 분류기에 전달.
+`originalName`도 `displayName`(AI 생성 별칭)도 전달하지 않음. 따라서 OCR 텍스트가 깨져있으면 판단 근거 부족 → unclassifiable.
+
+**실제 확인 결과**: 4건 모두 분류 가능한 정보가 충분함!
+
+| # | 원본 파일명 | displayName (AI 생성) | full_text 핵심 내용 | GT |
+|---|-----------|----------------------|-------------------|-----|
+| 1 | 20221012_154240.jpg | 인천 체류기간 및 국내거소 정보 | 일련번호, 체류기간, 국내거소, 부평동 주소 | id_card |
+| 2 | 20230925_174445.jpg | 부천시와 고양시 주민등록 정보 | OCR 깨짐 있으나 displayName으로 명확 | id_card |
+| 3 | 마리치 법인카드.jpeg | 신한카드 하리시 법인 카드 정보 | HARICI, CORP, ShinhanCard, Corporate, VISA | personal_docs |
+| 4 | 20231125_110227.jpg | 신한카드 사용 안내 및 상담 정보 | 신한은행, 신한카드, 체크카드, CVC, VALID | personal_docs |
+
+**수정 방향**: 분류 시 `originalName` + `displayName` + `full_text`를 모두 프롬프트 텍스트에 포함
+- `ocr_worker.py`: OCR 완료 후 summarize_text 호출 시 파일명/displayName 합성
+- `doc_prep_main.py`: 텍스트 추출 후 summarize_text 호출 시 동일 적용
+- `openai_service.py`: `summarize_text()`에 filename 파라미터 추가
+
+**원칙**: 분류 불가 판정 전에 full_text + displayName + originalName 모두 활용해야 함!
+
+#### 기타 개선 항목
 1. **corp_tax → insurance_etc** (3건): 경비처리/손비처리 문서의 세무 키워드 매칭 강화
 2. **corp_asset ↔ policy** (3건): 법인 고객 맥락 없이는 개선 어려움 (한계)
 3. **프롬프트 한글화 실험 실패**: gpt-4o-mini에서 유형명 한글화 시 퇴보 확인 (77.2%)
