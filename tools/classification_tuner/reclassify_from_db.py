@@ -161,9 +161,11 @@ def build_query(args) -> dict:
         query["document_type"] = args.type
     if args.doc_ids:
         query["_id"] = {"$in": [ObjectId(did) for did in args.doc_ids]}
+    if args.since:
+        query["createdAt"] = {"$gte": datetime.strptime(args.since, "%Y-%m-%d")}
 
     # --all 플래그 없이 필터도 없으면 거부
-    if not args.all and not any([args.customer_id, args.owner_id, args.type, args.doc_ids]):
+    if not args.all and not any([args.customer_id, args.owner_id, args.type, args.doc_ids, args.since]):
         print("[오류] --customer-id, --owner-id, --type, --doc-ids 중 하나를 지정하거나 --all을 사용하세요.")
         sys.exit(1)
 
@@ -184,6 +186,7 @@ async def main():
     parser.add_argument("--type", help="기존 document_type으로 필터")
     parser.add_argument("--doc-ids", nargs="+", help="특정 문서 ID 리스트")
     parser.add_argument("--all", action="store_true", help="전체 문서 대상 (주의: 비용)")
+    parser.add_argument("--since", help="이 날짜 이후 업로드된 문서만 (YYYY-MM-DD)")
     parser.add_argument("--include-ar", action="store_true", help="AR/CRS 문서도 포함")
     parser.add_argument("--limit", type=int, default=0, help="최대 처리 건수 (0=무제한)")
     parser.add_argument("--dry-run", action="store_true", default=True, help="DB 업데이트 없이 결과만 출력 (기본값)")

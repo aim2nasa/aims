@@ -102,7 +102,8 @@ CLASSIFICATION_SYSTEM_PROMPT = (
     "보험설계사 문서분류기. JSON만 응답. "
     "annual_report/customer_review/unspecified 선택 금지. "
     "general은 22개 유형 어디에도 해당하지 않을 때만 선택. "
-    "텍스트가 없거나 판독 불가하면 반드시 unclassifiable 선택."
+    "텍스트가 부실해도 파일명에서 유형을 추론 가능하면 반드시 해당 유형으로 분류! "
+    "unclassifiable은 텍스트도 없고 파일명에서도 전혀 추론 불가할 때만."
 )
 
 CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를 아래 22개 유형 중 하나로 분류하세요.
@@ -118,13 +119,13 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 기타: general(안내문/메모/사은품/요청자료모음/기타업무문서/액자/보관렉), unclassifiable(텍스트없음/판독불가/빈이미지)
 
 [핵심 규칙]
-1. 파일명·본문·고객정보를 종합 판단. 텍스트가 없으면 파일명으로 분류
+1. 파일명·본문·고객정보를 종합 판단. 텍스트가 부실하거나 없으면 파일명이 최우선 분류 근거!
 2. 법인 고객의 자동차보험 관련 문서(청약서/가입증/증권 포함) → corp_asset. 파일명에 "자동차"/"포터"/"트럭"/"차량" 포함 시에도 corp_asset
 3. 법인 고객이라도 화재보험·생명보험·상해보험·운전자보험 등 자동차 외 보험증권 → policy
 4. "원천징수" → corp_tax. "진료비/약제비/병원비" → medical_receipt. "보험금청구/사고접수" → claim_form
-5. "보장분석/보장범위분석" → coverage_analysis
+5. "보장분석/보장범위분석/보험조회" → coverage_analysis (텍스트가 부실해도 파일명에 이 키워드가 있으면 반드시 coverage_analysis!)
 6. 보험가입현황/적립금/보유계약리스트/상품설명서/보험명단/해약환급금/보험정리표/"가입내용"/"가입내역" → insurance_etc
-7. unclassifiable은 텍스트가 전혀 없고 파일명에서도 유형을 추론할 수 없을 때만. 파일명에 유형 관련 단서가 조금이라도 있으면 반드시 분류!
+7. unclassifiable은 텍스트가 전혀 없고 파일명도 날짜/숫자만인 경우에만! 파일명에 "사직서/통장/카드/등본/영수증/신분증/보험/증권/청약/동의/검진" 등 유형 단서가 조금이라도 있으면 반드시 분류!
 8. 특허청/지식재산 관련 납부고지서/수수료/보정요구서/등록증재발급신청 → corp_asset. 단, 특허등록완료/권리이전등록완료 → corp_basic (결과 통지 서류)
 9. "설계서"/"제안서"/"가입안내서"/"견적"/"가입제안"/"비교표"/"치매간병" → plan_design. 자동차견적/운전자보험 설계서도 plan_design
 10. 자격증/졸업증명서/이력서 → hr_document. 명함 → personal_docs
@@ -138,7 +139,7 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 18. 메모/사은품/디자인/액자 → general (unclassifiable 아님!). 단, 법인 로고/법인 서식(.ai 등) → corp_basic
 19. 잔고증명서/거래내역증명서/재산현황/사업비내역서 → corp_tax. "재산현황"은 보험이 아닌 세무 서류!
 20. 세무서제출용/세무자료/세무서제출서류 → corp_tax (insurance_etc 아님!)
-21. 파일명에 "신분증" → id_card, "암검진"/"건강검진" → health_checkup, "취업규칙" → hr_document
+21. 파일명에 "신분증" → id_card, "암검진"/"건강검진" → health_checkup, "취업규칙"/"사직서"/"근로자명부"/"성희롱" → hr_document, "통장"/"카드" → personal_docs, "등본" → family_cert, "손비처리"/"납입증명"/"경비처리" → corp_tax
 22. 재직증명서 → hr_document (법인 직원 관련)
 23. 자필서류/자필확인서/서명 서류 → insurance_etc (application 아님!)
 24. 파일명에 "법원"/"가합"/"소송"/"판결" → legal_document. "컨설팅" → plan_design
