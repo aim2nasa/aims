@@ -103,6 +103,7 @@ CLASSIFICATION_SYSTEM_PROMPT = (
     "annual_report/customer_review/unspecified 선택 금지. "
     "general은 22개 유형 어디에도 해당하지 않을 때만 선택. "
     "텍스트가 부실해도 파일명이나 별칭에서 유형을 추론 가능하면 반드시 해당 유형으로 분류! "
+    "예: 별칭 '체류기간 정보'→id_card, '카드 정보'→personal_docs. "
     "unclassifiable은 텍스트·파일명·별칭 모두에서 전혀 추론 불가할 때만."
 )
 
@@ -125,27 +126,28 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 4. "원천징수" → corp_tax. "진료비/약제비/병원비" → medical_receipt. "보험금청구/사고접수" → claim_form
 5. "보장분석/보장범위분석/보험조회/사전조회" → coverage_analysis. ★이 규칙은 규칙6보다 우선! 보장분석 보고서 안에 "보험가입현황"이 포함되더라도 반드시 coverage_analysis!
 6. 보험가입현황/적립금/보유계약리스트/상품설명서/보험명단/해약환급금/보험정리표/"가입내용"/"가입내역" → insurance_etc (단, 규칙5 "보장분석" 문서는 제외!)
-7. unclassifiable은 본문·파일명·별칭 모두 분류 단서가 전혀 없을 때만! 별칭에 "주민등록/체류기간/국내거소/여권" → id_card, "카드/통장" → personal_docs 등 단서가 있으면 반드시 분류! 파일명에 "사직서/통장/카드/등본/영수증/신분증/보험/증권/청약/동의/검진" 등 유형 단서가 조금이라도 있으면 반드시 분류!
-8. 특허청/지식재산 관련 납부고지서/수수료/보정요구서/등록증재발급신청 → corp_asset. 단, 특허등록완료/권리이전등록완료 → corp_basic (결과 통지 서류)
-9. "설계서"/"제안서"/"가입안내서"/"견적"/"가입제안"/"비교표"/"치매간병" → plan_design. 자동차견적/운전자보험 설계서도 plan_design
-10. 자격증/졸업증명서/이력서 → hr_document. 명함 → personal_docs
-11. 퇴직연금/퇴직연금부담금납입확인서/퇴직금영수증/야간근로동의서/야간근로청구서 → hr_document
-12. 질권설정/질권설정변경 → insurance_etc
-13. 계약자변경/계약내용변경 → insurance_etc
-14. 법인 자동차보험 "가입증"/"증권" → corp_asset, "청약서" → application. 개인용/"KB개인용" 자동차보험 가입증/증권 → policy. 운전자보험 증권→policy
-15. 법인설립비용/설립등기비용 → corp_tax
-16. 서약서/합의서/경업금지/비밀유지(법인 인사 관련) → hr_document
-17. 주식양수도계약서/주식명의신탁약정서/정관/주주명부/등기부등본/법인인감/사업자등록증 → corp_basic (legal_document 아님!)
-18. 메모/사은품/디자인/액자 → general (unclassifiable 아님!). 단, 법인 로고/법인 서식(.ai 등) → corp_basic
-19. 잔고증명서/거래내역증명서/재산현황/사업비내역서 → corp_tax. "재산현황"은 보험이 아닌 세무 서류!
-20. 세무서제출용/세무자료/세무서제출서류/손금산입/경비처리세무사제출 → corp_tax (insurance_etc 아님!). 파일명에 "경비처리"+"세무사" 또는 "손비처리"+"납입증명" 조합이면 corp_tax
-21. 파일명에 "신분증" → id_card, "암검진"/"건강검진" → health_checkup, "취업규칙"/"사직서"/"근로자명부"/"성희롱" → hr_document, "통장"/"카드" → personal_docs, "등본" → family_cert, "손비처리"/"납입증명"/"경비처리" → corp_tax
-22. 재직증명서 → hr_document (법인 직원 관련)
-23. 자필서류/자필확인서/서명 서류 → insurance_etc (application 아님!)
-24. 파일명에 "법원"/"가합"/"소송"/"판결" → legal_document. "컨설팅" → plan_design
-25. 신분증이 포함된 복합 파일(통장+신분증 등) → id_card 우선
-26. 법인인감(인감 이미지/인감증명) → corp_basic. "인감"이라도 법인 관련이면 corp_basic
-27. "법인서류"로 시작하는 파일명 → 내용이 법인 관련이면 corp_basic
+7. ★별칭(별명) 기반 분류 — 별칭에 다음 키워드가 있으면 반드시 해당 유형으로! "체류기간/국내거소/주민등록/여권/외국인등록/운전면허" → id_card. "카드 정보/통장/은행" → personal_docs. "진단/소견" → diagnosis. "청구서" → claim_form. "증권/보험증" → policy
+8. unclassifiable은 본문·파일명·별칭 모두 분류 단서가 전혀 없을 때만! 파일명에 "사직서/통장/카드/등본/영수증/신분증/보험/증권/청약/동의/검진" 등 유형 단서가 조금이라도 있으면 반드시 분류!
+9. 특허청/지식재산 관련 납부고지서/수수료/보정요구서/등록증재발급신청 → corp_asset. 단, 특허등록완료/권리이전등록완료 → corp_basic (결과 통지 서류)
+10. "설계서"/"제안서"/"가입안내서"/"견적"/"가입제안"/"비교표"/"치매간병" → plan_design. 자동차견적/운전자보험 설계서도 plan_design
+11. 자격증/졸업증명서/이력서 → hr_document. 명함 → personal_docs
+12. 퇴직연금/퇴직연금부담금납입확인서/퇴직금영수증/야간근로동의서/야간근로청구서 → hr_document
+13. 질권설정/질권설정변경 → insurance_etc
+14. 계약자변경/계약내용변경 → insurance_etc
+15. 법인 자동차보험 "가입증"/"증권" → corp_asset, "청약서" → application. 개인용/"KB개인용" 자동차보험 가입증/증권 → policy. 운전자보험 증권→policy
+16. 법인설립비용/설립등기비용 → corp_tax
+17. 서약서/합의서/경업금지/비밀유지(법인 인사 관련) → hr_document
+18. 주식양수도계약서/주식명의신탁약정서/정관/주주명부/등기부등본/법인인감/사업자등록증 → corp_basic (legal_document 아님!)
+19. 메모/사은품/디자인/액자 → general (unclassifiable 아님!). 단, 법인 로고/법인 서식(.ai 등) → corp_basic
+20. 잔고증명서/거래내역증명서/재산현황/사업비내역서 → corp_tax. "재산현황"은 보험이 아닌 세무 서류!
+21. 세무서제출용/세무자료/세무서제출서류/손금산입/경비처리세무사제출 → corp_tax (insurance_etc 아님!). 파일명에 "경비처리"+"세무사" 또는 "손비처리"+"납입증명" 조합이면 corp_tax
+22. 파일명에 "신분증" → id_card, "암검진"/"건강검진" → health_checkup, "취업규칙"/"사직서"/"근로자명부"/"성희롱" → hr_document, "통장"/"카드" → personal_docs, "등본" → family_cert, "손비처리"/"납입증명"/"경비처리" → corp_tax
+23. 재직증명서 → hr_document (법인 직원 관련)
+24. 자필서류/자필확인서/서명 서류 → insurance_etc (application 아님!)
+25. 파일명에 "법원"/"가합"/"소송"/"판결" → legal_document. "컨설팅" → plan_design
+26. 신분증이 포함된 복합 파일(통장+신분증 등) → id_card 우선
+27. 법인인감(인감 이미지/인감증명) → corp_basic. "인감"이라도 법인 관련이면 corp_basic
+28. "법인서류"로 시작하는 파일명 → 내용이 법인 관련이면 corp_basic
 
 [혼동 주의]
 - plan_design vs policy: 설계서/제안서/견적/가입안내서/컨설팅/비교표/치매간병보험설계 → plan_design. 운전자보험/운전자상해보험 설계서도 반드시 plan_design (policy 아님!). 보험증권(증권번호 확정+보험사 직인) → policy
