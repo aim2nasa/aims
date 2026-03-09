@@ -140,6 +140,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   const [showDatePicker, setShowDatePicker] = useState(false)
   const datePickerRef = useRef<HTMLDivElement>(null)
   const dateButtonRef = useRef<HTMLButtonElement>(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const settingsRef = useRef<HTMLDivElement>(null)
 
   // 문서가 있는 날짜 Set (빠른 조회용)
   const availableDatesSet = useMemo(() => {
@@ -631,7 +633,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
         </div>
       )}
 
-      {/* 액션 버튼들 */}
+      {/* Primary 액션: 펼치기/접기 */}
       <div className="doc-explorer-toolbar__actions">
         <Tooltip content={isAllExpanded ? '모두 접기' : '모두 펼치기'} placement="bottom">
           <button
@@ -641,14 +643,12 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
             aria-label={isAllExpanded ? '모두 접기' : '모두 펼치기'}
           >
             {isAllExpanded ? (
-              /* 접기: 트리가 접힌 모양 (평평한 리스트) */
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 <path d="M3 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             ) : (
-              /* 펼치기: 트리가 펼쳐진 모양 (들여쓰기 리스트) */
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 <path d="M6 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -658,71 +658,107 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
           </button>
         </Tooltip>
 
-        {/* 썸네일 미리보기 토글 */}
-        <Tooltip content={thumbnailEnabled ? '썸네일 끄기' : '썸네일 켜기'} placement="bottom">
-          <button
-            type="button"
-            className={`doc-explorer-toolbar__thumbnail-btn ${thumbnailEnabled ? 'doc-explorer-toolbar__thumbnail-btn--active' : ''}`}
-            onClick={() => onThumbnailEnabledChange(!thumbnailEnabled)}
-            aria-label={thumbnailEnabled ? '썸네일 끄기' : '썸네일 켜기'}
-            aria-pressed={thumbnailEnabled ? 'true' : 'false'}
-          >
-            {thumbnailEnabled ? (
-              /* 썸네일 켜짐: 컬러풀한 사진 아이콘 */
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="3" width="12" height="10" rx="1.5" fill="#4A90D9"/>
-                <circle cx="5.5" cy="5.5" r="1.5" fill="#FFD93D"/>
-                <path d="M2 10L5 7.5L7 9.5L10 6.5L14 10.5V11.5C14 12.33 13.33 13 12.5 13H3.5C2.67 13 2 12.33 2 11.5V10Z" fill="#4CAF50"/>
+        {/* 설정 팝오버 토글 (정렬 · 썸네일 · 파일명 모드) */}
+        <div className="doc-explorer-toolbar__settings-wrapper" ref={settingsRef}>
+          <Tooltip content="보기 설정" placement="bottom">
+            <button
+              type="button"
+              className={`doc-explorer-toolbar__settings-btn ${showSettings ? 'doc-explorer-toolbar__settings-btn--active' : ''}`}
+              onClick={() => setShowSettings(!showSettings)}
+              aria-label="보기 설정"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            ) : (
-              /* 썸네일 꺼짐: 회색 사진 아이콘 */
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                <circle cx="5.5" cy="5.5" r="1.5" stroke="currentColor" strokeWidth="1" fill="none"/>
-                <path d="M2 10L5 7.5L7 9.5L10 6.5L14 10.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-            )}
-          </button>
-        </Tooltip>
+            </button>
+          </Tooltip>
 
-        {/* 🍎 파일명 표시 모드 토글 (별칭/원본) */}
-        <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'} placement="bottom">
-          <button
-            type="button"
-            className="doc-explorer-toolbar__filename-mode-btn"
-            onClick={() => onFilenameModeChange(filenameMode === 'display' ? 'original' : 'display')}
-            aria-label={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}
-          >
-            {filenameMode === 'display' ? '별칭' : '원본'}
-          </button>
-        </Tooltip>
-      </div>
+          {showSettings && (
+            <>
+              <div
+                className="doc-explorer-toolbar__settings-backdrop"
+                onClick={() => setShowSettings(false)}
+              />
+              <div className="doc-explorer-toolbar__settings-popover">
+                {/* 정렬 */}
+                <div className="doc-explorer-toolbar__settings-section">
+                  <span className="doc-explorer-toolbar__settings-label">정렬</span>
+                  <div className="doc-explorer-toolbar__sort-buttons">
+                    {SORT_OPTIONS.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        className={`doc-explorer-toolbar__sort-btn ${sortBy === option ? 'doc-explorer-toolbar__sort-btn--active' : ''}`}
+                        onClick={() => onSortByChange(option)}
+                        aria-label={`${SORT_BY_LABELS[option]}순 정렬`}
+                      >
+                        {SORT_BY_LABELS[option]}
+                        {sortBy === option && (
+                          <SFSymbol
+                            name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
+                            size={SFSymbolSize.CAPTION_2}
+                            weight={SFSymbolWeight.MEDIUM}
+                            className="doc-explorer-toolbar__sort-icon"
+                            decorative
+                          />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-      {/* 정렬 기준 */}
-      <div className="doc-explorer-toolbar__sort">
-        <span className="doc-explorer-toolbar__sort-label">정렬</span>
-        <div className="doc-explorer-toolbar__sort-buttons">
-          {SORT_OPTIONS.map((option) => (
-            <Tooltip key={option} content={`${SORT_BY_LABELS[option]}순 정렬`} placement="bottom">
-              <button
-                type="button"
-                className={`doc-explorer-toolbar__sort-btn ${sortBy === option ? 'doc-explorer-toolbar__sort-btn--active' : ''}`}
-                onClick={() => onSortByChange(option)}
-                aria-label={`${SORT_BY_LABELS[option]}순 정렬`}
-              >
-                {SORT_BY_LABELS[option]}
-                {sortBy === option && (
-                  <SFSymbol
-                    name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
-                    size={SFSymbolSize.CAPTION_2}
-                    weight={SFSymbolWeight.MEDIUM}
-                    className="doc-explorer-toolbar__sort-icon"
-                    decorative
-                  />
-                )}
-              </button>
-            </Tooltip>
-          ))}
+                <div className="doc-explorer-toolbar__settings-divider" />
+
+                {/* 보기 옵션 */}
+                <div className="doc-explorer-toolbar__settings-section">
+                  <span className="doc-explorer-toolbar__settings-label">보기</span>
+                  <div className="doc-explorer-toolbar__settings-toggles">
+                    {/* 썸네일 */}
+                    <button
+                      type="button"
+                      className={`doc-explorer-toolbar__settings-toggle ${thumbnailEnabled ? 'doc-explorer-toolbar__settings-toggle--active' : ''}`}
+                      onClick={() => onThumbnailEnabledChange(!thumbnailEnabled)}
+                      aria-label={thumbnailEnabled ? '썸네일 끄기' : '썸네일 켜기'}
+                    >
+                      <SFSymbol
+                        name="photo"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.REGULAR}
+                        decorative
+                      />
+                      <span>썸네일</span>
+                      {thumbnailEnabled && (
+                        <SFSymbol
+                          name="checkmark"
+                          size={SFSymbolSize.CAPTION_2}
+                          weight={SFSymbolWeight.MEDIUM}
+                          className="doc-explorer-toolbar__settings-check"
+                          decorative
+                        />
+                      )}
+                    </button>
+
+                    {/* 파일명 모드 */}
+                    <button
+                      type="button"
+                      className={`doc-explorer-toolbar__settings-toggle ${filenameMode === 'original' ? 'doc-explorer-toolbar__settings-toggle--active' : ''}`}
+                      onClick={() => onFilenameModeChange(filenameMode === 'display' ? 'original' : 'display')}
+                      aria-label={filenameMode === 'display' ? '원본 파일명으로 전환' : '별칭으로 전환'}
+                    >
+                      <SFSymbol
+                        name="doc.text"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.REGULAR}
+                        decorative
+                      />
+                      <span>{filenameMode === 'display' ? '별칭 표시' : '원본 표시'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

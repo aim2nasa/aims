@@ -298,15 +298,9 @@
     }
 
     /* 액션 버튼 컴팩트 */
-    .doc-explorer-toolbar__expand-btn,
-    .doc-explorer-toolbar__thumbnail-btn {
+    .doc-explorer-toolbar__expand-btn {
       width: 26px;
       height: 26px;
-    }
-
-    .doc-explorer-toolbar__filename-mode-btn {
-      padding: 2px 6px;
-      font-size: 9px;
     }
   }
 
@@ -323,10 +317,6 @@
       padding: 2px 5px;
     }
 
-    /* 썸네일 토글 숨김 (콘텐츠 영역 확보) */
-    .doc-explorer-toolbar__thumbnail-btn {
-      display: none;
-    }
   }
 
 } /* end @layer components */
