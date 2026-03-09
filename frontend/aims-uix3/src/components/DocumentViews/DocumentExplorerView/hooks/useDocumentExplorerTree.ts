@@ -262,14 +262,25 @@ export function useDocumentExplorerTree({
     [setExpandedKeys]
   )
 
-  // 모두 펼치기/접기
+  // 모두 펼치기/접기 — 소분류(level 2)까지만 펼침, 파일은 숨김
   const toggleExpandAll = useCallback(() => {
     if (isAllExpanded) {
       setExpandedKeys([])
       setIsAllExpanded(false)
     } else {
-      const allKeys = collectAllKeys(treeData.nodes)
-      setExpandedKeys(allKeys)
+      // level 0=고객, 1=대분류, 2=소분류 → level 1까지 펼치면 소분류 폴더가 보임
+      const keys: string[] = []
+      function collectToLevel(nodeList: DocumentTreeNode[], level: number) {
+        if (level > 1) return
+        nodeList.forEach(node => {
+          if (node.type !== 'document') {
+            keys.push(node.key)
+            if (node.children) collectToLevel(node.children, level + 1)
+          }
+        })
+      }
+      collectToLevel(treeData.nodes, 0)
+      setExpandedKeys(keys)
       setIsAllExpanded(true)
     }
   }, [isAllExpanded, treeData.nodes, setExpandedKeys])
