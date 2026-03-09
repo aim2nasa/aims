@@ -521,7 +521,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
             ? (node.metadata?.customerType === 'corporate'
               ? <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate"><circle cx="10" cy="10" r="10" opacity="0.2" /><path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" /></svg>
               : <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal"><circle cx="10" cy="10" r="10" opacity="0.2" /><circle cx="10" cy="7" r="3" /><path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" /></svg>)
-            : (isExpanded ? '\uD83D\uDCC2' : '\uD83D\uDCC1')}
+            : <SFSymbol name="folder" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.REGULAR} decorative />}
         </span>
 
         {/* 그룹 라벨 + 고객 문서 수 */}
@@ -578,7 +578,9 @@ const GroupNode = React.memo<GroupNodeProps>(({
                       onOpenQuickSearch(node.metadata!.customerId!, node.label)
                     }}
                   >
-                    <span className="doc-explorer-tree__customer-action-icon">🔍</span>
+                    <span className="doc-explorer-tree__customer-action-icon">
+                      <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_1} decorative />
+                    </span>
                     간편 검색
                   </button>
                 )}
@@ -594,7 +596,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     }}
                   >
                     <span className="doc-explorer-tree__customer-action-icon">
-                      {isCustomerChildrenExpanded ? '📁' : '📂'}
+                      <SFSymbol name="folder" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
                     {isCustomerChildrenExpanded ? '하위 폴더 접기' : '하위 폴더 펼치기'}
                   </button>
@@ -618,7 +620,9 @@ const GroupNode = React.memo<GroupNodeProps>(({
                       )
                     }}
                   >
-                    <span className="doc-explorer-tree__customer-action-icon">📂</span>
+                    <span className="doc-explorer-tree__customer-action-icon">
+                      <SFSymbol name="folder" size={SFSymbolSize.CAPTION_1} decorative />
+                    </span>
                     문서 분류함
                   </button>
                 )}
@@ -633,7 +637,9 @@ const GroupNode = React.memo<GroupNodeProps>(({
                       onOpenFullDetail(node.metadata!.customerId!)
                     }}
                   >
-                    <span className="doc-explorer-tree__customer-action-icon">📋</span>
+                    <span className="doc-explorer-tree__customer-action-icon">
+                      <SFSymbol name="doc.text" size={SFSymbolSize.CAPTION_1} decorative />
+                    </span>
                     고객 상세
                   </button>
                 )}
@@ -648,7 +654,9 @@ const GroupNode = React.memo<GroupNodeProps>(({
                       onCustomerDetailClick(node.metadata!.customerId!, node.label)
                     }}
                   >
-                    <span className="doc-explorer-tree__customer-action-icon">👤</span>
+                    <span className="doc-explorer-tree__customer-action-icon">
+                      <SFSymbol name="person" size={SFSymbolSize.CAPTION_1} decorative />
+                    </span>
                     미니 카드
                   </button>
                 )}

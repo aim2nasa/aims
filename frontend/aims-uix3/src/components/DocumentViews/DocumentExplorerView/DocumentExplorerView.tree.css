@@ -131,20 +131,13 @@
     height: 12px;
   }
 
-  /* Folder Icon (내 보관함 스타일) - 라이트 테마 가시성 강화 */
+  /* Folder Icon (SFSymbol) */
   .doc-explorer-tree__folder-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
-    font-size: 12px;
-    line-height: 1;
-    /* 라이트 테마에서 이모지 색상 강화 */
-    filter: saturate(1.4) contrast(1.15);
-    text-shadow: 0 0 1px rgba(0, 0, 0, 0.12);
-  }
-
-  /* 다크 테마에서는 원래대로 */
-  html[data-theme="dark"] .doc-explorer-tree__folder-icon {
-    filter: saturate(1.1) brightness(1.05);
-    text-shadow: none;
+    color: var(--color-text-secondary);
   }
 
   /* 고객 타입 아이콘 (전체 고객 보기와 동일) */
@@ -291,16 +284,14 @@
     background: var(--color-border);
   }
 
-  /* 메뉴 항목 아이콘 */
+  /* 메뉴 항목 아이콘 (SFSymbol) */
   .doc-explorer-tree__customer-action-icon {
-    font-size: 13px;
-    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
     flex-shrink: 0;
-    filter: saturate(1.4) contrast(1.15);
-  }
-
-  html[data-theme="dark"] .doc-explorer-tree__customer-action-icon {
-    filter: saturate(1.1) brightness(1.05);
+    color: var(--color-text-secondary);
   }
 
   /* ============================================
