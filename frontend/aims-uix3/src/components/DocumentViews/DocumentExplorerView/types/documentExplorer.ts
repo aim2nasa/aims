@@ -107,6 +107,8 @@ export interface DocumentTreeNode {
     isSpecial?: boolean
     /** 업로드 날짜 (날짜별 분류 시) */
     uploadedAt?: string
+    /** 대분류 요약 (고객 노드에서 분류별 문서 수 표시용) */
+    categorySummary?: Array<{ label: string; count: number }>
   }
 }
 

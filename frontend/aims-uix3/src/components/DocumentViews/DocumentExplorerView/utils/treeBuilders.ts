@@ -5,6 +5,18 @@
 
 import type { Document } from '@/types/documentStatus'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeNode, DocumentTreeData, InitialType } from '../types/documentExplorer'
+import { DOCUMENT_CATEGORIES, getCategoryForType, getDocumentTypeLabel, getTypeDisplayOrder } from '@/shared/constants/documentCategories'
+
+/** 대분류 카테고리별 이모지 (SF Symbol 이름 대신 실제 이모지 사용) */
+const CATEGORY_EMOJI: Record<string, string> = {
+  insurance: '🛡️',
+  claim: '🏥',
+  identity: '🪪',
+  medical: '❤️',
+  asset: '🏢',
+  corporate: '🏛️',
+  etc: '📄',
+}
 
 /**
  * 한글 초성 추출 함수
@@ -134,7 +146,8 @@ export function buildTree(documents: Document[], groupBy: DocumentGroupBy): Docu
 }
 
 /**
- * 고객별 트리: 고객명 → 문서들
+ * 고객별 트리: 고객명 → 대분류 → 소분류 → 문서 (3단계 계층)
+ * 설계사가 고객별 문서함에서 모든 분류 정보를 바로 볼 수 있도록 구조화
  */
 function buildCustomerTree(documents: Document[]): DocumentTreeData {
   const groups = new Map<string, { docs: Document[]; customerId?: string; customerType?: string }>()
@@ -170,11 +183,76 @@ function buildCustomerTree(documents: Document[]): DocumentTreeData {
     })
   }
 
-  // 고객별 그룹 (가나다순)
+  // 고객별 그룹 (가나다순) — 내부를 대분류→소분류→문서 계층으로 구조화
   Array.from(groups.entries())
     .sort((a, b) => a[0].localeCompare(b[0], 'ko'))
     .forEach(([customerName, { docs, customerId, customerType }]) => {
       const isCorpo = customerType === 'corporate'
+
+      // 문서를 소분류(doc_type)별로 그룹화
+      const typeGroups = new Map<string, Document[]>()
+      docs.forEach(doc => {
+        const docType = doc.document_type || doc.docType || 'general'
+        if (!typeGroups.has(docType)) typeGroups.set(docType, [])
+        typeGroups.get(docType)!.push(doc)
+      })
+
+      // 대분류별로 소분류를 묶기
+      const categoryChildren: DocumentTreeNode[] = []
+      DOCUMENT_CATEGORIES.forEach(cat => {
+        const subTypeNodes: DocumentTreeNode[] = []
+
+        // 이 대분류에 속하는 소분류들을 GT 순서대로 순회
+        Array.from(typeGroups.entries())
+          .filter(([typeValue]) => getCategoryForType(typeValue) === cat.value)
+          .sort((a, b) => getTypeDisplayOrder(a[0]) - getTypeDisplayOrder(b[0]))
+          .forEach(([typeValue, typeDocs]) => {
+            subTypeNodes.push({
+              key: `customer-${customerId}-type-${typeValue}`,
+              label: getDocumentTypeLabel(typeValue),
+              type: 'group',
+              icon: 'doc.fill',
+              count: typeDocs.length,
+              children: typeDocs.map(doc => createDocumentNode(doc)),
+            })
+          })
+
+        // 이 대분류에 문서가 있는 경우만 추가
+        if (subTypeNodes.length > 0) {
+          const catDocCount = subTypeNodes.reduce((sum, n) => sum + (n.count || 0), 0)
+          categoryChildren.push({
+            key: `customer-${customerId}-cat-${cat.value}`,
+            label: `${CATEGORY_EMOJI[cat.value] || '📁'} ${cat.label}`,
+            type: 'group',
+            icon: 'folder.fill',
+            count: catDocCount,
+            children: subTypeNodes,
+          })
+        }
+      })
+
+      // 분류 안 된 문서 (general 등이 어느 카테고리에도 안 속하는 경우)
+      const categorized = new Set<string>()
+      DOCUMENT_CATEGORIES.forEach(cat => {
+        Array.from(typeGroups.keys()).forEach(t => {
+          if (getCategoryForType(t) === cat.value) categorized.add(t)
+        })
+      })
+      const uncategorized: Document[] = []
+      typeGroups.forEach((typeDocs, typeValue) => {
+        if (!categorized.has(typeValue)) uncategorized.push(...typeDocs)
+      })
+      if (uncategorized.length > 0) {
+        categoryChildren.push({
+          key: `customer-${customerId}-cat-uncategorized`,
+          label: '미분류',
+          type: 'group',
+          icon: 'questionmark.folder.fill',
+          count: uncategorized.length,
+          children: uncategorized.map(doc => createDocumentNode(doc)),
+        })
+      }
+
       nodes.push({
         key: `customer-${customerId || customerName}`,
         label: customerName,
@@ -184,8 +262,13 @@ function buildCustomerTree(documents: Document[]): DocumentTreeData {
         metadata: {
           customerId,
           customerType: isCorpo ? 'corporate' : 'personal',
+          // 대분류 요약 정보 (카드 표시용)
+          categorySummary: categoryChildren.map(c => ({
+            label: c.label,
+            count: c.count || 0,
+          })),
         },
-        children: docs.map((doc) => createDocumentNode(doc)),
+        children: categoryChildren,
       })
     })
 

@@ -435,6 +435,17 @@ const GroupNode = React.memo<GroupNodeProps>(({
             <span className="doc-explorer-tree__count-inline"> ({node.count}건)</span>
           )}
         </span>
+
+        {/* 고객 노드: 대분류 요약 배지 (접힌 상태에서 분류 현황을 한눈에) */}
+        {!isExpanded && node.metadata?.categorySummary && node.metadata.categorySummary.length > 0 && (
+          <span className="doc-explorer-tree__category-badges">
+            {node.metadata.categorySummary.map((cat, i) => (
+              <span key={i} className="doc-explorer-tree__category-badge" title={`${cat.label} ${cat.count}건`}>
+                {cat.label.split(' ')[0]} {cat.count}
+              </span>
+            ))}
+          </span>
+        )}
       </div>
 
       {/* 자식 노드 */}

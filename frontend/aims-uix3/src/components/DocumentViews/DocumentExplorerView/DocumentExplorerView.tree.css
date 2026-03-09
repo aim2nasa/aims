@@ -175,6 +175,25 @@
     color: var(--color-text-tertiary);
   }
 
+  /* 대분류 요약 배지 (고객 노드 접힌 상태에서 인라인 표시) */
+  .doc-explorer-tree__category-badges {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .doc-explorer-tree__category-badge {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-tertiary);
+    padding: 1px 5px;
+    border-radius: 8px;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+
   /* Children Container */
   .doc-explorer-tree__children {
     overflow: hidden;

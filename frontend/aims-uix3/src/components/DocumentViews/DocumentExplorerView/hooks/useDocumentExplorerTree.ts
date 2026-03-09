@@ -44,6 +44,7 @@ export interface UseDocumentExplorerTreeResult {
   setSearchTerm: (term: string) => void
   setSelectedDocumentId: (id: string | null) => void
   expandToDocument: (documentId: string) => void
+  expandToLevel: (maxLevel: number) => void
   setSortBy: (sortBy: DocumentSortBy) => void
   toggleSortDirection: () => void
   setQuickFilter: (filter: QuickFilterType) => void
@@ -361,6 +362,26 @@ export function useDocumentExplorerTree({
     [setThumbnailEnabledState]
   )
 
+  // 특정 레벨까지 트리 펼치기 (0=고객, 1=대분류, 2=소분류)
+  const expandToLevel = useCallback(
+    (maxLevel: number) => {
+      const keys: string[] = []
+      function collect(nodeList: DocumentTreeNode[], level: number) {
+        if (level > maxLevel) return
+        nodeList.forEach(node => {
+          if (node.type !== 'document') {
+            keys.push(node.key)
+            if (node.children) collect(node.children, level + 1)
+          }
+        })
+      }
+      collect(treeData.nodes, 0)
+      setExpandedKeys(keys)
+      setIsAllExpanded(false)
+    },
+    [treeData.nodes, setExpandedKeys]
+  )
+
   // 특정 문서까지 트리 펼치기
   const expandToDocument = useCallback(
     (documentId: string) => {
@@ -463,6 +484,7 @@ export function useDocumentExplorerTree({
     setSearchTerm,
     setSelectedDocumentId,
     expandToDocument,
+    expandToLevel,
     setSortBy,
     toggleSortDirection,
     setQuickFilter,

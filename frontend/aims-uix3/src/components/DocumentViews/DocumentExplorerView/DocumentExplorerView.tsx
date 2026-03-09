@@ -180,6 +180,7 @@ const DocumentExplorerContent: React.FC<{
     getAvailableDates,
     clearDateFilter,
     setThumbnailEnabled,
+    expandToLevel,
   } = useDocumentExplorerTree({
     documents,
     isLoading,
@@ -267,6 +268,26 @@ const DocumentExplorerContent: React.FC<{
       toggleNode(key)
     }
   }, [selectedInitial, isLoading, treeData.nodes, toggleNode])
+
+  // 초성 선택 시 자동 펼침: 고객(level 0) + 대분류(level 1)까지 펼침
+  // 설계사가 초성 클릭 즉시 모든 고객의 분류 구조를 한눈에 볼 수 있도록
+  const lastAutoExpandedInitialRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!selectedInitial || isLoading) return
+    if (docTreeData.nodes.length === 0) return
+    if (lastAutoExpandedInitialRef.current === selectedInitial) return
+
+    lastAutoExpandedInitialRef.current = selectedInitial
+    // level 0 = 고객까지만 펼침 (대분류는 접힌 상태 + 인라인 배지로 요약 표시)
+    expandToLevel(0)
+  }, [selectedInitial, isLoading, docTreeData.nodes.length, expandToLevel])
+
+  // 초성 해제 시 ref 리셋
+  useEffect(() => {
+    if (!selectedInitial) {
+      lastAutoExpandedInitialRef.current = null
+    }
+  }, [selectedInitial])
 
   // onToggleNode 래핑: 요약 모드에서 고객 폴더 클릭 시 초성 전환
   const handleToggleNode = useCallback(
