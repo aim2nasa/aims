@@ -198,6 +198,12 @@
     line-height: 1.4;
   }
 
+  .doc-explorer-tree__category-badge--overflow {
+    color: var(--color-text-tertiary);
+    font-style: italic;
+    opacity: 0.7;
+  }
+
   /* ============================================
      Customer Action Menu (고객 노드 ⋮ 통합 메뉴)
      ============================================ */

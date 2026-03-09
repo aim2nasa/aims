@@ -542,11 +542,20 @@ const GroupNode = React.memo<GroupNodeProps>(({
         {/* 고객 노드: 대분류 요약 배지 (접힌 상태에서 분류 현황을 한눈에) */}
         {!isExpanded && node.metadata?.categorySummary && node.metadata.categorySummary.length > 0 && (
           <span className="doc-explorer-tree__category-badges">
-            {node.metadata.categorySummary.map((cat, i) => (
-              <span key={i} className="doc-explorer-tree__category-badge" title={`${cat.label} ${cat.count}건`}>
-                {cat.label.split(' ')[0]} {cat.count}
-              </span>
+            {node.metadata.categorySummary.slice(0, 4).map((cat) => (
+              <Tooltip key={cat.label} content={`${cat.label} ${cat.count}건`} placement="bottom">
+                <span className="doc-explorer-tree__category-badge">
+                  {cat.label.split(' ')[0]} {cat.count}
+                </span>
+              </Tooltip>
             ))}
+            {node.metadata.categorySummary.length > 4 && (
+              <Tooltip content={node.metadata.categorySummary.slice(4).map(c => `${c.label} ${c.count}건`).join(', ')} placement="bottom">
+                <span className="doc-explorer-tree__category-badge doc-explorer-tree__category-badge--overflow">
+                  +{node.metadata.categorySummary.length - 4}
+                </span>
+              </Tooltip>
+            )}
           </span>
         )}
 
