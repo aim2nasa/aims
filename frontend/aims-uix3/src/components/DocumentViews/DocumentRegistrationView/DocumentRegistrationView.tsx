@@ -891,7 +891,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 addToUploadQueue: (uploadFile) => {
                   // 기존 파일의 상태를 pending으로 업데이트
                   updateFileStatus(file, 'pending')
-                  newUploadFiles.push({ ...uploadFile, id: fileId });
+                  newUploadFiles.push({ ...uploadFile, id: fileId, batchId: newBatchId });
                 },
                 trackArFile: (fileName, custId) => {
                   arFilenamesRef.current.add(fileName);
@@ -962,7 +962,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           error: undefined,
           completedAt: undefined,
           relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined,
-          customerId: customerFileCustomer?._id  // 🔗 고객 선택 시 자동 연결
+          customerId: customerFileCustomer?._id,  // 🔗 고객 선택 시 자동 연결
+          batchId: newBatchId  // 🔴 업로드 묶음 ID (진행률 추적용)
         })
       } else {
         // 검증 실패한 파일은 에러로 표시 - 🔄 개별 파일 상태 업데이트
@@ -1855,7 +1856,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // 기존 파일의 상태만 업데이트 (중복 추가 방지)
           updateFileStatusByFile(arFile, 'pending');
           // 🚀 실제 업로드 시작! (uploadService에 큐잉)
-          uploadService.queueFiles([{ ...uploadFile, id: fileId }]);
+          uploadService.queueFiles([{ ...uploadFile, id: fileId, batchId: getBatchId() || undefined }]);
         },
         trackArFile: (fileName, custId) => {
           arFilenamesRef.current.add(fileName);
@@ -1963,6 +1964,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       progress: 0,
       error: undefined,
       completedAt: undefined,
+      batchId: getBatchId() || undefined,
     };
 
     updateFileStatusByFile(crFile, 'pending');
@@ -2011,6 +2013,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       progress: 0,
       error: undefined,
       completedAt: undefined,
+      batchId: getBatchId() || undefined,
     };
 
     updateFileStatusByFile(crFile, 'pending');
