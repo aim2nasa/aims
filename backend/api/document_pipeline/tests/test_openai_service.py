@@ -1356,10 +1356,10 @@ class TestDocumentClassification:
             assert call_kwargs["response_format"] == {"type": "json_object"}
 
     @pytest.mark.asyncio
-    async def test_all_42_valid_types(self):
-        """42개 유효 유형 모두 검증"""
+    async def test_all_valid_types(self):
+        """22개 유효 유형 모두 검증"""
         from services.openai_service import VALID_DOCUMENT_TYPES
-        assert len(VALID_DOCUMENT_TYPES) == 42
+        assert len(VALID_DOCUMENT_TYPES) == 22
 
         for doc_type in VALID_DOCUMENT_TYPES:
             result = OpenAIService._validate_document_type(doc_type)

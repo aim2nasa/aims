@@ -12,7 +12,8 @@ async def test_summary_success(client, sample_text):
         # Mock summarize_text to return dict
         mock_openai.summarize_text = AsyncMock(return_value={
             "summary": "테스트 문서 요약입니다.",
-            "tags": ["AI", "머신러닝", "딥러닝"]
+            "document_type": "general",
+            "confidence": 0.85
         })
 
         response = await client.post(
@@ -24,8 +25,8 @@ async def test_summary_success(client, sample_text):
         data = response.json()
         assert "summary" in data
         assert "length" in data
-        assert "tags" in data
-        assert isinstance(data["tags"], list)
+        assert "document_type" in data
+        assert "confidence" in data
         assert data["summary"] == "테스트 문서 요약입니다."
 
 
@@ -41,7 +42,6 @@ async def test_summary_empty_text(client):
     data = response.json()
     # Empty text returns guidance message, not empty string
     assert "입력된 텍스트가 없습니다" in data["summary"]
-    assert data["tags"] == []
 
 
 @pytest.mark.asyncio

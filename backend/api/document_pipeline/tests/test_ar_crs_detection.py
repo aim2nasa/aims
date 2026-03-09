@@ -322,19 +322,21 @@ class TestARDBUpdate:
         update_set = call_args[0][1]["$set"]
         assert update_set.get("displayName") == "홍길동_AR_2026-01-15.pdf"
 
-    async def test_customer_id_as_objectid(self, files_collection):
-        """기존 고객 발견 시 customerId는 ObjectId로 저장"""
+    async def test_related_customer_id_as_objectid(self, files_collection):
+        """기존 고객 발견 시 relatedCustomerId는 ObjectId로 저장 (customerId는 변경하지 않음)"""
         text = "MetLife\n홍길동 고객님을 위한\nAnnual Review Report\n보유계약 현황"
         from routers.doc_prep_main import _detect_and_process_annual_report
 
         existing_customer_id = str(ObjectId())
         with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
-            # 기존 고객 검색 결과
+            # 기존 고객 검색 결과 (aims_api 응답 구조: data.customers)
             mock_search_resp = MagicMock()
             mock_search_resp.status_code = 200
             mock_search_resp.json.return_value = {
-                "customers": [{"_id": existing_customer_id, "personal_info": {"name": "홍길동"}}]
+                "data": {
+                    "customers": [{"_id": existing_customer_id, "personal_info": {"name": "홍길동"}}]
+                }
             }
             mock_sse_resp = MagicMock(status_code=200)
             mock_client.get = AsyncMock(return_value=mock_search_resp)
@@ -353,8 +355,8 @@ class TestARDBUpdate:
 
         call_args = files_collection.update_one.call_args
         update_set = call_args[0][1]["$set"]
-        assert "customerId" in update_set
-        assert isinstance(update_set["customerId"], ObjectId)
+        assert "relatedCustomerId" in update_set
+        assert isinstance(update_set["relatedCustomerId"], ObjectId)
 
 
 # ========================================
