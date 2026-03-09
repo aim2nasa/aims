@@ -46,6 +46,28 @@ startxref
 
 
 @pytest.fixture
+def sample_pdf_with_text():
+    """텍스트가 포함된 실제 PDF (pypdfium2 regression 테스트용)"""
+    try:
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        buf = io.BytesIO()
+        c = canvas.Canvas(buf, pagesize=A4)
+        c.setFont("Helvetica", 12)
+        c.drawString(72, 700, "Annual Review Report")
+        c.drawString(72, 680, "MetLife Insurance Coverage Summary")
+        c.drawString(72, 660, "Customer Name: Test User")
+        c.showPage()
+        c.drawString(72, 700, "Page 2: Contract Details")
+        c.drawString(72, 680, "Premium: 50,000 KRW")
+        c.showPage()
+        c.save()
+        return buf.getvalue()
+    except ImportError:
+        pytest.skip("reportlab not installed")
+
+
+@pytest.fixture
 def sample_text_content():
     """Sample text content"""
     return b"This is sample text content for testing."
@@ -161,16 +183,16 @@ class TestExtractPdfInfo:
         assert result["mime_type"] == "application/pdf"
 
     @pytest.mark.asyncio
-    async def test_pdf_without_pymupdf(self, sample_pdf_content):
-        """PyMuPDF 없으면 num_pages=None"""
-        with patch.dict("sys.modules", {"fitz": None}):
-            with patch("services.meta_service.HAS_PYMUPDF", False):
+    async def test_pdf_without_pypdfium2(self, sample_pdf_content):
+        """pypdfium2 없으면 num_pages=None"""
+        with patch.dict("sys.modules", {"pypdfium2": None}):
+            with patch("services.meta_service.HAS_PYPDFIUM2", False):
                 result = await MetaService.extract_metadata(
                     file_content=sample_pdf_content,
                     filename="test.pdf"
                 )
 
-                # PyMuPDF 없어도 에러 아님
+                # pypdfium2 없어도 에러 아님
                 assert result["error"] is False
 
 
@@ -300,3 +322,93 @@ class TestTextExtraction:
         )
 
         assert result["mime_type"] == "application/octet-stream"
+
+
+# =============================================================================
+# 8. pypdfium2 Regression 테스트
+# =============================================================================
+
+class TestPypdfium2Regression:
+    """pypdfium2 텍스트 추출 교체 regression 테스트"""
+
+    @pytest.mark.asyncio
+    async def test_pdf_text_extraction(self, sample_pdf_with_text):
+        """PDF에서 텍스트 추출 확인"""
+        result = await MetaService.extract_metadata(
+            file_content=sample_pdf_with_text,
+            filename="test.pdf"
+        )
+
+        assert result["error"] is False
+        assert result["extracted_text"] is not None
+        assert len(result["extracted_text"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_pdf_page_count(self, sample_pdf_with_text):
+        """페이지 수 정확히 추출"""
+        result = await MetaService.extract_metadata(
+            file_content=sample_pdf_with_text,
+            filename="test.pdf"
+        )
+
+        assert result["num_pages"] == 2
+
+    @pytest.mark.asyncio
+    async def test_pdf_text_ratio(self, sample_pdf_with_text):
+        """pdf_text_ratio 계산 확인"""
+        result = await MetaService.extract_metadata(
+            file_content=sample_pdf_with_text,
+            filename="test.pdf"
+        )
+
+        assert result["pdf_text_ratio"] is not None
+        assert result["pdf_text_ratio"] > 0
+
+    @pytest.mark.asyncio
+    async def test_pdf_keywords_preserved(self, sample_pdf_with_text):
+        """AR/CRS 감지 키워드가 텍스트에 보존되는지 확인"""
+        result = await MetaService.extract_metadata(
+            file_content=sample_pdf_with_text,
+            filename="test.pdf"
+        )
+
+        text = result["extracted_text"]
+        assert "Annual Review Report" in text
+        assert "MetLife" in text
+        assert "Customer Name" in text
+
+    @pytest.mark.asyncio
+    async def test_pdf_multipage_text(self, sample_pdf_with_text):
+        """다중 페이지 텍스트가 모두 추출되는지 확인"""
+        result = await MetaService.extract_metadata(
+            file_content=sample_pdf_with_text,
+            filename="test.pdf"
+        )
+
+        text = result["extracted_text"]
+        # 1페이지 텍스트
+        assert "Annual Review Report" in text
+        # 2페이지 텍스트
+        assert "Page 2" in text or "Contract" in text or "Premium" in text
+
+    @pytest.mark.asyncio
+    async def test_empty_pdf_no_error(self, sample_pdf_content):
+        """텍스트 없는 PDF도 에러 없이 처리"""
+        result = await MetaService.extract_metadata(
+            file_content=sample_pdf_content,
+            filename="empty.pdf"
+        )
+
+        assert result["error"] is False
+        assert result["num_pages"] is not None
+
+    @pytest.mark.asyncio
+    async def test_corrupt_pdf_graceful_error(self):
+        """손상된 PDF 입력 시 graceful 에러 처리"""
+        result = await MetaService.extract_metadata(
+            file_content=b"not a valid pdf content at all",
+            filename="corrupt.pdf"
+        )
+
+        # 에러가 나더라도 crash 없이 결과 반환
+        assert isinstance(result, dict)

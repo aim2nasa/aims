@@ -15,11 +15,11 @@ logger = logging.getLogger(__name__)
 
 # Optional imports for enhanced functionality
 try:
-    import fitz  # PyMuPDF
-    HAS_PYMUPDF = True
+    import pypdfium2 as pdfium
+    HAS_PYPDFIUM2 = True
 except ImportError:
-    HAS_PYMUPDF = False
-    logger.warning("PyMuPDF not available. PDF text extraction will be limited.")
+    HAS_PYPDFIUM2 = False
+    logger.warning("pypdfium2 not available. PDF text extraction will be limited.")
 
 try:
     import exifread
@@ -179,17 +179,27 @@ class MetaService:
             "pdf_text_ratio": None
         }
 
-        if not HAS_PYMUPDF:
+        if not HAS_PYPDFIUM2:
             return result
 
         try:
-            doc = fitz.open(stream=content, filetype="pdf")
-            result["num_pages"] = len(doc)
+            pdf = pdfium.PdfDocument(content)
+            result["num_pages"] = len(pdf)
 
             # Extract text from all pages
             text_parts = []
-            for page in doc:
-                text_parts.append(page.get_text())
+            try:
+                for page in pdf:
+                    try:
+                        textpage = page.get_textpage()
+                        try:
+                            text_parts.append(textpage.get_text_bounded())
+                        finally:
+                            textpage.close()
+                    finally:
+                        page.close()
+            finally:
+                pdf.close()
 
             full_text = "\n".join(text_parts)
             result["extracted_text"] = full_text
@@ -197,8 +207,6 @@ class MetaService:
             # Calculate text ratio (characters per page)
             if result["num_pages"] > 0:
                 result["pdf_text_ratio"] = len(full_text) / result["num_pages"]
-
-            doc.close()
 
         except Exception as e:
             logger.error(f"PDF extraction error: {e}")
