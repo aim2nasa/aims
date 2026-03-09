@@ -78,7 +78,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [activeTab, setActiveTab] = useState<string>(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlTab = urlParams.get('tab');
-    return urlTab || 'info';
+    return urlTab || 'documents';
   });
 
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false);
@@ -98,7 +98,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   // 활성 탭 변경 시 URL 동기화
   useEffect(() => {
     const url = new URL(window.location.href);
-    if (activeTab && activeTab !== 'info') {
+    if (activeTab && activeTab !== 'documents') {
       url.searchParams.set('tab', activeTab);
     } else {
       url.searchParams.delete('tab');
@@ -425,9 +425,20 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   // 법인 고객 여부 확인
   const isBusinessCustomer = customer.insurance_info?.customer_type === '법인';
 
-  // 🍎 탭 정의 (순서: 기본정보, 가족관계(개인만)/관계인(법인만), 문서, Annual Report)
+  // 🍎 탭 정의 (순서: 문서(가장 자주 사용) → 기본정보 → 관계 → 계약 → AR/CRS)
   const tabs: Tab[] = useMemo(() => {
     const baseTabs: Tab[] = [
+      // 문서 탭을 첫 번째에 배치 (설계사 주요 업무: 고객 문서 조회)
+      {
+        key: 'documents',
+        label: '문서',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
+          </svg>
+        ),
+        count: documentCount
+      },
       {
         key: 'info',
         label: '기본정보',
@@ -495,18 +506,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       count: corporateContractCount
     });
 
-    // 문서, Annual Report 탭 추가
+    // Annual Report, CRS 탭 추가
     baseTabs.push(
-      {
-        key: 'documents',
-        label: '문서',
-        icon: (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
-          </svg>
-        ),
-        count: documentCount
-      },
       {
         key: 'annual_report',
         label: 'AR',

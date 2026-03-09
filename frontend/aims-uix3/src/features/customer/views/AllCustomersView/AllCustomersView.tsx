@@ -7,7 +7,7 @@
  * iOS/macOS native table view style
  */
 
-import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
@@ -80,29 +80,8 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     // 개발자 모드 상태
     const { isDevMode } = useDevModeStore();
 
-    // 🍎 클릭/더블클릭 구분을 위한 타이머 ref
-    const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    // 싱글클릭 핸들러 (더블클릭과 구분하기 위해 딜레이)
+    // 🍎 싱글클릭 = 즉시 전체보기 (중장년 사용자 UX 개선: 더블클릭 구분 제거)
     const handleRowClick = useCallback((customerId: string, customer: Customer) => {
-      // 기존 타이머가 있으면 취소
-      if (clickTimerRef.current) {
-        clearTimeout(clickTimerRef.current);
-      }
-      // 300ms 후에 싱글클릭 실행 (더블클릭이면 취소됨)
-      clickTimerRef.current = setTimeout(() => {
-        onCustomerClick?.(customerId, customer);
-        clickTimerRef.current = null;
-      }, 300);
-    }, [onCustomerClick]);
-
-    // 더블클릭 핸들러 (싱글클릭 타이머 취소)
-    const handleRowDoubleClick = useCallback((customerId: string, customer: Customer) => {
-      // 싱글클릭 타이머 취소
-      if (clickTimerRef.current) {
-        clearTimeout(clickTimerRef.current);
-        clickTimerRef.current = null;
-      }
       onCustomerDoubleClick?.(customerId, customer);
     }, [onCustomerDoubleClick]);
 
@@ -1015,14 +994,8 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                     // 삭제 모드에서는 체크박스 토글
                     handleSelectCustomer(customer._id, { stopPropagation: () => {} } as React.MouseEvent);
                   } else {
-                    // 🍎 싱글클릭/더블클릭 구분 (타이머 사용)
+                    // 🍎 싱글클릭 = 즉시 전체보기
                     handleRowClick(customer._id, customer);
-                  }
-                }}
-                onDoubleClick={() => {
-                  if (!isDeleteMode) {
-                    // 🍎 더블클릭 시 싱글클릭 타이머 취소
-                    handleRowDoubleClick(customer._id, customer);
                   }
                 }}
                 onContextMenu={(e) => {
