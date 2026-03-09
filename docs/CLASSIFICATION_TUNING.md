@@ -93,3 +93,12 @@
 - 고객 컨텍스트: `[고객: 법인/개인(고객명)]` + `[파일명: xxx]` 주입
 - 테스트 스크립트: `tests/classification/test_v4_classification.py`
 - Ground Truth: `tests/classification/ground_truth_v5.json` (캐치업), `ground_truth_marichi.json` (마리치, 예정)
+
+---
+
+## 샘플 데이터 경로
+
+| 데이터셋 | 로컬 경로 | 비고 |
+|----------|----------|------|
+| **캐치업** | `D:\Users\rossi\Documents\AIMS\sample\캐치업코리아` | 446건 (중복 포함), DB 기준 387건 |
+| **마리치** | `D:\Users\rossi\Documents\AIMS\sample\마리치` | 177건, 폴더 구조 = 타입 |
