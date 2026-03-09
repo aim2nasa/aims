@@ -624,4 +624,22 @@
     transform: scale(0.9);
   }
 
+  /* ============================================
+     Edit Mode: Checkbox
+     ============================================ */
+  .doc-explorer-tree__checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    flex-shrink: 0;
+  }
+
+  .doc-explorer-tree__checkbox {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--color-primary-500);
+  }
+
 } /* end @layer components */

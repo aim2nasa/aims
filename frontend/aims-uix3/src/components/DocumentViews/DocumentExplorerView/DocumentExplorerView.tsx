@@ -14,15 +14,25 @@ import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { usePersistedState } from '@/hooks/usePersistedState'
-import { DocumentExplorerToolbar } from './DocumentExplorerToolbar'
+import { DocumentExplorerToolbar, type ExplorerSearchMode, type EditModeType } from './DocumentExplorerToolbar'
 import { DocumentExplorerTree } from './DocumentExplorerTree'
 import { InitialFilterBar } from '@/shared/ui/InitialFilterBar'
+import { ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui/ContextMenu'
 import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from './types/documentExplorer'
 import type { InitialType, DocumentTreeNode, DocumentTreeData } from './types/documentExplorer'
 import { useDocumentExplorerTree } from './hooks/useDocumentExplorerTree'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
+import { DocumentService } from '@/services/DocumentService'
+import { documentTypesService } from '@/services/documentTypesService'
 import { DocumentSummaryModal } from '../DocumentStatusView/components/DocumentSummaryModal'
 import { DocumentFullTextModal } from '../DocumentStatusView/components/DocumentFullTextModal'
+import { DocumentNotesModal } from '../DocumentStatusView/components/DocumentNotesModal'
+import { DocumentTypePickerModal } from '@/shared/ui/DocumentTypeCell/DocumentTypePickerModal'
+import DownloadHelper from '../../../utils/downloadHelper'
+import { errorReporter } from '@/shared/lib/errorReporter'
+import { SearchService } from '@/services/searchService'
+import type { SearchResultItem } from '@/entities/search'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { Document } from '@/types/documentStatus'
 import './DocumentExplorerView.toolbar.css';
 import './DocumentExplorerView.tree.css';
@@ -30,6 +40,8 @@ import './DocumentExplorerView.features.css';
 import './DocumentExplorerView.datejump.css';
 import './DocumentExplorerView.mobile.css';
 import { useDocumentActions } from '@/hooks/useDocumentActions'
+import { api } from '@/shared/lib/api'
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 
 export interface DocumentExplorerViewProps {
   /** View 표시 여부 */
@@ -90,6 +102,108 @@ const DocumentExplorerContent: React.FC<{
     if (docId) documentActions.deleteDocument(docId, docName)
   }, [documentActions])
 
+  // === 편집 모드 (일괄 삭제 / AI 별칭 생성) ===
+  const { showConfirm, showAlert } = useAppleConfirm()
+  const [editMode, setEditMode] = useState<EditModeType>('none')
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set())
+  const [isGeneratingAliases, setIsGeneratingAliases] = useState(false)
+  const [forceRegenerateAlias, setForceRegenerateAlias] = useState(false)
+
+  // 편집 모드 변경 핸들러
+  const handleEditModeChange = useCallback((mode: EditModeType) => {
+    setEditMode(mode)
+    setSelectedDocumentIds(new Set())
+    setForceRegenerateAlias(false)
+  }, [])
+
+  // 문서 선택/해제 토글
+  const handleSelectDocument = useCallback((documentId: string) => {
+    setSelectedDocumentIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(documentId)) {
+        newSet.delete(documentId)
+      } else {
+        newSet.add(documentId)
+      }
+      return newSet
+    })
+  }, [])
+
+  // 일괄 삭제 실행
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedDocumentIds.size === 0) return
+    await documentActions.deleteDocuments(selectedDocumentIds)
+  }, [selectedDocumentIds, documentActions])
+
+  // AI 별칭 일괄 생성 실행
+  const handleGenerateAliases = useCallback(async () => {
+    if (selectedDocumentIds.size === 0) return
+    setIsGeneratingAliases(true)
+    try {
+      const data = await api.post<{ summary?: { completed: number; skipped: number; failed: number } }>('/api/batch-display-names', {
+        document_ids: Array.from(selectedDocumentIds),
+        force_regenerate: forceRegenerateAlias,
+      })
+      if (data.summary) {
+        const { completed, skipped, failed } = data.summary
+        await showAlert({
+          title: '별칭 생성 완료',
+          message: `${completed}건 완료, ${skipped}건 스킵, ${failed}건 실패`,
+          confirmText: '확인',
+          showCancel: false,
+          iconType: completed > 0 ? 'success' : 'info',
+        })
+      }
+      window.location.reload()
+    } catch (err) {
+      console.error('별칭 생성 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'DocumentExplorerView.handleGenerateAliases' })
+      await showAlert({
+        title: '오류',
+        message: '별칭 생성 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'error',
+      })
+    } finally {
+      setIsGeneratingAliases(false)
+    }
+  }, [selectedDocumentIds, forceRegenerateAlias, showAlert])
+
+  // 고객 노드 우클릭 → 컨텍스트 메뉴
+  const customerContextMenu = useContextMenu()
+  const [contextMenuCustomer, setContextMenuCustomer] = useState<{ id: string; name: string } | null>(null)
+
+  const handleCustomerContextMenu = useCallback((customerId: string, customerName: string, event: React.MouseEvent) => {
+    setContextMenuCustomer({ id: customerId, name: customerName })
+    customerContextMenu.open(event)
+  }, [customerContextMenu])
+
+  // 고객 컨텍스트 메뉴 섹션
+  const customerContextMenuSections: ContextMenuSection[] = useMemo(() => {
+    if (!contextMenuCustomer) return []
+    return [
+      {
+        id: 'navigate',
+        items: [
+          {
+            id: 'customer-detail',
+            label: `${contextMenuCustomer.name} 상세 보기`,
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            ),
+            onClick: () => {
+              onCustomerClick?.(contextMenuCustomer.id)
+            }
+          }
+        ]
+      }
+    ]
+  }, [contextMenuCustomer, onCustomerClick])
+
   // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
     if (typeof window === 'undefined') return 'display'
@@ -99,6 +213,87 @@ const DocumentExplorerContent: React.FC<{
   const handleFilenameModeChange = useCallback((mode: 'display' | 'original') => {
     setFilenameMode(mode)
     localStorage.setItem('aims-filename-mode', mode)
+  }, [])
+
+  // === 내용 검색 / AI 질문 상태 ===
+  const [explorerSearchMode, setExplorerSearchMode] = usePersistedState<ExplorerSearchMode>('doc-explorer-search-mode', 'filename')
+  const [contentSearchResults, setContentSearchResults] = useState<SearchResultItem[]>([])
+  const [contentSearchAnswer, setContentSearchAnswer] = useState<string | null>(null)
+  const [isContentSearching, setIsContentSearching] = useState(false)
+  const [contentSearchError, setContentSearchError] = useState<string | null>(null)
+  const [lastContentSearchMode, setLastContentSearchMode] = useState<ExplorerSearchMode | null>(null)
+  const contentSearchAbortRef = useRef<AbortController | null>(null)
+
+  // 내용 검색 실행 핸들러
+  const handleContentSearch = useCallback(async (query: string) => {
+    if (!query.trim()) return
+
+    // 이전 요청 취소
+    if (contentSearchAbortRef.current) {
+      contentSearchAbortRef.current.abort()
+    }
+    const controller = new AbortController()
+    contentSearchAbortRef.current = controller
+
+    setIsContentSearching(true)
+    setContentSearchError(null)
+    setContentSearchResults([])
+    setContentSearchAnswer(null)
+
+    try {
+      const searchQuery = {
+        query: query.trim(),
+        search_mode: explorerSearchMode === 'semantic' ? 'semantic' as const : 'keyword' as const,
+        ...(explorerSearchMode === 'content' && { mode: 'AND' as const }),
+      }
+      const response = await SearchService.searchDocuments(searchQuery, controller.signal)
+      setContentSearchResults(response.search_results)
+      setContentSearchAnswer(response.answer || null)
+      setLastContentSearchMode(explorerSearchMode)
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      console.error('[DocumentExplorerView] 내용 검색 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'DocumentExplorerView.handleContentSearch' })
+      setContentSearchError('검색 중 오류가 발생했습니다.')
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsContentSearching(false)
+      }
+      if (contentSearchAbortRef.current === controller) {
+        contentSearchAbortRef.current = null
+      }
+    }
+  }, [explorerSearchMode])
+
+  // 검색 모드 전환 시 결과 초기화
+  const handleExplorerSearchModeChange = useCallback((mode: ExplorerSearchMode) => {
+    setExplorerSearchMode(mode)
+    setContentSearchResults([])
+    setContentSearchAnswer(null)
+    setContentSearchError(null)
+    setLastContentSearchMode(null)
+  }, [setExplorerSearchMode])
+
+  // 내용 검색 결과 닫기
+  const handleCloseContentSearch = useCallback(() => {
+    setContentSearchResults([])
+    setContentSearchAnswer(null)
+    setContentSearchError(null)
+    setLastContentSearchMode(null)
+    if (contentSearchAbortRef.current) {
+      contentSearchAbortRef.current.abort()
+      contentSearchAbortRef.current = null
+    }
+    setIsContentSearching(false)
+  }, [])
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      if (contentSearchAbortRef.current) {
+        contentSearchAbortRef.current.abort()
+      }
+    }
   }, [])
 
   // === explorer-tree API 데이터 (DocumentStatusProvider 대체) ===
@@ -181,6 +376,7 @@ const DocumentExplorerContent: React.FC<{
     clearDateFilter,
     setThumbnailEnabled,
     expandToLevel,
+    expandToDocument,
   } = useDocumentExplorerTree({
     documents,
     isLoading,
@@ -343,10 +539,267 @@ const DocumentExplorerContent: React.FC<{
   const handleSummaryClick = useCallback((doc: Document) => setSummaryDoc(doc), [])
   const handleFullTextClick = useCallback((doc: Document) => setFullTextDoc(doc), [])
 
+  // 컨텍스트 메뉴 상태
+  const documentContextMenu = useContextMenu()
+  const [contextMenuDocument, setContextMenuDocument] = useState<Document | null>(null)
+
+  // 컨텍스트 메뉴 핸들러 (우클릭)
+  const handleDocumentContextMenu = useCallback((doc: Document, event: React.MouseEvent) => {
+    setContextMenuDocument(doc)
+    documentContextMenu.open(event)
+  }, [documentContextMenu])
+
+  // 메모 모달 상태
+  const [notesModalVisible, setNotesModalVisible] = useState(false)
+  const [selectedNotes, setSelectedNotes] = useState<{
+    documentName: string
+    customerName?: string | undefined
+    customerId?: string | undefined
+    documentId?: string | undefined
+    notes: string
+  } | null>(null)
+
+  // 메모 저장 핸들러
+  const handleSaveNotes = useCallback(async (notes: string) => {
+    if (!selectedNotes?.customerId || !selectedNotes?.documentId) {
+      console.error('[DocumentExplorerView] customerId 또는 documentId 누락')
+      return
+    }
+    try {
+      await DocumentService.updateDocumentNotes(
+        selectedNotes.customerId,
+        selectedNotes.documentId,
+        notes
+      )
+      setSelectedNotes(prev => prev ? { ...prev, notes } : null)
+      void fetchExplorerTree(selectedInitial)
+    } catch (error) {
+      console.error('[DocumentExplorerView] 메모 저장 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentExplorerView.handleSaveNotes' })
+      throw error
+    }
+  }, [selectedNotes, fetchExplorerTree, selectedInitial])
+
+  // 메모 삭제 핸들러
+  const handleDeleteNotes = useCallback(async () => {
+    if (!selectedNotes?.customerId || !selectedNotes?.documentId) return
+    try {
+      await DocumentService.updateDocumentNotes(
+        selectedNotes.customerId,
+        selectedNotes.documentId,
+        ''
+      )
+      setNotesModalVisible(false)
+      setSelectedNotes(null)
+      void fetchExplorerTree(selectedInitial)
+    } catch (error) {
+      console.error('[DocumentExplorerView] 메모 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentExplorerView.handleDeleteNotes' })
+      throw error
+    }
+  }, [selectedNotes, fetchExplorerTree, selectedInitial])
+
+  // 문서유형 변경 모달 상태
+  const [typePickerVisible, setTypePickerVisible] = useState(false)
+  const [typePickerDocument, setTypePickerDocument] = useState<Document | null>(null)
+  const typePickerTriggerRef = useRef<HTMLSpanElement>(null)
+
+  // 문서유형 변경 핸들러
+  const handleDocumentTypeChange = useCallback(async (newType: string) => {
+    if (!typePickerDocument) return
+    const documentId = typePickerDocument._id || typePickerDocument.id || ''
+    if (!documentId) return
+
+    setTypePickerVisible(false)
+    try {
+      await documentTypesService.updateDocumentType(documentId, newType)
+      void fetchExplorerTree(selectedInitial)
+    } catch (error) {
+      console.error('[DocumentExplorerView] 문서 유형 변경 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentExplorerView.handleDocumentTypeChange' })
+    }
+  }, [typePickerDocument, fetchExplorerTree, selectedInitial])
+
+  // 컨텍스트 메뉴 섹션
+  const documentContextMenuSections: ContextMenuSection[] = useMemo(() => {
+    if (!contextMenuDocument) return []
+
+    const documentId = contextMenuDocument._id || contextMenuDocument.id || ''
+    const documentName = contextMenuDocument.displayName || DocumentStatusService.extractOriginalFilename(contextMenuDocument)
+    const customerRelation = contextMenuDocument.customer_relation
+
+    return [
+      {
+        id: 'view',
+        items: [
+          {
+            id: 'preview',
+            label: '미리보기',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            ),
+            onClick: () => {
+              if (onDocumentClick && documentId) {
+                onDocumentClick(documentId)
+              }
+            }
+          },
+          {
+            id: 'summary',
+            label: 'AI 요약',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M16 13H8" />
+                <path d="M16 17H8" />
+                <path d="M10 9H8" />
+              </svg>
+            ),
+            onClick: () => setSummaryDoc(contextMenuDocument)
+          },
+          {
+            id: 'fulltext',
+            label: '전체 텍스트',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M16 13H8" />
+                <path d="M16 17H8" />
+                <path d="M16 9H8" />
+              </svg>
+            ),
+            onClick: () => setFullTextDoc(contextMenuDocument)
+          }
+        ]
+      },
+      {
+        id: 'actions',
+        items: [
+          {
+            id: 'download',
+            label: '다운로드',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            ),
+            onClick: async () => {
+              try {
+                if (!documentId) return
+                const response = await DocumentStatusService.getDocumentDetailViaWebhook(documentId)
+                if (response) {
+                  const apiResponse = response as Record<string, unknown>
+                  const data = apiResponse['data'] as Record<string, unknown> | undefined
+                  const raw = (data?.['raw'] || apiResponse['raw'] || response) as Record<string, unknown>
+                  await DownloadHelper.downloadDocument({
+                    _id: documentId,
+                    ...raw
+                  })
+                }
+              } catch (error) {
+                console.error('다운로드 실패:', error)
+                errorReporter.reportApiError(error as Error, { component: 'DocumentExplorerView.handleDownload' })
+              }
+            }
+          },
+          {
+            id: 'change-type',
+            label: '문서유형 변경',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            ),
+            onClick: () => {
+              setTypePickerDocument(contextMenuDocument)
+              // 다음 프레임에서 열어야 triggerRef가 렌더링된 상태
+              requestAnimationFrame(() => setTypePickerVisible(true))
+            }
+          },
+          {
+            id: 'rename',
+            label: '이름 변경',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
+            ),
+            onClick: () => {
+              if (documentId) setRenamingDocumentId(documentId)
+            }
+          },
+          {
+            id: 'memo',
+            label: '메모',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            ),
+            onClick: () => {
+              setSelectedNotes({
+                documentName: documentName,
+                customerName: customerRelation?.customer_name,
+                customerId: customerRelation?.customer_id,
+                documentId: documentId,
+                notes: customerRelation?.notes || ''
+              })
+              setNotesModalVisible(true)
+            }
+          }
+        ]
+      },
+      {
+        id: 'danger',
+        items: [
+          {
+            id: 'delete',
+            label: '삭제',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            ),
+            danger: true,
+            onClick: () => {
+              if (documentId) {
+                documentActions.deleteDocument(documentId, documentName)
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }, [contextMenuDocument, onDocumentClick, documentActions])
+
   // 새로고침 핸들러
   const handleRefresh = useCallback(() => {
     void fetchExplorerTree(selectedInitial)
   }, [fetchExplorerTree, selectedInitial])
+
+  // 내용 검색 결과에서 문서 클릭 → 트리에서 해당 문서 위치로 이동
+  const handleContentSearchResultClick = useCallback((item: SearchResultItem) => {
+    const docId = ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined) || (('payload' in item && item.payload?.doc_id) ? item.payload.doc_id : '')
+    if (!docId) return
+
+    // RightPane 프리뷰
+    onDocumentClick?.(docId)
+
+    // 트리에서 해당 문서로 이동 (초성이 선택되어 있고 문서가 로드된 상태에서만)
+    if (selectedInitial && documents.length > 0) {
+      setSelectedDocumentId(docId)
+      expandToDocument(docId)
+    }
+  }, [onDocumentClick, selectedInitial, documents.length, setSelectedDocumentId, expandToDocument])
 
   return (
     <div className="doc-explorer-content">
@@ -377,7 +830,108 @@ const DocumentExplorerContent: React.FC<{
         onThumbnailEnabledChange={setThumbnailEnabled}
         filenameMode={filenameMode}
         onFilenameModeChange={handleFilenameModeChange}
+        searchMode={explorerSearchMode}
+        onSearchModeChange={handleExplorerSearchModeChange}
+        onContentSearch={handleContentSearch}
+        isContentSearching={isContentSearching}
+        editMode={editMode}
+        onEditModeChange={handleEditModeChange}
+        selectedCount={selectedDocumentIds.size}
       />
+
+      {/* 내용 검색 / AI 질문 결과 패널 */}
+      {(contentSearchResults.length > 0 || contentSearchError || lastContentSearchMode) && (
+        <div className="doc-explorer-content-search-panel">
+          <div className="doc-explorer-content-search-panel__header">
+            <span className="doc-explorer-content-search-panel__title">
+              {lastContentSearchMode === 'semantic' ? 'AI 질문 결과' : '내용 검색 결과'}
+              <span className="doc-explorer-content-search-panel__count">
+                {contentSearchResults.length}건
+              </span>
+            </span>
+            <button
+              type="button"
+              className="doc-explorer-content-search-panel__close"
+              onClick={handleCloseContentSearch}
+              aria-label="검색 결과 닫기"
+            >
+              <SFSymbol
+                name="xmark"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.MEDIUM}
+              />
+            </button>
+          </div>
+
+          {/* AI 답변 (시맨틱 모드) */}
+          {contentSearchAnswer && (
+            <div className="doc-explorer-content-search-panel__answer">
+              <SFSymbol
+                name="sparkles"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.MEDIUM}
+                decorative
+              />
+              <span>{contentSearchAnswer}</span>
+            </div>
+          )}
+
+          {/* 에러 표시 */}
+          {contentSearchError && (
+            <div className="doc-explorer-content-search-panel__error">
+              {contentSearchError}
+            </div>
+          )}
+
+          {/* 검색 결과 목록 */}
+          {contentSearchResults.length > 0 && (
+            <div className="doc-explorer-content-search-panel__list">
+              {contentSearchResults.map((item, index) => {
+                const docId = ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined) || ''
+                const displayName = item.displayName || SearchService.getOriginalName(item)
+                const summary = SearchService.getSummary(item)
+                const score = 'score' in item ? (item as { score?: number }).score : undefined
+                const customerName = item.customer_relation?.customer_name
+
+                return (
+                  <button
+                    key={docId || index}
+                    type="button"
+                    className="doc-explorer-content-search-panel__item"
+                    onClick={() => handleContentSearchResultClick(item)}
+                  >
+                    <div className="doc-explorer-content-search-panel__item-header">
+                      <span className="doc-explorer-content-search-panel__item-name" title={displayName}>
+                        {displayName}
+                      </span>
+                      {score !== undefined && score > 0 && (
+                        <span className="doc-explorer-content-search-panel__item-score">
+                          {(score * 100).toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
+                    {customerName && (
+                      <span className="doc-explorer-content-search-panel__item-customer">
+                        {customerName}
+                      </span>
+                    )}
+                    <span className="doc-explorer-content-search-panel__item-summary">
+                      {summary.length > 80 ? summary.substring(0, 80) + '...' : summary}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* 결과 없음 */}
+          {contentSearchResults.length === 0 && !contentSearchError && lastContentSearchMode && !isContentSearching && (
+            <div className="doc-explorer-content-search-panel__empty">
+              검색 결과가 없습니다.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 초성 필터 바 - 공용 컴포넌트 사용 */}
       <InitialFilterBar
@@ -418,12 +972,87 @@ const DocumentExplorerContent: React.FC<{
             onFullTextClick={handleFullTextClick}
             onRenameClick={handleRenameClick}
             onDeleteClick={handleHoverDeleteClick}
+            onDocumentContextMenu={handleDocumentContextMenu}
             renamingDocumentId={renamingDocumentId}
             onRenameConfirm={handleRenameConfirm}
             onRenameCancel={handleRenameCancel}
+            isEditMode={editMode !== 'none'}
+            selectedDocumentIds={selectedDocumentIds}
+            onSelectDocument={handleSelectDocument}
+            onCustomerContextMenu={handleCustomerContextMenu}
           />
         )}
       </div>
+
+      {/* 컨텍스트 메뉴 (문서) */}
+      <ContextMenu
+        visible={documentContextMenu.isOpen}
+        position={documentContextMenu.position}
+        sections={documentContextMenuSections}
+        onClose={documentContextMenu.close}
+      />
+
+      {/* 컨텍스트 메뉴 (고객 노드) */}
+      <ContextMenu
+        visible={customerContextMenu.isOpen}
+        position={customerContextMenu.position}
+        sections={customerContextMenuSections}
+        onClose={customerContextMenu.close}
+      />
+
+      {/* 편집 모드 하단 액션바 */}
+      {editMode !== 'none' && (
+        <div className="doc-explorer-action-bar">
+          <div className="doc-explorer-action-bar__left">
+            <span className="doc-explorer-action-bar__count">
+              {selectedDocumentIds.size}건 선택됨
+            </span>
+          </div>
+          <div className="doc-explorer-action-bar__right">
+            {editMode === 'alias' && (
+              <>
+                <label className="doc-explorer-action-bar__force-label">
+                  <input
+                    type="checkbox"
+                    checked={forceRegenerateAlias}
+                    onChange={(e) => setForceRegenerateAlias(e.target.checked)}
+                    aria-label="기존 별칭 포함"
+                  />
+                  <span>기존 별칭 포함</span>
+                </label>
+                <button
+                  type="button"
+                  className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--alias"
+                  onClick={handleGenerateAliases}
+                  disabled={isGeneratingAliases || selectedDocumentIds.size === 0}
+                >
+                  <SFSymbol
+                    name="sparkles"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative
+                  />
+                  {isGeneratingAliases ? '생성 중...' : 'AI 별칭 생성'}
+                </button>
+              </>
+            )}
+            {editMode === 'delete' && (
+              <button
+                type="button"
+                className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--delete"
+                onClick={handleBatchDelete}
+                disabled={documentActions.isDeleting || selectedDocumentIds.size === 0}
+              >
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <polyline points="3 6 5 6 13 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M5.33 6V4.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V6m1.33 0v7.33a1.33 1.33 0 01-1.34 1.34H5.34a1.33 1.33 0 01-1.34-1.34V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {documentActions.isDeleting ? '삭제 중...' : '일괄 삭제'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 요약 모달 */}
       <DocumentSummaryModal
@@ -437,6 +1066,44 @@ const DocumentExplorerContent: React.FC<{
         visible={fullTextDoc !== null}
         onClose={() => setFullTextDoc(null)}
         document={fullTextDoc}
+      />
+
+      {/* 메모 모달 */}
+      {selectedNotes && (
+        <DocumentNotesModal
+          visible={notesModalVisible}
+          documentName={selectedNotes.documentName}
+          customerName={selectedNotes.customerName}
+          customerId={selectedNotes.customerId}
+          documentId={selectedNotes.documentId}
+          notes={selectedNotes.notes}
+          onClose={() => {
+            setNotesModalVisible(false)
+            setSelectedNotes(null)
+          }}
+          onSave={handleSaveNotes}
+          onDelete={handleDeleteNotes}
+        />
+      )}
+
+      {/* 문서유형 변경 피커 (숨겨진 트리거) */}
+      <span
+        ref={typePickerTriggerRef}
+        style={{
+          position: 'fixed',
+          left: documentContextMenu.position.x,
+          top: documentContextMenu.position.y,
+          width: 0,
+          height: 0,
+          pointerEvents: 'none',
+        }}
+      />
+      <DocumentTypePickerModal
+        visible={typePickerVisible}
+        currentType={typePickerDocument?.document_type ?? null}
+        triggerRef={typePickerTriggerRef}
+        onSelect={handleDocumentTypeChange}
+        onClose={() => setTypePickerVisible(false)}
       />
     </div>
   )

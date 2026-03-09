@@ -70,12 +70,22 @@ export interface DocumentExplorerTreeProps {
   onRenameClick?: (document: Document) => void
   /** 삭제 클릭 핸들러 */
   onDeleteClick?: (document: Document) => void
+  /** 컨텍스트 메뉴 핸들러 (우클릭) */
+  onDocumentContextMenu?: (document: Document, e: React.MouseEvent) => void
   /** 현재 이름변경 중인 문서 ID */
   renamingDocumentId?: string | null
   /** 이름변경 확인 */
   onRenameConfirm?: (documentId: string, newName: string) => void
   /** 이름변경 취소 */
   onRenameCancel?: () => void
+  /** 편집 모드 활성 여부 (체크박스 표시) */
+  isEditMode?: boolean
+  /** 선택된 문서 ID 집합 */
+  selectedDocumentIds?: Set<string>
+  /** 문서 선택/해제 */
+  onSelectDocument?: (documentId: string) => void
+  /** 고객 노드 컨텍스트 메뉴 (고객 상세 이동) */
+  onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent) => void
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -170,9 +180,13 @@ interface DocumentNodeProps {
   onFullTextClick?: (doc: Document) => void
   onRenameClick?: (doc: Document) => void
   onDeleteClick?: (doc: Document) => void
+  onContextMenu?: (doc: Document, e: React.MouseEvent) => void
   renamingDocumentId?: string | null
   onRenameConfirm?: (documentId: string, newName: string) => void
   onRenameCancel?: () => void
+  isEditMode?: boolean
+  isChecked?: boolean
+  onCheckToggle?: (documentId: string) => void
 }
 
 const DocumentNode = React.memo<DocumentNodeProps>(({
@@ -191,9 +205,13 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   onFullTextClick,
   onRenameClick,
   onDeleteClick,
+  onContextMenu,
   renamingDocumentId,
   onRenameConfirm,
   onRenameCancel,
+  isEditMode,
+  isChecked,
+  onCheckToggle,
 }) => {
   const doc = node.document
   if (!doc) return null
@@ -214,10 +232,24 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       data-node-key={node.key}
       className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}`}
       onClick={(e) => onDocumentClick(doc, e, node.key)}
+      onContextMenu={onContextMenu ? (e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(doc, e) } : undefined}
       role="treeitem"
       tabIndex={-1}
       aria-selected={isSelected}
     >
+      {/* 편집 모드: 체크박스 */}
+      {isEditMode && (
+        <span className="doc-explorer-tree__checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            className="doc-explorer-tree__checkbox"
+            checked={isChecked || false}
+            onChange={() => onCheckToggle?.(docId)}
+            aria-label={`${showName} 선택`}
+          />
+        </span>
+      )}
+
       {/* 문서 아이콘 (확장자에 따른 아이콘) */}
       <span className={`doc-explorer-tree__doc-icon document-icon ${DocumentUtils.getFileTypeClass(doc.mimeType, filename)}`}>
         <SFSymbol
@@ -366,9 +398,14 @@ interface GroupNodeProps {
   onFullTextClick?: (doc: Document) => void
   onRenameClick?: (doc: Document) => void
   onDeleteClick?: (doc: Document) => void
+  onContextMenu?: (doc: Document, e: React.MouseEvent) => void
   renamingDocumentId?: string | null
   onRenameConfirm?: (documentId: string, newName: string) => void
   onRenameCancel?: () => void
+  isEditMode?: boolean
+  selectedDocumentIds?: Set<string>
+  onCheckToggle?: (documentId: string) => void
+  onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent) => void
 }
 
 const GroupNode = React.memo<GroupNodeProps>(({
@@ -389,9 +426,14 @@ const GroupNode = React.memo<GroupNodeProps>(({
   onFullTextClick,
   onRenameClick,
   onDeleteClick,
+  onContextMenu,
   renamingDocumentId,
   onRenameConfirm,
   onRenameCancel,
+  isEditMode,
+  selectedDocumentIds,
+  onCheckToggle,
+  onCustomerContextMenu,
 }) => {
   const isExpanded = expandedKeys.has(node.key)
   const hasChildren = node.children && node.children.length > 0
@@ -404,6 +446,11 @@ const GroupNode = React.memo<GroupNodeProps>(({
         data-node-key={node.key}
         className={`doc-explorer-tree__group-header doc-explorer-tree__group-header--level-${level}${isSpecial ? ' doc-explorer-tree__group-header--special' : ''}${isFocused ? ' doc-explorer-tree__group-header--focused' : ''}`}
         onClick={() => onGroupClick(node.key)}
+        onContextMenu={node.metadata?.customerId && onCustomerContextMenu ? (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onCustomerContextMenu(node.metadata!.customerId!, node.label, e)
+        } : undefined}
         role="treeitem"
         tabIndex={-1}
         aria-expanded={isExpanded}
@@ -471,9 +518,14 @@ const GroupNode = React.memo<GroupNodeProps>(({
               onFullTextClick={onFullTextClick}
               onRenameClick={onRenameClick}
               onDeleteClick={onDeleteClick}
+              onContextMenu={onContextMenu}
               renamingDocumentId={renamingDocumentId}
               onRenameConfirm={onRenameConfirm}
               onRenameCancel={onRenameCancel}
+              isEditMode={isEditMode}
+              selectedDocumentIds={selectedDocumentIds}
+              onCheckToggle={onCheckToggle}
+              onCustomerContextMenu={onCustomerContextMenu}
             />
           ))}
         </div>
@@ -506,9 +558,14 @@ interface TreeNodeProps {
   onFullTextClick?: (doc: Document) => void
   onRenameClick?: (doc: Document) => void
   onDeleteClick?: (doc: Document) => void
+  onContextMenu?: (doc: Document, e: React.MouseEvent) => void
   renamingDocumentId?: string | null
   onRenameConfirm?: (documentId: string, newName: string) => void
   onRenameCancel?: () => void
+  isEditMode?: boolean
+  selectedDocumentIds?: Set<string>
+  onCheckToggle?: (documentId: string) => void
+  onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent) => void
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -529,11 +586,17 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onFullTextClick,
   onRenameClick,
   onDeleteClick,
+  onContextMenu,
   renamingDocumentId,
   onRenameConfirm,
   onRenameCancel,
+  isEditMode,
+  selectedDocumentIds,
+  onCheckToggle,
+  onCustomerContextMenu,
 }) => {
   if (node.type === 'document') {
+    const docId = node.document?._id || node.document?.id || ''
     return (
       <DocumentNode
         node={node}
@@ -551,9 +614,13 @@ const TreeNode: React.FC<TreeNodeProps> = ({
         onFullTextClick={onFullTextClick}
         onRenameClick={onRenameClick}
         onDeleteClick={onDeleteClick}
+        onContextMenu={onContextMenu}
         renamingDocumentId={renamingDocumentId}
         onRenameConfirm={onRenameConfirm}
         onRenameCancel={onRenameCancel}
+        isEditMode={isEditMode}
+        isChecked={selectedDocumentIds?.has(docId)}
+        onCheckToggle={onCheckToggle}
       />
     )
   }
@@ -574,6 +641,16 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       onCustomerBadgeClick={onCustomerBadgeClick}
       onSummaryClick={onSummaryClick}
       onFullTextClick={onFullTextClick}
+      onRenameClick={onRenameClick}
+      onDeleteClick={onDeleteClick}
+      onContextMenu={onContextMenu}
+      renamingDocumentId={renamingDocumentId}
+      onRenameConfirm={onRenameConfirm}
+      onRenameCancel={onRenameCancel}
+      isEditMode={isEditMode}
+      selectedDocumentIds={selectedDocumentIds}
+      onCheckToggle={onCheckToggle}
+      onCustomerContextMenu={onCustomerContextMenu}
     />
   )
 }
@@ -602,9 +679,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onFullTextClick,
   onRenameClick,
   onDeleteClick,
+  onDocumentContextMenu,
   renamingDocumentId,
   onRenameConfirm,
   onRenameCancel,
+  isEditMode = false,
+  selectedDocumentIds,
+  onSelectDocument,
+  onCustomerContextMenu,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -875,6 +957,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   key={`recent-${docId}`}
                   className={`doc-explorer-tree__recent-item ${isSelected ? 'doc-explorer-tree__recent-item--selected' : ''}`}
                   onClick={(e) => handleDocumentClick(doc, e)}
+                  onContextMenu={onDocumentContextMenu ? (e) => { e.preventDefault(); e.stopPropagation(); onDocumentContextMenu(doc, e) } : undefined}
                   role="button"
                   tabIndex={0}
                 >
@@ -1018,9 +1101,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             onFullTextClick={onFullTextClick}
             onRenameClick={onRenameClick}
             onDeleteClick={onDeleteClick}
+            onContextMenu={onDocumentContextMenu}
             renamingDocumentId={renamingDocumentId}
             onRenameConfirm={onRenameConfirm}
             onRenameCancel={onRenameCancel}
+            isEditMode={isEditMode}
+            selectedDocumentIds={selectedDocumentIds}
+            onCheckToggle={onSelectDocument}
+            onCustomerContextMenu={onCustomerContextMenu}
           />
         ))}
       </div>
