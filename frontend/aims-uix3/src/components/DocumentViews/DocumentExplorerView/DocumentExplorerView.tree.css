@@ -242,6 +242,10 @@
     transform: scale(0.95);
   }
 
+  .doc-explorer-tree__customer-inline-btn--icon-only {
+    padding: 2px 4px;
+  }
+
   .doc-explorer-tree__customer-inline-icon {
     font-size: 11px;
     line-height: 1;

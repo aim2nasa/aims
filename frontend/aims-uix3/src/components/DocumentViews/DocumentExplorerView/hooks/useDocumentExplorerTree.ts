@@ -41,6 +41,7 @@ export interface UseDocumentExplorerTreeResult {
   setGroupBy: (groupBy: DocumentGroupBy) => void
   toggleNode: (key: string) => void
   toggleExpandAll: () => void
+  toggleExpandCustomer: (customerNodeKey: string) => void
   setSearchTerm: (term: string) => void
   setSelectedDocumentId: (id: string | null) => void
   expandToDocument: (documentId: string) => void
@@ -260,6 +261,37 @@ export function useDocumentExplorerTree({
       })
     },
     [setExpandedKeys]
+  )
+
+  // 특정 고객의 하위 폴더만 펼치기/접기 (소분류까지, 파일은 숨김)
+  const toggleExpandCustomer = useCallback(
+    (customerNodeKey: string) => {
+      const customerNode = treeData.nodes.find(n => n.key === customerNodeKey)
+      if (!customerNode || !customerNode.children) return
+
+      // 고객 키 + 대분류 키 수집
+      const targetKeys: string[] = [customerNodeKey]
+      customerNode.children.forEach(child => {
+        if (child.type !== 'document') {
+          targetKeys.push(child.key)
+        }
+      })
+
+      setExpandedKeys(prev => {
+        const newSet = new Set(prev)
+        // 대분류 중 하나라도 펼쳐져 있으면 → 접기, 아니면 → 펼치기
+        const childKeys = targetKeys.slice(1)
+        const isExpanded = childKeys.length > 0 && childKeys.some(k => newSet.has(k))
+
+        if (isExpanded) {
+          targetKeys.forEach(k => newSet.delete(k))
+        } else {
+          targetKeys.forEach(k => newSet.add(k))
+        }
+        return Array.from(newSet)
+      })
+    },
+    [treeData.nodes, setExpandedKeys]
   )
 
   // 모두 펼치기/접기 — 소분류(level 2)까지만 펼침, 파일은 숨김
@@ -492,6 +524,7 @@ export function useDocumentExplorerTree({
     setGroupBy,
     toggleNode,
     toggleExpandAll,
+    toggleExpandCustomer,
     setSearchTerm,
     setSelectedDocumentId,
     expandToDocument,

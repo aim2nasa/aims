@@ -23,6 +23,7 @@ import type { DocumentTreeNode, DocumentGroupBy, DocumentSortBy, SortDirection }
 import { useDocumentExplorerKeyboard } from './hooks/useDocumentExplorerKeyboard'
 import { getDocumentDate } from './utils/treeBuilders'
 import { HoverPreview } from './components/HoverPreview'
+import { Tooltip } from '@/shared/ui/Tooltip'
 
 // 최근 본 문서 아이콘 (시계 + 문서)
 const RecentDocumentsIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -94,6 +95,8 @@ export interface DocumentExplorerTreeProps {
   onOpenQuickSearch?: (customerId: string, customerName: string) => void
   /** 전체 정보 보기 (URL 네비게이션) */
   onOpenFullDetail?: (customerId: string) => void
+  /** 고객 하위 폴더 모두 펼치기/접기 */
+  onToggleExpandCustomer?: (customerNodeKey: string) => void
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -418,6 +421,7 @@ interface GroupNodeProps {
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenQuickSearch?: (customerId: string, customerName: string) => void
   onOpenFullDetail?: (customerId: string) => void
+  onToggleExpandCustomer?: (customerNodeKey: string) => void
 }
 
 const GroupNode = React.memo<GroupNodeProps>(({
@@ -450,6 +454,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
   onCustomerExplorerClick,
   onOpenQuickSearch,
   onOpenFullDetail,
+  onToggleExpandCustomer,
 }) => {
   const isExpanded = expandedKeys.has(node.key)
   const hasChildren = node.children && node.children.length > 0
@@ -474,6 +479,11 @@ const GroupNode = React.memo<GroupNodeProps>(({
 
   // 고객 노드 여부 (level 0 + customerId)
   const isCustomerNode = level === 0 && !!node.metadata?.customerId
+
+  // 고객 하위 대분류가 펼쳐져 있는지 판단
+  const isCustomerChildrenExpanded = isCustomerNode && isExpanded && node.children
+    ? node.children.some(child => child.type !== 'document' && expandedKeys.has(child.key))
+    : false
 
   return (
     <div className="doc-explorer-tree__group">
@@ -530,51 +540,80 @@ const GroupNode = React.memo<GroupNodeProps>(({
         {/* 고객 노드: 인라인 버튼 (항상 표시, 고객명 바로 옆) */}
         {isCustomerNode && (
           <span className="doc-explorer-tree__customer-inline-actions">
+            {onToggleExpandCustomer && hasChildren && (
+              <Tooltip content={isCustomerChildrenExpanded ? '폴더 접기' : '폴더 펼치기'} placement="bottom">
+                <button
+                  type="button"
+                  className="doc-explorer-tree__customer-inline-btn doc-explorer-tree__customer-inline-btn--icon-only"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleExpandCustomer(node.key)
+                  }}
+                >
+                  {isCustomerChildrenExpanded ? (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M3 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M6 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M9 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  )}
+                </button>
+              </Tooltip>
+            )}
             {onOpenFullDetail && (
-              <button
-                type="button"
-                className="doc-explorer-tree__customer-inline-btn"
-                title="고객상세페이지"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onOpenFullDetail(node.metadata!.customerId!)
-                }}
-              >
-                <span className="doc-explorer-tree__customer-inline-icon">📄</span>
-                상세
-              </button>
+              <Tooltip content="고객 상세 페이지" placement="bottom">
+                <button
+                  type="button"
+                  className="doc-explorer-tree__customer-inline-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onOpenFullDetail(node.metadata!.customerId!)
+                  }}
+                >
+                  <span className="doc-explorer-tree__customer-inline-icon">📄</span>
+                  상세
+                </button>
+              </Tooltip>
             )}
             {onCustomerDetailClick && (
-              <button
-                type="button"
-                className="doc-explorer-tree__customer-inline-btn"
-                title="고객미니페이지"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onCustomerDetailClick(node.metadata!.customerId!, node.label)
-                }}
-              >
-                <span className="doc-explorer-tree__customer-inline-icon">🪪</span>
-                미니
-              </button>
+              <Tooltip content="고객 미니 카드" placement="bottom">
+                <button
+                  type="button"
+                  className="doc-explorer-tree__customer-inline-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onCustomerDetailClick(node.metadata!.customerId!, node.label)
+                  }}
+                >
+                  <span className="doc-explorer-tree__customer-inline-icon">🪪</span>
+                  미니
+                </button>
+              </Tooltip>
             )}
             {onCustomerExplorerClick && (
-              <button
-                type="button"
-                className="doc-explorer-tree__customer-inline-btn"
-                title="고객문서분류함"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onCustomerExplorerClick(
-                    node.metadata!.customerId!,
-                    node.label,
-                    node.metadata!.customerType === 'corporate' ? '법인' : '개인'
-                  )
-                }}
-              >
-                <span className="doc-explorer-tree__customer-inline-icon">📂</span>
-                분류함
-              </button>
+              <Tooltip content="고객 문서 분류함" placement="bottom">
+                <button
+                  type="button"
+                  className="doc-explorer-tree__customer-inline-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onCustomerExplorerClick(
+                      node.metadata!.customerId!,
+                      node.label,
+                      node.metadata!.customerType === 'corporate' ? '법인' : '개인'
+                    )
+                  }}
+                >
+                  <span className="doc-explorer-tree__customer-inline-icon">📂</span>
+                  분류함
+                </button>
+              </Tooltip>
             )}
           </span>
         )}
@@ -711,6 +750,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
               onCustomerExplorerClick={onCustomerExplorerClick}
               onOpenQuickSearch={onOpenQuickSearch}
               onOpenFullDetail={onOpenFullDetail}
+              onToggleExpandCustomer={onToggleExpandCustomer}
             />
           ))}
         </div>
@@ -755,6 +795,7 @@ interface TreeNodeProps {
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenQuickSearch?: (customerId: string, customerName: string) => void
   onOpenFullDetail?: (customerId: string) => void
+  onToggleExpandCustomer?: (customerNodeKey: string) => void
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -787,6 +828,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onCustomerExplorerClick,
   onOpenQuickSearch,
   onOpenFullDetail,
+  onToggleExpandCustomer,
 }) => {
   if (node.type === 'document') {
     const docId = node.document?._id || node.document?.id || ''
@@ -848,6 +890,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       onCustomerExplorerClick={onCustomerExplorerClick}
       onOpenQuickSearch={onOpenQuickSearch}
       onOpenFullDetail={onOpenFullDetail}
+      onToggleExpandCustomer={onToggleExpandCustomer}
     />
   )
 }
@@ -888,6 +931,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onCustomerExplorerClick,
   onOpenQuickSearch,
   onOpenFullDetail,
+  onToggleExpandCustomer,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -1314,6 +1358,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             onCustomerExplorerClick={onCustomerExplorerClick}
             onOpenQuickSearch={onOpenQuickSearch}
             onOpenFullDetail={onOpenFullDetail}
+            onToggleExpandCustomer={onToggleExpandCustomer}
           />
         ))}
       </div>

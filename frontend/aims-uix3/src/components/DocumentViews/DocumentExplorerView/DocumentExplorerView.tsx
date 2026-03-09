@@ -437,6 +437,7 @@ const DocumentExplorerContent: React.FC<{
     setGroupBy,
     toggleNode,
     toggleExpandAll,
+    toggleExpandCustomer,
     setSearchTerm,
     setSelectedDocumentId,
     setSortBy,
@@ -1062,6 +1063,7 @@ const DocumentExplorerContent: React.FC<{
             onOpenFullDetail={(customerId) => {
               navigateToView('customers-full-detail', customerId)
             }}
+            onToggleExpandCustomer={toggleExpandCustomer}
           />
         )}
       </div>
