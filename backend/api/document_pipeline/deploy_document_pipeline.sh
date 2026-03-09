@@ -24,10 +24,17 @@ if [ ! -d "$VENV_DIR" ]; then
     python3 -m venv "$VENV_DIR"
 fi
 
-# Activate and install dependencies
-echo "Installing dependencies..."
+# Activate and install dependencies (해시 비교로 변경 없으면 스킵)
 source "$VENV_DIR/bin/activate"
-pip install -q -r requirements.txt
+REQ_HASH=$(md5sum requirements.txt | cut -d' ' -f1)
+SAVED_HASH=$(cat .requirements_hash 2>/dev/null || echo "")
+if [ "$REQ_HASH" != "$SAVED_HASH" ]; then
+    echo "Installing dependencies (requirements.txt changed)..."
+    pip install -q -r requirements.txt
+    echo "$REQ_HASH" > .requirements_hash
+else
+    echo "requirements.txt unchanged, skipping pip install"
+fi
 
 # Stop existing process
 echo "Stopping existing process..."
