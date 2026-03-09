@@ -537,86 +537,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
           )}
         </span>
 
-        {/* 고객 노드: 인라인 버튼 (항상 표시, 고객명 바로 옆) */}
-        {isCustomerNode && (
-          <span className="doc-explorer-tree__customer-inline-actions">
-            {onToggleExpandCustomer && hasChildren && (
-              <Tooltip content={isCustomerChildrenExpanded ? '폴더 접기' : '폴더 펼치기'} placement="bottom">
-                <button
-                  type="button"
-                  className="doc-explorer-tree__customer-inline-btn doc-explorer-tree__customer-inline-btn--icon-only"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onToggleExpandCustomer(node.key)
-                  }}
-                >
-                  {isCustomerChildrenExpanded ? (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <path d="M3 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  ) : (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <path d="M6 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <path d="M9 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  )}
-                </button>
-              </Tooltip>
-            )}
-            {onOpenFullDetail && (
-              <Tooltip content="고객 상세 페이지" placement="bottom">
-                <button
-                  type="button"
-                  className="doc-explorer-tree__customer-inline-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onOpenFullDetail(node.metadata!.customerId!)
-                  }}
-                >
-                  <span className="doc-explorer-tree__customer-inline-icon">📄</span>
-                  상세
-                </button>
-              </Tooltip>
-            )}
-            {onCustomerDetailClick && (
-              <Tooltip content="고객 미니 카드" placement="bottom">
-                <button
-                  type="button"
-                  className="doc-explorer-tree__customer-inline-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onCustomerDetailClick(node.metadata!.customerId!, node.label)
-                  }}
-                >
-                  <span className="doc-explorer-tree__customer-inline-icon">🪪</span>
-                  미니
-                </button>
-              </Tooltip>
-            )}
-            {onCustomerExplorerClick && (
-              <Tooltip content="고객 문서 분류함" placement="bottom">
-                <button
-                  type="button"
-                  className="doc-explorer-tree__customer-inline-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onCustomerExplorerClick(
-                      node.metadata!.customerId!,
-                      node.label,
-                      node.metadata!.customerType === 'corporate' ? '법인' : '개인'
-                    )
-                  }}
-                >
-                  <span className="doc-explorer-tree__customer-inline-icon">📂</span>
-                  분류함
-                </button>
-              </Tooltip>
-            )}
-          </span>
-        )}
+        {/* 고객 노드: 인라인 버튼은 ⋮ 메뉴로 통합 (Step 1: 중복 제거) */}
 
         {/* 고객 노드: 대분류 요약 배지 (접힌 상태에서 분류 현황을 한눈에) */}
         {!isExpanded && node.metadata?.categorySummary && node.metadata.categorySummary.length > 0 && (
@@ -629,51 +550,58 @@ const GroupNode = React.memo<GroupNodeProps>(({
           </span>
         )}
 
-        {/* 고객 노드: 더보기 액션 버튼 (⋮) */}
+        {/* 고객 노드: 더보기 액션 버튼 (⋮) — 항상 표시 */}
         {isCustomerNode && (
           <div className="doc-explorer-tree__customer-action-wrapper" ref={actionMenuRef}>
-            <button
-              type="button"
-              className="doc-explorer-tree__customer-action-trigger"
-              title="고객 메뉴"
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowActionMenu(prev => !prev)
-              }}
-            >
-              ⋮
-            </button>
+            <Tooltip content="고객 메뉴" placement="bottom">
+              <button
+                type="button"
+                className="doc-explorer-tree__customer-action-trigger"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowActionMenu(prev => !prev)
+                }}
+              >
+                ⋮
+              </button>
+            </Tooltip>
             {showActionMenu && (
               <div className="doc-explorer-tree__customer-action-menu">
-                {/* 미니보기 */}
-                {onCustomerDetailClick && (
+                {/* 간편 검색 (가장 자주 사용) */}
+                {onOpenQuickSearch && (
                   <button
                     type="button"
                     className="doc-explorer-tree__customer-action-item"
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowActionMenu(false)
-                      onCustomerDetailClick(node.metadata!.customerId!, node.label)
+                      onOpenQuickSearch(node.metadata!.customerId!, node.label)
                     }}
                   >
-                    <span className="doc-explorer-tree__customer-action-icon">👤</span>
-                    미니보기
+                    <span className="doc-explorer-tree__customer-action-icon">🔍</span>
+                    간편 검색
                   </button>
                 )}
-                {/* 전체 정보 */}
-                {onOpenFullDetail && (
+                {/* 하위 폴더 모두 펼치기/접기 */}
+                {onToggleExpandCustomer && hasChildren && (
                   <button
                     type="button"
                     className="doc-explorer-tree__customer-action-item"
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowActionMenu(false)
-                      onOpenFullDetail(node.metadata!.customerId!)
+                      onToggleExpandCustomer(node.key)
                     }}
                   >
-                    <span className="doc-explorer-tree__customer-action-icon">📋</span>
-                    전체 정보
+                    <span className="doc-explorer-tree__customer-action-icon">
+                      {isCustomerChildrenExpanded ? '📁' : '📂'}
+                    </span>
+                    {isCustomerChildrenExpanded ? '하위 폴더 접기' : '하위 폴더 펼치기'}
                   </button>
+                )}
+                {/* 구분선: 위쪽 항목이 하나라도 있을 때만 표시 */}
+                {(onOpenQuickSearch || (onToggleExpandCustomer && hasChildren)) && (
+                  <div className="doc-explorer-tree__customer-action-divider" />
                 )}
                 {/* 문서 분류함 */}
                 {onCustomerExplorerClick && (
@@ -694,19 +622,34 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     문서 분류함
                   </button>
                 )}
-                {/* 간편 검색 */}
-                {onOpenQuickSearch && (
+                {/* 고객 상세 */}
+                {onOpenFullDetail && (
                   <button
                     type="button"
                     className="doc-explorer-tree__customer-action-item"
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowActionMenu(false)
-                      onOpenQuickSearch(node.metadata!.customerId!, node.label)
+                      onOpenFullDetail(node.metadata!.customerId!)
                     }}
                   >
-                    <span className="doc-explorer-tree__customer-action-icon">🔍</span>
-                    간편 검색
+                    <span className="doc-explorer-tree__customer-action-icon">📋</span>
+                    고객 상세
+                  </button>
+                )}
+                {/* 미니 카드 */}
+                {onCustomerDetailClick && (
+                  <button
+                    type="button"
+                    className="doc-explorer-tree__customer-action-item"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowActionMenu(false)
+                      onCustomerDetailClick(node.metadata!.customerId!, node.label)
+                    }}
+                  >
+                    <span className="doc-explorer-tree__customer-action-icon">👤</span>
+                    미니 카드
                   </button>
                 )}
               </div>
