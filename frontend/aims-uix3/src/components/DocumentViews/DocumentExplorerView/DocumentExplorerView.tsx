@@ -1125,10 +1125,12 @@ const DocumentExplorerContent: React.FC<{
                 onClick={handleBatchDelete}
                 disabled={documentActions.isDeleting || selectedDocumentIds.size === 0}
               >
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <polyline points="3 6 5 6 13 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M5.33 6V4.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V6m1.33 0v7.33a1.33 1.33 0 01-1.34 1.34H5.34a1.33 1.33 0 01-1.34-1.34V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <SFSymbol
+                  name="trash"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative
+                />
                 {documentActions.isDeleting ? '삭제 중...' : '일괄 삭제'}
               </button>
             )}

@@ -816,16 +816,6 @@
 
   /* 별칭AI 버튼: alias-ai-button 클래스 사용 (DocumentLibraryView와 동일) */
 
-  .doc-explorer-toolbar__edit-btn--delete {
-    color: var(--color-error);
-    border-color: var(--color-border-secondary);
-  }
-
-  .doc-explorer-toolbar__edit-btn--delete:hover:not(:disabled) {
-    background: var(--color-danger-50, rgba(239, 68, 68, 0.05));
-    border-color: var(--color-error);
-  }
-
   .doc-explorer-toolbar__edit-btn--active {
     color: var(--color-success);
     border-color: var(--color-success);

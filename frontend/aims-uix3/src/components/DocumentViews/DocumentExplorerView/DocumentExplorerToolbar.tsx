@@ -602,23 +602,22 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
           <Tooltip content={editMode === 'delete' ? '삭제 완료' : '일괄 삭제'} placement="bottom">
             <button
               type="button"
-              className={`doc-explorer-toolbar__edit-btn doc-explorer-toolbar__edit-btn--delete ${editMode === 'delete' ? 'doc-explorer-toolbar__edit-btn--active' : ''}`}
+              className={`edit-mode-icon-button ${editMode === 'delete' ? 'edit-mode-icon-button--active' : ''}`}
               onClick={() => onEditModeChange(editMode === 'delete' ? 'none' : 'delete')}
               disabled={editMode === 'alias'}
               aria-label={editMode === 'delete' ? '삭제 완료' : '일괄 삭제'}
             >
               {editMode === 'delete' ? (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
                 <SFSymbol
-                  name="checkmark"
+                  name="trash"
                   size={SFSymbolSize.CAPTION_1}
                   weight={SFSymbolWeight.MEDIUM}
                   decorative
                 />
-              ) : (
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                  <polyline points="3 6 5 6 13 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M5.33 6V4.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V6m1.33 0v7.33a1.33 1.33 0 01-1.34 1.34H5.34a1.33 1.33 0 01-1.34-1.34V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
               )}
             </button>
           </Tooltip>
