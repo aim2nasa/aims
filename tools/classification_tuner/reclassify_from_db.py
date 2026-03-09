@@ -49,8 +49,13 @@ from services.openai_service import (
     CLASSIFICATION_USER_PROMPT,
     VALID_DOCUMENT_TYPES,
     SYSTEM_ONLY_TYPES,
-    TAG_NORMALIZATION,
 )
+
+# TAG_NORMALIZATION이 없을 수 있음
+try:
+    from services.openai_service import TAG_NORMALIZATION
+except ImportError:
+    TAG_NORMALIZATION = {}
 
 
 def validate_document_type(doc_type: str) -> str:
@@ -142,10 +147,14 @@ async def classify_text(text: str, client: openai.AsyncOpenAI) -> dict:
 
 def build_query(args) -> dict:
     """CLI 인자로 MongoDB 쿼리 생성"""
-    query = {"meta.full_text": {"$exists": True, "$ne": ""}}
+    # 텍스트 유무와 무관하게 모든 문서 대상 (파일명 fallback 지원)
+    query = {}
 
     if args.customer_id:
-        query["customerId"] = args.customer_id
+        # 복수 customer_id 지원 (리스트 또는 단일값)
+        cids = args.customer_id if isinstance(args.customer_id, list) else [args.customer_id]
+        oid_list = [ObjectId(cid) if ObjectId.is_valid(cid) else cid for cid in cids]
+        query["customerId"] = {"$in": oid_list} if len(oid_list) > 1 else oid_list[0]
     if args.owner_id:
         query["ownerId"] = args.owner_id
     if args.type:
@@ -170,7 +179,7 @@ def build_query(args) -> dict:
 
 async def main():
     parser = argparse.ArgumentParser(description="MongoDB 텍스트로 재분류")
-    parser.add_argument("--customer-id", help="고객 ID로 필터")
+    parser.add_argument("--customer-id", nargs="+", help="고객 ID로 필터 (복수 가능)")
     parser.add_argument("--owner-id", help="설계사(소유자) ID로 필터")
     parser.add_argument("--type", help="기존 document_type으로 필터")
     parser.add_argument("--doc-ids", nargs="+", help="특정 문서 ID 리스트")
@@ -217,6 +226,7 @@ async def main():
     # 문서 조회
     cursor = collection.find(query, {
         "meta.full_text": 1,
+        "ocr.full_text": 1,
         "document_type": 1,
         "meta.document_type": 1,
         "upload.originalName": 1,
@@ -238,20 +248,32 @@ async def main():
 
     for i, doc in enumerate(docs, 1):
         doc_id = str(doc["_id"])
+        # 텍스트 우선순위: meta.full_text > ocr.full_text
         full_text = doc.get("meta", {}).get("full_text", "")
+        text_source = "meta"
+        if not full_text or len(full_text.strip()) < 10:
+            full_text = doc.get("ocr", {}).get("full_text", "")
+            text_source = "ocr"
         old_type = doc.get("document_type", "unknown")
-        display = doc.get("displayName") or doc.get("upload", {}).get("originalName", doc_id)
+        original_name = doc.get("upload", {}).get("originalName", "")
+        display = doc.get("displayName") or original_name or doc_id
 
         print(f"[{i}/{len(docs)}] {display[:50]} ({old_type}) ... ", end="", flush=True)
 
         if not full_text or len(full_text.strip()) < 10:
-            print("스킵 (텍스트 부족)")
-            results.append({
-                "doc_id": doc_id, "display": display,
-                "old_type": old_type, "new_type": None,
-                "skipped": True, "reason": "텍스트 부족",
-            })
-            continue
+            # 텍스트 없으면 파일명만으로 분류 시도
+            fname = original_name or display
+            if fname and len(fname) > 3:
+                full_text = f"[파일명: {fname}]"
+                text_source = "filename"
+            else:
+                print("스킵 (텍스트 부족)")
+                results.append({
+                    "doc_id": doc_id, "display": display,
+                    "old_type": old_type, "new_type": None,
+                    "skipped": True, "reason": "텍스트 부족",
+                })
+                continue
 
         classification = await classify_text(full_text, openai_client)
         new_type = classification["type"]
@@ -265,15 +287,18 @@ async def main():
         result = {
             "doc_id": doc_id,
             "display": display,
+            "filename": original_name or display,  # evaluate.py 호환 (GT 매칭용 원본 파일명)
             "customer_id": str(doc.get("customerId", "")),
             "old_type": old_type,
             "new_type": new_type,
+            "predicted_type": new_type,  # evaluate.py 호환
             "confidence": classification["confidence"],
             "title": classification["title"],
             "summary": classification["summary"][:200],
             "tags": classification["tags"],
             "tokens_used": tokens,
             "type_changed": type_changed,
+            "text_source": text_source,
         }
         results.append(result)
 

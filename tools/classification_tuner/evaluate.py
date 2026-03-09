@@ -94,6 +94,10 @@ def evaluate(ground_truth: dict, predicted: list) -> dict:
         if not key:
             continue
 
+        # doc_id로 못 찾으면 filename으로 fallback
+        if key not in ground_truth and "filename" in item:
+            key = item["filename"]
+
         if key not in ground_truth:
             not_found += 1
             continue
