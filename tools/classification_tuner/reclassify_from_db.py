@@ -99,16 +99,33 @@ async def classify_text(text: str, client: openai.AsyncOpenAI, filename: str = "
     user_prompt = CLASSIFICATION_USER_PROMPT.format(file_info=file_info, text=text)
 
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": CLASSIFICATION_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            max_tokens=600,
-            temperature=0,
-            response_format={"type": "json_object"},
-        )
+        # 429 rate limit 시 최대 3회 재시도 (10초, 30초, 60초 대기)
+        max_retries = 3
+        retry_delays = [10, 30, 60]
+        response = None
+        for attempt in range(max_retries + 1):
+            try:
+                response = await client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": CLASSIFICATION_SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    max_tokens=600,
+                    temperature=0,
+                    response_format={"type": "json_object"},
+                )
+                break  # 성공 시 루프 탈출
+            except openai.RateLimitError as e:
+                if attempt < max_retries:
+                    delay = retry_delays[attempt]
+                    print(f"\n  [429 재시도] {delay}초 대기 후 {attempt+2}/{max_retries+1}차 시도...", end="", flush=True)
+                    await asyncio.sleep(delay)
+                else:
+                    raise  # 최대 재시도 초과 시 상위 except로
+
+        if response is None:
+            raise Exception("API 응답 없음")
 
         content = response.choices[0].message.content
         usage = {
