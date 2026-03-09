@@ -271,55 +271,63 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       </span>
 
       {/* 문서명: filenameMode에 따라 별칭/원본 전환 (또는 인라인 편집) */}
-      <span className="doc-explorer-tree__doc-name" title={altName || showName}>
-        {renamingDocumentId && renamingDocumentId === docId ? (
-          <InlineRenameInput
-            currentName={doc.displayName || DocumentStatusService.extractOriginalFilename(doc)}
-            onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
-            onCancel={() => onRenameCancel?.()}
-          />
-        ) : (
-          <span
-            className="doc-explorer-tree__doc-name-text"
-            onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
-            onMouseMove={(e) => onDocumentMouseMove(doc, e)}
-            onMouseLeave={onDocumentMouseLeave}
-          >
-            {highlightText(showName, searchTerm)}
-          </span>
-        )}
-      </span>
+      <Tooltip content={altName || showName} placement="bottom">
+        <span className="doc-explorer-tree__doc-name">
+          {renamingDocumentId && renamingDocumentId === docId ? (
+            <InlineRenameInput
+              currentName={doc.displayName || DocumentStatusService.extractOriginalFilename(doc)}
+              onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
+              onCancel={() => onRenameCancel?.()}
+            />
+          ) : (
+            <span
+              className="doc-explorer-tree__doc-name-text"
+              onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
+              onMouseMove={(e) => onDocumentMouseMove(doc, e)}
+              onMouseLeave={onDocumentMouseLeave}
+            >
+              {highlightText(showName, searchTerm)}
+            </span>
+          )}
+        </span>
+      </Tooltip>
 
       {/* 편집/삭제 아이콘 — doc-name 밖에 배치하여 줄바꿈 방지 */}
       {!(renamingDocumentId && renamingDocumentId === docId) && onRenameClick && onDeleteClick && (
         <span className="doc-explorer-tree__hover-actions" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--rename"
-            title="이름 변경"
-            onClick={(e) => { e.stopPropagation(); onRenameClick(doc) }}
-          >
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-              <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--delete"
-            title="삭제"
-            onClick={(e) => { e.stopPropagation(); onDeleteClick(doc) }}
-          >
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <Tooltip content="이름 변경" placement="bottom">
+            <button
+              type="button"
+              className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--rename"
+              aria-label="이름 변경"
+              onClick={(e) => { e.stopPropagation(); onRenameClick(doc) }}
+            >
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </Tooltip>
+          <Tooltip content="삭제" placement="bottom">
+            <button
+              type="button"
+              className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--delete"
+              aria-label="삭제"
+              onClick={(e) => { e.stopPropagation(); onDeleteClick(doc) }}
+            >
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </Tooltip>
         </span>
       )}
 
       {/* 파일 타입 (JPG, PDF 등) */}
-      <span className="doc-explorer-tree__doc-ext" title={fileExt || '-'}>
-        {fileExt || '-'}
-      </span>
+      <Tooltip content={fileExt || '-'} placement="bottom">
+        <span className="doc-explorer-tree__doc-ext">
+          {fileExt || '-'}
+        </span>
+      </Tooltip>
 
       {/* 파일 크기 */}
       <span className="doc-explorer-tree__doc-size">
@@ -327,35 +335,37 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       </span>
 
       {/* 고객명 (클릭 시 해당 고객 문서만 필터) + 개인/법인 아이콘 */}
-      <span
-        className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
-        title={customerName ? `${customerName} 문서만 보기` : '-'}
-        onClick={customerName ? (e) => onCustomerBadgeClick(e, customerName) : undefined}
-      >
-        {customerName && (
-          <span className="doc-explorer-tree__customer-type-icon">
-            {customerType === '법인' ? (
-              <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
-              </svg>
-            ) : (
-              <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
-                <circle cx="10" cy="7" r="3" />
-                <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-              </svg>
-            )}
-          </span>
-        )}
-        {customerName ? highlightText(customerName, searchTerm) : '-'}
-      </span>
+      <Tooltip content={customerName ? `${customerName} 문서만 보기` : '-'} placement="bottom">
+        <span
+          className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
+          onClick={customerName ? (e) => onCustomerBadgeClick(e, customerName) : undefined}
+        >
+          {customerName && (
+            <span className="doc-explorer-tree__customer-type-icon">
+              {customerType === '법인' ? (
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                </svg>
+              ) : (
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                  <circle cx="10" cy="7" r="3" />
+                  <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                </svg>
+              )}
+            </span>
+          )}
+          {customerName ? highlightText(customerName, searchTerm) : '-'}
+        </span>
+      </Tooltip>
 
       {/* 날짜/시간 */}
-      <span
-        className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
-        title={documentDate || '-'}
-      >
-        {documentDate ? formatDateTime(documentDate) : '-'}
-      </span>
+      <Tooltip content={documentDate || '-'} placement="bottom">
+        <span
+          className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
+        >
+          {documentDate ? formatDateTime(documentDate) : '-'}
+        </span>
+      </Tooltip>
 
       {/* 유형 배지 */}
       <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
@@ -364,22 +374,26 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
 
       {/* 액션 버튼 (요약/전체텍스트) */}
       <span className="doc-explorer-tree__doc-actions">
-        <button
-          type="button"
-          className="doc-explorer-tree__action-btn"
-          title="요약 보기"
-          onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
-        >
-          <SummaryIcon width={13} height={13} />
-        </button>
-        <button
-          type="button"
-          className="doc-explorer-tree__action-btn"
-          title="전체 텍스트 보기"
-          onClick={(e) => { e.stopPropagation(); onFullTextClick?.(doc) }}
-        >
-          <DocumentIcon width={13} height={13} />
-        </button>
+        <Tooltip content="요약 보기" placement="bottom">
+          <button
+            type="button"
+            className="doc-explorer-tree__action-btn"
+            aria-label="요약 보기"
+            onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
+          >
+            <SummaryIcon width={13} height={13} />
+          </button>
+        </Tooltip>
+        <Tooltip content="전체 텍스트 보기" placement="bottom">
+          <button
+            type="button"
+            className="doc-explorer-tree__action-btn"
+            aria-label="전체 텍스트 보기"
+            onClick={(e) => { e.stopPropagation(); onFullTextClick?.(doc) }}
+          >
+            <DocumentIcon width={13} height={13} />
+          </button>
+        </Tooltip>
       </span>
     </div>
   )
@@ -1176,21 +1190,25 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   </span>
 
                   {/* 문서명: filenameMode에 따라 별칭/원본 전환 */}
-                  <span className="doc-explorer-tree__doc-name" title={altName || showName}>
-                    <span
-                      className="doc-explorer-tree__doc-name-text"
-                      onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
-                      onMouseMove={(e) => handleDocumentMouseMove(doc, e)}
-                      onMouseLeave={handleDocumentMouseLeave}
-                    >
-                      {highlightText(showName, searchTerm)}
+                  <Tooltip content={altName || showName} placement="bottom">
+                    <span className="doc-explorer-tree__doc-name">
+                      <span
+                        className="doc-explorer-tree__doc-name-text"
+                        onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
+                        onMouseMove={(e) => handleDocumentMouseMove(doc, e)}
+                        onMouseLeave={handleDocumentMouseLeave}
+                      >
+                        {highlightText(showName, searchTerm)}
+                      </span>
                     </span>
-                  </span>
+                  </Tooltip>
 
                   {/* 파일 타입 */}
-                  <span className="doc-explorer-tree__doc-ext" title={fileExt || '-'}>
-                    {fileExt || '-'}
-                  </span>
+                  <Tooltip content={fileExt || '-'} placement="bottom">
+                    <span className="doc-explorer-tree__doc-ext">
+                      {fileExt || '-'}
+                    </span>
+                  </Tooltip>
 
                   {/* 파일 크기 */}
                   <span className="doc-explorer-tree__doc-size">
@@ -1198,35 +1216,37 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   </span>
 
                   {/* 고객명 + 개인/법인 아이콘 */}
-                  <span
-                    className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
-                    title={customerName ? `${customerName} 문서만 보기` : '-'}
-                    onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
-                  >
-                    {customerName && (
-                      <span className="doc-explorer-tree__customer-type-icon">
-                        {customerType === '법인' ? (
-                          <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
-                          </svg>
-                        ) : (
-                          <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
-                            <circle cx="10" cy="7" r="3" />
-                            <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                          </svg>
-                        )}
-                      </span>
-                    )}
-                    {customerName ? highlightText(customerName, searchTerm) : '-'}
-                  </span>
+                  <Tooltip content={customerName ? `${customerName} 문서만 보기` : '-'} placement="bottom">
+                    <span
+                      className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
+                      onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
+                    >
+                      {customerName && (
+                        <span className="doc-explorer-tree__customer-type-icon">
+                          {customerType === '법인' ? (
+                            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                            </svg>
+                          ) : (
+                            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                              <circle cx="10" cy="7" r="3" />
+                              <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                            </svg>
+                          )}
+                        </span>
+                      )}
+                      {customerName ? highlightText(customerName, searchTerm) : '-'}
+                    </span>
+                  </Tooltip>
 
                   {/* 날짜/시간 */}
-                  <span
-                    className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
-                    title={documentDate || '-'}
-                  >
-                    {documentDate ? formatDateTime(documentDate) : '-'}
-                  </span>
+                  <Tooltip content={documentDate || '-'} placement="bottom">
+                    <span
+                      className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
+                    >
+                      {documentDate ? formatDateTime(documentDate) : '-'}
+                    </span>
+                  </Tooltip>
 
                   {/* 유형 배지 */}
                   <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
@@ -1235,22 +1255,26 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
 
                   {/* 액션 버튼 */}
                   <span className="doc-explorer-tree__doc-actions">
-                    <button
-                      type="button"
-                      className="doc-explorer-tree__action-btn"
-                      title="요약 보기"
-                      onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
-                    >
-                      <SummaryIcon width={13} height={13} />
-                    </button>
-                    <button
-                      type="button"
-                      className="doc-explorer-tree__action-btn"
-                      title="전체 텍스트 보기"
-                      onClick={(e) => { e.stopPropagation(); onFullTextClick?.(doc) }}
-                    >
-                      <DocumentIcon width={13} height={13} />
-                    </button>
+                    <Tooltip content="요약 보기" placement="bottom">
+                      <button
+                        type="button"
+                        className="doc-explorer-tree__action-btn"
+                        aria-label="요약 보기"
+                        onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
+                      >
+                        <SummaryIcon width={13} height={13} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="전체 텍스트 보기" placement="bottom">
+                      <button
+                        type="button"
+                        className="doc-explorer-tree__action-btn"
+                        aria-label="전체 텍스트 보기"
+                        onClick={(e) => { e.stopPropagation(); onFullTextClick?.(doc) }}
+                      >
+                        <DocumentIcon width={13} height={13} />
+                      </button>
+                    </Tooltip>
                   </span>
                 </div>
               )
