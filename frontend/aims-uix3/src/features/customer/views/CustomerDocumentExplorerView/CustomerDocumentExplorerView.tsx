@@ -19,6 +19,7 @@ import {
   DOCUMENT_CATEGORIES,
   getCategoryForType,
   getDocumentTypeLabel,
+  getTypeDisplayOrder,
 } from '@/shared/constants/documentCategories'
 import { formatDateTimeCompact } from '@/shared/lib/timeUtils'
 import { DocumentUtils } from '@/entities/document/model'
@@ -143,12 +144,12 @@ function buildCategoryGroups(documents: CustomerDocumentItem[]): CategoryGroup[]
     })
   }
 
-  // 3단계: DOCUMENT_CATEGORIES 순서대로 정렬, 소분류는 건수 내림차순
+  // 3단계: DOCUMENT_CATEGORIES 순서대로 정렬, 소분류는 GT 폴더 순서 (1.1→1.2→...)
   return DOCUMENT_CATEGORIES
     .filter(cat => categoryMap.has(cat.value))
     .map(cat => {
       const subTypes = categoryMap.get(cat.value)!
-      subTypes.sort((a, b) => b.documents.length - a.documents.length)
+      subTypes.sort((a, b) => getTypeDisplayOrder(a.typeValue) - getTypeDisplayOrder(b.typeValue))
       return {
         value: cat.value,
         label: cat.label,

@@ -159,6 +159,17 @@ export function getCategoryInfo(categoryValue: string): DocumentCategory | undef
   return DOCUMENT_CATEGORIES.find(c => c.value === categoryValue)
 }
 
+/**
+ * 소분류 표시 순서 (DOCUMENT_TYPE_LABELS 키 순서 = GT 폴더 순서)
+ * 1.1 보험증권 → 1.2 보장분석 → ... → 7.2 분류불가
+ */
+const TYPE_DISPLAY_ORDER = Object.keys(DOCUMENT_TYPE_LABELS)
+
+export function getTypeDisplayOrder(typeValue: string): number {
+  const idx = TYPE_DISPLAY_ORDER.indexOf(typeValue)
+  return idx === -1 ? 999 : idx
+}
+
 /** 대분류별 소분류 그룹 목록 (시스템 유형 annual_report, customer_review 제외) */
 export interface DocumentTypeGroup {
   category: DocumentCategory
@@ -170,12 +181,11 @@ const SYSTEM_TYPES = new Set(['annual_report', 'customer_review'])
 export function getGroupedDocumentTypes(): DocumentTypeGroup[] {
   return DOCUMENT_CATEGORIES.map(cat => ({
     category: cat,
-    types: Object.entries(TYPE_TO_CATEGORY)
-      .filter(([typeValue, catValue]) =>
-        catValue === cat.value &&
-        !SYSTEM_TYPES.has(typeValue) &&
-        typeValue in DOCUMENT_TYPE_LABELS
+    types: Object.keys(DOCUMENT_TYPE_LABELS)
+      .filter(typeValue =>
+        TYPE_TO_CATEGORY[typeValue] === cat.value &&
+        !SYSTEM_TYPES.has(typeValue)
       )
-      .map(([typeValue]) => ({ value: typeValue, label: DOCUMENT_TYPE_LABELS[typeValue] ?? typeValue }))
+      .map(typeValue => ({ value: typeValue, label: DOCUMENT_TYPE_LABELS[typeValue] ?? typeValue }))
   })).filter(group => group.types.length > 0)
 }
