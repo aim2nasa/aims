@@ -14,6 +14,10 @@ import asyncio
 from pathlib import Path
 from datetime import datetime
 
+# Windows cp949 인코딩 문제 방지
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 # document_pipeline 모듈 import를 위한 경로 추가
 PIPELINE_DIR = Path(__file__).resolve().parent.parent.parent / "backend" / "api" / "document_pipeline"
 sys.path.insert(0, str(PIPELINE_DIR))
@@ -28,7 +32,7 @@ if ENV_SHARED.exists():
             os.environ.setdefault(key.strip(), val.strip())
 
 import openai
-import pdfplumber
+import pypdfium2 as pdfium
 
 # SSOT: openai_service.py에서 프롬프트/상수 직접 import
 from services.openai_service import (
@@ -36,19 +40,32 @@ from services.openai_service import (
     CLASSIFICATION_USER_PROMPT,
     VALID_DOCUMENT_TYPES,
     SYSTEM_ONLY_TYPES,
-    TAG_NORMALIZATION,
 )
+
+# TAG_NORMALIZATION은 제거될 수 있으므로 안전하게 import
+try:
+    from services.openai_service import TAG_NORMALIZATION
+except ImportError:
+    TAG_NORMALIZATION = {}
 
 
 def extract_text_pdf(filepath: str) -> str:
-    """pdfplumber로 PDF 텍스트 추출"""
+    """pypdfium2로 PDF 텍스트 추출 (프로덕션 동일 엔진)"""
     text_parts = []
     try:
-        with pdfplumber.open(filepath) as pdf:
-            for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text_parts.append(page_text)
+        pdf = pdfium.PdfDocument(filepath)
+        try:
+            for page in pdf:
+                try:
+                    textpage = page.get_textpage()
+                    try:
+                        text_parts.append(textpage.get_text_bounded())
+                    finally:
+                        textpage.close()
+                finally:
+                    page.close()
+        finally:
+            pdf.close()
     except Exception as e:
         return f"[추출 실패: {e}]"
     return "\n".join(text_parts)
@@ -155,7 +172,7 @@ async def classify_text(text: str, client: openai.AsyncOpenAI) -> dict:
 async def main():
     parser = argparse.ArgumentParser(description="파일에서 텍스트 추출 + 분류")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--folder", help="PDF 파일이 있는 폴더 경로")
+    group.add_argument("--folder", nargs="+", help="PDF 파일이 있는 폴더 경로 (복수 가능, 재귀 탐색)")
     group.add_argument("--files", nargs="+", help="개별 파일 경로 리스트")
     parser.add_argument("--output", default=None, help="결과 저장 경로 (기본: results/run_YYYYMMDD_HHmmss.json)")
     parser.add_argument("--extensions", default=".pdf", help="처리할 확장자 (쉼표 구분, 기본: .pdf)")
@@ -165,13 +182,14 @@ async def main():
     files = []
     if args.folder:
         exts = [e.strip() for e in args.extensions.split(",")]
-        folder = Path(args.folder)
-        if not folder.exists():
-            print(f"[오류] 폴더가 존재하지 않습니다: {folder}")
-            sys.exit(1)
-        for f in sorted(folder.iterdir()):
-            if f.suffix.lower() in exts:
-                files.append(f)
+        for folder_path in args.folder:
+            folder = Path(folder_path)
+            if not folder.exists():
+                print(f"[오류] 폴더가 존재하지 않습니다: {folder}")
+                sys.exit(1)
+            for f in sorted(folder.rglob("*")):
+                if f.is_file() and f.suffix.lower() in exts:
+                    files.append(f)
     else:
         files = [Path(f) for f in args.files]
 
@@ -195,7 +213,7 @@ async def main():
         print(f"[{i}/{len(files)}] {filepath.name} ... ", end="", flush=True)
 
         text = extract_text(str(filepath))
-        if text.startswith("["):
+        if text.startswith("[추출 실패:") or text.startswith("[지원하지 않는"):
             print(f"스킵 ({text})")
             results.append({"filename": filepath.name, "filepath": str(filepath), "error": text})
             continue

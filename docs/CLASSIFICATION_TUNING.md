@@ -4,15 +4,43 @@
 
 | 이름 | 출처 | 건수 | GT 기준 | 비고 |
 |------|------|------|---------|------|
-| **캐치업** | 캐치업코리아 (법인) | 387 | AI 추정 (Claude) | 자산/기타 카테고리 포함 |
-| **마리치** | 마리치 외 다수 (개인+법인) | 177 | 설계사 직접 분류 | 자산/기타 0건 |
-| **캐치업+마리치** | 합본 | 511 (GT) / 536 (DB) | 마리치 우선, 캐치업 보완 | R7부터 사용. GT 511건 (중복 제거), DB 536건 |
+| **마리치** | 마리치 외 다수 (개인+법인) | 177 | 설계사 직접 분류 | **유일한 인간 GT**, v4 폴더 구조 1:1 대응 |
+| **캐치업** | 캐치업코리아 (법인) | 445 (유니크 ~386) | AI 추정 (Claude) | GT 신뢰도 낮음 — 보조 참고용만 |
 
-### 데이터셋 우선순위
-- **마리치**(설계사 분류)와 **캐치업**(AI 추정)이 충돌 시 → 마리치 우선
-- 캐치업은 마리치에 없는 카테고리(자산, 기타) 보완 용도
+### GT 신뢰도
+- **마리치**: 설계사가 직접 폴더로 분류 → 높은 신뢰도
+- **캐치업**: AI(Claude)가 분류 → 낮은 신뢰도 ("시험지를 본인이 채점")
+- **R8부터 마리치 GT만 사용** (캐치업 GT 기준 평가 중단)
 
-### 마리치 폴더 구조 → 타입 매핑
+### 마리치 데이터 분포 (177건)
+
+| 파일 형식 | 건수 | 텍스트 추출 | 비고 |
+|----------|------|-----------|------|
+| PDF (텍스트 있음) | 72 | ✅ 가능 | 프롬프트 평가 대상 |
+| PDF (스캔 이미지) | 24 | ❌ 불가 | unclassifiable (OCR 필요) |
+| JPG/PNG/JPEG | 56 | ❌ 불가 | 이미지 파일 |
+| HWP | 18 | ❌ 불가 | 한글 문서 |
+| XLSX | 7 | ❌ 불가 | 엑셀 파일 |
+
+> 텍스트 추출 가능: 72/177 = 41%. 프롬프트 튜닝으로 개선 가능한 범위는 이 72건.
+
+### 마리치 GT 유형별 분포 (163건, 시스템 타입 제외)
+
+| 유형 | 건수 | | 유형 | 건수 |
+|------|------|-|------|------|
+| corp_asset | 22 | | personal_docs | 6 |
+| hr_document | 16 | | diagnosis | 6 |
+| consent_delegation | 13 | | claim_form | 6 |
+| id_card | 13 | | plan_design | 5 |
+| policy | 12 | | family_cert | 3 |
+| coverage_analysis | 12 | | health_checkup | 3 |
+| application | 11 | | legal_document | 1 |
+| corp_basic | 10 | | | |
+| corp_tax | 10 | | | |
+| medical_receipt | 8 | | | |
+| insurance_etc | 6 | | | |
+
+### 마리치 폴더 구조 → v4 타입 매핑
 
 | 폴더 | 타입 |
 |------|------|
@@ -20,8 +48,8 @@
 | 1.2 보장분석 | coverage_analysis |
 | 1.3 청약서 | application |
 | 1.4 가입설계서 | plan_design |
-| 1.5 Annual Report | annual_report |
-| 1.6 변액 리포트 | variable_report |
+| 1.5 Annual Report | annual_report (시스템) |
+| 1.6 변액 리포트 | customer_review (시스템) |
 | 1.7 기타 보험관련 서류 | insurance_etc |
 | 2.1 진단서,소견서 | diagnosis |
 | 2.2 진료비 영수증 | medical_receipt |
@@ -40,13 +68,78 @@
 | 6.5 기타 법률 서류 | legal_document |
 | 7.1 일반문서 | general |
 | 7.2 분류불가 | unclassifiable |
-| 7.3 미지정 | unclassified |
+| 7.3 미지정 | unspecified (시스템) |
 
 ---
 
 ## 버전별 정확도 이력
 
-### 캐치업 387건 기준
+### 마리치 기준
+
+| 버전 | 정확도 | 일치/총 | 평가 대상 | 주요 변경 |
+|------|--------|---------|----------|----------|
+| M1 | 55.6% | 40/72 | 로컬 PDF (텍스트 추출 가능 72건) | R6 프롬프트, pypdfium2 텍스트 추출. 이미지/HWP/XLSX 미처리 |
+| M2 | - | - | DB 업로드 후 전체 177건 | 예정 (AIMS 파이프라인 업로드 → OCR 포함) |
+
+### M1 오분류 분석 (32건)
+
+#### 패턴 1: 스캔 PDF → diagnosis (0.85) — 14건 (최대 문제)
+텍스트를 추출했으나 내용이 부실한 PDF가 일괄 `diagnosis`로 분류.
+
+| 실제 유형 | 건수 | 예시 |
+|----------|------|------|
+| policy | 2 | 마리치(박병호)증권, 이방이력(ING) |
+| id_card | 2 | 송연(이방)신분증, 이방_신분증 |
+| corp_basic | 2 | 캐치업코리아매뉴얼, 캐치업코리아사업자등록증주주명부 |
+| hr_document | 1 | 근로재계약서 2024.4.1 |
+| consent_delegation | 1 | 이방동의서위임서류 |
+| family_cert | 1 | 송연등 |
+| personal_docs | 1 | 통장사본(일일공팔) |
+| health_checkup | 1 | 안영미건강검진결과(20230811) |
+| insurance_etc | 2 | 계약내용변경신청서, 송연진료비내역 |
+| claim_form | 1 | 이방보험금분류청구서류(현대생명) |
+
+#### 패턴 2: coverage_analysis → insurance_etc — 5건
+보장분석 문서를 보험기타로 오인. "보장분석" 키워드가 있어도 insurance_etc로 분류.
+
+#### 패턴 3: corp_asset ↔ policy — 6건
+법인 자동차보험 가입증/증권을 policy로, 일반 증권을 corp_asset으로 혼동.
+
+#### 패턴 4: application → corp_asset — 2건
+법인 자동차 관련 청약서를 corp_asset으로 오인.
+
+#### 패턴 5: corp_tax → insurance_etc — 2건
+손비처리 납입증명서를 보험기타로 오인.
+
+#### 패턴 6: 기타 — 3건
+- plan_design → insurance_etc (1)
+- corp_asset → insurance_etc (2): 건물가액평가, 담보삭제요청서
+
+### 유형별 정확도
+
+| 유형 | 정확/전체 | 정확도 |
+|------|-----------|--------|
+| legal_document | 1/1 | 100.0% |
+| hr_document | 6/7 | 85.7% |
+| plan_design | 4/5 | 80.0% |
+| corp_tax | 4/6 | 66.7% |
+| corp_asset | 9/15 | 60.0% |
+| policy | 6/10 | 60.0% |
+| coverage_analysis | 5/10 | 50.0% |
+| corp_basic | 2/4 | 50.0% |
+| application | 2/4 | 50.0% |
+| insurance_etc | 1/4 | 25.0% |
+| consent_delegation | 0/1 | 0.0% |
+| id_card | 0/2 | 0.0% |
+| family_cert | 0/1 | 0.0% |
+| personal_docs | 0/1 | 0.0% |
+| health_checkup | 0/1 | 0.0% |
+
+---
+
+## 과거 이력 (캐치업 AI GT 기준 — 참고만)
+
+> **주의**: 아래 수치는 AI가 만든 GT 기준이므로 실제 정확도와 다를 수 있음.
 
 | 버전 | 정확도 | 일치/총 | 주요 변경 |
 |------|--------|---------|----------|
@@ -57,104 +150,34 @@
 | R4 | 87.9% | 340/387 | 20개 핵심 규칙, 13개 혼동 주의 |
 | R5 | 87.6% | 339/387 | R4 미세 조정 (6 API errors) |
 | R6 | 91.5% | 354/387 | 27개 핵심 규칙, 17개 혼동 주의 |
-
-### 캐치업+마리치 합본 기준 (536건 분류 → 511건 GT 매칭 평가)
-
-| 버전 | 정확도 | 일치/총 | 비고 |
-|------|--------|---------|------|
-| R6 베이스라인 | 76.5% | 410/536 | 오분류 126건. 캐치업 74.3% (249/335), 마리치 80.1% (161/201, 중복매칭 포함). GT v5 단독 76.5% (296/387) |
-| R7 | - | - | 예정 |
-
----
-
-## R6 합본 베이스라인 분석 (76.5%, 오분류 126건)
-
-> 캐치업 단독 91.5%에서 합본 76.5%로 하락.
->
-> **중요 발견**: 같은 GT v5 (387건) 기준으로도 91.5% → 76.5% (296/387)로 하락.
-> 원인은 두 가지 (Alex+Gini 교차 검증):
->
-> 1. **텍스트 추출 라이브러리 차이** (~20건): 91.5% 테스트는 로컬 pdfplumber 파싱,
->    실전은 DB 저장 텍스트(PyMuPDF/fitz 추출). 같은 PDF에서 추출 결과가 다를 수 있음.
-> 2. **프롬프트 unclassifiable 과다** (~38건): 텍스트가 충분한데도 프롬프트가 분류를 포기.
->    meta.full_text에 내용이 있는 문서(결근계, 퇴직금 영수증, 잔고증명서 등)도 unclassifiable 판정.
->
-> 즉 **91.5%는 이상적 조건(pdfplumber), 76.5%가 실전 정확도(PyMuPDF/DB)**에 가깝다.
-
-### 문제 1: unclassifiable 과다 — 63건 (오분류의 50%)
-
-**텍스트가 있는데도 unclassifiable로 판단하는 프롬프트 문제.**
-파일 확장자로 텍스트 유무를 판단하면 안 됨 — 오직 `meta.full_text`, `ocr.full_text` 필드로만 판단.
-
-| text_source | 건수 | 주요 실제 유형 |
-|-------------|------|---------------|
-| **meta** (텍스트 있음) | 29건 | hr_document:16, corp_tax:4, legal_document:3, general:3 |
-| **unknown** (캐치업, 텍스트 있었을 가능성 높음) | 29건 | personal_docs:5, id_card:5, corp_basic:4, medical_receipt:3 |
-| **filename** (진짜 텍스트 없음) | 5건 | legal_document:2, corp_tax:1 등 |
-
-→ 최소 58건은 텍스트가 있는데 프롬프트가 분류를 포기한 것
->
-> **참고**: Predicted에 filename 중복 37건 존재 (캐치업/마리치 고객 양쪽에 같은 파일 업로드).
-> 평가 시 같은 GT 항목에 2번 매칭되어 마리치 평가 건수가 176→201로 부풀려짐.
-
-### 문제 2: 유형 간 혼동 — 63건
-
-| 혼동 패턴 | 건수 | 비고 |
-|-----------|------|------|
-| coverage_analysis → insurance_etc | 8 | 보장분석을 기타보험으로 오인 |
-| corp_tax → insurance_etc | 5 | 세무서류를 보험으로 오인 |
-| insurance_etc → corp_basic | 4 | 보험기타를 법인기본으로 오인 |
-| medical_receipt → diagnosis | 3 | 영수증/진단서 혼동 |
-| corp_basic → personal_docs | 3 | 법인서류를 개인서류로 오인 |
-| application → corp_asset | 3 | 청약서를 법인자산으로 오인 |
-
-### 유형별 정확도 (위험 구간: 80% 미만)
-
-| 유형 | 정확/전체 | 정확도 |
-|------|-----------|--------|
-| annual_report | 0/1 | 0.0% |
-| general | 0/7 | 0.0% |
-| legal_document | 1/6 | 16.7% |
-| coverage_analysis | 6/15 | 40.0% |
-| personal_docs | 6/11 | 54.5% |
-| family_cert | 3/5 | 60.0% |
-| id_card | 14/22 | 63.6% |
-| corp_tax | 25/38 | 65.8% |
-| corp_basic | 38/51 | 74.5% |
-| insurance_etc | 30/39 | 76.9% |
+| R7 | - | - | 폐기 (합본 기준 시도, 규칙 과다로 퇴보) |
 
 ---
 
 ## 튜닝 전략
 
-### 적용 중
-- **Edge Case 규칙**: 혼동되는 타입 쌍별로 구체적 판단 기준 명시
-- **혼동 주의 섹션**: 자주 오분류되는 패턴을 프롬프트에 직접 기술
+### M2 방향 (예정)
+1. **diagnosis (0.85) 버그 수정**: 텍스트 부실 PDF가 일괄 diagnosis로 분류되는 문제 해결
+2. **coverage_analysis vs insurance_etc**: 보장분석 구분 강화
+3. **corp_asset vs policy**: 법인 자동차보험 구분 명확화
+4. **규칙 과다 금지**: R7 교훈 — gpt-4o-mini는 규칙이 많으면 오히려 퇴보
 
-### R6 캐치업 단독 불일치 (33건, 참고)
-- `plan_design → policy/application` 5건: 운전자보험 설계서 혼동 지속
-- `→ unclassifiable` 7건: 텍스트 있으나 프롬프트가 분류 포기
-- `corp_basic → 기타` 3건: 법인 통장/서류 혼동
-- `corp_tax ↔ insurance_etc` 2건: 재산현황 혼동
-
-### 향후 고려
-- Few-Shot: 토큰 비용 증가 우려로 보류
-- Chain-of-Thought: GPT-4o-mini 성능 한계로 보류
-- 모델 업그레이드 (GPT-4o): 비용 대비 효과 검토 필요
+### 참고
+- v2.5 프롬프트 (42타입, 98.3%): 구조와 접근법 참고 (커밋 `041735e3`)
+- v4 분류 체계는 FIXED — `docs/TAXONOMY_V4_MIGRATION.md`
 
 ---
 
 ## 테스트 환경
 
 - 모델: `gpt-4o-mini` (temperature=0, max_tokens=600, response_format=json_object)
-- 텍스트 소스: `meta.full_text` → `ocr.full_text` → filename (우선순위)
+- 텍스트 추출: pypdfium2 (프로덕션 동일)
 - 텍스트 최대 길이: 10,000자 truncate
-- 고객 컨텍스트: 현재 미주입 (향후 R7에서 검토)
 - 테스트 스크립트:
-  - 로컬 파일 분류: `tools/classification_tuner/extract_and_classify.py` (pdfplumber 사용, 91.5% 달성)
-  - DB 기반 재분류: `tools/classification_tuner/reclassify_from_db.py` (DB 텍스트 사용, 실전 조건)
+  - 로컬 파일 분류: `tools/classification_tuner/extract_and_classify.py`
+  - DB 기반 재분류: `tools/classification_tuner/reclassify_from_db.py`
   - 평가: `tools/classification_tuner/evaluate.py`
-- Ground Truth: `tests/classification/ground_truth_v5.json` (캐치업), `ground_truth_marichi.json` (마리치), `ground_truth_combined_v1.json` (합본 511건)
+- Ground Truth: `tests/classification/ground_truth_marichi_v4.json` (마리치 163건, 시스템 타입 제외)
 
 ---
 
@@ -162,5 +185,5 @@
 
 | 데이터셋 | 로컬 경로 | 비고 |
 |----------|----------|------|
-| **캐치업** | `D:\Users\rossi\Documents\AIMS\sample\캐치업코리아` | 446건 (중복 포함), DB 기준 387건 |
 | **마리치** | `D:\Users\rossi\Documents\AIMS\sample\마리치` | 177건, 폴더 구조 = 타입 |
+| **캐치업** | `D:\Users\rossi\Documents\AIMS\sample\캐치업코리아` | 445건 (유니크 ~386건), 보조 참고용 |

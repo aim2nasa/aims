@@ -1,0 +1,654 @@
+[
+  {
+    "filename": "(주)마리치-화재보험증권.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "마리치(박병호)증권.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "송연-실손증권.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "송연님 가입증.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "송연증권.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "이방-유병자실손증권.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "이방증권.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "이불대표님-자동차보험증권.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "이불증권(ING).pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "해외여행자보험증권.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "현대증권-전시시설-성북로23길10.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "현대증권-주택-성북로8길24.pdf",
+    "type": "policy"
+  },
+  {
+    "filename": "고진수(마리치)보장분석.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "김예은(마리치)보장분석2026.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "김우종(마리치)보장분석2026.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "김태연(마리치)보장분석.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "이방보장분석.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "이불보험조회1.png",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "이불보험조회2.png",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "장연우(마리치)보장분석2026.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "조형준(마리치)보장분석.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "채한빛(마리치)보장분석.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "최현희(마리치)보장분석.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "홍예준보장분석.pdf",
+    "type": "coverage_analysis"
+  },
+  {
+    "filename": "마리치 디스커버리청약서.pdf",
+    "type": "application"
+  },
+  {
+    "filename": "마리치(박병호)청약서.pdf",
+    "type": "application"
+  },
+  {
+    "filename": "마리치B251화재청약서.pdf",
+    "type": "application"
+  },
+  {
+    "filename": "마리치청약서.pdf",
+    "type": "application"
+  },
+  {
+    "filename": "마리치청약서류(강윤분).pdf",
+    "type": "application"
+  },
+  {
+    "filename": "마리치청약서류(고진수).pdf",
+    "type": "application"
+  },
+  {
+    "filename": "마리치청약서류(김태연).pdf",
+    "type": "application"
+  },
+  {
+    "filename": "마리치청약서류(서기원).pdf",
+    "type": "application"
+  },
+  {
+    "filename": "마리치청약서류(서승원).pdf",
+    "type": "application"
+  },
+  {
+    "filename": "이방님 현대유병자실손보험청약서)자필용.pdf",
+    "type": "application"
+  },
+  {
+    "filename": "현대회사용청약서-주택-성북로8길24.pdf",
+    "type": "application"
+  },
+  {
+    "filename": "윤두현단독실비.pdf",
+    "type": "plan_design"
+  },
+  {
+    "filename": "이경님-운전자보험-20250520.pdf",
+    "type": "plan_design"
+  },
+  {
+    "filename": "이경님-종합보험-20250520.pdf",
+    "type": "plan_design"
+  },
+  {
+    "filename": "이수진고객님제안서.pdf",
+    "type": "plan_design"
+  },
+  {
+    "filename": "현대화재-주택-성북로8길24.pdf",
+    "type": "plan_design"
+  },
+  {
+    "filename": "DB손비처리납입증명서.pdf",
+    "type": "insurance_etc"
+  },
+  {
+    "filename": "계약내용변경신청서.pdf",
+    "type": "insurance_etc"
+  },
+  {
+    "filename": "마리치직원상해해지서류20250313.pdf",
+    "type": "insurance_etc"
+  },
+  {
+    "filename": "송연명의변경.pdf",
+    "type": "insurance_etc"
+  },
+  {
+    "filename": "캐치업직원해지서류20240824.pdf",
+    "type": "insurance_etc"
+  },
+  {
+    "filename": "캐치업화재보험지급내역서20240813.pdf",
+    "type": "insurance_etc"
+  },
+  {
+    "filename": "송연 병원비영수증1.jpg",
+    "type": "diagnosis"
+  },
+  {
+    "filename": "송연진단서20250514(고대).pdf",
+    "type": "diagnosis"
+  },
+  {
+    "filename": "안희정수술확인서.jpg",
+    "type": "diagnosis"
+  },
+  {
+    "filename": "이방 의무기록지.pdf",
+    "type": "diagnosis"
+  },
+  {
+    "filename": "청구서류004.jpg",
+    "type": "diagnosis"
+  },
+  {
+    "filename": "캐치업(박지우수면무호흡수술확인서20230105).pdf",
+    "type": "diagnosis"
+  },
+  {
+    "filename": "서류206.jpg",
+    "type": "medical_receipt"
+  },
+  {
+    "filename": "서류207.jpg",
+    "type": "medical_receipt"
+  },
+  {
+    "filename": "서류208.jpg",
+    "type": "medical_receipt"
+  },
+  {
+    "filename": "서류209.jpg",
+    "type": "medical_receipt"
+  },
+  {
+    "filename": "송연 병원비영수증2.jpg",
+    "type": "medical_receipt"
+  },
+  {
+    "filename": "송연 병원비영수증3.jpg",
+    "type": "medical_receipt"
+  },
+  {
+    "filename": "송연 병원비영수증4.jpg",
+    "type": "medical_receipt"
+  },
+  {
+    "filename": "이방(병원비서류20210805).pdf",
+    "type": "medical_receipt"
+  },
+  {
+    "filename": "보험금청구서.pdf",
+    "type": "claim_form"
+  },
+  {
+    "filename": "삼성화재 보험금청구 151224-안영미.pdf",
+    "type": "claim_form"
+  },
+  {
+    "filename": "서류203.jpg",
+    "type": "claim_form"
+  },
+  {
+    "filename": "이불요실금보험금청구서류(신한생명).pdf",
+    "type": "claim_form"
+  },
+  {
+    "filename": "이불치과보험금청구서류(신한생명).pdf",
+    "type": "claim_form"
+  },
+  {
+    "filename": "청구서류001.jpg",
+    "type": "claim_form"
+  },
+  {
+    "filename": "신상철동의서.hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "안성환동의서.hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "안영미동의서.hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "안희정동의서.hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "이불위임장서류.pdf",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "이수진동의서.hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "정규희동의서.hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "정부균동의서.hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "진료기록  위임장(김보성).hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "진료기록  위임장(안영미).hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "진료기록  위임장(안희정).hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "진료기록  위임장(정부균).hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "진료기록  위임장(최은정).hwp",
+    "type": "consent_delegation"
+  },
+  {
+    "filename": "20220928_104640.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "20220928_104642.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "20221011_160909.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "20221012_154221.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "20221012_154240.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "20221025_142450.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "20230503_101144.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "20230604_104307.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "20230925_174445.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "김명규여권.jpg",
+    "type": "id_card"
+  },
+  {
+    "filename": "송연(이방)신분증.pdf",
+    "type": "id_card"
+  },
+  {
+    "filename": "이방_신분증.pdf",
+    "type": "id_card"
+  },
+  {
+    "filename": "이불신분증.png",
+    "type": "id_card"
+  },
+  {
+    "filename": "가족관계증명서164.jpg",
+    "type": "family_cert"
+  },
+  {
+    "filename": "송연등본.pdf",
+    "type": "family_cert"
+  },
+  {
+    "filename": "이경 주민등록등본.jpg",
+    "type": "family_cert"
+  },
+  {
+    "filename": "20231124_140859.jpg",
+    "type": "personal_docs"
+  },
+  {
+    "filename": "20231125_110227.jpg",
+    "type": "personal_docs"
+  },
+  {
+    "filename": "마리치 법인카드.jpeg",
+    "type": "personal_docs"
+  },
+  {
+    "filename": "이불(신한1000)통장.png",
+    "type": "personal_docs"
+  },
+  {
+    "filename": "이불(신한100026934786)통장.png",
+    "type": "personal_docs"
+  },
+  {
+    "filename": "통장사본(일일공팔).pdf",
+    "type": "personal_docs"
+  },
+  {
+    "filename": "2022.9.27건강검진(김보성).pdf",
+    "type": "health_checkup"
+  },
+  {
+    "filename": "2022.9.27건강검진(안영미).pdf",
+    "type": "health_checkup"
+  },
+  {
+    "filename": "안영미건강검진결과(20230811).pdf",
+    "type": "health_checkup"
+  },
+  {
+    "filename": "(완료)등기부등본_(주)캐치업코리아_250326.pdf",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "(주)캐치업코리아_사업자등록증_231218.pdf",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "라이콘코리아등기부등본.pdf",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "라이콘코리아사업자등록증주주명부.pdf",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "마리치법인서류.pdf",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "마리치사업자등록증.jpg",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "마리치주주명부.xlsx",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "사업자등록증(브라운스톤).jpg",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "정관_캐치업코리아.hwp",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "캐치업코리아주주명부.xlsx",
+    "type": "corp_basic"
+  },
+  {
+    "filename": "(주)캐치업코리아_4대보험가입자명부.pdf",
+    "type": "hr_document"
+  },
+  {
+    "filename": "20130409_121226표준취업규칙(최종).hwp",
+    "type": "hr_document"
+  },
+  {
+    "filename": "고용노동부 근로감독시 점검사항.pdf",
+    "type": "hr_document"
+  },
+  {
+    "filename": "근로계약서.xlsx",
+    "type": "hr_document"
+  },
+  {
+    "filename": "근로자명부전체.xlsx",
+    "type": "hr_document"
+  },
+  {
+    "filename": "근로재계약서 2024.4.1.pdf",
+    "type": "hr_document"
+  },
+  {
+    "filename": "급여대장(샘플130130).pdf",
+    "type": "hr_document"
+  },
+  {
+    "filename": "별첨 19 사직서.hwp",
+    "type": "hr_document"
+  },
+  {
+    "filename": "사업주가 알아야 할 사항.pdf",
+    "type": "hr_document"
+  },
+  {
+    "filename": "서약서.pdf",
+    "type": "hr_document"
+  },
+  {
+    "filename": "성희롱예방교육일지.pdf",
+    "type": "hr_document"
+  },
+  {
+    "filename": "재직증명서.xlsx",
+    "type": "hr_document"
+  },
+  {
+    "filename": "취업규칙.hwp",
+    "type": "hr_document"
+  },
+  {
+    "filename": "포괄근로계약서(갑을제외일반5인미만용).hwp",
+    "type": "hr_document"
+  },
+  {
+    "filename": "포괄근로계약서-5인이상.pdf",
+    "type": "hr_document"
+  },
+  {
+    "filename": "표준취업규칙(최종).hwp",
+    "type": "hr_document"
+  },
+  {
+    "filename": "2018년표준손익계산서.pdf",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "2023년경비처리세무사제출용(20240504).xlsx",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "2024년경비처리(직원상해)세무사제출용(20250324).xlsx",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "20년 세무조정계산서_캐치업코리아.pdf",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "21년 세무조정계산서_캐치업코리아 (1).pdf",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "21년 세무조정계산서_캐치업코리아.pdf",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "DB손비처리납입증명서.pdf",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "납입증명서(화재).pdf",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "라이콘재무제표확인(2023년).pdf",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "캐치업주당가치평가자료202208221.png",
+    "type": "corp_tax"
+  },
+  {
+    "filename": "0396가입증.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "08하 7454 자동차등록증.jpeg",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "160구3184자동차등록증.jpg",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "3184가입증.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "3204가입증-1.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "3204가입증.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "8621가입증.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "90도3455자동차등록증.jpg",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "90도3455자동차등록증1.jpg",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "9894가입증.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "낙하리-건물가액평가.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "박지우님가입증-1.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "박지우님가입증.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "박지우운전면허증.jpg",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "박지우자동차청약서.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "자동차등록원부(렉스턴).jpg",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "자동차등록원부(렉스턴)1.jpg",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "증권_퍼펙트플러스종합.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "캐치업_권리이전등록신청_납부고지서 (1).pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "캐치업_권리이전등록신청_납부고지서.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "캐치업_등록증재발급신청_납부고지서.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "캐치업코리아 담보삭제요청서.pdf",
+    "type": "corp_asset"
+  },
+  {
+    "filename": "19가합585938_(19.12.02)소장_001001.소장_법무법인 제하.pdf",
+    "type": "legal_document"
+  }
+]
