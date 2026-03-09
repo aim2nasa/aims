@@ -72,10 +72,14 @@
 > 캐치업 단독 91.5%에서 합본 76.5%로 하락.
 >
 > **중요 발견**: 같은 GT v5 (387건) 기준으로도 91.5% → 76.5% (296/387)로 하락.
-> 원인은 텍스트 소스 차이 — 이전 테스트는 로컬 파일 직접 파싱, 현재는 DB 저장 텍스트.
-> DB 텍스트 품질이 낮아 추가 오분류 58건 발생 (그 중 52건이 unclassifiable).
+> 원인은 두 가지 (Alex+Gini 교차 검증):
 >
-> 즉 **91.5%는 이상적 조건, 76.5%가 실전 정확도**에 가깝다.
+> 1. **텍스트 추출 라이브러리 차이** (~20건): 91.5% 테스트는 로컬 pdfplumber 파싱,
+>    실전은 DB 저장 텍스트(PyMuPDF/fitz 추출). 같은 PDF에서 추출 결과가 다를 수 있음.
+> 2. **프롬프트 unclassifiable 과다** (~38건): 텍스트가 충분한데도 프롬프트가 분류를 포기.
+>    meta.full_text에 내용이 있는 문서(결근계, 퇴직금 영수증, 잔고증명서 등)도 unclassifiable 판정.
+>
+> 즉 **91.5%는 이상적 조건(pdfplumber), 76.5%가 실전 정확도(PyMuPDF/DB)**에 가깝다.
 
 ### 문제 1: unclassifiable 과다 — 63건 (오분류의 50%)
 
@@ -145,8 +149,11 @@
 - 모델: `gpt-4o-mini` (temperature=0, max_tokens=600, response_format=json_object)
 - 텍스트 소스: `meta.full_text` → `ocr.full_text` → filename (우선순위)
 - 텍스트 최대 길이: 10,000자 truncate
-- 고객 컨텍스트: `[고객: 법인/개인(고객명)]` + `[파일명: xxx]` 주입
-- 테스트 스크립트: `tests/classification/test_v4_classification.py`
+- 고객 컨텍스트: 현재 미주입 (향후 R7에서 검토)
+- 테스트 스크립트:
+  - 로컬 파일 분류: `tools/classification_tuner/extract_and_classify.py` (pdfplumber 사용, 91.5% 달성)
+  - DB 기반 재분류: `tools/classification_tuner/reclassify_from_db.py` (DB 텍스트 사용, 실전 조건)
+  - 평가: `tools/classification_tuner/evaluate.py`
 - Ground Truth: `tests/classification/ground_truth_v5.json` (캐치업), `ground_truth_marichi.json` (마리치), `ground_truth_combined_v1.json` (합본 511건)
 
 ---
