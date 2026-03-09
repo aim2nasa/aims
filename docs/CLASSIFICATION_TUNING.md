@@ -289,6 +289,74 @@ OCR 인식 실패 또는 텍스트 부족으로 분류 불가 판정.
 - 2단계 분류 (대분류→세분류) 또는 Few-shot 예시 추가
 - gpt-4o 업그레이드 (비용 10배, 정확도 상승 예상)
 
+---
+
+## 최종 평가 (2026-03-10, M6 기준)
+
+### DB 재분류 결과
+
+M6 프롬프트로 전체 566건 재분류 + DB 반영 완료.
+
+| 고객 | 건수 | general | 상태 |
+|------|------|---------|------|
+| 캐치업코리아 | 387건 | 297건 (77%) | 정상 — 원본 자체가 안내문/메모 다수 |
+| 마리치 | 172건 | 0건 (0%) | 정상 — 20개 유형에 골고루 분포 |
+| 기타 | 7건 | 5건 | 정상 |
+
+### 마리치 DB 유형 분포 (172건)
+
+| 유형 | 건수 | | 유형 | 건수 |
+|------|------|-|------|------|
+| medical_receipt (진료비영수증) | 19 | | claim_form (보험금청구서) | 8 |
+| hr_document (인사노무) | 16 | | diagnosis (진단서) | 8 |
+| policy (보험증권) | 15 | | personal_docs (개인서류) | 6 |
+| corp_asset (법인자산) | 14 | | insurance_etc (기타보험) | 6 |
+| consent_delegation (동의서/위임장) | 13 | | family_cert (가족관계) | 3 |
+| id_card (신분증) | 13 | | plan_design (가입설계서) | 3 |
+| coverage_analysis (보장분석) | 12 | | health_checkup (건강검진) | 3 |
+| application (청약서) | 12 | | unclassifiable | 1 |
+| corp_basic (기본서류) | 10 | | legal_document (법률서류) | 1 |
+| corp_tax (세무) | 8 | | asset_document (자산) | 1 |
+
+### 종합 평가
+
+**강점**
+- 18개 유형 중 12개가 GT 대비 100% 정확도
+- general 0건, unclassifiable 1건 — 거의 모든 문서에 의미 있는 유형 부여
+- gpt-4o-mini + 프롬프트 튜닝만으로 91.8% 달성 — **가성비 최고 지점**
+- 사용자 수동 재분류 빈도: 약 10건 중 1건
+
+**약점 (추후 개선 대상)**
+- **corp_asset(법인자산) 63.2%**: 법인 자동차 가입증을 policy로 오분류. 고객 컨텍스트(법인/개인) 없이는 구조적 한계
+- **plan_design(가입설계서) 60%**: GT 샘플 5건뿐이라 통계적 의미 제한. 데이터 축적 후 재평가 필요
+
+### 추후 개선 트리거 조건
+
+| 조건 | 개선 내용 |
+|------|----------|
+| corp_asset 오분류 사용자 불만 발생 시 | 분류기에 고객 `type`(individual/corporation) 전달 → corp_asset↔policy 근본 해결 |
+| 마리치 GT 300건+ 축적 시 | plan_design 등 소수 유형 재평가, 교차 검증 유효성 확보 |
+| 전체 정확도 95%+ 요구 시 | gpt-4o 업그레이드 (비용 10배) 또는 2단계 분류(대분류→세분류) |
+| 새 문서 유형 추가 요청 시 | `VALID_DOCUMENT_TYPES` 추가 + 프롬프트 소분류 정의 + GT 구축 → M7 |
+
+### 재평가 방법
+
+```bash
+# 1. GT 파일 확인 (마리치 폴더 구조 기준)
+d:/aims/tools/classification_tuner/tests/classification/ground_truth_marichi_v4.json
+
+# 2. 재분류 (dry-run)
+cd d:/aims/tools/classification_tuner
+OPENAI_API_KEY=<key> python reclassify_from_db.py \
+  --customer-id 69ae12aff0e011bda4cbffc3 --dry-run --output results/m7_marichi.json
+
+# 3. 평가
+python evaluate.py \
+  --ground-truth tests/classification/ground_truth_marichi_v4.json \
+  --predicted results/m7_marichi.json \
+  --diff results/m6_marichi.json
+```
+
 ### 참고
 - v2.5 프롬프트 (42타입, 98.3%): 구조와 접근법 참고 (커밋 `041735e3`)
 - v4 분류 체계는 FIXED — `docs/TAXONOMY_V4_MIGRATION.md`
