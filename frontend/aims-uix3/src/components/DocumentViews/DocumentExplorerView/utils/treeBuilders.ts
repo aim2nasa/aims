@@ -187,7 +187,7 @@ function buildCustomerTree(documents: Document[]): DocumentTreeData {
   Array.from(groups.entries())
     .sort((a, b) => a[0].localeCompare(b[0], 'ko'))
     .forEach(([customerName, { docs, customerId, customerType }]) => {
-      const isCorpo = customerType === 'corporate'
+      const isCorpo = customerType === '법인'
 
       // 문서를 소분류(doc_type)별로 그룹화
       const typeGroups = new Map<string, Document[]>()
