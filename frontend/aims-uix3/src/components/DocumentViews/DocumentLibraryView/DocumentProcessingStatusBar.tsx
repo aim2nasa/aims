@@ -212,42 +212,50 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
         </div>
       )}
 
-      {/* 배치 없고 전체 라이브러리도 표시할 내용 없으면 기존 진행률 표시 */}
-      {!hasBatch && !hasAr && !hasCrs && (() => {
+      {/* 🔴 처리 중인 문서가 있으면 파이프라인 진행률 항상 표시 (배치 없을 때) */}
+      {!hasBatch && (() => {
         const { total, completed, processing, error, pending, completed_with_skip } = statistics
         const creditPending = statistics.credit_pending ?? 0
+        const hasActiveProcessing = processing > 0 || error > 0 || pending > 0 || creditPending > 0
+        if (!hasActiveProcessing) return null
+
         const allCompleted = completed + completed_with_skip + creditPending
-        const completedPct = total > 0 ? Math.round((allCompleted / total) * 100) : 0
+        const rawPct = total > 0 ? Math.round((allCompleted / total) * 100) : 0
+        // 🔴 처리 중인 문서가 있으면 100% 표시 방지 (반올림으로 100%가 되는 케이스)
+        const completedPct = (rawPct >= 100 && hasActiveProcessing) ? 99 : rawPct
         const isActive = completedPct < 100
 
         return (
-          <div className="psb-pipeline">
-            <div className="psb-pipeline-header">
-              <span className="psb-pipeline-text">
-                {fmt(allCompleted)}/{fmt(total)} 처리완료 ({completedPct}%)
-              </span>
-              {processing > 0 && (
-                <span className="psb-pipeline-processing">{fmt(processing)} 처리중</span>
-              )}
-              {pending > 0 && (
-                <span className="psb-pipeline-pending">{fmt(pending)} 대기</span>
-              )}
-              {error > 0 && (
-                <span className="psb-pipeline-error">{fmt(error)} 에러</span>
-              )}
-              {creditPending > 0 && (
-                <span className="psb-pipeline-credit" title="크레딧 충전 후 자동 처리됩니다">
-                  ⏸ {fmt(creditPending)} 크레딧 대기
+          <>
+            {(hasAr || hasCrs) && <div className="psb-divider" />}
+            <div className="psb-pipeline">
+              <div className="psb-pipeline-header">
+                <span className="psb-pipeline-text">
+                  {fmt(allCompleted)}/{fmt(total)} 처리완료 ({completedPct}%)
                 </span>
-              )}
+                {processing > 0 && (
+                  <span className="psb-pipeline-processing">{fmt(processing)} 처리중</span>
+                )}
+                {pending > 0 && (
+                  <span className="psb-pipeline-pending">{fmt(pending)} 대기</span>
+                )}
+                {error > 0 && (
+                  <span className="psb-pipeline-error">{fmt(error)} 에러</span>
+                )}
+                {creditPending > 0 && (
+                  <span className="psb-pipeline-credit" title="크레딧 충전 후 자동 처리됩니다">
+                    ⏸ {fmt(creditPending)} 크레딧 대기
+                  </span>
+                )}
+              </div>
+              <div className="psb-pipeline-bar">
+                <div
+                  className={`psb-pipeline-fill ${isActive ? 'psb-pipeline-fill--active' : ''}`}
+                  style={{ width: `${completedPct}%` }}
+                />
+              </div>
             </div>
-            <div className="psb-pipeline-bar">
-              <div
-                className={`psb-pipeline-fill ${isActive ? 'psb-pipeline-fill--active' : ''}`}
-                style={{ width: `${completedPct}%` }}
-              />
-            </div>
-          </div>
+          </>
         )
       })()}
     </div>

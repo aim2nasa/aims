@@ -54,7 +54,9 @@ import { getEffectiveMapping as getCrEffectiveMapping } from './utils/crGrouping
 import { BatchUploadApi } from '@/features/batch-upload/api/batchUploadApi'
 import type { ArFileTableRow } from './types/arBatchTypes'
 import type { CrFileTableRow } from './types/crBatchTypes'
-import { getBatchId, setBatchId } from '@/hooks/useBatchId'
+import { getBatchId, setBatchId, useBatchId } from '@/hooks/useBatchId'
+import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
+import { DocumentProcessingStatusBar } from '../DocumentLibraryView/DocumentProcessingStatusBar'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -89,6 +91,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const [customerFileCustomer, setCustomerFileCustomer] = useState<Customer | null>(null)
   // 고객 ID 변경 추적용 (이전 고객 ID)
   const prevCustomerIdRef = useRef<string | null>(null)
+
+  // 🔴 현재 업로드 배치 ID (실시간 추적 - 파이프라인 처리 진행률 표시용)
+  const currentBatchId = useBatchId()
+  const { statistics: docStats, isLoading: statsLoading } = useDocumentStatistics({ enabled: visible })
+  const { statistics: batchStats, isLoading: batchLoading } = useDocumentStatistics({
+    enabled: visible && !!currentBatchId,
+    batchId: currentBatchId
+  })
 
   // 🍎 처리 로그 표시 상태 (업로드 시작 전에는 숨김)
   const [isLogVisible, setIsLogVisible] = useState<boolean>(false)
@@ -2252,6 +2262,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               onRetryFile={handleRetryFile}
             />
           </div>
+        )}
+
+        {/* 🔴 파이프라인 처리 진행률 (업로드 후 OCR/임베딩 등 백엔드 처리 상태) */}
+        {isLogVisible && (
+          <DocumentProcessingStatusBar
+            statistics={docStats}
+            batchStatistics={currentBatchId ? batchStats : null}
+            isLoading={statsLoading || batchLoading}
+          />
         )}
 
         {/* 🍎 처리 상태 보기 & 새 문서 등록 버튼 (업로드 진행/완료 후 표시) */}
