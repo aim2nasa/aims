@@ -13,6 +13,9 @@ echo "=== Deploying $SERVICE_NAME ==="
 
 cd "$SERVICE_DIR"
 
+# 이전 smoke_test 프로세스 정리
+pkill -f "smoke_test.py" 2>/dev/null || true
+
 # 공유 API 키 로드 (독립 실행 대비 - deploy_all.sh에서 이미 로드됨)
 if [ -z "$OPENAI_API_KEY" ] && [ -f "$AIMS_DIR/.env.shared" ]; then
   export $(cat "$AIMS_DIR/.env.shared" | grep -v '^#' | grep -v '^$' | xargs)
@@ -68,7 +71,7 @@ fi
 if [ -f "$SERVICE_DIR/tests/smoke_test.py" ]; then
     echo ""
     echo "🔍 Running smoke test (--skip-ocr)..."
-    "$VENV_DIR/bin/python" "$SERVICE_DIR/tests/smoke_test.py" --skip-ocr --timeout 120 || {
+    timeout 60 "$VENV_DIR/bin/python" "$SERVICE_DIR/tests/smoke_test.py" --skip-ocr --timeout 30 || {
         echo "⚠️  Smoke test failed (non-blocking)"
     }
 fi
