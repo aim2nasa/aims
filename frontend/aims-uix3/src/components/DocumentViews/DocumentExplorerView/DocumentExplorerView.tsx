@@ -61,7 +61,7 @@ export interface DocumentExplorerViewProps {
 
 /** explorer-tree API 응답 타입 */
 interface ExplorerTreeData {
-  customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string | null }>
+  customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string | null; customerType?: string | null }>
   totalCustomers: number
   totalDocuments: number
   initials: Record<string, number>
@@ -485,12 +485,12 @@ const DocumentExplorerContent: React.FC<{
       key: `customer-${c.customerId}`,
       label: c.name,
       type: 'group' as const,
-      icon: /^[가-힣]/.test(c.name) ? 'person.fill' : 'building.2.fill',
+      icon: c.customerType === '법인' ? 'building.2.fill' : 'person.fill',
       count: c.docCount,
       children: [],
       metadata: {
         customerId: c.customerId,
-        customerType: (/^[가-힣]/.test(c.name) ? 'personal' : 'corporate') as 'personal' | 'corporate',
+        customerType: (c.customerType === '법인' ? 'corporate' : 'personal') as 'personal' | 'corporate',
       }
     }))
 

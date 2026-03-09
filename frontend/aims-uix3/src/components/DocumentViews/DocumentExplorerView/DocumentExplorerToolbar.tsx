@@ -4,12 +4,14 @@
  */
 
 import React, { useCallback, useRef, useState, useMemo, useEffect } from 'react'
+import { Button } from '@/shared/ui/Button'
 import { Dropdown, type DropdownOption } from '@/shared/ui/Dropdown'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection, QuickFilterType } from './types/documentExplorer'
 import { GROUP_BY_LABELS, SORT_BY_LABELS, QUICK_FILTER_LABELS } from './types/documentExplorer'
 import { getRecentSearchQueries, addRecentSearchQuery, type RecentSearchQuery } from '../../../utils/recentSearchQueries'
+import '../DocumentLibraryView/DocumentLibraryView-delete.css'
 
 /** 탐색기 검색 모드 */
 export type ExplorerSearchMode = 'filename' | 'content' | 'semantic'
@@ -305,16 +307,6 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
 
   return (
     <div className="doc-explorer-toolbar">
-      {/* 분류 기준 드롭다운 */}
-      <div className="doc-explorer-toolbar__group">
-        <Dropdown
-          className="doc-explorer-dropdown--compact"
-          options={GROUP_BY_OPTIONS}
-          value={groupBy}
-          onChange={handleGroupByChange}
-        />
-      </div>
-
       {/* 검색 모드 + 입력 */}
       <div className="doc-explorer-toolbar__search-group">
         <Dropdown
@@ -323,7 +315,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
           value={searchMode}
           onChange={handleSearchModeChange}
         />
-        <div className="doc-explorer-toolbar__search">
+        <div className={`doc-explorer-toolbar__search${searchMode === 'semantic' ? ' doc-explorer-toolbar__search--ai' : ''}`}>
           <SFSymbol
             name="magnifyingglass"
             size={SFSymbolSize.CAPTION_1}
@@ -588,22 +580,23 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
       {/* 편집 모드 버튼 (삭제/별칭AI) */}
       {onEditModeChange && (
         <div className="doc-explorer-toolbar__edit-group">
-          <Tooltip content={editMode === 'alias' ? '별칭 완료' : 'AI 별칭 생성'} placement="bottom">
-            <button
-              type="button"
-              className={`doc-explorer-toolbar__edit-btn doc-explorer-toolbar__edit-btn--alias ${editMode === 'alias' ? 'doc-explorer-toolbar__edit-btn--active' : ''}`}
+          <Tooltip content={editMode === 'alias' ? '별칭 완료' : 'AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다'} placement="bottom">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`alias-ai-button ${editMode === 'alias' ? 'doc-explorer-toolbar__edit-btn--active' : ''}`}
               onClick={() => onEditModeChange(editMode === 'alias' ? 'none' : 'alias')}
               disabled={editMode === 'delete'}
               aria-label={editMode === 'alias' ? '별칭 완료' : 'AI 별칭 생성'}
             >
               <SFSymbol
                 name={editMode === 'alias' ? 'checkmark' : 'sparkles'}
-                size={SFSymbolSize.CAPTION_1}
+                size={SFSymbolSize.CAPTION_2}
                 weight={SFSymbolWeight.MEDIUM}
                 decorative
               />
               {editMode === 'alias' ? '완료' : '별칭AI'}
-            </button>
+            </Button>
           </Tooltip>
 
           <Tooltip content={editMode === 'delete' ? '삭제 완료' : '일괄 삭제'} placement="bottom">

@@ -505,18 +505,79 @@ const GroupNode = React.memo<GroupNodeProps>(({
           <span className="doc-explorer-tree__chevron-placeholder" />
         )}
 
-        {/* 폴더 아이콘 (내 보관함 스타일) */}
+        {/* 폴더/고객 아이콘 */}
         <span className="doc-explorer-tree__folder-icon">
-          {isExpanded ? '\uD83D\uDCC2' : '\uD83D\uDCC1'}
+          {isCustomerNode
+            ? (node.metadata?.customerType === 'corporate'
+              ? <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate"><circle cx="10" cy="10" r="10" opacity="0.2" /><path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" /></svg>
+              : <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal"><circle cx="10" cy="10" r="10" opacity="0.2" /><circle cx="10" cy="7" r="3" /><path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" /></svg>)
+            : (isExpanded ? '\uD83D\uDCC2' : '\uD83D\uDCC1')}
         </span>
 
-        {/* 그룹 라벨 + 문서 수 */}
+        {/* 그룹 라벨 + 고객 문서 수 */}
         <span className="doc-explorer-tree__group-label">
           {highlightText(node.label, searchTerm)}
-          {node.count !== undefined && (
+          {isCustomerNode && (
+            <span className="doc-explorer-tree__count-inline">
+              {' · '}{node.count ?? 0}건
+            </span>
+          )}
+          {!isCustomerNode && node.count !== undefined && (
             <span className="doc-explorer-tree__count-inline"> ({node.count}건)</span>
           )}
         </span>
+
+        {/* 고객 노드: 인라인 버튼 (항상 표시, 고객명 바로 옆) */}
+        {isCustomerNode && (
+          <span className="doc-explorer-tree__customer-inline-actions">
+            {onOpenFullDetail && (
+              <button
+                type="button"
+                className="doc-explorer-tree__customer-inline-btn"
+                title="고객상세페이지"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenFullDetail(node.metadata!.customerId!)
+                }}
+              >
+                <span className="doc-explorer-tree__customer-inline-icon">📄</span>
+                상세
+              </button>
+            )}
+            {onCustomerDetailClick && (
+              <button
+                type="button"
+                className="doc-explorer-tree__customer-inline-btn"
+                title="고객미니페이지"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCustomerDetailClick(node.metadata!.customerId!, node.label)
+                }}
+              >
+                <span className="doc-explorer-tree__customer-inline-icon">🪪</span>
+                미니
+              </button>
+            )}
+            {onCustomerExplorerClick && (
+              <button
+                type="button"
+                className="doc-explorer-tree__customer-inline-btn"
+                title="고객문서분류함"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCustomerExplorerClick(
+                    node.metadata!.customerId!,
+                    node.label,
+                    node.metadata!.customerType === 'corporate' ? '법인' : '개인'
+                  )
+                }}
+              >
+                <span className="doc-explorer-tree__customer-inline-icon">📂</span>
+                분류함
+              </button>
+            )}
+          </span>
+        )}
 
         {/* 고객 노드: 대분류 요약 배지 (접힌 상태에서 분류 현황을 한눈에) */}
         {!isExpanded && node.metadata?.categorySummary && node.metadata.categorySummary.length > 0 && (
@@ -614,65 +675,6 @@ const GroupNode = React.memo<GroupNodeProps>(({
           </div>
         )}
       </div>
-
-      {/* 고객 미니 정보 카드 (고객 노드 펼침 시 상단 표시) */}
-      {isExpanded && node.metadata?.customerId && (
-        <div className="doc-explorer-tree__customer-card">
-          <div className="doc-explorer-tree__customer-card-info">
-            {/* 고객 유형 아이콘 */}
-            <span className="doc-explorer-tree__customer-card-type-icon">
-              {node.metadata.customerType === 'corporate' ? (
-                <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
-                </svg>
-              ) : (
-                <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor">
-                  <circle cx="10" cy="7" r="3" />
-                  <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                </svg>
-              )}
-            </span>
-            {/* 고객명 */}
-            <span className="doc-explorer-tree__customer-card-name">{node.label}</span>
-            <span className="doc-explorer-tree__customer-card-sep">&middot;</span>
-            {/* 고객 유형 */}
-            <span className="doc-explorer-tree__customer-card-type">
-              {node.metadata.customerType === 'corporate' ? '법인' : '개인'}
-            </span>
-            <span className="doc-explorer-tree__customer-card-sep">&middot;</span>
-            {/* 문서 수 */}
-            <span className="doc-explorer-tree__customer-card-count">{node.count ?? 0}건</span>
-          </div>
-          {/* 빠른 액션 버튼 */}
-          <div className="doc-explorer-tree__customer-card-actions">
-            {onCustomerDetailClick && node.metadata.customerId && (
-              <button
-                type="button"
-                className="doc-explorer-tree__customer-card-btn"
-                onClick={(e) => { e.stopPropagation(); onCustomerDetailClick(node.metadata!.customerId!, node.label) }}
-              >
-                상세
-              </button>
-            )}
-            {onCustomerExplorerClick && node.metadata.customerId && (
-              <button
-                type="button"
-                className="doc-explorer-tree__customer-card-btn"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onCustomerExplorerClick(
-                    node.metadata!.customerId!,
-                    node.label,
-                    node.metadata!.customerType === 'corporate' ? '법인' : '개인'
-                  )
-                }}
-              >
-                분류함
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* 자식 노드 */}
       {isExpanded && hasChildren && (

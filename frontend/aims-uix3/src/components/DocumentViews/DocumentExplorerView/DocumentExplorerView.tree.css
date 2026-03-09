@@ -147,9 +147,20 @@
     text-shadow: none;
   }
 
+  /* 고객 타입 아이콘 (전체 고객 보기와 동일) */
+  .doc-explorer-tree__folder-icon .customer-icon--personal {
+    color: var(--color-icon-blue);
+    filter: none;
+  }
+
+  .doc-explorer-tree__folder-icon .customer-icon--corporate {
+    color: var(--color-icon-orange);
+    filter: none;
+  }
+
   /* Group Label */
   .doc-explorer-tree__group-label {
-    flex: 1;
+    flex-shrink: 1;
     font-size: 12px;
     font-weight: 600;
     color: var(--color-text-primary);
@@ -195,6 +206,54 @@
   }
 
   /* ============================================
+     Customer Inline Actions (고객 노드 인라인 빠른 버튼)
+     ============================================ */
+  .doc-explorer-tree__customer-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .doc-explorer-tree__customer-inline-btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--explorer-transition), color var(--explorer-transition);
+    line-height: 1.4;
+  }
+
+  .doc-explorer-tree__customer-inline-btn:hover {
+    background: var(--color-bg-active);
+    color: var(--color-text-primary);
+  }
+
+  .doc-explorer-tree__customer-inline-btn:active {
+    transform: scale(0.95);
+  }
+
+  .doc-explorer-tree__customer-inline-icon {
+    font-size: 11px;
+    line-height: 1;
+    flex-shrink: 0;
+    filter: saturate(1.4) contrast(1.15);
+  }
+
+  html[data-theme="dark"] .doc-explorer-tree__customer-inline-icon {
+    filter: saturate(1.1) brightness(1.05);
+  }
+
+  /* ============================================
      Customer Action Menu (고객 노드 ⋮ 더보기 메뉴)
      ============================================ */
 
@@ -204,6 +263,7 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    margin-left: auto;
   }
 
   /* ⋮ 트리거 버튼: 기본 숨김, 호버 시 표시 */

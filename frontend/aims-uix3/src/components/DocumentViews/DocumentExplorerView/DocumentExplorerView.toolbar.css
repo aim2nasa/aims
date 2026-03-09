@@ -162,28 +162,28 @@
   .doc-explorer-toolbar__search-group {
     display: flex;
     align-items: center;
-    gap: 0;
+    gap: 4px;
     flex: 1;
-    min-width: 120px;
-    max-width: 240px;
+    min-width: 160px;
+    max-width: 480px;
   }
 
   /* 검색 모드 드롭다운 - 검색 입력과 연결 */
   .doc-explorer-dropdown--search-mode.ios-dropdown {
-    min-width: 64px;
+    min-width: 78px;
     flex-shrink: 0;
   }
 
   .doc-explorer-dropdown--search-mode.ios-dropdown .ios-dropdown__trigger {
     min-height: unset;
-    padding: 4px 6px;
-    font-size: 9px;
-    border-radius: 4px 0 0 4px;
-    border-right: none;
+    padding: 5px 8px;
+    font-size: 10px;
+    border-radius: 4px;
   }
 
   .doc-explorer-dropdown--search-mode.ios-dropdown .ios-dropdown__value {
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: 600;
   }
 
   .doc-explorer-dropdown--search-mode.ios-dropdown .ios-dropdown__arrow {
@@ -209,7 +209,7 @@
   }
 
   .doc-explorer-toolbar__search-group .doc-explorer-toolbar__search-input {
-    border-radius: 0 4px 4px 0;
+    border-radius: 4px;
   }
 
   .doc-explorer-toolbar__search {
@@ -230,18 +230,45 @@
 
   .doc-explorer-toolbar__search-input {
     width: 100%;
-    padding: 4px 24px;
-    font-size: 10px;
+    padding: 5px 24px;
+    font-size: 11px;
     border: 1px solid var(--color-border);
     border-radius: 4px;
     background: var(--color-bg-primary);
     color: var(--color-text-primary);
-    transition: border-color var(--explorer-transition);
+    transition: border-color var(--explorer-transition), background var(--explorer-transition), box-shadow var(--explorer-transition);
   }
 
   .doc-explorer-toolbar__search-input:focus {
     outline: none;
     border-color: var(--color-accent);
+  }
+
+  /* AI 질문 모드: 은은한 보라색 억양 */
+  .doc-explorer-toolbar__search--ai .doc-explorer-toolbar__search-input {
+    border-color: rgba(123, 90, 242, 0.4);
+    background: rgba(123, 90, 242, 0.04);
+  }
+
+  .doc-explorer-toolbar__search--ai .doc-explorer-toolbar__search-input:focus {
+    border-color: rgba(123, 90, 242, 0.7);
+    background: rgba(123, 90, 242, 0.06);
+    box-shadow: 0 0 0 2px rgba(123, 90, 242, 0.1);
+  }
+
+  .doc-explorer-toolbar__search--ai .doc-explorer-toolbar__search-icon {
+    color: rgba(123, 90, 242, 0.6);
+  }
+
+  html[data-theme="dark"] .doc-explorer-toolbar__search--ai .doc-explorer-toolbar__search-input {
+    border-color: rgba(139, 106, 242, 0.4);
+    background: rgba(139, 106, 242, 0.08);
+  }
+
+  html[data-theme="dark"] .doc-explorer-toolbar__search--ai .doc-explorer-toolbar__search-input:focus {
+    border-color: rgba(139, 106, 242, 0.6);
+    background: rgba(139, 106, 242, 0.1);
+    box-shadow: 0 0 0 2px rgba(139, 106, 242, 0.15);
   }
 
   .doc-explorer-toolbar__search-input::placeholder {
@@ -276,12 +303,11 @@
     padding: 0;
     flex-shrink: 0;
     border: 1px solid var(--color-border);
-    border-radius: 0 4px 4px 0;
+    border-radius: 4px;
     background: var(--color-bg-primary);
     color: var(--color-text-tertiary);
     cursor: pointer;
     transition: all 150ms ease;
-    margin-left: -1px;
   }
 
   .doc-explorer-toolbar__quick-search-btn:hover {
@@ -294,10 +320,7 @@
     transform: scale(0.95);
   }
 
-  /* 간편검색 버튼이 있을 때 검색 입력의 오른쪽 border-radius 제거 */
-  .doc-explorer-toolbar__search-group:has(.doc-explorer-toolbar__quick-search-btn) .doc-explorer-toolbar__search-input {
-    border-radius: 0;
-  }
+  /* 간편검색 버튼이 있을 때 검색 입력의 border-radius 유지 */
 
   /* Actions */
   .doc-explorer-toolbar__actions {
@@ -791,15 +814,7 @@
     white-space: nowrap;
   }
 
-  .doc-explorer-toolbar__edit-btn--alias {
-    color: var(--color-primary-500);
-    border-color: var(--color-primary-200);
-  }
-
-  .doc-explorer-toolbar__edit-btn--alias:hover:not(:disabled) {
-    background: var(--color-primary-50);
-    border-color: var(--color-primary-400);
-  }
+  /* 별칭AI 버튼: alias-ai-button 클래스 사용 (DocumentLibraryView와 동일) */
 
   .doc-explorer-toolbar__edit-btn--delete {
     color: var(--color-error);
@@ -931,16 +946,7 @@
     transform: scale(0.98);
   }
 
-  /* 다크 테마 */
-  html[data-theme="dark"] .doc-explorer-toolbar__edit-btn--alias {
-    color: var(--color-primary-300);
-    border-color: var(--color-primary-700);
-  }
-
-  html[data-theme="dark"] .doc-explorer-toolbar__edit-btn--alias:hover:not(:disabled) {
-    background: rgba(88, 86, 214, 0.15);
-    border-color: var(--color-primary-500);
-  }
+  /* 다크 테마: alias-ai-button은 DocumentLibraryView-delete.css에서 공통 정의 */
 
   html[data-theme="dark"] .doc-explorer-action-bar {
     background: var(--color-bg-tertiary);
