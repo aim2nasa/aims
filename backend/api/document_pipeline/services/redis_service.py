@@ -217,7 +217,8 @@ class RedisService:
         file_path: str,
         doc_id: str,
         owner_id: str,
-        queued_at: str
+        queued_at: str,
+        original_name: str = ""
     ) -> str:
         """
         Add a new message to the OCR stream.
@@ -228,6 +229,7 @@ class RedisService:
             doc_id: Document ID
             owner_id: Owner (user) ID
             queued_at: ISO timestamp when queued
+            original_name: 원본 파일명 (분류 정확도 향상용)
 
         Returns:
             The Redis message ID
@@ -244,7 +246,8 @@ class RedisService:
                     "file_path": file_path,
                     "doc_id": doc_id,
                     "owner_id": owner_id,
-                    "queued_at": queued_at
+                    "queued_at": queued_at,
+                    "original_name": original_name
                 }
             )
             logger.info(f"Added message to stream: {message_id}")

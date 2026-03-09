@@ -306,7 +306,8 @@ async def doc_prep_main(
             summary_result = await OpenAIService.summarize_text(
                 full_text,
                 owner_id=userId,
-                document_id="shadow_simulated"
+                document_id="shadow_simulated",
+                filename=original_name
             )
 
             # n8n이 전달한 created_at 사용 (없으면 현재 시간)
@@ -1322,7 +1323,8 @@ async def process_document_pipeline(
             summary_result = await OpenAIService.summarize_text(
                 full_text,
                 owner_id=user_id,
-                document_id=doc_id
+                document_id=doc_id,
+                filename=original_name
             )
             summary = summary_result.get("summary", "")
             ai_document_type = summary_result.get("document_type", "general")
@@ -1525,7 +1527,8 @@ async def process_document_pipeline(
                 file_path=dest_path,
                 doc_id=doc_id,
                 owner_id=user_id,
-                queued_at=queued_at
+                queued_at=queued_at,
+                original_name=original_name
             )
 
             # Update MongoDB with queue status

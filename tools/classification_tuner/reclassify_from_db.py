@@ -80,13 +80,23 @@ def normalize_tags(tags: list) -> list:
     return normalized
 
 
-async def classify_text(text: str, client: openai.AsyncOpenAI) -> dict:
+async def classify_text(text: str, client: openai.AsyncOpenAI, filename: str = "", display_name: str = "") -> dict:
     """현재 프롬프트로 텍스트 분류"""
     truncated = len(text) > 10000
     if truncated:
         text = text[:10000]
 
-    user_prompt = CLASSIFICATION_USER_PROMPT.format(text=text)
+    # 파일명/별칭 정보를 본문 앞에 합성 (분류 정확도 향상)
+    file_info = ""
+    if filename or display_name:
+        parts = []
+        if filename:
+            parts.append(f"파일명: {filename}")
+        if display_name:
+            parts.append(f"별칭: {display_name}")
+        file_info = " | ".join(parts) + "\n---\n"
+
+    user_prompt = CLASSIFICATION_USER_PROMPT.format(file_info=file_info, text=text)
 
     try:
         response = await client.chat.completions.create(
@@ -278,7 +288,10 @@ async def main():
                 })
                 continue
 
-        classification = await classify_text(full_text, openai_client)
+        classification = await classify_text(
+            full_text, openai_client,
+            filename=original_name, display_name=doc.get("displayName", "")
+        )
         new_type = classification["type"]
         tokens = classification.get("usage", {}).get("total_tokens", 0)
         total_tokens += tokens

@@ -102,8 +102,8 @@ CLASSIFICATION_SYSTEM_PROMPT = (
     "보험설계사 문서분류기. JSON만 응답. "
     "annual_report/customer_review/unspecified 선택 금지. "
     "general은 22개 유형 어디에도 해당하지 않을 때만 선택. "
-    "텍스트가 부실해도 파일명에서 유형을 추론 가능하면 반드시 해당 유형으로 분류! "
-    "unclassifiable은 텍스트도 없고 파일명에서도 전혀 추론 불가할 때만."
+    "텍스트가 부실해도 파일명이나 별칭에서 유형을 추론 가능하면 반드시 해당 유형으로 분류! "
+    "unclassifiable은 텍스트·파일명·별칭 모두에서 전혀 추론 불가할 때만."
 )
 
 CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를 아래 22개 유형 중 하나로 분류하세요.
@@ -119,13 +119,13 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 기타: general(안내문/메모/사은품/요청자료모음/기타업무문서/액자/보관렉), unclassifiable(텍스트없음/판독불가/빈이미지)
 
 [핵심 규칙]
-1. 파일명·본문·고객정보를 종합 판단. 텍스트가 부실하거나 없으면 파일명이 최우선 분류 근거!
+1. 본문·파일명·별칭·고객정보를 종합 판단. ★본문 텍스트가 충분하면 본문 내용이 최우선! 파일명/별칭은 보조 참고. 텍스트가 부실하거나 없으면 파일명/별칭이 최우선 분류 근거!
 2. 법인 고객의 자동차보험 가입증/증권 → corp_asset. 단, 청약서는 법인 자동차라도 application! 파일명에 "자동차"/"포터"/"트럭"/"차량" 포함 시에도 가입증/증권→corp_asset, 청약서→application
 3. 법인 고객이라도 화재보험·생명보험·상해보험·운전자보험 등 자동차 외 보험증권 → policy
 4. "원천징수" → corp_tax. "진료비/약제비/병원비" → medical_receipt. "보험금청구/사고접수" → claim_form
 5. "보장분석/보장범위분석/보험조회/사전조회" → coverage_analysis. ★이 규칙은 규칙6보다 우선! 보장분석 보고서 안에 "보험가입현황"이 포함되더라도 반드시 coverage_analysis!
 6. 보험가입현황/적립금/보유계약리스트/상품설명서/보험명단/해약환급금/보험정리표/"가입내용"/"가입내역" → insurance_etc (단, 규칙5 "보장분석" 문서는 제외!)
-7. unclassifiable은 텍스트가 전혀 없고 파일명도 날짜/숫자만인 경우에만! 파일명에 "사직서/통장/카드/등본/영수증/신분증/보험/증권/청약/동의/검진" 등 유형 단서가 조금이라도 있으면 반드시 분류!
+7. unclassifiable은 본문·파일명·별칭 모두 분류 단서가 전혀 없을 때만! 별칭에 "주민등록/체류기간/국내거소/여권" → id_card, "카드/통장" → personal_docs 등 단서가 있으면 반드시 분류! 파일명에 "사직서/통장/카드/등본/영수증/신분증/보험/증권/청약/동의/검진" 등 유형 단서가 조금이라도 있으면 반드시 분류!
 8. 특허청/지식재산 관련 납부고지서/수수료/보정요구서/등록증재발급신청 → corp_asset. 단, 특허등록완료/권리이전등록완료 → corp_basic (결과 통지 서류)
 9. "설계서"/"제안서"/"가입안내서"/"견적"/"가입제안"/"비교표"/"치매간병" → plan_design. 자동차견적/운전자보험 설계서도 plan_design
 10. 자격증/졸업증명서/이력서 → hr_document. 명함 → personal_docs
@@ -166,7 +166,9 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 - general vs unclassifiable: 메모/사은품/디자인/안내문 → general. 빈이미지/텍스트없음 → unclassifiable
 - id_card vs personal_docs: 신분증/운전면허증/여권 → id_card. 통장사본/명함 → personal_docs. 복합파일(신분증+통장) → id_card 우선
 
-[문서]
+[문서 메타정보 (참고용 — 본문 내용과 충돌 시 본문 우선!)]
+{file_info}
+[본문]
 {text}
 
 JSON:
@@ -263,11 +265,18 @@ class OpenAIService:
         text: str,
         max_length: int = 600,
         owner_id: Optional[str] = None,
-        document_id: Optional[str] = None
+        document_id: Optional[str] = None,
+        filename: Optional[str] = None,
+        display_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Summarize text and classify document type.
         Returns {"summary": str, "title": str, "document_type": str, "confidence": float, "truncated": bool}
+
+        Args:
+            text: 문서 본문 (meta.full_text 또는 ocr.full_text)
+            filename: 원본 파일명 (upload.originalName)
+            display_name: AI 생성 별칭 (displayName, 있으면)
 
         @see docs/DOCUMENT_TAXONOMY.md - AI 분류 기준 (프롬프트 가이드)
         """
@@ -292,7 +301,17 @@ class OpenAIService:
         if truncated:
             text = text[:10000]
 
-        user_prompt = CLASSIFICATION_USER_PROMPT.format(text=text)
+        # 파일명/별칭 정보를 본문 앞에 합성 (분류 정확도 향상)
+        file_info = ""
+        if filename or display_name:
+            parts = []
+            if filename:
+                parts.append(f"파일명: {filename}")
+            if display_name:
+                parts.append(f"별칭: {display_name}")
+            file_info = " | ".join(parts) + "\n---\n"
+
+        user_prompt = CLASSIFICATION_USER_PROMPT.format(file_info=file_info, text=text)
 
         try:
             client = cls._get_client()
