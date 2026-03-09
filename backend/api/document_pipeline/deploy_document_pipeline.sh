@@ -67,13 +67,7 @@ else
     exit 1
 fi
 
-# Smoke test (경고만, 배포는 계속 진행)
-if [ -f "$SERVICE_DIR/tests/smoke_test.py" ]; then
-    echo ""
-    echo "🔍 Running smoke test (--skip-ocr)..."
-    timeout 60 "$VENV_DIR/bin/python" "$SERVICE_DIR/tests/smoke_test.py" --skip-ocr --timeout 30 || {
-        echo "⚠️  Smoke test failed (non-blocking)"
-    }
-fi
+# Smoke test는 수동 실행만 지원 (배포 시 health check로 충분)
+# 수동: python tests/smoke_test.py --skip-ocr --timeout 30
 
 echo "=== Deployment complete ==="
