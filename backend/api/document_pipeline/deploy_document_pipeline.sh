@@ -67,7 +67,13 @@ else
     exit 1
 fi
 
-# Smoke test는 수동 실행만 지원 (배포 시 health check로 충분)
-# 수동: python tests/smoke_test.py --skip-ocr --timeout 30
+# Smoke test (SIGKILL 하드 리밋 120초, per-file 30초, 경고만 — 배포 블로킹 방지)
+if [ -f "$SERVICE_DIR/tests/smoke_test.py" ]; then
+    echo ""
+    echo "Running smoke test (--skip-ocr)..."
+    timeout --signal=SIGKILL 120 "$VENV_DIR/bin/python" "$SERVICE_DIR/tests/smoke_test.py" --skip-ocr --timeout 30 || {
+        echo "Smoke test failed or timed out (non-blocking)"
+    }
+fi
 
 echo "=== Deployment complete ==="

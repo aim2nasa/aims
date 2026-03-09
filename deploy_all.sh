@@ -14,9 +14,9 @@ AIMS_DIR="$HOME/aims"
 LOCKFILE="/tmp/aims_deploy.lock"
 
 # --- 동시 실행 방지 (flock) ---
+EXISTING_PID=$(cat "$LOCKFILE" 2>/dev/null)
 exec 200>"$LOCKFILE"
 if ! flock -n 200; then
-    EXISTING_PID=$(cat "$LOCKFILE" 2>/dev/null)
     echo -e "${YELLOW}다른 배포가 진행 중입니다 (PID: $EXISTING_PID). 기존 배포를 중단하고 새로 시작합니다.${NC}"
     if [ -n "$EXISTING_PID" ] && kill -0 "$EXISTING_PID" 2>/dev/null; then
         pkill -P "$EXISTING_PID" 2>/dev/null || true
@@ -24,14 +24,13 @@ if ! flock -n 200; then
         sleep 2
     fi
     pkill -f "smoke_test.py" 2>/dev/null || true
-    exec 200>"$LOCKFILE"
     if ! flock -n 200; then
         echo -e "${RED}Lock 획득 실패. 수동 정리 필요: rm $LOCKFILE${NC}"
         exit 1
     fi
 fi
 echo $$ > "$LOCKFILE"
-trap "rm -f $LOCKFILE" EXIT
+trap "flock -u 200; rm -f $LOCKFILE" EXIT
 
 TOTAL_START=$(date +%s)
 
