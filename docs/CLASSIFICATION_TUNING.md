@@ -79,61 +79,67 @@
 | 버전 | 정확도 | 일치/총 | 평가 대상 | 주요 변경 |
 |------|--------|---------|----------|----------|
 | M1 | 55.6% | 40/72 | 로컬 PDF (텍스트 추출 가능 72건) | R6 프롬프트, pypdfium2 텍스트 추출. 이미지/HWP/XLSX 미처리 |
-| M2 | - | - | DB 업로드 후 전체 177건 | 예정 (AIMS 파이프라인 업로드 → OCR 포함) |
+| **M2** | **77.2%** | **122/158** | **AIMS 파이프라인 업로드 172건 (GT 매칭 158건)** | **R6 프롬프트, OCR 포함. M1 대비 +21.6%p** |
 
-### M1 오분류 분석 (32건)
+### M2 오분류 분석 (36건)
 
-#### 패턴 1: 스캔 PDF → diagnosis (0.85) — 14건 (최대 문제)
-텍스트를 추출했으나 내용이 부실한 PDF가 일괄 `diagnosis`로 분류.
+#### 패턴 1: coverage_analysis → insurance_etc — 7건 (최대 문제)
+보장분석 문서를 보험기타로 오인. confidence=0인 경우가 5건 (텍스트 부실).
+
+#### 패턴 2: → unclassifiable — 12건
+OCR 인식 실패 또는 텍스트 부족으로 분류 불가 판정.
 
 | 실제 유형 | 건수 | 예시 |
 |----------|------|------|
-| policy | 2 | 마리치(박병호)증권, 이방이력(ING) |
-| id_card | 2 | 송연(이방)신분증, 이방_신분증 |
-| corp_basic | 2 | 캐치업코리아매뉴얼, 캐치업코리아사업자등록증주주명부 |
-| hr_document | 1 | 근로재계약서 2024.4.1 |
-| consent_delegation | 1 | 이방동의서위임서류 |
-| family_cert | 1 | 송연등 |
-| personal_docs | 1 | 통장사본(일일공팔) |
-| health_checkup | 1 | 안영미건강검진결과(20230811) |
-| insurance_etc | 2 | 계약내용변경신청서, 송연진료비내역 |
-| claim_form | 1 | 이방보험금분류청구서류(현대생명) |
+| id_card | 4 | 날짜형 파일명 사진들 (20221012, 20230503 등) |
+| personal_docs | 3 | 법인카드, 통장사본, 날짜형 사진 |
+| hr_document | 2 | 사업주가 알아야 할 사항, 별첨 사직서 |
+| insurance_etc | 1 | 직원상해해지서류 |
+| family_cert | 1 | 송연등본.pdf |
+| medical_receipt | 1 | 서류207.jpg |
 
-#### 패턴 2: coverage_analysis → insurance_etc — 5건
-보장분석 문서를 보험기타로 오인. "보장분석" 키워드가 있어도 insurance_etc로 분류.
+#### 패턴 3: corp_asset ↔ policy — 5건
+법인 자동차보험 가입증을 policy로, 일반 가입증을 corp_asset으로 혼동.
 
-#### 패턴 3: corp_asset ↔ policy — 6건
-법인 자동차보험 가입증/증권을 policy로, 일반 증권을 corp_asset으로 혼동.
+#### 패턴 4: corp_tax → insurance_etc — 3건
+손비처리 납입증명서, 경비처리 문서를 보험기타 또는 법인자산으로 오인.
 
-#### 패턴 4: application → corp_asset — 2건
-법인 자동차 관련 청약서를 corp_asset으로 오인.
+#### 패턴 5: application → corp_asset — 2건
+법인 관련 청약서를 corp_asset으로 오인.
 
-#### 패턴 5: corp_tax → insurance_etc — 2건
-손비처리 납입증명서를 보험기타로 오인.
+#### 패턴 6: 기타 — 7건
+- plan_design → insurance_etc (1): 현대화재 설계서
+- medical_receipt → claim_form (1): 이방 병원비서류
+- corp_tax → corp_asset (1): 경비처리 엑셀
+- coverage_analysis → insurance_etc (2): 보험조회 PNG
+- health_checkup → general (1): 안영미 건강검진
 
-#### 패턴 6: 기타 — 3건
-- plan_design → insurance_etc (1)
-- corp_asset → insurance_etc (2): 건물가액평가, 담보삭제요청서
+### M2 유형별 정확도
 
-### 유형별 정확도
+| 유형 | 정확/전체 | 정확도 | | 유형 | 정확/전체 | 정확도 |
+|------|-----------|--------|-|------|-----------|--------|
+| claim_form | 6/6 | 100.0% | | application | 9/11 | 81.8% |
+| consent_delegation | 13/13 | 100.0% | | insurance_etc | 4/5 | 80.0% |
+| corp_basic | 10/10 | 100.0% | | plan_design | 4/5 | 80.0% |
+| diagnosis | 6/6 | 100.0% | | medical_receipt | 6/8 | 75.0% |
+| legal_document | 1/1 | 100.0% | | id_card | 9/13 | 69.2% |
+| hr_document | 14/16 | 87.5% | | corp_asset | 13/19 | 68.4% |
+| policy | 10/12 | 83.3% | | family_cert | 2/3 | 66.7% |
+| | | | | health_checkup | 2/3 | 66.7% |
+| | | | | corp_tax | 5/9 | 55.6% |
+| | | | | personal_docs | 3/6 | 50.0% |
+| | | | | coverage_analysis | 5/12 | 41.7% |
 
-| 유형 | 정확/전체 | 정확도 |
-|------|-----------|--------|
-| legal_document | 1/1 | 100.0% |
-| hr_document | 6/7 | 85.7% |
-| plan_design | 4/5 | 80.0% |
-| corp_tax | 4/6 | 66.7% |
-| corp_asset | 9/15 | 60.0% |
-| policy | 6/10 | 60.0% |
-| coverage_analysis | 5/10 | 50.0% |
-| corp_basic | 2/4 | 50.0% |
-| application | 2/4 | 50.0% |
-| insurance_etc | 1/4 | 25.0% |
-| consent_delegation | 0/1 | 0.0% |
-| id_card | 0/2 | 0.0% |
-| family_cert | 0/1 | 0.0% |
-| personal_docs | 0/1 | 0.0% |
-| health_checkup | 0/1 | 0.0% |
+### M1 vs M2 비교
+
+| 항목 | M1 | M2 | 변화 |
+|------|-----|-----|------|
+| 정확도 | 55.6% | 77.2% | +21.6%p |
+| 평가 건수 | 72 | 158 | +86 (+119%) |
+| diagnosis 버그 | 14건 일괄 오분류 | 6/6 정확 | OCR로 해결 |
+| consent_delegation | 0/1 (0%) | 13/13 (100%) | HWP 변환으로 해결 |
+| corp_basic | 2/4 (50%) | 10/10 (100%) | OCR/변환으로 해결 |
+| coverage_analysis | 5/10 (50%) | 5/12 (41.7%) | 여전히 최대 약점 |
 
 ---
 
@@ -156,11 +162,12 @@
 
 ## 튜닝 전략
 
-### M2 방향 (예정)
-1. **diagnosis (0.85) 버그 수정**: 텍스트 부실 PDF가 일괄 diagnosis로 분류되는 문제 해결
-2. **coverage_analysis vs insurance_etc**: 보장분석 구분 강화
-3. **corp_asset vs policy**: 법인 자동차보험 구분 명확화
-4. **규칙 과다 금지**: R7 교훈 — gpt-4o-mini는 규칙이 많으면 오히려 퇴보
+### M3 방향 (M2 기반)
+1. **coverage_analysis 구분 강화** (7건 오분류, 41.7%): 보장분석 ↔ insurance_etc 혼동 해결
+2. **unclassifiable 줄이기** (12건): OCR 실패/텍스트 부족 시 파일명 기반 fallback 개선
+3. **corp_asset ↔ policy 구분** (5건): 법인 자동차보험 가입증 vs 일반 증권
+4. **corp_tax vs insurance_etc** (3건): 손비처리/경비처리 문서 구분
+5. **규칙 과다 금지**: R7 교훈 — gpt-4o-mini는 규칙이 많으면 오히려 퇴보
 
 ### 참고
 - v2.5 프롬프트 (42타입, 98.3%): 구조와 접근법 참고 (커밋 `041735e3`)
