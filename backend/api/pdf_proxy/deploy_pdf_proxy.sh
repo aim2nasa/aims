@@ -36,7 +36,7 @@ if [ ! -f "$VENV_PYTHON" ]; then
     cd "$SCRIPT_DIR"
     python3 -m venv venv
     source venv/bin/activate
-    pip install -r requirements.txt
+    if command -v uv &> /dev/null; then uv pip install -r requirements.txt; else pip install -r requirements.txt; fi
     md5sum requirements.txt | cut -d' ' -f1 > .requirements_hash
     echo "  가상환경 생성 완료"
 else
@@ -45,7 +45,7 @@ else
     if [ "$REQ_HASH" != "$SAVED_HASH" ]; then
         echo "  requirements.txt 변경 감지, 의존성 업데이트..."
         source "$SCRIPT_DIR/venv/bin/activate"
-        pip install -r requirements.txt
+        if command -v uv &> /dev/null; then uv pip install -r requirements.txt; else pip install -r requirements.txt; fi
         echo "$REQ_HASH" > "$SCRIPT_DIR/.requirements_hash"
     else
         echo "  가상환경 확인 완료 (변경 없음)"

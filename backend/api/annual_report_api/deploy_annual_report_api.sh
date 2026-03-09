@@ -82,13 +82,13 @@ if [ ! -f "$VENV_PYTHON" ]; then
     cd "$SCRIPT_DIR"
     python3 -m venv venv
     source venv/bin/activate
-    pip install -q -r requirements.txt
+    if command -v uv &> /dev/null; then uv pip install -q -r requirements.txt; else pip install -q -r requirements.txt; fi
     echo "$CURRENT_HASH" > "$HASH_FILE"
     echo "가상환경 생성 완료"
 elif [ "$CURRENT_HASH" != "$PREVIOUS_HASH" ]; then
     echo "의존성 업데이트 중..."
     source "$SCRIPT_DIR/venv/bin/activate"
-    pip install -q -r requirements.txt
+    if command -v uv &> /dev/null; then uv pip install -q -r requirements.txt; else pip install -q -r requirements.txt; fi
     echo "$CURRENT_HASH" > "$HASH_FILE"
     echo "의존성 업데이트 완료"
 else
