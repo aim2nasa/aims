@@ -12,7 +12,7 @@ import RegionalTreeView from './RegionalTreeView'
 import { useCustomerDocument } from '@/hooks/useCustomerDocument'
 import type { Customer } from '../../../entities/customer/model'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Modal, Tooltip, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
+import { Modal, Tooltip } from '@/shared/ui'
 
 interface CustomerRegionalViewProps {
   /** View 표시 여부 */

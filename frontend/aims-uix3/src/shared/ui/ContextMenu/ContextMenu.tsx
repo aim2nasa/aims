@@ -35,9 +35,6 @@ import './ContextMenu.css'
  *       position={position}
  *       sections={sections}
  *       onClose={close}
- *       showHelp
- *       helpContext="documents"
- *       onHelpClick={(ctx) => openHelp(ctx)}
  *     />
  *   </div>
  * )
@@ -47,10 +44,7 @@ export function ContextMenu({
   visible,
   position,
   sections,
-  onClose,
-  showHelp = false,
-  helpContext,
-  onHelpClick
+  onClose
 }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const adjustedPosition = useContextMenuPosition(position, menuRef)
@@ -76,7 +70,7 @@ export function ContextMenu({
 
       const items = Array.from(
         menuRef.current.querySelectorAll<HTMLButtonElement>(
-          '.context-menu-item:not([disabled]), .context-menu__help, .context-menu__close'
+          '.context-menu-item:not([disabled])'
         )
       )
       const currentIndex = items.findIndex((item) => item === document.activeElement)
@@ -112,16 +106,6 @@ export function ContextMenu({
     },
     [onClose]
   )
-
-  /**
-   * Help 버튼 클릭
-   */
-  const handleHelpClick = useCallback(() => {
-    if (helpContext && onHelpClick) {
-      onHelpClick(helpContext)
-    }
-    onClose()
-  }, [helpContext, onHelpClick, onClose])
 
   if (!visible) return null
 
@@ -160,58 +144,6 @@ export function ContextMenu({
         </div>
       ))}
 
-      {/* Help 버튼 */}
-      {showHelp && helpContext && (
-        <>
-          <ContextMenuDivider />
-          <button
-            type="button"
-            className="context-menu__help"
-            onClick={handleHelpClick}
-            role="menuitem"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-            <span>도움말</span>
-          </button>
-        </>
-      )}
-
-      {/* 닫기 버튼 */}
-      <ContextMenuDivider />
-      <button
-        type="button"
-        className="context-menu__close"
-        onClick={onClose}
-        role="menuitem"
-      >
-        <svg
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-        <span>닫기</span>
-      </button>
     </div>
   )
 

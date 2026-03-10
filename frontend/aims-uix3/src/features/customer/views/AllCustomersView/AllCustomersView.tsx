@@ -274,7 +274,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
       const customerId = contextMenuCustomer._id;
       const customerName = contextMenuCustomer.personal_info?.name || '고객';
-      const customerPhone = contextMenuCustomer.personal_info?.mobile_phone;
       const isInactive = contextMenuCustomer.meta?.status === 'inactive';
 
       return [
@@ -283,7 +282,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
           items: [
             {
               id: 'detail',
-              label: '상세 보기',
+              label: '고객요약보기',
               icon: (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -297,7 +296,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
             },
             {
               id: 'full-detail',
-              label: '전체 정보',
+              label: '고객상세보기',
               icon: (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -309,62 +308,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               ),
               shortcut: '⌘+Enter',
               onClick: () => onCustomerDoubleClick?.(customerId, contextMenuCustomer)
-            }
-          ]
-        },
-        {
-          id: 'contact',
-          items: [
-            {
-              id: 'call',
-              label: '전화하기',
-              icon: (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                </svg>
-              ),
-              disabled: !customerPhone,
-              onClick: () => {
-                if (customerPhone) {
-                  // 🔒 보안: noopener,noreferrer 추가
-                  window.open(`tel:${customerPhone.replace(/-/g, '')}`, '_blank', 'noopener,noreferrer');
-                }
-              }
-            },
-            {
-              id: 'message',
-              label: '문자 보내기',
-              icon: (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-              ),
-              disabled: !customerPhone,
-              onClick: () => {
-                if (customerPhone) {
-                  // 🔒 보안: noopener,noreferrer 추가
-                  window.open(`sms:${customerPhone.replace(/-/g, '')}`, '_blank', 'noopener,noreferrer');
-                }
-              }
-            }
-          ]
-        },
-        {
-          id: 'documents',
-          items: [
-            {
-              id: 'view-documents',
-              label: '연결된 문서 보기',
-              icon: (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <path d="M14 2v6h6" />
-                </svg>
-              ),
-              onClick: () => {
-                // 고객 상세 보기 → 문서 탭으로 이동
-                onCustomerDoubleClick?.(customerId, contextMenuCustomer);
-              }
             }
           ]
         },
@@ -1145,9 +1088,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
           position={customerContextMenu.position}
           sections={customerContextMenuSections}
           onClose={customerContextMenu.close}
-          showHelp
-          helpContext="customers"
-          onHelpClick={() => setHelpModalVisible(true)}
         />
 
         {/* 🍎 도움말 모달 */}

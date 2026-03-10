@@ -224,7 +224,7 @@ const DocumentExplorerContent: React.FC<{
         items: [
           {
             id: 'customer-mini',
-            label: '고객 미니보기',
+            label: '고객요약보기',
             icon: (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -237,7 +237,7 @@ const DocumentExplorerContent: React.FC<{
           },
           {
             id: 'full-detail',
-            label: '전체 정보 보기',
+            label: '고객상세보기',
             icon: (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />

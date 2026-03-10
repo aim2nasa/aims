@@ -30,8 +30,6 @@
  *       position={position}
  *       sections={sections}
  *       onClose={close}
- *       showHelp
- *       helpContext="documents-library"
  *     />
  *   </div>
  * )

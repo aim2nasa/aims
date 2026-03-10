@@ -756,9 +756,6 @@ const DocumentLibraryContent: React.FC<{
         position={documentContextMenu.position}
         sections={documentContextMenuSections}
         onClose={documentContextMenu.close}
-        showHelp
-        helpContext="documents"
-        onHelpClick={() => setHelpModalVisible(true)}
       />
 
       {/* 🍎 문서 보관함 도움말 모달 */}

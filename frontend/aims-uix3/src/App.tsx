@@ -83,7 +83,6 @@ import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
 import { useDeviceOrientation, detectDeviceState } from './hooks/useDeviceOrientation'
 import { API_CONFIG, getAuthHeaders, api } from './shared/lib/api'
 import type { Document as StatusDocument } from './types/documentStatus'
-import { ContextMenu, useContextMenu, type ContextMenuSection } from './shared/ui/ContextMenu'
 import { Modal } from './shared/ui'
 import Tooltip from './shared/ui/Tooltip'
 
@@ -1170,152 +1169,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     persistentState.layoutControlModalOpen = false
   }, [])
 
-  // 🍎 전역 컨텍스트 메뉴
-  const globalContextMenu = useContextMenu()
-
   // 🍎 도움말 모달 상태
   const [helpModalVisible, setHelpModalVisible] = useState(false)
 
-  // 🖥️ 플랫폼 감지 (Mac vs Windows/Linux)
-  const isMac = useMemo(() => {
-    return navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
-           navigator.userAgent.toUpperCase().indexOf('MAC') >= 0
-  }, [])
-
-  // 단축키 표시 헬퍼
-  const shortcutKey = useMemo(() => ({
-    mod: isMac ? '⌘' : 'Ctrl',
-    shift: isMac ? '⇧' : 'Shift',
-    alt: isMac ? '⌥' : 'Alt'
-  }), [isMac])
-
-  // 기본 컨텍스트 메뉴 섹션
-  const defaultContextMenuSections: ContextMenuSection[] = useMemo(() => [
-    {
-      id: 'navigation',
-      items: [
-        {
-          id: 'back',
-          label: '뒤로 가기',
-          icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          ),
-          shortcut: 'Alt+←',
-          onClick: () => window.history.back()
-        },
-        {
-          id: 'forward',
-          label: '앞으로 가기',
-          icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          ),
-          shortcut: 'Alt+→',
-          onClick: () => window.history.forward()
-        },
-        {
-          id: 'refresh',
-          label: '새로고침',
-          icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M23 4v6h-6" />
-              <path d="M1 20v-6h6" />
-              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
-            </svg>
-          ),
-          shortcut: `${shortcutKey.mod}+R`,
-          onClick: () => window.location.reload()
-        }
-      ]
-    },
-    {
-      id: 'quick-actions',
-      items: [
-        {
-          id: 'new-customer',
-          label: '고객 등록',
-          icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M19 8v6" />
-              <path d="M22 11h-6" />
-            </svg>
-          ),
-          shortcut: `${shortcutKey.mod}+${shortcutKey.shift}+C`,
-          onClick: () => handleMenuClick('customers-register')
-        },
-        {
-          id: 'customer-search',
-          label: '고객 검색',
-          icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <circle cx="19" cy="11" r="3" />
-              <path d="M22 14l-2-2" />
-            </svg>
-          ),
-          shortcut: `${shortcutKey.mod}+K`,
-          onClick: () => {
-            // 메뉴 닫힌 후 검색창에 포커스
-            setTimeout(() => {
-              const searchInput = document.querySelector<HTMLInputElement>('.quick-search__input')
-              searchInput?.focus()
-            }, 100)
-          }
-        },
-        {
-          id: 'new-document',
-          label: '문서 등록',
-          icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <path d="M14 2v6h6" />
-              <path d="M12 18v-6" />
-              <path d="M9 15h6" />
-            </svg>
-          ),
-          shortcut: `${shortcutKey.mod}+${shortcutKey.shift}+U`,
-          onClick: () => handleMenuClick('documents-register')
-        },
-        {
-          id: 'document-search',
-          label: '문서 검색',
-          icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <path d="M14 2v6h6" />
-              <circle cx="11" cy="14" r="3" />
-              <path d="M14 17l2 2" />
-            </svg>
-          ),
-          shortcut: `${shortcutKey.mod}+${shortcutKey.shift}+F`,
-          onClick: () => handleMenuClick('documents-search')
-        },
-        {
-          id: 'document-library',
-          label: '문서 보기',
-          icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <path d="M14 2v6h6" />
-              <path d="M16 13H8" />
-              <path d="M16 17H8" />
-              <path d="M10 9H8" />
-            </svg>
-          ),
-          shortcut: `${shortcutKey.mod}+${shortcutKey.shift}+L`,
-          onClick: () => handleMenuClick('documents-library')
-        }
-      ]
-    }
-  ], [handleMenuClick, shortcutKey])
-
-  // 전역 컨텍스트 메뉴 핸들러
+  // 전역 컨텍스트 메뉴 핸들러 (보안: 브라우저 기본 우클릭 차단)
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     const tagName = target.tagName.toLowerCase()
@@ -1333,9 +1190,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     if (!isInputField && !hasCustomContextMenu) {
       e.preventDefault()
       e.stopPropagation()
-      globalContextMenu.open(e)
     }
-  }, [globalContextMenu])
+  }, [])
 
   return (
     <div
@@ -2423,17 +2279,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
       {/* 우클릭 가이드 - 비활성화 */}
       {/* <RightClickGuide /> */}
-
-      {/* 🍎 전역 컨텍스트 메뉴 */}
-      <ContextMenu
-        visible={globalContextMenu.isOpen}
-        position={globalContextMenu.position}
-        sections={defaultContextMenuSections}
-        onClose={globalContextMenu.close}
-        showHelp
-        helpContext="general"
-        onHelpClick={() => setHelpModalVisible(true)}
-      />
 
       {/* 🍎 도움말 모달 - activeDocumentView에 따라 맥락별 도움말 표시 */}
       <Modal

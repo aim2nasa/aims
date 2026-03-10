@@ -57,12 +57,6 @@ export interface ContextMenuProps {
   sections: ContextMenuSection[]
   /** 닫기 핸들러 */
   onClose: () => void
-  /** Help 버튼 표시 여부 */
-  showHelp?: boolean
-  /** Help 컨텍스트 키 */
-  helpContext?: string
-  /** Help 클릭 핸들러 */
-  onHelpClick?: (context: string) => void
 }
 
 /**

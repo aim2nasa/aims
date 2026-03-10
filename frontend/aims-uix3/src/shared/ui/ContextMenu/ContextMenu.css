@@ -176,102 +176,10 @@
     opacity: 0.7;
   }
 
-  /* ===== Help 버튼 ===== */
-  .context-menu__help {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-1);
-
-    width: 100%;
-    padding: var(--spacing-2);
-    margin-top: var(--spacing-1);
-
-    background: var(--color-bg-secondary);
-    border: none;
-    border-radius: var(--radius-sm);
-
-    font-family: inherit;
-    font-size: var(--font-size-caption-1, 12px);
-    color: var(--color-primary);
-
-    cursor: pointer;
-    transition: background var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out);
-  }
-
-  .context-menu__help:hover {
-    background: var(--color-primary-alpha-10, rgba(0, 122, 255, 0.1));
-  }
-
-  .context-menu__help:focus {
-    outline: none;
-    background: var(--color-primary-alpha-10, rgba(0, 122, 255, 0.1));
-  }
-
-  .context-menu__help:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: -2px;
-  }
-
-  .context-menu__help svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  /* ===== 닫기 버튼 ===== */
-  .context-menu__close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-1);
-
-    width: 100%;
-    padding: var(--spacing-2);
-
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-sm);
-
-    font-family: inherit;
-    font-size: var(--font-size-caption-1, 12px);
-    color: var(--color-text-tertiary);
-
-    cursor: pointer;
-    transition: background var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out);
-  }
-
-  .context-menu__close:hover {
-    background: var(--color-bg-active);
-    color: var(--color-text-secondary);
-  }
-
-  .context-menu__close:focus {
-    outline: none;
-    background: var(--color-bg-active);
-  }
-
-  .context-menu__close:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: -2px;
-  }
-
-  .context-menu__close svg {
-    width: 13px;
-    height: 13px;
-  }
-
   /* ===== 다크 테마 ===== */
   [data-theme="dark"] .context-menu {
     background: var(--color-bg-card);
     border-color: var(--color-border);
-  }
-
-  [data-theme="dark"] .context-menu__help {
-    background: var(--color-bg-tertiary);
-  }
-
-  [data-theme="dark"] .context-menu__help:hover {
-    background: var(--color-primary-alpha-10);
   }
 
 } /* end @layer components */
