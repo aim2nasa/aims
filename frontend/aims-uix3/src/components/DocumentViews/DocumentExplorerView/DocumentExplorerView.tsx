@@ -628,6 +628,9 @@ const DocumentExplorerContent: React.FC<{
   // 요약 모드 고객 폴더 클릭 후, 초성 전환 완료 시 자동 펼침할 키
   const pendingExpandKeyRef = useRef<string | null>(null)
 
+  // 검색 결과에서 고객 클릭 시 검색어 보존 (복귀용)
+  const savedSearchTermRef = useRef<string | null>(null)
+
   // 초성 전환 후 데이터 로드 완료 → 대기 중인 폴더 자동 펼침
   useEffect(() => {
     if (!selectedInitial || !pendingExpandKeyRef.current) return
@@ -670,8 +673,15 @@ const DocumentExplorerContent: React.FC<{
       if (!selectedInitial && customerInitialMap.has(key)) {
         const initial = customerInitialMap.get(key)!
         pendingExpandKeyRef.current = key
-        // 검색어 클리어: 검색 자동 펼침 effect와의 충돌 방지
+
+        // 검색 결과에서 고객 클릭 시: 검색어 보존 + 해당 고객만 필터
         if (searchTerm) {
+          // 고객명 찾기 (customerFilter 설정용)
+          const customer = explorerData?.customers?.find(c => `customer-${c.customerId}` === key)
+          if (customer) {
+            savedSearchTermRef.current = searchTerm
+            setCustomerFilter(customer.name)
+          }
           setSearchTerm('')
         }
         onSelectedInitialChange(initial)
@@ -680,7 +690,7 @@ const DocumentExplorerContent: React.FC<{
       // 그 외: 기존 토글 동작
       toggleNode(key)
     },
-    [selectedInitial, customerInitialMap, toggleNode, onSelectedInitialChange, searchTerm, setSearchTerm]
+    [selectedInitial, customerInitialMap, toggleNode, onSelectedInitialChange, searchTerm, setSearchTerm, explorerData?.customers, setCustomerFilter]
   )
 
   // 문서 클릭 핸들러
@@ -1072,7 +1082,15 @@ const DocumentExplorerContent: React.FC<{
         quickFilter={quickFilter}
         onQuickFilterChange={setQuickFilter}
         customerFilter={customerFilter}
-        onCustomerFilterClear={() => setCustomerFilter(null)}
+        onCustomerFilterClear={() => {
+          setCustomerFilter(null)
+          // 검색 결과에서 진입했으면 검색어 복원 + 요약 모드 복귀
+          if (savedSearchTermRef.current) {
+            setSearchTerm(savedSearchTermRef.current)
+            onSelectedInitialChange(null)
+            savedSearchTermRef.current = null
+          }
+        }}
         onJumpToDate={jumpToDate}
         getAvailableDates={getAvailableDates}
         dateFilter={dateFilter}
