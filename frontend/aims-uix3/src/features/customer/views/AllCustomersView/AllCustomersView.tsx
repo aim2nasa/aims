@@ -20,6 +20,7 @@ import { CustomerService } from '@/services/customerService';
 import type { Customer } from '@/entities/customer/model';
 import { formatDate, formatDateTime } from '@/shared/lib/timeUtils';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { highlightText } from '@/shared/lib/highlightText';
 import './AllCustomersView.header.css';
 import './AllCustomersView.items.css';
 import './AllCustomersView.delete.css';
@@ -960,11 +961,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   </div>
                 )}
                 <span className="customer-type">{getCustomerIcon(customer)}</span>
-                <span className="customer-name">{customer.personal_info?.name || '이름 없음'}</span>
+                <span className="customer-name">{searchValue ? highlightText(customer.personal_info?.name || '이름 없음', searchValue) : (customer.personal_info?.name || '이름 없음')}</span>
                 <span className="customer-birth">{getCustomerBirthDate(customer)}</span>
                 <span className="customer-gender">{getCustomerGender(customer)}</span>
-                <span className="customer-phone">{getCustomerInfo(customer)}</span>
-                <span className="customer-email">{getCustomerEmail(customer)}</span>
+                <span className="customer-phone">{searchValue ? highlightText(getCustomerInfo(customer), searchValue) : getCustomerInfo(customer)}</span>
+                <span className="customer-email">{searchValue ? highlightText(getCustomerEmail(customer), searchValue) : getCustomerEmail(customer)}</span>
                 <span className="customer-address">{getCustomerAddress(customer)}</span>
                 <span className="customer-status">{getCustomerStatus(customer)}</span>
                 <span className="customer-created">{getCustomerCreatedDate(customer)}</span>

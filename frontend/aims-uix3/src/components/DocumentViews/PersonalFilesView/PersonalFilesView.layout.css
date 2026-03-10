@@ -423,7 +423,31 @@
 
   /* 다크 모드 지원 */
   html[data-theme="dark"] .search-input {
-    border-color: rgba(255, 255, 255, 0.12);  /* ❌ 표준: 다크 모드 경계선 */
+    border-color: var(--color-input-border);
+  }
+
+  /* 검색어 초기화 X 버튼 */
+  .pf-search-clear {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 2px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .pf-search-clear:hover {
+    opacity: 1;
+  }
+
+  /* X 버튼 있을 때 input 우측 패딩 확보 */
+  .search-box .search-input:not(:only-child) {
+    padding-right: 24px;
   }
 
   /* 툴바 구분선 */

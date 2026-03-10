@@ -672,6 +672,7 @@ const DocumentLibraryContent: React.FC<{
         renamingDocumentId={renamingDocumentId}
         onRenameConfirm={handleRenameConfirm}
         onRenameCancel={handleRenameCancel}
+        searchTerm={state.searchTerm}
       />
 
       {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}

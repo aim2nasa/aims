@@ -718,23 +718,6 @@
   }
 
   /* ============================================
-     Search Highlight
-     ============================================ */
-  .doc-explorer-highlight {
-    background-color: var(--color-dev-mode);
-    color: var(--color-text-inverse);
-    padding: 1px 3px;
-    border-radius: 3px;
-    font-weight: 600;
-  }
-
-  /* 다크모드 하이라이트 */
-  html[data-theme="dark"] .doc-explorer-highlight {
-    background-color: var(--color-warning-500);
-    color: var(--color-neutral-900);
-  }
-
-  /* ============================================
      Hover Preview
      ============================================ */
   .hover-preview {

@@ -25,6 +25,7 @@ import { getDocumentDate } from './utils/treeBuilders'
 import { HoverPreview } from './components/HoverPreview'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { DocumentTypeCell } from '@/shared/ui/DocumentTypeCell/DocumentTypeCell'
+import { highlightText } from '@/shared/lib/highlightText'
 
 // 최근 본 문서 아이콘 (시계 + 문서)
 const RecentDocumentsIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -108,46 +109,6 @@ export interface DocumentExplorerTreeProps {
 
 // 더블클릭 감지를 위한 타이머
 const DOUBLE_CLICK_DELAY = 250
-
-/**
- * 검색어 하이라이트 함수
- * 텍스트에서 검색어와 매칭되는 부분을 하이라이트 처리
- */
-const highlightText = (text: string, searchTerm: string): React.ReactNode => {
-  if (!searchTerm || !text) return text
-
-  const lowerText = text.toLowerCase()
-  const lowerSearch = searchTerm.toLowerCase().trim()
-
-  if (!lowerSearch || !lowerText.includes(lowerSearch)) return text
-
-  const parts: React.ReactNode[] = []
-  let lastIndex = 0
-  let matchIndex = lowerText.indexOf(lowerSearch)
-  let keyIndex = 0
-
-  while (matchIndex !== -1) {
-    // 매칭 전 부분
-    if (matchIndex > lastIndex) {
-      parts.push(text.slice(lastIndex, matchIndex))
-    }
-    // 매칭 부분 (하이라이트)
-    parts.push(
-      <mark key={keyIndex++} className="doc-explorer-highlight">
-        {text.slice(matchIndex, matchIndex + lowerSearch.length)}
-      </mark>
-    )
-    lastIndex = matchIndex + lowerSearch.length
-    matchIndex = lowerText.indexOf(lowerSearch, lastIndex)
-  }
-
-  // 남은 부분
-  if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex))
-  }
-
-  return parts.length > 0 ? <>{parts}</> : text
-}
 
 // 날짜/시간 포맷 (MM.DD HH:mm:ss) — 순수 함수이므로 컴포넌트 바깥에 정의
 const formatDateTime = (dateStr: string): string => {

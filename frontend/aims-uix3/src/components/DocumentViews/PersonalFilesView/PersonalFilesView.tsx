@@ -24,6 +24,7 @@ import { DocumentUtils } from '@/entities/document'
 import type { Document } from '../../../types/documentStatus'
 import { uploadService } from '../DocumentRegistrationView/services/uploadService'
 import { formatDate } from '@/shared/lib/timeUtils'
+import { highlightText } from '@/shared/lib/highlightText'
 import type { UploadFile } from '../DocumentRegistrationView/types/uploadTypes'
 import {
   EyeIcon,
@@ -454,8 +455,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 검색 실행 (검색어만 API 호출)
   const performSearch = useCallback(async () => {
-    // 검색어가 없으면 API 호출하지 않음 (타입 필터/정렬은 클라이언트에서 처리)
+    // 검색어가 없으면 현재 폴더로 복귀
     if (!searchTerm.trim()) {
+      loadFolderContents(currentFolderId)
       return
     }
 
@@ -474,7 +476,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     } finally {
       setLoading(false)
     }
-  }, [searchTerm])
+  }, [searchTerm, currentFolderId, loadFolderContents])
 
   // 초기 로드
   useEffect(() => {
@@ -497,9 +499,14 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     { enabled: visible }
   )
 
-  // 검색 debounce (500ms) - 필터/정렬은 클라이언트에서 처리
+  // 검색 debounce (500ms) - 빈 검색어는 즉시 실행 (폴더 복귀)
   useEffect(() => {
     if (!visible) return
+
+    if (!searchTerm.trim()) {
+      performSearch()
+      return
+    }
 
     const timer = setTimeout(() => {
       performSearch()
@@ -1889,9 +1896,26 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="파일 검색"
+                  placeholder="파일명으로 검색"
                   className="search-input"
                 />
+                {/* 검색어 초기화 X 버튼 */}
+                {searchTerm && (
+                  <button
+                    type="button"
+                    className="pf-search-clear"
+                    onClick={() => {
+                      setSearchTerm('')
+                    }}
+                    aria-label="검색어 지우기"
+                  >
+                    <SFSymbol
+                      name="xmark.circle.fill"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.REGULAR}
+                    />
+                  </button>
+                )}
               </div>
 
               {/* 뷰 모드 전환 */}
@@ -1977,7 +2001,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               </div>
             ) : filteredAndSortedItems.length === 0 ? (
               <div className="empty-state">
-                <p>파일이 없습니다</p>
+                <p>{searchTerm.trim()
+                  ? `'${searchTerm.trim()}'에 대한 검색 결과가 없습니다`
+                  : '파일이 없습니다'
+                }</p>
               </div>
             ) : viewMode === 'list' ? (
               // 리스트 뷰
@@ -2148,7 +2175,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       {item.type === 'folder' ? (
                         <>
                           <span className="folder-icon">📁</span>
-                          <span>{item.name}</span>
+                          <span>{highlightText(item.name, searchTerm)}</span>
                         </>
                       ) : (
                         <>
@@ -2255,7 +2282,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                               )
                             })()}
                           </div>
-                          <span>{item.name}</span>
+                          <span>{highlightText(item.name, searchTerm)}</span>
                         </>
                       )}
                     </div>
@@ -2381,7 +2408,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       )}
                     </div>
                     <div className="grid-item-name">
-                      {item.name}
+                      {highlightText(item.name, searchTerm)}
                     </div>
                     <div className="grid-item-info">
                       {item.type === 'file' && item.size ? formatFileSize(item.size) : ''}

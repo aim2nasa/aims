@@ -22,6 +22,7 @@ import type { Contract } from '@/entities/contract'
 import type { Customer } from '@/entities/customer'
 import { formatDate } from '@/shared/lib/timeUtils'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { highlightText } from '@/shared/lib/highlightText'
 import { ProductSearchModal } from './components/ProductSearchModal'
 import './ContractAllView.header.css';
 import './ContractAllView.rows.css';
@@ -926,13 +927,13 @@ export default function ContractAllView({
           {isEmpty && !error && (
             <div className="contract-empty">
               <SFSymbol
-                name="doc.text"
+                name={searchValue ? "magnifyingglass" : "doc.text"}
                 size={SFSymbolSize.TITLE_1}
                 weight={SFSymbolWeight.LIGHT}
               />
-              <p>등록된 계약이 없습니다.</p>
-              <p className="contract-empty-hint">고객·계약 일괄등록에서 엑셀 파일을 업로드하세요.</p>
-              {onNavigate && (
+              <p>{searchValue ? `'${searchValue}'에 대한 검색 결과가 없습니다.` : '등록된 계약이 없습니다.'}</p>
+              {!searchValue && <p className="contract-empty-hint">고객·계약 일괄등록에서 엑셀 파일을 업로드하세요.</p>}
+              {!searchValue && onNavigate && (
                 <Button
                   variant="primary"
                   onClick={() => onNavigate('contracts-import')}
@@ -1111,7 +1112,7 @@ export default function ContractAllView({
                 onClick={contract.customer_id ? (e) => handleCustomerClick(contract, e) : undefined}
                 onDoubleClick={contract.customer_id ? (e) => handleCustomerDoubleClick(contract, e) : undefined}
               >
-                {contract.customer_name || '-'}
+                {searchValue && contract.customer_name ? highlightText(contract.customer_name, searchValue) : (contract.customer_name || '-')}
               </span>
               <Tooltip
                 content={!contract.product_id ? '더블클릭: 상품 검색 (미매칭 상품)' : '더블클릭: 상품 변경'}
@@ -1126,11 +1127,11 @@ export default function ContractAllView({
                       <path d="M7.25 4.5a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0V4.5zM8 10.5a1 1 0 100 2 1 1 0 000-2z"/>
                     </svg>
                   )}
-                  <span className="product-name-text">{contract.product_name || '-'}</span>
+                  <span className="product-name-text">{searchValue && contract.product_name ? highlightText(contract.product_name, searchValue) : (contract.product_name || '-')}</span>
                 </span>
               </Tooltip>
               <span className="contract-date">{formatDate(contract.contract_date)}</span>
-              <span className="contract-policy">{formatPolicyNumber(contract.policy_number)}</span>
+              <span className="contract-policy">{searchValue && contract.policy_number ? highlightText(formatPolicyNumber(contract.policy_number), searchValue) : formatPolicyNumber(contract.policy_number)}</span>
               <span className="contract-premium">{formatPremium(contract.premium)}</span>
               <span className="contract-payment-day">{contract.payment_day || '-'}</span>
               <span className="contract-cycle">{contract.payment_cycle || '-'}</span>

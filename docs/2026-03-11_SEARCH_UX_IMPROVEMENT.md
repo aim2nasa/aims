@@ -1,7 +1,7 @@
 # 검색 UX 전수 개선 작업
 
 > 작업일: 2026-03-11
-> 상태: **Phase 1 준비 중 — 새 세션에서 시작 예정**
+> 상태: **Phase 1~4 완료 + E2E 브라우저 검증 PASS — 커밋/배포 대기**
 
 ---
 
@@ -19,19 +19,19 @@
 
 | # | 심각도 | 이슈 | 해당 뷰 | 상태 |
 |---|--------|------|---------|------|
-| 1 | MAJOR | 검색어 하이라이트 미구현 | QuickSearch | ⬜ TODO |
-| 2 | MAJOR | 검색어 하이라이트 미구현 | DocumentLibraryView | ⬜ TODO |
-| 3 | MAJOR | 검색어 하이라이트 미구현 | PersonalFilesView | ⬜ TODO |
-| 4 | MAJOR | 검색어 하이라이트 미구현 | AllCustomersView | ⬜ TODO |
-| 5 | MAJOR | 검색어 하이라이트 미구현 | ContractAllView | ⬜ TODO |
-| 6 | MAJOR | 빈 결과 메시지 부적절 ("문서가 없습니다" → 검색 맥락 필요) | DocumentLibraryView | ⬜ TODO |
-| 7 | MAJOR | 빈 결과 메시지 부적절 | PersonalFilesView | ⬜ TODO |
-| 8 | MAJOR | 검색 초기화 불완전 (X 버튼 없음 + 빈 검색어 시 미복귀) | PersonalFilesView | ⬜ TODO |
-| 9 | MAJOR | placeholder 거짓 약속 ("고객, 문서 검색..." → 실제 고객만) | QuickSearch | ⬜ TODO |
-| 10 | MAJOR | 검색 범위 불명확 ("파일 검색" → 어떤 필드?) | PersonalFilesView | ⬜ TODO |
-| 11 | MINOR | 빈 결과 메시지 맥락 부족 | ContractAllView | ⬜ TODO |
-| 12 | MINOR | 빈 결과 메시지 맥락 부족 | RelationshipView | ⬜ TODO |
-| 13 | MINOR | 검색 대상 필드 안내 부족 | AllCustomersView | ⬜ TODO |
+| 1 | MAJOR | 검색어 하이라이트 미구현 | QuickSearch | ✅ DONE |
+| 2 | MAJOR | 검색어 하이라이트 미구현 | DocumentLibraryView | ✅ DONE |
+| 3 | MAJOR | 검색어 하이라이트 미구현 | PersonalFilesView | ✅ DONE |
+| 4 | MAJOR | 검색어 하이라이트 미구현 | AllCustomersView | ✅ DONE |
+| 5 | MAJOR | 검색어 하이라이트 미구현 | ContractAllView | ✅ DONE |
+| 6 | MAJOR | 빈 결과 메시지 부적절 ("문서가 없습니다" → 검색 맥락 필요) | DocumentLibraryView | ✅ DONE |
+| 7 | MAJOR | 빈 결과 메시지 부적절 | PersonalFilesView | ✅ DONE |
+| 8 | MAJOR | 검색 초기화 불완전 (X 버튼 없음 + 빈 검색어 시 미복귀) | PersonalFilesView | ✅ DONE |
+| 9 | MAJOR | placeholder 거짓 약속 ("고객, 문서 검색..." → 실제 고객만) | QuickSearch | ✅ DONE |
+| 10 | MAJOR | 검색 범위 불명확 ("파일 검색" → 어떤 필드?) | PersonalFilesView | ✅ DONE |
+| 11 | MINOR | 빈 결과 메시지 맥락 부족 | ContractAllView | ✅ DONE |
+| 12 | MINOR | 빈 결과 메시지 맥락 부족 | RelationshipView | ✅ DONE |
+| 13 | MINOR | 검색 대상 필드 안내 부족 | AllCustomersView | ✅ DONE (이미 적절) |
 
 ---
 
@@ -143,4 +143,11 @@ export function highlightText(text: string, query: string): React.ReactNode {
 - [x] 전수 조사: 탐색 에이전트 + UX 에이전트 병렬 실행
 - [x] 결과: 백엔드 동일 버그 없음, 프론트엔드 UX 이슈 10건 발견
 - [x] 보고서 작성: 이 문서
-- [ ] **다음**: 새 세션에서 Phase 1부터 시작
+- [x] Phase 1 완료: `shared/lib/highlightText.tsx` 추출, `index.css`에 `.search-match` 공통 스타일 추가, DocumentExplorerTree 공통 유틸 import로 전환
+- [x] Phase 2 완료: Alex A(QuickSearch) + B(PersonalFiles) + C(Library+Customers+Contract+Relationship) 병렬 구현
+- [x] Phase 3 Gini 검수: FAIL → Major 2건 + Minor 2건 수정 완료
+  - Major: RelationshipView 로컬 highlightText → 공통 유틸 교체, `.search-match` CSS `--color-dev-mode` → `--color-warning-400`
+  - Minor: PersonalFiles X 버튼 debounce 경쟁 조건 해소, raw rgba → CSS 변수
+- [x] 빌드 재검증: 통과 (3.19s)
+- [x] Phase 4 브라우저 검증: Playwright E2E — QuickSearch/AllCustomers/DocumentLibrary/Relationship/PersonalFiles 전체 PASS
+- [ ] **대기 중**: 커밋/배포

@@ -130,6 +130,21 @@
 
 } /* end @layer utilities */
 
+/* === SEARCH HIGHLIGHT (unlayered — 모든 @layer보다 우선) === */
+
+.search-match {
+  background-color: var(--color-warning-500);
+  color: var(--color-neutral-900);
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .search-match {
+  background-color: var(--color-warning-500);
+  color: var(--color-neutral-900);
+}
+
 /* 🍎 모바일: 액션 버튼 한 줄 가로 배치 (unlayered → 모든 @layer보다 우선) */
 @media (max-width: 768px) {
   .customer-detail-view__actions {

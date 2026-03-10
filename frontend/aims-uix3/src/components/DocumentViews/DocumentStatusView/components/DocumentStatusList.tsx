@@ -28,6 +28,7 @@ import { DocumentNotesModal } from './DocumentNotesModal'
 import { useUserStore } from '../../../../stores/user'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { documentTypesService } from '../../../../services/documentTypesService'
+import { highlightText } from '@/shared/lib/highlightText'
 import './DocumentStatusList.header.css';
 import './DocumentStatusList.cells.css';
 import './DocumentStatusList.responsive.css';
@@ -72,6 +73,8 @@ interface DocumentStatusRowProps {
   renamingDocumentId?: string | null
   onRenameConfirm?: (documentId: string, newName: string) => void
   onRenameCancel?: () => void
+  // 검색어 하이라이트
+  searchTerm?: string
 }
 
 const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
@@ -105,6 +108,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   renamingDocumentId,
   onRenameConfirm,
   onRenameCancel,
+  searchTerm,
 }) => {
   // 각 Row 내부에서 싱글/더블클릭 타이머를 자체 관리
   const documentClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -270,10 +274,10 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
             <>
               {altName ? (
                 <Tooltip content={altName}>
-                  <span className="status-filename-text">{showName}</span>
+                  <span className="status-filename-text">{searchTerm ? highlightText(showName, searchTerm) : showName}</span>
                 </Tooltip>
               ) : (
-                <span className="status-filename-text">{showName}</span>
+                <span className="status-filename-text">{searchTerm ? highlightText(showName, searchTerm) : showName}</span>
               )}
               {/* 호버 시 이름변경/삭제 아이콘 */}
               {onRenameClick && onDeleteClick && (
@@ -707,6 +711,8 @@ export interface DocumentStatusListProps {
   renamingDocumentId?: string | null
   onRenameConfirm?: (documentId: string, newName: string) => void
   onRenameCancel?: () => void
+  // 검색어 하이라이트
+  searchTerm?: string
 }
 
 /**
@@ -880,6 +886,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   renamingDocumentId,
   onRenameConfirm,
   onRenameCancel,
+  searchTerm,
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -1125,8 +1132,10 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       <div className="document-status-list">
         <div className="list-empty">
           <span className="empty-icon">📄</span>
-          <p className="empty-message">문서가 없습니다.</p>
-          {onNavigate && (
+          <p className="empty-message">
+            {searchTerm ? `'${searchTerm}'에 대한 검색 결과가 없습니다.` : '문서가 없습니다.'}
+          </p>
+          {!searchTerm && onNavigate && (
             <Button
               variant="primary"
               onClick={() => onNavigate('documents-register')}
@@ -1338,6 +1347,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             renamingDocumentId={renamingDocumentId}
             onRenameConfirm={onRenameConfirm}
             onRenameCancel={onRenameCancel}
+            searchTerm={searchTerm}
           />
         )
       })}

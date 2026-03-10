@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import { CustomerService } from '@/services/customerService'
 import { CustomerUtils, type Customer } from '@/entities/customer/model'
+import { highlightText } from '@/shared/lib/highlightText'
 import './QuickSearch.css'
 
 interface QuickSearchProps {
@@ -44,7 +45,7 @@ interface SearchResult {
 export const QuickSearch: React.FC<QuickSearchProps> = ({
   onNavigate,
   onCustomerClick,
-  placeholder = '고객, 문서 검색...',
+  placeholder = '고객 검색...',
   className = ''
 }) => {
   const [query, setQuery] = useState('')
@@ -320,7 +321,7 @@ export const QuickSearch: React.FC<QuickSearchProps> = ({
                             {renderCustomerIcon(result.customerType)}
                           </span>
                           <div className="quick-search__result-content">
-                            <span className="quick-search__result-title">{result.title}</span>
+                            <span className="quick-search__result-title">{highlightText(result.title, debouncedQuery)}</span>
                             {result.subtitle && (
                               <span className="quick-search__result-subtitle">{result.subtitle}</span>
                             )}

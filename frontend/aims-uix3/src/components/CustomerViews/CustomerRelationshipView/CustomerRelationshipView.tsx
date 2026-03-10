@@ -20,6 +20,7 @@ import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
 import { QuickFamilyAssignPanel } from './QuickFamilyAssignPanel';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { highlightText as highlightTextUtil } from '@/shared/lib/highlightText';
 import './CustomerRelationshipView.css';
 import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar';
 import { usePersistedState } from '@/hooks/usePersistedState';
@@ -862,31 +863,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     onCustomerDoubleClick?.(customerId);
   }, [onCustomerDoubleClick]);
 
-  // 검색어 하이라이트 함수
+  // 검색어 하이라이트 함수 (공통 유틸리티 사용)
   const highlightText = useCallback((text: string) => {
-    if (!searchQuery.trim()) {
-      return text;
-    }
-
-    const query = searchQuery.toLowerCase().trim();
-    const lowerText = text.toLowerCase();
-    const index = lowerText.indexOf(query);
-
-    if (index === -1) {
-      return text;
-    }
-
-    const before = text.substring(0, index);
-    const match = text.substring(index, index + searchQuery.length);
-    const after = text.substring(index + searchQuery.length);
-
-    return (
-      <>
-        {before}
-        <span className="search-highlight">{match}</span>
-        {after}
-      </>
-    );
+    return highlightTextUtil(text, searchQuery);
   }, [searchQuery]);
 
   if (loading) {
@@ -945,8 +924,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
             <circle cx="8" cy="5" r="2.5"/>
             <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
           </svg>
-          <div>등록된 고객 관계가 없습니다</div>
-          {onNavigate && (
+          <div>{searchQuery ? `'${searchQuery}'에 대한 검색 결과가 없습니다` : '등록된 고객 관계가 없습니다'}</div>
+          {!searchQuery && onNavigate && (
             <Button variant="primary" onClick={() => onNavigate('customers-register')} style={{ marginTop: '16px' }}>
               새 고객 등록
             </Button>
