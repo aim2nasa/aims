@@ -978,9 +978,26 @@
     border-color: var(--color-success);
   }
 
+  /* 별칭AI 버튼 활성 상태: 보라 톤 유지 + 흰색 텍스트 */
+  .alias-ai-button.button.doc-explorer-toolbar__edit-btn--active {
+    background: linear-gradient(135deg, #9370f5, #7b6ae0, #c077e8);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .alias-ai-button.button.doc-explorer-toolbar__edit-btn--active .button__icon svg {
+    color: #fff;
+  }
+
   .doc-explorer-toolbar__edit-btn--active:hover:not(:disabled) {
     background: var(--color-success-50, rgba(34, 197, 94, 0.05));
     border-color: var(--color-success);
+  }
+
+  .alias-ai-button.button.doc-explorer-toolbar__edit-btn--active:hover:not(:disabled) {
+    background: linear-gradient(135deg, #9370f5, #7b6ae0, #c077e8);
+    border-color: transparent;
+    opacity: 0.92;
   }
 
   .doc-explorer-toolbar__edit-btn:disabled {
