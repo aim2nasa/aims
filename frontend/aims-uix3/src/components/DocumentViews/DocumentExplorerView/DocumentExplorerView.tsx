@@ -176,10 +176,10 @@ const DocumentExplorerContent: React.FC<{
 
   // 고객 노드 우클릭 → 컨텍스트 메뉴
   const customerContextMenu = useContextMenu()
-  const [contextMenuCustomer, setContextMenuCustomer] = useState<{ id: string; name: string } | null>(null)
+  const [contextMenuCustomer, setContextMenuCustomer] = useState<{ id: string; name: string; customerType?: '개인' | '법인' } | null>(null)
 
-  const handleCustomerContextMenu = useCallback((customerId: string, customerName: string, event: React.MouseEvent) => {
-    setContextMenuCustomer({ id: customerId, name: customerName })
+  const handleCustomerContextMenu = useCallback((customerId: string, customerName: string, event: React.MouseEvent, customerType?: '개인' | '법인') => {
+    setContextMenuCustomer({ id: customerId, name: customerName, customerType })
     customerContextMenu.open(event)
   }, [customerContextMenu])
 
@@ -192,6 +192,7 @@ const DocumentExplorerContent: React.FC<{
   const [contentSearchModalOpen, setContentSearchModalOpen] = useState(false)
   const [contentSearchCustomerId, setContentSearchCustomerId] = useState('')
   const [contentSearchCustomerName, setContentSearchCustomerName] = useState('')
+  const [contentSearchCustomerType, setContentSearchCustomerType] = useState<'개인' | '법인'>('개인')
 
   // 고객 컨텍스트 메뉴 — 뷰 네비게이션 핸들러
   const navigateToView = useCallback((view: string, customerId: string) => {
@@ -268,6 +269,7 @@ const DocumentExplorerContent: React.FC<{
             onClick: () => {
               setContentSearchCustomerId(contextMenuCustomer.id)
               setContentSearchCustomerName(contextMenuCustomer.name)
+              setContentSearchCustomerType(contextMenuCustomer.customerType || '개인')
               setContentSearchModalOpen(true)
             }
           }
@@ -1055,9 +1057,10 @@ const DocumentExplorerContent: React.FC<{
             onCustomerContextMenu={handleCustomerContextMenu}
             onCustomerDetailClick={handleCustomerDetailClick}
             onCustomerExplorerClick={onCustomerExplorerClick}
-            onOpenQuickSearch={(customerId, customerName) => {
+            onOpenQuickSearch={(customerId, customerName, customerType) => {
               setContentSearchCustomerId(customerId)
               setContentSearchCustomerName(customerName)
+              setContentSearchCustomerType(customerType || '개인')
               setContentSearchModalOpen(true)
             }}
             onOpenFullDetail={(customerId) => {
@@ -1198,6 +1201,7 @@ const DocumentExplorerContent: React.FC<{
         onClose={() => setContentSearchModalOpen(false)}
         customerId={contentSearchCustomerId}
         customerName={contentSearchCustomerName}
+        customerType={contentSearchCustomerType}
       />
     </div>
   )

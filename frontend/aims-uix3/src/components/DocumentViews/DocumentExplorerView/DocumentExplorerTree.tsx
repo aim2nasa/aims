@@ -86,13 +86,13 @@ export interface DocumentExplorerTreeProps {
   /** 문서 선택/해제 */
   onSelectDocument?: (documentId: string) => void
   /** 고객 노드 컨텍스트 메뉴 (고객 상세 이동) */
-  onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent) => void
+  onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent, customerType?: '개인' | '법인') => void
   /** 고객 상세 보기 (미니 카드 "상세" 버튼) */
   onCustomerDetailClick?: (customerId: string, customerName: string) => void
   /** 고객 문서 분류함 열기 (미니 카드 "분류함" 버튼) */
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   /** 간편 문서 검색 모달 열기 */
-  onOpenQuickSearch?: (customerId: string, customerName: string) => void
+  onOpenQuickSearch?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   /** 전체 정보 보기 (URL 네비게이션) */
   onOpenFullDetail?: (customerId: string) => void
   /** 고객 하위 폴더 모두 펼치기/접기 */
@@ -430,10 +430,10 @@ interface GroupNodeProps {
   isEditMode?: boolean
   selectedDocumentIds?: Set<string>
   onCheckToggle?: (documentId: string) => void
-  onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent) => void
+  onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent, customerType?: '개인' | '법인') => void
   onCustomerDetailClick?: (customerId: string, customerName: string) => void
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
-  onOpenQuickSearch?: (customerId: string, customerName: string) => void
+  onOpenQuickSearch?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenFullDetail?: (customerId: string) => void
   onToggleExpandCustomer?: (customerNodeKey: string) => void
 }
@@ -508,7 +508,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
         onContextMenu={node.metadata?.customerId && onCustomerContextMenu ? (e) => {
           e.preventDefault()
           e.stopPropagation()
-          onCustomerContextMenu(node.metadata!.customerId!, node.label, e)
+          onCustomerContextMenu(node.metadata!.customerId!, node.label, e, node.metadata!.customerType === 'corporate' ? '법인' : '개인')
         } : undefined}
         role="treeitem"
         tabIndex={-1}
@@ -598,7 +598,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowActionMenu(false)
-                      onOpenQuickSearch(node.metadata!.customerId!, node.label)
+                      onOpenQuickSearch(node.metadata!.customerId!, node.label, node.metadata!.customerType === 'corporate' ? '법인' : '개인')
                     }}
                   >
                     <span className="doc-explorer-tree__customer-action-icon">
@@ -764,10 +764,10 @@ interface TreeNodeProps {
   isEditMode?: boolean
   selectedDocumentIds?: Set<string>
   onCheckToggle?: (documentId: string) => void
-  onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent) => void
+  onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent, customerType?: '개인' | '법인') => void
   onCustomerDetailClick?: (customerId: string, customerName: string) => void
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
-  onOpenQuickSearch?: (customerId: string, customerName: string) => void
+  onOpenQuickSearch?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenFullDetail?: (customerId: string) => void
   onToggleExpandCustomer?: (customerNodeKey: string) => void
 }
