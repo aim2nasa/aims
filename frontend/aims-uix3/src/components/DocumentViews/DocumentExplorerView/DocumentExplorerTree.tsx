@@ -585,13 +585,14 @@ const GroupNode = React.memo<GroupNodeProps>(({
             <Tooltip content="고객 메뉴" placement="bottom">
               <button
                 type="button"
-                className="doc-explorer-tree__customer-action-trigger"
+                className={`doc-explorer-tree__customer-action-trigger${showActionMenu ? ' doc-explorer-tree__customer-action-trigger--active' : ''}`}
+                aria-label="고객 메뉴"
                 onClick={(e) => {
                   e.stopPropagation()
                   setShowActionMenu(prev => !prev)
                 }}
               >
-                ⋮
+                <SFSymbol name="ellipsis" size={SFSymbolSize.FOOTNOTE} />
               </button>
             </Tooltip>
             {showActionMenu && (

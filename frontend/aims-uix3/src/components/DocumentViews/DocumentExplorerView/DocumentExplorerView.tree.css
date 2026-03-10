@@ -217,7 +217,7 @@
     margin-left: auto;
   }
 
-  /* ⋮ 트리거 버튼: 항상 표시 */
+  /* 고객 메뉴 트리거 버튼: subtle ellipsis (Apple System Settings 패턴) */
   .doc-explorer-tree__customer-action-trigger {
     display: flex;
     align-items: center;
@@ -225,23 +225,36 @@
     width: 22px;
     height: 22px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     background: transparent;
     cursor: pointer;
     color: var(--color-text-tertiary);
-    font-size: 14px;
-    font-weight: 700;
     flex-shrink: 0;
-    transition: background var(--explorer-transition), color var(--explorer-transition);
+    opacity: 0.6;
+    transition: background var(--explorer-transition), color var(--explorer-transition), opacity var(--explorer-transition);
   }
 
   .doc-explorer-tree__customer-action-trigger:hover {
     background: var(--color-bg-active);
-    color: var(--color-text-primary);
+    color: var(--color-text-secondary);
+    opacity: 1;
   }
 
   .doc-explorer-tree__customer-action-trigger:active {
     transform: scale(0.92);
+  }
+
+  /* 메뉴 열린 상태 */
+  .doc-explorer-tree__customer-action-trigger--active {
+    background: var(--color-bg-active);
+    color: var(--color-text-secondary);
+    opacity: 1;
+  }
+
+  /* 고객 행 호버 시 트리거 선명하게 */
+  .doc-explorer-tree__group-header:hover .doc-explorer-tree__customer-action-trigger {
+    opacity: 1;
+    color: var(--color-text-secondary);
   }
 
   /* 드롭다운 메뉴 */
