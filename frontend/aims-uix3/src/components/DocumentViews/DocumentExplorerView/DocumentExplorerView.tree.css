@@ -297,7 +297,27 @@
     justify-content: center;
     width: 16px;
     flex-shrink: 0;
-    color: var(--color-text-secondary);
+  }
+
+  /* 액션 메뉴 아이콘 색상 — iOS 시스템 색상 */
+  .doc-explorer-tree__customer-action-icon .sf-symbol--magnifyingglass {
+    color: var(--color-ios-blue);
+  }
+
+  .doc-explorer-tree__customer-action-icon .sf-symbol--folder {
+    color: var(--color-ios-orange);
+  }
+
+  .doc-explorer-tree__customer-action-icon .sf-symbol--archivebox {
+    color: var(--color-ios-purple, #af52de);
+  }
+
+  .doc-explorer-tree__customer-action-icon .sf-symbol--doc-text {
+    color: var(--color-ios-teal);
+  }
+
+  .doc-explorer-tree__customer-action-icon .sf-symbol--person {
+    color: var(--color-ios-blue);
   }
 
   /* ============================================

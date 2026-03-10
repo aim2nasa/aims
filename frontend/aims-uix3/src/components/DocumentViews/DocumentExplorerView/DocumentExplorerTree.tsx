@@ -634,7 +634,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                 {(onOpenContentSearchModal || (onToggleExpandCustomer && hasChildren)) && (
                   <div className="doc-explorer-tree__customer-action-divider" />
                 )}
-                {/* 문서 분류함 */}
+                {/* 고객 문서 분류함 */}
                 {onCustomerExplorerClick && (
                   <button
                     type="button"
@@ -650,12 +650,12 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     }}
                   >
                     <span className="doc-explorer-tree__customer-action-icon">
-                      <SFSymbol name="folder" size={SFSymbolSize.CAPTION_1} decorative />
+                      <SFSymbol name="archivebox" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
-                    문서 분류함
+                    고객 문서 분류함
                   </button>
                 )}
-                {/* 고객 상세 */}
+                {/* 고객 상세 보기 */}
                 {onOpenFullDetail && (
                   <button
                     type="button"
@@ -669,10 +669,10 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     <span className="doc-explorer-tree__customer-action-icon">
                       <SFSymbol name="doc.text" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
-                    고객 상세
+                    고객 상세 보기
                   </button>
                 )}
-                {/* 미니 카드 */}
+                {/* 고객 요약 보기 */}
                 {onCustomerDetailClick && (
                   <button
                     type="button"
@@ -686,7 +686,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     <span className="doc-explorer-tree__customer-action-icon">
                       <SFSymbol name="person" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
-                    미니 카드
+                    고객 요약 보기
                   </button>
                 )}
               </div>
