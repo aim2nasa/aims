@@ -31,37 +31,34 @@ cd /d/aims && git log origin/main..HEAD --oneline
 
 ### Phase 2: 전체 배포 실행 (실시간 진행상황 표시)
 
-**반드시 아래 순서를 따른다:**
+**분리형 폴링 방식** — 배포 시작과 진행상황 조회를 별도 bash 호출로 분리한다.
+이렇게 해야 각 폴링 결과가 **즉시** 사용자에게 표시된다.
+(단일 SSH에 폴링 루프를 넣으면 bash 도구 특성상 완료까지 출력이 버퍼링되어 진행상황이 안 보임)
 
-#### Step 1: 서버에서 백그라운드로 배포 시작
-
-```bash
-ssh rossi@100.110.215.65 'cd ~/aims && nohup bash -c "./deploy_all.sh > /tmp/deploy_result.txt 2>&1; echo \$? > /tmp/deploy_exitcode.txt" &'
-```
-
-#### Step 2: 10초 간격으로 진행상황 폴링
-
-아래 명령을 10초 간격으로 반복 실행하여 사용자에게 진행 단계를 보여준다.
-**매 폴링마다 결과를 사용자에게 텍스트로 출력**해야 한다.
+#### Step 1: 이전 파일 정리 + 배포 시작
 
 ```bash
-ssh rossi@100.110.215.65 'grep -oP "\[\d+/14\].*" /tmp/deploy_result.txt 2>/dev/null | tail -1; test -f /tmp/deploy_exitcode.txt && echo "DEPLOY_DONE:$(cat /tmp/deploy_exitcode.txt)"'
+ssh rossi@100.110.215.65 'cd ~/aims && rm -f /tmp/deploy_exitcode.txt /tmp/deploy_result.txt && nohup bash -c "./deploy_all.sh > /tmp/deploy_result.txt 2>&1; echo \$? > /tmp/deploy_exitcode.txt" > /dev/null 2>&1 & echo "배포 시작됨 (PID: $!)"'
 ```
 
-- `DEPLOY_DONE:0` 이 나오면 배포 성공 → Phase 3으로
-- `DEPLOY_DONE:N` (N≠0) 이면 배포 실패 → Phase 3에서 에러 확인
-- 아직 없으면 "배포 진행 중..." + 마지막 완료 단계 표시 후 10초 대기
-- **최대 25회 (약 4분) 폴링. 초과 시 타임아웃 경고**
+이 명령은 즉시 반환된다 (배포는 백그라운드 실행).
 
-#### Step 3: 폴링 전 exitcode 파일 정리
+#### Step 2: 진행상황 폴링 (반복 실행)
 
-Phase 2 Step 1 실행 전, 이전 배포의 exitcode 파일을 삭제한다:
+아래 명령을 **별도의 bash 호출로 반복** 실행한다.
+**매 호출 결과를 사용자에게 텍스트로 출력**해야 한다.
 
 ```bash
-ssh rossi@100.110.215.65 'rm -f /tmp/deploy_exitcode.txt /tmp/deploy_result.txt'
+ssh rossi@100.110.215.65 'sleep 10; LAST=$(grep -oP "\[\d+/14\].*" /tmp/deploy_result.txt 2>/dev/null | tail -1); echo "PROGRESS: ${LAST:-시작 중...}"; if test -f /tmp/deploy_exitcode.txt; then echo "DEPLOY_DONE:$(cat /tmp/deploy_exitcode.txt)"; fi'
 ```
 
-**실행 순서: Step 3 → Step 1 → Step 2 반복**
+- 각 호출은 서버에서 10초 대기 후 현재 진행상황을 반환 (~11초 소요)
+- 출력에 `DEPLOY_DONE:0` 포함 → 배포 성공 → Phase 3으로
+- 출력에 `DEPLOY_DONE:N` (N≠0) 포함 → 배포 실패 → Phase 3에서 에러 확인
+- `DEPLOY_DONE`이 없으면 아직 진행 중 → 같은 명령 재호출
+- **exit code는 항상 0** (진행 중이든 완료든). `DEPLOY_DONE` 문자열로만 완료 판단
+- **최대 25회 반복 (약 4분). 초과 시 타임아웃 경고**
+- 매 폴링마다 사용자에게 현재 단계를 텍스트로 보고할 것
 
 ### Phase 3: 배포 결과 확인
 
