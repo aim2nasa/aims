@@ -398,9 +398,18 @@
      Document Node (파일)
      ============================================ */
   .doc-explorer-tree__document {
-    display: flex;
+    display: grid;
+    grid-template-columns:
+      /* icon */ 14px
+      /* name + hover-actions */ 1fr
+      /* ext */  32px
+      /* size */ 58px
+      /* customer */ minmax(50px, 100px)
+      /* date */ 106px
+      /* badge */ 28px
+      /* actions */ 44px;
     align-items: center;
-    gap: 6px;
+    gap: 0 6px;
     padding: 3px var(--explorer-spacing-md);
     border-radius: var(--explorer-border-radius);
     cursor: pointer;
@@ -447,9 +456,22 @@
     padding-left: calc(var(--explorer-spacing-md) + 76px);
   }
 
+  /* 편집 모드: 체크박스 열 추가 */
+  .doc-explorer-tree__document--edit {
+    grid-template-columns:
+      /* checkbox */ 18px
+      /* icon */ 14px
+      /* name + hover-actions */ 1fr
+      /* ext */  32px
+      /* size */ 58px
+      /* customer */ minmax(50px, 100px)
+      /* date */ 106px
+      /* badge */ 28px
+      /* actions */ 44px;
+  }
+
   /* Document Icon */
   .doc-explorer-tree__doc-icon {
-    flex-shrink: 0;
     width: 14px;
     height: 14px;
     display: flex;
@@ -603,6 +625,14 @@
     color: var(--color-text-tertiary);
   }
 
+  /* Document Name Cell (grid cell: name + hover-actions) */
+  .doc-explorer-tree__doc-name-cell {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   /* Document Name */
   .doc-explorer-tree__doc-name {
     flex: 1;
@@ -611,20 +641,17 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
   }
 
   /* Document Customer */
   .doc-explorer-tree__doc-customer {
-    flex-shrink: 0;
-    margin-left: var(--explorer-spacing-sm);
     padding: 1px 6px;
     font-size: 10px;
     font-weight: 600;
     color: var(--color-accent);
     background: var(--color-accent-bg);
     border-radius: 8px;
-    min-width: 50px;
-    max-width: 100px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -638,13 +665,10 @@
 
   /* Document Date */
   .doc-explorer-tree__doc-date {
-    flex-shrink: 0;
-    margin-left: var(--explorer-spacing-sm);
     font-size: 10px;
     font-weight: 400;
     color: var(--color-text-tertiary);
     font-variant-numeric: tabular-nums;
-    min-width: 100px;
     text-align: right;
   }
 
@@ -654,12 +678,12 @@
 
   /* Badge */
   .doc-explorer-tree__badge {
-    flex-shrink: 0;
     padding: 1px 4px;
     font-size: 9px;
     font-weight: 600;
     border-radius: 3px;
     text-transform: uppercase;
+    text-align: center;
   }
 
   .doc-explorer-tree__badge--txt {
@@ -709,35 +733,28 @@
 
   /* File Extension (JPG, PDF 등) */
   .doc-explorer-tree__doc-ext {
-    flex-shrink: 0;
-    margin-left: var(--explorer-spacing-sm);
     font-size: 9px;
     font-weight: 600;
     color: var(--color-text-tertiary);
     text-transform: uppercase;
-    min-width: 28px;
     text-align: center;
   }
 
   /* File Size */
   .doc-explorer-tree__doc-size {
-    flex-shrink: 0;
-    margin-left: var(--explorer-spacing-sm);
     font-size: 9px;
     font-weight: 400;
     color: var(--color-text-tertiary);
     font-variant-numeric: tabular-nums;
-    min-width: 52px;
     text-align: right;
   }
 
   /* Action Buttons (요약/전체텍스트) */
   .doc-explorer-tree__doc-actions {
-    flex-shrink: 0;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: calc(var(--spacing-1) / 2);
-    margin-left: var(--explorer-spacing-sm);
   }
 
   .doc-explorer-tree__action-btn {
@@ -769,7 +786,6 @@
     align-items: center;
     gap: 1px;
     margin-left: 4px;
-    flex-shrink: 0;
   }
 
   .doc-explorer-tree__document:hover .doc-explorer-tree__hover-actions {

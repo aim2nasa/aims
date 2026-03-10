@@ -241,7 +241,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   return (
     <div
       data-node-key={node.key}
-      className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}`}
+      className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}${isEditMode ? ' doc-explorer-tree__document--edit' : ''}`}
       onClick={(e) => onDocumentClick(doc, e, node.key)}
       onContextMenu={onContextMenu ? (e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(doc, e) } : undefined}
       role="treeitem"
@@ -270,57 +270,59 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
         />
       </span>
 
-      {/* 문서명: filenameMode에 따라 별칭/원본 전환 (또는 인라인 편집) */}
-      <Tooltip content={altName || showName} placement="bottom">
-        <span className="doc-explorer-tree__doc-name">
-          {renamingDocumentId && renamingDocumentId === docId ? (
-            <InlineRenameInput
-              currentName={doc.displayName || DocumentStatusService.extractOriginalFilename(doc)}
-              onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
-              onCancel={() => onRenameCancel?.()}
-            />
-          ) : (
-            <span
-              className="doc-explorer-tree__doc-name-text"
-              onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
-              onMouseMove={(e) => onDocumentMouseMove(doc, e)}
-              onMouseLeave={onDocumentMouseLeave}
-            >
-              {highlightText(showName, searchTerm)}
-            </span>
-          )}
-        </span>
-      </Tooltip>
+      {/* 문서명 + hover-actions (1 grid cell) */}
+      <span className="doc-explorer-tree__doc-name-cell">
+        <Tooltip content={altName || showName} placement="bottom">
+          <span className="doc-explorer-tree__doc-name">
+            {renamingDocumentId && renamingDocumentId === docId ? (
+              <InlineRenameInput
+                currentName={doc.displayName || DocumentStatusService.extractOriginalFilename(doc)}
+                onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
+                onCancel={() => onRenameCancel?.()}
+              />
+            ) : (
+              <span
+                className="doc-explorer-tree__doc-name-text"
+                onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
+                onMouseMove={(e) => onDocumentMouseMove(doc, e)}
+                onMouseLeave={onDocumentMouseLeave}
+              >
+                {highlightText(showName, searchTerm)}
+              </span>
+            )}
+          </span>
+        </Tooltip>
 
-      {/* 편집/삭제 아이콘 — doc-name 밖에 배치하여 줄바꿈 방지 */}
-      {!(renamingDocumentId && renamingDocumentId === docId) && onRenameClick && onDeleteClick && (
-        <span className="doc-explorer-tree__hover-actions" onClick={(e) => e.stopPropagation()}>
-          <Tooltip content="이름 변경" placement="bottom">
-            <button
-              type="button"
-              className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--rename"
-              aria-label="이름 변경"
-              onClick={(e) => { e.stopPropagation(); onRenameClick(doc) }}
-            >
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </Tooltip>
-          <Tooltip content="삭제" placement="bottom">
-            <button
-              type="button"
-              className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--delete"
-              aria-label="삭제"
-              onClick={(e) => { e.stopPropagation(); onDeleteClick(doc) }}
-            >
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </Tooltip>
-        </span>
-      )}
+        {/* 편집/삭제 아이콘 */}
+        {!(renamingDocumentId && renamingDocumentId === docId) && onRenameClick && onDeleteClick && (
+          <span className="doc-explorer-tree__hover-actions" onClick={(e) => e.stopPropagation()}>
+            <Tooltip content="이름 변경" placement="bottom">
+              <button
+                type="button"
+                className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--rename"
+                aria-label="이름 변경"
+                onClick={(e) => { e.stopPropagation(); onRenameClick(doc) }}
+              >
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                  <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </Tooltip>
+            <Tooltip content="삭제" placement="bottom">
+              <button
+                type="button"
+                className="doc-explorer-tree__hover-btn doc-explorer-tree__hover-btn--delete"
+                aria-label="삭제"
+                onClick={(e) => { e.stopPropagation(); onDeleteClick(doc) }}
+              >
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </Tooltip>
+          </span>
+        )}
+      </span>
 
       {/* 파일 타입 (JPG, PDF 등) */}
       <Tooltip content={fileExt || '-'} placement="bottom">
