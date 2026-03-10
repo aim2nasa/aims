@@ -14,7 +14,7 @@ AIMS_DIR="$HOME/aims"
 LOCKFILE="/tmp/aims_deploy.lock"
 
 # --- 동시 실행 방지 (flock) ---
-EXISTING_PID=$(cat "$LOCKFILE" 2>/dev/null)
+EXISTING_PID=$(cat "$LOCKFILE" 2>/dev/null || true)
 exec 200>"$LOCKFILE"
 if ! flock -n 200; then
     echo -e "${YELLOW}다른 배포가 진행 중입니다 (PID: $EXISTING_PID). 기존 배포를 중단하고 새로 시작합니다.${NC}"
