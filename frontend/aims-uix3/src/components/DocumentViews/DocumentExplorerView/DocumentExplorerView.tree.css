@@ -137,7 +137,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--color-text-secondary);
+    color: var(--color-ios-orange);
   }
 
   /* 고객 타입 아이콘 (전체 고객 보기와 동일) */
