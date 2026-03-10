@@ -90,8 +90,8 @@ const SEARCH_MODE_CHIPS_INITIAL: { value: ExplorerSearchMode; label: string; ico
 
 /** 검색 모드 칩 정의 — 요약 모드 (고객 목록) */
 const SEARCH_MODE_CHIPS_SUMMARY: { value: ExplorerSearchMode; label: string; icon: string }[] = [
-  { value: 'filename', label: '고객명', icon: 'person.fill' },
-  { value: 'content', label: '문서 검색', icon: 'magnifyingglass' },
+  { value: 'filename', label: '통합 검색', icon: 'magnifyingglass' },
+  { value: 'content', label: '문서 내용', icon: 'doc.text.magnifyingglass' },
   { value: 'semantic', label: 'AI 질문', icon: 'sparkles' },
 ]
 
@@ -104,8 +104,8 @@ const SEARCH_MODE_PLACEHOLDERS_INITIAL: Record<ExplorerSearchMode, string> = {
 
 /** 검색 모드별 placeholder — 요약 모드 */
 const SEARCH_MODE_PLACEHOLDERS_SUMMARY: Record<ExplorerSearchMode, string> = {
-  filename: '고객명으로 검색...',
-  content: '파일명 또는 문서 내용 검색... (Enter)',
+  filename: '고객명 · 파일명으로 검색...',
+  content: '문서 내용 검색... (Enter)',
   semantic: 'AI에게 질문하기...',
 }
 

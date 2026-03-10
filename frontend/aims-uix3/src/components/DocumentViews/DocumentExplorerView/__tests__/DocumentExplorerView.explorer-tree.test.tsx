@@ -131,7 +131,7 @@ describe('DocumentExplorerView — explorer-tree API (커밋 4e16c489)', () => {
       renderView()
 
       await waitFor(() => {
-        expect(mockGetExplorerTree).toHaveBeenCalledWith('excludeMyFiles', undefined)
+        expect(mockGetExplorerTree).toHaveBeenCalledWith('excludeMyFiles', undefined, undefined)
       })
     })
 
@@ -140,7 +140,7 @@ describe('DocumentExplorerView — explorer-tree API (커밋 4e16c489)', () => {
       renderView()
 
       await waitFor(() => {
-        expect(mockGetExplorerTree).toHaveBeenCalledWith('excludeMyFiles', undefined)
+        expect(mockGetExplorerTree).toHaveBeenCalledWith('excludeMyFiles', undefined, undefined)
       })
     })
 
@@ -150,7 +150,7 @@ describe('DocumentExplorerView — explorer-tree API (커밋 4e16c489)', () => {
       renderView()
 
       await waitFor(() => {
-        expect(mockGetExplorerTree).toHaveBeenCalledWith('excludeMyFiles', 'ㄱ')
+        expect(mockGetExplorerTree).toHaveBeenCalledWith('excludeMyFiles', 'ㄱ', undefined)
       })
     })
   })

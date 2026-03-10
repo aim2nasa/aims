@@ -64,12 +64,26 @@ export interface DocumentExplorerViewProps {
 }
 
 /** explorer-tree API 응답 타입 */
+interface SearchDocument {
+  _id: string
+  displayName: string | null
+  originalName: string
+  uploadedAt: string | null
+  fileSize: number | null
+  mimeType: string | null
+  customerId: string | null
+  customerName: string | null
+  document_type: string | null
+  badgeType: string | null
+}
+
 interface ExplorerTreeData {
   customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string | null; customerType?: string | null }>
   totalCustomers: number
   totalDocuments: number
   initials: Record<string, number>
   documents?: Document[]
+  searchDocuments?: SearchDocument[]
 }
 
 /**
@@ -477,10 +491,10 @@ const DocumentExplorerContent: React.FC<{
   const [explorerData, setExplorerData] = useState<ExplorerTreeData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchExplorerTree = useCallback(async (initial: string | null) => {
+  const fetchExplorerTree = useCallback(async (initial: string | null, search?: string) => {
     setIsLoading(true)
     try {
-      const data = await DocumentStatusService.getExplorerTree('excludeMyFiles', initial || undefined)
+      const data = await DocumentStatusService.getExplorerTree('excludeMyFiles', initial || undefined, search || undefined)
       setExplorerData(data)
     } catch (error) {
       console.error('Explorer tree fetch failed:', error)
@@ -561,6 +575,35 @@ const DocumentExplorerContent: React.FC<{
     filenameMode,
   })
 
+  // 요약 모드 + 통합 검색 칩: 서버 검색 (고객명+파일명) with debounce 300ms
+  const serverSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevSearchTermRef = useRef<string>('')
+  useEffect(() => {
+    if (selectedInitial || explorerSearchMode !== 'filename') return
+    if (serverSearchTimerRef.current) clearTimeout(serverSearchTimerRef.current)
+
+    const trimmed = searchTerm?.trim() || ''
+    const prevTrimmed = prevSearchTermRef.current
+
+    if (!trimmed) {
+      // 이전에 검색어가 있었으면 전체 목록 복원, 아니면 skip (초기 로드와 중복 방지)
+      if (prevTrimmed) {
+        fetchExplorerTree(null)
+      }
+      prevSearchTermRef.current = ''
+      return
+    }
+
+    prevSearchTermRef.current = trimmed
+    serverSearchTimerRef.current = setTimeout(() => {
+      fetchExplorerTree(null, trimmed)
+    }, 300)
+
+    return () => {
+      if (serverSearchTimerRef.current) clearTimeout(serverSearchTimerRef.current)
+    }
+  }, [searchTerm, selectedInitial, explorerSearchMode, fetchExplorerTree])
+
   // 초성 미선택 시: 고객 요약 트리 빌드 (서버 데이터 그대로 렌더링)
   // initialType(탭)에 따라 해당 카테고리 고객만 필터링
   const customerSummaryTree = useMemo<DocumentTreeData | null>(() => {
@@ -581,24 +624,60 @@ const DocumentExplorerContent: React.FC<{
       customers = customers.filter(c => numberSet.has(c.initial))
     }
 
-    // 검색어로 고객명 필터
-    if (searchTerm) {
+    // 검색어로 고객명 필터 (서버 검색이 아닌 경우에만 클라이언트 필터 적용)
+    // explorerSearchMode === 'filename'이면 서버에서 이미 필터됨 (고객명+파일명 통합 검색)
+    if (searchTerm && explorerSearchMode !== 'filename') {
       const lower = searchTerm.toLowerCase()
       customers = customers.filter(c => c.name.toLowerCase().includes(lower))
     }
 
-    const nodes: DocumentTreeNode[] = customers.map(c => ({
-      key: `customer-${c.customerId}`,
-      label: c.name,
-      type: 'group' as const,
-      icon: c.customerType === '법인' ? 'building.2.fill' : 'person.fill',
-      count: c.docCount,
-      children: [],
-      metadata: {
-        customerId: c.customerId,
-        customerType: (c.customerType === '법인' ? 'corporate' : 'personal') as 'personal' | 'corporate',
+    // searchDocuments를 고객별로 그룹핑
+    const searchDocsByCustomer = new Map<string, SearchDocument[]>()
+    if (explorerData.searchDocuments) {
+      explorerData.searchDocuments.forEach(doc => {
+        if (!doc.customerId) return
+        const existing = searchDocsByCustomer.get(doc.customerId) || []
+        existing.push(doc)
+        searchDocsByCustomer.set(doc.customerId, existing)
+      })
+    }
+
+    const nodes: DocumentTreeNode[] = customers.map(c => {
+      const matchedDocs = searchDocsByCustomer.get(c.customerId) || []
+      const children: DocumentTreeNode[] = matchedDocs.map(doc => ({
+        key: `search-doc-${doc._id}`,
+        label: doc.displayName || doc.originalName,
+        type: 'document' as const,
+        icon: 'doc.fill',
+        document: {
+          _id: doc._id,
+          originalName: doc.originalName,
+          displayName: doc.displayName,
+          uploadedAt: doc.uploadedAt,
+          fileSize: doc.fileSize,
+          mimeType: doc.mimeType,
+          document_type: doc.document_type,
+          badgeType: doc.badgeType,
+          customer_relation: {
+            customer_id: doc.customerId || '',
+            customer_name: doc.customerName || '',
+          },
+        } as unknown as Document,
+      }))
+
+      return {
+        key: `customer-${c.customerId}`,
+        label: c.name,
+        type: 'group' as const,
+        icon: c.customerType === '법인' ? 'building.2.fill' : 'person.fill',
+        count: c.docCount,
+        children,
+        metadata: {
+          customerId: c.customerId,
+          customerType: (c.customerType === '법인' ? 'corporate' : 'personal') as 'personal' | 'corporate',
+        }
       }
-    }))
+    })
 
     const totalDocs = customers.reduce((sum, c) => sum + c.docCount, 0)
 
@@ -607,7 +686,19 @@ const DocumentExplorerContent: React.FC<{
       totalDocuments: totalDocs,
       groupStats: { groupCount: customers.length }
     }
-  }, [selectedInitial, explorerData?.customers, searchTerm, initialType])
+  }, [selectedInitial, explorerData?.customers, explorerData?.searchDocuments, searchTerm, initialType, explorerSearchMode])
+
+  // searchDocuments가 있으면 매칭 문서가 있는 고객을 자동 확장
+  useEffect(() => {
+    if (!customerSummaryTree || !explorerData?.searchDocuments?.length) return
+    const keysToExpand = customerSummaryTree.nodes
+      .filter(n => n.children && n.children.length > 0)
+      .map(n => n.key)
+      .filter(key => !expandedKeys.has(key))
+    if (keysToExpand.length > 0) {
+      keysToExpand.forEach(key => toggleNode(key))
+    }
+  }, [explorerData?.searchDocuments]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 최종 트리 데이터: 초성 선택 여부에 따라 분기
   const treeData = selectedInitial

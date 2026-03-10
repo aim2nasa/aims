@@ -1,7 +1,7 @@
 # 고객별 문서함 검색 UX 개선 보고서
 
 > 작성일: 2026-03-10
-> 상태: **진행 중**
+> 상태: **Phase 2 완료**
 
 ---
 
@@ -60,19 +60,32 @@
 - [ ] 요약 모드 첫 번째 칩: "파일명" → "고객명"
 - [ ] 요약 모드에서 "내용"/"AI 질문" 칩 처리 (비활성 또는 서버 검색 연결)
 
-### Phase 2: 통합 검색 (백엔드+프론트엔드) — 별도 이슈로 분리
-- [ ] explorer-tree API에 `search` 파라미터 추가
-- [ ] 요약 모드에서 고객명+파일명 동시 매칭
-- [ ] debounce 300ms 적용
+### Phase 2: 통합 검색 (백엔드+프론트엔드)
+- [x] explorer-tree API에 `search` 파라미터 추가
+- [x] 요약 모드에서 고객명+파일명 동시 매칭
+- [x] debounce 300ms 적용
 
 ---
 
 ## 4. 구현 기록
 
-### Phase 1 완료 (커밋 예정)
+### Phase 1 완료 (커밋 eaf07649)
 - [x] 요약 모드 placeholder: `고객명으로 검색...`
 - [x] 초성 모드 placeholder: `파일명 · 고객명으로 검색...`
 - [x] 요약 모드 첫 번째 칩: "파일명" → "고객명" (아이콘: person.fill)
 - [x] 요약 모드 두 번째 칩: "내용" → "문서 검색"
 - [x] 모드별 툴팁 문구 정확화
 - [x] Playwright 검증: 요약 모드 + 초성 모드 모두 정상
+
+### Phase 2 완료 (커밋 예정)
+- [x] 백엔드: `explorer-tree` API에 `search` 쿼리 파라미터 추가
+  - 고객명 매칭: `customerList`에서 이름 `includes` 필터
+  - 파일명 매칭: MongoDB `files` 컬렉션에서 `displayName`/`originalName` regex 매칭 → 해당 고객 ID 추출
+  - 합집합으로 `filteredCustomerList` 구성, initials도 재계산
+- [x] 프론트엔드: `DocumentStatusService.getExplorerTree()`에 `search` 파라미터 추가
+- [x] 프론트엔드: 요약 모드 + 통합 검색 칩에서 debounce 300ms 서버 검색 적용
+- [x] 칩 레이블 재조정: "고객명" → "통합 검색", "문서 검색" → "문서 내용"
+- [x] placeholder 업데이트: `고객명 · 파일명으로 검색...`
+- [x] Playwright 검증:
+  - "곽" 검색 → 곽씨 고객 5명 필터 (고객명 매칭)
+  - "보험증권" 검색 → 마리치, 캐치업코리아 2명 필터 (파일명 매칭)

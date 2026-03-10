@@ -184,17 +184,30 @@ export class DocumentStatusService {
    * @param initial 초성 필터 (설정 시 해당 초성의 문서도 반환)
    * @returns 고객 요약 + 초성 카운트 + (초성 선택 시) 문서 목록
    */
-  static async getExplorerTree(fileScope?: string, initial?: string): Promise<{
+  static async getExplorerTree(fileScope?: string, initial?: string, search?: string): Promise<{
     customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string | null }>;
     totalCustomers: number;
     totalDocuments: number;
     initials: Record<string, number>;
     documents?: Document[];
+    searchDocuments?: Array<{
+      _id: string;
+      displayName: string | null;
+      originalName: string;
+      uploadedAt: string | null;
+      fileSize: number | null;
+      mimeType: string | null;
+      customerId: string | null;
+      customerName: string | null;
+      document_type: string | null;
+      badgeType: string | null;
+    }>;
   }> {
     try {
       const params = new URLSearchParams()
       if (fileScope) params.append('fileScope', fileScope)
       if (initial) params.append('initial', initial)
+      if (search) params.append('search', search)
 
       const response = await fetch(`${API_BASE_URL}/api/documents/status/explorer-tree?${params.toString()}`, {
         method: 'GET',
