@@ -33,6 +33,10 @@ import DownloadHelper from '../../../utils/downloadHelper'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem } from '@/entities/search'
+import { formatDate, formatDateTime } from '@/shared/lib/timeUtils'
+import { formatFileSize } from '@/shared/lib/fileValidation/constants'
+import { SortIndicator } from '@/shared/ui/SortIndicator'
+import { Tooltip } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { Document } from '@/types/documentStatus'
 import './DocumentExplorerView.toolbar.css';
@@ -304,6 +308,66 @@ const DocumentExplorerContent: React.FC<{
   const [contentSearchError, setContentSearchError] = useState<string | null>(null)
   const [lastContentSearchMode, setLastContentSearchMode] = useState<ExplorerSearchMode | null>(null)
   const contentSearchAbortRef = useRef<AbortController | null>(null)
+
+  // === 내용 검색 결과 정렬 상태 ===
+  type ContentSortField = 'filename' | 'customer' | 'date' | 'size' | 'score' | null
+  type ContentSortOrder = 'asc' | 'desc'
+  const [contentSortField, setContentSortField] = useState<ContentSortField>(null)
+  const [contentSortOrder, setContentSortOrder] = useState<ContentSortOrder>('asc')
+
+  // 정렬 핸들러
+  const handleContentSort = useCallback((field: Exclude<ContentSortField, null>) => {
+    if (contentSortField === field) {
+      setContentSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setContentSortField(field)
+      setContentSortOrder(field === 'score' || field === 'date' ? 'desc' : 'asc')
+    }
+  }, [contentSortField])
+
+  // 정렬된 결과
+  const sortedContentSearchResults = useMemo(() => {
+    if (!contentSortField || !contentSearchResults.length) return contentSearchResults
+
+    return [...contentSearchResults].sort((a, b) => {
+      let cmp = 0
+      if (contentSortField === 'filename') {
+        const nameA = (a.displayName || SearchService.getOriginalName(a)).toLowerCase()
+        const nameB = (b.displayName || SearchService.getOriginalName(b)).toLowerCase()
+        cmp = nameA.localeCompare(nameB, 'ko-KR')
+      } else if (contentSortField === 'customer') {
+        const custA = a.customer_relation?.customer_name || ''
+        const custB = b.customer_relation?.customer_name || ''
+        if (!custA && custB) return 1
+        if (custA && !custB) return -1
+        cmp = custA.localeCompare(custB, 'ko-KR')
+      } else if (contentSortField === 'date') {
+        const dateA = ('upload' in a && a.upload?.uploaded_at) ? new Date(a.upload.uploaded_at).getTime() : 0
+        const dateB = ('upload' in b && b.upload?.uploaded_at) ? new Date(b.upload.uploaded_at).getTime() : 0
+        cmp = dateA - dateB
+      } else if (contentSortField === 'size') {
+        const sizeA = ('meta' in a && a.meta?.size_bytes) || 0
+        const sizeB = ('meta' in b && b.meta?.size_bytes) || 0
+        cmp = sizeA - sizeB
+      } else if (contentSortField === 'score') {
+        const scoreA = ('score' in a ? (a as { score?: number }).score : 0) || 0
+        const scoreB = ('score' in b ? (b as { score?: number }).score : 0) || 0
+        cmp = scoreA - scoreB
+      }
+      return contentSortOrder === 'asc' ? cmp : -cmp
+    })
+  }, [contentSearchResults, contentSortField, contentSortOrder])
+
+  // 검색 모드 변경 시 정렬 초기화
+  useEffect(() => {
+    if (lastContentSearchMode === 'semantic') {
+      setContentSortField('score')
+      setContentSortOrder('desc')
+    } else if (lastContentSearchMode) {
+      setContentSortField('filename')
+      setContentSortOrder('asc')
+    }
+  }, [lastContentSearchMode])
 
   // 내용 검색 실행 핸들러
   const handleContentSearch = useCallback(async (query: string) => {
@@ -1055,15 +1119,74 @@ const DocumentExplorerContent: React.FC<{
 
             {/* 검색 결과 목록 */}
             {contentSearchResults.length > 0 && (
+              <>
+              {/* 🍎 칼럼 헤더 */}
+              <div className="doc-explorer-search-results__col-header">
+                <div
+                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'filename' ? 'sorted' : ''}`}
+                  data-col="filename"
+                  onClick={() => handleContentSort('filename')}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <span>파일명</span>
+                  <SortIndicator field="filename" currentSortField={contentSortField} sortDirection={contentSortOrder} />
+                </div>
+                <div
+                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'customer' ? 'sorted' : ''}`}
+                  data-col="customer"
+                  onClick={() => handleContentSort('customer')}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <span>고객</span>
+                  <SortIndicator field="customer" currentSortField={contentSortField} sortDirection={contentSortOrder} />
+                </div>
+                <div
+                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'date' ? 'sorted' : ''}`}
+                  data-col="date"
+                  onClick={() => handleContentSort('date')}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <span>업로드일</span>
+                  <SortIndicator field="date" currentSortField={contentSortField} sortDirection={contentSortOrder} />
+                </div>
+                <div
+                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'size' ? 'sorted' : ''}`}
+                  data-col="size"
+                  onClick={() => handleContentSort('size')}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <span>크기</span>
+                  <SortIndicator field="size" currentSortField={contentSortField} sortDirection={contentSortOrder} />
+                </div>
+                {lastContentSearchMode === 'semantic' && (
+                  <div
+                    className={`doc-explorer-search-results__col sortable ${contentSortField === 'score' ? 'sorted' : ''}`}
+                    data-col="score"
+                    onClick={() => handleContentSort('score')}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <span>유사도</span>
+                    <SortIndicator field="score" currentSortField={contentSortField} sortDirection={contentSortOrder} />
+                  </div>
+                )}
+              </div>
               <div className="doc-explorer-search-results__list" ref={searchResultsListRef}>
-                {contentSearchResults.map((item, index) => {
+                {sortedContentSearchResults.map((item, index) => {
                   const docId = ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined) || ''
                   const displayName = item.displayName || SearchService.getOriginalName(item)
                   const originalName = SearchService.getOriginalName(item)
                   const summary = SearchService.getSummary(item)
                   const score = 'score' in item ? (item as { score?: number }).score : undefined
                   const customerName = item.customer_relation?.customer_name
+                  const customerType = item.customer_relation?.customer_type
                   const ext = originalName.split('.').pop()?.toLowerCase() || ''
+                  const uploadedAt = ('upload' in item && item.upload?.uploaded_at) ? item.upload.uploaded_at : undefined
+                  const sizeBytes = ('meta' in item && item.meta?.size_bytes) ? item.meta.size_bytes : undefined
 
                   return (
                     <button
@@ -1080,25 +1203,54 @@ const DocumentExplorerContent: React.FC<{
                       <div className="doc-explorer-search-results__item-content">
                         <div className="doc-explorer-search-results__item-top">
                           <span className="doc-explorer-search-results__item-name">{displayName}</span>
-                          {score !== undefined && score > 0 && (
-                            <span className="doc-explorer-search-results__item-score">
-                              {(score * 100).toFixed(0)}%
-                            </span>
-                          )}
                         </div>
-                        {customerName && (
-                          <span className="doc-explorer-search-results__item-customer">
-                            <SFSymbol name="person" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.REGULAR} decorative />
-                            {customerName}
-                          </span>
-                        )}
                         {summary && (
                           <span className="doc-explorer-search-results__item-snippet">
                             {summary.length > 120 ? summary.substring(0, 120) + '...' : summary}
                           </span>
                         )}
                       </div>
-                      {/* 화살표 */}
+                      {/* 고객 — 개인/법인 아이콘 구분 (AllCustomersView 동일 방식) */}
+                      <span className="doc-explorer-search-results__item-customer">
+                        {customerName ? (
+                          <>
+                            {customerType === '법인' ? (
+                              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate" aria-hidden="true">
+                                <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                              </svg>
+                            ) : (
+                              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal" aria-hidden="true">
+                                <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                <circle cx="10" cy="7" r="3" />
+                                <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                              </svg>
+                            )}
+                            {customerName}
+                          </>
+                        ) : (
+                          <span className="doc-explorer-search-results__item-no-customer">-</span>
+                        )}
+                      </span>
+                      {/* 업로드일 */}
+                      <span className="doc-explorer-search-results__item-date">
+                        {uploadedAt ? (
+                          <Tooltip content={formatDateTime(uploadedAt)}>
+                            <span>{formatDate(uploadedAt)}</span>
+                          </Tooltip>
+                        ) : '-'}
+                      </span>
+                      {/* 크기 */}
+                      <span className="doc-explorer-search-results__item-size">
+                        {sizeBytes ? formatFileSize(sizeBytes) : '-'}
+                      </span>
+                      {/* 유사도 (시맨틱만) */}
+                      {lastContentSearchMode === 'semantic' && (
+                        <span className="doc-explorer-search-results__item-score">
+                          {score !== undefined && score > 0 ? `${(score * 100).toFixed(0)}%` : '-'}
+                        </span>
+                      )}
+                      {/* 화살표 (그리드 마지막 요소가 아닌 경우 숨김) */}
                       <SFSymbol
                         name="chevron.right"
                         size={SFSymbolSize.CAPTION_2}
@@ -1110,6 +1262,7 @@ const DocumentExplorerContent: React.FC<{
                   )
                 })}
               </div>
+              </>
             )}
 
             {/* 결과 없음 */}
