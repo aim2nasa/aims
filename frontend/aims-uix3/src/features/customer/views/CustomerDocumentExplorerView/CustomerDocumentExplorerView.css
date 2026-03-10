@@ -301,12 +301,13 @@
   .cde-category__count {
     font-size: 10px;
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
     color: var(--color-text-tertiary);
     background: var(--color-bg-secondary);
     padding: 1px 6px;
     border-radius: 10px;
     flex-shrink: 0;
-    min-width: 28px;
+    min-width: 22px;
     text-align: center;
   }
 
@@ -360,8 +361,12 @@
   .cde-subtype__count {
     font-size: 10px;
     font-weight: 400;
+    font-variant-numeric: tabular-nums;
     color: var(--color-text-tertiary);
     flex-shrink: 0;
+    min-width: 22px;
+    padding: 1px 6px;
+    text-align: center;
   }
 
   /* === 문서 행 === */
