@@ -438,6 +438,7 @@
       /* ext */  32px
       /* size */ 58px
       /* customer */ minmax(50px, 100px)
+      /* doctype */ minmax(50px, 90px)
       /* date */ 106px
       /* badge */ 28px
       /* actions */ 44px;
@@ -498,6 +499,7 @@
       /* ext */  32px
       /* size */ 58px
       /* customer */ minmax(50px, 100px)
+      /* doctype */ minmax(50px, 90px)
       /* date */ 106px
       /* badge */ 28px
       /* actions */ 44px;
@@ -697,6 +699,14 @@
   }
 
   /* Document Date */
+  /* 문서유형 (DocumentTypeCell 래퍼) */
+  .doc-explorer-tree__doc-type {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+  }
+
   .doc-explorer-tree__doc-date {
     font-size: 10px;
     font-weight: 400;

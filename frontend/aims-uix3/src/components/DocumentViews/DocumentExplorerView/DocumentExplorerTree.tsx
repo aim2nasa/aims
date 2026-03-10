@@ -24,6 +24,7 @@ import { useDocumentExplorerKeyboard } from './hooks/useDocumentExplorerKeyboard
 import { getDocumentDate } from './utils/treeBuilders'
 import { HoverPreview } from './components/HoverPreview'
 import { Tooltip } from '@/shared/ui/Tooltip'
+import { DocumentTypeCell } from '@/shared/ui/DocumentTypeCell/DocumentTypeCell'
 
 // 최근 본 문서 아이콘 (시계 + 문서)
 const RecentDocumentsIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -99,6 +100,10 @@ export interface DocumentExplorerTreeProps {
   onOpenFullDetail?: (customerId: string) => void
   /** 고객 하위 폴더 모두 펼치기/접기 */
   onToggleExpandCustomer?: (customerNodeKey: string) => void
+  /** 문서유형 변경 핸들러 */
+  onDocTypeChange?: (documentId: string, newType: string) => void
+  /** 문서유형 변경 중인 문서 ID */
+  updatingDocTypeId?: string | null
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -200,6 +205,8 @@ interface DocumentNodeProps {
   isEditMode?: boolean
   isChecked?: boolean
   onCheckToggle?: (documentId: string) => void
+  onDocTypeChange?: (documentId: string, newType: string) => void
+  updatingDocTypeId?: string | null
 }
 
 const DocumentNode = React.memo<DocumentNodeProps>(({
@@ -225,6 +232,8 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   isEditMode,
   isChecked,
   onCheckToggle,
+  onDocTypeChange,
+  updatingDocTypeId,
 }) => {
   const doc = node.document
   if (!doc) return null
@@ -362,6 +371,19 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
         </span>
       </Tooltip>
 
+      {/* 문서유형 */}
+      <span className="doc-explorer-tree__doc-type" onClick={(e) => e.stopPropagation()}>
+        <DocumentTypeCell
+          documentType={doc.document_type}
+          isAnnualReport={doc.is_annual_report}
+          isCustomerReview={doc.document_type === 'customer_review'}
+          onChange={onDocTypeChange ? (newType) => {
+            if (docId) onDocTypeChange(docId, newType)
+          } : undefined}
+          isUpdating={updatingDocTypeId === docId}
+        />
+      </span>
+
       {/* 날짜/시간 */}
       <Tooltip content={documentDate || '-'} placement="bottom">
         <span
@@ -441,6 +463,8 @@ interface GroupNodeProps {
   onOpenContentSearchModal?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenFullDetail?: (customerId: string) => void
   onToggleExpandCustomer?: (customerNodeKey: string) => void
+  onDocTypeChange?: (documentId: string, newType: string) => void
+  updatingDocTypeId?: string | null
 }
 
 const GroupNode = React.memo<GroupNodeProps>(({
@@ -475,6 +499,8 @@ const GroupNode = React.memo<GroupNodeProps>(({
   onOpenContentSearchModal,
   onOpenFullDetail,
   onToggleExpandCustomer,
+  onDocTypeChange,
+  updatingDocTypeId,
 }) => {
   const isExpanded = expandedKeys.has(node.key)
   const hasChildren = node.children && node.children.length > 0
@@ -733,6 +759,8 @@ const GroupNode = React.memo<GroupNodeProps>(({
               onOpenContentSearchModal={onOpenContentSearchModal}
               onOpenFullDetail={onOpenFullDetail}
               onToggleExpandCustomer={onToggleExpandCustomer}
+              onDocTypeChange={onDocTypeChange}
+              updatingDocTypeId={updatingDocTypeId}
             />
           ))}
         </div>
@@ -779,6 +807,8 @@ interface TreeNodeProps {
   onOpenContentSearchModal?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenFullDetail?: (customerId: string) => void
   onToggleExpandCustomer?: (customerNodeKey: string) => void
+  onDocTypeChange?: (documentId: string, newType: string) => void
+  updatingDocTypeId?: string | null
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -813,6 +843,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onOpenContentSearchModal,
   onOpenFullDetail,
   onToggleExpandCustomer,
+  onDocTypeChange,
+  updatingDocTypeId,
 }) => {
   if (node.type === 'document') {
     const docId = node.document?._id || node.document?.id || ''
@@ -840,6 +872,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
         isEditMode={isEditMode}
         isChecked={selectedDocumentIds?.has(docId)}
         onCheckToggle={onCheckToggle}
+        onDocTypeChange={onDocTypeChange}
+        updatingDocTypeId={updatingDocTypeId}
       />
     )
   }
@@ -876,6 +910,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       onOpenContentSearchModal={onOpenContentSearchModal}
       onOpenFullDetail={onOpenFullDetail}
       onToggleExpandCustomer={onToggleExpandCustomer}
+      onDocTypeChange={onDocTypeChange}
+      updatingDocTypeId={updatingDocTypeId}
     />
   )
 }
@@ -918,6 +954,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onOpenContentSearchModal,
   onOpenFullDetail,
   onToggleExpandCustomer,
+  onDocTypeChange,
+  updatingDocTypeId,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -1251,6 +1289,20 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                     </span>
                   </Tooltip>
 
+                  {/* 문서유형 */}
+                  <span className="doc-explorer-tree__doc-type" onClick={(e) => e.stopPropagation()}>
+                    <DocumentTypeCell
+                      documentType={doc.document_type}
+                      isAnnualReport={doc.is_annual_report}
+                      isCustomerReview={doc.document_type === 'customer_review'}
+                      onChange={onDocTypeChange ? (newType) => {
+                        const id = doc._id || doc.id || ''
+                        if (id) onDocTypeChange(id, newType)
+                      } : undefined}
+                      isUpdating={updatingDocTypeId === (doc._id || doc.id || '')}
+                    />
+                  </span>
+
                   {/* 날짜/시간 */}
                   <Tooltip content={documentDate || '-'} placement="bottom">
                     <span
@@ -1356,6 +1408,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             onOpenContentSearchModal={onOpenContentSearchModal}
             onOpenFullDetail={onOpenFullDetail}
             onToggleExpandCustomer={onToggleExpandCustomer}
+            onDocTypeChange={onDocTypeChange}
+            updatingDocTypeId={updatingDocTypeId}
           />
         ))}
       </div>

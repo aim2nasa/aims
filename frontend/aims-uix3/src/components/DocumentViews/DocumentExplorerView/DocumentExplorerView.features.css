@@ -625,6 +625,11 @@
     width: 80px;
   }
 
+  .doc-explorer-tree__recent-item .doc-explorer-tree__doc-type {
+    flex-shrink: 0;
+    width: 80px;
+  }
+
   .doc-explorer-tree__recent-item .doc-explorer-tree__doc-date {
     flex-shrink: 0;
     width: 110px;

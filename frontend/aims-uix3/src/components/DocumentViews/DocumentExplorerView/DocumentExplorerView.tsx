@@ -777,26 +777,57 @@ const DocumentExplorerContent: React.FC<{
     }
   }, [selectedNotes, fetchExplorerTree, selectedInitial])
 
-  // 문서유형 변경 모달 상태
+  // 문서유형 변경 모달 상태 (컨텍스트 메뉴용)
   const [typePickerVisible, setTypePickerVisible] = useState(false)
   const [typePickerDocument, setTypePickerDocument] = useState<Document | null>(null)
   const typePickerTriggerRef = useRef<HTMLSpanElement>(null)
 
-  // 문서유형 변경 핸들러
+  // 문서유형 변경 중 상태 (인라인 + 컨텍스트 메뉴 공용)
+  const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
+
+  // 문서유형 변경 핸들러 (컨텍스트 메뉴 피커용)
   const handleDocumentTypeChange = useCallback(async (newType: string) => {
     if (!typePickerDocument) return
     const documentId = typePickerDocument._id || typePickerDocument.id || ''
     if (!documentId) return
 
     setTypePickerVisible(false)
+    setUpdatingDocTypeId(documentId)
     try {
       await documentTypesService.updateDocumentType(documentId, newType)
       void fetchExplorerTree(selectedInitial)
     } catch (error) {
       console.error('[DocumentExplorerView] 문서 유형 변경 실패:', error)
       errorReporter.reportApiError(error as Error, { component: 'DocumentExplorerView.handleDocumentTypeChange' })
+      await showAlert({
+        title: '문서유형 변경 실패',
+        message: '문서유형을 변경하지 못했습니다. 잠시 후 다시 시도해주세요.',
+        confirmText: '확인',
+      })
+    } finally {
+      setUpdatingDocTypeId(null)
     }
-  }, [typePickerDocument, fetchExplorerTree, selectedInitial])
+  }, [typePickerDocument, fetchExplorerTree, selectedInitial, showAlert])
+
+  // 문서유형 인라인 변경 핸들러 (DocumentTypeCell용)
+  const handleInlineDocTypeChange = useCallback(async (documentId: string, newType: string) => {
+    if (updatingDocTypeId) return
+    setUpdatingDocTypeId(documentId)
+    try {
+      await documentTypesService.updateDocumentType(documentId, newType)
+      void fetchExplorerTree(selectedInitial)
+    } catch (error) {
+      console.error('[DocumentExplorerView] 문서 유형 변경 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentExplorerView.handleInlineDocTypeChange' })
+      await showAlert({
+        title: '문서유형 변경 실패',
+        message: '문서유형을 변경하지 못했습니다. 잠시 후 다시 시도해주세요.',
+        confirmText: '확인',
+      })
+    } finally {
+      setUpdatingDocTypeId(null)
+    }
+  }, [updatingDocTypeId, fetchExplorerTree, selectedInitial, showAlert])
 
   // 컨텍스트 메뉴 섹션
   const documentContextMenuSections: ContextMenuSection[] = useMemo(() => {
@@ -1400,6 +1431,8 @@ const DocumentExplorerContent: React.FC<{
               navigateToView('customers-full-detail', customerId)
             }}
             onToggleExpandCustomer={toggleExpandCustomer}
+            onDocTypeChange={handleInlineDocTypeChange}
+            updatingDocTypeId={updatingDocTypeId}
           />
         )}
       </div>
