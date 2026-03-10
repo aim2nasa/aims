@@ -226,10 +226,26 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   }, [])
 
   // 🍎 정렬 상태
-  type SortField = 'filename' | 'customer' | 'status' | 'similarity' | null
+  type SortField = 'filetype' | 'filename' | 'customer' | 'status' | 'similarity' | null
   type SortOrder = 'asc' | 'desc'
   const [sortField, setSortField] = useState<SortField>('filename')
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
+
+  // 🍎 파일 유형 라벨 추출
+  const getFileTypeLabel = useCallback((item: SearchResultItem) => {
+    const name = SearchService.getOriginalName(item)
+    const ext = name.split('.').pop()?.toLowerCase() || ''
+    if (ext === 'pdf') return 'PDF'
+    if (ext === 'hwp' || ext === 'hwpx') return 'HWP'
+    if (ext === 'xlsx' || ext === 'xls') return 'XLS'
+    if (ext === 'docx' || ext === 'doc') return 'DOC'
+    if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'IMG'
+    return ext.toUpperCase().slice(0, 3) || 'ETC'
+  }, [])
+
+  // 🍎 페이지네이션 상태
+  const SEARCH_PAGE_SIZE = 20
+  const [searchPage, setSearchPage] = useState(1)
 
   // 🍎 AI 검색 결과가 올 때 자동으로 유사도 내림차순 정렬
   useEffect(() => {
@@ -305,7 +321,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     const sorted = [...results].sort((a, b) => {
       let compareValue = 0
 
-      if (sortField === 'filename') {
+      if (sortField === 'filetype') {
+        compareValue = getFileTypeLabel(a).localeCompare(getFileTypeLabel(b))
+      } else if (sortField === 'filename') {
         // 🍎 filenameMode에 따라 정렬 기준 변경
         const nameA = (filenameMode === 'display' && SearchService.getDisplayName(a)) || SearchService.getOriginalName(a)
         const nameB = (filenameMode === 'display' && SearchService.getDisplayName(b)) || SearchService.getOriginalName(b)
@@ -338,7 +356,19 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     })
 
     return sorted
-  }, [results, sortField, sortOrder, filenameMode])
+  }, [results, sortField, sortOrder, filenameMode, getFileTypeLabel])
+
+  // 🍎 페이지네이션된 결과
+  const totalSearchPages = Math.max(1, Math.ceil(sortedResults.length / SEARCH_PAGE_SIZE))
+  const paginatedResults = useMemo(() => {
+    const start = (searchPage - 1) * SEARCH_PAGE_SIZE
+    return sortedResults.slice(start, start + SEARCH_PAGE_SIZE)
+  }, [sortedResults, searchPage])
+
+  // 🍎 정렬 변경 시 1페이지로 리셋
+  useEffect(() => { setSearchPage(1) }, [sortField, sortOrder])
+  // 🍎 검색 결과 변경 시 1페이지로 리셋
+  useEffect(() => { setSearchPage(1) }, [results])
 
   /**
    * Enter 키 입력 핸들러
@@ -1377,6 +1407,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               {/* 🍎 컬럼 헤더 */}
               <div className="search-results-column-header" data-search-mode={searchMode}>
                 <div className="header-index">#</div>
+                <div
+                  className={`header-filetype sortable ${sortField === 'filetype' ? 'sorted' : ''}`}
+                  onClick={() => handleSort('filetype')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('filetype') } }}
+                  aria-label={`형식으로 정렬 ${sortField === 'filetype' ? (sortOrder === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                >
+                  <span>형식</span>
+                  <SortIndicator field="filetype" currentSortField={sortField} sortDirection={sortOrder} />
+                </div>
                 <div className="header-filename">
                   <div
                     className={`header-filename__sort-area sortable ${sortField === 'filename' ? 'sorted' : ''}`}
@@ -1488,7 +1529,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
               {/* 🍎 iOS Table View 스타일 결과 리스트 */}
               <div className="search-results-table" role="list">
-                {sortedResults.map((item, index) => {
+                {paginatedResults.map((item, index) => {
                   const originalName = SearchService.getOriginalName(item)
                   const displayName = SearchService.getDisplayName(item)
                   const hasDisplay = Boolean(displayName)
@@ -1531,7 +1572,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     >
                       {/* 인덱스 */}
                       <div className="row-index">
-                        <span>[{index + 1}]</span>
+                        <span>[{(searchPage - 1) * SEARCH_PAGE_SIZE + index + 1}]</span>
+                      </div>
+
+                      {/* 형식 */}
+                      <div className="row-filetype">
+                        <span className={`filetype-badge filetype-badge--${getFileTypeLabel(item).toLowerCase()}`}>
+                          {getFileTypeLabel(item)}
+                        </span>
                       </div>
 
                       {/* 파일명 */}
@@ -1856,6 +1904,34 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   )
                 })}
               </div>
+
+              {/* 🍎 페이지네이션 */}
+              {totalSearchPages > 1 && (
+                <div className="search-results-pagination">
+                  <button
+                    type="button"
+                    className="search-results-pagination__btn"
+                    onClick={() => setSearchPage(p => Math.max(1, p - 1))}
+                    disabled={searchPage <= 1}
+                    aria-label="이전 페이지"
+                  >
+                    <SFSymbol name="chevron.left" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.SEMIBOLD} decorative />
+                  </button>
+                  <span className="search-results-pagination__info">
+                    <span className="search-results-pagination__size">{SEARCH_PAGE_SIZE}건씩</span>
+                    {searchPage} / {totalSearchPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="search-results-pagination__btn"
+                    onClick={() => setSearchPage(p => Math.min(totalSearchPages, p + 1))}
+                    disabled={searchPage >= totalSearchPages}
+                    aria-label="다음 페이지"
+                  >
+                    <SFSymbol name="chevron.right" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.SEMIBOLD} decorative />
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             !isLoading && (
