@@ -20,7 +20,7 @@ import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
 import { QuickFamilyAssignPanel } from './QuickFamilyAssignPanel';
 import { errorReporter } from '@/shared/lib/errorReporter';
-import { highlightText as highlightTextUtil } from '@/shared/lib/highlightText';
+import { highlightText } from '@/shared/lib/highlightText';
 import './CustomerRelationshipView.css';
 import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar';
 import { usePersistedState } from '@/hooks/usePersistedState';
@@ -863,11 +863,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     onCustomerDoubleClick?.(customerId);
   }, [onCustomerDoubleClick]);
 
-  // 검색어 하이라이트 함수 (공통 유틸리티 사용)
-  const highlightText = useCallback((text: string) => {
-    return highlightTextUtil(text, searchQuery);
-  }, [searchQuery]);
-
   if (loading) {
     return (
       <CenterPaneView
@@ -1143,7 +1138,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                 onClick={(e) => handleCustomerClick(groupData.representative._id, e)}
                                 onDoubleClick={(e) => handleCustomerDoubleClick(groupData.representative._id, e)}
                               >
-                                👑 {highlightText(representativeName)} (대표)
+                                👑 {highlightText(representativeName, searchQuery)} (대표)
                               </span>
                               {groupData.relations.length > 0 && (
                                 <span
@@ -1182,7 +1177,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                       onClick={(e) => handleCustomerClick(member._id, e)}
                                       onDoubleClick={(e) => handleCustomerDoubleClick(member._id, e)}
                                     >
-                                      {highlightText(member.personal_info?.name || '이름없음')}
+                                      {highlightText(member.personal_info?.name || '이름없음', searchQuery)}
                                       {(() => {
                                         const label = getRelationshipLabel(member._id, groupData.representative._id);
                                         return label ? ` (${label})` : '';
@@ -1268,7 +1263,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                 className={`tree-node__label tree-node__label--clickable ${selectedUnassignedCustomer?._id === customer._id ? "tree-node__label--selected" : ""}`}
                                 onClick={(e) => { e.stopPropagation(); onCustomerSelect?.(null, undefined); setSelectedUnassignedCorporate(null); setSelectedUnassignedCustomer(customer); }}
                               >
-                                {highlightText(customer.personal_info?.name || '이름없음')}
+                                {highlightText(customer.personal_info?.name || '이름없음', searchQuery)}
                               </span>
                             </div>
                           ))}
@@ -1324,7 +1319,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                 onClick={(e) => handleCustomerClick(groupData.company._id, e)}
                                 onDoubleClick={(e) => handleCustomerDoubleClick(groupData.company._id, e)}
                               >
-                                {highlightText(companyName)}
+                                {highlightText(companyName, searchQuery)}
                               </span>
                               <span className="tree-node__badge">{groupData.employees.length}</span>
                             </div>
@@ -1348,7 +1343,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                       onClick={(e) => handleCustomerClick(employee._id, e)}
                                       onDoubleClick={(e) => handleCustomerDoubleClick(employee._id, e)}
                                     >
-                                      {highlightText(employee.personal_info?.name || '이름없음')}
+                                      {highlightText(employee.personal_info?.name || '이름없음', searchQuery)}
                                       {(() => {
                                         const label = getRelationshipLabel(employee._id, companyId);
                                         return label ? ` (${label})` : '';
@@ -1405,7 +1400,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                   setSelectedUnassignedCorporate(customer);
                                 }}
                               >
-                                {highlightText(customer.personal_info?.name || '회사명없음')}
+                                {highlightText(customer.personal_info?.name || '회사명없음', searchQuery)}
                               </span>
                             </div>
                           ))}
