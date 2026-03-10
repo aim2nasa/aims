@@ -138,13 +138,14 @@
   .doc-explorer-search-results__col-header {
     display: grid;
     grid-template-columns:
+      64px                /* 형식 */
       minmax(120px, 1fr)  /* 파일명 (배지+내용) */
       80px                /* 고객 */
       80px                /* 업로드일 */
       56px                /* 크기 */;
     gap: 6px;
     align-items: center;
-    padding: 4px 12px 4px 48px; /* 왼쪽: 배지(28px)+gap(8px)+padding(12px) 맞춤 */
+    padding: 4px 12px;
     background: var(--color-bg-tertiary);
     border-bottom: 1px solid var(--color-border);
     font-size: 10px;
@@ -159,6 +160,7 @@
   /* 시맨틱 검색 시 유사도 칼럼 추가: JS에서 동적 렌더링 */
   .doc-explorer-search-results__col-header:has([data-col="score"]) {
     grid-template-columns:
+      64px                /* 형식 */
       minmax(120px, 1fr)  /* 파일명 */
       80px                /* 고객 */
       80px                /* 업로드일 */
@@ -179,6 +181,7 @@
     border-radius: 3px;
     padding: 2px 4px;
     margin: -2px -4px;
+    white-space: nowrap;
     transition: background 100ms ease, color 100ms ease;
   }
 
@@ -191,6 +194,7 @@
     color: var(--color-accent);
   }
 
+  .doc-explorer-search-results__col[data-col="filetype"],
   .doc-explorer-search-results__col[data-col="customer"],
   .doc-explorer-search-results__col[data-col="date"],
   .doc-explorer-search-results__col[data-col="size"],
@@ -209,7 +213,7 @@
   .doc-explorer-search-results__item {
     display: grid;
     grid-template-columns:
-      28px                /* 파일 배지 */
+      64px                /* 형식 배지 */
       minmax(80px, 1fr)   /* 파일명+요약 */
       80px                /* 고객 */
       80px                /* 업로드일 */
@@ -229,7 +233,7 @@
   /* 시맨틱 검색 시 유사도 칼럼 포함 */
   .doc-explorer-search-results__item:has(.doc-explorer-search-results__item-score) {
     grid-template-columns:
-      28px                /* 파일 배지 */
+      64px                /* 형식 배지 */
       minmax(80px, 1fr)   /* 파일명+요약 */
       80px                /* 고객 */
       80px                /* 업로드일 */
@@ -282,8 +286,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
+    width: 30px;
     height: 16px;
+    margin: 0 auto;
     flex-shrink: 0;
     border-radius: 3px;
     font-size: 9px;
@@ -447,6 +452,60 @@
 
   .doc-explorer-search-results__item-arrow {
     display: none; /* 그리드 레이아웃에서는 불필요 */
+  }
+
+  /* 🍎 페이지네이션 */
+  .doc-explorer-search-results__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 6px 12px;
+    background: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+
+  .doc-explorer-search-results__page-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 100ms ease, opacity 100ms ease;
+  }
+
+  .doc-explorer-search-results__page-btn:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+  }
+
+  .doc-explorer-search-results__page-btn:active:not(:disabled) {
+    background: var(--color-bg-tertiary);
+  }
+
+  .doc-explorer-search-results__page-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .doc-explorer-search-results__page-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-align: center;
+  }
+
+  .doc-explorer-search-results__page-size {
+    font-weight: 400;
+    color: var(--color-text-quaternary);
   }
 
   /* 결과 없음 */

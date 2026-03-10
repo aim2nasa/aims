@@ -310,10 +310,14 @@ const DocumentExplorerContent: React.FC<{
   const contentSearchAbortRef = useRef<AbortController | null>(null)
 
   // === 내용 검색 결과 정렬 상태 ===
-  type ContentSortField = 'filename' | 'customer' | 'date' | 'size' | 'score' | null
+  type ContentSortField = 'filetype' | 'filename' | 'customer' | 'date' | 'size' | 'score' | null
   type ContentSortOrder = 'asc' | 'desc'
   const [contentSortField, setContentSortField] = useState<ContentSortField>(null)
   const [contentSortOrder, setContentSortOrder] = useState<ContentSortOrder>('asc')
+
+  // === 페이지네이션 상태 ===
+  const CONTENT_PAGE_SIZE = 20
+  const [contentPage, setContentPage] = useState(1)
 
   // 정렬 핸들러
   const handleContentSort = useCallback((field: Exclude<ContentSortField, null>) => {
@@ -325,13 +329,27 @@ const DocumentExplorerContent: React.FC<{
     }
   }, [contentSortField])
 
+  // 파일 확장자 → 표시 형식 라벨 (정렬용)
+  const getFileTypeLabel = useCallback((item: SearchResultItem) => {
+    const name = SearchService.getOriginalName(item)
+    const ext = name.split('.').pop()?.toLowerCase() || ''
+    if (ext === 'pdf') return 'PDF'
+    if (ext === 'hwp' || ext === 'hwpx') return 'HWP'
+    if (ext === 'xlsx' || ext === 'xls') return 'XLS'
+    if (ext === 'docx' || ext === 'doc') return 'DOC'
+    if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'IMG'
+    return ext.toUpperCase().slice(0, 3) || 'ETC'
+  }, [])
+
   // 정렬된 결과
   const sortedContentSearchResults = useMemo(() => {
     if (!contentSortField || !contentSearchResults.length) return contentSearchResults
 
     return [...contentSearchResults].sort((a, b) => {
       let cmp = 0
-      if (contentSortField === 'filename') {
+      if (contentSortField === 'filetype') {
+        cmp = getFileTypeLabel(a).localeCompare(getFileTypeLabel(b))
+      } else if (contentSortField === 'filename') {
         const nameA = (a.displayName || SearchService.getOriginalName(a)).toLowerCase()
         const nameB = (b.displayName || SearchService.getOriginalName(b)).toLowerCase()
         cmp = nameA.localeCompare(nameB, 'ko-KR')
@@ -356,10 +374,18 @@ const DocumentExplorerContent: React.FC<{
       }
       return contentSortOrder === 'asc' ? cmp : -cmp
     })
-  }, [contentSearchResults, contentSortField, contentSortOrder])
+  }, [contentSearchResults, contentSortField, contentSortOrder, getFileTypeLabel])
 
-  // 검색 모드 변경 시 정렬 초기화
+  // 페이지네이션 적용된 결과
+  const totalContentPages = Math.max(1, Math.ceil(sortedContentSearchResults.length / CONTENT_PAGE_SIZE))
+  const paginatedContentResults = useMemo(() => {
+    const start = (contentPage - 1) * CONTENT_PAGE_SIZE
+    return sortedContentSearchResults.slice(start, start + CONTENT_PAGE_SIZE)
+  }, [sortedContentSearchResults, contentPage])
+
+  // 검색 모드 변경 시 정렬 초기화 + 페이지 리셋
   useEffect(() => {
+    setContentPage(1)
     if (lastContentSearchMode === 'semantic') {
       setContentSortField('score')
       setContentSortOrder('desc')
@@ -368,6 +394,11 @@ const DocumentExplorerContent: React.FC<{
       setContentSortOrder('asc')
     }
   }, [lastContentSearchMode])
+
+  // 정렬 변경 시 페이지 리셋
+  useEffect(() => {
+    setContentPage(1)
+  }, [contentSortField, contentSortOrder])
 
   // 내용 검색 실행 핸들러
   const handleContentSearch = useCallback(async (query: string) => {
@@ -952,28 +983,28 @@ const DocumentExplorerContent: React.FC<{
 
   useEffect(() => {
     setSearchResultFocusIndex(-1)
-  }, [contentSearchResults])
+  }, [contentSearchResults, contentPage])
 
   const handleSearchResultKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (!contentSearchResults.length) return
+    if (!paginatedContentResults.length) return
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
         setSearchResultFocusIndex(prev =>
-          prev < contentSearchResults.length - 1 ? prev + 1 : 0
+          prev < paginatedContentResults.length - 1 ? prev + 1 : 0
         )
         break
       case 'ArrowUp':
         e.preventDefault()
         setSearchResultFocusIndex(prev =>
-          prev > 0 ? prev - 1 : contentSearchResults.length - 1
+          prev > 0 ? prev - 1 : paginatedContentResults.length - 1
         )
         break
       case 'Enter':
-        if (searchResultFocusIndex >= 0 && contentSearchResults[searchResultFocusIndex]) {
+        if (searchResultFocusIndex >= 0 && paginatedContentResults[searchResultFocusIndex]) {
           e.preventDefault()
-          handleContentSearchResultClick(contentSearchResults[searchResultFocusIndex])
+          handleContentSearchResultClick(paginatedContentResults[searchResultFocusIndex])
         }
         break
       case 'Escape':
@@ -981,7 +1012,7 @@ const DocumentExplorerContent: React.FC<{
         handleCloseContentSearch()
         break
     }
-  }, [contentSearchResults, searchResultFocusIndex, handleCloseContentSearch, handleContentSearchResultClick])
+  }, [paginatedContentResults, searchResultFocusIndex, handleCloseContentSearch, handleContentSearchResultClick])
 
   useEffect(() => {
     if (searchResultFocusIndex >= 0 && searchResultsListRef.current) {
@@ -1123,6 +1154,16 @@ const DocumentExplorerContent: React.FC<{
               {/* 🍎 칼럼 헤더 */}
               <div className="doc-explorer-search-results__col-header">
                 <div
+                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'filetype' ? 'sorted' : ''}`}
+                  data-col="filetype"
+                  onClick={() => handleContentSort('filetype')}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <span>형식</span>
+                  <SortIndicator field="filetype" currentSortField={contentSortField} sortDirection={contentSortOrder} />
+                </div>
+                <div
                   className={`doc-explorer-search-results__col sortable ${contentSortField === 'filename' ? 'sorted' : ''}`}
                   data-col="filename"
                   onClick={() => handleContentSort('filename')}
@@ -1176,7 +1217,7 @@ const DocumentExplorerContent: React.FC<{
                 )}
               </div>
               <div className="doc-explorer-search-results__list" ref={searchResultsListRef}>
-                {sortedContentSearchResults.map((item, index) => {
+                {paginatedContentResults.map((item, index) => {
                   const docId = ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined) || ''
                   const displayName = item.displayName || SearchService.getOriginalName(item)
                   const originalName = SearchService.getOriginalName(item)
@@ -1262,6 +1303,33 @@ const DocumentExplorerContent: React.FC<{
                   )
                 })}
               </div>
+              {/* 🍎 페이지네이션 */}
+              {totalContentPages > 1 && (
+                <div className="doc-explorer-search-results__pagination">
+                  <button
+                    type="button"
+                    className="doc-explorer-search-results__page-btn"
+                    onClick={() => { setContentPage(p => Math.max(1, p - 1)); searchResultsListRef.current?.scrollTo(0, 0) }}
+                    disabled={contentPage <= 1}
+                    aria-label="이전 페이지"
+                  >
+                    <SFSymbol name="chevron.left" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+                  </button>
+                  <span className="doc-explorer-search-results__page-info">
+                    <span className="doc-explorer-search-results__page-size">{CONTENT_PAGE_SIZE}건씩</span>
+                    {contentPage} / {totalContentPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="doc-explorer-search-results__page-btn"
+                    onClick={() => { setContentPage(p => Math.min(totalContentPages, p + 1)); searchResultsListRef.current?.scrollTo(0, 0) }}
+                    disabled={contentPage >= totalContentPages}
+                    aria-label="다음 페이지"
+                  >
+                    <SFSymbol name="chevron.right" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+                  </button>
+                </div>
+              )}
               </>
             )}
 
