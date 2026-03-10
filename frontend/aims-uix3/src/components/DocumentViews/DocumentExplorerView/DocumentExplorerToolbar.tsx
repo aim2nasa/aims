@@ -77,19 +77,35 @@ export interface DocumentExplorerToolbarProps {
   scopeCustomer?: { id: string; name: string; type: '개인' | '법인' } | null
   /** 고객 범위 필터 해제 */
   onScopeCustomerClear?: () => void
+  /** 요약 모드 여부 (초성 미선택) — 칩/placeholder 동적 변경용 */
+  isSummaryMode?: boolean
 }
 
-/** 검색 모드 칩 정의 */
-const SEARCH_MODE_CHIPS: { value: ExplorerSearchMode; label: string; icon: string }[] = [
+/** 검색 모드 칩 정의 — 초성 모드 (문서 트리) */
+const SEARCH_MODE_CHIPS_INITIAL: { value: ExplorerSearchMode; label: string; icon: string }[] = [
   { value: 'filename', label: '파일명', icon: 'doc.text' },
   { value: 'content', label: '내용', icon: 'magnifyingglass' },
   { value: 'semantic', label: 'AI 질문', icon: 'sparkles' },
 ]
 
-/** 검색 모드별 placeholder */
-const SEARCH_MODE_PLACEHOLDERS: Record<ExplorerSearchMode, string> = {
-  filename: '파일명으로 검색...',
+/** 검색 모드 칩 정의 — 요약 모드 (고객 목록) */
+const SEARCH_MODE_CHIPS_SUMMARY: { value: ExplorerSearchMode; label: string; icon: string }[] = [
+  { value: 'filename', label: '고객명', icon: 'person.fill' },
+  { value: 'content', label: '문서 검색', icon: 'magnifyingglass' },
+  { value: 'semantic', label: 'AI 질문', icon: 'sparkles' },
+]
+
+/** 검색 모드별 placeholder — 초성 모드 */
+const SEARCH_MODE_PLACEHOLDERS_INITIAL: Record<ExplorerSearchMode, string> = {
+  filename: '파일명 · 고객명으로 검색...',
   content: '문서 내용 검색...',
+  semantic: 'AI에게 질문하기...',
+}
+
+/** 검색 모드별 placeholder — 요약 모드 */
+const SEARCH_MODE_PLACEHOLDERS_SUMMARY: Record<ExplorerSearchMode, string> = {
+  filename: '고객명으로 검색...',
+  content: '파일명 또는 문서 내용 검색... (Enter)',
   semantic: 'AI에게 질문하기...',
 }
 
@@ -134,7 +150,11 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   selectedCount = 0,
   scopeCustomer,
   onScopeCustomerClear,
+  isSummaryMode = false,
 }) => {
+  // 모드별 칩/placeholder 선택
+  const searchModeChips = isSummaryMode ? SEARCH_MODE_CHIPS_SUMMARY : SEARCH_MODE_CHIPS_INITIAL
+  const searchModePlaceholders = isSummaryMode ? SEARCH_MODE_PLACEHOLDERS_SUMMARY : SEARCH_MODE_PLACEHOLDERS_INITIAL
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const datePickerRef = useRef<HTMLDivElement>(null)
@@ -313,8 +333,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
       {/* 검색 모드 칩 + 입력 */}
       <div className="doc-explorer-toolbar__search-group">
         <div className="doc-explorer-toolbar__mode-chips">
-          {SEARCH_MODE_CHIPS.map((chip) => (
-            <Tooltip key={chip.value} content={chip.value === 'filename' ? '파일명으로 실시간 필터링' : chip.value === 'content' ? '문서 내용에서 키워드 검색 (Enter)' : 'AI가 문서 내용을 이해하여 답변 (Enter)'} placement="bottom">
+          {searchModeChips.map((chip) => (
+            <Tooltip key={chip.value} content={chip.value === 'filename' ? (isSummaryMode ? '고객명으로 실시간 필터링' : '파일명 · 고객명으로 실시간 필터링') : chip.value === 'content' ? (isSummaryMode ? '파일명 또는 문서 내용 검색 (Enter)' : '문서 내용에서 키워드 검색 (Enter)') : 'AI가 문서 내용을 이해하여 답변 (Enter)'} placement="bottom">
               <button
                 type="button"
                 className={`doc-explorer-toolbar__mode-chip ${searchMode === chip.value ? 'doc-explorer-toolbar__mode-chip--active' : ''} ${chip.value === 'semantic' ? 'doc-explorer-toolbar__mode-chip--ai' : ''}`}
@@ -342,7 +362,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
             ref={searchInputRef}
             type="text"
             className="doc-explorer-toolbar__search-input"
-            placeholder={SEARCH_MODE_PLACEHOLDERS[searchMode]}
+            placeholder={searchModePlaceholders[searchMode]}
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}

@@ -1112,6 +1112,7 @@ const DocumentExplorerContent: React.FC<{
           setScopeCustomer(null)
           handleCloseContentSearch()
         }}
+        isSummaryMode={!selectedInitial}
       />
 
       {/* 초성 필터 바 - 검색 결과 표시 중에는 숨김 */}
