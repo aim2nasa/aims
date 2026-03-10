@@ -203,38 +203,43 @@ export function useDocumentExplorerTree({
   // expandedKeys를 Set으로 변환
   const expandedKeysSet = useMemo(() => new Set(expandedKeys), [expandedKeys])
 
-  // 검색어 변경 시 첫 번째 결과로 자동 이동 및 폴더 펼치기
+  // 검색어 변경 시 매칭 문서가 있는 모든 폴더를 자동 펼치기
   useEffect(() => {
     if (!searchTerm || filteredDocuments.length === 0) return
 
-    // 첫 번째 문서 찾기
-    const firstDoc = filteredDocuments[0]
-    const firstDocId = firstDoc._id || firstDoc.id
-    if (!firstDocId) return
-
-    // 해당 문서가 속한 그룹을 찾아서 펼치기
-    const findParentKeys = (nodes: typeof treeData.nodes, targetId: string, path: string[] = []): string[] | null => {
+    // 매칭 문서가 있는 모든 부모 폴더 키를 수집
+    const collectAllParentKeys = (nodes: DocumentTreeNode[]): string[] => {
+      const keys: string[] = []
       for (const node of nodes) {
-        if (node.type === 'document' && (node.document?._id === targetId || node.document?.id === targetId)) {
-          return path
+        if (node.type === 'document') continue
+        if (!node.children || node.children.length === 0) continue
+
+        // 하위에 문서 노드가 있는지 (직접 또는 재귀적으로)
+        const hasDocumentDescendant = (n: DocumentTreeNode): boolean => {
+          if (n.type === 'document') return true
+          return n.children?.some(hasDocumentDescendant) ?? false
         }
-        if (node.children) {
-          const result = findParentKeys(node.children, targetId, [...path, node.key])
-          if (result) return result
+
+        if (hasDocumentDescendant(node)) {
+          keys.push(node.key)
+          // 자식 폴더도 재귀 수집
+          keys.push(...collectAllParentKeys(node.children))
         }
       }
-      return null
+      return keys
     }
 
-    const parentKeys = findParentKeys(treeData.nodes, firstDocId)
-    if (parentKeys && parentKeys.length > 0) {
-      setExpandedKeys((prev) => {
-        const newSet = new Set(prev)
-        parentKeys.forEach((key) => newSet.add(key))
-        return Array.from(newSet)
-      })
+    const allParentKeys = collectAllParentKeys(treeData.nodes)
+    if (allParentKeys.length > 0) {
+      setExpandedKeys(allParentKeys)
     }
-    setSelectedDocumentId(firstDocId)
+
+    // 첫 번째 문서 선택
+    const firstDoc = filteredDocuments[0]
+    const firstDocId = firstDoc._id || firstDoc.id
+    if (firstDocId) {
+      setSelectedDocumentId(firstDocId)
+    }
   }, [searchTerm, filteredDocuments, treeData.nodes, setExpandedKeys])
 
   // 분류 기준 변경 (확장 상태 초기화)
