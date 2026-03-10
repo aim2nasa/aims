@@ -78,7 +78,7 @@ interface SearchDocument {
 }
 
 interface ExplorerTreeData {
-  customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string | null; customerType?: string | null }>
+  customers: Array<{ customerId: string; name: string; initial: string; docCount: number; latestUpload: string | null; customerType?: string | null; matchedDocCount?: number; nameMatched?: boolean }>
   totalCustomers: number
   totalDocuments: number
   initials: Record<string, number>
@@ -644,6 +644,7 @@ const DocumentExplorerContent: React.FC<{
 
     const nodes: DocumentTreeNode[] = customers.map(c => {
       const matchedDocs = searchDocsByCustomer.get(c.customerId) || []
+      const totalMatchCount = c.matchedDocCount || matchedDocs.length
       const children: DocumentTreeNode[] = matchedDocs.map(doc => ({
         key: `search-doc-${doc._id}`,
         label: doc.displayName || doc.originalName,
@@ -664,17 +665,31 @@ const DocumentExplorerContent: React.FC<{
           },
         } as unknown as Document,
       }))
+      // 인라인 표시(최대 5건)보다 전체 매칭 건수가 많으면 "더 보기" 노드 추가
+      if (totalMatchCount > matchedDocs.length) {
+        children.push({
+          key: `more-docs-${c.customerId}`,
+          label: `${totalMatchCount - matchedDocs.length}건 더 보기...`,
+          type: 'subgroup' as const,
+          icon: 'ellipsis',
+          metadata: {
+            customerId: c.customerId,
+            isSpecial: true,
+          },
+        })
+      }
 
       return {
         key: `customer-${c.customerId}`,
         label: c.name,
         type: 'group' as const,
         icon: c.customerType === '법인' ? 'building.2.fill' : 'person.fill',
-        count: c.docCount,
+        count: totalMatchCount > 0 ? totalMatchCount : c.docCount,
         children,
         metadata: {
           customerId: c.customerId,
           customerType: (c.customerType === '법인' ? 'corporate' : 'personal') as 'personal' | 'corporate',
+          nameMatched: c.nameMatched || false,
         }
       }
     })

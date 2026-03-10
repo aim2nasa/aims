@@ -742,7 +742,7 @@ router.get('/documents/status/initials', authenticateJWT, async (req, res) => {
  */
 router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) => {
   try {
-    const { fileScope = 'excludeMyFiles', initial } = req.query;
+    const { fileScope = 'excludeMyFiles', initial, search } = req.query;
     const userId = req.user.id;
 
     // fileScope 필터 구성 (initials 엔드포인트와 동일 패턴)
@@ -933,9 +933,115 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
       if (!documents) documents = [];
     }
 
+    // 5. search 파라미터: 고객명 + 파일명 통합 검색
+    let searchDocuments = undefined;
+    let filteredCustomerList = customerList;
+
+    if (search && typeof search === 'string' && search.trim().length > 0) {
+      const searchTerm = search.trim();
+      const searchRegex = new RegExp(escapeRegex(searchTerm), 'i');
+
+      // 고객명 매칭 고객 ID Set
+      const nameMatchedIds = new Set(
+        customerList.filter(c => searchRegex.test(c.name)).map(c => c.customerId)
+      );
+
+      // 파일명 매칭 문서 검색 (displayName 또는 originalName)
+      const allCustomerObjectIds = customerList
+        .map(c => toSafeObjectId(c.customerId))
+        .filter(id => id !== null);
+
+      // allCustomerObjectIds는 이미 ownerId 기반 집계(1단계)로 도출되었으므로
+      // ownerId + customerId $in 조건만으로 데이터 격리 보장
+      const searchFilter = {
+        ownerId: userId,
+        customerId: { $in: allCustomerObjectIds },
+        $or: [
+          { displayName: { $regex: searchRegex } },
+          { 'upload.originalName': { $regex: searchRegex } }
+        ]
+      };
+
+      const matchedDocs = await db.collection(COLLECTION_NAME).aggregate([
+        { $match: searchFilter },
+        { $sort: { 'upload.uploaded_at': -1 } },
+        // 고객별 최대 5건씩만 (인라인 미리보기용)
+        { $group: {
+          _id: '$customerId',
+          docs: { $push: {
+            _id: '$_id',
+            displayName: '$displayName',
+            originalName: { $ifNull: ['$upload.originalName', 'Unknown File'] },
+            uploadedAt: { $ifNull: ['$upload.uploaded_at', null] },
+            fileSize: { $ifNull: ['$meta.size_bytes', null] },
+            mimeType: { $ifNull: ['$meta.mime', null] },
+            document_type: { $ifNull: ['$document_type', { $ifNull: ['$meta.document_type', null] }] },
+            badgeType: '$badgeType'
+          }},
+          totalCount: { $sum: 1 }
+        }},
+        { $project: {
+          docs: { $slice: ['$docs', 5] },
+          totalCount: 1
+        }}
+      ]).toArray();
+
+      // 파일명 매칭된 고객 ID Set
+      const docMatchedIds = new Set(matchedDocs.map(g => String(g._id)));
+
+      // searchDocuments 평탄화 (고객별 최대 5건)
+      searchDocuments = [];
+      matchedDocs.forEach(group => {
+        const cid = String(group._id);
+        const cName = customerNameMap.get(cid) || '';
+        group.docs.forEach(doc => {
+          searchDocuments.push({
+            _id: String(doc._id),
+            displayName: doc.displayName || null,
+            originalName: doc.originalName,
+            uploadedAt: doc.uploadedAt ? normalizeTimestamp(doc.uploadedAt) : null,
+            fileSize: doc.fileSize,
+            mimeType: doc.mimeType,
+            customerId: cid,
+            customerName: cName,
+            document_type: doc.document_type,
+            badgeType: doc.badgeType || 'BIN',
+          });
+        });
+      });
+
+      // 고객명 매칭 OR 파일명 매칭된 고객만 필터
+      filteredCustomerList = customerList.filter(c =>
+        nameMatchedIds.has(c.customerId) || docMatchedIds.has(c.customerId)
+      );
+
+      // 고객별 매칭 문서 수 맵
+      const docMatchCountMap = new Map(matchedDocs.map(g => [String(g._id), g.totalCount]));
+
+      // 고객 리스트에 matchedDocCount + nameMatched 플래그 추가
+      filteredCustomerList = filteredCustomerList.map(c => ({
+        ...c,
+        matchedDocCount: docMatchCountMap.get(c.customerId) || 0,
+        nameMatched: nameMatchedIds.has(c.customerId),
+      }));
+
+      // 정렬: 고객명 매칭 우선 → 매칭 문서 수 내림차순 → 이름순
+      filteredCustomerList.sort((a, b) => {
+        // 1) 고객명 매칭 고객 우선
+        if (a.nameMatched && !b.nameMatched) return -1;
+        if (!a.nameMatched && b.nameMatched) return 1;
+        // 2) 매칭 문서 수 내림차순
+        const countA = a.matchedDocCount || 0;
+        const countB = b.matchedDocCount || 0;
+        if (countB !== countA) return countB - countA;
+        // 3) 이름순
+        return a.name.localeCompare(b.name, 'ko');
+      });
+    }
+
     const responseData = {
-      customers: customerList,
-      totalCustomers: customerList.length,
+      customers: filteredCustomerList,
+      totalCustomers: filteredCustomerList.length,
       totalDocuments,
       initials
     };
@@ -943,6 +1049,11 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
     // initial이 지정된 경우에만 documents 포함
     if (documents !== undefined) {
       responseData.documents = documents;
+    }
+
+    // search 결과 포함
+    if (searchDocuments !== undefined) {
+      responseData.searchDocuments = searchDocuments;
     }
 
     res.json({ success: true, data: responseData });
