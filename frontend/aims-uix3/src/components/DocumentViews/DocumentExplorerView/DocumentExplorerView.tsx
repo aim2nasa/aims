@@ -42,7 +42,6 @@ import './DocumentExplorerView.mobile.css';
 import { useDocumentActions } from '@/hooks/useDocumentActions'
 import { api } from '@/shared/lib/api'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
-import { DocumentContentSearchModal } from '@/features/customer/components/DocumentContentSearchModal/DocumentContentSearchModal'
 
 export interface DocumentExplorerViewProps {
   /** View 표시 여부 */
@@ -188,11 +187,11 @@ const DocumentExplorerContent: React.FC<{
     onCustomerClick?.(customerId)
   }, [onCustomerClick])
 
-  // 간편 문서 검색 모달 상태
-  const [contentSearchModalOpen, setContentSearchModalOpen] = useState(false)
-  const [contentSearchCustomerId, setContentSearchCustomerId] = useState('')
-  const [contentSearchCustomerName, setContentSearchCustomerName] = useState('')
-  const [contentSearchCustomerType, setContentSearchCustomerType] = useState<'개인' | '법인'>('개인')
+  // 고객 범위 검색 (특정 고객의 문서만 검색)
+  const [scopeCustomer, setScopeCustomer] = useState<{ id: string; name: string; type: '개인' | '법인' } | null>(null)
+
+  // === 내용 검색 / AI 질문 상태 (컨텍스트 메뉴보다 먼저 선언) ===
+  const [explorerSearchMode, setExplorerSearchMode] = usePersistedState<ExplorerSearchMode>('doc-explorer-search-mode', 'filename')
 
   // 고객 컨텍스트 메뉴 — 뷰 네비게이션 핸들러
   const navigateToView = useCallback((view: string, customerId: string) => {
@@ -259,7 +258,7 @@ const DocumentExplorerContent: React.FC<{
           },
           {
             id: 'content-search',
-            label: '간편 문서 검색',
+            label: '이 고객 문서 검색',
             icon: (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" />
@@ -267,16 +266,19 @@ const DocumentExplorerContent: React.FC<{
               </svg>
             ),
             onClick: () => {
-              setContentSearchCustomerId(contextMenuCustomer.id)
-              setContentSearchCustomerName(contextMenuCustomer.name)
-              setContentSearchCustomerType(contextMenuCustomer.customerType || '개인')
-              setContentSearchModalOpen(true)
+              setScopeCustomer({
+                id: contextMenuCustomer.id,
+                name: contextMenuCustomer.name,
+                type: contextMenuCustomer.customerType || '개인'
+              })
+              // 내용 검색 모드로 전환 (파일명 모드일 때만)
+              setExplorerSearchMode(prev => prev === 'filename' ? 'content' : prev)
             }
           }
         ]
       }
     ]
-  }, [contextMenuCustomer, onCustomerClick, navigateToView])
+  }, [contextMenuCustomer, onCustomerClick, navigateToView, setExplorerSearchMode])
 
   // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
@@ -289,8 +291,7 @@ const DocumentExplorerContent: React.FC<{
     localStorage.setItem('aims-filename-mode', mode)
   }, [])
 
-  // === 내용 검색 / AI 질문 상태 ===
-  const [explorerSearchMode, setExplorerSearchMode] = usePersistedState<ExplorerSearchMode>('doc-explorer-search-mode', 'filename')
+  // === 내용 검색 / AI 질문 결과 상태 ===
   const [contentSearchResults, setContentSearchResults] = useState<SearchResultItem[]>([])
   const [contentSearchAnswer, setContentSearchAnswer] = useState<string | null>(null)
   const [isContentSearching, setIsContentSearching] = useState(false)
@@ -319,6 +320,7 @@ const DocumentExplorerContent: React.FC<{
         query: query.trim(),
         search_mode: explorerSearchMode === 'semantic' ? 'semantic' as const : 'keyword' as const,
         ...(explorerSearchMode === 'content' && { mode: 'AND' as const }),
+        ...(scopeCustomer && { customer_id: scopeCustomer.id }),
       }
       const response = await SearchService.searchDocuments(searchQuery, controller.signal)
       setContentSearchResults(response.search_results)
@@ -337,7 +339,7 @@ const DocumentExplorerContent: React.FC<{
         contentSearchAbortRef.current = null
       }
     }
-  }, [explorerSearchMode])
+  }, [explorerSearchMode, scopeCustomer])
 
   // 검색 모드 전환 시 결과 초기화
   const handleExplorerSearchModeChange = useCallback((mode: ExplorerSearchMode) => {
@@ -861,20 +863,62 @@ const DocumentExplorerContent: React.FC<{
     void fetchExplorerTree(selectedInitial)
   }, [fetchExplorerTree, selectedInitial])
 
-  // 내용 검색 결과에서 문서 클릭 → 트리에서 해당 문서 위치로 이동
+  // 내용 검색 결과에서 문서 클릭 → RightPane 프리뷰 + 트리 이동
   const handleContentSearchResultClick = useCallback((item: SearchResultItem) => {
     const docId = ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined) || (('payload' in item && item.payload?.doc_id) ? item.payload.doc_id : '')
     if (!docId) return
 
-    // RightPane 프리뷰
     onDocumentClick?.(docId)
 
-    // 트리에서 해당 문서로 이동 (초성이 선택되어 있고 문서가 로드된 상태에서만)
     if (selectedInitial && documents.length > 0) {
       setSelectedDocumentId(docId)
       expandToDocument(docId)
     }
   }, [onDocumentClick, selectedInitial, documents.length, setSelectedDocumentId, expandToDocument])
+
+  // 검색 결과 키보드 네비게이션
+  const [searchResultFocusIndex, setSearchResultFocusIndex] = useState(-1)
+  const searchResultsListRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setSearchResultFocusIndex(-1)
+  }, [contentSearchResults])
+
+  const handleSearchResultKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!contentSearchResults.length) return
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setSearchResultFocusIndex(prev =>
+          prev < contentSearchResults.length - 1 ? prev + 1 : 0
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setSearchResultFocusIndex(prev =>
+          prev > 0 ? prev - 1 : contentSearchResults.length - 1
+        )
+        break
+      case 'Enter':
+        if (searchResultFocusIndex >= 0 && contentSearchResults[searchResultFocusIndex]) {
+          e.preventDefault()
+          handleContentSearchResultClick(contentSearchResults[searchResultFocusIndex])
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        handleCloseContentSearch()
+        break
+    }
+  }, [contentSearchResults, searchResultFocusIndex, handleCloseContentSearch, handleContentSearchResultClick])
+
+  useEffect(() => {
+    if (searchResultFocusIndex >= 0 && searchResultsListRef.current) {
+      const items = searchResultsListRef.current.querySelectorAll('.doc-explorer-search-results__item')
+      items[searchResultFocusIndex]?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [searchResultFocusIndex])
 
   return (
     <div className="doc-explorer-content">
@@ -909,119 +953,169 @@ const DocumentExplorerContent: React.FC<{
         onSearchModeChange={handleExplorerSearchModeChange}
         onContentSearch={handleContentSearch}
         isContentSearching={isContentSearching}
+        onContentSearchClear={handleCloseContentSearch}
         editMode={editMode}
         onEditModeChange={handleEditModeChange}
         selectedCount={selectedDocumentIds.size}
+        scopeCustomer={scopeCustomer}
+        onScopeCustomerClear={() => {
+          setScopeCustomer(null)
+          handleCloseContentSearch()
+        }}
       />
 
-      {/* 내용 검색 / AI 질문 결과 패널 */}
-      {(contentSearchResults.length > 0 || contentSearchError || lastContentSearchMode) && (
-        <div className="doc-explorer-content-search-panel">
-          <div className="doc-explorer-content-search-panel__header">
-            <span className="doc-explorer-content-search-panel__title">
-              {lastContentSearchMode === 'semantic' ? 'AI 질문 결과' : '내용 검색 결과'}
-              <span className="doc-explorer-content-search-panel__count">
-                {contentSearchResults.length}건
-              </span>
-            </span>
-            <button
-              type="button"
-              className="doc-explorer-content-search-panel__close"
-              onClick={handleCloseContentSearch}
-              aria-label="검색 결과 닫기"
-            >
-              <SFSymbol
-                name="xmark"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-              />
-            </button>
-          </div>
-
-          {/* AI 답변 (시맨틱 모드) */}
-          {contentSearchAnswer && (
-            <div className="doc-explorer-content-search-panel__answer">
-              <SFSymbol
-                name="sparkles"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-                decorative
-              />
-              <span>{contentSearchAnswer}</span>
-            </div>
-          )}
-
-          {/* 에러 표시 */}
-          {contentSearchError && (
-            <div className="doc-explorer-content-search-panel__error">
-              {contentSearchError}
-            </div>
-          )}
-
-          {/* 검색 결과 목록 */}
-          {contentSearchResults.length > 0 && (
-            <div className="doc-explorer-content-search-panel__list">
-              {contentSearchResults.map((item, index) => {
-                const docId = ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined) || ''
-                const displayName = item.displayName || SearchService.getOriginalName(item)
-                const summary = SearchService.getSummary(item)
-                const score = 'score' in item ? (item as { score?: number }).score : undefined
-                const customerName = item.customer_relation?.customer_name
-
-                return (
-                  <button
-                    key={docId || index}
-                    type="button"
-                    className="doc-explorer-content-search-panel__item"
-                    onClick={() => handleContentSearchResultClick(item)}
-                  >
-                    <div className="doc-explorer-content-search-panel__item-header">
-                      <span className="doc-explorer-content-search-panel__item-name" title={displayName}>
-                        {displayName}
-                      </span>
-                      {score !== undefined && score > 0 && (
-                        <span className="doc-explorer-content-search-panel__item-score">
-                          {(score * 100).toFixed(0)}%
-                        </span>
-                      )}
-                    </div>
-                    {customerName && (
-                      <span className="doc-explorer-content-search-panel__item-customer">
-                        {customerName}
-                      </span>
-                    )}
-                    <span className="doc-explorer-content-search-panel__item-summary">
-                      {summary.length > 80 ? summary.substring(0, 80) + '...' : summary}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-
-          {/* 결과 없음 */}
-          {contentSearchResults.length === 0 && !contentSearchError && lastContentSearchMode && !isContentSearching && (
-            <div className="doc-explorer-content-search-panel__empty">
-              검색 결과가 없습니다.
-            </div>
-          )}
-        </div>
+      {/* 초성 필터 바 - 검색 결과 표시 중에는 숨김 */}
+      {!lastContentSearchMode && (
+        <InitialFilterBar
+          initialType={initialType}
+          onInitialTypeChange={onInitialTypeChange}
+          selectedInitial={selectedInitial}
+          onSelectedInitialChange={onSelectedInitialChange}
+          initialCounts={serverInitialCounts}
+          countLabel="건"
+          targetLabel="고객"
+        />
       )}
 
-      {/* 초성 필터 바 - 공용 컴포넌트 사용 */}
-      <InitialFilterBar
-        initialType={initialType}
-        onInitialTypeChange={onInitialTypeChange}
-        selectedInitial={selectedInitial}
-        onSelectedInitialChange={onSelectedInitialChange}
-        initialCounts={serverInitialCounts}
-        countLabel="건"
-        targetLabel="고객"
-      />
-
-      {/* 트리 뷰 */}
+      {/* 트리 뷰 또는 검색 결과 (트리 영역을 대체) */}
       <div className="doc-explorer-tree-container">
-        {isLoading && !explorerData ? (
+        {/* 내용 검색 / AI 질문 결과 — 트리 영역 전체를 대체 */}
+        {lastContentSearchMode ? (
+          <div className="doc-explorer-search-results" tabIndex={0} onKeyDown={handleSearchResultKeyDown}>
+            {/* 결과 헤더 */}
+            <div className="doc-explorer-search-results__header">
+              <div className="doc-explorer-search-results__header-left">
+                <SFSymbol
+                  name={lastContentSearchMode === 'semantic' ? 'sparkles' : 'magnifyingglass'}
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative
+                />
+                <span className="doc-explorer-search-results__title">
+                  {lastContentSearchMode === 'semantic' ? 'AI 질문 결과' : '내용 검색 결과'}
+                </span>
+                <span className="doc-explorer-search-results__count">
+                  {contentSearchResults.length}건
+                </span>
+                {scopeCustomer && (
+                  <span className="doc-explorer-search-results__scope-badge">
+                    {scopeCustomer.name}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="doc-explorer-search-results__back"
+                onClick={handleCloseContentSearch}
+                aria-label="검색 결과 닫기"
+              >
+                <SFSymbol
+                  name="xmark.circle.fill"
+                  size={SFSymbolSize.FOOTNOTE}
+                  weight={SFSymbolWeight.REGULAR}
+                />
+              </button>
+            </div>
+
+            {/* AI 답변 (시맨틱 모드) */}
+            {contentSearchAnswer && (
+              <div className="doc-explorer-search-results__answer">
+                <SFSymbol
+                  name="sparkles"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  className="doc-explorer-search-results__answer-icon"
+                  decorative
+                />
+                <span>{contentSearchAnswer}</span>
+              </div>
+            )}
+
+            {/* 에러 표시 */}
+            {contentSearchError && (
+              <div className="doc-explorer-search-results__error">
+                <SFSymbol name="exclamationmark.triangle" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.REGULAR} decorative />
+                <span>{contentSearchError}</span>
+              </div>
+            )}
+
+            {/* 로딩 중 */}
+            {isContentSearching && (
+              <div className="doc-explorer-search-results__loading">
+                <div className="doc-explorer-search-results__loading-spinner" />
+                <span>검색 중...</span>
+              </div>
+            )}
+
+            {/* 검색 결과 목록 */}
+            {contentSearchResults.length > 0 && (
+              <div className="doc-explorer-search-results__list" ref={searchResultsListRef}>
+                {contentSearchResults.map((item, index) => {
+                  const docId = ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined) || ''
+                  const displayName = item.displayName || SearchService.getOriginalName(item)
+                  const originalName = SearchService.getOriginalName(item)
+                  const summary = SearchService.getSummary(item)
+                  const score = 'score' in item ? (item as { score?: number }).score : undefined
+                  const customerName = item.customer_relation?.customer_name
+                  const ext = originalName.split('.').pop()?.toLowerCase() || ''
+
+                  return (
+                    <button
+                      key={docId || index}
+                      type="button"
+                      className={`doc-explorer-search-results__item ${selectedDocumentId === docId ? 'doc-explorer-search-results__item--selected' : ''} ${searchResultFocusIndex === index ? 'doc-explorer-search-results__item--focused' : ''}`}
+                      onClick={() => handleContentSearchResultClick(item)}
+                    >
+                      {/* 파일 타입 배지 */}
+                      <span className={`doc-explorer-search-results__file-badge doc-explorer-search-results__file-badge--${ext === 'pdf' ? 'pdf' : ext === 'hwp' || ext === 'hwpx' ? 'hwp' : ext === 'xlsx' || ext === 'xls' ? 'excel' : ext === 'docx' || ext === 'doc' ? 'word' : ext === 'jpg' || ext === 'jpeg' || ext === 'png' ? 'image' : 'other'}`}>
+                        {ext === 'pdf' ? 'PDF' : ext === 'hwp' || ext === 'hwpx' ? 'HWP' : ext === 'xlsx' || ext === 'xls' ? 'XLS' : ext === 'docx' || ext === 'doc' ? 'DOC' : ext === 'jpg' || ext === 'jpeg' || ext === 'png' ? 'IMG' : ext.toUpperCase().slice(0, 3)}
+                      </span>
+                      {/* 문서 정보 */}
+                      <div className="doc-explorer-search-results__item-content">
+                        <div className="doc-explorer-search-results__item-top">
+                          <span className="doc-explorer-search-results__item-name">{displayName}</span>
+                          {score !== undefined && score > 0 && (
+                            <span className="doc-explorer-search-results__item-score">
+                              {(score * 100).toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+                        {customerName && (
+                          <span className="doc-explorer-search-results__item-customer">
+                            <SFSymbol name="person" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.REGULAR} decorative />
+                            {customerName}
+                          </span>
+                        )}
+                        {summary && (
+                          <span className="doc-explorer-search-results__item-snippet">
+                            {summary.length > 120 ? summary.substring(0, 120) + '...' : summary}
+                          </span>
+                        )}
+                      </div>
+                      {/* 화살표 */}
+                      <SFSymbol
+                        name="chevron.right"
+                        size={SFSymbolSize.CAPTION_2}
+                        weight={SFSymbolWeight.REGULAR}
+                        className="doc-explorer-search-results__item-arrow"
+                        decorative
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* 결과 없음 */}
+            {contentSearchResults.length === 0 && !contentSearchError && !isContentSearching && (
+              <div className="doc-explorer-search-results__empty">
+                <SFSymbol name="doc.text.magnifyingglass" size={SFSymbolSize.TITLE_3} weight={SFSymbolWeight.ULTRALIGHT} decorative />
+                <span>검색 결과가 없습니다</span>
+                <span className="doc-explorer-search-results__empty-hint">다른 키워드로 다시 검색해 보세요</span>
+              </div>
+            )}
+          </div>
+        ) : isLoading && !explorerData ? (
           <div className="doc-explorer-loading">
             <div className="doc-explorer-loading__spinner" />
             <p>문서를 불러오는 중...</p>
@@ -1058,10 +1152,14 @@ const DocumentExplorerContent: React.FC<{
             onCustomerDetailClick={handleCustomerDetailClick}
             onCustomerExplorerClick={onCustomerExplorerClick}
             onOpenQuickSearch={(customerId, customerName, customerType) => {
-              setContentSearchCustomerId(customerId)
-              setContentSearchCustomerName(customerName)
-              setContentSearchCustomerType(customerType || '개인')
-              setContentSearchModalOpen(true)
+              setScopeCustomer({
+                id: customerId,
+                name: customerName,
+                type: customerType || '개인'
+              })
+              if (explorerSearchMode === 'filename') {
+                handleExplorerSearchModeChange('content')
+              }
             }}
             onOpenFullDetail={(customerId) => {
               navigateToView('customers-full-detail', customerId)
@@ -1195,14 +1293,6 @@ const DocumentExplorerContent: React.FC<{
         onClose={() => setTypePickerVisible(false)}
       />
 
-      {/* 간편 문서 검색 모달 (고객 컨텍스트 메뉴에서 열림) */}
-      <DocumentContentSearchModal
-        isOpen={contentSearchModalOpen}
-        onClose={() => setContentSearchModalOpen(false)}
-        customerId={contentSearchCustomerId}
-        customerName={contentSearchCustomerName}
-        customerType={contentSearchCustomerType}
-      />
     </div>
   )
 }
