@@ -91,8 +91,10 @@ export interface DocumentExplorerTreeProps {
   onCustomerDetailClick?: (customerId: string, customerName: string) => void
   /** 고객 문서 분류함 열기 (미니 카드 "분류함" 버튼) */
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
-  /** 간편 문서 검색 모달 열기 */
+  /** 간편 검색 (인라인 범위 필터) */
   onOpenQuickSearch?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
+  /** 문서 내용 검색 모달 열기 */
+  onOpenContentSearchModal?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   /** 전체 정보 보기 (URL 네비게이션) */
   onOpenFullDetail?: (customerId: string) => void
   /** 고객 하위 폴더 모두 펼치기/접기 */
@@ -436,6 +438,7 @@ interface GroupNodeProps {
   onCustomerDetailClick?: (customerId: string, customerName: string) => void
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenQuickSearch?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
+  onOpenContentSearchModal?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenFullDetail?: (customerId: string) => void
   onToggleExpandCustomer?: (customerNodeKey: string) => void
 }
@@ -469,6 +472,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
   onCustomerDetailClick,
   onCustomerExplorerClick,
   onOpenQuickSearch,
+  onOpenContentSearchModal,
   onOpenFullDetail,
   onToggleExpandCustomer,
 }) => {
@@ -592,21 +596,21 @@ const GroupNode = React.memo<GroupNodeProps>(({
             </Tooltip>
             {showActionMenu && (
               <div className="doc-explorer-tree__customer-action-menu">
-                {/* 간편 검색 (가장 자주 사용) */}
-                {onOpenQuickSearch && (
+                {/* 간편 문서 검색 (모달) */}
+                {onOpenContentSearchModal && (
                   <button
                     type="button"
                     className="doc-explorer-tree__customer-action-item"
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowActionMenu(false)
-                      onOpenQuickSearch(node.metadata!.customerId!, node.label, node.metadata!.customerType === 'corporate' ? '법인' : '개인')
+                      onOpenContentSearchModal(node.metadata!.customerId!, node.label, node.metadata!.customerType === 'corporate' ? '법인' : '개인')
                     }}
                   >
                     <span className="doc-explorer-tree__customer-action-icon">
                       <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
-                    간편 검색
+                    간편 문서 검색
                   </button>
                 )}
                 {/* 하위 폴더 모두 펼치기/접기 */}
@@ -627,7 +631,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                   </button>
                 )}
                 {/* 구분선: 위쪽 항목이 하나라도 있을 때만 표시 */}
-                {(onOpenQuickSearch || (onToggleExpandCustomer && hasChildren)) && (
+                {(onOpenContentSearchModal || (onToggleExpandCustomer && hasChildren)) && (
                   <div className="doc-explorer-tree__customer-action-divider" />
                 )}
                 {/* 문서 분류함 */}
@@ -725,6 +729,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
               onCustomerDetailClick={onCustomerDetailClick}
               onCustomerExplorerClick={onCustomerExplorerClick}
               onOpenQuickSearch={onOpenQuickSearch}
+              onOpenContentSearchModal={onOpenContentSearchModal}
               onOpenFullDetail={onOpenFullDetail}
               onToggleExpandCustomer={onToggleExpandCustomer}
             />
@@ -770,6 +775,7 @@ interface TreeNodeProps {
   onCustomerDetailClick?: (customerId: string, customerName: string) => void
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenQuickSearch?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
+  onOpenContentSearchModal?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   onOpenFullDetail?: (customerId: string) => void
   onToggleExpandCustomer?: (customerNodeKey: string) => void
 }
@@ -803,6 +809,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onCustomerDetailClick,
   onCustomerExplorerClick,
   onOpenQuickSearch,
+  onOpenContentSearchModal,
   onOpenFullDetail,
   onToggleExpandCustomer,
 }) => {
@@ -865,6 +872,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       onCustomerDetailClick={onCustomerDetailClick}
       onCustomerExplorerClick={onCustomerExplorerClick}
       onOpenQuickSearch={onOpenQuickSearch}
+      onOpenContentSearchModal={onOpenContentSearchModal}
       onOpenFullDetail={onOpenFullDetail}
       onToggleExpandCustomer={onToggleExpandCustomer}
     />
@@ -906,6 +914,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onCustomerDetailClick,
   onCustomerExplorerClick,
   onOpenQuickSearch,
+  onOpenContentSearchModal,
   onOpenFullDetail,
   onToggleExpandCustomer,
 }) => {
@@ -1343,6 +1352,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             onCustomerDetailClick={onCustomerDetailClick}
             onCustomerExplorerClick={onCustomerExplorerClick}
             onOpenQuickSearch={onOpenQuickSearch}
+            onOpenContentSearchModal={onOpenContentSearchModal}
             onOpenFullDetail={onOpenFullDetail}
             onToggleExpandCustomer={onToggleExpandCustomer}
           />

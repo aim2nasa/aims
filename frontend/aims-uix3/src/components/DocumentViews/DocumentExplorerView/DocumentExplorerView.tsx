@@ -28,6 +28,7 @@ import { DocumentSummaryModal } from '../DocumentStatusView/components/DocumentS
 import { DocumentFullTextModal } from '../DocumentStatusView/components/DocumentFullTextModal'
 import { DocumentNotesModal } from '../DocumentStatusView/components/DocumentNotesModal'
 import { DocumentTypePickerModal } from '@/shared/ui/DocumentTypeCell/DocumentTypePickerModal'
+import { DocumentContentSearchModal } from '@/features/customer/components/DocumentContentSearchModal/DocumentContentSearchModal'
 import DownloadHelper from '../../../utils/downloadHelper'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { SearchService } from '@/services/searchService'
@@ -189,6 +190,11 @@ const DocumentExplorerContent: React.FC<{
 
   // 고객 범위 검색 (특정 고객의 문서만 검색)
   const [scopeCustomer, setScopeCustomer] = useState<{ id: string; name: string; type: '개인' | '법인' } | null>(null)
+
+  // 문서 내용 검색 모달 상태
+  const [contentSearchModal, setContentSearchModal] = useState<{ isOpen: boolean; customerId: string; customerName: string; customerType: '개인' | '법인' }>({
+    isOpen: false, customerId: '', customerName: '', customerType: '개인'
+  })
 
   // === 내용 검색 / AI 질문 상태 (컨텍스트 메뉴보다 먼저 선언) ===
   const [explorerSearchMode, setExplorerSearchMode] = usePersistedState<ExplorerSearchMode>('doc-explorer-search-mode', 'filename')
@@ -1161,6 +1167,14 @@ const DocumentExplorerContent: React.FC<{
                 handleExplorerSearchModeChange('content')
               }
             }}
+            onOpenContentSearchModal={(customerId, customerName, customerType) => {
+              setContentSearchModal({
+                isOpen: true,
+                customerId,
+                customerName,
+                customerType: customerType || '개인'
+              })
+            }}
             onOpenFullDetail={(customerId) => {
               navigateToView('customers-full-detail', customerId)
             }}
@@ -1291,6 +1305,15 @@ const DocumentExplorerContent: React.FC<{
         triggerRef={typePickerTriggerRef}
         onSelect={handleDocumentTypeChange}
         onClose={() => setTypePickerVisible(false)}
+      />
+
+      {/* 문서 내용 검색 모달 */}
+      <DocumentContentSearchModal
+        isOpen={contentSearchModal.isOpen}
+        onClose={() => setContentSearchModal(prev => ({ ...prev, isOpen: false }))}
+        customerId={contentSearchModal.customerId}
+        customerName={contentSearchModal.customerName}
+        customerType={contentSearchModal.customerType}
       />
 
     </div>
