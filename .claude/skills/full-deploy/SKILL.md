@@ -29,16 +29,39 @@ push되지 않은 커밋이 있으면 알립니다.
 cd /d/aims && git log origin/main..HEAD --oneline
 ```
 
-### Phase 2: 전체 배포 실행
+### Phase 2: 전체 배포 실행 (실시간 진행상황 표시)
 
-출력이 30KB를 초과하므로 반드시 파일 리다이렉트를 사용합니다.
+**반드시 아래 순서를 따른다:**
+
+#### Step 1: 서버에서 백그라운드로 배포 시작
 
 ```bash
-ssh rossi@100.110.215.65 'cd ~/aims && ./deploy_all.sh > /tmp/deploy_result.txt 2>&1; echo $?'
+ssh rossi@100.110.215.65 'cd ~/aims && nohup bash -c "./deploy_all.sh > /tmp/deploy_result.txt 2>&1; echo \$? > /tmp/deploy_exitcode.txt" &'
 ```
 
-- 타임아웃: 10분
-- exit code `0`이면 성공
+#### Step 2: 10초 간격으로 진행상황 폴링
+
+아래 명령을 10초 간격으로 반복 실행하여 사용자에게 진행 단계를 보여준다.
+**매 폴링마다 결과를 사용자에게 텍스트로 출력**해야 한다.
+
+```bash
+ssh rossi@100.110.215.65 'grep -oP "\[\d+/14\].*" /tmp/deploy_result.txt 2>/dev/null | tail -1; test -f /tmp/deploy_exitcode.txt && echo "DEPLOY_DONE:$(cat /tmp/deploy_exitcode.txt)"'
+```
+
+- `DEPLOY_DONE:0` 이 나오면 배포 성공 → Phase 3으로
+- `DEPLOY_DONE:N` (N≠0) 이면 배포 실패 → Phase 3에서 에러 확인
+- 아직 없으면 "배포 진행 중..." + 마지막 완료 단계 표시 후 10초 대기
+- **최대 25회 (약 4분) 폴링. 초과 시 타임아웃 경고**
+
+#### Step 3: 폴링 전 exitcode 파일 정리
+
+Phase 2 Step 1 실행 전, 이전 배포의 exitcode 파일을 삭제한다:
+
+```bash
+ssh rossi@100.110.215.65 'rm -f /tmp/deploy_exitcode.txt /tmp/deploy_result.txt'
+```
+
+**실행 순서: Step 3 → Step 1 → Step 2 반복**
 
 ### Phase 3: 배포 결과 확인
 
