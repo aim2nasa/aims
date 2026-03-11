@@ -4,14 +4,11 @@
  *
  * Header의 순수 렌더링 컴포넌트
  * ARCHITECTURE.md 준수: 순수 View 컴포넌트, 모든 로직은 Controller에서 수신
- * CLAUDE.md 준수: 애플 디자인 철학 "Progressive Disclosure" UI 구현
  */
 
-import React, { useEffect, memo, useState, useRef, useCallback } from 'react'
+import React, { memo, useState, useRef, useCallback } from 'react'
 import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
-import HeaderTooltip from './HeaderTooltip'
-import useHeaderTooltip from './useHeaderTooltip'
 import { HAPTIC_TYPES } from '../../hooks/useHapticFeedback'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
@@ -32,10 +29,8 @@ interface HeaderViewProps extends HeaderProps {
 /**
  * HeaderView 컴포넌트
  *
- * Progressive Disclosure 패턴으로 구현된 애플 스타일 Header
- * - 기본: 거의 보이지 않는 서브틀한 상태
- * - 호버: 자연스럽게 확장되어 제어 요소들 표시
- * - "Invisible until you need it" 철학 구현
+ * 애플 스타일 Header — 모든 핵심 기능이 항상 표시
+ * 검색, AI 채팅, 테마 토글, 사용자 프로필이 즉시 접근 가능
  */
 export const HeaderView: React.FC<HeaderViewProps> = ({
   visible,
@@ -74,59 +69,16 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
     setUserId(newUserId);
   }
 
-  // 3단계: 애플스러운 툴팁 Hook + 4단계: 펄스 애니메이션
-  const { showTooltip, showPulse, dismissTooltip } = useHeaderTooltip()
-
-  // Header-CBR 연동: 클래스 기반 접근법 (모달 격리)
-  useEffect(() => {
-    const layoutMain = document.querySelector('.layout-main');
-    if (!layoutMain) return;
-
-    if (state.isHovered || state.showControls) {
-      // Header 확장 시: CBR 요소들을 아래로 이동
-      layoutMain.classList.add('layout-main--header-expanded');
-    } else {
-      // Header 축소 시: CBR 요소들을 원래 위치로
-      layoutMain.classList.remove('layout-main--header-expanded');
-    }
-
-    // 접근성: 스크린 리더에 레이아웃 변경 알림 (변화가 있을 때만)
-    const announcement = state.isHovered ? 'Header expanded' : 'Header collapsed';
-    const ariaLive = document.getElementById('layout-status-announcement');
-    if (ariaLive && ariaLive.textContent !== announcement) {
-      ariaLive.textContent = announcement;
-    }
-  }, [state.isHovered, state.showControls])
 
   // 헤더 표시 여부 확인
   if (!visible) return null
 
   // 클래스명 조합
   const headerClasses = [
-    'header-progressive',                                    // 기본 Progressive Disclosure 클래스
-    state.isHovered ? 'header-progressive--expanded' : '',  // 확장 상태
-    state.showControls ? 'header-progressive--controls-visible' : '', // 제어 요소 표시
-    state.isAnimating ? 'header-progressive--animating' : '', // 애니메이션 중
+    'header-progressive',
+    state.isHovered ? 'header-progressive--expanded' : '',
     className
   ].filter(Boolean).join(' ')
-
-  // 제어 버튼 클래스명 (현재 미사용이지만 향후 확장을 위해 유지)
-  // const controlButtonClasses = [
-  //   'header-control-button',
-  //   layoutControlModalOpen ? 'header-control-button--active' : ''
-  // ].filter(Boolean).join(' ')
-
-  // 툴팁 및 펄스 상호작용 처리 + 햅틱 피드백
-  const handleHeaderMouseEnter = () => {
-    handleMouseEnter()
-    // Progressive Disclosure 확장 시 가벼운 햅틱 피드백
-    if (window.aimsHaptic) {
-      window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.LIGHT)
-    }
-    if (showTooltip || showPulse) {
-      dismissTooltip() // 사용자가 상호작용하면 툴팁/펄스 즉시 해제
-    }
-  }
 
   // 레이아웃 제어 버튼 클릭 핸들러 (햅틱 추가)
   const handleLayoutControlClick = () => {
@@ -150,7 +102,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   return (
     <header
       className={headerClasses}
-      onMouseEnter={handleHeaderMouseEnter}
+      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}
       onBlur={handleBlur}
@@ -412,29 +364,6 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
         })()}
       </div>
 
-      {/* Progressive Disclosure 인디케이터 - BRB 스타일 + 4단계 펄스 */}
-      <div
-        className={[
-          'header-disclosure-indicator',
-          showPulse ? 'header-disclosure-indicator--pulse' : ''
-        ].filter(Boolean).join(' ')}
-        aria-hidden="true"
-      >
-        {!state.showControls && (
-          <SFSymbol
-            name="ellipsis"
-            size={SFSymbolSize.FOOTNOTE}
-            weight={SFSymbolWeight.MEDIUM}
-          />
-        )}
-      </div>
-
-      {/* 3단계: 애플스러운 툴팁 - 첫 방문자용 (모바일에서는 hover 불가하므로 숨김) */}
-      {!isMobile && (
-        <HeaderTooltip visible={showTooltip}>
-          마우스를 올리면 메뉴가 나타납니다
-        </HeaderTooltip>
-      )}
     </header>
   )
 }

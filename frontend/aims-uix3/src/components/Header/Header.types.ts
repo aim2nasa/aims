@@ -40,10 +40,6 @@ export interface HeaderProps {
 export interface HeaderState {
   /** 헤더 호버 상태 */
   isHovered: boolean;
-  /** 제어 요소들 표시 여부 */
-  showControls: boolean;
-  /** 애니메이션 진행 중 여부 */
-  isAnimating: boolean;
 }
 
 export interface HeaderControllerReturn {
@@ -57,18 +53,4 @@ export interface HeaderControllerReturn {
   handleFocus: () => void;
   /** 헤더 블러 핸들러 */
   handleBlur: () => void;
-}
-
-/** Progressive Disclosure 설정 */
-export interface ProgressiveDisclosureConfig {
-  /** 기본 높이 (px) */
-  baseHeight: number;
-  /** 확장 높이 (px) */
-  expandedHeight: number;
-  /** 호버 지연 시간 (ms) */
-  hoverDelay: number;
-  /** 페이드인 지속 시간 (ms) */
-  fadeInDuration: number;
-  /** 페이드아웃 지속 시간 (ms) */
-  fadeOutDuration: number;
 }

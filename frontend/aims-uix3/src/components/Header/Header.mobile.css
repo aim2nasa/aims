@@ -282,19 +282,6 @@
     }
   }
 
-  /* 모바일에서 Progressive Disclosure 인디케이터 숨김 */
-  @media (max-width: 768px) {
-    .header-disclosure-indicator {
-      display: none;
-    }
-
-    /* 모바일에서 헤더 항상 확장 상태 유지 */
-    .header-controls {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
-  }
 
   /* 📱 폰 가로 모드 - 울트라 컴팩트 헤더 (40px)
    * 세로 공간 극대화를 위해 헤더를 최소화 */
@@ -371,10 +358,6 @@
     .header-user-avatar-skeleton {
       width: 24px;
       height: 24px;
-    }
-
-    .header-disclosure-indicator {
-      display: none;
     }
 
     .header-user-selector {

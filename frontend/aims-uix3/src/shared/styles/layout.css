@@ -1007,27 +1007,7 @@
     }
   }
 
-  /* === HEADER-CBR 연동 시스템 제거됨 === */
-
-  /*
-   * Header 높이가 고정되어 더 이상 CBR 요소들을 이동시킬 필요 없음
-   * Progressive Disclosure는 시각적 변화만으로 구현
-   *
-   * 기존 Header-CBR 연동 시스템 완전 제거:
-   * - layout-main--header-expanded 클래스는 HeaderView.tsx에서 여전히 사용되지만
-   * - CSS에서는 더 이상 아무런 스타일을 적용하지 않음
-   * - 이는 애플 디자인 철학 "물리적 공간 변화 없는 Progressive Disclosure"에 부합
-   */
-
-  /* === APPLE STYLE HEADER EFFECTS === */
-
-  /*
-   * 화려한 애니메이션 제거됨 (shimmer, glimmer, headerPulse)
-   * 애플 디자인 철학: 극도의 미니멀리즘, 서브틀한 효과만 유지
-   *
-   * 새로운 Header는 Progressive Disclosure 패턴을 사용하며
-   * Header.css에서 별도로 관리됨
-   */
+  /* === HEADER-CBR 연동 시스템 제거됨 (M-1에서 완전 제거) === */
 
   /* === CENTERPANE PLACEHOLDER ANIMATION === */
 

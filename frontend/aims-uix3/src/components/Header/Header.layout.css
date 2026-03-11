@@ -1,32 +1,18 @@
 /**
- * Header Progressive Disclosure Styles
+ * Header Layout Styles
  * @since 1.0.0
  *
- * 애플 디자인 철학 "Progressive Disclosure" 구현
+ * 애플 디자인 철학 — 모든 핵심 기능 항상 표시
  * CLAUDE.md 준수: 하드코딩 금지, CSS 변수 100% 활용
  * CSS_SYSTEM.md 준수: 공용 클래스 시스템과 통합
  */
 
-@import './HeaderTooltip.css';
-
 @layer components {
 
-
-  @keyframes header-pulse-breathing {
-    0%, 100% {
-      opacity: var(--pulse-opacity-min);
-      transform: scale(var(--pulse-scale-min));
-    }
-    50% {
-      opacity: var(--pulse-opacity-max);
-      transform: scale(var(--pulse-scale-max));
-    }
-  }
-
-  /* === PROGRESSIVE DISCLOSURE 핵심 구현 === */
+  /* === 헤더 메인 컨테이너 === */
 
   .header-progressive {
-    /* 🍎 그리드 흐름 참여 - absolute 제거로 레이아웃 충돌 해결 */
+    /* 그리드 흐름 참여 */
     position: relative;
     width: 100%;
     height: var(--header-height-base, 60px); /* CSS 변수 사용 - theme.css와 동기화 */
@@ -40,17 +26,17 @@
     background: var(--color-header-bg-subtle);
     border-bottom: 1px solid var(--color-header-border-subtle);
 
-    /* iOS 17+ 정밀 Progressive Disclosure 전환 */
+    /* 서브틀한 전환 */
     transition:
       background-color var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
       border-color var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
       backdrop-filter var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
 
-    /* 🍎 애플 표준 텍스트 렌더링 */
+    /* 애플 표준 텍스트 렌더링 */
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
 
-    /* 🍎 성능 최적화 (필수만) */
+    /* 성능 최적화 */
     will-change: background-color;
 
     /* 레이어링 */
@@ -65,82 +51,17 @@
 
     /* 포커스 관리 */
     outline: none;
-
-    /* === 1단계: 애플스러운 마우스 커서 힌트 === */
-    /* 기본 상태: 상호작용 가능함을 암시 */
-    cursor: pointer;
   }
 
-  /* === 2단계: 서브틀한 시각적 힌트 === */
-
-  .header-progressive::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 60px;
-    height: 2px;
-    background: linear-gradient(90deg,
-      transparent,
-      var(--color-header-indicator),
-      transparent
-    );
-    transform: translateX(-50%);
-    opacity: 0.7; /* 충분히 인식 가능하게 */
-    transition: opacity var(--duration-fast) var(--easing-ease-out);
-    pointer-events: none;
-    user-select: none;
-  }
-
-  /* === 확장 상태 - 호버/포커스 시 === */
+  /* === 호버 상태 — 서브틀한 배경 변화만 === */
 
   .header-progressive--expanded {
-    /* 물리적 높이 변화 제거 - 시각적 변화만 */
     background: var(--color-header-bg-expanded);
     border-bottom: 1px solid var(--color-header-border-expanded);
 
-    /* 애플 스타일 Backdrop Filter 추가 */
+    /* 애플 스타일 Backdrop Filter */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-
-    /* 호버 상태: 조작 가능함을 명확히 표시 */
-    cursor: grab;
-  }
-
-  /* 호버/확장 시 힌트가 사라져 실제 컨트롤 등장을 강조 */
-  .header-progressive--expanded::after {
-    opacity: 0;
-  }
-
-  /* === 제어 요소들 표시 상태 === */
-
-  .header-progressive--controls-visible .header-control-button {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .header-progressive--controls-visible .header-theme-container {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* === 애니메이션 중 상태 === */
-
-  .header-progressive--animating {
-    /* 애니메이션 중일 때 추가 최적화 */
-    pointer-events: none; /* 애니메이션 중 상호작용 방지 */
-
-    /* 애니메이션 중 커서 혼란 방지 */
-    cursor: default;
-  }
-
-  .header-progressive--animating * {
-    pointer-events: none;
-  }
-
-  /* 사용자 아바타는 애니메이션 중에도 클릭 가능하도록 예외 처리 */
-  .header-progressive--animating .header-user-avatar {
-    pointer-events: auto;
   }
 
   /* === 브랜딩 영역 === */
@@ -157,18 +78,7 @@
     font-family: var(--font-family-display);
     font-weight: var(--font-weight-medium);
     color: var(--color-header-title);
-
-    /* 타이틀은 항상 보임 */
     opacity: 0.7;
-    transform: translateY(0);
-    transition:
-      opacity var(--duration-normal) var(--easing-ease-out),
-      transform var(--duration-normal) var(--easing-ease-out);
-  }
-
-  .header-progressive--controls-visible .header-title {
-    opacity: 0.6; /* 매우 서브틀하게 표시 */
-    transform: translateY(0);
   }
 
   /* === 개발자 모드 뱃지 (AIMS UIX3 우측) === */
@@ -199,6 +109,7 @@
       transform: scale(0.98);
     }
   }
+
   /* === 제어 영역 === */
 
   .header-controls {
@@ -207,7 +118,7 @@
     gap: var(--spacing-4);
   }
 
-  /* === 제어 버튼 === */
+  /* === 제어 버튼 (개발자 모드 전용: 레이아웃 제어) === */
 
   .header-control-button {
     /* 애플 스타일 기본 */
@@ -233,23 +144,19 @@
     font-family: var(--font-family-display);
     font-weight: var(--font-weight-medium);
 
-    /* iOS 17+ 정밀 Progressive Disclosure 전환 */
+    /* 전환 */
     transition:
       background-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
       border-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
       box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring),
       opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
       transform var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
-
-    /* 기본 상태: 투명 */
-    opacity: 0;
-    transform: translateY(-8px);
   }
 
   .header-control-button:hover {
     background-color: var(--color-apple-control-hover);
     border-color: var(--color-apple-control-border);
-    transform: scale(1.02); /* 더 서브틀한 스케일 */
+    transform: scale(1.02);
     box-shadow: var(--shadow-apple-button-hover);
     transition:
       background-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
@@ -259,7 +166,7 @@
   }
 
   .header-control-button:active {
-    transform: scale(0.98); /* 정밀한 Press State */
+    transform: scale(0.98);
     background-color: var(--color-header-control-active);
     transition:
       background-color var(--duration-micro-instant) var(--easing-micro-press-down),
@@ -292,20 +199,13 @@
   /* === 빠른 검색 컨테이너 === */
 
   .header-quick-search-container {
-    /* 항상 표시 */
     opacity: 1;
     transform: translateY(0);
-
-    /* 전환 */
-    transition:
-      opacity var(--duration-fast) var(--easing-ease-out),
-      transform var(--duration-fast) var(--easing-ease-out);
   }
 
   /* === AI 채팅 버튼 === */
 
   .header-chat-button {
-    /* 항상 표시 */
     opacity: 1;
     transform: translateY(0);
 
@@ -344,7 +244,6 @@
   .header-chat-button:hover {
     opacity: 0.8;
     transform: scale(1.1);
-    /* 배경색 변경 금지 */
     background: transparent;
     border: none;
     box-shadow: none;
@@ -355,7 +254,6 @@
   }
 
   .header-chat-button--active {
-    /* 활성 상태도 투명 배경 유지 */
     background: transparent;
   }
 
@@ -372,53 +270,8 @@
   /* === 테마 토글 컨테이너 === */
 
   .header-theme-container {
-    /* Progressive Disclosure 전환 */
-    transition:
-      opacity var(--duration-fast) var(--easing-ease-out),
-      transform var(--duration-fast) var(--easing-ease-out);
-
-    /* 기본 상태: 항상 표시 */
     opacity: 1;
     transform: translateY(0);
-  }
-
-  /* === Progressive Disclosure 인디케이터 === */
-
-  .header-disclosure-indicator {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-
-    /* 스타일링 */
-    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: disclosure indicator */
-    color: var(--color-header-indicator);
-    opacity: 0.7; /* 원래보다 훨씬 더 명확하게 */
-
-    /* 전환 */
-    transition:
-      opacity var(--duration-fast) var(--easing-ease-out);
-
-    /* 상호작용 방지 */
-    pointer-events: none;
-    user-select: none;
-  }
-
-  .header-progressive--expanded .header-disclosure-indicator {
-    opacity: 0;
-  }
-
-  /* === 4단계: 펄스 애니메이션 클래스 === */
-
-  .header-disclosure-indicator--pulse {
-    /* Apple-style breathing 애니메이션 적용 */
-    animation: header-pulse-breathing var(--pulse-duration) var(--pulse-easing) infinite;
-
-    /* 기본 opacity 재정의 (애니메이션이 제어) */
-    opacity: var(--pulse-opacity-min);
-
-    /* transform-origin 중앙 고정 */
-    transform-origin: center center;
   }
 
   /* === 접근성 === */

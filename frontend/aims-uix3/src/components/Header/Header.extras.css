@@ -6,15 +6,8 @@
     .header-progressive,
     .header-control-button,
     .header-theme-container,
-    .header-title,
-    .header-disclosure-indicator {
+    .header-title {
       transition: none;
-    }
-
-    /* 펄스 애니메이션도 비활성화 */
-    .header-disclosure-indicator--pulse {
-      animation: none;
-      opacity: var(--pulse-opacity-max); /* 정적 상태로 표시 */
     }
   }
 
