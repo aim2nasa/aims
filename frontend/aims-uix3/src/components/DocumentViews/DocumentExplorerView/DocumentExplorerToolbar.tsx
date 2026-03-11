@@ -482,7 +482,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
               type="button"
               className={`doc-explorer-toolbar__date-btn ${showDatePicker ? 'doc-explorer-toolbar__date-btn--active' : ''}`}
               onClick={() => setShowDatePicker(!showDatePicker)}
-              disabled={availableDatesSet.size === 0}
+              disabled={!isSummaryMode && availableDatesSet.size === 0}
               aria-label="날짜로 이동"
             >
               <SFSymbol
@@ -554,9 +554,9 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                       {dayInfo && (
                         <button
                           type="button"
-                          className={`doc-explorer-toolbar__calendar-day ${dayInfo.hasDocuments ? 'doc-explorer-toolbar__calendar-day--has-docs' : ''} ${dayInfo.isToday ? 'doc-explorer-toolbar__calendar-day--today' : ''}`}
-                          onClick={() => dayInfo.hasDocuments && handleDateSelect(calendarYear, calendarMonth, dayInfo.day)}
-                          disabled={!dayInfo.hasDocuments}
+                          className={`doc-explorer-toolbar__calendar-day ${(dayInfo.hasDocuments || isSummaryMode) ? 'doc-explorer-toolbar__calendar-day--has-docs' : ''} ${dayInfo.isToday ? 'doc-explorer-toolbar__calendar-day--today' : ''}`}
+                          onClick={() => (dayInfo.hasDocuments || isSummaryMode) && handleDateSelect(calendarYear, calendarMonth, dayInfo.day)}
+                          disabled={!dayInfo.hasDocuments && !isSummaryMode}
                         >
                           {dayInfo.day}
                         </button>

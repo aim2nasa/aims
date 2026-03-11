@@ -490,8 +490,10 @@ const DocumentExplorerContent: React.FC<{
   // === explorer-tree API 데이터 (DocumentStatusProvider 대체) ===
   const [explorerData, setExplorerData] = useState<ExplorerTreeData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  // 날짜/기간 필터 활성 시 'all'로 전체 문서 fetch 모드
+  const [filterFetchMode, setFilterFetchMode] = useState<'none' | 'all'>('none')
 
-  const fetchExplorerTree = useCallback(async (initial: string | null, search?: string) => {
+  const fetchExplorerTree = useCallback(async (initial: string | null | 'all', search?: string) => {
     setIsLoading(true)
     try {
       const data = await DocumentStatusService.getExplorerTree('excludeMyFiles', initial || undefined, search || undefined)
@@ -532,12 +534,12 @@ const DocumentExplorerContent: React.FC<{
     return map
   }, [explorerData?.initials])
 
-  // 초성 선택 시: explorer-tree에서 받은 documents를 useDocumentExplorerTree에 전달
-  // 초성 미선택 시: documents는 빈 배열 (고객 요약 트리를 별도 빌드)
+  // 초성 선택 시 OR 날짜/기간 필터 활성(filterFetchMode=all) 시: documents 사용
   const documents = useMemo(() => {
-    if (!selectedInitial || !explorerData?.documents) return []
-    return explorerData.documents
-  }, [selectedInitial, explorerData?.documents])
+    if (!explorerData?.documents) return []
+    if (selectedInitial || filterFetchMode === 'all') return explorerData.documents
+    return []
+  }, [selectedInitial, explorerData?.documents, filterFetchMode])
 
   const {
     groupBy,
@@ -575,6 +577,23 @@ const DocumentExplorerContent: React.FC<{
     filenameMode,
   })
 
+  // quickFilter/dateFilter 변경 시: 초성 미선택이면 전체 문서 로드 ('all')
+  useEffect(() => {
+    if (selectedInitial) {
+      if (filterFetchMode !== 'none') setFilterFetchMode('none')
+      return
+    }
+    const needsAll = quickFilter !== 'none' || dateFilter !== null
+    if (needsAll && filterFetchMode !== 'all') {
+      setFilterFetchMode('all')
+      void fetchExplorerTree('all')
+    } else if (!needsAll && filterFetchMode === 'all') {
+      setFilterFetchMode('none')
+      void fetchExplorerTree(null)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quickFilter, dateFilter, selectedInitial])
+
   // 요약 모드 + 통합 검색 칩: 서버 검색 (고객명+파일명) with debounce 300ms
   const serverSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevSearchTermRef = useRef<string>('')
@@ -607,7 +626,7 @@ const DocumentExplorerContent: React.FC<{
   // 초성 미선택 시: 고객 요약 트리 빌드 (서버 데이터 그대로 렌더링)
   // initialType(탭)에 따라 해당 카테고리 고객만 필터링
   const customerSummaryTree = useMemo<DocumentTreeData | null>(() => {
-    if (selectedInitial || !explorerData?.customers) return null
+    if (selectedInitial || filterFetchMode === 'all' || !explorerData?.customers) return null
 
     let customers = explorerData.customers
 
@@ -701,7 +720,7 @@ const DocumentExplorerContent: React.FC<{
       totalDocuments: totalDocs,
       groupStats: { groupCount: customers.length }
     }
-  }, [selectedInitial, explorerData?.customers, explorerData?.searchDocuments, searchTerm, initialType, explorerSearchMode])
+  }, [selectedInitial, filterFetchMode, explorerData?.customers, explorerData?.searchDocuments, searchTerm, initialType, explorerSearchMode])
 
   // searchDocuments가 있으면 매칭 문서가 있는 고객을 자동 확장
   useEffect(() => {
@@ -715,8 +734,8 @@ const DocumentExplorerContent: React.FC<{
     }
   }, [explorerData?.searchDocuments]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 최종 트리 데이터: 초성 선택 여부에 따라 분기
-  const treeData = selectedInitial
+  // 최종 트리 데이터: 초성 선택 OR 날짜/기간 필터 활성 시 → docTreeData, 그 외 → 고객 요약
+  const treeData = (selectedInitial || filterFetchMode === 'all')
     ? docTreeData
     : (customerSummaryTree || { nodes: [], totalDocuments: 0, groupStats: { groupCount: 0 } })
 
@@ -1218,7 +1237,7 @@ const DocumentExplorerContent: React.FC<{
           setScopeCustomer(null)
           handleCloseContentSearch()
         }}
-        isSummaryMode={!selectedInitial}
+        isSummaryMode={!selectedInitial && filterFetchMode !== 'all'}
       />
 
       {/* 초성 필터 바 - 검색 결과 표시 중에는 숨김 */}
