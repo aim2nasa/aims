@@ -83,7 +83,7 @@ interface DocumentSearchViewProps {
 // 검색 모드 옵션 정의
 const SEARCH_MODE_OPTIONS: DropdownOption[] = [
   { value: 'keyword', label: '키워드 검색' },
-  { value: 'semantic', label: '질문 검색' },
+  { value: 'semantic', label: '질문 검색 (크레딧)' },
 ]
 
 // 키워드 모드 옵션 정의
@@ -1264,7 +1264,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             options={SEARCH_MODE_OPTIONS}
             onChange={(value) => handleSearchModeChange(value as SearchMode)}
             aria-label="검색 모드 선택"
-            width={135}
+            width={175}
           />
 
           {/* 🍎 Progressive Disclosure: 키워드 검색 시 드롭다운으로 AND/OR 선택 */}
