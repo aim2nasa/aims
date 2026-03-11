@@ -11,7 +11,7 @@
  * - 접근성 준수 (ARIA)
  */
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 import './Tooltip.css'
 
@@ -49,6 +49,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const [position, setPosition] = useState({ top: 0, left: 0 })
   const [arrowOffset, setArrowOffset] = useState<number | null>(null) // 말꼬리 위치 (px)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const tooltipId = useId()
   const timeoutRef = useRef<number | undefined>(undefined)
   const triggerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -209,7 +210,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
     onMouseEnter: handleMouseEnter,
     onMouseLeave: handleMouseLeave,
     onTouchStart: handleTouchStart,
-    'aria-describedby': isVisible ? 'tooltip' : undefined
+    'aria-describedby': isVisible ? tooltipId : undefined
   } as React.HTMLAttributes<HTMLElement>)
 
   /**
@@ -226,7 +227,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         opacity: position.top === 0 && position.left === 0 ? 0 : 1
       }}
       role="tooltip"
-      id="tooltip"
+      id={tooltipId}
     >
       <div className="tooltip-content">
         {content}
