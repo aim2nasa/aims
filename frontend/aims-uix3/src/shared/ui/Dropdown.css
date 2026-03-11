@@ -172,7 +172,9 @@
 
   /* === DROPDOWN OPTION === */
   .ios-dropdown__option {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0;
     width: 100%;
     padding: 8px 12px;
     background-color: transparent;
@@ -211,11 +213,36 @@
   /* 선택된 옵션은 더 진한 색상으로 명확하게 표시 */
   .ios-dropdown__option--selected {
     background-color: var(--color-ios-menu-option-selected-light);
-    font-weight: 600; /* 폰트 굵기도 증가 */
+    font-weight: 600;
   }
 
   html[data-theme="dark"] .ios-dropdown__option--selected {
     background-color: var(--color-ios-menu-option-selected-dark);
+  }
+
+  /* 키보드 하이라이트 */
+  .ios-dropdown__option--highlighted {
+    background-color: var(--color-ios-menu-option-hover-light);
+  }
+
+  html[data-theme="dark"] .ios-dropdown__option--highlighted {
+    background-color: var(--color-ios-menu-option-hover-dark);
+  }
+
+  /* ✓ 체크마크 — 고정 너비 컬럼 (padding 오버라이드에 영향받지 않음) */
+  .ios-dropdown__checkmark {
+    flex-shrink: 0;
+    width: 18px;
+    font-size: var(--font-size-caption-1);
+    color: var(--color-primary-500);
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+  }
+
+  .ios-dropdown__option-label {
+    flex: 1;
+    text-align: left;
   }
 
   /* Disabled 옵션 스타일 (옅은 색상, 클릭 불가) */

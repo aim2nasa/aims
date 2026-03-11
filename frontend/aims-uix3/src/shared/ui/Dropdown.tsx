@@ -7,7 +7,7 @@
  * - ARCHITECTURE.md: Document-Controller-View 패턴
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import './Dropdown.css';
 
@@ -42,9 +42,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
   disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number; upward: boolean }>({ top: 0, left: 0, width: 0, upward: false });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // 선택된 옵션 찾기
   const selectedOption = options.find(opt => opt.value === value);
@@ -100,20 +102,94 @@ export const Dropdown: React.FC<DropdownProps> = ({
     };
   }, [isOpen]);
 
+  // 활성(선택 가능한) 옵션 인덱스 목록
+  const enabledIndices = useMemo(() => options.reduce<number[]>((acc, opt, i) => {
+    if (!opt.disabled) acc.push(i);
+    return acc;
+  }, []), [options]);
+
+  // 메뉴 열릴 때 현재 선택값으로 하이라이트 초기화
+  useEffect(() => {
+    if (isOpen) {
+      const idx = options.findIndex(opt => opt.value === value);
+      setHighlightedIndex(idx >= 0 ? idx : (enabledIndices[0] ?? -1));
+    }
+  }, [isOpen, options, value, enabledIndices]);
+
+  // 하이라이트된 옵션으로 스크롤
+  useEffect(() => {
+    if (!isOpen || highlightedIndex < 0 || !menuRef.current) return;
+    const optionEl = menuRef.current.children[highlightedIndex] as HTMLElement | undefined;
+    optionEl?.scrollIntoView({ block: 'nearest' });
+  }, [highlightedIndex, isOpen]);
+
   // 옵션 선택 핸들러
   const handleOptionClick = (option: DropdownOption) => {
-    if (option.disabled) return; // disabled 옵션은 선택 불가
+    if (option.disabled) return;
     onChange(option.value);
     setIsOpen(false);
+    triggerRef.current?.focus();
   };
+
+  // 다음/이전 활성 옵션 인덱스 찾기
+  const findNextEnabled = useCallback((current: number, direction: 1 | -1): number => {
+    const pos = enabledIndices.indexOf(current);
+    if (pos === -1) return enabledIndices[0] ?? -1;
+    const next = pos + direction;
+    if (next < 0 || next >= enabledIndices.length) return current;
+    return enabledIndices[next];
+  }, [enabledIndices]);
 
   // 키보드 네비게이션
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      setIsOpen(!isOpen);
-    } else if (event.key === 'Escape') {
-      setIsOpen(false);
+    switch (event.key) {
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        if (isOpen && highlightedIndex >= 0) {
+          const opt = options[highlightedIndex];
+          if (opt && !opt.disabled) {
+            handleOptionClick(opt);
+          }
+        } else {
+          setIsOpen(!isOpen);
+        }
+        break;
+      case 'Escape':
+        if (isOpen) {
+          event.preventDefault();
+          setIsOpen(false);
+          triggerRef.current?.focus();
+        }
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setHighlightedIndex(prev => findNextEnabled(prev, 1));
+        }
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setHighlightedIndex(prev => findNextEnabled(prev, -1));
+        }
+        break;
+      case 'Home':
+        if (isOpen) {
+          event.preventDefault();
+          setHighlightedIndex(enabledIndices[0] ?? -1);
+        }
+        break;
+      case 'End':
+        if (isOpen) {
+          event.preventDefault();
+          setHighlightedIndex(enabledIndices[enabledIndices.length - 1] ?? -1);
+        }
+        break;
     }
   };
 
@@ -135,6 +211,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
     >
       {/* Dropdown 트리거 버튼 */}
       <button
+        ref={triggerRef}
         type="button"
         className="ios-dropdown__trigger"
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -163,22 +240,34 @@ export const Dropdown: React.FC<DropdownProps> = ({
             minWidth: `${menuPos.width}px`,
           }}
         >
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={`ios-dropdown__option ${
-                option.value === value ? 'ios-dropdown__option--selected' : ''
-              } ${option.disabled ? 'ios-dropdown__option--disabled' : ''}`}
-              onClick={() => handleOptionClick(option)}
-              disabled={option.disabled}
-              role="option"
-              aria-selected={option.value === value}
-              aria-disabled={option.disabled}
-            >
-              {option.label}
-            </button>
-          ))}
+          {options.map((option, index) => {
+            const isSelected = option.value === value;
+            const isHighlighted = index === highlightedIndex;
+            return (
+              <button
+                key={option.value}
+                id={`dropdown-option-${index}`}
+                type="button"
+                className={[
+                  'ios-dropdown__option',
+                  isSelected && 'ios-dropdown__option--selected',
+                  isHighlighted && 'ios-dropdown__option--highlighted',
+                  option.disabled && 'ios-dropdown__option--disabled',
+                ].filter(Boolean).join(' ')}
+                onClick={() => handleOptionClick(option)}
+                onMouseEnter={() => !option.disabled && setHighlightedIndex(index)}
+                disabled={option.disabled}
+                role="option"
+                aria-selected={isSelected}
+                aria-disabled={option.disabled}
+              >
+                <span className="ios-dropdown__checkmark" aria-hidden="true">
+                  {isSelected ? '✓' : ''}
+                </span>
+                <span className="ios-dropdown__option-label">{option.label}</span>
+              </button>
+            );
+          })}
         </div>,
         document.body
       )}

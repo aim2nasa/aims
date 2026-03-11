@@ -8,6 +8,9 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Dropdown, DropdownOption } from '../Dropdown'
 
+// jsdom에 scrollIntoView가 없으므로 mock
+Element.prototype.scrollIntoView = vi.fn()
+
 describe('Dropdown', () => {
   const mockOptions: DropdownOption[] = [
     { value: 'option1', label: '옵션 1' },
@@ -335,6 +338,164 @@ describe('Dropdown', () => {
       const trigger = screen.getByRole('button')
 
       expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    })
+  })
+
+  describe('체크마크 표시 (m-2)', () => {
+    it('선택된 옵션에 체크마크(✓)가 표시되어야 함', async () => {
+      const user = userEvent.setup()
+
+      render(<Dropdown {...defaultProps} value="option2" />)
+
+      await user.click(screen.getByText('옵션 2'))
+
+      await waitFor(() => {
+        const selectedOption = screen.getByRole('option', { selected: true })
+        expect(selectedOption.querySelector('.ios-dropdown__checkmark')?.textContent).toBe('✓')
+      })
+    })
+
+    it('미선택 옵션에는 빈 체크마크 컬럼이 있어야 함', async () => {
+      const user = userEvent.setup()
+
+      render(<Dropdown {...defaultProps} value="option1" />)
+
+      await user.click(screen.getByText('옵션 1'))
+
+      await waitFor(() => {
+        const unselectedOptions = screen.getAllByRole('option', { selected: false })
+        unselectedOptions.forEach(opt => {
+          const checkmark = opt.querySelector('.ios-dropdown__checkmark')
+          expect(checkmark).toBeInTheDocument()
+          expect(checkmark?.textContent).toBe('')
+        })
+      })
+    })
+  })
+
+  describe('키보드 화살표 탐색 (m-1)', () => {
+    it('ArrowDown으로 옵션 메뉴 열기', async () => {
+      const user = userEvent.setup()
+
+      render(<Dropdown {...defaultProps} />)
+
+      const trigger = screen.getByRole('button')
+      trigger.focus()
+      await user.keyboard('{ArrowDown}')
+
+      await waitFor(() => {
+        expect(screen.getByRole('listbox')).toBeInTheDocument()
+      })
+    })
+
+    it('ArrowDown으로 다음 옵션 하이라이트', async () => {
+      const user = userEvent.setup()
+
+      render(<Dropdown {...defaultProps} />)
+
+      await user.click(screen.getByText('옵션 1'))
+
+      await waitFor(() => {
+        expect(screen.getByRole('listbox')).toBeInTheDocument()
+      })
+
+      // 초기: option1(인덱스 0) 하이라이트 → ArrowDown → option2(인덱스 1)
+      await user.keyboard('{ArrowDown}')
+
+      await waitFor(() => {
+        const options = screen.getAllByRole('option')
+        expect(options[1]).toHaveClass('ios-dropdown__option--highlighted')
+      })
+    })
+
+    it('ArrowUp으로 이전 옵션 하이라이트', async () => {
+      const user = userEvent.setup()
+
+      render(<Dropdown {...defaultProps} value="option3" />)
+
+      await user.click(screen.getByText('옵션 3'))
+
+      await waitFor(() => {
+        expect(screen.getByRole('listbox')).toBeInTheDocument()
+      })
+
+      // 초기: option3(인덱스 2) 하이라이트 → ArrowUp → option2(인덱스 1)
+      await user.keyboard('{ArrowUp}')
+
+      await waitFor(() => {
+        const options = screen.getAllByRole('option')
+        expect(options[1]).toHaveClass('ios-dropdown__option--highlighted')
+      })
+    })
+
+    it('Enter로 하이라이트된 옵션 선택', async () => {
+      const user = userEvent.setup()
+      const onChange = vi.fn()
+
+      render(<Dropdown {...defaultProps} onChange={onChange} />)
+
+      await user.click(screen.getByText('옵션 1'))
+
+      await waitFor(() => {
+        expect(screen.getByRole('listbox')).toBeInTheDocument()
+      })
+
+      await user.keyboard('{ArrowDown}') // option2로 이동
+      await user.keyboard('{Enter}')     // 선택
+
+      expect(onChange).toHaveBeenCalledWith('option2')
+    })
+  })
+
+  describe('disabled 옵션 처리', () => {
+    const optionsWithDisabled: DropdownOption[] = [
+      { value: 'a', label: '활성 A' },
+      { value: 'b', label: '비활성 B', disabled: true },
+      { value: 'c', label: '활성 C' },
+    ]
+
+    it('disabled 옵션 클릭 시 onChange 호출되지 않아야 함', async () => {
+      const user = userEvent.setup()
+      const onChange = vi.fn()
+
+      render(<Dropdown value="a" options={optionsWithDisabled} onChange={onChange} />)
+
+      await user.click(screen.getByText('활성 A'))
+
+      await waitFor(() => {
+        expect(screen.getByText('비활성 B')).toBeInTheDocument()
+      })
+
+      // disabled 옵션은 button disabled 속성이므로 클릭 불가
+      const disabledBtn = screen.getByText('비활성 B').closest('button')
+      expect(disabledBtn).toBeDisabled()
+
+      expect(onChange).not.toHaveBeenCalled()
+    })
+
+    it('ArrowDown으로 disabled 옵션을 건너뛰어야 함', async () => {
+      const user = userEvent.setup()
+      const onChange = vi.fn()
+
+      render(<Dropdown value="a" options={optionsWithDisabled} onChange={onChange} />)
+
+      await user.click(screen.getByText('활성 A'))
+
+      await waitFor(() => {
+        expect(screen.getByRole('listbox')).toBeInTheDocument()
+      })
+
+      // 초기: a(인덱스 0) → ArrowDown → b(disabled, 스킵) → c(인덱스 2)
+      await user.keyboard('{ArrowDown}')
+
+      await waitFor(() => {
+        const options = screen.getAllByRole('option')
+        expect(options[2]).toHaveClass('ios-dropdown__option--highlighted')
+      })
+
+      // Enter로 선택하면 'c'가 선택되어야 함
+      await user.keyboard('{Enter}')
+      expect(onChange).toHaveBeenCalledWith('c')
     })
   })
 
