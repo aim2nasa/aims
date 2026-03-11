@@ -88,8 +88,8 @@ const SEARCH_MODE_OPTIONS: DropdownOption[] = [
 
 // 키워드 모드 옵션 정의
 const KEYWORD_MODE_OPTIONS: DropdownOption[] = [
-  { value: 'AND', label: 'AND' },
-  { value: 'OR', label: 'OR' },
+  { value: 'AND', label: '모두 포함' },
+  { value: 'OR', label: '하나라도 포함' },
 ]
 
 
@@ -1274,7 +1274,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               options={KEYWORD_MODE_OPTIONS}
               onChange={(value) => handleKeywordModeChange(value as KeywordMode)}
               aria-label="키워드 모드 선택"
-              width={75}
+              width={130}
             />
           )}
 
@@ -1983,8 +1983,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             <div className="mode-options">
                               <div className="mode-option">
                                 <span className="mode-badge mode-keyword">키워드 검색</span>
-                                <p className="mode-description">AND: 모든 키워드 포함</p>
-                                <p className="mode-description">OR: 하나 이상 포함</p>
+                                <p className="mode-description">모두 포함: 입력한 키워드를 모두 포함</p>
+                                <p className="mode-description">하나라도 포함: 키워드 중 하나라도 포함</p>
                               </div>
                               <div className="mode-option">
                                 <span className="mode-badge mode-ai">질문 검색</span>

@@ -511,6 +511,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       {
         key: 'annual_report',
         label: 'AR',
+        tooltip: 'Annual Report (연간보고서)',
         icon: (
           <svg
             width="14"
@@ -536,6 +537,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       {
         key: 'customer_review',
         label: 'CRS',
+        tooltip: '변액 리포트',
         icon: (
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
             {/* Document outline */}

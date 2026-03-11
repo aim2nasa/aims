@@ -412,8 +412,8 @@ const CustomMenu = ({
     {
       key: 'autoclicker',
       icon: <span className="menu-icon-teal"><MenuIcons.AutoClicker /></span>,
-      label: collapsed ? '' : 'AutoClicker',
-      tooltipTitle: 'PDF 자동 다운로드',
+      label: collapsed ? '' : '메트 PDF 자동 받기',
+      tooltipTitle: '메트 PDF 자동 받기',
     },
 
     // 검색 결과 (동적 표시)
@@ -596,7 +596,7 @@ const CustomMenu = ({
         key: 'documents-explorer',
         icon: <span className="menu-icon-green"><MenuIcons.FolderTree /></span>,
         label: '',
-        tooltipTitle: '트리 구조로 문서를 탐색합니다',
+        tooltipTitle: '고객별로 문서를 모아 볼 수 있습니다',
       },
       {
         key: 'documents-search',
@@ -641,7 +641,7 @@ const CustomMenu = ({
         {
           key: 'help-faq',
           icon: <span className="menu-icon-orange"><MenuIcons.ChatQuestion /></span>,
-          label: 'FAQ',
+          label: '자주 묻는 질문',
           tooltipTitle: '자주 묻는 질문',
         },
         {
@@ -678,7 +678,7 @@ const CustomMenu = ({
         key: 'help-faq',
         icon: <span className="menu-icon-orange"><MenuIcons.ChatQuestion /></span>,
         label: '',
-        tooltipTitle: 'FAQ',
+        tooltipTitle: '자주 묻는 질문',
       },
       {
         key: 'help-inquiry',

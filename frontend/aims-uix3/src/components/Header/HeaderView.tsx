@@ -432,7 +432,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
       {/* 3단계: 애플스러운 툴팁 - 첫 방문자용 (모바일에서는 hover 불가하므로 숨김) */}
       {!isMobile && (
         <HeaderTooltip visible={showTooltip}>
-          Hover for controls
+          마우스를 올리면 메뉴가 나타납니다
         </HeaderTooltip>
       )}
     </header>

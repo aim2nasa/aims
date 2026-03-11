@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { Tooltip } from '../../shared/ui/Tooltip';
 import './Tabs.css';
 
 export interface Tab {
@@ -17,6 +18,7 @@ export interface Tab {
   icon?: React.ReactNode;
   disabled?: boolean;
   count?: number; // 선택적 카운트 표시 (예: 문서 5)
+  tooltip?: string; // 커스텀 툴팁 (미지정 시 표시 안함)
 }
 
 export interface TabsProps {
@@ -79,7 +81,7 @@ export const Tabs: React.FC<TabsProps> = ({
           tab.disabled && 'tabs-bar__tab--disabled'
         ].filter(Boolean).join(' ');
 
-        return (
+        const tabButton = (
           <button
             key={tab.key}
             type="button"
@@ -101,6 +103,16 @@ export const Tabs: React.FC<TabsProps> = ({
             </span>
           </button>
         );
+
+        if (tab.tooltip) {
+          return (
+            <Tooltip key={tab.key} content={tab.tooltip} placement="bottom">
+              {tabButton}
+            </Tooltip>
+          );
+        }
+
+        return tabButton;
       })}
     </div>
   );

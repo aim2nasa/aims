@@ -1187,7 +1187,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       className={`history-tabs__tab ${historyTab === 'ar' ? 'history-tabs__tab--active' : ''}`}
                       onClick={() => setHistoryTab('ar')}
                     >
-                      <span className="tab-label--full">Annual Report{'\u00A0'}이력</span>
+                      <span className="tab-label--full">Annual Report(연간보고서){'\u00A0'}이력</span>
                       <span className="tab-label--short">AR이력</span>
                       {arHistoryCount > 0 && (
                         <span className="history-tabs__count">{arHistoryCount}</span>
@@ -1410,28 +1410,32 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   </svg>
                   {/* 🍎 보고서 탭 버튼 */}
                   <div className="report-tabs">
-                    <button
-                      type="button"
-                      className={`report-tabs__tab ${reportTab === 'annual' ? 'report-tabs__tab--active' : ''}`}
-                      onClick={() => setReportTab('annual')}
-                    >
-                      <span className="tab-label--full">Annual Report</span>
-                      <span className="tab-label--short">AR</span>
-                      {annualReportCount > 0 && (
-                        <span className="report-tabs__count">{annualReportCount}</span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className={`report-tabs__tab ${reportTab === 'review' ? 'report-tabs__tab--active' : ''}`}
-                      onClick={() => setReportTab('review')}
-                    >
-                      <span className="tab-label--full">변액 리포트</span>
-                      <span className="tab-label--short">변액</span>
-                      {customerReviewCount > 0 && (
-                        <span className="report-tabs__count">{customerReviewCount}</span>
-                      )}
-                    </button>
+                    <Tooltip content="Annual Report (연간보고서)" placement="bottom">
+                      <button
+                        type="button"
+                        className={`report-tabs__tab ${reportTab === 'annual' ? 'report-tabs__tab--active' : ''}`}
+                        onClick={() => setReportTab('annual')}
+                      >
+                        <span className="tab-label--full">Annual Report(연간보고서)</span>
+                        <span className="tab-label--short">AR</span>
+                        {annualReportCount > 0 && (
+                          <span className="report-tabs__count">{annualReportCount}</span>
+                        )}
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="변액 리포트" placement="bottom">
+                      <button
+                        type="button"
+                        className={`report-tabs__tab ${reportTab === 'review' ? 'report-tabs__tab--active' : ''}`}
+                        onClick={() => setReportTab('review')}
+                      >
+                        <span className="tab-label--full">변액 리포트</span>
+                        <span className="tab-label--short">변액</span>
+                        {customerReviewCount > 0 && (
+                          <span className="report-tabs__count">{customerReviewCount}</span>
+                        )}
+                      </button>
+                    </Tooltip>
                   </div>
                   {/* 🍎 검색 (보고서 탭별) */}
                   <div className="customer-full-detail__section-search">
