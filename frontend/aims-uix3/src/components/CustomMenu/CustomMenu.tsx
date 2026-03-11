@@ -155,32 +155,37 @@ const MenuIcons = {
       <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
     </svg>
   ),
-  // 1:1 문의 아이콘 (말풍선)
+  // 1:1 문의 아이콘 (말풍선) — SFSymbol 통일 (m-4)
   ChatBubble: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--chat">
-      <path d="M12 3C6.5 3 2 6.58 2 11c0 2.13 1.02 4.05 2.67 5.47L4 21l4.88-2.33C9.86 18.89 10.91 19 12 19c5.5 0 10-3.58 10-8s-4.5-8-10-8z" opacity="0.85"/>
-    </svg>
+    <SFSymbol
+      name="bubble-left-fill"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
-  // 도움말 아이콘 (물음표 원)
+  // 도움말 아이콘 (물음표 원) — SFSymbol 통일 (m-4)
   Help: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--help">
-      <circle cx="12" cy="12" r="10" opacity="0.15"/>
-      <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="bold">?</text>
-    </svg>
+    <SFSymbol
+      name="questionmark-circle"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
-  // 공지사항 아이콘 (벨)
+  // 공지사항 아이콘 (벨) — SFSymbol 통일 (m-4)
   Bell: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--notice">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" opacity="0.85"/>
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
+    <SFSymbol
+      name="bell"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
-  // 사용 가이드 아이콘 (책)
+  // 사용 가이드 아이콘 (책) — SFSymbol 통일 (m-4)
   Book: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--guide">
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" opacity="0.85"/>
-    </svg>
+    <SFSymbol
+      name="book"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
   // FAQ 아이콘 (말풍선 물음표)
   ChatQuestion: () => (
@@ -206,6 +211,8 @@ export interface MenuItem {
   label: ReactNode
   tooltipTitle: string
   children?: MenuItem[] | undefined
+  /** S-2: collapsed 모드에서 그룹 시작 표시 (구분선 렌더링용) */
+  isGroupStart?: boolean
 }
 
 // 컴포넌트 Props 타입 정의
@@ -276,7 +283,9 @@ const CustomMenuItem = ({
     isSubMenu ? 'sub-menu' : ''
   } ${collapsed ? 'collapsed' : ''} ${
     isSelected ? 'selected' : ''
-  } ${hasChildren ? 'has-children' : ''}`
+  } ${hasChildren ? 'has-children' : ''} ${
+    item.isGroupStart ? 'group-start' : ''
+  }`
 
   const menuContent = (
     <div
@@ -338,6 +347,9 @@ const CustomMenuItem = ({
   )
 }
 
+// S-1: 메뉴 단계적 확장 딜레이 (ms) — 사용자 체감 속도 조정 가능
+const STAGE_DELAY_MS = 150
+
 // 메인 CustomMenu 컴포넌트
 const CustomMenu = ({
   onMenuClick,
@@ -365,45 +377,16 @@ const CustomMenu = ({
       }
       setExpandedKeys([]) // 강제로 모든 서브메뉴 접기
 
-      // 1단계: 200ms 후 자주 사용 펼침
-      setTimeout(() => {
-        if (import.meta.env.DEV) {
-          console.log('[CustomMenu] 1단계 - 자주 사용 펼침')
-        }
-        setExpandedKeys(['quick-actions'])
-      }, 200)
-
-      // 2단계: 400ms 후 고객도 펼침
-      setTimeout(() => {
-        if (import.meta.env.DEV) {
-          console.log('[CustomMenu] 2단계 - 고객 추가 펼침')
-        }
-        setExpandedKeys(['quick-actions', 'customers'])
-      }, 400)
-
-      // 3단계: 600ms 후 계약도 펼침
-      setTimeout(() => {
-        if (import.meta.env.DEV) {
-          console.log('[CustomMenu] 3단계 - 계약 추가 펼침')
-        }
-        setExpandedKeys(['quick-actions', 'customers', 'contracts'])
-      }, 600)
-
-      // 4단계: 800ms 후 문서도 펼침
-      setTimeout(() => {
-        if (import.meta.env.DEV) {
-          console.log('[CustomMenu] 4단계 - 문서 추가 펼침')
-        }
-        setExpandedKeys(['quick-actions', 'customers', 'contracts', 'documents'])
-      }, 800)
-
-      // 5단계: 1000ms 후 도움말도 펼침
-      setTimeout(() => {
-        if (import.meta.env.DEV) {
-          console.log('[CustomMenu] 5단계 - 도움말 추가 펼침')
-        }
-        setExpandedKeys(['quick-actions', 'customers', 'contracts', 'documents', 'help'])
-      }, 1000)
+      // 계층적 확장: STAGE_DELAY_MS 간격으로 순차 펼침
+      const stages = ['quick-actions', 'customers', 'contracts', 'documents', 'help']
+      stages.forEach((_, i) => {
+        setTimeout(() => {
+          if (import.meta.env.DEV) {
+            console.log(`[CustomMenu] ${i + 1}단계 펼침`)
+          }
+          setExpandedKeys(stages.slice(0, i + 1))
+        }, STAGE_DELAY_MS * (i + 1))
+      })
     }
   }, [collapsed]) // collapsed 상태 변화만 감지
 

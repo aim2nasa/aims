@@ -379,4 +379,11 @@
     transition: none;
   }
 
+  /* S-2: collapsed 모드 그룹 구분선 */
+  .custom-menu-item.collapsed.group-start {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--color-border-primary);
+  }
+
 } /* end @layer components */

@@ -92,6 +92,7 @@ describe('flattenForCollapsed', () => {
       ...standaloneItem,
       children: undefined,
       label: '',
+      isGroupStart: false,
     }])
     expect(result[0].tooltipTitle).toBe('메트 PDF 자동 받기')
   })
@@ -99,7 +100,7 @@ describe('flattenForCollapsed', () => {
   it('#3: collapsed=true, 부모+자식 → 부모(children:undefined, label:\'\') + 자식(label:\'\')', () => {
     const result = flatten([parentWithChildren], true)
     expect(result).toHaveLength(3) // 부모1 + 자식2
-    expect(result[0]).toEqual({ ...parentWithChildren, children: undefined, label: '' })
+    expect(result[0]).toEqual({ ...parentWithChildren, children: undefined, label: '', isGroupStart: true })
     expect(result[1].key).toBe('documents-register')
     expect(result[1].label).toBe('')
     expect(result[2].key).toBe('customers-register')
