@@ -1,7 +1,7 @@
 /**
  * L2: flattenForCollapsed 순수 함수 단위 테스트 (13개)
  *
- * 변환 함수의 정확성을 검증: collapsed=true 시 flat 변환, override 적용
+ * 변환 함수의 정확성을 검증: collapsed=true 시 flat 변환
  */
 import { describe, it, expect } from 'vitest'
 import { flattenForCollapsed } from '../menuUtils'
@@ -40,13 +40,13 @@ const parentWithChildren: MockMenuItem = {
       key: 'documents-register',
       icon: 'icon-doc',
       label: '고객·계약·문서 등록',
-      tooltipTitle: 'AR 업로드 시 고객 자동 추출/연결',
+      tooltipTitle: '고객·계약·문서 등록',
     },
     {
       key: 'customers-register',
       icon: 'icon-person',
       label: '고객 수동등록',
-      tooltipTitle: '고객 정보를 직접 입력합니다',
+      tooltipTitle: '고객 수동등록',
     },
   ],
 }
@@ -117,18 +117,18 @@ describe('flattenForCollapsed', () => {
     ])
   })
 
-  it('#5: collapsed=true, COLLAPSED_TOOLTIP_OVERRIDES 적용', () => {
+  it('#5: collapsed=true, 자식의 tooltipTitle 원본 유지', () => {
     const result = flatten([parentWithChildren], true)
-    expect(result[1].tooltipTitle).toBe('고객·계약·문서 등록') // override 적용
-    expect(result[2].tooltipTitle).toBe('고객 수동등록')        // override 적용
+    expect(result[1].tooltipTitle).toBe('고객·계약·문서 등록')
+    expect(result[2].tooltipTitle).toBe('고객 수동등록')
   })
 
-  it('#6: collapsed=true, override 없는 자식 — tooltipTitle 원본 유지', () => {
+  it('#6: collapsed=true, 자식 tooltipTitle 원본 유지', () => {
     const result = flatten([parentWithNoOverrideChildren], true)
-    expect(result[1].tooltipTitle).toBe('모든 고객을 보여줍니다') // override 없으므로 원본
+    expect(result[1].tooltipTitle).toBe('모든 고객을 보여줍니다')
   })
 
-  it('#7: collapsed=true, 부모의 tooltipTitle — override 미적용', () => {
+  it('#7: collapsed=true, 부모의 tooltipTitle 원본 유지', () => {
     const result = flatten([parentWithChildren], true)
     expect(result[0].tooltipTitle).toBe('빠른 작업') // 부모는 map에 없으므로 원본
   })

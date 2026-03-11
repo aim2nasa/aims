@@ -436,13 +436,13 @@ const CustomMenu = ({
           key: 'documents-register',
           icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
           label: '고객·계약·문서 등록',
-          tooltipTitle: 'AR 업로드 시 고객 자동 추출/연결',
+          tooltipTitle: '고객·계약·문서 등록',
         },
         {
           key: 'customers-register',
           icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
           label: '고객 수동등록',
-          tooltipTitle: '고객 정보를 직접 입력합니다',
+          tooltipTitle: '고객 수동등록',
         },
         {
           key: 'contracts-import',
@@ -520,7 +520,7 @@ const CustomMenu = ({
           key: 'documents-search',
           icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
           label: '상세 문서검색',
-          tooltipTitle: '상세 문서검색 페이지로 이동합니다',
+          tooltipTitle: '상세 문서검색',
         },
         {
           key: 'documents-library',
@@ -555,7 +555,7 @@ const CustomMenu = ({
           key: 'help-guide',
           icon: <span className="menu-icon-green"><MenuIcons.Book /></span>,
           label: '사용 가이드',
-          tooltipTitle: '기능별 사용 가이드',
+          tooltipTitle: '사용 가이드',
         },
         {
           key: 'help-faq',
