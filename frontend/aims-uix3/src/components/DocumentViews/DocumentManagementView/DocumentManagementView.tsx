@@ -641,7 +641,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
 
                           {/* AR 뱃지 */}
                           {isAnnualReport && (
-                            <Tooltip content="Annual Report">
+                            <Tooltip content="연간보고서">
                               <div className="document-ar-badge">
                                 AR
                               </div>
@@ -650,7 +650,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
 
                           {/* CR 뱃지 */}
                           {doc.is_customer_review === true && !isAnnualReport && (
-                            <Tooltip content="변액 리포트">
+                            <Tooltip content="변액 리뷰">
                               <div className="document-cr-badge">
                                 CR
                               </div>

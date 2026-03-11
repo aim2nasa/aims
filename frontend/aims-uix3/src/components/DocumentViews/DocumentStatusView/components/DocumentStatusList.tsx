@@ -227,7 +227,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
         </div>
         {/* AR BADGE: Annual Report 표시 (크레딧 부족 시 회색) */}
         {document.is_annual_report && (
-          <Tooltip content={isCreditPending ? "Annual Report (크레딧 부족)" : "Annual Report"}>
+          <Tooltip content={isCreditPending ? "연간보고서 (크레딧 부족)" : "연간보고서"}>
             <div className={`document-ar-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
               AR
             </div>

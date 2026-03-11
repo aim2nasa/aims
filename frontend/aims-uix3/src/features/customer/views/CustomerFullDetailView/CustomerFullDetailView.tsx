@@ -1423,7 +1423,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                         )}
                       </button>
                     </Tooltip>
-                    <Tooltip content="변액 리포트" placement="bottom">
+                    <Tooltip content="변액 리뷰" placement="bottom">
                       <button
                         type="button"
                         className={`report-tabs__tab ${reportTab === 'review' ? 'report-tabs__tab--active' : ''}`}

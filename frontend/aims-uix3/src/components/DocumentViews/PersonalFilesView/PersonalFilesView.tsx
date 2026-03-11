@@ -2190,7 +2190,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                             </div>
                             {/* 🍎 AR BADGE */}
                             {item.document?.is_annual_report && (
-                              <Tooltip content="Annual Report">
+                              <Tooltip content="연간보고서">
                                 <div className="document-ar-badge">
                                   AR
                                 </div>
@@ -2198,7 +2198,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                             )}
                             {/* 🍎 CR BADGE */}
                             {(item.document as any)?.is_customer_review && !item.document?.is_annual_report && (
-                              <Tooltip content="변액 리포트">
+                              <Tooltip content="변액 리뷰">
                                 <div className="document-cr-badge">
                                   CR
                                 </div>

@@ -4,7 +4,7 @@
  * @version 6.0.0
  *
  * 🍎 탭 기반 고객 정보 보기
- * - 기본정보, 가족관계(개인만), 문서, Annual Report, 변액 리포트
+ * - 기본정보, 가족관계(개인만), 문서, 연간보고서, 변액 리뷰
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -510,8 +510,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     baseTabs.push(
       {
         key: 'annual_report',
-        label: 'AR',
-        tooltip: 'Annual Report (연간보고서)',
+        label: '연간보고서',
+        tooltip: '연간보고서 (AR)',
         icon: (
           <svg
             width="14"
@@ -536,8 +536,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       },
       {
         key: 'customer_review',
-        label: 'CRS',
-        tooltip: '변액 리포트',
+        label: '변액 리뷰',
+        tooltip: '변액 리뷰 (CRS)',
         icon: (
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
             {/* Document outline */}

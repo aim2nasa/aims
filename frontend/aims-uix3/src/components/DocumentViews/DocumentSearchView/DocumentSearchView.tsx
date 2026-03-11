@@ -1597,7 +1597,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             </div>
                             {/* 🍎 AR BADGE: Annual Report 표시 */}
                             {('is_annual_report' in item && item.is_annual_report) ? (
-                              <Tooltip content="Annual Report">
+                              <Tooltip content="연간보고서">
                                 <div className="document-ar-badge">
                                   AR
                                 </div>
@@ -1605,7 +1605,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             ) : null}
                             {/* 🍎 CR BADGE: Customer Review (변액 리포트) 표시 */}
                             {('is_customer_review' in item && item.is_customer_review) && !('is_annual_report' in item && item.is_annual_report) ? (
-                              <Tooltip content="변액 리포트">
+                              <Tooltip content="변액 리뷰">
                                 <div className="document-cr-badge">
                                   CR
                                 </div>

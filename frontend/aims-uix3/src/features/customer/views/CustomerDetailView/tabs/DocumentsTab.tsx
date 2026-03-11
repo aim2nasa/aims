@@ -1356,7 +1356,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     </div>
                     {/* 🍎 AR BADGE: Annual Report 표시 */}
                     {document.isAnnualReport && (
-                      <Tooltip content="Annual Report">
+                      <Tooltip content="연간보고서">
                         <div className="document-ar-badge">
                           AR
                         </div>
@@ -1364,7 +1364,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     )}
                     {/* 🍎 CR BADGE: Customer Review (변액 리포트) 표시 */}
                     {document.document_type === 'customer_review' && !document.isAnnualReport && (
-                      <Tooltip content="변액 리포트">
+                      <Tooltip content="변액 리뷰">
                         <div className="document-cr-badge">
                           CR
                         </div>

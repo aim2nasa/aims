@@ -47,8 +47,8 @@ function getSystemType(
 }
 
 const SYSTEM_TYPE_LABELS: Record<string, string> = {
-  annual_report: 'Annual Report',
-  customer_review: '변액 리포트'
+  annual_report: '연간보고서',
+  customer_review: '변액 리뷰'
 }
 
 export const DocumentTypeCell: React.FC<DocumentTypeCellProps> = ({
