@@ -11,6 +11,7 @@ import {
   getChildKeys,
 } from '../navigationUtils';
 import type { MenuItem } from '../../components/CustomMenu/CustomMenu';
+import { flattenForCollapsed } from '../../components/CustomMenu/menuUtils';
 
 // 테스트용 메뉴 데이터
 const mockMenuItems: MenuItem[] = [
@@ -324,26 +325,8 @@ describe('M-7 getAllNavigableKeys 호환성', () => {
     ...realMenuMock.slice(3), // documents, help
   ];
 
-  /**
-   * collapsed=true 입력 생성 헬퍼
-   * Phase 2에서 flattenForCollapsed를 import 후 교체 예정
-   * 현재는 수동으로 flat 구조 생성 (현재 CustomMenu.tsx 동작 재현)
-   */
-  function manualFlattenForCollapsed(items: MenuItem[]): MenuItem[] {
-    const result: MenuItem[] = [];
-    for (const item of items) {
-      result.push({ ...item, children: undefined, label: '' });
-      if (item.children) {
-        for (const child of item.children) {
-          result.push({ ...child, label: '' });
-        }
-      }
-    }
-    return result;
-  }
-
   it('#12: collapsed=true, isDevMode=false, hasSearchResults=false', () => {
-    const flatItems = manualFlattenForCollapsed(realMenuMock);
+    const flatItems = flattenForCollapsed(realMenuMock, true);
     const keys = getAllNavigableKeys(flatItems, true, []);
     expect(keys).toEqual([
       'autoclicker',
@@ -395,7 +378,7 @@ describe('M-7 getAllNavigableKeys 호환성', () => {
   });
 
   it('#15: collapsed=true, isDevMode=true, hasSearchResults=false', () => {
-    const flatItems = manualFlattenForCollapsed(realMenuMockWithContracts);
+    const flatItems = flattenForCollapsed(realMenuMockWithContracts, true);
     const keys = getAllNavigableKeys(flatItems, true, []);
     expect(keys).toEqual([
       'autoclicker',

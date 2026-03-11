@@ -5,6 +5,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
 import RecentCustomers from '../RecentCustomers'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
+import { flattenForCollapsed } from './menuUtils'
 import './CustomMenu.menu.css';
 import './CustomMenu.states.css';
 import './CustomMenu.colors.css';
@@ -406,13 +407,13 @@ const CustomMenu = ({
     }
   }, [collapsed]) // collapsed 상태 변화만 감지
 
-  // 메뉴 데이터 구조 - UX 최적화된 새로운 구조
-  const menuItems: MenuItem[] = useMemo(() => [
+  // 메뉴 데이터 정본 (collapsed 무관, 항상 children 포함)
+  const menuItemsSource: MenuItem[] = useMemo(() => [
     // ━━━ AutoClicker ━━━
     {
       key: 'autoclicker',
       icon: <span className="menu-icon-teal"><MenuIcons.AutoClicker /></span>,
-      label: collapsed ? '' : '메트 PDF 자동 받기',
+      label: '메트 PDF 자동 받기',
       tooltipTitle: '메트 PDF 자동 받기',
     },
 
@@ -420,7 +421,7 @@ const CustomMenu = ({
     ...(hasSearchResults ? [{
       key: 'search-results',
       icon: <MenuIcons.Search />,
-      label: collapsed ? '' : `검색 결과 (${searchResultsCount}개)`,
+      label: `검색 결과 (${searchResultsCount}개)`,
       tooltipTitle: `검색 결과 (${searchResultsCount}개)`,
     }] : []),
 
@@ -428,9 +429,9 @@ const CustomMenu = ({
     {
       key: 'quick-actions',
       icon: <span className="menu-icon-orange"><SFSymbol name="bolt-fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
-      label: collapsed ? '' : '빠른 작업',
+      label: '빠른 작업',
       tooltipTitle: '빠른 작업',
-      children: collapsed ? undefined : [
+      children: [
         {
           key: 'documents-register',
           icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
@@ -458,41 +459,13 @@ const CustomMenu = ({
       ]
     },
 
-    // collapsed 상태에서 자주 사용 서브메뉴 표시
-    ...(collapsed ? [
-      {
-        key: 'documents-register',
-        icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
-        label: '',
-        tooltipTitle: '고객·계약·문서 등록',
-      },
-      {
-        key: 'customers-register',
-        icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-        label: '',
-        tooltipTitle: '고객 수동등록',
-      },
-      {
-        key: 'contracts-import',
-        icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
-        label: '',
-        tooltipTitle: isDevMode ? '엑셀 파일에서 고객과 계약 정보를 일괄 등록합니다' : '엑셀 파일에서 고객 정보를 일괄 등록합니다',
-      },
-      {
-        key: 'batch-document-upload',
-        icon: <span className="menu-icon-cyan"><MenuIcons.DocumentBatchUpload /></span>,
-        label: '',
-        tooltipTitle: '폴더별로 정리된 문서를 고객에게 일괄 등록합니다',
-      }
-    ] : []),
-
     // ━━━ 고객 ━━━
     {
       key: 'customers',
       icon: <MenuIcons.User />,
-      label: collapsed ? '' : '고객',
+      label: '고객',
       tooltipTitle: '고객',
-      children: collapsed ? undefined : [
+      children: [
         {
           key: 'customers-all',
           icon: <MenuIcons.List />,
@@ -514,35 +487,13 @@ const CustomMenu = ({
       ]
     },
 
-    // collapsed 상태에서 고객 서브메뉴 표시
-    ...(collapsed ? [
-      {
-        key: 'customers-all',
-        icon: <MenuIcons.List />,
-        label: '',
-        tooltipTitle: '모든 고객을 보여줍니다',
-      },
-      {
-        key: 'customers-regional',
-        icon: <MenuIcons.Location />,
-        label: '',
-        tooltipTitle: '지역별로 고객을 분류하여 보여줍니다',
-      },
-      {
-        key: 'customers-relationship',
-        icon: <span className="menu-icon-pink"><MenuIcons.Team /></span>,
-        label: '',
-        tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
-      }
-    ] : []),
-
     // ━━━ 계약 ━━━ (개발자 모드에서만 표시)
     ...(isDevMode ? [{
       key: 'contracts',
       icon: <span className="menu-icon-blue"><MenuIcons.Contract /></span>,
-      label: collapsed ? '' : '계약',
+      label: '계약',
       tooltipTitle: '계약',
-      children: collapsed ? undefined : [
+      children: [
         {
           key: 'contracts-all',
           icon: <span className="menu-icon-purple"><MenuIcons.ContractAll /></span>,
@@ -552,23 +503,13 @@ const CustomMenu = ({
       ]
     }] : []),
 
-    // collapsed 상태에서 계약 서브메뉴 표시 (개발자 모드에서만)
-    ...(collapsed && isDevMode ? [
-      {
-        key: 'contracts-all',
-        icon: <span className="menu-icon-purple"><MenuIcons.ContractAll /></span>,
-        label: '',
-        tooltipTitle: '모든 계약을 보여줍니다',
-      }
-    ] : []),
-
     // ━━━ 문서 ━━━
     {
       key: 'documents',
       icon: <MenuIcons.FileText />,
-      label: collapsed ? '' : '문서',
+      label: '문서',
       tooltipTitle: '문서',
-      children: collapsed ? undefined : [
+      children: [
         {
           key: 'documents-explorer',
           icon: <span className="menu-icon-green"><MenuIcons.FolderTree /></span>,
@@ -590,35 +531,13 @@ const CustomMenu = ({
       ]
     },
 
-    // collapsed 상태에서 문서 서브메뉴 표시
-    ...(collapsed ? [
-      {
-        key: 'documents-explorer',
-        icon: <span className="menu-icon-green"><MenuIcons.FolderTree /></span>,
-        label: '',
-        tooltipTitle: '고객별로 문서를 모아 볼 수 있습니다',
-      },
-      {
-        key: 'documents-search',
-        icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
-        label: '',
-        tooltipTitle: '상세 문서검색',
-      },
-      {
-        key: 'documents-library',
-        icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
-        label: '',
-        tooltipTitle: '모든 문서를 보여줍니다',
-      }
-    ] : []),
-
     // ━━━ 도움말 ━━━
     {
       key: 'help',
       icon: <MenuIcons.Help />,
-      label: collapsed ? '' : '도움말',
+      label: '도움말',
       tooltipTitle: '도움말',
-      children: collapsed ? undefined : [
+      children: [
         {
           key: 'help-notice',
           icon: <span className="menu-icon-blue"><MenuIcons.Bell /></span>,
@@ -659,37 +578,13 @@ const CustomMenu = ({
         },
       ]
     },
+  ], [hasSearchResults, searchResultsCount, inquiryUnreadCount, noticeHasNew, isDevMode])
 
-    // collapsed 상태에서 도움말 서브메뉴 표시
-    ...(collapsed ? [
-      {
-        key: 'help-notice',
-        icon: <span className="menu-icon-blue"><MenuIcons.Bell /></span>,
-        label: '',
-        tooltipTitle: noticeHasNew ? '공지사항 (새 글)' : '공지사항',
-      },
-      {
-        key: 'help-guide',
-        icon: <span className="menu-icon-green"><MenuIcons.Book /></span>,
-        label: '',
-        tooltipTitle: '사용 가이드',
-      },
-      {
-        key: 'help-faq',
-        icon: <span className="menu-icon-orange"><MenuIcons.ChatQuestion /></span>,
-        label: '',
-        tooltipTitle: '자주 묻는 질문',
-      },
-      {
-        key: 'help-inquiry',
-        icon: <MenuIcons.ChatBubble />,
-        label: '',
-        tooltipTitle: inquiryUnreadCount > 0 ? `1:1 문의 (${inquiryUnreadCount}개 미확인)` : '1:1 문의',
-      }
-    ] : []),
-
-    // 최근 검색 고객은 LeftPane 하단에 별도 컴포넌트로 분리됨
-  ], [collapsed, hasSearchResults, searchResultsCount, inquiryUnreadCount, noticeHasNew, isDevMode])
+  // collapsed 변환 적용 (단일 소스 → flat 구조)
+  const menuItems = useMemo(() =>
+    flattenForCollapsed(menuItemsSource, collapsed),
+    [menuItemsSource, collapsed]
+  )
 
   // 네비게이션 가능한 키 추출 (메뉴 구조 변경 시 자동 업데이트)
   const navigableKeys = useMemo(() =>
