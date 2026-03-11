@@ -1067,11 +1067,119 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
 });
 
 /**
+ * 🐛 BUG-3 FIX: 필터 조건에 해당하는 모든 문서 ID 조회 (전체 선택용)
+ * 페이지네이션 없이 ID만 반환하여 "전체 선택" 기능 지원
+ */
+router.get('/documents/status/all-ids', authenticateJWT, async (req, res) => {
+  try {
+    const { customerId: customerIdFilter, fileScope = 'excludeMyFiles', initial, initialType } = req.query;
+    const userId = req.user.id;
+
+    // initialType 유효성 검증
+    const VALID_INITIAL_TYPES = ['korean', 'alphabet', 'number'];
+    if (initialType && !VALID_INITIAL_TYPES.includes(initialType)) {
+      return res.status(400).json({ success: false, message: 'Invalid initialType' });
+    }
+
+    // 기본 필터 구성 (documents/status와 동일)
+    let filter = {
+      ownerId: userId,
+      customerId: { $exists: true, $ne: null },
+      $expr: { $ne: [{ $toString: '$customerId' }, userId] }
+    };
+
+    if (fileScope === 'onlyMyFiles') {
+      filter = {
+        ownerId: userId,
+        $expr: { $eq: [{ $toString: '$customerId' }, userId] }
+      };
+    } else if (fileScope === 'all') {
+      filter = { ownerId: userId };
+    }
+
+    // 특정 고객 필터
+    if (customerIdFilter && typeof customerIdFilter === 'string' && ObjectId.isValid(customerIdFilter)) {
+      filter['customerId'] = new ObjectId(customerIdFilter);
+    }
+
+    // 초성 카테고리 필터 (initialType)
+    if (initialType && !initial) {
+      let nameFilter = null;
+      if (initialType === 'korean') {
+        nameFilter = { $gte: '가', $lt: '\uD7A4' };
+      } else if (initialType === 'alphabet') {
+        nameFilter = { $regex: /^[A-Za-z]/ };
+      } else if (initialType === 'number') {
+        nameFilter = { $not: { $regex: /^[가-힣A-Za-z]/ } };
+      }
+      if (nameFilter) {
+        const matchingCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
+          .find({ 'meta.created_by': userId, 'personal_info.name': nameFilter })
+          .project({ _id: 1 })
+          .toArray();
+        if (matchingCustomers.length > 0) {
+          const ids = matchingCustomers.map(c => c._id);
+          if (!(filter['customerId'] instanceof ObjectId)) {
+            filter['customerId'] = { $in: ids };
+          }
+        } else {
+          return res.json({ success: true, data: { ids: [] } });
+        }
+      }
+    }
+
+    // 초성 필터 (initial)
+    if (initial && typeof initial === 'string' && initial.length === 1) {
+      let nameFilter = null;
+      const code = initial.charCodeAt(0);
+      if (code >= 0x3131 && code <= 0x314E) {
+        const range = CHOSUNG_RANGE_MAP[initial];
+        if (range) nameFilter = { $gte: range[0], $lt: range[1] };
+      } else if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+        const upper = initial.toUpperCase();
+        const lower = initial.toLowerCase();
+        nameFilter = { $regex: `^[${escapeRegex(upper)}${escapeRegex(lower)}]` };
+      } else if (code >= 48 && code <= 57) {
+        nameFilter = { $regex: `^${escapeRegex(initial)}` };
+      } else if (initial === '#') {
+        nameFilter = { $not: { $regex: /^[가-힣ㄱ-ㅎA-Za-z0-9]/ } };
+      }
+      if (nameFilter) {
+        const matchingCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
+          .find({ 'meta.created_by': userId, 'personal_info.name': nameFilter })
+          .project({ _id: 1 })
+          .toArray();
+        if (matchingCustomers.length > 0) {
+          const ids = matchingCustomers.map(c => c._id);
+          if (!(filter['customerId'] instanceof ObjectId)) {
+            filter['customerId'] = { $in: ids };
+          }
+        } else {
+          return res.json({ success: true, data: { ids: [] } });
+        }
+      }
+    }
+
+    // _id만 조회 (성능 최적화)
+    const documents = await db.collection(COLLECTION_NAME)
+      .find(filter)
+      .project({ _id: 1 })
+      .toArray();
+
+    const ids = documents.map(doc => doc._id.toString());
+    res.json({ success: true, data: { ids, totalCount: ids.length } });
+  } catch (error) {
+    console.error('[documents/status/all-ids] Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
  * 모든 문서의 상태를 조회하는 API
  */
 router.get('/documents/status', authenticateJWT, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField, period, initial, initialType } = req.query;
+    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField, period, initial, initialType, customerId: customerIdFilter } = req.query;
     const skip = (page - 1) * limit;
 
     // (정렬 디버깅 로그 제거됨 — 성능 최적화)
@@ -1107,6 +1215,11 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       filter['customerId'] = { $exists: true, $ne: null };
     } else if (customerLink === 'unlinked') {
       filter['customerId'] = { $exists: false };
+    }
+
+    // 🍎 특정 고객의 문서만 필터링 (고객 필터 기능)
+    if (customerIdFilter && typeof customerIdFilter === 'string' && ObjectId.isValid(customerIdFilter)) {
+      filter['customerId'] = new ObjectId(customerIdFilter);
     }
 
     if (search) {
@@ -1169,7 +1282,30 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
           .toArray();
 
         if (matchingCustomers.length > 0) {
-          filter['customerId'] = { $in: matchingCustomers.map(c => c._id) };
+          const initialCustomerIds = matchingCustomers.map(c => c._id);
+          // 🐛 BUG-2 FIX: 기존 customerId 필터(특정 고객)가 있으면 교집합 적용
+          if (filter['customerId'] instanceof ObjectId) {
+            const existingId = filter['customerId'];
+            const isInInitialFilter = initialCustomerIds.some(id => id.equals(existingId));
+            if (!isInInitialFilter) {
+              // 특정 고객이 초성 범위에 없음 → 빈 결과
+              return res.json({
+                success: true,
+                data: {
+                  documents: [],
+                  pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: 0,
+                    totalCount: 0,
+                    limit: parseInt(limit)
+                  }
+                }
+              });
+            }
+            // 특정 고객이 초성 범위에 있으면 기존 customerId 필터 유지
+          } else {
+            filter['customerId'] = { $in: initialCustomerIds };
+          }
         } else {
           return res.json({
             success: true,
@@ -1221,7 +1357,30 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
           .toArray();
 
         if (matchingCustomers.length > 0) {
-          filter['customerId'] = { $in: matchingCustomers.map(c => c._id) };
+          const initialCustomerIds = matchingCustomers.map(c => c._id);
+          // 🐛 BUG-2 FIX: 기존 customerId 필터(특정 고객)가 있으면 교집합 적용
+          if (filter['customerId'] instanceof ObjectId) {
+            const existingId = filter['customerId'];
+            const isInInitialFilter = initialCustomerIds.some(id => id.equals(existingId));
+            if (!isInInitialFilter) {
+              // 특정 고객이 초성 범위에 없음 → 빈 결과
+              return res.json({
+                success: true,
+                data: {
+                  documents: [],
+                  pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: 0,
+                    totalCount: 0,
+                    limit: parseInt(limit)
+                  }
+                }
+              });
+            }
+            // 특정 고객이 초성 범위에 있으면 기존 customerId 필터 유지
+          } else {
+            filter['customerId'] = { $in: initialCustomerIds };
+          }
         } else {
           // 매칭 고객 없음 → 빈 결과 즉시 반환
           return res.json({

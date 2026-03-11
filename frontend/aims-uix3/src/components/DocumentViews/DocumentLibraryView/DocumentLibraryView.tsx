@@ -105,7 +105,11 @@ const DocumentLibraryContent: React.FC<{
   onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
   onNavigate?: (viewKey: string) => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, onDeleteAll, isDeleting, isGeneratingAliases, onGenerateAliases, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
+  /** 고객 필터 상태 (null이면 필터 없음) */
+  customerFilter: { id: string; name: string } | null
+  /** 고객 필터 설정 핸들러 */
+  onCustomerFilterChange: (filter: { id: string; name: string } | null) => void
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, onDeleteAll, isDeleting, isGeneratingAliases, onGenerateAliases, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
 
@@ -135,6 +139,22 @@ const DocumentLibraryContent: React.FC<{
 
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
+
+  // 🍎 고객 필터: 더블클릭 시 고객명 자동 설정
+  React.useEffect(() => {
+    if (customerFilter && !customerFilter.name && state.documents.length > 0) {
+      // 현재 문서 목록에서 해당 고객명을 찾아 설정
+      const doc = state.documents.find(d =>
+        d.customer_relation?.customer_id === customerFilter.id
+      )
+      if (doc?.customer_relation?.customer_name) {
+        onCustomerFilterChange({
+          id: customerFilter.id,
+          name: doc.customer_relation.customer_name
+        })
+      }
+    }
+  }, [customerFilter, state.documents, onCustomerFilterChange])
 
   // 🍎 별칭 생성 모드: 기존 별칭 포함 여부
   const [forceRegenerateAlias, setForceRegenerateAlias] = React.useState(false)
@@ -357,16 +377,68 @@ const DocumentLibraryContent: React.FC<{
   }, [actions])
 
   // 🍎 전체 선택 핸들러 (Context의 documents 사용)
-  const handleSelectAll = React.useCallback((checked: boolean) => {
+  // 🐛 BUG-3 FIX: 고객 필터 활성 시 API로 해당 고객의 모든 문서 ID 조회
+  const handleSelectAll = React.useCallback(async (checked: boolean) => {
     if (checked) {
+      // 고객 필터가 있으면 API로 전체 ID 조회 (현재 페이지 한정 아님)
+      if (customerFilter?.id) {
+        try {
+          const allIds = await DocumentStatusService.getAllDocumentIds({
+            customerId: customerFilter.id,
+            fileScope: 'excludeMyFiles',
+            initial: selectedInitial || undefined,
+            initialType: initialType || undefined,
+          })
+          onSelectAllIds(allIds)
+        } catch {
+          // API 실패 시 현재 페이지 문서만 선택 (폴백)
+          const pageIds = controller.filteredDocuments
+            .map(doc => doc._id ?? doc.id ?? '')
+            .filter(id => id !== '')
+          onSelectAllIds(pageIds)
+        }
+      } else {
+        // 고객 필터 없으면 현재 페이지만 선택 (기존 동작 유지)
+        const allIds = controller.filteredDocuments
+          .map(doc => doc._id ?? doc.id ?? '')
+          .filter(id => id !== '')
+        onSelectAllIds(allIds)
+      }
+    } else {
+      onSelectAllIds([])
+    }
+  }, [controller.filteredDocuments, onSelectAllIds, customerFilter, selectedInitial, initialType])
+
+  // 🍎 고객 문서 전체 선택 핸들러 (고객 필터 활성 시 해당 고객의 모든 문서 전체 선택 + 삭제 모드 진입)
+  // 🐛 BUG-3 FIX: API로 해당 고객의 모든 문서 ID 조회
+  const handleSelectAllCustomerDocs = React.useCallback(async () => {
+    if (customerFilter?.id) {
+      try {
+        const allIds = await DocumentStatusService.getAllDocumentIds({
+          customerId: customerFilter.id,
+          fileScope: 'excludeMyFiles',
+          initial: selectedInitial || undefined,
+          initialType: initialType || undefined,
+        })
+        onSelectAllIds(allIds)
+      } catch {
+        // API 실패 시 현재 페이지 문서만 선택
+        const pageIds = controller.filteredDocuments
+          .map(doc => doc._id ?? doc.id ?? '')
+          .filter(id => id !== '')
+        onSelectAllIds(pageIds)
+      }
+    } else {
       const allIds = controller.filteredDocuments
         .map(doc => doc._id ?? doc.id ?? '')
         .filter(id => id !== '')
       onSelectAllIds(allIds)
-    } else {
-      onSelectAllIds([])
     }
-  }, [controller.filteredDocuments, onSelectAllIds])
+    // 삭제 모드가 아니면 진입
+    if (!isDeleteMode) {
+      onToggleDeleteMode()
+    }
+  }, [controller.filteredDocuments, onSelectAllIds, isDeleteMode, onToggleDeleteMode, customerFilter, selectedInitial, initialType])
 
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
@@ -515,6 +587,45 @@ const DocumentLibraryContent: React.FC<{
                   )}
                 </button>
               </Tooltip>
+
+              {/* 🍎 고객 필터 칩: 특정 고객의 문서만 필터링 중일 때 표시 (고객명 로딩 완료 후) */}
+              {customerFilter && customerFilter.name && (
+                <div className="customer-filter-chip">
+                  <span className="customer-filter-chip__label">
+                    {customerFilter.name}의 문서
+                  </span>
+                  <Tooltip content="전체 선택">
+                    <button
+                      type="button"
+                      className="customer-filter-chip__action"
+                      onClick={handleSelectAllCustomerDocs}
+                      aria-label="이 고객의 문서 전체 선택"
+                    >
+                      <SFSymbol
+                        name="checkmark"
+                        size={SFSymbolSize.CAPTION_2}
+                        weight={SFSymbolWeight.MEDIUM}
+                        decorative={true}
+                      />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="필터 해제">
+                    <button
+                      type="button"
+                      className="customer-filter-chip__close"
+                      onClick={() => onCustomerFilterChange(null)}
+                      aria-label="고객 필터 해제"
+                    >
+                      <SFSymbol
+                        name="xmark"
+                        size={SFSymbolSize.CAPTION_2}
+                        weight={SFSymbolWeight.MEDIUM}
+                        decorative={true}
+                      />
+                    </button>
+                  </Tooltip>
+                </div>
+              )}
 
               {/* 총 문서 개수 및 현재 표시 범위 */}
               <span className="result-count">
@@ -850,6 +961,11 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   const [selectedDocumentIds, setSelectedDocumentIds] = React.useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = React.useState(false)
 
+  // 🍎 고객 필터 상태 (특정 고객의 문서만 보기)
+  const [customerFilter, setCustomerFilter] = React.useState<{ id: string; name: string } | null>(null)
+  // 🍎 고객 필터 적용 전 초성 상태 저장 (해제 시 복원용)
+  const prevInitialRef = React.useRef<string | null>(null)
+
   // 🍎 고객 일괄 연결 기능 상태
   const [isBulkLinkMode, setIsBulkLinkMode] = React.useState(false)
 
@@ -961,6 +1077,43 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       return newSet
     })
   }, [])
+
+  // 🍎 고객 더블클릭 → 해당 고객의 문서만 필터링 (토글)
+  // 🐛 FIX: updater 내부 side effect 제거 (React Strict Mode 순수성 준수)
+  const handleCustomerDoubleClickForFilter = React.useCallback((customerId: string) => {
+    const isDeactivating = customerFilter?.id === customerId
+    if (isDeactivating) {
+      // 해제: 이전 초성 복원
+      if (prevInitialRef.current !== null) {
+        setSelectedInitial(prevInitialRef.current)
+      }
+      prevInitialRef.current = null
+      setCustomerFilter(null)
+    } else {
+      // 활성화: 현재 초성 저장 후 초성 해제
+      // 🐛 FIX: 이미 다른 고객 필터가 활성화된 경우 prevInitialRef 보존 (원래 초성 소실 방지)
+      if (prevInitialRef.current === null) {
+        prevInitialRef.current = selectedInitial
+      }
+      setSelectedInitial(null)
+      setCustomerFilter({ id: customerId, name: '' })
+    }
+  }, [customerFilter, selectedInitial, setSelectedInitial])
+
+  // 🍎 고객 필터 설정 (고객명 포함)
+  const handleCustomerFilterChange = React.useCallback((filter: { id: string; name: string } | null) => {
+    setCustomerFilter(filter)
+    // 필터 해제 시 선택 초기화 + 이전 초성 복원
+    if (!filter) {
+      setSelectedDocumentIds(new Set())
+      setIsDeleteMode(false)
+      // 이전 초성 상태 복원
+      if (prevInitialRef.current !== null) {
+        setSelectedInitial(prevInitialRef.current)
+        prevInitialRef.current = null
+      }
+    }
+  }, [setSelectedInitial])
 
   // 🍎 문서 삭제 핸들러
   const handleDeleteSelected = React.useCallback(async () => {
@@ -1113,7 +1266,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         )}
 
         {/* 🍎 타겟 영역: 상단 바 + 헤더 + 문서 리스트 + 페이지네이션 */}
-        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles" initialFilter={selectedInitial} initialTypeFilter={initialType}>
+        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles" initialFilter={selectedInitial} initialTypeFilter={initialType} customerIdFilter={customerFilter?.id}>
           <DocumentLibraryContent
             initialType={initialType}
             onInitialTypeChange={handleInitialTypeChange}
@@ -1141,10 +1294,15 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onRemoveDocumentsExpose={(fn) => {
               removeDocumentsFnRef.current = fn
             }}
+            customerFilter={customerFilter}
+            onCustomerFilterChange={handleCustomerFilterChange}
             {...(onDocumentClick && { onDocumentClick })}
             {...(onDocumentDoubleClick && { onDocumentDoubleClick })}
             {...(onCustomerClick && { onCustomerClick })}
-            {...(onCustomerDoubleClick && { onCustomerDoubleClick })}
+            onCustomerDoubleClick={(customerId: string) => {
+              // 🍎 고객 더블클릭 시 해당 고객의 문서만 필터링
+              handleCustomerDoubleClickForFilter(customerId)
+            }}
             {...(onNavigate && { onNavigate })}
           />
         </DocumentStatusProvider>

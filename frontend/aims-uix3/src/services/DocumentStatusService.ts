@@ -93,7 +93,7 @@ export class DocumentStatusService {
    * @param customerLink 고객 연결 필터 ('linked' | 'unlinked' | undefined)
    * @param fileScope 파일 범위 필터 ('all' | 'excludeMyFiles' | 'onlyMyFiles')
    */
-  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string, search?: string, customerLink?: 'linked' | 'unlinked', fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles', searchField?: 'displayName' | 'originalName', period?: string, initial?: string, initialType?: string): Promise<DocumentStatusResponse> {
+  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string, search?: string, customerLink?: 'linked' | 'unlinked', fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles', searchField?: 'displayName' | 'originalName', period?: string, initial?: string, initialType?: string, customerId?: string): Promise<DocumentStatusResponse> {
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -123,6 +123,9 @@ export class DocumentStatusService {
       if (initialType) {
         params.append('initialType', initialType)
       }
+      if (customerId) {
+        params.append('customerId', customerId)
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/documents/status?${params.toString()}`, {
         method: 'GET',
@@ -142,6 +145,45 @@ export class DocumentStatusService {
     } catch (error) {
       console.error('[DocumentStatusService] Get documents failed:', error)
       errorReporter.reportApiError(error as Error, { component: 'DocumentStatusService.getRecentDocuments' })
+      throw error
+    }
+  }
+
+  /**
+   * 🐛 BUG-3 FIX: 필터 조건에 해당하는 모든 문서 ID 조회 (전체 선택용)
+   * 페이지네이션 없이 ID만 반환
+   */
+  static async getAllDocumentIds(options?: {
+    customerId?: string
+    fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles'
+    initial?: string
+    initialType?: string
+  }): Promise<string[]> {
+    try {
+      const params = new URLSearchParams()
+      if (options?.customerId) params.append('customerId', options.customerId)
+      if (options?.fileScope) params.append('fileScope', options.fileScope)
+      if (options?.initial) params.append('initial', options.initial)
+      if (options?.initialType) params.append('initialType', options.initialType)
+
+      const response = await fetch(`${API_BASE_URL}/api/documents/status/all-ids?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        mode: 'cors'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      return data.success ? (data.data?.ids || []) : []
+    } catch (error) {
+      console.error('[DocumentStatusService] Get all document IDs failed:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusService.getAllDocumentIds' })
       throw error
     }
   }

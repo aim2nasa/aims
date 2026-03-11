@@ -268,6 +268,66 @@
     border-radius: 6px;
   }
 
+  /* === 🍎 CUSTOMER FILTER CHIP: 고객별 문서 필터링 칩 === */
+
+  .customer-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px 2px 8px;
+    background: var(--color-ios-blue, #007aff);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .customer-filter-chip__label {
+    color: var(--color-ios-text-on-accent, #fff);
+    padding-right: 2px;
+  }
+
+  .customer-filter-chip__action,
+  .customer-filter-chip__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-ios-text-on-accent, #fff);
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .customer-filter-chip__action:hover,
+  .customer-filter-chip__close:hover {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+
+  .customer-filter-chip__action--danger {
+    background: rgba(255, 59, 48, 0.3);
+  }
+
+  .customer-filter-chip__action--danger:hover {
+    background: rgba(255, 59, 48, 0.5);
+  }
+
+  .customer-filter-chip__action:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  html[data-theme="dark"] .customer-filter-chip {
+    background: var(--color-ios-blue-dark, #0a84ff);
+  }
+
   /* === 🍎 DOCUMENT LIST: iOS table view === */
 
   .document-list {

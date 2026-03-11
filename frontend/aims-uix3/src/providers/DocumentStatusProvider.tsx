@@ -32,6 +32,8 @@ interface DocumentStatusProviderProps {
   initialFilter?: string | null
   /** 초성 타입 필터 (한글/영문/숫자 카테고리 서버사이드 필터링) */
   initialTypeFilter?: string | null
+  /** 특정 고객 ID로 필터링 (고객별 문서 보기) */
+  customerIdFilter?: string | null
 }
 
 /**
@@ -44,7 +46,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   fileScope = 'all',
   initialItemsPerPage,
   initialFilter,
-  initialTypeFilter
+  initialTypeFilter,
+  customerIdFilter
 }) => {
   // State - 캐시된 데이터로 초기화 (네비게이션 시 빈 화면 방지)
   const [documents, setDocuments] = useState<Document[]>(documentCache)
@@ -102,6 +105,17 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     initialTypeFilterRef.current = initialTypeFilter
   }, [initialTypeFilter])
 
+  // 📝 고객 ID 필터 ref (고객별 문서 보기)
+  const customerIdFilterRef = useRef(customerIdFilter)
+  useEffect(() => {
+    customerIdFilterRef.current = customerIdFilter
+  }, [customerIdFilter])
+
+  // 🐛 FIX: fetch 요청 세대 카운터 — race condition 방지
+  // 여러 필터가 동시에 변경되면 다수의 fetch가 동시 발생하는데,
+  // 이전 응답이 최신 응답을 덮어쓰지 않도록 세대 번호로 무효화
+  const fetchGenerationRef = useRef(0)
+
   /**
    * 문서 목록 가져오기
    * 🍎 페이지네이션 기반: 현재 페이지와 페이지당 항목 수에 따라 데이터 가져오기
@@ -109,6 +123,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
    */
   const fetchDocuments = useCallback(
     async (isInitialLoad: boolean = false, silent: boolean = false) => {
+      // 🐛 FIX: 요청 세대 증가 — 이 fetch가 최신인지 확인하는 데 사용
+      const thisGeneration = ++fetchGenerationRef.current
+
       try {
         if (isInitialLoad) {
           setLoading(true)
@@ -150,7 +167,14 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         const searchFieldParam = searchQuery ? searchField : undefined
         const initialParam = initialFilterRef.current || undefined
         const initialTypeParam = initialTypeFilterRef.current || undefined
-        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam, searchFieldParam, undefined, initialParam, initialTypeParam)
+        const customerIdParam = customerIdFilterRef.current || undefined
+        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam, searchFieldParam, undefined, initialParam, initialTypeParam, customerIdParam)
+
+        // 🐛 FIX: stale 응답 무시 — 이 fetch 이후에 새로운 fetch가 시작되었으면 결과 버림
+        if (fetchGenerationRef.current !== thisGeneration) {
+          return
+        }
+
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 🍎 백엔드 pagination 정보 저장 + 캐시 업데이트
@@ -227,6 +251,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         })
 
       } catch (err) {
+        // 🐛 FIX: stale 에러 응답도 무시 — 최신 성공 응답을 덮어쓰지 않도록
+        if (fetchGenerationRef.current !== thisGeneration) return
+
         if (!silent && typeof window !== 'undefined') {
           setError('문서 목록을 불러올 수 없습니다.')
         }
@@ -238,6 +265,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           setDocuments([])
         }
       } finally {
+        // finally는 항상 실행 — setLoading(false)는 generation 체크 없이 항상 호출
         if (isInitialLoad && typeof window !== 'undefined') {
           setLoading(false)
         }
@@ -418,6 +446,28 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTypeFilter])
+
+  /**
+   * 🍎 고객 ID 필터 변경 시 1페이지로 리셋 + 재조회
+   * 🐛 BUG-1 FIX: 필터 변경 시 캐시된 totalCount를 즉시 리셋하여
+   * 이전 전체 수(예: 2492)가 잠깐 표시되는 문제 방지
+   */
+  useEffect(() => {
+    if (isInitialMountRef.current) return
+    if (typeof window === 'undefined') return
+
+    // 🐛 BUG-1 FIX: 필터 변경 시 pagination 캐시 즉시 리셋
+    paginationCache = { totalPages: 1, totalCount: 0 }
+    setTotalCount(0)
+    setTotalPages(1)
+
+    if (currentPage !== 1) {
+      setCurrentPage(1)
+    } else {
+      fetchDocumentsRef.current(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerIdFilter])
 
   // 🔄 SSE 훅 사용 (실시간 업데이트)
   // - document-list-change: 문서 업로드/삭제/연결 변경 시 즉시 반영

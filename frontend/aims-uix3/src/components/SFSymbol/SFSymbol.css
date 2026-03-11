@@ -1329,29 +1329,27 @@
   .sf-symbol--checkmark .sf-symbol__shape::before {
     content: '';
     position: absolute;
-    top: 40%;
-    left: 45%;
+    top: 38%;
+    left: 62%;
     transform: translate(-50%, -50%) rotate(45deg);
-    width: 0.08em;
-    height: 0.25em;
+    width: 0.14em;
+    height: 0.50em;
 
-    /* 애플 스타일 체크 - 단순한 선들 */
+    /* 애플 스타일 체크 - 긴 우측 획 */
     background: currentColor;
-    border-radius: 0.04em;
-    opacity: 0.8;
+    border-radius: 0.07em;
   }
 
   .sf-symbol--checkmark .sf-symbol__shape::after {
     content: '';
     position: absolute;
-    top: 45%;
-    left: 35%;
+    top: 60%;
+    left: 28%;
     transform: translate(-50%, -50%) rotate(-45deg);
-    width: 0.08em;
-    height: 0.15em;
+    width: 0.14em;
+    height: 0.28em;
     background: currentColor;
-    border-radius: 0.04em;
-    opacity: 0.8;
+    border-radius: 0.07em;
   }
 
   /* EXCLAMATIONMARK (Error) SYMBOL - 애플 스타일 느낌표 (!) */

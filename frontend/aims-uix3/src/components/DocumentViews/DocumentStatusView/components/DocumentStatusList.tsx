@@ -686,7 +686,7 @@ export interface DocumentStatusListProps {
   // 🍎 Delete mode props
   isDeleteMode?: boolean
   selectedDocumentIds?: Set<string>
-  onSelectAll?: (checked: boolean) => void
+  onSelectAll?: (checked: boolean) => void | Promise<void>
   onSelectDocument?: (documentId: string, event: React.MouseEvent) => void
   // 🍎 Bulk link mode props
   isBulkLinkMode?: boolean

@@ -91,7 +91,8 @@ describe('DocumentStatusProvider - initialType 카테고리 필터 테스트', (
         undefined, // searchField
         undefined, // period
         undefined, // initial
-        'korean'   // initialType
+        'korean',   // initialType
+        undefined  // customerId
       )
     })
 
@@ -111,7 +112,8 @@ describe('DocumentStatusProvider - initialType 카테고리 필터 테스트', (
         undefined, undefined, undefined, undefined,
         undefined, // period
         undefined, // initial
-        'alphabet' // initialType
+        'alphabet', // initialType
+        undefined  // customerId
       )
     })
 
@@ -131,7 +133,8 @@ describe('DocumentStatusProvider - initialType 카테고리 필터 테스트', (
         undefined, undefined, undefined, undefined,
         undefined, // period
         undefined, // initial
-        'number'   // initialType
+        'number',   // initialType
+        undefined  // customerId
       )
     })
 
@@ -151,7 +154,8 @@ describe('DocumentStatusProvider - initialType 카테고리 필터 테스트', (
         undefined, undefined, undefined, undefined,
         undefined, // period
         undefined, // initial
-        undefined  // initialType
+        undefined, // initialType
+        undefined  // customerId
       )
     })
   })
@@ -173,7 +177,8 @@ describe('DocumentStatusProvider - initialType 카테고리 필터 테스트', (
         undefined, undefined, undefined, undefined,
         undefined, // period
         'ㄱ',      // initial
-        'korean'   // initialType
+        'korean',   // initialType
+        undefined  // customerId
       )
     })
 
@@ -193,7 +198,8 @@ describe('DocumentStatusProvider - initialType 카테고리 필터 테스트', (
         undefined, undefined, undefined, undefined,
         undefined, // period
         '#',       // initial
-        'number'   // initialType
+        'number',   // initialType
+        undefined  // customerId
       )
     })
   })
