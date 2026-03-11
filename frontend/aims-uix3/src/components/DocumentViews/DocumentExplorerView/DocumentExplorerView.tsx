@@ -554,6 +554,7 @@ const DocumentExplorerContent: React.FC<{
     recentDocuments,
     customerFilter,
     dateFilter,
+    dateRange,
     thumbnailEnabled,
     setGroupBy,
     toggleNode,
@@ -568,6 +569,7 @@ const DocumentExplorerContent: React.FC<{
     jumpToDate,
     getAvailableDates,
     clearDateFilter,
+    setDateRange,
     setThumbnailEnabled,
     expandToLevel,
     expandToDocument,
@@ -583,7 +585,7 @@ const DocumentExplorerContent: React.FC<{
       if (filterFetchMode !== 'none') setFilterFetchMode('none')
       return
     }
-    const needsAll = quickFilter !== 'none' || dateFilter !== null
+    const needsAll = quickFilter !== 'none' || dateFilter !== null || dateRange !== null
     if (needsAll && filterFetchMode !== 'all') {
       setFilterFetchMode('all')
       void fetchExplorerTree('all')
@@ -592,7 +594,7 @@ const DocumentExplorerContent: React.FC<{
       void fetchExplorerTree(null)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quickFilter, dateFilter, selectedInitial])
+  }, [quickFilter, dateFilter, dateRange, selectedInitial])
 
   // 요약 모드 + 통합 검색 칩: 서버 검색 (고객명+파일명) with debounce 300ms
   const serverSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -1220,6 +1222,8 @@ const DocumentExplorerContent: React.FC<{
         getAvailableDates={getAvailableDates}
         dateFilter={dateFilter}
         onDateFilterClear={clearDateFilter}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
         thumbnailEnabled={thumbnailEnabled}
         onThumbnailEnabledChange={setThumbnailEnabled}
         filenameMode={filenameMode}

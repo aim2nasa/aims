@@ -7,7 +7,7 @@ import React, { useCallback, useRef, useState, useMemo, useEffect } from 'react'
 import { Button } from '@/shared/ui/Button'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
-import type { DocumentGroupBy, DocumentSortBy, SortDirection, QuickFilterType } from './types/documentExplorer'
+import type { DocumentGroupBy, DocumentSortBy, SortDirection, QuickFilterType, DateRange } from './types/documentExplorer'
 import { GROUP_BY_LABELS, SORT_BY_LABELS, QUICK_FILTER_LABELS } from './types/documentExplorer'
 import { getRecentSearchQueries, addRecentSearchQuery, type RecentSearchQuery } from '../../../utils/recentSearchQueries'
 import '../DocumentLibraryView/DocumentLibraryView-delete.css'
@@ -19,7 +19,6 @@ export type ExplorerSearchMode = 'filename' | 'content' | 'semantic'
 const QUICK_FILTER_TOOLTIPS: Record<QuickFilterType, string> = {
   none: '',
   today: '오늘 등록된 문서만 표시',
-  thisWeek: '이번 주 등록된 문서만 표시',
 }
 
 /** 편집 모드 타입 */
@@ -52,6 +51,9 @@ export interface DocumentExplorerToolbarProps {
   /** 날짜 필터 */
   dateFilter: Date | null
   onDateFilterClear: () => void
+  /** 날짜 범위 필터 */
+  dateRange: DateRange | null
+  onDateRangeChange: (range: DateRange | null) => void
   /** 썸네일 미리보기 활성화 */
   thumbnailEnabled: boolean
   onThumbnailEnabledChange: (enabled: boolean) => void
@@ -112,7 +114,7 @@ const SEARCH_MODE_PLACEHOLDERS_SUMMARY: Record<ExplorerSearchMode, string> = {
 const SORT_OPTIONS: DocumentSortBy[] = ['name', 'customer', 'date', 'badgeType']
 
 // 빠른 필터 칩 옵션 (전체 제외)
-const QUICK_FILTER_OPTIONS: QuickFilterType[] = ['today', 'thisWeek']
+const QUICK_FILTER_OPTIONS: QuickFilterType[] = ['today']
 
 export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = ({
   groupBy,
@@ -136,6 +138,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   getAvailableDates,
   dateFilter,
   onDateFilterClear,
+  dateRange,
+  onDateRangeChange,
   thumbnailEnabled,
   onThumbnailEnabledChange,
   filenameMode,
@@ -182,17 +186,48 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   const calendarYear = calendarDate.year
   const calendarMonth = calendarDate.month
 
-  // 날짜 선택 핸들러
+  // 범위 선택 상태: 시작일 임시 저장, 호버 미리보기
+  const [pendingStart, setPendingStart] = useState<Date | null>(null)
+  const [hoverDate, setHoverDate] = useState<Date | null>(null)
+
+  // 날짜 선택 핸들러 (범위 선택 지원)
   const handleDateSelect = useCallback(
     (year: number, month: number, day: number) => {
       const date = new Date(year, month, day)
-      const success = onJumpToDate(date)
-      if (success) {
+
+      if (!pendingStart) {
+        // 1클릭: 시작일 저장
+        setPendingStart(date)
+      } else {
+        // 2클릭: 범위 확정
+        const start = pendingStart.getTime() <= date.getTime() ? pendingStart : date
+        const end = pendingStart.getTime() <= date.getTime() ? date : pendingStart
+
+        if (start.getTime() === end.getTime()) {
+          // 같은 날 2번 클릭 → 단일 날짜 선택 (문서 있으면 jumpToDate, 없으면 범위 필터)
+          const success = onJumpToDate(date)
+          if (!success) {
+            onDateRangeChange({ start, end })
+          }
+        } else {
+          // 범위 선택
+          onDateRangeChange({ start, end })
+        }
+        setPendingStart(null)
+        setHoverDate(null)
         setShowDatePicker(false)
       }
     },
-    [onJumpToDate]
+    [pendingStart, onJumpToDate, onDateRangeChange]
   )
+
+  // 달력 닫힐 때 pendingStart 초기화
+  useEffect(() => {
+    if (!showDatePicker) {
+      setPendingStart(null)
+      setHoverDate(null)
+    }
+  }, [showDatePicker])
 
   // 이전/다음 달 이동 (단일 상태로 원자적 업데이트)
   const goToPrevMonth = useCallback(() => {
@@ -219,34 +254,74 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
     setCalendarDate({ year: today.getFullYear(), month: today.getMonth() })
   }, [])
 
-  // 달력 데이터 생성
+  // 달력 데이터 생성 (범위 선택 상태 포함)
   const calendarDays = useMemo(() => {
-    const firstDay = new Date(calendarYear, calendarMonth, 1)
     const lastDay = new Date(calendarYear, calendarMonth + 1, 0)
-    const startDayOfWeek = firstDay.getDay() // 0 = 일요일
+    const startDayOfWeek = new Date(calendarYear, calendarMonth, 1).getDay()
 
-    const days: Array<{ day: number; hasDocuments: boolean; isToday: boolean } | null> = []
+    const days: Array<{
+      day: number
+      hasDocuments: boolean
+      isToday: boolean
+      isSelected: boolean
+      isInRange: boolean
+      isRangeStart: boolean
+      isRangeEnd: boolean
+    } | null> = []
 
     // 이전 달의 빈 칸
     for (let i = 0; i < startDayOfWeek; i++) {
       days.push(null)
     }
 
-    // 현재 달의 날짜들
+    // 범위 계산용 변수
     const today = new Date()
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
+    // 현재 확정된 범위 또는 호버 미리보기 범위 계산
+    let rangeStart: number | null = null
+    let rangeEnd: number | null = null
+    if (pendingStart && hoverDate) {
+      // 호버 미리보기
+      rangeStart = Math.min(pendingStart.getTime(), hoverDate.getTime())
+      rangeEnd = Math.max(pendingStart.getTime(), hoverDate.getTime())
+    } else if (dateRange && !pendingStart) {
+      // 확정된 범위
+      rangeStart = dateRange.start.getTime()
+      rangeEnd = dateRange.end.getTime()
+    }
+
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      const dayTime = new Date(calendarYear, calendarMonth, day).getTime()
+
+      // 단일 날짜 필터 선택 상태
+      const isSelected = dateFilter
+        ? dateFilter.getFullYear() === calendarYear && dateFilter.getMonth() === calendarMonth && dateFilter.getDate() === day
+        : false
+
+      // pendingStart 선택 상태
+      const isPendingStart = pendingStart
+        ? pendingStart.getFullYear() === calendarYear && pendingStart.getMonth() === calendarMonth && pendingStart.getDate() === day
+        : false
+
+      const isInRange = rangeStart !== null && rangeEnd !== null && dayTime >= rangeStart && dayTime <= rangeEnd
+      const isRangeStart = rangeStart !== null && dayTime === rangeStart
+      const isRangeEnd = rangeEnd !== null && dayTime === rangeEnd
+
       days.push({
         day,
         hasDocuments: availableDatesSet.has(dateStr),
         isToday: dateStr === todayStr,
+        isSelected: isSelected || isPendingStart,
+        isInRange,
+        isRangeStart,
+        isRangeEnd,
       })
     }
 
     return days
-  }, [calendarYear, calendarMonth, availableDatesSet])
+  }, [calendarYear, calendarMonth, availableDatesSet, pendingStart, hoverDate, dateFilter, dateRange])
 
   // 월 이름
   const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
@@ -554,9 +629,18 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                       {dayInfo && (
                         <button
                           type="button"
-                          className={`doc-explorer-toolbar__calendar-day ${(dayInfo.hasDocuments || isSummaryMode) ? 'doc-explorer-toolbar__calendar-day--has-docs' : ''} ${dayInfo.isToday ? 'doc-explorer-toolbar__calendar-day--today' : ''}`}
-                          onClick={() => (dayInfo.hasDocuments || isSummaryMode) && handleDateSelect(calendarYear, calendarMonth, dayInfo.day)}
-                          disabled={!dayInfo.hasDocuments && !isSummaryMode}
+                          className={[
+                            'doc-explorer-toolbar__calendar-day',
+                            (dayInfo.hasDocuments || isSummaryMode) ? 'doc-explorer-toolbar__calendar-day--has-docs' : '',
+                            dayInfo.isToday ? 'doc-explorer-toolbar__calendar-day--today' : '',
+                            dayInfo.isSelected ? 'doc-explorer-toolbar__calendar-day--selected' : '',
+                            dayInfo.isInRange ? 'doc-explorer-toolbar__calendar-day--in-range' : '',
+                            dayInfo.isRangeStart ? 'doc-explorer-toolbar__calendar-day--range-start' : '',
+                            dayInfo.isRangeEnd ? 'doc-explorer-toolbar__calendar-day--range-end' : '',
+                          ].filter(Boolean).join(' ')}
+                          onClick={() => handleDateSelect(calendarYear, calendarMonth, dayInfo.day)}
+                          onMouseEnter={() => pendingStart && setHoverDate(new Date(calendarYear, calendarMonth, dayInfo.day))}
+                          onMouseLeave={() => pendingStart && setHoverDate(null)}
                         >
                           {dayInfo.day}
                         </button>
@@ -565,12 +649,18 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                   ))}
                 </div>
 
-                {/* 범례 */}
+                {/* 범례 / 범위 선택 안내 */}
                 <div className="doc-explorer-toolbar__calendar-legend">
-                  <span className="doc-explorer-toolbar__calendar-legend-item">
-                    <span className="doc-explorer-toolbar__calendar-legend-dot" />
-                    문서 있음
-                  </span>
+                  {pendingStart ? (
+                    <span className="doc-explorer-toolbar__calendar-legend-item">
+                      끝 날짜를 선택하세요
+                    </span>
+                  ) : (
+                    <span className="doc-explorer-toolbar__calendar-legend-item">
+                      <span className="doc-explorer-toolbar__calendar-legend-dot" />
+                      클릭 2회로 범위 선택
+                    </span>
+                  )}
                 </div>
               </div>
             </>
@@ -608,8 +698,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
         </div>
       )}
 
-      {/* 날짜 필터 표시 (활성화 시) */}
-      {dateFilter && (
+      {/* 날짜 필터 표시 — 단일 날짜 또는 범위 (활성화 시) */}
+      {(dateFilter || dateRange) && (
         <div className="doc-explorer-toolbar__date-filter">
           <span className="doc-explorer-toolbar__date-filter-label">
             <SFSymbol
@@ -618,13 +708,20 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
               weight={SFSymbolWeight.REGULAR}
               decorative
             />
-            {dateFilter.getFullYear()}.{String(dateFilter.getMonth() + 1).padStart(2, '0')}.{String(dateFilter.getDate()).padStart(2, '0')}
+            {dateRange
+              ? `${dateRange.start.getMonth() + 1}월 ${dateRange.start.getDate()}일 ~ ${dateRange.end.getMonth() + 1}월 ${dateRange.end.getDate()}일`
+              : dateFilter
+                ? `${dateFilter.getMonth() + 1}월 ${dateFilter.getDate()}일`
+                : ''}
           </span>
           <Tooltip content="날짜 필터 해제" placement="bottom">
             <button
               type="button"
               className="doc-explorer-toolbar__date-filter-clear"
-              onClick={onDateFilterClear}
+              onClick={() => {
+                onDateFilterClear()
+                onDateRangeChange(null)
+              }}
               aria-label="날짜 필터 해제"
             >
               <SFSymbol

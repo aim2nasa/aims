@@ -13,7 +13,15 @@ export type DocumentGroupBy = 'customer' | 'badgeType' | 'date'
 /**
  * 빠른 필터 타입
  */
-export type QuickFilterType = 'none' | 'today' | 'thisWeek'
+export type QuickFilterType = 'none' | 'today'
+
+/**
+ * 날짜 범위 (시작일 ~ 끝날)
+ */
+export interface DateRange {
+  start: Date
+  end: Date
+}
 
 /**
  * 초성 필터 타입 (한글/영문/숫자)
@@ -41,7 +49,6 @@ export const NUMBER_INITIALS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 export const QUICK_FILTER_LABELS: Record<QuickFilterType, string> = {
   none: '전체',
   today: '오늘',
-  thisWeek: '이번주',
 }
 
 /**

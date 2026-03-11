@@ -37,6 +37,7 @@ vi.mock('../hooks/useDocumentExplorerTree', () => ({
     recentDocuments: [],
     customerFilter: null,
     dateFilter: null,
+    dateRange: null,
     thumbnailEnabled: false,
     setGroupBy: vi.fn(),
     toggleNode: vi.fn(),
@@ -53,6 +54,7 @@ vi.mock('../hooks/useDocumentExplorerTree', () => ({
     jumpToDate: vi.fn(),
     getAvailableDates: vi.fn().mockReturnValue([]),
     clearDateFilter: vi.fn(),
+    setDateRange: vi.fn(),
     setThumbnailEnabled: vi.fn(),
   }),
 }))

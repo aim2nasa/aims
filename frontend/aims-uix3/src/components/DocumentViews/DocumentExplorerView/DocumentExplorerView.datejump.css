@@ -221,6 +221,62 @@
     background: white;
   }
 
+  /* 선택된 날짜 (시작일 또는 단일 선택) */
+  .doc-explorer-toolbar__calendar-day--selected {
+    background: var(--color-primary-500);
+    color: var(--color-text-inverse);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .doc-explorer-toolbar__calendar-day--selected::after {
+    display: none;
+  }
+
+  /* 범위 내 날짜 */
+  .doc-explorer-toolbar__calendar-day--in-range {
+    background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+    color: var(--color-text-primary);
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .doc-explorer-toolbar__calendar-day--in-range::after {
+    display: none;
+  }
+
+  .doc-explorer-toolbar__calendar-day--in-range:hover {
+    background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+
+  /* 범위 시작 */
+  .doc-explorer-toolbar__calendar-day--range-start {
+    background: var(--color-primary-500);
+    color: var(--color-text-inverse);
+    border-radius: 50% 4px 4px 50%;
+  }
+
+  .doc-explorer-toolbar__calendar-day--range-start::after {
+    display: none;
+  }
+
+  /* 범위 끝 */
+  .doc-explorer-toolbar__calendar-day--range-end {
+    background: var(--color-primary-500);
+    color: var(--color-text-inverse);
+    border-radius: 4px 50% 50% 4px;
+  }
+
+  .doc-explorer-toolbar__calendar-day--range-end::after {
+    display: none;
+  }
+
+  /* 시작과 끝이 같은 셀 (pendingStart만 선택된 상태) */
+  .doc-explorer-toolbar__calendar-day--range-start.doc-explorer-toolbar__calendar-day--range-end {
+    border-radius: 50%;
+  }
+
   /* 오늘 */
   .doc-explorer-toolbar__calendar-day--today {
     border: 2px solid var(--color-accent);

@@ -6,7 +6,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import type { Document } from '@/types/documentStatus'
-import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData, DocumentTreeNode, QuickFilterType } from '../types/documentExplorer'
+import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData, DocumentTreeNode, QuickFilterType, DateRange } from '../types/documentExplorer'
 import { buildTree, collectAllKeys, filterDocuments, sortTreeNodes, getDocumentDate } from '../utils/treeBuilders'
 
 const MAX_RECENT_DOCUMENTS = 5
@@ -35,6 +35,7 @@ export interface UseDocumentExplorerTreeResult {
   recentDocuments: Document[]
   customerFilter: string | null
   dateFilter: Date | null
+  dateRange: DateRange | null
   thumbnailEnabled: boolean
 
   // Actions
@@ -55,6 +56,7 @@ export interface UseDocumentExplorerTreeResult {
   jumpToDate: (date: Date) => boolean
   getAvailableDates: () => Date[]
   clearDateFilter: () => void
+  setDateRange: (range: DateRange | null) => void
   setThumbnailEnabled: (enabled: boolean) => void
 }
 
@@ -104,6 +106,7 @@ export function useDocumentExplorerTree({
   const [isAllExpanded, setIsAllExpanded] = useState(false)
   const [customerFilter, setCustomerFilterState] = useState<string | null>(null)
   const [dateFilter, setDateFilter] = useState<Date | null>(null)
+  const [dateRange, setDateRangeState] = useState<DateRange | null>(null)
 
   // 최근 본 문서 객체 목록
   const recentDocuments = useMemo(() => {
@@ -119,8 +122,6 @@ export function useDocumentExplorerTree({
 
       const now = new Date()
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const weekStart = new Date(todayStart)
-      weekStart.setDate(todayStart.getDate() - todayStart.getDay()) // 일요일 시작
 
       switch (filter) {
         case 'today':
@@ -129,13 +130,6 @@ export function useDocumentExplorerTree({
             if (!dateStr) return false
             const date = new Date(dateStr)
             return date >= todayStart
-          })
-        case 'thisWeek':
-          return docs.filter((doc) => {
-            const dateStr = getDocumentDate(doc)
-            if (!dateStr) return false
-            const date = new Date(dateStr)
-            return date >= weekStart
           })
         default:
           return docs
@@ -169,14 +163,32 @@ export function useDocumentExplorerTree({
     []
   )
 
-  // 검색어 + 빠른 필터 + 고객 필터 + 날짜 필터 + 초성 필터로 필터링된 문서
+  // 날짜 범위 필터 적용 (캘린더에서 선택한 시작일~끝날)
+  const applyDateRangeFilter = useCallback(
+    (docs: Document[], range: DateRange | null): Document[] => {
+      if (!range) return docs
+      const startTime = new Date(range.start.getFullYear(), range.start.getMonth(), range.start.getDate()).getTime()
+      // 끝날의 다음 날 0시 (끝날 포함)
+      const endTime = new Date(range.end.getFullYear(), range.end.getMonth(), range.end.getDate() + 1).getTime()
+      return docs.filter((doc) => {
+        const dateStr = getDocumentDate(doc)
+        if (!dateStr) return false
+        const docTime = new Date(dateStr).getTime()
+        return docTime >= startTime && docTime < endTime
+      })
+    },
+    []
+  )
+
+  // 검색어 + 빠른 필터 + 고객 필터 + 날짜 필터 + 날짜 범위 필터로 필터링된 문서
   const filteredDocuments = useMemo(() => {
     let result = filterDocuments(documents, searchTerm)
     result = applyQuickFilter(result, quickFilter)
     result = applyCustomerFilter(result, customerFilter)
     result = applyDateFilter(result, dateFilter)
+    result = applyDateRangeFilter(result, dateRange)
     return result
-  }, [documents, searchTerm, quickFilter, customerFilter, dateFilter, applyQuickFilter, applyCustomerFilter, applyDateFilter])
+  }, [documents, searchTerm, quickFilter, customerFilter, dateFilter, dateRange, applyQuickFilter, applyCustomerFilter, applyDateFilter, applyDateRangeFilter])
 
   // 트리 데이터 빌드 (정렬 적용)
   // 검색어가 있을 때도 그룹핑 유지, 매칭 그룹을 상단에 표시
@@ -354,10 +366,11 @@ export function useDocumentExplorerTree({
   const setQuickFilter = useCallback(
     (filter: QuickFilterType) => {
       setQuickFilterState(filter)
-      // 필터 변경 시 고객 필터, 날짜 필터 해제
+      // 필터 변경 시 고객 필터, 날짜 필터, 날짜 범위 해제
       if (filter !== 'none') {
         setCustomerFilterState(null)
         setDateFilter(null)
+        setDateRangeState(null)
       }
     },
     [setQuickFilterState]
@@ -394,6 +407,7 @@ export function useDocumentExplorerTree({
     setQuickFilterState('none')
     setCustomerFilterState(null)
     setDateFilter(null)
+    setDateRangeState(null)
     setSearchTermState('')
   }, [setQuickFilterState, setSearchTermState])
 
@@ -401,6 +415,20 @@ export function useDocumentExplorerTree({
   const clearDateFilter = useCallback(() => {
     setDateFilter(null)
   }, [])
+
+  // 날짜 범위 설정 (dateFilter와 상호 배타)
+  const setDateRange = useCallback(
+    (range: DateRange | null) => {
+      setDateRangeState(range)
+      if (range) {
+        setDateFilter(null)
+        setQuickFilterState('none')
+        setCustomerFilterState(null)
+        setSearchTermState('')
+      }
+    },
+    [setQuickFilterState, setSearchTermState]
+  )
 
   // 썸네일 활성화/비활성화
   const setThumbnailEnabled = useCallback(
@@ -500,6 +528,7 @@ export function useDocumentExplorerTree({
       setCustomerFilterState(null)
       setSearchTermState('')
       setDateFilter(targetDate)
+      setDateRangeState(null)
 
       return true
     },
@@ -523,6 +552,7 @@ export function useDocumentExplorerTree({
     recentDocuments,
     customerFilter,
     dateFilter,
+    dateRange,
     thumbnailEnabled,
 
     // Actions
@@ -543,6 +573,7 @@ export function useDocumentExplorerTree({
     jumpToDate,
     getAvailableDates,
     clearDateFilter,
+    setDateRange,
     setThumbnailEnabled,
   }
 }
