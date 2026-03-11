@@ -7,7 +7,7 @@
  * 접근성과 사용성을 고려한 디자인
  */
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 import './Input.css';
 
 export type InputType = 'text' | 'email' | 'tel' | 'date' | 'number' | 'password';
@@ -60,6 +60,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
+    const errorId = useId()
+
     const wrapperClasses = [
       'input-wrapper',
       fullWidth && 'input-wrapper--full-width',
@@ -95,7 +97,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={inputClasses}
             disabled={disabled}
             aria-invalid={error}
-            aria-describedby={error && errorMessage ? 'input-error' : undefined}
+            aria-describedby={error && errorMessage ? errorId : undefined}
             {...props}
           />
 
@@ -109,7 +111,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         {/* Error Message */}
         {error && errorMessage && (
-          <span id="input-error" className="input-error-message" role="alert">
+          <span id={errorId} className="input-error-message" role="alert">
             {errorMessage}
           </span>
         )}
