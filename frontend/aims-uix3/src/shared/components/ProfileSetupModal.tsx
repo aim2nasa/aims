@@ -52,7 +52,7 @@ export default function ProfileSetupModal({ isOpen, onComplete, onCancel }: Prof
 
     // 파일 크기 체크 (5MB 제한)
     if (file.size > 5 * 1024 * 1024) {
-      setError('이미지 크기는 5MB 이하여야 합니다')
+      setError('사진 용량이 너무 큽니다. 스마트폰 기본 카메라로 찍은 사진을 사용해보세요.')
       return
     }
 

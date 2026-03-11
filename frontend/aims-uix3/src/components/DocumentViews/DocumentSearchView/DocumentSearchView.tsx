@@ -1194,7 +1194,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               aria-label="최근 검색어 보기"
               type="button"
             >
-              🔍
+              <SFSymbol name="magnifyingglass" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} decorative />
             </button>
             <input
               ref={searchInputRef}
@@ -1938,7 +1938,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               <div className="search-empty" role="status">
                 {lastSearchMode ? (
                   <div className="search-no-results">
-                    <div className="no-results-icon">🔍</div>
+                    <div className="no-results-icon"><SFSymbol name="magnifyingglass" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} decorative /></div>
                     <div className="no-results-text">
                       <div className="no-results-title">검색 결과가 없습니다</div>
                       <div className="no-results-description">

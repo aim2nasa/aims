@@ -6,7 +6,7 @@
  * ARCHITECTURE.md 준수: 순수 View 컴포넌트, 모든 로직은 Controller에서 수신
  */
 
-import React, { memo, useState, useRef, useCallback } from 'react'
+import React, { memo, useState, useRef, useCallback, useEffect } from 'react'
 import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
 import { HAPTIC_TYPES } from '../../hooks/useHapticFeedback'
@@ -59,6 +59,17 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   // 소셜 로그인 사용자 정보
   const { user: authUser, isAuthenticated } = useAuthStore()
 
+  // m-3: 테마 변경 시 스크린리더 알림 (초기 마운트 시 빈 문자열)
+  const [themeLiveMsg, setThemeLiveMsg] = useState('')
+  const isFirstRender = useRef(true)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    setThemeLiveMsg(theme === 'dark' ? '다크 모드로 전환되었습니다' : '라이트 모드로 전환되었습니다')
+  }, [theme])
+
   // 사용자 프로필 메뉴 상태
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const userAvatarRef = useRef<HTMLDivElement>(null)
@@ -109,6 +120,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
       role="banner"
       aria-label="메인 네비게이션"
     >
+      {/* m-3: 스크린리더 알림 (테마 변경 시에만, 초기 마운트 시 무음) */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {themeLiveMsg}
+      </div>
+
       {/* 서브틀한 브랜딩 - 항상 표시 */}
       <div className="header-branding">
         {/* 📱 모바일 햄버거 메뉴 버튼 */}
