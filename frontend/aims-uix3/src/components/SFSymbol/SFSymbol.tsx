@@ -99,7 +99,7 @@ export const SFSymbol: React.FC<SFSymbolProps> = ({
   const accessibilityProps = {
     'aria-label': decorative ? undefined : (ariaLabel || name),
     'aria-hidden': decorative,
-    title: decorative ? undefined : (title || ariaLabel || name),
+    title: decorative ? undefined : title,
     role: interactive ? 'button' : decorative ? 'presentation' : 'img'
   }
 
