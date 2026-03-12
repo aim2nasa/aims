@@ -44,6 +44,17 @@ vi.mock('@/app/queryClient', () => ({
       // 레거시 호환 이벤트 발생 (실제 구현과 동일)
       window.dispatchEvent(new CustomEvent('customerChanged'))
     }),
+    contractChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('contractChanged'))
+    }),
+    documentChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('documentChanged'))
+    }),
+    relationshipChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('relationshipChanged'))
+    }),
+    documentLinked: vi.fn(),
+    refreshDocumentLibrary: vi.fn(),
   },
   queryClient: {
     invalidateQueries: vi.fn(),

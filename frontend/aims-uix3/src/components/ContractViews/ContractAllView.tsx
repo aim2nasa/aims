@@ -18,6 +18,7 @@ import Modal from '@/shared/ui/Modal'
 import { ContractService } from '@/services/contractService'
 import { CustomerService } from '@/services/customerService'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
+import { invalidateQueries } from '@/app/queryClient'
 import type { Contract } from '@/entities/contract'
 import type { Customer } from '@/entities/customer'
 import { formatDate } from '@/shared/lib/timeUtils'
@@ -601,8 +602,8 @@ export default function ContractAllView({
       setSelectedContractIds(new Set())
       setIsDeleteMode(false)
 
-      // 계약 관리 대시보드 동기화를 위한 이벤트 발생
-      window.dispatchEvent(new CustomEvent('contractChanged'))
+      // TanStack Query 캐시 무효화 + 레거시 이벤트 (계약 관리 대시보드 동기화)
+      invalidateQueries.contractChanged()
     } catch (error) {
       console.error('[ContractAllView] 계약 삭제 실패:', error)
       errorReporter.reportApiError(error as Error, { component: 'ContractAllView.handleConfirmDelete' })
@@ -641,8 +642,8 @@ export default function ContractAllView({
       setSelectedContractIds(new Set())
       setIsDeleteMode(false)
 
-      // 계약 관리 대시보드 동기화를 위한 이벤트 발생
-      window.dispatchEvent(new CustomEvent('contractChanged'))
+      // TanStack Query 캐시 무효화 + 레거시 이벤트 (계약 관리 대시보드 동기화)
+      invalidateQueries.contractChanged()
     } catch (error) {
       console.error('[ContractAllView] 계약 전체 삭제 실패:', error)
       errorReporter.reportApiError(error as Error, { component: 'ContractAllView.handleConfirmDeleteAll' })

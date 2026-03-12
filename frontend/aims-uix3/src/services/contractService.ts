@@ -8,6 +8,7 @@
  */
 
 import { api } from '@/shared/lib/api';
+import { invalidateQueries } from '@/app/queryClient';
 import {
   Contract,
   CreateContractData,
@@ -149,10 +150,10 @@ export class ContractService {
       throw new Error(response.message || '계약 삭제에 실패했습니다');
     }
 
-    // contractChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
-    window.dispatchEvent(new CustomEvent('contractChanged'));
+    // TanStack Query 캐시 무효화 + 레거시 이벤트 발생 (대시보드 등 다른 View 동기화)
+    invalidateQueries.contractChanged();
     if (import.meta.env.DEV) {
-      console.log('[ContractService.deleteContract] contractChanged 이벤트 발생');
+      console.log('[ContractService.deleteContract] contractChanged 쿼리 무효화');
     }
   }
 

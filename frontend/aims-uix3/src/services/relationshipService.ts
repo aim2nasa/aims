@@ -8,6 +8,7 @@
 
 import { api } from '@/shared/lib/api'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { invalidateQueries } from '@/app/queryClient'
 import type { Customer } from '@/entities/customer/model'
 
 /**
@@ -150,10 +151,8 @@ export class RelationshipService {
       throw new Error('관계 생성에 실패했습니다');
     }
 
-    // 관계 변경 이벤트 발생 (다른 뷰 동기화용)
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('relationshipChanged'));
-    }
+    // TanStack Query 캐시 무효화 + 레거시 이벤트 (다른 뷰 동기화용)
+    invalidateQueries.relationshipChanged();
 
     return response.data;
   }
@@ -177,10 +176,8 @@ export class RelationshipService {
       throw new Error('관계 삭제에 실패했습니다');
     }
 
-    // 관계 변경 이벤트 발생 (다른 뷰 동기화용)
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('relationshipChanged'));
-    }
+    // TanStack Query 캐시 무효화 + 레거시 이벤트 (다른 뷰 동기화용)
+    invalidateQueries.relationshipChanged();
   }
 
   /**

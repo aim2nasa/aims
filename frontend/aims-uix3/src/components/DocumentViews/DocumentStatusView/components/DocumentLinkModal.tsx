@@ -20,6 +20,7 @@ import { useRecentCustomersStore, type RecentCustomer } from '@/shared/store/use
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem } from '@/entities/search'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { invalidateQueries } from '@/app/queryClient'
 import { DOCUMENT_TYPE_LABELS } from '@/shared/constants/documentCategories'
 import './DocumentLinkModal.css'
 
@@ -238,14 +239,12 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           }
           await onLink(params)
 
-          // 🍎 문서 연결 이벤트 발생 (고객 상세 페이지 자동 새로고침용)
-          window.dispatchEvent(new CustomEvent('documentLinked', {
-            detail: {
-              documentId: docId,
-              customerId: selectedCustomer._id,
-              timestamp: new Date().toISOString()
-            }
-          }))
+          // TanStack Query 캐시 무효화 + 레거시 이벤트 (고객 상세 페이지 자동 새로고침용)
+          invalidateQueries.documentLinked({
+            documentId: docId,
+            customerId: selectedCustomer._id,
+            timestamp: new Date().toISOString()
+          })
 
           successCount++
         } catch (err) {

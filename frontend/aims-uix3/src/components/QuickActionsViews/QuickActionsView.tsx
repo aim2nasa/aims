@@ -6,8 +6,8 @@
  * 고객 관리, 계약 관리, 문서 관리로 빠르게 이동할 수 있는 허브 페이지
  */
 
-import React, { useEffect, useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import React, { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import { StatCard } from '@/shared/ui/StatCard'
@@ -36,34 +36,11 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
   onClose,
   onNavigate,
 }) => {
-  const queryClient = useQueryClient()
   const { isDevMode } = useDevModeStore() // 개발자 모드 상태
 
-  // 데이터 변경 이벤트 리스너 (계약, 문서 변경 시 쿼리 캐시 무효화)
-  // Note: customerChanged는 TanStack Query invalidateQueries로 대체 — 이벤트 리스너 불필요
-  useEffect(() => {
-    const handleContractChange = () => {
-      if (import.meta.env.DEV) {
-        console.log('[QuickActionsView] contractChanged 이벤트 수신 - 계약 데이터 새로고침')
-      }
-      queryClient.invalidateQueries({ queryKey: ['contracts-list'] })
-    }
-
-    const handleDocumentChange = () => {
-      if (import.meta.env.DEV) {
-        console.log('[QuickActionsView] documentChanged 이벤트 수신 - 문서 데이터 새로고침')
-      }
-      queryClient.invalidateQueries({ queryKey: ['documentStatistics'] })
-    }
-
-    window.addEventListener('contractChanged', handleContractChange)
-    window.addEventListener('documentChanged', handleDocumentChange)
-
-    return () => {
-      window.removeEventListener('contractChanged', handleContractChange)
-      window.removeEventListener('documentChanged', handleDocumentChange)
-    }
-  }, [queryClient])
+  // contractChanged, documentChanged → TanStack Query invalidateQueries 헬퍼가
+  // ['contracts-list'], ['documentStatistics'] queryKey를 직접 무효화하므로 이벤트 리스너 불필요
+  // Note: customerChanged도 TanStack Query invalidateQueries로 대체 완료
 
   // 고객 통계 조회
   const {

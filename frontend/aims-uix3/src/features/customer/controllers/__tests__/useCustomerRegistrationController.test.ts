@@ -21,6 +21,17 @@ vi.mock('@/app/queryClient', () => ({
     customerChanged: vi.fn(() => {
       window.dispatchEvent(new CustomEvent('customerChanged'))
     }),
+    contractChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('contractChanged'))
+    }),
+    documentChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('documentChanged'))
+    }),
+    relationshipChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('relationshipChanged'))
+    }),
+    documentLinked: vi.fn(),
+    refreshDocumentLibrary: vi.fn(),
   },
   queryClient: {
     invalidateQueries: vi.fn(),

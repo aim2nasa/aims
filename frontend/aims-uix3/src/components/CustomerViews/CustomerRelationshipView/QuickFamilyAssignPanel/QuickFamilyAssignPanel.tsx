@@ -402,7 +402,7 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         relationshipData
       );
 
-      window.dispatchEvent(new CustomEvent('relationshipChanged'));
+      // relationshipChanged는 RelationshipService.createRelationship() 내부에서 호출됨
       onComplete();
     } catch (err) {
       const errorMsg = isCorporateMode ? '구성원 등록에 실패했습니다.' : '가족 관계 등록에 실패했습니다.';

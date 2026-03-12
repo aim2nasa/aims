@@ -41,6 +41,7 @@ import './DocumentLibraryView.mobile.css';
 import './DocumentLibraryView-delete.css'
 import { InitialFilterBar, type InitialType } from '@/shared/ui/InitialFilterBar'
 import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from '@/shared/ui/InitialFilterBar/types'
+import { invalidateQueries } from '@/app/queryClient'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { useDocumentActions } from '@/hooks/useDocumentActions'
 
@@ -980,8 +981,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   React.useEffect(() => {
     if (onRefreshExpose) {
       onRefreshExpose(async () => {
-        // DocumentLibraryView 내부의 refresh 이벤트 발생
-        window.dispatchEvent(new CustomEvent('refresh-document-library'))
+        // TanStack Query 캐시 무효화 + 레거시 이벤트 (DocumentLibraryView 내부 새로고침)
+        invalidateQueries.refreshDocumentLibrary()
       })
     }
   }, [onRefreshExpose])

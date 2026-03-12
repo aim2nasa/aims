@@ -4,8 +4,8 @@
  * @version 1.0.0
  *
  * CustomerService의 이벤트 발생 검증 테스트
- * - deleteCustomer: customerChanged, customerStatusFilterChange 이벤트
- * - restoreCustomer: customerChanged, customerStatusFilterChange 이벤트
+ * - deleteCustomer: customerChanged 이벤트 + Zustand store 필터 변경
+ * - restoreCustomer: customerChanged 이벤트 + Zustand store 필터 변경
  * - permanentDeleteCustomer: customerChanged, contractChanged, documentChanged 이벤트
  */
 
@@ -44,6 +44,17 @@ vi.mock('@/app/queryClient', () => ({
       // 레거시 호환 이벤트 발생 (실제 구현과 동일)
       window.dispatchEvent(new CustomEvent('customerChanged'))
     }),
+    contractChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('contractChanged'))
+    }),
+    documentChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('documentChanged'))
+    }),
+    relationshipChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('relationshipChanged'))
+    }),
+    documentLinked: vi.fn(),
+    refreshDocumentLibrary: vi.fn(),
   },
   queryClient: {
     invalidateQueries: vi.fn(),
@@ -53,6 +64,16 @@ vi.mock('@/app/queryClient', () => ({
     customers: () => ['aims', 'customers'],
     relationships: () => ['aims', 'relationships'],
     documents: () => ['aims', 'documents'],
+  },
+}))
+
+// customerStatusFilterStore 모킹 — Zustand store
+const mockRequestFilterChange = vi.fn()
+vi.mock('@/shared/store/useCustomerStatusFilterStore', () => ({
+  useCustomerStatusFilterStore: {
+    getState: () => ({
+      requestFilterChange: mockRequestFilterChange,
+    }),
   },
 }))
 
@@ -133,32 +154,10 @@ describe('CustomerService - Event Dispatching', () => {
       expect(customerChangedEvent).toBeDefined()
     })
 
-    it('customerStatusFilterChange 이벤트가 발생해야 함', async () => {
+    it('Zustand store에 활성 필터 변경이 요청되어야 함', async () => {
       await CustomerService.deleteCustomer('cust-001')
 
-      const filterChangeEvent = dispatchedEvents.find(
-        (e) => e.type === 'customerStatusFilterChange'
-      )
-      expect(filterChangeEvent).toBeDefined()
-    })
-
-    it('customerStatusFilterChange 이벤트의 detail에 filter: "active"가 포함되어야 함', async () => {
-      await CustomerService.deleteCustomer('cust-001')
-
-      const filterChangeEvent = dispatchedEvents.find(
-        (e) => e.type === 'customerStatusFilterChange'
-      )
-      expect(filterChangeEvent?.detail).toEqual({ filter: 'active' })
-    })
-
-    it('이벤트 발생 순서가 올바라야 함 (customerChanged -> customerStatusFilterChange)', async () => {
-      await CustomerService.deleteCustomer('cust-001')
-
-      const eventTypes = dispatchedEvents.map((e) => e.type)
-      const customerChangedIndex = eventTypes.indexOf('customerChanged')
-      const filterChangeIndex = eventTypes.indexOf('customerStatusFilterChange')
-
-      expect(customerChangedIndex).toBeLessThan(filterChangeIndex)
+      expect(mockRequestFilterChange).toHaveBeenCalledWith('active')
     })
 
     it('API 호출 실패 시 이벤트가 발생하지 않아야 함', async () => {
@@ -199,32 +198,10 @@ describe('CustomerService - Event Dispatching', () => {
       expect(customerChangedEvent).toBeDefined()
     })
 
-    it('customerStatusFilterChange 이벤트가 발생해야 함', async () => {
+    it('Zustand store에 활성 필터 변경이 요청되어야 함', async () => {
       await CustomerService.restoreCustomer('cust-001')
 
-      const filterChangeEvent = dispatchedEvents.find(
-        (e) => e.type === 'customerStatusFilterChange'
-      )
-      expect(filterChangeEvent).toBeDefined()
-    })
-
-    it('customerStatusFilterChange 이벤트의 detail에 filter: "active"가 포함되어야 함', async () => {
-      await CustomerService.restoreCustomer('cust-001')
-
-      const filterChangeEvent = dispatchedEvents.find(
-        (e) => e.type === 'customerStatusFilterChange'
-      )
-      expect(filterChangeEvent?.detail).toEqual({ filter: 'active' })
-    })
-
-    it('이벤트 발생 순서가 올바라야 함 (customerChanged -> customerStatusFilterChange)', async () => {
-      await CustomerService.restoreCustomer('cust-001')
-
-      const eventTypes = dispatchedEvents.map((e) => e.type)
-      const customerChangedIndex = eventTypes.indexOf('customerChanged')
-      const filterChangeIndex = eventTypes.indexOf('customerStatusFilterChange')
-
-      expect(customerChangedIndex).toBeLessThan(filterChangeIndex)
+      expect(mockRequestFilterChange).toHaveBeenCalledWith('active')
     })
 
     it('API 호출 실패 시 이벤트가 발생하지 않아야 함', async () => {
@@ -320,7 +297,7 @@ describe('CustomerService - Event Dispatching', () => {
       window.removeEventListener('customerChanged', mockListener)
     })
 
-    it('restoreCustomer 후 고객 목록이 이벤트를 수신할 수 있어야 함', async () => {
+    it('restoreCustomer 후 Zustand store에 필터 변경이 요청되어야 함', async () => {
       const activeCustomer = createMockCustomer()
 
       vi.mocked(api.post).mockResolvedValue({
@@ -328,25 +305,9 @@ describe('CustomerService - Event Dispatching', () => {
         data: activeCustomer,
       })
 
-      // 이벤트 리스너 등록 (시뮬레이션)
-      let filterChangeReceived = false
-      let receivedFilter = ''
-      const mockListener = vi.fn((event: CustomEvent) => {
-        filterChangeReceived = true
-        receivedFilter = event.detail?.filter || ''
-      })
-
-      // dispatchEvent를 실제로 호출하도록 모킹 변경
-      dispatchEventSpy.mockRestore()
-      window.addEventListener('customerStatusFilterChange', mockListener as EventListener)
-
       await CustomerService.restoreCustomer('cust-001')
 
-      expect(mockListener).toHaveBeenCalled()
-      expect(filterChangeReceived).toBe(true)
-      expect(receivedFilter).toBe('active')
-
-      window.removeEventListener('customerStatusFilterChange', mockListener as EventListener)
+      expect(mockRequestFilterChange).toHaveBeenCalledWith('active')
     })
   })
 })

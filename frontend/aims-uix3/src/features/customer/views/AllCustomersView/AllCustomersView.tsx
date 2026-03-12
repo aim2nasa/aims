@@ -16,6 +16,7 @@ import Button from '@/shared/ui/Button';
 import { SortIndicator } from '@/shared/ui/SortIndicator';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
+import { useCustomerStatusFilterStore } from '@/shared/store/useCustomerStatusFilterStore';
 import { CustomerService } from '@/services/customerService';
 import type { Customer } from '@/entities/customer/model';
 import { formatDate, formatDateTime } from '@/shared/lib/timeUtils';
@@ -212,23 +213,15 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       setFetchKey(k => k + 1);
     }, []);
 
-    // 🍎 휴면 처리/복원 후 활성 필터로 자동 전환
+    // 🍎 휴면 처리/복원 후 활성 필터로 자동 전환 (Zustand store 구독)
+    const pendingFilter = useCustomerStatusFilterStore((s) => s.pendingFilter);
     useEffect(() => {
-      const handleStatusFilterChange = (event: Event) => {
-        const customEvent = event as CustomEvent<{
-          filter: 'all' | 'active' | 'inactive' | 'active-personal' | 'active-corporate' | 'inactive-personal' | 'inactive-corporate'
-        }>;
-        if (customEvent.detail?.filter) {
-          setStatusFilter(customEvent.detail.filter);
-          setCurrentPage(1); // 첫 페이지로 이동
-        }
-      };
-
-      window.addEventListener('customerStatusFilterChange', handleStatusFilterChange);
-      return () => {
-        window.removeEventListener('customerStatusFilterChange', handleStatusFilterChange);
-      };
-    }, [setStatusFilter, setCurrentPage]);
+      if (pendingFilter) {
+        setStatusFilter(pendingFilter);
+        setCurrentPage(1); // 첫 페이지로 이동
+        useCustomerStatusFilterStore.getState().consumeFilterChange();
+      }
+    }, [pendingFilter, setStatusFilter, setCurrentPage]);
 
     // === Server provides filtered/sorted/paginated data directly ===
     // No client-side filtering chain needed (filteredCustomers, sortedCustomers, visibleCustomers)

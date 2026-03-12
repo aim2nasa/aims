@@ -373,23 +373,23 @@ After:
 
 ---
 
-### W3~4: Phase 0-B — 이벤트 버스 본격 교체
+### W3~4: Phase 0-B — 이벤트 버스 본격 교체 ✅ DONE
 
-> PoC 승인 후 진행
+**6개 이벤트 모두 전환 완료**:
 
-**Gini 제안 단계적 교체 순서 (난이도 순)**:
+| 이벤트 | dispatch | listen 제거 | 방식 |
+|--------|----------|-------------|------|
+| `contractChanged` | 5→1 중앙 | ContractManagementView, QuickActionsView 리스너 제거 | TQ invalidate |
+| `documentChanged` | 1→1 중앙 | QuickActionsView 리스너 제거 | TQ invalidate |
+| `relationshipChanged` | 3→1 중앙 | (TQ 미사용 뷰만 남음) | TQ invalidate |
+| `documentLinked` | 1→1 중앙 | (TQ 미사용 뷰만 남음) | TQ invalidate |
+| `refresh-document-library` | 1→1 중앙 | (TQ 미사용 뷰만 남음) | TQ invalidate |
+| `customerStatusFilterChange` | 2→Zustand | AllCustomersView 리스너→구독 | Zustand store |
 
-| 단계 | 이벤트 | 발행/구독 | 난이도 |
-|------|--------|-----------|--------|
-| 0-B1 | `documentChanged`, `relationshipChanged` | 각 1~3곳 | 낮음 |
-| 0-B2 | `documentLinked`, `refresh-document-library` | 각 2~4곳 | 낮음 |
-| 0-B3 | `customerChanged` (PoC에서 완료) | 검증 확인 | 완료 |
-| 0-B4 | `contractChanged` | 5곳 (교차 구독) | 중간 |
-| 0-B5 | `customerStatusFilterChange` | Zustand store 신설 | 중간 |
-
-- queryClient.ts에 `contracts` 쿼리 키 + 무효화 헬퍼 추가 필요
-- 각 단계마다: 빌드 PASS + 관련 기능 수동 테스트
-- 비용: 총 1~2주 | 리스크: 중간 (PoC로 패턴 검증 후 리스크 감소)
+- `queryClient.ts`에 5개 `invalidateQueries` 헬퍼 추가 (W2 포함 총 6개)
+- `useCustomerStatusFilterStore.ts` 신규 생성 (pendingFilter/consumeFilterChange 패턴)
+- TQ 미사용 뷰를 위한 레거시 `dispatchEvent` 브릿지 유지 → 해당 뷰 TQ 전환 시 제거 예정
+- **테스트 220 passed / 0 failed, 빌드 PASS, Gini PASS (Minor 2건: 선택적)**
 
 ---
 

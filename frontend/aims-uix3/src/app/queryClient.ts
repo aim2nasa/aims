@@ -187,4 +187,41 @@ export const invalidateQueries = {
     // 추후 해당 뷰들이 TanStack Query로 전환되면 이 라인 제거
     window.dispatchEvent(new CustomEvent('customerChanged'));
   },
+
+  /** 계약 변경 시 관련 쿼리 무효화 (contractChanged 이벤트 대체) */
+  contractChanged: () => {
+    queryClient.invalidateQueries({ queryKey: ['contracts-list'] });
+    // 레거시 호환: TanStack Query를 사용하지 않는 뷰(ContractAllView, ContractsTab 등)를 위해
+    window.dispatchEvent(new CustomEvent('contractChanged'));
+  },
+
+  /** 문서 변경 시 관련 쿼리 무효화 (documentChanged 이벤트 대체) */
+  documentChanged: () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.documents() });
+    queryClient.invalidateQueries({ queryKey: ['documentStatistics'] });
+    // 레거시 호환: TanStack Query를 사용하지 않는 뷰를 위해
+    window.dispatchEvent(new CustomEvent('documentChanged'));
+  },
+
+  /** 관계 변경 시 관련 쿼리 무효화 (relationshipChanged 이벤트 대체) */
+  relationshipChanged: () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.relationships() });
+    queryClient.invalidateQueries({ queryKey: ['allRelationships'] });
+    // 레거시 호환: TanStack Query를 사용하지 않는 뷰(CustomerRelationshipView, RelationshipsTab 등)를 위해
+    window.dispatchEvent(new CustomEvent('relationshipChanged'));
+  },
+
+  /** 문서 연결 시 관련 쿼리 무효화 (documentLinked 이벤트 대체) */
+  documentLinked: (detail?: { documentId: string; customerId: string; timestamp: string }) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.documents() });
+    // 레거시 호환: TanStack Query를 사용하지 않는 뷰(DocumentExplorerView, DocumentLibraryView, DocumentsTab 등)를 위해
+    window.dispatchEvent(new CustomEvent('documentLinked', detail ? { detail } : undefined));
+  },
+
+  /** 문서 라이브러리 새로고침 (refresh-document-library 이벤트 대체) */
+  refreshDocumentLibrary: () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.documents() });
+    // 레거시 호환: TanStack Query를 사용하지 않는 뷰(DocumentExplorerView, DocumentLibraryView 등)를 위해
+    window.dispatchEvent(new CustomEvent('refresh-document-library'));
+  },
 };

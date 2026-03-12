@@ -19,6 +19,7 @@ import {
   CustomerUtils,
 } from '@/entities/customer';
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore';
+import { useCustomerStatusFilterStore } from '@/shared/store/useCustomerStatusFilterStore';
 
 /**
  * 고객 API 엔드포인트
@@ -160,8 +161,8 @@ export class CustomerService {
     // TanStack Query 캐시 무효화로 모든 View 자동 업데이트
     invalidateQueries.customerChanged();
 
-    // 휴면 처리 후 활성 필터로 전환
-    window.dispatchEvent(new CustomEvent('customerStatusFilterChange', { detail: { filter: 'active' } }));
+    // 휴면 처리 후 활성 필터로 전환 (Zustand store)
+    useCustomerStatusFilterStore.getState().requestFilterChange('active');
 
     // 최근 검색 고객 목록에서 제거
     useRecentCustomersStore.getState().removeRecentCustomer(id);
@@ -194,8 +195,8 @@ export class CustomerService {
     // TanStack Query 캐시 무효화로 모든 View 자동 업데이트
     invalidateQueries.customerChanged();
     invalidateQueries.documents();
-    window.dispatchEvent(new CustomEvent('contractChanged'));
-    window.dispatchEvent(new CustomEvent('documentChanged'));
+    invalidateQueries.contractChanged();
+    invalidateQueries.documentChanged();
 
     // 최근 검색 고객 목록에서 제거
     useRecentCustomersStore.getState().removeRecentCustomer(id);
@@ -227,8 +228,8 @@ export class CustomerService {
     // TanStack Query 캐시 무효화로 모든 View 자동 업데이트
     invalidateQueries.customerChanged();
 
-    // 복원 후 활성 필터로 전환
-    window.dispatchEvent(new CustomEvent('customerStatusFilterChange', { detail: { filter: 'active' } }));
+    // 복원 후 활성 필터로 전환 (Zustand store)
+    useCustomerStatusFilterStore.getState().requestFilterChange('active');
 
     return CustomerUtils.validate(response.data);
   }

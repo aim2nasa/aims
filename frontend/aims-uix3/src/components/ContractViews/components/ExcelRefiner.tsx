@@ -2753,7 +2753,7 @@ export function ExcelRefiner() {
         }
 
         invalidateQueries.customerChanged()
-        window.dispatchEvent(new CustomEvent('contractChanged'))
+        invalidateQueries.contractChanged()
       }
 
     } catch (err) {
