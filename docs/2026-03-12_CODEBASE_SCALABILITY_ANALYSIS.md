@@ -311,11 +311,12 @@ After:
 
 ### W1: Quick Wins — 즉시 실행 (리스크 0~낮음)
 
-#### QW-1. `aiAssistantDataChanged` 데드 이벤트 리스너 제거
+#### QW-1. `aiAssistantDataChanged` 데드 이벤트 리스너 제거 — DONE
 - **발행처 0곳, 리스너만 2곳** — 완전한 데드 코드
-- 파일: `AllCustomersView.tsx:223`, `useRightPaneContent.ts:253`
+- 파일: `AllCustomersView.tsx` (useEffect 11줄), `useRightPaneContent.ts` (useEffect 19줄)
 - 작업: addEventListener/removeEventListener + 핸들러 함수 삭제
 - 비용: 30분 | 리스크: 없음
+- **결과**: 빌드 PASS, Gini PASS, 소스 내 `aiAssistantDataChanged` 0건 확인
 
 #### QW-2. xlsx 번들 분리 (ProductSearchModal 426KB → ~120KB)
 - **원인**: `ProductSearchModal`이 `@aims/excel-refiner-core`에서 `fetchInsuranceProducts`만 사용하지만, 같은 진입점이 xlsx(~300KB)를 포함

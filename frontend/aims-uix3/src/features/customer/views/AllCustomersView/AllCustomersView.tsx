@@ -212,18 +212,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       setFetchKey(k => k + 1);
     }, []);
 
-    // 🍎 AI 어시스턴트에서 데이터 변경 시 자동 새로고침
-    useEffect(() => {
-      const handleAIDataChanged = () => {
-        if (import.meta.env.DEV) {
-          console.log('[AllCustomersView] AI 어시스턴트 데이터 변경 감지, 새로고침');
-        }
-        refresh();
-      };
-      window.addEventListener('aiAssistantDataChanged', handleAIDataChanged);
-      return () => window.removeEventListener('aiAssistantDataChanged', handleAIDataChanged);
-    }, [refresh]);
-
     // 🍎 휴면 처리/복원 후 활성 필터로 자동 전환
     useEffect(() => {
       const handleStatusFilterChange = (event: Event) => {
