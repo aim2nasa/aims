@@ -6,6 +6,8 @@
 import type { Document } from '@/types/documentStatus'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeNode, DocumentTreeData, InitialType } from '../types/documentExplorer'
 import { DOCUMENT_CATEGORIES, getCategoryForType, getDocumentTypeLabel, getTypeDisplayOrder } from '@/shared/constants/documentCategories'
+import { DocumentUtils } from '@/entities/document'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
 
 /** 대분류 카테고리별 이모지 (SF Symbol 이름 대신 실제 이모지 사용) */
 const CATEGORY_EMOJI: Record<string, string> = {
@@ -507,6 +509,19 @@ function sortDocumentNodes(
         if (!customerA) return 1
         if (!customerB) return -1
         return customerA.localeCompare(customerB, 'ko') * multiplier
+      }
+      case 'ext': {
+        const extA = (docA.mimeType ? DocumentUtils.getFileExtension(docA.mimeType) : '').toLowerCase()
+        const extB = (docB.mimeType ? DocumentUtils.getFileExtension(docB.mimeType) : '').toLowerCase()
+        if (!extA && !extB) return 0
+        if (!extA) return 1
+        if (!extB) return -1
+        return extA.localeCompare(extB) * multiplier
+      }
+      case 'size': {
+        const sizeA = DocumentStatusService.extractFileSize(docA)
+        const sizeB = DocumentStatusService.extractFileSize(docB)
+        return (sizeA - sizeB) * multiplier
       }
       default:
         return 0

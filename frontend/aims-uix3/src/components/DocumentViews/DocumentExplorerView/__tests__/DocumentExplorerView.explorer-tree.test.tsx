@@ -71,6 +71,7 @@ vi.mock('../DocumentExplorerToolbar', () => ({
 
 vi.mock('../DocumentExplorerTree', () => ({
   DocumentExplorerTree: () => <div data-testid="tree" />,
+  DocumentExplorerColumnHeader: () => <div data-testid="column-header" />,
 }))
 
 vi.mock('@/shared/lib/breadcrumbUtils', () => ({

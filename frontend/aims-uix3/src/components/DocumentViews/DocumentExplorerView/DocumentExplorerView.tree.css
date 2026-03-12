@@ -6,12 +6,24 @@
   }
 
   /* ============================================
+     Tree Layout (column header + scroll container)
+     ============================================ */
+  .doc-explorer-tree-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* ============================================
      Tree Container
      ============================================ */
   .doc-explorer-tree-container {
     flex: 1;
     overflow: auto;
     padding: var(--explorer-spacing-md);
+    min-height: 0;
   }
 
   /* Loading */
@@ -910,6 +922,100 @@
     height: 14px;
     cursor: pointer;
     accent-color: var(--color-primary-500);
+  }
+
+  /* ============================================
+     Column Header (macOS Finder 스타일 정렬 헤더)
+     ============================================ */
+  .doc-explorer-tree__column-header {
+    display: grid;
+    grid-template-columns:
+      /* icon */ 14px
+      /* name */ 1fr
+      /* ext */  32px
+      /* size */ 58px
+      /* customer */ minmax(50px, 100px)
+      /* doctype */ minmax(50px, 90px)
+      /* date */ 106px
+      /* badge */ 28px
+      /* actions */ 44px;
+    align-items: center;
+    gap: 0 6px;
+    padding: 4px var(--explorer-spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+    flex-shrink: 0;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 정렬 가능 컬럼 버튼 */
+  .doc-explorer-tree__col-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 4px;
+    margin: 0;
+    border: none;
+    border-radius: var(--radius-sm, 4px);
+    background: transparent;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 150ms ease, background 150ms ease;
+  }
+
+  .doc-explorer-tree__col-btn:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
+  }
+
+  /* 활성 정렬 컬럼 */
+  .doc-explorer-tree__col-btn--active {
+    color: var(--color-accent);
+  }
+
+  .doc-explorer-tree__col-btn--active:hover {
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+
+  /* 정렬 방향 화살표 */
+  .doc-explorer-tree__col-arrow {
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+
+  /* 정렬 불가 라벨 */
+  .doc-explorer-tree__col-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-quaternary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 2px 4px;
+  }
+
+  /* 빈 칸 (icon, actions 자리) */
+  .doc-explorer-tree__col-spacer {
+    /* 자리 유지용 빈 요소 */
+  }
+
+  /* 태블릿 반응형 */
+  @media (max-width: 768px) {
+    .doc-explorer-tree__column-header {
+      padding: 2px 8px;
+      gap: 0 4px;
+    }
+
+    .doc-explorer-tree__col-btn,
+    .doc-explorer-tree__col-label {
+      font-size: 9px;
+      padding: 1px 2px;
+    }
   }
 
 } /* end @layer components */

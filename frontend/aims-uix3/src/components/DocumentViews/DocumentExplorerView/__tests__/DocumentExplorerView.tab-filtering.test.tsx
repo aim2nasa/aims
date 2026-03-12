@@ -82,6 +82,7 @@ vi.mock('../DocumentExplorerTree', () => ({
       {nodes.map(n => <div key={n.key} data-testid="tree-node">{n.label}</div>)}
     </div>
   ),
+  DocumentExplorerColumnHeader: () => <div data-testid="column-header" />,
 }))
 
 // === Mock: usePersistedState ===

@@ -587,11 +587,20 @@
 
   /* Recent item - 일반 문서와 동일한 레이아웃 */
   .doc-explorer-tree__recent-item {
-    display: flex;
+    display: grid;
+    grid-template-columns:
+      14px
+      1fr
+      32px
+      58px
+      minmax(50px, 100px)
+      minmax(50px, 90px)
+      106px
+      28px
+      44px;
     align-items: center;
-    gap: 6px;
+    gap: 0 6px;
     padding: 3px var(--explorer-spacing-md);
-    padding-left: calc(var(--explorer-spacing-md) + 14px);
     border-radius: var(--explorer-border-radius);
     cursor: pointer;
     transition: background-color var(--explorer-transition);
@@ -614,29 +623,28 @@
     background: var(--color-accent-bg-hover);
   }
 
-  /* Recent item 내 문서명, 고객명, 날짜, 배지 - 일반 문서와 동일 */
+  /* Recent item 내 컬럼 — Grid 기반이므로 개별 width 불필요 */
   .doc-explorer-tree__recent-item .doc-explorer-tree__doc-name {
-    flex: 1;
     min-width: 0;
+    overflow: hidden;
   }
 
   .doc-explorer-tree__recent-item .doc-explorer-tree__doc-customer {
-    flex-shrink: 0;
-    width: 80px;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .doc-explorer-tree__recent-item .doc-explorer-tree__doc-type {
-    flex-shrink: 0;
-    width: 80px;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .doc-explorer-tree__recent-item .doc-explorer-tree__doc-date {
-    flex-shrink: 0;
-    width: 110px;
+    min-width: 0;
   }
 
   .doc-explorer-tree__recent-item .doc-explorer-tree__badge {
-    flex-shrink: 0;
+    justify-self: start;
   }
 
   /* ============================================

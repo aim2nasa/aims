@@ -111,7 +111,7 @@ const SEARCH_MODE_PLACEHOLDERS_SUMMARY: Record<ExplorerSearchMode, string> = {
   semantic: 'AI에게 질문하기...',
 }
 
-const SORT_OPTIONS: DocumentSortBy[] = ['name', 'customer', 'date', 'badgeType']
+const SORT_OPTIONS: DocumentSortBy[] = ['name', 'ext', 'size', 'customer', 'date', 'badgeType']
 
 // 빠른 필터 칩 옵션 (전체 제외)
 const QUICK_FILTER_OPTIONS: QuickFilterType[] = ['today']

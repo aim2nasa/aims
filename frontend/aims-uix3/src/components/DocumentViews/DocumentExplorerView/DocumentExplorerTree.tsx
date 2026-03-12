@@ -20,6 +20,7 @@ import { SummaryIcon, DocumentIcon } from '../components/DocumentActionIcons'
 import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
 import type { Document } from '@/types/documentStatus'
 import type { DocumentTreeNode, DocumentGroupBy, DocumentSortBy, SortDirection } from './types/documentExplorer'
+import { SORT_BY_LABELS } from './types/documentExplorer'
 import { useDocumentExplorerKeyboard } from './hooks/useDocumentExplorerKeyboard'
 import { getDocumentDate } from './utils/treeBuilders'
 import { HoverPreview } from './components/HoverPreview'
@@ -105,6 +106,10 @@ export interface DocumentExplorerTreeProps {
   onDocTypeChange?: (documentId: string, newType: string) => void
   /** 문서유형 변경 중인 문서 ID */
   updatingDocTypeId?: string | null
+  /** 정렬 기준 변경 (컬럼 헤더 클릭) */
+  onSortByChange?: (sortBy: DocumentSortBy) => void
+  /** true이면 컬럼 헤더를 내부에서 렌더링하지 않음 (부모가 scroll container 밖에서 렌더링할 때) */
+  hideColumnHeader?: boolean
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -881,6 +886,97 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 // DocumentExplorerTree: 메인 트리 컴포넌트
 // ─────────────────────────────────────────────────────────────
 
+/** 컬럼 헤더 — scroll container 밖에서 렌더링해야 sticky/clipping 버그가 없음 */
+export interface DocumentExplorerColumnHeaderProps {
+  sortBy?: DocumentSortBy
+  sortDirection?: SortDirection
+  onSortByChange: (sortBy: DocumentSortBy) => void
+}
+
+export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeaderProps> = ({
+  sortBy,
+  sortDirection,
+  onSortByChange,
+}) => (
+  <div className="doc-explorer-tree__column-header">
+    <span className="doc-explorer-tree__col-spacer" />
+    <button
+      type="button"
+      className={`doc-explorer-tree__col-btn${sortBy === 'name' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+      onClick={() => onSortByChange('name')}
+      aria-label="파일명 기준 정렬"
+    >
+      {SORT_BY_LABELS.name}
+      {sortBy === 'name' && (
+        <SFSymbol
+          name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
+          size={SFSymbolSize.CAPTION_2}
+          weight={SFSymbolWeight.MEDIUM}
+          className="doc-explorer-tree__col-arrow"
+          decorative
+        />
+      )}
+    </button>
+    <button
+      type="button"
+      className={`doc-explorer-tree__col-btn${sortBy === 'ext' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+      onClick={() => onSortByChange('ext')}
+      aria-label="형식 기준 정렬"
+    >
+      {SORT_BY_LABELS.ext}
+      {sortBy === 'ext' && (
+        <SFSymbol
+          name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
+          size={SFSymbolSize.CAPTION_2}
+          weight={SFSymbolWeight.MEDIUM}
+          className="doc-explorer-tree__col-arrow"
+          decorative
+        />
+      )}
+    </button>
+    <button
+      type="button"
+      className={`doc-explorer-tree__col-btn${sortBy === 'size' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+      onClick={() => onSortByChange('size')}
+      aria-label="크기 기준 정렬"
+    >
+      {SORT_BY_LABELS.size}
+      {sortBy === 'size' && (
+        <SFSymbol
+          name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
+          size={SFSymbolSize.CAPTION_2}
+          weight={SFSymbolWeight.MEDIUM}
+          className="doc-explorer-tree__col-arrow"
+          decorative
+        />
+      )}
+    </button>
+    <span className="doc-explorer-tree__col-label">고객명</span>
+    <span className="doc-explorer-tree__col-label">유형</span>
+    <button
+      type="button"
+      className={`doc-explorer-tree__col-btn${sortBy === 'date' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+      onClick={() => onSortByChange('date')}
+      aria-label="날짜 기준 정렬"
+    >
+      {SORT_BY_LABELS.date}
+      {sortBy === 'date' && (
+        <SFSymbol
+          name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
+          size={SFSymbolSize.CAPTION_2}
+          weight={SFSymbolWeight.MEDIUM}
+          className="doc-explorer-tree__col-arrow"
+          decorative
+        />
+      )}
+    </button>
+    <span className="doc-explorer-tree__col-label">배지</span>
+    <span className="doc-explorer-tree__col-spacer" />
+  </div>
+)
+
+// ─────────────────────────────────────────────────────────────
+
 export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   nodes,
   expandedKeys,
@@ -917,6 +1013,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onToggleExpandCustomer,
   onDocTypeChange,
   updatingDocTypeId,
+  onSortByChange,
+  hideColumnHeader = false,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -1327,6 +1425,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
 
   return (
     <>
+      {/* 컬럼 헤더 — hideColumnHeader=true이면 부모가 scroll container 밖에서 직접 렌더링 */}
+      {!hideColumnHeader && onSortByChange && (
+        <DocumentExplorerColumnHeader
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortByChange={onSortByChange}
+        />
+      )}
       <div
         ref={treeContainerRef}
         className="doc-explorer-tree"

@@ -54,7 +54,7 @@ export const QUICK_FILTER_LABELS: Record<QuickFilterType, string> = {
 /**
  * 문서 정렬 기준
  */
-export type DocumentSortBy = 'name' | 'date' | 'badgeType' | 'customer'
+export type DocumentSortBy = 'name' | 'date' | 'badgeType' | 'customer' | 'ext' | 'size'
 
 /**
  * 정렬 방향
@@ -65,10 +65,12 @@ export type SortDirection = 'asc' | 'desc'
  * 정렬 기준별 라벨
  */
 export const SORT_BY_LABELS: Record<DocumentSortBy, string> = {
-  name: '제목',
+  name: '파일명',
   date: '날짜',
   badgeType: '유형',
   customer: '고객명',
+  ext: '형식',
+  size: '크기',
 }
 
 /**

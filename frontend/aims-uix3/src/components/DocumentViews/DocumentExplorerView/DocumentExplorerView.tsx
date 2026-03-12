@@ -15,7 +15,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { DocumentExplorerToolbar, type ExplorerSearchMode, type EditModeType } from './DocumentExplorerToolbar'
-import { DocumentExplorerTree } from './DocumentExplorerTree'
+import { DocumentExplorerTree, DocumentExplorerColumnHeader } from './DocumentExplorerTree'
 import { InitialFilterBar } from '@/shared/ui/InitialFilterBar'
 import { ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui/ContextMenu'
 import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from './types/documentExplorer'
@@ -1257,8 +1257,18 @@ const DocumentExplorerContent: React.FC<{
         />
       )}
 
-      {/* 트리 뷰 또는 검색 결과 (트리 영역을 대체) */}
-      <div className="doc-explorer-tree-container">
+      {/* 트리 레이아웃 래퍼 — 컬럼 헤더(고정)와 스크롤 영역을 분리 */}
+      <div className="doc-explorer-tree-layout">
+        {/* 컬럼 헤더 — scroll container 밖에 배치해야 겹침/잘림 버그 없음 */}
+        {!lastContentSearchMode && (
+          <DocumentExplorerColumnHeader
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            onSortByChange={setSortBy}
+          />
+        )}
+        {/* 트리 뷰 또는 검색 결과 (트리 영역을 대체) */}
+        <div className="doc-explorer-tree-container">
         {/* 내용 검색 / AI 질문 결과 — 트리 영역 전체를 대체 */}
         {lastContentSearchMode ? (
           <div className="doc-explorer-search-results" tabIndex={0} onKeyDown={handleSearchResultKeyDown}>
@@ -1581,8 +1591,11 @@ const DocumentExplorerContent: React.FC<{
             onToggleExpandCustomer={toggleExpandCustomer}
             onDocTypeChange={handleInlineDocTypeChange}
             updatingDocTypeId={updatingDocTypeId}
+            onSortByChange={setSortBy}
+            hideColumnHeader
           />
         )}
+        </div>
       </div>
 
       {/* 컨텍스트 메뉴 (문서) */}
