@@ -517,7 +517,7 @@ const CustomMenu = ({
     // ━━━ 도움말 ━━━
     {
       key: 'help',
-      icon: <MenuIcons.Help />,
+      icon: <span className="menu-icon-gray"><MenuIcons.Help /></span>,
       label: '도움말',
       tooltipTitle: '도움말',
       children: [

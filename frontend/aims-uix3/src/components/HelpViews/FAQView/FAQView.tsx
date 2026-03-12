@@ -10,12 +10,14 @@ import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
 import { helpApi, type FAQ, type FAQCategory } from '@/features/help/api';
 import './FAQView.css';
 
-// FAQ 아이콘 (말풍선 물음표)
+// FAQ 아이콘 — LP와 동일 (커스텀 SVG, menu-icon-orange)
 const FAQIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="faq-view__title-icon">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" opacity="0.85"/>
-    <text x="12" y="13" textAnchor="middle" fontSize="10" fontWeight="bold" fill="var(--color-bg-primary, white)">?</text>
-  </svg>
+  <span className="menu-icon-orange">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" opacity="0.85"/>
+      <text x="12" y="13" textAnchor="middle" fontSize="10" fontWeight="bold" fill="var(--color-bg-primary, white)">?</text>
+    </svg>
+  </span>
 );
 
 interface FAQViewProps {

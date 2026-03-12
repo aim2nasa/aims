@@ -838,9 +838,7 @@ export default function InquiryView({
 
   // 1:1 문의 아이콘 (SFSymbol에 정의되지 않아 직접 SVG 사용)
   const inquiryIcon = (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="inquiry-title-icon">
-      <path d="M12 3C6.5 3 2 6.58 2 11c0 2.13 1.02 4.05 2.67 5.47L4 21l4.88-2.33C9.86 18.89 10.91 19 12 19c5.5 0 10-3.58 10-8s-4.5-8-10-8z" opacity="0.85"/>
-    </svg>
+    <SFSymbol name="bubble-left-fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />
   );
 
   return (

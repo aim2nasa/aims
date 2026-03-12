@@ -130,13 +130,15 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
   return (
     <CenterPaneView
       visible={visible}
-      title="AutoClicker"
+      title="메트 PDF 자동 받기"
       titleIcon={
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
-          <circle cx="19" cy="5" r="1.5" opacity="0.5"/>
-          <circle cx="21" cy="10" r="1" opacity="0.35"/>
-        </svg>
+        <span className="menu-icon-teal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
+            <circle cx="19" cy="5" r="1.5" opacity="0.5"/>
+            <circle cx="21" cy="10" r="1" opacity="0.35"/>
+          </svg>
+        </span>
       }
       onClose={onClose}
       marginTop={0}

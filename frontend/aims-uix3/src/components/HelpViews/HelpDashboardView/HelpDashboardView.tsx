@@ -8,14 +8,18 @@
 
 import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import './HelpDashboardView.css'
 
 // 아이콘 컴포넌트들
 const HelpIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="help-dashboard__title-icon">
-    <circle cx="12" cy="12" r="10" opacity="0.15"/>
-    <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="bold">?</text>
-  </svg>
+  <span className="menu-icon-gray">
+    <SFSymbol
+      name="questionmark-circle"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
+  </span>
 )
 
 const BellIcon = () => (
