@@ -548,7 +548,7 @@ const CustomMenu = ({
         },
         {
           key: 'help-inquiry',
-          icon: <MenuIcons.ChatBubble />,
+          icon: <span className="menu-icon-purple"><MenuIcons.ChatBubble /></span>,
           label: (
             <span className="menu-item-with-badge">
               1:1 문의
