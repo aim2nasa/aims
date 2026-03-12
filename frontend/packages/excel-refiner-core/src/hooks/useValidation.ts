@@ -18,8 +18,8 @@ import type {
 } from '../types/excel'
 import { cellToString } from '../utils/excel'
 
-// 보험상품 API URL (Vite 프록시를 통해 tars.giize.com:3010으로 전달)
-const INSURANCE_PRODUCTS_API = '/api/insurance-products'
+import { fetchInsuranceProducts } from '../api'
+
 // 고객명 검증 API URL
 const CUSTOMER_VALIDATE_NAMES_API = '/api/customers/validate-names'
 
@@ -259,22 +259,8 @@ export function getRowStatus(
   return 'normal'
 }
 
-/**
- * 보험상품 목록 가져오기
- */
-export async function fetchInsuranceProducts(): Promise<InsuranceProduct[]> {
-  try {
-    const response = await fetch(INSURANCE_PRODUCTS_API)
-    const data = await response.json()
-    if (data.success && data.data) {
-      return data.data
-    }
-    return []
-  } catch (error) {
-    console.error('보험상품 조회 오류:', error)
-    return []
-  }
-}
+// fetchInsuranceProducts는 ../api.ts로 이동 (xlsx-free 번들 분리)
+export { fetchInsuranceProducts } from '../api'
 
 /**
  * 상품명 검증 함수 (비동기)

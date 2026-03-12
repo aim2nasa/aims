@@ -10,7 +10,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { DraggableModal } from '@/shared/ui/DraggableModal'
 import { Button } from '@/shared/ui/Button'
-import { fetchInsuranceProducts, type InsuranceProduct } from '@aims/excel-refiner-core'
+import { fetchInsuranceProducts, type InsuranceProduct } from '@aims/excel-refiner-core/api'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import './ProductSearchModal.css'
 

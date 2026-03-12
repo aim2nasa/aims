@@ -318,14 +318,17 @@ After:
 - 비용: 30분 | 리스크: 없음
 - **결과**: 빌드 PASS, Gini PASS, 소스 내 `aiAssistantDataChanged` 0건 확인
 
-#### QW-2. xlsx 번들 분리 (ProductSearchModal 426KB → ~120KB)
+#### QW-2. xlsx 번들 분리 (ProductSearchModal 435KB → 2.67KB) ✅ DONE
 - **원인**: `ProductSearchModal`이 `@aims/excel-refiner-core`에서 `fetchInsuranceProducts`만 사용하지만, 같은 진입점이 xlsx(~300KB)를 포함
 - 작업:
-  1. `frontend/packages/excel-refiner-core/package.json`에 `"./api"` 서브 경로 추가
-  2. `excel-refiner-core/src/api/insuranceProductsApi.ts` 신규 생성 (xlsx 의존성 없음)
-  3. `ProductSearchModal.tsx`의 import를 `@aims/excel-refiner-core/api`로 변경
-- 비용: 4~6시간 | 리스크: 낮음 (로직 변경 없음)
-- 검증: `npm run build` 후 청크 크기 비교
+  1. `excel-refiner-core/src/api.ts` 신규 생성 — xlsx-free 엔트리포인트 (`fetchInsuranceProducts` + `InsuranceProduct` 타입만 export)
+  2. `excel-refiner-core/package.json`에 `"./api"` sub-path export 추가
+  3. `useValidation.ts`에서 `fetchInsuranceProducts` 함수 정의를 `api.ts`로 이동, re-export로 호환성 유지
+  4. `ProductSearchModal.tsx`의 import를 `@aims/excel-refiner-core/api`로 변경
+- **결과**: `ProductSearchModal.js` **435.78KB → 2.67KB (99.4% 절감)**
+  - xlsx는 실제 사용처인 `ContractImportView`(528KB)에 올바르게 번들링됨
+  - 기존 `@aims/excel-refiner-core` import 경로 호환성 100% 유지
+- 빌드 PASS, Gini PASS (Minor 2건: 중복 import 수정 완료, 회귀 방지 테스트는 비용 대비 불필요 판단)
 
 #### QW-3. 섹션 인덱스 주석 추가 (2000줄+ 6파일)
 - 대상: ExcelRefiner, ChatPanel, DocumentRegistrationView, PersonalFilesView, App, DocumentSearchView
