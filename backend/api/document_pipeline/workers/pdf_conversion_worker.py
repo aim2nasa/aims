@@ -10,6 +10,7 @@ upload_worker.py 패턴 기반.
 import asyncio
 import logging
 import os
+import re
 import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional
@@ -164,7 +165,7 @@ class PdfConversionWorker:
             await self._post_process_preview(job, result)
 
     async def _post_process_preview(self, job: Dict[str, Any], result: Dict[str, Any]):
-        """preview_pdf 완료 후: files 컬렉션 업데이트 + SSE 알림"""
+        """preview_pdf 완료 후: files 컬렉션 업데이트 + 텍스트 추출 + SSE 알림"""
         document_id = job.get("document_id")
         if not document_id:
             return
@@ -173,11 +174,12 @@ class PdfConversionWorker:
         if not pdf_path:
             return
 
-        # 1. files 컬렉션 직접 업데이트
-        try:
-            from bson import ObjectId as BsonObjectId
+        from bson import ObjectId as BsonObjectId
 
-            files_col = MongoService.get_collection("files")
+        files_col = MongoService.get_collection("files")
+
+        # 1. files 컬렉션 직접 업데이트 (변환 상태)
+        try:
             await files_col.update_one(
                 {"_id": BsonObjectId(document_id)},
                 {
@@ -192,8 +194,145 @@ class PdfConversionWorker:
         except Exception as e:
             logger.error(f"[PDF변환워커] files 업데이트 실패: {document_id} - {e}")
 
-        # 2. aims-api에 SSE 알림 요청
+        # 2. 변환된 PDF에서 텍스트 추출 → meta.full_text가 비어있으면 업데이트
+        await self._extract_and_update_text(document_id, pdf_path, files_col)
+
+        # 3. aims-api에 SSE 알림 요청
         await self._notify_conversion_complete(document_id, "completed")
+
+    async def _extract_and_update_text(
+        self,
+        document_id: str,
+        pdf_path: str,
+        files_col,
+    ):
+        """
+        변환된 PDF에서 텍스트 추출 후 meta.full_text가 비어있으면 DB 업데이트.
+
+        파이프라인 업로드 시 text_extraction이 실패했거나,
+        preview_pdf 재변환 성공 후 텍스트가 누락된 경우를 보완.
+        텍스트가 추출되면 AI 분류(요약/문서유형)도 수행.
+        """
+        from bson import ObjectId as BsonObjectId
+
+        try:
+            # 현재 문서의 meta.full_text 확인 — 이미 있으면 스킵
+            doc = await files_col.find_one(
+                {"_id": BsonObjectId(document_id)},
+                {
+                    "meta.full_text": 1,
+                    "ocr.full_text": 1,
+                    "ownerId": 1,
+                    "upload.originalName": 1,
+                    "displayName": 1,
+                },
+            )
+            if not doc:
+                return
+
+            meta_text = (doc.get("meta") or {}).get("full_text", "")
+            ocr_text = (doc.get("ocr") or {}).get("full_text", "")
+
+            # 이미 텍스트가 있으면 재추출 불필요
+            if (meta_text and meta_text.strip()) or (ocr_text and ocr_text.strip()):
+                logger.debug(
+                    f"[PDF변환워커] 텍스트 이미 존재, 추출 스킵: {document_id}"
+                )
+                return
+
+            # 변환된 PDF 파일에서 텍스트 추출
+            if not os.path.exists(pdf_path):
+                logger.warning(f"[PDF변환워커] 변환 PDF 파일 없음: {pdf_path}")
+                return
+
+            with open(pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+
+            extracted_text = self._extract_text_from_pdf_bytes(pdf_bytes)
+
+            if not extracted_text or not extracted_text.strip():
+                logger.info(
+                    f"[PDF변환워커] 변환 PDF에서 텍스트 없음 (스캔 문서?): {document_id}"
+                )
+                return
+
+            logger.info(
+                f"[PDF변환워커] 텍스트 추출 성공: {document_id} ({len(extracted_text)} chars)"
+            )
+
+            # AI 분류 (요약 + 문서유형 + 제목) 수행
+            text_update = {
+                "meta.full_text": extracted_text,
+                "meta.length": len(extracted_text),
+                "meta.document_type": "general",
+                "meta.confidence": 0.0,
+            }
+
+            owner_id = doc.get("ownerId", "")
+            original_name = (doc.get("upload") or {}).get("originalName", "")
+
+            try:
+                from services.openai_service import OpenAIService
+
+                summary_result = await OpenAIService.summarize_text(
+                    extracted_text,
+                    owner_id=owner_id,
+                    document_id=document_id,
+                    filename=original_name,
+                )
+                text_update["meta.summary"] = summary_result.get("summary", "")
+                text_update["meta.title"] = summary_result.get("title", "")
+                text_update["meta.document_type"] = summary_result.get(
+                    "document_type", "general"
+                )
+                text_update["meta.confidence"] = summary_result.get("confidence", 0.0)
+                logger.info(
+                    f"[PDF변환워커] AI 분류 완료: {document_id} → {summary_result.get('document_type', 'general')}"
+                )
+
+                # displayName 생성 (OCR 경로와 동일 패턴, 미설정 시에만)
+                if not doc.get("displayName"):
+                    title = summary_result.get("title", "")
+                    if not title and len(extracted_text.strip()) >= 10:
+                        try:
+                            title_result = await OpenAIService.generate_title_only(
+                                text=extracted_text,
+                                owner_id=owner_id,
+                                document_id=document_id,
+                            )
+                            title = title_result.get("title") or ""
+                        except Exception:
+                            pass
+                    if title:
+                        ext = os.path.splitext(original_name)[1].lower() if original_name else ""
+                        safe_title = re.sub(r'[\\/:*?"<>|]', '', title)
+                        safe_title = re.sub(r'\s+', ' ', safe_title).strip()
+                        if len(safe_title) > 40:
+                            safe_title = safe_title[:40].rstrip()
+                        text_update["displayName"] = f"{safe_title}{ext}" if ext else safe_title
+                        logger.info(
+                            f"[PDF변환워커] displayName 생성: {original_name} → {text_update['displayName']}"
+                        )
+            except Exception as ai_err:
+                logger.warning(
+                    f"[PDF변환워커] AI 분류 실패 (텍스트는 저장): {document_id} - {ai_err}"
+                )
+
+            # DB 업데이트
+            await files_col.update_one(
+                {"_id": BsonObjectId(document_id)},
+                {"$set": text_update},
+            )
+            logger.info(
+                f"[PDF변환워커] 텍스트+분류 DB 업데이트 완료: {document_id}"
+            )
+
+        except Exception as e:
+            # 텍스트 추출 실패가 변환 결과에 영향을 주지 않도록 격리
+            logger.error(
+                f"[PDF변환워커] 텍스트 추출/업데이트 실패: {document_id} - {e}",
+                exc_info=True,
+            )
 
     async def _notify_conversion_failed(self, job: Dict[str, Any], error_message: str):
         """preview_pdf 실패 후: files 컬렉션 업데이트 + SSE 알림"""
@@ -270,10 +409,10 @@ class PdfConversionWorker:
             await self._notify_conversion_failed(job, error_message)
 
     async def _periodic_cleanup(self):
-        """정기적 정리 작업 (10분마다)"""
+        """정기적 정리 작업 (3분마다)"""
         while self.running:
             try:
-                await asyncio.sleep(600)  # 10분
+                await asyncio.sleep(180)  # 3분
 
                 if not self.running:
                     break
@@ -281,6 +420,7 @@ class PdfConversionWorker:
                 await PdfConversionQueueService.cleanup_stale_jobs()
                 await PdfConversionQueueService.delete_completed_jobs(older_than_hours=24)
                 await self._recover_stuck_pending_documents()
+                await self._recover_completed_without_text()
 
             except asyncio.CancelledError:
                 break
@@ -337,6 +477,65 @@ class PdfConversionWorker:
                 logger.info(f"[PDF변환워커] stuck pending 총 {recovered}건 복구 → failed")
         except Exception as e:
             logger.error(f"[PDF변환워커] stuck pending 복구 에러: {e}")
+
+    async def _recover_completed_without_text(self):
+        """
+        변환 완료(completed)인데 meta.full_text가 비어있는 문서를 감지하여
+        변환된 PDF에서 텍스트를 재추출.
+
+        이슈1(파이프라인 이슈): 변환 성공했지만 텍스트 추출 누락
+        이슈2(재변환 이슈): 재변환 성공 후 텍스트 추출 미트리거
+        """
+        try:
+            files_col = MongoService.get_collection("files")
+
+            # 변환 완료 + convPdfPath 있음 + meta/ocr 텍스트 모두 비어있음
+            candidates = await files_col.find(
+                {
+                    "upload.conversion_status": "completed",
+                    "upload.convPdfPath": {"$exists": True, "$ne": ""},
+                    "$and": [
+                        {"$or": [
+                            {"meta.full_text": {"$exists": False}},
+                            {"meta.full_text": ""},
+                            {"meta.full_text": None},
+                        ]},
+                        {"$or": [
+                            {"ocr.full_text": {"$exists": False}},
+                            {"ocr.full_text": ""},
+                            {"ocr.full_text": None},
+                        ]},
+                    ],
+                },
+                {"_id": 1, "upload.convPdfPath": 1, "upload.originalName": 1},
+            ).to_list(length=50)
+
+            if not candidates:
+                return
+
+            recovered = 0
+            for doc in candidates:
+
+                doc_id = str(doc["_id"])
+                pdf_path = (doc.get("upload") or {}).get("convPdfPath", "")
+                if not pdf_path:
+                    continue
+
+                logger.info(
+                    f"[PDF변환워커] 텍스트 누락 감지 (completed): {doc_id} - "
+                    f"{(doc.get('upload') or {}).get('originalName', '')}"
+                )
+                await self._extract_and_update_text(doc_id, pdf_path, files_col)
+                recovered += 1
+
+            if recovered > 0:
+                logger.info(
+                    f"[PDF변환워커] 텍스트 누락 복구 완료: {recovered}건"
+                )
+        except Exception as e:
+            logger.error(
+                f"[PDF변환워커] 텍스트 누락 복구 에러: {e}", exc_info=True
+            )
 
     def get_status(self) -> Dict[str, Any]:
         """워커 상태 조회"""
