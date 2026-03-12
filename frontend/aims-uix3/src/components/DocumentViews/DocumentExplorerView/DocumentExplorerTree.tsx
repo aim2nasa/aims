@@ -1229,6 +1229,18 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
           comparison = typeA.localeCompare(typeB)
           break
         }
+        case 'ext': {
+          const extA = (a.mimeType ? DocumentUtils.getFileExtension(a.mimeType) : '').toLowerCase()
+          const extB = (b.mimeType ? DocumentUtils.getFileExtension(b.mimeType) : '').toLowerCase()
+          comparison = extA.localeCompare(extB)
+          break
+        }
+        case 'size': {
+          const sizeA = DocumentStatusService.extractFileSize(a)
+          const sizeB = DocumentStatusService.extractFileSize(b)
+          comparison = sizeA - sizeB
+          break
+        }
         default:
           comparison = 0
       }
