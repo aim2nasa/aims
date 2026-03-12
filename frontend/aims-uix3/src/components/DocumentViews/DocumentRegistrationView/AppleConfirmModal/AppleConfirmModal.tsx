@@ -41,7 +41,15 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
   state,
   actions
 }) => {
+  const [inputValue, setInputValue] = React.useState('')
+
+  React.useEffect(() => {
+    if (!state.isOpen) setInputValue('')
+  }, [state.isOpen])
+
   if (!state.isOpen) return null
+
+  const isConfirmDisabled = !!state.requireTextConfirm && inputValue !== state.requireTextConfirm
 
   // Footer with buttons
   const footer = (
@@ -61,6 +69,7 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
         variant={state.confirmStyle === 'destructive' ? 'destructive' : 'primary'}
         size="md"
         onClick={actions.handleConfirm}
+        disabled={isConfirmDisabled}
         autoFocus={!state.showCancel || state.confirmStyle === 'primary'}
       >
         {state.confirmText}
@@ -108,6 +117,22 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
         >
           {state.message}
         </p>
+        {state.requireTextConfirm && (
+          <div className="apple-confirm-modal__text-confirm">
+            <p className="apple-confirm-modal__text-confirm-label">
+              확인을 위해 <strong>{state.requireTextConfirm}</strong> 를 입력하세요
+            </p>
+            <input
+              type="text"
+              className="apple-confirm-modal__text-confirm-input"
+              value={inputValue}
+              onChange={e => setInputValue(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !isConfirmDisabled) actions.handleConfirm() }}
+              placeholder={state.requireTextConfirm}
+              autoFocus
+            />
+          </div>
+        )}
       </div>
     </Modal>
   )

@@ -22,6 +22,7 @@ export interface AppleConfirmState {
   confirmStyle?: 'primary' | 'destructive'
   showCancel?: boolean
   iconType?: 'success' | 'error' | 'warning' | 'info'
+  requireTextConfirm?: string
 }
 
 export interface AppleConfirmActions {
@@ -39,6 +40,7 @@ export interface AppleConfirmParams {
   confirmStyle?: 'primary' | 'destructive'
   showCancel?: boolean
   iconType?: 'success' | 'error' | 'warning' | 'info'
+  requireTextConfirm?: string
 }
 
 /**

@@ -1238,6 +1238,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       showCancel: true,
       confirmStyle: 'destructive',
       iconType: 'warning',
+      ...(isCustomerFiltered ? {} : { requireTextConfirm: '전체삭제' }),
     })
 
     if (!confirmed) return

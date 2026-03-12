@@ -157,4 +157,31 @@
     /* 이모지는 다크 모드에서도 동일하게 표시 */
   }
 
+  /* 텍스트 입력 확인 영역 */
+  .apple-confirm-modal__text-confirm {
+    margin-top: var(--spacing-3);
+  }
+
+  .apple-confirm-modal__text-confirm-label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .apple-confirm-modal__text-confirm-input {
+    width: 100%;
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--color-text-primary);
+    background: var(--color-bg-primary);
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .apple-confirm-modal__text-confirm-input:focus {
+    border-color: var(--color-destructive);
+  }
+
 } /* end @layer components */
