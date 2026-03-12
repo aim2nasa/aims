@@ -248,6 +248,20 @@ export default function BatchDocumentUploadView({
     }
   }, [progress.state])
 
+  // 업로드 진행 중 브라우저 탭 닫기/새로고침 방지
+  useEffect(() => {
+    if (progress.state !== 'uploading') return
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      // 표준 규격: returnValue 설정 (브라우저가 기본 확인 다이얼로그 표시)
+      e.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [progress.state])
+
   /**
    * 용량 내 파일만 필터링하여 mappings 생성
    */

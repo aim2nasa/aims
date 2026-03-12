@@ -155,6 +155,10 @@ export function useBatchUpload(): UseBatchUploadReturn {
   const isPausedRef = useRef(false)
   const isCancelledRef = useRef(false)
 
+  // 좀비 worker 방지를 위한 세대 카운터
+  // 새 업로드가 시작될 때마다 증가하여, 이전 세대의 worker가 자동 종료됨
+  const generationRef = useRef(0)
+
   // 중복 검사 관련 상태
   const duplicateResolverRef = useRef<((action: DuplicateAction) => void) | null>(null)
   const customerHashCacheRef = useRef<Map<string, ExistingFileHash[]>>(new Map())
@@ -285,6 +289,10 @@ export function useBatchUpload(): UseBatchUploadReturn {
    * 업로드 큐 처리 (중복 검사 포함)
    */
   const processQueue = useCallback(async (mappings: FolderMapping[]) => {
+    // 새 세대 시작 — 이전 세대의 worker들은 자동 종료됨
+    const currentGeneration = ++generationRef.current
+    console.log(`[useBatchUpload] 새 세대 시작: gen=${currentGeneration}, 파일 수=${mappings.reduce((sum, m) => sum + (m.matched ? m.files.length : 0), 0)}`)
+
     // 파일 상태 초기화
     const initialFiles: FileUploadState[] = []
     fileMapRef.current.clear()
@@ -353,12 +361,20 @@ export function useBatchUpload(): UseBatchUploadReturn {
 
     const processNextFile = async () => {
       while (true) {
+        // 세대 확인 — 새 업로드가 시작되면 이전 worker 즉시 종료
+        if (generationRef.current !== currentGeneration) {
+          console.warn(`[useBatchUpload] 좀비 worker 종료: worker gen=${currentGeneration}, current gen=${generationRef.current}`)
+          return
+        }
+
         // 취소 확인
         if (isCancelledRef.current) return
 
         // 일시정지 확인 (중복 다이얼로그 대기 포함)
         if (isPausedRef.current) {
           await new Promise((resolve) => setTimeout(resolve, 100))
+          // 일시정지 대기 중에도 세대/취소 확인
+          if (generationRef.current !== currentGeneration || isCancelledRef.current) return
           continue
         }
 
@@ -391,6 +407,9 @@ export function useBatchUpload(): UseBatchUploadReturn {
           // isPausedRef 또는 duplicateResolverRef가 설정되어 있으면 다른 워커가 다이얼로그를 처리 중
           while (isPausedRef.current || duplicateResolverRef.current !== null) {
             await new Promise((resolve) => setTimeout(resolve, 50))
+
+            // 세대/취소 확인 — 새 업로드 시작 시 대기 루프 즉시 탈출
+            if (generationRef.current !== currentGeneration || isCancelledRef.current) return
 
             // 대기 중 applyToAll이 설정되었는지 확인 (ref 사용 - 동기적)
             if (applyToAllActionRef.current) {
@@ -557,8 +576,9 @@ export function useBatchUpload(): UseBatchUploadReturn {
 
     await Promise.all(activeUploads)
 
-    // 완료 상태 설정
-    if (!isCancelledRef.current) {
+    // 완료 상태 설정 — 현재 세대인 경우만 (이전 세대 worker가 완료해도 무시)
+    console.log(`[useBatchUpload] 모든 worker 종료: gen=${currentGeneration}, cancelled=${isCancelledRef.current}, currentGen=${generationRef.current}`)
+    if (!isCancelledRef.current && generationRef.current === currentGeneration) {
       setProgress((prev) => ({
         ...prev,
         state: 'completed',
@@ -578,6 +598,19 @@ export function useBatchUpload(): UseBatchUploadReturn {
    */
   const startUpload = useCallback(
     async (mappings: FolderMapping[]) => {
+      // 이전 작업이 진행 중이면 완전 정리
+      // (페이지 이탈 후 복귀 시 좀비 worker 방지)
+      console.log(`[useBatchUpload] startUpload 호출: 이전 세대=${generationRef.current} 정리 시작`)
+      isCancelledRef.current = true // 이전 worker들에게 종료 신호
+      abortControllersRef.current.forEach((controller) => controller.abort())
+      abortControllersRef.current.clear()
+      duplicateResolverRef.current = null
+      applyToAllActionRef.current = null
+
+      // 이전 worker들이 취소 신호를 확인할 시간 확보
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // 새 작업 시작
       isPausedRef.current = false
       isCancelledRef.current = false
       await processQueue(mappings)
@@ -605,6 +638,8 @@ export function useBatchUpload(): UseBatchUploadReturn {
    * 업로드 취소
    */
   const cancelUpload = useCallback(() => {
+    // 세대 증가로 모든 worker 즉시 종료
+    generationRef.current++
     isCancelledRef.current = true
     isPausedRef.current = false
     duplicateResolverRef.current = null
@@ -653,8 +688,11 @@ export function useBatchUpload(): UseBatchUploadReturn {
    * 상태 초기화
    */
   const reset = useCallback(() => {
+    // 세대 증가로 진행 중인 worker 즉시 종료
+    generationRef.current++
     isPausedRef.current = false
-    isCancelledRef.current = false
+    isCancelledRef.current = true // 혹시 남아있는 worker 정리
+    abortControllersRef.current.forEach((controller) => controller.abort())
     abortControllersRef.current.clear()
     uploadQueueRef.current = []
     fileMapRef.current.clear()

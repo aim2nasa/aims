@@ -107,7 +107,7 @@ describe('useBatchUpload - Duplicate Detection', () => {
       const { result } = renderHook(() => useBatchUpload())
 
       await act(async () => {
-        result.current.startUpload([mapping])
+        await result.current.startUpload([mapping])
       })
 
       expect(mockGetCustomerFileHashes).toHaveBeenCalledWith('customer-1')

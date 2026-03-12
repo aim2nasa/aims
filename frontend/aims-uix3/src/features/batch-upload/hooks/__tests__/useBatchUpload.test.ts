@@ -118,13 +118,17 @@ describe('useBatchUpload', () => {
         }),
       ]
 
-      // 업로드 시작
+      // 업로드 시작 (startUpload 내부 50ms cleanup 대기 후 실제 업로드 진행)
       let uploadPromise: Promise<void>
       act(() => {
         uploadPromise = result.current.startUpload(mappings)
       })
 
-      // 즉시 취소
+      // startUpload의 cleanup 대기(50ms) 이후 취소해야 실제 취소됨
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 60))
+      })
+
       act(() => {
         result.current.cancelUpload()
       })

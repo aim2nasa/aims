@@ -458,12 +458,16 @@ describe('useBatchUpload - Advanced Scenarios', () => {
 
       const { result } = renderHook(() => useBatchUpload())
 
-      // 업로드 시작 (비동기)
+      // 업로드 시작 (비동기) — startUpload 내부 50ms cleanup 대기 후 실제 업로드
       act(() => {
         result.current.startUpload([mapping])
       })
 
-      // 즉시 취소
+      // cleanup 대기(50ms) 이후 취소해야 실제 취소됨
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 60))
+      })
+
       act(() => {
         result.current.cancelUpload()
       })
@@ -479,6 +483,11 @@ describe('useBatchUpload - Advanced Scenarios', () => {
 
       act(() => {
         result.current.startUpload([mapping])
+      })
+
+      // cleanup 대기(50ms) 이후 취소해야 실제 취소됨
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 60))
       })
 
       act(() => {
