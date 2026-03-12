@@ -330,11 +330,10 @@ After:
   - 기존 `@aims/excel-refiner-core` import 경로 호환성 100% 유지
 - 빌드 PASS, Gini PASS (Minor 2건: 중복 import 수정 완료, 회귀 방지 테스트는 비용 대비 불필요 판단)
 
-#### QW-3. 섹션 인덱스 주석 추가 (2000줄+ 6파일)
+#### QW-3. 섹션 인덱스 주석 추가 (2000줄+ 6파일) ⏭️ SKIP
 - 대상: ExcelRefiner, ChatPanel, DocumentRegistrationView, PersonalFilesView, App, DocumentSearchView
-- 파일 상단에 `// === SECTION: xxx (LINE ~nnn) ===` 목차 추가
-- 비용: 파일당 30분, 총 3시간 | 리스크: 없음
-- **Alex 이견**: 주석은 코드와 비동기화 위험. PM은 "비용 0이므로 즉시 적용" 주장 → **사용자 판단 필요**
+- **SKIP 사유**: 라인 번호가 수정마다 틀려지므로 유지보수 비용 ≠ 0. VS Code Outline/Symbol Search가 더 정확. 근본 해결은 파일 분할(W7+)이며, 목차 주석은 미봉책.
+- Alex 의견 채택, PM 의견 기각
 
 ---
 
