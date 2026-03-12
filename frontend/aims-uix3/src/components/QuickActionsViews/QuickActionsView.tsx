@@ -39,15 +39,9 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
   const queryClient = useQueryClient()
   const { isDevMode } = useDevModeStore() // 개발자 모드 상태
 
-  // 데이터 변경 이벤트 리스너 (고객, 계약, 문서 변경 시 쿼리 캐시 무효화)
+  // 데이터 변경 이벤트 리스너 (계약, 문서 변경 시 쿼리 캐시 무효화)
+  // Note: customerChanged는 TanStack Query invalidateQueries로 대체 — 이벤트 리스너 불필요
   useEffect(() => {
-    const handleCustomerChange = () => {
-      if (import.meta.env.DEV) {
-        console.log('[QuickActionsView] customerChanged 이벤트 수신 - 고객 데이터 새로고침')
-      }
-      queryClient.invalidateQueries({ queryKey: ['allCustomers'] })
-    }
-
     const handleContractChange = () => {
       if (import.meta.env.DEV) {
         console.log('[QuickActionsView] contractChanged 이벤트 수신 - 계약 데이터 새로고침')
@@ -62,12 +56,10 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
       queryClient.invalidateQueries({ queryKey: ['documentStatistics'] })
     }
 
-    window.addEventListener('customerChanged', handleCustomerChange)
     window.addEventListener('contractChanged', handleContractChange)
     window.addEventListener('documentChanged', handleDocumentChange)
 
     return () => {
-      window.removeEventListener('customerChanged', handleCustomerChange)
       window.removeEventListener('contractChanged', handleContractChange)
       window.removeEventListener('documentChanged', handleDocumentChange)
     }

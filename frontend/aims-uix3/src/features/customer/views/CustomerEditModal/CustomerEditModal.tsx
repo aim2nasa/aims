@@ -101,11 +101,8 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
       onSuccess?.();
       onClose();
       // 쿼리 캐시 무효화로 모든 View 업데이트 (새로고침 없이)
-      invalidateQueries.customers();
       invalidateQueries.customer(customer._id);
-      invalidateQueries.relationships();
-      // 다른 View 동기화를 위한 이벤트 발생
-      window.dispatchEvent(new CustomEvent('customerChanged'));
+      invalidateQueries.customerChanged();
     }
   }, [handleSave, onSuccess, onClose, customer._id]);
 

@@ -31,8 +31,11 @@ function extractCenterWidthFromCalc(widthExpr: string): number | null {
 vi.mock('@tanstack/react-query', () => ({
   QueryClient: vi.fn(() => ({
     clear: vi.fn(),
+    invalidateQueries: vi.fn(),
   })),
   QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
+  QueryCache: vi.fn(() => ({ find: vi.fn(), findAll: vi.fn() })),
+  MutationCache: vi.fn(() => ({ find: vi.fn(), findAll: vi.fn() })),
   useQuery: () => ({ data: null, isLoading: false, error: null }),
   useMutation: () => ({ mutate: vi.fn(), isLoading: false }),
   useQueryClient: () => ({ invalidateQueries: vi.fn(), setQueryData: vi.fn() }),

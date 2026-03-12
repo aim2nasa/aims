@@ -39,6 +39,7 @@ import {
   type CustomerNameValidationResult
 } from '@aims/excel-refiner-core'
 import { CustomerService, type BulkCustomerInput } from '@/services/customerService'
+import { invalidateQueries } from '@/app/queryClient'
 import { getAuthHeaders } from '@/shared/lib/api'
 import { ContractService } from '@/services/contractService'
 import { useAuthStore } from '@/shared/stores/authStore'
@@ -2408,8 +2409,8 @@ export function ExcelRefiner() {
           계약: { created: [], updated: [], skipped: [], errors: [] }
         })
 
-        // 완료 이벤트
-        window.dispatchEvent(new CustomEvent('customerChanged'))
+        // TanStack Query 캐시 무효화로 모든 View 자동 업데이트
+        invalidateQueries.customerChanged()
 
       } else {
         // === 전체 등록: 고객(bulkImport) + 계약 ===
@@ -2472,7 +2473,7 @@ export function ExcelRefiner() {
               계약: { created: [], updated: [], skipped: [], errors: [] }
             })
 
-            window.dispatchEvent(new CustomEvent('customerChanged'))
+            invalidateQueries.customerChanged()
           }
           return
         }
@@ -2751,7 +2752,7 @@ export function ExcelRefiner() {
           })
         }
 
-        window.dispatchEvent(new CustomEvent('customerChanged'))
+        invalidateQueries.customerChanged()
         window.dispatchEvent(new CustomEvent('contractChanged'))
       }
 

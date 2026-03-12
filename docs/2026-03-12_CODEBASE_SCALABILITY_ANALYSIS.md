@@ -361,11 +361,15 @@ After:
 - **보존**: 2종 (크로스 윈도우 통신, 대안 없음)
 - **기타**: 2종 (자기 참조, 선택적 교체)
 
-**PoC 범위**: `customerChanged` 1개만 교체
-- dispatch 측: customerService.ts의 3곳 → `queryClient.invalidateQueries({ queryKey: ['customers'] })` 호출
-- listen 측: 5곳의 addEventListener 제거 → TanStack Query의 자동 refetch에 의존
-- 검증: 고객 등록 → 다른 뷰에서 목록 갱신 확인, 고객 삭제 → 관계 뷰 갱신 확인
-- 비용: 1~2일 | **PoC 결과 보고 후 본 구현 승인**
+**PoC 범위**: `customerChanged` 1개만 교체 ✅ DONE
+
+**구현 결과**:
+- `queryClient.ts`에 `invalidateQueries.customerChanged()` 중앙 헬퍼 추가 — customers/relationships 4개 queryKey 일괄 무효화
+- dispatch 9곳 → `invalidateQueries.customerChanged()` 1줄로 통합 (CustomerRegistrationView, CustomerEditModal, useCustomerRegistrationController, customerService 3곳, ExcelRefiner 3곳)
+- listener 3곳 제거 (CustomerManagementView 전체 제거, QuickActionsView customerChanged만 제거)
+- 레거시 호환: `CustomerRelationshipView`가 TanStack Query 미사용이므로 중앙 함수에서 `dispatchEvent('customerChanged')` 유지 → 해당 뷰 TQ 전환 시 제거 예정
+- 유령 테스트(`data-refresh.test.tsx`) 삭제, queryClient mock 4개 파일 추가로 테스트 격리 보장
+- **테스트 220 passed / 0 failed, 빌드 PASS, Gini PASS**
 
 ---
 

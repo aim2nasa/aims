@@ -174,4 +174,17 @@ export const invalidateQueries = {
   relationships: () => queryClient.invalidateQueries({ queryKey: queryKeys.relationships() }),
   relationship: (id: string) => queryClient.invalidateQueries({ queryKey: queryKeys.relationship(id) }),
   all: () => queryClient.invalidateQueries({ queryKey: queryKeys.all }),
+  // 레거시 queryKey 무효화 (CustomerManagementView, QuickActionsView 등에서 사용)
+  allCustomers: () => queryClient.invalidateQueries({ queryKey: ['allCustomers'] }),
+  allRelationships: () => queryClient.invalidateQueries({ queryKey: ['allRelationships'] }),
+  /** 고객 변경 시 관련 쿼리 일괄 무효화 (customerChanged 이벤트 대체) */
+  customerChanged: () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.customers() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.relationships() });
+    queryClient.invalidateQueries({ queryKey: ['allCustomers'] });
+    queryClient.invalidateQueries({ queryKey: ['allRelationships'] });
+    // 레거시 호환: TanStack Query를 사용하지 않는 뷰(CustomerRelationshipView 등)를 위해
+    // 추후 해당 뷰들이 TanStack Query로 전환되면 이 라인 제거
+    window.dispatchEvent(new CustomEvent('customerChanged'));
+  },
 };

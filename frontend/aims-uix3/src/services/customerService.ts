@@ -9,6 +9,7 @@
 
 import { api } from '@/shared/lib/api';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { invalidateQueries } from '@/app/queryClient';
 import {
   Customer,
   CreateCustomerData,
@@ -156,8 +157,8 @@ export class CustomerService {
       throw new Error('고객을 휴면 처리할 수 없습니다');
     }
 
-    // customerChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
-    window.dispatchEvent(new CustomEvent('customerChanged'));
+    // TanStack Query 캐시 무효화로 모든 View 자동 업데이트
+    invalidateQueries.customerChanged();
 
     // 휴면 처리 후 활성 필터로 전환
     window.dispatchEvent(new CustomEvent('customerStatusFilterChange', { detail: { filter: 'active' } }));
@@ -190,8 +191,9 @@ export class CustomerService {
       deletedDocuments: number;
     }>(`${ENDPOINTS.CUSTOMER(id)}?permanent=true`);
 
-    // 모든 관련 이벤트 발생
-    window.dispatchEvent(new CustomEvent('customerChanged'));
+    // TanStack Query 캐시 무효화로 모든 View 자동 업데이트
+    invalidateQueries.customerChanged();
+    invalidateQueries.documents();
     window.dispatchEvent(new CustomEvent('contractChanged'));
     window.dispatchEvent(new CustomEvent('documentChanged'));
 
@@ -222,8 +224,8 @@ export class CustomerService {
       throw new Error('고객을 복원할 수 없습니다');
     }
 
-    // customerChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
-    window.dispatchEvent(new CustomEvent('customerChanged'));
+    // TanStack Query 캐시 무효화로 모든 View 자동 업데이트
+    invalidateQueries.customerChanged();
 
     // 복원 후 활성 필터로 전환
     window.dispatchEvent(new CustomEvent('customerStatusFilterChange', { detail: { filter: 'active' } }));

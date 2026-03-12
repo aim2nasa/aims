@@ -30,6 +30,32 @@ vi.mock('@/shared/lib/api', () => ({
   },
 }))
 
+// queryClient 모듈 모킹 — invalidateQueries가 queryClient 싱글턴에 의존하므로
+vi.mock('@/app/queryClient', () => ({
+  invalidateQueries: {
+    customers: vi.fn(),
+    customer: vi.fn(),
+    relationships: vi.fn(),
+    documents: vi.fn(),
+    all: vi.fn(),
+    allCustomers: vi.fn(),
+    allRelationships: vi.fn(),
+    customerChanged: vi.fn(() => {
+      // 레거시 호환 이벤트 발생 (실제 구현과 동일)
+      window.dispatchEvent(new CustomEvent('customerChanged'))
+    }),
+  },
+  queryClient: {
+    invalidateQueries: vi.fn(),
+  },
+  queryKeys: {
+    all: ['aims'],
+    customers: () => ['aims', 'customers'],
+    relationships: () => ['aims', 'relationships'],
+    documents: () => ['aims', 'documents'],
+  },
+}))
+
 // ==================== Mock Data ====================
 
 const createMockCustomer = (overrides: Partial<Customer> = {}): Customer => ({

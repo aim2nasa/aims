@@ -8,6 +8,31 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useCustomerRegistrationController } from '../useCustomerRegistrationController';
 
+// queryClient 모듈 모킹 — invalidateQueries가 queryClient 싱글턴에 의존하므로
+vi.mock('@/app/queryClient', () => ({
+  invalidateQueries: {
+    customers: vi.fn(),
+    customer: vi.fn(),
+    relationships: vi.fn(),
+    documents: vi.fn(),
+    all: vi.fn(),
+    allCustomers: vi.fn(),
+    allRelationships: vi.fn(),
+    customerChanged: vi.fn(() => {
+      window.dispatchEvent(new CustomEvent('customerChanged'))
+    }),
+  },
+  queryClient: {
+    invalidateQueries: vi.fn(),
+  },
+  queryKeys: {
+    all: ['aims'],
+    customers: () => ['aims', 'customers'],
+    relationships: () => ['aims', 'relationships'],
+    documents: () => ['aims', 'documents'],
+  },
+}))
+
 // fetch mock
 global.fetch = vi.fn();
 

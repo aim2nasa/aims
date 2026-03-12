@@ -6,8 +6,8 @@
  * 통계, 빠른 액션, 최근 활동을 포함
  */
 
-import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
@@ -58,20 +58,6 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   onCustomerClick,
   onCustomerDoubleClick,
 }) => {
-  // React Query 캐시 무효화를 위한 queryClient
-  const queryClient = useQueryClient();
-
-  // customerChanged 이벤트 리스너 (데이터 동기화)
-  useEffect(() => {
-    const handleCustomerChange = () => {
-      queryClient.invalidateQueries({ queryKey: ['allCustomers'] });
-      queryClient.invalidateQueries({ queryKey: ['allRelationships'] });
-    };
-
-    window.addEventListener('customerChanged', handleCustomerChange);
-    return () => window.removeEventListener('customerChanged', handleCustomerChange);
-  }, [queryClient]);
-
   // 클릭/더블클릭 구분을 위한 타이머 ref
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

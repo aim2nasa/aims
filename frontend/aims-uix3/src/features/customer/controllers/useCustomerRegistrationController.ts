@@ -13,6 +13,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { CreateCustomerSchema, type CreateCustomerData } from '@/entities/customer/model';
 import { api } from '@/shared/lib/api';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { invalidateQueries } from '@/app/queryClient';
 
 // Draft 저장 키
 const DRAFT_STORAGE_KEY = 'aims_customer_registration_draft';
@@ -305,8 +306,8 @@ export const useCustomerRegistrationController = ({
         console.log('[useCustomerRegistrationController] 고객 생성 완료:', customerId, customerName);
       }
 
-      // customerChanged 이벤트 발생 (지역별 보기 등 다른 View 동기화)
-      window.dispatchEvent(new CustomEvent('customerChanged'));
+      // TanStack Query 캐시 무효화로 모든 View 자동 업데이트
+      invalidateQueries.customerChanged();
 
       // 성공 콜백 (async 지원)
       if (onSuccess) {
