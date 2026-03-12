@@ -336,7 +336,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
           const tooltips: Record<string, string> = {
             completed: 'PDF 변환 완료',
             processing: 'PDF 변환 중...',
-            pending: 'PDF 변환 대기 중',
+            pending: 'PDF 변환 대기 중 - 오래 걸리면 클릭하여 재시도',
             failed: 'PDF 변환 실패 - 클릭하여 재시도'
           }
 
@@ -372,13 +372,13 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
 
           const icon = statusIcons[conversionStatus] || statusIcons['pending']
 
-          // failed 상태: 클릭 가능한 버튼
-          if (conversionStatus === 'failed') {
+          // failed/pending 상태: 클릭 가능한 버튼 (재시도)
+          if (conversionStatus === 'failed' || conversionStatus === 'pending') {
             return (
               <Tooltip content={tooltip}>
                 <button
                   type="button"
-                  className={`pdf-conversion-badge pdf-conversion-badge--failed ${isRetryingPdf ? 'pdf-conversion-badge--retrying' : ''}`}
+                  className={`pdf-conversion-badge pdf-conversion-badge--${conversionStatus} ${isRetryingPdf ? 'pdf-conversion-badge--retrying' : ''}`}
                   onClick={(e) => docId && onRetryPdfConversion(docId, e)}
                   disabled={isRetryingPdf || !docId}
                   aria-label="PDF 변환 재시도"
@@ -390,7 +390,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
             )
           }
 
-          // 그 외 상태: 일반 span
+          // 그 외 상태 (completed, processing): 일반 span
           return (
             <Tooltip content={tooltip}>
               <span className={`pdf-conversion-badge pdf-conversion-badge--${conversionStatus}`}>

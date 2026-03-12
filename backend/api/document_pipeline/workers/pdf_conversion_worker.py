@@ -270,21 +270,73 @@ class PdfConversionWorker:
             await self._notify_conversion_failed(job, error_message)
 
     async def _periodic_cleanup(self):
-        """정기적 정리 작업 (1시간마다)"""
+        """정기적 정리 작업 (10분마다)"""
         while self.running:
             try:
-                await asyncio.sleep(3600)
+                await asyncio.sleep(600)  # 10분
 
                 if not self.running:
                     break
 
                 await PdfConversionQueueService.cleanup_stale_jobs()
                 await PdfConversionQueueService.delete_completed_jobs(older_than_hours=24)
+                await self._recover_stuck_pending_documents()
 
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error(f"[PDF변환워커] 정리 에러: {e}")
+
+    async def _recover_stuck_pending_documents(self):
+        """
+        files 컬렉션에서 conversion_status='pending'이지만
+        큐에 active job이 없는 문서를 failed로 복구.
+        (시스템 문제로 stuck된 것이므로 retry_count도 리셋)
+        """
+        try:
+            db = MongoService.get_db()
+            files_collection = db["files"]
+            queue_collection = db["pdf_conversion_queue"]
+
+            # pending 상태인 모든 문서 조회
+            pending_docs = await files_collection.find(
+                {"upload.conversion_status": "pending"},
+                {"_id": 1}
+            ).to_list(length=100)
+
+            if not pending_docs:
+                return
+
+            recovered = 0
+            for doc in pending_docs:
+                doc_id_str = str(doc["_id"])
+                # 큐에 active job(pending/processing)이 있는지 확인
+                active_job = await queue_collection.find_one({
+                    "document_id": doc_id_str,
+                    "job_type": "preview_pdf",
+                    "status": {"$in": ["pending", "processing"]}
+                })
+                if active_job:
+                    continue  # 정상 처리 중
+
+                # stuck 확정 → failed로 복구
+                await files_collection.update_one(
+                    {"_id": doc["_id"]},
+                    {
+                        "$set": {
+                            "upload.conversion_status": "failed",
+                            "upload.conversion_error": "자동 복구: 변환 큐에 작업 없음 (stuck)",
+                            "upload.conversion_retry_count": 0,
+                        }
+                    }
+                )
+                recovered += 1
+                logger.info(f"[PDF변환워커] stuck pending 복구: {doc_id_str}")
+
+            if recovered > 0:
+                logger.info(f"[PDF변환워커] stuck pending 총 {recovered}건 복구 → failed")
+        except Exception as e:
+            logger.error(f"[PDF변환워커] stuck pending 복구 에러: {e}")
 
     def get_status(self) -> Dict[str, Any]:
         """워커 상태 조회"""

@@ -17,6 +17,7 @@ const sseManager = require('../lib/sseManager');
 const { notifyCustomerDocSubscribers, notifyDocumentStatusSubscribers, notifyDocumentListSubscribers, notifyPersonalFilesSubscribers, sendSSE } = sseManager;
 const { prepareDocumentResponse, isConvertibleFile, analyzeDocumentStatus } = require('../lib/documentStatusHelper');
 const createPdfConversionTrigger = require('../lib/pdfConversionTrigger');
+const { MAX_MANUAL_RETRIES } = createPdfConversionTrigger;
 
 const COLLECTION_NAME = COLLECTIONS.FILES;
 const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
@@ -2200,17 +2201,35 @@ router.post('/documents/:id/retry', authenticateJWT, async (req, res) => {
       const currentStatus = document.upload?.conversion_status;
       const retryCount = document.upload?.conversion_retry_count || 0;
 
-      if (currentStatus !== 'failed') {
+      if (currentStatus === 'pending') {
+        // pending stuck 판정: 큐에 active job(pending/processing)이 없으면 stuck
+        const activeJob = await db.collection('pdf_conversion_queue').findOne({
+          document_id: id,
+          job_type: 'preview_pdf',
+          status: { $in: ['pending', 'processing'] }
+        });
+        if (activeJob) {
+          return res.status(400).json({
+            success: false,
+            error: 'PDF 변환이 진행 중입니다. 잠시 후 다시 시도해주세요.'
+          });
+        }
+        // stuck 확인 → retry_count 리셋 (시스템 문제이므로)
+        await db.collection(COLLECTION_NAME).updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { 'upload.conversion_retry_count': 0 } }
+        );
+      } else if (currentStatus !== 'failed') {
         return res.status(400).json({
           success: false,
           error: 'PDF 변환이 실패 상태일 때만 재시도할 수 있습니다.'
         });
       }
 
-      if (retryCount >= 1) {
+      if (currentStatus === 'failed' && retryCount >= MAX_MANUAL_RETRIES) {
         return res.status(400).json({
           success: false,
-          error: 'PDF 변환 재시도는 1회만 가능합니다.'
+          error: `PDF 변환 재시도는 ${MAX_MANUAL_RETRIES}회만 가능합니다.`
         });
       }
 
@@ -2226,18 +2245,32 @@ router.post('/documents/:id/retry', authenticateJWT, async (req, res) => {
       await db.collection(COLLECTION_NAME).updateOne(
         { _id: new ObjectId(id) },
         {
-          $set: {
-            'upload.conversion_status': 'pending',
-            'upload.conversion_retry_count': retryCount + 1
-          },
-          $unset: {
-            'upload.conversion_error': ''
-          }
+          $set: { 'upload.conversion_status': 'pending' },
+          $inc: { 'upload.conversion_retry_count': 1 },
+          $unset: { 'upload.conversion_error': '' }
         }
       );
 
-      // 비동기로 변환 시작
-      convertDocumentInBackground(new ObjectId(id), destPath);
+      // force 모드로 큐 재등록 (기존 failed/completed 레코드 자동 삭제)
+      try {
+        await convertDocumentInBackground(new ObjectId(id), destPath, { force: true });
+      } catch (queueError) {
+        // 큐 등록 실패 → pending hang 방지를 위해 failed로 롤백
+        console.error(`[PDF변환] 재시도 큐 등록 실패, failed로 롤백: ${id}`, queueError.message);
+        backendLogger.error('Documents', `[PDF변환] 재시도 큐 등록 실패 (${id})`, queueError);
+        await db.collection(COLLECTION_NAME).updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: { 'upload.conversion_status': 'failed', 'upload.conversion_error': queueError.message },
+            $inc: { 'upload.conversion_retry_count': -1 }
+          }
+        );
+        return res.status(500).json({
+          success: false,
+          error: 'PDF 변환 큐 등록에 실패했습니다.',
+          details: queueError.message
+        });
+      }
 
       return res.json({
         success: true,

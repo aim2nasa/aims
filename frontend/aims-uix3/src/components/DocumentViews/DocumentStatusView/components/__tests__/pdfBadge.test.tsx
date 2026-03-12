@@ -363,7 +363,7 @@ describe('[회귀] PDF 변환 배지 - 재시도 버튼 (commit 748bb43e)', () =
     expect(pdfBadge?.tagName.toLowerCase()).toBe('span')
   })
 
-  it('pending 상태에서는 버튼이 아닌 span이 렌더링되어야 함', () => {
+  it('pending 상태에서도 버튼이 렌더링되어야 함 (stuck 재시도 지원)', () => {
     const doc = createMockDocument({
       originalName: 'document.xlsx',
       conversionStatus: 'pending',
@@ -379,7 +379,8 @@ describe('[회귀] PDF 변환 배지 - 재시도 버튼 (commit 748bb43e)', () =
     )
 
     const pdfBadge = container.querySelector('.pdf-conversion-badge')
-    expect(pdfBadge?.tagName.toLowerCase()).toBe('span')
+    expect(pdfBadge?.tagName.toLowerCase()).toBe('button')
+    expect(pdfBadge?.getAttribute('aria-label')).toBe('PDF 변환 재시도')
   })
 })
 
