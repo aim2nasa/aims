@@ -853,11 +853,14 @@ export class DocumentService {
   }
 
   /**
-   * 개발 환경 전용: 모든 문서 삭제
-   * 주의: 개발 환경에서만 사용!
+   * 개발 환경 전용: 문서 삭제 (고객 필터 지원)
+   * @param customerId 특정 고객의 문서만 삭제 (생략 시 전체 삭제)
    */
-  static async deleteAllDocuments(): Promise<{ deletedCount: number }> {
-    const response = await api.delete<{ success: boolean; deletedCount: number }>('/api/dev/documents/all');
+  static async deleteAllDocuments(customerId?: string): Promise<{ deletedCount: number }> {
+    const url = customerId
+      ? `/api/dev/documents/all?customerId=${encodeURIComponent(customerId)}`
+      : '/api/dev/documents/all';
+    const response = await api.delete<{ success: boolean; deletedCount: number }>(url);
     return { deletedCount: response.deletedCount };
   }
 

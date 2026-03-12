@@ -1223,10 +1223,16 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   }, [confirmModal])
 
   // 🍎 전체 문서 삭제 핸들러 (개발자 모드 전용)
+  // 고객 필터 활성화 시 해당 고객 문서만 삭제, 없으면 전체 삭제
   const handleDeleteAllDocuments = React.useCallback(async () => {
+    const isCustomerFiltered = !!customerFilter?.id
+    const targetLabel = isCustomerFiltered
+      ? `${customerFilter.name}의 모든 문서`
+      : '모든 문서'
+
     const confirmed = await confirmModal.actions.openModal({
-      title: '전체 문서 삭제',
-      message: '모든 문서를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.',
+      title: isCustomerFiltered ? '고객 문서 전체 삭제' : '전체 문서 삭제',
+      message: `${targetLabel}를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`,
       confirmText: '전체 삭제',
       cancelText: '취소',
       showCancel: true,
@@ -1238,8 +1244,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
     try {
       setIsDeleting(true)
-      const result = await DocumentService.deleteAllDocuments()
-      console.log(`🗑️ [DEV] 문서 전체 삭제 완료: ${result.deletedCount}건`)
+      const result = await DocumentService.deleteAllDocuments(customerFilter?.id ?? undefined)
+      console.log(`🗑️ [DEV] 문서 삭제 완료: ${result.deletedCount}건 (${isCustomerFiltered ? customerFilter.name : '전체'})`)
       window.location.reload()
     } catch (error) {
       console.error('Error in handleDeleteAllDocuments:', error)
@@ -1247,12 +1253,12 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       setIsDeleting(false)
       await confirmModal.actions.openModal({
         title: '삭제 실패',
-        message: '전체 문서 삭제 중 오류가 발생했습니다.',
+        message: '문서 삭제 중 오류가 발생했습니다.',
         confirmText: '확인',
         showCancel: false,
       })
     }
-  }, [confirmModal])
+  }, [confirmModal, customerFilter])
 
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="전체 문서 보기" titleIcon={<span className="menu-icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>} breadcrumbItems={breadcrumbItems} onBreadcrumbClick={onNavigate}>
