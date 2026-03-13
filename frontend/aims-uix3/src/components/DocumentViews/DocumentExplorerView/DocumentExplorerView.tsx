@@ -113,7 +113,7 @@ const DocumentExplorerContent: React.FC<{
   }, [])
 
   // 호버 액션: 문서 삭제/이름변경 — reload 대신 트리 재조회로 UI 상태 유지
-  const refreshDataRef = useRef<() => void>(() => window.location.reload())
+  const refreshDataRef = useRef<() => void>(() => {})
   const onRefreshData = useCallback(() => { refreshDataRef.current() }, [])
   const documentActions = useDocumentActions({
     onRenameSuccess: onRefreshData,

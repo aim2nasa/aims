@@ -37,6 +37,7 @@ export function useDocumentActions(options: UseDocumentActionsOptions) {
     try {
       setIsDeleting(true)
       await api.delete(`/api/documents/${documentId}`)
+      setIsDeleting(false)
       onDeleteSuccess()
     } catch (error) {
       console.error('Error deleting document:', error)
@@ -101,6 +102,7 @@ export function useDocumentActions(options: UseDocumentActionsOptions) {
         })
       }
 
+      setIsDeleting(false)
       if (successCount > 0) {
         onDeleteSuccess()
       }
@@ -129,6 +131,7 @@ export function useDocumentActions(options: UseDocumentActionsOptions) {
       } else {
         await api.patch(`/api/documents/${documentId}/display-name`, { displayName: newName })
       }
+      setIsRenaming(false)
       onRenameSuccess()
       return true
     } catch (error) {
