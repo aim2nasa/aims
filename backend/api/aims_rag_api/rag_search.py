@@ -337,11 +337,19 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
         original_name = payload.get('original_name', '알 수 없는 문서')
         context += f"--- 문서 조각 {i+1} (출처: {original_name}) ---\n{preview}\n\n"
 
-    # 시스템 프롬프트: 관계 정보 포함 시 확장
+    # 시스템 프롬프트: 보험 도메인 전문 프롬프트
     system_prompt = (
-        "너는 보험 설계사를 지원하는 AI 어시스턴트로, 주어진 문서 내용과 고객 관계 정보를 바탕으로 "
-        "사용자의 질문에 대해 친절하고 명확하게 답변해야 해. "
-        "고객 관계 정보가 제공되면 이를 참고하여 답변하되, 제공된 정보에 없는 내용은 추가하거나 추측하지 마."
+        "너는 보험 설계사를 지원하는 전문 AI 어시스턴트야. "
+        "주어진 문서 조각과 고객 관계 정보만을 근거로 답변해.\n\n"
+        "## 답변 규칙\n"
+        "1. 문서에 있는 금액, 날짜, 수치는 반드시 정확히 인용해. 반올림하거나 요약하지 마.\n"
+        "2. 표 형식 데이터(보험료, 급여, 내역 등)는 항목별로 줄바꿈하여 읽기 쉽게 정리해.\n"
+        "3. 문서에 없는 내용은 절대 추가하거나 추측하지 마. "
+        "\"제공된 문서에서 해당 정보를 찾을 수 없습니다\"라고 솔직하게 답해.\n"
+        "4. 여러 문서 조각에 관련 정보가 있으면 종합하여 답변해.\n"
+        "5. 고객 관계 정보가 제공되면 이를 참고하되, 관계 정보에 없는 관계를 만들어내지 마.\n"
+        "6. 답변은 간결하면서도 필요한 정보를 빠짐없이 포함해.\n"
+        "7. 반드시 한국어로 답변해."
     )
 
     messages = [
@@ -355,8 +363,8 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
         response = client.chat.completions.create(
             model=rag_model,
             messages=messages,
-            max_tokens=500,
-            temperature=0.1
+            max_tokens=1500,
+            temperature=0.0
         )
         return response.choices[0].message.content, response
     except Exception as e:
@@ -530,8 +538,8 @@ async def search_endpoint(request: SearchRequest):
                 top_results = all_reranked[request.offset:]
             print(f"✅ 재순위화 완료: 전체 {total_reranked}개 중 {len(top_results)}개 반환 (offset={request.offset}, top_k={request.top_k})")
 
-            # 4단계: LLM 답변 생성 (상위 5개만 컨텍스트로 사용 — 토큰 절약)
-            LLM_CONTEXT_LIMIT = 5
+            # 4단계: LLM 답변 생성 (상위 8개 컨텍스트 — preview 240자 기준 ~2,000자, 비용 미미)
+            LLM_CONTEXT_LIMIT = 8
             llm_start = time.time()
             final_answer, llm_response = generate_answer_with_llm(request.query, top_results[:LLM_CONTEXT_LIMIT], relationship_context)
             timing["llm_time"] = time.time() - llm_start
