@@ -1,5 +1,6 @@
 # rag_search.py
 import os
+import re
 import time
 from typing import List, Dict, Optional, Any
 from openai import OpenAI
@@ -55,6 +56,13 @@ if not RAG_API_KEY:
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
+
+# P4-5: 인메모리 Rate Limiting (외부 의존성 없음)
+import collections
+_rate_limit_store: Dict[str, collections.deque] = {}  # {ip: deque of timestamps}
+_RATE_LIMIT_WINDOW = 60  # 60초
+_RATE_LIMIT_MAX = 30  # 윈도우당 최대 요청 수 (/search 엔드포인트)
+
 class ApiKeyMiddleware(BaseHTTPMiddleware):
     """모든 엔드포인트에 x-api-key 검증 적용 (/health 제외)"""
     async def dispatch(self, request: Request, call_next):
@@ -69,8 +77,39 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(ApiKeyMiddleware)
 
+
+def _check_rate_limit(client_ip: str) -> bool:
+    """
+    P4-5: 인메모리 슬라이딩 윈도우 Rate Limiting.
+    Returns True if request is allowed, False if rate limited.
+    """
+    now = time.time()
+    if client_ip not in _rate_limit_store:
+        _rate_limit_store[client_ip] = collections.deque()
+
+    window = _rate_limit_store[client_ip]
+    # 윈도우 밖의 오래된 타임스탬프 제거
+    while window and window[0] < now - _RATE_LIMIT_WINDOW:
+        window.popleft()
+
+    if len(window) >= _RATE_LIMIT_MAX:
+        return False
+
+    window.append(now)
+
+    # 메모리 누수 방지: 빈 deque를 가진 IP 항목 정리 (100개 초과 시)
+    if len(_rate_limit_store) > 100:
+        empty_keys = [k for k, v in _rate_limit_store.items() if not v]
+        for k in empty_keys:
+            del _rate_limit_store[k]
+
+    return True
+
 # 🛡️ Qdrant 컬렉션 자동 확인/생성 (서비스 시작 시)
 QDRANT_COLLECTION = "docembed"
+# P5-4: 현재 text-embedding-3-small (1536차원). text-embedding-3-large (3072차원) 업그레이드 시
+# QDRANT_VECTOR_SIZE를 3072로 변경하고, Qdrant 컬렉션 재생성 + 전체 재임베딩 필요.
+# Phase 1~3 효과 측정 후 결정. 비용: 재임베딩 ~$0.01 (985 포인트 기준), 효과: 검색 정확도 5~10% 개선 기대.
 QDRANT_VECTOR_SIZE = 1536
 
 @app.on_event("startup")
@@ -111,6 +150,29 @@ token_tracker = TokenTracker()
 
 # P2-5: OpenAI 클라이언트 모듈 레벨 싱글턴 (매 요청마다 새 인스턴스 생성 방지)
 _openai_client = OpenAI()
+
+# P4-1/P4-2: user_id 검증 (MongoDB ObjectId 24자리 hex 형식)
+_OBJECTID_PATTERN = re.compile(r'^[a-fA-F0-9]{24}$')
+
+def validate_user_id(user_id: Optional[str]) -> str:
+    """
+    user_id 서버 측 검증.
+    - None, 빈 문자열, 'anonymous' → 403
+    - MongoDB ObjectId 형식이 아닌 값 → 403
+    - 유효한 ObjectId → 그대로 반환
+    """
+    if not user_id or user_id.strip() == "" or user_id == "anonymous":
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "user_id_required", "message": "인증된 사용자 ID가 필요합니다."}
+        )
+    user_id = user_id.strip()
+    if not _OBJECTID_PATTERN.match(user_id):
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "invalid_user_id", "message": "유효하지 않은 사용자 ID 형식입니다."}
+        )
+    return user_id
 
 # 🔥 AI 모델 설정 캐싱
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
@@ -337,6 +399,9 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
         payload = result.get('payload', result)
         preview = payload.get('preview', '')
         original_name = payload.get('original_name', '알 수 없는 문서')
+        # P4-4: 파일명/미리보기에서 제어문자 제거 (프롬프트 인젝션 방어)
+        original_name = re.sub(r'[\x00-\x1f\x7f]', '', original_name)
+        preview = re.sub(r'[\x00-\x1f\x7f]', '', preview)
         context += f"--- [{original_name}] ---\n{preview}\n\n"
 
     # 시스템 프롬프트: 보험 도메인 전문 프롬프트
@@ -396,7 +461,30 @@ async def health_check():
 
 
 @app.post("/search", response_model=UnifiedSearchResponse)
-async def search_endpoint(request: SearchRequest):
+async def search_endpoint(request: SearchRequest, raw_request: Request):
+    # P4-5: Rate Limiting 체크
+    if raw_request:
+        client_ip = raw_request.headers.get("x-real-ip") or raw_request.client.host
+        if not _check_rate_limit(client_ip):
+            raise HTTPException(
+                status_code=429,
+                detail={"error": "rate_limited", "message": "요청이 너무 빈번합니다. 잠시 후 다시 시도해주세요."}
+            )
+
+    # P4-1/P4-2: user_id 서버 측 검증 (semantic 검색 시 필수)
+    if request.search_mode == "semantic":
+        validated_user_id = validate_user_id(request.user_id)
+        request.user_id = validated_user_id
+    elif request.search_mode == "keyword" and request.user_id and request.user_id != "anonymous":
+        # 키워드 검색도 user_id가 있으면 형식 검증
+        user_id_trimmed = request.user_id.strip()
+        if user_id_trimmed and not _OBJECTID_PATTERN.match(user_id_trimmed):
+            raise HTTPException(
+                status_code=403,
+                detail={"error": "invalid_user_id", "message": "유효하지 않은 사용자 ID 형식입니다."}
+            )
+        request.user_id = user_id_trimmed
+
     # 🔴 크레딧 체크 (semantic 검색만 - AI 토큰 소비)
     # P2-2: asyncio.to_thread로 동기 HTTP 호출이 이벤트 루프를 블로킹하지 않도록 함
     if request.search_mode == "semantic" and request.user_id:
@@ -653,8 +741,30 @@ class FeedbackRequest(BaseModel):
     feedback_text: Optional[str] = None
 
 
+# P4-6: /analytics/* 접근 통제 — 내부 API 키 또는 로컬 네트워크에서만 접근 허용
+ANALYTICS_API_KEY = os.getenv("ANALYTICS_API_KEY", "")
+
+def _verify_analytics_access(request: Request):
+    """
+    P4-6: analytics 엔드포인트 접근 검증.
+    - ANALYTICS_API_KEY가 설정되어 있으면 x-analytics-key 헤더와 대조
+    - 미설정 시 localhost/내부망에서의 접근만 허용
+    """
+    if ANALYTICS_API_KEY:
+        provided_key = request.headers.get("x-analytics-key", "")
+        if provided_key != ANALYTICS_API_KEY:
+            raise HTTPException(status_code=403, detail="Analytics API 접근 권한이 없습니다.")
+        return
+
+    # ANALYTICS_API_KEY 미설정 시: localhost/내부망만 허용
+    client_ip = request.headers.get("x-real-ip") or (request.client.host if request.client else "unknown")
+    allowed_prefixes = ("127.0.0.1", "::1", "localhost", "10.", "172.16.", "192.168.", "100.")
+    if not any(client_ip.startswith(prefix) for prefix in allowed_prefixes):
+        raise HTTPException(status_code=403, detail="Analytics API는 내부 네트워크에서만 접근 가능합니다.")
+
+
 @app.get("/analytics/overall")
-async def get_overall_stats(days: int = 7):
+async def get_overall_stats(request: Request, days: int = 7):
     """
     전체 검색 통계 조회
 
@@ -664,6 +774,7 @@ async def get_overall_stats(days: int = 7):
     Returns:
         전체 통계 딕셔너리
     """
+    _verify_analytics_access(request)
     try:
         stats = quality_analyzer.get_overall_stats(days=days)
         return {"success": True, "data": stats, "days": days}
@@ -673,7 +784,7 @@ async def get_overall_stats(days: int = 7):
 
 
 @app.get("/analytics/query_types")
-async def get_query_type_breakdown(days: int = 7):
+async def get_query_type_breakdown(request: Request, days: int = 7):
     """
     쿼리 유형별 통계 조회
 
@@ -683,6 +794,7 @@ async def get_query_type_breakdown(days: int = 7):
     Returns:
         쿼리 유형별 통계 딕셔너리
     """
+    _verify_analytics_access(request)
     try:
         breakdown = quality_analyzer.get_query_type_breakdown(days=days)
         return {"success": True, "data": breakdown, "days": days}
@@ -692,7 +804,7 @@ async def get_query_type_breakdown(days: int = 7):
 
 
 @app.get("/analytics/rerank_impact")
-async def get_rerank_impact(days: int = 7):
+async def get_rerank_impact(request: Request, days: int = 7):
     """
     재순위화 효과 측정
 
@@ -702,6 +814,7 @@ async def get_rerank_impact(days: int = 7):
     Returns:
         재순위화 효과 통계
     """
+    _verify_analytics_access(request)
     try:
         impact = quality_analyzer.get_rerank_impact(days=days)
         return {"success": True, "data": impact, "days": days}
@@ -711,7 +824,7 @@ async def get_rerank_impact(days: int = 7):
 
 
 @app.get("/analytics/failure_rate")
-async def get_failure_rate(days: int = 7, threshold_score: float = 0.3, threshold_result_count: int = 1):
+async def get_failure_rate(request: Request, days: int = 7, threshold_score: float = 0.3, threshold_result_count: int = 1):
     """
     실패율 분석
 
@@ -723,6 +836,7 @@ async def get_failure_rate(days: int = 7, threshold_score: float = 0.3, threshol
     Returns:
         실패율 통계
     """
+    _verify_analytics_access(request)
     try:
         failure_rate = quality_analyzer.get_failure_rate(
             days=days,
@@ -736,7 +850,7 @@ async def get_failure_rate(days: int = 7, threshold_score: float = 0.3, threshol
 
 
 @app.get("/analytics/failed_queries")
-async def get_failed_queries(days: int = 7, limit: int = 10):
+async def get_failed_queries(request: Request, days: int = 7, limit: int = 10):
     """
     실패한 쿼리 Top N 조회
 
@@ -747,6 +861,7 @@ async def get_failed_queries(days: int = 7, limit: int = 10):
     Returns:
         실패 쿼리 리스트
     """
+    _verify_analytics_access(request)
     try:
         failed_queries = quality_analyzer.get_top_failed_queries(days=days, limit=limit)
         return {"success": True, "data": failed_queries, "days": days, "limit": limit}
@@ -756,7 +871,7 @@ async def get_failed_queries(days: int = 7, limit: int = 10):
 
 
 @app.get("/analytics/performance_trends")
-async def get_performance_trends(days: int = 7):
+async def get_performance_trends(request: Request, days: int = 7):
     """
     성능 트렌드 분석 (일별)
 
@@ -766,6 +881,7 @@ async def get_performance_trends(days: int = 7):
     Returns:
         일별 성능 통계
     """
+    _verify_analytics_access(request)
     try:
         trends = quality_analyzer.get_performance_trends(days=days)
         return {"success": True, "data": trends, "days": days}
@@ -775,7 +891,7 @@ async def get_performance_trends(days: int = 7):
 
 
 @app.get("/analytics/user_satisfaction")
-async def get_user_satisfaction(days: int = 7):
+async def get_user_satisfaction(request: Request, days: int = 7):
     """
     사용자 만족도 분석
 
@@ -785,6 +901,7 @@ async def get_user_satisfaction(days: int = 7):
     Returns:
         만족도 통계
     """
+    _verify_analytics_access(request)
     try:
         satisfaction = quality_analyzer.get_user_satisfaction(days=days)
         return {"success": True, "data": satisfaction, "days": days}
@@ -794,7 +911,7 @@ async def get_user_satisfaction(days: int = 7):
 
 
 @app.get("/analytics/alerts")
-async def check_alerts(days: int = 1):
+async def check_alerts(request: Request, days: int = 1):
     """
     품질 알림 체크
 
@@ -804,6 +921,7 @@ async def check_alerts(days: int = 1):
     Returns:
         발생한 알림 리스트
     """
+    _verify_analytics_access(request)
     try:
         alerts = alert_system.run_all_checks(days=days)
         return {
@@ -844,7 +962,7 @@ async def submit_feedback(request: FeedbackRequest):
 
 
 @app.get("/analytics/recent_logs")
-async def get_recent_logs(user_id: Optional[str] = None, limit: int = 100):
+async def get_recent_logs(request: Request, user_id: Optional[str] = None, limit: int = 100):
     """
     최근 검색 로그 조회
 
@@ -855,6 +973,7 @@ async def get_recent_logs(user_id: Optional[str] = None, limit: int = 100):
     Returns:
         검색 로그 리스트
     """
+    _verify_analytics_access(request)
     try:
         logs = search_logger.get_recent_logs(user_id=user_id, limit=limit)
         return {"success": True, "data": logs, "count": len(logs)}

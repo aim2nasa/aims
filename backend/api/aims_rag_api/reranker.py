@@ -21,8 +21,11 @@ class SearchReranker:
         """
         Args:
             model_name: Cross-Encoder 모델 이름
-                - ms-marco-MiniLM-L-12-v2: 빠르고 정확 (권장)
+                - ms-marco-MiniLM-L-12-v2: 빠르고 정확 (현재 사용, 영어 중심)
                 - ms-marco-MiniLM-L-6-v2: 더 빠름, 약간 낮은 정확도
+                - cross-encoder/mmarco-mMiniLMv2-L12-H384-v1: 다국어 MS MARCO (P5-3 후보)
+                  → 한국어 보험 문서 재순위화 정확도 개선 기대
+                  → 주의: Docker 이미지 크기 ~500MB 증가, Phase 1~3 효과 측정 후 결정
         """
         try:
             print(f"🔄 Cross-Encoder 모델 로딩 중: {model_name}")

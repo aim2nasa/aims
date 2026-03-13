@@ -234,12 +234,13 @@ class TestQueryAnalyzerPromptConstruction:
         analyzer = QueryAnalyzer()
         analyzer.analyze("특정 검색 쿼리 텍스트")
 
-        # 프롬프트 확인
+        # 프롬프트 확인 (P4-3: system/user 메시지 분리)
         call_args = mock_client.chat.completions.create.call_args
         messages = call_args.kwargs['messages']
-        assert len(messages) == 1
-        assert messages[0]['role'] == 'user'
-        assert "특정 검색 쿼리 텍스트" in messages[0]['content']
+        assert len(messages) == 2
+        assert messages[0]['role'] == 'system'
+        assert messages[1]['role'] == 'user'
+        assert messages[1]['content'] == "특정 검색 쿼리 텍스트"
 
 
 class TestQueryAnalyzerIntegration:
