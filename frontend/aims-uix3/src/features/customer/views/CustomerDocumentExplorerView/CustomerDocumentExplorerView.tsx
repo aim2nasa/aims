@@ -5,7 +5,7 @@
  * @see docs/DOCUMENT_TAXONOMY.md - 관계인 문서 뷰 (UI 탭) 섹션
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { CenterPaneView } from '@/components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { Tooltip } from '@/shared/ui'
@@ -193,8 +193,13 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   // 파일명 검색
   const [searchTerm, setSearchTerm] = useState('')
 
-  // 호버 액션: 문서 삭제/이름변경
-  const documentActions = useDocumentActions()
+  // 호버 액션: 문서 삭제/이름변경 — reload 대신 데이터 재조회로 UI 상태 유지
+  const refreshDataRef = useRef<() => void>(() => {})
+  const onRefreshData = useCallback(() => { refreshDataRef.current() }, [])
+  const documentActions = useDocumentActions({
+    onRenameSuccess: onRefreshData,
+    onDeleteSuccess: onRefreshData,
+  })
   const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
 
   const handleRenameClick = useCallback((doc: { _id?: string; displayName?: string; originalName?: string }) => {
@@ -233,6 +238,9 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     refresh,
     updateDocumentLocally,
   } = useCustomerDocumentsController(visible ? customerId : null)
+
+  // 이름변경/삭제 성공 시 데이터 재조회 (UI 상태 유지)
+  refreshDataRef.current = () => { refresh() }
 
   const { showAlert } = useAppleConfirm()
   const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)

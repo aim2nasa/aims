@@ -40,11 +40,12 @@ vi.mock('@/shared/lib/errorReporter', () => ({
   },
 }))
 
-// Mock window.location.reload
-const mockReload = vi.fn()
-Object.defineProperty(window, 'location', {
-  value: { reload: mockReload },
-  writable: true,
+/** 테스트용 기본 콜백 */
+const mockOnDeleteSuccess = vi.fn()
+const mockOnRenameSuccess = vi.fn()
+const defaultOptions = () => ({
+  onDeleteSuccess: mockOnDeleteSuccess,
+  onRenameSuccess: mockOnRenameSuccess,
 })
 
 describe('useDocumentActions', () => {
@@ -56,7 +57,7 @@ describe('useDocumentActions', () => {
     it('확인 모달에서 취소하면 삭제하지 않음', async () => {
       mockShowConfirm.mockResolvedValue(false)
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       await act(async () => {
         await result.current.deleteDocument('doc123', 'test.pdf')
@@ -71,18 +72,18 @@ describe('useDocumentActions', () => {
       expect(mockApiDelete).not.toHaveBeenCalled()
     })
 
-    it('확인 모달에서 승인하면 API 호출 후 reload', async () => {
+    it('확인 모달에서 승인하면 API 호출 후 onDeleteSuccess 콜백 호출', async () => {
       mockShowConfirm.mockResolvedValue(true)
       mockApiDelete.mockResolvedValue({})
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       await act(async () => {
         await result.current.deleteDocument('doc123', 'test.pdf')
       })
 
       expect(mockApiDelete).toHaveBeenCalledWith('/api/documents/doc123')
-      expect(mockReload).toHaveBeenCalled()
+      expect(mockOnDeleteSuccess).toHaveBeenCalled()
     })
 
     it('API 에러 시 에러 알림 표시', async () => {
@@ -90,7 +91,7 @@ describe('useDocumentActions', () => {
       mockApiDelete.mockRejectedValue(new Error('Server error'))
       mockShowAlert.mockResolvedValue(undefined)
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       await act(async () => {
         await result.current.deleteDocument('doc123', 'test.pdf')
@@ -101,7 +102,7 @@ describe('useDocumentActions', () => {
           title: '삭제 실패',
         })
       )
-      expect(mockReload).not.toHaveBeenCalled()
+      expect(mockOnDeleteSuccess).not.toHaveBeenCalled()
     })
 
     it('커스텀 onDeleteSuccess 콜백 호출', async () => {
@@ -110,7 +111,7 @@ describe('useDocumentActions', () => {
       const customCallback = vi.fn()
 
       const { result } = renderHook(() =>
-        useDocumentActions({ onDeleteSuccess: customCallback })
+        useDocumentActions({ onDeleteSuccess: customCallback, onRenameSuccess: mockOnRenameSuccess })
       )
 
       await act(async () => {
@@ -118,7 +119,6 @@ describe('useDocumentActions', () => {
       })
 
       expect(customCallback).toHaveBeenCalled()
-      expect(mockReload).not.toHaveBeenCalled()
     })
   })
 
@@ -126,7 +126,7 @@ describe('useDocumentActions', () => {
     it('빈 Set이면 선택 항목 없음 알림', async () => {
       mockShowAlert.mockResolvedValue(undefined)
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       await act(async () => {
         await result.current.deleteDocuments(new Set())
@@ -143,7 +143,7 @@ describe('useDocumentActions', () => {
     it('확인 모달에서 취소하면 삭제하지 않음', async () => {
       mockShowConfirm.mockResolvedValue(false)
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       await act(async () => {
         await result.current.deleteDocuments(new Set(['doc1', 'doc2']))
@@ -156,17 +156,17 @@ describe('useDocumentActions', () => {
       mockShowConfirm.mockResolvedValue(true)
       mockApiDelete.mockResolvedValue({})
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       await act(async () => {
         await result.current.deleteDocuments(new Set(['doc1', 'doc2', 'doc3']))
       })
 
       expect(mockApiDelete).toHaveBeenCalledTimes(3)
-      expect(mockReload).toHaveBeenCalled()
+      expect(mockOnDeleteSuccess).toHaveBeenCalled()
     })
 
-    it('일부 삭제 실패 시 실패 개수 알림 + 성공 건이 있으므로 reload', async () => {
+    it('일부 삭제 실패 시 실패 개수 알림 + 성공 건이 있으므로 콜백 호출', async () => {
       mockShowConfirm.mockResolvedValue(true)
       mockApiDelete
         .mockResolvedValueOnce({})
@@ -174,7 +174,7 @@ describe('useDocumentActions', () => {
         .mockResolvedValueOnce({})
       mockShowAlert.mockResolvedValue(undefined)
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       await act(async () => {
         await result.current.deleteDocuments(new Set(['doc1', 'doc2', 'doc3']))
@@ -185,18 +185,18 @@ describe('useDocumentActions', () => {
           message: '1개의 문서 삭제에 실패했습니다.',
         })
       )
-      // 성공 건(2개)이 있으므로 reload 호출
-      expect(mockReload).toHaveBeenCalled()
+      // 성공 건(2개)이 있으므로 콜백 호출
+      expect(mockOnDeleteSuccess).toHaveBeenCalled()
     })
 
-    it('전체 삭제 실패 시 reload 호출하지 않음', async () => {
+    it('전체 삭제 실패 시 콜백 호출하지 않음', async () => {
       mockShowConfirm.mockResolvedValue(true)
       mockApiDelete
         .mockRejectedValueOnce(new Error('fail1'))
         .mockRejectedValueOnce(new Error('fail2'))
       mockShowAlert.mockResolvedValue(undefined)
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       await act(async () => {
         await result.current.deleteDocuments(new Set(['doc1', 'doc2']))
@@ -207,16 +207,16 @@ describe('useDocumentActions', () => {
           message: '2개의 문서 삭제에 실패했습니다.',
         })
       )
-      // 성공 건이 0개이므로 reload 호출 안 됨
-      expect(mockReload).not.toHaveBeenCalled()
+      // 성공 건이 0개이므로 콜백 호출 안 됨
+      expect(mockOnDeleteSuccess).not.toHaveBeenCalled()
     })
   })
 
   describe('renameDocument', () => {
-    it('이름 변경 성공 시 reload', async () => {
+    it('이름 변경 성공 시 onRenameSuccess 콜백 호출', async () => {
       mockApiPatch.mockResolvedValue({})
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       let success = false
       await act(async () => {
@@ -228,14 +228,14 @@ describe('useDocumentActions', () => {
         '/api/documents/doc123/display-name',
         { displayName: 'newName.pdf' }
       )
-      expect(mockReload).toHaveBeenCalled()
+      expect(mockOnRenameSuccess).toHaveBeenCalled()
     })
 
     it('이름 변경 실패 시 에러 알림', async () => {
       mockApiPatch.mockRejectedValue(new Error('Server error'))
       mockShowAlert.mockResolvedValue(undefined)
 
-      const { result } = renderHook(() => useDocumentActions())
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
       let success = true
       await act(async () => {
@@ -248,7 +248,7 @@ describe('useDocumentActions', () => {
           title: '이름 변경 실패',
         })
       )
-      expect(mockReload).not.toHaveBeenCalled()
+      expect(mockOnRenameSuccess).not.toHaveBeenCalled()
     })
 
     it('커스텀 onRenameSuccess 콜백 호출', async () => {
@@ -256,7 +256,7 @@ describe('useDocumentActions', () => {
       const customCallback = vi.fn()
 
       const { result } = renderHook(() =>
-        useDocumentActions({ onRenameSuccess: customCallback })
+        useDocumentActions({ onRenameSuccess: customCallback, onDeleteSuccess: mockOnDeleteSuccess })
       )
 
       await act(async () => {
@@ -264,7 +264,6 @@ describe('useDocumentActions', () => {
       })
 
       expect(customCallback).toHaveBeenCalled()
-      expect(mockReload).not.toHaveBeenCalled()
     })
   })
 })

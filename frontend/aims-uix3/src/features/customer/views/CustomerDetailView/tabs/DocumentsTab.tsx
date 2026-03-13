@@ -151,8 +151,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
   })
 
-  // 호버 액션: 문서 삭제/이름변경
-  const documentActions = useDocumentActions()
+  // 호버 액션: 문서 삭제/이름변경 — reload 대신 데이터 재조회로 UI 상태 유지
+  const onRefreshData = useCallback(() => { refresh() }, [refresh])
+  const documentActions = useDocumentActions({
+    onRenameSuccess: onRefreshData,
+    onDeleteSuccess: onRefreshData,
+  })
   const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
 
   const handleRenameClick = useCallback((doc: CustomerDocumentItem) => {

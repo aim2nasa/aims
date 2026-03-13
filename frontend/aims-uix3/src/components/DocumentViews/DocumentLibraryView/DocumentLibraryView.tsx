@@ -126,8 +126,13 @@ const DocumentLibraryContent: React.FC<{
     return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
   })
 
-  // 호버 액션: 문서 삭제/이름변경
-  const documentActions = useDocumentActions()
+  // 호버 액션: 문서 삭제/이름변경 — reload 대신 데이터 재조회로 UI 상태 유지
+  const refreshDataRef = React.useRef<() => void>(() => {})
+  const onRefreshData = React.useCallback(() => { refreshDataRef.current() }, [])
+  const documentActions = useDocumentActions({
+    onRenameSuccess: onRefreshData,
+    onDeleteSuccess: onRefreshData,
+  })
   const [renamingDocumentId, setRenamingDocumentId] = React.useState<string | null>(null)
 
   const handleRenameClick = React.useCallback((document: Document) => {
@@ -153,6 +158,9 @@ const DocumentLibraryContent: React.FC<{
 
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
+
+  // 이름변경/삭제 성공 시 데이터 재조회 (UI 상태 유지)
+  refreshDataRef.current = () => { controller.refreshDocuments() }
 
   // 🍎 고객 필터: 더블클릭 시 고객명 자동 설정
   React.useEffect(() => {

@@ -9,17 +9,18 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { errorReporter } from '@/shared/lib/errorReporter'
 
 interface UseDocumentActionsOptions {
-  onDeleteSuccess?: () => void
-  onRenameSuccess?: () => void
+  /** 삭제 성공 후 데이터 갱신 콜백 (필수 — window.location.reload() 사용 금지) */
+  onDeleteSuccess: () => void
+  /** 이름변경 성공 후 데이터 갱신 콜백 (필수 — window.location.reload() 사용 금지) */
+  onRenameSuccess: () => void
 }
 
-export function useDocumentActions(options: UseDocumentActionsOptions = {}) {
+export function useDocumentActions(options: UseDocumentActionsOptions) {
   const { showConfirm, showAlert } = useAppleConfirm()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isRenaming, setIsRenaming] = useState(false)
 
-  const onDeleteSuccess = options.onDeleteSuccess ?? (() => window.location.reload())
-  const onRenameSuccess = options.onRenameSuccess ?? (() => window.location.reload())
+  const { onDeleteSuccess, onRenameSuccess } = options
 
   const deleteDocument = useCallback(async (documentId: string, documentName: string) => {
     const confirmed = await showConfirm({
