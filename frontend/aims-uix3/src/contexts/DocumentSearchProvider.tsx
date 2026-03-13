@@ -22,7 +22,8 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
   // 검색 결과는 대량 데이터(2000+건)이므로 sessionStorage 저장 불가 (5MB 한도 초과)
   const [results, setResults] = useState<DocumentSearchContextValue['results']>([])
   const [answer, setAnswer] = useState<string | null>(null)
-  const [lastSearchMode, setLastSearchMode] = usePersistedState<SearchMode | null>('document-search-last-mode', null)
+  // 현재 세션에서 검색 실행 여부 (새로고침 시 초기화 → 가이드 표시)
+  const [lastSearchMode, setLastSearchMode] = useState<SearchMode | null>(null)
 
   // 임시 상태들 (새로고침 시 초기화되어도 됨)
   const [isLoading, setIsLoading] = useState<boolean>(false)

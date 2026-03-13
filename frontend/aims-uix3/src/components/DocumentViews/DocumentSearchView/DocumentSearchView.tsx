@@ -1232,8 +1232,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 ✕
               </button>
             )}
-            {/* 🍎 최근 검색어 드롭다운 */}
-            {isSearchInputFocused && recentSearchQueries.length > 0 && (
+            {/* 🍎 최근 검색어 드롭다운 — 검색 결과가 있으면 표시하지 않음 */}
+            {isSearchInputFocused && recentSearchQueries.length > 0 && results.length === 0 && !answer && (
               <div className="recent-search-dropdown">
                 <div className="recent-search-header">최근 검색어</div>
                 <div className="recent-search-list">
