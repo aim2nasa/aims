@@ -112,8 +112,13 @@ const DocumentExplorerContent: React.FC<{
     localStorage.setItem('aims-filename-mode', mode)
   }, [])
 
-  // 호버 액션: 문서 삭제/이름변경
-  const documentActions = useDocumentActions()
+  // 호버 액션: 문서 삭제/이름변경 — reload 대신 트리 재조회로 UI 상태 유지
+  const refreshDataRef = useRef<() => void>(() => window.location.reload())
+  const onRefreshData = useCallback(() => { refreshDataRef.current() }, [])
+  const documentActions = useDocumentActions({
+    onRenameSuccess: onRefreshData,
+    onDeleteSuccess: onRefreshData,
+  })
   const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
 
   const handleRenameClick = useCallback((doc: Document) => {
@@ -472,6 +477,9 @@ const DocumentExplorerContent: React.FC<{
       setIsLoading(false)
     }
   }, [])
+
+  // 이름변경/삭제 성공 시 reload 대신 트리 재조회 (UI 상태 유지)
+  refreshDataRef.current = () => { fetchExplorerTree(selectedInitial) }
 
   // AI 별칭 단건 순차 생성 실행 (실시간 프로그레스 바 표시)
   const handleGenerateAliases = useCallback(async () => {
