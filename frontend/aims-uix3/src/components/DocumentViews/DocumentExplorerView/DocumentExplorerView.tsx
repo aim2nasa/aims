@@ -157,41 +157,6 @@ const DocumentExplorerContent: React.FC<{
     await documentActions.deleteDocuments(selectedDocumentIds)
   }, [selectedDocumentIds, documentActions])
 
-  // AI 별칭 일괄 생성 실행
-  const handleGenerateAliases = useCallback(async () => {
-    if (selectedDocumentIds.size === 0) return
-    setIsGeneratingAliases(true)
-    try {
-      const data = await api.post<{ summary?: { completed: number; skipped: number; failed: number } }>('/api/batch-display-names', {
-        document_ids: Array.from(selectedDocumentIds),
-        force_regenerate: forceRegenerateAlias,
-      })
-      if (data.summary) {
-        const { completed, skipped, failed } = data.summary
-        await showAlert({
-          title: '별칭 생성 완료',
-          message: `${completed}건 완료, ${skipped}건 스킵, ${failed}건 실패`,
-          confirmText: '확인',
-          showCancel: false,
-          iconType: completed > 0 ? 'success' : 'info',
-        })
-      }
-      window.location.reload()
-    } catch (err) {
-      console.error('별칭 생성 실패:', err)
-      errorReporter.reportApiError(err as Error, { component: 'DocumentExplorerView.handleGenerateAliases' })
-      await showAlert({
-        title: '오류',
-        message: '별칭 생성 중 오류가 발생했습니다.',
-        confirmText: '확인',
-        showCancel: false,
-        iconType: 'error',
-      })
-    } finally {
-      setIsGeneratingAliases(false)
-    }
-  }, [selectedDocumentIds, forceRegenerateAlias, showAlert])
-
   // 고객 노드 우클릭 → 컨텍스트 메뉴
   const customerContextMenu = useContextMenu()
   const [contextMenuCustomer, setContextMenuCustomer] = useState<{ id: string; name: string; customerType?: '개인' | '법인' } | null>(null)
@@ -504,6 +469,68 @@ const DocumentExplorerContent: React.FC<{
       setIsLoading(false)
     }
   }, [])
+
+  // AI 별칭 일괄 생성 실행
+  const handleGenerateAliases = useCallback(async () => {
+    if (selectedDocumentIds.size === 0) return
+    setIsGeneratingAliases(true)
+    try {
+      const data = await api.post<{
+        results?: Array<{ document_id: string; status: string; display_name?: string | null }>
+        summary?: { completed: number; skipped: number; failed: number }
+      }>('/api/batch-display-names', {
+        document_ids: Array.from(selectedDocumentIds),
+        force_regenerate: forceRegenerateAlias,
+      })
+      if (data.summary) {
+        const { completed, skipped, failed } = data.summary
+        await showAlert({
+          title: '별칭 생성 완료',
+          message: `${completed}건 완료, ${skipped}건 스킵, ${failed}건 실패`,
+          confirmText: '확인',
+          showCancel: false,
+          iconType: completed > 0 ? 'success' : 'info',
+        })
+      }
+      // 페이지 새로고침 대신 로컬 상태만 갱신 — 트리 펼침/스크롤 유지
+      if (data.results) {
+        const updateMap = new Map<string, string>()
+        for (const r of data.results) {
+          if (r.status === 'completed' && r.display_name) {
+            updateMap.set(r.document_id, r.display_name)
+          }
+        }
+        if (updateMap.size > 0) {
+          setExplorerData(prev => {
+            if (!prev?.documents) return prev
+            return {
+              ...prev,
+              documents: prev.documents.map(doc => {
+                const newName = doc._id ? updateMap.get(doc._id) : undefined
+                return newName ? { ...doc, displayName: newName } : doc
+              }),
+            }
+          })
+        }
+      }
+      // 별칭 편집 모드 종료 — 완료 상태로 전환
+      setEditMode('none')
+      setSelectedDocumentIds(new Set())
+      setForceRegenerateAlias(false)
+    } catch (err) {
+      console.error('별칭 생성 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'DocumentExplorerView.handleGenerateAliases' })
+      await showAlert({
+        title: '오류',
+        message: '별칭 생성 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'error',
+      })
+    } finally {
+      setIsGeneratingAliases(false)
+    }
+  }, [selectedDocumentIds, forceRegenerateAlias, showAlert])
 
   // selectedInitial 변경 시 재조회
   useEffect(() => { fetchExplorerTree(selectedInitial) }, [fetchExplorerTree, selectedInitial])

@@ -89,6 +89,7 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
       size="sm"
       footer={footer}
       ariaLabel={state.title || '확인'}
+      useHistory={false}
     >
       {/* 🍎 MODAL HEADER: iOS Alert 스타일 */}
       <div className="apple-confirm-modal__header">

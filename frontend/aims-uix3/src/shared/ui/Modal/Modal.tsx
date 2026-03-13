@@ -41,6 +41,8 @@ export interface ModalProps {
   className?: string
   /** ARIA label (접근성) */
   ariaLabel?: string
+  /** 브라우저 history 연동 (뒤로가기 버튼으로 닫기) 비활성화 여부. 프로그래매틱 모달(showAlert 등)에서 false로 설정 */
+  useHistory?: boolean
 }
 
 /**
@@ -73,13 +75,14 @@ export const Modal: React.FC<ModalProps> = ({
   footer,
   children,
   className = '',
-  ariaLabel
+  ariaLabel,
+  useHistory = true
 }) => {
   const modalRef = useRef<HTMLDivElement>(null)
 
   // 공통 모달 훅 사용
   useEscapeKey(escapeToClose && visible, onClose)
-  useBackButton(visible, onClose)
+  useBackButton(useHistory && visible, onClose)
   useBodyOverflow(visible)
   const handleBackdropClick = useBackdropClick(backdropClosable, onClose)
 
