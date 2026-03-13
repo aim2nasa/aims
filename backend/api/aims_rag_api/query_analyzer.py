@@ -11,7 +11,14 @@
 from openai import OpenAI
 from typing import Dict, List
 import json
+import time
+import hashlib
 from system_logger import send_error_log
+
+# P2-1: 쿼리 분석 결과 캐시 (TTL 10분)
+# 동일 쿼리 반복 시 LLM 호출을 생략하여 400~1200ms 절약
+_query_cache: Dict[str, tuple] = {}  # {query_hash: (result, timestamp)}
+_CACHE_TTL = 600  # 10분
 
 
 class QueryAnalyzer:
@@ -35,6 +42,16 @@ class QueryAnalyzer:
                 "metadata_keywords": ["곽승철", "이력서"]
             }
         """
+
+        # P2-1: 캐시 확인 (TTL 10분)
+        cache_key = hashlib.md5(query.strip().lower().encode()).hexdigest()
+        if cache_key in _query_cache:
+            cached_result, cached_time = _query_cache[cache_key]
+            if time.time() - cached_time < _CACHE_TTL:
+                print(f"📊 쿼리 분석 캐시 히트: '{query[:30]}...'")
+                return cached_result
+            else:
+                del _query_cache[cache_key]  # 만료된 캐시 삭제
 
         prompt = f"""다음 검색 쿼리를 분석하여 JSON 형식으로 답변해줘.
 
@@ -99,6 +116,14 @@ JSON만 응답해줘:"""
             result.setdefault("entities", [])
             result.setdefault("concepts", [])
             result.setdefault("metadata_keywords", [])
+
+            # P2-1: 캐시에 저장
+            _query_cache[cache_key] = (result, time.time())
+
+            # 캐시 크기 제한 (최대 100개, 초과 시 가장 오래된 것부터 제거)
+            if len(_query_cache) > 100:
+                oldest_key = min(_query_cache, key=lambda k: _query_cache[k][1])
+                del _query_cache[oldest_key]
 
             return result
 

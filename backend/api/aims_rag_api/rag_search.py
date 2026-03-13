@@ -109,6 +109,9 @@ alert_system = AlertSystem()
 # 🔥 Phase 4: AI 토큰 사용량 추적기 초기화
 token_tracker = TokenTracker()
 
+# P2-5: OpenAI 클라이언트 모듈 레벨 싱글턴 (매 요청마다 새 인스턴스 생성 방지)
+_openai_client = OpenAI()
+
 # 🔥 AI 모델 설정 캐싱
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
 INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
@@ -230,9 +233,8 @@ def embed_query(query_text: str) -> tuple:
     Returns:
         tuple: (embedding_vector, openai_response) - 벡터와 응답 객체 (토큰 추적용)
     """
-    client = OpenAI()
     try:
-        response = client.embeddings.create(
+        response = _openai_client.embeddings.create(
             input=query_text,
             model="text-embedding-3-small",
             encoding_format="float"
@@ -365,9 +367,8 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
     ]
 
     try:
-        client = OpenAI()
         rag_model = get_rag_model()
-        response = client.chat.completions.create(
+        response = _openai_client.chat.completions.create(
             model=rag_model,
             messages=messages,
             max_tokens=4000,
@@ -397,8 +398,9 @@ async def health_check():
 @app.post("/search", response_model=UnifiedSearchResponse)
 async def search_endpoint(request: SearchRequest):
     # 🔴 크레딧 체크 (semantic 검색만 - AI 토큰 소비)
+    # P2-2: asyncio.to_thread로 동기 HTTP 호출이 이벤트 루프를 블로킹하지 않도록 함
     if request.search_mode == "semantic" and request.user_id:
-        credit_check = check_credit_for_rag(request.user_id, estimated_tokens=2000)
+        credit_check = await asyncio.to_thread(check_credit_for_rag, request.user_id, 2000)
         if not credit_check.get("allowed", False):
             print(f"[CREDIT_EXCEEDED] RAG 검색 차단: user_id={request.user_id}, remaining={credit_check.get('credits_remaining', 0)}")
             raise HTTPException(
