@@ -194,8 +194,8 @@ class TestGenerateAnswerFunction:
         mock_client.chat.completions.create.assert_called_once()
         call_args = mock_client.chat.completions.create.call_args
         assert call_args.kwargs['model'] == "gpt-3.5-turbo"
-        assert call_args.kwargs['max_tokens'] == 500
-        assert call_args.kwargs['temperature'] == 0.1
+        assert call_args.kwargs['max_tokens'] == 1500
+        assert call_args.kwargs['temperature'] == 0.0
 
     @patch('rag_search.OpenAI')
     def test_generate_answer_failure(self, mock_openai):

@@ -199,7 +199,7 @@ def get_rag_model() -> str:
 
 # 💡 T11 변경 사항 시작 - 요청 및 응답 모델 정의
 class SearchRequest(BaseModel):
-    query: str
+    query: str = Field(..., min_length=1, max_length=500)
     mode: str = "OR"
     search_mode: str = "semantic"
     user_id: Optional[str] = None
@@ -607,11 +607,19 @@ async def search_endpoint(request: SearchRequest):
             # total_reranked: 재순위화된 전체 결과 수 (실제로 반환 가능한 문서 수)
             has_more = (request.offset + len(top_results)) < total_reranked
 
+            # 응답용 preview 트리밍 (LLM 컨텍스트에는 전체 사용, 클라이언트에는 300자 제한)
+            import copy
+            response_results = copy.deepcopy(top_results)
+            for r in response_results:
+                payload = r.get('payload', r)
+                if 'preview' in payload and len(payload['preview']) > 300:
+                    payload['preview'] = payload['preview'][:300]
+
             # 응답 구조를 통일된 형식으로 변경
             return UnifiedSearchResponse(
                 search_mode="semantic",
                 answer=final_answer,
-                search_results=top_results,
+                search_results=response_results,
                 total_count=total_reranked,
                 has_more=has_more,
                 log_id=str(log_id) if log_id else None  # 피드백 제출 시 사용
@@ -623,7 +631,7 @@ async def search_endpoint(request: SearchRequest):
             print(f"📍 Traceback:")
             traceback.print_exc()
             send_error_log("aims_rag_api", f"하이브리드 검색 오류: {e}", e, {"query": request.query, "search_mode": request.search_mode})
-            raise HTTPException(status_code=500, detail=f"하이브리드 검색 오류: {e}")
+            raise HTTPException(status_code=500, detail="검색 중 오류가 발생했습니다.")
     else:
         raise HTTPException(status_code=400, detail="유효하지 않은 검색 모드입니다. 'keyword' 또는 'semantic'을 사용하세요.")
 

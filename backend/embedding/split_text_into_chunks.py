@@ -2,7 +2,7 @@ import re
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
-def preprocess_text(text: str) -> str:
+def preprocess_text(text: str | None) -> str | None:
     """
     임베딩 전 텍스트 노이즈를 규칙 기반으로 제거합니다.
     AI를 사용하지 않으므로 환각 위험이 없습니다.
@@ -12,7 +12,7 @@ def preprocess_text(text: str) -> str:
     2. 연속 탭 → 단일 공백 (Excel 노이즈 해소)
     3. 연속 공백(3+) → 단일 공백
     4. 연속 빈 줄(4+) → 3줄로 축소
-    5. 반복 라인 제거 (10자+ 동일 라인 4회+ 반복 → 2회까지만 유지)
+    5. 반복 라인 제거 (10자+ 동일 라인 4회+ 반복 → 3회까지만 유지)
     """
     if not text:
         return text
@@ -39,9 +39,9 @@ def preprocess_text(text: str) -> str:
         stripped = line.strip()
         if stripped == prev_line and len(stripped) >= 10:
             repeat_count += 1
-            if repeat_count <= 2:
+            if repeat_count <= 3:
                 cleaned_lines.append(line)
-            # 3회 이상은 무시
+            # 4회 이상은 무시
         else:
             prev_line = stripped
             repeat_count = 1
