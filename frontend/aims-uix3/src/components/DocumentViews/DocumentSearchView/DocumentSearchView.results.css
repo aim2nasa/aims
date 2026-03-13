@@ -144,6 +144,21 @@
     border-bottom: 1px solid rgba(0, 120, 212, 0.15);
   }
 
+  /* sticky 헤더 위쪽 gap에서 스크롤 콘텐츠가 비치는 것을 방지 */
+  .search-results-column-header::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: var(--color-layout-content-light);
+  }
+
+  html[data-theme="dark"] .search-results-column-header::before {
+    background: var(--color-layout-content-dark);
+  }
+
   /* 🍎 키워드 검색 시 유사도 칼럼 제거 */
   .search-results-column-header[data-search-mode="keyword"] {
     grid-template-columns:

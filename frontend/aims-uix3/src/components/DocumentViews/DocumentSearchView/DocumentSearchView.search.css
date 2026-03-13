@@ -15,6 +15,7 @@
     gap: 12px;
     height: 100%;
     padding: 16px;
+    overflow: hidden;
   }
 
   /* === 🍎 SEARCH BAR: iOS Spotlight Style - 한 줄 레이아웃 === */
@@ -26,6 +27,9 @@
     gap: 8px;
     flex-wrap: nowrap; /* 한 줄 유지 */
     overflow: visible; /* 드롭다운이 잘리지 않도록 */
+    position: relative;
+    z-index: 10;
+    flex-shrink: 0;
   }
 
   /* A: iOS Spotlight 서치필드 (10% 축소) - 디자인 표준 적용 */
