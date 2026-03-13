@@ -483,12 +483,41 @@ const DocumentExplorerContent: React.FC<{
       })
       if (data.summary) {
         const { completed, skipped, failed } = data.summary
+        const hasCompleted = completed > 0
+        const hasSkipped = skipped > 0
+        const hasFailed = failed > 0
+
+        let title: string
+        let iconType: 'success' | 'info' | 'warning' | 'error'
+        if (hasFailed) {
+          title = hasCompleted ? '일부 문서의 별칭 생성에 실패했습니다' : '별칭 생성에 실패했습니다'
+          iconType = hasCompleted ? 'warning' : 'error'
+        } else if (!hasCompleted && hasSkipped) {
+          title = '새로 생성할 문서가 없습니다'
+          iconType = 'info'
+        } else {
+          title = '별칭 생성 완료'
+          iconType = 'success'
+        }
+
+        const lines: string[] = []
+        if (hasCompleted) lines.push(`${completed}건의 문서에 별칭이 생성되었습니다.`)
+        if (hasFailed) lines.push(`${failed}건 실패 — 잠시 후 다시 시도해 주세요.`)
+        if (hasSkipped) {
+          if (!hasCompleted && !hasFailed) {
+            lines.push(`선택한 ${skipped}건의 문서에 이미 별칭이 있습니다.`)
+            lines.push(`'별칭이 있는 문서도 새로 만들기'를 선택한 후 다시 시도해 주세요.`)
+          } else {
+            lines.push(`${skipped}건은 이미 별칭이 있어 건너뛰었습니다.`)
+          }
+        }
+
         await showAlert({
-          title: '별칭 생성 완료',
-          message: `${completed}건 완료, ${skipped}건 스킵, ${failed}건 실패`,
+          title,
+          message: lines.join('\n'),
           confirmText: '확인',
           showCancel: false,
-          iconType: completed > 0 ? 'success' : 'info',
+          iconType,
         })
       }
       // 서버에서 최신 데이터 재조회 — 트리 펼침/스크롤은 React state로 유지됨
@@ -1639,9 +1668,9 @@ const DocumentExplorerContent: React.FC<{
                     type="checkbox"
                     checked={forceRegenerateAlias}
                     onChange={(e) => setForceRegenerateAlias(e.target.checked)}
-                    aria-label="기존 별칭 포함"
+                    aria-label="별칭이 있는 문서도 새로 만들기"
                   />
-                  <span>기존 별칭 포함</span>
+                  <span>별칭이 있는 문서도 새로 만들기</span>
                 </label>
                 <button
                   type="button"
