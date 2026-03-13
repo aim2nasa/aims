@@ -116,15 +116,23 @@ export function useDocumentActions(options: UseDocumentActionsOptions = {}) {
     }
   }, [showConfirm, showAlert, onDeleteSuccess])
 
-  const renameDocument = useCallback(async (documentId: string, newDisplayName: string): Promise<boolean> => {
+  const renameDocument = useCallback(async (
+    documentId: string,
+    newName: string,
+    field: 'displayName' | 'originalName' = 'displayName'
+  ): Promise<boolean> => {
     try {
       setIsRenaming(true)
-      await api.patch(`/api/documents/${documentId}/display-name`, { displayName: newDisplayName })
+      if (field === 'originalName') {
+        await api.patch(`/api/documents/${documentId}/original-name`, { originalName: newName })
+      } else {
+        await api.patch(`/api/documents/${documentId}/display-name`, { displayName: newName })
+      }
       onRenameSuccess()
       return true
     } catch (error) {
       console.error('Error renaming document:', error)
-      errorReporter.reportApiError(error as Error, { component: 'useDocumentActions.renameDocument', payload: { documentId } })
+      errorReporter.reportApiError(error as Error, { component: 'useDocumentActions.renameDocument', payload: { documentId, field } })
       setIsRenaming(false)
       await showAlert({
         title: '이름 변경 실패',

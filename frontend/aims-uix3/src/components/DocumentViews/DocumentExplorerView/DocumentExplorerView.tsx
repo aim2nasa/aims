@@ -101,6 +101,17 @@ const DocumentExplorerContent: React.FC<{
   onInitialTypeChange: (type: InitialType) => void
 }> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange }) => {
 
+  // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
+  const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
+
+  const handleFilenameModeChange = useCallback((mode: 'display' | 'original') => {
+    setFilenameMode(mode)
+    localStorage.setItem('aims-filename-mode', mode)
+  }, [])
+
   // 호버 액션: 문서 삭제/이름변경
   const documentActions = useDocumentActions()
   const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
@@ -112,8 +123,9 @@ const DocumentExplorerContent: React.FC<{
 
   const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
     setRenamingDocumentId(null)
-    await documentActions.renameDocument(documentId, newName)
-  }, [documentActions])
+    const field = filenameMode === 'original' ? 'originalName' : 'displayName'
+    await documentActions.renameDocument(documentId, newName, field)
+  }, [documentActions, filenameMode])
 
   const handleRenameCancel = useCallback(() => {
     setRenamingDocumentId(null)
@@ -270,17 +282,6 @@ const DocumentExplorerContent: React.FC<{
       }
     ]
   }, [contextMenuCustomer, onCustomerClick, navigateToView, setExplorerSearchMode])
-
-  // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
-  const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
-    if (typeof window === 'undefined') return 'display'
-    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
-  })
-
-  const handleFilenameModeChange = useCallback((mode: 'display' | 'original') => {
-    setFilenameMode(mode)
-    localStorage.setItem('aims-filename-mode', mode)
-  }, [])
 
   // === 내용 검색 / AI 질문 결과 상태 ===
   const [contentSearchResults, setContentSearchResults] = useState<SearchResultItem[]>([])

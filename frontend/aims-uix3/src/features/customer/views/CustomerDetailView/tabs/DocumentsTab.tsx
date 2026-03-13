@@ -145,6 +145,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     ...(onDocumentCountChange ? { onDocumentsChange: onDocumentCountChange } : {}),
   })
 
+  // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
+  const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
+
   // 호버 액션: 문서 삭제/이름변경
   const documentActions = useDocumentActions()
   const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
@@ -155,8 +161,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
   const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
     setRenamingDocumentId(null)
-    await documentActions.renameDocument(documentId, newName)
-  }, [documentActions])
+    const field = filenameMode === 'original' ? 'originalName' as const : 'displayName' as const
+    await documentActions.renameDocument(documentId, newName, field)
+  }, [documentActions, filenameMode])
 
   const handleRenameCancel = useCallback(() => {
     setRenamingDocumentId(null)
@@ -178,12 +185,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
   // PDF 변환 재시도 중인 문서 ID
   const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
-
-  // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
-  const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
-    if (typeof window === 'undefined') return 'display'
-    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
-  })
 
   const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
 
@@ -1402,7 +1403,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                       if (renamingDocumentId && document._id && renamingDocumentId === document._id) {
                         return (
                           <InlineRenameInput
-                            currentName={document.displayName || document.originalName || ''}
+                            currentName={filenameMode === 'original' ? (document.originalName || '') : (document.displayName || document.originalName || '')}
                             onConfirm={(newName) => handleRenameConfirm(document._id!, newName)}
                             onCancel={handleRenameCancel}
                           />

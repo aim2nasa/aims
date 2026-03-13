@@ -254,7 +254,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
           <span className="doc-explorer-tree__doc-name">
             {renamingDocumentId && renamingDocumentId === docId ? (
               <InlineRenameInput
-                currentName={doc.displayName || DocumentStatusService.extractOriginalFilename(doc)}
+                currentName={filenameMode === 'original' ? DocumentStatusService.extractOriginalFilename(doc) : (doc.displayName || DocumentStatusService.extractOriginalFilename(doc))}
                 onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
                 onCancel={() => onRenameCancel?.()}
               />

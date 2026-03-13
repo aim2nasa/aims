@@ -120,6 +120,12 @@ const DocumentLibraryContent: React.FC<{
   // 🍎 개발서버 여부 (localhost에서만 고객 필터/전체 삭제 기능 활성화)
   const isDevServer = window.location.hostname === 'localhost'
 
+  // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
+  const [filenameMode, setFilenameMode] = React.useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
+
   // 호버 액션: 문서 삭제/이름변경
   const documentActions = useDocumentActions()
   const [renamingDocumentId, setRenamingDocumentId] = React.useState<string | null>(null)
@@ -131,8 +137,9 @@ const DocumentLibraryContent: React.FC<{
 
   const handleRenameConfirm = React.useCallback(async (documentId: string, newName: string) => {
     setRenamingDocumentId(null)
-    await documentActions.renameDocument(documentId, newName)
-  }, [documentActions])
+    const field = filenameMode === 'original' ? 'originalName' as const : 'displayName' as const
+    await documentActions.renameDocument(documentId, newName, field)
+  }, [documentActions, filenameMode])
 
   const handleRenameCancel = React.useCallback(() => {
     setRenamingDocumentId(null)
@@ -170,12 +177,6 @@ const DocumentLibraryContent: React.FC<{
   React.useEffect(() => {
     if (!isAliasMode) setForceRegenerateAlias(false)
   }, [isAliasMode])
-
-  // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
-  const [filenameMode, setFilenameMode] = React.useState<'display' | 'original'>(() => {
-    if (typeof window === 'undefined') return 'display'
-    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
-  })
 
   const handleFilenameModeChange = React.useCallback((mode: 'display' | 'original') => {
     setFilenameMode(mode)

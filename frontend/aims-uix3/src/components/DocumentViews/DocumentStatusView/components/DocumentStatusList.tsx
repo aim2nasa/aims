@@ -263,7 +263,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
           if (renamingDocumentId && docId && renamingDocumentId === docId) {
             return (
               <InlineRenameInput
-                currentName={document.displayName || originalName}
+                currentName={filenameMode === 'original' ? originalName : (document.displayName || originalName)}
                 onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
                 onCancel={() => onRenameCancel?.()}
               />

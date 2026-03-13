@@ -203,8 +203,9 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
 
   const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
     setRenamingDocumentId(null)
-    await documentActions.renameDocument(documentId, newName)
-  }, [documentActions])
+    const field = filenameMode === 'original' ? 'originalName' as const : 'displayName' as const
+    await documentActions.renameDocument(documentId, newName, field)
+  }, [documentActions, filenameMode])
 
   const handleRenameCancel = useCallback(() => {
     setRenamingDocumentId(null)
@@ -667,7 +668,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                 <span className="cde-doc-row__name-cell">
                                   {renamingDocumentId && doc._id && renamingDocumentId === doc._id ? (
                                     <InlineRenameInput
-                                      currentName={doc.displayName || doc.originalName || ''}
+                                      currentName={filenameMode === 'original' ? (doc.originalName || '') : (doc.displayName || doc.originalName || '')}
                                       onConfirm={(newName) => handleRenameConfirm(doc._id!, newName)}
                                       onCancel={handleRenameCancel}
                                     />
