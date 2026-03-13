@@ -347,8 +347,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         compareValue = (statusPriority[statusA] || 0) - (statusPriority[statusB] || 0)
       } else if (sortField === 'similarity') {
         // 유사도 정렬 (시맨틱 검색 결과만 해당)
-        const scoreA = ('score' in a ? a.score : 0) || 0
-        const scoreB = ('score' in b ? b.score : 0) || 0
+        // P1-3: 정렬에도 final_score 우선 사용
+        const scoreA = ('final_score' in a && a.final_score != null ? a.final_score : ('score' in a ? a.score : 0)) || 0
+        const scoreB = ('final_score' in b && b.final_score != null ? b.final_score : ('score' in b ? b.score : 0)) || 0
         compareValue = scoreA - scoreB
       }
 
@@ -1555,7 +1556,11 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     : (hasDisplay ? `별칭: ${displayName}` : '')
                   const summary = SearchService.getSummary(item)
                   const confidence = SearchService.getOCRConfidence(item)
-                  const score = 'score' in item ? item.score : null
+                  // P1-3: final_score 우선 사용 + 0~1 clamp
+                  const rawScore = 'final_score' in item && item.final_score != null
+                    ? item.final_score
+                    : ('score' in item ? item.score : null)
+                  const score = rawScore != null ? Math.min(Math.max(rawScore, 0), 1) : null
                   const mimeType = SearchService.getMimeType(item)
 
                   // 🍎 문서 처리 상태 정보 추출

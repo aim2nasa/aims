@@ -53,13 +53,13 @@ class SearchReranker:
             return []
 
         try:
-            # 쿼리-문서 쌍 생성 (문서는 preview 텍스트 사용, 최대 500자)
+            # P1-5: 쿼리-문서 쌍 생성 (preview 500→1000자로 확대하여 Cross-Encoder 정확도 향상)
             pairs = []
             for result in search_results:
                 # payload에서 preview 추출 (하이브리드 검색 결과 구조)
                 # 🔥 수정: None 안전 처리 (payload.get()이 None을 반환할 수 있음)
                 payload = result.get('payload') or {}
-                preview = (payload.get('preview') or '')[:500]  # 최대 500자
+                preview = (payload.get('preview') or '')[:1000]  # P1-5: 최대 1000자
 
                 # 쿼리-문서 쌍 생성
                 pairs.append([query, preview])
@@ -78,21 +78,14 @@ class SearchReranker:
                 result["rerank_score"] = normalized_score
                 result["original_score"] = result.get("score", 0.0)  # 원본 점수 보존
 
-                # 🎯 파일명 매칭 우선순위 보존 (근본 해결책)
-                # 원본 점수가 5.0 이상(파일명 완벽 매칭 등)이면 원본 점수에 높은 가중치 부여
-                # 이는 "파일명이 검색 의도를 가장 정확하게 반영한다"는 원칙을 반영
+                # P1-2: final_score 단순화 — 가중 합산 (0.3×original + 0.7×CE)
+                # P1-1에서 Entity 점수가 이미 Sigmoid 정규화되었으므로
+                # original_score도 0~1 범위, normalized_score(CE)도 0~1 범위
+                # → 분기 없이 단순 가중 합산으로 0~1 범위의 final_score 생성
                 original = result["original_score"]
                 semantic = normalized_score
 
-                if original >= 5.0:
-                    # 파일명 강한 매칭: 원본 점수 절대 우선 (2배 부스트 + semantic 미세 조정)
-                    result["final_score"] = original * 2.0 + semantic
-                elif original >= 2.0:
-                    # 파일명 일부 매칭: 균형 (원본 + semantic 2배)
-                    result["final_score"] = original + semantic * 2.0
-                else:
-                    # 파일명 매칭 약함: semantic 위주 (semantic 5배)
-                    result["final_score"] = original * 0.5 + semantic * 5.0
+                result["final_score"] = 0.3 * original + 0.7 * semantic
 
             # 🔥 수정: final_score 기준으로 정렬 (동일 점수일 경우 doc_id로 일관된 순서 보장)
             reranked = sorted(search_results, key=lambda x: (-x["final_score"], x.get("doc_id", "")))

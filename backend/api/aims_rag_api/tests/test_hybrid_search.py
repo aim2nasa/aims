@@ -115,8 +115,11 @@ class TestEntitySearch:
 
         results = engine._entity_search(query_intent, "user123", None, top_k=5)
 
-        # 파일명 완벽 매칭: +10.0 점
-        assert results[0]["score"] >= 10.0
+        # P1-1: 파일명 완벽 매칭 (+10.0 원본) → Sigmoid 정규화 후 0.92+ 범위
+        assert results[0]["score"] >= 0.9
+        assert results[0]["score"] <= 1.0
+        # 원본 점수도 보존되어야 함
+        assert results[0]["raw_entity_score"] >= 10.0
 
     @patch('hybrid_search.OpenAI')
     @patch('hybrid_search.QdrantClient')
@@ -378,19 +381,20 @@ class TestHybridSearch:
 
             # 같은 doc_id가 양쪽에서 나옴
             mock_entity.return_value = [
-                {"doc_id": "doc1", "score": 5.0, "payload": {"preview": "내용"}}
+                {"doc_id": "doc1", "score": 0.92, "payload": {"preview": "내용"}}
             ]
             mock_vector.return_value = [
                 {"doc_id": "doc1", "score": 0.8, "payload": {"preview": "내용"}}
             ]
 
-            query_intent = {"entities": ["테스트"], "metadata_keywords": ["테스트"]}
+            # P1-4: mixed 쿼리 → Entity 50% + Vector 50%
+            query_intent = {"query_type": "mixed", "entities": ["테스트"], "metadata_keywords": ["테스트"]}
             results = engine._hybrid_search("테스트", query_intent, "user123", None, top_k=5)
 
-            # 점수 합산 확인: 5.0 * 0.6 + 0.8 * 0.4 = 3.32
+            # 점수 합산 확인: 0.92 * 0.5 + 0.8 * 0.5 = 0.86
             assert len(results) == 1
             assert results[0]["source"] == "hybrid"
-            expected_score = 5.0 * 0.6 + 0.8 * 0.4
+            expected_score = 0.92 * 0.5 + 0.8 * 0.5
             assert abs(results[0]["score"] - expected_score) < 0.01
 
 

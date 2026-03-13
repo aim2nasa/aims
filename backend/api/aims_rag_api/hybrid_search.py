@@ -13,8 +13,20 @@ from pymongo import MongoClient
 from qdrant_client import QdrantClient, models
 from openai import OpenAI
 import re
+import math
 from bson import ObjectId
 from system_logger import send_error_log
+
+
+def normalize_entity_score(raw: float, midpoint: float = 5.0, steepness: float = 0.5) -> float:
+    """
+    Entity 검색 점수를 0~1 범위로 Sigmoid 정규화
+
+    raw=0 → 0.08, raw=5 → 0.50, raw=10 → 0.92, raw=20 → 0.99
+    Vector 검색 점수(0~1)와 동일한 스케일로 맞추어
+    하이브리드 검색에서 가중치가 의미를 갖도록 합니다.
+    """
+    return 1.0 / (1.0 + math.exp(-steepness * (raw - midpoint)))
 
 
 # 관계 유형 한글 라벨 (customer-relationships-routes.js RELATIONSHIP_TYPES와 동기화)
@@ -370,6 +382,11 @@ class HybridSearchEngine:
                 }
             })
 
+        # P1-1: Entity 점수 Sigmoid 정규화 (0~무제한 → 0~1)
+        for r in results:
+            r["raw_entity_score"] = r["score"]  # 원본 보존 (디버깅용)
+            r["score"] = normalize_entity_score(r["score"])
+
         # 점수 기준 정렬 (같은 점수일 경우 doc_id로 일관된 순서 보장)
         results.sort(key=lambda x: (-x["score"], x["doc_id"]))
         return results[:top_k]
@@ -450,10 +467,20 @@ class HybridSearchEngine:
         """
         하이브리드 검색: 메타데이터 + 벡터 검색 병합
 
-        가중치:
-        - 메타데이터 검색: 60%
-        - 벡터 검색: 40%
+        P1-4: query_type에 따라 가중치를 동적으로 조정합니다.
+        - entity 쿼리: Entity 70% + Vector 30% (파일명/태그 매칭 핵심)
+        - concept 쿼리: Entity 30% + Vector 70% (의미 검색 핵심)
+        - mixed 쿼리: Entity 50% + Vector 50% (균형)
         """
+        # P1-4: query_type 기반 동적 가중치
+        query_type = query_intent.get("query_type", "mixed")
+        weight_map = {
+            "entity":  (0.7, 0.3),
+            "concept": (0.3, 0.7),
+            "mixed":   (0.5, 0.5),
+        }
+        entity_weight, vector_weight = weight_map.get(query_type, (0.5, 0.5))
+
         # 두 방법으로 검색 (더 많이 가져오기)
         entity_results = self._entity_search(query_intent, user_id, customer_ids, top_k * 2)
         vector_results = self._vector_search(query, user_id, customer_ids, top_k * 2)
@@ -461,10 +488,10 @@ class HybridSearchEngine:
         # 문서별로 병합 (최고 점수 유지)
         doc_scores = {}
 
-        # 메타데이터 검색 결과 (가중치 60%)
+        # 메타데이터 검색 결과 (동적 가중치 적용)
         for result in entity_results:
             doc_id = result["doc_id"]
-            score = result["score"] * 0.6
+            score = result["score"] * entity_weight
 
             if doc_id not in doc_scores or score > doc_scores[doc_id]["score"]:
                 doc_scores[doc_id] = {
@@ -473,10 +500,10 @@ class HybridSearchEngine:
                     "source": "metadata"
                 }
 
-        # 벡터 검색 결과 (가중치 40%)
+        # 벡터 검색 결과 (동적 가중치 적용)
         for result in vector_results:
             doc_id = result["doc_id"]
-            score = result["score"] * 0.4
+            score = result["score"] * vector_weight
 
             if doc_id in doc_scores:
                 # 이미 있으면 점수 합산

@@ -68,8 +68,12 @@ export interface OCRInfo {
 export interface SemanticSearchResultItem {
   /** 문서 ID */
   id?: string
-  /** 유사도 점수 */
+  /** 유사도 점수 (원본 — 정규화 전 하이브리드 점수) */
   score: number
+  /** 최종 점수 (Reranker 정규화 후, 0~1 범위) */
+  final_score?: number
+  /** Cross-Encoder 재순위화 점수 (0~1 범위) */
+  rerank_score?: number
   /** MIME Type (최상위 필드) */
   mimeType?: string
   /** 사용자 지정 별칭 */
