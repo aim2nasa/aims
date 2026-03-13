@@ -52,9 +52,17 @@ def preprocess_text(text: str | None) -> str | None:
     return text
 
 
-def split_text_into_chunks(text: str, meta: dict, chunk_size: int = 1500, chunk_overlap: int = 150):
+def split_text_into_chunks(text: str, meta: dict, chunk_size: int = 1000, chunk_overlap: int = 200):
     """
     전체 텍스트를 작은 청크로 분할하고 메타데이터를 추가합니다.
+
+    P5-2: 청크 크기 1500→1000자, 오버랩 150→200자로 변경
+    - 작은 청크 = 더 정밀한 벡터 표현 (임베딩이 청크 전체를 대표하므로)
+    - 큰 오버랩 = 문맥 단절 감소
+
+    P5-1: 청크에 메타데이터 프리픽스 추가
+    - 임베딩 시 "[문서명] 청크텍스트" 형태로 문서 문맥을 벡터에 인코딩
+    - "이 청크가 어떤 문서에서 왔는지" 정보가 벡터에 반영되어 검색 정확도 향상
 
     :param text: 분할할 전체 텍스트.
     :param meta: 문서의 메타데이터 딕셔너리.
@@ -78,14 +86,27 @@ def split_text_into_chunks(text: str, meta: dict, chunk_size: int = 1500, chunk_
     # 텍스트를 청크로 분할
     chunks = text_splitter.split_text(text)
 
+    # P5-1: 메타데이터 프리픽스 구성 (문서명 → 벡터에 문맥 인코딩)
+    original_name = meta.get('original_name', '')
+    # 파일 확장자 제거하여 프리픽스 생성 (예: "보험계약서_홍길동.pdf" → "보험계약서_홍길동")
+    if original_name and '.' in original_name:
+        doc_label = original_name.rsplit('.', 1)[0]
+    else:
+        doc_label = original_name
+    metadata_prefix = f"[{doc_label}] " if doc_label else ""
+
     # 각 청크에 메타데이터 추가
     processed_chunks = []
     for i, chunk in enumerate(chunks):
+        # P5-1: 프리픽스를 청크 텍스트 앞에 붙여 임베딩에 문서 문맥 포함
+        prefixed_text = metadata_prefix + chunk if metadata_prefix else chunk
+
         # 기본 메타데이터에 청크별 정보 추가
         chunk_meta = meta.copy()
         chunk_meta.update({
             'chunk_id': f'{meta["doc_id"]}_{i}', # 고유한 청크 ID 생성
-            'text': chunk,
+            'text': prefixed_text,  # P5-1: 프리픽스 포함 텍스트
+            'text_raw': chunk,  # 원본 텍스트 (프리픽스 없음, LLM 컨텍스트용)
             'offset': text.find(chunk), # 텍스트 내 청크의 시작 위치
             'size': len(chunk)
         })
