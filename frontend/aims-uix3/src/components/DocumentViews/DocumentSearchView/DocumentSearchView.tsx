@@ -1133,13 +1133,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     >
       <div className="document-search-container">
         {/* 🍎 iOS Spotlight 검색바 - 한 줄 레이아웃 */}
-        <div className="search-bar-wrapper">
+        <div className={`search-bar-wrapper${isLoading ? ' search-bar-wrapper--loading' : ''}`}>
           {/* 🍎 고객 선택 버튼 (모든 검색 모드에서 표시) */}
           <button
             className="customer-select-button"
             onClick={() => setIsCustomerSelectorOpen(true)}
             aria-label="고객 선택"
             title="고객 선택"
+            disabled={isLoading}
           >
             고객선택
           </button>
@@ -1159,6 +1160,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   }}
                   aria-label="고객 선택 해제"
                   title="고객 선택 해제"
+                  disabled={isLoading}
                 >
                   ✕
                 </button>
@@ -1170,6 +1172,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 onChange={handleRecentCustomerSelect}
                 width={115}
                 aria-label="최근 선택한 고객"
+                disabled={isLoading}
               />
             )}
           </div>
@@ -1200,6 +1203,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyPress={handleKeyPress}
+              disabled={isLoading}
               onFocus={() => {
                 // 프로그래밍적 포커스(페이지 진입 시 자동 포커스)에서는 드롭다운 열지 않음
                 if (suppressRecentDropdown.current) {
@@ -1262,6 +1266,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             onChange={(value) => handleSearchModeChange(value as SearchMode)}
             aria-label="검색 모드 선택"
             width={175}
+            disabled={isLoading}
           />
 
           {/* 🍎 Progressive Disclosure: 키워드 검색 시 드롭다운으로 AND/OR 선택 */}
@@ -1272,6 +1277,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               onChange={(value) => handleKeywordModeChange(value as KeywordMode)}
               aria-label="키워드 모드 선택"
               width={130}
+              disabled={isLoading}
             />
           )}
 
@@ -1363,8 +1369,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <span className="answer-arrow">▶</span> AI 답변 (클릭하여 숨기기)
                   </summary>
                   <p className="answer-content">{
-                    answer.split(/(\(.+?\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png)\))/gi).map((part, i) =>
-                      /^\(.+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png)\)$/i.test(part)
+                    answer.split(/(\S+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png))/gi).map((part, i) =>
+                      /^\S+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png)$/i.test(part)
                         ? <span key={i} className="answer-source-ref">{part}</span>
                         : part
                     )

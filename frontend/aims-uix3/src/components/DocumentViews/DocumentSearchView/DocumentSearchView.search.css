@@ -32,6 +32,16 @@
     flex-shrink: 0;
   }
 
+  /* 검색 중 비활성화 — 취소 버튼 제외 모든 요소 비활성 */
+  .search-bar-wrapper--loading > *:not(.search-button--cancel) {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .search-bar-wrapper--loading > .search-button--cancel {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   /* A: iOS Spotlight 서치필드 (10% 축소) - 디자인 표준 적용 */
   .document-search-container .search-input-wrapper {
     position: relative;  /* ❌ 표준: 자식 absolute 위치의 기준 */
