@@ -84,6 +84,17 @@
     border-top-color: var(--color-ios-separator-dark);
   }
 
+  /* 출처 파일명 하이라이트 */
+  .answer-source-ref {
+    color: var(--color-primary-600);
+    font-weight: var(--font-weight-semibold);
+    font-size: inherit;
+  }
+
+  html[data-theme="dark"] .answer-source-ref {
+    color: var(--color-primary-400);
+  }
+
   /* === 🍎 RESULTS HEADER === */
 
   .search-results-header {
