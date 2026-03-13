@@ -1343,7 +1343,19 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         <div className="search-results-section">
           {isLoading ? (
             <div className="search-loading" role="status" aria-live="polite">
-              검색 중입니다. 잠시만 기다려 주세요...
+              <div className="search-loading__animation">
+                <div className="search-loading__rings">
+                  <div className="search-loading__ring search-loading__ring--outer" />
+                  <div className="search-loading__ring search-loading__ring--inner" />
+                  <svg className="search-loading__icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.45 4.39l3.58 3.58a.75.75 0 1 1-1.06 1.06l-3.58-3.58A7 7 0 0 1 2 9Z" fill="currentColor"/>
+                  </svg>
+                </div>
+              </div>
+              <p className="search-loading__text">문서를 검색하고 있습니다</p>
+              <p className="search-loading__subtext">
+                {searchMode === 'semantic' ? 'AI가 질문을 분석하고 관련 문서를 찾고 있습니다' : '키워드와 일치하는 문서를 찾고 있습니다'}
+              </p>
             </div>
           ) : results.length > 0 ? (
             <>

@@ -383,20 +383,115 @@
     color: var(--color-ios-text-tertiary-dark);
   }
 
-  /* 로딩 / Empty State */
-  .search-loading,
+  /* 로딩 상태 */
+  .search-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 48px var(--spacing-6) 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    animation: searchLoadingFadeIn 0.4s ease-out;
+  }
+
+  @keyframes searchLoadingFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .search-loading__animation {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .search-loading__rings {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .search-loading__ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid transparent;
+  }
+
+  .search-loading__ring--outer {
+    width: 64px;
+    height: 64px;
+    border-top-color: var(--color-primary-500);
+    border-right-color: var(--color-primary-200);
+    animation: searchRingSpin 1.2s linear infinite;
+  }
+
+  .search-loading__ring--inner {
+    width: 48px;
+    height: 48px;
+    border-bottom-color: var(--color-primary-400);
+    border-left-color: var(--color-primary-100);
+    animation: searchRingSpin 0.8s linear infinite reverse;
+  }
+
+  @keyframes searchRingSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  .search-loading__icon {
+    position: relative;
+    z-index: 1;
+    color: var(--color-primary-500);
+    animation: searchIconPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes searchIconPulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
+  .search-loading__text {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .search-loading__subtext {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+  }
+
+  html[data-theme="dark"] .search-loading__ring--outer {
+    border-top-color: var(--color-primary-400);
+    border-right-color: var(--color-primary-700);
+  }
+
+  html[data-theme="dark"] .search-loading__ring--inner {
+    border-bottom-color: var(--color-primary-300);
+    border-left-color: var(--color-primary-800);
+  }
+
+  /* Empty State */
   .search-empty {
     display: flex;
     align-items: flex-start;
     justify-content: center;
     padding: 0 var(--spacing-6);
     color: var(--color-ios-empty-light);
-    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-weight: 400;
   }
 
-  html[data-theme="dark"] .search-loading,
   html[data-theme="dark"] .search-empty {
     color: var(--color-ios-empty-dark);
   }
