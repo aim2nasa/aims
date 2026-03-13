@@ -6,7 +6,7 @@
 
 import { useMemo, useEffect, useRef } from 'react'
 import type { DocumentStatistics, ParsingStats } from '@/types/documentStatistics'
-import { clearBatchId, getBatchId, getLastBatchSetTime } from '@/hooks/useBatchId'
+import { clearBatchId, getBatchId, getLastBatchSetTime, getBatchExpectedTotal } from '@/hooks/useBatchId'
 import './DocumentProcessingStatusBar.css'
 
 interface DocumentProcessingStatusBarProps {
@@ -80,6 +80,14 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
       const currentBatchId = getBatchId()
       const snapshotTotal = batchTotal
       const snapshotTime = Date.now()
+
+      // 🔴 Guard 4: 서버 total이 업로드 예정 수(expectedTotal)에 미달 → cleanup 지연
+      // 프론트엔드에서 아직 전송 중인 파일이 있을 수 있음 (조기 cleanup 방지)
+      // expectedTotal에 도달했으면 기존 2초 후 cleanup, 미달이면 15초 후 강제 cleanup
+      const expTotal = getBatchExpectedTotal()
+      const allFilesArrived = expTotal === 0 || batchTotal >= expTotal
+      const cleanupDelay = allFilesArrived ? 2000 : 15000
+
       cleanupTimerRef.current = setTimeout(() => {
         // 새 업로드가 시작되지 않았는지 확인:
         // 1) batchId 변경, 2) 배치 크기 증가, 3) 타이머 시작 후 setBatchId 호출됨
@@ -89,7 +97,7 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
           clearBatchId()
         }
         cleanupTimerRef.current = null
-      }, 2000)
+      }, cleanupDelay)
     }
 
     return () => {

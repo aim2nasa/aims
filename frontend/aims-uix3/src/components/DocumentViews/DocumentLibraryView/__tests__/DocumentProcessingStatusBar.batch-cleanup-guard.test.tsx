@@ -20,11 +20,14 @@ import type { DocumentStatistics, ParsingStats } from '@/types/documentStatistic
 // --- useBatchId 모듈 mock ---
 let mockBatchId: string | null = null
 let mockLastSetTime = 0
+let mockExpectedTotal = 0
 
 vi.mock('@/hooks/useBatchId', () => ({
   getBatchId: () => mockBatchId,
-  clearBatchId: vi.fn(() => { mockBatchId = null }),
+  clearBatchId: vi.fn(() => { mockBatchId = null; mockExpectedTotal = 0 }),
   getLastBatchSetTime: () => mockLastSetTime,
+  getBatchExpectedTotal: () => mockExpectedTotal,
+  addBatchExpectedTotal: vi.fn((count: number) => { mockExpectedTotal += count }),
   setBatchId: vi.fn((id: string) => {
     mockBatchId = id
     mockLastSetTime = Date.now()
@@ -71,6 +74,7 @@ describe('DocumentProcessingStatusBar — batch cleanup 3-guard', () => {
     vi.clearAllMocks()
     mockBatchId = null
     mockLastSetTime = 0
+    mockExpectedTotal = 0
   })
 
   afterEach(() => {
@@ -440,6 +444,146 @@ describe('DocumentProcessingStatusBar — batch cleanup 3-guard', () => {
 
       // batchId가 유지됨
       expect(mockBatchId).toBe('batch-with-errors')
+    })
+  })
+
+  describe('Guard 4: expectedTotal 미달 → cleanup 지연 (조기 프로그레스바 사라짐 방지)', () => {
+    it('🔴 핵심 시나리오: 100개 업로드 중 10개만 서버 도착 → 10/10 완료 → 프로그레스바 사라지지 않음', () => {
+      // 사용자가 100개 파일을 일괄 업로드 시작
+      mockBatchId = 'batch-100-files'
+      mockLastSetTime = Date.now() - 5000
+      mockExpectedTotal = 100 // addBatchExpectedTotal(100) 호출됨
+
+      // 서버에는 아직 10개만 도착, 모두 완료 → total=10, completed=10
+      const batchStats = makeBatchStats({
+        total: 10,
+        completed: 10,
+        processing: 0,
+        pending: 0,
+        credit_pending: 0,
+      })
+
+      render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batchStats,
+        isLoading: false,
+      }))
+
+      // shouldCleanup = true (batchPct=100%, processing=0, pending=0)
+      // 그러나 Guard 4: total(10) < expectedTotal(100) → cleanupDelay = 15초
+
+      // 2초 경과 — 기존 로직이었다면 여기서 사라짐
+      act(() => { vi.advanceTimersByTime(2000) })
+      expect(clearBatchId).not.toHaveBeenCalled() // ✅ 사라지지 않음!
+      expect(mockBatchId).toBe('batch-100-files')
+
+      // 10초 경과해도 여전히 유지 (15초 미만)
+      act(() => { vi.advanceTimersByTime(8000) })
+      expect(clearBatchId).not.toHaveBeenCalled()
+    })
+
+    it('100개 업로드 중 50개 도착 → 50/50 완료 → 타이머 갱신 → 계속 유지', () => {
+      mockBatchId = 'batch-100-slow'
+      mockLastSetTime = Date.now() - 5000
+      mockExpectedTotal = 100
+
+      // 처음: 10개만 도착 완료
+      const batch10 = makeBatchStats({
+        total: 10, completed: 10, processing: 0, pending: 0, credit_pending: 0,
+      })
+
+      const { rerender } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batch10,
+        isLoading: false,
+      }))
+
+      // 5초 경과 — Guard 4로 인해 아직 정리 안 됨
+      act(() => { vi.advanceTimersByTime(5000) })
+      expect(clearBatchId).not.toHaveBeenCalled()
+
+      // 50개 도착, 일부 처리 중 → shouldCleanup = false → 타이머 취소
+      const batch50 = makeBatchStats({
+        total: 50, completed: 30, processing: 10, pending: 10, credit_pending: 0,
+      })
+
+      act(() => {
+        rerender(createElement(DocumentProcessingStatusBar, {
+          statistics: makeStats(),
+          batchStatistics: batch50,
+          isLoading: false,
+        }))
+      })
+
+      // shouldCleanup = false이므로 타이머 취소됨
+      act(() => { vi.advanceTimersByTime(15000) })
+      expect(clearBatchId).not.toHaveBeenCalled()
+      expect(mockBatchId).toBe('batch-100-slow')
+    })
+
+    it('100개 모두 도착 + 모두 완료 → expectedTotal 충족 → 2초 후 정상 cleanup', () => {
+      mockBatchId = 'batch-100-done'
+      mockLastSetTime = Date.now() - 30000
+      mockExpectedTotal = 100
+
+      // 100개 모두 도착, 모두 완료
+      const batchAll = makeBatchStats({
+        total: 100, completed: 100, processing: 0, pending: 0, credit_pending: 0,
+      })
+
+      render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batchAll,
+        isLoading: false,
+      }))
+
+      // total(100) >= expectedTotal(100) → cleanupDelay = 2초
+      act(() => { vi.advanceTimersByTime(2000) })
+      expect(clearBatchId).toHaveBeenCalledTimes(1) // ✅ 정상 cleanup
+    })
+
+    it('expectedTotal 미달 + 15초 stale guard → 강제 cleanup (skip/에러로 도달 불가)', () => {
+      mockBatchId = 'batch-stale-expected'
+      mockLastSetTime = Date.now() - 30000
+      mockExpectedTotal = 100
+
+      // 80개만 도착하고 업로드 멈춤 (나머지 20개는 skip/네트워크 에러)
+      const batch80 = makeBatchStats({
+        total: 80, completed: 80, processing: 0, pending: 0, credit_pending: 0,
+      })
+
+      render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batch80,
+        isLoading: false,
+      }))
+
+      // 2초 — 아직 안 됨 (expectedTotal 미달)
+      act(() => { vi.advanceTimersByTime(2000) })
+      expect(clearBatchId).not.toHaveBeenCalled()
+
+      // 15초 — stale guard 발동으로 강제 cleanup
+      act(() => { vi.advanceTimersByTime(13000) })
+      expect(clearBatchId).toHaveBeenCalledTimes(1) // ✅ 영구 차단 방지
+    })
+
+    it('expectedTotal이 0이면 (기존 동작 호환) → 2초 후 정상 cleanup', () => {
+      mockBatchId = 'batch-no-expected'
+      mockLastSetTime = Date.now() - 30000
+      mockExpectedTotal = 0 // addBatchExpectedTotal 미호출 (기존 코드 경로)
+
+      const batchDone = makeBatchStats({
+        total: 5, completed: 5, processing: 0, pending: 0, credit_pending: 0,
+      })
+
+      render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batchDone,
+        isLoading: false,
+      }))
+
+      act(() => { vi.advanceTimersByTime(2000) })
+      expect(clearBatchId).toHaveBeenCalledTimes(1) // ✅ 기존 동작 유지
     })
   })
 

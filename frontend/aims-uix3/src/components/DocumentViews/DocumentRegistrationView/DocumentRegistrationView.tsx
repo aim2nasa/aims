@@ -54,7 +54,7 @@ import { getEffectiveMapping as getCrEffectiveMapping } from './utils/crGrouping
 import { BatchUploadApi } from '@/features/batch-upload/api/batchUploadApi'
 import type { ArFileTableRow } from './types/arBatchTypes'
 import type { CrFileTableRow } from './types/crBatchTypes'
-import { getBatchId, setBatchId, useBatchId } from '@/hooks/useBatchId'
+import { getBatchId, setBatchId, addBatchExpectedTotal, useBatchId } from '@/hooks/useBatchId'
 import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
 import { DocumentProcessingStatusBar } from '../DocumentLibraryView/DocumentProcessingStatusBar'
 import './DocumentRegistrationView.css'
@@ -573,8 +573,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     const existingBatchId = getBatchId()
     const newBatchId = existingBatchId || `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     setBatchId(newBatchId)
+    // 🔴 업로드 예정 파일 수 등록 — 서버 total이 이 수에 도달하기 전까지 프로그레스바 cleanup 차단
+    addBatchExpectedTotal(files.length)
     if (import.meta.env.DEV) {
-      console.log(`[DocumentRegistrationView] 배치 ID: ${newBatchId}${existingBatchId ? ' (기존 재사용)' : ' (신규)'}`)
+      console.log(`[DocumentRegistrationView] 배치 ID: ${newBatchId}${existingBatchId ? ' (기존 재사용)' : ' (신규)'}, 파일 수: ${files.length}`)
     }
 
     // 🎯🎯🎯 AR 배치 모드: 제일 먼저 체크! (uploadState 건드리기 전에 처리)

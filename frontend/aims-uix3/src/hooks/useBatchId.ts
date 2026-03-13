@@ -7,6 +7,7 @@
  * - 배치 100% 완료 → 2초 후 자동 정리 (DocumentProcessingStatusBar에서 처리)
  * - 진행 중 새 업로드 시작 → 기존 배치에 누적 (동일 batchId 재사용)
  * - 완료 후 새 업로드 시작 → 새 배치로 전환
+ * - expectedTotal: 업로드 예정 총 파일 수 — 서버 total이 이 수에 도달하기 전까지 cleanup 차단
  */
 
 import { useSyncExternalStore } from 'react'
@@ -15,6 +16,10 @@ const BATCH_ID_KEY = 'aims-current-batch-id'
 
 // setBatchId 마지막 호출 시각 (경쟁 조건 감지용)
 let lastSetTime = 0
+
+// 업로드 예정 총 파일 수 (서버 total이 이 수에 도달하기 전까지 cleanup 차단)
+// 메모리 변수 — 같은 탭 내에서만 유효 (sessionStorage 불필요)
+let expectedTotal = 0
 
 // sessionStorage 변경 구독자 관리
 const subscribers = new Set<() => void>()
@@ -64,10 +69,27 @@ export function getLastBatchSetTime(): number {
 }
 
 /**
+ * 업로드 예정 총 파일 수 설정 (누적 방식)
+ * 기존 배치에 파일을 추가할 때는 누적됨 (AR 처리중 CRS 추가 등)
+ * 새 배치 시작 시(setBatchId에서 자동 초기화) 0부터 다시 시작
+ */
+export function addBatchExpectedTotal(count: number): void {
+  expectedTotal += count
+}
+
+/**
+ * 업로드 예정 총 파일 수 조회
+ */
+export function getBatchExpectedTotal(): number {
+  return expectedTotal
+}
+
+/**
  * batchId 삭제 (배치 완료 시 호출)
  */
 export function clearBatchId(): void {
   sessionStorage.removeItem(BATCH_ID_KEY)
+  expectedTotal = 0
   notifyBatchIdChange()
 }
 

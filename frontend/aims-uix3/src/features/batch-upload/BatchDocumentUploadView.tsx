@@ -27,6 +27,7 @@ import { validateBatch } from './utils/fileValidation'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import { checkStorageWithInfo } from '@/shared/lib/fileValidation'
 import type { FolderMapping, DuplicateAction } from './types'
+import { getBatchId, setBatchId, addBatchExpectedTotal } from '@/hooks/useBatchId'
 import './BatchDocumentUploadView.css'
 
 // ==================== SessionStorage 관련 ====================
@@ -409,6 +410,15 @@ export default function BatchDocumentUploadView({
   }, [])
 
   const handleStartUpload = useCallback(async (selectedMappings: FolderMapping[]) => {
+    // 🔴 업로드 묶음 ID 설정 — 전체문서보기 프로그레스바에서 배치 진행률 추적용
+    const existingBatchId = getBatchId()
+    const batchId = existingBatchId || `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    setBatchId(batchId)
+
+    // 🔴 업로드 예정 파일 수 등록 — 서버 total이 이 수에 도달하기 전까지 프로그레스바 cleanup 차단
+    const totalFiles = selectedMappings.reduce((sum, m) => sum + (m.matched ? m.files.length : 0), 0)
+    addBatchExpectedTotal(totalFiles)
+
     setStep('upload')
     await startUpload(selectedMappings)
   }, [startUpload])
