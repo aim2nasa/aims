@@ -64,8 +64,17 @@ def sanitize_display_name(name: str, original_filename: str = "") -> str:
         if dot_idx > 0:
             ext = original_filename[dot_idx:]  # ".pdf", ".jpg" 등
 
-    # 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈, 언더스코어만 허용)
-    cleaned = re.sub(r'[^가-힣a-zA-Z0-9\s\-_]', '', name).strip()
+    # AI가 확장자를 포함했을 수 있으므로 제거
+    # 예: "안영미 진료비 2011.09.jpg" → "안영미 진료비 2011.09"
+    common_exts = ['.jpg', '.jpeg', '.png', '.pdf', '.tiff', '.tif', '.gif', '.bmp', '.webp', '.heic']
+    name_lower = name.lower()
+    for c_ext in common_exts:
+        if name_lower.endswith(c_ext):
+            name = name[:-len(c_ext)]
+            break
+
+    # 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈, 언더스코어, 점만 허용)
+    cleaned = re.sub(r'[^가-힣a-zA-Z0-9\s\-_.]', '', name).strip()
 
     # 연속 공백 제거
     cleaned = re.sub(r'\s+', ' ', cleaned)
@@ -83,30 +92,38 @@ def sanitize_display_name(name: str, original_filename: str = "") -> str:
 
 def _extract_text_from_document(doc: dict) -> str:
     """
-    문서에서 텍스트 추출 (우선순위)
-    1. ocr.summary
-    2. meta.full_text
-    3. ocr.full_text
-    4. text.full_text
+    문서에서 텍스트 추출 (별칭 생성용 - full_text 우선)
+
+    별칭 생성에는 구체적 정보(이름, 날짜, 금액 등)가 필요하므로
+    요약본(summary)보다 원문(full_text)을 우선 사용한다.
+    full_text는 500자로 truncate하여 프롬프트 크기를 제한한다.
+
+    우선순위:
+    1. meta.full_text (텍스트 기반 추출)
+    2. ocr.full_text (OCR 추출)
+    3. text.full_text
+    4. ocr.summary (full_text 없을 때 폴백)
     """
-    # 1순위: ocr.summary
-    ocr = doc.get("ocr", {})
-    if isinstance(ocr, dict) and ocr.get("summary"):
-        return ocr["summary"]
+    MAX_TEXT_LENGTH = 500
 
-    # 2순위: meta.full_text
+    # 1순위: meta.full_text
     meta = doc.get("meta", {})
-    if isinstance(meta, dict) and meta.get("full_text"):
-        return meta["full_text"]
+    if isinstance(meta, dict) and meta.get("full_text", "").strip():
+        return meta["full_text"][:MAX_TEXT_LENGTH]
 
-    # 3순위: ocr.full_text
-    if isinstance(ocr, dict) and ocr.get("full_text"):
-        return ocr["full_text"]
+    # 2순위: ocr.full_text
+    ocr = doc.get("ocr", {})
+    if isinstance(ocr, dict) and ocr.get("full_text", "").strip():
+        return ocr["full_text"][:MAX_TEXT_LENGTH]
 
-    # 4순위: text.full_text
+    # 3순위: text.full_text
     text_obj = doc.get("text", {})
-    if isinstance(text_obj, dict) and text_obj.get("full_text"):
-        return text_obj["full_text"]
+    if isinstance(text_obj, dict) and text_obj.get("full_text", "").strip():
+        return text_obj["full_text"][:MAX_TEXT_LENGTH]
+
+    # 4순위: ocr.summary (폴백)
+    if isinstance(ocr, dict) and ocr.get("summary", "").strip():
+        return ocr["summary"]
 
     return ""
 
@@ -151,6 +168,30 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
     skipped = 0
     failed = 0
     credit_exceeded = False
+
+    # 동일 고객의 기존 별칭 목록 조회 (중복 방지용)
+    # 첫 문서의 customerId로 조회 (배치 내 문서는 동일 고객)
+    existing_aliases: List[str] = []
+    try:
+        first_doc = await collection.find_one(
+            {"_id": ObjectId(request.document_ids[0])},
+            {"customerId": 1}
+        )
+        if first_doc and first_doc.get("customerId"):
+            cursor = collection.find(
+                {
+                    "customerId": first_doc["customerId"],
+                    "displayName": {"$exists": True, "$ne": None}
+                },
+                {"displayName": 1}
+            )
+            async for d in cursor:
+                dn = d.get("displayName")
+                if dn:
+                    existing_aliases.append(dn)
+            logger.info(f"[DisplayName] 기존 별칭 {len(existing_aliases)}건 조회 완료")
+    except Exception as e:
+        logger.warning(f"[DisplayName] 기존 별칭 조회 실패 (계속 진행): {e}")
 
     for idx, doc_id in enumerate(request.document_ids):
         # 크레딧 초과 시 나머지 문서 모두 중단
@@ -230,11 +271,20 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
                 skipped += 1
                 continue
 
-            # 6. OpenAI로 제목 생성
+            # 6. 원본 파일명 및 문서 유형 추출
+            upload_obj = doc.get("upload")
+            upload_original = upload_obj.get("originalName", "") if isinstance(upload_obj, dict) else ""
+            original_name = doc.get("originalName") or doc.get("original_name") or upload_original or ""
+            doc_type = doc.get("document_type") or ""
+
+            # 7. OpenAI로 제목 생성 (개선: 파일명 + 유형 + 기존 별칭 전달)
             title_result = await OpenAIService.generate_title_only(
                 text=text,
                 owner_id=request.user_id,
-                document_id=doc_id
+                document_id=doc_id,
+                original_filename=original_name,
+                document_type=doc_type,
+                existing_aliases=existing_aliases
             )
 
             # 크레딧 초과 체크
@@ -261,10 +311,7 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
                 failed += 1
                 continue
 
-            # 7. displayName 정리
-            upload_obj = doc.get("upload")
-            upload_original = upload_obj.get("originalName", "") if isinstance(upload_obj, dict) else ""
-            original_name = doc.get("originalName") or doc.get("original_name") or upload_original or ""
+            # 8. displayName 정리
             display_name = sanitize_display_name(title, original_name)
 
             if not display_name:
@@ -276,7 +323,7 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
                 failed += 1
                 continue
 
-            # 8. MongoDB 업데이트 (성공 시 displayNameStatus 제거)
+            # 9. MongoDB 업데이트 (성공 시 displayNameStatus 제거)
             await collection.update_one(
                 {"_id": obj_id},
                 {
@@ -291,6 +338,8 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
                 display_name=display_name
             ))
             completed += 1
+            # 배치 내 중복 방지: 생성된 별칭을 누적
+            existing_aliases.append(display_name)
             logger.info(f"[DisplayName] 생성 완료: doc_id={doc_id}, displayName={display_name}")
 
         except Exception as e:

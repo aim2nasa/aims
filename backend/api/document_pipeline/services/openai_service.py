@@ -2,6 +2,7 @@
 OpenAI Service for Text Summarization and Document Classification
 """
 import os
+import re
 import json
 import uuid
 import httpx
@@ -388,12 +389,82 @@ class OpenAIService:
                 "truncated": truncated
             }
 
+    # 의미없는 파일명 패턴 (카메라 자동명, UUID, 타임스탬프 등)
+    _MEANINGLESS_FILENAME_PATTERNS = [
+        re.compile(r'^IMG[-_]?\d', re.IGNORECASE),
+        re.compile(r'^DSC[-_]?\d', re.IGNORECASE),
+        re.compile(r'^Screenshot', re.IGNORECASE),
+        re.compile(r'^KakaoTalk', re.IGNORECASE),
+        re.compile(r'^scan[-_]?\d', re.IGNORECASE),
+        re.compile(r'^tmp[-_]', re.IGNORECASE),
+        re.compile(r'^[a-f0-9-]{20,}', re.IGNORECASE),
+        re.compile(r'^\d{8,}'),
+        re.compile(r'^image[-_]?\d', re.IGNORECASE),
+        re.compile(r'^photo[-_]?\d', re.IGNORECASE),
+        re.compile(r'^document[-_]?\d', re.IGNORECASE),
+    ]
+
+    @classmethod
+    def _is_meaningful_filename(cls, filename: str) -> bool:
+        """파일명에 의미있는 정보(보험사명, 사람이름 등)가 있는지 판별"""
+        if not filename:
+            return False
+        name = os.path.splitext(filename)[0]
+        if len(name) <= 3:
+            return False
+        for pattern in cls._MEANINGLESS_FILENAME_PATTERNS:
+            if pattern.match(name):
+                return False
+        return True
+
+    @classmethod
+    def _build_title_prompt(
+        cls,
+        text: str,
+        original_filename: Optional[str] = None,
+        document_type: Optional[str] = None,
+        existing_aliases: Optional[List[str]] = None
+    ) -> str:
+        """별칭 생성 프롬프트 구성"""
+        parts = [
+            "보험설계사의 고객 문서에 표시할 짧은 별칭을 생성하세요.",
+            "",
+            "규칙:",
+            "- 최대 35자, 한국어, 제목만 출력",
+            "- 문서에 등장하는 사람 이름이 있으면 포함",
+            "- 보험사명, 상품명, 날짜, 기관명, 금액 등 구분 정보를 우선 포함",
+            "- 문서 유형명만으로 된 제목 금지 (예: '진료비 계산서' -> '안영미 진료비 2011.09')",
+            "- 같은 유형의 문서가 여러 개일 때 서로 구분 가능하도록 구체적으로",
+            "- 파일 확장자(.jpg, .pdf 등) 절대 포함 금지",
+            "- 날짜는 YYYY.MM.DD 또는 YYYY.MM 형식으로",
+        ]
+
+        if original_filename and cls._is_meaningful_filename(original_filename):
+            parts.append(f"\n원본 파일명: {original_filename}")
+            parts.append("파일명에 유용한 정보가 있다면 반영하세요.")
+
+        if document_type and document_type != "general":
+            parts.append(f"\n문서 유형: {document_type}")
+
+        if existing_aliases:
+            # 최근 30개만 포함 (프롬프트 길이 제한)
+            recent = existing_aliases[-30:]
+            parts.append("\n이미 생성된 별칭 (중복 금지):")
+            for alias in recent:
+                parts.append(f"- {alias}")
+
+        parts.append(f"\n문서:\n{text}")
+        return "\n".join(parts)
+
     @classmethod
     async def generate_title_only(
         cls,
         text: str,
         owner_id: Optional[str] = None,
-        document_id: Optional[str] = None
+        document_id: Optional[str] = None,
+        original_filename: Optional[str] = None,
+        document_type: Optional[str] = None,
+        existing_aliases: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         경량 제목 추출 (displayName 생성용)
@@ -407,6 +478,9 @@ class OpenAIService:
             text: 문서 텍스트
             owner_id: 문서 소유자 ID (크레딧 체크용)
             document_id: 문서 ID (토큰 로깅용)
+            original_filename: 원본 파일명 (의미있는 정보 반영용)
+            document_type: 문서 유형 (보험증권, 청약서 등)
+            existing_aliases: 동일 고객의 기존 별칭 목록 (중복 방지용)
 
         Returns:
             {"title": str|None, "error": str|None}
@@ -427,20 +501,14 @@ class OpenAIService:
         if len(text) > 3000:
             text = text[:3000]
 
-        prompt = f"""다음 문서의 내용을 대표하는 짧은 제목을 한국어로 생성해주세요.
-- 최대 40자
-- 핵심 내용을 담은 명확한 제목
-- 제목만 출력 (다른 설명 없이)
-
-문서:
-{text}"""
+        prompt = cls._build_title_prompt(text, original_filename, document_type, existing_aliases)
 
         try:
             client = cls._get_client()
             response = await client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "문서 제목 생성 전문가입니다. 제목만 출력합니다."},
+                    {"role": "system", "content": "문서 별칭 생성 전문가입니다. 별칭만 출력합니다."},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=60,
