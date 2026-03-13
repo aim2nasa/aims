@@ -1792,7 +1792,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                                 aria-label={`유사도 ${getSimilarityLevel(score).percentage} ${getSimilarityLevel(score).label}`}
                               >
                                 <span className="similarity-dot" />
-                                <span className="similarity-text">{getSimilarityLevel(score).label}</span>
+                                <span className="similarity-text">{getSimilarityLevel(score).percentage}</span>
                               </div>
                             </Tooltip>
                           )}
