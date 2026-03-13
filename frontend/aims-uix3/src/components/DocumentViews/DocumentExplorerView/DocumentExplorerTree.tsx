@@ -899,32 +899,55 @@ export interface DocumentExplorerColumnHeaderProps {
   sortBy?: DocumentSortBy
   sortDirection?: SortDirection
   onSortByChange: (sortBy: DocumentSortBy) => void
+  filenameMode?: 'display' | 'original'
+  onFilenameModeChange?: (mode: 'display' | 'original') => void
 }
 
 export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeaderProps> = ({
   sortBy,
   sortDirection,
   onSortByChange,
+  filenameMode,
+  onFilenameModeChange,
 }) => (
   <div className="doc-explorer-tree__column-header">
     <span className="doc-explorer-tree__col-spacer" />
-    <button
-      type="button"
-      className={`doc-explorer-tree__col-btn${sortBy === 'name' ? ' doc-explorer-tree__col-btn--active' : ''}`}
-      onClick={() => onSortByChange('name')}
-      aria-label="파일명 기준 정렬"
-    >
-      {SORT_BY_LABELS.name}
-      {sortBy === 'name' && (
-        <SFSymbol
-          name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
-          size={SFSymbolSize.CAPTION_2}
-          weight={SFSymbolWeight.MEDIUM}
-          className="doc-explorer-tree__col-arrow"
-          decorative
-        />
+    <div className="doc-explorer-tree__col-filename">
+      <button
+        type="button"
+        className={`doc-explorer-tree__col-btn${sortBy === 'name' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+        onClick={() => onSortByChange('name')}
+        aria-label="파일명 기준 정렬"
+      >
+        {SORT_BY_LABELS.name}
+        {sortBy === 'name' && (
+          <SFSymbol
+            name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
+            size={SFSymbolSize.CAPTION_2}
+            weight={SFSymbolWeight.MEDIUM}
+            className="doc-explorer-tree__col-arrow"
+            decorative
+          />
+        )}
+      </button>
+      {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
+      {onFilenameModeChange && (
+        <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}>
+          <button
+            type="button"
+            className="filename-mode-toggle"
+            onClick={(e) => {
+              e.stopPropagation()
+              const next = filenameMode === 'display' ? 'original' : 'display'
+              onFilenameModeChange(next)
+            }}
+            aria-label={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}
+          >
+            {filenameMode === 'display' ? '별칭' : '원본'}
+          </button>
+        </Tooltip>
       )}
-    </button>
+    </div>
     <button
       type="button"
       className={`doc-explorer-tree__col-btn${sortBy === 'ext' ? ' doc-explorer-tree__col-btn--active' : ''}`}
@@ -1451,6 +1474,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
           sortBy={sortBy}
           sortDirection={sortDirection}
           onSortByChange={onSortByChange}
+          filenameMode={filenameMode}
         />
       )}
       <div

@@ -895,21 +895,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                       )}
                     </button>
 
-                    {/* 파일명 모드 */}
-                    <button
-                      type="button"
-                      className={`doc-explorer-toolbar__settings-toggle ${filenameMode === 'original' ? 'doc-explorer-toolbar__settings-toggle--active' : ''}`}
-                      onClick={() => onFilenameModeChange(filenameMode === 'display' ? 'original' : 'display')}
-                      aria-label={filenameMode === 'display' ? '원본 파일명으로 전환' : '별칭으로 전환'}
-                    >
-                      <SFSymbol
-                        name="doc.text"
-                        size={SFSymbolSize.CAPTION_1}
-                        weight={SFSymbolWeight.REGULAR}
-                        decorative
-                      />
-                      <span>{filenameMode === 'display' ? '별칭 표시' : '원본 표시'}</span>
-                    </button>
+                    {/* 파일명 모드 토글은 컬럼 헤더로 이동됨 */}
                   </div>
                 </div>
               </div>

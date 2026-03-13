@@ -1265,6 +1265,8 @@ const DocumentExplorerContent: React.FC<{
             sortBy={sortBy}
             sortDirection={sortDirection}
             onSortByChange={setSortBy}
+            filenameMode={filenameMode}
+            onFilenameModeChange={handleFilenameModeChange}
           />
         )}
         {/* 트리 뷰 또는 검색 결과 (트리 영역을 대체) */}
