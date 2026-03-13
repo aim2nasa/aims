@@ -370,7 +370,7 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
         response = client.chat.completions.create(
             model=rag_model,
             messages=messages,
-            max_tokens=1500,
+            max_tokens=4000,
             temperature=0.0
         )
         return response.choices[0].message.content, response
