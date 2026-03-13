@@ -476,7 +476,6 @@ const DocumentExplorerContent: React.FC<{
     setIsGeneratingAliases(true)
     try {
       const data = await api.post<{
-        results?: Array<{ document_id: string; status: string; display_name?: string | null }>
         summary?: { completed: number; skipped: number; failed: number }
       }>('/api/batch-display-names', {
         document_ids: Array.from(selectedDocumentIds),
@@ -492,27 +491,8 @@ const DocumentExplorerContent: React.FC<{
           iconType: completed > 0 ? 'success' : 'info',
         })
       }
-      // 페이지 새로고침 대신 로컬 상태만 갱신 — 트리 펼침/스크롤 유지
-      if (data.results) {
-        const updateMap = new Map<string, string>()
-        for (const r of data.results) {
-          if (r.status === 'completed' && r.display_name) {
-            updateMap.set(r.document_id, r.display_name)
-          }
-        }
-        if (updateMap.size > 0) {
-          setExplorerData(prev => {
-            if (!prev?.documents) return prev
-            return {
-              ...prev,
-              documents: prev.documents.map(doc => {
-                const newName = doc._id ? updateMap.get(doc._id) : undefined
-                return newName ? { ...doc, displayName: newName } : doc
-              }),
-            }
-          })
-        }
-      }
+      // 서버에서 최신 데이터 재조회 — 트리 펼침/스크롤은 React state로 유지됨
+      await fetchExplorerTree(selectedInitial)
       // 별칭 편집 모드 종료 — 완료 상태로 전환
       setEditMode('none')
       setSelectedDocumentIds(new Set())
@@ -530,7 +510,7 @@ const DocumentExplorerContent: React.FC<{
     } finally {
       setIsGeneratingAliases(false)
     }
-  }, [selectedDocumentIds, forceRegenerateAlias, showAlert])
+  }, [selectedDocumentIds, forceRegenerateAlias, showAlert, fetchExplorerTree, selectedInitial])
 
   // selectedInitial 변경 시 재조회
   useEffect(() => { fetchExplorerTree(selectedInitial) }, [fetchExplorerTree, selectedInitial])
