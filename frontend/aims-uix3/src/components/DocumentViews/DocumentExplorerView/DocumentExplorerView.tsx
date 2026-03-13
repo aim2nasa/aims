@@ -45,7 +45,8 @@ import './DocumentExplorerView.features.css';
 import './DocumentExplorerView.datejump.css';
 import './DocumentExplorerView.mobile.css';
 import { useDocumentActions } from '@/hooks/useDocumentActions'
-import { api } from '@/shared/lib/api'
+import { useAliasGeneration } from '@/hooks/useAliasGeneration'
+import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 
 export interface DocumentExplorerViewProps {
@@ -128,8 +129,9 @@ const DocumentExplorerContent: React.FC<{
   const { showConfirm, showAlert } = useAppleConfirm()
   const [editMode, setEditMode] = useState<EditModeType>('none')
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set())
-  const [isGeneratingAliases, setIsGeneratingAliases] = useState(false)
   const [forceRegenerateAlias, setForceRegenerateAlias] = useState(false)
+  const aliasGeneration = useAliasGeneration()
+  const isGeneratingAliases = aliasGeneration.progress.isRunning
 
   // 편집 모드 변경 핸들러
   const handleEditModeChange = useCallback((mode: EditModeType) => {
@@ -470,62 +472,63 @@ const DocumentExplorerContent: React.FC<{
     }
   }, [])
 
-  // AI 별칭 일괄 생성 실행
+  // AI 별칭 단건 순차 생성 실행 (실시간 프로그레스 바 표시)
   const handleGenerateAliases = useCallback(async () => {
     if (selectedDocumentIds.size === 0) return
-    setIsGeneratingAliases(true)
     try {
-      const data = await api.post<{
-        summary?: { completed: number; skipped: number; failed: number }
-      }>('/api/batch-display-names', {
-        document_ids: Array.from(selectedDocumentIds),
-        force_regenerate: forceRegenerateAlias,
-      })
-      if (data.summary) {
-        const { completed, skipped, failed } = data.summary
-        const hasCompleted = completed > 0
-        const hasSkipped = skipped > 0
-        const hasFailed = failed > 0
+      const summary = await aliasGeneration.generate(
+        Array.from(selectedDocumentIds),
+        forceRegenerateAlias,
+      )
+      const { completed, skipped, failed, cancelled } = summary
+      const hasCompleted = completed > 0
+      const hasSkipped = skipped > 0
+      const hasFailed = failed > 0
 
-        let title: string
-        let iconType: 'success' | 'info' | 'warning' | 'error'
-        if (hasFailed) {
-          title = hasCompleted ? '일부 문서의 별칭 생성에 실패했습니다' : '별칭 생성에 실패했습니다'
-          iconType = hasCompleted ? 'warning' : 'error'
-        } else if (!hasCompleted && hasSkipped) {
-          title = '새로 생성할 문서가 없습니다'
-          iconType = 'info'
-        } else {
-          title = '별칭 생성 완료'
-          iconType = 'success'
-        }
-
-        const lines: string[] = []
-        if (hasCompleted) lines.push(`${completed}건의 문서에 별칭이 생성되었습니다.`)
-        if (hasFailed) lines.push(`${failed}건 실패 — 잠시 후 다시 시도해 주세요.`)
-        if (hasSkipped) {
-          if (!hasCompleted && !hasFailed) {
-            lines.push(`선택한 ${skipped}건의 문서에 이미 별칭이 있습니다.`)
-            lines.push(`'별칭이 있는 문서도 새로 만들기'를 선택한 후 다시 시도해 주세요.`)
-          } else {
-            lines.push(`${skipped}건은 이미 별칭이 있어 건너뛰었습니다.`)
-          }
-        }
-
-        await showAlert({
-          title,
-          message: lines.join('\n'),
-          confirmText: '확인',
-          showCancel: false,
-          iconType,
-        })
+      let title: string
+      let iconType: 'success' | 'info' | 'warning' | 'error'
+      if (cancelled) {
+        title = hasCompleted ? '별칭 생성이 취소되었습니다' : '별칭 생성이 취소되었습니다'
+        iconType = hasCompleted ? 'warning' : 'info'
+      } else if (hasFailed) {
+        title = hasCompleted ? '일부 문서의 별칭 생성에 실패했습니다' : '별칭 생성에 실패했습니다'
+        iconType = hasCompleted ? 'warning' : 'error'
+      } else if (!hasCompleted && hasSkipped) {
+        title = '새로 생성할 문서가 없습니다'
+        iconType = 'info'
+      } else {
+        title = '별칭 생성 완료'
+        iconType = 'success'
       }
+
+      const lines: string[] = []
+      if (hasCompleted) lines.push(`${completed}건의 문서에 별칭이 생성되었습니다.`)
+      if (hasFailed) lines.push(`${failed}건 실패 — 잠시 후 다시 시도해 주세요.`)
+      if (hasSkipped) {
+        if (!hasCompleted && !hasFailed) {
+          lines.push(`선택한 ${skipped}건의 문서에 이미 별칭이 있습니다.`)
+          lines.push(`'별칭이 있는 문서도 새로 만들기'를 선택한 후 다시 시도해 주세요.`)
+        } else {
+          lines.push(`${skipped}건은 이미 별칭이 있어 건너뛰었습니다.`)
+        }
+      }
+      if (cancelled) lines.push('나머지 문서는 처리되지 않았습니다.')
+
+      await showAlert({
+        title,
+        message: lines.join('\n'),
+        confirmText: '확인',
+        showCancel: false,
+        iconType,
+      })
+
       // 서버에서 최신 데이터 재조회 — 트리 펼침/스크롤은 React state로 유지됨
       await fetchExplorerTree(selectedInitial)
-      // 별칭 편집 모드 종료 — 완료 상태로 전환
+      // 별칭 편집 모드 종료
       setEditMode('none')
       setSelectedDocumentIds(new Set())
       setForceRegenerateAlias(false)
+      aliasGeneration.reset()
     } catch (err) {
       console.error('별칭 생성 실패:', err)
       errorReporter.reportApiError(err as Error, { component: 'DocumentExplorerView.handleGenerateAliases' })
@@ -536,10 +539,9 @@ const DocumentExplorerContent: React.FC<{
         showCancel: false,
         iconType: 'error',
       })
-    } finally {
-      setIsGeneratingAliases(false)
+      aliasGeneration.reset()
     }
-  }, [selectedDocumentIds, forceRegenerateAlias, showAlert, fetchExplorerTree, selectedInitial])
+  }, [selectedDocumentIds, forceRegenerateAlias, showAlert, fetchExplorerTree, selectedInitial, aliasGeneration])
 
   // selectedInitial 변경 시 재조회
   useEffect(() => { fetchExplorerTree(selectedInitial) }, [fetchExplorerTree, selectedInitial])
@@ -1633,6 +1635,12 @@ const DocumentExplorerContent: React.FC<{
             hideColumnHeader
           />
         )}
+
+        {/* AI 별칭 생성 진행률 오버레이 */}
+        <AliasProgressOverlay
+          progress={aliasGeneration.progress}
+          onCancel={aliasGeneration.cancel}
+        />
         </div>
       </div>
 

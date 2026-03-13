@@ -44,6 +44,8 @@ import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from '@/shared/ui
 import { invalidateQueries } from '@/app/queryClient'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { useDocumentActions } from '@/hooks/useDocumentActions'
+import { useAliasGeneration, type AliasProgress } from '@/hooks/useAliasGeneration'
+import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
 
 interface DocumentLibraryViewProps {
   /** View 표시 여부 */
@@ -101,6 +103,8 @@ const DocumentLibraryContent: React.FC<{
   isDeleting: boolean
   isGeneratingAliases: boolean
   onGenerateAliases: (forceRegenerate: boolean) => void
+  aliasProgress: AliasProgress
+  onAliasCancel: () => void
   onCustomerClick?: (customerId: string) => void
   onCustomerDoubleClick?: (customerId: string) => void
   onBulkLinkClick: (documents: Document[]) => void
@@ -110,7 +114,7 @@ const DocumentLibraryContent: React.FC<{
   customerFilter: { id: string; name: string } | null
   /** 고객 필터 설정 핸들러 */
   onCustomerFilterChange: (filter: { id: string; name: string } | null) => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, onDeleteAll, isDeleting, isGeneratingAliases, onGenerateAliases, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange }) => {
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, onDeleteAll, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
   // 🍎 개발서버 여부 (localhost에서만 고객 필터/전체 삭제 기능 활성화)
@@ -782,6 +786,11 @@ const DocumentLibraryContent: React.FC<{
       />
 
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
+      <div className="library-list-wrapper">
+      <AliasProgressOverlay
+        progress={aliasProgress}
+        onCancel={onAliasCancel}
+      />
       <DocumentStatusList
         documents={controller.filteredDocuments}
         isLoading={controller.isLoading}
@@ -816,6 +825,7 @@ const DocumentLibraryContent: React.FC<{
         onRenameCancel={handleRenameCancel}
         searchTerm={state.searchTerm}
       />
+      </div>
 
       {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}
       {!controller.isLoading && controller.filteredDocuments.length > 0 && (
@@ -1000,7 +1010,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
   // 🍎 별칭 일괄 생성 기능 상태
   const [isAliasMode, setIsAliasMode] = React.useState(false)
-  const [isGeneratingAliases, setIsGeneratingAliases] = React.useState(false)
+  const aliasGeneration = useAliasGeneration()
+  const isGeneratingAliases = aliasGeneration.progress.isRunning
 
   // 초성 필터 상태 (F5 이후에도 유지)
   const [initialType, setInitialType] = usePersistedState<InitialType>('document-library-initial-type', 'korean')
@@ -1054,54 +1065,56 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }
   }, [isAliasMode])
 
-  // 🍎 별칭 일괄 생성 핸들러
+  // 🍎 별칭 단건 순차 생성 핸들러 (실시간 프로그레스 바 표시)
   const handleGenerateAliases = React.useCallback(async (forceRegenerate: boolean) => {
     if (selectedDocumentIds.size === 0) return
-    setIsGeneratingAliases(true)
     try {
-      const data = await api.post<{ summary?: { completed: number; skipped: number; failed: number } }>('/api/batch-display-names', {
-        document_ids: Array.from(selectedDocumentIds),
-        force_regenerate: forceRegenerate,
-      })
-      if (data.summary) {
-        const { completed, skipped, failed } = data.summary
-        const hasCompleted = completed > 0
-        const hasSkipped = skipped > 0
-        const hasFailed = failed > 0
+      const summary = await aliasGeneration.generate(
+        Array.from(selectedDocumentIds),
+        forceRegenerate,
+      )
+      const { completed, skipped, failed, cancelled } = summary
+      const hasCompleted = completed > 0
+      const hasSkipped = skipped > 0
+      const hasFailed = failed > 0
 
-        let title: string
-        let iconType: 'success' | 'info' | 'warning' | 'error'
-        if (hasFailed) {
-          title = hasCompleted ? '일부 문서의 별칭 생성에 실패했습니다' : '별칭 생성에 실패했습니다'
-          iconType = hasCompleted ? 'warning' : 'error'
-        } else if (!hasCompleted && hasSkipped) {
-          title = '새로 생성할 문서가 없습니다'
-          iconType = 'info'
-        } else {
-          title = '별칭 생성 완료'
-          iconType = 'success'
-        }
-
-        const lines: string[] = []
-        if (hasCompleted) lines.push(`${completed}건의 문서에 별칭이 생성되었습니다.`)
-        if (hasFailed) lines.push(`${failed}건 실패 — 잠시 후 다시 시도해 주세요.`)
-        if (hasSkipped) {
-          if (!hasCompleted && !hasFailed) {
-            lines.push(`선택한 ${skipped}건의 문서에 이미 별칭이 있습니다.`)
-            lines.push(`'별칭이 있는 문서도 새로 만들기'를 선택한 후 다시 시도해 주세요.`)
-          } else {
-            lines.push(`${skipped}건은 이미 별칭이 있어 건너뛰었습니다.`)
-          }
-        }
-
-        await confirmModal.actions.openModal({
-          title,
-          message: lines.join('\n'),
-          confirmText: '확인',
-          showCancel: false,
-          iconType,
-        })
+      let title: string
+      let iconType: 'success' | 'info' | 'warning' | 'error'
+      if (cancelled) {
+        title = hasCompleted ? '별칭 생성이 취소되었습니다' : '별칭 생성이 취소되었습니다'
+        iconType = hasCompleted ? 'warning' : 'info'
+      } else if (hasFailed) {
+        title = hasCompleted ? '일부 문서의 별칭 생성에 실패했습니다' : '별칭 생성에 실패했습니다'
+        iconType = hasCompleted ? 'warning' : 'error'
+      } else if (!hasCompleted && hasSkipped) {
+        title = '새로 생성할 문서가 없습니다'
+        iconType = 'info'
+      } else {
+        title = '별칭 생성 완료'
+        iconType = 'success'
       }
+
+      const lines: string[] = []
+      if (hasCompleted) lines.push(`${completed}건의 문서에 별칭이 생성되었습니다.`)
+      if (hasFailed) lines.push(`${failed}건 실패 — 잠시 후 다시 시도해 주세요.`)
+      if (hasSkipped) {
+        if (!hasCompleted && !hasFailed) {
+          lines.push(`선택한 ${skipped}건의 문서에 이미 별칭이 있습니다.`)
+          lines.push(`'별칭이 있는 문서도 새로 만들기'를 선택한 후 다시 시도해 주세요.`)
+        } else {
+          lines.push(`${skipped}건은 이미 별칭이 있어 건너뛰었습니다.`)
+        }
+      }
+      if (cancelled) lines.push('나머지 문서는 처리되지 않았습니다.')
+
+      await confirmModal.actions.openModal({
+        title,
+        message: lines.join('\n'),
+        confirmText: '확인',
+        showCancel: false,
+        iconType,
+      })
+
       window.location.reload()
     } catch (err) {
       console.error('별칭 생성 실패:', err)
@@ -1113,9 +1126,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         iconType: 'error',
       })
     } finally {
-      setIsGeneratingAliases(false)
+      aliasGeneration.reset()
     }
-  }, [selectedDocumentIds])
+  }, [selectedDocumentIds, aliasGeneration, confirmModal.actions])
 
   // 🍎 전체 선택/해제 핸들러 (DocumentLibraryContent에서 ID 배열 전달받음)
   const handleSelectAllIds = React.useCallback((ids: string[]) => {
@@ -1325,6 +1338,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             isDeleting={isDeleting}
             isGeneratingAliases={isGeneratingAliases}
             onGenerateAliases={handleGenerateAliases}
+            aliasProgress={aliasGeneration.progress}
+            onAliasCancel={aliasGeneration.cancel}
             onBulkLinkClick={(documents) => {
               setSelectedDocumentsForLink(documents)
               setIsDocumentLinkModalVisible(true)

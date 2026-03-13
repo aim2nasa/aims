@@ -22,6 +22,14 @@ MAX_BATCH_SIZE = 50
 INTER_DOCUMENT_DELAY = 0.3
 
 
+class SingleDisplayNameRequest(BaseModel):
+    """단건 displayName 생성 요청"""
+    document_id: str
+    user_id: str
+    force_regenerate: bool = False
+    existing_aliases: List[str] = Field(default_factory=list)
+
+
 class BatchDisplayNameRequest(BaseModel):
     """배치 displayName 생성 요청"""
     document_ids: List[str] = Field(..., min_length=1, max_length=MAX_BATCH_SIZE)
@@ -139,6 +147,100 @@ def _is_ar_or_crs(doc: dict) -> bool:
         if "AR" in tags or "CRS" in tags:
             return True
     return False
+
+
+@router.post("/generate-display-name", response_model=DocumentResult)
+async def generate_single_display_name(request: SingleDisplayNameRequest):
+    """
+    단건 displayName 생성 — 프론트엔드에서 건별 호출하여 실시간 진행률 표시용
+
+    - AR/CRS 문서는 스킵
+    - force_regenerate=false 시 이미 displayName이 있는 문서 스킵
+    - ownerId 기반 보안 격리
+    - existing_aliases: 프론트에서 누적 전달 (중복 방지)
+    """
+    doc_id = request.document_id
+    if not request.user_id:
+        raise HTTPException(status_code=400, detail="user_id는 필수입니다.")
+
+    collection = MongoService.get_collection("files")
+
+    try:
+        obj_id = ObjectId(doc_id)
+    except Exception:
+        return DocumentResult(document_id=doc_id, status="failed", reason="invalid_document_id")
+
+    doc = await collection.find_one({"_id": obj_id})
+    if not doc:
+        return DocumentResult(document_id=doc_id, status="failed", reason="document_not_found")
+
+    # 보안 격리: ownerId 확인
+    doc_owner = doc.get("ownerId") or doc.get("owner_id") or ""
+    if str(doc_owner) != request.user_id:
+        return DocumentResult(document_id=doc_id, status="failed", reason="unauthorized")
+
+    # AR/CRS 문서 스킵
+    if _is_ar_or_crs(doc):
+        return DocumentResult(document_id=doc_id, status="skipped", reason="ar_crs_document")
+
+    # displayName 이미 존재 + force=false 시 스킵
+    existing_display_name = doc.get("displayName")
+    if existing_display_name and not request.force_regenerate:
+        return DocumentResult(
+            document_id=doc_id, status="skipped",
+            display_name=existing_display_name, reason="already_exists"
+        )
+
+    # 텍스트 추출
+    text = _extract_text_from_document(doc)
+    if not text or len(text.strip()) < 10:
+        return DocumentResult(document_id=doc_id, status="skipped", reason="insufficient_text")
+
+    # 원본 파일명 및 문서 유형 추출
+    upload_obj = doc.get("upload")
+    upload_original = upload_obj.get("originalName", "") if isinstance(upload_obj, dict) else ""
+    original_name = doc.get("originalName") or doc.get("original_name") or upload_original or ""
+    doc_type = doc.get("document_type") or ""
+
+    try:
+        # OpenAI로 제목 생성
+        title_result = await OpenAIService.generate_title_only(
+            text=text,
+            owner_id=request.user_id,
+            document_id=doc_id,
+            original_filename=original_name,
+            document_type=doc_type,
+            existing_aliases=request.existing_aliases
+        )
+
+        # 크레딧 초과 체크
+        if title_result.get("error") == "credit_exceeded":
+            return DocumentResult(document_id=doc_id, status="failed", reason="credit_exceeded")
+
+        title = title_result.get("title")
+        if not title:
+            return DocumentResult(document_id=doc_id, status="failed", reason="title_generation_failed")
+
+        # displayName 정리
+        display_name = sanitize_display_name(title, original_name)
+        if not display_name:
+            return DocumentResult(document_id=doc_id, status="failed", reason="sanitize_failed")
+
+        # MongoDB 업데이트
+        await collection.update_one(
+            {"_id": obj_id},
+            {
+                "$set": {"displayName": display_name},
+                "$unset": {"displayNameStatus": ""}
+            }
+        )
+
+        logger.info(f"[DisplayName] 단건 생성 완료: doc_id={doc_id}, displayName={display_name}")
+        return DocumentResult(document_id=doc_id, status="completed", display_name=display_name)
+
+    except Exception as e:
+        logger.error(f"[DisplayName] 단건 처리 실패: doc_id={doc_id}, error={e}", exc_info=True)
+        return DocumentResult(document_id=doc_id, status="failed", reason="internal_error")
 
 
 @router.post("/batch-display-names", response_model=BatchDisplayNameResponse)

@@ -135,6 +135,46 @@ router.post("/batch-display-names", authenticateJWT, async (req, res) => {
   }
 });
 
+// ==================== Single Display Name Generation Proxy ====================
+/**
+ * 단건 별칭(displayName) 생성 프록시 엔드포인트
+ * document_pipeline의 generate-display-name API로 전달
+ * 프론트에서 건별 호출하여 실시간 진행률 표시용
+ */
+router.post("/generate-display-name", authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'userId required' });
+    }
+
+    const { document_id, force_regenerate, existing_aliases } = req.body;
+    if (!document_id) {
+      return res.status(400).json({ success: false, message: 'document_id 필수' });
+    }
+
+    const response = await axios.post(
+      `${DOCUMENT_PIPELINE_URL}/webhook/generate-display-name`,
+      {
+        document_id,
+        user_id: userId,
+        force_regenerate: !!force_regenerate,
+        existing_aliases: existing_aliases || []
+      },
+      { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ [단건 별칭 생성 프록시] 실패:", error.message);
+    backendLogger.error('SingleDisplayName', '단건 별칭 생성 프록시 실패', error);
+    res.status(error.response?.status || 500).json({
+      success: false,
+      error: "별칭 생성 실패"
+    });
+  }
+});
+
 // ==================== AR Background Parsing Proxy ====================
 /**
  * AR 백그라운드 파싱 프록시 엔드포인트

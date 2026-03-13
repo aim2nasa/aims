@@ -357,4 +357,9 @@
     transition: color 0.2s ease-out;
   }
 
+  /* 리스트 래퍼: AliasProgressOverlay 기준점 */
+  .library-list-wrapper {
+    position: relative;
+  }
+
 } /* end @layer components */

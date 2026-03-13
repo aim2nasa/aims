@@ -20,6 +20,7 @@
      Tree Container
      ============================================ */
   .doc-explorer-tree-container {
+    position: relative;
     flex: 1;
     overflow: auto;
     padding: var(--explorer-spacing-md);

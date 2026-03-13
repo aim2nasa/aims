@@ -1,0 +1,130 @@
+/**
+ * AliasProgressOverlay 스타일
+ * AI 별칭 생성 진행률 오버레이
+ * CSS 변수만 사용 (CLAUDE.md 규칙)
+ */
+
+/* 오버레이: 부모 요소(position: relative) 기준 전체 덮음 */
+.alias-progress-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-overlay, rgba(255, 255, 255, 0.75));
+  pointer-events: all;
+  backdrop-filter: blur(2px);
+}
+
+html[data-theme="dark"] .alias-progress-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* 카드 */
+.alias-progress-overlay__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 32px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  min-width: 320px;
+  max-width: 400px;
+}
+
+/* 헤더: 제목 + 카운터 */
+.alias-progress-overlay__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.alias-progress-overlay__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.alias-progress-overlay__counter {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 프로그레스 바 */
+.alias-progress-overlay__bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.alias-progress-overlay__bar-fill {
+  height: 100%;
+  background: var(--color-primary-500);
+  border-radius: 3px;
+  transition: width 0.3s ease-out;
+}
+
+/* 현재 생성된 별칭명 */
+.alias-progress-overlay__current-name {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-primary-600);
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-height: 18px;
+}
+
+/* 실시간 카운트 */
+.alias-progress-overlay__stats {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.alias-progress-overlay__stat {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.alias-progress-overlay__stat--completed {
+  color: var(--color-success-600, #16a34a);
+}
+
+.alias-progress-overlay__stat--skipped {
+  color: var(--color-text-tertiary);
+}
+
+.alias-progress-overlay__stat--failed {
+  color: var(--color-error-600, #dc2626);
+}
+
+/* 취소 버튼 */
+.alias-progress-overlay__cancel {
+  margin-top: 4px;
+  padding: 4px 16px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  background: none;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.alias-progress-overlay__cancel:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
