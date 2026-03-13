@@ -276,10 +276,13 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
                 failed += 1
                 continue
 
-            # 8. MongoDB 업데이트
+            # 8. MongoDB 업데이트 (성공 시 displayNameStatus 제거)
             await collection.update_one(
                 {"_id": obj_id},
-                {"$set": {"displayName": display_name}}
+                {
+                    "$set": {"displayName": display_name},
+                    "$unset": {"displayNameStatus": ""}
+                }
             )
 
             results.append(DocumentResult(

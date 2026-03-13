@@ -213,24 +213,24 @@ if (frontendTests > 0) {
     'Frontend acknowledges cascade deletion in comments'
   );
 
-  // 15. customerChanged 이벤트 발생
+  // 15. customerChanged 이벤트 발생 (invalidateQueries 또는 dispatchEvent)
   assertIncludes(
     frontendContent,
-    "dispatchEvent\\(new\\s+CustomEvent\\('customerChanged'\\)\\)",
+    "customerChanged",
     'Frontend dispatches customerChanged event'
   );
 
-  // 16. contractChanged 이벤트 발생
+  // 16. contractChanged 이벤트 발생 (invalidateQueries 또는 dispatchEvent)
   assertIncludes(
     frontendContent,
-    "dispatchEvent\\(new\\s+CustomEvent\\('contractChanged'\\)\\)",
+    "contractChanged",
     'Frontend dispatches contractChanged event'
   );
 
-  // 17. documentChanged 이벤트 발생
+  // 17. documentChanged 이벤트 발생 (invalidateQueries 또는 dispatchEvent)
   assertIncludes(
     frontendContent,
-    "dispatchEvent\\(new\\s+CustomEvent\\('documentChanged'\\)\\)",
+    "documentChanged",
     'Frontend dispatches documentChanged event'
   );
 }

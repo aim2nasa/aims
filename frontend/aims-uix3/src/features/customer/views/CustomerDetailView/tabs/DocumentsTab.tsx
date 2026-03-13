@@ -1390,10 +1390,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     {/* 🍎 파일명 표시: filenameMode에 따라 원본/별칭 전환 (또는 인라인 편집) */}
                     {(() => {
                       const hasDisplay = Boolean(document.displayName)
-                      const showName = filenameMode === 'display' && hasDisplay
+                      const isAlias = filenameMode === 'display' && hasDisplay
+                      const showName = isAlias
                         ? document.displayName!
                         : (document.originalName ?? '이름 없는 문서')
-                      const altName = filenameMode === 'display' && hasDisplay
+                      const altName = isAlias
                         ? `원본: ${document.originalName ?? ''}`
                         : (hasDisplay ? `별칭: ${document.displayName}` : '')
 
@@ -1412,11 +1413,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         <>
                           {altName ? (
                             <Tooltip content={altName}>
-                              <span className="status-filename-text">{showName}</span>
+                              <span className={`status-filename-text${isAlias ? ' document-name--alias' : ''}`}>{showName}</span>
                             </Tooltip>
                           ) : (
                             <Tooltip content={showName} showOnlyWhenTruncated>
-                              <span className="status-filename-text">{showName}</span>
+                              <span className={`status-filename-text${isAlias ? ' document-name--alias' : ''}`}>{showName}</span>
                             </Tooltip>
                           )}
                           <span className="status-filename-hover-actions" onClick={(e) => e.stopPropagation()}>
@@ -1596,18 +1597,19 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     onKeyDown={handleSimpleSearchKeyDown}
                     aria-label="간편 문서검색"
                   />
+                  <Tooltip content="문서 내용 검색">
                   <button
                     type="button"
                     className="simple-document-search__btn"
                     onClick={handleSimpleSearch}
                     disabled={!simpleSearchQuery.trim()}
                     aria-label="검색"
-                    title="문서 내용 검색"
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                       <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                     </svg>
                   </button>
+                  </Tooltip>
                   <span className="simple-document-search__divider">|</span>
                   <Tooltip content="문서 검색 페이지로 이동 (현재 고객 자동 선택)">
                     <div className="simple-document-search__detail-group">

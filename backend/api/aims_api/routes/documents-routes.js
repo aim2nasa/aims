@@ -627,7 +627,8 @@ router.get('/documents', authenticateJWT, async (req, res) => {
       return {
         _id: doc._id,
         filename: doc.upload?.originalName || 'Unknown File',
-        displayName: doc.displayName || null,  // 🍎 CR 파싱 후 생성된 사용자 친화적 이름
+        displayName: doc.displayName || null,
+        displayNameStatus: doc.displayNameStatus || null,
         fileSize: doc.meta?.size_bytes || 0,
         mimeType: doc.meta?.mime || 'unknown',
         uploadTime: doc.upload?.uploaded_at || doc.createdAt,
@@ -886,6 +887,7 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
               _id: doc._id,
               originalName: doc.upload?.originalName || 'Unknown File',
               displayName: doc.displayName || null,
+              displayNameStatus: doc.displayNameStatus || null,
               uploadedAt: normalizeTimestamp(doc.upload?.uploaded_at),
               fileSize: doc.meta?.size_bytes,
               mimeType: doc.meta?.mime,
@@ -1763,7 +1765,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
-        displayName: doc.displayName || null,  // CR 등 파싱 후 생성된 사용자 친화적 이름
+        displayName: doc.displayName || null,
+        displayNameStatus: doc.displayNameStatus || null,
         uploadedAt: normalizeTimestamp(doc.upload?.uploaded_at),
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
@@ -2325,7 +2328,8 @@ router.get('/documents/status/live', authenticateJWT, async (req, res) => {
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
-        displayName: doc.displayName || null,  // CR 등 파싱 후 생성된 사용자 친화적 이름
+        displayName: doc.displayName || null,
+        displayNameStatus: doc.displayNameStatus || null,
         ...statusInfo
       };
     });

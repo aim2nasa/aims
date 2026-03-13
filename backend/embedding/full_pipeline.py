@@ -307,8 +307,28 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                             'overallStatusUpdatedAt': datetime.now(timezone.utc)
                         }}
                     )
-                    # 바이러스 스캔 트리거 (임베딩 스킵이라도 완료 처리)
+                    # 🔵 displayName 자동 생성 (임베딩 스킵이라도 시도)
                     owner_id = doc_data.get('ownerId')
+                    if not doc_data.get("displayName") and owner_id:
+                        is_ar = doc_data.get("is_annual_report", False)
+                        is_crs = doc_data.get("is_customer_review", False)
+                        tags = doc_data.get("tags", [])
+                        is_ar_crs = is_ar or is_crs or ("AR" in (tags or [])) or ("CRS" in (tags or []))
+                        if not is_ar_crs:
+                            try:
+                                dp_url = os.getenv("DOCUMENT_PIPELINE_URL", "http://localhost:8100")
+                                dn_resp = requests.post(
+                                    f"{dp_url}/webhook/batch-display-names",
+                                    json={"document_ids": [doc_id], "user_id": owner_id, "force_regenerate": False},
+                                    headers={"Content-Type": "application/json"},
+                                    timeout=15  # 배치 1건 기준 충분, 루프 블로킹 최소화
+                                )
+                                if dn_resp.status_code == 200:
+                                    print(f"[DisplayName] 자동 생성 완료 (스킵 문서): {doc_id}")
+                            except Exception as dn_err:
+                                print(f"[DisplayName] 자동 생성 실패 (계속 진행): {doc_id}, error={dn_err}")
+
+                    # 바이러스 스캔 트리거 (임베딩 스킵이라도 완료 처리)
                     trigger_virus_scan(doc_id, owner_id)
                     continue
 
@@ -353,6 +373,30 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     }}
                 )
                 print(f"--- 문서 ID: {doc_id} 처리 완료 (status+overallStatus: completed) ---")
+
+                # 🔵 displayName 자동 생성 (없는 비-AR/CRS 문서만)
+                if not doc_data.get("displayName"):
+                    is_ar = doc_data.get("is_annual_report", False)
+                    is_crs = doc_data.get("is_customer_review", False)
+                    tags = doc_data.get("tags", [])
+                    is_ar_crs = is_ar or is_crs or ("AR" in (tags or [])) or ("CRS" in (tags or []))
+
+                    if not is_ar_crs and owner_id:
+                        try:
+                            dp_url = os.getenv("DOCUMENT_PIPELINE_URL", "http://localhost:8100")
+                            dn_resp = requests.post(
+                                f"{dp_url}/webhook/batch-display-names",
+                                json={"document_ids": [doc_id], "user_id": owner_id, "force_regenerate": False},
+                                headers={"Content-Type": "application/json"},
+                                timeout=30
+                            )
+                            if dn_resp.status_code == 200:
+                                dn_result = dn_resp.json()
+                                print(f"[DisplayName] 자동 생성 완료: {doc_id}, summary={dn_result.get('summary', {})}")
+                            else:
+                                print(f"[DisplayName] API 응답 에러: {doc_id}, status={dn_resp.status_code}")
+                        except Exception as dn_err:
+                            print(f"[DisplayName] 자동 생성 실패 (계속 진행): {doc_id}, error={dn_err}")
 
                 # 바이러스 스캔 트리거 (임베딩 완료 후 자동 스캔)
                 trigger_virus_scan(doc_id, owner_id)

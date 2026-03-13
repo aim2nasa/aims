@@ -1135,15 +1135,16 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         {/* 🍎 iOS Spotlight 검색바 - 한 줄 레이아웃 */}
         <div className={`search-bar-wrapper${isLoading ? ' search-bar-wrapper--loading' : ''}`}>
           {/* 🍎 고객 선택 버튼 (모든 검색 모드에서 표시) */}
+          <Tooltip content="고객 선택">
           <button
             className="customer-select-button"
             onClick={() => setIsCustomerSelectorOpen(true)}
             aria-label="고객 선택"
-            title="고객 선택"
             disabled={isLoading}
           >
             고객선택
           </button>
+          </Tooltip>
 
           {/* 🍎 선택된 고객명 표시 또는 최근 고객 드롭다운 */}
           <div className="selected-customer-display">
@@ -1159,7 +1160,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     handleCustomerIdChange(null)
                   }}
                   aria-label="고객 선택 해제"
-                  title="고객 선택 해제"
                   disabled={isLoading}
                 >
                   ✕
@@ -1534,8 +1534,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   const originalName = SearchService.getOriginalName(item)
                   const displayName = SearchService.getDisplayName(item)
                   const hasDisplay = Boolean(displayName)
+                  const isAlias = filenameMode === 'display' && hasDisplay
                   // 🍎 filenameMode에 따라 표시할 파일명 결정
-                  const showName = filenameMode === 'display' && hasDisplay
+                  const showName = isAlias
                     ? displayName!
                     : originalName
                   // 🍎 툴팁용 대체 파일명
@@ -1661,10 +1662,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                                 <>
                                   {altName ? (
                                     <Tooltip content={altName}>
-                                      <span className="row-title">{showName}</span>
+                                      <span className={`row-title${isAlias ? ' document-name--alias' : ''}`}>{showName}</span>
                                     </Tooltip>
                                   ) : (
-                                    <span className="row-title">{showName}</span>
+                                    <span className={`row-title${isAlias ? ' document-name--alias' : ''}`}>{showName}</span>
                                   )}
                                   <span className="search-hover-actions" onClick={(e) => e.stopPropagation()}>
                                     <Tooltip content="이름 변경">

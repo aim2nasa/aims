@@ -1,0 +1,40 @@
+/**
+ * 문서 별칭(displayName) 시각적 구분 스타일
+ * - AI 생성 별칭: 기울임(skew) + ✦ 마커 + primary 색상
+ * - 원본 파일명: 기본 스타일 (변경 없음)
+ */
+
+/* 별칭 표시: 기울임 + primary 색상 (각 렌더링 요소별 특이성 확보) */
+.status-filename-text.document-name--alias,
+.doc-explorer-tree__doc-name-text.document-name--alias,
+.row-title.document-name--alias,
+.cde-doc-row__name.document-name--alias,
+span.document-name--alias {
+  display: inline-block;
+  transform: skewX(-10deg);
+  color: var(--color-primary-600);
+}
+
+.document-name--alias::before {
+  content: "\2726 ";
+  font-style: normal;
+  color: var(--color-primary-600);
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+/* 별칭 생성 실패 경고 아이콘 */
+.document-name__alias-failed {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  cursor: help;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.document-name__alias-failed:hover {
+  opacity: 1;
+}

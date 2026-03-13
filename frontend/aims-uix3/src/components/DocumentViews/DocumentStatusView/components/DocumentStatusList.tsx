@@ -274,10 +274,16 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
             <>
               {altName ? (
                 <Tooltip content={altName}>
-                  <span className="status-filename-text">{searchTerm ? highlightText(showName, searchTerm) : showName}</span>
+                  <span className={`status-filename-text${filenameMode === 'display' && hasDisplay ? ' document-name--alias' : ''}`}>{searchTerm ? highlightText(showName, searchTerm) : showName}</span>
                 </Tooltip>
               ) : (
-                <span className="status-filename-text">{searchTerm ? highlightText(showName, searchTerm) : showName}</span>
+                <span className={`status-filename-text${filenameMode === 'display' && hasDisplay ? ' document-name--alias' : ''}`}>{searchTerm ? highlightText(showName, searchTerm) : showName}</span>
+              )}
+              {/* 별칭 생성 실패 표시 */}
+              {filenameMode === 'display' && !hasDisplay && document.displayNameStatus === 'failed' && (
+                <Tooltip content="별칭 자동 생성에 실패했습니다. 별칭AI 버튼으로 재생성할 수 있습니다.">
+                  <span className="document-name__alias-failed">⚠</span>
+                </Tooltip>
               )}
               {/* 호버 시 이름변경/삭제 아이콘 */}
               {onRenameClick && onDeleteClick && (

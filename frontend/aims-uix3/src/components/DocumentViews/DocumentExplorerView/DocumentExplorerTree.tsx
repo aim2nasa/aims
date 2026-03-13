@@ -132,16 +132,17 @@ const formatDateTime = (dateStr: string): string => {
 }
 
 // filenameMode에 따라 문서 표시명 결정 — 순수 함수이므로 컴포넌트 바깥에 정의
-const getDocName = (doc: Document, filenameMode: 'display' | 'original'): { showName: string; altName: string } => {
+const getDocName = (doc: Document, filenameMode: 'display' | 'original'): { showName: string; altName: string; isAlias: boolean } => {
   const originalName = DocumentStatusService.extractOriginalFilename(doc)
   const hasDisplay = Boolean(doc.displayName)
-  const showName = filenameMode === 'display' && hasDisplay
+  const isAlias = filenameMode === 'display' && hasDisplay
+  const showName = isAlias
     ? doc.displayName!
     : originalName
-  const altName = filenameMode === 'display' && hasDisplay
+  const altName = isAlias
     ? `원본: ${originalName}`
     : (hasDisplay ? `별칭: ${doc.displayName}` : '')
-  return { showName, altName }
+  return { showName, altName, isAlias }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -211,7 +212,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   const customerType = doc.customer_relation?.customer_type
   const documentDate = getDocumentDate(doc)
   const filename = DocumentStatusService.extractFilename(doc)
-  const { showName, altName } = getDocName(doc, filenameMode)
+  const { showName, altName, isAlias } = getDocName(doc, filenameMode)
   const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : ''
   const fileSize = DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(doc))
 
@@ -259,7 +260,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
               />
             ) : (
               <span
-                className="doc-explorer-tree__doc-name-text"
+                className={`doc-explorer-tree__doc-name-text${isAlias ? ' document-name--alias' : ''}`}
                 onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
                 onMouseMove={(e) => onDocumentMouseMove(doc, e)}
                 onMouseLeave={onDocumentMouseLeave}
@@ -269,6 +270,13 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
             )}
           </span>
         </Tooltip>
+
+        {/* 별칭 생성 실패 표시 */}
+        {filenameMode === 'display' && !isAlias && doc.displayNameStatus === 'failed' && (
+          <Tooltip content="별칭 자동 생성에 실패했습니다. 별칭AI 버튼으로 재생성할 수 있습니다." placement="bottom">
+            <span className="document-name__alias-failed">⚠</span>
+          </Tooltip>
+        )}
 
         {/* 편집/삭제 아이콘 */}
         {!(renamingDocumentId && renamingDocumentId === docId) && onRenameClick && onDeleteClick && (
@@ -1288,7 +1296,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
               const customerType = doc.customer_relation?.customer_type
               const documentDate = getDocumentDate(doc)
               const filename = DocumentStatusService.extractFilename(doc)
-              const { showName, altName } = getDocName(doc, filenameMode)
+              const { showName, altName, isAlias } = getDocName(doc, filenameMode)
               const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : ''
               const fileSize = DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(doc))
 
@@ -1314,7 +1322,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   <Tooltip content={altName || showName} placement="bottom">
                     <span className="doc-explorer-tree__doc-name">
                       <span
-                        className="doc-explorer-tree__doc-name-text"
+                        className={`doc-explorer-tree__doc-name-text${isAlias ? ' document-name--alias' : ''}`}
                         onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
                         onMouseMove={(e) => handleDocumentMouseMove(doc, e)}
                         onMouseLeave={handleDocumentMouseLeave}

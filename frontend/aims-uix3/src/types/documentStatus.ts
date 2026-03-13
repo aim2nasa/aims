@@ -144,7 +144,8 @@ export interface Document {
 
   // 기본 필드들
   originalName?: string
-  displayName?: string  // 🍎 CR 파싱 후 생성된 사용자 친화적 이름
+  displayName?: string  // 🍎 AI 생성 또는 AR/CRS 파싱 후 생성된 사용자 친화적 이름
+  displayNameStatus?: string  // 별칭 생성 결과: "failed" = 자동 생성 실패
   filename?: string
   file_name?: string
   name?: string

@@ -28,6 +28,7 @@ from services.openai_service import OpenAIService
 from services.redis_service import RedisService
 from services.temp_file_service import TempFileService
 from services.upload_queue_service import UploadQueueService
+from routers.doc_display_name import sanitize_display_name
 from services.pdf_conversion_text_service import (
     is_convertible_mime,
     convert_and_extract_text,
@@ -1315,6 +1316,7 @@ async def process_document_pipeline(
                 logger.info(f"[PDF변환텍스트] 텍스트 추출 실패, OCR fallback: {doc_id}")
 
         summary = ""
+        summary_result = {}
 
         ai_document_type = "general"
         ai_confidence = 0.0
@@ -1401,6 +1403,7 @@ async def process_document_pipeline(
         # 🔴 AR/CRS 자동 감지 (PDF 파일이고 텍스트가 있는 경우)
         # AR/CRS 감지 실패가 문서 처리 전체를 중단시키지 않도록 개별 격리
         is_ar_detected = False
+        is_crs_detected = False
         if detected_mime == "application/pdf" and full_text and len(full_text.strip()) > 0:
             try:
                 ar_detection = await _detect_and_process_annual_report(
@@ -1426,6 +1429,7 @@ async def process_document_pipeline(
                         files_collection=files_collection
                     )
                     if crs_detection.get("is_customer_review"):
+                        is_crs_detected = True
                         logger.info(f"✅ CRS 자동 감지 완료: doc_id={doc_id}, related_customer_id={crs_detection.get('related_customer_id')}")
                 except Exception as crs_err:
                     logger.error(f"❌ CRS 감지 예외 (문서 처리 계속): doc_id={doc_id}, error={crs_err}", exc_info=True)
@@ -1448,6 +1452,43 @@ async def process_document_pipeline(
                 {"_id": ObjectId(doc_id)},
                 {"$set": {"text.full_text": text_content}}
             )
+
+            # 🔵 displayName 자동 생성 (text/plain)
+            # text/plain은 메타 추출 시점에 full_text가 비어 summarize_text() 미호출 →
+            # summary_result에 title 없음 → generate_title_only() 경량 호출로 생성
+            try:
+                ai_title = summary_result.get("title", "") if summary_result else ""
+                if not ai_title and text_content and len(text_content.strip()) >= 10:
+                    try:
+                        title_result = await OpenAIService.generate_title_only(
+                            text=text_content,
+                            owner_id=user_id,
+                            document_id=doc_id
+                        )
+                        ai_title = title_result.get("title", "")
+                    except Exception as title_err:
+                        logger.warning(f"[DisplayName] generate_title_only 실패 (text/plain): {doc_id}, error={title_err}")
+
+                if ai_title:
+                    display_name = sanitize_display_name(ai_title, original_name)
+                    if display_name:
+                        await files_collection.update_one(
+                            {"_id": ObjectId(doc_id)},
+                            {"$set": {"displayName": display_name}}
+                        )
+                        logger.info(f"[DisplayName] 자동 생성 (text/plain): {doc_id}, {original_name} → {display_name}")
+                    else:
+                        await files_collection.update_one(
+                            {"_id": ObjectId(doc_id)},
+                            {"$set": {"displayNameStatus": "failed"}}
+                        )
+                else:
+                    await files_collection.update_one(
+                        {"_id": ObjectId(doc_id)},
+                        {"$set": {"displayNameStatus": "failed"}}
+                    )
+            except Exception as dn_err:
+                logger.warning(f"[DisplayName] 자동 생성 예외 (text/plain, 처리 계속): {doc_id}, error={dn_err}")
 
             # Progress: 100% - text/plain processing complete (no OCR needed)
             await _notify_progress(doc_id, user_id, 100, "complete", "텍스트 파일 처리 완료")
@@ -1557,6 +1598,52 @@ async def process_document_pipeline(
 
         # Case 4: Text already extracted, notify complete
         logger.info(f"Document {doc_id} processed without OCR (text already extracted)")
+
+        # 🔵 displayName 자동 생성 (AR/CRS가 아닌 일반 문서)
+        if not is_ar_detected and not is_crs_detected:
+            try:
+                existing_doc = await files_collection.find_one(
+                    {"_id": ObjectId(doc_id)},
+                    {"displayName": 1}
+                )
+                if existing_doc and not existing_doc.get("displayName"):
+                    # 1순위: summarize_text()에서 이미 생성된 title (추가 API 비용 없음)
+                    ai_title = summary_result.get("title", "") if summary_result else ""
+
+                    # 2순위: title이 없으면 generate_title_only() 경량 호출
+                    if not ai_title and full_text and len(full_text.strip()) >= 10:
+                        try:
+                            title_result = await OpenAIService.generate_title_only(
+                                text=full_text,
+                                owner_id=user_id,
+                                document_id=doc_id
+                            )
+                            ai_title = title_result.get("title", "")
+                        except Exception as title_err:
+                            logger.warning(f"[DisplayName] generate_title_only 실패: {doc_id}, error={title_err}")
+
+                    if ai_title:
+                        display_name = sanitize_display_name(ai_title, original_name)
+                        if display_name:
+                            await files_collection.update_one(
+                                {"_id": ObjectId(doc_id)},
+                                {"$set": {"displayName": display_name}}
+                            )
+                            logger.info(f"[DisplayName] 자동 생성: {doc_id}, {original_name} → {display_name}")
+                        else:
+                            await files_collection.update_one(
+                                {"_id": ObjectId(doc_id)},
+                                {"$set": {"displayNameStatus": "failed"}}
+                            )
+                            logger.warning(f"[DisplayName] sanitize 실패: {doc_id}")
+                    else:
+                        await files_collection.update_one(
+                            {"_id": ObjectId(doc_id)},
+                            {"$set": {"displayNameStatus": "failed"}}
+                        )
+                        logger.warning(f"[DisplayName] 제목 생성 실패 (텍스트 부족 또는 API 에러): {doc_id}")
+            except Exception as dn_err:
+                logger.warning(f"[DisplayName] 자동 생성 예외 (문서 처리 계속): {doc_id}, error={dn_err}")
 
         # Progress: 90% - Almost complete
         await _notify_progress(doc_id, user_id, 90, "complete", "처리 완료 중")

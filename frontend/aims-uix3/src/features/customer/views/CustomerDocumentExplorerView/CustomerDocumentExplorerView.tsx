@@ -643,10 +643,11 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                             const fileClass = DocumentUtils.getFileTypeClass(doc.mimeType, doc.originalName)
                             const fileSize = doc.fileSize ? DocumentUtils.formatFileSize(doc.fileSize) : '-'
                             const hasDisplay = Boolean(doc.displayName)
-                            const showName = filenameMode === 'display' && hasDisplay
+                            const isAlias = filenameMode === 'display' && hasDisplay
+                            const showName = isAlias
                               ? doc.displayName!
                               : doc.originalName
-                            const altName = filenameMode === 'display' && hasDisplay
+                            const altName = isAlias
                               ? `원본: ${doc.originalName}`
                               : (hasDisplay ? `별칭: ${doc.displayName}` : '')
                             return (
@@ -674,32 +675,38 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                     <>
                                       {altName ? (
                                         <Tooltip content={altName}>
-                                          <span className="cde-doc-row__name">{showName}</span>
+                                          <span className={`cde-doc-row__name${isAlias ? ' document-name--alias' : ''}`}>{showName}</span>
                                         </Tooltip>
                                       ) : (
-                                        <span className="cde-doc-row__name" title={doc.originalName}>{showName}</span>
+                                        <Tooltip content={doc.originalName || ''} showOnlyWhenTruncated>
+                                          <span className={`cde-doc-row__name${isAlias ? ' document-name--alias' : ''}`}>{showName}</span>
+                                        </Tooltip>
                                       )}
                                       <span className="cde-doc-row__hover-actions" onClick={(e) => e.stopPropagation()}>
-                                        <button
-                                          type="button"
-                                          className="cde-doc-row__hover-btn cde-doc-row__hover-btn--rename"
-                                          title="이름 변경"
-                                          onClick={(e) => { e.stopPropagation(); handleRenameClick(doc) }}
-                                        >
-                                          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                                            <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                          </svg>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          className="cde-doc-row__hover-btn cde-doc-row__hover-btn--delete"
-                                          title="삭제"
-                                          onClick={(e) => { e.stopPropagation(); handleHoverDeleteClick(doc) }}
-                                        >
-                                          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                                            <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                                          </svg>
-                                        </button>
+                                        <Tooltip content="이름 변경">
+                                          <button
+                                            type="button"
+                                            className="cde-doc-row__hover-btn cde-doc-row__hover-btn--rename"
+                                            aria-label="이름 변경"
+                                            onClick={(e) => { e.stopPropagation(); handleRenameClick(doc) }}
+                                          >
+                                            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                                              <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                          </button>
+                                        </Tooltip>
+                                        <Tooltip content="삭제">
+                                          <button
+                                            type="button"
+                                            className="cde-doc-row__hover-btn cde-doc-row__hover-btn--delete"
+                                            aria-label="삭제"
+                                            onClick={(e) => { e.stopPropagation(); handleHoverDeleteClick(doc) }}
+                                          >
+                                            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                                              <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                          </button>
+                                        </Tooltip>
                                       </span>
                                     </>
                                   )}
