@@ -179,6 +179,8 @@
     --color-overlay-backdrop-strong: rgba(0, 0, 0, var(--opacity-overlay-strong));
     --color-overlay-dark: rgba(0, 0, 0, var(--opacity-dark-overlay));
     --color-overlay-light: rgba(255, 255, 255, var(--opacity-light-overlay));
+    --color-overlay-frosted: rgba(255, 255, 255, 0.75);
+    --color-overlay-frosted-dark: rgba(0, 0, 0, 0.6);
 
     /* iOS-style Overlay Colors */
     --color-ios-bg-light: rgba(142, 142, 147, var(--opacity-ios-bg-light));

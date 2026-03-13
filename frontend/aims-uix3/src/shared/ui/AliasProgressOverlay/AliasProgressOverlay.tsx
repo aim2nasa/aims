@@ -8,6 +8,7 @@
 
 import React from 'react'
 import type { AliasProgress } from '@/hooks/useAliasGeneration'
+import { Button } from '@/shared/ui/Button'
 import './AliasProgressOverlay.css'
 
 interface AliasProgressOverlayProps {
@@ -70,13 +71,9 @@ export const AliasProgressOverlay: React.FC<AliasProgressOverlayProps> = ({
         </div>
 
         {/* 취소 버튼 */}
-        <button
-          type="button"
-          className="alias-progress-overlay__cancel"
-          onClick={onCancel}
-        >
+        <Button variant="ghost" size="sm" onClick={onCancel}>
           취소
-        </button>
+        </Button>
       </div>
     </div>
   )
