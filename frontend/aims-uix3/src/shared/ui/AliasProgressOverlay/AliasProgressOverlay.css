@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-overlay, rgba(255, 255, 255, 0.75));
+  background: rgba(255, 255, 255, 0.75);
   pointer-events: all;
   backdrop-filter: blur(2px);
 }
@@ -68,6 +68,7 @@ html[data-theme="dark"] .alias-progress-overlay {
 
 .alias-progress-overlay__bar-fill {
   height: 100%;
+  width: var(--alias-progress-pct, 0%);
   background: var(--color-primary-500);
   border-radius: 3px;
   transition: width 0.3s ease-out;

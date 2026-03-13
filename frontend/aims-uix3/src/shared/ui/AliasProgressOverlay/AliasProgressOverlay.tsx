@@ -41,7 +41,7 @@ export const AliasProgressOverlay: React.FC<AliasProgressOverlayProps> = ({
         <div className="alias-progress-overlay__bar-track">
           <div
             className="alias-progress-overlay__bar-fill"
-            style={{ width: `${percent}%` }}
+            style={{ ['--alias-progress-pct' as string]: `${percent}%` }}
           />
         </div>
 

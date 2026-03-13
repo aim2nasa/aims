@@ -488,7 +488,7 @@ const DocumentExplorerContent: React.FC<{
       let title: string
       let iconType: 'success' | 'info' | 'warning' | 'error'
       if (cancelled) {
-        title = hasCompleted ? '별칭 생성이 취소되었습니다' : '별칭 생성이 취소되었습니다'
+        title = '별칭 생성이 취소되었습니다'
         iconType = hasCompleted ? 'warning' : 'info'
       } else if (hasFailed) {
         title = hasCompleted ? '일부 문서의 별칭 생성에 실패했습니다' : '별칭 생성에 실패했습니다'
