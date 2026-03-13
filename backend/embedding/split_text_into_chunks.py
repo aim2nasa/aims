@@ -1,4 +1,56 @@
+import re
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+
+def preprocess_text(text: str) -> str:
+    """
+    임베딩 전 텍스트 노이즈를 규칙 기반으로 제거합니다.
+    AI를 사용하지 않으므로 환각 위험이 없습니다.
+
+    처리 항목:
+    1. \\r\\n → \\n 정규화
+    2. 연속 탭 → 단일 공백 (Excel 노이즈 해소)
+    3. 연속 공백(3+) → 단일 공백
+    4. 연속 빈 줄(4+) → 3줄로 축소
+    5. 반복 라인 제거 (10자+ 동일 라인 4회+ 반복 → 2회까지만 유지)
+    """
+    if not text:
+        return text
+
+    # 1. \r\n → \n 정규화
+    text = text.replace('\r\n', '\n')
+
+    # 2. 연속 탭 → 단일 공백
+    text = re.sub(r'\t+', ' ', text)
+
+    # 3. 연속 공백(3+) → 단일 공백 (줄바꿈은 보존)
+    text = re.sub(r'[^\S\n]{3,}', ' ', text)
+
+    # 4. 연속 빈 줄(4+) → 3줄로 축소
+    text = re.sub(r'\n{4,}', '\n\n\n', text)
+
+    # 5. 반복 라인 제거 (10자+ 동일 라인이 4회+ 반복 → 2회까지만 유지)
+    lines = text.split('\n')
+    cleaned_lines = []
+    prev_line = None
+    repeat_count = 0
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped == prev_line and len(stripped) >= 10:
+            repeat_count += 1
+            if repeat_count <= 2:
+                cleaned_lines.append(line)
+            # 3회 이상은 무시
+        else:
+            prev_line = stripped
+            repeat_count = 1
+            cleaned_lines.append(line)
+
+    text = '\n'.join(cleaned_lines)
+
+    return text
+
 
 def split_text_into_chunks(text: str, meta: dict, chunk_size: int = 1500, chunk_overlap: int = 150):
     """
@@ -12,6 +64,9 @@ def split_text_into_chunks(text: str, meta: dict, chunk_size: int = 1500, chunk_
     """
     if not text:
         return []
+
+    # 텍스트 전처리: 노이즈 제거 (탭, 연속 공백, 반복 라인 등)
+    text = preprocess_text(text)
 
     # 텍스트 분할기(Text Splitter) 초기화
     text_splitter = RecursiveCharacterTextSplitter(

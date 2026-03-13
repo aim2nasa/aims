@@ -77,7 +77,7 @@ def save_chunks_to_qdrant(chunks: List[Dict], qdrant_url: str = "http://localhos
             key: value for key, value in chunk.items() if key not in ['text', 'embedding']
         }
         payload['chunk_id'] = chunk_id
-        payload['preview'] = chunk['text'][:240]
+        payload['preview'] = chunk['text']
 
         points.append(
             models.PointStruct(

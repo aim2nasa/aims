@@ -538,7 +538,7 @@ async def search_endpoint(request: SearchRequest):
                 top_results = all_reranked[request.offset:]
             print(f"✅ 재순위화 완료: 전체 {total_reranked}개 중 {len(top_results)}개 반환 (offset={request.offset}, top_k={request.top_k})")
 
-            # 4단계: LLM 답변 생성 (상위 8개 컨텍스트 — preview 240자 기준 ~2,000자, 비용 미미)
+            # 4단계: LLM 답변 생성 (상위 8개 컨텍스트 — 청크 전체 ~1500자 기준 ~12,000자, 비용 미미)
             LLM_CONTEXT_LIMIT = 8
             llm_start = time.time()
             final_answer, llm_response = generate_answer_with_llm(request.query, top_results[:LLM_CONTEXT_LIMIT], relationship_context)
