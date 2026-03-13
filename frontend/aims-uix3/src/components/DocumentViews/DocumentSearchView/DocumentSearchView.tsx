@@ -1363,8 +1363,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <span className="answer-arrow">▶</span> AI 답변 (클릭하여 숨기기)
                   </summary>
                   <p className="answer-content">{
-                    answer.split(/(\([^)]+\.(?:pdf|PDF|hwp|HWP|xlsx?|XLSX?|docx?|DOCX?|pptx?|PPTX?|jpg|JPG|jpeg|JPEG|png|PNG)\))/).map((part, i) =>
-                      /^\(.+\.(?:pdf|PDF|hwp|HWP|xlsx?|XLSX?|docx?|DOCX?|pptx?|PPTX?|jpg|JPG|jpeg|JPEG|png|PNG)\)$/.test(part)
+                    answer.split(/(\(.+?\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png)\))/gi).map((part, i) =>
+                      /^\(.+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png)\)$/i.test(part)
                         ? <span key={i} className="answer-source-ref">{part}</span>
                         : part
                     )
