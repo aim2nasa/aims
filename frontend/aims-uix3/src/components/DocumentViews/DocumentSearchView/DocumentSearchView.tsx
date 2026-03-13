@@ -854,26 +854,22 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   }, [contextMenuDocument, onDocumentClick, handleDeleteSingleDocument])
 
   /**
-   * 유사도 점수를 5단계로 분류
-   * - 백분율과 더 직관적인 레이블 제공
+   * P3-1: 유사도 점수를 3단계 도트 시스템으로 분류
+   * - Apple HIG, Nielsen 3~4단계 권장에 따라 5단계 → 3단계로 단순화
+   * - emoji 대신 CSS dot 사용 (6px border-radius: 50%)
    */
   const getSimilarityLevel = (score: number): {
-    icon: string
     label: string
     color: string
     percentage: string
   } => {
     const percentage = `${Math.round(score * 100)}%`
-    if (score >= 0.85) {
-      return { icon: '🟢', label: '정확히 일치', color: 'excellent', percentage }
-    } else if (score >= 0.70) {
-      return { icon: '🟢', label: '매우 관련 있음', color: 'high', percentage }
-    } else if (score >= 0.50) {
-      return { icon: '🟡', label: '관련 있음', color: 'medium', percentage }
-    } else if (score >= 0.30) {
-      return { icon: '🟠', label: '약간 관련', color: 'low', percentage }
+    if (score >= 0.70) {
+      return { label: '높음', color: 'high', percentage }
+    } else if (score >= 0.40) {
+      return { label: '보통', color: 'medium', percentage }
     } else {
-      return { icon: '🔴', label: '관련성 낮음', color: 'very-low', percentage }
+      return { label: '낮음', color: 'low', percentage }
     }
   }
 
@@ -1370,56 +1366,36 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 </details>
               )}
 
-              {/* 검색 결과 헤더 */}
+              {/* P3-2: 검색 결과 헤더 — 간결하게 "N건 검색됨" */}
               <div className="search-results-header">
                 <div className="results-header-text">
                   {lastSearchMode === 'semantic' ? (
-                    <p>주어진 검색어와 유사도가 높은 상위 {results.length}개의 문서를 보여드립니다.</p>
+                    <p>{results.length}건 검색됨</p>
                   ) : (
-                    <>
-                      <p>
-                        {lastSearchCustomer
-                          ? `${lastSearchCustomer.personal_info?.name}에 대하여 검색한 결과, 총 ${results.length}건의 파일이 검색되었습니다.`
-                          : `모든 고객에 대하여 검색한 결과, 총 ${results.length}건의 파일이 검색되었습니다.`}
-                      </p>
-                      <p className="results-divider">--- 검색 결과 ---</p>
-                    </>
+                    <p>
+                      {lastSearchCustomer
+                        ? `${lastSearchCustomer.personal_info?.name}에 대하여 검색한 결과, 총 ${results.length}건의 파일이 검색되었습니다.`
+                        : `모든 고객에 대하여 검색한 결과, 총 ${results.length}건의 파일이 검색되었습니다.`}
+                    </p>
                   )}
                 </div>
               </div>
 
-              {/* 🍎 유사도 점수 범례 (시맨틱 검색일 때만 표시) */}
-              {searchMode === 'semantic' && results.length > 0 && (
+              {/* P3-2: 범례 제거 — 3단계 도트면 자명하므로 제거 (기존 5단계 범례 불필요) */}
+              {false && searchMode === 'semantic' && results.length > 0 && (
                 <div className="similarity-legend">
                   <div className="legend-title">유사도 점수:</div>
                   <div className="legend-items">
                     <div className="legend-item">
-                      <span className="legend-icon">🟢</span>
-                      <span className="legend-label">정확히 일치 (≥85%)</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="legend-icon">🟢</span>
-                      <span className="legend-label">매우 관련 있음 (≥70%)</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="legend-icon">🟡</span>
-                      <span className="legend-label">관련 있음 (≥50%)</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="legend-icon">🟠</span>
-                      <span className="legend-label">약간 관련 (≥30%)</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="legend-icon">🔴</span>
-                      <span className="legend-label">관련성 낮음 (&lt;30%)</span>
+                      <span className="legend-icon">placeholder</span>
+                      <span className="legend-label">placeholder</span>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* 🍎 컬럼 헤더 */}
+              {/* P3-5: # 칼럼 제거 — 정렬 순서가 이미 순위를 나타냄 */}
               <div className="search-results-column-header" data-search-mode={searchMode}>
-                <div className="header-index">#</div>
                 <div
                   className={`header-filetype sortable ${sortField === 'filetype' ? 'sorted' : ''}`}
                   onClick={() => handleSort('filetype')}
@@ -1587,10 +1563,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       }}
                       aria-label={`문서: ${originalName}`}
                     >
-                      {/* 인덱스 */}
-                      <div className="row-index">
-                        <span>[{(searchPage - 1) * SEARCH_PAGE_SIZE + index + 1}]</span>
-                      </div>
+                      {/* P3-5: # 칼럼 제거 */}
 
                       {/* 형식 */}
                       <div className="row-filetype">
@@ -1809,7 +1782,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         </Tooltip>
                       </div>
 
-                      {/* 🍎 유사도 (시맨틱 검색 시만 표시) */}
+                      {/* P3-1: 유사도 3단계 도트 시스템 (시맨틱 검색 시만 표시) */}
                       {searchMode === 'semantic' && (
                         <div className="row-similarity">
                           {score !== null && (
@@ -1818,9 +1791,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                                 className={`similarity-indicator similarity-${getSimilarityLevel(score).color}`}
                                 aria-label={`유사도 ${getSimilarityLevel(score).percentage} ${getSimilarityLevel(score).label}`}
                               >
-                                <span className="similarity-icon">{getSimilarityLevel(score).icon}</span>
-                                <span className="similarity-percentage">{getSimilarityLevel(score).percentage}</span>
-                                <span className="similarity-label">{getSimilarityLevel(score).label}</span>
+                                <span className="similarity-dot" />
+                                <span className="similarity-text">{getSimilarityLevel(score).label}</span>
                               </div>
                             </Tooltip>
                           )}
