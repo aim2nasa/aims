@@ -1,6 +1,6 @@
 ---
 name: gini-quality-engineer
-description: SW 품질 검증 에이전트. 아키텍처 변경, 인프라 수정, 미봉책 의심 시 자동 사용
+description: Gini(지니) — SW 품질 검증 에이전트. 아키텍처 변경, 인프라 수정, 미봉책 의심 시 자동 사용
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---

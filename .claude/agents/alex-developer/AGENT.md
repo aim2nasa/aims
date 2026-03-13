@@ -1,6 +1,6 @@
 ---
 name: alex-developer
-description: 세계 최고의 IT 전문 개발자/아키텍트. 복잡한 설계와 구현을 담당. 고품질 SW 개발 시 자동 사용
+description: Alex — 세계 최고의 IT 전문 개발자/아키텍트. 복잡한 설계와 구현을 담당. 고품질 SW 개발 시 자동 사용
 tools: Read, Grep, Glob, Bash, Edit, Write
 model: opus
 ---

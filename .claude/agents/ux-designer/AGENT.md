@@ -1,6 +1,6 @@
 ---
 name: ux-designer
-description: UI/UX 디자인 전문가. 웹/모바일/앱 사용성 분석, 디자인 리뷰, UX 개선 시 자동 사용
+description: Dana — UI/UX 디자인 전문가. 웹/모바일/앱 사용성 분석, 디자인 리뷰, UX 개선 시 자동 사용
 tools: Read, Grep, Glob, Bash
 model: opus
 ---
