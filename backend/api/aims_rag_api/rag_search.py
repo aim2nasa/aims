@@ -5,7 +5,7 @@ from typing import List, Dict, Optional, Any
 from openai import OpenAI
 from qdrant_client import QdrantClient, models
 # 💡 T11 변경 사항 시작
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 import requests
 import json
@@ -46,6 +46,28 @@ app = FastAPI(
 log_version_info()
 
 # CORS는 nginx에서 처리하므로 여기서는 제거
+
+# 🔒 RAG API 인증: 내부 API 키 검증 (미들웨어로 모든 엔드포인트에 적용)
+RAG_API_KEY = os.getenv("RAG_API_KEY", "")
+if not RAG_API_KEY:
+    print("⚠️ [Security] RAG_API_KEY 미설정 — API 인증이 비활성화됩니다. .env.shared에 설정을 권장합니다.")
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+
+class ApiKeyMiddleware(BaseHTTPMiddleware):
+    """모든 엔드포인트에 x-api-key 검증 적용 (/health 제외)"""
+    async def dispatch(self, request: Request, call_next):
+        if not RAG_API_KEY:
+            return await call_next(request)  # 키 미설정 시 스킵 (하위 호환)
+        if request.url.path == "/health":
+            return await call_next(request)  # 헬스체크는 인증 제외
+        api_key = request.headers.get("x-api-key", "")
+        if api_key != RAG_API_KEY:
+            return JSONResponse(status_code=403, content={"detail": "Invalid API key"})
+        return await call_next(request)
+
+app.add_middleware(ApiKeyMiddleware)
 
 # 🛡️ Qdrant 컬렉션 자동 확인/생성 (서비스 시작 시)
 QDRANT_COLLECTION = "docembed"
@@ -89,7 +111,7 @@ token_tracker = TokenTracker()
 
 # 🔥 AI 모델 설정 캐싱
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
 _ai_model_cache = {"model": None, "timestamp": 0}
 _AI_MODEL_CACHE_TTL = 60  # 1분
 

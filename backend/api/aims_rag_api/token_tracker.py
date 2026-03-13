@@ -20,7 +20,7 @@ AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
 TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
 
 # 내부 API 키 (환경변수 또는 기본값)
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
 
 # 요청 타임아웃 (초)
 REQUEST_TIMEOUT = 5

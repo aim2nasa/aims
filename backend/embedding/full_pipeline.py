@@ -14,14 +14,18 @@ from save_to_qdrant import save_chunks_to_qdrant
 # aims_api 토큰 로깅 설정
 AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
 TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
+if not INTERNAL_API_KEY:
+    raise RuntimeError("INTERNAL_API_KEY 환경변수가 설정되지 않았습니다. ~/.env.shared를 확인하세요.")
 
 # 크레딧 체크 API 설정
 CREDIT_CHECK_URL = f"{AIMS_API_BASE_URL}/api/internal/check-credit"
 
 # 바이러스 스캔 트리거용 webhook 설정
 PROCESSING_COMPLETE_WEBHOOK_URL = f"{AIMS_API_BASE_URL}/api/webhooks/document-processing-complete"
-N8N_WEBHOOK_API_KEY = "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
+N8N_WEBHOOK_API_KEY = os.getenv("N8N_WEBHOOK_API_KEY")
+if not N8N_WEBHOOK_API_KEY:
+    raise RuntimeError("N8N_WEBHOOK_API_KEY 환경변수가 설정되지 않았습니다. ~/.env.shared를 확인하세요.")
 
 
 def check_credit_for_embedding(owner_id: str, estimated_pages: int = 1) -> Dict:

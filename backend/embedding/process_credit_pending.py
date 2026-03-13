@@ -23,7 +23,7 @@ from bson.objectid import ObjectId
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://tars:27017/")
 DB_NAME = os.getenv("DB_NAME", "docupload")
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
 
 # 크레딧 체크 API URL
 CREDIT_CHECK_URL = f"{AIMS_API_URL}/api/internal/check-credit"

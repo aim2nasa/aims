@@ -84,6 +84,9 @@ docker run -d \
   --network=host \
   --restart=unless-stopped \
   -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
+  -e INTERNAL_API_KEY="${INTERNAL_API_KEY}" \
+  -e RAG_API_KEY="${RAG_API_KEY}" \
+  -e AIMS_API_URL="${AIMS_API_URL:-http://localhost:3010}" \
   $IMAGE_NAME
 
 echo "✅ AIMS RAG API 배포 완료: v${VERSION} (${GIT_HASH})"

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # aims_api 토큰 로깅 설정
 AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
 TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
 
 # 🔴 크레딧 체크 API 설정
 CREDIT_CHECK_URL = f"{AIMS_API_BASE_URL}/api/internal/check-credit"
