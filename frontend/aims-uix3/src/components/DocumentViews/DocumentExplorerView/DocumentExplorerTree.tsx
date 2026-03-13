@@ -935,7 +935,7 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
         <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}>
           <button
             type="button"
-            className="filename-mode-toggle"
+            className={`filename-mode-toggle ${filenameMode === 'display' ? 'filename-mode-toggle--alias' : 'filename-mode-toggle--original'}`}
             onClick={(e) => {
               e.stopPropagation()
               const next = filenameMode === 'display' ? 'original' : 'display'

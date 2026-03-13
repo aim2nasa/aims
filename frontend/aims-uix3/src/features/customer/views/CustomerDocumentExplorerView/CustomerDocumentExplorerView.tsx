@@ -975,7 +975,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
         <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}>
           <button
             type="button"
-            className="cde-filename-toggle"
+            className={`filename-mode-toggle ${filenameMode === 'display' ? 'filename-mode-toggle--alias' : 'filename-mode-toggle--original'}`}
             onClick={() => setFilenameMode(prev => {
               const next = prev === 'display' ? 'original' : 'display'
               localStorage.setItem('aims-filename-mode', next)

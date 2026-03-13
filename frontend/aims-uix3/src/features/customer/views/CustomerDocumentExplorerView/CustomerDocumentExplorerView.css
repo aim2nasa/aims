@@ -55,28 +55,9 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
-  /* === 파일명 모드 토글 === */
-  .cde-filename-toggle {
+  /* === 파일명 모드 토글: 탭 바 내 margin-left: auto 유지 === */
+  .cde-tabs .filename-mode-toggle {
     margin-left: auto;
-    flex-shrink: 0;
-    padding: 3px 8px;
-    font-size: 10px;
-    font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: 0.02em;
-    border: 1px solid var(--color-border-primary);
-    border-radius: 6px;
-    background: var(--color-bg-secondary);
-    color: var(--color-text-tertiary);
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-    white-space: nowrap;
-  }
-
-  .cde-filename-toggle:hover {
-    color: var(--color-text-secondary);
-    border-color: var(--color-border-secondary);
-    background: var(--color-bg-tertiary);
   }
 
   /* === 돌아가기 버튼 === */
