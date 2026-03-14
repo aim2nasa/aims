@@ -1,30 +1,44 @@
 import { z, ZodError } from 'zod';
+import { ObjectId } from 'mongodb';
 import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
 
 
-// 스키마 정의
+// ── 스키마 정의 ──
+
 export const addMemoSchema = z.object({
   customerId: z.string().describe('고객 ID'),
   content: z.string().min(1).describe('메모 내용')
 });
 
-export const getMemoSchema = z.object({
-  customerId: z.string().describe('고객 ID')
+export const listMemoSchema = z.object({
+  customerId: z.string().describe('고객 ID'),
+  limit: z.number().optional().default(10).describe('조회할 메모 수 (기본 10건)')
 });
 
 export const deleteMemoSchema = z.object({
   customerId: z.string().describe('고객 ID'),
-  lineNumber: z.number().optional().describe('삭제할 메모 줄 번호 (1부터 시작)'),
-  contentPattern: z.string().optional().describe('삭제할 메모 내용 (포함된 텍스트)')
+  memoId: z.string().describe('삭제할 메모 ID')
 });
 
-// Tool 정의 (단일 memo 필드 기반)
+export const updateMemoSchema = z.object({
+  customerId: z.string().describe('고객 ID'),
+  memoId: z.string().describe('수정할 메모 ID'),
+  content: z.string().min(1).describe('수정할 메모 내용')
+});
+
+export const searchMemoSchema = z.object({
+  query: z.string().min(1).describe('검색 키워드'),
+  limit: z.number().optional().default(20).describe('최대 결과 수 (기본 20건)')
+});
+
+// ── Tool 정의 ──
+
 export const memoToolDefinitions = [
   {
     name: 'add_customer_memo',
-    description: '고객에게 메모를 추가합니다. 기존 메모가 있으면 새 줄에 추가됩니다.',
+    description: '고객에게 메모를 추가합니다. customer_memos 컬렉션에 개별 문서로 저장됩니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -36,29 +50,56 @@ export const memoToolDefinitions = [
   },
   {
     name: 'list_customer_memos',
-    description: '고객의 메모를 조회합니다.',
+    description: '고객의 메모를 구조화된 JSON으로 조회합니다. limit 파라미터로 최근 N건만 조회할 수 있습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        customerId: { type: 'string', description: '고객 ID' }
+        customerId: { type: 'string', description: '고객 ID' },
+        limit: { type: 'number', description: '조회할 메모 수 (기본 10건)' }
       },
       required: ['customerId']
     }
   },
   {
     name: 'delete_customer_memo',
-    description: '고객의 특정 메모를 삭제합니다. lineNumber(줄 번호) 또는 contentPattern(내용 일부)으로 삭제할 메모를 지정합니다.',
+    description: '고객의 특정 메모를 삭제합니다. list_customer_memos로 메모 ID를 먼저 확인 후 삭제하세요.',
     inputSchema: {
       type: 'object' as const,
       properties: {
         customerId: { type: 'string', description: '고객 ID' },
-        lineNumber: { type: 'number', description: '삭제할 메모 줄 번호 (1부터 시작)' },
-        contentPattern: { type: 'string', description: '삭제할 메모에 포함된 텍스트' }
+        memoId: { type: 'string', description: '삭제할 메모 ID (list_customer_memos에서 확인)' }
       },
-      required: ['customerId']
+      required: ['customerId', 'memoId']
+    }
+  },
+  {
+    name: 'update_customer_memo',
+    description: '고객의 특정 메모를 수정합니다. list_customer_memos로 메모 ID를 먼저 확인 후 수정하세요.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        customerId: { type: 'string', description: '고객 ID' },
+        memoId: { type: 'string', description: '수정할 메모 ID' },
+        content: { type: 'string', description: '수정할 메모 내용' }
+      },
+      required: ['customerId', 'memoId', 'content']
+    }
+  },
+  {
+    name: 'search_customer_memos',
+    description: '키워드로 고객 메모를 검색합니다. 현재 로그인한 설계사의 고객 메모만 검색됩니다 (소유권 격리).',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: '검색 키워드' },
+        limit: { type: 'number', description: '최대 결과 수 (기본 20건)' }
+      },
+      required: ['query']
     }
   }
 ];
+
+// ── 유틸리티 ──
 
 /**
  * 날짜 포맷 (YYYY.MM.DD HH:mm)
@@ -73,12 +114,57 @@ function formatDateTime(date: Date): string {
 }
 
 /**
- * 메모 추가 핸들러
- * customers.memo 필드에 append
- *
- * ⭐ Atomic Update 사용:
- * findOneAndUpdate + aggregation pipeline으로 동시 추가 시에도 모든 메모 보존
- * (Read-Modify-Write 패턴의 race condition 방지)
+ * customer_memos → customers.memo 동기화
+ * 백엔드 syncCustomerMemoField()의 MCP 복제 구현
+ */
+async function syncCustomerMemoField(customerId: string): Promise<boolean> {
+  try {
+    const db = getDB();
+    const customerObjectId = toSafeObjectId(customerId);
+    if (!customerObjectId) return false;
+
+    // customer_memos에서 해당 고객의 모든 메모 조회 (시간순)
+    const memos = await db.collection('customer_memos')
+      .find({ customer_id: customerObjectId })
+      .sort({ created_at: 1 })
+      .toArray();
+
+    // 타임스탬프 형식으로 변환
+    const memoText = memos.map(m =>
+      `[${formatDateTime(new Date(m.created_at))}] ${m.content}`
+    ).join('\n');
+
+    // customers.memo 필드 업데이트
+    await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+      { _id: customerObjectId },
+      { $set: { memo: memoText, 'meta.updated_at': new Date() } }
+    );
+
+    return true;
+  } catch (error) {
+    console.error(`[MCP] syncCustomerMemoField 실패 (고객 ${customerId}):`, error);
+    return false;
+  }
+}
+
+/**
+ * 고객 존재 및 소유권 확인
+ */
+async function verifyCustomerOwnership(customerId: string, userId: string) {
+  const db = getDB();
+  const customerObjectId = toSafeObjectId(customerId);
+  if (!customerObjectId) return null;
+
+  return db.collection(COLLECTIONS.CUSTOMERS).findOne({
+    _id: customerObjectId,
+    'meta.created_by': userId
+  });
+}
+
+// ── 핸들러 ──
+
+/**
+ * 메모 추가: customer_memos INSERT + customers.memo 동기화
  */
 export async function handleAddMemo(args: unknown) {
   try {
@@ -86,76 +172,27 @@ export async function handleAddMemo(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
-    const customerObjectId = toSafeObjectId(params.customerId);
-    if (!customerObjectId) {
+    const customer = await verifyCustomerOwnership(params.customerId, userId);
+    if (!customer) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
+        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
       };
     }
 
     const now = new Date();
-    const timestamp = formatDateTime(now);
-    const newMemoLine = `[${timestamp}] ${params.content}`;
+    const newMemo = {
+      customer_id: new ObjectId(params.customerId),
+      content: params.content.trim(),
+      created_by: userId,
+      created_at: now,
+      updated_at: now,
+    };
 
-    // ⭐ 메모 추가: Read-Modify-Write with optimistic concurrency control
-    // MongoDB Node.js driver에서 aggregation pipeline update 이슈로
-    // 기본 패턴 사용 + retry 로직
+    const result = await db.collection('customer_memos').insertOne(newMemo);
 
-    const maxRetries = 5;
-    let result = null;
-
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      // 1. 현재 고객 정보 조회
-      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-        _id: customerObjectId,
-        'meta.created_by': userId
-      });
-
-      if (!customer) {
-        return {
-          isError: true,
-          content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
-        };
-      }
-
-      // 2. 새 메모 내용 생성
-      const currentMemo = customer.memo || '';
-      const updatedMemo = currentMemo ? `${currentMemo}\n${newMemoLine}` : newMemoLine;
-      const currentUpdatedAt = customer.meta?.updated_at;
-
-      // 3. 조건부 업데이트 (updated_at이 동일할 때만 - optimistic lock)
-      const updateResult = await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
-        {
-          _id: customerObjectId,
-          'meta.created_by': userId,
-          'meta.updated_at': currentUpdatedAt
-        },
-        {
-          $set: {
-            memo: updatedMemo,
-            'meta.updated_at': now
-          }
-        }
-      );
-
-      if (updateResult.modifiedCount > 0) {
-        result = customer;
-        break; // 성공
-      }
-
-      // Race condition 발생 - 재시도
-      if (attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 5 + Math.random() * 10));
-      }
-    }
-
-    if (!result) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '메모 추가에 실패했습니다. 다시 시도해주세요.' }]
-      };
-    }
+    // customers.memo 동기화
+    const syncOk = await syncCustomerMemoField(params.customerId);
 
     return {
       content: [{
@@ -163,15 +200,16 @@ export async function handleAddMemo(args: unknown) {
         text: JSON.stringify({
           success: true,
           customerId: params.customerId,
-          customerName: result.personal_info?.name,
+          customerName: customer.personal_info?.name,
+          memoId: result.insertedId.toHexString(),
           addedContent: params.content,
-          timestamp: timestamp,
-          message: '메모가 추가되었습니다.'
+          timestamp: formatDateTime(now),
+          message: '메모가 추가되었습니다.',
+          ...(syncOk ? {} : { syncWarning: true })
         }, null, 2)
       }]
     };
   } catch (error) {
-    // 에러 로깅
     console.error('[MCP] add_customer_memo 에러:', error);
     sendErrorLog('aims_mcp', 'add_customer_memo 에러', error);
     const errorMessage = error instanceof ZodError
@@ -179,38 +217,21 @@ export async function handleAddMemo(args: unknown) {
       : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
-      content: [{
-        type: 'text' as const,
-        text: `메모 추가 실패: ${errorMessage}`
-      }]
+      content: [{ type: 'text' as const, text: `메모 추가 실패: ${errorMessage}` }]
     };
   }
 }
 
 /**
- * 메모 조회 핸들러
- * customers.memo 필드 조회
+ * 메모 조회: customer_memos 컬렉션에서 구조화된 JSON 반환
  */
 export async function handleListMemos(args: unknown) {
   try {
-    const params = getMemoSchema.parse(args);
+    const params = listMemoSchema.parse(args);
     const db = getDB();
     const userId = getCurrentUserId();
 
-    const customerObjectId = toSafeObjectId(params.customerId);
-    if (!customerObjectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    // 해당 고객이 현재 사용자의 고객인지 확인
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: customerObjectId,
-      'meta.created_by': userId
-    });
-
+    const customer = await verifyCustomerOwnership(params.customerId, userId);
     if (!customer) {
       return {
         isError: true,
@@ -218,7 +239,29 @@ export async function handleListMemos(args: unknown) {
       };
     }
 
-    const memo = customer.memo || '';
+    const customerObjectId = new ObjectId(params.customerId);
+    const limit = params.limit ?? 10;
+
+    // 최신순으로 limit건 조회
+    const memos = await db.collection('customer_memos')
+      .find({ customer_id: customerObjectId })
+      .sort({ created_at: -1 })
+      .limit(limit)
+      .toArray();
+
+    // 전체 메모 수
+    const total = await db.collection('customer_memos')
+      .countDocuments({ customer_id: customerObjectId });
+
+    // 구조화된 응답
+    const formattedMemos = memos.map(m => ({
+      id: m._id.toHexString(),
+      content: m.content,
+      created_at: formatDateTime(new Date(m.created_at)),
+      updated_at: m.updated_at && m.updated_at.getTime() !== m.created_at.getTime()
+        ? formatDateTime(new Date(m.updated_at))
+        : null,
+    }));
 
     return {
       content: [{
@@ -226,13 +269,13 @@ export async function handleListMemos(args: unknown) {
         text: JSON.stringify({
           customerId: params.customerId,
           customerName: customer.personal_info?.name,
-          memo: memo,
-          hasContent: memo.length > 0
+          memos: formattedMemos,
+          total,
+          limit,
         }, null, 2)
       }]
     };
   } catch (error) {
-    // 에러 로깅
     console.error('[MCP] list_customer_memos 에러:', error);
     sendErrorLog('aims_mcp', 'list_customer_memos 에러', error);
     const errorMessage = error instanceof ZodError
@@ -240,17 +283,13 @@ export async function handleListMemos(args: unknown) {
       : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
-      content: [{
-        type: 'text' as const,
-        text: `메모 조회 실패: ${errorMessage}`
-      }]
+      content: [{ type: 'text' as const, text: `메모 조회 실패: ${errorMessage}` }]
     };
   }
 }
 
 /**
- * 메모 삭제 핸들러
- * lineNumber 또는 contentPattern으로 특정 메모 줄 삭제
+ * 메모 삭제: memoId 기반 삭제 + customers.memo 동기화
  */
 export async function handleDeleteMemo(args: unknown) {
   try {
@@ -258,28 +297,7 @@ export async function handleDeleteMemo(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
-    // lineNumber와 contentPattern 둘 다 없으면 에러
-    if (params.lineNumber === undefined && !params.contentPattern) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: 'lineNumber 또는 contentPattern 중 하나를 지정해야 합니다.' }]
-      };
-    }
-
-    const customerObjectId = toSafeObjectId(params.customerId);
-    if (!customerObjectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    // 고객 조회
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: customerObjectId,
-      'meta.created_by': userId
-    });
-
+    const customer = await verifyCustomerOwnership(params.customerId, userId);
     if (!customer) {
       return {
         isError: true,
@@ -287,52 +305,32 @@ export async function handleDeleteMemo(args: unknown) {
       };
     }
 
-    const currentMemo = customer.memo || '';
-    if (!currentMemo) {
+    const memoObjectId = toSafeObjectId(params.memoId);
+    if (!memoObjectId) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '삭제할 메모가 없습니다.' }]
+        content: [{ type: 'text' as const, text: '유효하지 않은 메모 ID입니다.' }]
       };
     }
 
-    // 메모를 줄 단위로 분리
-    const lines = currentMemo.split('\n');
-    let deletedLine = '';
-    let newLines: string[];
+    // 메모 존재 확인
+    const memo = await db.collection('customer_memos').findOne({
+      _id: memoObjectId,
+      customer_id: new ObjectId(params.customerId),
+    });
 
-    if (params.lineNumber !== undefined) {
-      // 줄 번호로 삭제 (1부터 시작)
-      const idx = params.lineNumber - 1;
-      if (idx < 0 || idx >= lines.length) {
-        return {
-          isError: true,
-          content: [{ type: 'text' as const, text: `유효하지 않은 줄 번호입니다. (1~${lines.length})` }]
-        };
-      }
-      deletedLine = lines[idx];
-      newLines = lines.filter((_: string, i: number) => i !== idx);
-    } else {
-      // contentPattern으로 삭제
-      const pattern = params.contentPattern!.toLowerCase();
-      const matchIdx = lines.findIndex((line: string) => line.toLowerCase().includes(pattern));
-      if (matchIdx === -1) {
-        return {
-          isError: true,
-          content: [{ type: 'text' as const, text: `"${params.contentPattern}" 내용이 포함된 메모를 찾을 수 없습니다.` }]
-        };
-      }
-      deletedLine = lines[matchIdx];
-      newLines = lines.filter((_: string, i: number) => i !== matchIdx);
+    if (!memo) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '메모를 찾을 수 없습니다.' }]
+      };
     }
 
-    const updatedMemo = newLines.join('\n');
-    const now = new Date();
+    // 삭제
+    await db.collection('customer_memos').deleteOne({ _id: memoObjectId });
 
-    // 업데이트 실행
-    await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
-      { _id: customerObjectId, 'meta.created_by': userId },
-      { $set: { memo: updatedMemo, 'meta.updated_at': now } }
-    );
+    // customers.memo 동기화
+    const syncOk = await syncCustomerMemoField(params.customerId);
 
     return {
       content: [{
@@ -341,9 +339,9 @@ export async function handleDeleteMemo(args: unknown) {
           success: true,
           customerId: params.customerId,
           customerName: customer.personal_info?.name,
-          deletedMemo: deletedLine,
-          remainingLines: newLines.length,
-          message: '메모가 삭제되었습니다.'
+          deletedMemo: memo.content,
+          message: '메모가 삭제되었습니다.',
+          ...(syncOk ? {} : { syncWarning: true })
         }, null, 2)
       }]
     };
@@ -355,10 +353,167 @@ export async function handleDeleteMemo(args: unknown) {
       : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
+      content: [{ type: 'text' as const, text: `메모 삭제 실패: ${errorMessage}` }]
+    };
+  }
+}
+
+/**
+ * 메모 수정: memoId + content 수정 + customers.memo 동기화
+ */
+export async function handleUpdateMemo(args: unknown) {
+  try {
+    const params = updateMemoSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    const customer = await verifyCustomerOwnership(params.customerId, userId);
+    if (!customer) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
+      };
+    }
+
+    const memoObjectId = toSafeObjectId(params.memoId);
+    if (!memoObjectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 메모 ID입니다.' }]
+      };
+    }
+
+    // 메모 존재 확인
+    const memo = await db.collection('customer_memos').findOne({
+      _id: memoObjectId,
+      customer_id: new ObjectId(params.customerId),
+    });
+
+    if (!memo) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '메모를 찾을 수 없습니다.' }]
+      };
+    }
+
+    const now = new Date();
+    await db.collection('customer_memos').updateOne(
+      { _id: memoObjectId },
+      {
+        $set: {
+          content: params.content.trim(),
+          updated_at: now,
+          updated_by: userId,
+        }
+      }
+    );
+
+    // customers.memo 동기화
+    const syncOk = await syncCustomerMemoField(params.customerId);
+
+    return {
       content: [{
         type: 'text' as const,
-        text: `메모 삭제 실패: ${errorMessage}`
+        text: JSON.stringify({
+          success: true,
+          customerId: params.customerId,
+          customerName: customer.personal_info?.name,
+          memoId: params.memoId,
+          previousContent: memo.content,
+          newContent: params.content.trim(),
+          message: '메모가 수정되었습니다.',
+          ...(syncOk ? {} : { syncWarning: true })
+        }, null, 2)
       }]
+    };
+  } catch (error) {
+    console.error('[MCP] update_customer_memo 에러:', error);
+    sendErrorLog('aims_mcp', 'update_customer_memo 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{ type: 'text' as const, text: `메모 수정 실패: ${errorMessage}` }]
+    };
+  }
+}
+
+/**
+ * 메모 검색: 2-step 소유권 격리 + $regex 검색
+ */
+export async function handleSearchMemos(args: unknown) {
+  try {
+    const params = searchMemoSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+    const limit = params.limit ?? 20;
+
+    // Step 1: 현재 사용자의 고객 ID 목록 조회
+    const myCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
+      .find(
+        { 'meta.created_by': userId },
+        { projection: { _id: 1, 'personal_info.name': 1 } }
+      )
+      .toArray();
+
+    if (myCustomers.length === 0) {
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify({
+            results: [],
+            total: 0,
+            message: '등록된 고객이 없습니다.'
+          }, null, 2)
+        }]
+      };
+    }
+
+    const customerIds = myCustomers.map(c => c._id);
+    const customerNameMap = new Map(
+      myCustomers.map(c => [c._id.toHexString(), c.personal_info?.name || '(이름 없음)'])
+    );
+
+    // Step 2: 해당 고객 ID 목록 + 키워드 $regex 검색
+    const escapedQuery = params.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const memos = await db.collection('customer_memos')
+      .find({
+        customer_id: { $in: customerIds },
+        content: { $regex: escapedQuery, $options: 'i' }
+      })
+      .sort({ created_at: -1 })
+      .limit(limit)
+      .toArray();
+
+    const results = memos.map(m => ({
+      memoId: m._id.toHexString(),
+      customerId: m.customer_id.toHexString(),
+      customerName: customerNameMap.get(m.customer_id.toHexString()) || '(이름 없음)',
+      content: m.content,
+      created_at: formatDateTime(new Date(m.created_at)),
+    }));
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          query: params.query,
+          results,
+          total: results.length,
+          limit,
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] search_customer_memos 에러:', error);
+    sendErrorLog('aims_mcp', 'search_customer_memos 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{ type: 'text' as const, text: `메모 검색 실패: ${errorMessage}` }]
     };
   }
 }

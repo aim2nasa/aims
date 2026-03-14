@@ -35,10 +35,10 @@ export interface FieldErrors {
  */
 export const useCustomerEditController = (customer: Customer) => {
   // 1. 폼 데이터 상태
+  // memo 필드는 customer_memos 컬렉션으로 전환 → 여기서는 전송하지 않음
   const [formData, setFormData] = useState<UpdateCustomerData>({
     personal_info: { ...customer.personal_info },
     insurance_info: customer.insurance_info ? { ...customer.insurance_info } : undefined,
-    memo: customer.memo ?? '',
   });
 
   // 2. UI 상태
@@ -51,7 +51,6 @@ export const useCustomerEditController = (customer: Customer) => {
     setFormData({
       personal_info: { ...customer.personal_info },
       insurance_info: customer.insurance_info ? { ...customer.insurance_info } : undefined,
-      memo: customer.memo ?? '',
     });
   }, [customer]);
 
@@ -174,11 +173,11 @@ export const useCustomerEditController = (customer: Customer) => {
           }
         });
       }
-      // 백엔드로 전송할 데이터 (personal_info, insurance_info, memo)
+      // 백엔드로 전송할 데이터 (personal_info, insurance_info)
+      // memo 필드는 customer_memos 컬렉션으로 전환 → 전송하지 않음
       const updatePayload: UpdateCustomerData = {
         personal_info: cleanPersonalInfo,
         insurance_info: formData.insurance_info,
-        memo: formData.memo,
       };
 
       // Document-View 패턴: CustomerDocument를 통해 업데이트

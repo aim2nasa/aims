@@ -235,15 +235,16 @@ describe('Category 1: 데이터 동기화 테스트', () => {
 
       expect(api.isError(postResult)).toBe(false);
 
-      // 3. MCP로 메모 조회 (returns { memo: string, hasContent: boolean })
+      // 3. MCP로 메모 조회 (returns { memos: [...], total, limit })
       const mcpResult = await mcp.call<{
-        memo: string;
-        hasContent: boolean;
+        memos: Array<{ id: string; content: string; created_at: string }>;
+        total: number;
       }>('list_customer_memos', { customerId });
 
       // 4. 검증
-      expect(mcpResult.memo).toContain(memoContent);
-      expect(mcpResult.hasContent).toBe(true);
+      expect(mcpResult.total).toBeGreaterThanOrEqual(1);
+      const found = mcpResult.memos.some(m => m.content === memoContent);
+      expect(found).toBe(true);
     });
 
     // delete_customer_memo는 deprecated됨 - 스킵

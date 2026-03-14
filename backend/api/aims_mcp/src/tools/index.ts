@@ -11,7 +11,7 @@ import { contractToolDefinitions, handleListContracts, handleGetContractDetails,
 import { birthdayToolDefinitions, handleFindBirthdayCustomers } from './birthdays.js';
 import { networkToolDefinitions, handleGetCustomerNetwork } from './network.js';
 import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments, handleFindDocumentByFilename } from './documents.js';
-import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo } from './memos.js';
+import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo, handleUpdateMemo, handleSearchMemos } from './memos.js';
 import { productToolDefinitions, handleSearchProducts } from './products.js';
 import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
 import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArContractHistory } from './annual_reports.js';
@@ -63,6 +63,8 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   add_customer_memo: handleAddMemo,
   list_customer_memos: handleListMemos,
   delete_customer_memo: handleDeleteMemo,
+  update_customer_memo: handleUpdateMemo,
+  search_customer_memos: handleSearchMemos,
   // 보험상품 관련
   search_products: handleSearchProducts,
   // 관계 관련
