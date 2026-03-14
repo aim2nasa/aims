@@ -62,6 +62,15 @@ export default function LoginPage() {
       }).catch(() => {
         setPinSetupStep('setup-enter');
       });
+    } else {
+      // authToken 없음 (재방문, 세션 만료) — rememberedUser가 있으면 PIN 입력 화면 표시
+      // PIN 입력 시점에 소셜 로그인으로 토큰을 재획득하는 것이 아니라,
+      // PIN 화면을 보여주고, 실패 시 소셜 로그인으로 전환
+      const stored = localStorage.getItem('aims-remembered-user');
+      if (stored) {
+        setPinSetupStep('input');
+      }
+      // rememberedUser도 없으면 pinSetupStep='check' → 소셜 로그인 화면 표시 (정상)
     }
   }, [isPinMode, mode, authToken]);
 
@@ -170,7 +179,10 @@ export default function LoginPage() {
     }
 
     try {
+      // aims-remember-device는 보존 (PIN 플로우 테스트 위해)
+      const rememberFlag = localStorage.getItem('aims-remember-device');
       localStorage.clear();
+      if (rememberFlag) localStorage.setItem('aims-remember-device', rememberFlag);
       const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
       const response = await fetch(`${API_BASE_URL}/api/dev/ensure-user`, {
         method: 'POST',
