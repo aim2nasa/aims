@@ -125,15 +125,15 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // 토큰 없음 → 소셜 로그인 (로그아웃 또는 미인증)
-  // JWT가 없으면 PIN 검증 불가능하므로 소셜 로그인부터 시작
+  // 토큰 없음 → 소셜 로그인
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // 토큰 있음 + 기기 기억 O + (세션 토큰 없음 또는 서버 검증 실패) → PIN
+  // 토큰 있음 + 기기 기억 O + (세션 토큰 없음 또는 서버 검증 실패)
+  // → 소셜 로그인 페이지로 보냄 (소셜 로그인 성공 후 AuthCallbackPage/LoginPage에서 PIN으로 전환)
   if (rememberDevice && (!sessionToken || sessionValid === false)) {
-    return <Navigate to="/login?mode=pin" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

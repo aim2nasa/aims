@@ -126,6 +126,7 @@ export default function LoginPage() {
         await processAuthToken(token, {
           setToken, setUser, updateCurrentUser, syncUserIdFromStorage, navigate,
         });
+        setIsProcessing(false);
       } catch (error) {
         console.error('[LoginPage] 토큰 처리 실패:', error);
         errorReporter.reportApiError(error as Error, { component: 'LoginPage.processToken' });

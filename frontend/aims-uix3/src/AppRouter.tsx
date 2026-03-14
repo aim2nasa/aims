@@ -54,7 +54,9 @@ export default function AppRouter() {
         <Route
           path="/login"
           element={
-            (isAuthenticated && !isPinMode) ? <Navigate to="/" replace /> : <LoginPage />
+            (isAuthenticated && !isPinMode && !(localStorage.getItem('aims-remember-device') === 'true' && !sessionStorage.getItem('aims-session-token')))
+              ? <Navigate to="/" replace />
+              : <LoginPage />
           }
         />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
