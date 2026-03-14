@@ -133,6 +133,7 @@ export const processAuthToken = async (token: string, deps: ProcessTokenDeps) =>
   localStorage.setItem('aims-remembered-user', JSON.stringify({
     userId: user._id,
     name: user.name || '',
+    avatarUrl: user.avatarUrl || null,
     authProvider: user.authProvider || 'kakao',
   }));
   deps.navigate('/login?mode=pin', { replace: true });

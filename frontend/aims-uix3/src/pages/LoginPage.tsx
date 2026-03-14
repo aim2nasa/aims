@@ -18,6 +18,7 @@ import './LoginPage.css';
 interface RememberedUser {
   userId: string;
   name: string;
+  avatarUrl?: string | null;
   authProvider: string;
 }
 
@@ -324,7 +325,10 @@ export default function LoginPage() {
         <div className="login-container">
           <div className="login-pin-container">
             <div className="login-pin-avatar">
-              <span>{rememberedUser.name.charAt(0)}</span>
+              {rememberedUser.avatarUrl
+                ? <img src={rememberedUser.avatarUrl} alt={rememberedUser.name} />
+                : <span>{rememberedUser.name.charAt(0)}</span>
+              }
             </div>
             <p className="login-pin-name">{rememberedUser.name} 님</p>
             <p className="login-pin-message">간편 비밀번호를 입력하세요</p>
