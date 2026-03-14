@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { usePersistedState } from '@/hooks/usePersistedState'
 import { useDeviceOrientation } from '../../../../hooks/useDeviceOrientation'
 import { CenterPaneView } from '../../../../components/CenterPaneView/CenterPaneView'
 import CustomerEditModal from '../CustomerEditModal'
@@ -109,28 +110,28 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [corporateRefreshTrigger, setCorporateRefreshTrigger] = useState(0)
 
   // 🍎 계약 검색 상태
-  const [contractSearchTerm, setContractSearchTerm] = useState('')
+  const [contractSearchTerm, setContractSearchTerm] = usePersistedState('cust-full-detail-contract-search', '')
 
   // 🍎 문서 검색 상태
-  const [documentSearchTerm, setDocumentSearchTerm] = useState('')
+  const [documentSearchTerm, setDocumentSearchTerm] = usePersistedState('cust-full-detail-doc-search', '')
 
   // 🍎 문서 필터바 포탈 타겟 (섹션 헤더에 필터를 통합 표시)
   const [docFilterBarEl, setDocFilterBarEl] = useState<HTMLDivElement | null>(null)
 
   // 🍎 Annual Report 검색 상태
-  const [annualReportSearchTerm, setAnnualReportSearchTerm] = useState('')
+  const [annualReportSearchTerm, setAnnualReportSearchTerm] = usePersistedState('cust-full-detail-ar-search', '')
 
   // 🍎 Customer Review 검색 상태
-  const [customerReviewSearchTerm, setCustomerReviewSearchTerm] = useState('')
+  const [customerReviewSearchTerm, setCustomerReviewSearchTerm] = usePersistedState('cust-full-detail-cr-search', '')
 
   // 🍎 고객 정보 탭 상태 ('info' | 'memo')
-  const [customerInfoTab, setCustomerInfoTab] = useState<'info' | 'memo'>('info')
+  const [customerInfoTab, setCustomerInfoTab] = usePersistedState<'info' | 'memo'>('cust-full-detail-info-tab', 'info')
 
   // 🍎 보고서 탭 상태 ('annual' | 'review')
-  const [reportTab, setReportTab] = useState<'annual' | 'review'>('annual')
+  const [reportTab, setReportTab] = usePersistedState<'annual' | 'review'>('cust-full-detail-report-tab', 'annual')
 
   // 🍎 보험 이력 탭 상태 ('ar' | 'cr' | 'family' | 'corporate')
-  const [historyTab, setHistoryTab] = useState<'ar' | 'cr' | 'family' | 'corporate'>('ar')
+  const [historyTab, setHistoryTab] = usePersistedState<'ar' | 'cr' | 'family' | 'corporate'>('cust-full-detail-history-tab', 'ar')
 
   // 🍎 문서 내용 검색 모달 상태
   const [isDocContentSearchModalOpen, setIsDocContentSearchModalOpen] = useState(false)
@@ -143,7 +144,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
   // 🍎 모바일 뷰 감지 (768px 이하 또는 폰 가로 모드에서 탭 기반 레이아웃)
   const { isMobileLayout: isMobileView } = useDeviceOrientation()
-  const [mobileActiveSection, setMobileActiveSection] = useState<'contracts' | 'documents' | 'report' | 'memo'>('contracts')
+  const [mobileActiveSection, setMobileActiveSection] = usePersistedState<'contracts' | 'documents' | 'report' | 'memo'>('cust-full-detail-mobile-section', 'contracts')
 
   // 🍎 리사이즈 기본값 및 localStorage 키
   const LAYOUT_STORAGE_KEY = 'aims-customer-full-detail-layout'

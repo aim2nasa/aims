@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { usePersistedState } from '@/hooks/usePersistedState'
 import { CenterPaneView } from '@/components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { Tooltip } from '@/shared/ui'
@@ -182,16 +183,24 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   onCollapse,
   onDocumentClick,
 }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('my')
+  const [activeTab, setActiveTab] = usePersistedState<TabType>('cust-doc-explorer-tab', 'my')
   // 펼침 상태: "cat:insurance" 또는 "st:insurance/annual_report" 형식
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => new Set())
+  const [expandedNodesList, setExpandedNodesList] = usePersistedState<string[]>('cust-doc-explorer-expanded', [])
+  const expandedNodes = useMemo(() => new Set(expandedNodesList), [expandedNodesList])
+  const setExpandedNodes = useCallback((value: Set<string> | ((prev: Set<string>) => Set<string>)) => {
+    if (typeof value === 'function') {
+      setExpandedNodesList(prev => Array.from(value(new Set(prev))))
+    } else {
+      setExpandedNodesList(Array.from(value))
+    }
+  }, [setExpandedNodesList])
   // 파일명 모드: localStorage로 전역 동기화 (전체문서보기와 동일 키)
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
     if (typeof window === 'undefined') return 'display'
     return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
   })
   // 파일명 검색
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = usePersistedState('cust-doc-explorer-search', '')
 
   // 호버 액션: 문서 삭제/이름변경 — reload 대신 데이터 재조회로 UI 상태 유지
   const refreshDataRef = useRef<() => void>(() => {})

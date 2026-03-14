@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { usePersistedState } from '@/hooks/usePersistedState'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
@@ -95,19 +96,19 @@ export default function ContractAllView({
   const [error, setError] = useState<string | null>(null)
 
   // 검색 상태
-  const [searchValue, setSearchValue] = useState('')
+  const [searchValue, setSearchValue] = usePersistedState('contract-all-search', '')
 
   // 정렬 상태
-  const [sortField, setSortField] = useState<SortField | null>(null)
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [sortField, setSortField] = usePersistedState<SortField | null>('contract-all-sort-field', null)
+  const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('contract-all-sort-direction', 'asc')
 
   // 초성 필터 상태
-  const [initialType, setInitialType] = useState<InitialType>('korean')
-  const [selectedInitial, setSelectedInitial] = useState<string | null>(null)
+  const [initialType, setInitialType] = usePersistedState<InitialType>('contract-all-initial-type', 'korean')
+  const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('contract-all-selected-initial', null)
 
   // 페이지네이션 상태
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState('50')
+  const [currentPage, setCurrentPage] = usePersistedState('contract-all-page', 1)
+  const [itemsPerPage, setItemsPerPage] = usePersistedState('contract-all-items-per-page', '50')
 
   // 페이지네이션 클릭 애니메이션 상태
   const [prevArrowClicked, setPrevArrowClicked] = useState(false)
@@ -144,7 +145,7 @@ export default function ContractAllView({
   }>({ isOpen: false, name: '' })
 
   // 미매칭 상품명 필터 상태
-  const [showUnmatchedOnly, setShowUnmatchedOnly] = useState(false)
+  const [showUnmatchedOnly, setShowUnmatchedOnly] = usePersistedState('contract-all-unmatched-filter', false)
 
   // 상품 검색 모달 상태
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false)

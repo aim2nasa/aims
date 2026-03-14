@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { usePersistedState } from '@/hooks/usePersistedState'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
@@ -233,8 +234,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   // 🍎 정렬 상태
   type SortField = 'filetype' | 'filename' | 'customer' | 'status' | 'similarity' | null
   type SortOrder = 'asc' | 'desc'
-  const [sortField, setSortField] = useState<SortField>('filename')
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
+  const [sortField, setSortField] = usePersistedState<SortField>('doc-search-sort-field', 'filename')
+  const [sortOrder, setSortOrder] = usePersistedState<SortOrder>('doc-search-sort-order', 'asc')
 
   // 🍎 파일 유형 라벨 추출
   const getFileTypeLabel = useCallback((item: SearchResultItem) => {
@@ -250,7 +251,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
   // 🍎 페이지네이션 상태
   const SEARCH_PAGE_SIZE = 20
-  const [searchPage, setSearchPage] = useState(1)
+  const [searchPage, setSearchPage] = usePersistedState('doc-search-page', 1)
 
   // 🍎 AI 검색 결과가 올 때 자동으로 유사도 내림차순 정렬
   useEffect(() => {

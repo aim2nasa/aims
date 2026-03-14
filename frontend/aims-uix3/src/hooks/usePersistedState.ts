@@ -95,6 +95,36 @@ export function clearAllViewStates(): void {
     'document-status-filter',
     'document-status-sort',
     'document-status-page',
+
+    // DocumentSearchView
+    'doc-search-sort-field',
+    'doc-search-sort-order',
+    'doc-search-page',
+
+    // CustomerFullDetailView
+    'cust-full-detail-info-tab',
+    'cust-full-detail-report-tab',
+    'cust-full-detail-history-tab',
+    'cust-full-detail-contract-search',
+    'cust-full-detail-doc-search',
+    'cust-full-detail-ar-search',
+    'cust-full-detail-cr-search',
+    'cust-full-detail-mobile-section',
+
+    // CustomerDocumentExplorerView
+    'cust-doc-explorer-tab',
+    'cust-doc-explorer-search',
+    'cust-doc-explorer-expanded',
+
+    // ContractAllView
+    'contract-all-search',
+    'contract-all-sort-field',
+    'contract-all-sort-direction',
+    'contract-all-initial-type',
+    'contract-all-selected-initial',
+    'contract-all-page',
+    'contract-all-items-per-page',
+    'contract-all-unmatched-filter',
   ];
 
   keys.forEach(key => clearPersistedState(key));
