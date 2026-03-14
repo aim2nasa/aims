@@ -99,7 +99,6 @@ export function clearAllViewStates(): void {
     // DocumentSearchView
     'doc-search-sort-field',
     'doc-search-sort-order',
-    'doc-search-page',
 
     // CustomerFullDetailView
     'cust-full-detail-info-tab',

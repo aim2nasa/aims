@@ -202,6 +202,17 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   // 파일명 검색
   const [searchTerm, setSearchTerm] = usePersistedState('cust-doc-explorer-search', '')
 
+  // 🍎 고객 전환 시 상태 초기화 (이전 고객의 UI 컨텍스트 오염 방지)
+  const prevCustomerIdRef = useRef(customerId)
+  useEffect(() => {
+    if (prevCustomerIdRef.current !== customerId) {
+      prevCustomerIdRef.current = customerId
+      setActiveTab('my')
+      setExpandedNodesList([])
+      setSearchTerm('')
+    }
+  }, [customerId, setActiveTab, setExpandedNodesList, setSearchTerm])
+
   // 호버 액션: 문서 삭제/이름변경 — reload 대신 데이터 재조회로 UI 상태 유지
   const refreshDataRef = useRef<() => void>(() => {})
   const onRefreshData = useCallback(() => { refreshDataRef.current() }, [])

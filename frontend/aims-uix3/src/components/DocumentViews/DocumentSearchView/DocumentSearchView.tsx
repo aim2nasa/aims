@@ -251,7 +251,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
   // 🍎 페이지네이션 상태
   const SEARCH_PAGE_SIZE = 20
-  const [searchPage, setSearchPage] = usePersistedState('doc-search-page', 1)
+  const [searchPage, setSearchPage] = useState(1)
 
   // 🍎 AI 검색 결과가 올 때 자동으로 유사도 내림차순 정렬
   useEffect(() => {

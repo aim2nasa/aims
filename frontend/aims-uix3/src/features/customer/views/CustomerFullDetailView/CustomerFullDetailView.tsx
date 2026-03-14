@@ -288,6 +288,22 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     // 🔧 finally 제거 - 취소된 요청에서 setIsLoading(false)가 호출되면 안 됨
   }, [customerId, addRecentCustomer, removeRecentCustomer])
 
+  // 🍎 고객 전환 시 persisted 상태 초기화 (이전 고객의 UI 컨텍스트 오염 방지)
+  const prevCustomerIdRef = useRef(customerId)
+  useEffect(() => {
+    if (prevCustomerIdRef.current !== customerId) {
+      prevCustomerIdRef.current = customerId
+      setContractSearchTerm('')
+      setDocumentSearchTerm('')
+      setAnnualReportSearchTerm('')
+      setCustomerReviewSearchTerm('')
+      setCustomerInfoTab('info')
+      setReportTab('annual')
+      setHistoryTab('ar')
+      setMobileActiveSection('contracts')
+    }
+  }, [customerId, setContractSearchTerm, setDocumentSearchTerm, setAnnualReportSearchTerm, setCustomerReviewSearchTerm, setCustomerInfoTab, setReportTab, setHistoryTab, setMobileActiveSection])
+
   // 🍎 초기 로드
   useEffect(() => {
     console.log('🔥🔥🔥 [CustomerFullDetailView] useEffect 트리거 [BUILD v0.375.0]:', {
