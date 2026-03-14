@@ -25,7 +25,7 @@ interface RememberedUser {
 export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { setToken, setUser, token: authToken } = useAuthStore();
+  const { setToken, setUser, token: authToken, logout: authLogout } = useAuthStore();
   const { updateCurrentUser } = useUserStore();
   const { isDevMode, toggleDevMode } = useDevModeStore();
   const { showAlert } = useAppleConfirm();
@@ -183,9 +183,21 @@ export default function LoginPage() {
 
   // PIN 모드 → 소셜 로그인 모드로 전환
   const switchToSocialLogin = useCallback(() => {
-    setSearchParams({});
+    // 완전 초기화 + 해당 소셜 로그인 switch(강제 재인증)로 바로 이동
+    authLogout();
+    localStorage.removeItem('aims-remember-device');
+    localStorage.removeItem('aims-remembered-user');
+    localStorage.removeItem('aims-current-user-id');
     setPinError(null);
-  }, [setSearchParams]);
+
+    // 기억된 사용자의 소셜 로그인 provider로 바로 이동 (강제 재인증)
+    const provider = rememberedUser?.authProvider;
+    if (provider === 'kakao') { startKakaoLoginSwitch(); return; }
+    if (provider === 'naver') { startNaverLoginSwitch(); return; }
+    if (provider === 'google') { startGoogleLoginSwitch(); return; }
+    // provider 없으면 소셜 로그인 페이지로
+    setSearchParams({});
+  }, [authLogout, setSearchParams, rememberedUser]);
 
   // PIN 입력 완료 핸들러 — 서버 검증
   const handlePinComplete = useCallback(async (pin: string) => {

@@ -32,6 +32,7 @@ vi.mock('react-router-dom', async () => {
 let mockAuthStore = {
   setToken: mockSetToken,
   setUser: mockSetUser,
+  logout: vi.fn(),
   isAuthenticated: false,
   user: null,
   token: null as string | null,
@@ -154,13 +155,14 @@ describe('LoginPage Phase 2 — PIN 모드', () => {
       })
     })
 
-    it('"다른 계정으로 로그인" 클릭 시 소셜 로그인 화면으로 전환', async () => {
+    it('"다른 계정으로 로그인" 클릭 시 해당 소셜 로그인 switch로 이동', async () => {
+      const { startKakaoLoginSwitch } = await import('@/entities/auth/api')
       renderLoginPage('/login?mode=pin')
       await waitFor(() => {
         expect(screen.getByText('다른 계정으로 로그인')).toBeInTheDocument()
       })
       fireEvent.click(screen.getByText('다른 계정으로 로그인'))
-      expect(screen.getByText('카카오 로그인')).toBeInTheDocument()
+      expect(startKakaoLoginSwitch).toHaveBeenCalled()
     })
 
     it('숨겨진 input이 존재하고 numeric inputMode를 가짐', async () => {
