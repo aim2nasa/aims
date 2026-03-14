@@ -156,11 +156,10 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
         )}
         <h1 className="header-title">
           <img
-            src={theme === 'dark' ? '/assets/logo/aims-logo-dark.svg' : '/assets/logo/aims-logo-light.svg'}
+            src={theme === 'dark' ? '/assets/logo/aims-logo-full-dark.svg' : '/assets/logo/aims-logo-full-light.svg'}
             alt="AIMS"
-            className="header-logo-icon"
+            className="header-logo-full"
           />
-          AIMS
         </h1>
         {/* Developer Mode Badge - AIMS UIX3 우측 */}
         {isDevMode && (
