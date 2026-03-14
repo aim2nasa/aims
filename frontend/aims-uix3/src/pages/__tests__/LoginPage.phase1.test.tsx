@@ -1,6 +1,6 @@
 /**
  * LoginPage Phase 1 테스트 — 체크박스 + 모바일 대응
- * @description "다음에 PIN으로 빠르게 로그인" 체크박스 렌더링 검증
+ * @description "다음에 간편 비밀번호로 빠르게 로그인" 체크박스 렌더링 검증
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -91,7 +91,7 @@ describe('LoginPage Phase 1 — 체크박스', () => {
     sessionStorage.clear()
   })
 
-  describe('"다음에 PIN으로 빠르게 로그인" 체크박스', () => {
+  describe('"다음에 간편 비밀번호로 빠르게 로그인" 체크박스', () => {
     it('체크박스가 렌더링되어야 함', () => {
       renderLoginPage()
       const checkbox = screen.getByRole('checkbox')
@@ -112,7 +112,7 @@ describe('LoginPage Phase 1 — 체크박스', () => {
 
     it('체크박스 라벨 텍스트가 올바른가', () => {
       renderLoginPage()
-      expect(screen.getByText('다음에 PIN으로 빠르게 로그인')).toBeInTheDocument()
+      expect(screen.getByText('다음에 간편 비밀번호로 빠르게 로그인')).toBeInTheDocument()
     })
 
     it('안내 문구가 표시되어야 함', () => {

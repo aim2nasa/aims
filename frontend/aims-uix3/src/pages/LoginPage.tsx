@@ -438,7 +438,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* 다음에 PIN으로 빠르게 로그인 */}
+          {/* 다음에 간편 비밀번호로 빠르게 로그인 */}
           <div className="login-remember-device">
             <input
               type="checkbox"
@@ -454,7 +454,7 @@ export default function LoginPage() {
                 }
               }}
             />
-            <label htmlFor="remember-device">다음에 PIN으로 빠르게 로그인</label>
+            <label htmlFor="remember-device">다음에 간편 비밀번호로 빠르게 로그인</label>
             <span className="login-remember-device-hint">
               {rememberDevice
                 ? '다음엔 숫자 4개만 누르면 됩니다'

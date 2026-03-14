@@ -184,7 +184,7 @@
     font-size: 14px;
   }
 
-  /* "다음에 PIN으로 빠르게 로그인" 체크박스 */
+  /* "다음에 간편 비밀번호로 빠르게 로그인" 체크박스 */
   .login-remember-device {
     display: flex;
     align-items: center;
