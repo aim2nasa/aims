@@ -149,7 +149,7 @@ test.describe('일반 모드 Regression', () => {
 
     const checkbox = page.locator('#remember-device');
     await expect(checkbox).toBeVisible();
-    await expect(checkbox).toBeDisabled();
+    await expect(checkbox).toBeEnabled();
     await page.screenshot({ path: 'D:/tmp/e2e_tc12_pc_social_login.png' });
   });
 

@@ -44,6 +44,30 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const rememberDevice = localStorage.getItem('aims-remember-device') === 'true';
   const sessionToken = sessionStorage.getItem('aims-session-token');
 
+  // Idle Timeout: PC 30분, 모바일 10분 미사용 시 세션 토큰 삭제 → PIN 재입력
+  useEffect(() => {
+    if (!rememberDevice || !sessionToken) return;
+    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+    const IDLE_MS = isMobile ? 10 * 60_000 : 30 * 60_000;
+    let lastActivity = Date.now();
+
+    const resetTimer = () => { lastActivity = Date.now(); };
+    const events = ['mousemove', 'keydown', 'touchstart', 'scroll'];
+    events.forEach(evt => window.addEventListener(evt, resetTimer, { passive: true }));
+
+    const interval = setInterval(() => {
+      if (Date.now() - lastActivity > IDLE_MS) {
+        sessionStorage.removeItem('aims-session-token');
+        setSessionValid(false);
+      }
+    }, 60_000);
+
+    return () => {
+      events.forEach(evt => window.removeEventListener(evt, resetTimer));
+      clearInterval(interval);
+    };
+  }, [rememberDevice, sessionToken]);
+
   useEffect(() => {
     const init = async () => {
       // 사용자 정보 로드

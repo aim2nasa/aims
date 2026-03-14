@@ -105,6 +105,9 @@ export default function LoginPage() {
     const token = searchParams.get('token');
     if (!token || isProcessing) return;
 
+    // URL에서 토큰 즉시 제거 (브라우저 히스토리/Referer 노출 방지)
+    setSearchParams({}, { replace: true });
+
     const isValidJWT = (t: string) =>
       t.length < 2000 &&
       /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/.test(t);

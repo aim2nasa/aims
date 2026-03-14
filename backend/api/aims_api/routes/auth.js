@@ -886,7 +886,7 @@ module.exports = function(db) {
       // exp와 iat를 제거하고 새로 토큰 생성
       const { exp, iat, ...payload } = req.user;
       const newToken = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+        expiresIn: process.env.JWT_EXPIRES_IN || '1d'
       });
 
       res.json({
