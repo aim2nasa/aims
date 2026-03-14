@@ -295,6 +295,17 @@ export default function LoginPage() {
             </button>
           </div>
 
+          {/* 다음에 PIN으로 빠르게 로그인 체크박스 (Phase 3까지 disabled) */}
+          <div className="login-remember-device">
+            <input
+              type="checkbox"
+              id="remember-device"
+              disabled
+            />
+            <label htmlFor="remember-device">다음에 PIN으로 빠르게 로그인</label>
+            <span className="login-remember-device-hint">곧 지원 예정</span>
+          </div>
+
           {/* 다른 계정으로 로그인 섹션 */}
           <div className="switch-account-section">
             <button

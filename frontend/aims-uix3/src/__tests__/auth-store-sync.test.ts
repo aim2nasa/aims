@@ -10,11 +10,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 
 describe('Auth Store 동기화', () => {
-  // localStorage Mock
+  // localStorage / sessionStorage Mock
   let localStorageMock: Record<string, string> = {}
+  let sessionStorageMock: Record<string, string> = {}
 
   beforeEach(() => {
     localStorageMock = {}
+    sessionStorageMock = {}
 
     vi.stubGlobal('localStorage', {
       getItem: vi.fn((key: string) => localStorageMock[key] || null),
@@ -26,10 +28,10 @@ describe('Auth Store 동기화', () => {
     })
 
     vi.stubGlobal('sessionStorage', {
-      getItem: vi.fn(() => null),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
+      getItem: vi.fn((key: string) => sessionStorageMock[key] || null),
+      setItem: vi.fn((key: string, value: string) => { sessionStorageMock[key] = value }),
+      removeItem: vi.fn((key: string) => { delete sessionStorageMock[key] }),
+      clear: vi.fn(() => { sessionStorageMock = {} }),
       length: 0,
       key: vi.fn()
     })
@@ -133,7 +135,7 @@ describe('Auth Store 동기화', () => {
   })
 
   describe('authStore 토큰 영속화', () => {
-    it('토큰만 localStorage에 저장되어야 함 (user 제외)', async () => {
+    it('토큰만 스토리지에 저장되어야 함 (user 제외)', async () => {
       const { useAuthStore } = await import('@/shared/stores/authStore')
 
       const { result } = renderHook(() => useAuthStore())
@@ -150,7 +152,10 @@ describe('Auth Store 동기화', () => {
       })
 
       // partialize 설정 확인 - 토큰만 저장
-      const saved = JSON.parse(localStorageMock['auth-storage-v2'] || '{}')
+      // Phase 1: 기본 스토리지가 sessionStorage로 변경됨
+      const savedSession = JSON.parse(sessionStorageMock['auth-storage-v2'] || '{}')
+      const savedLocal = JSON.parse(localStorageMock['auth-storage-v2'] || '{}')
+      const saved = savedSession.state?.token ? savedSession : savedLocal
       expect(saved.state?.token).toBeDefined()
       // user는 저장되지 않아야 함 (partialize 설정)
     })
