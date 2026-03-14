@@ -219,9 +219,21 @@ async function getTopOcrUsers(analyticsDb, startDate, endDate, limit = 10) {
 async function ensureIndexes(analyticsDb) {
   const collection = analyticsDb.collection('ocr_usage_log');
 
+  // file_id_1 unique 인덱스가 이미 존재하면 drop 후 non-unique로 재생성
+  try {
+    const indexes = await collection.indexes();
+    const fileIdIndex = indexes.find(idx => idx.name === 'file_id_1' && idx.unique);
+    if (fileIdIndex) {
+      await collection.dropIndex('file_id_1');
+      console.log('[OcrUsageLogService] file_id_1 unique 인덱스 제거 완료');
+    }
+  } catch (e) {
+    if (e.code !== 27 && e.codeName !== 'IndexNotFound') throw e;
+  }
+
   await collection.createIndex({ processed_at: -1 });
   await collection.createIndex({ owner_id: 1, processed_at: -1 });
-  await collection.createIndex({ file_id: 1 }, { unique: true, sparse: true });
+  await collection.createIndex({ file_id: 1 });
   await collection.createIndex({ status: 1, processed_at: -1 });
 
   console.log('[OcrUsageLogService] 인덱스 생성 완료');

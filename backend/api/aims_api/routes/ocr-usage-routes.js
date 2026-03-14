@@ -36,6 +36,11 @@ const redis = new Redis({
  */
 module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
+  // 초기화 시 인덱스 생성 (unique → non-unique 마이그레이션 포함)
+  ocrUsageLogService.ensureIndexes(analyticsDb).catch(err => {
+    console.error('[OcrUsageRoutes] 인덱스 생성 실패:', err);
+  });
+
   /**
    * GET /api/admin/ocr-usage/overview
    * OCR 전체 통계

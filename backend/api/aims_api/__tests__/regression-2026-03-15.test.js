@@ -1,12 +1,13 @@
 /**
  * Regression Tests — 2026-03-15 버그 수정
  *
- * 수정된 버그 5건:
+ * 수정된 버그 6건:
  * 1. credit_pending 재처리 트리거 누락 (storage-routes.js)
  * 2. webhook API 키 인증 불일치 (customers-routes.js, auth.js)
  * 3. virusScanService import 누락 (customers-routes.js)
  * 4. scanAfterUpload ObjectId 변환 누락 (virusScanService.js)
  * 5. AR/CR 라우트 인증 미들웨어 누락 (customers-routes.js)
+ * 7. ocr_usage_log file_id unique 인덱스 → 재처리 시 중복 에러 (ocrUsageLogService.js)
  *
  * @since 2026-03-15
  */
@@ -220,5 +221,57 @@ describe('BUG-2 보완: deploy 스크립트 환경변수 전달', () => {
 
   test('INTERNAL_WEBHOOK_API_KEY가 Docker에 전달되어야 함', () => {
     expect(deploySource).toContain('INTERNAL_WEBHOOK_API_KEY');
+  });
+});
+
+// =============================================================================
+// 7. ocr_usage_log file_id unique 인덱스 제거 (ocrUsageLogService.js)
+// =============================================================================
+describe('BUG-7: ocr_usage_log file_id에 unique 인덱스가 없어야 함', () => {
+  const source = readSource('lib/ocrUsageLogService.js');
+
+  test('file_id 인덱스에 unique: true가 없어야 함', () => {
+    const fileIdIndexLines = source.split('\n').filter(l =>
+      l.includes('file_id') && l.includes('createIndex')
+    );
+    expect(fileIdIndexLines.length).toBeGreaterThan(0);
+    for (const line of fileIdIndexLines) {
+      expect(line).not.toContain('unique');
+    }
+  });
+
+  test('ensureIndexes에서 기존 unique 인덱스를 drop하는 마이그레이션 로직이 있어야 함', () => {
+    expect(source).toContain('dropIndex');
+    expect(source).toContain('file_id_1');
+  });
+
+  test('마이그레이션 catch에서 IndexNotFound만 무시하고 나머지는 throw해야 함', () => {
+    expect(source).toContain('IndexNotFound');
+    expect(source).not.toMatch(/catch\s*\(e\)\s*\{\s*\}/);
+  });
+
+  test('동일 file_id로 여러 번 로그 기록이 가능해야 함 (재처리 시나리오)', () => {
+    const logFn = source.substring(
+      source.indexOf('async function logOcrUsage'),
+      source.indexOf('async function getOcrUsageStats')
+    );
+    expect(logFn).toContain('insertOne');
+    expect(logFn).not.toContain('updateOne');
+  });
+
+  test('ocr-usage-routes에서 서버 기동 시 ensureIndexes를 호출해야 함', () => {
+    const routesSource = readSource('routes/ocr-usage-routes.js');
+    expect(routesSource).toContain('ocrUsageLogService.ensureIndexes');
+  });
+
+  test('migrateOcrUsageLog.js에서도 file_id unique 인덱스가 제거되어야 함', () => {
+    const migrateSource = readSource('scripts/migrateOcrUsageLog.js');
+    const fileIdLines = migrateSource.split('\n').filter(l =>
+      l.includes('file_id') && l.includes('createIndex')
+    );
+    expect(fileIdLines.length).toBeGreaterThan(0);
+    for (const line of fileIdLines) {
+      expect(line).not.toContain('unique');
+    }
   });
 });

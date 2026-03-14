@@ -42,7 +42,7 @@ async function migrate() {
     console.log('[2/5] 인덱스 생성 중...');
     await ocrUsageLogCollection.createIndex({ processed_at: -1 });
     await ocrUsageLogCollection.createIndex({ owner_id: 1, processed_at: -1 });
-    await ocrUsageLogCollection.createIndex({ file_id: 1 }, { unique: true, sparse: true });
+    await ocrUsageLogCollection.createIndex({ file_id: 1 });
     await ocrUsageLogCollection.createIndex({ status: 1, processed_at: -1 });
     console.log('   인덱스 생성 완료');
 
