@@ -63,6 +63,16 @@ export default function AuthCallbackPage() {
         localStorage.setItem('aims-current-user-id', user._id);
         syncUserIdFromStorage();
 
+        // 기기 기억 체크 시 remembered user 저장
+        const rememberDevice = localStorage.getItem('aims-remember-device') === 'true';
+        if (rememberDevice) {
+          localStorage.setItem('aims-remembered-user', JSON.stringify({
+            userId: user._id,
+            name: user.name || '',
+            authProvider: user.authProvider || 'kakao',
+          }));
+        }
+
         // 메인 페이지로 리다이렉트
         navigate('/', { replace: true });
       } catch (err) {

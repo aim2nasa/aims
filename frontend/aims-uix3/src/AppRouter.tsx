@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/authStore';
 import LoginPage from '@/pages/LoginPage';
 import AuthCallbackPage from '@/pages/AuthCallbackPage';
@@ -20,7 +20,11 @@ const CustomerReviewPage = lazy(() => import('@/pages/CustomerReviewPage'));
 
 export default function AppRouter() {
   const { isAuthenticated, user, logout } = useAuthStore();
+  const [searchParams] = useSearchParams();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
+
+  // PIN 모드이면 인증 상태와 관계없이 LoginPage 표시
+  const isPinMode = searchParams.get('mode') === 'pin';
 
   // 로그인 후 profileCompleted 체크
   useEffect(() => {
@@ -50,7 +54,7 @@ export default function AppRouter() {
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
+            (isAuthenticated && !isPinMode) ? <Navigate to="/" replace /> : <LoginPage />
           }
         />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
