@@ -37,6 +37,8 @@ export interface ModalProps {
   footer?: React.ReactNode
   /** 모달 본문 내용 */
   children: React.ReactNode
+  /** 모달 변형 — Alert은 모바일에서도 중앙 배치, Sheet는 하단 시트 */
+  variant?: 'sheet' | 'alert'
   /** 추가 CSS 클래스 */
   className?: string
   /** ARIA label (접근성) */
@@ -69,6 +71,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   size = 'md',
+  variant = 'sheet',
   backdropClosable = false,
   escapeToClose = true,
   showHeader = true,
@@ -90,13 +93,13 @@ export const Modal: React.FC<ModalProps> = ({
 
   const modalBody = (
     <div
-      className="modal-backdrop"
+      className={`modal-backdrop modal-backdrop--${variant}`}
       onClick={handleBackdropClick}
       role="presentation"
     >
       <div
         ref={modalRef}
-        className={`modal modal--${size} ${className}`}
+        className={`modal modal--${size} modal--${variant} ${className}`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

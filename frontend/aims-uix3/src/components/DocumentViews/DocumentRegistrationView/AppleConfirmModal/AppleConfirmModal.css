@@ -24,16 +24,19 @@
       0 3px 12px var(--color-hover-light),
       0 12px 40px var(--color-ios-error-bg-light),
       0 25px 80px var(--color-active-light);
-    max-width: 500px; /* 더 넓은 폭 */
-    min-width: 420px;
+    max-width: 340px; /* iOS Alert 표준 크기 */
     width: 100%;
     max-height: 70vh;
     overflow: hidden;
   }
 
+  /* 이중 패딩 해소 — AppleConfirmModal이 자체 패딩 제어 */
+  .apple-confirm-modal .modal__content { padding: 0; }
+  .apple-confirm-modal .modal__footer { padding: 0; border-top: none; }
+
   /* 🍎 MODAL HEADER: 아이콘과 제목 */
   .apple-confirm-modal__header {
-    padding: 18px 20px 10px 20px;
+    padding: 20px 16px 4px 16px;
     text-align: center;
   }
 
@@ -66,7 +69,7 @@
 
   /* 🍎 MODAL BODY: 메시지 영역 */
   .apple-confirm-modal__body {
-    padding: 0 20px 18px 20px;
+    padding: 0 16px 16px 16px;
     text-align: center;
   }
 
@@ -86,16 +89,23 @@
   /* 🍎 MODAL ACTIONS: iOS 버튼 영역 */
   .apple-confirm-modal__actions {
     display: flex;
-    gap: var(--spacing-3);
-    /* border-top 제거: 회색 라인 없앰 */
-    min-height: 43px; /* iOS 최적화된 터치 영역 */
-    padding: var(--spacing-2) var(--spacing-3);
+    gap: 8px;
+    padding: 0 16px 16px 16px;
   }
 
-  /* 공용 Button 컴포넌트 사용 */
+  /* 공용 Button 컴포넌트 사용 — Alert 컨텍스트 크기 오버라이드 */
   .apple-confirm-modal__actions .button {
     flex: 1;
+    min-height: 34px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 13px;
   }
+
+  /* iOS Alert 규칙: 주요 액션은 semibold, 보조 액션은 regular */
+  .apple-confirm-modal__actions .button--primary,
+  .apple-confirm-modal__actions .button--destructive { font-weight: 600; }
+  .apple-confirm-modal__actions .button--ghost { font-weight: 400; }
 
   /* 🍎 REDUCED MOTION: 모션 감소 사용자 배려 */
   @media (prefers-reduced-motion: reduce) {
@@ -104,24 +114,19 @@
     }
   }
 
+  /* 모바일: 터치 타겟 유지 */
+  @media (max-width: 768px) {
+    .apple-confirm-modal__actions .button {
+      min-height: 44px;
+      padding: 10px 16px;
+      font-size: 15px;
+    }
+  }
+
   /* 🍎 MOBILE RESPONSIVE: 작은 화면 대응 */
   @media (max-width: 480px) {
     .apple-confirm-modal {
-      max-width: none;
-      min-width: 260px;
-    }
-
-    .apple-confirm-modal__header {
-      padding: 20px 20px 12px 20px;
-    }
-
-    .apple-confirm-modal__body {
-      padding: 0 20px 20px 20px;
-    }
-
-    .apple-confirm-modal__message {
-      font-size: var(--font-size-body); /* 17px - FONT_SIZE_STANDARDS.md: 모바일에서 약간 더 크게 */
-      font-family: var(--font-family-display);
+      max-width: 300px;
     }
   }
 

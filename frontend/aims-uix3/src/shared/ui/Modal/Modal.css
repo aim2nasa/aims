@@ -122,13 +122,13 @@
   /* === RESPONSIVE === */
 
   @media (max-width: 480px) {
-    /* 📱 iOS 하단 시트 패턴 */
-    .modal-backdrop {
+    /* 📱 Sheet만 하단 시트로 전환 — Alert은 중앙 유지 */
+    .modal-backdrop--sheet {
       align-items: flex-end;
       padding: 0;
     }
 
-    .modal {
+    .modal--sheet {
       width: 100vw;
       max-width: 100vw;
       max-height: 90vh;
@@ -137,17 +137,23 @@
       animation: modalSlideUp var(--duration-moderate) var(--easing-ios-spring);
     }
 
-    .modal__header {
+    .modal--sheet .modal__header {
       padding: var(--spacing-4) var(--spacing-5);
     }
 
-    .modal__content {
+    .modal--sheet .modal__content {
       padding: var(--spacing-4) var(--spacing-5);
     }
 
-    .modal__footer {
+    .modal--sheet .modal__footer {
       padding: var(--spacing-4) var(--spacing-5);
       padding-bottom: max(var(--spacing-4), env(safe-area-inset-bottom));
+    }
+
+    /* Alert은 중앙 유지, 컴팩트 크기 */
+    .modal--alert {
+      max-width: 300px;
+      border-radius: 13px;
     }
   }
 
@@ -169,8 +175,12 @@
       padding: 4px;
     }
 
-    .modal {
+    .modal--sheet {
       max-height: calc(100dvh - 8px);
+    }
+
+    .modal--alert {
+      max-height: calc(100dvh - 32px);
     }
   }
 

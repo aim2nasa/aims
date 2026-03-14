@@ -57,7 +57,7 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
       {state.showCancel && (
         <Button
           variant="ghost"
-          size="md"
+          size="sm"
           onClick={actions.handleCancel}
           autoFocus={state.confirmStyle === 'destructive'}
         >
@@ -67,7 +67,7 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
 
       <Button
         variant={state.confirmStyle === 'destructive' ? 'destructive' : 'primary'}
-        size="md"
+        size="sm"
         onClick={actions.handleConfirm}
         disabled={isConfirmDisabled}
         autoFocus={!state.showCancel || state.confirmStyle === 'primary'}
@@ -86,6 +86,7 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
       showHeader={false}
       backdropClosable={state.showCancel ?? true}
       className="apple-confirm-modal"
+      variant="alert"
       size="sm"
       footer={footer}
       ariaLabel={state.title || '확인'}
