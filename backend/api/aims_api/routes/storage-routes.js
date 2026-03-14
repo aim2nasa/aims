@@ -17,7 +17,7 @@ const {
   updateTierDefinition,
   calculateOcrCycle
 } = require('../lib/storageQuotaService');
-const { getUserCreditInfo, getBonusCreditBalance } = require('../lib/creditService');
+const { getUserCreditInfo, getBonusCreditBalance, processCreditPendingDocuments } = require('../lib/creditService');
 const backendLogger = require('../lib/backendLogger');
 
 /**
@@ -212,6 +212,19 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
         });
       }
 
+      // 크레딧 한도가 늘어났을 수 있으므로 credit_pending 문서 재처리
+      // 재처리 실패는 tier 변경 성공에 영향을 주지 않음 (grantBonusCredits 설계 원칙 준수)
+      let creditPendingResult = { processed: 0, remaining: 0 };
+      try {
+        creditPendingResult = await processCreditPendingDocuments(db, id);
+        if (creditPendingResult.processed > 0) {
+          console.log(`[Storage] 티어 변경(${tier}) → credit_pending ${creditPendingResult.processed}건 재처리, ${creditPendingResult.remaining}건 잔여`);
+        }
+      } catch (creditErr) {
+        console.error(`[Storage] credit_pending 재처리 실패 (tier 변경은 성공):`, creditErr.message);
+        backendLogger.error('Storage', 'credit_pending 재처리 실패', creditErr);
+      }
+
       // SSE로 해당 사용자에게 티어 변경 알림
       if (notifyUserAccountSubscribers) {
         notifyUserAccountSubscribers(id, 'tier-changed', {
@@ -229,7 +242,9 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
           userId: id,
           tier: result.tier,
           quota_bytes: result.quota_bytes,
-          formatted_quota: formatBytes(result.quota_bytes)
+          formatted_quota: formatBytes(result.quota_bytes),
+          credit_pending_reprocessed: creditPendingResult.processed,
+          credit_pending_remaining: creditPendingResult.remaining
         }
       });
 
@@ -348,6 +363,38 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
 
       const updatedTier = await updateTierDefinition(db, tierId, updates);
 
+      // credit_quota가 변경된 경우, 해당 tier 사용자들의 credit_pending 문서 재처리
+      // 재처리 실패는 tier 정의 변경 성공에 영향을 주지 않음
+      let totalReprocessed = 0;
+      let totalRemaining = 0;
+      if (credit_quota !== undefined) {
+        try {
+          const usersCollection = db.collection('users');
+          const affectedUsers = await usersCollection.find(
+            { 'storage.tier': tierId },
+            { projection: { _id: 1 } }
+          ).toArray();
+
+          for (const user of affectedUsers) {
+            const userId = user._id.toString();
+            try {
+              const result = await processCreditPendingDocuments(db, userId);
+              totalReprocessed += result.processed;
+              totalRemaining += result.remaining;
+            } catch (userErr) {
+              console.error(`[Storage] 사용자 ${userId} credit_pending 재처리 실패:`, userErr.message);
+            }
+          }
+
+          if (totalReprocessed > 0) {
+            console.log(`[Storage] 티어 정의 변경(${tierId}) → ${affectedUsers.length}명 사용자, credit_pending ${totalReprocessed}건 재처리, ${totalRemaining}건 잔여`);
+          }
+        } catch (creditErr) {
+          console.error(`[Storage] 티어 정의 변경 후 credit_pending 재처리 실패:`, creditErr.message);
+          backendLogger.error('Storage', 'tier 정의 변경 후 credit_pending 재처리 실패', creditErr);
+        }
+      }
+
       res.json({
         success: true,
         message: `티어 "${updatedTier.name}"이(가) 수정되었습니다.`,
@@ -356,7 +403,9 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
           ...updatedTier,
           formatted_quota: formatBytes(updatedTier.quota_bytes),
           formatted_credit_quota: formatCreditQuota(updatedTier.credit_quota ?? 2000),
-          formatted_ocr_page_quota: formatOcrPageQuota(updatedTier.ocr_page_quota ?? 500)
+          formatted_ocr_page_quota: formatOcrPageQuota(updatedTier.ocr_page_quota ?? 500),
+          credit_pending_reprocessed: totalReprocessed,
+          credit_pending_remaining: totalRemaining
         }
       });
 
