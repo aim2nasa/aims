@@ -26,6 +26,7 @@ const {
 } = sseManager;
 const { prepareDocumentResponse, analyzeDocumentStatus, isConvertibleFile } = require('../lib/documentStatusHelper');
 const createPdfConversionTrigger = require('../lib/pdfConversionTrigger');
+const virusScanService = require('../lib/virusScanService');
 
 /**
  * 카카오 API로 주소 자동 검증
