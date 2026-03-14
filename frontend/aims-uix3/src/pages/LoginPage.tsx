@@ -31,7 +31,8 @@ export default function LoginPage() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // PIN 모드 상태
-  const isPinMode = searchParams.get('mode') === 'pin';
+  const mode = searchParams.get('mode');
+  const isPinMode = mode === 'pin' || mode === 'pin-setup';
   const [pinError, setPinError] = useState<string | null>(null);
   const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
   const [rememberDevice, setRememberDevice] = useState(false);
@@ -48,7 +49,13 @@ export default function LoginPage() {
       if (stored) setRememberedUser(JSON.parse(stored));
     } catch { /* ignore */ }
 
-    // 서버에서 PIN 설정 여부 확인 (authToken은 Zustand 복원 후 reactive하게 업데이트됨)
+    // pin-setup 모드: 바로 설정 화면 진입 (프로필 메뉴 PIN 변경)
+    if (mode === 'pin-setup') {
+      setPinSetupStep('setup-enter');
+      return;
+    }
+
+    // pin 모드: 서버에서 PIN 설정 여부 확인
     if (authToken) {
       getPinStatus(authToken).then(res => {
         setPinSetupStep(res.hasPin ? 'input' : 'setup-enter');
@@ -56,8 +63,7 @@ export default function LoginPage() {
         setPinSetupStep('setup-enter');
       });
     }
-    // authToken이 아직 null이면 Zustand 복원 대기 (의존성에 authToken 포함)
-  }, [isPinMode, authToken]);
+  }, [isPinMode, mode, authToken]);
 
   // 로그인 페이지 배경 — html/body/#root 배경색 통일 (다크 모드 흰색 방지)
   useEffect(() => {
@@ -132,7 +138,16 @@ export default function LoginPage() {
         });
         localStorage.setItem('aims-current-user-id', user._id);
         syncUserIdFromStorage();
-        console.log(`[LoginPage] ${user.authProvider} 로그인 성공:`, user.name);
+
+        // 기기 기억 시 remembered user 저장 (PIN 화면에서 이름 표시용)
+        if (localStorage.getItem('aims-remember-device') === 'true') {
+          localStorage.setItem('aims-remembered-user', JSON.stringify({
+            userId: user._id,
+            name: user.name || '',
+            authProvider: user.authProvider || 'kakao',
+          }));
+        }
+
         navigate('/', { replace: true });
       } catch (error) {
         console.error('[LoginPage] 토큰 처리 실패:', error);
@@ -206,6 +221,12 @@ export default function LoginPage() {
       const result = await verifyPin(token, pin);
       if (result.success && result.sessionToken) {
         sessionStorage.setItem('aims-session-token', result.sessionToken);
+        // 팝업 탭에 PIN 검증 완료 전파
+        try {
+          const ch = new BroadcastChannel('aims-auth');
+          ch.postMessage({ type: 'PIN_VERIFIED', sessionToken: result.sessionToken });
+          ch.close();
+        } catch { /* BroadcastChannel 미지원 */ }
         navigate('/', { replace: true });
       }
     } catch (error: unknown) {
@@ -257,6 +278,11 @@ export default function LoginPage() {
         const verifyResult = await verifyPin(token, setupPin);
         if (verifyResult.success && verifyResult.sessionToken) {
           sessionStorage.setItem('aims-session-token', verifyResult.sessionToken);
+          try {
+            const ch = new BroadcastChannel('aims-auth');
+            ch.postMessage({ type: 'PIN_VERIFIED', sessionToken: verifyResult.sessionToken });
+            ch.close();
+          } catch { /* BroadcastChannel 미지원 */ }
           navigate('/', { replace: true });
         }
       }

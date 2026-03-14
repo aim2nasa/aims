@@ -797,11 +797,14 @@ module.exports = function(db) {
    * 현재는 비밀번호 없이 접근, 추후 비밀번호 인증 추가 예정
    */
   router.post('/admin-login', async (req, res) => {
+    // 보안: 프로덕션 환경에서 비활성화 (비밀번호 인증 구현 전까지)
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ success: false, message: 'Not found' });
+    }
+
     try {
       const { ObjectId } = require('mongodb');
       const usersCollection = db.collection('users');
-
-      // TODO: 추후 비밀번호 인증 추가
       // const { password } = req.body;
 
       // 시스템 Admin 계정 조회
@@ -1073,11 +1076,12 @@ module.exports = function(db) {
   });
 
   /**
-   * GET /api/auth/verify-session — 세션 토큰 유효성 검증
+   * POST /api/auth/verify-session — 세션 토큰 유효성 검증
+   * GET → POST 변경: sessionToken을 query string 대신 body로 전달 (서버 로그 노출 방지)
    */
-  router.get('/verify-session', authenticateJWT, async (req, res) => {
+  router.post('/verify-session', authenticateJWT, async (req, res) => {
     try {
-      const sessionToken = req.query.sessionToken;
+      const sessionToken = req.body.sessionToken;
       if (!sessionToken) {
         return res.status(400).json({ valid: false, message: '세션 토큰이 필요합니다' });
       }
