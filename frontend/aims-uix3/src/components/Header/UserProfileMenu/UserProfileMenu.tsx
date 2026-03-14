@@ -16,7 +16,7 @@ import UserProfileMenuItem from './UserProfileMenuItem';
 import { useDevModeStore } from '../../../shared/store/useDevModeStore';
 import { useAccountSettingsStore } from '../../../shared/store/useAccountSettingsStore';
 import { useAuthStore } from '../../../shared/stores/authStore';
-import { deleteAccount } from '../../../entities/auth/api';
+import { deleteAccount, deletePin, getPinStatus } from '../../../entities/auth/api';
 import { AccountSettingsModal } from '../../../features/AccountSettings';
 import { AppleConfirmModal } from '../../DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../controllers/useAppleConfirmController';
@@ -72,6 +72,17 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   // 계정 설정 모달 상태
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+
+  // PIN 관련 상태
+  const hasRememberDevice = typeof window !== 'undefined' && localStorage.getItem('aims-remember-device') === 'true';
+  const [hasPin, setHasPin] = useState(false);
+
+  // PIN 설정 여부 확인
+  useEffect(() => {
+    if (isOpen && token && hasRememberDevice) {
+      getPinStatus(token).then(res => setHasPin(res.hasPin)).catch(() => {});
+    }
+  }, [isOpen, token, hasRememberDevice]);
 
   // 계정 설정 View 상태 (Zustand store 사용)
   const { openAccountSettingsView } = useAccountSettingsStore();
@@ -157,6 +168,36 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
       onMenuClick('documents-my-files');
     }
     onClose();
+  };
+
+  const handlePinChange = () => {
+    onClose();
+    navigate('/login?mode=pin-setup');
+  };
+
+  const handleForgetDevice = async () => {
+    onClose();
+    const confirmed = await confirmActions.openModal({
+      title: '기기 기억 해제',
+      message: '이 기기의 간편 비밀번호를 해제합니다.\n다음 방문 시 소셜 로그인이 필요합니다.',
+      confirmText: '해제',
+      cancelText: '취소',
+      confirmStyle: 'destructive',
+      iconType: 'warning'
+    });
+    if (confirmed && token) {
+      try {
+        await deletePin(token);
+        localStorage.removeItem('aims-remember-device');
+        localStorage.removeItem('aims-remembered-user');
+        sessionStorage.removeItem('aims-session-token');
+        setHasPin(false);
+        showAlert({ title: '완료', message: '기기 기억이 해제되었습니다.', iconType: 'success' });
+      } catch (error) {
+        errorReporter.reportApiError(error as Error, { component: 'UserProfileMenu.handleForgetDevice' });
+        showAlert({ title: '오류', message: '기기 기억 해제에 실패했습니다.', iconType: 'error' });
+      }
+    }
   };
 
   const handleLogout = async () => {
@@ -273,8 +314,25 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               icon="gearshape"
               label="계정 설정"
               onClick={handleAccountSettings}
-              showDivider={true}
+              showDivider={!hasRememberDevice}
             />
+
+            {/* PIN 관련 메뉴 (기기 기억 중일 때만 표시) */}
+            {hasRememberDevice && hasPin && (
+              <UserProfileMenuItem
+                icon="lock.rotation"
+                label="간편 비밀번호 변경"
+                onClick={handlePinChange}
+              />
+            )}
+            {hasRememberDevice && (
+              <UserProfileMenuItem
+                icon="iphone.slash"
+                label="기기 기억 해제"
+                onClick={handleForgetDevice}
+                showDivider={true}
+              />
+            )}
 
             {/* 로그아웃 */}
             <UserProfileMenuItem
