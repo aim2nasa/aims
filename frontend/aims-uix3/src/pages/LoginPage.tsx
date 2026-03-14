@@ -228,7 +228,8 @@ export default function LoginPage() {
   const handlePinComplete = useCallback(async (pin: string) => {
     const { token } = useAuthStore.getState();
     if (!token) {
-      switchToSocialLogin();
+      // 로그아웃 후 재방문: JWT 없음 → 소셜 로그인으로 토큰 재획득 필요
+      setPinError('소셜 로그인 후 이용 가능합니다');
       return;
     }
 

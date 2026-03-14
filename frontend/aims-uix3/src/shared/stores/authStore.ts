@@ -78,12 +78,11 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user: User) =>
         set({ user, isAuthenticated: true }),
 
-      // 로그아웃 — 모든 인증 관련 데이터 정리
+      // 로그아웃 — JWT + 세션 토큰만 삭제. 기기 기억(aims-remember-device)은 보존.
+      // 재방문 시 PIN 화면이 나오도록 하기 위함.
       logout: () => {
-        // 인증 관련 localStorage/sessionStorage 정리
         try {
-          localStorage.removeItem('aims-remember-device');
-          localStorage.removeItem('aims-remembered-user');
+          // aims-remember-device, aims-remembered-user는 보존 (PIN 재진입용)
           localStorage.removeItem('auth-storage-v2');
         } catch { /* Safari 개인정보 보호 모드 */ }
         sessionStorage.removeItem('aims-session-token');
