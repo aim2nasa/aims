@@ -7,7 +7,8 @@
  * - useMemoController를 통한 customer_memos 컬렉션 CRUD
  * - 날짜별 그룹핑, 시간 라벨, 카드형 UI
  * - 더보기(⋯) 메뉴 → 수정/삭제
- * - Enter = 줄바꿈, Ctrl+Enter = 저장
+ * - PC: Enter = 저장, Shift+Enter = 줄바꿈 (슬랙 패턴)
+ * - 모바일: Enter = 줄바꿈, 저장 버튼 = 저장 (카톡 패턴)
  */
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
@@ -92,7 +93,6 @@ export const MemosTab: React.FC<MemosTabProps> = ({ customer }) => {
 
   // 더보기 메뉴 상태
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   // 고객 전환 시 로컬 상태 초기화
   useEffect(() => {
@@ -102,12 +102,13 @@ export const MemosTab: React.FC<MemosTabProps> = ({ customer }) => {
     setOpenMenuId(null);
   }, [customer._id]);
 
-  // 더보기 메뉴 외부 클릭 시 닫기
+  // 더보기 메뉴 외부 클릭 시 닫기 (closest로 판별 — ref 불필요)
   useEffect(() => {
     if (!openMenuId) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const target = e.target as Element;
+      if (!target.closest('.memo-card__more-wrapper')) {
         setOpenMenuId(null);
       }
     };
@@ -349,7 +350,7 @@ export const MemosTab: React.FC<MemosTabProps> = ({ customer }) => {
                       </button>
 
                       {openMenuId === memo._id && (
-                        <div ref={menuRef} className="memo-card__menu">
+                        <div className="memo-card__menu">
                           <button
                             type="button"
                             className="memo-card__menu-item"
