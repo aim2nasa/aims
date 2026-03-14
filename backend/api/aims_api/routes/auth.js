@@ -928,7 +928,7 @@ module.exports = function(db) {
         { $set: { pinHash, pinFailCount: 0, pinLockedAt: null } }
       );
 
-      activityLogger.log(db, userId, 'pin_set', { success: true }, req);
+      backendLogger.info('Auth', `PIN 설정 완료: ${userId}`);
       res.json({ success: true });
     } catch (error) {
       backendLogger.error('Auth', 'PIN 설정 오류', error);
@@ -981,7 +981,7 @@ module.exports = function(db) {
           { $set: updateFields }
         );
 
-        activityLogger.log(db, userId, 'pin_verify_fail', { failCount: newFailCount }, req);
+        backendLogger.warn('Auth', `PIN 검증 실패: ${userId}, failCount: ${newFailCount}`);
 
         const remaining = PIN_MAX_FAIL - newFailCount;
         if (remaining <= 0) {
@@ -1005,7 +1005,7 @@ module.exports = function(db) {
         { $set: { pinFailCount: 0, pinLockedAt: null } }
       );
 
-      activityLogger.log(db, userId, 'pin_verify_success', {}, req);
+      backendLogger.info('Auth', `PIN 검증 성공: ${userId}`);
       res.json({ success: true, sessionToken });
     } catch (error) {
       backendLogger.error('Auth', 'PIN 검증 오류', error);
@@ -1038,7 +1038,7 @@ module.exports = function(db) {
         { $set: { pinHash, pinFailCount: 0, pinLockedAt: null } }
       );
 
-      activityLogger.log(db, userId, 'pin_reset', { success: true }, req);
+      backendLogger.info('Auth', `PIN 재설정 완료: ${userId}`);
       res.json({ success: true });
     } catch (error) {
       backendLogger.error('Auth', 'PIN 재설정 오류', error);
@@ -1064,7 +1064,7 @@ module.exports = function(db) {
       const sessionsCollection = db.collection('pin_sessions');
       await sessionsCollection.deleteMany({ userId: new ObjectId(userId) });
 
-      activityLogger.log(db, userId, 'pin_delete', { success: true }, req);
+      backendLogger.info('Auth', `PIN 삭제 완료: ${userId}`);
       res.json({ success: true });
     } catch (error) {
       backendLogger.error('Auth', 'PIN 삭제 오류', error);

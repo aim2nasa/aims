@@ -24,7 +24,7 @@ interface RememberedUser {
 export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { setToken, setUser } = useAuthStore();
+  const { setToken, setUser, token: authToken } = useAuthStore();
   const { updateCurrentUser } = useUserStore();
   const { isDevMode, toggleDevMode } = useDevModeStore();
   const { showAlert } = useAppleConfirm();
@@ -48,19 +48,16 @@ export default function LoginPage() {
       if (stored) setRememberedUser(JSON.parse(stored));
     } catch { /* ignore */ }
 
-    // 서버에서 PIN 설정 여부 확인
-    const { token } = useAuthStore.getState();
-    if (token) {
-      getPinStatus(token).then(res => {
+    // 서버에서 PIN 설정 여부 확인 (authToken은 Zustand 복원 후 reactive하게 업데이트됨)
+    if (authToken) {
+      getPinStatus(authToken).then(res => {
         setPinSetupStep(res.hasPin ? 'input' : 'setup-enter');
       }).catch(() => {
         setPinSetupStep('setup-enter');
       });
-    } else {
-      // 토큰 없으면 PIN 모드 진입 불가 → 소셜 로그인으로 전환
-      setSearchParams({});
     }
-  }, [isPinMode]);
+    // authToken이 아직 null이면 Zustand 복원 대기 (의존성에 authToken 포함)
+  }, [isPinMode, authToken]);
 
   // 로그인 페이지 배경 — html/body/#root 배경색 통일 (다크 모드 흰색 방지)
   useEffect(() => {
