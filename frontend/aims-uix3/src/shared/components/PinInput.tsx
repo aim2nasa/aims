@@ -63,6 +63,8 @@ export default function PinInput({ length = 4, onComplete, error, disabled }: Pi
         <div
           key={i}
           data-testid="pin-dot"
+          // pin-dot--error: 에러 발생 직후 shake 애니메이션(400ms) 동안 value가 아직 남아있으므로
+          // 이 시점에 error dot 색상이 표시됨. 400ms 후 setValue('')로 초기화되면 자동 해제.
           className={`pin-dot ${i < value.length ? 'pin-dot--filled' : ''} ${error && i < value.length ? 'pin-dot--error' : ''}`}
         />
       ))}
