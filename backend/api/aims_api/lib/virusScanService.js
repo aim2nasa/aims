@@ -5,6 +5,7 @@
  */
 
 const axios = require('axios');
+const { ObjectId } = require('mongodb');
 const backendLogger = require('./backendLogger');
 
 // yuri 스캔 서비스 설정
@@ -123,7 +124,8 @@ async function scanAfterUpload(db, documentId, collectionName = 'files') {
 
   try {
     const collection = db.collection(collectionName);
-    const doc = await collection.findOne({ _id: documentId });
+    const docId = (typeof documentId === 'string') ? new ObjectId(documentId) : documentId;
+    const doc = await collection.findOne({ _id: docId });
 
     if (!doc) {
       console.warn(`[VirusScan] 문서 찾을 수 없음: ${documentId}`);
@@ -148,7 +150,7 @@ async function scanAfterUpload(db, documentId, collectionName = 'files') {
 
     // 스캔 상태 초기화 (pending)
     await collection.updateOne(
-      { _id: documentId },
+      { _id: docId },
       {
         $set: {
           'virusScan.status': 'pending',
