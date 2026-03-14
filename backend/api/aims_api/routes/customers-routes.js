@@ -3495,7 +3495,7 @@ router.post('/webhooks/document-processing-complete', async (req, res) => {
 
     // API Key 인증 (n8n에서 호출 시 사용)
     const apiKey = req.headers['x-api-key'];
-    if (apiKey !== process.env.N8N_API_KEY) {
+    if (apiKey !== (process.env.INTERNAL_WEBHOOK_API_KEY || process.env.N8N_WEBHOOK_API_KEY) && apiKey !== process.env.N8N_API_KEY) {
       console.warn('[SSE-DocStatus] 잘못된 API Key로 webhook 호출 시도');
       return res.status(401).json({ success: false, error: '인증 실패' });
     }
@@ -3686,7 +3686,7 @@ router.post('/webhooks/document-progress', async (req, res) => {
 
     // API Key 인증
     const apiKey = req.headers['x-api-key'];
-    if (apiKey !== process.env.N8N_API_KEY) {
+    if (apiKey !== (process.env.INTERNAL_WEBHOOK_API_KEY || process.env.N8N_WEBHOOK_API_KEY) && apiKey !== process.env.N8N_API_KEY) {
       console.warn('[SSE-Progress] 잘못된 API Key로 webhook 호출 시도');
       return res.status(401).json({ success: false, error: '인증 실패' });
     }
@@ -3793,7 +3793,7 @@ router.post('/webhooks/document-list-change', (req, res) => {
 
     // API Key 인증 (내부 호출용)
     const apiKey = req.headers['x-api-key'];
-    if (apiKey !== process.env.N8N_API_KEY) {
+    if (apiKey !== (process.env.INTERNAL_WEBHOOK_API_KEY || process.env.N8N_WEBHOOK_API_KEY) && apiKey !== process.env.N8N_API_KEY) {
       console.warn('[SSE-DocList] 잘못된 API Key로 webhook 호출 시도');
       return res.status(401).json({ success: false, error: '인증 실패' });
     }
