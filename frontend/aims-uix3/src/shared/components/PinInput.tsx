@@ -78,8 +78,8 @@ export default function PinInput({ length = 4, onComplete, error, disabled }: Pi
         onChange={handleChange}
         disabled={disabled}
         className="pin-hidden-input"
-        aria-hidden="true"
-        tabIndex={-1}
+        tabIndex={0}
+        aria-label="간편 비밀번호 입력"
       />
     </div>
   );

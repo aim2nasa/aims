@@ -105,6 +105,44 @@ export const getCurrentUser = async (token: string): Promise<User> => {
   return response.data.user;
 };
 
+/**
+ * OAuth 토큰 처리 공통 함수
+ * LoginPage와 AuthCallbackPage 모두에서 사용
+ */
+export interface ProcessTokenDeps {
+  setToken: (token: string) => void;
+  setUser: (user: User) => void;
+  updateCurrentUser: (u: { id: string; name: string; email: string; role: string; avatarUrl?: string }) => void;
+  syncUserIdFromStorage: () => void;
+  navigate: (path: string, opts?: { replace?: boolean }) => void;
+}
+
+export const processAuthToken = async (token: string, deps: ProcessTokenDeps) => {
+  deps.setToken(token);
+  const user = await getCurrentUser(token);
+  deps.setUser(user);
+  deps.updateCurrentUser({
+    id: user._id, name: user.name || '', email: user.email || '',
+    role: user.role, avatarUrl: user.avatarUrl || undefined,
+  });
+  localStorage.setItem('aims-current-user-id', user._id);
+  deps.syncUserIdFromStorage();
+
+  const rememberDevice = localStorage.getItem('aims-remember-device') === 'true';
+  if (rememberDevice) {
+    localStorage.setItem('aims-remembered-user', JSON.stringify({
+      userId: user._id,
+      name: user.name || '',
+      authProvider: user.authProvider || 'kakao',
+    }));
+    deps.navigate('/login?mode=pin', { replace: true });
+  } else {
+    deps.navigate('/', { replace: true });
+  }
+
+  return user;
+};
+
 export interface ProfileUpdateData {
   name: string;
   email?: string;

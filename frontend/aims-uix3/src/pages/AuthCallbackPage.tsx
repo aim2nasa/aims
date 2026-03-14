@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/authStore';
-import { getCurrentUser } from '@/entities/auth/api';
+import { processAuthToken } from '@/entities/auth/api';
 import { syncUserIdFromStorage, useUserStore } from '@/stores/user';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import './AuthCallbackPage.css';
@@ -23,7 +23,6 @@ export default function AuthCallbackPage() {
       setLoading(true);
 
       try {
-        // URL에서 토큰 추출
         const token = searchParams.get('token');
         const errorParam = searchParams.get('error');
 
@@ -43,49 +42,15 @@ export default function AuthCallbackPage() {
           throw new Error('토큰을 받지 못했습니다');
         }
 
-        // 토큰 저장
-        setToken(token);
-
-        // 사용자 정보 조회
-        const user = await getCurrentUser(token);
-        setUser(user);
-
-        // useUserStore에 사용자 정보 동기화 (AccountSettings 등에서 즉시 사용)
-        updateCurrentUser({
-          id: user._id,
-          name: user.name || '',
-          email: user.email || '',
-          role: user.role,
-          avatarUrl: user.avatarUrl || undefined,
+        // 공통 토큰 처리 (LoginPage와 동일 로직)
+        await processAuthToken(token, {
+          setToken, setUser, updateCurrentUser, syncUserIdFromStorage, navigate,
         });
-
-        // 레거시 API용 사용자 ID 저장 및 동기화
-        localStorage.setItem('aims-current-user-id', user._id);
-        syncUserIdFromStorage();
-
-        // 기기 기억 체크 시 remembered user 저장
-        const rememberDevice = localStorage.getItem('aims-remember-device') === 'true';
-        if (rememberDevice) {
-          localStorage.setItem('aims-remembered-user', JSON.stringify({
-            userId: user._id,
-            name: user.name || '',
-            authProvider: user.authProvider || 'kakao',
-          }));
-        }
-
-        // 기기 기억 O → PIN 설정/입력 화면으로 (소셜 로그인 후 PIN 확인)
-        // 기기 기억 X → 메인 페이지
-        if (rememberDevice) {
-          navigate('/login?mode=pin', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
       } catch (err) {
         console.error('인증 콜백 처리 오류:', err);
         errorReporter.reportApiError(err as Error, { component: 'AuthCallbackPage.handleCallback' });
         setError(err instanceof Error ? err.message : '로그인 처리 중 오류가 발생했습니다');
 
-        // 3초 후 로그인 페이지로 리다이렉트
         setTimeout(() => {
           navigate('/login', { replace: true });
         }, 3000);

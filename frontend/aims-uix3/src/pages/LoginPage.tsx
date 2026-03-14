@@ -6,7 +6,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { startKakaoLogin, startKakaoLoginSwitch, startNaverLogin, startNaverLoginSwitch, startGoogleLogin, startGoogleLoginSwitch, verifyPin, setPin, getPinStatus } from '@/entities/auth/api';
+import { startKakaoLogin, startKakaoLoginSwitch, startNaverLogin, startNaverLoginSwitch, startGoogleLogin, startGoogleLoginSwitch, verifyPin, setPin, getPinStatus, processAuthToken } from '@/entities/auth/api';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
@@ -122,47 +122,10 @@ export default function LoginPage() {
 
     const processToken = async () => {
       try {
-        setToken(token);
-        const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
+        // 공통 토큰 처리 (AuthCallbackPage와 동일 로직)
+        await processAuthToken(token, {
+          setToken, setUser, updateCurrentUser, syncUserIdFromStorage, navigate,
         });
-
-        if (!response.ok) throw new Error('사용자 정보 조회 실패');
-        const data = await response.json();
-        if (!data.success || !data.user) throw new Error('사용자 정보 없음');
-
-        const user = {
-          _id: data.user._id,
-          name: data.user.name,
-          email: data.user.email,
-          avatarUrl: data.user.avatarUrl || null,
-          role: data.user.role,
-          authProvider: data.user.authProvider || 'kakao',
-          profileCompleted: data.user.profileCompleted ?? true,
-          oauthProfile: data.user.oauthProfile || null,
-        };
-
-        setUser(user);
-        updateCurrentUser({
-          id: user._id, name: user.name || '', email: user.email || '',
-          role: user.role, avatarUrl: user.avatarUrl || undefined,
-        });
-        localStorage.setItem('aims-current-user-id', user._id);
-        syncUserIdFromStorage();
-
-        // 기기 기억 시 remembered user 저장 + PIN 화면으로 이동
-        const rememberDevice = localStorage.getItem('aims-remember-device') === 'true';
-        if (rememberDevice) {
-          localStorage.setItem('aims-remembered-user', JSON.stringify({
-            userId: user._id,
-            name: user.name || '',
-            authProvider: user.authProvider || 'kakao',
-          }));
-          navigate('/login?mode=pin', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
       } catch (error) {
         console.error('[LoginPage] 토큰 처리 실패:', error);
         errorReporter.reportApiError(error as Error, { component: 'LoginPage.processToken' });

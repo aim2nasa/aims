@@ -86,7 +86,22 @@ vi.mock('@/entities/auth/api', () => ({
   startNaverLogin: mockStartNaverLogin,
   startNaverLoginSwitch: mockStartNaverLoginSwitch,
   startGoogleLogin: mockStartGoogleLogin,
-  startGoogleLoginSwitch: mockStartGoogleLoginSwitch
+  startGoogleLoginSwitch: mockStartGoogleLoginSwitch,
+  processAuthToken: vi.fn(async (token: string, deps: Record<string, Function>) => {
+    deps.setToken(token);
+    const API_BASE_URL = '';
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (data.success && data.user) {
+      deps.setUser(data.user);
+      deps.updateCurrentUser({ id: data.user._id, name: data.user.name, email: data.user.email, role: data.user.role });
+      localStorage.setItem('aims-current-user-id', data.user._id);
+      deps.syncUserIdFromStorage();
+    }
+    deps.navigate('/', { replace: true });
+  }),
 }))
 
 // SFSymbol Mock
@@ -206,43 +221,18 @@ describe('LoginPage', () => {
       })
     })
 
-    it('사용자 정보를 authStore에 저장해야 함', async () => {
+    it('processAuthToken이 호출되어야 함 (토큰 처리 + 리다이렉트)', async () => {
+      const { processAuthToken } = await import('@/entities/auth/api')
       renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
 
       await waitFor(() => {
-        expect(mockSetUser).toHaveBeenCalledWith(expect.objectContaining({
-          _id: mockUser._id,
-          name: mockUser.name,
-          email: mockUser.email
-        }))
-      })
-    })
-
-    it('userStore.updateCurrentUser를 호출해야 함', async () => {
-      renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
-
-      await waitFor(() => {
-        expect(mockUpdateCurrentUser).toHaveBeenCalledWith(expect.objectContaining({
-          id: mockUser._id,
-          name: mockUser.name,
-          email: mockUser.email
-        }))
-      })
-    })
-
-    it('localStorage에 aims-current-user-id를 저장해야 함', async () => {
-      renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
-
-      await waitFor(() => {
-        expect(localStorage.getItem('aims-current-user-id')).toBe('user123')
-      })
-    })
-
-    it('메인 페이지로 리다이렉트해야 함', async () => {
-      renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
-
-      await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })
+        expect(processAuthToken).toHaveBeenCalledWith(
+          MOCK_JWT_TOKEN,
+          expect.objectContaining({
+            setToken: mockSetToken,
+            setUser: mockSetUser,
+          })
+        )
       })
     })
   })

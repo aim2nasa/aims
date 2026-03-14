@@ -95,6 +95,16 @@ vi.mock('@/contexts/AppleConfirmProvider', () => ({
 
 vi.mock('@/entities/auth/api', () => ({
   getCurrentUser: mockGetCurrentUser,
+  processAuthToken: vi.fn(async (token: string, deps: Record<string, Function>) => {
+    deps.setToken(token);
+    const user = await mockGetCurrentUser(token);
+    deps.setUser(user);
+    deps.updateCurrentUser({ id: user._id, name: user.name || '', email: user.email || '', role: user.role, avatarUrl: user.avatarUrl || undefined });
+    localStorage.setItem('aims-current-user-id', user._id);
+    deps.syncUserIdFromStorage();
+    deps.navigate('/', { replace: true });
+    return user;
+  }),
   startKakaoLogin: mockStartKakaoLogin,
   startKakaoLoginSwitch: mockStartKakaoLoginSwitch,
   startNaverLogin: mockStartNaverLogin,
