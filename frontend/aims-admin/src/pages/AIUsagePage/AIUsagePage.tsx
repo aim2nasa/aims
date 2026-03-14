@@ -475,7 +475,7 @@ export const AIUsagePage = () => {
     if (saved && ['hourly', 'daily', 'weekly', 'monthly', 'yearly'].includes(saved)) {
       return saved as PeriodType;
     }
-    return 'monthly';
+    return 'daily';
   });
   const [selectedYear, setSelectedYearState] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_YEAR);
