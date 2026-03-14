@@ -151,16 +151,18 @@ export default function LoginPage() {
         localStorage.setItem('aims-current-user-id', user._id);
         syncUserIdFromStorage();
 
-        // 기기 기억 시 remembered user 저장 (PIN 화면에서 이름 표시용)
-        if (localStorage.getItem('aims-remember-device') === 'true') {
+        // 기기 기억 시 remembered user 저장 + PIN 화면으로 이동
+        const rememberDevice = localStorage.getItem('aims-remember-device') === 'true';
+        if (rememberDevice) {
           localStorage.setItem('aims-remembered-user', JSON.stringify({
             userId: user._id,
             name: user.name || '',
             authProvider: user.authProvider || 'kakao',
           }));
+          navigate('/login?mode=pin', { replace: true });
+        } else {
+          navigate('/', { replace: true });
         }
-
-        navigate('/', { replace: true });
       } catch (error) {
         console.error('[LoginPage] 토큰 처리 실패:', error);
         errorReporter.reportApiError(error as Error, { component: 'LoginPage.processToken' });

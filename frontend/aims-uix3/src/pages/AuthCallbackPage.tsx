@@ -73,8 +73,13 @@ export default function AuthCallbackPage() {
           }));
         }
 
-        // 메인 페이지로 리다이렉트
-        navigate('/', { replace: true });
+        // 기기 기억 O → PIN 설정/입력 화면으로 (소셜 로그인 후 PIN 확인)
+        // 기기 기억 X → 메인 페이지
+        if (rememberDevice) {
+          navigate('/login?mode=pin', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       } catch (err) {
         console.error('인증 콜백 처리 오류:', err);
         errorReporter.reportApiError(err as Error, { component: 'AuthCallbackPage.handleCallback' });
