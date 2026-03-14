@@ -4,20 +4,13 @@
 
 @layer components {
 
-  /* 로그인 페이지 활성 시 html/body 배경도 통일 (다크 모드 하단 흰색 방지) */
-  html:has(.login-page),
-  html:has(.login-page) body,
-  html:has(.login-page) #root {
-    background: var(--color-bg-primary) !important;
-  }
-
   .login-page {
-    position: fixed;
-    inset: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
     background: var(--color-bg-primary);
   }
 

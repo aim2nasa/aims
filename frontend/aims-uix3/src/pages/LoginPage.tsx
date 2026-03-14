@@ -6,7 +6,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { startKakaoLogin, startKakaoLoginSwitch, startNaverLogin, startNaverLoginSwitch, startGoogleLogin, startGoogleLoginSwitch, verifyPin } from '@/entities/auth/api';
+import { startKakaoLogin, startKakaoLoginSwitch, startNaverLogin, startNaverLoginSwitch, startGoogleLogin, startGoogleLoginSwitch, verifyPin, setPin, getPinStatus } from '@/entities/auth/api';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
@@ -36,17 +36,42 @@ export default function LoginPage() {
   const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
   const [rememberDevice, setRememberDevice] = useState(false);
 
-  // 기억된 사용자 정보 로드
+  // PIN 설정 플로우 상태
+  const [pinSetupStep, setPinSetupStep] = useState<'check' | 'input' | 'setup-enter' | 'setup-confirm'>('check');
+  const [setupPin, setSetupPin] = useState('');
+
+  // 기억된 사용자 정보 로드 + PIN 설정 여부 확인
   useEffect(() => {
-    if (isPinMode) {
-      try {
-        const stored = localStorage.getItem('aims-remembered-user');
-        if (stored) {
-          setRememberedUser(JSON.parse(stored));
-        }
-      } catch { /* ignore */ }
+    if (!isPinMode) return;
+    try {
+      const stored = localStorage.getItem('aims-remembered-user');
+      if (stored) setRememberedUser(JSON.parse(stored));
+    } catch { /* ignore */ }
+
+    // 서버에서 PIN 설정 여부 확인
+    const { token } = useAuthStore.getState();
+    if (token) {
+      getPinStatus(token).then(res => {
+        setPinSetupStep(res.hasPin ? 'input' : 'setup-enter');
+      }).catch(() => {
+        setPinSetupStep('setup-enter');
+      });
+    } else {
+      // 토큰 없으면 PIN 모드 진입 불가 → 소셜 로그인으로 전환
+      setSearchParams({});
     }
   }, [isPinMode]);
+
+  // 로그인 페이지 배경 — html/body/#root 배경색 통일 (다크 모드 흰색 방지)
+  useEffect(() => {
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-bg-primary').trim();
+    const els = [document.documentElement, document.body, document.getElementById('root')].filter(Boolean) as HTMLElement[];
+    const originals = els.map(el => el.style.background);
+    els.forEach(el => { el.style.background = bg; });
+    return () => {
+      els.forEach((el, i) => { el.style.background = originals[i]; });
+    };
+  }, []);
 
   // 개발자 모드 단축키 핸들러
   useEffect(() => {
@@ -206,6 +231,54 @@ export default function LoginPage() {
     }
   }, [navigate, showAlert, switchToSocialLogin]);
 
+  // PIN 설정: 첫 번째 입력 완료
+  const handleSetupEnter = useCallback((pin: string) => {
+    setSetupPin(pin);
+    setPinSetupStep('setup-confirm');
+    setPinError(null);
+  }, []);
+
+  // PIN 설정: 확인 입력 완료
+  const handleSetupConfirm = useCallback(async (confirmPin: string) => {
+    if (confirmPin !== setupPin) {
+      setPinError('비밀번호가 일치하지 않습니다');
+      setPinSetupStep('setup-enter');
+      setSetupPin('');
+      return;
+    }
+
+    const { token } = useAuthStore.getState();
+    if (!token) {
+      switchToSocialLogin();
+      return;
+    }
+
+    try {
+      const result = await setPin(token, setupPin);
+      if (result.success) {
+        // PIN 설정 완료 → PIN 검증으로 전환 (바로 입력 가능)
+        const verifyResult = await verifyPin(token, setupPin);
+        if (verifyResult.success && verifyResult.sessionToken) {
+          sessionStorage.setItem('aims-session-token', verifyResult.sessionToken);
+          navigate('/', { replace: true });
+        }
+      }
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      setPinError(axiosError?.response?.data?.message || '비밀번호 설정에 실패했습니다');
+      setPinSetupStep('setup-enter');
+      setSetupPin('');
+    }
+  }, [setupPin, navigate, switchToSocialLogin]);
+
+  // PIN 설정 건너뛰기 (나중에 설정하기) → 기기 기억 해제 + 소셜 로그인과 동일 상태
+  const handleSkipSetup = useCallback(() => {
+    localStorage.removeItem('aims-remember-device');
+    localStorage.removeItem('aims-remembered-user');
+    // 기기 기억 해제 → ProtectedRoute에서 rememberDevice=false → sessionToken 불필요 → 메인 진입 가능
+    navigate('/', { replace: true });
+  }, [navigate]);
+
   // 토큰 처리 중
   if (isProcessing) {
     return (
@@ -217,34 +290,61 @@ export default function LoginPage() {
     );
   }
 
-  // Phase 2: PIN 입력 모드
-  if (isPinMode && rememberedUser) {
+  // PIN 모드
+  if (isPinMode && rememberedUser && pinSetupStep !== 'check') {
+    // PIN 설정 화면 (setup-enter / setup-confirm)
+    if (pinSetupStep === 'setup-enter' || pinSetupStep === 'setup-confirm') {
+      return (
+        <div className="login-page">
+          <div className="login-container">
+            <div className="login-pin-container">
+              <p className="login-pin-name">
+                {pinSetupStep === 'setup-enter'
+                  ? '간편 비밀번호를 설정하세요'
+                  : '한번 더 입력하세요'}
+              </p>
+              <p className="login-pin-message">
+                {pinSetupStep === 'setup-enter'
+                  ? '다음 방문 시 빠르게 로그인할 수 있습니다'
+                  : '확인을 위해 한번 더 입력해주세요'}
+              </p>
+
+              <PinInput
+                key={pinSetupStep}
+                onComplete={pinSetupStep === 'setup-enter' ? handleSetupEnter : handleSetupConfirm}
+                error={pinError}
+              />
+
+              <p className="login-pin-error">{pinError || '\u00A0'}</p>
+
+              <button type="button" className="login-pin-switch" onClick={handleSkipSetup}>
+                나중에 설정하기
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // PIN 입력 화면 (기존 PIN 검증)
     return (
       <div className="login-page">
         <div className="login-container">
           <div className="login-pin-container">
-            {/* 아바타 (이니셜) */}
             <div className="login-pin-avatar">
               <span>{rememberedUser.name.charAt(0)}</span>
             </div>
             <p className="login-pin-name">{rememberedUser.name} 님</p>
             <p className="login-pin-message">간편 비밀번호를 입력하세요</p>
 
-            {/* PIN 입력 */}
             <PinInput
               onComplete={handlePinComplete}
               error={pinError}
             />
 
-            {/* 에러 메시지 */}
             <p className="login-pin-error">{pinError || '\u00A0'}</p>
 
-            {/* 하단 링크 */}
-            <button
-              type="button"
-              className="login-pin-switch"
-              onClick={switchToSocialLogin}
-            >
+            <button type="button" className="login-pin-switch" onClick={switchToSocialLogin}>
               다른 계정으로 로그인
             </button>
             <button

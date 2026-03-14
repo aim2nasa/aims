@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { createElement } from 'react'
 
@@ -29,13 +29,16 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate }
 })
 
+let mockAuthStore = {
+  setToken: mockSetToken,
+  setUser: mockSetUser,
+  isAuthenticated: false,
+  user: null,
+  token: null as string | null,
+}
 vi.mock('@/shared/stores/authStore', () => ({
-  useAuthStore: () => ({
-    setToken: mockSetToken,
-    setUser: mockSetUser,
-    isAuthenticated: false,
-    user: null,
-    token: null
+  useAuthStore: Object.assign(() => mockAuthStore, {
+    getState: () => mockAuthStore,
   })
 }))
 
@@ -58,7 +61,10 @@ vi.mock('@/entities/auth/api', () => ({
   startNaverLogin: vi.fn(),
   startNaverLoginSwitch: vi.fn(),
   startGoogleLogin: vi.fn(),
-  startGoogleLoginSwitch: vi.fn()
+  startGoogleLoginSwitch: vi.fn(),
+  verifyPin: vi.fn(),
+  setPin: vi.fn(),
+  getPinStatus: vi.fn().mockResolvedValue({ success: true, hasPin: true, locked: false }),
 }))
 
 vi.mock('@/components/SFSymbol', () => ({
@@ -88,11 +94,13 @@ describe('LoginPage Phase 2 — PIN 모드', () => {
     vi.clearAllMocks()
     localStorage.clear()
     sessionStorage.clear()
+    mockAuthStore.token = null
   })
 
   describe('PIN 입력 모드 (?mode=pin)', () => {
     beforeEach(() => {
-      // PIN 모드에 필요한 기억된 사용자 정보 설정
+      // PIN 모드에 필요한 토큰 + 기억된 사용자 정보 설정
+      mockAuthStore.token = 'mock.jwt.token'
       localStorage.setItem('aims-remembered-user', JSON.stringify({
         userId: 'user123',
         name: '김소라',
@@ -100,56 +108,73 @@ describe('LoginPage Phase 2 — PIN 모드', () => {
       }))
     })
 
-    it('?mode=pin으로 접속 시 PIN 입력 화면이 표시됨', () => {
+    it('?mode=pin으로 접속 시 PIN 입력 화면이 표시됨', async () => {
       renderLoginPage('/login?mode=pin')
-      expect(screen.getByText('간편 비밀번호를 입력하세요')).toBeInTheDocument()
-    })
-
-    it('기억된 사용자 이름이 표시됨', () => {
-      renderLoginPage('/login?mode=pin')
-      expect(screen.getByText('김소라 님')).toBeInTheDocument()
-    })
-
-    it('PIN dot 4개가 표시됨', () => {
-      renderLoginPage('/login?mode=pin')
-      const dots = screen.getAllByTestId('pin-dot')
-      expect(dots).toHaveLength(4)
-    })
-
-    it('초기 상태에서 모든 dot이 비어있음', () => {
-      renderLoginPage('/login?mode=pin')
-      const dots = screen.getAllByTestId('pin-dot')
-      dots.forEach(dot => {
-        expect(dot).not.toHaveClass('pin-dot--filled')
+      await waitFor(() => {
+        expect(screen.getByText('간편 비밀번호를 입력하세요')).toBeInTheDocument()
       })
     })
 
-    it('"다른 계정으로 로그인" 링크가 표시됨', () => {
+    it('기억된 사용자 이름이 표시됨', async () => {
       renderLoginPage('/login?mode=pin')
-      expect(screen.getByText('다른 계정으로 로그인')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('김소라 님')).toBeInTheDocument()
+      })
     })
 
-    it('"비밀번호를 잊으셨나요?" 링크가 표시됨', () => {
+    it('PIN dot 4개가 표시됨', async () => {
       renderLoginPage('/login?mode=pin')
-      expect(screen.getByText('비밀번호를 잊으셨나요?')).toBeInTheDocument()
+      await waitFor(() => {
+        const dots = screen.getAllByTestId('pin-dot')
+        expect(dots).toHaveLength(4)
+      })
     })
 
-    it('"다른 계정으로 로그인" 클릭 시 소셜 로그인 화면으로 전환', () => {
+    it('초기 상태에서 모든 dot이 비어있음', async () => {
       renderLoginPage('/login?mode=pin')
+      await waitFor(() => {
+        const dots = screen.getAllByTestId('pin-dot')
+        dots.forEach(dot => {
+          expect(dot).not.toHaveClass('pin-dot--filled')
+        })
+      })
+    })
+
+    it('"다른 계정으로 로그인" 링크가 표시됨', async () => {
+      renderLoginPage('/login?mode=pin')
+      await waitFor(() => {
+        expect(screen.getByText('다른 계정으로 로그인')).toBeInTheDocument()
+      })
+    })
+
+    it('"비밀번호를 잊으셨나요?" 링크가 표시됨', async () => {
+      renderLoginPage('/login?mode=pin')
+      await waitFor(() => {
+        expect(screen.getByText('비밀번호를 잊으셨나요?')).toBeInTheDocument()
+      })
+    })
+
+    it('"다른 계정으로 로그인" 클릭 시 소셜 로그인 화면으로 전환', async () => {
+      renderLoginPage('/login?mode=pin')
+      await waitFor(() => {
+        expect(screen.getByText('다른 계정으로 로그인')).toBeInTheDocument()
+      })
       fireEvent.click(screen.getByText('다른 계정으로 로그인'))
-      // 소셜 로그인 버튼이 표시되어야 함
       expect(screen.getByText('카카오 로그인')).toBeInTheDocument()
     })
 
-    it('숨겨진 input이 존재하고 numeric inputMode를 가짐', () => {
+    it('숨겨진 input이 존재하고 numeric inputMode를 가짐', async () => {
       renderLoginPage('/login?mode=pin')
-      const hiddenInput = document.querySelector('input[inputmode="numeric"]')
-      expect(hiddenInput).not.toBeNull()
+      await waitFor(() => {
+        const hiddenInput = document.querySelector('input[inputmode="numeric"]')
+        expect(hiddenInput).not.toBeNull()
+      })
     })
   })
 
   describe('PIN 입력 동작', () => {
     beforeEach(() => {
+      mockAuthStore.token = 'mock.jwt.token'
       localStorage.setItem('aims-remembered-user', JSON.stringify({
         userId: 'user123',
         name: '김소라',
@@ -157,8 +182,11 @@ describe('LoginPage Phase 2 — PIN 모드', () => {
       }))
     })
 
-    it('숫자 입력 시 dot이 채워짐', () => {
+    it('숫자 입력 시 dot이 채워짐', async () => {
       renderLoginPage('/login?mode=pin')
+      await waitFor(() => {
+        expect(document.querySelector('input[inputmode="numeric"]')).not.toBeNull()
+      })
       const input = document.querySelector('input[inputmode="numeric"]') as HTMLInputElement
       fireEvent.change(input, { target: { value: '12' } })
       const dots = screen.getAllByTestId('pin-dot')
