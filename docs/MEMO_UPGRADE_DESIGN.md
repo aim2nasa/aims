@@ -2,7 +2,7 @@
 
 > **Designer**: Dana (UX/UI)
 > **Date**: 2026.03.14
-> **Version**: 2.0 (에이전트 리뷰 반영)
+> **Version**: 2.1 (에이전트 리뷰 + 모바일 웹 반영)
 > **Status**: 설계 완료 — 구현 승인 대기
 > **Reviewers**: Alex (설계), Gini (QA), Sora (설계사), PM (기획), Code Reviewer
 
@@ -38,6 +38,7 @@
 3. **음성 친화**: MCP 도구가 구조화된 데이터를 반환 → AI가 자연어로 읽어줄 수 있음
 4. **Apple 디자인**: AIMS 기존 디자인 시스템 준수
 5. **동시 배포**: Phase 1(UI) + Phase 2(MCP) 반드시 함께 배포 (과도기 불일치 방지)
+6. **모바일 우선**: 설계사는 이동 중 모바일로 메모 → 터치/키보드 대응 필수
 
 ---
 
@@ -117,7 +118,146 @@ border: 1px solid var(--color-border-secondary);
 box-shadow: 0 0 0 3px var(--color-focus-ring);
 ```
 
-### 3-4. 구현 시 주의사항 (Code Review 반영)
+### 3-4. 모바일 웹 대응
+
+AIMS는 4단계 breakpoint(480/768/1024/1366px) + 폰 가로 모드를 지원하며,
+메모 탭은 **모바일에서 가장 빈번하게 사용되는 기능** (이동 중 메모 추가/확인).
+
+#### 3-4-1. Breakpoint별 레이아웃
+
+```
+데스크톱 (>768px)              모바일 세로 (≤768px)           모바일 가로 (≤500px 높이)
+┌──────────────────┐          ┌──────────────┐              ┌─────────────────────────┐
+│ 📝 메모           │          │ 📝 메모       │              │ 📝 메모                  │
+│ ┌──────────────┐ │          │ ┌──────────┐ │              │ ┌─────────────────────┐ │
+│ │ 입력 필드     │ │          │ │ 입력 필드 │ │              │ │ 입력 (1줄 축소)      │ │
+│ │ 2~3줄 높이   │ │          │ │ 2줄 높이  │ │              │ └─────────────────────┘ │
+│ │       [저장] │ │          │ │    [저장] │ │              │ 14:30 보험 리뷰 미팅... ⋯│
+│ └──────────────┘ │          │ └──────────┘ │              │ 09:15 전화 상담...     ⋯│
+│ ── 2026.03.14 ── │          │ ─ 2026.03.14 │              └─────────────────────────┘
+│ 14:30 보험 리뷰.. │          │ 14:30 보험.. │
+│            ⋯    │          │          ⋯  │
+│ 09:15 전화 상담.. │          │ 09:15 전화.. │
+│            ⋯    │          │          ⋯  │
+└──────────────────┘          └──────────────┘
+```
+
+#### 3-4-2. 모바일 CSS 규칙
+
+```css
+/* ── 768px 이하: 모바일 기본 ── */
+@media (max-width: 768px) {
+  /* 입력 textarea: iOS 자동 줌 방지 (16px 이상 필수) */
+  .memo-input__textarea {
+    font-size: max(16px, var(--font-caption));
+  }
+
+  /* 더보기(⋯) 버튼: 터치 기기에서 항상 표시 */
+  .memo-card__more {
+    opacity: 0.5;  /* hover 불가이므로 항상 보임 */
+  }
+
+  /* 메모 카드: 터치 영역 확보 */
+  .memo-card {
+    min-height: 44px;  /* WCAG 2.5.5 터치 타겟 */
+    padding: var(--spacing-2) var(--spacing-3);
+  }
+}
+
+/* ── 480px 이하: 스마트폰 ── */
+@media (max-width: 480px) {
+  /* 날짜 구분선: 약간 컴팩트 */
+  .memo-date-header {
+    font-size: 10px;
+    padding: var(--spacing-1) 0;
+  }
+
+  /* 시간 라벨: 축소 */
+  .memo-card__time {
+    font-size: 10px;
+    min-width: 32px;
+  }
+}
+
+/* ── 폰 가로 모드: 세로 공간 극대화 ── */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  /* 입력 영역: 1줄로 축소 (포커스 시 확장) */
+  .memo-input__textarea {
+    min-height: 28px;
+    rows: 1;
+  }
+
+  .memo-input__textarea:focus {
+    min-height: 48px;  /* 포커스 시 2줄로 확장 */
+  }
+
+  /* 날짜 구분선 숨김 (공간 절약) → 시간 옆에 날짜 표시 */
+  .memo-date-header {
+    display: none;
+  }
+
+  .memo-card__time::before {
+    content: attr(data-date) " ";  /* "03.14 14:30" 형식 */
+    font-weight: 400;
+  }
+
+  /* 메모 카드: 극도 컴팩트 */
+  .memo-card {
+    min-height: 28px;
+    padding: 4px var(--spacing-2);
+  }
+}
+
+/* ── 터치 디바이스 공통 ── */
+@media (pointer: coarse) {
+  /* 더보기 버튼: 항상 표시 (hover 없으므로) */
+  .memo-card__more {
+    opacity: 0.5;
+  }
+
+  /* 터치 영역 확대: 44x44px 히트 영역 */
+  .memo-card__more::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px; height: 44px;
+  }
+
+  /* 저장 버튼: 터치 친화적 크기 */
+  .memo-input__save {
+    min-height: 36px;
+    min-width: 52px;
+  }
+
+  /* 호버 효과 비활성화 */
+  .memo-card:hover {
+    background: inherit;
+  }
+}
+```
+
+#### 3-4-3. 모바일 키보드 대응
+
+| 상황 | 대응 |
+|------|------|
+| **키보드 열림** | `100dvh` 기반 레이아웃 → 키보드 높이 자동 제외. 부모 `CustomerDetailView`가 이미 `100dvh` 사용 |
+| **iOS 자동 줌** | textarea `font-size: max(16px, ...)` 필수 (16px 미만 시 iOS가 자동 줌) |
+| **입력 중 스크롤** | 입력 영역은 상단 고정, 메모 리스트만 스크롤 |
+| **저장 단축키** | 모바일에서 Ctrl+Enter 불가 → **저장 버튼 항상 표시** (데스크톱에서는 변경 감지 시만 표시해도 OK) |
+| **안전 영역** | 부모 레이아웃이 `env(safe-area-inset-*)` 처리 완료 → MemosTab 자체에서 추가 처리 불필요 |
+
+#### 3-4-4. 모바일 인터랙션 차이
+
+| 동작 | 데스크톱 | 모바일 |
+|------|---------|--------|
+| **메모 추가** | Ctrl+Enter 또는 저장 버튼 | **저장 버튼만** (Ctrl+Enter 불가) |
+| **더보기(⋯)** | hover 시 나타남 | **항상 표시** (opacity 0.5) |
+| **수정 모드** | 더보기 → 수정 클릭 | 동일 (터치 영역 44px 확보) |
+| **삭제 확인** | AppleConfirmModal | 동일 (모달은 이미 반응형 대응 완료) |
+| **스크롤** | 마우스 휠 | 터치 스크롤 (`-webkit-overflow-scrolling: touch`) |
+
+### 3-5. 구현 시 주의사항 (Code Review 반영)
 
 - `title` 속성 사용 금지 → AIMS `<Tooltip>` 컴포넌트 사용
 - `<button>` HTML 직접 사용 금지 → AIMS 컴포넌트 규칙 준수
@@ -335,3 +475,6 @@ AI:     1) list_customer_memos 호출 → 어제 메모 1건 확인
 | 하위 호환 | `customers.memo` 필드 기존 검색 **정상 동작** |
 | 날짜 그룹핑 | 같은 날짜 메모 **1개 날짜 헤더** 아래 정확히 그룹핑 |
 | 동기화 | REST API / MCP 양쪽 CUD 후 `customers.memo` 동기화 **정상** |
+| 모바일 (768px) | 메모 추가/조회 **정상**, iOS 자동 줌 **미발생**, 터치 타겟 **44px 이상** |
+| 모바일 (480px) | 컴팩트 레이아웃 **깨짐 없음**, 더보기 버튼 **접근 가능** |
+| 폰 가로 모드 | 입력 영역 축소 + 포커스 시 확장 **정상 동작** |
