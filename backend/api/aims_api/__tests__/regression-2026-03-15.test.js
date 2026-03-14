@@ -1,11 +1,12 @@
 /**
  * Regression Tests — 2026-03-15 버그 수정
  *
- * 수정된 버그 4건:
+ * 수정된 버그 5건:
  * 1. credit_pending 재처리 트리거 누락 (storage-routes.js)
  * 2. webhook API 키 인증 불일치 (customers-routes.js, auth.js)
  * 3. virusScanService import 누락 (customers-routes.js)
  * 4. scanAfterUpload ObjectId 변환 누락 (virusScanService.js)
+ * 5. AR/CR 라우트 인증 미들웨어 누락 (customers-routes.js)
  *
  * @since 2026-03-15
  */
@@ -142,7 +143,73 @@ describe('BUG-4: scanAfterUpload ObjectId 변환 누락', () => {
 });
 
 // =============================================================================
-// 5. deploy 스크립트 — Docker 환경변수 전달
+// 5. AR/CR 라우트 인증 미들웨어 (customers-routes.js)
+// =============================================================================
+describe('BUG-5: AR/CR 라우트 인증 미들웨어 누락', () => {
+  const source = readSource('routes/customers-routes.js');
+
+  test('GET /annual-report/status/:file_id에 authenticateJWT가 적용되어야 함', () => {
+    const routeMatch = source.match(
+      /router\.get\(\s*['"]\/annual-report\/status\/:file_id['"]\s*,\s*(authenticate\w+)/
+    );
+    expect(routeMatch).not.toBeNull();
+    expect(routeMatch[1]).toMatch(/^authenticate(JWT|JWTorAPIKey|JWTWithQuery)$/);
+  });
+
+  test('POST /annual-report/parse에 authenticateJWT가 적용되어야 함', () => {
+    const routeMatch = source.match(
+      /router\.post\(\s*['"]\/annual-report\/parse['"]\s*,\s*(authenticate\w+)/
+    );
+    expect(routeMatch).not.toBeNull();
+    expect(routeMatch[1]).toMatch(/^authenticate(JWT|JWTorAPIKey)$/);
+  });
+
+  test('POST /annual-report/parse-file에 authenticateJWT가 적용되어야 함', () => {
+    const routeMatch = source.match(
+      /router\.post\(\s*['"]\/annual-report\/parse-file['"]\s*,\s*(authenticate\w+)/
+    );
+    expect(routeMatch).not.toBeNull();
+    expect(routeMatch[1]).toMatch(/^authenticate(JWT|JWTorAPIKey)$/);
+  });
+
+  test('POST /annual-report/check에 authenticateJWT가 적용되어야 함', () => {
+    const routeMatch = source.match(
+      /router\.post\(\s*['"]\/annual-report\/check['"]\s*,\s*(authenticate\w+)/
+    );
+    expect(routeMatch).not.toBeNull();
+    expect(routeMatch[1]).toMatch(/^authenticate(JWT|JWTorAPIKey)$/);
+  });
+
+  test('POST /customer-review/check에 authenticateJWT가 적용되어야 함', () => {
+    const routeMatch = source.match(
+      /router\.post\(\s*['"]\/customer-review\/check['"]\s*,\s*(authenticate\w+)/
+    );
+    expect(routeMatch).not.toBeNull();
+    expect(routeMatch[1]).toMatch(/^authenticate(JWT|JWTorAPIKey)$/);
+  });
+
+  test('req.user.id를 참조하는 모든 라우트에 인증 미들웨어가 있어야 함', () => {
+    const lines = source.split('\n');
+    const unauthRoutes = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.match(/router\.(get|post|put|delete|patch)\(/) &&
+          !line.match(/authenticate/) &&
+          line.match(/async\s*\(req/)) {
+        const block = lines.slice(i, i + 20).join('\n');
+        if (block.includes('req.user.')) {
+          unauthRoutes.push(`Line ${i + 1}: ${line.trim()}`);
+        }
+      }
+    }
+
+    expect(unauthRoutes).toEqual([]);
+  });
+});
+
+// =============================================================================
+// 6. deploy 스크립트 — Docker 환경변수 전달 (BUG-2 보완)
 // =============================================================================
 describe('BUG-2 보완: deploy 스크립트 환경변수 전달', () => {
   const deploySource = readSource('deploy_aims_api.sh');

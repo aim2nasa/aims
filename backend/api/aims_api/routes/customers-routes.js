@@ -2648,7 +2648,7 @@ router.use('/', require('./address-routes')());
  * Annual Report 체크 프록시 (Phase 2 - 파일 업로드 시 자동 감지)
  * 프론트엔드 → Node.js (3010) → Python (8004)
  */
-router.post('/annual-report/check', upload.single('file'), async (req, res) => {
+router.post('/annual-report/check', authenticateJWT, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -2705,7 +2705,7 @@ router.post('/annual-report/check', upload.single('file'), async (req, res) => {
  * Customer Review 체크 프록시 (파일 업로드 시 자동 감지)
  * 프론트엔드 → Node.js (3010) → Python (8004)
  */
-router.post('/customer-review/check', upload.single('file'), async (req, res) => {
+router.post('/customer-review/check', authenticateJWT, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -2762,7 +2762,7 @@ router.post('/customer-review/check', upload.single('file'), async (req, res) =>
  * Annual Report 파싱 프록시 (Phase 2 - 고객 선택 후 파싱)
  * 프론트엔드 → Node.js (3010) → Python (8004)
  */
-router.post('/annual-report/parse-file', upload.single('file'), async (req, res) => {
+router.post('/annual-report/parse-file', authenticateJWT, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -2821,7 +2821,7 @@ router.post('/annual-report/parse-file', upload.single('file'), async (req, res)
 /**
  * Annual Report 파싱 요청 프록시 (Python FastAPI로 전달)
  */
-router.post('/annual-report/parse', async (req, res) => {
+router.post('/annual-report/parse', authenticateJWT, async (req, res) => {
   try {
     const { file_path, file_id, customer_id } = req.body;
 
@@ -2883,7 +2883,7 @@ router.post('/annual-report/parse', async (req, res) => {
 /**
  * ⭐ 설계사별 문서 데이터 격리 적용
  */
-router.get('/annual-report/status/:file_id', async (req, res) => {
+router.get('/annual-report/status/:file_id', authenticateJWT, async (req, res) => {
   try {
     const { file_id } = req.params;
 
