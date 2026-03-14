@@ -5,14 +5,32 @@ Replaces n8n SmartSearch workflow
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Any, Dict
-from bson import ObjectId
+from bson import ObjectId, Decimal128
 import logging
 import re
 
 from services.mongo_service import MongoService
+from datetime import datetime
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _convert_objectids(obj):
+    """재귀적으로 BSON 타입을 JSON 직렬화 가능한 값으로 변환"""
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    if isinstance(obj, bytes):
+        return obj.hex()
+    if isinstance(obj, dict):
+        return {k: _convert_objectids(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_convert_objectids(item) for item in obj]
+    if isinstance(obj, Decimal128):
+        return float(obj.to_decimal())
+    return obj
 
 # 플레이스홀더 ObjectId 패턴 (0으로만 이루어진 ID)
 _PLACEHOLDER_ID_PATTERN = re.compile(r'^0{20,}[0-9]?$')
@@ -125,17 +143,11 @@ async def smart_search(request: SearchRequest):
         cursor = collection.find(mongo_query)
         results = await cursor.to_list(length=None)  # 제한 없음 (키워드 검색은 전체 반환)
 
-        # Convert ObjectId to string for JSON serialization
-        for doc in results:
-            if "_id" in doc:
-                doc["_id"] = str(doc["_id"])
-            if "customerId" in doc and doc["customerId"]:
-                doc["customerId"] = str(doc["customerId"])
-            if "ownerId" in doc:
-                doc["ownerId"] = str(doc["ownerId"])
-
-        # customer_relation 보강: customerId 기반 고객명 batch 조회
+        # customer_relation 보강: customerId 기반 고객명 batch 조회 (ObjectId 변환 전에 수행)
         await _enrich_customer_relations(results, user_id)
+
+        # Convert all ObjectId/datetime to string for JSON serialization
+        results = [_convert_objectids(doc) for doc in results]
 
         logger.info(f"SmartSearch: query='{query}', id='{doc_id}', mode={mode}, results={len(results)}")
         return results
