@@ -35,7 +35,6 @@ export default function LoginPage() {
   const isPinMode = mode === 'pin' || mode === 'pin-setup';
   const [pinError, setPinError] = useState<string | null>(null);
   const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
-  const [rememberDevice, setRememberDevice] = useState(false);
 
   // PIN 설정 플로우 상태
   const [pinSetupStep, setPinSetupStep] = useState<'check' | 'input' | 'setup-enter' | 'setup-confirm'>('check');
@@ -148,10 +147,7 @@ export default function LoginPage() {
     }
 
     try {
-      // aims-remember-device는 보존 (PIN 플로우 테스트 위해)
-      const rememberFlag = localStorage.getItem('aims-remember-device');
       localStorage.clear();
-      if (rememberFlag) localStorage.setItem('aims-remember-device', rememberFlag);
       const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
       const response = await fetch(`${API_BASE_URL}/api/dev/ensure-user`, {
         method: 'POST',
@@ -276,13 +272,7 @@ export default function LoginPage() {
     }
   }, [setupPin, navigate, switchToSocialLogin]);
 
-  // PIN 설정 건너뛰기 (나중에 설정하기) → 기기 기억 해제 + 소셜 로그인과 동일 상태
-  const handleSkipSetup = useCallback(() => {
-    localStorage.removeItem('aims-remember-device');
-    localStorage.removeItem('aims-remembered-user');
-    // 기기 기억 해제 → ProtectedRoute에서 rememberDevice=false → sessionToken 불필요 → 메인 진입 가능
-    navigate('/', { replace: true });
-  }, [navigate]);
+  // PIN 설정은 필수 — "나중에 설정하기" 제거됨
 
   // 토큰 처리 중
   if (isProcessing) {
@@ -322,9 +312,6 @@ export default function LoginPage() {
 
               <p className="login-pin-error">{pinError || '\u00A0'}</p>
 
-              <button type="button" className="login-pin-switch" onClick={handleSkipSetup}>
-                나중에 설정하기
-              </button>
             </div>
           </div>
         </div>
@@ -403,30 +390,6 @@ export default function LoginPage() {
               </svg>
               <span>구글 로그인</span>
             </button>
-          </div>
-
-          {/* 다음에 간편 비밀번호로 빠르게 로그인 */}
-          <div className="login-remember-device">
-            <input
-              type="checkbox"
-              id="remember-device"
-              checked={rememberDevice}
-              onChange={(e) => {
-                setRememberDevice(e.target.checked);
-                // 체크 즉시 localStorage에 저장 (OAuth redirect 전에 보존)
-                if (e.target.checked) {
-                  localStorage.setItem('aims-remember-device', 'true');
-                } else {
-                  localStorage.removeItem('aims-remember-device');
-                }
-              }}
-            />
-            <label htmlFor="remember-device">다음에 간편 비밀번호로 빠르게 로그인</label>
-            <span className="login-remember-device-hint">
-              {rememberDevice
-                ? '다음엔 숫자 4개만 누르면 됩니다'
-                : '체크 안 하면 → 다음에도 소셜 로그인 필요'}
-            </span>
           </div>
 
           {/* 다른 계정으로 로그인 섹션 */}

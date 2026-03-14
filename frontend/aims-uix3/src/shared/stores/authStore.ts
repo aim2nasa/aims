@@ -46,19 +46,16 @@ interface AuthState {
  * - 미설정/false → sessionStorage (브라우저 닫으면 토큰 삭제)
  * - Safari 개인정보 보호 모드 → sessionStorage fallback
  */
+// 전 사용자 PIN 강제 — 항상 localStorage 사용 (브라우저 닫아도 토큰 유지 → PIN으로 재진입)
 const getStorage = (): Storage => {
   try {
-    const rememberDevice = localStorage.getItem('aims-remember-device');
-    if (rememberDevice === 'true') {
-      // localStorage 쓰기 가능 여부 테스트
-      localStorage.setItem('aims-storage-test', '1');
-      localStorage.removeItem('aims-storage-test');
-      return localStorage;
-    }
+    localStorage.setItem('aims-storage-test', '1');
+    localStorage.removeItem('aims-storage-test');
+    return localStorage;
   } catch {
     console.warn('[Auth] localStorage 접근 불가, sessionStorage로 fallback');
+    return sessionStorage;
   }
-  return sessionStorage;
 };
 
 export const useAuthStore = create<AuthState>()(

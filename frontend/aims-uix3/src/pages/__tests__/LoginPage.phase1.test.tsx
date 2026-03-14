@@ -91,37 +91,9 @@ describe('LoginPage Phase 1 — 체크박스', () => {
     sessionStorage.clear()
   })
 
-  describe('"다음에 간편 비밀번호로 빠르게 로그인" 체크박스', () => {
-    it('체크박스가 렌더링되어야 함', () => {
-      renderLoginPage()
-      const checkbox = screen.getByRole('checkbox')
-      expect(checkbox).toBeInTheDocument()
-    })
+  // 체크박스 제거됨 — 전 사용자 PIN 강제 (Dana/Security 합의)
 
-    it('체크박스는 활성화(enabled) 상태여야 함 (Phase 3 완료)', () => {
-      renderLoginPage()
-      const checkbox = screen.getByRole('checkbox')
-      expect(checkbox).toBeEnabled()
-    })
-
-    it('체크박스는 기본 해제(unchecked) 상태여야 함', () => {
-      renderLoginPage()
-      const checkbox = screen.getByRole('checkbox')
-      expect(checkbox).not.toBeChecked()
-    })
-
-    it('체크박스 라벨 텍스트가 올바른가', () => {
-      renderLoginPage()
-      expect(screen.getByText('다음에 간편 비밀번호로 빠르게 로그인')).toBeInTheDocument()
-    })
-
-    it('안내 문구가 표시되어야 함', () => {
-      renderLoginPage()
-      expect(screen.getByText('체크 안 하면 → 다음에도 소셜 로그인 필요')).toBeInTheDocument()
-    })
-  })
-
-  describe('기존 소셜 로그인 버튼 유지', () => {
+  describe('소셜 로그인 버튼', () => {
     it('소셜 로그인 버튼 3개가 모두 렌더링됨', () => {
       renderLoginPage()
       expect(screen.getByText('카카오 로그인')).toBeInTheDocument()

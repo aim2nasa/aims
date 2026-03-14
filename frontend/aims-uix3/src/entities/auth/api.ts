@@ -128,17 +128,14 @@ export const processAuthToken = async (token: string, deps: ProcessTokenDeps) =>
   localStorage.setItem('aims-current-user-id', user._id);
   deps.syncUserIdFromStorage();
 
-  const rememberDevice = localStorage.getItem('aims-remember-device') === 'true';
-  if (rememberDevice) {
-    localStorage.setItem('aims-remembered-user', JSON.stringify({
-      userId: user._id,
-      name: user.name || '',
-      authProvider: user.authProvider || 'kakao',
-    }));
-    deps.navigate('/login?mode=pin', { replace: true });
-  } else {
-    deps.navigate('/', { replace: true });
-  }
+  // 전 사용자 PIN 강제 — 소셜 로그인 성공 시 항상 기기 기억 + PIN 설정/입력으로 이동
+  localStorage.setItem('aims-remember-device', 'true');
+  localStorage.setItem('aims-remembered-user', JSON.stringify({
+    userId: user._id,
+    name: user.name || '',
+    authProvider: user.authProvider || 'kakao',
+  }));
+  deps.navigate('/login?mode=pin', { replace: true });
 
   return user;
 };
