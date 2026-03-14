@@ -170,3 +170,60 @@ export const deleteAccount = async (token: string): Promise<void> => {
     },
   });
 };
+
+// ========== Phase 3: PIN 간편 비밀번호 API ==========
+
+export interface PinVerifyResponse {
+  success: boolean;
+  sessionToken?: string;
+  message?: string;
+  failCount?: number;
+  remaining?: number;
+  locked?: boolean;
+}
+
+export interface PinStatusResponse {
+  success: boolean;
+  hasPin: boolean;
+  locked: boolean;
+}
+
+/** PIN 설정 */
+export const setPin = async (token: string, pin: string): Promise<{ success: boolean; message?: string }> => {
+  const response = await axios.post(`${API_BASE_URL}/api/auth/set-pin`, { pin }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+/** PIN 검증 → 세션 토큰 반환 */
+export const verifyPin = async (token: string, pin: string): Promise<PinVerifyResponse> => {
+  const response = await axios.post(`${API_BASE_URL}/api/auth/verify-pin`, { pin }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+/** PIN 재설정 (소셜 로그인 인증 후) */
+export const resetPin = async (token: string, newPin: string): Promise<{ success: boolean; message?: string }> => {
+  const response = await axios.post(`${API_BASE_URL}/api/auth/reset-pin`, { newPin }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+/** PIN 삭제 + 기기 기억 해제 */
+export const deletePin = async (token: string): Promise<{ success: boolean }> => {
+  const response = await axios.delete(`${API_BASE_URL}/api/auth/pin`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+/** PIN 설정 여부 확인 */
+export const getPinStatus = async (token: string): Promise<PinStatusResponse> => {
+  const response = await axios.get(`${API_BASE_URL}/api/auth/pin-status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};

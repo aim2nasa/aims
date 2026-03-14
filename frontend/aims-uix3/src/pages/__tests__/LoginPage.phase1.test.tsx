@@ -98,10 +98,10 @@ describe('LoginPage Phase 1 — 체크박스', () => {
       expect(checkbox).toBeInTheDocument()
     })
 
-    it('체크박스는 disabled 상태여야 함 (Phase 3까지)', () => {
+    it('체크박스는 활성화(enabled) 상태여야 함 (Phase 3 완료)', () => {
       renderLoginPage()
       const checkbox = screen.getByRole('checkbox')
-      expect(checkbox).toBeDisabled()
+      expect(checkbox).toBeEnabled()
     })
 
     it('체크박스는 기본 해제(unchecked) 상태여야 함', () => {
@@ -117,7 +117,7 @@ describe('LoginPage Phase 1 — 체크박스', () => {
 
     it('안내 문구가 표시되어야 함', () => {
       renderLoginPage()
-      expect(screen.getByText('곧 지원 예정')).toBeInTheDocument()
+      expect(screen.getByText('체크 안 하면 → 다음에도 소셜 로그인 필요')).toBeInTheDocument()
     })
   })
 

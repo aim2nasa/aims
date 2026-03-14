@@ -6,7 +6,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { startKakaoLogin, startKakaoLoginSwitch, startNaverLogin, startNaverLoginSwitch, startGoogleLogin, startGoogleLoginSwitch } from '@/entities/auth/api';
+import { startKakaoLogin, startKakaoLoginSwitch, startNaverLogin, startNaverLoginSwitch, startGoogleLogin, startGoogleLoginSwitch, verifyPin } from '@/entities/auth/api';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
@@ -30,10 +30,11 @@ export default function LoginPage() {
   const { showAlert } = useAppleConfirm();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Phase 2: PIN 모드 상태
+  // PIN 모드 상태
   const isPinMode = searchParams.get('mode') === 'pin';
   const [pinError, setPinError] = useState<string | null>(null);
   const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
+  const [rememberDevice, setRememberDevice] = useState(false);
 
   // 기억된 사용자 정보 로드
   useEffect(() => {
@@ -165,18 +166,45 @@ export default function LoginPage() {
     }
   };
 
-  // PIN 입력 완료 핸들러 (Phase 3에서 서버 검증 연결 예정)
-  const handlePinComplete = useCallback((_pin: string) => {
-    // Phase 3: POST /api/auth/verify-pin 호출
-    // 현재는 UI만 구현, 서버 연결은 Phase 3에서
-    setPinError('서버 연결 준비 중입니다');
-  }, []);
-
   // PIN 모드 → 소셜 로그인 모드로 전환
   const switchToSocialLogin = useCallback(() => {
     setSearchParams({});
     setPinError(null);
   }, [setSearchParams]);
+
+  // PIN 입력 완료 핸들러 — 서버 검증
+  const handlePinComplete = useCallback(async (pin: string) => {
+    const { token } = useAuthStore.getState();
+    if (!token) {
+      switchToSocialLogin();
+      return;
+    }
+
+    try {
+      const result = await verifyPin(token, pin);
+      if (result.success && result.sessionToken) {
+        sessionStorage.setItem('aims-session-token', result.sessionToken);
+        navigate('/', { replace: true });
+      }
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { message?: string; locked?: boolean } } };
+      const data = axiosError?.response?.data;
+      if (data?.locked) {
+        // 5회 실패 잠금 → 기기 기억 해제 + 소셜 로그인으로 전환
+        localStorage.removeItem('aims-remember-device');
+        localStorage.removeItem('aims-remembered-user');
+        setPinError(null);
+        showAlert({
+          title: '비밀번호 입력 잠김',
+          message: '카카오/네이버/구글 로그인 후 다시 설정할 수 있습니다.',
+          iconType: 'error'
+        });
+        switchToSocialLogin();
+        return;
+      }
+      setPinError(data?.message || '비밀번호가 올바르지 않습니다');
+    }
+  }, [navigate, showAlert, switchToSocialLogin]);
 
   // 토큰 처리 중
   if (isProcessing) {
@@ -272,11 +300,28 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* 다음에 PIN으로 빠르게 로그인 체크박스 (Phase 3까지 disabled) */}
+          {/* 다음에 PIN으로 빠르게 로그인 */}
           <div className="login-remember-device">
-            <input type="checkbox" id="remember-device" disabled />
+            <input
+              type="checkbox"
+              id="remember-device"
+              checked={rememberDevice}
+              onChange={(e) => {
+                setRememberDevice(e.target.checked);
+                // 체크 즉시 localStorage에 저장 (OAuth redirect 전에 보존)
+                if (e.target.checked) {
+                  localStorage.setItem('aims-remember-device', 'true');
+                } else {
+                  localStorage.removeItem('aims-remember-device');
+                }
+              }}
+            />
             <label htmlFor="remember-device">다음에 PIN으로 빠르게 로그인</label>
-            <span className="login-remember-device-hint">곧 지원 예정</span>
+            <span className="login-remember-device-hint">
+              {rememberDevice
+                ? '다음엔 숫자 4개만 누르면 됩니다'
+                : '체크 안 하면 → 다음에도 소셜 로그인 필요'}
+            </span>
           </div>
 
           {/* 다른 계정으로 로그인 섹션 */}

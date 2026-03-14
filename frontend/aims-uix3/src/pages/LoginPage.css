@@ -357,6 +357,7 @@
 
     .login-pin-switch {
       padding: 12px 16px;
+      min-height: 44px;
       font-size: 13px;
     }
   }

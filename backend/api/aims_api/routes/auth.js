@@ -4,9 +4,39 @@
 
 const express = require('express');
 const passport = require('passport');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { generateToken, authenticateJWT } = require('../middleware/auth');
 const activityLogger = require('../lib/activityLogger');
 const backendLogger = require('../lib/backendLogger');
+
+// PIN 설정 상수
+const PIN_LENGTH = 4;
+const PIN_MAX_FAIL = 5;
+const PIN_SALT_ROUNDS = 10;
+const SESSION_TOKEN_TTL_MS = 60 * 60 * 1000; // 1시간
+
+// 취약 PIN 차단 목록
+const WEAK_PINS = new Set([
+  '0000', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999',
+  '1234', '2345', '3456', '4567', '5678', '6789', '0123',
+  '9876', '8765', '7654', '6543', '5432', '4321', '3210',
+  '1004', '1212', '0101', '1122', '2580',
+]);
+
+// userId 기반 rate limit (메모리 기반, 서버 재시작 시 초기화)
+const pinRateLimit = new Map(); // userId -> { count, resetAt }
+function checkPinRateLimit(userId) {
+  const now = Date.now();
+  const entry = pinRateLimit.get(userId);
+  if (!entry || now > entry.resetAt) {
+    pinRateLimit.set(userId, { count: 1, resetAt: now + 5 * 60 * 1000 }); // 5분
+    return true;
+  }
+  if (entry.count >= 10) return false; // 5분간 10회 제한
+  entry.count++;
+  return true;
+}
 
 // 카카오 동의항목 scope (닉네임 + 프로필 사진 + 이메일 필수)
 const KAKAO_SCOPE = ['profile_nickname', 'profile_image', 'account_email'];
@@ -869,6 +899,236 @@ module.exports = function(db) {
       });
     }
   });
+
+  // ========== Phase 3: PIN 간편 비밀번호 API ==========
+
+  /**
+   * POST /api/auth/set-pin — PIN 설정
+   * 설계서 4.1절: bcrypt 해시로 서버 저장
+   */
+  router.post('/set-pin', authenticateJWT, async (req, res) => {
+    try {
+      const { pin } = req.body;
+      const userId = req.user.id;
+
+      if (!pin || pin.length !== PIN_LENGTH || !/^\d+$/.test(pin)) {
+        return res.status(400).json({ success: false, message: `${PIN_LENGTH}자리 숫자를 입력해주세요` });
+      }
+
+      if (WEAK_PINS.has(pin)) {
+        return res.status(400).json({ success: false, message: '너무 쉬운 비밀번호입니다. 다른 숫자를 입력해주세요' });
+      }
+
+      const usersCollection = db.collection('users');
+      const { ObjectId } = require('mongodb');
+      const pinHash = await bcrypt.hash(pin, PIN_SALT_ROUNDS);
+
+      await usersCollection.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { pinHash, pinFailCount: 0, pinLockedAt: null } }
+      );
+
+      activityLogger.log(db, userId, 'pin_set', { success: true }, req);
+      res.json({ success: true });
+    } catch (error) {
+      backendLogger.error('Auth', 'PIN 설정 오류', error);
+      res.status(500).json({ success: false, message: 'PIN 설정에 실패했습니다' });
+    }
+  });
+
+  /**
+   * POST /api/auth/verify-pin — PIN 검증
+   * 설계서 4.1절: Authorization 헤더에서 userId 추출 (body에서 받지 않음)
+   * 성공 시 세션 토큰 발급 (1시간 TTL)
+   */
+  router.post('/verify-pin', authenticateJWT, async (req, res) => {
+    try {
+      const { pin } = req.body;
+      const userId = req.user.id;
+
+      if (!pin || !/^\d+$/.test(pin)) {
+        return res.status(400).json({ success: false, message: '숫자를 입력해주세요' });
+      }
+
+      // Rate limit 체크
+      if (!checkPinRateLimit(userId)) {
+        return res.status(429).json({ success: false, message: '너무 많은 시도입니다. 잠시 후 다시 시도해주세요' });
+      }
+
+      const usersCollection = db.collection('users');
+      const { ObjectId } = require('mongodb');
+      const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+      if (!user || !user.pinHash) {
+        return res.status(400).json({ success: false, message: 'PIN이 설정되지 않았습니다' });
+      }
+
+      // 잠금 확인
+      if (user.pinFailCount >= PIN_MAX_FAIL) {
+        return res.status(423).json({ success: false, message: '비밀번호를 여러 번 틀렸습니다. 소셜 로그인으로 다시 확인해주세요', locked: true });
+      }
+
+      const isValid = await bcrypt.compare(pin, user.pinHash);
+
+      if (!isValid) {
+        const newFailCount = (user.pinFailCount || 0) + 1;
+        const updateFields = { pinFailCount: newFailCount };
+        if (newFailCount >= PIN_MAX_FAIL) {
+          updateFields.pinLockedAt = new Date();
+        }
+        await usersCollection.updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: updateFields }
+        );
+
+        activityLogger.log(db, userId, 'pin_verify_fail', { failCount: newFailCount }, req);
+
+        const remaining = PIN_MAX_FAIL - newFailCount;
+        if (remaining <= 0) {
+          return res.status(423).json({ success: false, message: '비밀번호를 여러 번 틀렸습니다. 소셜 로그인으로 다시 확인해주세요', locked: true });
+        }
+        return res.status(401).json({ success: false, message: `비밀번호가 올바르지 않습니다 (${newFailCount}/${PIN_MAX_FAIL})`, failCount: newFailCount, remaining });
+      }
+
+      // 성공: 실패 카운트 초기화 + 세션 토큰 발급
+      const sessionToken = crypto.randomBytes(32).toString('hex');
+      const sessionsCollection = db.collection('pin_sessions');
+      await sessionsCollection.insertOne({
+        sessionToken,
+        userId: new ObjectId(userId),
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + SESSION_TOKEN_TTL_MS),
+      });
+
+      await usersCollection.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { pinFailCount: 0, pinLockedAt: null } }
+      );
+
+      activityLogger.log(db, userId, 'pin_verify_success', {}, req);
+      res.json({ success: true, sessionToken });
+    } catch (error) {
+      backendLogger.error('Auth', 'PIN 검증 오류', error);
+      res.status(500).json({ success: false, message: 'PIN 검증에 실패했습니다' });
+    }
+  });
+
+  /**
+   * POST /api/auth/reset-pin — PIN 재설정 (소셜 로그인 인증 후)
+   */
+  router.post('/reset-pin', authenticateJWT, async (req, res) => {
+    try {
+      const { newPin } = req.body;
+      const userId = req.user.id;
+
+      if (!newPin || newPin.length !== PIN_LENGTH || !/^\d+$/.test(newPin)) {
+        return res.status(400).json({ success: false, message: `${PIN_LENGTH}자리 숫자를 입력해주세요` });
+      }
+
+      if (WEAK_PINS.has(newPin)) {
+        return res.status(400).json({ success: false, message: '너무 쉬운 비밀번호입니다. 다른 숫자를 입력해주세요' });
+      }
+
+      const usersCollection = db.collection('users');
+      const { ObjectId } = require('mongodb');
+      const pinHash = await bcrypt.hash(newPin, PIN_SALT_ROUNDS);
+
+      await usersCollection.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { pinHash, pinFailCount: 0, pinLockedAt: null } }
+      );
+
+      activityLogger.log(db, userId, 'pin_reset', { success: true }, req);
+      res.json({ success: true });
+    } catch (error) {
+      backendLogger.error('Auth', 'PIN 재설정 오류', error);
+      res.status(500).json({ success: false, message: 'PIN 재설정에 실패했습니다' });
+    }
+  });
+
+  /**
+   * DELETE /api/auth/pin — PIN 삭제 + 기기 기억 해제
+   */
+  router.delete('/pin', authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const usersCollection = db.collection('users');
+      const { ObjectId } = require('mongodb');
+
+      await usersCollection.updateOne(
+        { _id: new ObjectId(userId) },
+        { $unset: { pinHash: '', pinFailCount: '', pinLockedAt: '' } }
+      );
+
+      // 해당 사용자의 모든 세션 토큰 삭제
+      const sessionsCollection = db.collection('pin_sessions');
+      await sessionsCollection.deleteMany({ userId: new ObjectId(userId) });
+
+      activityLogger.log(db, userId, 'pin_delete', { success: true }, req);
+      res.json({ success: true });
+    } catch (error) {
+      backendLogger.error('Auth', 'PIN 삭제 오류', error);
+      res.status(500).json({ success: false, message: 'PIN 삭제에 실패했습니다' });
+    }
+  });
+
+  /**
+   * GET /api/auth/verify-session — 세션 토큰 유효성 검증
+   */
+  router.get('/verify-session', authenticateJWT, async (req, res) => {
+    try {
+      const sessionToken = req.query.sessionToken;
+      if (!sessionToken) {
+        return res.status(400).json({ valid: false, message: '세션 토큰이 필요합니다' });
+      }
+
+      const sessionsCollection = db.collection('pin_sessions');
+      const session = await sessionsCollection.findOne({
+        sessionToken,
+        expiresAt: { $gt: new Date() },
+      });
+
+      res.json({ valid: !!session });
+    } catch (error) {
+      backendLogger.error('Auth', '세션 검증 오류', error);
+      res.status(500).json({ valid: false, message: '세션 검증에 실패했습니다' });
+    }
+  });
+
+  /**
+   * GET /api/auth/pin-status — PIN 설정 여부 확인
+   */
+  router.get('/pin-status', authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const usersCollection = db.collection('users');
+      const { ObjectId } = require('mongodb');
+      const user = await usersCollection.findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { pinHash: 1, pinFailCount: 1, pinLockedAt: 1 } }
+      );
+
+      res.json({
+        success: true,
+        hasPin: !!(user && user.pinHash),
+        locked: !!(user && user.pinFailCount >= PIN_MAX_FAIL),
+      });
+    } catch (error) {
+      backendLogger.error('Auth', 'PIN 상태 조회 오류', error);
+      res.status(500).json({ success: false, message: 'PIN 상태 조회에 실패했습니다' });
+    }
+  });
+
+  // pin_sessions 컬렉션 TTL 인덱스 생성 (만료된 세션 자동 삭제)
+  (async () => {
+    try {
+      const sessionsCollection = db.collection('pin_sessions');
+      await sessionsCollection.createIndex(
+        { expiresAt: 1 },
+        { expireAfterSeconds: 0, background: true }
+      );
+    } catch { /* 인덱스 이미 존재하면 무시 */ }
+  })();
 
   return router;
 };
