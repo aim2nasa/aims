@@ -21,6 +21,7 @@ import SFSymbol, {
   SFSymbolWeight,
 } from '../../../../../components/SFSymbol';
 import { formatDate, formatTime } from '@/shared/lib/timeUtils';
+import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
 import './MemosTab.css';
 
 interface MemosTabProps {
@@ -73,6 +74,9 @@ export const MemosTab: React.FC<MemosTabProps> = ({ customer }) => {
     deleteMemo,
     clearError,
   } = useMemoController(customer._id);
+
+  // 모바일 감지
+  const { isMobileLayout } = useDeviceOrientation();
 
   // 삭제 확인 모달
   const confirmController = useAppleConfirmController();
@@ -137,12 +141,20 @@ export const MemosTab: React.FC<MemosTabProps> = ({ customer }) => {
   }, [inputValue, isSaving, createMemo]);
 
   // 입력 영역 키보드 핸들러
+  // PC: Enter = 저장, Shift+Enter = 줄바꿈 (슬랙/카톡 PC 패턴)
+  // 모바일: Enter = 줄바꿈, 저장 버튼 = 저장 (카톡/iMessage 패턴)
   const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if (e.key === 'Enter') {
+      if (isMobileLayout) {
+        // 모바일: Enter = 줄바꿈 (기본 동작, 아무것도 하지 않음)
+        return;
+      }
+      // PC: Shift+Enter = 줄바꿈, Enter = 저장
+      if (e.shiftKey) return; // 줄바꿈 허용
       e.preventDefault();
       handleCreate();
     }
-  }, [handleCreate]);
+  }, [handleCreate, isMobileLayout]);
 
   // 수정 시작
   const handleEditStart = useCallback((memo: CustomerMemo) => {
@@ -171,15 +183,17 @@ export const MemosTab: React.FC<MemosTabProps> = ({ customer }) => {
     setEditValue('');
   }, []);
 
-  // 수정 키보드 핸들러
+  // 수정 키보드 핸들러 (입력과 동일 패턴)
   const handleEditKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if (e.key === 'Enter') {
+      if (isMobileLayout) return; // 모바일: Enter = 줄바꿈
+      if (e.shiftKey) return; // PC: Shift+Enter = 줄바꿈
       e.preventDefault();
       handleEditSave();
     } else if (e.key === 'Escape') {
       handleEditCancel();
     }
-  }, [handleEditSave, handleEditCancel]);
+  }, [handleEditSave, handleEditCancel, isMobileLayout]);
 
   // 삭제
   const handleDelete = useCallback(async (memo: CustomerMemo) => {
@@ -226,7 +240,10 @@ export const MemosTab: React.FC<MemosTabProps> = ({ customer }) => {
         <textarea
           ref={textareaRef}
           className="memo-input__textarea"
-          placeholder="전화 상담 후 메모를 남겨보세요... (Ctrl+Enter로 저장)"
+          placeholder={isMobileLayout
+            ? "메모 입력..."
+            : "메모 입력... (Enter로 저장, Shift+Enter 줄바꿈)"
+          }
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleInputKeyDown}
