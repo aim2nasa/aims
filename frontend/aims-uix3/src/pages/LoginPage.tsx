@@ -361,7 +361,8 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-container">
         <div className="login-header">
-          <p>보험 문서 AI 플랫폼</p>
+          <img src="/assets/logo/aims-logo-full-light.svg" alt="AIMS" className="login-logo-full" />
+          <p>보험 설계사를 위한 AI-Powered 업무 플랫폼</p>
         </div>
 
         <div className="login-content">

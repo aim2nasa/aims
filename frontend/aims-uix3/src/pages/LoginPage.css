@@ -26,6 +26,15 @@
   .login-header {
     text-align: center;
     margin-bottom: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .login-logo-full {
+    width: 220px;
+    height: auto;
   }
 
   .login-header h1 {

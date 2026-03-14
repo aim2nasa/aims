@@ -79,6 +79,14 @@
     font-weight: var(--font-weight-medium);
     color: var(--color-header-title);
     opacity: 0.7;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .header-logo-icon {
+    width: 24px;
+    height: 24px;
   }
 
   /* === 개발자 모드 뱃지 (AIMS UIX3 우측) === */
