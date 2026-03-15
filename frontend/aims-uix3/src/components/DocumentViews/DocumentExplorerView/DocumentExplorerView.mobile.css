@@ -267,11 +267,13 @@
 
     /* 별칭AI 텍스트 숨기고 아이콘만 표시 (360~480px) */
     .alias-ai-button .button__content {
-      display: none;
+      font-size: 0;
+      gap: 0;
     }
 
-    .alias-ai-button .button__icon {
-      margin: 0;
+    /* 아이콘(SFSymbol SVG)은 크기 유지 */
+    .alias-ai-button .button__content .sf-symbol {
+      font-size: 11px;
     }
 
     .doc-explorer-toolbar__edit-count {

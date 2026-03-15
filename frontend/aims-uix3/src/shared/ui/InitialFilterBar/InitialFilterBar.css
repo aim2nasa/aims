@@ -271,41 +271,41 @@
     }
   }
 
-  /* === 모바일 폰 세로 (480px 이하): CSS Grid 10칼럼 강제 배치 ===
-     CSS Grid repeat(10, 1fr)로 컨테이너 너비와 무관하게 10칼럼 보장
-     한글 19개 = 2줄(10+9), 영문 26개 = 3줄, 숫자 10개 = 1줄
-     flex-wrap 방식은 부모 scrollbar/padding에 따라 3줄로 밀리는 문제 해결 */
+  /* === 모바일 폰 세로 (480px 이하): 1줄 가로 스크롤 ===
+     그리드 2줄 → 1줄 수평 스크롤로 변경. 공간 절약 + 직관적 UX */
   @media (max-width: 480px) {
     .initial-filter-bar {
       gap: 4px;
       padding: 4px 6px;
-      align-items: flex-start;
+      align-items: center;
     }
 
     .initial-filter-bar__initials {
-      display: grid;
-      grid-template-columns: repeat(10, 1fr);
-      overflow-x: visible;
-      gap: 1px;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      gap: 2px;
     }
 
-    /* Tooltip 래퍼(.tooltip-trigger)가 그리드 셀을 채우도록 */
-    .initial-filter-bar__initials > .tooltip-trigger {
-      display: flex;
+    .initial-filter-bar__initials::-webkit-scrollbar {
+      display: none;
     }
 
     .initial-filter-bar__initial {
-      width: 100%;
-      min-width: 0;
-      height: 24px;
+      min-width: 26px;
+      height: 26px;
       font-size: 10px;
-      padding: 0;
+      padding: 0 3px;
+      flex-shrink: 0;
       border-radius: 3px;
     }
 
     .initial-filter-bar__type-toggle {
       min-width: 36px;
-      height: 24px;
+      height: 26px;
       padding: 0 4px;
     }
 
@@ -321,6 +321,7 @@
     .initial-filter-bar__selected {
       height: auto;
       padding: 3px 6px 3px 8px;
+      flex-shrink: 0;
     }
 
     .initial-filter-bar__selected-label {
