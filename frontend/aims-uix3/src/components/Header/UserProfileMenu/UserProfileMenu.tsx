@@ -178,8 +178,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   const handleForgetDevice = async () => {
     onClose();
     const confirmed = await confirmActions.openModal({
-      title: '기기 기억 해제',
-      message: '이 기기의 간편 비밀번호를 해제합니다.\n다음 방문 시 소셜 로그인이 필요합니다.',
+      title: '간편 로그인 해제',
+      message: '간편 비밀번호를 삭제합니다.\n다음 방문 시 카카오/네이버/구글 로그인이 필요합니다.',
       confirmText: '해제',
       cancelText: '취소',
       confirmStyle: 'destructive',
@@ -192,10 +192,10 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
         localStorage.removeItem('aims-remembered-user');
         sessionStorage.removeItem('aims-session-token');
         setHasPin(false);
-        showAlert({ title: '완료', message: '기기 기억이 해제되었습니다.', iconType: 'success' });
+        showAlert({ title: '완료', message: '간편 로그인이 해제되었습니다.', iconType: 'success' });
       } catch (error) {
         errorReporter.reportApiError(error as Error, { component: 'UserProfileMenu.handleForgetDevice' });
-        showAlert({ title: '오류', message: '기기 기억 해제에 실패했습니다.', iconType: 'error' });
+        showAlert({ title: '오류', message: '간편 로그인 해제에 실패했습니다.', iconType: 'error' });
       }
     }
   };
@@ -328,7 +328,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
             {hasRememberDevice && (
               <UserProfileMenuItem
                 icon="iphone.slash"
-                label="기기 기억 해제"
+                label="간편 로그인 해제"
                 onClick={handleForgetDevice}
                 showDivider={true}
               />
