@@ -126,24 +126,15 @@
 
   /* 비활성화된 소셜 로그인 버튼 (준비 중) */
   .social-login-button--disabled {
-    opacity: 0.45;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-quaternary);
+    border: 1px solid var(--color-border);
     cursor: not-allowed;
-    position: relative;
   }
 
   .social-login-button--disabled:hover {
     transform: none;
     box-shadow: none;
-  }
-
-  .social-login-badge {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--color-text-quaternary);
-    background: var(--color-bg-tertiary);
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-left: 4px;
   }
 
   /* 다른 계정으로 로그인 버튼 - 테두리 스타일 */
