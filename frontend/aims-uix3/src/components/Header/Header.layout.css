@@ -308,4 +308,21 @@
     outline-offset: 2px;
   }
 
+  /* === 터치 타겟 44px 보장 (AI 버튼) === */
+  @media (pointer: coarse) {
+    .header-chat-button {
+      position: relative;
+    }
+
+    .header-chat-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
 } /* end @layer components */

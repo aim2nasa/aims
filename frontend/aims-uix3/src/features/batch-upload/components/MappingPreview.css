@@ -142,7 +142,7 @@
     min-height: 0; /* flexbox 스크롤 활성화 */
     padding: var(--spacing-md);
     border: none;
-    background-color: #e8eaed;  /* 라이트 테마에서 눈에 띄는 배경색 */
+    background-color: var(--color-bg-tertiary, #e8eaed);
     border-radius: var(--radius-md);
     overflow: auto;  /* 수평/수직 모두 스크롤 가능 */
     font-size: var(--font-size-caption-1);  /* FONT_SIZE_STANDARDS: 테이블 데이터 */

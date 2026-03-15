@@ -257,6 +257,17 @@
     background: var(--color-ios-orange, #ff9500);
   }
 
+  html[data-theme="dark"] .guide-desc {
+    background: rgba(0, 122, 255, 0.25);
+    color: var(--color-ios-blue-dark, #64d2ff);
+    box-shadow: none;
+  }
+
+  html[data-theme="dark"] .guide-desc.alt {
+    background: rgba(255, 149, 0, 0.25);
+    color: var(--color-ios-orange-dark, #ffb340);
+  }
+
   .guide-match {
     display: inline-flex;
     align-items: center;

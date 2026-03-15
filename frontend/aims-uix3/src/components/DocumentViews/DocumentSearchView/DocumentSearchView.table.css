@@ -525,4 +525,21 @@
     color: var(--color-danger-400, #f87171);
   }
 
+  /* === 터치 타겟 44px 보장 (액션 버튼) === */
+  @media (pointer: coarse) {
+    .row-actions .action-button {
+      position: relative;
+    }
+
+    .row-actions .action-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
 } /* end @layer components */

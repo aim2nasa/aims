@@ -1467,4 +1467,21 @@
     transform: scale(0.95);
   }
 
+  /* === 터치 타겟 44px 보장 (테마 토글) === */
+  @media (pointer: coarse) {
+    .theme-toggle-container {
+      position: relative;
+    }
+
+    .theme-toggle-container::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
 } /* end @layer utilities */

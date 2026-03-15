@@ -375,4 +375,21 @@
 
   }
 
+  /* === 터치 타겟 44px 보장 (확장 버튼) === */
+  @media (pointer: coarse) {
+    .doc-explorer-toolbar__expand-btn {
+      position: relative;
+    }
+
+    .doc-explorer-toolbar__expand-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
 } /* end @layer components */

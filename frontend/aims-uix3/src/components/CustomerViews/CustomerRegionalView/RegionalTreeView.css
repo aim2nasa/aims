@@ -301,7 +301,7 @@
   }
 
   html[data-theme="dark"] .tree-node-badge {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.15);
   }
 
   .badge-no-address {
