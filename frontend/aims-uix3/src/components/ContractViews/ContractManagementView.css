@@ -321,12 +321,28 @@
   }
 
   @media (max-width: 480px) {
+    .contract-management-view__content {
+      padding: var(--spacing-3);
+    }
+
+    .contract-management-view__section {
+      margin-bottom: var(--spacing-4);
+    }
+
     .contract-management-view__stats-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-2);
     }
 
     .contract-management-view__pie-charts-grid {
       grid-template-columns: 1fr;
+      gap: var(--spacing-3);
+      padding: var(--spacing-2);
+      margin-top: var(--spacing-3);
+    }
+
+    .contract-management-view__section-title {
+      font-size: var(--font-size-caption-2);
     }
 
     /* 테이블: 가로 스크롤 전환 */
