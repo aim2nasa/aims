@@ -364,6 +364,9 @@
     height: 1px;
     opacity: 0;
     pointer-events: none;
+    direction: ltr;
+    text-align: left;
+    caret-color: transparent;
   }
 
   /* 흔들림 애니메이션 (PIN 실패 시) */
