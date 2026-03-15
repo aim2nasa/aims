@@ -62,9 +62,9 @@
     color: var(--color-ios-purple, #af52de);
   }
 
-  /* 크레딧 아이콘: 골드/옐로우 (코인) */
+  /* 크레딧 아이콘: 앰버/다크골드 (코인) — 라이트 모드에서 식별성 확보 */
   .usage-pie__icon--credit {
-    color: var(--color-ios-yellow, #ffcc00);
+    color: var(--color-ios-orange, #ff9500);
   }
 
   /* 프로그레스 링 색상 - normal (파랑) */
