@@ -24,7 +24,8 @@ export default function AppRouter() {
   const [showProfileSetup, setShowProfileSetup] = useState(false);
 
   // PIN 모드이면 인증 상태와 관계없이 LoginPage 표시
-  const isPinMode = searchParams.get('mode') === 'pin';
+  const mode = searchParams.get('mode');
+  const isPinMode = mode === 'pin' || mode === 'pin-setup';
 
   // 로그인 후 profileCompleted 체크
   useEffect(() => {

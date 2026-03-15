@@ -1923,4 +1923,38 @@
     -webkit-mask-size: contain;
   }
 
+  /* === LOCK.ROTATION (간편 비밀번호 변경) === */
+
+  .sf-symbol--lock-rotation .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='5' y='11' width='14' height='11' rx='2' fill='currentColor'/%3e%3cpath d='M8 11V7a4 4 0 118 0v4' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3cpath d='M19 2a3 3 0 013 3v2' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cpath d='M22 7l-1.5-1.5M22 7l1.5-1.5' fill='none' stroke='currentColor' stroke-width='1.2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='5' y='11' width='14' height='11' rx='2' fill='currentColor'/%3e%3cpath d='M8 11V7a4 4 0 118 0v4' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3cpath d='M19 2a3 3 0 013 3v2' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cpath d='M22 7l-1.5-1.5M22 7l1.5-1.5' fill='none' stroke='currentColor' stroke-width='1.2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+  }
+
+  /* === IPHONE.SLASH (기기 기억 해제) === */
+
+  .sf-symbol--iphone-slash .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='7' y='2' width='10' height='20' rx='2' fill='none' stroke='currentColor' stroke-width='1.8'/%3e%3cline x1='10' y1='19' x2='14' y2='19' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cline x1='3' y1='21' x2='21' y2='3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='7' y='2' width='10' height='20' rx='2' fill='none' stroke='currentColor' stroke-width='1.8'/%3e%3cline x1='10' y1='19' x2='14' y2='19' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cline x1='3' y1='21' x2='21' y2='3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+  }
+
 } /* end @layer components */
