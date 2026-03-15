@@ -105,8 +105,22 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
       }),
       // persist 복원 후 isAuthenticated 파생 (token → isAuthenticated)
+      // JWT 만료 여부를 확인하여 만료된 토큰은 즉시 제거 (불필요한 API 호출 방지)
       onRehydrateStorage: () => (state) => {
         if (state?.token) {
+          try {
+            const payload = JSON.parse(atob(state.token.split('.')[1]));
+            if (payload.exp && payload.exp * 1000 < Date.now()) {
+              state.token = null;
+              state.isAuthenticated = false;
+              return;
+            }
+          } catch {
+            // 디코딩 실패 = 잘못된 토큰 → 제거
+            state.token = null;
+            state.isAuthenticated = false;
+            return;
+          }
           state.isAuthenticated = true;
         }
       },
