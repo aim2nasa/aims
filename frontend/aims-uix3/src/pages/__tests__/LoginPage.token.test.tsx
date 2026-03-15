@@ -161,22 +161,27 @@ describe('LoginPage', () => {
       expect(screen.getByText('구글 로그인')).toBeInTheDocument()
     })
 
-    it('"다른 카카오 계정" 옵션이 존재해야 함', () => {
+    it('"다른 카카오 계정으로 로그인" 옵션이 존재해야 함', () => {
       renderWithRouter()
 
-      expect(screen.getByText('다른 카카오 계정')).toBeInTheDocument()
+      expect(screen.getByText('다른 카카오 계정으로 로그인')).toBeInTheDocument()
     })
 
-    it('"다른 네이버 계정" 옵션이 존재해야 함', () => {
+    it('네이버/구글 버튼이 disabled 상태여야 함', () => {
       renderWithRouter()
 
-      expect(screen.getByText('다른 네이버 계정')).toBeInTheDocument()
+      const naverButton = screen.getByText('네이버 로그인').closest('button')
+      const googleButton = screen.getByText('구글 로그인').closest('button')
+
+      expect(naverButton).toBeDisabled()
+      expect(googleButton).toBeDisabled()
     })
 
-    it('"다른 구글 계정" 옵션이 존재해야 함', () => {
+    it('"다른 네이버 계정", "다른 구글 계정" 옵션이 존재하지 않아야 함', () => {
       renderWithRouter()
 
-      expect(screen.getByText('다른 구글 계정')).toBeInTheDocument()
+      expect(screen.queryByText('다른 네이버 계정')).not.toBeInTheDocument()
+      expect(screen.queryByText('다른 구글 계정')).not.toBeInTheDocument()
     })
   })
 
@@ -265,49 +270,31 @@ describe('LoginPage', () => {
       expect(mockStartKakaoLogin).toHaveBeenCalled()
     })
 
-    it('네이버 로그인 버튼 클릭 시 startNaverLogin 호출', () => {
+    it('네이버 로그인 버튼 클릭 시 disabled이므로 startNaverLogin 호출되지 않아야 함', () => {
       renderWithRouter()
 
       const naverButton = screen.getByText('네이버 로그인')
       fireEvent.click(naverButton)
 
-      expect(mockStartNaverLogin).toHaveBeenCalled()
+      expect(mockStartNaverLogin).not.toHaveBeenCalled()
     })
 
-    it('구글 로그인 버튼 클릭 시 startGoogleLogin 호출', () => {
+    it('구글 로그인 버튼 클릭 시 disabled이므로 startGoogleLogin 호출되지 않아야 함', () => {
       renderWithRouter()
 
       const googleButton = screen.getByText('구글 로그인')
       fireEvent.click(googleButton)
 
-      expect(mockStartGoogleLogin).toHaveBeenCalled()
+      expect(mockStartGoogleLogin).not.toHaveBeenCalled()
     })
 
-    it('"다른 카카오 계정" 클릭 시 startKakaoLoginSwitch 호출', () => {
+    it('"다른 카카오 계정으로 로그인" 클릭 시 startKakaoLoginSwitch 호출', () => {
       renderWithRouter()
 
-      const switchButton = screen.getByText('다른 카카오 계정')
+      const switchButton = screen.getByText('다른 카카오 계정으로 로그인')
       fireEvent.click(switchButton)
 
       expect(mockStartKakaoLoginSwitch).toHaveBeenCalled()
-    })
-
-    it('"다른 네이버 계정" 클릭 시 startNaverLoginSwitch 호출', () => {
-      renderWithRouter()
-
-      const switchButton = screen.getByText('다른 네이버 계정')
-      fireEvent.click(switchButton)
-
-      expect(mockStartNaverLoginSwitch).toHaveBeenCalled()
-    })
-
-    it('"다른 구글 계정" 클릭 시 startGoogleLoginSwitch 호출', () => {
-      renderWithRouter()
-
-      const switchButton = screen.getByText('다른 구글 계정')
-      fireEvent.click(switchButton)
-
-      expect(mockStartGoogleLoginSwitch).toHaveBeenCalled()
     })
   })
 })

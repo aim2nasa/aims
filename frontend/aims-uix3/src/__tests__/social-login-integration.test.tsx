@@ -257,14 +257,14 @@ describe('소셜 로그인 통합 테스트', () => {
       profileCompleted: true
     }
 
-    it('1. 네이버 로그인 버튼 클릭 시 OAuth 시작', async () => {
+    it('1. 네이버 로그인 버튼이 disabled 상태여야 함', async () => {
       renderApp('/login')
 
-      const naverButton = screen.getByText('네이버 로그인')
-      fireEvent.click(naverButton)
+      const naverButton = screen.getByText('네이버 로그인').closest('button')
+      expect(naverButton).toBeDisabled()
 
-      expect(mockStartNaverLogin).toHaveBeenCalled()
-      expect(mockHref).toContain('/api/auth/naver')
+      fireEvent.click(screen.getByText('네이버 로그인'))
+      expect(mockStartNaverLogin).not.toHaveBeenCalled()
     })
 
     it('2. 네이버 콜백 처리 → Store 동기화', async () => {
@@ -306,14 +306,14 @@ describe('소셜 로그인 통합 테스트', () => {
       profileCompleted: true
     }
 
-    it('1. 구글 로그인 버튼 클릭 시 OAuth 시작', async () => {
+    it('1. 구글 로그인 버튼이 disabled 상태여야 함', async () => {
       renderApp('/login')
 
-      const googleButton = screen.getByText('구글 로그인')
-      fireEvent.click(googleButton)
+      const googleButton = screen.getByText('구글 로그인').closest('button')
+      expect(googleButton).toBeDisabled()
 
-      expect(mockStartGoogleLogin).toHaveBeenCalled()
-      expect(mockHref).toContain('/api/auth/google')
+      fireEvent.click(screen.getByText('구글 로그인'))
+      expect(mockStartGoogleLogin).not.toHaveBeenCalled()
     })
 
     it('2. 콜백 처리 → 토큰 저장', async () => {
@@ -383,34 +383,21 @@ describe('소셜 로그인 통합 테스트', () => {
   })
 
   describe('계정 전환', () => {
-    it('"다른 카카오 계정" 클릭 시 switch 엔드포인트 사용', async () => {
+    it('"다른 카카오 계정으로 로그인" 클릭 시 switch 엔드포인트 사용', async () => {
       renderApp('/login')
 
-      const switchButton = screen.getByText('다른 카카오 계정')
+      const switchButton = screen.getByText('다른 카카오 계정으로 로그인')
       fireEvent.click(switchButton)
 
       expect(mockStartKakaoLoginSwitch).toHaveBeenCalled()
       expect(mockHref).toContain('/api/auth/kakao/switch')
     })
 
-    it('"다른 네이버 계정" 클릭 시 switch 엔드포인트 사용', async () => {
+    it('"다른 네이버 계정", "다른 구글 계정" 옵션이 존재하지 않아야 함', () => {
       renderApp('/login')
 
-      const switchButton = screen.getByText('다른 네이버 계정')
-      fireEvent.click(switchButton)
-
-      expect(mockStartNaverLoginSwitch).toHaveBeenCalled()
-      expect(mockHref).toContain('/api/auth/naver/switch')
-    })
-
-    it('"다른 구글 계정" 클릭 시 switch 엔드포인트 사용', async () => {
-      renderApp('/login')
-
-      const switchButton = screen.getByText('다른 구글 계정')
-      fireEvent.click(switchButton)
-
-      expect(mockStartGoogleLoginSwitch).toHaveBeenCalled()
-      expect(mockHref).toContain('/api/auth/google/switch')
+      expect(screen.queryByText('다른 네이버 계정')).not.toBeInTheDocument()
+      expect(screen.queryByText('다른 구글 계정')).not.toBeInTheDocument()
     })
   })
 
