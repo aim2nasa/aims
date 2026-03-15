@@ -508,6 +508,25 @@
 
   }
 
+  /* 소형 모바일 (480px 이하): form-row 세로 배치 */
+  @media (max-width: 480px) {
+    .form-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 2px;
+    }
+
+    .form-row__label {
+      flex: none;
+      margin-right: 0;
+    }
+
+    .form-row__error,
+    .form-row__warning {
+      margin-left: 0;
+    }
+  }
+
   /* Address Search Styles */
   .form-row__search-btn {
     background-color: var(--color-primary);

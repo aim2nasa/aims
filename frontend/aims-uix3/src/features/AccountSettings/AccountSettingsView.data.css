@@ -246,6 +246,15 @@
     }
   }
 
+  /* 소형 모바일: AI 통계 그리드 2칼럼 */
+  @media (max-width: 480px) {
+    .account-settings-view__ai-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-2);
+      padding: var(--spacing-3);
+    }
+  }
+
   /* AI 사용량 카드 modifier */
   .account-settings-view__usage-card--ai {
     margin-bottom: var(--spacing-5);

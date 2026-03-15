@@ -373,4 +373,47 @@
     margin-bottom: 0;
   }
 
+  /* === 모바일 반응형 (480px 이하) === */
+  @media (max-width: 480px) {
+    .usage-guide-view__content {
+      padding: var(--spacing-2);
+      gap: var(--spacing-2);
+    }
+
+    .usage-guide-view__category-header {
+      padding: var(--spacing-2);
+    }
+
+    /* 들여쓰기 축소: 48px → 28px */
+    .usage-guide-view__item-header {
+      padding-left: calc(var(--spacing-2) + 28px);
+    }
+
+    .usage-guide-view__item-header::before {
+      left: calc(var(--spacing-2) + 16px);
+    }
+
+    .usage-guide-view__items::before {
+      left: calc(var(--spacing-2) + 18px);
+    }
+
+    .usage-guide-view__item-content {
+      margin-left: calc(var(--spacing-2) + 28px);
+      margin-right: var(--spacing-2);
+      padding: var(--spacing-2);
+    }
+
+    .usage-guide-view__item-title {
+      font-size: 12px;
+    }
+
+    .usage-guide-view__item-description {
+      font-size: 11px;
+    }
+
+    .usage-guide-view__step {
+      font-size: 11px;
+    }
+  }
+
 } /* end @layer components */

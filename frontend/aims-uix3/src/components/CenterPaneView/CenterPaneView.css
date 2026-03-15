@@ -262,6 +262,20 @@
 
     .center-pane-view__header {
       padding: 6px 12px;
+      gap: 6px;
+    }
+
+    /* 제목 텍스트 줄임 처리 */
+    .center-pane-view__title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 액세서리 영역 축소 방지 */
+    .center-pane-view__title-accessory {
+      flex-shrink: 0;
     }
 
     .center-pane-view__content {

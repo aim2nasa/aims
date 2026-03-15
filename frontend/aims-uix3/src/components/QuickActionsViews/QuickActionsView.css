@@ -186,4 +186,35 @@
     color: var(--color-primary-200);
   }
 
+  /* === 모바일 반응형 (480px 이하) === */
+  @media (max-width: 480px) {
+    .quick-actions-view__content {
+      padding: var(--spacing-3);
+      gap: var(--spacing-4);
+    }
+
+    .quick-actions-view__action-cards {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-3);
+    }
+
+    .quick-actions-view__action-card {
+      padding: var(--spacing-4);
+    }
+
+    .quick-actions-view__stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-2);
+    }
+
+    .quick-actions-view__menu-cards {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-3);
+    }
+
+    .quick-actions-view__menu-card {
+      padding: var(--spacing-4);
+    }
+  }
+
 } /* end @layer components */

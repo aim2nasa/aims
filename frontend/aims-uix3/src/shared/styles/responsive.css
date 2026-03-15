@@ -49,6 +49,32 @@
   }
 
   /* ========================================
+   * 📜 가로 스크롤 어포던스 (inset shadow)
+   * - 오른쪽 끝에 inset shadow로 스크롤 가능함을 시각적으로 알림
+   * - box-shadow: inset은 스크롤과 독립적으로 고정되어 JS 불필요
+   * - 주요 가로 스크롤 테이블 컨테이너에 직접 적용
+   * ======================================== */
+
+  @media (max-width: 768px) {
+    .customer-list,
+    .contract-list,
+    .document-status-table-wrapper,
+    .responsive-table-scroll {
+      box-shadow: var(--shadow-scroll-hint);
+    }
+  }
+
+  /* 폰 가로 모드에서도 동일 적용 */
+  @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+    .customer-list,
+    .contract-list,
+    .document-status-table-wrapper,
+    .responsive-table-scroll {
+      box-shadow: var(--shadow-scroll-hint);
+    }
+  }
+
+  /* ========================================
    * 🎯 터치 타겟 확대 유틸리티
    * - WCAG 2.5.5 기준 최소 44x44px 터치 영역
    * - 시각적 크기는 유지, ::after로 터치 영역만 확대

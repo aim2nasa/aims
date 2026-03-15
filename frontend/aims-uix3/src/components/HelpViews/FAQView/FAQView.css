@@ -236,4 +236,41 @@
     color: var(--color-text-tertiary);
   }
 
+  /* === 모바일 반응형 (480px 이하) === */
+  @media (max-width: 480px) {
+    .faq-view__content {
+      padding: var(--spacing-2);
+    }
+
+    .faq-view__filters {
+      gap: var(--spacing-1);
+      margin-bottom: var(--spacing-3);
+      padding-bottom: var(--spacing-2);
+    }
+
+    .faq-view__filter {
+      padding: var(--spacing-1) var(--spacing-2);
+      font-size: 11px;
+    }
+
+    .faq-view__question {
+      padding: var(--spacing-2) var(--spacing-3);
+    }
+
+    .faq-view__question-text {
+      font-size: 12px;
+    }
+
+    /* 답변 영역 margin-left 축소 */
+    .faq-view__answer {
+      margin-left: var(--spacing-3);
+      margin-right: var(--spacing-2);
+      padding: var(--spacing-2);
+    }
+
+    .faq-view__answer-text {
+      font-size: 12px;
+    }
+  }
+
 } /* end @layer components */

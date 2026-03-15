@@ -413,10 +413,17 @@
         60px;                /* 납입상태 */
     }
 
+    /* 모바일에서 숨김: 유형, 증권번호, 이체일, 납입주기, 피보험자 */
+    .header-type,
     .header-policy,
     .header-cycle,
+    .header-insured,
+    .header-payment-day,
+    .contract-type,
     .contract-policy,
-    .contract-cycle {
+    .contract-cycle,
+    .contract-insured,
+    .contract-payment-day {
       display: none;
     }
   }

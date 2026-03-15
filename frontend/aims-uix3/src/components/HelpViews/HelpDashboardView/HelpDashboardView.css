@@ -203,4 +203,43 @@
     color: var(--color-text-primary);
   }
 
+  /* === 모바일 반응형 (480px 이하) === */
+  @media (max-width: 480px) {
+    .help-dashboard-view__content {
+      padding: var(--spacing-3);
+      gap: var(--spacing-4);
+    }
+
+    .help-dashboard-view__card {
+      gap: var(--spacing-2);
+      padding: var(--spacing-3);
+    }
+
+    .help-dashboard-view__card-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    .help-dashboard-view__card-title {
+      font-size: 13px;
+    }
+
+    .help-dashboard-view__card-description {
+      font-size: 11px;
+    }
+
+    .help-dashboard-view__section--contact {
+      padding: var(--spacing-3);
+    }
+
+    .help-dashboard-view__contact-label {
+      min-width: 48px;
+      font-size: 11px;
+    }
+
+    .help-dashboard-view__contact-value {
+      font-size: 12px;
+    }
+  }
+
 } /* end @layer components */

@@ -161,4 +161,51 @@
     color: var(--color-text-tertiary);
   }
 
+  /* === 모바일 반응형 (480px 이하) === */
+  @media (max-width: 480px) {
+    .notice-view__list {
+      padding: var(--spacing-2);
+    }
+
+    .notice-view__item {
+      flex-wrap: wrap;
+      gap: var(--spacing-1);
+      padding: var(--spacing-2);
+    }
+
+    .notice-view__item-title {
+      flex-basis: 100%;
+      order: 1;
+      white-space: normal;
+      font-size: 12px;
+    }
+
+    .notice-view__category {
+      order: 0;
+    }
+
+    .notice-view__new-badge {
+      order: 0;
+    }
+
+    .notice-view__item-date {
+      order: 2;
+      font-size: 10px;
+      margin-left: auto;
+    }
+
+    .notice-view__detail {
+      padding: var(--spacing-3);
+    }
+
+    .notice-view__detail-header {
+      flex-wrap: wrap;
+      gap: var(--spacing-2);
+    }
+
+    .notice-view__detail-content {
+      font-size: 12px;
+    }
+  }
+
 } /* end @layer components */

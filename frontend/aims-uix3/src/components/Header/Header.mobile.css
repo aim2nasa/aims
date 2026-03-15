@@ -203,6 +203,19 @@
       height: 28px;
     }
 
+    /* 햄버거 버튼 터치 영역 44px 확보 (시각적 크기 28px, 터치 44px) */
+    .header-mobile-menu-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
     /* 테마 토글 */
     .header-theme-container {
       flex-shrink: 0;
@@ -257,6 +270,19 @@
     .header-mobile-menu-btn svg {
       width: 16px;
       height: 16px;
+    }
+
+    /* 햄버거 버튼 터치 영역 44px 확보 (시각적 크기 26px, 터치 44px) */
+    .header-mobile-menu-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
     }
 
     /* 검색바: 남은 공간을 최대한 차지 */
@@ -332,6 +358,19 @@
     .header-mobile-menu-btn svg {
       width: 16px;
       height: 16px;
+    }
+
+    /* 햄버거 버튼 터치 영역 44px 확보 (시각적 크기 24px, 터치 44px) */
+    .header-mobile-menu-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
     }
 
     .header-quick-search-container {

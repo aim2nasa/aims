@@ -393,6 +393,12 @@
       min-height: 100dvh;
     }
 
+    .switch-account-section {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0;
+    }
+
     .switch-account-button {
       padding: 12px 8px;
       font-size: 13px;
