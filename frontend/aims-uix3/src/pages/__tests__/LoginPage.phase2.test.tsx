@@ -206,4 +206,28 @@ describe('LoginPage Phase 2 — PIN 모드', () => {
       expect(screen.getByText('구글 로그인')).toBeInTheDocument()
     })
   })
+
+  describe('PIN 모드 로딩 가드 (소셜 로그인 깜빡임 방지)', () => {
+    it('rememberedUser 있으면 PIN 모드 진입 시 소셜 로그인 버튼이 표시되지 않음', async () => {
+      mockAuthStore.token = 'mock.jwt.token'
+      localStorage.setItem('aims-remembered-user', JSON.stringify({
+        userId: 'user123',
+        name: '김소라',
+        authProvider: 'kakao'
+      }))
+      renderLoginPage('/login?mode=pin')
+      // 소셜 로그인 버튼이 표시되지 않아야 함 (로딩 가드 또는 PIN UI)
+      expect(screen.queryByText('카카오 로그인')).not.toBeInTheDocument()
+      // PIN UI가 나타날 때까지 대기
+      await waitFor(() => {
+        expect(screen.getByText('간편 비밀번호를 입력하세요')).toBeInTheDocument()
+      })
+    })
+
+    it('rememberedUser 없으면 PIN 모드에서도 소셜 로그인 표시', () => {
+      // localStorage에 remembered-user 없음
+      renderLoginPage('/login?mode=pin')
+      expect(screen.getByText('카카오 로그인')).toBeInTheDocument()
+    })
+  })
 })

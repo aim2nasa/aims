@@ -16,6 +16,7 @@ import { CustomerDocument } from '@/stores/CustomerDocument';
 import { queryKeys, invalidateQueries } from '@/app/queryClient';
 import { handleApiError } from '@/shared/lib/api';
 import { CustomerService } from '@/services/customerService';
+import { useAuthStore } from '@/shared/stores/authStore';
 import type { CreateCustomerData, UpdateCustomerData } from '@/entities/customer';
 
 /**
@@ -36,8 +37,9 @@ const useCustomerDataManager = () => {
     setDeleting,
   } = useCustomerContext();
 
+  const { isAuthenticated } = useAuthStore();
 
-  // 고객 목록 조회
+  // 고객 목록 조회 — 인증된 상태에서만 실행 (로그인 페이지에서 401 방지)
   const {
     data: customersData,
     isLoading: isLoadingCustomers,
@@ -49,7 +51,7 @@ const useCustomerDataManager = () => {
       ? CustomerService.searchCustomers(state.searchQuery, state.searchParams)
       : CustomerService.getCustomers(state.searchParams),
     staleTime: 1000 * 60 * 2, // 2분
-    enabled: true, // 항상 활성화
+    enabled: isAuthenticated,
   });
 
   // 고객 생성 뮤테이션

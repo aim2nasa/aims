@@ -35,19 +35,21 @@ export default function LoginPage() {
   const mode = searchParams.get('mode');
   const isPinMode = mode === 'pin' || mode === 'pin-setup';
   const [pinError, setPinError] = useState<string | null>(null);
-  const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
+  // rememberedUser를 localStorage에서 동기 초기화 (useEffect 비동기 로딩 제거 → PIN 모드 깜빡임 방지)
+  const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(() => {
+    try {
+      const stored = localStorage.getItem('aims-remembered-user');
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
+  });
 
   // PIN 설정 플로우 상태
   const [pinSetupStep, setPinSetupStep] = useState<'check' | 'input' | 'setup-enter' | 'setup-confirm'>('check');
   const [setupPin, setSetupPin] = useState('');
 
-  // 기억된 사용자 정보 로드 + PIN 설정 여부 확인
+  // PIN 설정 여부 확인 (rememberedUser는 useState 초기값에서 동기 로드됨)
   useEffect(() => {
     if (!isPinMode) return;
-    try {
-      const stored = localStorage.getItem('aims-remembered-user');
-      if (stored) setRememberedUser(JSON.parse(stored));
-    } catch { /* ignore */ }
 
     // pin-setup 모드: 바로 설정 화면 진입 (프로필 메뉴 PIN 변경)
     if (mode === 'pin-setup') {
@@ -62,14 +64,9 @@ export default function LoginPage() {
       }).catch(() => {
         setPinSetupStep('setup-enter');
       });
-    } else {
+    } else if (rememberedUser) {
       // authToken 없음 (재방문, 세션 만료) — rememberedUser가 있으면 PIN 입력 화면 표시
-      // PIN 입력 시점에 소셜 로그인으로 토큰을 재획득하는 것이 아니라,
-      // PIN 화면을 보여주고, 실패 시 소셜 로그인으로 전환
-      const stored = localStorage.getItem('aims-remembered-user');
-      if (stored) {
-        setPinSetupStep('input');
-      }
+      setPinSetupStep('input');
       // rememberedUser도 없으면 pinSetupStep='check' → 소셜 로그인 화면 표시 (정상)
     }
   }, [isPinMode, mode, authToken]);
@@ -293,6 +290,17 @@ export default function LoginPage() {
       <div className="login-page">
         <div className="login-container">
           <div className="login-header"><p>로그인 처리 중...</p></div>
+        </div>
+      </div>
+    );
+  }
+
+  // PIN 모드 초기화 중 — 소셜 로그인 버튼 깜빡임 방지
+  if (isPinMode && rememberedUser && pinSetupStep === 'check') {
+    return (
+      <div className="login-page">
+        <div className="login-container">
+          <div className="login-header"><p>로딩 중...</p></div>
         </div>
       </div>
     );
