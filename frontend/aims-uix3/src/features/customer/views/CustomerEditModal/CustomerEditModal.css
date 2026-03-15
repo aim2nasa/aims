@@ -429,7 +429,7 @@
     .customer-edit-modal-field input,
     .customer-edit-modal-field select,
     .customer-edit-modal-memo__textarea {
-      font-size: 16px;
+      font-size: var(--font-size-callout);
     }
 
     /* 푸터: safe-area 대응 */
@@ -451,7 +451,7 @@
   }
 
   .customer-edit-modal--compact .customer-edit-modal-title {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
   }
 
   /* 탭: 울트라 컴팩트 */
@@ -461,7 +461,7 @@
 
   .customer-edit-modal--compact .customer-edit-modal-tab {
     padding: var(--spacing-1) var(--spacing-1-5);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
   }
 
   /* 콘텐츠: 스크롤 가능 + 울트라 컴팩트 */
@@ -475,7 +475,7 @@
   /* 섹션 제목: 컴팩트 */
   .customer-edit-modal--compact .form-section__title {
     padding: var(--spacing-0-5) 0;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
   }
 
   /* 폼 행: 울트라 컴팩트 간격 */
@@ -489,14 +489,14 @@
   }
 
   .customer-edit-modal--compact .form-row__label {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     min-width: 52px;
   }
 
   .customer-edit-modal--compact .form-row__input input,
   .customer-edit-modal--compact .form-row__input select {
     padding: var(--spacing-0-75) var(--spacing-2);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
   }
 
   .customer-edit-modal--compact .radio-group {
@@ -504,7 +504,7 @@
   }
 
   .customer-edit-modal--compact .radio-option span {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   /* 메모: 1줄 컴팩트 */
@@ -514,7 +514,7 @@
   }
 
   .customer-edit-modal--compact .customer-edit-modal-memo__label {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     margin-bottom: var(--spacing-0-5);
   }
 
@@ -522,7 +522,7 @@
     min-height: unset;
     height: 28px;
     padding: var(--spacing-1) var(--spacing-2);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     resize: none;
   }
 

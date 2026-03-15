@@ -380,7 +380,7 @@
 
     .account-settings-view__input {
       padding: var(--spacing-2) var(--spacing-3);
-      font-size: 16px;
+      font-size: var(--font-size-callout);
     }
 
     /* 편집 모드 액션 버튼 */

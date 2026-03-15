@@ -99,7 +99,7 @@
     min-height: 34px;
     padding: var(--spacing-1-5) var(--spacing-4);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
   }
 
   /* iOS Alert 규칙: 주요 액션은 semibold, 보조 액션은 regular */
@@ -119,7 +119,7 @@
     .apple-confirm-modal__actions .button {
       min-height: 44px;
       padding: 10px var(--spacing-4);
-      font-size: 15px;
+      font-size: var(--font-size-subheadline);
     }
   }
 
@@ -168,7 +168,7 @@
   }
 
   .apple-confirm-modal__text-confirm-label {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-secondary);
     margin-bottom: var(--spacing-2);
   }
@@ -178,7 +178,7 @@
     padding: var(--spacing-2) var(--spacing-3);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-primary);
     background: var(--color-bg-primary);
     outline: none;

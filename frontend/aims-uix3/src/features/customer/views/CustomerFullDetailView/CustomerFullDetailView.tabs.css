@@ -392,18 +392,18 @@
 
     /* 🍎 탭 버튼 크기 축소 (고객정보/보험이력/보고서) */
     .customer-full-detail .customer-info-tabs__tab {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
       padding: var(--spacing-0-75) var(--spacing-1-5);
     }
 
     .customer-full-detail .history-tabs__tab {
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
       padding: var(--spacing-0-5) 5px;
       white-space: nowrap;
     }
 
     .customer-full-detail .report-tabs__tab {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
       padding: var(--spacing-0-75) var(--spacing-1-5);
       white-space: nowrap;
     }
@@ -499,7 +499,7 @@
     }
 
     .customer-full-detail .report-tabs__tab {
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
       padding: var(--spacing-0-5) 5px;
     }
 

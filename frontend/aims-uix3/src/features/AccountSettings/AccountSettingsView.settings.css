@@ -253,7 +253,7 @@
 
   .account-settings-view__delete-modal-desc {
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
   }
 
   /* 계정 삭제 확인 입력 */

@@ -42,7 +42,7 @@
 
   .progress-indicator__percent {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-ios-system-blue);
     min-width: 36px;
@@ -52,7 +52,7 @@
 
   .progress-indicator__stat {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 400;
     color: var(--color-text-secondary);
     font-variant-numeric: tabular-nums;
@@ -168,7 +168,7 @@
   }
 
   .progress-indicator__cancel-text {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     white-space: nowrap;
@@ -201,7 +201,7 @@
     padding: var(--spacing-2) var(--spacing-3);
     color: var(--color-ios-green);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
   }
 
@@ -297,7 +297,7 @@
     background: var(--color-ios-green);
     color: white;
     border-radius: 50%;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 700;
     line-height: 1;
   }
@@ -313,7 +313,7 @@
   .progress-file__error-icon {
     color: var(--color-ios-red);
     font-weight: 700;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     line-height: 1;
   }
 
@@ -358,7 +358,7 @@
 
   .progress-file__name {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 400;
     color: var(--color-text-primary);
     white-space: nowrap;
@@ -368,7 +368,7 @@
 
   .progress-file__size {
     font-family: "SF Mono", "Consolas", monospace;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 400;
     color: var(--color-text-tertiary);
     flex-shrink: 0;
@@ -399,7 +399,7 @@
 
   .progress-file__progress-text {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-ios-system-blue);
     min-width: 32px;
@@ -410,7 +410,7 @@
   /* 상태 텍스트 */
   .progress-file__status-text {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 400;
     flex-shrink: 0;
   }
@@ -435,7 +435,7 @@
   /* 에러 메시지 */
   .progress-file__error {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 400;
     color: var(--color-ios-red);
     white-space: nowrap;
@@ -448,7 +448,7 @@
   .progress-file__retry {
     padding: var(--spacing-0-5) var(--spacing-2);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-ios-system-blue);
     background: transparent;

@@ -403,7 +403,7 @@
 
   /* 규격 위반 사유 메시지 */
   .excel-refiner__compliance-message {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     padding: var(--spacing-0-5) var(--spacing-2);
     border-radius: 4px;
     margin-left: var(--spacing-2);
@@ -431,7 +431,7 @@
 
   /* 규격 외 컬럼 안내 (info) */
   .excel-refiner__extra-columns-info {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     padding: var(--spacing-0-5) var(--spacing-2);
     border-radius: 4px;
     background: var(--color-info-50);

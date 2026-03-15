@@ -44,7 +44,7 @@
     flex: 1;
     border: none;
     background: transparent;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-primary);
     outline: none;
   }
@@ -88,7 +88,7 @@
 
   .faq-view__filter {
     padding: var(--spacing-1) var(--spacing-3);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-secondary);
     background: var(--color-bg-secondary);
@@ -148,7 +148,7 @@
     justify-content: center;
     width: 20px;
     height: 20px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 700;
     color: white;
     background: var(--color-ios-blue, #007aff);
@@ -158,7 +158,7 @@
 
   .faq-view__question-text {
     flex: 1;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
     line-height: 1.4;
@@ -211,7 +211,7 @@
     justify-content: center;
     width: 20px;
     height: 20px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 700;
     color: white;
     background: var(--color-ios-green, #34c759);
@@ -221,7 +221,7 @@
 
   .faq-view__answer-text {
     flex: 1;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-secondary);
     line-height: 1.6;
   }
@@ -232,7 +232,7 @@
     align-items: center;
     justify-content: center;
     padding: var(--spacing-8);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-tertiary);
   }
 
@@ -250,7 +250,7 @@
 
     .faq-view__filter {
       padding: var(--spacing-1) var(--spacing-2);
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
     }
 
     .faq-view__question {
@@ -258,7 +258,7 @@
     }
 
     .faq-view__question-text {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
 
     /* 답변 영역 margin-left 축소 */
@@ -269,7 +269,7 @@
     }
 
     .faq-view__answer-text {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
   }
 

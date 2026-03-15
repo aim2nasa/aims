@@ -61,12 +61,12 @@
   }
 
   .crm-summary__label {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-tertiary);
   }
 
   .crm-summary__value {
-    font-size: 16px;
+    font-size: var(--font-size-callout);
     font-weight: 600;
     color: var(--color-text-primary);
     font-variant-numeric: tabular-nums;
@@ -94,12 +94,12 @@
   }
 
   .crm-persons__label {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-tertiary);
   }
 
   .crm-persons__value {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
   }
@@ -132,7 +132,7 @@
 
   .crm-card__title {
     margin: 0 0 var(--spacing-3) 0;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
   }
@@ -142,7 +142,7 @@
   }
 
   .crm-card__badge {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-accent);
     background: var(--color-accent-subtle);
@@ -173,12 +173,12 @@
   }
 
   .crm-stat__label {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-secondary);
   }
 
   .crm-stat__value {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-primary);
     font-variant-numeric: tabular-nums;
@@ -208,7 +208,7 @@
     align-items: center;
     padding: 10px 0;
     border-bottom: 1px solid var(--color-border-light);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   .crm-list__item:last-child {
@@ -303,7 +303,7 @@
   }
 
   .crm-table__cell {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-primary);
     font-variant-numeric: tabular-nums;
     text-align: right;
@@ -357,21 +357,21 @@
 
   .crm-empty__title {
     margin: 0;
-    font-size: 15px;
+    font-size: var(--font-size-subheadline);
     font-weight: 600;
     color: var(--color-text-primary);
   }
 
   .crm-empty__desc {
     margin: 0;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-tertiary);
   }
 
   /* ==================== Product Name (중앙 정렬) ==================== */
   .crm-product-name--centered {
     text-align: center;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
     padding: 10px var(--spacing-4);
@@ -386,7 +386,7 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 20px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-secondary);
     padding: var(--spacing-2) var(--spacing-4);
     margin-bottom: var(--spacing-3);
@@ -427,7 +427,7 @@
 
   .crm-card--compact .crm-card__title {
     margin-bottom: var(--spacing-2);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
   }
 
   .crm-card--compact .crm-card__header {
@@ -436,7 +436,7 @@
 
   .crm-list--compact .crm-list__item {
     padding: var(--spacing-1-5) 0;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
   }
 
   .crm-card--compact .crm-card__badge {

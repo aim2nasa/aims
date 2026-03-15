@@ -248,7 +248,7 @@
   /* Status Indicator */
   .form-row__status {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     width: 16px;
     text-align: center;
     line-height: 1;
@@ -456,7 +456,7 @@
 
     .form-section__title {
       padding: 1px 0;
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
 
     .form-row {
@@ -469,11 +469,11 @@
       height: 16px;
       min-height: 16px;
       max-height: 16px;
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
 
     .form-row__label {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
 
     .customer-registration__actions {

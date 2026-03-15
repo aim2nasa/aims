@@ -261,7 +261,7 @@
     .custom-menu-item {
       min-height: 30px;
       padding: 3px 10px;
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
       line-height: 1.2;
       border-radius: 5px;
       display: flex;
@@ -326,7 +326,7 @@
     .custom-menu-item.sub-menu {
       min-height: 24px;
       padding-left: 22px;
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
     }
 
     .menu-icon {

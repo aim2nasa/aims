@@ -246,7 +246,7 @@
   .doc-explorer-toolbar__search-input {
     width: 100%;
     padding: 5px var(--spacing-6);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     border: 1px solid var(--color-border);
     border-radius: 4px;
     background: var(--color-bg-primary);
@@ -552,7 +552,7 @@
     border-radius: 4px;
     background: transparent;
     color: var(--color-text-secondary);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     text-align: left;
     cursor: pointer;
     transition: background 100ms ease;
@@ -665,7 +665,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-1);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-accent);
   }
@@ -702,7 +702,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-1);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-accent);
   }
@@ -810,7 +810,7 @@
   }
 
   .doc-explorer-content-search-panel__title {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-text-primary);
     display: flex;
@@ -849,7 +849,7 @@
     display: flex;
     gap: var(--spacing-1-5);
     padding: var(--spacing-2) 10px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     line-height: 1.5;
     color: var(--color-text-primary);
     background: var(--color-primary-50);
@@ -860,7 +860,7 @@
   /* 에러 표시 */
   .doc-explorer-content-search-panel__error {
     padding: 10px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-status-error);
     text-align: center;
   }
@@ -901,7 +901,7 @@
   }
 
   .doc-explorer-content-search-panel__item-name {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-text-primary);
     overflow: hidden;
@@ -942,7 +942,7 @@
   /* 결과 없음 */
   .doc-explorer-content-search-panel__empty {
     padding: var(--spacing-4) 10px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-tertiary);
     text-align: center;
   }
@@ -1033,7 +1033,7 @@
   }
 
   .doc-explorer-action-bar__count {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-primary);
     font-variant-numeric: tabular-nums;
@@ -1049,7 +1049,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-1);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-secondary);
     cursor: pointer;
     white-space: nowrap;

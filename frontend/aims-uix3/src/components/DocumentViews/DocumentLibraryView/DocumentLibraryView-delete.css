@@ -250,7 +250,7 @@
   }
 
   .alias-mode-count {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-family: var(--font-family-text);
     font-weight: 400;
     color: var(--color-ios-text-secondary-light);
@@ -270,7 +270,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-1);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-family: var(--font-family-text);
     font-weight: 400;
     color: var(--color-ios-text-secondary-light);
@@ -299,7 +299,7 @@
     padding: var(--spacing-1) var(--spacing-3);
     min-height: 24px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     box-shadow: 0 1px 4px rgba(88, 86, 214, 0.35);
     transition:

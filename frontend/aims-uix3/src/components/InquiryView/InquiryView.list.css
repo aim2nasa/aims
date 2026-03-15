@@ -96,7 +96,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   html[data-theme="dark"] .inquiry-result-count {
@@ -111,7 +111,7 @@
     border-radius: 4px;
     cursor: pointer;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-ios-text-tertiary-light);
     transition: all 0.15s ease-out;
@@ -161,7 +161,7 @@
     border: none;
     background: var(--color-primary-600, #007AFF);
     color: white;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     border-radius: 6px;
@@ -192,7 +192,7 @@
     min-height: 28px;
     background: var(--color-neutral-50);
     border-bottom: 1px solid var(--color-ios-separator-light);
-    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-size: var(--font-size-caption-2); /* 폰트 규정: 테이블 헤더 */
     font-family: var(--font-family-text);
     font-weight: 600;
     color: var(--color-ios-text-tertiary-light);
@@ -344,7 +344,7 @@
   .inquiry-row-title {
     display: flex;
     align-items: center;
-    font-size: 12px; /* 폰트 규정: 테이블 데이터 */
+    font-size: var(--font-size-caption-1); /* 폰트 규정: 테이블 데이터 */
     font-weight: 400;
     color: var(--color-ios-text-primary-light);
     overflow: hidden;
@@ -357,7 +357,7 @@
   }
 
   .inquiry-row-date {
-    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-size: var(--font-size-caption-2); /* 폰트 규정: 테이블 헤더 */
     font-weight: 400;
     color: var(--color-ios-text-secondary-light);
   }
@@ -370,7 +370,7 @@
     display: flex;
     align-items: center;
     gap: 3px;
-    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-size: var(--font-size-caption-2); /* 폰트 규정: 테이블 헤더 */
     font-weight: 400;
     color: var(--color-ios-text-tertiary-light);
   }
@@ -400,7 +400,7 @@
   }
 
   .inquiry-empty-title {
-    font-size: 15px;
+    font-size: var(--font-size-subheadline);
     font-weight: 600;
     color: var(--color-ios-text-primary-light);
     margin-bottom: 8px;
@@ -411,7 +411,7 @@
   }
 
   .inquiry-empty-desc {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-ios-text-tertiary-light);
     margin-bottom: 20px;
   }
@@ -428,7 +428,7 @@
     border: none;
     background: var(--color-primary);
     color: white;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     border-radius: 8px;
     cursor: pointer;
@@ -445,7 +445,7 @@
     justify-content: center;
     padding: 60px;
     color: var(--color-ios-text-tertiary-light);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
   }
 
   html[data-theme="dark"] .inquiry-loading {

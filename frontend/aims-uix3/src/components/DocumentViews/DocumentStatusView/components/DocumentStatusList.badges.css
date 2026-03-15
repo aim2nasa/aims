@@ -4,7 +4,7 @@
   .display-name-suffix {
     flex-shrink: 1;
     color: var(--color-text-tertiary);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 400;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -236,7 +236,7 @@
 
   /* === 내 파일 표시 === */
   .customer-id-text {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-secondary);
     font-style: italic;
   }

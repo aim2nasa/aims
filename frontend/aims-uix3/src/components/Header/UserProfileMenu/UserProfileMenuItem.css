@@ -135,7 +135,7 @@
     .user-profile-menu-item {
       gap: 6px;
       padding: 4px 8px;
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
 
     .user-profile-menu-item__icon {
@@ -145,7 +145,7 @@
 
     .user-profile-menu-item .sf-symbol,
     .user-profile-menu-item .sf-symbol__shape {
-      font-size: 13px;
+      font-size: var(--font-size-footnote);
     }
 
     .user-profile-menu-item__label {

@@ -150,7 +150,7 @@
   }
 
   .quick-family-assign-panel__role-btn .role-icon {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   .quick-family-assign-panel__role-btn .role-text {
@@ -242,7 +242,7 @@
     border: none;
     background: transparent;
     cursor: pointer;
-    font-size: 16px;
+    font-size: var(--font-size-callout);
     color: var(--color-text-secondary);
     border-radius: 50%;
     display: flex;
@@ -496,7 +496,7 @@
   }
 
   .quick-family-assign-panel__type-icon {
-    font-size: 16px;
+    font-size: var(--font-size-callout);
   }
 
   .quick-family-assign-panel__type-label {
@@ -608,7 +608,7 @@
 
     /* 검색 입력: iOS zoom 방지 */
     .quick-family-assign-panel__search-input {
-      font-size: 16px;
+      font-size: var(--font-size-callout);
       min-height: 36px;
     }
 

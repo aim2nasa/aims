@@ -72,7 +72,7 @@
 
   .doc-explorer-tree__empty-text {
     margin: 0;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
   }
 
   /* ============================================
@@ -167,7 +167,7 @@
   /* Group Label */
   .doc-explorer-tree__group-label {
     flex-shrink: 1;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-primary);
     overflow: hidden;
@@ -294,7 +294,7 @@
     padding: var(--spacing-1-5) var(--spacing-3);
     border: none;
     background: transparent;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-primary);
     cursor: pointer;
     text-align: left;
@@ -366,7 +366,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-1);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-secondary);
     overflow: hidden;
     white-space: nowrap;
@@ -418,7 +418,7 @@
     border: none;
     border-radius: 4px;
     background: transparent;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-primary);
     cursor: pointer;
@@ -525,7 +525,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   /* ============================================
@@ -684,7 +684,7 @@
   /* Document Name */
   .doc-explorer-tree__doc-name {
     flex: 1;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-primary);
     overflow: hidden;
     text-overflow: ellipsis;

@@ -43,7 +43,7 @@
   }
 
   .autoclicker-view__hero-title {
-    font-size: 16px;
+    font-size: var(--font-size-callout);
     font-weight: var(--font-weight-semibold, 600);
     color: var(--color-text-primary);
     margin: 0 0 var(--spacing-1) 0;

@@ -10,7 +10,7 @@
   .document-type {
     text-align: center;
     color: var(--color-text-secondary);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     text-transform: uppercase;
   }
 
@@ -20,7 +20,7 @@
     color: var(--color-text-secondary);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
   }
 
   /* === 🍎 페이지네이션 === */
@@ -149,7 +149,7 @@
   /* 구분선 */
   .simple-document-search__divider {
     color: var(--color-text-tertiary);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     opacity: 0.5;
     margin: 0 var(--spacing-1);
     flex-shrink: 0;

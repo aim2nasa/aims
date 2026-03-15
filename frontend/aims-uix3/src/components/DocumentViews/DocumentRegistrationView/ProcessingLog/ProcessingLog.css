@@ -457,7 +457,7 @@
   .file-summary__error-icon {
     color: #ff3b30;
     font-weight: 700;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     line-height: 1;
   }
 
@@ -465,14 +465,14 @@
   .file-summary__skipped-icon {
     color: #ff9500;
     font-weight: 700;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     line-height: 1;
   }
 
   .file-item__error-icon {
     color: #ff3b30;
     font-weight: 700;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     line-height: 1;
   }
 
@@ -551,7 +551,7 @@
     background: var(--color-ios-green);
     color: white;
     border-radius: 50%;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 700;
     line-height: 1;
   }

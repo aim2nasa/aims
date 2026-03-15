@@ -51,7 +51,7 @@
     /* iOS Safari 자동 줌 방지: 16px 이상 필요 */
     .form-row__input input,
     .form-row__input select {
-      font-size: 16px;
+      font-size: var(--font-size-callout);
     }
 
     /* 라디오 그룹 gap 축소 */

@@ -99,7 +99,7 @@
   }
 
   .stat-icon {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     opacity: 0.7;
     line-height: 1;
     display: flex;
@@ -110,7 +110,7 @@
   .stat-label {
     color: var(--color-text-secondary);
     font-weight: 400;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     line-height: 1;
     display: flex;
     align-items: center;
@@ -380,7 +380,7 @@
 
   .geocoding-failed-badge {
     margin-left: var(--spacing-1);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     opacity: 0.8;
     cursor: help;
   }
@@ -527,7 +527,7 @@
     border-radius: 3px;
     cursor: pointer;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-ios-text-tertiary-light);
     transition: all 0.15s ease-out;
@@ -653,7 +653,7 @@
     .type-filter-button {
       min-height: 26px;
       padding: var(--spacing-0-75) var(--spacing-2);
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
       line-height: 1;
       display: inline-flex;
       align-items: center;
@@ -678,7 +678,7 @@
     .regional-tree-stats .ios-dropdown__trigger {
       min-height: 26px;
       padding: var(--spacing-0-75) var(--spacing-2);
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
     }
 
     /* 레이아웃: 가로 → 세로 전환 */
@@ -710,7 +710,7 @@
     }
 
     .tree-node-label {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
 
     .tree-node-children,
@@ -727,7 +727,7 @@
     }
 
     .tree-customer-name {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
 
     .regional-tree-loading,

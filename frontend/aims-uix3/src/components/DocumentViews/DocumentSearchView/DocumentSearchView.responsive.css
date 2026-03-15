@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-1-5);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-ios-text-primary-light);
   }
@@ -42,7 +42,7 @@
     padding: var(--spacing-2) var(--spacing-3);
     background: var(--color-ios-bg-tertiary-light);
     border-radius: 8px;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   html[data-theme="dark"] .keyword-location-modal-header {
@@ -64,7 +64,7 @@
 
   .keyword-location-query {
     color: var(--color-ios-text-secondary-light);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
   }
 
   html[data-theme="dark"] .keyword-location-query {
@@ -85,7 +85,7 @@
     padding: var(--spacing-3);
     background: var(--color-ios-bg-secondary-light);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     line-height: 1.6;
     color: var(--color-ios-text-primary-light);
     overflow-y: auto;
@@ -103,7 +103,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-0-75);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-family: var(--font-family-text);
   }
 
@@ -161,7 +161,7 @@
   }
 
   .keyword-location-section-label {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-ios-text-secondary-light);
     text-transform: uppercase;
@@ -176,7 +176,7 @@
     padding: var(--spacing-2) var(--spacing-3);
     background: var(--color-ios-bg-secondary-light);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     line-height: 1.5;
     color: var(--color-ios-text-primary-light);
     word-break: break-word;
@@ -244,7 +244,7 @@
   }
 
   .keyword-location-counter strong {
-    font-size: 16px;
+    font-size: var(--font-size-callout);
     font-weight: 600;
     color: var(--color-ios-blue);
   }
@@ -259,7 +259,7 @@
   }
 
   .keyword-location-no-match {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-ios-text-tertiary-light);
   }
 
@@ -268,7 +268,7 @@
   }
 
   .keyword-location-body-preview {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-ios-text-secondary-light);
     line-height: 1.6;
     white-space: pre-wrap;
@@ -398,7 +398,7 @@
 
     .document-search-container .search-input {
       padding: var(--spacing-0-75) var(--spacing-1-5) var(--spacing-0-75) var(--spacing-6);
-      font-size: 16px; /* iOS zoom 방지 */
+      font-size: var(--font-size-callout); /* iOS zoom 방지 */
     }
 
     .document-search-container .search-icon {

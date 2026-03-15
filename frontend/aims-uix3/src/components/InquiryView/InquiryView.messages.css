@@ -79,7 +79,7 @@
 
   /* 작성자 이름 */
   .inquiry-message-author {
-    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-size: var(--font-size-caption-2); /* 폰트 규정: 테이블 헤더 */
     font-weight: 600;
     color: var(--color-ios-text-secondary-light);
     padding-left: 4px;
@@ -98,7 +98,7 @@
   .inquiry-message-content {
     padding: 8px 12px;
     border-radius: 14px;
-    font-size: 12px; /* 폰트 규정: 테이블 데이터 */
+    font-size: var(--font-size-caption-1); /* 폰트 규정: 테이블 데이터 */
     line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
@@ -180,7 +180,7 @@
     gap: 6px;
     padding: 6px 10px;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     text-decoration: none;
     background: transparent;
     color: var(--color-ios-text-secondary-light);
@@ -236,7 +236,7 @@
     border-radius: 6px;
     background: var(--color-bg-primary);
     color: var(--color-ios-text-primary-light);
-    font-size: 12px; /* 폰트 규정: 테이블 데이터 */
+    font-size: var(--font-size-caption-1); /* 폰트 규정: 테이블 데이터 */
     font-family: inherit;
     resize: none;
     min-height: 44px; /* 축소 */
@@ -277,7 +277,7 @@
     padding: 4px 8px;
     background: var(--color-bg-primary);
     border-radius: 4px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-ios-text-secondary-light);
   }
 
@@ -322,7 +322,7 @@
     padding: 6px 10px;
     background: var(--color-bg-primary);
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-ios-text-secondary-light);
   }
 
@@ -389,7 +389,7 @@
     height: 20px;
     background: rgba(0, 0, 0, 0.6);
     color: white;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     margin-left: 0;
   }
 
@@ -458,7 +458,7 @@
     background: var(--color-ios-bg-secondary-light);
     border-radius: 8px;
     color: var(--color-ios-text-tertiary-light);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
   }
 
   html[data-theme="dark"] .inquiry-closed-notice {
@@ -477,7 +477,7 @@
     border: 1px solid rgba(52, 199, 89, 0.3);
     border-radius: 8px;
     color: var(--color-ios-green-light, #34C759);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     margin-bottom: 0;
   }
 

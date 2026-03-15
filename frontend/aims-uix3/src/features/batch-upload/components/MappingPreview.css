@@ -145,7 +145,7 @@
     background-color: #e8eaed;  /* 라이트 테마에서 눈에 띄는 배경색 */
     border-radius: var(--radius-md);
     overflow: auto;  /* 수평/수직 모두 스크롤 가능 */
-    font-size: 12px;  /* FONT_SIZE_STANDARDS: 테이블 데이터 */
+    font-size: var(--font-size-caption-1);  /* FONT_SIZE_STANDARDS: 테이블 데이터 */
     line-height: 1.3;
   }
 
@@ -292,7 +292,7 @@
   /* 이름 */
   .tree-container .guide-name {
     color: var(--color-text-secondary);
-    font-size: 12px;  /* FONT_SIZE_STANDARDS: 테이블 데이터 */
+    font-size: var(--font-size-caption-1);  /* FONT_SIZE_STANDARDS: 테이블 데이터 */
   }
 
   .tree-container .guide-name.customer {
@@ -325,7 +325,7 @@
   .tree-container .guide-arrow {
     color: var(--color-ios-green, #34c759);
     font-weight: 700;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   .tree-container .guide-customer-badge {

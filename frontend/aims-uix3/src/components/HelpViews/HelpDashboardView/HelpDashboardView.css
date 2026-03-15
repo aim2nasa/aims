@@ -43,7 +43,7 @@
   }
 
   .help-dashboard-view__section-description {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-secondary);
     margin: 0;
     line-height: 1.5;
@@ -156,7 +156,7 @@
   }
 
   .help-dashboard-view__card-description {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-secondary);
     line-height: 1.4;
   }
@@ -192,14 +192,14 @@
   }
 
   .help-dashboard-view__contact-label {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-tertiary);
     min-width: 60px;
   }
 
   .help-dashboard-view__contact-value {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-primary);
   }
 
@@ -221,11 +221,11 @@
     }
 
     .help-dashboard-view__card-title {
-      font-size: 13px;
+      font-size: var(--font-size-footnote);
     }
 
     .help-dashboard-view__card-description {
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
     }
 
     .help-dashboard-view__section--contact {
@@ -234,11 +234,11 @@
 
     .help-dashboard-view__contact-label {
       min-width: 48px;
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
     }
 
     .help-dashboard-view__contact-value {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
   }
 

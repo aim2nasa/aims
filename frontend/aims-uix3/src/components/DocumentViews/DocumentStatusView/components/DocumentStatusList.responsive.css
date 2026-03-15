@@ -292,7 +292,7 @@
     align-items: center;
     justify-content: flex-end;
     gap: var(--spacing-1);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     text-align: right;
   }

@@ -386,7 +386,7 @@
   }
 
   .recent-customer-icon {
-    font-size: 16px; /* 크기 축소 */
+    font-size: var(--font-size-callout); /* 크기 축소 */
     flex-shrink: 0;
   }
 

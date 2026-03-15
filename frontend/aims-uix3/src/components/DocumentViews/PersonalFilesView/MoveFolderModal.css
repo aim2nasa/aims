@@ -133,7 +133,7 @@
 
   /* 비활성화 뱃지 */
   .move-folder-disabled-badge {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     padding: var(--spacing-0-5) var(--spacing-1-5);
     background: var(--color-bg-tertiary);
     color: var(--color-text-tertiary);

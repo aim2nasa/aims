@@ -33,7 +33,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     padding: var(--spacing-1) 0;
   }
 
@@ -78,7 +78,7 @@
     padding: var(--spacing-3) 14px;
     background: var(--color-info-50);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-info-700);
   }
 

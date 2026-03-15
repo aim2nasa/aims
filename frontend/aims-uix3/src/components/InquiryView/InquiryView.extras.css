@@ -14,7 +14,7 @@
     padding: 6px 12px;
     background: var(--color-ios-bg-tertiary-light, rgba(0, 0, 0, 0.05));
     border-radius: 12px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-ios-text-secondary-light);
   }
 
@@ -41,7 +41,7 @@
     border: none;
     background: transparent;
     color: var(--color-ios-text-secondary-light);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     cursor: pointer;
     border-radius: 4px;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -166,7 +166,7 @@
     width: auto;
     padding: 0 16px;
     border-radius: 18px;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
   }
 
@@ -183,7 +183,7 @@
   /* 줌 퍼센트 표시 */
   .inquiry-image-preview-modal__toolbar .zoom-level {
     color: white;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     min-width: 52px;
     text-align: center;
@@ -230,7 +230,7 @@
     transform: translateX(-50%);
     z-index: 10001;
     color: rgba(255, 255, 255, 0.7);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     white-space: nowrap;
     background: rgba(0, 0, 0, 0.5);
     padding: 8px 16px;
@@ -268,22 +268,22 @@
     .inquiry-image-preview-modal__toolbar button {
       width: 32px;
       height: 32px;
-      font-size: 16px;
+      font-size: var(--font-size-callout);
     }
 
     .inquiry-image-preview-modal__toolbar button.reset-btn {
       padding: 0 12px;
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
     }
 
     .inquiry-image-preview-modal__toolbar .zoom-level {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
       min-width: 44px;
     }
 
     .inquiry-image-preview-modal__hint {
       bottom: 16px;
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
       padding: 6px 12px;
     }
   }

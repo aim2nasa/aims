@@ -33,7 +33,7 @@
     border-radius: 6px;
     background: transparent;
     color: var(--color-text-tertiary);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease-out;
@@ -72,7 +72,7 @@
     background: transparent;
     color: var(--color-text-tertiary);
     cursor: pointer;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 400;
     line-height: 1;
     white-space: nowrap;
@@ -122,7 +122,7 @@
     border: none;
     background: transparent;
     outline: none;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-primary);
   }
 
@@ -157,7 +157,7 @@
     gap: var(--spacing-2);
     padding: var(--spacing-10) var(--spacing-4);
     color: var(--color-text-tertiary);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
   }
 
   .cde-state--error {
@@ -178,7 +178,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-tertiary);
     padding: var(--spacing-2) var(--spacing-2);
     margin-bottom: var(--spacing-0-5);
@@ -234,7 +234,7 @@
     border-radius: 8px;
     background: transparent;
     color: var(--color-text-primary);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.12s ease-out;
@@ -313,7 +313,7 @@
     border-radius: 6px;
     background: transparent;
     color: var(--color-text-secondary);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 400;
     cursor: pointer;
     transition: background-color 0.12s ease-out;
@@ -364,7 +364,7 @@
     gap: var(--spacing-1);
     padding: var(--spacing-1) var(--spacing-2);
     border-radius: 6px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-secondary);
     cursor: pointer;
     transition: background-color 0.12s ease-out;
@@ -506,7 +506,7 @@
     border-radius: 8px;
     background: transparent;
     color: var(--color-text-primary);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.12s ease-out;
@@ -523,7 +523,7 @@
   }
 
   .cde-person__icon {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     line-height: 1;
     flex-shrink: 0;
   }

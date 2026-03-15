@@ -121,7 +121,7 @@
 
   .doc-explorer-toolbar__calendar-title {
     padding: var(--spacing-1) var(--spacing-3);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
     background: transparent;
@@ -177,7 +177,7 @@
     border: none;
     border-radius: 50%;
     background: transparent;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 400;
     color: var(--color-text-tertiary);
     cursor: default;

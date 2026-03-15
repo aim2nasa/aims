@@ -340,7 +340,7 @@
     .customer-library-container .search-input {
       min-height: 40px;
       padding: var(--spacing-2) 10px var(--spacing-2) 32px;
-      font-size: 16px; /* iOS Safari 자동줌 방지 */
+      font-size: var(--font-size-callout); /* iOS Safari 자동줌 방지 */
       border-radius: var(--radius-md);
     }
 

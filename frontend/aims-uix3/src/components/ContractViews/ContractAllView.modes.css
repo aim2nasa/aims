@@ -163,7 +163,7 @@
 
     .contract-all-view .search-input {
       padding: var(--spacing-0-75) var(--spacing-1-5) var(--spacing-0-75) var(--spacing-6);
-      font-size: 16px; /* iOS Safari 자동줌 방지 */
+      font-size: var(--font-size-callout); /* iOS Safari 자동줌 방지 */
     }
 
     .contract-all-view .search-icon {

@@ -27,7 +27,7 @@
     border: none;
     background: none;
     cursor: pointer;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-primary);
     text-align: left;
   }
@@ -62,7 +62,7 @@
 
   .ar-group-card__file-count {
     color: var(--color-text-tertiary);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     flex-shrink: 0;
   }
 
@@ -88,7 +88,7 @@
     align-items: center;
     gap: var(--spacing-3);
     padding: var(--spacing-2) var(--spacing-4) var(--spacing-2) 40px;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     border-bottom: 1px solid var(--color-border-light, rgba(0,0,0,0.05));
   }
 
@@ -188,7 +188,7 @@
     border-radius: 6px;
     background: var(--color-bg-primary);
     cursor: pointer;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     min-width: 140px;
     max-width: 200px;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -290,7 +290,7 @@
     border: none;
     background: none;
     cursor: pointer;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     text-align: left;
     color: var(--color-text-primary);
     transition: background-color 0.15s;
@@ -365,7 +365,7 @@
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: 6px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-secondary);
   }
 
@@ -382,7 +382,7 @@
     border-radius: 4px;
     background: var(--color-bg-tertiary);
     cursor: pointer;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-secondary);
     transition: background-color 0.15s;
   }
@@ -414,7 +414,7 @@
     align-items: center;
     gap: var(--spacing-2);
     padding: var(--spacing-0-75) var(--spacing-2);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     border-radius: 3px;
   }
 

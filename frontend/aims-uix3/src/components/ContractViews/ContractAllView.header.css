@@ -203,7 +203,7 @@
   }
 
   .contract-filter-btn .filter-icon {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   .contract-filter-btn .filter-count {

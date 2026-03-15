@@ -52,7 +52,7 @@
   .address-input-description {
     margin: 0;
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     line-height: 1.6;
     max-width: 320px;
   }
@@ -82,7 +82,7 @@
   }
 
   .geocoding-error-notice .notice-text {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-ios-orange, #FF9500);
     line-height: 1.4;
@@ -153,13 +153,13 @@
   }
 
   .search-card-subtitle {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-tertiary);
   }
 
   .search-card-arrow {
     color: var(--color-text-quaternary);
-    font-size: 16px;
+    font-size: var(--font-size-callout);
     flex-shrink: 0;
   }
 
@@ -189,13 +189,13 @@
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: bold;
   }
 
   .selected-address-header h4 {
     margin: 0;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
   }
@@ -234,7 +234,7 @@
   }
 
   .address-label {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-secondary);
     min-width: 60px;
@@ -242,7 +242,7 @@
   }
 
   .address-value {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-primary);
     flex: 1;
     word-break: keep-all;
@@ -252,7 +252,7 @@
   .address-input {
     width: 100%;
     padding: 10px var(--spacing-3);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     line-height: 1.4;
     color: var(--color-text-primary);
     background-color: var(--color-bg-primary);
@@ -263,7 +263,7 @@
 
   .address-input::placeholder {
     color: var(--color-text-quaternary);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   .address-input:focus {

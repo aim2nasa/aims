@@ -69,7 +69,7 @@
 
     .no-ar-warning__message {
       white-space: normal;
-      font-size: 13px;
+      font-size: var(--font-size-footnote);
     }
 
     /* 접근성: focus-visible 스타일 */
@@ -132,7 +132,7 @@
     }
 
     .no-ar-warning__message {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
   }
 

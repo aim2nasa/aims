@@ -33,7 +33,7 @@
   /* ===== Guide (사용자 안내 문구) ===== */
   .batch-ar-modal__guide {
     padding: var(--spacing-2) var(--spacing-3);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-secondary);
     background: var(--color-bg-secondary);
     border-radius: 6px;
@@ -59,7 +59,7 @@
     border-radius: 50%;
     background: var(--color-bg-primary);
     color: var(--color-text-tertiary);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s;
@@ -80,7 +80,7 @@
   .batch-ar-modal__guide-detail p {
     margin: 0 0 var(--spacing-1) 0;
     color: var(--color-text-tertiary);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
   }
 
   .batch-ar-modal__guide-detail p:last-child {
@@ -104,12 +104,12 @@
     padding: var(--spacing-3) var(--spacing-4);
     background: var(--color-bg-secondary);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     flex-wrap: wrap;
   }
 
   .batch-ar-modal__summary-icon {
-    font-size: 16px;
+    font-size: var(--font-size-callout);
   }
 
   .batch-ar-modal__summary-text {
@@ -122,7 +122,7 @@
     gap: var(--spacing-1);
     padding: var(--spacing-0-5) var(--spacing-2);
     border-radius: 4px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 500;
   }
 
@@ -206,7 +206,7 @@
   }
 
   .batch-ar-modal__analyzing-count {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-secondary);
   }
 
@@ -229,7 +229,7 @@
     gap: 10px;
     padding: 10px 14px;
     border-bottom: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.05));
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     transition: background-color 0.15s;
   }
 
@@ -338,7 +338,7 @@
   /* 상태 텍스트 */
   .batch-ar-modal__file-status-text {
     flex-shrink: 0;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     padding: var(--spacing-0-5) var(--spacing-2);
     border-radius: 4px;
     font-weight: 500;
@@ -391,7 +391,7 @@
   }
 
   .batch-ar-modal__current-file {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-tertiary);
   }
 
@@ -401,7 +401,7 @@
     background: var(--color-warning-bg, rgba(255, 149, 0, 0.1));
     border-left: 3px solid var(--color-warning, #ff9500);
     border-radius: 4px;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-warning, #ff9500);
   }
 
@@ -462,7 +462,7 @@
   }
 
   .batch-ar-modal__progress-text {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-primary);
     text-align: center;

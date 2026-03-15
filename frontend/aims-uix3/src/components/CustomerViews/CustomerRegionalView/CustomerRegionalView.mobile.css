@@ -78,7 +78,7 @@
 
     /* 도움말 모달 내용: 모바일 최적화 */
     .customer-regional-view .help-modal-content {
-      font-size: 13px;
+      font-size: var(--font-size-footnote);
     }
 
     .customer-regional-view .help-modal-section ul {

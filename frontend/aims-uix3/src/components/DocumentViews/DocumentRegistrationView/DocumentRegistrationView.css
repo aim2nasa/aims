@@ -675,7 +675,7 @@
   }
 
   .no-ar-warning__icon {
-    font-size: 16px;
+    font-size: var(--font-size-callout);
     flex-shrink: 0;
   }
 

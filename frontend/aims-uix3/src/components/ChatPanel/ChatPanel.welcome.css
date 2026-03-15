@@ -82,7 +82,7 @@
   }
 
   .chat-panel__welcome-feature-icon {
-    font-size: 16px;
+    font-size: var(--font-size-callout);
     line-height: 1;
     flex-shrink: 0;
     margin-top: 2px;
@@ -301,7 +301,7 @@
   .chat-panel__question-tab {
     flex: 1;
     padding: 6px 6px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-text-secondary);
     background: transparent;

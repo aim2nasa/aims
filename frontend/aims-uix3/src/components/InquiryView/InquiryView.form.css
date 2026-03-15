@@ -17,7 +17,7 @@
   }
 
   .inquiry-form-label {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-ios-text-secondary-light);
   }
@@ -44,7 +44,7 @@
     border-radius: 8px;
     background: transparent;
     color: var(--color-ios-text-primary-light);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-family: inherit;
   }
 
@@ -67,7 +67,7 @@
     border-radius: 8px;
     background: transparent;
     color: var(--color-ios-text-primary-light);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-family: inherit;
     resize: vertical;
     min-height: 120px;
@@ -110,11 +110,11 @@
   }
 
   .inquiry-file-drop-text {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   .inquiry-file-drop-hint {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     opacity: 0.7;
   }
 
@@ -135,7 +135,7 @@
     padding: 6px 10px;
     background: var(--color-ios-bg-secondary-light);
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-ios-text-secondary-light);
   }
 
@@ -197,7 +197,7 @@
     height: 20px;
     background: rgba(0, 0, 0, 0.6);
     color: white;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     border-radius: 50%;
     margin-left: 0;
   }
@@ -220,7 +220,7 @@
     border: 1px solid var(--color-ios-separator-light);
     background: transparent;
     color: var(--color-ios-text-secondary-light);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     border-radius: 6px;
     cursor: pointer;
@@ -304,7 +304,7 @@
     border: 1px solid var(--color-ios-separator-light);
     background: var(--color-ios-bg-secondary-light);
     color: var(--color-ios-text-primary-light);
-    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-size: var(--font-size-caption-2); /* 폰트 규정: 테이블 헤더 */
     font-weight: 600;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     cursor: pointer;
@@ -347,7 +347,7 @@
   }
 
   .inquiry-detail-date {
-    font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+    font-size: var(--font-size-caption-2); /* 폰트 규정: 테이블 헤더 */
     font-weight: 400;
     color: var(--color-ios-text-tertiary-light);
     margin-left: 4px;
@@ -360,7 +360,7 @@
   /* 문의 제목 - 폰트 규정 준수 */
   .inquiry-detail-title {
     margin: 4px 0;
-    font-size: 13px; /* 폰트 규정: 섹션 제목 */
+    font-size: var(--font-size-footnote); /* 폰트 규정: 섹션 제목 */
     font-weight: 600;
     color: var(--color-ios-text-primary-light);
     line-height: 1.4;

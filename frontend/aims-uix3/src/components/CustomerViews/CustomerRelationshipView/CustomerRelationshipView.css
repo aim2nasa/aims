@@ -627,7 +627,7 @@
     .relationship-search-input {
       width: 100%;
       height: 32px;
-      font-size: 16px; /* iOS zoom 방지 */
+      font-size: var(--font-size-callout); /* iOS zoom 방지 */
       padding: 0 var(--spacing-sm);
     }
 

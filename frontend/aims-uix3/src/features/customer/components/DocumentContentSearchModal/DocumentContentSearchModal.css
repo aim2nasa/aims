@@ -26,7 +26,7 @@
     align-items: center;
     gap: var(--spacing-1);
     margin-left: var(--spacing-2);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 400;
     color: var(--color-text-tertiary);
     background: var(--color-ios-bg-tertiary-light);
@@ -146,7 +146,7 @@
     border: 1px solid var(--color-border);
     border-radius: 6px;
     background: var(--color-bg-primary);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-primary);
     outline: none;
     transition: border-color 0.15s ease;
@@ -190,7 +190,7 @@
     border-radius: 6px;
     background: var(--color-primary-500);
     color: white;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s ease;
@@ -216,7 +216,7 @@
 
   .doc-search-left__results-count {
     padding: var(--spacing-2) var(--spacing-4);
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-text-tertiary);
     border-bottom: 1px solid var(--color-ios-separator-light);
@@ -262,7 +262,7 @@
     border: 1px solid var(--color-error-200);
     border-radius: 6px;
     color: var(--color-error-600);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   html[data-theme="dark"] .doc-search-left__error {
@@ -280,7 +280,7 @@
     gap: 10px;
     padding: 32px var(--spacing-4);
     color: var(--color-text-tertiary);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     text-align: center;
   }
 
@@ -336,7 +336,7 @@
 
   .doc-search-item__name {
     flex: 1;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -362,7 +362,7 @@
     justify-content: center;
     gap: var(--spacing-3);
     color: var(--color-text-quaternary);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     text-align: center;
     line-height: 1.5;
   }
@@ -392,7 +392,7 @@
 
   .doc-search-right__title {
     flex: 1;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
     white-space: nowrap;
@@ -408,7 +408,7 @@
     border-radius: 5px;
     background: var(--color-primary-500);
     color: white;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     text-decoration: none;
     transition: background 0.15s ease;
@@ -439,7 +439,7 @@
     justify-content: center;
     gap: var(--spacing-3);
     color: var(--color-text-tertiary);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
   }
 
   /* 이미지 미리보기 */
@@ -546,7 +546,7 @@
 
   .doc-search-right__text {
     margin: 0;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     line-height: 1.5;
     color: var(--color-text-secondary);
   }
@@ -598,7 +598,7 @@
     /* 검색 입력: iOS zoom 방지 */
     .doc-search-left input[type="text"],
     .doc-search-left input[type="search"] {
-      font-size: 16px;
+      font-size: var(--font-size-callout);
     }
 
     /* 검색 결과 아이템: 터치 타겟 확대 */

@@ -5,7 +5,7 @@
 
   .crm-mobile__product {
     text-align: center;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
     padding: var(--spacing-2) var(--spacing-3);
@@ -37,7 +37,7 @@
   }
 
   .crm-mobile__person-value {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-primary);
   }
 
@@ -55,7 +55,7 @@
   }
 
   .crm-mobile__section-title {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-primary);
     margin: 0 0 var(--spacing-2) 0;
@@ -104,12 +104,12 @@
   }
 
   .crm-mobile__item-label {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-secondary);
   }
 
   .crm-mobile__item-value {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-primary);
     font-weight: 400;
   }
@@ -122,7 +122,7 @@
   }
 
   .crm-mobile__fund-name {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-primary);
     padding: var(--spacing-2) 10px;
@@ -157,13 +157,13 @@
   }
 
   .crm-mobile__fund-total-label {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-text-primary);
   }
 
   .crm-mobile__fund-total-value {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-accent);
   }
@@ -171,7 +171,7 @@
   .crm-mobile__empty {
     text-align: center;
     padding: var(--spacing-4);
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-tertiary);
   }
 

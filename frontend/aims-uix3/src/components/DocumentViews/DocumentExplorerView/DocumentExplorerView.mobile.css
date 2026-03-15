@@ -331,12 +331,12 @@
     }
 
     .doc-explorer-action-bar__count {
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
     }
 
     .doc-explorer-action-bar__btn {
       padding: var(--spacing-1) var(--spacing-2);
-      font-size: 11px;
+      font-size: var(--font-size-caption-2);
     }
 
     .doc-explorer-action-bar__force-label {

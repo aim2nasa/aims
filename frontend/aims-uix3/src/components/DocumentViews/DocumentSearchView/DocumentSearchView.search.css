@@ -476,7 +476,7 @@
 
   .search-loading__subtext {
     margin: 0;
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     font-weight: 400;
     color: var(--color-text-tertiary);
   }

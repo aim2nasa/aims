@@ -393,7 +393,7 @@
 
   /* P3-1: 라벨 텍스트 */
   .similarity-text {
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     font-family: var(--font-family-text);
     color: var(--color-text-tertiary);

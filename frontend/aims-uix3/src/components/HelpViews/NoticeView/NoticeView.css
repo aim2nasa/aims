@@ -108,7 +108,7 @@
   /* 아이템 제목 */
   .notice-view__item-title {
     flex: 1;
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
     line-height: 1.4;
@@ -120,7 +120,7 @@
   /* 아이템 날짜 */
   .notice-view__item-date {
     flex-shrink: 0;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     color: var(--color-text-tertiary);
     white-space: nowrap;
   }
@@ -140,12 +140,12 @@
   }
 
   .notice-view__date {
-    font-size: 12px;
+    font-size: var(--font-size-caption-1);
     color: var(--color-text-tertiary);
   }
 
   .notice-view__detail-content {
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     line-height: 1.7;
     color: var(--color-text-primary);
     white-space: pre-wrap;
@@ -157,7 +157,7 @@
     align-items: center;
     justify-content: center;
     padding: var(--spacing-8);
-    font-size: 13px;
+    font-size: var(--font-size-footnote);
     color: var(--color-text-tertiary);
   }
 
@@ -177,7 +177,7 @@
       flex-basis: 100%;
       order: 1;
       white-space: normal;
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
 
     .notice-view__category {
@@ -204,7 +204,7 @@
     }
 
     .notice-view__detail-content {
-      font-size: 12px;
+      font-size: var(--font-size-caption-1);
     }
   }
 

@@ -277,7 +277,7 @@
     padding: var(--spacing-0-5) var(--spacing-1) var(--spacing-0-5) var(--spacing-2);
     background: var(--color-ios-blue, #007aff);
     border-radius: 12px;
-    font-size: 11px;
+    font-size: var(--font-size-caption-2);
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
