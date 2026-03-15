@@ -15,6 +15,7 @@ import { AnnualReportApi } from '../features/customer/api/annualReportApi'
 import { formatDateTime, formatDate } from '@/shared/lib/timeUtils'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
 import './AnnualReportPage.css'
+import './AnnualReportPage.mobile.css'
 
 // 정렬 설정 타입
 type SortConfig = {

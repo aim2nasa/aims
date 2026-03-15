@@ -1,0 +1,107 @@
+/**
+ * Customer Review 팝업 페이지 - 모바일 반응형
+ * @since 2026-03-16
+ *
+ * 페이지 레벨 헤더/액션/레이아웃의 반응형 처리
+ * crm-* 클래스 중 모바일 미디어쿼리가 없는 항목도 여기서 오버라이드
+ */
+
+@layer components {
+
+  /* ==================== Tablet & Mobile (768px 이하) ==================== */
+  @media (max-width: 768px) {
+
+    /* 헤더 패딩 축소 */
+    .customer-review-page__header {
+      padding: 8px 12px;
+    }
+
+    /* 제목 영역 gap 축소 + 폰트 축소 */
+    .customer-review-page__header-title {
+      gap: 8px;
+    }
+
+    .customer-review-page__header-title h1 {
+      font-size: 14px;
+    }
+
+    /* 액션 버튼 터치 타겟 확대 (44px 최소) */
+    .customer-review-page__action-button {
+      position: relative;
+    }
+
+    .customer-review-page__action-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+    }
+
+    /* 메인 콘텐츠 패딩 축소 */
+    .customer-review-page__content {
+      padding: 12px;
+    }
+
+    /* 3컬럼 레이아웃: compact.css에서 grid-template-columns: 1fr 이미 적용됨, flex만 해제 */
+    .crm-three-columns {
+      flex: unset;
+    }
+
+    /* Footer 여백 축소 */
+    .customer-review-page__footer {
+      margin-top: 16px;
+      padding-top: 12px;
+    }
+  }
+
+  /* ==================== Small Mobile (480px 이하) ==================== */
+  @media (max-width: 480px) {
+
+    .customer-review-page__header-title h1 {
+      font-size: 13px;
+    }
+
+    .customer-review-page__content {
+      padding: 8px;
+    }
+
+    /* 상품명 폰트 축소 */
+    .crm-product-name,
+    .crm-product-name--centered {
+      font-size: 12px;
+      padding: 8px 12px;
+    }
+
+    /* 인적사항: 2x2 그리드 */
+    .crm-persons-inline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .crm-persons-inline span {
+      padding: 4px 0;
+    }
+
+    /* crm-card--compact padding은 compact.css 768px에서 이미 10px 적용됨 — 중복 제거 */
+
+    /* Footer 여백 추가 축소 */
+    .customer-review-page__footer {
+      margin-top: 12px;
+      padding-top: 10px;
+    }
+  }
+
+  /* ==================== 접근성: focus-visible ==================== */
+  .customer-review-page__action-button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+} /* end @layer components */

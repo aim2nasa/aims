@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { getAuthToken } from '@/shared/lib/api';
 import ChatPanel from '@/components/ChatPanel';
 import './AIAssistantPage.css';
+import './AIAssistantPage.mobile.css';
 
 /**
  * 🔒 보안: JWT 토큰 형식 검증

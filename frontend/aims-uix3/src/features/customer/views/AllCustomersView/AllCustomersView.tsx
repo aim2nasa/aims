@@ -25,6 +25,7 @@ import { highlightText } from '@/shared/lib/highlightText';
 import './AllCustomersView.header.css';
 import './AllCustomersView.items.css';
 import './AllCustomersView.delete.css';
+import './AllCustomersView.mobile.css';
 
 interface AllCustomersViewProps {
   /** 고객 클릭 핸들러 */

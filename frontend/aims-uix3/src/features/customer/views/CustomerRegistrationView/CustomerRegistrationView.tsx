@@ -22,6 +22,7 @@ import { AddressSection } from './components/AddressSection';
 import { InsuranceInfoSection } from './components/InsuranceInfoSection';
 import { invalidateQueries } from '../../../../app/queryClient';
 import './CustomerRegistrationView.css';
+import './CustomerRegistrationView.mobile.css';
 
 export const CustomerRegistrationView: React.FC = () => {
   // 🍎 도움말 모달 상태

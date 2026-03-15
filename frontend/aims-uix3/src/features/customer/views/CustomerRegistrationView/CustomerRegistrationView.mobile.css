@@ -1,0 +1,63 @@
+/**
+ * CustomerRegistrationView - 모바일 반응형 보강
+ * 메인 CSS의 768px/480px 미디어 쿼리와 중복하지 않는 추가 최적화
+ */
+
+@layer components {
+
+  /* 모바일 (768px 이하) */
+  @media (max-width: 768px) {
+    /* 섹션: 가로 → 세로 레이아웃 전환 */
+    .form-section {
+      flex-direction: column;
+    }
+
+    /* 섹션 타이틀: 좌측 고정 해제, 하단 여백 */
+    .form-section__title {
+      flex: none;
+      margin-bottom: 4px;
+    }
+
+    /* 터치 타겟 확보: submit 버튼 */
+    .customer-registration__actions .button {
+      min-height: 44px;
+    }
+
+    /* 터치 타겟 확보: 도움말 아이콘 */
+    .help-icon-button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* 터치 타겟 확보: 주소 검색 버튼 */
+    .form-row__search-btn {
+      min-height: 44px;
+    }
+
+    /* 임시저장 인디케이터 세로 중앙 정렬 */
+    .customer-registration__draft-indicator {
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  /* 소형 모바일 (480px 이하) */
+  @media (max-width: 480px) {
+    /* inner padding 추가 축소 */
+    .customer-registration__inner {
+      padding: var(--spacing-2) var(--spacing-2);
+    }
+
+    /* iOS Safari 자동 줌 방지: 16px 이상 필요 */
+    .form-row__input input,
+    .form-row__input select {
+      font-size: 16px;
+    }
+
+    /* 라디오 그룹 gap 축소 */
+    .radio-group {
+      gap: var(--spacing-2);
+    }
+  }
+
+} /* end @layer components */

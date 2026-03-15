@@ -1,0 +1,87 @@
+/**
+ * Annual Report 팝업 페이지 - 모바일 반응형 스타일
+ * @since 2026-03-16
+ *
+ * 헤더/액션버튼/콘텐츠/푸터의 패딩 축소 및 터치 타겟 확보
+ * 카드 레이아웃(ar-mobile-*)은 AnnualReportPage.css에서 관리 (중복 금지)
+ */
+
+@layer components {
+
+  /* ==================== 768px 이하 ==================== */
+  @media (max-width: 768px) {
+
+    .annual-report-page__header {
+      padding: 8px 12px;
+      flex-wrap: wrap;
+    }
+
+    .annual-report-page__header-title {
+      gap: 8px;
+    }
+
+    .annual-report-page__header-title h1 {
+      font-size: 14px;
+    }
+
+    .annual-report-page__header-title p {
+      font-size: 10px;
+    }
+
+    /* 터치 타겟 44px 확보 (시각적 크기는 28px 유지) */
+    .annual-report-page__action-button {
+      position: relative;
+    }
+
+    .annual-report-page__action-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    .annual-report-page__content {
+      padding: 12px;
+    }
+
+    .annual-report-page__footer {
+      margin-top: 16px;
+      padding-top: 12px;
+    }
+  }
+
+  /* ==================== 480px 이하 ==================== */
+  @media (max-width: 480px) {
+
+    .annual-report-page__header {
+      padding: 6px 8px;
+    }
+
+    .annual-report-page__header-title h1 {
+      font-size: 13px;
+    }
+
+    .annual-report-page__content {
+      padding: 8px;
+    }
+
+    .annual-report-page .ar-mobile-summary {
+      padding: 8px 0;
+    }
+
+    .annual-report-page .ar-mobile-card {
+      margin-bottom: 6px;
+    }
+  }
+
+  /* ==================== 접근성 ==================== */
+  .annual-report-page__action-button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+} /* end @layer components */

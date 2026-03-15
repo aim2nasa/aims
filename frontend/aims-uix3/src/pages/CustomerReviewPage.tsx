@@ -15,6 +15,7 @@ import '../features/customer/components/CustomerReviewModal/CustomerReviewModal.
 import '../features/customer/components/CustomerReviewModal/CustomerReviewModal.compact.css'
 import '../features/customer/components/CustomerReviewModal/CustomerReviewModal.mobile.css'
 import './CustomerReviewPage.css'
+import './CustomerReviewPage.mobile.css'
 
 // 상품명에서 "발행" 이후 텍스트 제거
 const extractProductName = (productName: string | undefined): string => {

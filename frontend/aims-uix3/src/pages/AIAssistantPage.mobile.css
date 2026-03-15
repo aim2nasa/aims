@@ -1,0 +1,51 @@
+/**
+ * AI 어시스턴트 팝업 페이지 - 모바일 반응형
+ * @since 2026-03-16
+ *
+ * ChatPanel 내부 스타일은 자체 반응형 처리됨.
+ * 여기서는 인증/로딩 상태 UI와 전체 레이아웃만 처리.
+ */
+
+@layer components {
+
+  /* 태블릿 이하 (768px) */
+  @media (max-width: 768px) {
+
+    .ai-assistant-page__auth-message {
+      padding: var(--spacing-4);
+    }
+
+    .ai-assistant-page__auth-message h2 {
+      font-size: var(--font-size-body);
+    }
+
+    .ai-assistant-page__auth-message p {
+      font-size: var(--font-size-xs);
+    }
+
+    /* 터치 타겟 확보 */
+    .ai-assistant-page__auth-button {
+      min-height: 44px;
+      min-width: 120px;
+    }
+  }
+
+  /* 소형 모바일 (480px) */
+  @media (max-width: 480px) {
+
+    .ai-assistant-page__auth-message {
+      padding: var(--spacing-3);
+    }
+
+    .ai-assistant-page__auth-message h2 {
+      font-size: var(--font-size-sm);
+    }
+  }
+
+  /* 접근성: 포커스 표시 */
+  .ai-assistant-page__auth-button:focus-visible {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: 2px;
+  }
+
+} /* end @layer components */
