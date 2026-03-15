@@ -348,26 +348,51 @@ async def doc_prep_main(
             # 큐잉 모드: 문서를 먼저 생성 후 파일 처리를 큐에 등록
             logger.info(f"Queueing upload for userId: {userId}, file: {original_name}")
 
-            # 🔴 0. 크레딧 체크 (EMBEDDING_CREDIT_POLICY.md 참조)
-            # PDF → 실제 페이지 수, 비PDF → 1 (B1 수정: 디스크 파일 경로 기반)
+            # 🔴 0. 텍스트 추출을 먼저 시도하여 OCR 필요 여부 판단
+            # 텍스트가 이미 있는 PDF는 OCR이 불필요 → 크레딧 소모 없이 정상 처리
             estimated_pages = _extract_page_count_from_path(stream_temp_path, file.content_type)
-            credit_check = await check_credit_for_upload(userId, estimated_pages)
-            is_credit_pending = not credit_check.get("allowed", False)
 
-            if is_credit_pending:
-                logger.info(f"[CreditPending] 크레딧 부족으로 처리 보류: userId={userId}, reason={credit_check.get('reason')}")
+            # 🍎 사전 텍스트 추출 (pdfplumber - 크레딧 소모 없음)
+            pre_extracted_text = ""
+            pre_detected_mime = ""
+            pre_num_pages = 0
+            try:
+                pre_meta = await MetaService.extract_metadata(stream_temp_path)
+                pre_extracted_text = pre_meta.get("extracted_text", "")
+                pre_detected_mime = pre_meta.get("mime_type", "")
+                pre_num_pages = pre_meta.get("num_pages", 0)
+
+                # PDF 변환 텍스트 추출 (HWP, DOC 등 - 크레딧 소모 없음)
+                if (not pre_extracted_text or len(pre_extracted_text.strip()) == 0) and is_convertible_mime(pre_detected_mime):
+                    converted_text = await convert_and_extract_text(stream_temp_path)
+                    if converted_text and converted_text.strip():
+                        pre_extracted_text = converted_text
+            except Exception as pre_meta_err:
+                logger.warning(f"[PreTextExtract] 사전 텍스트 추출 실패 (크레딧 체크로 진행): {pre_meta_err}")
+
+            # 텍스트가 있으면 OCR 불필요 → 크레딧 체크 스킵
+            has_text = bool(pre_extracted_text and len(pre_extracted_text.strip()) > 0)
+            if has_text:
+                logger.info(f"[TextFound] 텍스트 추출 성공 ({len(pre_extracted_text)} chars), OCR 불필요 → 크레딧 체크 스킵: {original_name}")
+                is_credit_pending = False
+                credit_check = {"allowed": True, "reason": "text_already_extracted"}
+            else:
+                # 텍스트 없음 → OCR 필요 → 크레딧 체크
+                credit_check = await check_credit_for_upload(userId, estimated_pages)
+                is_credit_pending = not credit_check.get("allowed", False)
+                if is_credit_pending:
+                    logger.info(f"[CreditPending] 텍스트 없음 + 크레딧 부족 → 처리 보류: userId={userId}, reason={credit_check.get('reason')}")
 
             # 1. MongoDB 문서 생성 (크레딧 상태에 따라 다르게)
             files_collection = MongoService.get_collection("files")
 
             if is_credit_pending:
-                # 🔴 크레딧 부족: credit_pending 상태로 문서 생성 (큐에 등록하지 않음)
-                # ⚠️ AR/CRS 판단은 텍스트 기반이므로, 크레딧 충전 후 정상 파이프라인에서 처리
-                # ⚠️ 파일명 기반 AR/CRS 판단 절대 금지! (detector.py의 텍스트 파싱으로만 판단)
+                # 🔴 크레딧 부족 + OCR 필요: credit_pending 상태로 문서 생성
+                # ⚠️ 파일명 기반 AR/CRS 판단 절대 금지!
                 doc_data = {
                     "ownerId": userId,
                     "createdAt": datetime.utcnow(),
-                    "batchId": batchId,  # 🔴 업로드 묶음 ID (현재 세션 진행률 추적)
+                    "batchId": batchId,
                     "upload": {
                         "originalName": original_name,
                         "uploaded_at": datetime.utcnow().isoformat(),
@@ -379,14 +404,13 @@ async def doc_prep_main(
                         "mime": file.content_type,
                         "filename": original_name
                     },
-                    # credit_pending 상태
+                    # credit_pending 상태 (OCR이 실제로 필요한 문서만 여기 도달)
                     "overallStatus": "credit_pending",
                     "ocrStatus": "credit_pending",
                     "progress": 0,
                     "progressStage": "credit_pending",
-                    "progressMessage": "크레딧 부족으로 처리 대기 중",
+                    "progressMessage": "OCR 처리를 위한 크레딧 대기 중",
                     "status": "credit_pending",
-                    # 크레딧 보류 정보
                     "credit_pending_since": datetime.utcnow(),
                     "credit_pending_info": {
                         "credits_remaining": credit_check.get("credits_remaining", 0),
@@ -399,22 +423,21 @@ async def doc_prep_main(
                         "credit_pending_since": datetime.utcnow().isoformat()
                     }
                 }
-                logger.info(f"[CreditPending] 크레딧 부족 문서 저장 (AR/CRS 판단은 크레딧 충전 후 텍스트 파싱으로): {original_name}")
+                logger.info(f"[CreditPending] OCR 필요 + 크레딧 부족 → 보류: {original_name}")
             else:
-                # 크레딧 충분: 기존 로직
+                # 크레딧 충분 또는 텍스트 있어서 OCR 불필요: 정상 처리
                 doc_data = {
                     "ownerId": userId,
                     "createdAt": datetime.utcnow(),
-                    "batchId": batchId,  # 🔴 업로드 묶음 ID (현재 세션 진행률 추적)
+                    "batchId": batchId,
                     "upload": {
                         "originalName": original_name,
                         "uploaded_at": datetime.utcnow().isoformat()
                     },
-                    # 초기 progress 설정 - 프론트엔드에서 즉시 표시
                     "progress": 10,
                     "progressStage": "queued",
                     "progressMessage": "대기열에 추가됨",
-                    "status": "processing"  # 처리 중 상태 (set-annual-report가 찾을 수 있음)
+                    "status": "processing"
                 }
 
             if customerId:
@@ -441,6 +464,26 @@ async def doc_prep_main(
                     "upload.destPath": dest_path
                 }}
             )
+
+
+            # 🍎 사전 추출 텍스트가 있으면 meta에 저장 (정상 경로에서도 큐 워커가 활용)
+            if has_text and not is_credit_pending:
+                try:
+                    pre_meta_update = {
+                        "meta.mime": pre_detected_mime,
+                        "meta.pdf_pages": pre_num_pages,
+                        "meta.length": len(pre_extracted_text),
+                        "meta.full_text": pre_extracted_text,
+                        "meta.filename": original_name,
+                        "meta.size_bytes": file_size,
+                    }
+                    await files_collection.update_one(
+                        {"_id": ObjectId(doc_id)},
+                        {"$set": pre_meta_update}
+                    )
+                    logger.info(f"[TextFound] 사전 추출 메타 저장 완료: {doc_id} ({len(pre_extracted_text)} chars)")
+                except Exception as pre_store_err:
+                    logger.warning(f"[TextFound] 사전 추출 메타 저장 실패 (큐 워커에서 재추출): {pre_store_err}")
 
             # 🔴 크레딧 부족 시: 텍스트 추출 + AR/CRS 파싱 판단 (임베딩만 안함)
             if is_credit_pending:

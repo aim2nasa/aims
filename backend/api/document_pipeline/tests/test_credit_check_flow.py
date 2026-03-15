@@ -348,57 +348,50 @@ class TestCreditPendingARCRS:
         return mock_collection
 
     async def test_ar_detected_in_credit_pending(self, client, mock_upload_queue_disabled, mock_files_collection, ar_text_sample):
-        """크레딧 부족이어도 AR 감지 실행"""
+        """텍스트가 있는 AR 문서 → OCR 불필요 → credit_pending 스킵 → 정상 큐 경로"""
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "internal-key"
 
-        with patch("routers.doc_prep_main.check_credit_for_upload", return_value={
-                 "allowed": False, "reason": "credit_exhausted", "credits_remaining": 0,
-             }), \
+        with patch("routers.doc_prep_main.check_credit_for_upload") as mock_credit_check, \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
              patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
              patch("services.meta_service.MetaService.extract_metadata", return_value={
                  "extracted_text": ar_text_sample, "mime_type": "application/pdf",
                  "num_pages": 3, "file_hash": "abc", "error": None,
-             }), \
-             patch("routers.doc_prep_main._detect_and_process_annual_report", return_value={
-                 "is_annual_report": True, "customer_id": "cust1", "customer_name": "홍길동",
-             }) as mock_ar_detect:
-            await client.post(
+             }):
+            response = await client.post(
                 "/webhook/docprep-main",
                 data={"userId": "user1"},
                 files={"file": ("test.pdf", b"fake content", "application/pdf")},
             )
 
-        mock_ar_detect.assert_called_once()
+        # 텍스트가 있으므로 크레딧 체크 자체가 호출되지 않아야 함
+        mock_credit_check.assert_not_called()
+        # 정상 큐 경로로 진입 (credit_pending이 아님)
+        assert response.json()["status"] == "queued"
 
     async def test_crs_detected_in_credit_pending(self, client, mock_upload_queue_disabled, mock_files_collection, crs_text_sample):
-        """크레딧 부족이어도 CRS 감지 실행 (AR 아닌 경우)"""
+        """텍스트가 있는 CRS 문서 → OCR 불필요 → credit_pending 스킵 → 정상 큐 경로"""
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "internal-key"
 
-        with patch("routers.doc_prep_main.check_credit_for_upload", return_value={
-                 "allowed": False, "reason": "credit_exhausted", "credits_remaining": 0,
-             }), \
+        with patch("routers.doc_prep_main.check_credit_for_upload") as mock_credit_check, \
              patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
              patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
              patch("services.meta_service.MetaService.extract_metadata", return_value={
                  "extracted_text": crs_text_sample, "mime_type": "application/pdf",
                  "num_pages": 3, "file_hash": "abc", "error": None,
-             }), \
-             patch("routers.doc_prep_main._detect_and_process_annual_report", return_value={
-                 "is_annual_report": False, "customer_id": None, "customer_name": None,
-             }), \
-             patch("routers.doc_prep_main._detect_and_process_customer_review", return_value={
-                 "is_customer_review": True, "customer_name": "김철수",
-             }) as mock_crs_detect:
-            await client.post(
+             }):
+            response = await client.post(
                 "/webhook/docprep-main",
                 data={"userId": "user1"},
                 files={"file": ("test.pdf", b"fake content", "application/pdf")},
             )
 
-        mock_crs_detect.assert_called_once()
+        # 텍스트가 있으므로 크레딧 체크 자체가 호출되지 않아야 함
+        mock_credit_check.assert_not_called()
+        # 정상 큐 경로로 진입 (credit_pending이 아님)
+        assert response.json()["status"] == "queued"
 
     async def test_ar_crs_skipped_for_non_pdf(self, client, mock_upload_queue_disabled, mock_files_collection):
         """PDF가 아닌 파일은 AR/CRS 감지 안함"""
