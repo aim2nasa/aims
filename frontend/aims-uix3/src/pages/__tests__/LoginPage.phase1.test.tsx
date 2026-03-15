@@ -101,11 +101,11 @@ describe('LoginPage Phase 1 — 체크박스', () => {
       expect(screen.getByText('구글 로그인')).toBeInTheDocument()
     })
 
-    it('다른 카카오 계정 전환 링크가 렌더링됨 (네이버/구글은 제거됨)', () => {
+    it('다른 계정 전환 링크가 렌더링됨 (개발 환경: 카카오/네이버/구글 모두)', () => {
       renderLoginPage()
       expect(screen.getByText('다른 카카오 계정으로 로그인')).toBeInTheDocument()
-      expect(screen.queryByText('다른 네이버 계정')).not.toBeInTheDocument()
-      expect(screen.queryByText('다른 구글 계정')).not.toBeInTheDocument()
+      expect(screen.getByText('다른 네이버 계정')).toBeInTheDocument()
+      expect(screen.getByText('다른 구글 계정')).toBeInTheDocument()
     })
   })
 })

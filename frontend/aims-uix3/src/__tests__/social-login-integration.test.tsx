@@ -257,14 +257,14 @@ describe('소셜 로그인 통합 테스트', () => {
       profileCompleted: true
     }
 
-    it('1. 네이버 로그인 버튼이 disabled 상태여야 함', async () => {
+    it('1. 개발 환경에서 네이버 로그인 버튼이 활성 상태임', async () => {
       renderApp('/login')
 
       const naverButton = screen.getByText('네이버 로그인').closest('button')
-      expect(naverButton).toBeDisabled()
+      expect(naverButton).not.toBeDisabled()
 
       fireEvent.click(screen.getByText('네이버 로그인'))
-      expect(mockStartNaverLogin).not.toHaveBeenCalled()
+      expect(mockStartNaverLogin).toHaveBeenCalled()
     })
 
     it('2. 네이버 콜백 처리 → Store 동기화', async () => {
@@ -306,14 +306,14 @@ describe('소셜 로그인 통합 테스트', () => {
       profileCompleted: true
     }
 
-    it('1. 구글 로그인 버튼이 disabled 상태여야 함', async () => {
+    it('1. 개발 환경에서 구글 로그인 버튼이 활성 상태임', async () => {
       renderApp('/login')
 
       const googleButton = screen.getByText('구글 로그인').closest('button')
-      expect(googleButton).toBeDisabled()
+      expect(googleButton).not.toBeDisabled()
 
       fireEvent.click(screen.getByText('구글 로그인'))
-      expect(mockStartGoogleLogin).not.toHaveBeenCalled()
+      expect(mockStartGoogleLogin).toHaveBeenCalled()
     })
 
     it('2. 콜백 처리 → 토큰 저장', async () => {
@@ -393,11 +393,11 @@ describe('소셜 로그인 통합 테스트', () => {
       expect(mockHref).toContain('/api/auth/kakao/switch')
     })
 
-    it('"다른 네이버 계정", "다른 구글 계정" 옵션이 존재하지 않아야 함', () => {
+    it('개발 환경에서는 "다른 네이버 계정", "다른 구글 계정" 옵션이 표시됨', () => {
       renderApp('/login')
 
-      expect(screen.queryByText('다른 네이버 계정')).not.toBeInTheDocument()
-      expect(screen.queryByText('다른 구글 계정')).not.toBeInTheDocument()
+      expect(screen.getByText('다른 네이버 계정')).toBeInTheDocument()
+      expect(screen.getByText('다른 구글 계정')).toBeInTheDocument()
     })
   })
 

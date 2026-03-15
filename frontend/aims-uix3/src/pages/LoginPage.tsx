@@ -399,14 +399,14 @@ export default function LoginPage() {
               <span>카카오 로그인</span>
             </button>
 
-            <button type="button" className="social-login-button naver-login-button social-login-button--disabled" disabled aria-label="네이버 로그인 (준비 중)">
+            <button type="button" className={`social-login-button naver-login-button${import.meta.env.PROD ? ' social-login-button--disabled' : ''}`} disabled={import.meta.env.PROD} onClick={import.meta.env.PROD ? undefined : startNaverLogin} aria-label="네이버 로그인">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M12.1875 9.5625L5.4375 0H0V18H5.8125V8.4375L12.5625 18H18V0H12.1875V9.5625Z" fill="#FFFFFF" />
               </svg>
               <span>네이버 로그인</span>
             </button>
 
-            <button type="button" className="social-login-button google-login-button social-login-button--disabled" disabled aria-label="구글 로그인 (준비 중)">
+            <button type="button" className={`social-login-button google-login-button${import.meta.env.PROD ? ' social-login-button--disabled' : ''}`} disabled={import.meta.env.PROD} onClick={import.meta.env.PROD ? undefined : startGoogleLogin} aria-label="구글 로그인">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4" />
                 <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853" />
@@ -420,6 +420,14 @@ export default function LoginPage() {
           {/* 다른 계정으로 로그인 섹션 */}
           <div className="switch-account-section">
             <button type="button" className="switch-account-button" onClick={startKakaoLoginSwitch} aria-label="다른 카카오 계정으로 로그인">다른 카카오 계정으로 로그인</button>
+            {!import.meta.env.PROD && (
+              <>
+                <span className="switch-account-divider">|</span>
+                <button type="button" className="switch-account-button" onClick={startNaverLoginSwitch} aria-label="다른 네이버 계정으로 로그인">다른 네이버 계정</button>
+                <span className="switch-account-divider">|</span>
+                <button type="button" className="switch-account-button" onClick={startGoogleLoginSwitch} aria-label="다른 구글 계정으로 로그인">다른 구글 계정</button>
+              </>
+            )}
           </div>
 
           {/* 개발자 모드 전용 */}
