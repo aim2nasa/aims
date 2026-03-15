@@ -35,8 +35,8 @@
   .doc-explorer-toolbar {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
+    gap: clamp(4px, 0.42vw, 6px);
+    padding: clamp(4px, 0.42vw, 6px) clamp(6px, 0.69vw, 10px);
     background: var(--color-bg-secondary);
     flex-shrink: 0;
     flex-wrap: nowrap;
@@ -49,7 +49,7 @@
   }
 
   .doc-explorer-toolbar__label {
-    font-size: 12px;
+    font-size: clamp(10px, 0.83vw, 12px);
     font-weight: 600;
     color: var(--color-text-secondary);
   }
@@ -99,9 +99,9 @@
   .doc-explorer-toolbar__sort-btn {
     display: flex;
     align-items: center;
-    gap: 3px;
-    padding: 4px 8px;
-    font-size: 10px;
+    gap: clamp(2px, 0.21vw, 3px);
+    padding: clamp(3px, 0.28vw, 4px) clamp(5px, 0.56vw, 8px);
+    font-size: clamp(8px, 0.69vw, 10px);
     font-weight: 600;
     color: var(--color-text-secondary);
     background: var(--color-bg-tertiary);
@@ -173,9 +173,9 @@
   .doc-explorer-toolbar__mode-chip {
     display: flex;
     align-items: center;
-    gap: 3px;
-    padding: 4px 7px;
-    font-size: 10px;
+    gap: clamp(2px, 0.21vw, 3px);
+    padding: clamp(3px, 0.28vw, 4px) clamp(5px, 0.49vw, 7px);
+    font-size: clamp(8px, 0.69vw, 10px);
     font-weight: 600;
     color: var(--color-text-tertiary);
     background: transparent;
@@ -432,8 +432,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: clamp(22px, 1.94vw, 28px);
+    height: clamp(22px, 1.94vw, 28px);
     padding: 0;
     border: none;
     border-radius: var(--explorer-border-radius);
@@ -471,8 +471,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: clamp(22px, 1.94vw, 28px);
+    height: clamp(22px, 1.94vw, 28px);
     padding: 0;
     flex-shrink: 0;
     border: none;
@@ -609,8 +609,8 @@
   }
 
   .doc-explorer-toolbar__filter-chip {
-    padding: 3px 8px;
-    font-size: 10px;
+    padding: clamp(2px, 0.21vw, 3px) clamp(5px, 0.56vw, 8px);
+    font-size: clamp(8px, 0.69vw, 10px);
     font-weight: 600;
     color: var(--color-text-secondary);
     background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
@@ -959,9 +959,9 @@
   .doc-explorer-toolbar__edit-btn {
     display: flex;
     align-items: center;
-    gap: 3px;
-    padding: 3px 8px;
-    font-size: 10px;
+    gap: clamp(2px, 0.21vw, 3px);
+    padding: clamp(2px, 0.21vw, 3px) clamp(5px, 0.56vw, 8px);
+    font-size: clamp(8px, 0.69vw, 10px);
     font-weight: 600;
     border: 1px solid var(--color-border-secondary);
     border-radius: 4px;
@@ -1066,8 +1066,8 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 5px 12px;
-    font-size: 12px;
+    padding: clamp(4px, 0.35vw, 5px) clamp(8px, 0.83vw, 12px);
+    font-size: clamp(10px, 0.83vw, 12px);
     font-weight: 600;
     border: none;
     border-radius: 6px;

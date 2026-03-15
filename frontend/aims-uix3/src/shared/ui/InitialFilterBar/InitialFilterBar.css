@@ -8,8 +8,8 @@
   .initial-filter-bar {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: clamp(6px, 0.83vw, 12px);
+    padding: clamp(4px, 0.56vw, 8px) clamp(6px, 0.83vw, 12px);
     background: var(--color-bg-secondary);
     border-top: 1px solid var(--color-border-primary);
     border-bottom: 1px solid var(--color-border-primary);
@@ -18,8 +18,8 @@
 
   /* 컴팩트 모드 */
   .initial-filter-bar--compact {
-    padding: 6px 10px;
-    gap: 8px;
+    padding: clamp(4px, 0.42vw, 6px) clamp(6px, 0.69vw, 10px);
+    gap: clamp(5px, 0.56vw, 8px);
   }
 
   /* 초성 타입 섹션 */
@@ -33,9 +33,9 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    min-width: 48px;
-    height: 28px;
-    padding: 0 8px;
+    min-width: clamp(36px, 3.33vw, 48px);
+    height: clamp(22px, 1.94vw, 28px);
+    padding: 0 clamp(4px, 0.56vw, 8px);
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border-primary);
     border-radius: 6px;
@@ -44,9 +44,9 @@
   }
 
   .initial-filter-bar--compact .initial-filter-bar__type-toggle {
-    min-width: 42px;
-    height: 24px;
-    padding: 0 6px;
+    min-width: clamp(32px, 2.92vw, 42px);
+    height: clamp(18px, 1.67vw, 24px);
+    padding: 0 clamp(4px, 0.42vw, 6px);
   }
 
   .initial-filter-bar__type-toggle:hover {
@@ -71,7 +71,7 @@
   }
 
   .initial-filter-bar__type-label {
-    font-size: 11px;
+    font-size: clamp(9px, 0.76vw, 11px);
     font-weight: 600;
     color: var(--color-text-primary);
     line-height: 1;
@@ -83,7 +83,7 @@
   .initial-filter-bar__initials {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: clamp(2px, 0.21vw, 3px);
     /* flex: 1 제거 → 자연 너비, 선택 배지가 초성 바로 뒤에 위치 */
     flex-wrap: wrap;
   }
@@ -93,13 +93,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 26px;
-    height: 26px;
-    padding: 0 4px;
+    min-width: clamp(20px, 1.81vw, 26px);
+    height: clamp(20px, 1.81vw, 26px);
+    padding: 0 clamp(2px, 0.28vw, 4px);
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border-primary);
     border-radius: 4px;
-    font-size: 11px;
+    font-size: clamp(9px, 0.76vw, 11px);
     font-weight: 600;
     color: var(--color-text-secondary);
     cursor: pointer;
@@ -107,9 +107,9 @@
   }
 
   .initial-filter-bar--compact .initial-filter-bar__initial {
-    min-width: 22px;
-    height: 22px;
-    font-size: 10px;
+    min-width: clamp(17px, 1.53vw, 22px);
+    height: clamp(17px, 1.53vw, 22px);
+    font-size: clamp(8px, 0.69vw, 10px);
   }
 
   /* 라이트 테마 초성 버튼 대비 강화 */
