@@ -254,7 +254,7 @@
       font-size: 9px;
     }
 
-    /* ── 편집 그룹: 별칭AI 버튼 축소 ── */
+    /* ── 편집 그룹: 별칭AI 버튼 → 아이콘만 표시 ── */
     .doc-explorer-toolbar__edit-group {
       gap: 2px;
     }
@@ -263,6 +263,15 @@
       padding: 2px 5px;
       font-size: 9px;
       gap: 2px;
+    }
+
+    /* 별칭AI 텍스트 숨기고 아이콘만 표시 (360~480px) */
+    .alias-ai-button .button__content {
+      display: none;
+    }
+
+    .alias-ai-button .button__icon {
+      margin: 0;
     }
 
     .doc-explorer-toolbar__edit-count {
