@@ -151,10 +151,19 @@
     /* === APPLE STYLE HEADER COLORS - LIGHT THEME === */
 
     /* Progressive Disclosure Header Background - 가시성 개선 */
-    --color-header-bg-subtle: rgba(255, 255, 255, 0.85); /* 충분한 가시성 확보 */
+    --color-header-bg-subtle: linear-gradient(135deg, rgba(245, 243, 255, 0.95) 0%, rgba(240, 247, 255, 0.92) 50%, rgba(248, 244, 255, 0.95) 100%);
     --color-header-bg-expanded: rgba(255, 255, 255, 0.98); /* 확장 시 거의 불투명 */
     --color-header-border-subtle: rgba(229, 229, 234, 0.6); /* 명확한 테두리 */
     --color-header-border-expanded: rgba(229, 229, 234, 0.9); /* iOS 테두리 확장 */
+    --shadow-header: 0 1px 0 rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-header-expanded: 0 1px 0 rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06);
+    --color-header-inner-glow: rgba(255, 255, 255, 0.5);
+    --header-gradient-overlay: linear-gradient(
+      135deg,
+      rgba(130, 110, 200, 0.12) 0%,
+      rgba(90, 150, 240, 0.08) 50%,
+      rgba(180, 140, 220, 0.10) 100%
+    );
 
     /* Header Text */
     --color-header-title: rgba(26, 26, 26, 0.6); /* 서브틀한 타이틀 */
@@ -343,10 +352,19 @@
     /* === APPLE STYLE HEADER COLORS - DARK THEME === */
 
     /* Progressive Disclosure Header Background - iOS systemGray6 기반 */
-    --color-header-bg-subtle: rgba(28, 28, 30, 0.85); /* iOS systemGray6 다크모드 (#1c1c1e) */
+    --color-header-bg-subtle: linear-gradient(135deg, rgba(35, 30, 50, 0.92) 0%, rgba(25, 35, 55, 0.90) 50%, rgba(35, 28, 48, 0.92) 100%);
     --color-header-bg-expanded: rgba(28, 28, 30, 0.98); /* 확장 시 거의 불투명 */
     --color-header-border-subtle: rgba(58, 58, 60, 0.6); /* iOS systemGray4 다크모드 (#3a3a3c) */
     --color-header-border-expanded: rgba(58, 58, 60, 0.9); /* 다크 테두리 확장 */
+    --shadow-header: 0 1px 0 rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+    --shadow-header-expanded: 0 1px 0 rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+    --color-header-inner-glow: rgba(255, 255, 255, 0.06);
+    --header-gradient-overlay: linear-gradient(
+      135deg,
+      rgba(140, 120, 220, 0.15) 0%,
+      rgba(80, 140, 240, 0.10) 50%,
+      rgba(180, 140, 230, 0.12) 100%
+    );
 
     /* Header Text */
     --color-header-title: rgba(249, 250, 251, 0.6); /* 서브틀한 다크 타이틀 */
