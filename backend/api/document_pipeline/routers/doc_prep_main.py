@@ -1319,27 +1319,68 @@ async def process_document_pipeline(
         # Progress: 20% - Upload complete
         await _notify_progress(doc_id, user_id, 20, "upload", "파일 업로드 완료")
 
-        # Step 3: Extract metadata
+        # Step 3: Extract metadata (사전 추출된 텍스트가 있으면 재추출 스킵)
         # Progress: 40% - Starting meta extraction
         await _notify_progress(doc_id, user_id, 40, "meta", "메타데이터 추출 중")
-        meta_result = await MetaService.extract_metadata(dest_path)
 
-        if meta_result.get("error"):
-            logger.warning(f"Metadata extraction failed: {meta_result}")
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {
-                    "status": "failed",
-                    "overallStatus": "error",
-                    "meta.error": meta_result.get("message", "Unknown error")
-                }}
-            )
-            return {
-                "result": "error",
-                "document_id": doc_id,
-                "error": meta_result.get("message", "Unknown error"),
-                "status": meta_result.get("status", 500)
+        # 🍎 DB에 사전 추출된 meta.full_text가 있는지 확인 (업로드 시 저장됨)
+        existing_doc = await files_collection.find_one(
+            {"_id": ObjectId(doc_id)},
+            {"meta.full_text": 1, "meta.mime": 1, "meta.pdf_pages": 1, "meta.size_bytes": 1, "meta.filename": 1}
+        )
+        pre_full_text = (existing_doc or {}).get("meta", {}).get("full_text", "")
+        pre_mime = (existing_doc or {}).get("meta", {}).get("mime", "")
+
+        if pre_full_text and len(pre_full_text.strip()) > 0 and pre_mime:
+            # 사전 추출된 텍스트 재사용 → MetaService 재호출 스킵
+            logger.info(f"[MetaSkip] DB에 사전 추출 텍스트 존재 ({len(pre_full_text)} chars), 메타 추출 스킵: {doc_id}")
+            full_text = pre_full_text
+            detected_mime = pre_mime
+            # meta_result는 후속 코드에서 참조하므로 DB 값으로 구성
+            existing_meta = (existing_doc or {}).get("meta", {})
+            meta_result = {
+                "extracted_text": pre_full_text,
+                "mime_type": pre_mime,
+                "num_pages": existing_meta.get("pdf_pages", 0),
+                "file_size": existing_meta.get("size_bytes", 0),
+                "filename": existing_meta.get("filename", original_name),
+                "error": None,
             }
+        else:
+            # 사전 추출 텍스트 없음 → 기존대로 MetaService 호출
+            meta_result = await MetaService.extract_metadata(dest_path)
+
+            if meta_result.get("error"):
+                logger.warning(f"Metadata extraction failed: {meta_result}")
+                await files_collection.update_one(
+                    {"_id": ObjectId(doc_id)},
+                    {"$set": {
+                        "status": "failed",
+                        "overallStatus": "error",
+                        "meta.error": meta_result.get("message", "Unknown error")
+                    }}
+                )
+                return {
+                    "result": "error",
+                    "document_id": doc_id,
+                    "error": meta_result.get("message", "Unknown error"),
+                    "status": meta_result.get("status", 500)
+                }
+
+            full_text = meta_result.get("extracted_text", "")
+            detected_mime = meta_result.get("mime_type", "")
+
+            # PDF 변환 텍스트 추출: 직접 파서로 텍스트가 없고 변환 가능한 형식인 경우
+            if (not full_text or len(full_text.strip()) == 0) and is_convertible_mime(detected_mime):
+                await _notify_progress(doc_id, user_id, 50, "convert", "PDF 변환 후 텍스트 추출 중")
+                logger.info(f"[PDF변환텍스트] 직접 파서 없음, PDF 변환 시도: {doc_id} (MIME: {detected_mime})")
+
+                converted_text = await convert_and_extract_text(dest_path)
+                if converted_text and converted_text.strip():
+                    full_text = converted_text
+                    logger.info(f"[PDF변환텍스트] 성공: {doc_id} ({len(full_text)} chars)")
+                else:
+                    logger.info(f"[PDF변환텍스트] 텍스트 추출 실패, OCR fallback: {doc_id}")
 
         # Get summary if text was extracted
         full_text = meta_result.get("extracted_text", "")
