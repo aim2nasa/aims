@@ -34,7 +34,7 @@
     /* font-weight: var(--font-weight-medium); () */
     white-space: nowrap;
     max-width: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-popover-light);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
@@ -42,7 +42,7 @@
   html[data-theme="dark"] .tooltip-content {
     background-color: var(--color-ios-tooltip-bg-dark);
     color: var(--color-ios-tooltip-text-dark);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-popover-dark);
   }
 
   /* 툴팁 화살표 */

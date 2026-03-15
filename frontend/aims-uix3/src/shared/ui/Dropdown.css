@@ -62,7 +62,7 @@
 
   .ios-dropdown__trigger:focus {
     border-color: var(--color-primary-500);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: var(--shadow-focus-blue);
   }
 
   /* Disabled 트리거 버튼 스타일 */
@@ -114,7 +114,7 @@
     background-color: var(--color-ios-menu-bg-light); /* CSS 변수 사용 */
     border: 1px solid var(--color-ios-separator-light);
     border-radius: var(--radius-md); /* 통일된 라운딩 */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-popover-light);
     overflow: hidden;
     z-index: 10000; /* 높은 z-index로 다른 요소 위에 표시 */
     max-height: 300px; /* 최대 높이 제한 */
@@ -143,7 +143,7 @@
   html[data-theme="dark"] .ios-dropdown__menu {
     background-color: var(--color-ios-menu-bg-dark); /* CSS 변수 사용 */
     border-color: var(--color-ios-separator-dark);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-popover-dark);
   }
 
   /* 아래로 펼쳐지는 애니메이션 (기본) */

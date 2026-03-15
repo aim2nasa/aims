@@ -454,6 +454,17 @@
     --shadow-progress: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-xl));
     --shadow-badge: 0 2px 6px rgba(0, 0, 0, var(--opacity-dark-overlay));
 
+    /* Popover/Dropdown Shadows (반복 패턴 토큰화) */
+    --shadow-popover-light: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-popover-dark: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-dropdown-light: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-dropdown-dark: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-overlay-light: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-overlay-dark: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-focus-blue: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    --shadow-focus-primary: 0 0 0 2px rgba(0, 122, 255, 0.2);
+
     /* === TRANSITIONS === */
 
     --duration-fast: 150ms;

@@ -284,7 +284,7 @@
     min-width: max-content; /* 칼럼 리사이즈 시 자동 확장 */
     background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
     border-bottom: 1px solid rgba(0, 120, 212, 0.2);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-dropdown-light);
     font-size: var(--font-size-caption-1); /* 12px */
     font-family: var(--font-family-text);
     font-weight: 600;
@@ -300,7 +300,7 @@
     background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
     border-bottom-color: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.7);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-dropdown-dark);
   }
 
   .contract-list-header > div {

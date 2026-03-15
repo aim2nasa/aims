@@ -569,7 +569,7 @@
 
   html[data-theme="dark"] .quick-family-assign-panel__custom-input-field:focus {
     border-color: var(--color-primary-400);
-    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+    box-shadow: var(--shadow-focus-primary);
   }
 
   /* ============================================

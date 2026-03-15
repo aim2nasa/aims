@@ -51,7 +51,7 @@
 
   .usage-guide-view__search-input:focus {
     border-color: var(--color-ios-blue, #007aff);
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+    box-shadow: var(--shadow-focus-primary);
   }
 
   .usage-guide-view__search-input::placeholder {

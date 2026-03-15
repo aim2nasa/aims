@@ -465,7 +465,7 @@
   }
 
   html[data-theme="dark"] .doc-search-right__preview-image {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-dropdown-dark);
   }
 
   /* 정보 영역 (탭 형식) - 컴팩트 */

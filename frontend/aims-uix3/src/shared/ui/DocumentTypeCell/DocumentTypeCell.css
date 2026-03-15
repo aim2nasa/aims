@@ -39,7 +39,7 @@
   .document-type-cell--clickable:focus-visible {
     outline: none;
     border-color: var(--color-ios-blue-light);
-    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+    box-shadow: var(--shadow-focus-primary);
   }
 
   /* 업데이트 중 */
