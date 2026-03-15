@@ -15,7 +15,7 @@
     gap: var(--spacing-3);
     height: 100%;
     padding: var(--spacing-4);
-    overflow: hidden;
+    overflow: visible; /* 검색바 버튼/드롭다운 잘림 방지 (스크롤은 .search-results-section에서 처리) */
   }
 
   /* === 🍎 SEARCH BAR: iOS Spotlight Style - 한 줄 레이아웃 === */

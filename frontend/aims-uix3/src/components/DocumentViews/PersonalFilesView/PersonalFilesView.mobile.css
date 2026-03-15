@@ -29,9 +29,11 @@
       padding: var(--spacing-1);
     }
 
-    /* 검색 입력: 폭 축소 */
+    /* 검색 입력: 유동 폭으로 overflow 방지 */
     .search-input {
-      width: 160px;
+      width: auto;
+      max-width: 160px;
+      min-width: 0;
     }
 
     /* 검색 박스: flex-shrink 허용 */
@@ -40,9 +42,11 @@
       min-width: 120px;
     }
 
-    /* 툴바 액션: 간격 축소 */
+    /* 툴바 액션: 간격 축소 + overflow 방지 */
     .toolbar-actions {
       gap: var(--spacing-2);
+      flex-shrink: 1;
+      min-width: 0;
     }
 
     /* 타입 필터: 스크롤 가능 */

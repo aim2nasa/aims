@@ -153,6 +153,8 @@
     gap: 0;
     flex: 1;
     min-height: 0;
+    min-width: 0; /* flex 자식이 부모를 넘지 않도록 */
+    overflow: hidden; /* 내부 요소(지도 SDK) 오버플로 방지 */
   }
 
   .regional-tree-container {
@@ -172,6 +174,8 @@
     flex: 1;
     position: relative;
     min-height: 0;
+    min-width: 0; /* flex 자식이 부모를 넘지 않도록 */
+    overflow: hidden; /* 지도 SDK 내부 요소 오버플로 방지 */
   }
 
   /* ============================================

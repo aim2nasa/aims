@@ -233,6 +233,9 @@
     .initial-filter-bar {
       gap: var(--spacing-2);
       padding: var(--spacing-1-5) 10px;
+      /* 뷰포트 너비 초과 방지 */
+      max-width: 100%;
+      overflow: hidden;
     }
 
     .initial-filter-bar__initials {
@@ -241,6 +244,8 @@
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       -ms-overflow-style: none;
+      /* flex 자식이 컨텐츠 크기 이하로 축소될 수 있도록 허용 */
+      min-width: 0;
     }
 
     .initial-filter-bar__initials::-webkit-scrollbar {
@@ -288,6 +293,8 @@
       scrollbar-width: none;
       -ms-overflow-style: none;
       gap: var(--spacing-0-5);
+      /* flex 자식이 컨텐츠 크기 이하로 축소될 수 있도록 허용 */
+      min-width: 0;
     }
 
     .initial-filter-bar__initials::-webkit-scrollbar {
