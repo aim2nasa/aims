@@ -85,12 +85,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
           localStorage.setItem('aims-current-user-id', userData._id);
           syncUserIdFromStorage();
         } catch (error) {
-          // 만료/무효 토큰으로 인한 401/403은 정상 흐름 — 에러 로그 노이즈 방지
-          const status = (error as any)?.response?.status;
-          if (status !== 401 && status !== 403) {
-            console.error('Failed to fetch user:', error);
-            errorReporter.reportApiError(error as Error, { component: 'ProtectedRoute.fetchUser' });
-          }
+          // errorReporter.isTransientError가 401/403을 필터링하므로 항상 전달
+          errorReporter.reportApiError(error as Error, { component: 'ProtectedRoute.fetchUser' });
           logout();
           setIsLoading(false);
           return;

@@ -109,14 +109,18 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         if (state?.token) {
           try {
-            const payload = JSON.parse(atob(state.token.split('.')[1]));
+            // JWT는 Base64url 인코딩 — atob()은 표준 Base64만 처리하므로 변환 필요
+            const base64Url = state.token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const payload = JSON.parse(atob(base64));
+            // 클라이언트 최적화 전용 — 실제 보안은 서버 jwt.verify()에 의존
             if (payload.exp && payload.exp * 1000 < Date.now()) {
               state.token = null;
               state.isAuthenticated = false;
               return;
             }
           } catch {
-            // 디코딩 실패 = 잘못된 토큰 → 제거
+            console.warn('[Auth] JWT 디코딩 실패 — 토큰 형식 이상, 제거');
             state.token = null;
             state.isAuthenticated = false;
             return;

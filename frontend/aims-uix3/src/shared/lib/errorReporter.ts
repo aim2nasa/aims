@@ -89,12 +89,16 @@ class ErrorReporter {
   private isProcessing = false;
   private lastReportTime = 0;
   private errorCounts: Map<string, number> = new Map();
+  private recent502Count = 0;
+  private last502ResetTime = 0;
 
   // 설정
   private readonly THROTTLE_MS = 1000; // 에러 간 최소 간격 (1초)
   private readonly MAX_QUEUE_SIZE = 50; // 최대 큐 크기
   private readonly DEDUP_WINDOW_MS = 60000; // 중복 제거 윈도우 (1분)
   private readonly MAX_SAME_ERROR = 5; // 같은 에러 최대 전송 횟수
+  private readonly TRANSIENT_502_WINDOW_MS = 5 * 60 * 1000; // 502 판단 윈도우 (5분)
+  private readonly TRANSIENT_502_THRESHOLD = 3; // 이 횟수 이상이면 실제 장애로 판단
 
   constructor() {
     this.setupGlobalHandlers();
@@ -170,6 +174,9 @@ class ErrorReporter {
       payload?: Record<string, unknown>;
     }
   ) {
+    // 자동 복구되는 에러는 리포트하지 않음 (배포 중 502, SSE 끊김 등)
+    if (this.isTransientError(error)) return;
+
     let category: ErrorCategory = 'api';
     let severity: ErrorSeverity = 'medium';
     let code: string | undefined;
@@ -266,6 +273,43 @@ class ErrorReporter {
         payload: this.sanitizePayload(options?.context)
       }
     });
+  }
+
+  /**
+   * HTTP 상태 코드 추출 (ApiError, AxiosError 모두 대응)
+   */
+  private getHttpStatus(error: Error): number | undefined {
+    if (error instanceof ApiError) return error.status;
+    // AxiosError 호환 (axios를 직접 사용하는 코드에서 발생)
+    const axiosResponse = (error as { response?: { status?: number } }).response;
+    return axiosResponse?.status;
+  }
+
+  /**
+   * 자동 복구 가능한 일시적 에러 판별
+   * 배포 중 502, SSE 연결 끊김, 인증 만료 등 — 리포트 불필요
+   */
+  private isTransientError(error: Error): boolean {
+    const status = this.getHttpStatus(error);
+
+    // 502 Bad Gateway — 배포 중 1~2회는 무시, 5분 내 반복 시 실제 장애로 리포트
+    if (status === 502) {
+      const now = Date.now();
+      if (now - this.last502ResetTime > this.TRANSIENT_502_WINDOW_MS) {
+        this.recent502Count = 0;
+        this.last502ResetTime = now;
+      }
+      this.recent502Count++;
+      return this.recent502Count < this.TRANSIENT_502_THRESHOLD;
+    }
+
+    // SSE 연결 에러 (자동 재연결됨)
+    if (error.message === 'SSE connection error') return true;
+
+    // 인증 만료/무효 (ProtectedRoute에서 logout 처리됨)
+    if (status === 401 || status === 403) return true;
+
+    return false;
   }
 
   /**
