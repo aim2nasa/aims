@@ -18,7 +18,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     padding: var(--spacing-1);
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
@@ -85,7 +85,7 @@
   .file-type-pie-chart__legend {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     width: 100%;
   }
 
@@ -93,7 +93,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-half);
-    padding: 2px 4px;
+    padding: var(--spacing-0-5) var(--spacing-1);
     border-radius: var(--radius-md);
     transition: background-color var(--duration-fast) var(--easing-ease-out);
   }
@@ -136,7 +136,7 @@
     font-weight: var(--font-weight-regular);
     color: var(--color-text-tertiary);
     line-height: 1.4;
-    margin-left: calc(8px + var(--spacing-1)); /* 색상 원 + gap 만큼 들여쓰기 */
+    margin-left: calc(var(--spacing-2) + var(--spacing-1)); /* 색상 원 + gap 만큼 들여쓰기 */
     opacity: 0.9;
   }
 
@@ -171,7 +171,7 @@
   @media (max-width: 480px) {
     .file-type-pie-chart {
       padding: var(--spacing-half, 2px);
-      gap: 2px;
+      gap: var(--spacing-0-5);
     }
 
     .file-type-pie-chart:hover {
@@ -183,7 +183,7 @@
     }
 
     .file-type-pie-chart__legend-item {
-      padding: 1px 2px;
+      padding: 1px var(--spacing-0-5);
     }
 
     .file-type-pie-chart__legend-description {

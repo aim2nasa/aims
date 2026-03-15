@@ -30,7 +30,7 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 6px 12px; /* 여유있는 패딩 */
+    padding: var(--spacing-1-5) var(--spacing-3); /* 여유있는 패딩 */
     min-height: 38px; /* 버튼과 동일한 높이 */
     background-color: transparent;
     border: 1px solid var(--color-ios-separator-light);
@@ -95,7 +95,7 @@
   }
 
   .ios-dropdown__arrow {
-    margin-left: 8px;
+    margin-left: var(--spacing-2);
     /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
     color: var(--color-ios-text-quaternary-light);
     transition: transform var(--duration-ios-quick) var(--easing-ease-out);
@@ -176,7 +176,7 @@
     align-items: center;
     gap: 0;
     width: 100%;
-    padding: 8px 12px;
+    padding: var(--spacing-2) var(--spacing-3);
     background-color: transparent;
     border: none;
     color: var(--color-ios-text-primary-light);

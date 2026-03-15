@@ -93,7 +93,7 @@
 
   .button--sm {
     gap: var(--spacing-1);
-    padding: 4px 12px;
+    padding: var(--spacing-1) var(--spacing-3);
     /* font-size: var(--font-size-sm); () */
     min-height: 1.875rem; /* 44px - iOS 최소 터치 영역 표준 */
     min-width: auto;  /* 44px - iOS 최소 터치 영역 너비 보장 */

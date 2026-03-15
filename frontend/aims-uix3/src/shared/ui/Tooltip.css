@@ -28,7 +28,7 @@
   .tooltip-content {
     background-color: var(--color-ios-tooltip-bg-light);
     color: var(--color-ios-tooltip-text-light);
-    padding: 6px 12px;
+    padding: var(--spacing-1-5) var(--spacing-3);
     border-radius: 6px;
     /* font-size: var(--font-size-caption-1); () */
     /* font-weight: var(--font-weight-medium); () */

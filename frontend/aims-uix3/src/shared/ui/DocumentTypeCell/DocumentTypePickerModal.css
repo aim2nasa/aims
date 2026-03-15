@@ -41,8 +41,8 @@
   .doc-type-popover__search {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 10px 12px;
+    gap: var(--spacing-1-5);
+    padding: 10px var(--spacing-3);
     border-bottom: 1px solid var(--color-ios-separator-light);
   }
 
@@ -89,7 +89,7 @@
     flex: 1;
     overflow-y: auto;
     max-height: 320px;
-    padding: 4px 0;
+    padding: var(--spacing-1) 0;
   }
 
   /* 스크롤바 */
@@ -114,9 +114,9 @@
   .doc-type-popover__cat-header {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     width: 100%;
-    padding: 7px 12px;
+    padding: 7px var(--spacing-3);
     font-size: 12px;
     font-weight: 600;
     font-family: var(--font-family-text);
@@ -192,9 +192,9 @@
   .doc-type-popover__item {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     width: 100%;
-    padding: 6px 14px;
+    padding: var(--spacing-1-5) 14px;
     font-size: 12px;
     font-weight: 400;
     font-family: var(--font-family-text);
@@ -265,7 +265,7 @@
     font-size: 12px;
     font-weight: 600;
     flex-shrink: 0;
-    margin-left: 4px;
+    margin-left: var(--spacing-1);
   }
 
   html[data-theme="dark"] .doc-type-popover__check {
@@ -274,7 +274,7 @@
 
   /* === 검색 결과 없음 === */
   .doc-type-popover__empty {
-    padding: 24px 16px;
+    padding: var(--spacing-6) var(--spacing-4);
     text-align: center;
     font-size: 12px;
     color: var(--color-ios-text-tertiary-light);
@@ -287,8 +287,8 @@
   /* === 하단 액션 바 === */
   .doc-type-popover__actions {
     display: flex;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
     border-top: 1px solid var(--color-ios-separator-light);
     justify-content: flex-end;
   }
@@ -298,7 +298,7 @@
   }
 
   .doc-type-popover__btn-cancel {
-    padding: 5px 12px;
+    padding: 5px var(--spacing-3);
     font-size: 12px;
     font-family: var(--font-family-text);
     font-weight: 400;

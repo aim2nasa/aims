@@ -4,7 +4,7 @@
   font-size: 8px;
   font-family: var(--font-family-text);
   font-weight: 600;
-  margin-left: 2px;
+  margin-left: var(--spacing-0-5);
   color: var(--color-sort-indicator-active);
   line-height: 1;
   vertical-align: middle;

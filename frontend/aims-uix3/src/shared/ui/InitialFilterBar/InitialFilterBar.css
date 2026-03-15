@@ -32,7 +32,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     min-width: clamp(36px, 3.33vw, 48px);
     height: clamp(22px, 1.94vw, 28px);
     padding: 0 clamp(4px, 0.56vw, 8px);
@@ -175,8 +175,8 @@
   .initial-filter-bar__selected {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 8px 4px 12px;
+    gap: var(--spacing-1-5);
+    padding: var(--spacing-1) var(--spacing-2) var(--spacing-1) var(--spacing-3);
     background: rgba(0, 122, 255, 0.1);
     border: 1px solid var(--color-primary-500, #007aff);
     border-radius: 16px;
@@ -231,8 +231,8 @@
   /* === 모바일 반응형 (768px 이하): 수평 스크롤 === */
   @media (max-width: 768px) {
     .initial-filter-bar {
-      gap: 8px;
-      padding: 6px 10px;
+      gap: var(--spacing-2);
+      padding: var(--spacing-1-5) 10px;
     }
 
     .initial-filter-bar__initials {
@@ -250,7 +250,7 @@
     .initial-filter-bar__type-toggle {
       min-width: 44px;
       height: 36px;
-      padding: 0 8px;
+      padding: 0 var(--spacing-2);
       font-size: var(--font-size-caption-1); /* 13px */
     }
 
@@ -262,7 +262,7 @@
     }
 
     .initial-filter-bar__selected {
-      padding: 4px 8px 4px 10px;
+      padding: var(--spacing-1) var(--spacing-2) var(--spacing-1) 10px;
       height: 36px;
     }
 
@@ -275,8 +275,8 @@
      그리드 2줄 → 1줄 수평 스크롤로 변경. 공간 절약 + 직관적 UX */
   @media (max-width: 480px) {
     .initial-filter-bar {
-      gap: 4px;
-      padding: 4px 6px;
+      gap: var(--spacing-1);
+      padding: var(--spacing-1) var(--spacing-1-5);
       align-items: center;
     }
 
@@ -287,7 +287,7 @@
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       -ms-overflow-style: none;
-      gap: 2px;
+      gap: var(--spacing-0-5);
     }
 
     .initial-filter-bar__initials::-webkit-scrollbar {
@@ -298,7 +298,7 @@
       min-width: 26px;
       height: 26px;
       font-size: 10px;
-      padding: 0 3px;
+      padding: 0 var(--spacing-0-75);
       flex-shrink: 0;
       border-radius: 3px;
     }
@@ -306,7 +306,7 @@
     .initial-filter-bar__type-toggle {
       min-width: 36px;
       height: 26px;
-      padding: 0 4px;
+      padding: 0 var(--spacing-1);
     }
 
     .initial-filter-bar__type-label {
@@ -320,7 +320,7 @@
 
     .initial-filter-bar__selected {
       height: auto;
-      padding: 3px 6px 3px 8px;
+      padding: var(--spacing-0-75) var(--spacing-1-5) var(--spacing-0-75) var(--spacing-2);
       flex-shrink: 0;
     }
 
@@ -335,29 +335,29 @@
      영문+숫자는 2줄 */
   @media (max-height: 500px) and (min-width: 481px) {
     .initial-filter-bar {
-      gap: 6px;
-      padding: 4px 8px;
+      gap: var(--spacing-1-5);
+      padding: var(--spacing-1) var(--spacing-2);
       align-items: flex-start;
     }
 
     .initial-filter-bar__initials {
       flex-wrap: wrap;
       overflow-x: visible;
-      gap: 2px;
+      gap: var(--spacing-0-5);
     }
 
     .initial-filter-bar__initial {
       min-width: 26px;
       height: 26px;
       font-size: 11px;
-      padding: 0 3px;
+      padding: 0 var(--spacing-0-75);
       flex-shrink: 0;
     }
 
     .initial-filter-bar__type-toggle {
       min-width: 40px;
       height: 26px;
-      padding: 0 6px;
+      padding: 0 var(--spacing-1-5);
     }
 
     .initial-filter-bar__type-label {
@@ -371,7 +371,7 @@
 
     .initial-filter-bar__selected {
       height: auto;
-      padding: 3px 6px 3px 8px;
+      padding: var(--spacing-0-75) var(--spacing-1-5) var(--spacing-0-75) var(--spacing-2);
     }
 
     .initial-filter-bar__selected-label {

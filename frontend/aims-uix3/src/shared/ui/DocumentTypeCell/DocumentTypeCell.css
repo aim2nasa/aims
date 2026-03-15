@@ -10,7 +10,7 @@
     display: block;
     width: 100%;
     height: 22px;
-    padding: 0 6px;
+    padding: 0 var(--spacing-1-5);
     font-size: var(--font-size-caption-2);
     font-family: var(--font-family-text);
     font-weight: 400;
@@ -65,7 +65,7 @@
     display: block;
     width: 100%;
     height: 22px;
-    padding: 0 6px;
+    padding: 0 var(--spacing-1-5);
     font-size: var(--font-size-caption-2);
     font-family: var(--font-family-text);
     font-weight: 400;

@@ -172,7 +172,7 @@
   /* Portal로 <body>에 렌더링되므로 미디어쿼리로만 타겟팅 가능 */
   @media (orientation: landscape) and (max-height: 600px) {
     .modal-backdrop {
-      padding: 4px;
+      padding: var(--spacing-1);
     }
 
     .modal--sheet {

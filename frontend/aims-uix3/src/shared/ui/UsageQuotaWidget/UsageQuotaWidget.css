@@ -9,8 +9,8 @@
   .usage-widget-container {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 6px;
+    gap: var(--spacing-1-5);
+    padding: var(--spacing-1) var(--spacing-1-5);
     background: transparent;
     border: none;
     border-radius: var(--radius-sm);
@@ -124,8 +124,8 @@
   /* 📱 iPad/소형 PC (1024px-1366px) */
   @media (min-width: 1024px) and (max-width: 1366px) {
     .usage-widget-container {
-      gap: 4px;
-      padding: 2px 4px;
+      gap: var(--spacing-1);
+      padding: var(--spacing-0-5) var(--spacing-1);
     }
 
     .usage-pie--loading {

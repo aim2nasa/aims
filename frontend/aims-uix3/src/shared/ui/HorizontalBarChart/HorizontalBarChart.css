@@ -52,7 +52,7 @@
   .horizontal-bar-chart__bars {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: var(--spacing-0-75);
   }
 
   .horizontal-bar-chart__bar-item {
@@ -136,7 +136,7 @@
     .horizontal-bar-chart__bar-item {
       flex-direction: column;
       align-items: stretch;
-      gap: 2px;
+      gap: var(--spacing-0-5);
     }
 
     .horizontal-bar-chart__bar-label {

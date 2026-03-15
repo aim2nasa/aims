@@ -87,7 +87,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     padding: var(--spacing-2) var(--spacing-3);
     background: transparent;
     border: none;
@@ -122,7 +122,7 @@
   .customer-selector-modal__initials {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--spacing-1);
     margin-bottom: var(--spacing-3);
     padding: var(--spacing-2);
     background: var(--color-bg-secondary);
@@ -134,7 +134,7 @@
   .customer-selector-modal__initial-type-toggle {
     min-width: 42px;
     height: 28px;
-    padding: 0 6px;
+    padding: 0 var(--spacing-1-5);
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border-primary);
     border-radius: var(--border-radius-sm);
@@ -143,8 +143,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    margin-right: 4px;
+    gap: var(--spacing-0-75);
+    margin-right: var(--spacing-1);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   }
 
@@ -231,7 +231,7 @@
     align-items: center;
     gap: var(--spacing-1);
     margin-left: auto;
-    padding: 4px var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-2);
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border-primary);
     border-radius: var(--border-radius-sm);
@@ -274,7 +274,7 @@
     align-items: center;
     justify-content: center;
     padding: 0;
-    margin-left: 2px;
+    margin-left: var(--spacing-0-5);
     background: transparent;
     border: none;
     color: var(--color-text-secondary);
@@ -323,7 +323,7 @@
   .customer-selector-modal__table-header > div {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -358,8 +358,8 @@
     user-select: none;
     transition: all var(--duration-fast) var(--easing-ease-out);
     border-radius: var(--border-radius-sm);
-    padding: 4px;
-    margin: -4px;
+    padding: var(--spacing-1);
+    margin: calc(-1 * var(--spacing-1));
   }
 
   .customer-selector-modal__table-header > div.sortable:hover {
@@ -508,7 +508,7 @@
   .cell-name {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     font-weight: var(--font-weight-regular);
   }
 
@@ -524,7 +524,7 @@
   .cell-phone {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     color: var(--color-text-primary);
   }
 
@@ -532,7 +532,7 @@
   .cell-address {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     color: var(--color-text-secondary);
     font-size: var(--font-size-xs);
   }
@@ -610,7 +610,7 @@
       overflow-x: visible;
       padding: var(--spacing-1) var(--spacing-2);
       margin-bottom: var(--spacing-2);
-      gap: 3px;
+      gap: var(--spacing-0-75);
     }
 
     /* 초성 버튼: 그리드 셀 채우기 */
@@ -677,7 +677,7 @@
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       padding: var(--spacing-1);
-      gap: 2px;
+      gap: var(--spacing-0-5);
       margin-bottom: var(--spacing-1);
     }
 
