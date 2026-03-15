@@ -16,12 +16,12 @@
 
     /* 가이드 토글: 터치 친화적 패딩 */
     .registration-guide__toggle {
-      padding: 14px 12px 0 12px;
+      padding: 14px var(--spacing-3) 0 var(--spacing-3);
     }
 
     /* 가이드 콘텐츠: 좌우 패딩 축소 */
     .registration-guide .guide-content {
-      padding: 0 12px 12px;
+      padding: 0 var(--spacing-3) var(--spacing-3);
     }
 
     /* 가이드 스텝 1번: 고정 폭 해제 (세로 배치에서 불필요) */
@@ -37,7 +37,7 @@
     /* 문서 유형 선택: max-width 해제 + 패딩 축소 */
     .document-type-selection {
       max-width: 100%;
-      padding: 12px 0;
+      padding: var(--spacing-3) 0;
     }
 
     /* 문서 유형 카드: 터치 타겟 44px 확보 (padding은 기존 480px CSS에서 처리) */
@@ -53,7 +53,7 @@
     /* 처리 상태 버튼: 터치 친화적 크기 */
     .view-status-button {
       min-height: 44px;
-      padding: 10px 16px;
+      padding: 10px var(--spacing-4);
     }
 
     /* 리셋 버튼 컨테이너: max-width 해제 */
@@ -89,23 +89,23 @@
 
     /* 가이드 콘텐츠: 좌우 패딩 더 축소 */
     .registration-guide .guide-content {
-      padding: 0 8px 10px;
-      gap: 8px;
+      padding: 0 var(--spacing-2) 10px;
+      gap: var(--spacing-2);
     }
 
     /* 가이드 토글: 패딩 더 축소 */
     .registration-guide__toggle {
-      padding: 10px 8px 0 8px;
+      padding: 10px var(--spacing-2) 0 var(--spacing-2);
     }
 
     /* 고객 정보 콘텐츠: 패딩 축소 */
     .customer-info-content {
-      padding: 0 8px 12px;
+      padding: 0 var(--spacing-2) var(--spacing-3);
     }
 
     /* 문서 유형 선택: 패딩 축소 */
     .document-type-selection {
-      padding: 8px 0;
+      padding: var(--spacing-2) 0;
     }
 
     /* 처리 상태 버튼: 세로 배치 + 전폭 */
@@ -127,8 +127,8 @@
     /* AR 경고 토스트: 더 컴팩트 */
     .no-ar-warning {
       top: 52px;
-      padding: 8px 14px;
-      gap: 6px;
+      padding: var(--spacing-2) 14px;
+      gap: var(--spacing-1-5);
     }
 
     .no-ar-warning__message {

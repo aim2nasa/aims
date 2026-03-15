@@ -25,7 +25,7 @@
     align-items: center;
     justify-content: center;
     min-width: 32px;
-    margin-right: 12px;
+    margin-right: var(--spacing-3);
   }
 
   .row-index {
@@ -49,8 +49,8 @@
   .row-title-wrapper {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 2px;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-0-5);
   }
 
   /* 🍎 파일 타입 아이콘 */
@@ -150,8 +150,8 @@
   .row-trailing {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-left: 12px;
+    gap: var(--spacing-2);
+    margin-left: var(--spacing-3);
     flex-shrink: 0;
   }
 
@@ -165,7 +165,7 @@
     justify-content: center;
     min-width: 80px;
     max-width: 120px;
-    margin-right: 8px;
+    margin-right: var(--spacing-2);
   }
 
   .search-customer .customer-name {
@@ -193,8 +193,8 @@
   .search-customer .customer-name-button {
     background: transparent;
     border: none;
-    padding: 4px 8px;
-    margin: -4px -8px;
+    padding: var(--spacing-1) var(--spacing-2);
+    margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-2));
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease-out;
@@ -372,7 +372,7 @@
     white-space: nowrap;
     cursor: help;
     transition: all var(--duration-ios-quick) var(--easing-ease-out);
-    padding: 3px 6px;
+    padding: var(--spacing-0-75) var(--spacing-1-5);
     border-radius: 6px;
   }
 
@@ -477,8 +477,8 @@
   .search-hover-actions {
     display: none;
     align-items: center;
-    gap: 2px;
-    margin-left: 4px;
+    gap: var(--spacing-0-5);
+    margin-left: var(--spacing-1);
     flex-shrink: 0;
   }
 

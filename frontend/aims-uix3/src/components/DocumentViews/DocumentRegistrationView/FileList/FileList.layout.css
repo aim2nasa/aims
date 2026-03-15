@@ -18,9 +18,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0 4px 0;
+    padding: var(--spacing-2) 0 var(--spacing-1) 0;
     border-bottom: 1px solid var(--color-ios-separator-subtle-light);
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-2);
   }
 
   html[data-theme="dark"] .file-list__header {
@@ -30,7 +30,7 @@
   .file-list__header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   .file-list__title {
@@ -65,16 +65,16 @@
   /* 🍎 STATS: Minimal badges */
   .file-list__stats {
     display: flex;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   .file-list__stat {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: var(--spacing-0-75);
     /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
     font-weight: 400;
-    padding: 2px 6px;
+    padding: var(--spacing-0-5) var(--spacing-1-5);
     border-radius: 4px;
     background: var(--color-overlay-dark);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -175,8 +175,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 12px;
-    margin: 8px 0;
+    padding: var(--spacing-1-5) var(--spacing-3);
+    margin: var(--spacing-2) 0;
     background: var(--color-hover-light);
     border: 1px solid var(--color-active-light);
     border-radius: 8px;
@@ -202,8 +202,8 @@
   .file-list__show-all {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 6px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-0-5) var(--spacing-1-5);
     background: none;
     border: none;
     color: var(--color-ios-error-button-light);
@@ -250,8 +250,8 @@
   .file-list__clear {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1) var(--spacing-2);
     background: none;
     border: none;
     border-radius: 4px;
@@ -293,7 +293,7 @@
     background: var(--color-upload-progress-bg-light);
     border-radius: 1px;
     overflow: hidden;
-    margin-top: 8px;
+    margin-top: var(--spacing-2);
     position: relative;
   }
 
@@ -319,8 +319,8 @@
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 4px;
-    margin-top: 3px;
+    gap: var(--spacing-1);
+    margin-top: var(--spacing-0-75);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     opacity: 0.8;
     transition: opacity var(--duration-fast) var(--easing-ease-out);
@@ -338,7 +338,7 @@
   .file-list__items {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   /* 🍎 APPLE COMPACT GRID: One-line layout like iOS/macOS table view */
@@ -350,10 +350,10 @@
       80px           /* 크기 고정 */
       70px           /* 시간 고정 */
       32px;          /* 상태 고정 */
-    gap: 12px;
+    gap: var(--spacing-3);
     align-items: center;
     height: 32px;
-    padding: 6px 12px;
+    padding: var(--spacing-1-5) var(--spacing-3);
     background: var(--color-ios-empty-dark);
     border-radius: 4px;
     cursor: default;

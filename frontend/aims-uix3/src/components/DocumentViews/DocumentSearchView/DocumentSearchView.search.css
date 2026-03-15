@@ -12,9 +12,9 @@
   .document-search-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--spacing-3);
     height: 100%;
-    padding: 16px;
+    padding: var(--spacing-4);
     overflow: hidden;
   }
 
@@ -24,7 +24,7 @@
     display: flex;
     align-items: center;
     justify-content: center; /* 중앙 정렬 */
-    gap: 8px;
+    gap: var(--spacing-2);
     flex-wrap: nowrap; /* 한 줄 유지 */
     overflow: visible; /* 드롭다운이 잘리지 않도록 */
     position: relative;
@@ -51,7 +51,7 @@
     min-width: 200px; /* ✅ 변경 가능: 최소 너비 보장 */
     background-color: transparent;  /* ❌ 표준: 투명 */
     border-radius: 10px;
-    padding: 0 8px; /* 검색 바 컴포넌트 높이 통일을 위해 vertical padding 제거 */
+    padding: 0 var(--spacing-2); /* 검색 바 컴포넌트 높이 통일을 위해 vertical padding 제거 */
     transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
     overflow: visible; /* ❌ 표준: 드롭다운이 잘리지 않도록 */
   }
@@ -114,7 +114,7 @@
     font-weight: 400;
     color: var(--color-ios-text-primary-light);  /* ❌ 표준: CSS 변수 */
     outline: none;
-    padding: 4px 8px 4px 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
+    padding: var(--spacing-1) var(--spacing-2) var(--spacing-1) 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
     transition: border-color 0.2s ease-out;
     box-sizing: border-box;
   }
@@ -138,7 +138,7 @@
     position: absolute;
     right: 16px;
     top: 50%;
-    margin-top: -8px; /* height의 절반 (16px / 2) */
+    margin-top: calc(-1 * var(--spacing-2)); /* height의 절반 (var(--spacing-4) / 2) */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -184,8 +184,8 @@
   /* Full Text 보기 버튼 - Progressive Disclosure */
   .fulltext-button {
     flex-shrink: 0;
-    padding: 4px 8px;
-    margin-right: 8px;
+    padding: var(--spacing-1) var(--spacing-2);
+    margin-right: var(--spacing-2);
     border: none;
     background-color: transparent;
     color: var(--color-ios-text-tertiary-light);
@@ -299,7 +299,7 @@
   /* === 🍎 Dropdown 높이 오버라이드: 다른 페이지와 일관된 컨트롤 높이 === */
   .document-search-container .ios-dropdown__trigger {
     min-height: 30px;
-    padding: 4px 12px;
+    padding: var(--spacing-1) var(--spacing-3);
   }
 
   /* === 🍎 ERROR MESSAGE: iOS Alert Style === */
@@ -307,8 +307,8 @@
   .search-error {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3);
     background-color: var(--color-ios-error-bg-light);
     color: var(--color-ios-error-text-light);
     border-left: 3px solid var(--color-ios-error-border-light);
@@ -330,9 +330,9 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--spacing-4);
     overflow-y: auto;
-    padding: 4px 0;
+    padding: var(--spacing-1) 0;
   }
 
   /* 🍎 유사도 점수 범례 - iOS 서브틀 스타일 */
@@ -340,12 +340,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-3);
     background-color: var(--color-ios-bg-secondary-light);
     border-radius: 8px;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-2);
   }
 
   html[data-theme="dark"] .similarity-legend {
@@ -366,14 +366,14 @@
 
   .legend-items {
     display: flex;
-    gap: 16px;
+    gap: var(--spacing-4);
     flex-wrap: wrap;
   }
 
   .legend-item {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .legend-icon {
@@ -399,8 +399,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    padding: 48px var(--spacing-6) 24px;
+    gap: var(--spacing-4);
+    padding: 48px var(--spacing-6) var(--spacing-6);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     animation: searchLoadingFadeIn 0.4s ease-out;
   }

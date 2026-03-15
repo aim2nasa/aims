@@ -32,7 +32,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: var(--spacing-3) var(--spacing-4);
     border-bottom: 1px solid var(--color-border);
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.02));
     flex-shrink: 0;
@@ -45,7 +45,7 @@
   .quick-family-assign-panel__title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
     font-family: var(--font-family-text);
     font-weight: 600;
@@ -85,11 +85,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 16px;
+    padding: 10px var(--spacing-4);
     background: var(--color-accent-light);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   .quick-family-assign-panel__customer-info {
@@ -106,7 +106,7 @@
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-1);
   }
 
   .quick-family-assign-panel__customer-name {
@@ -120,15 +120,15 @@
   /* 역할 선택 버튼 */
   .quick-family-assign-panel__role-selector {
     display: flex;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     flex-shrink: 0;
   }
 
   .quick-family-assign-panel__role-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 10px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1-5) 10px;
     border: 1px solid var(--color-border);
     border-radius: 6px;
     background: var(--color-bg-primary);
@@ -161,8 +161,8 @@
   .quick-family-assign-panel__mode-guide {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-4);
     background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
     border-bottom: 1px solid var(--color-border);
     font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
@@ -182,7 +182,7 @@
 
   /* 에러 메시지 */
   .quick-family-assign-panel__error {
-    padding: 10px 16px;
+    padding: 10px var(--spacing-4);
     font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
     font-family: var(--font-family-text);
     color: var(--color-status-error); /* 테마별 에러 색상 */
@@ -193,7 +193,7 @@
 
   /* 검색 */
   .quick-family-assign-panel__search {
-    padding: 10px 16px;
+    padding: 10px var(--spacing-4);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
   }
@@ -213,7 +213,7 @@
 
   .quick-family-assign-panel__search-input {
     width: 100%;
-    padding: 8px 32px 8px 32px;
+    padding: var(--spacing-2) 32px var(--spacing-2) 32px;
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 입력 */
     font-family: var(--font-family-text);
     border: 1px solid var(--color-border);
@@ -260,8 +260,8 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 4px;
-    padding: 8px 16px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-2) var(--spacing-4);
     border-bottom: 1px solid var(--color-border);
     background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
     flex-shrink: 0;
@@ -270,8 +270,8 @@
   .quick-family-assign-panel__initial-type-toggle {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1) var(--spacing-2);
     border: 1px solid var(--color-border);
     border-radius: 6px;
     background: var(--color-bg-primary);
@@ -280,7 +280,7 @@
     font-family: var(--font-family-text);
     color: var(--color-text-secondary);
     transition: all 0.15s ease;
-    margin-right: 4px;
+    margin-right: var(--spacing-1);
   }
 
   .quick-family-assign-panel__initial-type-toggle:hover {
@@ -299,7 +299,7 @@
   .quick-family-assign-panel__initial {
     min-width: 24px;
     height: 24px;
-    padding: 0 4px;
+    padding: 0 var(--spacing-1);
     border: none;
     border-radius: 4px;
     background: transparent;
@@ -328,7 +328,7 @@
     width: 24px;
     height: 24px;
     padding: 0;
-    margin-left: 4px;
+    margin-left: var(--spacing-1);
     border: none;
     background: transparent;
     cursor: pointer;
@@ -352,7 +352,7 @@
 
   .quick-family-assign-panel__loading,
   .quick-family-assign-panel__empty {
-    padding: 32px 16px;
+    padding: 32px var(--spacing-4);
     text-align: center;
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
     font-family: var(--font-family-text);
@@ -363,8 +363,8 @@
   .quick-family-assign-panel__table-header {
     display: grid;
     grid-template-columns: 80px 80px 35px 110px 1fr;
-    gap: 8px;
-    padding: 8px 16px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-4);
     background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
@@ -373,7 +373,7 @@
   .quick-family-assign-panel__table-header > div {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
     font-family: var(--font-family-text);
     font-weight: 600;
@@ -404,8 +404,8 @@
   .quick-family-assign-panel__table-row {
     display: grid;
     grid-template-columns: 80px 80px 35px 110px 1fr;
-    gap: 8px;
-    padding: 10px 16px;
+    gap: var(--spacing-2);
+    padding: 10px var(--spacing-4);
     cursor: pointer;
     border-bottom: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.05));
     transition: background-color 0.1s ease;
@@ -442,7 +442,7 @@
 
   /* 테이블 푸터 */
   .quick-family-assign-panel__table-footer {
-    padding: 8px 16px;
+    padding: var(--spacing-2) var(--spacing-4);
     font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
     font-family: var(--font-family-text);
     color: var(--color-text-secondary);
@@ -454,7 +454,7 @@
 
   /* 관계 유형 선택 섹션 */
   .quick-family-assign-panel__relationship-section {
-    padding: 12px 16px;
+    padding: var(--spacing-3) var(--spacing-4);
     border-top: 1px solid var(--color-border);
     background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
     flex-shrink: 0;
@@ -462,8 +462,8 @@
 
   .quick-family-assign-panel__type-buttons {
     display: flex;
-    gap: 8px;
-    margin-top: 8px;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-2);
   }
 
   .quick-family-assign-panel__type-btn {
@@ -471,8 +471,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 10px 12px;
+    gap: var(--spacing-1-5);
+    padding: 10px var(--spacing-3);
     border: 1px solid var(--color-border);
     border-radius: 8px;
     background: var(--color-bg-primary);
@@ -511,8 +511,8 @@
   .quick-family-assign-panel__actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3) var(--spacing-4);
     border-top: 1px solid var(--color-border);
     background: linear-gradient(to top, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.02));
     flex-shrink: 0;
@@ -546,7 +546,7 @@
 
   .quick-family-assign-panel__custom-input-field {
     width: 100%;
-    padding: 8px 12px;
+    padding: var(--spacing-2) var(--spacing-3);
     font-size: var(--font-size-caption-1);
     font-family: var(--font-family-text);
     border: 1px solid var(--color-border);

@@ -25,7 +25,7 @@
   }
 
   .customer-selection-modal__description {
-    margin: 0 0 16px 0;
+    margin: 0 0 var(--spacing-4) 0;
     padding: var(--spacing-md) var(--spacing-lg);
     background-color: var(--color-bg-secondary);
     border-radius: var(--radius-md);
@@ -170,7 +170,7 @@
   .customer-selection-modal__new-badge {
     display: inline-block;
     margin-left: var(--spacing-xs);
-    padding: 1px 4px;
+    padding: 1px var(--spacing-1);
     background-color: var(--color-success-500);
     border-radius: var(--radius-xs);
     font-size: 9px;

@@ -208,7 +208,7 @@
   .excel-refiner__td--checkbox {
     width: 32px;
     text-align: center;
-    padding: 4px var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-2);
     line-height: 1.2;
   }
 

@@ -27,7 +27,7 @@
     gap: var(--docs-container-gap);
     height: 100%;
     overflow: hidden;
-    padding: 0 16px 16px 16px; /* 좌우/하단 패딩 */
+    padding: 0 var(--spacing-4) var(--spacing-4) var(--spacing-4); /* 좌우/하단 패딩 */
   }
 
   /* 🍎 DocumentLibraryView와 수직 레이아웃 맞춤 - 컴팩트 헤더 */
@@ -35,7 +35,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 4px;
+    gap: var(--spacing-1);
     flex-shrink: 0;
     font-size: 10px;
     padding: 0;
@@ -103,7 +103,7 @@
   /* === 🍎 리스트 컨테이너 - 탭 고유 속성 === */
   /* 공통 스타일: tab-table.css (.tab-table__scroll) */
   .customer-documents__list-container {
-    gap: 2px;
+    gap: var(--spacing-0-5);
     margin-top: var(--docs-list-margin-top);
     width: 100%;
   }
@@ -158,13 +158,13 @@
     white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .header-filename__sort-area {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     cursor: pointer;
     min-width: 0;
   }
@@ -260,7 +260,7 @@
   .status-filename {
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: var(--spacing-1);
     color: var(--color-text-primary);
     font-weight: 600;
     min-width: 0; /* flex/grid item 텍스트 오버플로우 처리 */
@@ -301,8 +301,8 @@
     justify-content: center;
     gap: 1px;
     flex-shrink: 0;
-    padding: 2px 4px;
-    margin-left: 6px;
+    padding: var(--spacing-0-5) var(--spacing-1);
+    margin-left: var(--spacing-1-5);
     border-radius: 3px;
     font-weight: 600;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -357,8 +357,8 @@
     gap: var(--spacing-2);
     flex-shrink: 0;
     padding: 0;
-    margin-top: 2px;
-    margin-bottom: 2px;
+    margin-top: var(--spacing-0-5);
+    margin-bottom: var(--spacing-0-5);
   }
 
   .document-category-filter {
@@ -378,14 +378,14 @@
 
   /* 카테고리 필터 드롭다운 — 컴팩트 + 테두리 */
   .document-category-filter .ios-dropdown__trigger {
-    padding: 0 8px;
+    padding: 0 var(--spacing-2);
     min-height: unset;
     height: 22px;
     min-width: 72px;
     font-size: 10px;
     border: 1px solid var(--color-border-primary);
     border-radius: 6px;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     background: transparent;
     color: var(--color-text-secondary);
   }
@@ -415,7 +415,7 @@
   }
 
   .document-category-filter .ios-dropdown__option {
-    padding: 4px 10px;
+    padding: var(--spacing-1) 10px;
     font-size: 10px;
     white-space: nowrap;
   }
@@ -427,8 +427,8 @@
   .document-expand-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 0 10px 0 8px;
+    gap: var(--spacing-1);
+    padding: 0 10px 0 var(--spacing-2);
     height: 24px;
     border: none;
     border-radius: 6px;
@@ -462,8 +462,8 @@
   .status-filename-hover-actions {
     display: none;
     align-items: center;
-    gap: 2px;
-    margin-left: 4px;
+    gap: var(--spacing-0-5);
+    margin-left: var(--spacing-1);
     flex-shrink: 0;
   }
 

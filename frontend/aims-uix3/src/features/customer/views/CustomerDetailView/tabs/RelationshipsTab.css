@@ -14,7 +14,7 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   /* ==================== 상태 표시 (로딩/에러/빈) ==================== */
@@ -25,7 +25,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: 8px;
+    gap: var(--spacing-2);
     color: var(--color-text-secondary);
     text-align: center;
     padding: 20px;
@@ -245,13 +245,13 @@
   .relationships-table__header-content {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .relationships-table__count-badge {
     min-width: 16px;
     height: 16px;
-    padding: 0 4px;
+    padding: 0 var(--spacing-1);
     border-radius: 8px;
     background: var(--color-primary-100);
     color: var(--color-primary-700);
@@ -260,7 +260,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-left: 2px;
+    margin-left: var(--spacing-0-5);
   }
 
   [data-theme="dark"] .relationships-table__count-badge {
@@ -365,7 +365,7 @@
     height: var(--row-height);
     padding: 0 10px;
     font-size: var(--font-body);
-    gap: 6px;
+    gap: var(--spacing-1-5);
     flex-direction: row;
   }
 

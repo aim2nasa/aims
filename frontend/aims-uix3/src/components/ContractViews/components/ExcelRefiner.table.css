@@ -40,13 +40,13 @@
 
   /* 테이블 헤더 */
   .excel-refiner__th {
-    padding: 4px var(--spacing-3);
+    padding: var(--spacing-1) var(--spacing-3);
     line-height: 1.2;
   }
 
   /* 테이블 데이터 셀 */
   .excel-refiner__td {
-    padding: 4px var(--spacing-3);
+    padding: var(--spacing-1) var(--spacing-3);
     line-height: 1.2;
   }
 
@@ -122,7 +122,7 @@
     background: var(--color-error-500);
     color: var(--color-badge-text);
     font-size: 9px;
-    padding: 1px 4px;
+    padding: 1px var(--spacing-1);
     border-radius: 3px;
     font-weight: 600;
   }
@@ -161,7 +161,7 @@
     background: var(--color-neutral-500);
     color: var(--color-badge-text);
     font-size: 9px;
-    padding: 1px 4px;
+    padding: 1px var(--spacing-1);
     border-radius: 3px;
     font-weight: 600;
   }

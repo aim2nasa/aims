@@ -67,9 +67,9 @@
   .customer-document-preview__conversion-badge {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: var(--spacing-0-75);
     margin-top: var(--spacing-1);
-    padding: 2px 6px;
+    padding: var(--spacing-0-5) var(--spacing-1-5);
     background-color: var(--color-accent-blue-subtle);
     color: var(--color-accent-blue);
     border-radius: 4px;
@@ -267,7 +267,7 @@
   }
 
   .customer-document-preview__type-dropdown {
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     font-size: var(--font-size-caption-1);
     font-family: var(--font-family-text);
     color: var(--color-text-primary);
@@ -303,7 +303,7 @@
   .customer-document-preview__auto-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 6px;
+    padding: var(--spacing-0-5) var(--spacing-1-5);
     font-size: 10px;
     font-weight: var(--font-weight-medium);
     color: var(--color-accent-green);

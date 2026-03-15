@@ -97,7 +97,7 @@
     font-weight: 600;
     color: var(--color-text-tertiary);
     background: var(--color-bg-tertiary);
-    padding: 2px 8px;
+    padding: var(--spacing-0-5) var(--spacing-2);
     border-radius: 10px;
     margin-left: auto;
     margin-right: var(--spacing-2);

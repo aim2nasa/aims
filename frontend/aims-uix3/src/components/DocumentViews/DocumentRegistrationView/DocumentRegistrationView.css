@@ -13,7 +13,7 @@
   .document-registration-content {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm); /* 8px - 컴팩트한 간격 */
+    gap: var(--spacing-sm); /* var(--spacing-2) - 컴팩트한 간격 */
     height: 100%;
     min-height: 0; /* ✅ flexbox 스크롤 활성화 필수 */
     /* overflow는 설정하지 않음 - 자식 요소가 자체 스크롤 처리 */
@@ -57,7 +57,7 @@
     max-width: 1000px; /* 설명 텍스트 줄바꿈 최소화 */
     margin-left: auto;
     margin-right: auto;
-    margin-bottom: -6px; /* 간격 대폭 축소 */
+    margin-bottom: calc(-1 * var(--spacing-1-5)); /* 간격 대폭 축소 */
     overflow: hidden;
   }
 
@@ -68,7 +68,7 @@
   /* 가이드 토글 버튼 */
   .registration-guide__toggle {
     width: 100%;
-    padding: 12px 16px 0 16px; /* 하단 패딩 완전 제거 */
+    padding: var(--spacing-3) var(--spacing-4) 0 var(--spacing-4); /* 하단 패딩 완전 제거 */
     background: transparent;
     border: none;
     cursor: pointer;
@@ -102,8 +102,8 @@
 
   /* 펼쳐진 상태: 하단 구분선 표시 */
   .registration-guide--expanded .guide-header {
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+    margin-bottom: var(--spacing-4);
+    padding-bottom: var(--spacing-3);
     border-bottom: 1px solid var(--color-ios-separator-light);
   }
 
@@ -160,22 +160,22 @@
   .registration-guide .guide-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--spacing-3);
     align-items: center;
-    padding: 0 16px 16px;
+    padding: 0 var(--spacing-4) var(--spacing-4);
   }
 
   .registration-guide .guide-section {
     display: flex;
     flex-direction: row;
-    gap: 24px;
+    gap: var(--spacing-6);
     max-width: 100%;
     width: 100%;
   }
 
   .registration-guide .guide-step {
     display: flex;
-    gap: 12px;
+    gap: var(--spacing-3);
     align-items: flex-start;
   }
 
@@ -219,7 +219,7 @@
   }
 
   .registration-guide .step-title {
-    margin: 0 0 4px;
+    margin: 0 0 var(--spacing-1);
     font-family: var(--font-family-display);
     font-size: var(--font-size-footnote);
     font-weight: 600;
@@ -232,7 +232,7 @@
   }
 
   .registration-guide .step-description {
-    margin: 2px 0;
+    margin: var(--spacing-0-5) 0;
     font-family: var(--font-family-text);
     font-size: var(--font-size-caption-1);
     font-weight: 400;
@@ -260,7 +260,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px;
+    padding: var(--spacing-1-5);
     background: transparent;
     border: none;
     border-radius: 6px;
@@ -323,8 +323,8 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 12px;
-    padding-bottom: 12px;
+    margin-bottom: var(--spacing-3);
+    padding-bottom: var(--spacing-3);
     border-bottom: 1px solid var(--color-ios-separator-light);
   }
 
@@ -337,13 +337,13 @@
     font-size: var(--font-size-caption-1);
     font-weight: 400;
     color: var(--color-ios-red);
-    margin-left: 2px;
+    margin-left: var(--spacing-0-5);
   }
 
   /* 고객 정보 토글 버튼 (레거시 - 하위 호환용) */
   .customer-info-section__toggle {
     width: 100%;
-    padding: 12px 16px; /* 여유있는 터치 영역 */
+    padding: var(--spacing-3) var(--spacing-4); /* 여유있는 터치 영역 */
     background: transparent;
     border: none;
     cursor: pointer;
@@ -424,7 +424,7 @@
 
   /* 고객 정보 컨텐츠 영역 */
   .customer-info-content {
-    padding: 0 16px 16px; /* 상단 패딩 제거 */
+    padding: 0 var(--spacing-4) var(--spacing-4); /* 상단 패딩 제거 */
   }
 
   /* 항상 펼쳐진 상태에서는 패딩 없음 (부모에서 처리) */
@@ -445,8 +445,8 @@
   .view-status-button {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 20px;
+    gap: var(--spacing-1-5);
+    padding: var(--spacing-2) 20px;
     font-family: var(--font-family-text);
     font-size: var(--font-size-footnote);
     font-weight: 600;
@@ -501,7 +501,7 @@
     margin: 0 auto;
     display: flex;
     justify-content: center;
-    padding: 16px 0;
+    padding: var(--spacing-4) 0;
   }
 
   .document-type-selection__buttons {
@@ -574,7 +574,7 @@
   /* 🎯 문서 유형 아이콘 */
   .document-type-card__icon {
     flex-shrink: 0;
-    margin-right: 6px;
+    margin-right: var(--spacing-1-5);
   }
 
   .document-type-card__icon--orange {
@@ -597,12 +597,12 @@
   /* 🍎 RESPONSIVE: Minimal changes */
   @media (max-width: 768px) {
     .document-registration-content {
-      gap: 8px;
+      gap: var(--spacing-2);
     }
 
     .registration-guide .guide-section {
       flex-direction: column;
-      gap: 12px;
+      gap: var(--spacing-3);
     }
 
     .document-type-selection__buttons {
@@ -634,7 +634,7 @@
     /* 문서 타입 카드: 44px 터치 타겟 */
     .document-type-card {
       min-height: 44px;
-      padding: 10px 12px;
+      padding: 10px var(--spacing-3);
     }
 
     /* 처리 로그: 전체 폭, 컴팩트 */
@@ -655,7 +655,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     padding: 10px 20px;
     background-color: rgba(0, 0, 0, 0.85);
     border-radius: 20px;

@@ -9,8 +9,8 @@
     user-select: none;
     transition: all var(--duration-ios-quick) var(--easing-ease-out);
     border-radius: 4px;
-    padding: 4px 8px;
-    margin: -4px -8px;
+    padding: var(--spacing-1) var(--spacing-2);
+    margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-2));
   }
 
   .files-list-header .sortable:hover {
@@ -346,7 +346,7 @@
   .row-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     justify-content: flex-end;
   }
 
@@ -357,7 +357,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   /* 상태 아이콘 */

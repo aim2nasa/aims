@@ -43,7 +43,7 @@
 
     /* 답변 영역 패딩 중간 축소 */
     .faq-view__answer {
-      margin-left: calc(var(--spacing-3) + 8px);
+      margin-left: calc(var(--spacing-3) + var(--spacing-2));
       margin-right: var(--spacing-3);
       padding: var(--spacing-2) var(--spacing-3);
     }

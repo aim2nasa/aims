@@ -36,12 +36,12 @@
 
   /* 🍎 MODAL HEADER: 아이콘과 제목 */
   .apple-confirm-modal__header {
-    padding: 20px 16px 4px 16px;
+    padding: 20px var(--spacing-4) var(--spacing-1) var(--spacing-4);
     text-align: center;
   }
 
   .apple-confirm-modal__icon {
-    margin-bottom: 6px;
+    margin-bottom: var(--spacing-1-5);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -69,7 +69,7 @@
 
   /* 🍎 MODAL BODY: 메시지 영역 */
   .apple-confirm-modal__body {
-    padding: 0 16px 16px 16px;
+    padding: 0 var(--spacing-4) var(--spacing-4) var(--spacing-4);
     text-align: center;
   }
 
@@ -89,15 +89,15 @@
   /* 🍎 MODAL ACTIONS: iOS 버튼 영역 */
   .apple-confirm-modal__actions {
     display: flex;
-    gap: 8px;
-    padding: 0 16px 16px 16px;
+    gap: var(--spacing-2);
+    padding: 0 var(--spacing-4) var(--spacing-4) var(--spacing-4);
   }
 
   /* 공용 Button 컴포넌트 사용 — Alert 컨텍스트 크기 오버라이드 */
   .apple-confirm-modal__actions .button {
     flex: 1;
     min-height: 34px;
-    padding: 6px 16px;
+    padding: var(--spacing-1-5) var(--spacing-4);
     border-radius: 8px;
     font-size: 13px;
   }
@@ -118,7 +118,7 @@
   @media (max-width: 768px) {
     .apple-confirm-modal__actions .button {
       min-height: 44px;
-      padding: 10px 16px;
+      padding: 10px var(--spacing-4);
       font-size: 15px;
     }
   }

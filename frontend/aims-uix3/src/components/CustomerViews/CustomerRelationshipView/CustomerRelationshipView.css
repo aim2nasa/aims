@@ -47,7 +47,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px var(--spacing-lg);
+    padding: var(--spacing-3) var(--spacing-lg);
 
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.03));
   }
@@ -59,7 +59,7 @@
   .relationship-title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
     font-family: var(--font-family-text);
     font-weight: 600;
@@ -142,7 +142,7 @@
   .tree-node {
     display: flex;
     align-items: center;
-    padding: 6px 10px;
+    padding: var(--spacing-1-5) 10px;
     margin: 1px 0;
     cursor: pointer;
     transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
@@ -250,7 +250,7 @@
     color: var(--color-text-secondary);
     font-weight: 600;
     background: rgba(0, 0, 0, 0.05);
-    padding: 2px 8px;
+    padding: var(--spacing-0-5) var(--spacing-2);
     border-radius: 12px;
     min-width: 24px;
     text-align: center;
@@ -267,7 +267,7 @@
 
   .tree-children {
     padding-left: 20px;
-    margin-left: 8px;
+    margin-left: var(--spacing-2);
   }
 
   .tree-group {
@@ -282,7 +282,7 @@
     font-weight: 600;
     padding-top: 10px;
     padding-bottom: 10px;
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-1);
     background: linear-gradient(135deg, rgba(0, 120, 212, 0.12) 0%, rgba(0, 120, 212, 0.06) 100%);
     border-left: 3px solid var(--color-accent);
     border-radius: 0 6px 6px 0;
@@ -343,7 +343,7 @@
 
   .relationship-search-input {
     width: 220px;
-    padding: 6px 12px;
+    padding: var(--spacing-1-5) var(--spacing-3);
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 입력 */
     font-family: var(--font-family-text);
     border: 1px solid var(--color-border);
@@ -379,7 +379,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
+    padding: var(--spacing-1);
     color: var(--color-text-secondary);
     display: flex;
     align-items: center;
@@ -401,7 +401,7 @@
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
     font-family: var(--font-family-text);
     cursor: pointer;
-    padding: 4px 6px;
+    padding: var(--spacing-1) var(--spacing-1-5);
     opacity: 0.6;
     transition: all 0.1s ease;
     border-radius: 3px;
@@ -427,7 +427,7 @@
     color: var(--color-text-secondary);
     background: rgba(0, 0, 0, 0.03);
     border-radius: 4px;
-    margin: 2px 0;
+    margin: var(--spacing-0-5) 0;
     border-left: 2px solid var(--color-accent-light);
   }
 
@@ -585,7 +585,7 @@
   @media (max-width: 480px) {
     /* 헤더: 한 줄 컴팩트 - 제목 숨기고 검색+컨트롤만 */
     .relationship-header {
-      padding: 6px var(--spacing-sm);
+      padding: var(--spacing-1-5) var(--spacing-sm);
       background: none;
     }
 
@@ -598,7 +598,7 @@
     .relationship-header-actions {
       flex: 1;
       min-width: 0;
-      gap: 6px;
+      gap: var(--spacing-1-5);
     }
 
     /* 뷰모드 라벨 숨김 (아이콘만 표시) */
@@ -633,18 +633,18 @@
 
     /* 초성 필터: 컴팩트 */
     .relationship-initial-filter {
-      padding: 2px var(--spacing-sm);
+      padding: var(--spacing-0-5) var(--spacing-sm);
     }
 
     /* 트리 영역: 패딩 최소화 */
     .relationship-tree {
-      padding: 2px;
+      padding: var(--spacing-0-5);
     }
 
     /* 트리 계층 들여쓰기 축소 */
     .tree-children {
       padding-left: 10px;
-      margin-left: 2px;
+      margin-left: var(--spacing-0-5);
     }
 
     /* 트리 섹션 간격 제거 */
@@ -655,7 +655,7 @@
     /* 트리 노드: 컴팩트하되 터치 가능 */
     .tree-node {
       min-height: 36px;
-      padding: 4px var(--spacing-sm);
+      padding: var(--spacing-1) var(--spacing-sm);
       margin: 0;
       border-radius: 4px;
     }
@@ -663,8 +663,8 @@
     /* 루트 노드: 컴팩트 섹션 헤더 */
     .tree-node--root {
       min-height: 32px;
-      padding: 4px var(--spacing-sm);
-      margin-bottom: 2px;
+      padding: var(--spacing-1) var(--spacing-sm);
+      margin-bottom: var(--spacing-0-5);
     }
 
     /* 리프 노드: 들여쓰기 축소 */
@@ -679,19 +679,19 @@
     /* 관계 목록 들여쓰기 축소 */
     .relation-list {
       padding-left: 30px;
-      padding-top: 2px;
-      padding-bottom: 2px;
+      padding-top: var(--spacing-0-5);
+      padding-bottom: var(--spacing-0-5);
     }
 
     /* 관계 아이템: 컴팩트 */
     .relation-item {
-      padding: 2px var(--spacing-sm);
+      padding: var(--spacing-0-5) var(--spacing-sm);
       margin: 1px 0;
     }
 
     /* 노드 콘텐츠 간격 축소 */
     .tree-node__content {
-      gap: 6px;
+      gap: var(--spacing-1-5);
     }
 
     /* 패널: 모바일에서 전체화면 오버레이 */

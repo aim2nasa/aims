@@ -3,8 +3,8 @@
   /* === 🍎 AI ANSWER: Subtle Collapsible Style (Progressive Disclosure) === */
 
   .search-answer {
-    padding: 8px 12px;
-    margin-bottom: 12px;
+    padding: var(--spacing-2) var(--spacing-3);
+    margin-bottom: var(--spacing-3);
     background-color: transparent;
     border: 1px solid var(--color-ios-separator-light);
     border-radius: 8px;
@@ -35,7 +35,7 @@
 
   .answer-title {
     margin: 0;
-    padding: 4px 0;
+    padding: var(--spacing-1) 0;
     font-size: var(--font-size-caption-1); /* 12px - 더 작게 */
     font-weight: 600;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -68,8 +68,8 @@
   }
 
   .answer-content {
-    margin: 8px 0 0 0;
-    padding-top: 8px;
+    margin: var(--spacing-2) 0 0 0;
+    padding-top: var(--spacing-2);
     font-size: var(--font-size-caption-1); /* 12px - 더 작게 */
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     color: var(--color-ios-text-primary-light);
@@ -101,8 +101,8 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
-    padding: 8px 16px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-4);
     /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     color: var(--color-ios-text-secondary-light);
@@ -119,12 +119,12 @@
   }
 
   .results-header-text p {
-    margin: 0 0 4px 0;
+    margin: 0 0 var(--spacing-1) 0;
   }
 
   .results-divider {
     font-weight: 600;
-    margin-top: 8px;
+    margin-top: var(--spacing-2);
   }
 
   /* === 🍎 COLUMN HEADER === */
@@ -140,12 +140,12 @@
       60px           /* 상태 */
       90px           /* 유사도 (시맨틱 검색 시) */
       140px;         /* 액션 버튼 */
-    gap: 12px;
+    gap: var(--spacing-3);
     align-items: center;
-    padding: 8px 16px;
+    padding: var(--spacing-2) var(--spacing-4);
     background: var(--color-bg-tertiary);
     border-radius: 4px;
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-1);
     font-family: var(--font-family-text);
     font-weight: 600;
     font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 테이블 헤더 */
@@ -193,7 +193,7 @@
   .search-results-column-header > div {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .search-results-column-header .header-icon-svg {
@@ -234,13 +234,13 @@
   .search-results-column-header .header-filename {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .search-results-column-header .header-filename__sort-area {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   /* 🍎 정렬 가능한 컬럼 헤더 */
@@ -249,8 +249,8 @@
     user-select: none;
     transition: all var(--duration-ios-quick) var(--easing-ease-out);
     border-radius: 4px;
-    padding: 4px 8px;
-    margin: -4px -8px;
+    padding: var(--spacing-1) var(--spacing-2);
+    margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-2));
   }
 
   .search-results-column-header .sortable:hover {
@@ -290,9 +290,9 @@
       60px           /* 상태 */
       90px           /* 유사도 (시맨틱 검색 시) */
       140px;         /* 액션 버튼 */
-    gap: 12px;
+    gap: var(--spacing-3);
     align-items: center;
-    padding: 12px 16px;
+    padding: var(--spacing-3) var(--spacing-4);
     background-color: transparent;
     border-bottom: 0.5px solid var(--color-ios-separator-light);
     cursor: pointer;
@@ -328,7 +328,7 @@
   .search-result-row .row-filename {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--spacing-1);
     min-width: 0;
   }
 
@@ -354,7 +354,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   html[data-theme="dark"] .search-result-row {
@@ -407,7 +407,7 @@
     align-items: center;
     justify-content: center;
     min-width: 30px;
-    padding: 1px 4px;
+    padding: 1px var(--spacing-1);
     border-radius: 3px;
     font-size: 10px;
     font-weight: 600;
@@ -429,8 +429,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 6px 12px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-1-5) var(--spacing-3);
     background: var(--color-bg-secondary);
     border-top: 1px solid var(--color-border);
     flex-shrink: 0;
@@ -462,7 +462,7 @@
   .search-results-pagination__info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     font-size: 12px;
     font-weight: 600;
     color: var(--color-text-secondary);

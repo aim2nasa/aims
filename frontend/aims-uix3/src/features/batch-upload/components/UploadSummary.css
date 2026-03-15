@@ -20,7 +20,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 24px;
+    margin-bottom: var(--spacing-6);
     color: var(--color-text-tertiary);
   }
 
@@ -45,7 +45,7 @@
     font-size: var(--font-size-footnote);  /* 13px - 섹션 제목 */
     font-weight: 600;
     color: var(--color-text-primary);
-    margin: 0 0 12px 0;
+    margin: 0 0 var(--spacing-3) 0;
   }
 
   .upload-summary-description {
@@ -108,7 +108,7 @@
   .upload-summary-skipped-toggle {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     background: none;
     border: none;
     padding: var(--spacing-sm) 0;
@@ -213,7 +213,7 @@
     font-weight: 600;
     color: var(--color-ios-red, #ff3b30);
     background: rgba(255, 59, 48, 0.15);
-    padding: 2px 8px;
+    padding: var(--spacing-0-5) var(--spacing-2);
     border-radius: var(--radius-sm);
   }
 
@@ -231,7 +231,7 @@
   .upload-summary-failure-file {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     padding: var(--spacing-xs) 0;
   }
 
@@ -247,14 +247,14 @@
     color: var(--color-ios-red, #ff3b30);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   /* 버튼 */
   .upload-summary-actions {
     display: flex;
-    gap: 12px;
-    padding-top: 8px;
+    gap: var(--spacing-3);
+    padding-top: var(--spacing-2);
   }
 
   .upload-summary-btn {

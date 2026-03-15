@@ -8,7 +8,7 @@
   .contract-history-section {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     overflow-x: auto;
   }
 
@@ -35,8 +35,8 @@
       var(--ar-payment-width, 51px)
       var(--ar-premium-width, 83px)
       var(--ar-issue-date-width, 80px);
-    gap: 4px;
-    padding: 6px 8px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1-5) var(--spacing-2);
     font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-ios-text-tertiary-light);
@@ -62,7 +62,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   /* 정렬 가능한 헤더 */
@@ -118,9 +118,9 @@
       var(--ar-payment-width, 51px)
       var(--ar-premium-width, 83px)
       var(--ar-issue-date-width, 80px);
-    gap: 4px;
+    gap: var(--spacing-1);
     align-items: center;
-    padding: 6px 8px;
+    padding: var(--spacing-1-5) var(--spacing-2);
     cursor: pointer;
     transition: background-color 0.15s ease;
     font-size: var(--font-size-caption-1);
@@ -171,7 +171,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     font-family: var(--font-family-mono);
     font-weight: 500;
     color: var(--color-ios-text-primary-light);
@@ -319,7 +319,7 @@
 
   /* 아코디언 내용 (스냅샷 목록) */
   .contract-history-accordion__content {
-    padding: 8px 12px 12px 40px;
+    padding: var(--spacing-2) var(--spacing-3) var(--spacing-3) 40px;
     background: var(--color-ios-bg-secondary-light);
     border-top: 1px solid var(--color-ios-separator-light);
   }
@@ -332,7 +332,7 @@
   .contract-history-accordion__content--empty {
     color: var(--color-ios-text-tertiary-light);
     font-size: var(--font-size-caption-1);
-    padding: 12px 12px 12px 40px;
+    padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) 40px;
   }
 
   html[data-theme="dark"] .contract-history-accordion__content--empty {
@@ -344,7 +344,7 @@
     font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-ios-text-secondary-light);
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-2);
   }
 
   html[data-theme="dark"] .contract-history-snapshots-title {
@@ -355,8 +355,8 @@
   .contract-history-snapshots-header {
     display: grid;
     grid-template-columns: 80px 55px 60px 50px 50px 80px;
-    gap: 6px;
-    padding: 4px 0 6px;
+    gap: var(--spacing-1-5);
+    padding: var(--spacing-1) 0 var(--spacing-1-5);
     font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-ios-text-tertiary-light);
@@ -381,7 +381,7 @@
   .contract-history-snapshot-item {
     display: grid;
     grid-template-columns: 80px 55px 60px 50px 50px 80px;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     padding: 5px 0;
     font-size: var(--font-size-caption-1);
     color: var(--color-ios-text-primary-light);

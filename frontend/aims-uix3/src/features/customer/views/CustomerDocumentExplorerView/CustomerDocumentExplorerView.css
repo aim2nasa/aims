@@ -16,8 +16,8 @@
 
   .cde-tabs__segment {
     display: flex;
-    gap: 2px;
-    padding: 2px;
+    gap: var(--spacing-0-5);
+    padding: var(--spacing-0-5);
     background: var(--color-bg-secondary);
     border-radius: 8px;
     border: 1px solid var(--color-border-primary);
@@ -27,7 +27,7 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     padding: 5px 14px;
     border: none;
     border-radius: 6px;
@@ -64,8 +64,8 @@
   .cde-back-btn {
     display: flex;
     align-items: center;
-    gap: 3px;
-    padding: 2px 8px 2px 5px;
+    gap: var(--spacing-0-75);
+    padding: var(--spacing-0-5) var(--spacing-2) var(--spacing-0-5) 5px;
     height: 26px;
     border: 1px solid var(--color-border-primary);
     border-radius: 6px;
@@ -89,15 +89,15 @@
   .cde-summary__actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     flex-shrink: 0;
   }
 
   .cde-search__input-wrap {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 0 6px;
+    gap: var(--spacing-1);
+    padding: 0 var(--spacing-1-5);
     height: 22px;
     width: 120px;
     background: var(--color-bg-secondary);
@@ -181,7 +181,7 @@
     font-size: 11px;
     color: var(--color-text-tertiary);
     padding: var(--spacing-2) var(--spacing-2);
-    margin-bottom: 2px;
+    margin-bottom: var(--spacing-0-5);
     position: sticky;
     top: 0;
     z-index: 1;
@@ -197,8 +197,8 @@
   .cde-expand-all-btn {
     display: flex;
     align-items: center;
-    gap: 3px;
-    padding: 2px 8px 2px 5px;
+    gap: var(--spacing-0-75);
+    padding: var(--spacing-0-5) var(--spacing-2) var(--spacing-0-5) 5px;
     height: 22px;
     border: 1px solid var(--color-border-primary);
     border-radius: 5px;
@@ -221,7 +221,7 @@
 
   /* === 대분류 (카테고리) === */
   .cde-category {
-    margin-bottom: 2px;
+    margin-bottom: var(--spacing-0-5);
   }
 
   .cde-category__header {
@@ -285,7 +285,7 @@
     font-variant-numeric: tabular-nums;
     color: var(--color-text-tertiary);
     background: var(--color-bg-secondary);
-    padding: 1px 6px;
+    padding: 1px var(--spacing-1-5);
     border-radius: 10px;
     flex-shrink: 0;
     min-width: 22px;
@@ -294,7 +294,7 @@
 
   /* === 소분류 컨테이너 === */
   .cde-subtypes {
-    padding-left: 24px;
+    padding-left: var(--spacing-6);
     margin-left: 5px;
     border-left: 2px solid color-mix(in srgb, var(--cde-cat-color, var(--color-border-primary)) 25%, transparent);
   }
@@ -306,9 +306,9 @@
   .cde-subtype__header {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     width: 100%;
-    padding: 4px var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-2);
     border: none;
     border-radius: 6px;
     background: transparent;
@@ -346,7 +346,7 @@
     color: var(--color-text-tertiary);
     flex-shrink: 0;
     min-width: 22px;
-    padding: 1px 6px;
+    padding: 1px var(--spacing-1-5);
     text-align: center;
   }
 
@@ -361,8 +361,8 @@
     display: grid;
     grid-template-columns: 16px 1fr 110px 48px 100px 30px;
     align-items: center;
-    gap: 4px;
-    padding: 4px var(--spacing-2);
+    gap: var(--spacing-1);
+    padding: var(--spacing-1) var(--spacing-2);
     border-radius: 6px;
     font-size: 11px;
     color: var(--color-text-secondary);
@@ -398,7 +398,7 @@
   .cde-doc-row__name-cell {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: var(--spacing-0-75);
     min-width: 0;
     overflow: hidden;
   }
@@ -462,7 +462,7 @@
   .cde-doc-row__actions {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     flex-shrink: 0;
     opacity: 0;
     transition: opacity 0.12s ease-out;
@@ -493,7 +493,7 @@
 
   /* === 관계자/가족 그룹 === */
   .cde-person {
-    margin-bottom: 2px;
+    margin-bottom: var(--spacing-0-5);
   }
 
   .cde-person__header {
@@ -537,7 +537,7 @@
     font-weight: 600;
     color: var(--color-text-tertiary);
     background: var(--color-bg-secondary);
-    padding: 1px 6px;
+    padding: 1px var(--spacing-1-5);
     border-radius: 10px;
     border: 1px solid var(--color-border-primary);
   }
@@ -548,7 +548,7 @@
     font-weight: 600;
     color: var(--color-text-tertiary);
     background: var(--color-bg-secondary);
-    padding: 1px 6px;
+    padding: 1px var(--spacing-1-5);
     border-radius: 10px;
     flex-shrink: 0;
     min-width: 28px;
@@ -557,7 +557,7 @@
 
   .cde-person__content {
     padding-left: 20px;
-    margin-left: 16px;
+    margin-left: var(--spacing-4);
     border-left: 2px solid var(--color-border-primary);
   }
 
@@ -566,7 +566,7 @@
     display: none;
     align-items: center;
     gap: 1px;
-    margin-left: 4px;
+    margin-left: var(--spacing-1);
     flex-shrink: 0;
   }
 

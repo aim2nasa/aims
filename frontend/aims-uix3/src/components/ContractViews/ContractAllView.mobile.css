@@ -4,8 +4,8 @@
   @media (max-width: 768px) {
     /* 컨테이너 패딩/갭 축소 */
     .contract-all-view {
-      padding: 8px 12px;
-      gap: 8px;
+      padding: var(--spacing-2) var(--spacing-3);
+      gap: var(--spacing-2);
     }
 
     /* 검색바 전폭 */
@@ -16,7 +16,7 @@
     /* 결과 헤더 컴팩트화 */
     .contract-result-header {
       flex-wrap: wrap;
-      gap: 8px;
+      gap: var(--spacing-2);
     }
 
     /* 필터 버튼 터치 타겟 확보 */
@@ -70,8 +70,8 @@
   @media (max-width: 480px) {
     /* 결과 헤더 더 컴팩트하게 */
     .contract-result-header {
-      gap: 4px;
-      padding: 0 2px 2px 2px;
+      gap: var(--spacing-1);
+      padding: 0 var(--spacing-0-5) var(--spacing-0-5) var(--spacing-0-5);
     }
 
     /* 리스트 테두리 제거 — 공간 확보 */
@@ -84,7 +84,7 @@
     .contract-item--delete-mode {
       grid-template-columns: 24px 24px 1fr auto;
       grid-template-rows: auto auto auto;
-      gap: 2px 6px;
+      gap: var(--spacing-0-5) var(--spacing-1-5);
       min-width: 0;
       height: auto;
       min-height: 44px;

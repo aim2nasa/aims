@@ -68,7 +68,7 @@
   .status-badge {
     /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
     font-weight: 600;
-    padding: 2px 6px;
+    padding: var(--spacing-0-5) var(--spacing-1-5);
     border-radius: 6px;
     background: var(--color-primary);
     color: white;
@@ -99,7 +99,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 0;
+    padding: var(--spacing-3) 0;
     border-bottom: 1px solid var(--color-border);
   }
 
@@ -120,8 +120,8 @@
   .annual-report-tab__stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin: 24px 0;
+    gap: var(--spacing-4);
+    margin: var(--spacing-6) 0;
     padding: 20px;
     background: var(--color-bg-secondary);
     border-radius: 10px;
@@ -130,7 +130,7 @@
   .annual-report-tab__stat-item {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .annual-report-tab__stat-label {
@@ -157,15 +157,15 @@
 
   .annual-report-tab__actions {
     display: flex;
-    gap: 12px;
-    margin: 24px 0;
+    gap: var(--spacing-3);
+    margin: var(--spacing-6) 0;
   }
 
   /* ==================== Contract Preview ==================== */
 
   .annual-report-tab__preview {
     margin-top: 32px;
-    padding-top: 24px;
+    padding-top: var(--spacing-6);
     border-top: 1px solid var(--color-border);
   }
 
@@ -173,15 +173,15 @@
     /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 16px deprecated ) */
     font-weight: 600;
     color: var(--color-text-primary);
-    margin: 0 0 16px 0;
+    margin: 0 0 var(--spacing-4) 0;
   }
 
   .annual-report-tab__contract-preview {
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 12px;
+    padding: var(--spacing-4);
+    margin-bottom: var(--spacing-3);
     transition: all 0.2s ease;
   }
 
@@ -194,7 +194,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-2);
   }
 
   .annual-report-tab__contract-company {
@@ -206,7 +206,7 @@
   .annual-report-tab__contract-status {
     /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
     font-weight: 600;
-    padding: 3px 8px;
+    padding: var(--spacing-0-75) var(--spacing-2);
     border-radius: 10px;
     background: var(--color-bg-hover);
     color: var(--color-text-secondary);
@@ -216,19 +216,19 @@
     /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
     font-weight: 600;
     color: var(--color-text-primary);
-    margin-bottom: 6px;
+    margin-bottom: var(--spacing-1-5);
   }
 
   .annual-report-tab__contract-details {
     /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md ) */
     color: var(--color-text-secondary);
     display: flex;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   .annual-report-tab__preview-more {
     text-align: center;
-    padding: 12px;
+    padding: var(--spacing-3);
     color: var(--color-text-secondary);
     /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
     cursor: pointer;
@@ -246,13 +246,13 @@
   /* === 📱 768px: 칼럼 재정의 (공통 gap/padding/font: tab-table.css) === */
   @media (max-width: 768px) {
     .annual-report-tab {
-      padding: 8px;
+      padding: var(--spacing-2);
     }
 
     .annual-report-tab__header {
       flex-direction: column;
       align-items: flex-start;
-      gap: 12px;
+      gap: var(--spacing-3);
     }
 
     .annual-report-card__stats {
@@ -296,7 +296,7 @@
   /* === 📱 480px: 빈 상태 축소 === */
   @media (max-width: 480px) {
     .annual-report-tab {
-      padding: 4px;
+      padding: var(--spacing-1);
     }
 
     .annual-report-tab__loading,
@@ -321,7 +321,7 @@
   .annual-report-table__header-content {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   /* 정렬 표시 → 공유 SortIndicator 컴포넌트로 통일 */

@@ -23,7 +23,7 @@
   .doctype-select {
     width: 100%;
     height: 18px;
-    padding: 0 2px;
+    padding: 0 var(--spacing-0-5);
     font-size: 9px;
     font-family: var(--font-family-text);
     color: var(--color-text-primary);
@@ -78,7 +78,7 @@
     justify-content: center;
     font-size: 11px;
     font-weight: 600;
-    padding: 2px 8px;
+    padding: var(--spacing-0-5) var(--spacing-2);
     border-radius: 4px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -131,7 +131,7 @@
    *    → 뷰포트에 맞춰 자동 조절 → 수평 스크롤 없음 → 헤더 배경 끊김 방지 */
   @media (max-width: 768px) {
     .customer-documents {
-      padding: 0 8px 8px 8px;
+      padding: 0 var(--spacing-2) var(--spacing-2) var(--spacing-2);
     }
 
     /* 4칼럼 (문서유형, 타입 숨김) - 수평 스크롤 허용, 칼럼 넓게 */
@@ -174,7 +174,7 @@
   /* 📱 480px: 유연한 그리드 유지 + 폰트 축소 */
   @media (max-width: 480px) {
     .customer-documents {
-      padding: 0 4px 4px 4px;
+      padding: 0 var(--spacing-1) var(--spacing-1) var(--spacing-1);
     }
 
     .customer-documents-list-header,

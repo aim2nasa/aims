@@ -20,7 +20,7 @@
   .relationship-modal__title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 모달 제목 */
     font-family: var(--font-family-display);
     font-weight: 600;
@@ -33,7 +33,7 @@
 
   /* 바디 - CustomerEditModal 기준 (padding: 16px 20px) */
   .relationship-modal__body {
-    padding: 16px 20px;
+    padding: var(--spacing-4) 20px;
     overflow-y: auto;
     flex: 1;
   }
@@ -48,20 +48,20 @@
   .relationship-modal__field {
     display: flex;
     flex-direction: column;
-    gap: 8px; /* CustomerEditModal 필드 간격(6px) 기준, 선택 UI 고려 8px */
+    gap: var(--spacing-2); /* CustomerEditModal 필드 간격(6px) 기준, 선택 UI 고려 8px */
   }
 
   .relationship-modal__field-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   .relationship-modal__field-title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 필드 제목 */
     font-family: var(--font-family-text);
     font-weight: 600;
@@ -76,7 +76,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     border-radius: 999px;
     font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 배지 */
     font-family: var(--font-family-text);
@@ -106,7 +106,7 @@
     transform: translateY(-50%);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     color: var(--color-text-secondary);
   }
 
@@ -134,7 +134,7 @@
 
   /* 에러 메시지 */
   .relationship-modal__error {
-    padding: 12px;
+    padding: var(--spacing-3);
     background-color: rgba(255, 59, 48, 0.1);
     border: 1px solid var(--color-icon-red);
     border-radius: 8px;
@@ -145,7 +145,7 @@
 
   /* 성공 메시지 */
   .relationship-modal__success {
-    padding: 12px;
+    padding: var(--spacing-3);
     background-color: rgba(52, 199, 89, 0.1);
     border: 1px solid var(--color-icon-green);
     border-radius: 8px;
@@ -157,7 +157,7 @@
   /* 액션 버튼 */
   .relationship-modal__actions {
     display: flex;
-    gap: 8px;
+    gap: var(--spacing-2);
     justify-content: flex-end;
   }
 
@@ -172,7 +172,7 @@
     transition: all 0.15s ease-out;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .relationship-modal__button:disabled {
@@ -272,7 +272,7 @@
     }
 
     .relationship-modal .modal__header {
-      padding: 4px 12px;
+      padding: var(--spacing-1) var(--spacing-3);
     }
 
     .relationship-modal .modal__header .modal__title {
@@ -280,20 +280,20 @@
     }
 
     .relationship-modal .modal__footer {
-      padding: 4px 12px;
-      padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+      padding: var(--spacing-1) var(--spacing-3);
+      padding-bottom: calc(var(--spacing-1) + env(safe-area-inset-bottom, 0px));
     }
 
     .relationship-modal__body {
-      padding: 6px 12px;
+      padding: var(--spacing-1-5) var(--spacing-3);
     }
 
     .relationship-modal__form {
-      gap: 8px;
+      gap: var(--spacing-2);
     }
 
     .relationship-modal__field {
-      gap: 4px;
+      gap: var(--spacing-1);
     }
 
     .relationship-modal__field-title {
@@ -302,12 +302,12 @@
 
     .relationship-modal__badge {
       font-size: 10px;
-      padding: 2px 6px;
+      padding: var(--spacing-0-5) var(--spacing-1-5);
     }
 
     /* 가족 선택 버튼: min-height 오버라이드 필수 (.button--md의 44px 제거) */
     .relationship-modal__selector-button.button {
-      padding: 6px 10px;
+      padding: var(--spacing-1-5) 10px;
       font-size: 12px;
       min-height: 36px;
       height: 36px;
@@ -315,14 +315,14 @@
 
     /* footer 버튼: min-height 오버라이드 */
     .relationship-modal__actions .button {
-      padding: 6px 12px;
+      padding: var(--spacing-1-5) var(--spacing-3);
       font-size: 12px;
       min-height: 32px;
       height: 32px;
     }
 
     .relationship-modal .form-select {
-      padding: 4px 8px;
+      padding: var(--spacing-1) var(--spacing-2);
       font-size: 12px;
     }
   }
@@ -339,7 +339,7 @@
     }
 
     .relationship-modal .modal__header {
-      padding: 4px 12px;
+      padding: var(--spacing-1) var(--spacing-3);
     }
 
     .relationship-modal .modal__header .modal__title {
@@ -347,19 +347,19 @@
     }
 
     .relationship-modal .modal__footer {
-      padding: 4px 12px;
+      padding: var(--spacing-1) var(--spacing-3);
     }
 
     .relationship-modal__body {
-      padding: 6px 12px;
+      padding: var(--spacing-1-5) var(--spacing-3);
     }
 
     .relationship-modal__form {
-      gap: 6px;
+      gap: var(--spacing-1-5);
     }
 
     .relationship-modal__field {
-      gap: 3px;
+      gap: var(--spacing-0-75);
     }
 
     .relationship-modal__field-title {
@@ -368,7 +368,7 @@
 
     .relationship-modal__badge {
       font-size: 10px;
-      padding: 2px 6px;
+      padding: var(--spacing-0-5) var(--spacing-1-5);
     }
 
     /* 가족 선택 버튼: 울트라 컴팩트 */
@@ -381,20 +381,20 @@
 
     /* footer 버튼: 울트라 컴팩트 */
     .relationship-modal__actions .button {
-      padding: 4px 12px;
+      padding: var(--spacing-1) var(--spacing-3);
       font-size: 12px;
       min-height: 28px;
       height: 28px;
     }
 
     .relationship-modal .form-select {
-      padding: 4px 8px;
+      padding: var(--spacing-1) var(--spacing-2);
       font-size: 12px;
     }
 
     /* 선택된 고객 표시: 컴팩트 */
     .relationship-modal__selected-customer {
-      padding: 4px 8px;
+      padding: var(--spacing-1) var(--spacing-2);
     }
   }
 

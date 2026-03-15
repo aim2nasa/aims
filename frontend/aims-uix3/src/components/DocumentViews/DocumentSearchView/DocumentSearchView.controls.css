@@ -149,7 +149,7 @@
   .selected-customer-display {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     height: 30px; /* 다른 페이지와 일관된 컨트롤 높이 */
     padding: 0 10px;
     min-width: 132px; /* 120px → 132px (10% 증가) */

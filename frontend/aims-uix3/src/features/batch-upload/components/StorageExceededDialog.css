@@ -19,14 +19,14 @@
   .storage-exceeded-content {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--spacing-4);
   }
 
   /* 용량 정보 */
   .storage-exceeded-info {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   .storage-exceeded-info-row {
@@ -34,7 +34,7 @@
     justify-content: space-between;
     align-items: center;
     font-size: 13px;
-    padding: 4px 0;
+    padding: var(--spacing-1) 0;
   }
 
   .storage-exceeded-label {
@@ -49,8 +49,8 @@
 
   /* 초과 용량 강조 */
   .storage-exceeded-info-row.exceeded {
-    padding: 10px 12px;
-    margin-top: 4px;
+    padding: 10px var(--spacing-3);
+    margin-top: var(--spacing-1);
     background: var(--color-error-50);
     border-radius: 8px;
   }
@@ -67,7 +67,7 @@
 
   /* 스토리지 바 */
   .storage-exceeded-bar {
-    margin: 4px 0;
+    margin: var(--spacing-1) 0;
   }
 
   /* 힌트 박스 */
@@ -75,7 +75,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 14px;
+    padding: var(--spacing-3) 14px;
     background: var(--color-info-50);
     border-radius: 8px;
     font-size: 13px;
@@ -93,14 +93,14 @@
   .storage-exceeded-actions {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--spacing-2);
     width: 100%;
   }
 
   .storage-exceeded-actions button {
     width: 100%;
     justify-content: center;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   /* 버튼 아이콘 색상 */

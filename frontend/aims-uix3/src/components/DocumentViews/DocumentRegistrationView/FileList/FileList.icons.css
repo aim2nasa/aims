@@ -231,8 +231,8 @@
   .file-item__details {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 2px;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-0-5);
     /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
     color: var(--color-ios-empty-light);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -257,14 +257,14 @@
 
   /* 🍎 STATUS MESSAGES: Minimal */
   .file-item__error {
-    margin-top: 3px;
+    margin-top: var(--spacing-0-75);
     /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
     color: var(--color-success-overlay-icon-light);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   }
 
   .file-item__cancelled {
-    margin-top: 3px;
+    margin-top: var(--spacing-0-75);
     /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
     color: var(--color-ios-empty-light);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -325,7 +325,7 @@
   .file-item__retry-minimal {
     background: none;
     border: none;
-    padding: 2px;
+    padding: var(--spacing-0-5);
     cursor: pointer;
     color: var(--color-ios-empty-light);
     border-radius: 2px;
@@ -344,7 +344,7 @@
   /* 🍎 RESPONSIVE: Minimal changes */
   @media (max-width: 768px) {
     .file-item {
-      padding: 6px 8px;
+      padding: var(--spacing-1-5) var(--spacing-2);
     }
 
     .file-item__name {

@@ -17,7 +17,7 @@
   /* 삭제 버튼은 컴포넌트의 isDevMode 조건으로 제어됨 - 숨기지 않음 */
   .customer-full-detail__section-content--report .annual-report-actions,
   .customer-full-detail__section-content--report .customer-review-actions {
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     justify-content: flex-end;
   }
 
@@ -36,7 +36,7 @@
   /* 공통 테이블 헤더 */
   .customer-full-detail__section-content--report .annual-report-table-header,
   .customer-full-detail__section-content--report .customer-review-table-header {
-    gap: 6px;
+    gap: var(--spacing-1-5);
     padding: 0 10px;
     height: var(--row-height);
     min-height: var(--row-height);
@@ -72,7 +72,7 @@
   /* 공통 테이블 행 */
   .customer-full-detail__section-content--report .annual-report-row,
   .customer-full-detail__section-content--report .customer-review-row {
-    gap: 6px;
+    gap: var(--spacing-1-5);
     padding: 0 10px;
     height: var(--row-height);
     min-height: var(--row-height);
@@ -107,14 +107,14 @@
   .customer-full-detail__section-content--report .annual-report-tab__empty,
   .customer-full-detail__section-content--report .customer-review-tab__empty {
     min-height: 0;
-    padding: 16px 10px;
+    padding: var(--spacing-4) 10px;
     font-size: var(--font-body);
   }
 
   .customer-full-detail__section-content--report .annual-report-tab__empty-icon,
   .customer-full-detail__section-content--report .customer-review-tab__empty-icon {
     font-size: var(--font-icon-large);
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-2);
   }
 
   .customer-full-detail__section-content--report .annual-report-tab__empty-title,
@@ -133,14 +133,14 @@
   .customer-full-detail__section-content--report .customer-review-tab__loading,
   .customer-full-detail__section-content--report .customer-review-tab__error {
     min-height: 0;
-    padding: 16px 10px;
+    padding: var(--spacing-4) 10px;
     font-size: var(--font-body);
   }
 
   /* 공통 페이지네이션 */
   .customer-full-detail__section-content--report .annual-report-pagination,
   .customer-full-detail__section-content--report .customer-review-pagination {
-    padding: 2px 8px;
+    padding: var(--spacing-0-5) var(--spacing-2);
     height: 26px;
     min-height: 26px;
     max-height: 26px;
@@ -208,13 +208,13 @@
   /* 빈 상태 */
   .customer-full-detail__section-content--report .annual-report-tab__empty {
     min-height: 0;
-    padding: 16px 10px;
+    padding: var(--spacing-4) 10px;
     font-size: var(--font-body);
   }
 
   .customer-full-detail__section-content--report .annual-report-tab__empty-icon {
     font-size: var(--font-icon-large);
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-2);
   }
 
   .customer-full-detail__section-content--report .annual-report-tab__empty-title {
@@ -223,7 +223,7 @@
 
   .customer-full-detail__section-content--report .annual-report-tab__empty-description {
     font-size: var(--font-header);
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-2);
   }
 
   .customer-full-detail__section-content--report .annual-report-tab__empty-hint {
@@ -234,13 +234,13 @@
   .customer-full-detail__section-content--report .annual-report-tab__loading,
   .customer-full-detail__section-content--report .annual-report-tab__error {
     min-height: 0;
-    padding: 16px 10px;
+    padding: var(--spacing-4) 10px;
     font-size: var(--font-body);
   }
 
   /* 페이지네이션 - 좌측 드롭다운, 우측 페이지 컨트롤 */
   .customer-full-detail__section-content--report .annual-report-pagination {
-    padding: 2px 8px;
+    padding: var(--spacing-0-5) var(--spacing-2);
     height: 26px;
     min-height: 26px;
     max-height: 26px;
@@ -272,11 +272,11 @@
   }
 
   .customer-full-detail__section-content--report .pagination-limit .ios-dropdown__trigger {
-    padding: 1px 6px;
+    padding: 1px var(--spacing-1-5);
     height: 18px;
     min-height: 18px;
     font-size: var(--font-micro);
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .customer-full-detail__section-content--report .pagination-limit .ios-dropdown__value {
@@ -285,7 +285,7 @@
 
   .customer-full-detail__section-content--report .pagination-limit .ios-dropdown__arrow {
     font-size: var(--font-arrow);
-    margin-left: 4px;
+    margin-left: var(--spacing-1);
   }
 
   /* 드롭다운 메뉴 - 컴팩트 스타일 */
@@ -294,7 +294,7 @@
   }
 
   .customer-full-detail__section-content--report .pagination-limit .ios-dropdown__option {
-    padding: 3px 8px;
+    padding: var(--spacing-0-75) var(--spacing-2);
     font-size: var(--font-micro);
     min-height: 0;
   }
@@ -302,7 +302,7 @@
   /* 페이지네이션 컨트롤 우측 */
   .customer-full-detail__section-content--report .pagination-controls {
     flex: none;
-    gap: 4px;
+    gap: var(--spacing-1);
     align-items: center;
     height: 100%;
   }

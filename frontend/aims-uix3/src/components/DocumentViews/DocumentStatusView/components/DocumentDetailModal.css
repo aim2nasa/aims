@@ -45,7 +45,7 @@
   .detail-section {
     background-color: var(--color-layout-content-light);
     border-radius: 16px;
-    padding: 8px 14px;
+    padding: var(--spacing-2) 14px;
     border: 0.5px solid var(--color-layout-border);
     box-shadow: var(--shadow-card-light);
   }
@@ -61,7 +61,7 @@
     font-weight: 600;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     color: var(--color-text-primary);
-    margin: 0 0 6px 0;
+    margin: 0 0 var(--spacing-1-5) 0;
     letter-spacing: -0.4px;
     user-select: none;
   }
@@ -69,7 +69,7 @@
   /* ===== 섹션 1: 컴팩트 처리 진행 상태 ===== */
 
   .detail-section--status {
-    padding: 6px 24px;
+    padding: var(--spacing-1-5) var(--spacing-6);
   }
 
   /* 🍎 iOS-Style Progress Bar */
@@ -79,7 +79,7 @@
     background-color: var(--color-overlay-dark);
     border-radius: 100px;
     overflow: hidden;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-2);
     box-shadow: var(--shadow-inset-light);
     user-select: none;
   }
@@ -133,15 +133,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   /* 🍎 iOS-Style Status Badge */
   .detail-status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1) 10px;
     border-radius: 100px;
     font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
     font-family: var(--font-family-text);
@@ -202,7 +202,7 @@
   .detail-info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   @media (max-width: 768px) {
@@ -215,8 +215,8 @@
   .detail-info-card {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 6px 10px;
+    gap: var(--spacing-0-5);
+    padding: var(--spacing-1-5) 10px;
     background-color: var(--color-layout-secondary-light);
     border-radius: 10px;
     border: 0.5px solid var(--color-layout-border);
@@ -246,7 +246,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .detail-info-card-label {
@@ -287,7 +287,7 @@
     background-color: transparent;
     border: none;
     border-radius: 6px;
-    padding: 4px 6px;
+    padding: var(--spacing-1) var(--spacing-1-5);
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 버튼 (14px deprecated) */
     font-family: var(--font-family-text);
     color: var(--color-text-secondary);
@@ -329,7 +329,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px 12px 24px;
+    padding: 20px var(--spacing-6) var(--spacing-3) var(--spacing-6);
   }
 
   /* ⚠️ 핵심: 독립 스크롤 컨테이너 */
@@ -338,7 +338,7 @@
     max-height: 220px;
     overflow-y: auto;
     overflow-x: auto;
-    padding: 0 24px 30px 24px;
+    padding: 0 var(--spacing-6) 30px var(--spacing-6);
     box-sizing: border-box;
     position: relative;
   }
@@ -351,7 +351,7 @@
   .detail-raw-scroll-container::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.05);
     border-radius: 5px;
-    margin: 4px 0;
+    margin: var(--spacing-1) 0;
   }
 
   .detail-raw-scroll-container::-webkit-scrollbar-thumb {
@@ -399,7 +399,7 @@
     line-height: 1.4;
     color: var(--color-text-primary);
     background-color: transparent;
-    padding: 12px;
+    padding: var(--spacing-3);
     white-space: pre-wrap;
     word-wrap: break-word;
     word-break: break-word;
@@ -422,15 +422,15 @@
     }
 
     .detail-section--status {
-      padding: 16px 20px;
+      padding: var(--spacing-4) 20px;
     }
 
     .detail-raw-header {
-      padding: 16px 20px 12px 20px;
+      padding: var(--spacing-4) 20px var(--spacing-3) 20px;
     }
 
     .detail-raw-scroll-container {
-      padding: 0 20px 24px 20px;
+      padding: 0 20px var(--spacing-6) 20px;
       height: 320px;
       max-height: 320px;
     }

@@ -45,7 +45,7 @@
   .doc-explorer-toolbar__group {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .doc-explorer-toolbar__label {
@@ -61,7 +61,7 @@
 
   .doc-explorer-dropdown--compact.ios-dropdown .ios-dropdown__trigger {
     min-height: unset;
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     font-size: 10px;
   }
 
@@ -71,7 +71,7 @@
 
   .doc-explorer-dropdown--compact.ios-dropdown .ios-dropdown__arrow {
     font-size: 8px;
-    margin-left: 4px;
+    margin-left: var(--spacing-1);
   }
 
   .doc-explorer-dropdown--compact.ios-dropdown .ios-dropdown__menu {
@@ -79,7 +79,7 @@
   }
 
   .doc-explorer-dropdown--compact.ios-dropdown .ios-dropdown__option {
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     font-size: 10px;
   }
 
@@ -87,13 +87,13 @@
   .doc-explorer-toolbar__sort {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .doc-explorer-toolbar__sort-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 3px;
+    gap: var(--spacing-0-75);
   }
 
   .doc-explorer-toolbar__sort-btn {
@@ -156,7 +156,7 @@
   .doc-explorer-toolbar__search-group {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     flex: 1;
     min-width: 160px;
     max-width: 520px;
@@ -166,7 +166,7 @@
   .doc-explorer-toolbar__mode-chips {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     flex-shrink: 0;
   }
 
@@ -245,7 +245,7 @@
 
   .doc-explorer-toolbar__search-input {
     width: 100%;
-    padding: 5px 24px;
+    padding: 5px var(--spacing-6);
     font-size: 11px;
     border: 1px solid var(--color-border);
     border-radius: 4px;
@@ -345,8 +345,8 @@
   .doc-explorer-toolbar__scope-chip {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 4px 3px 8px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-0-75) var(--spacing-1) var(--spacing-0-75) var(--spacing-2);
     background: var(--color-primary-50);
     border: 1px solid var(--color-primary-200);
     border-radius: 12px;
@@ -405,7 +405,7 @@
     right: var(--explorer-spacing-xs);
     top: 50%;
     transform: translateY(-50%);
-    padding: 2px;
+    padding: var(--spacing-0-5);
     border: none;
     background: transparent;
     color: var(--color-text-tertiary);
@@ -508,7 +508,7 @@
     right: 0;
     z-index: 100;
     min-width: 200px;
-    padding: 8px;
+    padding: var(--spacing-2);
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -518,7 +518,7 @@
   .doc-explorer-toolbar__settings-section {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .doc-explorer-toolbar__settings-label {
@@ -527,27 +527,27 @@
     color: var(--color-text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    padding: 0 4px;
+    padding: 0 var(--spacing-1);
   }
 
   .doc-explorer-toolbar__settings-divider {
     height: 1px;
-    margin: 6px 0;
+    margin: var(--spacing-1-5) 0;
     background: var(--color-border);
   }
 
   .doc-explorer-toolbar__settings-toggles {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   .doc-explorer-toolbar__settings-toggle {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     width: 100%;
-    padding: 5px 8px;
+    padding: 5px var(--spacing-2);
     border: none;
     border-radius: 4px;
     background: transparent;
@@ -584,7 +584,7 @@
   .doc-explorer-toolbar__stats {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     font-size: 9px;
     color: var(--color-text-tertiary);
     white-space: nowrap;
@@ -605,7 +605,7 @@
   .doc-explorer-toolbar__quick-filters {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   .doc-explorer-toolbar__filter-chip {
@@ -654,8 +654,8 @@
   .doc-explorer-toolbar__customer-filter {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 6px 3px 8px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-0-75) var(--spacing-1-5) var(--spacing-0-75) var(--spacing-2);
     background: var(--color-accent-bg);
     border: 1px solid var(--color-accent);
     border-radius: 12px;
@@ -664,7 +664,7 @@
   .doc-explorer-toolbar__customer-filter-label {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     font-size: 11px;
     font-weight: 600;
     color: var(--color-accent);
@@ -691,8 +691,8 @@
   .doc-explorer-toolbar__date-filter {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 6px 3px 8px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-0-75) var(--spacing-1-5) var(--spacing-0-75) var(--spacing-2);
     background: var(--color-accent-bg);
     border: 1px solid var(--color-accent);
     border-radius: 12px;
@@ -701,7 +701,7 @@
   .doc-explorer-toolbar__date-filter-label {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     font-size: 11px;
     font-weight: 600;
     color: var(--color-accent);
@@ -753,7 +753,7 @@
   }
 
   .doc-explorer-toolbar__recent-queries-header {
-    padding: 6px 10px 4px;
+    padding: var(--spacing-1-5) 10px var(--spacing-1);
     font-size: 9px;
     font-weight: 600;
     color: var(--color-text-tertiary);
@@ -764,7 +764,7 @@
   .doc-explorer-toolbar__recent-query-item {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     width: 100%;
     padding: 5px 10px;
     border: none;
@@ -803,7 +803,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 10px;
+    padding: var(--spacing-1-5) 10px;
     background: var(--color-bg-secondary);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
@@ -815,7 +815,7 @@
     color: var(--color-text-primary);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .doc-explorer-content-search-panel__count {
@@ -847,8 +847,8 @@
   /* AI 답변 영역 */
   .doc-explorer-content-search-panel__answer {
     display: flex;
-    gap: 6px;
-    padding: 8px 10px;
+    gap: var(--spacing-1-5);
+    padding: var(--spacing-2) 10px;
     font-size: 11px;
     line-height: 1.5;
     color: var(--color-text-primary);
@@ -874,9 +874,9 @@
   .doc-explorer-content-search-panel__item {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     width: 100%;
-    padding: 6px 10px;
+    padding: var(--spacing-1-5) 10px;
     border: none;
     border-bottom: 1px solid var(--color-border);
     background: transparent;
@@ -897,7 +897,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   .doc-explorer-content-search-panel__item-name {
@@ -916,7 +916,7 @@
     font-weight: 600;
     color: var(--color-accent);
     flex-shrink: 0;
-    padding: 1px 4px;
+    padding: 1px var(--spacing-1);
     background: var(--color-primary-50);
     border-radius: 3px;
   }
@@ -941,7 +941,7 @@
 
   /* 결과 없음 */
   .doc-explorer-content-search-panel__empty {
-    padding: 16px 10px;
+    padding: var(--spacing-4) 10px;
     font-size: 11px;
     color: var(--color-text-tertiary);
     text-align: center;
@@ -953,7 +953,7 @@
   .doc-explorer-toolbar__edit-group {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .doc-explorer-toolbar__edit-btn {
@@ -1020,7 +1020,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--spacing-2) var(--spacing-3);
     background: var(--color-bg-secondary);
     border-top: 1px solid var(--color-border-primary);
     flex-shrink: 0;
@@ -1029,7 +1029,7 @@
   .doc-explorer-action-bar__left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   .doc-explorer-action-bar__count {
@@ -1048,7 +1048,7 @@
   .doc-explorer-action-bar__force-label {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     font-size: 11px;
     color: var(--color-text-secondary);
     cursor: pointer;
@@ -1065,7 +1065,7 @@
   .doc-explorer-action-bar__btn {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     padding: clamp(4px, 0.35vw, 5px) clamp(8px, 0.83vw, 12px);
     font-size: clamp(10px, 0.83vw, 12px);
     font-weight: 600;

@@ -12,7 +12,7 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   /* 로딩 상태 */
@@ -22,7 +22,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: 12px;
+    gap: var(--spacing-3);
     color: var(--color-text-secondary);
   }
 
@@ -46,7 +46,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: 12px;
+    gap: var(--spacing-3);
     color: var(--color-text-secondary);
   }
 
@@ -69,7 +69,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: 8px;
+    gap: var(--spacing-2);
     color: var(--color-text-secondary);
     text-align: center;
     padding: 20px;
@@ -104,7 +104,7 @@
   .customer-review-actions {
     display: flex;
     justify-content: flex-end;
-    padding: 4px 0;
+    padding: var(--spacing-1) 0;
   }
 
   /* ==================== 🍎 TABLE HEADER - 칼럼 정의 ==================== */
@@ -144,7 +144,7 @@
   .customer-review-table__header-content {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   /* 정렬 표시 → 공유 SortIndicator 컴포넌트로 통일 */
@@ -235,7 +235,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   /* ==================== 🍎 STATUS BADGES ==================== */
@@ -243,8 +243,8 @@
   .status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    padding: 1px 6px;
+    gap: var(--spacing-0-75);
+    padding: 1px var(--spacing-1-5);
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;

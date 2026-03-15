@@ -65,7 +65,7 @@
   .settings-action-card__content {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     flex: 1;
     min-width: 0;
   }
@@ -159,7 +159,7 @@
   .settings-toggle-card__content {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     flex: 1;
     min-width: 0;
   }
@@ -261,7 +261,7 @@
   .ai-usage-summary__content {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     min-width: 0;
   }
 

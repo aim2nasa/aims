@@ -22,27 +22,27 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 8px;
+    padding: var(--spacing-1-5) var(--spacing-2);
     background: var(--color-bg-secondary);
     border-bottom: 1px solid var(--color-border);
-    gap: 8px;
+    gap: var(--spacing-2);
     flex-shrink: 0;
   }
 
   .ar-file-table__toolbar-left {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .ar-file-table__toolbar-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   .ar-file-table__search {
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 11px;
@@ -57,7 +57,7 @@
   }
 
   .ar-file-table__filter {
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 11px;
@@ -73,7 +73,7 @@
 
   /* 미매핑 전체 선택 버튼 */
   .ar-file-table__quick-select-btn {
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     border: 1px solid var(--color-warning, #ff9500);
     border-radius: 4px;
     background: var(--color-warning-bg, rgba(255, 149, 0, 0.1));
@@ -97,8 +97,8 @@
   .ar-file-table__bulk-toolbar {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1-5) var(--spacing-3);
     background: linear-gradient(135deg, var(--color-primary-bg, rgba(0, 122, 255, 0.12)) 0%, var(--color-primary-bg, rgba(0, 122, 255, 0.08)) 100%);
     border-bottom: 2px solid var(--color-primary);
     animation: bulkToolbarSlideIn 0.15s ease-out;
@@ -129,7 +129,7 @@
   }
 
   .ar-file-table__bulk-btn {
-    padding: 4px 10px;
+    padding: var(--spacing-1) 10px;
     border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
@@ -167,7 +167,7 @@
   .ar-file-table__bulk-group-name {
     font-weight: 400;
     color: var(--color-text-secondary);
-    margin-left: 4px;
+    margin-left: var(--spacing-1);
   }
 
   /* 경고 메시지 (고객명이 다를 때) */
@@ -186,7 +186,7 @@
     min-height: 0;
     border: 1px solid #8e8e93;
     border-radius: 2px;
-    margin: 0 4px;
+    margin: 0 var(--spacing-1);
     background: var(--color-bg-primary);
   }
 
@@ -236,7 +236,7 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    padding: 4px 6px;
+    padding: var(--spacing-1) var(--spacing-1-5);
     background: var(--color-bg-tertiary, #f2f2f7);
     font-size: 10px;
     font-weight: 600;
@@ -255,13 +255,13 @@
 
   .ar-file-table__th--rownum {
     text-align: center;
-    padding: 4px 2px;
+    padding: var(--spacing-1) var(--spacing-0-5);
     background: var(--color-bg-tertiary, #e5e5ea);
   }
 
   .ar-file-table__th--checkbox {
     text-align: center;
-    padding: 4px 2px;
+    padding: var(--spacing-1) var(--spacing-0-5);
   }
 
   .ar-file-table__th--date,
@@ -374,7 +374,7 @@
 
   /* ===== Table Cell ===== */
   .ar-file-table__td {
-    padding: 2px 6px;
+    padding: var(--spacing-0-5) var(--spacing-1-5);
     border-bottom: 1px solid var(--color-border, #d1d1d6);
     border-right: 1px solid var(--color-border, #d1d1d6);
     white-space: nowrap;
@@ -391,7 +391,7 @@
 
   .ar-file-table__td--rownum {
     text-align: center;
-    padding: 2px 4px;
+    padding: var(--spacing-0-5) var(--spacing-1);
     background: var(--color-bg-tertiary, #f2f2f7);
     color: var(--color-text-tertiary, #8e8e93);
     font-size: 10px;
@@ -399,7 +399,7 @@
 
   .ar-file-table__td--checkbox {
     text-align: center;
-    padding: 2px;
+    padding: var(--spacing-0-5);
   }
 
   .ar-file-table__td--checkbox input {
@@ -439,7 +439,7 @@
 
   /* ===== Empty State ===== */
   .ar-file-table__empty {
-    padding: 32px 16px;
+    padding: 32px var(--spacing-4);
     text-align: center;
     color: var(--color-text-tertiary);
     font-size: 12px;
@@ -449,8 +449,8 @@
   .ar-file-table__extracted-name {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 2px 4px;
+    gap: var(--spacing-0-5);
+    padding: var(--spacing-0-5) var(--spacing-1);
     border: none;
     border-radius: 3px;
     background: transparent;
@@ -483,9 +483,9 @@
   .ar-file-table__dropdown-trigger {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     width: 100%;
-    padding: 3px 6px;
+    padding: var(--spacing-0-75) var(--spacing-1-5);
     border: 1px solid var(--color-border);
     border-radius: 3px;
     background: var(--color-bg-primary);
@@ -576,7 +576,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 8px;
+    padding: var(--spacing-1-5) var(--spacing-2);
     background: var(--color-bg-secondary);
     border-top: 1px solid var(--color-border);
     font-size: 11px;
@@ -590,11 +590,11 @@
   .ar-file-table__pagination-controls {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .ar-file-table__pagination-btn {
-    padding: 3px 6px;
+    padding: var(--spacing-0-75) var(--spacing-1-5);
     border: 1px solid var(--color-border);
     border-radius: 3px;
     background: var(--color-bg-primary);
@@ -621,7 +621,7 @@
   }
 
   .ar-file-table__pagination-size {
-    padding: 3px 6px;
+    padding: var(--spacing-0-75) var(--spacing-1-5);
     border: 1px solid var(--color-border);
     border-radius: 3px;
     background: var(--color-bg-primary);
@@ -644,7 +644,7 @@
   }
 
   .ar-table-dropdown__section-title {
-    padding: 6px 10px 3px;
+    padding: var(--spacing-1-5) 10px var(--spacing-0-75);
     font-size: 10px;
     font-weight: 600;
     color: var(--color-text-tertiary);
@@ -655,7 +655,7 @@
   .ar-table-dropdown__option {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     width: 100%;
     padding: 7px 10px;
     border: none;
@@ -712,7 +712,7 @@
   .ar-table-dropdown__divider {
     height: 1px;
     background: var(--color-border);
-    margin: 4px 0;
+    margin: var(--spacing-1) 0;
   }
 
   .ar-table-dropdown__empty {

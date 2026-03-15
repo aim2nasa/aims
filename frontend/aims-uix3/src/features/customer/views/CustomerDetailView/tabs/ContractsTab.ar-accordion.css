@@ -17,10 +17,10 @@
   .ar-accordion__header {
     display: grid;
     grid-template-columns: 20px 80px 80px 140px 100px 60px;
-    gap: 8px;
+    gap: var(--spacing-2);
     align-items: center;
     height: 32px; /* Annual Report 행과 동일 */
-    padding: 6px 10px; /* Annual Report 행과 동일 */
+    padding: var(--spacing-1-5) 10px; /* Annual Report 행과 동일 */
     cursor: pointer;
     font-size: var(--font-size-footnote); /* 13px - Annual Report 행과 동일 */
     color: var(--color-ios-text-primary-light);
@@ -111,11 +111,11 @@
 
   /* AR 아코디언 콘텐츠 (상세 계약 목록) */
   .ar-accordion__content {
-    padding: 8px 8px 10px 8px;
+    padding: var(--spacing-2) var(--spacing-2) 10px var(--spacing-2);
     background: var(--color-ios-bg-secondary-light);
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     overflow-x: auto;
   }
 
@@ -124,7 +124,7 @@
   }
 
   .ar-accordion__content--empty {
-    padding: 16px 12px 16px 32px;
+    padding: var(--spacing-4) var(--spacing-3) var(--spacing-4) 32px;
     color: var(--color-ios-text-tertiary-light);
     font-size: var(--font-size-caption-1);
     text-align: center;
@@ -138,14 +138,14 @@
   .ar-contracts-header {
     display: grid;
     grid-template-columns: 28px 70px 180px 50px 50px 70px 55px 70px 50px 50px 70px;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     min-width: 800px;
-    padding: 6px 10px;
+    padding: var(--spacing-1-5) 10px;
     font-size: 11px;
     font-weight: 600;
     color: var(--color-ios-text-tertiary-light);
     border-bottom: 1px solid var(--color-ios-separator-light);
-    margin-bottom: 2px;
+    margin-bottom: var(--spacing-0-5);
   }
 
   html[data-theme="dark"] .ar-contracts-header {
@@ -169,10 +169,10 @@
   .ar-contract-item {
     display: grid;
     grid-template-columns: 28px 70px 180px 50px 50px 70px 55px 70px 50px 50px 70px;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     min-width: 800px;
     height: 28px;
-    padding: 4px 10px;
+    padding: var(--spacing-1) 10px;
     align-items: center;
     font-size: 12px;
     color: var(--color-ios-text-primary-light);
@@ -231,7 +231,7 @@
 
   .ar-contract-item__status {
     text-align: center;
-    padding: 1px 4px;
+    padding: 1px var(--spacing-1);
     border-radius: 3px;
     font-size: 10px;
     font-weight: 500;
@@ -296,8 +296,8 @@
   .customer-contracts__ar-loading {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
     font-size: var(--font-size-caption-1);
     color: var(--color-ios-text-tertiary-light);
   }

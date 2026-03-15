@@ -12,15 +12,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    padding: var(--spacing-3) var(--spacing-4);
     background: var(--color-bg-secondary);
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   .ar-group-card__toggle {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     flex: 1;
     min-width: 0;
     padding: 0;
@@ -69,7 +69,7 @@
   .ar-group-card__selector {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     flex-shrink: 0;
   }
 
@@ -86,8 +86,8 @@
   .ar-file-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 16px 8px 40px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-4) var(--spacing-2) 40px;
     font-size: 12px;
     border-bottom: 1px solid var(--color-border-light, rgba(0,0,0,0.05));
   }
@@ -154,7 +154,7 @@
 
   .ar-file-row__badge {
     display: inline-block;
-    padding: 2px 6px;
+    padding: var(--spacing-0-5) var(--spacing-1-5);
     border-radius: 3px;
     font-size: 10px;
     font-weight: 500;
@@ -182,8 +182,8 @@
   .customer-dropdown__trigger {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1-5) var(--spacing-3);
     border: 1px solid var(--color-border);
     border-radius: 6px;
     background: var(--color-bg-primary);
@@ -262,7 +262,7 @@
     position: absolute;
     top: 100%;
     right: 0;
-    margin-top: 4px;
+    margin-top: var(--spacing-1);
     min-width: 180px;
     max-width: 280px;
     background: var(--color-bg-primary);
@@ -284,9 +284,9 @@
   .customer-dropdown__option {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px var(--spacing-3);
     border: none;
     background: none;
     cursor: pointer;
@@ -338,7 +338,7 @@
   .customer-dropdown__divider {
     height: 1px;
     background: var(--color-border);
-    margin: 4px 0;
+    margin: var(--spacing-1) 0;
   }
 
   /* ===== DraggableModal Content Override ===== */
@@ -350,7 +350,7 @@
     flex-shrink: 1;
     flex-basis: 0;
     min-height: 0;
-    padding: 8px;
+    padding: var(--spacing-2);
     overflow: hidden;
   }
 
@@ -360,8 +360,8 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 4px 8px;
-    padding: 6px 10px;
+    gap: var(--spacing-1) var(--spacing-2);
+    padding: var(--spacing-1-5) 10px;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: 6px;
@@ -376,8 +376,8 @@
   .batch-ar-modal__file-summary-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 1px 6px;
+    gap: var(--spacing-1);
+    padding: 1px var(--spacing-1-5);
     border: none;
     border-radius: 4px;
     background: var(--color-bg-tertiary);
@@ -404,16 +404,16 @@
     width: 100%;
     max-height: 150px;
     overflow-y: auto;
-    margin-top: 6px;
+    margin-top: var(--spacing-1-5);
     border-top: 1px solid var(--color-border);
-    padding-top: 4px;
+    padding-top: var(--spacing-1);
   }
 
   .batch-ar-modal__excluded-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 3px 8px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-0-75) var(--spacing-2);
     font-size: 11px;
     border-radius: 3px;
   }

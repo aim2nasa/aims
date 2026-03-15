@@ -88,8 +88,8 @@
   .annual-report-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
     padding: 20px;
     background: var(--color-layout-content-light);
     border-radius: 12px;
@@ -104,7 +104,7 @@
   .annual-report-summary__item {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .annual-report-summary__label {
@@ -143,8 +143,8 @@
   .annual-report-date-dropdown__trigger {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
+    gap: var(--spacing-1-5);
+    padding: var(--spacing-1) 10px;
     background: var(--color-control-bg);
     border: 1px solid var(--color-control-border);
     border-radius: 6px;
@@ -205,7 +205,7 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 8px 12px;
+    padding: var(--spacing-2) var(--spacing-3);
     background: transparent;
     border: none;
     cursor: pointer;
@@ -230,7 +230,7 @@
     font-size: var(--font-size-caption-2);
     color: var(--color-text-tertiary);
     font-weight: 400;
-    margin-left: 8px;
+    margin-left: var(--spacing-2);
   }
 
   [data-theme="dark"] .annual-report-date-dropdown__trigger {
@@ -254,7 +254,7 @@
   /* ==================== Contracts Table ==================== */
 
   .annual-report-contracts {
-    margin-top: 16px;
+    margin-top: var(--spacing-4);
   }
 
   .annual-report-contracts__title {
@@ -262,7 +262,7 @@
     font-family: var(--font-family-text);
     font-weight: 600;
     color: var(--color-text-primary);
-    margin: 0 0 12px 0;
+    margin: 0 0 var(--spacing-3) 0;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   }
 
@@ -299,7 +299,7 @@
   }
 
   .contracts-table th {
-    padding: 8px 6px;
+    padding: var(--spacing-2) var(--spacing-1-5);
     text-align: center;
     font-weight: 600;
     color: var(--color-text-primary);
@@ -373,7 +373,7 @@
   }
 
   .contracts-table td {
-    padding: 6px 6px;
+    padding: var(--spacing-1-5) var(--spacing-1-5);
     color: var(--color-text-primary);
     vertical-align: middle;
     font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 테이블 내용 */
@@ -393,7 +393,7 @@
 
   .contracts-table__cell--empty {
     text-align: center;
-    padding: 24px 16px;
+    padding: var(--spacing-6) var(--spacing-4);
     color: var(--color-text-tertiary);
     font-size: 12px;
   }
@@ -442,7 +442,7 @@
 
   .status-badge {
     display: inline-block;
-    padding: 2px 6px;
+    padding: var(--spacing-0-5) var(--spacing-1-5);
     border-radius: 6px;
     font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 뱃지 (10px deprecated) */
     font-family: var(--font-family-text);
@@ -492,8 +492,8 @@
   /* ==================== Footer ==================== */
 
   .annual-report-modal__footer {
-    margin-top: 24px;
-    padding-top: 16px;
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-4);
     border-top: 1px solid var(--color-layout-border);
     text-align: center;
   }
@@ -522,13 +522,13 @@
     .annual-report-summary {
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
-      padding: 12px;
-      margin-bottom: 16px;
+      padding: var(--spacing-3);
+      margin-bottom: var(--spacing-4);
       border-radius: 8px;
     }
 
     .annual-report-summary__item {
-      gap: 3px;
+      gap: var(--spacing-0-75);
     }
 
     .annual-report-summary__label {
@@ -547,7 +547,7 @@
 
     .contracts-table th,
     .contracts-table td {
-      padding: 8px 4px;
+      padding: var(--spacing-2) var(--spacing-1);
       font-size: 11px;
     }
 
@@ -593,13 +593,13 @@
     }
 
     .contracts-table .status-badge {
-      padding: 2px 4px;
+      padding: var(--spacing-0-5) var(--spacing-1);
       font-size: 10px;
     }
 
     /* 🍎 섹션 제목: 컴팩트 */
     .annual-report-contracts__title {
-      margin: 0 0 8px 0;
+      margin: 0 0 var(--spacing-2) 0;
       font-size: 12px;
     }
 
@@ -609,12 +609,12 @@
 
     /* 🍎 실효 계약 제목 */
     .annual-report-contracts__title--lapsed {
-      margin-top: 12px;
+      margin-top: var(--spacing-3);
     }
 
     /* 🍎 푸터: 컴팩트 */
     .annual-report-modal__footer {
-      margin-top: 12px;
+      margin-top: var(--spacing-3);
       padding-top: 10px;
     }
 
@@ -633,8 +633,8 @@
     /* 요약: 1열 */
     .annual-report-summary {
       grid-template-columns: 1fr;
-      gap: 6px;
-      padding: 8px;
+      gap: var(--spacing-1-5);
+      padding: var(--spacing-2);
     }
 
     /* 테이블: 더 축소 (순번 숨김 → 상품명 + 계약자 + 상태만) */
@@ -644,7 +644,7 @@
 
     .contracts-table th,
     .contracts-table td {
-      padding: 6px 3px;
+      padding: var(--spacing-1-5) var(--spacing-0-75);
       font-size: 10px;
     }
 
@@ -674,8 +674,8 @@
     background: var(--color-layout-content-light);
     border: 1px solid var(--color-layout-border);
     border-radius: 10px;
-    padding: 12px 0;
-    margin-bottom: 16px;
+    padding: var(--spacing-3) 0;
+    margin-bottom: var(--spacing-4);
   }
 
   .ar-mobile-summary__item {
@@ -683,7 +683,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   .ar-mobile-summary__item + .ar-mobile-summary__item {
@@ -707,15 +707,15 @@
   }
 
   .ar-mobile-contracts {
-    margin-bottom: 16px;
+    margin-bottom: var(--spacing-4);
   }
 
   .ar-mobile-contracts__title {
     font-size: 12px;
     font-weight: 600;
     color: var(--color-text-primary);
-    margin: 0 0 8px 0;
-    padding-bottom: 6px;
+    margin: 0 0 var(--spacing-2) 0;
+    padding-bottom: var(--spacing-1-5);
     border-bottom: 1px solid var(--color-layout-border);
   }
 
@@ -727,7 +727,7 @@
     background: var(--color-layout-content-light);
     border: 1px solid var(--color-layout-border);
     border-radius: 10px;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-2);
     overflow: hidden;
   }
 
@@ -735,8 +735,8 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 10px 12px 0;
-    gap: 8px;
+    padding: 10px var(--spacing-3) 0;
+    gap: var(--spacing-2);
   }
 
   .ar-mobile-card__product {
@@ -750,19 +750,19 @@
   .ar-mobile-card__company {
     font-size: 10px;
     color: var(--color-text-tertiary);
-    padding: 2px 12px 8px;
+    padding: var(--spacing-0-5) var(--spacing-3) var(--spacing-2);
     border-bottom: 1px solid var(--color-layout-border);
   }
 
   .ar-mobile-card__body {
-    padding: 6px 12px;
+    padding: var(--spacing-1-5) var(--spacing-3);
   }
 
   .ar-mobile-card__row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 3px 0;
+    padding: var(--spacing-0-75) 0;
   }
 
   .ar-mobile-card__label {
@@ -783,7 +783,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    padding: var(--spacing-2) var(--spacing-3);
     background: var(--color-primary-bg);
     border-top: 1px solid var(--color-layout-border);
   }
@@ -802,7 +802,7 @@
 
   .ar-mobile-empty {
     text-align: center;
-    padding: 24px 16px;
+    padding: var(--spacing-6) var(--spacing-4);
     font-size: 12px;
     color: var(--color-text-tertiary);
   }

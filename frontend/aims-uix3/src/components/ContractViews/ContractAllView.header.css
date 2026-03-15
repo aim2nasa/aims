@@ -12,7 +12,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   /* === 🍎 SEARCH BAR: iOS-style search field === */
@@ -27,7 +27,7 @@
     width: 100%;
     background-color: transparent;
     border-radius: 10px;
-    padding: 6px 8px;
+    padding: var(--spacing-1-5) var(--spacing-2);
     transition: background-color 0.2s ease-out;
     overflow: visible;
   }
@@ -68,7 +68,7 @@
     font-weight: 400;
     color: var(--color-ios-text-primary-light);
     outline: none;
-    padding: 4px 8px 4px 26px;
+    padding: var(--spacing-1) var(--spacing-2) var(--spacing-1) 26px;
     transition: border-color 0.2s ease-out;
   }
 
@@ -92,7 +92,7 @@
     justify-content: center;
     background: none;
     border: none;
-    padding: 4px;
+    padding: var(--spacing-1);
     cursor: pointer;
     color: var(--color-ios-text-quaternary-light);
     transition: color 0.15s ease-out;
@@ -129,7 +129,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 4px 4px 4px;
+    padding: 0 var(--spacing-1) var(--spacing-1) var(--spacing-1);
   }
 
 
@@ -151,14 +151,14 @@
   .contract-filter-buttons {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   .contract-filter-btn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1) 10px;
     border: 1px solid var(--color-border-primary);
     border-radius: 6px;
     background: transparent;
@@ -234,8 +234,8 @@
     overflow-x: auto;  /* 수평 스크롤 활성화 */
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding-right: 4px;
+    gap: var(--spacing-0-5);
+    padding-right: var(--spacing-1);
   }
 
   /* 라이트 모드: 리스트 테두리 */
@@ -278,8 +278,8 @@
       var(--col-insured, 95px)       /* 피보험자 */
       var(--col-status, 100px);      /* 납입상태 */
     align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-3);
     height: 32px;          /* AllCustomersView와 동일 */
     min-width: max-content; /* 칼럼 리사이즈 시 자동 확장 */
     background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
@@ -306,7 +306,7 @@
   .contract-list-header > div {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     min-width: 0;
   }
 
@@ -328,8 +328,8 @@
     -webkit-user-select: none;
     user-select: none;
     transition: background-color 0.15s ease-out;
-    padding: 4px 6px;
-    margin: -4px -6px;
+    padding: var(--spacing-1) var(--spacing-1-5);
+    margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-1-5));
     border-radius: 4px;
   }
 
@@ -400,8 +400,8 @@
     -webkit-user-select: none;
     user-select: none;
     transition: background-color 0.15s ease-out;
-    padding: 4px 6px;
-    margin: -4px -6px;
+    padding: var(--spacing-1) var(--spacing-1-5);
+    margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-1-5));
     border-radius: 4px;
   }
 
@@ -428,7 +428,7 @@
     justify-content: center;
     width: 16px;
     height: 16px;
-    margin-left: 4px;
+    margin-left: var(--spacing-1);
     padding: 0;
     border: none;
     border-radius: 3px;

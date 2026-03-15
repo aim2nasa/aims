@@ -53,7 +53,7 @@
     font-size: var(--font-size-caption-2);
     font-weight: 400;
     color: var(--color-text-tertiary);
-    margin-top: 2px;
+    margin-top: var(--spacing-0-5);
   }
 
   .stat-divider {
@@ -103,7 +103,7 @@
   .tree-header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   .select-all-btn {
@@ -203,8 +203,8 @@
   .tree-container .guide-node-content {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 0;
+    gap: var(--spacing-1);
+    padding: var(--spacing-0-75) 0;
     white-space: nowrap;
     cursor: default;
     border-radius: var(--radius-xs);
@@ -240,7 +240,7 @@
 
   /* 체크박스 */
   .tree-container .guide-checkbox {
-    margin-right: 4px;
+    margin-right: var(--spacing-1);
     cursor: pointer;
     font-size: 14px;
     color: var(--color-text-tertiary);
@@ -318,8 +318,8 @@
   .tree-container .guide-match {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    margin-left: 6px;
+    gap: var(--spacing-1);
+    margin-left: var(--spacing-1-5);
   }
 
   .tree-container .guide-arrow {
@@ -329,7 +329,7 @@
   }
 
   .tree-container .guide-customer-badge {
-    padding: 1px 8px;
+    padding: 1px var(--spacing-2);
     background: rgba(52, 199, 89, 0.15);
     color: var(--color-ios-green, #34c759);
     font-size: 10px;
@@ -339,8 +339,8 @@
 
   /* 미매칭 노트 */
   .tree-container .guide-note {
-    margin-left: 6px;
-    padding: 1px 6px;
+    margin-left: var(--spacing-1-5);
+    padding: 1px var(--spacing-1-5);
     background: rgba(255, 149, 0, 0.15);
     color: var(--color-ios-orange, #ff9500);
     font-size: 10px;  /* FONT_SIZE_STANDARDS: 배지 */

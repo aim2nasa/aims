@@ -419,7 +419,7 @@
     .account-settings-view__usage-footer:not(.account-settings-view__usage-footer--breakdown) {
       display: grid;
       grid-template-columns: auto 1fr;
-      gap: 2px var(--spacing-2);
+      gap: var(--spacing-0-5) var(--spacing-2);
       align-items: baseline;
     }
 

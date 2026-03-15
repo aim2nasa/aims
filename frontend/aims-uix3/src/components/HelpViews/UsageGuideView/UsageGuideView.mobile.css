@@ -18,7 +18,7 @@
     }
 
     .usage-guide-view__search-input {
-      padding: 12px 36px 12px 36px;
+      padding: var(--spacing-3) 36px var(--spacing-3) 36px;
     }
 
     /* 카테고리 헤더 패딩 중간 축소 + 터치 영역 확보 */

@@ -22,7 +22,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--spacing-2) var(--spacing-3);
     background: var(--color-bg-secondary);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
@@ -31,7 +31,7 @@
   .doc-explorer-search-results__header-left {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     color: var(--color-text-secondary);
     min-width: 0;
   }
@@ -53,7 +53,7 @@
     font-weight: 600;
     color: var(--color-accent);
     background: var(--color-accent-bg);
-    padding: 1px 6px;
+    padding: 1px var(--spacing-1-5);
     border-radius: 8px;
     max-width: 100px;
     overflow: hidden;
@@ -65,7 +65,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2px;
+    padding: var(--spacing-0-5);
     border: none;
     border-radius: 4px;
     background: transparent;
@@ -82,8 +82,8 @@
   /* AI 답변 */
   .doc-explorer-search-results__answer {
     display: flex;
-    gap: 8px;
-    padding: 10px 12px;
+    gap: var(--spacing-2);
+    padding: 10px var(--spacing-3);
     font-size: 11px;
     line-height: 1.6;
     color: var(--color-text-primary);
@@ -106,8 +106,8 @@
   .doc-explorer-search-results__error {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3);
     font-size: 11px;
     color: var(--color-status-error);
     background: rgba(255, 59, 48, 0.05);
@@ -119,8 +119,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 32px 12px;
+    gap: var(--spacing-2);
+    padding: 32px var(--spacing-3);
     font-size: 11px;
     color: var(--color-text-tertiary);
   }
@@ -143,9 +143,9 @@
       80px                /* 고객 */
       80px                /* 업로드일 */
       56px                /* 크기 */;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     align-items: center;
-    padding: 4px 12px;
+    padding: var(--spacing-1) var(--spacing-3);
     background: var(--color-bg-tertiary);
     border-bottom: 1px solid var(--color-border);
     font-size: 10px;
@@ -171,7 +171,7 @@
   .doc-explorer-search-results__col {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   .doc-explorer-search-results__col.sortable {
@@ -179,8 +179,8 @@
     -webkit-user-select: none;
     user-select: none;
     border-radius: 3px;
-    padding: 2px 4px;
-    margin: -2px -4px;
+    padding: var(--spacing-0-5) var(--spacing-1);
+    margin: calc(-1 * var(--spacing-0-5)) calc(-1 * var(--spacing-1));
     white-space: nowrap;
     transition: background 100ms ease, color 100ms ease;
   }
@@ -218,10 +218,10 @@
       80px                /* 고객 */
       80px                /* 업로드일 */
       56px                /* 크기 */;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     align-items: center;
     width: 100%;
-    padding: 6px 12px;
+    padding: var(--spacing-1-5) var(--spacing-3);
     border: none;
     border-bottom: 1px solid var(--color-border);
     background: transparent;
@@ -361,7 +361,7 @@
   .doc-explorer-search-results__item-content {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     flex: 1;
     min-width: 0;
   }
@@ -369,7 +369,7 @@
   .doc-explorer-search-results__item-top {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .doc-explorer-search-results__item-name {
@@ -399,7 +399,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: var(--spacing-0-75);
     font-size: 10px;
     color: var(--color-text-tertiary);
     overflow: hidden;
@@ -459,8 +459,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 6px 12px;
+    gap: var(--spacing-3);
+    padding: var(--spacing-1-5) var(--spacing-3);
     background: var(--color-bg-secondary);
     border-top: 1px solid var(--color-border);
     flex-shrink: 0;
@@ -496,7 +496,7 @@
   .doc-explorer-search-results__page-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     font-size: 10px;
     font-weight: 600;
     color: var(--color-text-tertiary);
@@ -514,8 +514,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 48px 24px;
+    gap: var(--spacing-2);
+    padding: 48px var(--spacing-6);
     color: var(--color-text-tertiary);
     font-size: 12px;
   }
@@ -582,7 +582,7 @@
   .doc-explorer-tree__recent-list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   /* Recent item - 일반 문서와 동일한 레이아웃 */
@@ -599,8 +599,8 @@
       28px
       44px;
     align-items: center;
-    gap: 0 6px;
-    padding: 3px var(--explorer-spacing-md);
+    gap: 0 var(--spacing-1-5);
+    padding: var(--spacing-0-75) var(--explorer-spacing-md);
     border-radius: var(--explorer-border-radius);
     cursor: pointer;
     transition: background-color var(--explorer-transition);
@@ -792,7 +792,7 @@
     justify-content: center;
     width: 100%;
     height: 100%;
-    padding: 16px;
+    padding: var(--spacing-4);
     font-size: 11px;
     color: var(--color-text-tertiary);
     text-align: center;
@@ -828,7 +828,7 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
     color: var(--color-text-inverse);
     text-align: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   html[data-theme="dark"] .hover-preview__file-icon {
@@ -854,7 +854,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding: 0 8px;
+    padding: 0 var(--spacing-2);
   }
 
 } /* end @layer components */

@@ -79,14 +79,14 @@
      Group Node (폴더)
      ============================================ */
   .doc-explorer-tree__group {
-    margin-bottom: 2px;
+    margin-bottom: var(--spacing-0-5);
   }
 
   .doc-explorer-tree__group-header {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px var(--explorer-spacing-md);
+    gap: var(--spacing-1-5);
+    padding: var(--spacing-1) var(--explorer-spacing-md);
     border-radius: var(--explorer-border-radius);
     cursor: pointer;
     transition: background-color var(--explorer-transition);
@@ -178,7 +178,7 @@
   /* Count Badge (legacy) */
   .doc-explorer-tree__count {
     flex-shrink: 0;
-    padding: 1px 6px;
+    padding: 1px var(--spacing-1-5);
     font-size: 10px;
     font-weight: 600;
     color: var(--color-text-tertiary);
@@ -195,9 +195,9 @@
   /* 대분류 요약 배지 (고객 노드 접힌 상태에서 인라인 표시) */
   .doc-explorer-tree__category-badges {
     display: flex;
-    gap: 4px;
+    gap: var(--spacing-1);
     flex-shrink: 0;
-    margin-left: 8px;
+    margin-left: var(--spacing-2);
   }
 
   .doc-explorer-tree__category-badge {
@@ -281,7 +281,7 @@
     border: 1px solid var(--color-border);
     border-radius: 8px;
     box-shadow: var(--shadow-lg);
-    padding: 4px 0;
+    padding: var(--spacing-1) 0;
     overflow: hidden;
   }
 
@@ -289,9 +289,9 @@
   .doc-explorer-tree__customer-action-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     width: 100%;
-    padding: 6px 12px;
+    padding: var(--spacing-1-5) var(--spacing-3);
     border: none;
     background: transparent;
     font-size: 12px;
@@ -312,7 +312,7 @@
   /* 메뉴 구분선 */
   .doc-explorer-tree__customer-action-divider {
     height: 1px;
-    margin: 4px 8px;
+    margin: var(--spacing-1) var(--spacing-2);
     background: var(--color-border);
   }
 
@@ -353,9 +353,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    margin: 2px 0 4px 0;
-    padding: 4px 12px 4px calc(var(--explorer-spacing-md) + 20px);
+    gap: var(--spacing-2);
+    margin: var(--spacing-0-5) 0 var(--spacing-1) 0;
+    padding: var(--spacing-1) var(--spacing-3) var(--spacing-1) calc(var(--explorer-spacing-md) + 20px);
     background: var(--color-bg-secondary);
     border-radius: 6px;
     height: 28px;
@@ -365,7 +365,7 @@
   .doc-explorer-tree__customer-card-info {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     font-size: 11px;
     color: var(--color-text-secondary);
     overflow: hidden;
@@ -409,12 +409,12 @@
   .doc-explorer-tree__customer-card-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     flex-shrink: 0;
   }
 
   .doc-explorer-tree__customer-card-btn {
-    padding: 2px 8px;
+    padding: var(--spacing-0-5) var(--spacing-2);
     border: none;
     border-radius: 4px;
     background: transparent;
@@ -456,8 +456,8 @@
       /* badge */ 28px
       /* actions */ 44px;
     align-items: center;
-    gap: 0 6px;
-    padding: 3px var(--explorer-spacing-md);
+    gap: 0 var(--spacing-1-5);
+    padding: var(--spacing-0-75) var(--explorer-spacing-md);
     border-radius: var(--explorer-border-radius);
     cursor: pointer;
     transition: background-color var(--explorer-transition);
@@ -477,7 +477,7 @@
   .doc-explorer-tree__document--selected {
     background: var(--color-selection-bg);
     border-left: 3px solid var(--color-primary-500);
-    padding-left: calc(var(--explorer-spacing-md) - 3px); /* 테두리 보정 */
+    padding-left: calc(var(--explorer-spacing-md) - var(--spacing-0-75)); /* 테두리 보정 */
   }
 
   .doc-explorer-tree__document--selected:hover {
@@ -694,7 +694,7 @@
 
   /* Document Customer */
   .doc-explorer-tree__doc-customer {
-    padding: 1px 6px;
+    padding: 1px var(--spacing-1-5);
     font-size: 10px;
     font-weight: 600;
     color: var(--color-accent);
@@ -734,7 +734,7 @@
 
   /* Badge */
   .doc-explorer-tree__badge {
-    padding: 1px 4px;
+    padding: 1px var(--spacing-1);
     font-size: 9px;
     font-weight: 600;
     border-radius: 3px;
@@ -841,7 +841,7 @@
     display: none;
     align-items: center;
     gap: 1px;
-    margin-left: 4px;
+    margin-left: var(--spacing-1);
   }
 
   .doc-explorer-tree__document:hover .doc-explorer-tree__hover-actions {
@@ -941,8 +941,8 @@
       /* badge */ 28px
       /* actions */ 44px;
     align-items: center;
-    gap: 0 6px;
-    padding: 4px var(--explorer-spacing-md);
+    gap: 0 var(--spacing-1-5);
+    padding: var(--spacing-1) var(--explorer-spacing-md);
     border-bottom: 1px solid var(--color-border);
     background: var(--color-bg-secondary);
     flex-shrink: 0;
@@ -954,8 +954,8 @@
   .doc-explorer-tree__col-btn {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 2px 4px;
+    gap: var(--spacing-0-5);
+    padding: var(--spacing-0-5) var(--spacing-1);
     margin: 0;
     border: none;
     border-radius: var(--radius-sm, 4px);
@@ -993,7 +993,7 @@
   .doc-explorer-tree__col-filename {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: var(--spacing-0-75);
   }
 
   /* 정렬 불가 라벨 */
@@ -1004,7 +1004,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 2px 4px;
+    padding: var(--spacing-0-5) var(--spacing-1);
   }
 
   /* 빈 칸 (icon, actions 자리) */
@@ -1015,14 +1015,14 @@
   /* 태블릿 반응형 */
   @media (max-width: 768px) {
     .doc-explorer-tree__column-header {
-      padding: 2px 8px;
-      gap: 0 4px;
+      padding: var(--spacing-0-5) var(--spacing-2);
+      gap: 0 var(--spacing-1);
     }
 
     .doc-explorer-tree__col-btn,
     .doc-explorer-tree__col-label {
       font-size: 9px;
-      padding: 1px 2px;
+      padding: 1px var(--spacing-0-5);
     }
   }
 

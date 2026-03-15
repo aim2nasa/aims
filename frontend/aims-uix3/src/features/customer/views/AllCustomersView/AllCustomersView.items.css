@@ -7,7 +7,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: var(--spacing-3);
     height: 200px;
     color: var(--color-ios-empty-light);
   }
@@ -41,10 +41,10 @@
       minmax(150px, 2fr)  /* 주소 */
       80px           /* 상태 (텍스트 표시) */
       160px;         /* 등록일 (YYYY.MM.DD HH:MM:SS) */
-    gap: 12px;
+    gap: var(--spacing-3);
     align-items: center;
     height: 32px;
-    padding: 6px 12px;
+    padding: var(--spacing-1-5) var(--spacing-3);
     background: var(--color-ios-bg-primary-light);
     border-radius: 4px;
     cursor: pointer;
@@ -307,17 +307,17 @@
         55px           /* 상태 */
         130px;         /* 등록일 */
       min-width: 780px;
-      gap: 8px;
+      gap: var(--spacing-2);
     }
 
     .customer-list-header {
       font-size: 10px;
-      padding: 6px 8px;
+      padding: var(--spacing-1-5) var(--spacing-2);
     }
 
     .customer-item {
       height: 28px;
-      padding: 4px 8px;
+      padding: var(--spacing-1) var(--spacing-2);
     }
 
     .customer-item:hover {
@@ -327,19 +327,19 @@
 
   @media (max-width: 480px) {
     .customer-library-container {
-      padding: 8px 12px;
-      gap: 6px;
+      padding: var(--spacing-2) var(--spacing-3);
+      gap: var(--spacing-1-5);
     }
 
     /* 검색: 풀 폭 + 40px 터치 타겟 + iOS 자동줌 방지 */
     .customer-library-container .search-input-wrapper {
       width: 100%;
-      padding: 4px 8px;
+      padding: var(--spacing-1) var(--spacing-2);
     }
 
     .customer-library-container .search-input {
       min-height: 40px;
-      padding: 8px 10px 8px 32px;
+      padding: var(--spacing-2) 10px var(--spacing-2) 32px;
       font-size: 16px; /* iOS Safari 자동줌 방지 */
       border-radius: var(--radius-md);
     }
@@ -354,8 +354,8 @@
       flex-wrap: nowrap;
       scrollbar-width: none;
       -ms-overflow-style: none;
-      gap: 6px;
-      padding: 2px 0;
+      gap: var(--spacing-1-5);
+      padding: var(--spacing-0-5) 0;
     }
 
     .result-count::-webkit-scrollbar {
@@ -365,7 +365,7 @@
     .type-filter-button {
       flex-shrink: 0;
       font-size: var(--font-size-caption-1);
-      padding: 6px 12px;
+      padding: var(--spacing-1-5) var(--spacing-3);
       min-height: 34px;
       border-radius: var(--radius-full, 999px);
     }

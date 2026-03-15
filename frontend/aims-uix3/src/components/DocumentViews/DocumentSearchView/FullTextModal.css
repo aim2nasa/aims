@@ -39,7 +39,7 @@
 
   /* 모달 푸터 */
   .fulltext-modal-footer {
-    padding: 16px 20px;
+    padding: var(--spacing-4) 20px;
     border-top: 1px solid var(--color-layout-border);
     display: flex;
     justify-content: flex-end;
@@ -66,11 +66,11 @@
   /* 모바일 (480px 이하) - 412px 최적화 */
   @media (max-width: 480px) {
     .fulltext-modal-body {
-      padding: 12px;
+      padding: var(--spacing-3);
     }
 
     .fulltext-modal-footer {
-      padding: 12px;
+      padding: var(--spacing-3);
     }
   }
 

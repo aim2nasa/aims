@@ -121,7 +121,7 @@
   .customer-edit-modal-content {
     flex: 1;
     overflow-y: auto;
-    padding: 16px 20px;
+    padding: var(--spacing-4) 20px;
     background-color: var(--color-layout-content-light);
   }
 
@@ -142,26 +142,26 @@
     font-weight: 600;
     color: var(--color-text-primary);
     margin: 0;
-    padding-top: 8px;
+    padding-top: var(--spacing-2);
   }
 
   .customer-edit-modal-divider {
     height: 0.5px;
     background-color: var(--color-layout-border);
-    margin: 12px 0;
+    margin: var(--spacing-3) 0;
   }
 
   /* ===== 필드 그룹 (2열 그리드) ===== */
   .customer-edit-modal-field-group {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   .customer-edit-modal-field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .customer-edit-modal-field--full {
@@ -187,7 +187,7 @@
 
   /* ===== 입력 필드 ===== */
   .customer-edit-modal-input {
-    padding: 8px 12px;
+    padding: var(--spacing-2) var(--spacing-3);
     border: 1px solid var(--color-layout-border);
     border-radius: 8px;
     background-color: var(--color-layout-secondary-light);
@@ -233,7 +233,7 @@
     font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 에러 메시지 */
     font-family: var(--font-family-text);
     color: var(--color-ios-red-light);
-    margin-top: -2px;
+    margin-top: calc(-1 * var(--spacing-0-5));
   }
 
   html[data-theme="dark"] .customer-edit-modal-error {
@@ -241,14 +241,14 @@
   }
 
   .customer-edit-modal-submit-error {
-    padding: 12px 16px;
+    padding: var(--spacing-3) var(--spacing-4);
     background-color: var(--color-danger-alpha-light);
     border: 1px solid var(--color-ios-red-light);
     border-radius: 8px;
     color: var(--color-ios-red-light);
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 제출 에러 */
     font-family: var(--font-family-text);
-    margin-top: 12px;
+    margin-top: var(--spacing-3);
   }
 
   html[data-theme="dark"] .customer-edit-modal-submit-error {
@@ -274,7 +274,7 @@
 
   .customer-edit-modal-button {
     flex: 1;
-    padding: 6px 16px;
+    padding: var(--spacing-1-5) var(--spacing-4);
     border: none;
     border-radius: 8px;
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 버튼 */
@@ -353,15 +353,15 @@
     .customer-edit-modal-header,
     .customer-edit-modal-content,
     .customer-edit-modal-footer {
-      padding-left: 16px;
-      padding-right: 16px;
+      padding-left: var(--spacing-4);
+      padding-right: var(--spacing-4);
     }
   }
 
   /* ===== 메모 필드 ===== */
   .customer-edit-modal-memo {
-    margin-top: 12px;
-    padding-top: 12px;
+    margin-top: var(--spacing-3);
+    padding-top: var(--spacing-3);
     border-top: 0.5px solid var(--color-layout-border);
   }
 
@@ -371,12 +371,12 @@
     font-weight: 600;
     color: var(--color-text-secondary);
     font-family: var(--font-family-text);
-    margin-bottom: 6px;
+    margin-bottom: var(--spacing-1-5);
   }
 
   .customer-edit-modal-memo__textarea {
     width: 100%;
-    padding: 8px 12px;
+    padding: var(--spacing-2) var(--spacing-3);
     border: 1px solid var(--color-layout-border);
     border-radius: 8px;
     background-color: var(--color-layout-secondary-light);
@@ -434,7 +434,7 @@
 
     /* 푸터: safe-area 대응 */
     .customer-edit-modal-footer {
-      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(var(--spacing-3) + env(safe-area-inset-bottom, 0px));
     }
   }
 
@@ -447,7 +447,7 @@
 
   /* 헤더: 울트라 컴팩트 */
   .customer-edit-modal--compact .customer-edit-modal-header {
-    padding: 4px 12px;
+    padding: var(--spacing-1) var(--spacing-3);
   }
 
   .customer-edit-modal--compact .customer-edit-modal-title {
@@ -460,13 +460,13 @@
   }
 
   .customer-edit-modal--compact .customer-edit-modal-tab {
-    padding: 4px 6px;
+    padding: var(--spacing-1) var(--spacing-1-5);
     font-size: 11px;
   }
 
   /* 콘텐츠: 스크롤 가능 + 울트라 컴팩트 */
   .customer-edit-modal--compact .customer-edit-modal-content {
-    padding: 6px 12px;
+    padding: var(--spacing-1-5) var(--spacing-3);
     flex: 1;
     min-height: 0;
     overflow-y: auto;
@@ -474,7 +474,7 @@
 
   /* 섹션 제목: 컴팩트 */
   .customer-edit-modal--compact .form-section__title {
-    padding: 2px 0;
+    padding: var(--spacing-0-5) 0;
     font-size: 11px;
   }
 
@@ -485,7 +485,7 @@
 
   .customer-edit-modal--compact .form-row {
     gap: 1px;
-    padding: 2px 0;
+    padding: var(--spacing-0-5) 0;
   }
 
   .customer-edit-modal--compact .form-row__label {
@@ -495,7 +495,7 @@
 
   .customer-edit-modal--compact .form-row__input input,
   .customer-edit-modal--compact .form-row__input select {
-    padding: 3px 8px;
+    padding: var(--spacing-0-75) var(--spacing-2);
     font-size: 13px;
   }
 
@@ -509,26 +509,26 @@
 
   /* 메모: 1줄 컴팩트 */
   .customer-edit-modal--compact .customer-edit-modal-memo {
-    margin-top: 4px;
-    padding-top: 4px;
+    margin-top: var(--spacing-1);
+    padding-top: var(--spacing-1);
   }
 
   .customer-edit-modal--compact .customer-edit-modal-memo__label {
     font-size: 11px;
-    margin-bottom: 2px;
+    margin-bottom: var(--spacing-0-5);
   }
 
   .customer-edit-modal--compact .customer-edit-modal-memo__textarea {
     min-height: unset;
     height: 28px;
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     font-size: 12px;
     resize: none;
   }
 
   /* 푸터: 울트라 컴팩트 */
   .customer-edit-modal--compact .customer-edit-modal-footer {
-    padding: 4px 12px;
+    padding: var(--spacing-1) var(--spacing-3);
   }
 
 } /* end @layer components */

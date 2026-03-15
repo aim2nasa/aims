@@ -16,7 +16,7 @@
 
     /* 헤더: 패딩 축소 */
     .relationship-header {
-      padding: 8px var(--spacing-sm);
+      padding: var(--spacing-2) var(--spacing-sm);
     }
 
     /* 검색 입력: 폭 축소 */
@@ -27,7 +27,7 @@
 
     /* 트리 컨트롤: 간격 축소 */
     .relationship-tree-controls {
-      gap: 4px;
+      gap: var(--spacing-1);
     }
 
     /* 트리 컨트롤 버튼: 터치 영역 확보 */
@@ -38,7 +38,7 @@
 
     /* 트리 영역: 패딩 축소 */
     .relationship-tree {
-      padding: 4px;
+      padding: var(--spacing-1);
     }
 
     /* 트리 노드: 터치 친화적 min-height */
@@ -49,18 +49,18 @@
 
     /* 루트 노드: 약간 축소 */
     .tree-node--root {
-      padding: 6px var(--spacing-sm);
+      padding: var(--spacing-1-5) var(--spacing-sm);
     }
 
     /* 계층 들여쓰기 축소 */
     .tree-children {
       padding-left: 14px;
-      margin-left: 4px;
+      margin-left: var(--spacing-1);
     }
 
     /* 리프/멤버 노드: 들여쓰기 축소 */
     .tree-node--leaf {
-      padding-left: 24px;
+      padding-left: var(--spacing-6);
     }
 
     .tree-node--member {
@@ -74,7 +74,7 @@
 
     /* 노드 콘텐츠 간격 축소 */
     .tree-node__content {
-      gap: 8px;
+      gap: var(--spacing-2);
     }
 
     /* 패널: 폭 조정 (태블릿에서 최소폭 완화) */
@@ -91,7 +91,7 @@
 
     /* 초성 필터: 컴팩트 */
     .relationship-initial-filter {
-      padding: 4px var(--spacing-sm);
+      padding: var(--spacing-1) var(--spacing-sm);
     }
   }
 

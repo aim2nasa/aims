@@ -87,7 +87,7 @@
 
     /* 통계 항목 간격 축소 */
     .upload-progress-stats {
-      gap: 16px;
+      gap: var(--spacing-4);
       flex-wrap: wrap;
     }
 
@@ -106,8 +106,8 @@
 
     /* 처리 상태 보기 버튼 간격 축소 */
     .upload-view-documents {
-      padding-top: 24px;
-      margin-top: 16px;
+      padding-top: var(--spacing-6);
+      margin-top: var(--spacing-4);
     }
 
     .upload-view-documents-btn {
@@ -123,13 +123,13 @@
     .upload-summary-icon {
       width: 52px;
       height: 52px;
-      margin-bottom: 16px;
+      margin-bottom: var(--spacing-4);
     }
 
     /* 통계 카드 간격/패딩 축소 */
     .upload-summary-stats {
       gap: 20px;
-      padding: 16px 24px;
+      padding: var(--spacing-4) var(--spacing-6);
       margin-bottom: 28px;
     }
 
@@ -140,7 +140,7 @@
     }
 
     .upload-summary-actions {
-      gap: 8px;
+      gap: var(--spacing-2);
       flex-wrap: wrap;
       justify-content: center;
     }

@@ -12,11 +12,11 @@
   .crm-table--compact .crm-table__row,
   .crm-table--compact .crm-table__foot {
     grid-template-columns: 2fr 1fr 0.6fr 0.6fr 1fr;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .crm-table--compact .crm-table__head {
-    padding: 6px 10px;
+    padding: var(--spacing-1-5) 10px;
   }
 
   .crm-table--compact .crm-table__head .crm-table__cell {
@@ -24,7 +24,7 @@
   }
 
   .crm-table--compact .crm-table__row {
-    padding: 6px 10px;
+    padding: var(--spacing-1-5) 10px;
   }
 
   .crm-table--compact .crm-table__cell {
@@ -32,7 +32,7 @@
   }
 
   .crm-table--compact .crm-table__foot {
-    padding: 6px 10px;
+    padding: var(--spacing-1-5) 10px;
   }
 
   .crm-table--compact .crm-table__body {
@@ -46,7 +46,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px 16px;
+    padding: var(--spacing-6) var(--spacing-4);
     font-size: 12px;
     color: var(--color-text-tertiary);
     background: var(--color-bg-tertiary);
@@ -59,21 +59,21 @@
   .crm-table--dual .crm-table__row,
   .crm-table--dual .crm-table__foot {
     grid-template-columns: 1.5fr 1.4fr 1fr 1fr 1.4fr;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   .crm-table--compact.crm-table--dual .crm-table__head,
   .crm-table--compact.crm-table--dual .crm-table__row,
   .crm-table--compact.crm-table--dual .crm-table__foot {
     grid-template-columns: 1.5fr 1.4fr 1fr 1fr 1.4fr;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   /* Dual header with main/sub text */
   .crm-table__cell--dual-header {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     text-align: center;
   }
 
@@ -93,7 +93,7 @@
   .crm-table__cell--dual {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   /* Dual value row (기본납입/추가납입) */
@@ -102,7 +102,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     white-space: nowrap;
   }
 
@@ -155,7 +155,7 @@
   @media (max-width: 768px) {
     /* 🍎 모바일에서 콘텐츠 스크롤 활성화 (overflow: hidden 해제) */
     .customer-document-preview .customer-document-preview__content {
-      padding: 10px 12px;
+      padding: 10px var(--spacing-3);
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -164,15 +164,15 @@
     .crm-product-name,
     .crm-product-name--centered {
       font-size: 13px;
-      padding: 8px 12px;
-      margin-bottom: 8px;
+      padding: var(--spacing-2) var(--spacing-3);
+      margin-bottom: var(--spacing-2);
     }
 
     /* 🍎 인원 행: 4열 → 2열 */
     .crm-persons {
       grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      padding: 10px 12px;
+      gap: var(--spacing-2);
+      padding: 10px var(--spacing-3);
       margin-bottom: 10px;
     }
 
@@ -186,9 +186,9 @@
 
     /* 🍎 인원 인라인: gap 축소, 줄바꿈 */
     .crm-persons-inline {
-      gap: 10px 16px;
-      padding: 8px 12px;
-      margin-bottom: 8px;
+      gap: 10px var(--spacing-4);
+      padding: var(--spacing-2) var(--spacing-3);
+      margin-bottom: var(--spacing-2);
       font-size: 11px;
     }
 
@@ -212,19 +212,19 @@
 
     /* 🍎 카드: 패딩/마진 축소 */
     .crm-card {
-      padding: 12px;
+      padding: var(--spacing-3);
       margin-bottom: 10px;
       border-radius: 8px;
     }
 
     .crm-card__title {
-      margin-bottom: 8px;
+      margin-bottom: var(--spacing-2);
       font-size: 12px;
     }
 
     .crm-card__badge {
       font-size: 10px;
-      padding: 2px 6px;
+      padding: var(--spacing-0-5) var(--spacing-1-5);
     }
 
     /* 🍎 통계 그리드: gap/패딩 축소 */
@@ -233,7 +233,7 @@
     }
 
     .crm-stat {
-      padding: 8px 10px;
+      padding: var(--spacing-2) 10px;
     }
 
     .crm-stat__label {
@@ -246,13 +246,13 @@
 
     /* 🍎 리스트: 패딩/폰트 축소 */
     .crm-list__item {
-      padding: 8px 0;
+      padding: var(--spacing-2) 0;
       font-size: 11px;
     }
 
     .crm-list__item--total {
-      margin: 6px -12px;
-      padding: 8px 12px;
+      margin: var(--spacing-1-5) calc(-1 * var(--spacing-3));
+      padding: var(--spacing-2) var(--spacing-3);
     }
 
     /* 🍎 테이블: 3열로 축소 (펀드명, 적립금, 배분비율만) */
@@ -260,19 +260,19 @@
     .crm-table__row,
     .crm-table__foot {
       grid-template-columns: 2fr 1.2fr 0.8fr;
-      gap: 4px;
+      gap: var(--spacing-1);
     }
 
     .crm-table__head {
-      padding: 6px 10px;
+      padding: var(--spacing-1-5) 10px;
     }
 
     .crm-table__row {
-      padding: 8px 10px;
+      padding: var(--spacing-2) 10px;
     }
 
     .crm-table__foot {
-      padding: 8px 10px;
+      padding: var(--spacing-2) 10px;
     }
 
     .crm-table__cell {
@@ -295,7 +295,7 @@
     .crm-table--compact .crm-table__row,
     .crm-table--compact .crm-table__foot {
       grid-template-columns: 2fr 1.2fr 0.8fr;
-      gap: 4px;
+      gap: var(--spacing-1);
     }
 
     /* 🍎 dual 테이블도 동일 */
@@ -306,18 +306,18 @@
     .crm-table--compact.crm-table--dual .crm-table__row,
     .crm-table--compact.crm-table--dual .crm-table__foot {
       grid-template-columns: 1.5fr 1.4fr 1fr;
-      gap: 4px;
+      gap: var(--spacing-1);
     }
 
     /* 🍎 요약 섹션: 컴팩트 */
     .crm-summary {
-      gap: 8px;
+      gap: var(--spacing-2);
       margin-bottom: 10px;
     }
 
     .crm-summary__item {
-      padding: 8px 12px;
-      gap: 3px;
+      padding: var(--spacing-2) var(--spacing-3);
+      gap: var(--spacing-0-75);
     }
 
     .crm-summary__label {
@@ -330,7 +330,7 @@
 
     /* 🍎 빈 상태: 패딩 축소 */
     .crm-empty {
-      padding: 32px 16px;
+      padding: 32px var(--spacing-4);
     }
 
     .crm-empty__icon {
@@ -346,7 +346,7 @@
     }
 
     .crm-empty-small {
-      padding: 16px 12px;
+      padding: var(--spacing-4) var(--spacing-3);
       font-size: 11px;
     }
 
@@ -357,7 +357,7 @@
 
     .crm-card--compact .crm-card__title {
       font-size: 11px;
-      margin-bottom: 6px;
+      margin-bottom: var(--spacing-1-5);
     }
 
     .crm-list--compact .crm-list__item {
@@ -382,8 +382,8 @@
     .crm-table__row,
     .crm-table__foot {
       grid-template-columns: 1fr 1fr;
-      gap: 4px;
-      padding: 4px 8px;
+      gap: var(--spacing-1);
+      padding: var(--spacing-1) var(--spacing-2);
       font-size: 10px;
     }
 
@@ -399,20 +399,20 @@
     .crm-table--compact .crm-table__row,
     .crm-table--compact .crm-table__foot {
       grid-template-columns: 1fr 1fr;
-      gap: 3px;
-      padding: 3px 6px;
+      gap: var(--spacing-0-75);
+      padding: var(--spacing-0-75) var(--spacing-1-5);
       font-size: 9px;
     }
 
     /* 인물 정보: 1열 */
     .crm-persons {
       grid-template-columns: 1fr;
-      gap: 6px;
+      gap: var(--spacing-1-5);
     }
 
     /* 카드: 패딩 축소 */
     .crm-card {
-      padding: 8px;
+      padding: var(--spacing-2);
     }
 
     .crm-card__title {
@@ -421,7 +421,7 @@
 
     /* 리스트 아이템: 컴팩트 */
     .crm-list__item {
-      padding: 4px 0;
+      padding: var(--spacing-1) 0;
       font-size: 10px;
     }
   }

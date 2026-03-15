@@ -12,12 +12,12 @@
       50px      /* 타입 고정 */
       60px      /* 상태 (넓게) */
       124px;    /* 액션 버튼 */
-    gap: 12px;
+    gap: var(--spacing-3);
     align-items: center;
-    padding: 8px 12px;
+    padding: var(--spacing-2) var(--spacing-3);
     background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
     border-radius: 4px;
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-1);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-weight: 600;
     color: #4a5568;
@@ -63,12 +63,12 @@
     cursor: pointer;
     user-select: none;
     transition: background-color 0.15s ease-out, color 0.15s ease-out;
-    padding: 4px 6px;
-    margin: -4px -6px;
+    padding: var(--spacing-1) var(--spacing-1-5);
+    margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-1-5));
     border-radius: 4px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     white-space: nowrap;
     overflow: hidden;
   }
@@ -83,8 +83,8 @@
     cursor: pointer;
     user-select: none;
     transition: background-color 0.15s ease-out;
-    padding: 4px 6px;
-    margin: -4px -6px;
+    padding: var(--spacing-1) var(--spacing-1-5);
+    margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-1-5));
     border-radius: 4px;
   }
 
@@ -120,8 +120,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 4px 6px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1) var(--spacing-1-5);
     white-space: nowrap;
   }
 
@@ -198,7 +198,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: var(--spacing-3);
     height: 200px;
     color: var(--color-ios-text-quaternary-light);
     /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
@@ -236,7 +236,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: var(--spacing-3);
     height: 200px;
     color: var(--color-ios-empty-light);
   }
@@ -268,10 +268,10 @@
       50px      /* 타입 고정 */
       60px      /* 상태 (넓게) */
       124px;    /* 액션 버튼 */
-    gap: 12px;
+    gap: var(--spacing-3);
     align-items: center;
     height: 32px;
-    padding: 6px 12px;
+    padding: var(--spacing-1-5) var(--spacing-3);
     background: var(--color-ios-bg-primary-light);
     border-radius: 4px;
     cursor: pointer;

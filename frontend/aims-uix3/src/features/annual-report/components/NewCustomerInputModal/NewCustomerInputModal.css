@@ -17,7 +17,7 @@
     flex-direction: column;
     font-family: var(--font-family-system);
     -webkit-font-smoothing: antialiased;
-    padding: 4px 0;
+    padding: var(--spacing-1) 0;
   }
 
   /* Row - 가로 레이아웃 */
@@ -36,13 +36,13 @@
   .ncm-row--error {
     border-bottom-color: var(--color-error);
     background-color: var(--color-error-light);
-    margin: 0 -16px;
-    padding-left: 16px;
-    padding-right: 16px;
+    margin: 0 calc(-1 * var(--spacing-4));
+    padding-left: var(--spacing-4);
+    padding-right: var(--spacing-4);
   }
 
   .ncm-row--compact {
-    padding: 12px 0;
+    padding: var(--spacing-3) 0;
   }
 
   .ncm-row--last {
@@ -55,7 +55,7 @@
     font-size: 13px;
     font-weight: 500;
     color: var(--color-text-secondary);
-    margin-right: 16px;
+    margin-right: var(--spacing-4);
   }
 
   /* Row Content */
@@ -64,14 +64,14 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   /* Input Wrapper */
   .ncm-row__input-wrap {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   /* Input */
@@ -139,7 +139,7 @@
     font-size: 12px;
     font-weight: 500;
     color: var(--color-error);
-    padding: 4px 0;
+    padding: var(--spacing-1) 0;
   }
 
   /* Readonly Input */
@@ -152,14 +152,14 @@
   .ncm-row__date-wrap {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     position: relative;
   }
 
   .ncm-row__date-input {
     flex: 1;
     height: 28px;
-    padding: 2px 8px;
+    padding: var(--spacing-0-5) var(--spacing-2);
     font-size: 13px;
     font-family: var(--font-family-system);
     color: var(--color-text-primary);
@@ -190,7 +190,7 @@
 
   .ncm-search-btn {
     flex-shrink: 0;
-    padding: 5px 12px;
+    padding: 5px var(--spacing-3);
     font-size: 12px;
     font-weight: 500;
     color: var(--color-primary-600);
@@ -220,7 +220,7 @@
   .ncm-radio {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     cursor: pointer;
     font-size: 13px;
     color: var(--color-text-primary);
@@ -244,7 +244,7 @@
 
   /* Hint */
   .ncm-hint {
-    padding: 10px 0 6px;
+    padding: 10px 0 var(--spacing-1-5);
     font-size: 11px;
     color: var(--color-text-tertiary);
     border-bottom: 1px solid var(--color-border-secondary);
@@ -254,7 +254,7 @@
   .ncm-toggle {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     padding: 14px 0;
     margin: 0;
     background: none;
@@ -283,7 +283,7 @@
 
   .ncm-toggle__badge {
     margin-left: auto;
-    padding: 3px 8px;
+    padding: var(--spacing-0-75) var(--spacing-2);
     font-size: 10px;
     font-weight: 500;
     color: var(--color-text-tertiary);
@@ -293,8 +293,8 @@
 
   /* Details Section */
   .ncm-details {
-    margin: 0 -16px;
-    padding: 8px 16px 4px;
+    margin: 0 calc(-1 * var(--spacing-4));
+    padding: var(--spacing-2) var(--spacing-4) var(--spacing-1);
     background: var(--color-bg-secondary);
     border-top: 1px solid var(--color-border-secondary);
     animation: ncm-slideDown 0.2s ease;
@@ -323,7 +323,7 @@
   .ncm-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   /* Dark Mode */

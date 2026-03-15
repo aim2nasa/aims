@@ -53,7 +53,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px 24px 16px;
+    padding: var(--spacing-6) var(--spacing-6) var(--spacing-4);
     border-bottom: 1px solid var(--color-border-secondary);
   }
 
@@ -68,18 +68,18 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--color-ios-orange, #ff9500);
-    margin-top: 6px;
+    margin-top: var(--spacing-1-5);
   }
 
   /* 콘텐츠 */
   .duplicate-dialog-content {
-    padding: 16px 24px;
+    padding: var(--spacing-4) var(--spacing-6);
   }
 
   .duplicate-dialog-message {
     font-size: 13px;
     color: var(--color-text-secondary);
-    margin: 0 0 16px 0;
+    margin: 0 0 var(--spacing-4) 0;
     text-align: center;
   }
 
@@ -91,14 +91,14 @@
   .duplicate-dialog-file-info {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--spacing-2);
   }
 
   .duplicate-file-card {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 12px;
+    gap: var(--spacing-1);
+    padding: var(--spacing-3);
     background: var(--color-bg-secondary);
     border-radius: 8px;
     border: 1px solid var(--color-border-secondary);
@@ -134,8 +134,8 @@
   .duplicate-dialog-apply-all {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3) var(--spacing-6);
     font-size: 12px;
     color: var(--color-text-secondary);
     cursor: pointer;
@@ -153,7 +153,7 @@
     display: flex;
     justify-content: center;
     gap: 10px;
-    padding: 16px 24px;
+    padding: var(--spacing-4) var(--spacing-6);
     border-top: 1px solid var(--color-border-secondary);
   }
 
@@ -161,8 +161,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 10px 16px;
+    gap: var(--spacing-1-5);
+    padding: 10px var(--spacing-4);
     border: 1px solid var(--color-border-primary);
     border-radius: 8px;
     font-size: 13px;

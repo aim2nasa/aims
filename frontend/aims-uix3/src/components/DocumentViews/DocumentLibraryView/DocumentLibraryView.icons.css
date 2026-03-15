@@ -318,13 +318,13 @@
 
   @media (max-width: 768px) {
     .document-search-container {
-      padding: 12px;
+      padding: var(--spacing-3);
     }
 
     /* 헤더 컴팩트화 */
     .library-unified-header {
-      gap: 6px;
-      padding: 6px 8px;
+      gap: var(--spacing-1-5);
+      padding: var(--spacing-1-5) var(--spacing-2);
     }
 
     /* 처리 현황 바 숨김 (카드 레이아웃에서 불필요) */
@@ -341,24 +341,24 @@
   /* === 폰 가로 모드: 높이 극도 절약 === */
   @media (max-height: 500px) and (min-width: 481px) {
     .document-library-container {
-      padding: 2px 8px;
-      gap: 2px;
+      padding: var(--spacing-0-5) var(--spacing-2);
+      gap: var(--spacing-0-5);
     }
 
     .document-library-view {
-      gap: 2px;
+      gap: var(--spacing-0-5);
     }
 
     .library-unified-header {
-      padding: 4px 8px;
+      padding: var(--spacing-1) var(--spacing-2);
       margin-bottom: 0;
-      gap: 4px;
+      gap: var(--spacing-1);
     }
 
     /* 페이지네이션 컴팩트 */
     .document-library-view .document-pagination {
-      padding: 2px 0;
-      gap: 4px;
+      padding: var(--spacing-0-5) 0;
+      gap: var(--spacing-1);
     }
   }
 

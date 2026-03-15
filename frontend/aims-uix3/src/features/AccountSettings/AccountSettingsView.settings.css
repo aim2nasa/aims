@@ -225,7 +225,7 @@
 
   .account-settings-view__delete-modal-footer {
     display: flex;
-    gap: 8px;
+    gap: var(--spacing-2);
     justify-content: flex-end;
   }
 

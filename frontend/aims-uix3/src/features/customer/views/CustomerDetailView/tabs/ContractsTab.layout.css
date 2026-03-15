@@ -10,7 +10,7 @@
   .customer-contracts {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--spacing-3);
     height: 100%;
     overflow: hidden;
   }
@@ -88,7 +88,7 @@
   /* 공통 스타일: tab-table.css (.tab-table__scroll) */
   .customer-contracts__list-container {
     overflow-x: auto;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   /* === 🍎 COLUMN HEADER - 칼럼 정의 === */
@@ -178,7 +178,7 @@
     white-space: nowrap;  /* 한 줄 유지 */
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
   html[data-theme="dark"] .customer-contracts-item .contract-product {
@@ -242,7 +242,7 @@
   /* === 납입상태 === */
   .contract-status {
     text-align: center;
-    padding: 2px 8px;
+    padding: var(--spacing-0-5) var(--spacing-2);
     border-radius: 4px;
     font-size: var(--font-size-caption-2);
     font-weight: 600;
@@ -306,8 +306,8 @@
   .customer-contracts__ar-section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3);
     background: var(--color-ios-bg-secondary-light);
     border-radius: 8px;
     flex-shrink: 0;
@@ -320,7 +320,7 @@
   .ar-section__title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-ios-text-secondary-light);
@@ -343,7 +343,7 @@
   .ar-section__list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--spacing-1);
   }
 
 } /* end @layer components */

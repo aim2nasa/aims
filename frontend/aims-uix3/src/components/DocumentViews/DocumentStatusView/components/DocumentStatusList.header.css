@@ -11,8 +11,8 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding-right: 4px;
+    gap: var(--spacing-0-5);
+    padding-right: var(--spacing-1);
   }
 
   /* === 🍎 COLUMN HEADER: 문서 처리 현황 헤더 === */
@@ -30,10 +30,10 @@
       104px;         /* 액션 버튼 (4개, 고정) */
     gap: 10px;
     align-items: center;
-    padding: 8px 10px;
+    padding: var(--spacing-2) 10px;
     background: var(--color-neutral-100);  /* 완전 불투명 배경 - 스크롤 시 콘텐츠 겹침 방지 */
     border-radius: 4px;
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-1);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-weight: 600;
     color: var(--color-ios-text-secondary-light);
@@ -67,7 +67,7 @@
   .status-list-header > div {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: column headers */
     font-family: var(--font-family-text);
   }
@@ -111,14 +111,14 @@
   .status-list-header .header-filename {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     min-width: 0;
   }
 
   .header-filename__sort-area {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     cursor: pointer;
     min-width: 0;
   }
@@ -161,8 +161,8 @@
     cursor: pointer;
     user-select: none;
     transition: background-color 0.15s ease-out;
-    padding: 4px 6px;
-    margin: -4px -6px;
+    padding: var(--spacing-1) var(--spacing-1-5);
+    margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-1-5));
     border-radius: 4px;
   }
 
@@ -243,7 +243,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     height: 100px;
     color: var(--color-ios-text-secondary-light);
     font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: error text */
@@ -265,7 +265,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     height: 200px;
   }
 
@@ -301,7 +301,7 @@
     gap: 10px;
     align-items: center;
     height: 40px;
-    padding: 6px 10px;
+    padding: var(--spacing-1-5) 10px;
     background: var(--color-ios-bg-primary-light);
     border-radius: 4px;
     cursor: pointer;

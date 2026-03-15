@@ -16,7 +16,7 @@
     color: var(--color-ios-text-tertiary-light);
     cursor: pointer;
     transition: all 0.15s ease;
-    margin-right: 8px;
+    margin-right: var(--spacing-2);
   }
 
   html[data-theme="dark"] .contract-all-view .edit-mode-icon-button {
@@ -55,8 +55,8 @@
 
   /* 선택 수 인라인 표시 */
   .contract-all-view .selected-count-inline {
-    margin-left: 12px;
-    margin-right: 8px;
+    margin-left: var(--spacing-3);
+    margin-right: var(--spacing-2);
     font-size: var(--font-size-caption-1);
     font-weight: 600;
     color: var(--color-primary-600);
@@ -120,7 +120,7 @@
   .delete-confirm-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   .delete-confirm-content p {
@@ -145,24 +145,24 @@
   .delete-confirm-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
-    margin-top: 8px;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-2);
   }
 
   /* === 모바일 반응형 (480px 이하) === */
   @media (max-width: 480px) {
     .contract-all-view {
       padding: var(--spacing-2);
-      gap: 4px;
+      gap: var(--spacing-1);
     }
 
     /* 검색 입력 컴팩트 */
     .contract-all-view .search-input-wrapper {
-      padding: 2px 4px;
+      padding: var(--spacing-0-5) var(--spacing-1);
     }
 
     .contract-all-view .search-input {
-      padding: 3px 6px 3px 24px;
+      padding: var(--spacing-0-75) var(--spacing-1-5) var(--spacing-0-75) var(--spacing-6);
       font-size: 16px; /* iOS Safari 자동줌 방지 */
     }
 
@@ -186,11 +186,11 @@
       display: grid;
       grid-template-columns: 24px 1fr auto;
       grid-template-rows: auto auto auto;
-      gap: 2px 6px;
+      gap: var(--spacing-0-5) var(--spacing-1-5);
       min-width: 0;
       height: auto;
       min-height: var(--spacing-touch-min, 44px);
-      padding: 8px 10px;
+      padding: var(--spacing-2) 10px;
       border-radius: 8px;
       border: 0.5px solid var(--color-ios-separator-light);
     }

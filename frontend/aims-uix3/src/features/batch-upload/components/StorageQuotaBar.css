@@ -8,8 +8,8 @@
   .storage-quota-bar {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3) var(--spacing-4);
     background: var(--color-bg-secondary);
     border-radius: 10px;
     border: 1px solid var(--color-border-secondary);
@@ -35,14 +35,14 @@
   .storage-quota-title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     font-size: 12px;
     font-weight: 600;
     color: var(--color-text-secondary);
   }
 
   .storage-quota-tier {
-    padding: 2px 6px;
+    padding: var(--spacing-0-5) var(--spacing-1-5);
     background: var(--color-bg-tertiary);
     border-radius: 4px;
     font-size: 10px;
@@ -53,7 +53,7 @@
   .storage-quota-values {
     display: flex;
     align-items: baseline;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     font-size: 12px;
   }
 
@@ -137,7 +137,7 @@
   .storage-quota-danger {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-1);
     font-weight: 600;
   }
 

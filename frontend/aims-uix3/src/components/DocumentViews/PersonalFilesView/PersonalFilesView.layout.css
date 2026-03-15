@@ -142,14 +142,14 @@
   .folder-tree-row.active {
     background: var(--color-primary-alpha-20);
     border-left: 3px solid var(--color-button-primary-bg);
-    padding-left: calc(var(--spacing-3) - 3px);
+    padding-left: calc(var(--spacing-3) - var(--spacing-0-75));
     font-weight: var(--font-weight-semibold);
   }
 
   .folder-tree-row.drag-over {
     background: var(--color-primary-alpha-40);
     border-left: 3px solid var(--color-button-primary-bg);
-    padding-left: calc(var(--spacing-3) - 3px);
+    padding-left: calc(var(--spacing-3) - var(--spacing-0-75));
   }
 
   .folder-tree-row.active .folder-name-button {
@@ -432,7 +432,7 @@
     right: 6px;
     top: 50%;
     transform: translateY(-50%);
-    padding: 2px;
+    padding: var(--spacing-0-5);
     border: none;
     background: transparent;
     color: var(--color-text-tertiary);
@@ -447,7 +447,7 @@
 
   /* X 버튼 있을 때 input 우측 패딩 확보 */
   .search-box .search-input:not(:only-child) {
-    padding-right: 24px;
+    padding-right: var(--spacing-6);
   }
 
   /* 툴바 구분선 */
@@ -461,10 +461,10 @@
   /* 타입 필터 그룹 */
   .type-filter-group {
     display: flex;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     background: var(--color-bg-secondary);
     border-radius: var(--radius-sm);
-    padding: 2px;
+    padding: var(--spacing-0-5);
   }
 
   .type-filter-button {

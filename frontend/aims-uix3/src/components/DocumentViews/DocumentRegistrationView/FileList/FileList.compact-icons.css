@@ -23,7 +23,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   .file-item__name-text {
@@ -138,7 +138,7 @@
   .file-item__retry-compact {
     background: none;
     border: none;
-    padding: 2px;
+    padding: var(--spacing-0-5);
     cursor: pointer;
     border-radius: 2px;
     transition: all var(--duration-fast) var(--easing-ease-out);
@@ -188,7 +188,7 @@
   .file-item__skipped-inline {
     color: var(--color-warning, #ff9500);
     font-weight: 400;
-    margin-left: 8px;
+    margin-left: var(--spacing-2);
     opacity: 0.9;
     white-space: nowrap;
   }
@@ -231,9 +231,9 @@
         1fr            /* 파일명 */
         60px           /* 크기 줄임 */
         28px;          /* 상태만 */
-      gap: 8px;
+      gap: var(--spacing-2);
       height: 28px;
-      padding: 4px 8px;
+      padding: var(--spacing-1) var(--spacing-2);
     }
 
     .file-item__time-compact {
@@ -255,9 +255,9 @@
         18px           /* 아이콘 더 줄임 */
         1fr            /* 파일명 */
         24px;          /* 상태만 */
-      gap: 6px;
+      gap: var(--spacing-1-5);
       height: 26px;
-      padding: 3px 6px;
+      padding: var(--spacing-0-75) var(--spacing-1-5);
     }
 
     .file-item__size-compact {

@@ -11,7 +11,7 @@
   .family-contracts {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-0-5);
     height: 100%;
     overflow: hidden;
   }
@@ -21,7 +21,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-4);
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     color: var(--color-text-secondary);
     font-size: var(--font-size-caption-1);
     flex-shrink: 0;
@@ -102,7 +102,7 @@
     text-overflow: ellipsis;
     text-align: center;
     justify-content: center;
-    gap: 2px;
+    gap: var(--spacing-0-5);
   }
 
   /* 정렬 표시 → 공유 SortIndicator 컴포넌트로 통일 */
@@ -137,7 +137,7 @@
     justify-content: center;
     font-size: 10px;
     font-weight: 600;
-    padding: 1px 6px;
+    padding: 1px var(--spacing-1-5);
     border-radius: 4px;
     white-space: nowrap;
     line-height: 1.4;
@@ -237,7 +237,7 @@
   /* === 계약상태 === */
   .fc-status {
     text-align: center;
-    padding: 1px 4px;
+    padding: 1px var(--spacing-1);
     border-radius: 3px;
     font-size: var(--font-size-caption-2);
     font-weight: 600;
@@ -306,7 +306,7 @@
 
     .fc-relation-badge {
       font-size: 9px;
-      padding: 1px 4px;
+      padding: 1px var(--spacing-1);
     }
   }
 

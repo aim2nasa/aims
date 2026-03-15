@@ -66,14 +66,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
+    padding: var(--spacing-4) 20px;
     border-bottom: 1px solid var(--color-border-primary);
   }
 
   .family-modal__title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 모달 제목 */
     font-family: var(--font-family-display);
     font-weight: 600;
@@ -85,7 +85,7 @@
   }
 
   .family-modal__close {
-    padding: 6px;
+    padding: var(--spacing-1-5);
     border: none;
     background: transparent;
     color: var(--color-text-secondary);
@@ -108,27 +108,27 @@
   .family-modal__form {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: var(--spacing-6);
   }
 
   /* 폼 섹션 */
   .family-modal__field {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   .family-modal__field-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--spacing-3);
   }
 
   .family-modal__field-title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 필드 제목 */
     font-family: var(--font-family-text);
     font-weight: 600;
@@ -143,7 +143,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 8px;
+    padding: var(--spacing-1) var(--spacing-2);
     border-radius: 999px;
     font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 배지 */
     font-family: var(--font-family-text);
@@ -161,7 +161,7 @@
   .form-input,
   .form-select {
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px var(--spacing-3);
     font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 입력 필드 */
     font-family: var(--font-family-text);
     border: 1px solid var(--color-border-primary);
@@ -186,7 +186,7 @@
     transform: translateY(-50%);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
     color: var(--color-text-secondary);
   }
 
@@ -265,9 +265,9 @@
   .autocomplete-option {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px var(--spacing-3);
     border: none;
     background: transparent;
     text-align: left;
@@ -307,7 +307,7 @@
 
   /* 에러 메시지 */
   .family-modal__error {
-    padding: 12px;
+    padding: var(--spacing-3);
     background-color: rgba(255, 59, 48, 0.1);
     border: 1px solid var(--color-icon-red);
     border-radius: 8px;
@@ -319,7 +319,7 @@
 
   /* 성공 메시지 */
   .family-modal__success {
-    padding: 12px;
+    padding: var(--spacing-3);
     background-color: rgba(52, 199, 89, 0.1);
     border: 1px solid var(--color-icon-green);
     border-radius: 8px;
@@ -332,7 +332,7 @@
   /* 액션 버튼 */
   .family-modal__actions {
     display: flex;
-    gap: 8px;
+    gap: var(--spacing-2);
     justify-content: flex-end;
   }
 
@@ -347,7 +347,7 @@
     transition: all 0.15s ease-out;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-1-5);
   }
 
   .family-modal__button:disabled {
