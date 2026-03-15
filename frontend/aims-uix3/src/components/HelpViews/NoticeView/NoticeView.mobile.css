@@ -1,0 +1,60 @@
+/**
+ * NoticeView 모바일 반응형 스타일
+ * 768px 이하 태블릿/모바일 레이아웃
+ * 480px 이하는 NoticeView.css에 정의
+ */
+
+@layer components {
+
+  /* === 태블릿 반응형 (481px ~ 768px) === */
+  @media (min-width: 481px) and (max-width: 768px) {
+
+    /* 목록 패딩 중간 축소 */
+    .notice-view__list {
+      padding: var(--spacing-2) var(--spacing-3);
+      gap: var(--spacing-1);
+    }
+
+    /* 아이템 패딩/간격 축소, 터치 영역 확보 */
+    .notice-view__item {
+      padding: var(--spacing-2) var(--spacing-3);
+      gap: var(--spacing-2);
+      min-height: 44px;
+    }
+
+    /* 제목 폰트 약간 축소 */
+    .notice-view__item-title {
+      font-size: 12.5px;
+    }
+
+    /* 날짜 폰트 축소 */
+    .notice-view__item-date {
+      font-size: 10.5px;
+    }
+
+    /* 뒤로가기 버튼 터치 영역 확보 */
+    .notice-view__back-button {
+      width: 36px;
+      height: 36px;
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* 상세 패딩 축소 */
+    .notice-view__detail {
+      padding: var(--spacing-3);
+    }
+
+    .notice-view__detail-header {
+      gap: var(--spacing-2);
+      margin-bottom: var(--spacing-3);
+      padding-bottom: var(--spacing-2);
+    }
+
+    .notice-view__detail-content {
+      font-size: 12.5px;
+      line-height: 1.65;
+    }
+  }
+
+} /* end @layer components */

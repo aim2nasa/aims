@@ -1,0 +1,51 @@
+/**
+ * QuickActionsView 모바일 반응형 스타일
+ * 768px 이하 태블릿/모바일 레이아웃
+ * 480px 이하는 QuickActionsView.css에 정의
+ */
+
+@layer components {
+
+  /* === 태블릿 반응형 (481px ~ 768px) === */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .quick-actions-view__content {
+      padding: var(--spacing-3);
+      gap: var(--spacing-5);
+    }
+
+    /* 빠른 액션 카드: 2열 */
+    .quick-actions-view__action-cards {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-3);
+    }
+
+    .quick-actions-view__action-card {
+      padding: var(--spacing-4);
+      min-height: 44px;
+    }
+
+    /* 통계 그리드: 3열 */
+    .quick-actions-view__stats-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-2);
+    }
+
+    /* 관리 메뉴 카드: 2열 */
+    .quick-actions-view__menu-cards {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-3);
+    }
+
+    .quick-actions-view__menu-card {
+      padding: var(--spacing-4);
+      min-height: 44px;
+    }
+
+    .menu-card-action {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+
+} /* end @layer components */

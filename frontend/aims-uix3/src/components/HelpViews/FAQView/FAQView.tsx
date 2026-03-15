@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
 import { helpApi, type FAQ, type FAQCategory } from '@/features/help/api';
 import './FAQView.css';
+import './FAQView.mobile.css';
 
 // FAQ 아이콘 — LP와 동일 (커스텀 SVG, menu-icon-orange)
 const FAQIcon = () => (

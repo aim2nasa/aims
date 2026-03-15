@@ -23,6 +23,7 @@ import HorizontalBarChart from '@/shared/ui/HorizontalBarChart';
 import { Dropdown } from '@/shared/ui/Dropdown';
 import { formatDate } from '@/shared/lib/timeUtils';
 import './DocumentManagementView.css';
+import './DocumentManagementView.mobile.css';
 
 type ActivityPeriod = '1week' | '1month' | '3months' | '6months' | '1year';
 

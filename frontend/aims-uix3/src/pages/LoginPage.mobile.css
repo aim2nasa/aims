@@ -1,0 +1,93 @@
+/**
+ * 로그인 페이지 - 모바일 반응형 스타일 (태블릿)
+ * @since 2026-03-16
+ *
+ * 768px 이하 태블릿 최적화
+ * 480px 이하 스마트폰 스타일은 LoginPage.css에서 관리 (중복 금지)
+ */
+
+@layer components {
+
+  /* ==================== 768px 이하 ==================== */
+  @media (max-width: 768px) {
+
+    /* 컨테이너: border-radius/패딩 축소 */
+    .login-container {
+      max-width: 360px;
+      padding: 36px 24px;
+      border-radius: 12px;
+    }
+
+    /* 헤더: 간격 축소 */
+    .login-header {
+      margin-bottom: 36px;
+      gap: 8px;
+    }
+
+    /* 로고 축소 */
+    .login-logo-full {
+      width: 180px;
+    }
+
+    /* 제목 폰트 축소 */
+    .login-header h1 {
+      font-size: 26px;
+    }
+
+    .login-header p {
+      font-size: 14px;
+    }
+
+    /* 소셜 로그인 버튼: 터치 타겟 44px 확보 */
+    .social-login-button {
+      padding: 12px 20px;
+      min-height: 44px;
+      font-size: 15px;
+    }
+
+    /* PIN 화면 패딩 축소 */
+    .login-pin-container {
+      padding: 24px 24px 20px;
+    }
+
+    /* PIN 아바타 축소 */
+    .login-pin-avatar {
+      width: 64px;
+      height: 64px;
+      font-size: 24px;
+    }
+
+    /* PIN 이름/메시지 축소 */
+    .login-pin-name {
+      font-size: 16px;
+    }
+
+    .login-pin-message {
+      font-size: 12px;
+      margin-bottom: 24px;
+    }
+
+    /* PIN 전환 버튼: 터치 타겟 확보 */
+    .login-pin-switch {
+      min-height: 44px;
+      padding: 10px 14px;
+    }
+
+    /* 다른 계정 버튼: 터치 타겟 확보 */
+    .switch-account-button {
+      min-height: 44px;
+      padding: 10px 6px;
+    }
+
+    /* 체크박스 영역 */
+    .login-remember-device label {
+      font-size: 12px;
+    }
+
+    /* 개발 버튼: 터치 타겟 */
+    .dev-login-button {
+      min-height: 44px;
+    }
+  }
+
+} /* end @layer components */

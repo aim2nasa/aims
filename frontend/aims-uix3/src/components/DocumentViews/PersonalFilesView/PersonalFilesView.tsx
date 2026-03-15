@@ -44,6 +44,7 @@ import './PersonalFilesView.layout.css';
 import './PersonalFilesView.list.css';
 import './PersonalFilesView.icons.css';
 import './PersonalFilesView.controls.css';
+import './PersonalFilesView.mobile.css';
 
 interface PersonalFilesViewProps {
   visible: boolean

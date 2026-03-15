@@ -16,6 +16,7 @@ import { getDocumentStatistics } from '@/services/DocumentService'
 import { ContractService } from '@/services/contractService'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './QuickActionsView.css'
+import './QuickActionsView.mobile.css'
 
 interface QuickActionsViewProps {
   /** View 표시 여부 */

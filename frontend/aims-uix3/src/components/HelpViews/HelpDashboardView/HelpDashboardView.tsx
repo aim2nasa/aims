@@ -10,6 +10,7 @@ import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import './HelpDashboardView.css'
+import './HelpDashboardView.mobile.css'
 
 // 아이콘 컴포넌트들
 const HelpIcon = () => (

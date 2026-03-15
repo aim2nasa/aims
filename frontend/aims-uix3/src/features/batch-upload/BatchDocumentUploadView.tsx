@@ -29,6 +29,7 @@ import { checkStorageWithInfo } from '@/shared/lib/fileValidation'
 import type { FolderMapping, DuplicateAction } from './types'
 import { getBatchId, setBatchId, addBatchExpectedTotal } from '@/hooks/useBatchId'
 import './BatchDocumentUploadView.css'
+import './BatchDocumentUploadView.mobile.css'
 
 // ==================== SessionStorage 관련 ====================
 

@@ -29,6 +29,7 @@ import { ProductSearchModal } from './components/ProductSearchModal'
 import './ContractAllView.header.css';
 import './ContractAllView.rows.css';
 import './ContractAllView.modes.css';
+import './ContractAllView.mobile.css';
 
 interface ContractAllViewProps {
   visible: boolean

@@ -20,6 +20,7 @@ import { Dropdown } from '@/shared/ui/Dropdown';
 import type { Contract } from '@/entities/contract';
 import { formatDate } from '@/shared/lib/timeUtils';
 import './ContractManagementView.css';
+import './ContractManagementView.mobile.css';
 
 type ActivityPeriod = '1week' | '1month' | '2months' | '3months';
 

@@ -11,6 +11,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import ExcelRefiner from './components/ExcelRefiner'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './ContractImportView.css'
+import './ContractImportView.mobile.css'
 import './ContractManagementView.css'
 
 interface ContractImportViewProps {

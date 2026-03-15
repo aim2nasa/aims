@@ -11,6 +11,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { formatDateTime } from '@/shared/lib/timeUtils';
 import { helpApi, NOTICE_CATEGORY_LABELS, type Notice } from '@/features/help/api';
 import './NoticeView.css';
+import './NoticeView.mobile.css';
 
 // 공지사항 벨 아이콘 — LP와 동일 (SFSymbol: bell, menu-icon-blue)
 const BellIcon = () => (

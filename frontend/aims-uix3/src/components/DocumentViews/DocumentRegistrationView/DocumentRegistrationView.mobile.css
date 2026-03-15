@@ -1,0 +1,139 @@
+/**
+ * DocumentRegistrationView 모바일 반응형 보완
+ * 기존 768px/480px 미디어쿼리에 없는 스타일만 추가
+ */
+
+@layer components {
+
+  /* === 태블릿/모바일 (768px 이하) === */
+  @media (max-width: 768px) {
+
+    /* 가이드 섹션: max-width 해제하여 전폭 활용 */
+    .registration-guide {
+      max-width: 100%;
+      margin-bottom: 0;
+    }
+
+    /* 가이드 토글: 터치 친화적 패딩 */
+    .registration-guide__toggle {
+      padding: 14px 12px 0 12px;
+    }
+
+    /* 가이드 콘텐츠: 좌우 패딩 축소 */
+    .registration-guide .guide-content {
+      padding: 0 12px 12px;
+    }
+
+    /* 가이드 스텝 1번: 고정 폭 해제 (세로 배치에서 불필요) */
+    .registration-guide .guide-step:first-child {
+      min-width: 0;
+    }
+
+    /* 고객 정보 섹션: max-width 해제 */
+    .customer-info-section {
+      max-width: 100%;
+    }
+
+    /* 문서 유형 선택: max-width 해제 + 패딩 축소 */
+    .document-type-selection {
+      max-width: 100%;
+      padding: 12px 0;
+    }
+
+    /* 문서 유형 카드: 터치 타겟 44px 확보 (padding은 기존 480px CSS에서 처리) */
+    .document-type-card {
+      min-height: 44px;
+    }
+
+    /* 처리 상태 버튼 컨테이너: max-width 해제 */
+    .view-status-button-container {
+      max-width: 100%;
+    }
+
+    /* 처리 상태 버튼: 터치 친화적 크기 */
+    .view-status-button {
+      min-height: 44px;
+      padding: 10px 16px;
+    }
+
+    /* 리셋 버튼 컨테이너: max-width 해제 */
+    .document-registration-view__reset-container {
+      max-width: 100%;
+    }
+
+    /* AR 경고 토스트: 모바일 폭 대응 */
+    .no-ar-warning {
+      max-width: calc(100vw - 32px);
+      top: 60px;
+    }
+
+    .no-ar-warning__message {
+      white-space: normal;
+      font-size: 13px;
+    }
+
+    /* 접근성: focus-visible 스타일 */
+    .registration-guide__toggle:focus-visible,
+    .document-type-card:focus-visible,
+    .view-status-button:focus-visible,
+    .document-registration-view__reset-button:focus-visible,
+    .customer-info-section__toggle:focus-visible {
+      outline: 2px solid var(--color-ios-blue);
+      outline-offset: 2px;
+      border-radius: var(--radius-md);
+    }
+  }
+
+  /* === 모바일 (480px 이하) === */
+  @media (max-width: 480px) {
+
+    /* 가이드 콘텐츠: 좌우 패딩 더 축소 */
+    .registration-guide .guide-content {
+      padding: 0 8px 10px;
+      gap: 8px;
+    }
+
+    /* 가이드 토글: 패딩 더 축소 */
+    .registration-guide__toggle {
+      padding: 10px 8px 0 8px;
+    }
+
+    /* 고객 정보 콘텐츠: 패딩 축소 */
+    .customer-info-content {
+      padding: 0 8px 12px;
+    }
+
+    /* 문서 유형 선택: 패딩 축소 */
+    .document-type-selection {
+      padding: 8px 0;
+    }
+
+    /* 처리 상태 버튼: 세로 배치 + 전폭 */
+    .view-status-button-container {
+      flex-direction: column;
+      gap: var(--spacing-1);
+    }
+
+    .view-status-button {
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* 리셋 버튼 컨테이너 */
+    .document-registration-view__reset-container {
+      margin-bottom: 0;
+    }
+
+    /* AR 경고 토스트: 더 컴팩트 */
+    .no-ar-warning {
+      top: 52px;
+      padding: 8px 14px;
+      gap: 6px;
+    }
+
+    .no-ar-warning__message {
+      font-size: 12px;
+    }
+  }
+
+} /* end @layer components */

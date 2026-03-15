@@ -1,0 +1,72 @@
+/**
+ * DocumentManagementView 모바일 반응형 보완
+ * 기존 CSS의 768px/480px 미디어쿼리와 중복 없이 보완
+ *
+ * 기존 768px: content 패딩, stats 4열, pie 2열, actions 3열, 드롭다운, 스크롤바
+ * 기존 480px: content 패딩, section 마진, stats 2열, pie 1열, actions 2열,
+ *            section-title 폰트, recent-activity 카드형, 드롭다운
+ *
+ * 이 파일: 터치 타겟, 섹션 헤더 최적화, 접근성, 모션 감소
+ */
+
+@layer components {
+
+  /* === 768px: 터치 타겟 + 헤더 최적화 + 접근성 === */
+  @media (max-width: 768px) {
+
+    /* 최근 활동 행: 터치 친화적 높이 */
+    .recent-activity-row {
+      min-height: 44px;
+    }
+
+    /* 섹션 헤더: 좁은 화면에서 줄바꿈 허용 */
+    .document-management-view__section-header {
+      flex-wrap: wrap;
+      gap: var(--spacing-2);
+    }
+
+    /* 파이 차트 제목: 모바일 컴팩트 */
+    .document-management-view__pie-charts-grid .pie-chart-title {
+      font-size: var(--font-size-caption-2);
+      margin-bottom: var(--spacing-1);
+    }
+
+    /* 사용가이드 섹션 내 버튼 터치 타겟 */
+    .document-management-view__content .usage-guide-item {
+      min-height: 44px;
+    }
+  }
+
+  /* === 접근성: focus-visible (반응형 무관, 전역) === */
+
+  .recent-activity-row:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
+
+  html[data-theme="dark"] .recent-activity-row:focus-visible {
+    outline-color: var(--color-primary-300);
+  }
+
+  .document-management-view__stats-grid .stat-card:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .document-management-view__stats-grid .stat-card:focus-visible {
+    outline-color: var(--color-primary-300);
+  }
+
+  /* === 모션 감소 === */
+  @media (prefers-reduced-motion: reduce) {
+    .recent-activity-row {
+      transition: none;
+    }
+
+    .document-management-view__pie-charts-grid .file-type-pie-chart {
+      transition: none;
+    }
+  }
+
+} /* end @layer components */

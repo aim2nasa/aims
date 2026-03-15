@@ -1,0 +1,159 @@
+@layer components {
+
+  /* === 768px: 태블릿 — 컨테이너 + 헤더 + 삭제 모드 조정 === */
+  @media (max-width: 768px) {
+    /* 컨테이너 패딩/갭 축소 */
+    .contract-all-view {
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    /* 검색바 전폭 */
+    .contract-all-view .search-input-wrapper {
+      width: 100%;
+    }
+
+    /* 결과 헤더 컴팩트화 */
+    .contract-result-header {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* 필터 버튼 터치 타겟 확보 */
+    .contract-filter-btn {
+      min-height: 44px;
+    }
+
+    /* 삭제 모드 토글 버튼 터치 타겟 */
+    .contract-all-view .edit-mode-icon-button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* 삭제 모드: 그리드 5칼럼 + 체크박스 (rows.css 768px과 동일 칼럼 구성) */
+    .contract-list-header--delete-mode {
+      grid-template-columns:
+        24px                     /* 체크박스 */
+        minmax(60px, 1fr)        /* 고객명 */
+        minmax(100px, 1.5fr)     /* 상품명 */
+        80px                     /* 계약일 */
+        80px                     /* 보험료 */
+        60px;                    /* 납입상태 */
+    }
+
+    .contract-item--delete-mode {
+      grid-template-columns:
+        24px                     /* 체크박스 */
+        minmax(60px, 1fr)        /* 고객명 */
+        minmax(100px, 1.5fr)     /* 상품명 */
+        80px                     /* 계약일 */
+        80px                     /* 보험료 */
+        60px;                    /* 납입상태 */
+    }
+
+    /* 삭제 모드에서도 숨김 칼럼 유지 */
+    .contract-list-header--delete-mode .header-type,
+    .contract-list-header--delete-mode .header-policy,
+    .contract-list-header--delete-mode .header-cycle,
+    .contract-list-header--delete-mode .header-insured,
+    .contract-list-header--delete-mode .header-payment-day,
+    .contract-item--delete-mode .contract-type,
+    .contract-item--delete-mode .contract-policy,
+    .contract-item--delete-mode .contract-cycle,
+    .contract-item--delete-mode .contract-insured,
+    .contract-item--delete-mode .contract-payment-day {
+      display: none;
+    }
+  }
+
+  /* === 480px: 모바일 — 삭제 모드 카드형 대응 === */
+  @media (max-width: 480px) {
+    /* 결과 헤더 더 컴팩트하게 */
+    .contract-result-header {
+      gap: 4px;
+      padding: 0 2px 2px 2px;
+    }
+
+    /* 리스트 테두리 제거 — 공간 확보 */
+    html:not([data-theme="dark"]) .contract-list {
+      border: none;
+      border-radius: 0;
+    }
+
+    /* 삭제 모드: 카드형 레이아웃에 체크박스 통합 */
+    .contract-item--delete-mode {
+      grid-template-columns: 24px 24px 1fr auto;
+      grid-template-rows: auto auto auto;
+      gap: 2px 6px;
+      min-width: 0;
+      height: auto;
+      min-height: 44px;
+    }
+
+    /* 삭제 모드 체크박스 위치 */
+    .contract-item--delete-mode > .item-checkbox {
+      grid-row: 1 / 4;
+      grid-column: 1;
+      align-self: center;
+    }
+
+    /* 삭제 모드 카드 내 각 셀 위치 재조정 */
+    .contract-item--delete-mode > .contract-type {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    .contract-item--delete-mode > .contract-customer {
+      grid-row: 1;
+      grid-column: 3;
+    }
+
+    .contract-item--delete-mode > .contract-payment-status {
+      grid-row: 1;
+      grid-column: 4;
+    }
+
+    .contract-item--delete-mode > .contract-product {
+      grid-row: 2;
+      grid-column: 3 / 5;
+    }
+
+    .contract-item--delete-mode > .contract-date {
+      grid-row: 3;
+      grid-column: 3;
+    }
+
+    .contract-item--delete-mode > .contract-premium {
+      grid-row: 3;
+      grid-column: 4;
+    }
+
+    /* 삭제 모드에서도 숨길 칼럼 */
+    .contract-item--delete-mode > .contract-policy,
+    .contract-item--delete-mode > .contract-payment-day,
+    .contract-item--delete-mode > .contract-cycle,
+    .contract-item--delete-mode > .contract-insured {
+      display: none;
+    }
+
+    /* 삭제 확인 액션 버튼 세로 배치 */
+    .delete-confirm-actions {
+      flex-direction: column;
+    }
+
+    .delete-confirm-actions button {
+      min-height: 44px;
+    }
+  }
+
+  /* === 접근성: focus-visible === */
+  .contract-item:focus-visible {
+    outline: 2px solid var(--color-ios-focus-light);
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .contract-item:focus-visible {
+    outline-color: var(--color-ios-focus-dark);
+  }
+
+} /* end @layer components */

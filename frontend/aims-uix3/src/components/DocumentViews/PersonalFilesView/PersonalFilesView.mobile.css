@@ -1,0 +1,164 @@
+/**
+ * PersonalFilesView 모바일 반응형 보완
+ * list.css의 768px/480px 미디어쿼리와 중복하지 않음
+ *
+ * list.css 768px 담당: 사이드바 숨김, 리스트 그리드 축소, row-size/actions 숨김, 그리드 카드 축소
+ * 이 파일 담당: layout(툴바/검색/브레드크럼), controls(체크박스 터치), icons(액션버튼 터치), 접근성
+ */
+
+@layer components {
+
+  @media (max-width: 768px) {
+
+    /* ===== layout.css 보완: 툴바 flex-wrap은 list.css 480px에서 처리됨 ===== */
+
+    /* 브레드크럼: 스크롤 허용, 최소 폭 축소 */
+    .breadcrumb {
+      min-width: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+    }
+
+    .breadcrumb::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+
+    .breadcrumb-item {
+      font-size: var(--font-size-caption-1);
+      padding: var(--spacing-1);
+    }
+
+    /* 검색 입력: 폭 축소 */
+    .search-input {
+      width: 160px;
+    }
+
+    /* 검색 박스: flex-shrink 허용 */
+    .search-box {
+      flex-shrink: 1;
+      min-width: 120px;
+    }
+
+    /* 툴바 액션: 간격 축소 */
+    .toolbar-actions {
+      gap: var(--spacing-2);
+    }
+
+    /* 타입 필터: 스크롤 가능 */
+    .type-filter-group {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      flex-shrink: 1;
+      min-width: 0;
+    }
+
+    .type-filter-group::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* 타입 필터 버튼: 터치 타겟 확보 */
+    .type-filter-button {
+      min-height: 36px;
+      padding: var(--spacing-1) var(--spacing-2);
+    }
+
+    /* 업로드/새폴더 버튼: 터치 타겟 44px */
+    .toolbar-actions .upload-button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* 상위 폴더 버튼: 터치 타겟 */
+    .up-folder-button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* 파일 컨텐츠 영역: 패딩 축소 */
+    .files-content {
+      padding: var(--spacing-2);
+    }
+
+    /* 업로드 프로그레스: 패딩 축소 */
+    .upload-progress {
+      padding: var(--spacing-2) var(--spacing-3);
+    }
+
+    /* ===== controls.css 보완: 체크박스 터치 영역 ===== */
+    .document-checkbox-wrapper {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .document-checkbox {
+      width: 20px;
+      height: 20px;
+    }
+
+    .header-checkbox {
+      min-width: 44px;
+      min-height: 36px;
+    }
+
+    .document-select-all-checkbox {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* ===== icons.css 보완: 액션 버튼 터치 타겟 ===== */
+    .action-btn {
+      min-width: 44px;
+      min-height: 44px;
+      width: 44px;
+      height: 44px;
+    }
+
+    /* 다운로드 버튼: 터치 타겟 */
+    .download-button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* 컨텍스트 메뉴: 터치 타겟 */
+    .context-menu button.context-menu-item {
+      min-height: 44px;
+      padding: var(--spacing-3);
+    }
+
+    /* ===== 접근성: focus-visible ===== */
+    .sidebar-item:focus-visible,
+    .folder-name-button:focus-visible,
+    .folder-expand-button:focus-visible,
+    .breadcrumb-item:focus-visible,
+    .up-folder-button:focus-visible,
+    .type-filter-button:focus-visible,
+    .search-input:focus-visible,
+    .download-button:focus-visible,
+    .context-menu button.context-menu-item:focus-visible {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: 2px;
+    }
+
+    html[data-theme="dark"] .sidebar-item:focus-visible,
+    html[data-theme="dark"] .folder-name-button:focus-visible,
+    html[data-theme="dark"] .folder-expand-button:focus-visible,
+    html[data-theme="dark"] .breadcrumb-item:focus-visible,
+    html[data-theme="dark"] .up-folder-button:focus-visible,
+    html[data-theme="dark"] .type-filter-button:focus-visible,
+    html[data-theme="dark"] .search-input:focus-visible,
+    html[data-theme="dark"] .download-button:focus-visible,
+    html[data-theme="dark"] .context-menu button.context-menu-item:focus-visible {
+      outline-color: var(--color-primary-300);
+    }
+
+    /* 뷰 모드 토글: 터치 타겟 */
+    .toolbar-actions .view-mode-toggle .view-mode-button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+  } /* end 768px */
+
+} /* end @layer components */

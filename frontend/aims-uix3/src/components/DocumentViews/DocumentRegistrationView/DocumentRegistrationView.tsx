@@ -58,6 +58,7 @@ import { getBatchId, setBatchId, addBatchExpectedTotal, useBatchId } from '@/hoo
 import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
 import { DocumentProcessingStatusBar } from '../DocumentLibraryView/DocumentProcessingStatusBar'
 import './DocumentRegistrationView.css'
+import './DocumentRegistrationView.mobile.css'
 
 interface DocumentRegistrationViewProps {
   /** View 표시 여부 */

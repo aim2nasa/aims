@@ -1,0 +1,162 @@
+/**
+ * CustomerRegionalView - 모바일 반응형 CSS
+ *
+ * 768px: 태블릿 — 트리 패널 축소, 통계바 컴팩트
+ * 480px: 모바일 — 세로 스택, 터치 친화적
+ *
+ * 기존 RegionalTreeView.css @layer responsive (480px)와 함께 동작
+ */
+
+@layer components {
+
+  /* ============================================
+     태블릿 (768px 이하)
+     ============================================ */
+  @media (max-width: 768px) {
+
+    /* 트리 패널: 폭 축소 */
+    .regional-tree-container {
+      flex: 0 0 220px;
+    }
+
+    /* 통계바: 패딩/간격 축소 */
+    .regional-tree-stats {
+      padding: 6px 8px;
+      gap: 8px;
+    }
+
+    .stat-item {
+      min-height: 24px;
+    }
+
+    /* 드롭다운: 컴팩트 */
+    .regional-tree-stats .ios-dropdown__trigger {
+      min-height: 24px;
+      padding: 2px 8px;
+    }
+
+    /* 트리 노드: 터치 영역 확보 */
+    .tree-node {
+      min-height: 38px;
+      padding: 6px 8px;
+    }
+
+    .tree-customer-item {
+      min-height: 38px;
+      padding: 6px 8px;
+      padding-left: 26px;
+    }
+
+    /* 계층 들여쓰기 축소 */
+    .tree-node-children,
+    .tree-node-customers {
+      padding-left: 16px;
+      margin-left: 6px;
+    }
+
+    /* 로딩/빈 상태 */
+    .regional-tree-loading,
+    .regional-tree-empty {
+      padding: 24px;
+    }
+
+    /* 도움말 모달: 모바일 최적화 */
+    .customer-regional-view .help-icon-button {
+      min-width: 36px;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  /* ============================================
+     모바일 (480px 이하)
+     — RegionalTreeView.css @layer responsive 보완
+     ============================================ */
+  @media (max-width: 480px) {
+
+    /* 도움말 모달 내용: 모바일 최적화 */
+    .customer-regional-view .help-modal-content {
+      font-size: 13px;
+    }
+
+    .customer-regional-view .help-modal-section ul {
+      padding-left: 16px;
+    }
+
+    .customer-regional-view .help-modal-section li {
+      margin-bottom: 6px;
+      line-height: 1.5;
+    }
+
+    /* 도움말 버튼: 터치 영역 확보 */
+    .customer-regional-view .help-icon-button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* 트리 액션 버튼: 터치 친화적 */
+    .tree-action-btn {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px;
+    }
+
+    /* 트리 노드 뱃지: 가독성 확보 */
+    .tree-node-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      min-width: 22px;
+    }
+
+    /* InitialFilterBar: 컴팩트 */
+    .regional-tree-container .initial-filter-bar {
+      padding: 2px 4px;
+      gap: 2px;
+    }
+  }
+
+  /* ============================================
+     가로 모드 (landscape, 낮은 높이)
+     ============================================ */
+  @media (max-height: 430px) and (orientation: landscape) {
+
+    /* 가로 모드에서 지도+트리 가로 유지, 트리 축소 */
+    .regional-tree-content {
+      flex-direction: row;
+    }
+
+    .regional-tree-container {
+      flex: 0 0 180px;
+      border-right: 1px solid var(--color-border);
+    }
+
+    .regional-map-container {
+      flex: 1;
+      height: auto;
+      min-height: 0;
+      max-height: none;
+      border-bottom: none;
+    }
+
+    /* 트리 노드: 컴팩트 */
+    .tree-node {
+      min-height: 32px;
+      padding: 4px 8px;
+    }
+
+    .tree-customer-item {
+      min-height: 32px;
+      padding: 4px 8px;
+      padding-left: 20px;
+    }
+
+    .tree-node-children,
+    .tree-node-customers {
+      padding-left: 12px;
+      margin-left: 4px;
+    }
+  }
+
+} /* end @layer components */

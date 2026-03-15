@@ -14,6 +14,7 @@ import { syncUserIdFromStorage, useUserStore } from '@/stores/user';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import PinInput from '@/shared/components/PinInput';
 import './LoginPage.css';
+import './LoginPage.mobile.css';
 
 interface RememberedUser {
   userId: string;

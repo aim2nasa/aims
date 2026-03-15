@@ -22,6 +22,7 @@ import { QuickFamilyAssignPanel } from './QuickFamilyAssignPanel';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import { highlightText } from '@/shared/lib/highlightText';
 import './CustomerRelationshipView.css';
+import './CustomerRelationshipView.mobile.css';
 import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar';
 import { usePersistedState } from '@/hooks/usePersistedState';
 

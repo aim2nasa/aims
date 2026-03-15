@@ -1,0 +1,41 @@
+/**
+ * HelpDashboardView 모바일 반응형 스타일
+ * 768px 이하 태블릿/모바일 레이아웃
+ * 480px 이하는 HelpDashboardView.css에 정의
+ */
+
+@layer components {
+
+  /* === 태블릿 반응형 (481px ~ 768px) === */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .help-dashboard-view__content {
+      padding: var(--spacing-3);
+      gap: var(--spacing-5);
+    }
+
+    .help-dashboard-view__section {
+      gap: var(--spacing-2);
+    }
+
+    /* 카드: 터치 영역 확보 */
+    .help-dashboard-view__card {
+      padding: var(--spacing-3) var(--spacing-4);
+      min-height: 44px;
+    }
+
+    .help-dashboard-view__card-icon {
+      width: 44px;
+      height: 44px;
+    }
+
+    /* 연락처 섹션 */
+    .help-dashboard-view__section--contact {
+      padding: var(--spacing-3);
+    }
+
+    .help-dashboard-view__contact-label {
+      min-width: 52px;
+    }
+  }
+
+} /* end @layer components */

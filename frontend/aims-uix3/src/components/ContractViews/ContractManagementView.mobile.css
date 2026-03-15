@@ -1,0 +1,75 @@
+/**
+ * ContractManagementView 모바일 반응형 보완 (768px)
+ * 기존 CSS의 768px/480px 레이아웃 변경과 중복하지 않음
+ * - 터치 타겟 44px 확보
+ * - 헤더/필터 영역 컴팩트화
+ * - 접근성 focus-visible
+ */
+
+@layer components {
+
+  @media (max-width: 768px) {
+
+    /* === 섹션 헤더: 제목+드롭다운 줄바꿈 대비 === */
+    .contract-management-view__section-header {
+      flex-wrap: wrap;
+      gap: var(--spacing-2);
+    }
+
+    /* === 드롭다운 터치 타겟 === */
+    .contract-management-view .ios-dropdown__trigger {
+      min-height: 44px;
+    }
+
+    /* === 사용 가이드 섹션 터치 타겟 === */
+    .contract-management-view .usage-guide__section--clickable {
+      min-height: 44px;
+    }
+
+    /* === 사용 가이드 헤더(접기/펼치기) 터치 타겟 === */
+    .contract-management-view .usage-guide__header {
+      min-height: 44px;
+    }
+
+    /* === 클릭 가능 고객명 셀 터치 타겟 === */
+    .recent-cell-customer--clickable {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* === 로딩/에러/빈 상태 패딩 축소 === */
+    .recent-activity-loading,
+    .recent-activity-error,
+    .recent-activity-empty {
+      padding: var(--spacing-6) var(--spacing-3);
+    }
+
+    /* === 접근성: focus-visible 링 === */
+    .recent-cell-customer--clickable:focus-visible {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+
+    .contract-management-view .ios-dropdown__trigger:focus-visible {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: 2px;
+      border-radius: var(--radius-md);
+    }
+
+    .contract-management-view .usage-guide__header:focus-visible {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: 2px;
+      border-radius: var(--radius-md);
+    }
+
+    .contract-management-view .usage-guide__section--clickable:focus-visible {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: 2px;
+      border-radius: var(--radius-md);
+    }
+
+  }
+
+} /* end @layer components */

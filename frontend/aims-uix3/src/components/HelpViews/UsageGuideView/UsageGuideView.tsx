@@ -12,6 +12,7 @@ import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { helpApi, type UsageGuide } from '@/features/help/api';
 import './UsageGuideView.css';
+import './UsageGuideView.mobile.css';
 
 // 책 아이콘 (타이틀용) — LP와 동일 (SFSymbol: book, menu-icon-green)
 const BookIcon = () => (

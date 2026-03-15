@@ -1,0 +1,52 @@
+/**
+ * FAQView 모바일 반응형 스타일
+ * 768px 이하 태블릿/모바일 레이아웃
+ * 480px 이하는 FAQView.css에 정의
+ */
+
+@layer components {
+
+  /* === 태블릿 반응형 (481px ~ 768px) === */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .faq-view__content {
+      padding: var(--spacing-2) var(--spacing-3);
+    }
+
+    /* 검색바: 전폭 확보 */
+    .faq-view__search {
+      margin-bottom: var(--spacing-2);
+    }
+
+    /* 필터 영역: 가로 스크롤 가능 */
+    .faq-view__filters {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      gap: var(--spacing-1);
+      margin-bottom: var(--spacing-3);
+      padding-bottom: var(--spacing-2);
+    }
+
+    /* 필터 버튼: 터치 영역 확보 */
+    .faq-view__filter {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* 질문 영역 패딩 중간 축소 */
+    .faq-view__question {
+      padding: var(--spacing-2) var(--spacing-3);
+    }
+
+    /* 답변 영역 패딩 중간 축소 */
+    .faq-view__answer {
+      margin-left: calc(var(--spacing-3) + 8px);
+      margin-right: var(--spacing-3);
+      padding: var(--spacing-2) var(--spacing-3);
+    }
+  }
+
+} /* end @layer components */

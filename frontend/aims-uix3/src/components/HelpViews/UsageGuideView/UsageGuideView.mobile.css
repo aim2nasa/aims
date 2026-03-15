@@ -1,0 +1,59 @@
+/**
+ * 사용 가이드 뷰 — 태블릿/모바일 반응형 (768px)
+ * 480px 미만은 UsageGuideView.css에서 처리
+ */
+
+@layer components {
+
+  @media (max-width: 768px) {
+    /* 콘텐츠 패딩 중간 축소 */
+    .usage-guide-view__content {
+      padding: var(--spacing-2) var(--spacing-2);
+      gap: var(--spacing-2);
+    }
+
+    /* 검색바 전폭 확보 */
+    .usage-guide-view__search {
+      width: 100%;
+    }
+
+    .usage-guide-view__search-input {
+      padding: 12px 36px 12px 36px;
+    }
+
+    /* 카테고리 헤더 패딩 중간 축소 + 터치 영역 확보 */
+    .usage-guide-view__category-header {
+      padding: var(--spacing-2) var(--spacing-3);
+      min-height: 44px;
+    }
+
+    /* 카테고리 아이콘 크기 유지 */
+    .usage-guide-view__category-icon {
+      width: 26px;
+      height: 26px;
+    }
+
+    /* 아이템 헤더 들여쓰기 중간 축소 + 터치 영역 확보 */
+    .usage-guide-view__item-header {
+      padding-left: calc(var(--spacing-3) + 38px);
+      min-height: 44px;
+    }
+
+    .usage-guide-view__item-header::before {
+      left: calc(var(--spacing-3) + 24px);
+    }
+
+    /* 연결선 위치 조정 */
+    .usage-guide-view__items::before {
+      left: calc(var(--spacing-3) + 26px);
+    }
+
+    /* 아이템 콘텐츠 들여쓰기/패딩 조정 */
+    .usage-guide-view__item-content {
+      margin-left: calc(var(--spacing-3) + 38px);
+      margin-right: var(--spacing-3);
+      padding: var(--spacing-2) var(--spacing-3);
+    }
+  }
+
+} /* end @layer components */
