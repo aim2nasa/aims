@@ -271,6 +271,8 @@ export const ErrorLogsPage = () => {
 
     try {
       await errorLogsApi.setRetention(hours, true);
+      clearStats();
+      clearNewLogs();
       refetch();
       queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs', 'retention'] });
@@ -351,6 +353,8 @@ export const ErrorLogsPage = () => {
   const deleteMutation = useMutation({
     mutationFn: (ids: string[]) => errorLogsApi.deleteMany(ids),
     onSuccess: () => {
+      clearStats();
+      clearNewLogs();
       queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       setSelectedIds(new Set());
     },
