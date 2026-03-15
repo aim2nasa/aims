@@ -262,20 +262,27 @@
 
     .center-pane-view__header {
       padding: 6px 12px;
-      gap: 6px;
+      gap: 4px;
     }
 
-    /* 제목 텍스트 줄임 처리 */
+    /* 제목 영역: 남은 공간 차지 + 줄임 처리 */
     .center-pane-view__title {
+      flex: 1;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-size: var(--font-size-caption-1); /* 12px - 412px에서 공간 확보 */
     }
 
     /* 액세서리 영역 축소 방지 */
     .center-pane-view__title-accessory {
       flex-shrink: 0;
+    }
+
+    /* 왼쪽 액세서리 간격 축소 */
+    .center-pane-view__title-left-accessory {
+      margin-right: 6px;
     }
 
     .center-pane-view__content {

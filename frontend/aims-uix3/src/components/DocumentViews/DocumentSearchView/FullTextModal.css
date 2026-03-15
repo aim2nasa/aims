@@ -63,4 +63,15 @@
     background-color: var(--color-text-tertiary);
   }
 
+  /* 모바일 (480px 이하) - 412px 최적화 */
+  @media (max-width: 480px) {
+    .fulltext-modal-body {
+      padding: 12px;
+    }
+
+    .fulltext-modal-footer {
+      padding: 12px;
+    }
+  }
+
 } /* end @layer components */

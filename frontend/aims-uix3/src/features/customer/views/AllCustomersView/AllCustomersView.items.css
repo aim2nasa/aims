@@ -331,8 +331,9 @@
       gap: 6px;
     }
 
-    /* 검색: 40px 터치 타겟 + iOS 자동줌 방지 */
+    /* 검색: 풀 폭 + 40px 터치 타겟 + iOS 자동줌 방지 */
     .customer-library-container .search-input-wrapper {
+      width: 100%;
       padding: 4px 8px;
     }
 

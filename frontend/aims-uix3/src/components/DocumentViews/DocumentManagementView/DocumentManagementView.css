@@ -475,15 +475,15 @@
       margin-bottom: var(--spacing-4);
     }
 
-    /* 통계 카드: 4개 1줄 유지 */
+    /* 통계 카드: 2x2 그리드 (412px에서 4칼럼은 과밀) */
     .document-management-view__stats-grid {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: var(--spacing-2);
     }
 
-    /* 파이 차트: 2열 그리드 */
+    /* 파이 차트: 1열 세로 배치 (412px에서 2열은 과밀) */
     .document-management-view__pie-charts-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr;
       gap: var(--spacing-3);
       padding: var(--spacing-2);
       margin-top: var(--spacing-3);

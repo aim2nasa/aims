@@ -163,6 +163,7 @@
 
     .contract-all-view .search-input {
       padding: 3px 6px 3px 24px;
+      font-size: 16px; /* iOS Safari 자동줌 방지 */
     }
 
     .contract-all-view .search-icon {

@@ -369,6 +369,18 @@
     .files-toolbar {
       padding: var(--spacing-2) var(--spacing-3);
       gap: var(--spacing-2);
+      flex-wrap: wrap;
+    }
+
+    /* 검색 입력: 전체 폭 */
+    .search-input {
+      width: 100%;
+    }
+
+    /* 검색 박스: 전체 폭, 별도 행 */
+    .search-box {
+      flex: 1;
+      min-width: 0;
     }
 
     /* 컬럼 헤더 숨김 */

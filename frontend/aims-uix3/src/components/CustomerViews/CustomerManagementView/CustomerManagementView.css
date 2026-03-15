@@ -377,9 +377,9 @@
       gap: var(--spacing-2);
     }
 
-    /* 파이 차트: 2열 그리드 (세로 배치 대신) */
+    /* 파이 차트: 1열 세로 배치 (412px에서 2열은 과밀) */
     .customer-management-view__pie-charts-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr;
       gap: var(--spacing-3);
       padding: var(--spacing-2);
       margin-top: var(--spacing-3);
