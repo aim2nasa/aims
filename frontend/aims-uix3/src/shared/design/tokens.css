@@ -821,12 +821,12 @@
     /* 후보 6: 애플 아이폰/맥 스타일 - 미니멀하고 세련된 애플 디자인 */
 
     /* Main Background Colors - 애플 시그니처 배경 */
-    --color-layout-main-light: #ededf2; /* Light Theme: iOS 라이트 그레이 - 대비 강화 */
+    --color-layout-main-light: #f0f0f5; /* Light Theme: 중립 라이트 그레이 */
     --color-layout-main-dark: #1c1c1e;  /* Dark Theme: 순수 블랙 */
 
     /* Content Background Colors - 깔끔한 카드형 배경 */
     --color-layout-content-light: #ffffff;    /* Light Theme: 순수 화이트 */
-    --color-layout-content-dark: #1c1c1e;     /* Dark Theme: iOS 다크 그레이 */
+    --color-layout-content-dark: #2c2c2e;     /* Dark Theme: 카드 배경 — 배경보다 한 단계 밝음 (iOS Settings 패턴) */
 
     /* Secondary Background Colors - 시스템 보조 영역 */
     --color-layout-secondary-light: #f2f2f7;  /* Light Theme: 시스템 그레이 */
@@ -837,7 +837,7 @@
     --color-layout-accent-dark: #2c2c2e;      /* Dark Theme: iOS systemGray5 정확한 색상 */
 
     /* LeftPane Colors */
-    --color-layout-leftpane-light: #dfdfe6;  /* Light Theme: iOS 시스템 그레이 - 대비 강화 */
+    --color-layout-leftpane-light: #e8e8ed;  /* Light Theme: iOS systemGray5 중립 그레이 */
     --color-layout-leftpane-dark: #1c1c1e;   /* Dark Theme: iOS 다크 그레이 */
 
     /* Header Colors - 후보6.1: 애플 스타일 미니멀 헤더 */
