@@ -234,7 +234,7 @@ export const setPin = async (token: string, pin: string): Promise<{ success: boo
 
 /** PIN 검증 → 세션 토큰 반환 */
 export const verifyPin = async (token: string, pin: string): Promise<PinVerifyResponse> => {
-  const response = await axios.post(`${API_BASE_URL}/api/auth/verify-pin`, { pin }, {
+  const response = await axios.post(`${API_BASE_URL}/api/auth/verify-pin`, { pin: pin.trim() }, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;

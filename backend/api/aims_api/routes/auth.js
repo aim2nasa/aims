@@ -911,7 +911,7 @@ module.exports = function(db) {
    */
   router.post('/set-pin', authenticateJWT, async (req, res) => {
     try {
-      const { pin } = req.body;
+      const pin = (req.body.pin || '').trim();
       const userId = req.user.id;
 
       if (!pin || pin.length !== PIN_LENGTH || !/^\d+$/.test(pin)) {
@@ -946,7 +946,7 @@ module.exports = function(db) {
    */
   router.post('/verify-pin', authenticateJWT, async (req, res) => {
     try {
-      const { pin } = req.body;
+      const pin = (req.body.pin || '').trim();
       const userId = req.user.id;
 
       if (!pin || !/^\d+$/.test(pin)) {
@@ -1021,7 +1021,7 @@ module.exports = function(db) {
    */
   router.post('/reset-pin', authenticateJWT, async (req, res) => {
     try {
-      const { newPin } = req.body;
+      const newPin = (req.body.newPin || '').trim();
       const userId = req.user.id;
 
       if (!newPin || newPin.length !== PIN_LENGTH || !/^\d+$/.test(newPin)) {

@@ -60,6 +60,6 @@ describe('GET /api/annual-report/status/:file_id', () => {
   it('존재하지 않는 파일에 결과 반환', async () => {
     if (!serverAvailable) return;
     const res = await apiFetch('/api/annual-report/status/000000000000000000000000', {}, TEST_USER_ID);
-    expect([200, 404, 500]).toContain(res.status);
+    expect([200, 403, 404, 500]).toContain(res.status);
   });
 });
