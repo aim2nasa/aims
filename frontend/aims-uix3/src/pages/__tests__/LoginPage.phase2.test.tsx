@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { createElement } from 'react'
 
@@ -190,7 +190,11 @@ describe('LoginPage Phase 2 — PIN 모드', () => {
         expect(document.querySelector('input[inputmode="numeric"]')).not.toBeNull()
       })
       const input = document.querySelector('input[inputmode="numeric"]') as HTMLInputElement
-      fireEvent.change(input, { target: { value: '12' } })
+      // PinInput은 onInput(InputEvent.data) 방식으로 동작
+      for (const char of '12') {
+        const event = new InputEvent('input', { data: char, inputType: 'insertText', bubbles: true })
+        act(() => { input.dispatchEvent(event) })
+      }
       const dots = screen.getAllByTestId('pin-dot')
       expect(dots[0]).toHaveClass('pin-dot--filled')
       expect(dots[1]).toHaveClass('pin-dot--filled')

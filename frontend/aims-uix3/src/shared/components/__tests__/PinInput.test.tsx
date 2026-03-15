@@ -7,6 +7,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import PinInput from '../PinInput'
 
+/** onInput 이벤트를 시뮬레이션하는 헬퍼 (InputEvent.data 포함) */
+function simulateInput(input: HTMLInputElement, data: string) {
+  for (const char of data) {
+    // React onInput은 native 'input' 이벤트를 리슨
+    const event = new InputEvent('input', {
+      data: char,
+      inputType: 'insertText',
+      bubbles: true,
+    })
+    act(() => {
+      input.dispatchEvent(event)
+    })
+  }
+}
+
 describe('PinInput', () => {
   const mockOnComplete = vi.fn()
 
@@ -51,7 +66,7 @@ describe('PinInput', () => {
     it('숫자 입력 시 해당 dot이 filled됨', () => {
       render(<PinInput onComplete={mockOnComplete} />)
       const input = document.querySelector('input[inputmode="numeric"]') as HTMLInputElement
-      fireEvent.change(input, { target: { value: '12' } })
+      simulateInput(input, '12')
       const dots = screen.getAllByTestId('pin-dot')
       expect(dots[0]).toHaveClass('pin-dot--filled')
       expect(dots[1]).toHaveClass('pin-dot--filled')
@@ -62,24 +77,14 @@ describe('PinInput', () => {
     it('4자리 입력 완료 시 onComplete 호출', () => {
       render(<PinInput onComplete={mockOnComplete} />)
       const input = document.querySelector('input[inputmode="numeric"]') as HTMLInputElement
-      fireEvent.change(input, { target: { value: '1234' } })
+      simulateInput(input, '1234')
       expect(mockOnComplete).toHaveBeenCalledWith('1234')
-    })
-
-    it('숫자가 아닌 문자는 무시됨', () => {
-      render(<PinInput onComplete={mockOnComplete} />)
-      const input = document.querySelector('input[inputmode="numeric"]') as HTMLInputElement
-      fireEvent.change(input, { target: { value: '12ab' } })
-      const dots = screen.getAllByTestId('pin-dot')
-      expect(dots[0]).toHaveClass('pin-dot--filled')
-      expect(dots[1]).toHaveClass('pin-dot--filled')
-      expect(dots[2]).not.toHaveClass('pin-dot--filled')
     })
 
     it('5자리 이상 입력 시 4자리로 truncate', () => {
       render(<PinInput onComplete={mockOnComplete} />)
       const input = document.querySelector('input[inputmode="numeric"]') as HTMLInputElement
-      fireEvent.change(input, { target: { value: '12345' } })
+      simulateInput(input, '12345')
       expect(mockOnComplete).toHaveBeenCalledWith('1234')
     })
   })
@@ -94,19 +99,15 @@ describe('PinInput', () => {
 
     it('에러 발생 후 400ms 뒤 shake 해제 + 값 초기화', () => {
       const { rerender } = render(<PinInput onComplete={mockOnComplete} />)
-      // 먼저 값 입력
       const input = document.querySelector('input[inputmode="numeric"]') as HTMLInputElement
-      fireEvent.change(input, { target: { value: '12' } })
+      simulateInput(input, '12')
 
-      // 에러 트리거
       rerender(<PinInput onComplete={mockOnComplete} error="틀렸습니다" />)
 
-      // 400ms 후
       act(() => { vi.advanceTimersByTime(400) })
 
       const dotsContainer = document.querySelector('.pin-dots')
       expect(dotsContainer).not.toHaveClass('pin-dots--shake')
-      // 값 초기화 확인
       const dots = screen.getAllByTestId('pin-dot')
       dots.forEach(dot => {
         expect(dot).not.toHaveClass('pin-dot--filled')

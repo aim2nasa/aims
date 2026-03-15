@@ -3,8 +3,8 @@
  * 숫자 4자리 입력 → dot 시각화 → 자동 검증
  * 설계서: docs/2026-03-14_LOGIN_UX_PROPOSAL.md Phase 2
  *
- * Android 삼성 브라우저 호환: hidden input의 커서 위치 버그로
- * onChange가 아닌 onKeyDown으로 값을 직접 조립 (prepend 방지)
+ * Android 호환: hidden input 커서 위치 버그로 입력 순서가 뒤집히는 문제 해결
+ * → onInput의 InputEvent.data로 새로 입력된 문자를 직접 캡처하여 append
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
@@ -17,15 +17,14 @@ interface PinInputProps {
 }
 
 export default function PinInput({ length = 4, onComplete, error, disabled }: PinInputProps) {
-  const [value, setValue] = useState('');
+  const [digits, setDigits] = useState<string[]>([]);
   const [shaking, setShaking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const valueRef = useRef('');
+  const digitsRef = useRef<string[]>([]);
 
-  // valueRef 동기화 (onKeyDown에서 최신 값 참조)
   useEffect(() => {
-    valueRef.current = value;
-  }, [value]);
+    digitsRef.current = digits;
+  }, [digits]);
 
   // 에러 발생 시 흔들림 + 초기화
   useEffect(() => {
@@ -36,7 +35,9 @@ export default function PinInput({ length = 4, onComplete, error, disabled }: Pi
     }
     const timer = setTimeout(() => {
       setShaking(false);
-      setValue('');
+      setDigits([]);
+      // input value도 초기화
+      if (inputRef.current) inputRef.current.value = '';
       inputRef.current?.focus();
     }, 400);
     return () => clearTimeout(timer);
@@ -49,88 +50,76 @@ export default function PinInput({ length = 4, onComplete, error, disabled }: Pi
     }
   }, [disabled]);
 
-  // onKeyDown: 키 입력을 직접 캡처하여 값 조립 (Android prepend 버그 방지)
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    const current = valueRef.current;
+  // onInput: InputEvent.data에 새로 입력된 문자가 담김 (Android/iOS/PC 모두 동작)
+  const handleInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const inputEvent = e.nativeEvent as InputEvent;
+    const current = digitsRef.current;
 
-    if (e.key >= '0' && e.key <= '9') {
-      if (current.length >= length) return;
-      e.preventDefault();
-      const newValue = current + e.key;
-      setValue(newValue);
-      if (newValue.length === length) {
-        onComplete(newValue);
-      }
-    } else if (e.key === 'Backspace') {
-      e.preventDefault();
-      setValue(current.slice(0, -1));
-    } else if (e.key === 'Delete' || e.key === 'Enter' || e.key === 'Tab') {
-      // 허용
-    } else {
-      e.preventDefault();
-    }
-  }, [length, onComplete]);
-
-  // onChange: Android에서 onKeyDown이 key="Unidentified"로 올 경우 fallback
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, '');
-    const current = valueRef.current;
-
-    // onKeyDown에서 이미 처리된 경우 무시 (값이 동일)
-    if (raw === current) return;
-
-    // Android fallback: 새로 추가된 문자를 찾아서 append
-    if (raw.length === current.length + 1) {
-      // 새 문자 = raw에서 current에 없는 것
-      let newChar = '';
-      for (let i = 0; i < raw.length; i++) {
-        const before = current.slice(0, i) + current.slice(i + 1);
-        if (raw.length - 1 === before.length) {
-          // raw[i]가 새로 추가된 문자일 수 있음
-          const remaining = raw.slice(0, i) + raw.slice(i + 1);
-          if (remaining === current) {
-            newChar = raw[i];
-            break;
-          }
-        }
-      }
-      // 찾지 못하면 마지막 문자 사용
-      if (!newChar) newChar = raw[raw.length - 1];
-
-      const newValue = (current + newChar).slice(0, length);
-      setValue(newValue);
-      if (newValue.length === length) {
-        onComplete(newValue);
-      }
-    } else if (raw.length < current.length) {
+    if (inputEvent.inputType === 'deleteContentBackward' || inputEvent.inputType === 'deleteContentForward') {
       // 삭제
-      setValue(raw.slice(0, length));
-    } else {
-      // 기타: 그대로 사용 (paste 등)
-      const newValue = raw.slice(0, length);
-      setValue(newValue);
-      if (newValue.length === length) {
-        onComplete(newValue);
-      }
+      const newDigits = current.slice(0, -1);
+      setDigits(newDigits);
+      if (inputRef.current) inputRef.current.value = newDigits.join('');
+      return;
+    }
+
+    // 새로 입력된 문자
+    const data = inputEvent.data;
+    if (!data) return;
+
+    // 숫자만 필터
+    const numChars = data.replace(/\D/g, '').split('');
+    if (numChars.length === 0) {
+      // 숫자가 아닌 입력 → input value를 현재 digits로 되돌림
+      if (inputRef.current) inputRef.current.value = current.join('');
+      return;
+    }
+
+    // 현재 digits에 새 숫자 append
+    const newDigits = [...current, ...numChars].slice(0, length);
+    setDigits(newDigits);
+
+    // input의 실제 value를 우리가 관리하는 값으로 강제 동기화
+    if (inputRef.current) inputRef.current.value = newDigits.join('');
+
+    if (newDigits.length === length) {
+      onComplete(newDigits.join(''));
     }
   }, [length, onComplete]);
+
+  // onChange는 빈 핸들러 (React 경고 방지, 실제 로직은 onInput에서 처리)
+  const handleChange = useCallback(() => {
+    // noop — onInput에서 모든 로직 처리
+  }, []);
 
   const handleContainerClick = useCallback(() => {
     inputRef.current?.focus();
   }, []);
+
+  // 키보드 백스페이스 처리 (일부 브라우저에서 onInput에 deleteContentBackward 안 오는 경우)
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      const newDigits = digitsRef.current.slice(0, -1);
+      setDigits(newDigits);
+      if (inputRef.current) inputRef.current.value = newDigits.join('');
+    }
+  }, []);
+
+  const filledCount = digits.length;
 
   return (
     <div
       className={`pin-dots ${shaking ? 'pin-dots--shake' : ''}`}
       onClick={handleContainerClick}
       role="group"
-      aria-label={`간편 비밀번호 입력, ${length}자리 중 ${value.length}자리 입력됨`}
+      aria-label={`간편 비밀번호 입력, ${length}자리 중 ${filledCount}자리 입력됨`}
     >
       {Array.from({ length }, (_, i) => (
         <div
           key={i}
           data-testid="pin-dot"
-          className={`pin-dot ${i < value.length ? 'pin-dot--filled' : ''} ${error && i < value.length ? 'pin-dot--error' : ''} ${i === value.length && !error ? 'pin-dot--next' : ''}`}
+          className={`pin-dot ${i < filledCount ? 'pin-dot--filled' : ''} ${error && i < filledCount ? 'pin-dot--error' : ''} ${i === filledCount && !error ? 'pin-dot--next' : ''}`}
         />
       ))}
       <input
@@ -139,9 +128,10 @@ export default function PinInput({ length = 4, onComplete, error, disabled }: Pi
         inputMode="numeric"
         pattern="[0-9]*"
         autoComplete="off"
-        value={value}
-        onKeyDown={handleKeyDown}
+        defaultValue=""
+        onInput={handleInput}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
         disabled={disabled}
         className="pin-hidden-input"
         tabIndex={0}
