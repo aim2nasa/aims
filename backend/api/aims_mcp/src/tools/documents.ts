@@ -195,9 +195,9 @@ export async function handleSearchDocuments(args: unknown) {
         offset,
         hasMore,
         nextOffset,
-        // AI 지시: 사용자가 "더 보여줘"하면 이 query, searchMode, nextOffset 사용
+        // AI 지시: 사용자가 "더 보여줘"하면 이 힌트 그대로 사용
         _paginationHint: hasMore
-          ? `다음 페이지: search_documents(query="${params.query}", searchMode="${params.searchMode || 'semantic'}", offset=${nextOffset})`
+          ? `다음 페이지: search_documents(query="${params.query}", searchMode="${params.searchMode || 'keyword'}"${params.customerId ? `, customerId="${params.customerId}"` : ''}, offset=${nextOffset})`
           : null,
         documents: (result.search_results || []).map((doc) => {
           // 키워드 검색 형식 (MongoDB 문서)
