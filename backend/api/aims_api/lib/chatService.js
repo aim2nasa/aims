@@ -733,6 +733,44 @@ function getLastUserMessage(messages) {
   }
   return null;
 }
+/**
+ * 대화 이력에서 마지막 _paginationHint를 추출하여 도구명+인자로 파싱
+ * 형식: '다음 페이지: search_documents(query="자동차", searchMode="keyword", customerId="xxx", offset=10)'
+ */
+function extractPaginationHint(messages) {
+  // 역순으로 assistant 메시지의 tool 결과에서 _paginationHint 찾기
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role === 'tool' && msg.content) {
+      try {
+        const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+        const hintMatch = content.match(/_paginationHint["\s:]+다음 페이지:\s*(\w+)\(([^)]+)\)/);
+        if (hintMatch) {
+          const toolName = hintMatch[1];
+          const argsStr = hintMatch[2];
+          const args = {};
+          // key="value" 또는 key=number 패턴 파싱
+          const argParts = argsStr.match(/(\w+)=(?:"([^"]*)"|(\d+))/g);
+          if (argParts) {
+            for (const part of argParts) {
+              const eqIdx = part.indexOf('=');
+              const key = part.substring(0, eqIdx);
+              let val = part.substring(eqIdx + 1);
+              if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+              else if (/^\d+$/.test(val)) val = parseInt(val, 10);
+              args[key] = val;
+            }
+          }
+          return { tool: toolName, args };
+        }
+      } catch (e) {
+        // 파싱 실패 시 무시
+      }
+    }
+  }
+  return null;
+}
+
 // ========== RAG 폴백 헬퍼 끝 ==========
 
 async function* streamChatResponse(messages, userId, analyticsDb) {
@@ -764,6 +802,33 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
     let currentMessages = fullMessages;
     let iterationCount = 0;
     const MAX_ITERATIONS = 5;  // 무한 루프 방지
+
+    // 🔥 페이지네이션 자동 처리: "더 보여줘" 감지 시 이전 _paginationHint 자동 실행
+    const lastUserMsg = getLastUserMessage(messages);
+    const PAGINATION_TRIGGERS = ['더 보여줘', '더보여줘', '다음', '계속', '응', '네', '예', 'ㅇㅇ', '더 보여줘'];
+    if (lastUserMsg && PAGINATION_TRIGGERS.some(t => lastUserMsg.trim() === t)) {
+      // 대화 이력에서 마지막 assistant tool_calls의 결과 중 _paginationHint 찾기
+      const paginationHint = extractPaginationHint(messages);
+      if (paginationHint) {
+        console.log(`[ChatService] 페이지네이션 자동 실행: ${paginationHint.tool}(${JSON.stringify(paginationHint.args).substring(0, 100)})`);
+        try {
+          yield { type: 'tool_start', tools: [paginationHint.tool] };
+          yield { type: 'tool_calling', name: paginationHint.tool };
+          const result = await callMCPTool(paginationHint.tool, paginationHint.args, userId);
+          yield { type: 'tool_result', name: paginationHint.tool, success: true };
+          toolCallsExecuted.push({ name: paginationHint.tool, success: true });
+
+          // 도구 결과를 메시지에 추가하여 AI가 포맷팅하도록 함
+          currentMessages = [
+            ...currentMessages,
+            { role: 'assistant', content: null, tool_calls: [{ id: 'auto_pagination', type: 'function', function: { name: paginationHint.tool, arguments: JSON.stringify(paginationHint.args) } }] },
+            { role: 'tool', tool_call_id: 'auto_pagination', content: result }
+          ];
+        } catch (error) {
+          console.error('[ChatService] 페이지네이션 자동 실행 실패:', error.message);
+        }
+      }
+    }
 
     // AI 모델 설정 조회 (캐싱됨)
     const chatModel = await aiModelSettings.getModel('chat');
