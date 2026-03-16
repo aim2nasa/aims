@@ -295,7 +295,8 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                 else:
                     still_pending += 1
 
-            print(f"[CreditRecheck] credit_pending {len(credit_pending_docs)}건 확인 → {transitioned}건 pending 전환, {still_pending}건 크레딧 부족 유지")
+            if transitioned > 0:
+                print(f"[CreditRecheck] credit_pending {len(credit_pending_docs)}건 중 {transitioned}건 pending 전환")
 
         # 1.6단계: OCR quota_check_error 자동 재시도
         # OCR 쿼터 체크 API 일시적 오류로 실패한 문서를 재처리
