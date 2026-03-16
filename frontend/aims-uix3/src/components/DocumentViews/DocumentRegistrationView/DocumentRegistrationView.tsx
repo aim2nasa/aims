@@ -501,7 +501,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    * 🔴 중복 파일 처리 다이얼로그 취소 핸들러
    */
   const handleDuplicateCancel = useCallback(() => {
-    duplicateResolverRef.current = null
+    // 🔴 resolver가 있으면 반드시 resolve하여 Promise 해소 (무한 대기 방지)
+    if (duplicateResolverRef.current) {
+      duplicateResolverRef.current('skip' as DuplicateAction)
+      duplicateResolverRef.current = null
+    }
     duplicateApplyAllRef.current = null
     setShowDuplicateDialog(false)
     setCurrentDuplicateFile(null)
@@ -937,15 +941,22 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             if (duplicateResult.isDuplicate && duplicateResult.existingDoc) {
               const customerName = customerFileCustomer.personal_info?.name || '알 수 없음'
 
-              // 🔴 중복 파일 무조건 거부! (선택권 없음!)
-              addLog(
-                'error',
-                `🔴 중복 파일 거부: ${file.name}`,
-                `"${customerName}" 고객에게 이미 동일한 파일이 등록되어 있습니다.`
+              // 🔴 중복 파일 발견 — DuplicateDialog로 사용자에게 선택권 제공 (일괄등록과 동일)
+              const duplicateAction = await promptDuplicateAction(
+                file,
+                { uploadedAt: duplicateResult.existingDoc.uploadedAt, size: duplicateResult.existingDoc.fileSize },
+                customerName
               )
-              console.error(`[DocumentRegistration] 🔴 중복 파일 거부: ${file.name}`)
-              updateFileStatus(file, 'error', `중복 파일 - "${customerName}" 고객에게 이미 등록됨`)
-              continue
+
+              if (duplicateAction === 'skip' || duplicateAction === 'cancel') {
+                addLog(
+                  'info',
+                  `⊘ 중복 파일 건너뜀: ${file.name}`,
+                  `"${customerName}" 고객에게 이미 동일한 파일이 등록되어 있습니다.`
+                )
+                updateFileStatus(file, 'skipped', `중복 파일 - "${customerName}" 고객에게 이미 등록됨`)
+                continue
+              }
             }
           } catch (error) {
             console.error('[DocumentRegistration] 중복 검사 실패:', error)
@@ -2266,6 +2277,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               uploadStats={stats}
               onCancelUpload={handleCancelAll}
               onRetryFile={handleRetryFile}
+              customerName={customerFileCustomer?.personal_info?.name}
             />
           </div>
         )}
@@ -2284,7 +2296,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           <div className="view-status-button-container">
             <button
               type="button"
-              className="view-status-button"
+              className="view-status-button view-status-button--secondary"
               onClick={() => {
                 // 초기 상태로 되돌리기
                 setProcessingLogs([])
@@ -2304,11 +2316,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               }}
             >
               <span className="icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} /></span>
-              고객·계약·문서 등록
+              새 문서 등록
             </button>
             <button
               type="button"
-              className="view-status-button"
+              className="view-status-button view-status-button--primary"
               onClick={() => {
                 onClose()
                 const url = new URL(window.location.href)
@@ -2317,7 +2329,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 window.dispatchEvent(new PopStateEvent('popstate'))
               }}
             >
-              <span className="icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} /></span>
+              <SFSymbol name="books-vertical" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
               전체 문서 보기
             </button>
           </div>

@@ -152,7 +152,7 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
       {hasBatch && (
         <div className="psb-batch">
           <div className="psb-batch-header">
-            <span className="psb-batch-label">📤 이번 업로드</span>
+            <span className="psb-batch-label">📋 문서 처리</span>
             <span className="psb-batch-text">
               {fmt(batchCompleted)}/{fmt(batchTotal)} 완료 ({batchPct}%)
             </span>

@@ -36,6 +36,8 @@ interface ProcessingLogProps {
   onCancelUpload?: () => void
   /** 파일 재시도 핸들러 */
   onRetryFile?: (fileId: string) => void
+  /** 업로드 대상 고객명 (완료 요약 표시용) */
+  customerName?: string
 }
 
 type SortOrder = 'oldest-first' | 'newest-first'
@@ -48,7 +50,8 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   uploadState,
   uploadStats,
   onCancelUpload,
-  onRetryFile
+  onRetryFile,
+  customerName
 }) => {
   // 개발자 모드 확인
   const { isDevMode } = useDevModeStore()
@@ -61,6 +64,9 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   // 업로드 상태 확인
   const hasFiles = uploadState && uploadState.files.length > 0
   const isUploading = uploadState?.uploading || (uploadStats?.uploading ?? 0) > 0
+  // 업로드 완료 여부 (모든 파일이 최종 상태)
+  const isUploadComplete = hasFiles && !isUploading &&
+    uploadState!.files.every(f => ['completed', 'warning', 'error', 'skipped'].includes(f.status))
 
   // 파일 상태별 분류 (useMemo: 대량 파일 등록 시 매 렌더마다 6회 filter 방지)
   const { analyzingFiles, pendingFiles, uploadingFiles, completedFiles, errorFiles, skippedFiles } = useMemo(() => {
@@ -183,7 +189,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           // ✅ 완료: 초록색 원형 체크마크 (눈에 잘 띄게)
           return <span className="file-item__check-circle">✓</span>
         case 'error':
-          return <span className="file-item__error-icon">!</span>
+          return <span className="file-item__error-icon"><SFSymbol name="exclamationmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} /></span>
         case 'skipped':
           return <span className="file-item__skipped-icon">⊘</span>
         case 'uploading':
@@ -220,8 +226,8 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
         {file.status === 'error' && file.error && (
           <span className="file-item__error">{file.error}</span>
         )}
-        {/* 영구 실패(바이러스, 용량 부족 등)는 재시도 불가 */}
-        {file.status === 'error' && onRetryFile && file.retryable !== false && !file.error?.includes('바이러스 감지') && (
+        {/* 영구 실패(바이러스, 용량 부족, 중복 파일 등)는 재시도 불가 */}
+        {file.status === 'error' && onRetryFile && file.retryable !== false && !file.error?.includes('바이러스 감지') && !file.error?.includes('중복 파일') && (
           <button
             type="button"
             className="file-item__retry"
@@ -246,6 +252,80 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           />
         </div>
       )}
+
+      {/* 업로드 완료 요약 카드 */}
+      {isUploadComplete && (() => {
+        const hasSuccess = completedFiles.length > 0
+        const allFailed = !hasSuccess && (errorFiles.length > 0 || skippedFiles.length > 0)
+        return (
+          <div className={`upload-completion-summary ${allFailed ? 'upload-completion-summary--failed' : ''}`}>
+            <div className="upload-completion-summary__header">
+              {hasSuccess ? (
+                <span className="upload-completion-summary__check-icon">✓</span>
+              ) : (
+                <span className="upload-completion-summary__fail-icon">
+                  <SFSymbol name="exclamationmark-circle-fill" size={SFSymbolSize.BODY} weight={SFSymbolWeight.MEDIUM} />
+                </span>
+              )}
+              <span className="upload-completion-summary__title">
+                {hasSuccess ? '업로드 완료' : '업로드 실패'}
+              </span>
+            </div>
+            <p className="upload-completion-summary__description">
+              {hasSuccess
+                ? (customerName
+                    ? <><strong>{customerName}</strong> 고객에게 <strong>{completedFiles.length}건</strong>의 문서가 등록되었습니다.</>
+                    : <><strong>{completedFiles.length}건</strong>의 문서가 등록되었습니다.</>
+                  )
+                : (customerName
+                    ? <><strong>{customerName}</strong> 고객에게 업로드된 문서가 없습니다. 아래 상세 내역을 확인해주세요.</>
+                    : <>업로드된 문서가 없습니다. 아래 상세 내역을 확인해주세요.</>
+                  )
+              }
+            </p>
+            <div className="upload-completion-summary__stats">
+              {completedFiles.length > 0 && (
+                <span className="upload-completion-summary__stat upload-completion-summary__stat--success">
+                  <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                  완료 {completedFiles.length}
+                </span>
+              )}
+              {errorFiles.length > 0 && (
+                <span className="upload-completion-summary__stat upload-completion-summary__stat--error">
+                  <SFSymbol name="xmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                  실패 {errorFiles.length}
+                </span>
+              )}
+              {skippedFiles.length > 0 && (
+                <span className="upload-completion-summary__stat upload-completion-summary__stat--skipped">
+                  <SFSymbol name="minus-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                  건너뜀 {skippedFiles.length}
+                </span>
+              )}
+            </div>
+            {hasSuccess ? (
+              <p className="upload-completion-summary__guide">
+                업로드된 문서는 자동으로 분류·분석됩니다. 처리 현황은 <strong>전체 문서 보기</strong>에서 확인하세요.
+              </p>
+            ) : (
+              <p className="upload-completion-summary__guide upload-completion-summary__guide--error">
+                {(() => {
+                  const totalFailed = errorFiles.length + skippedFiles.length
+                  const allErrors = [...errorFiles, ...skippedFiles]
+                  const duplicateCount = allErrors.filter(f => f.error?.includes('중복 파일')).length
+                  const virusCount = allErrors.filter(f => f.error?.includes('바이러스')).length
+                  const otherCount = totalFailed - duplicateCount - virusCount
+                  const reasons: string[] = []
+                  if (duplicateCount > 0) reasons.push(`중복 파일 ${duplicateCount}건`)
+                  if (virusCount > 0) reasons.push(`바이러스 감지 ${virusCount}건`)
+                  if (otherCount > 0) reasons.push(`기타 오류 ${otherCount}건`)
+                  return `사유: ${reasons.join(', ')}`
+                })()}
+              </p>
+            )}
+          </div>
+        )
+      })()}
 
       {/* 업로드 파일 요약 (업로드 중이 아닐 때만 표시 - ProgressIndicator와 중복 방지) */}
       {hasFiles && !isUploading && (
@@ -351,7 +431,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
               {errorFiles.length > 0 && (
                 <div className="file-summary__section">
                   <div className="file-summary__section-header">
-                    <span className="file-summary__error-icon">!</span>
+                    <SFSymbol name="exclamationmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-summary__error-icon" />
                     <span className="file-summary__section-title--error">실패 ({errorFiles.length})</span>
                   </div>
                   <div className="file-summary__list">

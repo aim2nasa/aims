@@ -913,6 +913,16 @@
     --color-ios-teal: #5ac8fa;           /* iOS systemTeal */
     --color-ios-indigo: #5856d6;         /* iOS systemIndigo */
     --color-ios-yellow: #ffcc00;         /* iOS systemYellow */
+
+    /* iOS 색상 알파 배경 (배지/태그 배경용) */
+    --color-ios-red-alpha-15: rgba(255, 59, 48, 0.15);
+    --color-ios-red-alpha-10: rgba(255, 59, 48, 0.1);
+    --color-ios-green-alpha-10: rgba(52, 199, 89, 0.1);
+    --color-ios-orange-alpha-15: rgba(255, 149, 0, 0.15);
+    --color-ios-orange-alpha-10: rgba(255, 149, 0, 0.1);
+    --color-ios-blue-alpha-15: rgba(0, 122, 255, 0.15);
+    --color-ios-purple-alpha-15: rgba(175, 82, 222, 0.15);
+    --color-ios-purple-alpha-05: rgba(175, 82, 222, 0.05);
     --color-folder-yellow: #F7C94B;      /* Windows Explorer 폴더 노란색 */
 
     /* Dark Theme - iOS 다크모드 전용 색상 */

@@ -322,10 +322,14 @@
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-size: var(--font-size-caption-2);
     font-weight: 600;
-    color: #ff3b30;
-    background: rgba(255, 59, 48, 0.15);
+    color: var(--color-ios-red-light);
+    background: var(--color-ios-red-alpha-15);
     padding: var(--spacing-0-5) var(--spacing-1-5);
     border-radius: 10px;
+  }
+
+  html[data-theme="dark"] .file-summary__error-count {
+    color: var(--color-ios-red-dark);
   }
 
   .file-summary__uploading-count {
@@ -333,7 +337,7 @@
     font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-primary-500);
-    background: rgba(0, 122, 255, 0.15);
+    background: var(--color-ios-blue-alpha-15);
     padding: var(--spacing-0-5) var(--spacing-1-5);
     border-radius: 10px;
   }
@@ -342,8 +346,8 @@
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-size: var(--font-size-caption-2);
     font-weight: 600;
-    color: #5856d6;
-    background: rgba(88, 86, 214, 0.15);
+    color: var(--color-ios-purple);
+    background: var(--color-ios-purple-alpha-15);
     padding: var(--spacing-0-5) var(--spacing-1-5);
     border-radius: 10px;
   }
@@ -352,8 +356,8 @@
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-size: var(--font-size-caption-2);
     font-weight: 600;
-    color: #ff9500;
-    background: rgba(255, 149, 0, 0.15);
+    color: var(--color-ios-orange);
+    background: var(--color-ios-orange-alpha-15);
     padding: var(--spacing-0-5) var(--spacing-1-5);
     border-radius: 10px;
   }
@@ -434,7 +438,7 @@
 
   /* 분석 중 스피너 (보라색) */
   .file-summary__spinner--analyzing {
-    border-top-color: #5856d6;
+    border-top-color: var(--color-ios-purple);
   }
 
   @keyframes file-summary-spin {
@@ -444,42 +448,53 @@
   }
 
   .file-summary__section-title--error {
-    color: #ff3b30;
+    color: var(--color-ios-red-light);
     font-weight: 600;
+  }
+
+  html[data-theme="dark"] .file-summary__section-title--error {
+    color: var(--color-ios-red-dark);
   }
 
   .file-summary__section-title--skipped {
-    color: #ff9500;
+    color: var(--color-ios-orange);
     font-weight: 600;
   }
 
-  /* 빨간색 느낌표 아이콘 */
+  /* 에러 섹션 아이콘 */
   .file-summary__error-icon {
-    color: #ff3b30;
-    font-weight: 700;
+    color: var(--color-ios-red-light);
     font-size: var(--font-size-caption-1);
     line-height: 1;
   }
 
-  /* 주황색 건너뜀 아이콘 */
+  html[data-theme="dark"] .file-summary__error-icon {
+    color: var(--color-ios-red-dark);
+  }
+
+  /* 건너뜀 섹션 아이콘 */
   .file-summary__skipped-icon {
-    color: #ff9500;
-    font-weight: 700;
+    color: var(--color-ios-orange);
     font-size: var(--font-size-caption-1);
     line-height: 1;
   }
 
   .file-item__error-icon {
-    color: #ff3b30;
-    font-weight: 700;
-    font-size: var(--font-size-caption-1);
-    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    color: var(--color-ios-red-light);
+  }
+
+  html[data-theme="dark"] .file-item__error-icon {
+    color: var(--color-ios-red-dark);
   }
 
   .file-item__skipped-icon {
-    color: #ff9500;
-    font-weight: 700;
-    font-size: 14px;
+    color: var(--color-ios-orange);
+    font-size: var(--font-size-caption-1);
     line-height: 1;
   }
 
@@ -575,7 +590,7 @@
 
   /* 분석 중 스피너 (보라색) */
   .file-item__spinner--analyzing {
-    border-top-color: #5856d6;
+    border-top-color: var(--color-ios-purple);
   }
 
   @keyframes file-item-spin {
@@ -586,7 +601,7 @@
 
   /* 분석 중 파일 아이템 스타일 */
   .file-item--analyzing {
-    background: rgba(88, 86, 214, 0.05);
+    background: var(--color-ios-purple-alpha-05);
   }
 
   .file-item__info {
@@ -635,26 +650,28 @@
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-size: var(--font-size-caption-2);
     font-weight: 400;
-    color: var(--color-ios-red);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 300px;  /* 150px → 300px: 바이러스 감지 메시지 표시 공간 확대 */
-    margin-left: auto;  /* 우측 정렬 */
+    color: var(--color-ios-red-light);
+    white-space: normal;
+    margin-left: auto;
     text-align: right;
+    max-width: 50%;
+    line-height: 1.4;
+  }
+
+  html[data-theme="dark"] .file-item__error {
+    color: var(--color-ios-red-dark);
   }
 
   .file-item__skipped {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-size: var(--font-size-caption-2);
     font-weight: 400;
-    color: #ff9500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 300px;
+    color: var(--color-ios-orange);
+    white-space: normal;
     margin-left: auto;
     text-align: right;
+    max-width: 50%;
+    line-height: 1.4;
   }
 
   /* 건너뛴 파일 아이템 스타일 */
@@ -663,14 +680,15 @@
   }
 
   .file-item__retry {
-    padding: var(--spacing-0-5) var(--spacing-2);
+    padding: var(--spacing-1-5) var(--spacing-2-5);
+    min-height: 32px;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-primary-500);
     background: transparent;
     border: 1px solid var(--color-primary-500);
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
     flex-shrink: 0;
@@ -692,6 +710,130 @@
 
   .file-item__status-text--success {
     color: var(--color-ios-green);
+  }
+
+  /* ============================================
+   * 업로드 완료 요약 카드
+   * ============================================ */
+  .upload-completion-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding: var(--spacing-4) var(--spacing-4);
+    background: var(--color-section-bg);
+    border-bottom: 1px solid var(--color-section-border);
+  }
+
+  .upload-completion-summary--failed {
+    border-left: 3px solid var(--color-ios-red-light);
+  }
+
+  html[data-theme="dark"] .upload-completion-summary--failed {
+    border-left-color: var(--color-ios-red-dark);
+  }
+
+  .upload-completion-summary__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .upload-completion-summary__fail-icon {
+    color: var(--color-ios-red-light);
+    display: flex;
+    align-items: center;
+  }
+
+  html[data-theme="dark"] .upload-completion-summary__fail-icon {
+    color: var(--color-ios-red-dark);
+  }
+
+  .upload-completion-summary__check-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--color-ios-green);
+    color: white;
+    border-radius: 50%;
+    font-size: var(--font-size-footnote);
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .upload-completion-summary__title {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-size: var(--font-size-callout);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .upload-completion-summary__description {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-size: var(--font-size-footnote);
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .upload-completion-summary__description strong {
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .upload-completion-summary__stats {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+  }
+
+  .upload-completion-summary__stat {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-size: var(--font-size-caption-1);
+    font-weight: 600;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: 6px;
+  }
+
+  .upload-completion-summary__stat--success {
+    color: var(--color-ios-green);
+    background: var(--color-ios-green-alpha-10);
+  }
+
+  .upload-completion-summary__stat--error {
+    color: var(--color-ios-red-light);
+    background: var(--color-ios-red-alpha-10);
+  }
+
+  html[data-theme="dark"] .upload-completion-summary__stat--error {
+    color: var(--color-ios-red-dark);
+  }
+
+  .upload-completion-summary__stat--skipped {
+    color: var(--color-ios-orange);
+    background: var(--color-ios-orange-alpha-10);
+  }
+
+  .upload-completion-summary__guide {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-size: var(--font-size-caption-1);
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    margin: 0;
+    line-height: 1.5;
+    padding-top: var(--spacing-1);
+    border-top: 1px solid var(--color-section-border);
+  }
+
+  .upload-completion-summary__guide strong {
+    font-weight: 600;
+    color: var(--color-text-secondary);
   }
 
 } /* end @layer components */

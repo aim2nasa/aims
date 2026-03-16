@@ -151,6 +151,19 @@
     color: var(--color-text-primary);
   }
 
+  .file-upload-area__text-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .file-upload-area__sub-hint-text {
+    font-size: 14px;
+    opacity: 0.6;
+    color: var(--color-text-secondary);
+  }
+
   /* 🍎 DROP ACTIVE: Clear feedback */
   .file-upload-area__drop-active {
     display: flex;

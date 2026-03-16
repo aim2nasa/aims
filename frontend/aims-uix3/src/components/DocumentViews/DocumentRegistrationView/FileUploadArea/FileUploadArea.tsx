@@ -284,11 +284,11 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
                 <path d="M24 10V38M10 24H38" stroke="white" strokeWidth="4" strokeLinecap="round"/>
               </svg>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <div className="file-upload-area__text-group">
               <span className="file-upload-area__hint-text">
                 지금 바로 파일을 끌어다 놓으세요!
               </span>
-              <span style={{ fontSize: '14px', opacity: 0.6, color: 'var(--color-text-secondary)' }}>
+              <span className="file-upload-area__sub-hint-text">
                 또는 클릭하여 파일 선택
               </span>
             </div>

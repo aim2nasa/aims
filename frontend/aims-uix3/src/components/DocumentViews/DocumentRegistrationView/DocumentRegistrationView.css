@@ -467,6 +467,19 @@
     transform: scale(0.98);
   }
 
+  /* 전체 문서 보기 버튼 (primary - filled) */
+  .view-status-button--primary {
+    background: var(--color-ios-blue);
+    color: white;
+    border-color: var(--color-ios-blue);
+  }
+
+  .view-status-button--primary:hover {
+    background: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+    color: white;
+  }
+
   /* 새 문서 등록 버튼 (secondary) */
   .view-status-button--secondary {
     color: var(--color-text-secondary);
@@ -531,7 +544,7 @@
     transition: all 0.15s ease;
     color: var(--color-ios-text-secondary-light);
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 400;
   }
 
   html[data-theme="dark"] .document-type-card {
@@ -567,8 +580,12 @@
 
   .document-type-card__label {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 400;
     color: inherit;
+  }
+
+  .document-type-card--selected .document-type-card__label {
+    font-weight: 600;
   }
 
   /* 🎯 문서 유형 아이콘 */
@@ -682,7 +699,7 @@
   .no-ar-warning__message {
     font-size: 14px;
     color: white;
-    font-weight: 500;
+    font-weight: 600;
     white-space: nowrap;
   }
 
