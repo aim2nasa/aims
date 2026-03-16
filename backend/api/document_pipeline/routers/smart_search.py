@@ -15,6 +15,22 @@ from datetime import datetime
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# 한국어 불용어 (질문형/조사/보조동사)
+STOPWORDS_KO = {
+    "정보", "알려줘", "알려", "줘", "뭐야", "어떻게", "있어", "없어",
+    "해줘", "보여줘", "확인", "좀", "해", "대해", "관련", "에서", "으로",
+    "이란", "라는", "뭔가", "어디", "언제", "얼마", "몇", "왜",
+    "무엇", "어떤", "하는", "하고", "그리고", "또는", "그런",
+    "것", "거", "수", "등", "및", "의", "가", "를", "은", "는", "이", "에",
+}
+
+
+def _filter_stopwords(keywords: List[str]) -> List[str]:
+    """불용어를 제거한 키워드 목록 반환"""
+    filtered = [kw for kw in keywords if kw not in STOPWORDS_KO]
+    # 불용어 제거 후 키워드가 없으면 원본 반환 (검색 불가 방지)
+    return filtered if filtered else keywords
+
 
 def _convert_objectids(obj):
     """재귀적으로 BSON 타입을 JSON 직렬화 가능한 값으로 변환"""
@@ -43,6 +59,61 @@ def _is_valid_customer_id(customer_id: str) -> bool:
     if _PLACEHOLDER_ID_PATTERN.match(customer_id):
         return False
     return True
+
+
+# 키워드 매칭 점수 계산용 필드 가중치
+_SCORE_FIELDS_HIGH = ["displayName", "upload.originalName"]  # 파일명: 가중치 3
+_SCORE_FIELDS_LOW = [
+    "ocr.full_text", "ocr.summary",
+    "meta.full_text", "meta.summary", "meta.filename",
+    "text.full_text", "customer_relation.notes",
+]  # 본문: 가중치 1
+
+WEIGHT_HIGH = 3
+WEIGHT_LOW = 1
+
+
+def _get_nested(doc: dict, dotted_key: str) -> str:
+    """점(.)으로 구분된 키로 중첩 딕셔너리 값을 안전하게 가져옴"""
+    parts = dotted_key.split(".")
+    val = doc
+    for p in parts:
+        if isinstance(val, dict):
+            val = val.get(p)
+        else:
+            return ""
+    return str(val) if val is not None else ""
+
+
+def _compute_relevance_score(doc: dict, keywords: List[str]) -> float:
+    """
+    문서의 키워드 매칭 점수 계산.
+    - 파일명(displayName, originalName)에서 매칭: 가중치 3
+    - 본문(full_text, summary 등)에서 매칭: 가중치 1
+    - 점수 = 각 키워드별 최고 가중치의 합
+    """
+    score = 0.0
+    for kw in keywords:
+        kw_lower = kw.lower()
+        kw_score = 0
+
+        # 높은 가중치 필드 (파일명)
+        for field in _SCORE_FIELDS_HIGH:
+            val = _get_nested(doc, field)
+            if val and kw_lower in val.lower():
+                kw_score = WEIGHT_HIGH
+                break  # 이 키워드는 이미 최고 가중치
+
+        # 높은 가중치에서 매칭 안 됐으면 낮은 가중치 필드 확인
+        if kw_score == 0:
+            for field in _SCORE_FIELDS_LOW:
+                val = _get_nested(doc, field)
+                if val and kw_lower in val.lower():
+                    kw_score = WEIGHT_LOW
+                    break
+
+        score += kw_score
+    return score
 
 
 class SearchRequest(BaseModel):
@@ -79,6 +150,7 @@ async def smart_search(request: SearchRequest):
 
         # Build MongoDB query
         mongo_query = None
+        effective_keywords = []  # 점수 계산에 사용할 키워드
 
         # 1. Search by ID
         if doc_id:
@@ -96,12 +168,17 @@ async def smart_search(request: SearchRequest):
 
         # 2. Search by keywords
         elif query:
-            keywords = [k.strip() for k in query.split() if k.strip()]
-            if not keywords:
+            raw_keywords = [k.strip() for k in query.split() if k.strip()]
+            if not raw_keywords:
                 return []
 
-            # Fields to search
+            # 불용어 필터링
+            effective_keywords = _filter_stopwords(raw_keywords)
+            logger.info(f"SmartSearch keywords: raw={raw_keywords} -> filtered={effective_keywords}")
+
+            # Fields to search (displayName 추가)
             fields = [
+                "displayName",
                 "upload.originalName",
                 "ocr.full_text",
                 "ocr.summary",
@@ -123,12 +200,12 @@ async def smart_search(request: SearchRequest):
 
             if mode == "AND":
                 # All keywords must match (each keyword in at least one field)
-                for kw in keywords:
+                for kw in effective_keywords:
                     conditions.append({"$or": build_keyword_query(kw)})
             else:
                 # Any keyword can match (OR mode)
                 or_conditions = []
-                for kw in keywords:
+                for kw in effective_keywords:
                     or_conditions.extend(build_keyword_query(kw))
                 conditions.append({"$or": or_conditions})
 
@@ -145,6 +222,13 @@ async def smart_search(request: SearchRequest):
 
         # customer_relation 보강: customerId 기반 고객명 batch 조회 (ObjectId 변환 전에 수행)
         await _enrich_customer_relations(results, user_id)
+
+        # 키워드 매칭 점수 기반 정렬 (키워드 검색일 때만)
+        if effective_keywords:
+            results.sort(
+                key=lambda doc: _compute_relevance_score(doc, effective_keywords),
+                reverse=True
+            )
 
         # Convert all ObjectId/datetime to string for JSON serialization
         results = [_convert_objectids(doc) for doc in results]
@@ -214,7 +298,7 @@ async def _enrich_customer_relations(results: List[Dict[str, Any]], user_id: str
                 "customer_type": customer_info.get("type")
             }
 
-    # 플레이스홀더 ID → "내 보관함"
+    # 플레이스홀더 ID -> "내 보관함"
     for idx in placeholder_indices:
         customer_id_str = str(results[idx].get("customerId", ""))
         results[idx]["customer_relation"] = {
