@@ -2,6 +2,7 @@
 import os
 import uuid
 import requests
+import redis
 from typing import List, Dict
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -207,6 +208,39 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
             )
             print(f"[FIX] 불일치 상태 수정 완료")
 
+        # 1단계-B: overallStatus 불일치 자동 수정
+        # status: "completed" + overallStatus != "completed" → overallStatus를 "completed"로 수정
+        os_completed_filter = {
+            'status': 'completed',
+            'overallStatus': {'$ne': 'completed'}
+        }
+        os_completed_count = collection.count_documents(os_completed_filter)
+        if os_completed_count > 0:
+            collection.update_many(
+                os_completed_filter,
+                {'$set': {
+                    'overallStatus': 'completed',
+                    'overallStatusUpdatedAt': datetime.now(timezone.utc)
+                }}
+            )
+            print(f"[FIX] overallStatus 불일치(completed) {os_completed_count}건 수정")
+
+        # status: "failed" + overallStatus: "processing" → overallStatus를 "error"로 수정
+        os_failed_filter = {
+            'status': 'failed',
+            'overallStatus': 'processing'
+        }
+        os_failed_count = collection.count_documents(os_failed_filter)
+        if os_failed_count > 0:
+            collection.update_many(
+                os_failed_filter,
+                {'$set': {
+                    'overallStatus': 'error',
+                    'overallStatusUpdatedAt': datetime.now(timezone.utc)
+                }}
+            )
+            print(f"[FIX] overallStatus 불일치(failed→error) {os_failed_count}건 수정")
+
         # 1.5단계: credit_pending 문서 크레딧 재확인
         # 크레딧 충전(티어 변경, 보너스, 월 리셋 등) 후 자동 재처리 대상 탐색
         credit_pending_filter = {
@@ -262,6 +296,91 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     still_pending += 1
 
             print(f"[CreditRecheck] credit_pending {len(credit_pending_docs)}건 확인 → {transitioned}건 pending 전환, {still_pending}건 크레딧 부족 유지")
+
+        # 1.6단계: OCR quota_check_error 자동 재시도
+        # OCR 쿼터 체크 API 일시적 오류로 실패한 문서를 재처리
+        ocr_quota_error_filter = {
+            'ocr.status': 'quota_exceeded',
+            'ocr.quota_message': {'$regex': 'quota_check_error'}
+        }
+        ocr_quota_error_docs = list(collection.find(ocr_quota_error_filter))
+
+        if ocr_quota_error_docs:
+            # 사용자별로 그룹화하여 API 정상 여부 확인
+            owner_api_status_cache = {}  # owner_id -> bool (API 정상 여부)
+            requeued = 0
+            redis_client = None
+
+            try:
+                redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+                for oqe_doc in ocr_quota_error_docs:
+                    oqe_owner = oqe_doc.get('ownerId')
+                    if not oqe_owner:
+                        continue
+
+                    # 캐시된 결과 사용
+                    if oqe_owner not in owner_api_status_cache:
+                        credit_result = check_credit_for_embedding(oqe_owner, 1)
+                        reason = credit_result.get('reason', '')
+                        # API가 정상 응답했으면 (allowed/not allowed 무관) True
+                        # API 오류(api_error_fallback, error_fallback)면 False
+                        owner_api_status_cache[oqe_owner] = reason not in ('api_error_fallback', 'error_fallback')
+
+                    if not owner_api_status_cache[oqe_owner]:
+                        continue  # API 아직 오류 → 다음 크론에서 재시도
+
+                    # Redis 스트림에 OCR 작업 재추가
+                    doc_id = str(oqe_doc['_id'])
+                    file_path = oqe_doc.get('upload', {}).get('destPath', '')
+                    original_name = oqe_doc.get('upload', {}).get('originalName', '') or oqe_doc.get('originalName', '')
+                    queued_at = datetime.now(timezone.utc).isoformat()
+
+                    if not file_path:
+                        continue  # 파일 경로 없으면 스킵
+
+                    try:
+                        redis_client.xadd('ocr_stream', {
+                            'file_id': doc_id,
+                            'file_path': file_path,
+                            'doc_id': doc_id,
+                            'owner_id': oqe_owner,
+                            'queued_at': queued_at,
+                            'original_name': original_name
+                        })
+
+                        # MongoDB 상태 리셋
+                        collection.update_one(
+                            {'_id': oqe_doc['_id']},
+                            {
+                                '$set': {
+                                    'status': 'pending',
+                                    'overallStatus': 'pending',
+                                    'ocr.status': 'queued',
+                                    'ocr.queued_at': queued_at,
+                                    'progressStage': 'ocr',
+                                    'progressMessage': 'OCR 재시도 대기',
+                                    'stages.ocr.status': 'pending',
+                                    'stages.ocr.message': 'OCR 재시도 대기',
+                                    'stages.ocr.timestamp': queued_at
+                                },
+                                '$unset': {
+                                    'ocr.quota_message': ''
+                                }
+                            }
+                        )
+                        requeued += 1
+                    except Exception as redis_err:
+                        print(f"[OCR-Retry] Redis 큐 추가 실패: {doc_id}, error={redis_err}")
+            except Exception as redis_conn_err:
+                print(f"[OCR-Retry] Redis 연결 실패: {redis_conn_err}")
+            finally:
+                if redis_client:
+                    redis_client.close()
+
+            skipped = len(ocr_quota_error_docs) - requeued
+            if requeued > 0 or skipped > 0:
+                print(f"[OCR-Retry] quota_check_error {len(ocr_quota_error_docs)}건: {requeued}건 재시도, {skipped}건 API오류로 대기")
 
         # 2단계: full_text가 있고, 임베딩이 아직 완료되지 않은 문서를 찾습니다.
         # - docembed.status가 없거나 'pending'인 경우: 신규 처리 대상
