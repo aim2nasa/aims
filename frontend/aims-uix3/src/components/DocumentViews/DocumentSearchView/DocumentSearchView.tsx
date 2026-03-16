@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { useDeviceOrientation } from '@/hooks/useDeviceOrientation'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
@@ -104,6 +105,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
+
+  // 🍎 모바일 레이아웃 감지 (드롭다운 width 조건부 적용)
+  const { isMobileLayout } = useDeviceOrientation()
 
   // 🍎 DEV 모드 상태
   const isDevMode = useDevModeStore((state) => state.isDevMode)
@@ -1176,7 +1180,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 value=""
                 options={recentCustomerOptions}
                 onChange={handleRecentCustomerSelect}
-                width={115}
+                width={isMobileLayout ? undefined : 115}
                 aria-label="최근 선택한 고객"
                 disabled={isLoading}
               />
@@ -1271,7 +1275,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             options={SEARCH_MODE_OPTIONS}
             onChange={(value) => handleSearchModeChange(value as SearchMode)}
             aria-label="검색 모드 선택"
-            width={175}
+            width={isMobileLayout ? undefined : 175}
             disabled={isLoading}
           />
 
@@ -1282,7 +1286,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               options={KEYWORD_MODE_OPTIONS}
               onChange={(value) => handleKeywordModeChange(value as KeywordMode)}
               aria-label="키워드 모드 선택"
-              width={130}
+              width={isMobileLayout ? undefined : 130}
               disabled={isLoading}
             />
           )}

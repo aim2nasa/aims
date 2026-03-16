@@ -326,17 +326,54 @@
       gap: var(--spacing-2);
     }
 
-    /* 검색바: 2행 wrap */
+    /* 검색바: 3행 wrap — 고객→검색→옵션 (가이드 순서 일치) */
     .search-bar-wrapper {
       flex-wrap: wrap;
       gap: var(--spacing-1-5);
     }
 
-    /* 검색 입력: 풀 width 차지 */
-    .document-search-container .search-input-wrapper {
-      flex: 1 1 100%;
-      min-width: 0;
-      order: 2; /* 2행으로 이동 */
+    /* 1행: 고객 선택 — Tooltip wrapper(.tooltip-trigger)가 flex 아이템이므로 :has()로 order 지정 */
+    .document-search-container .search-bar-wrapper > .tooltip-trigger:has(.customer-select-button) {
+      order: 1;
+      flex-shrink: 0;
+    }
+
+    .document-search-container .customer-select-button {
+      flex-shrink: 0;
+    }
+
+    .document-search-container .selected-customer-display {
+      order: 2;
+      flex: 1 1 auto;
+      min-width: calc(100% - 70px);
+    }
+
+    /* 2행: 검색 입력 + 검색 버튼 — 입력창이 검색 버튼 직전까지 채움 */
+    .document-search-container .search-bar-wrapper .search-input-wrapper {
+      order: 3;
+      flex: 1 1 0%;
+      min-width: calc(100% - 80px);
+    }
+
+    /* 초기화 버튼 — Tooltip wrapper가 flex 아이템 */
+    .document-search-container .search-bar-wrapper > .tooltip-trigger:has(.reset-button) {
+      order: 4;
+    }
+
+    .document-search-container .search-button {
+      order: 5;
+      flex-shrink: 0;
+    }
+
+    /* 3행: 검색 옵션 — flex-basis:0 + min-width로 균등 분배 + 3행 강제 */
+    .document-search-container .search-bar-wrapper > .ios-dropdown {
+      order: 6;
+      flex: 1 1 0%;
+      min-width: 100px;
+    }
+
+    .document-search-container .search-bar-wrapper > .ios-dropdown .ios-dropdown__trigger {
+      width: 100%;
     }
 
     /* 모든 컨트롤 높이 28px 통일 */
@@ -357,6 +394,10 @@
 
     .document-search-container .search-input {
       height: 28px;
+      width: 0;
+      min-width: 0;
+      max-width: none;
+      flex: 1 1 0%;
     }
 
     .document-search-container .search-button {
