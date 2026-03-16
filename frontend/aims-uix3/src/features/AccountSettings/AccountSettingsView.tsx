@@ -17,6 +17,7 @@ import Modal from '@/shared/ui/Modal/Modal'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
 import { deleteAccount } from '@/entities/auth/api'
+import { getCurrentUserId } from '@/shared/lib/api'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import { getMyAIUsage, getMyDailyUsage, formatTokens, formatCost, type AIUsageData, type DailyUsagePoint } from '@/services/aiUsageService'
 import { AIUsageChart } from '@/shared/ui/AIUsageChart'
@@ -255,9 +256,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   }, [visible, activeTab, loadStorageInfo])
 
   // SSE로 티어 변경 감지하여 스토리지 정보 새로고침
-  const sseUserId = typeof window !== 'undefined'
-    ? localStorage.getItem('aims-current-user-id') || ''
-    : ''
+  const sseUserId = getCurrentUserId()
 
   useUserAccountSSE(sseUserId, loadStorageInfo, {
     enabled: visible && activeTab === 'data' && !!sseUserId

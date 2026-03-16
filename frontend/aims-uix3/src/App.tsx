@@ -81,7 +81,7 @@ import { usePersistentTheme } from './hooks/usePersistentTheme'
 import { useAppUsageData } from './hooks/useAppUsageData'
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
 import { useDeviceOrientation, detectDeviceState } from './hooks/useDeviceOrientation'
-import { API_CONFIG, getAuthHeaders, api } from './shared/lib/api'
+import { API_CONFIG, getAuthHeaders, api, getCurrentUserId } from './shared/lib/api'
 import type { Document as StatusDocument } from './types/documentStatus'
 import { Modal } from './shared/ui'
 import Tooltip from './shared/ui/Tooltip'
@@ -318,10 +318,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   } = useAppUsageData()
 
   // 사용자 계정 SSE - 관리자가 티어 변경 시 실시간 새로고침
-  // localStorage에서 직접 읽어서 SSE 연결 (PersonalFilesView와 동일한 방식)
-  const sseUserId = typeof window !== 'undefined'
-    ? localStorage.getItem('aims-current-user-id') || ''
-    : ''
+  const sseUserId = getCurrentUserId()
 
   useUserAccountSSE(sseUserId, refreshUsageData, {
     enabled: !!sseUserId,
