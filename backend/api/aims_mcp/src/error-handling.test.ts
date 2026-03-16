@@ -179,7 +179,8 @@ describe('에러 처리 테스트', () => {
       });
 
       it('memos.ts: 고객 ID 변환 실패 시 에러 반환', () => {
-        expect(memosCode).toContain("text: '유효하지 않은 고객 ID입니다.'");
+        // verifyCustomerOwnership에서 toSafeObjectId 실패 → null → "고객을 찾을 수 없습니다."
+        expect(memosCode).toContain("text: '고객을 찾을 수 없습니다.'");
       });
     });
 

@@ -180,7 +180,7 @@ describe('응답 포맷 일관성', () => {
       });
 
       it('timestamp 필드 포함', () => {
-        expect(sourceCode).toContain('timestamp: timestamp');
+        expect(sourceCode).toContain('timestamp: formatDateTime(now)');
       });
 
       it('message 필드 포함', () => {
@@ -197,12 +197,12 @@ describe('응답 포맷 일관성', () => {
         expect(sourceCode).toContain("customerName: customer.personal_info?.name");
       });
 
-      it('memo 필드 포함 (단일 문자열)', () => {
-        expect(sourceCode).toContain('memo: memo');
+      it('memos 배열 포함 (구조화된 메모 목록)', () => {
+        expect(sourceCode).toContain('memos: formattedMemos');
       });
 
-      it('hasContent 필드 포함', () => {
-        expect(sourceCode).toContain('hasContent: memo.length > 0');
+      it('total 필드 포함', () => {
+        expect(sourceCode).toMatch(/total,/);
       });
     });
 

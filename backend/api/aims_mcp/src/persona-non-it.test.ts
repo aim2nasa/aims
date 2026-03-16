@@ -362,8 +362,8 @@ describe('페르소나: IT 비전문가', () => {
       // 한글 에러 메시지 확인
       expect(customersSource).toContain('유효하지 않은 고객 ID');
       expect(customersSource).toContain('고객을 찾을 수 없습니다');
-      // memos는 단일 메모 필드 구조 - 고객 ID 검증만 확인
-      expect(memosSource).toContain('유효하지 않은 고객 ID');
+      // memos는 customer_memos 컬렉션 구조 — 고객 존재 확인 메시지
+      expect(memosSource).toContain('고객을 찾을 수 없습니다');
       // contracts.ts는 계약 조회/검색 실패 메시지 확인
       expect(contractsSource).toContain('계약 조회 실패');
       expect(contractsSource).toContain('계약을 찾을 수 없습니다');

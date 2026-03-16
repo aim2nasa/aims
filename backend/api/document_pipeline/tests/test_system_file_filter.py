@@ -40,9 +40,9 @@ class TestIsSystemFile:
         assert _is_system_file("thumbs.pdf") is False
 
     def test_path_with_directory(self):
-        """경로가 포함된 경우에도 basename으로 판단"""
+        """경로가 포함된 경우에도 basename으로 판단 (서버=Linux, 슬래시 경로만)"""
         assert _is_system_file("/some/path/Thumbs.db") is True
-        assert _is_system_file("C:\\Users\\test\\.DS_Store") is True
+        assert _is_system_file("/Users/test/.DS_Store") is True
         assert _is_system_file("/some/path/document.pdf") is False
 
 

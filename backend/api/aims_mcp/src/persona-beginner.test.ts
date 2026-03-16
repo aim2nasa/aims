@@ -260,8 +260,8 @@ describe('페르소나: 생초보 설계사', () => {
       expect(customersSource).toContain('유효하지 않은 고객 ID입니다');
       expect(customersSource).toContain('고객을 찾을 수 없습니다');
       expect(customersSource).toContain('같은 이름의 고객이 이미 존재합니다');
-      // memos는 단일 메모 필드 구조로 변경됨 - 고객 ID 검증만 확인
-      expect(memosSource).toContain('유효하지 않은 고객 ID입니다');
+      // memos는 customer_memos 컬렉션 구조 — 고객 존재 확인 메시지
+      expect(memosSource).toContain('고객을 찾을 수 없습니다');
     });
 
     it('영어 기술 용어가 사용자 에러에 노출되지 않음', () => {

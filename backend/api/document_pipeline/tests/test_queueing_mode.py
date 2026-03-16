@@ -25,6 +25,7 @@ class TestQueueingModeDocCreation:
     @pytest.fixture
     def mock_files_collection(self):
         mock_collection = AsyncMock()
+        mock_collection.find_one = AsyncMock(return_value=None)
         mock_insert = MagicMock()
         mock_insert.inserted_id = ObjectId(TEST_DOC_ID)
         mock_collection.insert_one = AsyncMock(return_value=mock_insert)
@@ -130,6 +131,7 @@ class TestQueueingModeEnqueue:
     @pytest.fixture
     def mock_files_collection(self):
         mock_collection = AsyncMock()
+        mock_collection.find_one = AsyncMock(return_value=None)
         mock_insert = MagicMock()
         mock_insert.inserted_id = ObjectId(TEST_DOC_ID)
         mock_collection.insert_one = AsyncMock(return_value=mock_insert)
@@ -228,6 +230,7 @@ class TestExistingDocIdPath:
     @pytest.fixture
     def mock_files_collection(self):
         mock_collection = AsyncMock()
+        mock_collection.find_one = AsyncMock(return_value=None)
         mock_collection.update_one = AsyncMock()
         mock_collection.delete_one = AsyncMock(return_value=MagicMock(deleted_count=0))
         return mock_collection

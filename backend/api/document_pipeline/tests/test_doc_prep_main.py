@@ -36,6 +36,7 @@ class TestDocPrepMainSuccess:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -107,6 +108,7 @@ class TestDocPrepMainSuccess:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -178,6 +180,7 @@ class TestDocPrepMainSuccess:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -236,6 +239,7 @@ class TestDocPrepMainSuccess:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             mock_insert.inserted_id = ObjectId()
             mock_collection.insert_one.return_value = mock_insert
@@ -297,6 +301,7 @@ class TestDocPrepMainWithCustomer:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -381,6 +386,7 @@ class TestDocPrepMainErrors:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -433,6 +439,7 @@ class TestDocPrepMainErrors:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -562,6 +569,7 @@ class TestDocPrepMainMongoDBUpdates:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -629,6 +637,7 @@ class TestDocPrepMainMongoDBUpdates:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id

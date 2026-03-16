@@ -35,6 +35,7 @@ class TestFullPipelinePDF:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -108,6 +109,7 @@ class TestFullPipelinePDF:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -177,6 +179,7 @@ class TestFullPipelineImage:
 
             # MongoDB mock
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -240,6 +243,7 @@ class TestN8NResponseCompatibility:
 
             # Setup mocks
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -298,6 +302,7 @@ class TestN8NResponseCompatibility:
             mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -346,6 +351,7 @@ class TestN8NResponseCompatibility:
             mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -405,6 +411,7 @@ class TestConcurrentUploads:
 
             # Generate unique ObjectIds for each insert
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
 
             def mock_insert_one(*args, **kwargs):
                 result = MagicMock()
@@ -465,6 +472,7 @@ class TestErrorRecovery:
         with patch("routers.doc_prep_main.MongoService") as mock_mongo:
 
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_collection.insert_one.side_effect = Exception("MongoDB connection failed")
             mock_mongo.get_collection.return_value = mock_collection
 
@@ -483,6 +491,7 @@ class TestErrorRecovery:
              patch("routers.doc_prep_main.FileService") as mock_file:
 
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id
@@ -518,6 +527,7 @@ class TestErrorRecovery:
             mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             mock_collection = AsyncMock()
+            mock_collection.find_one = AsyncMock(return_value=None)
             mock_insert = MagicMock()
             test_doc_id = ObjectId()
             mock_insert.inserted_id = test_doc_id

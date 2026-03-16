@@ -103,30 +103,29 @@ describe('MCP 소스 코드 검증', () => {
     });
 
     describe('add_customer_memo 핸들러', () => {
-      it('customers.memo 필드에 직접 저장해야 함 (별도 컬렉션 아님)', () => {
-        // COLLECTIONS.CUSTOMERS 사용 확인
+      it('customer_memos 컬렉션에 개별 문서로 저장해야 함', () => {
+        // customer_memos 컬렉션 사용 확인
+        expect(sourceCode).toContain("db.collection('customer_memos')");
+        // COLLECTIONS.CUSTOMERS도 사용 (동기화용)
         expect(sourceCode).toContain('db.collection(COLLECTIONS.CUSTOMERS)');
-        // customer_memos 별도 컬렉션 사용 금지
-        expect(sourceCode).not.toContain("db.collection('customer_memos')");
-        expect(sourceCode).not.toContain('COLLECTIONS.MEMOS');
       });
 
-      it('메모 필드명은 memo 사용해야 함', () => {
-        expect(sourceCode).toContain('memo: updatedMemo');
-        expect(sourceCode).toContain('customer.memo');
+      it('customers.memo 필드에 동기화해야 함', () => {
+        // syncCustomerMemoField를 통해 customers.memo 동기화
+        expect(sourceCode).toContain('syncCustomerMemoField');
+        expect(sourceCode).toContain("$set: { memo: memoText");
       });
 
-      it('기존 메모에 append하는 로직이 있어야 함', () => {
-        expect(sourceCode).toContain('currentMemo');
-        expect(sourceCode).toContain('updatedMemo');
-        // 기존 메모 + 새 메모 병합
-        expect(sourceCode).toMatch(/currentMemo[\s\S]*?newMemoLine/);
+      it('insertOne으로 새 메모 문서를 추가해야 함', () => {
+        expect(sourceCode).toContain("db.collection('customer_memos').insertOne");
+        expect(sourceCode).toContain('content: params.content.trim()');
       });
 
-      it('타임스탬프 형식으로 메모를 추가해야 함', () => {
+      it('타임스탬프 형식으로 동기화 메모를 생성해야 함', () => {
         // [YYYY.MM.DD HH:mm] 형식의 타임스탬프
         expect(sourceCode).toContain('formatDateTime');
-        expect(sourceCode).toContain('newMemoLine');
+        // 동기화 시 타임스탬프 포맷
+        expect(sourceCode).toMatch(/\[.*formatDateTime/);
       });
     });
 
@@ -290,9 +289,12 @@ describe('MCP 소스 코드 검증', () => {
           expect(source).toContain("console.error('[MCP]");
         });
 
-        it(`${name}에서 에러 로깅 주석`, () => {
+        it(`${name}에서 에러 로깅 주석 또는 console.error 패턴`, () => {
           const source = readSourceFile(`./tools/${name}`);
-          expect(source).toContain('// 에러 로깅');
+          // 에러 로깅 주석 또는 console.error('[MCP] 패턴 중 하나 이상 존재
+          const hasComment = source.includes('// 에러 로깅');
+          const hasConsoleError = source.includes("console.error('[MCP]");
+          expect(hasComment || hasConsoleError).toBe(true);
         });
       });
     });

@@ -1384,22 +1384,6 @@ async def process_document_pipeline(
                     logger.info(f"[PDF변환텍스트] 텍스트 추출 실패, OCR fallback: {doc_id}")
 
         # Get summary if text was extracted
-        full_text = meta_result.get("extracted_text", "")
-        detected_mime = meta_result.get("mime_type", "")
-
-        # PDF 변환 텍스트 추출: 직접 파서로 텍스트가 없고 변환 가능한 형식인 경우
-        # HWP, DOC, PPT, ODT, ODS, ODP, RTF → pdf_converter → PyMuPDF → 텍스트
-        if (not full_text or len(full_text.strip()) == 0) and is_convertible_mime(detected_mime):
-            await _notify_progress(doc_id, user_id, 50, "convert", "PDF 변환 후 텍스트 추출 중")
-            logger.info(f"[PDF변환텍스트] 직접 파서 없음, PDF 변환 시도: {doc_id} (MIME: {detected_mime})")
-
-            converted_text = await convert_and_extract_text(dest_path)
-            if converted_text and converted_text.strip():
-                full_text = converted_text
-                logger.info(f"[PDF변환텍스트] 성공: {doc_id} ({len(full_text)} chars)")
-            else:
-                logger.info(f"[PDF변환텍스트] 텍스트 추출 실패, OCR fallback: {doc_id}")
-
         summary = ""
         summary_result = {}
 
