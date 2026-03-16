@@ -110,7 +110,10 @@ def _compute_relevance_score(doc: dict, keywords: List[str]) -> float:
     score = 0.0
     filename_match_count = 0  # 파일명에서 매칭된 키워드 수
 
-    for kw in keywords:
+    # 중복 키워드 제거 (동일 키워드 반복 시 보너스 과다 방지)
+    unique_keywords = list(set(keywords))
+
+    for kw in unique_keywords:
         kw_lower = kw.lower()
         kw_score = 0
 
@@ -133,8 +136,8 @@ def _compute_relevance_score(doc: dict, keywords: List[str]) -> float:
         score += kw_score
 
     # 보너스: 모든 키워드가 파일명에 매칭된 경우 (2개 이상 키워드일 때만)
-    if len(keywords) >= 2 and filename_match_count == len(keywords):
-        score += len(keywords) * ALL_MATCH_BONUS_MULTIPLIER
+    if len(unique_keywords) >= 2 and filename_match_count == len(unique_keywords):
+        score += len(unique_keywords) * ALL_MATCH_BONUS_MULTIPLIER
 
     return score
 
@@ -145,11 +148,6 @@ class SearchRequest(BaseModel):
     mode: Optional[str] = "OR"  # OR or AND
     user_id: str = "tester"
     customer_id: Optional[str] = ""
-
-
-class SearchResponse(BaseModel):
-    results: List[Any]
-    count: int
 
 
 @router.post("/smartsearch")
