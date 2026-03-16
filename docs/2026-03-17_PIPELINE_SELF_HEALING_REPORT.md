@@ -64,10 +64,11 @@
 
 | 항목 | 처리 전 | 처리 후 |
 |------|---------|---------|
-| completed | 1,381 | **1,476** (+95) |
+| completed | 1,381 | **1,479** (+98) |
 | credit_pending | 17 | **0** |
 | failed (processing) | 81 | **0** |
 | pending | 17 | **0** |
+| overallStatus 불일치 | 3 | **0** (1단계-B 자동 수정 확인) |
 
 ---
 
@@ -100,3 +101,14 @@
 2. **상태 머신은 모든 전이 경로에서 일관성 유지**: `status`와 `overallStatus`를 동시에 업데이트하지 않는 코드 경로가 있으면 불일치 발생
 3. **fail-closed 정책에는 반드시 자동 재시도 메커니즘 동반**: 일시적 장애를 영구 실패로 만들지 않기 위해
 4. **Self-Healing은 주기적 검증 패턴으로 구현**: 매분 실행되는 크론에서 "복구 가능한 문서가 있나?" 체크하는 구조가 가장 robust
+5. **Python 의존성 관리**: embedding venv에 `redis` 패키지 미설치로 새 코드 실행 실패 발생. 배포 시 의존성 확인 필수
+
+## 7. Self-Healing 동작 검증 결과
+
+| 단계 | 크론 로그 확인 | 결과 |
+|------|---------------|------|
+| 1단계 | `[FIX] 불일치 상태 문서 78개 수정` | PASS |
+| 1.5단계 | `[CreditRecheck] credit_pending 4건 확인 → 0건 전환, 4건 부족 유지` | PASS (smoke_test_user는 크레딧 없어 정상) |
+| 1.6단계 | `[OCR-Retry] quota_check_error 81건: 81건 재시도` | PASS |
+| 2단계 | `총 0개의 문서를 처리할 준비` | PASS (처리할 문서 없음 = 모두 완료) |
+| **최종** | **youmi 1,479건 전체 completed+completed** | **ALL CLEAR** |
