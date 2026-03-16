@@ -207,6 +207,62 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
             )
             print(f"[FIX] 불일치 상태 수정 완료")
 
+        # 1.5단계: credit_pending 문서 크레딧 재확인
+        # 크레딧 충전(티어 변경, 보너스, 월 리셋 등) 후 자동 재처리 대상 탐색
+        credit_pending_filter = {
+            '$or': [
+                {'status': 'credit_pending'},
+                {'overallStatus': 'credit_pending'},
+                {'docembed.status': 'credit_pending'}
+            ]
+        }
+        credit_pending_docs = list(collection.find(credit_pending_filter))
+
+        if credit_pending_docs:
+            # 사용자별로 그룹화하여 크레딧 체크 (동일 사용자 1회만 호출)
+            owner_credit_cache = {}  # owner_id -> allowed (bool)
+            transitioned = 0
+            still_pending = 0
+
+            for cp_doc in credit_pending_docs:
+                cp_owner = cp_doc.get('ownerId')
+                if not cp_owner:
+                    continue
+
+                # 캐시된 결과 사용
+                if cp_owner not in owner_credit_cache:
+                    estimated_pages = cp_doc.get('ocr', {}).get('page_count', 1) or 1
+                    credit_result = check_credit_for_embedding(cp_owner, estimated_pages)
+                    owner_credit_cache[cp_owner] = credit_result.get('allowed', False)
+
+                if owner_credit_cache[cp_owner]:
+                    # 크레딧 충분 → pending으로 전환 (2단계에서 자동 처리)
+                    collection.update_one(
+                        {'_id': cp_doc['_id']},
+                        {
+                            '$set': {
+                                'status': 'pending',
+                                'overallStatus': 'pending',
+                                'docembed.status': 'pending',
+                                'docembed.reprocessed_from_credit_pending': True,
+                                'docembed.reprocessed_at': datetime.now(timezone.utc).isoformat(),
+                                'progressStage': 'queued',
+                                'progressMessage': '크레딧 확인 후 자동 재처리 대기'
+                            },
+                            '$unset': {
+                                'credit_pending_since': '',
+                                'credit_pending_info': '',
+                                'docembed.credit_pending_since': '',
+                                'docembed.credit_info': ''
+                            }
+                        }
+                    )
+                    transitioned += 1
+                else:
+                    still_pending += 1
+
+            print(f"[CreditRecheck] credit_pending {len(credit_pending_docs)}건 확인 → {transitioned}건 pending 전환, {still_pending}건 크레딧 부족 유지")
+
         # 2단계: full_text가 있고, 임베딩이 아직 완료되지 않은 문서를 찾습니다.
         # - docembed.status가 없거나 'pending'인 경우: 신규 처리 대상
         # - docembed.status가 'failed'이고 retry_count < 3인 경우: 재시도 대상
