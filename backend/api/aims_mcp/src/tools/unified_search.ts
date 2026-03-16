@@ -110,6 +110,7 @@ async function ragFetch(endpoint: string, options: RequestInit = {}): Promise<Re
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      'x-api-key': process.env.RAG_API_KEY || 'iWgbzs5Rbgfb7Xxy6o9P6KkrGkYpfdOK8iaGsT1lcjM',
       ...options.headers
     }
   });

@@ -712,6 +712,33 @@ async function callMCPTool(toolName, args, userId) {
  * @param {Db} analyticsDb - MongoDB aims_analytics 인스턴스
  * @yields {Object} SSE 이벤트
  */
+// ========== RAG 폴백 헬퍼 ==========
+const FALLBACK_ELIGIBLE_TOOLS = new Set(['list_contracts']);
+
+function isZeroResultQuery(resultText) {
+  try {
+    const parsed = JSON.parse(resultText);
+    return (parsed.totalCount === 0 || parsed.count === 0);
+  } catch {
+    return false;
+  }
+}
+
+function getLastUserMessage(messages) {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'user') {
+      const c = messages[i].content;
+      if (typeof c === 'string') return c.substring(0, 500);
+      if (Array.isArray(c)) {
+        return c.filter(p => p.type === 'text').map(p => p.text).join(' ').substring(0, 500);
+      }
+      return null;
+    }
+  }
+  return null;
+}
+// ========== RAG 폴백 헬퍼 끝 ==========
+
 async function* streamChatResponse(messages, userId, analyticsDb) {
   const requestId = uuidv4();
   let totalPromptTokens = 0;
@@ -880,11 +907,29 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
           toolCallsExecuted.push({ name: toolName, success: true });
           yield { type: 'tool_result', name: toolName, success: true };
 
+          // RAG 폴백: 계약 조회 0건 시 unified_search 보강
+          let enrichedResult = result;
+          if (FALLBACK_ELIGIBLE_TOOLS.has(toolName) && isZeroResultQuery(result)) {
+            const userQuery = getLastUserMessage(messages);
+            if (userQuery) {
+              try {
+                console.log(`[ChatService] RAG fallback: ${toolName} 0건 → unified_search("${userQuery.substring(0, 50)}")`);
+                const fallbackResult = await callMCPTool('unified_search', { query: userQuery, limit: 5 }, userId);
+                enrichedResult = result +
+                  '\n\n--- 추가 검색 결과 (관련 문서/고객/계약) ---\n' +
+                  '계약 조회에서 결과가 없어 통합 검색을 추가로 수행했습니다:\n' +
+                  fallbackResult;
+              } catch (fallbackError) {
+                console.warn('[ChatService] RAG fallback failed (ignored):', fallbackError.message);
+              }
+            }
+          }
+
           // Tool 결과 메시지 추가
           currentMessages.push({
             role: 'tool',
             tool_call_id: tc.id,
-            content: result
+            content: enrichedResult
           });
         } catch (error) {
           toolCallsExecuted.push({ name: toolName, success: false, error: error.message });
