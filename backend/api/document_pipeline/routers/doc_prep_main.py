@@ -1121,9 +1121,10 @@ async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str
             "progressMessage": message
         }
 
-        # ⭐ 처리 완료 시 status: 'completed' 설정 (전체 문서 보기에 표시되도록)
+        # ⭐ 처리 완료 시 status + overallStatus 동시 설정 (불일치 방지)
         if progress == 100 and stage == "complete":
             update_fields["status"] = "completed"
+            update_fields["overallStatus"] = "completed"
 
         # 🔴 에러 상태 처리 (progress == -1)
         if progress == -1 and stage == "error":
