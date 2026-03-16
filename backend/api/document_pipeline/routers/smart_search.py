@@ -24,6 +24,18 @@ STOPWORDS_KO = {
     "것", "거", "수", "등", "및", "의", "가", "를", "은", "는", "이", "에",
 }
 
+# 키워드 검색 시 결과 상한 (성능 보호)
+MAX_KEYWORD_RESULTS = 50
+
+# MongoDB projection: 키워드 검색 시 불필요한 대용량 필드 제외
+_KEYWORD_SEARCH_PROJECTION = {
+    "ocr.full_text": 0,
+    "meta.full_text": 0,
+    "text.full_text": 0,
+    "docembed": 0,
+    "annual_report": 0,
+}
+
 
 def _filter_stopwords(keywords: List[str]) -> List[str]:
     """불용어를 제거한 키워드 목록 반환"""
@@ -64,13 +76,15 @@ def _is_valid_customer_id(customer_id: str) -> bool:
 # 키워드 매칭 점수 계산용 필드 가중치
 _SCORE_FIELDS_HIGH = ["displayName", "upload.originalName"]  # 파일명: 가중치 3
 _SCORE_FIELDS_LOW = [
-    "ocr.full_text", "ocr.summary",
-    "meta.full_text", "meta.summary", "meta.filename",
-    "text.full_text", "customer_relation.notes",
-]  # 본문: 가중치 1
+    "ocr.summary",
+    "meta.summary", "meta.filename",
+    "customer_relation.notes",
+]  # 본문: 가중치 1 (full_text는 projection으로 제외됨)
 
 WEIGHT_HIGH = 3
 WEIGHT_LOW = 1
+# 모든 키워드가 파일명에 매칭될 때 추가 보너스 (키워드 수에 비례)
+ALL_MATCH_BONUS_MULTIPLIER = 5
 
 
 def _get_nested(doc: dict, dotted_key: str) -> str:
@@ -89,10 +103,13 @@ def _compute_relevance_score(doc: dict, keywords: List[str]) -> float:
     """
     문서의 키워드 매칭 점수 계산.
     - 파일명(displayName, originalName)에서 매칭: 가중치 3
-    - 본문(full_text, summary 등)에서 매칭: 가중치 1
-    - 점수 = 각 키워드별 최고 가중치의 합
+    - 본문(summary 등)에서 매칭: 가중치 1
+    - 모든 키워드가 파일명에 동시 매칭 시: 큰 보너스 부여
+    - 점수 = 각 키워드별 최고 가중치의 합 + all-match 보너스
     """
     score = 0.0
+    filename_match_count = 0  # 파일명에서 매칭된 키워드 수
+
     for kw in keywords:
         kw_lower = kw.lower()
         kw_score = 0
@@ -102,6 +119,7 @@ def _compute_relevance_score(doc: dict, keywords: List[str]) -> float:
             val = _get_nested(doc, field)
             if val and kw_lower in val.lower():
                 kw_score = WEIGHT_HIGH
+                filename_match_count += 1
                 break  # 이 키워드는 이미 최고 가중치
 
         # 높은 가중치에서 매칭 안 됐으면 낮은 가중치 필드 확인
@@ -113,6 +131,11 @@ def _compute_relevance_score(doc: dict, keywords: List[str]) -> float:
                     break
 
         score += kw_score
+
+    # 보너스: 모든 키워드가 파일명에 매칭된 경우 (2개 이상 키워드일 때만)
+    if len(keywords) >= 2 and filename_match_count == len(keywords):
+        score += len(keywords) * ALL_MATCH_BONUS_MULTIPLIER
+
     return score
 
 
@@ -151,6 +174,7 @@ async def smart_search(request: SearchRequest):
         # Build MongoDB query
         mongo_query = None
         effective_keywords = []  # 점수 계산에 사용할 키워드
+        is_keyword_search = False  # 키워드 검색 여부 (projection 적용 판단용)
 
         # 1. Search by ID
         if doc_id:
@@ -174,6 +198,7 @@ async def smart_search(request: SearchRequest):
 
             # 불용어 필터링
             effective_keywords = _filter_stopwords(raw_keywords)
+            is_keyword_search = True
             logger.info(f"SmartSearch keywords: raw={raw_keywords} -> filtered={effective_keywords}")
 
             # Fields to search (displayName 추가)
@@ -217,18 +242,28 @@ async def smart_search(request: SearchRequest):
 
         # Execute query
         collection = MongoService.get_collection("files")
-        cursor = collection.find(mongo_query)
-        results = await cursor.to_list(length=None)  # 제한 없음 (키워드 검색은 전체 반환)
+
+        # 키워드 검색: projection으로 대용량 필드 제외 (응답 크기 대폭 감소)
+        if is_keyword_search:
+            cursor = collection.find(mongo_query, _KEYWORD_SEARCH_PROJECTION)
+        else:
+            cursor = collection.find(mongo_query)
+
+        results = await cursor.to_list(length=None)
 
         # customer_relation 보강: customerId 기반 고객명 batch 조회 (ObjectId 변환 전에 수행)
         await _enrich_customer_relations(results, user_id)
 
-        # 키워드 매칭 점수 기반 정렬 (키워드 검색일 때만)
+        # 키워드 매칭 점수 기반 정렬 + 결과 수 제한 (키워드 검색일 때만)
         if effective_keywords:
             results.sort(
                 key=lambda doc: _compute_relevance_score(doc, effective_keywords),
                 reverse=True
             )
+            # 상위 N개만 반환 (성능 보호)
+            if len(results) > MAX_KEYWORD_RESULTS:
+                logger.info(f"SmartSearch: 결과 제한 {len(results)} -> {MAX_KEYWORD_RESULTS}")
+                results = results[:MAX_KEYWORD_RESULTS]
 
         # Convert all ObjectId/datetime to string for JSON serialization
         results = [_convert_objectids(doc) for doc in results]

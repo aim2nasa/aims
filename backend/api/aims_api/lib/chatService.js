@@ -688,7 +688,7 @@ async function callMCPTool(toolName, args, userId) {
           'Content-Type': 'application/json',
           'X-User-ID': userId
         },
-        timeout: 30000
+        timeout: 45000
       }
     );
 
