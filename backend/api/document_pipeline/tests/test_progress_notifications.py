@@ -103,8 +103,8 @@ class TestNotifyProgress:
         set_data = mock_files_collection.update_one.call_args[0][1]["$set"]
         assert "overallStatus" not in set_data
 
-    async def test_complete_progress_no_overallStatus(self, mock_files_collection):
-        """progress=100 완료 시에도 overallStatus는 설정되지 않음"""
+    async def test_complete_progress_sets_overallStatus(self, mock_files_collection):
+        """progress=100 완료 시 status와 overallStatus 동시 설정"""
         from routers.doc_prep_main import _notify_progress
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
@@ -118,7 +118,8 @@ class TestNotifyProgress:
             await _notify_progress(TEST_DOC_ID, "user1", 100, "complete", "처리 완료")
 
         set_data = mock_files_collection.update_one.call_args[0][1]["$set"]
-        assert "overallStatus" not in set_data
+        assert set_data["status"] == "completed"
+        assert set_data["overallStatus"] == "completed"
 
     async def test_sse_webhook_called(self, mock_files_collection):
         """SSE webhook 호출 확인"""

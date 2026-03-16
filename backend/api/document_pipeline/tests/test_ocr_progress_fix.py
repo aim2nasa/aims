@@ -81,6 +81,7 @@ class TestOCRSuccessProgress:
         # 기존 필드도 유지
         assert captured_update.get("ocr.status") == "done"
         assert captured_update.get("status") == "completed"
+        assert captured_update.get("overallStatus") == "completed"
 
 
 # ========================================
