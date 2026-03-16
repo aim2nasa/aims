@@ -169,8 +169,9 @@ export function getAuthHeaders(): Record<string, string> {
 
   const headers: Record<string, string> = {}
 
-  // x-user-id 헤더 추가 (개발자 모드 계정 전환 지원)
-  const currentUserId = localStorage.getItem('aims-current-user-id')
+  // x-user-id 헤더 추가 (개발자 모드 오버라이드 우선)
+  const devOverride = localStorage.getItem('aims-dev-user-override')
+  const currentUserId = devOverride || localStorage.getItem('aims-current-user-id')
   if (currentUserId) {
     headers['x-user-id'] = currentUserId
   }
@@ -456,9 +457,11 @@ export async function apiRequest<T = unknown>(
     }
   }
 
-  // 헤더 구성
+  // 헤더 구성 (개발자 모드 오버라이드 우선)
   const currentUserId = typeof window !== 'undefined'
     ? (() => {
+        const devOverride = localStorage.getItem('aims-dev-user-override');
+        if (devOverride) return devOverride;
         const storedId = localStorage.getItem('aims-current-user-id');
         if (!storedId) {
           logger.debug('API', '사용자 ID가 localStorage에 없습니다. x-user-id 헤더가 빈 값으로 전송됩니다.');

@@ -54,7 +54,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   const { isDevMode } = useDevModeStore()
 
   // 현재 사용자 정보 (레거시)
-  const { userId, setUserId, currentUser, availableUsers, loading } = useUserStore()
+  const { userId, currentUser, availableUsers, loading } = useUserStore()
 
   // 소셜 로그인 사용자 정보
   const { user: authUser, isAuthenticated } = useAuthStore()
@@ -74,10 +74,17 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const userAvatarRef = useRef<HTMLDivElement>(null)
 
-  // 사용자 전환 핸들러
+  // 사용자 전환 핸들러 (개발자 모드: dev override 방식 — 기존 auth 흐름 간섭 없음)
   const handleUserChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newUserId = event.target.value;
-    setUserId(newUserId);
+    // 개발자 자신의 ID로 돌아오면 override 제거
+    const authUserId = authUser?._id || '';
+    if (newUserId === authUserId) {
+      localStorage.removeItem('aims-dev-user-override');
+    } else {
+      localStorage.setItem('aims-dev-user-override', newUserId);
+    }
+    window.location.reload();
   }
 
 
@@ -171,8 +178,8 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
       {/* 제어 요소들 - Progressive Disclosure */}
       <div className="header-controls">
-        {/* 사용자 전환 드롭다운 - 개발자 모드(Ctrl+Shift+D)에서만 표시 */}
-        {isDevMode && (
+        {/* 사용자 전환 드롭다운 - 개발자 모드 + 실제 로그인 계정이 agent/admin인 경우만 */}
+        {isDevMode && (authUser?.role === 'agent' || authUser?.role === 'admin') && (
           <div
             className="header-user-selector"
             style={{
@@ -188,7 +195,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             ) : (
               <select
                 id="user-select"
-                value={userId}
+                value={localStorage.getItem('aims-dev-user-override') || userId}
                 onChange={handleUserChange}
                 className="header-user-select"
                 aria-label="사용자 선택"
