@@ -340,12 +340,29 @@
 
     .document-search-container .customer-select-button {
       flex-shrink: 0;
+      margin-right: -4px;
     }
 
+    /* 1행에 드롭다운도 함께 배치: 고객선택 + 고객드롭다운 + 키워드검색 + 모두포함 */
     .document-search-container .selected-customer-display {
       order: 2;
-      flex: 1 1 auto;
-      min-width: calc(100% - 70px);
+      flex: 1 1 0%;
+      min-width: 0;
+    }
+
+    .document-search-container .selected-customer-display .ios-dropdown__value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .document-search-container .search-bar-wrapper > .ios-dropdown {
+      order: 2;
+      flex: 0 0 auto;
+      min-width: 95px;
+    }
+
+    .document-search-container .search-bar-wrapper > .ios-dropdown .ios-dropdown__trigger {
+      width: 100%;
     }
 
     /* 2행: 검색 입력 + 검색 버튼 — 입력창이 검색 버튼 직전까지 채움 */
@@ -363,13 +380,6 @@
     .document-search-container .search-button {
       order: 5;
       flex-shrink: 0;
-    }
-
-    /* 3행: 검색 옵션 — flex-basis:0 + min-width로 균등 분배 + 3행 강제 */
-    .document-search-container .search-bar-wrapper > .ios-dropdown {
-      order: 6;
-      flex: 1 1 0%;
-      min-width: 100px;
     }
 
     .document-search-container .search-bar-wrapper > .ios-dropdown .ios-dropdown__trigger {

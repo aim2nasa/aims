@@ -85,7 +85,7 @@ interface DocumentSearchViewProps {
 // 검색 모드 옵션 정의
 const SEARCH_MODE_OPTIONS: DropdownOption[] = [
   { value: 'keyword', label: '키워드 검색' },
-  { value: 'semantic', label: '질문 검색 (크레딧)' },
+  { value: 'semantic', label: '질문 검색' },
 ]
 
 // 키워드 모드 옵션 정의
@@ -1275,7 +1275,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             options={SEARCH_MODE_OPTIONS}
             onChange={(value) => handleSearchModeChange(value as SearchMode)}
             aria-label="검색 모드 선택"
-            width={isMobileLayout ? undefined : 175}
+            width={isMobileLayout ? undefined : 120}
             disabled={isLoading}
           />
 
@@ -1286,7 +1286,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               options={KEYWORD_MODE_OPTIONS}
               onChange={(value) => handleKeywordModeChange(value as KeywordMode)}
               aria-label="키워드 모드 선택"
-              width={isMobileLayout ? undefined : 130}
+              width={isMobileLayout ? undefined : 100}
               disabled={isLoading}
             />
           )}
