@@ -1,0 +1,93 @@
+[
+  {
+    "id": "REG-001",
+    "name": "자동차 문서 검색 - 세무조정계산서 제외",
+    "category": "search_documents",
+    "question": "캐치업코리아 자동차 관련 문서 찾아줘",
+    "expected_tools": ["search_customers", "search_documents"],
+    "response_must_contain": ["자동차"],
+    "response_must_not_contain": ["세무조정계산서"],
+    "created_from": "AI_ASSISTANT_UNIFIED_SEARCH_ISSUE.md (Q-020)",
+    "created_date": "2026-03-16"
+  },
+  {
+    "id": "REG-002",
+    "name": "보험증권 문서 검색 - 세무조정계산서 제외",
+    "category": "search_documents",
+    "question": "캐치업코리아 보험증권 문서 찾아줘",
+    "expected_tools": ["search_customers", "search_documents"],
+    "response_must_contain": ["보험증권"],
+    "response_must_not_contain": ["세무조정계산서"],
+    "created_from": "AI_ASSISTANT_UNIFIED_SEARCH_ISSUE.md (Q-021)",
+    "created_date": "2026-03-16"
+  },
+  {
+    "id": "REG-003",
+    "name": "search_documents API 권한 오류 없음",
+    "category": "search_documents",
+    "question": "캐치업코리아 문서 목록 보여줘",
+    "expected_tools": ["search_customers", "search_documents"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["권한", "인증", "unauthorized", "forbidden", "x-api-key", "API key"],
+    "created_from": "search_documents x-api-key 누락 수정",
+    "created_date": "2026-03-16"
+  },
+  {
+    "id": "REG-004",
+    "name": "해외여행보험 문서 검색 - 고객명 관련도 반영",
+    "category": "search_documents",
+    "question": "캐치업코리아 해외여행보험 내용 요약해줘",
+    "expected_tools": ["search_customers"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["찾을 수 없습니다", "존재하지 않습니다"],
+    "created_from": "SmartSearch 고객명 관련도 반영",
+    "created_date": "2026-03-16"
+  },
+  {
+    "id": "REG-005",
+    "name": "성씨 검색 - lastName 파라미터",
+    "category": "search_customers",
+    "question": "정씨 성을 가진 고객 찾아줘",
+    "expected_tools": ["search_customers"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류", "에러", "error"],
+    "created_from": "성씨 검색 lastName 파라미터 수정",
+    "created_date": "2026-03-16"
+  },
+  {
+    "id": "REG-006",
+    "name": "페이지네이션 customerId 유지",
+    "category": "pagination",
+    "question": "캐치업코리아 문서 전체 목록 보여줘",
+    "expected_tools": ["search_customers", "search_documents"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류", "에러"],
+    "validate_pagination_hint": true,
+    "created_from": "페이지네이션 customerId 유지 수정",
+    "created_date": "2026-03-16"
+  },
+  {
+    "id": "REG-007",
+    "name": "ID 노출 제거 - 응답에 ObjectId 없음",
+    "category": "response_format",
+    "question": "캐치업코리아 고객 정보 알려줘",
+    "expected_tools": ["search_customers"],
+    "response_must_contain": ["캐치업코리아"],
+    "response_must_not_contain": [],
+    "response_must_not_match": ["\\(ID:\\s*[0-9a-f]{24}\\)"],
+    "created_from": "ID 노출 제거",
+    "created_date": "2026-03-16"
+  },
+  {
+    "id": "REG-008",
+    "name": "가상 데이터 생성 금지 - 도구 호출 필수",
+    "category": "hallucination",
+    "question": "고객 목록 보여줘",
+    "expected_tools": ["search_customers"],
+    "response_must_contain": [],
+    "response_must_not_contain": [],
+    "must_call_tools": true,
+    "created_from": "AI 어시스턴트 기본 규칙",
+    "created_date": "2026-03-16"
+  }
+]

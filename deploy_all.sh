@@ -62,7 +62,7 @@ run_step() {
     local step_cmd=$3
 
     local start=$(date +%s)
-    echo -n "[${step_num}/14] ${step_name} ... "
+    echo -n "[${step_num}/15] ${step_name} ... "
 
     eval "$step_cmd" > /dev/null 2>&1
 
@@ -116,6 +116,31 @@ run_step 13 "서비스 상태 확인" "pm2 list"
 
 # 14. Docker 정리 (미사용 이미지 삭제)
 run_step 14 "Docker 정리" "docker image prune -f && docker container prune -f"
+
+# 15. AI 어시스턴트 Regression 테스트 (배포 중단하지 않음 — AI 모델 응답은 비결정적)
+REGRESSION_SCRIPT="$AIMS_DIR/tools/ai_assistant_regression/run_regression.py"
+if [ -f "$REGRESSION_SCRIPT" ]; then
+  echo -n "[15/15] AI 어시스턴트 Regression 테스트 ... "
+  REGRESSION_START=$(date +%s)
+
+  # 서비스 안정화 대기 (배포 직후 PM2 재시작 반영)
+  sleep 5
+
+  # set -e 영향 차단: 서브셸에서 실행하여 regression 실패가 배포를 중단하지 않도록 함
+  (python3 "$REGRESSION_SCRIPT" > /tmp/regression_output.txt 2>&1) && REGRESSION_OK=1 || REGRESSION_OK=0
+  REGRESSION_END=$(date +%s)
+  REGRESSION_ELAPSED=$((REGRESSION_END - REGRESSION_START))
+  if [ "$REGRESSION_OK" = "1" ]; then
+    echo -e "${GREEN}PASS${NC} ${CYAN}($(format_time $REGRESSION_ELAPSED))${NC}"
+  else
+    echo -e "${YELLOW}FAIL (경고)${NC} ${CYAN}($(format_time $REGRESSION_ELAPSED))${NC}"
+    echo -e "${YELLOW}  AI 응답 비결정적 특성상 배포는 계속됩니다.${NC}"
+    echo -e "${YELLOW}  상세: cat /tmp/regression_output.txt${NC}"
+    echo -e "${YELLOW}  결과: cat /tmp/regression_results.json${NC}"
+  fi
+else
+  echo "[15/15] AI Regression 테스트 스킵 (스크립트 없음)"
+fi
 
 TOTAL_END=$(date +%s)
 TOTAL_ELAPSED=$((TOTAL_END - TOTAL_START))

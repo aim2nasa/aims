@@ -121,7 +121,55 @@ if [ -n "$STAGED_BACKEND_FILES" ]; then
   fi
 fi
 
-# ==================== 4단계: Frontend 검사 ====================
+# ==================== 4단계: AI 어시스턴트 변경 경고 ====================
+# MCP 도구 또는 chatService.js 변경 시 regression 테스트 추가 여부 확인
+
+STAGED_FILES=$(git diff --cached --name-only)
+
+# docs/*.md 변경만 있는 경우 스킵
+NON_DOC_FILES=$(echo "$STAGED_FILES" | grep -v '\.md$' | grep -v '^docs/')
+if [ -n "$NON_DOC_FILES" ]; then
+
+  AI_CORE_CHANGED=0
+  # MCP 도구 파일 변경 감지
+  if echo "$STAGED_FILES" | grep -q "^backend/api/aims_mcp/src/tools/"; then
+    AI_CORE_CHANGED=1
+  fi
+  # chatService.js 변경 감지
+  if echo "$STAGED_FILES" | grep -q "^backend/api/aims_api/lib/chatService.js"; then
+    AI_CORE_CHANGED=1
+  fi
+
+  if [ "$AI_CORE_CHANGED" = "1" ]; then
+    # 테스트 파일도 함께 변경되었는지 확인
+    TEST_CHANGED=0
+    if echo "$STAGED_FILES" | grep -q "^backend/api/aims_mcp/src/__tests__/"; then
+      TEST_CHANGED=1
+    fi
+    if echo "$STAGED_FILES" | grep -q "^backend/api/aims_api/__tests__/"; then
+      TEST_CHANGED=1
+    fi
+    if echo "$STAGED_FILES" | grep -q "^tools/ai_assistant_regression/"; then
+      TEST_CHANGED=1
+    fi
+
+    if [ "$TEST_CHANGED" = "0" ]; then
+      echo ""
+      echo "  ============================================================"
+      echo "  MCP 도구/시스템 프롬프트 변경됨 -- regression 테스트 추가 필요"
+      echo "  대상: tools/ai_assistant_regression/regression_cases.json"
+      echo "        backend/api/aims_mcp/src/__tests__/"
+      echo "        backend/api/aims_api/__tests__/"
+      echo "  ============================================================"
+      echo ""
+      echo "  테스트 없이 커밋하려면: git commit --no-verify"
+      exit 1
+    fi
+  fi
+
+fi
+
+# ==================== 5단계: Frontend 검사 ====================
 
 STAGED_FRONTEND_FILES=$(git diff --cached --name-only -- 'frontend/aims-uix3/*')
 
