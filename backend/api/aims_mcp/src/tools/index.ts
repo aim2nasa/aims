@@ -19,7 +19,6 @@ import { customerReviewToolDefinitions, handleGetCustomerReviews, handleGetCrCon
 import { utilityToolDefinitions, handleGetStorageInfo, handleGetCreditInfo, handleCheckCustomerName, handleListNotices, handleListFaqs, handleListUsageGuides } from './utilities.js';
 import { ragToolDefinitions, handleSearchDocumentsSemantic } from './rag.js';
 import { addressToolDefinitions, handleSearchAddress } from './address.js';
-import { unifiedSearchToolDefinitions, handleUnifiedSearch } from './unified_search.js';
 
 // 모든 Tool 정의 통합
 const allToolDefinitions = [
@@ -36,7 +35,6 @@ const allToolDefinitions = [
   ...utilityToolDefinitions,
   ...ragToolDefinitions,
   ...addressToolDefinitions,
-  ...unifiedSearchToolDefinitions,
 ];
 
 // Tool 핸들러 매핑
@@ -88,8 +86,6 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   search_documents_semantic: handleSearchDocumentsSemantic,
   // 주소 검색 관련
   search_address: handleSearchAddress,
-  // 통합 검색
-  unified_search: handleUnifiedSearch,
 };
 
 /**

@@ -1,0 +1,1381 @@
+{
+  "label": "after_unified_search_removal",
+  "timestamp": "2026-03-16T19:52:47.162553",
+  "model": "gpt-4.1-mini",
+  "summary": {
+    "total": 90,
+    "correct": 85,
+    "wrong": 2,
+    "no_tool": 3,
+    "accuracy_total": 94.4,
+    "accuracy_called": 97.7
+  },
+  "wrong_cases": [
+    {
+      "id": "TC-050",
+      "question": "캐치업코리아 메모에서 미팅 검색해줘",
+      "expected": "search_customer_memos (acceptable: ['search_customer_memos'])",
+      "selected": "search_customers",
+      "category": "메모",
+      "notes": "search_customer_memos는 query만 필수, customerId 불필요"
+    },
+    {
+      "id": "TC-070",
+      "question": "연금보험 가입한 고객 있어?",
+      "expected": "search_documents (acceptable: ['search_documents'])",
+      "selected": "list_contracts",
+      "category": "정보 검색",
+      "notes": "포괄적 질문"
+    }
+  ],
+  "no_tool_cases": [
+    {
+      "id": "TC-029",
+      "question": "고객 등록해줘. 이름은 홍길동"
+    },
+    {
+      "id": "TC-041",
+      "question": "캐치업코리아 주소 경기도 성남시 분당구로 변경해줘"
+    },
+    {
+      "id": "TC-078",
+      "question": "최근 업로드한 문서 보여줘"
+    }
+  ],
+  "details": [
+    {
+      "id": "TC-001",
+      "question": "캐치업코리아 자동차 정보 알려줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "list_contracts",
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-002",
+      "question": "캐치업코리아 계약 목록 보여줘",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "list_contracts",
+      "correct": true,
+      "selected_args": {
+        "search": "캐치업코리아",
+        "limit": 10,
+        "offset": 0
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-003",
+      "question": "캐치업코리아 보유 계약 알려줘",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-004",
+      "question": "캐치업코리아 어떤 보험 있어?",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "list_contracts",
+      "correct": true,
+      "selected_args": {
+        "search": "캐치업코리아",
+        "limit": 10,
+        "offset": 0
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-005",
+      "question": "캐치업코리아 전화번호 알려줘",
+      "target_tool": "search_customers",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-006",
+      "question": "캐치업코리아 주소 알려줘",
+      "target_tool": "search_customers",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-007",
+      "question": "캐치업코리아 고객 상세정보 보여줘",
+      "target_tool": "search_customers",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-008",
+      "question": "캐치업코리아 문서 목록 보여줘",
+      "target_tool": "list_customer_documents",
+      "acceptable": [
+        "list_customer_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "문서 관리"
+    },
+    {
+      "id": "TC-009",
+      "question": "퇴직연금 관련 서류 찾아줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents"
+      ],
+      "selected_tool": "search_documents",
+      "correct": true,
+      "selected_args": {
+        "query": "퇴직연금",
+        "searchMode": "keyword",
+        "limit": 10
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-010",
+      "question": "자동차보험 문서 검색해줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents"
+      ],
+      "selected_tool": "search_documents",
+      "correct": true,
+      "selected_args": {
+        "query": "자동차보험",
+        "searchMode": "keyword",
+        "limit": 10,
+        "offset": 0
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-011",
+      "question": "캐치업코리아 등기부등본 있어?",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-012",
+      "question": "캐치업코리아 연차보고서 보여줘",
+      "target_tool": "get_annual_reports",
+      "acceptable": [
+        "get_annual_reports",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-013",
+      "question": "캐치업코리아 계약 이력 변화 보여줘",
+      "target_tool": "get_ar_contract_history",
+      "acceptable": [
+        "get_ar_contract_history",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-014",
+      "question": "캐치업코리아 보험료 변화 추이 알려줘",
+      "target_tool": "get_ar_contract_history",
+      "acceptable": [
+        "get_ar_contract_history",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-015",
+      "question": "캐치업코리아 변액보험 이력 보여줘",
+      "target_tool": "get_cr_contract_history",
+      "acceptable": [
+        "get_cr_contract_history",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-016",
+      "question": "캐치업코리아 가족관계 보여줘",
+      "target_tool": "list_relationships",
+      "acceptable": [
+        "list_relationships",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "관계"
+    },
+    {
+      "id": "TC-017",
+      "question": "캐치업코리아에 메모 추가해줘. 내용은 내일 미팅 예정",
+      "target_tool": "add_customer_memo",
+      "acceptable": [
+        "add_customer_memo",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "메모"
+    },
+    {
+      "id": "TC-018",
+      "question": "캐치업코리아 메모 목록 보여줘",
+      "target_tool": "list_customer_memos",
+      "acceptable": [
+        "list_customer_memos",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "메모"
+    },
+    {
+      "id": "TC-019",
+      "question": "김보성 검색해줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_customers",
+        "search_documents"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-020",
+      "question": "이번 달 생일인 고객 알려줘",
+      "target_tool": "find_birthday_customers",
+      "acceptable": [
+        "find_birthday_customers"
+      ],
+      "selected_tool": "find_birthday_customers",
+      "correct": true,
+      "selected_args": {
+        "month": 3
+      },
+      "category": "생일"
+    },
+    {
+      "id": "TC-021",
+      "question": "저장소 사용량 얼마야?",
+      "target_tool": "get_storage_info",
+      "acceptable": [
+        "get_storage_info"
+      ],
+      "selected_tool": "get_storage_info",
+      "correct": true,
+      "selected_args": {},
+      "category": "유틸리티"
+    },
+    {
+      "id": "TC-022",
+      "question": "크레딧 얼마나 남았어?",
+      "target_tool": "get_credit_info",
+      "acceptable": [
+        "get_credit_info"
+      ],
+      "selected_tool": "get_credit_info",
+      "correct": true,
+      "selected_args": {},
+      "category": "유틸리티"
+    },
+    {
+      "id": "TC-023",
+      "question": "무배당 종신보험 상품 검색해줘",
+      "target_tool": "search_products",
+      "acceptable": [
+        "search_products"
+      ],
+      "selected_tool": "search_products",
+      "correct": true,
+      "selected_args": {
+        "query": "무배당 종신보험",
+        "limit": 5
+      },
+      "category": "상품"
+    },
+    {
+      "id": "TC-024",
+      "question": "캐치업코리아 보험 현황 알려줘",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-025",
+      "question": "캐치업코리아에 대해 알려줘",
+      "target_tool": "search_customers",
+      "acceptable": [
+        "search_customers",
+        "search_documents"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아",
+        "limit": 10
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-026",
+      "question": "일산동구 키워드 검색해줘",
+      "target_tool": "search_documents_semantic",
+      "acceptable": [
+        "search_documents_semantic"
+      ],
+      "selected_tool": "search_documents_semantic",
+      "correct": true,
+      "selected_args": {
+        "query": "일산동구",
+        "mode": "keyword",
+        "limit": 10,
+        "offset": 0
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-027",
+      "question": "보험료가 비싼 계약 의미 검색",
+      "target_tool": "search_documents_semantic",
+      "acceptable": [
+        "search_documents_semantic"
+      ],
+      "selected_tool": "search_documents_semantic",
+      "correct": true,
+      "selected_args": {
+        "query": "보험료가 비싼 계약",
+        "mode": "semantic",
+        "limit": 10
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-028",
+      "question": "캐치업코리아 사업자등록증 찾아줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-029",
+      "question": "고객 등록해줘. 이름은 홍길동",
+      "target_tool": "create_customer",
+      "acceptable": [
+        "create_customer",
+        "check_customer_name"
+      ],
+      "selected_tool": null,
+      "correct": false,
+      "selected_args": null,
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-030",
+      "question": "캐치업코리아 전화번호 010-1234-5678로 변경해줘",
+      "target_tool": "update_customer",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-031",
+      "question": "공지사항 보여줘",
+      "target_tool": "list_notices",
+      "acceptable": [
+        "list_notices"
+      ],
+      "selected_tool": "list_notices",
+      "correct": true,
+      "selected_args": {},
+      "category": "유틸리티"
+    },
+    {
+      "id": "TC-032",
+      "question": "사용 가이드 알려줘",
+      "target_tool": "list_usage_guides",
+      "acceptable": [
+        "list_usage_guides"
+      ],
+      "selected_tool": "list_usage_guides",
+      "correct": true,
+      "selected_args": {
+        "limit": 5
+      },
+      "category": "유틸리티"
+    },
+    {
+      "id": "TC-033",
+      "question": "자주 묻는 질문 보여줘",
+      "target_tool": "list_faqs",
+      "acceptable": [
+        "list_faqs"
+      ],
+      "selected_tool": "list_faqs",
+      "correct": true,
+      "selected_args": {},
+      "category": "유틸리티"
+    },
+    {
+      "id": "TC-034",
+      "question": "캐치업코리아 관련 자료 찾아줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-035",
+      "question": "캐치업코리아 청약서 있어?",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-036",
+      "question": "캐치업코리아 변액리포트 보여줘",
+      "target_tool": "get_customer_reviews",
+      "acceptable": [
+        "get_customer_reviews",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-037",
+      "question": "캐치업코리아 적립금 변화 추이",
+      "target_tool": "get_cr_contract_history",
+      "acceptable": [
+        "get_cr_contract_history",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-038",
+      "question": "홍길동이라는 고객 있어?",
+      "target_tool": "search_customers",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "홍길동"
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-039",
+      "question": "캐치업코리아 근로계약서 내용 알려줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-040",
+      "question": "고객 몇 명이야?",
+      "target_tool": "search_customers",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {},
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-041",
+      "question": "캐치업코리아 주소 경기도 성남시 분당구로 변경해줘",
+      "target_tool": "update_customer",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": null,
+      "correct": false,
+      "selected_args": null,
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-042",
+      "question": "종신보험 찾아줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_products",
+        "search_documents"
+      ],
+      "selected_tool": "search_products",
+      "correct": true,
+      "selected_args": {
+        "query": "종신보험",
+        "limit": 10
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-043",
+      "question": "보험 상품 중에 종신보험 있어?",
+      "target_tool": "search_products",
+      "acceptable": [
+        "search_products"
+      ],
+      "selected_tool": "search_products",
+      "correct": true,
+      "selected_args": {
+        "query": "종신보험",
+        "limit": 10
+      },
+      "category": "상품"
+    },
+    {
+      "id": "TC-044",
+      "question": "캐치업코리아 월 보험료 총액 얼마야?",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-045",
+      "question": "캐치업코리아 실효된 계약 있어?",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-046",
+      "question": "캐치업코리아 자녀로 홍길동 등록해줘",
+      "target_tool": "create_relationship",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "관계"
+    },
+    {
+      "id": "TC-047",
+      "question": "캐치업코리아 취업규칙 문서 보여줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-048",
+      "question": "캐치업코리아 정관 내용 요약해줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-049",
+      "question": "3월 생일인 고객 있어?",
+      "target_tool": "find_birthday_customers",
+      "acceptable": [
+        "find_birthday_customers"
+      ],
+      "selected_tool": "find_birthday_customers",
+      "correct": true,
+      "selected_args": {
+        "month": 3
+      },
+      "category": "생일"
+    },
+    {
+      "id": "TC-050",
+      "question": "캐치업코리아 메모에서 미팅 검색해줘",
+      "target_tool": "search_customer_memos",
+      "acceptable": [
+        "search_customer_memos"
+      ],
+      "selected_tool": "search_customers",
+      "correct": false,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "메모"
+    },
+    {
+      "id": "TC-051",
+      "question": "김보성 건강검진 결과 있어?",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-052",
+      "question": "김보성 보험금 청구한 내역 알려줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_customers",
+        "search_documents"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-053",
+      "question": "김영순 진단서 찾아줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김영순"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-054",
+      "question": "변수현 재무설계 자료 있어?",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "변수현"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-055",
+      "question": "변수현 적립금 얼마야?",
+      "target_tool": "get_cr_contract_history",
+      "acceptable": [
+        "get_cr_contract_history",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "변수현"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-056",
+      "question": "안영미 연차보고서 보여줘",
+      "target_tool": "get_annual_reports",
+      "acceptable": [
+        "get_annual_reports",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "안영미"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-057",
+      "question": "고영자 변액리포트 있어?",
+      "target_tool": "get_customer_reviews",
+      "acceptable": [
+        "get_customer_reviews",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "고영자"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-058",
+      "question": "정부균 보유계약현황 알려줘",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "정부균"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-059",
+      "question": "신상철 어떤 보험 들었어?",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "신상철"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-060",
+      "question": "김보성 종신보험 증권번호 알려줘",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-061",
+      "question": "캐치업코리아 자동차보험 가입되어 있어?",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "list_contracts",
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-062",
+      "question": "김보성 암보험 있어?",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-063",
+      "question": "변수현 청약서 보여줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "변수현"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-064",
+      "question": "법인 고객 목록 보여줘",
+      "target_tool": "search_customers",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "customerType": "법인",
+        "limit": 10
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-065",
+      "question": "김보성 계약 상태가 어떻게 바뀌었어?",
+      "target_tool": "get_ar_contract_history",
+      "acceptable": [
+        "get_ar_contract_history",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-066",
+      "question": "한진구 변액 수익률 어떻게 변했어?",
+      "target_tool": "get_cr_contract_history",
+      "acceptable": [
+        "get_cr_contract_history",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "한진구"
+      },
+      "category": "AR/CRS"
+    },
+    {
+      "id": "TC-067",
+      "question": "곽승철 보험 증권 문서 찾아줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "곽승철"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-068",
+      "question": "김영순 입퇴원확인서 있어?",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김영순"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-069",
+      "question": "캐치업코리아 메트라이프 관련 자료 보여줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-070",
+      "question": "연금보험 가입한 고객 있어?",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents"
+      ],
+      "selected_tool": "list_contracts",
+      "correct": false,
+      "selected_args": {
+        "search": "연금보험",
+        "limit": 10
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-071",
+      "question": "김보성 생년월일 알려줘",
+      "target_tool": "search_customers",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-072",
+      "question": "변수현 배우자가 누구야?",
+      "target_tool": "list_relationships",
+      "acceptable": [
+        "list_relationships",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "변수현"
+      },
+      "category": "관계"
+    },
+    {
+      "id": "TC-073",
+      "question": "김보성 안영미 관계 등록해줘. 배우자야",
+      "target_tool": "create_relationship",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "관계"
+    },
+    {
+      "id": "TC-074",
+      "question": "김보성한테 메모 남겨줘. 다음주 보험 갱신 상담",
+      "target_tool": "add_customer_memo",
+      "acceptable": [
+        "add_customer_memo",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "메모"
+    },
+    {
+      "id": "TC-075",
+      "question": "김보성 무배당 유니버셜달러종신보험 상세 알려줘",
+      "target_tool": "get_contract_details",
+      "acceptable": [
+        "get_contract_details",
+        "list_contracts",
+        "search_customers",
+        "search_products"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-076",
+      "question": "보장 분석해줘 김보성",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_customers",
+        "search_documents"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-077",
+      "question": "캐치업코리아 정관 문서 파일명이 뭐야?",
+      "target_tool": "find_document_by_filename",
+      "acceptable": [
+        "find_document_by_filename",
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아"
+      },
+      "category": "문서 관리"
+    },
+    {
+      "id": "TC-078",
+      "question": "최근 업로드한 문서 보여줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "list_customer_documents"
+      ],
+      "selected_tool": null,
+      "correct": false,
+      "selected_args": null,
+      "category": "문서 관리"
+    },
+    {
+      "id": "TC-079",
+      "question": "김보성 이메일 주소 알려줘",
+      "target_tool": "search_customers",
+      "acceptable": [
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-080",
+      "question": "홍길동 고객 등록하고 전화번호는 010-9999-8888",
+      "target_tool": "create_customer",
+      "acceptable": [
+        "create_customer",
+        "check_customer_name"
+      ],
+      "selected_tool": "check_customer_name",
+      "correct": true,
+      "selected_args": {
+        "name": "홍길동"
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-081",
+      "question": "김보성 보험료 얼마 내고 있어?",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-082",
+      "question": "만기 임박한 계약 알려줘",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_documents"
+      ],
+      "selected_tool": "list_contracts",
+      "correct": true,
+      "selected_args": {
+        "status": "만기임박",
+        "limit": 10,
+        "offset": 0
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-083",
+      "question": "캐치업코리아 실버플랜 변액유니버셜 보험 내용 알려줘",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "캐치업코리아",
+        "limit": 5
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-084",
+      "question": "김보성 관련 문서 전부 보여줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "정보 검색"
+    },
+    {
+      "id": "TC-085",
+      "question": "화재보험 관련 서류 있어?",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents"
+      ],
+      "selected_tool": "search_documents",
+      "correct": true,
+      "selected_args": {
+        "query": "화재보험",
+        "searchMode": "keyword"
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-086",
+      "question": "변수현 메모 정리 문서 찾아줘",
+      "target_tool": "search_documents",
+      "acceptable": [
+        "search_documents",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "변수현",
+        "limit": 1
+      },
+      "category": "문서 검색"
+    },
+    {
+      "id": "TC-087",
+      "question": "김보성이 피보험자인 계약 알려줘",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "김보성"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-088",
+      "question": "안영미가 계약자인 보험 있어?",
+      "target_tool": "list_contracts",
+      "acceptable": [
+        "list_contracts",
+        "search_customers"
+      ],
+      "selected_tool": "search_customers",
+      "correct": true,
+      "selected_args": {
+        "query": "안영미"
+      },
+      "category": "계약 조회"
+    },
+    {
+      "id": "TC-089",
+      "question": "고객 이름 중복 확인해줘. 김보성",
+      "target_tool": "check_customer_name",
+      "acceptable": [
+        "check_customer_name"
+      ],
+      "selected_tool": "check_customer_name",
+      "correct": true,
+      "selected_args": {
+        "name": "김보성"
+      },
+      "category": "고객 관리"
+    },
+    {
+      "id": "TC-090",
+      "question": "캐치업코리아 주소 검색해줘. 테헤란로 123",
+      "target_tool": "search_address",
+      "acceptable": [
+        "search_address"
+      ],
+      "selected_tool": "search_address",
+      "correct": true,
+      "selected_args": {
+        "keyword": "테헤란로 123"
+      },
+      "category": "주소"
+    }
+  ]
+}

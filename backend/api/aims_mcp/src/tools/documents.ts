@@ -6,7 +6,7 @@ import { sendErrorLog } from '../systemLogger.js';
 // 스키마 정의
 export const searchDocumentsSchema = z.object({
   query: z.string().describe('검색어'),
-  searchMode: z.enum(['semantic', 'keyword']).optional().default('semantic').describe('검색 모드'),
+  searchMode: z.enum(['semantic', 'keyword']).optional().default('keyword').describe('검색 모드 (기본: keyword)'),
   customerId: z.string().optional().describe('특정 고객의 문서만 검색'),
   limit: z.number().optional().default(10).describe('결과 개수 제한'),
   offset: z.number().optional().default(0).describe('시작 위치 (페이지네이션용)')
@@ -31,17 +31,29 @@ export const findDocumentByFilenameSchema = z.object({
 export const documentToolDefinitions = [
   {
     name: 'search_documents',
-    description: `문서를 검색합니다. semantic 모드는 AI 기반 의미 검색, keyword 모드는 키워드 검색입니다.
+    description: `문서를 검색합니다.
 
-페이지네이션 지원:
-- offset을 사용하여 추가 결과를 조회할 수 있습니다
-- 응답의 hasMore가 true이면 nextOffset으로 다음 페이지 조회 가능
-- 사용자가 "더 보여줘"하면 동일한 query와 searchMode로 nextOffset 사용`,
+■ 고객의 문서를 찾을 때:
+  1. search_customers로 고객 ID를 먼저 조회
+  2. search_documents(query="키워드", customerId="고객ID", searchMode="keyword")
+  예: "캐치업코리아 보험증권" → search_customers("캐치업코리아") → search_documents(query="보험증권", customerId="...", searchMode="keyword")
+
+■ 고객 지정 없이 전체 문서 검색:
+  search_documents(query="검색어", searchMode="keyword")
+
+■ 검색 모드:
+  - keyword: 파일명/내용에서 키워드 매칭 (기본, 권장)
+  - semantic: AI 기반 의미 검색
+
+■ 페이지네이션:
+  - offset을 사용하여 추가 결과를 조회할 수 있습니다
+  - 응답의 hasMore가 true이면 nextOffset으로 다음 페이지 조회 가능
+  - 사용자가 "더 보여줘"하면 동일한 query와 searchMode로 nextOffset 사용`,
     inputSchema: {
       type: 'object' as const,
       properties: {
         query: { type: 'string', description: '검색어' },
-        searchMode: { type: 'string', enum: ['semantic', 'keyword'], description: '검색 모드 (기본: semantic)' },
+        searchMode: { type: 'string', enum: ['semantic', 'keyword'], description: '검색 모드 (기본: keyword, 권장)' },
         customerId: { type: 'string', description: '특정 고객의 문서만 검색' },
         limit: { type: 'number', description: '결과 개수 제한 (기본: 10)' },
         offset: { type: 'number', description: '시작 위치 (기본: 0, 페이지네이션용)' }

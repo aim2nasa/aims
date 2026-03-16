@@ -410,56 +410,38 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - "계약 목록", "어떤 보험" = list_contracts (현재 상태)
 - "이력 변화", "추이", "어떻게 바뀌었어" = get_ar_contract_history / get_cr_contract_history (시간에 따른 변화)
 
-## 🔍 검색 도구 선택 가이드 (unified_search 사용)
+## 🔍 검색 도구 선택 가이드
 
-### 1. 문서 검색 - documentsOnly: true
-**"문서", "서류", "파일" 키워드가 있으면 문서만 검색!**
-- "퇴직연금 관련 서류 찾아줘" → unified_search(documentsOnly: true)
-- "자동차보험 문서 검색해줘" → unified_search(documentsOnly: true)
-- "건강검진 서류 있어?" → unified_search(documentsOnly: true)
-- "계약서 파일 보여줘" → unified_search(documentsOnly: true)
+### 1. 🔴 문서 검색: search_documents (CRITICAL!)
+**문서, 서류, 파일 검색 요청은 모두 search_documents 사용!**
 
-**문서 검색 결과 표시 (2가지 카테고리만):**
+**■ 고객의 문서를 찾을 때 (2단계 필수!):**
+1. search_customers로 고객 ID를 먼저 조회
+2. search_documents(query="키워드", customerId="고객ID", searchMode="keyword")
+
+**예시:**
+- "캐치업코리아 보험증권 찾아줘" → search_customers("캐치업코리아") → search_documents(query="보험증권", customerId="...", searchMode="keyword")
+- "김보성 건강검진 결과 있어?" → search_customers("김보성") → search_documents(query="건강검진", customerId="...", searchMode="keyword")
+- "캐치업코리아 사업자등록증 찾아줘" → search_customers("캐치업코리아") → search_documents(query="사업자등록증", customerId="...", searchMode="keyword")
+
+**■ 고객 지정 없이 전체 문서 검색:**
+- "퇴직연금 관련 서류 찾아줘" → search_documents(query="퇴직연금", searchMode="keyword")
+- "화재보험 관련 서류 있어?" → search_documents(query="화재보험", searchMode="keyword")
+
+**■ 포괄적 정보 요청 (고객명 + 키워드):**
+- "캐치업코리아 관련 자료 찾아줘" → search_customers("캐치업코리아") → search_documents(query="캐치업코리아", customerId="...", searchMode="keyword")
+- "김보성 관련 문서 전부 보여줘" → search_customers("김보성") → list_customer_documents(customerId="...")
+
+**문서 검색 결과 표시:**
 \`\`\`
-"OOO" 문서 검색 결과:
+"OOO" 검색 결과 (N건):
 
-### 🔤 키워드 일치 문서 (3건)
 1. [파일명.pdf](doc:문서ID): 요약...
-
-### 🤖 AI 검색 문서 (5건)
-1. [파일명.pdf](doc:문서ID): 요약...
+2. [파일명.pdf](doc:문서ID): 요약...
 \`\`\`
 **중요**: 문서명은 반드시 [파일명](doc:fileId) 형식으로 표시! 클릭 시 미리보기 가능
 
-### 2. 🔴 통합 검색 출력 형식 (CRITICAL - 반드시 준수!)
-**단순 키워드나 사람 이름이면 통합 검색!**
-- "퇴직연금" → unified_search (검색어만 있음)
-- "캐치업코리아" → unified_search (회사명)
-- "김보성" → unified_search (사람 이름 = 고객도 검색)
-- "일산동구 관련 자료" → unified_search (트리거 키워드 없음)
-
-**🔴 통합 검색 결과는 반드시 4개 카테고리로 구분 표시!**
-\`\`\`
-"OOO" 검색 결과:
-
-### 🔤 키워드 일치 문서 (N건)
-1. [파일명.pdf](doc:문서ID): 요약...
-
-### 🤖 AI 검색 문서 (M건)
-1. [파일명.pdf](doc:문서ID): 요약...
-
-### 👤 고객 (0건)
-해당하는 고객이 없습니다.
-
-### 📋 계약 (0건)
-해당하는 계약이 없습니다.
-\`\`\`
-**🚨 절대 금지:** 키워드/AI 구분 없이 단일 목록으로 표시하는 것!
-**✅ 반드시:** 4개 카테고리 헤더(🔤 키워드, 🤖 AI, 👤 고객, 📋 계약)를 모두 표시!
-**중요**: 0건인 카테고리도 반드시 표시!
-**중요**: 문서명은 반드시 [파일명](doc:fileId) 형식으로 표시!
-
-### search_products는 언제 사용?
+### 2. search_products는 언제 사용?
 - "상품 검색해줘" → search_products
 - "무배당 종신보험 찾아줘" → search_products
 - 사용자가 **명시적으로** "보험 상품"을 요청할 때만 search_products 사용
@@ -484,7 +466,7 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 | "키워드 검색", "키워드로", "키워드만" | keyword | search_documents_semantic |
 | "의미 검색", "시맨틱", "의미로", "AI로" | semantic | search_documents_semantic |
 
-**⚠️ 주의:** 위 트리거 키워드가 없을 때만 unified_search 사용!
+**⚠️ 주의:** 위 트리거 키워드가 없으면 search_documents 사용!
 
 **결과 표시 형식 (CRITICAL - 반드시 총 개수 표시!):**
 \`\`\`
@@ -638,7 +620,7 @@ AI: [list_customer_documents(customerId="6947f716ea0d306a0ac63b61", offset=20)]
 **🔴 다음 페이지 요청 처리 (사용자가 "응", "더 보여줘" 등 응답 시):**
 - 이전 응답에서 "(ID:xxx)" 패턴을 찾아 customerId로 사용
 - 이전에 보여준 범위(X-Y번)를 확인하여 다음 offset 계산 (예: 1-10번이었으면 offset=10)
-- **⛔ unified_search 절대 사용 금지!** 반드시 동일한 도구(list_customer_documents 등)를 사용
+- **⛔ 반드시 동일한 도구(list_customer_documents 등)를 사용!** 다른 도구로 바꾸지 마세요
 - **⛔ 새로운 고객 검색(search_customers) 금지!** 이전 응답의 ID를 그대로 사용`;
 
 // GPT-4o 비용 (TOKEN_COSTS에 없는 경우를 위해)
@@ -907,17 +889,17 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
           toolCallsExecuted.push({ name: toolName, success: true });
           yield { type: 'tool_result', name: toolName, success: true };
 
-          // RAG 폴백: 계약 조회 0건 시 unified_search 보강
+          // RAG 폴백: 계약 조회 0건 시 search_documents(keyword) 보강
           let enrichedResult = result;
           if (FALLBACK_ELIGIBLE_TOOLS.has(toolName) && isZeroResultQuery(result)) {
             const userQuery = getLastUserMessage(messages);
             if (userQuery) {
               try {
-                console.log(`[ChatService] RAG fallback: ${toolName} 0건 → unified_search("${userQuery.substring(0, 50)}")`);
-                const fallbackResult = await callMCPTool('unified_search', { query: userQuery, limit: 5 }, userId);
+                console.log(`[ChatService] RAG fallback: ${toolName} 0건 → search_documents("${userQuery.substring(0, 50)}")`);
+                const fallbackResult = await callMCPTool('search_documents', { query: userQuery, searchMode: 'keyword', limit: 10 }, userId);
                 enrichedResult = result +
-                  '\n\n--- 추가 검색 결과 (관련 문서/고객/계약) ---\n' +
-                  '계약 조회에서 결과가 없어 통합 검색을 추가로 수행했습니다:\n' +
+                  '\n\n--- 추가 검색 결과 (관련 문서) ---\n' +
+                  '계약 조회에서 결과가 없어 문서 검색을 추가로 수행했습니다:\n' +
                   fallbackResult;
               } catch (fallbackError) {
                 console.warn('[ChatService] RAG fallback failed (ignored):', fallbackError.message);
