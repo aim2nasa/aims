@@ -344,10 +344,12 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 ## 🔴 계약 관련 도구 선택 가이드 (CRITICAL!)
 
 ### 1. 현재 계약 목록 조회: list_contracts
-**단순히 계약 목록을 보여달라고 할 때 사용!**
+**계약 목록을 보여달라고 하거나, "고객명 + 주제 + 정보/알려줘" 요청에 사용!**
 - "계약 목록 보여줘" → list_contracts
 - "보유 계약 알려줘" → list_contracts
 - "어떤 보험 있어?" → list_contracts
+- "캐치업코리아 자동차 정보" → list_contracts(customerId="...", search="자동차")
+- "마리치 건강보험 알려줘" → list_contracts(customerId="...", search="건강")
 
 ### 2. 계약 이력 변화 조회: get_ar_contract_history
 **🔴 "이력", "변화", "추이" 키워드가 있으면 반드시 이 도구 사용!**
@@ -407,7 +409,8 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 **🔴 이전 발행일과 달라진 값은 중괄호+느낌표로 감싸기 (예: +12.5% → \`{!+12.5%!}\`) - 빨간색으로 렌더링됨**
 
 **🚨 핵심 구분:**
-- "계약 목록", "어떤 보험" = list_contracts (현재 상태)
+- "계약 목록", "어떤 보험", "정보", "알려줘" = list_contracts (현재 상태)
+- "문서", "서류", "파일", "찾아줘", "검색해줘" = search_documents (문서 검색)
 - "이력 변화", "추이", "어떻게 바뀌었어" = get_ar_contract_history / get_cr_contract_history (시간에 따른 변화)
 
 ## 🔍 검색 도구 선택 가이드
@@ -428,7 +431,23 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - "퇴직연금 관련 서류 찾아줘" → search_documents(query="퇴직연금", searchMode="keyword")
 - "화재보험 관련 서류 있어?" → search_documents(query="화재보험", searchMode="keyword")
 
-**■ 포괄적 정보 요청 (고객명 + 키워드):**
+**■ 포괄적 정보 요청 (고객명 + 주제 + "정보"/"알려줘") — 🔴 CRITICAL!:**
+**"정보", "알려줘", "있어?", "어때?" 같은 모호한 표현은 항상 list_contracts 우선!**
+아래 표현들은 모두 동일한 의도이며, 반드시 동일한 도구(list_contracts)로 처리:
+- "캐치업코리아 자동차 정보" → search_customers("캐치업코리아") → list_contracts(customerId="...", search="자동차")
+- "캐치업코리아 자동차 정보 알려줘" → search_customers("캐치업코리아") → list_contracts(customerId="...", search="자동차")
+- "캐치업코리아 자동차 보험 있어?" → search_customers("캐치업코리아") → list_contracts(customerId="...", search="자동차")
+- "마리치 건강보험 알려줘" → search_customers("마리치") → list_contracts(customerId="...", search="건강")
+- "마리치 종신보험 정보" → search_customers("마리치") → list_contracts(customerId="...", search="종신")
+- "고객 연금 정보 알려줘" → search_customers("고객") → list_contracts(customerId="...", search="연금")
+
+**⚠️ search_documents는 "문서", "서류", "파일", "자료", "찾아줘", "검색해줘" 키워드가 명시된 경우에만 사용!**
+- "캐치업코리아 자동차 문서 찾아줘" → search_documents (문서 검색)
+- "캐치업코리아 자동차 서류 검색해줘" → search_documents (문서 검색)
+- "캐치업코리아 자동차 정보" → list_contracts (계약 조회) ← "문서/서류/파일" 없으므로!
+- "캐치업코리아 자동차 정보 알려줘" → list_contracts (계약 조회) ← 동일!
+
+**■ 고객 관련 자료/문서 전체 조회:**
 - "캐치업코리아 관련 자료 찾아줘" → search_customers("캐치업코리아") → search_documents(query="캐치업코리아", customerId="...", searchMode="keyword")
 - "김보성 관련 문서 전부 보여줘" → search_customers("김보성") → list_customer_documents(customerId="...")
 
@@ -709,7 +728,10 @@ async function callMCPTool(toolName, args, userId) {
  * @yields {Object} SSE 이벤트
  */
 // ========== RAG 폴백 헬퍼 ==========
+// 정방향: list_contracts 0건 → search_documents로 문서 보완
 const FALLBACK_ELIGIBLE_TOOLS = new Set(['list_contracts']);
+// 역방향: search_documents 0건 → list_contracts로 계약 보완
+const REVERSE_FALLBACK_ELIGIBLE_TOOLS = new Set(['search_documents']);
 
 function isZeroResultQuery(resultText) {
   try {
@@ -968,7 +990,7 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
           toolCallsExecuted.push({ name: toolName, success: true });
           yield { type: 'tool_result', name: toolName, success: true };
 
-          // RAG 폴백: 계약 조회 0건 시 search_documents(keyword) 보강
+          // RAG 폴백 (정방향): 계약 조회 0건 시 search_documents(keyword) 보강
           let enrichedResult = result;
           if (FALLBACK_ELIGIBLE_TOOLS.has(toolName) && isZeroResultQuery(result)) {
             const userQuery = getLastUserMessage(messages);
@@ -982,6 +1004,28 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
                   fallbackResult;
               } catch (fallbackError) {
                 console.warn('[ChatService] RAG fallback failed (ignored):', fallbackError.message);
+              }
+            }
+          }
+
+          // RAG 폴백 (역방향): 문서 검색 0건 시 list_contracts로 계약 보완
+          if (REVERSE_FALLBACK_ELIGIBLE_TOOLS.has(toolName) && isZeroResultQuery(result)) {
+            const userQuery = getLastUserMessage(messages);
+            if (userQuery) {
+              try {
+                const fallbackArgs = { search: userQuery, limit: 10 };
+                // 원본 도구의 customerId가 있으면 전달
+                if (args.customerId) {
+                  fallbackArgs.customerId = args.customerId;
+                }
+                console.log(`[ChatService] RAG reverse fallback: ${toolName} 0건 → list_contracts("${userQuery.substring(0, 50)}")`);
+                const fallbackResult = await callMCPTool('list_contracts', fallbackArgs, userId);
+                enrichedResult = result +
+                  '\n\n--- 추가 검색 결과 (관련 계약) ---\n' +
+                  '문서 검색에서 결과가 없어 계약 조회를 추가로 수행했습니다:\n' +
+                  fallbackResult;
+              } catch (fallbackError) {
+                console.warn('[ChatService] RAG reverse fallback failed (ignored):', fallbackError.message);
               }
             }
           }
