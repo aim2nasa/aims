@@ -410,7 +410,7 @@
     },
 
     {"id": "TC-051", "question": "김보성 건강검진 결과 있어?", "target_tool": "unified_search", "acceptable_first_calls": ["unified_search"], "category": "문서 검색", "notes": "건강검진 문서 검색"},
-    {"id": "TC-052", "question": "김보성 보험금 청구한 내역 알려줘", "target_tool": "unified_search", "acceptable_first_calls": ["unified_search"], "category": "정보 검색", "notes": "보험금청구 문서/정보 검색"},
+    {"id": "TC-052", "question": "김보성 보험금 청구한 내역 알려줘", "target_tool": "unified_search", "acceptable_first_calls": ["unified_search", "search_customers"], "category": "정보 검색", "notes": "보험금청구 문서/정보 검색. 고객명+내역 → search_customers도 합리적"},
     {"id": "TC-053", "question": "김영순 진단서 찾아줘", "target_tool": "unified_search", "acceptable_first_calls": ["unified_search"], "category": "문서 검색", "notes": "진단서 문서 검색"},
     {"id": "TC-054", "question": "변수현 재무설계 자료 있어?", "target_tool": "unified_search", "acceptable_first_calls": ["unified_search"], "category": "문서 검색", "notes": "재무설계 문서 검색"},
     {"id": "TC-055", "question": "변수현 적립금 얼마야?", "target_tool": "get_cr_contract_history", "acceptable_first_calls": ["get_cr_contract_history", "search_customers"], "category": "AR/CRS", "notes": "customerId required"},

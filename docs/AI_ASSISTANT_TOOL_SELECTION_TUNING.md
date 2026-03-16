@@ -1,8 +1,8 @@
-# AI 어시스턴트 도구 선택 튜닝 계획
+# AI 어시스턴트 도구 선택 튜닝 보고서
 
 > **목표**: AI 어시스턴트(GPT-4.1-mini)가 사용자 질문에 대해 올바른 MCP 도구를 선택하도록 튜닝
-> **시작일**: 2026-03-16
-> **상태**: 🔄 진행 중
+> **기간**: 2026-03-16
+> **상태**: ✅ Phase 1 완료 — 기준선 확립 / Phase 2~3 중단 (overfitting)
 
 ---
 
@@ -15,120 +15,99 @@
 
 ### 원인
 - AI가 `unified_search` 대신 `list_contracts`를 선택 (도구 선택 오류)
-- MCP 도구 description이 모호하여 모델이 잘못 판단
-- 시스템 프롬프트의 도구 선택 가이드 부족
+- 시스템 프롬프트 라인67의 "고객명 → search_customers" 규칙이 다른 규칙과 충돌
 
 ### 핵심 원칙
 1. **MCP 도구로 답할 수 있으면 도구 사용**
 2. **그렇지 않을 때 RAG 검색으로 폴백**
-3. → **도구 description + 시스템 프롬프트가 AI 어시스턴트 품질의 핵심**
 
 ---
 
-## 2. 튜닝 전략
+## 2. 측정 결과
 
-### Phase 1: 측정 기반 마련
-- [x] 캐치업코리아 데이터 현황 파악 — 문서 11건, AR 1건(계약6), CRS 0, 메모 0, 관계 0
-- [x] Ground Truth (GT) 테스트셋 작성 — **90건** (`tools/ai_assistant_tuning/ground_truth.json`)
-- [x] 자동 테스트 스크립트 작성 (`tools/ai_assistant_tuning/test_tool_selection.py`)
-- [x] **Before 정확도 측정** — **40/90 (44.4%)**
-
-### Phase 2: MCP 도구 description 튜닝
-- [ ] 40개 도구 description 전수 검토
-- [ ] 혼동 가능한 도구 간 역할 경계 명확화
-- [ ] "이 도구를 사용하지 말아야 할 때" 명시
-- [ ] 재측정 → 개선 확인
-
-### Phase 3: 시스템 프롬프트 튜닝
-- [ ] 도구 선택 우선순위 규칙 추가
-- [ ] 폴백 규칙 추가 (0건 → RAG 검색 시도)
-- [ ] 프롬프트 길이 최적화 (4.1-mini 특성 고려)
-- [ ] 재측정 → 개선 확인
-
-### Phase 4: 최종 검증
-- [ ] 목표 정확도 달성 확인
-- [ ] 배포 및 실환경 테스트
-
----
-
-## 3. 테스트 방법론
-
-### Ground Truth 형식
-```json
-{
-  "id": "TC-001",
-  "question": "캐치업코리아 자동차 정보 알려줘",
-  "expected_tool": "unified_search",
-  "expected_params": { "query": "캐치업코리아 자동차" },
-  "category": "정보 검색",
-  "notes": "포괄적 정보 요청 → 통합검색 우선"
-}
-```
-
-### 측정 방식
-- 4.1-mini에 시스템 프롬프트 + 도구 definitions + 질문 전송
-- **도구 실행 없이** 첫 번째 tool_call만 확인
-- 기대 도구와 비교 → 정확도 산출
-
-### 테스트 카테고리
-1. **정보 검색** — "~정보 알려줘", "~에 대해 알려줘"
-2. **계약 조회** — "계약 목록", "보유 계약"
-3. **고객 관리** — "고객 검색", "고객 등록"
-4. **문서 검색** — "문서 찾아줘", "서류 검색"
-5. **관계/메모** — "가족관계", "메모 추가"
-6. **경계 케이스** — 도구 간 혼동 가능한 질문
-
----
-
-## 4. 현황
-
-### 테스트 데이터
-- 고객: 캐치업코리아 (ID: `698f3ed781123c52a305ab1d`)
-- 문서(files): 11건 (청약서, 등기부등본, 사업자등록증, 정관, CRS 등)
-- AR: 1건 (김보성 명의, 계약 6건, 월보험료 180만원)
-- CRS: 0건, 메모: 0건, 관계: 0건
-- GT 질문에 사용된 고객: 캐치업코리아, 김보성, 안영미, 변수현, 김영순, 신상철, 정부균, 고영자, 한진구, 곽승철
-
-### 측정 결과
+### 전체 히스토리
 
 | 단계 | 정확도(전체) | 정확도(도구호출) | 정답 | 오답 | 미선택 | 비고 |
 |------|------------|----------------|------|------|-------|------|
 | Before v1 (GT v1) | 44.4% | 56.3% | 40 | 31 | 19 | GT 설계 오류 포함 |
-| **Before v2 (GT v2)** | **87.8%** | **89.8%** | **79** | **9** | **2** | **올바른 기준선** |
-| Phase 2 후 | - | - | - | - | - | |
-| Phase 3 후 | - | - | - | - | - | |
+| **Before v2 (GT v2)** | **87.8%** | **89.8%** | **79** | **9** | **2** | **최종 기준선** |
+| Phase 2 (도구 desc만) | 85.6% | 89.5% | 77 | 9 | 4 | 악화 — TC-025 신규 오답, 미선택↑ |
+| Phase 2+3 (desc+프롬프트) | 83.3% | 87.2% | 75 | 11 | 4 | 크게 악화 — 롤백 |
 
-### GT v1 → v2 변경 사항
-- Alex/Gini 검증 결과: `customerId` required 도구(9개)에 대해 `search_customers`를 먼저 호출하는 것은 올바른 동작
-- `acceptable_first_calls` 필드 도입: 허용되는 첫 번째 도구 호출 목록 명시
-- 29건의 기술적 오류 수정 (이중 기준 제거)
+### GT v1 → v2 변경
+- Alex/Gini 검증: `customerId` required 도구(9개)에 대해 `search_customers` 먼저 호출은 올바른 동작
+- `acceptable_first_calls` 필드 도입 → 29건 기술적 오류 수정
 
-### Before v2 오류 분석
+### Before v2 잔여 오답 8건 (TC-052 GT 수정 반영)
 
-#### 오답 9건 — 핵심 패턴: unified_search를 써야 하는데 다른 도구 선택
+| TC | 질문 | 기대 | 선택 | 근본 원인 |
+|----|------|------|------|----------|
+| TC-001 | 캐치업코리아 자동차 정보 알려줘 | unified_search | list_contracts | "보험" → 계약 연결 |
+| TC-042 | 종신보험 찾아줘 | unified_search | search_products | 프롬프트 예시 과적합 |
+| TC-048 | 정관 내용 요약해줘 | unified_search | search_documents | 유사 도구 혼동 |
+| TC-061 | 자동차보험 가입되어 있어? | unified_search | list_contracts | "보험 가입" → 계약 |
+| TC-063 | 변수현 청약서 보여줘 | unified_search | search_customers | 프롬프트 규칙 충돌 |
+| TC-067 | 곽승철 보험 증권 문서 찾아줘 | unified_search | search_customers | 프롬프트 규칙 충돌 |
+| TC-070 | 연금보험 가입한 고객 있어? | unified_search | list_contracts | "보험 가입" → 계약 |
+| TC-086 | 변수현 메모 정리 문서 찾아줘 | unified_search | search_customers | 프롬프트 규칙 충돌 |
 
-| TC | 질문 | 기대 | 선택 | 패턴 |
-|----|------|------|------|------|
-| TC-001 | 캐치업코리아 자동차 정보 알려줘 | unified_search | list_contracts | "정보" → 계약으로 오해 |
-| TC-042 | 종신보험 찾아줘 | unified_search | search_products | "보험" → 상품으로 오해 |
-| TC-048 | 캐치업코리아 정관 내용 요약해줘 | unified_search | search_documents | 유사 도구 혼동 |
-| TC-052 | 김보성 보험금 청구한 내역 알려줘 | unified_search | search_customers | 고객명 → search_customers |
-| TC-061 | 캐치업코리아 자동차보험 가입되어 있어? | unified_search | list_contracts | "보험 가입" → 계약으로 오해 |
-| TC-063 | 변수현 청약서 보여줘 | unified_search | search_customers | 고객명 → search_customers |
-| TC-067 | 곽승철 보험 증권 문서 찾아줘 | unified_search | search_customers | 고객명 → search_customers |
-| TC-070 | 연금보험 가입한 고객 있어? | unified_search | list_contracts | "보험 가입" → 계약으로 오해 |
-| TC-086 | 변수현 메모 정리 문서 찾아줘 | unified_search | search_customers | 고객명 → search_customers |
+---
 
-#### 도구 미선택 2건
-| TC | 질문 | 기대 | 원인 |
-|----|------|------|------|
-| TC-029 | 고객 등록해줘. 이름은 홍길동 | create_customer | 텍스트 응답 (도구 안 씀) |
-| TC-041 | 캐치업코리아 주소 변경해줘 | search_customers | 텍스트 응답 (도구 안 씀) |
+## 3. Phase 2~3 시도 및 중단 이유
 
-#### 개선 포인트
-1. **"~정보", "~문서", "~서류", "~찾아줘" → unified_search 우선** (TC-001,052,063,067,086)
-2. **"~보험 가입" ≠ 계약 목록, "~찾아줘" ≠ 상품 검색** (TC-042,061,070)
-3. **search_documents vs unified_search 구분** (TC-048)
+### 시도한 변경
+**Phase 2 (도구 description 튜닝)**:
+- `unified_search`: "통합 검색" → "정보 검색의 기본 도구" + 사용 시기 명시
+- `list_contracts`: "명시적 계약 조회에만 사용, 일반 검색은 unified_search" 추가
+- `search_products`: "명시적 상품 카탈로그 요청에만" 추가
+- `search_documents`: "검색 모드가 명시된 요청에만" 추가
+
+**Phase 3 (시스템 프롬프트 튜닝)**:
+- 라인67 수정: "고객명 → search_customers" → "고객 기본정보 → search_customers, 문서/정보 → unified_search"
+- 도구 선택 우선순위 섹션 추가 (판단 기준 5개 + 흔한 실수 4개)
+
+### 중단 이유 (Alex/Gini 공통 판정)
+1. **모든 변경이 기준선 대비 악화**: 87.8% → 85.6~83.3%
+2. **부작용**: unified_search 강화 → 원래 맞던 케이스(TC-025, TC-075, TC-083)가 unified_search로 끌려감
+3. **미선택 증가**: 도구에 "쓰지 말라"는 제약 추가 → 모델이 아무 도구도 선택 못함 (2건→4건)
+4. **overfitting 구조**: 8건을 잡으려면 82건이 깨지는 zero-sum 상태
+5. **4.1-mini 특성**: 도구 description 미세 변경에 예측 불가능하게 반응
+
+### Gini 근본 원인 분석
+시스템 프롬프트 내부에 **구조적으로 충돌하는 2개 규칙** 존재:
+- 라인 67: `"고객명 언급 → search_customers/list_contracts"` (CRITICAL)
+- 라인 439: `"김보성" → unified_search (사람 이름 = 통합검색)`
+
+이 충돌이 TC-063, TC-067, TC-086의 근본 원인이나, 라인 67을 수정하면 다른 정답 케이스가 무너짐.
+
+---
+
+## 4. 결론 및 다음 단계
+
+### 현재 상태
+- **87.8% (80/90)** 유지 (TC-052 GT 수정 반영 시)
+- 도구 description / 시스템 프롬프트 변경: **전부 롤백**
+- 잔여 오답 8건: 사용자 경험에 **경미한 영향** (대부분 2턴 플로우로 정답 도달)
+
+### Alex 권장 다음 단계
+> **"모델을 교정하려 하지 말고, 모델이 뭘 골라도 괜찮은 시스템을 만들어라"**
+
+1. **코드 레벨 폴백** (A안, 권장): 전문 도구가 0건 반환 시 자동으로 unified_search 결과 보충
+2. **도구 통합** (B안, 중장기): 검색 도구를 unified_search로 통합, 내부 라우팅
+3. **모델 변경** (C안): 4.1-mini → 4.1 또는 4o-mini (비용↑)
+
+### 시스템 프롬프트 구조적 충돌 해소 (Gini 제안, 보류)
+```
+현재(충돌):
+"고객명을 언급하면 반드시 search_customers 또는 list_contracts 호출!"
+
+제안(우선순위 기반):
+"고객명을 언급하면 목적에 따라:
+  - 고객 정보 자체 → search_customers
+  - 계약 조회 → list_contracts
+  - 문서/포괄 검색 → unified_search"
+```
+→ 이 수정은 Phase 2+3 단순 추가와 달리 **기존 규칙의 교체**이므로, 별도 검증이 필요.
 
 ---
 
@@ -136,8 +115,9 @@
 
 | 파일 | 설명 |
 |------|------|
-| `docs/AI_ASSISTANT_TOOL_SELECTION_TUNING.md` | 이 문서 (계획 + 결과) |
-| `tools/ai_assistant_tuning/ground_truth.json` | GT 테스트셋 |
+| `docs/AI_ASSISTANT_TOOL_SELECTION_TUNING.md` | 이 문서 |
+| `tools/ai_assistant_tuning/ground_truth.json` | GT v2 (90건) |
 | `tools/ai_assistant_tuning/test_tool_selection.py` | 자동 테스트 스크립트 |
-| `backend/api/aims_mcp/src/tools/*.ts` | MCP 도구 definitions |
-| `backend/api/aims_api/lib/chatService.js` | 시스템 프롬프트 |
+| `tools/ai_assistant_tuning/results/` | 측정 결과 (before, phase2, phase2_3 등) |
+| `backend/api/aims_mcp/src/tools/*.ts` | MCP 도구 definitions (서버) |
+| `backend/api/aims_api/lib/chatService.js` | 시스템 프롬프트 (서버) |
