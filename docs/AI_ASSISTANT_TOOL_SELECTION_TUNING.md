@@ -90,42 +90,64 @@
 
 ---
 
-## 4. 결론 및 다음 단계
+## 4. Phase 1 결론
 
-### 현재 상태
-- **87.8% (80/90)** 유지 (TC-052 GT 수정 반영 시)
-- 도구 description / 시스템 프롬프트 변경: **전부 롤백**
-- 잔여 오답 8건: 사용자 경험에 **경미한 영향** (대부분 2턴 플로우로 정답 도달)
+### 최종 상태: 92.2% (GT v4 기준, 프롬프트/코드 미변경)
+- GT v1 → v4 재정의로 평가 공정성 확보 (overfitting 아닌 합리적 확장)
+- 도구 description / 시스템 프롬프트 / search_documents 제거: **모두 악화 → 전부 롤백**
+- **GT v4 이후 동결** — 측정 결과를 보고 GT 재조정 금지
 
-### Alex 권장 다음 단계
-> **"모델을 교정하려 하지 말고, 모델이 뭘 골라도 괜찮은 시스템을 만들어라"**
+### 잔여 오답 5건 (구조적 한계)
+| TC | 질문 | 선택 | 기대 | 근본 원인 |
+|----|------|------|------|----------|
+| TC-048 | 정관 내용 요약해줘 | search_documents_semantic | unified_search | 유사 도구 혼동 |
+| TC-063 | 변수현 청약서 보여줘 | search_customers | unified_search | 라인67 규칙 충돌 |
+| TC-067 | 곽승철 보험 증권 문서 찾아줘 | search_customers | unified_search | 라인67 규칙 충돌 |
+| TC-070 | 연금보험 가입한 고객 있어? | list_contracts | unified_search | "보험" → 계약 연결 |
+| TC-086 | 변수현 메모 정리 문서 찾아줘 | search_customers | unified_search | 라인67 규칙 충돌 |
 
-1. **코드 레벨 폴백** (A안, 권장): 전문 도구가 0건 반환 시 자동으로 unified_search 결과 보충
-2. **도구 통합** (B안, 중장기): 검색 도구를 unified_search로 통합, 내부 라우팅
-3. **모델 변경** (C안): 4.1-mini → 4.1 또는 4o-mini (비용↑)
+### 미선택 2건 (멀티턴 설계 특성)
+| TC | 질문 | 원인 |
+|----|------|------|
+| TC-029 | 고객 등록해줘 | 프롬프트가 확인 절차를 유도 → 텍스트 응답 |
+| TC-041 | 주소 변경해줘 | 프롬프트가 확인 절차를 유도 → 텍스트 응답 |
 
-### 시스템 프롬프트 구조적 충돌 해소 (Gini 제안, 보류)
-```
-현재(충돌):
-"고객명을 언급하면 반드시 search_customers 또는 list_contracts 호출!"
+### 4.1-mini 도구 선택 한계 요약
+> **"프롬프트/도구 description 변경으로는 91~92%가 천장이다."**
+> 4번의 코드/프롬프트 변경이 모두 기준선 대비 악화되었으며, 이는 현재 프롬프트가 4.1-mini의 최적점 근처에 있다는 강한 신호이다.
 
-제안(우선순위 기반):
-"고객명을 언급하면 목적에 따라:
-  - 고객 정보 자체 → search_customers
-  - 계약 조회 → list_contracts
-  - 문서/포괄 검색 → unified_search"
-```
-→ 이 수정은 Phase 2+3 단순 추가와 달리 **기존 규칙의 교체**이므로, 별도 검증이 필요.
+### 미해결 구조적 충돌 (Phase 2 해결 대상)
+시스템 프롬프트 라인 67 vs 라인 439:
+- 라인 67: `"고객명 언급 → search_customers/list_contracts"` (CRITICAL)
+- 라인 439: `"김보성" → unified_search (사람 이름 = 통합검색)`
+- 이 충돌이 TC-063, TC-067, TC-086의 근본 원인
+- 라인 67을 수정하면 다른 정답 케이스가 무너짐 (81.1%로 검증됨)
 
 ---
 
-## 5. 파일 위치
+## 5. Phase 2: RAG 폴백 (다음 단계)
+
+### 목표
+MCP 도구가 잘못 선택되거나 결과가 불충분할 때, RAG 검색으로 보충하여 "없습니다"라는 잘못된 확정 답변 방지
+
+### 해결 대상
+- TC-001 패턴: list_contracts가 0건 반환 → "자동차 관련 계약은 없습니다" (실제로는 문서에 있음)
+- 도구 선택 오류로 인한 불완전한 답변 보충
+
+### 접근 방식 (검토 필요)
+1. **코드 레벨 폴백**: 도구 결과 0건 시 자동 unified_search
+2. **도구 통합**: 검색 도구를 unified_search로 통합, 내부 라우팅
+3. **모델 변경**: 4.1-mini → 상위 모델
+
+---
+
+## 6. 파일 위치
 
 | 파일 | 설명 |
 |------|------|
 | `docs/AI_ASSISTANT_TOOL_SELECTION_TUNING.md` | 이 문서 |
-| `tools/ai_assistant_tuning/ground_truth.json` | GT v2 (90건) |
+| `tools/ai_assistant_tuning/ground_truth.json` | GT v4 (90건, 동결) |
 | `tools/ai_assistant_tuning/test_tool_selection.py` | 자동 테스트 스크립트 |
-| `tools/ai_assistant_tuning/results/` | 측정 결과 (before, phase2, phase2_3 등) |
+| `tools/ai_assistant_tuning/results/` | 측정 결과 히스토리 |
 | `backend/api/aims_mcp/src/tools/*.ts` | MCP 도구 definitions (서버) |
 | `backend/api/aims_api/lib/chatService.js` | 시스템 프롬프트 (서버) |

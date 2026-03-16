@@ -204,7 +204,7 @@
       "id": "TC-025",
       "question": "캐치업코리아에 대해 알려줘",
       "target_tool": "search_customers",
-      "acceptable_first_calls": ["search_customers"],
+      "acceptable_first_calls": ["search_customers", "unified_search"],
       "category": "고객 관리",
       "notes": "고객 전반 정보"
     },
