@@ -24,7 +24,7 @@
     list-style: none;
     min-width: 0;
     flex-wrap: nowrap;
-    overflow: hidden;
+    overflow: clip; /* hidden은 콘텐츠 잘림 — clip은 스크롤바 없이 잘라냄 */
   }
 
   .breadcrumb-item {

@@ -258,13 +258,13 @@
     cursor: not-allowed;
   }
 
-  /* 브레드크럼 */
+  /* 브레드크럼 — JS 점진적 축약이 너비를 측정하여 자동 조정 */
   .breadcrumb {
     display: flex;
     align-items: center;
     gap: var(--spacing-1);
     flex: 1;
-    overflow: hidden; /* 2줄 넘김 방지 및 overflow 감지용 */
+    overflow: visible; /* JS 축약 로직이 너비 기반으로 처리 — hidden 시 잘림 문제 */
     flex-wrap: nowrap; /* 절대 줄바꿈 안 함 */
     min-width: 0; /* flex shrink 허용 */
   }

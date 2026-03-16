@@ -79,5 +79,8 @@ export {
   NUMBER_INITIALS,
 } from './InitialFilterBar';
 
+export { ActionOverflowMenu } from './ActionOverflowMenu';
+export type { OverflowMenuItem } from './ActionOverflowMenu';
+
 // Pagination (CSS만 제공)
 import './Pagination';

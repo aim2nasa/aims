@@ -15,6 +15,7 @@ import CorporateRelationshipModal from '../../components/CorporateRelationshipMo
 import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { Button } from '../../../../shared/ui/Button';
+import { ActionOverflowMenu, type OverflowMenuItem } from '@/shared/ui/ActionOverflowMenu';
 import { Tabs, type Tab } from '../../../../components/Tabs';
 import { BasicInfoTab } from './tabs/BasicInfoTab';
 import { RelationshipsTab } from './tabs/RelationshipsTab';
@@ -70,9 +71,6 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
   // 🍎 개발자 모드 (Ctrl+Alt+D)
   const { isDevMode } = useDevModeStore();
-
-  // 🍎 더보기 토글 (개발자 모드 전용 액션 펼치기)
-  const [showExtraActions, setShowExtraActions] = useState(false);
 
   // URL에서 활성 탭 복원 (초기 마운트 시에만)
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -635,7 +633,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     >
       <div className="customer-detail-view">
         <div className="customer-detail-view__inner">
-          {/* 🍎 액션 버튼 영역 */}
+          {/* 🍎 액션 버튼 영역 — 핵심 버튼 + 더보기 메뉴 패턴 */}
           <div className="customer-detail-view__actions">
             {canAddFamilyRelation && (
               <Button
@@ -668,42 +666,37 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             >
               정보 수정
             </Button>
-            {/* 🍎 휴면 고객 → "휴면 해제" 항상 표시 */}
-            {customer.meta?.status === 'inactive' && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleRestoreClick}
-                leftIcon={<span>♻️</span>}
-                title="휴면 고객을 활성 상태로 변경합니다"
-              >
-                휴면 해제
-              </Button>
-            )}
-            {/* 🍎 개발자 모드 전용: 휴면 처리 / 영구 삭제 */}
-            {isDevMode && customer.meta?.status !== 'inactive' && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleSoftDeleteClick}
-                leftIcon={<span>💤</span>}
-                title="고객을 휴면 처리합니다 (휴면 해제 가능)"
-              >
-                휴면 처리
-              </Button>
-            )}
-            {isDevMode && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handlePermanentDeleteClick}
-                leftIcon={<span>🗑️</span>}
-                title="고객과 연결된 모든 데이터를 영구 삭제합니다"
-              >
-                영구 삭제
-              </Button>
-            )}
-            {/* 전체 보기 버튼은 제목 옆으로 이동됨 */}
+            {/* 🍎 더보기 메뉴: 휴면 해제/처리, 영구 삭제 등 부가 액션 */}
+            {(() => {
+              const overflowItems: OverflowMenuItem[] = []
+              if (customer.meta?.status === 'inactive') {
+                overflowItems.push({
+                  key: 'restore',
+                  label: '휴면 해제',
+                  icon: <span>♻️</span>,
+                  onClick: handleRestoreClick,
+                })
+              }
+              if (isDevMode && customer.meta?.status !== 'inactive') {
+                overflowItems.push({
+                  key: 'soft-delete',
+                  label: '휴면 처리',
+                  icon: <span>💤</span>,
+                  onClick: handleSoftDeleteClick,
+                  destructive: true,
+                })
+              }
+              if (isDevMode) {
+                overflowItems.push({
+                  key: 'permanent-delete',
+                  label: '영구 삭제',
+                  icon: <span>🗑️</span>,
+                  onClick: handlePermanentDeleteClick,
+                  destructive: true,
+                })
+              }
+              return overflowItems.length > 0 ? <ActionOverflowMenu items={overflowItems} /> : null
+            })()}
           </div>
 
           {/* 🍎 탭 네비게이션 */}

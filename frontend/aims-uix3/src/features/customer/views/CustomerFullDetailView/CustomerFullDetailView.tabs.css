@@ -301,7 +301,7 @@
     /* 🍎 콘텐츠: 고정높이 flex 분할 → 세로 스크롤 */
     .customer-full-detail .customer-full-detail__content {
       overflow-y: auto;
-      overflow-x: hidden;
+      overflow-x: clip;
       padding: var(--spacing-1);
       gap: var(--spacing-2);
     }
@@ -354,7 +354,6 @@
       display: flex;
       flex-direction: row;
       flex-wrap: nowrap;
-      overflow-x: hidden;
       padding: var(--spacing-1-5) var(--spacing-2);
       gap: var(--spacing-1-5);
     }

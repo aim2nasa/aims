@@ -31,6 +31,7 @@ import { useAddressArchiveController } from '../../controllers/useAddressArchive
 import { AddressArchiveModal } from '../../components/AddressArchiveModal'
 import { DocumentContentSearchModal } from '../../components/DocumentContentSearchModal'
 import { Tooltip } from '@/shared/ui/Tooltip'
+import { ActionOverflowMenu, type OverflowMenuItem } from '@/shared/ui/ActionOverflowMenu'
 import type { Customer } from '@/entities/customer/model'
 import { CustomerService } from '@/services/customerService'
 import { CustomerDocument } from '@/stores/CustomerDocument'
@@ -94,9 +95,6 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [annualReportRefreshTrigger, setAnnualReportRefreshTrigger] = useState(0)
   const [customerReviewRefreshTrigger, setCustomerReviewRefreshTrigger] = useState(0)
   const [familyRefreshTrigger, setFamilyRefreshTrigger] = useState(0)
-
-  // 🍎 더보기 토글 (개발자 모드 전용 액션 펼치기)
-  const [showExtraActions, setShowExtraActions] = useState(false)
 
   // 🍎 개수 상태
   const [contractCount, setContractCount] = useState(0)
@@ -764,7 +762,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
         {/* 🍎 고객 데이터 표시 */}
         {customer && !isLoading && !error && (
           <>
-            {/* 🍎 액션 버튼 영역 */}
+            {/* 🍎 액션 버튼 영역 — 핵심 버튼 + 더보기 메뉴 패턴 */}
             <div className="customer-full-detail__actions">
               {canAddFamilyRelation && (
                 <Tooltip content="가족대표가 되어 가족 구성원을 추가합니다">
@@ -800,44 +798,37 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   정보 수정
                 </Button>
               </Tooltip>
-              {/* 🍎 휴면 고객 → "휴면 해제" 항상 표시 */}
-              {customer.meta?.status === 'inactive' && (
-                <Tooltip content="휴면 고객을 활성 상태로 변경합니다">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleRestoreClick}
-                    leftIcon={<span>♻️</span>}
-                  >
-                    휴면 해제
-                  </Button>
-                </Tooltip>
-              )}
-              {/* 🍎 개발자 모드 전용: 휴면 처리 / 영구 삭제 */}
-              {isDevMode && customer.meta?.status !== 'inactive' && (
-                <Tooltip content="고객을 휴면 처리합니다 (휴면 해제 가능)">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleSoftDeleteClick}
-                    leftIcon={<span>💤</span>}
-                  >
-                    휴면 처리
-                  </Button>
-                </Tooltip>
-              )}
-              {isDevMode && (
-                <Tooltip content="고객과 연결된 모든 데이터를 영구 삭제합니다">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handlePermanentDeleteClick}
-                    leftIcon={<span>🗑️</span>}
-                  >
-                    영구 삭제
-                  </Button>
-                </Tooltip>
-              )}
+              {/* 🍎 더보기 메뉴: 휴면 해제/처리, 영구 삭제 등 부가 액션 */}
+              {(() => {
+                const overflowItems: OverflowMenuItem[] = []
+                if (customer.meta?.status === 'inactive') {
+                  overflowItems.push({
+                    key: 'restore',
+                    label: '휴면 해제',
+                    icon: <span>♻️</span>,
+                    onClick: handleRestoreClick,
+                  })
+                }
+                if (isDevMode && customer.meta?.status !== 'inactive') {
+                  overflowItems.push({
+                    key: 'soft-delete',
+                    label: '휴면 처리',
+                    icon: <span>💤</span>,
+                    onClick: handleSoftDeleteClick,
+                    destructive: true,
+                  })
+                }
+                if (isDevMode) {
+                  overflowItems.push({
+                    key: 'permanent-delete',
+                    label: '영구 삭제',
+                    icon: <span>🗑️</span>,
+                    onClick: handlePermanentDeleteClick,
+                    destructive: true,
+                  })
+                }
+                return overflowItems.length > 0 ? <ActionOverflowMenu items={overflowItems} /> : null
+              })()}
               <div className="customer-full-detail__actions-spacer" />
               {/* 🍎 레이아웃 리셋 버튼 (변경 시에만 표시) */}
               {isLayoutModified && (

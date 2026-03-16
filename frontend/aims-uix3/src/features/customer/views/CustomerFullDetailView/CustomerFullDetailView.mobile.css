@@ -211,7 +211,6 @@
       flex-wrap: nowrap;
       padding: var(--spacing-1-5) var(--spacing-2);
       gap: var(--spacing-1-5);
-      overflow-x: hidden;
     }
 
     /* 🍎 Tooltip 래퍼: 균등 분할 */
