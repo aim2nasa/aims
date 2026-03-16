@@ -145,7 +145,7 @@ describe('DocumentSummaryModal', () => {
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
           '/api/documents/doc123/status',
-          { headers: { 'x-user-id': 'tester' } }
+          expect.objectContaining({ headers: expect.any(Object) })
         );
       });
 

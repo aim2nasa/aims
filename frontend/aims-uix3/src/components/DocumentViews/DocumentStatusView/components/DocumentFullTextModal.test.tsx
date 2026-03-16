@@ -143,7 +143,7 @@ describe('DocumentFullTextModal', () => {
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
           '/api/documents/doc456/status',
-          { headers: { 'x-user-id': 'tester' } }
+          expect.objectContaining({ headers: expect.any(Object) })
         );
       });
 

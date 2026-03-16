@@ -14,7 +14,7 @@ import { Document } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import { Button, Modal } from '@/shared/ui'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import { getAuthToken } from '@/shared/lib/api'
+import { getAuthHeaders } from '@/shared/lib/api'
 import './DocumentSummaryModal.css'
 
 interface DocumentSummaryModalProps {
@@ -69,14 +69,9 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
           return
         }
 
-        // 백엔드 API를 통해 문서 상세 정보 가져오기 (🔥 getAuthToken 사용으로 v1/v2 호환)
-        const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-        const token = getAuthToken();
+        // 백엔드 API를 통해 문서 상세 정보 가져오기 (getAuthHeaders로 dev override 포함)
         const response = await fetch(`/api/documents/${docId}/status`, {
-          headers: {
-            'x-user-id': userId,
-            ...(token && { Authorization: `Bearer ${token}` })
-          }
+          headers: getAuthHeaders()
         })
 
         if (!response.ok) {
