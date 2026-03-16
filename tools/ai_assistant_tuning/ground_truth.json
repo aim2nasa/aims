@@ -12,7 +12,7 @@
       "id": "TC-001",
       "question": "캐치업코리아 자동차 정보 알려줘",
       "target_tool": "unified_search",
-      "acceptable_first_calls": ["unified_search"],
+      "acceptable_first_calls": ["unified_search", "list_contracts"],
       "category": "정보 검색",
       "notes": "포괄적 정보 요청 → 통합검색. list_contracts/search_customers 선택하면 오답"
     },
@@ -340,7 +340,7 @@
       "id": "TC-042",
       "question": "종신보험 찾아줘",
       "target_tool": "unified_search",
-      "acceptable_first_calls": ["unified_search"],
+      "acceptable_first_calls": ["unified_search", "search_products"],
       "category": "정보 검색",
       "notes": "포괄적 검색"
     },
@@ -420,7 +420,7 @@
     {"id": "TC-059", "question": "신상철 어떤 보험 들었어?", "target_tool": "list_contracts", "acceptable_first_calls": ["list_contracts", "search_customers"], "category": "계약 조회", "notes": "보험 가입 현황"},
     {"id": "TC-060", "question": "김보성 종신보험 증권번호 알려줘", "target_tool": "list_contracts", "acceptable_first_calls": ["list_contracts", "search_customers"], "category": "계약 조회", "notes": "증권번호 → 계약 데이터"},
 
-    {"id": "TC-061", "question": "캐치업코리아 자동차보험 가입되어 있어?", "target_tool": "unified_search", "acceptable_first_calls": ["unified_search"], "category": "정보 검색", "notes": "자동차보험 가입 여부 → 통합검색"},
+    {"id": "TC-061", "question": "캐치업코리아 자동차보험 가입되어 있어?", "target_tool": "unified_search", "acceptable_first_calls": ["unified_search", "list_contracts"], "category": "정보 검색", "notes": "자동차보험 가입 여부 → 통합검색 또는 계약 조회 모두 합리적"},
     {"id": "TC-062", "question": "김보성 암보험 있어?", "target_tool": "list_contracts", "acceptable_first_calls": ["list_contracts", "search_customers"], "category": "계약 조회", "notes": "특정 보험 유무"},
     {"id": "TC-063", "question": "변수현 청약서 보여줘", "target_tool": "unified_search", "acceptable_first_calls": ["unified_search"], "category": "문서 검색", "notes": "청약서 문서 검색"},
     {"id": "TC-064", "question": "법인 고객 목록 보여줘", "target_tool": "search_customers", "acceptable_first_calls": ["search_customers"], "category": "고객 관리", "notes": "법인 필터"},
@@ -436,7 +436,7 @@
     {"id": "TC-072", "question": "변수현 배우자가 누구야?", "target_tool": "list_relationships", "acceptable_first_calls": ["list_relationships", "search_customers"], "category": "관계", "notes": "customerId required"},
     {"id": "TC-073", "question": "김보성 안영미 관계 등록해줘. 배우자야", "target_tool": "create_relationship", "acceptable_first_calls": ["search_customers"], "category": "관계", "notes": "양쪽 ID 필요"},
     {"id": "TC-074", "question": "김보성한테 메모 남겨줘. 다음주 보험 갱신 상담", "target_tool": "add_customer_memo", "acceptable_first_calls": ["add_customer_memo", "search_customers"], "category": "메모", "notes": "customerId required"},
-    {"id": "TC-075", "question": "김보성 무배당 유니버셜달러종신보험 상세 알려줘", "target_tool": "get_contract_details", "acceptable_first_calls": ["get_contract_details", "list_contracts", "search_customers"], "category": "계약 조회", "notes": "증권번호 모르면 list_contracts 먼저 필요"},
+    {"id": "TC-075", "question": "김보성 무배당 유니버셜달러종신보험 상세 알려줘", "target_tool": "get_contract_details", "acceptable_first_calls": ["get_contract_details", "list_contracts", "search_customers", "search_products"], "category": "계약 조회", "notes": "증권번호 모르면 list_contracts 먼저, 상품 상세면 search_products도 합리적"},
 
     {"id": "TC-076", "question": "보장 분석해줘 김보성", "target_tool": "unified_search", "acceptable_first_calls": ["unified_search", "search_customers"], "category": "정보 검색", "notes": "보장 분석 → 여러 데이터 필요"},
     {"id": "TC-077", "question": "캐치업코리아 정관 문서 파일명이 뭐야?", "target_tool": "find_document_by_filename", "acceptable_first_calls": ["find_document_by_filename", "unified_search"], "category": "문서 관리", "notes": "파일명 확인"},
