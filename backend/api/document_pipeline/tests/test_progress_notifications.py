@@ -233,6 +233,7 @@ class TestProgressSequence:
     @pytest.fixture
     def mock_files_collection(self):
         mock_collection = AsyncMock()
+        mock_collection.find_one = AsyncMock(return_value=None)
         mock_collection.update_one = AsyncMock()
         mock_collection.delete_one = AsyncMock(return_value=MagicMock(deleted_count=0))
         return mock_collection

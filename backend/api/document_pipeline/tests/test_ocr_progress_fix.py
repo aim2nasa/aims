@@ -144,6 +144,7 @@ class TestConvertibleMimeNoOCR:
     @pytest.fixture
     def mock_files_collection(self):
         mock = AsyncMock()
+        mock.find_one = AsyncMock(return_value=None)
         mock.update_one = AsyncMock()
         mock.delete_one = AsyncMock(return_value=MagicMock(deleted_count=0))
         return mock
