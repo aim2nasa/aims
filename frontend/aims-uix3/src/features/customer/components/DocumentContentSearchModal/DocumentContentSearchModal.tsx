@@ -14,7 +14,7 @@ import { resolveFileUrl, resolvePdfUrl } from '../../../../utils/documentTransfo
 import type { SearchResultItem } from '@/entities/search'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import { getAuthToken } from '@/shared/lib/api'
+import { getAuthToken, getCurrentUserId } from '@/shared/lib/api'
 import './DocumentContentSearchModal.css'
 
 interface DocumentContentSearchModalProps {
@@ -323,7 +323,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     // 그 외 파일은 API에서 변환된 PDF 경로 조회
     setIsLoadingPreview(true)
     try {
-      const userId = localStorage.getItem('aims-current-user-id') || 'tester'
+      const userId = getCurrentUserId() || 'tester'
       // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
       const token = getAuthToken()
 

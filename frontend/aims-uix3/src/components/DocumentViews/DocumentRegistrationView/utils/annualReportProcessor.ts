@@ -11,7 +11,7 @@
 
 import { calculateFileHash } from '@/features/customer/utils/fileHash';
 import { errorReporter } from '@/shared/lib/errorReporter';
-import { getAuthToken } from '@/shared/lib/api';
+import { getAuthToken, getCurrentUserId } from '@/shared/lib/api';
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi';
 import type { UploadFile } from '../types/uploadTypes';
 import type { LogLevel } from '../types/logTypes';
@@ -107,7 +107,7 @@ async function getCustomerDocumentHashes(customerId: string): Promise<Set<string
   // 캐시 미스 → API 일괄 조회
   try {
     const token = getAuthToken();
-    const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+    const userId = getCurrentUserId() || 'tester';
     const res = await fetch(`/api/customers/${customerId}/document-hashes`, {
       headers: {
         'x-user-id': userId,
@@ -139,7 +139,7 @@ async function getCustomerArIssueDates(customerId: string): Promise<Set<string>>
 
   // 캐시 미스 → API 조회
   try {
-    const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+    const userId = getCurrentUserId() || 'tester';
     const arListResponse = await AnnualReportApi.getAnnualReports(customerId, userId, 100);
 
     const dateSet = new Set<string>();

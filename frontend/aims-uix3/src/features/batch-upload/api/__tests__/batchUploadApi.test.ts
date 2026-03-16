@@ -40,6 +40,7 @@ vi.mock('@/shared/lib/api', () => ({
     }
   },
   getAuthHeaders: vi.fn(() => ({ 'Authorization': 'Bearer test-token' })),
+  getCurrentUserId: vi.fn(() => 'test-user-id'),
 }))
 
 // errorReporter 모킹

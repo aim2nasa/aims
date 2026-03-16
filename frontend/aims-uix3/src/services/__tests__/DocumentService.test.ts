@@ -18,6 +18,7 @@ vi.mock('@/shared/lib/api', () => ({
     delete: vi.fn(),
   },
   getAuthToken: vi.fn().mockReturnValue('test-token'),
+  getCurrentUserId: vi.fn().mockReturnValue('test-user-id'),
 }))
 
 // 바이러스 검사 모킹

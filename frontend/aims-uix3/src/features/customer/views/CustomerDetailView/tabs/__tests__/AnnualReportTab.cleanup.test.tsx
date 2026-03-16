@@ -33,6 +33,7 @@ vi.mock('@/shared/lib/api', () => ({
   apiRequest: vi.fn(),
   getAuthHeaders: () => ({ 'Authorization': 'Bearer mock-token' }),
   getAuthToken: () => 'mock-token',
+  getCurrentUserId: vi.fn().mockReturnValue('mock-user-id'),
   ApiError: class ApiError extends Error {
     constructor(message: string, public status: number, public statusText: string, public data?: unknown) {
       super(message);

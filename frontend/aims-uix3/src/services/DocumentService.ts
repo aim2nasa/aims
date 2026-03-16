@@ -8,7 +8,7 @@
  * 바이러스 검사 통합 (ClamAV)
  */
 
-import { api, getAuthToken } from '@/shared/lib/api';
+import { api, getAuthToken, getCurrentUserId } from '@/shared/lib/api';
 import { utcNowISO } from '@/shared/lib/timeUtils';
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi';
 import { checkSystemDuplicate } from '@/shared/lib/fileValidation/duplicateChecker';
@@ -593,10 +593,8 @@ export class DocumentService {
    * 문서 처리 상태별 통계를 반환
    */
   static async getDocumentStatistics(): Promise<DocumentStatistics> {
-    // 현재 사용자 ID 가져오기
-    const userId = typeof window !== 'undefined'
-      ? localStorage.getItem('aims-current-user-id') || 'tester'
-      : 'tester';
+    // 현재 사용자 ID 가져오기 (dev override 우선)
+    const userId = getCurrentUserId() || 'tester';
 
     const response = await api.get<{ success: boolean; data: DocumentStatistics }>(
       ENDPOINTS.DOCUMENT_STATISTICS,
@@ -677,10 +675,8 @@ export class DocumentService {
       }
     }
 
-    // userId 가져오기 (localStorage에서)
-    const userId = typeof window !== 'undefined'
-      ? localStorage.getItem('aims-current-user-id') || 'tester'
-      : 'tester';
+    // userId 가져오기 (dev override 우선)
+    const userId = getCurrentUserId() || 'tester';
 
     const formData = new FormData();
     formData.append('file', file);

@@ -7,7 +7,7 @@
  */
 
 import axios from 'axios';
-import { api, API_CONFIG } from '@/shared/lib/api';
+import { api, API_CONFIG, getCurrentUserId } from '@/shared/lib/api';
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi';
 
 const API_BASE = '/api/personal-files';
@@ -16,11 +16,8 @@ const API_BASE = '/api/personal-files';
  * AIMS 표준 헤더 생성 (x-user-id 방식)
  */
 const getHeaders = () => {
-  const currentUserId = typeof window !== 'undefined'
-    ? localStorage.getItem('aims-current-user-id') || 'tester'
-    : 'tester';
   return {
-    'x-user-id': currentUserId
+    'x-user-id': getCurrentUserId() || 'tester'
   };
 };
 
@@ -243,9 +240,7 @@ export const personalFilesService = {
    * @param fileId - 파일 ID
    */
   getDownloadUrl(fileId: string): string {
-    const currentUserId = typeof window !== 'undefined'
-      ? localStorage.getItem('aims-current-user-id') || 'tester'
-      : 'tester';
+    const currentUserId = getCurrentUserId() || 'tester';
     return `${API_CONFIG.BASE_URL}${API_BASE}/${fileId}/download?x-user-id=${encodeURIComponent(currentUserId)}`;
   },
 

@@ -17,7 +17,7 @@ import MoveFolderModal from './MoveFolderModal'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button } from '@/shared/ui'
-import { api } from '@/shared/lib/api'
+import { api, getCurrentUserId } from '@/shared/lib/api'
 import personalFilesService, { type PersonalFileItem } from '@/services/personalFilesService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { DocumentUtils } from '@/entities/document'
@@ -163,10 +163,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // SSE 항상 활성화 (수동 토글 제거)
 
-  // 현재 사용자 ID
-  const userId = typeof window !== 'undefined'
-    ? localStorage.getItem('aims-current-user-id') || 'tester'
-    : 'tester'
+  // 현재 사용자 ID (dev override 우선)
+  const userId = getCurrentUserId() || 'tester'
 
   // 리사이저 상태
   const [sidebarWidth, setSidebarWidth] = useState(240)

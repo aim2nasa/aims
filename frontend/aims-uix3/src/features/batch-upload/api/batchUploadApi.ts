@@ -7,7 +7,7 @@
  * 바이러스 검사 통합 (ClamAV)
  */
 
-import { api, ApiError, API_CONFIG, getAuthHeaders } from '../../../shared/lib/api'
+import { api, ApiError, API_CONFIG, getAuthHeaders, getCurrentUserId } from '../../../shared/lib/api'
 import { errorReporter } from '../../../shared/lib/errorReporter'
 import type { CustomerForMatching } from '../utils/customerMatcher'
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'
@@ -199,10 +199,8 @@ export class BatchUploadApi {
       formData.append('file', file)
       formData.append('customerId', customerId)
 
-      // 현재 사용자 ID 추가
-      const currentUserId = typeof window !== 'undefined'
-        ? localStorage.getItem('aims-current-user-id') || ''
-        : ''
+      // 현재 사용자 ID 추가 (dev override 우선)
+      const currentUserId = getCurrentUserId()
       formData.append('userId', currentUserId)
 
       // 🔴 업로드 묶음 ID 추가 (현재 세션 진행률 추적용)

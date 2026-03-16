@@ -24,6 +24,7 @@ vi.mock('@/shared/lib/api', () => ({
     delete: vi.fn(),
   },
   getAuthToken: vi.fn().mockReturnValue('test-token'),
+  getCurrentUserId: vi.fn().mockReturnValue('test-user-id'),
 }));
 
 vi.mock('@/shared/lib/fileValidation/virusScanApi', () => ({

@@ -11,7 +11,7 @@ import type {
   SearchResultItem,
   SemanticSearchResultItem
 } from '@/entities/search'
-import { API_CONFIG, getAuthHeaders, getAuthToken } from '@/shared/lib/api'
+import { API_CONFIG, getAuthHeaders, getAuthToken, getCurrentUserId } from '@/shared/lib/api'
 import { errorReporter } from '@/shared/lib/errorReporter'
 
 const SEARCH_API_URL = 'https://tars.giize.com/search_api'
@@ -56,10 +56,8 @@ export class SearchService {
    */
   static async searchDocuments(query: SearchQuery, signal?: AbortSignal): Promise<SearchResponse> {
     try {
-      // 현재 사용자 ID 가져오기
-      const userId = typeof window !== 'undefined'
-        ? localStorage.getItem('aims-current-user-id') || 'tester'
-        : 'tester';
+      // 현재 사용자 ID 가져오기 (dev override 우선)
+      const userId = getCurrentUserId() || 'tester';
 
       // 쿼리에 user_id 추가
       const queryWithUser = {
@@ -92,7 +90,7 @@ export class SearchService {
             try {
               // MongoDB에서 전체 문서 정보 조회 (🔥 getAuthToken 사용으로 v1/v2 호환)
               const token = getAuthToken();
-              const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+              const userId = getCurrentUserId() || 'tester';
               const docResponse = await fetch(`/api/documents/${docId}/status`, {
                 headers: {
                   'x-user-id': userId,
@@ -157,7 +155,7 @@ export class SearchService {
             Array.from(customerIds).map(async (customerId) => {
               try {
                 // ⭐ 설계사별 고객 데이터 격리 (🔥 getAuthToken 사용으로 v1/v2 호환)
-                const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+                const currentUserId = getCurrentUserId() || 'tester';
                 const tokenForCustomer = getAuthToken();
                 const customerResponse = await fetch(`/api/customers/${customerId}`, {
                   headers: {

@@ -7,7 +7,7 @@
  */
 
 import { UploadContext, UserIdentifierType } from '../types/uploadTypes'
-import { API_CONFIG } from '@/shared/lib/api'
+import { API_CONFIG, getCurrentUserId } from '@/shared/lib/api'
 
 type UploadMetadataValue = string | number | boolean | null | undefined
 
@@ -20,13 +20,9 @@ type UploadMetadataValue = string | number | boolean | null | undefined
 export class UserContextService {
   // 🔄 현재 기본 컨텍스트 (localStorage에서 동적 로드)
   private static getDefaultContext(): UploadContext {
-    const currentUserId = typeof window !== 'undefined'
-      ? localStorage.getItem('aims-current-user-id') || 'tester'
-      : 'tester';
-
     return {
       identifierType: 'userId',
-      identifierValue: currentUserId
+      identifierValue: getCurrentUserId() || 'tester'
     };
   }
 
@@ -37,15 +33,11 @@ export class UserContextService {
    * localStorage에서 최신 userId를 반영
    */
   static getContext(): UploadContext {
-    // userId 타입일 때만 localStorage에서 최신 값 반영
+    // userId 타입일 때만 최신 값 반영 (dev override 우선)
     if (this.context.identifierType === 'userId') {
-      const currentUserId = typeof window !== 'undefined'
-        ? localStorage.getItem('aims-current-user-id') || 'tester'
-        : 'tester';
-
       return {
         ...this.context,
-        identifierValue: currentUserId
+        identifierValue: getCurrentUserId() || 'tester'
       };
     }
 
@@ -100,11 +92,9 @@ export class UserContextService {
     // 필수: 파일
     formData.append('file', file)
 
-    // userId 타입일 때만 localStorage에서 최신 값 가져오기
+    // userId 타입일 때만 최신 값 가져오기 (dev override 우선)
     const identifierValue = this.context.identifierType === 'userId'
-      ? (typeof window !== 'undefined'
-          ? localStorage.getItem('aims-current-user-id') || 'tester'
-          : 'tester')
+      ? (getCurrentUserId() || 'tester')
       : this.context.identifierValue;
 
     // 🔍 디버깅: userId 확인

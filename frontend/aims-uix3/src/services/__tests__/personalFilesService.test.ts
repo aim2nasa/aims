@@ -21,6 +21,10 @@ const { mockAxiosPost, mockAxiosGet } = vi.hoisted(() => ({
   mockAxiosGet: vi.fn(),
 }))
 
+const { mockGetCurrentUserId } = vi.hoisted(() => ({
+  mockGetCurrentUserId: vi.fn().mockReturnValue('test-user'),
+}))
+
 // api 모듈 mock - 호이스팅됨
 vi.mock('@/shared/lib/api', () => ({
   api: {
@@ -36,6 +40,7 @@ vi.mock('@/shared/lib/api', () => ({
     TIMEOUT: 30000,
     DEFAULT_HEADERS: { 'Content-Type': 'application/json' },
   },
+  getCurrentUserId: mockGetCurrentUserId,
   ApiError: class ApiError extends Error {
     constructor(message: string, public status: number, public statusText: string, public data?: unknown) {
       super(message)
@@ -507,7 +512,7 @@ describe('PersonalFilesService', () => {
 
   describe('getDownloadUrl', () => {
     it('다운로드 URL을 생성해야 함', () => {
-      localStorageMock.getItem.mockReturnValue('test-user')
+      mockGetCurrentUserId.mockReturnValue('test-user')
 
       const url = personalFilesService.getDownloadUrl('file-123')
 
@@ -516,8 +521,8 @@ describe('PersonalFilesService', () => {
       )
     })
 
-    it('localStorage에 사용자 ID가 없으면 tester를 사용해야 함', () => {
-      localStorageMock.getItem.mockReturnValue(null)
+    it('getCurrentUserId가 빈 문자열을 반환하면 tester를 사용해야 함', () => {
+      mockGetCurrentUserId.mockReturnValue('')
 
       const url = personalFilesService.getDownloadUrl('file-123')
 

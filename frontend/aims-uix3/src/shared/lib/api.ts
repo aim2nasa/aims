@@ -103,6 +103,18 @@ export function clearActiveCustomer(): void {
 }
 
 /**
+ * 현재 사용자 ID 가져오기
+ * 개발자 모드 오버라이드(aims-dev-user-override)를 우선 적용
+ *
+ * @returns 사용자 ID 문자열 (없으면 빈 문자열)
+ */
+export function getCurrentUserId(): string {
+  if (typeof window === 'undefined') return ''
+  const devOverride = localStorage.getItem('aims-dev-user-override')
+  return devOverride || localStorage.getItem('aims-current-user-id') || ''
+}
+
+/**
  * JWT 토큰만 가져오기
  * localStorage에서 토큰 추출 (v2 우선, 하위 호환성 위해 v1도 확인)
  *

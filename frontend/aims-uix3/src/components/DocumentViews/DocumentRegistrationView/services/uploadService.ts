@@ -17,7 +17,7 @@ import {
 import { UserContextService, uploadConfig } from './userContextService'
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import { getAuthToken } from '@/shared/lib/api'
+import { getAuthToken, getCurrentUserId } from '@/shared/lib/api'
 
 /**
  * 업로드 진행률 콜백 타입
@@ -289,8 +289,8 @@ export class UploadService {
 
         // 🔔 SSE 알림 트리거 (실시간 갱신)
         if (customerId) {
-          // userId 가져오기
-          const currentUserId = localStorage.getItem('aims-current-user-id') || ''
+          // userId 가져오기 (dev override 우선)
+          const currentUserId = getCurrentUserId()
 
           if (customerId === currentUserId) {
             // 내 보관함: folderId 설정 + Personal Files SSE 웹훅 호출
