@@ -58,6 +58,7 @@ function formatPhoneNumber(phone: string | undefined | null): string {
 // 스키마 정의
 export const searchCustomersSchema = z.object({
   query: z.string().optional().describe('검색어 (이름, 전화번호, 이메일)'),
+  lastName: z.string().optional().describe('성씨로 검색 (이름의 첫 글자, 예: "김", "이", "박", "정"). query 대신 사용'),
   customerType: z.enum(['개인', '법인']).optional().describe('고객 유형'),
   status: z.enum(['active', 'inactive', 'all']).optional().default('active').describe('상태'),
   region: z.string().optional().describe('지역 (시/도)'),
@@ -100,6 +101,7 @@ export const customerToolDefinitions = [
       type: 'object' as const,
       properties: {
         query: { type: 'string', description: '검색어 (이름, 전화번호, 이메일)' },
+        lastName: { type: 'string', description: '성씨로 검색 (이름의 첫 글자, 예: "김", "이", "박", "정"). query 대신 사용' },
         customerType: { type: 'string', enum: ['개인', '법인'], description: '고객 유형' },
         status: { type: 'string', enum: ['active', 'inactive', 'all'], description: '상태 (기본: active)' },
         region: { type: 'string', description: '지역 (시/도)' },
@@ -169,8 +171,12 @@ export async function handleSearchCustomers(args: unknown) {
       'meta.created_by': userId
     };
 
+    // 성씨 검색 (이름 첫 글자 기준)
+    if (params.lastName) {
+      filter['personal_info.name'] = { $regex: `^${escapeRegex(params.lastName)}`, $options: 'i' };
+    }
     // 검색어
-    if (params.query) {
+    else if (params.query) {
       const regex = { $regex: escapeRegex(params.query), $options: 'i' };
       filter.$or = [
         { 'personal_info.name': regex },

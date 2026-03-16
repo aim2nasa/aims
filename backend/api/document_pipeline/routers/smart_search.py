@@ -79,6 +79,7 @@ _SCORE_FIELDS_LOW = [
     "ocr.summary",
     "meta.summary", "meta.filename",
     "customer_relation.notes",
+    "customer_relation.customer_name",
 ]  # 본문: 가중치 1 (full_text는 projection으로 제외됨)
 
 WEIGHT_HIGH = 3

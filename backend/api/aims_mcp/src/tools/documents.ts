@@ -114,7 +114,8 @@ export async function handleSearchDocuments(args: unknown) {
       const response = await fetch('http://localhost:8000/search', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.RAG_API_KEY || 'iWgbzs5Rbgfb7Xxy6o9P6KkrGkYpfdOK8iaGsT1lcjM'
         },
         body: JSON.stringify({
           query: params.query,
