@@ -48,6 +48,7 @@ import { useDocumentActions } from '@/hooks/useDocumentActions'
 import { useAliasGeneration } from '@/hooks/useAliasGeneration'
 import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
+import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
 
 export interface DocumentExplorerViewProps {
   /** View 표시 여부 */
@@ -119,21 +120,22 @@ const DocumentExplorerContent: React.FC<{
     onRenameSuccess: onRefreshData,
     onDeleteSuccess: onRefreshData,
   })
-  const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
+  const [renamingDoc, setRenamingDoc] = useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
   const handleRenameClick = useCallback((doc: Document) => {
     const docId = doc._id || doc.id
-    if (docId) setRenamingDocumentId(docId)
+    if (docId) setRenamingDoc({ _id: docId, originalName: doc.originalName || '', displayName: doc.displayName })
   }, [])
 
-  const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
-    setRenamingDocumentId(null)
+  const handleRenameConfirm = useCallback(async (newName: string) => {
+    if (!renamingDoc) return
+    setRenamingDoc(null)
     const field = filenameMode === 'original' ? 'originalName' : 'displayName'
-    await documentActions.renameDocument(documentId, newName, field)
-  }, [documentActions, filenameMode])
+    await documentActions.renameDocument(renamingDoc._id, newName, field)
+  }, [documentActions, filenameMode, renamingDoc])
 
   const handleRenameCancel = useCallback(() => {
-    setRenamingDocumentId(null)
+    setRenamingDoc(null)
   }, [])
 
   const handleHoverDeleteClick = useCallback((doc: Document) => {
@@ -1126,7 +1128,7 @@ const DocumentExplorerContent: React.FC<{
               </svg>
             ),
             onClick: () => {
-              if (documentId) setRenamingDocumentId(documentId)
+              if (contextMenuDocument) handleRenameClick(contextMenuDocument)
             }
           },
           {
@@ -1607,9 +1609,9 @@ const DocumentExplorerContent: React.FC<{
             onRenameClick={handleRenameClick}
             onDeleteClick={handleHoverDeleteClick}
             onDocumentContextMenu={handleDocumentContextMenu}
-            renamingDocumentId={renamingDocumentId}
-            onRenameConfirm={handleRenameConfirm}
-            onRenameCancel={handleRenameCancel}
+            renamingDocumentId={null}
+            onRenameConfirm={undefined}
+            onRenameCancel={undefined}
             isEditMode={editMode !== 'none'}
             selectedDocumentIds={selectedDocumentIds}
             onSelectDocument={handleSelectDocument}
@@ -1784,6 +1786,16 @@ const DocumentExplorerContent: React.FC<{
         customerId={contentSearchModal.customerId}
         customerName={contentSearchModal.customerName}
         customerType={contentSearchModal.customerType}
+      />
+
+      {/* 이름 변경 모달 */}
+      <RenameModal
+        visible={renamingDoc !== null}
+        onClose={handleRenameCancel}
+        onConfirm={handleRenameConfirm}
+        editField={filenameMode === 'original' ? 'originalName' : 'displayName'}
+        originalName={renamingDoc?.originalName || ''}
+        displayName={renamingDoc?.displayName}
       />
 
     </div>

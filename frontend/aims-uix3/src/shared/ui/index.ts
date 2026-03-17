@@ -82,5 +82,8 @@ export {
 export { ActionOverflowMenu } from './ActionOverflowMenu';
 export type { OverflowMenuItem } from './ActionOverflowMenu';
 
+export { RenameModal } from './RenameModal/RenameModal';
+export type { RenameModalProps } from './RenameModal/RenameModal';
+
 // Pagination (CSS만 제공)
 import './Pagination';

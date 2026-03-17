@@ -48,7 +48,7 @@ import './DocumentsTab.features.css';
 import './DocumentsTab.extras.css';
 import './DocumentsTab.cfd-overrides.css';
 import { useDocumentActions } from '@/hooks/useDocumentActions'
-import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
+import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
 
 interface DocumentsTabProps {
   customer: Customer
@@ -157,20 +157,21 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     onRenameSuccess: onRefreshData,
     onDeleteSuccess: onRefreshData,
   })
-  const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
+  const [renamingDoc, setRenamingDoc] = useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
   const handleRenameClick = useCallback((doc: CustomerDocumentItem) => {
-    if (doc._id) setRenamingDocumentId(doc._id)
+    if (doc._id) setRenamingDoc({ _id: doc._id, originalName: doc.originalName || '', displayName: doc.displayName })
   }, [])
 
-  const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
-    setRenamingDocumentId(null)
+  const handleRenameConfirm = useCallback(async (newName: string) => {
+    if (!renamingDoc) return
+    setRenamingDoc(null)
     const field = filenameMode === 'original' ? 'originalName' as const : 'displayName' as const
-    await documentActions.renameDocument(documentId, newName, field)
-  }, [documentActions, filenameMode])
+    await documentActions.renameDocument(renamingDoc._id, newName, field)
+  }, [documentActions, filenameMode, renamingDoc])
 
   const handleRenameCancel = useCallback(() => {
-    setRenamingDocumentId(null)
+    setRenamingDoc(null)
   }, [])
 
   const handleHoverDeleteClick = useCallback((doc: CustomerDocumentItem) => {
@@ -1383,6 +1384,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <div
                     className="status-filename status-filename--clickable"
                     onClick={() => handlePreview(document)}
+
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
@@ -1392,7 +1394,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                       }
                     }}
                   >
-                    {/* 🍎 파일명 표시: filenameMode에 따라 원본/별칭 전환 (또는 인라인 편집) */}
+                    {/* 🍎 파일명 표시: filenameMode에 따라 원본/별칭 전환 */}
                     {(() => {
                       const hasDisplay = Boolean(document.displayName)
                       const isAlias = filenameMode === 'display' && hasDisplay
@@ -1402,17 +1404,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                       const altName = isAlias
                         ? `원본: ${document.originalName ?? ''}`
                         : (hasDisplay ? `별칭: ${document.displayName}` : '')
-
-                      // 인라인 이름변경 모드
-                      if (renamingDocumentId && document._id && renamingDocumentId === document._id) {
-                        return (
-                          <InlineRenameInput
-                            currentName={filenameMode === 'original' ? (document.originalName || '') : (document.displayName || document.originalName || '')}
-                            onConfirm={(newName) => handleRenameConfirm(document._id!, newName)}
-                            onCancel={handleRenameCancel}
-                          />
-                        )
-                      }
 
                       return (
                         <>
@@ -1731,6 +1722,16 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
           setSummaryDocument(null)
         }}
         document={summaryDocument as any}
+      />
+
+      {/* 이름 변경 모달 */}
+      <RenameModal
+        visible={renamingDoc !== null}
+        onClose={handleRenameCancel}
+        onConfirm={handleRenameConfirm}
+        editField={filenameMode === 'original' ? 'originalName' : 'displayName'}
+        originalName={renamingDoc?.originalName || ''}
+        displayName={renamingDoc?.displayName}
       />
     </div>
   )

@@ -23,7 +23,7 @@ import {
   LinkIcon,
   SummaryIcon
 } from '../../components/DocumentActionIcons'
-import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
+// InlineRenameInput 제거 — 부모 뷰에서 RenameModal로 대체
 import { DocumentNotesModal } from './DocumentNotesModal'
 import { useUserStore } from '../../../../stores/user'
 import { errorReporter } from '@/shared/lib/errorReporter'
@@ -246,8 +246,8 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
       </div>
 
       {/* 파일명 + PDF 변환 상태 아이콘 + 호버 액션 */}
-      <div className="status-filename">
-        {/* filenameMode에 따라 별칭/원본 전환 표시 (또는 인라인 편집) */}
+      <div className="status-filename" onDoubleClick={(e) => { e.stopPropagation(); onRenameClick?.(document) }}>
+        {/* filenameMode에 따라 별칭/원본 전환 표시 */}
         {(() => {
           const hasDisplay = Boolean(document.displayName)
           const originalName = DocumentStatusService.extractOriginalFilename(document)
@@ -258,17 +258,6 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
             ? `원본: ${originalName}`
             : (hasDisplay ? `별칭: ${document.displayName}` : '')
           const docId = document._id || document.id
-
-          // 인라인 이름변경 모드
-          if (renamingDocumentId && docId && renamingDocumentId === docId) {
-            return (
-              <InlineRenameInput
-                currentName={filenameMode === 'original' ? originalName : (document.displayName || originalName)}
-                onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
-                onCancel={() => onRenameCancel?.()}
-              />
-            )
-          }
 
           return (
             <>

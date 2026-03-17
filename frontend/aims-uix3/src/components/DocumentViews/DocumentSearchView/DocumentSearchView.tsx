@@ -44,7 +44,7 @@ import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { useDocumentActions } from '@/hooks/useDocumentActions'
-import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
+import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
 import './DocumentSearchView.search.css';
 import './DocumentSearchView.results.css';
 import './DocumentSearchView.table.css';
@@ -143,7 +143,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     onRenameSuccess: onRefreshSearch,
     onDeleteSuccess: onRefreshSearch,
   })
-  const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
+  const [renamingDoc, setRenamingDoc] = useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
   const getSearchItemId = useCallback((item: SearchResultItem): string | undefined => {
     return ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined)
@@ -151,17 +151,22 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
   const handleRenameClick = useCallback((item: SearchResultItem) => {
     const docId = getSearchItemId(item)
-    if (docId) setRenamingDocumentId(docId)
+    if (docId) {
+      const origName = ('originalName' in item ? item.originalName : undefined) || ''
+      const dispName = ('displayName' in item ? item.displayName : undefined)
+      setRenamingDoc({ _id: docId, originalName: origName as string, displayName: dispName as string | undefined })
+    }
   }, [getSearchItemId])
 
-  const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
-    setRenamingDocumentId(null)
+  const handleRenameConfirm = useCallback(async (newName: string) => {
+    if (!renamingDoc) return
+    setRenamingDoc(null)
     const field = filenameMode === 'original' ? 'originalName' as const : 'displayName' as const
-    await documentActions.renameDocument(documentId, newName, field)
-  }, [documentActions, filenameMode])
+    await documentActions.renameDocument(renamingDoc._id, newName, field)
+  }, [documentActions, filenameMode, renamingDoc])
 
   const handleRenameCancel = useCallback(() => {
-    setRenamingDocumentId(null)
+    setRenamingDoc(null)
   }, [])
 
   const handleHoverDeleteClick = useCallback((item: SearchResultItem) => {
@@ -1656,18 +1661,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             })()}
                           </div>
                           <div className="row-title-container">
-                            {/* 🍎 filenameMode에 따라 별칭/원본 전환 표시 (또는 인라인 편집) */}
+                            {/* 🍎 filenameMode에 따라 별칭/원본 전환 표시 */}
                             {(() => {
-                              const docId = getSearchItemId(item)
-                              if (renamingDocumentId && docId && renamingDocumentId === docId) {
-                                return (
-                                  <InlineRenameInput
-                                    currentName={filenameMode === 'original' ? originalName : (('displayName' in item ? item.displayName : undefined) || originalName)}
-                                    onConfirm={(newName) => handleRenameConfirm(docId, newName)}
-                                    onCancel={handleRenameCancel}
-                                  />
-                                )
-                              }
                               return (
                                 <>
                                   {altName ? (
@@ -2238,6 +2233,16 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         position={documentContextMenu.position}
         sections={documentContextMenuSections}
         onClose={documentContextMenu.close}
+      />
+
+      {/* 이름 변경 모달 */}
+      <RenameModal
+        visible={renamingDoc !== null}
+        onClose={handleRenameCancel}
+        onConfirm={handleRenameConfirm}
+        editField={filenameMode === 'original' ? 'originalName' : 'displayName'}
+        originalName={renamingDoc?.originalName || ''}
+        displayName={renamingDoc?.displayName}
       />
     </CenterPaneView>
   )

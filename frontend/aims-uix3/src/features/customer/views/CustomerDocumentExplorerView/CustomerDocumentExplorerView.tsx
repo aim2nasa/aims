@@ -31,7 +31,7 @@ import { SummaryIcon, DocumentIcon } from '@/components/DocumentViews/components
 import type { Document } from '@/types/documentStatus'
 import type { Customer } from '@/entities/customer/model'
 import { useDocumentActions } from '@/hooks/useDocumentActions'
-import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
+import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import './CustomerDocumentExplorerView.css'
 
@@ -220,20 +220,21 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     onRenameSuccess: onRefreshData,
     onDeleteSuccess: onRefreshData,
   })
-  const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null)
+  const [renamingDoc, setRenamingDoc] = useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
   const handleRenameClick = useCallback((doc: { _id?: string; displayName?: string; originalName?: string }) => {
-    if (doc._id) setRenamingDocumentId(doc._id)
+    if (doc._id) setRenamingDoc({ _id: doc._id, originalName: doc.originalName || '', displayName: doc.displayName })
   }, [])
 
-  const handleRenameConfirm = useCallback(async (documentId: string, newName: string) => {
-    setRenamingDocumentId(null)
+  const handleRenameConfirm = useCallback(async (newName: string) => {
+    if (!renamingDoc) return
+    setRenamingDoc(null)
     const field = filenameMode === 'original' ? 'originalName' as const : 'displayName' as const
-    await documentActions.renameDocument(documentId, newName, field)
-  }, [documentActions, filenameMode])
+    await documentActions.renameDocument(renamingDoc._id, newName, field)
+  }, [documentActions, filenameMode, renamingDoc])
 
   const handleRenameCancel = useCallback(() => {
-    setRenamingDocumentId(null)
+    setRenamingDoc(null)
   }, [])
 
   const handleHoverDeleteClick = useCallback((doc: { _id?: string; displayName?: string; originalName?: string }) => {
@@ -694,13 +695,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                   />
                                 </span>
                                 <span className="cde-doc-row__name-cell">
-                                  {renamingDocumentId && doc._id && renamingDocumentId === doc._id ? (
-                                    <InlineRenameInput
-                                      currentName={filenameMode === 'original' ? (doc.originalName || '') : (doc.displayName || doc.originalName || '')}
-                                      onConfirm={(newName) => handleRenameConfirm(doc._id!, newName)}
-                                      onCancel={handleRenameCancel}
-                                    />
-                                  ) : (
                                     <>
                                       {altName ? (
                                         <Tooltip content={altName}>
@@ -738,7 +732,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                                         </Tooltip>
                                       </span>
                                     </>
-                                  )}
                                   {doc.relatedCustomerId && !prefix && (
                                     <Tooltip content={`${relatedGroups.find(g => g.customerId === doc.relatedCustomerId)?.name || '관계자'}에게 링크됨`}>
                                       <span className="cde-doc-row__origin-badge">
@@ -1140,6 +1133,16 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
           customerType={customerType}
         />
       )}
+
+      {/* 이름 변경 모달 */}
+      <RenameModal
+        visible={renamingDoc !== null}
+        onClose={handleRenameCancel}
+        onConfirm={handleRenameConfirm}
+        editField={filenameMode === 'original' ? 'originalName' : 'displayName'}
+        originalName={renamingDoc?.originalName || ''}
+        displayName={renamingDoc?.displayName}
+      />
     </CenterPaneView>
   )
 }

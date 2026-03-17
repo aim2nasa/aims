@@ -1,0 +1,112 @@
+/**
+ * RenameModal Styles
+ * 문서 이름 변경 모달
+ */
+
+@layer components {
+
+  .rename-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+  }
+
+  .rename-modal__label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .rename-modal__input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 400;
+    font-family: var(--font-family-system);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: border-color var(--duration-fast) var(--easing-ease-out),
+                box-shadow var(--duration-fast) var(--easing-ease-out);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .rename-modal__input:focus {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px var(--color-primary-100);
+  }
+
+  [data-theme="dark"] .rename-modal__input {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+  }
+
+  [data-theme="dark"] .rename-modal__input:focus {
+    border-color: var(--color-primary-400);
+    box-shadow: 0 0 0 3px var(--color-primary-900);
+  }
+
+  /* 참고 정보 (편집하지 않는 다른 이름) */
+  .rename-modal__reference {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-2);
+    padding: 6px 8px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: var(--radius-sm);
+  }
+
+  .rename-modal__reference-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+  }
+
+  .rename-modal__reference-value {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    word-break: break-all;
+    line-height: 1.4;
+  }
+
+  /* Footer 버튼 */
+  .rename-modal__footer-actions {
+    display: flex;
+    gap: var(--spacing-2);
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .rename-modal__btn {
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 400;
+    font-family: var(--font-family-system);
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: opacity var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .rename-modal__btn:hover {
+    opacity: 0.85;
+  }
+
+  .rename-modal__btn--cancel {
+    color: var(--color-text-secondary);
+    background-color: var(--color-bg-tertiary);
+  }
+
+  .rename-modal__btn--confirm {
+    color: var(--color-text-inverse);
+    background-color: var(--color-primary-500);
+  }
+
+} /* end @layer components */

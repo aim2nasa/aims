@@ -17,7 +17,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { SummaryIcon, DocumentIcon } from '../components/DocumentActionIcons'
-import { InlineRenameInput } from '@/shared/ui/InlineRenameInput'
+// InlineRenameInput 제거 — 부모 뷰에서 RenameModal로 대체
 import type { Document } from '@/types/documentStatus'
 import type { DocumentTreeNode, DocumentGroupBy, DocumentSortBy, SortDirection } from './types/documentExplorer'
 import { SORT_BY_LABELS } from './types/documentExplorer'
@@ -251,14 +251,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       {/* 문서명 + hover-actions (1 grid cell) */}
       <span className="doc-explorer-tree__doc-name-cell">
         <Tooltip content={altName || showName} placement="bottom">
-          <span className="doc-explorer-tree__doc-name">
-            {renamingDocumentId && renamingDocumentId === docId ? (
-              <InlineRenameInput
-                currentName={filenameMode === 'original' ? DocumentStatusService.extractOriginalFilename(doc) : (doc.displayName || DocumentStatusService.extractOriginalFilename(doc))}
-                onConfirm={(newName) => onRenameConfirm?.(docId, newName)}
-                onCancel={() => onRenameCancel?.()}
-              />
-            ) : (
+          <span className="doc-explorer-tree__doc-name" onDoubleClick={(e) => { e.stopPropagation(); onRenameClick?.(doc) }}>
               <span
                 className={`doc-explorer-tree__doc-name-text${isAlias ? ' document-name--alias' : ''}`}
                 onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}
@@ -267,7 +260,6 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
               >
                 {highlightText(showName, searchTerm)}
               </span>
-            )}
           </span>
         </Tooltip>
 
@@ -279,7 +271,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
         )}
 
         {/* 편집/삭제 아이콘 */}
-        {!(renamingDocumentId && renamingDocumentId === docId) && onRenameClick && onDeleteClick && (
+        {onRenameClick && onDeleteClick && (
           <span className="doc-explorer-tree__hover-actions" onClick={(e) => e.stopPropagation()}>
             <Tooltip content="이름 변경" placement="bottom">
               <button

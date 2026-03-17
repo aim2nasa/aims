@@ -46,6 +46,7 @@ import { usePersistedState } from '@/hooks/usePersistedState'
 import { useDocumentActions } from '@/hooks/useDocumentActions'
 import { useAliasGeneration, type AliasProgress } from '@/hooks/useAliasGeneration'
 import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
+import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
 
 interface DocumentLibraryViewProps {
   /** View 표시 여부 */
@@ -133,21 +134,22 @@ const DocumentLibraryContent: React.FC<{
     onRenameSuccess: onRefreshData,
     onDeleteSuccess: onRefreshData,
   })
-  const [renamingDocumentId, setRenamingDocumentId] = React.useState<string | null>(null)
+  const [renamingDoc, setRenamingDoc] = React.useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
   const handleRenameClick = React.useCallback((document: Document) => {
     const docId = document._id || document.id
-    if (docId) setRenamingDocumentId(docId)
+    if (docId) setRenamingDoc({ _id: docId, originalName: document.originalName || '', displayName: document.displayName })
   }, [])
 
-  const handleRenameConfirm = React.useCallback(async (documentId: string, newName: string) => {
-    setRenamingDocumentId(null)
+  const handleRenameConfirm = React.useCallback(async (newName: string) => {
+    if (!renamingDoc) return
+    setRenamingDoc(null)
     const field = filenameMode === 'original' ? 'originalName' as const : 'displayName' as const
-    await documentActions.renameDocument(documentId, newName, field)
-  }, [documentActions, filenameMode])
+    await documentActions.renameDocument(renamingDoc._id, newName, field)
+  }, [documentActions, filenameMode, renamingDoc])
 
   const handleRenameCancel = React.useCallback(() => {
-    setRenamingDocumentId(null)
+    setRenamingDoc(null)
   }, [])
 
   const handleHoverDeleteClick = React.useCallback((document: Document) => {
@@ -829,9 +831,9 @@ const DocumentLibraryContent: React.FC<{
         onFilenameModeChange={handleFilenameModeChange}
         onRenameClick={handleRenameClick}
         onDeleteClick={handleHoverDeleteClick}
-        renamingDocumentId={renamingDocumentId}
-        onRenameConfirm={handleRenameConfirm}
-        onRenameCancel={handleRenameCancel}
+        renamingDocumentId={null}
+        onRenameConfirm={undefined}
+        onRenameCancel={undefined}
         searchTerm={state.searchTerm}
       />
       </div>
@@ -952,6 +954,16 @@ const DocumentLibraryContent: React.FC<{
           </div>
         </div>
       </Modal>
+
+      {/* 이름 변경 모달 */}
+      <RenameModal
+        visible={renamingDoc !== null}
+        onClose={handleRenameCancel}
+        onConfirm={handleRenameConfirm}
+        editField={filenameMode === 'original' ? 'originalName' : 'displayName'}
+        originalName={renamingDoc?.originalName || ''}
+        displayName={renamingDoc?.displayName}
+      />
     </>
   )
 }
@@ -1398,6 +1410,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           />
         </DocumentStatusProvider>
       )}
+
     </CenterPaneView>
   )
 }
