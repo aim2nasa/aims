@@ -31,7 +31,7 @@ export const findDocumentByFilenameSchema = z.object({
 export const documentToolDefinitions = [
   {
     name: 'search_documents',
-    description: `문서를 검색합니다.
+    description: `문서/서류/파일을 찾거나 검색할 때 사용합니다. 사용자가 특정 문서를 찾거나, 문서 내용을 검색하거나, 어떤 서류가 있는지 확인하려는 의도가 있을 때 이 도구가 적합합니다.
 
 ■ 고객의 문서를 찾을 때:
   1. search_customers로 고객 ID를 먼저 조회

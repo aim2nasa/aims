@@ -26,7 +26,7 @@ export const getContractDetailsSchema = z.object({
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 고객의 보험 정보 요청 시 우선 사용하세요. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별로 필터링할 수 있습니다. "정보", "알려줘" 같은 모호한 요청은 이 도구를 우선 사용하고, "문서/서류/파일 찾아줘"는 search_documents를 사용하세요.',
+    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별로 필터링할 수 있습니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {

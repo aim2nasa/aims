@@ -8,7 +8,13 @@ SSH 경유 실행:      ssh rossi@100.110.215.65 'cd ~/aims && python3 tools/ai_
 AI 채팅 API(localhost:3010/api/chat)에 SSE 요청을 보내고,
 각 케이스의 응답을 검증합니다.
 
-exit code: 0=전체 PASS, 1=FAIL 있음
+검증 구분:
+  - HARD (PASS/FAIL): response_must_contain, response_must_not_contain,
+                       response_must_not_match, must_call_tools,
+                       required_tools, API 오류
+  - SOFT (WARN):      expected_tools (AI 비결정성 수용)
+
+exit code: 0=HARD 전체 PASS, 1=HARD FAIL 있음
 """
 
 import json
@@ -142,42 +148,53 @@ def _process_event(event, result):
 def validate_case(case, response):
     """테스트 케이스를 검증하여 결과 반환
 
-    Returns:
-        dict: {"passed": bool, "failures": list[str]}
-    """
-    failures = []
+    검증을 hard(FAIL) / soft(WARN)로 구분합니다.
+    - hard: 반드시 통과해야 하는 검증 (응답 내용, API 오류, 도구 호출 필수)
+    - soft: AI 비결정성으로 인해 실패할 수 있는 검증 (expected_tools)
 
-    # 오류 체크
+    Returns:
+        dict: {"passed": bool, "failures": list[str], "warnings": list[str]}
+    """
+    failures = []  # hard — FAIL
+    warnings = []  # soft — WARN
+
+    # 오류 체크 (hard)
     if response["error"]:
         failures.append(f"API 오류: {response['error']}")
 
     text = response["full_text"]
 
-    # must_contain 검증
+    # must_contain 검증 (hard)
     for keyword in case.get("response_must_contain", []):
         if keyword not in text:
             failures.append(f"응답에 '{keyword}'가 포함되어야 하지만 없음")
 
-    # must_not_contain 검증
+    # must_not_contain 검증 (hard)
     for keyword in case.get("response_must_not_contain", []):
         if keyword in text:
             failures.append(f"응답에 '{keyword}'가 포함되면 안 되지만 발견됨")
 
-    # must_not_match 정규식 검증
+    # must_not_match 정규식 검증 (hard)
     for pattern in case.get("response_must_not_match", []):
         if re.search(pattern, text):
             failures.append(f"응답이 패턴 '{pattern}'에 매칭되면 안 되지만 매칭됨")
 
-    # expected_tools 검증 (순서 무관, 포함 여부만)
-    expected_tools = case.get("expected_tools", [])
+    # must_call_tools 검증 (hard): 최소 1개 이상 도구 호출 필수
     called_tools = response["tools_called"]
-    for tool in expected_tools:
-        if tool not in called_tools:
-            failures.append(f"도구 '{tool}'가 호출되어야 하지만 호출되지 않음 (호출된 도구: {called_tools})")
-
-    # must_call_tools 검증: 최소 1개 이상 도구 호출 필수
     if case.get("must_call_tools") and len(called_tools) == 0:
         failures.append("도구 호출 없이 응답함 (가상 데이터 생성 의심)")
+
+    # required_tools 검증 (hard — FAIL): 이 도구는 반드시 호출되어야 함
+    required_tools = case.get("required_tools", [])
+    for tool in required_tools:
+        if tool not in called_tools:
+            failures.append(f"필수 도구 '{tool}'가 호출되지 않음 (호출된 도구: {called_tools})")
+
+    # expected_tools 검증 (soft — WARN): AI 비결정성 수용
+    expected_tools = case.get("expected_tools", [])
+    for tool in expected_tools:
+        if tool not in called_tools:
+            warnings.append(f"도구 '{tool}'가 호출 기대되었으나 미호출 (호출된 도구: {called_tools})")
 
     # validate_pagination_hint: tool_result에서 _paginationHint 포함 여부
     if case.get("validate_pagination_hint"):
@@ -187,12 +204,15 @@ def validate_case(case, response):
             if "_paginationHint" in evt_str:
                 has_hint = True
                 break
-        # 페이지네이션 힌트는 결과가 충분할 때만 나타나므로 경고만
+        # 결과가 적으면 힌트가 없을 수 있음 — 경고 수준
         if not has_hint:
-            # 결과가 적으면 힌트가 없을 수 있음 — 경고 수준
-            pass
+            warnings.append("_paginationHint가 응답에 없음 (결과가 적으면 정상)")
 
-    return {"passed": len(failures) == 0, "failures": failures}
+    return {
+        "passed": len(failures) == 0,
+        "failures": failures,
+        "warnings": warnings
+    }
 
 
 def main():
@@ -206,6 +226,8 @@ def main():
         cases = json.load(f)
 
     print(f"테스트 케이스: {len(cases)}개")
+    print(f"검증 기준: HARD (must_contain/must_not_contain/must_call_tools/required_tools) = PASS/FAIL")
+    print(f"           SOFT (expected_tools) = WARN (비결정적 AI 수용)")
     print()
 
     # 인증
@@ -218,6 +240,7 @@ def main():
     results = []
     passed = 0
     failed = 0
+    total_warnings = 0
 
     for i, case in enumerate(cases):
         case_id = case["id"]
@@ -232,12 +255,15 @@ def main():
         elapsed = time.time() - start_time
 
         validation = validate_case(case, response)
+        warn_count = len(validation["warnings"])
+        total_warnings += warn_count
 
         result_entry = {
             "id": case_id,
             "name": case_name,
             "passed": validation["passed"],
             "failures": validation["failures"],
+            "warnings": validation["warnings"],
             "elapsed_seconds": round(elapsed, 1),
             "tools_called": response["tools_called"],
             "response_preview": response["full_text"][:300],
@@ -247,12 +273,19 @@ def main():
 
         if validation["passed"]:
             passed += 1
-            print(f"  PASS ({elapsed:.1f}s) - 도구: {response['tools_called']}")
+            status = "PASS"
+            if warn_count > 0:
+                status += f" ({warn_count} warn)"
+            print(f"  {status} ({elapsed:.1f}s) - 도구: {response['tools_called']}")
+            for w in validation["warnings"]:
+                print(f"    [WARN] {w}")
         else:
             failed += 1
             print(f"  FAIL ({elapsed:.1f}s)")
             for failure in validation["failures"]:
-                print(f"    - {failure}")
+                print(f"    [FAIL] {failure}")
+            for w in validation["warnings"]:
+                print(f"    [WARN] {w}")
 
         print()
 
@@ -266,6 +299,7 @@ def main():
         "total": len(cases),
         "passed": passed,
         "failed": failed,
+        "warnings": total_warnings,
         "results": results
     }
 
@@ -274,11 +308,11 @@ def main():
 
     # 요약 출력
     print("=" * 60)
-    print(f"  결과: {passed}/{len(cases)} PASS, {failed}/{len(cases)} FAIL")
+    print(f"  결과: {passed}/{len(cases)} PASS, {failed}/{len(cases)} FAIL ({total_warnings} warnings)")
     print(f"  결과 파일: {RESULT_FILE}")
     print("=" * 60)
 
-    # exit code
+    # exit code: HARD FAIL만 실패 처리
     sys.exit(1 if failed > 0 else 0)
 
 
