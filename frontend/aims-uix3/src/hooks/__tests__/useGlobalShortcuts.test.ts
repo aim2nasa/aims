@@ -3,7 +3,7 @@
  * @since 2026-02-05
  *
  * 테스트 범위:
- * 1. Developer Mode 토글 (Ctrl+Shift+E)
+ * 1. Developer Mode 토글 (Ctrl+Shift+E) — 비밀번호 모달 연동
  * 2. 검색창 포커스 (Ctrl+K)
  * 3. 문서 검색 (Ctrl+Shift+F)
  * 4. 문서 등록 (Ctrl+Shift+U)
@@ -16,10 +16,21 @@ import { renderHook } from '@testing-library/react';
 import { useGlobalShortcuts } from '../useGlobalShortcuts';
 
 // Mock useDevModeStore
-const mockToggleDevMode = vi.fn();
+const mockSetDevMode = vi.fn();
+const mockOpenPasswordModal = vi.fn();
+let mockIsDevMode = false;
+
 vi.mock('@/shared/store/useDevModeStore', () => ({
-  useDevModeStore: (selector: (state: { toggleDevMode: () => void }) => void) =>
-    selector({ toggleDevMode: mockToggleDevMode }),
+  useDevModeStore: (selector: (state: {
+    isDevMode: boolean;
+    setDevMode: (v: boolean) => void;
+    openPasswordModal: () => void;
+  }) => unknown) =>
+    selector({
+      isDevMode: mockIsDevMode,
+      setDevMode: mockSetDevMode,
+      openPasswordModal: mockOpenPasswordModal,
+    }),
 }));
 
 describe('useGlobalShortcuts', () => {
@@ -27,6 +38,7 @@ describe('useGlobalShortcuts', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsDevMode = false;
   });
 
   afterEach(() => {
@@ -69,12 +81,24 @@ describe('useGlobalShortcuts', () => {
   // =============================================================================
 
   describe('Developer Mode 토글 (Ctrl+Shift+E)', () => {
-    it('Ctrl+Shift+E로 Developer Mode를 토글해야 함', () => {
+    it('devMode OFF 상태에서 Ctrl+Shift+E → 비밀번호 모달을 열어야 함', () => {
+      mockIsDevMode = false;
       renderHook(() => useGlobalShortcuts({ onMenuClick: mockOnMenuClick }));
 
       dispatchKeyEvent({ key: 'E', code: 'KeyE', ctrlKey: true, shiftKey: true });
 
-      expect(mockToggleDevMode).toHaveBeenCalledTimes(1);
+      expect(mockOpenPasswordModal).toHaveBeenCalledTimes(1);
+      expect(mockSetDevMode).not.toHaveBeenCalled();
+    });
+
+    it('devMode ON 상태에서 Ctrl+Shift+E → 바로 OFF로 전환해야 함', () => {
+      mockIsDevMode = true;
+      renderHook(() => useGlobalShortcuts({ onMenuClick: mockOnMenuClick }));
+
+      dispatchKeyEvent({ key: 'E', code: 'KeyE', ctrlKey: true, shiftKey: true });
+
+      expect(mockSetDevMode).toHaveBeenCalledWith(false);
+      expect(mockOpenPasswordModal).not.toHaveBeenCalled();
     });
 
     it('Ctrl+E만으로는 토글하지 않아야 함', () => {
@@ -82,7 +106,8 @@ describe('useGlobalShortcuts', () => {
 
       dispatchKeyEvent({ key: 'E', code: 'KeyE', ctrlKey: true });
 
-      expect(mockToggleDevMode).not.toHaveBeenCalled();
+      expect(mockOpenPasswordModal).not.toHaveBeenCalled();
+      expect(mockSetDevMode).not.toHaveBeenCalled();
     });
 
     it('Ctrl+Alt+Shift+E로는 토글하지 않아야 함 (Alt 포함 시 비활성)', () => {
@@ -90,7 +115,8 @@ describe('useGlobalShortcuts', () => {
 
       dispatchKeyEvent({ key: 'E', code: 'KeyE', ctrlKey: true, altKey: true, shiftKey: true });
 
-      expect(mockToggleDevMode).not.toHaveBeenCalled();
+      expect(mockOpenPasswordModal).not.toHaveBeenCalled();
+      expect(mockSetDevMode).not.toHaveBeenCalled();
     });
   });
 

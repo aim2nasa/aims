@@ -21,15 +21,23 @@ export interface GlobalShortcutActions {
  * - Ctrl+Shift+C: 고객 등록
  */
 export function useGlobalShortcuts({ onMenuClick }: GlobalShortcutActions): void {
-  const toggleDevMode = useDevModeStore((state) => state.toggleDevMode)
+  const isDevMode = useDevModeStore((state) => state.isDevMode)
+  const setDevMode = useDevModeStore((state) => state.setDevMode)
+  const openPasswordModal = useDevModeStore((state) => state.openPasswordModal)
 
   // Developer Mode 토글 핸들러
   const handleDevModeShortcut = useCallback((e: KeyboardEvent) => {
     if (e.ctrlKey && e.shiftKey && !e.altKey && e.code === 'KeyE') {
       e.preventDefault()
-      toggleDevMode()
+      if (isDevMode) {
+        // 이미 켜져 있으면 바로 끔
+        setDevMode(false)
+      } else {
+        // 꺼져 있으면 비밀번호 모달 표시
+        openPasswordModal()
+      }
     }
-  }, [toggleDevMode])
+  }, [isDevMode, setDevMode, openPasswordModal])
 
   // 전역 단축키 핸들러
   const handleGlobalShortcuts = useCallback((e: KeyboardEvent) => {

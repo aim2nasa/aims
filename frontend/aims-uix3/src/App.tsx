@@ -10,6 +10,7 @@ import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { AppleConfirmProvider } from './contexts/AppleConfirmProvider'
 import { ToastProvider } from './shared/ui/Toast'
 import { DevToolsPanel } from './shared/ui/DevToolsPanel'
+import { DevModePasswordModal } from './shared/ui/DevToolsPanel/DevModePasswordModal'
 import { OnboardingTour, type TourStep } from './shared/components/OnboardingTour'
 import { RightClickGuide } from './shared/components/RightClickGuide'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
@@ -2265,6 +2266,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
       {/* 개발자 도구 패널 (DEV 모드에서만 표시) */}
       <DevToolsPanel />
+
+      {/* 개발자 모드 비밀번호 입력 모달 */}
+      <DevModePasswordModal />
 
       {/* 첫 방문자 가이드 투어 - 비활성화 (모바일에서 오히려 불편) */}
       {/* <OnboardingTour
