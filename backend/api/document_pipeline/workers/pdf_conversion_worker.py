@@ -225,6 +225,7 @@ class PdfConversionWorker:
                     "ownerId": 1,
                     "upload.originalName": 1,
                     "displayName": 1,
+                    "customerId": 1,
                 },
             )
             if not doc:
@@ -274,11 +275,27 @@ class PdfConversionWorker:
             try:
                 from services.openai_service import OpenAIService
 
+                # 고객명 조회 (summarize_text 프롬프트에 전달하여 이름 환각 방지)
+                customer_name_for_summary = None
+                customer_id_for_summary = doc.get("customerId")
+                if customer_id_for_summary:
+                    try:
+                        customers_col_summary = MongoService.get_collection("customers")
+                        customer_doc_summary = await customers_col_summary.find_one(
+                            {"_id": BsonObjectId(str(customer_id_for_summary))},
+                            {"personal_info.name": 1}
+                        )
+                        if customer_doc_summary:
+                            customer_name_for_summary = (customer_doc_summary.get("personal_info") or {}).get("name")
+                    except Exception:
+                        pass
+
                 summary_result = await OpenAIService.summarize_text(
                     extracted_text,
                     owner_id=owner_id,
                     document_id=document_id,
                     filename=original_name,
+                    customer_name=customer_name_for_summary,
                 )
                 text_update["meta.summary"] = summary_result.get("summary", "")
                 text_update["meta.title"] = summary_result.get("title", "")
@@ -292,6 +309,9 @@ class PdfConversionWorker:
 
                 # displayName 생성 (OCR 경로와 동일 패턴, 미설정 시에만)
                 if not doc.get("displayName"):
+                    # 고객명은 위에서 조회한 customer_name_for_summary 재사용
+                    customer_name = customer_name_for_summary
+
                     title = summary_result.get("title", "")
                     if not title and len(extracted_text.strip()) >= 10:
                         try:
@@ -299,6 +319,8 @@ class PdfConversionWorker:
                                 text=extracted_text,
                                 owner_id=owner_id,
                                 document_id=document_id,
+                                original_filename=original_name,
+                                customer_name=customer_name,
                             )
                             title = title_result.get("title") or ""
                         except Exception:

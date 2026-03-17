@@ -73,7 +73,7 @@ def sanitize_display_name(name: str, original_filename: str = "") -> str:
             ext = original_filename[dot_idx:]  # ".pdf", ".jpg" 등
 
     # AI가 확장자를 포함했을 수 있으므로 제거
-    # 예: "안영미 진료비 2011.09.jpg" → "안영미 진료비 2011.09"
+    # 예: "삼성화재 진료비 2024.03.jpg" → "삼성화재 진료비 2024.03"
     common_exts = ['.jpg', '.jpeg', '.png', '.pdf', '.tiff', '.tif', '.gif', '.bmp', '.webp', '.heic']
     name_lower = name.lower()
     for c_ext in common_exts:
@@ -202,6 +202,21 @@ async def generate_single_display_name(request: SingleDisplayNameRequest):
     original_name = doc.get("originalName") or doc.get("original_name") or upload_original or ""
     doc_type = doc.get("document_type") or ""
 
+    # 고객명 조회 (프롬프트에 전달하여 이름 환각 방지)
+    customer_name = None
+    customer_id = doc.get("customerId")
+    if customer_id:
+        try:
+            customers_col = MongoService.get_collection("customers")
+            customer_doc = await customers_col.find_one(
+                {"_id": ObjectId(str(customer_id))},
+                {"personal_info.name": 1}
+            )
+            if customer_doc:
+                customer_name = (customer_doc.get("personal_info") or {}).get("name")
+        except Exception as e:
+            logger.warning(f"[DisplayName] 고객명 조회 실패 (계속 진행): {e}")
+
     try:
         # OpenAI로 제목 생성
         title_result = await OpenAIService.generate_title_only(
@@ -210,7 +225,8 @@ async def generate_single_display_name(request: SingleDisplayNameRequest):
             document_id=doc_id,
             original_filename=original_name,
             document_type=doc_type,
-            existing_aliases=request.existing_aliases
+            existing_aliases=request.existing_aliases,
+            customer_name=customer_name
         )
 
         # 크레딧 초과 체크
@@ -274,11 +290,24 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
     # 동일 고객의 기존 별칭 목록 조회 (중복 방지용)
     # 첫 문서의 customerId로 조회 (배치 내 문서는 동일 고객)
     existing_aliases: List[str] = []
+    customer_name = None
     try:
         first_doc = await collection.find_one(
             {"_id": ObjectId(request.document_ids[0])},
             {"customerId": 1}
         )
+        if first_doc and first_doc.get("customerId"):
+            # 고객명 조회 (프롬프트에 전달하여 이름 환각 방지)
+            try:
+                customers_col = MongoService.get_collection("customers")
+                customer_doc = await customers_col.find_one(
+                    {"_id": ObjectId(str(first_doc["customerId"]))},
+                    {"personal_info.name": 1}
+                )
+                if customer_doc:
+                    customer_name = (customer_doc.get("personal_info") or {}).get("name")
+            except Exception as e:
+                logger.warning(f"[DisplayName] 배치 고객명 조회 실패 (계속 진행): {e}")
         if first_doc and first_doc.get("customerId"):
             cursor = collection.find(
                 {
@@ -379,14 +408,15 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
             original_name = doc.get("originalName") or doc.get("original_name") or upload_original or ""
             doc_type = doc.get("document_type") or ""
 
-            # 7. OpenAI로 제목 생성 (개선: 파일명 + 유형 + 기존 별칭 전달)
+            # 7. OpenAI로 제목 생성 (개선: 파일명 + 유형 + 기존 별칭 + 고객명 전달)
             title_result = await OpenAIService.generate_title_only(
                 text=text,
                 owner_id=request.user_id,
                 document_id=doc_id,
                 original_filename=original_name,
                 document_type=doc_type,
-                existing_aliases=existing_aliases
+                existing_aliases=existing_aliases,
+                customer_name=customer_name
             )
 
             # 크레딧 초과 체크

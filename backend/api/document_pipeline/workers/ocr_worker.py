@@ -103,6 +103,25 @@ class OCRWorker:
         logger.info(f"Processing OCR job: file_id={file_id}, path={file_path}")
 
         try:
+            # 0. 고객명 조회 (summarize_text 프롬프트에 전달하여 이름 환각 방지)
+            customer_name = None
+            try:
+                collection = MongoService.get_collection("files")
+                file_doc = await collection.find_one(
+                    {"_id": ObjectId(file_id)},
+                    {"customerId": 1}
+                )
+                if file_doc and file_doc.get("customerId"):
+                    customers_col = MongoService.get_collection("customers")
+                    customer_doc = await customers_col.find_one(
+                        {"_id": ObjectId(str(file_doc["customerId"]))},
+                        {"personal_info.name": 1}
+                    )
+                    if customer_doc:
+                        customer_name = (customer_doc.get("personal_info") or {}).get("name")
+            except Exception as e:
+                logger.warning(f"Customer name lookup for summarize_text failed: {e}")
+
             # 1. Get page count
             page_count = await self._get_page_count(file_path)
 
@@ -123,7 +142,7 @@ class OCRWorker:
             })
 
             # 4. Process OCR
-            ocr_result = await self._process_ocr(file_path, owner_id=owner_id, doc_id=doc_id, original_name=original_name)
+            ocr_result = await self._process_ocr(file_path, owner_id=owner_id, doc_id=doc_id, original_name=original_name, customer_name=customer_name)
 
             if ocr_result.get("error"):
                 await self._handle_ocr_error(msg, ocr_result, queued_at)
@@ -171,7 +190,7 @@ class OCRWorker:
             # fail-closed: 오류 시 OCR 처리 보류 (aims_api 복구 후 재시도)
             return {"allowed": False, "reason": "quota_check_error"}
 
-    async def _process_ocr(self, file_path: str, owner_id: Optional[str] = None, doc_id: Optional[str] = None, original_name: str = "") -> Dict[str, Any]:
+    async def _process_ocr(self, file_path: str, owner_id: Optional[str] = None, doc_id: Optional[str] = None, original_name: str = "", customer_name: Optional[str] = None) -> Dict[str, Any]:
         """Process OCR using Upstage service"""
         try:
             if not os.path.exists(file_path):
@@ -201,7 +220,8 @@ class OCRWorker:
                         ocr_result["full_text"],
                         owner_id=owner_id,
                         document_id=doc_id,
-                        filename=original_name or None
+                        filename=original_name or None,
+                        customer_name=customer_name
                     )
                     summary = result.get("summary")
                     document_type = result.get("document_type", "general")
@@ -310,11 +330,26 @@ class OCRWorker:
             collection = MongoService.get_collection("files")
             doc = await collection.find_one(
                 {"_id": ObjectId(file_id)},
-                {"displayName": 1, "upload.originalName": 1}
+                {"displayName": 1, "upload.originalName": 1, "customerId": 1}
             )
             if doc and not doc.get("displayName"):
                 original_name = doc.get("upload", {}).get("originalName", "")
                 full_text = ocr_result.get("full_text", "")
+
+                # 고객명 조회 (프롬프트에 전달하여 이름 환각 방지)
+                customer_name = None
+                customer_id = doc.get("customerId")
+                if customer_id:
+                    try:
+                        customers_col = MongoService.get_collection("customers")
+                        customer_doc = await customers_col.find_one(
+                            {"_id": ObjectId(str(customer_id))},
+                            {"personal_info.name": 1}
+                        )
+                        if customer_doc:
+                            customer_name = (customer_doc.get("personal_info") or {}).get("name")
+                    except Exception as e:
+                        logger.warning(f"Customer name lookup failed: {e}")
 
                 # 1순위: summarize_text에서 받은 title
                 title = ocr_result.get("title")
@@ -325,7 +360,9 @@ class OCRWorker:
                         title_result = await OpenAIService.generate_title_only(
                             text=full_text,
                             owner_id=owner_id,
-                            document_id=doc_id
+                            document_id=doc_id,
+                            original_filename=original_name,
+                            customer_name=customer_name
                         )
                         title = title_result.get("title")
                     except Exception as e:

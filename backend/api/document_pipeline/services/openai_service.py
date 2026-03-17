@@ -175,7 +175,7 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 {text}
 
 JSON:
-{{"type":"diagnosis","confidence":0.85,"title":"홍길동 진단서(30자이내 핵심제목)","summary":"3~5줄 요약"}}
+{{"type":"diagnosis","confidence":0.85,"title":"삼성화재 진단서 2024.03(30자이내 핵심제목)","summary":"3~5줄 요약"}}
 """
 
 class OpenAIService:
@@ -270,7 +270,8 @@ class OpenAIService:
         owner_id: Optional[str] = None,
         document_id: Optional[str] = None,
         filename: Optional[str] = None,
-        display_name: Optional[str] = None
+        display_name: Optional[str] = None,
+        customer_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Summarize text and classify document type.
@@ -306,12 +307,14 @@ class OpenAIService:
 
         # 파일명/별칭 정보를 본문 앞에 합성 (분류 정확도 향상)
         file_info = ""
-        if filename or display_name:
+        if filename or display_name or customer_name:
             parts = []
             if filename:
                 parts.append(f"파일명: {filename}")
             if display_name:
                 parts.append(f"별칭: {display_name}")
+            if customer_name:
+                parts.append(f"이 문서의 고객: {customer_name}")
             file_info = " | ".join(parts) + "\n---\n"
 
         user_prompt = CLASSIFICATION_USER_PROMPT.format(file_info=file_info, text=text)
@@ -423,7 +426,8 @@ class OpenAIService:
         text: str,
         original_filename: Optional[str] = None,
         document_type: Optional[str] = None,
-        existing_aliases: Optional[List[str]] = None
+        existing_aliases: Optional[List[str]] = None,
+        customer_name: Optional[str] = None
     ) -> str:
         """별칭 생성 프롬프트 구성"""
         parts = [
@@ -431,13 +435,18 @@ class OpenAIService:
             "",
             "규칙:",
             "- 최대 35자, 한국어, 제목만 출력",
-            "- 문서에 등장하는 사람 이름이 있으면 포함",
+            "- 문서 텍스트, 파일명, 고객 정보에 실제로 등장하는 사람 이름만 포함 가능",
+            "- 문서 텍스트, 파일명, 고객 정보에 없는 이름은 절대 사용 금지 (이름을 지어내지 말 것)",
+            "- 이름을 찾을 수 없으면 이름 없이 생성",
             "- 보험사명, 상품명, 날짜, 기관명, 금액 등 구분 정보를 우선 포함",
-            "- 문서 유형명만으로 된 제목 금지 (예: '진료비 계산서' -> '안영미 진료비 2011.09')",
+            "- 문서 유형명만으로 된 제목 금지 (예: '진료비 계산서' -> '삼성화재 진료비 2024.03')",
             "- 같은 유형의 문서가 여러 개일 때 서로 구분 가능하도록 구체적으로",
             "- 파일 확장자(.jpg, .pdf 등) 절대 포함 금지",
             "- 날짜는 YYYY.MM.DD 또는 YYYY.MM 형식으로",
         ]
+
+        if customer_name:
+            parts.append(f"\n이 문서의 고객: {customer_name}")
 
         if original_filename and cls._is_meaningful_filename(original_filename):
             parts.append(f"\n원본 파일명: {original_filename}")
@@ -464,7 +473,8 @@ class OpenAIService:
         document_id: Optional[str] = None,
         original_filename: Optional[str] = None,
         document_type: Optional[str] = None,
-        existing_aliases: Optional[List[str]] = None
+        existing_aliases: Optional[List[str]] = None,
+        customer_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         경량 제목 추출 (displayName 생성용)
@@ -501,7 +511,7 @@ class OpenAIService:
         if len(text) > 3000:
             text = text[:3000]
 
-        prompt = cls._build_title_prompt(text, original_filename, document_type, existing_aliases)
+        prompt = cls._build_title_prompt(text, original_filename, document_type, existing_aliases, customer_name)
 
         try:
             client = cls._get_client()
@@ -512,7 +522,7 @@ class OpenAIService:
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=60,
-                temperature=0.3
+                temperature=0.1
             )
 
             title = response.choices[0].message.content.strip()
