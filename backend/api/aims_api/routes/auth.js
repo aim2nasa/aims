@@ -805,18 +805,24 @@ module.exports = function(db) {
     try {
       const { ObjectId } = require('mongodb');
       const usersCollection = db.collection('users');
-      // const { password } = req.body;
+      const { email } = req.body;
 
-      // 시스템 Admin 계정 조회
-      const admin = await usersCollection.findOne({
-        role: 'admin',
-        authProvider: 'system'  // 카카오가 아닌 시스템 계정
-      });
+      let admin;
+      if (email) {
+        // email이 지정되면 해당 사용자로 로그인 (regression 테스트용)
+        admin = await usersCollection.findOne({ email });
+      } else {
+        // email 미지정 시 시스템 Admin 계정 조회 (기존 동작)
+        admin = await usersCollection.findOne({
+          role: 'admin',
+          authProvider: 'system'
+        });
+      }
 
       if (!admin) {
         return res.status(401).json({
           success: false,
-          message: 'Admin 계정이 존재하지 않습니다'
+          message: email ? `${email} 계정을 찾을 수 없습니다` : 'Admin 계정이 존재하지 않습니다'
         });
       }
 

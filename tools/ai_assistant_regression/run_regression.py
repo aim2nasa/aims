@@ -42,7 +42,7 @@ REQUEST_TIMEOUT = 120  # 초
 
 
 def get_auth_token():
-    """관리자 로그인하여 JWT 토큰 획득"""
+    """설계사 계정으로 로그인하여 JWT 토큰 획득 (admin-login API에 email 전달)"""
     payload = json.dumps({"email": AUTH_EMAIL, "password": AUTH_PASSWORD}).encode("utf-8")
     req = urllib.request.Request(
         AUTH_API_URL,

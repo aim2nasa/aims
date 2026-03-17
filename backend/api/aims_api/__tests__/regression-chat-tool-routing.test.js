@@ -106,14 +106,15 @@ describe('MCP 도구 정의: 모호성 방지', () => {
     path.join('..', 'aims_mcp', 'src', 'tools', 'documents.ts')
   );
 
-  test('list_contracts description에 "정보 요청 시 우선 사용" 안내가 있어야 함', () => {
+  test('list_contracts description에 계약 세부 정보 범위가 명시되어야 함', () => {
     // description 필드 값만 추출하여 검증
     const descMatch = contractsSource.match(
       /name:\s*'list_contracts'[\s\S]*?description:\s*'([\s\S]*?)'/
     );
     expect(descMatch).not.toBeNull();
     const description = descMatch[1];
-    expect(description).toContain('정보 요청 시 우선 사용');
+    expect(description).toContain('계약');
+    expect(description).toMatch(/적합하지 않/);
   });
 
   test('search_documents description에 문서/서류/파일 전용임이 명시되어야 함', () => {
