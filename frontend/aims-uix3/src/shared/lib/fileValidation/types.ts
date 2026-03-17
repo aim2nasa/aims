@@ -9,6 +9,7 @@
  */
 export type ValidationFailReason =
   | 'blocked_extension'
+  | 'system_file'
   | 'size_exceeded'
   | 'mime_mismatch'
   | 'virus_detected'

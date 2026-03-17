@@ -108,6 +108,12 @@ describe('isSystemFileName', () => {
     expect(isSystemFileName('.DS_Store')).toBe(true)
   })
 
+  it('Office 임시 파일 감지 (~$ 접두사)', () => {
+    expect(isSystemFileName('~$보고서.xlsx')).toBe(true)
+    expect(isSystemFileName('~$계약서.docx')).toBe(true)
+    expect(isSystemFileName('~$김도일 보험현황.xlsx')).toBe(true)
+  })
+
   it('일반 파일은 통과', () => {
     expect(isSystemFileName('document.pdf')).toBe(false)
     expect(isSystemFileName('image.jpg')).toBe(false)
@@ -162,31 +168,49 @@ describe('validateExtension', () => {
     expect(result.valid).toBe(true)
   })
 
-  it('시스템 파일 거부 — Thumbs.db', () => {
+  it('OS 시스템 파일 거부 — Thumbs.db', () => {
     const file = createMockFile('Thumbs.db')
     const result = validateExtension(file)
 
     expect(result.valid).toBe(false)
-    expect(result.reason).toBe('blocked_extension')
+    expect(result.reason).toBe('system_file')
     expect(result.message).toContain('시스템 파일')
   })
 
-  it('시스템 파일 거부 — .DS_Store', () => {
+  it('OS 시스템 파일 거부 — .DS_Store', () => {
     const file = createMockFile('.DS_Store')
     const result = validateExtension(file)
 
     expect(result.valid).toBe(false)
-    expect(result.reason).toBe('blocked_extension')
+    expect(result.reason).toBe('system_file')
     expect(result.message).toContain('시스템 파일')
   })
 
-  it('시스템 파일 거부 — desktop.ini', () => {
+  it('OS 시스템 파일 거부 — desktop.ini', () => {
     const file = createMockFile('desktop.ini')
     const result = validateExtension(file)
 
     expect(result.valid).toBe(false)
-    expect(result.reason).toBe('blocked_extension')
+    expect(result.reason).toBe('system_file')
     expect(result.message).toContain('시스템 파일')
+  })
+
+  it('Office 임시 파일 거부 — ~$보고서.xlsx', () => {
+    const file = createMockFile('~$보고서.xlsx')
+    const result = validateExtension(file)
+
+    expect(result.valid).toBe(false)
+    expect(result.reason).toBe('system_file')
+    expect(result.message).toContain('편집 중 자동 생성된 파일')
+  })
+
+  it('Office 임시 파일 거부 — ~$계약서.docx', () => {
+    const file = createMockFile('~$계약서.docx')
+    const result = validateExtension(file)
+
+    expect(result.valid).toBe(false)
+    expect(result.reason).toBe('system_file')
+    expect(result.message).toContain('편집 중 자동 생성된 파일')
   })
 
   it('시스템 파일과 이름이 유사하지만 다른 파일은 통과', () => {

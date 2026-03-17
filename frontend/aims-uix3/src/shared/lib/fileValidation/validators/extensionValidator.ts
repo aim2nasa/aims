@@ -42,6 +42,8 @@ export function isSystemFileName(filename: string): boolean {
   const trimmed = filename.trim()
   // 경로 구분자가 포함된 경우 파일명만 추출
   const basename = trimmed.split(/[/\\]/).pop() || trimmed
+  // Office 임시 잠금 파일 (~$*.xlsx, ~$*.docx 등)
+  if (basename.startsWith('~$')) return true
   return (SYSTEM_FILE_NAMES as readonly string[]).includes(basename)
 }
 
@@ -53,11 +55,14 @@ export function isSystemFileName(filename: string): boolean {
 export function validateExtension(file: File): FileValidationResult {
   // 시스템 파일 체크 (Thumbs.db, .DS_Store 등)
   if (isSystemFileName(file.name)) {
+    const basename = file.name.split(/[/\\]/).pop() || file.name
     return {
       valid: false,
       file,
-      reason: 'blocked_extension',
-      message: `시스템 파일은 업로드할 수 없습니다: ${file.name}`,
+      reason: 'system_file',
+      message: basename.startsWith('~$')
+        ? `편집 중 자동 생성된 파일입니다: ${file.name}`
+        : `시스템 파일입니다: ${file.name}`,
     }
   }
 

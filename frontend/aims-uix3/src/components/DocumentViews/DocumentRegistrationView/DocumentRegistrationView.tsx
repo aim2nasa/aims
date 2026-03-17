@@ -727,6 +727,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     initialUploadFiles.forEach(uf => fileIdMap.set(uf.file, uf.id))
 
     const newUploadFiles: UploadFile[] = []
+    const systemFileNames: string[] = []
 
     // 🔄 개별 파일 상태 업데이트 헬퍼
     const updateFileStatus = (file: File, status: UploadStatus, error?: string) => {
@@ -979,6 +980,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           customerId: customerFileCustomer?._id,  // 🔗 고객 선택 시 자동 연결
           batchId: newBatchId  // 🔴 업로드 묶음 ID (진행률 추적용)
         })
+      } else if (validation.reason === 'system_file') {
+        // 시스템/임시 파일은 에러 목록에 넣지 않고 조용히 제외 + 경고 로그
+        systemFileNames.push(file.name)
       } else {
         // 검증 실패한 파일은 에러로 표시 - 🔄 개별 파일 상태 업데이트
         updateFileStatus(file, 'error', validation.message || '파일 검증 실패')
@@ -992,6 +996,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         }
         newUploadFiles.push(errorFile)
       }
+    }
+
+    // 시스템/임시 파일 제외 알림
+    if (systemFileNames.length > 0) {
+      addLog('warning', `편집 중 자동 생성된 파일 ${systemFileNames.length}개가 제외되었습니다`, systemFileNames.join(', '))
     }
 
     // 검증 실패한 파일 개수 확인 및 팝업 표시 (크기 초과, 차단 확장자, MIME 불일치 등)

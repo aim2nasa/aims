@@ -304,9 +304,36 @@ export default function BatchDocumentUploadView({
     const allFiles = Array.from(fileGroups.values()).flat()
     const validation = validateBatch(allFiles, tierLimit)
 
+    // 시스템/임시 파일과 기타 검증 실패를 분리
+    const systemFiles = validation.invalidFiles.filter(f => f.reason === 'system_file')
+    const otherInvalidFiles = validation.invalidFiles.filter(f => f.reason !== 'system_file')
+
+    // 시스템 파일이 있으면 fileGroups에서도 제거
+    if (systemFiles.length > 0) {
+      const systemFileSet = new Set(systemFiles.map(f => f.file))
+      for (const [folder, folderFiles] of fileGroups.entries()) {
+        const cleaned = folderFiles.filter(f => !systemFileSet.has(f))
+        if (cleaned.length === 0) {
+          fileGroups.delete(folder)
+        } else {
+          fileGroups.set(folder, cleaned)
+        }
+      }
+    }
+
     const errors: string[] = []
-    if (validation.invalidFiles.length > 0) {
-      errors.push(`${validation.invalidFiles.length}개 파일이 제외되었습니다 (크기 초과 또는 차단된 확장자)`)
+    if (systemFiles.length > 0) {
+      const officeTempCount = systemFiles.filter(f => f.file.name.startsWith('~$')).length
+      const osSystemCount = systemFiles.length - officeTempCount
+      if (officeTempCount > 0) {
+        errors.push(`편집 중 자동 생성된 파일 ${officeTempCount}개가 제외되었습니다`)
+      }
+      if (osSystemCount > 0) {
+        errors.push(`시스템 파일 ${osSystemCount}개가 제외되었습니다`)
+      }
+    }
+    if (otherInvalidFiles.length > 0) {
+      errors.push(`${otherInvalidFiles.length}개 파일이 제외되었습니다 (크기 초과 또는 차단된 확장자)`)
     }
     if (validation.isBatchSizeExceeded) {
       errors.push('배치 총 크기가 등급 한도를 초과했습니다')

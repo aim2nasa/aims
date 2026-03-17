@@ -56,7 +56,7 @@ export interface UserStorageInfo {
 export interface FileValidationResult {
   valid: boolean
   file: File
-  reason?: 'blocked_extension' | 'size_exceeded' | 'batch_size_exceeded'
+  reason?: 'blocked_extension' | 'system_file' | 'size_exceeded' | 'batch_size_exceeded'
   message?: string
 }
 
