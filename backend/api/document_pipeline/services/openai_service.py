@@ -169,6 +169,11 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 - general vs unclassifiable: 메모/사은품/디자인/안내문 → general. 빈이미지/텍스트없음 → unclassifiable
 - id_card vs personal_docs: 신분증/운전면허증/여권 → id_card. 통장사본/명함 → personal_docs. 복합파일(신분증+통장) → id_card 우선
 
+[title 규칙]
+- 사람 이름은 문서의 '계약자'를 기준으로 사용 (피보험자가 아닌 계약자)
+- 문서에 없는 이름은 절대 사용 금지 (이름을 지어내지 말 것)
+- 계약자를 찾을 수 없으면 이름 없이 생성
+
 [문서 메타정보 (참고용 — 본문 내용과 충돌 시 본문 우선!)]
 {file_info}
 [본문]
