@@ -49,6 +49,37 @@ const DATA_MUTATING_TOOLS = {
   contracts: ['create_contract'],
 };
 
+// 문서 관련 키워드 (사용자 질문에서 문서 의도 감지용)
+export const DOCUMENT_KEYWORDS = [
+  '문서', '서류', '증권', '보험증권', '증서', '약관',
+  '보장분석', '연금저축', '진단서', '청구서',
+  '계약서', '설계서', '제안서', '가입설계', '보장내용',
+  '첨부', '파일', '업로드', 'PDF', 'pdf',
+];
+
+// 문서 검색/조회 관련 MCP 도구
+export const DOCUMENT_SEARCH_TOOLS = [
+  'search_documents', 'list_customer_documents',
+];
+
+/**
+ * 사용자 질문에 문서 관련 키워드가 포함되어 있는지 확인
+ */
+export function hasDocumentIntent(userMessage: string): boolean {
+  const normalized = userMessage.toLowerCase();
+  return DOCUMENT_KEYWORDS.some(kw => normalized.includes(kw.toLowerCase()));
+}
+
+/**
+ * Graceful Recovery 제안이 필요한지 판단
+ * - 사용자가 문서를 요청했는데 AI가 문서 검색 도구를 사용하지 않은 경우
+ */
+export function shouldSuggestDocSearch(userContent: string, toolsUsed?: string[]): boolean {
+  if (!hasDocumentIntent(userContent)) return false;
+  if (!toolsUsed || toolsUsed.length === 0) return true;
+  return !toolsUsed.some(tool => DOCUMENT_SEARCH_TOOLS.includes(tool));
+}
+
 interface ChatPanelProps {
   /** 패널 열림 상태 */
   isOpen: boolean;
@@ -63,6 +94,8 @@ interface DisplayMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  /** AI 응답에서 사용된 도구 목록 (Graceful Recovery 감지용) */
+  toolsUsed?: string[];
 }
 
 /**
@@ -292,6 +325,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null); // 파일 입력 ref
+  const docSuggestionSentRef = useRef(false); // 문서 검색 제안 중복 클릭 방지
 
   // 🔴 팝업 모드에서 localStorage 전용 키로부터 메시지 로드
   useEffect(() => {
@@ -1650,6 +1684,80 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     return <>{result}</>;
   }, [parseTextContent, parseMarkdownTable]);
 
+  // 채팅 요청 공통 로직: 메시지 전송 + 도구 수집 + 응답 처리 + 데이터 변경 시 새로고침
+  const executeChatRequest = useCallback(async (
+    _userMessage: string,
+    allMessages: DisplayMessage[]
+  ) => {
+    // 대화 히스토리 구성 (API 전송용)
+    const chatMessages: ChatMessage[] = allMessages.map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+
+    // 데이터 변경 도구 성공 시 페이지 새로고침 플래그
+    let shouldReloadPage = false;
+    // Graceful Recovery: 사용된 도구 이름 수집
+    const collectedTools: string[] = [];
+    const handleToolResult = (event: ChatEvent) => {
+      // tool_start 이벤트에서 도구 목록 수집
+      if (event.type === 'tool_start' && event.tools) {
+        for (const t of event.tools) {
+          if (!collectedTools.includes(t)) collectedTools.push(t);
+        }
+      }
+      // tool_result 이벤트에서 개별 도구 이름 수집
+      if (event.type === 'tool_result' && event.name) {
+        if (!collectedTools.includes(event.name)) collectedTools.push(event.name);
+      }
+      if (event.type === 'tool_result' && event.success && event.name) {
+        const allMutatingTools = [
+          ...DATA_MUTATING_TOOLS.customers,
+          ...DATA_MUTATING_TOOLS.documents,
+          ...DATA_MUTATING_TOOLS.relationships,
+          ...DATA_MUTATING_TOOLS.memos,
+          ...DATA_MUTATING_TOOLS.contracts
+        ];
+        if (allMutatingTools.includes(event.name)) {
+          shouldReloadPage = true;
+        }
+      }
+    };
+
+    // 메시지 전송 및 응답 받기
+    const result = await sendMessage(chatMessages, {
+      sessionId: sessionId || undefined,
+      onChunk: handleToolResult
+    });
+
+    // 새 세션 ID 저장
+    if (result.sessionId && !sessionId) {
+      setSessionId(result.sessionId);
+    }
+
+    // 어시스턴트 응답 추가 (사용된 도구 정보 포함)
+    if (result.response) {
+      setMessages(prev => [...prev, {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: result.response,
+        timestamp: new Date(),
+        toolsUsed: collectedTools.length > 0 ? [...collectedTools] : undefined,
+      }]);
+    }
+
+    // 데이터 변경 도구 성공 시 페이지 새로고침
+    if (shouldReloadPage) {
+      setTimeout(() => {
+        if (isPopup && window.opener && !window.opener.closed) {
+          window.opener.location.reload();
+        } else {
+          window.location.reload();
+        }
+      }, 1500);
+    }
+  }, [sendMessage, sessionId, isPopup]);
+
   // 메시지 전송
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -1874,73 +1982,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
 
     try {
-      // 대화 히스토리 구성 (실제 전송용 - 문서 ID 포함)
-      const chatMessages: ChatMessage[] = [...messages, { ...userMessage, content: messageContent }].map(m => ({
-        role: m.role,
-        content: m.content
-      }));
-
-      // 데이터 변경 도구 성공 시 페이지 새로고침 플래그 설정
-      let shouldReloadPage = false;
-      const handleToolResult = (event: ChatEvent) => {
-        if (event.type === 'tool_result' && event.success && event.name) {
-          const toolName = event.name;
-          const allMutatingTools = [
-            ...DATA_MUTATING_TOOLS.customers,
-            ...DATA_MUTATING_TOOLS.documents,
-            ...DATA_MUTATING_TOOLS.relationships,
-            ...DATA_MUTATING_TOOLS.memos,
-            ...DATA_MUTATING_TOOLS.contracts
-          ];
-
-          if (allMutatingTools.includes(toolName)) {
-            console.log('[ChatPanel] 데이터 변경 감지, 응답 완료 후 페이지 새로고침 예정:', toolName);
-            shouldReloadPage = true;
-          }
-        }
-      };
-
-      // 메시지 전송 및 응답 받기 (세션 ID 포함, 도구 결과 콜백)
-      const result = await sendMessage(chatMessages, {
-        sessionId: sessionId || undefined,
-        onChunk: handleToolResult
-      });
-
-      // 새 세션 ID 저장
-      if (result.sessionId && !sessionId) {
-        setSessionId(result.sessionId);
-      }
-
-      // 어시스턴트 응답 추가
-      if (result.response) {
-        setMessages(prev => [...prev, {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: result.response,
-          timestamp: new Date()
-        }]);
-      }
-
-      // 🚨 AI 어시스턴트 데이터 변경 시 페이지 새로고침 (CenterPane + RightPane 모두 갱신)
-      // aims-uix3 전체 강제 규정: 데이터 변경 도구 성공 시 항상 페이지 새로고침
-      if (shouldReloadPage) {
-        console.log('[ChatPanel] 데이터 변경 완료, 페이지 새로고침 실행');
-        // 응답이 화면에 표시된 후 새로고침 (사용자가 결과를 볼 수 있도록 약간의 딜레이)
-        setTimeout(() => {
-          // 팝업 모드: 메인 창 새로고침 (팝업은 유지)
-          if (isPopup && window.opener && !window.opener.closed) {
-            console.log('[ChatPanel] 팝업 모드 - 메인 창 새로고침');
-            window.opener.location.reload();
-          } else {
-            // 도킹/분리 모드: 현재 창 새로고침
-            window.location.reload();
-          }
-        }, 1500);
-      }
+      await executeChatRequest(messageContent, [...messages, { ...userMessage, content: messageContent }]);
     } catch (error) {
       console.error('[ChatPanel] 전송 오류:', error);
       errorReporter.reportApiError(error as Error, { component: 'ChatPanel.handleSend' });
-      // 에러 메시지 표시
       setMessages(prev => [...prev, {
         id: `error-${Date.now()}`,
         role: 'assistant',
@@ -1956,6 +2001,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   // 세션 선택
   const handleSelectSession = async (selectedSession: ChatSession) => {
     setShowSessionList(false);
+    docSuggestionSentRef.current = false;
     const detail = await loadSession(selectedSession.session_id);
 
     if (detail) {
@@ -1969,6 +2015,37 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
   };
 
+  // Graceful Recovery: 문서 검색 제안 클릭 시 자동 전송
+  const handleDocSearchSuggestion = useCallback(async () => {
+    if (isLoading || docSuggestionSentRef.current) return;
+    docSuggestionSentRef.current = true;
+
+    const suggestionText = '위 질문에 대해 문서를 검색해주세요';
+
+    // 사용자 메시지 추가 (화면 표시용)
+    const userMessage: DisplayMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: suggestionText,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    try {
+      await executeChatRequest(suggestionText, [...messages, userMessage]);
+    } catch (error) {
+      docSuggestionSentRef.current = false;
+      console.error('[ChatPanel] 문서 검색 제안 오류:', error);
+      errorReporter.reportApiError(error as Error, { component: 'ChatPanel.handleDocSearchSuggestion' });
+      setMessages(prev => [...prev, {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: `오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
+        timestamp: new Date()
+      }]);
+    }
+  }, [isLoading, messages, executeChatRequest]);
+
   // 새 대화 시작
   const handleNewChat = () => {
     if (isLoading) {
@@ -1978,6 +2055,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     setMessages([]);
     setInput('');
     setShowSessionList(false);
+    docSuggestionSentRef.current = false;
     // 기능 목록 화면으로 돌아가기
     setPreferDirectChat(false);
     localStorage.setItem('aims-chat-direct-mode', 'false');
@@ -2515,16 +2593,34 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           )
         )}
 
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`chat-panel__message chat-panel__message--${msg.role}`}
-            onContextMenu={(e) => handleMessageContextMenu(e, msg.content)}
-          >
-            <div className="chat-panel__message-content">
-              {renderMessageContent(msg.content)}
+        {messages.map((msg, idx) => (
+          <React.Fragment key={msg.id}>
+            <div
+              className={`chat-panel__message chat-panel__message--${msg.role}`}
+              onContextMenu={(e) => handleMessageContextMenu(e, msg.content)}
+            >
+              <div className="chat-panel__message-content">
+                {renderMessageContent(msg.content)}
+              </div>
             </div>
-          </div>
+            {/* Graceful Recovery: 문서 검색 제안 (마지막 assistant 메시지에만 표시) */}
+            {msg.role === 'assistant' && !isLoading && idx === messages.length - 1 && idx > 0 && (() => {
+              const prevMsg = messages[idx - 1];
+              return prevMsg?.role === 'user' && shouldSuggestDocSearch(prevMsg.content, msg.toolsUsed);
+            })() && (
+              <div className="chat-panel__doc-suggest">
+                <button
+                  type="button"
+                  className="chat-panel__doc-suggest-btn"
+                  onClick={handleDocSearchSuggestion}
+                  disabled={isLoading}
+                >
+                  <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_1} decorative />
+                  <span>문서를 검색하시겠습니까?</span>
+                </button>
+              </div>
+            )}
+          </React.Fragment>
         ))}
 
         {/* 스트리밍 응답 */}
@@ -2964,16 +3060,34 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           )
         )}
 
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`chat-panel__message chat-panel__message--${msg.role}`}
-            onContextMenu={(e) => handleMessageContextMenu(e, msg.content)}
-          >
-            <div className="chat-panel__message-content">
-              {renderMessageContent(msg.content)}
+        {messages.map((msg, idx) => (
+          <React.Fragment key={msg.id}>
+            <div
+              className={`chat-panel__message chat-panel__message--${msg.role}`}
+              onContextMenu={(e) => handleMessageContextMenu(e, msg.content)}
+            >
+              <div className="chat-panel__message-content">
+                {renderMessageContent(msg.content)}
+              </div>
             </div>
-          </div>
+            {/* Graceful Recovery: 문서 검색 제안 (마지막 assistant 메시지에만 표시) */}
+            {msg.role === 'assistant' && !isLoading && idx === messages.length - 1 && idx > 0 && (() => {
+              const prevMsg = messages[idx - 1];
+              return prevMsg?.role === 'user' && shouldSuggestDocSearch(prevMsg.content, msg.toolsUsed);
+            })() && (
+              <div className="chat-panel__doc-suggest">
+                <button
+                  type="button"
+                  className="chat-panel__doc-suggest-btn"
+                  onClick={handleDocSearchSuggestion}
+                  disabled={isLoading}
+                >
+                  <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_1} decorative />
+                  <span>문서를 검색하시겠습니까?</span>
+                </button>
+              </div>
+            )}
+          </React.Fragment>
         ))}
 
         {isLoading && currentResponse && (

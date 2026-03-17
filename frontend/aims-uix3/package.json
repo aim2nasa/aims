@@ -1,7 +1,7 @@
 {
   "name": "aims-uix3",
   "private": true,
-  "version": "0.532.4",
+  "version": "0.533.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
