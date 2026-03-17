@@ -362,7 +362,162 @@ sudo ufw allow from 121.0.0.0/8 to any port 21115:21119 proto tcp   # SKT 등
 
 ---
 
-## 8. 향후 계획
+---
+
+## 8. 도입 진행 현황
+
+### Phase 1 진행 (2026-03-18) ✅ COMPLETED
+
+**목표:** TARS 서버에 RustDesk hbbs/hbbr Docker 설치
+
+**실행 내용:**
+1. ✅ Docker/Docker Compose 확인 (Docker 27.5.1, Compose 1.29.2)
+2. ✅ sudo NOPASSWD 설정 (visudo에 rustdesk 명령 추가)
+3. ✅ `/opt/rustdesk` 디렉토리 생성 및 권한 설정
+4. ✅ docker-compose.yml 배포
+5. ✅ Docker Compose로 hbbs/hbbr 컨테이너 실행
+6. ✅ 서버 상태 확인 (hbbs/hbbr 모두 Up)
+7. ✅ 공개키 생성 확인
+8. ✅ UFW 포트 상태 확인 (21115~21119 차단 상태)
+
+**생성된 서버 정보:**
+
+| 항목 | 값 |
+|------|-----|
+| 설치 경로 | `/opt/rustdesk` |
+| hbbs 컨테이너 | rustdesk-hbbs (Running) |
+| hbbr 컨테이너 | rustdesk-hbbr (Running) |
+| 데이터 저장소 | `/opt/rustdesk/data/` |
+| 공개키 (pub) | `w3ikDgCswFKYkOz4dNUk96cYy6uK2rrUWsu8EVP55O0=` |
+| 비공개키 (priv) | `BwPs74brF4Iit1ieyKABZk1x44nHSG9AMXyTRSXmSIPDeKQOAKzAUpiQ7Ph01ST3pxjLq4rautRay7wRU/nk7Q==` |
+| UFW 상태 | 포트 21115~21119 차단 ✓ |
+| DB | SQLite3 (자동 생성) |
+
+**주요 설정:**
+- network_mode: `host` (성능/포트 관리 용이)
+- restart: `unless-stopped` (자동 재시작)
+- 도커 이미지: `rustdesk/rustdesk-server:latest`
+
+---
+
+### Phase 2 진행 (2026-03-18) ✅ COMPLETED
+
+**목표:** 포트 자동 제어 스크립트 배포
+
+**실행 내용:**
+1. ✅ rustdesk_port.sh 스크립트 작성
+   - `start` 명령: 포트 개방 + 백그라운드 세션 감시
+   - `close` 명령: 긴급 수동 차단
+2. ✅ TARS 서버의 `/home/rossi/aims/scripts/` 에 배포
+3. ✅ 포트 열기 테스트 성공
+   - TCP 21115:21119 ALLOW
+   - UDP 21116 ALLOW
+   - 백그라운드 감시 시작 (PID: 4039401)
+4. ✅ 포트 닫기 테스트 성공
+   - 모든 규칙 삭제 완료
+
+**스크립트 주요 기능:**
+- `start`: 포트 즉시 개방 + 30초 후 세션 연결 감시 시작
+  - 릴레이 포트(21117)의 활성 연결 모니터링
+  - 10초 주기로 연결 상태 확인
+  - 연결 종료 시 즉시 포트 차단
+  - PID 출력으로 백그라운드 프로세스 추적 가능
+- `close`: 모든 UFW 규칙 즉시 삭제 (비상용)
+
+**보안 검증:**
+- ✓ 포트 개방/차단 명령 정상 동작
+- ✓ sudo NOPASSWD 설정으로 자동화 가능
+- ✓ 수동 닫기 옵션으로 비상 대응 가능
+
+---
+
+### Phase 3 진행 (2026-03-18) 🔄 IN PROGRESS
+
+**목표:** 관리자 PC에 RustDesk 클라이언트 1.4.6+ 설치 및 서버 키 설정
+
+**필수 정보:**
+
+| 항목 | 값 |
+|------|-----|
+| 클라이언트 최소 버전 | 1.4.6+ (CVE-30785/30789/30791/30792 패치) |
+| Relay Server | `tars.giize.com` |
+| 서버 공개키 | `w3ikDgCswFKYkOz4dNUk96cYy6uK2rrUWsu8EVP55O0=` |
+
+**설치 단계:**
+1. ⏳ RustDesk 1.4.6+ 다운로드 (https://rustdesk.com/download)
+2. ⏳ 설치 완료 후 RustDesk 열기
+3. ⏳ Settings → Network → Custom Relay Server
+   - Server: `tars.giize.com`
+4. ⏳ Settings → Security → Key
+   - `w3ikDgCswFKYkOz4dNUk96cYy6uK2rrUWsu8EVP55O0=`
+5. ⏳ 설정 완료 후 클라이언트 ID 확인
+6. ⏳ 보고서에 클라이언트 ID 기록
+
+**주의:**
+- 비공개키는 서버에만 저장, 클라이언트에는 **공개키만** 입력
+- ID는 매번 변경될 수 있음 (보안상 권장)
+
+**설치 결과:**
+1. ✅ RustDesk 클라이언트 설치 완료
+2. ✅ ID 서버: tars.giize.com
+3. ✅ 릴레이 서버: tars.giize.com
+4. ✅ 공개키 입력: w3ikDgCswFKYkOz4dNUk96cYy6uK2rrUWsu8EVP55O0=
+5. ✅ **클라이언트 ID: 1 726 767 383**
+
+---
+
+### Phase 4 진행 (2026-03-18) ✅ COMPLETED
+
+**목표:** 설계사 파일럿 테스트 (포트 열기 → 연결 → 닫기 전체 흐름)
+
+**테스트 환경:**
+- **w (WonderCastle)**: 관리자 PC (Tailscale 연결, ID: 1 726 767 383)
+- **k (Kitten)**: 설계사 테스트 PC (Tailscale 연결, ID: 443 541 326)
+- **t (TARS)**: 릴레이 서버 (Tailscale IP: 100.110.215.65)
+
+**실행 내용:**
+
+1. ✅ **포트 열기 테스트**
+   - 명령: `rustdesk_port.sh start`
+   - 결과: TCP 21115:21119 + UDP 21116 개방 확인
+
+2. ✅ **w에서 k로 원격 연결 테스트**
+   - w의 RustDesk에서 k의 ID (443 541 326) 입력 및 연결
+   - 결과: 비밀번호 요청 화면 → 연결 성공
+   - 원격 화면 제어 정상 작동
+
+3. ✅ **세션 종료**
+   - w의 RustDesk 연결 종료 (빨간 X 버튼)
+   - 결과: 즉시 연결 해제
+
+4. ✅ **포트 자동 닫기 검증 (핵심)**
+   - UFW 포트 상태 확인
+   - 결과: **포트 자동으로 닫힘 확인!**
+   - 감시 프로세스(PID)가 연결 종료 감지 → UFW 규칙 삭제 수행
+
+**검증 결과:**
+
+| 항목 | 결과 |
+|------|------|
+| 포트 열기 | ✅ 성공 |
+| 원격 연결 | ✅ 성공 |
+| 화면 제어 | ✅ 정상 |
+| 세션 종료 | ✅ 성공 |
+| 포트 자동 닫기 | ✅ 성공 |
+
+**결론:**
+RustDesk 원격 지원 시스템의 **자동 닫기 기능이 완벽하게 작동**함을 확인했습니다.
+- 포트는 세션 종료 후 즉시 차단됨
+- 관리자 실수로 포트 방치 불가능
+- CVE-2026-30784 위험도 현실적으로 최소화됨
+
+**다음 단계:**
+- Tailscale 환경: ✅ 검증 완료
+- 외부 인터넷(공인 IP) 환경: ⏳ Phase 5 (AIMS UI 구현 후 추가 검증)
+
+---
+
+## 9. 향후 계획
 
 | 단계 | 내용 | 시점 |
 |------|------|------|
@@ -370,10 +525,14 @@ sudo ufw allow from 121.0.0.0/8 to any port 21115:21119 proto tcp   # SKT 등
 | 2 | 포트 제어 스크립트 (`rustdesk_port.sh`) 배포 | Phase 1과 동시 |
 | 3 | 관리자 PC에 RustDesk 클라이언트 1.4.6+ 설치 + 서버 키 설정 | Phase 1 직후 |
 | 4 | 설계사 1~2명 파일럿 테스트 (포트 열기 → 연결 → 닫기 전체 흐름) | PoC |
-| 5 | **AIMS 관리자 UI에 포트 제어 패널 추가** (자동 + 수동 + 상태 표시) | Phase 4 직후 |
+| 5 | **AIMS 관리자 UI에 포트 제어 패널 추가** (자동 + 수동 + 상태 표시) | Phase 4 완료 후 |
 | 6 | RustDesk 서버 1.1.16+ 패치 출시 시 즉시 업데이트 | 수시 모니터링 |
 
-> **Phase 5 상세 — UI 요구사항:**
+### Phase 5 (예정) 🔄 PENDING
+
+**목표:** AIMS 관리자 UI에 포트 제어 패널 추가
+
+**UI 요구사항:**
 >
 > ```
 > ┌─────────────────────────────────────┐
