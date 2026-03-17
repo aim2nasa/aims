@@ -1106,6 +1106,26 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     clearNeedsScroll()
   }, [needsScroll, focusedKey, clearNeedsScroll])
 
+  // 별칭↔원본 전환 시: 선택된 문서가 있으면 해당 위치로 자동 스크롤 (정렬 변경으로 인한 위치 이동 대응)
+  const prevFilenameModeRef = useRef(filenameMode)
+  useEffect(() => {
+    if (prevFilenameModeRef.current === filenameMode) return
+    prevFilenameModeRef.current = filenameMode
+
+    if (!selectedDocumentId) return
+
+    // 트리 재정렬 + React 재렌더링 완료 후 스크롤
+    const timer = setTimeout(() => {
+      const selectedElement = document.querySelector(
+        `[data-node-key="doc-${selectedDocumentId}"]`
+      ) as HTMLElement
+      if (selectedElement) {
+        selectedElement.scrollIntoView({ block: 'center', behavior: 'instant' })
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [filenameMode, selectedDocumentId])
+
   // rAF / leave 타이머 cleanup
   useEffect(() => {
     return () => {
