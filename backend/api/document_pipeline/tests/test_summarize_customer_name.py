@@ -1,5 +1,5 @@
 """
-summarize_text() customer_name 전달 regression 테스트
+displayName 프롬프트 오염 방지 regression 테스트
 @since 2026-03-17
 
 검증 항목:
@@ -7,6 +7,9 @@ summarize_text() customer_name 전달 regression 테스트
 2. 프롬프트에 이름 환각 금지 규칙이 있는지
 3. customer_name=None일 때 "이 문서의 고객:" 행이 없어야 함
 4. CLASSIFICATION_USER_PROMPT에 "안영미" 등 특정 인명 하드코딩이 없는지
+5. 프롬프트 예시에 실제 사람 이름이 없는지 (수동 + 자동 양쪽)
+6. 계약자 기준 명칭 규칙이 존재하는지
+7. 계약자명 맨 앞 표시 규칙이 존재하는지
 """
 import pytest
 import sys
@@ -80,3 +83,52 @@ class TestSummarizeTextCustomerNameSignature:
         sig = inspect.signature(OpenAIService.summarize_text)
         param = sig.parameters["customer_name"]
         assert param.default is None
+
+
+class TestNoRealNamesInPrompts:
+    """프롬프트에 실제 사람 이름이 없는지 검증 — 프롬프트 오염 재발 방지"""
+
+    # 과거 오염을 일으켰거나 일으킬 수 있는 실제 이름 목록
+    FORBIDDEN_NAMES = ["안영미", "홍길동", "김보성", "이불", "서승원", "서기원", "정은이", "이경"]
+
+    def test_build_title_prompt_no_real_names(self):
+        """_build_title_prompt() 출력에 실제 사람 이름이 없어야 함"""
+        prompt = OpenAIService._build_title_prompt(text="테스트")
+        for name in self.FORBIDDEN_NAMES:
+            assert name not in prompt, f"프롬프트에 실제 이름 '{name}' 포함됨"
+
+    def test_classification_prompt_no_real_names(self):
+        """CLASSIFICATION_USER_PROMPT에 실제 사람 이름이 없어야 함"""
+        for name in self.FORBIDDEN_NAMES:
+            assert name not in CLASSIFICATION_USER_PROMPT, f"분류 프롬프트에 실제 이름 '{name}' 포함됨"
+
+
+class TestContractorNamingRules:
+    """계약자 기준 명칭 규칙 검증"""
+
+    def test_contractor_rule_in_title_prompt(self):
+        """_build_title_prompt()에 '계약자' 기준 규칙이 있어야 함"""
+        prompt = OpenAIService._build_title_prompt(text="테스트")
+        assert "계약자" in prompt
+
+    def test_contractor_first_rule_in_title_prompt(self):
+        """_build_title_prompt()에 계약자명 맨 앞 표시 규칙이 있어야 함"""
+        prompt = OpenAIService._build_title_prompt(text="테스트")
+        assert "맨 앞" in prompt
+
+    def test_contractor_rule_in_classification_prompt(self):
+        """CLASSIFICATION_USER_PROMPT에 '계약자' 기준 규칙이 있어야 함"""
+        assert "계약자" in CLASSIFICATION_USER_PROMPT
+
+    def test_contractor_first_rule_in_classification_prompt(self):
+        """CLASSIFICATION_USER_PROMPT에 계약자명 맨 앞 표시 규칙이 있어야 함"""
+        assert "맨 앞" in CLASSIFICATION_USER_PROMPT
+
+    def test_no_fabrication_rule_in_title_prompt(self):
+        """_build_title_prompt()에 이름 날조 금지 규칙이 있어야 함"""
+        prompt = OpenAIService._build_title_prompt(text="테스트")
+        assert "지어내지 말 것" in prompt
+
+    def test_no_fabrication_rule_in_classification_prompt(self):
+        """CLASSIFICATION_USER_PROMPT에 이름 날조 금지 규칙이 있어야 함"""
+        assert "지어내지 말 것" in CLASSIFICATION_USER_PROMPT
