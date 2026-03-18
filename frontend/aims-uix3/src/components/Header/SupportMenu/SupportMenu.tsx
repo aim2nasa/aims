@@ -1,11 +1,12 @@
 /**
- * SupportMenu — 원격 지원 v11
- * SFX exe 다운로드 + 텍스트 안내 모달 (이미지 없음)
+ * SupportMenu — 원격 지원 v12
+ * API로 서버 포트 열기 → SFX exe 다운로드 → 안내 모달
  */
 
 import React, { useEffect, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Tooltip from '../../../shared/ui/Tooltip'
+import { api } from '../../../shared/lib/api'
 import './SupportMenu.css'
 
 const SFX_EXE_URL = '/public/downloads/AIMS_remote_support.exe'
@@ -27,8 +28,13 @@ function downloadSfxExe() {
 
 export const SupportMenu: React.FC = () => {
   const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleClose = useCallback(() => setOpen(false), [])
+  const handleClose = useCallback(() => {
+    setOpen(false)
+    setError(null)
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -37,10 +43,28 @@ export const SupportMenu: React.FC = () => {
     return () => document.removeEventListener('keydown', handleEsc)
   }, [open, handleClose])
 
-  const handleClick = useCallback(() => {
-    downloadSfxExe()
-    setOpen(true)
-  }, [])
+  const handleClick = useCallback(async () => {
+    if (loading) return
+    setLoading(true)
+    setError(null)
+    try {
+      // 서버 포트 열기 API 호출
+      const result = await api.post<{ success: boolean; error?: string }>('/api/rustdesk/support-request')
+      if (!result.success) {
+        setError(result.error || '원격 지원 준비에 실패했습니다')
+        setOpen(true)
+        return
+      }
+      // 성공 시 SFX 다운로드 + 모달
+      downloadSfxExe()
+      setOpen(true)
+    } catch {
+      setError('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요')
+      setOpen(true)
+    } finally {
+      setLoading(false)
+    }
+  }, [loading])
 
   return (
     <>
@@ -65,21 +89,27 @@ export const SupportMenu: React.FC = () => {
             </div>
 
             <div className="sp-body">
-              <p className="sp-msg sp-msg--highlight">
-                원격 지원 프로그램을 다운로드하고 있습니다.
-              </p>
-              <p className="sp-msg">
-                다운로드가 완료되면 <strong>AIMS_원격지원.exe</strong>를 실행하시고<br/>
-                프로그램에 표시된 <strong>ID</strong>를 관리자에게 알려주세요
-              </p>
-              <div className="sp-id-example">
-                <span className="sp-id-label">예시)</span>
-                <span className="sp-id-number">1 726 767 383</span>
-                <span className="sp-id-arrow">← 이런 숫자</span>
-              </div>
-              <p className="sp-msg sp-msg--muted">
-                관리자가 연결할 때까지 잠시 기다려주세요
-              </p>
+              {error ? (
+                <p className="sp-msg sp-msg--error">{error}</p>
+              ) : (
+                <>
+                  <p className="sp-msg sp-msg--highlight">
+                    원격 지원 프로그램을 다운로드하고 있습니다.
+                  </p>
+                  <p className="sp-msg">
+                    다운로드가 완료되면 <strong>AIMS_원격지원.exe</strong>를 실행하시고<br/>
+                    프로그램에 표시된 <strong>ID</strong>를 관리자에게 알려주세요
+                  </p>
+                  <div className="sp-id-example">
+                    <span className="sp-id-label">예시)</span>
+                    <span className="sp-id-number">1 726 767 383</span>
+                    <span className="sp-id-arrow">← 이런 숫자</span>
+                  </div>
+                  <p className="sp-msg sp-msg--muted">
+                    관리자가 연결할 때까지 잠시 기다려주세요
+                  </p>
+                </>
+              )}
             </div>
 
           </div>

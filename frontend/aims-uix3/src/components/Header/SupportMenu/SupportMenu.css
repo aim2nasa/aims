@@ -97,6 +97,11 @@
     color: var(--color-text-tertiary);
     margin: 0;
   }
+  .sp-msg--error {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-error);
+  }
 
   .sp-id-example {
     display: flex;
