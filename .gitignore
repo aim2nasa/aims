@@ -72,3 +72,6 @@ tools/capture/hotkey.log
 mobile/screenshots/
 mobile/screenshots_*/
 mobile/node_modules/
+# RustDesk installer build artifacts
+tools/rustdesk_installer/rustdesk.exe
+tools/rustdesk_installer/dist/

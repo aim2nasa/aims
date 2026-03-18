@@ -56,7 +56,7 @@ Root: HKCU; Subkey: "Software\Classes\aims-rs"; ValueType: string; ValueName: "U
 Root: HKCU; Subkey: "Software\Classes\aims-rs\DefaultIcon"; ValueType: string; ValueName: ""; \
     ValueData: "{app}\{#MyAppExeName},1"
 Root: HKCU; Subkey: "Software\Classes\aims-rs\shell\open\command"; ValueType: string; ValueName: ""; \
-    ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+    ValueData: """{app}\{#MyAppExeName}"""
 
 [Run]
 ; 설치 완료 후 RustDesk 실행
