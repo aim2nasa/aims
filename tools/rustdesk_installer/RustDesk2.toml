@@ -1,0 +1,10 @@
+rendezvous_server = 'tars.giize.com:21116'
+nat_type = 1
+serial = 0
+unlock_pin = ''
+trusted_devices = ''
+
+[options]
+custom-rendezvous-server = 'tars.giize.com'
+relay-server = 'tars.giize.com'
+key = 'w3ikDgCswFKYkOz4dNUk96cYy6uK2rrUWsu8EVP55O0='

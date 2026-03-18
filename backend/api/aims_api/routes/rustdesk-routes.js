@@ -1,5 +1,6 @@
 const express = require("express");
 const http = require("http");
+const path = require("path");
 const router = express.Router();
 
 // rustdesk-service는 호스트 PM2에서 127.0.0.1:3015로 실행 중
@@ -51,6 +52,16 @@ module.exports = function (db, authenticateJWT) {
     } catch (err) {
       res.json({ success: false, error: err.message });
     }
+  });
+
+  // GET /api/rustdesk/download-installer — 인스톨러 다운로드 (인증 불필요)
+  router.get("/rustdesk/download-installer", (req, res) => {
+    const filePath = path.join(__dirname, "..", "public", "installers", "AIMS_RustDesk_Setup.exe");
+    res.download(filePath, "AIMS_RustDesk_Setup.exe", (err) => {
+      if (err && !res.headersSent) {
+        res.status(404).json({ success: false, message: "인스톨러 파일을 찾을 수 없습니다." });
+      }
+    });
   });
 
   // GET /api/rustdesk/status — 포트 상태

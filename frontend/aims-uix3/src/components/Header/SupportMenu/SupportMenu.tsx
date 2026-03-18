@@ -1,6 +1,7 @@
 /**
- * SupportMenu — 원격 지원 v12
- * API로 서버 포트 열기 → SFX exe 다운로드 → 안내 모달
+ * SupportMenu — 원격 지원 v13 (설치형)
+ * 최초: 인스톨러 다운로드 → 설치
+ * 이후: URI Scheme(aims-rs://)으로 RustDesk 즉시 실행
  */
 
 import React, { useEffect, useState, useCallback } from 'react'
@@ -9,7 +10,7 @@ import Tooltip from '../../../shared/ui/Tooltip'
 import { api } from '../../../shared/lib/api'
 import './SupportMenu.css'
 
-const SFX_EXE_URL = '/public/downloads/AIMS_remote_support.exe'
+const STORAGE_KEY = 'aims-rustdesk-installed'
 
 const HeadsetIcon: React.FC = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -17,54 +18,90 @@ const HeadsetIcon: React.FC = () => (
   </svg>
 )
 
-function downloadSfxExe() {
+/** 인스톨러 다운로드 */
+function downloadInstaller() {
   const a = document.createElement('a')
-  a.href = SFX_EXE_URL
-  a.download = 'AIMS_원격지원.exe'
+  a.href = '/api/rustdesk/download-installer'
+  a.download = ''
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
 }
 
+type ModalState =
+  | { type: 'none' }
+  | { type: 'install' }        // 인스톨러 다운로드 안내
+  | { type: 'running' }        // RustDesk 실행 완료 → ID 안내
+  | { type: 'error'; message: string }
+
 export const SupportMenu: React.FC = () => {
-  const [open, setOpen] = useState(false)
+  const [modal, setModal] = useState<ModalState>({ type: 'none' })
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const handleClose = useCallback(() => {
-    setOpen(false)
-    setError(null)
+    setModal({ type: 'none' })
   }, [])
 
+  // ESC로 닫기
   useEffect(() => {
-    if (!open) return
+    if (modal.type === 'none') return
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     document.addEventListener('keydown', handleEsc)
     return () => document.removeEventListener('keydown', handleEsc)
-  }, [open, handleClose])
+  }, [modal.type, handleClose])
 
   const handleClick = useCallback(async () => {
     if (loading) return
     setLoading(true)
-    setError(null)
+
     try {
-      // 서버 포트 열기 API 호출
-      const result = await api.post<{ success: boolean; error?: string }>('/api/rustdesk/support-request')
-      if (!result.success) {
-        setError(result.error || '원격 지원 준비에 실패했습니다')
-        setOpen(true)
-        return
+      const isInstalled = localStorage.getItem(STORAGE_KEY) === 'true'
+
+      if (isInstalled) {
+        // 설치됨 → API로 포트 열기 + URI Scheme 실행
+        const result = await api.post<{ success: boolean; error?: string }>('/api/rustdesk/support-request')
+        if (!result.success) {
+          setModal({ type: 'error', message: result.error || '원격 지원 준비에 실패했습니다' })
+          return
+        }
+
+        // URI Scheme으로 RustDesk 실행
+        window.location.href = 'aims-rs://start'
+
+        // blur 감지: 앱이 포커스를 가져가면 성공
+        await new Promise<void>((resolve) => {
+          const failTimer = setTimeout(() => {
+            window.removeEventListener('blur', onBlur)
+            // 3초 내 blur 없음 → 삭제된 것으로 판단 → 인스톨러 재다운로드
+            localStorage.removeItem(STORAGE_KEY)
+            downloadInstaller()
+            setModal({ type: 'install' })
+            resolve()
+          }, 3000)
+
+          const onBlur = () => {
+            clearTimeout(failTimer)
+            window.removeEventListener('blur', onBlur)
+            // 성공 → ID 안내 모달
+            setModal({ type: 'running' })
+            resolve()
+          }
+          window.addEventListener('blur', onBlur)
+        })
+      } else {
+        // 미설치 → 인스톨러 다운로드
+        downloadInstaller()
+        localStorage.setItem(STORAGE_KEY, 'true')
+        setModal({ type: 'install' })
       }
-      // 성공 시 SFX 다운로드 + 모달
-      downloadSfxExe()
-      setOpen(true)
     } catch {
-      setError('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요')
-      setOpen(true)
+      setModal({ type: 'error', message: '서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요' })
     } finally {
       setLoading(false)
     }
   }, [loading])
+
+  const isOpen = modal.type !== 'none'
 
   return (
     <>
@@ -74,7 +111,7 @@ export const SupportMenu: React.FC = () => {
         </button>
       </Tooltip>
 
-      {open && createPortal(
+      {isOpen && createPortal(
         <div className="sp-overlay" onClick={handleClose}>
           <div className="sp-modal" onClick={e => e.stopPropagation()}>
 
@@ -89,21 +126,36 @@ export const SupportMenu: React.FC = () => {
             </div>
 
             <div className="sp-body">
-              {error ? (
-                <p className="sp-msg sp-msg--error">{error}</p>
-              ) : (
+              {modal.type === 'error' && (
+                <p className="sp-msg sp-msg--error">{modal.message}</p>
+              )}
+
+              {modal.type === 'install' && (
                 <>
                   <p className="sp-msg sp-msg--highlight">
-                    원격 지원 프로그램을 다운로드하고 있습니다.
+                    원격 지원 프로그램을 다운로드하고 있습니다
                   </p>
                   <p className="sp-msg">
-                    다운로드가 완료되면 <strong>AIMS_원격지원.exe</strong>를 실행하시고<br/>
+                    다운로드된 <strong>AIMS_RustDesk_Setup.exe</strong>를 실행하여 설치해주세요
+                  </p>
+                  <p className="sp-msg sp-msg--muted">
+                    설치는 최초 1회만 필요합니다. 이후에는 바로 실행됩니다
+                  </p>
+                </>
+              )}
+
+              {modal.type === 'running' && (
+                <>
+                  <p className="sp-msg sp-msg--highlight">
+                    원격 지원 프로그램이 실행되었습니다
+                  </p>
+                  <p className="sp-msg">
                     프로그램에 표시된 <strong>ID</strong>를 관리자에게 알려주세요
                   </p>
                   <div className="sp-id-example">
                     <span className="sp-id-label">예시)</span>
                     <span className="sp-id-number">1 726 767 383</span>
-                    <span className="sp-id-arrow">← 이런 숫자</span>
+                    <span className="sp-id-arrow">&larr; 이런 숫자</span>
                   </div>
                   <p className="sp-msg sp-msg--muted">
                     관리자가 연결할 때까지 잠시 기다려주세요
