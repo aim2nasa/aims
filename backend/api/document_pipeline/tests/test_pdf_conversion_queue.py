@@ -772,3 +772,67 @@ class TestInfiniteLoopRegression:
         update_doc = update_call[0][1]
         assert "$unset" in update_doc
         assert "meta.text_extraction_failed" in update_doc["$unset"]
+
+
+# ========================================
+# COLLSCAN 인덱스 Regression 테스트
+# upload.conversion_status 인덱스가 워커 시작 시
+# 자동 생성되는지 검증 (COLLSCAN 방지)
+# ========================================
+
+class TestConversionStatusIndex:
+    """
+    files 컬렉션의 upload.conversion_status 인덱스 생성 검증.
+
+    _recover_completed_without_text()와 _recover_stuck_pending_documents()가
+    3분마다 upload.conversion_status로 쿼리하므로, 인덱스 없으면 COLLSCAN 발생.
+    워커 시작 시 _ensure_files_indexes()로 sparse 인덱스를 자동 생성해야 한다.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup_mocks(self):
+        """워커 mock 설정"""
+        with patch("workers.pdf_conversion_worker.MongoService") as mock_mongo, \
+             patch("workers.pdf_conversion_worker.PdfConversionQueueService") as mock_queue:
+            self.mock_mongo = mock_mongo
+            self.mock_queue_service = mock_queue
+            self.mock_files_col = AsyncMock()
+            mock_mongo.get_collection.return_value = self.mock_files_col
+
+            from workers.pdf_conversion_worker import PdfConversionWorker
+            self.worker = PdfConversionWorker()
+            yield
+
+    @pytest.mark.asyncio
+    async def test_ensure_files_indexes_creates_conversion_status_index(self):
+        """워커 시작 시 upload.conversion_status sparse 인덱스가 생성된다"""
+        self.mock_files_col.create_index.return_value = "idx_conversion_status"
+
+        await self.worker._ensure_files_indexes()
+
+        self.mock_files_col.create_index.assert_called_once()
+        call_args = self.mock_files_col.create_index.call_args
+
+        # 인덱스 키: upload.conversion_status ascending
+        assert call_args[0][0] == [("upload.conversion_status", 1)]
+        # sparse=True (conversion_status 없는 문서는 인덱스에서 제외)
+        assert call_args[1]["sparse"] is True
+        # 인덱스 이름
+        assert call_args[1]["name"] == "idx_conversion_status"
+
+    @pytest.mark.asyncio
+    async def test_ensure_files_indexes_error_does_not_raise(self):
+        """인덱스 생성 실패 시 예외가 전파되지 않는다 (워커 시작 차단 방지)"""
+        self.mock_files_col.create_index.side_effect = Exception("index creation failed")
+
+        # 예외 없이 정상 반환
+        await self.worker._ensure_files_indexes()
+
+    @pytest.mark.asyncio
+    async def test_worker_start_calls_ensure_files_indexes(self):
+        """워커 start()의 코드에 _ensure_files_indexes() 호출이 포함되어 있다"""
+        import inspect
+        from workers.pdf_conversion_worker import PdfConversionWorker
+        source = inspect.getsource(PdfConversionWorker.start)
+        assert "_ensure_files_indexes" in source, \
+            "start() 메서드에 _ensure_files_indexes() 호출이 없습니다"

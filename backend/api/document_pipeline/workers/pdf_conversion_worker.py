@@ -43,6 +43,7 @@ class PdfConversionWorker:
 
         # 인덱스 보장
         await PdfConversionQueueService.ensure_indexes()
+        await self._ensure_files_indexes()
 
         # 시작 시 stale 작업 복구
         recovered = await PdfConversionQueueService.cleanup_stale_jobs()
@@ -67,6 +68,23 @@ class PdfConversionWorker:
         if self._cleanup_task:
             self._cleanup_task.cancel()
         logger.info(f"[PDF변환워커] 중지: {self.worker_id}")
+
+    async def _ensure_files_indexes(self):
+        """files 컬렉션 인덱스 보장 (워커 시작 시 1회)
+
+        _recover_completed_without_text()와 _recover_stuck_pending_documents()가
+        3분마다 upload.conversion_status로 쿼리하므로 COLLSCAN 방지.
+        """
+        try:
+            files_col = MongoService.get_collection("files")
+            await files_col.create_index(
+                [("upload.conversion_status", 1)],
+                name="idx_conversion_status",
+                sparse=True,
+            )
+            logger.info("[PDF변환워커] files 인덱스 보장 완료: idx_conversion_status")
+        except Exception as e:
+            logger.warning(f"[PDF변환워커] files 인덱스 생성 실패 (무시): {e}")
 
     async def _process_next(self):
         """다음 작업 1건 처리"""
