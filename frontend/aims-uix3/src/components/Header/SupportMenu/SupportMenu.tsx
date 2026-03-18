@@ -6,10 +6,8 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Tooltip from '../../../shared/ui/Tooltip'
-import { api } from '@/shared/lib/api'
 import './SupportMenu.css'
 
-type PortStatus = 'idle' | 'opening' | 'open' | 'error'
 type ModalMode = 'none' | 'setup' | 'connect'
 
 /** RustDesk exe 직접 다운로드 (서버 호스팅) */
@@ -82,8 +80,6 @@ const CheckIcon: React.FC = () => (
 
 export const SupportMenu: React.FC = () => {
   const [modalMode, setModalMode] = useState<ModalMode>('none')
-  const [portStatus, setPortStatus] = useState<PortStatus>('idle')
-  const [errorMessage, setErrorMessage] = useState('')
   const [step, setStep] = useState(0) // 0: 초기, 1: exe 다운로드됨, 2: 설정 완료
 
   const isFirstTime = localStorage.getItem('aims-rustdesk-setup') !== 'done'
@@ -95,38 +91,19 @@ export const SupportMenu: React.FC = () => {
     return () => document.removeEventListener('keydown', handleEsc)
   }, [modalMode])
 
-  const requestSupport = useCallback(async () => {
-    setPortStatus('opening')
-    setErrorMessage('')
-    try {
-      const result = await api.post<{ success: boolean }>('/api/rustdesk/support-request')
-      if (result.success) {
-        setPortStatus('open')
-        downloadConfigVbs()
-      } else {
-        setPortStatus('error')
-        setErrorMessage('연결 준비에 실패했습니다. 잠시 후 다시 시도해 주세요.')
-      }
-    } catch {
-      setPortStatus('error')
-      setErrorMessage('서버에 연결할 수 없습니다. 인터넷 연결을 확인해 주세요.')
-    }
-  }, [])
-
   const handleClick = useCallback(() => {
     if (isFirstTime) {
       setStep(0)
       setModalMode('setup')
     } else {
+      // 재방문: VBS 다운로드 + 안내
+      downloadConfigVbs()
       setModalMode('connect')
-      requestSupport()
     }
-  }, [isFirstTime, requestSupport])
+  }, [isFirstTime])
 
   const handleClose = useCallback(() => {
     setModalMode('none')
-    setPortStatus('idle')
-    setErrorMessage('')
     setStep(0)
   }, [])
 
@@ -150,14 +127,13 @@ export const SupportMenu: React.FC = () => {
   /** Step 3: 모든 설정 완료 */
   const handleSetupComplete = useCallback(() => {
     localStorage.setItem('aims-rustdesk-setup', 'done')
+    downloadConfigVbs()
     setModalMode('connect')
-    requestSupport()
-  }, [requestSupport])
+  }, [])
 
   const handleNeedSetup = useCallback(() => {
     setStep(0)
     setModalMode('setup')
-    setPortStatus('idle')
   }, [])
 
   return (
@@ -259,46 +235,28 @@ export const SupportMenu: React.FC = () => {
             {modalMode === 'connect' && (
               <>
                 <div className="sp-hero">
-                  <div className={`sp-status sp-status--${portStatus}`}>
-                    {portStatus === 'opening' && <div className="sp-spinner" />}
-                    {portStatus === 'open' && <CheckIcon />}
-                    {portStatus === 'error' && (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                    )}
+                  <div className="sp-status sp-status--open">
+                    <CheckIcon />
                   </div>
-                  <h2 className="sp-title">
-                    {portStatus === 'opening' && '연결 준비 중...'}
-                    {portStatus === 'open' && '연결 준비 완료'}
-                    {portStatus === 'error' && '연결 실패'}
-                    {portStatus === 'idle' && '원격 지원'}
-                  </h2>
-                  {portStatus === 'error' && <p className="sp-desc sp-desc--err">{errorMessage}</p>}
+                  <h2 className="sp-title">원격 지원 시작</h2>
                 </div>
 
-                {portStatus === 'open' && (
-                  <div className="sp-guide">
-                    <div className="sp-guide-arrow">↓</div>
-                    <p className="sp-guide-main">
-                      화면 하단에 받아진 파일을 <strong>클릭</strong>하면<br/>원격 지원이 시작됩니다
-                    </p>
-                    <p className="sp-guide-sub">
-                      실행 후 화면의 <strong>접속 번호</strong>를 관리자에게 알려주세요
-                    </p>
-                  </div>
-                )}
-
-                {portStatus === 'error' && (
-                  <div className="sp-actions">
-                    <button type="button" className="sp-card-btn sp-card-btn--primary" onClick={() => requestSupport()}>다시 시도</button>
-                  </div>
-                )}
+                <div className="sp-guide">
+                  <div className="sp-guide-arrow">↓</div>
+                  <p className="sp-guide-main">
+                    화면 하단에 받아진 파일을 <strong>클릭</strong>하면<br/>원격 지원이 시작됩니다
+                  </p>
+                  <p className="sp-guide-sub">
+                    실행 후 화면의 <strong>접속 번호</strong>를 관리자에게 알려주세요
+                  </p>
+                </div>
 
                 <div className="sp-footer">
                   <button type="button" className="sp-link" onClick={handleNeedSetup}>
                     프로그램을 아직 설치하지 않으셨나요?
                   </button>
                   <button type="button" className="sp-card-btn sp-card-btn--primary sp-footer-btn" onClick={handleClose}>
-                    {portStatus === 'open' ? '알겠습니다' : '닫기'}
+                    알겠습니다
                   </button>
                 </div>
               </>
