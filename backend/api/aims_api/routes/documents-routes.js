@@ -3215,7 +3215,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
   router.post('/internal/notify-conversion', async (req, res) => {
     try {
       const apiKey = req.headers['x-api-key'];
-      const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'aims-internal-token-logging-key-2024';
+      const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
       if (apiKey !== INTERNAL_API_KEY) {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
       }

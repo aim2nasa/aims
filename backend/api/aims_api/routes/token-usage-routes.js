@@ -23,7 +23,7 @@ const {
 const { getLastResetTime } = require('../lib/usageResetService');
 
 // 내부 API 키 (환경변수 또는 기본값)
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'aims-internal-token-logging-key-2024';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
 
 /**
  * 내부 API 키 검증 미들웨어

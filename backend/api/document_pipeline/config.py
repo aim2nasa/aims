@@ -40,11 +40,10 @@ class Settings(BaseSettings):
     # Google Sheets
     GOOGLE_SHEETS_ID: str = ""
 
-    # Internal API
-    AIMS_API_KEY: str = "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
+    # Internal API — 키는 환경변수(.env.shared → .env)에서 로드. 기본값 없음.
     AIMS_API_URL: str = "http://localhost:3010"
-    WEBHOOK_API_KEY: str = "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
-    INTERNAL_API_KEY: str = "aims-internal-token-logging-key-2024"  # 크레딧 체크 API용
+    WEBHOOK_API_KEY: str = ""
+    INTERNAL_API_KEY: str = ""  # 크레딧 체크 API용
 
     # PDF Converter
     PDF_CONVERTER_HOST: str = "localhost"

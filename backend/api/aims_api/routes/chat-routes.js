@@ -355,7 +355,7 @@ router.post('/transcribe', authenticateJWT, upload.single('file'), async (req, r
 router.post('/internal/check-credit', async (req, res) => {
   // API Key 인증 (내부 호출용)
   const apiKey = req.headers['x-api-key'];
-  const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'aims-internal-token-logging-key-2024';
+  const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
 
   if (apiKey !== INTERNAL_API_KEY) {
     console.warn('[CreditCheck] 잘못된 API Key로 내부 API 호출 시도');
@@ -405,7 +405,7 @@ router.post('/internal/check-credit', async (req, res) => {
  */
 router.get('/internal/credit-pending-documents', async (req, res) => {
   const apiKey = req.headers['x-api-key'];
-  const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'aims-internal-token-logging-key-2024';
+  const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
 
   if (apiKey !== INTERNAL_API_KEY) {
     return res.status(401).json({ success: false, error: '인증 실패' });

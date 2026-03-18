@@ -130,6 +130,7 @@ docker run -d --network host \
   -e N8N_API_KEY="${N8N_API_KEY}" \
   -e N8N_WEBHOOK_API_KEY="${N8N_WEBHOOK_API_KEY}" \
   -e INTERNAL_WEBHOOK_API_KEY="${N8N_WEBHOOK_API_KEY}" \
+  -e INTERNAL_API_KEY="${INTERNAL_API_KEY}" \
   -e CLAMAV_ENABLED="${CLAMAV_ENABLED:-true}" \
   -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
   -e MCP_SERVER_URL="${MCP_SERVER_URL:-http://localhost:3011}" \

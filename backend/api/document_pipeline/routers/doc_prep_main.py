@@ -157,7 +157,7 @@ async def check_credit_for_upload(user_id: str, estimated_pages: int = 1) -> Dic
                 },
                 headers={
                     "Content-Type": "application/json",
-                    "x-api-key": settings.INTERNAL_API_KEY or "aims-internal-token-logging-key-2024"
+                    "x-api-key": settings.INTERNAL_API_KEY
                 },
                 timeout=10.0
             )

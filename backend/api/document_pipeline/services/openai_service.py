@@ -14,10 +14,11 @@ from config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# aims_api 토큰 로깅 설정
-AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
+# aims_api 토큰 로깅 설정 — settings에서 로드 (pydantic_settings 통합)
+_settings = get_settings()
+AIMS_API_BASE_URL = _settings.AIMS_API_URL
 TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
+INTERNAL_API_KEY = _settings.INTERNAL_API_KEY
 
 # 🔴 크레딧 체크 API 설정
 CREDIT_CHECK_URL = f"{AIMS_API_BASE_URL}/api/internal/check-credit"
