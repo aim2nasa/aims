@@ -19,7 +19,7 @@ type PortStatus = 'idle' | 'opening' | 'open' | 'error'
 type ModalMode = 'none' | 'first-time' | 'returning'
 
 /** 설치 배치 파일 (서버 설정 자동 적용 + RustDesk 다운로드/실행) */
-const INSTALLER_URL = '/public/downloads/AIMS_원격지원_설치.bat'
+const INSTALLER_URL = '/public/downloads/AIMS_remote_support.bat'
 
 export const SupportMenu: React.FC = () => {
   const [modalMode, setModalMode] = useState<ModalMode>('none')
