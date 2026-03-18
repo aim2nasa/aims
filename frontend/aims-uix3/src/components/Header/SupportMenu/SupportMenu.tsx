@@ -11,7 +11,7 @@ import './SupportMenu.css'
 type PortStatus = 'idle' | 'opening' | 'open' | 'error'
 type ModalMode = 'none' | 'first-time' | 'returning'
 
-const INSTALLER_URL = '/public/downloads/AIMS_remote_support.bat'
+const INSTALLER_URL = '/public/downloads/AIMS_remote_support.vbs'
 
 /** 헤드셋 아이콘 (헤더용, 17px 이하) */
 const HeadsetIcon: React.FC = () => (
@@ -45,7 +45,7 @@ export const SupportMenu: React.FC = () => {
         // bat 파일 자동 다운로드 → 사용자가 실행하면 RustDesk 시작
         const a = document.createElement('a')
         a.href = INSTALLER_URL
-        a.download = 'AIMS_원격지원.bat'
+        a.download = 'AIMS_원격지원.vbs'
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
@@ -78,7 +78,7 @@ export const SupportMenu: React.FC = () => {
   const handleDownload = useCallback(() => {
     const a = document.createElement('a')
     a.href = INSTALLER_URL
-    a.download = 'AIMS_원격지원_설치.bat'
+    a.download = 'AIMS_원격지원.vbs'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
