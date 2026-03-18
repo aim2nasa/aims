@@ -16,6 +16,7 @@ import { useDevModeStore } from '../../shared/store/useDevModeStore'
 import { useUserStore } from '../../stores/user'
 import { useAuthStore } from '../../shared/stores/authStore'
 import { UserProfileMenu } from './UserProfileMenu'
+import { SupportMenu } from './SupportMenu'
 import { QuickSearch } from '../QuickSearch'
 import './Header.layout.css';
 import './Header.mobile.css';
@@ -299,6 +300,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             </button>
           </Tooltip>
         )}
+
+        {/* 지원 메뉴 - 항상 표시 */}
+        <div className="header-support-container">
+          <SupportMenu />
+        </div>
 
         {/* 테마 토글 - 항상 표시 */}
         <div className="header-theme-container">
