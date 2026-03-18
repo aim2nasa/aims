@@ -1,8 +1,14 @@
-# xPipe — AIMS 문서 처리 엔진 모듈화 전략 토의
+# xPipe — AIMS 문서 처리 엔진 모듈화 전략
 
-**작성일**: 2026-03-13
-**참여**: Alex (개발/아키텍트), Gini (품질 엔지니어), Architect (설계 전문가), PM (제품 매니저), Moderator (Claude)
-**상태**: 진행 중
+**작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (5차 검토)
+**참여**: Alex (개발/아키텍트), Gini (품질 엔지니어), PM (제품 매니저), Moderator (Claude)
+**상태**: Phase 0 미착수 (게이트 조건 0/6 충족)
+**토의 이력**: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
+
+> **현재 상태 요약**
+> - Foundation Phase 0~4 + Evolution Phase 5-A~8 로드맵 확정
+> - Phase 0 선행 조건(보안 5건, God Function 분해, Q2 결정, E2E 테스트) 미착수
+> - 마일스톤: M1(분리) → M2(검증) → M3(품질도약) → M4(컴플라이언스) → M5(조건부)
 
 ---
 
@@ -69,14 +75,14 @@ xPipe 엔진 내부:
 ### 1.3 WHY NOW — 왜 지금 해야 하는가
 
 1. **기술 부채 임계점**: document_pipeline에 보험 도메인 로직이 깊이 결합되어, 새 기능 추가 시마다 코어 코드를 건드려야 하는 상황. 결합이 깊어질수록 나중에 분리 비용이 기하급수적으로 증가
-2. **코드 분해의 자연스러운 시점**: `doc_prep_main.py` God Function(600줄+), `openai_service.py` 프롬프트 하드코딩 등 기술 부채 해소가 필요한 시점과 겹침. 리팩토링의 방향을 "모듈화"로 잡으면 부채 해소와 구조 개선을 동시에 달성
+2. **코드 분해의 자연스러운 시점**: `doc_prep_main.py` God Function(1,777줄), `openai_service.py` 프롬프트 하드코딩 등 기술 부채 해소가 필요한 시점과 겹침. 리팩토링의 방향을 "모듈화"로 잡으면 부채 해소와 구조 개선을 동시에 달성
 3. **목적 정의**: 이 작업은 **"리팩토링으로서의 모듈화"**. 새 제품/SaaS를 만드는 것이 아니라, 기존 코드의 구조를 개선하면서 미래 확장 옵션을 확보하는 것
 
-**기회 비용**: Phase 0~3 기간(약 14-18주) 동안 AIMS 신규 기능 개발이 제한됨. 단, 리팩토링 과정에서 기술 부채(God Function, 보안 이슈 등)가 함께 해소되므로 순수 손실은 아님.
+**기회 비용**: Foundation(Phase 0~4) 기간(약 17-21주) 동안 AIMS 신규 기능 개발이 제한됨. 단, 리팩토링 과정에서 기술 부채(God Function, 보안 이슈 등)가 함께 해소되므로 순수 손실은 아님.
 
 ### 1.4 마일스톤 및 완료 기준 (Definition of Done)
 
-**마일스톤**: 현재 혼재된 구조에서 레이어를 완전히 독립시키고, 분리된 구조 위에서 AIMS가 안정적으로 동작하는 것을 검증
+**마일스톤**: M1~M5 5단계로 구성. Foundation(분리) → Evolution(플랫폼 진화) 순서로 진행. 상세는 섹션 5 마일스톤 정의 참조.
 
 **측정 가능한 완료 기준:**
 
@@ -208,38 +214,9 @@ document_pipeline (FastAPI :8100)
 
 ## 3. 아키텍처 비교 (AS-IS → TO-BE)
 
-### 3.0 AS-IS: 현재 구조
+### 3.0 TO-BE: 목표 구조
 
-```
-┌─ AIMS ──────────────────────────────────────────────────────┐
-│                                                              │
-│  Frontend (React)                                            │
-│  └─ API 호출 ──────────────────────────┐                     │
-│                                        ▼                     │
-│  aims_api (Node.js :3010) ◄────► MongoDB                     │
-│       │                                                      │
-│       ▼                                                      │
-│  document_pipeline (FastAPI :8100)                            │
-│  ┌───────────────────────────────────────────────────┐       │
-│  │  업로드 → PDF변환 → OCR → ★분류 → ★메타추출 → 임베딩  │       │
-│  │                           ★AR/CRS감지              │       │
-│  │                           ★보험표시명               │       │
-│  │                           ★보험25소분류             │       │
-│  │  ─────────────────────────────────────────────    │       │
-│  │  ★ = 보험 도메인 로직이 코어에 하드코딩            │       │
-│  └───────────────────────────────────────────────────┘       │
-│                                                              │
-│  aims_rag_api ◄────► Qdrant                                  │
-│  annual_report_api                                           │
-│  paddle_ocr_api                                              │
-│  pdf_proxy / pdf_converter                                   │
-│                                                              │
-│  ※ 모든 것이 AIMS라는 하나의 덩어리                           │
-│  ※ 범용 기능과 보험 로직의 경계가 없음                         │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### 3.0.1 TO-BE: 목표 구조
+> AS-IS 현재 구조는 섹션 2 참조. 핵심 문제: 코어 기능과 보험 도메인 로직이 같은 레이어에 혼재 → 다른 도메인에서 재사용 불가능
 
 ```
 ┌─ AIMS (보험 솔루션) ─────────────────────────────────────────┐
@@ -267,13 +244,7 @@ document_pipeline (FastAPI :8100)
 │  │  │ PDF변환 │ │ OCR    │ │ 임베딩  │ │        │        │   │
 │  │  └────────┘ └────────┘ └────────┘ └────────┘        │   │
 │  │                                                       │   │
-│  │  DomainAdapter Interface (ABC)                         │   │
-│  │  ├─ get_classification_config() → 프롬프트+분류체계   │   │
-│  │  ├─ detect_special_documents() → 특수문서 감지        │   │
-│  │  ├─ resolve_entity() → 엔티티 연결                    │   │
-│  │  ├─ extract_metadata() → 메타데이터                   │   │
-│  │  ├─ generate_display_name() → 표시명                  │   │
-│  │  └─ on_stage_complete() → 단계별 후크                 │   │
+│  │  DomainAdapter Interface (ABC) — 상세: 섹션 3.3        │   │
 │  │                                                       │   │
 │  │  ※ 도메인 로직 zero. 순수 파이프라인.                    │   │
 │  │  ※ 어댑터를 꽂으면 어떤 도메인이든 동작                  │   │
@@ -303,7 +274,7 @@ document_pipeline (FastAPI :8100)
 └──────────────────────────────────────┘
 ```
 
-### 3.0.2 핵심 차이
+### 3.0.1 핵심 차이
 
 | | AS-IS | TO-BE |
 |---|---|---|
@@ -314,9 +285,7 @@ document_pipeline (FastAPI :8100)
 
 ---
 
-## 4. 제안: 3-Layer 아키텍처
-
-### 3.1 전체 구조
+### 3.1 제안: 3-Layer 아키텍처
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -438,41 +407,46 @@ class DomainAdapter(ABC):
 
 ### 3.4 Layer 3: Application (AIMS 보험 구현 예시)
 
+> 통합 `DomainAdapter` ABC(섹션 3.3)를 상속하는 단일 어댑터 구현
+
 ```python
-class InsuranceClassificationAdapter(ClassificationAdapter):
-    """AIMS 보험 도메인 분류 어댑터"""
+class InsuranceDomainAdapter(DomainAdapter):
+    """AIMS 보험 도메인 어댑터 — DomainAdapter 단일 통합 구현"""
 
-    INSURANCE_CATEGORIES = [
-        Category("health", "건강보험", "insurance"),
-        Category("life", "생명보험", "insurance"),
-        Category("annuity", "연금보험", "insurance"),
-        # ... 7대분류/25소분류
-    ]
-
-    def get_categories(self):
-        return self.INSURANCE_CATEGORIES
-
-    def get_prompt_template(self):
-        return M6_PROMPT  # 91.8% 정확도 프롬프트
-
-    def classify(self, text: str, filename: str) -> ClassificationResult:
-        # 현재 doc_prep_main.py의 분류 로직 이동
-        ...
-
-class InsuranceMetadataAdapter(MetadataAdapter):
-    """보험 문서 메타데이터 추출"""
-
-    def get_schema(self):
+    def get_classification_config(self) -> dict:
         return {
-            "policyholder": str,      # 계약자
-            "insured": str,           # 피보험자
-            "policy_number": str,     # 증권번호
-            "insurance_company": str, # 보험사
-            "effective_date": str,    # 보험 시작일
+            "categories": [
+                Category("health", "건강보험", "insurance"),
+                Category("life", "생명보험", "insurance"),
+                Category("annuity", "연금보험", "insurance"),
+                # ... 7대분류/25소분류
+            ],
+            "prompt_template": M6_PROMPT,  # 91.8% 정확도
         }
 
-    def extract(self, text: str, filename: str) -> dict:
-        # 현재 doc_meta.py의 보험 메타 추출 로직 이동
+    def detect_special_documents(self, text: str, mime: str) -> list[Detection]:
+        # AR/CRS 감지 (doc_prep_main.py에서 이동)
+        detections = []
+        if self._is_annual_report(text):
+            detections.append(Detection("annual_report", 0.95, {...}))
+        if self._is_customer_review(text):
+            detections.append(Detection("customer_review", 0.90, {...}))
+        return detections
+
+    def resolve_entity(self, detection: Detection, owner_id: str) -> dict:
+        # 고객명 → 고객ID 연결
+        ...
+
+    def extract_metadata(self, text: str, filename: str) -> dict:
+        return {"policyholder": ..., "insured": ..., "policy_number": ...,
+                "insurance_company": ..., "effective_date": ...}
+
+    def generate_display_name(self, doc: dict, detection: Detection | None) -> str:
+        # 보험 문서 표시명 규칙 (doc_display_name.py에서 이동)
+        ...
+
+    def on_stage_complete(self, stage: str, doc: dict) -> list[dict]:
+        # AR 감지 시 SSE 알림 등
         ...
 ```
 
@@ -532,17 +506,17 @@ xpipe/                    # 독립 Python 패키지
 │   ├── fixtures/         # 기본 제공 테스트 셋
 │   └── external/         # 외부 주입 테스트 셋 (도메인별 샘플 문서 + 기대 결과)
 │       └── README.md     # 테스트 셋 포맷 명세
-├── providers/            # 외부 자원 관리 (유료 서비스 추상화)
-│   ├── base.py           # Provider ABC (사용량 추적, 비용 계산 인터페이스)
+├── providers/            # [Phase 5-B에서 추가] 외부 자원 관리
+│   ├── base.py           # Provider ABC (사용량 추적, 비용 계산)
 │   ├── openai.py         # OpenAI API 제공자
 │   ├── upstage.py        # Upstage OCR 제공자
 │   ├── anthropic.py      # Anthropic API 제공자
 │   ├── storage.py        # 스토리지 제공자
 │   └── registry.py       # 제공자 등록·전환·한도 관리
-└── console/              # 독립 관리 인터페이스
-    ├── web/              # 웹 기반 대시보드 (모니터링 + 제어 + 비용)
-    ├── cli/              # CUI 명령어 (xpipe status, xpipe run, xpipe cost 등)
-    └── api/              # 관리 API (상태 조회, 스테이지 제어, 비용 조회, 설정 변경)
+└── console/              # [Phase 3-B에서 구현] 독립 관리 인터페이스
+    ├── web/              # [Phase 5-B에서 비용 대시보드 추가] 웹 대시보드
+    ├── cli/              # CUI 명령어 (xpipe status, xpipe run, xpipe test)
+    └── api/              # 관리 API (상태 조회, 스테이지 제어, 설정 변경)
 ```
 
 이렇게 하면 import 경로만 변경하면서 점진적으로 분리 가능. Phase 3에서 `xpipe/`만 별도 패키지로 추출.
@@ -566,7 +540,7 @@ Phase 3-A: 패키지화 (2주)         ──M1──  Phase 6-B: 감사 로그 
 Phase 3-B: 검증+제어 인터페이스 (3-4주)    Phase 7: 파이프라인 DSL (3-4주)
 Phase 4: PoC (1-2주)              ──M2──  Phase 8: 멀티테넌시 (5-7주)     ──M5──
                                      │
-                                     └──► Phase 5-A                     ──M3──
+                                     └──► Phase 5-A+5-B+6-A            ──M3──
 ```
 
 ### 마일스톤 정의
@@ -966,278 +940,52 @@ pipeline:
 | 2 | **Critical** | document_pipeline 전역 인증 없음 + CORS 전면 개방 | document_pipeline/main.py |
 | 3 | **Major** | chat-routes.js userId 헤더 우선 | routes/chat-routes.js:29 |
 | 4 | **Major** | SSE 엔드포인트 인증 누락 (2건) | customers-routes.js:3298, :3381 |
-| 5 | **Major** | doc_prep_main.py God Function (600줄+) | document_pipeline/routers/doc_prep_main.py |
+| 5 | **Major** | doc_prep_main.py God Function (1,777줄) | document_pipeline/routers/doc_prep_main.py |
 | 6 | **Major** | App.tsx 2,644줄 God Component | src/App.tsx |
-| 7 | **Major** | raw fetch 직접 사용 11곳+ | App.tsx, LoginPage.tsx, DocumentStatusProvider.tsx 등 |
+| 7 | **Major** | raw fetch 직접 사용 23파일/39회 | App.tsx, LoginPage.tsx, DocumentStatusProvider.tsx 등 23파일 |
 | 8 | **Major** | Store 3곳 분산 + 인증 상태 이중화 | stores/user.ts, shared/stores/, shared/store/ |
 | 9 | **Major** | services → UI 스토어 직접 import | services/customerService.ts |
 | 10 | **Minor** | as any 남용 | PersonalFilesView.tsx 18회 등 |
 
 ---
 
-## 8. 토의 기록
+## 8. 토의 기록 (요약)
 
-### 2026-03-13 초기 토의
-
-**참여자**: Alex, Gini, Architect, PM, Moderator (Claude)
-
-**주요 합의사항**:
-1. 3-Layer 아키텍처 (xPipe → Domain Adapter → Application) 채택
-2. 제공 형태는 Python 패키지 우선, API는 수익화 후
-3. Phase 0 (보안+선행조건) → Phase 1 (인터페이스) → Phase 2 (분리) → Phase 3 (패키지화) → Phase 4 (PoC) 순서
-4. "리팩토링으로서의 모듈화" — 새 서비스를 만들지 말고, 기존 코드에서 경계를 나누는 방식
-5. PG 결제 연동 / SaaS API 제공은 현재 스코프 밖
+> 상세 토의 이력: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
 
 **미결 사항**:
-- [ ] Q1: xPipe의 정확한 분리 범위 (embedding pipeline 포함 여부 등)
-- [ ] **Q2: 데이터 저장소 전략 — Phase 0에서 반드시 결정** (Gini, PM: 미결 시 Phase 1 진입 불가)
-- [ ] Q3: 멀티테넌시 수준 (DB 레벨 격리 vs 컬렉션 레벨 격리 vs 필드 레벨 격리)
+- [ ] Q1: xPipe의 정확한 분리 범위 (embedding pipeline 포함 여부) → Phase 1에서 결정
+- [ ] **Q2: 데이터 저장소 전략** → Phase 0에서 반드시 결정 (미결 시 Phase 1 진입 불가)
+- [ ] Q3: 멀티테넌시 수준 (DB/컬렉션/필드 레벨 격리) → Phase 7에서 결정
 - [ ] 다른 도메인 PoC 대상 선정 (법률? 의료? 금융?)
-- [ ] xPipe 하위 모듈 이름 (리팩토링 진행하며 경계가 드러난 후 결정)
+- [ ] xPipe 하위 모듈 이름 (리팩토링 진행하며 결정)
 
-### 2026-03-13 2차 토의 — 엔진 이름 확정 및 방향 합의
-
-**합의사항**:
-1. **엔진 이름: xPipe** 확정
-   - x = 어떤 문서든, 어떤 도메인이든 — 범용성을 한 글자로 표현
-   - Pipe = 문서 처리 파이프라인이라는 본질
-   - *"xPipe 위에 보험 어댑터를 얹으면 AIMS가 된다"*
-2. **하위 모듈 이름은 지금 정하지 않는다** — 리팩토링하며 실제 경계가 드러난 후 결정
-3. **PG 연동 / SaaS API 제공은 현재 스코프 밖** — 시기상조
-4. **마일스톤 정의**: 현재 혼재된 구조에서 레이어를 완전히 독립시키고, 분리된 구조 위에서 AIMS가 안정적으로 동작하는 것을 검증하는 것
-
-**방향성**:
-- 새 서비스를 만드는 것이 아니라, 기존 코드의 **리팩토링**으로 레이어를 분리한다
-- xPipe(범용 코어)와 보험 도메인 로직의 경계를 명확히 나눈다
-- 분리 후 AIMS 전체 파이프라인이 기존과 동일하게 동작하는 것을 검증한다
-
-### 2026-03-13 3차 — 에이전트 리뷰 피드백
-
-보고서 초안에 대해 Alex, Gini, PM이 실제 코드를 검증하며 리뷰를 수행함.
-
-#### Alex (아키텍트/개발자) 피드백
-
-**핵심 지적:**
-
-1. **Adapter 4개로 부족 — DetectionAdapter 누락이 치명적**
-   - AR/CRS 감지가 파이프라인 **중간 단계**에서 발생하며, 감지 결과에 따라 후속 처리가 완전히 달라짐
-   - `PostProcessAdapter.onComplete()`로는 커버 불가 — 감지가 파이프라인 완료 전에 발생하기 때문
-   - 필요한 추가 어댑터: `DetectionAdapter`, `SummarizationAdapter`, `EntityResolutionAdapter`
-
-2. **분류+요약이 한 번의 AI 호출로 통합되어 있음**
-   - `openai_service.py`의 `summarize_text()`가 분류/요약/제목을 한번에 반환
-   - 어댑터로 분리하면 **AI 호출 횟수 2배 → 비용 2배**
-   - `ClassificationAdapter.classify(text, filename)` 인터페이스로는 이 최적화가 깨짐
-
-3. **`doc_prep_main.py`가 600줄+ God Function**
-   - Ingest + Extract + Enrich + 도메인 로직이 모두 혼재된 오케스트레이터
-   - 모듈화 전에 먼저 분해해야 함 → Phase 0에 포함 권장
-
-4. **서비스 수 불일치**: 문서 "13개" → 실제 11개
-
-5. **embedding/full_pipeline.py 범위 미결정**
-   - cron으로 1분마다 실행되는 별도 프로세스
-   - xPipe에 포함할지 결정 필요
-
-6. **Phase 기간 과소평가**: 문서 9-12주 → 현실적 추정 **14-18주**
-
-**제안:**
-- Strangler Fig 패턴 — 별도 패키지 대신 기존 코드 내 디렉토리 경계(`xpipe/`, `insurance/`)부터 나누기
-- 어댑터를 통합하여 `PipelineAdapter` 단일 인터페이스로 재설계 (AI 호출 최적화 보존)
-
-#### Gini (품질 엔지니어) 피드백
-
-**핵심 지적:**
-
-1. **기술 부채 목록 정확도 문제**
-   - SSE 인증 누락: 문서는 1건(`:3298`)만 명시 → 실제 2건 (`:3381` `/user/account/stream`도 미보호)
-   - raw fetch: 문서 "3곳" → 실제 **11곳 이상** (Minor가 아닌 Major 재분류 필요)
-
-2. **Critical 누락 — document_pipeline 인증 부재**
-   - FastAPI :8100에 전역 인증 미들웨어 **전혀 없음**
-   - CORS `allow_origins=["*"]` 전면 개방
-   - 현재 Tailscale VPN으로 보호되지만, xPipe를 외부 API로 전환 시 심각한 문제
-   - 섹션 7에 이 항목이 전혀 없음
-
-3. **Storage 추상화(Q2)가 미결인 채 Phase 1 진입은 위험**
-   - `MongoService`가 싱글턴 클래스 메서드, DB명 `docupload` 하드코딩
-   - Storage 추상화 여부에 따라 인터페이스 자체가 달라짐
-   - Medium이 아닌 **High** 리스크
-
-4. **테스트 전략 구체성 부족**
-   - "E2E 테스트"의 정의 없음 (실제 인프라 vs mock 기반)
-   - 어댑터 계약(contract) 테스트 전략 없음
-   - 회귀 테스트 기준선 수치 없음
-
-5. **Phase 0 "1주"는 비현실적** — E2E 테스트가 실제 인프라 기반이면 최소 2-3주
-
-**판정**: 조건부 승인 — 기술 부채 목록 보완 + Phase 0 선행 조건 보완 + Q2 우선 결정 후 재검토
-
-#### PM (제품 매니저) 피드백
-
-**핵심 지적:**
-
-1. **Definition of Done(완료 기준)이 전혀 없다** (0/10)
-   - "안정적으로 동작" 을 어떻게 측정하는가?
-   - 제안한 DoD:
-     - 기능 보존: E2E 테스트 전/후 동일, M6 정확도 91.8% 유지, 처리 시간 10% 이내 오차
-     - 코드 구조: 보험 도메인 키워드가 어댑터 외에 존재하지 않음 (grep 검증)
-     - 독립성: xPipe 패키지가 AIMS 없이 단독 실행 가능
-
-2. **WHY NOW가 없다** — 비즈니스 관점 불충분 (3/10)
-   - 왜 지금 해야 하는가, 기회 비용은?
-   - 9-12주 리소스의 트레이드오프 명시 필요
-   - "리팩토링 + 미래 옵션 확보"라는 이중 목적이 뒤섞여 있음
-
-3. **AIMS 운영 리스크 부족** (4/10)
-   - M6 분류 정확도 보존 검증 방법 없음
-   - AR/CRS 분리 시 SKILL.md 규칙 보존 여부 미검토
-   - credit_pending 처리 경로 분리 후 정상 동작 미검토
-   - 배포 파이프라인(deploy_all.sh) 변경 필요 여부 미언급
-
-4. **PM 의견과 합의사항 상충**
-   - 섹션 2.4: "수익화(PG 연동) 병행 필수"
-   - 섹션 8 합의: "PG 연동은 스코프 밖"
-   - → 불일치 해소 필요
-
-5. **문서 구조 제안**: 토의 기록은 별도 파일로 분리, 이 문서는 의사결정 결과와 실행 계획만
-
-#### 3개 리뷰 공통 지적 (교차 검증)
-
-| 지적 사항 | Alex | Gini | PM | 합의 |
-|-----------|:----:|:----:|:--:|------|
-| Phase 기간 과소평가 | ✓ | ✓ | - | 9-12주 → 14-18주 재산정 필요 |
-| Phase 0 "1주" 비현실적 | ✓ | ✓ | - | 최소 2-3주 |
-| Definition of Done 없음 | - | - | ✓ | 측정 가능한 완료 기준 추가 필수 |
-| openai_service.py 분리 난이도 과소평가 | ✓ | ✓ | - | 분류+요약 통합 호출 구조 고려 필요 |
-| Q2(Storage 추상화) Phase 1 전 결정 필요 | - | ✓ | ✓ | 미결로 두면 인터페이스 재설계 불가피 |
-| document_pipeline 인증 부재 | - | ✓ | - | Critical 항목으로 기술 부채 추가 |
-
-### 2026-03-13 최종 — 우선순위 확정 및 보고서 보완
-
-**확정사항**:
-- xPipe 모듈화는 **AIMS 프로젝트의 최우선 일정**으로 확정
-- 마일스톤: Phase 3 완료 (xPipe 독립 패키지 + AIMS 안정 동작 검증)
-- Phase 4(다른 도메인 PoC)는 마일스톤 이후 보너스
-
-**보고서 보완 (3차 리뷰 피드백 반영)**:
-- 섹션 1.3 WHY NOW 추가 (PM)
-- 섹션 1.4 Definition of Done 추가 (PM)
-- 어댑터 인터페이스: 4개 개별 → 1개 통합 `DomainAdapter` 재설계 (Alex)
-- Phase 기간: 9-12주 → 13-17주 보정 (Alex, Gini)
-- Phase 0: 1주→2-3주, 게이트 조건 추가, 5개 작업 추가 (Gini)
-- Phase 2: Strangler Fig 패턴 적용 (Alex)
-- 리스크 테이블: 5개→10개 확장 (전원)
-- 기술 부채: 8개→10개, 정확도 보정 (Gini)
-- PM 의견 상충 해소: "PG 병행 필수" → "PG는 스코프 밖" 통일
-
-### 2026-03-19 4차 — 현행화 검토 + 확장 전략 수립 + Phase 전면 재설계
-
-**참여자**: Alex, Gini, PM, Moderator (Claude)
-
-#### 4차-1: 현행화 검토 결과
-
-**3자 공통 지적**:
-- Phase 0 게이트 조건 5개 중 0개 충족 — Phase 1 진입 불가 상태
-- doc_prep_main.py: 문서 기재 600줄+ → 실제 1,777줄 (3배 과소평가)
-- raw fetch: 문서 기재 11곳+ → 실제 23파일/39회
-- 기술 부채 10개 항목 전원 미해결
-- 전략적 프레임워크 자체는 유효, 수치 보정 필요
-
-#### 4차-2: 신규 요구사항 반영
-
-1. **xPipe 최우선 원칙 — AIMS First**
-   - xPipe는 AIMS 지원을 최우선으로 한다
-   - AIMS에서 xPipe를 효율적으로 사용할 수 있는 구조가 기본 설계 방향
-   - 범용성은 AIMS 최적화를 해치지 않는 범위에서 추구한다
-   - 최고의 아키텍트(Alex)가 AIMS-xPipe 간 구조를 설계·개선한다
-
-2. xPipe "자동차 엔진" 철학 — 6가지 독립성 원칙 수립
-   - 독립 실행, 독립 검증, 독립 제어, 이식성, 외부 자원 투명성, 하위 호환성
-
-3. 확장 로드맵 Phase 5~8 추가 (B,C,D,E,G 아이디어 반영)
-
-#### 4차-3: Phase 전면 재설계 (Alex, Gini, PM 3자 교차 검토)
-
-**3자 공통 합의**:
-
-| 합의 사항 | Alex | Gini | PM |
-|-----------|:----:|:----:|:--:|
-| Phase 3 과부하 → 3-A(패키지화)/3-B(검증+제어) 분리 | ✓ | ✓ | ✓ |
-| Phase 5의 Provider + Quality Gate 분리 | ✓ | ✓ | ✓ |
-| Phase 4를 "보너스" → 정식 게이트 격상 | - | ✓ | ✓ |
-| 감사 로그를 멀티테넌시 앞으로 이동 | ✓ | - | ✓ |
-| 멀티테넌시를 조건부 Phase로 (외부 고객 확정 시) | ✓ | ✓ | ✓ |
-| 전 Phase에 게이트 조건 + 롤백 전략 추가 | ✓ | ✓ | - |
-| Phase 0 기간: 2-3주 → 3-4주 (1,777줄 분해) | ✓ | ✓ | ✓ |
-| 멀티테넌시 기간: 3-4주 → 5-7주 (과소평가) | ✓ | ✓ | - |
-| Phase 간 병렬 진행 가능성 활용 (5-B ∥ 6-B) | ✓ | - | ✓ |
-
-**재설계 결과**:
-- Foundation: Phase 0 → 1 → 2 → 3-A (M1) → 3-B → 4 (M2)
-- Evolution: 5-A → 5-B ∥ 6-B → 6-A → 7 → 8 (조건부)
-- 마일스톤 5단계: M1(분리) → M2(검증) → M3(품질도약) → M4(컴플라이언스) → M5(멀티플랫폼, 조건부)
-- 각 Phase에 게이트 조건(진입 조건) + 롤백 전략(환경 변수 기반) 추가
-- 리스크 테이블: 10개 → 18개 (Evolution 리스크 8개 추가)
+**토의 이력 요약** (1차~5차):
+- 1차 (2026-03-13): 3-Layer 아키텍처 채택, Phase 0~4 순서 합의
+- 2차: 엔진 이름 "xPipe" 확정
+- 3차: Alex/Gini/PM 코드 검증 리뷰 → 6개 공통 지적 → 본문 반영 완료
+- 4차 (2026-03-19): Phase 전면 재설계 (3-A/3-B 분리, Evolution Phase 5~8, M1~M5 마일스톤, 게이트 조건+롤백 전략)
+- 5차 (2026-03-19): 문서 최적화 (모순 7건 + 중복 4건 해소, 토의 기록 분리)
 
 ---
 
 ## 부록: 확장 아이디어 (참고용)
 
-> 아래는 xPipe 플랫폼 진화를 위해 검토된 아이디어 목록이다.
-> ★ 표시는 로드맵에 반영 완료된 항목, ○ 표시는 미반영 참고 항목이다.
+| 아이디어 | 반영 여부 | Phase |
+|---------|---------|-------|
+| A. 플러그인 마켓플레이스 / 어댑터 레지스트리 | ○ 미반영 | 생태계 성장 후 검토 |
+| B. 멀티테넌시 | ★ 반영 | Phase 8 (조건부) |
+| C. 파이프라인 스테이지 커스터마이징 | ★ 반영 | Phase 7 |
+| D. AI Provider 추상화 + 핫스왑 | ★ 반영 | Phase 5-B |
+| E. Quality Gate | ★ 반영 | Phase 5-A |
+| F. 이벤트/웹훅 | ★ 반영 | Phase 6-A |
+| G. 감사 로그 (Audit Trail) | ★ 반영 | Phase 6-B |
 
-### A. 플러그인 마켓플레이스 / 어댑터 레지스트리 ○
+### A. 플러그인 마켓플레이스 (미반영)
 
-현재 어댑터는 직접 코드를 작성해야 한다. 한 단계 더 나아가면:
-- **어댑터 레지스트리**: `xpipe install insurance-adapter`처럼 어댑터를 패키지로 배포·설치
-- 제3자가 만든 어댑터도 등록 가능 → 생태계 확장
-- 버전 관리: 어댑터 버전과 xPipe 코어 버전 호환성 매트릭스
+`xpipe install insurance-adapter`처럼 어댑터를 패키지로 배포·설치. 제3자 어댑터 등록 + 버전 호환성 매트릭스.
 
 > **미반영 사유**: 생태계 규모가 충분해진 후 검토. 현재는 어댑터 수가 소수이므로 시기상조.
-
-### B. 멀티테넌시 기본 지원 ★ → Phase 8 (조건부)
-
-제3의 솔루션이 xPipe를 쓸 때, 하나의 xPipe 인스턴스에서 여러 테넌트(고객사)를 격리하여 운영:
-- 테넌트별 설정·어댑터·스토리지·비용 격리
-- 테넌트별 사용량 쿼터 및 비용 할당
-- Q3(멀티테넌시 수준) 미결 사항과 직결
-
-### C. 파이프라인 스테이지 커스터마이징 ★ → Phase 7
-
-현재 파이프라인은 고정 순서(Ingest → Extract → Enrich → Search)이지만:
-- **스테이지 선택적 실행**: "OCR 불필요 → Extract 스킵" 같은 조건부 파이프라인
-- **커스텀 스테이지 삽입**: 솔루션별 전/후처리 스테이지를 파이프라인에 끼워넣기
-- 설정 파일(YAML/JSON)로 파이프라인 흐름을 정의하는 **파이프라인 DSL**
-
-### D. AI 제공자 추상화 + 핫스왑 ★ → Phase 5-B
-
-현재 OpenAI, Anthropic, Upstage 등이 하드코딩되어 있는 상태에서:
-- **Provider 인터페이스**로 추상화 → 새 AI 서비스 추가 시 코드 변경 없이 설정만으로 전환
-- **런타임 핫스왑**: 관리 인터페이스에서 "분류는 Anthropic → OpenAI로 전환" 같은 실시간 변경
-- **폴백 체인**: 1순위 API 오류 시 자동으로 2순위로 전환 (비용/속도/품질 트레이드오프 설정)
-
-### E. 처리 결과 품질 자동 측정 — Quality Gate ★ → Phase 5-A
-
-파이프라인이 돌아간 뒤 결과의 품질을 자동으로 측정:
-- 분류 confidence가 임계값 이하 → 자동 플래그 + 수동 검토 큐
-- OCR 품질 점수 (글자 인식률) 자동 산출
-- 주기적으로 Ground Truth 대비 정확도 측정 → 품질 저하 시 알림
-- 이 데이터가 관리 인터페이스의 품질 대시보드에 표시
-
-### F. 이벤트/웹훅 시스템 ★ → Phase 6-A (독립 Phase로 분리)
-
-xPipe를 탑재한 솔루션이 파이프라인 이벤트를 구독할 수 있도록:
-- `on_document_processed`, `on_classification_complete`, `on_error` 등 이벤트
-- 웹훅 URL 등록 → 이벤트 발생 시 외부 시스템에 자동 통지
-- 현재 AIMS의 SSE 알림이 이 패턴의 특수 사례 → 범용화
-
-### G. 문서 처리 감사 로그 — Audit Trail ★ → Phase 6-B (멀티테넌시 앞으로 이동)
-
-규제가 있는 도메인(금융, 의료, 법률)에서 필수:
-- 문서별 처리 이력: 누가, 언제, 어떤 스테이지를, 어떤 결과로 처리했는지
-- AI 판단 근거 보존: 분류 시 사용된 프롬프트 버전, 응답 원문
-- 변경 불가(immutable) 로그 → 컴플라이언스 대응
 
 ---
 
