@@ -32,7 +32,9 @@ from bson import ObjectId
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 KEYWORD = "AIMS_SMOKE_TEST"
-USER_ID = "smoke_test_user"
+SMOKE_BATCH_ID = "smoke_test_batch"  # cleanup 시 smoke_test 문서만 식별하는 마커
+# 시스템 관리자 (is_unlimited=True) — 크레딧 제한 없이 전체 경로 테스트 가능
+USER_ID = "693ea527a867379a5f9dc29d"
 
 # MongoDB 기본값 (서버 환경)
 MONGO_URI = "mongodb://localhost:27017"
@@ -243,7 +245,7 @@ class SmokeTestRunner:
         """파일을 업로드하고 document_id를 반환"""
         with open(filepath, "rb") as f:
             files = {"file": (filepath.name, f, mime)}
-            data = {"userId": USER_ID}
+            data = {"userId": USER_ID, "batchId": SMOKE_BATCH_ID}
             resp = httpx.post(
                 f"{self.base_url}/webhook/docprep-main",
                 files=files,
@@ -326,12 +328,12 @@ class SmokeTestRunner:
         print(f"{'='*60}")
 
     def _cleanup(self):
-        """스모크 테스트로 생성된 문서를 MongoDB에서 삭제"""
-        result = self.collection.delete_many({"ownerId": USER_ID})
+        """스모크 테스트로 생성된 문서만 MongoDB에서 삭제 (batchId로 식별)"""
+        result = self.collection.delete_many({"batchId": SMOKE_BATCH_ID})
         if result.deleted_count > 0:
-            print(f"[Cleanup] Deleted {result.deleted_count} test documents (ownerId={USER_ID})")
+            print(f"[Cleanup] Deleted {result.deleted_count} test documents (batchId={SMOKE_BATCH_ID})")
         # 큐에서도 정리
-        queue_result = self.db["upload_queue"].delete_many({"owner_id": USER_ID})
+        queue_result = self.db["upload_queue"].delete_many({"batch_id": SMOKE_BATCH_ID})
         if queue_result.deleted_count > 0:
             print(f"[Cleanup] Deleted {queue_result.deleted_count} queue entries")
 
