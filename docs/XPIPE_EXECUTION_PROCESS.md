@@ -13,6 +13,67 @@
 - **문서 리뷰만으로는 계획의 실현 가능성을 검증할 수 없다** — 코드가 증명한다
 - **매 Sprint 완료 시 계획을 실측 데이터로 갱신한다** — 계획은 고정이 아니라 진화한다
 - **AIMS First** — xPipe의 모든 설계·구현은 AIMS 지원 최우선
+- **main 브랜치 보호** — xPipe 작업은 Phase별 브랜치에서 진행, 게이트 PASS 시에만 main 머지
+
+---
+
+## 브랜치 전략
+
+### 원칙
+
+xPipe 모듈화는 프로덕션 코드의 구조를 변경하는 작업이다.
+**main 브랜치에서 직접 진행하지 않는다.**
+
+```
+main (프로덕션) ─────────────────────────────────────────────────────►
+  │                         │                         │
+  └─ xpipe/phase-0 ────────┤                         │
+     (Sprint 0-1~0-3)      │                         │
+                     게이트 PASS → main 머지           │
+                                                      │
+                            └─ xpipe/phase-1 ─────────┤
+                               (Sprint 1-1~1-N)       │
+                                                게이트 PASS → main 머지
+```
+
+### 규칙
+
+| 규칙 | 설명 |
+|------|------|
+| **Phase별 브랜치 생성** | `xpipe/phase-0`, `xpipe/phase-1`, ... |
+| **Sprint 커밋은 Phase 브랜치에** | Sprint 0-1~0-3의 모든 커밋은 `xpipe/phase-0`에 |
+| **main 머지 조건** | Phase 게이트 조건 전원 충족 + Gini PASS + 3자 합의 |
+| **main 동기화** | Phase 브랜치 작업 중 main에 다른 변경이 있으면 `git merge main`으로 동기화 |
+| **AIMS 긴급 수정** | main에서 직접 수행 (xPipe 작업과 무관한 핫픽스) |
+| **머지 후 브랜치 보존** | 머지 완료된 Phase 브랜치는 태그(`phase-0-done`)로 보존 후 삭제 |
+
+### Phase 브랜치 생명주기
+
+```
+1. Phase 시작:  git checkout -b xpipe/phase-N main
+2. Sprint 진행: Phase 브랜치에서 커밋 (작은 단위로)
+3. main 동기화: git merge main (충돌 시 Phase 브랜치에서 해결)
+4. 게이트 판정: Gini PASS + 3자 합의
+5. main 머지:  git checkout main && git merge xpipe/phase-N
+6. 태그 보존:  git tag phase-N-done && git branch -d xpipe/phase-N
+7. 다음 Phase: git checkout -b xpipe/phase-(N+1) main
+```
+
+### AIMS 일반 개발과의 공존
+
+xPipe Phase 브랜치 작업 중에도 **AIMS 일반 기능 개발/버그 수정은 main에서 계속 진행**한다.
+
+```
+main ──[AIMS 버그 수정]──[AIMS 기능 추가]──[AIMS 핫픽스]──────────►
+  │                                          │
+  └─ xpipe/phase-0 ─[Sprint 0-1]─[Sprint 0-2]─[merge main]─[Sprint 0-3]─►
+                                               ↑
+                                     main 변경 사항 동기화
+```
+
+- Phase 브랜치에서 주기적으로 `git merge main`하여 main의 변경을 흡수
+- 충돌이 발생하면 **Phase 브랜치에서 해결** (main은 건드리지 않음)
+- Phase 게이트 PASS 후 main에 머지할 때 충돌이 최소화됨
 
 ---
 
