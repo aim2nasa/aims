@@ -44,6 +44,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 ; RustDesk 공식 실행 파일 (포터블 인스톨러)
 Source: "rustdesk.exe"; DestDir: "{app}"; DestName: "rustdesk.exe"; Flags: ignoreversion
+; 런처 (URI Scheme → 인자 없이 RustDesk 실행)
+Source: "launcher.bat"; DestDir: "{app}"; Flags: ignoreversion
 ; Relay 서버 설정 파일 → RustDesk config 디렉토리
 Source: "RustDesk2.toml"; DestDir: "{userappdata}\RustDesk\config"; Flags: ignoreversion
 
@@ -56,7 +58,7 @@ Root: HKCU; Subkey: "Software\Classes\aims-rs"; ValueType: string; ValueName: "U
 Root: HKCU; Subkey: "Software\Classes\aims-rs\DefaultIcon"; ValueType: string; ValueName: ""; \
     ValueData: "{app}\{#MyAppExeName},1"
 Root: HKCU; Subkey: "Software\Classes\aims-rs\shell\open\command"; ValueType: string; ValueName: ""; \
-    ValueData: """{app}\{#MyAppExeName}"""
+    ValueData: """{app}\launcher.bat"""
 
 [Run]
 ; 설치 완료 후 RustDesk 실행
