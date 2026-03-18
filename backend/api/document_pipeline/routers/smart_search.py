@@ -24,8 +24,8 @@ STOPWORDS_KO = {
     "것", "거", "수", "등", "및", "의", "가", "를", "은", "는", "이", "에",
 }
 
-# 키워드 검색 시 결과 상한 (성능 보호)
-MAX_KEYWORD_RESULTS = 50
+# 키워드 검색: 결과 제한 없음 (검색된 모든 문서를 반환)
+# projection으로 대용량 필드(full_text, docembed)를 제외하여 성능 보호
 
 # MongoDB projection: 키워드 검색 시 불필요한 대용량 필드 제외
 _KEYWORD_SEARCH_PROJECTION = {
@@ -259,10 +259,6 @@ async def smart_search(request: SearchRequest):
                 key=lambda doc: _compute_relevance_score(doc, effective_keywords),
                 reverse=True
             )
-            # 상위 N개만 반환 (성능 보호)
-            if len(results) > MAX_KEYWORD_RESULTS:
-                logger.info(f"SmartSearch: 결과 제한 {len(results)} -> {MAX_KEYWORD_RESULTS}")
-                results = results[:MAX_KEYWORD_RESULTS]
 
         # Convert all ObjectId/datetime to string for JSON serialization
         results = [_convert_objectids(doc) for doc in results]
