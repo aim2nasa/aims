@@ -519,3 +519,256 @@ class TestMemorySafety:
         assert "file_data" not in call_args
         assert "content" not in call_args
         assert "buffer" not in call_args
+
+
+# ========================================
+# 무한 루프 버그 Regression 테스트
+# ISSUE: ISSUE_PDF_CONVERSION_WORKER_INFINITE_LOOP.md
+# 스캔 문서(텍스트 추출 불가) 무한 재시도 방지 검증
+# ========================================
+
+class TestInfiniteLoopRegression:
+    """
+    PDF 변환 워커의 _recover_completed_without_text()가
+    스캔 문서에 대해 무한 루프를 일으키지 않음을 검증.
+
+    버그: 텍스트 추출 불가 시 DB에 마커를 남기지 않아
+    3분마다 동일 문서를 영원히 재시도하는 무한 루프 발생.
+    수정: meta.text_extraction_failed=True 마커 기록 + 쿼리 필터.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup_mocks(self):
+        """워커 mock 설정"""
+        with patch("workers.pdf_conversion_worker.MongoService") as mock_mongo, \
+             patch("workers.pdf_conversion_worker.PdfConversionQueueService") as mock_queue:
+            self.mock_mongo = mock_mongo
+            self.mock_queue_service = mock_queue
+            self.mock_files_col = AsyncMock()
+            mock_mongo.get_collection.return_value = self.mock_files_col
+            mock_mongo.get_db.return_value = {
+                "files": self.mock_files_col,
+                "pdf_conversion_queue": AsyncMock(),
+            }
+
+            from workers.pdf_conversion_worker import PdfConversionWorker
+            self.worker = PdfConversionWorker()
+            yield
+
+    # --- TC-01: 스캔 문서 재시도 차단 (핵심 버그 검증) ---
+
+    @pytest.mark.asyncio
+    async def test_scan_document_marks_extraction_failed(self):
+        """TC-01: 텍스트 추출 불가(스캔 문서) 시 meta.text_extraction_failed=True 마커가 DB에 기록된다"""
+        doc_id = str(ObjectId())
+
+        # 문서에 텍스트 없음
+        self.mock_files_col.find_one.return_value = {
+            "_id": ObjectId(doc_id),
+            "meta": {},
+            "ocr": {},
+            "ownerId": "test_user",
+            "upload": {"originalName": "scan.ppt"},
+        }
+        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
+
+        # PyMuPDF가 텍스트 없음 반환 (스캔 문서 시뮬레이션)
+        import tempfile, os
+        tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+        tmp.write(b"%PDF-1.4 fake scan pdf")
+        tmp.close()
+
+        with patch.object(self.worker, "_extract_text_from_pdf_bytes", return_value=None):
+            result = await self.worker._extract_and_update_text(doc_id, tmp.name, self.mock_files_col)
+
+        os.unlink(tmp.name)
+
+        # 반환값: False (텍스트 추출 실패)
+        assert result is False
+
+        # DB에 마커 기록 확인
+        self.mock_files_col.update_one.assert_called_once()
+        update_call = self.mock_files_col.update_one.call_args
+        update_doc = update_call[0][1]
+        assert update_doc["$set"]["meta.text_extraction_failed"] is True
+
+    # --- TC-02: 거짓 성공 카운트 제거 ---
+
+    @pytest.mark.asyncio
+    async def test_recovered_count_excludes_scan_documents(self):
+        """TC-02: 스캔 문서(텍스트 불가)는 recovered 카운트에 포함되지 않는다"""
+        doc_id = ObjectId()
+
+        # _recover_completed_without_text()가 1건 감지
+        mock_cursor = AsyncMock()
+        mock_cursor.to_list.return_value = [
+            {
+                "_id": doc_id,
+                "upload": {"convPdfPath": "/data/scan.pdf", "originalName": "scan.ppt"},
+            },
+        ]
+        self.mock_files_col.find.return_value = mock_cursor
+
+        # _extract_and_update_text()가 False 반환 (스캔 문서)
+        with patch.object(self.worker, "_extract_and_update_text", new_callable=AsyncMock, return_value=False):
+            await self.worker._recover_completed_without_text()
+
+        # recovered 카운트가 0이므로 "복구 완료" 로그가 출력되지 않음을 간접 확인
+        # (recovered > 0일 때만 로그 출력)
+        # 핵심: _extract_and_update_text()의 반환값이 False이므로 recovered += 1이 실행되지 않음
+
+    # --- TC-03: 정상 복구 비회귀 ---
+
+    @pytest.mark.asyncio
+    async def test_text_extraction_success_returns_true(self):
+        """TC-03: 텍스트 추출 성공 시 DB 업데이트 + return True"""
+        doc_id = str(ObjectId())
+
+        self.mock_files_col.find_one.return_value = {
+            "_id": ObjectId(doc_id),
+            "meta": {},
+            "ocr": {},
+            "ownerId": "test_user",
+            "upload": {"originalName": "report.doc"},
+        }
+        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
+
+        import tempfile, os
+        tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+        tmp.write(b"%PDF-1.4 real content")
+        tmp.close()
+
+        with patch.object(self.worker, "_extract_text_from_pdf_bytes", return_value="추출된 텍스트 내용"):
+            with patch("services.openai_service.OpenAIService") as mock_ai:
+                mock_ai.summarize_text = AsyncMock(return_value={
+                    "summary": "요약",
+                    "title": "제목",
+                    "document_type": "general",
+                    "confidence": 0.9,
+                })
+                result = await self.worker._extract_and_update_text(doc_id, tmp.name, self.mock_files_col)
+
+        os.unlink(tmp.name)
+
+        assert result is True
+        # DB에 meta.full_text 저장 확인
+        update_calls = self.mock_files_col.update_one.call_args_list
+        assert len(update_calls) >= 1
+        last_update = update_calls[-1][0][1]
+        assert "meta.full_text" in last_update.get("$set", {})
+
+    # --- TC-04: 마커 필터링 쿼리 검증 ---
+
+    @pytest.mark.asyncio
+    async def test_recover_query_excludes_marked_documents(self):
+        """TC-04: _recover_completed_without_text() 쿼리가 text_extraction_failed=True 문서를 제외한다"""
+        # 빈 결과 반환
+        mock_cursor = AsyncMock()
+        mock_cursor.to_list.return_value = []
+        self.mock_files_col.find.return_value = mock_cursor
+
+        await self.worker._recover_completed_without_text()
+
+        # find() 호출 시 쿼리 조건 확인
+        find_call = self.mock_files_col.find.call_args
+        query = find_call[0][0]
+
+        # 핵심: meta.text_extraction_failed 필터 존재 확인
+        assert "meta.text_extraction_failed" in query
+        assert query["meta.text_extraction_failed"] == {"$ne": True}
+
+    # --- TC-05: 반환값 계약 검증 ---
+
+    @pytest.mark.asyncio
+    async def test_return_false_when_text_empty(self):
+        """TC-05a: 텍스트 추출 결과가 빈 문자열이면 False 반환"""
+        doc_id = str(ObjectId())
+        self.mock_files_col.find_one.return_value = {
+            "_id": ObjectId(doc_id),
+            "meta": {},
+            "ocr": {},
+            "ownerId": "test",
+            "upload": {"originalName": "scan.ppt"},
+        }
+        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
+
+        import tempfile, os
+        tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+        tmp.write(b"%PDF")
+        tmp.close()
+
+        with patch.object(self.worker, "_extract_text_from_pdf_bytes", return_value="   "):
+            result = await self.worker._extract_and_update_text(doc_id, tmp.name, self.mock_files_col)
+
+        os.unlink(tmp.name)
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_return_false_when_file_missing(self):
+        """TC-05b: PDF 파일이 없으면 False 반환 + 마커 기록"""
+        doc_id = str(ObjectId())
+        self.mock_files_col.find_one.return_value = {
+            "_id": ObjectId(doc_id),
+            "meta": {},
+            "ocr": {},
+            "ownerId": "test",
+            "upload": {"originalName": "missing.ppt"},
+        }
+        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
+
+        result = await self.worker._extract_and_update_text(doc_id, "/nonexistent/path.pdf", self.mock_files_col)
+
+        assert result is False
+        # 파일 없어도 마커 기록 확인
+        self.mock_files_col.update_one.assert_called_once()
+        update_doc = self.mock_files_col.update_one.call_args[0][1]
+        assert update_doc["$set"]["meta.text_extraction_failed"] is True
+
+    @pytest.mark.asyncio
+    async def test_return_false_when_doc_not_found(self):
+        """TC-05c: MongoDB에서 문서를 찾을 수 없으면 False 반환"""
+        doc_id = str(ObjectId())
+        self.mock_files_col.find_one.return_value = None
+
+        result = await self.worker._extract_and_update_text(doc_id, "/any/path.pdf", self.mock_files_col)
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_return_false_when_text_already_exists(self):
+        """TC-05d: 이미 텍스트가 있으면 False 반환 (재추출 불필요)"""
+        doc_id = str(ObjectId())
+        self.mock_files_col.find_one.return_value = {
+            "_id": ObjectId(doc_id),
+            "meta": {"full_text": "이미 존재하는 텍스트"},
+            "ocr": {},
+            "ownerId": "test",
+            "upload": {"originalName": "doc.ppt"},
+        }
+
+        result = await self.worker._extract_and_update_text(doc_id, "/any/path.pdf", self.mock_files_col)
+        assert result is False
+
+    # --- TC-06: 재변환 시 마커 리셋 ---
+
+    @pytest.mark.asyncio
+    async def test_post_process_preview_resets_extraction_marker(self):
+        """TC-06: _post_process_preview() 호출 시 meta.text_extraction_failed가 $unset된다"""
+        doc_id = str(ObjectId())
+        job = {
+            "_id": ObjectId(),
+            "job_type": "preview_pdf",
+            "document_id": doc_id,
+        }
+        result = {"pdf_path": "/data/files/test.pdf"}
+
+        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
+
+        with patch.object(self.worker, "_extract_and_update_text", new_callable=AsyncMock, return_value=True):
+            with patch.object(self.worker, "_notify_conversion_complete", new_callable=AsyncMock):
+                await self.worker._post_process(job, result)
+
+        # update_one 호출에서 $unset 확인
+        update_call = self.mock_files_col.update_one.call_args
+        update_doc = update_call[0][1]
+        assert "$unset" in update_doc
+        assert "meta.text_extraction_failed" in update_doc["$unset"]

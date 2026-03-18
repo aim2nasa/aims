@@ -187,7 +187,10 @@ class PdfConversionWorker:
                         "upload.convPdfPath": pdf_path,
                         "upload.converted_at": datetime.utcnow(),
                         "upload.conversion_status": "completed",
-                    }
+                    },
+                    "$unset": {
+                        "meta.text_extraction_failed": "",
+                    },
                 },
             )
             logger.info(f"[PDF변환워커] files 업데이트: {document_id}")
@@ -205,13 +208,17 @@ class PdfConversionWorker:
         document_id: str,
         pdf_path: str,
         files_col,
-    ):
+    ) -> bool:
         """
         변환된 PDF에서 텍스트 추출 후 meta.full_text가 비어있으면 DB 업데이트.
 
         파이프라인 업로드 시 text_extraction이 실패했거나,
         preview_pdf 재변환 성공 후 텍스트가 누락된 경우를 보완.
         텍스트가 추출되면 AI 분류(요약/문서유형)도 수행.
+
+        Returns:
+            True: 텍스트 추출 성공 및 DB 업데이트 완료
+            False: 텍스트 추출 불가 또는 스킵
         """
         from bson import ObjectId as BsonObjectId
 
@@ -229,7 +236,7 @@ class PdfConversionWorker:
                 },
             )
             if not doc:
-                return
+                return False
 
             meta_text = (doc.get("meta") or {}).get("full_text", "")
             ocr_text = (doc.get("ocr") or {}).get("full_text", "")
@@ -239,12 +246,17 @@ class PdfConversionWorker:
                 logger.debug(
                     f"[PDF변환워커] 텍스트 이미 존재, 추출 스킵: {document_id}"
                 )
-                return
+                return False
 
             # 변환된 PDF 파일에서 텍스트 추출
             if not os.path.exists(pdf_path):
                 logger.warning(f"[PDF변환워커] 변환 PDF 파일 없음: {pdf_path}")
-                return
+                # 파일 없음 → 재시도해도 무의미, 마커 기록
+                await files_col.update_one(
+                    {"_id": BsonObjectId(document_id)},
+                    {"$set": {"meta.text_extraction_failed": True}},
+                )
+                return False
 
             with open(pdf_path, "rb") as f:
                 pdf_bytes = f.read()
@@ -253,9 +265,14 @@ class PdfConversionWorker:
 
             if not extracted_text or not extracted_text.strip():
                 logger.info(
-                    f"[PDF변환워커] 변환 PDF에서 텍스트 없음 (스캔 문서?): {document_id}"
+                    f"[PDF변환워커] 변환 PDF에서 텍스트 없음 (스캔 문서), 재시도 차단 마커 기록: {document_id}"
                 )
-                return
+                # 스캔 문서 → 텍스트 추출 불가 마커 기록하여 무한 재시도 방지
+                await files_col.update_one(
+                    {"_id": BsonObjectId(document_id)},
+                    {"$set": {"meta.text_extraction_failed": True}},
+                )
+                return False
 
             logger.info(
                 f"[PDF변환워커] 텍스트 추출 성공: {document_id} ({len(extracted_text)} chars)"
@@ -348,6 +365,7 @@ class PdfConversionWorker:
             logger.info(
                 f"[PDF변환워커] 텍스트+분류 DB 업데이트 완료: {document_id}"
             )
+            return True
 
         except Exception as e:
             # 텍스트 추출 실패가 변환 결과에 영향을 주지 않도록 격리
@@ -355,6 +373,7 @@ class PdfConversionWorker:
                 f"[PDF변환워커] 텍스트 추출/업데이트 실패: {document_id} - {e}",
                 exc_info=True,
             )
+            return False
 
     async def _notify_conversion_failed(self, job: Dict[str, Any], error_message: str):
         """preview_pdf 실패 후: files 컬렉션 업데이트 + SSE 알림"""
@@ -512,10 +531,12 @@ class PdfConversionWorker:
             files_col = MongoService.get_collection("files")
 
             # 변환 완료 + convPdfPath 있음 + meta/ocr 텍스트 모두 비어있음
+            # + 이미 추출 시도하여 실패한 문서는 제외 (무한 재시도 방지)
             candidates = await files_col.find(
                 {
                     "upload.conversion_status": "completed",
                     "upload.convPdfPath": {"$exists": True, "$ne": ""},
+                    "meta.text_extraction_failed": {"$ne": True},
                     "$and": [
                         {"$or": [
                             {"meta.full_text": {"$exists": False}},
@@ -547,8 +568,9 @@ class PdfConversionWorker:
                     f"[PDF변환워커] 텍스트 누락 감지 (completed): {doc_id} - "
                     f"{(doc.get('upload') or {}).get('originalName', '')}"
                 )
-                await self._extract_and_update_text(doc_id, pdf_path, files_col)
-                recovered += 1
+                success = await self._extract_and_update_text(doc_id, pdf_path, files_col)
+                if success:
+                    recovered += 1
 
             if recovered > 0:
                 logger.info(
