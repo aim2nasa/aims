@@ -36,9 +36,9 @@
     background: var(--color-bg-primary);
     border-radius: 16px;
     box-shadow: 0 16px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
-    width: 340px;
+    width: 380px;
     max-width: calc(100vw - 32px);
-    padding: 28px 28px 20px;
+    padding: 28px 28px 24px;
     animation: sp-pop 220ms cubic-bezier(0.32, 0.72, 0, 1);
   }
   html[data-theme="dark"] .sp-modal {
@@ -67,13 +67,13 @@
   }
   .sp-close:hover { background: var(--color-bg-tertiary); }
 
-  /* === Hero === */
+  /* === Hero (아이콘만) === */
   .sp-hero {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
   .sp-hero-icon {
     width: 48px;
@@ -84,65 +84,50 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 14px;
-  }
-  .sp-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0;
-    letter-spacing: -0.02em;
   }
 
   /* === Instructions === */
   .sp-instructions {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    margin-bottom: 22px;
+    gap: 10px;
+    margin-bottom: 18px;
     text-align: center;
   }
   .sp-instruction-item {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--color-text-primary);
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.55;
   }
   .sp-instruction-item strong { font-weight: 600; }
   .sp-instruction-highlight {
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-accent-blue);
   }
-  .sp-arrow {
-    display: inline-block;
-    margin-right: 2px;
+
+  /* === RustDesk 캡처 이미지 === */
+  .sp-diagram {
+    margin: 0 0 14px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--color-border-secondary);
   }
-  .sp-instruction-muted {
-    font-size: 13px;
-    color: var(--color-text-tertiary);
+  .sp-diagram-img {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 
-  /* === Footer === */
-  .sp-footer {
-    display: flex;
-    justify-content: center;
+  /* === 대기 안내 === */
+  .sp-wait-msg {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    text-align: center;
+    margin: 0;
+    line-height: 1.5;
   }
-  .sp-ok-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 9px 28px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 120ms;
-    border: none;
-    background: var(--color-accent-blue);
-    color: var(--color-text-inverse);
-  }
-  .sp-ok-btn:hover { opacity: 0.85; }
 
   /* === Touch target === */
   @media (pointer: coarse) {

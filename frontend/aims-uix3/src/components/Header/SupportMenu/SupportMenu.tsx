@@ -1,7 +1,7 @@
 /**
- * SupportMenu — 원격 지원 v8
+ * SupportMenu — 원격 지원 v9
  *
- * SFX exe 자동 다운로드 + 안내 모달 (극단적 단순화)
+ * SFX exe 자동 다운로드 + 안내 모달 (RustDesk ID 안내 도식 포함)
  */
 
 import React, { useEffect, useState, useCallback } from 'react'
@@ -17,6 +17,9 @@ const HeadsetIcon: React.FC = () => (
     <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/>
   </svg>
 )
+
+/** RustDesk 실제 화면 캡처 이미지 경로 */
+const RUSTDESK_GUIDE_IMG = '/images/rustdesk-id-guide.png'
 
 /** SFX exe 다운로드 트리거 */
 function downloadSfxExe() {
@@ -62,30 +65,33 @@ export const SupportMenu: React.FC = () => {
               <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             </button>
 
+            {/* 헤드셋 아이콘 */}
             <div className="sp-hero">
               <div className="sp-hero-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg>
               </div>
-              <h2 className="sp-title">원격 지원</h2>
             </div>
 
+            {/* 안내 문구 */}
             <div className="sp-instructions">
               <p className="sp-instruction-item sp-instruction-highlight">
-                <span className="sp-arrow">↓</span> 화면 아래에 나타난 파일을 클릭하세요
+                원격 지원 프로그램을 다운로드하고 있습니다.
               </p>
               <p className="sp-instruction-item">
-                프로그램에 표시된 <strong>숫자</strong>를<br/>관리자에게 알려주세요
-              </p>
-              <p className="sp-instruction-item sp-instruction-muted">
-                관리자가 연결할 때까지<br/>잠시 기다려주세요
+                다운로드가 완료되면 <strong>AIMS_원격지원.exe</strong>를 실행하시고<br />
+                프로그램에 표시된 <strong>숫자</strong>를 관리자에게 알려주세요
               </p>
             </div>
 
-            <div className="sp-footer">
-              <button type="button" className="sp-ok-btn" onClick={handleClose}>
-                확인
-              </button>
+            {/* RustDesk 실제 화면 캡처 */}
+            <div className="sp-diagram">
+              <img src={RUSTDESK_GUIDE_IMG} alt="RustDesk 실행 화면 — ID 숫자 위치" className="sp-diagram-img" />
             </div>
+
+            {/* 대기 안내 */}
+            <p className="sp-wait-msg">
+              관리자가 연결할 때까지 잠시 기다려주세요
+            </p>
 
           </div>
         </div>,
