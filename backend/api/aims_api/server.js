@@ -324,6 +324,8 @@ MongoClient.connect(MONGO_URI)
     const acRoutes = require('./routes/ac-routes')(db, authenticateJWT);
     app.use('/api/ac', acRoutes);
 
+    const rustdeskRoutes = require("./routes/rustdesk-routes")(db, authenticateJWT);
+    app.use("/api", rustdeskRoutes);
     console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();
 
