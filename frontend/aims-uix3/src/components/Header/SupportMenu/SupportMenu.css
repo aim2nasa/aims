@@ -16,12 +16,6 @@
   .header-support-button:hover { opacity: 1; transform: scale(1.08); }
   .header-support-button:active { transform: scale(0.94); }
 
-  .header-support-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   /* === Overlay === */
   .sp-overlay {
     position: fixed;
@@ -39,16 +33,15 @@
   /* === Modal === */
   .sp-modal {
     position: relative;
-    background: var(--color-surface-primary, #fff);
+    background: var(--color-bg-primary);
     border-radius: 16px;
     box-shadow: 0 16px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
-    width: 340px;
+    width: 360px;
     max-width: calc(100vw - 32px);
-    padding: 28px 28px 24px;
+    padding: 28px 28px 20px;
     animation: sp-pop 220ms cubic-bezier(0.32, 0.72, 0, 1);
   }
   html[data-theme="dark"] .sp-modal {
-    background: var(--color-surface-primary, #2c2c2e);
     border: 1px solid rgba(255,255,255,0.1);
   }
   @keyframes sp-pop {
@@ -64,7 +57,7 @@
     height: 26px;
     border-radius: 50%;
     border: none;
-    background: var(--color-surface-secondary, #f0f0f2);
+    background: var(--color-bg-secondary);
     color: var(--color-text-tertiary);
     cursor: pointer;
     display: flex;
@@ -72,8 +65,7 @@
     justify-content: center;
     transition: background 120ms;
   }
-  .sp-close:hover { background: var(--color-surface-tertiary, #e4e4e8); }
-  html[data-theme="dark"] .sp-close { background: rgba(255,255,255,0.08); }
+  .sp-close:hover { background: var(--color-bg-tertiary); }
 
   /* === Hero === */
   .sp-hero {
@@ -83,20 +75,20 @@
     text-align: center;
     margin-bottom: 20px;
   }
-  .sp-hero-badge {
+  .sp-hero-icon {
     width: 48px;
     height: 48px;
     border-radius: 14px;
-    background: linear-gradient(135deg, #5856d6, #007aff);
-    color: #fff;
+    background: var(--color-accent-blue);
+    color: var(--color-text-inverse);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 14px;
   }
   .sp-title {
-    font-size: 17px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
     color: var(--color-text-primary);
     margin: 0 0 4px;
     letter-spacing: -0.02em;
@@ -108,73 +100,136 @@
     line-height: 1.5;
   }
   .sp-desc strong { font-weight: 600; color: var(--color-text-primary); }
-  .sp-desc--err { color: var(--color-text-error, #ff3b30); }
+  .sp-desc--err { color: var(--color-error); }
 
-  /* === Steps === */
-  .sp-steps {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin-bottom: 20px;
-  }
-  .sp-step {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 11px 0;
-    border-top: 1px solid var(--color-border-secondary, rgba(0,0,0,0.06));
-  }
-  .sp-step:first-child { border-top: none; }
-  html[data-theme="dark"] .sp-step { border-top-color: rgba(255,255,255,0.06); }
+  /* === Wizard Card (한 번에 한 단계) === */
+  .sp-wizard { margin-bottom: 16px; }
 
-  .sp-step-n {
-    flex-shrink: 0;
-    width: 22px;
-    height: 22px;
+  .sp-card {
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .sp-card--done {
+    background: var(--color-success-bg);
+  }
+
+  .sp-card-step {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+  .sp-card-check {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: var(--color-accent, #007aff);
-    color: #fff;
+    background: var(--color-success);
+    color: var(--color-text-inverse);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
+    margin: 0 auto 8px;
   }
-  .sp-step-n--sub { background: var(--color-text-quaternary, #bbb); }
-  .sp-step--done .sp-step-n { background: #34c759; }
-
-  .sp-step-text {
-    flex: 1;
-    font-size: 13px;
+  .sp-card-title {
+    font-size: 14px;
+    font-weight: 600;
     color: var(--color-text-primary);
+    margin: 0 0 6px;
+  }
+  .sp-card-desc {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin: 0 0 4px;
+    line-height: 1.5;
+  }
+  .sp-card-desc strong { font-weight: 600; color: var(--color-text-primary); }
+  .sp-card-note {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    margin: 0 0 14px;
     line-height: 1.4;
   }
-  .sp-step-text strong { font-weight: 600; }
-  .sp-step-ok {
-    font-size: 12px;
-    color: #34c759;
-    font-weight: 600;
-  }
+  .sp-card-note strong { font-weight: 600; }
 
-  /* === Download Btn === */
-  .sp-dl {
-    flex-shrink: 0;
-    padding: 5px 14px;
-    border: none;
-    border-radius: 7px;
-    background: #34c759;
-    color: #fff;
-    font-size: 12px;
+  /* === Buttons === */
+  .sp-card-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 28px;
+    border-radius: 10px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: opacity 120ms;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    min-width: 120px;
   }
-  .sp-dl:hover { opacity: 0.85; }
+  .sp-card-btn:hover { opacity: 0.85; }
 
-  /* === Ring (status) === */
-  .sp-ring {
-    width: 56px;
-    height: 56px;
+  .sp-card-btn--primary {
+    background: var(--color-accent-blue);
+    color: var(--color-text-inverse);
+    border-color: transparent;
+  }
+
+  .sp-card-btn--ghost {
+    background: none;
+    border: none;
+    color: var(--color-text-tertiary);
+    font-size: 12px;
+    min-width: auto;
+    padding: 4px 8px;
+  }
+  .sp-card-btn--ghost:hover { color: var(--color-text-secondary); }
+
+  /* === Progress Dots === */
+  .sp-progress {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .sp-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-border-secondary);
+    transition: background 200ms;
+  }
+  .sp-dot--active { background: var(--color-accent-blue); }
+
+  /* === Dismiss (나중에) === */
+  .sp-dismiss {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 8px 0 0;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    text-align: center;
+  }
+  .sp-dismiss:hover { color: var(--color-text-secondary); }
+
+  /* === Card nav (뒤로 가기) === */
+  .sp-card-nav {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  /* === Status Ring (connect mode) === */
+  .sp-status {
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -182,18 +237,29 @@
     margin-bottom: 14px;
     transition: all 250ms;
   }
-  .sp-ring--idle { background: var(--color-surface-secondary, #f0f0f2); color: var(--color-text-tertiary); }
-  .sp-ring--opening { background: #fff3cd; color: #856404; }
-  .sp-ring--open { background: #d1e7dd; color: #0f5132; }
-  .sp-ring--error { background: #f8d7da; color: #842029; }
-  html[data-theme="dark"] .sp-ring--idle { background: rgba(255,255,255,0.06); }
-  html[data-theme="dark"] .sp-ring--opening { background: rgba(255,193,7,0.15); color: #ffc107; }
-  html[data-theme="dark"] .sp-ring--open { background: rgba(25,135,84,0.15); color: #75b798; }
-  html[data-theme="dark"] .sp-ring--error { background: rgba(220,53,69,0.15); color: #ea868f; }
+  .sp-status--idle {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-tertiary);
+  }
+  .sp-status--opening {
+    background: var(--color-warning-50);
+    color: var(--color-warning);
+  }
+  html[data-theme="dark"] .sp-status--opening {
+    background: var(--color-warning-bg-dark);
+  }
+  .sp-status--open {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+  .sp-status--error {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+  }
 
   .sp-spinner {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border: 2.5px solid currentColor;
     border-top-color: transparent;
     border-radius: 50%;
@@ -201,91 +267,58 @@
   }
   @keyframes sp-spin { to { transform: rotate(360deg); } }
 
-  /* === Launch Guide === */
-  .sp-launch-guide {
+  /* === Guide (connect mode) === */
+  .sp-guide {
     text-align: center;
-    padding: 16px 0 8px;
+    padding: 12px 0 8px;
   }
-  .sp-launch-arrow {
-    font-size: 28px;
-    color: var(--color-accent, #007aff);
+  .sp-guide-arrow {
+    font-size: 24px;
+    color: var(--color-accent-blue);
     animation: sp-bounce 1s ease-in-out infinite;
     line-height: 1;
   }
   @keyframes sp-bounce {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(6px); }
+    50% { transform: translateY(5px); }
   }
-  .sp-launch-text {
-    font-size: 14px;
+  .sp-guide-main {
+    font-size: 13px;
     font-weight: 600;
     color: var(--color-text-primary);
     line-height: 1.5;
-    margin: 8px 0 6px;
+    margin: 6px 0 4px;
   }
-  .sp-launch-text strong { color: var(--color-accent, #007aff); }
-  .sp-launch-sub {
+  .sp-guide-main strong { color: var(--color-accent-blue); }
+  .sp-guide-sub {
     font-size: 12px;
     color: var(--color-text-tertiary);
     margin: 0;
   }
-  .sp-launch-sub strong { font-weight: 600; color: var(--color-text-secondary); }
+  .sp-guide-sub strong { font-weight: 600; color: var(--color-text-secondary); }
 
-  /* === Footnote === */
-  .sp-footnote {
-    font-size: 11px;
-    color: var(--color-text-tertiary);
+  /* === Actions / Footer === */
+  .sp-actions {
     text-align: center;
-    margin: 0 0 12px;
-    line-height: 1.4;
+    margin: 12px 0;
   }
-
-  /* === Sub Link === */
-  .sp-sub-link {
-    text-align: center;
-    margin-bottom: 16px;
+  .sp-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
   }
+  .sp-footer-btn { width: 100%; }
   .sp-link {
     background: none;
     border: none;
     padding: 0;
     font-size: 12px;
-    color: var(--color-accent, #007aff);
+    color: var(--color-accent-blue);
     cursor: pointer;
   }
   .sp-link:hover { text-decoration: underline; }
-
-  /* === Buttons (좌우 대칭 중앙) === */
-  .sp-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-  }
-
-  .sp-btn {
-    padding: 9px 28px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 120ms, background 120ms;
-    min-width: 100px;
-    text-align: center;
-  }
-  .sp-btn--fill {
-    background: var(--color-accent, #007aff);
-    color: #fff;
-    border: none;
-  }
-  .sp-btn--fill:hover { opacity: 0.85; }
-  .sp-btn--outline {
-    background: transparent;
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-border-secondary, rgba(0,0,0,0.15));
-  }
-  .sp-btn--outline:hover { background: var(--color-surface-secondary, #f5f5f7); }
-  html[data-theme="dark"] .sp-btn--outline { border-color: rgba(255,255,255,0.15); }
-  html[data-theme="dark"] .sp-btn--outline:hover { background: rgba(255,255,255,0.08); }
 
   /* === Touch target === */
   @media (pointer: coarse) {
