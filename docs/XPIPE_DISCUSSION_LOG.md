@@ -127,3 +127,16 @@
 **3자 공통 합의**: 문서 신뢰도 등급 C → 모순 7건 + 중복 4건 해소 필요
 - 수치 오류 3건, 섹션 번호 중복, 구 인터페이스 코드 잔존, 마일스톤 정의 충돌, M3 다이어그램 불일치
 - 토의 기록 별도 파일 분리, 부록 B~G 축소, DomainAdapter/AS-IS 중복 제거
+
+### 2026-03-19 Sprint 0-1 완료 — 보안 이슈 4건 해결
+
+**실행 결과**:
+- 4건 수정 완료: SSE 인증 2건, chat-routes userId, personal-files DI 리팩토링, CORS 제한
+- Gini 판정: PASS with Minor (Minor 즉시 해소)
+- 테스트: 47 스위트, 1,052건 전원 PASS
+- 커밋: `18e0680a` (보안 4건), `d852ba24` (CORS Minor)
+
+**신규 발견**: `customer-relationships-routes.js:591` — JWT 미사용 (Major)
+→ Sprint 0-2에 포함하여 해결 예정
+
+**실측 데이터**: 예상 3시간 15분 → 실제 더 빠르게 완료. DI 리팩토링 패턴이 동일하여 일괄 치환 가능.

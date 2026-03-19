@@ -2,13 +2,13 @@
 
 **작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (5차 검토)
 **참여**: Alex (개발/아키텍트), Gini (품질 엔지니어), PM (제품 매니저), Moderator (Claude)
-**상태**: Phase 0 미착수 (게이트 조건 0/6 충족)
+**상태**: Phase 0 진행 중 — Sprint 0-1 완료 (게이트 조건 1/7 충족)
 **토의 이력**: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
 
 > **현재 상태 요약**
-> - Foundation Phase 0~4 + Evolution Phase 5-A~8 로드맵 확정
-> - Phase 0 선행 조건(보안 5건, God Function 분해, Q2 결정, E2E 테스트) 미착수
-> - 마일스톤: M1(분리) → M2(검증) → M3(품질도약) → M4(컴플라이언스) → M5(조건부)
+> - Phase 0, Sprint 0-1 완료: 보안 이슈 4건 해결 (잔여 1건 Sprint 0-2에서 처리)
+> - 다음: Sprint 0-2 (잔여 보안 + God Function 분해)
+> - 게이트 조건: 보안 ✅ (잔여 1건 제외) / E2E ❌ / 기준선 ❌ / Q2 ❌ / God Function ❌ / tag ❌
 
 ---
 
@@ -559,18 +559,20 @@ Phase 4: PoC (1-2주)              ──M2──  Phase 8: 멀티테넌시 (5-7
 
 > 기간 보정: 2-3주 → **3-4주** (doc_prep_main.py가 실제 1,777줄이므로 분해 기간 확대)
 
-| 작업 | 근거 |
-|------|------|
-| `personal-files-routes.js` JWT 인증 우회 수정 | Gini: Critical 보안 이슈 |
-| `chat-routes.js` userId 헤더 우선순위 수정 | Gini: Major 보안 이슈 |
-| `/user/account/stream` SSE 인증 누락 수정 | Gini: 2번째 미보호 SSE 엔드포인트 |
-| document_pipeline 인증 정책 결정 | Gini: 전역 인증 없음, CORS 전면 개방 |
-| `doc_prep_main.py` God Function 분해 (1,777줄) | Alex: 오케스트레이터 + 단계별 함수로 분해 |
-| **Q2 결정: Storage 추상화 여부** | Gini, PM: 미결 시 Phase 1 인터페이스 설계 불가 |
-| 파이프라인 E2E 테스트 추가 | Gini: 실제 MongoDB+Redis 환경, 회귀 기준선 수치 포함 |
+| 작업 | 근거 | 상태 |
+|------|------|------|
+| `personal-files-routes.js` JWT 인증 우회 수정 | Gini: Critical 보안 이슈 | ✅ Sprint 0-1 완료 (DI 패턴 전환 + authenticateJWT) |
+| `chat-routes.js` userId 헤더 우선순위 수정 | Gini: Major 보안 이슈 | ✅ Sprint 0-1 완료 |
+| `/personal-files/stream`, `/user/account/stream` SSE 인증 누락 수정 | Gini: 미보호 SSE 2건 | ✅ Sprint 0-1 완료 (authenticateJWTWithQuery) |
+| document_pipeline CORS 제한 | Gini: CORS 전면 개방 | ✅ Sprint 0-1 완료 (특정 오리진만 허용) |
+| `customer-relationships-routes.js` JWT 미사용 | Gini: Sprint 0-1 전수조사에서 신규 발견 (Major) | 미착수 |
+| `doc_prep_main.py` God Function 분해 (1,777줄) | Alex: 오케스트레이터 + 단계별 함수로 분해 | 미착수 |
+| **Q2 결정: Storage 추상화 여부** | Gini, PM: 미결 시 Phase 1 인터페이스 설계 불가 | 미착수 |
+| 파이프라인 E2E 테스트 추가 | Gini: 실제 MongoDB+Redis 환경, 회귀 기준선 수치 포함 | 미착수 |
 
 **Phase 0 게이트 조건 (전원 충족 시 Phase 1 진입):**
-- [ ] 보안 이슈 Critical/Major 전원 해결
+- [x] 보안 이슈 Critical/Major 전원 해결 (Sprint 0-1: 4건 완료, 잔여 1건 `customer-relationships-routes.js`)
+- [ ] `customer-relationships-routes.js:591` JWT 인증 추가 (Sprint 0-1 Gini 전수조사에서 발견)
 - [ ] E2E 테스트가 실제 인프라(MongoDB+Redis)에서 통과
 - [ ] 회귀 기준선 확립: 분류 정확도 91.8%, 처리 성공률, P95 응답시간
 - [ ] Q2 결정 완료 및 문서화
