@@ -1,14 +1,15 @@
 # xPipe — AIMS 문서 처리 엔진 모듈화 전략
 
-**작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (5차 검토)
+**작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (7차 — Phase 0 완료)
 **참여**: Alex (개발/아키텍트), Gini (품질 엔지니어), PM (제품 매니저), Moderator (Claude)
-**상태**: Phase 0 진행 중 — Sprint 0-2 진행 중 (게이트 조건 3/7 충족)
+**상태**: ✅ Phase 0 완료 — 게이트 조건 7/7 충족. Phase 1 진입 가능.
 **토의 이력**: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
 
 > **현재 상태 요약**
-> - Phase 0, Sprint 0-2 진행 중: 보안 5건 전원 완료, Q2 결정 완료
-> - 다음: God Function 분해 → E2E 테스트 → 기준선 확립 → tag
-> - 게이트 조건: 보안 ✅ / Q2 ✅ / E2E ❌ / 기준선 ❌ / God Function ❌ / tag ❌
+> - Phase 0 완료 (Sprint 0-1 + 0-2): 보안 5건, Q2 결정, God Function 분해, E2E 테스트, 기준선 확립
+> - `git tag phase0-baseline` 생성 완료
+> - 다음: Phase 1 (인터페이스 정의)
+> - 게이트 조건: 보안 ✅ / JWT ✅ / Q2 ✅ / God Function ✅ / E2E ✅ / 기준선 ✅ / tag ✅
 
 ---
 
@@ -566,18 +567,18 @@ Phase 4: PoC (1-2주)              ──M2──  Phase 8: 멀티테넌시 (5-7
 | `/personal-files/stream`, `/user/account/stream` SSE 인증 누락 수정 | Gini: 미보호 SSE 2건 | ✅ Sprint 0-1 완료 (authenticateJWTWithQuery) |
 | document_pipeline CORS 제한 | Gini: CORS 전면 개방 | ✅ Sprint 0-1 완료 (특정 오리진만 허용) |
 | `customer-relationships-routes.js` JWT 미사용 | Gini: Sprint 0-1 전수조사에서 신규 발견 (Major) | ✅ Sprint 0-2 완료 (커밋 a66b58af) |
-| `doc_prep_main.py` God Function 분해 (1,777줄) | Alex: 오케스트레이터 + 단계별 함수로 분해 | 미착수 |
+| `doc_prep_main.py` God Function 분해 (1,777줄) | Alex: 오케스트레이터 + 단계별 함수로 분해 | ✅ Sprint 0-2 완료 (561줄→50줄 오케스트레이터 + 7 step, 커밋 146e6c85) |
 | **Q2 결정: Storage 추상화 여부** | Gini, PM: 미결 시 Phase 1 인터페이스 설계 불가 | ✅ Sprint 0-2 결정: Option B (얇은 추상화) |
-| 파이프라인 E2E 테스트 추가 | Gini: 실제 MongoDB+Redis 환경, 회귀 기준선 수치 포함 | 미착수 |
+| 파이프라인 E2E 테스트 추가 | Gini: 실제 MongoDB+Redis 환경, 회귀 기준선 수치 포함 | ✅ Sprint 0-2 완료 (10개 E2E, 커밋 7c6b60c4) |
 
-**Phase 0 게이트 조건 (전원 충족 시 Phase 1 진입):**
-- [x] 보안 이슈 Critical/Major 전원 해결 (Sprint 0-1: 4건, Sprint 0-2: 1건 `customer-relationships-routes.js`)
+**Phase 0 게이트 조건 (전원 충족 ✅ — Phase 1 진입 가능):**
+- [x] 보안 이슈 Critical/Major 전원 해결 (Sprint 0-1: 4건, Sprint 0-2: 1건)
 - [x] `customer-relationships-routes.js` JWT 인증 추가 (커밋 a66b58af)
-- [x] Q2 결정 완료: **Option B (얇은 추상화)** — DocumentStore/JobQueue ABC + MongoDB/Redis 기본 구현체. 향후 필요 시 Option C (완전 추상화)로 확장 가능한 구조. Phase 1에서 인터페이스 정의, Phase 2에서 구현
-- [ ] E2E 테스트가 실제 인프라(MongoDB+Redis)에서 통과
-- [ ] 회귀 기준선 확립: 분류 정확도 91.8%, 처리 성공률, P95 응답시간
-- [ ] `doc_prep_main.py`가 오케스트레이터 + 단계별 함수로 분해됨
-- [ ] `git tag phase0-baseline` 생성 (롤백 기준점)
+- [x] Q2 결정 완료: **Option B (얇은 추상화)** — 향후 C 확장 가능
+- [x] E2E 테스트 10개 실제 인프라(MongoDB+Redis)에서 통과
+- [x] 회귀 기준선 확립: 성공률 100%, 분류 정확도 91.8%, 분류 커버리지 51.5%, AR 711, CRS 402
+- [x] `doc_prep_main.py` 오케스트레이터 + 7 step 함수로 분해 (Gini PASS)
+- [x] `git tag phase0-baseline` 생성
 
 **롤백 전략**: 보안 수정 / God Function 분해를 별도 커밋으로 분리. 어느 시점으로든 `git reset --hard` 가능.
 
@@ -969,6 +970,7 @@ pipeline:
 - 4차 (2026-03-19): Phase 전면 재설계 (3-A/3-B 분리, Evolution Phase 5~8, M1~M5 마일스톤, 게이트 조건+롤백 전략)
 - 5차 (2026-03-19): 문서 최적화 (모순 7건 + 중복 4건 해소, 토의 기록 분리)
 - 6차 (2026-03-19): Q2 결정 — Option B (얇은 추상화). Alex 코드 분석(MongoDB 10컬렉션, Redis Stream 단일 패턴) 기반. B→C 진화 경로 확보
+- 7차 (2026-03-19): Phase 0 완료 — God Function 분해(특성 테스트 36개 안전망 + Gini PASS) + E2E 10개 + 회귀 기준선 확립 + tag 생성. 게이트 7/7 충족
 
 ---
 
