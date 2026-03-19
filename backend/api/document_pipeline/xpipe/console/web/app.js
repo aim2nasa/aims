@@ -102,7 +102,6 @@
           adapter: $('#cfg-adapter').value,
           preset: $('#cfg-preset').value,
           mode: $('#cfg-mode').value,
-          quality_gate: $('#cfg-quality').value === 'true',
           models: {
             llm: $('#cfg-llm').value,
             ocr: $('#cfg-ocr').value,
@@ -145,7 +144,6 @@
       presetSelect.value = data.config.preset;
       $('#cfg-adapter').value = data.config.adapter;
       $('#cfg-mode').value = data.config.mode;
-      $('#cfg-quality').value = String(data.config.quality_gate);
 
       // 모델 드롭다운 업데이트
       if (data.available_models) {
