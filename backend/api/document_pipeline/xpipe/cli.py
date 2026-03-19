@@ -102,6 +102,71 @@ def _cmd_status(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_quality(args: argparse.Namespace) -> int:
+    """품질 게이트 정보 및 GT 측정"""
+    from xpipe.quality import QualityConfig, QualityGate, is_enabled
+
+    subcommand = getattr(args, "quality_command", None)
+
+    if subcommand == "check":
+        # GT 파일 경로가 지정된 경우 측정 실행
+        gt_path = getattr(args, "gt_path", None)
+        if not gt_path:
+            print("GT 파일 경로를 지정하세요: python -m xpipe quality check <GT_PATH>")
+            return 1
+
+        from xpipe.quality_runner import GroundTruthRunner
+
+        runner = GroundTruthRunner()
+        try:
+            report = runner.measure_accuracy(gt_path)
+        except FileNotFoundError:
+            print(f"GT 파일을 찾을 수 없습니다: {gt_path}")
+            return 1
+        except Exception as e:
+            print(f"GT 측정 실패: {e}")
+            return 1
+
+        print("=== Ground Truth 측정 결과 ===")
+        print(f"  전체: {report.total}건")
+        print(f"  정확: {report.correct}건")
+        print(f"  오류: {report.incorrect}건")
+        print(f"  스킵: {report.skipped}건")
+        print(f"  정확도: {report.accuracy:.1%}")
+
+        if report.mismatches:
+            print(f"\n  불일치 ({len(report.mismatches)}건):")
+            for m in report.mismatches[:10]:  # 최대 10건 표시
+                print(f"    {m['file_id']}: {m['expected']} → {m['actual']}")
+            if len(report.mismatches) > 10:
+                print(f"    ... 외 {len(report.mismatches) - 10}건")
+
+        return 0
+
+    # 기본: 품질 게이트 설정 표시
+    config = QualityConfig()
+    enabled = is_enabled()
+
+    print("=== Quality Gate 설정 ===")
+    print(f"  상태: {'활성화' if enabled else '비활성화'} (XPIPE_QUALITY_GATE)")
+    print(f"  최소 confidence: {config.min_confidence}")
+    print(f"  최소 텍스트 길이: {config.min_text_length}자")
+    print(f"  최대 깨진 문자 비율: {config.max_broken_char_ratio:.0%}")
+    print(f"  종합 통과 임계치: {config.overall_threshold}")
+    print()
+    print("  플래그 종류:")
+    print("    LOW_CONFIDENCE  -- 분류 신뢰도가 임계치 미만")
+    print("    SHORT_TEXT      -- 텍스트가 너무 짧음")
+    print("    BROKEN_TEXT     -- 깨진 문자 비율이 너무 높음")
+    print("    UNCLASSIFIED    -- 미분류(general/unknown/빈값)")
+    print()
+    print("  사용법:")
+    print("    python -m xpipe quality          → 설정 표시 (현재 화면)")
+    print("    python -m xpipe quality check <GT_PATH>  → GT 측정")
+
+    return 0
+
+
 def _cmd_test(args: argparse.Namespace) -> int:
     """내장 테스트 실행 (pytest 호출)"""
     # xpipe 테스트 디렉토리
@@ -163,6 +228,14 @@ def main() -> None:
     # test
     sub_test = subparsers.add_parser("test", help="내장 테스트 실행")
     sub_test.set_defaults(func=_cmd_test)
+
+    # quality
+    sub_quality = subparsers.add_parser("quality", help="품질 게이트 설정/측정")
+    sub_quality.set_defaults(func=_cmd_quality, quality_command=None)
+    quality_sub = sub_quality.add_subparsers(dest="quality_command")
+
+    sub_quality_check = quality_sub.add_parser("check", help="Ground Truth 측정")
+    sub_quality_check.add_argument("gt_path", help="GT JSON 파일 경로")
 
     args = parser.parse_args()
     if not args.command:
