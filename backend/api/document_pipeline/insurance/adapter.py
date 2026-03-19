@@ -487,7 +487,7 @@ class InsuranceDomainAdapter(DomainAdapter):
         display_name = context.get("display_name", "")
         update_fields: dict[str, Any] = {
             "is_annual_report": True,
-            "annual_report_status": "pending",
+            "ar_parsing_status": "pending",
         }
         if display_name:
             update_fields["displayName"] = display_name
@@ -547,7 +547,7 @@ class InsuranceDomainAdapter(DomainAdapter):
         display_name = context.get("display_name", "")
         update_fields: dict[str, Any] = {
             "is_customer_review": True,
-            "customer_review_status": "pending",
+            "cr_parsing_status": "pending",
         }
         if display_name:
             update_fields["displayName"] = display_name

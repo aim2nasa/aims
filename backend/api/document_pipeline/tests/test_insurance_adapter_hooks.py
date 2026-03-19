@@ -188,7 +188,7 @@ class TestARDetected:
         status_update = result[0]
         assert status_update.action == StageHookAction.UPDATE_STATUS
         assert status_update.payload["fields"]["is_annual_report"] is True
-        assert status_update.payload["fields"]["annual_report_status"] == "pending"
+        assert status_update.payload["fields"]["ar_parsing_status"] == "pending"
         assert status_update.payload["fields"]["displayName"] == "홍길동_AR_2026-01-15.pdf"
         assert status_update.payload["fields"]["ar_issue_date"] == "2026-01-15"
         assert status_update.payload["add_to_set"] == {"tags": "AR"}
@@ -277,7 +277,7 @@ class TestCRSDetected:
         status_update = result[0]
         assert status_update.action == StageHookAction.UPDATE_STATUS
         assert status_update.payload["fields"]["is_customer_review"] is True
-        assert status_update.payload["fields"]["customer_review_status"] == "pending"
+        assert status_update.payload["fields"]["cr_parsing_status"] == "pending"
         assert status_update.payload["add_to_set"] == {"tags": "CRS"}
 
     @pytest.mark.asyncio
