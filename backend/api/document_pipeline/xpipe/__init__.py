@@ -23,6 +23,13 @@ from xpipe.quality_runner import (
     GroundTruthRunner,
     AccuracyReport,
 )
+from xpipe.providers import (
+    LLMProvider,
+    OCRProvider,
+    EmbeddingProvider,
+)
+from xpipe.provider_registry import ProviderRegistry
+from xpipe.cost_tracker import CostTracker, UsageRecord
 
 __all__ = [
     # Adapter
@@ -42,4 +49,11 @@ __all__ = [
     "QualityReport",
     "GroundTruthRunner",
     "AccuracyReport",
+    # Providers
+    "LLMProvider",
+    "OCRProvider",
+    "EmbeddingProvider",
+    "ProviderRegistry",
+    "CostTracker",
+    "UsageRecord",
 ]

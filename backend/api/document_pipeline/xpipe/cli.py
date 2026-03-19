@@ -60,11 +60,15 @@ def _cmd_status(_args: argparse.Namespace) -> int:
     from xpipe.adapter import DomainAdapter
     from xpipe.store import DocumentStore
     from xpipe.queue import JobQueue
+    from xpipe.providers import LLMProvider, OCRProvider, EmbeddingProvider
 
     abcs = [
         ("DomainAdapter", DomainAdapter),
         ("DocumentStore", DocumentStore),
         ("JobQueue", JobQueue),
+        ("LLMProvider", LLMProvider),
+        ("OCRProvider", OCRProvider),
+        ("EmbeddingProvider", EmbeddingProvider),
     ]
 
     print("=== ABC 정의 ===")
@@ -167,6 +171,46 @@ def _cmd_quality(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_providers(_args: argparse.Namespace) -> int:
+    """등록된 Provider ABC 정보 출력"""
+    from xpipe.providers import LLMProvider, OCRProvider, EmbeddingProvider
+
+    provider_abcs = [
+        ("LLMProvider", LLMProvider),
+        ("OCRProvider", OCRProvider),
+        ("EmbeddingProvider", EmbeddingProvider),
+    ]
+
+    print("=== AI Provider ABC ===")
+    for name, cls in provider_abcs:
+        abstract_methods = sorted(cls.__abstractmethods__)
+        print(f"\n  {name}:")
+        print(f"    abstract 메서드 ({len(abstract_methods)}개):")
+        for m in abstract_methods:
+            print(f"      - {m}")
+
+    # ProviderRegistry 사용 예시
+    print("\n=== Provider Registry 사용법 ===")
+    print("  from xpipe import ProviderRegistry, LLMProvider")
+    print()
+    print("  registry = ProviderRegistry()")
+    print('  registry.register("llm", my_llm_provider, priority=10)')
+    print('  registry.register("llm", fallback_provider, priority=1)')
+    print()
+    print('  provider = registry.get("llm")  # 최우선 Provider')
+    print('  result = await registry.call_with_fallback("llm", "complete", ...)')
+
+    # CostTracker 사용 예시
+    print("\n=== Cost Tracker 사용법 ===")
+    print("  from xpipe import CostTracker, UsageRecord")
+    print()
+    print("  tracker = CostTracker()")
+    print("  tracker.record(UsageRecord(...))")
+    print('  summary = tracker.get_summary("day")')
+
+    return 0
+
+
 def _cmd_test(args: argparse.Namespace) -> int:
     """내장 테스트 실행 (pytest 호출)"""
     # xpipe 테스트 디렉토리
@@ -228,6 +272,10 @@ def main() -> None:
     # test
     sub_test = subparsers.add_parser("test", help="내장 테스트 실행")
     sub_test.set_defaults(func=_cmd_test)
+
+    # providers
+    sub_providers = subparsers.add_parser("providers", help="AI Provider ABC 정보")
+    sub_providers.set_defaults(func=_cmd_providers)
 
     # quality
     sub_quality = subparsers.add_parser("quality", help="품질 게이트 설정/측정")
