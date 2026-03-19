@@ -1,0 +1,42 @@
+[
+  {
+    "description": "판결문 감지: 서울중앙지방법원 판결 (필수+선택 키워드 충분)",
+    "input_text": "서울중앙지방법원\n판    결\n사건 2024가합12345 손해배상(기)\n원고: 김민수\n피고: 이영희\n\n주문\n1. 피고는 원고에게 금 50,000,000원을 지급하라.\n2. 소송비용은 피고가 부담한다.\n\n판결일: 2024. 6. 15.\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [{"doc_type": "judgment"}],
+    "expected_classification": "judgment",
+    "filename": "judgment.pdf"
+  },
+  {
+    "description": "계약서 감지: 용역 계약서 (갑/을/계약기간 키워드)",
+    "input_text": "용역 계약서\n\n갑: 주식회사 테스트\n을: 홍길동\n\n제1조 (계약기간)\n본 계약의 기간은 2024년 1월 1일부터 2024년 12월 31일까지로 한다.\n\n제2조 (용역 내용)\n을은 갑에게 소프트웨어 개발 용역을 제공한다.\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [{"doc_type": "contract"}],
+    "expected_classification": "contract",
+    "filename": "contract.pdf"
+  },
+  {
+    "description": "일반 법률 문서: 감지 대상 아닌 소장 (판결/계약서 키워드 부족)",
+    "input_text": "소장\n\n원고: 박영수\n피고: 최철수\n\n청구 취지\n피고는 원고에게 금 10,000,000원을 지급하라.\n\n청구 원인\n1. 피고는 2024. 1. 15. 원고에게 금전을 차용하였다.\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [],
+    "expected_classification": "complaint",
+    "filename": "complaint.pdf"
+  },
+  {
+    "description": "판결 키워드 부족: '판결'만 있고 선택 키워드 1개 → 미감지",
+    "input_text": "판결\n이 문서는 일반적인 리뷰 보고서입니다.\n특별한 법률 관련 내용이 없습니다.\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [],
+    "expected_classification": null,
+    "filename": "generic_report.pdf"
+  },
+  {
+    "description": "빈 텍스트: 감지 없음",
+    "input_text": "",
+    "input_mime": "application/pdf",
+    "expected_detections": [],
+    "expected_classification": null,
+    "filename": "empty.pdf"
+  }
+]
