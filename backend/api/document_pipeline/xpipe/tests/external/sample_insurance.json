@@ -1,0 +1,42 @@
+[
+  {
+    "description": "AR 감지: MetLife Annual Review Report (필수+선택 키워드 모두 존재)",
+    "input_text": "MetLife\n홍길동 고객님을 위한\nAnnual Review Report\n\n보유계약 현황\n메트라이프생명 보험계약 현황\n\n계약번호   상품명           계약일\n12345678   종합보장보험     2020.01.15\n\n발행(기준)일: 2026년 1월 15일\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [{"doc_type": "annual_report"}],
+    "expected_classification": null,
+    "filename": "document.pdf"
+  },
+  {
+    "description": "CRS 감지: MetLife Customer Review Service (변액 적립금)",
+    "input_text": "메트라이프\n김철수 고객님을 위한\nCustomer Review Service\n\n변액 적립금 현황\n투자수익률 및 펀드 배분 현황\n\n계약번호: 98765432\n계약자: 김철수\n메트라이프 변액종합보험\n발행(기준)일: 2026년 2월 10일\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [{"doc_type": "customer_review"}],
+    "expected_classification": null,
+    "filename": "crs_report.pdf"
+  },
+  {
+    "description": "일반 PDF: AR/CRS 아닌 보험증권 문서 (감지 없음)",
+    "input_text": "삼성화재 보험증권\n\n계약번호: AB-2026-001\n계약자: 박영희\n피보험자: 박영희\n보험기간: 2026.01.01 ~ 2036.01.01\n보험료: 50,000원\n\n가입 내용\n- 일반상해사망: 1억원\n- 질병사망: 5천만원\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [],
+    "expected_classification": "policy",
+    "filename": "policy.pdf"
+  },
+  {
+    "description": "비PDF 문서: MIME 불일치로 AR 패턴 있어도 감지 안 됨",
+    "input_text": "MetLife\n홍길동 고객님을 위한\nAnnual Review Report\n보유계약 현황\n",
+    "input_mime": "image/jpeg",
+    "expected_detections": [],
+    "expected_classification": null,
+    "filename": "report.jpg"
+  },
+  {
+    "description": "AR 키워드 부분 매칭: 필수 키워드만 있고 선택 키워드 없음 → 미감지",
+    "input_text": "Annual Review Report\n\n이 문서는 일반적인 연간 리뷰 보고서입니다.\n특별한 보험 관련 내용이 없습니다.\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [],
+    "expected_classification": null,
+    "filename": "generic_report.pdf"
+  }
+]

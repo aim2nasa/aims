@@ -17,10 +17,19 @@ XPIPE_DIR = Path(__file__).parent.parent / "xpipe"
 ALLOWED_MODULES = frozenset({
     "__future__",
     "abc",
+    "argparse",      # CLI
+    "asyncio",       # testing.py (async 테스트 러너)
     "dataclasses",
     "enum",
+    "importlib",     # CLI status (동적 어댑터 탐색)
+    "inspect",       # CLI status (ABC 메서드 목록 조회)
+    "json",          # testing.py (테스트 셋 로드)
+    "pathlib",       # CLI, testing.py (파일 경로)
+    "subprocess",    # CLI test (pytest 실행)
+    "sys",           # CLI (sys.exit, sys.executable)
+    "tomllib",       # CLI (_get_version, Python 3.11+)
     "typing",
-    "warnings",  # deprecation 정책에서 사용 예정
+    "warnings",      # deprecation 정책에서 사용 예정
 })
 
 # 절대 import하면 안 되는 모듈 패턴 (document_pipeline 내부)
