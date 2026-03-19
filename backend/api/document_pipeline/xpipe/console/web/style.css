@@ -601,7 +601,52 @@ body {
 /* 액션 버튼 */
 .action-btns {
   display: flex;
-  gap: 4px;
+  gap: 2px;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.btn-icon:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
+}
+
+.btn-icon.btn-summary {
+  color: var(--accent);
+}
+
+.btn-icon.btn-fulltext {
+  color: var(--success);
+}
+
+.btn-icon.btn-remove {
+  color: var(--error);
+}
+
+.btn-icon.btn-retry {
+  color: var(--warning);
+}
+
+.btn-icon:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon svg {
+  display: block;
 }
 
 /* --- 인라인 파이프라인 뱃지 (테이블 상태 컬럼) --- */
