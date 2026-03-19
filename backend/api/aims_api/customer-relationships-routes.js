@@ -63,10 +63,10 @@ const getAllRelationshipTypes = () => {
   return allTypes;
 };
 
-const setupCustomerRelationshipRoutes = (app, db) => {
+const setupCustomerRelationshipRoutes = (app, db, authenticateJWT) => {
   
   // 1. 고객 관계 생성
-  app.post('/api/customers/:id/relationships', async (req, res) => {
+  app.post('/api/customers/:id/relationships', authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
       const {
@@ -238,7 +238,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
   });
 
   // 2. 고객 관계 조회
-  app.get('/api/customers/:id/relationships', async (req, res) => {
+  app.get('/api/customers/:id/relationships', authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
       const { category, type, include_details = 'true' } = req.query;
@@ -387,7 +387,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
   });
 
   // 3. 관계 네트워크 분석
-  app.get('/api/customers/:id/network-analysis', async (req, res) => {
+  app.get('/api/customers/:id/network-analysis', authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
 
@@ -460,7 +460,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
   });
 
   // 4. 관계 수정
-  app.put('/api/customers/:id/relationships/:relationshipId', async (req, res) => {
+  app.put('/api/customers/:id/relationships/:relationshipId', authenticateJWT, async (req, res) => {
     try {
       const { id, relationshipId } = req.params;
       const updateData = req.body;
@@ -529,7 +529,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
   });
 
   // 5. 관계 삭제 - HARD DELETE로 수정됨
-  app.delete('/api/customers/:id/relationships/:relationshipId', async (req, res) => {
+  app.delete('/api/customers/:id/relationships/:relationshipId', authenticateJWT, async (req, res) => {
     try {
       const { id, relationshipId } = req.params;
 
@@ -586,9 +586,9 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
   // 6. 전체 관계 조회 (N-iteration 제거를 위한 벌크 API)
   // 🔧 프론트엔드에서 모든 고객의 관계를 한 번에 조회
-  app.get('/api/relationships', async (req, res) => {
+  app.get('/api/relationships', authenticateJWT, async (req, res) => {
     try {
-      const userId = req.headers['x-user-id'];
+      const userId = req.user.id;
 
       if (!userId || !ObjectId.isValid(userId)) {
         return res.status(400).json({
@@ -707,7 +707,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
   });
 
   // 7. 관계 통계 조회
-  app.get('/api/customers/:id/relationship-stats', async (req, res) => {
+  app.get('/api/customers/:id/relationship-stats', authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
 
