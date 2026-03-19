@@ -349,6 +349,7 @@ def _create_doc_entry(doc_id: str, filename: str, file_size: int, file_path: str
         "stages_detail": {name: {"status": "pending"} for name in stage_names},
         "stages_data": {},  # v2: 각 스테이지의 input/output 데이터
         "extracted_text": "",  # v2: 추출 텍스트 전문
+        "summary": None,  # AI 요약 (캐시)
         "result": None,
         "quality": None,
         "cost": None,
@@ -577,6 +578,76 @@ async def get_extracted_text(doc_id: str):
         "text_length": len(text),
         "is_stub": is_stub,
     }
+
+
+# --- AI 요약 ---
+
+@app.get("/api/summary/{doc_id}")
+async def get_summary(doc_id: str):
+    """AI 요약 생성 (OpenAI gpt-4o-mini, 결과 캐시)"""
+    doc = documents.get(doc_id)
+    if not doc:
+        raise HTTPException(404, f"문서를 찾을 수 없습니다: {doc_id}")
+
+    text = doc.get("extracted_text", "")
+    if not text or len(text.strip()) < 10:
+        return {
+            "doc_id": doc_id,
+            "summary": "(텍스트가 너무 짧아 요약할 수 없습니다)",
+            "cached": False,
+        }
+
+    # 캐시 확인
+    if doc.get("summary"):
+        return {
+            "doc_id": doc_id,
+            "summary": doc["summary"],
+            "cached": True,
+        }
+
+    # OpenAI API 호출
+    try:
+        import openai
+        client = openai.OpenAI()  # OPENAI_API_KEY 환경 변수 사용
+
+        # 텍스트 10,000자 제한
+        input_text = text[:10000]
+        if len(text) > 10000:
+            input_text += "\n\n(... 이하 생략, 총 " + str(len(text)) + "자)"
+
+        filename = doc.get("filename", "")
+        doc_type = (doc.get("result") or {}).get("document_type", "")
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "문서 요약 전문가. 핵심 내용을 3~5줄로 간결하게 요약. 한국어로 응답.",
+                },
+                {
+                    "role": "user",
+                    "content": f"파일명: {filename}\n문서유형: {doc_type}\n\n--- 본문 ---\n{input_text}\n\n위 문서를 3~5줄로 요약해주세요.",
+                },
+            ],
+            max_tokens=500,
+            temperature=0.3,
+        )
+
+        summary = response.choices[0].message.content.strip()
+        doc["summary"] = summary  # 캐시 저장
+
+        return {
+            "doc_id": doc_id,
+            "summary": summary,
+            "cached": False,
+        }
+
+    except ImportError:
+        raise HTTPException(503, "openai 패키지가 설치되지 않았습니다")
+    except Exception as exc:
+        logger.exception("AI 요약 실패: doc_id=%s", doc_id)
+        raise HTTPException(500, f"요약 생성 실패: {exc}")
 
 
 # --- SSE 실시간 이벤트 ---

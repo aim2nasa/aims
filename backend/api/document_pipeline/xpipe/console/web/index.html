@@ -117,7 +117,11 @@
     <table class="doc-table">
       <thead>
         <tr>
+          <th>유형</th>
           <th>파일명</th>
+          <th>크기</th>
+          <th>타입</th>
+          <th>업로드</th>
           <th>상태</th>
           <th>분류</th>
           <th>감지</th>
@@ -140,11 +144,15 @@
     <p class="empty-sub">파일을 드래그하여 xPipe 파이프라인 처리를 시작하세요.</p>
   </section>
 
-  <!-- 상세 패널 (탭 없음 — 뱃지/컬럼 클릭으로 전환) -->
+  <!-- 상세 패널 -->
   <section class="detail-panel" id="detail-panel" style="display:none;">
     <div class="detail-header">
       <h3 id="detail-filename">파일명</h3>
-      <button class="btn-close" id="detail-close">&times;</button>
+      <div class="detail-header-actions">
+        <button type="button" class="btn-xs detail-tab active" data-view="summary" id="btn-view-summary">요약</button>
+        <button type="button" class="btn-xs detail-tab" data-view="text" id="btn-view-text">전체 텍스트</button>
+        <button type="button" class="btn-close" id="detail-close">&times;</button>
+      </div>
     </div>
     <div class="detail-content" id="detail-content"></div>
   </section>
@@ -161,6 +169,21 @@
         <button type="button" class="btn btn-sm" id="benchmark-csv">CSV 다운로드</button>
         <button type="button" class="btn btn-sm" id="benchmark-json">JSON 다운로드</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 문서 상세 모달 (요약 / 전체 텍스트) -->
+  <div class="modal-overlay" id="doc-modal" style="display:none;">
+    <div class="modal modal-doc">
+      <div class="modal-header">
+        <h3 id="doc-modal-title">파일명</h3>
+        <div class="modal-header-actions">
+          <button type="button" class="btn-xs detail-tab active" data-view="summary" id="modal-tab-summary">요약</button>
+          <button type="button" class="btn-xs detail-tab" data-view="text" id="modal-tab-text">전체 텍스트</button>
+          <button type="button" class="btn-close" id="doc-modal-close">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body" id="doc-modal-body"></div>
     </div>
   </div>
 

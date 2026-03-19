@@ -28,6 +28,9 @@
   let detailView = null;
   let detailViewParam = null; // 스테이지 이름 등
 
+  // 모달 상태
+  let modalDocId = null;
+
   // ---------------------------------------------------------------------------
   // DOM 참조
   // ---------------------------------------------------------------------------
@@ -53,6 +56,9 @@
     detailContent: $('#detail-content'),
     benchmarkModal: $('#benchmark-modal'),
     benchmarkBody: $('#benchmark-body'),
+    docModal: $('#doc-modal'),
+    docModalTitle: $('#doc-modal-title'),
+    docModalBody: $('#doc-modal-body'),
     ftCompleted: $('#ft-completed'),
     ftTotal: $('#ft-total'),
     ftEvents: $('#ft-events'),
@@ -268,6 +274,14 @@
     dom.tableSection.style.display = '';
 
     dom.docTbody.innerHTML = filtered.map(doc => {
+      const ext = getFileExt(doc.filename);
+      const procBadge = renderProcessingBadge(ext);
+      const displayName = (doc.result && doc.result.display_name && doc.result.display_name !== doc.filename)
+        ? '<span class="fname-display">' + escapeHtml(truncate(doc.result.display_name, 32)) + '</span><span class="fname-orig">' + escapeHtml(truncate(doc.filename, 28)) + '</span>'
+        : escapeHtml(truncate(doc.filename, 32));
+      const sizeHtml = formatSize(doc.file_size);
+      const typeHtml = ext ? ext.toUpperCase() : '-';
+      const uploadHtml = formatDate(doc.created_at);
       const statusHtml = renderStatusCell(doc);
       const classifyHtml = doc.result ? escapeHtml(doc.result.document_type) : '<span class="text-muted">-</span>';
       const detectHtml = renderDetections(doc);
@@ -281,7 +295,11 @@
       const selClass = doc.id === selectedDocId ? 'selected' : '';
 
       return '<tr class="' + rowClass + ' ' + selClass + '" data-id="' + doc.id + '">' +
-        '<td>' + truncate(doc.filename, 28) + '</td>' +
+        '<td>' + procBadge + '</td>' +
+        '<td class="td-filename">' + displayName + '</td>' +
+        '<td class="td-compact">' + sizeHtml + '</td>' +
+        '<td class="td-compact">' + typeHtml + '</td>' +
+        '<td class="td-compact">' + uploadHtml + '</td>' +
         '<td>' + statusHtml + '</td>' +
         '<td>' + classifyHtml + '</td>' +
         '<td>' + detectHtml + '</td>' +
@@ -306,7 +324,8 @@
         selectedDocId = id;
         const doc = documents.find(d => d.id === id);
         if (doc) {
-          showDetailView(doc, 'text');
+          // completed일 때만 AI 요약, 그 외는 텍스트 뷰
+          showDetailView(doc, doc.status === 'completed' ? 'summary' : 'text');
         }
         renderTable();
       });
@@ -355,6 +374,23 @@
           showDetailView(doc, 'audit');
         }
         renderTable();
+      });
+    });
+
+    // 요약/텍스트 버튼 → 모달
+    dom.docTbody.querySelectorAll('.btn-summary').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const doc = documents.find(d => d.id === btn.dataset.id);
+        if (doc) openDocModal(doc, 'summary');
+      });
+    });
+
+    dom.docTbody.querySelectorAll('.btn-fulltext').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const doc = documents.find(d => d.id === btn.dataset.id);
+        if (doc) openDocModal(doc, 'text');
       });
     });
 
@@ -484,6 +520,10 @@
 
   function renderActions(doc) {
     let html = '<div class="action-btns">';
+    if (doc.status === 'completed') {
+      html += '<button class="btn-xs btn-summary" data-id="' + doc.id + '">요약</button>';
+      html += '<button class="btn-xs btn-fulltext" data-id="' + doc.id + '">텍스트</button>';
+    }
     if (doc.status === 'error') {
       html += '<button class="btn-xs btn-retry" data-id="' + doc.id + '">재시도</button>';
     }
@@ -566,6 +606,19 @@
       detailView = null;
       renderTable();
     });
+
+    // 요약/전체 텍스트 토글
+    $$('.detail-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const view = btn.dataset.view;
+        if (!selectedDocId) return;
+        const doc = documents.find(d => d.id === selectedDocId);
+        if (!doc) return;
+        $$('.detail-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showDetailView(doc, view);
+      });
+    });
   }
 
   /**
@@ -579,6 +632,12 @@
     detailViewParam = param || null;
     dom.detailPanel.style.display = '';
     dom.detailFilename.textContent = doc.filename;
+
+    // 탭 active 상태 업데이트
+    $$('.detail-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.view === view);
+    });
+
     _renderDetailContent(doc, view, param);
   }
 
@@ -595,7 +654,9 @@
    * 상세 패널 콘텐츠 렌더링
    */
   function _renderDetailContent(doc, view, param) {
-    if (view === 'stage') {
+    if (view === 'summary') {
+      renderSummaryView(doc);
+    } else if (view === 'stage') {
       renderStageDetail(doc, param);
     } else if (view === 'events') {
       renderEventsView(doc.id);
@@ -604,6 +665,35 @@
     } else if (view === 'text') {
       loadExtractedText(doc.id);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 요약 뷰
+  // ---------------------------------------------------------------------------
+  async function renderSummaryView(doc) {
+    const el = dom.detailContent;
+    el.innerHTML = '<div class="ai-summary-loading"><div class="spinner"></div><p>AI 요약 생성 중...</p></div>';
+
+    try {
+      const data = await api('GET', '/api/summary/' + doc.id);
+      const cached = data.cached ? ' <span class="text-muted">(캐시)</span>' : '';
+
+      let html = '<div class="ai-summary-view">';
+      html += '<div class="ai-summary-header">';
+      html += '<span class="ai-summary-badge">AI 요약</span>' + cached;
+      html += '</div>';
+      html += '<div class="ai-summary-content">' + escapeHtml(data.summary || '') + '</div>';
+      html += '</div>';
+
+      el.innerHTML = html;
+    } catch (err) {
+      el.innerHTML = '<p class="text-error">AI 요약 실패: ' + escapeHtml(err.message) + '</p>';
+    }
+  }
+
+  function _summaryItem(label, value) {
+    return '<div class="summary-key">' + escapeHtml(label) + '</div>' +
+      '<div class="summary-val">' + escapeHtml(String(value || '-')) + '</div>';
   }
 
   // ---------------------------------------------------------------------------
@@ -940,6 +1030,123 @@
   }
 
   // ---------------------------------------------------------------------------
+  // 문서 상세 모달 (요약 / 전체 텍스트)
+  // ---------------------------------------------------------------------------
+  function initDocModal() {
+    $('#doc-modal-close').addEventListener('click', closeDocModal);
+    dom.docModal.addEventListener('click', (e) => {
+      if (e.target === dom.docModal) closeDocModal();
+    });
+
+    // 탭 전환
+    dom.docModal.querySelectorAll('.detail-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const view = btn.dataset.view;
+        if (!modalDocId) return;
+        const doc = documents.find(d => d.id === modalDocId);
+        if (!doc) return;
+        openDocModal(doc, view);
+      });
+    });
+  }
+
+  function openDocModal(doc, view) {
+    modalDocId = doc.id;
+    dom.docModal.style.display = '';
+    dom.docModalTitle.textContent = doc.filename;
+
+    // 탭 active
+    dom.docModal.querySelectorAll('.detail-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.view === view);
+    });
+
+    if (view === 'summary') {
+      renderModalSummary(doc);
+    } else {
+      renderModalText(doc.id);
+    }
+  }
+
+  function closeDocModal() {
+    dom.docModal.style.display = 'none';
+    modalDocId = null;
+    modalView = null;
+  }
+
+  async function renderModalSummary(doc) {
+    const el = dom.docModalBody;
+    el.innerHTML = '<div class="ai-summary-loading"><div class="spinner"></div><p>AI 요약 생성 중...</p></div>';
+
+    try {
+      const data = await api('GET', '/api/summary/' + doc.id);
+      const cached = data.cached ? ' <span class="text-muted">(캐시)</span>' : '';
+
+      let html = '<div class="ai-summary-view">';
+      html += '<div class="ai-summary-header">';
+      html += '<span class="ai-summary-badge">AI 요약</span>' + cached;
+      html += '</div>';
+      html += '<div class="ai-summary-content">' + escapeHtml(data.summary || '') + '</div>';
+
+      // 복사 버튼
+      html += '<div class="ai-summary-actions">';
+      html += '<button class="btn-xs" id="modal-copy-summary">클립보드 복사</button>';
+      html += '</div>';
+      html += '</div>';
+
+      el.innerHTML = html;
+
+      $('#modal-copy-summary').addEventListener('click', function () {
+        navigator.clipboard.writeText(data.summary || '').then(() => {
+          this.textContent = '복사 완료';
+          setTimeout(() => { this.textContent = '클립보드 복사'; }, 1500);
+        }).catch(() => alert('클립보드 복사 실패'));
+      });
+
+    } catch (err) {
+      el.innerHTML = '<p class="text-error">AI 요약 실패: ' + escapeHtml(err.message) + '</p>';
+    }
+  }
+
+  async function renderModalText(docId) {
+    const el = dom.docModalBody;
+    el.innerHTML = '<p class="text-muted">로딩...</p>';
+
+    try {
+      const data = await api('GET', '/api/text/' + docId);
+
+      let html = '<div class="text-tab-header">';
+      html += '<span class="text-tab-info">' + (data.text_length || 0) + '자</span>';
+      html += '<div class="text-tab-actions">';
+      html += '<button class="btn-xs" id="modal-copy-text">클립보드 복사</button>';
+      html += '<button class="btn-xs" id="modal-download-text">TXT 다운로드</button>';
+      html += '</div></div>';
+      html += '<div class="text-content">' + escapeHtml(data.text || '(텍스트 없음)') + '</div>';
+
+      el.innerHTML = html;
+
+      $('#modal-copy-text').addEventListener('click', function () {
+        navigator.clipboard.writeText(data.text || '').then(() => {
+          this.textContent = '복사 완료';
+          setTimeout(() => { this.textContent = '클립보드 복사'; }, 1500);
+        }).catch(() => alert('클립보드 복사 실패'));
+      });
+
+      $('#modal-download-text').addEventListener('click', () => {
+        const blob = new Blob([data.text || ''], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const doc = documents.find(d => d.id === docId);
+        a.download = (doc ? doc.filename.replace(/\.[^.]+$/, '') : docId) + '_extracted.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    } catch (err) {
+      el.innerHTML = '<p class="text-error">텍스트 로드 실패: ' + escapeHtml(err.message) + '</p>';
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // SSE 실시간 이벤트
   // ---------------------------------------------------------------------------
   function initSSE() {
@@ -1027,9 +1234,53 @@
 
   function formatSize(bytes) {
     if (!bytes) return '-';
-    if (bytes < 1024) return bytes + 'B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
-    return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  function formatDate(ts) {
+    if (!ts) return '-';
+    try {
+      const d = new Date(ts * 1000);
+      const Y = d.getFullYear();
+      const M = String(d.getMonth() + 1).padStart(2, '0');
+      const D = String(d.getDate()).padStart(2, '0');
+      const h = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
+      const s = String(d.getSeconds()).padStart(2, '0');
+      return Y + '.' + M + '.' + D + ' ' + h + ':' + m + ':' + s;
+    } catch (e) {
+      return '-';
+    }
+  }
+
+  function getFileExt(filename) {
+    if (!filename) return '';
+    const dot = filename.lastIndexOf('.');
+    return dot >= 0 ? filename.slice(dot + 1).toLowerCase() : '';
+  }
+
+  /** 처리 유형 판별: OCR / TXT / PDF변환 / PDF */
+  function getProcessingType(ext) {
+    const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp'];
+    const TEXT_EXTS = ['txt', 'md', 'csv', 'log', 'json', 'xml', 'yaml', 'yml', 'ini', 'cfg', 'conf', 'py', 'js', 'ts', 'html', 'css'];
+    const CONVERT_EXTS = ['hwp', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'];
+    if (IMAGE_EXTS.includes(ext)) return 'OCR';
+    if (TEXT_EXTS.includes(ext)) return 'TXT';
+    if (CONVERT_EXTS.includes(ext)) return 'PDF변환';
+    if (ext === 'pdf') return 'PDF';
+    return '-';
+  }
+
+  function renderProcessingBadge(ext) {
+    const type = getProcessingType(ext);
+    if (type === '-') return '<span class="text-muted">-</span>';
+    const cls = {
+      'OCR': 'proc-ocr', 'TXT': 'proc-txt',
+      'PDF변환': 'proc-convert', 'PDF': 'proc-pdf',
+    }[type] || '';
+    return '<span class="proc-badge ' + cls + '">' + type + '</span>';
   }
 
   function formatTime(isoStr) {
@@ -1073,6 +1324,7 @@
     initFilters();
     initDetail();
     initBenchmark();
+    initDocModal();
     initSSE();
     refreshDocuments();
 

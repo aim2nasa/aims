@@ -512,6 +512,67 @@ body {
   color: #c77c00;
 }
 
+/* 처리 유형 뱃지 */
+.proc-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.proc-ocr {
+  background: rgba(88, 86, 214, 0.12);
+  color: #5856d6;
+}
+
+.proc-txt {
+  background: rgba(52, 199, 89, 0.12);
+  color: #248a3d;
+}
+
+.proc-convert {
+  background: rgba(255, 159, 10, 0.12);
+  color: #c77c00;
+}
+
+.proc-pdf {
+  background: rgba(0, 113, 227, 0.12);
+  color: #0071e3;
+}
+
+/* 파일명 셀 */
+.td-filename {
+  max-width: 240px;
+}
+
+.fname-display {
+  display: block;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fname-orig {
+  display: block;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 컴팩트 셀 */
+.td-compact {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
 /* 액션 버튼 */
 .action-btns {
   display: flex;
@@ -609,8 +670,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-light);
+  gap: 12px;
 }
 
 .detail-header h3 {
@@ -623,6 +685,153 @@ body {
   min-height: 200px;
   max-height: 500px;
   overflow-y: auto;
+}
+
+/* 상세 패널 헤더 액션 */
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-tab {
+  transition: background 0.15s, color 0.15s;
+}
+
+.detail-tab.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* 요약 뷰 */
+.summary-view {
+  animation: fadeIn 0.2s ease;
+}
+
+.summary-section {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.summary-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.summary-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 4px 12px;
+  font-size: 12px;
+}
+
+.summary-key {
+  color: var(--text-tertiary);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.summary-val {
+  color: var(--text-primary);
+  word-break: break-all;
+  font-size: 11px;
+}
+
+.summary-pipeline {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  row-gap: 6px;
+}
+
+.summary-pipeline .stage-ms {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  margin-left: 4px;
+  font-weight: 400;
+}
+
+.summary-skipped {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+/* AI 요약 뷰 */
+.ai-summary-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border-light);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-summary-view {
+  animation: fadeIn 0.2s ease;
+}
+
+.ai-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ai-summary-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--accent);
+}
+
+.ai-summary-content {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-primary);
+}
+
+.ai-summary-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* 상세 뷰 제목 */
@@ -823,6 +1032,32 @@ body {
 .modal-header h3 {
   font-size: 16px;
   font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* 문서 상세 모달 — 넓게 */
+.modal-doc {
+  max-width: 720px;
+}
+
+.modal-doc .modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-doc .text-content {
+  max-height: 50vh;
 }
 
 .modal-body {
