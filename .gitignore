@@ -75,3 +75,4 @@ mobile/node_modules/
 # RustDesk installer build artifacts
 tools/rustdesk_installer/rustdesk.exe
 tools/rustdesk_installer/dist/
+*.egg-info
