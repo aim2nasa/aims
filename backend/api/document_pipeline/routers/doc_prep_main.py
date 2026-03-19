@@ -1465,37 +1465,119 @@ async def _step_update_meta_to_db(ctx: PipelineContext) -> None:
 
 
 async def _step_detect_ar_crs(ctx: PipelineContext) -> None:
-    """Step: AR/CRS 자동 감지 (PDF 파일이고 텍스트가 있는 경우)"""
+    """Step: AR/CRS 자동 감지 (PDF 파일이고 텍스트가 있는 경우)
+
+    Strangler Fig 패턴:
+    - InsuranceDomainAdapter가 등록되어 있으면 adapter.detect_special_documents() 사용
+    - 없으면 기존 _detect_and_process_*() 함수로 fallback
+    """
     # AR/CRS 감지 실패가 문서 처리 전체를 중단시키지 않도록 개별 격리
     if ctx.detected_mime == "application/pdf" and ctx.full_text and len(ctx.full_text.strip()) > 0:
+        # Strangler Fig: 어댑터가 있으면 새 경로 사용
+        adapter = _get_insurance_adapter()
+        if adapter is not None:
+            await _step_detect_ar_crs_via_adapter(ctx, adapter)
+        else:
+            await _step_detect_ar_crs_legacy(ctx)
+
+
+def _get_insurance_adapter():
+    """InsuranceDomainAdapter 인스턴스 반환 (없으면 None — fallback 사용)
+
+    Strangler Fig 전환 제어점. Phase 완료 후 항상 인스턴스를 반환하도록 변경 예정.
+    """
+    try:
+        from insurance.adapter import InsuranceDomainAdapter
+        return InsuranceDomainAdapter()
+    except ImportError:
+        return None
+
+
+async def _step_detect_ar_crs_via_adapter(ctx: PipelineContext, adapter) -> None:
+    """어댑터 경로: detect_special_documents() → resolve_entity() → DB 업데이트
+
+    순수 텍스트 분석(어댑터)과 부수 효과(DB, SSE)를 분리한다.
+    """
+    try:
+        detections = await adapter.detect_special_documents(
+            text=ctx.full_text,
+            mime_type=ctx.detected_mime,
+            filename=ctx.original_name,
+        )
+    except Exception as detect_err:
+        logger.error(f"❌ 어댑터 감지 예외 (legacy fallback): doc_id={ctx.doc_id}, error={detect_err}", exc_info=True)
+        # 어댑터 감지 실패 시 legacy fallback
+        await _step_detect_ar_crs_legacy(ctx)
+        return
+
+    if not detections:
+        return
+
+    detection = detections[0]  # AR/CRS는 상호 배타적
+
+    if detection.doc_type == "annual_report":
+        # 기존 _detect_and_process_annual_report()의 DB+SSE 로직은 그대로 사용
+        # 어댑터가 추출한 메타데이터를 기존 함수에 위임
         try:
-            ar_detection = await _detect_and_process_annual_report(
+            ar_result = await _detect_and_process_annual_report(
+                doc_id=ctx.doc_id,
+                full_text=ctx.full_text,
+                original_name=ctx.original_name,
+                user_id=ctx.user_id,
+                files_collection=ctx.files_collection,
+            )
+            if ar_result.get("is_annual_report"):
+                ctx.is_ar_detected = True
+                logger.info(f"✅ AR 자동 감지 완료 (어댑터 경로): doc_id={ctx.doc_id}")
+        except Exception as ar_err:
+            logger.error(f"❌ AR 처리 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={ar_err}", exc_info=True)
+
+    elif detection.doc_type == "customer_review":
+        try:
+            crs_result = await _detect_and_process_customer_review(
+                doc_id=ctx.doc_id,
+                full_text=ctx.full_text,
+                original_name=ctx.original_name,
+                user_id=ctx.user_id,
+                files_collection=ctx.files_collection,
+            )
+            if crs_result.get("is_customer_review"):
+                ctx.is_crs_detected = True
+                logger.info(f"✅ CRS 자동 감지 완료 (어댑터 경로): doc_id={ctx.doc_id}")
+        except Exception as crs_err:
+            logger.error(f"❌ CRS 처리 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={crs_err}", exc_info=True)
+
+
+async def _step_detect_ar_crs_legacy(ctx: PipelineContext) -> None:
+    """Legacy 경로: 기존 _detect_and_process_*() 함수 직접 호출 (fallback)"""
+    try:
+        ar_detection = await _detect_and_process_annual_report(
+            doc_id=ctx.doc_id,
+            full_text=ctx.full_text,
+            original_name=ctx.original_name,
+            user_id=ctx.user_id,
+            files_collection=ctx.files_collection
+        )
+        if ar_detection.get("is_annual_report"):
+            ctx.is_ar_detected = True
+            logger.info(f"✅ AR 자동 감지 완료: doc_id={ctx.doc_id}, related_customer_id={ar_detection.get('related_customer_id')}")
+    except Exception as ar_err:
+        logger.error(f"❌ AR 감지 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={ar_err}", exc_info=True)
+
+    if not ctx.is_ar_detected:
+        try:
+            crs_detection = await _detect_and_process_customer_review(
                 doc_id=ctx.doc_id,
                 full_text=ctx.full_text,
                 original_name=ctx.original_name,
                 user_id=ctx.user_id,
                 files_collection=ctx.files_collection
             )
-            if ar_detection.get("is_annual_report"):
-                ctx.is_ar_detected = True
-                logger.info(f"✅ AR 자동 감지 완료: doc_id={ctx.doc_id}, related_customer_id={ar_detection.get('related_customer_id')}")
-        except Exception as ar_err:
-            logger.error(f"❌ AR 감지 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={ar_err}", exc_info=True)
-
-        if not ctx.is_ar_detected:
-            try:
-                crs_detection = await _detect_and_process_customer_review(
-                    doc_id=ctx.doc_id,
-                    full_text=ctx.full_text,
-                    original_name=ctx.original_name,
-                    user_id=ctx.user_id,
-                    files_collection=ctx.files_collection
-                )
-                if crs_detection.get("is_customer_review"):
-                    ctx.is_crs_detected = True
-                    logger.info(f"✅ CRS 자동 감지 완료: doc_id={ctx.doc_id}, related_customer_id={crs_detection.get('related_customer_id')}")
-            except Exception as crs_err:
-                logger.error(f"❌ CRS 감지 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={crs_err}", exc_info=True)
+            if crs_detection.get("is_customer_review"):
+                ctx.is_crs_detected = True
+                logger.info(f"✅ CRS 자동 감지 완료: doc_id={ctx.doc_id}, related_customer_id={crs_detection.get('related_customer_id')}")
+        except Exception as crs_err:
+            logger.error(f"❌ CRS 감지 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={crs_err}", exc_info=True)
 
 
 async def _generate_display_name(

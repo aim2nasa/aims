@@ -6,16 +6,22 @@ DomainAdapter ABC를 상속하여 보험 도메인에 특화된 로직을 구현
 Phase 2-1 완료: 분류 체계 + 프롬프트가 어댑터로 이동됨.
 - get_classification_config(): openai_service.py에서 M6 프롬프트 + 22개 분류 체계 이동
 
+Phase 2-2 완료: AR/CRS 감지 + 엔티티 연결 + 표시명 생성이 어댑터로 이동됨.
+- detect_special_documents(): AR/CRS 패턴 매칭 (순수 텍스트 분석)
+- resolve_entity(): 고객명 → aims_api 검색 → 고객 ID 연결
+- generate_display_name(): AR/CRS 표시명 생성
+
 아직 스텁인 메서드:
-- AR/CRS 감지: doc_prep_main.py _step_detect_ar_crs() (L1467-1498)
-- 엔티티 연결: doc_prep_main.py _detect_and_process_annual_report() 내부
 - 메타데이터 추출: doc_meta.py, meta_service.py
-- 표시명 생성: doc_display_name.py, doc_prep_main.py _generate_display_name() (L1501-1550)
 - 단계 후크: doc_prep_main.py _notify_progress() + SSE 알림
 """
 from __future__ import annotations
 
+import logging
+import re
 from typing import Any, Optional
+
+import httpx
 
 from xpipe.adapter import (
     DomainAdapter,
@@ -24,6 +30,8 @@ from xpipe.adapter import (
     Detection,
     HookResult,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -175,7 +183,7 @@ class InsuranceDomainAdapter(DomainAdapter):
     """AIMS 보험 도메인 어댑터
 
     Phase 2-1 완료: get_classification_config()에 분류 체계 + M6 프롬프트 구현.
-    나머지 메서드는 스텁 (Phase 2-2 이후 순차 이동).
+    Phase 2-2 완료: detect_special_documents(), resolve_entity(), generate_display_name() 구현.
     """
 
     async def get_classification_config(self) -> ClassificationConfig:
@@ -194,37 +202,105 @@ class InsuranceDomainAdapter(DomainAdapter):
             },
         )
 
+    # ------------------------------------------------------------------
+    # AR/CRS 감지 — doc_prep_main.py에서 이동 (순수 텍스트 분석만)
+    # ------------------------------------------------------------------
+
     async def detect_special_documents(
         self,
         text: str,
         mime_type: str,
         filename: str = "",
     ) -> list[Detection]:
-        """AR/CRS 특수 문서 감지
+        """AR/CRS 특수 문서 감지 (순수 텍스트 분석 — HTTP 호출 없음)
 
-        # TODO: Phase 2에서 실제 로직 이동
-        # 현재 위치: doc_prep_main.py _step_detect_ar_crs() (L1467-1498)
-        #   - _detect_and_process_annual_report(): AR 감지 (PDF + 텍스트 기반)
-        #   - _detect_and_process_customer_review(): CRS 감지
-        # 감지 조건: mime == "application/pdf" and full_text 존재
-        # AR/CRS 감지 실패 시 문서 처리 전체를 중단시키지 않도록 개별 격리
+        doc_prep_main.py의 _detect_and_process_annual_report() /
+        _detect_and_process_customer_review()에서 패턴 매칭 + 메타 추출 로직을 이동.
+        DB 업데이트, SSE 알림, 고객 검색은 포함하지 않는다.
+
+        감지 조건: mime == "application/pdf" and full_text 존재
+        AR/CRS 감지 실패가 전체 파이프라인을 중단시키지 않도록 개별 격리.
         """
-        return []
+        detections: list[Detection] = []
+
+        if mime_type != "application/pdf" or not text or not text.strip():
+            return detections
+
+        # AR 감지 시도
+        ar = _detect_ar_pattern(text)
+        if ar is not None:
+            detections.append(ar)
+            # AR이면 CRS는 시도하지 않음 (기존 로직과 동일)
+            return detections
+
+        # CRS 감지 시도
+        crs = _detect_crs_pattern(text)
+        if crs is not None:
+            detections.append(crs)
+
+        return detections
+
+    # ------------------------------------------------------------------
+    # 엔티티 연결 — 고객명으로 aims_api 검색
+    # ------------------------------------------------------------------
 
     async def resolve_entity(
         self,
         detection: Detection,
         owner_id: str,
     ) -> dict[str, Any]:
-        """고객명 → 고객 ID 연결
+        """고객명 → aims_api 검색 → 고객 ID 연결
 
-        # TODO: Phase 2에서 실제 로직 이동
-        # 현재 위치: doc_prep_main.py _detect_and_process_annual_report() 내부
-        #   - extract_customer_info_from_first_page()로 고객명 추출
-        #   - MongoDB customers 컬렉션에서 고객명 매칭 (소유자 격리)
-        #   - 매칭 성공 시 customerId 연결
+        AR/CRS에서 추출된 고객명으로 aims_api를 검색하여 매칭되는 고객을 찾는다.
+        customerId(소유권)는 변경하지 않고, relatedCustomerId로만 연결한다.
+
+        Args:
+            detection: detect_special_documents()의 결과
+            owner_id: 설계사 ID (소유자 격리)
+
+        Returns:
+            {"matched": True, "customer_id": str, "customer_name": str} 또는
+            {"matched": False, "reason": str}
         """
-        return {"matched": False, "reason": "stub_not_implemented"}
+        customer_name = detection.metadata.get("customer_name")
+        if not customer_name or not owner_id:
+            return {"matched": False, "reason": "no_customer_name_or_owner"}
+
+        try:
+            from config import get_settings
+            settings = get_settings()
+
+            async with httpx.AsyncClient() as client:
+                search_response = await client.get(
+                    f"{settings.AIMS_API_URL}/api/customers",
+                    params={"search": customer_name, "userId": owner_id},
+                    headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                    timeout=10.0
+                )
+
+                if search_response.status_code == 200:
+                    search_result = search_response.json()
+                    customers = search_result.get("data", {}).get("customers", [])
+
+                    # 정확히 일치하는 고객 찾기
+                    for c in customers:
+                        c_name = c.get("personal_info", {}).get("name", "")
+                        if c_name == customer_name:
+                            customer_id = c.get("_id")
+                            logger.info(f"엔티티 연결 성공: {customer_name} (ID: {customer_id})")
+                            return {
+                                "matched": True,
+                                "customer_id": customer_id,
+                                "customer_name": customer_name,
+                            }
+
+                    return {"matched": False, "reason": "no_exact_match"}
+                else:
+                    logger.warning(f"고객 검색 실패: {search_response.text}")
+                    return {"matched": False, "reason": f"api_error_{search_response.status_code}"}
+        except Exception as e:
+            logger.warning(f"고객 검색 중 오류: {e}")
+            return {"matched": False, "reason": f"exception: {e}"}
 
     async def extract_domain_metadata(
         self,
@@ -233,30 +309,50 @@ class InsuranceDomainAdapter(DomainAdapter):
     ) -> dict[str, Any]:
         """보험 도메인 메타데이터 추출
 
-        # TODO: Phase 2에서 실제 로직 이동
+        # TODO: Phase 2-3 이후 이동 예정
         # 현재 위치: doc_meta.py + meta_service.py
-        #   - MetaService.extract_metadata(): 범용 메타 (MIME, 크기, 해시, 페이지 수 등)
-        #   - doc_prep_main.py _step_extract_metadata() (L1309-1379): DB 업데이트 포함
-        # 보험 특화 필드: policyholder, insured, policy_number, insurance_company 등
-        # 주의: 범용 메타(MIME, 크기 등)는 xPipe 코어가 추출. 여기서는 도메인 특화 필드만.
         """
         return {}
+
+    # ------------------------------------------------------------------
+    # 표시명 생성 — AR/CRS 전용
+    # ------------------------------------------------------------------
 
     async def generate_display_name(
         self,
         doc: dict[str, Any],
         detection: Optional[Detection] = None,
     ) -> str:
-        """보험 문서 표시명 생성 규칙
+        """AR/CRS 문서 표시명 생성
 
-        # TODO: Phase 2에서 실제 로직 이동
-        # 현재 위치:
-        #   - doc_display_name.py: 표시명 생성 라우터 + sanitize_display_name()
-        #   - doc_prep_main.py _generate_display_name() (L1501-1550)
-        #     1순위: summary_result에서 이미 생성된 title (추가 API 비용 없음)
-        #     2순위: OpenAIService.generate_title_only() 경량 호출
-        # 보험 표시명 규칙: 계약자명 맨 앞 표시, 문서에 없는 이름 생성 금지
+        AR: {고객명}_AR_{발행일}.pdf
+        CRS: {고객명}_CRS_{상품명}_{발행일}.pdf (상품명 없으면 생략)
+
+        detection이 None이거나 AR/CRS가 아니면 빈 문자열 반환
+        (xPipe 코어가 기본 규칙 적용).
         """
+        if detection is None:
+            return ""
+
+        customer_name = detection.metadata.get("customer_name")
+        issue_date = detection.metadata.get("issue_date")
+
+        if detection.doc_type == "annual_report":
+            if customer_name and issue_date:
+                return f"{customer_name}_AR_{issue_date}.pdf"
+            return ""
+
+        if detection.doc_type == "customer_review":
+            product_name = detection.metadata.get("product_name")
+            if customer_name and product_name and issue_date:
+                # 상품명 정규화 (파일명에 사용 불가 문자 제거)
+                safe_product = re.sub(r'[\\/:*?"<>|]', '', product_name)
+                safe_product = re.sub(r'\s+', ' ', safe_product).strip()
+                return f"{customer_name}_CRS_{safe_product}_{issue_date}.pdf"
+            elif customer_name and issue_date:
+                return f"{customer_name}_CRS_{issue_date}.pdf"
+            return ""
+
         return ""
 
     async def on_stage_complete(
@@ -267,12 +363,170 @@ class InsuranceDomainAdapter(DomainAdapter):
     ) -> list[HookResult]:
         """단계 완료 시 보험 도메인 후속 액션
 
-        # TODO: Phase 2에서 실제 로직 이동
+        # TODO: Phase 2-3 이후 이동 예정
         # 현재 위치: doc_prep_main.py 전반
-        #   - _notify_progress(): SSE를 통한 프론트엔드 진행률 알림
-        #   - AR 감지 시: annual_report_api로 파싱 요청 트리거
-        #   - 크레딧 체크: check_credit_for_upload() (L126-176)
-        #     credit_pending → 충전 시 reprocessed_from_credit_pending 플래그 → 크레딧 체크 스킵
-        #   - 바이러스 스캔: yuri 바이러스 스캔 (별도 서비스)
         """
         return []
+
+
+# ---------------------------------------------------------------------------
+# 순수 함수: AR/CRS 패턴 매칭 (HTTP 호출 없음, 테스트 용이)
+# doc_prep_main.py의 _detect_and_process_annual_report() /
+# _detect_and_process_customer_review()에서 패턴 매칭 로직을 1글자도 변경 없이 이동.
+# ---------------------------------------------------------------------------
+
+def _detect_ar_pattern(full_text: str) -> Optional[Detection]:
+    """AR (Annual Review Report) 패턴 매칭 + 메타데이터 추출
+
+    Returns:
+        Detection 객체 (AR 감지 시) 또는 None
+    """
+    # 1. AR 패턴 매칭 (공백 정규화)
+    normalized_text = re.sub(r'\s+', ' ', full_text)
+
+    # 필수 키워드: "Annual Review Report"
+    required_keywords = ['Annual Review Report']
+    # 선택 키워드: MetLife 관련
+    optional_keywords = ['보유계약 현황', 'MetLife', '고객님을 위한', '메트라이프생명', '메트라이프']
+
+    matched_required = [kw for kw in required_keywords if kw in normalized_text]
+    matched_optional = [kw for kw in optional_keywords if kw in normalized_text]
+
+    # AR 판단: 필수 키워드 1개 이상 + 선택 키워드 1개 이상
+    is_annual_report = len(matched_required) > 0 and len(matched_optional) > 0
+
+    if not is_annual_report:
+        return None
+
+    # 2. 고객명 추출: "Annual" 키워드가 포함된 줄의 바로 위 줄에서 추출 (파일명 사용 절대 금지!)
+    customer_name = None
+    lines = full_text.split('\n')
+    for i, line in enumerate(lines):
+        if 'Annual' in line:
+            if i > 0:
+                name_line = lines[i - 1].strip()
+                go_idx = name_line.find(' 고')
+                if go_idx > 0:
+                    name = name_line[:go_idx]
+                else:
+                    space_idx = name_line.find(' ')
+                    name = name_line[:space_idx] if space_idx > 0 else name_line
+                if len(name) >= 2:
+                    customer_name = name
+            break
+
+    # 3. 발행기준일 추출
+    issue_date = None
+    date_pattern1 = r'발행\s*(?:\(기준\))?\s*일[:\s]*(\d{4})년?\s*[\-.]?\s*(\d{1,2})월?\s*[\-.]?\s*(\d{1,2})일?'
+    date_match1 = re.search(date_pattern1, normalized_text)
+    if date_match1:
+        year, month, day = date_match1.groups()
+        issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+    else:
+        date_pattern2 = r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일'
+        date_match2 = re.search(date_pattern2, normalized_text)
+        if date_match2:
+            year, month, day = date_match2.groups()
+            issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+
+    return Detection(
+        doc_type="annual_report",
+        confidence=1.0,
+        metadata={
+            "customer_name": customer_name,
+            "issue_date": issue_date,
+            "matched_required": matched_required,
+            "matched_optional": matched_optional,
+        },
+    )
+
+
+def _detect_crs_pattern(full_text: str) -> Optional[Detection]:
+    """CRS (Customer Review Service) 패턴 매칭 + 메타데이터 추출
+
+    Returns:
+        Detection 객체 (CRS 감지 시) 또는 None
+    """
+    # 1. CRS 패턴 매칭
+    normalized_text = re.sub(r'\s+', ' ', full_text)
+
+    required_keywords = ['Customer Review Service']
+    optional_keywords = ['메트라이프', '변액', '적립금', '투자수익률', '펀드', '해지환급금']
+
+    matched_required = [kw for kw in required_keywords if kw in normalized_text]
+    matched_optional = [kw for kw in optional_keywords if kw in normalized_text]
+
+    # CRS 판단: "Customer Review Service" 필수 + 선택 키워드 1개 이상
+    has_cr_keyword = "Customer Review Service" in normalized_text
+    is_customer_review = has_cr_keyword and len(matched_optional) >= 1
+
+    if not is_customer_review:
+        return None
+
+    # 2. 메타데이터 추출 (고객명, 상품명, 발행일)
+
+    # 2-1. 고객명 추출: "Customer" 키워드가 포함된 줄의 바로 위 줄에서 추출 (파일명 사용 절대 금지!)
+    customer_name = None
+    lines = full_text.split('\n')
+    for i, line in enumerate(lines):
+        if 'Customer' in line:
+            if i > 0:
+                name_line = lines[i - 1].strip()
+                go_idx = name_line.find(' 고')
+                if go_idx > 0:
+                    name = name_line[:go_idx]
+                else:
+                    space_idx = name_line.find(' ')
+                    name = name_line[:space_idx] if space_idx > 0 else name_line
+                if len(name) >= 2:
+                    customer_name = name
+            break
+    # fallback: "계약자" 필드에서 추출
+    if not customer_name:
+        contractor_idx = normalized_text.find('계약자')
+        if contractor_idx >= 0:
+            after = normalized_text[contractor_idx + 3:]
+            while after and after[0] in (':', '：', ' '):
+                after = after[1:]
+            space_idx = after.find(' ')
+            name = after[:space_idx].strip() if space_idx > 0 else after.strip()
+            if len(name) >= 2:
+                customer_name = name
+
+    # 2-2. 상품명 추출: 발행일 바로 윗줄이 상품명
+    product_name = None
+    발행_idx = full_text.find("발행")
+    if 발행_idx > 0:
+        before = full_text[:발행_idx].rstrip()
+        nl = before.rfind("\n")
+        if nl >= 0:
+            product_name = before[nl + 1:].strip()
+            if not product_name:
+                product_name = None
+
+    # 2-3. 발행일 추출
+    issue_date = None
+    date_pattern = r'발행\s*(?:\(기준\))?\s*일[:\s]*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일'
+    date_match = re.search(date_pattern, full_text)
+    if date_match:
+        year, month, day = date_match.groups()
+        issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+    else:
+        # 대체 패턴: 일반 날짜
+        alt_date_pattern = r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일'
+        alt_date_match = re.search(alt_date_pattern, full_text)
+        if alt_date_match:
+            year, month, day = alt_date_match.groups()
+            issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+
+    return Detection(
+        doc_type="customer_review",
+        confidence=1.0,
+        metadata={
+            "customer_name": customer_name,
+            "product_name": product_name,
+            "issue_date": issue_date,
+            "matched_required": matched_required,
+            "matched_optional": matched_optional,
+        },
+    )
