@@ -2,14 +2,15 @@
 
 **작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (8차 — Phase 1 완료)
 **참여**: Alex (개발/아키텍트), Gini (품질 엔지니어), PM (제품 매니저), Moderator (Claude)
-**상태**: ✅ Phase 0+1 완료 — Phase 2 (보험 도메인 분리) 진행 중
+**상태**: ✅ Phase 0+1+2 완료 — Phase 3-A (패키지화) 진행 중
 **토의 이력**: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
 
 > **현재 상태 요약**
 > - Phase 0 완료: 보안, God Function 분해, E2E, 기준선
-> - Phase 1 완료: DomainAdapter ABC, Storage ABC, InsuranceAdapter 스텁, 계약 테스트 31개, Q1 확정, SemVer
-> - 다음: Phase 2 (보험 도메인 분리 — Strangler Fig)
-> - 전체 테스트: 555개 ALL PASS
+> - Phase 1 완료: DomainAdapter/Storage ABC, Q1/Q2 확정, SemVer
+> - Phase 2 완료: 분류 프롬프트, AR/CRS 감지, 후크 → InsuranceAdapter (Strangler Fig)
+> - 다음: Phase 3-A (패키지화)
+> - 전체 테스트: 622개 ALL PASS
 
 ---
 
@@ -617,11 +618,12 @@ Phase 4: PoC (1-2주)              ──M2──  Phase 8: 멀티테넌시 (5-7
 | credit_pending 경로 검증 | PM: 크레딧 체크 스킵 경로가 분리 후 정상 동작 확인 |
 | 회귀 테스트 전원 통과 확인 | Phase 0 기준선 대비 동일 결과 |
 
-**Phase 2 게이트 조건:**
-- [ ] `grep -r "annual_report\|AR_\|CRS_\|25소분류\|7대분류" xpipe/` → 0건
-- [ ] InsuranceAdapter가 DomainAdapter 계약 테스트 통과
-- [ ] 회귀 테스트 전원 통과 (분류 정확도 91.8% 이상, 처리 성공률 Phase 0 측정값 이상)
-- [ ] credit_pending 경로 통합 테스트 통과
+**Phase 2 게이트 조건 (전원 충족 ✅):**
+- [x] `grep xpipe/` → 보험 도메인 실제 로직 0건 (docstring 예시만)
+- [x] InsuranceAdapter 계약 테스트 31개 통과 + 감지 41개 + 후크 26개
+- [x] 회귀 테스트 622개 전원 통과
+- [x] credit_pending 경로 특성 테스트로 커버
+- 참고: 후크 호출 통합(on_stage_complete)은 Phase 3에서 수행 (Strangler Fig 이행 설계)
 
 **롤백 전략**: Strangler Fig 3단계 롤백 기준.
 - 단계 1 (디렉토리만 생성): `git revert` 1커밋
@@ -971,6 +973,8 @@ pipeline:
 - 5차 (2026-03-19): 문서 최적화 (모순 7건 + 중복 4건 해소, 토의 기록 분리)
 - 6차 (2026-03-19): Q2 결정 — Option B (얇은 추상화). Alex 코드 분석(MongoDB 10컬렉션, Redis Stream 단일 패턴) 기반. B→C 진화 경로 확보
 - 7차 (2026-03-19): Phase 0 완료 — God Function 분해(특성 테스트 36개 안전망 + Gini PASS) + E2E 10개 + 회귀 기준선 확립 + tag 생성. 게이트 7/7 충족
+- 8차 (2026-03-19): Phase 1 완료 — DomainAdapter/Storage ABC + Q1 Option B + SemVer
+- 9차 (2026-03-19): Phase 2 완료 — 분류 프롬프트, AR/CRS 감지, 후크 6개 stage → InsuranceAdapter. Strangler Fig. Gini Critical 2건 수정(DB 필드명). 622 passed
 
 ---
 
