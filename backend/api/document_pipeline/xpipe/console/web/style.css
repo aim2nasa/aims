@@ -476,21 +476,6 @@ body {
   font-weight: 600;
 }
 
-.badge-pass {
-  background: rgba(52,199,89,0.12);
-  color: #248a3d;
-}
-
-.badge-fail {
-  background: rgba(255,59,48,0.12);
-  color: #d70015;
-}
-
-.badge-pending {
-  background: rgba(142,142,147,0.12);
-  color: #636366;
-}
-
 /* 이벤트/감사 건수 뱃지 */
 .badge-count {
   cursor: pointer;
@@ -832,6 +817,35 @@ body {
   margin-top: 12px;
   display: flex;
   justify-content: flex-end;
+}
+
+.ai-summary-sim {
+  padding: 32px 20px;
+  text-align: center;
+  font-size: 13px;
+}
+
+/* data-tip 툴팁 (CSS only) */
+.has-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.has-tooltip:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--text-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
 }
 
 /* 상세 뷰 제목 */

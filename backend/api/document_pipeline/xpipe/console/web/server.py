@@ -589,6 +589,16 @@ async def get_summary(doc_id: str):
     if not doc:
         raise HTTPException(404, f"문서를 찾을 수 없습니다: {doc_id}")
 
+    # 시뮬레이션 모드에서는 AI 호출 차단
+    mode = doc.get("config", {}).get("mode", current_config.get("mode", "stub"))
+    if mode == "stub":
+        return {
+            "doc_id": doc_id,
+            "summary": None,
+            "cached": False,
+            "simulation": True,
+        }
+
     text = doc.get("extracted_text", "")
     if not text or len(text.strip()) < 10:
         return {

@@ -157,7 +157,7 @@
 
   function updateConfigDisplay(cfg) {
     const adapterLabel = { insurance: 'Insurance', legal: 'Legal', none: 'None' }[cfg.adapter] || cfg.adapter;
-    const modeLabel = cfg.mode === 'stub' ? 'stub (시뮬레이션)' : cfg.mode;
+    const modeLabel = cfg.mode === 'stub' ? '시뮬레이션' : cfg.mode;
     const modelsStr = cfg.models
       ? cfg.models.llm + ' / ' + cfg.models.ocr + ' / ' + cfg.models.embedding
       : '';
@@ -285,7 +285,6 @@
       const statusHtml = renderStatusCell(doc);
       const classifyHtml = doc.result ? escapeHtml(doc.result.document_type) : '<span class="text-muted">-</span>';
       const detectHtml = renderDetections(doc);
-      const qualityHtml = renderQuality(doc);
       const costHtml = renderCost(doc);
       const durationHtml = doc.duration ? doc.duration.toFixed(2) + 's' : '<span class="text-muted">-</span>';
       const eventsHtml = renderEventsBadge(doc);
@@ -303,7 +302,6 @@
         '<td>' + statusHtml + '</td>' +
         '<td>' + classifyHtml + '</td>' +
         '<td>' + detectHtml + '</td>' +
-        '<td>' + qualityHtml + '</td>' +
         '<td>' + costHtml + '</td>' +
         '<td>' + durationHtml + '</td>' +
         '<td>' + eventsHtml + '</td>' +
@@ -485,18 +483,10 @@
     return doc.result.detections.map(d => escapeHtml(d.doc_type || d)).join(', ');
   }
 
-  // R4: stub이면 품질 "-"
-  function renderQuality(doc) {
-    if (!doc.quality) return '<span class="text-muted">-</span>';
-    const q = doc.quality;
-    const cls = q.passed ? 'badge-pass' : 'badge-fail';
-    const txt = q.passed ? 'PASS' : 'FAIL';
-    return '<span class="badge ' + cls + '">' + q.overall.toFixed(2) + ' ' + txt + '</span>';
-  }
-
-  // R4: stub이면 비용 "-"
   function renderCost(doc) {
-    if (doc.cost === null || doc.cost === undefined) return '<span class="text-muted">-</span>';
+    if (doc.cost === null || doc.cost === undefined) {
+      return '<span class="text-muted has-tooltip" data-tip="시뮬레이션 모드에서는 비용이 발생하지 않습니다">-</span>';
+    }
     return '$' + doc.cost.toFixed(3);
   }
 
@@ -676,8 +666,14 @@
 
     try {
       const data = await api('GET', '/api/summary/' + doc.id);
-      const cached = data.cached ? ' <span class="text-muted">(캐시)</span>' : '';
 
+      if (data.simulation) {
+        el.innerHTML = '<div class="ai-summary-view"><div class="ai-summary-sim">' +
+          '<span class="text-muted">시뮬레이션 모드에서는 AI 요약을 제공하지 않습니다</span></div></div>';
+        return;
+      }
+
+      const cached = data.cached ? ' <span class="text-muted">(캐시)</span>' : '';
       let html = '<div class="ai-summary-view">';
       html += '<div class="ai-summary-header">';
       html += '<span class="ai-summary-badge">AI 요약</span>' + cached;
@@ -1070,7 +1066,6 @@
   function closeDocModal() {
     dom.docModal.style.display = 'none';
     modalDocId = null;
-    modalView = null;
   }
 
   async function renderModalSummary(doc) {
@@ -1079,6 +1074,13 @@
 
     try {
       const data = await api('GET', '/api/summary/' + doc.id);
+
+      if (data.simulation) {
+        el.innerHTML = '<div class="ai-summary-view"><div class="ai-summary-sim">' +
+          '<span class="text-muted">시뮬레이션 모드에서는 AI 요약을 제공하지 않습니다</span></div></div>';
+        return;
+      }
+
       const cached = data.cached ? ' <span class="text-muted">(캐시)</span>' : '';
 
       let html = '<div class="ai-summary-view">';
