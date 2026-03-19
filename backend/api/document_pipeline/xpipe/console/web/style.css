@@ -417,52 +417,74 @@ body {
   background: rgba(255,59,48,0.04);
 }
 
-/* 프로그레스 바 */
-.progress-cell {
-  display: flex;
+/* 인라인 파이프라인 (테이블 상태 컬럼) */
+.inline-pipeline {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
-.progress-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--border-light);
-  border-radius: 3px;
-  overflow: hidden;
-  min-width: 60px;
+.inline-stage {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  line-height: 1.4;
 }
 
-.progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.3s ease;
-  background: var(--accent);
+.inline-stage:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
 }
 
-.progress-fill.completed {
-  background: var(--success);
+.inline-stage.completed {
+  background: rgba(52, 199, 89, 0.14);
+  color: #248a3d;
 }
 
-.progress-fill.error {
-  background: var(--error);
-}
-
-.progress-fill.processing {
-  background: var(--processing);
+.inline-stage.running {
+  background: rgba(88, 86, 214, 0.14);
+  color: #5856d6;
   animation: pulse 1.5s ease-in-out infinite;
+}
+
+.inline-stage.pending {
+  background: rgba(142, 142, 147, 0.1);
+  color: var(--text-tertiary);
+}
+
+.inline-stage.error {
+  background: rgba(255, 59, 48, 0.14);
+  color: #d70015;
+}
+
+.inline-arrow {
+  color: var(--text-tertiary);
+  font-size: 9px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.inline-status-text {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.inline-status-text.queued {
+  color: var(--text-secondary);
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
-}
-
-.progress-text {
-  font-size: 10px;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-  min-width: 32px;
 }
 
 /* 상태 뱃지 */

@@ -21,6 +21,43 @@ class ExtractStage(Stage):
         """이미 텍스트가 있으면 스킵"""
         return bool(context.get("has_text"))
 
+    @staticmethod
+    def _read_text_file(file_path: str, file_name: str, mime: str) -> str:
+        """텍스트 파일을 실제로 읽어서 내용을 반환한다.
+
+        읽기 실패 시 메타 정보만 반환.
+        """
+        import os
+
+        if not file_path or not os.path.exists(file_path):
+            return (
+                f"텍스트 파일을 찾을 수 없습니다.\n\n"
+                f"파일: {file_name}\n"
+                f"경로: {file_path}\n"
+            )
+
+        # 여러 인코딩 시도
+        for encoding in ("utf-8", "cp949", "euc-kr", "latin-1"):
+            try:
+                with open(file_path, "r", encoding=encoding) as f:
+                    content = f.read()
+                return content
+            except (UnicodeDecodeError, UnicodeError):
+                continue
+            except Exception as exc:
+                return (
+                    f"텍스트 파일 읽기 실패: {exc}\n\n"
+                    f"파일: {file_name}\n"
+                    f"MIME: {mime}\n"
+                )
+
+        # 모든 인코딩 실패
+        return (
+            f"텍스트 파일 인코딩을 인식할 수 없습니다.\n\n"
+            f"파일: {file_name}\n"
+            f"MIME: {mime}\n"
+        )
+
     async def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         """텍스트 추출 처리"""
         start = time.time()
@@ -30,42 +67,49 @@ class ExtractStage(Stage):
         mime = context.get("mime_type", "")
         mode = context.get("mode", "stub")
 
-        # 추출 방식 결정: MIME 타입에 따라 분기
+        # 추출 방식 결정: MIME + 확장자에 따라 분기
+        import os
+        ext = os.path.splitext(file_name)[1].lower() if file_name else ""
+        TEXT_EXTENSIONS = {".txt", ".md", ".csv", ".log", ".json", ".xml", ".yaml", ".yml", ".ini", ".cfg", ".conf", ".py", ".js", ".ts", ".html", ".css"}
         is_image = mime.startswith("image/") if mime else False
-        is_text = mime.startswith("text/") if mime else False
+        is_text = (mime.startswith("text/") if mime else False) or ext in TEXT_EXTENSIONS
         is_pdf = mime == "application/pdf" or mime.startswith("application/pdf")
         models = context.get("models", {})
         ocr_model_name = models.get("ocr", "paddleocr")
 
         if mode == "stub":
             if is_text:
-                # 텍스트 파일: 직접 읽기
+                # 텍스트 파일: 실제로 파일을 읽는다
                 method = "direct_read"
                 ocr_model = "-"
-                text = (
-                    f"[stub] {file_name}에서 직접 읽은 시뮬레이션 텍스트입니다.\n\n"
-                    f"텍스트 파일은 변환/OCR 없이 직접 읽습니다.\n"
-                    f"파일: {file_name}\nMIME: {mime}\n"
-                )
+                text = self._read_text_file(file_path, file_name, mime)
             elif is_image:
-                # 이미지: OCR
+                # 이미지: stub에서는 OCR 불가
                 method = "ocr"
                 ocr_model = f"{ocr_model_name} (stub)"
                 text = (
-                    f"[stub] {file_name}에서 OCR로 추출된 시뮬레이션 텍스트입니다.\n\n"
+                    f"OCR은 real 모드에서 가능합니다.\n\n"
+                    f"파일: {file_name}\n"
+                    f"MIME: {mime}\n"
                     f"OCR 모델: {ocr_model_name}\n"
-                    f"이미지 파일에서 텍스트를 인식합니다.\n"
-                    f"파일: {file_name}\nMIME: {mime}\n"
                 )
-            else:
-                # PDF 등: pdfplumber
+            elif is_pdf:
+                # PDF: stub에서는 텍스트 추출 불가
                 method = "pdfplumber"
                 ocr_model = "-"
                 text = (
-                    f"[stub] {file_name}에서 추출된 시뮬레이션 텍스트입니다.\n\n"
-                    f"이 텍스트는 stub 모드에서 생성된 것으로, 실제 문서 내용이 아닙니다.\n"
-                    f"실제 모드(real)에서는 pdfplumber를 사용하여 텍스트를 추출합니다.\n\n"
-                    f"파일: {file_name}\nMIME: {mime}\n경로: {file_path}\n"
+                    f"PDF 텍스트 추출은 real 모드에서 가능합니다.\n\n"
+                    f"파일: {file_name}\n"
+                    f"MIME: {mime}\n"
+                )
+            else:
+                # xlsx, doc, hwp 등: 변환 후 추출 필요
+                method = "pdfplumber"
+                ocr_model = "-"
+                text = (
+                    f"PDF 변환 후 텍스트 추출은 real 모드에서 가능합니다.\n\n"
+                    f"파일: {file_name}\n"
+                    f"MIME: {mime}\n"
                 )
         else:
             # real 모드: 실제 추출 (추후 구현)

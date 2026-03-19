@@ -556,7 +556,16 @@ async def get_extracted_text(doc_id: str):
         raise HTTPException(404, f"문서를 찾을 수 없습니다: {doc_id}")
 
     text = doc.get("extracted_text", "")
-    is_stub = doc.get("config", {}).get("mode", "stub") == "stub"
+    mode = doc.get("config", {}).get("mode", "stub")
+
+    # stub 모드라도 텍스트 파일은 실제 내용을 읽었으므로 is_stub=False
+    import mimetypes, os
+    filename = doc.get("filename", "")
+    mime_type, _ = mimetypes.guess_type(filename)
+    ext = os.path.splitext(filename)[1].lower()
+    TEXT_EXTENSIONS = {".txt", ".md", ".csv", ".log", ".json", ".xml", ".yaml", ".yml", ".ini", ".cfg", ".conf", ".py", ".js", ".ts", ".html", ".css"}
+    is_text_file = (mime_type or "").startswith("text/") or ext in TEXT_EXTENSIONS
+    is_stub = mode == "stub" and not is_text_file
 
     return {
         "doc_id": doc_id,

@@ -278,6 +278,28 @@
     dom.docTbody.querySelectorAll('tr').forEach(tr => {
       tr.addEventListener('click', (e) => {
         if (e.target.closest('button')) return;
+
+        // 인라인 스테이지 뱃지 클릭 시: 해당 스테이지 상세를 하단 패널에 표시
+        const stageEl = e.target.closest('.inline-stage');
+        if (stageEl) {
+          const docId = stageEl.dataset.docId;
+          const stageName = stageEl.dataset.stage;
+          const doc = documents.find(d => d.id === docId);
+          if (doc) {
+            selectedDocId = docId;
+            selectedStage = stageName;
+            showDetail(doc);
+            // 파이프라인 탭 활성화
+            $$('.detail-tabs .tab').forEach(t => t.classList.remove('active'));
+            $$('.tab-pane').forEach(p => p.classList.remove('active'));
+            const pipeTab = document.querySelector('.detail-tabs .tab[data-tab="pipeline"]');
+            if (pipeTab) pipeTab.classList.add('active');
+            $('#tab-pipeline').classList.add('active');
+          }
+          renderTable();
+          return;
+        }
+
         const id = tr.dataset.id;
         selectedDocId = id;
         const doc = documents.find(d => d.id === id);
@@ -318,31 +340,48 @@
   }
 
   function renderStatusCell(doc) {
-    const pct = doc.progress || 0;
-    let fillClass = '';
-    let label = '';
-
-    switch (doc.status) {
-      case 'queued': label = '대기'; break;
-      case 'processing':
-        fillClass = 'processing';
-        label = doc.current_stage || '처리중';
-        break;
-      case 'completed':
-        fillClass = 'completed';
-        label = '완료';
-        break;
-      case 'error':
-        fillClass = 'error';
-        label = '에러';
-        break;
-      default: label = doc.status;
+    // 대기 상태: 간단한 텍스트만
+    if (doc.status === 'queued') {
+      return '<span class="inline-status-text queued">대기</span>';
     }
 
-    return '<div class="progress-cell">' +
-      '<div class="progress-bar"><div class="progress-fill ' + fillClass + '" style="width:' + pct + '%"></div></div>' +
-      '<span class="progress-text">' + label + '</span>' +
-      '</div>';
+    const stagesDetail = doc.stages_detail || {};
+    const stageOrder = Object.keys(stagesDetail);
+
+    // 스테이지 정보가 없으면 텍스트 fallback
+    if (stageOrder.length === 0) {
+      return '<span class="inline-status-text">' + escapeHtml(doc.status) + '</span>';
+    }
+
+    const isError = doc.status === 'error';
+    const errorStage = doc.error_stage;
+    const skippedStages = doc.result ? (doc.result.stages_skipped || []) : [];
+
+    let html = '<div class="inline-pipeline">';
+    let visibleCount = 0;
+
+    for (let i = 0; i < stageOrder.length; i++) {
+      const name = stageOrder[i];
+      const detail = stagesDetail[name] || {};
+      let status = detail.status || 'pending';
+      const isCurrentError = isError && errorStage === name;
+      const isSkipped = skippedStages.includes(name);
+
+      if (isCurrentError) status = 'error';
+      if (isSkipped && status !== 'error') continue; // 스킵 단계 숨김
+
+      if (visibleCount > 0) {
+        html += '<span class="inline-arrow">\u2192</span>';
+      }
+
+      html += '<span class="inline-stage ' + status + '" data-stage="' + name + '" data-doc-id="' + doc.id + '">';
+      html += _stageKoreanName(name);
+      html += '</span>';
+      visibleCount++;
+    }
+
+    html += '</div>';
+    return html;
   }
 
   function renderDetections(doc) {
