@@ -265,6 +265,29 @@ body {
   max-width: 200px;
 }
 
+/* 어댑터 비활성 상태 */
+.adapter-disabled {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: help;
+  position: relative;
+}
+
+.adapter-disabled label {
+  color: var(--border);
+}
+
+.adapter-none {
+  display: inline-block;
+  padding: 5px 8px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--border);
+  background: var(--bg);
+}
+
 .key-input-wrap {
   display: flex;
   align-items: center;
@@ -979,18 +1002,21 @@ body {
 .has-tooltip:hover::after {
   content: attr(data-tip);
   position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px 10px;
+  top: calc(100% + 6px);
+  left: 0;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
-  background: var(--text-primary);
+  background: #1d1d1f;
   color: #fff;
   font-size: 11px;
   font-weight: 400;
-  white-space: nowrap;
-  z-index: 200;
+  white-space: normal;
+  min-width: 280px;
+  max-width: 400px;
+  line-height: 1.5;
+  z-index: 300;
   pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* 상세 뷰 제목 */

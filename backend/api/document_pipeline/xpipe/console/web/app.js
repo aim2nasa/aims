@@ -189,12 +189,11 @@
   }
 
   function updateConfigDisplay(cfg) {
-    const adapterLabel = { insurance: 'Insurance', legal: 'Legal', none: 'None' }[cfg.adapter] || cfg.adapter;
     const modeLabel = { stub: '시뮬레이션', real: '실제 실행' }[cfg.mode] || cfg.mode;
     const modelsStr = cfg.models
       ? cfg.models.llm + ' / ' + cfg.models.ocr + ' / ' + cfg.models.embedding
       : '';
-    dom.configDisplay.textContent = adapterLabel + ' / ' + cfg.preset + ' / ' + modeLabel +
+    dom.configDisplay.textContent = cfg.preset + ' / ' + modeLabel +
       (modelsStr ? ' | ' + modelsStr : '');
     dom.ftVersion.textContent = 'xPipeWeb v0.2.1 / ' + modeLabel;
   }

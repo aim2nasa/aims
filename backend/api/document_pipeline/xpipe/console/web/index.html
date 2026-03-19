@@ -30,12 +30,10 @@
       <div class="provider-card">
         <span class="provider-label">엔진</span>
         <div class="provider-row">
-          <label>어댑터</label>
-          <select id="cfg-adapter">
-            <option value="insurance">Insurance</option>
-            <option value="legal">Legal</option>
-            <option value="none">None (코어만)</option>
-          </select>
+          <span class="adapter-disabled has-tooltip" data-tip="도메인 특화 플러그인 (분류 체계, 특수 문서 감지 등). 아직 구현된 어댑터가 없습니다.">
+            <label>어댑터</label>
+            <span class="adapter-none">없음</span>
+          </span>
           <label>프리셋</label>
           <select id="cfg-preset">
             <option value="aims-insurance">aims-insurance</option>
