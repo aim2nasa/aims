@@ -211,6 +211,91 @@ def _cmd_providers(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_events(_args: argparse.Namespace) -> int:
+    """이벤트/웹훅 시스템 정보 출력"""
+    from xpipe.events import EventBus, PipelineEvent, WebhookConfig
+
+    config = WebhookConfig()
+
+    print("=== EventBus 시스템 ===")
+    print()
+    print("  핵심 클래스:")
+    print("    PipelineEvent  -- 파이프라인 이벤트 (event_type, document_id, stage, payload)")
+    print("    EventBus       -- 이벤트 발행 + 웹훅 디스패치")
+    print("    WebhookConfig  -- 웹훅 전송 설정")
+    print()
+    print("  기본 설정:")
+    print(f"    최대 재시도: {config.max_retries}회")
+    print(f"    재시도 간격: {config.retry_delay_seconds}초")
+    print(f"    타임아웃: {config.timeout_seconds}초")
+    print()
+    print("  이벤트 유형:")
+    print("    document_processed  -- 문서 처리 완료")
+    print("    stage_complete      -- 단계 완료")
+    print("    error               -- 오류 발생")
+    print()
+    print("  사용법:")
+    print("    from xpipe import EventBus, PipelineEvent")
+    print()
+    print("    bus = EventBus()")
+    print('    bus.register_webhook("document_processed", "https://example.com/hook")')
+    print()
+    print("    event = PipelineEvent(")
+    print('        event_type="document_processed",')
+    print('        document_id="abc123",')
+    print('        stage="classification",')
+    print('        payload={"category": "policy"},')
+    print("    )")
+    print("    await bus.emit(event)")
+    print()
+    print("  Dead Letter Queue:")
+    print("    bus.get_dead_letter_queue()    -- 실패 이벤트 조회")
+    print("    bus.clear_dead_letter_queue()  -- DLQ 비우기")
+
+    return 0
+
+
+def _cmd_audit(_args: argparse.Namespace) -> int:
+    """감사 로그 시스템 정보 출력"""
+    from xpipe.audit import AuditLog, AuditEntry
+
+    print("=== Audit Log 시스템 ===")
+    print()
+    print("  핵심 클래스:")
+    print("    AuditEntry  -- 감사 로그 엔트리 (document_id, stage, action, actor, checksum)")
+    print("    AuditLog    -- 변경 불가 감사 로그 관리")
+    print()
+    print("  특징:")
+    print("    - SHA-256 체크섬으로 무결성 보장")
+    print("    - Append-only (수정/삭제 불가)")
+    print("    - 인메모리 구현 (영구 저장소는 향후 확장)")
+    print()
+    print("  조회 메서드:")
+    print("    get_by_document(doc_id)    -- 문서별 조회")
+    print("    get_by_stage(stage)        -- 단계별 조회")
+    print("    get_by_actor(actor)        -- 액터별 조회")
+    print("    get_by_period(start, end)  -- 기간별 조회")
+    print()
+    print("  무결성 검증:")
+    print("    verify_integrity(entry)    -- 단건 체크섬 검증")
+    print("    verify_all()               -- 전체 로그 검증")
+    print()
+    print("  사용법:")
+    print("    from xpipe import AuditLog, AuditEntry")
+    print()
+    print("    audit = AuditLog()")
+    print("    entry = audit.record(AuditEntry(")
+    print('        document_id="abc123",')
+    print('        stage="classification",')
+    print('        action="classified",')
+    print('        actor="openai/gpt-4o",')
+    print('        details={"confidence": 0.95},')
+    print("    ))")
+    print("    assert audit.verify_integrity(entry)")
+
+    return 0
+
+
 def _cmd_test(args: argparse.Namespace) -> int:
     """내장 테스트 실행 (pytest 호출)"""
     # xpipe 테스트 디렉토리
@@ -276,6 +361,14 @@ def main() -> None:
     # providers
     sub_providers = subparsers.add_parser("providers", help="AI Provider ABC 정보")
     sub_providers.set_defaults(func=_cmd_providers)
+
+    # events
+    sub_events = subparsers.add_parser("events", help="이벤트/웹훅 시스템 정보")
+    sub_events.set_defaults(func=_cmd_events)
+
+    # audit
+    sub_audit = subparsers.add_parser("audit", help="감사 로그 시스템 정보")
+    sub_audit.set_defaults(func=_cmd_audit)
 
     # quality
     sub_quality = subparsers.add_parser("quality", help="품질 게이트 설정/측정")

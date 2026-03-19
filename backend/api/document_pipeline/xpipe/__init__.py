@@ -30,6 +30,8 @@ from xpipe.providers import (
 )
 from xpipe.provider_registry import ProviderRegistry
 from xpipe.cost_tracker import CostTracker, UsageRecord
+from xpipe.events import EventBus, PipelineEvent, WebhookConfig
+from xpipe.audit import AuditLog, AuditEntry
 
 __all__ = [
     # Adapter
@@ -56,4 +58,11 @@ __all__ = [
     "ProviderRegistry",
     "CostTracker",
     "UsageRecord",
+    # Events
+    "EventBus",
+    "PipelineEvent",
+    "WebhookConfig",
+    # Audit
+    "AuditLog",
+    "AuditEntry",
 ]
