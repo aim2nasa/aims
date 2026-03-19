@@ -1,11 +1,13 @@
 /**
  * xPipeWeb v2 — 체험 도구 클라이언트 (Vanilla JS, 외부 의존 없음)
  *
- * R1: 파이프라인 아코디언 (각 스테이지 input→output)
- * R2: 추출 텍스트 탭 (전문 보기 + 다운로드/복사)
+ * R1: 테이블 상태 컬럼에 파이프라인 뱃지 표시
+ * R2: 뱃지 클릭 → 하단에 해당 스테이지 입출력만 표시
  * R3: 모델 선택/변경/표시
  * R4: stub 값 정리 (confidence/비용/품질 → "-")
- * R5: OCR 경로 (이미지 업로드 시 OCR 모델 표시)
+ * R5: 이벤트/감사로그를 테이블 행에 표시
+ * R6: 하단 패널에서 파이프라인 탭/이벤트 탭/감사로그 탭 제거
+ * R7: [stub] 시뮬레이션 텍스트 완전 제거
  */
 (function () {
   'use strict';
@@ -20,6 +22,11 @@
   let eventCount = 0;
   let pollTimer = null;
   let sseEventBuffer = [];  // 문서별 이벤트 추적
+
+  // 현재 하단 패널에 표시 중인 뷰 종류
+  // 'stage' | 'events' | 'audit' | 'text' | null
+  let detailView = null;
+  let detailViewParam = null; // 스테이지 이름 등
 
   // ---------------------------------------------------------------------------
   // DOM 참조
@@ -150,7 +157,7 @@
       : '';
     dom.configDisplay.textContent = adapterLabel + ' / ' + cfg.preset + ' / ' + modeLabel +
       (modelsStr ? ' | ' + modelsStr : '');
-    dom.ftVersion.textContent = 'xPipeWeb v2.0.0 / ' + modeLabel;
+    dom.ftVersion.textContent = 'xPipeWeb v0.2.0 / ' + modeLabel;
   }
 
   // ---------------------------------------------------------------------------
@@ -220,10 +227,12 @@
       if (selectedDocId) {
         const doc = documents.find(d => d.id === selectedDocId);
         if (doc) {
-          renderDetail(doc);
+          // 현재 표시 중인 뷰 갱신
+          _refreshDetailView(doc);
         } else {
           // 서버 재시작 등으로 문서가 사라진 경우
           selectedDocId = null;
+          detailView = null;
           dom.detailPanel.style.display = 'none';
         }
       }
@@ -233,8 +242,15 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 테이블 렌더링 (R4: stub 값 정리)
+  // 테이블 렌더링
   // ---------------------------------------------------------------------------
+
+  // 스테이지 이름 한글 매핑
+  const STAGE_LABELS = {
+    ingest: '업로드', convert: 'PDF변환', extract: '텍스트추출',
+    classify: 'AI분류', detect_special: '감지', embed: '임베딩', complete: '완료'
+  };
+
   function renderTable() {
     const filtered = currentFilter === 'all'
       ? documents
@@ -258,6 +274,8 @@
       const qualityHtml = renderQuality(doc);
       const costHtml = renderCost(doc);
       const durationHtml = doc.duration ? doc.duration.toFixed(2) + 's' : '<span class="text-muted">-</span>';
+      const eventsHtml = renderEventsBadge(doc);
+      const auditHtml = renderAuditBadge(doc);
       const actionsHtml = renderActions(doc);
       const rowClass = doc.status === 'error' ? 'error-row' : '';
       const selClass = doc.id === selectedDocId ? 'selected' : '';
@@ -270,40 +288,72 @@
         '<td>' + qualityHtml + '</td>' +
         '<td>' + costHtml + '</td>' +
         '<td>' + durationHtml + '</td>' +
+        '<td>' + eventsHtml + '</td>' +
+        '<td>' + auditHtml + '</td>' +
         '<td>' + actionsHtml + '</td>' +
         '</tr>';
     }).join('');
 
-    // 행 클릭 이벤트
+    // 행 클릭 이벤트 — 추출 텍스트 뷰 표시
     dom.docTbody.querySelectorAll('tr').forEach(tr => {
       tr.addEventListener('click', (e) => {
         if (e.target.closest('button')) return;
-
-        // 인라인 스테이지 뱃지 클릭 시: 해당 스테이지 상세를 하단 패널에 표시
-        const stageEl = e.target.closest('.inline-stage');
-        if (stageEl) {
-          const docId = stageEl.dataset.docId;
-          const stageName = stageEl.dataset.stage;
-          const doc = documents.find(d => d.id === docId);
-          if (doc) {
-            selectedDocId = docId;
-            selectedStage = stageName;
-            showDetail(doc);
-            // 파이프라인 탭 활성화
-            $$('.detail-tabs .tab').forEach(t => t.classList.remove('active'));
-            $$('.tab-pane').forEach(p => p.classList.remove('active'));
-            const pipeTab = document.querySelector('.detail-tabs .tab[data-tab="pipeline"]');
-            if (pipeTab) pipeTab.classList.add('active');
-            $('#tab-pipeline').classList.add('active');
-          }
-          renderTable();
-          return;
-        }
+        if (e.target.closest('.inline-stage')) return;
+        if (e.target.closest('.badge-events')) return;
+        if (e.target.closest('.badge-audit')) return;
 
         const id = tr.dataset.id;
         selectedDocId = id;
         const doc = documents.find(d => d.id === id);
-        if (doc) showDetail(doc);
+        if (doc) {
+          showDetailView(doc, 'text');
+        }
+        renderTable();
+      });
+    });
+
+    // 인라인 파이프라인 뱃지 클릭 → 해당 스테이지 상세
+    dom.docTbody.querySelectorAll('.inline-stage').forEach(badge => {
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tr = badge.closest('tr');
+        const id = tr.dataset.id;
+        selectedDocId = id;
+        const doc = documents.find(d => d.id === id);
+        const stageName = badge.dataset.stage;
+        if (doc && stageName) {
+          showDetailView(doc, 'stage', stageName);
+        }
+        renderTable();
+      });
+    });
+
+    // 이벤트 뱃지 클릭
+    dom.docTbody.querySelectorAll('.badge-events').forEach(badge => {
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tr = badge.closest('tr');
+        const id = tr.dataset.id;
+        selectedDocId = id;
+        const doc = documents.find(d => d.id === id);
+        if (doc) {
+          showDetailView(doc, 'events');
+        }
+        renderTable();
+      });
+    });
+
+    // 감사로그 뱃지 클릭
+    dom.docTbody.querySelectorAll('.badge-audit').forEach(badge => {
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tr = badge.closest('tr');
+        const id = tr.dataset.id;
+        selectedDocId = id;
+        const doc = documents.find(d => d.id === id);
+        if (doc) {
+          showDetailView(doc, 'audit');
+        }
         renderTable();
       });
     });
@@ -329,6 +379,7 @@
           await api('DELETE', '/api/documents/' + id);
           if (selectedDocId === id) {
             selectedDocId = null;
+            detailView = null;
             dom.detailPanel.style.display = 'none';
           }
           await refreshDocuments();
@@ -340,48 +391,55 @@
   }
 
   function renderStatusCell(doc) {
-    // 대기 상태: 간단한 텍스트만
     if (doc.status === 'queued') {
-      return '<span class="inline-status-text queued">대기</span>';
+      return '<span class="status-text queued">대기</span>';
     }
 
+    if (doc.status === 'error') {
+      return '<span class="status-text error">에러</span>';
+    }
+
+    // 완료 또는 처리중: 파이프라인 뱃지 표시
     const stagesDetail = doc.stages_detail || {};
     const stageOrder = Object.keys(stagesDetail);
 
-    // 스테이지 정보가 없으면 텍스트 fallback
-    if (stageOrder.length === 0) {
-      return '<span class="inline-status-text">' + escapeHtml(doc.status) + '</span>';
-    }
+    if (stageOrder.length > 0) {
+      let html = '<div class="inline-pipeline">';
+      const skipped = (doc.result && doc.result.stages_skipped) || [];
+      for (let i = 0; i < stageOrder.length; i++) {
+        const name = stageOrder[i];
+        if (skipped.includes(name)) continue; // 스킵된 단계 미표시
+        const detail = stagesDetail[name] || {};
+        let cls = 'pending';
+        if (detail.status === 'completed') cls = 'done';
+        else if (detail.status === 'running') cls = 'running';
+        else if (detail.status === 'error') cls = 'error';
+        const label = STAGE_LABELS[name] || name;
 
-    const isError = doc.status === 'error';
-    const errorStage = doc.error_stage;
-    const skippedStages = doc.result ? (doc.result.stages_skipped || []) : [];
-
-    let html = '<div class="inline-pipeline">';
-    let visibleCount = 0;
-
-    for (let i = 0; i < stageOrder.length; i++) {
-      const name = stageOrder[i];
-      const detail = stagesDetail[name] || {};
-      let status = detail.status || 'pending';
-      const isCurrentError = isError && errorStage === name;
-      const isSkipped = skippedStages.includes(name);
-
-      if (isCurrentError) status = 'error';
-      if (isSkipped && status !== 'error') continue; // 스킵 단계 숨김
-
-      if (visibleCount > 0) {
-        html += '<span class="inline-arrow">\u2192</span>';
+        // 화살표: 이전에 표시된 스테이지가 있으면 화살표 추가
+        let prevShown = false;
+        for (let j = i - 1; j >= 0; j--) {
+          if (!skipped.includes(stageOrder[j])) { prevShown = true; break; }
+        }
+        if (prevShown) {
+          html += '<span class="inline-arrow">\u2192</span>';
+        }
+        html += '<span class="inline-stage ' + cls + '" data-stage="' + name + '">' + label + '</span>';
       }
-
-      html += '<span class="inline-stage ' + status + '" data-stage="' + name + '" data-doc-id="' + doc.id + '">';
-      html += _stageKoreanName(name);
-      html += '</span>';
-      visibleCount++;
+      html += '</div>';
+      return html;
     }
 
-    html += '</div>';
-    return html;
+    if (doc.status === 'completed') {
+      return '<span class="status-text completed">완료</span>';
+    }
+
+    if (doc.status === 'processing') {
+      return '<span class="status-text processing">처리중</span>';
+    }
+
+    // fallback
+    return '<span class="status-text">' + escapeHtml(doc.status) + '</span>';
   }
 
   function renderDetections(doc) {
@@ -404,6 +462,24 @@
   function renderCost(doc) {
     if (doc.cost === null || doc.cost === undefined) return '<span class="text-muted">-</span>';
     return '$' + doc.cost.toFixed(3);
+  }
+
+  // R5: 이벤트 건수 뱃지
+  function renderEventsBadge(doc) {
+    const docEvents = sseEventBuffer.filter(e => e.document_id === doc.id);
+    if (docEvents.length === 0) return '<span class="text-muted">-</span>';
+    return '<span class="badge badge-events badge-count">' + docEvents.length + '건</span>';
+  }
+
+  // R5: 감사로그 건수 뱃지 (비동기 로드 불가하므로 stages_data 기반 추정)
+  function renderAuditBadge(doc) {
+    // 완료된 스테이지 수 + upload + complete = 대략적 감사 건수
+    const stagesDetail = doc.stages_detail || {};
+    const completedCount = Object.values(stagesDetail).filter(s => s.status === 'completed').length;
+    // upload(1) + 각 stage_completed + pipeline_completed(1) = completedCount + 2 (대략)
+    const estimatedCount = completedCount > 0 ? completedCount + 2 : 0;
+    if (estimatedCount === 0) return '<span class="text-muted">-</span>';
+    return '<span class="badge badge-audit badge-count">' + estimatedCount + '건</span>';
   }
 
   function renderActions(doc) {
@@ -439,6 +515,7 @@
         try {
           await api('DELETE', '/api/documents');
           selectedDocId = null;
+          detailView = null;
           dom.detailPanel.style.display = 'none';
           await refreshDocuments();
         } catch (err) {
@@ -480,49 +557,60 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 상세 패널
+  // 상세 패널 — 탭 없이 뷰 전환
   // ---------------------------------------------------------------------------
   function initDetail() {
     $('#detail-close').addEventListener('click', () => {
       dom.detailPanel.style.display = 'none';
       selectedDocId = null;
+      detailView = null;
       renderTable();
     });
-
-    // 탭 전환
-    $$('.detail-tabs .tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        $$('.detail-tabs .tab').forEach(t => t.classList.remove('active'));
-        $$('.tab-pane').forEach(p => p.classList.remove('active'));
-        tab.classList.add('active');
-        $('#tab-' + tab.dataset.tab).classList.add('active');
-
-        if (tab.dataset.tab === 'text' && selectedDocId) loadExtractedText(selectedDocId);
-        if (tab.dataset.tab === 'audit' && selectedDocId) loadAudit(selectedDocId);
-        if (tab.dataset.tab === 'events' && selectedDocId) renderEventsTab(selectedDocId);
-      });
-    });
   }
 
-  function showDetail(doc) {
+  /**
+   * 하단 패널에 뷰 표시
+   * @param {object} doc - 문서 객체
+   * @param {string} view - 'stage' | 'events' | 'audit' | 'text'
+   * @param {string} [param] - 스테이지 이름 등
+   */
+  function showDetailView(doc, view, param) {
+    detailView = view;
+    detailViewParam = param || null;
     dom.detailPanel.style.display = '';
-    renderDetail(doc);
-  }
-
-  function renderDetail(doc) {
     dom.detailFilename.textContent = doc.filename;
-    renderPipelineTab(doc);
+    _renderDetailContent(doc, view, param);
+  }
+
+  /**
+   * 현재 표시 중인 뷰를 최신 데이터로 갱신
+   */
+  function _refreshDetailView(doc) {
+    if (detailView) {
+      _renderDetailContent(doc, detailView, detailViewParam);
+    }
+  }
+
+  /**
+   * 상세 패널 콘텐츠 렌더링
+   */
+  function _renderDetailContent(doc, view, param) {
+    if (view === 'stage') {
+      renderStageDetail(doc, param);
+    } else if (view === 'events') {
+      renderEventsView(doc.id);
+    } else if (view === 'audit') {
+      renderAuditView(doc.id);
+    } else if (view === 'text') {
+      loadExtractedText(doc.id);
+    }
   }
 
   // ---------------------------------------------------------------------------
-  // R1: 파이프라인 플로우 시각화 + 아코디언
+  // 스테이지 상세 (뱃지 클릭 시 해당 스테이지만)
   // ---------------------------------------------------------------------------
-
-  // 현재 선택된 스테이지 (플로우에서 클릭 시)
-  let selectedStage = null;
-
-  async function renderPipelineTab(doc) {
-    const el = $('#tab-pipeline');
+  async function renderStageDetail(doc, stageName) {
+    const el = dom.detailContent;
     el.innerHTML = '<p class="text-muted">로딩...</p>';
 
     let stagesData = {};
@@ -534,114 +622,77 @@
     }
 
     const stagesDetail = doc.stages_detail || {};
-    const stageOrder = Object.keys(stagesDetail);
+    const detail = stagesDetail[stageName] || {};
+    const data = stagesData[stageName] || {};
+    const status = detail.status || 'pending';
+    const koreanName = STAGE_LABELS[stageName] || stageName;
+    const englishName = _stageDisplayName(stageName);
 
-    if (stageOrder.length === 0) {
-      el.innerHTML = '<p class="text-muted">스테이지가 없습니다.</p>';
-      return;
-    }
-
-    const isError = doc.status === 'error';
-    const errorStage = doc.error_stage;
-    const skippedStages = doc.result ? (doc.result.stages_skipped || []) : [];
-
-    // --- 파이프라인 플로우 (가로 화살표) ---
-    let html = '<div class="pipeline-flow">';
-    for (let i = 0; i < stageOrder.length; i++) {
-      const name = stageOrder[i];
-      const detail = stagesDetail[name] || {};
-      let status = detail.status || 'pending';
-      const isCurrentError = isError && errorStage === name;
-      const isSkipped = skippedStages.includes(name);
-
-      if (isCurrentError) status = 'error';
-      if (isSkipped && status !== 'error') status = 'skipped';
-
-      const activeClass = selectedStage === name ? ' active' : '';
-
-      html += '<span class="pipeline-stage ' + status + activeClass + '" data-stage="' + name + '">';
-      html += _stageKoreanName(name);
-      html += '</span>';
-
-      if (i < stageOrder.length - 1) {
-        html += '<span class="pipeline-arrow">&#8594;</span>';
-      }
-    }
+    let html = '<div class="stage-detail-view">';
+    html += '<div class="stage-detail-title">';
+    html += '<span class="stage-detail-name">' + koreanName + '</span>';
+    html += '<span class="stage-detail-eng">(' + englishName + ')</span>';
+    const statusLabel = { pending: '대기', running: '처리중', completed: '완료', error: '에러' }[status] || status;
+    const statusCls = { pending: 'pending', running: 'running', completed: 'done', error: 'error' }[status] || 'pending';
+    html += '<span class="inline-stage ' + statusCls + '" style="margin-left:8px;">' + statusLabel + '</span>';
     html += '</div>';
 
-    // --- 스테이지 상세 패널 (클릭 시 펼침) ---
-    html += '<div class="pipeline-detail-panel" id="pipeline-detail-panel"></div>';
+    if (status === 'pending' || status === 'running') {
+      html += '<p class="text-muted">' + (status === 'pending' ? '대기 중' : '처리 중...') + '</p>';
+    } else if (!data || !data.input) {
+      html += '<p class="text-muted">데이터 없음</p>';
+    } else {
+      // INPUT 섹션
+      html += '<div class="io-section">';
+      html += '<div class="io-label input">INPUT</div>';
+      html += '<div class="io-grid">';
+      html += _renderKVPairs(data.input);
+      html += '</div></div>';
 
-    // --- 아코디언 (기존) ---
-    html += '<ul class="accordion">';
+      // 화살표
+      html += '<div class="io-arrow">&#8595;</div>';
 
-    for (const name of stageOrder) {
-      const detail = stagesDetail[name] || {};
-      const data = stagesData[name] || {};
-      const status = detail.status || 'pending';
-      const isCurrentError = isError && errorStage === name;
+      // OUTPUT 섹션
+      html += '<div class="io-section">';
+      html += '<div class="io-label output">OUTPUT</div>';
+      html += '<div class="io-grid">';
 
-      const icon = _stageIcon(status, isCurrentError);
-      const durationMs = data.duration_ms || detail.duration_ms || 0;
-      const durationStr = durationMs > 0 ? durationMs + 'ms' : '';
-      const summary = _stageSummary(name, data, status);
-      const errorClass = isCurrentError ? ' error' : '';
-      const autoOpen = isCurrentError;
-
-      html += '<li class="accordion-item' + errorClass + '">';
-      html += '<div class="accordion-header' + (autoOpen ? ' open' : '') + '" data-stage="' + name + '">';
-      html += '<span class="accordion-icon">' + icon + '</span>';
-      html += '<span class="accordion-name">' + _stageDisplayName(name) + '</span>';
-      html += '<span class="accordion-duration">' + durationStr + '</span>';
-      html += '<span class="accordion-summary">' + summary + '</span>';
-      html += '<span class="accordion-arrow">&#9660;</span>';
-      html += '</div>';
-      html += '<div class="accordion-body' + (autoOpen ? ' open' : '') + '">';
-      html += _renderStageData(name, data, status, doc);
-      if (isCurrentError && doc.error) {
-        html += '<div class="error-msg">' +
-          '<span>' + escapeHtml(doc.error) + '</span>' +
-          '<button class="btn-xs btn-retry" data-id="' + doc.id + '">재시도</button>' +
-          '</div>';
+      if (data.output) {
+        const outputCopy = Object.assign({}, data.output);
+        // full_text 미리보기 + 전체 보기 버튼
+        if (outputCopy.full_text && outputCopy.full_text.length > 200) {
+          const textLen = outputCopy.full_text.length;
+          delete outputCopy.full_text;
+          html += _renderKVPairs(outputCopy);
+          html += '</div>';
+          html += '<div class="stage-text-preview">';
+          html += '<div class="io-label output">추출 텍스트 (' + textLen.toLocaleString() + '자)</div>';
+          html += '<div class="text-content">' + escapeHtml(data.output.full_text.substring(0, 500)) + (textLen > 500 ? '...' : '') + '</div>';
+          html += '</div>';
+        } else {
+          html += _renderKVPairs(outputCopy);
+          html += '</div>';
+        }
+      } else {
+        html += '<span class="text-muted">-</span>';
+        html += '</div>';
       }
+
       html += '</div>';
-      html += '</li>';
     }
 
-    html += '</ul>';
+    // 에러 표시
+    if (doc.status === 'error' && doc.error_stage === stageName && doc.error) {
+      html += '<div class="error-msg">' +
+        '<span>' + escapeHtml(doc.error) + '</span>' +
+        '<button class="btn-xs btn-retry" data-id="' + doc.id + '">재시도</button>' +
+        '</div>';
+    }
+
+    html += '</div>';
     el.innerHTML = html;
 
-    // --- 플로우 스테이지 클릭 이벤트 ---
-    el.querySelectorAll('.pipeline-stage').forEach(stageEl => {
-      stageEl.addEventListener('click', () => {
-        const stageName = stageEl.dataset.stage;
-
-        // 토글: 같은 스테이지 다시 클릭하면 닫기
-        if (selectedStage === stageName) {
-          selectedStage = null;
-          el.querySelectorAll('.pipeline-stage').forEach(s => s.classList.remove('active'));
-          $('#pipeline-detail-panel').innerHTML = '';
-          return;
-        }
-
-        selectedStage = stageName;
-        el.querySelectorAll('.pipeline-stage').forEach(s => s.classList.remove('active'));
-        stageEl.classList.add('active');
-
-        // 상세 패널 렌더링
-        _renderFlowDetail(stageName, stagesData, stagesDetail, doc, skippedStages);
-      });
-    });
-
-    // 아코디언 토글 이벤트
-    el.querySelectorAll('.accordion-header').forEach(header => {
-      header.addEventListener('click', () => {
-        header.classList.toggle('open');
-        header.nextElementSibling.classList.toggle('open');
-      });
-    });
-
-    // 에러 재시도 버튼
+    // 재시도 버튼
     el.querySelectorAll('.btn-retry').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -653,118 +704,6 @@
         }
       });
     });
-  }
-
-  /**
-   * 파이프라인 플로우에서 스테이지 클릭 시 상세 패널 렌더링
-   */
-  function _renderFlowDetail(stageName, stagesData, stagesDetail, doc, skippedStages) {
-    const panel = $('#pipeline-detail-panel');
-    if (!panel) return;
-
-    const data = stagesData[stageName] || {};
-    const detail = stagesDetail[stageName] || {};
-    const status = detail.status || 'pending';
-    const isSkipped = skippedStages.includes(stageName);
-    const isError = doc.status === 'error' && doc.error_stage === stageName;
-
-    let html = '<div class="flow-detail-card">';
-    html += '<div class="flow-detail-header">';
-    html += '<span class="flow-detail-title">' + _stageKoreanName(stageName) + '</span>';
-
-    const durationMs = data.duration_ms || detail.duration_ms || 0;
-    if (durationMs > 0) {
-      html += '<span class="flow-detail-duration">' + _formatDuration(durationMs) + '</span>';
-    }
-    html += '</div>';
-
-    // 스킵된 스테이지
-    if (isSkipped) {
-      html += '<div class="flow-detail-skip">';
-      html += _getSkipReason(stageName, doc);
-      html += '</div>';
-      html += '</div>';
-      panel.innerHTML = html;
-      return;
-    }
-
-    // 에러 스테이지
-    if (isError && doc.error) {
-      html += '<div class="error-msg">' + escapeHtml(doc.error) + '</div>';
-    }
-
-    // 대기/처리중
-    if (status === 'pending' || status === 'running') {
-      html += '<div class="flow-detail-status">' +
-        (status === 'pending' ? '대기 중' : '처리 중...') + '</div>';
-      html += '</div>';
-      panel.innerHTML = html;
-      return;
-    }
-
-    // 완료된 스테이지: 입력/출력 표시
-    if (data.input) {
-      html += '<div class="flow-detail-section">';
-      html += '<div class="io-label input">입력</div>';
-      html += '<div class="flow-detail-grid">';
-      html += _renderFlowKV(data.input);
-      html += '</div></div>';
-    }
-
-    if (data.output) {
-      html += '<div class="flow-detail-section">';
-      html += '<div class="io-label output">출력</div>';
-      html += '<div class="flow-detail-grid">';
-      // full_text 미리보기 제한
-      const outputCopy = Object.assign({}, data.output);
-      if (outputCopy.full_text && outputCopy.full_text.length > 300) {
-        outputCopy.full_text = outputCopy.full_text.substring(0, 300) + '...';
-      }
-      html += _renderFlowKV(outputCopy);
-      html += '</div></div>';
-    }
-
-    html += '</div>';
-    panel.innerHTML = html;
-  }
-
-  function _getSkipReason(stageName, doc) {
-    switch (stageName) {
-      case 'convert':
-        return '변환 불필요 (PDF/이미지/텍스트 파일)';
-      case 'extract':
-        return '이미 텍스트가 존재하여 추출을 건너뛰었습니다';
-      case 'embed':
-        return '크레딧 부족으로 임베딩을 건너뛰었습니다';
-      default:
-        return '조건에 따라 건너뛰었습니다';
-    }
-  }
-
-  function _renderFlowKV(obj) {
-    let html = '';
-    for (const [k, v] of Object.entries(obj)) {
-      const displayVal = _displayVal(v);
-      html += '<span class="flow-kv-key">' + escapeHtml(k) + '</span>';
-      html += '<span class="flow-kv-val">' + escapeHtml(displayVal) + '</span>';
-    }
-    return html;
-  }
-
-  function _formatDuration(ms) {
-    if (ms < 1000) return ms + 'ms';
-    return (ms / 1000).toFixed(2) + 's';
-  }
-
-  function _stageIcon(status, isError) {
-    if (isError) return '<span style="color:var(--error)">&#10007;</span>';
-    const icons = {
-      pending: '<span style="color:var(--text-tertiary)">&#9711;</span>',
-      running: '<span style="color:var(--processing)">&#9881;</span>',
-      completed: '<span style="color:var(--success)">&#10003;</span>',
-      skipped: '<span style="color:var(--text-tertiary)">&#10140;</span>',
-    };
-    return icons[status] || icons.pending;
   }
 
   function _stageDisplayName(name) {
@@ -780,90 +719,13 @@
     return names[name] || name;
   }
 
-  // 파이프라인 한글 표시명
-  function _stageKoreanName(name) {
-    const names = {
-      ingest: '업로드',
-      convert: 'PDF변환',
-      extract: '텍스트추출',
-      classify: 'AI분류',
-      detect_special: '감지',
-      embed: '임베딩',
-      complete: '완료',
-    };
-    return names[name] || name;
-  }
-
-  function _stageSummary(name, data, status) {
-    if (status === 'pending') return '';
-    if (status === 'running') return '처리중...';
-    if (!data || !data.output) return '';
-
-    const out = data.output;
-    switch (name) {
-      case 'ingest':
-        return (out.file_size ? formatSize(out.file_size) : '') + ' / ' + (out.mime_type || '-');
-      case 'convert':
-        return (out.method || '-') + ' / ' + (out.output_mime_type || 'PDF');
-      case 'extract':
-        return (out.method || '-') + ' / ' + (out.text_length || 0) + '자';
-      case 'classify':
-        return (out.document_type || '-') + ' / ' + _displayVal(out.confidence);
-      case 'detect_special':
-        return out.detected_type && out.detected_type !== '-'
-          ? out.detected_type
-          : '감지 없음';
-      case 'embed':
-        return (out.vector_dims || '-') + 'd / ' + (out.chunk_count || 0) + '청크';
-      case 'complete':
-        return (out.total_duration_ms || 0) + 'ms / ' + _displayVal(out.total_cost);
-      default:
-        return '';
-    }
-  }
-
-  function _renderStageData(name, data, status, doc) {
-    if (status === 'pending' || status === 'running') {
-      return '<p class="text-muted">' + (status === 'pending' ? '대기 중' : '처리 중...') + '</p>';
-    }
-    if (!data || !data.input) {
-      return '<p class="text-muted">데이터 없음</p>';
-    }
-
-    let html = '';
-    // Input
-    html += '<div class="io-section">';
-    html += '<div class="io-label input">INPUT</div>';
-    html += '<div class="io-grid">';
-    html += _renderKVPairs(data.input);
-    html += '</div></div>';
-
-    // 화살표
-    html += '<div class="io-arrow">&#8595;</div>';
-
-    // Output
-    html += '<div class="io-section">';
-    html += '<div class="io-label output">OUTPUT</div>';
-    html += '<div class="io-grid">';
-    // full_text는 너무 길 수 있으므로 미리보기만
-    const outputCopy = Object.assign({}, data.output);
-    if (outputCopy.full_text && outputCopy.full_text.length > 200) {
-      outputCopy.full_text = outputCopy.full_text.substring(0, 200) + '...';
-    }
-    html += _renderKVPairs(outputCopy);
-    html += '</div></div>';
-
-    return html;
-  }
-
   function _renderKVPairs(obj) {
     let html = '';
     for (const [k, v] of Object.entries(obj)) {
       const displayKey = k;
       const displayVal = _displayVal(v);
-      const stubClass = (typeof v === 'string' && v.includes('(stub)')) ? ' stub' : '';
       html += '<span class="io-key">' + escapeHtml(displayKey) + '</span>';
-      html += '<span class="io-val' + stubClass + '">' + escapeHtml(displayVal) + '</span>';
+      html += '<span class="io-val">' + escapeHtml(displayVal) + '</span>';
     }
     return html;
   }
@@ -878,10 +740,10 @@
   }
 
   // ---------------------------------------------------------------------------
-  // R2: 추출 텍스트 탭
+  // 추출 텍스트 뷰
   // ---------------------------------------------------------------------------
   async function loadExtractedText(docId) {
-    const el = $('#tab-text');
+    const el = dom.detailContent;
     el.innerHTML = '<p class="text-muted">로딩...</p>';
 
     try {
@@ -893,10 +755,6 @@
       html += '<button class="btn-xs" id="btn-copy-text">클립보드 복사</button>';
       html += '<button class="btn-xs" id="btn-download-text">TXT 다운로드</button>';
       html += '</div></div>';
-
-      if (data.is_stub) {
-        html += '<div class="stub-banner">[stub] 시뮬레이션 텍스트입니다. 실제 문서 내용이 아닙니다.</div>';
-      }
 
       html += '<div class="text-content" id="extracted-text-content">' + escapeHtml(data.text || '(텍스트 없음)') + '</div>';
 
@@ -936,18 +794,19 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 이벤트 탭
+  // 이벤트 뷰 (하단 패널)
   // ---------------------------------------------------------------------------
-  function renderEventsTab(docId) {
-    const el = $('#tab-events');
+  function renderEventsView(docId) {
+    const el = dom.detailContent;
     const docEvents = sseEventBuffer.filter(e => e.document_id === docId);
 
     if (docEvents.length === 0) {
-      el.innerHTML = '<p class="text-muted">이벤트가 없습니다.</p>';
+      el.innerHTML = '<div class="detail-view-title">이벤트</div><p class="text-muted">이벤트가 없습니다.</p>';
       return;
     }
 
-    let html = '<ul class="log-list">';
+    let html = '<div class="detail-view-title">이벤트 (' + docEvents.length + '건)</div>';
+    html += '<ul class="log-list">';
     for (const evt of docEvents) {
       html += '<li class="log-item">';
       html += '<span class="log-time">' + formatTime(evt.timestamp) + '</span>';
@@ -960,18 +819,19 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 감사 로그 탭
+  // 감사 로그 뷰 (하단 패널)
   // ---------------------------------------------------------------------------
-  async function loadAudit(docId) {
-    const el = $('#tab-audit');
-    el.innerHTML = '<p class="text-muted">로딩...</p>';
+  async function renderAuditView(docId) {
+    const el = dom.detailContent;
+    el.innerHTML = '<div class="detail-view-title">감사로그</div><p class="text-muted">로딩...</p>';
     try {
       const data = await api('GET', '/api/audit/' + docId);
       if (!data.entries || data.entries.length === 0) {
-        el.innerHTML = '<p class="text-muted">감사 로그가 없습니다.</p>';  // 이미 통일 패턴
+        el.innerHTML = '<div class="detail-view-title">감사로그</div><p class="text-muted">감사 로그가 없습니다.</p>';
         return;
       }
-      let html = '<ul class="log-list">';
+      let html = '<div class="detail-view-title">감사로그 (' + data.entries.length + '건)</div>';
+      html += '<ul class="log-list">';
       for (const e of data.entries) {
         html += '<li class="log-item">';
         html += '<span class="log-time">' + formatTime(e.timestamp) + '</span>';
@@ -982,7 +842,7 @@
       html += '</ul>';
       el.innerHTML = html;
     } catch (err) {
-      el.innerHTML = '<p class="text-error">로드 실패: ' + escapeHtml(err.message) + '</p>';
+      el.innerHTML = '<div class="detail-view-title">감사로그</div><p class="text-error">로드 실패: ' + escapeHtml(err.message) + '</p>';
     }
   }
 
@@ -1122,7 +982,7 @@
           pollTimer = setTimeout(refreshDocuments, 200);
         }
 
-        // 완료 알림 (R5: 브라우저 Notification)
+        // 완료 알림
         if (data.event_type === 'document_processed') {
           _notifyCompletion(data);
         }

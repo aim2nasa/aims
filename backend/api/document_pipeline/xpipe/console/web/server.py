@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 WEB_DIR = Path(__file__).parent
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
-VERSION = "2.0.0"
+VERSION = "0.2.0"
 
 # ---------------------------------------------------------------------------
 # 인메모리 상태
@@ -558,14 +558,18 @@ async def get_extracted_text(doc_id: str):
     text = doc.get("extracted_text", "")
     mode = doc.get("config", {}).get("mode", "stub")
 
-    # stub 모드라도 텍스트 파일은 실제 내용을 읽었으므로 is_stub=False
+    # stub 모드라도 텍스트/PDF/변환 가능 파일은 실제 내용을 추출하므로 is_stub=False
     import mimetypes, os
     filename = doc.get("filename", "")
     mime_type, _ = mimetypes.guess_type(filename)
     ext = os.path.splitext(filename)[1].lower()
     TEXT_EXTENSIONS = {".txt", ".md", ".csv", ".log", ".json", ".xml", ".yaml", ".yml", ".ini", ".cfg", ".conf", ".py", ".js", ".ts", ".html", ".css"}
+    CONVERTIBLE_EXTENSIONS = {".hwp", ".doc", ".docx", ".pptx", ".ppt", ".xls", ".xlsx"}
     is_text_file = (mime_type or "").startswith("text/") or ext in TEXT_EXTENSIONS
-    is_stub = mode == "stub" and not is_text_file
+    is_pdf = (mime_type or "") == "application/pdf"
+    is_convertible = ext in CONVERTIBLE_EXTENSIONS
+    # 이미지만 실제 추출이 불가능 (OCR 필요)
+    is_stub = mode == "stub" and not is_text_file and not is_pdf and not is_convertible
 
     return {
         "doc_id": doc_id,

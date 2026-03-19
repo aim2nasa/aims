@@ -11,7 +11,7 @@
   <header class="header">
     <div class="header-left">
       <h1 class="logo">xPipe<span class="logo-sub">Web</span></h1>
-      <span class="version" id="version">v2.0.0</span>
+      <span class="version" id="version">v0.2.0</span>
     </div>
     <div class="header-right">
       <span class="status-indicator" id="sse-status"></span>
@@ -124,6 +124,8 @@
           <th>품질</th>
           <th>비용</th>
           <th>소요</th>
+          <th>이벤트</th>
+          <th>감사</th>
           <th></th>
         </tr>
       </thead>
@@ -138,24 +140,13 @@
     <p class="empty-sub">파일을 드래그하여 xPipe 파이프라인 처리를 시작하세요.</p>
   </section>
 
-  <!-- 상세 패널 -->
+  <!-- 상세 패널 (탭 없음 — 뱃지/컬럼 클릭으로 전환) -->
   <section class="detail-panel" id="detail-panel" style="display:none;">
     <div class="detail-header">
       <h3 id="detail-filename">파일명</h3>
       <button class="btn-close" id="detail-close">&times;</button>
     </div>
-    <div class="detail-tabs">
-      <button class="tab active" data-tab="pipeline">파이프라인</button>
-      <button class="tab" data-tab="text">추출 텍스트</button>
-      <button class="tab" data-tab="events">이벤트</button>
-      <button class="tab" data-tab="audit">감사로그</button>
-    </div>
-    <div class="detail-content" id="detail-content">
-      <div class="tab-pane active" id="tab-pipeline"></div>
-      <div class="tab-pane" id="tab-text"></div>
-      <div class="tab-pane" id="tab-events"></div>
-      <div class="tab-pane" id="tab-audit"></div>
-    </div>
+    <div class="detail-content" id="detail-content"></div>
   </section>
 
   <!-- 벤치마크 모달 -->
@@ -181,7 +172,7 @@
     <span>
       <button class="btn btn-xs" id="btn-benchmark">벤치마크</button>
     </span>
-    <span class="footer-version" id="ft-version">xPipeWeb v2.0.0 / stub</span>
+    <span class="footer-version" id="ft-version">xPipeWeb v0.2.0 / stub</span>
   </footer>
 
   <script src="/app.js"></script>

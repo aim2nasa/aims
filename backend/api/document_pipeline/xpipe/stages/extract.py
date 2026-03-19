@@ -7,6 +7,10 @@ from typing import Any
 from xpipe.stage import Stage
 
 
+# LibreOffice로 변환 가능한 확장자
+CONVERTIBLE_EXTENSIONS = {".hwp", ".doc", ".docx", ".pptx", ".ppt", ".xls", ".xlsx"}
+
+
 class ExtractStage(Stage):
     """텍스트 추출 스테이지
 
@@ -58,6 +62,71 @@ class ExtractStage(Stage):
             f"MIME: {mime}\n"
         )
 
+    @staticmethod
+    def _read_pdf_file(file_path: str, file_name: str) -> str:
+        """PDF 파일에서 pdfplumber로 텍스트를 추출한다."""
+        import os
+
+        if not file_path or not os.path.exists(file_path):
+            return ""
+
+        try:
+            import pdfplumber
+            text_parts = []
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(page_text)
+            return "\n".join(text_parts)
+        except ImportError:
+            return ""
+        except Exception:
+            return ""
+
+    @staticmethod
+    def _convert_and_extract(file_path: str, file_name: str) -> str:
+        """LibreOffice로 PDF 변환 후 pdfplumber로 텍스트 추출"""
+        import subprocess
+        import tempfile
+        import os
+
+        soffice = "C:/Program Files/LibreOffice/program/soffice.exe"
+        if not os.path.exists(soffice):
+            return f"LibreOffice 미설치 — 텍스트 추출 불가\n파일: {file_name}"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                result = subprocess.run(
+                    [soffice, "--headless", "--convert-to", "pdf", "--outdir", tmp, file_path],
+                    capture_output=True, timeout=60,
+                )
+            except subprocess.TimeoutExpired:
+                return f"LibreOffice 변환 시간 초과 (60초)\n파일: {file_name}"
+            except Exception as e:
+                return f"LibreOffice 실행 실패: {e}\n파일: {file_name}"
+
+            # 변환된 PDF 찾기
+            pdf_files = [f for f in os.listdir(tmp) if f.endswith(".pdf")]
+            if not pdf_files:
+                return f"LibreOffice PDF 변환 실패\n파일: {file_name}"
+
+            pdf_path = os.path.join(tmp, pdf_files[0])
+            # pdfplumber로 텍스트 추출
+            try:
+                import pdfplumber
+                text_parts = []
+                with pdfplumber.open(pdf_path) as pdf:
+                    for page in pdf.pages:
+                        t = page.extract_text()
+                        if t:
+                            text_parts.append(t)
+                return "\n".join(text_parts) if text_parts else f"변환 성공, 텍스트 없음\n파일: {file_name}"
+            except ImportError:
+                return f"pdfplumber 미설치 — 텍스트 추출 불가\n파일: {file_name}"
+            except Exception as e:
+                return f"PDF 텍스트 추출 실패: {e}\n파일: {file_name}"
+
     async def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         """텍스트 추출 처리"""
         start = time.time()
@@ -74,57 +143,46 @@ class ExtractStage(Stage):
         is_image = mime.startswith("image/") if mime else False
         is_text = (mime.startswith("text/") if mime else False) or ext in TEXT_EXTENSIONS
         is_pdf = mime == "application/pdf" or mime.startswith("application/pdf")
+        is_convertible = ext in CONVERTIBLE_EXTENSIONS
         models = context.get("models", {})
         ocr_model_name = models.get("ocr", "paddleocr")
 
-        if mode == "stub":
-            if is_text:
-                # 텍스트 파일: 실제로 파일을 읽는다
-                method = "direct_read"
-                ocr_model = "-"
-                text = self._read_text_file(file_path, file_name, mime)
-            elif is_image:
-                # 이미지: stub에서는 OCR 불가
-                method = "ocr"
-                ocr_model = f"{ocr_model_name} (stub)"
-                text = (
-                    f"OCR은 real 모드에서 가능합니다.\n\n"
-                    f"파일: {file_name}\n"
-                    f"MIME: {mime}\n"
-                    f"OCR 모델: {ocr_model_name}\n"
-                )
-            elif is_pdf:
-                # PDF: stub에서는 텍스트 추출 불가
-                method = "pdfplumber"
-                ocr_model = "-"
-                text = (
-                    f"PDF 텍스트 추출은 real 모드에서 가능합니다.\n\n"
-                    f"파일: {file_name}\n"
-                    f"MIME: {mime}\n"
-                )
-            else:
-                # xlsx, doc, hwp 등: 변환 후 추출 필요
-                method = "pdfplumber"
-                ocr_model = "-"
-                text = (
-                    f"PDF 변환 후 텍스트 추출은 real 모드에서 가능합니다.\n\n"
-                    f"파일: {file_name}\n"
-                    f"MIME: {mime}\n"
-                )
+        if is_text:
+            # 텍스트 파일: 실제로 파일을 읽는다 (모드 무관)
+            method = "direct_read"
+            ocr_model = "-"
+            text = self._read_text_file(file_path, file_name, mime)
+        elif is_image:
+            # 이미지: OCR 필요
+            method = "ocr"
+            ocr_model = ocr_model_name
+            text = (
+                f"OCR 필요 — 이미지 파일은 OCR 처리가 필요합니다.\n\n"
+                f"파일: {file_name}\n"
+                f"MIME: {mime}\n"
+                f"OCR 모델: {ocr_model_name}\n"
+            )
+        elif is_pdf:
+            # PDF: pdfplumber로 실제 텍스트 추출 (모드 무관)
+            method = "pdfplumber"
+            ocr_model = "-"
+            text = self._read_pdf_file(file_path, file_name)
+            if not text:
+                text = f"PDF 텍스트 추출 실패 (pdfplumber 미설치 또는 스캔 PDF)\n파일: {file_name}"
+        elif is_convertible:
+            # HWP/DOC/PPTX/XLS: LibreOffice로 PDF 변환 후 추출
+            method = "libreoffice+pdfplumber"
+            ocr_model = "-"
+            text = self._convert_and_extract(file_path, file_name)
         else:
-            # real 모드: 실제 추출 (추후 구현)
-            if is_text:
-                method = "direct_read"
-                ocr_model = "-"
-                text = f"[real-placeholder] 직접 읽은 텍스트 ({file_name})"
-            elif is_image:
-                method = "ocr"
-                ocr_model = ocr_model_name
-                text = f"[real-placeholder] OCR로 추출될 텍스트 ({file_name})"
-            else:
-                method = "pdfplumber"
-                ocr_model = "-"
-                text = f"[real-placeholder] pdfplumber로 추출될 텍스트 ({file_name})"
+            # 알 수 없는 형식
+            method = "unknown"
+            ocr_model = "-"
+            text = (
+                f"지원하지 않는 파일 형식입니다.\n\n"
+                f"파일: {file_name}\n"
+                f"MIME: {mime}\n"
+            )
 
         context["extracted_text"] = text
         context["text"] = text
