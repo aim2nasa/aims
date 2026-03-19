@@ -957,7 +957,7 @@ pipeline:
 > 상세 토의 이력: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
 
 **미결 사항**:
-- [ ] Q1: xPipe의 정확한 분리 범위 (embedding pipeline 포함 여부) → Phase 1에서 결정
+- [x] **Q1: xPipe 모듈 경계** → **Option B 확정** (2026-03-19). document_pipeline + embedding = xPipe. RAG(aims_rag_api)는 Evolution에서 통합. annual_report_api는 Layer 3(보험 도메인). "문서 수신→임베딩→검색 가능" E2E 완결이 엔진의 핵심 가치
 - [x] **Q2: 데이터 저장소 전략** → **Option B (얇은 추상화) 확정** (2026-03-19). DocumentStore/JobQueue/WorkQueue ABC 인터페이스 + MongoDB/Redis 기본 구현체. 의도 기반 메서드로 캡슐화. 향후 C(완전 추상화) 확장 가능
 - [ ] Q3: 멀티테넌시 수준 (DB/컬렉션/필드 레벨 격리) → Phase 7에서 결정
 - [ ] 다른 도메인 PoC 대상 선정 (법률? 의료? 금융?)
