@@ -205,6 +205,66 @@ body {
   grid-column: 1 / -1;
 }
 
+/* --- Provider 카드 (OpenAI, Upstage 등) --- */
+.provider-card {
+  grid-column: 1 / -1;
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.provider-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 56px;
+}
+
+.provider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.provider-row label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.provider-row select {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--font);
+  background: var(--surface);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.provider-row select:focus {
+  border-color: var(--accent);
+}
+
+.provider-row .key-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.provider-row .key-input-wrap input {
+  min-width: 80px;
+  max-width: 200px;
+}
+
 .key-input-wrap {
   display: flex;
   align-items: center;
@@ -213,7 +273,7 @@ body {
 
 .key-input-wrap input {
   flex: 1;
-  padding: 6px 8px;
+  padding: 5px 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 12px;

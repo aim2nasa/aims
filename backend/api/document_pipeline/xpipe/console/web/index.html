@@ -27,57 +27,47 @@
       <button class="config-toggle" id="config-toggle">&#9660;</button>
     </div>
     <div class="config-panel" id="config-panel" style="display:none;">
-      <div class="config-group-title">엔진 설정</div>
-      <div class="config-group">
-        <div class="config-row">
+      <div class="provider-card">
+        <span class="provider-label">엔진</span>
+        <div class="provider-row">
           <label>어댑터</label>
           <select id="cfg-adapter">
             <option value="insurance">Insurance</option>
             <option value="legal">Legal</option>
             <option value="none">None (코어만)</option>
           </select>
-        </div>
-        <div class="config-row">
           <label>프리셋</label>
           <select id="cfg-preset">
             <option value="aims-insurance">aims-insurance</option>
             <option value="minimal">minimal</option>
           </select>
-        </div>
-        <div class="config-row">
           <label>모드</label>
           <select id="cfg-mode">
             <option value="stub">시뮬레이션</option>
             <option value="real">실제 실행</option>
           </select>
-        </div>
-        <div class="config-row">
-          <label>Quality Gate</label>
+          <label>QG</label>
           <select id="cfg-quality">
             <option value="true">ON</option>
             <option value="false">OFF</option>
           </select>
         </div>
       </div>
-      <div class="config-group-title">OpenAI</div>
-      <div class="config-group">
-        <div class="config-row">
-          <label>LLM 모델</label>
+      <div class="provider-card">
+        <span class="provider-label">OpenAI</span>
+        <div class="provider-row">
+          <label>LLM</label>
           <select id="cfg-llm">
             <option value="gpt-4o-mini">gpt-4o-mini</option>
             <option value="gpt-4o">gpt-4o</option>
             <option value="gpt-4-turbo">gpt-4-turbo</option>
           </select>
-        </div>
-        <div class="config-row">
-          <label>Embedding 모델</label>
+          <label>Embedding</label>
           <select id="cfg-embedding">
             <option value="text-embedding-3-small">text-embedding-3-small</option>
             <option value="text-embedding-3-large">text-embedding-3-large</option>
             <option value="text-embedding-ada-002">text-embedding-ada-002</option>
           </select>
-        </div>
-        <div class="config-row config-row-wide">
           <label>API Key</label>
           <div class="key-input-wrap">
             <input type="password" id="cfg-openai-key" placeholder="sk-..." autocomplete="off" spellcheck="false">
@@ -85,15 +75,13 @@
           </div>
         </div>
       </div>
-      <div class="config-group-title">Upstage (OCR)</div>
-      <div class="config-group">
-        <div class="config-row">
-          <label>OCR 모델</label>
+      <div class="provider-card">
+        <span class="provider-label">Upstage</span>
+        <div class="provider-row">
+          <label>OCR</label>
           <select id="cfg-ocr">
-            <option value="upstage">Upstage</option>
+            <option value="upstage">upstage</option>
           </select>
-        </div>
-        <div class="config-row config-row-wide">
           <label>API Key</label>
           <div class="key-input-wrap">
             <input type="password" id="cfg-upstage-key" placeholder="up_..." autocomplete="off" spellcheck="false">
