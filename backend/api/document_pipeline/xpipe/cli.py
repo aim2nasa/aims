@@ -296,6 +296,77 @@ def _cmd_audit(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_pipeline(args: argparse.Namespace) -> int:
+    """파이프라인 정의 검증 및 프리셋 정보"""
+    subcommand = getattr(args, "pipeline_command", None)
+
+    if subcommand == "validate":
+        # YAML/JSON 정의 파일 검증
+        filepath = getattr(args, "definition_path", None)
+        if not filepath:
+            print("정의 파일 경로를 지정하세요: python -m xpipe pipeline validate <PATH>")
+            return 1
+
+        from xpipe.pipeline import Pipeline
+        from xpipe.stages import (
+            IngestStage, ExtractStage, ClassifyStage,
+            DetectSpecialStage, EmbedStage, CompleteStage,
+        )
+
+        try:
+            if filepath.endswith(".json"):
+                pipeline = Pipeline.from_json(filepath)
+            else:
+                pipeline = Pipeline.from_yaml(filepath)
+        except FileNotFoundError:
+            print(f"파일을 찾을 수 없습니다: {filepath}")
+            return 1
+        except Exception as e:
+            print(f"파싱 실패: {e}")
+            return 1
+
+        # 내장 스테이지 등록 (검증용)
+        pipeline.register_stage("ingest", IngestStage)
+        pipeline.register_stage("extract", ExtractStage)
+        pipeline.register_stage("classify", ClassifyStage)
+        pipeline.register_stage("detect_special", DetectSpecialStage)
+        pipeline.register_stage("embed", EmbedStage)
+        pipeline.register_stage("complete", CompleteStage)
+
+        errors = pipeline.validate()
+
+        if errors:
+            print(f"검증 실패 ({len(errors)}건):")
+            for err in errors:
+                print(f"  - {err}")
+            return 1
+
+        print(f"검증 통과: {pipeline.definition.name}")
+        print(f"  스테이지: {len(pipeline.definition.stages)}개")
+        for sc in pipeline.definition.stages:
+            skip_info = f" (skip_if: {sc.skip_if})" if sc.skip_if else ""
+            error_info = " [skip_on_error]" if sc.skip_on_error else ""
+            print(f"    - {sc.name}{skip_info}{error_info}")
+        return 0
+
+    if subcommand == "presets":
+        from xpipe.pipeline_presets import list_presets as _list_presets
+
+        presets = _list_presets()
+        print("=== 내장 프리셋 ===")
+        for p in presets:
+            print(f"\n  {p['name']} ({p['stage_count']}개 스테이지):")
+            for stage_name in p["stages"]:
+                print(f"    - {stage_name}")
+        return 0
+
+    # 기본: pipeline 도움말
+    print("사용법:")
+    print("  python -m xpipe pipeline validate <YAML|JSON>  → 정의 검증")
+    print("  python -m xpipe pipeline presets                → 내장 프리셋 목록")
+    return 0
+
+
 def _cmd_test(args: argparse.Namespace) -> int:
     """내장 테스트 실행 (pytest 호출)"""
     # xpipe 테스트 디렉토리
@@ -369,6 +440,16 @@ def main() -> None:
     # audit
     sub_audit = subparsers.add_parser("audit", help="감사 로그 시스템 정보")
     sub_audit.set_defaults(func=_cmd_audit)
+
+    # pipeline
+    sub_pipeline = subparsers.add_parser("pipeline", help="파이프라인 정의 검증/프리셋")
+    sub_pipeline.set_defaults(func=_cmd_pipeline, pipeline_command=None)
+    pipeline_sub = sub_pipeline.add_subparsers(dest="pipeline_command")
+
+    sub_pipeline_validate = pipeline_sub.add_parser("validate", help="정의 파일 검증")
+    sub_pipeline_validate.add_argument("definition_path", help="YAML 또는 JSON 파일 경로")
+
+    pipeline_sub.add_parser("presets", help="내장 프리셋 목록")
 
     # quality
     sub_quality = subparsers.add_parser("quality", help="품질 게이트 설정/측정")

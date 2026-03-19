@@ -32,6 +32,9 @@ from xpipe.provider_registry import ProviderRegistry
 from xpipe.cost_tracker import CostTracker, UsageRecord
 from xpipe.events import EventBus, PipelineEvent, WebhookConfig
 from xpipe.audit import AuditLog, AuditEntry
+from xpipe.stage import Stage
+from xpipe.pipeline import Pipeline, PipelineDefinition, StageConfig
+from xpipe.pipeline_presets import PRESETS, get_preset, list_presets
 
 __all__ = [
     # Adapter
@@ -65,4 +68,12 @@ __all__ = [
     # Audit
     "AuditLog",
     "AuditEntry",
+    # Pipeline
+    "Stage",
+    "Pipeline",
+    "PipelineDefinition",
+    "StageConfig",
+    "PRESETS",
+    "get_preset",
+    "list_presets",
 ]
