@@ -77,7 +77,7 @@ current_config: dict[str, Any] = {
     "mode": "stub",
     "models": {
         "llm": "gpt-4o-mini",
-        "ocr": "paddleocr",
+        "ocr": "upstage",
         "embedding": "text-embedding-3-small",
     },
     "api_keys": {
@@ -762,7 +762,7 @@ async def get_config():
         "available_modes": ["stub", "real"],
         "available_models": {
             "llm": ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"],
-            "ocr": ["upstage", "paddleocr (미구현)", "tesseract (미구현)"],
+            "ocr": ["upstage"],
             "embedding": ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"],
         },
     }

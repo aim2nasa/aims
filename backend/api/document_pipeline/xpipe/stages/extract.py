@@ -134,10 +134,11 @@ class ExtractStage(Stage):
         file_name: str,
         mime: str,
         ocr_model_name: str,
-    ) -> str:
+    ) -> tuple[str, str]:
         """OCR Provider를 통해 이미지에서 텍스트 추출을 시도한다.
 
-        Provider가 등록되지 않았거나 시뮬레이션 모드이면 플레이스홀더 반환.
+        Returns:
+            (추출 텍스트, 실제 사용된 provider 이름)
         """
         mode = context.get("mode", "stub")
 
@@ -147,7 +148,7 @@ class ExtractStage(Stage):
                 f"파일: {file_name}\n"
                 f"MIME: {mime}\n"
                 f"OCR 모델: {ocr_model_name}\n"
-            )
+            ), ocr_model_name
 
         # ProviderRegistry가 context에 주입되어 있는지 확인
         registry = context.get("_provider_registry")
@@ -158,26 +159,27 @@ class ExtractStage(Stage):
                 api_key = context.get("_api_keys", {}).get("upstage", "")
                 provider = UpstageOCRProvider(api_key=api_key)
                 result = await provider.process(file_path)
-                return result.get("text", "")
+                return result.get("text", ""), provider.get_name()
             except Exception as e:
                 return (
                     f"OCR 처리 실패: {e}\n\n"
                     f"파일: {file_name}\n"
                     f"MIME: {mime}\n"
-                    f"OCR 모델: {ocr_model_name}\n"
-                )
+                ), ocr_model_name
 
         # Registry를 통한 호출 (폴백 체인 지원)
         try:
+            # 실제 사용된 provider 이름 추적
+            provider = registry.get("ocr")
+            actual_name = provider.get_name()
             result = await registry.call_with_fallback("ocr", "process", file_path)
-            return result.get("text", "")
+            return result.get("text", ""), actual_name
         except Exception as e:
             return (
                 f"OCR 처리 실패: {e}\n\n"
                 f"파일: {file_name}\n"
                 f"MIME: {mime}\n"
-                f"OCR 모델: {ocr_model_name}\n"
-            )
+            ), ocr_model_name
 
     async def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         """텍스트 추출 처리"""
@@ -207,8 +209,7 @@ class ExtractStage(Stage):
         elif is_image:
             # 이미지: OCR Provider로 처리
             method = "ocr"
-            ocr_model = ocr_model_name
-            text = await self._try_ocr(context, file_path, file_name, mime, ocr_model_name)
+            text, ocr_model = await self._try_ocr(context, file_path, file_name, mime, ocr_model_name)
         elif is_pdf:
             # PDF: pdfplumber로 실제 텍스트 추출 (모드 무관)
             method = "pdfplumber"

@@ -635,6 +635,9 @@ class TestExtractStageOCR:
         result = asyncio.get_event_loop().run_until_complete(stage.execute(context))
         text = result.get("extracted_text", "")
         assert "OCR 결과" in text
+        # stage_data에 실제 사용된 provider 이름이 기록되어야 함
+        ocr_model = result.get("stage_data", {}).get("extract", {}).get("output", {}).get("ocr_model")
+        assert ocr_model == "test-ocr"
 
     def test_image_real_mode_no_registry_no_key(self):
         """실제 실행 모드 + Registry 없음 + API 키 없음 → 에러 메시지"""
