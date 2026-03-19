@@ -1228,10 +1228,11 @@
         html += '<div class="preview-unavailable">이 파일 형식은 프리뷰를 지원하지 않습니다</div>';
       }
     } else if (isImage) {
-      html += '<div class="file-preview"><img src="/api/file/' + doc.id + '" alt="' + escapeHtml(doc.filename) + '"></div>';
+      html += '<div class="file-preview"><div class="preview-loading" id="preview-spinner"><div class="spinner"></div><p>로딩 중...</p></div>' +
+        '<img src="/api/file/' + doc.id + '" alt="' + escapeHtml(doc.filename) + '" onload="document.getElementById(\'preview-spinner\').style.display=\'none\'" onerror="document.getElementById(\'preview-spinner\').innerHTML=\'로드 실패\'"></div>';
     } else if (isPdf || isConverted) {
-      // PDF 또는 PDF로 변환된 파일 → iframe
-      html += '<div class="file-preview"><iframe src="/api/file/' + doc.id + '"></iframe></div>';
+      html += '<div class="file-preview"><div class="preview-loading" id="preview-spinner"><div class="spinner"></div><p>프리뷰 로딩 중...</p></div>' +
+        '<iframe src="/api/file/' + doc.id + '" onload="document.getElementById(\'preview-spinner\').style.display=\'none\'"></iframe></div>';
     } else {
       html += '<div class="preview-unavailable">이 파일 형식은 프리뷰를 지원하지 않습니다</div>';
     }
