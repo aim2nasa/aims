@@ -186,6 +186,19 @@ class EventBus:
             self._listeners[event_type] = []
         self._listeners[event_type].append(listener)
 
+    def off(self, event_type: str, listener: Callable[[PipelineEvent], None]) -> None:
+        """동기 리스너 해제
+
+        Args:
+            event_type: 이벤트 유형
+            listener: 제거할 콜백
+        """
+        if event_type in self._listeners:
+            try:
+                self._listeners[event_type].remove(listener)
+            except ValueError:
+                pass
+
     # --- 이벤트 발행 ---
 
     async def emit(self, event: PipelineEvent) -> None:

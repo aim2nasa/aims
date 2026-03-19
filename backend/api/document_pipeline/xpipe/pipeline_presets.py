@@ -25,6 +25,7 @@ AIMS_INSURANCE_PRESET: dict[str, Any] = {
     "name": "aims-insurance",
     "stages": [
         {"name": "ingest", "config": {}},
+        {"name": "convert", "config": {}, "skip_if": "!needs_conversion"},
         {"name": "extract", "config": {}, "skip_if": "has_text"},
         {"name": "classify", "config": {}},
         {"name": "detect_special", "config": {}},

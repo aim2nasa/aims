@@ -566,6 +566,140 @@ LLM: [gpt-4o-mini ▼]    OCR: [PaddleOCR ▼]    Embedding: [text-embedding-3-s
 | regression 테스트 | xpipe 내장 251개 (단위 222 + regression 29) |
 | xPipe Phase 0~7 | 전부 완료, M1~M5 달성 |
 
+### 10.4 xPipe 문서 데이터 구조 (AIMS 참고)
+
+AIMS의 files 컬렉션 구조를 참고하여, xPipe는 **각 스테이지의 입력→출력을 명시적으로 기록**하는 구조를 사용한다.
+
+**AIMS 현재 구조 (참고):**
+```json
+{
+  "upload": { "originalName", "saveName", "destPath", "uploaded_at" },
+  "meta": { "mime", "full_text", "summary", "document_type", "confidence", "meta_status" },
+  "ocr": { "status", "full_text", "page_count", "provider", "confidence" },
+  "docembed": { "status", "dims", "chunks", "text_source" },
+  "is_annual_report", "ar_parsing_status", "displayName",
+  "progress", "progressStage", "status", "overallStatus"
+}
+```
+
+**xPipe v2 문서 구조 (개선):**
+
+AIMS와 달리, **각 스테이지의 처리 결과를 `stages` 배열에 순서대로 기록**한다. 이렇게 하면 어떤 스테이지에서 무슨 일이 일어났는지 한눈에 파악 가능.
+
+```json
+{
+  "_id": "doc_abc123",
+  "file": {
+    "name": "보험증권.pdf",
+    "size": 2348576,
+    "mime": "application/pdf"
+  },
+  "config": {
+    "adapter": "insurance",
+    "preset": "aims-insurance",
+    "models": {
+      "llm": "gpt-4o-mini",
+      "ocr": "PaddleOCR",
+      "embedding": "text-embedding-3-small"
+    },
+    "mode": "stub"
+  },
+  "status": "completed",
+  "progress": 100,
+  "started_at": "2026-03-19T14:30:00Z",
+  "completed_at": "2026-03-19T14:30:04Z",
+  "total_time_ms": 4070,
+  "total_cost": 0.003,
+
+  "stages": [
+    {
+      "name": "ingest",
+      "status": "completed",
+      "started_at": "...",
+      "duration_ms": 10,
+      "input": { "file_name": "보험증권.pdf", "file_size": 2348576, "mime": "application/pdf" },
+      "output": { "saved_path": "/tmp/xpipe/abc123.pdf" }
+    },
+    {
+      "name": "extract",
+      "status": "completed",
+      "duration_ms": 800,
+      "input": { "file_path": "/tmp/xpipe/abc123.pdf", "method": "pdfplumber" },
+      "output": { "text": "MetLife\n홍길동 고객님을 위한\nAnnual Review Report...", "text_length": 3247 }
+    },
+    {
+      "name": "classify",
+      "status": "completed",
+      "duration_ms": 1230,
+      "input": { "text_length": 3247 },
+      "output": {
+        "document_type": "insurance_etc",
+        "confidence": 0.92,
+        "model": "gpt-4o-mini (stub)",
+        "cost": 0.002
+      }
+    },
+    {
+      "name": "detect_special",
+      "status": "completed",
+      "duration_ms": 50,
+      "input": { "text_length": 3247, "mime": "application/pdf" },
+      "output": {
+        "detections": [
+          {
+            "type": "annual_report",
+            "customer_name": "홍길동",
+            "issue_date": "2026-01-15",
+            "matched_keywords": {
+              "required": ["Annual Review Report"],
+              "optional": ["보유계약 현황", "메트라이프"]
+            }
+          }
+        ],
+        "display_name": "홍길동_AR_2026-01-15.pdf"
+      }
+    },
+    {
+      "name": "embed",
+      "status": "completed",
+      "duration_ms": 2100,
+      "input": { "text_length": 3247, "chunk_count": 3 },
+      "output": {
+        "dimensions": 1536,
+        "chunks": 3,
+        "model": "text-embedding-3-small (stub)",
+        "cost": 0.001
+      }
+    },
+    {
+      "name": "complete",
+      "status": "completed",
+      "duration_ms": 10,
+      "input": {},
+      "output": {
+        "display_name": "홍길동_AR_2026-01-15.pdf",
+        "total_time_ms": 4070,
+        "total_cost": 0.003
+      }
+    }
+  ],
+
+  "extracted_text": "MetLife\n홍길동 고객님을 위한\n...(전문)",
+  "quality": {
+    "score": null,
+    "passed": null,
+    "flags": [],
+    "note": "stub 모드 — 품질 평가 미수행"
+  }
+}
+```
+
+**AIMS 대비 개선점:**
+- AIMS: `meta`, `ocr`, `docembed` 등 단계별로 흩어진 필드
+- xPipe: `stages[]` 배열에 **시간 순서대로** 입력→출력 기록 → UI에서 그대로 표시
+- 각 스테이지에 `model`, `cost`, `duration_ms` 명시 → 성능/비용 측정 즉시 가능
+- `config` 필드에 처리 시 사용된 설정 스냅샷 → 나중에 같은 설정으로 재현 가능
+
 ---
 
-*v2 구현 시 R1~R5를 최우선으로 반영. 이것이 빠지면 다시 FAIL.*
+*v2 구현 시 R1~R5 + 이 데이터 구조를 최우선으로 반영. 이것이 빠지면 다시 FAIL.*

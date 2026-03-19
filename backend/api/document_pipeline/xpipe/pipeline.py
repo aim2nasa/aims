@@ -192,18 +192,33 @@ class Pipeline:
 
             # 3. 스테이지 실행
             try:
+                # stage_start 이벤트 발행
+                if self.event_bus is not None:
+                    start_event = PipelineEvent(
+                        event_type="stage_start",
+                        document_id=context.get("document_id", ""),
+                        stage=stage_name,
+                        payload={"pipeline": self.definition.name},
+                    )
+                    await self.event_bus.emit(start_event)
+
                 # config를 context에 주입
                 context["_stage_config"] = stage_config.config
                 context = await stage.execute(context)
                 context["_pipeline"]["stages_executed"].append(stage_name)
 
-                # 4. 이벤트 발행
+                # 4. 이벤트 발행 (stage_data 포함 — xPipeWeb R1 지원)
                 if self.event_bus is not None:
+                    stage_data = context.get("stage_data", {}).get(stage_name, {})
                     event = PipelineEvent(
                         event_type="stage_complete",
                         document_id=context.get("document_id", ""),
                         stage=stage_name,
-                        payload={"pipeline": self.definition.name},
+                        payload={
+                            "pipeline": self.definition.name,
+                            "stage_data": stage_data,
+                            "duration_ms": stage_data.get("duration_ms", 0),
+                        },
                     )
                     await self.event_bus.emit(event)
 

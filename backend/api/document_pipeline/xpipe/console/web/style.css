@@ -1,4 +1,4 @@
-/* xPipeWeb — Apple 디자인 기반 스타일 */
+/* xPipeWeb v2 — Apple 디자인 기반 스타일 */
 
 :root {
   --bg: #f5f5f7;
@@ -19,6 +19,7 @@
   --shadow: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
   --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
 }
 
 * {
@@ -89,6 +90,20 @@ body {
   background: var(--error);
 }
 
+.sse-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-left: 4px;
+}
+
+.sse-label.connected {
+  color: var(--success);
+}
+
+.sse-label.disconnected {
+  color: var(--error);
+}
+
 /* --- 설정 바 --- */
 .config-bar {
   margin: 16px 24px 0;
@@ -134,9 +149,9 @@ body {
 }
 
 .config-panel {
-  padding: 0 16px 16px;
+  padding: 12px 16px 16px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr) auto;
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   align-items: end;
   border-top: 1px solid var(--border-light);
@@ -167,6 +182,33 @@ body {
 
 .config-row select:focus {
   border-color: var(--accent);
+}
+
+.config-group-title {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  padding-top: 4px;
+}
+
+.config-group {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.config-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.btn-reset-all {
+  margin-left: auto;
 }
 
 /* --- 버튼 --- */
@@ -447,6 +489,11 @@ body {
   color: #636366;
 }
 
+.badge-stub {
+  background: rgba(142,142,147,0.08);
+  color: #8e8e93;
+}
+
 /* 액션 버튼 */
 .action-btns {
   display: flex;
@@ -530,7 +577,7 @@ body {
 .detail-content {
   padding: 16px;
   min-height: 200px;
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
 }
 
@@ -542,44 +589,349 @@ body {
   display: block;
 }
 
-/* 파이프라인 스테이지 목록 */
-.stage-list {
+/* --- 파이프라인 플로우 (가로 화살표) --- */
+.pipeline-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 16px 4px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.pipeline-stage {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  border: 1.5px solid transparent;
+  user-select: none;
+}
+
+.pipeline-stage.completed {
+  background: rgba(52, 199, 89, 0.12);
+  color: #248a3d;
+  border-color: rgba(52, 199, 89, 0.3);
+}
+
+.pipeline-stage.running {
+  background: rgba(88, 86, 214, 0.12);
+  color: #5856d6;
+  border-color: rgba(88, 86, 214, 0.3);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.pipeline-stage.pending {
+  background: rgba(142, 142, 147, 0.08);
+  color: var(--text-tertiary);
+  border-color: var(--border-light);
+}
+
+.pipeline-stage.error {
+  background: rgba(255, 59, 48, 0.12);
+  color: #d70015;
+  border-color: rgba(255, 59, 48, 0.3);
+}
+
+.pipeline-stage.skipped {
+  background: rgba(142, 142, 147, 0.05);
+  color: var(--text-tertiary);
+  border-color: var(--border-light);
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.pipeline-stage:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pipeline-stage.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+}
+
+.pipeline-arrow {
+  color: var(--text-tertiary);
+  font-size: 14px;
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+/* --- 파이프라인 상세 패널 (플로우 클릭 시) --- */
+.pipeline-detail-panel {
+  min-height: 0;
+  transition: min-height 0.2s;
+}
+
+.flow-detail-card {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.flow-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.flow-detail-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.flow-detail-duration {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--mono);
+}
+
+.flow-detail-section {
+  margin-bottom: 10px;
+}
+
+.flow-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.flow-detail-grid {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 3px 12px;
+  font-size: 11px;
+}
+
+.flow-kv-key {
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.flow-kv-val {
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.flow-detail-skip {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.flow-detail-status {
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+/* --- 아코디언 (파이프라인 탭) --- */
+.accordion {
   list-style: none;
 }
 
-.stage-item {
+.accordion-item {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.accordion-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--bg);
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.accordion-header:hover {
+  background: rgba(0,113,227,0.03);
+}
+
+.accordion-header.open {
   border-bottom: 1px solid var(--border-light);
-  font-size: 12px;
 }
 
-.stage-item:last-child {
-  border-bottom: none;
-}
-
-.stage-icon {
+.accordion-icon {
   width: 20px;
   text-align: center;
   font-size: 13px;
+  flex-shrink: 0;
 }
 
-.stage-name {
+.accordion-name {
   font-weight: 600;
-  min-width: 100px;
+  font-size: 12px;
+  min-width: 110px;
 }
 
-.stage-duration {
+.accordion-duration {
   color: var(--text-tertiary);
   font-size: 11px;
 }
 
-.stage-info {
+.accordion-summary {
   color: var(--text-secondary);
   font-size: 11px;
   flex: 1;
+  text-align: right;
+}
+
+.accordion-arrow {
+  color: var(--text-tertiary);
+  font-size: 10px;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.accordion-header.open .accordion-arrow {
+  transform: rotate(180deg);
+}
+
+.accordion-body {
+  display: none;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.accordion-body.open {
+  display: block;
+}
+
+.accordion-item.error .accordion-header {
+  background: rgba(255,59,48,0.04);
+}
+
+/* 입출력 데이터 그리드 */
+.io-section {
+  margin-bottom: 12px;
+}
+
+.io-section:last-child {
+  margin-bottom: 0;
+}
+
+.io-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.io-label::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+.io-label.input::before {
+  background: var(--accent);
+}
+
+.io-label.output::before {
+  background: var(--success);
+}
+
+.io-grid {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 4px 12px;
+  font-size: 12px;
+}
+
+.io-key {
+  color: var(--text-tertiary);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.io-val {
+  color: var(--text-primary);
+  word-break: break-all;
+  font-size: 11px;
+}
+
+.io-val.stub {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.io-arrow {
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+/* --- 추출 텍스트 탭 --- */
+.text-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.text-tab-info {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.text-tab-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.stub-banner {
+  background: rgba(142,142,147,0.08);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+
+.text-content {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+  color: var(--text-primary);
 }
 
 /* 메타데이터 키-값 */
@@ -604,7 +956,7 @@ body {
 .log-list {
   list-style: none;
   font-size: 11px;
-  font-family: 'SF Mono', 'Consolas', monospace;
+  font-family: var(--mono);
 }
 
 .log-item {
@@ -764,6 +1116,20 @@ body {
 
 .text-muted {
   color: var(--text-tertiary);
+}
+
+/* 에러 메시지 (아코디언 내) */
+.error-msg {
+  background: rgba(255,59,48,0.06);
+  border: 1px solid rgba(255,59,48,0.2);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--error);
+  font-size: 11px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* 반응형 */

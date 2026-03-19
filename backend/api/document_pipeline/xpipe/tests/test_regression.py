@@ -36,6 +36,7 @@ from xpipe.adapter import (
 from xpipe.testing import TestRunner, TestCase
 from xpipe.stages import (
     IngestStage,
+    ConvertStage,
     ExtractStage,
     ClassifyStage,
     DetectSpecialStage,
@@ -60,6 +61,7 @@ def _run(coro):
 def _register_all_stages(pipeline: Pipeline) -> None:
     """모든 내장 스테이지를 등록"""
     pipeline.register_stage("ingest", IngestStage)
+    pipeline.register_stage("convert", ConvertStage)
     pipeline.register_stage("extract", ExtractStage)
     pipeline.register_stage("classify", ClassifyStage)
     pipeline.register_stage("detect_special", DetectSpecialStage)
@@ -113,7 +115,7 @@ class TestPipelineE2EFlow:
 
     def test_scenario1_normal_pdf_with_text(self):
         """시나리오 1: 정상 PDF (텍스트 있음)
-        Ingest → Extract(스킵: has_text) → Classify → DetectSpecial → Embed → Complete
+        Ingest → Convert(스킵) → Extract(스킵: has_text) → Classify → DetectSpecial → Embed → Complete
         """
         events: list[PipelineEvent] = []
         bus = EventBus()
@@ -129,8 +131,9 @@ class TestPipelineE2EFlow:
         }
         result = _run(pipeline.run(context))
 
-        # Extract 스킵 확인
+        # Extract, Convert 스킵 확인
         assert "extract" in result["_pipeline"]["stages_skipped"]
+        assert "convert" in result["_pipeline"]["stages_skipped"]
         assert "extract" not in result["_pipeline"]["stages_executed"]
 
         # 나머지 모두 실행 확인
@@ -150,15 +153,16 @@ class TestPipelineE2EFlow:
         assert result["status"] == "completed"
         assert result["_pipeline"]["errors"] == []
 
-        # 이벤트 발행 확인 — 스킵된 extract 제외, 5개 스테이지 완료 이벤트
+        # 이벤트 발행 확인 — 스킵된 extract+convert 제외, 5개 스테이지 완료 이벤트
         assert len(events) == 5
         event_stages = [e.stage for e in events]
         assert "extract" not in event_stages
+        assert "convert" not in event_stages
         assert all(e.document_id == "e2e-001" for e in events)
 
     def test_scenario2_pdf_without_text(self):
         """시나리오 2: 텍스트 없는 PDF
-        Ingest → Extract(실행) → Classify → DetectSpecial → Embed → Complete
+        Ingest → Convert(스킵) → Extract(실행) → Classify → DetectSpecial → Embed → Complete
         """
         pipeline = _build_aims_pipeline()
 
@@ -173,9 +177,9 @@ class TestPipelineE2EFlow:
         assert "extract" in result["_pipeline"]["stages_executed"]
         assert result["extracted"] is True
 
-        # 전체 6개 스테이지 모두 실행
+        # convert 스킵 (needs_conversion 없음), 나머지 6개 실행
+        assert "convert" in result["_pipeline"]["stages_skipped"]
         assert len(result["_pipeline"]["stages_executed"]) == 6
-        assert result["_pipeline"]["stages_skipped"] == []
 
     def test_scenario3_crs_document(self):
         """시나리오 3: CRS 문서 — 어댑터의 detect_special_documents 검증
@@ -264,7 +268,7 @@ class TestPipelineE2EFlow:
         assert display_name == "홍길동_AR_2026-01-15.pdf"
 
     def test_credit_pending_skips_embed(self):
-        """credit_pending=True → embed 스킵, 나머지 정상 실행"""
+        """credit_pending=True → embed + convert 스킵, 나머지 정상 실행"""
         pipeline = _build_aims_pipeline()
         context = {
             "document_id": "e2e-006",
@@ -273,11 +277,12 @@ class TestPipelineE2EFlow:
         result = _run(pipeline.run(context))
 
         assert "embed" in result["_pipeline"]["stages_skipped"]
+        assert "convert" in result["_pipeline"]["stages_skipped"]
         assert "embedded" not in result
         assert result["completed"] is True
 
     def test_text_and_credit_pending_both_skip(self):
-        """텍스트 있음 + 크레딧 부족 → extract + embed 둘 다 스킵"""
+        """텍스트 있음 + 크레딧 부족 → convert + extract + embed 스킵"""
         pipeline = _build_aims_pipeline()
         context = {
             "document_id": "e2e-007",
@@ -287,6 +292,7 @@ class TestPipelineE2EFlow:
         result = _run(pipeline.run(context))
 
         skipped = set(result["_pipeline"]["stages_skipped"])
+        assert "convert" in skipped
         assert "extract" in skipped
         assert "embed" in skipped
         assert result["completed"] is True
@@ -311,7 +317,7 @@ class TestModuleIntegration:
         pipeline = _build_aims_pipeline(event_bus=bus)
         result = _run(pipeline.run({"document_id": "int-001"}))
 
-        # 전체 6 스테이지 → 6 이벤트
+        # 전체 7 스테이지 중 convert 스킵 → 6 이벤트
         assert len(events) == 6
         for ev in events:
             assert ev.event_type == "stage_complete"
@@ -372,7 +378,7 @@ class TestModuleIntegration:
         pipeline = _build_aims_pipeline(event_bus=bus)
         _run(pipeline.run({"document_id": "int-003"}))
 
-        # 6개 스테이지 → 6개 감사 로그
+        # 7개 스테이지 중 convert 스킵 → 6개 감사 로그
         entries = audit.get_by_document("int-003")
         assert len(entries) == 6
 
@@ -587,7 +593,7 @@ class TestAdapterSwapRegression:
 
         assert result["completed"] is True
         assert result["_pipeline"]["errors"] == []
-        # 어댑터 없이도 모든 스테이지가 실행됨 (stub 구현)
+        # 어댑터 없이도 모든 스테이지가 실행됨 (stub 구현, convert는 스킵)
         assert len(result["_pipeline"]["stages_executed"]) == 6
 
     def test_adapter_exception_with_skip_on_error(self):
@@ -689,12 +695,13 @@ class TestBackwardCompatibility:
         # Golden 정의: 변경되면 테스트가 실패하여 의도적 변경인지 확인
         assert AIMS_INSURANCE_PRESET["name"] == "aims-insurance"
 
-        expected_stages = ["ingest", "extract", "classify", "detect_special", "embed", "complete"]
+        expected_stages = ["ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"]
         actual_stages = [s["name"] for s in AIMS_INSURANCE_PRESET["stages"]]
         assert actual_stages == expected_stages
 
         # skip_if 조건 Golden
         stage_map = {s["name"]: s for s in AIMS_INSURANCE_PRESET["stages"]}
+        assert stage_map["convert"].get("skip_if") == "!needs_conversion"
         assert stage_map["extract"].get("skip_if") == "has_text"
         assert stage_map["embed"].get("skip_if") == "credit_pending"
         assert stage_map["ingest"].get("skip_if") is None
@@ -703,9 +710,9 @@ class TestBackwardCompatibility:
         """AIMS 프리셋 실행 결과 Golden — 각 시나리오별 스테이지 실행 목록 고정"""
         pipeline = _build_aims_pipeline()
 
-        # 시나리오 A: 기본 (스킵 없음)
+        # 시나리오 A: 기본 (PDF — convert 스킵, 나머지 실행)
         result_a = _run(pipeline.run({"document_id": "golden-a"}))
-        assert result_a["_pipeline"]["stages_executed"] == expected_stages_list(all_=True)
+        assert result_a["_pipeline"]["stages_executed"] == expected_stages_list()
 
         # 시나리오 B: has_text=True
         result_b = _run(pipeline.run({"document_id": "golden-b", "has_text": True}))
@@ -869,13 +876,16 @@ def expected_stages_list(
     all_: bool = False,
     skip_extract: bool = False,
     skip_embed: bool = False,
+    skip_convert: bool = True,  # 기본적으로 convert 스킵 (needs_conversion 없으면)
 ) -> list[str]:
     """AIMS 프리셋의 예상 실행 스테이지 목록을 반환"""
-    stages = ["ingest", "extract", "classify", "detect_special", "embed", "complete"]
+    stages = ["ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"]
     if all_:
         return stages
     result = []
     for s in stages:
+        if skip_convert and s == "convert":
+            continue
         if skip_extract and s == "extract":
             continue
         if skip_embed and s == "embed":

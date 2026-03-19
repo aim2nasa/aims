@@ -1,5 +1,7 @@
 """
-xPipeWeb — xPipe 엔진 검증용 개발자 전용 웹 데모 서버
+xPipeWeb v2 — xPipe 엔진 검증용 개발자 전용 웹 데모 서버
+
+v2: "체험 도구" — 각 스테이지에서 무슨 데이터가 들어가고 나오는지 직접 본다.
 
 FastAPI 기반. 포트 8200 (XPIPE_DEMO_PORT 환경 변수로 변경 가능).
 외부 DB 의존 없이 인메모리로 동작.
@@ -36,12 +38,14 @@ from xpipe.cost_tracker import CostTracker, UsageRecord
 from xpipe.quality import QualityGate, QualityConfig, QualityScore
 from xpipe.stages import (
     IngestStage,
+    ConvertStage,
     ExtractStage,
     ClassifyStage,
     DetectSpecialStage,
     EmbedStage,
     CompleteStage,
 )
+from xpipe.stages.convert import needs_conversion
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +54,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 WEB_DIR = Path(__file__).parent
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
-VERSION = "0.1.0"
+VERSION = "2.0.0"
 
 # ---------------------------------------------------------------------------
 # 인메모리 상태
@@ -65,12 +69,17 @@ audit_log = AuditLog()
 cost_tracker = CostTracker()
 quality_gate = QualityGate()
 
-# 현재 설정
+# 현재 설정 (provider → mode 로 수정)
 current_config: dict[str, Any] = {
     "adapter": "insurance",
     "preset": "aims-insurance",
     "quality_gate": True,
-    "provider": "stub",
+    "mode": "stub",
+    "models": {
+        "llm": "gpt-4o-mini",
+        "ocr": "paddleocr",
+        "embedding": "text-embedding-3-small",
+    },
 }
 
 # 임시 파일 디렉토리
@@ -118,6 +127,7 @@ def _build_pipeline(preset_name: str) -> Pipeline:
 
     # 내장 스테이지 등록
     pipeline.register_stage("ingest", IngestStage)
+    pipeline.register_stage("convert", ConvertStage)
     pipeline.register_stage("extract", ExtractStage)
     pipeline.register_stage("classify", ClassifyStage)
     pipeline.register_stage("detect_special", DetectSpecialStage)
@@ -133,40 +143,61 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
     if not doc:
         return
 
+    # 스테이지 진행 추적 리스너
+    stages_completed: list[str] = []
+
+    def _track_stage_start(event: PipelineEvent) -> None:
+        if event.document_id == doc_id and event.event_type == "stage_start":
+            stage_name = event.stage
+            doc["current_stage"] = stage_name
+            doc["stages_detail"].setdefault(stage_name, {})
+            doc["stages_detail"][stage_name]["status"] = "running"
+            doc["stages_detail"][stage_name]["started_at"] = time.time()
+
+    def _track_stage(event: PipelineEvent) -> None:
+        if event.document_id == doc_id and event.event_type == "stage_complete":
+            stage_name = event.stage
+            stages_completed.append(stage_name)
+            preset_data = get_preset(current_config["preset"])
+            total_stages = len(preset_data["stages"])
+            progress = int(len(stages_completed) / total_stages * 100)
+            doc["progress"] = progress
+            doc["current_stage"] = stage_name
+
+            doc["stages_detail"][stage_name] = {
+                "status": "completed",
+                "completed_at": time.time(),
+                "duration_ms": event.payload.get("duration_ms", 0),
+            }
+
+            # 감사 로그
+            audit_log.record(AuditEntry(
+                document_id=doc_id,
+                stage=stage_name,
+                action="stage_completed",
+                actor=f"{current_config['mode']}/{current_config['adapter']}",
+                details={"pipeline": current_config["preset"]},
+            ))
+
+    event_bus.on("stage_start", _track_stage_start)
+    event_bus.on("stage_complete", _track_stage)
+
     try:
+        # 취소 체크
+        if doc.get("_cancelled"):
+            return
+
         doc["status"] = "processing"
         doc["started_at"] = time.time()
 
         pipeline = _build_pipeline(current_config["preset"])
-        stage_names = [s["name"] for s in get_preset(current_config["preset"])["stages"]]
-        total_stages = len(stage_names)
+        preset_data = get_preset(current_config["preset"])
+        stage_names = [s["name"] for s in preset_data["stages"]]
 
-        # 스테이지별 진행 추적을 위해 이벤트 리스너 등록
-        stages_completed = []
-
-        def _track_stage(event: PipelineEvent) -> None:
-            if event.document_id == doc_id and event.event_type == "stage_complete":
-                stage_name = event.stage
-                stages_completed.append(stage_name)
-                progress = int(len(stages_completed) / total_stages * 100)
-                doc["progress"] = progress
-                doc["current_stage"] = stage_name
-                doc["stages_detail"][stage_name] = {
-                    "status": "completed",
-                    "completed_at": time.time(),
-                    "duration": 0,
-                }
-
-                # 감사 로그
-                audit_log.record(AuditEntry(
-                    document_id=doc_id,
-                    stage=stage_name,
-                    action="stage_completed",
-                    actor=f"stub/{current_config['provider']}",
-                    details={"pipeline": current_config["preset"]},
-                ))
-
-        event_bus.on("stage_complete", _track_stage)
+        # MIME 타입 추론 (needs_conversion 판단용)
+        import mimetypes
+        mime_type, _ = mimetypes.guess_type(filename)
+        mime_type = mime_type or "application/octet-stream"
 
         # 컨텍스트 구성
         context: dict[str, Any] = {
@@ -174,55 +205,49 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             "file_path": file_path,
             "filename": filename,
             "original_name": filename,
+            "mode": current_config["mode"],
+            "models": dict(current_config["models"]),
+            "adapter_name": current_config["adapter"],
+            "uploaded_at": doc.get("created_at_iso", ""),
+            "needs_conversion": needs_conversion(mime_type),
         }
 
-        # 파이프라인 실행 (stub 스테이지는 빠르지만 리얼 느낌을 위해 약간의 지연)
-        for stage_config in pipeline.definition.stages:
-            stage_name = stage_config.name
-            doc["current_stage"] = stage_name
-            doc["stages_detail"].setdefault(stage_name, {})
-            doc["stages_detail"][stage_name]["status"] = "running"
-            doc["stages_detail"][stage_name]["started_at"] = time.time()
-
-            # SSE 이벤트 직접 발행 (stage_start)
-            await event_bus.emit(PipelineEvent(
-                event_type="stage_start",
-                document_id=doc_id,
-                stage=stage_name,
-                payload={"pipeline": current_config["preset"]},
-            ))
-
-            # 리얼 느낌의 지연 (stub 모드)
-            await asyncio.sleep(0.1 + 0.05 * hash(stage_name) % 5 * 0.1)
-
-        # 실제 파이프라인 실행
+        # 파이프라인 실행
         result = await pipeline.run(context)
+
+        # 취소 체크 (파이프라인 실행 중 삭제된 경우)
+        if doc.get("_cancelled"):
+            return
+
+        # stage_data를 문서에 병합
+        if "stage_data" in result:
+            for sname, sdata in result["stage_data"].items():
+                doc["stages_data"][sname] = sdata
 
         # 결과 반영
         doc["status"] = "completed"
         doc["progress"] = 100
         doc["completed_at"] = time.time()
         doc["duration"] = doc["completed_at"] - doc["started_at"]
+        doc["extracted_text"] = result.get("extracted_text", result.get("text", ""))
+
+        is_stub = current_config["mode"] == "stub"
+
         doc["result"] = {
             "document_type": result.get("document_type", "general"),
-            "classification_confidence": result.get("classification_confidence", 0.85),
+            "classification_confidence": result.get("classification_confidence", "-" if is_stub else 0.0),
             "detections": result.get("detections", []),
-            "text_preview": result.get("text", "")[:200],
+            "text_preview": (result.get("extracted_text", "") or "")[:200],
             "stages_executed": result.get("_pipeline", {}).get("stages_executed", []),
             "stages_skipped": result.get("_pipeline", {}).get("stages_skipped", []),
+            "display_name": result.get("display_name", filename),
         }
 
-        # stub 모드의 시뮬레이션 결과 보강
-        if current_config["provider"] == "stub":
-            doc["result"]["document_type"] = _stub_classify(filename)
-            doc["result"]["classification_confidence"] = 0.87
-            doc["result"]["text_preview"] = f"[stub] {filename}에서 추출된 텍스트 미리보기"
-
         # 품질 평가
-        if current_config.get("quality_gate", True):
+        if current_config.get("quality_gate", True) and not is_stub:
             score = quality_gate.evaluate({
                 "classification_confidence": doc["result"]["classification_confidence"],
-                "full_text": doc["result"].get("text_preview", ""),
+                "full_text": doc.get("extracted_text", ""),
                 "document_type": doc["result"]["document_type"],
             })
             doc["quality"] = {
@@ -232,20 +257,26 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
                 "passed": score.passed,
                 "flags": score.flags,
             }
+        else:
+            # stub: 품질 "-"
+            doc["quality"] = None
 
-        # 비용 추적 (stub)
-        cost_record = UsageRecord(
-            provider=current_config["provider"],
-            operation="pipeline",
-            input_tokens=500,
-            output_tokens=100,
-            estimated_cost=0.003,
-            timestamp=PipelineEvent(
-                event_type="", document_id="", stage=""
-            ).timestamp,
-        )
-        cost_tracker.record(cost_record)
-        doc["cost"] = cost_record.estimated_cost
+        # 비용 추적
+        if is_stub:
+            doc["cost"] = None
+        else:
+            cost_record = UsageRecord(
+                provider=current_config["mode"],
+                operation="pipeline",
+                input_tokens=500,
+                output_tokens=100,
+                estimated_cost=0.003,
+                timestamp=PipelineEvent(
+                    event_type="", document_id="", stage=""
+                ).timestamp,
+            )
+            cost_tracker.record(cost_record)
+            doc["cost"] = cost_record.estimated_cost
 
         # 완료 이벤트
         await event_bus.emit(PipelineEvent(
@@ -267,16 +298,15 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             details={
                 "duration": doc["duration"],
                 "document_type": doc["result"]["document_type"],
-                "quality_passed": doc.get("quality", {}).get("passed"),
+                "mode": current_config["mode"],
             },
         ))
-
-        # 리스너 정리 (간단히 — 실제 프로덕션에서는 unregister 필요)
 
     except Exception as exc:
         logger.exception("파이프라인 실행 실패: doc_id=%s", doc_id)
         doc["status"] = "error"
         doc["error"] = str(exc)
+        doc["error_stage"] = doc.get("current_stage", "unknown")
         doc["completed_at"] = time.time()
         doc["duration"] = doc["completed_at"] - doc.get("started_at", doc["completed_at"])
 
@@ -294,24 +324,43 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             actor="xpipe-demo",
             details={"error": str(exc)},
         ))
+    finally:
+        # 리스너 해제 (Gini 지적 해결)
+        event_bus.off("stage_start", _track_stage_start)
+        event_bus.off("stage_complete", _track_stage)
 
 
-def _stub_classify(filename: str) -> str:
-    """stub 분류 — 파일명 기반 단순 추정 (데모 시각화용)"""
-    fn = filename.lower()
-    if any(k in fn for k in ["보험", "증권", "policy"]):
-        return "보험증권"
-    if any(k in fn for k in ["계약", "contract"]):
-        return "계약서"
-    if any(k in fn for k in ["청구", "claim"]):
-        return "보험금청구서"
-    if any(k in fn for k in ["ar", "annual", "연간"]):
-        return "연간보고서"
-    if any(k in fn for k in ["crs", "review", "검토"]):
-        return "고객검토서"
-    if any(k in fn for k in ["진단", "medical"]):
-        return "진단서"
-    return "일반문서"
+def _create_doc_entry(doc_id: str, filename: str, file_size: int, file_path: str) -> dict[str, Any]:
+    """문서 상태 엔트리 생성"""
+    preset_data = get_preset(current_config["preset"])
+    stage_names = [s["name"] for s in preset_data["stages"]]
+    now = time.time()
+    from datetime import datetime, timezone
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    return {
+        "id": doc_id,
+        "filename": filename,
+        "file_size": file_size,
+        "file_path": file_path,
+        "status": "queued",
+        "progress": 0,
+        "current_stage": None,
+        "stages_detail": {name: {"status": "pending"} for name in stage_names},
+        "stages_data": {},  # v2: 각 스테이지의 input/output 데이터
+        "extracted_text": "",  # v2: 추출 텍스트 전문
+        "result": None,
+        "quality": None,
+        "cost": None,
+        "error": None,
+        "error_stage": None,
+        "created_at": now,
+        "created_at_iso": now_iso,
+        "started_at": None,
+        "completed_at": None,
+        "duration": None,
+        "config": dict(current_config),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -357,42 +406,17 @@ async def upload_file(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(400, "파일명이 없습니다")
 
-    # 파일 크기 체크
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(413, f"파일 크기 초과: 최대 {MAX_FILE_SIZE // 1024 // 1024}MB")
 
-    # 임시 파일 저장
     doc_id = str(uuid.uuid4())[:8]
     file_path = os.path.join(temp_dir, f"{doc_id}_{file.filename}")
     with open(file_path, "wb") as f:
         f.write(content)
 
-    # 문서 상태 초기화
-    preset_data = get_preset(current_config["preset"])
-    stage_names = [s["name"] for s in preset_data["stages"]]
+    documents[doc_id] = _create_doc_entry(doc_id, file.filename, len(content), file_path)
 
-    documents[doc_id] = {
-        "id": doc_id,
-        "filename": file.filename,
-        "file_size": len(content),
-        "file_path": file_path,
-        "status": "queued",
-        "progress": 0,
-        "current_stage": None,
-        "stages_detail": {name: {"status": "pending"} for name in stage_names},
-        "result": None,
-        "quality": None,
-        "cost": 0.0,
-        "error": None,
-        "created_at": time.time(),
-        "started_at": None,
-        "completed_at": None,
-        "duration": None,
-        "config": dict(current_config),
-    }
-
-    # 감사 로그
     audit_log.record(AuditEntry(
         document_id=doc_id,
         stage="upload",
@@ -401,9 +425,7 @@ async def upload_file(file: UploadFile = File(...)):
         details={"filename": file.filename, "size": len(content)},
     ))
 
-    # 백그라운드에서 파이프라인 실행
     asyncio.create_task(_run_pipeline(doc_id, file_path, file.filename))
-
     return {"doc_id": doc_id, "filename": file.filename, "status": "queued"}
 
 
@@ -428,28 +450,7 @@ async def upload_batch(files: list[UploadFile] = File(...)):
         with open(file_path, "wb") as f:
             f.write(content)
 
-        preset_data = get_preset(current_config["preset"])
-        stage_names = [s["name"] for s in preset_data["stages"]]
-
-        documents[doc_id] = {
-            "id": doc_id,
-            "filename": file.filename,
-            "file_size": len(content),
-            "file_path": file_path,
-            "status": "queued",
-            "progress": 0,
-            "current_stage": None,
-            "stages_detail": {name: {"status": "pending"} for name in stage_names},
-            "result": None,
-            "quality": None,
-            "cost": 0.0,
-            "error": None,
-            "created_at": time.time(),
-            "started_at": None,
-            "completed_at": None,
-            "duration": None,
-            "config": dict(current_config),
-        }
+        documents[doc_id] = _create_doc_entry(doc_id, file.filename, len(content), file_path)
 
         audit_log.record(AuditEntry(
             document_id=doc_id,
@@ -482,6 +483,7 @@ async def get_status(doc_id: str):
         "current_stage": doc["current_stage"],
         "stages_detail": doc["stages_detail"],
         "error": doc["error"],
+        "error_stage": doc.get("error_stage"),
         "duration": doc["duration"],
     }
 
@@ -519,12 +521,49 @@ async def list_documents():
             "current_stage": doc["current_stage"],
             "result": doc.get("result"),
             "quality": doc.get("quality"),
-            "cost": doc.get("cost", 0),
+            "cost": doc.get("cost"),
             "error": doc.get("error"),
+            "error_stage": doc.get("error_stage"),
             "duration": doc.get("duration"),
             "created_at": doc["created_at"],
+            "stages_detail": doc.get("stages_detail", {}),
+            "stages_data": doc.get("stages_data", {}),
         })
     return {"documents": docs}
+
+
+# --- v2 API: 스테이지 데이터 + 추출 텍스트 ---
+
+@app.get("/api/stages/{doc_id}")
+async def get_stages_data(doc_id: str):
+    """스테이지별 입출력 데이터 조회 (R1)"""
+    doc = documents.get(doc_id)
+    if not doc:
+        raise HTTPException(404, f"문서를 찾을 수 없습니다: {doc_id}")
+
+    return {
+        "doc_id": doc_id,
+        "stages_data": doc.get("stages_data", {}),
+        "stages_detail": doc.get("stages_detail", {}),
+    }
+
+
+@app.get("/api/text/{doc_id}")
+async def get_extracted_text(doc_id: str):
+    """추출 텍스트 전문 조회 (R2)"""
+    doc = documents.get(doc_id)
+    if not doc:
+        raise HTTPException(404, f"문서를 찾을 수 없습니다: {doc_id}")
+
+    text = doc.get("extracted_text", "")
+    is_stub = doc.get("config", {}).get("mode", "stub") == "stub"
+
+    return {
+        "doc_id": doc_id,
+        "text": text,
+        "text_length": len(text),
+        "is_stub": is_stub,
+    }
 
 
 # --- SSE 실시간 이벤트 ---
@@ -537,7 +576,6 @@ async def sse_stream():
 
     async def event_generator():
         try:
-            # Last-Event-ID 기반 재전송 (간이)
             yield f"data: {json.dumps({'type': 'connected', 'version': VERSION})}\n\n"
 
             while True:
@@ -545,7 +583,6 @@ async def sse_stream():
                     event = await asyncio.wait_for(queue.get(), timeout=30)
                     yield f"id: {event.get('id', '')}\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
                 except asyncio.TimeoutError:
-                    # keepalive
                     yield ": keepalive\n\n"
         except asyncio.CancelledError:
             pass
@@ -570,7 +607,8 @@ class ConfigUpdate(BaseModel):
     adapter: Optional[str] = None
     preset: Optional[str] = None
     quality_gate: Optional[bool] = None
-    provider: Optional[str] = None
+    mode: Optional[str] = None
+    models: Optional[dict[str, str]] = None
 
 
 @app.get("/api/config")
@@ -580,13 +618,18 @@ async def get_config():
         "config": current_config,
         "available_presets": list_presets(),
         "available_adapters": ["insurance", "legal", "none"],
-        "available_providers": ["stub", "real"],
+        "available_modes": ["stub", "real"],
+        "available_models": {
+            "llm": ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"],
+            "ocr": ["paddleocr", "upstage-ocr", "tesseract"],
+            "embedding": ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"],
+        },
     }
 
 
 @app.put("/api/config")
 async def update_config(body: ConfigUpdate):
-    """어댑터/프리셋 전환 (다음 업로드부터 적용)"""
+    """설정 변경 (다음 업로드부터 적용)"""
     if body.adapter is not None:
         if body.adapter not in ("insurance", "legal", "none"):
             raise HTTPException(400, f"유효하지 않은 어댑터: {body.adapter}")
@@ -600,10 +643,13 @@ async def update_config(body: ConfigUpdate):
     if body.quality_gate is not None:
         current_config["quality_gate"] = body.quality_gate
 
-    if body.provider is not None:
-        if body.provider not in ("stub", "real"):
-            raise HTTPException(400, f"유효하지 않은 프로바이더: {body.provider}")
-        current_config["provider"] = body.provider
+    if body.mode is not None:
+        if body.mode not in ("stub", "real"):
+            raise HTTPException(400, f"유효하지 않은 모드: {body.mode}")
+        current_config["mode"] = body.mode
+
+    if body.models is not None:
+        current_config["models"].update(body.models)
 
     return {"config": current_config, "message": "설정이 업데이트되었습니다 (다음 업로드부터 적용)"}
 
@@ -629,15 +675,15 @@ async def get_benchmark():
     total_duration = sum(durations) if durations else 0
     avg_duration = total_duration / len(durations) if durations else 0
 
-    # 스테이지별 평균 (간이 — stage_detail에서 추출)
     confidences = []
     quality_passed = 0
-    total_cost = sum(d.get("cost", 0) for d in completed_docs)
+    total_cost = sum(d.get("cost", 0) or 0 for d in completed_docs)
 
     for d in completed_docs:
-        if d.get("result", {}).get("classification_confidence"):
-            confidences.append(d["result"]["classification_confidence"])
-        if d.get("quality", {}).get("passed"):
+        conf = d.get("result", {}).get("classification_confidence")
+        if isinstance(conf, (int, float)):
+            confidences.append(conf)
+        if d.get("quality", {}) and d["quality"].get("passed"):
             quality_passed += 1
 
     avg_confidence = sum(confidences) / len(confidences) if confidences else 0
@@ -650,11 +696,11 @@ async def get_benchmark():
         "total_duration_sec": round(total_duration, 2),
         "avg_duration_sec": round(avg_duration, 2),
         "throughput_per_min": round(throughput, 1),
-        "avg_confidence": round(avg_confidence, 4),
+        "avg_confidence": round(avg_confidence, 4) if confidences else "-",
         "quality_pass_rate": round(quality_passed / len(completed_docs) * 100, 1) if completed_docs else 0,
-        "total_cost": round(total_cost, 6),
-        "cost_per_doc": round(total_cost / len(completed_docs), 6) if completed_docs else 0,
-        "provider": current_config["provider"],
+        "total_cost": round(total_cost, 6) if total_cost else "-",
+        "cost_per_doc": round(total_cost / len(completed_docs), 6) if total_cost and completed_docs else "-",
+        "mode": current_config["mode"],
         "preset": current_config["preset"],
     }
 
@@ -699,9 +745,12 @@ async def retry_document(doc_id: str):
     doc["progress"] = 0
     doc["current_stage"] = None
     doc["stages_detail"] = {name: {"status": "pending"} for name in stage_names}
+    doc["stages_data"] = {}
+    doc["extracted_text"] = ""
     doc["result"] = None
     doc["quality"] = None
     doc["error"] = None
+    doc["error_stage"] = None
     doc["started_at"] = None
     doc["completed_at"] = None
     doc["duration"] = None
@@ -710,17 +759,43 @@ async def retry_document(doc_id: str):
     return {"doc_id": doc_id, "status": "queued", "message": "재시도 시작"}
 
 
+@app.delete("/api/documents")
+async def remove_all_documents():
+    """전체 문서 제거 (초기화)"""
+    count = len(documents)
+    for doc in documents.values():
+        # 처리 중 문서에 cancellation 플래그
+        if doc["status"] in ("queued", "processing"):
+            doc["_cancelled"] = True
+        fp = doc.get("file_path")
+        if fp and os.path.exists(fp):
+            try:
+                os.remove(fp)
+            except OSError:
+                pass
+    documents.clear()
+    return {"removed": count, "message": "전체 초기화 완료"}
+
+
 @app.delete("/api/documents/{doc_id}")
 async def remove_document(doc_id: str):
-    """문서 제거"""
-    doc = documents.pop(doc_id, None)
+    """문서 제거 (처리 중이면 _cancelled 플래그 설정)"""
+    doc = documents.get(doc_id)
     if not doc:
         raise HTTPException(404, f"문서를 찾을 수 없습니다: {doc_id}")
 
-    # 임시 파일 삭제
+    # 처리 중이면 cancellation 플래그 설정
+    if doc["status"] in ("queued", "processing"):
+        doc["_cancelled"] = True
+
+    documents.pop(doc_id, None)
+
     fp = doc.get("file_path")
     if fp and os.path.exists(fp):
-        os.remove(fp)
+        try:
+            os.remove(fp)
+        except OSError:
+            pass
 
     return {"doc_id": doc_id, "message": "제거 완료"}
 
@@ -733,7 +808,7 @@ async def remove_document(doc_id: str):
 async def on_startup():
     global temp_dir
     temp_dir = tempfile.mkdtemp(prefix="xpipe_demo_")
-    logger.info("xPipeWeb 시작 — 임시 디렉토리: %s", temp_dir)
+    logger.info("xPipeWeb v%s 시작 — 임시 디렉토리: %s", VERSION, temp_dir)
 
 
 @app.on_event("shutdown")
@@ -753,7 +828,7 @@ def run_server():
     print(f"\n  xPipeWeb v{VERSION}")
     print(f"  http://localhost:{port}")
     print(f"  프리셋: {current_config['preset']}")
-    print(f"  프로바이더: {current_config['provider']}")
+    print(f"  모드: {current_config['mode']}")
     print()
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
 

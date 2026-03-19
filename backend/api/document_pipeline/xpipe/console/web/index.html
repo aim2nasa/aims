@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>xPipeWeb</title>
+  <title>xPipeWeb v2</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -11,10 +11,11 @@
   <header class="header">
     <div class="header-left">
       <h1 class="logo">xPipe<span class="logo-sub">Web</span></h1>
-      <span class="version" id="version">v0.1.0</span>
+      <span class="version" id="version">v2.0.0</span>
     </div>
     <div class="header-right">
-      <span class="status-indicator" id="sse-status" title="SSE 연결 상태"></span>
+      <span class="status-indicator" id="sse-status"></span>
+      <span class="sse-label" id="sse-label">연결중</span>
     </div>
   </header>
 
@@ -23,39 +24,71 @@
     <div class="config-summary" id="config-summary">
       <span class="config-label">설정</span>
       <span class="config-value" id="config-display">Insurance / aims-insurance / stub</span>
-      <button class="config-toggle" id="config-toggle" title="설정 펼치기/접기">&#9660;</button>
+      <button class="config-toggle" id="config-toggle">&#9660;</button>
     </div>
     <div class="config-panel" id="config-panel" style="display:none;">
-      <div class="config-row">
-        <label>어댑터</label>
-        <select id="cfg-adapter">
-          <option value="insurance">Insurance</option>
-          <option value="legal">Legal</option>
-          <option value="none">None (코어만)</option>
-        </select>
+      <div class="config-group-title">엔진 설정</div>
+      <div class="config-group">
+        <div class="config-row">
+          <label>어댑터</label>
+          <select id="cfg-adapter">
+            <option value="insurance">Insurance</option>
+            <option value="legal">Legal</option>
+            <option value="none">None (코어만)</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <label>프리셋</label>
+          <select id="cfg-preset">
+            <option value="aims-insurance">aims-insurance</option>
+            <option value="minimal">minimal</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <label>모드</label>
+          <select id="cfg-mode">
+            <option value="stub">stub</option>
+            <option value="real">real</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <label>Quality Gate</label>
+          <select id="cfg-quality">
+            <option value="true">ON</option>
+            <option value="false">OFF</option>
+          </select>
+        </div>
       </div>
-      <div class="config-row">
-        <label>프리셋</label>
-        <select id="cfg-preset">
-          <option value="aims-insurance">aims-insurance</option>
-          <option value="minimal">minimal</option>
-        </select>
+      <div class="config-group-title">모델 설정</div>
+      <div class="config-group">
+        <div class="config-row">
+          <label>LLM 모델</label>
+          <select id="cfg-llm">
+            <option value="gpt-4o-mini">gpt-4o-mini</option>
+            <option value="gpt-4o">gpt-4o</option>
+            <option value="gpt-4-turbo">gpt-4-turbo</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <label>OCR 모델</label>
+          <select id="cfg-ocr">
+            <option value="paddleocr">PaddleOCR</option>
+            <option value="upstage-ocr">Upstage</option>
+            <option value="tesseract">Tesseract</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <label>Embedding 모델</label>
+          <select id="cfg-embedding">
+            <option value="text-embedding-3-small">text-embedding-3-small</option>
+            <option value="text-embedding-3-large">text-embedding-3-large</option>
+            <option value="text-embedding-ada-002">text-embedding-ada-002</option>
+          </select>
+        </div>
       </div>
-      <div class="config-row">
-        <label>Quality Gate</label>
-        <select id="cfg-quality">
-          <option value="true">ON</option>
-          <option value="false">OFF</option>
-        </select>
+      <div class="config-row config-actions">
+        <button class="btn btn-sm" id="cfg-apply">적용</button>
       </div>
-      <div class="config-row">
-        <label>Provider</label>
-        <select id="cfg-provider">
-          <option value="stub">stub</option>
-          <option value="real">real</option>
-        </select>
-      </div>
-      <button class="btn btn-sm" id="cfg-apply">적용</button>
     </div>
   </section>
 
@@ -76,6 +109,7 @@
     <span class="filter-item" data-filter="processing">처리중 <b id="cnt-processing">0</b></span>
     <span class="filter-item" data-filter="completed">완료 <b id="cnt-completed">0</b></span>
     <span class="filter-item" data-filter="error">에러 <b id="cnt-error">0</b></span>
+    <button type="button" class="btn-xs btn-danger btn-reset-all" id="btn-reset-all">전체 초기화</button>
   </section>
 
   <!-- 처리 현황 테이블 -->
@@ -100,29 +134,27 @@
   <!-- 빈 상태 -->
   <section class="empty-state" id="empty-state">
     <div class="empty-icon">&#128203;</div>
-    <p>파일을 드래그하여 시작하세요</p>
-    <p class="empty-sub">xPipe 파이프라인이 문서를 분석합니다</p>
+    <p>문서가 없습니다.</p>
+    <p class="empty-sub">파일을 드래그하여 xPipe 파이프라인 처리를 시작하세요.</p>
   </section>
 
   <!-- 상세 패널 -->
   <section class="detail-panel" id="detail-panel" style="display:none;">
     <div class="detail-header">
       <h3 id="detail-filename">파일명</h3>
-      <button class="btn-close" id="detail-close" title="닫기">&times;</button>
+      <button class="btn-close" id="detail-close">&times;</button>
     </div>
     <div class="detail-tabs">
       <button class="tab active" data-tab="pipeline">파이프라인</button>
-      <button class="tab" data-tab="metadata">메타데이터</button>
+      <button class="tab" data-tab="text">추출 텍스트</button>
       <button class="tab" data-tab="events">이벤트</button>
       <button class="tab" data-tab="audit">감사로그</button>
-      <button class="tab" data-tab="cost">비용</button>
     </div>
     <div class="detail-content" id="detail-content">
       <div class="tab-pane active" id="tab-pipeline"></div>
-      <div class="tab-pane" id="tab-metadata"></div>
+      <div class="tab-pane" id="tab-text"></div>
       <div class="tab-pane" id="tab-events"></div>
       <div class="tab-pane" id="tab-audit"></div>
-      <div class="tab-pane" id="tab-cost"></div>
     </div>
   </section>
 
@@ -135,7 +167,8 @@
       </div>
       <div class="modal-body" id="benchmark-body"></div>
       <div class="modal-footer">
-        <button class="btn btn-sm" id="benchmark-json">JSON 다운로드</button>
+        <button type="button" class="btn btn-sm" id="benchmark-csv">CSV 다운로드</button>
+        <button type="button" class="btn btn-sm" id="benchmark-json">JSON 다운로드</button>
       </div>
     </div>
   </div>
@@ -144,11 +177,11 @@
   <footer class="footer-bar">
     <span>처리: <b id="ft-completed">0</b>/<b id="ft-total">0</b> 완료</span>
     <span>이벤트: <b id="ft-events">0</b>건</span>
-    <span>비용: $<b id="ft-cost">0.000</b></span>
+    <span>비용: <b id="ft-cost">-</b></span>
     <span>
-      <button class="btn btn-xs" id="btn-benchmark" title="벤치마크 보기">벤치마크</button>
+      <button class="btn btn-xs" id="btn-benchmark">벤치마크</button>
     </span>
-    <span class="footer-version" id="ft-version">xPipeWeb v0.1.0 / stub</span>
+    <span class="footer-version" id="ft-version">xPipeWeb v2.0.0 / stub</span>
   </footer>
 
   <script src="/app.js"></script>

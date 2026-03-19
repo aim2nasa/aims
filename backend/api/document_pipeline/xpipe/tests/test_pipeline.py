@@ -32,6 +32,7 @@ from xpipe.pipeline_presets import (
 from xpipe.events import EventBus, PipelineEvent
 from xpipe.stages import (
     IngestStage,
+    ConvertStage,
     ExtractStage,
     ClassifyStage,
     DetectSpecialStage,
@@ -109,6 +110,7 @@ def _make_counter(name: str) -> type[Stage]:
 def _register_builtin_stages(pipeline: Pipeline) -> None:
     """내장 스테이지를 모두 등록"""
     pipeline.register_stage("ingest", IngestStage)
+    pipeline.register_stage("convert", ConvertStage)
     pipeline.register_stage("extract", ExtractStage)
     pipeline.register_stage("classify", ClassifyStage)
     pipeline.register_stage("detect_special", DetectSpecialStage)
@@ -416,6 +418,78 @@ class TestPipelineEvents:
         assert events_received[1].stage == "b"
         assert events_received[0].document_id == "doc123"
 
+    def test_stage_start_event(self):
+        """스테이지 시작 시 stage_start 이벤트 발행"""
+        events_received: list[PipelineEvent] = []
+        bus = EventBus()
+        bus.on("stage_start", lambda e: events_received.append(e))
+
+        definition = PipelineDefinition(
+            name="test",
+            stages=[
+                StageConfig(name="a"),
+                StageConfig(name="b"),
+            ],
+        )
+        pipeline = Pipeline(definition, event_bus=bus)
+        pipeline.register_stage("a", _make_counter("a"))
+        pipeline.register_stage("b", _make_counter("b"))
+
+        _run(pipeline.run({"document_id": "doc-start"}))
+
+        assert len(events_received) == 2
+        assert events_received[0].event_type == "stage_start"
+        assert events_received[0].stage == "a"
+        assert events_received[1].event_type == "stage_start"
+        assert events_received[1].stage == "b"
+        assert events_received[0].document_id == "doc-start"
+        assert events_received[0].payload["pipeline"] == "test"
+
+    def test_stage_start_before_complete(self):
+        """stage_start는 stage_complete보다 먼저 발행됨"""
+        events_received: list[PipelineEvent] = []
+        bus = EventBus()
+        bus.on("stage_start", lambda e: events_received.append(e))
+        bus.on("stage_complete", lambda e: events_received.append(e))
+
+        definition = PipelineDefinition(
+            name="test",
+            stages=[StageConfig(name="a")],
+        )
+        pipeline = Pipeline(definition, event_bus=bus)
+        pipeline.register_stage("a", _make_counter("a"))
+
+        _run(pipeline.run({"document_id": "doc-order"}))
+
+        assert len(events_received) == 2
+        assert events_received[0].event_type == "stage_start"
+        assert events_received[1].event_type == "stage_complete"
+
+    def test_stage_start_not_emitted_for_skipped(self):
+        """스킵된 스테이지는 stage_start 이벤트를 발행하지 않음"""
+        events_received: list[PipelineEvent] = []
+        bus = EventBus()
+        bus.on("stage_start", lambda e: events_received.append(e))
+
+        definition = PipelineDefinition(
+            name="test",
+            stages=[
+                StageConfig(name="a"),
+                StageConfig(name="b", skip_if="skip_b"),
+                StageConfig(name="c"),
+            ],
+        )
+        pipeline = Pipeline(definition, event_bus=bus)
+        pipeline.register_stage("a", _make_counter("a"))
+        pipeline.register_stage("b", _make_counter("b"))
+        pipeline.register_stage("c", _make_counter("c"))
+
+        _run(pipeline.run({"document_id": "doc-skip", "skip_b": True}))
+
+        assert len(events_received) == 2
+        stages = [e.stage for e in events_received]
+        assert stages == ["a", "c"]
+
     def test_error_event_on_failure(self):
         """에러 시 error 이벤트 발행"""
         events_received: list[PipelineEvent] = []
@@ -642,7 +716,7 @@ class TestPresets:
         assert AIMS_INSURANCE_PRESET["name"] == "aims-insurance"
         stage_names = [s["name"] for s in AIMS_INSURANCE_PRESET["stages"]]
         assert stage_names == [
-            "ingest", "extract", "classify", "detect_special", "embed", "complete"
+            "ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"
         ]
 
     def test_minimal_preset_structure(self):
@@ -691,6 +765,14 @@ class TestPresets:
         result = _run(pipeline.run({"credit_pending": True}))
         assert "embed" in result["_pipeline"]["stages_skipped"]
 
+        # needs_conversion=True → convert 실행
+        result = _run(pipeline.run({"needs_conversion": True}))
+        assert "convert" in result["_pipeline"]["stages_executed"]
+
+        # needs_conversion 없음 → convert 스킵 (skip_if: !needs_conversion)
+        result = _run(pipeline.run({}))
+        assert "convert" in result["_pipeline"]["stages_skipped"]
+
 
 # ---------------------------------------------------------------------------
 # Golden File 테스트 — AIMS 프리셋 실행 결과 비교
@@ -700,19 +782,19 @@ class TestGoldenFile:
     """Golden File 테스트 — AIMS 프리셋 실행 → 예상 결과 비교"""
 
     def test_aims_full_pipeline(self):
-        """AIMS 전체 파이프라인 실행 결과"""
+        """AIMS 전체 파이프라인 실행 결과 (PDF — convert 스킵)"""
         pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
         _register_builtin_stages(pipeline)
 
         context = {"document_id": "golden-001", "file_path": "/tmp/test.pdf"}
         result = _run(pipeline.run(context))
 
-        # 전체 스테이지 실행 확인
+        # convert는 needs_conversion=False이므로 스킵 (skip_if: !needs_conversion)
         assert result["_pipeline"]["name"] == "aims-insurance"
         assert result["_pipeline"]["stages_executed"] == [
             "ingest", "extract", "classify", "detect_special", "embed", "complete"
         ]
-        assert result["_pipeline"]["stages_skipped"] == []
+        assert "convert" in result["_pipeline"]["stages_skipped"]
         assert result["_pipeline"]["errors"] == []
 
         # 각 스테이지의 결과 플래그
@@ -724,8 +806,29 @@ class TestGoldenFile:
         assert result["completed"] is True
         assert result["status"] == "completed"
 
+    def test_aims_full_pipeline_with_conversion(self):
+        """AIMS 전체 파이프라인 실행 결과 (xlsx — convert 실행)"""
+        pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
+        _register_builtin_stages(pipeline)
+
+        context = {
+            "document_id": "golden-001b",
+            "file_path": "/tmp/test.xlsx",
+            "needs_conversion": True,
+        }
+        result = _run(pipeline.run(context))
+
+        # convert 실행됨
+        assert result["_pipeline"]["name"] == "aims-insurance"
+        assert "convert" in result["_pipeline"]["stages_executed"]
+        assert result["_pipeline"]["stages_executed"] == [
+            "ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"
+        ]
+        assert result["converted"] is True
+        assert result["completed"] is True
+
     def test_aims_with_existing_text(self):
-        """이미 텍스트가 있는 문서 → extract 스킵"""
+        """이미 텍스트가 있는 문서 → extract + convert 스킵"""
         pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
         _register_builtin_stages(pipeline)
 
@@ -740,9 +843,10 @@ class TestGoldenFile:
             "ingest", "classify", "detect_special", "embed", "complete"
         ]
         assert "extract" in result["_pipeline"]["stages_skipped"]
+        assert "convert" in result["_pipeline"]["stages_skipped"]
 
     def test_aims_credit_pending(self):
-        """크레딧 부족 → embed 스킵"""
+        """크레딧 부족 → embed + convert 스킵"""
         pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
         _register_builtin_stages(pipeline)
 
@@ -753,9 +857,10 @@ class TestGoldenFile:
             "ingest", "extract", "classify", "detect_special", "complete"
         ]
         assert "embed" in result["_pipeline"]["stages_skipped"]
+        assert "convert" in result["_pipeline"]["stages_skipped"]
 
     def test_aims_text_and_credit_pending(self):
-        """텍스트 있음 + 크레딧 부족 → extract + embed 둘 다 스킵"""
+        """텍스트 있음 + 크레딧 부족 → convert + extract + embed 스킵"""
         pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
         _register_builtin_stages(pipeline)
 
@@ -770,6 +875,7 @@ class TestGoldenFile:
             "ingest", "classify", "detect_special", "complete"
         ]
         skipped = set(result["_pipeline"]["stages_skipped"])
+        assert "convert" in skipped
         assert "extract" in skipped
         assert "embed" in skipped
 
@@ -800,6 +906,16 @@ class TestBuiltinStages:
     def test_ingest_stage(self):
         result = _run(IngestStage().execute({}))
         assert result["ingested"] is True
+
+    def test_convert_stage(self):
+        result = _run(ConvertStage().execute({"file_path": "/tmp/test.xlsx", "mime_type": "application/vnd.ms-excel"}))
+        assert result["converted"] is True
+        assert result["mime_type"] == "application/pdf"
+
+    def test_convert_should_skip(self):
+        assert ConvertStage().should_skip({"needs_conversion": True}) is False
+        assert ConvertStage().should_skip({"needs_conversion": False}) is True
+        assert ConvertStage().should_skip({}) is True
 
     def test_extract_stage(self):
         result = _run(ExtractStage().execute({}))
@@ -835,6 +951,7 @@ class TestBuiltinStages:
     def test_stage_names(self):
         """각 스테이지의 get_name()이 올바른 이름 반환"""
         assert IngestStage().get_name() == "ingest"
+        assert ConvertStage().get_name() == "convert"
         assert ExtractStage().get_name() == "extract"
         assert ClassifyStage().get_name() == "classify"
         assert DetectSpecialStage().get_name() == "detect_special"
