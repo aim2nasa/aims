@@ -330,7 +330,7 @@
 
       return '<tr class="' + rowClass + ' ' + selClass + '" data-id="' + doc.id + '">' +
         '<td>' + procBadge + '</td>' +
-        '<td class="td-filename">' + displayName + '</td>' +
+        '<td class="td-filename td-clickable" data-action="preview" data-id="' + doc.id + '">' + displayName + '</td>' +
         '<td class="td-compact">' + sizeHtml + '</td>' +
         '<td class="td-compact">' + typeHtml + '</td>' +
         '<td class="td-compact">' + uploadHtml + '</td>' +
@@ -352,6 +352,13 @@
         if (e.target.closest('.inline-stage')) return;
         if (e.target.closest('.badge-events')) return;
         if (e.target.closest('.badge-audit')) return;
+        // 파일명 클릭 → 프리뷰 모달
+        if (e.target.closest('.td-clickable[data-action="preview"]')) {
+          const id = e.target.closest('.td-clickable').dataset.id;
+          const doc = documents.find(d => d.id === id);
+          if (doc) openDocModal(doc, 'preview');
+          return;
+        }
 
         const id = tr.dataset.id;
         selectedDocId = id;
@@ -1085,6 +1092,10 @@
     dom.docModal.style.display = '';
     dom.docModalTitle.textContent = doc.filename;
 
+    // preview 모달은 더 넓게
+    const modalEl = dom.docModal.querySelector('.modal-doc');
+    if (modalEl) modalEl.classList.toggle('modal-preview', view === 'preview');
+
     // 탭 active
     dom.docModal.querySelectorAll('.detail-tab').forEach(b => {
       b.classList.toggle('active', b.dataset.view === view);
@@ -1092,6 +1103,8 @@
 
     if (view === 'summary') {
       renderModalSummary(doc);
+    } else if (view === 'preview') {
+      renderModalPreview(doc);
     } else {
       renderModalText(doc.id);
     }
@@ -1179,6 +1192,69 @@
       });
     } catch (err) {
       el.innerHTML = '<p class="text-error">텍스트 로드 실패: ' + escapeHtml(err.message) + '</p>';
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 파일 프리뷰 (파일명 클릭 시)
+  // ---------------------------------------------------------------------------
+  async function renderModalPreview(doc) {
+    const el = dom.docModalBody;
+    const ext = getFileExt(doc.filename);
+    const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+    const isImage = IMAGE_EXTS.includes(ext);
+    const isPdf = ext === 'pdf';
+    const isConverted = doc.is_converted;
+    const hasPreview = doc.has_preview;
+
+    let html = '';
+
+    // AI 요약 (완료 상태이고 실제 실행 모드면)
+    if (doc.status === 'completed') {
+      html += '<div id="preview-summary-area"></div>';
+    }
+
+    // 파일 프리뷰
+    html += '<div class="file-preview-label">파일 프리뷰';
+    if (isConverted) {
+      html += ' <span class="converted-badge">PDF 변환됨 · 원본 ' + ext.toUpperCase() + '</span>';
+    }
+    html += '</div>';
+
+    if (!hasPreview) {
+      html += '<div class="preview-unavailable">이 파일 형식은 프리뷰를 지원하지 않습니다</div>';
+    } else if (isImage) {
+      html += '<div class="file-preview"><img src="/api/file/' + doc.id + '" alt="' + escapeHtml(doc.filename) + '"></div>';
+    } else if (isPdf || isConverted) {
+      // PDF 또는 PDF로 변환된 파일 → iframe
+      html += '<div class="file-preview"><iframe src="/api/file/' + doc.id + '"></iframe></div>';
+    } else {
+      html += '<div class="preview-unavailable">이 파일 형식은 프리뷰를 지원하지 않습니다</div>';
+    }
+
+    el.innerHTML = html;
+
+    // AI 요약 비동기 로드
+    if (doc.status === 'completed') {
+      const summaryArea = $('#preview-summary-area');
+      if (summaryArea) {
+        try {
+          const data = await api('GET', '/api/summary/' + doc.id);
+          if (data.simulation) {
+            // 시뮬레이션 모드에서는 요약 표시 안 함
+            summaryArea.remove();
+          } else if (data.summary) {
+            summaryArea.innerHTML =
+              '<div class="ai-summary-view" style="margin-bottom:16px;">' +
+              '<div class="ai-summary-header"><span class="ai-summary-badge">AI 요약</span>' +
+              (data.cached ? ' <span class="text-muted">(캐시)</span>' : '') +
+              '</div>' +
+              '<div class="ai-summary-content">' + escapeHtml(data.summary) + '</div></div>';
+          }
+        } catch (e) {
+          summaryArea.remove();
+        }
+      }
     }
   }
 

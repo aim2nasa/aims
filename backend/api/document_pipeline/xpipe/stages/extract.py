@@ -218,10 +218,16 @@ class ExtractStage(Stage):
             if not text:
                 text = f"PDF 텍스트 추출 실패 (pdfplumber 미설치 또는 스캔 PDF)\n파일: {file_name}"
         elif is_convertible:
-            # HWP/DOC/PPTX/XLS: LibreOffice로 PDF 변환 후 추출
+            # HWP/DOC/PPTX/XLS: ConvertStage에서 변환된 PDF가 있으면 사용, 없으면 직접 변환
             method = "libreoffice+pdfplumber"
             ocr_model = "-"
-            text = self._convert_and_extract(file_path, file_name)
+            converted = context.get("converted_pdf_path", "")
+            if converted and os.path.exists(converted):
+                text = self._read_pdf_file(converted, file_name)
+                if not text:
+                    text = f"변환된 PDF에서 텍스트 추출 실패\n파일: {file_name}"
+            else:
+                text = self._convert_and_extract(file_path, file_name)
         else:
             # 알 수 없는 형식
             method = "unknown"

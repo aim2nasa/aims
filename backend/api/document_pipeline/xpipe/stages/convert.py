@@ -37,6 +37,7 @@ class ConvertStage(Stage):
 
     async def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         """PDF 변환 처리"""
+        import os
         start = time.time()
 
         file_path = context.get("file_path", "")
@@ -45,21 +46,21 @@ class ConvertStage(Stage):
         mode = context.get("mode", "stub")
 
         if mode == "stub":
-            # stub: 변환 시뮬레이션
+            # stub: 변환 시뮬레이션 (실제 파일 생성 안 함)
             converted_path = file_path.rsplit(".", 1)[0] + ".pdf" if "." in file_path else file_path + ".pdf"
             method = "libreoffice (stub)"
             output_size = context.get("file_size", 0)
             status_detail = "시뮬레이션 변환 완료"
         else:
-            # real 모드: LibreOffice 호출 (추후 구현)
-            converted_path = file_path.rsplit(".", 1)[0] + ".pdf" if "." in file_path else file_path + ".pdf"
-            method = "libreoffice"
-            output_size = context.get("file_size", 0)
-            status_detail = "변환 완료"
+            # real 모드: LibreOffice 실제 호출
+            converted_path, method, output_size, status_detail = self._convert_real(
+                file_path, file_name
+            )
 
         # 변환 후 file_path를 변환된 PDF 경로로 갱신
         context["original_file_path"] = file_path
         context["file_path"] = converted_path
+        context["converted_pdf_path"] = converted_path  # 프리뷰용
         context["converted"] = True
         # 변환 후 MIME 타입을 PDF로 갱신
         context["original_mime_type"] = mime
@@ -87,6 +88,52 @@ class ConvertStage(Stage):
         }
 
         return context
+
+    @staticmethod
+    def _convert_real(file_path: str, file_name: str) -> tuple[str, str, int, str]:
+        """LibreOffice로 실제 PDF 변환. 변환된 PDF를 원본 옆에 보존.
+
+        Returns:
+            (converted_path, method, output_size, status_detail)
+        """
+        import subprocess
+        import os
+
+        soffice_paths = [
+            "C:/Program Files/LibreOffice/program/soffice.exe",  # Windows
+            "/usr/bin/soffice",  # Linux
+            "/usr/bin/libreoffice",  # Linux alt
+        ]
+        soffice = None
+        for p in soffice_paths:
+            if os.path.exists(p):
+                soffice = p
+                break
+
+        if not soffice:
+            # LibreOffice 미설치 → 원본 경로 그대로 (변환 실패)
+            return file_path, "libreoffice (미설치)", 0, "LibreOffice 미설치"
+
+        # 원본 파일과 같은 디렉토리에 PDF 생성
+        out_dir = os.path.dirname(file_path) or "."
+        try:
+            subprocess.run(
+                [soffice, "--headless", "--convert-to", "pdf", "--outdir", out_dir, file_path],
+                capture_output=True, timeout=60,
+            )
+        except subprocess.TimeoutExpired:
+            return file_path, "libreoffice", 0, "변환 시간 초과 (60초)"
+        except Exception as e:
+            return file_path, "libreoffice", 0, f"변환 실패: {e}"
+
+        # 변환된 PDF 찾기
+        base = os.path.splitext(os.path.basename(file_path))[0]
+        converted_path = os.path.join(out_dir, base + ".pdf")
+        if not os.path.exists(converted_path):
+            return file_path, "libreoffice", 0, "PDF 파일 생성 실패"
+
+        output_size = os.path.getsize(converted_path)
+        return converted_path, "libreoffice", output_size, "변환 완료"
 
 
 def needs_conversion(mime_type: str) -> bool:

@@ -241,6 +241,9 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         doc["completed_at"] = time.time()
         doc["duration"] = doc["completed_at"] - doc["started_at"]
         doc["extracted_text"] = result.get("extracted_text", result.get("text", ""))
+        # 변환된 PDF 경로 보존 (프리뷰용)
+        if result.get("converted_pdf_path"):
+            doc["converted_pdf_path"] = result["converted_pdf_path"]
 
         is_stub = current_config["mode"] == "stub"
 
@@ -341,6 +344,18 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         event_bus.off("stage_complete", _track_stage)
 
 
+_PREVIEWABLE_EXTS = {".pdf", ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg"}
+
+
+def _can_preview(doc: dict[str, Any]) -> bool:
+    """프리뷰 가능 여부: PDF/이미지는 직접, 변환 파일은 PDF 존재 시"""
+    if doc.get("converted_pdf_path") and os.path.exists(doc["converted_pdf_path"]):
+        return True
+    filename = doc.get("filename", "")
+    ext = os.path.splitext(filename)[1].lower() if filename else ""
+    return ext in _PREVIEWABLE_EXTS
+
+
 def _create_doc_entry(doc_id: str, filename: str, file_size: int, file_path: str) -> dict[str, Any]:
     """문서 상태 엔트리 생성"""
     preset_data = get_preset(current_config["preset"])
@@ -407,6 +422,46 @@ async def serve_js():
     return Response(
         js_path.read_text(encoding="utf-8"),
         media_type="application/javascript",
+    )
+
+
+# --- 파일 프리뷰 서빙 ---
+
+@app.get("/api/file/{doc_id}")
+async def serve_file(doc_id: str, preview: bool = True):
+    """파일 서빙 — preview=true면 변환된 PDF 우선, false면 원본
+
+    AIMS 패턴: 변환된 PDF(convPdfPath) → 프리뷰 가능
+              원본(destPath) → 다운로드용
+    """
+    doc = documents.get(doc_id)
+    if not doc:
+        raise HTTPException(404, f"문서를 찾을 수 없습니다: {doc_id}")
+
+    # 프리뷰: 변환된 PDF 우선 → 원본 fallback
+    if preview:
+        conv_path = doc.get("converted_pdf_path", "")
+        if conv_path and os.path.exists(conv_path):
+            return Response(
+                open(conv_path, "rb").read(),
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'inline; filename="{doc.get("filename", "file")}.pdf"'},
+            )
+
+    file_path = doc.get("file_path", "")
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(404, "파일을 찾을 수 없습니다")
+
+    import mimetypes
+    mime_type, _ = mimetypes.guess_type(file_path)
+    mime_type = mime_type or "application/octet-stream"
+
+    return Response(
+        open(file_path, "rb").read(),
+        media_type=mime_type,
+        headers={
+            "Content-Disposition": f'inline; filename="{doc.get("filename", "file")}"',
+        },
     )
 
 
@@ -540,6 +595,8 @@ async def list_documents():
             "created_at": doc["created_at"],
             "stages_detail": doc.get("stages_detail", {}),
             "stages_data": doc.get("stages_data", {}),
+            "has_preview": _can_preview(doc),
+            "is_converted": bool(doc.get("converted_pdf_path")),
         })
     return {"documents": docs}
 
