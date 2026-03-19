@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xpipe"
+version = "0.1.0"
+description = "Domain-agnostic document processing engine"
+requires-python = ">=3.10"
+
+# xpipe는 표준 라이브러리만 사용 — 외부 의존성 없음
+dependencies = []
+
+[tool.setuptools]
+# pyproject.toml이 xpipe/ 디렉토리 안에 위치하므로,
+# 현재 디렉토리(.) 자체를 "xpipe" 패키지로 매핑한다.
+# 설치: pip install -e backend/api/document_pipeline/xpipe/
+packages = ["xpipe"]
+
+[tool.setuptools.package-dir]
+xpipe = "."
