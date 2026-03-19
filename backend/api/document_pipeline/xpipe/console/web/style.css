@@ -1,0 +1,796 @@
+/* xPipeWeb — Apple 디자인 기반 스타일 */
+
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #86868b;
+  --border: #d2d2d7;
+  --border-light: #e8e8ed;
+  --accent: #0071e3;
+  --accent-hover: #0077ed;
+  --success: #34c759;
+  --warning: #ff9f0a;
+  --error: #ff3b30;
+  --processing: #5856d6;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg);
+  line-height: 1.5;
+  padding-bottom: 44px;
+}
+
+/* --- 헤더 --- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-light);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.logo-sub {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.version {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: var(--text-tertiary);
+  transition: background 0.3s;
+}
+
+.status-indicator.connected {
+  background: var(--success);
+}
+
+.status-indicator.disconnected {
+  background: var(--error);
+}
+
+/* --- 설정 바 --- */
+.config-bar {
+  margin: 16px 24px 0;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+.config-summary {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.config-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  letter-spacing: 0.5px;
+}
+
+.config-value {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.config-toggle {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.config-toggle.open {
+  transform: rotate(180deg);
+}
+
+.config-panel {
+  padding: 0 16px 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  border-top: 1px solid var(--border-light);
+}
+
+.config-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.config-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.config-row select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--font);
+  background: var(--surface);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.config-row select:focus {
+  border-color: var(--accent);
+}
+
+/* --- 버튼 --- */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  transition: background 0.15s;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.btn-xs:hover {
+  background: var(--bg);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.btn-ghost:hover {
+  background: rgba(0,113,227,0.06);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.btn-danger:hover {
+  background: rgba(255,59,48,0.06);
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  line-height: 1;
+}
+
+.btn-close:hover {
+  color: var(--text-primary);
+}
+
+/* --- 업로드 --- */
+.upload-area {
+  margin: 16px 24px 0;
+}
+
+.upload-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--surface);
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(0,113,227,0.03);
+}
+
+.upload-dropzone.compact {
+  padding: 12px;
+}
+
+.upload-dropzone.compact .upload-icon,
+.upload-dropzone.compact .upload-hint {
+  display: none;
+}
+
+.upload-dropzone.compact .upload-text {
+  font-size: 12px;
+  margin: 0;
+}
+
+.upload-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+.upload-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.upload-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* --- 필터 바 --- */
+.filter-bar {
+  display: flex;
+  gap: 4px;
+  margin: 16px 24px 0;
+  padding: 4px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+}
+
+.filter-item {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.filter-item:hover {
+  background: var(--bg);
+}
+
+.filter-item.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.filter-item b {
+  margin-left: 3px;
+}
+
+/* --- 테이블 --- */
+.table-section {
+  margin: 12px 24px 0;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.doc-table th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg);
+}
+
+.doc-table td {
+  font-size: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+
+.doc-table tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.doc-table tbody tr:hover {
+  background: rgba(0,113,227,0.03);
+}
+
+.doc-table tbody tr.selected {
+  background: rgba(0,113,227,0.06);
+}
+
+.doc-table tbody tr.error-row {
+  background: rgba(255,59,48,0.04);
+}
+
+/* 프로그레스 바 */
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border-light);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  background: var(--accent);
+}
+
+.progress-fill.completed {
+  background: var(--success);
+}
+
+.progress-fill.error {
+  background: var(--error);
+}
+
+.progress-fill.processing {
+  background: var(--processing);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.progress-text {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  min-width: 32px;
+}
+
+/* 상태 뱃지 */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.badge-pass {
+  background: rgba(52,199,89,0.12);
+  color: #248a3d;
+}
+
+.badge-fail {
+  background: rgba(255,59,48,0.12);
+  color: #d70015;
+}
+
+.badge-pending {
+  background: rgba(142,142,147,0.12);
+  color: #636366;
+}
+
+/* 액션 버튼 */
+.action-btns {
+  display: flex;
+  gap: 4px;
+}
+
+/* --- 빈 상태 --- */
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 48px;
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  font-size: 15px;
+}
+
+.empty-sub {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+/* --- 상세 패널 --- */
+.detail-panel {
+  margin: 16px 24px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.detail-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.detail-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 16px;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  color: var(--text-secondary);
+}
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.detail-content {
+  padding: 16px;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.tab-pane {
+  display: none;
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+/* 파이프라인 스테이지 목록 */
+.stage-list {
+  list-style: none;
+}
+
+.stage-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 12px;
+}
+
+.stage-item:last-child {
+  border-bottom: none;
+}
+
+.stage-icon {
+  width: 20px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.stage-name {
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.stage-duration {
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.stage-info {
+  color: var(--text-secondary);
+  font-size: 11px;
+  flex: 1;
+}
+
+/* 메타데이터 키-값 */
+.meta-grid {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 6px 12px;
+  font-size: 12px;
+}
+
+.meta-key {
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.meta-val {
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+/* 이벤트/감사 로그 */
+.log-list {
+  list-style: none;
+  font-size: 11px;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.log-item {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  gap: 8px;
+}
+
+.log-time {
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.log-type {
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.log-msg {
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+/* --- 모달 --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 560px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 벤치마크 핵심 지표 */
+.bench-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.bench-card {
+  text-align: center;
+  padding: 16px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+}
+
+.bench-card .num {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bench-card .unit {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.bench-card .label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.bench-detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.bench-detail dt {
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-top: 8px;
+}
+
+.bench-detail dd {
+  margin-left: 0;
+}
+
+/* --- 하단 바 --- */
+.footer-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 24px;
+  background: var(--surface);
+  border-top: 1px solid var(--border-light);
+  font-size: 11px;
+  color: var(--text-secondary);
+  z-index: 100;
+}
+
+.footer-bar b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.footer-version {
+  margin-left: auto;
+  color: var(--text-tertiary);
+}
+
+/* --- 유틸리티 --- */
+.hidden {
+  display: none;
+}
+
+.text-error {
+  color: var(--error);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-muted {
+  color: var(--text-tertiary);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .config-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bench-highlights {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    padding: 12px 16px;
+  }
+
+  .upload-area,
+  .filter-bar,
+  .table-section,
+  .detail-panel {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .footer-bar {
+    padding: 10px 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}

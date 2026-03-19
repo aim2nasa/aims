@@ -367,6 +367,19 @@ def _cmd_pipeline(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_demo(_args: argparse.Namespace) -> int:
+    """xPipeWeb 데모 서버 시작"""
+    try:
+        from xpipe.console.web.server import run_server
+        run_server()
+    except ImportError as e:
+        print(f"xPipeWeb 서버를 시작할 수 없습니다: {e}")
+        print("FastAPI/uvicorn이 설치되어 있는지 확인하세요:")
+        print("  pip install fastapi uvicorn python-multipart")
+        return 1
+    return 0
+
+
 def _cmd_test(args: argparse.Namespace) -> int:
     """내장 테스트 실행 (pytest 호출)"""
     # xpipe 테스트 디렉토리
@@ -424,6 +437,10 @@ def main() -> None:
     # status
     sub_status = subparsers.add_parser("status", help="패키지 상태 확인")
     sub_status.set_defaults(func=_cmd_status)
+
+    # demo
+    sub_demo = subparsers.add_parser("demo", help="xPipeWeb 데모 서버 시작")
+    sub_demo.set_defaults(func=_cmd_demo)
 
     # test
     sub_test = subparsers.add_parser("test", help="내장 테스트 실행")
