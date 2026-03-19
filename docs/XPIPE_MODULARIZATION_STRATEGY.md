@@ -1,16 +1,29 @@
 # xPipe — AIMS 문서 처리 엔진 모듈화 전략
 
-**작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (8차 — Phase 1 완료)
+**작성일**: 2026-03-13 | **최종 갱신**: 2026-03-20 (9차 — Phase 5-C + xPipeWeb)
 **참여**: Alex (개발/아키텍트), Gini (품질 엔지니어), PM (제품 매니저), Moderator (Claude)
-**상태**: ✅ Phase 0~7 완료 (M1~M5 달성). Phase 8(멀티테넌시)은 추가 테넌트 필요 시 확장.
+**상태**: ✅ Phase 0~7 완료 (M1~M5 달성). Phase 5-C (OCR Provider) 추가 완료.
 **토의 이력**: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
 
 > **현재 상태 요약**
 > - Foundation (Phase 0~4): 완료 — M1(분리) + M2(이식성 PoC) 달성
 > - Evolution (Phase 5~7): 완료 — M3(품질+Provider) + M4(감사 로그) 달성
+> - Phase 5-C: UpstageOCRProvider 구현 완료 (2026-03-20)
 > - Phase 8 (멀티테넌시): 보류 — 외부 테넌트 확정 시 착수
 > - xpipe 내장 테스트: 222개, document_pipeline 전체: 622+개 ALL PASS
 > - Tags: phase0-baseline, phase1-interface, phase2-domain-split, phase3a-package, phase3b-verification, phase4-poc-m2, phase5a-quality, phase5b-providers, phase6-events-audit, phase7-dsl
+
+### 플랫폼 및 운영 결정 (2026-03-20)
+
+| 항목 | 결정 |
+|------|------|
+| **타겟 플랫폼** | **Linux (Ubuntu)** — tars 서버 환경 기준 |
+| **개발 환경** | tars (Linux)에서 실행, PC (Windows)에서 브라우저 접속만 |
+| **LibreOffice** | Linux 패키지 사용 (`/usr/bin/soffice`). Windows 경로 하드코딩 금지 |
+| **HWP 지원** | Linux LibreOffice의 `libhwplo.so` 필터 의존 |
+| **xPipeWeb** | tars에서 실행 (포트 8200), aims-admin처럼 외부에서 접속 |
+| **OCR Provider** | Upstage API (클라우드). PaddleOCR/Tesseract는 미구현 |
+| **API 키 관리** | 설정 패널 입력 또는 환경변수 fallback |
 
 ---
 

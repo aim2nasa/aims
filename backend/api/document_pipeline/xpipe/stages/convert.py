@@ -57,14 +57,26 @@ class ConvertStage(Stage):
                 file_path, file_name
             )
 
-        # 변환 후 file_path를 변환된 PDF 경로로 갱신
+        # 변환 성공 여부 판단
+        import os as _os
+        conversion_ok = (
+            converted_path != file_path
+            and _os.path.exists(converted_path)
+            and _os.path.getsize(converted_path) > 0
+        )
+
         context["original_file_path"] = file_path
-        context["file_path"] = converted_path
-        context["converted_pdf_path"] = converted_path  # 프리뷰용
-        context["converted"] = True
-        # 변환 후 MIME 타입을 PDF로 갱신
-        context["original_mime_type"] = mime
-        context["mime_type"] = "application/pdf"
+        if conversion_ok:
+            context["file_path"] = converted_path
+            context["converted_pdf_path"] = converted_path
+            context["converted"] = True
+            context["original_mime_type"] = mime
+            context["mime_type"] = "application/pdf"
+        else:
+            # 변환 실패: 원본 유지
+            context["converted"] = False
+            context["conversion_failed"] = True
+            context["conversion_error"] = status_detail
 
         # stage_data 기록
         duration_ms = int((time.time() - start) * 1000)
@@ -91,49 +103,77 @@ class ConvertStage(Stage):
 
     @staticmethod
     def _convert_real(file_path: str, file_name: str) -> tuple[str, str, int, str]:
-        """LibreOffice로 실제 PDF 변환. 변환된 PDF를 원본 옆에 보존.
+        """PDF 변환 — pdf_converter 서비스(8005) 우선, fallback으로 soffice 직접 호출.
+
+        AIMS와 동일한 pdf_converter 서비스를 사용하여 HWP/XLS/PPTX 등을 PDF로 변환.
 
         Returns:
             (converted_path, method, output_size, status_detail)
         """
-        import subprocess
         import os
 
-        soffice_paths = [
-            "C:/Program Files/LibreOffice/program/soffice.exe",  # Windows
-            "/usr/bin/soffice",  # Linux
-            "/usr/bin/libreoffice",  # Linux alt
-        ]
-        soffice = None
-        for p in soffice_paths:
-            if os.path.exists(p):
-                soffice = p
-                break
-
-        if not soffice:
-            # LibreOffice 미설치 → 원본 경로 그대로 (변환 실패)
-            return file_path, "libreoffice (미설치)", 0, "LibreOffice 미설치"
-
-        # 원본 파일과 같은 디렉토리에 PDF 생성
         out_dir = os.path.dirname(file_path) or "."
+        base = os.path.splitext(os.path.basename(file_path))[0]
+        converted_path = os.path.join(out_dir, base + ".pdf")
+
+        # 1차: pdf_converter 서비스 (AIMS 표준 방식)
+        result = ConvertStage._try_pdf_converter_service(file_path, converted_path)
+        if result:
+            return result
+
+        # 2차: soffice 직접 호출 (fallback)
+        result = ConvertStage._try_soffice_direct(file_path, converted_path, out_dir)
+        if result:
+            return result
+
+        return file_path, "none", 0, "PDF 변환 수단 없음 (pdf_converter 서비스 미실행, soffice 미설치)"
+
+    @staticmethod
+    def _try_pdf_converter_service(
+        file_path: str, converted_path: str
+    ) -> tuple[str, str, int, str] | None:
+        """pdf_converter 서비스(localhost:8005)로 변환 시도"""
+        import os
+        try:
+            import httpx
+            with open(file_path, "rb") as f:
+                resp = httpx.post(
+                    "http://localhost:8005/convert",
+                    files={"file": (os.path.basename(file_path), f)},
+                    timeout=120.0,
+                )
+            if resp.status_code == 200 and len(resp.content) > 0:
+                with open(converted_path, "wb") as out:
+                    out.write(resp.content)
+                return converted_path, "pdf_converter", os.path.getsize(converted_path), "변환 완료"
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _try_soffice_direct(
+        file_path: str, converted_path: str, out_dir: str
+    ) -> tuple[str, str, int, str] | None:
+        """soffice 직접 호출로 변환 시도 (fallback)"""
+        import subprocess
+        import shutil
+        import os
+
+        soffice = shutil.which("soffice") or shutil.which("libreoffice")
+        if not soffice:
+            return None
+
         try:
             subprocess.run(
                 [soffice, "--headless", "--convert-to", "pdf", "--outdir", out_dir, file_path],
                 capture_output=True, timeout=60,
             )
-        except subprocess.TimeoutExpired:
-            return file_path, "libreoffice", 0, "변환 시간 초과 (60초)"
-        except Exception as e:
-            return file_path, "libreoffice", 0, f"변환 실패: {e}"
+        except Exception:
+            return None
 
-        # 변환된 PDF 찾기
-        base = os.path.splitext(os.path.basename(file_path))[0]
-        converted_path = os.path.join(out_dir, base + ".pdf")
-        if not os.path.exists(converted_path):
-            return file_path, "libreoffice", 0, "PDF 파일 생성 실패"
-
-        output_size = os.path.getsize(converted_path)
-        return converted_path, "libreoffice", output_size, "변환 완료"
+        if os.path.exists(converted_path) and os.path.getsize(converted_path) > 0:
+            return converted_path, "soffice", os.path.getsize(converted_path), "변환 완료"
+        return None
 
 
 def needs_conversion(mime_type: str) -> bool:

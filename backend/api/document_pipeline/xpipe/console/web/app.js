@@ -1222,7 +1222,11 @@
     html += '</div>';
 
     if (!hasPreview) {
-      html += '<div class="preview-unavailable">이 파일 형식은 프리뷰를 지원하지 않습니다</div>';
+      if (doc.conversion_failed) {
+        html += '<div class="preview-unavailable">PDF 변환 실패 — ' + escapeHtml(doc.conversion_error || '원본 파일 형식을 변환할 수 없습니다') + '</div>';
+      } else {
+        html += '<div class="preview-unavailable">이 파일 형식은 프리뷰를 지원하지 않습니다</div>';
+      }
     } else if (isImage) {
       html += '<div class="file-preview"><img src="/api/file/' + doc.id + '" alt="' + escapeHtml(doc.filename) + '"></div>';
     } else if (isPdf || isConverted) {

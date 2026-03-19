@@ -91,8 +91,9 @@ class ExtractStage(Stage):
         import tempfile
         import os
 
-        soffice = "C:/Program Files/LibreOffice/program/soffice.exe"
-        if not os.path.exists(soffice):
+        import shutil
+        soffice = shutil.which("soffice") or shutil.which("libreoffice")
+        if not soffice:
             return f"LibreOffice 미설치 — 텍스트 추출 불가\n파일: {file_name}"
 
         with tempfile.TemporaryDirectory() as tmp:

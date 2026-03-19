@@ -244,6 +244,9 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         # 변환된 PDF 경로 보존 (프리뷰용)
         if result.get("converted_pdf_path"):
             doc["converted_pdf_path"] = result["converted_pdf_path"]
+        if result.get("conversion_failed"):
+            doc["conversion_failed"] = True
+            doc["conversion_error"] = result.get("conversion_error", "")
 
         is_stub = current_config["mode"] == "stub"
 
@@ -348,8 +351,9 @@ _PREVIEWABLE_EXTS = {".pdf", ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", "
 
 
 def _can_preview(doc: dict[str, Any]) -> bool:
-    """프리뷰 가능 여부: PDF/이미지는 직접, 변환 파일은 PDF 존재 시"""
-    if doc.get("converted_pdf_path") and os.path.exists(doc["converted_pdf_path"]):
+    """프리뷰 가능 여부: PDF/이미지는 직접, 변환 파일은 PDF 존재+크기>0 시"""
+    conv = doc.get("converted_pdf_path", "")
+    if conv and os.path.exists(conv) and os.path.getsize(conv) > 0:
         return True
     filename = doc.get("filename", "")
     ext = os.path.splitext(filename)[1].lower() if filename else ""
@@ -434,18 +438,24 @@ async def serve_file(doc_id: str, preview: bool = True):
     AIMS 패턴: 변환된 PDF(convPdfPath) → 프리뷰 가능
               원본(destPath) → 다운로드용
     """
+    from urllib.parse import quote
+
     doc = documents.get(doc_id)
     if not doc:
         raise HTTPException(404, f"문서를 찾을 수 없습니다: {doc_id}")
 
+    def _content_disposition(name: str) -> str:
+        """한글 파일명 지원 Content-Disposition (RFC 5987)"""
+        return f"inline; filename*=UTF-8''{quote(name, safe='')}"
+
     # 프리뷰: 변환된 PDF 우선 → 원본 fallback
     if preview:
         conv_path = doc.get("converted_pdf_path", "")
-        if conv_path and os.path.exists(conv_path):
+        if conv_path and os.path.exists(conv_path) and os.path.getsize(conv_path) > 0:
             return Response(
                 open(conv_path, "rb").read(),
                 media_type="application/pdf",
-                headers={"Content-Disposition": f'inline; filename="{doc.get("filename", "file")}.pdf"'},
+                headers={"Content-Disposition": _content_disposition(doc.get("filename", "file") + ".pdf")},
             )
 
     file_path = doc.get("file_path", "")
@@ -459,9 +469,7 @@ async def serve_file(doc_id: str, preview: bool = True):
     return Response(
         open(file_path, "rb").read(),
         media_type=mime_type,
-        headers={
-            "Content-Disposition": f'inline; filename="{doc.get("filename", "file")}"',
-        },
+        headers={"Content-Disposition": _content_disposition(doc.get("filename", "file"))},
     )
 
 
@@ -597,6 +605,8 @@ async def list_documents():
             "stages_data": doc.get("stages_data", {}),
             "has_preview": _can_preview(doc),
             "is_converted": bool(doc.get("converted_pdf_path")),
+            "conversion_failed": bool(doc.get("conversion_failed")),
+            "conversion_error": doc.get("conversion_error", ""),
         })
     return {"documents": docs}
 
