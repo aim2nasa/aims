@@ -528,3 +528,175 @@ class TestCostTrackerSummary:
 
         b_stats = summary["by_provider"]["b"]
         assert b_stats["count"] == 1
+
+
+# ===========================================================================
+# UpstageOCRProvider 테스트
+# ===========================================================================
+
+
+class TestUpstageOCRProvider:
+    """UpstageOCRProvider 구현체 테스트"""
+
+    def test_is_ocr_provider(self):
+        """OCRProvider ABC를 올바르게 구현"""
+        from xpipe.providers import UpstageOCRProvider
+        provider = UpstageOCRProvider()
+        assert isinstance(provider, OCRProvider)
+
+    def test_get_name(self):
+        """이름은 'upstage'"""
+        from xpipe.providers import UpstageOCRProvider
+        assert UpstageOCRProvider().get_name() == "upstage"
+
+    def test_api_key_from_constructor(self):
+        """생성자로 전달한 키가 우선"""
+        from xpipe.providers import UpstageOCRProvider
+        p = UpstageOCRProvider(api_key="test-key-123")
+        assert p.api_key == "test-key-123"
+
+    def test_api_key_env_fallback(self, monkeypatch):
+        """생성자 키가 없으면 환경변수 fallback"""
+        from xpipe.providers import UpstageOCRProvider
+        monkeypatch.setenv("UPSTAGE_API_KEY", "env-key-456")
+        p = UpstageOCRProvider()
+        assert p.api_key == "env-key-456"
+
+    def test_api_key_empty_raises(self):
+        """API 키 없으면 RuntimeError"""
+        from xpipe.providers import UpstageOCRProvider
+        import os
+        # 환경변수도 없는 상태
+        old = os.environ.pop("UPSTAGE_API_KEY", None)
+        try:
+            p = UpstageOCRProvider(api_key="")
+            with pytest.raises(RuntimeError, match="API 키가 설정되지 않았습니다"):
+                asyncio.get_event_loop().run_until_complete(p.process("/dummy.png"))
+        finally:
+            if old is not None:
+                os.environ["UPSTAGE_API_KEY"] = old
+
+    def test_set_api_key(self):
+        """런타임 키 변경"""
+        from xpipe.providers import UpstageOCRProvider
+        p = UpstageOCRProvider()
+        p.set_api_key("new-key")
+        assert p.api_key == "new-key"
+
+    def test_registry_integration(self):
+        """ProviderRegistry에 등록 + 조회"""
+        from xpipe.providers import UpstageOCRProvider
+        registry = ProviderRegistry()
+        provider = UpstageOCRProvider(api_key="test")
+        registry.register("ocr", provider, priority=10)
+        assert registry.get("ocr") is provider
+        assert registry.get("ocr").get_name() == "upstage"
+
+
+# ===========================================================================
+# ExtractStage OCR 연동 테스트
+# ===========================================================================
+
+
+class TestExtractStageOCR:
+    """ExtractStage에서 이미지 파일 OCR 처리 테스트"""
+
+    def test_image_stub_mode_no_ocr_call(self):
+        """시뮬레이션 모드에서는 OCR 호출하지 않고 안내 메시지 반환"""
+        from xpipe.stages.extract import ExtractStage
+        stage = ExtractStage()
+        context = {
+            "file_path": "/dummy/test.png",
+            "filename": "test.png",
+            "mime_type": "image/png",
+            "mode": "stub",
+            "models": {"ocr": "upstage"},
+        }
+        result = asyncio.get_event_loop().run_until_complete(stage.execute(context))
+        text = result.get("extracted_text", "")
+        assert "시뮬레이션 모드" in text
+        assert "OCR" in text
+
+    def test_image_real_mode_with_registry(self):
+        """실제 실행 모드 + Registry에 StubOCR 등록 → OCR 결과 반환"""
+        from xpipe.stages.extract import ExtractStage
+        registry = ProviderRegistry()
+        registry.register("ocr", StubOCR("test-ocr"), priority=10)
+
+        stage = ExtractStage()
+        context = {
+            "file_path": "/dummy/test.jpg",
+            "filename": "test.jpg",
+            "mime_type": "image/jpeg",
+            "mode": "real",
+            "models": {"ocr": "upstage"},
+            "_provider_registry": registry,
+        }
+        result = asyncio.get_event_loop().run_until_complete(stage.execute(context))
+        text = result.get("extracted_text", "")
+        assert "OCR 결과" in text
+
+    def test_image_real_mode_no_registry_no_key(self):
+        """실제 실행 모드 + Registry 없음 + API 키 없음 → 에러 메시지"""
+        from xpipe.stages.extract import ExtractStage
+        import os
+        old = os.environ.pop("UPSTAGE_API_KEY", None)
+        try:
+            stage = ExtractStage()
+            context = {
+                "file_path": "/dummy/test.jpg",
+                "filename": "test.jpg",
+                "mime_type": "image/jpeg",
+                "mode": "real",
+                "models": {"ocr": "upstage"},
+                "_api_keys": {"upstage": ""},
+            }
+            result = asyncio.get_event_loop().run_until_complete(stage.execute(context))
+            text = result.get("extracted_text", "")
+            assert "실패" in text or "API 키" in text
+        finally:
+            if old is not None:
+                os.environ["UPSTAGE_API_KEY"] = old
+
+    def test_image_real_mode_fallback_chain(self):
+        """1순위 실패 → 2순위 자동 전환"""
+        from xpipe.stages.extract import ExtractStage
+        registry = ProviderRegistry()
+        registry.register("ocr", StubOCR("fail-ocr", fail=True), priority=10)
+        registry.register("ocr", StubOCR("backup-ocr"), priority=5)
+
+        stage = ExtractStage()
+        context = {
+            "file_path": "/dummy/test.png",
+            "filename": "test.png",
+            "mime_type": "image/png",
+            "mode": "real",
+            "models": {"ocr": "upstage"},
+            "_provider_registry": registry,
+        }
+        result = asyncio.get_event_loop().run_until_complete(stage.execute(context))
+        text = result.get("extracted_text", "")
+        assert "OCR 결과" in text  # backup-ocr가 성공
+
+    def test_pdf_not_affected(self):
+        """PDF 파일은 OCR Provider와 무관하게 기존 방식 유지"""
+        from xpipe.stages.extract import ExtractStage
+        import tempfile, os
+        # 빈 텍스트 파일을 PDF로 가장 (pdfplumber 실패하겠지만 OCR 호출은 안 함)
+        stage = ExtractStage()
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+            f.write(b"%PDF-1.4 dummy")
+            tmp = f.name
+        try:
+            context = {
+                "file_path": tmp,
+                "filename": "test.pdf",
+                "mime_type": "application/pdf",
+                "mode": "real",
+                "models": {"ocr": "upstage"},
+            }
+            result = asyncio.get_event_loop().run_until_complete(stage.execute(context))
+            stage_data = result.get("stage_data", {}).get("extract", {})
+            assert stage_data.get("input", {}).get("method") == "pdfplumber"
+        finally:
+            os.unlink(tmp)

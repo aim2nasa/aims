@@ -111,9 +111,13 @@
         };
         // API 키: 값이 입력된 경우에만 전송 (빈 값이면 기존 유지)
         const openaiKey = $('#cfg-openai-key').value.trim();
-        if (openaiKey) {
-          payload.api_keys = { openai: openaiKey };
-          $('#cfg-openai-key').value = '';  // 전송 후 필드 초기화
+        const upstageKey = $('#cfg-upstage-key').value.trim();
+        if (openaiKey || upstageKey) {
+          payload.api_keys = {};
+          if (openaiKey) payload.api_keys.openai = openaiKey;
+          if (upstageKey) payload.api_keys.upstage = upstageKey;
+          $('#cfg-openai-key').value = '';
+          $('#cfg-upstage-key').value = '';
         }
         const data = await api('PUT', '/api/config', payload);
         updateConfigDisplay(data.config);
@@ -157,15 +161,19 @@
 
   function _updateKeyStatus(keysStatus) {
     if (!keysStatus) return;
-    const openai = keysStatus.openai;
-    const el = $('#key-status-openai');
-    if (!el) return;
-    if (!openai || !openai.set) {
+    _renderKeyBadge('#key-status-openai', keysStatus.openai);
+    _renderKeyBadge('#key-status-upstage', keysStatus.upstage);
+  }
+
+  function _renderKeyBadge(selector, info) {
+    const el = $(selector);
+    if (!el || !info) return;
+    if (!info.set) {
       el.textContent = '미설정';
       el.className = 'key-status key-none';
     } else {
-      const srcLabel = openai.source === 'config' ? '설정' : '환경변수';
-      el.textContent = openai.masked + ' (' + srcLabel + ')';
+      const srcLabel = info.source === 'config' ? '설정' : '환경변수';
+      el.textContent = info.masked + ' (' + srcLabel + ')';
       el.className = 'key-status key-set';
     }
   }

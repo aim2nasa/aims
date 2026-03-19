@@ -81,7 +81,8 @@ current_config: dict[str, Any] = {
         "embedding": "text-embedding-3-small",
     },
     "api_keys": {
-        "openai": "",  # 빈 문자열이면 환경변수 fallback
+        "openai": "",   # 빈 문자열이면 환경변수 fallback
+        "upstage": "",  # Upstage OCR API 키
     },
 }
 
@@ -202,6 +203,12 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         mime_type, _ = mimetypes.guess_type(filename)
         mime_type = mime_type or "application/octet-stream"
 
+        # API 키 해석 (설정 패널 키 → 환경변수 fallback)
+        api_keys_resolved = {}
+        env_map = {"openai": "OPENAI_API_KEY", "upstage": "UPSTAGE_API_KEY"}
+        for prov, key in current_config.get("api_keys", {}).items():
+            api_keys_resolved[prov] = key or os.environ.get(env_map.get(prov, ""), "")
+
         # 컨텍스트 구성
         context: dict[str, Any] = {
             "document_id": doc_id,
@@ -213,6 +220,7 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             "adapter_name": current_config["adapter"],
             "uploaded_at": doc.get("created_at_iso", ""),
             "needs_conversion": needs_conversion(mime_type),
+            "_api_keys": api_keys_resolved,
         }
 
         # 파이프라인 실행
@@ -723,7 +731,8 @@ def _key_source(provider: str) -> str:
     config_key = current_config.get("api_keys", {}).get(provider, "")
     if config_key:
         return "config"
-    env_key = os.environ.get("OPENAI_API_KEY", "") if provider == "openai" else ""
+    env_map = {"openai": "OPENAI_API_KEY", "upstage": "UPSTAGE_API_KEY"}
+    env_key = os.environ.get(env_map.get(provider, ""), "")
     if env_key:
         return "env"
     return "none"
@@ -735,7 +744,7 @@ async def get_config():
     # 키는 마스킹하여 반환
     api_keys_masked = {}
     for provider, key in current_config.get("api_keys", {}).items():
-        env_var = {"openai": "OPENAI_API_KEY"}.get(provider, "")
+        env_var = {"openai": "OPENAI_API_KEY", "upstage": "UPSTAGE_API_KEY"}.get(provider, "")
         actual_key = key or os.environ.get(env_var, "")
         api_keys_masked[provider] = {
             "masked": _mask_key(actual_key),
@@ -753,7 +762,7 @@ async def get_config():
         "available_modes": ["stub", "real"],
         "available_models": {
             "llm": ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"],
-            "ocr": ["paddleocr", "upstage-ocr", "tesseract"],
+            "ocr": ["upstage", "paddleocr (미구현)", "tesseract (미구현)"],
             "embedding": ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"],
         },
     }
@@ -786,7 +795,7 @@ async def update_config(body: ConfigUpdate):
     if body.api_keys is not None:
         current_config.setdefault("api_keys", {})
         for provider, key in body.api_keys.items():
-            if provider not in ("openai",):
+            if provider not in ("openai", "upstage"):
                 raise HTTPException(400, f"지원하지 않는 프로바이더: {provider}")
             current_config["api_keys"][provider] = key
 

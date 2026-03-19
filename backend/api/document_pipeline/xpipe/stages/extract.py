@@ -127,6 +127,58 @@ class ExtractStage(Stage):
             except Exception as e:
                 return f"PDF 텍스트 추출 실패: {e}\n파일: {file_name}"
 
+    async def _try_ocr(
+        self,
+        context: dict[str, Any],
+        file_path: str,
+        file_name: str,
+        mime: str,
+        ocr_model_name: str,
+    ) -> str:
+        """OCR Provider를 통해 이미지에서 텍스트 추출을 시도한다.
+
+        Provider가 등록되지 않았거나 시뮬레이션 모드이면 플레이스홀더 반환.
+        """
+        mode = context.get("mode", "stub")
+
+        if mode == "stub":
+            return (
+                f"OCR 필요 — 시뮬레이션 모드에서는 OCR을 실행하지 않습니다.\n\n"
+                f"파일: {file_name}\n"
+                f"MIME: {mime}\n"
+                f"OCR 모델: {ocr_model_name}\n"
+            )
+
+        # ProviderRegistry가 context에 주입되어 있는지 확인
+        registry = context.get("_provider_registry")
+        if registry is None:
+            # 레거시 호환: Registry 없이 호출된 경우 직접 Provider 생성 시도
+            try:
+                from xpipe.providers import UpstageOCRProvider
+                api_key = context.get("_api_keys", {}).get("upstage", "")
+                provider = UpstageOCRProvider(api_key=api_key)
+                result = await provider.process(file_path)
+                return result.get("text", "")
+            except Exception as e:
+                return (
+                    f"OCR 처리 실패: {e}\n\n"
+                    f"파일: {file_name}\n"
+                    f"MIME: {mime}\n"
+                    f"OCR 모델: {ocr_model_name}\n"
+                )
+
+        # Registry를 통한 호출 (폴백 체인 지원)
+        try:
+            result = await registry.call_with_fallback("ocr", "process", file_path)
+            return result.get("text", "")
+        except Exception as e:
+            return (
+                f"OCR 처리 실패: {e}\n\n"
+                f"파일: {file_name}\n"
+                f"MIME: {mime}\n"
+                f"OCR 모델: {ocr_model_name}\n"
+            )
+
     async def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         """텍스트 추출 처리"""
         start = time.time()
@@ -153,15 +205,10 @@ class ExtractStage(Stage):
             ocr_model = "-"
             text = self._read_text_file(file_path, file_name, mime)
         elif is_image:
-            # 이미지: OCR 필요
+            # 이미지: OCR Provider로 처리
             method = "ocr"
             ocr_model = ocr_model_name
-            text = (
-                f"OCR 필요 — 이미지 파일은 OCR 처리가 필요합니다.\n\n"
-                f"파일: {file_name}\n"
-                f"MIME: {mime}\n"
-                f"OCR 모델: {ocr_model_name}\n"
-            )
+            text = await self._try_ocr(context, file_path, file_name, mime, ocr_model_name)
         elif is_pdf:
             # PDF: pdfplumber로 실제 텍스트 추출 (모드 무관)
             method = "pdfplumber"

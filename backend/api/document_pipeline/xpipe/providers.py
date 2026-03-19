@@ -1,18 +1,20 @@
 """
-xPipe AI Provider ABC — 외부 AI 서비스를 교체 가능한 부품으로 추상화
+xPipe AI Provider ABC + 구현체
 
-설계 원칙:
-- 표준 라이브러리만 사용 (xpipe 독립성 유지)
-- LLM(분류/요약), OCR(텍스트 인식), Embedding(벡터 생성) 3종 Provider 정의
-- 실제 OpenAI/Upstage 래핑은 이번 범위 밖 — ABC 프레임워크만 정의
-- 각 Provider는 이름, 비용 추정 등 메타 정보를 제공
+ABC (Phase 5-B):
+- LLMProvider, OCRProvider, EmbeddingProvider 인터페이스 정의
 
-Phase 5-B: 인터페이스 정의. 실제 구현체(OpenAI, Upstage 등)는 Phase 5-C.
+구현체 (Phase 5-C):
+- UpstageOCRProvider: Upstage Document Digitization API
 """
 from __future__ import annotations
 
+import logging
+import os
 from abc import ABC, abstractmethod
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class LLMProvider(ABC):
@@ -129,3 +131,87 @@ class EmbeddingProvider(ABC):
     def get_dimensions(self) -> int:
         """임베딩 벡터 차원 수 반환"""
         ...
+
+
+# ---------------------------------------------------------------------------
+# 구현체: UpstageOCRProvider
+# ---------------------------------------------------------------------------
+
+class UpstageOCRProvider(OCRProvider):
+    """Upstage Document Digitization API를 사용하는 OCR Provider
+
+    AIMS upstage_service.py의 순수 API 호출 부분을 xPipe Provider 형태로 래핑.
+    AIMS 도메인 로직(MongoDB, Redis, 고객명 조회 등)은 포함하지 않음.
+    """
+
+    API_URL = "https://api.upstage.ai/v1/document-digitization"
+
+    def __init__(self, api_key: str = ""):
+        self._api_key = api_key
+
+    @property
+    def api_key(self) -> str:
+        """설정 키 우선, 없으면 환경변수 fallback"""
+        return self._api_key or os.environ.get("UPSTAGE_API_KEY", "")
+
+    def set_api_key(self, key: str) -> None:
+        """런타임에 API 키 변경"""
+        self._api_key = key
+
+    def get_name(self) -> str:
+        return "upstage"
+
+    async def process(
+        self,
+        file_path: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Upstage API로 OCR 처리
+
+        Args:
+            file_path: 처리할 이미지/PDF 파일 경로
+
+        Returns:
+            {text, pages, confidence}
+        """
+        if not self.api_key:
+            raise RuntimeError("Upstage API 키가 설정되지 않았습니다")
+
+        import httpx
+
+        filename = os.path.basename(file_path)
+        with open(file_path, "rb") as f:
+            file_content = f.read()
+
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    self.API_URL,
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    files={"document": (filename, file_content)},
+                    data={"model": "ocr"},
+                )
+
+                if response.status_code != 200:
+                    error_msg = self._parse_error(response)
+                    raise RuntimeError(f"Upstage API 오류 ({response.status_code}): {error_msg}")
+
+                data = response.json()
+                return {
+                    "text": data.get("text", ""),
+                    "pages": data.get("numBilledPages", 1),
+                    "confidence": data.get("confidence", 0.0),
+                }
+
+        except httpx.TimeoutException:
+            raise RuntimeError("Upstage OCR 처리 시간 초과 (120초)")
+
+    @staticmethod
+    def _parse_error(response: Any) -> str:
+        try:
+            data = response.json()
+            if "error" in data and "message" in data["error"]:
+                return data["error"]["message"]
+        except Exception:
+            pass
+        return f"HTTP {response.status_code}"
