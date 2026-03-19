@@ -76,7 +76,7 @@ current_config: dict[str, Any] = {
     "quality_gate": True,
     "mode": "stub",
     "models": {
-        "llm": "gpt-4o-mini",
+        "llm": "gpt-4.1-mini",
         "ocr": "upstage",
         "embedding": "text-embedding-3-small",
     },
@@ -662,7 +662,7 @@ async def get_extracted_text(doc_id: str):
 
 @app.get("/api/summary/{doc_id}")
 async def get_summary(doc_id: str):
-    """AI 요약 생성 (OpenAI gpt-4o-mini, 결과 캐시)"""
+    """AI 요약 생성 (설정 패널 LLM 모델 사용, 결과 캐시)"""
     doc = documents.get(doc_id)
     if not doc:
         raise HTTPException(404, f"문서를 찾을 수 없습니다: {doc_id}")
@@ -708,8 +708,9 @@ async def get_summary(doc_id: str):
         filename = doc.get("filename", "")
         doc_type = (doc.get("result") or {}).get("document_type", "")
 
+        llm_model = current_config.get("models", {}).get("llm", "gpt-4.1-mini")
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=llm_model,
             messages=[
                 {
                     "role": "system",
@@ -786,6 +787,53 @@ class ConfigUpdate(BaseModel):
     api_keys: Optional[dict[str, str]] = None
 
 
+# 캐시된 LLM 모델 목록 (서버 시작 시 1회 조회)
+_cached_llm_models: list[str] | None = None
+
+
+def _get_available_llm_models() -> list[str]:
+    """OpenAI API에서 사용 가능한 chat 모델 목록 조회 (캐시)"""
+    global _cached_llm_models
+    if _cached_llm_models is not None:
+        return _cached_llm_models
+
+    # 폴백 목록 (API 조회 실패 시)
+    fallback = [
+        "gpt-4.1-mini", "gpt-4.1", "gpt-4.1-nano",
+        "gpt-4o-mini", "gpt-4o", "gpt-4-turbo",
+        "o4-mini", "o3-mini", "o1-mini", "o1",
+    ]
+    try:
+        import openai
+        api_key = current_config.get("api_keys", {}).get("openai", "") or None
+        client = openai.OpenAI(api_key=api_key)
+        models = client.models.list()
+        # chat completion 가능한 모델만 필터
+        chat_prefixes = ("gpt-4", "gpt-3.5", "o1", "o3", "o4", "chatgpt")
+        # 제외: audio, realtime, transcribe, tts, search, image, diarize, deep-research, instruct
+        exclude_keywords = ("audio", "realtime", "transcribe", "tts", "search", "image", "diarize", "deep-research", "instruct")
+        chat_models = sorted(
+            [m.id for m in models
+             if any(m.id.startswith(p) for p in chat_prefixes)
+             and not any(kw in m.id for kw in exclude_keywords)],
+            key=lambda x: (
+                0 if x.startswith("gpt-4.1") else
+                1 if x.startswith("gpt-4.5") else
+                2 if x.startswith("gpt-4o") else
+                3 if x.startswith("o4") else
+                4 if x.startswith("o3") else
+                5 if x.startswith("o1") else
+                6,
+                x,
+            ),
+        )
+        _cached_llm_models = chat_models if chat_models else fallback
+    except Exception as e:
+        logger.warning(f"OpenAI 모델 목록 조회 실패: {e}, 폴백 사용")
+        _cached_llm_models = fallback
+    return _cached_llm_models
+
+
 def _mask_key(key: str) -> str:
     """API 키 마스킹 (앞 7자 + *****)"""
     if not key:
@@ -828,7 +876,7 @@ async def get_config():
         "available_adapters": ["insurance", "legal", "none"],
         "available_modes": ["stub", "real"],
         "available_models": {
-            "llm": ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"],
+            "llm": _get_available_llm_models(),
             "ocr": ["upstage"],
             "embedding": ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"],
         },

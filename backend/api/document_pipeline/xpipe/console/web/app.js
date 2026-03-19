@@ -99,7 +99,6 @@
     $('#cfg-apply').addEventListener('click', async () => {
       try {
         const payload = {
-          adapter: $('#cfg-adapter').value,
           preset: $('#cfg-preset').value,
           mode: $('#cfg-mode').value,
           models: {
@@ -142,7 +141,6 @@
         presetSelect.appendChild(opt);
       });
       presetSelect.value = data.config.preset;
-      $('#cfg-adapter').value = data.config.adapter;
       $('#cfg-mode').value = data.config.mode;
 
       // 모델 드롭다운 업데이트

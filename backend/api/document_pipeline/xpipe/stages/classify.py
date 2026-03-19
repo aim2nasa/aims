@@ -25,7 +25,7 @@ class ClassifyStage(Stage):
         file_name = context.get("filename", context.get("original_name", "unknown"))
         mode = context.get("mode", "stub")
         models = context.get("models", {})
-        llm_model = models.get("llm", "gpt-4o-mini")
+        llm_model = models.get("llm", "gpt-4.1-mini")
 
         if mode == "stub":
             # stub 분류: 파일명 기반 단순 추정
