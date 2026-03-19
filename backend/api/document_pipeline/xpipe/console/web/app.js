@@ -98,7 +98,7 @@
 
     $('#cfg-apply').addEventListener('click', async () => {
       try {
-        const data = await api('PUT', '/api/config', {
+        const payload = {
           adapter: $('#cfg-adapter').value,
           preset: $('#cfg-preset').value,
           mode: $('#cfg-mode').value,
@@ -108,8 +108,17 @@
             ocr: $('#cfg-ocr').value,
             embedding: $('#cfg-embedding').value,
           },
-        });
+        };
+        // API 키: 값이 입력된 경우에만 전송 (빈 값이면 기존 유지)
+        const openaiKey = $('#cfg-openai-key').value.trim();
+        if (openaiKey) {
+          payload.api_keys = { openai: openaiKey };
+          $('#cfg-openai-key').value = '';  // 전송 후 필드 초기화
+        }
+        const data = await api('PUT', '/api/config', payload);
         updateConfigDisplay(data.config);
+        // 키 상태 갱신 (적용 후 최신 상태 재조회)
+        api('GET', '/api/config').then(d => _updateKeyStatus(d.config.api_keys_status)).catch(() => {});
         dom.configPanel.style.display = 'none';
         dom.configToggle.classList.remove('open');
       } catch (e) {
@@ -140,7 +149,25 @@
         _populateModelSelect('#cfg-ocr', data.available_models.ocr, data.config.models.ocr);
         _populateModelSelect('#cfg-embedding', data.available_models.embedding, data.config.models.embedding);
       }
+
+      // API 키 상태 표시
+      _updateKeyStatus(data.config.api_keys_status);
     }).catch(() => {});
+  }
+
+  function _updateKeyStatus(keysStatus) {
+    if (!keysStatus) return;
+    const openai = keysStatus.openai;
+    const el = $('#key-status-openai');
+    if (!el) return;
+    if (!openai || !openai.set) {
+      el.textContent = '미설정';
+      el.className = 'key-status key-none';
+    } else {
+      const srcLabel = openai.source === 'config' ? '설정' : '환경변수';
+      el.textContent = openai.masked + ' (' + srcLabel + ')';
+      el.className = 'key-status key-set';
+    }
   }
 
   function _populateModelSelect(selector, options, current) {

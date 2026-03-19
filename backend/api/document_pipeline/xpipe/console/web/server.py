@@ -80,6 +80,9 @@ current_config: dict[str, Any] = {
         "ocr": "paddleocr",
         "embedding": "text-embedding-3-small",
     },
+    "api_keys": {
+        "openai": "",  # 빈 문자열이면 환경변수 fallback
+    },
 }
 
 # 임시 파일 디렉토리
@@ -618,7 +621,9 @@ async def get_summary(doc_id: str):
     # OpenAI API 호출
     try:
         import openai
-        client = openai.OpenAI()  # OPENAI_API_KEY 환경 변수 사용
+        # 설정 패널 키 우선, 없으면 환경변수 fallback
+        api_key = current_config.get("api_keys", {}).get("openai", "") or None
+        client = openai.OpenAI(api_key=api_key)  # api_key=None이면 환경변수 사용
 
         # 텍스트 10,000자 제한
         input_text = text[:10000]
@@ -703,13 +708,46 @@ class ConfigUpdate(BaseModel):
     quality_gate: Optional[bool] = None
     mode: Optional[str] = None
     models: Optional[dict[str, str]] = None
+    api_keys: Optional[dict[str, str]] = None
+
+
+def _mask_key(key: str) -> str:
+    """API 키 마스킹 (앞 7자 + *****)"""
+    if not key:
+        return ""
+    return key[:7] + "*****" if len(key) > 7 else "***"
+
+
+def _key_source(provider: str) -> str:
+    """키 출처 반환: 'config' | 'env' | 'none'"""
+    config_key = current_config.get("api_keys", {}).get(provider, "")
+    if config_key:
+        return "config"
+    env_key = os.environ.get("OPENAI_API_KEY", "") if provider == "openai" else ""
+    if env_key:
+        return "env"
+    return "none"
 
 
 @app.get("/api/config")
 async def get_config():
     """현재 설정 조회"""
+    # 키는 마스킹하여 반환
+    api_keys_masked = {}
+    for provider, key in current_config.get("api_keys", {}).items():
+        env_var = {"openai": "OPENAI_API_KEY"}.get(provider, "")
+        actual_key = key or os.environ.get(env_var, "")
+        api_keys_masked[provider] = {
+            "masked": _mask_key(actual_key),
+            "source": _key_source(provider),
+            "set": bool(actual_key),
+        }
+
+    config_safe = {k: v for k, v in current_config.items() if k != "api_keys"}
+    config_safe["api_keys_status"] = api_keys_masked
+
     return {
-        "config": current_config,
+        "config": config_safe,
         "available_presets": list_presets(),
         "available_adapters": ["insurance", "legal", "none"],
         "available_modes": ["stub", "real"],
@@ -745,7 +783,16 @@ async def update_config(body: ConfigUpdate):
     if body.models is not None:
         current_config["models"].update(body.models)
 
-    return {"config": current_config, "message": "설정이 업데이트되었습니다 (다음 업로드부터 적용)"}
+    if body.api_keys is not None:
+        current_config.setdefault("api_keys", {})
+        for provider, key in body.api_keys.items():
+            if provider not in ("openai",):
+                raise HTTPException(400, f"지원하지 않는 프로바이더: {provider}")
+            current_config["api_keys"][provider] = key
+
+    # 응답에서 api_keys 원본은 제외
+    config_safe = {k: v for k, v in current_config.items() if k != "api_keys"}
+    return {"config": config_safe, "message": "설정이 업데이트되었습니다 (다음 업로드부터 적용)"}
 
 
 # --- 벤치마크 ---
