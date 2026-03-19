@@ -198,7 +198,7 @@
       : '';
     dom.configDisplay.textContent = adapterLabel + ' / ' + cfg.preset + ' / ' + modeLabel +
       (modelsStr ? ' | ' + modelsStr : '');
-    dom.ftVersion.textContent = 'xPipeWeb v0.2.0 / ' + modeLabel;
+    dom.ftVersion.textContent = 'xPipeWeb v0.2.1 / ' + modeLabel;
   }
 
   // ---------------------------------------------------------------------------

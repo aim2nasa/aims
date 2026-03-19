@@ -11,7 +11,7 @@
   <header class="header">
     <div class="header-left">
       <h1 class="logo">xPipe<span class="logo-sub">Web</span></h1>
-      <span class="version" id="version">v0.2.0</span>
+      <span class="version" id="version">v0.2.1</span>
     </div>
     <div class="header-right">
       <span class="status-indicator" id="sse-status"></span>
@@ -59,7 +59,7 @@
           </select>
         </div>
       </div>
-      <div class="config-group-title">모델 설정</div>
+      <div class="config-group-title">OpenAI</div>
       <div class="config-group">
         <div class="config-row">
           <label>LLM 모델</label>
@@ -70,12 +70,6 @@
           </select>
         </div>
         <div class="config-row">
-          <label>OCR 모델</label>
-          <select id="cfg-ocr">
-            <option value="upstage">Upstage</option>
-          </select>
-        </div>
-        <div class="config-row">
           <label>Embedding 모델</label>
           <select id="cfg-embedding">
             <option value="text-embedding-3-small">text-embedding-3-small</option>
@@ -83,18 +77,24 @@
             <option value="text-embedding-ada-002">text-embedding-ada-002</option>
           </select>
         </div>
-      </div>
-      <div class="config-group-title">API 키</div>
-      <div class="config-group">
         <div class="config-row config-row-wide">
-          <label>OpenAI API Key</label>
+          <label>API Key</label>
           <div class="key-input-wrap">
             <input type="password" id="cfg-openai-key" placeholder="sk-..." autocomplete="off" spellcheck="false">
             <span class="key-status" id="key-status-openai"></span>
           </div>
         </div>
+      </div>
+      <div class="config-group-title">Upstage (OCR)</div>
+      <div class="config-group">
+        <div class="config-row">
+          <label>OCR 모델</label>
+          <select id="cfg-ocr">
+            <option value="upstage">Upstage</option>
+          </select>
+        </div>
         <div class="config-row config-row-wide">
-          <label>Upstage API Key (OCR)</label>
+          <label>API Key</label>
           <div class="key-input-wrap">
             <input type="password" id="cfg-upstage-key" placeholder="up_..." autocomplete="off" spellcheck="false">
             <span class="key-status" id="key-status-upstage"></span>
@@ -209,7 +209,7 @@
     <span>
       <button class="btn btn-xs" id="btn-benchmark">벤치마크</button>
     </span>
-    <span class="footer-version" id="ft-version">xPipeWeb v0.2.0 / 시뮬레이션</span>
+    <span class="footer-version" id="ft-version">xPipeWeb v0.2.1 / 시뮬레이션</span>
   </footer>
 
   <script src="/app.js"></script>
