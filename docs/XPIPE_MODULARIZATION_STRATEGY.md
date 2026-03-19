@@ -2,7 +2,7 @@
 
 **작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (8차 — Phase 1 완료)
 **참여**: Alex (개발/아키텍트), Gini (품질 엔지니어), PM (제품 매니저), Moderator (Claude)
-**상태**: ✅ Phase 0~7 완료 (M1~M4 달성). Phase 8은 외부 테넌트 확정 시 착수.
+**상태**: ✅ Phase 0~7 완료 (M1~M5 달성). Phase 8(멀티테넌시)은 추가 테넌트 필요 시 확장.
 **토의 이력**: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
 
 > **현재 상태 요약**
@@ -553,7 +553,7 @@ Phase 4: PoC (1-2주)              ──M2──  Phase 8: 멀티테넌시 (5-7
 | **M2: 검증된 플랫폼** | Phase 4 | 독립 테스트 + 이식성 PoC 성공 | 이식성 원칙 입증, Evolution 진입 자격 |
 | **M3: AIMS 품질 도약** | Phase 5-A+5-B+6-A | Quality Gate + Provider 핫스왑 + 이벤트/웹훅 | 사용자 체감 품질 향상, 비용 통제 |
 | **M4: 컴플라이언스** | Phase 6-B | AI 판단 근거 보존 + 감사 로그 | 보험 규제 대응 |
-| **M5 (조건부)** | Phase 7+8 | YAML DSL + 멀티테넌시 | 외부 고객 확보 시 |
+| **M5: 플랫폼 완성** | Phase 7 | YAML DSL + 파이프라인 커스터마이징 | AIMS(1 테넌트) 동작 중, 추가 테넌트는 필요 시 확장 |
 
 ---
 
