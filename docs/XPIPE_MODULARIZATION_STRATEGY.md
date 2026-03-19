@@ -2,15 +2,15 @@
 
 **작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (8차 — Phase 1 완료)
 **참여**: Alex (개발/아키텍트), Gini (품질 엔지니어), PM (제품 매니저), Moderator (Claude)
-**상태**: ✅ Phase 0+1+2 완료 — Phase 3-A (패키지화) 진행 중
+**상태**: ✅ Phase 0~7 완료 (M1~M4 달성). Phase 8은 외부 테넌트 확정 시 착수.
 **토의 이력**: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
 
 > **현재 상태 요약**
-> - Phase 0 완료: 보안, God Function 분해, E2E, 기준선
-> - Phase 1 완료: DomainAdapter/Storage ABC, Q1/Q2 확정, SemVer
-> - Phase 2 완료: 분류 프롬프트, AR/CRS 감지, 후크 → InsuranceAdapter (Strangler Fig)
-> - 다음: Phase 3-A (패키지화)
-> - 전체 테스트: 622개 ALL PASS
+> - Foundation (Phase 0~4): 완료 — M1(분리) + M2(이식성 PoC) 달성
+> - Evolution (Phase 5~7): 완료 — M3(품질+Provider) + M4(감사 로그) 달성
+> - Phase 8 (멀티테넌시): 보류 — 외부 테넌트 확정 시 착수
+> - xpipe 내장 테스트: 222개, document_pipeline 전체: 622+개 ALL PASS
+> - Tags: phase0-baseline, phase1-interface, phase2-domain-split, phase3a-package, phase3b-verification, phase4-poc-m2, phase5a-quality, phase5b-providers, phase6-events-audit, phase7-dsl
 
 ---
 
@@ -975,6 +975,7 @@ pipeline:
 - 7차 (2026-03-19): Phase 0 완료 — God Function 분해(특성 테스트 36개 안전망 + Gini PASS) + E2E 10개 + 회귀 기준선 확립 + tag 생성. 게이트 7/7 충족
 - 8차 (2026-03-19): Phase 1 완료 — DomainAdapter/Storage ABC + Q1 Option B + SemVer
 - 9차 (2026-03-19): Phase 2 완료 — 분류 프롬프트, AR/CRS 감지, 후크 6개 stage → InsuranceAdapter. Strangler Fig. Gini Critical 2건 수정(DB 필드명). 622 passed
+- 10차 (2026-03-19): Phase 3~7 완료 — 패키지화(M1), 법률 PoC(M2), Quality Gate, Provider ABC, 이벤트/감사로그, 파이프라인 DSL. xpipe 내장 222개 테스트
 
 ---
 
