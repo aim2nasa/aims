@@ -1,15 +1,15 @@
 # xPipe — AIMS 문서 처리 엔진 모듈화 전략
 
-**작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (7차 — Phase 0 완료)
+**작성일**: 2026-03-13 | **최종 갱신**: 2026-03-19 (8차 — Phase 1 완료)
 **참여**: Alex (개발/아키텍트), Gini (품질 엔지니어), PM (제품 매니저), Moderator (Claude)
-**상태**: ✅ Phase 0 완료 — 게이트 조건 7/7 충족. Phase 1 진입 가능.
+**상태**: ✅ Phase 0+1 완료 — Phase 2 (보험 도메인 분리) 진행 중
 **토의 이력**: [XPIPE_DISCUSSION_LOG.md](XPIPE_DISCUSSION_LOG.md)
 
 > **현재 상태 요약**
-> - Phase 0 완료 (Sprint 0-1 + 0-2): 보안 5건, Q2 결정, God Function 분해, E2E 테스트, 기준선 확립
-> - `git tag phase0-baseline` 생성 완료
-> - 다음: Phase 1 (인터페이스 정의)
-> - 게이트 조건: 보안 ✅ / JWT ✅ / Q2 ✅ / God Function ✅ / E2E ✅ / 기준선 ✅ / tag ✅
+> - Phase 0 완료: 보안, God Function 분해, E2E, 기준선
+> - Phase 1 완료: DomainAdapter ABC, Storage ABC, InsuranceAdapter 스텁, 계약 테스트 31개, Q1 확정, SemVer
+> - 다음: Phase 2 (보험 도메인 분리 — Strangler Fig)
+> - 전체 테스트: 555개 ALL PASS
 
 ---
 
@@ -594,11 +594,11 @@ Phase 4: PoC (1-2주)              ──M2──  Phase 8: 멀티테넌시 (5-7
 | 어댑터 계약(contract) 테스트 구현 | Gini: 모든 DomainAdapter 구현체가 통과해야 하는 테스트 |
 | SemVer 정책 확정 | 하위 호환성 원칙의 구체적 운영 규칙 문서화 |
 
-**Phase 1 게이트 조건:**
-- [ ] DomainAdapter ABC가 Python 파일로 존재 (mypy 통과)
-- [ ] InsuranceAdapter 스텁이 ABC 구현체로 생성됨
-- [ ] 계약 테스트 파일 존재 및 스텁 통과
-- [ ] Q1 해소 (xPipe 모듈 경계 결정) 문서화
+**Phase 1 게이트 조건 (전원 충족 ✅):**
+- [x] DomainAdapter ABC Python 파일 존재 (`xpipe/adapter.py`, 6 abstract + 2 기본구현)
+- [x] InsuranceAdapter 스텁 ABC 구현 (`insurance/adapter.py`)
+- [x] 계약 테스트 31개 ALL PASS (`tests/test_adapter_contract.py`)
+- [x] Q1 해소: Option B (document_pipeline + embedding = xPipe, RAG는 Evolution)
 - [ ] Phase 0 E2E 테스트 ALL PASS 유지 확인
 
 **롤백 전략**: Phase 1은 설계 단계이므로 코드 변경 최소. `git tag phase1-interface` 생성.
