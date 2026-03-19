@@ -109,6 +109,10 @@ FastAPI `document_pipeline` 사용. **n8n 사용 안함!**
 
 ## 에이전트/스킬
 
+### Identity 규칙
+- **메인 Claude**: 모든 응답은 `[Claude]`로 시작
+- **서브에이전트**: 각 AGENT.md에 정의된 Identity 태그 사용 (예: `[Alex]`, `[Gini]`, `[Dana]` 등)
+
 ### 실행 규칙
 - 트리거 감지 시 반드시 정의 파일 Read → 모든 Phase 순차 실행. 임의 실행 금지
 - 스킬에서 파일 생성 명시 → 반드시 파일 생성 (화면 출력 ≠ 대체)
