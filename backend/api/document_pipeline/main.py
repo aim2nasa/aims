@@ -104,7 +104,6 @@ app.add_middleware(
     allow_origins=[
         "https://aims.giize.com",
         "https://localhost:5177",
-        "http://localhost:3010",
     ],
     allow_credentials=True,
     allow_methods=["*"],
