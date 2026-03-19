@@ -11,6 +11,7 @@ import logging
 from typing import List, Dict, Any, Optional
 
 from config import get_settings
+from xpipe.adapter import ClassificationConfig
 
 logger = logging.getLogger(__name__)
 
@@ -278,7 +279,8 @@ class OpenAIService:
         document_id: Optional[str] = None,
         filename: Optional[str] = None,
         display_name: Optional[str] = None,
-        customer_name: Optional[str] = None
+        customer_name: Optional[str] = None,
+        classification_config: Optional[ClassificationConfig] = None
     ) -> Dict[str, Any]:
         """
         Summarize text and classify document type.
@@ -288,6 +290,8 @@ class OpenAIService:
             text: 문서 본문 (meta.full_text 또는 ocr.full_text)
             filename: 원본 파일명 (upload.originalName)
             display_name: AI 생성 별칭 (displayName, 있으면)
+            classification_config: 어댑터가 제공하는 분류 설정.
+                있으면 어댑터 프롬프트 사용, 없으면(None) 기존 하드코딩 fallback.
 
         @see docs/DOCUMENT_TAXONOMY.md - AI 분류 기준 (프롬프트 가이드)
         """
@@ -324,14 +328,24 @@ class OpenAIService:
                 parts.append(f"이 문서의 고객: {customer_name}")
             file_info = " | ".join(parts) + "\n---\n"
 
-        user_prompt = CLASSIFICATION_USER_PROMPT.format(file_info=file_info, text=text)
+        # 어댑터 config가 있으면 어댑터 프롬프트 사용, 없으면 기존 하드코딩 fallback
+        if classification_config is not None:
+            user_prompt_template = classification_config.prompt_template
+            system_prompt = classification_config.extra.get(
+                "system_prompt", CLASSIFICATION_SYSTEM_PROMPT
+            )
+        else:
+            user_prompt_template = CLASSIFICATION_USER_PROMPT
+            system_prompt = CLASSIFICATION_SYSTEM_PROMPT
+
+        user_prompt = user_prompt_template.format(file_info=file_info, text=text)
 
         try:
             client = cls._get_client()
             response = await client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": CLASSIFICATION_SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
                 max_tokens=max_length,
@@ -365,7 +379,17 @@ class OpenAIService:
                 }
 
             # 필드 추출 + 후처리
-            doc_type = cls._validate_document_type(parsed.get("type"))
+            # 어댑터 config가 있으면 어댑터의 valid_types/system_only_types로 검증
+            if classification_config is not None:
+                _valid = set(classification_config.valid_types) if classification_config.valid_types else VALID_DOCUMENT_TYPES
+                _sys_only = classification_config.extra.get("system_only_types", SYSTEM_ONLY_TYPES)
+                raw_type = parsed.get("type")
+                if not raw_type or raw_type in _sys_only or raw_type not in _valid:
+                    doc_type = "general"
+                else:
+                    doc_type = raw_type
+            else:
+                doc_type = cls._validate_document_type(parsed.get("type"))
             confidence = parsed.get("confidence", 0.0)
             if not isinstance(confidence, (int, float)):
                 confidence = 0.0
