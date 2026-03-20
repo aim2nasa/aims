@@ -183,7 +183,7 @@ class UpstageOCRProvider(OCRProvider):
         with open(file_path, "rb") as f:
             file_content = f.read()
 
-        max_retries = 3
+        max_retries = 5
         for attempt in range(max_retries):
             try:
                 async with httpx.AsyncClient(timeout=120.0) as client:
@@ -195,10 +195,14 @@ class UpstageOCRProvider(OCRProvider):
                     )
 
                     if response.status_code == 429:
-                        # Rate limit — 재시도 (exponential backoff)
+                        # Rate limit (Upstage Tier 1 = 1 RPS) — Retry-After 헤더 우선, 없으면 backoff
                         if attempt < max_retries - 1:
                             import asyncio
-                            wait = 2 ** (attempt + 1)  # 2, 4, 8초
+                            retry_after = response.headers.get("Retry-After")
+                            if retry_after:
+                                wait = int(retry_after)
+                            else:
+                                wait = 10 * (attempt + 1)  # 10, 20, 30, 40초
                             await asyncio.sleep(wait)
                             continue
                         error_msg = self._parse_error(response)
