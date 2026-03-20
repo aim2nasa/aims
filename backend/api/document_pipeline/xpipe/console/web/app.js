@@ -300,7 +300,8 @@
       '<span class="summary-sep">|</span>' +
       '<span class="summary-text">' + modeLabel + '</span>' +
       (modelsStr ? '<span class="summary-sep">|</span><span class="summary-text">' + modelsStr + '</span>' : '');
-    dom.ftVersion.textContent = 'xPipeWeb v0.2.2 / ' + modeLabel;
+    const ver = document.getElementById('version')?.textContent || 'v0.2.3';
+    dom.ftVersion.textContent = 'xPipeWeb ' + ver + ' / ' + modeLabel;
   }
 
   // ---------------------------------------------------------------------------
