@@ -30,6 +30,7 @@ from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
 # xpipe 코어 임포트
+from xpipe.scheduler import InMemoryQueue, Job, JobStatus
 from xpipe.pipeline import Pipeline, PipelineDefinition, StageConfig
 # pipeline_presets는 더 이상 사용하지 않음 (스테이지 토글 방식으로 전환)
 from xpipe.events import EventBus, PipelineEvent
@@ -91,6 +92,39 @@ temp_dir: Optional[str] = None
 
 # SSE 클라이언트 큐
 sse_queues: list[asyncio.Queue] = []
+
+# --- FIFO 작업 큐 + 동시성 제어 ---
+pipeline_queue = InMemoryQueue(maxsize=100)
+MAX_CONCURRENCY = 2
+_running_count = 0
+_worker_task: Optional[asyncio.Task] = None
+_running_tasks: set[asyncio.Task] = set()
+
+
+async def _queue_worker() -> None:
+    """큐에서 작업을 FIFO로 꺼내 파이프라인 실행. 동시성 제어."""
+    global _running_count
+
+    while True:
+        if _running_count < MAX_CONCURRENCY:
+            job = await pipeline_queue.get(timeout=0.5)
+            if job is None:
+                continue
+            _running_count += 1
+            task = asyncio.create_task(_execute_queued_job(job))
+            _running_tasks.add(task)
+            task.add_done_callback(_running_tasks.discard)
+        else:
+            await asyncio.sleep(0.05)
+
+
+async def _execute_queued_job(job: Job) -> None:
+    """큐에서 꺼낸 작업 실행 후 카운터 해제."""
+    global _running_count
+    try:
+        await _run_pipeline(job.job_id, job.file_path, job.filename)
+    finally:
+        _running_count -= 1
 
 
 # ---------------------------------------------------------------------------
@@ -516,7 +550,8 @@ async def upload_file(file: UploadFile = File(...)):
         details={"filename": file.filename, "size": len(content)},
     ))
 
-    asyncio.create_task(_run_pipeline(doc_id, file_path, file.filename))
+    job = Job(job_id=doc_id, file_path=file_path, filename=file.filename)
+    await pipeline_queue.put(job)
     return {"doc_id": doc_id, "filename": file.filename, "status": "queued"}
 
 
@@ -551,7 +586,8 @@ async def upload_batch(files: list[UploadFile] = File(...)):
             details={"filename": file.filename, "size": len(content)},
         ))
 
-        asyncio.create_task(_run_pipeline(doc_id, file_path, file.filename))
+        job = Job(job_id=doc_id, file_path=file_path, filename=file.filename)
+        await pipeline_queue.put(job)
         results.append({"doc_id": doc_id, "filename": file.filename, "status": "queued"})
 
     return {"files": results, "total": len(results)}
@@ -1065,7 +1101,8 @@ async def retry_document(doc_id: str):
     doc["completed_at"] = None
     doc["duration"] = None
 
-    asyncio.create_task(_run_pipeline(doc_id, doc["file_path"], doc["filename"]))
+    job = Job(job_id=doc_id, file_path=doc["file_path"], filename=doc["filename"])
+    await pipeline_queue.put(job)
     return {"doc_id": doc_id, "status": "queued", "message": "재시도 시작"}
 
 
@@ -1116,13 +1153,34 @@ async def remove_document(doc_id: str):
 
 @app.on_event("startup")
 async def on_startup():
-    global temp_dir
+    global temp_dir, _worker_task
     temp_dir = tempfile.mkdtemp(prefix="xpipe_demo_")
-    logger.info("xPipeWeb v%s 시작 — 임시 디렉토리: %s", VERSION, temp_dir)
+    _worker_task = asyncio.create_task(_queue_worker())
+    logger.info("xPipeWeb v%s 시작 — 임시 디렉토리: %s, 큐 워커 시작 (max_concurrency=%d)", VERSION, temp_dir, MAX_CONCURRENCY)
 
 
 @app.on_event("shutdown")
 async def on_shutdown():
+    # 1. 워커 루프 중지
+    if _worker_task:
+        _worker_task.cancel()
+        try:
+            await _worker_task
+        except asyncio.CancelledError:
+            pass
+
+    # 2. 실행 중 파이프라인 태스크 취소 + 대기
+    if _running_tasks:
+        cancelled_count = len(_running_tasks)
+        for task in list(_running_tasks):
+            task.cancel()
+        await asyncio.gather(*_running_tasks, return_exceptions=True)
+        _running_tasks.clear()
+        logger.info("실행 중 파이프라인 태스크 %d개 취소", cancelled_count)
+
+    logger.info("큐 워커 종료")
+
+    # 3. 임시 디렉토리 삭제 (모든 태스크 종료 후)
     if temp_dir and os.path.exists(temp_dir):
         shutil.rmtree(temp_dir, ignore_errors=True)
         logger.info("임시 디렉토리 삭제: %s", temp_dir)
