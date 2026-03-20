@@ -1467,10 +1467,14 @@ tr.row-error {
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-  width: 90%;
-  max-width: 560px;
-  max-height: 80vh;
-  overflow-y: auto;
+  width: 60%;
+  max-width: 800px;
+  min-width: 320px;
+  min-height: 200px;
+  max-height: 85vh;
+  overflow: auto;
+  resize: both;
+  position: absolute;
 }
 
 .modal-header {
@@ -1479,7 +1483,11 @@ tr.row-error {
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-light);
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
 }
+.modal-header:active { cursor: grabbing; }
 
 .modal-header h3 {
   font-size: 16px;

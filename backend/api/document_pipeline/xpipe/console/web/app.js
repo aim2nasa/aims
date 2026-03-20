@@ -1375,16 +1375,47 @@
         openDocModal(doc, view);
       });
     });
+
+    // 드래그 (모달 헤더로 드래그)
+    const modalHeader = dom.docModal.querySelector('.modal-header');
+    const modalEl = dom.docModal.querySelector('.modal');
+    if (modalHeader && modalEl) {
+      let isDragging = false, startX, startY, startLeft, startTop;
+      modalHeader.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) return;
+        isDragging = true;
+        const rect = modalEl.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = rect.left;
+        startTop = rect.top;
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        modalEl.style.left = (startLeft + e.clientX - startX) + 'px';
+        modalEl.style.top = (startTop + e.clientY - startY) + 'px';
+        modalEl.style.margin = '0';
+      });
+      document.addEventListener('mouseup', () => { isDragging = false; });
+    }
   }
 
   function openDocModal(doc, view) {
     modalDocId = doc.id;
     dom.docModal.style.display = '';
     dom.docModalTitle.textContent = doc.filename;
+    // 모달 위치 중앙 초기화
+    const modalEl = dom.docModal.querySelector('.modal');
+    if (modalEl) {
+      modalEl.style.left = '';
+      modalEl.style.top = '';
+      modalEl.style.margin = '';
+    }
 
     // preview 모달은 더 넓게
-    const modalEl = dom.docModal.querySelector('.modal-doc');
-    if (modalEl) modalEl.classList.toggle('modal-preview', view === 'preview');
+    const modalDocEl = dom.docModal.querySelector('.modal-doc');
+    if (modalDocEl) modalDocEl.classList.toggle('modal-preview', view === 'preview');
 
     // 탭 active
     dom.docModal.querySelectorAll('.detail-tab').forEach(b => {
