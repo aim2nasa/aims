@@ -536,6 +536,15 @@ body {
   margin: 0;
 }
 
+/* 파일 입력 — display:none 대신 시각적 숨김 (브라우저 .click() 호환) */
+#file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
 .upload-icon {
   font-size: 36px;
   margin-bottom: 8px;
