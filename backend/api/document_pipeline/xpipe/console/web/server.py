@@ -363,7 +363,8 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         event_bus.off("stage_complete", _track_stage)
 
 
-_PREVIEWABLE_EXTS = {".pdf", ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg"}
+_PREVIEWABLE_EXTS = {".pdf", ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg",
+                     ".txt", ".md", ".csv", ".log", ".json", ".xml", ".yaml", ".yml"}
 
 
 def _can_preview(doc: dict[str, Any]) -> bool:

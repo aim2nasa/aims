@@ -1309,7 +1309,9 @@
     const el = dom.docModalBody;
     const ext = getFileExt(doc.filename);
     const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+    const TEXT_EXTS = ['txt', 'md', 'csv', 'log', 'json', 'xml', 'yaml', 'yml'];
     const isImage = IMAGE_EXTS.includes(ext);
+    const isText = TEXT_EXTS.includes(ext);
     const isPdf = ext === 'pdf';
     const isConverted = doc.is_converted;
     const hasPreview = doc.has_preview;
@@ -1340,11 +1342,29 @@
     } else if (isPdf || isConverted) {
       html += '<div class="file-preview"><div class="preview-loading" id="preview-spinner"><div class="spinner"></div><p>프리뷰 로딩 중...</p></div>' +
         '<iframe src="/api/file/' + doc.id + '" onload="document.getElementById(\'preview-spinner\').style.display=\'none\'"></iframe></div>';
+    } else if (isText) {
+      html += '<div class="file-preview"><div class="preview-loading" id="preview-spinner"><div class="spinner"></div><p>로딩 중...</p></div>' +
+        '<pre class="text-content" id="text-preview-content"></pre></div>';
     } else {
       html += '<div class="preview-unavailable">이 파일 형식은 프리뷰를 지원하지 않습니다</div>';
     }
 
     el.innerHTML = html;
+
+    // 텍스트 파일 프리뷰 로드
+    if (isText && hasPreview) {
+      try {
+        const res = await fetch('/api/file/' + doc.id);
+        const text = await res.text();
+        const preEl = $('#text-preview-content');
+        const spinnerEl = $('#preview-spinner');
+        if (preEl) preEl.textContent = text;
+        if (spinnerEl) spinnerEl.style.display = 'none';
+      } catch (e) {
+        const spinnerEl = $('#preview-spinner');
+        if (spinnerEl) spinnerEl.innerHTML = '로드 실패';
+      }
+    }
 
     // AI 요약 비동기 로드
     if (doc.status === 'completed') {
