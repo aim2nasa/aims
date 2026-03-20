@@ -157,6 +157,7 @@ class ExtractStage(Stage):
             provider = registry.get("ocr")
             actual_name = provider.get_name()
             result = await registry.call_with_fallback("ocr", "process", file_path)
+            context["_ocr_pages"] = result.get("pages", 1)
             return result.get("text", ""), actual_name
 
         # Registry 없음 → 직접 Provider 생성 (API 키 필수)
@@ -170,6 +171,7 @@ class ExtractStage(Stage):
         from xpipe.providers import UpstageOCRProvider
         provider = UpstageOCRProvider(api_key=api_key)
         result = await provider.process(file_path)
+        context["_ocr_pages"] = result.get("pages", 1)
         return result.get("text", ""), provider.get_name()
 
     async def execute(self, context: dict[str, Any]) -> dict[str, Any]:

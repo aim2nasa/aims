@@ -496,8 +496,9 @@ def _calculate_cost(result: dict[str, Any]) -> float | None:
     extract_data = stage_data.get("extract", {})
     extract_output = extract_data.get("output", {})
     if extract_output.get("method", "").startswith("ocr") or "ocr" in extract_output.get("method", ""):
-        # OCR 사용 — 페이지 수가 없으면 1페이지로 추정
-        total_cost += _UPSTAGE_OCR_COST_PER_PAGE
+        # OCR 사용 — 실제 페이지 수 기반 비용 (없으면 1페이지)
+        ocr_pages = result.get("_ocr_pages", 1)
+        total_cost += _UPSTAGE_OCR_COST_PER_PAGE * ocr_pages
         has_data = True
 
     return total_cost if has_data else None

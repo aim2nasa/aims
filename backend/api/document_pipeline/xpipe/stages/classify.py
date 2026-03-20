@@ -148,8 +148,6 @@ async def _real_classify(
 
     # 토큰 사용량 기록 (비용 계산용)
     usage = response.usage
-    if usage and "stage_data" not in context:
-        context["stage_data"] = {}
     if usage:
         context.setdefault("_usage", {})["classify"] = {
             "prompt_tokens": usage.prompt_tokens,

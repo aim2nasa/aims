@@ -1747,6 +1747,16 @@
         renderTable();
       });
     });
+    // 초기 정렬 상태를 JS 변수 기준으로 헤더에 반영 (HTML 하드코딩 의존 제거)
+    document.querySelectorAll('.doc-table th.sortable').forEach(h => {
+      h.classList.remove('sort-active');
+      const arrow = h.querySelector('.sort-arrow');
+      if (arrow) arrow.innerHTML = '';
+      if (h.dataset.sort === sortColumn) {
+        h.classList.add('sort-active');
+        if (arrow) arrow.innerHTML = sortDirection === 'asc' ? '&#9650;' : '&#9660;';
+      }
+    });
   }
 
   function init() {
