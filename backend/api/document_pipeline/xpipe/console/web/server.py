@@ -31,7 +31,7 @@ from pydantic import BaseModel
 
 # xpipe 코어 임포트
 from xpipe.pipeline import Pipeline, PipelineDefinition, StageConfig
-from xpipe.pipeline_presets import PRESETS, get_preset, list_presets
+# pipeline_presets는 더 이상 사용하지 않음 (스테이지 토글 방식으로 전환)
 from xpipe.events import EventBus, PipelineEvent
 from xpipe.audit import AuditLog, AuditEntry
 from xpipe.cost_tracker import CostTracker, UsageRecord
@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 WEB_DIR = Path(__file__).parent
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 
 # ---------------------------------------------------------------------------
 # 인메모리 상태
@@ -72,9 +72,9 @@ quality_gate = QualityGate()
 # 현재 설정 (provider → mode 로 수정)
 current_config: dict[str, Any] = {
     "adapter": "insurance",
-    "preset": "aims-insurance",
     "quality_gate": True,
     "mode": "stub",
+    "enabled_stages": ["ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"],
     "models": {
         "llm": "gpt-4.1-mini",
         "ocr": "upstage",
@@ -123,21 +123,37 @@ event_bus.on("*", _on_pipeline_event)
 # ---------------------------------------------------------------------------
 # 파이프라인 조립
 # ---------------------------------------------------------------------------
-def _build_pipeline(preset_name: str) -> Pipeline:
-    """프리셋 기반 파이프라인 조립 (내장 스테이지 자동 등록)"""
-    preset = get_preset(preset_name)
-    pipeline = Pipeline.from_dict(preset)
+# 전체 스테이지 정의 (순서 + skip_if 조건)
+ALL_STAGES = [
+    {"name": "ingest", "config": {}},
+    {"name": "convert", "config": {}, "skip_if": "!needs_conversion"},
+    {"name": "extract", "config": {}, "skip_if": "has_text"},
+    {"name": "classify", "config": {}},
+    {"name": "detect_special", "config": {}},
+    {"name": "embed", "config": {}, "skip_if": "credit_pending"},
+    {"name": "complete", "config": {}},
+]
+
+# 스테이지 클래스 매핑
+STAGE_CLASSES = {
+    "ingest": IngestStage,
+    "convert": ConvertStage,
+    "extract": ExtractStage,
+    "classify": ClassifyStage,
+    "detect_special": DetectSpecialStage,
+    "embed": EmbedStage,
+    "complete": CompleteStage,
+}
+
+
+def _build_pipeline(enabled_stages: list[str]) -> Pipeline:
+    """활성 스테이지 목록으로 파이프라인 조립"""
+    stages = [s for s in ALL_STAGES if s["name"] in enabled_stages]
+    definition = {"name": "custom", "stages": stages}
+    pipeline = Pipeline.from_dict(definition)
     pipeline.event_bus = event_bus
-
-    # 내장 스테이지 등록
-    pipeline.register_stage("ingest", IngestStage)
-    pipeline.register_stage("convert", ConvertStage)
-    pipeline.register_stage("extract", ExtractStage)
-    pipeline.register_stage("classify", ClassifyStage)
-    pipeline.register_stage("detect_special", DetectSpecialStage)
-    pipeline.register_stage("embed", EmbedStage)
-    pipeline.register_stage("complete", CompleteStage)
-
+    for name, cls in STAGE_CLASSES.items():
+        pipeline.register_stage(name, cls)
     return pipeline
 
 
@@ -162,8 +178,7 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         if event.document_id == doc_id and event.event_type == "stage_complete":
             stage_name = event.stage
             stages_completed.append(stage_name)
-            preset_data = get_preset(current_config["preset"])
-            total_stages = len(preset_data["stages"])
+            total_stages = len(current_config.get("enabled_stages", []))
             progress = int(len(stages_completed) / total_stages * 100)
             doc["progress"] = progress
             doc["current_stage"] = stage_name
@@ -180,7 +195,7 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
                 stage=stage_name,
                 action="stage_completed",
                 actor=f"{current_config['mode']}/{current_config['adapter']}",
-                details={"pipeline": current_config["preset"]},
+                details={"stages": current_config.get("enabled_stages", [])},
             ))
 
     event_bus.on("stage_start", _track_stage_start)
@@ -194,9 +209,9 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         doc["status"] = "processing"
         doc["started_at"] = time.time()
 
-        pipeline = _build_pipeline(current_config["preset"])
-        preset_data = get_preset(current_config["preset"])
-        stage_names = [s["name"] for s in preset_data["stages"]]
+        enabled = current_config.get("enabled_stages", [s["name"] for s in ALL_STAGES])
+        pipeline = _build_pipeline(enabled)
+        stage_names = enabled
 
         # MIME 타입 추론 (needs_conversion 판단용)
         import mimetypes
@@ -362,8 +377,7 @@ def _can_preview(doc: dict[str, Any]) -> bool:
 
 def _create_doc_entry(doc_id: str, filename: str, file_size: int, file_path: str) -> dict[str, Any]:
     """문서 상태 엔트리 생성"""
-    preset_data = get_preset(current_config["preset"])
-    stage_names = [s["name"] for s in preset_data["stages"]]
+    stage_names = current_config.get("enabled_stages", [s["name"] for s in ALL_STAGES])
     now = time.time()
     from datetime import datetime, timezone
     now_iso = datetime.now(timezone.utc).isoformat()
@@ -780,11 +794,11 @@ async def sse_stream():
 
 class ConfigUpdate(BaseModel):
     adapter: Optional[str] = None
-    preset: Optional[str] = None
     quality_gate: Optional[bool] = None
     mode: Optional[str] = None
     models: Optional[dict[str, str]] = None
     api_keys: Optional[dict[str, str]] = None
+    enabled_stages: Optional[list[str]] = None
 
 
 # 캐시된 LLM 모델 목록 (서버 시작 시 1회 조회)
@@ -870,16 +884,37 @@ async def get_config():
     config_safe = {k: v for k, v in current_config.items() if k != "api_keys"}
     config_safe["api_keys_status"] = api_keys_masked
 
+    # 스테이지 메타데이터 (토글 UI용)
+    stage_meta = []
+    for s in ALL_STAGES:
+        name = s["name"]
+        fixed = name in ("ingest", "complete")
+        stage_meta.append({
+            "name": name,
+            "fixed": fixed,
+            "skip_if": s.get("skip_if"),
+            "requires": _stage_dependencies().get(name, []),
+        })
+
     return {
         "config": config_safe,
-        "available_presets": list_presets(),
-        "available_adapters": ["insurance", "legal", "none"],
+        "stage_meta": stage_meta,
         "available_modes": ["stub", "real"],
         "available_models": {
             "llm": _get_available_llm_models(),
             "ocr": ["upstage"],
             "embedding": ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"],
         },
+    }
+
+
+def _stage_dependencies() -> dict[str, list[str]]:
+    """스테이지 의존성 정의"""
+    return {
+        "extract": ["convert"],
+        "classify": ["extract"],
+        "detect_special": ["extract"],
+        "embed": ["extract"],
     }
 
 
@@ -891,10 +926,18 @@ async def update_config(body: ConfigUpdate):
             raise HTTPException(400, f"유효하지 않은 어댑터: {body.adapter}")
         current_config["adapter"] = body.adapter
 
-    if body.preset is not None:
-        if body.preset not in PRESETS:
-            raise HTTPException(400, f"유효하지 않은 프리셋: {body.preset}")
-        current_config["preset"] = body.preset
+    if body.enabled_stages is not None:
+        valid_names = {s["name"] for s in ALL_STAGES}
+        for name in body.enabled_stages:
+            if name not in valid_names:
+                raise HTTPException(400, f"유효하지 않은 스테이지: {name}")
+        # ingest/complete는 항상 포함
+        stages = list(body.enabled_stages)
+        if "ingest" not in stages:
+            stages.insert(0, "ingest")
+        if "complete" not in stages:
+            stages.append("complete")
+        current_config["enabled_stages"] = stages
 
     if body.quality_gate is not None:
         current_config["quality_gate"] = body.quality_gate
@@ -966,7 +1009,7 @@ async def get_benchmark():
         "total_cost": round(total_cost, 6) if total_cost else "-",
         "cost_per_doc": round(total_cost / len(completed_docs), 6) if total_cost and completed_docs else "-",
         "mode": current_config["mode"],
-        "preset": current_config["preset"],
+        "stages": len(current_config.get("enabled_stages", [])),
     }
 
 
@@ -1004,8 +1047,7 @@ async def retry_document(doc_id: str):
         raise HTTPException(400, "에러 상태의 문서만 재시도 가능합니다")
 
     # 상태 리셋
-    preset_data = get_preset(current_config["preset"])
-    stage_names = [s["name"] for s in preset_data["stages"]]
+    stage_names = current_config.get("enabled_stages", [s["name"] for s in ALL_STAGES])
     doc["status"] = "queued"
     doc["progress"] = 0
     doc["current_stage"] = None
@@ -1092,7 +1134,7 @@ def run_server():
     port = int(os.environ.get("XPIPE_DEMO_PORT", "8200"))
     print(f"\n  xPipeWeb v{VERSION}")
     print(f"  http://localhost:{port}")
-    print(f"  프리셋: {current_config['preset']}")
+    print(f"  스테이지: {len(current_config['enabled_stages'])}개")
     print(f"  모드: {current_config['mode']}")
     print()
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")

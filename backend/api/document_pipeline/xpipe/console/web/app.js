@@ -98,9 +98,20 @@
 
     $('#cfg-apply').addEventListener('click', async () => {
       try {
+        // 활성 스테이지 수집
+        const enabledStages = [];
+        $$('.stage-toggle').forEach(el => {
+          if (el.classList.contains('active')) enabledStages.push(el.dataset.stage);
+        });
+        // fixed 스테이지도 포함
+        $$('.stage-toggle.fixed').forEach(el => {
+          const name = el.dataset.stage;
+          if (!enabledStages.includes(name)) enabledStages.push(name);
+        });
+
         const payload = {
-          preset: $('#cfg-preset').value,
           mode: $('#cfg-mode').value,
+          enabled_stages: enabledStages,
           models: {
             llm: $('#cfg-llm').value,
             ocr: $('#cfg-ocr').value,
@@ -119,7 +130,6 @@
         }
         const data = await api('PUT', '/api/config', payload);
         updateConfigDisplay(data.config);
-        // 키 상태 갱신 (적용 후 최신 상태 재조회)
         api('GET', '/api/config').then(d => _updateKeyStatus(d.config.api_keys_status)).catch(() => {});
         dom.configPanel.style.display = 'none';
         dom.configToggle.classList.remove('open');
@@ -131,17 +141,12 @@
     // 초기 설정 로드
     api('GET', '/api/config').then(data => {
       updateConfigDisplay(data.config);
-      // 프리셋 옵션 업데이트
-      const presetSelect = $('#cfg-preset');
-      presetSelect.innerHTML = '';
-      data.available_presets.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.name;
-        opt.textContent = p.name + ' (' + p.stage_count + '단계)';
-        presetSelect.appendChild(opt);
-      });
-      presetSelect.value = data.config.preset;
       $('#cfg-mode').value = data.config.mode;
+
+      // 스테이지 토글 렌더링
+      if (data.stage_meta) {
+        _renderStageToggles(data.stage_meta, data.config.enabled_stages || []);
+      }
 
       // 모델 드롭다운 업데이트
       if (data.available_models) {
@@ -153,6 +158,96 @@
       // API 키 상태 표시
       _updateKeyStatus(data.config.api_keys_status);
     }).catch(() => {});
+  }
+
+  // --- 스테이지 토글 ---
+  let _stageMeta = [];
+
+  const STAGE_TOGGLE_LABELS = {
+    ingest: '업로드', convert: 'PDF변환', extract: '텍스트추출',
+    classify: 'AI분류', detect_special: '감지', embed: '임베딩', complete: '완료'
+  };
+
+  function _renderStageToggles(meta, enabledStages) {
+    _stageMeta = meta;
+    const container = $('#stage-toggles');
+    if (!container) return;
+    container.innerHTML = '';
+
+    meta.forEach(s => {
+      const isEnabled = enabledStages.includes(s.name);
+      const label = STAGE_TOGGLE_LABELS[s.name] || s.name;
+      const btn = document.createElement('span');
+      btn.className = 'stage-toggle' + (isEnabled ? ' active' : '') + (s.fixed ? ' fixed' : '');
+      btn.dataset.stage = s.name;
+      btn.textContent = label;
+      if (s.skip_if) {
+        btn.classList.add('conditional');
+        btn.title = '조건부 실행: ' + s.skip_if;
+      }
+      if (s.fixed) {
+        btn.title = '항상 실행 (변경 불가)';
+      }
+
+      if (!s.fixed) {
+        btn.addEventListener('click', () => _toggleStage(s.name));
+      }
+
+      container.appendChild(btn);
+
+      // 화살표 (마지막 제외)
+      if (s !== meta[meta.length - 1]) {
+        const arrow = document.createElement('span');
+        arrow.className = 'stage-arrow';
+        arrow.textContent = '→';
+        container.appendChild(arrow);
+      }
+    });
+  }
+
+  function _toggleStage(name) {
+    const btn = $(`.stage-toggle[data-stage="${name}"]`);
+    if (!btn || btn.classList.contains('fixed')) return;
+
+    const turningOn = !btn.classList.contains('active');
+
+    if (turningOn) {
+      // 켤 때: 의존하는 스테이지도 켜기
+      _activateWithDeps(name);
+    } else {
+      // 끌 때: 이 스테이지에 의존하는 스테이지도 끄기
+      _deactivateWithDependents(name);
+    }
+  }
+
+  function _activateWithDeps(name) {
+    const meta = _stageMeta.find(s => s.name === name);
+    if (!meta) return;
+    // 먼저 의존성 켜기 (재귀)
+    (meta.requires || []).forEach(dep => {
+      const depBtn = $(`.stage-toggle[data-stage="${dep}"]`);
+      if (depBtn && !depBtn.classList.contains('active') && !depBtn.classList.contains('fixed')) {
+        _activateWithDeps(dep);
+      }
+    });
+    // 자신 켜기
+    const btn = $(`.stage-toggle[data-stage="${name}"]`);
+    if (btn) btn.classList.add('active');
+  }
+
+  function _deactivateWithDependents(name) {
+    // 자신 끄기
+    const btn = $(`.stage-toggle[data-stage="${name}"]`);
+    if (btn) btn.classList.remove('active');
+    // 이 스테이지에 의존하는 스테이지도 끄기 (재귀)
+    _stageMeta.forEach(s => {
+      if ((s.requires || []).includes(name)) {
+        const depBtn = $(`.stage-toggle[data-stage="${s.name}"]`);
+        if (depBtn && depBtn.classList.contains('active') && !depBtn.classList.contains('fixed')) {
+          _deactivateWithDependents(s.name);
+        }
+      }
+    });
   }
 
   function _updateKeyStatus(keysStatus) {
@@ -191,9 +286,10 @@
     const modelsStr = cfg.models
       ? cfg.models.llm + ' / ' + cfg.models.ocr + ' / ' + cfg.models.embedding
       : '';
-    dom.configDisplay.textContent = cfg.preset + ' / ' + modeLabel +
+    const stageCount = (cfg.enabled_stages || []).length;
+    dom.configDisplay.textContent = stageCount + '단계 / ' + modeLabel +
       (modelsStr ? ' | ' + modelsStr : '');
-    dom.ftVersion.textContent = 'xPipeWeb v0.2.1 / ' + modeLabel;
+    dom.ftVersion.textContent = 'xPipeWeb v0.2.2 / ' + modeLabel;
   }
 
   // ---------------------------------------------------------------------------
