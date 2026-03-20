@@ -25,7 +25,7 @@
 
   // 정렬 상태
   let sortColumn = 'created_at'; // 기본 정렬: 업로드 시간
-  let sortDirection = 'desc';    // 기본: 내림차순
+  let sortDirection = 'asc';     // 기본: 오름차순 (첫 번째 업로드가 맨 위)
 
   // 감사로그 건수 캐시 (doc_id -> count)
   let auditCountCache = {};
@@ -68,6 +68,7 @@
     ftEvents: $('#ft-events'),
     ftCost: $('#ft-cost'),
     ftVersion: $('#ft-version'),
+    ftQueue: $('#ft-queue'),
   };
 
   // ---------------------------------------------------------------------------
@@ -512,12 +513,13 @@
       const eventsHtml = renderEventsBadge(doc);
       const auditHtml = renderAuditBadge(doc);
       const actionsHtml = renderActions(doc);
-      const rowClass = doc.status === 'error' ? 'error-row' : '';
+      const rowClass = 'row-' + doc.status;
       const selClass = doc.id === selectedDocId ? 'accordion-open' : '';
 
       const chevron = doc.id === selectedDocId ? '▼' : '▶';
+      const queueNum = doc.queue_number ? '<span class="queue-number">#' + doc.queue_number + '</span>' : '';
       return '<tr class="' + rowClass + ' ' + selClass + '" data-id="' + doc.id + '">' +
-        '<td class="td-toggle"><button type="button" class="btn-accordion-toggle" title="상세 보기">' + chevron + '</button></td>' +
+        '<td class="td-toggle">' + queueNum + '<button type="button" class="btn-accordion-toggle" title="상세 보기">' + chevron + '</button></td>' +
         '<td>' + procBadge + '</td>' +
         '<td class="td-filename td-clickable" data-action="preview" data-id="' + doc.id + '">' + displayName + '</td>' +
         '<td class="td-compact">' + sizeHtml + '</td>' +
@@ -660,7 +662,13 @@
 
   function renderStatusCell(doc) {
     if (doc.status === 'queued') {
-      return '<span class="status-text queued">대기</span>';
+      // 대기 순서/총 대기 수 계산
+      const queuedDocs = documents.filter(d => d.status === 'queued');
+      const sortedQueued = queuedDocs.slice().sort((a, b) => (a.queue_number || 0) - (b.queue_number || 0));
+      const position = sortedQueued.findIndex(d => d.id === doc.id) + 1;
+      const total = queuedDocs.length;
+      const posHtml = total > 0 ? '<span class="queue-position">' + position + '/' + total + '</span>' : '';
+      return '<span class="status-text queued">대기</span>' + posHtml;
     }
 
     if (doc.status === 'error') {
@@ -823,6 +831,17 @@
 
     const totalCost = documents.reduce((s, d) => s + (d.cost || 0), 0);
     dom.ftCost.textContent = totalCost > 0 ? '$' + totalCost.toFixed(3) : '-';
+
+    // 큐 상태 (처리중/대기)
+    const processingCount = documents.filter(d => d.status === 'processing').length;
+    const queuedCount = documents.filter(d => d.status === 'queued').length;
+    if (dom.ftQueue) {
+      if (processingCount > 0 || queuedCount > 0) {
+        dom.ftQueue.textContent = processingCount + '건 처리중 / ' + queuedCount + '건 대기';
+      } else {
+        dom.ftQueue.textContent = '-';
+      }
+    }
 
     // 완료 문서 0건이면 벤치마크 버튼 비활성화
     const benchBtn = $('#btn-benchmark');

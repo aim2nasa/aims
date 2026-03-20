@@ -97,6 +97,7 @@ VERSION = "0.2.4"
 documents: dict[str, dict[str, Any]] = {}  # doc_id -> 문서 상태
 sse_events: list[dict[str, Any]] = []  # SSE 이벤트 버퍼
 sse_event_id: int = 0
+_queue_counter: int = 0  # FIFO 큐 번호 (업로드 순서)
 
 # 글로벌 인프라
 event_bus = EventBus()
@@ -516,12 +517,17 @@ def _can_preview(doc: dict[str, Any]) -> bool:
 
 def _create_doc_entry(doc_id: str, filename: str, file_size: int, file_path: str) -> dict[str, Any]:
     """문서 상태 엔트리 생성"""
+    global _queue_counter
+    _queue_counter += 1
+    queue_number = _queue_counter
+
     stage_names = current_config.get("enabled_stages", [s["name"] for s in ALL_STAGES])
     now = time.time()
     from datetime import datetime, timezone
     now_iso = datetime.now(timezone.utc).isoformat()
 
     return {
+        "queue_number": queue_number,
         "id": doc_id,
         "filename": filename,
         "file_size": file_size,
@@ -746,6 +752,7 @@ async def list_documents():
         audit_entries = audit_log.get_by_document(doc["id"])
         docs.append({
             "id": doc["id"],
+            "queue_number": doc.get("queue_number", 0),
             "filename": doc["filename"],
             "file_size": doc["file_size"],
             "status": doc["status"],
@@ -1225,6 +1232,7 @@ async def retry_document(doc_id: str):
 @app.delete("/api/documents")
 async def remove_all_documents():
     """전체 문서 제거 (초기화)"""
+    global _queue_counter
     count = len(documents)
     for doc in documents.values():
         # 처리 중 문서에 cancellation 플래그
@@ -1237,6 +1245,7 @@ async def remove_all_documents():
             except OSError:
                 pass
     documents.clear()
+    _queue_counter = 0
     return {"removed": count, "message": "전체 초기화 완료"}
 
 
