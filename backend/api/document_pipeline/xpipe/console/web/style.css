@@ -598,24 +598,25 @@ body {
 .doc-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
-/* 칼럼 너비 고정 — 아코디언 열려도 칼럼 위치 변하지 않음 */
-.doc-table th:nth-child(1)  { width: 24px; }    /* 토글 */
-.doc-table th:nth-child(2)  { width: 50px; }    /* 유형 */
-.doc-table th:nth-child(3)  { width: auto; }    /* 파일명 (유동) */
-.doc-table th:nth-child(4)  { width: 65px; }    /* 크기 */
-.doc-table th:nth-child(5)  { width: 40px; }    /* 타입 */
-.doc-table th:nth-child(6)  { width: 120px; }   /* 업로드 */
-.doc-table th:nth-child(7)  { width: 100px; }   /* 상태 (아이콘 도트) */
-.doc-table th:nth-child(8)  { width: 65px; }    /* 분류 */
-.doc-table th:nth-child(9)  { width: 65px; }    /* 감지 */
-.doc-table th:nth-child(10) { width: 50px; }    /* 비용 */
-.doc-table th:nth-child(11) { width: 45px; }    /* 소요 */
-.doc-table th:nth-child(12) { width: 40px; }    /* 이벤트 */
-.doc-table th:nth-child(13) { width: 40px; }    /* 감사 */
-.doc-table th:nth-child(14) { width: 70px; }    /* 액션 */
+/* 칼럼 — nowrap 기본, 파일명만 가변 */
+.doc-table th, .doc-table td { white-space: nowrap; }
+.doc-table th:nth-child(1)  { width: 28px; }     /* 토글 */
+.doc-table th:nth-child(2)  { width: 55px; }     /* 유형 */
+/* nth-child(3) 파일명 = 가변 (나머지 고정 칼럼 빼고 남은 공간) */
+.doc-table td:nth-child(3)  { white-space: normal; overflow: hidden; text-overflow: ellipsis; }
+.doc-table th:nth-child(4)  { width: 65px; }     /* 크기 */
+.doc-table th:nth-child(5)  { width: 40px; }     /* 타입 */
+.doc-table th:nth-child(6)  { width: 140px; }    /* 업로드 */
+.doc-table th:nth-child(7)  { width: 310px; }    /* 상태 (7스테이지 최대폭 고정) */
+.doc-table th:nth-child(8)  { width: 55px; }     /* 분류 */
+.doc-table th:nth-child(9)  { width: 55px; }     /* 감지 */
+.doc-table th:nth-child(10) { width: 58px; }     /* 비용 */
+.doc-table th:nth-child(11) { width: 48px; }     /* 소요 */
+.doc-table th:nth-child(12) { width: 45px; }     /* 이벤트 */
+.doc-table th:nth-child(13) { width: 40px; }     /* 감사 */
+.doc-table th:nth-child(14) { width: 70px; }     /* 액션 */
 
 /* 토글 버튼 */
 .td-toggle { padding: 0 4px !important; text-align: center; }
@@ -886,88 +887,19 @@ body {
   display: block;
 }
 
-/* --- 인라인 파이프라인 뱃지 (테이블 상태 컬럼) --- */
+/* --- 인라인 파이프라인 뱃지 (Apple-style Minimal) --- */
 .inline-pipeline {
   display: inline-flex;
   align-items: center;
-  gap: 0;
-  flex-wrap: wrap;
-  row-gap: 4px;
-}
-
-/* 도트 아이콘 모드 (상태 컬럼) */
-.inline-pipeline.dot-mode {
-  gap: 3px;
-}
-
-.inline-pipeline.dot-mode .stage-dot {
-  width: 8px;
-  height: 8px;
-  min-width: 8px;
-  min-height: 8px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
-  flex-shrink: 0;
-  position: relative;
-  /* inline-stage 기본 스타일 오버라이드 */
-  padding: 0;
-  font-size: 0;
-  background: none;
-}
-
-.inline-pipeline.dot-mode .stage-dot:hover {
-  opacity: 0.8;
-  transform: scale(1.4);
-}
-
-.inline-pipeline.dot-mode .stage-dot.done {
-  background: var(--success);
-}
-
-.inline-pipeline.dot-mode .stage-dot.running {
-  background: var(--processing);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.inline-pipeline.dot-mode .stage-dot.pending {
-  background: var(--border);
-}
-
-.inline-pipeline.dot-mode .stage-dot.error {
-  background: var(--error);
-}
-
-/* 도트 툴팁 (CSS only) */
-.inline-pipeline.dot-mode .stage-dot::after {
-  content: attr(data-tip);
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: var(--text-primary);
-  color: var(--surface);
-  font-size: 10px;
-  font-weight: 400;
-  white-space: nowrap;
-  z-index: 300;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.inline-pipeline.dot-mode .stage-dot:hover::after {
-  opacity: 1;
+  gap: 1px;
+  flex-wrap: nowrap;
 }
 
 .inline-stage {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
   font-size: 10px;
   font-weight: 600;
   cursor: pointer;
@@ -975,32 +907,41 @@ body {
   white-space: nowrap;
   -webkit-user-select: none;
   user-select: none;
+  letter-spacing: -0.1px;
 }
 
 .inline-stage:hover {
-  opacity: 0.8;
-  transform: scale(1.05);
+  opacity: 0.75;
+  transform: scale(1.04);
 }
 
 .inline-stage.done {
-  background: rgba(52, 199, 89, 0.12);
+  background: rgba(52, 199, 89, 0.08);
   color: #248a3d;
 }
 
 .inline-stage.running {
-  background: rgba(88, 86, 214, 0.12);
+  background: rgba(88, 86, 214, 0.10);
   color: #5856d6;
-  animation: pulse 1.5s ease-in-out infinite;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .inline-stage.pending {
-  background: rgba(142, 142, 147, 0.08);
-  color: var(--text-tertiary);
+  background: rgba(142, 142, 147, 0.06);
+  color: var(--border);
 }
 
 .inline-stage.error {
-  background: rgba(255, 59, 48, 0.12);
+  background: rgba(255, 59, 48, 0.08);
   color: #d70015;
+}
+
+.inline-arrow {
+  color: var(--border-light);
+  font-size: 8px;
+  padding: 0 1px;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 .inline-arrow {

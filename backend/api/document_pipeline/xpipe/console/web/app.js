@@ -307,7 +307,7 @@
       '<span class="summary-sep">|</span>' +
       '<span class="summary-text">' + modeLabel + '</span>' +
       (modelsStr ? '<span class="summary-sep">|</span><span class="summary-text">' + modelsStr + '</span>' : '');
-    const ver = document.getElementById('version')?.textContent || 'v0.2.3';
+    const ver = document.getElementById('version')?.textContent || 'v0.2.4';
     dom.ftVersion.textContent = 'xPipeWeb ' + ver + ' / ' + modeLabel;
   }
 
@@ -398,6 +398,17 @@
   const STAGE_LABELS = {
     ingest: '업로드', convert: 'PDF변환', extract: '텍스트추출',
     classify: 'AI분류', detect_special: '감지', embed: '임베딩', complete: '완료'
+  };
+
+  // 스테이지별 기하 도형 아이콘 (10x10 SVG)
+  const STAGE_ICONS = {
+    ingest: '<svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,8.5 1,2.5 9,2.5" fill="currentColor"/></svg>',
+    convert: '<svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,1 9,5 5,9 1,5" fill="currentColor"/></svg>',
+    extract: '<svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="2.5" width="8" height="5" rx="1" fill="currentColor"/></svg>',
+    classify: '<svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="5" cy="5" r="1.5" fill="currentColor"/></svg>',
+    detect_special: '<svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,1.5 9,7.5 1,7.5" fill="currentColor"/></svg>',
+    embed: '<svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,0.5 9,2.75 9,7.25 5,9.5 1,7.25 1,2.75" fill="currentColor"/></svg>',
+    complete: '<svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>',
   };
 
   // 상태 한글 매핑 (도트 툴팁용)
@@ -686,8 +697,9 @@
    * 파이프라인 상태를 도트 아이콘으로 렌더링
    */
   function _renderDotPipeline(doc, stagesDetail, stageOrder) {
-    let html = '<div class="inline-pipeline dot-mode">';
+    let html = '<div class="inline-pipeline">';
     const skipped = (doc.result && doc.result.stages_skipped) || [];
+    let prevShown = false;
     for (let i = 0; i < stageOrder.length; i++) {
       const name = stageOrder[i];
       if (skipped.includes(name)) continue;
@@ -697,9 +709,11 @@
       else if (detail.status === 'running') cls = 'running';
       else if (detail.status === 'error') cls = 'error';
       const label = STAGE_LABELS[name] || name;
-      const statusLabel = STATUS_LABELS[detail.status] || detail.status || '대기';
-      const tip = label + ' : ' + statusLabel;
-      html += '<span class="stage-dot inline-stage ' + cls + '" data-stage="' + name + '" data-tip="' + tip + '"></span>';
+      if (prevShown) {
+        html += '<span class="inline-arrow">\u2192</span>';
+      }
+      html += '<span class="inline-stage ' + cls + '" data-stage="' + name + '">' + label + '</span>';
+      prevShown = true;
     }
     html += '</div>';
     return html;
