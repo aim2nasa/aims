@@ -883,6 +883,68 @@ body {
   flex-shrink: 0;
 }
 
+/* --- 아코디언 행 --- */
+.accordion-row td {
+  padding: 0;
+  border-bottom: none;
+}
+
+.accordion-content {
+  padding: 12px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border-light);
+  border-bottom: 2px solid var(--border);
+  animation: accordion-open 0.2s ease;
+  overflow: hidden;
+}
+
+@keyframes accordion-open {
+  from { max-height: 0; opacity: 0; }
+  to { max-height: 600px; opacity: 1; }
+}
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.accordion-header h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accordion-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.accordion-content .detail-content {
+  padding: 0;
+  min-height: 120px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 아코디언 열린 행 강조 */
+.doc-table tbody tr.accordion-open {
+  background: rgba(0, 113, 227, 0.06);
+  border-bottom-color: transparent;
+}
+
+.doc-table tbody tr.accordion-open td {
+  border-bottom-color: transparent;
+}
+
 /* --- 빈 상태 --- */
 .empty-state {
   text-align: center;

@@ -51,9 +51,6 @@
     tableSection: $('#table-section'),
     docTbody: $('#doc-tbody'),
     emptyState: $('#empty-state'),
-    detailPanel: $('#detail-panel'),
-    detailFilename: $('#detail-filename'),
-    detailContent: $('#detail-content'),
     benchmarkModal: $('#benchmark-modal'),
     benchmarkBody: $('#benchmark-body'),
     docModal: $('#doc-modal'),
@@ -377,9 +374,7 @@
           _refreshDetailView(doc);
         } else {
           // 서버 재시작 등으로 문서가 사라진 경우
-          selectedDocId = null;
-          detailView = null;
-          dom.detailPanel.style.display = 'none';
+          _closeAccordion();
         }
       }
     } catch (e) {
@@ -406,8 +401,16 @@
       dom.emptyState.style.display = '';
       dom.filterBar.style.display = 'none';
       dom.tableSection.style.display = 'none';
+      _closeAccordion();
       return;
     }
+
+    // 아코디언 상태 기억 (innerHTML 교체 시 소멸되므로)
+    const savedAccordion = selectedDocId && detailView ? {
+      docId: selectedDocId,
+      view: detailView,
+      param: detailViewParam,
+    } : null;
 
     dom.emptyState.style.display = 'none';
     dom.filterBar.style.display = '';
@@ -433,7 +436,7 @@
       const auditHtml = renderAuditBadge(doc);
       const actionsHtml = renderActions(doc);
       const rowClass = doc.status === 'error' ? 'error-row' : '';
-      const selClass = doc.id === selectedDocId ? 'selected' : '';
+      const selClass = doc.id === selectedDocId ? 'accordion-open' : '';
 
       return '<tr class="' + rowClass + ' ' + selClass + '" data-id="' + doc.id + '">' +
         '<td>' + procBadge + '</td>' +
@@ -452,8 +455,8 @@
         '</tr>';
     }).join('');
 
-    // 행 클릭 이벤트 — 추출 텍스트 뷰 표시
-    dom.docTbody.querySelectorAll('tr').forEach(tr => {
+    // 행 클릭 이벤트 — 아코디언 토글
+    dom.docTbody.querySelectorAll('tr[data-id]').forEach(tr => {
       tr.addEventListener('click', (e) => {
         if (e.target.closest('button')) return;
         if (e.target.closest('.inline-stage')) return;
@@ -468,13 +471,12 @@
         }
 
         const id = tr.dataset.id;
-        selectedDocId = id;
         const doc = documents.find(d => d.id === id);
         if (doc) {
           // completed일 때만 AI 요약, 그 외는 텍스트 뷰
-          showDetailView(doc, doc.status === 'completed' ? 'summary' : 'text');
+          const view = doc.status === 'completed' ? 'summary' : 'text';
+          showDetailView(doc, view);
         }
-        renderTable();
       });
     });
 
@@ -484,13 +486,11 @@
         e.stopPropagation();
         const tr = badge.closest('tr');
         const id = tr.dataset.id;
-        selectedDocId = id;
         const doc = documents.find(d => d.id === id);
         const stageName = badge.dataset.stage;
         if (doc && stageName) {
           showDetailView(doc, 'stage', stageName);
         }
-        renderTable();
       });
     });
 
@@ -500,12 +500,10 @@
         e.stopPropagation();
         const tr = badge.closest('tr');
         const id = tr.dataset.id;
-        selectedDocId = id;
         const doc = documents.find(d => d.id === id);
         if (doc) {
           showDetailView(doc, 'events');
         }
-        renderTable();
       });
     });
 
@@ -515,12 +513,10 @@
         e.stopPropagation();
         const tr = badge.closest('tr');
         const id = tr.dataset.id;
-        selectedDocId = id;
         const doc = documents.find(d => d.id === id);
         if (doc) {
           showDetailView(doc, 'audit');
         }
-        renderTable();
       });
     });
 
@@ -561,9 +557,7 @@
         try {
           await api('DELETE', '/api/documents/' + id);
           if (selectedDocId === id) {
-            selectedDocId = null;
-            detailView = null;
-            dom.detailPanel.style.display = 'none';
+            _closeAccordion();
           }
           await refreshDocuments();
         } catch (err) {
@@ -571,6 +565,18 @@
         }
       });
     });
+
+    // 아코디언 복원: renderTable()로 innerHTML이 교체된 후 다시 열기
+    if (savedAccordion) {
+      const doc = documents.find(d => d.id === savedAccordion.docId);
+      if (doc) {
+        // 상태를 초기화한 뒤 다시 열기 (토글 방지)
+        selectedDocId = null;
+        detailView = null;
+        detailViewParam = null;
+        showDetailView(doc, savedAccordion.view, savedAccordion.param);
+      }
+    }
   }
 
   function renderStatusCell(doc) {
@@ -697,9 +703,7 @@
         if (!confirm('모든 문서를 삭제하시겠습니까?')) return;
         try {
           await api('DELETE', '/api/documents');
-          selectedDocId = null;
-          detailView = null;
-          dom.detailPanel.style.display = 'none';
+          _closeAccordion();
           await refreshDocuments();
         } catch (err) {
           alert('전체 초기화 실패: ' + err.message);
@@ -740,47 +744,104 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 상세 패널 — 탭 없이 뷰 전환
+  // 아코디언 상세 뷰
   // ---------------------------------------------------------------------------
   function initDetail() {
-    $('#detail-close').addEventListener('click', () => {
-      dom.detailPanel.style.display = 'none';
-      selectedDocId = null;
-      detailView = null;
-      renderTable();
-    });
-
-    // 요약/전체 텍스트 토글
-    $$('.detail-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const view = btn.dataset.view;
-        if (!selectedDocId) return;
-        const doc = documents.find(d => d.id === selectedDocId);
-        if (!doc) return;
-        $$('.detail-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        showDetailView(doc, view);
-      });
-    });
+    // 아코디언 방식이므로 별도 초기화 불필요
   }
 
   /**
-   * 하단 패널에 뷰 표시
+   * 기존 아코디언 닫기
+   */
+  function _closeAccordion() {
+    const existing = document.querySelector('.accordion-row');
+    if (existing) {
+      // 원래 행의 강조 제거
+      const prevTr = existing.previousElementSibling;
+      if (prevTr) prevTr.classList.remove('accordion-open');
+      existing.remove();
+    }
+    selectedDocId = null;
+    detailView = null;
+    detailViewParam = null;
+  }
+
+  /**
+   * 아코디언 행을 해당 tr 아래에 삽입하여 상세 뷰 표시
    * @param {object} doc - 문서 객체
-   * @param {string} view - 'stage' | 'events' | 'audit' | 'text'
+   * @param {string} view - 'stage' | 'events' | 'audit' | 'summary' | 'text'
    * @param {string} [param] - 스테이지 이름 등
    */
   function showDetailView(doc, view, param) {
+    // 같은 doc, 같은 view를 다시 클릭하면 토글(닫기)
+    if (selectedDocId === doc.id && detailView === view && detailViewParam === (param || null)) {
+      _closeAccordion();
+      return;
+    }
+
+    // 기존 아코디언 닫기
+    const existingRow = document.querySelector('.accordion-row');
+    if (existingRow) {
+      const prevTr = existingRow.previousElementSibling;
+      if (prevTr) prevTr.classList.remove('accordion-open');
+      existingRow.remove();
+    }
+
+    selectedDocId = doc.id;
     detailView = view;
     detailViewParam = param || null;
-    dom.detailPanel.style.display = '';
-    dom.detailFilename.textContent = doc.filename;
 
-    // 탭 active 상태 업데이트
-    $$('.detail-tab').forEach(b => {
-      b.classList.toggle('active', b.dataset.view === view);
+    // 해당 행 찾기
+    const targetTr = dom.docTbody.querySelector('tr[data-id="' + doc.id + '"]');
+    if (!targetTr) return;
+
+    // 행 강조
+    dom.docTbody.querySelectorAll('tr.selected').forEach(t => t.classList.remove('selected'));
+    targetTr.classList.add('accordion-open');
+
+    // 아코디언 행 생성
+    const accTr = document.createElement('tr');
+    accTr.className = 'accordion-row';
+
+    // 탭 버튼 (요약/텍스트) — completed 상태에서만 탭 표시
+    let tabsHtml = '';
+    if (doc.status === 'completed' && (view === 'summary' || view === 'text')) {
+      tabsHtml =
+        '<button type="button" class="btn-xs accordion-tab' + (view === 'summary' ? ' active' : '') + '" data-view="summary">요약</button>' +
+        '<button type="button" class="btn-xs accordion-tab' + (view === 'text' ? ' active' : '') + '" data-view="text">전체 텍스트</button>';
+    }
+
+    accTr.innerHTML =
+      '<td colspan="13">' +
+      '<div class="accordion-content">' +
+      '<div class="accordion-header">' +
+      '<h3>' + escapeHtml(doc.filename) + '</h3>' +
+      '<div class="accordion-header-actions">' +
+      tabsHtml +
+      '<button type="button" class="btn-close accordion-close">&times;</button>' +
+      '</div></div>' +
+      '<div class="detail-content"></div>' +
+      '</div></td>';
+
+    // 행 바로 뒤에 삽입
+    targetTr.after(accTr);
+
+    // 닫기 버튼 이벤트
+    accTr.querySelector('.accordion-close').addEventListener('click', (e) => {
+      e.stopPropagation();
+      _closeAccordion();
     });
 
+    // 탭 전환 이벤트
+    accTr.querySelectorAll('.accordion-tab').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const newView = btn.dataset.view;
+        showDetailView(doc, newView);
+      });
+    });
+
+    // 콘텐츠 렌더링
     _renderDetailContent(doc, view, param);
   }
 
@@ -791,6 +852,14 @@
     if (detailView) {
       _renderDetailContent(doc, detailView, detailViewParam);
     }
+  }
+
+  /**
+   * 아코디언 내부의 detail-content 요소 얻기
+   */
+  function _getDetailContentEl() {
+    const accRow = document.querySelector('.accordion-row');
+    return accRow ? accRow.querySelector('.detail-content') : null;
   }
 
   /**
@@ -814,7 +883,8 @@
   // 요약 뷰
   // ---------------------------------------------------------------------------
   async function renderSummaryView(doc) {
-    const el = dom.detailContent;
+    const el = _getDetailContentEl();
+    if (!el) return;
     el.innerHTML = '<div class="ai-summary-loading"><div class="spinner"></div><p>AI 요약 생성 중...</p></div>';
 
     try {
@@ -844,7 +914,8 @@
   // 스테이지 상세 (뱃지 클릭 시 해당 스테이지만)
   // ---------------------------------------------------------------------------
   async function renderStageDetail(doc, stageName) {
-    const el = dom.detailContent;
+    const el = _getDetailContentEl();
+    if (!el) return;
     el.innerHTML = '<p class="text-muted">로딩...</p>';
 
     let stagesData = {};
@@ -977,7 +1048,8 @@
   // 추출 텍스트 뷰
   // ---------------------------------------------------------------------------
   async function loadExtractedText(docId) {
-    const el = dom.detailContent;
+    const el = _getDetailContentEl();
+    if (!el) return;
     el.innerHTML = '<p class="text-muted">로딩...</p>';
 
     try {
@@ -1031,7 +1103,8 @@
   // 이벤트 뷰 (하단 패널)
   // ---------------------------------------------------------------------------
   function renderEventsView(docId) {
-    const el = dom.detailContent;
+    const el = _getDetailContentEl();
+    if (!el) return;
     const docEvents = sseEventBuffer.filter(e => e.document_id === docId);
 
     if (docEvents.length === 0) {
@@ -1056,7 +1129,8 @@
   // 감사 로그 뷰 (하단 패널)
   // ---------------------------------------------------------------------------
   async function renderAuditView(docId) {
-    const el = dom.detailContent;
+    const el = _getDetailContentEl();
+    if (!el) return;
     el.innerHTML = '<div class="detail-view-title">감사로그</div><p class="text-muted">로딩...</p>';
     try {
       const data = await api('GET', '/api/audit/' + docId);
