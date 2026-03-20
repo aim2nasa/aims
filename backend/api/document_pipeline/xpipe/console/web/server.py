@@ -54,15 +54,17 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # .env.shared 로드 (API 키 등 환경변수)
 # ---------------------------------------------------------------------------
-def _load_env_shared() -> None:
-    """서버 루트의 .env.shared에서 환경변수 로드."""
-    # xpipe/console/web/server.py → 5단계 위가 aims 루트
-    # 하지만 서버 위치에 무관하게 홈 디렉토리 기준으로 탐색
+def _load_env_files() -> None:
+    """환경변수 파일들에서 API 키 등 로드. 먼저 로드된 값이 우선."""
     candidates = [
+        # .env.shared (전역)
         Path.home() / "aims" / ".env.shared",
         Path(__file__).resolve().parents[5] / ".env.shared",
-        Path.cwd() / ".env.shared",
+        # document_pipeline/.env (로컬 — Upstage 등)
+        Path(__file__).resolve().parents[3] / ".env",
+        Path.cwd() / ".env",
     ]
+    loaded = []
     for env_path in candidates:
         if env_path.exists():
             with open(env_path) as f:
@@ -74,11 +76,13 @@ def _load_env_shared() -> None:
                     key, value = key.strip(), value.strip()
                     if key and key not in os.environ:
                         os.environ[key] = value
-            logger.info(".env.shared 로드: %s", env_path)
-            return
-    logger.warning(".env.shared 파일을 찾을 수 없습니다")
+            loaded.append(str(env_path))
+    if loaded:
+        print(f"[xPipeWeb] 환경변수 로드: {', '.join(loaded)}")
+    else:
+        print("[xPipeWeb] WARNING: .env 파일을 찾을 수 없습니다")
 
-_load_env_shared()
+_load_env_files()
 
 # ---------------------------------------------------------------------------
 # 상수

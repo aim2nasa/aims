@@ -205,12 +205,20 @@ class ExtractStage(Stage):
             method = "ocr"
             text, ocr_model = await self._try_ocr(context, file_path, file_name, mime, ocr_model_name)
         elif is_pdf:
-            # PDF: pdfplumber로 실제 텍스트 추출 (모드 무관)
+            # PDF: pdfplumber로 텍스트 추출 시도
             method = "pdfplumber"
             ocr_model = "-"
             text = self._read_pdf_file(file_path, file_name)
-            if not text:
-                text = f"PDF 텍스트 추출 실패 (pdfplumber 미설치 또는 스캔 PDF)\n파일: {file_name}"
+            if not text and mode == "real":
+                # 스캔 PDF → OCR 폴백 시도
+                method = "pdfplumber+ocr_fallback"
+                text, ocr_model = await self._try_ocr(context, file_path, file_name, mime, ocr_model_name)
+            elif not text:
+                # stub 모드에서 텍스트 없으면 에러
+                raise RuntimeError(
+                    f"PDF 텍스트 추출 실패 (스캔 PDF). OCR이 필요하지만 시뮬레이션 모드에서는 "
+                    f"OCR을 실행하지 않습니다. 실제 실행 모드로 전환하세요. (파일: {file_name})"
+                )
         elif is_convertible:
             # HWP/DOC/PPTX/XLS: ConvertStage에서 변환된 PDF가 있으면 사용, 없으면 직접 변환
             method = "libreoffice+pdfplumber"
@@ -232,9 +240,16 @@ class ExtractStage(Stage):
                 f"MIME: {mime}\n"
             )
 
+        # 텍스트 추출 결과 검증 — 빈 텍스트는 에러 (가짜 성공 금지)
+        if not text or not text.strip():
+            raise RuntimeError(
+                f"텍스트 추출 실패: 추출된 텍스트가 없습니다. "
+                f"(파일: {file_name}, 방식: {method})"
+            )
+
         context["extracted_text"] = text
         context["text"] = text
-        context["has_text"] = bool(text.strip())
+        context["has_text"] = True
         context["extracted"] = True
 
         # stage_data 기록

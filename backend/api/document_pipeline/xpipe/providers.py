@@ -183,28 +183,46 @@ class UpstageOCRProvider(OCRProvider):
         with open(file_path, "rb") as f:
             file_content = f.read()
 
-        try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                response = await client.post(
-                    self.API_URL,
-                    headers={"Authorization": f"Bearer {self.api_key}"},
-                    files={"document": (filename, file_content)},
-                    data={"model": "ocr"},
-                )
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                async with httpx.AsyncClient(timeout=120.0) as client:
+                    response = await client.post(
+                        self.API_URL,
+                        headers={"Authorization": f"Bearer {self.api_key}"},
+                        files={"document": (filename, file_content)},
+                        data={"model": "ocr"},
+                    )
 
-                if response.status_code != 200:
-                    error_msg = self._parse_error(response)
-                    raise RuntimeError(f"Upstage API 오류 ({response.status_code}): {error_msg}")
+                    if response.status_code == 429:
+                        # Rate limit — 재시도 (exponential backoff)
+                        if attempt < max_retries - 1:
+                            import asyncio
+                            wait = 2 ** (attempt + 1)  # 2, 4, 8초
+                            await asyncio.sleep(wait)
+                            continue
+                        error_msg = self._parse_error(response)
+                        raise RuntimeError(f"Upstage API 오류 (429): {error_msg} (재시도 {max_retries}회 소진)")
 
-                data = response.json()
-                return {
-                    "text": data.get("text", ""),
-                    "pages": data.get("numBilledPages", 1),
-                    "confidence": data.get("confidence", 0.0),
-                }
+                    if response.status_code != 200:
+                        error_msg = self._parse_error(response)
+                        raise RuntimeError(f"Upstage API 오류 ({response.status_code}): {error_msg}")
 
-        except httpx.TimeoutException:
-            raise RuntimeError("Upstage OCR 처리 시간 초과 (120초)")
+                    data = response.json()
+                    return {
+                        "text": data.get("text", ""),
+                        "pages": data.get("numBilledPages", 1),
+                        "confidence": data.get("confidence", 0.0),
+                    }
+
+            except httpx.TimeoutException:
+                if attempt < max_retries - 1:
+                    import asyncio
+                    await asyncio.sleep(2 ** (attempt + 1))
+                    continue
+                raise RuntimeError("Upstage OCR 처리 시간 초과 (120초, 재시도 소진)")
+
+        raise RuntimeError("Upstage OCR 재시도 실패")
 
     @staticmethod
     def _parse_error(response: Any) -> str:
