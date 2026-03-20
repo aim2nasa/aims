@@ -419,6 +419,7 @@
 
   // 정렬 칼럼 정의 (헤더 인덱스 -> 정렬 키)
   const SORTABLE_COLUMNS = {
+    0: { key: 'queue_number', label: '#' },
     1: { key: 'proc_type', label: '유형' },
     2: { key: 'filename', label: '파일명' },
     3: { key: 'file_size', label: '크기' },
@@ -435,6 +436,7 @@
    */
   function _getSortValue(doc, key) {
     switch (key) {
+      case 'queue_number': return doc.queue_number || 0;
       case 'filename': return (doc.result && doc.result.display_name) || doc.filename || '';
       case 'file_size': return doc.file_size || 0;
       case 'file_ext': return getFileExt(doc.filename);
