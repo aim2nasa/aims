@@ -51,28 +51,30 @@ class DetectSpecialStage(Stage):
         customer_name = "-"
         issue_date = "-"
 
-        if mode == "stub":
-            # stub: 파일명 + 텍스트 키워드 기반 감지
-            search_target = (file_name + " " + text).lower()
-            for rule in _DETECTION_RULES:
-                for kw in rule["keywords"]:
-                    if kw.lower() in search_target:
-                        detected_type = rule["type"]
-                        matched_keywords.append(kw)
-                        detections.append({
-                            "doc_type": rule["type"],
-                            "matched_keyword": kw,
-                            "customer_name": "[고객명] (stub)",
-                            "issue_date": "2026-01-01 (stub)",
-                        })
-                        customer_name = "[고객명] (stub)"
-                        issue_date = "2026-01-01 (stub)"
-                        break
-                if detections:
+        # 텍스트 패턴 매칭 — API 불필요, 모든 모드에서 동작
+        search_target = (file_name + " " + text).lower()
+        for rule in _DETECTION_RULES:
+            for kw in rule["keywords"]:
+                if kw.lower() in search_target:
+                    detected_type = rule["type"]
+                    matched_keywords.append(kw)
+                    if mode == "stub":
+                        det_customer = "[고객명] (stub)"
+                        det_date = "2026-01-01 (stub)"
+                    else:
+                        det_customer = "-"
+                        det_date = "-"
+                    detections.append({
+                        "doc_type": rule["type"],
+                        "matched_keyword": kw,
+                        "customer_name": det_customer,
+                        "issue_date": det_date,
+                    })
+                    customer_name = det_customer
+                    issue_date = det_date
                     break
-        else:
-            # real 모드 (추후 DomainAdapter 연동)
-            pass
+            if detections:
+                break
 
         context["special_detected"] = True
         context["detections"] = detections

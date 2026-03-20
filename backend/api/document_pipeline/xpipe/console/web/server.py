@@ -50,6 +50,36 @@ from xpipe.stages.convert import needs_conversion
 
 logger = logging.getLogger(__name__)
 
+
+# ---------------------------------------------------------------------------
+# .env.shared 로드 (API 키 등 환경변수)
+# ---------------------------------------------------------------------------
+def _load_env_shared() -> None:
+    """서버 루트의 .env.shared에서 환경변수 로드."""
+    # xpipe/console/web/server.py → 5단계 위가 aims 루트
+    # 하지만 서버 위치에 무관하게 홈 디렉토리 기준으로 탐색
+    candidates = [
+        Path.home() / "aims" / ".env.shared",
+        Path(__file__).resolve().parents[5] / ".env.shared",
+        Path.cwd() / ".env.shared",
+    ]
+    for env_path in candidates:
+        if env_path.exists():
+            with open(env_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, _, value = line.partition("=")
+                    key, value = key.strip(), value.strip()
+                    if key and key not in os.environ:
+                        os.environ[key] = value
+            logger.info(".env.shared 로드: %s", env_path)
+            return
+    logger.warning(".env.shared 파일을 찾을 수 없습니다")
+
+_load_env_shared()
+
 # ---------------------------------------------------------------------------
 # 상수
 # ---------------------------------------------------------------------------
@@ -328,22 +358,13 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             # stub: 품질 "-"
             doc["quality"] = None
 
-        # 비용 추적
+        # 비용 추적 — stub은 비용 없음, real은 실제 API 응답 기반 (추후 정교화)
         if is_stub:
             doc["cost"] = None
         else:
-            cost_record = UsageRecord(
-                provider=current_config["mode"],
-                operation="pipeline",
-                input_tokens=500,
-                output_tokens=100,
-                estimated_cost=0.003,
-                timestamp=PipelineEvent(
-                    event_type="", document_id="", stage=""
-                ).timestamp,
-            )
-            cost_tracker.record(cost_record)
-            doc["cost"] = cost_record.estimated_cost
+            # 실제 비용은 각 스테이지에서 기록된 stage_data에서 집계
+            # 현재는 처리 완료 표시만 (하드코딩 금지)
+            doc["cost"] = None
 
         # 완료 이벤트
         await event_bus.emit(PipelineEvent(
@@ -984,6 +1005,16 @@ async def update_config(body: ConfigUpdate):
     if body.mode is not None:
         if body.mode not in ("stub", "real"):
             raise HTTPException(400, f"유효하지 않은 모드: {body.mode}")
+        # real 모드 전환 시 API 키 유효성 경고
+        if body.mode == "real":
+            env_map = {"openai": "OPENAI_API_KEY", "upstage": "UPSTAGE_API_KEY"}
+            missing = []
+            for prov, env_key in env_map.items():
+                key = current_config.get("api_keys", {}).get(prov, "") or os.environ.get(env_key, "")
+                if not key:
+                    missing.append(f"{prov} ({env_key})")
+            if missing:
+                logger.warning("실제 실행 모드 전환: API 키 미설정 — %s", ", ".join(missing))
         current_config["mode"] = body.mode
 
     if body.models is not None:

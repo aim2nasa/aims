@@ -151,36 +151,29 @@ class ExtractStage(Stage):
                 f"OCR 모델: {ocr_model_name}\n"
             ), ocr_model_name
 
+        # API 키 확인 — 없으면 즉시 에러 (가짜 결과 반환 금지)
+        api_key = context.get("_api_keys", {}).get("upstage", "")
+        if not api_key:
+            raise RuntimeError(
+                f"OCR 실행 불가: UPSTAGE_API_KEY가 설정되지 않았습니다. "
+                f"설정 패널에서 API 키를 입력하거나 .env.shared에 설정하세요. "
+                f"(파일: {file_name})"
+            )
+
         # ProviderRegistry가 context에 주입되어 있는지 확인
         registry = context.get("_provider_registry")
         if registry is None:
-            # 레거시 호환: Registry 없이 호출된 경우 직접 Provider 생성 시도
-            try:
-                from xpipe.providers import UpstageOCRProvider
-                api_key = context.get("_api_keys", {}).get("upstage", "")
-                provider = UpstageOCRProvider(api_key=api_key)
-                result = await provider.process(file_path)
-                return result.get("text", ""), provider.get_name()
-            except Exception as e:
-                return (
-                    f"OCR 처리 실패: {e}\n\n"
-                    f"파일: {file_name}\n"
-                    f"MIME: {mime}\n"
-                ), ocr_model_name
+            # 레거시 호환: Registry 없이 호출된 경우 직접 Provider 생성
+            from xpipe.providers import UpstageOCRProvider
+            provider = UpstageOCRProvider(api_key=api_key)
+            result = await provider.process(file_path)
+            return result.get("text", ""), provider.get_name()
 
         # Registry를 통한 호출 (폴백 체인 지원)
-        try:
-            # 실제 사용된 provider 이름 추적
-            provider = registry.get("ocr")
-            actual_name = provider.get_name()
-            result = await registry.call_with_fallback("ocr", "process", file_path)
-            return result.get("text", ""), actual_name
-        except Exception as e:
-            return (
-                f"OCR 처리 실패: {e}\n\n"
-                f"파일: {file_name}\n"
-                f"MIME: {mime}\n"
-            ), ocr_model_name
+        provider = registry.get("ocr")
+        actual_name = provider.get_name()
+        result = await registry.call_with_fallback("ocr", "process", file_path)
+        return result.get("text", ""), actual_name
 
     async def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         """텍스트 추출 처리"""
