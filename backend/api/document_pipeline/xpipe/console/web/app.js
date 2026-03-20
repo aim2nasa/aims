@@ -438,7 +438,9 @@
       const rowClass = doc.status === 'error' ? 'error-row' : '';
       const selClass = doc.id === selectedDocId ? 'accordion-open' : '';
 
+      const chevron = doc.id === selectedDocId ? '▼' : '▶';
       return '<tr class="' + rowClass + ' ' + selClass + '" data-id="' + doc.id + '">' +
+        '<td class="td-toggle"><button type="button" class="btn-accordion-toggle" title="상세 보기">' + chevron + '</button></td>' +
         '<td>' + procBadge + '</td>' +
         '<td class="td-filename td-clickable" data-action="preview" data-id="' + doc.id + '">' + displayName + '</td>' +
         '<td class="td-compact">' + sizeHtml + '</td>' +
@@ -458,7 +460,7 @@
     // 행 클릭 이벤트 — 아코디언 토글
     dom.docTbody.querySelectorAll('tr[data-id]').forEach(tr => {
       tr.addEventListener('click', (e) => {
-        if (e.target.closest('button')) return;
+        if (e.target.closest('button') && !e.target.closest('.btn-accordion-toggle')) return;
         if (e.target.closest('.inline-stage')) return;
         if (e.target.closest('.badge-events')) return;
         if (e.target.closest('.badge-audit')) return;
@@ -812,7 +814,7 @@
     }
 
     accTr.innerHTML =
-      '<td colspan="13">' +
+      '<td colspan="14">' +
       '<div class="accordion-content">' +
       '<div class="accordion-header">' +
       '<h3>' + escapeHtml(doc.filename) + '</h3>' +
