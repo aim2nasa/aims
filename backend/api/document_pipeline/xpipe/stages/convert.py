@@ -59,11 +59,15 @@ class ConvertStage(Stage):
 
         # 변환 성공 여부 판단
         import os as _os
-        conversion_ok = (
-            converted_path != file_path
-            and _os.path.exists(converted_path)
-            and _os.path.getsize(converted_path) > 0
-        )
+        if mode == "stub":
+            # stub: 파일 존재 검사 없이 성공으로 간주
+            conversion_ok = converted_path != file_path
+        else:
+            conversion_ok = (
+                converted_path != file_path
+                and _os.path.exists(converted_path)
+                and _os.path.getsize(converted_path) > 0
+            )
 
         context["original_file_path"] = file_path
         if conversion_ok:

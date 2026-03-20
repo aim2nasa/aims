@@ -214,11 +214,8 @@ class ExtractStage(Stage):
                 method = "pdfplumber+ocr_fallback"
                 text, ocr_model = await self._try_ocr(context, file_path, file_name, mime, ocr_model_name)
             elif not text:
-                # stub 모드에서 텍스트 없으면 에러
-                raise RuntimeError(
-                    f"PDF 텍스트 추출 실패 (스캔 PDF). OCR이 필요하지만 시뮬레이션 모드에서는 "
-                    f"OCR을 실행하지 않습니다. 실제 실행 모드로 전환하세요. (파일: {file_name})"
-                )
+                # stub 모드: 스캔 PDF는 OCR 불가 — 빈 텍스트 허용 (시뮬레이션)
+                text = ""
         elif is_convertible:
             # HWP/DOC/PPTX/XLS: ConvertStage에서 변환된 PDF가 있으면 사용, 없으면 직접 변환
             method = "libreoffice+pdfplumber"
@@ -240,8 +237,8 @@ class ExtractStage(Stage):
                 f"MIME: {mime}\n"
             )
 
-        # 텍스트 추출 결과 검증 — 빈 텍스트는 에러 (가짜 성공 금지)
-        if not text or not text.strip():
+        # 텍스트 추출 결과 검증 — real 모드에서 빈 텍스트는 에러 (가짜 성공 금지)
+        if mode != "stub" and (not text or not text.strip()):
             raise RuntimeError(
                 f"텍스트 추출 실패: 추출된 텍스트가 없습니다. "
                 f"(파일: {file_name}, 방식: {method})"
