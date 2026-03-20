@@ -133,9 +133,17 @@
           $('#cfg-openai-key').value = '';
           $('#cfg-upstage-key').value = '';
         }
+        // 저장 경로 (항상 전송 — 빈 값이면 임시 디렉토리로 복원)
+        const storagePathEl = $('#cfg-storage-path');
+        if (storagePathEl) {
+          payload.storage_path = storagePathEl.value.trim();
+        }
         const data = await api('PUT', '/api/config', payload);
         updateConfigDisplay(data.config);
-        api('GET', '/api/config').then(d => _updateKeyStatus(d.config.api_keys_status)).catch(() => {});
+        api('GET', '/api/config').then(d => {
+          _updateKeyStatus(d.config.api_keys_status);
+          _updateStorageDisplay(d.storage);
+        }).catch(() => {});
         dom.configPanel.style.display = 'none';
         dom.configToggle.classList.remove('open');
       } catch (e) {
@@ -162,6 +170,11 @@
 
       // API 키 상태 표시
       _updateKeyStatus(data.config.api_keys_status);
+
+      // 저장 경로 표시
+      if (data.storage) {
+        _updateStorageDisplay(data.storage);
+      }
     }).catch(() => {});
   }
 
@@ -261,6 +274,24 @@
     _renderKeyBadge('#key-status-upstage', keysStatus.upstage);
   }
 
+  function _updateStorageDisplay(storage) {
+    if (!storage) return;
+    const pathInput = $('#cfg-storage-path');
+    const activeLabel = $('#storage-active-path');
+    if (pathInput) {
+      pathInput.value = storage.storage_path || '';
+    }
+    if (activeLabel) {
+      if (storage.is_temporary) {
+        activeLabel.textContent = '임시: ' + (storage.active_path || '-') + ' (서버 종료 시 삭제)';
+        activeLabel.className = 'storage-active-path temporary';
+      } else {
+        activeLabel.textContent = '사용 중: ' + (storage.active_path || '-');
+        activeLabel.className = 'storage-active-path persistent';
+      }
+    }
+  }
+
   function _renderKeyBadge(selector, info) {
     const el = $(selector);
     if (!el || !info) return;
@@ -304,10 +335,23 @@
       if (i < allStages.length - 1) stageHtml += '<span class="summary-arrow">→</span>';
     });
 
+    // 저장 경로 요약
+    const storagePath = cfg.storage_path || '';
+    let storageLabel = '';
+    if (storagePath) {
+      // 경로가 길면 마지막 디렉토리명만 표시
+      const parts = storagePath.replace(/\\/g, '/').replace(/\/+$/, '').split('/');
+      const shortPath = parts.length > 2 ? '.../' + parts.slice(-2).join('/') : storagePath;
+      storageLabel = '<span class="summary-sep">|</span><span class="summary-text summary-storage" title="' + escapeHtml(storagePath) + '">' + escapeHtml(shortPath) + '</span>';
+    } else {
+      storageLabel = '<span class="summary-sep">|</span><span class="summary-text summary-storage-temp">임시 저장</span>';
+    }
+
     dom.configDisplay.innerHTML = stageHtml +
       '<span class="summary-sep">|</span>' +
       '<span class="summary-text">' + modeLabel + '</span>' +
-      (modelsStr ? '<span class="summary-sep">|</span><span class="summary-text">' + modelsStr + '</span>' : '');
+      (modelsStr ? '<span class="summary-sep">|</span><span class="summary-text">' + modelsStr + '</span>' : '') +
+      storageLabel;
     const ver = document.getElementById('version')?.textContent || 'v0.2.4';
     dom.ftVersion.textContent = 'xPipeWeb ' + ver + ' / ' + modeLabel;
   }
@@ -1361,9 +1405,7 @@
   // ---------------------------------------------------------------------------
   function initDocModal() {
     $('#doc-modal-close').addEventListener('click', closeDocModal);
-    dom.docModal.addEventListener('click', (e) => {
-      if (e.target === dom.docModal) closeDocModal();
-    });
+    // 배경 클릭으로 모달 닫지 않음 — x 버튼만으로 닫기
 
     // 탭 전환
     dom.docModal.querySelectorAll('.detail-tab').forEach(btn => {

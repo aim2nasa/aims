@@ -11,7 +11,7 @@
   <header class="header">
     <div class="header-left">
       <h1 class="logo">xPipe<span class="logo-sub">Web</span></h1>
-      <span class="version" id="version">v0.2.4</span>
+      <span class="version" id="version">v0.2.5</span>
     </div>
     <div class="header-right">
       <span class="status-indicator" id="sse-status"></span>
@@ -78,6 +78,16 @@
           <div class="key-input-wrap">
             <input type="password" id="cfg-upstage-key" placeholder="up_..." autocomplete="off" spellcheck="false">
             <span class="key-status" id="key-status-upstage"></span>
+          </div>
+        </div>
+      </div>
+      <div class="provider-card">
+        <span class="provider-label">저장</span>
+        <div class="provider-row storage-row">
+          <label>경로</label>
+          <div class="storage-input-wrap">
+            <input type="text" id="cfg-storage-path" placeholder="비워두면 임시 디렉토리 사용" autocomplete="off" spellcheck="false">
+            <span class="storage-active-path" id="storage-active-path"></span>
           </div>
         </div>
       </div>
@@ -178,7 +188,7 @@
     <span>
       <button class="btn btn-xs" id="btn-benchmark">벤치마크</button>
     </span>
-    <span class="footer-version" id="ft-version">xPipeWeb v0.2.4 / 시뮬레이션</span>
+    <span class="footer-version" id="ft-version">xPipeWeb v0.2.5 / 시뮬레이션</span>
   </footer>
 
   <script src="/app.js"></script>

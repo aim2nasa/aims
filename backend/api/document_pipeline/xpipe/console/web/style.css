@@ -420,6 +420,64 @@ body {
   color: var(--success);
 }
 
+/* --- 저장 경로 설정 --- */
+.storage-row {
+  flex: 1;
+}
+
+.storage-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.storage-input-wrap input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--mono);
+  background: var(--surface);
+  color: var(--text-primary);
+  outline: none;
+  min-width: 200px;
+}
+
+.storage-input-wrap input:focus {
+  border-color: var(--accent);
+}
+
+.storage-active-path {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.storage-active-path.temporary {
+  color: var(--warning);
+}
+
+.storage-active-path.persistent {
+  color: var(--success);
+}
+
+/* 설정 요약 바 — 저장 경로 */
+.summary-storage {
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.summary-storage-temp {
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-style: italic;
+}
+
 .config-actions {
   grid-column: 1 / -1;
   display: flex;

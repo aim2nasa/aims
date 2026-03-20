@@ -89,7 +89,7 @@ _load_env_files()
 # ---------------------------------------------------------------------------
 WEB_DIR = Path(__file__).parent
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
-VERSION = "0.2.4"
+VERSION = "0.2.5"
 
 # ---------------------------------------------------------------------------
 # 인메모리 상태
@@ -121,6 +121,7 @@ current_config: dict[str, Any] = {
         "openai": "",   # 빈 문자열이면 환경변수 fallback
         "upstage": "",  # Upstage OCR API 키
     },
+    "storage_path": "",  # 빈 문자열 = 임시 디렉토리 사용 (서버 종료 시 삭제)
 }
 
 # 임시 파일 디렉토리
@@ -951,6 +952,7 @@ class ConfigUpdate(BaseModel):
     models: Optional[dict[str, str]] = None
     api_keys: Optional[dict[str, str]] = None
     enabled_stages: Optional[list[str]] = None
+    storage_path: Optional[str] = None
 
 
 # 캐시된 LLM 모델 목록 (서버 시작 시 1회 조회)
@@ -1048,6 +1050,13 @@ async def get_config():
             "requires": _stage_dependencies().get(name, []),
         })
 
+    # 저장 경로 정보
+    storage_info = {
+        "storage_path": current_config.get("storage_path", ""),
+        "active_path": temp_dir or "",
+        "is_temporary": not bool(current_config.get("storage_path")),
+    }
+
     return {
         "config": config_safe,
         "stage_meta": stage_meta,
@@ -1057,6 +1066,7 @@ async def get_config():
             "ocr": ["upstage"],
             "embedding": ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"],
         },
+        "storage": storage_info,
     }
 
 
@@ -1118,6 +1128,44 @@ async def update_config(body: ConfigUpdate):
             if provider not in ("openai", "upstage"):
                 raise HTTPException(400, f"지원하지 않는 프로바이더: {provider}")
             current_config["api_keys"][provider] = key
+
+    if body.storage_path is not None:
+        global temp_dir
+        new_path = body.storage_path.strip()
+
+        if new_path:
+            # 경로가 지정된 경우: 디렉토리 존재 여부 확인 → 없으면 생성
+            try:
+                os.makedirs(new_path, exist_ok=True)
+            except OSError as exc:
+                raise HTTPException(400, f"저장 경로를 생성할 수 없습니다: {exc}")
+            if not os.access(new_path, os.W_OK):
+                raise HTTPException(400, f"저장 경로에 쓰기 권한이 없습니다: {new_path}")
+
+            # 처리 중/대기 중 문서가 있으면 경로 변경 차단
+            active_docs = [d for d in documents.values() if d["status"] in ("queued", "processing")]
+            if active_docs:
+                raise HTTPException(400, f"처리 중인 문서 {len(active_docs)}건이 있어 저장 경로를 변경할 수 없습니다. 완료 후 다시 시도하세요.")
+
+            # 기존 임시 디렉토리 정리 (임시 디렉토리였고 문서가 없는 경우만)
+            old_storage = current_config.get("storage_path", "")
+            if not old_storage and temp_dir and os.path.exists(temp_dir):
+                if not documents:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                    logger.info("기존 임시 디렉토리 삭제: %s", temp_dir)
+                else:
+                    logger.info("기존 임시 디렉토리 유지 (완료 문서 파일 보존): %s", temp_dir)
+
+            current_config["storage_path"] = new_path
+            temp_dir = new_path
+            logger.info("저장 경로 변경: %s", new_path)
+        else:
+            # 빈 문자열 = 임시 디렉토리로 복원
+            old_path = current_config.get("storage_path", "")
+            current_config["storage_path"] = ""
+            new_temp = tempfile.mkdtemp(prefix="xpipe_demo_")
+            temp_dir = new_temp
+            logger.info("임시 디렉토리로 복원: %s (이전 경로: %s — 파일 유지)", new_temp, old_path)
 
     # 응답에서 api_keys 원본은 제외
     config_safe = {k: v for k, v in current_config.items() if k != "api_keys"}
@@ -1279,9 +1327,25 @@ async def remove_document(doc_id: str):
 @app.on_event("startup")
 async def on_startup():
     global temp_dir, _worker_task
-    temp_dir = tempfile.mkdtemp(prefix="xpipe_demo_")
+    storage_path = current_config.get("storage_path", "")
+    if storage_path:
+        # 사용자 지정 경로 사용 + 권한 확인
+        try:
+            os.makedirs(storage_path, exist_ok=True)
+        except OSError:
+            storage_path = ""
+        if storage_path and os.access(storage_path, os.W_OK):
+            temp_dir = storage_path
+            logger.info("xPipeWeb v%s 시작 — 저장 경로: %s (사용자 지정)", VERSION, temp_dir)
+        else:
+            logger.warning("저장 경로 사용 불가: %s — 임시 디렉토리로 전환", current_config.get("storage_path"))
+            current_config["storage_path"] = ""
+            storage_path = ""
+    if not storage_path:
+        temp_dir = tempfile.mkdtemp(prefix="xpipe_demo_")
+        logger.info("xPipeWeb v%s 시작 — 임시 디렉토리: %s", VERSION, temp_dir)
     _worker_task = asyncio.create_task(_queue_worker())
-    logger.info("xPipeWeb v%s 시작 — 임시 디렉토리: %s, 큐 워커 시작 (max_concurrency=%d)", VERSION, temp_dir, MAX_CONCURRENCY)
+    logger.info("큐 워커 시작 (max_concurrency=%d)", MAX_CONCURRENCY)
 
 
 @app.on_event("shutdown")
@@ -1305,10 +1369,13 @@ async def on_shutdown():
 
     logger.info("큐 워커 종료")
 
-    # 3. 임시 디렉토리 삭제 (모든 태스크 종료 후)
+    # 3. 임시 디렉토리 삭제 (사용자 지정 경로가 아닌 경우만)
     if temp_dir and os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir, ignore_errors=True)
-        logger.info("임시 디렉토리 삭제: %s", temp_dir)
+        if current_config.get("storage_path"):
+            logger.info("사용자 지정 저장 경로 유지: %s (파일 삭제 안 함)", temp_dir)
+        else:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            logger.info("임시 디렉토리 삭제: %s", temp_dir)
 
 
 # ---------------------------------------------------------------------------
