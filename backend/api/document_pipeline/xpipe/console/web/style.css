@@ -598,7 +598,23 @@ body {
 .doc-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
+
+/* 칼럼 너비 고정 — 아코디언 열려도 칼럼 위치 변하지 않음 */
+.doc-table th:nth-child(1)  { width: 55px; }   /* 유형 */
+.doc-table th:nth-child(2)  { width: auto; }    /* 파일명 (유동) */
+.doc-table th:nth-child(3)  { width: 75px; }    /* 크기 */
+.doc-table th:nth-child(4)  { width: 45px; }    /* 타입 */
+.doc-table th:nth-child(5)  { width: 130px; }   /* 업로드 */
+.doc-table th:nth-child(6)  { width: auto; }    /* 상태 (유동) */
+.doc-table th:nth-child(7)  { width: 70px; }    /* 분류 */
+.doc-table th:nth-child(8)  { width: 70px; }    /* 감지 */
+.doc-table th:nth-child(9)  { width: 45px; }    /* 비용 */
+.doc-table th:nth-child(10) { width: 50px; }    /* 소요 */
+.doc-table th:nth-child(11) { width: 45px; }    /* 이벤트 */
+.doc-table th:nth-child(12) { width: 45px; }    /* 감사 */
+.doc-table th:nth-child(13) { width: 75px; }    /* 액션 */
 
 .doc-table th {
   font-size: 11px;
@@ -616,6 +632,8 @@ body {
   font-size: 12px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--border-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
   vertical-align: middle;
 }
 
