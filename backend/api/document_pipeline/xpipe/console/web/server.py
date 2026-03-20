@@ -363,13 +363,11 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             # stub: 품질 "-"
             doc["quality"] = None
 
-        # 비용 추적 — stub은 비용 없음, real은 실제 API 응답 기반 (추후 정교화)
+        # 비용 추적 — stub은 비용 없음, real은 _usage 토큰 기반 계산
         if is_stub:
             doc["cost"] = None
         else:
-            # 실제 비용은 각 스테이지에서 기록된 stage_data에서 집계
-            # 현재는 처리 완료 표시만 (하드코딩 금지)
-            doc["cost"] = None
+            doc["cost"] = _calculate_cost(result)
 
         # 완료 이벤트
         await event_bus.emit(PipelineEvent(
@@ -425,6 +423,84 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
 
 _PREVIEWABLE_EXTS = {".pdf", ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg",
                      ".txt", ".md", ".csv", ".log", ".json", ".xml", ".yaml", ".yml"}
+
+
+# ---------------------------------------------------------------------------
+# 비용 계산 (토큰 기반)
+# ---------------------------------------------------------------------------
+# 모델별 1K 토큰 가격 (USD)
+_MODEL_PRICING: dict[str, dict[str, float]] = {
+    # Chat models (input / output per 1K tokens)
+    "gpt-4.1-mini":     {"input": 0.0004, "output": 0.0016},
+    "gpt-4.1-nano":     {"input": 0.0001, "output": 0.0004},
+    "gpt-4.1":          {"input": 0.002,  "output": 0.008},
+    "gpt-4o-mini":      {"input": 0.00015,"output": 0.0006},
+    "gpt-4o":           {"input": 0.0025, "output": 0.01},
+    # Embedding models (input only per 1K tokens)
+    "text-embedding-3-small": {"input": 0.00002},
+    "text-embedding-3-large": {"input": 0.00013},
+    "text-embedding-ada-002": {"input": 0.0001},
+}
+
+# Upstage OCR 페이지당 비용 (USD)
+_UPSTAGE_OCR_COST_PER_PAGE = 0.01
+
+
+def _calculate_cost(result: dict[str, Any]) -> float | None:
+    """파이프라인 결과의 _usage 데이터를 기반으로 비용 계산.
+
+    Returns:
+        비용(USD). 사용량 데이터가 없으면 None.
+    """
+    usage_data = result.get("_usage", {})
+    if not usage_data:
+        # fallback: stage_data의 output.tokens에서 토큰 정보 수집
+        stage_data = result.get("stage_data", {})
+        for sname, sdata in stage_data.items():
+            tokens = sdata.get("output", {}).get("tokens")
+            if tokens:
+                usage_data[sname] = tokens
+        if not usage_data:
+            return None
+
+    total_cost = 0.0
+    has_data = False
+
+    for stage_name, usage in usage_data.items():
+        model = usage.get("model", "")
+        pricing = _MODEL_PRICING.get(model)
+        if not pricing:
+            # 알 수 없는 모델 — gpt-4.1-mini 기본 가격 적용
+            pricing = _MODEL_PRICING.get("gpt-4.1-mini", {"input": 0.0004, "output": 0.0016})
+
+        prompt_tokens = usage.get("prompt_tokens", 0)
+        completion_tokens = usage.get("completion_tokens", 0)
+
+        # 입력 비용
+        if prompt_tokens > 0:
+            total_cost += (prompt_tokens / 1000) * pricing.get("input", 0)
+            has_data = True
+
+        # 출력 비용 (embedding은 output 가격 없음)
+        if completion_tokens > 0 and "output" in pricing:
+            total_cost += (completion_tokens / 1000) * pricing["output"]
+            has_data = True
+
+        # embedding: total_tokens 기반 (prompt_tokens가 없을 수 있음)
+        if prompt_tokens == 0 and usage.get("total_tokens", 0) > 0:
+            total_cost += (usage["total_tokens"] / 1000) * pricing.get("input", 0)
+            has_data = True
+
+    # OCR 비용 (extract 스테이지의 stage_data에서 페이지 수 확인)
+    stage_data = result.get("stage_data", {})
+    extract_data = stage_data.get("extract", {})
+    extract_output = extract_data.get("output", {})
+    if extract_output.get("method", "").startswith("ocr") or "ocr" in extract_output.get("method", ""):
+        # OCR 사용 — 페이지 수가 없으면 1페이지로 추정
+        total_cost += _UPSTAGE_OCR_COST_PER_PAGE
+        has_data = True
+
+    return total_cost if has_data else None
 
 
 def _can_preview(doc: dict[str, Any]) -> bool:
@@ -665,6 +741,8 @@ async def list_documents():
     """전체 문서 목록 조회"""
     docs = []
     for doc in documents.values():
+        # 감사 건수를 실제 AuditLog에서 조회
+        audit_entries = audit_log.get_by_document(doc["id"])
         docs.append({
             "id": doc["id"],
             "filename": doc["filename"],
@@ -686,6 +764,7 @@ async def list_documents():
             "conversion_failed": bool(doc.get("conversion_failed")),
             "conversion_error": doc.get("conversion_error", ""),
             "enabled_stages": doc.get("enabled_stages", []),
+            "audit_count": len(audit_entries),
         })
     return {"documents": docs}
 

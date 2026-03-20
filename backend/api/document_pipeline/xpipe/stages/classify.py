@@ -76,7 +76,7 @@ class ClassifyStage(Stage):
         duration_ms = int((time.time() - start) * 1000)
         if "stage_data" not in context:
             context["stage_data"] = {}
-        context["stage_data"]["classify"] = {
+        classify_stage_data = {
             "status": "completed",
             "duration_ms": duration_ms,
             "input": {
@@ -89,6 +89,11 @@ class ClassifyStage(Stage):
                 "model": model_display,
             },
         }
+        # 토큰 사용량 포함 (비용 계산용)
+        usage_info = context.get("_usage", {}).get("classify")
+        if usage_info:
+            classify_stage_data["output"]["tokens"] = usage_info
+        context["stage_data"]["classify"] = classify_stage_data
 
         return context
 
@@ -140,6 +145,18 @@ async def _real_classify(
 
     result_text = response.choices[0].message.content.strip()
     logger.info("AI 분류 결과 (raw): %s", result_text)
+
+    # 토큰 사용량 기록 (비용 계산용)
+    usage = response.usage
+    if usage and "stage_data" not in context:
+        context["stage_data"] = {}
+    if usage:
+        context.setdefault("_usage", {})["classify"] = {
+            "prompt_tokens": usage.prompt_tokens,
+            "completion_tokens": usage.completion_tokens,
+            "total_tokens": usage.total_tokens,
+            "model": llm_model,
+        }
 
     try:
         if "```" in result_text:

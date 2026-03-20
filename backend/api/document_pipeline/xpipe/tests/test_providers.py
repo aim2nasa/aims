@@ -640,7 +640,7 @@ class TestExtractStageOCR:
         assert ocr_model == "test-ocr"
 
     def test_image_real_mode_no_registry_no_key(self):
-        """실제 실행 모드 + Registry 없음 + API 키 없음 → 에러 메시지"""
+        """실제 실행 모드 + Registry 없음 + API 키 없음 → RuntimeError"""
         from xpipe.stages.extract import ExtractStage
         import os
         old = os.environ.pop("UPSTAGE_API_KEY", None)
@@ -654,9 +654,8 @@ class TestExtractStageOCR:
                 "models": {"ocr": "upstage"},
                 "_api_keys": {"upstage": ""},
             }
-            result = asyncio.get_event_loop().run_until_complete(stage.execute(context))
-            text = result.get("extracted_text", "")
-            assert "실패" in text or "API 키" in text
+            with pytest.raises(RuntimeError, match="UPSTAGE_API_KEY"):
+                asyncio.get_event_loop().run_until_complete(stage.execute(context))
         finally:
             if old is not None:
                 os.environ["UPSTAGE_API_KEY"] = old
@@ -681,11 +680,10 @@ class TestExtractStageOCR:
         text = result.get("extracted_text", "")
         assert "OCR 결과" in text  # backup-ocr가 성공
 
-    def test_pdf_not_affected(self):
-        """PDF 파일은 OCR Provider와 무관하게 기존 방식 유지"""
+    def test_pdf_scan_ocr_fallback_no_key(self):
+        """스캔 PDF(텍스트 0) + API 키 없음 → OCR 폴백 시 RuntimeError"""
         from xpipe.stages.extract import ExtractStage
         import tempfile, os
-        # 빈 텍스트 파일을 PDF로 가장 (pdfplumber 실패하겠지만 OCR 호출은 안 함)
         stage = ExtractStage()
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
             f.write(b"%PDF-1.4 dummy")
@@ -697,9 +695,9 @@ class TestExtractStageOCR:
                 "mime_type": "application/pdf",
                 "mode": "real",
                 "models": {"ocr": "upstage"},
+                "_api_keys": {"upstage": ""},
             }
-            result = asyncio.get_event_loop().run_until_complete(stage.execute(context))
-            stage_data = result.get("stage_data", {}).get("extract", {})
-            assert stage_data.get("input", {}).get("method") == "pdfplumber"
+            with pytest.raises(RuntimeError, match="UPSTAGE_API_KEY"):
+                asyncio.get_event_loop().run_until_complete(stage.execute(context))
         finally:
             os.unlink(tmp)

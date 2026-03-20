@@ -23,6 +23,13 @@
   let pollTimer = null;
   let sseEventBuffer = [];  // 문서별 이벤트 추적
 
+  // 정렬 상태
+  let sortColumn = 'created_at'; // 기본 정렬: 업로드 시간
+  let sortDirection = 'desc';    // 기본: 내림차순
+
+  // 감사로그 건수 캐시 (doc_id -> count)
+  let auditCountCache = {};
+
   // 현재 하단 패널에 표시 중인 뷰 종류
   // 'stage' | 'events' | 'audit' | 'text' | null
   let detailView = null;
@@ -393,10 +400,68 @@
     classify: 'AI분류', detect_special: '감지', embed: '임베딩', complete: '완료'
   };
 
+  // 상태 한글 매핑 (도트 툴팁용)
+  const STATUS_LABELS = {
+    pending: '대기', running: '처리중', completed: '완료', error: '에러'
+  };
+
+  // 정렬 칼럼 정의 (헤더 인덱스 -> 정렬 키)
+  const SORTABLE_COLUMNS = {
+    1: { key: 'proc_type', label: '유형' },
+    2: { key: 'filename', label: '파일명' },
+    3: { key: 'file_size', label: '크기' },
+    4: { key: 'file_ext', label: '타입' },
+    5: { key: 'created_at', label: '업로드' },
+    6: { key: 'status', label: '상태' },
+    7: { key: 'doc_type', label: '분류' },
+    9: { key: 'cost', label: '비용' },
+    10: { key: 'duration', label: '소요' },
+  };
+
+  /**
+   * 정렬 키에 해당하는 값을 문서에서 추출
+   */
+  function _getSortValue(doc, key) {
+    switch (key) {
+      case 'filename': return (doc.result && doc.result.display_name) || doc.filename || '';
+      case 'file_size': return doc.file_size || 0;
+      case 'file_ext': return getFileExt(doc.filename);
+      case 'proc_type': return getProcessingType(getFileExt(doc.filename));
+      case 'created_at': return doc.created_at || 0;
+      case 'status': return doc.status || '';
+      case 'doc_type': return (doc.result && doc.result.document_type) || '';
+      case 'cost': return doc.cost || 0;
+      case 'duration': return doc.duration || 0;
+      default: return '';
+    }
+  }
+
+  /**
+   * 문서 배열을 현재 정렬 상태로 정렬
+   */
+  function sortDocuments(docs) {
+    return docs.slice().sort((a, b) => {
+      let va = _getSortValue(a, sortColumn);
+      let vb = _getSortValue(b, sortColumn);
+      // 문자열 비교
+      if (typeof va === 'string' && typeof vb === 'string') {
+        va = va.toLowerCase();
+        vb = vb.toLowerCase();
+        if (va < vb) return sortDirection === 'asc' ? -1 : 1;
+        if (va > vb) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+      // 숫자 비교
+      if (sortDirection === 'asc') return (va || 0) - (vb || 0);
+      return (vb || 0) - (va || 0);
+    });
+  }
+
   function renderTable() {
-    const filtered = currentFilter === 'all'
+    const filteredUnsorted = currentFilter === 'all'
       ? documents
       : documents.filter(d => d.status === currentFilter);
+    const filtered = sortDocuments(filteredUnsorted);
 
     if (documents.length === 0) {
       dom.emptyState.style.display = '';
@@ -588,38 +653,21 @@
     }
 
     if (doc.status === 'error') {
+      // 에러 시에도 도트 표시 (어느 스테이지에서 에러인지 시각적으로)
+      const stagesDetail = doc.stages_detail || {};
+      const stageOrder = Object.keys(stagesDetail);
+      if (stageOrder.length > 0) {
+        return _renderDotPipeline(doc, stagesDetail, stageOrder);
+      }
       return '<span class="status-text error">에러</span>';
     }
 
-    // 완료 또는 처리중: 파이프라인 뱃지 표시
+    // 완료 또는 처리중: 도트 아이콘 표시
     const stagesDetail = doc.stages_detail || {};
     const stageOrder = Object.keys(stagesDetail);
 
     if (stageOrder.length > 0) {
-      let html = '<div class="inline-pipeline">';
-      const skipped = (doc.result && doc.result.stages_skipped) || [];
-      for (let i = 0; i < stageOrder.length; i++) {
-        const name = stageOrder[i];
-        if (skipped.includes(name)) continue; // 스킵된 단계 미표시
-        const detail = stagesDetail[name] || {};
-        let cls = 'pending';
-        if (detail.status === 'completed') cls = 'done';
-        else if (detail.status === 'running') cls = 'running';
-        else if (detail.status === 'error') cls = 'error';
-        const label = STAGE_LABELS[name] || name;
-
-        // 화살표: 이전에 표시된 스테이지가 있으면 화살표 추가
-        let prevShown = false;
-        for (let j = i - 1; j >= 0; j--) {
-          if (!skipped.includes(stageOrder[j])) { prevShown = true; break; }
-        }
-        if (prevShown) {
-          html += '<span class="inline-arrow">\u2192</span>';
-        }
-        html += '<span class="inline-stage ' + cls + '" data-stage="' + name + '">' + label + '</span>';
-      }
-      html += '</div>';
-      return html;
+      return _renderDotPipeline(doc, stagesDetail, stageOrder);
     }
 
     if (doc.status === 'completed') {
@@ -634,6 +682,29 @@
     return '<span class="status-text">' + escapeHtml(doc.status) + '</span>';
   }
 
+  /**
+   * 파이프라인 상태를 도트 아이콘으로 렌더링
+   */
+  function _renderDotPipeline(doc, stagesDetail, stageOrder) {
+    let html = '<div class="inline-pipeline dot-mode">';
+    const skipped = (doc.result && doc.result.stages_skipped) || [];
+    for (let i = 0; i < stageOrder.length; i++) {
+      const name = stageOrder[i];
+      if (skipped.includes(name)) continue;
+      const detail = stagesDetail[name] || {};
+      let cls = 'pending';
+      if (detail.status === 'completed') cls = 'done';
+      else if (detail.status === 'running') cls = 'running';
+      else if (detail.status === 'error') cls = 'error';
+      const label = STAGE_LABELS[name] || name;
+      const statusLabel = STATUS_LABELS[detail.status] || detail.status || '대기';
+      const tip = label + ' : ' + statusLabel;
+      html += '<span class="stage-dot inline-stage ' + cls + '" data-stage="' + name + '" data-tip="' + tip + '"></span>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   function renderDetections(doc) {
     if (!doc.result || !doc.result.detections || doc.result.detections.length === 0) {
       return '<span class="text-muted">-</span>';
@@ -645,6 +716,10 @@
     if (doc.cost === null || doc.cost === undefined) {
       return '<span class="text-muted has-tooltip" data-tip="시뮬레이션 모드에서는 비용이 발생하지 않습니다">-</span>';
     }
+    // 매우 작은 비용은 소수점 4자리까지
+    if (doc.cost < 0.001) {
+      return '$' + doc.cost.toFixed(4);
+    }
     return '$' + doc.cost.toFixed(3);
   }
 
@@ -655,15 +730,11 @@
     return '<span class="badge badge-events badge-count">' + docEvents.length + '건</span>';
   }
 
-  // R5: 감사로그 건수 뱃지 (비동기 로드 불가하므로 stages_data 기반 추정)
+  // R5: 감사로그 건수 뱃지 (서버에서 실제 건수 제공)
   function renderAuditBadge(doc) {
-    // 완료된 스테이지 수 + upload + complete = 대략적 감사 건수
-    const stagesDetail = doc.stages_detail || {};
-    const completedCount = Object.values(stagesDetail).filter(s => s.status === 'completed').length;
-    // upload(1) + 각 stage_completed + pipeline_completed(1) = completedCount + 2 (대략)
-    const estimatedCount = completedCount > 0 ? completedCount + 2 : 0;
-    if (estimatedCount === 0) return '<span class="text-muted">-</span>';
-    return '<span class="badge badge-audit badge-count">' + estimatedCount + '건</span>';
+    const count = doc.audit_count || 0;
+    if (count === 0) return '<span class="text-muted">-</span>';
+    return '<span class="badge badge-audit badge-count">' + count + '건</span>';
   }
 
   function renderActions(doc) {
@@ -1639,6 +1710,31 @@
   // ---------------------------------------------------------------------------
   // 초기화
   // ---------------------------------------------------------------------------
+  function initSortableHeaders() {
+    document.querySelectorAll('.doc-table th.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        if (!key) return;
+        if (sortColumn === key) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortColumn = key;
+          sortDirection = 'asc';
+        }
+        // 헤더 UI 갱신
+        document.querySelectorAll('.doc-table th.sortable').forEach(h => {
+          h.classList.remove('sort-active');
+          const arrow = h.querySelector('.sort-arrow');
+          if (arrow) arrow.innerHTML = '';
+        });
+        th.classList.add('sort-active');
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) arrow.innerHTML = sortDirection === 'asc' ? '&#9650;' : '&#9660;';
+        renderTable();
+      });
+    });
+  }
+
   function init() {
     initConfig();
     initUpload();
@@ -1646,6 +1742,7 @@
     initDetail();
     initBenchmark();
     initDocModal();
+    initSortableHeaders();
     initSSE();
     refreshDocuments();
 

@@ -53,7 +53,7 @@ class EmbedStage(Stage):
         duration_ms = int((time.time() - start) * 1000)
         if "stage_data" not in context:
             context["stage_data"] = {}
-        context["stage_data"]["embed"] = {
+        embed_stage_data = {
             "status": "completed",
             "duration_ms": duration_ms,
             "input": {
@@ -69,6 +69,11 @@ class EmbedStage(Stage):
                 "docembed_status": "completed",
             },
         }
+        # 토큰 사용량 포함 (비용 계산용)
+        usage_info = context.get("_usage", {}).get("embed")
+        if usage_info:
+            embed_stage_data["output"]["tokens"] = usage_info
+        context["stage_data"]["embed"] = embed_stage_data
 
         return context
 
@@ -106,6 +111,16 @@ async def _real_embed(
     )
 
     dims = len(response.data[0].embedding)
+
+    # 토큰 사용량 기록 (비용 계산용)
+    usage = response.usage
+    if usage:
+        context.setdefault("_usage", {})["embed"] = {
+            "prompt_tokens": getattr(usage, "prompt_tokens", usage.total_tokens),
+            "total_tokens": usage.total_tokens,
+            "model": embed_model,
+        }
+
     logger.info("임베딩 완료: %d차원, 모델=%s", dims, embed_model)
 
     return dims, embed_model

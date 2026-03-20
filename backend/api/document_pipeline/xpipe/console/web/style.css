@@ -602,20 +602,20 @@ body {
 }
 
 /* 칼럼 너비 고정 — 아코디언 열려도 칼럼 위치 변하지 않음 */
-.doc-table th:nth-child(1)  { width: 28px; }    /* 토글 */
-.doc-table th:nth-child(2)  { width: 55px; }    /* 유형 */
+.doc-table th:nth-child(1)  { width: 24px; }    /* 토글 */
+.doc-table th:nth-child(2)  { width: 50px; }    /* 유형 */
 .doc-table th:nth-child(3)  { width: auto; }    /* 파일명 (유동) */
-.doc-table th:nth-child(4)  { width: 75px; }    /* 크기 */
-.doc-table th:nth-child(5)  { width: 45px; }    /* 타입 */
-.doc-table th:nth-child(6)  { width: 130px; }   /* 업로드 */
-.doc-table th:nth-child(7)  { width: auto; }    /* 상태 (유동) */
-.doc-table th:nth-child(8)  { width: 70px; }    /* 분류 */
-.doc-table th:nth-child(9)  { width: 70px; }    /* 감지 */
-.doc-table th:nth-child(10) { width: 45px; }    /* 비용 */
-.doc-table th:nth-child(11) { width: 50px; }    /* 소요 */
-.doc-table th:nth-child(12) { width: 45px; }    /* 이벤트 */
-.doc-table th:nth-child(13) { width: 45px; }    /* 감사 */
-.doc-table th:nth-child(14) { width: 75px; }    /* 액션 */
+.doc-table th:nth-child(4)  { width: 65px; }    /* 크기 */
+.doc-table th:nth-child(5)  { width: 40px; }    /* 타입 */
+.doc-table th:nth-child(6)  { width: 120px; }   /* 업로드 */
+.doc-table th:nth-child(7)  { width: 100px; }   /* 상태 (아이콘 도트) */
+.doc-table th:nth-child(8)  { width: 65px; }    /* 분류 */
+.doc-table th:nth-child(9)  { width: 65px; }    /* 감지 */
+.doc-table th:nth-child(10) { width: 50px; }    /* 비용 */
+.doc-table th:nth-child(11) { width: 45px; }    /* 소요 */
+.doc-table th:nth-child(12) { width: 40px; }    /* 이벤트 */
+.doc-table th:nth-child(13) { width: 40px; }    /* 감사 */
+.doc-table th:nth-child(14) { width: 70px; }    /* 액션 */
 
 /* 토글 버튼 */
 .td-toggle { padding: 0 4px !important; text-align: center; }
@@ -643,6 +643,29 @@ body {
   text-align: left;
   border-bottom: 1px solid var(--border-light);
   background: var(--bg);
+}
+
+/* 정렬 가능 헤더 */
+.doc-table th.sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.doc-table th.sortable:hover {
+  color: var(--text-primary);
+}
+
+.doc-table th .sort-arrow {
+  font-size: 9px;
+  margin-left: 2px;
+  opacity: 0.4;
+}
+
+.doc-table th.sort-active .sort-arrow {
+  opacity: 1;
+  color: var(--accent);
 }
 
 .doc-table td {
@@ -872,6 +895,74 @@ body {
   row-gap: 4px;
 }
 
+/* 도트 아이콘 모드 (상태 컬럼) */
+.inline-pipeline.dot-mode {
+  gap: 3px;
+}
+
+.inline-pipeline.dot-mode .stage-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  flex-shrink: 0;
+  position: relative;
+  /* inline-stage 기본 스타일 오버라이드 */
+  padding: 0;
+  font-size: 0;
+  background: none;
+}
+
+.inline-pipeline.dot-mode .stage-dot:hover {
+  opacity: 0.8;
+  transform: scale(1.4);
+}
+
+.inline-pipeline.dot-mode .stage-dot.done {
+  background: var(--success);
+}
+
+.inline-pipeline.dot-mode .stage-dot.running {
+  background: var(--processing);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.inline-pipeline.dot-mode .stage-dot.pending {
+  background: var(--border);
+}
+
+.inline-pipeline.dot-mode .stage-dot.error {
+  background: var(--error);
+}
+
+/* 도트 툴팁 (CSS only) */
+.inline-pipeline.dot-mode .stage-dot::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--text-primary);
+  color: var(--surface);
+  font-size: 10px;
+  font-weight: 400;
+  white-space: nowrap;
+  z-index: 300;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.inline-pipeline.dot-mode .stage-dot:hover::after {
+  opacity: 1;
+}
+
 .inline-stage {
   display: inline-flex;
   align-items: center;
@@ -882,6 +973,7 @@ body {
   cursor: pointer;
   transition: opacity 0.15s, transform 0.15s;
   white-space: nowrap;
+  -webkit-user-select: none;
   user-select: none;
 }
 
