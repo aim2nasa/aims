@@ -104,11 +104,12 @@ audit_log = AuditLog()
 cost_tracker = CostTracker()
 quality_gate = QualityGate()
 
-# 현재 설정 (provider → mode 로 수정)
+# 현재 설정 — API 키가 있으면 실제 실행, 없으면 시뮬레이션
+_default_mode = "real" if os.environ.get("OPENAI_API_KEY") else "stub"
 current_config: dict[str, Any] = {
-    "adapter": "insurance",
+    "adapter": "none",
     "quality_gate": True,
-    "mode": "stub",
+    "mode": _default_mode,
     "enabled_stages": ["ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"],
     "models": {
         "llm": "gpt-4.1-mini",
