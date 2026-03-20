@@ -800,8 +800,9 @@ class TestGoldenFile:
         # 각 스테이지의 결과 플래그
         assert result["ingested"] is True
         assert result["extracted"] is True
-        assert result["classified"] is True
-        assert result["special_detected"] is True
+        # 어댑터 미제공 → classify/detect_special은 skipped
+        assert result["classified"] is False
+        assert result["special_detected"] is False
         assert result["embedded"] is True
         assert result["completed"] is True
         assert result["status"] == "completed"
@@ -926,13 +927,17 @@ class TestBuiltinStages:
         assert ExtractStage().should_skip({"has_text": False}) is False
         assert ExtractStage().should_skip({}) is False
 
-    def test_classify_stage(self):
+    def test_classify_stage_no_adapter(self):
+        """어댑터 미제공 → classify skipped"""
         result = _run(ClassifyStage().execute({}))
-        assert result["classified"] is True
+        assert result["classified"] is False
+        assert result["stage_data"]["classify"]["status"] == "skipped"
 
-    def test_detect_special_stage(self):
+    def test_detect_special_stage_no_adapter(self):
+        """어댑터 미제공 → detect_special skipped"""
         result = _run(DetectSpecialStage().execute({}))
-        assert result["special_detected"] is True
+        assert result["special_detected"] is False
+        assert result["stage_data"]["detect_special"]["status"] == "skipped"
 
     def test_embed_stage(self):
         result = _run(EmbedStage().execute({}))

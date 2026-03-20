@@ -146,8 +146,9 @@ class TestPipelineE2EFlow:
 
         # 최종 상태 확인
         assert result["ingested"] is True
-        assert result["classified"] is True
-        assert result["special_detected"] is True
+        # 어댑터 미제공 → classify/detect_special은 skipped
+        assert result["classified"] is False
+        assert result["special_detected"] is False
         assert result["embedded"] is True
         assert result["completed"] is True
         assert result["status"] == "completed"
