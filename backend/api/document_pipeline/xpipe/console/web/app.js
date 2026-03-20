@@ -286,9 +286,23 @@
     const modelsStr = cfg.models
       ? cfg.models.llm + ' / ' + cfg.models.ocr + ' / ' + cfg.models.embedding
       : '';
-    const stageCount = (cfg.enabled_stages || []).length;
-    dom.configDisplay.textContent = stageCount + '단계 / ' + modeLabel +
-      (modelsStr ? ' | ' + modelsStr : '');
+
+    // 스테이지 뱃지 생성
+    const enabled = cfg.enabled_stages || [];
+    const allStages = ['ingest', 'convert', 'extract', 'classify', 'detect_special', 'embed', 'complete'];
+    let stageHtml = '';
+    allStages.forEach((name, i) => {
+      const isOn = enabled.includes(name);
+      const label = STAGE_TOGGLE_LABELS[name] || name;
+      const cls = isOn ? 'summary-stage on' : 'summary-stage off';
+      stageHtml += '<span class="' + cls + '">' + label + '</span>';
+      if (i < allStages.length - 1) stageHtml += '<span class="summary-arrow">→</span>';
+    });
+
+    dom.configDisplay.innerHTML = stageHtml +
+      '<span class="summary-sep">|</span>' +
+      '<span class="summary-text">' + modeLabel + '</span>' +
+      (modelsStr ? '<span class="summary-sep">|</span><span class="summary-text">' + modelsStr + '</span>' : '');
     dom.ftVersion.textContent = 'xPipeWeb v0.2.2 / ' + modeLabel;
   }
 

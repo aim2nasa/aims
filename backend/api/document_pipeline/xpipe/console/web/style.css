@@ -133,6 +133,47 @@ body {
   font-size: 12px;
   color: var(--text-secondary);
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+/* 설정 요약 바 — 스테이지 뱃지 */
+.summary-stage {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.summary-stage.on {
+  background: rgba(52, 199, 89, 0.12);
+  color: #248a3d;
+}
+
+.summary-stage.off {
+  background: rgba(142, 142, 147, 0.08);
+  color: var(--border);
+  text-decoration: line-through;
+}
+
+.summary-arrow {
+  color: var(--border);
+  font-size: 9px;
+}
+
+.summary-sep {
+  color: var(--border);
+  margin: 0 4px;
+}
+
+.summary-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
 }
 
 .config-toggle {
