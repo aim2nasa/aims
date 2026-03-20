@@ -409,7 +409,9 @@
       const typeHtml = ext ? ext.toUpperCase() : '-';
       const uploadHtml = formatDate(doc.created_at);
       const statusHtml = renderStatusCell(doc);
-      const classifyHtml = doc.result ? escapeHtml(doc.result.document_type) : '<span class="text-muted">-</span>';
+      const classifyRan = (doc.enabled_stages || []).includes('classify');
+      const classifyHtml = !classifyRan ? '<span class="text-muted">-</span>'
+        : doc.result ? escapeHtml(doc.result.document_type) : '<span class="text-muted">-</span>';
       const detectHtml = renderDetections(doc);
       const costHtml = renderCost(doc);
       const durationHtml = doc.duration ? doc.duration.toFixed(2) + 's' : '<span class="text-muted">-</span>';

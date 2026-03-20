@@ -212,6 +212,7 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         enabled = current_config.get("enabled_stages", [s["name"] for s in ALL_STAGES])
         pipeline = _build_pipeline(enabled)
         stage_names = enabled
+        doc["enabled_stages"] = list(enabled)  # 실행 시점의 스테이지 기록
 
         # MIME 타입 추론 (needs_conversion 판단용)
         import mimetypes
@@ -621,6 +622,7 @@ async def list_documents():
             "is_converted": bool(doc.get("converted_pdf_path")),
             "conversion_failed": bool(doc.get("conversion_failed")),
             "conversion_error": doc.get("conversion_error", ""),
+            "enabled_stages": doc.get("enabled_stages", []),
         })
     return {"documents": docs}
 
