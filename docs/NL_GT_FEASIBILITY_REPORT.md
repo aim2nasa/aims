@@ -369,3 +369,116 @@ GT 93건 (기존 80건 + AR 3건 + CRS 10건):
 - CRS 누락 필드 추가 → 사망수익자, 적립금, 수익률 등 질의 가능해짐
 - CRS 도구 선택 프롬프트 가이드 → AI가 `list_contracts` 대신 `get_customer_reviews` 올바르게 선택
 - AR 보험사 필드 + 가입금액 정렬 → 보험사별 필터, 보장금액 순위 질의 가능
+
+---
+
+## 14. AR/CRS 도구 재설계 — 커버율 95% 이상 목표 (설계안)
+
+### 목표
+AR/CRS 문서에 파싱된 모든 데이터를 자연어로 조회할 수 있게 한다.
+**모든 영역 커버율 95% 이상.**
+
+### 현재 커버율
+
+| 영역 | 현재 |
+|------|:---:|
+| AR 단일 조회 | 90% |
+| AR 조건부 필터 | 30% |
+| AR 집계 | 40% |
+| CRS 현재 상태 | 80% |
+| CRS 조건부 필터 | 0% |
+| CRS 집계 | 20% |
+| CRS 이력 | 80% |
+
+### 도구 구성 (7개: 1개 대폭 보강, 1개 신규, 1개 보강, 4개 유지)
+
+| 도구 | 상태 | 용도 |
+|------|:---:|------|
+| `list_contracts` | **대폭 보강** | AR 계약 조건부 조회 + 집계 |
+| `get_contract_details` | 유지 | 단일 계약 상세 |
+| `get_ar_contract_history` | 유지 | AR 이력 변화 |
+| `get_annual_reports` | 유지 | AR 메타 |
+| `get_customer_reviews` | 유지 | CRS 현재 상태 반환 |
+| `query_customer_reviews` | **신규** | CRS 조건부 조회 + 집계 |
+| `get_cr_contract_history` | **보강** | CRS 이력 변화 + 펀드 필터 |
+
+### list_contracts 보강 상세
+
+**추가 필터 파라미터:**
+
+| 파라미터 | 용도 |
+|---------|------|
+| insurerName | 보험사 필터 |
+| paymentStatus | 납입상태 필터 (납입중/납입완료/일시납) |
+| coverageAmountMin/Max | 보장금액 범위 |
+| premiumMin/Max | 보험료 범위 |
+| insurancePeriod | 보험기간 필터 ("종신", "100세" 등) |
+| contractorNotInsured | boolean — 계약자≠피보험자 |
+| paymentPeriodMin | 납입기간 최소 (년) |
+| includeLapsed | boolean — 실효 계약 포함 (기본 false) |
+
+**summary 확장:**
+
+| 필드 | 용도 |
+|------|------|
+| byInsurer[] | 보험사별 {name, count, totalPremium} |
+| lapsedCount | 실효 계약 수 |
+| (기존 유지) | totalPremium, monthlyPremium, lumpSumPremium, totalContracts, activeContracts |
+
+### query_customer_reviews 신규 도구 상세
+
+**파라미터:**
+
+| 파라미터 | 용도 |
+|---------|------|
+| customerId | 특정 고객 (선택) |
+| returnRateMin/Max | 수익률 범위 |
+| accumulatedAmountMin/Max | 적립금 범위 |
+| surrenderRateMin/Max | 해지환급률 범위 |
+| hasPolicyLoan | 약관대출 유무 |
+| hasWithdrawal | 중도인출 유무 |
+| hasAdditionalPremium | 추가납입 유무 |
+| fundName | 특정 펀드 포함 여부 |
+| sortBy | 정렬 (accumulatedAmount/returnRate/surrenderValue) |
+| sortOrder | asc/desc |
+
+**응답 summary:**
+
+| 필드 | 용도 |
+|------|------|
+| totalAccumulated | 적립금 합계 |
+| avgReturnRate | 평균 수익률 |
+| totalPolicyLoan | 약관대출 총액 |
+| bestReturnRate | 최고 수익률 계약 |
+| worstReturnRate | 최저 수익률 계약 |
+| principalVsAccumulated | 원금 대비 적립금 비율 |
+
+### get_cr_contract_history 보강 상세
+
+**추가 파라미터:**
+
+| 파라미터 | 용도 |
+|---------|------|
+| fundName | 특정 펀드 이력만 필터 |
+| field | 추적 대상 필드 (accumulatedAmount/returnRate/surrenderValue) |
+
+### 목표 커버율
+
+| 영역 | 현재 | 목표 |
+|------|:---:|:---:|
+| AR 단일 조회 | 90% | **98%** |
+| AR 조건부 필터 | 30% | **95%** |
+| AR 집계 | 40% | **95%** |
+| CRS 현재 상태 | 80% | **98%** |
+| CRS 조건부 필터 | 0% | **95%** |
+| CRS 집계 | 20% | **95%** |
+| CRS 이력 | 80% | **95%** |
+
+### 구현 계획
+
+| 커밋 | 내용 |
+|:---:|------|
+| 1 | 설계안 보고서 (교차 리뷰 대상) ← 현재 |
+| 2 | list_contracts 대폭 보강 |
+| 3 | query_customer_reviews 신규 + get_cr_contract_history 보강 |
+| 4 | GT 추가 + 배포 + 평가 |
