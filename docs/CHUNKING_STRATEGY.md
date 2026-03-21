@@ -228,8 +228,8 @@ xPipe의 embed 스테이지는 현재 기존 파이프라인과 완전히 다른
 | 1 | 개별 API 호출 | 배치 임베딩 미사용. 다수 청크 시 레이턴시 증가 |
 | 2 | offset 부정확 | `text.find()` 사용으로 중복 텍스트 시 첫 위치만 반환 |
 | 3 | 문자 수 기준 | 토큰 기준(`tiktoken`) 분할이 아닌 문자 수 기준. 영문 혼재 시 비효율 |
-| 4 | 문서 유형 무차별 | 약관/AR/CRS/청구서 등 모든 문서에 동일 파라미터 적용 |
-| 5 | customer_id 미전달 | `full_pipeline.py`에서 meta에 `customer_id` 누락 (코드 버그) |
+| 4 | 문서 유형 미활용 | `meta.document_type`(22개 AI 분류)이 존재하나 청킹 메타에 미전달. 유형별 파라미터 차별화 미적용. 상세: `docs/DOCUMENT_CLASSIFICATION_FIELDS.md` |
+| 5 | ~~customer_id 미전달~~ | ~~`full_pipeline.py`에서 meta에 `customer_id` 누락~~ → **수정 완료** (커밋 d91b7f6c) |
 | 6 | xPipe 불일치 | xPipe embed 스테이지가 기존 청킹 로직과 완전 별도 |
 
 ---
