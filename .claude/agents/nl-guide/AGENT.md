@@ -79,9 +79,14 @@ model: opus
 - get_customer/search_customers: birthDate 반환, 이름 검색 description 개선
 - chatService.js: Q4/Q6/Q7 도구 선택 가이드, 월납/일시납 구분
 
-### 다음 단계 (미착수)
-1. **UQ 설계** — Q3(문서 내용 질의), Q9(복합 질의) 대응
-2. **C1~C6 GT 구축** — 명령 유형의 GT 테스트 셋 (현재 문제 없으나 측정 기반 부재)
+### UQ: ✅ 완료 (2026-03-21)
+- Q3: 방안 A(프롬프트 "문서 원문 재서술 금지") → FAIL률 0%
+- Q9: 방안 D+E(복합 질의 분해 + Few-shot) 적용 완료
+
+### 1차 종료 판정
+- SQ 75% 수렴 + UQ FAIL률 0% + Regression 35/35 PASS
+- **추가 개선은 실제 사용자 질의 누적 후 2차로 진행**
+- 트리거: `aims_analytics.chat_messages` 로그 분석 → 실패 패턴 발견 시
 
 ## 핵심 파일
 

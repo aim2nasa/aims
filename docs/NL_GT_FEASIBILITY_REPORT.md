@@ -277,3 +277,28 @@ UQ 프롬프트 변경 후 SQ regression **35/35 PASS** — 기존 응답 깨지
 - **Q3: 방안 A만으로 해결 (FAIL률 0%)**
 - **Q9: 방안 D+E 적용 완료**
 - **추가 작업 불필요**
+
+---
+
+## 12. NL 품질 개선 1차 종료 (2026-03-21)
+
+### 최종 성과
+
+| 영역 | 시작 | 결과 |
+|------|:---:|:---:|
+| SQ (Q1~Q8) | 50% | **75%** (7라운드 수렴) |
+| UQ Q3 | 미대응 | **FAIL률 0%** |
+| UQ Q9 | 미대응 | 분해 규칙 적용 완료 |
+| Regression | - | **35/35 PASS** |
+
+### 구축된 인프라
+- `docs/gt_test_cases.json` — SQ GT 80건
+- `tools/ai_assistant_regression/run_regression.py` — 기본 regression 35건
+- `tools/ai_assistant_regression/run_gt_evaluation.py` — SQ 심화 평가
+- `tools/ai_assistant_regression/run_uq_evaluation.py` — UQ Proxy GT 평가
+
+### 2차 개선 계획
+- **트리거**: `aims_analytics.chat_messages`에 실제 사용자 질의가 충분히 누적되었을 때
+- **방법**: 채팅 로그에서 실패 패턴(AI가 잘못 답변한 케이스) 수집 → GT 보강 → 평가 → 개선
+- **인프라**: 1차에서 구축한 평가 스크립트 그대로 활용
+- **기대 효과**: 실제 사용자의 비격식체, 축약어, 모호한 표현 대응력 향상
