@@ -55,6 +55,8 @@ async function loadToolHandlers() {
     add_customer_memo: memos.handleAddMemo,
     list_customer_memos: memos.handleListMemos,
     delete_customer_memo: memos.handleDeleteMemo,
+    update_customer_memo: memos.handleUpdateMemo,
+    search_customer_memos: memos.handleSearchMemos,
     // 보험상품 관련
     search_products: products.handleSearchProducts,
     // Phase 1: 관계 관리
@@ -67,6 +69,7 @@ async function loadToolHandlers() {
     // Customer Review (변액리포트)
     get_customer_reviews: customerReviews.handleGetCustomerReviews,
     get_cr_contract_history: customerReviews.handleGetCrContractHistory,
+    query_customer_reviews: customerReviews.handleQueryCustomerReviews,
     // Phase 4: 유틸리티
     get_storage_info: utilities.handleGetStorageInfo,
     get_credit_info: utilities.handleGetCreditInfo,
