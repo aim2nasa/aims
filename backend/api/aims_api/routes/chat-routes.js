@@ -25,8 +25,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, upload) {
  * @route POST /api/chat
  */
 router.post('/chat', authenticateJWT, async (req, res) => {
-  // x-user-id 헤더가 있으면 우선 사용 (개발자 모드 계정 전환 지원)
-  const userId = req.headers['x-user-id'] || req.user.id;
+  const userId = req.user.id;
   const { messages, session_id: requestSessionId } = req.body;
 
   if (!messages || !Array.isArray(messages)) {

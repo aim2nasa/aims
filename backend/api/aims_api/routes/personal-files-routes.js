@@ -9,8 +9,7 @@
  */
 
 const express = require('express');
-const router = express.Router();
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
 const multer = require('multer');
 const path = require('path');
 const { escapeRegex } = require('../lib/helpers');
@@ -19,28 +18,11 @@ const axios = require('axios');
 const { checkUploadAllowed } = require('../lib/storageQuotaService');
 const backendLogger = require('../lib/backendLogger');
 
-// MongoDB 설정
-const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017';
-const dbName = 'docupload';
-
 // 파일 저장소 기본 경로
 const BASE_STORAGE_PATH = '/data/files/users';
 
-// AIMS 표준 인증 미들웨어 (x-user-id 헤더 방식)
-const authenticateToken = (req, res, next) => {
-  const userId = req.headers['x-user-id'];
-
-  if (!userId) {
-    return res.status(401).json({
-      success: false,
-      message: '사용자 ID가 없습니다'
-    });
-  }
-
-  // AIMS 표준: req.user 객체에 userId 설정
-  req.user = { userId };
-  next();
-};
+module.exports = function(db, authenticateJWT) {
+const router = express.Router();
 
 // 사용자별 저장소 경로 생성
 const getUserStoragePath = (userId) => {
@@ -59,7 +41,7 @@ const ensureDirectoryExists = async (dirPath) => {
 // Multer 파일 업로드 설정
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const storagePath = getUserStoragePath(userId);
     await ensureDirectoryExists(storagePath);
     cb(null, storagePath);
@@ -83,15 +65,11 @@ const upload = multer({
  * 1-1. 루트 폴더 내용 조회
  * GET /api/personal-files/folders
  */
-router.get('/folders', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.get('/folders', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const collection = db.collection('personal_files');
 
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 루트 폴더 (parentId가 null인 항목들)
     const items = await collection.find({
@@ -117,8 +95,6 @@ router.get('/folders', authenticateToken, async (req, res) => {
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -126,16 +102,12 @@ router.get('/folders', authenticateToken, async (req, res) => {
  * 1-2. 특정 폴더 내용 조회
  * GET /api/personal-files/folders/:folderId
  */
-router.get('/folders/:folderId', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.get('/folders/:folderId', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const collection = db.collection('personal_files');
 
     const { folderId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 현재 폴더 정보
     const currentFolder = await collection.findOne({
@@ -195,8 +167,6 @@ router.get('/folders/:folderId', authenticateToken, async (req, res) => {
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -205,16 +175,12 @@ router.get('/folders/:folderId', authenticateToken, async (req, res) => {
  * POST /api/personal-files/folders
  * Body: { name: string, parentId?: string }
  */
-router.post('/folders', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.post('/folders', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const collection = db.collection('personal_files');
 
     const { name, parentId } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     if (!name || name.trim() === '') {
       return res.status(400).json({
@@ -281,8 +247,6 @@ router.post('/folders', authenticateToken, async (req, res) => {
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -291,9 +255,7 @@ router.post('/folders', authenticateToken, async (req, res) => {
  * POST /api/personal-files/upload
  * FormData: { file: File, parentId?: string }
  */
-router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.post('/upload', authenticateJWT, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -302,12 +264,10 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       });
     }
 
-    await client.connect();
-    const db = client.db(dbName);
     const collection = db.collection('personal_files');
 
     const { parentId } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 쿼터 체크 (하드 리밋)
     const quotaCheck = await checkUploadAllowed(db, userId, req.file.size);
@@ -399,8 +359,6 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -409,17 +367,13 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
  * PUT /api/personal-files/:itemId/rename
  * Body: { newName: string }
  */
-router.put('/:itemId/rename', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.put('/:itemId/rename', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const collection = db.collection('personal_files');
 
     const { itemId } = req.params;
     const { newName } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     if (!newName || newName.trim() === '') {
       return res.status(400).json({
@@ -496,8 +450,6 @@ router.put('/:itemId/rename', authenticateToken, async (req, res) => {
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -505,16 +457,12 @@ router.put('/:itemId/rename', authenticateToken, async (req, res) => {
  * 5. 항목 삭제 (소프트 삭제)
  * DELETE /api/personal-files/:itemId
  */
-router.delete('/:itemId', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.delete('/:itemId', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const collection = db.collection('personal_files');
 
     const { itemId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 항목 존재 확인
     const item = await collection.findOne({
@@ -597,8 +545,6 @@ router.delete('/:itemId', authenticateToken, async (req, res) => {
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -688,17 +634,13 @@ async function collectDocumentIdsFromFolder(db, userId, folderId) {
  * PUT /api/personal-files/:itemId/move
  * Body: { targetFolderId: string | null }
  */
-router.put('/:itemId/move', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.put('/:itemId/move', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const collection = db.collection('personal_files');
 
     const { itemId } = req.params;
     const { targetFolderId } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 이동할 항목 조회
     const item = await collection.findOne({
@@ -798,8 +740,6 @@ router.put('/:itemId/move', authenticateToken, async (req, res) => {
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -807,16 +747,12 @@ router.put('/:itemId/move', authenticateToken, async (req, res) => {
  * 7. 파일 다운로드
  * GET /api/personal-files/:fileId/download
  */
-router.get('/:fileId/download', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.get('/:fileId/download', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const collection = db.collection('personal_files');
 
     const { fileId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 파일 정보 조회
     const file = await collection.findOne({
@@ -844,8 +780,6 @@ router.get('/:fileId/download', authenticateToken, async (req, res) => {
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -853,15 +787,11 @@ router.get('/:fileId/download', authenticateToken, async (req, res) => {
  * 9. 파일/폴더 검색
  * GET /api/personal-files/search?q=검색어&type=file&dateFrom=2025-01-01&dateTo=2025-01-31&sortBy=name&sortDirection=asc
  */
-router.get('/search', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.get('/search', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const collection = db.collection('personal_files');
 
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const {
       q,           // 검색어
       type,        // 'file' | 'folder'
@@ -927,8 +857,6 @@ router.get('/search', authenticateToken, async (req, res) => {
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -940,18 +868,14 @@ router.get('/search', authenticateToken, async (req, res) => {
  * docupload.files 컬렉션의 문서에 folderId를 설정하여
  * 폴더 구조에 논리적으로 연결합니다.
  */
-router.put('/documents/:documentId/move', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.put('/documents/:documentId/move', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const filesCollection = db.collection('files');
     const foldersCollection = db.collection('personal_files');
 
     const { documentId } = req.params;
     const { targetFolderId } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 문서 존재 확인 (customerId를 문자열로 변환하여 userId와 비교)
     const document = await filesCollection.findOne({
@@ -1021,8 +945,6 @@ router.put('/documents/:documentId/move', authenticateToken, async (req, res) =>
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
@@ -1034,17 +956,13 @@ router.put('/documents/:documentId/move', authenticateToken, async (req, res) =>
  * @body {string} newName - 새 파일명 (확장자 포함)
  * @returns {Object} 성공/실패 응답
  */
-router.put('/documents/:documentId/rename', authenticateToken, async (req, res) => {
-  const client = new MongoClient(mongoUrl);
-
+router.put('/documents/:documentId/rename', authenticateJWT, async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db(dbName);
     const filesCollection = db.collection('files');
 
     const { documentId } = req.params;
     const { newName } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     if (!newName || typeof newName !== 'string' || newName.trim() === '') {
       return res.status(400).json({
@@ -1103,9 +1021,8 @@ router.put('/documents/:documentId/rename', authenticateToken, async (req, res) 
       message: '서버 오류가 발생했습니다',
       error: error.message
     });
-  } finally {
-    await client.close();
   }
 });
 
-module.exports = router;
+return router;
+};

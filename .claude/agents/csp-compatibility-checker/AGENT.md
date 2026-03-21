@@ -9,6 +9,9 @@ model: haiku
 
 In-App Browser (카카오톡, 메일, Safari View Controller 등)에서 CSP 위반 없이 동작하는지 검사합니다.
 
+> **🏷️ Identity 규칙**: 모든 응답은 반드시 **`[CSPChecker]`** 로 시작해야 합니다.
+> 예시: `[CSPChecker] CSP 호환성 검사를 시작합니다. ...`
+
 ## 배경
 
 Apple Safari View Controller는 일반 Safari보다 **엄격한 CSP**를 적용:

@@ -3296,13 +3296,8 @@ router.get('/customers/:customerId/customer-reviews/stream', authenticateJWTWith
  * @route GET /api/personal-files/stream
  * @description 사용자의 개인 파일 변경을 실시간으로 전달
  */
-router.get('/personal-files/stream', (req, res) => {
-  // x-user-id 헤더 또는 쿼리 파라미터에서 userId 추출
-  const userId = req.headers['x-user-id'] || req.query.userId;
-
-  if (!userId) {
-    return res.status(401).json({ success: false, error: '사용자 ID가 필요합니다.' });
-  }
+router.get('/personal-files/stream', authenticateJWTWithQuery, (req, res) => {
+  const userId = req.user.id;
 
   console.log(`[SSE-PF] Personal Files 스트림 연결 - userId: ${userId}`);
 
@@ -3379,13 +3374,8 @@ router.post('/webhooks/personal-files-change', (req, res) => {
  * @route GET /api/user/account/stream
  * @description 사용자의 계정 정보(티어, 스토리지 등) 변경을 실시간으로 전달
  */
-router.get('/user/account/stream', (req, res) => {
-  // x-user-id 헤더 또는 쿼리 파라미터에서 userId 추출
-  const userId = req.headers['x-user-id'] || req.query.userId;
-
-  if (!userId) {
-    return res.status(401).json({ success: false, error: '사용자 ID가 필요합니다.' });
-  }
+router.get('/user/account/stream', authenticateJWTWithQuery, (req, res) => {
+  const userId = req.user.id;
 
   console.log(`[SSE-UserAccount] 계정 정보 스트림 연결 - userId: ${userId}`);
 

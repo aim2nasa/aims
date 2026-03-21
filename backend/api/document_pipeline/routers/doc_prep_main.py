@@ -12,6 +12,7 @@ import os
 import re
 import tempfile
 from datetime import datetime, timedelta
+from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, Tuple, Union
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
@@ -1214,6 +1215,611 @@ async def _notify_document_complete(doc_id: str, owner_id: str):
     asyncio.create_task(_send_notification())
 
 
+@dataclass
+class PipelineContext:
+    """process_document_pipeline 내부에서 공유되는 상태 객체"""
+    # 입력
+    file_content: bytes
+    original_name: str
+    user_id: str
+    customer_id: Optional[str]
+    source_path: Optional[str]
+    mime_type: Optional[str]
+    existing_doc_id: Optional[str]
+    # 진행 중 상태
+    doc_id: Optional[str] = None
+    dest_path: Optional[str] = None
+    files_collection: Any = None
+    customer_connected: bool = False
+    cleanup_done: bool = False
+    metric_record: Any = None
+    # 추출 결과
+    full_text: str = ""
+    detected_mime: str = ""
+    meta_result: Dict[str, Any] = field(default_factory=dict)
+    summary_result: Dict[str, Any] = field(default_factory=dict)
+    ai_document_type: str = "general"
+    ai_confidence: float = 0.0
+    is_ar_detected: bool = False
+    is_crs_detected: bool = False
+
+
+async def _step_create_or_update_document(ctx: PipelineContext) -> None:
+    """Step 1: MongoDB에 문서 생성 또는 기존 문서 업데이트"""
+    if ctx.existing_doc_id:
+        # 큐잉 모드: 기존 문서 업데이트
+        logger.info(f"Using existing document: {ctx.existing_doc_id} for userId: {ctx.user_id}")
+        ctx.doc_id = ctx.existing_doc_id
+        await ctx.files_collection.update_one(
+            {"_id": ObjectId(ctx.doc_id)},
+            {"$set": {
+                "progress": 20,
+                "progressStage": "upload",
+                "progressMessage": "업로드 준비 중"
+            }}
+        )
+    else:
+        # 동기 모드: 새 문서 생성
+        logger.info(f"Creating document for userId: {ctx.user_id}, customerId: {ctx.customer_id}")
+        doc_data = {
+            "ownerId": ctx.user_id,
+            "createdAt": datetime.utcnow(),
+            # 초기 progress 설정 - 프론트엔드에서 즉시 20% 표시
+            "progress": 20,
+            "progressStage": "upload",
+            "progressMessage": "업로드 준비 중",
+            "status": "processing"
+        }
+        if ctx.customer_id:
+            # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
+            doc_data["customerId"] = ObjectId(ctx.customer_id) if ObjectId.is_valid(ctx.customer_id) else ctx.customer_id
+
+        result = await ctx.files_collection.insert_one(doc_data)
+        ctx.doc_id = str(result.inserted_id)
+        logger.info(f"Created document: {ctx.doc_id}")
+
+
+async def _step_save_file(ctx: PipelineContext) -> None:
+    """Step 2: 파일을 디스크에 저장하고 MongoDB에 업로드 정보 업데이트"""
+    saved_name, ctx.dest_path = await FileService.save_file(
+        content=ctx.file_content,
+        original_name=ctx.original_name,
+        user_id=ctx.user_id,
+        source_path=ctx.source_path
+    )
+
+    logger.info(f"Saved file: {saved_name} to {ctx.dest_path}")
+
+    # Update MongoDB with upload info
+    upload_info = {
+        "upload.originalName": ctx.original_name,
+        "upload.saveName": saved_name,
+        "upload.destPath": ctx.dest_path,
+        "upload.uploaded_at": datetime.utcnow().isoformat(),
+    }
+    if ctx.source_path:
+        upload_info["upload.sourcePath"] = ctx.source_path
+
+    await ctx.files_collection.update_one(
+        {"_id": ObjectId(ctx.doc_id)},
+        {"$set": upload_info}
+    )
+
+
+async def _step_extract_metadata(ctx: PipelineContext) -> Optional[Dict[str, Any]]:
+    """
+    Step 3: 메타데이터 추출 (사전 추출된 텍스트가 있으면 재추출 스킵)
+
+    Returns:
+        None: 정상 진행
+        dict: 에러 시 early return할 응답 dict
+    """
+    # Progress: 40% - Starting meta extraction
+    await _notify_progress(ctx.doc_id, ctx.user_id, 40, "meta", "메타데이터 추출 중")
+
+    # 🍎 DB에 사전 추출된 meta.full_text가 있는지 확인 (업로드 시 저장됨)
+    existing_doc = await ctx.files_collection.find_one(
+        {"_id": ObjectId(ctx.doc_id)},
+        {"meta.full_text": 1, "meta.mime": 1, "meta.pdf_pages": 1, "meta.size_bytes": 1, "meta.filename": 1}
+    )
+    pre_full_text = (existing_doc or {}).get("meta", {}).get("full_text", "")
+    pre_mime = (existing_doc or {}).get("meta", {}).get("mime", "")
+
+    if pre_full_text and len(pre_full_text.strip()) > 0 and pre_mime:
+        # 사전 추출된 텍스트 재사용 → MetaService 재호출 스킵
+        logger.info(f"[MetaSkip] DB에 사전 추출 텍스트 존재 ({len(pre_full_text)} chars), 메타 추출 스킵: {ctx.doc_id}")
+        ctx.full_text = pre_full_text
+        ctx.detected_mime = pre_mime
+        # meta_result는 후속 코드에서 참조하므로 DB 값으로 구성
+        existing_meta = (existing_doc or {}).get("meta", {})
+        ctx.meta_result = {
+            "extracted_text": pre_full_text,
+            "mime_type": pre_mime,
+            "num_pages": existing_meta.get("pdf_pages", 0),
+            "file_size": existing_meta.get("size_bytes", 0),
+            "filename": existing_meta.get("filename", ctx.original_name),
+            "error": None,
+        }
+    else:
+        # 사전 추출 텍스트 없음 → 기존대로 MetaService 호출
+        ctx.meta_result = await MetaService.extract_metadata(ctx.dest_path)
+
+        if ctx.meta_result.get("error"):
+            logger.warning(f"Metadata extraction failed: {ctx.meta_result}")
+            await ctx.files_collection.update_one(
+                {"_id": ObjectId(ctx.doc_id)},
+                {"$set": {
+                    "status": "failed",
+                    "overallStatus": "error",
+                    "meta.error": ctx.meta_result.get("message", "Unknown error")
+                }}
+            )
+            return {
+                "result": "error",
+                "document_id": ctx.doc_id,
+                "error": ctx.meta_result.get("message", "Unknown error"),
+                "status": ctx.meta_result.get("status", 500)
+            }
+
+        ctx.full_text = ctx.meta_result.get("extracted_text", "")
+        ctx.detected_mime = ctx.meta_result.get("mime_type", "")
+
+        # PDF 변환 텍스트 추출: 직접 파서로 텍스트가 없고 변환 가능한 형식인 경우
+        if (not ctx.full_text or len(ctx.full_text.strip()) == 0) and is_convertible_mime(ctx.detected_mime):
+            await _notify_progress(ctx.doc_id, ctx.user_id, 50, "convert", "PDF 변환 후 텍스트 추출 중")
+            logger.info(f"[PDF변환텍스트] 직접 파서 없음, PDF 변환 시도: {ctx.doc_id} (MIME: {ctx.detected_mime})")
+
+            converted_text = await convert_and_extract_text(ctx.dest_path)
+            if converted_text and converted_text.strip():
+                ctx.full_text = converted_text
+                logger.info(f"[PDF변환텍스트] 성공: {ctx.doc_id} ({len(ctx.full_text)} chars)")
+            else:
+                logger.info(f"[PDF변환텍스트] 텍스트 추출 실패, OCR fallback: {ctx.doc_id}")
+
+    return None
+
+
+async def _step_ai_summarize(ctx: PipelineContext) -> None:
+    """Step: AI 요약 생성 (텍스트가 추출된 경우에만)"""
+    if ctx.full_text and len(ctx.full_text.strip()) > 0:
+        ctx.summary_result = await OpenAIService.summarize_text(
+            ctx.full_text,
+            owner_id=ctx.user_id,
+            document_id=ctx.doc_id,
+            filename=ctx.original_name
+        )
+        ctx.ai_document_type = ctx.summary_result.get("document_type", "general")
+        ctx.ai_confidence = ctx.summary_result.get("confidence", 0.0)
+
+
+async def _step_update_meta_to_db(ctx: PipelineContext) -> None:
+    """Step: 메타데이터를 MongoDB에 업데이트 (중복 해시 처리 + DuplicateKeyError 포함)"""
+    summary = ctx.summary_result.get("summary", "") if ctx.summary_result else ""
+
+    meta_update = {
+        "meta.filename": ctx.meta_result.get("filename"),
+        "meta.extension": ctx.meta_result.get("extension"),
+        "meta.mime": ctx.meta_result.get("mime_type"),
+        "meta.size_bytes": ctx.meta_result.get("file_size"),
+        "meta.file_hash": ctx.meta_result.get("file_hash"),
+        "meta.pdf_pages": ctx.meta_result.get("num_pages"),
+        "meta.full_text": ctx.full_text or "",
+        "meta.summary": summary,
+        "meta.document_type": ctx.ai_document_type,
+        "meta.confidence": ctx.ai_confidence,
+        "meta.length": len(ctx.full_text) if ctx.full_text else 0,
+        "meta.meta_status": "done",
+        # Image EXIF metadata
+        "meta.width": ctx.meta_result.get("width"),
+        "meta.height": ctx.meta_result.get("height"),
+        "meta.date_taken": ctx.meta_result.get("date_taken"),
+        "meta.camera_make": ctx.meta_result.get("camera_make"),
+        "meta.camera_model": ctx.meta_result.get("camera_model"),
+        "meta.gps_latitude": ctx.meta_result.get("gps_latitude"),
+        "meta.gps_longitude": ctx.meta_result.get("gps_longitude"),
+        "meta.gps_latitude_ref": ctx.meta_result.get("gps_latitude_ref"),
+        "meta.gps_longitude_ref": ctx.meta_result.get("gps_longitude_ref"),
+        "meta.orientation": ctx.meta_result.get("orientation"),
+        "meta.exif": ctx.meta_result.get("exif"),
+    }
+
+    # 🔴 중복 파일 해시 처리: 고아 문서(customerId: null) 안전하게 정리
+    file_hash = ctx.meta_result.get("file_hash")
+    if file_hash:
+        # 안전한 삭제 조건 (race condition 완벽 방지):
+        # 1. customerId가 null인 문서만 (고아 상태)
+        # 2. status가 "completed"가 아닌 문서만 (처리 완료된 정상 문서 보호)
+        # 3. 생성된 지 30초 이상 된 문서만 (동시 업로드 시 처리 중인 문서 보호)
+        # 4. 현재 문서가 아닌 것만
+        orphan_threshold = datetime.utcnow() - timedelta(seconds=30)
+        delete_result = await ctx.files_collection.delete_one({
+            "ownerId": ctx.user_id,
+            "customerId": None,
+            "meta.file_hash": file_hash,
+            "_id": {"$ne": ObjectId(ctx.doc_id)},
+            "status": {"$ne": "completed"},  # 처리 완료된 문서 보호
+            "createdAt": {"$lt": orphan_threshold}  # 30초 이상 된 문서만
+        })
+        if delete_result.deleted_count > 0:
+            logger.info(f"🗑️ 고아 문서 삭제 완료 (file_hash: {file_hash[:16]}...)")
+
+    try:
+        await ctx.files_collection.update_one(
+            {"_id": ObjectId(ctx.doc_id)},
+            {"$set": meta_update}
+        )
+    except DuplicateKeyError as e:
+        # 중복 에러 발생 시 SSE 에러 전달 후 cleanup 수행
+        # (cleanup이 files 레코드를 삭제하므로 notify_progress를 먼저 호출)
+        error_msg = "동일한 파일이 이미 등록되어 있습니다."
+        logger.error(f"🔴 중복 파일 에러: {ctx.doc_id} - {error_msg}")
+        await _notify_progress(ctx.doc_id, ctx.user_id, -1, "error", error_msg)
+        await _cleanup_failed_document(ctx.doc_id, ctx.customer_id, ctx.dest_path)
+        ctx.cleanup_done = True
+        raise Exception(error_msg) from e
+
+    ctx.detected_mime = ctx.meta_result.get("mime_type", "")
+
+    # Progress: 50% - Meta extraction complete
+    await _notify_progress(ctx.doc_id, ctx.user_id, 50, "meta", "메타데이터 추출 완료")
+
+
+async def _step_detect_ar_crs(ctx: PipelineContext) -> None:
+    """Step: AR/CRS 자동 감지 (PDF 파일이고 텍스트가 있는 경우)
+
+    Strangler Fig 패턴:
+    - InsuranceDomainAdapter가 등록되어 있으면 adapter.detect_special_documents() 사용
+    - 없으면 기존 _detect_and_process_*() 함수로 fallback
+    """
+    # AR/CRS 감지 실패가 문서 처리 전체를 중단시키지 않도록 개별 격리
+    if ctx.detected_mime == "application/pdf" and ctx.full_text and len(ctx.full_text.strip()) > 0:
+        # Strangler Fig: 어댑터가 있으면 새 경로 사용
+        adapter = _get_insurance_adapter()
+        if adapter is not None:
+            await _step_detect_ar_crs_via_adapter(ctx, adapter)
+        else:
+            await _step_detect_ar_crs_legacy(ctx)
+
+
+def _get_insurance_adapter():
+    """InsuranceDomainAdapter 인스턴스 반환 (없으면 None — fallback 사용)
+
+    Strangler Fig 전환 제어점. Phase 완료 후 항상 인스턴스를 반환하도록 변경 예정.
+    """
+    try:
+        from insurance.adapter import InsuranceDomainAdapter
+        return InsuranceDomainAdapter()
+    except ImportError:
+        return None
+
+
+async def _step_detect_ar_crs_via_adapter(ctx: PipelineContext, adapter) -> None:
+    """어댑터 경로: detect_special_documents() → resolve_entity() → DB 업데이트
+
+    순수 텍스트 분석(어댑터)과 부수 효과(DB, SSE)를 분리한다.
+    """
+    try:
+        detections = await adapter.detect_special_documents(
+            text=ctx.full_text,
+            mime_type=ctx.detected_mime,
+            filename=ctx.original_name,
+        )
+    except Exception as detect_err:
+        logger.error(f"❌ 어댑터 감지 예외 (legacy fallback): doc_id={ctx.doc_id}, error={detect_err}", exc_info=True)
+        # 어댑터 감지 실패 시 legacy fallback
+        await _step_detect_ar_crs_legacy(ctx)
+        return
+
+    if not detections:
+        return
+
+    detection = detections[0]  # AR/CRS는 상호 배타적
+
+    if detection.doc_type == "annual_report":
+        # 기존 _detect_and_process_annual_report()의 DB+SSE 로직은 그대로 사용
+        # 어댑터가 추출한 메타데이터를 기존 함수에 위임
+        try:
+            ar_result = await _detect_and_process_annual_report(
+                doc_id=ctx.doc_id,
+                full_text=ctx.full_text,
+                original_name=ctx.original_name,
+                user_id=ctx.user_id,
+                files_collection=ctx.files_collection,
+            )
+            if ar_result.get("is_annual_report"):
+                ctx.is_ar_detected = True
+                logger.info(f"✅ AR 자동 감지 완료 (어댑터 경로): doc_id={ctx.doc_id}")
+        except Exception as ar_err:
+            logger.error(f"❌ AR 처리 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={ar_err}", exc_info=True)
+
+    elif detection.doc_type == "customer_review":
+        try:
+            crs_result = await _detect_and_process_customer_review(
+                doc_id=ctx.doc_id,
+                full_text=ctx.full_text,
+                original_name=ctx.original_name,
+                user_id=ctx.user_id,
+                files_collection=ctx.files_collection,
+            )
+            if crs_result.get("is_customer_review"):
+                ctx.is_crs_detected = True
+                logger.info(f"✅ CRS 자동 감지 완료 (어댑터 경로): doc_id={ctx.doc_id}")
+        except Exception as crs_err:
+            logger.error(f"❌ CRS 처리 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={crs_err}", exc_info=True)
+
+
+async def _step_detect_ar_crs_legacy(ctx: PipelineContext) -> None:
+    """Legacy 경로: 기존 _detect_and_process_*() 함수 직접 호출 (fallback)"""
+    try:
+        ar_detection = await _detect_and_process_annual_report(
+            doc_id=ctx.doc_id,
+            full_text=ctx.full_text,
+            original_name=ctx.original_name,
+            user_id=ctx.user_id,
+            files_collection=ctx.files_collection
+        )
+        if ar_detection.get("is_annual_report"):
+            ctx.is_ar_detected = True
+            logger.info(f"✅ AR 자동 감지 완료: doc_id={ctx.doc_id}, related_customer_id={ar_detection.get('related_customer_id')}")
+    except Exception as ar_err:
+        logger.error(f"❌ AR 감지 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={ar_err}", exc_info=True)
+
+    if not ctx.is_ar_detected:
+        try:
+            crs_detection = await _detect_and_process_customer_review(
+                doc_id=ctx.doc_id,
+                full_text=ctx.full_text,
+                original_name=ctx.original_name,
+                user_id=ctx.user_id,
+                files_collection=ctx.files_collection
+            )
+            if crs_detection.get("is_customer_review"):
+                ctx.is_crs_detected = True
+                logger.info(f"✅ CRS 자동 감지 완료: doc_id={ctx.doc_id}, related_customer_id={crs_detection.get('related_customer_id')}")
+        except Exception as crs_err:
+            logger.error(f"❌ CRS 감지 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={crs_err}", exc_info=True)
+
+
+async def _generate_display_name(
+    doc_id: str,
+    text: str,
+    original_name: str,
+    user_id: str,
+    summary_result: Dict[str, Any],
+    files_collection: Any
+) -> None:
+    """
+    displayName 자동 생성 (text/plain, 일반 문서 공통)
+
+    1순위: summary_result에서 이미 생성된 title (추가 API 비용 없음)
+    2순위: generate_title_only() 경량 호출
+    """
+    try:
+        ai_title = summary_result.get("title", "") if summary_result else ""
+
+        if not ai_title and text and len(text.strip()) >= 10:
+            try:
+                title_result = await OpenAIService.generate_title_only(
+                    text=text,
+                    owner_id=user_id,
+                    document_id=doc_id
+                )
+                ai_title = title_result.get("title", "")
+            except Exception as title_err:
+                logger.warning(f"[DisplayName] generate_title_only 실패: {doc_id}, error={title_err}")
+
+        if ai_title:
+            display_name = sanitize_display_name(ai_title, original_name)
+            if display_name:
+                await files_collection.update_one(
+                    {"_id": ObjectId(doc_id)},
+                    {"$set": {"displayName": display_name}}
+                )
+                logger.info(f"[DisplayName] 자동 생성: {doc_id}, {original_name} → {display_name}")
+            else:
+                await files_collection.update_one(
+                    {"_id": ObjectId(doc_id)},
+                    {"$set": {"displayNameStatus": "failed"}}
+                )
+                logger.warning(f"[DisplayName] sanitize 실패: {doc_id}")
+        else:
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {"displayNameStatus": "failed"}}
+            )
+            logger.warning(f"[DisplayName] 제목 생성 실패 (텍스트 부족 또는 API 에러): {doc_id}")
+    except Exception as dn_err:
+        logger.warning(f"[DisplayName] 자동 생성 예외 (문서 처리 계속): {doc_id}, error={dn_err}")
+
+
+async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
+    """Step 4: MIME 타입별 분기 처리 (text/plain, unsupported, OCR, 텍스트 추출 완료)"""
+    from workers.pipeline_metrics import pipeline_metrics
+
+    # Case 1: text/plain - extract and save text
+    if ctx.detected_mime == "text/plain":
+        logger.info(f"Processing text/plain file: {ctx.doc_id}")
+
+        # Progress: 60% - Starting text extraction
+        await _notify_progress(ctx.doc_id, ctx.user_id, 60, "text", "텍스트 추출 중")
+
+        text_content = await FileService.read_file_as_text(ctx.dest_path)
+
+        # Progress: 80% - Saving text to database
+        await _notify_progress(ctx.doc_id, ctx.user_id, 80, "text", "텍스트 저장 중")
+
+        await ctx.files_collection.update_one(
+            {"_id": ObjectId(ctx.doc_id)},
+            {"$set": {"text.full_text": text_content}}
+        )
+
+        # 🔵 displayName 자동 생성 (text/plain)
+        # text/plain은 메타 추출 시점에 full_text가 비어 summarize_text() 미호출 →
+        # summary_result에 title 없음 → generate_title_only() 경량 호출로 생성
+        await _generate_display_name(
+            doc_id=ctx.doc_id,
+            text=text_content,
+            original_name=ctx.original_name,
+            user_id=ctx.user_id,
+            summary_result=ctx.summary_result,
+            files_collection=ctx.files_collection
+        )
+
+        # Progress: 100% - text/plain processing complete (no OCR needed)
+        await _notify_progress(ctx.doc_id, ctx.user_id, 100, "complete", "텍스트 파일 처리 완료")
+
+        pipeline_metrics.record_success(ctx.metric_record)
+        return {
+            "exitCode": 0,
+            "stderr": "",
+            "document_id": ctx.doc_id
+        }
+
+    # Case 2: Unsupported MIME type → 파일 보관만 (AI 처리 스킵)
+    if ctx.detected_mime in UNSUPPORTED_MIME_TYPES:
+        logger.info(f"[UnsupportedFormat] 지원하지 않는 형식, 보관만: {ctx.detected_mime} for {ctx.doc_id}")
+
+        await _notify_progress(ctx.doc_id, ctx.user_id, 60, "check", "파일 형식 확인 중")
+        await _notify_progress(ctx.doc_id, ctx.user_id, 80, "update", "처리 상태 업데이트 중")
+
+        await ctx.files_collection.update_one(
+            {"_id": ObjectId(ctx.doc_id)},
+            {"$set": {
+                "processingSkipReason": "unsupported_format",
+                "overallStatus": "completed",
+                "status": "completed",
+                "meta.mime": ctx.detected_mime,
+            }}
+        )
+
+        await _notify_progress(ctx.doc_id, ctx.user_id, 100, "complete", "처리 완료 (보관)")
+        await _notify_document_complete(ctx.doc_id, ctx.user_id)
+
+        pipeline_metrics.record_success(ctx.metric_record)
+        return {
+            "result": "success",
+            "document_id": ctx.doc_id,
+            "status": "completed",
+            "processingSkipReason": "unsupported_format",
+            "mime": ctx.detected_mime,
+            "filename": ctx.original_name
+        }
+
+    # Case 3: Check if OCR is needed (no text extracted)
+    if not ctx.full_text or len(ctx.full_text.strip()) == 0:
+        # 변환 가능한 포맷(HWP, DOC, PPT 등)이 변환 실패한 경우 → OCR에 보내지 않고 보관 처리
+        if is_convertible_mime(ctx.detected_mime):
+            logger.warning(f"[ConvertFailed] {ctx.detected_mime} 변환 실패, OCR 불가 → 보관 처리: {ctx.doc_id}")
+            await ctx.files_collection.update_one(
+                {"_id": ObjectId(ctx.doc_id)},
+                {"$set": {
+                    "processingSkipReason": "conversion_failed",
+                    "overallStatus": "completed",
+                    "status": "completed",
+                    "meta.mime": ctx.detected_mime,
+                }}
+            )
+            await _notify_progress(ctx.doc_id, ctx.user_id, 100, "complete", "PDF 변환 실패 (보관)")
+            await _notify_document_complete(ctx.doc_id, ctx.user_id)
+            pipeline_metrics.record_success(ctx.metric_record)
+            return {
+                "result": "success",
+                "document_id": ctx.doc_id,
+                "status": "completed",
+                "processingSkipReason": "conversion_failed",
+                "mime": ctx.detected_mime,
+                "filename": ctx.original_name
+            }
+
+        # Progress: 60% - OCR needed
+        await _notify_progress(ctx.doc_id, ctx.user_id, 60, "ocr", "OCR 처리 준비 중")
+        logger.info(f"Queueing OCR for document: {ctx.doc_id}")
+
+        queued_at = datetime.utcnow().isoformat()
+
+        # Queue to Redis
+        await RedisService.add_to_stream(
+            file_id=ctx.doc_id,
+            file_path=ctx.dest_path,
+            doc_id=ctx.doc_id,
+            owner_id=ctx.user_id,
+            queued_at=queued_at,
+            original_name=ctx.original_name
+        )
+
+        # Update MongoDB with queue status
+        await ctx.files_collection.update_one(
+            {"_id": ObjectId(ctx.doc_id)},
+            {"$set": {
+                "ocr.status": "queued",
+                "ocr.queued_at": queued_at
+            }}
+        )
+
+        # Progress: 70% - OCR queued
+        await _notify_progress(ctx.doc_id, ctx.user_id, 70, "ocr", "OCR 대기열에 추가됨")
+
+        # 메트릭: 성공 기록 (OCR는 별도 처리)
+        pipeline_metrics.record_success(ctx.metric_record)
+
+        return {
+            "result": "success",
+            "document_id": ctx.doc_id,
+            "ocr": {
+                "status": "queued",
+                "queued_at": queued_at
+            }
+        }
+
+    # Case 4: Text already extracted, notify complete
+    logger.info(f"Document {ctx.doc_id} processed without OCR (text already extracted)")
+
+    # 🔵 displayName 자동 생성 (AR/CRS가 아닌 일반 문서)
+    if not ctx.is_ar_detected and not ctx.is_crs_detected:
+        existing_doc = await ctx.files_collection.find_one(
+            {"_id": ObjectId(ctx.doc_id)},
+            {"displayName": 1}
+        )
+        if existing_doc and not existing_doc.get("displayName"):
+            await _generate_display_name(
+                doc_id=ctx.doc_id,
+                text=ctx.full_text,
+                original_name=ctx.original_name,
+                user_id=ctx.user_id,
+                summary_result=ctx.summary_result,
+                files_collection=ctx.files_collection
+            )
+
+    # Progress: 90% - Almost complete
+    await _notify_progress(ctx.doc_id, ctx.user_id, 90, "complete", "처리 완료 중")
+
+    # Progress: 100% - Complete (no OCR needed)
+    await _notify_progress(ctx.doc_id, ctx.user_id, 100, "complete", "처리 완료")
+
+    # Send completion notification
+    await _notify_document_complete(ctx.doc_id, ctx.user_id)
+
+    # 메트릭: 성공 기록
+    pipeline_metrics.record_success(ctx.metric_record)
+
+    return {
+        "result": "success",
+        "document_id": ctx.doc_id,
+        "status": "completed",
+        "meta": {
+            "filename": ctx.meta_result.get("filename"),
+            "extension": ctx.meta_result.get("extension"),
+            "mime": ctx.meta_result.get("mime_type"),
+            "size_bytes": str(ctx.meta_result.get("file_size", "")),
+            "created_at": datetime.utcnow().isoformat() + "Z",
+            "meta_status": "ok",
+            "exif": "{}",
+            "pdf_pages": str(ctx.meta_result.get("num_pages", "")),
+            "full_text": (ctx.full_text[:10000] + "...") if len(ctx.full_text) > 10000 else ctx.full_text
+        }
+    }
+
+
 async def process_document_pipeline(
     file_content: bytes,
     original_name: str,
@@ -1238,11 +1844,6 @@ async def process_document_pipeline(
     Returns:
         처리 결과 dict
     """
-    doc_id = existing_doc_id
-    dest_path: Optional[str] = None
-    customer_connected = False  # 고객 연결 완료 추적 (cleanup 판단용)
-    cleanup_done = False  # cleanup 완료 추적 (이중 호출 방지용)
-
     # 메트릭 기록 시작
     from workers.pipeline_metrics import pipeline_metrics
     metric_record = pipeline_metrics.record_start(
@@ -1251,497 +1852,51 @@ async def process_document_pipeline(
         file_size=len(file_content),
     )
 
+    ctx = PipelineContext(
+        file_content=file_content,
+        original_name=original_name,
+        user_id=user_id,
+        customer_id=customer_id,
+        source_path=source_path,
+        mime_type=mime_type,
+        existing_doc_id=existing_doc_id,
+        doc_id=existing_doc_id,
+        metric_record=metric_record,
+    )
+
     try:
-        files_collection = MongoService.get_collection("files")
+        ctx.files_collection = MongoService.get_collection("files")
 
         # Step 1: Create document in MongoDB (기존 문서가 없는 경우에만)
-        if existing_doc_id:
-            # 큐잉 모드: 기존 문서 업데이트
-            logger.info(f"Using existing document: {existing_doc_id} for userId: {user_id}")
-            doc_id = existing_doc_id
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {
-                    "progress": 20,
-                    "progressStage": "upload",
-                    "progressMessage": "업로드 준비 중"
-                }}
-            )
-        else:
-            # 동기 모드: 새 문서 생성
-            logger.info(f"Creating document for userId: {user_id}, customerId: {customer_id}")
-            doc_data = {
-                "ownerId": user_id,
-                "createdAt": datetime.utcnow(),
-                # 초기 progress 설정 - 프론트엔드에서 즉시 20% 표시
-                "progress": 20,
-                "progressStage": "upload",
-                "progressMessage": "업로드 준비 중",
-                "status": "processing"
-            }
-            if customer_id:
-                # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
-                doc_data["customerId"] = ObjectId(customer_id) if ObjectId.is_valid(customer_id) else customer_id
-
-            result = await files_collection.insert_one(doc_data)
-            doc_id = str(result.inserted_id)
-            logger.info(f"Created document: {doc_id}")
+        await _step_create_or_update_document(ctx)
 
         # Step 2: Save file to disk
-        saved_name, dest_path = await FileService.save_file(
-            content=file_content,
-            original_name=original_name,
-            user_id=user_id,
-            source_path=source_path
-        )
-
-        logger.info(f"Saved file: {saved_name} to {dest_path}")
-
-        # Update MongoDB with upload info
-        upload_info = {
-            "upload.originalName": original_name,
-            "upload.saveName": saved_name,
-            "upload.destPath": dest_path,
-            "upload.uploaded_at": datetime.utcnow().isoformat(),
-        }
-        if source_path:
-            upload_info["upload.sourcePath"] = source_path
-
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {"$set": upload_info}
-        )
+        await _step_save_file(ctx)
 
         # Connect document to customer if customer_id provided
         if customer_id:
-            await _connect_document_to_customer(customer_id, doc_id, user_id)
-            customer_connected = True
+            await _connect_document_to_customer(customer_id, ctx.doc_id, user_id)
+            ctx.customer_connected = True
 
         # Progress: 20% - Upload complete
-        await _notify_progress(doc_id, user_id, 20, "upload", "파일 업로드 완료")
+        await _notify_progress(ctx.doc_id, user_id, 20, "upload", "파일 업로드 완료")
 
         # Step 3: Extract metadata (사전 추출된 텍스트가 있으면 재추출 스킵)
-        # Progress: 40% - Starting meta extraction
-        await _notify_progress(doc_id, user_id, 40, "meta", "메타데이터 추출 중")
+        meta_error_response = await _step_extract_metadata(ctx)
+        if meta_error_response is not None:
+            return meta_error_response
 
-        # 🍎 DB에 사전 추출된 meta.full_text가 있는지 확인 (업로드 시 저장됨)
-        existing_doc = await files_collection.find_one(
-            {"_id": ObjectId(doc_id)},
-            {"meta.full_text": 1, "meta.mime": 1, "meta.pdf_pages": 1, "meta.size_bytes": 1, "meta.filename": 1}
-        )
-        pre_full_text = (existing_doc or {}).get("meta", {}).get("full_text", "")
-        pre_mime = (existing_doc or {}).get("meta", {}).get("mime", "")
+        # AI 요약 생성
+        await _step_ai_summarize(ctx)
 
-        if pre_full_text and len(pre_full_text.strip()) > 0 and pre_mime:
-            # 사전 추출된 텍스트 재사용 → MetaService 재호출 스킵
-            logger.info(f"[MetaSkip] DB에 사전 추출 텍스트 존재 ({len(pre_full_text)} chars), 메타 추출 스킵: {doc_id}")
-            full_text = pre_full_text
-            detected_mime = pre_mime
-            # meta_result는 후속 코드에서 참조하므로 DB 값으로 구성
-            existing_meta = (existing_doc or {}).get("meta", {})
-            meta_result = {
-                "extracted_text": pre_full_text,
-                "mime_type": pre_mime,
-                "num_pages": existing_meta.get("pdf_pages", 0),
-                "file_size": existing_meta.get("size_bytes", 0),
-                "filename": existing_meta.get("filename", original_name),
-                "error": None,
-            }
-        else:
-            # 사전 추출 텍스트 없음 → 기존대로 MetaService 호출
-            meta_result = await MetaService.extract_metadata(dest_path)
+        # 메타데이터 DB 업데이트 (중복 해시 처리 + DuplicateKeyError 포함)
+        await _step_update_meta_to_db(ctx)
 
-            if meta_result.get("error"):
-                logger.warning(f"Metadata extraction failed: {meta_result}")
-                await files_collection.update_one(
-                    {"_id": ObjectId(doc_id)},
-                    {"$set": {
-                        "status": "failed",
-                        "overallStatus": "error",
-                        "meta.error": meta_result.get("message", "Unknown error")
-                    }}
-                )
-                return {
-                    "result": "error",
-                    "document_id": doc_id,
-                    "error": meta_result.get("message", "Unknown error"),
-                    "status": meta_result.get("status", 500)
-                }
+        # AR/CRS 자동 감지
+        await _step_detect_ar_crs(ctx)
 
-            full_text = meta_result.get("extracted_text", "")
-            detected_mime = meta_result.get("mime_type", "")
-
-            # PDF 변환 텍스트 추출: 직접 파서로 텍스트가 없고 변환 가능한 형식인 경우
-            if (not full_text or len(full_text.strip()) == 0) and is_convertible_mime(detected_mime):
-                await _notify_progress(doc_id, user_id, 50, "convert", "PDF 변환 후 텍스트 추출 중")
-                logger.info(f"[PDF변환텍스트] 직접 파서 없음, PDF 변환 시도: {doc_id} (MIME: {detected_mime})")
-
-                converted_text = await convert_and_extract_text(dest_path)
-                if converted_text and converted_text.strip():
-                    full_text = converted_text
-                    logger.info(f"[PDF변환텍스트] 성공: {doc_id} ({len(full_text)} chars)")
-                else:
-                    logger.info(f"[PDF변환텍스트] 텍스트 추출 실패, OCR fallback: {doc_id}")
-
-        # Get summary if text was extracted
-        summary = ""
-        summary_result = {}
-
-        ai_document_type = "general"
-        ai_confidence = 0.0
-
-        if full_text and len(full_text.strip()) > 0:
-            summary_result = await OpenAIService.summarize_text(
-                full_text,
-                owner_id=user_id,
-                document_id=doc_id,
-                filename=original_name
-            )
-            summary = summary_result.get("summary", "")
-            ai_document_type = summary_result.get("document_type", "general")
-            ai_confidence = summary_result.get("confidence", 0.0)
-
-        # Update MongoDB with meta info
-        meta_update = {
-            "meta.filename": meta_result.get("filename"),
-            "meta.extension": meta_result.get("extension"),
-            "meta.mime": meta_result.get("mime_type"),
-            "meta.size_bytes": meta_result.get("file_size"),
-            "meta.file_hash": meta_result.get("file_hash"),
-            "meta.pdf_pages": meta_result.get("num_pages"),
-            "meta.full_text": full_text or "",
-            "meta.summary": summary,
-            "meta.document_type": ai_document_type,
-            "meta.confidence": ai_confidence,
-            "meta.length": len(full_text) if full_text else 0,
-            "meta.meta_status": "done",
-            # Image EXIF metadata
-            "meta.width": meta_result.get("width"),
-            "meta.height": meta_result.get("height"),
-            "meta.date_taken": meta_result.get("date_taken"),
-            "meta.camera_make": meta_result.get("camera_make"),
-            "meta.camera_model": meta_result.get("camera_model"),
-            "meta.gps_latitude": meta_result.get("gps_latitude"),
-            "meta.gps_longitude": meta_result.get("gps_longitude"),
-            "meta.gps_latitude_ref": meta_result.get("gps_latitude_ref"),
-            "meta.gps_longitude_ref": meta_result.get("gps_longitude_ref"),
-            "meta.orientation": meta_result.get("orientation"),
-            "meta.exif": meta_result.get("exif"),
-        }
-
-        # 🔴 중복 파일 해시 처리: 고아 문서(customerId: null) 안전하게 정리
-        file_hash = meta_result.get("file_hash")
-        if file_hash:
-            # 안전한 삭제 조건 (race condition 완벽 방지):
-            # 1. customerId가 null인 문서만 (고아 상태)
-            # 2. status가 "completed"가 아닌 문서만 (처리 완료된 정상 문서 보호)
-            # 3. 생성된 지 30초 이상 된 문서만 (동시 업로드 시 처리 중인 문서 보호)
-            # 4. 현재 문서가 아닌 것만
-            orphan_threshold = datetime.utcnow() - timedelta(seconds=30)
-            delete_result = await files_collection.delete_one({
-                "ownerId": user_id,
-                "customerId": None,
-                "meta.file_hash": file_hash,
-                "_id": {"$ne": ObjectId(doc_id)},
-                "status": {"$ne": "completed"},  # 처리 완료된 문서 보호
-                "createdAt": {"$lt": orphan_threshold}  # 30초 이상 된 문서만
-            })
-            if delete_result.deleted_count > 0:
-                logger.info(f"🗑️ 고아 문서 삭제 완료 (file_hash: {file_hash[:16]}...)")
-
-        try:
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": meta_update}
-            )
-        except DuplicateKeyError as e:
-            # 중복 에러 발생 시 SSE 에러 전달 후 cleanup 수행
-            # (cleanup이 files 레코드를 삭제하므로 notify_progress를 먼저 호출)
-            error_msg = "동일한 파일이 이미 등록되어 있습니다."
-            logger.error(f"🔴 중복 파일 에러: {doc_id} - {error_msg}")
-            await _notify_progress(doc_id, user_id, -1, "error", error_msg)
-            await _cleanup_failed_document(doc_id, customer_id, dest_path)
-            cleanup_done = True
-            raise Exception(error_msg) from e
-
-        detected_mime = meta_result.get("mime_type", "")
-
-        # Progress: 50% - Meta extraction complete
-        await _notify_progress(doc_id, user_id, 50, "meta", "메타데이터 추출 완료")
-
-        # 🔴 AR/CRS 자동 감지 (PDF 파일이고 텍스트가 있는 경우)
-        # AR/CRS 감지 실패가 문서 처리 전체를 중단시키지 않도록 개별 격리
-        is_ar_detected = False
-        is_crs_detected = False
-        if detected_mime == "application/pdf" and full_text and len(full_text.strip()) > 0:
-            try:
-                ar_detection = await _detect_and_process_annual_report(
-                    doc_id=doc_id,
-                    full_text=full_text,
-                    original_name=original_name,
-                    user_id=user_id,
-                    files_collection=files_collection
-                )
-                if ar_detection.get("is_annual_report"):
-                    is_ar_detected = True
-                    logger.info(f"✅ AR 자동 감지 완료: doc_id={doc_id}, related_customer_id={ar_detection.get('related_customer_id')}")
-            except Exception as ar_err:
-                logger.error(f"❌ AR 감지 예외 (문서 처리 계속): doc_id={doc_id}, error={ar_err}", exc_info=True)
-
-            if not is_ar_detected:
-                try:
-                    crs_detection = await _detect_and_process_customer_review(
-                        doc_id=doc_id,
-                        full_text=full_text,
-                        original_name=original_name,
-                        user_id=user_id,
-                        files_collection=files_collection
-                    )
-                    if crs_detection.get("is_customer_review"):
-                        is_crs_detected = True
-                        logger.info(f"✅ CRS 자동 감지 완료: doc_id={doc_id}, related_customer_id={crs_detection.get('related_customer_id')}")
-                except Exception as crs_err:
-                    logger.error(f"❌ CRS 감지 예외 (문서 처리 계속): doc_id={doc_id}, error={crs_err}", exc_info=True)
-
-        # Step 4: Route based on MIME type
-
-        # Case 1: text/plain - extract and save text
-        if detected_mime == "text/plain":
-            logger.info(f"Processing text/plain file: {doc_id}")
-
-            # Progress: 60% - Starting text extraction
-            await _notify_progress(doc_id, user_id, 60, "text", "텍스트 추출 중")
-
-            text_content = await FileService.read_file_as_text(dest_path)
-
-            # Progress: 80% - Saving text to database
-            await _notify_progress(doc_id, user_id, 80, "text", "텍스트 저장 중")
-
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {"text.full_text": text_content}}
-            )
-
-            # 🔵 displayName 자동 생성 (text/plain)
-            # text/plain은 메타 추출 시점에 full_text가 비어 summarize_text() 미호출 →
-            # summary_result에 title 없음 → generate_title_only() 경량 호출로 생성
-            try:
-                ai_title = summary_result.get("title", "") if summary_result else ""
-                if not ai_title and text_content and len(text_content.strip()) >= 10:
-                    try:
-                        title_result = await OpenAIService.generate_title_only(
-                            text=text_content,
-                            owner_id=user_id,
-                            document_id=doc_id
-                        )
-                        ai_title = title_result.get("title", "")
-                    except Exception as title_err:
-                        logger.warning(f"[DisplayName] generate_title_only 실패 (text/plain): {doc_id}, error={title_err}")
-
-                if ai_title:
-                    display_name = sanitize_display_name(ai_title, original_name)
-                    if display_name:
-                        await files_collection.update_one(
-                            {"_id": ObjectId(doc_id)},
-                            {"$set": {"displayName": display_name}}
-                        )
-                        logger.info(f"[DisplayName] 자동 생성 (text/plain): {doc_id}, {original_name} → {display_name}")
-                    else:
-                        await files_collection.update_one(
-                            {"_id": ObjectId(doc_id)},
-                            {"$set": {"displayNameStatus": "failed"}}
-                        )
-                else:
-                    await files_collection.update_one(
-                        {"_id": ObjectId(doc_id)},
-                        {"$set": {"displayNameStatus": "failed"}}
-                    )
-            except Exception as dn_err:
-                logger.warning(f"[DisplayName] 자동 생성 예외 (text/plain, 처리 계속): {doc_id}, error={dn_err}")
-
-            # Progress: 100% - text/plain processing complete (no OCR needed)
-            await _notify_progress(doc_id, user_id, 100, "complete", "텍스트 파일 처리 완료")
-
-            pipeline_metrics.record_success(metric_record)
-            return {
-                "exitCode": 0,
-                "stderr": "",
-                "document_id": doc_id
-            }
-
-        # Case 2: Unsupported MIME type → 파일 보관만 (AI 처리 스킵)
-        if detected_mime in UNSUPPORTED_MIME_TYPES:
-            logger.info(f"[UnsupportedFormat] 지원하지 않는 형식, 보관만: {detected_mime} for {doc_id}")
-
-            await _notify_progress(doc_id, user_id, 60, "check", "파일 형식 확인 중")
-            await _notify_progress(doc_id, user_id, 80, "update", "처리 상태 업데이트 중")
-
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {
-                    "processingSkipReason": "unsupported_format",
-                    "overallStatus": "completed",
-                    "status": "completed",
-                    "meta.mime": detected_mime,
-                }}
-            )
-
-            await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료 (보관)")
-            await _notify_document_complete(doc_id, user_id)
-
-            pipeline_metrics.record_success(metric_record)
-            return {
-                "result": "success",
-                "document_id": doc_id,
-                "status": "completed",
-                "processingSkipReason": "unsupported_format",
-                "mime": detected_mime,
-                "filename": original_name
-            }
-
-        # Case 3: Check if OCR is needed (no text extracted)
-        if not full_text or len(full_text.strip()) == 0:
-            # 변환 가능한 포맷(HWP, DOC, PPT 등)이 변환 실패한 경우 → OCR에 보내지 않고 보관 처리
-            if is_convertible_mime(detected_mime):
-                logger.warning(f"[ConvertFailed] {detected_mime} 변환 실패, OCR 불가 → 보관 처리: {doc_id}")
-                await files_collection.update_one(
-                    {"_id": ObjectId(doc_id)},
-                    {"$set": {
-                        "processingSkipReason": "conversion_failed",
-                        "overallStatus": "completed",
-                        "status": "completed",
-                        "meta.mime": detected_mime,
-                    }}
-                )
-                await _notify_progress(doc_id, user_id, 100, "complete", "PDF 변환 실패 (보관)")
-                await _notify_document_complete(doc_id, user_id)
-                pipeline_metrics.record_success(metric_record)
-                return {
-                    "result": "success",
-                    "document_id": doc_id,
-                    "status": "completed",
-                    "processingSkipReason": "conversion_failed",
-                    "mime": detected_mime,
-                    "filename": original_name
-                }
-
-            # Progress: 60% - OCR needed
-            await _notify_progress(doc_id, user_id, 60, "ocr", "OCR 처리 준비 중")
-            logger.info(f"Queueing OCR for document: {doc_id}")
-
-            queued_at = datetime.utcnow().isoformat()
-
-            # Queue to Redis
-            await RedisService.add_to_stream(
-                file_id=doc_id,
-                file_path=dest_path,
-                doc_id=doc_id,
-                owner_id=user_id,
-                queued_at=queued_at,
-                original_name=original_name
-            )
-
-            # Update MongoDB with queue status
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {
-                    "ocr.status": "queued",
-                    "ocr.queued_at": queued_at
-                }}
-            )
-
-            # Progress: 70% - OCR queued
-            await _notify_progress(doc_id, user_id, 70, "ocr", "OCR 대기열에 추가됨")
-
-            # 메트릭: 성공 기록 (OCR는 별도 처리)
-            pipeline_metrics.record_success(metric_record)
-
-            return {
-                "result": "success",
-                "document_id": doc_id,
-                "ocr": {
-                    "status": "queued",
-                    "queued_at": queued_at
-                }
-            }
-
-        # Case 4: Text already extracted, notify complete
-        logger.info(f"Document {doc_id} processed without OCR (text already extracted)")
-
-        # 🔵 displayName 자동 생성 (AR/CRS가 아닌 일반 문서)
-        if not is_ar_detected and not is_crs_detected:
-            try:
-                existing_doc = await files_collection.find_one(
-                    {"_id": ObjectId(doc_id)},
-                    {"displayName": 1}
-                )
-                if existing_doc and not existing_doc.get("displayName"):
-                    # 1순위: summarize_text()에서 이미 생성된 title (추가 API 비용 없음)
-                    ai_title = summary_result.get("title", "") if summary_result else ""
-
-                    # 2순위: title이 없으면 generate_title_only() 경량 호출
-                    if not ai_title and full_text and len(full_text.strip()) >= 10:
-                        try:
-                            title_result = await OpenAIService.generate_title_only(
-                                text=full_text,
-                                owner_id=user_id,
-                                document_id=doc_id
-                            )
-                            ai_title = title_result.get("title", "")
-                        except Exception as title_err:
-                            logger.warning(f"[DisplayName] generate_title_only 실패: {doc_id}, error={title_err}")
-
-                    if ai_title:
-                        display_name = sanitize_display_name(ai_title, original_name)
-                        if display_name:
-                            await files_collection.update_one(
-                                {"_id": ObjectId(doc_id)},
-                                {"$set": {"displayName": display_name}}
-                            )
-                            logger.info(f"[DisplayName] 자동 생성: {doc_id}, {original_name} → {display_name}")
-                        else:
-                            await files_collection.update_one(
-                                {"_id": ObjectId(doc_id)},
-                                {"$set": {"displayNameStatus": "failed"}}
-                            )
-                            logger.warning(f"[DisplayName] sanitize 실패: {doc_id}")
-                    else:
-                        await files_collection.update_one(
-                            {"_id": ObjectId(doc_id)},
-                            {"$set": {"displayNameStatus": "failed"}}
-                        )
-                        logger.warning(f"[DisplayName] 제목 생성 실패 (텍스트 부족 또는 API 에러): {doc_id}")
-            except Exception as dn_err:
-                logger.warning(f"[DisplayName] 자동 생성 예외 (문서 처리 계속): {doc_id}, error={dn_err}")
-
-        # Progress: 90% - Almost complete
-        await _notify_progress(doc_id, user_id, 90, "complete", "처리 완료 중")
-
-        # Progress: 100% - Complete (no OCR needed)
-        await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료")
-
-        # Send completion notification
-        await _notify_document_complete(doc_id, user_id)
-
-        # 메트릭: 성공 기록
-        pipeline_metrics.record_success(metric_record)
-
-        return {
-            "result": "success",
-            "document_id": doc_id,
-            "status": "completed",
-            "meta": {
-                "filename": meta_result.get("filename"),
-                "extension": meta_result.get("extension"),
-                "mime": meta_result.get("mime_type"),
-                "size_bytes": str(meta_result.get("file_size", "")),
-                "created_at": datetime.utcnow().isoformat() + "Z",
-                "meta_status": "ok",
-                "exif": "{}",
-                "pdf_pages": str(meta_result.get("num_pages", "")),
-                "full_text": (full_text[:10000] + "...") if len(full_text) > 10000 else full_text
-            }
-        }
+        # Step 4: MIME 타입별 분기 처리
+        return await _step_route_by_mime(ctx)
 
     except Exception as e:
         logger.error(f"Error in process_document_pipeline: {e}", exc_info=True)
@@ -1751,11 +1906,11 @@ async def process_document_pipeline(
 
         # Save error to MongoDB if we have a doc_id
         # cleanup_done=True면 이미 DuplicateKeyError 핸들러에서 레코드가 삭제되었으므로 스킵
-        if doc_id and not cleanup_done:
+        if ctx.doc_id and not ctx.cleanup_done:
             try:
                 files_collection = MongoService.get_collection("files")
                 await files_collection.update_one(
-                    {"_id": ObjectId(doc_id)},
+                    {"_id": ObjectId(ctx.doc_id)},
                     {"$set": {
                         "status": "failed",
                         "overallStatus": "error",
@@ -1768,9 +1923,9 @@ async def process_document_pipeline(
                 logger.error(f"Failed to save error to MongoDB: {save_error}")
 
             # 고객 연결이 완료된 상태에서 에러 발생 시 고아 데이터 방지를 위해 cleanup
-            if customer_connected:
+            if ctx.customer_connected:
                 try:
-                    await _cleanup_failed_document(doc_id, customer_id, dest_path)
+                    await _cleanup_failed_document(ctx.doc_id, customer_id, ctx.dest_path)
                 except Exception as cleanup_error:
                     logger.error(f"Failed to cleanup after error: {cleanup_error}")
 

@@ -29,7 +29,7 @@ def preprocess_text(text: str | None) -> str | None:
     # 4. 연속 빈 줄(4+) → 3줄로 축소
     text = re.sub(r'\n{4,}', '\n\n\n', text)
 
-    # 5. 반복 라인 제거 (10자+ 동일 라인이 4회+ 반복 → 2회까지만 유지)
+    # 5. 반복 라인 제거 (10자+ 동일 라인이 4회+ 반복 → 3회까지만 유지)
     lines = text.split('\n')
     cleaned_lines = []
     prev_line = None
@@ -52,26 +52,72 @@ def preprocess_text(text: str | None) -> str | None:
     return text
 
 
-def split_text_into_chunks(text: str, meta: dict, chunk_size: int = 1000, chunk_overlap: int = 200):
+# 문서 유형별 청킹 파라미터 — (chunk_size, chunk_overlap)
+# @see docs/DOCUMENT_CLASSIFICATION_FIELDS.md
+CHUNK_PARAMS_BY_TYPE = {
+    # small (500/100): 짧은 신분·의료 문서
+    'id_card': (500, 100),
+    'family_cert': (500, 100),
+    'diagnosis': (500, 100),
+    'medical_receipt': (500, 100),
+    # medium (800/150): 정형 계약 문서
+    'policy': (800, 150),
+    'application': (800, 150),
+    'claim_form': (800, 150),
+    # large (1200/200): 분석·비교 보고서
+    'plan_design': (1200, 200),
+    'coverage_analysis': (1200, 200),
+    'corp_tax': (1200, 200),
+    # ar_crs (600/100): AR/CRS 테이블 중심 문서
+    'annual_report': (600, 100),
+    'customer_review': (600, 100),
+}
+DEFAULT_CHUNK_PARAMS = (1000, 200)
+
+
+def _resolve_chunk_params(meta: dict) -> tuple:
+    """
+    문서 유형에 따라 (chunk_size, chunk_overlap)을 결정한다.
+
+    우선순위:
+    1. is_annual_report == True → ar_crs
+    2. is_customer_review == True → ar_crs
+    3. meta['document_type'] → CHUNK_PARAMS_BY_TYPE 매핑
+    4. 위 어디에도 해당 없으면 → DEFAULT (1000, 200)
+    """
+    if meta.get('is_annual_report'):
+        return CHUNK_PARAMS_BY_TYPE['annual_report']
+    if meta.get('is_customer_review'):
+        return CHUNK_PARAMS_BY_TYPE['customer_review']
+
+    doc_type = meta.get('document_type', '')
+    return CHUNK_PARAMS_BY_TYPE.get(doc_type, DEFAULT_CHUNK_PARAMS)
+
+
+def split_text_into_chunks(text: str, meta: dict, chunk_size: int = None, chunk_overlap: int = None):
     """
     전체 텍스트를 작은 청크로 분할하고 메타데이터를 추가합니다.
 
-    P5-2: 청크 크기 1500→1000자, 오버랩 150→200자로 변경
-    - 작은 청크 = 더 정밀한 벡터 표현 (임베딩이 청크 전체를 대표하므로)
-    - 큰 오버랩 = 문맥 단절 감소
+    chunk_size/chunk_overlap을 명시하지 않으면 meta의 문서 유형 정보에 따라 자동 결정.
+    명시하면 해당 값을 우선 사용 (하위 호환).
 
     P5-1: 청크에 메타데이터 프리픽스 추가
     - 임베딩 시 "[문서명] 청크텍스트" 형태로 문서 문맥을 벡터에 인코딩
     - "이 청크가 어떤 문서에서 왔는지" 정보가 벡터에 반영되어 검색 정확도 향상
 
     :param text: 분할할 전체 텍스트.
-    :param meta: 문서의 메타데이터 딕셔너리.
-    :param chunk_size: 청크의 최대 크기.
-    :param chunk_overlap: 청크 간의 중복 크기.
+    :param meta: 문서의 메타데이터 딕셔너리 (is_annual_report, is_customer_review, document_type 포함 가능).
+    :param chunk_size: 청크의 최대 크기. None이면 문서 유형에서 자동 결정.
+    :param chunk_overlap: 청크 간의 중복 크기. None이면 문서 유형에서 자동 결정.
     :return: 메타데이터가 포함된 청크들의 리스트.
     """
     if not text:
         return []
+
+    # 유형별 파라미터 결정 (명시값 우선, 없으면 문서 유형 기반)
+    auto_size, auto_overlap = _resolve_chunk_params(meta)
+    chunk_size = chunk_size if chunk_size is not None else auto_size
+    chunk_overlap = chunk_overlap if chunk_overlap is not None else auto_overlap
 
     # 텍스트 전처리: 노이즈 제거 (탭, 연속 공백, 반복 라인 등)
     text = preprocess_text(text)

@@ -294,27 +294,26 @@ def run_service_tests(services):
 
     # Frontend 테스트는 git pre-commit hook에서 처리 (여기서는 스킵)
 
-    # aims_api 테스트 (로컬 실행)
+    # aims_api 테스트 (SSH로 tars 서버에서 실행 — MongoDB가 서버에 있음)
     if services.get("aims_api"):
-        aims_api_dir = os.path.join(project_root, "backend", "api", "aims_api")
-        if os.path.exists(os.path.join(aims_api_dir, "package.json")):
-            try:
-                result = subprocess.run(
-                    ["npm", "test"],
-                    cwd=aims_api_dir,
-                    capture_output=True, text=True, timeout=120,
-                    encoding="utf-8", errors="replace",
-                    shell=(os.name == 'nt')
-                )
-                if result.returncode != 0:
-                    stderr_short = result.stderr[:300] if result.stderr else result.stdout[:300]
-                    results.append(("FAIL", f"aims_api 테스트 실패:\n{stderr_short}"))
-                else:
-                    results.append(("PASS", "aims_api 테스트 통과"))
-            except subprocess.TimeoutExpired:
-                results.append(("WARN", "aims_api 테스트 타임아웃 (120초)"))
-            except Exception as e:
-                results.append(("WARN", f"aims_api 테스트 실행 불가: {e}"))
+        try:
+            result = subprocess.run(
+                ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+                 "rossi@100.110.215.65",
+                 "cd ~/aims/backend/api/aims_api && npm run test:ci 2>&1"],
+                capture_output=True, text=True, timeout=120,
+                encoding="utf-8", errors="replace",
+                shell=(os.name == 'nt')
+            )
+            if result.returncode != 0:
+                stderr_short = result.stderr[:300] if result.stderr else result.stdout[-300:]
+                results.append(("FAIL", f"aims_api 테스트 실패:\n{stderr_short}"))
+            else:
+                results.append(("PASS", "aims_api 테스트 통과 (서버)"))
+        except subprocess.TimeoutExpired:
+            results.append(("WARN", "aims_api 테스트 타임아웃 (120초)"))
+        except Exception as e:
+            results.append(("WARN", f"aims_api 테스트 실행 불가: {e}"))
 
     # aims_mcp 테스트 (로컬: TypeScript 컴파일 체크만, 전체 테스트는 서버에서 실행)
     # MCP 서버가 원격(tars)에서만 실행되므로 로컬에서는 e2e 테스트 실행 불가

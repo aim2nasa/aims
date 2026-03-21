@@ -48,6 +48,10 @@ log_version_info()
 
 # CORS는 nginx에서 처리하므로 여기서는 제거
 
+# 🔧 튜닝 파라미터 (환경변수로 재배포 없이 조정 가능)
+RERANK_LIMIT = int(os.getenv("RERANK_LIMIT", "20"))       # Cross-Encoder 재순위화 대상 수
+LLM_CONTEXT_LIMIT = int(os.getenv("LLM_CONTEXT_LIMIT", "8"))  # LLM 답변 생성 시 사용할 청크 수
+
 # 🔒 RAG API 인증: 내부 API 키 검증 (미들웨어로 모든 엔드포인트에 적용)
 RAG_API_KEY = os.getenv("RAG_API_KEY", "")
 if not RAG_API_KEY:
@@ -605,14 +609,13 @@ async def search_endpoint(request: SearchRequest, raw_request: Request):
             timing["search_time"] = time.time() - search_start
 
             # 3단계: Cross-Encoder 재순위화 (asyncio.to_thread로 이벤트 루프 블로킹 방지)
-            RERANK_LIMIT = 50
             rerank_start = time.time()
             if len(search_results) <= RERANK_LIMIT:
                 all_reranked = await asyncio.to_thread(
                     reranker.rerank, request.query, search_results, len(search_results)
                 )
             else:
-                # 상위 50개만 정밀 재순위화, 나머지는 원본 벡터 유사도 순서 유지
+                # 상위 20개만 정밀 재순위화, 나머지는 원본 벡터 유사도 순서 유지
                 top_candidates = search_results[:RERANK_LIMIT]
                 remaining = search_results[RERANK_LIMIT:]
                 reranked_top = await asyncio.to_thread(
@@ -635,14 +638,25 @@ async def search_endpoint(request: SearchRequest, raw_request: Request):
                 top_results = all_reranked[request.offset:]
             print(f"✅ 재순위화 완료: 전체 {total_reranked}개 중 {len(top_results)}개 반환 (offset={request.offset}, top_k={request.top_k})")
 
-            # 4단계: LLM 답변 생성 (상위 8개 컨텍스트 — 청크 전체 ~1500자 기준 ~12,000자, 비용 미미)
-            LLM_CONTEXT_LIMIT = 8
+            # 4단계: LLM 답변 생성
             llm_start = time.time()
             final_answer, llm_response = generate_answer_with_llm(request.query, top_results[:LLM_CONTEXT_LIMIT], relationship_context)
             timing["llm_time"] = time.time() - llm_start
 
+            # 임베딩 시간 분리 (hybrid_engine 내부에서 측정)
+            timing["embedding_ms"] = hybrid_engine.last_embedding_ms
+            # 순수 Qdrant 검색 시간 = search_time - 임베딩 시간
+            timing["qdrant_search_ms"] = int(timing["search_time"] * 1000) - hybrid_engine.last_embedding_ms
+
             # 전체 시간 계산
             timing["total_time"] = time.time() - total_start_time
+
+            # ⏱️ 단계별 소요 시간 로깅
+            print(f"⏱️ [Timing] 임베딩={timing['embedding_ms']}ms | "
+                  f"Qdrant검색={timing['qdrant_search_ms']}ms | "
+                  f"재순위화={int(timing['rerank_time']*1000)}ms | "
+                  f"LLM답변={int(timing['llm_time']*1000)}ms | "
+                  f"전체={int(timing['total_time']*1000)}ms")
 
             # 🔥 Phase 3: 검색 로그 저장
             log_id = None

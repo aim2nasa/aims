@@ -229,10 +229,10 @@ MongoClient.connect(MONGO_URI)
     app.use('/api/auth', authRoutes);
 
     // 고객 관계 라우트 설정
-    setupCustomerRelationshipRoutes(app, db);
+    setupCustomerRelationshipRoutes(app, db, authenticateJWT);
 
-    // 개인 파일 관리 라우트 설정
-    app.use('/api/personal-files', personalFilesRoutes);
+    // 개인 파일 관리 라우트 설정 (DI: db, authenticateJWT)
+    app.use('/api/personal-files', personalFilesRoutes(db, authenticateJWT));
 
     // AI 토큰 사용량 라우트 설정 (가장 먼저 등록)
     console.log('[Server] fallbackHandlersRegistered BEFORE token routes:', fallbackHandlersRegistered);

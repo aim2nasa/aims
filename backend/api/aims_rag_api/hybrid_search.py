@@ -69,6 +69,7 @@ class HybridSearchEngine:
 
         # 🔥 Phase 4: 마지막 임베딩 응답 저장 (토큰 추적용)
         self.last_embedding_response = None
+        self.last_embedding_ms = 0
 
     def resolve_customer_from_entities(self, entities: List[str], user_id: str) -> Optional[str]:
         """
@@ -427,10 +428,12 @@ class HybridSearchEngine:
 
         if query_vector is None:
             try:
+                embed_start = time.time()
                 response = self.openai_client.embeddings.create(
                     input=query,
                     model="text-embedding-3-small"
                 )
+                self.last_embedding_ms = int((time.time() - embed_start) * 1000)
                 query_vector = response.data[0].embedding
                 self.last_embedding_response = response
 
@@ -443,7 +446,10 @@ class HybridSearchEngine:
                 print(f"❌ 쿼리 임베딩 중 오류 발생: {e}")
                 send_error_log("aims_rag_api", f"HybridSearch 쿼리 임베딩 오류: {e}", e)
                 self.last_embedding_response = None
+                self.last_embedding_ms = 0
                 return []
+        else:
+            self.last_embedding_ms = 0  # 캐시 히트
 
         # Qdrant 필터 구성
         filter_conditions = [models.FieldCondition(key="owner_id", match=models.MatchValue(value=user_id))]
