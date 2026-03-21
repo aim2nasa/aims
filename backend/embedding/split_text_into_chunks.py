@@ -29,7 +29,7 @@ def preprocess_text(text: str | None) -> str | None:
     # 4. 연속 빈 줄(4+) → 3줄로 축소
     text = re.sub(r'\n{4,}', '\n\n\n', text)
 
-    # 5. 반복 라인 제거 (10자+ 동일 라인이 4회+ 반복 → 2회까지만 유지)
+    # 5. 반복 라인 제거 (10자+ 동일 라인이 4회+ 반복 → 3회까지만 유지)
     lines = text.split('\n')
     cleaned_lines = []
     prev_line = None
