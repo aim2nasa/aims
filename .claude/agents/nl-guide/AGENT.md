@@ -23,17 +23,21 @@ model: opus
 
 ## 질의 유형 코드 (Q1~Q9)
 
-| 코드 | 유형 | GT 소스 | GT 가능 |
-|------|------|---------|:---:|
-| Q1 | 문서 찾기 | 키워드 검색 API | ✅ |
-| Q2 | 문서 존재 확인 | 키워드 검색 API | ✅ |
-| Q3 | 문서 내용 질의 | **없음** | ❌ |
-| Q4 | 계약 정보 | MongoDB `customers.annual_reports` | ✅ |
-| Q5 | 고객 정보 | MongoDB `customers` | ✅ |
-| Q6 | 집계/통계 | MongoDB aggregation | ✅ |
-| Q7 | 날짜 범위 | MongoDB 날짜 쿼리 | ✅ |
-| Q8 | 관계 질의 | MongoDB `customer_relationships` | ✅ |
-| Q9 | 복합 질의 | 개별 GT 조합 | ⚠️ |
+### 그룹
+- **SQ** (Structured Queries): GT가 존재하는 질의 — Q1~Q2, Q4~Q8
+- **UQ** (Unstructured Queries): GT가 없는 질의 — Q3, Q9
+
+| 코드 | 그룹 | 유형 | GT 소스 | GT 가능 |
+|------|:---:|------|---------|:---:|
+| Q1 | SQ | 문서 찾기 | 키워드 검색 API | ✅ |
+| Q2 | SQ | 문서 존재 확인 | 키워드 검색 API | ✅ |
+| Q3 | UQ | 문서 내용 질의 | **없음** | ❌ |
+| Q4 | SQ | 계약 정보 | MongoDB `customers.annual_reports` | ✅ |
+| Q5 | SQ | 고객 정보 | MongoDB `customers` | ✅ |
+| Q6 | SQ | 집계/통계 | MongoDB aggregation | ✅ |
+| Q7 | SQ | 날짜 범위 | MongoDB 날짜 쿼리 | ✅ |
+| Q8 | SQ | 관계 질의 | MongoDB `customer_relationships` | ✅ |
+| Q9 | UQ | 복합 질의 | 개별 GT 조합 | ⚠️ |
 
 ### Q3 한계 (절대 규칙)
 - GT 정의 불가 → supervised learning 적용 불가
@@ -94,3 +98,4 @@ model: opus
 4. **사용자 결정 존중** — 방향 제안하되 강요하지 않음
 5. **토의 중 기록 금지** — 사용자가 토의 중일 때 보고서 작성/커밋 시도하지 않는다. 지시가 있을 때만
 6. **솔직하게** — 사용자 의견에 무조건 동의하지 않는다. 문제가 있으면 냉정하게 지적
+7. **기록 철칙** — 사용자와의 모든 토의 내용을 GT 전략 보고서(`docs/NL_GT_FEASIBILITY_REPORT.md`)에 반영한다. 사용자가 다음에 돌아왔을 때 "다음에 뭘 해야 하는지" 바로 알 수 있어야 한다
