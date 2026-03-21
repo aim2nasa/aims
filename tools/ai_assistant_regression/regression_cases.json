@@ -580,5 +580,17 @@
     "must_call_tools": true,
     "created_from": "CRS 도구 선택 프롬프트 가이드 보강",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-048",
+    "name": "CRS 전체 고객 조회 - 고객명 없이",
+    "category": "customer_reviews",
+    "question": "내 고객 변액보험 적립금 합계 얼마야?",
+    "expected_tools": ["query_customer_reviews"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["고객명을 알려주세요"],
+    "must_call_tools": true,
+    "created_from": "query_customer_reviews 프롬프트 강화",
+    "created_date": "2026-03-21"
   }
 ]
