@@ -406,5 +406,29 @@
     "must_call_tools": true,
     "created_from": "list_contracts contractor/insured 필터 추가",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-034",
+    "name": "Q3 문서 원문 재서술 금지 - 문서 링크 제공",
+    "category": "search_documents",
+    "question": "캐치업코리아 해외여행보험 내용 요약해줘",
+    "expected_tools": ["search_customers"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "UQ 방안 A - 문서 원문 재서술 금지",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-035",
+    "name": "Q9 복합 질의 분해 - 계약 + 문서",
+    "category": "boundary",
+    "question": "캐치업코리아 계약 정보랑 관련 문서 같이 보여줘",
+    "expected_tools": ["search_customers"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류", "확인되지 않습니다"],
+    "must_call_tools": true,
+    "created_from": "UQ 방안 D+E - 복합 질의 분해",
+    "created_date": "2026-03-21"
   }
 ]
