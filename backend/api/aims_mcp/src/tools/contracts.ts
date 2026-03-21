@@ -15,6 +15,8 @@ export const listContractsSchema = z.object({
   insured: z.string().optional().describe('피보험자명으로 필터링 (예: "안영미")'),
   contractDateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이후 계약만 조회 (YYYY-MM-DD)'),
   contractDateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이전 계약만 조회 (YYYY-MM-DD)'),
+  includeLapsed: z.boolean().optional().default(false).describe('실효/해지 계약 포함 여부 (lapsed_contracts 배열에서 수집, 기본: false)'),
+  paymentStatus: z.string().optional().describe('납입상태 필터 (납입중/납입완료/일시납/전기납)'),
   sortBy: z.enum(['contractDate', 'premium', 'coverageAmount']).optional().default('contractDate').describe('정렬 기준 (기본: contractDate)'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc').describe('정렬 순서 (기본: desc)'),
   limit: z.number().optional().default(50).describe('결과 개수 제한 (기본: 50, 최대: 50)'),
@@ -32,7 +34,7 @@ export const getContractDetailsSchema = z.object({
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명, 보험사 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 각 계약에 paymentStatus(납입상태: 납입중/납입완료/일시납/전기납) 필드가 포함되어 납입 완료 여부를 바로 확인할 수 있습니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위로 필터링할 수 있고, 계약일, 보험료, 가입금액 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
+    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 각 계약에 paymentStatus(납입상태: 납입중/납입완료/일시납/전기납), expiryDate(보험 만기일), paymentEndDate(납입 종료일) 계산 필드가 포함됩니다. includeLapsed=true로 lapsed_contracts(실효/해지 계약)도 함께 조회할 수 있으며, isLapsed 마커로 구분됩니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위, 납입상태별로 필터링할 수 있고, 계약일, 보험료, 가입금액 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수, lapsedFromARCount)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -43,6 +45,8 @@ export const contractToolDefinitions = [
         insured: { type: 'string', description: '피보험자명으로 필터링' },
         contractDateFrom: { type: 'string', description: '이 날짜 이후 계약만 조회 (YYYY-MM-DD)' },
         contractDateTo: { type: 'string', description: '이 날짜 이전 계약만 조회 (YYYY-MM-DD)' },
+        includeLapsed: { type: 'boolean', description: '실효/해지 계약 포함 여부 (lapsed_contracts 배열에서 수집, 기본: false)' },
+        paymentStatus: { type: 'string', description: '납입상태 필터 (납입중/납입완료/일시납/전기납)' },
         sortBy: { type: 'string', enum: ['contractDate', 'premium', 'coverageAmount'], description: '정렬 기준 (기본: contractDate)' },
         sortOrder: { type: 'string', enum: ['asc', 'desc'], description: '정렬 순서 (기본: desc)' },
         limit: { type: 'number', description: '결과 개수 제한 (기본: 50, 최대: 50)' },
@@ -109,7 +113,10 @@ interface NormalizedContract {
   insurancePeriod: string;
   paymentPeriod: string;
   paymentStatus: string;
+  expiryDate: string | null;
+  paymentEndDate: string | null;
   premium: number;
+  isLapsed: boolean;
   arIssueDate: string;
   arParsedAt?: string;
 }
@@ -147,6 +154,63 @@ function calculatePaymentStatus(paymentPeriod: string, contractDate: string): st
 }
 
 /**
+ * 보험기간과 계약일을 기반으로 보험 만기일 계산
+ * - "종신" → null (종신보험)
+ * - "N년" → 계약일 + N년
+ * - "N세" → null (생년월일 필요, 판단 불가)
+ * - 파싱 불가 → null
+ */
+function calculateExpiryDate(insurancePeriod: string, contractDate: string): string | null {
+  const period = insurancePeriod.trim();
+
+  if (period.includes('종신')) return null;
+
+  // "N년" 패턴 매칭
+  const yearMatch = period.match(/^(\d+)\s*년$/);
+  if (yearMatch && contractDate) {
+    const years = parseInt(yearMatch[1], 10);
+    const contractDateObj = new Date(contractDate);
+    if (!isNaN(contractDateObj.getTime())) {
+      const expiryDate = new Date(contractDateObj);
+      expiryDate.setFullYear(expiryDate.getFullYear() + years);
+      return expiryDate.toISOString().split('T')[0];
+    }
+  }
+
+  // "N세" 등 파싱 불가
+  return null;
+}
+
+/**
+ * 납입기간과 계약일을 기반으로 납입 종료일 계산
+ * - "일시납" → 계약일 (납입 즉시 완료)
+ * - "전기납" → null (보험기간과 동일, 별도 표기 불필요)
+ * - "N년" → 계약일 + N년
+ * - "N세" → null (생년월일 필요, 판단 불가)
+ * - 파싱 불가 → null
+ */
+function calculatePaymentEndDate(paymentPeriod: string, contractDate: string): string | null {
+  const period = paymentPeriod.trim();
+
+  if (period.includes('일시납')) return contractDate || null;
+  if (period.includes('전기납')) return null;
+
+  // "N년" 패턴 매칭
+  const yearMatch = period.match(/^(\d+)\s*년$/);
+  if (yearMatch && contractDate) {
+    const years = parseInt(yearMatch[1], 10);
+    const contractDateObj = new Date(contractDate);
+    if (!isNaN(contractDateObj.getTime())) {
+      const endDate = new Date(contractDateObj);
+      endDate.setFullYear(endDate.getFullYear() + years);
+      return endDate.toISOString().split('T')[0];
+    }
+  }
+
+  return null;
+}
+
+/**
  * AR 계약 데이터를 정규화된 형식으로 변환
  */
 function normalizeContract(
@@ -154,10 +218,12 @@ function normalizeContract(
   customerId: string,
   customerName: string,
   arIssueDate: string,
-  arParsedAt?: string
+  arParsedAt?: string,
+  isLapsed: boolean = false
 ): NormalizedContract {
   const paymentPeriod = contract['납입기간'] || '';
   const contractDate = contract['계약일'] || '';
+  const insurancePeriod = contract['보험기간'] || '';
 
   return {
     customerId,
@@ -170,10 +236,13 @@ function normalizeContract(
     contractDate,
     status: contract['계약상태'] || '',
     coverageAmount: contract['가입금액(만원)'] || 0,
-    insurancePeriod: contract['보험기간'] || '',
+    insurancePeriod,
     paymentPeriod,
     paymentStatus: calculatePaymentStatus(paymentPeriod, contractDate),
+    expiryDate: calculateExpiryDate(insurancePeriod, contractDate),
+    paymentEndDate: calculatePaymentEndDate(paymentPeriod, contractDate),
     premium: contract['보험료(원)'] || 0,
+    isLapsed,
     arIssueDate,
     arParsedAt
   };
@@ -255,6 +324,7 @@ export async function handleListContracts(args: unknown) {
         const contractMap = new Map<string, NormalizedContract>();
 
         for (const ar of sortedReports) {
+          // 정상 계약 수집
           const contracts = ar.contracts || [];
           for (const contract of contracts) {
             const policyNumber = contract['증권번호'] || '';
@@ -267,13 +337,39 @@ export async function handleListContracts(args: unknown) {
               customerId,
               customerName,
               ar.issue_date,
-              ar.parsed_at
+              ar.parsed_at,
+              false
             );
             if (policyNumber) {
               contractMap.set(policyNumber, normalized);
             } else {
               // 증권번호 없는 계약은 그대로 추가
               allContracts.push(normalized);
+            }
+          }
+
+          // lapsed_contracts 수집 (includeLapsed=true일 때만)
+          if (params.includeLapsed) {
+            const lapsedContracts = ar.lapsed_contracts || [];
+            for (const contract of lapsedContracts) {
+              const policyNumber = contract['증권번호'] || '';
+              // 이미 수집된 증권번호면 스킵
+              if (policyNumber && contractMap.has(policyNumber)) {
+                continue;
+              }
+              const normalized = normalizeContract(
+                contract,
+                customerId,
+                customerName,
+                ar.issue_date,
+                ar.parsed_at,
+                true
+              );
+              if (policyNumber) {
+                contractMap.set(policyNumber, normalized);
+              } else {
+                allContracts.push(normalized);
+              }
             }
           }
         }
@@ -310,6 +406,13 @@ export async function handleListContracts(args: unknown) {
       const statusLower = params.status.toLowerCase();
       filteredContracts = filteredContracts.filter(c =>
         c.status.toLowerCase().includes(statusLower)
+      );
+    }
+
+    // 필터링: 납입상태
+    if (params.paymentStatus) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.paymentStatus === params.paymentStatus
       );
     }
 
@@ -371,9 +474,15 @@ export async function handleListContracts(args: unknown) {
         } else if (statusLower.includes('실효') || statusLower.includes('해지') || statusLower.includes('만기')) {
           acc.lapsedContracts += 1;
         }
+
+        // lapsed_contracts 배열에서 온 계약 수 (isLapsed 마커 기준)
+        if (c.isLapsed) {
+          acc.lapsedFromARCount += 1;
+        }
+
         return acc;
       },
-      { totalPremium: 0, monthlyPremium: 0, lumpSumPremium: 0, totalContracts: 0, activeContracts: 0, lapsedContracts: 0 }
+      { totalPremium: 0, monthlyPremium: 0, lumpSumPremium: 0, totalContracts: 0, activeContracts: 0, lapsedContracts: 0, lapsedFromARCount: 0 }
     );
 
     // 페이지네이션

@@ -492,5 +492,31 @@
     "must_call_tools": true,
     "created_from": "paymentStatus 필드 추가",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-041",
+    "name": "실효 계약 포함 조회 - includeLapsed",
+    "category": "list_contracts",
+    "question": "이상윤 실효된 계약 포함해서 전부 보여줘",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "list_contracts 1단계 보강 - includeLapsed",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-042",
+    "name": "만기일 조회 - expiryDate",
+    "category": "list_contracts",
+    "question": "캐치업코리아 보험 언제 끝나?",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "list_contracts 1단계 보강 - expiryDate",
+    "created_date": "2026-03-21"
   }
 ]
