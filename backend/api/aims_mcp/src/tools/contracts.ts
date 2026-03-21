@@ -569,6 +569,12 @@ export async function handleListContracts(args: unknown) {
     const paginatedContracts = filteredContracts.slice(offset, offset + limit);
     const hasMore = offset + paginatedContracts.length < totalCount;
 
+    // 페이지네이션 힌트: AI가 "더 보여줘" 요청 시 자동 사용
+    const nextOffset = offset + paginatedContracts.length;
+    const paginationHint = hasMore
+      ? `다음 페이지: list_contracts(${params.customerId ? `customerId="${params.customerId}", ` : ''}offset=${nextOffset})`
+      : null;
+
     return {
       content: [{
         type: 'text' as const,
@@ -578,6 +584,7 @@ export async function handleListContracts(args: unknown) {
           offset,
           limit,
           hasMore,
+          _paginationHint: paginationHint,
           summary,
           contracts: paginatedContracts
         }, null, 2)

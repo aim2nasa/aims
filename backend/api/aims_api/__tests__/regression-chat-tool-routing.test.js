@@ -256,3 +256,16 @@ describe('get_customer_reviews description 완전성', () => {
     expect(customerReviewsSource).toMatch(/납입보험료 총액|순보험료/);
   });
 });
+
+// =============================================================================
+// list_contracts _paginationHint 일관성
+// =============================================================================
+describe('list_contracts 페이지네이션 힌트', () => {
+  const contractsSource = readSource(
+    path.join('..', 'aims_mcp', 'src', 'tools', 'contracts.ts')
+  );
+
+  test('list_contracts에 _paginationHint가 포함되어야 함', () => {
+    expect(contractsSource).toContain('_paginationHint');
+  });
+});
