@@ -202,27 +202,45 @@ export async function handleListContracts(args: unknown) {
       const customerName = customer.personal_info?.name || '';
       const annualReports: AnnualReport[] = customer.annual_reports || [];
 
-      // 각 AR의 계약 수집 (최신 AR만 사용 - 중복 방지)
-      // AR은 issue_date 기준 최신 것 사용
+      // 모든 AR에서 계약 수집, 증권번호 기준 중복 제거 (최신 AR 우선)
       if (annualReports.length > 0) {
-        // issue_date 기준 정렬 (최신 우선)
+        // issue_date 기준 정렬 (최신 우선) — 먼저 넣은 것이 우선
         const sortedReports = [...annualReports].sort((a, b) => {
           const dateA = new Date(a.issue_date || 0).getTime();
           const dateB = new Date(b.issue_date || 0).getTime();
           return dateB - dateA;
         });
 
-        const latestAR = sortedReports[0];
-        const contracts = latestAR.contracts || [];
+        // 증권번호 → NormalizedContract 맵 (최신 AR의 데이터가 우선)
+        const contractMap = new Map<string, NormalizedContract>();
 
-        for (const contract of contracts) {
-          allContracts.push(normalizeContract(
-            contract,
-            customerId,
-            customerName,
-            latestAR.issue_date,
-            latestAR.parsed_at
-          ));
+        for (const ar of sortedReports) {
+          const contracts = ar.contracts || [];
+          for (const contract of contracts) {
+            const policyNumber = contract['증권번호'] || '';
+            // 이미 최신 AR에서 수집된 증권번호면 스킵
+            if (policyNumber && contractMap.has(policyNumber)) {
+              continue;
+            }
+            const normalized = normalizeContract(
+              contract,
+              customerId,
+              customerName,
+              ar.issue_date,
+              ar.parsed_at
+            );
+            if (policyNumber) {
+              contractMap.set(policyNumber, normalized);
+            } else {
+              // 증권번호 없는 계약은 그대로 추가
+              allContracts.push(normalized);
+            }
+          }
+        }
+
+        // 맵에서 수집된 계약을 allContracts에 추가
+        for (const contract of contractMap.values()) {
+          allContracts.push(contract);
         }
       }
     }

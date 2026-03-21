@@ -261,3 +261,148 @@ describe('contracts - handleListContracts 핸들러', () => {
     expect(data.contracts[2].premium).toBe(30000);
   });
 });
+
+// ============================================================================
+// 다중 AR 계약 수집 + 중복 제거 regression 테스트
+// ============================================================================
+
+describe('contracts - 다중 AR 계약 수집', () => {
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // ── 여러 AR에서 서로 다른 계약을 수집해야 한다 ──────────────────
+  it('고객에 AR이 2개일 때 모든 AR의 계약이 수집된다', async () => {
+    const multiARCustomers = [
+      {
+        _id: { toString: () => 'cust-multi' },
+        personal_info: { name: '캐치업코리아' },
+        annual_reports: [
+          {
+            issue_date: '2026-01-15',
+            parsed_at: '2026-01-16T00:00:00Z',
+            contracts: [
+              {
+                '순번': 1, '증권번호': 'POL-A1', '보험상품': '종신보험',
+                '계약자': '김보성', '피보험자': '김보성', '계약일': '2025-06-15',
+                '계약상태': '정상', '가입금액(만원)': 10000, '보험기간': '종신',
+                '납입기간': '20년', '보험료(원)': 100000
+              },
+              {
+                '순번': 2, '증권번호': 'POL-A2', '보험상품': '실손보험',
+                '계약자': '김보성', '피보험자': '김보성', '계약일': '2024-12-01',
+                '계약상태': '정상', '가입금액(만원)': 5000, '보험기간': '1년',
+                '납입기간': '1년', '보험료(원)': 30000
+              }
+            ]
+          },
+          {
+            issue_date: '2025-07-10',
+            parsed_at: '2025-07-11T00:00:00Z',
+            contracts: [
+              {
+                '순번': 1, '증권번호': 'POL-B1', '보험상품': '암보험',
+                '계약자': '안영미', '피보험자': '안영미', '계약일': '2023-03-10',
+                '계약상태': '정상', '가입금액(만원)': 20000, '보험기간': '20년',
+                '납입기간': '10년', '보험료(원)': 50000
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
+    mockFind.mockReturnValue(createMockCursor(multiARCustomers));
+    const result = await handleListContracts({});
+    const data = parseResponse(result as any);
+
+    // 3건 모두 수집되어야 함 (AR1: 2건 + AR2: 1건)
+    expect(data.totalCount).toBe(3);
+    expect(data.summary.totalContracts).toBe(3);
+    expect(data.summary.totalPremium).toBe(180000);  // 100000 + 30000 + 50000
+
+    const policyNumbers = data.contracts.map((c: any) => c.policyNumber);
+    expect(policyNumbers).toContain('POL-A1');
+    expect(policyNumbers).toContain('POL-A2');
+    expect(policyNumbers).toContain('POL-B1');
+  });
+
+  // ── 같은 증권번호가 여러 AR에 있으면 최신 AR 우선 ──────────────
+  it('동일 증권번호가 여러 AR에 있으면 최신 AR의 데이터 사용', async () => {
+    const duplicateARCustomers = [
+      {
+        _id: { toString: () => 'cust-dup' },
+        personal_info: { name: '곽승철' },
+        annual_reports: [
+          {
+            issue_date: '2026-03-01',  // 최신
+            parsed_at: '2026-03-02T00:00:00Z',
+            contracts: [
+              {
+                '순번': 1, '증권번호': 'POL-DUP', '보험상품': '종신보험(갱신)',
+                '계약자': '곽승철', '피보험자': '곽승철', '계약일': '2025-06-15',
+                '계약상태': '정상', '가입금액(만원)': 15000, '보험기간': '종신',
+                '납입기간': '20년', '보험료(원)': 200000
+              },
+              {
+                '순번': 2, '증권번호': 'POL-NEW', '보험상품': '암보험',
+                '계약자': '곽승철', '피보험자': '곽승철', '계약일': '2026-01-10',
+                '계약상태': '정상', '가입금액(만원)': 5000, '보험기간': '10년',
+                '납입기간': '10년', '보험료(원)': 40000
+              }
+            ]
+          },
+          {
+            issue_date: '2025-06-01',  // 구형
+            parsed_at: '2025-06-02T00:00:00Z',
+            contracts: [
+              {
+                '순번': 1, '증권번호': 'POL-DUP', '보험상품': '종신보험',
+                '계약자': '곽승철', '피보험자': '곽승철', '계약일': '2025-06-15',
+                '계약상태': '정상', '가입금액(만원)': 10000, '보험기간': '종신',
+                '납입기간': '20년', '보험료(원)': 150000
+              },
+              {
+                '순번': 2, '증권번호': 'POL-OLD', '보험상품': '실손보험',
+                '계약자': '곽승철', '피보험자': '곽승철', '계약일': '2024-01-01',
+                '계약상태': '실효', '가입금액(만원)': 3000, '보험기간': '1년',
+                '납입기간': '1년', '보험료(원)': 20000
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
+    mockFind.mockReturnValue(createMockCursor(duplicateARCustomers));
+    const result = await handleListContracts({});
+    const data = parseResponse(result as any);
+
+    // POL-DUP 중복 제거: 3건 (POL-DUP 최신, POL-NEW, POL-OLD)
+    expect(data.totalCount).toBe(3);
+
+    // POL-DUP은 최신 AR(2026-03-01)의 데이터 사용: 200000원, 가입금액 15000
+    const dupContract = data.contracts.find((c: any) => c.policyNumber === 'POL-DUP');
+    expect(dupContract).toBeDefined();
+    expect(dupContract.premium).toBe(200000);          // 최신 AR 값
+    expect(dupContract.coverageAmount).toBe(15000);     // 최신 AR 값
+    expect(dupContract.productName).toBe('종신보험(갱신)'); // 최신 AR 값
+    expect(dupContract.arIssueDate).toBe('2026-03-01'); // 최신 AR
+
+    // summary: 200000 + 40000 + 20000 = 260000
+    expect(data.summary.totalPremium).toBe(260000);
+  });
+
+  // ── AR이 1개인 경우 기존 동작과 동일 ─────────────────────────
+  it('AR이 1개인 고객은 기존과 동일하게 동작', async () => {
+    // mockCustomers (상단 fixture)는 AR 1개
+    mockFind.mockReturnValue(createMockCursor(mockCustomers));
+    const result = await handleListContracts({});
+    const data = parseResponse(result as any);
+
+    expect(data.totalCount).toBe(3);
+    expect(data.summary.totalContracts).toBe(3);
+    expect(data.summary.totalPremium).toBe(380000);
+  });
+});
