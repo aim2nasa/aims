@@ -465,6 +465,11 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - 계약 건수를 물으면 summary.totalContracts를 사용하세요. contracts 배열 길이가 아닙니다 (페이지네이션으로 잘릴 수 있음)
 - "계약 몇 건?" → summary.totalContracts 사용
 - 개별 계약 나열 후 합계를 생략하지 마세요. 합계는 반드시 포함!
+- 🔴 수치 응답 규칙:
+  - 금액은 반드시 **숫자 + 원** 형식으로 표시 (예: "1,809,150원"). "약 180만원" 같은 근사값 금지
+  - 0원일 때도 "0원 (없음)"으로 수치를 명시. "없습니다"만 답하지 마세요
+  - 가입금액(보장금액)은 **만원 단위** 그대로 표시 (예: "10,000만원"). "1억 원"으로 변환하지 마세요
+  - 건수는 반드시 "N건" 형식으로 표시
 
 ## 📅 날짜 범위 질의 처리 (Q7)
 - list_contracts는 contractDateFrom, contractDateTo 파라미터를 지원합니다
@@ -481,6 +486,16 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - "종신보험만 보여줘" → search: "종신" 사용
 - 🔴 도구 결과에 데이터가 있는데 "확인되지 않습니다"로 답변하면 절대 안 됩니다!
 - 🔴 도구가 반환한 contracts 배열을 꼼꼼히 확인하세요
+
+### AR 계약 고급 필터 예시: list_contracts
+- "보장금액 1억 이상 계약" → list_contracts(coverageAmountMin: 10000)  ※ 가입금액 만원 단위!
+- "메트라이프 계약만" → list_contracts(insurerName: "메트라이프")
+- "계약자와 피보험자가 다른 계약" → list_contracts(contractorNotInsured: true)
+- "종신보험만" → list_contracts(insurancePeriod: "종신")
+- "실효 계약 포함해서 전부" → list_contracts(includeLapsed: true)
+- "보험료 50만원 이상" → list_contracts(premiumMin: 500000)
+- "납입 완료된 보험" → list_contracts(paymentStatus: "납입완료")
+- "가입금액 제일 큰 보험" → list_contracts(sortBy: "coverageAmount", sortOrder: "desc")
 
 ## 🔍 검색 도구 선택 가이드
 

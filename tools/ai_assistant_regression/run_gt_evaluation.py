@@ -203,6 +203,28 @@ def evaluate_gt(case, response):
             if num in text or num_plain in text:
                 matched += 1
             else:
+                # 단위 변환 매칭: "10,345,613,592원" ↔ "약 103억원", "10000만원" ↔ "1억"
+                num_value = int(re.sub(r'[^\d]', '', num_plain) or '0')
+                unit = re.search(r'(원|건|만원)', num)
+                unit_str = unit.group(1) if unit else ''
+                # 만원 단위 → 원 단위 변환
+                if unit_str == '만원':
+                    num_value_won = num_value * 10000
+                else:
+                    num_value_won = num_value
+                # 억 단위 변환 체크
+                if num_value_won >= 100000000:
+                    billions = num_value_won / 100000000
+                    billion_strs = [f"{billions:.0f}억", f"약 {billions:.0f}억", f"{billions:g}억"]
+                    if any(b in text for b in billion_strs):
+                        matched += 1
+                        continue
+                # "0원" ↔ "없습니다/없음" 동의어 매칭
+                if num_value == 0 and unit_str == '원':
+                    zero_synonyms = ["없습니다", "없음", "없어요", "0원", "없는"]
+                    if any(s in text for s in zero_synonyms):
+                        matched += 1
+                        continue
                 details.append(f"누락된 수치: {num}")
         score_parts.append(matched / len(required_numbers) if required_numbers else 1.0)
 
@@ -232,6 +254,16 @@ def evaluate_gt(case, response):
         matched = sum(1 for n in person_names if n in text)
         if person_names:
             score_parts.append(matched / len(person_names))
+
+    # gt_tool 필드가 있으면 도구 선택 정확도 평가 (가산)
+    gt_tool = case.get("gt_tool", "")
+    if gt_tool and response["tools_called"]:
+        if gt_tool in response["tools_called"]:
+            score_parts.append(1.0)
+            details.append(f"도구 선택 정확: {gt_tool}")
+        else:
+            score_parts.append(0.0)
+            details.append(f"도구 선택 오류: expected={gt_tool}, actual={response['tools_called']}")
 
     # 최종 점수 계산
     if score_parts:

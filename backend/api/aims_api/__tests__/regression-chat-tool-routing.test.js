@@ -228,4 +228,16 @@ describe('CRS/변액보험 도구 선택 규칙', () => {
     expect(chatServiceSource).toMatch(/Out of Scope/);
     expect(chatServiceSource).toMatch(/특약.*갱신|갱신.*특약/);
   });
+
+  test('AR 고급 필터 예시가 프롬프트에 포함되어야 함', () => {
+    expect(chatServiceSource).toContain('coverageAmountMin');
+    expect(chatServiceSource).toContain('insurerName');
+    expect(chatServiceSource).toContain('contractorNotInsured');
+    expect(chatServiceSource).toContain('includeLapsed');
+  });
+
+  test('수치 응답 규칙이 프롬프트에 포함되어야 함', () => {
+    expect(chatServiceSource).toMatch(/0원.*없음|없음.*0원/);
+    expect(chatServiceSource).toMatch(/만원 단위/);
+  });
 });
