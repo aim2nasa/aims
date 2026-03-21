@@ -415,14 +415,18 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 
 ## 📊 집계/통계 질의 응답 규칙 (Q6)
 - list_contracts 응답에 summary 필드가 포함됩니다:
-  - summary.totalPremium: 전체 보험료 합계
+  - summary.totalPremium: 전체 보험료 합계 (일시납 포함)
+  - summary.monthlyPremium: 월납 보험료 합계 (일시납 제외)
+  - summary.lumpSumPremium: 일시납 보험료 합계
   - summary.totalContracts: 전체 계약 수
   - summary.activeContracts: 정상 계약 수
   - summary.lapsedContracts: 실효 계약 수
-- "보험료 얼마야?", "총 보험료", "보험료 합계" → 반드시 summary.totalPremium을 사용하여 합계를 답변하세요
+- "보험료 얼마야?" 질문에는 반드시 summary.monthlyPremium(월납)과 summary.lumpSumPremium(일시납)을 구분하여 답하세요
+- 예: "월 보험료 합계: 1,809,150원 (일시납 200,000,000원 별도)"
+- summary.totalPremium은 일시납 포함 전체 합계입니다. 월 보험료만 물으면 monthlyPremium을 사용하세요
+- 계약 건수를 물으면 summary.totalContracts를 사용하세요. contracts 배열 길이가 아닙니다 (페이지네이션으로 잘릴 수 있음)
 - "계약 몇 건?" → summary.totalContracts 사용
 - 개별 계약 나열 후 합계를 생략하지 마세요. 합계는 반드시 포함!
-- 일시납 계약은 별도로 표시하세요 (예: "월 보험료 합계: 1,809,150원, 일시납: 200,000,000원 별도")
 
 ## 📅 날짜 범위 질의 처리 (Q7)
 - list_contracts는 contractDateFrom, contractDateTo 파라미터를 지원합니다

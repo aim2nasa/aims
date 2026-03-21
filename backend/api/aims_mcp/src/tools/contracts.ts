@@ -15,7 +15,7 @@ export const listContractsSchema = z.object({
   contractDateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이전 계약만 조회 (YYYY-MM-DD)'),
   sortBy: z.enum(['contractDate', 'premium']).optional().default('contractDate').describe('정렬 기준 (기본: contractDate)'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc').describe('정렬 순서 (기본: desc)'),
-  limit: z.number().optional().default(10).describe('결과 개수 제한 (기본: 10, 최대: 50)'),
+  limit: z.number().optional().default(50).describe('결과 개수 제한 (기본: 50, 최대: 50)'),
   offset: z.number().optional().default(0).describe('건너뛸 개수 (페이지네이션용)')
 });
 
@@ -41,7 +41,7 @@ export const contractToolDefinitions = [
         contractDateTo: { type: 'string', description: '이 날짜 이전 계약만 조회 (YYYY-MM-DD)' },
         sortBy: { type: 'string', enum: ['contractDate', 'premium'], description: '정렬 기준 (기본: contractDate)' },
         sortOrder: { type: 'string', enum: ['asc', 'desc'], description: '정렬 순서 (기본: desc)' },
-        limit: { type: 'number', description: '결과 개수 제한 (기본: 10, 최대: 50)' },
+        limit: { type: 'number', description: '결과 개수 제한 (기본: 50, 최대: 50)' },
         offset: { type: 'number', description: '건너뛸 개수 (페이지네이션용, 기본: 0)' }
       }
     }
@@ -276,8 +276,18 @@ export async function handleListContracts(args: unknown) {
     // summary 집계 (필터 적용 후, 페이지네이션 전)
     const summary = filteredContracts.reduce(
       (acc, c) => {
-        acc.totalPremium += c.premium || 0;
+        const premium = c.premium || 0;
+        acc.totalPremium += premium;
         acc.totalContracts += 1;
+
+        // 일시납 여부 판단: paymentPeriod에 "일시납" 포함
+        const isLumpSum = c.paymentPeriod.includes('일시납');
+        if (isLumpSum) {
+          acc.lumpSumPremium += premium;
+        } else {
+          acc.monthlyPremium += premium;
+        }
+
         const statusLower = c.status.toLowerCase();
         if (statusLower.includes('정상') || statusLower.includes('유지')) {
           acc.activeContracts += 1;
@@ -286,7 +296,7 @@ export async function handleListContracts(args: unknown) {
         }
         return acc;
       },
-      { totalPremium: 0, totalContracts: 0, activeContracts: 0, lapsedContracts: 0 }
+      { totalPremium: 0, monthlyPremium: 0, lumpSumPremium: 0, totalContracts: 0, activeContracts: 0, lapsedContracts: 0 }
     );
 
     // 페이지네이션
