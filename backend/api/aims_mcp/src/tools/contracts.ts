@@ -11,6 +11,10 @@ export const listContractsSchema = z.object({
   customerId: z.string().optional().describe('특정 고객의 계약만 조회'),
   search: z.string().optional().describe('검색어 (고객명, 상품명, 증권번호)'),
   status: z.string().optional().describe('계약 상태 (정상, 실효 등)'),
+  contractDateFrom: z.string().optional().describe('이 날짜 이후 계약만 조회 (YYYY-MM-DD)'),
+  contractDateTo: z.string().optional().describe('이 날짜 이전 계약만 조회 (YYYY-MM-DD)'),
+  sortBy: z.enum(['contractDate', 'premium']).optional().default('contractDate').describe('정렬 기준 (기본: contractDate)'),
+  sortOrder: z.enum(['asc', 'desc']).optional().default('desc').describe('정렬 순서 (기본: desc)'),
   limit: z.number().optional().default(10).describe('결과 개수 제한 (기본: 10, 최대: 50)'),
   offset: z.number().optional().default(0).describe('건너뛸 개수 (페이지네이션용)')
 });
@@ -26,13 +30,17 @@ export const getContractDetailsSchema = z.object({
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별로 필터링할 수 있습니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
+    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별, 계약일 범위로 필터링할 수 있고, 계약일 또는 보험료 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
         customerId: { type: 'string', description: '특정 고객의 계약만 조회' },
         search: { type: 'string', description: '검색어 (고객명, 상품명, 증권번호)' },
         status: { type: 'string', description: '계약 상태 (정상, 실효 등)' },
+        contractDateFrom: { type: 'string', description: '이 날짜 이후 계약만 조회 (YYYY-MM-DD)' },
+        contractDateTo: { type: 'string', description: '이 날짜 이전 계약만 조회 (YYYY-MM-DD)' },
+        sortBy: { type: 'string', enum: ['contractDate', 'premium'], description: '정렬 기준 (기본: contractDate)' },
+        sortOrder: { type: 'string', enum: ['asc', 'desc'], description: '정렬 순서 (기본: desc)' },
         limit: { type: 'number', description: '결과 개수 제한 (기본: 10, 최대: 50)' },
         offset: { type: 'number', description: '건너뛸 개수 (페이지네이션용, 기본: 0)' }
       }
@@ -233,12 +241,53 @@ export async function handleListContracts(args: unknown) {
       );
     }
 
-    // 정렬: 계약일 기준 최신순
+    // 필터링: 계약일 범위
+    if (params.contractDateFrom) {
+      const fromTime = new Date(params.contractDateFrom).getTime();
+      filteredContracts = filteredContracts.filter(c => {
+        const t = new Date(c.contractDate).getTime();
+        return !isNaN(t) && t >= fromTime;
+      });
+    }
+    if (params.contractDateTo) {
+      // To 날짜의 하루 끝까지 포함 (해당 날짜 23:59:59)
+      const toTime = new Date(params.contractDateTo).getTime() + 86400000 - 1;
+      filteredContracts = filteredContracts.filter(c => {
+        const t = new Date(c.contractDate).getTime();
+        return !isNaN(t) && t <= toTime;
+      });
+    }
+
+    // 정렬
+    const sortBy = params.sortBy || 'contractDate';
+    const sortOrder = params.sortOrder || 'desc';
+    const sortMultiplier = sortOrder === 'asc' ? 1 : -1;
+
     filteredContracts.sort((a, b) => {
+      if (sortBy === 'premium') {
+        return (a.premium - b.premium) * sortMultiplier;
+      }
+      // 기본: contractDate
       const dateA = new Date(a.contractDate || 0).getTime();
       const dateB = new Date(b.contractDate || 0).getTime();
-      return dateB - dateA;
+      return (dateA - dateB) * sortMultiplier;
     });
+
+    // summary 집계 (필터 적용 후, 페이지네이션 전)
+    const summary = filteredContracts.reduce(
+      (acc, c) => {
+        acc.totalPremium += c.premium || 0;
+        acc.totalContracts += 1;
+        const statusLower = c.status.toLowerCase();
+        if (statusLower.includes('정상') || statusLower.includes('유지')) {
+          acc.activeContracts += 1;
+        } else if (statusLower.includes('실효') || statusLower.includes('해지') || statusLower.includes('만기')) {
+          acc.lapsedContracts += 1;
+        }
+        return acc;
+      },
+      { totalPremium: 0, totalContracts: 0, activeContracts: 0, lapsedContracts: 0 }
+    );
 
     // 페이지네이션
     const totalCount = filteredContracts.length;
@@ -256,6 +305,7 @@ export async function handleListContracts(args: unknown) {
           offset,
           limit,
           hasMore,
+          summary,
           contracts: paginatedContracts
         }, null, 2)
       }]

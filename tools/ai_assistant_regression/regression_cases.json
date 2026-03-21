@@ -265,5 +265,57 @@
     "must_call_tools": true,
     "created_from": "Phase 1 계약 상태 필터 정상 동작 검증",
     "created_date": "2026-03-17"
+  },
+  {
+    "id": "REG-023",
+    "name": "보험료 집계 - summary.totalPremium 활용",
+    "category": "list_contracts",
+    "question": "캐치업코리아 보험료 얼마나 내고 있어?",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류", "확인되지 않습니다"],
+    "must_call_tools": true,
+    "created_from": "Task 1 - summary 집계 필드 추가",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-024",
+    "name": "계약 건수 집계 - summary.totalContracts 활용",
+    "category": "list_contracts",
+    "question": "캐치업코리아 계약 몇 건이야?",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "Task 1 - summary 집계 필드 추가",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-025",
+    "name": "날짜 필터 - 최근 계약 조회",
+    "category": "list_contracts",
+    "question": "김보성 최근 가입한 보험이 뭐야?",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["확인되지 않습니다", "오류"],
+    "must_call_tools": true,
+    "created_from": "Task 1 - 날짜 필터/정렬 추가",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-026",
+    "name": "날짜 범위 필터 - 연도 기반",
+    "category": "list_contracts",
+    "question": "2024년 이후 계약된 건 보여줘",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "Task 1 - 날짜 필터 추가",
+    "created_date": "2026-03-21"
   }
 ]
