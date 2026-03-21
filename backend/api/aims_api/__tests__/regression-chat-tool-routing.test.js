@@ -193,3 +193,39 @@ describe('RAG 폴백 양방향: 코드 레벨 자동 보정', () => {
     expect(matches.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+// =============================================================================
+// CRS/변액보험 도구 선택 규칙 — decision tree + 파라미터명 정합성
+// =============================================================================
+describe('CRS/변액보험 도구 선택 규칙', () => {
+  const chatServiceSource = readSource('lib/chatService.js');
+
+  test('CRS 도구 선택 decision tree가 CRITICAL 규칙 근처(상단)에 있어야 함', () => {
+    const criticalIdx = chatServiceSource.indexOf('가장 중요한 규칙');
+    const decisionTreeIdx = chatServiceSource.indexOf('CRS/변액보험 도구 선택');
+    expect(criticalIdx).toBeGreaterThan(-1);
+    expect(decisionTreeIdx).toBeGreaterThan(-1);
+    // decision tree가 CRITICAL 규칙 이후 200행 이내에 위치해야 함
+    const linesBetween = chatServiceSource.substring(criticalIdx, decisionTreeIdx).split('\n').length;
+    expect(linesBetween).toBeLessThan(200);
+  });
+
+  test('decision tree에 3개 CRS 도구가 모두 명시되어야 함', () => {
+    const treeStart = chatServiceSource.indexOf('CRS/변액보험 도구 선택');
+    const treeSection = chatServiceSource.substring(treeStart, treeStart + 500);
+    expect(treeSection).toContain('query_customer_reviews');
+    expect(treeSection).toContain('get_customer_reviews');
+    expect(treeSection).toContain('get_cr_contract_history');
+  });
+
+  test('query_customer_reviews 예시에 fundName 파라미터가 올바르게 사용되어야 함 (fundSearch 금지)', () => {
+    // fundSearch 오타가 재발하지 않도록 검증
+    expect(chatServiceSource).not.toMatch(/fundSearch/);
+    expect(chatServiceSource).toMatch(/fundName:\s*"주식"/);
+  });
+
+  test('Out of Scope 규칙이 프롬프트에 포함되어야 함', () => {
+    expect(chatServiceSource).toMatch(/Out of Scope/);
+    expect(chatServiceSource).toMatch(/특약.*갱신|갱신.*특약/);
+  });
+});

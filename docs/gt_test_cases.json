@@ -118,12 +118,12 @@
     {"id": "AR-24", "type": "Q7", "query": "캐치업코리아 보험 언제 만기야?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "expiryDate 계산 필드 기반 만기일 제시"},
     {"id": "AR-25", "type": "Q4", "query": "이상윤 실효된 계약 포함해서 전부 보여줘", "gt_method": "mongodb_query", "gt_customer": "이상윤", "expected": "includeLapsed=true로 실효 계약 포함"},
 
-    {"id": "CRS-11", "type": "Q4", "query": "수익률 100% 이상인 변액보험 있어?", "gt_method": "mongodb_query", "expected": "returnRateMin=100 필터로 고수익 변액보험 조회"},
-    {"id": "CRS-12", "type": "Q6", "query": "내 고객 변액보험 적립금 합계 얼마야?", "gt_method": "mongodb_query", "expected": "summary.totalAccumulated 제시"},
-    {"id": "CRS-13", "type": "Q4", "query": "약관대출 받고 있는 고객 있어?", "gt_method": "mongodb_query", "expected": "hasPolicyLoan=true 필터"},
-    {"id": "CRS-14", "type": "Q4", "query": "적립금이 가장 많은 변액보험은?", "gt_method": "mongodb_query", "expected": "sortBy=accumulatedAmount, sortOrder=desc, limit=1"},
-    {"id": "CRS-15", "type": "Q4", "query": "정승우 인덱스주식형 펀드 수익률 변화 보여줘", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "get_cr_contract_history fundName=인덱스주식형 이력"},
-    {"id": "CRS-16", "type": "Q4", "query": "수익률이 마이너스인 변액보험 있어?", "gt_method": "mongodb_query", "expected": "returnRateMax=0 필터"},
-    {"id": "CRS-17", "type": "Q4", "query": "중도인출한 변액보험 있어?", "gt_method": "mongodb_query", "expected": "hasWithdrawal=true 필터"}
+    {"id": "CRS-11", "type": "Q4", "query": "수익률 100% 이상인 변액보험 있어?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"returnRateMin": 100}, "expected": "145건, 평균 수익률 154.43%, 최고 891.5%(마스터플랜 변액유니버셜보험)"},
+    {"id": "CRS-12", "type": "Q6", "query": "내 고객 변액보험 적립금 합계 얼마야?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {}, "expected": "총 418건, 적립금 합계 10,345,613,592원, 평균 수익률 88.81%"},
+    {"id": "CRS-13", "type": "Q4", "query": "약관대출 받고 있는 고객 있어?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"hasPolicyLoan": true}, "expected": "42건, 총 약관대출 165,560,000원"},
+    {"id": "CRS-14", "type": "Q4", "query": "적립금이 가장 많은 변액보험은?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"sortBy": "accumulatedAmount", "sortOrder": "desc"}, "expected": "홍석진 무배당 My Fund 변액연금Ⅳ보험 적립형 766,952,152원"},
+    {"id": "CRS-15", "type": "Q4", "query": "정승우 인덱스주식형 펀드 수익률 변화 보여줘", "gt_method": "mongodb_query", "gt_tool": "get_cr_contract_history", "gt_params": {"fundName": "인덱스주식형"}, "gt_customer": "정승우", "expected": "인덱스주식형 펀드 수익률 이력 (시계열 데이터)"},
+    {"id": "CRS-16", "type": "Q4", "query": "수익률이 마이너스인 변액보험 있어?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"returnRateMax": 0}, "expected": "17건 (수익률 0% 이하)"},
+    {"id": "CRS-17", "type": "Q4", "query": "중도인출한 변액보험 있어?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"hasWithdrawal": true}, "expected": "65건"}
   ]
 }
