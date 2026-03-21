@@ -297,8 +297,52 @@ UQ 프롬프트 변경 후 SQ regression **35/35 PASS** — 기존 응답 깨지
 - `tools/ai_assistant_regression/run_gt_evaluation.py` — SQ 심화 평가
 - `tools/ai_assistant_regression/run_uq_evaluation.py` — UQ Proxy GT 평가
 
-### 2차 개선 계획
+### 2차 개선 계획 (실사용 로그 기반)
 - **트리거**: `aims_analytics.chat_messages`에 실제 사용자 질의가 충분히 누적되었을 때
-- **방법**: 채팅 로그에서 실패 패턴(AI가 잘못 답변한 케이스) 수집 → GT 보강 → 평가 → 개선
+- **방법**: 채팅 로그에서 실패 패턴 수집 → GT 보강 → 평가 → 개선
 - **인프라**: 1차에서 구축한 평가 스크립트 그대로 활용
-- **기대 효과**: 실제 사용자의 비격식체, 축약어, 모호한 표현 대응력 향상
+
+---
+
+## 13. AR/CRS 데이터 질의 확장 (2026-03-21~)
+
+### 목표
+AR(Annual Report)과 CRS(Customer Review Service)에 파싱된 모든 정보를 자연어로 질의할 수 있도록 한다.
+
+### AR 데이터 필드 (customers.annual_reports[].contracts[])
+
+| 필드 | 한글명 | 현재 질의 가능 |
+|------|--------|:---:|
+| 증권번호 | 증권번호 | ✅ |
+| 보험상품 | 상품명 | ✅ |
+| 계약자 | 계약자 | ✅ |
+| 피보험자 | 피보험자 | ✅ |
+| 계약일 | 계약일 | ✅ |
+| 계약상태 | 상태 | ✅ |
+| 가입금액(만원) | 보장금액 | ⚠️ 정렬/필터 미지원 |
+| 보험기간 | 보험기간 | ⚠️ 만기 계산 미지원 |
+| 납입기간 | 납입기간 | ⚠️ 납입완료 판단 미지원 |
+| 보험료(원) | 보험료 | ✅ |
+
+### CRS 데이터 필드 (customers.customer_reviews[])
+
+| 필드 | 한글명 | 현재 질의 가능 |
+|------|--------|:---:|
+| product_name | 상품명 | ❌ |
+| death_beneficiary | 사망수익자 | ❌ |
+| accumulated_amount | 적립금 | ❌ |
+| investment_return_rate | 투자수익률 | ❌ |
+| surrender_value | 해지환급금 | ❌ |
+| surrender_rate | 해지환급률 | ❌ |
+| initial_premium | 최초보험료 | ❌ |
+| monthly_premium | 월보험료 | ❌ |
+| net_premium | 순보험료 | ❌ |
+| policy_loan | 보험계약대출 | ❌ |
+| fund_allocations[] | 펀드 배분 | ❌ |
+| total_accumulated_amount | 총 적립금 | ❌ |
+
+### 진행 상태
+- Step 1: AR/CRS 질의 유형 정의 ← 현재
+- Step 2: 현재 도구 갭 분석
+- Step 3: 도구 확장/신규
+- Step 4: GT 구축 + 평가
