@@ -102,12 +102,12 @@
     {"id": "AR-20", "type": "Q4", "query": "캐치업코리아 메트라이프 계약만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "보험사가 메트라이프인 계약만 필터"},
 
     {"id": "CRS-01", "type": "Q4", "query": "정승우 변액보험 뭐 있어?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "무) 마스터플랜 변액유니버셜종신, CRS 2건"},
-    {"id": "CRS-02", "type": "Q6", "query": "정승우 변액보험 적립금 얼마야?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "총 적립금 7,606,508원"},
-    {"id": "CRS-03", "type": "Q4", "query": "정승우 변액보험 수익률 어때?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "투자수익률 84.62%"},
-    {"id": "CRS-04", "type": "Q6", "query": "정승우 지금 해지하면 얼마 받아?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "해지환급금 7,606,508원, 해지환급률 94.8%"},
+    {"id": "CRS-02", "type": "Q6", "query": "정승우 변액보험 적립금 얼마야?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "총 적립금 8,666,558원"},
+    {"id": "CRS-03", "type": "Q4", "query": "정승우 변액보험 수익률 어때?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "투자수익률 109.23%"},
+    {"id": "CRS-04", "type": "Q6", "query": "정승우 지금 해지하면 얼마 받아?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "해지환급금 8,666,558원, 해지환급률 107.3%"},
     {"id": "CRS-05", "type": "Q4", "query": "정승우 펀드 구성 보여줘", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "인덱스주식형 61.8%(수익률 202.7%), 채권형 38.2%(수익률 13.25%)"},
     {"id": "CRS-06", "type": "Q4", "query": "최혜진 변액보험 사망수익자 누구야?", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "이분희"},
-    {"id": "CRS-07", "type": "Q4", "query": "정은연 변액보험 적립금 얼마야?", "gt_method": "mongodb_query", "gt_customer": "정은연", "expected": "총 적립금 7,636,241원"},
+    {"id": "CRS-07", "type": "Q4", "query": "정은연 변액보험 적립금 얼마야?", "gt_method": "mongodb_query", "gt_customer": "정은연", "expected": "총 적립금 7,966,342원"},
     {"id": "CRS-08", "type": "Q4", "query": "최혜진 납입보험료 총액은?", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "순보험료 23,620,870원"},
     {"id": "CRS-09", "type": "Q4", "query": "정승우 보험계약대출 있어?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "보험계약대출 0원 (없음)"},
     {"id": "CRS-10", "type": "Q4", "query": "최혜진 변액보험 수익률 변화 추이 보여줘", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "CRS 이력 기반 수익률 변화"}

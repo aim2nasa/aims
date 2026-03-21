@@ -467,5 +467,17 @@
     "must_call_tools": true,
     "created_from": "AR insurerName 필드 추가",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-039",
+    "name": "CRS 도구 선택 - 적립금 질의",
+    "category": "customer_reviews",
+    "question": "정승우 변액보험 적립금 얼마야?",
+    "expected_tools": ["search_customers", "get_customer_reviews"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["계약이 없습니다"],
+    "must_call_tools": true,
+    "created_from": "CRS 도구 선택 프롬프트 가이드 추가",
+    "created_date": "2026-03-21"
   }
 ]
