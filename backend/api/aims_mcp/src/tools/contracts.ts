@@ -11,6 +11,8 @@ export const listContractsSchema = z.object({
   customerId: z.string().optional().describe('특정 고객의 계약만 조회'),
   search: z.string().optional().describe('검색어 (고객명, 상품명, 증권번호)'),
   status: z.string().optional().describe('계약 상태 (정상, 실효 등)'),
+  contractor: z.string().optional().describe('계약자명으로 필터링 (예: "김보성")'),
+  insured: z.string().optional().describe('피보험자명으로 필터링 (예: "안영미")'),
   contractDateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이후 계약만 조회 (YYYY-MM-DD)'),
   contractDateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이전 계약만 조회 (YYYY-MM-DD)'),
   sortBy: z.enum(['contractDate', 'premium']).optional().default('contractDate').describe('정렬 기준 (기본: contractDate)'),
@@ -30,13 +32,15 @@ export const getContractDetailsSchema = z.object({
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별, 계약일 범위로 필터링할 수 있고, 계약일 또는 보험료 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
+    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위로 필터링할 수 있고, 계약일 또는 보험료 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
         customerId: { type: 'string', description: '특정 고객의 계약만 조회' },
         search: { type: 'string', description: '검색어 (고객명, 상품명, 증권번호)' },
         status: { type: 'string', description: '계약 상태 (정상, 실효 등)' },
+        contractor: { type: 'string', description: '계약자명으로 필터링' },
+        insured: { type: 'string', description: '피보험자명으로 필터링' },
         contractDateFrom: { type: 'string', description: '이 날짜 이후 계약만 조회 (YYYY-MM-DD)' },
         contractDateTo: { type: 'string', description: '이 날짜 이전 계약만 조회 (YYYY-MM-DD)' },
         sortBy: { type: 'string', enum: ['contractDate', 'premium'], description: '정렬 기준 (기본: contractDate)' },
@@ -249,6 +253,20 @@ export async function handleListContracts(args: unknown) {
     let filteredContracts = allContracts;
     if (params.search) {
       filteredContracts = filteredContracts.filter(c => matchesSearch(c, params.search!));
+    }
+
+    // 필터링: 계약자명
+    if (params.contractor) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.contractor.includes(params.contractor!)
+      );
+    }
+
+    // 필터링: 피보험자명
+    if (params.insured) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.insured.includes(params.insured!)
+      );
     }
 
     // 필터링: 상태

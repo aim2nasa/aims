@@ -380,5 +380,31 @@
     "must_call_tools": true,
     "created_from": "이름 검색 description 개선 (query vs lastName)",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-032",
+    "name": "계약자 필터링 - contractor 파라미터",
+    "category": "list_contracts",
+    "question": "김보성 고객이 계약자로 되어 있는 계약들을 모두 보여줘",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["등록되어 있지 않습니다", "확인되지 않습니다"],
+    "must_call_tools": true,
+    "created_from": "list_contracts contractor/insured 필터 추가",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-033",
+    "name": "피보험자 필터링 - insured 파라미터",
+    "category": "list_contracts",
+    "question": "안영미가 피보험자인 계약 보여줘",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["등록되어 있지 않습니다", "확인되지 않습니다"],
+    "must_call_tools": true,
+    "created_from": "list_contracts contractor/insured 필터 추가",
+    "created_date": "2026-03-21"
   }
 ]
