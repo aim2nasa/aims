@@ -3,9 +3,9 @@
     "version": "2.0",
     "created": "2026-03-21",
     "purpose": "SQ 질의 유형별 GT 테스트 셋 — AI 어시스턴트 응답 품질 측정용",
-    "total_cases": 80,
+    "total_cases": 93,
     "coverage": {
-      "Q1": 10, "Q2": 10, "Q4": 15, "Q5": 15, "Q6": 10, "Q7": 10, "Q8": 10
+      "Q1": 10, "Q2": 10, "Q4": 26, "Q5": 15, "Q6": 12, "Q7": 10, "Q8": 10
     }
   },
   "test_cases": [
@@ -95,6 +95,21 @@
     {"id": "Q8-07", "type": "Q8", "query": "송연과 이방 관계는?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "배우자 (family/spouse)", "note": "마리치/주식회사마리치 이름 불일치로 관계 조회 실패 가능"},
     {"id": "Q8-08", "type": "Q8", "query": "이율 부모가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "송연(부모)", "note": "마리치/주식회사마리치 이름 불일치로 관계 조회 실패 가능"},
     {"id": "Q8-09", "type": "Q8", "query": "캐치업코리아 대표이사가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "gt_filter": "type == 'ceo'", "expected": "김보성"},
-    {"id": "Q8-10", "type": "Q8", "query": "송유미 남편이 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "곽승철(배우자/spouse)"}
+    {"id": "Q8-10", "type": "Q8", "query": "송유미 남편이 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "곽승철(배우자/spouse)"},
+
+    {"id": "AR-11", "type": "Q4", "query": "캐치업코리아 가입금액 제일 큰 보험은?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "가입금액 기준 최대 계약 제시"},
+    {"id": "AR-12", "type": "Q4", "query": "이분희 납입 완료된 보험 있어?", "gt_method": "mongodb_query", "gt_customer": "이분희", "expected": "납입기간 20년(2001~2021), 15년(2005~2020) 모두 납입 완료"},
+    {"id": "AR-20", "type": "Q4", "query": "캐치업코리아 메트라이프 계약만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "보험사가 메트라이프인 계약만 필터"},
+
+    {"id": "CRS-01", "type": "Q4", "query": "정승우 변액보험 뭐 있어?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "무) 마스터플랜 변액유니버셜종신, CRS 2건"},
+    {"id": "CRS-02", "type": "Q6", "query": "정승우 변액보험 적립금 얼마야?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "총 적립금 7,606,508원"},
+    {"id": "CRS-03", "type": "Q4", "query": "정승우 변액보험 수익률 어때?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "투자수익률 84.62%"},
+    {"id": "CRS-04", "type": "Q6", "query": "정승우 지금 해지하면 얼마 받아?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "해지환급금 7,606,508원, 해지환급률 94.8%"},
+    {"id": "CRS-05", "type": "Q4", "query": "정승우 펀드 구성 보여줘", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "인덱스주식형 61.8%(수익률 202.7%), 채권형 38.2%(수익률 13.25%)"},
+    {"id": "CRS-06", "type": "Q4", "query": "최혜진 변액보험 사망수익자 누구야?", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "이분희"},
+    {"id": "CRS-07", "type": "Q4", "query": "정은연 변액보험 적립금 얼마야?", "gt_method": "mongodb_query", "gt_customer": "정은연", "expected": "총 적립금 7,636,241원"},
+    {"id": "CRS-08", "type": "Q4", "query": "최혜진 납입보험료 총액은?", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "순보험료 23,620,870원"},
+    {"id": "CRS-09", "type": "Q4", "query": "정승우 보험계약대출 있어?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "보험계약대출 0원 (없음)"},
+    {"id": "CRS-10", "type": "Q4", "query": "최혜진 변액보험 수익률 변화 추이 보여줘", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "CRS 이력 기반 수익률 변화"}
   ]
 }

@@ -641,8 +641,20 @@ async def search_endpoint(request: SearchRequest, raw_request: Request):
             final_answer, llm_response = generate_answer_with_llm(request.query, top_results[:LLM_CONTEXT_LIMIT], relationship_context)
             timing["llm_time"] = time.time() - llm_start
 
+            # 임베딩 시간 분리 (hybrid_engine 내부에서 측정)
+            timing["embedding_ms"] = hybrid_engine.last_embedding_ms
+            # 순수 Qdrant 검색 시간 = search_time - 임베딩 시간
+            timing["qdrant_search_ms"] = int(timing["search_time"] * 1000) - hybrid_engine.last_embedding_ms
+
             # 전체 시간 계산
             timing["total_time"] = time.time() - total_start_time
+
+            # ⏱️ 단계별 소요 시간 로깅
+            print(f"⏱️ [Timing] 임베딩={timing['embedding_ms']}ms | "
+                  f"Qdrant검색={timing['qdrant_search_ms']}ms | "
+                  f"재순위화={int(timing['rerank_time']*1000)}ms | "
+                  f"LLM답변={int(timing['llm_time']*1000)}ms | "
+                  f"전체={int(timing['total_time']*1000)}ms")
 
             # 🔥 Phase 3: 검색 로그 저장
             log_id = None
