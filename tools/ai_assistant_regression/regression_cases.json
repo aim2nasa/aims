@@ -518,5 +518,31 @@
     "must_call_tools": true,
     "created_from": "list_contracts 1단계 보강 - expiryDate",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-043",
+    "name": "보장금액 필터 - coverageAmountMin",
+    "category": "list_contracts",
+    "question": "캐치업코리아 보장금액 1억 이상 계약 보여줘",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "list_contracts 2단계 보강",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-044",
+    "name": "계약자≠피보험자 필터",
+    "category": "list_contracts",
+    "question": "캐치업코리아 계약자와 피보험자가 다른 계약만 보여줘",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "list_contracts 2단계 보강 - contractorNotInsured",
+    "created_date": "2026-03-21"
   }
 ]

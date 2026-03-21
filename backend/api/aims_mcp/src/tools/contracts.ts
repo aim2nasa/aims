@@ -17,6 +17,13 @@ export const listContractsSchema = z.object({
   contractDateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이전 계약만 조회 (YYYY-MM-DD)'),
   includeLapsed: z.boolean().optional().default(false).describe('실효/해지 계약 포함 여부 (lapsed_contracts 배열에서 수집, 기본: false)'),
   paymentStatus: z.string().optional().describe('납입상태 필터 (납입중/납입완료/일시납/전기납)'),
+  coverageAmountMin: z.number().optional().describe('보장금액 최소 (만원 단위)'),
+  coverageAmountMax: z.number().optional().describe('보장금액 최대 (만원 단위)'),
+  premiumMin: z.number().optional().describe('보험료 최소 (원 단위)'),
+  premiumMax: z.number().optional().describe('보험료 최대 (원 단위)'),
+  insurancePeriod: z.string().optional().describe('보험기간 필터 — "종신", "100세", "20년" 등 부분 매칭'),
+  contractorNotInsured: z.boolean().optional().describe('계약자와 피보험자가 다른 계약만 (true로 설정)'),
+  paymentPeriodMin: z.number().optional().describe('납입기간 최소 N년 이상 (전기납/일시납 제외)'),
   sortBy: z.enum(['contractDate', 'premium', 'coverageAmount']).optional().default('contractDate').describe('정렬 기준 (기본: contractDate)'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc').describe('정렬 순서 (기본: desc)'),
   limit: z.number().optional().default(50).describe('결과 개수 제한 (기본: 50, 최대: 50)'),
@@ -34,7 +41,7 @@ export const getContractDetailsSchema = z.object({
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 각 계약에 paymentStatus(납입상태: 납입중/납입완료/일시납/전기납), expiryDate(보험 만기일), paymentEndDate(납입 종료일) 계산 필드가 포함됩니다. includeLapsed=true로 lapsed_contracts(실효/해지 계약)도 함께 조회할 수 있으며, isLapsed 마커로 구분됩니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위, 납입상태별로 필터링할 수 있고, 계약일, 보험료, 가입금액 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수, lapsedFromARCount)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
+    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 각 계약에 paymentStatus(납입상태: 납입중/납입완료/일시납/전기납), expiryDate(보험 만기일), paymentEndDate(납입 종료일) 계산 필드가 포함됩니다. includeLapsed=true로 lapsed_contracts(실효/해지 계약)도 함께 조회할 수 있으며, isLapsed 마커로 구분됩니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위, 납입상태별로 필터링할 수 있고, 보장금액/보험료 범위, 보험기간, 계약자≠피보험자 여부, 납입기간 최소 연수로도 필터링할 수 있습니다. 계약일, 보험료, 가입금액 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수, lapsedFromARCount)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -47,6 +54,13 @@ export const contractToolDefinitions = [
         contractDateTo: { type: 'string', description: '이 날짜 이전 계약만 조회 (YYYY-MM-DD)' },
         includeLapsed: { type: 'boolean', description: '실효/해지 계약 포함 여부 (lapsed_contracts 배열에서 수집, 기본: false)' },
         paymentStatus: { type: 'string', description: '납입상태 필터 (납입중/납입완료/일시납/전기납)' },
+        coverageAmountMin: { type: 'number', description: '보장금액 최소 (만원 단위)' },
+        coverageAmountMax: { type: 'number', description: '보장금액 최대 (만원 단위)' },
+        premiumMin: { type: 'number', description: '보험료 최소 (원 단위)' },
+        premiumMax: { type: 'number', description: '보험료 최대 (원 단위)' },
+        insurancePeriod: { type: 'string', description: '보험기간 필터 — "종신", "100세", "20년" 등 부분 매칭' },
+        contractorNotInsured: { type: 'boolean', description: '계약자와 피보험자가 다른 계약만 (true로 설정)' },
+        paymentPeriodMin: { type: 'number', description: '납입기간 최소 N년 이상 (전기납/일시납 제외)' },
         sortBy: { type: 'string', enum: ['contractDate', 'premium', 'coverageAmount'], description: '정렬 기준 (기본: contractDate)' },
         sortOrder: { type: 'string', enum: ['asc', 'desc'], description: '정렬 순서 (기본: desc)' },
         limit: { type: 'number', description: '결과 개수 제한 (기본: 50, 최대: 50)' },
@@ -414,6 +428,53 @@ export async function handleListContracts(args: unknown) {
       filteredContracts = filteredContracts.filter(c =>
         c.paymentStatus === params.paymentStatus
       );
+    }
+
+    // 필터링: 보장금액 범위 (만원 단위)
+    if (params.coverageAmountMin !== undefined) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.coverageAmount >= params.coverageAmountMin!
+      );
+    }
+    if (params.coverageAmountMax !== undefined) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.coverageAmount <= params.coverageAmountMax!
+      );
+    }
+
+    // 필터링: 보험료 범위 (원 단위)
+    if (params.premiumMin !== undefined) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.premium >= params.premiumMin!
+      );
+    }
+    if (params.premiumMax !== undefined) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.premium <= params.premiumMax!
+      );
+    }
+
+    // 필터링: 보험기간 (부분 매칭)
+    if (params.insurancePeriod) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.insurancePeriod.includes(params.insurancePeriod!)
+      );
+    }
+
+    // 필터링: 계약자 ≠ 피보험자
+    if (params.contractorNotInsured) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.contractor !== c.insured
+      );
+    }
+
+    // 필터링: 납입기간 최소 N년 이상 (전기납/일시납 제외)
+    if (params.paymentPeriodMin !== undefined) {
+      filteredContracts = filteredContracts.filter(c => {
+        const yearMatch = c.paymentPeriod.match(/^(\d+)\s*년$/);
+        if (!yearMatch) return false; // 전기납/일시납/파싱 불가는 제외
+        return parseInt(yearMatch[1], 10) >= params.paymentPeriodMin!;
+      });
     }
 
     // 필터링: 계약일 범위
