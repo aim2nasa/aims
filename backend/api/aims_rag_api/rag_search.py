@@ -605,14 +605,14 @@ async def search_endpoint(request: SearchRequest, raw_request: Request):
             timing["search_time"] = time.time() - search_start
 
             # 3단계: Cross-Encoder 재순위화 (asyncio.to_thread로 이벤트 루프 블로킹 방지)
-            RERANK_LIMIT = 50
+            RERANK_LIMIT = 20
             rerank_start = time.time()
             if len(search_results) <= RERANK_LIMIT:
                 all_reranked = await asyncio.to_thread(
                     reranker.rerank, request.query, search_results, len(search_results)
                 )
             else:
-                # 상위 50개만 정밀 재순위화, 나머지는 원본 벡터 유사도 순서 유지
+                # 상위 20개만 정밀 재순위화, 나머지는 원본 벡터 유사도 순서 유지
                 top_candidates = search_results[:RERANK_LIMIT]
                 remaining = search_results[RERANK_LIMIT:]
                 reranked_top = await asyncio.to_thread(
