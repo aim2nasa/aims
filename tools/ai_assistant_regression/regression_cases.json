@@ -479,5 +479,18 @@
     "must_call_tools": true,
     "created_from": "CRS 도구 선택 프롬프트 가이드 추가",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-040",
+    "name": "납입상태 조회 - paymentStatus",
+    "category": "list_contracts",
+    "question": "이분희 납입 완료된 보험 있어?",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "paymentStatus 필드 추가",
+    "created_date": "2026-03-21"
   }
 ]

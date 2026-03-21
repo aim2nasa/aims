@@ -32,7 +32,7 @@ export const getContractDetailsSchema = z.object({
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명, 보험사 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위로 필터링할 수 있고, 계약일, 보험료, 가입금액 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
+    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명, 보험사 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 각 계약에 paymentStatus(납입상태: 납입중/납입완료/일시납/전기납) 필드가 포함되어 납입 완료 여부를 바로 확인할 수 있습니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위로 필터링할 수 있고, 계약일, 보험료, 가입금액 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -108,6 +108,7 @@ interface NormalizedContract {
   coverageAmount: number;
   insurancePeriod: string;
   paymentPeriod: string;
+  paymentStatus: string;
   premium: number;
   arIssueDate: string;
   arParsedAt?: string;
@@ -116,6 +117,34 @@ interface NormalizedContract {
 // ============================================================================
 // 헬퍼 함수
 // ============================================================================
+
+/**
+ * 납입기간과 계약일을 기반으로 납입상태를 계산
+ * - "일시납" → "일시납"
+ * - "전기납" → "전기납"
+ * - "N년" → 계약일 + N년 vs 현재 날짜 비교 → "납입완료" / "납입중"
+ * - 그 외 (N세 등 파싱 불가) → "납입중"
+ */
+function calculatePaymentStatus(paymentPeriod: string, contractDate: string): string {
+  const period = paymentPeriod.trim();
+
+  if (period.includes('일시납')) return '일시납';
+  if (period.includes('전기납')) return '전기납';
+
+  // "N년" 패턴 매칭 (예: "20년", "10년")
+  const yearMatch = period.match(/^(\d+)\s*년$/);
+  if (yearMatch && contractDate) {
+    const years = parseInt(yearMatch[1], 10);
+    const contractDateObj = new Date(contractDate);
+    if (!isNaN(contractDateObj.getTime())) {
+      const paymentEndDate = new Date(contractDateObj);
+      paymentEndDate.setFullYear(paymentEndDate.getFullYear() + years);
+      return paymentEndDate.getTime() <= Date.now() ? '납입완료' : '납입중';
+    }
+  }
+
+  return '납입중';
+}
 
 /**
  * AR 계약 데이터를 정규화된 형식으로 변환
@@ -127,6 +156,9 @@ function normalizeContract(
   arIssueDate: string,
   arParsedAt?: string
 ): NormalizedContract {
+  const paymentPeriod = contract['납입기간'] || '';
+  const contractDate = contract['계약일'] || '';
+
   return {
     customerId,
     customerName,
@@ -135,11 +167,12 @@ function normalizeContract(
     insurerName: contract['보험사'] || '',
     contractor: contract['계약자'] || '',
     insured: contract['피보험자'] || '',
-    contractDate: contract['계약일'] || '',
+    contractDate,
     status: contract['계약상태'] || '',
     coverageAmount: contract['가입금액(만원)'] || 0,
     insurancePeriod: contract['보험기간'] || '',
-    paymentPeriod: contract['납입기간'] || '',
+    paymentPeriod,
+    paymentStatus: calculatePaymentStatus(paymentPeriod, contractDate),
     premium: contract['보험료(원)'] || 0,
     arIssueDate,
     arParsedAt
