@@ -125,7 +125,7 @@ def evaluate_gt(case, response):
     # Q2: 문서 존재 확인 — "N건 있다" 또는 "없다" 형태면 정답
     if case_type == "Q2":
         has_count = bool(re.search(r'\d+\s*건', text))
-        has_existence = bool(re.search(r'있습니다|있어요|있네요|없습니다|없어요|없네요|없는|찾을 수 없|검색되지|확인되지', text))
+        has_existence = bool(re.search(r'있습니다|있어요|있네요|없습니다|없어요|없네요|없는|찾을 수 없|검색되지|확인되지|등록되어 있지 않', text))
         if has_count or has_existence:
             details.append("Q2 유무 판단 표현 확인됨")
             return {"grade": "GOOD", "score": 1.0, "details": details}

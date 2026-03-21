@@ -107,9 +107,9 @@ describe('MCP 도구 정의: 모호성 방지', () => {
   );
 
   test('list_contracts description에 계약 세부 정보 범위가 명시되어야 함', () => {
-    // description 필드 값만 추출하여 검증
+    // description 필드 값만 추출하여 검증 (단일 따옴표 또는 백틱)
     const descMatch = contractsSource.match(
-      /name:\s*'list_contracts'[\s\S]*?description:\s*'([\s\S]*?)'/
+      /name:\s*'list_contracts'[\s\S]*?description:\s*[`']([\s\S]*?)[`']/
     );
     expect(descMatch).not.toBeNull();
     const description = descMatch[1];
@@ -118,10 +118,12 @@ describe('MCP 도구 정의: 모호성 방지', () => {
   });
 
   test('search_documents description에 문서/서류/파일 전용임이 명시되어야 함', () => {
-    // search_documents는 "문서", "서류", "파일"을 찾을 때만 사용
-    expect(documentsSource).toMatch(
-      /description:.*(?:문서|서류|파일)/s
+    // search_documents는 "문서", "서류", "파일"을 찾을 때만 사용 (단일 따옴표 또는 백틱)
+    const descMatch = documentsSource.match(
+      /name:\s*'search_documents'[\s\S]*?description:\s*[`']([\s\S]*?)[`']\s*,/
     );
+    expect(descMatch).not.toBeNull();
+    expect(descMatch[1]).toMatch(/문서|서류|파일/);
   });
 });
 

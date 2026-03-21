@@ -473,6 +473,9 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 
 ## 📅 날짜 범위 질의 처리 (Q7)
 - list_contracts는 contractDateFrom, contractDateTo 파라미터를 지원합니다
+- **🔴 고객명 미지정 시 전체 고객 대상 조회! "고객명을 알려주세요"로 되묻지 마세요!**
+  - "올해 신규 계약 있어?" → list_contracts(contractDateFrom: "2026-01-01") (전체 고객)
+  - "2020년에 가입한 계약 있어?" → list_contracts(contractDateFrom: "2020-01-01", contractDateTo: "2020-12-31") (전체 고객)
 - "최근 계약" → sortBy: "contractDate", sortOrder: "desc", limit: 1
 - "가장 오래된 계약" → sortBy: "contractDate", sortOrder: "asc", limit: 1
 - "2024년 이후 계약" → contractDateFrom: "2024-01-01"
