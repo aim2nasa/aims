@@ -268,4 +268,8 @@ describe('list_contracts 페이지네이션 힌트', () => {
   test('list_contracts에 _paginationHint가 포함되어야 함', () => {
     expect(contractsSource).toContain('_paginationHint');
   });
+
+  test('list_contracts description에 customerId 선택사항이 명시되어야 함', () => {
+    expect(contractsSource).toMatch(/customerId.*선택사항/);
+  });
 });

@@ -53,6 +53,11 @@ export const contractToolDefinitions = [
 - "보험료 50만원 이상" → premiumMin=500000 (원 단위)
 - "가입금액 제일 큰" → sortBy="coverageAmount", sortOrder="desc"
 
+⚠️ customerId는 선택사항! 생략하면 전체 고객 대상으로 조회합니다.
+- "올해 신규 계약 있어?" → list_contracts(contractDateFrom="2026-01-01") (전체 고객)
+- "5년 이상 된 계약" → list_contracts(contractDateTo="2021-03-24") (전체 고객)
+- "가장 최근 계약한 고객" → list_contracts(sortBy="contractDate", sortOrder="desc", limit=1) (전체 고객)
+
 ■ 응답 summary 필드: totalPremium(전체합계), monthlyPremium(월납합계), lumpSumPremium(일시납합계), totalContracts, activeContracts, lapsedContracts
 ■ 각 계약에 paymentStatus(납입중/납입완료/일시납/전기납), expiryDate(만기일), paymentEndDate(납입종료일) 계산 필드 포함
 ■ 문서/서류/파일 검색에는 적합하지 않습니다 → search_documents 사용
@@ -60,7 +65,7 @@ export const contractToolDefinitions = [
     inputSchema: {
       type: 'object' as const,
       properties: {
-        customerId: { type: 'string', description: '특정 고객의 계약만 조회' },
+        customerId: { type: 'string', description: '특정 고객의 계약만 조회 (선택사항! 생략 시 전체 고객 대상)' },
         search: { type: 'string', description: '검색어 (고객명, 상품명, 증권번호)' },
         status: { type: 'string', description: '계약 상태 (정상, 실효 등)' },
         contractor: { type: 'string', description: '계약자명으로 필터링' },
@@ -575,10 +580,16 @@ export async function handleListContracts(args: unknown) {
       ? `다음 페이지: list_contracts(${params.customerId ? `customerId="${params.customerId}", ` : ''}offset=${nextOffset})`
       : null;
 
+    // 전체 고객 대상 조회 시 안내 메시지
+    const message = !params.customerId && totalCount > 0
+      ? `전체 고객 대상 조회: 총 ${totalCount}건 중 ${paginatedContracts.length}건 표시`
+      : undefined;
+
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
+          ...(message ? { message } : {}),
           count: paginatedContracts.length,
           totalCount,
           offset,
