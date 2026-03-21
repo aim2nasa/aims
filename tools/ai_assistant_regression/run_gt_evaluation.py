@@ -180,9 +180,11 @@ def evaluate_gt(case, response):
     # --- 일반 평가 로직 ---
 
     # "확인되지 않습니다" 패턴 체크 (부정 expected가 아닌 경우만 감점)
+    # 단, expected에 "0건", "없음", "관계 없음" 등이 포함되면 감점 안 함
+    expected_is_negative = bool(re.search(r'0건|없음|관계 없음', expected))
     fail_patterns = ["확인되지 않습니다", "등록되어 있지 않습니다", "정보가 없습니다"]
     for fp in fail_patterns:
-        if fp in text and fp not in expected:
+        if fp in text and fp not in expected and not expected_is_negative:
             details.append(f"실패 패턴 감지: '{fp}'")
 
     # expected에서 핵심 키워드 추출하여 응답에 포함 여부 체크
