@@ -91,9 +91,9 @@
     {"id": "Q8-03", "type": "Q8", "query": "캐치업코리아 관계자 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "김보성(대표이사), 안영미(임원), 김선희(직원), 박지우(직원), 안희정(직원), 유아영(직원), 이승준(직원)"},
     {"id": "Q8-04", "type": "Q8", "query": "곽승철 가족 관계 알려줘", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "곽지민(자녀), 송유미(배우자)"},
     {"id": "Q8-05", "type": "Q8", "query": "곽지민 부모가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "곽승철(부모)"},
-    {"id": "Q8-06", "type": "Q8", "query": "마리치 관계자 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "이불(임원), 이경(임원), 이방(대표이사), 송연(실장), 장연우(직원)"},
-    {"id": "Q8-07", "type": "Q8", "query": "송연과 이방 관계는?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "배우자 (family/spouse)"},
-    {"id": "Q8-08", "type": "Q8", "query": "이율 부모가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "송연(부모)"},
+    {"id": "Q8-06", "type": "Q8", "query": "마리치 관계자 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "이불(임원), 이경(임원), 이방(대표이사), 송연(실장), 장연우(직원)", "note": "DB에 '주식회사마리치'로 저장 — '마리치' 부분 매칭 미지원으로 검색 실패 가능"},
+    {"id": "Q8-07", "type": "Q8", "query": "송연과 이방 관계는?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "배우자 (family/spouse)", "note": "마리치/주식회사마리치 이름 불일치로 관계 조회 실패 가능"},
+    {"id": "Q8-08", "type": "Q8", "query": "이율 부모가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "송연(부모)", "note": "마리치/주식회사마리치 이름 불일치로 관계 조회 실패 가능"},
     {"id": "Q8-09", "type": "Q8", "query": "캐치업코리아 대표이사가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "gt_filter": "type == 'ceo'", "expected": "김보성"},
     {"id": "Q8-10", "type": "Q8", "query": "송유미 남편이 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "곽승철(배우자/spouse)"}
   ]

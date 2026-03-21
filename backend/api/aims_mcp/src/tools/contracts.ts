@@ -300,13 +300,15 @@ export async function handleListContracts(args: unknown) {
 
         // 일시납 여부 판단: paymentPeriod에 "일시납" 포함
         const isLumpSum = c.paymentPeriod.includes('일시납');
+        // 정상/유지 상태 계약만 monthlyPremium에 포함 (실효/해지/만기 제외)
+        const statusLower = c.status.toLowerCase();
+        const isActive = statusLower.includes('정상') || statusLower.includes('유지');
         if (isLumpSum) {
           acc.lumpSumPremium += premium;
-        } else {
+        } else if (isActive) {
           acc.monthlyPremium += premium;
         }
 
-        const statusLower = c.status.toLowerCase();
         if (statusLower.includes('정상') || statusLower.includes('유지')) {
           acc.activeContracts += 1;
         } else if (statusLower.includes('실효') || statusLower.includes('해지') || statusLower.includes('만기')) {
