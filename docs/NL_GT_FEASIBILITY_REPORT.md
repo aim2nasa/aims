@@ -372,25 +372,42 @@ GT 93건 (기존 80건 + AR 3건 + CRS 10건):
 
 ---
 
-## 14. AR/CRS 도구 재설계 — 커버율 95% 이상 목표 (설계안)
+## 14. AR/CRS 도구 재설계 v2 — 커버율 95% 이상 목표
+
+> Alex + Gini + Sora 교차 리뷰 반영 (2026-03-21)
 
 ### 목표
 AR/CRS 문서에 파싱된 모든 데이터를 자연어로 조회할 수 있게 한다.
-**모든 영역 커버율 95% 이상.**
+**모든 영역 커버율 95% 이상.** (단, AR 원본에 없는 데이터는 Out of Scope)
 
-### 현재 커버율
+### 교차 리뷰 반영 사항
 
-| 영역 | 현재 |
-|------|:---:|
-| AR 단일 조회 | 90% |
-| AR 조건부 필터 | 30% |
-| AR 집계 | 40% |
-| CRS 현재 상태 | 80% |
-| CRS 조건부 필터 | 0% |
-| CRS 집계 | 20% |
-| CRS 이력 | 80% |
+| 출처 | 지적 | 반영 |
+|------|------|------|
+| Gini | 파라미터 16+개 → AI 오선택 위험 | 1단계/2단계 순차 투입 |
+| Gini | get_ vs query_ 혼동 | description + 프롬프트 가이드 명확화 |
+| Gini | 만기일/납입완료 예정일 계산 없음 | `expiryDate`, `paymentEndDate` 계산 필드 추가 |
+| Gini | bestReturnRate 구조 미정의 | `{productName, returnRate}` 최소 구조 명시 |
+| Gini | 커밋 간 중간 regression Gate | 각 커밋 후 regression 확인 |
+| Sora | 특약 정보 없음 (설계사 TOP2) | **Out of Scope** — AR 원본에 특약 데이터 없음 |
+| Sora | 갱신형 여부/갱신일 없음 (설계사 TOP4) | **Out of Scope** — AR 원본에 갱신 필드 없음 |
+| Sora | 납입면제, 보험금 청구 이력 | **Out of Scope** — AR/CRS에 해당 데이터 없음 |
+| Alex | lapsed_contracts 수집 누락 | 구현 전 DB 중복 여부 확인 필수 |
+| Alex | 보험사 필드 채움율 미확인 | DB 샘플 확인 후 구현 |
 
-### 도구 구성 (7개: 1개 대폭 보강, 1개 신규, 1개 보강, 4개 유지)
+### Out of Scope 명시
+
+AR/CRS 원본에 **존재하지 않는 데이터**는 도구로 해결 불가:
+- 특약(특별약관) 정보
+- 갱신형 여부, 갱신일
+- 납입면제 여부
+- 보험금 청구 이력
+- 추가납입 한도/잔여 한도
+- 중도인출 가능 금액
+
+> Sora 의견: "특약과 갱신일이 빠지면 시스템 데이터 기준 95%이지, 설계사 실무 기준 95%는 아니다." → 장기적으로 AR 파서 확장이 필요한 영역.
+
+### 도구 구성 (7개)
 
 | 도구 | 상태 | 용도 |
 |------|:---:|------|
@@ -398,34 +415,36 @@ AR/CRS 문서에 파싱된 모든 데이터를 자연어로 조회할 수 있게
 | `get_contract_details` | 유지 | 단일 계약 상세 |
 | `get_ar_contract_history` | 유지 | AR 이력 변화 |
 | `get_annual_reports` | 유지 | AR 메타 |
-| `get_customer_reviews` | 유지 | CRS 현재 상태 반환 |
-| `query_customer_reviews` | **신규** | CRS 조건부 조회 + 집계 |
+| `get_customer_reviews` | 유지 | CRS 현재 상태 반환 (단순 조회) |
+| `query_customer_reviews` | **신규** | CRS 조건부 조회 + 집계 (필터/정렬) |
 | `get_cr_contract_history` | **보강** | CRS 이력 변화 + 펀드 필터 |
 
-### list_contracts 보강 상세
+### list_contracts 보강 (순차 투입)
 
-**추가 필터 파라미터:**
+**1단계 (핵심, 커밋 2):**
+
+| 파라미터/필드 | 용도 |
+|---------|------|
+| insurerName | 보험사 필터 |
+| paymentStatus | 납입상태 필터 |
+| includeLapsed | 실효 계약 포함 (기본 false) |
+| expiryDate | **계산 필드** — 계약일 + 보험기간 (만기일) |
+| paymentEndDate | **계산 필드** — 계약일 + 납입기간 (납입완료 예정일) |
+| byInsurer[] | summary — 보험사별 {name, count, totalPremium} |
+
+**2단계 (regression 확인 후, 커밋 2-b):**
 
 | 파라미터 | 용도 |
 |---------|------|
-| insurerName | 보험사 필터 |
-| paymentStatus | 납입상태 필터 (납입중/납입완료/일시납) |
 | coverageAmountMin/Max | 보장금액 범위 |
 | premiumMin/Max | 보험료 범위 |
-| insurancePeriod | 보험기간 필터 ("종신", "100세" 등) |
-| contractorNotInsured | boolean — 계약자≠피보험자 |
-| paymentPeriodMin | 납입기간 최소 (년) |
-| includeLapsed | boolean — 실효 계약 포함 (기본 false) |
+| insurancePeriod | 보험기간 필터 |
+| contractorNotInsured | 계약자≠피보험자 |
+| paymentPeriodMin | 납입기간 최소 |
 
-**summary 확장:**
+### query_customer_reviews 신규 도구
 
-| 필드 | 용도 |
-|------|------|
-| byInsurer[] | 보험사별 {name, count, totalPremium} |
-| lapsedCount | 실효 계약 수 |
-| (기존 유지) | totalPremium, monthlyPremium, lumpSumPremium, totalContracts, activeContracts |
-
-### query_customer_reviews 신규 도구 상세
+**description 명확화**: "CRS 데이터를 조건부로 필터링/정렬/집계할 때 사용. 단순 현황 조회는 get_customer_reviews 사용."
 
 **파라미터:**
 
@@ -444,41 +463,35 @@ AR/CRS 문서에 파싱된 모든 데이터를 자연어로 조회할 수 있게
 
 **응답 summary:**
 
-| 필드 | 용도 |
+| 필드 | 구조 |
 |------|------|
-| totalAccumulated | 적립금 합계 |
-| avgReturnRate | 평균 수익률 |
-| totalPolicyLoan | 약관대출 총액 |
-| bestReturnRate | 최고 수익률 계약 |
-| worstReturnRate | 최저 수익률 계약 |
-| principalVsAccumulated | 원금 대비 적립금 비율 |
+| totalAccumulated | number |
+| avgReturnRate | number |
+| totalPolicyLoan | number |
+| bestReturnRate | `{productName: string, returnRate: number}` |
+| worstReturnRate | `{productName: string, returnRate: number}` |
+| principalVsAccumulated | number (비율) |
 
-### get_cr_contract_history 보강 상세
-
-**추가 파라미터:**
+### get_cr_contract_history 보강
 
 | 파라미터 | 용도 |
 |---------|------|
 | fundName | 특정 펀드 이력만 필터 |
 | field | 추적 대상 필드 (accumulatedAmount/returnRate/surrenderValue) |
 
-### 목표 커버율
+### 구현 전 DB 확인 필요 (3건)
 
-| 영역 | 현재 | 목표 |
-|------|:---:|:---:|
-| AR 단일 조회 | 90% | **98%** |
-| AR 조건부 필터 | 30% | **95%** |
-| AR 집계 | 40% | **95%** |
-| CRS 현재 상태 | 80% | **98%** |
-| CRS 조건부 필터 | 0% | **95%** |
-| CRS 집계 | 20% | **95%** |
-| CRS 이력 | 80% | **95%** |
+1. lapsed_contracts vs contracts 내 실효 항목 중복 여부
+2. 보험사 필드(`ARContract['보험사']`) 채움율
+3. CRS `premium_info.withdrawal` 실데이터 존재 여부
 
-### 구현 계획
+### 구현 계획 (수정)
 
-| 커밋 | 내용 |
-|:---:|------|
-| 1 | 설계안 보고서 (교차 리뷰 대상) ← 현재 |
-| 2 | list_contracts 대폭 보강 |
-| 3 | query_customer_reviews 신규 + get_cr_contract_history 보강 |
-| 4 | GT 추가 + 배포 + 평가 |
+| 커밋 | 내용 | Gate |
+|:---:|------|:---:|
+| 1 | 설계안 보고서 v2 (교차 리뷰 반영) | ✅ 완료 |
+| 2 | list_contracts 1단계 보강 + DB 확인 | regression PASS |
+| 2-b | list_contracts 2단계 보강 | regression PASS |
+| 3 | query_customer_reviews 신규 + get_cr_contract_history 보강 | regression PASS |
+| 4 | GT 추가 + 배포 + 평가 | - |
+| 5 | CRS 프롬프트 도구 선택 가이드 보강 | regression PASS |
