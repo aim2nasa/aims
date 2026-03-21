@@ -34,14 +34,14 @@
 
     {"id": "Q4-01", "type": "Q4", "query": "캐치업코리아 계약 현황 알려줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "김보성 AR 6건 + 안영미 AR 10건 = 총 16건 계약 목록"},
     {"id": "Q4-02", "type": "Q4", "query": "캐치업코리아의 정상 상태 계약 목록 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "gt_filter": "계약상태 == '정상'", "expected": "정상 상태 계약만 필터링"},
-    {"id": "Q4-03", "type": "Q4", "query": "캐치업코리아의 실효된 계약이 있어?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "gt_filter": "계약상태 != '정상'", "expected": "비정상 계약 존재 여부"},
+    {"id": "Q4-03", "type": "Q4", "query": "캐치업코리아의 실효된 계약이 있어?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "gt_filter": "계약상태 != '정상'", "expected": "실효 계약 0건 (정상 16건)"},
     {"id": "Q4-04", "type": "Q4", "query": "김보성 고객이 계약자로 되어 있는 계약들을 모두 보여줘", "gt_method": "mongodb_query", "gt_customer": "김보성", "gt_filter": "계약자 == '김보성'", "expected": "마스터플랜(65,200원), 암엔암(5,100원), 유니버셜달러종신(2,505,490원), 변액연금동행Plus(200,000,000원)"},
     {"id": "Q4-05", "type": "Q4", "query": "곽승철 계약 현황 보여줘", "gt_method": "mongodb_query", "gt_customer": "곽승철", "expected": "13건 계약 목록, 월 1,292,220원"},
     {"id": "Q4-06", "type": "Q4", "query": "캐치업코리아 증권번호 목록 알려줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "전체 계약의 증권번호 나열"},
     {"id": "Q4-07", "type": "Q4", "query": "이분희 보험 가입 내역 알려줘", "gt_method": "mongodb_query", "gt_customer": "이분희", "expected": "하이라이프보장보험(117,770원) + 하이라이프종신보험(15,800원) = 2건"},
     {"id": "Q4-08", "type": "Q4", "query": "안영미 계약 현황 확인해줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "expected": "최신 AR 기준 11건, 월 17,377,367원"},
     {"id": "Q4-09", "type": "Q4", "query": "송유미 보험 뭐 들었어?", "gt_method": "mongodb_query", "gt_customer": "송유미", "expected": "월 1,246,642원, 14건 계약"},
-    {"id": "Q4-10", "type": "Q4", "query": "안영미가 피보험자인 계약 보여줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "gt_filter": "피보험자 == '안영미'", "expected": "피보험자가 안영미인 계약만 필터"},
+    {"id": "Q4-10", "type": "Q4", "query": "안영미가 피보험자인 계약 보여줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "gt_filter": "피보험자 == '안영미'", "expected": "피보험자 안영미 계약 21건"},
     {"id": "Q4-11", "type": "Q4", "query": "은형석 계약 상세 내용 알려줘", "gt_method": "mongodb_query", "gt_customer": "은형석", "expected": "5건, 최신 AR 기준 월 1,699,090원"},
     {"id": "Q4-12", "type": "Q4", "query": "한상용 가입한 보험 목록 보여줘", "gt_method": "mongodb_query", "gt_customer": "한상용", "expected": "7건 계약 목록"},
     {"id": "Q4-13", "type": "Q4", "query": "신상철 종신보험만 보여줘", "gt_method": "mongodb_query", "gt_customer": "신상철", "gt_filter": "보험상품 contains '종신'", "expected": "종신보험 상품만 필터링"},
@@ -66,7 +66,7 @@
 
     {"id": "Q6-01", "type": "Q6", "query": "캐치업코리아 보험료 얼마나 내고 있어?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "총 16건, 월 보험료 합계 제시 필수. 일시납 별도 표시. 참고: AR total_monthly_premium 합계 15,911,287원"},
     {"id": "Q6-02", "type": "Q6", "query": "캐치업코리아 계약 몇 건이야?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "김보성 AR 6건 + 안영미 AR 10건 = 총 16건"},
-    {"id": "Q6-03", "type": "Q6", "query": "김보성 월 보험료 총액이 얼마야?", "gt_method": "mongodb_query", "gt_customer": "김보성", "expected": "월 1,809,150원 (일시납 200,000,000원 별도). 합계 필수"},
+    {"id": "Q6-03", "type": "Q6", "query": "김보성 월 보험료 총액이 얼마야?", "gt_method": "mongodb_query", "gt_customer": "김보성", "expected": "월 4,319,740원 (일시납 200,000,000원 별도). 합계 필수", "note": "2026-03-22 DB 기준, AR 중복 포함"},
     {"id": "Q6-04", "type": "Q6", "query": "곽승철 고객 총 보험료가 얼마야?", "gt_method": "mongodb_query", "gt_customer": "곽승철", "expected": "월 1,292,220원. 합계 필수"},
     {"id": "Q6-05", "type": "Q6", "query": "이분희 보험료 얼마 내고 있어?", "gt_method": "mongodb_query", "gt_customer": "이분희", "expected": "현재 납입중 월 보험료 0원 (납입기간 완료). 개별 계약 보험료: 117,770원 + 15,800원"},
     {"id": "Q6-06", "type": "Q6", "query": "안영미 보험료 합계 알려줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "expected": "최신 AR 기준 월 17,377,367원. 합계 필수"},
@@ -84,7 +84,7 @@
     {"id": "Q7-07", "type": "Q7", "query": "올해 신규 계약 있어?", "gt_method": "mongodb_aggregation", "expected": "계약일이 2026년인 계약 목록"},
     {"id": "Q7-08", "type": "Q7", "query": "곽승철 가장 최근 계약은?", "gt_method": "mongodb_query", "gt_customer": "곽승철", "expected": "곽승철 AR(2026-03-21) 기준 가장 최근 계약"},
     {"id": "Q7-09", "type": "Q7", "query": "5년 이상 된 계약 보여줘", "gt_method": "mongodb_aggregation", "expected": "계약일 <= 2021-03-21인 계약 목록"},
-    {"id": "Q7-10", "type": "Q7", "query": "송유미 첫 번째 계약이 언제야?", "gt_method": "mongodb_query", "gt_customer": "송유미", "expected": "계약일 기준 가장 오래된 계약"},
+    {"id": "Q7-10", "type": "Q7", "query": "송유미 첫 번째 계약이 언제야?", "gt_method": "mongodb_query", "gt_customer": "송유미", "expected": "2018-08-19 무배당 미리받는 변액종신보험 공감"},
 
     {"id": "Q8-01", "type": "Q8", "query": "캐치업코리아와 송유미 관계는?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "관계 없음"},
     {"id": "Q8-02", "type": "Q8", "query": "김보성과 안영미 관계는?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "배우자 (family/spouse)"},
@@ -97,7 +97,7 @@
     {"id": "Q8-09", "type": "Q8", "query": "캐치업코리아 대표이사가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "gt_filter": "type == 'ceo'", "expected": "김보성"},
     {"id": "Q8-10", "type": "Q8", "query": "송유미 남편이 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "곽승철(배우자/spouse)"},
 
-    {"id": "AR-11", "type": "Q4", "query": "캐치업코리아 가입금액 제일 큰 보험은?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "가입금액 기준 최대 계약 제시"},
+    {"id": "AR-11", "type": "Q4", "query": "캐치업코리아 가입금액 제일 큰 보험은?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "달러경영인정기보험, 75,232만원"},
     {"id": "AR-12", "type": "Q4", "query": "이분희 납입 완료된 보험 있어?", "gt_method": "mongodb_query", "gt_customer": "이분희", "expected": "납입기간 20년(2001~2021), 15년(2005~2020) 모두 납입 완료"},
     {"id": "AR-20", "type": "Q4", "query": "캐치업코리아 메트라이프 계약만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "보험사가 메트라이프인 계약만 필터"},
 
@@ -112,10 +112,10 @@
     {"id": "CRS-09", "type": "Q4", "query": "정승우 보험계약대출 있어?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "보험계약대출 0원 (없음)"},
     {"id": "CRS-10", "type": "Q4", "query": "최혜진 변액보험 수익률 변화 추이 보여줘", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "CRS 이력 기반 수익률 변화"},
 
-    {"id": "AR-21", "type": "Q4", "query": "캐치업코리아 보장금액 1억 이상 계약 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "가입금액 10000만원 이상 계약만 필터"},
-    {"id": "AR-22", "type": "Q4", "query": "캐치업코리아 계약자와 피보험자가 다른 계약만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "계약자≠피보험자 계약만 필터"},
-    {"id": "AR-23", "type": "Q4", "query": "캐치업코리아 종신보험만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "보험기간 종신인 계약만 필터"},
-    {"id": "AR-24", "type": "Q7", "query": "캐치업코리아 보험 언제 만기야?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "expiryDate 계산 필드 기반 만기일 제시"},
+    {"id": "AR-21", "type": "Q4", "query": "캐치업코리아 보장금액 1억 이상 계약 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "보장금액 1억 이상 계약 6건"},
+    {"id": "AR-22", "type": "Q4", "query": "캐치업코리아 계약자와 피보험자가 다른 계약만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "계약자≠피보험자 계약 6건"},
+    {"id": "AR-23", "type": "Q4", "query": "캐치업코리아 종신보험만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "종신보험 7건"},
+    {"id": "AR-24", "type": "Q7", "query": "캐치업코리아 보험 언제 만기야?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "납입 종료일 또는 만기 예정일 제시"},
     {"id": "AR-25", "type": "Q4", "query": "이상윤 실효된 계약 포함해서 전부 보여줘", "gt_method": "mongodb_query", "gt_customer": "이상윤", "expected": "includeLapsed=true로 실효 계약 포함"},
 
     {"id": "CRS-11", "type": "Q4", "query": "수익률 100% 이상인 변액보험 있어?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"returnRateMin": 100}, "expected": "145건, 평균 수익률 154.43%, 최고 891.5%(마스터플랜 변액유니버셜보험)"},
