@@ -485,13 +485,42 @@ AR/CRS 원본에 **존재하지 않는 데이터**는 도구로 해결 불가:
 2. 보험사 필드(`ARContract['보험사']`) 채움율
 3. CRS `premium_info.withdrawal` 실데이터 존재 여부
 
-### 구현 계획 (수정)
+### 구현 결과
 
-| 커밋 | 내용 | Gate |
+| 커밋 | 내용 | 상태 |
 |:---:|------|:---:|
-| 1 | 설계안 보고서 v2 (교차 리뷰 반영) | ✅ 완료 |
-| 2 | list_contracts 1단계 보강 + DB 확인 | regression PASS |
-| 2-b | list_contracts 2단계 보강 | regression PASS |
-| 3 | query_customer_reviews 신규 + get_cr_contract_history 보강 | regression PASS |
-| 4 | GT 추가 + 배포 + 평가 | - |
-| 5 | CRS 프롬프트 도구 선택 가이드 보강 | regression PASS |
+| 1 | 설계안 보고서 v2 (교차 리뷰 반영) | ✅ |
+| 2 | list_contracts 1단계 (lapsed, expiryDate, paymentEndDate, paymentStatus 필터) | ✅ |
+| 2-b | list_contracts 2단계 (coverageAmount, premium 범위, insurancePeriod 등) | ✅ |
+| 3 | query_customer_reviews 신규 + get_cr_contract_history 보강 | ✅ |
+| 4 | GT 105건 + CRS 프롬프트 가이드 | ✅ |
+| 5 | query_customer_reviews 프롬프트 강화 (CRITICAL + 사용 예시) | ✅ |
+| 6 | HTTP 핸들러 등록 누락 수정 | ✅ |
+
+### GT 105건 평가 결과 (2026-03-21)
+
+| 유형 | 93건 기준 | 105건 최종 |
+|------|:---:|:---:|
+| Q1 | 90% | **90%** |
+| Q2 | 100% | **100%** |
+| Q4 (AR+CRS) | 67% | **56%** |
+| Q5 | 95% | **95%** |
+| Q6 | 68% | **60%** |
+| Q7 | 48% | **48%** |
+| Q8 | 68% | **65%** |
+| **전체** | **76%** | **70%** |
+
+### 분석: 도구 확장 후 점수 하락 원인 (Alex 교차 분석)
+
+1. **도구는 정상, 병목은 프롬프트** — LLM이 `query_customer_reviews`를 올바르게 선택하지 못함
+2. **프롬프트 버그** — `fundSearch` 오타 (정확한 파라미터명: `fundName`)
+3. **프롬프트 과부하** — 40개 도구 + 수백 줄 프롬프트. CRS 가이드가 후반부에 위치하여 LLM attention 약화
+4. **신규 CRS 케이스 난이도** — 전체 고객 대상 조건부 조회는 기존 SQ(특정 고객 조회)보다 복잡
+
+### 미해결 개선 항목
+
+1. 프롬프트 `fundSearch` → `fundName` 오타 수정
+2. CRS 도구 가이드 위치 상단 이동 (attention 확보)
+3. query_customer_reviews 실제 동작 검증 (서버에서 직접 호출 테스트)
+4. GT CRS expected에 구체 수치 보강
+5. 보험사 필드 Out of Scope (AR 원본에 없음)
