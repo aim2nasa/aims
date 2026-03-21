@@ -46,7 +46,7 @@
     {"id": "Q4-12", "type": "Q4", "query": "한상용 가입한 보험 목록 보여줘", "gt_method": "mongodb_query", "gt_customer": "한상용", "expected": "7건 계약 목록"},
     {"id": "Q4-13", "type": "Q4", "query": "신상철 종신보험만 보여줘", "gt_method": "mongodb_query", "gt_customer": "신상철", "gt_filter": "보험상품 contains '종신'", "expected": "종신보험 상품만 필터링"},
     {"id": "Q4-14", "type": "Q4", "query": "캐치업코리아가 계약자인 보험 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "gt_filter": "계약자 == '캐치업코리아'", "expected": "실버플랜 변액유니버셜V(992,500원), 유니버셜달러종신(3,710,230원), 달러경영인정기x2"},
-    {"id": "Q4-15", "type": "Q4", "query": "피보험자 김보성 가입내용 보여줘", "gt_method": "mongodb_query", "gt_customer": "김보성", "gt_filter": "피보험자 == '김보성'", "expected": "피보험자가 김보성인 전체 계약 (6건)"},
+    {"id": "Q4-15", "type": "Q4", "query": "피보험자 김보성 가입내용 보여줘", "gt_method": "mongodb_query", "gt_customer": "김보성", "gt_filter": "피보험자 == '김보성'", "expected": "피보험자가 김보성인 전체 계약 (18건, 증권번호 중복 포함)"},
 
     {"id": "Q5-01", "type": "Q5", "query": "캐치업코리아 고객 정보 알려줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "법인, 연락처: 010-4941-8720, 상태: active"},
     {"id": "Q5-02", "type": "Q5", "query": "마리치 고객 정보 알려줘", "gt_method": "mongodb_query", "gt_customer": "마리치", "expected": "법인, 상태: active"},
@@ -73,12 +73,12 @@
     {"id": "Q6-07", "type": "Q6", "query": "송유미 보험 총 몇 건이야?", "gt_method": "mongodb_query", "gt_customer": "송유미", "expected": "14건"},
     {"id": "Q6-08", "type": "Q6", "query": "곽지민 월납 보험료 총액은?", "gt_method": "mongodb_query", "gt_customer": "곽지민", "expected": "26건, 월 4,017,136원"},
     {"id": "Q6-09", "type": "Q6", "query": "은형석 계약 건수 알려줘", "gt_method": "mongodb_query", "gt_customer": "은형석", "expected": "5건"},
-    {"id": "Q6-10", "type": "Q6", "query": "한상용 보험료 얼마나 내?", "gt_method": "mongodb_query", "gt_customer": "한상용", "expected": "월 1,092,297원", "note": "AI가 실효 계약 포함 시 다른 금액을 답할 수 있음"},
+    {"id": "Q6-10", "type": "Q6", "query": "한상용 보험료 얼마나 내?", "gt_method": "mongodb_query", "gt_customer": "한상용", "expected": "월 1,349,807원 (일시납 별도)", "note": "7건, monthlyPremium=1,349,807원 (2026-03-21 DB 기준)"},
 
     {"id": "Q7-01", "type": "Q7", "query": "가장 최근에 계약한 고객은?", "gt_method": "mongodb_aggregation", "expected": "전체 계약 중 계약일 최신인 고객명 + 계약 정보"},
     {"id": "Q7-02", "type": "Q7", "query": "2024년 이후 계약된 건 보여줘", "gt_method": "mongodb_aggregation", "expected": "계약일 >= 2024-01-01인 전체 계약 목록"},
     {"id": "Q7-03", "type": "Q7", "query": "캐치업코리아 가장 오래된 계약은?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "마스터플랜 변액유니버셜종신Ⅱ보험 (2009-06-10)"},
-    {"id": "Q7-04", "type": "Q7", "query": "김보성 최근 가입한 보험이 뭐야?", "gt_method": "mongodb_query", "gt_customer": "김보성", "expected": "변액연금보험 동행Plus (2025-10-29)"},
+    {"id": "Q7-04", "type": "Q7", "query": "김보성 최근 가입한 보험이 뭐야?", "gt_method": "mongodb_query", "gt_customer": "김보성", "expected": "무배당 모두의 종신보험 (2025-06-02)", "note": "김보성 고객의 전체 계약 중 계약일 최신. 피보험자=김보성, 계약자=안영미"},
     {"id": "Q7-05", "type": "Q7", "query": "2020년에 가입한 계약 있어?", "gt_method": "mongodb_aggregation", "expected": "계약일이 2020년인 계약 목록"},
     {"id": "Q7-06", "type": "Q7", "query": "안영미 2022년 이후 가입 계약 보여줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "gt_filter": "계약일 >= 2022-01-01", "expected": "VIP종신Plus(2022-10-24), 달러연금(2024-12-19)"},
     {"id": "Q7-07", "type": "Q7", "query": "올해 신규 계약 있어?", "gt_method": "mongodb_aggregation", "expected": "계약일이 2026년인 계약 목록"},

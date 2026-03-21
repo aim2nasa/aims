@@ -41,7 +41,22 @@ export const getContractDetailsSchema = z.object({
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 각 계약에 paymentStatus(납입상태: 납입중/납입완료/일시납/전기납), expiryDate(보험 만기일), paymentEndDate(납입 종료일) 계산 필드가 포함됩니다. includeLapsed=true로 lapsed_contracts(실효/해지 계약)도 함께 조회할 수 있으며, isLapsed 마커로 구분됩니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위, 납입상태별로 필터링할 수 있고, 보장금액/보험료 범위, 보험기간, 계약자≠피보험자 여부, 납입기간 최소 연수로도 필터링할 수 있습니다. 계약일, 보험료, 가입금액 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수, lapsedFromARCount)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
+    description: `계약 목록을 조회합니다. Annual Report에서 파싱된 계약 정보를 반환합니다.
+
+■ 주요 사용 사례:
+- "메트라이프 계약만" → insurerName="메트라이프"
+- "보장금액 1억 이상" → coverageAmountMin=10000 (만원 단위! 1억=10000만원)
+- "계약자와 피보험자가 다른 계약" → contractorNotInsured=true
+- "종신보험만" → insurancePeriod="종신"
+- "실효 계약 포함 전부" → includeLapsed=true
+- "납입 완료된 보험" → paymentStatus="납입완료"
+- "보험료 50만원 이상" → premiumMin=500000 (원 단위)
+- "가입금액 제일 큰" → sortBy="coverageAmount", sortOrder="desc"
+
+■ 응답 summary 필드: totalPremium(전체합계), monthlyPremium(월납합계), lumpSumPremium(일시납합계), totalContracts, activeContracts, lapsedContracts
+■ 각 계약에 paymentStatus(납입중/납입완료/일시납/전기납), expiryDate(만기일), paymentEndDate(납입종료일) 계산 필드 포함
+■ 문서/서류/파일 검색에는 적합하지 않습니다 → search_documents 사용
+■ 변액보험 수익률/적립금/펀드 → query_customer_reviews 사용`,
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -59,6 +74,7 @@ export const contractToolDefinitions = [
         premiumMin: { type: 'number', description: '보험료 최소 (원 단위)' },
         premiumMax: { type: 'number', description: '보험료 최대 (원 단위)' },
         insurancePeriod: { type: 'string', description: '보험기간 필터 — "종신", "100세", "20년" 등 부분 매칭' },
+        insurerName: { type: 'string', description: '보험사명으로 필터링 (예: "메트라이프", "삼성생명")' },
         contractorNotInsured: { type: 'boolean', description: '계약자와 피보험자가 다른 계약만 (true로 설정)' },
         paymentPeriodMin: { type: 'number', description: '납입기간 최소 N년 이상 (전기납/일시납 제외)' },
         sortBy: { type: 'string', enum: ['contractDate', 'premium', 'coverageAmount'], description: '정렬 기준 (기본: contractDate)' },

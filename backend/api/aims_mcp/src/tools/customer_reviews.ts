@@ -68,7 +68,18 @@ export const customerReviewToolDefinitions = [
   },
   {
     name: 'query_customer_reviews',
-    description: '변액보험(CRS) 데이터를 조건부로 필터링/정렬/집계합니다. 수익률 범위, 적립금 범위, 약관대출 유무 등으로 필터링하고, 적립금/수익률/해지환급금 기준으로 정렬할 수 있습니다. 단순 현황 조회는 get_customer_reviews를 사용하세요.',
+    description: `변액보험(CRS) 데이터를 조건부로 필터링/정렬/집계합니다.
+
+⚠️ customerId는 선택사항! 생략하면 전체 고객 대상으로 조회합니다.
+- "약관대출 있는 고객 있어?" → customerId 없이 hasPolicyLoan=true
+- "수익률 100% 이상 변액보험" → returnRateMin=100
+- "적립금 가장 많은 변액보험" → sortBy="accumulatedAmount", sortOrder="desc"
+- "수익률 마이너스 변액보험" → returnRateMax=0
+- "중도인출한 변액보험" → hasWithdrawal=true
+- "전체 적립금 합계" → 파라미터 없이 호출, summary.totalAccumulated 확인
+
+응답 summary: totalAccumulated(적립금 합계), avgReturnRate(평균 수익률), totalPolicyLoan(총 약관대출), bestReturnRate, worstReturnRate
+단순 현황 조회는 get_customer_reviews를 사용하세요.`,
     inputSchema: {
       type: 'object' as const,
       properties: {

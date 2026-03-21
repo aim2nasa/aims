@@ -133,10 +133,12 @@ def evaluate_gt(case, response):
         return {"grade": "FAIL", "score": 0.0, "details": details}
 
     # 방향성 expected 처리 — 구체 수치 없이 방향만 제시하는 경우
-    # (예: "비정상 계약 존재 여부", "계약일 기준 가장 오래된 계약")
+    # (예: "비정상 계약 존재 여부", "계약일 기준 가장 오래된 계약", "~만 필터")
     # 도구 호출이 정상이고 실패 패턴이 없으면 GOOD 처리
     has_concrete_value = bool(re.search(r'[\d,]+(?:원|건|만원)', expected)) or bool(re.findall(r'[가-힣]{2,3}(?=\(|,|$| )', expected))
-    if not has_concrete_value and response["tools_called"]:
+    # "필터" 키워드만 있는 expected도 방향성으로 간주
+    is_filter_only = bool(re.search(r'필터|만\s*필터|포함$', expected)) and not has_concrete_value
+    if (not has_concrete_value or is_filter_only) and response["tools_called"]:
         fail_patterns = ["확인되지 않습니다", "등록되어 있지 않습니다", "정보가 없습니다", "찾을 수 없"]
         has_fail = any(fp in text for fp in fail_patterns)
         if not has_fail and len(text.strip()) > 20:
