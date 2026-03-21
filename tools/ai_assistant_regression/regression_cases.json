@@ -568,5 +568,17 @@
     "must_call_tools": true,
     "created_from": "get_cr_contract_history fundName 보강",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-047",
+    "name": "CRS 도구 선택 - query vs get 분기",
+    "category": "customer_reviews",
+    "question": "적립금이 가장 많은 변액보험은?",
+    "expected_tools": ["query_customer_reviews"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "CRS 도구 선택 프롬프트 가이드 보강",
+    "created_date": "2026-03-21"
   }
 ]

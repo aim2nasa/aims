@@ -3,9 +3,9 @@
     "version": "2.0",
     "created": "2026-03-21",
     "purpose": "SQ 질의 유형별 GT 테스트 셋 — AI 어시스턴트 응답 품질 측정용",
-    "total_cases": 93,
+    "total_cases": 105,
     "coverage": {
-      "Q1": 10, "Q2": 10, "Q4": 26, "Q5": 15, "Q6": 12, "Q7": 10, "Q8": 10
+      "Q1": 10, "Q2": 10, "Q4": 36, "Q5": 15, "Q6": 13, "Q7": 11, "Q8": 10
     }
   },
   "test_cases": [
@@ -110,6 +110,20 @@
     {"id": "CRS-07", "type": "Q4", "query": "정은연 변액보험 적립금 얼마야?", "gt_method": "mongodb_query", "gt_customer": "정은연", "expected": "총 적립금 7,966,342원"},
     {"id": "CRS-08", "type": "Q4", "query": "최혜진 납입보험료 총액은?", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "순보험료 23,620,870원"},
     {"id": "CRS-09", "type": "Q4", "query": "정승우 보험계약대출 있어?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "보험계약대출 0원 (없음)"},
-    {"id": "CRS-10", "type": "Q4", "query": "최혜진 변액보험 수익률 변화 추이 보여줘", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "CRS 이력 기반 수익률 변화"}
+    {"id": "CRS-10", "type": "Q4", "query": "최혜진 변액보험 수익률 변화 추이 보여줘", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "CRS 이력 기반 수익률 변화"},
+
+    {"id": "AR-21", "type": "Q4", "query": "캐치업코리아 보장금액 1억 이상 계약 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "가입금액 10000만원 이상 계약만 필터"},
+    {"id": "AR-22", "type": "Q4", "query": "캐치업코리아 계약자와 피보험자가 다른 계약만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "계약자≠피보험자 계약만 필터"},
+    {"id": "AR-23", "type": "Q4", "query": "캐치업코리아 종신보험만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "보험기간 종신인 계약만 필터"},
+    {"id": "AR-24", "type": "Q7", "query": "캐치업코리아 보험 언제 만기야?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "expiryDate 계산 필드 기반 만기일 제시"},
+    {"id": "AR-25", "type": "Q4", "query": "이상윤 실효된 계약 포함해서 전부 보여줘", "gt_method": "mongodb_query", "gt_customer": "이상윤", "expected": "includeLapsed=true로 실효 계약 포함"},
+
+    {"id": "CRS-11", "type": "Q4", "query": "수익률 100% 이상인 변액보험 있어?", "gt_method": "mongodb_query", "expected": "returnRateMin=100 필터로 고수익 변액보험 조회"},
+    {"id": "CRS-12", "type": "Q6", "query": "내 고객 변액보험 적립금 합계 얼마야?", "gt_method": "mongodb_query", "expected": "summary.totalAccumulated 제시"},
+    {"id": "CRS-13", "type": "Q4", "query": "약관대출 받고 있는 고객 있어?", "gt_method": "mongodb_query", "expected": "hasPolicyLoan=true 필터"},
+    {"id": "CRS-14", "type": "Q4", "query": "적립금이 가장 많은 변액보험은?", "gt_method": "mongodb_query", "expected": "sortBy=accumulatedAmount, sortOrder=desc, limit=1"},
+    {"id": "CRS-15", "type": "Q4", "query": "정승우 인덱스주식형 펀드 수익률 변화 보여줘", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "get_cr_contract_history fundName=인덱스주식형 이력"},
+    {"id": "CRS-16", "type": "Q4", "query": "수익률이 마이너스인 변액보험 있어?", "gt_method": "mongodb_query", "expected": "returnRateMax=0 필터"},
+    {"id": "CRS-17", "type": "Q4", "query": "중도인출한 변액보험 있어?", "gt_method": "mongodb_query", "expected": "hasWithdrawal=true 필터"}
   ]
 }

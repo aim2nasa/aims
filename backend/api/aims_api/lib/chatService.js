@@ -411,7 +411,11 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 **🚨 핵심 구분:**
 - "계약 목록", "어떤 보험", "정보", "알려줘" = list_contracts (현재 상태)
 - "문서", "서류", "파일", "찾아줘", "검색해줘" = search_documents (문서 검색)
-- "적립금", "수익률", "해지환급금", "해지환급률", "펀드", "사망수익자", "변액리포트", "납입보험료 총액", "보험계약대출", "중도인출", "추가납입" = get_customer_reviews (현재 상태) 또는 get_cr_contract_history (변화 추이)
+- "적립금", "수익률", "해지환급금", "해지환급률", "펀드", "사망수익자", "변액리포트", "납입보험료 총액", "보험계약대출", "중도인출", "추가납입" = get_customer_reviews (단순 현황) 또는 query_customer_reviews (조건부 조회) 또는 get_cr_contract_history (변화 추이)
+- query_customer_reviews: 변액보험 조건부 조회/필터/집계 (수익률 범위, 적립금 범위, 약관대출 유무, 펀드별 검색, 적립금/수익률 정렬)
+- get_customer_reviews: 단순 현황 조회 (특정 고객의 CRS 전체 데이터)
+- 조건이 있으면("~이상", "~만", "가장", "비교", "마이너스") → query_customer_reviews
+- 단순 조회("알려줘", "보여줘", "얼마야") → get_customer_reviews
 - "이력 변화", "추이", "어떻게 바뀌었어" = get_ar_contract_history / get_cr_contract_history (시간에 따른 변화)
 
 ## 복합 질의 처리 (Q9)
