@@ -42,7 +42,7 @@ export const queryCustomerReviewsSchema = z.object({
 export const customerReviewToolDefinitions = [
   {
     name: 'get_customer_reviews',
-    description: '고객의 Customer Review(변액리포트/CRS) 목록을 조회합니다. 증권번호, 상품명, 적립금, 펀드 정보, 사망수익자, 담당 설계사, 적립율, 초회보험료, 월납보험료, 펀드별 납입원금 등 변액보험 상세 정보를 확인할 수 있습니다.',
+    description: '고객의 Customer Review(변액리포트/CRS) 목록을 조회합니다. 증권번호, 상품명, 적립금, 펀드 정보, 사망수익자, 담당 설계사, 적립율, 초회보험료, 월납보험료, 납입보험료 총액(순보험료), 보험계약대출, 중도인출, 추가납입, 펀드별 납입원금 등 변액보험 상세 정보를 확인할 수 있습니다. "납입보험료 총액", "순보험료", "보험계약대출" 등은 이 도구에서만 조회 가능합니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {

@@ -243,3 +243,16 @@ describe('CRS/변액보험 도구 선택 규칙', () => {
     expect(chatServiceSource).toMatch(/만원 단위/);
   });
 });
+
+// =============================================================================
+// get_customer_reviews description: 납입보험료 총액 명시
+// =============================================================================
+describe('get_customer_reviews description 완전성', () => {
+  const customerReviewsSource = readSource(
+    path.join('..', 'aims_mcp', 'src', 'tools', 'customer_reviews.ts')
+  );
+
+  test('get_customer_reviews description에 납입보험료 총액이 명시되어야 함', () => {
+    expect(customerReviewsSource).toMatch(/납입보험료 총액|순보험료/);
+  });
+});
