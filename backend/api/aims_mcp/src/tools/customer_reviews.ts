@@ -24,7 +24,7 @@ export const getCrContractHistorySchema = z.object({
 export const customerReviewToolDefinitions = [
   {
     name: 'get_customer_reviews',
-    description: '고객의 Customer Review(변액리포트/CRS) 목록을 조회합니다. 증권번호, 상품명, 적립금, 펀드 정보 등 변액보험 상세 정보를 확인할 수 있습니다.',
+    description: '고객의 Customer Review(변액리포트/CRS) 목록을 조회합니다. 증권번호, 상품명, 적립금, 펀드 정보, 사망수익자, 담당 설계사, 적립율, 초회보험료, 월납보험료, 펀드별 납입원금 등 변액보험 상세 정보를 확인할 수 있습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -104,6 +104,8 @@ export async function handleGetCustomerReviews(args: unknown) {
         productName: review.product_name || '-',
         contractorName: review.contractor_name || '-',  // 계약자
         insuredName: review.insured_name || '-',        // 피보험자
+        deathBeneficiary: review.death_beneficiary || '-', // 사망수익자
+        fsrName: review.fsr_name || '-',                   // 담당 설계사
         issueDate: review.issue_date,
         parsedAt: review.parsed_at,
         status: review.status || 'completed',
@@ -116,6 +118,9 @@ export async function handleGetCustomerReviews(args: unknown) {
         investmentReturnRate: contractInfo.investment_return_rate || 0,
         surrenderValue: contractInfo.surrender_value || 0,
         surrenderRate: contractInfo.surrender_rate || 0,
+        accumulationRate: contractInfo.accumulation_rate || 0,   // 적립율
+        initialPremium: contractInfo.initial_premium || 0,       // 초회보험료
+        monthlyPremium: contractInfo.monthly_premium || 0,       // 월납보험료
 
         // 납입원금 정보
         basicPremium: premiumInfo.basic_premium || 0,
@@ -130,7 +135,8 @@ export async function handleGetCustomerReviews(args: unknown) {
           fundName: f.fund_name,
           basicAccumulated: f.basic_accumulated || 0,
           allocationRatio: f.allocation_ratio || 0,
-          returnRate: f.return_rate || 0
+          returnRate: f.return_rate || 0,
+          investedPrincipal: f.invested_principal || 0  // 납입원금
         })),
 
         sourceFileId: review.source_file_id?.toString()

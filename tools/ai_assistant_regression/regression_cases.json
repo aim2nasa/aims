@@ -430,5 +430,42 @@
     "must_call_tools": true,
     "created_from": "UQ 방안 D+E - 복합 질의 분해",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-036",
+    "name": "CRS 적립금 조회",
+    "category": "customer_reviews",
+    "question": "정승우 변액보험 적립금 얼마야?",
+    "expected_tools": ["search_customers", "get_customer_reviews"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류", "에러"],
+    "must_call_tools": true,
+    "created_from": "CRS 누락 필드 추가",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-037",
+    "name": "CRS 사망수익자 조회",
+    "category": "customer_reviews",
+    "question": "최혜진 변액보험 사망수익자 누구야?",
+    "expected_tools": ["search_customers", "get_customer_reviews"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류", "확인되지 않습니다"],
+    "must_call_tools": true,
+    "created_from": "CRS death_beneficiary 필드 추가",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-038",
+    "name": "AR 보험사 필터 조회",
+    "category": "list_contracts",
+    "question": "캐치업코리아 메트라이프 계약만 보여줘",
+    "required_tools": ["list_contracts"],
+    "expected_tools": ["search_customers", "list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "AR insurerName 필드 추가",
+    "created_date": "2026-03-21"
   }
 ]

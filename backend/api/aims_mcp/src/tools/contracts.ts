@@ -15,7 +15,7 @@ export const listContractsSchema = z.object({
   insured: z.string().optional().describe('피보험자명으로 필터링 (예: "안영미")'),
   contractDateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이후 계약만 조회 (YYYY-MM-DD)'),
   contractDateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이전 계약만 조회 (YYYY-MM-DD)'),
-  sortBy: z.enum(['contractDate', 'premium']).optional().default('contractDate').describe('정렬 기준 (기본: contractDate)'),
+  sortBy: z.enum(['contractDate', 'premium', 'coverageAmount']).optional().default('contractDate').describe('정렬 기준 (기본: contractDate)'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc').describe('정렬 순서 (기본: desc)'),
   limit: z.number().optional().default(50).describe('결과 개수 제한 (기본: 50, 최대: 50)'),
   offset: z.number().optional().default(0).describe('건너뛸 개수 (페이지네이션용)')
@@ -32,7 +32,7 @@ export const getContractDetailsSchema = z.object({
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위로 필터링할 수 있고, 계약일 또는 보험료 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
+    description: '계약 목록을 조회합니다. 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명, 보험사 등 계약 세부 정보가 필요할 때 사용합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별, 계약자명별, 피보험자명별, 계약일 범위로 필터링할 수 있고, 계약일, 보험료, 가입금액 기준 정렬이 가능합니다. 응답에 summary(총 보험료 합계, 전체/정상/실효 계약 수)가 포함됩니다. 이 도구는 구조화된 계약 데이터만 다루며, 문서/서류/파일을 찾거나 검색하는 용도에는 적합하지 않습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -43,7 +43,7 @@ export const contractToolDefinitions = [
         insured: { type: 'string', description: '피보험자명으로 필터링' },
         contractDateFrom: { type: 'string', description: '이 날짜 이후 계약만 조회 (YYYY-MM-DD)' },
         contractDateTo: { type: 'string', description: '이 날짜 이전 계약만 조회 (YYYY-MM-DD)' },
-        sortBy: { type: 'string', enum: ['contractDate', 'premium'], description: '정렬 기준 (기본: contractDate)' },
+        sortBy: { type: 'string', enum: ['contractDate', 'premium', 'coverageAmount'], description: '정렬 기준 (기본: contractDate)' },
         sortOrder: { type: 'string', enum: ['asc', 'desc'], description: '정렬 순서 (기본: desc)' },
         limit: { type: 'number', description: '결과 개수 제한 (기본: 50, 최대: 50)' },
         offset: { type: 'number', description: '건너뛸 개수 (페이지네이션용, 기본: 0)' }
@@ -72,6 +72,7 @@ interface ARContract {
   '순번': number;
   '증권번호': string;
   '보험상품': string;
+  '보험사'?: string;
   '계약자': string;
   '피보험자': string;
   '계약일': string;
@@ -99,6 +100,7 @@ interface NormalizedContract {
   customerName: string;
   policyNumber: string;
   productName: string;
+  insurerName: string;
   contractor: string;
   insured: string;
   contractDate: string;
@@ -130,6 +132,7 @@ function normalizeContract(
     customerName,
     policyNumber: contract['증권번호'] || '',
     productName: contract['보험상품'] || '',
+    insurerName: contract['보험사'] || '',
     contractor: contract['계약자'] || '',
     insured: contract['피보험자'] || '',
     contractDate: contract['계약일'] || '',
@@ -302,6 +305,9 @@ export async function handleListContracts(args: unknown) {
     filteredContracts.sort((a, b) => {
       if (sortBy === 'premium') {
         return (a.premium - b.premium) * sortMultiplier;
+      }
+      if (sortBy === 'coverageAmount') {
+        return (a.coverageAmount - b.coverageAmount) * sortMultiplier;
       }
       // 기본: contractDate
       const dateA = new Date(a.contractDate || 0).getTime();
