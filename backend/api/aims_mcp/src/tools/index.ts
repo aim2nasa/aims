@@ -15,7 +15,7 @@ import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo, 
 import { productToolDefinitions, handleSearchProducts } from './products.js';
 import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
 import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArContractHistory } from './annual_reports.js';
-import { customerReviewToolDefinitions, handleGetCustomerReviews, handleGetCrContractHistory } from './customer_reviews.js';
+import { customerReviewToolDefinitions, handleGetCustomerReviews, handleGetCrContractHistory, handleQueryCustomerReviews } from './customer_reviews.js';
 import { utilityToolDefinitions, handleGetStorageInfo, handleGetCreditInfo, handleCheckCustomerName, handleListNotices, handleListFaqs, handleListUsageGuides } from './utilities.js';
 import { ragToolDefinitions, handleSearchDocumentsSemantic } from './rag.js';
 import { addressToolDefinitions, handleSearchAddress } from './address.js';
@@ -75,6 +75,7 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   // Customer Review (변액리포트) 관련
   get_customer_reviews: handleGetCustomerReviews,
   get_cr_contract_history: handleGetCrContractHistory,
+  query_customer_reviews: handleQueryCustomerReviews,
   // 유틸리티 관련
   get_storage_info: handleGetStorageInfo,
   get_credit_info: handleGetCreditInfo,

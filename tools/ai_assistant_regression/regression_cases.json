@@ -544,5 +544,29 @@
     "must_call_tools": true,
     "created_from": "list_contracts 2단계 보강 - contractorNotInsured",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-045",
+    "name": "CRS 조건부 조회 - 수익률 필터",
+    "category": "customer_reviews",
+    "question": "수익률 100% 이상인 변액보험 있어?",
+    "expected_tools": ["query_customer_reviews"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "query_customer_reviews 신규 도구",
+    "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-046",
+    "name": "CRS 이력 펀드 필터",
+    "category": "customer_reviews",
+    "question": "정승우 인덱스주식형 펀드 수익률 변화 보여줘",
+    "expected_tools": ["search_customers", "get_cr_contract_history"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "get_cr_contract_history fundName 보강",
+    "created_date": "2026-03-21"
   }
 ]
