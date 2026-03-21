@@ -83,10 +83,36 @@ model: opus
 - Q3: 방안 A(프롬프트 "문서 원문 재서술 금지") → FAIL률 0%
 - Q9: 방안 D+E(복합 질의 분해 + Few-shot) 적용 완료
 
-### 1차 종료 판정
-- SQ 75% 수렴 + UQ FAIL률 0% + Regression 35/35 PASS
-- **추가 개선은 실제 사용자 질의 누적 후 2차로 진행**
-- 트리거: `aims_analytics.chat_messages` 로그 분석 → 실패 패턴 발견 시
+### AR/CRS 도구 확장: 🔴 진행 중 (2026-03-21~)
+
+**목표**: AR/CRS 데이터의 모든 영역 커버율 95% 이상
+**현재**: GT 105건 기준 70% (목표 대비 -25%p)
+
+**완료된 구현:**
+- list_contracts: 필터 13개, 계산 필드 3개 (expiryDate, paymentEndDate, paymentStatus)
+- query_customer_reviews: 신규 도구 (CRS 조건부 조회/필터/집계)
+- get_cr_contract_history: fundName, field 파라미터 보강
+- HTTP 핸들러 등록 수정
+- GT 105건 구축, 프롬프트 CRITICAL 가이드 추가
+
+**병목 (Alex 분석):** 도구는 정상 구현됨. AI가 도구를 올바르게 선택하지 못하는 것이 핵심.
+
+### 다음 세션에서 해야 할 일 (우선순위)
+
+1. **query_customer_reviews 서버 직접 호출 테스트** — 도구가 진짜 동작하는지 확인 (필수 선행)
+   ```
+   ssh rossi@100.110.215.65 'curl -s -X POST http://localhost:3011/call ...'
+   ```
+2. **프롬프트 버그 수정** — `fundSearch` → `fundName` 오타
+3. **CRS 도구 가이드 위치 상단 이동** — 프롬프트 후반부 → CRITICAL 바로 아래로
+4. **GT CRS expected 구체 수치 보강** — 현재 "파라미터 힌트"만 있어 정확한 평가 불가
+5. **재평가** — 배포 후 GT 105건 재실행
+6. **반복** — 목표 95% 달성까지
+
+### Out of Scope (AR 원본에 데이터 없음)
+- 보험사 필드, 특약, 갱신형, 납입면제, 보험금 청구 이력
+
+> 상세: `docs/NL_GT_FEASIBILITY_REPORT.md` 섹션 13~14
 
 ## 핵심 파일
 
