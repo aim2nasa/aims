@@ -57,8 +57,8 @@ function formatPhoneNumber(phone: string | undefined | null): string {
 
 // 스키마 정의
 export const searchCustomersSchema = z.object({
-  query: z.string().optional().describe('검색어 (이름, 전화번호, 이메일)'),
-  lastName: z.string().optional().describe('성씨로 검색 (이름의 첫 글자, 예: "김", "이", "박", "정"). query 대신 사용'),
+  query: z.string().optional().describe('검색어 (이름의 일부, 전화번호, 이메일). 부분 매칭 지원'),
+  lastName: z.string().optional().describe('성씨(한 글자)로만 검색 (예: "김", "이", "박"). 2글자 이상은 query 사용'),
   customerType: z.enum(['개인', '법인']).optional().describe('고객 유형'),
   status: z.enum(['active', 'inactive', 'all']).optional().default('active').describe('상태'),
   region: z.string().optional().describe('지역 (시/도)'),
@@ -96,12 +96,12 @@ export const updateCustomerSchema = z.object({
 export const customerToolDefinitions = [
   {
     name: 'search_customers',
-    description: '고객을 이름, 전화번호, 지역 등으로 검색합니다. 검색 조건 없이 호출하면 전체 고객 목록을 반환합니다.',
+    description: '고객을 이름, 전화번호, 지역 등으로 검색합니다. 검색 조건 없이 호출하면 전체 고객 목록을 반환합니다. 응답에는 birthDate(생년월일) 필드가 포함됩니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        query: { type: 'string', description: '검색어 (이름, 전화번호, 이메일)' },
-        lastName: { type: 'string', description: '성씨로 검색 (이름의 첫 글자, 예: "김", "이", "박", "정"). query 대신 사용' },
+        query: { type: 'string', description: '검색어 (이름의 일부, 전화번호, 이메일). 부분 매칭을 지원하므로 이름 일부만으로도 검색 가능 (예: "마리치" → "주식회사마리치" 검색됨)' },
+        lastName: { type: 'string', description: '성씨(한 글자)로만 검색할 때 사용 (예: "김", "이", "박"). 이름의 첫 글자 기준 prefix 매칭. 2글자 이상의 이름 부분 검색은 query를 사용하세요' },
         customerType: { type: 'string', enum: ['개인', '법인'], description: '고객 유형' },
         status: { type: 'string', enum: ['active', 'inactive', 'all'], description: '상태 (기본: active)' },
         region: { type: 'string', description: '지역 (시/도)' },
@@ -111,7 +111,7 @@ export const customerToolDefinitions = [
   },
   {
     name: 'get_customer',
-    description: '특정 고객의 상세 정보를 조회합니다.',
+    description: '특정 고객의 상세 정보를 조회합니다. personalInfo에 birthDate(생년월일) 필드가 포함됩니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -219,6 +219,7 @@ export async function handleSearchCustomers(args: unknown) {
         'personal_info.mobile_phone': 1,
         'personal_info.email': 1,
         'personal_info.address': 1,
+        'personal_info.birth_date': 1,
         'insurance_info.customer_type': 1,
         'meta.status': 1,
         'meta.created_at': 1
@@ -251,6 +252,7 @@ export async function handleSearchCustomers(args: unknown) {
           customers: customers.map(c => ({
             id: c._id.toString(),
             name: c.personal_info?.name,
+            birthDate: c.personal_info?.birth_date || null,
             phone: c.personal_info?.mobile_phone,
             email: c.personal_info?.email,
             address: c.personal_info?.address?.address1,
@@ -331,6 +333,7 @@ export async function handleGetCustomer(args: unknown) {
       id: customer._id.toString(),
       personalInfo: {
         name: customer.personal_info?.name,
+        birthDate: customer.personal_info?.birth_date || null,
         mobilePhone: customer.personal_info?.mobile_phone || null,
         homePhone: customer.personal_info?.home_phone || null,
         workPhone: customer.personal_info?.work_phone || null,
