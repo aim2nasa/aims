@@ -3270,8 +3270,8 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
             continue;
           }
 
-          // 카테고리/서브타입 폴더 경로 결정
-          const docType = doc.document_type || 'unspecified';
+          // 카테고리/서브타입 폴더 경로 결정 (document_type → meta.document_type 폴백)
+          const docType = doc.document_type || (doc.meta && doc.meta.document_type) || 'unspecified';
           const category = TYPE_TO_CATEGORY[docType] || 'etc';
           const catLabel = CATEGORY_LABELS[category] || '기타';
           const subLabel = SUBTYPE_LABELS[docType] || docType;
