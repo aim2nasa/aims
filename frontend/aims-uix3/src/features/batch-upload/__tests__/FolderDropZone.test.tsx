@@ -15,14 +15,14 @@ describe('FolderDropZone', () => {
 
       const dropZone = container.querySelector('.folder-drop-zone')
       expect(dropZone).toBeInTheDocument()
-      expect(screen.getByText(/상위 폴더 또는 고객명 폴더를 드래그하세요/)).toBeInTheDocument()
+      expect(screen.getByText(/지금 바로 폴더를 끌어다 놓으세요/)).toBeInTheDocument()
     })
 
     test('안내 문구가 표시된다', () => {
       const onFilesSelected = vi.fn()
       render(<FolderDropZone onFilesSelected={onFilesSelected} />)
 
-      expect(screen.getByText(/폴더명이 고객명과 일치하면 자동으로 연결됩니다/)).toBeInTheDocument()
+      expect(screen.getByText(/또는 클릭하여 폴더 선택/)).toBeInTheDocument()
     })
 
     test('가이드 문구가 표시된다', () => {

@@ -6,7 +6,7 @@
  * 폴더 선택 및 드래그앤드롭 영역
  */
 
-import { useState, useCallback, type DragEvent } from 'react'
+import { useState, useCallback, useRef, type DragEvent, type ChangeEvent } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
 import './FolderDropZone.css'
 
@@ -20,6 +20,7 @@ export default function FolderDropZone({
   disabled = false
 }: FolderDropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)
+  const folderInputRef = useRef<HTMLInputElement>(null)
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -115,6 +116,17 @@ export default function FolderDropZone({
     }
   }, [disabled, onFilesSelected])
 
+  const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    const allFiles = Array.from(files)
+    onFilesSelected(allFiles)
+
+    // input 초기화 (같은 폴더 재선택 가능)
+    e.target.value = ''
+  }, [onFilesSelected])
+
   return (
     <div
       className={`folder-drop-zone ${isDragOver ? 'drag-over' : ''} ${disabled ? 'disabled' : ''}`}
@@ -122,7 +134,7 @@ export default function FolderDropZone({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       aria-label="폴더를 드래그하세요"
-      aria-disabled={disabled}
+      aria-disabled={disabled ? "true" : undefined}
     >
       {/* 폴더 준비 가이드 */}
       <div className="folder-guide">
@@ -230,24 +242,31 @@ export default function FolderDropZone({
       </div>
 
       {/* 드래그 영역 */}
-      <div className="folder-drop-zone-content">
-        <div className="folder-drop-zone-icon">
-          <SFSymbol
-            name="folder-fill-badge-plus"
-            size={SFSymbolSize.TITLE_1}
-            weight={SFSymbolWeight.MEDIUM}
-          />
+      <label className={`folder-drop-zone-content ${disabled ? 'disabled' : ''}`}>
+        <input
+          ref={folderInputRef}
+          type="file"
+          className="folder-input-hidden"
+          onChange={handleInputChange}
+          disabled={disabled}
+          aria-label="폴더 선택"
+          /* @ts-expect-error webkitdirectory is non-standard but widely supported */
+          webkitdirectory=""
+          multiple
+        />
+        {/* + 버튼 */}
+        <div className="folder-select-plus-icon">
+          <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+            <path d="M24 10V38M10 24H38" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+          </svg>
         </div>
-
-        <div className="folder-drop-zone-text">
-          <p className="folder-drop-zone-title">
-            {isDragOver ? '여기에 놓으세요' : '상위 폴더 또는 고객명 폴더를 드래그하세요'}
-          </p>
-          <p className="folder-drop-zone-description">
-            폴더명이 고객명과 일치하면 자동으로 연결됩니다
-          </p>
-        </div>
-      </div>
+        <span className="folder-drop-zone-title">
+          {isDragOver ? '여기에 놓으세요' : '지금 바로 폴더를 끌어다 놓으세요!'}
+        </span>
+        <span className="folder-drop-zone-description">
+          또는 클릭하여 폴더 선택
+        </span>
+      </label>
     </div>
   )
 }

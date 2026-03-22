@@ -35,10 +35,33 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: var(--spacing-2);
     text-align: center;
+    color: var(--color-text-secondary);
+    cursor: pointer;
     max-width: 100%;
     min-width: 0; /* flexbox shrink 허용 */
+  }
+
+  .folder-drop-zone-content.disabled {
+    cursor: default;
+    opacity: 0.4;
+  }
+
+  /* 숨겨진 폴더 선택 input */
+  .folder-input-hidden {
+    display: none;
+  }
+
+  /* + 아이콘 (폴더 선택) — ExcelRefiner __plus-icon과 동일 */
+  .folder-select-plus-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-primary-500);
   }
 
   .folder-drop-zone-icon {
@@ -60,15 +83,17 @@
 
   .folder-drop-zone-title {
     margin: 0;
-    font-size: var(--font-size-footnote);  /* 13px - FONT_SIZE_STANDARDS: 섹션 제목 */
+    font-size: var(--font-size-footnote);  /* 13px */
     font-weight: 600;
     color: var(--color-text-primary);
+    letter-spacing: -0.3px;
   }
 
   .folder-drop-zone-description {
     margin: 0;
-    font-size: var(--font-size-caption-1);  /* 12px - FONT_SIZE_STANDARDS: 보조 정보 */
+    font-size: var(--font-size-caption-1);  /* 12px */
     font-weight: 400;
+    opacity: 0.6;
     color: var(--color-text-secondary);
   }
 
