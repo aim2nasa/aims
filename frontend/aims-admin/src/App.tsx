@@ -82,14 +82,6 @@ function App() {
   // 문의 알림 관리 (SSE 실시간 알림)
   const inquiryNotifications = useInquiryNotifications();
 
-  // 모바일 감지
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   // 모바일 사이드바 상태
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -144,6 +136,11 @@ function App() {
     setIsResizing(false);
     resizeRef.current = null;
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+  }, [sidebarWidth]);
+
+  // 사이드바 너비를 CSS 변수로 전달 (인라인 스타일 대신)
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
   }, [sidebarWidth]);
 
   // 리사이즈 이벤트 리스너
@@ -305,7 +302,6 @@ function App() {
           {/* Sidebar */}
           <aside
             className={`app__sidebar ${sidebarOpen ? 'app__sidebar--open' : ''}`}
-            style={isMobile ? undefined : { width: sidebarWidth }}
           >
             <nav className="app__nav">
               {navItems.map((item) => renderNavItem(item))}

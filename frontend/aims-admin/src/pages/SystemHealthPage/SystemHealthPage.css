@@ -857,6 +857,34 @@
   transition: width 0.3s ease, background-color 0.3s ease;
 }
 
+/* 부하 상태별 색상 (data-status) */
+.realtime-metrics-section__load-value[data-status="normal"],
+.realtime-metrics-section__load-status[data-status="normal"] {
+  color: var(--color-success);
+}
+
+.realtime-metrics-section__load-bar-fill[data-status="normal"] {
+  background-color: var(--color-success);
+}
+
+.realtime-metrics-section__load-value[data-status="warning"],
+.realtime-metrics-section__load-status[data-status="warning"] {
+  color: var(--color-warning);
+}
+
+.realtime-metrics-section__load-bar-fill[data-status="warning"] {
+  background-color: var(--color-warning);
+}
+
+.realtime-metrics-section__load-value[data-status="critical"],
+.realtime-metrics-section__load-status[data-status="critical"] {
+  color: var(--color-danger);
+}
+
+.realtime-metrics-section__load-bar-fill[data-status="critical"] {
+  background-color: var(--color-danger);
+}
+
 .realtime-metrics-section__load-bar-labels {
   display: flex;
   justify-content: space-between;

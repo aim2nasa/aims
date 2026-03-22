@@ -291,15 +291,6 @@ const RealtimeMetricsSection = memo(function RealtimeMetricsSection({ isAimsApiH
   });
 
   // 부하 지수 상태별 색상
-  const getLoadStatusColor = (status: string): string => {
-    switch (status) {
-      case 'normal': return 'var(--color-success)';
-      case 'warning': return 'var(--color-warning)';
-      case 'critical': return 'var(--color-danger)';
-      default: return 'var(--color-text-secondary)';
-    }
-  };
-
   // 부하 지수 상태별 텍스트
   const getLoadStatusText = (status: string): string => {
     switch (status) {
@@ -450,13 +441,13 @@ const RealtimeMetricsSection = memo(function RealtimeMetricsSection({ isAimsApiH
             <div className="realtime-metrics-section__load-gauge">
               <div
                 className="realtime-metrics-section__load-value"
-                style={{ color: getLoadStatusColor(metrics!.loadIndex.status) }}
+                data-status={metrics!.loadIndex.status}
               >
                 {metrics!.loadIndex.value}
               </div>
               <div
                 className="realtime-metrics-section__load-status"
-                style={{ color: getLoadStatusColor(metrics!.loadIndex.status) }}
+                data-status={metrics!.loadIndex.status}
               >
                 {getLoadStatusText(metrics!.loadIndex.status)}
               </div>
@@ -464,10 +455,8 @@ const RealtimeMetricsSection = memo(function RealtimeMetricsSection({ isAimsApiH
             <div className="realtime-metrics-section__load-bar">
               <div
                 className="realtime-metrics-section__load-bar-fill"
-                style={{
-                  width: `${Math.min(100, metrics!.loadIndex.value)}%`,
-                  backgroundColor: getLoadStatusColor(metrics!.loadIndex.status)
-                }}
+                data-status={metrics!.loadIndex.status}
+                ref={(el) => { if (el) el.style.width = `${Math.min(100, metrics!.loadIndex.value)}%`; }}
               />
             </div>
             <div className="realtime-metrics-section__load-components">
