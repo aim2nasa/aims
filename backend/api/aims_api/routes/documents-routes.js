@@ -3185,9 +3185,10 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       archive.pipe(res);
 
       // 7. 카테고리/서브타입 레이블 매핑 (document_type → 한글명)
+      // 프론트엔드 documentCategories.ts와 동일한 라벨 사용
       const CATEGORY_LABELS = {
-        insurance: '보험계약', claim: '보험금청구', identity: '신분증명',
-        medical: '건강의료', asset: '자산', corporate: '법인', etc: '기타'
+        insurance: '보험계약', claim: '보험금청구', identity: '신분·증명',
+        medical: '건강·의료', asset: '자산', corporate: '법인', etc: '기타'
       };
       const TYPE_TO_CATEGORY = {
         policy: 'insurance', coverage_analysis: 'insurance', application: 'insurance',
@@ -3204,15 +3205,15 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       };
       const SUBTYPE_LABELS = {
         policy: '보험증권', coverage_analysis: '보장분석', application: '청약서',
-        plan_design: '가입설계서', annual_report: '연간보고서', customer_review: '변액리포트',
-        insurance_etc: '기타보험관련',
-        diagnosis: '진단서소견서', medical_receipt: '진료비영수증',
-        claim_form: '보험금청구서', consent_delegation: '위임장동의서',
-        id_card: '신분증', family_cert: '가족관계서류', personal_docs: '기타개인서류',
+        plan_design: '가입설계서', annual_report: '연간보고서(AR)', customer_review: '변액리포트(CRS)',
+        insurance_etc: '기타 보험관련',
+        diagnosis: '진단서·소견서', medical_receipt: '진료비영수증',
+        claim_form: '보험금청구서', consent_delegation: '위임장·동의서',
+        id_card: '신분증', family_cert: '가족관계서류', personal_docs: '기타 통장 및 개인서류',
         health_checkup: '건강검진결과',
-        asset_document: '자산관련서류', inheritance_gift: '상속증여',
-        corp_basic: '기본서류', hr_document: '인사노무', corp_tax: '세무',
-        corp_asset: '법인자산', legal_document: '기타법률서류',
+        asset_document: '자산관련서류', inheritance_gift: '상속·증여',
+        corp_basic: '기본서류', hr_document: '인사·노무', corp_tax: '세무',
+        corp_asset: '법인자산', legal_document: '기타 법률서류',
         general: '일반문서', unclassifiable: '분류불가', unspecified: '미지정'
       };
 
