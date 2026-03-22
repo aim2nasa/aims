@@ -894,6 +894,7 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
   const requestId = uuidv4();
   let totalPromptTokens = 0;
   let totalCompletionTokens = 0;
+  let totalCachedTokens = 0;
   const toolCallsExecuted = [];
 
   try {
@@ -1017,6 +1018,7 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
         if (chunk.usage) {
           totalPromptTokens += chunk.usage.prompt_tokens || 0;
           totalCompletionTokens += chunk.usage.completion_tokens || 0;
+          totalCachedTokens += chunk.usage.prompt_tokens_details?.cached_tokens || 0;
         }
 
         const choice = chunk.choices[0];
@@ -1153,9 +1155,10 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
           user_id: userId,
           source: 'chat',
           request_id: requestId,
-          model: 'gpt-4o',
+          model: chatModel,
           prompt_tokens: totalPromptTokens,
           completion_tokens: totalCompletionTokens,
+          cached_tokens: totalCachedTokens,
           metadata: {
             messageCount: messages.length,
             toolCalls: toolCallsExecuted.map(tc => tc.name),

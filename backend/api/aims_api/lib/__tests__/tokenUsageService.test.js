@@ -292,6 +292,34 @@ describe('calculateCost - 비용 계산', () => {
       expect(cost1).toBe(cost2);
     });
   });
+
+  describe('캐시 토큰 할인 계산', () => {
+    it('캐시 토큰이 0이면 기존 계산과 동일', () => {
+      const costWithout = calculateCost('gpt-4.1-mini', 1000, 500);
+      const costWith = calculateCost('gpt-4.1-mini', 1000, 500, 0);
+      expect(costWith).toBe(costWithout);
+    });
+
+    it('캐시 토큰에 75% 할인 적용 (gpt-4.1-mini)', () => {
+      // 전체 1000 prompt, 500 cached
+      // 비캐시: (500/1000) * 0.0004 = 0.0002
+      // 캐시: (500/1000) * 0.0004 * 0.25 = 0.00005
+      // 출력: 0
+      const cost = calculateCost('gpt-4.1-mini', 1000, 0, 500);
+      expect(cost).toBeCloseTo(0.0002 + 0.00005, 6);
+    });
+
+    it('전체 토큰이 캐시되면 입력 비용 75% 절감', () => {
+      const fullPrice = calculateCost('gpt-4.1-mini', 10000, 0, 0);
+      const allCached = calculateCost('gpt-4.1-mini', 10000, 0, 10000);
+      expect(allCached).toBeCloseTo(fullPrice * 0.25, 6);
+    });
+
+    it('cachedTokens 미전달 시 기본값 0 (하위 호환)', () => {
+      const cost = calculateCost('gpt-4o', 1000, 500);
+      expect(cost).toBeCloseTo((1000/1000) * 0.0025 + (500/1000) * 0.01, 6);
+    });
+  });
 });
 
 // =============================================================================

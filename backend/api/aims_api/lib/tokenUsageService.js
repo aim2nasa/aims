@@ -18,17 +18,20 @@ const TOKEN_COSTS = {
 };
 
 /**
- * 토큰 비용 계산
+ * 토큰 비용 계산 (캐시 토큰 할인 반영)
  * @param {string} model - 모델명
  * @param {number} promptTokens - 입력 토큰 수
  * @param {number} completionTokens - 출력 토큰 수
+ * @param {number} cachedTokens - 캐시된 입력 토큰 수 (OpenAI prompt caching, 75% 할인)
  * @returns {number} 예상 비용 (USD)
  */
-function calculateCost(model, promptTokens, completionTokens) {
+function calculateCost(model, promptTokens, completionTokens, cachedTokens = 0) {
   const costs = TOKEN_COSTS[model] || TOKEN_COSTS['default'];
-  const inputCost = (promptTokens / 1000) * costs.input;
+  const nonCachedPromptTokens = promptTokens - cachedTokens;
+  const inputCost = (nonCachedPromptTokens / 1000) * costs.input;
+  const cachedInputCost = (cachedTokens / 1000) * costs.input * 0.25; // 캐시 토큰 75% 할인
   const outputCost = (completionTokens / 1000) * costs.output;
-  return Math.round((inputCost + outputCost) * 1000000) / 1000000; // 소수점 6자리까지
+  return Math.round((inputCost + cachedInputCost + outputCost) * 1000000) / 1000000;
 }
 
 /**
@@ -44,12 +47,13 @@ async function logTokenUsage(analyticsDb, data) {
     model,
     prompt_tokens = 0,
     completion_tokens = 0,
+    cached_tokens = 0,
     total_tokens,
     metadata = {}
   } = data;
 
   const totalTokens = total_tokens || (prompt_tokens + completion_tokens);
-  const estimatedCost = calculateCost(model, prompt_tokens, completion_tokens);
+  const estimatedCost = calculateCost(model, prompt_tokens, completion_tokens, cached_tokens);
 
   const document = {
     user_id,
@@ -59,6 +63,7 @@ async function logTokenUsage(analyticsDb, data) {
     model,
     prompt_tokens,
     completion_tokens,
+    cached_tokens,
     total_tokens: totalTokens,
     estimated_cost_usd: estimatedCost,
     metadata
