@@ -24,7 +24,7 @@ export const listContractsSchema = z.object({
   insurancePeriod: z.string().optional().describe('보험기간 필터 — "종신", "100세", "20년" 등 부분 매칭'),
   contractorNotInsured: z.boolean().optional().describe('계약자와 피보험자가 다른 계약만 (true로 설정)'),
   paymentPeriodMin: z.number().optional().describe('납입기간 최소 N년 이상 (전기납/일시납 제외)'),
-  sortBy: z.enum(['contractDate', 'premium', 'coverageAmount']).optional().default('contractDate').describe('정렬 기준 (기본: contractDate)'),
+  sortBy: z.enum(['contractDate', 'premium', 'coverageAmount', 'expiryDate']).optional().default('contractDate').describe('정렬 기준 (기본: contractDate)'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc').describe('정렬 순서 (기본: desc)'),
   limit: z.number().optional().default(50).describe('결과 개수 제한 (기본: 50, 최대: 50)'),
   offset: z.number().optional().default(0).describe('건너뛸 개수 (페이지네이션용)')
@@ -82,7 +82,7 @@ export const contractToolDefinitions = [
         insurerName: { type: 'string', description: '보험사명으로 필터링 (예: "메트라이프", "삼성생명")' },
         contractorNotInsured: { type: 'boolean', description: '계약자와 피보험자가 다른 계약만 (true로 설정)' },
         paymentPeriodMin: { type: 'number', description: '납입기간 최소 N년 이상 (전기납/일시납 제외)' },
-        sortBy: { type: 'string', enum: ['contractDate', 'premium', 'coverageAmount'], description: '정렬 기준 (기본: contractDate)' },
+        sortBy: { type: 'string', enum: ['contractDate', 'premium', 'coverageAmount', 'expiryDate'], description: '정렬 기준 (기본: contractDate)' },
         sortOrder: { type: 'string', enum: ['asc', 'desc'], description: '정렬 순서 (기본: desc)' },
         limit: { type: 'number', description: '결과 개수 제한 (기본: 50, 최대: 50)' },
         offset: { type: 'number', description: '건너뛸 개수 (페이지네이션용, 기본: 0)' }
@@ -526,6 +526,15 @@ export async function handleListContracts(args: unknown) {
       }
       if (sortBy === 'coverageAmount') {
         return (a.coverageAmount - b.coverageAmount) * sortMultiplier;
+      }
+      if (sortBy === 'expiryDate') {
+        // null(종신보험 등)은 정렬 방향과 무관하게 항상 맨 뒤로
+        if (!a.expiryDate && !b.expiryDate) return 0;
+        if (!a.expiryDate) return 1;
+        if (!b.expiryDate) return -1;
+        const dateA = new Date(a.expiryDate).getTime();
+        const dateB = new Date(b.expiryDate).getTime();
+        return (dateA - dateB) * sortMultiplier;
       }
       // 기본: contractDate
       const dateA = new Date(a.contractDate || 0).getTime();

@@ -116,7 +116,7 @@ describe('contracts - listContractsSchema 검증', () => {
     const result = listContractsSchema.parse({});
     expect(result.sortBy).toBe('contractDate');
     expect(result.sortOrder).toBe('desc');
-    expect(result.limit).toBe(10);
+    expect(result.limit).toBe(50);
     expect(result.offset).toBe(0);
     expect(result.contractDateFrom).toBeUndefined();
     expect(result.contractDateTo).toBeUndefined();
@@ -259,6 +259,28 @@ describe('contracts - handleListContracts 핸들러', () => {
     expect(data.contracts[0].premium).toBe(200000);
     expect(data.contracts[1].premium).toBe(150000);
     expect(data.contracts[2].premium).toBe(30000);
+  });
+
+  // ── 시나리오 6: sortBy: 'expiryDate' (regression: ZodError 방지) ──
+  it('expiryDate asc 정렬 시 만기일 오름차순, null(종신)은 맨 뒤', async () => {
+    const result = await handleListContracts({ sortBy: 'expiryDate', sortOrder: 'asc' });
+    const data = parseResponse(result as any);
+
+    // POL-002(1년, 2025-12-01) → POL-003(20년, 2043-03-10) → POL-001(종신, null)
+    expect(data.contracts[0].policyNumber).toBe('POL-002');
+    expect(data.contracts[1].policyNumber).toBe('POL-003');
+    expect(data.contracts[2].policyNumber).toBe('POL-001');
+    expect(data.contracts[2].expiryDate).toBeNull();
+  });
+
+  it('expiryDate desc 정렬 시 null(종신)이 맨 뒤, 만기 먼 순서', async () => {
+    const result = await handleListContracts({ sortBy: 'expiryDate', sortOrder: 'desc' });
+    const data = parseResponse(result as any);
+
+    // desc: POL-003(2043) → POL-002(2025) → POL-001(종신, null → Infinity*-1 = 맨 뒤)
+    expect(data.contracts[0].policyNumber).toBe('POL-003');
+    expect(data.contracts[1].policyNumber).toBe('POL-002');
+    expect(data.contracts[2].policyNumber).toBe('POL-001');
   });
 });
 
