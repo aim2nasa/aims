@@ -308,10 +308,19 @@ export interface PipelineQueueStatus {
   failed: number;
 }
 
+export interface PipelineParsingStatus {
+  total: number;
+  completed: number;
+  pending: number;
+  processing: number;
+  failed: number;
+}
+
 export interface PipelineSummary {
   ocr: PipelineQueueStatus;
   embed: PipelineQueueStatus;
-  arParsing: PipelineQueueStatus;
+  ar: PipelineParsingStatus;
+  crs: PipelineParsingStatus;
   creditPending: number;
   recentErrors: { today: number; yesterday: number };
   checkedAt: string;

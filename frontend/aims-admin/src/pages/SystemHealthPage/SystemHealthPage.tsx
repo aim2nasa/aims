@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { dashboardApi, type ServiceHealth, type HealthHistoryLog, type PipelineQueueStatus } from '@/features/dashboard/api';
+import { dashboardApi, type ServiceHealth, type HealthHistoryLog, type PipelineQueueStatus, type PipelineParsingStatus } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { ResourceGauge, MetricsLineChart } from '@/shared/ui/Charts';
 import './SystemHealthPage.css';
@@ -302,6 +302,27 @@ const QueueRow = ({ label, queue }: { label: string; queue: PipelineQueueStatus 
   );
 };
 
+// AR/CRS 파싱 행 (total/completed/pending/processing/failed)
+const ParsingRow = ({ label, status }: { label: string; status: PipelineParsingStatus }) => {
+  const allDone = status.pending === 0 && status.processing === 0 && status.failed === 0;
+
+  return (
+    <div className={`pipeline-summary__row ${allDone ? 'pipeline-summary__row--muted' : ''}`}>
+      <span className="pipeline-summary__row-label">{label}</span>
+      <span className="pipeline-summary__stat">
+        {status.completed}/{status.total}
+      </span>
+      <span className={`pipeline-summary__stat ${status.pending > 0 ? 'pipeline-summary__stat--warning' : ''}`}>
+        {status.pending > 0 && <span className="pipeline-summary__dot pipeline-summary__dot--warning" />}
+        대기 {status.pending}
+      </span>
+      <span className={`pipeline-summary__stat ${status.failed > 0 ? 'pipeline-summary__stat--error' : ''}`}>
+        실패 {status.failed}
+      </span>
+    </div>
+  );
+};
+
 const PipelineSummarySection = memo(function PipelineSummarySection({ isAimsApiHealthy }: { isAimsApiHealthy: boolean }) {
   const { data: summary, isLoading, isError } = useQuery({
     queryKey: ['admin', 'pipeline-summary'],
@@ -342,7 +363,8 @@ const PipelineSummarySection = memo(function PipelineSummarySection({ isAimsApiH
           <div className="pipeline-summary__queues">
             <QueueRow label="OCR" queue={summary.ocr} />
             <QueueRow label="임베딩" queue={summary.embed} />
-            <QueueRow label="AR 파싱" queue={summary.arParsing} />
+            <ParsingRow label="AR 파싱" status={summary.ar} />
+            <ParsingRow label="CRS 파싱" status={summary.crs} />
           </div>
 
           {/* 하단: 크레딧 대기 + 최근 에러 */}

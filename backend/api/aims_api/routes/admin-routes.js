@@ -816,7 +816,6 @@ router.get('/admin/metrics/current', authenticateJWT, requireRole('admin'), asyn
 router.get('/admin/pipeline-summary', authenticateJWT, requireRole('admin'), async (req, res) => {
   try {
     const filesCol = db.collection(COLLECTION_NAME);
-    const arQueueCol = db.collection('ar_parse_queue');
     const errorLogsCol = analyticsDb.collection('error_logs');
 
     // 오늘/어제 경계 계산 (UTC)
@@ -827,7 +826,10 @@ router.get('/admin/pipeline-summary', authenticateJWT, requireRole('admin'), asy
     const [
       ocrPending, ocrProcessing, ocrFailed,
       embedPending, embedProcessing, embedFailed,
-      arPending, arProcessing, arFailed,
+      // AR 파싱 (files 컬렉션의 실제 상태 — ar_parse_queue는 고아 데이터 포함)
+      arTotal, arCompleted, arPending, arProcessing, arFailed,
+      // CRS 파싱
+      crsTotal, crsCompleted, crsPending, crsProcessing, crsFailed,
       creditPending,
       errorsToday, errorsYesterday
     ] = await Promise.all([
@@ -839,10 +841,18 @@ router.get('/admin/pipeline-summary', authenticateJWT, requireRole('admin'), asy
       filesCol.countDocuments({ 'docembed.status': 'pending' }),
       filesCol.countDocuments({ 'docembed.status': 'processing' }),
       filesCol.countDocuments({ 'docembed.status': 'failed' }),
-      // AR 파싱 큐 상태
-      arQueueCol.countDocuments({ status: 'pending' }),
-      arQueueCol.countDocuments({ status: 'processing' }),
-      arQueueCol.countDocuments({ status: 'failed' }),
+      // AR 파싱 (files.is_annual_report + ar_parsing_status)
+      filesCol.countDocuments({ is_annual_report: true }),
+      filesCol.countDocuments({ is_annual_report: true, ar_parsing_status: 'completed' }),
+      filesCol.countDocuments({ is_annual_report: true, ar_parsing_status: 'pending' }),
+      filesCol.countDocuments({ is_annual_report: true, ar_parsing_status: 'processing' }),
+      filesCol.countDocuments({ is_annual_report: true, ar_parsing_status: 'failed' }),
+      // CRS 파싱 (files.is_customer_review + cr_parsing_status)
+      filesCol.countDocuments({ is_customer_review: true }),
+      filesCol.countDocuments({ is_customer_review: true, cr_parsing_status: 'completed' }),
+      filesCol.countDocuments({ is_customer_review: true, cr_parsing_status: 'pending' }),
+      filesCol.countDocuments({ is_customer_review: true, cr_parsing_status: 'processing' }),
+      filesCol.countDocuments({ is_customer_review: true, cr_parsing_status: 'failed' }),
       // 크레딧 대기
       filesCol.countDocuments({ overallStatus: 'credit_pending' }),
       // 최근 에러 (오늘/어제)
@@ -855,7 +865,8 @@ router.get('/admin/pipeline-summary', authenticateJWT, requireRole('admin'), asy
       data: {
         ocr: { pending: ocrPending, processing: ocrProcessing, failed: ocrFailed },
         embed: { pending: embedPending, processing: embedProcessing, failed: embedFailed },
-        arParsing: { pending: arPending, processing: arProcessing, failed: arFailed },
+        ar: { total: arTotal, completed: arCompleted, pending: arPending, processing: arProcessing, failed: arFailed },
+        crs: { total: crsTotal, completed: crsCompleted, pending: crsPending, processing: crsProcessing, failed: crsFailed },
         creditPending,
         recentErrors: { today: errorsToday, yesterday: errorsYesterday },
         checkedAt: utcNowISO(),
