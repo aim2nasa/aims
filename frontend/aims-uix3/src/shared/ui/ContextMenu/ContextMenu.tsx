@@ -50,16 +50,19 @@ export function ContextMenu({
   const adjustedPosition = useContextMenuPosition(position, menuRef)
 
   /**
-   * 첫 번째 메뉴 아이템에 포커스
+   * 위치 설정 + 첫 번째 메뉴 아이템에 포커스
    */
   useEffect(() => {
     if (!visible || !menuRef.current) return
+
+    menuRef.current.style.left = `${adjustedPosition.x}px`
+    menuRef.current.style.top = `${adjustedPosition.y}px`
 
     const firstItem = menuRef.current.querySelector<HTMLButtonElement>(
       '.context-menu-item:not([disabled])'
     )
     firstItem?.focus()
-  }, [visible])
+  }, [visible, adjustedPosition.x, adjustedPosition.y])
 
   /**
    * 키보드 네비게이션
@@ -119,18 +122,12 @@ export function ContextMenu({
       role="menu"
       aria-label="컨텍스트 메뉴"
       data-theme={theme}
-      style={{
-        position: 'fixed',
-        left: `${adjustedPosition.x}px`,
-        top: `${adjustedPosition.y}px`,
-        zIndex: 'var(--z-index-modal, 1000)'
-      }}
       onKeyDown={handleKeyDown}
       onClick={(e) => e.stopPropagation()}
       onContextMenu={(e) => e.preventDefault()}
     >
       {sections.map((section, sectionIndex) => (
-        <div key={section.id} className="context-menu__section">
+        <div key={section.id} className="context-menu__section" role="group" aria-label={section.title || `섹션 ${sectionIndex + 1}`}>
           {section.title && (
             <div className="context-menu__section-title">{section.title}</div>
           )}

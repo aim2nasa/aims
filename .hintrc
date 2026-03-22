@@ -1,0 +1,27 @@
+{
+  "hints": {
+    "no-inline-styles": "off",
+    "css-prefix-order": "off",
+    "compat-api/css": ["default", {
+      "ignore": [
+        "scrollbar-width",
+        "scrollbar-color",
+        "backdrop-filter",
+        "-webkit-backdrop-filter",
+        "text-size-adjust",
+        "-webkit-text-size-adjust",
+        "forced-color-adjust",
+        "-webkit-user-drag",
+        "color-mix",
+        "user-select",
+        "-webkit-user-select"
+      ]
+    }],
+    "axe/aria": ["default", {
+      "aria-valid-attr-value": "off"
+    }],
+    "axe/keyboard": ["default", {
+      "nested-interactive": "off"
+    }]
+  }
+}

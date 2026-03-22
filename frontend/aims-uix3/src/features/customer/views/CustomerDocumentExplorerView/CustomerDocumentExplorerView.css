@@ -271,7 +271,7 @@
   .cde-subtypes {
     padding-left: var(--spacing-6);
     margin-left: 5px;
-    border-left: 2px solid var(--color-border-secondary);
+    border-left: 2px solid var(--color-border-secondary); /* color-mix 미지원 폴백 */
     border-left: 2px solid color-mix(in srgb, var(--cde-cat-color, var(--color-border-primary)) 25%, transparent);
   }
 
@@ -330,7 +330,7 @@
   .cde-subtype__docs {
     padding-left: 20px;
     margin-left: 5px;
-    border-left: 2px solid var(--color-border-tertiary);
+    border-left: 2px solid var(--color-border-tertiary); /* color-mix 미지원 폴백 */
     border-left: 2px solid color-mix(in srgb, var(--cde-cat-color, var(--color-border-primary)) 15%, transparent);
   }
 

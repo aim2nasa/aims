@@ -10,6 +10,10 @@
 @layer components {
 
   .context-menu {
+    /* 위치 */
+    position: fixed;
+    z-index: var(--z-index-modal, 1000);
+
     /* 크기 */
     min-width: 180px;
     max-width: 280px;
