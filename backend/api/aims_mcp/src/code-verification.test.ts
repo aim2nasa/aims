@@ -235,6 +235,30 @@ describe('MCP 소스 코드 검증', () => {
     });
   });
 
+  describe('contracts.ts 코드 검증', () => {
+    let contractsSource: string;
+
+    beforeAll(() => {
+      contractsSource = readSourceFile('./tools/contracts.ts');
+    });
+
+    describe('list_contracts limit 일관성', () => {
+      it('스키마 default와 런타임 fallback이 동일해야 함 (50)', () => {
+        // 스키마: limit default 50
+        expect(contractsSource).toMatch(/limit:\s*z\.number\(\).*\.default\(50\)/);
+        // 런타임: fallback도 50이어야 함 (10이면 불일치 버그)
+        expect(contractsSource).toContain('params.limit || 50');
+        // 런타임에 fallback 10이 없어야 함
+        expect(contractsSource).not.toContain('params.limit || 10');
+      });
+
+      it('Math.min 상한이 50이어야 함', () => {
+        // Math.min(params.limit || 50, 50) 패턴 확인
+        expect(contractsSource).toMatch(/Math\.min\(params\.limit \|\| 50,\s*50\)/);
+      });
+    });
+  });
+
   describe('모든 도구 파일 일관성 검증', () => {
     const toolFiles = [
       { name: 'customers.ts', handlers: ['search_customers', 'get_customer', 'create_customer', 'update_customer'] },

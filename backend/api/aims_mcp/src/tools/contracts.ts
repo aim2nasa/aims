@@ -569,7 +569,7 @@ export async function handleListContracts(args: unknown) {
 
     // 페이지네이션
     const totalCount = filteredContracts.length;
-    const limit = Math.min(params.limit || 10, 50);
+    const limit = Math.min(params.limit || 50, 50);
     const offset = params.offset || 0;
     const paginatedContracts = filteredContracts.slice(offset, offset + limit);
     const hasMore = offset + paginatedContracts.length < totalCount;

@@ -592,5 +592,17 @@
     "must_call_tools": true,
     "created_from": "query_customer_reviews 프롬프트 강화",
     "created_date": "2026-03-21"
+  },
+  {
+    "id": "REG-049",
+    "name": "캐치업코리아 증권번호 전체 조회 (16건, limit 50 검증)",
+    "category": "contracts",
+    "question": "캐치업코리아 증권번호 목록 알려줘",
+    "expected_tools": ["list_contracts"],
+    "response_must_contain": [],
+    "response_must_not_contain": ["오류"],
+    "must_call_tools": true,
+    "created_from": "건B — list_contracts limit 10→50 수정",
+    "created_date": "2026-03-22"
   }
 ]
