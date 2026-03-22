@@ -315,6 +315,10 @@ export class DocumentStatusService {
       })
 
       if (!response.ok) {
+        // 403/404: 삭제된 문서 또는 접근 권한 없음 → null 반환 (에러 로그 불필요)
+        if (response.status === 403 || response.status === 404) {
+          return null
+        }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 

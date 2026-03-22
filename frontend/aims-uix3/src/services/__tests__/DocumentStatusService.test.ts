@@ -182,6 +182,30 @@ describe('DocumentStatusService', () => {
 
         expect(result).toBeNull()
       })
+
+      it('403 응답 시 throw 없이 null 반환 (삭제된 문서/고아 참조)', async () => {
+        vi.mocked(fetch).mockResolvedValueOnce({
+          ok: false,
+          status: 403,
+          statusText: '',
+        } as Response)
+
+        const result = await DocumentStatusService.getDocumentDetailViaWebhook('deleted-doc')
+
+        expect(result).toBeNull()
+      })
+
+      it('404 응답 시 throw 없이 null 반환', async () => {
+        vi.mocked(fetch).mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          statusText: 'Not Found',
+        } as Response)
+
+        const result = await DocumentStatusService.getDocumentDetailViaWebhook('missing-doc')
+
+        expect(result).toBeNull()
+      })
     })
   })
 
