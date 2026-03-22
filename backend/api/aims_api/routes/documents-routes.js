@@ -3124,7 +3124,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
 
       const customers = await db.collection(CUSTOMERS_COLLECTION).find({
         _id: { $in: objectIds },
-        ownerId: userId
+        'meta.created_by': userId
       }).toArray();
 
       if (customers.length !== customerIds.length) {
