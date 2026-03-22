@@ -4014,7 +4014,7 @@ router.get('/customers/:customerId/annual-reports/latest', authenticateJWT, asyn
 router.delete('/customers/:customerId/annual-reports', authenticateJWT, async (req, res) => {
   try {
     const { customerId } = req.params;
-    const { indices } = req.body;
+    const { identifiers, indices } = req.body;
 
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
@@ -4037,9 +4037,13 @@ router.delete('/customers/:customerId/annual-reports', authenticateJWT, async (r
       }
     }
 
-    console.log(`🗑️  [Annual Report] 삭제 요청: customer=${customerId}, userId=${userId}, indices=${JSON.stringify(indices)}`);
+    // identifiers 우선, 하위 호환을 위해 indices도 허용
+    const hasIdentifiers = identifiers && Array.isArray(identifiers) && identifiers.length > 0;
+    const hasIndices = indices && Array.isArray(indices) && indices.length > 0;
 
-    if (!indices || !Array.isArray(indices) || indices.length === 0) {
+    console.log(`🗑️  [Annual Report] 삭제 요청: customer=${customerId}, userId=${userId}, identifiers=${JSON.stringify(identifiers)}, indices=${JSON.stringify(indices)}`);
+
+    if (!hasIdentifiers && !hasIndices) {
       return res.status(400).json({
         success: false,
         message: '삭제할 항목을 선택해주세요'
@@ -4048,8 +4052,10 @@ router.delete('/customers/:customerId/annual-reports', authenticateJWT, async (r
 
     const pythonApiUrl = `http://172.17.0.1:8004/customers/${customerId}/annual-reports`;
 
+    // identifiers가 있으면 identifiers 전달, 없으면 기존 indices 전달
+    const requestBody = hasIdentifiers ? { identifiers } : { indices };
     const response = await axios.delete(pythonApiUrl, {
-      data: { indices },
+      data: requestBody,
       headers: {
         'x-user-id': userId
       },

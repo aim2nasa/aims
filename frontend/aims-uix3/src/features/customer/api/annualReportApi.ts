@@ -678,17 +678,17 @@ export class AnnualReportApi {
   }
 
   /**
-   * Annual Reports 삭제 (복수 선택 가능)
+   * Annual Reports 삭제 (복수 선택 가능, 고유 식별자 기반)
    *
    * @param customerId 고객 ID
    * @param userId 사용자 ID (설계사 계정)
-   * @param indices 삭제할 리포트 인덱스 배열 (최신순 기준)
+   * @param identifiers 삭제할 리포트 식별자 배열 (source_file_id 또는 issue_date+customer_name)
    * @returns 삭제 결과
    */
   static async deleteAnnualReports(
     customerId: string,
     userId: string,
-    indices: number[]
+    identifiers: Array<{ source_file_id?: string; issue_date?: string; customer_name?: string }>
   ): Promise<{ success: boolean; message: string; deleted_count?: number }> {
     try {
       const data = await apiRequest<{
@@ -697,7 +697,7 @@ export class AnnualReportApi {
         deleted_count?: number;
       }>(
         `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports?userId=${encodeURIComponent(userId)}`,
-        { method: 'DELETE', body: { indices } }
+        { method: 'DELETE', body: { identifiers } }
       );
 
       if (data.success) {
@@ -713,7 +713,7 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : 'Annual Reports 삭제 중 오류가 발생했습니다');
-      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.deleteAnnualReports', payload: { customerId, indices } });
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.deleteAnnualReports', payload: { customerId, identifiers } });
       return { success: false, message };
     }
   }

@@ -277,14 +277,22 @@ async def get_latest_annual_report(
         )
 
 
+class ReportIdentifier(BaseModel):
+    """AR 고유 식별자 (source_file_id 또는 issue_date+customer_name)"""
+    source_file_id: Optional[str] = None
+    issue_date: Optional[str] = None
+    customer_name: Optional[str] = None
+
+
 class DeleteAnnualReportsRequest(BaseModel):
-    """Annual Reports 삭제 요청"""
-    indices: List[int] = Field(..., description="삭제할 리포트 인덱스 리스트 (최신순 기준)")
+    """Annual Reports 삭제 요청 (identifiers 우선, indices는 하위 호환)"""
+    identifiers: Optional[List[ReportIdentifier]] = Field(None, description="삭제할 리포트 식별자 리스트")
+    indices: Optional[List[int]] = Field(None, description="(하위 호환) 삭제할 리포트 인덱스 리스트")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "indices": [0, 2, 5]
+                "identifiers": [{"source_file_id": "abc123"}, {"issue_date": "2024-01-01", "customer_name": "홍길동"}]
             }
         }
 
@@ -325,15 +333,15 @@ async def delete_customer_annual_reports(
         HTTPException 404: 고객을 찾을 수 없을 때
         HTTPException 500: 서버 오류
     """
-    logger.info(f"🗑️  Annual Reports 삭제 요청: customer_id={customer_id}, user_id={user_id}, indices={request.indices}")
+    logger.info(f"🗑️  Annual Reports 삭제 요청: customer_id={customer_id}, user_id={user_id}, identifiers={request.identifiers}, indices={request.indices}")
 
     try:
         # ⭐ userId 검증
         if not user_id:
             raise HTTPException(status_code=400, detail="user_id required")
 
-        # 유효성 검증
-        if not request.indices:
+        # 유효성 검증: identifiers 또는 indices 중 하나 필수
+        if not request.identifiers and not request.indices:
             raise HTTPException(
                 status_code=400,
                 detail="삭제할 항목을 선택해주세요"
@@ -363,12 +371,20 @@ async def delete_customer_annual_reports(
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
             )
 
-        # 삭제 실행
-        result = delete_annual_reports(
-            db=db,
-            customer_id=customer_id,
-            report_indices=request.indices
-        )
+        # 삭제 실행: identifiers 우선, 없으면 indices 사용 (하위 호환)
+        if request.identifiers:
+            identifier_dicts = [ident.model_dump(exclude_none=True) for ident in request.identifiers]
+            result = delete_annual_reports(
+                db=db,
+                customer_id=customer_id,
+                report_identifiers=identifier_dicts
+            )
+        else:
+            result = delete_annual_reports(
+                db=db,
+                customer_id=customer_id,
+                report_indices=request.indices
+            )
 
         if not result["success"]:
             if "찾을 수 없습니다" in result.get("message", ""):

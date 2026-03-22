@@ -483,15 +483,18 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
 def delete_annual_reports(
     db,
     customer_id: str,
-    report_indices: list[int]
+    report_indices: list[int] = None,
+    report_identifiers: list[dict] = None
 ) -> Dict[str, any]:
     """
-    고객의 Annual Reports 삭제 (배열 인덱스 기반)
+    고객의 Annual Reports 삭제 (고유 식별자 기반 또는 인덱스 기반)
 
     Args:
         db: MongoDB database 객체
         customer_id: 고객 ObjectId (문자열)
-        report_indices: 삭제할 리포트의 인덱스 리스트 (최신순 기준)
+        report_indices: (하위 호환) 삭제할 리포트의 인덱스 리스트 (최신순 기준)
+        report_identifiers: 삭제할 리포트 식별자 리스트
+            각 항목: { source_file_id?: str, issue_date?: str, customer_name?: str }
 
     Returns:
         dict: {
@@ -500,7 +503,7 @@ def delete_annual_reports(
             "deleted_count": int
         }
     """
-    logger.info(f"Annual Reports 삭제: customer_id={customer_id}, indices={report_indices}")
+    logger.info(f"Annual Reports 삭제: customer_id={customer_id}, identifiers={report_identifiers}, indices={report_indices}")
 
     try:
         # ObjectId 변환
@@ -537,10 +540,29 @@ def delete_annual_reports(
         )
 
         # 삭제할 리포트 선택
-        reports_to_keep = [
-            report for idx, report in enumerate(sorted_reports)
-            if idx not in report_indices
-        ]
+        if report_identifiers:
+            # 고유 식별자 기반 삭제 (인덱스 불일치 버그 방지)
+            def _should_delete(report: dict) -> bool:
+                for ident in report_identifiers:
+                    sfid = ident.get("source_file_id")
+                    if sfid:
+                        # source_file_id가 있으면 그것으로 매칭
+                        if str(report.get("source_file_id", "")) == sfid:
+                            return True
+                    else:
+                        # issue_date + customer_name 조합으로 매칭
+                        if (report.get("issue_date") == ident.get("issue_date")
+                                and report.get("customer_name") == ident.get("customer_name")):
+                            return True
+                return False
+
+            reports_to_keep = [r for r in sorted_reports if not _should_delete(r)]
+        else:
+            # 하위 호환: 인덱스 기반 삭제
+            reports_to_keep = [
+                report for idx, report in enumerate(sorted_reports)
+                if idx not in report_indices
+            ]
 
         # 고객 문서 업데이트 (annual_reports 배열 교체)
         result = customers_collection.update_one(

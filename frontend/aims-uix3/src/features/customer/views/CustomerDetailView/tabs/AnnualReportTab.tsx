@@ -618,10 +618,13 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
 
     if (!confirmed) return;
 
-    const globalIndex = reports.indexOf(report);
-    if (globalIndex === -1) {
-      console.error('[AnnualReportTab] 삭제할 AR을 찾을 수 없습니다');
-      return;
+    // 고유 식별자 기반 삭제 (인덱스 불일치 버그 방지)
+    const identifier: { source_file_id?: string; issue_date?: string; customer_name?: string } = {};
+    if (report.source_file_id) {
+      identifier.source_file_id = report.source_file_id;
+    } else {
+      identifier.issue_date = report.issue_date;
+      identifier.customer_name = report.customer_name;
     }
 
     setIsDeleting(true);
@@ -630,7 +633,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       const result = await AnnualReportApi.deleteAnnualReports(
         customer._id,
         userId,
-        [globalIndex]
+        [identifier]
       );
 
       setIsDeleting(false);
@@ -732,10 +735,18 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     setIsDeleting(true);
     try {
       const userId = UserContextService.getContext().identifierValue;
+      // 선택된 인덱스 → 고유 식별자 변환 (인덱스 불일치 버그 방지)
+      const identifiers = Array.from(selectedIndices).map(idx => {
+        const report = reports[idx];
+        if (report?.source_file_id) {
+          return { source_file_id: report.source_file_id };
+        }
+        return { issue_date: report?.issue_date, customer_name: report?.customer_name };
+      });
       const result = await AnnualReportApi.deleteAnnualReports(
         customer._id,
         userId,
-        Array.from(selectedIndices)
+        identifiers
       );
 
       // 삭제 작업 완료 후 즉시 isDeleting을 false로 설정
