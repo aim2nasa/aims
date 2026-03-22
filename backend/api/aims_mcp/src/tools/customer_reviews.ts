@@ -1,5 +1,5 @@
 import { z, ZodError } from 'zod';
-import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { getDB, toSafeObjectId, COLLECTIONS, formatZodError, filterExistingFileIds } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
 
@@ -146,6 +146,12 @@ export async function handleGetCustomerReviews(args: unknown) {
       })
       .slice(0, params.limit);
 
+    // sourceFileId 존재 검증 (고아 참조 방지)
+    const allSourceFileIds = sortedReviews
+      .map((r: any) => r.source_file_id?.toString())
+      .filter(Boolean) as string[];
+    const existingFileIds = await filterExistingFileIds(allSourceFileIds);
+
     // 요약 정보 생성
     const formattedReviews = sortedReviews.map((review: any, index: number) => {
       const contractInfo = review.contract_info || {};
@@ -193,7 +199,7 @@ export async function handleGetCustomerReviews(args: unknown) {
           investedPrincipal: f.invested_principal || 0  // 납입원금
         })),
 
-        sourceFileId: review.source_file_id?.toString()
+        sourceFileId: (() => { const sfId = review.source_file_id?.toString(); return sfId && existingFileIds.has(sfId) ? sfId : undefined; })()
       };
     });
 
@@ -268,6 +274,12 @@ export async function handleGetCrContractHistory(args: unknown) {
     const customerName = customer.personal_info?.name || '알 수 없음';
     const customerReviews = customer.customer_reviews || [];
 
+    // sourceFileId 존재 검증 (고아 참조 방지)
+    const allSourceFileIds = customerReviews
+      .map((r: any) => r.source_file_id?.toString())
+      .filter(Boolean) as string[];
+    const existingFileIds2 = await filterExistingFileIds(allSourceFileIds);
+
     // 발행일별 CRS 문서 정보 수집 (중복 제거)
     const crsDocumentsMap = new Map<string, {
       issueDate: string;
@@ -288,7 +300,8 @@ export async function handleGetCrContractHistory(args: unknown) {
       const contractInfo = review.contract_info || {};
       const policyNumber = contractInfo.policy_number;
       const issueDate = review.issue_date;
-      const sourceFileId = review.source_file_id?.toString();
+      const rawFileId = review.source_file_id?.toString();
+      const sourceFileId = rawFileId && existingFileIds2.has(rawFileId) ? rawFileId : undefined;
 
       // 발행일별 CRS 문서 정보 저장
       // Date 객체인 경우 YYYY.MM.DD 형식으로 변환

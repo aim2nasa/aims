@@ -1,6 +1,6 @@
 import { z, ZodError } from 'zod';
 import { ObjectId } from 'mongodb';
-import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { getDB, toSafeObjectId, COLLECTIONS, formatZodError, filterExistingFileIds } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
 
@@ -87,15 +87,23 @@ export async function handleGetAnnualReports(args: unknown) {
       })
       .slice(0, params.limit);
 
+    // sourceFileId 존재 검증 (고아 참조 방지)
+    const allSourceFileIds = sortedReports
+      .map((r: any) => r.source_file_id?.toString())
+      .filter(Boolean) as string[];
+    const existingFileIds = await filterExistingFileIds(allSourceFileIds);
+
     // 요약 정보 생성
-    const formattedReports = sortedReports.map((report: any, index: number) => ({
+    const formattedReports = sortedReports.map((report: any, index: number) => {
+      const sfId = report.source_file_id?.toString();
+      return {
       index,
       issueDate: report.issue_date,
       parsedAt: report.parsed_at,
       customerName: report.customer_name || customerName,
       totalContracts: report.contracts?.length || 0,
       totalMonthlyPremium: report.total_monthly_premium || 0,
-      sourceFileId: report.source_file_id?.toString(),
+      sourceFileId: sfId && existingFileIds.has(sfId) ? sfId : undefined,
       contracts: (report.contracts || []).slice(0, 5).map((c: any) => ({
         순번: c['순번'],
         보험상품: c['보험상품'],
@@ -105,7 +113,8 @@ export async function handleGetAnnualReports(args: unknown) {
         월보험료: c['보험료(원)'] || c['월보험료'],
         계약상태: c['계약상태']
       }))
-    }));
+    };
+    });
 
     return {
       content: [{
@@ -172,6 +181,12 @@ export async function handleGetArContractHistory(args: unknown) {
     const customerName = customer.personal_info?.name || '알 수 없음';
     const annualReports = customer.annual_reports || [];
 
+    // sourceFileId 존재 검증 (고아 참조 방지)
+    const allSourceFileIds = annualReports
+      .map((r: any) => r.source_file_id?.toString())
+      .filter(Boolean) as string[];
+    const existingFileIds = await filterExistingFileIds(allSourceFileIds);
+
     // 발행일별 AR 문서 정보 수집 (중복 제거)
     const arDocumentsMap = new Map<string, {
       issueDate: string;
@@ -192,7 +207,8 @@ export async function handleGetArContractHistory(args: unknown) {
     for (const report of annualReports) {
       const issueDate = report.issue_date;
       const parsedAt = report.parsed_at;
-      const sourceFileId = report.source_file_id?.toString();
+      const rawFileId = report.source_file_id?.toString();
+      const sourceFileId = rawFileId && existingFileIds.has(rawFileId) ? rawFileId : undefined;
       const contracts = report.contracts || [];
 
       // 발행일별 AR 문서 정보 저장

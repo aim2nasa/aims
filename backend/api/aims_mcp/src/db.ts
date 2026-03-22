@@ -71,6 +71,23 @@ export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * sourceFileId 배열 중 files 컬렉션에 실제 존재하는 ID만 반환
+ * (고아 참조 방지: 삭제된 파일의 sourceFileId가 AI 응답에 포함되지 않도록)
+ */
+export async function filterExistingFileIds(sourceFileIds: string[]): Promise<Set<string>> {
+  const validIds = sourceFileIds.filter(id => ObjectId.isValid(id));
+  if (validIds.length === 0) return new Set();
+
+  const db = getDB();
+  const objectIds = validIds.map(id => new ObjectId(id));
+  const existingDocs = await db.collection('files')
+    .find({ _id: { $in: objectIds } }, { projection: { _id: 1 } })
+    .toArray();
+
+  return new Set(existingDocs.map(doc => doc._id.toString()));
+}
+
 // 컬렉션 이름 상수는 @aims/shared-schema에서 import됨 (상단 참조)
 
 // 필드명 한글 매핑
