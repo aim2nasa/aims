@@ -3151,10 +3151,12 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
         zipFilename = `${singleName}.zip`;
       }
 
-      // 4. 응답 헤더 설정
+      // 4. 응답 헤더 설정 (RFC 6266: filename + filename* 둘 다)
+      const encodedFilename = encodeURIComponent(zipFilename);
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition',
-        `attachment; filename*=UTF-8''${encodeURIComponent(zipFilename)}`);
+        `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`);
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
       res.setHeader('X-Skipped-Files', '0'); // 누락 파일 수 (나중에 업데이트)
 
       // 5. 스트리밍 타임아웃 해제
