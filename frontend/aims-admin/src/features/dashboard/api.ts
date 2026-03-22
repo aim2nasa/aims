@@ -301,6 +301,27 @@ export interface RealtimeMetricsResponse {
   data: RealtimeMetrics;
 }
 
+// 파이프라인 요약 타입
+export interface PipelineQueueStatus {
+  pending: number;
+  processing: number;
+  failed: number;
+}
+
+export interface PipelineSummary {
+  ocr: PipelineQueueStatus;
+  embed: PipelineQueueStatus;
+  arParsing: PipelineQueueStatus;
+  creditPending: number;
+  recentErrors: { today: number; yesterday: number };
+  checkedAt: string;
+}
+
+export interface PipelineSummaryResponse {
+  success: boolean;
+  data: PipelineSummary;
+}
+
 export const dashboardApi = {
   getDashboard: (): Promise<DashboardData> => {
     return apiClient.get<DashboardData>('/api/admin/dashboard');
@@ -438,6 +459,12 @@ export const dashboardApi = {
   // 실시간 메트릭 API (동시접속, 처리량, 부하지수)
   getMetricsRealtime: (): Promise<RealtimeMetrics> => {
     return apiClient.get<RealtimeMetricsResponse>('/api/admin/metrics/realtime')
+      .then((res) => res.data);
+  },
+
+  // 파이프라인 요약 API (OCR/임베딩/AR파싱 큐 상태)
+  getPipelineSummary: (): Promise<PipelineSummary> => {
+    return apiClient.get<PipelineSummaryResponse>('/api/admin/pipeline-summary')
       .then((res) => res.data);
   },
 };

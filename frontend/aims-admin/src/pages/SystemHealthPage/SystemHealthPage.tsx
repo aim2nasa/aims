@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { dashboardApi, type ServiceHealth, type HealthHistoryLog } from '@/features/dashboard/api';
+import { dashboardApi, type ServiceHealth, type HealthHistoryLog, type PipelineQueueStatus } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { ResourceGauge, MetricsLineChart } from '@/shared/ui/Charts';
 import './SystemHealthPage.css';
@@ -280,194 +280,83 @@ const ServerResourcesSection = memo(function ServerResourcesSection({ isAimsApiH
 });
 
 // 실시간 메트릭 섹션 컴포넌트 (memo: 부모 리렌더 차단)
-const RealtimeMetricsSection = memo(function RealtimeMetricsSection({ isAimsApiHealthy }: { isAimsApiHealthy: boolean }) {
-  const { data: metrics, isLoading, isError } = useQuery({
-    queryKey: ['admin', 'metrics', 'realtime'],
-    queryFn: dashboardApi.getMetricsRealtime,
-    refetchInterval: 10000, // 10초마다 갱신 (3초 → 10초: OOM 방지)
-    refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
-    staleTime: 8000, // 8초간 fresh 유지 (중간 리렌더 시 불필요한 refetch 방지)
-    retry: 0, // 즉시 실패 감지 (딜레이 최소화)
-  });
+// 파이프라인 큐 행 렌더링 헬퍼
+const QueueRow = ({ label, queue }: { label: string; queue: PipelineQueueStatus }) => {
+  const allZero = queue.pending === 0 && queue.processing === 0 && queue.failed === 0;
 
-  // 부하 지수 상태별 색상
-  // 부하 지수 상태별 텍스트
-  const getLoadStatusText = (status: string): string => {
-    switch (status) {
-      case 'normal': return '정상';
-      case 'warning': return '주의';
-      case 'critical': return '위험';
-      default: return '-';
-    }
-  };
+  return (
+    <div className={`pipeline-summary__row ${allZero ? 'pipeline-summary__row--muted' : ''}`}>
+      <span className="pipeline-summary__row-label">{label}</span>
+      <span className={`pipeline-summary__stat ${queue.pending > 0 ? 'pipeline-summary__stat--warning' : ''}`}>
+        {queue.pending > 0 && <span className="pipeline-summary__dot pipeline-summary__dot--warning" />}
+        대기 {queue.pending}
+      </span>
+      <span className={`pipeline-summary__stat ${queue.processing > 0 ? 'pipeline-summary__stat--info' : ''}`}>
+        {queue.processing > 0 && <span className="pipeline-summary__dot pipeline-summary__dot--info" />}
+        처리중 {queue.processing}
+      </span>
+      <span className={`pipeline-summary__stat ${queue.failed > 0 ? 'pipeline-summary__stat--error' : ''}`}>
+        실패 {queue.failed}
+      </span>
+    </div>
+  );
+};
+
+const PipelineSummarySection = memo(function PipelineSummarySection({ isAimsApiHealthy }: { isAimsApiHealthy: boolean }) {
+  const { data: summary, isLoading, isError } = useQuery({
+    queryKey: ['admin', 'pipeline-summary'],
+    queryFn: dashboardApi.getPipelineSummary,
+    refetchInterval: 30000, // 30초마다 갱신
+    refetchIntervalInBackground: false,
+    staleTime: 25000,
+    retry: 0,
+  });
 
   if (isLoading) {
     return (
-      <section className="realtime-metrics-section">
-        <div className="realtime-metrics-section__header">
-          <h2 className="realtime-metrics-section__title">실시간 모니터링</h2>
+      <section className="pipeline-summary">
+        <div className="pipeline-summary__header">
+          <h2 className="pipeline-summary__title">파이프라인 요약</h2>
         </div>
-        <div className="realtime-metrics-section__loading">로딩 중...</div>
+        <div className="pipeline-summary__loading">로딩 중...</div>
       </section>
     );
   }
 
-  // 에러 또는 데이터 없음 또는 헬스 모니터 기준 aims_api 다운: 같은 레이아웃 유지하면서 placeholder 표시
-  const showUnavailable = !isAimsApiHealthy || isError || !metrics;
+  const showUnavailable = !isAimsApiHealthy || isError || !summary;
 
   return (
-    <section className="realtime-metrics-section">
-      <div className="realtime-metrics-section__header">
-        <h2 className="realtime-metrics-section__title">실시간 모니터링</h2>
-        <span className="realtime-metrics-section__subtitle">
-          {showUnavailable ? 'aims_api 연결 필요' : '3초마다 자동 갱신'}
+    <section className="pipeline-summary">
+      <div className="pipeline-summary__header">
+        <h2 className="pipeline-summary__title">파이프라인 요약</h2>
+        <span className="pipeline-summary__subtitle">
+          {showUnavailable ? 'aims_api 연결 필요' : '30초마다 갱신'}
         </span>
       </div>
 
-      <div className="realtime-metrics-section__grid">
-        {/* 동시접속 */}
-        <div className="realtime-metrics-section__card">
-          <div className="realtime-metrics-section__card-header">
-            <span className="realtime-metrics-section__card-icon">👥</span>
-            <span className="realtime-metrics-section__card-title">동시접속</span>
+      {showUnavailable ? (
+        <div className="pipeline-summary__unavailable">-</div>
+      ) : (
+        <>
+          {/* 큐 상태 행 */}
+          <div className="pipeline-summary__queues">
+            <QueueRow label="OCR" queue={summary.ocr} />
+            <QueueRow label="임베딩" queue={summary.embed} />
+            <QueueRow label="AR 파싱" queue={summary.arParsing} />
           </div>
-          <div className="realtime-metrics-section__card-content">
-            {showUnavailable ? (
-              <div className="realtime-metrics-section__card-unavailable">-</div>
-            ) : (
-            <>
-            <div className="realtime-metrics-section__stat-row">
-              <span className="realtime-metrics-section__stat-label">활성 요청</span>
-              <span className="realtime-metrics-section__stat-value">
-                {metrics!.concurrency.activeRequests}
-              </span>
-            </div>
-            <div className="realtime-metrics-section__stat-row">
-              <span className="realtime-metrics-section__stat-label">활성 사용자</span>
-              <span className="realtime-metrics-section__stat-value">
-                {metrics!.concurrency.activeUsers}명
-              </span>
-            </div>
-            <div className="realtime-metrics-section__stat-row realtime-metrics-section__stat-row--muted">
-              <span className="realtime-metrics-section__stat-label">피크 요청</span>
-              <span className="realtime-metrics-section__stat-value">
-                {metrics!.concurrency.peakRequests}/s
-              </span>
-            </div>
-            </>
-            )}
-          </div>
-        </div>
 
-        {/* 처리량 */}
-        <div className="realtime-metrics-section__card">
-          <div className="realtime-metrics-section__card-header">
-            <span className="realtime-metrics-section__card-icon">⚡</span>
-            <span className="realtime-metrics-section__card-title">처리량</span>
+          {/* 하단: 크레딧 대기 + 최근 에러 */}
+          <div className="pipeline-summary__footer">
+            <span className={`pipeline-summary__footer-item ${summary.creditPending > 0 ? 'pipeline-summary__footer-item--warning' : ''}`}>
+              크레딧 대기 {summary.creditPending}건
+            </span>
+            <span className="pipeline-summary__footer-divider" />
+            <span className={`pipeline-summary__footer-item ${summary.recentErrors.today > 0 ? 'pipeline-summary__footer-item--error' : ''}`}>
+              최근 에러 오늘 {summary.recentErrors.today} / 어제 {summary.recentErrors.yesterday}
+            </span>
           </div>
-          <div className="realtime-metrics-section__card-content">
-            {showUnavailable ? (
-              <div className="realtime-metrics-section__card-unavailable">-</div>
-            ) : (
-            <>
-            <div className="realtime-metrics-section__stat-row">
-              <span className="realtime-metrics-section__stat-label">요청/초</span>
-              <span className="realtime-metrics-section__stat-value realtime-metrics-section__stat-value--highlight">
-                {metrics!.throughput.requestsPerSecond}
-              </span>
-            </div>
-            <div className="realtime-metrics-section__stat-row">
-              <span className="realtime-metrics-section__stat-label">최근 60초</span>
-              <span className="realtime-metrics-section__stat-value">
-                {metrics!.throughput.requestsLast60s}건
-              </span>
-            </div>
-            <div className="realtime-metrics-section__stat-row realtime-metrics-section__stat-row--muted">
-              <span className="realtime-metrics-section__stat-label">에러율</span>
-              <span className={`realtime-metrics-section__stat-value ${metrics!.throughput.errorRate > 0 ? 'realtime-metrics-section__stat-value--error' : ''}`}>
-                {metrics!.throughput.errorRate}%
-              </span>
-            </div>
-            </>
-            )}
-          </div>
-        </div>
-
-        {/* 응답시간 */}
-        <div className="realtime-metrics-section__card">
-          <div className="realtime-metrics-section__card-header">
-            <span className="realtime-metrics-section__card-icon">⏱️</span>
-            <span className="realtime-metrics-section__card-title">응답시간</span>
-          </div>
-          <div className="realtime-metrics-section__card-content">
-            {showUnavailable ? (
-              <div className="realtime-metrics-section__card-unavailable">-</div>
-            ) : (
-            <>
-            <div className="realtime-metrics-section__stat-row">
-              <span className="realtime-metrics-section__stat-label">평균</span>
-              <span className="realtime-metrics-section__stat-value">
-                {metrics!.responseTime.avg}ms
-              </span>
-            </div>
-            <div className="realtime-metrics-section__stat-row">
-              <span className="realtime-metrics-section__stat-label">P95</span>
-              <span className={`realtime-metrics-section__stat-value ${metrics!.responseTime.p95 > 1000 ? 'realtime-metrics-section__stat-value--warning' : ''}`}>
-                {metrics!.responseTime.p95}ms
-              </span>
-            </div>
-            <div className="realtime-metrics-section__stat-row realtime-metrics-section__stat-row--muted">
-              <span className="realtime-metrics-section__stat-label">P99</span>
-              <span className="realtime-metrics-section__stat-value">
-                {metrics!.responseTime.p99}ms
-              </span>
-            </div>
-            </>
-            )}
-          </div>
-        </div>
-
-        {/* 부하 지수 */}
-        <div className="realtime-metrics-section__card realtime-metrics-section__card--load-index">
-          <div className="realtime-metrics-section__card-header">
-            <span className="realtime-metrics-section__card-icon">📊</span>
-            <span className="realtime-metrics-section__card-title">부하 지수</span>
-          </div>
-          <div className="realtime-metrics-section__card-content">
-            {showUnavailable ? (
-              <div className="realtime-metrics-section__card-unavailable">-</div>
-            ) : (
-            <>
-            <div className="realtime-metrics-section__load-gauge">
-              <div
-                className="realtime-metrics-section__load-value"
-                data-status={metrics!.loadIndex.status}
-              >
-                {metrics!.loadIndex.value}
-              </div>
-              <div
-                className="realtime-metrics-section__load-status"
-                data-status={metrics!.loadIndex.status}
-              >
-                {getLoadStatusText(metrics!.loadIndex.status)}
-              </div>
-            </div>
-            <div className="realtime-metrics-section__load-bar">
-              <div
-                className="realtime-metrics-section__load-bar-fill"
-                data-status={metrics!.loadIndex.status}
-                ref={(el) => { if (el) el.style.width = `${Math.min(100, metrics!.loadIndex.value)}%`; }}
-              />
-            </div>
-            <div className="realtime-metrics-section__load-components">
-              <span>CPU: {metrics!.loadIndex.components.cpu.toFixed(1)}%</span>
-              <span>MEM: {metrics!.loadIndex.components.memory.toFixed(1)}%</span>
-            </div>
-            </>
-            )}
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </section>
   );
 });
@@ -931,8 +820,8 @@ export const SystemHealthPage = () => {
           {/* 서버 리소스 섹션 */}
           <ServerResourcesSection isAimsApiHealthy={isAimsApiHealthy} />
 
-          {/* 실시간 메트릭 섹션 */}
-          <RealtimeMetricsSection isAimsApiHealthy={isAimsApiHealthy} />
+          {/* 파이프라인 요약 섹션 */}
+          <PipelineSummarySection isAimsApiHealthy={isAimsApiHealthy} />
 
           {/* Tier 서비스 상태 */}
           {serviceTiers.map((tierGroup) => (

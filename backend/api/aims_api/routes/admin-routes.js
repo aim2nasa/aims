@@ -811,6 +811,68 @@ router.get('/admin/metrics/current', authenticateJWT, requireRole('admin'), asyn
 });
 
 /**
+ * 관리자: 파이프라인 요약 (OCR/임베딩/AR파싱 큐 상태 + 크레딧 대기 + 최근 에러)
+ */
+router.get('/admin/pipeline-summary', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const filesCol = db.collection(COLLECTION_NAME);
+    const arQueueCol = db.collection('ar_parse_queue');
+    const errorLogsCol = analyticsDb.collection('error_logs');
+
+    // 오늘/어제 경계 계산 (UTC)
+    const now = new Date();
+    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
+
+    const [
+      ocrPending, ocrProcessing, ocrFailed,
+      embedPending, embedProcessing, embedFailed,
+      arPending, arProcessing, arFailed,
+      creditPending,
+      errorsToday, errorsYesterday
+    ] = await Promise.all([
+      // OCR 상태
+      filesCol.countDocuments({ 'ocr.status': 'pending' }),
+      filesCol.countDocuments({ 'ocr.status': 'processing' }),
+      filesCol.countDocuments({ 'ocr.status': 'failed' }),
+      // 임베딩 상태
+      filesCol.countDocuments({ 'docembed.status': 'pending' }),
+      filesCol.countDocuments({ 'docembed.status': 'processing' }),
+      filesCol.countDocuments({ 'docembed.status': 'failed' }),
+      // AR 파싱 큐 상태
+      arQueueCol.countDocuments({ status: 'pending' }),
+      arQueueCol.countDocuments({ status: 'processing' }),
+      arQueueCol.countDocuments({ status: 'failed' }),
+      // 크레딧 대기
+      filesCol.countDocuments({ overallStatus: 'credit_pending' }),
+      // 최근 에러 (오늘/어제)
+      errorLogsCol.countDocuments({ timestamp: { $gte: todayStart.toISOString() } }),
+      errorLogsCol.countDocuments({ timestamp: { $gte: yesterdayStart.toISOString(), $lt: todayStart.toISOString() } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        ocr: { pending: ocrPending, processing: ocrProcessing, failed: ocrFailed },
+        embed: { pending: embedPending, processing: embedProcessing, failed: embedFailed },
+        arParsing: { pending: arPending, processing: arProcessing, failed: arFailed },
+        creditPending,
+        recentErrors: { today: errorsToday, yesterday: errorsYesterday },
+        checkedAt: utcNowISO(),
+      }
+    });
+  } catch (error) {
+    console.error('[Admin] 파이프라인 요약 조회 오류:', error);
+    backendLogger.error('Admin', '파이프라인 요약 조회 오류', error);
+    res.status(500).json({
+      success: false,
+      message: '파이프라인 요약 조회에 실패했습니다',
+      error: error.message
+    });
+  }
+});
+
+/**
  * 관리자: 실시간 시스템 메트릭 조회 (동시접속, 처리량, 부하지수)
  */
 router.get('/admin/metrics/realtime', authenticateJWT, requireRole('admin'), async (req, res) => {

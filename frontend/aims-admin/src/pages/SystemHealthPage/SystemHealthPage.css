@@ -750,8 +750,8 @@
   text-overflow: ellipsis;
 }
 
-/* Realtime Metrics Section */
-.realtime-metrics-section {
+/* Pipeline Summary Section */
+.pipeline-summary {
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -759,154 +759,144 @@
   margin-bottom: var(--spacing-xs);
 }
 
-.realtime-metrics-section__header {
+.pipeline-summary__header {
   display: flex;
   align-items: baseline;
   gap: var(--spacing-xs);
   margin-bottom: 2px;
 }
 
-.realtime-metrics-section__title {
+.pipeline-summary__title {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin: 0;
 }
 
-.realtime-metrics-section__subtitle {
+.pipeline-summary__subtitle {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
-.realtime-metrics-section__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-}
-
-.realtime-metrics-section__card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 2px 4px;
-}
-
-.realtime-metrics-section__card-title {
-  font-size: 10px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  margin-bottom: 2px;
-}
-
-.realtime-metrics-section__card-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.realtime-metrics-section__stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.realtime-metrics-section__stat-label {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-}
-
-.realtime-metrics-section__stat-value {
-  font-size: 11px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  font-family: monospace;
-}
-
-.realtime-metrics-section__stat-value--large {
-  font-size: 14px;
-  font-weight: var(--font-weight-bold);
-}
-
-.realtime-metrics-section__stat-value--success {
-  color: var(--color-success);
-}
-
-.realtime-metrics-section__stat-value--warning {
-  color: var(--color-warning);
-}
-
-.realtime-metrics-section__stat-value--error {
-  color: var(--color-error);
-}
-
-/* Load Index Bar */
-.realtime-metrics-section__load-bar-container {
-  margin-top: 2px;
-}
-
-.realtime-metrics-section__load-bar {
-  height: 6px;
-  background-color: var(--color-border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.realtime-metrics-section__load-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.3s ease, background-color 0.3s ease;
-}
-
-/* 부하 상태별 색상 (data-status) */
-.realtime-metrics-section__load-value[data-status="normal"],
-.realtime-metrics-section__load-status[data-status="normal"] {
-  color: var(--color-success);
-}
-
-.realtime-metrics-section__load-bar-fill[data-status="normal"] {
-  background-color: var(--color-success);
-}
-
-.realtime-metrics-section__load-value[data-status="warning"],
-.realtime-metrics-section__load-status[data-status="warning"] {
-  color: var(--color-warning);
-}
-
-.realtime-metrics-section__load-bar-fill[data-status="warning"] {
-  background-color: var(--color-warning);
-}
-
-.realtime-metrics-section__load-value[data-status="critical"],
-.realtime-metrics-section__load-status[data-status="critical"] {
-  color: var(--color-danger);
-}
-
-.realtime-metrics-section__load-bar-fill[data-status="critical"] {
-  background-color: var(--color-danger);
-}
-
-.realtime-metrics-section__load-bar-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2px;
-}
-
-.realtime-metrics-section__load-bar-label {
-  font-size: 9px;
-  color: var(--color-text-tertiary);
-}
-
-.realtime-metrics-section__loading {
+.pipeline-summary__loading {
   padding: var(--spacing-md);
   text-align: center;
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
 }
 
+.pipeline-summary__unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-lg);
+}
+
+/* 큐 상태 행 */
+.pipeline-summary__queues {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pipeline-summary__row {
+  display: grid;
+  grid-template-columns: 56px repeat(3, 1fr);
+  gap: 4px;
+  align-items: center;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.pipeline-summary__row--muted {
+  opacity: 0.55;
+}
+
+.pipeline-summary__row-label {
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.pipeline-summary__stat {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: monospace;
+}
+
+.pipeline-summary__stat--warning {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pipeline-summary__stat--info {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pipeline-summary__stat--error {
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 상태 dot */
+.pipeline-summary__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pipeline-summary__dot--warning {
+  background-color: var(--color-warning);
+}
+
+.pipeline-summary__dot--info {
+  background-color: var(--color-primary);
+}
+
+/* 하단 footer */
+.pipeline-summary__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 4px 6px;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.pipeline-summary__footer-item {
+  font-family: monospace;
+}
+
+.pipeline-summary__footer-item--warning {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pipeline-summary__footer-item--error {
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pipeline-summary__footer-divider {
+  width: 1px;
+  height: 10px;
+  background-color: var(--color-border);
+}
+
 /* ===== 반응형 ===== */
 @media (max-width: 900px) {
-  .realtime-metrics-section__grid {
-    grid-template-columns: repeat(2, 1fr);
+  .pipeline-summary__row {
+    grid-template-columns: 56px repeat(3, 1fr);
   }
 }
 
@@ -962,8 +952,19 @@
 }
 
 @media (max-width: 500px) {
-  .realtime-metrics-section__grid {
+  .pipeline-summary__row {
     grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .pipeline-summary__footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .pipeline-summary__footer-divider {
+    display: none;
   }
 }
 
@@ -980,15 +981,7 @@
   min-height: 200px;
 }
 
-.realtime-metrics-section__card-unavailable {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 60px;
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-lg);
-}
+/* (realtime-metrics-section 삭제됨 — pipeline-summary로 대체) */
 
 /* Workflow Unavailable - 정상 레이아웃 유지 */
 .system-health-page__workflow-unavailable {
