@@ -27,10 +27,10 @@
     -moz-osx-font-smoothing: grayscale;
 
     /* SF Symbol 특성 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
 
     /* 텍스트와 정렬 */
     vertical-align: middle;
@@ -165,10 +165,10 @@
 
     /* iOS 표준 기어 모양 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 30c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20zm0-6c-3 0-5-2-5-5v-9c0-3 2-5 5-5s5 2 5 5v9c0 3-2 5-5 5zm0 52c3 0 5 2 5 5v9c0 3-2 5-5 5s-5-2-5-5v-9c0-3 2-5 5-5zm26-26c0-3 2-5 5-5h9c3 0 5 2 5 5s-2 5-5 5h-9c-3 0-5-2-5-5zm-52 0c0 3-2 5-5 5h-9c-3 0-5-2-5-5s2-5 5-5h9c3 0 5 2 5 5zm41-18c-2-2-2-5 0-7l6-6c2-2 5-2 7 0s2 5 0 7l-6 6c-2 2-5 2-7 0zm-30 30c2 2 2 5 0 7l-6 6c-2 2-5 2-7 0s-2-5 0-7l6-6c2-2 5-2 7 0zm30 0c2-2 5-2 7 0l6 6c2 2 2 5 0 7s-5 2-7 0l-6-6c-2-2-2-5 0-7zm-30-30c-2 2-5 2-7 0l-6-6c-2-2-2-5 0-7s5-2 7 0l6 6c2 2 2 5 0 7z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 30c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20zm0-6c-3 0-5-2-5-5v-9c0-3 2-5 5-5s5 2 5 5v9c0 3-2 5-5 5zm0 52c3 0 5 2 5 5v9c0 3-2 5-5 5s-5-2-5-5v-9c0-3 2-5 5-5zm26-26c0-3 2-5 5-5h9c3 0 5 2 5 5s-2 5-5 5h-9c-3 0-5-2-5-5zm-52 0c0 3-2 5-5 5h-9c-3 0-5-2-5-5s2-5 5-5h9c3 0 5 2 5 5zm41-18c-2-2-2-5 0-7l6-6c2-2 5-2 7 0s2 5 0 7l-6 6c-2 2-5 2-7 0zm-30 30c2 2 2 5 0 7l-6 6c-2 2-5 2-7 0s-2-5 0-7l6-6c2-2 5-2 7 0zm30 0c2-2 5-2 7 0l6 6c2 2 2 5 0 7s-5 2-7 0l-6-6c-2-2-2-5 0-7zm-30-30c-2 2-5 2-7 0l-6-6c-2-2-2-5 0-7s5-2 7 0l6 6c2 2 2 5 0 7z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 30c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20zm0-6c-3 0-5-2-5-5v-9c0-3 2-5 5-5s5 2 5 5v9c0 3-2 5-5 5zm0 52c3 0 5 2 5 5v9c0 3-2 5-5 5s-5-2-5-5v-9c0-3 2-5 5-5zm26-26c0-3 2-5 5-5h9c3 0 5 2 5 5s-2 5-5 5h-9c-3 0-5-2-5-5zm-52 0c0 3-2 5-5 5h-9c-3 0-5-2-5-5s2-5 5-5h9c3 0 5 2 5 5zm41-18c-2-2-2-5 0-7l6-6c2-2 5-2 7 0s2 5 0 7l-6 6c-2 2-5 2-7 0zm-30 30c2 2 2 5 0 7l-6 6c-2 2-5 2-7 0s-2-5 0-7l6-6c2-2 5-2 7 0zm30 0c2-2 5-2 7 0l6 6c2 2 2 5 0 7s-5 2-7 0l-6-6c-2-2-2-5 0-7zm-30-30c-2 2-5 2-7 0l-6-6c-2-2-2-5 0-7s5-2 7 0l6 6c2 2 2 5 0 7z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === SUN SYMBOL === */
@@ -314,10 +314,10 @@
 
     /* iOS 표준 "메뉴 펼치기" 암시 디자인 - 3줄 햄버거 + 우향 화살표 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='8' y='10' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='28' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='46' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3cpath d='M42 25L52 30L42 35L44 30Z' fill='currentColor'/%3e%3crect x='55' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='8' y='10' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='28' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='46' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3cpath d='M42 25L52 30L42 35L44 30Z' fill='currentColor'/%3e%3crect x='55' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='8' y='10' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='28' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='46' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3cpath d='M42 25L52 30L42 35L44 30Z' fill='currentColor'/%3e%3crect x='55' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* sidebar-leading: 사이드바 펼쳐진 상태 아이콘 (접기 암시) */
@@ -332,10 +332,10 @@
 
     /* iOS 표준 "메뉴 접기" 암시 디자인 - 펼쳐진 사이드바 + 좌향 화살표 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='5' y='5' width='25' height='50' fill='currentColor' rx='2'/%3e%3cpath d='M38 25L28 30L38 35L36 30Z' fill='currentColor'/%3e%3crect x='45' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='5' y='5' width='25' height='50' fill='currentColor' rx='2'/%3e%3cpath d='M38 25L28 30L38 35L36 30Z' fill='currentColor'/%3e%3crect x='45' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='5' y='5' width='25' height='50' fill='currentColor' rx='2'/%3e%3cpath d='M38 25L28 30L38 35L36 30Z' fill='currentColor'/%3e%3crect x='45' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === INTERACTIVE STATES === */
@@ -521,10 +521,10 @@
 
     /* iOS 표준 사람 실루엣 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='50' cy='25' r='15'/%3e%3cpath d='M50 45c-15 0-25 10-25 25v20h50V70c0-15-10-25-25-25z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='50' cy='25' r='15'/%3e%3cpath d='M50 45c-15 0-25 10-25 25v20h50V70c0-15-10-25-25-25z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='50' cy='25' r='15'/%3e%3cpath d='M50 45c-15 0-25 10-25 25v20h50V70c0-15-10-25-25-25z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === LIST BULLET SYMBOL === */
@@ -540,10 +540,10 @@
 
     /* iOS 표준 목록 스타일 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 70'%3e%3ccircle cx='10' cy='15' r='4'/%3e%3crect x='25' y='11' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='35' r='4'/%3e%3crect x='25' y='31' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='55' r='4'/%3e%3crect x='25' y='51' width='70' height='8' rx='4'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 70'%3e%3ccircle cx='10' cy='15' r='4'/%3e%3crect x='25' y='11' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='35' r='4'/%3e%3crect x='25' y='31' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='55' r='4'/%3e%3crect x='25' y='51' width='70' height='8' rx='4'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 70'%3e%3ccircle cx='10' cy='15' r='4'/%3e%3crect x='25' y='11' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='35' r='4'/%3e%3crect x='25' y='31' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='55' r='4'/%3e%3crect x='25' y='51' width='70' height='8' rx='4'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === LOCATION SYMBOL === */
@@ -559,10 +559,10 @@
 
     /* iOS 표준 위치 핀 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 80'%3e%3cpath d='M30 0C13.4 0 0 13.4 0 30c0 30 30 50 30 50s30-20 30-50C60 13.4 46.6 0 30 0zm0 45c-8.3 0-15-6.7-15-15s6.7-15 15-15 15 6.7 15 15-6.7 15-15 15z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 80'%3e%3cpath d='M30 0C13.4 0 0 13.4 0 30c0 30 30 50 30 50s30-20 30-50C60 13.4 46.6 0 30 0zm0 45c-8.3 0-15-6.7-15-15s6.7-15 15-15 15 6.7 15 15-6.7 15-15 15z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 80'%3e%3cpath d='M30 0C13.4 0 0 13.4 0 30c0 30 30 50 30 50s30-20 30-50C60 13.4 46.6 0 30 0zm0 45c-8.3 0-15-6.7-15-15s6.7-15 15-15 15 6.7 15 15-6.7 15-15 15z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === HEART.FILL SYMBOL (배우자/가족) === */
@@ -578,10 +578,10 @@
 
     /* iOS SF Symbols 하트 아이콘 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 90 C 20 70, 5 50, 5 35 C 5 20, 15 10, 25 10 C 35 10, 45 20, 50 30 C 55 20, 65 10, 75 10 C 85 10, 95 20, 95 35 C 95 50, 80 70, 50 90 Z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 90 C 20 70, 5 50, 5 35 C 5 20, 15 10, 25 10 C 35 10, 45 20, 50 30 C 55 20, 65 10, 75 10 C 85 10, 95 20, 95 35 C 95 50, 80 70, 50 90 Z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 90 C 20 70, 5 50, 5 35 C 5 20, 15 10, 25 10 C 35 10, 45 20, 50 30 C 55 20, 65 10, 75 10 C 85 10, 95 20, 95 35 C 95 50, 80 70, 50 90 Z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
     opacity: 0.95;
   }
 
@@ -598,10 +598,10 @@
 
     /* iOS 표준 집 실루엣 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 80'%3e%3cpath d='M42.5 5L5 35v40h25V55h25v20h25V35L42.5 5z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 80'%3e%3cpath d='M42.5 5L5 35v40h25V55h25v20h25V35L42.5 5z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 80'%3e%3cpath d='M42.5 5L5 35v40h25V55h25v20h25V35L42.5 5z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
     opacity: 0.9;
   }
 
@@ -618,10 +618,10 @@
 
     /* iOS 표준 두 사람 실루엣 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
     opacity: 0.9;
   }
 
@@ -651,10 +651,10 @@
 
     /* iOS 표준 서류가방 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 70'%3e%3cpath d='M30 5h25v10H30V5z'/%3e%3crect x='5' y='15' width='75' height='50' rx='5' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 70'%3e%3cpath d='M30 5h25v10H30V5z'/%3e%3crect x='5' y='15' width='75' height='50' rx='5' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 70'%3e%3cpath d='M30 5h25v10H30V5z'/%3e%3crect x='5' y='15' width='75' height='50' rx='5' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
     opacity: 0.9;
   }
 
@@ -684,10 +684,10 @@
 
     /* iOS 표준 두 사람 실루엣 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === DOC (DOCUMENT) SYMBOL === */
@@ -703,10 +703,10 @@
 
     /* iOS 표준 문서 아이콘 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 65 80'%3e%3cpath d='M10 0v80h45V20L35 0H10zm30 5l15 15H40V5z'/%3e%3crect x='18' y='30' width='30' height='3'/%3e%3crect x='18' y='38' width='30' height='3'/%3e%3crect x='18' y='46' width='25' height='3'/%3e%3crect x='18' y='54' width='30' height='3'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 65 80'%3e%3cpath d='M10 0v80h45V20L35 0H10zm30 5l15 15H40V5z'/%3e%3crect x='18' y='30' width='30' height='3'/%3e%3crect x='18' y='38' width='30' height='3'/%3e%3crect x='18' y='46' width='25' height='3'/%3e%3crect x='18' y='54' width='30' height='3'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 65 80'%3e%3cpath d='M10 0v80h45V20L35 0H10zm30 5l15 15H40V5z'/%3e%3crect x='18' y='30' width='30' height='3'/%3e%3crect x='18' y='38' width='30' height='3'/%3e%3crect x='18' y='46' width='25' height='3'/%3e%3crect x='18' y='54' width='30' height='3'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === CHART BAR (DASHBOARD) SYMBOL === */
@@ -722,10 +722,10 @@
 
     /* iOS 표준 차트 아이콘 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='50' width='12' height='25' rx='2'/%3e%3crect x='28' y='30' width='12' height='45' rx='2'/%3e%3crect x='46' y='20' width='12' height='55' rx='2'/%3e%3crect x='64' y='40' width='12' height='35' rx='2'/%3e%3cpath d='M5 75h70' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='50' width='12' height='25' rx='2'/%3e%3crect x='28' y='30' width='12' height='45' rx='2'/%3e%3crect x='46' y='20' width='12' height='55' rx='2'/%3e%3crect x='64' y='40' width='12' height='35' rx='2'/%3e%3cpath d='M5 75h70' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='50' width='12' height='25' rx='2'/%3e%3crect x='28' y='30' width='12' height='45' rx='2'/%3e%3crect x='46' y='20' width='12' height='55' rx='2'/%3e%3crect x='64' y='40' width='12' height='35' rx='2'/%3e%3cpath d='M5 75h70' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === BOOKS VERTICAL (LIBRARY) SYMBOL === */
@@ -741,10 +741,10 @@
 
     /* iOS 표준 책 3권 세로 정렬 아이콘 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='30' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='50' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3cline x1='13' y1='20' x2='22' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='33' y1='20' x2='42' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='53' y1='20' x2='62' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='30' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='50' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3cline x1='13' y1='20' x2='22' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='33' y1='20' x2='42' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='53' y1='20' x2='62' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='30' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='50' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3cline x1='13' y1='20' x2='22' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='33' y1='20' x2='42' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='53' y1='20' x2='62' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === MAGNIFYING GLASS (SEARCH) SYMBOL === */
@@ -760,10 +760,10 @@
 
     /* iOS 표준 돋보기 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3ccircle cx='30' cy='30' r='25' fill='none' stroke='currentColor' stroke-width='4'/%3e%3cpath d='52 52l22 22' stroke='currentColor' stroke-width='4' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3ccircle cx='30' cy='30' r='25' fill='none' stroke='currentColor' stroke-width='4'/%3e%3cpath d='52 52l22 22' stroke='currentColor' stroke-width='4' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3ccircle cx='30' cy='30' r='25' fill='none' stroke='currentColor' stroke-width='4'/%3e%3cpath d='52 52l22 22' stroke='currentColor' stroke-width='4' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === SEARCH BOLD SYMBOL === */
@@ -779,10 +779,10 @@
 
     /* 더 뚜렷한 검색 아이콘 - 두꺼운 선 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M10 2a8 8 0 105.3 14.03l5.34 5.34 1.42-1.42-5.34-5.34A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z' fill='black'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M10 2a8 8 0 105.3 14.03l5.34 5.34 1.42-1.42-5.34-5.34A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z' fill='black'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M10 2a8 8 0 105.3 14.03l5.34 5.34 1.42-1.42-5.34-5.34A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z' fill='black'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === CHEVRON DOWN SYMBOL === */
@@ -798,10 +798,10 @@
 
     /* iOS 표준 화살표 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 5l25 25 25-25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 5l25 25 25-25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 5l25 25 25-25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* chevron.up - 위쪽 화살표 */
@@ -816,10 +816,10 @@
 
     /* iOS 표준 화살표 (위쪽) */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 30l25-25 25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 30l25-25 25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 30l25-25 25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* chevron.right - 오른쪽 화살표 */
@@ -834,10 +834,10 @@
 
     /* iOS 표준 화살표 (오른쪽) */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M5 5l25 25-25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M5 5l25 25-25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M5 5l25 25-25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* chevron.left - 왼쪽 화살표 (chevron.right 수평 반전) */
@@ -852,10 +852,10 @@
 
     /* iOS 표준 화살표 (왼쪽) */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M30 5L5 30l25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M30 5L5 30l25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M30 5L5 30l25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* arrow.up.arrow.down - 양방향 정렬 화살표 */
@@ -870,10 +870,10 @@
 
     /* iOS 표준 양방향 화살표 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 70'%3e%3cpath d='M20 5l-10 10M20 5l10 10M20 5v60M10 55l10 10M30 55l10-10' stroke='currentColor' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 70'%3e%3cpath d='M20 5l-10 10M20 5l10 10M20 5v60M10 55l10 10M30 55l10-10' stroke='currentColor' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 70'%3e%3cpath d='M20 5l-10 10M20 5l10 10M20 5v60M10 55l10 10M30 55l10-10' stroke='currentColor' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === 위트있는 HOVER 애니메이션 === */
@@ -985,10 +985,10 @@
 
     /* 채워진 사람 + 플러스 배지 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='25' r='15' fill='currentColor'/%3e%3cpath d='M35 45c-15 0-25 10-25 25v20h40V70c0-15-10-25-25-25z' fill='currentColor'/%3e%3ccircle cx='75' cy='20' r='12' fill='currentColor'/%3e%3cpath d='M75 14v12M69 20h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='25' r='15' fill='currentColor'/%3e%3cpath d='M35 45c-15 0-25 10-25 25v20h40V70c0-15-10-25-25-25z' fill='currentColor'/%3e%3ccircle cx='75' cy='20' r='12' fill='currentColor'/%3e%3cpath d='M75 14v12M69 20h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='25' r='15' fill='currentColor'/%3e%3cpath d='M35 45c-15 0-25 10-25 25v20h40V70c0-15-10-25-25-25z' fill='currentColor'/%3e%3ccircle cx='75' cy='20' r='12' fill='currentColor'/%3e%3cpath d='M75 14v12M69 20h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === DOC BADGE PLUS SYMBOL === */
@@ -1004,10 +1004,10 @@
 
     /* 문서 + 플러스 배지 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M15 5v80h45V25L45 5H15zm25 5l15 15H40V10z'/%3e%3crect x='23' y='35' width='25' height='3'/%3e%3crect x='23' y='43' width='25' height='3'/%3e%3crect x='23' y='51' width='20' height='3'/%3e%3crect x='23' y='59' width='25' height='3'/%3e%3ccircle cx='75' cy='25' r='12' fill='currentColor'/%3e%3cpath d='M75 19v12M69 25h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M15 5v80h45V25L45 5H15zm25 5l15 15H40V10z'/%3e%3crect x='23' y='35' width='25' height='3'/%3e%3crect x='23' y='43' width='25' height='3'/%3e%3crect x='23' y='51' width='20' height='3'/%3e%3crect x='23' y='59' width='25' height='3'/%3e%3ccircle cx='75' cy='25' r='12' fill='currentColor'/%3e%3cpath d='M75 19v12M69 25h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M15 5v80h45V25L45 5H15zm25 5l15 15H40V10z'/%3e%3crect x='23' y='35' width='25' height='3'/%3e%3crect x='23' y='43' width='25' height='3'/%3e%3crect x='23' y='51' width='20' height='3'/%3e%3crect x='23' y='59' width='25' height='3'/%3e%3ccircle cx='75' cy='25' r='12' fill='currentColor'/%3e%3cpath d='M75 19v12M69 25h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === 🍎 TRUE APPLE GEOMETRIC ICONS === */
@@ -1157,7 +1157,22 @@
     border-radius: 0.04em;
   }
 
-  /* TRAY FULL (서류함) SYMBOL - 문서 저장소 */.sf-symbol--tray-full .sf-symbol__shape::before {  content: '';  position: absolute;  top: 50%;  left: 50%;  transform: translate(-50%, -50%);  width: 0.85em;  height: 0.7em;  /* 서류함 아이콘 - 문서가 쌓인 트레이 */  background: currentColor;  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3e%3cpath d='M2 14v4c0 1 1 2 2 2h16c1 0 2-1 2-2v-4H2zm3-2h14l2-6H3l2 6zm1-8h12v2H6V4zm2-4h8v2H8V0z' fill='black'/%3e%3c/svg%3e") no-repeat center;  mask-size: contain;  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3e%3cpath d='M2 14v4c0 1 1 2 2 2h16c1 0 2-1 2-2v-4H2zm3-2h14l2-6H3l2 6zm1-8h12v2H6V4zm2-4h8v2H8V0z' fill='black'/%3e%3c/svg%3e") no-repeat center;  -webkit-mask-size: contain;}
+  /* TRAY FULL (서류함) SYMBOL - 문서 저장소 */
+  .sf-symbol--tray-full .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.7em;
+    /* 서류함 아이콘 - 문서가 쌓인 트레이 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3e%3cpath d='M2 14v4c0 1 1 2 2 2h16c1 0 2-1 2-2v-4H2zm3-2h14l2-6H3l2 6zm1-8h12v2H6V4zm2-4h8v2H8V0z' fill='black'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3e%3cpath d='M2 14v4c0 1 1 2 2 2h16c1 0 2-1 2-2v-4H2zm3-2h14l2-6H3l2 6zm1-8h12v2H6V4zm2-4h8v2H8V0z' fill='black'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
   /* DOC TEXT (Word) SYMBOL - 텍스트 라인 */
   .sf-symbol--doc-text .sf-symbol__shape::before {
     content: '';
@@ -1437,10 +1452,10 @@
     width: 0.95em;
     height: 0.65em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath fill='%23fff' fill-rule='evenodd' d='M50 15c24 0 43 20 50 35-7 15-26 35-50 35S7 65 0 50c7-15 26-35 50-35Zm0 15c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20Zm0 12a8 8 0 1 1 0 16 8 8 0 0 1 0-16Z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath fill='%23fff' fill-rule='evenodd' d='M50 15c24 0 43 20 50 35-7 15-26 35-50 35S7 65 0 50c7-15 26-35 50-35Zm0 15c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20Zm0 12a8 8 0 1 1 0 16 8 8 0 0 1 0-16Z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath fill='%23fff' fill-rule='evenodd' d='M50 15c24 0 43 20 50 35-7 15-26 35-50 35S7 65 0 50c7-15 26-35 50-35Zm0 15c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20Zm0 12a8 8 0 1 1 0 16 8 8 0 0 1 0-16Z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   .sf-symbol--eye .sf-symbol__shape::after {
@@ -1468,10 +1483,10 @@
 
     /* iOS 표준 쓰레기통 아이콘 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 100'%3e%3cpath d='M25 20 L25 10 C25 5, 28 0, 35 0 L50 0 C57 0, 60 5, 60 10 L60 20 M10 20 L75 20 M15 25 L15 90 C15 95, 18 100, 25 100 L60 100 C67 100, 70 95, 70 90 L70 25 M32 35 L32 85 M50 35 L50 85' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 100'%3e%3cpath d='M25 20 L25 10 C25 5, 28 0, 35 0 L50 0 C57 0, 60 5, 60 10 L60 20 M10 20 L75 20 M15 25 L15 90 C15 95, 18 100, 25 100 L60 100 C67 100, 70 95, 70 90 L70 25 M32 35 L32 85 M50 35 L50 85' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 100'%3e%3cpath d='M25 20 L25 10 C25 5, 28 0, 35 0 L50 0 C57 0, 60 5, 60 10 L60 20 M10 20 L75 20 M15 25 L15 90 C15 95, 18 100, 25 100 L60 100 C67 100, 70 95, 70 90 L70 25 M32 35 L32 85 M50 35 L50 85' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
     opacity: 0.9;
   }
 
@@ -1485,10 +1500,10 @@
     width: 0.75em;
     height: 0.75em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
     opacity: 0.9;
   }
 
@@ -1502,10 +1517,10 @@
     width: 0.75em;
     height: 0.85em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
     opacity: 0.9;
   }
 
@@ -1667,10 +1682,10 @@
 
     /* iOS 표준 폴더 아이콘 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M1.5 3.5C1.5 2.67157 2.17157 2 3 2H6.08579C6.351 2 6.60536 2.10536 6.79289 2.29289L7.70711 3.20711C7.89464 3.39464 8.149 3.5 8.41421 3.5H13C13.8284 3.5 14.5 4.17157 14.5 5V12.5C14.5 13.3284 13.8284 14 13 14H3C2.17157 14 1.5 13.3284 1.5 12.5V3.5Z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M1.5 3.5C1.5 2.67157 2.17157 2 3 2H6.08579C6.351 2 6.60536 2.10536 6.79289 2.29289L7.70711 3.20711C7.89464 3.39464 8.149 3.5 8.41421 3.5H13C13.8284 3.5 14.5 4.17157 14.5 5V12.5C14.5 13.3284 13.8284 14 13 14H3C2.17157 14 1.5 13.3284 1.5 12.5V3.5Z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M1.5 3.5C1.5 2.67157 2.17157 2 3 2H6.08579C6.351 2 6.60536 2.10536 6.79289 2.29289L7.70711 3.20711C7.89464 3.39464 8.149 3.5 8.41421 3.5H13C13.8284 3.5 14.5 4.17157 14.5 5V12.5C14.5 13.3284 13.8284 14 13 14H3C2.17157 14 1.5 13.3284 1.5 12.5V3.5Z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   .sf-symbol--folder .sf-symbol__shape::after {
@@ -1703,10 +1718,10 @@
 
     /* 번개 아이콘 */
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === BUBBLE.LEFT (말풍선 아이콘) - AI 채팅 === */
@@ -1720,10 +1735,10 @@
     width: 0.85em;
     height: 0.85em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === BUBBLE.LEFT.FILL (말풍선 채움 아이콘) - AI 채팅 활성 === */
@@ -1737,10 +1752,10 @@
     width: 0.85em;
     height: 0.85em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === BUBBLE.LEFT.AND.BUBBLE.RIGHT.FILL (양쪽 말풍선) - 대화 아이콘 === */
@@ -1754,10 +1769,10 @@
     width: 0.9em;
     height: 0.9em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === SPARKLES (반짝임) - AI 아이콘 === */
@@ -1771,10 +1786,10 @@
     width: 0.9em;
     height: 0.9em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 3L10.5 8.5L5 10L10.5 11.5L12 17L13.5 11.5L19 10L13.5 8.5L12 3zM5 16l-.75 2.25L2 19l2.25.75L5 22l.75-2.25L8 19l-2.25-.75L5 16zm14-2l-.75 2.25L16 17l2.25.75.75 2.25.75-2.25L22 17l-2.25-.75L19 14z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 3L10.5 8.5L5 10L10.5 11.5L12 17L13.5 11.5L19 10L13.5 8.5L12 3zM5 16l-.75 2.25L2 19l2.25.75L5 22l.75-2.25L8 19l-2.25-.75L5 16zm14-2l-.75 2.25L16 17l2.25.75.75 2.25.75-2.25L22 17l-2.25-.75L19 14z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 3L10.5 8.5L5 10L10.5 11.5L12 17L13.5 11.5L19 10L13.5 8.5L12 3zM5 16l-.75 2.25L2 19l2.25.75L5 22l.75-2.25L8 19l-2.25-.75L5 16zm14-2l-.75 2.25L16 17l2.25.75.75 2.25.75-2.25L22 17l-2.25-.75L19 14z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === STOP.FILL (정지) - 채팅 중단 버튼 === */
@@ -1802,10 +1817,10 @@
     width: 0.85em;
     height: 0.85em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 7.83l5.59 5.59L20 12l-8-8-8 8 1.41 1.41L11 7.83V20h2V7.83z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 7.83l5.59 5.59L20 12l-8-8-8 8 1.41 1.41L11 7.83V20h2V7.83z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 7.83l5.59 5.59L20 12l-8-8-8 8 1.41 1.41L11 7.83V20h2V7.83z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === PLUS (추가) - 새 대화 버튼 === */
@@ -1819,10 +1834,10 @@
     width: 0.85em;
     height: 0.85em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === CLOCK.ARROW.CIRCLEPATH (히스토리) - 이전 대화 버튼 === */
@@ -1836,10 +1851,10 @@
     width: 0.9em;
     height: 0.9em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13.5 8H12v5l4.28 2.54.72-1.21-3.5-2.08V8zM13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13.5 8H12v5l4.28 2.54.72-1.21-3.5-2.08V8zM13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13.5 8H12v5l4.28 2.54.72-1.21-3.5-2.08V8zM13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === QUESTIONMARK.CIRCLE (도움말) - AI 어시스턴트 도움말 버튼 === */
@@ -1853,10 +1868,10 @@
     width: 0.9em;
     height: 0.9em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === PAPERCLIP (첨부파일) - AI 어시스턴트 파일 첨부 버튼 === */
@@ -1870,10 +1885,10 @@
     width: 0.9em;
     height: 0.9em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 000 10h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4a5 5 0 000-10z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 000 10h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4a5 5 0 000-10z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 000 10h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4a5 5 0 000-10z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   .sf-symbol--paperclip .sf-symbol__shape::before {
@@ -1885,10 +1900,10 @@
     width: 0.9em;
     height: 0.9em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21.58 12.58l-9-9a6.53 6.53 0 00-9.19 9.19l1.2 1.2a.75.75 0 001.06-1.06l-1.2-1.2a5 5 0 017.08-7.08l9 9a3.53 3.53 0 01-5 5l-9-9a2 2 0 012.83-2.83l8.49 8.49a.75.75 0 001.06-1.06l-8.49-8.49a3.52 3.52 0 00-5 5l9 9a5 5 0 007.08-7.08z'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21.58 12.58l-9-9a6.53 6.53 0 00-9.19 9.19l1.2 1.2a.75.75 0 001.06-1.06l-1.2-1.2a5 5 0 017.08-7.08l9 9a3.53 3.53 0 01-5 5l-9-9a2 2 0 012.83-2.83l8.49 8.49a.75.75 0 001.06-1.06l-8.49-8.49a3.52 3.52 0 00-5 5l9 9a5 5 0 007.08-7.08z'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21.58 12.58l-9-9a6.53 6.53 0 00-9.19 9.19l1.2 1.2a.75.75 0 001.06-1.06l-1.2-1.2a5 5 0 017.08-7.08l9 9a3.53 3.53 0 01-5 5l-9-9a2 2 0 012.83-2.83l8.49 8.49a.75.75 0 001.06-1.06l-8.49-8.49a3.52 3.52 0 00-5 5l9 9a5 5 0 007.08-7.08z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* 🔔 bell (알림 벨) — fill-only path */
@@ -1901,10 +1916,10 @@
     width: 0.9em;
     height: 0.9em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9z'/%3e%3cellipse cx='12' cy='21.5' rx='2' ry='1.2'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9z'/%3e%3cellipse cx='12' cy='21.5' rx='2' ry='1.2'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9z'/%3e%3cellipse cx='12' cy='21.5' rx='2' ry='1.2'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* 📖 book (책) — fill-only path */
@@ -1917,10 +1932,10 @@
     width: 0.9em;
     height: 0.9em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M4 4.5A2.5 2.5 0 016.5 2H20v15H6.5A2.5 2.5 0 004 19.5v-15z'/%3e%3cpath d='M4 19.5A2.5 2.5 0 016.5 17H20v5H6.5A2.5 2.5 0 014 19.5z' opacity='0.6'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M4 4.5A2.5 2.5 0 016.5 2H20v15H6.5A2.5 2.5 0 014 19.5v-15z'/%3e%3cpath d='M4 19.5A2.5 2.5 0 016.5 17H20v5H6.5A2.5 2.5 0 014 19.5z' opacity='0.6'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M4 4.5A2.5 2.5 0 016.5 2H20v15H6.5A2.5 2.5 0 004 19.5v-15z'/%3e%3cpath d='M4 19.5A2.5 2.5 0 016.5 17H20v5H6.5A2.5 2.5 0 014 19.5z' opacity='0.6'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === LOCK.ROTATION (간편 비밀번호 변경) === */
@@ -1934,10 +1949,10 @@
     width: 0.85em;
     height: 0.85em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='5' y='11' width='14' height='11' rx='2' fill='currentColor'/%3e%3cpath d='M8 11V7a4 4 0 118 0v4' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3cpath d='M19 2a3 3 0 013 3v2' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cpath d='M22 7l-1.5-1.5M22 7l1.5-1.5' fill='none' stroke='currentColor' stroke-width='1.2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='5' y='11' width='14' height='11' rx='2' fill='currentColor'/%3e%3cpath d='M8 11V7a4 4 0 118 0v4' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3cpath d='M19 2a3 3 0 013 3v2' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cpath d='M22 7l-1.5-1.5M22 7l1.5-1.5' fill='none' stroke='currentColor' stroke-width='1.2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='5' y='11' width='14' height='11' rx='2' fill='currentColor'/%3e%3cpath d='M8 11V7a4 4 0 118 0v4' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3cpath d='M19 2a3 3 0 013 3v2' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cpath d='M22 7l-1.5-1.5M22 7l1.5-1.5' fill='none' stroke='currentColor' stroke-width='1.2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
   /* === IPHONE.SLASH (기기 기억 해제) === */
@@ -1951,10 +1966,10 @@
     width: 0.85em;
     height: 0.85em;
     background: currentColor;
-    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='7' y='2' width='10' height='20' rx='2' fill='none' stroke='currentColor' stroke-width='1.8'/%3e%3cline x1='10' y1='19' x2='14' y2='19' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cline x1='3' y1='21' x2='21' y2='3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
-    mask-size: contain;
     -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='7' y='2' width='10' height='20' rx='2' fill='none' stroke='currentColor' stroke-width='1.8'/%3e%3cline x1='10' y1='19' x2='14' y2='19' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cline x1='3' y1='21' x2='21' y2='3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
     -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='7' y='2' width='10' height='20' rx='2' fill='none' stroke='currentColor' stroke-width='1.8'/%3e%3cline x1='10' y1='19' x2='14' y2='19' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cline x1='3' y1='21' x2='21' y2='3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
   }
 
 } /* end @layer components */

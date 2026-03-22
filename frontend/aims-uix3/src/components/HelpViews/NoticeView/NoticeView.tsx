@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
+import { BackButton } from '@/shared/ui/BackButton';
 import { formatDateTime } from '@/shared/lib/timeUtils';
 import { helpApi, NOTICE_CATEGORY_LABELS, type Notice } from '@/features/help/api';
 import './NoticeView.css';
@@ -62,17 +63,8 @@ export default function NoticeView({
       visible={visible}
       title={selectedNotice ? selectedNotice.title : '공지사항'}
       titleIcon={<BellIcon />}
-      titleLeftAccessory={selectedNotice ? (
-        <button
-          type="button"
-          className="notice-view__back-button"
-          onClick={handleBackToList}
-          aria-label="목록으로"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-          </svg>
-        </button>
+      titleAccessory={selectedNotice ? (
+        <BackButton label="목록" onClick={handleBackToList} />
       ) : undefined}
       onClose={onClose}
       className="notice-view"

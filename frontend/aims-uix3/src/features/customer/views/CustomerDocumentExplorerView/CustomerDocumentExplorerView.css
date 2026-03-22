@@ -60,31 +60,6 @@
     margin-left: auto;
   }
 
-  /* === 돌아가기 버튼 === */
-  .cde-back-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-0-75);
-    padding: var(--spacing-0-5) var(--spacing-2) var(--spacing-0-5) 5px;
-    height: 26px;
-    border: 1px solid var(--color-border-primary);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--color-text-tertiary);
-    cursor: pointer;
-    font-size: var(--font-size-caption-2);
-    font-weight: 400;
-    line-height: 1;
-    white-space: nowrap;
-    transition: all 0.15s ease-out;
-  }
-
-  .cde-back-btn:hover {
-    color: var(--color-text-primary);
-    border-color: var(--color-border-secondary);
-    background: var(--color-bg-secondary);
-  }
-
   /* === 검색 (요약 바 내 통합) === */
   .cde-summary__actions {
     display: flex;
@@ -296,6 +271,7 @@
   .cde-subtypes {
     padding-left: var(--spacing-6);
     margin-left: 5px;
+    border-left: 2px solid var(--color-border-secondary);
     border-left: 2px solid color-mix(in srgb, var(--cde-cat-color, var(--color-border-primary)) 25%, transparent);
   }
 
@@ -354,6 +330,7 @@
   .cde-subtype__docs {
     padding-left: 20px;
     margin-left: 5px;
+    border-left: 2px solid var(--color-border-tertiary);
     border-left: 2px solid color-mix(in srgb, var(--cde-cat-color, var(--color-border-primary)) 15%, transparent);
   }
 

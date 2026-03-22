@@ -44,6 +44,7 @@
     padding: 20px 24px; /* 애플 표준: 8의 배수 그리드 시스템 */
     border-bottom: 0.5px solid var(--color-layout-accent-light); /* Ultra-subtle 구분선 */
     background-color: var(--color-header-glass-bg); /* 테마별 glassmorphism 배경 */
+    -webkit-backdrop-filter: blur(10px); /* Safari 지원 */
     backdrop-filter: blur(10px); /* 애플 glassmorphism */
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     flex-shrink: 0;
@@ -364,63 +365,16 @@
     gap: 8px;
   }
 
-  /* 🍎 돌아가기 아이콘 버튼 - 타이틀 옆에 배치 */
-  .back-icon-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    transition: all var(--duration-ios-quick) var(--easing-ease-out);
-  }
-
-  .back-icon-button:hover {
-    background: var(--color-bg-hover);
-    color: var(--color-text-primary);
-  }
-
-  .back-icon-button:active {
-    transform: scale(0.95);
-  }
-
-  .back-icon-button svg {
-    width: 16px;
-    height: 16px;
-  }
-
   /* === 터치 기기: 아이콘 버튼 터치 영역 확대 (44px 최소) === */
 
   @media (pointer: coarse) {
-    .back-icon-button {
-      position: relative;
-    }
-
-    .back-icon-button::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      min-height: 44px;
-    }
-
     .center-pane-view__title-action .view-switch-button {
       height: 28px;
       font-size: var(--font-size-caption-1);
     }
 
     /* 터치 기기에서 호버 scale 비활성화 */
-    .center-pane-view__title-action .view-switch-button:hover,
-    .back-icon-button:hover {
+    .center-pane-view__title-action .view-switch-button:hover {
       transform: none;
     }
   }

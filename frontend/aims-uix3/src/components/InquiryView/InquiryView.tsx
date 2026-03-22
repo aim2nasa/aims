@@ -23,6 +23,7 @@ import {
 import { CenterPaneView } from '../CenterPaneView/CenterPaneView';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import Tooltip from '../../shared/ui/Tooltip';
+import { BackButton } from '@/shared/ui/BackButton';
 import { Dropdown } from '../../shared/ui/Dropdown';
 import { formatDateTime } from '@/shared/lib/timeUtils';
 import './InquiryView.list.css';
@@ -356,11 +357,8 @@ export default function InquiryView({
   };
 
   // 뒤로가기 버튼 (작성 뷰에서만 헤더에 표시, 상세 뷰는 본문에 표시)
-  const titleLeftAccessory = viewMode === 'create' ? (
-    <button type="button" className="inquiry-back-button" onClick={handleBackToList}>
-      <SFSymbol name="chevron-left" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
-      목록
-    </button>
+  const inquiryBackButton = viewMode === 'create' ? (
+    <BackButton label="목록" onClick={handleBackToList} />
   ) : undefined;
 
   // titleAccessory 제거 - 새 문의 버튼은 필터 줄에 배치
@@ -849,7 +847,7 @@ export default function InquiryView({
         visible={visible}
         title={getTitle()}
         titleIcon={inquiryIcon}
-        titleLeftAccessory={titleLeftAccessory}
+        titleAccessory={inquiryBackButton}
         onClose={onClose}
       >
         {viewMode === 'list' && renderListContent()}

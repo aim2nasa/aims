@@ -18,7 +18,7 @@ import { SearchService, MY_STORAGE_MARKER, MY_STORAGE_DISPLAY_NAME } from '@/ser
 import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/search'
 import { DocumentUtils, DocumentProcessingModule } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Dropdown, Tooltip, type DropdownOption, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
+import { Dropdown, Tooltip, BackButton, type DropdownOption, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
 import { api } from '@/shared/lib/api'
 import DownloadHelper from '../../../utils/downloadHelper'
 import DraggableModal from '@/shared/ui/DraggableModal'
@@ -1128,18 +1128,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       title="상세 문서검색"
       titleIcon={<SFSymbol name="search-bold" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} style={{ color: 'var(--color-icon-doc-search)' }} />}
       titleAccessory={
-        <Tooltip content="이전 페이지로 돌아가기" placement="bottom">
-          <button
-            type="button"
-            className="back-icon-button"
-            onClick={() => window.history.back()}
-            aria-label="돌아가기"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path fillRule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-            </svg>
-          </button>
-        </Tooltip>
+        <BackButton
+          onClick={() => window.history.back()}
+          tooltipContent="이전 페이지로 돌아가기"
+        />
       }
       onClose={onClose}
       marginTop={6}

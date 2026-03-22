@@ -32,14 +32,6 @@
       font-size: 10.5px;
     }
 
-    /* 뒤로가기 버튼 터치 영역 확보 */
-    .notice-view__back-button {
-      width: 36px;
-      height: 36px;
-      min-height: 44px;
-      min-width: 44px;
-    }
-
     /* 상세 패딩 축소 */
     .notice-view__detail {
       padding: var(--spacing-3);

@@ -1197,8 +1197,18 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       onContextMenu={handleContextMenu}
       style={{
         // width, height, position은 layout.css에서 관리 (iPad 미디어쿼리 적용을 위해)
-        ...cssVariables as React.CSSProperties // CSS 변수 적용
-      }}>
+        ...cssVariables as React.CSSProperties, // CSS 변수 적용
+        // 레이아웃 치수 CSS 변수 주입 (하위 요소에서 var()로 참조)
+        '--layout-leftpane-width': layoutDimensions.leftPaneWidthVar,
+        '--layout-mainpane-width': layoutDimensions.mainPaneWidth,
+        '--layout-mainpane-height': layoutDimensions.mainContentHeight,
+        '--layout-centerpane-left': layoutDimensions.centerPaneLeft,
+        '--layout-centerpane-width': layoutDimensions.centerPaneWidth,
+        '--layout-pagination-left': `calc(${layoutDimensions.leftPaneWidthVar} + var(--gap-left))`,
+        '--layout-pagination-width': layoutDimensions.paginationWidth,
+        '--layout-rightpane-container-left': layoutDimensions.rightPaneLeft,
+        '--layout-rightpane-container-width': rightPaneVisible ? layoutDimensions.rightPaneWidth : '0px',
+      } as React.CSSProperties}>
 
       {/* 🔄 새 버전 알림 배너 */}
       {newVersionAvailable && (
@@ -1225,29 +1235,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       <a
         href="#main-content"
         className="skip-navigation"
-        style={{
-          position: 'absolute',
-          top: 'var(--skip-nav-offset)',
-          left: 'var(--spacing-2)',
-          background: 'var(--color-primary-500)',
-          color: 'white',
-          padding: 'var(--spacing-2) var(--spacing-4)',
-          borderRadius: 'var(--radius-sm)',
-          textDecoration: 'none',
-          fontSize: 'var(--font-size-footnote)',
-          fontWeight: 'var(--font-weight-semibold)',
-          zIndex: 'var(--z-index-notification)',
-          transform: 'translateY(var(--skip-nav-offset))',
-          transition: 'transform var(--duration-ios-standard) var(--easing-ios-default)',
-          outline: '2px solid transparent',
-          outlineOffset: '2px'
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.transform = 'translateY(var(--skip-nav-visible-offset))'
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.transform = 'translateY(var(--skip-nav-offset))'
-        }}
         aria-label="메인 콘텐츠로 바로 가기"
       >
         메인 콘텐츠로 바로 가기
@@ -1259,17 +1246,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         aria-live="polite"
         aria-atomic="true"
         className="sr-only"
-        style={{
-          position: 'absolute',
-          width: 'var(--sr-only-size)',
-          height: 'var(--sr-only-size)',
-          padding: '0',
-          margin: 'calc(var(--sr-only-size) * -1)',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          border: '0'
-        }}
       />
 
       {/* Header - Progressive Disclosure 애플 스타일 */}
@@ -1331,7 +1307,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             role="navigation"
             aria-label="모바일 네비게이션 메뉴"
           >
-            <Suspense fallback={<div style={{ width: '100%', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
+            <Suspense fallback={<div className="suspense-skeleton" />}>
               <CustomMenu
                 collapsed={false}
                 onMenuClick={(key) => {
@@ -1398,21 +1374,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         /* 🖥️ 데스크톱: 기존 고정 사이드바 */
         leftPaneVisible && (
           <nav
-            className={`layout-pane layout-leftpane ${leftPaneAnimationState === 'expanding' ? 'layout-leftpane--expanding' : ''} ${leftPaneAnimationState === 'collapsing' ? 'layout-leftpane--collapsing' : ''}`}
+            className={`layout-pane layout-leftpane ${leftPaneAnimationState === 'expanding' ? 'layout-leftpane--expanding' : ''} ${leftPaneAnimationState === 'collapsing' ? 'layout-leftpane--collapsing' : ''} ${leftPaneCollapsed ? 'layout-leftpane--collapsed' : ''} ${isResizing ? 'layout-leftpane--no-transition' : ''}`}
             role="navigation"
             aria-label="메인 네비게이션 메뉴"
-            style={{
-              top: `calc(var(--header-height-base) + var(--gap-top))`,
-              width: layoutDimensions.leftPaneWidthVar,
-              height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
-              paddingTop: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-4)',
-              paddingRight: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-3)',
-              paddingBottom: 'var(--spacing-2)',
-              paddingLeft: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-3)',
-              transition: isResizing ? 'none' : 'width var(--duration-apple-graceful) var(--easing-apple-smooth), padding var(--duration-apple-graceful) var(--easing-apple-smooth)'
-            }}
           >
-            <Suspense fallback={<div style={{ width: '100%', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
+            <Suspense fallback={<div className="suspense-skeleton" />}>
               <CustomMenu
                 collapsed={leftPaneCollapsed}
                 onMenuClick={handleMenuClick}
@@ -1483,12 +1449,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       {mainPaneVisible && (
         <div
           className={`layout-pane layout-mainpane ${isResizing ? '' : 'transition-smooth'}`}
-          style={{
-            left: layoutDimensions.leftPaneWidthVar,
-            width: layoutDimensions.mainPaneWidth,
-            height: layoutDimensions.mainContentHeight,
-            padding: 'var(--gap-right)'
-          }}
         >
         </div>
       )}
@@ -1500,25 +1460,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           className={`layout-pane layout-centerpane ${isDraggingBRB || isResizing ? 'no-transition' : ''}`}
           role="main"
           aria-label="메인 콘텐츠 영역"
-          style={{
-            top: `calc(var(--header-height-base) + var(--gap-top))`,
-            left: layoutDimensions.centerPaneLeft,
-            width: layoutDimensions.centerPaneWidth,
-            height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
-            color: 'var(--color-text-primary)'
-          }}
         >
           {/* CenterPane 문구 - 활성 View가 없을 때만 표시 (애플 스타일: Invisible until you need it) */}
           {!hasActiveView && (
             <h3
-              className="section-heading"
-              style={{
-                color: 'var(--color-text-primary)',
-                margin: '0',
-                opacity: hasActiveView ? 0 : 1,
-                transition: 'opacity var(--duration-fast) var(--easing-ease-out)',
-                animation: hasActiveView ? 'none' : 'centerPanePlaceholderFadeIn var(--duration-fast) var(--easing-ease-out)'
-              }}
+              className={`section-heading centerpane-placeholder-heading ${hasActiveView ? 'centerpane-placeholder-heading--hidden' : 'centerpane-placeholder-heading--visible'}`}
             >
               CenterPane
             </h3>
@@ -1783,11 +1729,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       {paginationVisible && (
         <div
           className="layout-pane layout-pagination"
-          style={{
-            bottom: `var(--gap-bottom)`,
-            left: `calc(${layoutDimensions.leftPaneWidthVar} + var(--gap-left))`,
-            width: layoutDimensions.paginationWidth,
-          }}
         >
           PaginationPane
         </div>
@@ -1798,31 +1739,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         className={`layout-rightpane-container ${!rightPaneVisible ? 'layout-rightpane-container--hidden' : ''} ${isDraggingBRB || isResizing ? 'no-transition' : ''} ${isMobileView ? 'layout-rightpane-container--mobile' : ''}`}
         role="complementary"
         aria-label="보조 정보 패널"
-        style={{
-          position: isMobileView ? 'fixed' : 'absolute',
-          top: isMobileView ? 'var(--header-height-base)' : `calc(var(--header-height-base) + var(--gap-top))`,
-          left: layoutDimensions.rightPaneLeft,
-          width: rightPaneVisible ? layoutDimensions.rightPaneWidth : '0px',
-          height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
-          display: 'flex',
-          flexDirection: 'row',
-          overflow: 'hidden',
-          zIndex: 10,
-        }}
       >
         {/* BRB - RightPane 컨테이너 내부에서 좌측에 위치 (모바일에서 숨김) */}
         {brbVisible && !isMobileView && (
           <div
-            className="layout-brb"
-            style={{
-              width: 'var(--brb-width)',
-              height: '100%',
-              flexShrink: 0,
-              cursor: rightPaneVisible ? 'col-resize' : 'default',
-              // CSS 클래스에서 처리되는 속성들을 인라인에서 제거
-              // backgroundColor, zIndex, position, display, alignItems, justifyContent는 CSS에서 처리
-              // transition 제거 - 컨테이너의 transition 사용
-            }}
+            className={`layout-brb ${rightPaneVisible ? 'layout-brb--active' : ''}`}
             onMouseDown={(e) => {
               e.preventDefault()
 
@@ -1898,16 +1819,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
         {/* RightPane - 컨테이너 내부에서 우측에 위치 */}
         <div
-          className="layout-rightpane-content"
+          className={`layout-rightpane-content ${(selectedDocument || selectedCustomer) ? 'layout-rightpane-content--has-selection' : ''} ${rightPaneVisible ? 'layout-rightpane-content--visible' : ''}`}
           onDoubleClick={isMobileView ? undefined : handleRightPaneDoubleClick}
-          style={{
-            flex: 1,
-            padding: (selectedDocument || selectedCustomer) ? '0' : (rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0'),
-            overflow: 'hidden',
-            color: 'var(--color-text-primary)',
-            display: 'flex',
-            flexDirection: 'column'
-          }}
         >
           {/* 📱 모바일 뒤로가기 헤더 */}
           {isMobileView && rightPaneVisible && rightPaneContentType && (
@@ -1928,16 +1841,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
           {!rightPaneContentType && (
             <>
-              <h3 className="section-heading" style={{
-                color: 'var(--color-text-primary)',
-                margin: '0'
-              }}>RightPane</h3>
+              <h3 className="section-heading rightpane-section-heading">RightPane</h3>
             </>
           )}
 
           {/* 고객 상세 정보 표시 */}
           {rightPaneContentType === 'customer' && selectedCustomer && (
-            <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
+            <Suspense fallback={<div className="suspense-skeleton--loading">로딩 중...</div>}>
               <CustomerDetailView
                 customer={selectedCustomer}
                 onClose={() => {
@@ -1968,7 +1878,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
           {/* 문서 프리뷰 표시 */}
           {rightPaneContentType === 'document' && selectedDocument && (
-            <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
+            <Suspense fallback={<div className="suspense-skeleton--loading">로딩 중...</div>}>
               <BaseViewer
                 visible={true}
                 title={(() => {
@@ -2008,8 +1918,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   const hasSubtitle = isConverted || ocrInfo
 
                   return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div className="baseviewer-title-wrapper">
+                      <div className="baseviewer-title-row">
                         <span>{fileName}</span>
                         {nameLabel && (
                           <Tooltip content={rpFilenameMode === 'display'
@@ -2017,6 +1927,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                             : `원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환`}>
                             <button
                               type="button"
+                              className="baseviewer-title-badge"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 setRpFilenameMode(prev => {
@@ -2025,18 +1936,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                                   return next
                                 })
                               }}
-                              style={{
-                                flexShrink: 0,
-                                padding: '1px 5px',
-                                fontSize: '9px',
-                                fontWeight: 600,
-                                lineHeight: '1.2',
-                                border: '1px solid var(--color-border-primary)',
-                                borderRadius: '4px',
-                                background: 'var(--color-bg-secondary)',
-                                color: 'var(--color-text-tertiary)',
-                                cursor: 'pointer',
-                              }}
                             >
                               {nameLabel}
                             </button>
@@ -2044,32 +1943,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                         )}
                       </div>
                       {hasSubtitle && (
-                        <div style={{
-                          fontSize: '11px',
-                          fontWeight: '400',
-                          color: 'var(--color-text-tertiary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          flexWrap: 'wrap'
-                        }}>
+                        <div className="baseviewer-subtitle-row">
                           {isConverted && (
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '3px',
-                              padding: '1px 5px',
-                              backgroundColor: 'var(--color-accent-blue-subtle)',
-                              color: 'var(--color-accent-blue)',
-                              borderRadius: '4px',
-                              fontSize: '10px',
-                              fontWeight: '500'
-                            }}>
+                            <span className="baseviewer-converted-badge">
                               PDF 변환됨{originalExt ? ` · 원본 ${originalExt}` : ''}
                             </span>
                           )}
                           {ocrInfo && (
-                            <span style={{ opacity: 0.7 }}>
+                            <span className="baseviewer-ocr-info">
                               OCR {ocrInfo.percent}% · {ocrInfo.label}
                             </span>
                           )}

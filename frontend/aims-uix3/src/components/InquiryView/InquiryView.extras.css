@@ -32,33 +32,6 @@
     color: #FEE500; /* 다크 테마: 카카오톡 공식 노란색 */
   }
 
-  /* === BACK BUTTON (for CenterPaneView titleLeftAccessory) === */
-  .inquiry-back-button {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border: none;
-    background: transparent;
-    color: var(--color-ios-text-secondary-light);
-    font-size: var(--font-size-footnote);
-    cursor: pointer;
-    border-radius: 4px;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  }
-
-  html[data-theme="dark"] .inquiry-back-button {
-    color: var(--color-ios-text-secondary-dark);
-  }
-
-  .inquiry-back-button:hover {
-    background: var(--color-ios-bg-tertiary-light);
-  }
-
-  html[data-theme="dark"] .inquiry-back-button:hover {
-    background: var(--color-ios-bg-tertiary-dark);
-  }
-
   /* === 🍎 UNREAD INDICATOR === */
   .inquiry-row--unread {
     font-weight: 600;

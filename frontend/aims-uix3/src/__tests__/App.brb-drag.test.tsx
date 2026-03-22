@@ -179,12 +179,12 @@ describe('App - BRB 드래그 동기화', () => {
     // BRB 드래그 시작
     fireEvent.mouseDown(brb!, { clientX: 960 })
 
-    // 여러 번의 mousemove 이벤트
+    // 여러 번의 mousemove 이벤트 — 드래그 중 no-transition 유지 확인
     const positions = [950, 940, 930, 920, 910]
     positions.forEach(x => {
       fireEvent.mouseMove(document, { clientX: x })
-      // 각 이벤트마다 width가 업데이트되어야 함
-      expect(centerPane.style.width).toBeTruthy()
+      // 각 이벤트마다 no-transition 클래스가 유지되어야 함 (드래그 동기화)
+      expect(centerPane.classList.contains('no-transition')).toBe(true)
     })
 
     fireEvent.mouseUp(document)

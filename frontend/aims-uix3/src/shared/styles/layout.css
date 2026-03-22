@@ -34,10 +34,10 @@
     height: 100vh;
     position: relative;
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
 
   /* 🍎 Apple Performance: CSS Grid 기반 레이아웃 시스템 */
@@ -239,6 +239,8 @@
 
     /* 📱 모바일 RightPane: 전체화면 오버레이 */
     .layout-rightpane-container--mobile {
+      position: fixed;
+      top: var(--header-height-base);
       z-index: var(--z-index-modal, 1000);
       background-color: var(--color-layout-rightpane-bg);
       transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
@@ -523,15 +525,17 @@
     overflow: hidden;
     /* 애플 스타일: 화려한 애니메이션 제거, 서브틀한 효과만 유지 */
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
 
   .layout-leftpane {
-    top: var(--header-height-base);
+    top: calc(var(--header-height-base) + var(--gap-top));
+    height: calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom));
     left: 0;
+    width: var(--layout-leftpane-width);
     flex-direction: column;
     /* 🍎 애플 철학: 테두리 제거 - 공간감과 그림자로만 구분 */
     z-index: var(--z-index-sidebar); /* 🍎 사이드바 최적값 - 과도한 레이어링 방지 */
@@ -541,10 +545,8 @@
     /* font-size: var(--font-size-subheadline-dynamic); (iOS Dynamic Type 지원 ) */
 
     /* 🍎 Safe Area 대응 - 노치/Dynamic Island 완벽 지원 */
-    padding-left: max(20px, env(safe-area-inset-left));
-    padding-right: max(20px, env(safe-area-inset-right));
-    padding-top: max(0px, env(safe-area-inset-top));
-    padding-bottom: max(2px, env(safe-area-inset-bottom)); /* 최소 여백 - 초컴팩트 */
+    padding: var(--spacing-4) var(--spacing-3) var(--spacing-2) var(--spacing-3);
+    transition: width var(--duration-apple-graceful) var(--easing-apple-smooth), padding var(--duration-apple-graceful) var(--easing-apple-smooth);
 
     /* 🍎 Safari 특화: 폰트 렌더링 최적화 */
     -webkit-font-smoothing: antialiased;
@@ -557,10 +559,18 @@
     overflow-y: auto;
 
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
+  }
+
+  .layout-leftpane--collapsed {
+    padding-top: var(--spacing-3);
+  }
+
+  .layout-leftpane--no-transition {
+    transition: none;
   }
 
   /* 🍎 다크 테마 그림자 최적화 */
@@ -590,16 +600,25 @@
 
   .layout-mainpane {
     top: var(--header-height-base);
+    left: var(--layout-leftpane-width);
+    width: var(--layout-mainpane-width);
+    height: var(--layout-mainpane-height);
     z-index: var(--z-index-content);
     background-color: var(--color-layout-mainpane-bg);
+    padding: var(--gap-right);
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
 
   .layout-centerpane {
+    top: calc(var(--header-height-base) + var(--gap-top));
+    left: var(--layout-centerpane-left);
+    width: var(--layout-centerpane-width);
+    height: calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom));
+    color: var(--color-text-primary);
     /* 애플 디자인 가이드라인 표준 패딩 (iOS 앱 기준) */
     /* Golden Ratio 적용: 조화로운 시각적 균형 */
     padding-block: var(--spacing-golden-lg); /* ~26px 상하 - 황금비 기반 조화 */
@@ -635,13 +654,14 @@
 
     /* 🌍 국제화: 완벽한 다국어 지원 */
     unicode-bidi: isolate;
+    -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
 
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
 
   /* 🎯 BRB 드래그 중 transition 비활성화 - CenterPane과 RightPane 완벽 동기화 */
@@ -659,6 +679,9 @@
   }
 
   .layout-pagination {
+    left: var(--layout-pagination-left);
+    width: var(--layout-pagination-width);
+    bottom: var(--gap-bottom);
     height: 40px;
     color: var(--color-text-primary);
     align-items: center;
@@ -693,6 +716,7 @@
 
     /* 🌍 국제화: 완벽한 다국어 지원 */
     unicode-bidi: isolate;
+    -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
 
     /* 🍎 iOS Safari 전용 최적화 */
@@ -708,10 +732,10 @@
     padding-bottom: max(0px, env(safe-area-inset-bottom));
 
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
 
   /* Apple Design: Progressive Enhancement - 필요할 때만 완전히 보임 */
@@ -723,6 +747,9 @@
 
   /* 🍎 제안 1: Ghost Mode - 완전히 투명하다가 호버 시에만 극히 서브틀하게 나타남 */
   .layout-brb {
+    width: var(--brb-width);
+    height: 100%;
+    flex-shrink: 0;
     /* 평상시 완전 투명 - "Invisible until you need it" */
     background-color: transparent;
     transition: background-color var(--duration-ios-standard) var(--easing-apple-smooth); /* Apple standard easing */
@@ -735,7 +762,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: col-resize;
+    cursor: default;
 
     /* 🎯 UP/DOWN 영역 마스크: 상단 16px, 하단 16px는 안보이게 */
     clip-path: inset(16px 0 16px 0);
@@ -745,8 +772,13 @@
 
     /* 🔬 드래그 상호작용 최적화: 완벽한 터치 반응성 */
     touch-action: pan-x;
+    -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+  }
+
+  .layout-brb--active {
+    cursor: col-resize;
   }
 
   /* 그립 인디케이터 완전 제거 - 애플 미니멀리즘 */
@@ -836,10 +868,10 @@
     background-color: var(--color-layout-rightpane-bg);
     /* transition 완전 제거 - Header-CBR 연동 시 컨테이너에서 처리 */
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
 
   .layout-rightpane--hidden {
@@ -852,14 +884,21 @@
   /* CenterPane + RightPane 통합 컨테이너 - 구조적 동기화 */
   .layout-center-right-container {
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
 
   /* 🍎 미닫이문 UX: RightPane + BRB 통합 컨테이너 */
   .layout-rightpane-container {
+    position: absolute;
+    top: calc(var(--header-height-base) + var(--gap-top));
+    left: var(--layout-rightpane-container-left);
+    width: var(--layout-rightpane-container-width);
+    height: calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom));
+    display: flex;
+    flex-direction: row;
     z-index: var(--z-index-elevated);
     overflow: hidden;
     background-color: transparent;
@@ -878,10 +917,10 @@
     backface-visibility: hidden;
 
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
 
   /* 🎯 미닫이문 닫힘: width만 0으로 (left는 App.tsx에서 계산된 위치 유지) */
@@ -893,6 +932,11 @@
   }
 
   .layout-rightpane-content {
+    flex: 1;
+    overflow: hidden;
+    color: var(--color-text-primary);
+    display: flex;
+    flex-direction: column;
     background-color: var(--color-layout-rightpane-bg);
     /* 애플 스타일 카드형 디자인 */
     border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
@@ -915,13 +959,24 @@
 
     /* 🌍 국제화: 완벽한 다국어 지원 */
     unicode-bidi: isolate;
+    -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
 
     /* 프로페셔널 UI: 텍스트 선택 방지 */
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* RightPane 보일 때 기본 padding (문서/고객 미선택 상태) */
+  .layout-rightpane-content--visible {
+    padding: var(--spacing-6) var(--spacing-5);
+  }
+
+  /* 문서/고객 선택 시 padding 제거 */
+  .layout-rightpane-content--has-selection {
+    padding: 0;
   }
 
   /* 애플 스타일 Progressive Enhancement - 호버 시 깊이감 증가 */
@@ -1077,6 +1132,117 @@
 
   .version-update-banner__btn-later:hover {
     background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* === SKIP NAVIGATION (접근성) === */
+  .skip-navigation {
+    position: absolute;
+    top: var(--skip-nav-offset);
+    left: var(--spacing-2);
+    background: var(--color-primary-500);
+    color: white;
+    padding: var(--spacing-2) var(--spacing-4);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-size: var(--font-size-footnote);
+    font-weight: var(--font-weight-semibold);
+    z-index: var(--z-index-notification);
+    transform: translateY(var(--skip-nav-offset));
+    transition: transform var(--duration-ios-standard) var(--easing-ios-default);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+
+  .skip-navigation:focus {
+    transform: translateY(var(--skip-nav-visible-offset));
+  }
+
+  /* === SUSPENSE SKELETON FALLBACK === */
+  .suspense-skeleton {
+    width: 100%;
+    height: 32px;
+    background-color: var(--color-skeleton-base);
+    border-radius: 4px;
+    opacity: 0.6;
+  }
+
+  .suspense-skeleton--loading {
+    padding: var(--spacing-6);
+    color: var(--color-text-secondary);
+  }
+
+  /* === CENTERPANE PLACEHOLDER HEADING === */
+  .centerpane-placeholder-heading {
+    color: var(--color-text-primary);
+    margin: 0;
+    transition: opacity var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .centerpane-placeholder-heading--visible {
+    opacity: 1;
+    animation: centerPanePlaceholderFadeIn var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .centerpane-placeholder-heading--hidden {
+    opacity: 0;
+  }
+
+  /* === RIGHTPANE CONTENT SECTION HEADING === */
+  .rightpane-section-heading {
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  /* === BASEVIEWER TITLE LAYOUT === */
+  .baseviewer-title-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .baseviewer-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .baseviewer-title-badge {
+    flex-shrink: 0;
+    padding: 1px 5px;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.2;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 4px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+  }
+
+  .baseviewer-subtitle-row {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .baseviewer-converted-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 5px;
+    background-color: var(--color-accent-blue-subtle);
+    color: var(--color-accent-blue);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .baseviewer-ocr-info {
+    opacity: 0.7;
   }
 
 } /* end @layer utilities */

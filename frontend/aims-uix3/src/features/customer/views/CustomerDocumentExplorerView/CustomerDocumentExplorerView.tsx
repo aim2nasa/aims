@@ -9,7 +9,7 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { CenterPaneView } from '@/components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
-import { Tooltip } from '@/shared/ui'
+import { Tooltip, BackButton } from '@/shared/ui'
 import { DocumentTypeCell } from '@/shared/ui/DocumentTypeCell/DocumentTypeCell'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { documentTypesService } from '@/services/documentTypesService'
@@ -603,7 +603,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
               type="button"
               className="cde-category__header"
               onClick={() => toggleNode(catKey)}
-              aria-expanded={isCatExpanded}
+              aria-expanded={isCatExpanded ? "true" : "false"}
             >
               <span className="cde-category__chevron">
                 <SFSymbol
@@ -641,7 +641,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                         type="button"
                         className="cde-subtype__header"
                         onClick={() => toggleNode(stKey)}
-                        aria-expanded={isStExpanded}
+                        aria-expanded={isStExpanded ? "true" : "false"}
                       >
                         <span className="cde-subtype__chevron">
                           <SFSymbol
@@ -913,7 +913,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                 type="button"
                 className="cde-person__header"
                 onClick={() => toggleNode(personKey)}
-                aria-expanded={isPersonExpanded}
+                aria-expanded={isPersonExpanded ? "true" : "false"}
               >
                 <span className="cde-person__chevron">
                   <SFSymbol
@@ -955,21 +955,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
         />
       }
       titleAccessory={
-        <button
-          type="button"
-          className="cde-back-btn"
-          onClick={onCollapse}
-          aria-label="돌아가기"
-        >
-          <SFSymbol
-            name="chevron.left"
-            size={SFSymbolSize.CAPTION_1}
-            weight={SFSymbolWeight.MEDIUM}
-            color="var(--color-primary-500)"
-            decorative={true}
-          />
-          <span>돌아가기</span>
-        </button>
+        <BackButton label="목록" onClick={onCollapse} />
       }
       onClose={onClose}
       className="customer-document-explorer"
