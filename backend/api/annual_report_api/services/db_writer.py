@@ -551,7 +551,11 @@ def delete_annual_reports(
                             return True
                     else:
                         # issue_date + customer_name 조합으로 매칭
-                        if (report.get("issue_date") == ident.get("issue_date")
+                        # DB의 issue_date는 datetime 객체일 수 있으므로 문자열로 변환 후 비교
+                        db_issue_date = report.get("issue_date")
+                        if isinstance(db_issue_date, datetime):
+                            db_issue_date = db_issue_date.isoformat()
+                        if (db_issue_date == ident.get("issue_date")
                                 and report.get("customer_name") == ident.get("customer_name")):
                             return True
                 return False
