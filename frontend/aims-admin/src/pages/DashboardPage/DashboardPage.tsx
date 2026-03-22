@@ -5,6 +5,29 @@ import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './DashboardPage.css';
 
+/** 날짜를 YYYY.MM.DD HH:mm 형식으로 포맷 */
+const formatDate = (dateStr: string | null): string => {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '-';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+/** overallStatus 한글 라벨 */
+const statusLabel = (status: string): { text: string; className: string } => {
+  switch (status) {
+    case 'completed': return { text: '완료', className: 'status-badge--completed' };
+    case 'processing': return { text: '처리중', className: 'status-badge--processing' };
+    case 'error': return { text: '오류', className: 'status-badge--error' };
+    case 'credit_pending': return { text: '크레딧 대기', className: 'status-badge--pending' };
+    default: return { text: status || '알 수 없음', className: 'status-badge--unknown' };
+  }
+};
+
+/** 숫자에 천 단위 쉼표 */
+const formatNumber = (n: number): string => n.toLocaleString('ko-KR');
+
 export const DashboardPage = () => {
   const navigate = useNavigate();
 
@@ -44,22 +67,107 @@ export const DashboardPage = () => {
     data?.health.qdrant,
   ].filter((s) => s?.status === 'unhealthy').length;
 
+  const summary = data?.summary;
+  const recentUploads = data?.recentUploads || [];
+  const recentCustomers = data?.recentCustomers || [];
+
   return (
     <div className="dashboard-page">
       <h1 className="dashboard-page__title">대시보드</h1>
 
-      {/* 시스템 통계 */}
+      {/* 요약 카드 */}
       <section className="dashboard-page__section">
-        <h2 className="dashboard-page__section-title">시스템 통계</h2>
+        <h2 className="dashboard-page__section-title">요약</h2>
         <div className="dashboard-page__stats-grid">
-          <StatCard title="전체 사용자" value={data?.stats.totalUsers || 0} onClick={() => navigate('/users')} />
-          <StatCard title="활성 사용자" value={data?.stats.activeUsers || 0} subtitle="최근 30일 내 로그인" />
-          <StatCard title="고객 수" value={data?.stats.totalCustomers || 0} />
-          <StatCard title="문서 수" value={data?.stats.totalDocuments || 0} />
-          <StatCard title="계약 수" value={data?.stats.totalContracts || 0} />
-          <StatCard title="이번 달 OCR" value={data?.ocr?.usedThisMonth || 0} subtitle={`누적 ${data?.ocr?.totalProcessed || 0}건`} />
+          <StatCard
+            title="총 고객"
+            value={formatNumber(summary?.totalCustomers || data?.stats.totalCustomers || 0)}
+          />
+          <StatCard
+            title="총 문서"
+            value={formatNumber(summary?.totalDocuments || data?.stats.totalDocuments || 0)}
+          />
+          <StatCard
+            title="오늘 업로드"
+            value={formatNumber(summary?.todayUploads || 0)}
+          />
+          <StatCard
+            title="이번 주 업로드"
+            value={formatNumber(summary?.weekUploads || 0)}
+          />
+          <StatCard
+            title="크레딧 잔액"
+            value={formatNumber(summary?.creditBalance || 0)}
+            subtitle="전체 사용자 합산"
+          />
+          <StatCard
+            title="이번 달 OCR"
+            value={data?.ocr?.usedThisMonth || 0}
+            subtitle={`누적 ${formatNumber(data?.ocr?.totalProcessed || 0)}건`}
+          />
         </div>
       </section>
+
+      {/* 최근 업로드 문서 */}
+      {recentUploads.length > 0 && (
+        <section className="dashboard-page__section">
+          <h2 className="dashboard-page__section-title">최근 업로드 문서</h2>
+          <div className="dashboard-page__table-wrap">
+            <table className="dashboard-page__table">
+              <thead>
+                <tr>
+                  <th>파일명</th>
+                  <th>고객</th>
+                  <th>상태</th>
+                  <th>업로드 시간</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentUploads.map((doc, i) => {
+                  const status = statusLabel(doc.overallStatus);
+                  return (
+                    <tr key={i}>
+                      <td className="dashboard-page__cell-name">{doc.displayName}</td>
+                      <td>{doc.customerName}</td>
+                      <td>
+                        <span className={`status-badge ${status.className}`}>{status.text}</span>
+                      </td>
+                      <td className="dashboard-page__cell-date">{formatDate(doc.uploadedAt)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* 최근 가입 고객 */}
+      {recentCustomers.length > 0 && (
+        <section className="dashboard-page__section">
+          <h2 className="dashboard-page__section-title">최근 가입 고객</h2>
+          <div className="dashboard-page__table-wrap">
+            <table className="dashboard-page__table">
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>유형</th>
+                  <th>가입일</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentCustomers.map((cust, i) => (
+                  <tr key={i}>
+                    <td>{cust.name}</td>
+                    <td>{cust.type === 'corporate' ? '법인' : '개인'}</td>
+                    <td className="dashboard-page__cell-date">{formatDate(cust.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* 주요 알림 */}
       <section className="dashboard-page__section">

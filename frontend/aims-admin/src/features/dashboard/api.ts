@@ -96,6 +96,32 @@ export interface WorkflowStatus {
   updatedAt: string;
 }
 
+// 최근 가입 고객
+export interface RecentCustomer {
+  name: string;
+  type: string;
+  createdAt: string | null;
+  createdBy: string | null;
+}
+
+// 최근 업로드 문서
+export interface RecentUpload {
+  originalName: string;
+  displayName: string;
+  customerName: string;
+  uploadedAt: string | null;
+  overallStatus: string;
+}
+
+// 요약 통계
+export interface DashboardSummary {
+  totalCustomers: number;
+  totalDocuments: number;
+  todayUploads: number;
+  weekUploads: number;
+  creditBalance: number;
+}
+
 export interface DashboardData {
   stats: DashboardStats;
   documents?: DocumentsStatus;  // 문서 처리 현황 (상세)
@@ -103,6 +129,9 @@ export interface DashboardData {
   health: HealthStatus;
   ocr?: OcrStats;
   workflows?: WorkflowStatus[];
+  recentCustomers?: RecentCustomer[];
+  recentUploads?: RecentUpload[];
+  summary?: DashboardSummary;
 }
 
 export interface StorageOverview {

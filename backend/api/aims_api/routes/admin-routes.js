@@ -727,6 +727,79 @@ router.get('/admin/dashboard', authenticateJWT, requireRole('admin'), async (req
       console.warn('[Admin] n8n 워크플로우 상태 조회 실패 (API):', wfError.message);
     }
 
+    // 최근 가입 고객 5건
+    const recentCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
+      .find({ deleted_at: null })
+      .sort({ 'meta.created_at': -1 })
+      .limit(5)
+      .project({ name: 1, type: 1, 'meta.created_at': 1, 'meta.created_by': 1 })
+      .toArray()
+      .then(docs => docs.map(d => ({
+        name: d.name,
+        type: d.type || '개인',
+        createdAt: d.meta?.created_at || null,
+        createdBy: d.meta?.created_by || null
+      })));
+
+    // 최근 업로드 문서 10건
+    const recentUploads = await db.collection(COLLECTIONS.FILES)
+      .find({})
+      .sort({ 'upload.uploaded_at': -1 })
+      .limit(10)
+      .project({
+        originalName: 1,
+        displayName: 1,
+        'upload.uploaded_at': 1,
+        overallStatus: 1,
+        ownerId: 1,
+        customerId: 1
+      })
+      .toArray();
+
+    // 최근 업로드 문서에 고객명 매핑
+    const customerIds = [...new Set(recentUploads.map(d => d.customerId).filter(Boolean))];
+    const customerNames = customerIds.length > 0
+      ? await db.collection(COLLECTIONS.CUSTOMERS)
+          .find({ _id: { $in: customerIds.map(id => {
+            try { return new ObjectId(id); } catch { return id; }
+          }) } })
+          .project({ name: 1 })
+          .toArray()
+          .then(docs => {
+            const map = {};
+            docs.forEach(d => { map[d._id.toString()] = d.name; });
+            return map;
+          })
+      : {};
+
+    const recentUploadsFormatted = recentUploads.map(d => ({
+      originalName: d.originalName || '(알 수 없음)',
+      displayName: d.displayName || d.originalName || '(알 수 없음)',
+      customerName: d.customerId ? (customerNames[d.customerId.toString()] || '(삭제된 고객)') : '(미지정)',
+      uploadedAt: d.upload?.uploaded_at || null,
+      overallStatus: d.overallStatus || 'unknown'
+    }));
+
+    // 오늘/이번 주 업로드 건수
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [todayUploads, weekUploads] = await Promise.all([
+      db.collection(COLLECTIONS.FILES).countDocuments({
+        'upload.uploaded_at': { $gte: todayStart.toISOString() }
+      }),
+      db.collection(COLLECTIONS.FILES).countDocuments({
+        'upload.uploaded_at': { $gte: weekStart.toISOString() }
+      })
+    ]);
+
+    // 총 크레딧 잔액 (전체 사용자 합산)
+    const creditResult = await db.collection(COLLECTIONS.USERS).aggregate([
+      { $group: { _id: null, total: { $sum: { $ifNull: ['$bonus_credits.balance', 0] } } } }
+    ]).toArray();
+    const totalCreditBalance = creditResult[0]?.total || 0;
+
     res.json({
       success: true,
       stats: {
@@ -735,6 +808,18 @@ router.get('/admin/dashboard', authenticateJWT, requireRole('admin'), async (req
         totalCustomers,
         totalDocuments,
         totalContracts
+      },
+      // 최근 가입 고객
+      recentCustomers,
+      // 최근 업로드 문서
+      recentUploads: recentUploadsFormatted,
+      // 요약 통계
+      summary: {
+        totalCustomers,
+        totalDocuments,
+        todayUploads,
+        weekUploads,
+        creditBalance: totalCreditBalance
       },
       // 문서 처리 현황 (상세)
       documents: {
