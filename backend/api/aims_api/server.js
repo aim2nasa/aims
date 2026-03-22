@@ -30,6 +30,8 @@ const app = express();
 const ALLOWED_ORIGINS = [
   'https://aims.giize.com',
   'https://admin.aims.giize.com',
+  'http://tars:8080',
+  'http://100.110.215.65:8080',
   'http://localhost:5177',
   'https://localhost:5177',
   'http://localhost:5178',

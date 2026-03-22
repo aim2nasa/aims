@@ -797,15 +797,11 @@ module.exports = function(db) {
    * 현재는 비밀번호 없이 접근, 추후 비밀번호 인증 추가 예정
    */
   router.post('/admin-login', async (req, res) => {
-    // 보안: 프로덕션 환경에서 비활성화 (비밀번호 인증 구현 전까지)
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(404).json({ success: false, message: 'Not found' });
-    }
-
+    // 보안: Tailscale VPN 내에서만 접근 가능 (nginx가 Tailscale IP에서만 listen)
     try {
       const { ObjectId } = require('mongodb');
       const usersCollection = db.collection('users');
-      const { email } = req.body;
+      const { email } = req.body || {};
 
       let admin;
       if (email) {
