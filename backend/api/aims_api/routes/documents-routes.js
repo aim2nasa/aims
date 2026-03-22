@@ -3106,7 +3106,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
     const fs = require('fs');
     const path = require('path');
 
-    const BASE_DIR = path.resolve('/data/uploads');
+    const BASE_DIR = path.resolve('/data/files');
 
     try {
       const { customerIds } = req.body;
