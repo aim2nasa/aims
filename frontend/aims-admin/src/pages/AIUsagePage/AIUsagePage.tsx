@@ -968,8 +968,8 @@ export const AIUsagePage = () => {
               return (
                 <>
                   <div className="cost-bar">
-                    <div className="cost-bar__ai" style={{ width: `${aiPercent}%` }} />
-                    <div className="cost-bar__ocr" style={{ width: `${ocrPercent}%` }} />
+                    <div className="cost-bar__ai" ref={(el) => { if (el) el.style.width = `${aiPercent}%`; }} />
+                    <div className="cost-bar__ocr" ref={(el) => { if (el) el.style.width = `${ocrPercent}%`; }} />
                   </div>
                   <div className="cost-legend">
                     <div className="cost-legend__item cost-legend__item--ai">
@@ -1052,14 +1052,15 @@ export const AIUsagePage = () => {
                 return sourcesWithCost.map((source) => (
                   <div key={source.key} className="cost-item">
                     <div className="cost-item__row">
-                      <span className="cost-item__dot" style={{ backgroundColor: source.color }} />
+                      <span className="cost-item__dot" data-source={source.key} />
                       <span className="cost-item__label">{source.label}</span>
                       <span className="cost-item__cost">{formatCost(source.cost)}</span>
                     </div>
                     <div className="cost-item__bar">
                       <div
                         className="cost-item__bar-fill"
-                        style={{ width: `${source.percent}%`, backgroundColor: source.color }}
+                        data-source={source.key}
+                        ref={(el) => { if (el) el.style.width = `${source.percent}%`; }}
                       />
                     </div>
                     <div className="cost-item__meta">
@@ -1537,12 +1538,10 @@ export const AIUsagePage = () => {
         <div
           className="modal-overlay"
           onClick={() => setShowResetConfirmModal(false)}
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
         >
           <div
             className="modal-content reset-modal"
             onClick={(e) => e.stopPropagation()}
-            style={{ background: '#ffffff', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', padding: '24px', width: '420px' }}
           >
             <h3 className="reset-modal__title">
               사용량 리셋
@@ -1623,12 +1622,10 @@ export const AIUsagePage = () => {
         <div
           className="modal-overlay"
           onClick={() => setShowResetHistoryModal(false)}
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
         >
           <div
             className="modal-content reset-history-modal"
             onClick={(e) => e.stopPropagation()}
-            style={{ background: '#ffffff', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', width: '700px', maxWidth: '90vw' }}
           >
             <div className="reset-history-modal__header">
               <h3 className="reset-history-modal__title">사용량 리셋 이력</h3>
@@ -1700,12 +1697,10 @@ export const AIUsagePage = () => {
         <div
           className="modal-overlay"
           onClick={() => setShowResetDetailModal(false)}
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
         >
           <div
             className="modal-content reset-detail-modal"
             onClick={(e) => e.stopPropagation()}
-            style={{ background: '#ffffff', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', width: '600px', maxWidth: '90vw' }}
           >
             <div className="reset-detail-modal__header">
               <h3 className="reset-detail-modal__title">

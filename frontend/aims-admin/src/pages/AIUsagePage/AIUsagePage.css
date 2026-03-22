@@ -1070,6 +1070,29 @@
   transition: width 0.3s ease;
 }
 
+/* 소스별 색상 (data-source) */
+.cost-item__dot[data-source="chat"],
+.cost-item__bar-fill[data-source="chat"] {
+  background-color: #AF52DE;
+}
+
+.cost-item__dot[data-source="doc_embedding"],
+.cost-item__bar-fill[data-source="doc_embedding"] {
+  background-color: #FF9500;
+}
+
+.cost-item__dot[data-source="rag_api"],
+.cost-item__bar-fill[data-source="rag_api"] {
+  background-color: #007AFF;
+}
+
+.cost-item__dot[data-source="n8n_docsummary"],
+.cost-item__bar-fill[data-source="n8n_docsummary"],
+.cost-item__dot[data-source="doc_summary"],
+.cost-item__bar-fill[data-source="doc_summary"] {
+  background-color: #34C759;
+}
+
 .cost-item__meta {
   display: flex;
   gap: var(--spacing-sm);
