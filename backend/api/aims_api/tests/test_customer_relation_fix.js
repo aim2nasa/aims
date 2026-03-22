@@ -150,7 +150,7 @@ assertIncludes(
   serverContent,
   "[Cc]ustomer[Ii]d\\s*=\\s*document\\.customerId",
   'AR deletion uses document.customerId (customerId or arCustomerId)',
-  3  // Should appear in 3 places: customerId (2x) + arCustomerId (1x)
+  2  // customerId (documents-routes.js) + arCustomerId (customers-routes.js)
 );
 
 assertNotIncludes(

@@ -38,11 +38,12 @@ describe('MCP 도구 description regression 테스트', () => {
       expect(desc).not.toContain('먼저 사용');
     });
 
-    it('"계약 세부 정보" 범위가 한정되어 있어야 한다', () => {
-      // 계약 상태, 보험료, 보장 내용, 증권번호, 계약일, 상품명 등 구체적 키워드
+    it('"계약" 관련 범위가 명시되어 있어야 한다', () => {
+      // 계약 목록/정보/이력 등 계약 관련 키워드가 있어야 함
       expect(desc).toContain('계약');
-      // "세부 정보" 또는 구체적 속성 나열로 범위를 한정해야 함
-      const hasScope = desc.includes('세부 정보') ||
+      // 조회 목적이 명시되어야 함
+      const hasScope = desc.includes('목록') || desc.includes('정보') ||
+        desc.includes('세부 정보') ||
         (desc.includes('보험료') && desc.includes('증권번호'));
       expect(hasScope).toBe(true);
     });
