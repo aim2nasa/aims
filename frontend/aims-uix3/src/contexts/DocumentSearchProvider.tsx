@@ -55,7 +55,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
         query: query.trim(),
         search_mode: searchMode,
         ...(searchMode === 'keyword' && { mode: keywordMode }),
-        // semantic 모드: top_k 미전송 → 백엔드가 전체 결과 반환
+        top_k: 50,
         ...(customerId && { customer_id: customerId })
       }
 
