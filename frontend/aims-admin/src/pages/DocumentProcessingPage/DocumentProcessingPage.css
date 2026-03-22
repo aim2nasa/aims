@@ -193,3 +193,22 @@
 .document-processing-page .stat-card__subtitle {
   font-size: 10px;
 }
+
+/* ===== 반응형 ===== */
+@media (max-width: 768px) {
+  .document-processing-page__stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .document-processing-page__info-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .document-processing-page__status-grid {
+    flex-direction: column;
+  }
+
+  .status-card {
+    min-width: 100%;
+  }
+}

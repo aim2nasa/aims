@@ -702,3 +702,30 @@ html[data-theme="dark"] .tier-select option {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ===== 반응형 ===== */
+@media (max-width: 768px) {
+  .users-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .users-page__filters {
+    flex-direction: column;
+  }
+
+  .users-page__search {
+    min-width: 100%;
+  }
+
+  .users-page__title {
+    font-size: var(--font-size-xl);
+  }
+
+  /* 모바일에서 덜 중요한 칼럼 숨기기 */
+  .users-table__th--hide-mobile,
+  .users-table__td--hide-mobile {
+    display: none;
+  }
+}

@@ -875,10 +875,61 @@
   font-size: var(--font-size-xs);
 }
 
-/* Responsive */
+/* ===== 반응형 ===== */
 @media (max-width: 900px) {
   .realtime-metrics-section__grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .system-health-page {
+    height: auto;
+    overflow: visible;
+  }
+
+  /* 2단 레이아웃 → 1단 세로 */
+  .system-health-page__main-layout {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .system-health-page__main-column {
+    overflow-y: visible;
+  }
+
+  .system-health-page__side-column {
+    width: 100%;
+  }
+
+  /* 헬스 그리드/워크플로우 그리드 세로 */
+  .system-health-page__health-grid,
+  .system-health-page__workflow-grid {
+    flex-direction: column;
+  }
+
+  .health-card {
+    width: 100%;
+  }
+
+  .workflow-card {
+    min-width: 100%;
+  }
+
+  /* 필터 버튼 터치 타겟 보정 */
+  .health-history-section__filter-btn,
+  .health-history-section__clear-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  /* 헤더 세로 배치 */
+  .system-health-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
   }
 }
 

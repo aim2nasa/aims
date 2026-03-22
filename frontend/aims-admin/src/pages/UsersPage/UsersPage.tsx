@@ -377,16 +377,16 @@ export const UsersPage = () => {
                 <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('name')}>
                   이름 <SortIcon columnKey="name" />
                 </th>
-                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('email')}>
+                <th className="users-table__th users-table__th--sortable users-table__th--hide-mobile" onClick={() => handleSort('email')}>
                   이메일 <SortIcon columnKey="email" />
                 </th>
                 <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('tier')}>
                   등급 <SortIcon columnKey="tier" />
                 </th>
-                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('createdAt')}>
+                <th className="users-table__th users-table__th--sortable users-table__th--hide-mobile" onClick={() => handleSort('createdAt')}>
                   가입일 <SortIcon columnKey="createdAt" />
                 </th>
-                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('lastLogin')}>
+                <th className="users-table__th users-table__th--sortable users-table__th--hide-mobile" onClick={() => handleSort('lastLogin')}>
                   최근 로그인 <SortIcon columnKey="lastLogin" />
                 </th>
                 <th className="users-table__th users-table__th--actions">
@@ -419,7 +419,7 @@ export const UsersPage = () => {
                         </span>
                       )}
                     </td>
-                    <td className="users-table__td">{user.email || '-'}</td>
+                    <td className="users-table__td users-table__td--hide-mobile">{user.email || '-'}</td>
                     <td className="users-table__td">
                       <select
                         className={`tier-select tier-select--${tier}`}
@@ -436,8 +436,8 @@ export const UsersPage = () => {
                         ))}
                       </select>
                     </td>
-                    <td className="users-table__td">{formatDate((user as any).createdAt)}</td>
-                    <td className="users-table__td">{formatDate((user as any).lastLogin)}</td>
+                    <td className="users-table__td users-table__td--hide-mobile">{formatDate((user as any).createdAt)}</td>
+                    <td className="users-table__td users-table__td--hide-mobile">{formatDate((user as any).lastLogin)}</td>
                     <td className="users-table__td users-table__td--actions">
                       {user.role !== 'admin' && (
                         <>

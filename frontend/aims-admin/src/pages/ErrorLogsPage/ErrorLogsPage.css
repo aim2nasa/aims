@@ -780,3 +780,53 @@
   opacity: 1;
   color: var(--color-primary);
 }
+
+/* ===== 반응형 ===== */
+@media (max-width: 768px) {
+  .error-logs-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .error-logs-page__actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .error-logs-page__filters {
+    flex-direction: column;
+  }
+
+  .error-logs-page__search {
+    max-width: 100%;
+    min-width: 100%;
+  }
+
+  .error-logs-page__stats {
+    flex-direction: column;
+  }
+
+  .error-logs-page__stat-card {
+    min-width: 100%;
+  }
+
+  /* 모바일에서 덜 중요한 칼럼 숨김 */
+  .error-logs-page__th-severity,
+  .error-logs-page__th-type,
+  .error-logs-page__th-user,
+  .error-logs-page__cell-severity,
+  .error-logs-page__cell-type,
+  .error-logs-page__cell-user {
+    display: none;
+  }
+
+  /* 상세 그리드 1칼럼 */
+  .error-logs-detail__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .error-logs-page {
+    height: auto;
+  }
+}

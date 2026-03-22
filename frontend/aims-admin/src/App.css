@@ -179,3 +179,99 @@
   padding: var(--spacing-xl);
   overflow-y: auto;
 }
+
+/* 햄버거 버튼 — 데스크톱에서 숨김 */
+.app__hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.app__hamburger:hover {
+  background-color: var(--color-background-hover);
+}
+
+/* 모바일 오버레이 — 데스크톱에서 숨김 */
+.app__sidebar-overlay {
+  display: none;
+}
+
+/* ===== 모바일 반응형 (768px 이하) ===== */
+@media (max-width: 768px) {
+  /* 햄버거 표시 */
+  .app__hamburger {
+    display: flex;
+  }
+
+  /* 헤더 축소 */
+  .app__header {
+    height: 48px;
+    padding: 0 var(--spacing-md);
+  }
+
+  /* 시계, 사용자명 숨김 */
+  .app__current-time,
+  .app__user-name {
+    display: none;
+  }
+
+  /* 사이드바 → fixed 오버레이 드로어 */
+  .app__sidebar {
+    position: fixed;
+    top: 48px;
+    left: 0;
+    bottom: 0;
+    z-index: var(--z-modal);
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform var(--transition-slow);
+    border-right: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .app__sidebar--open {
+    transform: translateX(0);
+  }
+
+  /* 오버레이 배경 */
+  .app__sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 48px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-modal-backdrop);
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+
+  /* 리사이즈 핸들 숨김 */
+  .app__resize-handle {
+    display: none;
+  }
+
+  /* 전체 레이아웃 스크롤 허용 */
+  .app {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .app__body {
+    overflow: visible;
+  }
+
+  /* 메인 컨텐츠 패딩 축소 + 스크롤 허용 */
+  .app__main {
+    padding: var(--spacing-md);
+    overflow-y: visible;
+  }
+}

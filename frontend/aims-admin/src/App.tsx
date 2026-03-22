@@ -82,6 +82,22 @@ function App() {
   // 문의 알림 관리 (SSE 실시간 알림)
   const inquiryNotifications = useInquiryNotifications();
 
+  // 모바일 감지
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 모바일 사이드바 상태
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // 네비게이션 변경 시 사이드바 닫기
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   const [expandedMenus, setExpandedMenus] = useState<string[]>(() => {
     const saved = localStorage.getItem(EXPANDED_MENUS_KEY);
     if (saved) {
@@ -255,6 +271,16 @@ function App() {
         {/* Header */}
         <header className="app__header">
           <div className="app__header-left">
+            <button
+              type="button"
+              className="app__hamburger"
+              onClick={() => setSidebarOpen((prev) => !prev)}
+              aria-label="메뉴 열기"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
             <h1 className="app__logo">AIMS Admin</h1>
           </div>
           <div className="app__header-right">
@@ -268,8 +294,19 @@ function App() {
         </header>
 
         <div className="app__body">
+          {/* 모바일 오버레이 */}
+          {sidebarOpen && (
+            <div
+              className="app__sidebar-overlay"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
           {/* Sidebar */}
-          <aside className="app__sidebar" style={{ width: sidebarWidth }}>
+          <aside
+            className={`app__sidebar ${sidebarOpen ? 'app__sidebar--open' : ''}`}
+            style={isMobile ? undefined : { width: sidebarWidth }}
+          >
             <nav className="app__nav">
               {navItems.map((item) => renderNavItem(item))}
             </nav>
