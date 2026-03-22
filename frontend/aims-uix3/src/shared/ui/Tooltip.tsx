@@ -218,14 +218,16 @@ export const Tooltip: React.FC<TooltipProps> = ({
    */
   const tooltipElement = isVisible ? (
     <div
-      ref={tooltipRef}
-      className={`tooltip tooltip--${placement}`}
-      style={{
-        position: 'fixed',
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-        opacity: position.top === 0 && position.left === 0 ? 0 : 1
+      ref={(el) => {
+        (tooltipRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        if (el) {
+          el.style.position = 'fixed';
+          el.style.top = `${position.top}px`;
+          el.style.left = `${position.left}px`;
+          el.style.opacity = position.top === 0 && position.left === 0 ? '0' : '1';
+        }
       }}
+      className={`tooltip tooltip--${placement}`}
       role="tooltip"
       id={tooltipId}
     >
@@ -234,13 +236,17 @@ export const Tooltip: React.FC<TooltipProps> = ({
       </div>
       <div
         className="tooltip-arrow"
-        style={
-          arrowOffset !== null
-            ? (placement === 'top' || placement === 'bottom')
-              ? { left: `${arrowOffset}px`, marginLeft: '-4px' }
-              : { top: `${arrowOffset}px`, marginTop: '-4px' }
-            : undefined
-        }
+        ref={(el) => {
+          if (el && arrowOffset !== null) {
+            if (placement === 'top' || placement === 'bottom') {
+              el.style.left = `${arrowOffset}px`;
+              el.style.marginLeft = '-4px';
+            } else {
+              el.style.top = `${arrowOffset}px`;
+              el.style.marginTop = '-4px';
+            }
+          }
+        }}
       />
     </div>
   ) : null

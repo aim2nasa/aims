@@ -2487,9 +2487,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                       key={idx}
                       className="chat-panel__welcome-feature"
                       onClick={() => handleFeatureClick(idx)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleFeatureClick(idx)}
-                      role="button"
-                      tabIndex={0}
                     >
                       <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
                       <div className="chat-panel__welcome-feature-content">
@@ -2955,9 +2952,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                       key={idx}
                       className="chat-panel__welcome-feature"
                       onClick={() => handleFeatureClick(idx)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleFeatureClick(idx)}
-                      role="button"
-                      tabIndex={0}
                     >
                       <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
                       <div className="chat-panel__welcome-feature-content">
