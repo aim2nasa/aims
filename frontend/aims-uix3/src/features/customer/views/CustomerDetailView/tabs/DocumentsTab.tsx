@@ -1386,15 +1386,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <div
                     className="status-filename status-filename--clickable"
                     onClick={() => handlePreview(document)}
-
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        handlePreview(document)
-                      }
-                    }}
                   >
                     {/* 🍎 파일명 표시: filenameMode에 따라 원본/별칭 전환 */}
                     {(() => {

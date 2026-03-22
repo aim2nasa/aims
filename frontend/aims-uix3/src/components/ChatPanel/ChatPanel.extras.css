@@ -235,6 +235,10 @@
     white-space: nowrap;
   }
 
+  .chat-panel__doc-link--disabled {
+    cursor: default;
+  }
+
   .chat-panel__doc-link:hover {
     background: var(--color-chat-accent-alpha-20);
     border-color: var(--color-chat-accent-alpha-40);

@@ -1625,7 +1625,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             className={`chat-panel__doc-link${isDesktop ? '' : ' chat-panel__doc-link--disabled'}`}
             onClick={() => isDesktop && handleDocumentPreviewClick(docId)}
             title={isDesktop ? '클릭하여 문서 미리보기' : '웹에서 문서 미리보기 가능'}
-            style={isDesktop ? { cursor: 'pointer' } : { cursor: 'default' }}
           >
             📄 {fileName}
           </button>
