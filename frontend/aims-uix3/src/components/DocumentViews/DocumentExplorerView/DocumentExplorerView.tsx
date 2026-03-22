@@ -36,7 +36,7 @@ import type { SearchResultItem } from '@/entities/search'
 import { formatDate, formatDateTime } from '@/shared/lib/timeUtils'
 import { formatFileSize } from '@/shared/lib/fileValidation/constants'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
-import { Tooltip } from '@/shared/ui'
+import { Tooltip, useToastContext } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { Document } from '@/types/documentStatus'
 import './DocumentExplorerView.toolbar.css';
@@ -49,6 +49,7 @@ import { useAliasGeneration } from '@/hooks/useAliasGeneration'
 import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
+import { useDocumentDownload } from '@/features/customer/hooks/useDocumentDownload'
 
 export interface DocumentExplorerViewProps {
   /** View 표시 여부 */
@@ -143,6 +144,57 @@ const DocumentExplorerContent: React.FC<{
     const docName = doc.displayName || DocumentStatusService.extractOriginalFilename(doc)
     if (docId) documentActions.deleteDocument(docId, docName)
   }, [documentActions])
+
+  // === 문서함 다운로드 ===
+  const toast = useToastContext()
+  const { download: downloadZip, cancel: cancelDownload, isDownloading } = useDocumentDownload()
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set())
+
+  // 고객 체크박스 토글
+  const handleToggleCustomerSelect = useCallback((customerId: string) => {
+    setSelectedCustomerIds(prev => {
+      const next = new Set(prev)
+      if (next.has(customerId)) {
+        next.delete(customerId)
+      } else {
+        next.add(customerId)
+      }
+      return next
+    })
+  }, [])
+
+  // 단일 고객 문서함 다운로드 (··· 메뉴)
+  const handleDownloadCustomerDocuments = useCallback(async (customerId: string, customerName: string) => {
+    try {
+      await downloadZip([customerId])
+      toast.show(`${customerName} 문서함 다운로드 완료`, { type: 'success' })
+    } catch {
+      toast.show('다운로드에 실패했습니다', { type: 'error' })
+    }
+  }, [downloadZip])
+
+  // 다중 고객 문서함 다운로드 (하단 액션바)
+  const handleDownloadSelectedCustomers = useCallback(async () => {
+    if (selectedCustomerIds.size === 0) return
+    try {
+      await downloadZip(Array.from(selectedCustomerIds))
+      const count = selectedCustomerIds.size
+      toast.show(`${count}명 고객 문서함 다운로드 완료`, { type: 'success' })
+      setSelectedCustomerIds(new Set())
+    } catch {
+      toast.show('다운로드에 실패했습니다', { type: 'error' })
+    }
+  }, [selectedCustomerIds, downloadZip])
+
+  // 전체 선택/해제
+  const handleToggleSelectAllCustomers = useCallback((allCustomerIds: string[]) => {
+    setSelectedCustomerIds(prev => {
+      if (prev.size === allCustomerIds.length && allCustomerIds.every(id => prev.has(id))) {
+        return new Set()
+      }
+      return new Set(allCustomerIds)
+    })
+  }, [])
 
   // === 편집 모드 (일괄 삭제 / AI 별칭 생성) ===
   const { showConfirm, showAlert } = useAppleConfirm()
@@ -1646,6 +1698,9 @@ const DocumentExplorerContent: React.FC<{
             updatingDocTypeId={updatingDocTypeId}
             onSortByChange={setSortBy}
             hideColumnHeader
+            onDownloadCustomerDocuments={handleDownloadCustomerDocuments}
+            selectedCustomerIds={selectedCustomerIds}
+            onToggleCustomerSelect={handleToggleCustomerSelect}
           />
         )}
 
@@ -1672,6 +1727,48 @@ const DocumentExplorerContent: React.FC<{
         sections={customerContextMenuSections}
         onClose={customerContextMenu.close}
       />
+
+      {/* 고객 다운로드 하단 액션바 (체크박스 선택 시) */}
+      {selectedCustomerIds.size > 0 && editMode === 'none' && (
+        <div className="doc-explorer-action-bar">
+          <div className="doc-explorer-action-bar__left">
+            <label className="doc-explorer-action-bar__select-all">
+              <input
+                type="checkbox"
+                checked={treeData.nodes.length > 0 && treeData.nodes.every(n => !n.metadata?.customerId || selectedCustomerIds.has(n.metadata.customerId))}
+                onChange={() => {
+                  const allIds = treeData.nodes
+                    .filter(n => n.metadata?.customerId)
+                    .map(n => n.metadata!.customerId!)
+                  handleToggleSelectAllCustomers(allIds)
+                }}
+                aria-label="전체 선택"
+              />
+              <span>전체 선택</span>
+            </label>
+            <span className="doc-explorer-action-bar__count">
+              {selectedCustomerIds.size}명 선택됨
+            </span>
+          </div>
+          <div className="doc-explorer-action-bar__right">
+            <button
+              type="button"
+              className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--clear"
+              onClick={() => setSelectedCustomerIds(new Set())}
+            >
+              선택 해제
+            </button>
+            <button
+              type="button"
+              className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--download"
+              onClick={handleDownloadSelectedCustomers}
+              disabled={isDownloading}
+            >
+              {isDownloading ? '다운로드 중...' : '선택 다운로드'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 편집 모드 하단 액션바 */}
       {editMode !== 'none' && (

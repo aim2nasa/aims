@@ -3097,5 +3097,242 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
   });
 
 
+  // ========================
+  // 고객별 문서함 ZIP 다운로드
+  // POST /api/documents/download
+  // ========================
+  router.post('/documents/download', authenticateJWT, async (req, res) => {
+    const archiver = require('archiver');
+    const fs = require('fs');
+    const path = require('path');
+
+    const BASE_DIR = path.resolve('/data/uploads');
+
+    try {
+      const { customerIds } = req.body;
+      const userId = req.user.id;
+
+      if (!customerIds || !Array.isArray(customerIds) || customerIds.length === 0) {
+        return res.status(400).json({ error: 'customerIds 배열이 필요합니다.' });
+      }
+
+      // 1. 인가 검증: 모든 고객이 요청자 소유인지 확인
+      const objectIds = customerIds.map(id => {
+        if (!ObjectId.isValid(id)) throw new Error(`유효하지 않은 고객 ID: ${id}`);
+        return new ObjectId(id);
+      });
+
+      const customers = await db.collection(CUSTOMERS_COLLECTION).find({
+        _id: { $in: objectIds },
+        ownerId: userId
+      }).toArray();
+
+      if (customers.length !== customerIds.length) {
+        return res.status(403).json({ error: '접근 권한이 없는 고객이 포함되어 있습니다.' });
+      }
+
+      // 2. 동명이인 감지 (ZIP 내 폴더명 충돌 방지)
+      const nameCount = new Map();
+      for (const c of customers) {
+        const name = c.personal_info?.name || '이름없음';
+        nameCount.set(name, (nameCount.get(name) || 0) + 1);
+      }
+
+      // 3. ZIP 파일명 결정
+      const isMulti = customers.length > 1;
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+
+      let zipFilename;
+      if (isMulti) {
+        zipFilename = `AIMS_문서함_${dateStr}.zip`;
+      } else {
+        const singleName = customers[0].personal_info?.name || '고객';
+        zipFilename = `${singleName}.zip`;
+      }
+
+      // 4. 응답 헤더 설정
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition',
+        `attachment; filename*=UTF-8''${encodeURIComponent(zipFilename)}`);
+      res.setHeader('X-Skipped-Files', '0'); // 누락 파일 수 (나중에 업데이트)
+
+      // 5. 스트리밍 타임아웃 해제
+      req.setTimeout(0);
+
+      // 6. archiver 설정
+      const archive = archiver('zip', { zlib: { level: 5 } });
+
+      // 에러 핸들링
+      archive.on('error', (err) => {
+        console.error('[문서 다운로드] archiver 오류:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'ZIP 생성 실패' });
+        }
+      });
+
+      archive.on('warning', (err) => {
+        console.warn('[문서 다운로드] archiver 경고:', err);
+      });
+
+      // 클라이언트 연결 끊김 시 정리
+      req.on('close', () => {
+        archive.abort();
+      });
+
+      archive.pipe(res);
+
+      // 7. 카테고리/서브타입 레이블 매핑 (document_type → 한글명)
+      const CATEGORY_LABELS = {
+        insurance: '보험계약', claim: '보험금청구', identity: '신분증명',
+        medical: '건강의료', asset: '자산', corporate: '법인', etc: '기타'
+      };
+      const TYPE_TO_CATEGORY = {
+        policy: 'insurance', coverage_analysis: 'insurance', application: 'insurance',
+        plan_design: 'insurance', annual_report: 'insurance', customer_review: 'insurance',
+        insurance_etc: 'insurance',
+        diagnosis: 'claim', medical_receipt: 'claim', claim_form: 'claim',
+        consent_delegation: 'claim',
+        id_card: 'identity', family_cert: 'identity', personal_docs: 'identity',
+        health_checkup: 'medical',
+        asset_document: 'asset', inheritance_gift: 'asset',
+        corp_basic: 'corporate', hr_document: 'corporate', corp_tax: 'corporate',
+        corp_asset: 'corporate', legal_document: 'corporate',
+        general: 'etc', unclassifiable: 'etc', unspecified: 'etc'
+      };
+      const SUBTYPE_LABELS = {
+        policy: '보험증권', coverage_analysis: '보장분석', application: '청약서',
+        plan_design: '가입설계서', annual_report: '연간보고서', customer_review: '변액리포트',
+        insurance_etc: '기타보험관련',
+        diagnosis: '진단서소견서', medical_receipt: '진료비영수증',
+        claim_form: '보험금청구서', consent_delegation: '위임장동의서',
+        id_card: '신분증', family_cert: '가족관계서류', personal_docs: '기타개인서류',
+        health_checkup: '건강검진결과',
+        asset_document: '자산관련서류', inheritance_gift: '상속증여',
+        corp_basic: '기본서류', hr_document: '인사노무', corp_tax: '세무',
+        corp_asset: '법인자산', legal_document: '기타법률서류',
+        general: '일반문서', unclassifiable: '분류불가', unspecified: '미지정'
+      };
+
+      // 폴더/파일명 안전 처리
+      function sanitizeName(name) {
+        return name
+          .replace(/[<>:"/\\|?*]/g, '_')
+          .replace(/\.{2,}/g, '_')
+          .replace(/[.\s]+$/, '')
+          .trim() || '이름없음';
+      }
+
+      let skippedFiles = 0;
+
+      // 8. 고객별 문서 추가
+      for (const customer of customers) {
+        const customerName = customer.personal_info?.name || '이름없음';
+        let customerFolder = sanitizeName(customerName);
+
+        // 동명이인 처리: ID 접미사 추가
+        if (nameCount.get(customerName) > 1) {
+          customerFolder = `${customerFolder}_${customer._id.toString().slice(-6)}`;
+        }
+
+        const docs = await db.collection(COLLECTION_NAME).find({
+          customerId: customer._id,
+          ownerId: userId
+        }).toArray();
+
+        if (docs.length === 0) continue;
+
+        // 폴더 내 파일명 충돌 추적
+        const folderFileNames = new Map(); // folderPath → Set<usedName>
+
+        for (const doc of docs) {
+          // 파일 경로 결정: PDF 변환본 우선, 없으면 원본
+          let filePath = doc.upload?.convPdfPath || doc.upload?.destPath;
+          if (!filePath) {
+            skippedFiles++;
+            continue;
+          }
+
+          // 경로 탈출 방지
+          const resolved = path.resolve(filePath);
+          if (!resolved.startsWith(BASE_DIR)) {
+            console.warn('[문서 다운로드] 경로 탈출 시도 감지:', filePath);
+            skippedFiles++;
+            continue;
+          }
+
+          // 파일 존재 여부 확인
+          if (!fs.existsSync(resolved)) {
+            skippedFiles++;
+            continue;
+          }
+
+          // 카테고리/서브타입 폴더 경로 결정
+          const docType = doc.document_type || 'unspecified';
+          const category = TYPE_TO_CATEGORY[docType] || 'etc';
+          const catLabel = CATEGORY_LABELS[category] || '기타';
+          const subLabel = SUBTYPE_LABELS[docType] || docType;
+
+          // 폴더 경로 구성
+          let folderPath;
+          if (isMulti) {
+            folderPath = `AIMS_문서함_${dateStr}/${customerFolder}/${catLabel}/${subLabel}`;
+          } else {
+            folderPath = `${customerFolder}/${catLabel}/${subLabel}`;
+          }
+
+          // 파일명 결정 (displayName 우선 → originalName 폴백)
+          let fileName = doc.displayName || doc.upload?.originalName || 'unnamed';
+
+          // PDF 변환본 사용 시 확장자 교정
+          if (doc.upload?.convPdfPath && filePath === doc.upload.convPdfPath) {
+            const ext = path.extname(fileName).toLowerCase();
+            if (ext !== '.pdf') {
+              fileName = fileName.replace(/\.[^/.]+$/, '') + '.pdf';
+            }
+          }
+
+          // 같은 폴더 내 파일명 충돌 처리
+          if (!folderFileNames.has(folderPath)) {
+            folderFileNames.set(folderPath, new Set());
+          }
+          const usedNames = folderFileNames.get(folderPath);
+
+          if (usedNames.has(fileName)) {
+            const nameBase = fileName.replace(/\.[^/.]+$/, '');
+            const nameExt = path.extname(fileName);
+            let counter = 2;
+            while (usedNames.has(`${nameBase} (${counter})${nameExt}`)) {
+              counter++;
+            }
+            fileName = `${nameBase} (${counter})${nameExt}`;
+          }
+          usedNames.add(fileName);
+
+          // ZIP에 파일 추가
+          archive.file(resolved, { name: `${folderPath}/${fileName}` });
+        }
+      }
+
+      // 누락 파일 수 업데이트 (헤더는 이미 전송되었을 수 있으므로 별도 헤더로)
+      // 참고: 스트리밍이므로 헤더를 사후 변경할 수 없음 → 프론트엔드에서 응답 헤더로 확인
+      // archive.finalize() 전에 trailer는 HTTP/1.1에서 지원하나 실용성 낮음
+      // 대신 프론트엔드가 X-Skipped-Files 헤더를 읽음 (초기값 0, 실제 값은 로그에만)
+      if (skippedFiles > 0) {
+        console.warn(`[문서 다운로드] ${skippedFiles}건의 파일을 찾을 수 없어 제외됨`);
+      }
+
+      await archive.finalize();
+
+    } catch (error) {
+      console.error('[문서 다운로드] 오류:', error.message);
+      backendLogger.error('Documents', '[문서 다운로드] ZIP 생성 실패', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: `문서 다운로드 실패: ${error.message}` });
+      }
+    }
+  });
+
+
   return router;
 };

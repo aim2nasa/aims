@@ -59,6 +59,16 @@ vi.mock('../hooks/useDocumentExplorerTree', () => ({
   }),
 }))
 
+// === Mock: Toast ===
+vi.mock('@/shared/ui/Toast/ToastContext', () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}))
+
 // === Mock: UI 컴포넌트 ===
 vi.mock('../../../CenterPaneView/CenterPaneView', () => ({
   default: ({ children, visible }: { children: React.ReactNode; visible: boolean }) =>

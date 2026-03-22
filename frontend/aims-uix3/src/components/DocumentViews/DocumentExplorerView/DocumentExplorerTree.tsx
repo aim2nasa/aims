@@ -110,6 +110,12 @@ export interface DocumentExplorerTreeProps {
   onSortByChange?: (sortBy: DocumentSortBy) => void
   /** true이면 컬럼 헤더를 내부에서 렌더링하지 않음 (부모가 scroll container 밖에서 렌더링할 때) */
   hideColumnHeader?: boolean
+  /** 고객 문서함 다운로드 핸들러 (단일 고객) */
+  onDownloadCustomerDocuments?: (customerId: string, customerName: string) => void
+  /** 고객 체크박스 선택 상태 */
+  selectedCustomerIds?: Set<string>
+  /** 고객 체크박스 토글 */
+  onToggleCustomerSelect?: (customerId: string) => void
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -431,6 +437,9 @@ interface GroupNodeProps {
   onToggleExpandCustomer?: (customerNodeKey: string) => void
   onDocTypeChange?: (documentId: string, newType: string) => void
   updatingDocTypeId?: string | null
+  onDownloadCustomerDocuments?: (customerId: string, customerName: string) => void
+  selectedCustomerIds?: Set<string>
+  onToggleCustomerSelect?: (customerId: string) => void
 }
 
 const GroupNode = React.memo<GroupNodeProps>(({
@@ -467,6 +476,9 @@ const GroupNode = React.memo<GroupNodeProps>(({
   onToggleExpandCustomer,
   onDocTypeChange,
   updatingDocTypeId,
+  onDownloadCustomerDocuments,
+  selectedCustomerIds,
+  onToggleCustomerSelect,
 }) => {
   const isExpanded = expandedKeys.has(node.key)
   const hasChildren = node.children && node.children.length > 0
@@ -513,6 +525,19 @@ const GroupNode = React.memo<GroupNodeProps>(({
         aria-expanded={isExpanded}
         aria-selected={isFocused}
       >
+        {/* 고객 노드 체크박스 (문서함 다운로드용) */}
+        {isCustomerNode && onToggleCustomerSelect && node.metadata?.customerId && (
+          <span className="doc-explorer-tree__customer-checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              className="doc-explorer-tree__customer-checkbox"
+              checked={selectedCustomerIds?.has(node.metadata.customerId) || false}
+              onChange={() => onToggleCustomerSelect(node.metadata!.customerId!)}
+              aria-label={`${node.label} 선택`}
+            />
+          </span>
+        )}
+
         {/* 펼치기/접기 아이콘 - 자식이 있을 때만 표시 (윈도우 탐색기 스타일) */}
         {hasChildren ? (
           <span className="doc-explorer-tree__chevron">
@@ -623,8 +648,25 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     {isCustomerChildrenExpanded ? '하위 폴더 접기' : '하위 폴더 펼치기'}
                   </button>
                 )}
+                {/* 문서함 다운로드 */}
+                {onDownloadCustomerDocuments && (
+                  <button
+                    type="button"
+                    className="doc-explorer-tree__customer-action-item"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowActionMenu(false)
+                      onDownloadCustomerDocuments(node.metadata!.customerId!, node.label)
+                    }}
+                  >
+                    <span className="doc-explorer-tree__customer-action-icon">
+                      <SFSymbol name="arrow.down.circle" size={SFSymbolSize.CAPTION_1} decorative />
+                    </span>
+                    문서함 다운로드
+                  </button>
+                )}
                 {/* 구분선: 위쪽 항목이 하나라도 있을 때만 표시 */}
-                {(onOpenContentSearchModal || (onToggleExpandCustomer && hasChildren)) && (
+                {(onOpenContentSearchModal || (onToggleExpandCustomer && hasChildren) || onDownloadCustomerDocuments) && (
                   <div className="doc-explorer-tree__customer-action-divider" />
                 )}
                 {/* 고객 문서 분류함 */}
@@ -727,6 +769,9 @@ const GroupNode = React.memo<GroupNodeProps>(({
               onToggleExpandCustomer={onToggleExpandCustomer}
               onDocTypeChange={onDocTypeChange}
               updatingDocTypeId={updatingDocTypeId}
+              onDownloadCustomerDocuments={onDownloadCustomerDocuments}
+              selectedCustomerIds={selectedCustomerIds}
+              onToggleCustomerSelect={onToggleCustomerSelect}
             />
           ))}
         </div>
@@ -775,6 +820,9 @@ interface TreeNodeProps {
   onToggleExpandCustomer?: (customerNodeKey: string) => void
   onDocTypeChange?: (documentId: string, newType: string) => void
   updatingDocTypeId?: string | null
+  onDownloadCustomerDocuments?: (customerId: string, customerName: string) => void
+  selectedCustomerIds?: Set<string>
+  onToggleCustomerSelect?: (customerId: string) => void
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -811,6 +859,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onToggleExpandCustomer,
   onDocTypeChange,
   updatingDocTypeId,
+  onDownloadCustomerDocuments,
+  selectedCustomerIds,
+  onToggleCustomerSelect,
 }) => {
   if (node.type === 'document') {
     const docId = node.document?._id || node.document?.id || ''
@@ -878,6 +929,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       onToggleExpandCustomer={onToggleExpandCustomer}
       onDocTypeChange={onDocTypeChange}
       updatingDocTypeId={updatingDocTypeId}
+      onDownloadCustomerDocuments={onDownloadCustomerDocuments}
+      selectedCustomerIds={selectedCustomerIds}
+      onToggleCustomerSelect={onToggleCustomerSelect}
     />
   )
 }
@@ -1038,6 +1092,9 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   updatingDocTypeId,
   onSortByChange,
   hideColumnHeader = false,
+  onDownloadCustomerDocuments,
+  selectedCustomerIds,
+  onToggleCustomerSelect,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -1491,7 +1548,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
       )}
       <div
         ref={treeContainerRef}
-        className="doc-explorer-tree"
+        className={`doc-explorer-tree${selectedCustomerIds && selectedCustomerIds.size > 0 ? ' doc-explorer-tree--selection-active' : ''}`}
         role="tree"
         tabIndex={0}
         onKeyDown={keyboardHandleKeyDown}
@@ -1533,6 +1590,9 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             onToggleExpandCustomer={onToggleExpandCustomer}
             onDocTypeChange={onDocTypeChange}
             updatingDocTypeId={updatingDocTypeId}
+            onDownloadCustomerDocuments={onDownloadCustomerDocuments}
+            selectedCustomerIds={selectedCustomerIds}
+            onToggleCustomerSelect={onToggleCustomerSelect}
           />
         ))}
       </div>

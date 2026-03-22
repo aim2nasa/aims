@@ -1063,12 +1063,14 @@
   }
 
   .doc-explorer-action-bar__btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: var(--spacing-1);
-    padding: clamp(4px, 0.35vw, 5px) clamp(8px, 0.83vw, 12px);
+    padding: clamp(6px, 0.4vw, 8px) clamp(10px, 0.83vw, 14px);
     font-size: clamp(10px, 0.83vw, 12px);
     font-weight: 600;
+    line-height: 1;
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -1118,6 +1120,51 @@
 
   html[data-theme="dark"] .doc-explorer-action-bar__btn--alias {
     background: linear-gradient(135deg, #8b6af2, #5e5ce6, #bf5af2);
+  }
+
+  /* 다운로드 버튼 */
+  .doc-explorer-action-bar__btn--download {
+    background: var(--color-primary-500, #007aff);
+    color: var(--color-button-primary-text, #fff);
+    box-shadow: 0 1px 4px rgba(0, 122, 255, 0.3);
+  }
+
+  .doc-explorer-action-bar__btn--download:hover:not(:disabled) {
+    opacity: 0.92;
+    transform: scale(1.02);
+  }
+
+  .doc-explorer-action-bar__btn--download:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  /* 선택 해제 버튼 */
+  .doc-explorer-action-bar__btn--clear {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+  }
+
+  .doc-explorer-action-bar__btn--clear:hover:not(:disabled) {
+    background: var(--color-bg-active);
+  }
+
+  /* 전체선택 라벨 */
+  .doc-explorer-action-bar__select-all {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    font-size: var(--font-size-caption-2);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    margin-right: var(--spacing-2);
+  }
+
+  .doc-explorer-action-bar__select-all input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    accent-color: var(--color-primary);
+    cursor: pointer;
   }
 
 } /* end @layer components */

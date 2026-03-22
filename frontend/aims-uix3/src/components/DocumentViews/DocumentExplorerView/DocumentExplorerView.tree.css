@@ -90,6 +90,7 @@
     border-radius: var(--explorer-border-radius);
     cursor: pointer;
     transition: background-color var(--explorer-transition);
+    position: relative;
   }
 
   /* 그룹 헤더 호버 - 라이트 테마 대비 강화 */
@@ -344,6 +345,58 @@
 
   .doc-explorer-tree__customer-action-icon .sf-symbol--person {
     color: var(--color-ios-blue);
+  }
+
+  /* 문서함 다운로드 아이콘 색상 */
+  .doc-explorer-tree__customer-action-icon .sf-symbol--arrow-down-circle {
+    color: var(--color-ios-green, #34c759);
+  }
+
+  /* ============================================
+     고객 체크박스 (문서함 다운로드 선택용)
+     ============================================ */
+  .doc-explorer-tree__customer-checkbox-wrapper {
+    position: absolute;
+    left: -2px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .doc-explorer-tree__customer-checkbox {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+    opacity: 0;
+    transition: opacity var(--explorer-transition);
+  }
+
+  /* 호버 시 체크박스 표시 */
+  .doc-explorer-tree__group-header:hover .doc-explorer-tree__customer-checkbox {
+    opacity: 0.6;
+  }
+
+  /* 체크된 체크박스는 항상 표시 */
+  .doc-explorer-tree__customer-checkbox:checked {
+    opacity: 1;
+  }
+
+  /* 선택 모드 (하나라도 선택됨): 모든 체크박스 표시 */
+  .doc-explorer-tree--selection-active .doc-explorer-tree__customer-checkbox {
+    opacity: 0.4;
+  }
+
+  .doc-explorer-tree--selection-active .doc-explorer-tree__group-header:hover .doc-explorer-tree__customer-checkbox {
+    opacity: 0.8;
+  }
+
+  .doc-explorer-tree--selection-active .doc-explorer-tree__customer-checkbox:checked {
+    opacity: 1;
   }
 
   /* ============================================
