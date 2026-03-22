@@ -1205,14 +1205,16 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         <>
           {/* 🍎 리스트 컨테이너 - CenterPane 스타일 */}
           <div
+            ref={(el) => {
+              if (el) {
+                el.style.setProperty('--filename-column-width', `${columnWidths['filename'] || filenameColumnWidth}px`);
+                el.style.setProperty('--doctype-column-width', `${columnWidths['docType'] || DEFAULT_DOCTYPE_WIDTH}px`);
+                el.style.setProperty('--size-column-width', `${columnWidths['size'] || sizeColumnWidth}px`);
+                el.style.setProperty('--type-column-width', `${columnWidths['type'] || DEFAULT_TYPE_WIDTH}px`);
+                el.style.setProperty('--date-column-width', `${columnWidths['date'] || dateColumnWidth}px`);
+              }
+            }}
             className={`tab-table__scroll customer-documents__list-container${isResizing ? ' is-resizing' : ''}`}
-            style={{
-              '--filename-column-width': `${columnWidths['filename'] || filenameColumnWidth}px`,
-              '--doctype-column-width': `${columnWidths['docType'] || DEFAULT_DOCTYPE_WIDTH}px`,
-              '--size-column-width': `${columnWidths['size'] || sizeColumnWidth}px`,
-              '--type-column-width': `${columnWidths['type'] || DEFAULT_TYPE_WIDTH}px`,
-              '--date-column-width': `${columnWidths['date'] || dateColumnWidth}px`,
-            } as React.CSSProperties}
           >
             {/* 🍎 칼럼 헤더 - CenterPane과 동일 */}
             <div className="tab-table__header customer-documents-list-header">

@@ -327,6 +327,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const fileInputRef = useRef<HTMLInputElement>(null); // 파일 입력 ref
   const docSuggestionSentRef = useRef(false); // 문서 검색 제안 중복 클릭 방지
 
+  // 패널 너비를 ref를 통해 programmatic하게 설정 (inline style 회피)
+  useEffect(() => {
+    if (panelRef.current) {
+      panelRef.current.style.width = typeof panelWidth === 'number' ? `${panelWidth}px` : String(panelWidth);
+    }
+  }, [panelWidth]);
+
   // 🔴 팝업 모드에서 localStorage 전용 키로부터 메시지 로드
   useEffect(() => {
     if (!isPopup) return;
@@ -1619,15 +1626,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         const fileName = text.slice(openBracketPos + 1, suffixStart);
         const isDesktop = !detectDeviceState().isMobileLayout;
         parts.push(
-          <button
+          <span
             key={`${keyPrefix}-doc-${docId}-${match.index}`}
-            type="button"
+            role="button"
+            tabIndex={isDesktop ? 0 : -1}
             className={`chat-panel__doc-link${isDesktop ? '' : ' chat-panel__doc-link--disabled'}`}
             onClick={() => isDesktop && handleDocumentPreviewClick(docId)}
-            title={isDesktop ? '클릭하여 문서 미리보기' : '웹에서 문서 미리보기 가능'}
+            onKeyDown={(e) => { if (isDesktop && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleDocumentPreviewClick(docId); } }}
+            aria-label={isDesktop ? '클릭하여 문서 미리보기' : '웹에서 문서 미리보기 가능'}
           >
             📄 {fileName}
-          </button>
+          </span>
         );
         lastIndex = match.index + match[0].length;
       }
@@ -3335,8 +3344,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   // 컨텍스트 메뉴 UI (우클릭 복사) - Portal로 body에 직접 렌더링하여 z-index 문제 해결
   const contextMenuUI = contextMenu.visible && createPortal(
     <div
+      ref={(el) => {
+        if (el) {
+          el.style.left = `${contextMenu.x}px`;
+          el.style.top = `${contextMenu.y}px`;
+        }
+      }}
       className="chat-panel__context-menu"
-      style={{ left: contextMenu.x, top: contextMenu.y }}
       onClick={(e) => e.stopPropagation()}
     >
       <button
@@ -3511,7 +3525,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         <div
           ref={panelRef}
           className={`chat-panel ${isOpen ? 'chat-panel--open' : ''} ${isResizing ? 'chat-panel--resizing' : ''}`}
-          style={{ width: panelWidth }}
         >
           {panelContent}
         </div>

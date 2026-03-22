@@ -1763,14 +1763,16 @@ const DocumentExplorerContent: React.FC<{
 
       {/* 문서유형 변경 피커 (숨겨진 트리거) */}
       <span
-        ref={typePickerTriggerRef}
-        style={{
-          position: 'fixed',
-          left: documentContextMenu.position.x,
-          top: documentContextMenu.position.y,
-          width: 0,
-          height: 0,
-          pointerEvents: 'none',
+        ref={(el) => {
+          (typePickerTriggerRef as React.MutableRefObject<HTMLSpanElement | null>).current = el;
+          if (el) {
+            el.style.position = 'fixed';
+            el.style.left = `${documentContextMenu.position.x}px`;
+            el.style.top = `${documentContextMenu.position.y}px`;
+            el.style.width = '0';
+            el.style.height = '0';
+            el.style.pointerEvents = 'none';
+          }
         }}
       />
       <DocumentTypePickerModal
