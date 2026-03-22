@@ -835,6 +835,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     _id: documentId,
                     ...raw
                   })
+                } else {
+                  alert('삭제되었거나 접근할 수 없는 문서입니다.')
                 }
               } catch (error) {
                 console.error('다운로드 실패:', error)
