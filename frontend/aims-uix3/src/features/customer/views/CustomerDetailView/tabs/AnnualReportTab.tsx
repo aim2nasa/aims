@@ -1075,15 +1075,17 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
 
       {/* 테이블 컨테이너 */}
       <div
+        ref={(el) => {
+          if (el) {
+            el.style.setProperty('--owner-column-width', `${columnWidths['owner'] || ownerColumnWidth}px`);
+            el.style.setProperty('--issue-date-column-width', `${columnWidths['issueDate'] || DEFAULT_ISSUE_DATE_WIDTH}px`);
+            el.style.setProperty('--parsed-at-column-width', `${columnWidths['parsedAt'] || parsedAtColumnWidth}px`);
+            el.style.setProperty('--premium-column-width', `${columnWidths['premium'] || premiumColumnWidth}px`);
+            el.style.setProperty('--count-column-width', `${columnWidths['count'] || DEFAULT_COUNT_WIDTH}px`);
+            el.style.setProperty('--status-column-width', `${columnWidths['status'] || DEFAULT_STATUS_WIDTH}px`);
+          }
+        }}
         className={`tab-table__scroll annual-report-table-container${isResizing ? ' is-resizing' : ''}`}
-        style={{
-          '--owner-column-width': `${columnWidths['owner'] || ownerColumnWidth}px`,
-          '--issue-date-column-width': `${columnWidths['issueDate'] || DEFAULT_ISSUE_DATE_WIDTH}px`,
-          '--parsed-at-column-width': `${columnWidths['parsedAt'] || parsedAtColumnWidth}px`,
-          '--premium-column-width': `${columnWidths['premium'] || premiumColumnWidth}px`,
-          '--count-column-width': `${columnWidths['count'] || DEFAULT_COUNT_WIDTH}px`,
-          '--status-column-width': `${columnWidths['status'] || DEFAULT_STATUS_WIDTH}px`,
-        } as React.CSSProperties}
       >
         {/* 테이블 헤더 */}
         <div className="tab-table__header annual-report-table-header">
