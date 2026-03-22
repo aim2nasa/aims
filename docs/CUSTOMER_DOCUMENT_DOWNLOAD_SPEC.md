@@ -1,7 +1,8 @@
 # 고객별 문서함 다운로드 기능 설계서
 
 > **작성일**: 2026-03-22
-> **상태**: 검토 대기
+> **수정일**: 2026-03-22 (Alex/Gini 리뷰 반영)
+> **상태**: 리뷰 반영 완료
 > **관련 뷰**: CustomerDocumentExplorerView
 
 ---
@@ -14,7 +15,7 @@
 
 | # | 기능 | 트리거 | 대상 |
 |---|------|--------|------|
-| 1 | 고객별 문서함 다운로드 | 고객 행 `···` 컨텍스트 메뉴 | 단일 고객 |
+| 1 | 고객별 문서함 다운로드 | 고객 행 `···` 컨텍스트 메뉴 (신규 추가) | 단일 고객 |
 | 2 | 전체 문서함 다운로드 | 페이지 상단 버튼 | 다중 선택 / 전체 고객 |
 
 ---
@@ -25,11 +26,12 @@
 
 다운로드 시 고객별 문서함의 카테고리/서브타입 계층을 그대로 보존한다.
 
+**단일 고객 ZIP 내부:**
 ```
-곽승철/
+[고객A]/
 ├── 보험계약/
 │   ├── 보험증권/
-│   │   └── 곽승철_무배당뉴하이카운전자상해보험_2022.11.pdf
+│   │   └── 무배당_운전자보험_2022.11.pdf
 │   ├── 청약서/
 │   │   └── ...
 │   ├── 가입설계서/
@@ -52,6 +54,21 @@
     └── ...
 ```
 
+**다중 고객 통합 ZIP 내부:**
+```
+AIMS_문서함_20260322/
+├── [고객A]/
+│   ├── 보험계약/
+│   │   └── ...
+│   └── ...
+├── [고객B]/
+│   ├── 보험금청구/
+│   │   └── ...
+│   └── ...
+└── [고객C]/
+    └── ...
+```
+
 ### 2.2 파일명 규칙
 
 | 모드 | 설명 | 기본값 |
@@ -64,41 +81,72 @@
 
 ### 2.3 다운로드 방식
 
-| 브라우저 지원 | 방식 | 설명 |
-|---------------|------|------|
-| File System Access API 지원 (Chrome/Edge) | 폴더 직접 저장 | `showDirectoryPicker()` → 계층 폴더 직접 생성 |
-| 미지원 (Firefox/Safari 등) | ZIP 다운로드 | 백엔드에서 ZIP 생성 → 브라우저 다운로드 |
+> **MVP 결정:** ZIP 다운로드 단일 경로만 구현한다.
+> File System Access API(`showDirectoryPicker`)는 향후 Phase 2에서 검토한다.
+> (사유: 브라우저 호환성 제한, 개별 fetch N회 오버헤드, 테스트 매트릭스 2배 증가)
+
+| 구분 | 방식 | 설명 |
+|------|------|------|
+| 단일 고객 | 개별 ZIP | `[고객A].zip` 1개 다운로드 |
+| 다중/전체 고객 | **통합 ZIP** | `AIMS_문서함_YYYYMMDD.zip` 1개 (내부에 고객별 폴더) |
+
+**통합 ZIP 방식 채택 사유:**
+- 브라우저가 사용자 제스처 없이 연속 다운로드를 팝업 차단함 (Chrome 등)
+- 고객별 개별 ZIP 순차 다운로드 시 2번째부터 차단될 가능성 높음
+- `archiver` 스트리밍 방식이면 서버 메모리 부담 최소화 가능
 
 ### 2.4 진행상황 모달
 
 다운로드 진행 중 모달을 표시하여 사용자에게 상태를 안내한다.
 
+**단일 고객:**
 ```
 ┌─────────────────────────────────────┐
 │  문서함 다운로드                     │
 │                                     │
-│  곽승철 (3/15 고객)                  │
+│  [고객A] — 52건                      │
 │  ████████████░░░░░░░░  45%          │
 │                                     │
-│  진료비영수증_2024.pdf 다운로드 중... │
-│                                     │
-│  완료: 2 / 실패: 0 / 남은: 12       │
+│  ZIP 생성 중...                      │
 │                                     │
 │              [취소]                  │
 └─────────────────────────────────────┘
 ```
 
-**표시 항목:**
-- 현재 처리 중인 고객명 + 순번 (다중 고객 시)
-- 전체 진행률 (%) + 프로그레스 바
-- 현재 다운로드 중인 파일명
-- 완료/실패/남은 건수
-- 취소 버튼
+**다중 고객:**
+```
+┌─────────────────────────────────────┐
+│  문서함 다운로드                     │
+│                                     │
+│  [고객C] (3/15 고객)                 │
+│  ████████████░░░░░░░░  45%          │
+│                                     │
+│  ZIP 생성 중...                      │
+│  완료: 2명 / 실패: 0명 / 남은: 12명  │
+│                                     │
+│              [취소]                  │
+└─────────────────────────────────────┘
+```
+
+**진행률 표시 방식:**
+- 단일 고객: 수신 바이트 기준 (백엔드 info API로 totalSize 사전 조회)
+- 다중 고객: 고객 단위 진행률 (`완료 고객 수 / 전체 고객 수 × 100`)
+- ZIP 스트리밍은 `Content-Length`를 알 수 없으므로, 정밀 바이트 진행률이 불가한 경우 고객 단위로 표시
+
+**취소 메커니즘:**
+- `AbortController`를 사용하여 진행 중인 `fetch` 요청 중단
+- 다중 고객 순차 처리 중 취소: 현재 고객 다운로드 중단 후 즉시 정지
+- 취소 시 이미 수신된 불완전한 데이터는 폐기 (Blob 해제)
+- 사용자에게 "다운로드가 취소되었습니다" 안내
+
+**페이지 이탈 방지:**
+- 다운로드 진행 중 `beforeunload` 이벤트로 이탈 경고 표시
+- 다운로드 완료/취소 시 `beforeunload` 리스너 해제
 
 ### 2.5 오류 처리
 
-- 개별 파일 다운로드 실패 → 건너뛰고 계속 진행
-- 고객 단위 ZIP 생성 실패 → 해당 고객 건너뛰고 계속 진행
+- 개별 파일 누락 (서버에 파일 없음) → 해당 파일 건너뛰고 계속 진행
+- 고객 문서 ZIP 생성 실패 → 해당 고객 건너뛰고 계속 진행
 - 완료 후 실패 목록을 결과 모달에 표시
 
 ```
@@ -107,12 +155,24 @@
 │                                     │
 │  ✓ 성공: 13명 (총 847건)            │
 │  ✗ 실패: 2명                        │
-│    - 김규선: 서버 오류               │
-│    - 권영민: 파일 없음 (2건)         │
+│    - [고객D]: 서버 오류              │
+│    - [고객E]: 파일 없음 (2건 누락)   │
 │                                     │
 │            [확인]                    │
 └─────────────────────────────────────┘
 ```
+
+### 2.6 엣지 케이스
+
+| 케이스 | 처리 |
+|--------|------|
+| 문서 0건 고객 | 다운로드 대상에서 제외, "다운로드할 문서가 없습니다" 안내 |
+| 동명이인 고객 | ZIP 내 폴더명에 고객ID 접미사 추가: `[고객A]_a1b2c3/` |
+| 휴면(inactive) 고객 | 전체 다운로드 시 활성(active) 고객만 대상. 개별 선택 시 휴면 고객도 가능 |
+| PDF 변환 미완료 문서 | 변환 완료 파일이 있으면 사용, 없으면 원본 파일 다운로드 |
+| 관계자(가족) 문서 | `includeRelated=true` 시 `[고객A]/관계자/[관계자명]/카테고리/...` 구조 |
+| 중복 다운로드 클릭 | `isDownloading` 플래그로 중복 실행 차단 |
+| 다운로드 중 페이지 이탈 | `beforeunload` 경고 표시 |
 
 ---
 
@@ -122,16 +182,19 @@
 
 **트리거:** 고객 목록의 각 행 우측 `···` 컨텍스트 메뉴에 "문서함 다운로드" 항목 추가
 
+> **참고:** 현재 고객 행에 `···` 메뉴가 없으므로 **신규 추가**한다.
+> `ContextMenu` + `useContextMenu` 컴포넌트를 활용한다.
+
 **동작 흐름:**
 1. 사용자가 고객 행의 `···` 메뉴 클릭
 2. "문서함 다운로드" 메뉴 항목 선택
 3. 다운로드 옵션 모달 표시:
    - 파일명 모드: 별칭(기본) / 원본
-   - 다운로드 방식: 폴더 저장(지원 시) / ZIP 다운로드
+   - 관계자 문서 포함 여부
 4. 진행상황 모달 표시
 5. 완료 후 결과 표시
 
-**ZIP 파일명:** `{고객명}.zip` (예: `곽승철.zip`)
+**ZIP 파일명:** `[고객명].zip`
 
 ### 3.2 기능 2 — 전체 문서함 다운로드
 
@@ -141,7 +204,7 @@
 
 | 모드 | 설명 |
 |------|------|
-| 전체 다운로드 | 모든 고객의 문서함을 다운로드 |
+| 전체 다운로드 | 모든 활성 고객의 문서함을 다운로드 |
 | 선택 다운로드 | 체크박스로 고객을 선택하여 다운로드 |
 
 **동작 흐름:**
@@ -150,15 +213,15 @@
    - 대상 선택: 전체 / 선택한 고객
    - 체크박스 고객 선택 UI (선택 모드 시)
    - 파일명 모드: 별칭(기본) / 원본
-   - 다운로드 방식: 폴더 저장(지원 시) / ZIP 다운로드
+   - 관계자 문서 포함 여부
 3. "다운로드 시작" 클릭
-4. **고객 단위 순차 처리:**
-   - 고객별로 ZIP 생성 요청 → 다운로드 → 다음 고객
-   - 하나의 거대 ZIP을 만들지 않음 (서버 부하 분산)
+4. **통합 ZIP으로 처리:**
+   - 백엔드에서 선택된 고객들의 문서를 하나의 ZIP으로 스트리밍 생성
+   - 내부에 고객별 폴더 구조 유지
 5. 진행상황 모달: 고객 단위 진행률 표시
 6. 완료 후 결과 표시
 
-**ZIP 파일명:** 고객별 `{고객명}.zip`
+**ZIP 파일명:** `AIMS_문서함_YYYYMMDD.zip`
 
 ---
 
@@ -172,7 +235,7 @@
 │                 │     │                 │     │   + 파일저장소  │
 │ - 다운로드 옵션   │     │ - ZIP 생성       │     │              │
 │ - 진행상황 모달   │◀────│ - 스트리밍 응답   │◀────│              │
-│ - 폴더 저장/ZIP  │     │                 │     │              │
+│ - AbortController│    │ - archiver      │     │              │
 └─────────────────┘     └─────────────────┘     └──────────────┘
 ```
 
@@ -184,6 +247,8 @@
 GET /api/customers/:customerId/documents/download
 ```
 
+**미들웨어:** `authenticateJWT` (인증 필수)
+
 **쿼리 파라미터:**
 
 | 파라미터 | 타입 | 기본값 | 설명 |
@@ -193,33 +258,90 @@ GET /api/customers/:customerId/documents/download
 
 **응답:** `application/zip` 스트리밍
 
-**ZIP 내부 구조:**
+**Content-Disposition 헤더 (RFC 6266 준수):**
 ```
-곽승철/
-├── 보험계약/
-│   ├── 보험증권/
-│   │   └── 파일.pdf
-│   └── ...
-└── ...
+Content-Disposition: attachment; filename*=UTF-8''%EC%98%88%EC%8B%9C.zip
+```
+- 한글 파일명은 반드시 `filename*=UTF-8''` + `encodeURIComponent()` 형태 사용
+- Node.js `content-disposition` 패키지 또는 직접 인코딩
+
+**인가 검증 (필수):**
+```javascript
+// 반드시 ownerId 복합 조건으로 조회 — 타인 고객 문서 접근 차단
+const customer = await db.collection('customers').findOne({
+  _id: new ObjectId(customerId),
+  ownerId: userId  // ← 필수: 요청자 소유 고객인지 확인
+})
+if (!customer) return res.status(403).json({ error: 'Forbidden' })
+```
+
+**경로 탈출 방지 (필수):**
+```javascript
+const path = require('path')
+const BASE_DIR = '/data/uploads'
+
+function validateFilePath(filePath) {
+  const resolved = path.resolve(BASE_DIR, filePath)
+  if (!resolved.startsWith(path.resolve(BASE_DIR) + path.sep)) {
+    throw new Error('경로 탈출 시도 감지')
+  }
+  return resolved
+}
+```
+
+**파일 누락 처리:**
+```javascript
+// ZIP 생성 중 파일이 없으면 건너뛰기 (ZIP 전체 실패 방지)
+if (!fs.existsSync(resolvedPath)) {
+  skippedFiles.push({ name: doc.displayName, reason: '파일 없음' })
+  continue  // 다음 문서로
+}
 ```
 
 **구현 상세:**
-- `archiver` npm 패키지 사용 (스트리밍 ZIP 생성)
-- 문서 파일은 서버 로컬 `/data/uploads/` 경로에서 직접 읽기
+- `archiver` npm 패키지 사용 (스트리밍 ZIP 생성, 메모리 버퍼링 없음)
+- 문서 파일은 서버 로컬 `/data/uploads/` 경로에서 `fs.createReadStream()`으로 읽기
 - 빈 카테고리/서브타입 폴더는 생성하지 않음
-- Content-Disposition 헤더: `attachment; filename="곽승철.zip"`
+- `archiver`의 `pipe(res)` 방식으로 직접 스트리밍 (메모리 효율적)
 
-#### 4.2.2 다운로드 가능 여부 확인 (선택적)
+#### 4.2.2 다중 고객 통합 ZIP 다운로드
+
+```
+POST /api/documents/download/bulk
+```
+
+**미들웨어:** `authenticateJWT`
+
+**요청 Body:**
+```json
+{
+  "customerIds": ["id1", "id2", "id3"],
+  "filenameMode": "alias",
+  "includeRelated": false
+}
+```
+- `customerIds`가 빈 배열이면 해당 설계사의 전체 활성 고객 대상
+- 모든 `customerId`에 대해 `ownerId` 검증 수행
+
+**응답:** `application/zip` 스트리밍
+
+**ZIP 파일명:** `AIMS_문서함_YYYYMMDD.zip`
+
+#### 4.2.3 다운로드 사전 정보 조회
 
 ```
 GET /api/customers/:customerId/documents/download/info
 ```
 
+**미들웨어:** `authenticateJWT`
+
+**용도:** 다운로드 옵션 모달에서 건수/용량 미리 표시
+
 **응답:**
 ```json
 {
   "customerId": "...",
-  "customerName": "곽승철",
+  "customerName": "[고객A]",
   "totalDocuments": 52,
   "totalSize": 156789012,
   "categories": [
@@ -228,6 +350,8 @@ GET /api/customers/:customerId/documents/download/info
   ]
 }
 ```
+
+> `totalSize`는 문서 스키마의 `fileSize` 필드 합산. 필드 없는 문서는 제외.
 
 ### 4.3 프론트엔드 컴포넌트
 
@@ -242,33 +366,36 @@ GET /api/customers/:customerId/documents/download/info
 [설정] → [진행 중] → [완료/실패]
 ```
 
-- **설정 단계:** 파일명 모드, 다운로드 방식, 대상 고객 선택
-- **진행 단계:** 프로그레스 바 + 현재 파일명 + 완료/실패 카운트
+- **설정 단계:** 파일명 모드, 대상 고객 선택, 관계자 포함 여부
+- **진행 단계:** 프로그레스 바 + 고객 단위 진행 + 완료/실패 카운트
 - **완료 단계:** 성공/실패 요약 + 실패 목록
+
+**단계 전환 시 포커스 관리:**
+- 진행 단계 진입 시 → "취소" 버튼에 포커스
+- 완료 단계 진입 시 → "확인" 버튼에 포커스
+- `aria-live="polite"` 영역에 상태 변화 텍스트 업데이트 (스크린리더 대응)
 
 #### 4.3.2 신규 훅
 
 | 훅 | 경로 | 역할 |
 |----|------|------|
-| `useDocumentDownload` | `features/customer/hooks/useDocumentDownload.ts` | 다운로드 로직 (API 호출, 진행상황 관리, File System Access API) |
+| `useDocumentDownload` | `features/customer/hooks/useDocumentDownload.ts` | 다운로드 로직 (API 호출, 진행상황 관리, 취소) |
 
 **인터페이스:**
 ```typescript
 interface DownloadOptions {
   filenameMode: 'alias' | 'original'
-  downloadMethod: 'folder' | 'zip'  // File System Access vs ZIP
   includeRelated: boolean
 }
 
 interface DownloadProgress {
-  phase: 'preparing' | 'downloading' | 'completed' | 'error'
+  phase: 'preparing' | 'downloading' | 'completed' | 'cancelled' | 'error'
   currentCustomer: string
   currentCustomerIndex: number
   totalCustomers: number
-  currentFile: string
-  completedFiles: number
-  totalFiles: number
   percentage: number
+  successCount: number
+  failCount: number
   errors: DownloadError[]
 }
 
@@ -279,45 +406,41 @@ interface DownloadError {
 }
 
 function useDocumentDownload(): {
-  startDownload: (customerIds: string[], options: DownloadOptions) => Promise<void>
+  downloadSingle: (customerId: string, options: DownloadOptions) => Promise<void>
+  downloadBulk: (customerIds: string[], options: DownloadOptions) => Promise<void>
   cancelDownload: () => void
   progress: DownloadProgress
   isDownloading: boolean
 }
 ```
 
+**취소 구현:**
+```typescript
+const abortControllerRef = useRef<AbortController | null>(null)
+
+function cancelDownload() {
+  abortControllerRef.current?.abort()
+  setProgress(prev => ({ ...prev, phase: 'cancelled' }))
+}
+
+// fetch 호출 시
+const response = await fetch(url, { signal: abortControllerRef.current.signal })
+```
+
 #### 4.3.3 기존 컴포넌트 수정
 
 | 컴포넌트 | 수정 내용 |
 |----------|-----------|
-| `CustomerDocumentExplorerView` | 고객 행 `···` 메뉴에 "문서함 다운로드" 항목 추가 |
+| `CustomerDocumentExplorerView` | 고객 행에 `···` 메뉴 **신규 추가** (ContextMenu + useContextMenu) |
+| `CustomerDocumentExplorerView` | `···` 메뉴에 "문서함 다운로드" 항목 포함 |
 | `CustomerDocumentExplorerView` | 페이지 상단에 "다운로드" 버튼 추가 |
 | `CustomerDocumentExplorerView` | 체크박스 선택 모드 UI 추가 (전체 다운로드 시) |
 
-### 4.4 File System Access API 분기
+**체크박스 선택 상태 관리:**
+- `useState<Set<string>>` (로컬 상태) — Zustand store 불필요 (이 뷰 내에서만 사용)
+- 현재 필터/초성 기준으로 로드된 고객 목록 대상으로 "전체 선택/해제"
 
-```typescript
-async function downloadToFolder(customerData, options) {
-  if ('showDirectoryPicker' in window) {
-    // Chrome/Edge: 폴더 직접 저장
-    const dirHandle = await window.showDirectoryPicker()
-    // 계층 폴더 생성 + 파일 쓰기
-  } else {
-    // Firefox/Safari: ZIP 다운로드 폴백
-    await downloadAsZip(customerData, options)
-  }
-}
-```
-
-**폴더 직접 저장 시:**
-- 프론트엔드에서 개별 문서를 `fetch` → `FileSystemWritableFileStream`으로 기록
-- 진행률은 파일 단위로 업데이트
-
-**ZIP 다운로드 시:**
-- 백엔드 API 호출 → 스트리밍 ZIP 수신 → Blob → 다운로드
-- 진행률은 수신 바이트 기준 또는 고객 단위
-
-### 4.5 폴더명/파일명 충돌 처리
+### 4.4 폴더명/파일명 충돌 처리
 
 ```typescript
 function resolveFilenameConflict(existingNames: Set<string>, name: string): string {
@@ -333,20 +456,22 @@ function resolveFilenameConflict(existingNames: Set<string>, name: string): stri
 }
 ```
 
-### 4.6 폴더명 안전 처리
+### 4.5 폴더명 안전 처리
 
-파일 시스템에서 사용 불가한 문자를 치환한다.
+파일 시스템에서 사용 불가한 문자를 치환한다. **폴더명에만 적용 (파일명에는 미적용).**
 
 ```typescript
 function sanitizeFolderName(name: string): string {
   return name
-    .replace(/[<>:"/\\|?*]/g, '_')  // Windows 금지 문자
-    .replace(/\./g, '·')            // 마침표 → 가운데점 (폴더명 안전)
+    .replace(/[<>:"/\\|?*]/g, '_')   // Windows 금지 문자
+    .replace(/\.{2,}/g, '_')         // 연속 마침표 (경로 탈출 방지)
+    .replace(/[.\s]+$/, '')          // 끝의 마침표/공백 제거 (Windows 금지)
     .trim()
 }
 ```
 
-**적용 대상:** 고객명, 카테고리명, 서브타입명
+> **주의:** 단일 마침표는 치환하지 않음 (날짜 형식 `2024.11` 보존).
+> 파일명의 확장자 마침표가 치환되지 않도록 폴더명에만 적용한다.
 
 ---
 
@@ -362,47 +487,62 @@ function sanitizeFolderName(name: string): string {
   │◀── 옵션 모달 표시 ───│                     │                     │
   │                      │                     │                     │
   │── "다운로드" 클릭 ──▶│                     │                     │
+  │                      │── GET /info ───────▶│  (사전 조회)         │
+  │                      │◀── 건수/용량 ───────│                     │
+  │                      │                     │                     │
   │                      │── GET /download ───▶│                     │
+  │                      │                     │── ownerId 검증 ────▶│
   │                      │                     │── 문서 목록 조회 ──▶│
   │                      │                     │◀── 문서 데이터 ─────│
   │                      │                     │                     │
-  │                      │                     │── 파일 읽기 ────────▶│
+  │                      │                     │── 경로 검증 ────────│
+  │                      │                     │── fs.createReadStream│
   │                      │◀── ZIP 스트리밍 ────│◀── 파일 데이터 ─────│
   │                      │                     │                     │
   │◀── 진행상황 업데이트 ─│                     │                     │
   │                      │                     │                     │
-  │◀── 다운로드 완료 ────│                     │                     │
+  │◀── Blob → 다운로드 ──│                     │                     │
   │◀── 결과 모달 표시 ───│                     │                     │
 ```
 
-### 5.2 다중 고객 다운로드 시퀀스
+### 5.2 다중 고객 통합 ZIP 다운로드 시퀀스
 
 ```
-고객 목록: [강새봄, 곽승철, 김기태, ...]
-
-for each 고객:
-  1. 진행 모달 업데이트: "강새봄 (1/3 고객)"
-  2. GET /api/customers/:id/documents/download → ZIP 스트리밍
-  3. 브라우저 다운로드 트리거: 강새봄.zip
-  4. 성공 → 다음 고객 / 실패 → 에러 기록, 다음 고객 진행
-
-완료 후: 결과 모달 표시
+사용자                 프론트엔드              백엔드                파일저장소
+  │                      │                     │                     │
+  │── "다운로드" 클릭 ──▶│                     │                     │
+  │── 고객 선택/전체 ───▶│                     │                     │
+  │                      │                     │                     │
+  │                      │── POST /bulk ──────▶│                     │
+  │                      │   {customerIds}      │── 각 고객 ownerId 검증│
+  │                      │                     │── 고객별 문서 조회 ─▶│
+  │                      │                     │                     │
+  │                      │                     │  for each 고객:      │
+  │                      │                     │    경로 검증          │
+  │                      │                     │    archiver.append() │
+  │                      │                     │                     │
+  │                      │◀── 통합 ZIP 스트리밍 │◀── 파일 데이터 ─────│
+  │                      │                     │                     │
+  │◀── 고객 단위 진행률 ──│                     │                     │
+  │                      │                     │                     │
+  │◀── Blob → 다운로드 ──│  (단일 파일)         │                     │
+  │◀── 결과 모달 표시 ───│                     │                     │
 ```
 
 ---
 
 ## 6. UI 배치
 
-### 6.1 고객별 다운로드 — 컨텍스트 메뉴
+### 6.1 고객별 다운로드 — 컨텍스트 메뉴 (신규)
 
-기존 고객 행의 `···` 메뉴에 항목 추가:
+고객 행 우측에 `···` 버튼 **신규 추가** + ContextMenu:
 
 ```
-┌──────────────────┐
-│ 📥 문서함 다운로드 │  ← 신규
-│─────────────────-│
-│ (기존 메뉴 항목들) │
-└──────────────────┘
+┌────────────────────┐
+│ 📥 문서함 다운로드   │
+│────────────────────│
+│ (향후 확장 메뉴)     │
+└────────────────────┘
 ```
 
 ### 6.2 전체 다운로드 — 버튼 배치
@@ -419,14 +559,14 @@ for each 고객:
 │                                                         │
 │ 파일명  별칭  형식  크기  고객명  유형  날짜  배지          │
 │─────────────────────────────────────────────────────────│
-│ ☐ 👤 강새봄 · 6건                              ···      │
-│ ☐ 👤 강세황 · 1건                              ···      │
+│ ☐ 👤 [고객A] · 6건                              ···     │
+│ ☐ 👤 [고객B] · 1건                              ···     │
 │ ...                                                     │
 └─────────────────────────────────────────────────────────┘
 ```
 
-- 체크박스: "다운로드" 버튼 클릭 시 체크박스 선택 모드 진입
-- 또는 바로 전체/선택 옵션이 있는 설정 모달 표시
+- "다운로드" 버튼 클릭 → 설정 모달에서 전체/선택 모드 선택
+- 선택 모드 시 체크박스 활성화
 
 ---
 
@@ -436,14 +576,15 @@ for each 고객:
 
 | 패키지 | 용도 | 비고 |
 |--------|------|------|
-| `archiver` | ZIP 스트리밍 생성 | 이미 사용 중인지 확인 필요 |
+| `archiver` | ZIP 스트리밍 생성 | 신규 설치 필요 |
+| `content-disposition` | RFC 6266 한글 파일명 인코딩 | 신규 설치 필요 (또는 직접 `encodeURIComponent`) |
 
 ### 7.2 프론트엔드
 
 | 기존 인프라 | 활용 |
 |-------------|------|
 | `Modal` 컴포넌트 | 옵션/진행/결과 모달 |
-| `ContextMenu` + `useContextMenu` | 고객 행 메뉴 |
+| `ContextMenu` + `useContextMenu` | 고객 행 메뉴 (신규 추가) |
 | `DownloadHelper` | 개별 파일 다운로드 참고 |
 | `SFSymbol` | 아이콘 |
 | `Tooltip` | 버튼 툴팁 |
@@ -452,16 +593,34 @@ for each 고객:
 
 ## 8. 보안 고려사항
 
-- 다운로드 API는 인증된 사용자(설계사)만 접근 가능
-- 다운로드 대상은 해당 설계사 소속 고객의 문서로 제한
-- ZIP 파일명에 경로 탐색 문자(`../`) 포함 방지
-- 서버 측 파일 경로 검증 (심볼릭 링크 추적 방지)
+| 항목 | 구현 방법 |
+|------|-----------|
+| **인증** | 모든 다운로드 API에 `authenticateJWT` 미들웨어 적용 |
+| **인가** | `ownerId === userId` 복합 조건으로 조회. 타인 고객 문서 접근 시 403 반환 |
+| **경로 탈출 방지** | `path.resolve()` + `BASE_DIR` 경계 검사. `../` 포함 경로 차단 |
+| **심볼릭 링크** | `fs.realpathSync()` 후 `BASE_DIR` 경계 재확인 |
+| **ZIP 파일명 인젝션** | `sanitizeFolderName()` 적용. ZIP 엔트리명에 `../` 금지 |
+| **파일명 인코딩** | RFC 6266 `filename*=UTF-8''` 형태 사용 |
 
 ---
 
-## 9. 향후 확장 가능성
+## 9. 성능/안정성
 
+| 항목 | 대응 |
+|------|------|
+| **서버 메모리** | `archiver` 스트리밍 모드 사용 (파일을 메모리에 버퍼링하지 않음) |
+| **Nginx 타임아웃** | `proxy_read_timeout` 조정 필요 시 설정 (대용량 고객) |
+| **Express 타임아웃** | 스트리밍 응답 중에는 타임아웃 비활성화 (`req.setTimeout(0)`) |
+| **동시 다운로드 제한** | 설계사당 동시 다운로드 1건으로 제한 (프론트엔드 `isDownloading` 플래그) |
+| **좀비 스트림 정리** | 클라이언트 연결 끊김(`req.on('close')`) 시 `archiver.abort()` 호출 |
+
+---
+
+## 10. 향후 확장 가능성 (Phase 2+)
+
+- File System Access API 지원 (폴더 직접 저장)
 - 선택한 카테고리/서브타입만 다운로드
 - 날짜 범위 필터링
 - 정기 자동 백업 (스케줄)
 - 다운로드 이력 관리
+- SSE 기반 실시간 진행률 표시
