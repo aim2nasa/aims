@@ -10,8 +10,8 @@ import { useState, useRef, useCallback } from 'react'
 import { getAuthHeaders, API_CONFIG } from '@/shared/lib/api'
 
 interface UseDocumentDownloadReturn {
-  /** ZIP 다운로드 실행 */
-  download: (customerIds: string[]) => Promise<void>
+  /** ZIP 다운로드 실행 (filenameOverride: 프론트엔드에서 파일명 지정) */
+  download: (customerIds: string[], filenameOverride?: string) => Promise<void>
   /** 진행 중인 다운로드 취소 */
   cancel: () => void
   /** 다운로드 진행 중 여부 */
@@ -67,7 +67,7 @@ export function useDocumentDownload(): UseDocumentDownloadReturn {
   const [isDownloading, setIsDownloading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
-  const download = useCallback(async (customerIds: string[]) => {
+  const download = useCallback(async (customerIds: string[], filenameOverride?: string) => {
     if (isDownloading || customerIds.length === 0) return
 
     setIsDownloading(true)
@@ -97,7 +97,7 @@ export function useDocumentDownload(): UseDocumentDownloadReturn {
       }
 
       const blob = await response.blob()
-      const filename = parseContentDisposition(response.headers.get('Content-Disposition'))
+      const filename = filenameOverride || parseContentDisposition(response.headers.get('Content-Disposition'))
       triggerBrowserDownload(blob, filename)
 
       return // 성공

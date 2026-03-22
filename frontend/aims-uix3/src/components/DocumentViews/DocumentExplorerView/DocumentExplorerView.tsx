@@ -180,13 +180,16 @@ const DocumentExplorerContent: React.FC<{
     const count = selectedCustomerIds.size
     toast.show(`${count}명 고객 문서함 다운로드 시작...`, { type: 'info' })
     try {
-      await downloadZip(Array.from(selectedCustomerIds))
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+      const initialSuffix = selectedInitial ? `_${selectedInitial}` : ''
+      const zipName = `AIMS_문서함${initialSuffix}_${dateStr}.zip`
+      await downloadZip(Array.from(selectedCustomerIds), zipName)
       toast.show(`${count}명 고객 문서함 다운로드 완료`, { type: 'success' })
       setSelectedCustomerIds(new Set())
     } catch {
       toast.show('다운로드에 실패했습니다', { type: 'error' })
     }
-  }, [selectedCustomerIds, downloadZip])
+  }, [selectedCustomerIds, downloadZip, selectedInitial])
 
   // 전체 선택/해제
   const handleToggleSelectAllCustomers = useCallback((allCustomerIds: string[]) => {
