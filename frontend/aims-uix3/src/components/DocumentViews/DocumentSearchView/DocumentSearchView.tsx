@@ -85,7 +85,7 @@ interface DocumentSearchViewProps {
 // 검색 모드 옵션 정의
 const SEARCH_MODE_OPTIONS: DropdownOption[] = [
   { value: 'keyword', label: '키워드 검색' },
-  { value: 'semantic', label: '질문 검색' },
+  { value: 'semantic', label: 'AI 검색' },
 ]
 
 // 키워드 모드 옵션 정의
@@ -1996,7 +1996,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                                 <p className="mode-description">하나라도 포함: 키워드 중 하나라도 포함</p>
                               </div>
                               <div className="mode-option">
-                                <span className="mode-badge mode-ai">질문 검색</span>
+                                <span className="mode-badge mode-ai">AI 검색</span>
                                 <p className="mode-description">자연어로 질문하여 답을 검색</p>
                                 <p className="mode-description mode-description--credit">크레딧 사용</p>
                               </div>
@@ -2008,7 +2008,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       <div className="guide-tips">
                         <ul className="tips-list">
                           <li>고객을 먼저 선택하면 더 빠르고 정확합니다</li>
-                          <li>질문 검색 예: "암 진단 시 보험금은?"</li>
+                          <li>AI 검색 예: "암 진단 시 보험금은?"</li>
                         </ul>
                       </div>
                     </div>
