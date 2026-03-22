@@ -29,6 +29,28 @@ AUTH_EMAIL = "aim2nasa@gmail.com"
 AUTH_PASSWORD = "3007"
 REQUEST_TIMEOUT = 120
 
+# 사람 이름으로 오인식되는 일반 명사 목록 (person_names 추출 시 제외)
+PERSON_NAME_STOPWORDS = {
+    # 보험/금융 용어
+    "합계", "필수", "보험료", "보험", "납입중", "납입", "완료", "최신", "기준", "현재",
+    "적립금", "환급금", "수익률", "평균", "일시납", "별도", "제시", "개별", "전체",
+    "활성", "상태", "계약", "목록", "건수", "유무", "답변", "기간", "기반",
+    "정상", "실효", "해지", "만기", "갱신", "변경", "종신", "연금",
+    "채권형", "적립형", "암엔암",
+    # 서술/접속 용어
+    "포함", "이상", "이하", "미만", "초과", "이내", "이후", "이전",
+    "가장", "최고", "최저", "최대", "최소", "최근",
+    # 일반 명사/서술어
+    "월납", "연납", "일시", "보장", "가입", "피보", "무배당",
+    "표시", "정보", "모두", "총액", "내역", "현황",
+    "있음", "없음", "없다", "있다", "관계", "중복", "나열",
+    "법인", "개인", "고객", "배우자", "자녀", "부모",
+    "이력", "변화", "공감", "만원", "펀드", "시계열",
+    "필터링", "계약만", "상품만", "계약의", "계약일", "모두의",
+    "건이면", "년인",
+}
+
+
 
 def get_auth_token():
     payload = json.dumps({"email": AUTH_EMAIL, "password": AUTH_PASSWORD}).encode("utf-8")
@@ -252,8 +274,9 @@ def evaluate_gt(case, response):
             if k not in text:
                 details.append(f"누락된 관계: {k}")
 
-    # 사람 이름 매칭
-    person_names = re.findall(r'[가-힣]{2,3}(?=\(|,|$| )', expected)
+    # 사람 이름 매칭 (lookbehind로 한글 단어 중간 매칭 방지, stopwords 제외)
+    person_names = [n for n in re.findall(r'(?<![가-힣])[가-힣]{2,3}(?=\(|,|$| )', expected)
+                    if n not in PERSON_NAME_STOPWORDS]
     if person_names:
         matched = sum(1 for n in person_names if n in text)
         if person_names:

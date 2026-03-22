@@ -5,125 +5,897 @@
     "purpose": "SQ 질의 유형별 GT 테스트 셋 — AI 어시스턴트 응답 품질 측정용",
     "total_cases": 105,
     "coverage": {
-      "Q1": 10, "Q2": 10, "Q4": 36, "Q5": 15, "Q6": 13, "Q7": 11, "Q8": 10
+      "Q1": 10,
+      "Q2": 10,
+      "Q4": 36,
+      "Q5": 15,
+      "Q6": 13,
+      "Q7": 11,
+      "Q8": 10
     }
   },
   "test_cases": [
-
-    {"id": "Q1-01", "type": "Q1", "query": "캐치업코리아 자동차 관련 문서 찾아줘", "gt_method": "keyword_search", "gt_keywords": "캐치업코리아 자동차", "gt_mode": "AND"},
-    {"id": "Q1-02", "type": "Q1", "query": "캐치업코리아 보험증권 문서 찾아줘", "gt_method": "keyword_search", "gt_keywords": "캐치업코리아 보험증권", "gt_mode": "AND"},
-    {"id": "Q1-03", "type": "Q1", "query": "마리치 문서 목록 보여줘", "gt_method": "keyword_search", "gt_keywords": "마리치", "gt_mode": "AND"},
-    {"id": "Q1-04", "type": "Q1", "query": "마리치한테 온 파일 검색해줘", "gt_method": "keyword_search", "gt_keywords": "마리치", "gt_mode": "AND"},
-    {"id": "Q1-05", "type": "Q1", "query": "김보성 건강검진 문서 찾아줘", "gt_method": "keyword_search", "gt_keywords": "김보성 건강검진", "gt_mode": "AND"},
-    {"id": "Q1-06", "type": "Q1", "query": "안영미 관련 서류 전부 보여줘", "gt_method": "keyword_search", "gt_keywords": "안영미", "gt_mode": "AND"},
-    {"id": "Q1-07", "type": "Q1", "query": "송유미 보험 관련 파일 검색", "gt_method": "keyword_search", "gt_keywords": "송유미 보험", "gt_mode": "AND"},
-    {"id": "Q1-08", "type": "Q1", "query": "곽지민 문서 뭐 있지?", "gt_method": "keyword_search", "gt_keywords": "곽지민", "gt_mode": "AND"},
-    {"id": "Q1-09", "type": "Q1", "query": "은형석 증권 서류 검색해봐", "gt_method": "keyword_search", "gt_keywords": "은형석 증권", "gt_mode": "AND"},
-    {"id": "Q1-10", "type": "Q1", "query": "신상철 퇴직연금 문서 찾아", "gt_method": "keyword_search", "gt_keywords": "신상철 퇴직연금", "gt_mode": "AND"},
-
-    {"id": "Q2-01", "type": "Q2", "query": "캐치업코리아 관련 서류 있어?", "gt_method": "keyword_search", "gt_keywords": "캐치업코리아", "gt_mode": "AND", "expected": "있음 (N건)"},
-    {"id": "Q2-02", "type": "Q2", "query": "마리치 계약서 있어?", "gt_method": "keyword_search", "gt_keywords": "마리치 계약서", "gt_mode": "AND", "expected": "0건이면 없다, N건이면 있다"},
-    {"id": "Q2-03", "type": "Q2", "query": "이분희 관련 서류 있어?", "gt_method": "keyword_search", "gt_keywords": "이분희", "gt_mode": "AND", "expected": "건수 기반 유무 답변"},
-    {"id": "Q2-04", "type": "Q2", "query": "곽승철 진단서 있어?", "gt_method": "keyword_search", "gt_keywords": "곽승철 진단서", "gt_mode": "AND", "expected": "건수 기반 유무 답변"},
-    {"id": "Q2-05", "type": "Q2", "query": "김보성 통장 사본 있나?", "gt_method": "keyword_search", "gt_keywords": "김보성 통장", "gt_mode": "AND", "expected": "건수 기반 유무 답변"},
-    {"id": "Q2-06", "type": "Q2", "query": "안영미 명함 파일 있나요?", "gt_method": "keyword_search", "gt_keywords": "안영미 명함", "gt_mode": "AND", "expected": "건수 기반 유무 답변"},
-    {"id": "Q2-07", "type": "Q2", "query": "한상용한테 받은 서류 있어?", "gt_method": "keyword_search", "gt_keywords": "한상용", "gt_mode": "AND", "expected": "건수 기반 유무 답변"},
-    {"id": "Q2-08", "type": "Q2", "query": "류창수 관련 파일 확인해봐", "gt_method": "keyword_search", "gt_keywords": "류창수", "gt_mode": "AND", "expected": "건수 기반 유무 답변"},
-    {"id": "Q2-09", "type": "Q2", "query": "성연정 건강검진 결과 있나?", "gt_method": "keyword_search", "gt_keywords": "성연정 건강검진", "gt_mode": "AND", "expected": "건수 기반 유무 답변"},
-    {"id": "Q2-10", "type": "Q2", "query": "김향길 자동차보험 서류 있어?", "gt_method": "keyword_search", "gt_keywords": "김향길 자동차보험", "gt_mode": "AND", "expected": "건수 기반 유무 답변"},
-
-    {"id": "Q4-01", "type": "Q4", "query": "캐치업코리아 계약 현황 알려줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "김보성 AR 6건 + 안영미 AR 10건 = 총 16건 계약 목록"},
-    {"id": "Q4-02", "type": "Q4", "query": "캐치업코리아의 정상 상태 계약 목록 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "gt_filter": "계약상태 == '정상'", "expected": "정상 상태 계약만 필터링"},
-    {"id": "Q4-03", "type": "Q4", "query": "캐치업코리아의 실효된 계약이 있어?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "gt_filter": "계약상태 != '정상'", "expected": "실효 계약 0건 (정상 16건)"},
-    {"id": "Q4-04", "type": "Q4", "query": "김보성 고객이 계약자로 되어 있는 계약들을 모두 보여줘", "gt_method": "mongodb_query", "gt_customer": "김보성", "gt_filter": "계약자 == '김보성'", "expected": "마스터플랜(65,200원), 암엔암(5,100원), 유니버셜달러종신(2,505,490원), 변액연금동행Plus(200,000,000원)"},
-    {"id": "Q4-05", "type": "Q4", "query": "곽승철 계약 현황 보여줘", "gt_method": "mongodb_query", "gt_customer": "곽승철", "expected": "13건 계약 목록, 월 1,292,220원"},
-    {"id": "Q4-06", "type": "Q4", "query": "캐치업코리아 증권번호 목록 알려줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "전체 계약의 증권번호 나열"},
-    {"id": "Q4-07", "type": "Q4", "query": "이분희 보험 가입 내역 알려줘", "gt_method": "mongodb_query", "gt_customer": "이분희", "expected": "하이라이프보장보험(117,770원) + 하이라이프종신보험(15,800원) = 2건"},
-    {"id": "Q4-08", "type": "Q4", "query": "안영미 계약 현황 확인해줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "expected": "최신 AR 기준 11건, 월 17,377,367원"},
-    {"id": "Q4-09", "type": "Q4", "query": "송유미 보험 뭐 들었어?", "gt_method": "mongodb_query", "gt_customer": "송유미", "expected": "월 1,246,642원, 14건 계약"},
-    {"id": "Q4-10", "type": "Q4", "query": "안영미가 피보험자인 계약 보여줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "gt_filter": "피보험자 == '안영미'", "expected": "피보험자 안영미 계약 21건"},
-    {"id": "Q4-11", "type": "Q4", "query": "은형석 계약 상세 내용 알려줘", "gt_method": "mongodb_query", "gt_customer": "은형석", "expected": "5건, 최신 AR 기준 월 1,699,090원"},
-    {"id": "Q4-12", "type": "Q4", "query": "한상용 가입한 보험 목록 보여줘", "gt_method": "mongodb_query", "gt_customer": "한상용", "expected": "7건 계약 목록"},
-    {"id": "Q4-13", "type": "Q4", "query": "신상철 종신보험만 보여줘", "gt_method": "mongodb_query", "gt_customer": "신상철", "gt_filter": "보험상품 contains '종신'", "expected": "종신보험 상품만 필터링"},
-    {"id": "Q4-14", "type": "Q4", "query": "캐치업코리아가 계약자인 보험 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "gt_filter": "계약자 == '캐치업코리아'", "expected": "실버플랜 변액유니버셜V(992,500원), 유니버셜달러종신(3,710,230원), 달러경영인정기x2"},
-    {"id": "Q4-15", "type": "Q4", "query": "피보험자 김보성 가입내용 보여줘", "gt_method": "mongodb_query", "gt_customer": "김보성", "gt_filter": "피보험자 == '김보성'", "expected": "피보험자가 김보성인 전체 계약 (18건, 증권번호 중복 포함)"},
-
-    {"id": "Q5-01", "type": "Q5", "query": "캐치업코리아 고객 정보 알려줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "법인, 연락처: 010-4941-8720, 상태: active"},
-    {"id": "Q5-02", "type": "Q5", "query": "마리치 고객 정보 알려줘", "gt_method": "mongodb_query", "gt_customer": "마리치", "expected": "법인, 상태: active"},
-    {"id": "Q5-03", "type": "Q5", "query": "고객 목록 보여줘", "gt_method": "mongodb_query", "gt_filter": "meta.status == 'active'", "expected": "전체 활성 고객 목록"},
-    {"id": "Q5-04", "type": "Q5", "query": "정씨 성을 가진 고객 찾아줘", "gt_method": "mongodb_query", "gt_filter": "name starts with '정'", "expected": "정승우, 정명란, 정은연, 정지호, 정병덕 등"},
-    {"id": "Q5-05", "type": "Q5", "query": "캐치업 이라는 이름의 고객 있어?", "gt_method": "mongodb_query", "gt_filter": "name contains '캐치업'", "expected": "캐치업코리아 (법인)"},
-    {"id": "Q5-06", "type": "Q5", "query": "김보성 연락처 알려줘", "gt_method": "mongodb_query", "gt_customer": "김보성", "expected": "010-4941-8720"},
-    {"id": "Q5-07", "type": "Q5", "query": "김보성 생년월일이 어떻게 돼?", "gt_method": "mongodb_query", "gt_customer": "김보성", "expected": "1968-02-15"},
-    {"id": "Q5-08", "type": "Q5", "query": "안영미 전화번호 알려줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "expected": "010-3665-8710"},
-    {"id": "Q5-09", "type": "Q5", "query": "곽승철 고객 정보 확인해봐", "gt_method": "mongodb_query", "gt_customer": "곽승철", "expected": "개인, 010-2657-0687, 1969-12-07"},
-    {"id": "Q5-10", "type": "Q5", "query": "송유미 생일이 언제야?", "gt_method": "mongodb_query", "gt_customer": "송유미", "expected": "1968-09-14"},
-    {"id": "Q5-11", "type": "Q5", "query": "법인 고객 목록 보여줘", "gt_method": "mongodb_query", "gt_filter": "customer_type == '법인'", "expected": "캐치업코리아, 마리치 등 법인 고객 목록"},
-    {"id": "Q5-12", "type": "Q5", "query": "은형석 누구야?", "gt_method": "mongodb_query", "gt_customer": "은형석", "expected": "개인, 010-4221-1002, 1973-10-07"},
-    {"id": "Q5-13", "type": "Q5", "query": "전체 고객 리스트 보여줘", "gt_method": "mongodb_query", "gt_filter": "meta.status == 'active'", "expected": "활성 상태 전체 고객 목록"},
-    {"id": "Q5-14", "type": "Q5", "query": "김씨 성 가진 고객 찾아봐", "gt_method": "mongodb_query", "gt_filter": "name starts with '김'", "expected": "김보성, 김향길, 김선희, 김미현 등"},
-    {"id": "Q5-15", "type": "Q5", "query": "안광민 정보 좀 알려줘", "gt_method": "mongodb_query", "gt_customer": "안광민", "expected": "개인, 010-3774-5261, 1966-09-20"},
-
-    {"id": "Q6-01", "type": "Q6", "query": "캐치업코리아 보험료 얼마나 내고 있어?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "총 16건, 월 보험료 합계 제시 필수. 일시납 별도 표시. 참고: AR total_monthly_premium 합계 15,911,287원"},
-    {"id": "Q6-02", "type": "Q6", "query": "캐치업코리아 계약 몇 건이야?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "김보성 AR 6건 + 안영미 AR 10건 = 총 16건"},
-    {"id": "Q6-03", "type": "Q6", "query": "김보성 월 보험료 총액이 얼마야?", "gt_method": "mongodb_query", "gt_customer": "김보성", "expected": "월 4,319,740원 (일시납 200,000,000원 별도). 합계 필수", "note": "2026-03-22 DB 기준, AR 중복 포함"},
-    {"id": "Q6-04", "type": "Q6", "query": "곽승철 고객 총 보험료가 얼마야?", "gt_method": "mongodb_query", "gt_customer": "곽승철", "expected": "월 1,292,220원. 합계 필수"},
-    {"id": "Q6-05", "type": "Q6", "query": "이분희 보험료 얼마 내고 있어?", "gt_method": "mongodb_query", "gt_customer": "이분희", "expected": "현재 납입중 월 보험료 0원 (납입기간 완료). 개별 계약 보험료: 117,770원 + 15,800원"},
-    {"id": "Q6-06", "type": "Q6", "query": "안영미 보험료 합계 알려줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "expected": "최신 AR 기준 월 17,377,367원. 합계 필수"},
-    {"id": "Q6-07", "type": "Q6", "query": "송유미 보험 총 몇 건이야?", "gt_method": "mongodb_query", "gt_customer": "송유미", "expected": "14건"},
-    {"id": "Q6-08", "type": "Q6", "query": "곽지민 월납 보험료 총액은?", "gt_method": "mongodb_query", "gt_customer": "곽지민", "expected": "26건, 월 4,017,136원"},
-    {"id": "Q6-09", "type": "Q6", "query": "은형석 계약 건수 알려줘", "gt_method": "mongodb_query", "gt_customer": "은형석", "expected": "5건"},
-    {"id": "Q6-10", "type": "Q6", "query": "한상용 보험료 얼마나 내?", "gt_method": "mongodb_query", "gt_customer": "한상용", "expected": "월 1,349,807원 (일시납 별도)", "note": "7건, monthlyPremium=1,349,807원 (2026-03-21 DB 기준)"},
-
-    {"id": "Q7-01", "type": "Q7", "query": "가장 최근에 계약한 고객은?", "gt_method": "mongodb_aggregation", "expected": "곽승철, 2026-03-08 계약"},
-    {"id": "Q7-02", "type": "Q7", "query": "2024년 이후 계약된 건 보여줘", "gt_method": "mongodb_aggregation", "expected": "계약일 >= 2024-01-01인 전체 계약 목록"},
-    {"id": "Q7-03", "type": "Q7", "query": "캐치업코리아 가장 오래된 계약은?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "마스터플랜 변액유니버셜종신Ⅱ보험 (2009-06-10)"},
-    {"id": "Q7-04", "type": "Q7", "query": "김보성 최근 가입한 보험이 뭐야?", "gt_method": "mongodb_query", "gt_customer": "김보성", "expected": "무배당 모두의 종신보험 (2025-06-02)", "note": "김보성 고객의 전체 계약 중 계약일 최신. 피보험자=김보성, 계약자=안영미"},
-    {"id": "Q7-05", "type": "Q7", "query": "2020년에 가입한 계약 있어?", "gt_method": "mongodb_aggregation", "expected": "2020년 계약 39건"},
-    {"id": "Q7-06", "type": "Q7", "query": "안영미 2022년 이후 가입 계약 보여줘", "gt_method": "mongodb_query", "gt_customer": "안영미", "gt_filter": "계약일 >= 2022-01-01", "expected": "VIP종신Plus(2022-10-24), 달러연금(2024-12-19)"},
-    {"id": "Q7-07", "type": "Q7", "query": "올해 신규 계약 있어?", "gt_method": "mongodb_aggregation", "expected": "계약일이 2026년인 계약 목록"},
-    {"id": "Q7-08", "type": "Q7", "query": "곽승철 가장 최근 계약은?", "gt_method": "mongodb_query", "gt_customer": "곽승철", "expected": "곽승철 AR(2026-03-21) 기준 가장 최근 계약"},
-    {"id": "Q7-09", "type": "Q7", "query": "5년 이상 된 계약 보여줘", "gt_method": "mongodb_aggregation", "expected": "계약일 <= 2021-03-21인 계약 목록"},
-    {"id": "Q7-10", "type": "Q7", "query": "송유미 첫 번째 계약이 언제야?", "gt_method": "mongodb_query", "gt_customer": "송유미", "expected": "2018-08-19 무배당 미리받는 변액종신보험 공감"},
-
-    {"id": "Q8-01", "type": "Q8", "query": "캐치업코리아와 송유미 관계는?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "관계 없음"},
-    {"id": "Q8-02", "type": "Q8", "query": "김보성과 안영미 관계는?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "배우자 (family/spouse)"},
-    {"id": "Q8-03", "type": "Q8", "query": "캐치업코리아 관계자 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "김보성(대표이사), 안영미(임원), 김선희(직원), 박지우(직원), 안희정(직원), 유아영(직원), 이승준(직원)"},
-    {"id": "Q8-04", "type": "Q8", "query": "곽승철 가족 관계 알려줘", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "곽지민(자녀), 송유미(배우자)"},
-    {"id": "Q8-05", "type": "Q8", "query": "곽지민 부모가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "곽승철(부모)"},
-    {"id": "Q8-06", "type": "Q8", "query": "마리치 관계자 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "관계 없음", "note": "DB에 '주식회사마리치'로 저장되어 마리치로 검색 시 관계 미발견. 부분 매칭 미지원"},
-    {"id": "Q8-07", "type": "Q8", "query": "송연과 이방 관계는?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "관계 없음", "note": "송연/이방 관계가 DB에 미등록 상태"},
-    {"id": "Q8-08", "type": "Q8", "query": "이율 부모가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "관계 없음", "note": "이율 부모 관계가 DB에 미등록 상태"},
-    {"id": "Q8-09", "type": "Q8", "query": "캐치업코리아 대표이사가 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "gt_filter": "type == 'ceo'", "expected": "김보성"},
-    {"id": "Q8-10", "type": "Q8", "query": "송유미 남편이 누구야?", "gt_method": "mongodb_query", "gt_collection": "customer_relationships", "expected": "곽승철(배우자/spouse)"},
-
-    {"id": "AR-11", "type": "Q4", "query": "캐치업코리아 가입금액 제일 큰 보험은?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "달러경영인정기보험, 75,232만원"},
-    {"id": "AR-12", "type": "Q4", "query": "이분희 납입 완료된 보험 있어?", "gt_method": "mongodb_query", "gt_customer": "이분희", "expected": "납입기간 20년(2001~2021), 15년(2005~2020) 모두 납입 완료"},
-    {"id": "AR-20", "type": "Q4", "query": "캐치업코리아 메트라이프 계약만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "메트라이프 계약 0건", "note": "AR 데이터에 보험사명이 메트라이프로 파싱되지 않아 0건 정상"},
-
-    {"id": "CRS-01", "type": "Q4", "query": "정승우 변액보험 뭐 있어?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "무) 마스터플랜 변액유니버셜종신, CRS 2건"},
-    {"id": "CRS-02", "type": "Q6", "query": "정승우 변액보험 적립금 얼마야?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "총 적립금 8,666,558원"},
-    {"id": "CRS-03", "type": "Q4", "query": "정승우 변액보험 수익률 어때?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "투자수익률 109.23%"},
-    {"id": "CRS-04", "type": "Q6", "query": "정승우 지금 해지하면 얼마 받아?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "해지환급금 8,666,558원, 해지환급률 107.3%"},
-    {"id": "CRS-05", "type": "Q4", "query": "정승우 펀드 구성 보여줘", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "인덱스주식형 61.8%(수익률 202.7%), 채권형 38.2%(수익률 13.25%)"},
-    {"id": "CRS-06", "type": "Q4", "query": "최혜진 변액보험 사망수익자 누구야?", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "이분희"},
-    {"id": "CRS-07", "type": "Q4", "query": "정은연 변액보험 적립금 얼마야?", "gt_method": "mongodb_query", "gt_customer": "정은연", "expected": "총 적립금 7,966,342원"},
-    {"id": "CRS-08", "type": "Q4", "query": "최혜진 납입보험료 총액은?", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "순보험료 23,620,870원"},
-    {"id": "CRS-09", "type": "Q4", "query": "정승우 보험계약대출 있어?", "gt_method": "mongodb_query", "gt_customer": "정승우", "expected": "보험계약대출 0원 (없음)"},
-    {"id": "CRS-10", "type": "Q4", "query": "최혜진 변액보험 수익률 변화 추이 보여줘", "gt_method": "mongodb_query", "gt_customer": "최혜진", "expected": "CRS 이력 기반 수익률 변화"},
-
-    {"id": "AR-21", "type": "Q4", "query": "캐치업코리아 보장금액 1억 이상 계약 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "보장금액 1억 이상 계약 6건"},
-    {"id": "AR-22", "type": "Q4", "query": "캐치업코리아 계약자와 피보험자가 다른 계약만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "계약자≠피보험자 계약 6건"},
-    {"id": "AR-23", "type": "Q4", "query": "캐치업코리아 종신보험만 보여줘", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "종신보험 7건"},
-    {"id": "AR-24", "type": "Q7", "query": "캐치업코리아 보험 언제 만기야?", "gt_method": "mongodb_query", "gt_customer": "캐치업코리아", "expected": "종신보험 만기 없음, 납입종료일 2035년 등 제시"},
-    {"id": "AR-25", "type": "Q4", "query": "이상윤 실효된 계약 포함해서 전부 보여줘", "gt_method": "mongodb_query", "gt_customer": "이상윤", "expected": "includeLapsed=true로 실효 계약 포함"},
-
-    {"id": "CRS-11", "type": "Q4", "query": "수익률 100% 이상인 변액보험 있어?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"returnRateMin": 100}, "expected": "145건, 평균 수익률 154.43%, 최고 891.5%(마스터플랜 변액유니버셜보험)"},
-    {"id": "CRS-12", "type": "Q6", "query": "내 고객 변액보험 적립금 합계 얼마야?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {}, "expected": "총 418건, 적립금 합계 10,345,613,592원, 평균 수익률 88.81%"},
-    {"id": "CRS-13", "type": "Q4", "query": "약관대출 받고 있는 고객 있어?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"hasPolicyLoan": true}, "expected": "42건, 총 약관대출 165,560,000원"},
-    {"id": "CRS-14", "type": "Q4", "query": "적립금이 가장 많은 변액보험은?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"sortBy": "accumulatedAmount", "sortOrder": "desc"}, "expected": "홍석진 무배당 My Fund 변액연금Ⅳ보험 적립형 766,952,152원"},
-    {"id": "CRS-15", "type": "Q4", "query": "정승우 인덱스주식형 펀드 수익률 변화 보여줘", "gt_method": "mongodb_query", "gt_tool": "get_cr_contract_history", "gt_params": {"fundName": "인덱스주식형"}, "gt_customer": "정승우", "expected": "인덱스주식형 펀드 수익률 이력 (시계열 데이터)"},
-    {"id": "CRS-16", "type": "Q4", "query": "수익률이 마이너스인 변액보험 있어?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"returnRateMax": 0}, "expected": "17건 (수익률 0% 이하)"},
-    {"id": "CRS-17", "type": "Q4", "query": "중도인출한 변액보험 있어?", "gt_method": "mongodb_query", "gt_tool": "query_customer_reviews", "gt_params": {"hasWithdrawal": true}, "expected": "65건"}
+    {
+      "id": "Q1-01",
+      "type": "Q1",
+      "query": "캐치업코리아 자동차 관련 문서 찾아줘",
+      "gt_method": "keyword_search",
+      "gt_keywords": "캐치업코리아 자동차",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q1-02",
+      "type": "Q1",
+      "query": "캐치업코리아 보험증권 문서 찾아줘",
+      "gt_method": "keyword_search",
+      "gt_keywords": "캐치업코리아 보험증권",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q1-03",
+      "type": "Q1",
+      "query": "마리치 문서 목록 보여줘",
+      "gt_method": "keyword_search",
+      "gt_keywords": "마리치",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q1-04",
+      "type": "Q1",
+      "query": "마리치한테 온 파일 검색해줘",
+      "gt_method": "keyword_search",
+      "gt_keywords": "마리치",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q1-05",
+      "type": "Q1",
+      "query": "김보성 건강검진 문서 찾아줘",
+      "gt_method": "keyword_search",
+      "gt_keywords": "김보성 건강검진",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q1-06",
+      "type": "Q1",
+      "query": "안영미 관련 서류 전부 보여줘",
+      "gt_method": "keyword_search",
+      "gt_keywords": "안영미",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q1-07",
+      "type": "Q1",
+      "query": "송유미 보험 관련 파일 검색",
+      "gt_method": "keyword_search",
+      "gt_keywords": "송유미 보험",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q1-08",
+      "type": "Q1",
+      "query": "곽지민 문서 뭐 있지?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "곽지민",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q1-09",
+      "type": "Q1",
+      "query": "은형석 증권 서류 검색해봐",
+      "gt_method": "keyword_search",
+      "gt_keywords": "은형석 증권",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q1-10",
+      "type": "Q1",
+      "query": "신상철 퇴직연금 문서 찾아",
+      "gt_method": "keyword_search",
+      "gt_keywords": "신상철 퇴직연금",
+      "gt_mode": "AND"
+    },
+    {
+      "id": "Q2-01",
+      "type": "Q2",
+      "query": "캐치업코리아 관련 서류 있어?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "캐치업코리아",
+      "gt_mode": "AND",
+      "expected": "있음 (N건)"
+    },
+    {
+      "id": "Q2-02",
+      "type": "Q2",
+      "query": "마리치 계약서 있어?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "마리치 계약서",
+      "gt_mode": "AND",
+      "expected": "0건이면 없다, N건이면 있다"
+    },
+    {
+      "id": "Q2-03",
+      "type": "Q2",
+      "query": "이분희 관련 서류 있어?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "이분희",
+      "gt_mode": "AND",
+      "expected": "건수 기반 유무 답변"
+    },
+    {
+      "id": "Q2-04",
+      "type": "Q2",
+      "query": "곽승철 진단서 있어?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "곽승철 진단서",
+      "gt_mode": "AND",
+      "expected": "건수 기반 유무 답변"
+    },
+    {
+      "id": "Q2-05",
+      "type": "Q2",
+      "query": "김보성 통장 사본 있나?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "김보성 통장",
+      "gt_mode": "AND",
+      "expected": "건수 기반 유무 답변"
+    },
+    {
+      "id": "Q2-06",
+      "type": "Q2",
+      "query": "안영미 명함 파일 있나요?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "안영미 명함",
+      "gt_mode": "AND",
+      "expected": "건수 기반 유무 답변"
+    },
+    {
+      "id": "Q2-07",
+      "type": "Q2",
+      "query": "한상용한테 받은 서류 있어?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "한상용",
+      "gt_mode": "AND",
+      "expected": "건수 기반 유무 답변"
+    },
+    {
+      "id": "Q2-08",
+      "type": "Q2",
+      "query": "류창수 관련 파일 확인해봐",
+      "gt_method": "keyword_search",
+      "gt_keywords": "류창수",
+      "gt_mode": "AND",
+      "expected": "건수 기반 유무 답변"
+    },
+    {
+      "id": "Q2-09",
+      "type": "Q2",
+      "query": "성연정 건강검진 결과 있나?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "성연정 건강검진",
+      "gt_mode": "AND",
+      "expected": "건수 기반 유무 답변"
+    },
+    {
+      "id": "Q2-10",
+      "type": "Q2",
+      "query": "김향길 자동차보험 서류 있어?",
+      "gt_method": "keyword_search",
+      "gt_keywords": "김향길 자동차보험",
+      "gt_mode": "AND",
+      "expected": "건수 기반 유무 답변"
+    },
+    {
+      "id": "Q4-01",
+      "type": "Q4",
+      "query": "캐치업코리아 계약 현황 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "김보성 AR 6건 + 안영미 AR 10건 = 총 16건 계약 목록"
+    },
+    {
+      "id": "Q4-02",
+      "type": "Q4",
+      "query": "캐치업코리아의 정상 상태 계약 목록 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "gt_filter": "계약상태 == '정상'",
+      "expected": "정상 상태 계약만 필터링"
+    },
+    {
+      "id": "Q4-03",
+      "type": "Q4",
+      "query": "캐치업코리아의 실효된 계약이 있어?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "gt_filter": "계약상태 != '정상'",
+      "expected": "실효 계약 0건 (정상 16건)"
+    },
+    {
+      "id": "Q4-04",
+      "type": "Q4",
+      "query": "김보성 고객이 계약자로 되어 있는 계약들을 모두 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "김보성",
+      "gt_filter": "계약자 == '김보성'",
+      "expected": "마스터플랜(65,200원), 암엔암(5,100원), 유니버셜달러종신(2,505,490원), 변액연금동행Plus(200,000,000원)"
+    },
+    {
+      "id": "Q4-05",
+      "type": "Q4",
+      "query": "곽승철 계약 현황 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "곽승철",
+      "expected": "13건 계약 목록, 월 1,292,220원"
+    },
+    {
+      "id": "Q4-06",
+      "type": "Q4",
+      "query": "캐치업코리아 증권번호 목록 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "전체 계약의 증권번호 나열"
+    },
+    {
+      "id": "Q4-07",
+      "type": "Q4",
+      "query": "이분희 보험 가입 내역 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "이분희",
+      "expected": "하이라이프보장보험(117,770원) + 하이라이프종신보험(15,800원) = 2건"
+    },
+    {
+      "id": "Q4-08",
+      "type": "Q4",
+      "query": "안영미 계약 현황 확인해줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "안영미",
+      "expected": "최신 AR 기준 11건, 월 17,377,367원"
+    },
+    {
+      "id": "Q4-09",
+      "type": "Q4",
+      "query": "송유미 보험 뭐 들었어?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "송유미",
+      "expected": "월 1,246,642원, 14건 계약"
+    },
+    {
+      "id": "Q4-10",
+      "type": "Q4",
+      "query": "안영미가 피보험자인 계약 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "안영미",
+      "gt_filter": "피보험자 == '안영미'",
+      "expected": "피보험자 안영미 계약 21건"
+    },
+    {
+      "id": "Q4-11",
+      "type": "Q4",
+      "query": "은형석 계약 상세 내용 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "은형석",
+      "expected": "5건, 최신 AR 기준 월 1,699,090원"
+    },
+    {
+      "id": "Q4-12",
+      "type": "Q4",
+      "query": "한상용 가입한 보험 목록 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "한상용",
+      "expected": "7건 계약 목록"
+    },
+    {
+      "id": "Q4-13",
+      "type": "Q4",
+      "query": "신상철 종신보험만 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "신상철",
+      "gt_filter": "보험상품 contains '종신'",
+      "expected": "종신보험 상품만 필터링"
+    },
+    {
+      "id": "Q4-14",
+      "type": "Q4",
+      "query": "캐치업코리아가 계약자인 보험 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "gt_filter": "계약자 == '캐치업코리아'",
+      "expected": "실버플랜 변액유니버셜V(992,500원), 유니버셜달러종신(3,710,230원), 달러경영인정기x2"
+    },
+    {
+      "id": "Q4-15",
+      "type": "Q4",
+      "query": "피보험자 김보성 가입내용 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "김보성",
+      "gt_filter": "피보험자 == '김보성'",
+      "expected": "피보험자가 김보성인 전체 계약 (18건, 증권번호 중복 포함)"
+    },
+    {
+      "id": "Q5-01",
+      "type": "Q5",
+      "query": "캐치업코리아 고객 정보 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "법인, 연락처: 010-4941-8720, 상태: active"
+    },
+    {
+      "id": "Q5-02",
+      "type": "Q5",
+      "query": "마리치 고객 정보 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "마리치",
+      "expected": "법인, 상태: active"
+    },
+    {
+      "id": "Q5-03",
+      "type": "Q5",
+      "query": "고객 목록 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_filter": "meta.status == 'active'",
+      "expected": "전체 활성 고객 목록"
+    },
+    {
+      "id": "Q5-04",
+      "type": "Q5",
+      "query": "정씨 성을 가진 고객 찾아줘",
+      "gt_method": "mongodb_query",
+      "gt_filter": "name starts with '정'",
+      "expected": "정승우, 정명란, 정은연, 정지호, 정병덕 등"
+    },
+    {
+      "id": "Q5-05",
+      "type": "Q5",
+      "query": "캐치업 이라는 이름의 고객 있어?",
+      "gt_method": "mongodb_query",
+      "gt_filter": "name contains '캐치업'",
+      "expected": "캐치업코리아 (법인)"
+    },
+    {
+      "id": "Q5-06",
+      "type": "Q5",
+      "query": "김보성 연락처 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "김보성",
+      "expected": "010-4941-8720"
+    },
+    {
+      "id": "Q5-07",
+      "type": "Q5",
+      "query": "김보성 생년월일이 어떻게 돼?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "김보성",
+      "expected": "1968-02-15"
+    },
+    {
+      "id": "Q5-08",
+      "type": "Q5",
+      "query": "안영미 전화번호 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "안영미",
+      "expected": "010-3665-8710"
+    },
+    {
+      "id": "Q5-09",
+      "type": "Q5",
+      "query": "곽승철 고객 정보 확인해봐",
+      "gt_method": "mongodb_query",
+      "gt_customer": "곽승철",
+      "expected": "개인, 010-2657-0687, 1969-12-07"
+    },
+    {
+      "id": "Q5-10",
+      "type": "Q5",
+      "query": "송유미 생일이 언제야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "송유미",
+      "expected": "1968-09-14"
+    },
+    {
+      "id": "Q5-11",
+      "type": "Q5",
+      "query": "법인 고객 목록 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_filter": "customer_type == '법인'",
+      "expected": "캐치업코리아, 마리치 등 법인 고객 목록"
+    },
+    {
+      "id": "Q5-12",
+      "type": "Q5",
+      "query": "은형석 누구야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "은형석",
+      "expected": "개인, 010-4221-1002, 1973-10-07"
+    },
+    {
+      "id": "Q5-13",
+      "type": "Q5",
+      "query": "전체 고객 리스트 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_filter": "meta.status == 'active'",
+      "expected": "활성 상태 전체 고객 목록"
+    },
+    {
+      "id": "Q5-14",
+      "type": "Q5",
+      "query": "김씨 성 가진 고객 찾아봐",
+      "gt_method": "mongodb_query",
+      "gt_filter": "name starts with '김'",
+      "expected": "김보성, 김향길, 김선희, 김미현 등"
+    },
+    {
+      "id": "Q5-15",
+      "type": "Q5",
+      "query": "안광민 정보 좀 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "안광민",
+      "expected": "개인, 010-3774-5261, 1966-09-20"
+    },
+    {
+      "id": "Q6-01",
+      "type": "Q6",
+      "query": "캐치업코리아 보험료 얼마나 내고 있어?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "총 16건, 월 보험료 합계 제시. 일시납 별도 표시"
+    },
+    {
+      "id": "Q6-02",
+      "type": "Q6",
+      "query": "캐치업코리아 계약 몇 건이야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "캐치업코리아 총 16건"
+    },
+    {
+      "id": "Q6-03",
+      "type": "Q6",
+      "query": "김보성 월 보험료 총액이 얼마야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "김보성",
+      "expected": "월 4,319,740원 (일시납 200,000,000원 별도). 합계 필수",
+      "note": "2026-03-22 DB 기준, AR 중복 포함"
+    },
+    {
+      "id": "Q6-04",
+      "type": "Q6",
+      "query": "곽승철 고객 총 보험료가 얼마야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "곽승철",
+      "expected": "월 1,292,220원. 합계 필수"
+    },
+    {
+      "id": "Q6-05",
+      "type": "Q6",
+      "query": "이분희 보험료 얼마 내고 있어?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "이분희",
+      "expected": "현재 납입중 월 보험료 0원 (납입기간 완료). 개별 계약 보험료: 117,770원 + 15,800원"
+    },
+    {
+      "id": "Q6-06",
+      "type": "Q6",
+      "query": "안영미 보험료 합계 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "안영미",
+      "expected": "최신 AR 기준 월 17,377,367원. 합계 필수"
+    },
+    {
+      "id": "Q6-07",
+      "type": "Q6",
+      "query": "송유미 보험 총 몇 건이야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "송유미",
+      "expected": "14건"
+    },
+    {
+      "id": "Q6-08",
+      "type": "Q6",
+      "query": "곽지민 월납 보험료 총액은?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "곽지민",
+      "expected": "월 4,017,136원"
+    },
+    {
+      "id": "Q6-09",
+      "type": "Q6",
+      "query": "은형석 계약 건수 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "은형석",
+      "expected": "5건"
+    },
+    {
+      "id": "Q6-10",
+      "type": "Q6",
+      "query": "한상용 보험료 얼마나 내?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "한상용",
+      "expected": "월 1,349,807원 (일시납 별도)",
+      "note": "7건, monthlyPremium=1,349,807원 (2026-03-21 DB 기준)"
+    },
+    {
+      "id": "Q7-01",
+      "type": "Q7",
+      "query": "가장 최근에 계약한 고객은?",
+      "gt_method": "mongodb_aggregation",
+      "expected": "곽승철, 2026-03-08 계약"
+    },
+    {
+      "id": "Q7-02",
+      "type": "Q7",
+      "query": "2024년 이후 계약된 건 보여줘",
+      "gt_method": "mongodb_aggregation",
+      "expected": "계약일 >= 2024-01-01인 전체 계약 목록"
+    },
+    {
+      "id": "Q7-03",
+      "type": "Q7",
+      "query": "캐치업코리아 가장 오래된 계약은?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "마스터플랜 변액유니버셜종신Ⅱ보험 (2009-06-10)"
+    },
+    {
+      "id": "Q7-04",
+      "type": "Q7",
+      "query": "김보성 최근 가입한 보험이 뭐야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "김보성",
+      "expected": "무배당 모두의 종신보험 (2025-06-02)",
+      "note": "김보성 고객의 전체 계약 중 계약일 최신. 피보험자=김보성, 계약자=안영미"
+    },
+    {
+      "id": "Q7-05",
+      "type": "Q7",
+      "query": "2020년에 가입한 계약 있어?",
+      "gt_method": "mongodb_aggregation",
+      "expected": "2020년 계약 39건"
+    },
+    {
+      "id": "Q7-06",
+      "type": "Q7",
+      "query": "안영미 2022년 이후 가입 계약 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "안영미",
+      "gt_filter": "계약일 >= 2022-01-01",
+      "expected": "VIP종신Plus(2022-10-24), 달러연금(2024-12-19)"
+    },
+    {
+      "id": "Q7-07",
+      "type": "Q7",
+      "query": "올해 신규 계약 있어?",
+      "gt_method": "mongodb_aggregation",
+      "expected": "계약일이 2026년인 계약 목록"
+    },
+    {
+      "id": "Q7-08",
+      "type": "Q7",
+      "query": "곽승철 가장 최근 계약은?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "곽승철",
+      "expected": "곽승철 AR(2026-03-21) 기준 가장 최근 계약"
+    },
+    {
+      "id": "Q7-09",
+      "type": "Q7",
+      "query": "5년 이상 된 계약 보여줘",
+      "gt_method": "mongodb_aggregation",
+      "expected": "계약일 <= 2021-03-21인 계약 목록"
+    },
+    {
+      "id": "Q7-10",
+      "type": "Q7",
+      "query": "송유미 첫 번째 계약이 언제야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "송유미",
+      "expected": "2018-08-19 무배당 미리받는 변액종신보험 공감"
+    },
+    {
+      "id": "Q8-01",
+      "type": "Q8",
+      "query": "캐치업코리아와 송유미 관계는?",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "expected": "관계 없음"
+    },
+    {
+      "id": "Q8-02",
+      "type": "Q8",
+      "query": "김보성과 안영미 관계는?",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "expected": "배우자 (family/spouse)"
+    },
+    {
+      "id": "Q8-03",
+      "type": "Q8",
+      "query": "캐치업코리아 관계자 누구야?",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "expected": "김보성(대표이사), 안영미(임원), 김선희(직원), 박지우(직원), 안희정(직원), 유아영(직원), 이승준(직원)"
+    },
+    {
+      "id": "Q8-04",
+      "type": "Q8",
+      "query": "곽승철 가족 관계 알려줘",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "expected": "곽지민(자녀), 송유미(배우자)"
+    },
+    {
+      "id": "Q8-05",
+      "type": "Q8",
+      "query": "곽지민 부모가 누구야?",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "expected": "곽승철(부모)"
+    },
+    {
+      "id": "Q8-06",
+      "type": "Q8",
+      "query": "마리치 관계자 누구야?",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "expected": "관계 없음",
+      "note": "DB에 '주식회사마리치'로 저장되어 마리치로 검색 시 관계 미발견. 부분 매칭 미지원"
+    },
+    {
+      "id": "Q8-07",
+      "type": "Q8",
+      "query": "송연과 이방 관계는?",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "expected": "관계 없음",
+      "note": "송연/이방 관계가 DB에 미등록 상태"
+    },
+    {
+      "id": "Q8-08",
+      "type": "Q8",
+      "query": "이율 부모가 누구야?",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "expected": "관계 없음",
+      "note": "이율 부모 관계가 DB에 미등록 상태"
+    },
+    {
+      "id": "Q8-09",
+      "type": "Q8",
+      "query": "캐치업코리아 대표이사가 누구야?",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "gt_filter": "type == 'ceo'",
+      "expected": "김보성"
+    },
+    {
+      "id": "Q8-10",
+      "type": "Q8",
+      "query": "송유미 남편이 누구야?",
+      "gt_method": "mongodb_query",
+      "gt_collection": "customer_relationships",
+      "expected": "곽승철(배우자/spouse)"
+    },
+    {
+      "id": "AR-11",
+      "type": "Q4",
+      "query": "캐치업코리아 가입금액 제일 큰 보험은?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "달러경영인정기보험, 75,232만원"
+    },
+    {
+      "id": "AR-12",
+      "type": "Q4",
+      "query": "이분희 납입 완료된 보험 있어?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "이분희",
+      "expected": "납입기간 20년(2001~2021), 15년(2005~2020) 모두 납입 완료"
+    },
+    {
+      "id": "AR-20",
+      "type": "Q4",
+      "query": "캐치업코리아 메트라이프 계약만 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "메트라이프 계약 0건",
+      "note": "AR 데이터에 보험사명이 메트라이프로 파싱되지 않아 0건 정상"
+    },
+    {
+      "id": "CRS-01",
+      "type": "Q4",
+      "query": "정승우 변액보험 뭐 있어?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "정승우",
+      "expected": "무) 마스터플랜 변액유니버셜종신, CRS 2건"
+    },
+    {
+      "id": "CRS-02",
+      "type": "Q6",
+      "query": "정승우 변액보험 적립금 얼마야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "정승우",
+      "expected": "총 적립금 8,666,558원"
+    },
+    {
+      "id": "CRS-03",
+      "type": "Q4",
+      "query": "정승우 변액보험 수익률 어때?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "정승우",
+      "expected": "투자수익률 109.23%"
+    },
+    {
+      "id": "CRS-04",
+      "type": "Q6",
+      "query": "정승우 지금 해지하면 얼마 받아?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "정승우",
+      "expected": "해지환급금 정보 제시 (2건)"
+    },
+    {
+      "id": "CRS-05",
+      "type": "Q4",
+      "query": "정승우 펀드 구성 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "정승우",
+      "expected": "인덱스주식형 61.8%(수익률 202.7%), 채권형 38.2%(수익률 13.25%)"
+    },
+    {
+      "id": "CRS-06",
+      "type": "Q4",
+      "query": "최혜진 변액보험 사망수익자 누구야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "최혜진",
+      "expected": "이분희"
+    },
+    {
+      "id": "CRS-07",
+      "type": "Q4",
+      "query": "정은연 변액보험 적립금 얼마야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "정은연",
+      "expected": "총 적립금 7,966,342원"
+    },
+    {
+      "id": "CRS-08",
+      "type": "Q4",
+      "query": "최혜진 납입보험료 총액은?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "최혜진",
+      "expected": "순보험료 23,620,870원"
+    },
+    {
+      "id": "CRS-09",
+      "type": "Q4",
+      "query": "정승우 보험계약대출 있어?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "정승우",
+      "expected": "보험계약대출 0원 (없음)"
+    },
+    {
+      "id": "CRS-10",
+      "type": "Q4",
+      "query": "최혜진 변액보험 수익률 변화 추이 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "최혜진",
+      "expected": "CRS 이력 기반 수익률 변화"
+    },
+    {
+      "id": "AR-21",
+      "type": "Q4",
+      "query": "캐치업코리아 보장금액 1억 이상 계약 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "보장금액 1억 이상 계약 6건"
+    },
+    {
+      "id": "AR-22",
+      "type": "Q4",
+      "query": "캐치업코리아 계약자와 피보험자가 다른 계약만 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "계약자≠피보험자 계약 6건"
+    },
+    {
+      "id": "AR-23",
+      "type": "Q4",
+      "query": "캐치업코리아 종신보험만 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "종신보험 7건"
+    },
+    {
+      "id": "AR-24",
+      "type": "Q7",
+      "query": "캐치업코리아 보험 언제 만기야?",
+      "gt_method": "mongodb_query",
+      "gt_customer": "캐치업코리아",
+      "expected": "종신보험 만기 없음, 납입종료일 2035년 등 제시"
+    },
+    {
+      "id": "AR-25",
+      "type": "Q4",
+      "query": "이상윤 실효된 계약 포함해서 전부 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_customer": "이상윤",
+      "expected": "includeLapsed=true로 실효 계약 포함"
+    },
+    {
+      "id": "CRS-11",
+      "type": "Q4",
+      "query": "수익률 100% 이상인 변액보험 있어?",
+      "gt_method": "mongodb_query",
+      "gt_tool": "query_customer_reviews",
+      "gt_params": {
+        "returnRateMin": 100
+      },
+      "expected": "145건, 평균 수익률 154.43%, 최고 891.5%(마스터플랜 변액유니버셜보험)"
+    },
+    {
+      "id": "CRS-12",
+      "type": "Q6",
+      "query": "내 고객 변액보험 적립금 합계 얼마야?",
+      "gt_method": "mongodb_query",
+      "gt_tool": "query_customer_reviews",
+      "gt_params": {},
+      "expected": "적립금 합계 10,345,613,592원"
+    },
+    {
+      "id": "CRS-13",
+      "type": "Q4",
+      "query": "약관대출 받고 있는 고객 있어?",
+      "gt_method": "mongodb_query",
+      "gt_tool": "query_customer_reviews",
+      "gt_params": {
+        "hasPolicyLoan": true
+      },
+      "expected": "42건, 총 약관대출 165,560,000원"
+    },
+    {
+      "id": "CRS-14",
+      "type": "Q4",
+      "query": "적립금이 가장 많은 변액보험은?",
+      "gt_method": "mongodb_query",
+      "gt_tool": "query_customer_reviews",
+      "gt_params": {
+        "sortBy": "accumulatedAmount",
+        "sortOrder": "desc"
+      },
+      "expected": "홍석진 무배당 My Fund 변액연금Ⅳ보험 적립형 766,952,152원"
+    },
+    {
+      "id": "CRS-15",
+      "type": "Q4",
+      "query": "정승우 인덱스주식형 펀드 수익률 변화 보여줘",
+      "gt_method": "mongodb_query",
+      "gt_tool": "get_cr_contract_history",
+      "gt_params": {
+        "fundName": "인덱스주식형"
+      },
+      "gt_customer": "정승우",
+      "expected": "인덱스주식형 펀드 수익률 이력 (시계열 데이터)"
+    },
+    {
+      "id": "CRS-16",
+      "type": "Q4",
+      "query": "수익률이 마이너스인 변액보험 있어?",
+      "gt_method": "mongodb_query",
+      "gt_tool": "query_customer_reviews",
+      "gt_params": {
+        "returnRateMax": 0
+      },
+      "expected": "17건 (수익률 0% 이하)"
+    },
+    {
+      "id": "CRS-17",
+      "type": "Q4",
+      "query": "중도인출한 변액보험 있어?",
+      "gt_method": "mongodb_query",
+      "gt_tool": "query_customer_reviews",
+      "gt_params": {
+        "hasWithdrawal": true
+      },
+      "expected": "65건"
+    }
   ]
 }
