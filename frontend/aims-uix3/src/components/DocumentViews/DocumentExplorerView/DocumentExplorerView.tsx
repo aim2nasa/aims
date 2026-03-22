@@ -165,6 +165,7 @@ const DocumentExplorerContent: React.FC<{
 
   // 단일 고객 문서함 다운로드 (··· 메뉴)
   const handleDownloadCustomerDocuments = useCallback(async (customerId: string, customerName: string) => {
+    toast.show(`${customerName} 문서함 다운로드 시작...`, { type: 'info' })
     try {
       await downloadZip([customerId])
       toast.show(`${customerName} 문서함 다운로드 완료`, { type: 'success' })
@@ -176,9 +177,10 @@ const DocumentExplorerContent: React.FC<{
   // 다중 고객 문서함 다운로드 (하단 액션바)
   const handleDownloadSelectedCustomers = useCallback(async () => {
     if (selectedCustomerIds.size === 0) return
+    const count = selectedCustomerIds.size
+    toast.show(`${count}명 고객 문서함 다운로드 시작...`, { type: 'info' })
     try {
       await downloadZip(Array.from(selectedCustomerIds))
-      const count = selectedCustomerIds.size
       toast.show(`${count}명 고객 문서함 다운로드 완료`, { type: 'success' })
       setSelectedCustomerIds(new Set())
     } catch {
