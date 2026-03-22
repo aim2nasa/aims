@@ -148,10 +148,10 @@ if (pipelineContent) {
     'Should convert customerId to ObjectId before storing'
   );
 
-  // 6. ObjectId.is_valid() 체크 존재
+  // 6. ObjectId.is_valid() 체크 존재 (customerId: camelCase)
   assertIncludes(
     pipelineContent,
-    'ObjectId\\.is_valid\\(customer_id\\)',
+    'ObjectId\\.is_valid\\(customerId\\)',
     'ObjectId.is_valid() check exists',
     'Should validate customerId before converting to ObjectId'
   );

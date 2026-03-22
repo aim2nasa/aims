@@ -20,15 +20,24 @@ ALLOWED_MODULES = frozenset({
     "argparse",      # CLI
     "asyncio",       # testing.py (async 테스트 러너)
     "dataclasses",
+    "datetime",      # audit.py, cost_tracker.py, events.py (타임스탬프)
     "enum",
+    "hashlib",       # audit.py (감사 로그 해시)
+    "httpx",         # providers.py (AI API 호출 — xpipe 자체 의존성)
     "importlib",     # CLI status (동적 어댑터 탐색)
     "inspect",       # CLI status (ABC 메서드 목록 조회)
     "json",          # testing.py (테스트 셋 로드)
+    "logging",       # audit.py, events.py (로깅)
+    "os",            # providers.py, quality.py (환경변수, 파일 경로)
     "pathlib",       # CLI, testing.py (파일 경로)
+    "re",            # quality.py (정규식)
     "subprocess",    # CLI test (pytest 실행)
     "sys",           # CLI (sys.exit, sys.executable)
+    "time",          # scheduler.py (시간)
     "tomllib",       # CLI (_get_version, Python 3.11+)
     "typing",
+    "unicodedata",   # quality.py (유니코드 처리)
+    "urllib",        # events.py (URL 처리)
     "warnings",      # deprecation 정책에서 사용 예정
 })
 
@@ -43,7 +52,7 @@ FORBIDDEN_MODULES = frozenset({
     "motor",
     "redis",
     "fastapi",
-    "httpx",
+    # httpx는 xpipe 자체 의존성 (AI API 호출용) — 금지 대상 아님
     "openai",
     "anthropic",
 })
