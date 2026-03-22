@@ -1,6 +1,7 @@
 /**
  * FolderDropZone 컴포넌트 테스트
  * @since 2025-12-05
+ * @updated 2026-03-22 v2.0 개편에 맞춰 테스트 갱신
  */
 
 import { describe, test, expect, vi } from 'vitest'
@@ -25,12 +26,11 @@ describe('FolderDropZone', () => {
       expect(screen.getByText(/또는 클릭하여 폴더 선택/)).toBeInTheDocument()
     })
 
-    test('가이드 문구가 표시된다', () => {
+    test('접히는 가이드 토글이 표시된다', () => {
       const onFilesSelected = vi.fn()
       render(<FolderDropZone onFilesSelected={onFilesSelected} />)
 
-      expect(screen.getByText('이렇게 폴더를 준비하세요')).toBeInTheDocument()
-      expect(screen.getByText('폴더명 = 고객명이면 자동 매칭')).toBeInTheDocument()
+      expect(screen.getByText('폴더 준비 방법')).toBeInTheDocument()
     })
   })
 
@@ -88,21 +88,25 @@ describe('FolderDropZone', () => {
     })
   })
 
-  describe('가이드 콘텐츠', () => {
-    test('폴더 구조 가이드가 표시된다', () => {
+  describe('가이드 토글', () => {
+    test('기본 상태에서 가이드 내용이 숨겨져 있다', () => {
       const onFilesSelected = vi.fn()
       render(<FolderDropZone onFilesSelected={onFilesSelected} />)
 
-      expect(screen.getByText('홍길동')).toBeInTheDocument()
-      expect(screen.getByText('김영희')).toBeInTheDocument()
+      // 가이드 토글 버튼은 보이지만, 상세 내용은 숨김
+      expect(screen.getByText('폴더 준비 방법')).toBeInTheDocument()
+      expect(screen.queryByText('홍길동')).not.toBeInTheDocument()
     })
 
-    test('가이드 팁이 표시된다', () => {
+    test('토글 클릭 시 가이드 내용이 펼쳐진다', () => {
       const onFilesSelected = vi.fn()
       render(<FolderDropZone onFilesSelected={onFilesSelected} />)
 
-      expect(screen.getByText('상위 폴더 또는 고객 폴더 직접 선택 가능')).toBeInTheDocument()
-      expect(screen.getByText('하위 폴더의 파일도 모두 등록')).toBeInTheDocument()
+      const toggleButton = screen.getByRole('button', { name: '사용법 펼치기' })
+      fireEvent.click(toggleButton)
+
+      expect(screen.getByText('홍길동')).toBeInTheDocument()
+      expect(screen.getByText(/이름이 같은 고객에게 알아서 연결돼요/)).toBeInTheDocument()
     })
   })
 })

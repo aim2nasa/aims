@@ -250,7 +250,8 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
         multiple={multiple}
         accept={accept}
         onChange={handleFileInputChange}
-        style={{ display: 'none' }}
+        className="file-upload-area__hidden-input"
+        aria-label="파일 선택"
       />
 
       {directory && (
@@ -260,7 +261,8 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
           multiple
           accept={accept}
           onChange={handleFileInputChange}
-          style={{ display: 'none' }}
+          className="file-upload-area__hidden-input"
+          aria-label="폴더 선택"
         />
       )}
 
@@ -274,8 +276,11 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
         onDrop={handleDrop}
         role="button"
         tabIndex={disabled || uploading ? -1 : 0}
-        aria-label="파일 업로드: 클릭하거나 파일을 드래그하세요"
-        aria-disabled={disabled || uploading}
+        aria-label={
+          (disabled || uploading)
+            ? "파일 업로드 (비활성)"
+            : "파일 업로드: 클릭하거나 파일을 드래그하세요"
+        }
       >
         {!uploading && !isDragging && !disabled && (
           <div className="file-upload-area__unified-content">

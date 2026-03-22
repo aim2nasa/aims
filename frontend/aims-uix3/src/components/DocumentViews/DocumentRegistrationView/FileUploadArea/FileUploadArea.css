@@ -13,6 +13,10 @@
     padding: 0;
   }
 
+  .file-upload-area__hidden-input {
+    display: none;
+  }
+
   /* 🍎 UNIFIED UPLOAD ZONE: Click or Drop - 적정 크기 */
   .file-upload-area__unified-zone {
     height: 150px; /* 적정 크기 */

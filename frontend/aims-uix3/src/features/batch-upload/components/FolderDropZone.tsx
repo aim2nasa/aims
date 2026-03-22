@@ -1,13 +1,13 @@
 /**
  * FolderDropZone Component
  * @since 2025-12-05
- * @version 1.0.0
+ * @version 2.0.0
  *
  * 폴더 선택 및 드래그앤드롭 영역
+ * v2: AR/CR 등록 패턴과 동일한 깔끔한 레이아웃으로 개편
  */
 
 import { useState, useCallback, useRef, type DragEvent, type ChangeEvent } from 'react'
-import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
 import './FolderDropZone.css'
 
 interface FolderDropZoneProps {
@@ -20,6 +20,7 @@ export default function FolderDropZone({
   disabled = false
 }: FolderDropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)
+  const [isGuideExpanded, setIsGuideExpanded] = useState(false)
   const folderInputRef = useRef<HTMLInputElement>(null)
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -136,112 +137,75 @@ export default function FolderDropZone({
       role="region"
       aria-label={disabled ? "폴더 드롭존 (비활성)" : "폴더를 드래그하세요"}
     >
-      {/* 폴더 준비 가이드 */}
-      <div className="folder-guide">
-        <div className="folder-guide-header">
-          <span className="folder-guide-badge">예시</span>
-          <p className="folder-guide-title">이렇게 폴더를 준비하세요</p>
-        </div>
+      {/* 접히는 가이드 — AR/CR 등록 방법과 동일한 패턴 */}
+      <div className={`folder-guide ${isGuideExpanded ? 'folder-guide--expanded' : 'folder-guide--collapsed'}`}>
+        <button
+          type="button"
+          className="folder-guide__toggle"
+          onClick={() => setIsGuideExpanded(!isGuideExpanded)}
+          aria-label={isGuideExpanded ? '사용법 접기' : '사용법 펼치기'}
+        >
+          <div className="folder-guide__header">
+            <svg className="folder-guide__icon" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path className="lightbulb-bulb" d="M12 3C8.68629 3 6 5.68629 6 9C6 11.4363 7.4152 13.5392 9.42857 14.3572V17C9.42857 17.5523 9.87629 18 10.4286 18H13.5714C14.1237 18 14.5714 17.5523 14.5714 17V14.3572C16.5848 13.5392 18 11.4363 18 9C18 5.68629 15.3137 3 12 3Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <h3 className="folder-guide__title">폴더 준비 방법</h3>
+            <span className="folder-guide__toggle-icon" aria-hidden="true">
+              {isGuideExpanded ? '▲' : '▼'}
+            </span>
+          </div>
+        </button>
 
-        <div className="folder-guide-content">
-          <div className="folder-guide-tree">
-            {/* 루트 폴더 */}
-            <div className="guide-node root">
-              <div className="guide-node-content">
-                <span className="guide-icon folder">📁</span>
-                <span className="guide-name root">내 고객 문서</span>
-                <span className="guide-desc">← 상위 폴더를 드래그하거나</span>
-              </div>
+        {isGuideExpanded && (
+          <div className="folder-guide__content">
+            <p className="folder-guide__desc">
+              내 PC에 고객 이름으로 된 폴더가 있으면 그대로 사용할 수 있어요.
+            </p>
 
-              {/* 홍길동 고객 폴더 */}
-              <div className="guide-node has-children">
-                <div className="guide-node-content">
-                  <span className="guide-icon folder">📁</span>
-                  <span className="guide-name customer">홍길동</span>
-                  <span className="guide-desc alt">← 고객 폴더를 직접 선택</span>
-                  <span className="guide-match">
-                    <span className="guide-arrow">→</span>
-                    <span className="guide-customer-badge">👤 홍길동 고객</span>
-                  </span>
-                </div>
-
-                {/* 홍길동 하위 파일/폴더 */}
-                <div className="guide-node">
-                  <div className="guide-node-content">
-                    <span className="guide-icon file">📄</span>
-                    <span className="guide-name file">보험증권.pdf</span>
-                  </div>
-                </div>
-
-                <div className="guide-node has-children">
-                  <div className="guide-node-content">
-                    <span className="guide-icon folder sub">📁</span>
-                    <span className="guide-name subfolder">청구서류</span>
-                    <span className="guide-note">하위 폴더도 OK</span>
-                  </div>
-
-                  {/* 청구서류 하위 */}
-                  <div className="guide-node">
-                    <div className="guide-node-content">
-                      <span className="guide-icon file">📄</span>
-                      <span className="guide-name file">진단서.pdf</span>
-                    </div>
-                  </div>
-                  <div className="guide-node last">
-                    <div className="guide-node-content">
-                      <span className="guide-icon file">📄</span>
-                      <span className="guide-name file">영수증.jpg</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="guide-node last">
-                  <div className="guide-node-content">
-                    <span className="guide-icon file">📄</span>
-                    <span className="guide-name file">약관.pdf</span>
-                  </div>
+            {/* 간결한 2단계 가이드 — 일반 문서 등록 패턴 */}
+            <div className="folder-guide__steps">
+              <div className="folder-guide__step">
+                <span className="folder-guide__step-number">1</span>
+                <div className="folder-guide__step-text">
+                  <strong>고객별로 문서 정리</strong>
+                  <span>고객 이름 폴더 안에 문서를 넣어두세요</span>
                 </div>
               </div>
-
-              {/* 김영희 고객 폴더 */}
-              <div className="guide-node last has-children">
-                <div className="guide-node-content">
-                  <span className="guide-icon folder">📁</span>
-                  <span className="guide-name customer">김영희</span>
-                  <span className="guide-match">
-                    <span className="guide-arrow">→</span>
-                    <span className="guide-customer-badge">👤 김영희 고객</span>
-                  </span>
+              <div className="folder-guide__step">
+                <span className="folder-guide__step-number">2</span>
+                <div className="folder-guide__step-text">
+                  <strong>여기로 끌어오기</strong>
+                  <span>이름이 같은 고객에게 알아서 연결돼요</span>
                 </div>
+              </div>
+            </div>
 
-                <div className="guide-node last">
-                  <div className="guide-node-content">
-                    <span className="guide-icon file">📄</span>
-                    <span className="guide-name file">계약서.pdf</span>
-                  </div>
+            {/* 미니 예시 — 한눈에 볼 수 있는 간결한 구조 */}
+            <div className="folder-guide__example">
+              <span className="folder-guide__example-label">예시</span>
+              <div className="folder-guide__example-tree">
+                <div className="folder-guide__example-row">
+                  <span>📁</span>
+                  <span className="folder-guide__example-name">홍길동</span>
+                  <span className="folder-guide__example-arrow">→</span>
+                  <span className="folder-guide__example-match">홍길동 고객에 자동 연결</span>
+                </div>
+                <div className="folder-guide__example-row folder-guide__example-row--child">
+                  <span>📄</span>
+                  <span className="folder-guide__example-file">보험증권.pdf</span>
+                </div>
+                <div className="folder-guide__example-row folder-guide__example-row--child">
+                  <span>📄</span>
+                  <span className="folder-guide__example-file">약관.pdf</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="folder-guide-tips">
-          <div className="guide-tip">
-            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-            <span>상위 폴더 또는 고객 폴더 직접 선택 가능</span>
-          </div>
-          <div className="guide-tip">
-            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-            <span>폴더명 = 고객명이면 자동 매칭</span>
-          </div>
-          <div className="guide-tip">
-            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-            <span>하위 폴더의 파일도 모두 등록</span>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* 드래그 영역 */}
+      {/* 드롭존 — 화면의 주인공 */}
       <label className={`folder-drop-zone-content ${disabled ? 'disabled' : ''}`}>
         <input
           ref={folderInputRef}
@@ -254,7 +218,7 @@ export default function FolderDropZone({
           webkitdirectory=""
           multiple
         />
-        {/* + 버튼 */}
+        {/* + 버튼 — AR/CR 드롭존과 동일한 세로 배치 */}
         <div className="folder-select-plus-icon">
           <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
             <path d="M24 10V38M10 24H38" stroke="white" strokeWidth="4" strokeLinecap="round"/>
@@ -265,6 +229,9 @@ export default function FolderDropZone({
         </span>
         <span className="folder-drop-zone-description">
           또는 클릭하여 폴더 선택
+        </span>
+        <span className="folder-drop-zone-hint">
+          내 PC에서 고객 이름으로 만든 폴더를 선택하세요
         </span>
       </label>
     </div>

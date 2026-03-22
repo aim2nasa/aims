@@ -1,6 +1,7 @@
 /**
  * FolderDropZone Styles
  * @since 2025-12-05
+ * @version 2.0.0 — AR/CR 등록 패턴과 동일한 깔끔한 레이아웃
  */
 
 @layer components {
@@ -9,16 +10,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* center → flex-start: 상단 정렬 */
+    justify-content: center;
     flex: 1;
     min-height: 0;
-    min-width: 0; /* flexbox 오버플로우 방지 */
+    min-width: 0;
     padding: var(--spacing-3);
     border: 2px dashed var(--color-upload-zone-border);
     border-radius: var(--radius-lg);
     background: var(--color-upload-zone-bg);
     transition: all 0.2s ease;
-    overflow: auto; /* 내용 넘침 시 스크롤 */
+    overflow: auto;
+    gap: var(--spacing-4);
   }
 
   .folder-drop-zone.drag-over {
@@ -31,6 +33,8 @@
     opacity: 0.5;
   }
 
+  /* ==================== 드롭존 (화면의 주인공) ==================== */
+
   .folder-drop-zone-content {
     display: flex;
     flex-direction: column;
@@ -40,7 +44,7 @@
     color: var(--color-text-secondary);
     cursor: pointer;
     max-width: 100%;
-    min-width: 0; /* flexbox shrink 허용 */
+    min-width: 0;
   }
 
   .folder-drop-zone-content.disabled {
@@ -48,12 +52,10 @@
     opacity: 0.4;
   }
 
-  /* 숨겨진 폴더 선택 input */
   .folder-input-hidden {
     display: none;
   }
 
-  /* + 아이콘 (폴더 선택) — ExcelRefiner __plus-icon과 동일 */
   .folder-select-plus-icon {
     display: flex;
     align-items: center;
@@ -64,26 +66,9 @@
     background: var(--color-primary-500);
   }
 
-  .folder-drop-zone-icon {
-    color: var(--color-ios-cyan, #32ade6);
-    opacity: 0.8;
-  }
-
-  .folder-drop-zone.drag-over .folder-drop-zone-icon {
-    opacity: 1;
-    transform: scale(1.1);
-    transition: transform 0.2s ease;
-  }
-
-  .folder-drop-zone-text {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-  }
-
   .folder-drop-zone-title {
     margin: 0;
-    font-size: var(--font-size-footnote);  /* 13px */
+    font-size: var(--font-size-footnote);
     font-weight: 600;
     color: var(--color-text-primary);
     letter-spacing: -0.3px;
@@ -91,379 +76,242 @@
 
   .folder-drop-zone-description {
     margin: 0;
-    font-size: var(--font-size-caption-1);  /* 12px */
+    font-size: var(--font-size-caption-1);
     font-weight: 400;
-    opacity: 0.6;
     color: var(--color-text-secondary);
   }
 
   .folder-drop-zone-hint {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background-color: var(--color-bg-tertiary, #f3f4f6);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-caption-2);  /* 11px - FONT_SIZE_STANDARDS: 힌트 */
+    font-size: var(--font-size-caption-2);
     font-weight: 400;
+    opacity: 0.6;
     color: var(--color-text-tertiary);
   }
 
-  .folder-drop-zone-hint-icon {
-    color: var(--color-text-tertiary);
-    opacity: 0.7;
-  }
-
-  /* ==================== 폴더 준비 가이드 ==================== */
+  /* ==================== 접히는 가이드 (AR/CR 패턴) ==================== */
 
   .folder-guide {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-2);
-    padding: var(--spacing-3) var(--spacing-4);
-    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary, #f3f4f6) 100%);
-    border: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+    background: transparent;
     border-radius: var(--radius-lg);
-    margin-bottom: var(--spacing-2);
-    max-width: 100%; /* 컨테이너 너비 초과 방지 */
-    box-sizing: border-box;
+    max-width: 600px;
+    width: 100%;
+    overflow: hidden;
   }
 
-  .folder-guide-header {
+  /* 토글 버튼 */
+  .folder-guide__toggle {
+    width: 100%;
+    padding: var(--spacing-2) var(--spacing-4);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
+
+  .folder-guide__toggle:hover {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+
+  .folder-guide__header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    gap: 8px;
   }
 
-  .folder-guide-badge {
-    padding: var(--spacing-0-5) var(--spacing-2);
-    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-    color: white;
-    font-size: 10px;
+  /* 펼쳐진 상태: 하단 구분선 */
+  .folder-guide--expanded .folder-guide__header {
+    margin-bottom: var(--spacing-2);
+    padding-bottom: var(--spacing-2);
+    border-bottom: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+  }
+
+  .folder-guide__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .folder-guide__icon .lightbulb-bulb {
+    fill: var(--color-icon-lightbulb-fill);
+    stroke: var(--color-icon-lightbulb-stroke);
+  }
+
+  .folder-guide__icon .lightbulb-base {
+    stroke: var(--color-icon-lightbulb-stroke);
+  }
+
+  .folder-guide__title {
+    margin: 0;
+    font-size: var(--font-size-subheadline);
     font-weight: 600;
-    border-radius: 10px;
+    color: var(--color-text-primary);
+    letter-spacing: -0.5px;
+  }
+
+  .folder-guide__toggle-icon {
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-caption-1);
+    transition: transform 0.2s ease;
+  }
+
+  /* 가이드 본문 */
+  .folder-guide__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    align-items: center;
+    padding: 0 var(--spacing-4) var(--spacing-3);
+  }
+
+  .folder-guide__desc {
+    margin: 0;
+    font-size: var(--font-size-caption-1);
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* 2단계 스텝 — 일반 문서 등록 패턴 */
+  .folder-guide__steps {
+    display: flex;
+    gap: var(--spacing-6);
+    justify-content: center;
+    width: 100%;
+  }
+
+  .folder-guide__step {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+  }
+
+  .folder-guide__step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-primary-500);
+    color: white;
+    font-size: var(--font-size-caption-2);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .folder-guide__step-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .folder-guide__step-text strong {
+    font-size: var(--font-size-caption-1);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .folder-guide__step-text span {
+    font-size: var(--font-size-caption-2);
+    font-weight: 400;
+    color: var(--color-text-secondary);
+  }
+
+  /* 미니 예시 */
+  .folder-guide__example {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1-5);
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+    border-radius: var(--radius-md);
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .folder-guide__example-label {
+    font-size: var(--font-size-caption-2);
+    font-weight: 600;
+    color: var(--color-text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
-  .folder-guide-title {
-    margin: 0;
-    font-size: var(--font-size-footnote);  /* 13px */
-    font-weight: 600;
-    color: var(--color-text-primary);
-  }
-
-  .folder-guide-content {
+  .folder-guide__example-tree {
     display: flex;
-    justify-content: center;
-    padding: var(--spacing-3) var(--spacing-4);
-    background: rgba(0, 122, 255, 0.08);
-    border-radius: var(--radius-md);
-    margin: var(--spacing-1) 0;
-    max-width: 100%;
-    overflow-x: auto; /* 트리가 넓으면 가로 스크롤 */
+    flex-direction: column;
+    gap: var(--spacing-0-5);
   }
 
-  .folder-guide-tree {
-    font-size: var(--font-size-footnote);
-    line-height: 1.5;
-    padding: var(--spacing-1) 0;
-  }
-
-  /* 트리 노드 - CSS 라인으로 연결 */
-  .guide-node {
-    position: relative;
-    padding-left: var(--spacing-6);
-  }
-
-  .guide-node.root {
-    padding-left: 0;
-  }
-
-  /* 수직선 (부모에서 자식으로) */
-  .guide-node:not(.root)::before {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background-color: var(--color-border, #d1d5db);
-  }
-
-  /* 마지막 노드는 수직선을 중간까지만 */
-  .guide-node.last::before {
-    bottom: auto;
-    height: 16px;
-  }
-
-  /* 수평선 (아이콘으로 연결) */
-  .guide-node:not(.root)::after {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: 16px;
-    width: 12px;
-    height: 1px;
-    background-color: var(--color-border, #d1d5db);
-  }
-
-  .guide-node-content {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-1-5);
-    padding: var(--spacing-1) 0;
-    white-space: nowrap;
-  }
-
-  .guide-icon {
-    font-size: var(--font-size-callout);
-    line-height: 1;
-    flex-shrink: 0;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-  }
-
-  .guide-icon.folder {
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
-  }
-
-  /* 라이트 테마에서 폴더 아이콘 가시성 강화 */
-  html:not([data-theme="dark"]) .guide-icon.folder {
-    filter: saturate(1.4) contrast(1.15) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
-  }
-
-  .guide-icon.file {
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-  }
-
-  .guide-icon.folder.sub {
-    opacity: 0.9;
-  }
-
-  .guide-name {
-    color: var(--color-text-primary);
-    font-size: var(--font-size-footnote);
-    font-weight: 600;
-  }
-
-  .guide-name.root {
-    font-weight: 700;
-    color: var(--color-text-primary);
-  }
-
-  .guide-name.customer {
-    color: var(--color-ios-blue, #007aff);
-    font-weight: 700;
-  }
-
-  .guide-name.subfolder {
-    color: var(--color-text-primary);
-    font-weight: 600;
-  }
-
-  .guide-name.file {
-    color: var(--color-text-secondary);
-    font-weight: 600;
-  }
-
-  .guide-desc {
-    margin-left: var(--spacing-2);
-    padding: var(--spacing-0-5) var(--spacing-2);
-    background: var(--color-ios-blue, #007aff);
-    color: white;
-    font-size: 10px;
-    font-weight: 700;
-    border-radius: 10px;
-    font-family: var(--font-family-base);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  }
-
-  .guide-desc.alt {
-    background: var(--color-ios-orange, #ff9500);
-  }
-
-  html[data-theme="dark"] .guide-desc {
-    background: rgba(0, 122, 255, 0.25);
-    color: var(--color-ios-blue-dark, #64d2ff);
-    box-shadow: none;
-  }
-
-  html[data-theme="dark"] .guide-desc.alt {
-    background: rgba(255, 149, 0, 0.25);
-    color: var(--color-ios-orange-dark, #ffb340);
-  }
-
-  .guide-match {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-1-5);
-    margin-left: var(--spacing-2);
-  }
-
-  .guide-arrow {
-    color: var(--color-ios-green, #34c759);
-    font-weight: 900;
-    font-size: 14px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-  }
-
-  .guide-customer-badge {
-    padding: var(--spacing-0-5) 10px;
-    background: rgba(52, 199, 89, 0.25);
-    color: var(--color-ios-green, #34c759);
-    font-size: var(--font-size-caption-2);
-    font-weight: 700;
-    border-radius: 12px;
-    font-family: var(--font-family-base);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  .guide-note {
-    margin-left: var(--spacing-2);
-    padding: var(--spacing-0-5) var(--spacing-2);
-    background: rgba(255, 149, 0, 0.25);
-    color: var(--color-ios-orange, #ff9500);
-    font-size: 10px;
-    font-weight: 700;
-    border-radius: 10px;
-    font-family: var(--font-family-base);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  /* 팁 영역 */
-  .folder-guide-tips {
-    display: flex;
-    flex-wrap: wrap; /* 공간 부족 시 줄바꿈 */
-    gap: var(--spacing-2);
-    justify-content: center;
-    padding-top: var(--spacing-2);
-    border-top: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
-  }
-
-  .guide-tip {
+  .folder-guide__example-row {
     display: flex;
     align-items: center;
     gap: var(--spacing-1-5);
     font-size: var(--font-size-caption-1);
-    font-weight: 700;
-    color: var(--color-ios-green, #34c759);
   }
 
-  .guide-tip svg {
-    flex-shrink: 0;
+  .folder-guide__example-row--child {
+    padding-left: var(--spacing-5);
+  }
+
+  .folder-guide__example-name {
+    font-weight: 600;
+    color: var(--color-primary-500);
+  }
+
+  .folder-guide__example-arrow {
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-caption-2);
+  }
+
+  .folder-guide__example-match {
+    font-size: var(--font-size-caption-2);
+    font-weight: 400;
+    color: var(--color-text-secondary);
+  }
+
+  .folder-guide__example-file {
+    font-weight: 400;
+    color: var(--color-text-secondary);
   }
 
   /* ==================== 모바일 반응형 (480px 이하) ==================== */
   @media (max-width: 480px) {
     .folder-drop-zone {
       padding: var(--spacing-2);
+      gap: var(--spacing-3);
+    }
+
+    .folder-guide__steps {
+      flex-direction: column;
       gap: var(--spacing-2);
     }
 
-    /* 가이드 영역 패딩 축소 */
-    .folder-guide {
-      padding: var(--spacing-2);
-      gap: var(--spacing-1);
-    }
-
-    .folder-guide-content {
+    .folder-guide__toggle {
       padding: var(--spacing-2);
     }
 
-    .folder-guide-tree {
-      font-size: var(--font-size-caption-1);
+    .folder-guide__content {
+      padding: 0 var(--spacing-2) var(--spacing-2);
     }
 
-    /* 트리 들여쓰기 축소 */
-    .guide-node {
-      padding-left: var(--spacing-4);
-    }
-
-    .guide-node.root {
-      padding-left: 0;
-    }
-
-    /* 수직선/수평선 위치 조정 */
-    .guide-node:not(.root)::before {
-      left: 5px;
-    }
-
-    .guide-node:not(.root)::after {
-      left: 5px;
-      width: 8px;
-      top: 13px;
-    }
-
-    .guide-node.last::before {
-      height: 13px;
-    }
-
-    /* 노드 내용 줄바꿈 허용 */
-    .guide-node-content {
-      flex-wrap: wrap;
-      gap: var(--spacing-0-75);
-      padding: var(--spacing-0-75) 0;
-    }
-
-    .guide-icon {
-      font-size: var(--font-size-footnote);
-    }
-
-    .guide-name {
-      font-size: var(--font-size-caption-1);
-    }
-
-    /* 인라인 설명 배지 숨김 (모바일에서 공간 절약) */
-    .guide-desc {
-      display: none;
-    }
-
-    /* 고객 매칭 배지를 새 줄로 */
-    .guide-match {
-      margin-left: 0;
-      flex-basis: 100%;
-      padding-left: 20px;
-      gap: var(--spacing-1);
-    }
-
-    .guide-arrow {
-      font-size: var(--font-size-caption-1);
-    }
-
-    .guide-customer-badge {
-      font-size: 10px;
-      padding: 1px 7px;
-    }
-
-    .guide-note {
-      margin-left: var(--spacing-1);
-      font-size: 9px;
-      padding: 1px var(--spacing-1-5);
-    }
-
-    /* 팁 영역 세로 배치 */
-    .folder-guide-tips {
-      flex-direction: column;
-      gap: var(--spacing-1);
-      padding-top: var(--spacing-1);
-    }
-
-    .guide-tip {
-      font-size: var(--font-size-caption-2);
-      font-weight: 600;
-    }
-
-    /* 드래그 영역 축소 */
     .folder-drop-zone-content {
       gap: var(--spacing-sm);
     }
 
     .folder-drop-zone-title {
-      font-size: var(--font-size-caption-1); /* 12px */
+      font-size: var(--font-size-caption-1);
     }
 
     .folder-drop-zone-description {
-      font-size: var(--font-size-caption-2); /* 11px */
+      font-size: var(--font-size-caption-2);
     }
   }
 
