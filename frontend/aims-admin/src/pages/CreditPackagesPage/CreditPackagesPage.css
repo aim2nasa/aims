@@ -442,3 +442,62 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .credit-packages-page {
+    padding: 16px;
+  }
+
+  .credit-tabs {
+    overflow-x: auto;
+  }
+
+  .credit-tab {
+    padding: 10px 14px;
+    white-space: nowrap;
+    min-height: 44px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .page-header h1 {
+    font-size: 20px;
+  }
+
+  .add-btn {
+    align-self: flex-start;
+    min-height: 44px;
+  }
+
+  .packages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    max-width: calc(100vw - 32px);
+    margin: 16px;
+  }
+
+  .edit-btn,
+  .toggle-btn {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .package-credits {
+    font-size: 24px;
+  }
+
+  .package-price {
+    font-size: 18px;
+  }
+}

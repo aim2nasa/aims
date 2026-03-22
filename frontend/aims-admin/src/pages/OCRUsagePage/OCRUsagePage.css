@@ -418,3 +418,47 @@
 .ocr-usage-page .stat-card__subtitle {
   font-size: 10px;
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .ocr-usage-page__header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  .ocr-usage-page__header-right {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .ocr-usage-page__stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ocr-usage-page__status-grid {
+    flex-direction: column;
+  }
+
+  .status-card {
+    min-width: unset;
+  }
+
+  .ocr-usage-page__table-container {
+    overflow-x: auto;
+  }
+
+  .ocr-usage-page__table {
+    min-width: 500px;
+  }
+
+  .ocr-usage-page__period-btn {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ocr-usage-page__stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

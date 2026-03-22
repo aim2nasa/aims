@@ -1262,3 +1262,85 @@
 .resize-handle--active {
   background: rgba(0, 122, 255, 0.05);
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .user-activity-page {
+    padding: var(--spacing-sm);
+  }
+
+  .user-activity-page__header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  .user-activity-page__filters {
+    flex-direction: column;
+  }
+
+  .user-activity-page__search {
+    max-width: unset;
+    min-width: unset;
+  }
+
+  .user-activity-page__content {
+    flex-direction: column;
+  }
+
+  .user-detail-panel {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+  }
+
+  .resize-handle {
+    display: none;
+  }
+
+  .user-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .user-table {
+    min-width: 700px;
+  }
+
+  .user-activity-page__pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .user-activity-page__pagination-info {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .user-activity-page__pagination-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .credit-sheet__header,
+  .credit-sheet__row,
+  .credit-sheet__subtotal,
+  .credit-sheet__total {
+    grid-template-columns: 60px 1fr 60px 70px 50px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-detail-panel__info-grid {
+    grid-template-columns: 70px 1fr;
+  }
+
+  .user-detail-panel__stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-source-row {
+    flex-wrap: wrap;
+  }
+}

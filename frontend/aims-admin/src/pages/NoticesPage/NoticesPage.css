@@ -311,3 +311,60 @@
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .notices-page {
+    padding: var(--spacing-md);
+  }
+
+  .notices-page__header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  .notices-page__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .notices-page__filters {
+    flex-direction: column;
+  }
+
+  .notices-page__search {
+    max-width: unset;
+  }
+
+  .notices-page__table-container {
+    overflow-x: auto;
+  }
+
+  .notices-page__table {
+    min-width: 600px;
+  }
+
+  .notices-page__action-btn,
+  .notices-page__toggle {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 12px;
+  }
+
+  .notices-page__page-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .notices-page__form-row--inline {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .notices-page__pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

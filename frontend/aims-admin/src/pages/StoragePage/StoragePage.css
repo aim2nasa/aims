@@ -151,3 +151,41 @@
   margin: 0;
   line-height: 1.5;
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .storage-page__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .storage-page__stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .storage-page__tier-distribution {
+    gap: var(--spacing-sm);
+  }
+
+  .tier-card {
+    min-width: 100px;
+    padding: var(--spacing-md);
+  }
+
+  .storage-page__info-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .storage-page__stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .storage-page__tier-distribution {
+    flex-direction: column;
+  }
+
+  .tier-card {
+    min-width: unset;
+  }
+}

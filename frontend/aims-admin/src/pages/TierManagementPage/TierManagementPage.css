@@ -252,3 +252,30 @@
   margin: 0;
   line-height: 1.5;
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .tier-management-page__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .tier-management-page__info-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tier-definition-table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .tier-action-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tier-management-page__info-cards {
+    grid-template-columns: 1fr;
+  }
+}

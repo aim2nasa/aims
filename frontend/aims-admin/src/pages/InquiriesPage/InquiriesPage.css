@@ -452,3 +452,55 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .inquiries-page__header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  .inquiries-page__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .inquiries-page__stats {
+    flex-wrap: wrap;
+  }
+
+  .inquiries-page__filters {
+    flex-direction: column;
+  }
+
+  .inquiries-page__search {
+    min-width: unset;
+  }
+
+  .inquiries-page__select {
+    min-width: unset;
+  }
+
+  .inquiries-page__table-container {
+    overflow-x: auto;
+  }
+
+  .inquiries-table {
+    min-width: 700px;
+  }
+
+  .inquiries-page__pagination {
+    flex-wrap: wrap;
+  }
+
+  .inquiries-page__pagination-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .inquiries-page__pagination-info {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+}

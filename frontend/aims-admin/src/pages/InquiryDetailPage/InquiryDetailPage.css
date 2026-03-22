@@ -665,7 +665,6 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   -webkit-user-select: none;
   user-select: none;
-  -webkit-user-drag: none;
   transition: transform 0.1s ease;
 }
 
@@ -692,6 +691,34 @@
 }
 
 /* 반응형 */
+@media (max-width: 768px) {
+  .inquiry-detail-page {
+    padding: var(--spacing-md);
+  }
+
+  .inquiry-detail-page__header {
+    padding: var(--spacing-sm);
+  }
+
+  .messages-container {
+    max-height: calc(100vh - 350px);
+    min-height: 200px;
+    padding: 12px 8px;
+  }
+
+  .message-item {
+    max-width: 92%;
+  }
+
+  .inquiry-detail-page__reply-input {
+    min-height: 80px;
+  }
+
+  .inquiry-detail-page__reply-actions {
+    flex-wrap: wrap;
+  }
+}
+
 @media (max-width: 600px) {
   .inquiry-detail-page__header-top {
     flex-direction: column;

@@ -102,3 +102,13 @@ select:focus {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* ===== 모바일 반응형 ===== */
+@media (max-width: 768px) {
+  /* iOS Safari 자동 줌 방지 (16px 미만 input에서 발생) */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

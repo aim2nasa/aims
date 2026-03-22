@@ -530,6 +530,12 @@
 }
 
 @media (max-width: 768px) {
+  .virus-scan-page.compact {
+    padding: 12px;
+    height: auto;
+    overflow: auto;
+  }
+
   .page-header {
     flex-direction: column;
     gap: 12px;
@@ -551,5 +557,46 @@
   .stats-row {
     flex-wrap: wrap;
     gap: 12px;
+  }
+
+  .stats-bar {
+    padding: 8px 12px;
+  }
+
+  .tab-btn {
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    min-width: 600px;
+  }
+
+  .settings-table th {
+    width: 120px;
+  }
+
+  .pagination button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-item .stat-value {
+    font-size: 16px;
+  }
+
+  .settings-table {
+    max-width: unset;
+  }
+
+  .settings-table th {
+    width: 100px;
   }
 }

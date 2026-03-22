@@ -68,6 +68,29 @@
   overflow-y: auto;
 }
 
+/* ===== 모바일 반응형 ===== */
+@media (max-width: 768px) {
+  .modal--sm,
+  .modal--md,
+  .modal--lg {
+    width: calc(100vw - 32px);
+    max-width: 100%;
+  }
+
+  .modal__header {
+    padding: var(--spacing-md);
+  }
+
+  .modal__content {
+    padding: var(--spacing-md);
+  }
+
+  .modal__close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

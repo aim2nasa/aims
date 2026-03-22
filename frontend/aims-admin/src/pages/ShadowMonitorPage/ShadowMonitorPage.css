@@ -785,3 +785,73 @@
     flex-direction: column;
   }
 }
+
+@media (max-width: 768px) {
+  .shadow-page {
+    padding: 12px;
+    height: auto;
+    overflow: auto;
+  }
+
+  .shadow-page__header-left {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .shadow-page__title {
+    font-size: 18px;
+  }
+
+  .shadow-page__header-right {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .shadow-page__service {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .shadow-page__mode-btn {
+    min-height: 44px;
+  }
+
+  .shadow-page__table-wrap {
+    overflow-x: auto;
+  }
+
+  .shadow-page__table {
+    min-width: 500px;
+  }
+
+  .shadow-page__diff-values {
+    grid-template-columns: 1fr;
+  }
+
+  .shadow-page__modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .shadow-page__modal-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .shadow-page__perf-summary {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .shadow-page__stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .shadow-page__stat-value {
+    font-size: 18px;
+  }
+}

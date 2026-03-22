@@ -130,3 +130,29 @@
   color: var(--color-primary);
   font-style: italic;
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .parsing-settings-page__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .parsing-settings-page__label {
+    min-width: unset;
+  }
+
+  .parsing-settings-page__select {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .parsing-settings-page__section {
+    padding: var(--spacing-sm);
+  }
+
+  .parsing-settings-page__actions {
+    flex-wrap: wrap;
+  }
+}
