@@ -3329,6 +3329,7 @@ export function ExcelRefiner() {
                     type="button"
                     className="excel-refiner__icon-btn"
                     onClick={handleSaveRefined}
+                    aria-label="엑셀 저장"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path d="M8 2v8M8 10L5 7M8 10l3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -3341,6 +3342,7 @@ export function ExcelRefiner() {
                     type="button"
                     className="excel-refiner__icon-btn excel-refiner__icon-btn--close"
                     onClick={handleCloseExcel}
+                    aria-label="엑셀 닫기"
                   >
                     <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
                       <path d="M4.5 4.5L12.5 12.5M12.5 4.5L4.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -3449,7 +3451,7 @@ export function ExcelRefiner() {
                     <div className="excel-refiner__import-progress-bar">
                       <div
                         className="excel-refiner__import-progress-fill"
-                        style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                        ref={(el) => { if (el) el.style.setProperty('--progress-width', `${Math.round((importProgress.current / importProgress.total) * 100)}%`) }}
                       />
                     </div>
                   </div>
@@ -3584,6 +3586,7 @@ export function ExcelRefiner() {
                           type="checkbox"
                           checked={selectedRows.size === sortedDataWithIndices.length && sortedDataWithIndices.length > 0}
                           onChange={handleSelectAll}
+                          aria-label="전체 선택/해제"
                         />
                         </Tooltip>
                       </th>
@@ -3739,6 +3742,7 @@ export function ExcelRefiner() {
                               checked={isSelected}
                               onChange={() => handleDeleteSelect(originalIndex)}
                               onClick={(e) => e.stopPropagation()}
+                              aria-label={`행 ${getExcelRowNumber(originalIndex)} 선택`}
                             />
                             </Tooltip>
                           </td>

@@ -133,8 +133,8 @@ export default function FolderDropZone({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      aria-label="폴더를 드래그하세요"
-      aria-disabled={disabled ? "true" : undefined}
+      role="region"
+      aria-label={disabled ? "폴더 드롭존 (비활성)" : "폴더를 드래그하세요"}
     >
       {/* 폴더 준비 가이드 */}
       <div className="folder-guide">

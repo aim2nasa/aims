@@ -40,7 +40,7 @@ describe('FolderDropZone', () => {
       const { container } = render(<FolderDropZone onFilesSelected={onFilesSelected} disabled />)
 
       const dropZone = container.querySelector('.folder-drop-zone')
-      expect(dropZone).toHaveAttribute('aria-disabled', 'true')
+      expect(dropZone).toHaveAttribute('aria-label', '폴더 드롭존 (비활성)')
       expect(dropZone).toHaveClass('disabled')
     })
   })
@@ -79,12 +79,12 @@ describe('FolderDropZone', () => {
       expect(dropZone).toHaveAttribute('aria-label', '폴더를 드래그하세요')
     })
 
-    test('disabled 상태가 aria-disabled로 표시된다', () => {
+    test('disabled 상태가 aria-label에 반영된다', () => {
       const onFilesSelected = vi.fn()
       const { container } = render(<FolderDropZone onFilesSelected={onFilesSelected} disabled />)
 
       const dropZone = container.querySelector('.folder-drop-zone')
-      expect(dropZone).toHaveAttribute('aria-disabled', 'true')
+      expect(dropZone).toHaveAttribute('aria-label', '폴더 드롭존 (비활성)')
     })
   })
 
