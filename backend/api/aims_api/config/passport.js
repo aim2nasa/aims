@@ -62,7 +62,7 @@ module.exports = function(db) {
           authProvider: 'kakao',
           storage: { tier: DEFAULT_TIER, updated_at: new Date() },  // 기본 등급 설정
           hasOcrPermission: true,  // OCR 권한 (기본값: 허용)
-          profileCompleted: false,  // 프로필 미완료
+          profileCompleted: true,  // 소셜 로그인 정보를 그대로 사용  // 프로필 미완료
           createdAt: new Date(),
           lastLogin: new Date()
         };
@@ -142,7 +142,7 @@ module.exports = function(db) {
           authProvider: 'naver',
           storage: { tier: DEFAULT_TIER, updated_at: new Date() },  // 기본 등급 설정
           hasOcrPermission: true,
-          profileCompleted: false,
+          profileCompleted: true,  // 소셜 로그인 정보를 그대로 사용
           createdAt: new Date(),
           lastLogin: new Date()
         };
@@ -222,7 +222,7 @@ module.exports = function(db) {
           authProvider: 'google',
           storage: { tier: DEFAULT_TIER, updated_at: new Date() },  // 기본 등급 설정
           hasOcrPermission: true,
-          profileCompleted: false,
+          profileCompleted: true,  // 소셜 로그인 정보를 그대로 사용
           createdAt: new Date(),
           lastLogin: new Date()
         };

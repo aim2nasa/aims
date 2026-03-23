@@ -2,13 +2,12 @@
  * 앱 라우터 - 인증 라우팅 처리
  */
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/authStore';
 import LoginPage from '@/pages/LoginPage';
 import AuthCallbackPage from '@/pages/AuthCallbackPage';
 import ProtectedRoute from '@/shared/components/ProtectedRoute';
-import ProfileSetupModal from '@/shared/components/ProfileSetupModal';
 import App from './App';
 
 // AI 어시스턴트 팝업 페이지 (lazy loading)
@@ -19,34 +18,11 @@ const AnnualReportPage = lazy(() => import('@/pages/AnnualReportPage'));
 const CustomerReviewPage = lazy(() => import('@/pages/CustomerReviewPage'));
 
 export default function AppRouter() {
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [searchParams] = useSearchParams();
-  const [showProfileSetup, setShowProfileSetup] = useState(false);
-
   // PIN 모드이면 인증 상태와 관계없이 LoginPage 표시
   const mode = searchParams.get('mode');
   const isPinMode = mode === 'pin' || mode === 'pin-setup';
-
-  // 로그인 후 profileCompleted 체크
-  useEffect(() => {
-    if (isAuthenticated && user && user.profileCompleted === false) {
-      setShowProfileSetup(true);
-    }
-  }, [isAuthenticated, user]);
-
-  // 프로필 설정 완료 핸들러
-  const handleProfileComplete = () => {
-    setShowProfileSetup(false);
-  };
-
-  // 프로필 설정 취소 핸들러 (로그아웃 후 로그인 페이지로)
-  const handleProfileCancel = () => {
-    setShowProfileSetup(false);
-    logout();
-    // navigate() 대신 강제 새로고침으로 확실한 로그아웃 처리
-    // (Zustand 상태 변경이 비동기로 처리되어 navigate가 먼저 실행될 수 있음)
-    window.location.href = '/login';
-  };
 
   return (
     <>
@@ -109,12 +85,6 @@ export default function AppRouter() {
         />
       </Routes>
 
-      {/* 프로필 설정 모달 (profileCompleted: false일 때 표시) */}
-      <ProfileSetupModal
-        isOpen={showProfileSetup}
-        onComplete={handleProfileComplete}
-        onCancel={handleProfileCancel}
-      />
     </>
   );
 }
