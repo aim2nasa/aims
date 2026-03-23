@@ -4,13 +4,25 @@
  * 이후: URI Scheme(aims-rs://)으로 RustDesk 즉시 실행
  */
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import Tooltip from '../../../shared/ui/Tooltip'
 import { api } from '../../../shared/lib/api'
 import './SupportMenu.css'
 
 const STORAGE_KEY = 'aims-rustdesk-installed'
+
+function detectPlatform() {
+  const ua = navigator.userAgent
+  if (/windows/i.test(ua)) return { isWindows: true, name: 'Windows' }
+  if (/iPhone|iPod/i.test(ua)) return { isWindows: false, name: 'iPhone' }
+  if (/iPad/i.test(ua)) return { isWindows: false, name: 'iPad' }
+  if (/Android/i.test(ua)) return { isWindows: false, name: 'Android' }
+  if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return { isWindows: false, name: 'iPad' }
+  if (/Macintosh|Mac OS/i.test(ua)) return { isWindows: false, name: 'Mac' }
+  if (/Linux/i.test(ua)) return { isWindows: false, name: 'Linux' }
+  return { isWindows: false, name: '이 기기' }
+}
 
 const HeadsetIcon: React.FC = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -32,11 +44,13 @@ type ModalState =
   | { type: 'none' }
   | { type: 'install' }        // 인스톨러 다운로드 안내
   | { type: 'running' }        // RustDesk 실행 완료 → ID 안내
+  | { type: 'unsupported' }    // 비-Windows 플랫폼
   | { type: 'error'; message: string }
 
 export const SupportMenu: React.FC = () => {
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
   const [loading, setLoading] = useState(false)
+  const platform = useMemo(() => detectPlatform(), [])
 
   const handleClose = useCallback(() => {
     setModal({ type: 'none' })
@@ -51,6 +65,10 @@ export const SupportMenu: React.FC = () => {
   }, [modal.type, handleClose])
 
   const handleClick = useCallback(async () => {
+    if (!platform.isWindows) {
+      setModal({ type: 'unsupported' })
+      return
+    }
     if (loading) return
     setLoading(true)
 
@@ -99,7 +117,7 @@ export const SupportMenu: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }, [loading])
+  }, [loading, platform])
 
   const isOpen = modal.type !== 'none'
 
@@ -126,6 +144,18 @@ export const SupportMenu: React.FC = () => {
             </div>
 
             <div className="sp-body">
+              {modal.type === 'unsupported' && (
+                <>
+                  <p className="sp-msg sp-msg--error">
+                    Windows에서만 지원되는 기능입니다
+                  </p>
+                  <p className="sp-msg sp-msg--muted">
+                    {platform.name}에서는 사용할 수 없습니다.
+                    <br />Windows PC에서 이용해주세요.
+                  </p>
+                </>
+              )}
+
               {modal.type === 'error' && (
                 <p className="sp-msg sp-msg--error">{modal.message}</p>
               )}
