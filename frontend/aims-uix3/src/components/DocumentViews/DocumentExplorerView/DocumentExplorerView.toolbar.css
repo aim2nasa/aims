@@ -202,6 +202,18 @@
     background: var(--color-accent-bg);
   }
 
+  /* 다크모드: 일반 활성 칩 */
+  html[data-theme="dark"] .doc-explorer-toolbar__mode-chip--active {
+    color: rgba(96, 165, 250, 0.95);
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+
+  html[data-theme="dark"] .doc-explorer-toolbar__mode-chip--active:hover {
+    color: rgba(96, 165, 250, 1);
+    background: rgba(59, 130, 246, 0.18);
+  }
+
   /* AI 칩 활성화 시 보라색 */
   .doc-explorer-toolbar__mode-chip--ai.doc-explorer-toolbar__mode-chip--active {
     color: rgba(123, 90, 242, 0.9);
