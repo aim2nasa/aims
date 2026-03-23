@@ -228,6 +228,46 @@ def _build_pipeline(enabled_stages: list[str]) -> Pipeline:
     return pipeline
 
 
+async def _inject_adapter_config(context: dict) -> None:
+    """어댑터가 설정되어 있으면, 어댑터의 config를 context에 주입.
+
+    각 스테이지는 context에서 _classify_config, _detect_rules 등을 찾아 동작한다.
+    이 함수가 어댑터 인스턴스를 생성하고, 스테이지가 필요로 하는 config를 주입한다.
+    """
+    adapter_name = context.get("adapter_name", "none")
+    if adapter_name == "none" or not adapter_name:
+        return
+
+    try:
+        if adapter_name == "insurance":
+            from insurance.adapter import InsuranceDomainAdapter
+            adapter = InsuranceDomainAdapter()
+        else:
+            logger.warning("[Adapter] 알 수 없는 어댑터: %s", adapter_name)
+            return
+
+        # 1. 분류 config 주입 → ClassifyStage가 사용
+        classification_config = await adapter.get_classification_config()
+        if classification_config:
+            context["_classify_config"] = {
+                "system_prompt": classification_config.extra.get("system_prompt", ""),
+                "user_prompt": classification_config.prompt_template,
+                "categories": [c.code for c in classification_config.categories],
+                "valid_types": classification_config.valid_types,
+            }
+
+        # 2. 감지 규칙 주입 → DetectSpecialStage가 사용
+        #    기존 _detect_rules 키워드 매칭 대신, 어댑터 인스턴스를 직접 주입
+        context["_domain_adapter"] = adapter
+
+        logger.info("[Adapter] %s 어댑터 연결 완료", adapter_name)
+
+    except ImportError:
+        logger.warning("[Adapter] %s 어댑터 모듈을 찾을 수 없음", adapter_name)
+    except Exception as e:
+        logger.error("[Adapter] %s 어댑터 초기화 실패: %s", adapter_name, e)
+
+
 async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
     """파이프라인 실행 (백그라운드 태스크)"""
     doc = documents.get(doc_id)
@@ -309,6 +349,9 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             "needs_conversion": needs_conversion(mime_type),
             "_api_keys": api_keys_resolved,
         }
+
+        # 어댑터 연결: 어댑터가 설정되어 있으면 config를 context에 주입
+        await _inject_adapter_config(context)
 
         # 파이프라인 실행
         result = await pipeline.run(context)

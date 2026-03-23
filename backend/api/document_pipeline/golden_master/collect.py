@@ -80,6 +80,35 @@ SAMPLING_PLAN = {
 
 FILE_BASE_PATH = os.environ.get("FILE_BASE_PATH", "/data/files")
 
+# MIME → 확장자 매핑
+MIME_TO_EXT = {
+    "application/pdf": ".pdf",
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "application/x-hwp": ".hwp",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+    "application/vnd.ms-excel": ".xls",
+    "application/vnd.ms-powerpoint": ".ppt",
+    "application/msword": ".doc",
+    "application/rtf": ".rtf",
+    "text/plain": ".txt",
+    "application/zip": ".zip",
+    "application/postscript": ".ps",
+}
+
+
+def _resolve_extension(doc: dict) -> str:
+    """문서의 확장자를 결정. originalName → MIME → .pdf fallback"""
+    original = doc.get("originalName", "")
+    if original:
+        ext = Path(original).suffix
+        if ext:
+            return ext
+    mime = doc.get("meta", {}).get("mime", "")
+    return MIME_TO_EXT.get(mime, ".pdf")
+
 
 def get_db():
     uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
@@ -141,7 +170,7 @@ def build_snapshot(doc: dict, gm_id: str, file_path: str | None) -> dict:
             "mime_type": meta.get("mime", ""),
             "file_size": os.path.getsize(file_path) if file_path and os.path.exists(file_path) else 0,
             "file_hash": file_hash(file_path) if file_path and os.path.exists(file_path) else "",
-            "file_ref": f"files/{gm_id}{Path(doc.get('originalName', '.pdf')).suffix}",
+            "file_ref": f"files/{gm_id}{_resolve_extension(doc)}",
         },
         "expected": {
             # Layer 1: 출력 비교
@@ -284,9 +313,9 @@ def main():
         gm_id = f"gm_{i + 1:04d}"
         file_path = resolve_file_path(doc)
 
-        # 파일 복사
+        # 파일 복사 (MIME 기반 확장자 추론)
         if file_path and os.path.exists(file_path):
-            ext = Path(doc.get("originalName", ".pdf")).suffix
+            ext = _resolve_extension(doc)
             dest = files_dir / f"{gm_id}{ext}"
             shutil.copy2(file_path, dest)
             file_found += 1
