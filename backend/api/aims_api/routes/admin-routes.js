@@ -732,11 +732,11 @@ router.get('/admin/dashboard', authenticateJWT, requireRole('admin'), async (req
       .find({ deleted_at: null })
       .sort({ 'meta.created_at': -1 })
       .limit(5)
-      .project({ name: 1, type: 1, 'meta.created_at': 1, 'meta.created_by': 1 })
+      .project({ 'personal_info.name': 1, 'personal_info.type': 1, 'meta.created_at': 1, 'meta.created_by': 1 })
       .toArray()
       .then(docs => docs.map(d => ({
-        name: d.name,
-        type: d.type || '개인',
+        name: d.personal_info?.name || '(이름 없음)',
+        type: d.personal_info?.type || '개인',
         createdAt: d.meta?.created_at || null,
         createdBy: d.meta?.created_by || null
       })));
@@ -763,11 +763,11 @@ router.get('/admin/dashboard', authenticateJWT, requireRole('admin'), async (req
           .find({ _id: { $in: customerIds.map(id => {
             try { return new ObjectId(id); } catch { return id; }
           }) } })
-          .project({ name: 1 })
+          .project({ 'personal_info.name': 1 })
           .toArray()
           .then(docs => {
             const map = {};
-            docs.forEach(d => { map[d._id.toString()] = d.name; });
+            docs.forEach(d => { map[d._id.toString()] = d.personal_info?.name || '(이름 없음)'; });
             return map;
           })
       : {};
