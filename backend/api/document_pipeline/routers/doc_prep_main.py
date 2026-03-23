@@ -1380,13 +1380,27 @@ async def _step_extract_metadata(ctx: PipelineContext) -> Optional[Dict[str, Any
 
 
 async def _step_ai_summarize(ctx: PipelineContext) -> None:
-    """Step: AI 요약 생성 (텍스트가 추출된 경우에만)"""
+    """Step: AI 요약 생성 (텍스트가 추출된 경우에만)
+
+    Strangler Fig: 어댑터가 있으면 어댑터의 분류 config를 사용.
+    없으면 OpenAIService의 하드코딩 프롬프트로 fallback.
+    """
     if ctx.full_text and len(ctx.full_text.strip()) > 0:
+        # 어댑터에서 분류 config 가져오기 (있으면)
+        classification_config = None
+        adapter = _get_insurance_adapter()
+        if adapter is not None:
+            try:
+                classification_config = await adapter.get_classification_config()
+            except Exception as e:
+                logger.warning(f"⚠️ 어댑터 분류 config 조회 실패 (fallback): {e}")
+
         ctx.summary_result = await OpenAIService.summarize_text(
             ctx.full_text,
             owner_id=ctx.user_id,
             document_id=ctx.doc_id,
-            filename=ctx.original_name
+            filename=ctx.original_name,
+            classification_config=classification_config,
         )
         ctx.ai_document_type = ctx.summary_result.get("document_type", "general")
         ctx.ai_confidence = ctx.summary_result.get("confidence", 0.0)
