@@ -100,9 +100,9 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
           </div>
         </div>
 
-        {/* 상세주소 입력 */}
+        {/* 상세주소 */}
         <div className="form-row">
-          <label className="form-row__label">상세주소 입력</label>
+          <label className="form-row__label">상세주소</label>
           <div className="form-row__input">
             {formData.address1 ? (
               <input
