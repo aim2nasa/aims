@@ -356,14 +356,12 @@
      고객 체크박스 (문서함 다운로드 선택용)
      ============================================ */
   .doc-explorer-tree__customer-checkbox-wrapper {
-    position: absolute;
-    left: -2px;
-    top: 50%;
-    transform: translateY(-50%);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    z-index: 1;
+    flex-shrink: 0;
+    width: 16px;
+    margin-left: -4px;
   }
 
   .doc-explorer-tree__customer-checkbox {
@@ -371,31 +369,16 @@
     height: 14px;
     margin: 0;
     cursor: pointer;
-    accent-color: var(--color-primary);
-    opacity: 0;
+    accent-color: var(--color-primary-500);
+    opacity: 0.5;
     transition: opacity var(--explorer-transition);
   }
 
-  /* 호버 시 체크박스 표시 */
   .doc-explorer-tree__group-header:hover .doc-explorer-tree__customer-checkbox {
-    opacity: 0.6;
-  }
-
-  /* 체크된 체크박스는 항상 표시 */
-  .doc-explorer-tree__customer-checkbox:checked {
-    opacity: 1;
-  }
-
-  /* 선택 모드 (하나라도 선택됨): 모든 체크박스 표시 */
-  .doc-explorer-tree--selection-active .doc-explorer-tree__customer-checkbox {
-    opacity: 0.4;
-  }
-
-  .doc-explorer-tree--selection-active .doc-explorer-tree__group-header:hover .doc-explorer-tree__customer-checkbox {
     opacity: 0.8;
   }
 
-  .doc-explorer-tree--selection-active .doc-explorer-tree__customer-checkbox:checked {
+  .doc-explorer-tree__customer-checkbox:checked {
     opacity: 1;
   }
 
@@ -499,7 +482,7 @@
   .doc-explorer-tree__document {
     display: grid;
     grid-template-columns:
-      /* icon */ 14px
+      /* icon/select */ 20px
       /* name + hover-actions */ 1fr
       /* ext */  32px
       /* size */ 58px
@@ -560,7 +543,7 @@
   .doc-explorer-tree__document--edit {
     grid-template-columns:
       /* checkbox */ 18px
-      /* icon */ 14px
+      /* icon/select */ 20px
       /* name + hover-actions */ 1fr
       /* ext */  32px
       /* size */ 58px
@@ -984,7 +967,7 @@
   .doc-explorer-tree__column-header {
     display: grid;
     grid-template-columns:
-      /* icon */ 14px
+      /* icon/select */ 20px
       /* name */ 1fr
       /* ext */  32px
       /* size */ 58px
@@ -1063,6 +1046,37 @@
   /* 빈 칸 (icon, actions 자리) */
   .doc-explorer-tree__col-spacer {
     /* 자리 유지용 빈 요소 */
+  }
+
+  /* 고객 선택 모드 토글 (칼럼 헤더 첫 칸, 아이콘만) */
+  .doc-explorer-tree__col-select-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: color 150ms ease, background 150ms ease;
+  }
+
+  .doc-explorer-tree__col-select-btn:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
+  }
+
+  .doc-explorer-tree__col-select-btn--active {
+    color: var(--color-primary-500);
+  }
+
+  .doc-explorer-tree__col-select-btn--active:hover {
+    color: var(--color-primary-600);
+    background: rgba(59, 130, 246, 0.08);
   }
 
   /* 태블릿 반응형 */

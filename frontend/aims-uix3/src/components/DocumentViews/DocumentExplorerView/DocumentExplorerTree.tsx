@@ -116,6 +116,8 @@ export interface DocumentExplorerTreeProps {
   selectedCustomerIds?: Set<string>
   /** 고객 체크박스 토글 */
   onToggleCustomerSelect?: (customerId: string) => void
+  /** 고객 선택 모드 활성 여부 */
+  customerSelectMode?: boolean
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -947,6 +949,8 @@ export interface DocumentExplorerColumnHeaderProps {
   onSortByChange: (sortBy: DocumentSortBy) => void
   filenameMode?: 'display' | 'original'
   onFilenameModeChange?: (mode: 'display' | 'original') => void
+  customerSelectMode?: boolean
+  onToggleCustomerSelectMode?: () => void
 }
 
 export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeaderProps> = ({
@@ -955,9 +959,34 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
   onSortByChange,
   filenameMode,
   onFilenameModeChange,
+  customerSelectMode = false,
+  onToggleCustomerSelectMode,
 }) => (
   <div className="doc-explorer-tree__column-header">
-    <span className="doc-explorer-tree__col-spacer" />
+    {onToggleCustomerSelectMode ? (
+      <Tooltip content={customerSelectMode ? '선택 모드 종료' : '고객을 선택하여 문서함 다운로드'}>
+        <button
+          type="button"
+          className={`doc-explorer-tree__col-select-btn${customerSelectMode ? ' doc-explorer-tree__col-select-btn--active' : ''}`}
+          onClick={onToggleCustomerSelectMode}
+          aria-label={customerSelectMode ? '선택 모드 종료' : '선택 다운로드'}
+        >
+          {customerSelectMode ? (
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="8" cy="8" r="7" />
+              <path d="M5 8L7 10L11 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
+          ) : (
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
+      </Tooltip>
+    ) : (
+      <span className="doc-explorer-tree__col-spacer" />
+    )}
     <div className="doc-explorer-tree__col-filename">
       <button
         type="button"
@@ -1095,6 +1124,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onDownloadCustomerDocuments,
   selectedCustomerIds,
   onToggleCustomerSelect,
+  customerSelectMode = false,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -1548,7 +1578,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
       )}
       <div
         ref={treeContainerRef}
-        className={`doc-explorer-tree${selectedCustomerIds && selectedCustomerIds.size > 0 ? ' doc-explorer-tree--selection-active' : ''}`}
+        className={`doc-explorer-tree${customerSelectMode ? ' doc-explorer-tree--selection-active' : ''}`}
         role="tree"
         tabIndex={0}
         onKeyDown={keyboardHandleKeyDown}

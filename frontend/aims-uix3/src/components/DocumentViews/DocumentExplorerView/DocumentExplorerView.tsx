@@ -149,6 +149,14 @@ const DocumentExplorerContent: React.FC<{
   const toast = useToastContext()
   const { download: downloadZip, cancel: cancelDownload, isDownloading } = useDocumentDownload()
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set())
+  const [customerSelectMode, setCustomerSelectMode] = useState(false)
+
+  const handleToggleCustomerSelectMode = useCallback(() => {
+    setCustomerSelectMode(prev => {
+      if (prev) setSelectedCustomerIds(new Set())
+      return !prev
+    })
+  }, [])
 
   // 고객 체크박스 토글
   const handleToggleCustomerSelect = useCallback((customerId: string) => {
@@ -1375,6 +1383,8 @@ const DocumentExplorerContent: React.FC<{
             onSortByChange={setSortBy}
             filenameMode={filenameMode}
             onFilenameModeChange={handleFilenameModeChange}
+            customerSelectMode={customerSelectMode}
+            onToggleCustomerSelectMode={handleToggleCustomerSelectMode}
           />
         )}
         {/* 트리 뷰 또는 검색 결과 (트리 영역을 대체) */}
@@ -1705,7 +1715,8 @@ const DocumentExplorerContent: React.FC<{
             hideColumnHeader
             onDownloadCustomerDocuments={handleDownloadCustomerDocuments}
             selectedCustomerIds={selectedCustomerIds}
-            onToggleCustomerSelect={handleToggleCustomerSelect}
+            onToggleCustomerSelect={customerSelectMode ? handleToggleCustomerSelect : undefined}
+            customerSelectMode={customerSelectMode}
           />
         )}
 
@@ -1733,8 +1744,8 @@ const DocumentExplorerContent: React.FC<{
         onClose={customerContextMenu.close}
       />
 
-      {/* 고객 다운로드 하단 액션바 (체크박스 선택 시) */}
-      {selectedCustomerIds.size > 0 && editMode === 'none' && (
+      {/* 고객 다운로드 하단 액션바 (선택 모드 시) */}
+      {customerSelectMode && editMode === 'none' && (
         <div className="doc-explorer-action-bar">
           <div className="doc-explorer-action-bar__left">
             <label className="doc-explorer-action-bar__select-all">
@@ -1756,20 +1767,29 @@ const DocumentExplorerContent: React.FC<{
             </span>
           </div>
           <div className="doc-explorer-action-bar__right">
-            <button
-              type="button"
-              className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--clear"
-              onClick={() => setSelectedCustomerIds(new Set())}
-            >
-              선택 해제
-            </button>
+            {selectedCustomerIds.size > 0 && (
+              <button
+                type="button"
+                className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--clear"
+                onClick={() => setSelectedCustomerIds(new Set())}
+              >
+                선택 해제
+              </button>
+            )}
             <button
               type="button"
               className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--download"
               onClick={handleDownloadSelectedCustomers}
-              disabled={isDownloading}
+              disabled={isDownloading || selectedCustomerIds.size === 0}
             >
               {isDownloading ? '다운로드 중...' : '선택 다운로드'}
+            </button>
+            <button
+              type="button"
+              className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--clear"
+              onClick={handleToggleCustomerSelectMode}
+            >
+              완료
             </button>
           </div>
         </div>
