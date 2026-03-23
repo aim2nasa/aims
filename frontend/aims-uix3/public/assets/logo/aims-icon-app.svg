@@ -1,20 +1,24 @@
 <svg width="1024" height="1024" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
-  <!-- AIMS App Icon — Mobile (1024x1024 base, dark bg) -->
-  <rect width="110" height="110" rx="24" fill="#120a24"/>
+  <!-- 6 outer nodes -->
   <circle cx="55" cy="15"  r="9.5" fill="#6d28d9"/>
   <circle cx="85" cy="32"  r="9.5" fill="#7c3aed"/>
   <circle cx="85" cy="78"  r="9.5" fill="#6d28d9"/>
   <circle cx="55" cy="95"  r="9.5" fill="#7c3aed"/>
   <circle cx="25" cy="78"  r="9.5" fill="#6d28d9"/>
   <circle cx="25" cy="32"  r="9.5" fill="#7c3aed"/>
-  <line x1="55" y1="42" x2="55" y2="25"  stroke="#8b5cf6" stroke-width="2.5" opacity="0.9"/>
-  <line x1="64" y1="47" x2="77" y2="37"  stroke="#8b5cf6" stroke-width="2.5" opacity="0.9"/>
-  <line x1="64" y1="63" x2="77" y2="73"  stroke="#7c3aed" stroke-width="2.2" opacity="0.75"/>
-  <line x1="55" y1="68" x2="55" y2="86"  stroke="#7c3aed" stroke-width="2.2" opacity="0.75"/>
-  <line x1="46" y1="63" x2="33" y2="73"  stroke="#7c3aed" stroke-width="2.2" opacity="0.75"/>
-  <line x1="46" y1="47" x2="33" y2="37"  stroke="#8b5cf6" stroke-width="2.5" opacity="0.9"/>
-  <circle cx="55" cy="55" r="16" fill="#1a0838"/>
+  <!-- Connection lines — 보라색 -->
+  <line x1="55" y1="42" x2="55" y2="25"  stroke="#7c3aed" stroke-width="2.5"/>
+  <line x1="64" y1="47" x2="77" y2="37"  stroke="#7c3aed" stroke-width="2.5"/>
+  <line x1="64" y1="63" x2="77" y2="73"  stroke="#7c3aed" stroke-width="2.5"/>
+  <line x1="55" y1="68" x2="55" y2="86"  stroke="#7c3aed" stroke-width="2.5"/>
+  <line x1="46" y1="63" x2="33" y2="73"  stroke="#7c3aed" stroke-width="2.5"/>
+  <line x1="46" y1="47" x2="33" y2="37"  stroke="#7c3aed" stroke-width="2.5"/>
+  <!-- Core: 흰색 배경 -->
+  <circle cx="55" cy="55" r="16" fill="#ffffff"/>
+  <!-- Red ring -->
+  <circle cx="55" cy="55" r="16" fill="none" stroke="#b91c1c" stroke-width="3"/>
+  <!-- 보라 중간 링 -->
   <circle cx="55" cy="55" r="10" fill="#7c3aed"/>
-  <circle cx="55" cy="55" r="16" fill="none" stroke="#b91c1c" stroke-width="2.5"/>
-  <circle cx="55" cy="55" r="4"  fill="#c084fc"/>
+  <!-- 밝은 중심 점 -->
+  <circle cx="55" cy="55" r="4.5" fill="#c4b5fd"/>
 </svg>
