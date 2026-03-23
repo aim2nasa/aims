@@ -515,6 +515,17 @@ def _inject_doc_markers(answer: str, doc_id_map: Dict[str, str]) -> str:
         if fname in result:
             result = result.replace(fname, marker)
 
+    # 3단계: 마커를 마침표 뒤로 이동
+    # "...입니다[[DOC:...]][[DOC:...]]." → "...입니다. [[DOC:...]] [[DOC:...]]"
+    # 패턴: (마커들)(마침표) → (마침표 공백)(마커들)
+    result = re.sub(
+        r'((?:\[\[DOC:[^\]]+\]\]\s*)+)([.。])',
+        lambda m: m.group(2) + ' ' + m.group(1).strip(),
+        result
+    )
+    # 마커 사이에 공백 보장
+    result = re.sub(r'\]\]\s*\[\[DOC:', ']] [[DOC:', result)
+
     return result
 
 
