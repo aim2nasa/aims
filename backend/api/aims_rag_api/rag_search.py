@@ -463,8 +463,8 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
         )
         raw_answer = response.choices[0].message.content
 
-        # 후처리: 유효하지 않은 [[DOC:...]] 마커 정리
-        final_answer = _sanitize_doc_markers(raw_answer, doc_id_map)
+        # 후처리: 파일명을 [[DOC:...]] 마커로 강제 치환 (AI 의존 안 함)
+        final_answer = _inject_doc_markers(raw_answer, doc_id_map)
 
         return final_answer, response
     except Exception as e:
@@ -472,30 +472,50 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
         return f"❌ LLM 답변 생성 중 오류 발생: {e}", None
 
 
-# [[DOC:doc_id|파일명]] 마커 후처리 — 유효하지 않은 마커 제거
+# [[DOC:doc_id|파일명]] 마커 후처리
 _DOC_MARKER_RE = re.compile(r'\[\[DOC:([^|]+)\|([^\]]+)\]\]')
 
-def _sanitize_doc_markers(answer: str, doc_id_map: Dict[str, str]) -> str:
+def _inject_doc_markers(answer: str, doc_id_map: Dict[str, str]) -> str:
     """
-    AI 응답의 [[DOC:doc_id|파일명]] 마커를 검증하여:
-    - doc_id가 유효하면 마커 유지 (파일명을 정확한 원본으로 교정)
-    - doc_id가 유효하지 않으면 파일명만 텍스트로 남김
+    AI 응답에 [[DOC:doc_id|파일명]] 마커를 강제 삽입.
+    AI가 마커를 생성했든 안 했든, 파일명을 찾아 치환한다.
+
+    1단계: 기존 마커가 있으면 검증/교정
+    2단계: 마커 없는 파일명을 찾아 강제 삽입
     """
-    if not doc_id_map or '[[DOC:' not in answer:
+    if not doc_id_map:
         return answer
 
-    def replace_marker(match):
-        doc_id = match.group(1).strip()
-        ai_filename = match.group(2).strip()
-        if doc_id in doc_id_map:
-            # doc_id 유효 → 정확한 원본 파일명으로 교정
-            correct_name = doc_id_map[doc_id]
-            return f"[[DOC:{doc_id}|{correct_name}]]"
-        else:
-            # doc_id 무효 → 파일명만 텍스트로 남김
-            return ai_filename
+    result = answer
 
-    return _DOC_MARKER_RE.sub(replace_marker, answer)
+    # 1단계: 기존 [[DOC:...]] 마커 검증/교정
+    if '[[DOC:' in result:
+        def replace_marker(match):
+            doc_id = match.group(1).strip()
+            if doc_id in doc_id_map:
+                correct_name = doc_id_map[doc_id]
+                return f"[[DOC:{doc_id}|{correct_name}]]"
+            else:
+                return match.group(2).strip()
+        result = _DOC_MARKER_RE.sub(replace_marker, result)
+
+    # 2단계: 마커 없이 등장하는 파일명을 찾아 강제 삽입
+    # 역방향 매핑: 파일명 → doc_id
+    name_to_id = {fname: did for did, fname in doc_id_map.items()}
+    # 긴 파일명부터 매칭 (부분 매칭 방지)
+    sorted_names = sorted(name_to_id.keys(), key=len, reverse=True)
+
+    for fname in sorted_names:
+        marker = f"[[DOC:{name_to_id[fname]}|{fname}]]"
+        # 이미 마커로 감싸진 파일명은 건너뛰기
+        if marker in result:
+            continue
+        # 마커 안에 있지 않은 파일명만 치환
+        # 단순 replace로 처리 (마커 안의 파일명은 이미 1단계에서 교정됨)
+        if fname in result:
+            result = result.replace(fname, marker)
+
+    return result
 
 
 # ========================================
