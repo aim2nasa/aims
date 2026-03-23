@@ -103,7 +103,8 @@ async def _real_embed(
     client = AsyncOpenAI(api_key=api_key)
 
     # 텍스트가 너무 길면 앞부분만 (8191 토큰 제한 대비)
-    embed_text = text[:8000]
+    # 한국어 1문자 ≈ 2~3토큰 → 안전하게 3000자로 제한 (≈6000~9000토큰 → 8191 이내)
+    embed_text = text[:3000]
 
     response = await client.embeddings.create(
         model=embed_model,

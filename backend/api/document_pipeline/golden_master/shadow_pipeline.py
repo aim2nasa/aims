@@ -156,6 +156,7 @@ async def main():
     parser.add_argument("--snapshots", default="./golden_master/snapshots")
     parser.add_argument("--xpipe-url", default=XPIPE_URL)
     parser.add_argument("--max-docs", type=int, default=0, help="최대 처리 건수 (0=전체)")
+    parser.add_argument("--no-embed", action="store_true", help="Embed 스테이지 비활성화 (Shadow 비교에 불필요)")
     args = parser.parse_args()
 
     xpipe_url = args.xpipe_url
@@ -184,6 +185,18 @@ async def main():
             config = resp.json().get("config", {})
             print(f"어댑터: {config.get('adapter')}, 모드: {config.get('mode')}")
             print(f"모델: {config.get('models', {})}")
+
+            # Embed 비활성화 옵션
+            if args.no_embed:
+                stages = config.get("enabled_stages", [])
+                if "embed" in stages:
+                    stages = [s for s in stages if s != "embed"]
+                    await client.put(
+                        f"{xpipe_url}/api/config",
+                        json={"enabled_stages": stages},
+                        timeout=5,
+                    )
+                    print(f"Embed 스테이지 비활성화됨")
         except Exception as e:
             print(f"ERROR: xPipeWeb 접속 불가: {e}")
             sys.exit(1)
