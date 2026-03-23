@@ -342,6 +342,9 @@ async function checkCreditForDocumentProcessing(db, analyticsDb, userId, estimat
   try {
     const { getUserStorageInfo, getTierDefinitions } = require('./storageQuotaService');
 
+    // 0. 보너스 사후 정산 (월정액 초과분 실차감)
+    await settleBonusCredits(db, analyticsDb, userId);
+
     // 1. 사용자 스토리지/티어 정보 조회
     const storageInfo = await getUserStorageInfo(db, userId);
 
@@ -622,28 +625,12 @@ async function useBonusCredits(db, userId, amount, usageInfo = {}) {
   const usersCollection = db.collection('users');
   const transactionsCollection = db.collection('credit_transactions');
 
-  // 1. 현재 잔액 조회
-  const user = await usersCollection.findOne(
-    { _id: toUserIdQuery(userId) },
-    { projection: { 'bonus_credits.balance': 1 } }
-  );
-
-  const balanceBefore = user?.bonus_credits?.balance ?? 0;
-
-  if (balanceBefore < amount) {
-    return {
-      success: false,
-      reason: 'insufficient_balance',
-      balance: balanceBefore,
-      required: amount
-    };
-  }
-
-  const balanceAfter = balanceBefore - amount;
-
-  // 2. 잔액 차감
-  await usersCollection.updateOne(
-    { _id: toUserIdQuery(userId) },
+  // 원자적 Read-Modify-Write: $gte 필터로 잔액 충분할 때만 차감
+  const result = await usersCollection.findOneAndUpdate(
+    {
+      _id: toUserIdQuery(userId),
+      'bonus_credits.balance': { $gte: amount }
+    },
     {
       $inc: {
         'bonus_credits.balance': -amount,
@@ -652,10 +639,31 @@ async function useBonusCredits(db, userId, amount, usageInfo = {}) {
       $set: {
         'bonus_credits.updated_at': new Date()
       }
-    }
+    },
+    { returnDocument: 'after', projection: { bonus_credits: 1 } }
   );
 
-  // 3. 트랜잭션 기록
+  // 잔액 부족 또는 사용자 미존재 → 실패
+  if (!result) {
+    // 실패 시 현재 잔액 조회 (에러 응답에 포함)
+    const user = await usersCollection.findOne(
+      { _id: toUserIdQuery(userId) },
+      { projection: { 'bonus_credits.balance': 1 } }
+    );
+    const currentBalance = user?.bonus_credits?.balance ?? 0;
+    return {
+      success: false,
+      reason: 'insufficient_balance',
+      balance: currentBalance,
+      required: amount
+    };
+  }
+
+  // 원자적 업데이트 성공 → after에서 역산
+  const balanceAfter = result.bonus_credits?.balance ?? 0;
+  const balanceBefore = balanceAfter + amount;
+
+  // 트랜잭션 기록
   const transaction = {
     user_id: toUserIdQuery(userId),
     type: 'usage',
@@ -684,7 +692,137 @@ async function useBonusCredits(db, userId, amount, usageInfo = {}) {
 }
 
 /**
+ * 보너스 크레딧 사후 정산 (Post-Settlement)
+ *
+ * 월정액 초과분을 보너스에서 실차감하는 핵심 함수.
+ * 매 크레딧 체크 시점에 호출되어, 이미 발생한 초과 사용분을
+ * 보너스 잔액에서 실제로 차감합니다.
+ *
+ * 이중 차감 방지: credit_transactions type='usage' 중 현재 사이클 내 합산으로
+ * 이미 차감된 양을 추적합니다.
+ *
+ * @param {Db} db - MongoDB docupload DB
+ * @param {Db} analyticsDb - MongoDB aims_analytics DB
+ * @param {string} userId - 사용자 ID
+ * @returns {Promise<{ settled: boolean, amount?: number, error?: string }>}
+ */
+async function settleBonusCredits(db, analyticsDb, userId) {
+  try {
+    const { getUserStorageInfo, getTierDefinitions } = require('./storageQuotaService');
+
+    // 1. 사용자 스토리지/티어 정보 조회
+    const storageInfo = await getUserStorageInfo(db, userId);
+
+    // 2. 무제한 사용자 → 정산 불필요
+    if (storageInfo.is_unlimited) {
+      return { settled: false, reason: 'unlimited' };
+    }
+
+    // 3. 보너스 잔액 0이면 정산할 것이 없음
+    const bonusBalance = await getBonusCreditBalance(db, userId);
+    if (bonusBalance <= 0) {
+      return { settled: false, reason: 'no_bonus_balance' };
+    }
+
+    // 4. 티어 크레딧 한도 조회 + 일할 계산
+    const tierDefinitions = await getTierDefinitions(db);
+    const tierDef = tierDefinitions[storageInfo.tier] || tierDefinitions['free_trial'];
+    const creditQuotaFull = tierDef.credit_quota ?? 2000;
+    const proRataRatio = storageInfo.pro_rata_ratio ?? 1.0;
+    const effectiveCreditQuota = Math.round(creditQuotaFull * proRataRatio);
+
+    // 5. 사이클 정보
+    const cycleStart = new Date(storageInfo.ocr_cycle_start + 'T00:00:00+09:00');
+    const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
+
+    // 6. 현재 사이클 총 사용량 집계
+    const usage = await getCycleCreditsUsed(db, analyticsDb, userId, cycleStart, cycleEnd);
+
+    // 7. 월정액 초과분 계산
+    const monthlyOverage = Math.max(0, usage.total_credits - effectiveCreditQuota);
+    if (monthlyOverage <= 0) {
+      return { settled: false, reason: 'within_quota' };
+    }
+
+    // 8. 현재 사이클에서 이미 차감된 보너스 합산 (credit_transactions type='usage')
+    const alreadyDeducted = await getCycleSettledAmount(db, userId, cycleStart, cycleEnd);
+
+    // 9. 추가 차감 필요분 계산
+    const additionalDeduction = Math.max(0, monthlyOverage - alreadyDeducted);
+    if (additionalDeduction <= 0) {
+      return { settled: false, reason: 'already_settled' };
+    }
+
+    // 10. 실제 차감 가능 금액 (잔액 초과하지 않도록)
+    const deductAmount = Math.min(additionalDeduction, bonusBalance);
+    // 소수점 2자리 반올림
+    const roundedDeductAmount = Math.round(deductAmount * 100) / 100;
+
+    if (roundedDeductAmount <= 0) {
+      return { settled: false, reason: 'insufficient_bonus' };
+    }
+
+    // 11. useBonusCredits로 실차감 (DB 업데이트 + 트랜잭션 기록)
+    const result = await useBonusCredits(db, userId, roundedDeductAmount, {
+      resource_type: 'monthly_overage_settlement',
+      description: `월정액 초과분 자동 정산 (초과: ${monthlyOverage.toFixed(1)}C, 기정산: ${alreadyDeducted.toFixed(1)}C, 이번 정산: ${roundedDeductAmount.toFixed(1)}C)`
+    });
+
+    if (result.success) {
+      console.log(`[CreditService] settleBonusCredits: userId=${userId}, 정산=${roundedDeductAmount}C (초과=${monthlyOverage.toFixed(1)}C, 기정산=${alreadyDeducted.toFixed(1)}C, 잔액=${result.balance_after}C)`);
+    }
+
+    return {
+      settled: result.success,
+      amount: roundedDeductAmount,
+      monthly_overage: monthlyOverage,
+      already_deducted: alreadyDeducted,
+      balance_after: result.balance_after
+    };
+
+  } catch (error) {
+    // 정산 실패해도 크레딧 체크 자체는 진행 (fail-open)
+    console.error('[CreditService] settleBonusCredits 오류:', error.message);
+    return { settled: false, error: error.message };
+  }
+}
+
+/**
+ * 현재 사이클에서 이미 정산(차감)된 보너스 크레딧 합산
+ * credit_transactions에서 type='usage'이고 현재 사이클 내인 것의 합계
+ *
+ * @param {Db} db - MongoDB docupload DB
+ * @param {string} userId - 사용자 ID
+ * @param {Date} cycleStart - 사이클 시작일
+ * @param {Date} cycleEnd - 사이클 종료일
+ * @returns {Promise<number>} 이미 정산된 크레딧 합계 (양수)
+ */
+async function getCycleSettledAmount(db, userId, cycleStart, cycleEnd) {
+  const transactionsCollection = db.collection('credit_transactions');
+
+  const result = await transactionsCollection.aggregate([
+    {
+      $match: {
+        user_id: toUserIdQuery(userId),
+        type: 'usage',
+        created_at: { $gte: cycleStart, $lte: cycleEnd }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total_deducted: { $sum: { $abs: '$amount' } }
+      }
+    }
+  ]).toArray();
+
+  return result.length > 0 ? result[0].total_deducted : 0;
+}
+
+/**
  * 크레딧 충분 여부 체크 (월정액 + 추가 크레딧 통합)
+ * 체크 시 보너스 사후 정산도 자동 수행
+ *
  * @param {Db} db - MongoDB docupload DB
  * @param {Db} analyticsDb - MongoDB aims_analytics DB
  * @param {string} userId - 사용자 ID
@@ -693,6 +831,9 @@ async function useBonusCredits(db, userId, amount, usageInfo = {}) {
  */
 async function checkCreditWithBonus(db, analyticsDb, userId, requiredCredits = 0) {
   try {
+    // 0. 보너스 사후 정산 (월정액 초과분 실차감)
+    await settleBonusCredits(db, analyticsDb, userId);
+
     // 1. 월정액 크레딧 체크
     const monthlyCheck = await checkCreditBeforeAI(db, analyticsDb, userId, requiredCredits);
 
@@ -707,14 +848,23 @@ async function checkCreditWithBonus(db, analyticsDb, userId, requiredCredits = 0
       };
     }
 
-    // 월정액 초과분 계산 (보너스에서 차감해야 할 양)
+    // 월정액 초과분 계산
     const creditsUsed = monthlyCheck.credits_used ?? 0;
     const creditQuota = monthlyCheck.credit_quota ?? 0;
     const monthlyOverage = Math.max(0, creditsUsed - creditQuota);
 
-    // 보너스에서 초과분 차감한 유효 잔액
+    // 정산 후 실제 보너스 잔액 조회
     const bonusBalance = await getBonusCreditBalance(db, userId);
-    const effectiveBonusBalance = Math.max(0, bonusBalance - monthlyOverage);
+
+    // 정산이 완전하지 못한 경우(잔액 부족) 미정산분 반영
+    // 사이클 정보를 storageInfo에서 직접 조회
+    const { getUserStorageInfo } = require('./storageQuotaService');
+    const storageInfo = await getUserStorageInfo(db, userId);
+    const cycleStart = new Date(storageInfo.ocr_cycle_start + 'T00:00:00+09:00');
+    const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
+    const alreadySettled = await getCycleSettledAmount(db, userId, cycleStart, cycleEnd);
+    const unsettledOverage = Math.max(0, monthlyOverage - alreadySettled);
+    const effectiveBonusBalance = Math.max(0, bonusBalance - unsettledOverage);
 
     // 월정액 남은 금액 (음수면 0)
     const monthlyRemaining = Math.max(0, monthlyCheck.credits_remaining ?? 0);
@@ -1055,6 +1205,8 @@ module.exports = {
   useBonusCredits,
   checkCreditWithBonus,
   consumeCredits,
+  settleBonusCredits,
+  getCycleSettledAmount,
   getCreditTransactions,
   getCreditPackages,
   getCreditOverview,

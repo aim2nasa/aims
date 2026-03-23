@@ -17,7 +17,7 @@ const {
   updateTierDefinition,
   calculateOcrCycle
 } = require('../lib/storageQuotaService');
-const { getUserCreditInfo, getBonusCreditBalance, processCreditPendingDocuments } = require('../lib/creditService');
+const { getUserCreditInfo, getBonusCreditBalance, processCreditPendingDocuments, settleBonusCredits, getCycleSettledAmount } = require('../lib/creditService');
 const backendLogger = require('../lib/backendLogger');
 
 /**
@@ -81,12 +81,17 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
         }
       );
 
-      // 추가 크레딧 (Bonus Credits) 조회 및 월정액 초과분 차감
+      // 추가 크레딧 (Bonus Credits) 사후 정산 + 조회
+      if (!storageInfo.is_unlimited) {
+        await settleBonusCredits(db, analyticsDb, userId);
+      }
       const bonusBalance = await getBonusCreditBalance(db, userId);
       const monthlyRemaining = Math.max(0, creditInfo.credits_remaining);
-      // 🔴 월정액 초과분을 보너스에서 차감해야 총 가용 크레딧이 정확함
+      // 정산 후 미정산분 반영 (잔액 부족 시)
       const monthlyOverage = Math.max(0, creditInfo.credits_used - creditInfo.credit_quota);
-      const effectiveBonusBalance = Math.max(0, bonusBalance - monthlyOverage);
+      const alreadySettled = storageInfo.is_unlimited ? 0 : await getCycleSettledAmount(db, userId, cycleStart, cycleEnd);
+      const unsettledOverage = Math.max(0, monthlyOverage - alreadySettled);
+      const effectiveBonusBalance = Math.max(0, bonusBalance - unsettledOverage);
       const totalAvailable = storageInfo.is_unlimited ? -1 : (monthlyRemaining + effectiveBonusBalance);
 
       res.json({
