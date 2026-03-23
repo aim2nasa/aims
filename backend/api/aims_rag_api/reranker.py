@@ -12,6 +12,11 @@ from typing import List, Dict
 from sentence_transformers import CrossEncoder
 import traceback
 import math
+import gc
+import os
+
+# 환경변수로 배치 크기 조정 가능 (기본값 4 — CPU 환경 OOM 방지)
+RERANKER_BATCH_SIZE = int(os.getenv("RERANKER_BATCH_SIZE", "4"))
 
 
 class SearchReranker:
@@ -62,13 +67,14 @@ class SearchReranker:
                 # payload에서 preview 추출 (하이브리드 검색 결과 구조)
                 # 🔥 수정: None 안전 처리 (payload.get()이 None을 반환할 수 있음)
                 payload = result.get('payload') or {}
-                preview = (payload.get('preview') or '')[:1000]  # P1-5: 최대 1000자
+                preview = (payload.get('preview') or '')[:500]  # Cross-Encoder max_length=512 토큰, 500자면 충분
 
                 # 쿼리-문서 쌍 생성
                 pairs.append([query, preview])
 
-            # Cross-Encoder로 관련성 점수 계산
-            scores = self.model.predict(pairs)
+            # Cross-Encoder로 관련성 점수 계산 (batch_size 제한으로 OOM 방지)
+            scores = self.model.predict(pairs, batch_size=RERANKER_BATCH_SIZE)
+            gc.collect()  # 방어적 메모리 정리
 
             # 재순위화 점수 추가
             for i, result in enumerate(search_results):
