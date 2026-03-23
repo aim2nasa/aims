@@ -495,6 +495,8 @@ class InsuranceDomainAdapter(DomainAdapter):
             "is_annual_report": True,
             "ar_parsing_status": "pending",
         }
+        if related_customer_id:
+            update_fields["relatedCustomerId"] = str(related_customer_id)
         if display_name:
             update_fields["displayName"] = display_name
         if detection and hasattr(detection, "metadata"):
@@ -555,6 +557,8 @@ class InsuranceDomainAdapter(DomainAdapter):
             "is_customer_review": True,
             "cr_parsing_status": "pending",
         }
+        if related_customer_id:
+            update_fields["relatedCustomerId"] = str(related_customer_id)
         if display_name:
             update_fields["displayName"] = display_name
 

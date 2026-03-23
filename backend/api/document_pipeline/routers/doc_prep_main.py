@@ -1494,9 +1494,10 @@ def _get_insurance_adapter():
 
 
 async def _step_detect_ar_crs_via_adapter(ctx: PipelineContext, adapter) -> None:
-    """어댑터 경로: detect_special_documents() → resolve_entity() → DB 업데이트
+    """어댑터 경로: detect → resolve_entity → on_stage_complete → HookResult 실행
 
-    순수 텍스트 분석(어댑터)과 부수 효과(DB, SSE)를 분리한다.
+    Phase 2: legacy 함수 호출 없이 어댑터 + HookResult 실행기로 자립 동작.
+    순수 텍스트 분석(어댑터)과 부수 효과(HookResult)를 완전 분리.
     """
     try:
         detections = await adapter.detect_special_documents(
@@ -1506,7 +1507,6 @@ async def _step_detect_ar_crs_via_adapter(ctx: PipelineContext, adapter) -> None
         )
     except Exception as detect_err:
         logger.error(f"❌ 어댑터 감지 예외 (legacy fallback): doc_id={ctx.doc_id}, error={detect_err}", exc_info=True)
-        # 어댑터 감지 실패 시 legacy fallback
         await _step_detect_ar_crs_legacy(ctx)
         return
 
@@ -1515,37 +1515,138 @@ async def _step_detect_ar_crs_via_adapter(ctx: PipelineContext, adapter) -> None
 
     detection = detections[0]  # AR/CRS는 상호 배타적
 
-    if detection.doc_type == "annual_report":
-        # 기존 _detect_and_process_annual_report()의 DB+SSE 로직은 그대로 사용
-        # 어댑터가 추출한 메타데이터를 기존 함수에 위임
-        try:
-            ar_result = await _detect_and_process_annual_report(
-                doc_id=ctx.doc_id,
-                full_text=ctx.full_text,
-                original_name=ctx.original_name,
-                user_id=ctx.user_id,
-                files_collection=ctx.files_collection,
-            )
-            if ar_result.get("is_annual_report"):
-                ctx.is_ar_detected = True
-                logger.info(f"✅ AR 자동 감지 완료 (어댑터 경로): doc_id={ctx.doc_id}")
-        except Exception as ar_err:
-            logger.error(f"❌ AR 처리 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={ar_err}", exc_info=True)
+    # 1. 엔티티 연결 (고객명 → 고객 ID)
+    related_customer_id = None
+    try:
+        entity_result = await adapter.resolve_entity(detection, ctx.user_id)
+        related_customer_id = entity_result.get("customer_id") if entity_result else None
+    except Exception as entity_err:
+        logger.warning(f"⚠️ 엔티티 연결 실패 (감지는 계속): doc_id={ctx.doc_id}, error={entity_err}")
 
+    # 2. 표시명 생성
+    display_name = ""
+    try:
+        display_name = await adapter.generate_display_name(
+            {"originalName": ctx.original_name},
+            detection,
+        )
+    except Exception:
+        pass
+
+    # 3. on_stage_complete() → HookResult 목록 반환
+    stage_name = "ar_detected" if detection.doc_type == "annual_report" else "crs_detected"
+    hook_context = {
+        "doc_id": ctx.doc_id,
+        "detection": detection,
+        "related_customer_id": related_customer_id,
+        "display_name": display_name,
+        "user_id": ctx.user_id,
+    }
+
+    try:
+        hook_results = await adapter.on_stage_complete(
+            stage=stage_name,
+            doc={},
+            context=hook_context,
+        )
+    except Exception as hook_err:
+        logger.error(f"❌ 어댑터 훅 예외: doc_id={ctx.doc_id}, error={hook_err}", exc_info=True)
+        hook_results = []
+
+    # 4. HookResult 실행
+    await _execute_hook_results(ctx, hook_results)
+
+    # 5. 상태 플래그 업데이트
+    if detection.doc_type == "annual_report":
+        ctx.is_ar_detected = True
+        logger.info(f"✅ AR 자동 감지 완료 (어댑터+HookResult): doc_id={ctx.doc_id}, customer={related_customer_id}")
     elif detection.doc_type == "customer_review":
+        ctx.is_crs_detected = True
+        logger.info(f"✅ CRS 자동 감지 완료 (어댑터+HookResult): doc_id={ctx.doc_id}, customer={related_customer_id}")
+
+
+async def _execute_hook_results(ctx: PipelineContext, hook_results: list) -> None:
+    """HookResult 목록을 실행 — DB 업데이트, SSE 알림, 프로세스 트리거
+
+    어댑터가 반환한 HookResult를 실제로 실행하는 단일 실행기.
+    이 함수가 있으므로 어댑터는 순수 로직만 담당하고,
+    부수 효과(DB, SSE, HTTP)는 이 함수가 처리한다.
+    """
+    from xpipe.adapter import StageHookAction
+
+    for result in hook_results:
         try:
-            crs_result = await _detect_and_process_customer_review(
-                doc_id=ctx.doc_id,
-                full_text=ctx.full_text,
-                original_name=ctx.original_name,
-                user_id=ctx.user_id,
-                files_collection=ctx.files_collection,
+            if result.action == StageHookAction.UPDATE_STATUS:
+                # MongoDB $set + $addToSet
+                payload = result.payload
+                doc_id = payload.get("doc_id", ctx.doc_id)
+                fields = payload.get("fields", {})
+                add_to_set = payload.get("add_to_set", {})
+
+                update_ops = {}
+                if fields:
+                    update_ops["$set"] = fields
+                if add_to_set:
+                    update_ops["$addToSet"] = add_to_set
+
+                # relatedCustomerId는 문자열 → ObjectId 변환 필요
+                if fields.get("relatedCustomerId"):
+                    from bson import ObjectId
+                    rid = fields["relatedCustomerId"]
+                    if isinstance(rid, str) and ObjectId.is_valid(rid):
+                        fields["relatedCustomerId"] = ObjectId(rid)
+
+                if update_ops:
+                    from bson import ObjectId
+                    await ctx.files_collection.update_one(
+                        {"_id": ObjectId(doc_id)},
+                        update_ops,
+                    )
+
+            elif result.action == StageHookAction.NOTIFY:
+                # SSE 웹훅 호출
+                payload = result.payload
+                event = payload.get("event", "")
+                if event:
+                    await _send_sse_webhook(event, payload)
+
+            elif result.action == StageHookAction.TRIGGER_PROCESS:
+                # AR 파싱 트리거 등 — annual_report_api 스캐너가 polling으로 처리하므로
+                # ar_parsing_status=pending 설정만 하면 됨 (UPDATE_STATUS에서 이미 처리)
+                pass
+
+        except Exception as exec_err:
+            logger.error(f"❌ HookResult 실행 오류: action={result.action}, error={exec_err}", exc_info=True)
+
+
+async def _send_sse_webhook(event: str, payload: dict) -> None:
+    """SSE 웹훅을 aims_api에 전송 (X-API-Key 인증 포함)"""
+    import httpx
+    from config import get_settings
+
+    webhook_map = {
+        "ar-status-change": "/api/webhooks/ar-status-change",
+        "cr-status-change": "/api/webhooks/cr-status-change",
+    }
+    path = webhook_map.get(event)
+    if not path:
+        return
+
+    settings = get_settings()
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{settings.AIMS_API_URL}{path}",
+                json={
+                    "customerId": payload.get("customer_id", ""),
+                    "fileId": payload.get("file_id", ""),
+                    "status": payload.get("status", "pending"),
+                },
+                headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                timeout=5.0,
             )
-            if crs_result.get("is_customer_review"):
-                ctx.is_crs_detected = True
-                logger.info(f"✅ CRS 자동 감지 완료 (어댑터 경로): doc_id={ctx.doc_id}")
-        except Exception as crs_err:
-            logger.error(f"❌ CRS 처리 예외 (문서 처리 계속): doc_id={ctx.doc_id}, error={crs_err}", exc_info=True)
+    except Exception as e:
+        logger.warning(f"⚠️ SSE 웹훅 전송 실패 ({event}): {e}")
 
 
 async def _step_detect_ar_crs_legacy(ctx: PipelineContext) -> None:
