@@ -585,6 +585,9 @@
     position: fixed;
     top: 0;
     left: 0;
+    width: 200px;
+    max-width: 60vw;
+    height: 100dvh;
     z-index: var(--z-index-modal, 1000);
     border-radius: 0;
     padding: 12px;
