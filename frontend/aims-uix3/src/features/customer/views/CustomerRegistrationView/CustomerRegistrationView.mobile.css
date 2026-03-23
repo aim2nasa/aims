@@ -7,34 +7,65 @@
 
   /* 모바일 (768px 이하) */
   @media (max-width: 768px) {
-    /* 섹션: 가로 → 세로 레이아웃 전환 */
+    /* 섹션: 세로 전환 */
     .form-section {
       flex-direction: column;
     }
 
-    /* 섹션 타이틀: 좌측 고정 해제, 하단 여백 */
+    /* 섹션 타이틀: 카테고리 헤더 */
     .form-section__title {
       flex: none;
-      margin-bottom: var(--spacing-1);
+      margin-bottom: 0;
+      padding: var(--spacing-1) 0 var(--spacing-0-5);
     }
 
-    /* 터치 타겟 확보: submit 버튼 */
+    /* 카테고리 아래 내용 들여쓰기 (24px) */
+    .form-section__content {
+      padding-left: 24px;
+    }
+
+    /* form-row 가로 유지 */
+    .form-row {
+      flex-direction: row;
+      align-items: center;
+    }
+
+    /* 입력 폰트를 라벨과 동일하게 통일 (footnote = 13px) */
+    .form-row__input input,
+    .form-row__input select {
+      font-size: var(--font-size-footnote);
+    }
+
+    /* 라디오 텍스트도 통일 */
+    .radio-group label,
+    .radio-group span {
+      font-size: var(--font-size-footnote);
+    }
+
+    /* 상단 여백 최소화 */
+    .customer-registration__inner {
+      padding: 0 var(--spacing-3);
+    }
+
+    /* 도움말 헤더 숨김 */
+    .customer-registration__header {
+      display: none;
+    }
+
+    /* 터치 타겟 확보 */
     .customer-registration__actions .button {
       min-height: 44px;
     }
 
-    /* 터치 타겟 확보: 도움말 아이콘 */
     .help-icon-button {
       min-height: 44px;
       min-width: 44px;
     }
 
-    /* 터치 타겟 확보: 주소 검색 버튼 */
     .form-row__search-btn {
       min-height: 44px;
     }
 
-    /* 임시저장 인디케이터 세로 중앙 정렬 */
     .customer-registration__draft-indicator {
       align-items: center;
       justify-content: center;
@@ -43,18 +74,24 @@
 
   /* 소형 모바일 (480px 이하) */
   @media (max-width: 480px) {
-    /* inner padding 추가 축소 */
     .customer-registration__inner {
       padding: var(--spacing-2) var(--spacing-2);
     }
 
-    /* iOS Safari 자동 줌 방지: 16px 이상 필요 */
-    .form-row__input input,
-    .form-row__input select {
-      font-size: var(--font-size-callout);
+    .form-section__content {
+      padding-left: 20px;
     }
 
-    /* 라디오 그룹 gap 축소 */
+    .form-row__label {
+      flex: 0 0 64px;
+      margin-right: var(--spacing-1);
+    }
+
+    .form-row__error,
+    .form-row__warning {
+      margin-left: calc(64px + var(--spacing-1));
+    }
+
     .radio-group {
       gap: var(--spacing-2);
     }

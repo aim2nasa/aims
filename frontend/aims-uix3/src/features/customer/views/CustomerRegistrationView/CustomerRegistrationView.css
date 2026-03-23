@@ -508,24 +508,7 @@
 
   }
 
-  /* 소형 모바일 (480px 이하): form-row 세로 배치 */
-  @media (max-width: 480px) {
-    .form-row {
-      flex-direction: column;
-      align-items: stretch;
-      gap: var(--spacing-0-5);
-    }
-
-    .form-row__label {
-      flex: none;
-      margin-right: 0;
-    }
-
-    .form-row__error,
-    .form-row__warning {
-      margin-left: 0;
-    }
-  }
+  /* 소형 모바일 레이아웃은 CustomerRegistrationView.mobile.css에서 처리 */
 
   /* Address Search Styles */
   .form-row__search-btn {
