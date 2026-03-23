@@ -1395,7 +1395,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                               type="button"
                               className="answer-source-ref answer-source-ref--clickable"
                               onClick={() => { if (onDocumentDoubleClick) onDocumentDoubleClick(seg.result) }}
-                            >{seg.name}</button>
+                            >[{seg.name}]</button>
                           : seg.value
                       )
                     })()
