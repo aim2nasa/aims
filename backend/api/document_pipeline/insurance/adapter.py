@@ -4,7 +4,7 @@ InsuranceDomainAdapter — AIMS 보험 도메인 어댑터
 DomainAdapter ABC를 상속하여 보험 도메인에 특화된 로직을 구현한다.
 
 Phase 2-1 완료: 분류 체계 + 프롬프트가 어댑터로 이동됨.
-- get_classification_config(): openai_service.py에서 M6 프롬프트 + 22개 분류 체계 이동
+- get_classification_config(): openai_service.py에서 M6 프롬프트 + 23개 분류 체계 이동
 
 Phase 2-2 완료: AR/CRS 감지 + 엔티티 연결 + 표시명 생성이 어댑터로 이동됨.
 - detect_special_documents(): AR/CRS 패턴 매칭 (순수 텍스트 분석)
@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 # @see docs/DOCUMENT_TAXONOMY.md
 # ---------------------------------------------------------------------------
 
-# 22개 유효 문서 유형
+# 유효 문서 유형 (INSURANCE_CATEGORIES와 1:1 대응해야 함)
 VALID_DOCUMENT_TYPES = {
     # 1. 보험계약 (insurance)
     "policy", "coverage_analysis", "application", "plan_design", "insurance_etc",
@@ -57,8 +57,8 @@ VALID_DOCUMENT_TYPES = {
     "id_card", "family_cert", "personal_docs",
     # 4. 건강/의료 (medical)
     "health_checkup",
-    # 5. 자산 (asset)
-    "asset_document", "inheritance_gift",
+    # 5. 자산/금융 (asset)
+    "asset_document", "inheritance_gift", "bank_account",
     # 6. 법인 (corporate)
     "corp_basic", "hr_document", "corp_tax", "corp_asset", "legal_document",
     # 7. 기타 (etc)
@@ -67,6 +67,11 @@ VALID_DOCUMENT_TYPES = {
 
 # AI 분류에서 이 값이 나오면 general로 교체 (시스템 전용 유형)
 SYSTEM_ONLY_TYPES = {"annual_report", "customer_review", "unspecified"}
+
+# DB 레거시 값 → 현재 유효 타입으로 매핑 (alias)
+LEGACY_TYPE_ALIASES = {
+    "proposal": "plan_design",  # 가입설계서/제안서 → plan_design으로 통합
+}
 
 # 분류 체계를 Category 객체로 정의 (대분류 → 소분류 구조)
 INSURANCE_CATEGORIES = [
@@ -87,9 +92,10 @@ INSURANCE_CATEGORIES = [
     Category(code="personal_docs", name="개인서류", parent="identity"),
     # 4. 건강/의료
     Category(code="health_checkup", name="건강검진결과", parent="medical"),
-    # 5. 자산
+    # 5. 자산/금융
     Category(code="asset_document", name="자산서류", parent="asset"),
     Category(code="inheritance_gift", name="상속/증여", parent="asset"),
+    Category(code="bank_account", name="통장사본", parent="asset"),
     # 6. 법인
     Category(code="corp_basic", name="법인기본서류", parent="corporate"),
     Category(code="hr_document", name="인사서류", parent="corporate"),
@@ -104,13 +110,13 @@ INSURANCE_CATEGORIES = [
 CLASSIFICATION_SYSTEM_PROMPT = (
     "보험설계사 문서분류기. JSON만 응답. "
     "annual_report/customer_review/unspecified 선택 금지. "
-    "general은 22개 유형 어디에도 해당하지 않을 때만 선택. "
+    "general은 23개 유형 어디에도 해당하지 않을 때만 선택. "
     "텍스트가 부실해도 파일명이나 별칭에서 유형을 추론 가능하면 반드시 해당 유형으로 분류! "
     "예: 별칭 '체류기간 정보'→id_card, '카드 정보'→personal_docs. "
     "unclassifiable은 텍스트·파일명·별칭 모두에서 전혀 추론 불가할 때만."
 )
 
-CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를 아래 22개 유형 중 하나로 분류하세요.
+CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를 아래 23개 유형 중 하나로 분류하세요.
 
 [대분류 → 소분류]
 
@@ -118,7 +124,7 @@ CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를
 보험금청구: diagnosis(진단서/소견서/입퇴원확인서/의무기록/진료차트/처방전/검사결과지), medical_receipt(진료비영수증/진료비계산서/약제비계산서/병원비영수증), claim_form(보험금청구서/사고접수/사고증명/사고통지서), consent_delegation(동의서/위임장/FATCA확인서/고객거래확인서)
 신분증명: id_card(주민등록증/운전면허증/여권/신분증 사본), family_cert(가족관계증명서/주민등록등본), personal_docs(개인통장/개인인감증명서/명함/금융거래확인서)
 건강: health_checkup(건강검진결과/종합검진/암검진)
-자산: asset_document(개인소득증명/재직증명/개인부동산등기/건물가액평가), inheritance_gift(상속/증여)
+자산: asset_document(개인소득증명/재직증명/개인부동산등기/건물가액평가), inheritance_gift(상속/증여), bank_account(통장사본/예금통장/은행통장/계좌사본)
 법인: corp_basic(법인등기부등본/정관/주주명부/주식양수도계약서/주식명의신탁약정서/법인통장/법인인감증명서/특허등록완료/연구전담부서인증/법인로고/법인서식/이사회의사록/중소기업확인서/사업자등록증/권리이전등록완료), hr_document(근로계약서/급여대장/인사발령/취업규칙/퇴직연금/퇴직연금부담금납입확인서/퇴직금영수증/결근계/사직서/경고장/경위서/사유서/복직원/병가원/근태계/지각이유서/휴가신청서/조퇴외출신청서/야간근로동의서/야간근로청구서/비밀유지서약서/경업금지서약서/졸업증명서/자격증/포트폴리오/출장신고서/징계처분통지서/징계의결서/징계요구서/노무규정/업무인수인계/성희롱예방교육/선택적보상휴가제합의서/4대보험가입자명부/이력서/근로자명부/재직증명서), corp_tax(원천징수영수증/종합소득세/부가세/세금계산서/법인손익계산서/법인재무제표/재무상태표/주당가치평가/법인설립비용/중소기업기준검토/세무조정계산서/잔고증명서/거래내역증명서/재산현황/사업비내역서), corp_asset(법인자동차보험증권/법인자동차보험가입증/법인자동차등록증/법인부동산/리스/특허수수료/납부고지서/보정요구서/자동차만기/법인건물가액평가/법인담보삭제), legal_document(판결문/소장/내용증명/임대차계약/매매계약/사업계획서/도급계약/컨설팅계약)
 기타: general(안내문/메모/사은품/요청자료모음/기타업무문서/액자/보관렉), unclassifiable(텍스트없음/판독불가/빈이미지)
 
