@@ -1378,9 +1378,20 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <span className="answer-arrow">▶</span> AI 답변 (클릭하여 숨기기)
                   </summary>
                   <p className="answer-content">{
-                    answer.split(/(\S+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png))/gi).map((part, i) =>
-                      /^\S+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png)$/i.test(part)
-                        ? <span key={i} className="answer-source-ref">{part}</span>
+                    answer.split(/([가-힣a-zA-Z0-9_\-·+]+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png))/gi).map((part, i) =>
+                      /^[가-힣a-zA-Z0-9_\-·+]+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png)$/i.test(part)
+                        ? <button
+                            key={i}
+                            type="button"
+                            className="answer-source-ref answer-source-ref--clickable"
+                            onClick={() => {
+                              const match = results.find(r => {
+                                const name = ('payload' in r ? r.payload?.original_name : ('filename' in r ? r.filename : undefined)) || r.upload?.originalName || ''
+                                return name === part
+                              })
+                              if (match && onDocumentDoubleClick) onDocumentDoubleClick(match)
+                            }}
+                          >{part}</button>
                         : part
                     )
                   }</p>
