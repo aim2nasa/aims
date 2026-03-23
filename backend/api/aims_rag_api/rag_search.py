@@ -392,8 +392,9 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
     if not search_results and not relationship_context:
         return "관련 문서를 찾을 수 없습니다.", None
 
-    # 검색 결과를 바탕으로 컨텍스트 생성
+    # 검색 결과를 바탕으로 컨텍스트 생성 + doc_id-파일명 매핑 구축
     context = ""
+    doc_id_map = {}  # {doc_id: original_name} — 후처리 검증용
 
     # 고객 관계 정보가 있으면 문서 컨텍스트 앞에 배치
     if relationship_context:
@@ -403,10 +404,25 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
         payload = result.get('payload', result)
         preview = payload.get('preview', '')
         original_name = payload.get('original_name', '알 수 없는 문서')
+        doc_id = payload.get('doc_id', '')
         # P4-4: 파일명/미리보기에서 제어문자 제거 (프롬프트 인젝션 방어)
         original_name = re.sub(r'[\x00-\x1f\x7f]', '', original_name)
         preview = re.sub(r'[\x00-\x1f\x7f]', '', preview)
-        context += f"--- [{original_name}] ---\n{preview}\n\n"
+        # doc_id가 있는 경우 매핑에 추가
+        if doc_id:
+            doc_id_map[doc_id] = original_name
+        context += f"--- [DOC_ID:{doc_id}|{original_name}] ---\n{preview}\n\n"
+
+    # 문서 참조 형식 안내 (doc_id 목록)
+    doc_ref_guide = ""
+    if doc_id_map:
+        doc_ref_guide = "\n\n## 문서 참조 형식\n"
+        doc_ref_guide += "답변에서 문서를 참조할 때 반드시 다음 형식을 사용해:\n"
+        doc_ref_guide += "[[DOC:문서ID|파일명]]\n\n"
+        doc_ref_guide += "사용 가능한 문서 목록:\n"
+        for did, fname in doc_id_map.items():
+            doc_ref_guide += f"- [[DOC:{did}|{fname}]]\n"
+        doc_ref_guide += "\n위 목록에 없는 문서는 참조하지 마. 파일명을 변형하거나 축약하지 마.\n"
 
     # 시스템 프롬프트: 보험 도메인 전문 프롬프트
     system_prompt = (
@@ -426,12 +442,13 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
         "\"해당 정보를 찾을 수 없습니다\"라고 답해.\n"
         "9. 너의 일반 지식으로 답변하지 마. 오직 제공된 문서 내용만 사용해.\n"
         "10. 답변에 내부 참조 번호(문서 조각 번호 등)를 언급하지 마.\n"
-        "11. 답변의 각 정보에 대해 출처 문서 파일명을 반드시 괄호로 표기해. "
-        "예: \"보험료: 73,230원 (계약서_홍길동.pdf)\""
+        "11. 문서를 참조할 때 반드시 [[DOC:문서ID|파일명]] 형식을 사용해. "
+        "괄호() 표기 금지. 반드시 [[DOC:...]] 마커만 사용해. "
+        "예: \"보험료: 73,230원 [[DOC:abc123|계약서_[계약자].pdf]]\""
     )
 
     messages = [
-        {"role": "system", "content": system_prompt},
+        {"role": "system", "content": system_prompt + doc_ref_guide},
         {"role": "user", "content": f"다음 정보를 참고해서 질문에 답해줘. 질문: '{query}'\n\n{context}"}
     ]
 
@@ -443,10 +460,41 @@ def generate_answer_with_llm(query: str, search_results: List[Dict], relationshi
             max_tokens=4000,
             temperature=0.0
         )
-        return response.choices[0].message.content, response
+        raw_answer = response.choices[0].message.content
+
+        # 후처리: 유효하지 않은 [[DOC:...]] 마커 정리
+        final_answer = _sanitize_doc_markers(raw_answer, doc_id_map)
+
+        return final_answer, response
     except Exception as e:
         send_error_log("aims_rag_api", f"LLM 답변 생성 중 오류: {e}", e)
         return f"❌ LLM 답변 생성 중 오류 발생: {e}", None
+
+
+# [[DOC:doc_id|파일명]] 마커 후처리 — 유효하지 않은 마커 제거
+_DOC_MARKER_RE = re.compile(r'\[\[DOC:([^|]+)\|([^\]]+)\]\]')
+
+def _sanitize_doc_markers(answer: str, doc_id_map: Dict[str, str]) -> str:
+    """
+    AI 응답의 [[DOC:doc_id|파일명]] 마커를 검증하여:
+    - doc_id가 유효하면 마커 유지 (파일명을 정확한 원본으로 교정)
+    - doc_id가 유효하지 않으면 파일명만 텍스트로 남김
+    """
+    if not doc_id_map or '[[DOC:' not in answer:
+        return answer
+
+    def replace_marker(match):
+        doc_id = match.group(1).strip()
+        ai_filename = match.group(2).strip()
+        if doc_id in doc_id_map:
+            # doc_id 유효 → 정확한 원본 파일명으로 교정
+            correct_name = doc_id_map[doc_id]
+            return f"[[DOC:{doc_id}|{correct_name}]]"
+        else:
+            # doc_id 무효 → 파일명만 텍스트로 남김
+            return ai_filename
+
+    return _DOC_MARKER_RE.sub(replace_marker, answer)
 
 
 # ========================================

@@ -1383,6 +1383,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       const fileEntries = results
                         .map(r => ({
                           name: ('payload' in r ? r.payload?.original_name : ('filename' in r ? r.filename : undefined)) || r.upload?.originalName || '',
+                          docId: ('payload' in r ? r.payload?.doc_id : ('_id' in r ? r._id : undefined)) || undefined,
                           result: r
                         }))
                         .filter(e => e.name)
