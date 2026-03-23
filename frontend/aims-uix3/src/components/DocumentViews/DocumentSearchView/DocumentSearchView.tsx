@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { parseAnswerLinks } from './utils/parseAnswerLinks'
 import { useDeviceOrientation } from '@/hooks/useDeviceOrientation'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
@@ -1378,22 +1379,25 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <span className="answer-arrow">▶</span> AI 답변 (클릭하여 숨기기)
                   </summary>
                   <p className="answer-content">{
-                    answer.split(/([가-힣a-zA-Z0-9_\-·+]+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png))/gi).map((part, i) =>
-                      /^[가-힣a-zA-Z0-9_\-·+]+\.(?:pdf|hwp|xlsx?|docx?|pptx?|jpg|jpeg|png)$/i.test(part)
-                        ? <button
-                            key={i}
-                            type="button"
-                            className="answer-source-ref answer-source-ref--clickable"
-                            onClick={() => {
-                              const match = results.find(r => {
-                                const name = ('payload' in r ? r.payload?.original_name : ('filename' in r ? r.filename : undefined)) || r.upload?.originalName || ''
-                                return name === part
-                              })
-                              if (match && onDocumentDoubleClick) onDocumentDoubleClick(match)
-                            }}
-                          >{part}</button>
-                        : part
-                    )
+                    (() => {
+                      const fileEntries = results
+                        .map(r => ({
+                          name: ('payload' in r ? r.payload?.original_name : ('filename' in r ? r.filename : undefined)) || r.upload?.originalName || '',
+                          result: r
+                        }))
+                        .filter(e => e.name)
+
+                      return parseAnswerLinks(answer, fileEntries).map((seg, i) =>
+                        seg.type === 'file'
+                          ? <button
+                              key={i}
+                              type="button"
+                              className="answer-source-ref answer-source-ref--clickable"
+                              onClick={() => { if (onDocumentDoubleClick) onDocumentDoubleClick(seg.result) }}
+                            >{seg.name}</button>
+                          : seg.value
+                      )
+                    })()
                   }</p>
                 </details>
               )}
