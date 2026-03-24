@@ -189,7 +189,7 @@ class DomainAdapter(ABC):
 
         Returns:
             도메인 특화 메타데이터. 도메인별 자유 구조.
-            예: {"policyholder": "홍길동", "policy_number": "P12345", ...}
+            예: {"author": "홍길동", "doc_number": "D12345", ...}
         """
         ...
 
