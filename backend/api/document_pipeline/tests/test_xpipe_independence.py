@@ -53,9 +53,15 @@ FORBIDDEN_MODULES = frozenset({
     "redis",
     "fastapi",
     # httpx는 xpipe 자체 의존성 (AI API 호출용) — 금지 대상 아님
+    # openai는 providers.py 내장 구현체에서만 허용 (stages/ 코어 코드에서는 금지)
     "openai",
     "anthropic",
 })
+
+# providers.py는 내장 구현체(OpenAILLMProvider 등)를 포함하므로 openai import 허용
+PROVIDER_IMPL_EXCEPTIONS: dict[str, frozenset[str]] = {
+    "providers.py": frozenset({"openai"}),
+}
 
 
 def _collect_imports(filepath: Path) -> list[tuple[str, int]]:
@@ -103,8 +109,9 @@ class TestXpipeIndependence:
         """xpipe가 document_pipeline 내부 모듈을 import하지 않는지 검증"""
         violations = []
         for filepath in _get_xpipe_py_files():
+            exceptions = PROVIDER_IMPL_EXCEPTIONS.get(filepath.name, frozenset())
             for module_name, lineno in _collect_imports(filepath):
-                if module_name in FORBIDDEN_MODULES:
+                if module_name in FORBIDDEN_MODULES and module_name not in exceptions:
                     violations.append(
                         f"  {filepath.name}:{lineno} — import {module_name}"
                     )
@@ -116,11 +123,12 @@ class TestXpipeIndependence:
         """xpipe가 허용된 표준 라이브러리만 사용하는지 검증"""
         violations = []
         for filepath in _get_xpipe_py_files():
+            exceptions = PROVIDER_IMPL_EXCEPTIONS.get(filepath.name, frozenset())
             for module_name, lineno in _collect_imports(filepath):
                 # xpipe 내부 import는 허용
                 if module_name == "xpipe":
                     continue
-                if module_name not in ALLOWED_MODULES:
+                if module_name not in ALLOWED_MODULES and module_name not in exceptions:
                     violations.append(
                         f"  {filepath.name}:{lineno} — import {module_name}"
                     )
