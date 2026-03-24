@@ -746,6 +746,22 @@ body {
   border-collapse: collapse;
   table-layout: fixed;
 }
+.doc-table th { position: relative; }
+.doc-table th .th-resize-handle {
+  position: absolute;
+  right: -4px;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 10;
+}
+.doc-table th .th-resize-handle:hover,
+.doc-table th .th-resize-handle.active {
+  background: var(--accent, #007aff);
+  opacity: 0.3;
+}
 
 /* 칼럼 너비 (table-layout: fixed) — 파일명만 가변, 나머지 고정 */
 .doc-table th, .doc-table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -757,7 +773,7 @@ body {
 .doc-table th:nth-child(4)  { width: 82px; }     /* 크기 */
 .doc-table th:nth-child(5)  { width: 52px; }     /* 타입 */
 .doc-table th:nth-child(6)  { width: 148px; }    /* 업로드 */
-.doc-table th:nth-child(7)  { width: 230px; }    /* 상태 */
+.doc-table th:nth-child(7)  { width: 320px; }    /* 상태 */
 .doc-table th:nth-child(8)  { width: 52px; }     /* 분류 */
 .doc-table th:nth-child(9)  { width: 52px; }     /* 감지 */
 .doc-table th:nth-child(10) { width: 66px; }     /* 비용 */
@@ -1430,8 +1446,9 @@ tr.row-error {
   color: #fff;
   font-size: 11px;
   font-weight: 400;
-  white-space: nowrap;
-  max-width: 400px;
+  white-space: normal;
+  word-break: keep-all;
+  max-width: 300px;
   line-height: 1.5;
   z-index: 300;
   pointer-events: none;

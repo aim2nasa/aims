@@ -916,6 +916,7 @@
     let prevShown = false;
     for (let i = 0; i < stageOrder.length; i++) {
       const name = stageOrder[i];
+      if (name === 'complete') continue;  // "완료"는 도트 표시 불필요 (항상 마지막, 정보 없음)
       const detail = stagesDetail[name] || {};
       const stageData = (doc.stages_data && doc.stages_data[name]) || {};
       // stages_data.status를 우선 참조 (실제 파이프라인 결과), stages_detail은 fallback
@@ -2020,6 +2021,64 @@
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // 칼럼 리사이즈 (드래그) — 점프 방지: mousedown 시 전체 칼럼 너비를 inline 고정
+  // ---------------------------------------------------------------------------
+  function initColumnResize() {
+    var table = document.querySelector('.doc-table');
+    if (!table) return;
+    var headers = Array.from(table.querySelectorAll('thead th'));
+
+    // 핸들 삽입
+    headers.forEach(function (th) {
+      var handle = document.createElement('div');
+      handle.className = 'th-resize-handle';
+      th.appendChild(handle);
+    });
+
+    // 이벤트 위임 (thead에 한 번만)
+    var thead = table.querySelector('thead');
+    thead.addEventListener('mousedown', function (e) {
+      var handle = e.target.closest('.th-resize-handle');
+      if (!handle) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      var th = handle.parentElement;
+      // 점프 방지: 드래그 시작 전 모든 칼럼의 실제 너비를 inline으로 고정
+      var widths = headers.map(function (h) { return h.offsetWidth; });
+      headers.forEach(function (h, i) { h.style.width = widths[i] + 'px'; });
+
+      var startX = e.clientX;
+      var startWidth = th.offsetWidth;
+      handle.classList.add('active');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      function onMove(ev) {
+        var delta = ev.clientX - startX;
+        var newWidth = Math.max(30, startWidth + delta);
+        th.style.width = newWidth + 'px';
+      }
+      function onUp() {
+        handle.classList.remove('active');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    // 리사이즈 핸들 클릭 시 정렬 이벤트 차단 (click은 mousedown+mouseup 후 발생)
+    thead.addEventListener('click', function (e) {
+      if (e.target.closest('.th-resize-handle')) {
+        e.stopImmediatePropagation();
+      }
+    }, true);
+  }
+
   function init() {
     initConfig();
     initUpload();
@@ -2028,6 +2087,7 @@
     initBenchmark();
     initDocModal();
     initSortableHeaders();
+    initColumnResize();
     initSSE();
     refreshDocuments();
 
