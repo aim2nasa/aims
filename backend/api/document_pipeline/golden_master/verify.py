@@ -320,12 +320,49 @@ def main():
         json.dump(result, f, ensure_ascii=False, indent=2, default=str)
     print(f"\n결과 저장: {result_path}")
 
-    # 알림 (크론용)
+    # 알림: FAIL 시 aims-admin 시스템 로그에 에러 등록
     if args.alert_on_fail and failed > 0:
         print(f"\n[ALERT] Golden Master FAIL: {failed}/{total}건")
-        # TODO: Slack/Email 알림 연동
+        _send_error_to_admin(failed, total, failures)
 
     sys.exit(1 if failed > 0 else 0)
+
+
+def _send_error_to_admin(failed: int, total: int, failures: list):
+    """aims-admin 시스템 로그에 Golden Master FAIL 에러를 등록"""
+    import requests as req
+
+    aims_api_url = os.environ.get("AIMS_API_URL", "http://localhost:3010")
+    fail_details = "; ".join(
+        f"{f['id']}({','.join(d['field'] for d in f['diffs'])})"
+        for f in failures[:5]  # 최대 5건만
+    )
+
+    try:
+        req.post(
+            f"{aims_api_url}/api/error-logs",
+            json={
+                "source": {
+                    "type": "server",
+                    "component": "golden_master_verify",
+                    "endpoint": "cron/golden-master",
+                },
+                "error": {
+                    "type": "GoldenMasterFail",
+                    "message": f"[xPipe 모니터링] Golden Master FAIL: {failed}/{total}건 불일치 — {fail_details}",
+                    "severity": "high",
+                    "category": "xpipe_monitoring",
+                },
+                "context": {
+                    "version": os.environ.get("PIPELINE_ENGINE", "unknown"),
+                    "payload": {"failures": failures[:5]},
+                },
+            },
+            timeout=5,
+        )
+        print("  → aims-admin 시스템 로그에 에러 등록 완료")
+    except Exception as e:
+        print(f"  → aims-admin 에러 등록 실패: {e}")
 
 
 if __name__ == "__main__":
