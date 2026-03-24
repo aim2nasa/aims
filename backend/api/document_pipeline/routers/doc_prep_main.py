@@ -1935,6 +1935,16 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
     }
 
 
+def _get_pipeline_engine() -> str:
+    """파이프라인 엔진 설정 조회. 환경변수 PIPELINE_ENGINE으로 전환.
+
+    Returns:
+        "xpipe" → xPipe 파이프라인으로 처리
+        "legacy" → 기존 document_pipeline으로 처리 (기본값)
+    """
+    return os.environ.get("PIPELINE_ENGINE", "legacy").lower()
+
+
 async def process_document_pipeline(
     file_content: bytes,
     original_name: str,
@@ -1946,6 +1956,10 @@ async def process_document_pipeline(
 ) -> Dict[str, Any]:
     """
     실제 문서 처리 파이프라인 (워커에서 호출)
+
+    PIPELINE_ENGINE 환경변수로 처리 엔진을 전환:
+    - "xpipe": xPipe Pipeline + InsuranceAdapter로 처리
+    - "legacy": 기존 document_pipeline 코드로 처리 (기본값)
 
     Args:
         file_content: 파일 내용 (bytes)
@@ -1959,6 +1973,262 @@ async def process_document_pipeline(
     Returns:
         처리 결과 dict
     """
+    engine = _get_pipeline_engine()
+    if engine == "xpipe":
+        try:
+            return await _process_via_xpipe(
+                file_content, original_name, user_id, customer_id,
+                source_path, mime_type, existing_doc_id,
+            )
+        except Exception as e:
+            logger.error(f"❌ xPipe 처리 실패, legacy fallback: {e}", exc_info=True)
+            # xPipe 실패 시 자동 fallback (안전장치)
+            return await _process_via_legacy(
+                file_content, original_name, user_id, customer_id,
+                source_path, mime_type, existing_doc_id,
+            )
+
+    return await _process_via_legacy(
+        file_content, original_name, user_id, customer_id,
+        source_path, mime_type, existing_doc_id,
+    )
+
+
+async def _process_via_xpipe(
+    file_content: bytes,
+    original_name: str,
+    user_id: str,
+    customer_id: Optional[str],
+    source_path: Optional[str],
+    mime_type: Optional[str] = None,
+    existing_doc_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """xPipe Pipeline으로 문서 처리
+
+    xPipe의 Pipeline.run()을 사용하여 전체 파이프라인을 실행하고,
+    결과를 AIMS MongoDB 스키마에 매핑한다.
+    """
+    import tempfile
+    from xpipe.pipeline import Pipeline, PipelineDefinition, StageConfig
+    from xpipe.stages.ingest import IngestStage
+    from xpipe.stages.convert import ConvertStage
+    from xpipe.stages.extract import ExtractStage
+    from xpipe.stages.classify import ClassifyStage
+    from xpipe.stages.detect_special import DetectSpecialStage
+    from xpipe.stages.complete import CompleteStage
+
+    logger.info(f"🚀 [xPipe] 문서 처리 시작: {original_name} (user={user_id})")
+
+    # 1. MongoDB에 문서 생성 (기존 로직 재사용)
+    files_collection = MongoService.get_collection("files")
+    if existing_doc_id:
+        doc_id = existing_doc_id
+    else:
+        doc = {
+            "ownerId": user_id,
+            "originalName": original_name,
+            "status": "processing",
+            "overallStatus": "processing",
+            "progressStage": "upload",
+            "createdAt": datetime.utcnow(),
+        }
+        result = await files_collection.insert_one(doc)
+        doc_id = str(result.inserted_id)
+
+    # 2. 파일을 임시 경로에 저장
+    tmp_dir = tempfile.mkdtemp()
+    tmp_path = os.path.join(tmp_dir, original_name or "upload.pdf")
+    with open(tmp_path, "wb") as f:
+        f.write(file_content)
+
+    # 3. 파일을 영구 저장소에 복사
+    saved_name, dest_path = await FileService.save_file(
+        file_content, original_name, user_id, source_path
+    )
+    await files_collection.update_one(
+        {"_id": ObjectId(doc_id)},
+        {"$set": {"upload.saveName": saved_name, "upload.destPath": dest_path}},
+    )
+
+    # 고객 연결
+    if customer_id:
+        await _connect_document_to_customer(customer_id, doc_id, user_id)
+
+    await _notify_progress(doc_id, user_id, 20, "upload", "파일 업로드 완료")
+
+    # 4. MIME 타입 추론
+    import mimetypes as mt
+    detected_mime = mime_type or mt.guess_type(original_name or "")[0] or "application/octet-stream"
+
+    # 5. xPipe Pipeline 조립
+    definition = PipelineDefinition(
+        name="aims-xpipe",
+        stages=[
+            StageConfig(name="extract"),
+            StageConfig(name="classify"),
+            StageConfig(name="detect_special"),
+            StageConfig(name="complete"),
+        ],
+    )
+    pipeline = Pipeline(definition)
+    pipeline.register_stage("extract", ExtractStage)
+    pipeline.register_stage("classify", ClassifyStage)
+    pipeline.register_stage("detect_special", DetectSpecialStage)
+    pipeline.register_stage("complete", CompleteStage)
+
+    # 6. 어댑터 연결
+    from insurance.adapter import InsuranceDomainAdapter
+    adapter = InsuranceDomainAdapter()
+    classification_config = await adapter.get_classification_config()
+
+    # API 키
+    from config import get_settings
+    settings = get_settings()
+
+    context = {
+        "document_id": doc_id,
+        "file_path": dest_path,
+        "filename": original_name,
+        "original_name": original_name,
+        "mime_type": detected_mime,
+        "mode": "real",
+        "models": {"llm": "gpt-4.1-mini", "ocr": "upstage", "embedding": "text-embedding-3-small"},
+        "needs_conversion": _is_convertible_mime(detected_mime),
+        "_domain_adapter": adapter,
+        "_classify_config": {
+            "system_prompt": classification_config.extra.get("system_prompt", ""),
+            "user_prompt": classification_config.prompt_template,
+            "categories": [c.code for c in classification_config.categories],
+            "valid_types": classification_config.valid_types,
+        },
+        "_api_keys": {
+            "openai": os.environ.get("OPENAI_API_KEY", ""),
+            "upstage": os.environ.get("UPSTAGE_API_KEY", ""),
+        },
+    }
+
+    await _notify_progress(doc_id, user_id, 40, "processing", "텍스트 추출 중")
+
+    # 7. 파이프라인 실행
+    result = await pipeline.run(context)
+
+    # 8. 결과를 AIMS MongoDB 스키마에 매핑
+    extracted_text = result.get("extracted_text", result.get("text", ""))
+    doc_type = result.get("document_type")
+    confidence = result.get("classification_confidence", 0.0)
+    detections = result.get("detections", [])
+
+    await _notify_progress(doc_id, user_id, 70, "classifying", "AI 분류 완료")
+
+    # Meta 업데이트
+    meta_update = {
+        "meta.full_text": extracted_text,
+        "meta.length": len(extracted_text) if extracted_text else 0,
+        "meta.mime": detected_mime,
+        "meta.meta_status": "done",
+        "meta.document_type": doc_type or "general",
+        "meta.confidence": confidence or 0.0,
+        "document_type": doc_type or "general",
+        "status": "completed",
+        "overallStatus": "completed",
+        "progressStage": "complete",
+        "progress": 100,
+        "upload.originalName": original_name,
+    }
+    await files_collection.update_one(
+        {"_id": ObjectId(doc_id)},
+        {"$set": meta_update},
+    )
+
+    # 9. AR/CRS 감지 결과 처리 (HookResult)
+    for det in detections:
+        det_type = det.get("doc_type") if isinstance(det, dict) else getattr(det, "doc_type", None)
+        if det_type in ("annual_report", "customer_review"):
+            # resolve_entity + on_stage_complete + HookResult 실행
+            from xpipe.adapter import Detection
+            if isinstance(det, dict):
+                detection_obj = Detection(
+                    doc_type=det.get("doc_type", ""),
+                    confidence=det.get("confidence", 1.0),
+                    metadata=det.get("metadata", {}),
+                )
+            else:
+                detection_obj = det
+
+            related_customer_id = None
+            try:
+                entity_result = await adapter.resolve_entity(detection_obj, user_id)
+                related_customer_id = entity_result.get("customer_id") if entity_result else None
+            except Exception:
+                pass
+
+            display_name = ""
+            try:
+                display_name = await adapter.generate_display_name(
+                    {"originalName": original_name}, detection_obj
+                )
+            except Exception:
+                pass
+
+            stage_name = "ar_detected" if det_type == "annual_report" else "crs_detected"
+            hook_context = {
+                "doc_id": doc_id,
+                "detection": detection_obj,
+                "related_customer_id": related_customer_id,
+                "display_name": display_name,
+                "user_id": user_id,
+            }
+            hook_results = await adapter.on_stage_complete(stage_name, {}, hook_context)
+
+            # PipelineContext 호환 객체 생성 (HookResult 실행용)
+            class _MinimalCtx:
+                pass
+            mini_ctx = _MinimalCtx()
+            mini_ctx.doc_id = doc_id
+            mini_ctx.files_collection = files_collection
+            await _execute_hook_results(mini_ctx, hook_results)
+
+    # 10. 완료 알림
+    await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료")
+    await _notify_document_complete(doc_id, user_id)
+
+    # 임시 파일 정리
+    try:
+        import shutil
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+    except Exception:
+        pass
+
+    logger.info(f"✅ [xPipe] 문서 처리 완료: doc_id={doc_id}, type={doc_type}")
+
+    return {
+        "result": "success",
+        "doc_id": doc_id,
+        "document_type": doc_type,
+        "engine": "xpipe",
+    }
+
+
+def _is_convertible_mime(mime: str) -> bool:
+    """변환이 필요한 MIME인지 판단"""
+    convertible = (
+        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument",
+        "application/msword", "application/x-hwp", "application/rtf",
+        "application/vnd.ms-powerpoint", "application/vnd.hancom",
+    )
+    return any(mime.startswith(prefix) for prefix in convertible)
+
+
+async def _process_via_legacy(
+    file_content: bytes,
+    original_name: str,
+    user_id: str,
+    customer_id: Optional[str],
+    source_path: Optional[str],
+    mime_type: Optional[str] = None,
+    existing_doc_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """기존 document_pipeline 코드로 처리 (legacy 경로)"""
     # 메트릭 기록 시작
     from workers.pipeline_metrics import pipeline_metrics
     metric_record = pipeline_metrics.record_start(
