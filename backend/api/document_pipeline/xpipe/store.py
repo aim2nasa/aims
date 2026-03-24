@@ -5,9 +5,8 @@ DocumentStore ABC — 의도 기반 문서 저장소 인터페이스
 - MongoDB 직접 호출을 캡슐화하되, 과도한 추상화는 피한다.
 - 메서드명은 "의도"를 나타낸다 (예: find_pending_documents, update_document_status).
 - 기본 구현체(MongoDB)를 제공하되, 다른 저장소로 교체 가능한 구조.
-- Phase 2에서 MongoService의 실제 호출을 이 인터페이스 뒤로 이동.
+- 구현체에서 MongoService 등 실제 호출을 이 인터페이스 뒤로 이동.
 
-Phase 1: 인터페이스 정의만. 기본 구현체(MongoDB)는 Phase 2.
 """
 from __future__ import annotations
 
@@ -44,7 +43,7 @@ class DocumentStore(ABC):
         Args:
             data: 초기 문서 데이터
                 필수 필드: ownerId (소유자 ID)
-                선택 필드: customerId, status, progress 등
+                선택 필드: 도메인별 확장 필드 (status, progress 등)
 
         Returns:
             생성된 문서의 ID (문자열)

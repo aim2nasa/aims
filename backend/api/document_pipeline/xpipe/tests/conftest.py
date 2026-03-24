@@ -190,7 +190,6 @@ class MockDomainAdapter(DomainAdapter):
         self,
         detection: Detection,
         owner_id: str,
-        **kwargs: Any,
     ) -> dict[str, Any]:
         return {"matched": False, "reason": "mock"}
 
@@ -198,7 +197,6 @@ class MockDomainAdapter(DomainAdapter):
         self,
         text: str,
         filename: str,
-        **kwargs: Any,
     ) -> dict[str, Any]:
         return {}
 
@@ -206,7 +204,6 @@ class MockDomainAdapter(DomainAdapter):
         self,
         doc: dict[str, Any],
         detection: Optional[Detection] = None,
-        **kwargs: Any,
     ) -> str:
         if detection and detection.doc_type == "special_report":
             name = detection.metadata.get("entity_name", "")

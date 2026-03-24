@@ -7,7 +7,6 @@ JobQueue ABC — 비동기 작업 큐 인터페이스
 - 기본 구현체(Redis Stream)를 제공하되, 다른 큐(RabbitMQ, SQS 등)로 교체 가능.
 - claim_stale()은 선택적 — Redis Stream의 XAUTOCLAIM에 대응.
 
-Phase 1: 인터페이스 정의만. 기본 구현체는 Phase 2.
 """
 from __future__ import annotations
 
@@ -31,8 +30,7 @@ class JobQueue(ABC):
         Args:
             job_data: 작업 데이터
                 예: {"file_id": "abc", "file_path": "/tmp/doc.pdf",
-                     "doc_id": "xyz", "owner_id": "user1",
-                     "queued_at": "2026-03-19T12:00:00"}
+                     "doc_id": "xyz", "queued_at": "2026-03-19T12:00:00"}
 
         Returns:
             작업 ID (큐 시스템에서 할당한 고유 ID)

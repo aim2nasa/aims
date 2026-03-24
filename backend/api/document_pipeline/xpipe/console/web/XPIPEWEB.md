@@ -3,7 +3,7 @@
 **xPipeWeb**은 xPipe 엔진의 동작을 검증하기 위한 **개발자 전용 웹 데모 도구**입니다.
 문서를 업로드하면 파이프라인 각 단계의 입출력을 실시간으로 확인할 수 있습니다.
 
-- 버전: v0.2.1
+- 버전: v0.1.0
 - 접속: `http://100.110.215.65:8200` (tars 서버, Tailscale VPN 필요)
 - 실행: tars에서 `cd ~/aims/backend/api/document_pipeline && source venv/bin/activate && source ~/aims/.env.shared && source .env && python -m xpipe.console.web.server`
 
@@ -64,7 +64,7 @@ DomainAdapter 구현 예시 B
 
 | 설정 | 설명 |
 |------|------|
-| **LLM** | Classify(AI분류) 스테이지에서 사용하는 모델. gpt-4o-mini(가성비), gpt-4o(정확도↑ 비용↑) |
+| **LLM** | Classify(AI분류) 스테이지에서 사용하는 모델. gpt-4.1-mini(가성비), gpt-4.1(정확도↑ 비용↑) |
 | **Embedding** | Embed 스테이지에서 텍스트→벡터 변환 모델. text-embedding-3-small(기본, 저렴+빠름) |
 | **API Key** | OpenAI API 키. 서버 환경변수(`OPENAI_API_KEY`)에서 자동 로드됨 |
 
@@ -138,5 +138,5 @@ xPipe 코어 (Pipeline, Stages, EventBus, CostTracker, AuditLog)
 | 항목 | 상태 | 비고 |
 |------|------|------|
 | DomainAdapter 구현체 | Phase 2 예정 | ABC만 정의됨. 어댑터 선택해도 동작 차이 없음 |
-| Quality Gate UI | 제거됨 (v0.2.1) | 서버 기본값 true 유지, 시뮬레이션에서는 항상 스킵 |
+| Quality Gate UI | 제거됨 | 서버 기본값 true 유지, 시뮬레이션에서는 항상 스킵 |
 | 배치 업로드 큐 | 미구현 | 동시 업로드 시 리소스 경합 가능 ([상세](../../../../../memory/xpipeweb-queue-issue.md)) |
