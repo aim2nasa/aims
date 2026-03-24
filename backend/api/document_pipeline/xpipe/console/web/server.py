@@ -105,7 +105,12 @@ def _load_env_files() -> None:
 WEB_DIR = Path(__file__).parent
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_CONCURRENCY = 2
-VERSION = "0.3.0"
+VERSION = "0.3.1"
+
+# 허용된 어댑터 모듈/클래스 화이트리스트 (보안: 임의 모듈 import 방지)
+ALLOWED_ADAPTERS: dict[str, list[str]] = {
+    "insurance.adapter": ["InsuranceDomainAdapter"],
+}
 
 # 환경변수 매핑 — 실행 진입점에서 주입. 코어 모듈은 특정 서비스를 모른다.
 _env_key_map: dict[str, str] = {}
@@ -178,6 +183,11 @@ class ServerState:
 
         # LLM 모델 캐시
         self._cached_llm_models: list[str] | None = None
+
+        # 어댑터 인스턴스 캐시 (동일 모듈:클래스일 때 재사용)
+        self.cached_adapter: Any = None
+        self.cached_adapter_key: str = ""  # "module:class"
+        self._adapter_cache_lock: asyncio.Lock | None = None  # lifespan에서 초기화
 
     def resolve_api_key(self, provider: str) -> str:
         """API 키 해석: 설정 패널 값 우선, 없으면 환경변수에서 읽은 캐시 값 반환"""
@@ -290,27 +300,51 @@ async def _inject_adapter_config(context: dict) -> None:
 
     각 스테이지는 context에서 _classify_config, _detect_rules 등을 찾아 동작한다.
     이 함수가 어댑터 인스턴스를 생성하고, 스테이지가 필요로 하는 config를 주입한다.
+
+    race condition 방지: state.current_config 대신 context 스냅샷에서 읽는다.
     """
     adapter_name = context.get("adapter_name", "none")
     if adapter_name == "none" or not adapter_name:
         return
 
     try:
-        # 설정에서 어댑터 모듈/클래스 경로를 가져옴 (플러그인 방식)
-        module_path = state.current_config.get("adapter_module", "") or ""
-        class_name = state.current_config.get("adapter_class", "") or ""
+        # 스냅샷에서 어댑터 모듈/클래스 경로를 가져옴 (race condition 방지)
+        module_path = context.get("_adapter_module", "") or ""
+        class_name = context.get("_adapter_class", "") or ""
 
-        if module_path and class_name:
-            # 설정에 명시적으로 지정된 경우
-            mod = importlib.import_module(module_path)
-            adapter_cls = getattr(mod, class_name)
-            adapter = adapter_cls()
-        else:
+        if not (module_path and class_name):
             logger.warning(
                 "[Adapter] adapter_name=%s이지만 adapter_module/adapter_class가 "
                 "설정되지 않아 어댑터를 로드할 수 없습니다", adapter_name
             )
             return
+
+        # 화이트리스트 검증 (이중 방어: update_config에서도 검증)
+        allowed_classes = ALLOWED_ADAPTERS.get(module_path)
+        if allowed_classes is None or class_name not in allowed_classes:
+            logger.warning(
+                "[Adapter] 허용되지 않는 어댑터 모듈/클래스: %s.%s",
+                module_path, class_name,
+            )
+            context["_adapter_status"] = {
+                "connected": False,
+                "name": adapter_name,
+                "error": f"허용되지 않는 어댑터: {module_path}.{class_name}",
+            }
+            return
+
+        # 어댑터 인스턴스 캐싱 (asyncio.Lock으로 이중 생성 방지)
+        cache_key = f"{module_path}:{class_name}"
+        lock = state._adapter_cache_lock or asyncio.Lock()
+        async with lock:
+            if state.cached_adapter_key == cache_key and state.cached_adapter is not None:
+                adapter = state.cached_adapter
+            else:
+                mod = importlib.import_module(module_path)
+                adapter_cls = getattr(mod, class_name)
+                adapter = adapter_cls()
+                state.cached_adapter = adapter
+                state.cached_adapter_key = cache_key
 
         # 1. 분류 config 주입 → ClassifyStage가 사용
         classification_config = await adapter.get_classification_config()
@@ -327,11 +361,22 @@ async def _inject_adapter_config(context: dict) -> None:
         context["_domain_adapter"] = adapter
 
         logger.info("[Adapter] %s 어댑터 연결 완료", adapter_name)
+        context["_adapter_status"] = {"connected": True, "name": adapter_name}
 
     except ImportError:
         logger.warning("[Adapter] %s 어댑터 모듈을 찾을 수 없음", adapter_name)
+        context["_adapter_status"] = {
+            "connected": False,
+            "name": adapter_name,
+            "error": f"모듈을 찾을 수 없음: {adapter_name}",
+        }
     except Exception as e:
         logger.error("[Adapter] %s 어댑터 초기화 실패: %s", adapter_name, e)
+        context["_adapter_status"] = {
+            "connected": False,
+            "name": adapter_name,
+            "error": f"초기화 실패: {e}",
+        }
 
 
 async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
@@ -339,6 +384,9 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
     doc = documents.get(doc_id)
     if not doc:
         return
+
+    # 설정 스냅샷 (race condition 방지: 실행 중 설정 변경 영향 차단)
+    config_snapshot = dict(current_config)
 
     # 스테이지 진행 추적 리스너
     stages_completed: list[str] = []
@@ -355,7 +403,7 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         if event.document_id == doc_id and event.event_type == "stage_complete":
             stage_name = event.stage
             stages_completed.append(stage_name)
-            total_stages = len(current_config.get("enabled_stages", []))
+            total_stages = len(config_snapshot.get("enabled_stages", []))
             progress = int(len(stages_completed) / total_stages * 100)
             doc["progress"] = progress
             doc["current_stage"] = stage_name
@@ -366,13 +414,13 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
                 "duration_ms": event.payload.get("duration_ms", 0),
             }
 
-            # 감사 로그
+            # 감사 로그 (스냅샷 사용)
             audit_log.record(AuditEntry(
                 document_id=doc_id,
                 stage=stage_name,
                 action="stage_completed",
-                actor=f"{current_config['mode']}/{current_config['adapter']}",
-                details={"stages": current_config.get("enabled_stages", [])},
+                actor=f"{config_snapshot['mode']}/{config_snapshot['adapter']}",
+                details={"stages": config_snapshot.get("enabled_stages", [])},
             ))
 
     event_bus.on("stage_start", _track_stage_start)
@@ -386,7 +434,7 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         doc["status"] = "processing"
         doc["started_at"] = time.time()
 
-        enabled = current_config.get("enabled_stages", [s["name"] for s in ALL_STAGES])
+        enabled = config_snapshot.get("enabled_stages", [s["name"] for s in ALL_STAGES])
         pipeline = _build_pipeline(enabled)
         stage_names = enabled
         doc["enabled_stages"] = list(enabled)  # 실행 시점의 스테이지 기록
@@ -399,7 +447,7 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         # API 키 해석 (설정 패널 키 → 환경변수 캐시 fallback)
         api_keys_resolved = {
             prov: state.resolve_api_key(prov)
-            for prov in current_config.get("api_keys", {})
+            for prov in config_snapshot.get("api_keys", {})
         }
 
         # 컨텍스트 구성
@@ -408,12 +456,15 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             "file_path": file_path,
             "filename": filename,
             "original_name": filename,
-            "mode": current_config["mode"],
-            "models": dict(current_config["models"]),
-            "adapter_name": current_config["adapter"],
+            "mode": config_snapshot["mode"],
+            "models": dict(config_snapshot["models"]),
+            "adapter_name": config_snapshot["adapter"],
+            "_adapter_module": config_snapshot.get("adapter_module", ""),
+            "_adapter_class": config_snapshot.get("adapter_class", ""),
             "uploaded_at": doc.get("created_at_iso", ""),
             "needs_conversion": needs_conversion(mime_type),
             "_api_keys": api_keys_resolved,
+            "_config_snapshot": config_snapshot,
         }
 
         # 어댑터 연결: 어댑터가 설정되어 있으면 config를 context에 주입
@@ -444,7 +495,7 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             doc["conversion_failed"] = True
             doc["conversion_error"] = result.get("conversion_error", "")
 
-        is_stub = current_config["mode"] == "stub"
+        is_stub = config_snapshot["mode"] == "stub"
 
         doc["result"] = {
             "document_type": result.get("document_type", "general"),
@@ -454,10 +505,11 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             "stages_executed": result.get("_pipeline", {}).get("stages_executed", []),
             "stages_skipped": result.get("_pipeline", {}).get("stages_skipped", []),
             "display_name": result.get("display_name", filename),
+            "adapter_status": result.get("_adapter_status"),
         }
 
         # 품질 평가
-        if current_config.get("quality_gate", True) and not is_stub:
+        if config_snapshot.get("quality_gate", True) and not is_stub:
             score = quality_gate.evaluate({
                 "classification_confidence": doc["result"]["classification_confidence"],
                 "full_text": doc.get("extracted_text", ""),
@@ -500,7 +552,7 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
             details={
                 "duration": doc["duration"],
                 "document_type": doc["result"]["document_type"],
-                "mode": current_config["mode"],
+                "mode": config_snapshot["mode"],
             },
         ))
 
@@ -658,7 +710,7 @@ def _create_doc_entry(doc_id: str, filename: str, file_size: int, file_path: str
         "started_at": None,
         "completed_at": None,
         "duration": None,
-        "config": dict(current_config),
+        "config": {k: v for k, v in current_config.items() if k != "api_keys"},
     }
 
 
@@ -1065,6 +1117,11 @@ class ConfigUpdate(BaseModel):
     storage_path: Optional[str] = None
 
 
+class AdapterTestRequest(BaseModel):
+    adapter_module: str
+    adapter_class: str
+
+
 def _get_available_llm_models() -> list[str]:
     """OpenAI API에서 사용 가능한 chat 모델 목록 조회 (캐시)"""
     if state._cached_llm_models is not None:
@@ -1199,6 +1256,31 @@ async def update_config(body: ConfigUpdate):
                 )
         current_config["adapter"] = body.adapter
 
+    # 어댑터 모듈/클래스 변경 시: 화이트리스트 검증 + import 사전 검증
+    new_module = body.adapter_module if body.adapter_module is not None else current_config.get("adapter_module", "")
+    new_class = body.adapter_class if body.adapter_class is not None else current_config.get("adapter_class", "")
+
+    if body.adapter_module is not None or body.adapter_class is not None:
+        # 값이 비어있으면 (어댑터 해제) 검증 스킵
+        if new_module and new_class:
+            # 화이트리스트 검증
+            allowed_classes = ALLOWED_ADAPTERS.get(new_module)
+            if allowed_classes is None or new_class not in allowed_classes:
+                raise HTTPException(
+                    400,
+                    f"허용되지 않는 어댑터입니다: {new_module}.{new_class}"
+                )
+            # import 사전 검증 (저장 전 로드 가능 여부 확인)
+            try:
+                mod = importlib.import_module(new_module)
+                getattr(mod, new_class)
+            except (ImportError, AttributeError) as e:
+                raise HTTPException(400, f"어댑터를 로드할 수 없습니다: {e}")
+
+        # 어댑터 캐시 무효화
+        state.cached_adapter = None
+        state.cached_adapter_key = ""
+
     if body.adapter_module is not None:
         current_config["adapter_module"] = body.adapter_module
     if body.adapter_class is not None:
@@ -1283,6 +1365,52 @@ async def update_config(body: ConfigUpdate):
     # 응답에서 api_keys 원본은 제외
     config_safe = {k: v for k, v in current_config.items() if k != "api_keys"}
     return {"config": config_safe, "message": "설정이 업데이트되었습니다 (다음 업로드부터 적용)"}
+
+
+@app.post("/api/adapter/test")
+async def test_adapter(body: AdapterTestRequest):
+    """어댑터 연결 테스트 (설정 저장 전 사전 검증)"""
+    # 1. 화이트리스트 검증
+    allowed_classes = ALLOWED_ADAPTERS.get(body.adapter_module)
+    if allowed_classes is None or body.adapter_class not in allowed_classes:
+        return {
+            "success": False,
+            "error": f"허용되지 않는 어댑터: {body.adapter_module}.{body.adapter_class}",
+        }
+
+    try:
+        # 2. 모듈 로딩
+        mod = importlib.import_module(body.adapter_module)
+        adapter_cls = getattr(mod, body.adapter_class)
+
+        # 3. 인스턴스화
+        adapter = adapter_cls()
+
+        # 4. get_classification_config 호출 (사이드 이펙트 없는 안전한 메서드)
+        config = await adapter.get_classification_config()
+        categories_count = len(config.categories) if config else 0
+
+        # 5. 메서드 구현 여부 확인 (호출하지 않고 hasattr + callable만)
+        capabilities = {
+            "classification": callable(getattr(adapter, "get_classification_config", None)),
+            "detection": callable(getattr(adapter, "detect_special_documents", None)),
+            "entity_resolution": callable(getattr(adapter, "resolve_entity", None)),
+            "display_name": callable(getattr(adapter, "generate_display_name", None)),
+        }
+
+        return {
+            "success": True,
+            "adapter_name": body.adapter_class,
+            "capabilities": capabilities,
+            "classification_categories_count": categories_count,
+            "error": None,
+        }
+    except ImportError as e:
+        return {"success": False, "error": f"모듈을 찾을 수 없습니다: {e}"}
+    except AttributeError as e:
+        return {"success": False, "error": f"클래스를 찾을 수 없습니다: {e}"}
+    except Exception as e:
+        return {"success": False, "error": f"어댑터 초기화 실패: {e}"}
 
 
 # --- 벤치마크 ---
@@ -1471,6 +1599,7 @@ async def on_startup():
     if not storage_path:
         state.temp_dir = tempfile.mkdtemp(prefix="xpipe_demo_")
         logger.info("xPipeWeb v%s 시작 — 임시 디렉토리: %s", VERSION, state.temp_dir)
+    state._adapter_cache_lock = asyncio.Lock()
     state._worker_task = asyncio.create_task(_queue_worker())
     logger.info("큐 워커 시작 (max_concurrency=%d)", MAX_CONCURRENCY)
 
