@@ -229,7 +229,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         if not self._api_key:
             raise RuntimeError(
                 "임베딩 실행 불가: context['_api_keys']['openai']에 API 키가 없습니다. "
-                "설정 패널에서 API 키를 입력하거나 .env.shared에 설정하세요."
+                "환경변수로 제공하거나 context['_api_keys']에 주입하세요."
             )
 
         from openai import AsyncOpenAI

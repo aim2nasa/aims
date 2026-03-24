@@ -42,7 +42,7 @@ class DocumentStore(ABC):
 
         Args:
             data: 초기 문서 데이터
-                필수 필드: ownerId (소유자 ID)
+                필수 필드: owner_id (소유자 식별자)
                 선택 필드: 도메인별 확장 필드 (status, progress 등)
 
         Returns:

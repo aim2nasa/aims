@@ -802,7 +802,7 @@ class TestBackwardCompatibility:
         results = _run(adapter_a.on_stage_complete(
             stage="upload_complete",
             doc={"_id": "test-doc", "ownerId": "owner-1"},
-            context={"doc_id": "test-doc", "user_id": "owner-1", "customer_id": "cust-1"},
+            context={"doc_id": "test-doc", "user_id": "owner-1", "entity_id": "entity-1"},
         ))
 
         assert isinstance(results, list)

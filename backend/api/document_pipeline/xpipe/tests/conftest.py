@@ -226,8 +226,8 @@ class MockDomainAdapter(DomainAdapter):
                 HookResult(
                     action=StageHookAction.TRIGGER_PROCESS,
                     payload={
-                        "process": "connect_document_to_customer",
-                        "customer_id": context.get("customer_id", ""),
+                        "process": "connect_entity",
+                        "entity_id": context.get("entity_id", ""),
                         "doc_id": context.get("doc_id", ""),
                     },
                 ),

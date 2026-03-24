@@ -165,7 +165,7 @@ class ExtractStage(Stage):
         if not api_key:
             raise RuntimeError(
                 f"OCR 실행 불가: UPSTAGE_API_KEY가 설정되지 않았습니다. "
-                f"설정 패널에서 API 키를 입력하거나 .env.shared에 설정하세요. "
+                f"환경변수로 제공하거나 context['_api_keys']에 주입하세요. "
                 f"(파일: {file_name})"
             )
         from xpipe.providers_builtin import UpstageOCRProvider
@@ -192,7 +192,7 @@ class ExtractStage(Stage):
         is_pdf = mime == "application/pdf" or mime.startswith("application/pdf")
         is_convertible = ext in CONVERTIBLE_EXTENSIONS
         models = context.get("models", {})
-        ocr_model_name = models.get("ocr", "paddleocr")
+        ocr_model_name = models.get("ocr", "upstage")
 
         if is_text:
             # 텍스트 파일: 실제로 파일을 읽는다 (모드 무관)

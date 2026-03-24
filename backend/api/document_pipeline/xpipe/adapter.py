@@ -205,7 +205,7 @@ class DomainAdapter(ABC):
         도메인별 명명 규칙에 따라 사용자에게 표시할 문서명을 생성한다.
 
         Args:
-            doc: 현재 문서 데이터 (MongoDB 문서 구조)
+            doc: 현재 문서 데이터 (dict)
             detection: 특수 문서 감지 결과 (있는 경우)
 
         Returns:
