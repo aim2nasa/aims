@@ -106,6 +106,8 @@ def _extract_text_from_document(doc: dict) -> str:
     요약본(summary)보다 원문(full_text)을 우선 사용한다.
     full_text는 500자로 truncate하여 프롬프트 크기를 제한한다.
 
+    호출자에서 len(text.strip()) < 10 체크로 텍스트 절대량을 검증한다.
+
     우선순위:
     1. meta.full_text (텍스트 기반 추출)
     2. ocr.full_text (OCR 추출)

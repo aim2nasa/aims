@@ -216,7 +216,8 @@ class OCRWorker:
             result = None
             document_type = "general"
             doc_confidence = 0.0
-            if ocr_result.get("full_text"):
+            ocr_text = (ocr_result.get("full_text") or "").strip()
+            if ocr_text and len(ocr_text) >= 10:
                 try:
                     result = await self.openai_service.summarize_text(
                         ocr_result["full_text"],
@@ -355,6 +356,7 @@ class OCRWorker:
                         logger.warning(f"Customer name lookup failed: {e}")
 
                 # 1순위: summarize_text에서 받은 title
+                # (summarize_text는 이미 텍스트 >= 10자일 때만 호출되므로 별도 체크 불필요)
                 title = ocr_result.get("title")
 
                 # 2순위: title이 없으면 generate_title_only로 경량 생성

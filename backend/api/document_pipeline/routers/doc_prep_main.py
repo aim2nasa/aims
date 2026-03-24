@@ -1400,7 +1400,7 @@ async def _step_ai_summarize(ctx: PipelineContext) -> None:
     Strangler Fig: 어댑터가 있으면 어댑터의 분류 config를 사용.
     없으면 OpenAIService의 하드코딩 프롬프트로 fallback.
     """
-    if ctx.full_text and len(ctx.full_text.strip()) > 0:
+    if ctx.full_text and len(ctx.full_text.strip()) >= 10:
         # 어댑터에서 분류 config 가져오기 (있으면)
         classification_config = None
         adapter = _get_insurance_adapter()

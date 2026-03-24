@@ -91,7 +91,7 @@ async def main():
             ocr = doc.get("ocr", {})
             # summary 우선, 없으면 full_text 사용
             text = ocr.get("summary") or ocr.get("full_text") or ""
-            if not text or text.startswith("크레딧 부족"):
+            if not text or len(text.strip()) < 10 or text.startswith("크레딧 부족"):
                 skipped += 1
                 continue
 

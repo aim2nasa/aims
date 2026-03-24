@@ -85,7 +85,8 @@ async def process_ocr(
         document_type = "general"
         doc_confidence = 0.0
 
-        if ocr_result.get("full_text"):
+        ocr_full_text = (ocr_result.get("full_text") or "").strip()
+        if len(ocr_full_text) >= 10:
             try:
                 result = await openai_service.summarize_text(
                     ocr_result["full_text"],
