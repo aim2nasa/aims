@@ -112,9 +112,29 @@ overallStatus 세분화도 정상 동작: AR 문서가 `embedding` 상태(크론
 | **Gini** | **PASS** | 이전 지적 4건 모두 수정 확인. 환경변수 캡슐화, 어댑터 플러그인 구조 완성 |
 | **Claude** | **PASS** | 453 테스트 ALL PASS, 프로덕션 실테스트 PASS |
 
+→ 추가 엄격 재평가에서 잔여 이슈 발견 → Phase 2-C로 진행
+
+### Phase 2-C: 보험 도메인 흔적 전면 제거 — 완료 (`a14b15d9`)
+
+- adapter.py 주석 보험 예시 12건 → 범용 예시
+- test_pipeline.py `test_aims_*` 11건 → `test_standard_*`
+- test_regression.py `insurance` 변수명 → `adapter_a`
+- providers.py → ABC만 유지, 구현체 `providers_builtin.py`로 분리
+- conftest.py → MockDomainAdapter 완전 범용화
+- server.py → `~/aims/` 하드코딩 제거, ENV_KEY_MAP 외부 주입
+- **grep 결과: xpipe/ 전체에서 보험/insurance/AIMS 도메인 키워드 0건**
+
+### Phase 3.5-C: 최종 모듈화 평가 — **3자 ALL PASS**
+
+| 평가자 | 판정 | 근거 |
+|--------|------|------|
+| **Alex** | **PASS** | 8개 기준 모두 충족. 도메인 키워드 0건, providers.py ABC 순수 |
+| **Gini** | **PASS** | 8개 검증 포인트 모두 통과. 코드 로직 도메인 오염 없음 |
+| **Claude** | **PASS** | 453 테스트 ALL PASS, grep 0건 직접 확인 |
+
 ### Phase 4: 사용자 매뉴얼 — 진행 가능
 
-3자 ALL PASS 달성. 모듈화 완료.
+**3자 ALL PASS 최종 달성. xPipe 모듈화 완료.**
 
 ---
 
@@ -122,6 +142,7 @@ overallStatus 세분화도 정상 동작: AR 문서가 `embedding` 상태(크론
 
 | 커밋 | 내용 |
 |------|------|
+| `a14b15d9` | Phase 2-C: 보험 도메인 흔적 전면 제거 (3자 ALL PASS) |
 | `57d38469` | 모듈화 분석 + 리팩토링 계획 문서 |
 | `f4332734` | Phase 1: characterization 테스트 60개 |
 | `17ccb8d3` | Phase 2: 리팩토링 11건 완료 (453 테스트 ALL PASS) |
