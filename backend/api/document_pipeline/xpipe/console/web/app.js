@@ -133,6 +133,16 @@
           $('#cfg-openai-key').value = '';
           $('#cfg-upstage-key').value = '';
         }
+        // 어댑터 설정
+        const adapterSelect = $('#cfg-adapter');
+        if (adapterSelect) {
+          const adapterVal = adapterSelect.value;
+          payload.adapter = adapterVal;
+          if (adapterVal !== 'none') {
+            payload.adapter_module = ($('#cfg-adapter-module').value || '').trim();
+            payload.adapter_class = ($('#cfg-adapter-class').value || '').trim();
+          }
+        }
         // 저장 경로 (항상 전송 — 빈 값이면 임시 디렉토리로 복원)
         const storagePathEl = $('#cfg-storage-path');
         if (storagePathEl) {
@@ -175,7 +185,13 @@
       if (data.storage) {
         _updateStorageDisplay(data.storage);
       }
+
+      // 어댑터 상태 반영
+      _loadAdapterState(data.config);
     }).catch(() => {});
+
+    // 어댑터 선택 변경 이벤트
+    _initAdapterEvents();
   }
 
   // --- 스테이지 토글 ---
@@ -292,6 +308,131 @@
     }
   }
 
+  // --- 어댑터 설정 ---
+
+  /** 서버에서 받은 config로 어댑터 UI 상태 반영 */
+  function _loadAdapterState(cfg) {
+    const select = $('#cfg-adapter');
+    if (!select) return;
+
+    const adapter = cfg.adapter || 'none';
+    const adapterModule = cfg.adapter_module || '';
+    const adapterClass = cfg.adapter_class || '';
+
+    // 프리셋 매칭: select의 data-module/data-class와 비교
+    let matched = false;
+    for (const opt of select.options) {
+      if (opt.value === 'none' || opt.value === 'custom') continue;
+      if (opt.dataset.module === adapterModule && opt.dataset.class === adapterClass) {
+        select.value = opt.value;
+        matched = true;
+        break;
+      }
+    }
+
+    if (adapter === 'none' || (!adapterModule && !adapterClass)) {
+      select.value = 'none';
+    } else if (!matched) {
+      select.value = 'custom';
+      $('#cfg-adapter-module').value = adapterModule;
+      $('#cfg-adapter-class').value = adapterClass;
+    }
+
+    _updateAdapterFieldsVisibility();
+  }
+
+  /** 어댑터 select 변경 시 필드 표시/숨김 제어 */
+  function _updateAdapterFieldsVisibility() {
+    const select = $('#cfg-adapter');
+    const fields = $('#adapter-fields');
+    const testBtn = $('#btn-adapter-test');
+    const moduleInput = $('#cfg-adapter-module');
+    const classInput = $('#cfg-adapter-class');
+    const statusEl = $('#adapter-status');
+    if (!select || !fields || !testBtn) return;
+
+    const val = select.value;
+
+    if (val === 'none') {
+      fields.style.display = 'none';
+      testBtn.style.display = 'none';
+      if (statusEl) { statusEl.textContent = ''; statusEl.className = 'adapter-status'; }
+    } else if (val === 'custom') {
+      fields.style.display = '';
+      testBtn.style.display = '';
+      moduleInput.readOnly = false;
+      classInput.readOnly = false;
+      moduleInput.value = moduleInput.value || '';
+      classInput.value = classInput.value || '';
+    } else {
+      // 프리셋: data-module/data-class에서 값 채움, readonly
+      const selectedOpt = select.options[select.selectedIndex];
+      fields.style.display = '';
+      testBtn.style.display = '';
+      moduleInput.value = selectedOpt.dataset.module || '';
+      classInput.value = selectedOpt.dataset.class || '';
+      moduleInput.readOnly = true;
+      classInput.readOnly = true;
+    }
+  }
+
+  /** 어댑터 이벤트 바인딩 */
+  function _initAdapterEvents() {
+    const select = $('#cfg-adapter');
+    const testBtn = $('#btn-adapter-test');
+    if (!select) return;
+
+    select.addEventListener('change', () => {
+      _updateAdapterFieldsVisibility();
+    });
+
+    if (testBtn) {
+      testBtn.addEventListener('click', async () => {
+        const moduleVal = ($('#cfg-adapter-module').value || '').trim();
+        const classVal = ($('#cfg-adapter-class').value || '').trim();
+        const statusEl = $('#adapter-status');
+
+        if (!moduleVal || !classVal) {
+          if (statusEl) {
+            statusEl.textContent = '모듈 경로와 클래스명을 입력하세요';
+            statusEl.className = 'adapter-status err';
+          }
+          return;
+        }
+
+        testBtn.disabled = true;
+        testBtn.textContent = '테스트 중...';
+        if (statusEl) { statusEl.textContent = ''; statusEl.className = 'adapter-status'; }
+
+        try {
+          const result = await api('POST', '/api/adapter/test', {
+            adapter_module: moduleVal,
+            adapter_class: classVal,
+          });
+          if (statusEl) {
+            if (result.success) {
+              const countInfo = result.classification_categories_count
+                ? ' (' + result.classification_categories_count + '개 분류)' : '';
+              statusEl.textContent = '연결됨' + countInfo;
+              statusEl.className = 'adapter-status ok';
+            } else {
+              statusEl.textContent = result.error || '연결 실패';
+              statusEl.className = 'adapter-status err';
+            }
+          }
+        } catch (err) {
+          if (statusEl) {
+            statusEl.textContent = err.message || '연결 실패';
+            statusEl.className = 'adapter-status err';
+          }
+        } finally {
+          testBtn.disabled = false;
+          testBtn.textContent = '테스트';
+        }
+      });
+    }
+  }
+
   function _renderKeyBadge(selector, info) {
     const el = $(selector);
     if (!el || !info) return;
@@ -323,6 +464,14 @@
       ? cfg.models.llm + ' / ' + cfg.models.ocr + ' / ' + cfg.models.embedding
       : '';
 
+    // 어댑터 요약 라벨
+    const ADAPTER_LABELS = { none: '', insurance: '보험 어댑터' };
+    const adapterVal = cfg.adapter || 'none';
+    let adapterLabel = ADAPTER_LABELS[adapterVal] || '';
+    if (adapterVal === 'custom') {
+      adapterLabel = (cfg.adapter_class || '사용자 지정');
+    }
+
     // 스테이지 뱃지 생성
     const enabled = cfg.enabled_stages || [];
     const allStages = ['ingest', 'convert', 'extract', 'classify', 'detect_special', 'embed', 'complete'];
@@ -347,7 +496,10 @@
       storageLabel = '<span class="summary-sep">|</span><span class="summary-text summary-storage-temp">임시 저장</span>';
     }
 
-    dom.configDisplay.innerHTML = stageHtml +
+    const adapterHtml = adapterLabel
+      ? '<span class="summary-text summary-adapter">' + escapeHtml(adapterLabel) + '</span><span class="summary-sep">|</span>'
+      : '';
+    dom.configDisplay.innerHTML = adapterHtml + stageHtml +
       '<span class="summary-sep">|</span>' +
       '<span class="summary-text">' + modeLabel + '</span>' +
       (modelsStr ? '<span class="summary-sep">|</span><span class="summary-text">' + modelsStr + '</span>' : '') +

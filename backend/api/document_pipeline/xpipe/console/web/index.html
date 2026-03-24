@@ -11,7 +11,7 @@
   <header class="header">
     <div class="header-left">
       <h1 class="logo">xPipe<span class="logo-sub">Web</span></h1>
-      <span class="version" id="version">v0.3.0</span>
+      <span class="version" id="version">v0.3.1</span>
     </div>
     <div class="header-right">
       <span class="status-indicator" id="sse-status"></span>
@@ -30,10 +30,24 @@
       <div class="provider-card">
         <span class="provider-label">엔진</span>
         <div class="provider-row">
-          <span class="adapter-disabled has-tooltip" data-tip="도메인 특화 플러그인 (분류 체계, 특수 문서 감지 등). 아직 구현된 어댑터가 없습니다.">
+          <div class="adapter-config">
             <label>어댑터</label>
-            <span class="adapter-none">없음</span>
-          </span>
+            <select id="cfg-adapter">
+              <option value="none">없음</option>
+              <option value="insurance"
+                      data-module="insurance.adapter"
+                      data-class="InsuranceDomainAdapter">
+                보험 도메인
+              </option>
+              <option value="custom">사용자 지정</option>
+            </select>
+            <div id="adapter-fields" style="display:none;">
+              <input type="text" id="cfg-adapter-module" placeholder="모듈 경로" autocomplete="off" spellcheck="false">
+              <input type="text" id="cfg-adapter-class" placeholder="클래스명" autocomplete="off" spellcheck="false">
+            </div>
+            <button type="button" class="btn-xs" id="btn-adapter-test" style="display:none;">테스트</button>
+            <span id="adapter-status" class="adapter-status"></span>
+          </div>
           <label>모드</label>
           <select id="cfg-mode">
             <option value="stub">시뮬레이션</option>
@@ -188,7 +202,7 @@
     <span>
       <button class="btn btn-xs" id="btn-benchmark">벤치마크</button>
     </span>
-    <span class="footer-version" id="ft-version">xPipeWeb v0.3.0 / 시뮬레이션</span>
+    <span class="footer-version" id="ft-version">xPipeWeb v0.3.1 / 시뮬레이션</span>
   </footer>
 
   <script src="/app.js"></script>

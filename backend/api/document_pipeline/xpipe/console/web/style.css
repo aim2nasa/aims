@@ -329,6 +329,85 @@ body {
   background: var(--bg);
 }
 
+/* --- 어댑터 설정 --- */
+.adapter-config {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.adapter-config label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.adapter-config select {
+  width: 120px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--font);
+  background: var(--surface);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.adapter-config select:focus {
+  border-color: var(--accent);
+}
+
+#adapter-fields {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.adapter-config input {
+  width: 160px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--mono);
+  background: var(--surface);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.adapter-config input:focus {
+  border-color: var(--accent);
+}
+
+.adapter-config input[readonly] {
+  background: var(--bg);
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.adapter-status {
+  font-size: 11px;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.adapter-status.ok {
+  color: var(--success);
+}
+
+.adapter-status.err {
+  color: var(--error);
+}
+
+/* 설정 요약 바 — 어댑터 라벨 */
+.summary-adapter {
+  font-weight: 600;
+  color: var(--accent);
+}
+
 /* --- 스테이지 토글 --- */
 .stage-toggle-row {
   display: flex;
