@@ -2064,7 +2064,9 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
 
     documents.forEach(doc => {
       const { overallStatus, currentStage } = analyzeDocumentStatus(doc);
-      stats[overallStatus]++;
+      // 방어: 세분화 상태(embed_pending 등)가 직접 반환될 경우 processing으로 집계
+      const statsKey = (overallStatus in stats) ? overallStatus : 'processing';
+      stats[statsKey]++;
 
       // 현재 단계별 통계
       if (currentStage >= 1) stats.stages.upload++;
