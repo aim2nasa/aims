@@ -258,7 +258,7 @@ class EventBus:
                     },
                 )
                 # 블로킹 호출을 이벤트 루프에서 실행
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 await loop.run_in_executor(
                     None,
                     lambda: urllib.request.urlopen(
