@@ -2118,6 +2118,14 @@ async def _process_via_xpipe(
     confidence = result.get("classification_confidence", 0.0)
     detections = result.get("detections", [])
 
+    # AR/CRS 감지 시 document_type 덮어쓰기 (ClassifyStage 결과보다 우선)
+    for det in detections:
+        det_type = det.get("doc_type") if isinstance(det, dict) else getattr(det, "doc_type", None)
+        if det_type in ("annual_report", "customer_review"):
+            doc_type = det_type
+            logger.info(f"[xPipe] document_type 오버라이드: {result.get('document_type')} → {det_type}")
+            break
+
     await _notify_progress(doc_id, user_id, 70, "classifying", "AI 분류 완료")
 
     # Meta 업데이트

@@ -225,6 +225,27 @@ class TestARDetected:
         assert trigger.payload["doc_id"] == "doc_001"
 
     @pytest.mark.asyncio
+    async def test_ar_document_type_override(self, adapter, sample_doc, ar_detection):
+        """[Regression] AR 감지 시 document_type이 'annual_report'로 설정되어야 함
+
+        이전 버그: ClassifyStage가 'policy'로 분류해도 AR 감지 시 document_type이
+        'annual_report'로 덮어써져야 하는데, HookResult에 document_type 필드가 없어서
+        'policy'로 남아있었음.
+        """
+        context = {
+            "doc_id": "doc_001",
+            "detection": ar_detection,
+            "related_customer_id": "cust_rel_001",
+            "display_name": "홍길동_AR_2026-01-15.pdf",
+        }
+        result = await adapter.on_stage_complete("ar_detected", sample_doc, context)
+
+        status_update = result[0]
+        fields = status_update.payload["fields"]
+        assert fields["document_type"] == "annual_report"
+        assert fields["meta.document_type"] == "annual_report"
+
+    @pytest.mark.asyncio
     async def test_ar_no_customer_skips_sse(self, adapter, sample_doc, ar_detection):
         """고객 ID 없으면 SSE 알림 생략 (상태 업데이트 + 파싱 트리거만)"""
         context = {
@@ -294,6 +315,22 @@ class TestCRSDetected:
         assert sse.action == StageHookAction.NOTIFY
         assert sse.payload["event"] == "cr-status-change"
         assert sse.payload["customer_id"] == "cust_rel_002"
+
+    @pytest.mark.asyncio
+    async def test_crs_document_type_override(self, adapter, sample_doc, crs_detection):
+        """[Regression] CRS 감지 시 document_type이 'customer_review'로 설정되어야 함"""
+        context = {
+            "doc_id": "doc_001",
+            "detection": crs_detection,
+            "related_customer_id": "cust_rel_002",
+            "display_name": "김철수_CRS_메트라이프 변액종합보험_2026-02-10.pdf",
+        }
+        result = await adapter.on_stage_complete("crs_detected", sample_doc, context)
+
+        status_update = result[0]
+        fields = status_update.payload["fields"]
+        assert fields["document_type"] == "customer_review"
+        assert fields["meta.document_type"] == "customer_review"
 
     @pytest.mark.asyncio
     async def test_crs_no_customer_skips_sse(self, adapter, sample_doc, crs_detection):

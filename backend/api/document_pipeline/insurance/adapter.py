@@ -493,6 +493,8 @@ class InsuranceDomainAdapter(DomainAdapter):
         display_name = context.get("display_name", "")
         update_fields: dict[str, Any] = {
             "is_annual_report": True,
+            "document_type": "annual_report",
+            "meta.document_type": "annual_report",
             "ar_parsing_status": "pending",
         }
         if related_customer_id:
@@ -555,6 +557,8 @@ class InsuranceDomainAdapter(DomainAdapter):
         display_name = context.get("display_name", "")
         update_fields: dict[str, Any] = {
             "is_customer_review": True,
+            "document_type": "customer_review",
+            "meta.document_type": "customer_review",
             "cr_parsing_status": "pending",
         }
         if related_customer_id:
