@@ -44,8 +44,10 @@ from xpipe.stages import (
     CompleteStage,
 )
 
-# --- 도메인 어댑터 ---
-from insurance.adapter import InsuranceDomainAdapter
+# --- Mock 어댑터 (insurance 직접 의존 제거) ---
+from xpipe.tests.conftest import MockInsuranceAdapter
+
+# --- poc_legal 어댑터 (PoC 검증용, xpipe 외부) ---
 from poc_legal.adapter import LegalDomainAdapter
 
 
@@ -185,7 +187,7 @@ class TestPipelineE2EFlow:
     def test_scenario3_crs_document(self):
         """시나리오 3: CRS 문서 — 어댑터의 detect_special_documents 검증
         Ingest → Extract(스킵) → Classify → DetectSpecial → Embed → Complete
-        + InsuranceDomainAdapter가 CRS를 올바르게 감지하는지 교차 검증
+        + MockInsuranceAdapter가 CRS를 올바르게 감지하는지 교차 검증
         """
         # 파이프라인 실행
         pipeline = _build_aims_pipeline()
@@ -200,7 +202,7 @@ class TestPipelineE2EFlow:
         assert "extract" in result["_pipeline"]["stages_skipped"]
 
         # 어댑터 CRS 감지 검증 (파이프라인과 독립적으로도 동작하는지)
-        adapter = InsuranceDomainAdapter()
+        adapter = MockInsuranceAdapter()
         detections = _run(adapter.detect_special_documents(
             text=_CRS_TEXT,
             mime_type="application/pdf",
@@ -232,7 +234,7 @@ class TestPipelineE2EFlow:
         assert result["_pipeline"]["errors"] == []
 
         # 어댑터 감지 결과: 빈 리스트
-        adapter = InsuranceDomainAdapter()
+        adapter = MockInsuranceAdapter()
         detections = _run(adapter.detect_special_documents(
             text=_NORMAL_TEXT,
             mime_type="application/pdf",
@@ -251,7 +253,7 @@ class TestPipelineE2EFlow:
         assert result["completed"] is True
 
         # 어댑터 AR 감지 검증
-        adapter = InsuranceDomainAdapter()
+        adapter = MockInsuranceAdapter()
         detections = _run(adapter.detect_special_documents(
             text=_AR_TEXT,
             mime_type="application/pdf",
@@ -323,7 +325,7 @@ class TestModuleIntegration:
         for ev in events:
             assert ev.event_type == "stage_complete"
             assert ev.document_id == "int-001"
-            assert ev.payload["pipeline"] == "aims-insurance"
+            assert ev.payload["pipeline"] == "standard"
 
     def test_pipeline_eventbus_error_event(self):
         """Pipeline + EventBus: 에러 시 error 이벤트 발행"""
@@ -468,7 +470,7 @@ class TestModuleIntegration:
 
     def test_insurance_adapter_quality_gate(self):
         """InsuranceAdapter + QualityGate: 분류 결과 품질 평가"""
-        adapter = InsuranceDomainAdapter()
+        adapter = MockInsuranceAdapter()
         config = _run(adapter.get_classification_config())
 
         gate = QualityGate()
@@ -488,7 +490,7 @@ class TestModuleIntegration:
     @pytest.mark.asyncio
     async def test_insurance_adapter_test_runner(self):
         """InsuranceAdapter + TestRunner: 외부 테스트 셋으로 어댑터 검증"""
-        adapter = InsuranceDomainAdapter()
+        adapter = MockInsuranceAdapter()
         runner = TestRunner(adapter)
 
         test_cases = [
@@ -668,7 +670,7 @@ class TestBackwardCompatibility:
         validate_document()와 on_before_ai_call()이 기본 구현(no-op)을 가지므로,
         기존 어댑터가 오버라이드하지 않아도 정상 동작.
         """
-        insurance = InsuranceDomainAdapter()
+        insurance = MockInsuranceAdapter()
         legal = LegalDomainAdapter()
 
         # validate_document: 기본 구현 (항상 유효)
@@ -694,7 +696,7 @@ class TestBackwardCompatibility:
         AIMS 보험 프리셋의 구조(스테이지 순서, 스킵 조건)가 변경되지 않았는지 확인.
         """
         # Golden 정의: 변경되면 테스트가 실패하여 의도적 변경인지 확인
-        assert AIMS_INSURANCE_PRESET["name"] == "aims-insurance"
+        assert AIMS_INSURANCE_PRESET["name"] == "standard"
 
         expected_stages = ["ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"]
         actual_stages = [s["name"] for s in AIMS_INSURANCE_PRESET["stages"]]
@@ -739,7 +741,7 @@ class TestBackwardCompatibility:
         Insurance/Legal 어댑터가 반환하는 ClassificationConfig의 필수 필드가
         모두 존재하고 올바른 타입인지 확인.
         """
-        for adapter in [InsuranceDomainAdapter(), LegalDomainAdapter()]:
+        for adapter in [MockInsuranceAdapter(), LegalDomainAdapter()]:
             config = _run(adapter.get_classification_config())
 
             # 필수 필드 존재
@@ -765,7 +767,7 @@ class TestBackwardCompatibility:
     def test_detection_dataclass_backward_compatible(self):
         """Detection 데이터 클래스의 필수 필드가 보존되는지"""
         # Insurance 어댑터
-        insurance = InsuranceDomainAdapter()
+        insurance = MockInsuranceAdapter()
         ar_detections = _run(insurance.detect_special_documents(
             text=_AR_TEXT,
             mime_type="application/pdf",
@@ -794,7 +796,7 @@ class TestBackwardCompatibility:
 
     def test_hook_result_structure_unchanged(self):
         """HookResult/StageHookAction 구조가 보존되는지"""
-        insurance = InsuranceDomainAdapter()
+        insurance = MockInsuranceAdapter()
 
         # on_stage_complete 호출
         results = _run(insurance.on_stage_complete(
@@ -818,8 +820,8 @@ class TestBackwardCompatibility:
         assert empty_results == []
 
     def test_insurance_adapter_all_abstract_methods_implemented(self):
-        """InsuranceDomainAdapter가 DomainAdapter의 모든 abstract 메서드를 구현"""
-        adapter = InsuranceDomainAdapter()
+        """MockInsuranceAdapter가 DomainAdapter의 모든 abstract 메서드를 구현"""
+        adapter = MockInsuranceAdapter()
 
         # 모든 abstract 메서드가 호출 가능한지 (에러 없이)
         config = _run(adapter.get_classification_config())

@@ -1,11 +1,16 @@
 """
-xPipe AI Provider ABC + 구현체
+xPipe AI Provider ABC + 내장 구현체
 
-ABC (Phase 5-B):
-- LLMProvider, OCRProvider, EmbeddingProvider 인터페이스 정의
+=== ABC (코어 인터페이스) ===
+- LLMProvider: LLM 완성(completion) 호출
+- OCRProvider: OCR 텍스트 인식
+- EmbeddingProvider: 벡터 임베딩 생성
 
-구현체 (Phase 5-C):
+=== 내장 구현체 (참조 구현) ===
 - UpstageOCRProvider: Upstage Document Digitization API
+
+내장 구현체는 코어 ABC 위에 참조 구현으로 제공된다.
+독립 패키지 분리 시 별도 모듈로 이동 예정.
 """
 from __future__ import annotations
 
@@ -134,7 +139,7 @@ class EmbeddingProvider(ABC):
 
 
 # ---------------------------------------------------------------------------
-# 구현체: UpstageOCRProvider
+# 내장 구현체: UpstageOCRProvider (참조 구현)
 # ---------------------------------------------------------------------------
 
 class UpstageOCRProvider(OCRProvider):
@@ -142,6 +147,8 @@ class UpstageOCRProvider(OCRProvider):
 
     AIMS upstage_service.py의 순수 API 호출 부분을 xPipe Provider 형태로 래핑.
     AIMS 도메인 로직(MongoDB, Redis, 고객명 조회 등)은 포함하지 않음.
+
+    API 키는 생성자에서 외부 주입한다. 환경변수 참조는 소비자(AIMS) 책임.
     """
 
     API_URL = "https://api.upstage.ai/v1/document-digitization"
@@ -151,8 +158,8 @@ class UpstageOCRProvider(OCRProvider):
 
     @property
     def api_key(self) -> str:
-        """설정 키 우선, 없으면 환경변수 fallback"""
-        return self._api_key or os.environ.get("UPSTAGE_API_KEY", "")
+        """생성자에서 주입받은 API 키 반환"""
+        return self._api_key
 
     def set_api_key(self, key: str) -> None:
         """런타임에 API 키 변경"""

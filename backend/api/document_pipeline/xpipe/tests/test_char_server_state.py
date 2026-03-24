@@ -38,7 +38,7 @@ class TestServerGlobalState:
         assert isinstance(config, dict)
 
         # 필수 키 존재 확인
-        expected_keys = {"adapter", "quality_gate", "mode", "enabled_stages", "models", "api_keys", "storage_path"}
+        expected_keys = {"adapter", "quality_gate", "mode", "enabled_stages", "models", "api_keys", "storage_path", "adapter_module", "adapter_class"}
         assert expected_keys.issubset(set(config.keys()))
 
     def test_current_config_enabled_stages(self):

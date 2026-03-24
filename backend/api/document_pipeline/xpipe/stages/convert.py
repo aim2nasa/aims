@@ -53,8 +53,9 @@ class ConvertStage(Stage):
             status_detail = "시뮬레이션 변환 완료"
         else:
             # real 모드: LibreOffice 실제 호출
+            converter_url = context.get("_converter_url", "")
             converted_path, method, output_size, status_detail = self._convert_real(
-                file_path, file_name
+                file_path, file_name, converter_url=converter_url
             )
 
         # 변환 성공 여부 판단
@@ -106,10 +107,13 @@ class ConvertStage(Stage):
         return context
 
     @staticmethod
-    def _convert_real(file_path: str, file_name: str) -> tuple[str, str, int, str]:
-        """PDF 변환 — pdf_converter 서비스(8005) 우선, fallback으로 soffice 직접 호출.
+    def _convert_real(file_path: str, file_name: str, converter_url: str = "") -> tuple[str, str, int, str]:
+        """PDF 변환 — pdf_converter 서비스 우선, fallback으로 soffice 직접 호출.
 
         AIMS와 동일한 pdf_converter 서비스를 사용하여 HWP/XLS/PPTX 등을 PDF로 변환.
+
+        Args:
+            converter_url: 변환 서비스 URL. 빈 문자열이면 기본값 사용.
 
         Returns:
             (converted_path, method, output_size, status_detail)
@@ -121,7 +125,7 @@ class ConvertStage(Stage):
         converted_path = os.path.join(out_dir, base + ".pdf")
 
         # 1차: pdf_converter 서비스 (AIMS 표준 방식)
-        result = ConvertStage._try_pdf_converter_service(file_path, converted_path)
+        result = ConvertStage._try_pdf_converter_service(file_path, converted_path, converter_url=converter_url)
         if result:
             return result
 
@@ -132,17 +136,24 @@ class ConvertStage(Stage):
 
         return file_path, "none", 0, "PDF 변환 수단 없음 (pdf_converter 서비스 미실행, soffice 미설치)"
 
+    _DEFAULT_CONVERTER_URL = "http://localhost:8005/convert"
+
     @staticmethod
     def _try_pdf_converter_service(
-        file_path: str, converted_path: str
+        file_path: str, converted_path: str, converter_url: str = ""
     ) -> tuple[str, str, int, str] | None:
-        """pdf_converter 서비스(localhost:8005)로 변환 시도"""
+        """pdf_converter 서비스로 변환 시도
+
+        Args:
+            converter_url: 변환 서비스 URL. 빈 문자열이면 기본값 사용.
+        """
         import os
+        url = converter_url or ConvertStage._DEFAULT_CONVERTER_URL
         try:
             import httpx
             with open(file_path, "rb") as f:
                 resp = httpx.post(
-                    "http://localhost:8005/convert",
+                    url,
                     files={"file": (os.path.basename(file_path), f)},
                     timeout=120.0,
                 )

@@ -198,10 +198,8 @@ class TestClassifyStageReal:
             "_api_keys": {},
             "extracted_text": "문서",
         }
-        with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
-            # 환경변수에도 없어야 하므로 monkeypatch 없이 context에서만 테스트
-            with patch.dict("os.environ", {}, clear=True):
-                await stage.execute(ctx)
+        with pytest.raises(RuntimeError, match="API 키가 없습니다"):
+            await stage.execute(ctx)
 
     @pytest.mark.asyncio
     async def test_real_mode_usage_tracking(self):

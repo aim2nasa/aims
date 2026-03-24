@@ -7,12 +7,7 @@ JobQueue ABC — 비동기 작업 큐 인터페이스
 - 기본 구현체(Redis Stream)를 제공하되, 다른 큐(RabbitMQ, SQS 등)로 교체 가능.
 - claim_stale()은 선택적 — Redis Stream의 XAUTOCLAIM에 대응.
 
-현재 AIMS에서의 Redis Stream 매핑:
-- 스트림: ocr_stream
-- 컨슈머 그룹: ocr_consumer_group
-- 메시지 필드: file_id, file_path, doc_id, owner_id, queued_at, original_name
-
-Phase 1: 인터페이스 정의만. 기본 구현체(Redis Stream)는 Phase 2.
+Phase 1: 인터페이스 정의만. 기본 구현체는 Phase 2.
 """
 from __future__ import annotations
 

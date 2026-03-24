@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import inspect
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -92,16 +93,21 @@ def _cmd_status(_args: argparse.Namespace) -> int:
             for m in sorted(optional_methods):
                 print(f"      - {m}")
 
-    # 등록된 어댑터 탐색 (동적 import — xpipe 독립성 유지)
+    # 등록된 어댑터 탐색 (플러그인 방식 — xpipe 독립성 유지)
     print("\n=== 등록된 어댑터 ===")
-    try:
-        ins_module = importlib.import_module("insurance.adapter")
-        adapter_cls = getattr(ins_module, "InsuranceDomainAdapter")
-        adapter = adapter_cls()
-        print(f"  - InsuranceDomainAdapter (insurance.adapter)")
-        print(f"    DomainAdapter 구현: {'OK' if isinstance(adapter, DomainAdapter) else 'FAIL'}")
-    except (ImportError, AttributeError):
-        print("  (어댑터를 찾을 수 없습니다. insurance 패키지가 경로에 있는지 확인하세요)")
+    adapter_module = os.environ.get("XPIPE_ADAPTER_MODULE", "")
+    adapter_class = os.environ.get("XPIPE_ADAPTER_CLASS", "")
+    if adapter_module and adapter_class:
+        try:
+            mod = importlib.import_module(adapter_module)
+            adapter_cls = getattr(mod, adapter_class)
+            adapter = adapter_cls()
+            print(f"  - {adapter_class} ({adapter_module})")
+            print(f"    DomainAdapter 구현: {'OK' if isinstance(adapter, DomainAdapter) else 'FAIL'}")
+        except (ImportError, AttributeError):
+            print(f"  어댑터 로드 실패: {adapter_module}.{adapter_class}")
+    else:
+        print("  (XPIPE_ADAPTER_MODULE / XPIPE_ADAPTER_CLASS 환경변수가 설정되지 않았습니다)")
 
     return 0
 

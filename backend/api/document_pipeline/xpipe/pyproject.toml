@@ -11,6 +11,11 @@ requires-python = ">=3.10"
 # xpipe는 표준 라이브러리만 사용 — 외부 의존성 없음
 dependencies = []
 
+[project.optional-dependencies]
+stages = ["openai", "httpx", "pdfplumber"]
+web = ["fastapi", "uvicorn", "pydantic"]
+all = ["openai", "httpx", "pdfplumber", "fastapi", "uvicorn", "pydantic"]
+
 [project.scripts]
 xpipe = "xpipe.cli:main"
 

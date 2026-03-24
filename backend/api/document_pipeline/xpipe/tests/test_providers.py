@@ -555,26 +555,20 @@ class TestUpstageOCRProvider:
         p = UpstageOCRProvider(api_key="test-key-123")
         assert p.api_key == "test-key-123"
 
-    def test_api_key_env_fallback(self, monkeypatch):
-        """생성자 키가 없으면 환경변수 fallback"""
+    def test_no_env_fallback(self, monkeypatch):
+        """생성자 키가 없으면 환경변수 참조 없이 빈 문자열"""
         from xpipe.providers import UpstageOCRProvider
         monkeypatch.setenv("UPSTAGE_API_KEY", "env-key-456")
         p = UpstageOCRProvider()
-        assert p.api_key == "env-key-456"
+        # 환경변수 fallback이 없으므로 빈 문자열
+        assert p.api_key == ""
 
     def test_api_key_empty_raises(self):
         """API 키 없으면 RuntimeError"""
         from xpipe.providers import UpstageOCRProvider
-        import os
-        # 환경변수도 없는 상태
-        old = os.environ.pop("UPSTAGE_API_KEY", None)
-        try:
-            p = UpstageOCRProvider(api_key="")
-            with pytest.raises(RuntimeError, match="API 키가 설정되지 않았습니다"):
-                asyncio.get_event_loop().run_until_complete(p.process("/dummy.png"))
-        finally:
-            if old is not None:
-                os.environ["UPSTAGE_API_KEY"] = old
+        p = UpstageOCRProvider(api_key="")
+        with pytest.raises(RuntimeError, match="API 키가 설정되지 않았습니다"):
+            asyncio.get_event_loop().run_until_complete(p.process("/dummy.png"))
 
     def test_set_api_key(self):
         """런타임 키 변경"""

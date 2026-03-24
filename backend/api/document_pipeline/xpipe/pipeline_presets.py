@@ -6,9 +6,9 @@ Pipeline.from_dict()로 바로 사용 가능.
 
 사용 예:
     from xpipe.pipeline import Pipeline
-    from xpipe.pipeline_presets import AIMS_INSURANCE_PRESET
+    from xpipe.pipeline_presets import STANDARD_PRESET
 
-    pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
+    pipeline = Pipeline.from_dict(STANDARD_PRESET)
     pipeline.register_stage("ingest", IngestStage)
     ...
 """
@@ -18,11 +18,11 @@ from typing import Any
 
 
 # ---------------------------------------------------------------------------
-# AIMS 보험 도메인 프리셋
+# 표준 파이프라인 프리셋 (7단계 전체)
 # ---------------------------------------------------------------------------
 
-AIMS_INSURANCE_PRESET: dict[str, Any] = {
-    "name": "aims-insurance",
+STANDARD_PRESET: dict[str, Any] = {
+    "name": "standard",
     "stages": [
         {"name": "ingest", "config": {}},
         {"name": "convert", "config": {}, "skip_if": "!needs_conversion"},
@@ -33,6 +33,9 @@ AIMS_INSURANCE_PRESET: dict[str, Any] = {
         {"name": "complete", "config": {}},
     ],
 }
+
+# 하위 호환 alias
+AIMS_INSURANCE_PRESET = STANDARD_PRESET
 
 
 # ---------------------------------------------------------------------------
@@ -54,8 +57,10 @@ MINIMAL_PRESET: dict[str, Any] = {
 # ---------------------------------------------------------------------------
 
 PRESETS: dict[str, dict[str, Any]] = {
-    "aims-insurance": AIMS_INSURANCE_PRESET,
+    "standard": STANDARD_PRESET,
     "minimal": MINIMAL_PRESET,
+    # 하위 호환 alias
+    "aims-insurance": STANDARD_PRESET,
 }
 
 
@@ -80,16 +85,21 @@ def get_preset(name: str) -> dict[str, Any]:
 
 
 def list_presets() -> list[dict[str, Any]]:
-    """등록된 프리셋 목록 반환
+    """등록된 프리셋 목록 반환 (alias 중복 제외)
 
     Returns:
         [{"name": "...", "stage_count": N, "stages": ["ingest", ...]}, ...]
     """
+    seen_names: set[str] = set()
     result = []
     for name, preset in PRESETS.items():
+        preset_name = preset["name"]
+        if preset_name in seen_names:
+            continue
+        seen_names.add(preset_name)
         stage_names = [s["name"] for s in preset.get("stages", [])]
         result.append({
-            "name": name,
+            "name": preset_name,
             "stage_count": len(stage_names),
             "stages": stage_names,
         })

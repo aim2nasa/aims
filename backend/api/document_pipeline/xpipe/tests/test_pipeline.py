@@ -712,8 +712,8 @@ class TestPresets:
     """파이프라인 프리셋 테스트"""
 
     def test_aims_insurance_preset_structure(self):
-        """AIMS 보험 프리셋 구조 검증"""
-        assert AIMS_INSURANCE_PRESET["name"] == "aims-insurance"
+        """표준 프리셋 구조 검증 (하위 호환 alias 포함)"""
+        assert AIMS_INSURANCE_PRESET["name"] == "standard"
         stage_names = [s["name"] for s in AIMS_INSURANCE_PRESET["stages"]]
         assert stage_names == [
             "ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"
@@ -726,9 +726,12 @@ class TestPresets:
         assert stage_names == ["ingest", "extract", "complete"]
 
     def test_get_preset(self):
-        """get_preset()으로 프리셋 조회"""
-        preset = get_preset("aims-insurance")
-        assert preset["name"] == "aims-insurance"
+        """get_preset()으로 프리셋 조회 (standard + 하위 호환 alias)"""
+        preset = get_preset("standard")
+        assert preset["name"] == "standard"
+        # 하위 호환: aims-insurance alias도 동작
+        preset_alias = get_preset("aims-insurance")
+        assert preset_alias["name"] == "standard"
 
     def test_get_preset_not_found(self):
         """없는 프리셋 조회 시 KeyError"""
@@ -740,7 +743,7 @@ class TestPresets:
         presets = list_presets()
         assert len(presets) >= 2
         names = [p["name"] for p in presets]
-        assert "aims-insurance" in names
+        assert "standard" in names
         assert "minimal" in names
 
     def test_preset_to_pipeline(self):
@@ -790,7 +793,7 @@ class TestGoldenFile:
         result = _run(pipeline.run(context))
 
         # convert는 needs_conversion=False이므로 스킵 (skip_if: !needs_conversion)
-        assert result["_pipeline"]["name"] == "aims-insurance"
+        assert result["_pipeline"]["name"] == "standard"
         assert result["_pipeline"]["stages_executed"] == [
             "ingest", "extract", "classify", "detect_special", "embed", "complete"
         ]
@@ -820,7 +823,7 @@ class TestGoldenFile:
         result = _run(pipeline.run(context))
 
         # convert 실행됨
-        assert result["_pipeline"]["name"] == "aims-insurance"
+        assert result["_pipeline"]["name"] == "standard"
         assert "convert" in result["_pipeline"]["stages_executed"]
         assert result["_pipeline"]["stages_executed"] == [
             "ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"

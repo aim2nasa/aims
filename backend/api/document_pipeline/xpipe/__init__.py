@@ -36,6 +36,15 @@ from xpipe.scheduler import InMemoryQueue, Job, JobStatus
 from xpipe.stage import Stage
 from xpipe.pipeline import Pipeline, PipelineDefinition, StageConfig
 from xpipe.pipeline_presets import PRESETS, get_preset, list_presets
+from xpipe.stages import (
+    IngestStage,
+    ConvertStage,
+    ExtractStage,
+    ClassifyStage,
+    DetectSpecialStage,
+    EmbedStage,
+    CompleteStage,
+)
 
 __all__ = [
     # Adapter
@@ -81,4 +90,12 @@ __all__ = [
     "PRESETS",
     "get_preset",
     "list_presets",
+    # Built-in Stages
+    "IngestStage",
+    "ConvertStage",
+    "ExtractStage",
+    "ClassifyStage",
+    "DetectSpecialStage",
+    "EmbedStage",
+    "CompleteStage",
 ]

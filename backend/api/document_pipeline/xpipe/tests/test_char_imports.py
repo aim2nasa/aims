@@ -71,6 +71,9 @@ class TestXpipeTopLevelImport:
             "EventBus", "AuditLog", "QualityGate", "CostTracker",
             "LLMProvider", "OCRProvider", "EmbeddingProvider",
             "ProviderRegistry", "InMemoryQueue", "Job", "JobStatus",
+            # 내장 스테이지 (#9)
+            "IngestStage", "ConvertStage", "ExtractStage", "ClassifyStage",
+            "DetectSpecialStage", "EmbedStage", "CompleteStage",
         ]
         all_set = set(xpipe.__all__)
         for sym in core_symbols:

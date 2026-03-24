@@ -20,10 +20,6 @@ class DocumentStore(ABC):
 
     xPipe 코어는 이 인터페이스를 통해서만 문서 데이터에 접근한다.
     구현체는 MongoDB, PostgreSQL 등 어떤 저장소든 가능하다.
-
-    현재 AIMS에서의 MongoDB 컬렉션 매핑:
-    - 문서: files 컬렉션
-    - 에러: errors 컬렉션
     """
 
     # --- 기본 CRUD ---

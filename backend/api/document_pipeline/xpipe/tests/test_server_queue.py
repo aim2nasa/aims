@@ -24,7 +24,7 @@ def _make_file(name: str, content: str = "test content") -> tuple[str, io.BytesI
 async def _wait_all_done(timeout: float = 10.0) -> None:
     """모든 큐 작업 완료 대기"""
     for _ in range(int(timeout / 0.1)):
-        if srv.pipeline_queue.qsize() == 0 and srv._running_count == 0:
+        if srv.state.pipeline_queue.qsize() == 0 and srv.state._running_count == 0:
             return
         await asyncio.sleep(0.1)
 
@@ -33,8 +33,8 @@ async def _wait_all_done(timeout: float = 10.0) -> None:
 async def test_server_queue_integration():
     """서버 큐잉 통합 테스트 — 단일 세션에서 모든 시나리오 검증"""
     # --- 초기화 ---
-    srv.pipeline_queue = InMemoryQueue(maxsize=100)
-    srv._running_count = 0
+    srv.state.pipeline_queue = InMemoryQueue(maxsize=100)
+    srv.state._running_count = 0
     await srv.on_startup()
 
     transport = ASGITransport(app=srv.app)

@@ -105,13 +105,53 @@ async def _real_classify(
     classify_config: dict[str, Any],
     context: dict[str, Any],
 ) -> tuple[str, float, str]:
-    """OpenAI API로 실제 문서 분류 — 어댑터가 제공한 설정 사용"""
-    import os
+    """AI 문서 분류 — ProviderRegistry 경유 우선, 없으면 OpenAI 직접 호출 fallback"""
 
-    api_key = context.get("_api_keys", {}).get("openai", "") or os.environ.get("OPENAI_API_KEY", "")
+    system_prompt = classify_config.get("system_prompt", "")
+    categories = classify_config.get("categories", [])
+
+    text_for_classify = text[:3000] if text else f"(텍스트 없음, 파일명: {file_name})"
+
+    user_prompt = f"문서 텍스트:\n{text_for_classify}\n\n파일명: {file_name}"
+    if categories:
+        user_prompt += f"\n\n분류 카테고리: {', '.join(categories)}"
+    user_prompt += '\n\nJSON 응답 형식:\n{"type": "분류결과", "confidence": 0.0~1.0}'
+
+    # 1순위: ProviderRegistry에서 LLM Provider 조회
+    registry = context.get("_provider_registry")
+    if registry:
+        try:
+            result = await registry.call_with_fallback(
+                "llm", "complete",
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                model=llm_model,
+                temperature=0,
+                max_tokens=100,
+            )
+            result_text = result.get("content", "").strip()
+            logger.info("AI 분류 결과 (raw, provider): %s", result_text)
+
+            # 토큰 사용량 기록
+            usage = result.get("usage", {})
+            if usage:
+                context.setdefault("_usage", {})["classify"] = {
+                    "prompt_tokens": usage.get("input_tokens", 0),
+                    "completion_tokens": usage.get("output_tokens", 0),
+                    "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
+                    "model": result.get("model", llm_model),
+                }
+
+            return _parse_classify_response(result_text, result.get("model", llm_model))
+        except KeyError:
+            # "llm" role에 등록된 Provider가 없음 → fallback으로 진행
+            logger.debug("ProviderRegistry에 'llm' role 미등록 — OpenAI 직접 호출 fallback")
+
+    # 2순위: OpenAI 직접 호출 (fallback — ProviderRegistry 미등록 시)
+    api_key = context.get("_api_keys", {}).get("openai", "")
     if not api_key:
         raise RuntimeError(
-            "AI 분류 실행 불가: OPENAI_API_KEY가 설정되지 않았습니다."
+            "AI 분류 실행 불가: context['_api_keys']['openai']에 API 키가 없습니다."
         )
 
     try:
@@ -121,19 +161,9 @@ async def _real_classify(
 
     client = AsyncOpenAI(api_key=api_key)
 
-    system_prompt = classify_config.get("system_prompt", "")
-    categories = classify_config.get("categories", [])
-
-    text_for_classify = text[:3000] if text else f"(텍스트 없음, 파일명: {file_name})"
-
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
-
-    user_prompt = f"문서 텍스트:\n{text_for_classify}\n\n파일명: {file_name}"
-    if categories:
-        user_prompt += f"\n\n분류 카테고리: {', '.join(categories)}"
-    user_prompt += '\n\nJSON 응답 형식:\n{"type": "분류결과", "confidence": 0.0~1.0}'
     messages.append({"role": "user", "content": user_prompt})
 
     response = await client.chat.completions.create(
@@ -156,12 +186,18 @@ async def _real_classify(
             "model": llm_model,
         }
 
+    return _parse_classify_response(result_text, llm_model)
+
+
+def _parse_classify_response(result_text: str, model: str) -> tuple[str, float, str]:
+    """AI 분류 응답 JSON 파싱"""
     try:
-        if "```" in result_text:
-            result_text = result_text.split("```")[1]
-            if result_text.startswith("json"):
-                result_text = result_text[4:]
-        parsed = json.loads(result_text.strip())
+        text = result_text
+        if "```" in text:
+            text = text.split("```")[1]
+            if text.startswith("json"):
+                text = text[4:]
+        parsed = json.loads(text.strip())
         doc_type = parsed.get("type", None)
         confidence = float(parsed.get("confidence", 0.0))
     except (json.JSONDecodeError, ValueError, IndexError):
@@ -169,4 +205,4 @@ async def _real_classify(
         doc_type = None
         confidence = 0.0
 
-    return doc_type, confidence, llm_model
+    return doc_type, confidence, model

@@ -14,6 +14,7 @@ FastAPI 기반. 포트 8200 (XPIPE_DEMO_PORT 환경 변수로 변경 가능).
 from __future__ import annotations
 
 import asyncio
+import importlib
 import json
 import logging
 import os
@@ -82,86 +83,113 @@ def _load_env_files() -> None:
     else:
         print("[xPipeWeb] WARNING: .env 파일을 찾을 수 없습니다")
 
-_load_env_files()
-
 # ---------------------------------------------------------------------------
 # 상수
 # ---------------------------------------------------------------------------
 WEB_DIR = Path(__file__).parent
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+MAX_CONCURRENCY = 2
 VERSION = "0.2.5"
 
+
 # ---------------------------------------------------------------------------
-# 인메모리 상태
+# ServerState — 모든 인메모리 상태를 캡슐화
 # ---------------------------------------------------------------------------
-documents: dict[str, dict[str, Any]] = {}  # doc_id -> 문서 상태
-sse_events: list[dict[str, Any]] = []  # SSE 이벤트 버퍼
-sse_event_id: int = 0
-_queue_counter: int = 0  # FIFO 큐 번호 (업로드 순서)
+class ServerState:
+    """xPipeWeb 서버의 모든 인메모리 상태를 캡슐화한다.
 
-# 글로벌 인프라
-event_bus = EventBus()
-audit_log = AuditLog()
-cost_tracker = CostTracker()
-quality_gate = QualityGate()
+    모듈 레벨 글로벌 변수를 제거하고, 단일 state 인스턴스로 관리.
+    테스트에서 state를 교체/리셋하여 격리된 테스트가 가능하다.
+    """
 
-# 현재 설정 — API 키가 있으면 실제 실행, 없으면 시뮬레이션
-_default_mode = "real" if os.environ.get("OPENAI_API_KEY") else "stub"
-current_config: dict[str, Any] = {
-    "adapter": "none",
-    "quality_gate": True,
-    "mode": _default_mode,
-    "enabled_stages": ["ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"],
-    "models": {
-        "llm": "gpt-4.1-mini",
-        "ocr": "upstage",
-        "embedding": "text-embedding-3-small",
-    },
-    "api_keys": {
-        "openai": "",   # 빈 문자열이면 환경변수 fallback
-        "upstage": "",  # Upstage OCR API 키
-    },
-    "storage_path": "",  # 빈 문자열 = 임시 디렉토리 사용 (서버 종료 시 삭제)
-}
+    def __init__(self) -> None:
+        # .env 파일 로드 (API 키 등)
+        _load_env_files()
 
-# 임시 파일 디렉토리
-temp_dir: Optional[str] = None
+        # 인메모리 문서 상태
+        self.documents: dict[str, dict[str, Any]] = {}
+        self.sse_events: list[dict[str, Any]] = []
+        self.sse_event_id: int = 0
+        self._queue_counter: int = 0
 
-# SSE 클라이언트 큐
-sse_queues: list[asyncio.Queue] = []
+        # 인프라 모듈
+        self.event_bus = EventBus()
+        self.audit_log = AuditLog()
+        self.cost_tracker = CostTracker()
+        self.quality_gate = QualityGate()
 
-# --- FIFO 작업 큐 + 동시성 제어 ---
-pipeline_queue = InMemoryQueue(maxsize=100)
-MAX_CONCURRENCY = 2
-_running_count = 0
-_worker_task: Optional[asyncio.Task] = None
-_running_tasks: set[asyncio.Task] = set()
+        # 현재 설정
+        _default_mode = "real" if os.environ.get("OPENAI_API_KEY") else "stub"
+        self.current_config: dict[str, Any] = {
+            "adapter": "none",
+            "quality_gate": True,
+            "mode": _default_mode,
+            "enabled_stages": ["ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"],
+            "models": {
+                "llm": "gpt-4.1-mini",
+                "ocr": "upstage",
+                "embedding": "text-embedding-3-small",
+            },
+            "api_keys": {
+                "openai": "",
+                "upstage": "",
+            },
+            "storage_path": "",
+            "adapter_module": "",
+            "adapter_class": "",
+        }
+
+        # 임시 파일 디렉토리
+        self.temp_dir: Optional[str] = None
+
+        # SSE 클라이언트 큐
+        self.sse_queues: list[asyncio.Queue] = []
+
+        # FIFO 작업 큐 + 동시성 제어
+        self.pipeline_queue = InMemoryQueue(maxsize=100)
+        self._running_count: int = 0
+        self._worker_task: Optional[asyncio.Task] = None
+        self._running_tasks: set[asyncio.Task] = set()
+
+        # LLM 모델 캐시
+        self._cached_llm_models: list[str] | None = None
+
+
+# 모듈 레벨 싱글턴 인스턴스
+state = ServerState()
+
+# 하위 호환 alias (기존 코드에서 모듈 레벨 변수로 접근하는 경우 대비)
+documents = state.documents
+sse_events = state.sse_events
+event_bus = state.event_bus
+audit_log = state.audit_log
+cost_tracker = state.cost_tracker
+quality_gate = state.quality_gate
+current_config = state.current_config
+pipeline_queue = state.pipeline_queue
 
 
 async def _queue_worker() -> None:
     """큐에서 작업을 FIFO로 꺼내 파이프라인 실행. 동시성 제어."""
-    global _running_count
-
     while True:
-        if _running_count < MAX_CONCURRENCY:
-            job = await pipeline_queue.get(timeout=0.5)
+        if state._running_count < MAX_CONCURRENCY:
+            job = await state.pipeline_queue.get(timeout=0.5)
             if job is None:
                 continue
-            _running_count += 1
+            state._running_count += 1
             task = asyncio.create_task(_execute_queued_job(job))
-            _running_tasks.add(task)
-            task.add_done_callback(_running_tasks.discard)
+            state._running_tasks.add(task)
+            task.add_done_callback(state._running_tasks.discard)
         else:
             await asyncio.sleep(0.05)
 
 
 async def _execute_queued_job(job: Job) -> None:
     """큐에서 꺼낸 작업 실행 후 카운터 해제."""
-    global _running_count
     try:
         await _run_pipeline(job.job_id, job.file_path, job.filename)
     finally:
-        _running_count -= 1
+        state._running_count -= 1
 
 
 # ---------------------------------------------------------------------------
@@ -169,18 +197,17 @@ async def _execute_queued_job(job: Job) -> None:
 # ---------------------------------------------------------------------------
 def _on_pipeline_event(event: PipelineEvent) -> None:
     """EventBus 이벤트를 SSE 버퍼 + 클라이언트 큐에 전달"""
-    global sse_event_id
-    sse_event_id += 1
+    state.sse_event_id += 1
     sse_data = {
-        "id": sse_event_id,
+        "id": state.sse_event_id,
         **event.to_dict(),
     }
-    sse_events.append(sse_data)
+    state.sse_events.append(sse_data)
     # 버퍼 최대 1000개 유지
-    if len(sse_events) > 1000:
-        sse_events.pop(0)
+    if len(state.sse_events) > 1000:
+        state.sse_events.pop(0)
     # 연결된 SSE 클라이언트에 push
-    for q in sse_queues:
+    for q in state.sse_queues:
         try:
             q.put_nowait(sse_data)
         except asyncio.QueueFull:
@@ -188,7 +215,7 @@ def _on_pipeline_event(event: PipelineEvent) -> None:
 
 
 # 와일드카드 리스너 등록 — 모든 이벤트 수신
-event_bus.on("*", _on_pipeline_event)
+state.event_bus.on("*", _on_pipeline_event)
 
 
 # ---------------------------------------------------------------------------
@@ -222,7 +249,7 @@ def _build_pipeline(enabled_stages: list[str]) -> Pipeline:
     stages = [s for s in ALL_STAGES if s["name"] in enabled_stages]
     definition = {"name": "custom", "stages": stages}
     pipeline = Pipeline.from_dict(definition)
-    pipeline.event_bus = event_bus
+    pipeline.event_bus = state.event_bus
     for name, cls in STAGE_CLASSES.items():
         pipeline.register_stage(name, cls)
     return pipeline
@@ -239,9 +266,20 @@ async def _inject_adapter_config(context: dict) -> None:
         return
 
     try:
-        if adapter_name == "insurance":
-            from insurance.adapter import InsuranceDomainAdapter
-            adapter = InsuranceDomainAdapter()
+        # 설정에서 어댑터 모듈/클래스 경로를 가져옴 (플러그인 방식)
+        module_path = state.current_config.get("adapter_module", "") or ""
+        class_name = state.current_config.get("adapter_class", "") or ""
+
+        if module_path and class_name:
+            # 설정에 명시적으로 지정된 경우
+            mod = importlib.import_module(module_path)
+            adapter_cls = getattr(mod, class_name)
+            adapter = adapter_cls()
+        elif adapter_name == "insurance":
+            # 하위 호환: adapter_module/adapter_class 미설정 시 기본 경로 시도
+            mod = importlib.import_module("insurance.adapter")
+            adapter_cls = getattr(mod, "InsuranceDomainAdapter")
+            adapter = adapter_cls()
         else:
             logger.warning("[Adapter] 알 수 없는 어댑터: %s", adapter_name)
             return
@@ -561,9 +599,8 @@ def _can_preview(doc: dict[str, Any]) -> bool:
 
 def _create_doc_entry(doc_id: str, filename: str, file_size: int, file_path: str) -> dict[str, Any]:
     """문서 상태 엔트리 생성"""
-    global _queue_counter
-    _queue_counter += 1
-    queue_number = _queue_counter
+    state._queue_counter += 1
+    queue_number = state._queue_counter
 
     stage_names = current_config.get("enabled_stages", [s["name"] for s in ALL_STAGES])
     now = time.time()
@@ -689,7 +726,7 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(413, f"파일 크기 초과: 최대 {MAX_FILE_SIZE // 1024 // 1024}MB")
 
     doc_id = str(uuid.uuid4())[:8]
-    file_path = os.path.join(temp_dir, f"{doc_id}_{file.filename}")
+    file_path = os.path.join(state.temp_dir, f"{doc_id}_{file.filename}")
     with open(file_path, "wb") as f:
         f.write(content)
 
@@ -704,7 +741,7 @@ async def upload_file(file: UploadFile = File(...)):
     ))
 
     job = Job(job_id=doc_id, file_path=file_path, filename=file.filename)
-    await pipeline_queue.put(job)
+    await state.pipeline_queue.put(job)
     return {"doc_id": doc_id, "filename": file.filename, "status": "queued"}
 
 
@@ -725,7 +762,7 @@ async def upload_batch(files: list[UploadFile] = File(...)):
             continue
 
         doc_id = str(uuid.uuid4())[:8]
-        file_path = os.path.join(temp_dir, f"{doc_id}_{file.filename}")
+        file_path = os.path.join(state.temp_dir, f"{doc_id}_{file.filename}")
         with open(file_path, "wb") as f:
             f.write(content)
 
@@ -740,7 +777,7 @@ async def upload_batch(files: list[UploadFile] = File(...)):
         ))
 
         job = Job(job_id=doc_id, file_path=file_path, filename=file.filename)
-        await pipeline_queue.put(job)
+        await state.pipeline_queue.put(job)
         results.append({"doc_id": doc_id, "filename": file.filename, "status": "queued"})
 
     return {"files": results, "total": len(results)}
@@ -957,7 +994,7 @@ async def get_summary(doc_id: str):
 async def sse_stream():
     """SSE 실시간 이벤트 스트림"""
     queue: asyncio.Queue = asyncio.Queue(maxsize=100)
-    sse_queues.append(queue)
+    state.sse_queues.append(queue)
 
     async def event_generator():
         try:
@@ -972,8 +1009,8 @@ async def sse_stream():
         except asyncio.CancelledError:
             pass
         finally:
-            if queue in sse_queues:
-                sse_queues.remove(queue)
+            if queue in state.sse_queues:
+                state.sse_queues.remove(queue)
 
     return StreamingResponse(
         event_generator(),
@@ -998,15 +1035,10 @@ class ConfigUpdate(BaseModel):
     storage_path: Optional[str] = None
 
 
-# 캐시된 LLM 모델 목록 (서버 시작 시 1회 조회)
-_cached_llm_models: list[str] | None = None
-
-
 def _get_available_llm_models() -> list[str]:
     """OpenAI API에서 사용 가능한 chat 모델 목록 조회 (캐시)"""
-    global _cached_llm_models
-    if _cached_llm_models is not None:
-        return _cached_llm_models
+    if state._cached_llm_models is not None:
+        return state._cached_llm_models
 
     # 폴백 목록 (API 조회 실패 시)
     fallback = [
@@ -1038,11 +1070,11 @@ def _get_available_llm_models() -> list[str]:
                 x,
             ),
         )
-        _cached_llm_models = chat_models if chat_models else fallback
+        state._cached_llm_models = chat_models if chat_models else fallback
     except Exception as e:
         logger.warning(f"OpenAI 모델 목록 조회 실패: {e}, 폴백 사용")
-        _cached_llm_models = fallback
-    return _cached_llm_models
+        state._cached_llm_models = fallback
+    return state._cached_llm_models
 
 
 def _mask_key(key: str) -> str:
@@ -1096,7 +1128,7 @@ async def get_config():
     # 저장 경로 정보
     storage_info = {
         "storage_path": current_config.get("storage_path", ""),
-        "active_path": temp_dir or "",
+        "active_path": state.temp_dir or "",
         "is_temporary": not bool(current_config.get("storage_path")),
     }
 
@@ -1173,7 +1205,6 @@ async def update_config(body: ConfigUpdate):
             current_config["api_keys"][provider] = key
 
     if body.storage_path is not None:
-        global temp_dir
         new_path = body.storage_path.strip()
 
         if new_path:
@@ -1186,28 +1217,28 @@ async def update_config(body: ConfigUpdate):
                 raise HTTPException(400, f"저장 경로에 쓰기 권한이 없습니다: {new_path}")
 
             # 처리 중/대기 중 문서가 있으면 경로 변경 차단
-            active_docs = [d for d in documents.values() if d["status"] in ("queued", "processing")]
+            active_docs = [d for d in state.documents.values() if d["status"] in ("queued", "processing")]
             if active_docs:
                 raise HTTPException(400, f"처리 중인 문서 {len(active_docs)}건이 있어 저장 경로를 변경할 수 없습니다. 완료 후 다시 시도하세요.")
 
             # 기존 임시 디렉토리 정리 (임시 디렉토리였고 문서가 없는 경우만)
-            old_storage = current_config.get("storage_path", "")
-            if not old_storage and temp_dir and os.path.exists(temp_dir):
-                if not documents:
-                    shutil.rmtree(temp_dir, ignore_errors=True)
-                    logger.info("기존 임시 디렉토리 삭제: %s", temp_dir)
+            old_storage = state.current_config.get("storage_path", "")
+            if not old_storage and state.temp_dir and os.path.exists(state.temp_dir):
+                if not state.documents:
+                    shutil.rmtree(state.temp_dir, ignore_errors=True)
+                    logger.info("기존 임시 디렉토리 삭제: %s", state.temp_dir)
                 else:
-                    logger.info("기존 임시 디렉토리 유지 (완료 문서 파일 보존): %s", temp_dir)
+                    logger.info("기존 임시 디렉토리 유지 (완료 문서 파일 보존): %s", state.temp_dir)
 
-            current_config["storage_path"] = new_path
-            temp_dir = new_path
+            state.current_config["storage_path"] = new_path
+            state.temp_dir = new_path
             logger.info("저장 경로 변경: %s", new_path)
         else:
             # 빈 문자열 = 임시 디렉토리로 복원
-            old_path = current_config.get("storage_path", "")
-            current_config["storage_path"] = ""
+            old_path = state.current_config.get("storage_path", "")
+            state.current_config["storage_path"] = ""
             new_temp = tempfile.mkdtemp(prefix="xpipe_demo_")
-            temp_dir = new_temp
+            state.temp_dir = new_temp
             logger.info("임시 디렉토리로 복원: %s (이전 경로: %s — 파일 유지)", new_temp, old_path)
 
     # 응답에서 api_keys 원본은 제외
@@ -1316,16 +1347,15 @@ async def retry_document(doc_id: str):
     doc["duration"] = None
 
     job = Job(job_id=doc_id, file_path=doc["file_path"], filename=doc["filename"])
-    await pipeline_queue.put(job)
+    await state.pipeline_queue.put(job)
     return {"doc_id": doc_id, "status": "queued", "message": "재시도 시작"}
 
 
 @app.delete("/api/documents")
 async def remove_all_documents():
     """전체 문서 제거 (초기화)"""
-    global _queue_counter
-    count = len(documents)
-    for doc in documents.values():
+    count = len(state.documents)
+    for doc in state.documents.values():
         # 처리 중 문서에 cancellation 플래그
         if doc["status"] in ("queued", "processing"):
             doc["_cancelled"] = True
@@ -1335,8 +1365,8 @@ async def remove_all_documents():
                 os.remove(fp)
             except OSError:
                 pass
-    documents.clear()
-    _queue_counter = 0
+    state.documents.clear()
+    state._queue_counter = 0
     return {"removed": count, "message": "전체 초기화 완료"}
 
 
@@ -1369,8 +1399,7 @@ async def remove_document(doc_id: str):
 
 @app.on_event("startup")
 async def on_startup():
-    global temp_dir, _worker_task
-    storage_path = current_config.get("storage_path", "")
+    storage_path = state.current_config.get("storage_path", "")
     if storage_path:
         # 사용자 지정 경로 사용 + 권한 확인
         try:
@@ -1378,47 +1407,47 @@ async def on_startup():
         except OSError:
             storage_path = ""
         if storage_path and os.access(storage_path, os.W_OK):
-            temp_dir = storage_path
-            logger.info("xPipeWeb v%s 시작 — 저장 경로: %s (사용자 지정)", VERSION, temp_dir)
+            state.temp_dir = storage_path
+            logger.info("xPipeWeb v%s 시작 — 저장 경로: %s (사용자 지정)", VERSION, state.temp_dir)
         else:
-            logger.warning("저장 경로 사용 불가: %s — 임시 디렉토리로 전환", current_config.get("storage_path"))
-            current_config["storage_path"] = ""
+            logger.warning("저장 경로 사용 불가: %s — 임시 디렉토리로 전환", state.current_config.get("storage_path"))
+            state.current_config["storage_path"] = ""
             storage_path = ""
     if not storage_path:
-        temp_dir = tempfile.mkdtemp(prefix="xpipe_demo_")
-        logger.info("xPipeWeb v%s 시작 — 임시 디렉토리: %s", VERSION, temp_dir)
-    _worker_task = asyncio.create_task(_queue_worker())
+        state.temp_dir = tempfile.mkdtemp(prefix="xpipe_demo_")
+        logger.info("xPipeWeb v%s 시작 — 임시 디렉토리: %s", VERSION, state.temp_dir)
+    state._worker_task = asyncio.create_task(_queue_worker())
     logger.info("큐 워커 시작 (max_concurrency=%d)", MAX_CONCURRENCY)
 
 
 @app.on_event("shutdown")
 async def on_shutdown():
     # 1. 워커 루프 중지
-    if _worker_task:
-        _worker_task.cancel()
+    if state._worker_task:
+        state._worker_task.cancel()
         try:
-            await _worker_task
+            await state._worker_task
         except asyncio.CancelledError:
             pass
 
     # 2. 실행 중 파이프라인 태스크 취소 + 대기
-    if _running_tasks:
-        cancelled_count = len(_running_tasks)
-        for task in list(_running_tasks):
+    if state._running_tasks:
+        cancelled_count = len(state._running_tasks)
+        for task in list(state._running_tasks):
             task.cancel()
-        await asyncio.gather(*_running_tasks, return_exceptions=True)
-        _running_tasks.clear()
+        await asyncio.gather(*state._running_tasks, return_exceptions=True)
+        state._running_tasks.clear()
         logger.info("실행 중 파이프라인 태스크 %d개 취소", cancelled_count)
 
     logger.info("큐 워커 종료")
 
     # 3. 임시 디렉토리 삭제 (사용자 지정 경로가 아닌 경우만)
-    if temp_dir and os.path.exists(temp_dir):
-        if current_config.get("storage_path"):
-            logger.info("사용자 지정 저장 경로 유지: %s (파일 삭제 안 함)", temp_dir)
+    if state.temp_dir and os.path.exists(state.temp_dir):
+        if state.current_config.get("storage_path"):
+            logger.info("사용자 지정 저장 경로 유지: %s (파일 삭제 안 함)", state.temp_dir)
         else:
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            logger.info("임시 디렉토리 삭제: %s", temp_dir)
+            shutil.rmtree(state.temp_dir, ignore_errors=True)
+            logger.info("임시 디렉토리 삭제: %s", state.temp_dir)
 
 
 # ---------------------------------------------------------------------------

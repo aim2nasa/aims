@@ -81,13 +81,35 @@ class EmbedStage(Stage):
 async def _real_embed(
     text: str, embed_model: str, context: dict[str, Any]
 ) -> tuple[int, str]:
-    """OpenAI Embedding API로 실제 벡터화. (dims, model_display) 반환."""
-    import os
+    """벡터 임베딩 — ProviderRegistry 경유 우선, 없으면 OpenAI 직접 호출 fallback."""
 
-    api_key = context.get("_api_keys", {}).get("openai", "") or os.environ.get("OPENAI_API_KEY", "")
+    if not text.strip():
+        logger.warning("임베딩 스킵: 텍스트가 비어있습니다")
+        return 0, embed_model
+
+    # 텍스트가 너무 길면 앞부분만 (8191 토큰 제한 대비)
+    # 한국어 1문자 ≈ 2~3토큰 → 안전하게 3000자로 제한
+    embed_text = text[:3000]
+
+    # 1순위: ProviderRegistry에서 Embedding Provider 조회
+    registry = context.get("_provider_registry")
+    if registry:
+        try:
+            provider = registry.get("embedding")
+            vectors = await provider.embed([embed_text], model=embed_model)
+            dims = len(vectors[0]) if vectors and vectors[0] else 0
+            model_display = embed_model
+            logger.info("임베딩 완료 (provider): %d차원, 모델=%s", dims, model_display)
+            return dims, model_display
+        except KeyError:
+            # "embedding" role에 등록된 Provider가 없음 → fallback으로 진행
+            logger.debug("ProviderRegistry에 'embedding' role 미등록 — OpenAI 직접 호출 fallback")
+
+    # 2순위: OpenAI 직접 호출 (fallback — ProviderRegistry 미등록 시)
+    api_key = context.get("_api_keys", {}).get("openai", "")
     if not api_key:
         raise RuntimeError(
-            "임베딩 실행 불가: OPENAI_API_KEY가 설정되지 않았습니다. "
+            "임베딩 실행 불가: context['_api_keys']['openai']에 API 키가 없습니다. "
             "설정 패널에서 API 키를 입력하거나 .env.shared에 설정하세요."
         )
 
@@ -96,15 +118,7 @@ async def _real_embed(
     except ImportError:
         raise RuntimeError("임베딩 실행 불가: openai 패키지가 설치되지 않았습니다.")
 
-    if not text.strip():
-        logger.warning("임베딩 스킵: 텍스트가 비어있습니다")
-        return 0, embed_model
-
     client = AsyncOpenAI(api_key=api_key)
-
-    # 텍스트가 너무 길면 앞부분만 (8191 토큰 제한 대비)
-    # 한국어 1문자 ≈ 2~3토큰 → 안전하게 3000자로 제한 (≈6000~9000토큰 → 8191 이내)
-    embed_text = text[:3000]
 
     response = await client.embeddings.create(
         model=embed_model,

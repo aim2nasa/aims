@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 
 from xpipe.testing import TestCase, TestResult, TestRunner
-from insurance.adapter import InsuranceDomainAdapter
+from xpipe.tests.conftest import MockInsuranceAdapter
 
 
 @pytest.fixture
 def adapter():
-    return InsuranceDomainAdapter()
+    return MockInsuranceAdapter()
 
 
 @pytest.fixture
