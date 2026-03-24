@@ -1123,6 +1123,11 @@ tr.row-error {
   background: rgba(255, 59, 48, 0.08);
   color: #d70015;
 }
+.inline-stage.skipped {
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--text-muted, #999);
+  text-decoration: line-through;
+}
 
 .inline-arrow {
   color: var(--border-light);

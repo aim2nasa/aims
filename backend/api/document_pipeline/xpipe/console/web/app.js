@@ -702,10 +702,18 @@
       const typeHtml = ext ? ext.toUpperCase() : '-';
       const uploadHtml = formatDate(doc.created_at);
       const statusHtml = renderStatusCell(doc);
-      const classifyRan = (doc.enabled_stages || []).includes('classify');
-      const classifyHtml = !classifyRan ? '<span class="text-muted">-</span>'
-        : doc.result ? escapeHtml(doc.result.document_type) : '<span class="text-muted">-</span>';
-      const detectHtml = renderDetections(doc);
+      const classifySkipped = (doc.result && doc.result.stages_skipped || []).includes('classify')
+        || (doc.stages_data && doc.stages_data.classify && doc.stages_data.classify.status === 'skipped');
+      const classifyHtml = classifySkipped
+        ? '<span class="text-muted has-tooltip" data-tip="어댑터 미설정 — 분류 스킵">스킵</span>'
+        : doc.result && doc.result.document_type
+          ? escapeHtml(doc.result.document_type)
+          : '<span class="text-muted">-</span>';
+      const detectSkipped = (doc.result && doc.result.stages_skipped || []).includes('detect_special')
+        || (doc.stages_data && doc.stages_data.detect_special && doc.stages_data.detect_special.status === 'skipped');
+      const detectHtml = detectSkipped
+        ? '<span class="text-muted has-tooltip" data-tip="어댑터 미설정 — 감지 스킵">스킵</span>'
+        : renderDetections(doc);
       const costHtml = renderCost(doc);
       const durationHtml = doc.duration ? doc.duration.toFixed(2) + 's' : '<span class="text-muted">-</span>';
       const eventsHtml = renderEventsBadge(doc);
@@ -908,10 +916,11 @@
     let prevShown = false;
     for (let i = 0; i < stageOrder.length; i++) {
       const name = stageOrder[i];
-      if (skipped.includes(name)) continue;
       const detail = stagesDetail[name] || {};
+      const stageData = (doc.stages_data && doc.stages_data[name]) || {};
       let cls = 'pending';
-      if (detail.status === 'completed') cls = 'done';
+      if (skipped.includes(name) || stageData.status === 'skipped') cls = 'skipped';
+      else if (detail.status === 'completed') cls = 'done';
       else if (detail.status === 'running') cls = 'running';
       else if (detail.status === 'error') cls = 'error';
       const label = STAGE_LABELS[name] || name;
