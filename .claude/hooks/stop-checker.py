@@ -8,6 +8,7 @@ import json
 import sys
 import os
 import io
+import re
 import subprocess
 
 # Windows cp949 인코딩 문제 방지
@@ -79,7 +80,6 @@ def check_css_violations(files: list[str]) -> list[str]:
             if "font-weight: 500" in content or "font-weight:500" in content:
                 violations.append(f"{filename}: font-weight: 500 사용 (400 또는 600만 허용)")
             # #hex 색상 감지 (var(--color-*) 대신)
-            import re
             hex_matches = re.findall(r'(?<!-)#[0-9a-fA-F]{3,8}\b', content)
             if hex_matches and "var(--" not in content[:100]:  # 변수 정의 파일 제외
                 violations.append(f"{filename}: 하드코딩 색상 {len(hex_matches)}건 (var(--color-*) 사용 권장)")
