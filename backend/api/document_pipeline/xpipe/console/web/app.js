@@ -702,14 +702,14 @@
       const typeHtml = ext ? ext.toUpperCase() : '-';
       const uploadHtml = formatDate(doc.created_at);
       const statusHtml = renderStatusCell(doc);
-      const classifySkipped = (doc.result && doc.result.stages_skipped || []).includes('classify')
+      const classifySkipped = ((doc.result && doc.result.stages_skipped) || []).includes('classify')
         || (doc.stages_data && doc.stages_data.classify && doc.stages_data.classify.status === 'skipped');
       const classifyHtml = classifySkipped
         ? '<span class="text-muted has-tooltip" data-tip="어댑터 미설정 — 분류 스킵">스킵</span>'
         : doc.result && doc.result.document_type
           ? escapeHtml(doc.result.document_type)
           : '<span class="text-muted">-</span>';
-      const detectSkipped = (doc.result && doc.result.stages_skipped || []).includes('detect_special')
+      const detectSkipped = ((doc.result && doc.result.stages_skipped) || []).includes('detect_special')
         || (doc.stages_data && doc.stages_data.detect_special && doc.stages_data.detect_special.status === 'skipped');
       const detectHtml = detectSkipped
         ? '<span class="text-muted has-tooltip" data-tip="어댑터 미설정 — 감지 스킵">스킵</span>'
@@ -918,11 +918,13 @@
       const name = stageOrder[i];
       const detail = stagesDetail[name] || {};
       const stageData = (doc.stages_data && doc.stages_data[name]) || {};
+      // stages_data.status를 우선 참조 (실제 파이프라인 결과), stages_detail은 fallback
+      const effectiveStatus = stageData.status || detail.status || '';
       let cls = 'pending';
-      if (skipped.includes(name) || stageData.status === 'skipped') cls = 'skipped';
-      else if (detail.status === 'completed') cls = 'done';
-      else if (detail.status === 'running') cls = 'running';
-      else if (detail.status === 'error') cls = 'error';
+      if (skipped.includes(name) || effectiveStatus === 'skipped') cls = 'skipped';
+      else if (effectiveStatus === 'completed') cls = 'done';
+      else if (effectiveStatus === 'running') cls = 'running';
+      else if (effectiveStatus === 'error') cls = 'error';
       const label = STAGE_LABELS[name] || name;
       if (prevShown) {
         html += '<span class="inline-arrow">\u2192</span>';
@@ -1243,7 +1245,8 @@
     const stagesDetail = doc.stages_detail || {};
     const detail = stagesDetail[stageName] || {};
     const data = stagesData[stageName] || {};
-    const status = detail.status || 'pending';
+    // stages_data.status 우선, stages_detail.status fallback
+    const status = data.status || detail.status || 'pending';
     const koreanName = STAGE_LABELS[stageName] || stageName;
     const englishName = _stageDisplayName(stageName);
 
@@ -1251,12 +1254,15 @@
     html += '<div class="stage-detail-title">';
     html += '<span class="stage-detail-name">' + koreanName + '</span>';
     html += '<span class="stage-detail-eng">(' + englishName + ')</span>';
-    const statusLabel = { pending: '대기', running: '처리중', completed: '완료', error: '에러' }[status] || status;
-    const statusCls = { pending: 'pending', running: 'running', completed: 'done', error: 'error' }[status] || 'pending';
+    const statusLabel = { pending: '대기', running: '처리중', completed: '완료', error: '에러', skipped: '스킵' }[status] || status;
+    const statusCls = { pending: 'pending', running: 'running', completed: 'done', error: 'error', skipped: 'skipped' }[status] || 'pending';
     html += '<span class="inline-stage ' + statusCls + '" style="margin-left:8px;">' + statusLabel + '</span>';
     html += '</div>';
 
-    if (status === 'pending' || status === 'running') {
+    if (status === 'skipped') {
+      const reason = data.reason || '어댑터 미설정';
+      html += '<p class="text-muted">' + escapeHtml(reason) + '</p>';
+    } else if (status === 'pending' || status === 'running') {
       html += '<p class="text-muted">' + (status === 'pending' ? '대기 중' : '처리 중...') + '</p>';
     } else if (!data || !data.input) {
       html += '<p class="text-muted">데이터 없음</p>';

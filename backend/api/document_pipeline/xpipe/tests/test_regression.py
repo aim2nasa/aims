@@ -599,6 +599,38 @@ class TestAdapterSwapRegression:
         # 어댑터 없이도 모든 스테이지가 실행됨 (stub 구현, convert는 스킵)
         assert len(result["_pipeline"]["stages_executed"]) == 6
 
+    def test_adapter_none_classify_detect_stage_data_skipped(self):
+        """어댑터 없이 실행 → classify/detect의 stage_data.status가 'skipped'
+
+        BUG-1/BUG-2/BUG-3 regression: 프론트엔드가 stage_data.status를
+        참조하여 도트 색상과 컬럼 표시를 결정하므로, 백엔드가 올바른 status를
+        반환하는지 검증한다.
+        """
+        pipeline = _build_standard_pipeline()
+        result = _run(pipeline.run({"document_id": "status-display-001"}))
+
+        assert result["completed"] is True
+        stage_data = result.get("stage_data", {})
+
+        # classify: 어댑터 미제공 → skipped
+        classify_data = stage_data.get("classify", {})
+        assert classify_data.get("status") == "skipped", (
+            f"classify status는 'skipped'이어야 하나 '{classify_data.get('status')}'임"
+        )
+
+        # detect_special: 어댑터 미제공 → skipped
+        detect_data = stage_data.get("detect_special", {})
+        assert detect_data.get("status") == "skipped", (
+            f"detect_special status는 'skipped'이어야 하나 '{detect_data.get('status')}'임"
+        )
+
+        # 완료된 스테이지는 completed
+        for stage_name in ["ingest", "embed", "complete"]:
+            sd = stage_data.get(stage_name, {})
+            assert sd.get("status") == "completed", (
+                f"{stage_name} status는 'completed'이어야 하나 '{sd.get('status')}'임"
+            )
+
     def test_adapter_exception_with_skip_on_error(self):
         """어댑터가 예외 발생 → skip_on_error=True이면 파이프라인 중단 없음"""
 

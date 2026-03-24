@@ -142,3 +142,21 @@ import { useCustomerSSE } from '@/shared/hooks/useCustomerSSE'
 - 프레임워크: Vitest + jsdom
 - 커버리지: 50% stmt/fn/lines, 40% branches
 - 실행: `npm run test`, `npm run test:coverage`
+
+## UI 변경 시 Playwright 검증 (필수)
+
+UI를 수정/구현한 경우 반드시 Playwright E2E로 검증한다. DOM 존재 여부만 확인하는 것은 검증이 아니다.
+
+### 검증 기준
+- **값 검증**: 각 요소의 실제 텍스트, class, attribute 값을 개별 확인
+- **인터랙션 검증**: 클릭/입력/선택 후 상태 변화가 기대값과 일치하는지 확인
+- **시각 검증**: headful 모드로 실행하여 색상/레이아웃을 육안 확인 가능한 스크린샷 캡처
+- **에러 경로 검증**: 실패 응답, 빈 데이터, 네트워크 오류 시 UI가 올바르게 반응하는지 확인
+
+### 금지 사항
+- DOM 요소 존재(`isVisible`, `count > 0`)만 확인하고 PASS 처리 금지
+- headless 모드에서 저해상도 스크린샷만 찍고 검증 완료 처리 금지
+- 상태(색상, class)를 확인하지 않고 "스크린샷 확인" 처리 금지
+
+### xPipeWeb (순수 HTML+JS)
+xPipeWeb은 React가 아닌 순수 HTML+JS 구성이지만 동일한 Playwright 검증 기준을 적용한다.
