@@ -3,7 +3,7 @@
 **xPipeWeb**은 xPipe 엔진의 동작을 검증하기 위한 **개발자 전용 웹 데모 도구**입니다.
 문서를 업로드하면 파이프라인 각 단계의 입출력을 실시간으로 확인할 수 있습니다.
 
-- 버전: v0.1.0
+- 버전: v0.3.0
 - 접속: `http://100.110.215.65:8200` (tars 서버, Tailscale VPN 필요)
 - 실행: tars에서 `cd ~/aims/backend/api/document_pipeline && source venv/bin/activate && source ~/aims/.env.shared && source .env && python -m xpipe.console.web.server`
 

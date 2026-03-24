@@ -42,3 +42,6 @@
 | 버전 | 날짜 | 내용 |
 |------|------|------|
 | 0.1.0 | Phase 1 | DomainAdapter ABC + DocumentStore/JobQueue ABC 정의 |
+| 0.2.0 | Phase 2 | xPipeWeb + InsuranceAdapter 연동, 내장 스테이지 7종 |
+| 0.2.5 | Phase 2 | xPipeWeb UI 개선, 큐잉, SSE 이벤트 |
+| 0.3.0 | Phase 3 | 모듈화 리팩토링 — 도메인 완전 분리, Provider ABC 분리, 환경변수 주입 통일 |

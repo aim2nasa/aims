@@ -105,7 +105,7 @@ def _load_env_files() -> None:
 WEB_DIR = Path(__file__).parent
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_CONCURRENCY = 2
-VERSION = "0.1.0"
+VERSION = "0.3.0"
 
 # 환경변수 매핑 — 실행 진입점에서 주입. 코어 모듈은 특정 서비스를 모른다.
 _env_key_map: dict[str, str] = {}
