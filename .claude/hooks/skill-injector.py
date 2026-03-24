@@ -62,6 +62,14 @@ SKILL_MAP = [
             r"문서\s*처리", r"문서\s*상태", r"overall.?status",
         ],
     },
+    {
+        "skill": "ar-crs-parsing-rules",
+        "keywords": [
+            r"AR", r"CRS", r"연차\s*보고서", r"annual.?report", r"customer.?review",
+            r"문서\s*감지", r"문서\s*판단", r"문서\s*유형\s*판단", r"파싱",
+            r"pdfplumber", r"보유계약\s*현황",
+        ],
+    },
 ]
 
 def load_skill(skill_name: str) -> str | None:
