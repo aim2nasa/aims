@@ -147,42 +147,34 @@ async def _real_classify(
             # "llm" role에 등록된 Provider가 없음 → fallback으로 진행
             logger.debug("ProviderRegistry에 'llm' role 미등록 — OpenAI 직접 호출 fallback")
 
-    # 2순위: OpenAI 직접 호출 (fallback — ProviderRegistry 미등록 시)
+    # 2순위: OpenAILLMProvider fallback (ProviderRegistry 미등록 시)
+    from xpipe.providers import OpenAILLMProvider
+
     api_key = context.get("_api_keys", {}).get("openai", "")
     if not api_key:
         raise RuntimeError(
             "AI 분류 실행 불가: context['_api_keys']['openai']에 API 키가 없습니다."
         )
 
-    try:
-        from openai import AsyncOpenAI
-    except ImportError:
-        raise RuntimeError("AI 분류 실행 불가: openai 패키지가 설치되지 않았습니다.")
-
-    client = AsyncOpenAI(api_key=api_key)
-
-    messages = []
-    if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-    messages.append({"role": "user", "content": user_prompt})
-
-    response = await client.chat.completions.create(
+    provider = OpenAILLMProvider(api_key=api_key)
+    result = await provider.complete(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
         model=llm_model,
-        messages=messages,
         temperature=0,
         max_tokens=100,
     )
 
-    result_text = response.choices[0].message.content.strip()
+    result_text = result.get("content", "").strip()
     logger.info("AI 분류 결과 (raw): %s", result_text)
 
     # 토큰 사용량 기록 (비용 계산용)
-    usage = response.usage
-    if usage:
+    raw_usage = result.get("_raw_usage")
+    if raw_usage:
         context.setdefault("_usage", {})["classify"] = {
-            "prompt_tokens": usage.prompt_tokens,
-            "completion_tokens": usage.completion_tokens,
-            "total_tokens": usage.total_tokens,
+            "prompt_tokens": raw_usage.prompt_tokens,
+            "completion_tokens": raw_usage.completion_tokens,
+            "total_tokens": raw_usage.total_tokens,
             "model": llm_model,
         }
 

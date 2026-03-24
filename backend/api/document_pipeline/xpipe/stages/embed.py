@@ -105,7 +105,9 @@ async def _real_embed(
             # "embedding" role에 등록된 Provider가 없음 → fallback으로 진행
             logger.debug("ProviderRegistry에 'embedding' role 미등록 — OpenAI 직접 호출 fallback")
 
-    # 2순위: OpenAI 직접 호출 (fallback — ProviderRegistry 미등록 시)
+    # 2순위: OpenAIEmbeddingProvider fallback (ProviderRegistry 미등록 시)
+    from xpipe.providers import OpenAIEmbeddingProvider
+
     api_key = context.get("_api_keys", {}).get("openai", "")
     if not api_key:
         raise RuntimeError(
@@ -113,22 +115,12 @@ async def _real_embed(
             "설정 패널에서 API 키를 입력하거나 .env.shared에 설정하세요."
         )
 
-    try:
-        from openai import AsyncOpenAI
-    except ImportError:
-        raise RuntimeError("임베딩 실행 불가: openai 패키지가 설치되지 않았습니다.")
-
-    client = AsyncOpenAI(api_key=api_key)
-
-    response = await client.embeddings.create(
-        model=embed_model,
-        input=embed_text,
-    )
-
-    dims = len(response.data[0].embedding)
+    provider = OpenAIEmbeddingProvider(api_key=api_key, model=embed_model)
+    vectors = await provider.embed([embed_text], model=embed_model)
+    dims = len(vectors[0]) if vectors and vectors[0] else 0
 
     # 토큰 사용량 기록 (비용 계산용)
-    usage = response.usage
+    usage = getattr(provider, "_last_usage", None)
     if usage:
         context.setdefault("_usage", {})["embed"] = {
             "prompt_tokens": getattr(usage, "prompt_tokens", usage.total_tokens),

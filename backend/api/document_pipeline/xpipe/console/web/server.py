@@ -91,6 +91,12 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_CONCURRENCY = 2
 VERSION = "0.2.5"
 
+# 환경변수 매핑 (한 곳에서만 정의)
+ENV_KEY_MAP: dict[str, str] = {
+    "openai": "OPENAI_API_KEY",
+    "upstage": "UPSTAGE_API_KEY",
+}
+
 
 # ---------------------------------------------------------------------------
 # ServerState — 모든 인메모리 상태를 캡슐화
@@ -106,6 +112,12 @@ class ServerState:
         # .env 파일 로드 (API 키 등)
         _load_env_files()
 
+        # 환경변수에서 API 키 1회 읽기 (이후 os.environ 직접 참조 금지)
+        self.env_api_keys: dict[str, str] = {
+            provider: os.environ.get(env_var, "")
+            for provider, env_var in ENV_KEY_MAP.items()
+        }
+
         # 인메모리 문서 상태
         self.documents: dict[str, dict[str, Any]] = {}
         self.sse_events: list[dict[str, Any]] = []
@@ -119,7 +131,7 @@ class ServerState:
         self.quality_gate = QualityGate()
 
         # 현재 설정
-        _default_mode = "real" if os.environ.get("OPENAI_API_KEY") else "stub"
+        _default_mode = "real" if self.env_api_keys.get("openai") else "stub"
         self.current_config: dict[str, Any] = {
             "adapter": "none",
             "quality_gate": True,
@@ -153,6 +165,11 @@ class ServerState:
 
         # LLM 모델 캐시
         self._cached_llm_models: list[str] | None = None
+
+    def resolve_api_key(self, provider: str) -> str:
+        """API 키 해석: 설정 패널 값 우선, 없으면 환경변수에서 읽은 캐시 값 반환"""
+        config_key = self.current_config.get("api_keys", {}).get(provider, "")
+        return config_key or self.env_api_keys.get(provider, "")
 
 
 # 모듈 레벨 싱글턴 인스턴스
@@ -275,13 +292,11 @@ async def _inject_adapter_config(context: dict) -> None:
             mod = importlib.import_module(module_path)
             adapter_cls = getattr(mod, class_name)
             adapter = adapter_cls()
-        elif adapter_name == "insurance":
-            # 하위 호환: adapter_module/adapter_class 미설정 시 기본 경로 시도
-            mod = importlib.import_module("insurance.adapter")
-            adapter_cls = getattr(mod, "InsuranceDomainAdapter")
-            adapter = adapter_cls()
         else:
-            logger.warning("[Adapter] 알 수 없는 어댑터: %s", adapter_name)
+            logger.warning(
+                "[Adapter] adapter_name=%s이지만 adapter_module/adapter_class가 "
+                "설정되지 않아 어댑터를 로드할 수 없습니다", adapter_name
+            )
             return
 
         # 1. 분류 config 주입 → ClassifyStage가 사용
@@ -368,11 +383,11 @@ async def _run_pipeline(doc_id: str, file_path: str, filename: str) -> None:
         mime_type, _ = mimetypes.guess_type(filename)
         mime_type = mime_type or "application/octet-stream"
 
-        # API 키 해석 (설정 패널 키 → 환경변수 fallback)
-        api_keys_resolved = {}
-        env_map = {"openai": "OPENAI_API_KEY", "upstage": "UPSTAGE_API_KEY"}
-        for prov, key in current_config.get("api_keys", {}).items():
-            api_keys_resolved[prov] = key or os.environ.get(env_map.get(prov, ""), "")
+        # API 키 해석 (설정 패널 키 → 환경변수 캐시 fallback)
+        api_keys_resolved = {
+            prov: state.resolve_api_key(prov)
+            for prov in current_config.get("api_keys", {})
+        }
 
         # 컨텍스트 구성
         context: dict[str, Any] = {
@@ -1027,6 +1042,8 @@ async def sse_stream():
 
 class ConfigUpdate(BaseModel):
     adapter: Optional[str] = None
+    adapter_module: Optional[str] = None
+    adapter_class: Optional[str] = None
     quality_gate: Optional[bool] = None
     mode: Optional[str] = None
     models: Optional[dict[str, str]] = None
@@ -1089,8 +1106,7 @@ def _key_source(provider: str) -> str:
     config_key = current_config.get("api_keys", {}).get(provider, "")
     if config_key:
         return "config"
-    env_map = {"openai": "OPENAI_API_KEY", "upstage": "UPSTAGE_API_KEY"}
-    env_key = os.environ.get(env_map.get(provider, ""), "")
+    env_key = state.env_api_keys.get(provider, "")
     if env_key:
         return "env"
     return "none"
@@ -1101,9 +1117,8 @@ async def get_config():
     """현재 설정 조회"""
     # 키는 마스킹하여 반환
     api_keys_masked = {}
-    for provider, key in current_config.get("api_keys", {}).items():
-        env_var = {"openai": "OPENAI_API_KEY", "upstage": "UPSTAGE_API_KEY"}.get(provider, "")
-        actual_key = key or os.environ.get(env_var, "")
+    for provider in current_config.get("api_keys", {}):
+        actual_key = state.resolve_api_key(provider)
         api_keys_masked[provider] = {
             "masked": _mask_key(actual_key),
             "source": _key_source(provider),
@@ -1159,9 +1174,22 @@ def _stage_dependencies() -> dict[str, list[str]]:
 async def update_config(body: ConfigUpdate):
     """설정 변경 (다음 업로드부터 적용)"""
     if body.adapter is not None:
-        if body.adapter not in ("insurance", "legal", "none"):
-            raise HTTPException(400, f"유효하지 않은 어댑터: {body.adapter}")
+        if body.adapter != "none":
+            # "none" 이외의 어댑터는 adapter_module/adapter_class가 함께 설정되어야 함
+            has_module = bool(body.adapter_module) or bool(current_config.get("adapter_module"))
+            has_class = bool(body.adapter_class) or bool(current_config.get("adapter_class"))
+            if not (has_module and has_class):
+                raise HTTPException(
+                    400,
+                    f"어댑터 '{body.adapter}' 사용 시 adapter_module과 "
+                    f"adapter_class를 함께 설정해야 합니다"
+                )
         current_config["adapter"] = body.adapter
+
+    if body.adapter_module is not None:
+        current_config["adapter_module"] = body.adapter_module
+    if body.adapter_class is not None:
+        current_config["adapter_class"] = body.adapter_class
 
     if body.enabled_stages is not None:
         valid_names = {s["name"] for s in ALL_STAGES}
@@ -1184,12 +1212,10 @@ async def update_config(body: ConfigUpdate):
             raise HTTPException(400, f"유효하지 않은 모드: {body.mode}")
         # real 모드 전환 시 API 키 유효성 경고
         if body.mode == "real":
-            env_map = {"openai": "OPENAI_API_KEY", "upstage": "UPSTAGE_API_KEY"}
             missing = []
-            for prov, env_key in env_map.items():
-                key = current_config.get("api_keys", {}).get(prov, "") or os.environ.get(env_key, "")
-                if not key:
-                    missing.append(f"{prov} ({env_key})")
+            for prov, env_var in ENV_KEY_MAP.items():
+                if not state.resolve_api_key(prov):
+                    missing.append(f"{prov} ({env_var})")
             if missing:
                 logger.warning("실제 실행 모드 전환: API 키 미설정 — %s", ", ".join(missing))
         current_config["mode"] = body.mode
