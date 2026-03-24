@@ -53,7 +53,19 @@ class Job:
 
 
 class InMemoryQueue:
-    """asyncio.Queue 래핑. 단일 프로세스 전용. 서버 재시작 시 유실."""
+    """asyncio.Queue 래핑 — xPipeWeb 데모 서버 전용 인메모리 큐
+
+    이 클래스는 JobQueue ABC의 구현체가 아닌, 데모 서버 전용 인메모리 큐입니다.
+    JobQueue는 Redis Stream 등 프로덕션 큐 백엔드를 위한 인터페이스이며,
+    InMemoryQueue는 단일 프로세스에서 asyncio.Queue를 래핑하여
+    외부 종속성 없이 동작하는 경량 큐입니다. 서버 재시작 시 유실됩니다.
+
+    메서드명이 JobQueue(enqueue/dequeue/ack)와 다른 것은
+    용도와 시그니처가 다르기 때문입니다:
+    - put: Job 객체를 직접 받음 (JobQueue.enqueue는 dict)
+    - get: timeout 후 None 반환 (JobQueue.dequeue는 block_ms)
+    - remove: job_id로 큐에서 제거 (JobQueue.ack는 처리 완료 확인)
+    """
 
     def __init__(self, maxsize: int = 100):
         self._queue: asyncio.Queue[Job] = asyncio.Queue(maxsize=maxsize)

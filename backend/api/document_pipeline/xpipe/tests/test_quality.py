@@ -17,7 +17,6 @@ from xpipe.quality import (
     QualityReport,
     QualityScore,
     _count_broken_chars,
-    is_enabled,
 )
 from xpipe.quality_runner import AccuracyReport, GroundTruthRunner
 
@@ -103,38 +102,30 @@ class TestBrokenCharCount:
         assert _count_broken_chars("") == 0
 
 
-class TestIsEnabled:
-    """환경 변수 기반 활성화/비활성화"""
+class TestQualityGateEnabled:
+    """QualityGate.enabled — 생성자 파라미터 기반 활성화/비활성화"""
 
-    def test_default_enabled(self, monkeypatch):
+    def test_default_enabled(self):
         """기본값: 활성화"""
-        monkeypatch.delenv("XPIPE_QUALITY_GATE", raising=False)
-        assert is_enabled() is True
+        gate = QualityGate()
+        assert gate.enabled is True
 
-    def test_explicit_true(self, monkeypatch):
-        """명시적 true"""
-        monkeypatch.setenv("XPIPE_QUALITY_GATE", "true")
-        assert is_enabled() is True
+    def test_explicit_enabled(self):
+        """명시적 enabled=True"""
+        gate = QualityGate(enabled=True)
+        assert gate.enabled is True
 
-    def test_disabled_false(self, monkeypatch):
-        """false로 비활성화"""
-        monkeypatch.setenv("XPIPE_QUALITY_GATE", "false")
-        assert is_enabled() is False
+    def test_disabled(self):
+        """enabled=False로 비활성화"""
+        gate = QualityGate(enabled=False)
+        assert gate.enabled is False
 
-    def test_disabled_zero(self, monkeypatch):
-        """0으로 비활성화"""
-        monkeypatch.setenv("XPIPE_QUALITY_GATE", "0")
-        assert is_enabled() is False
-
-    def test_disabled_no(self, monkeypatch):
-        """no로 비활성화"""
-        monkeypatch.setenv("XPIPE_QUALITY_GATE", "no")
-        assert is_enabled() is False
-
-    def test_case_insensitive(self, monkeypatch):
-        """대소문자 무관"""
-        monkeypatch.setenv("XPIPE_QUALITY_GATE", "FALSE")
-        assert is_enabled() is False
+    def test_enabled_with_config(self):
+        """config과 enabled 동시 전달"""
+        config = QualityConfig(min_confidence=0.9)
+        gate = QualityGate(config, enabled=False)
+        assert gate.enabled is False
+        assert gate.config.min_confidence == 0.9
 
 
 class TestQualityGateEvaluate:

@@ -114,7 +114,8 @@ def _cmd_status(_args: argparse.Namespace) -> int:
 
 def _cmd_quality(args: argparse.Namespace) -> int:
     """품질 게이트 정보 및 GT 측정"""
-    from xpipe.quality import QualityConfig, QualityGate, is_enabled
+    import os
+    from xpipe.quality import QualityConfig, QualityGate
 
     subcommand = getattr(args, "quality_command", None)
 
@@ -154,11 +155,14 @@ def _cmd_quality(args: argparse.Namespace) -> int:
         return 0
 
     # 기본: 품질 게이트 설정 표시
+    # 환경변수 해석은 호스트 앱(CLI) 책임
+    env_val = os.environ.get("XPIPE_QUALITY_GATE", "true").lower().strip()
+    enabled = env_val not in ("false", "0", "no")
     config = QualityConfig()
-    enabled = is_enabled()
+    gate = QualityGate(config, enabled=enabled)
 
     print("=== Quality Gate 설정 ===")
-    print(f"  상태: {'활성화' if enabled else '비활성화'} (XPIPE_QUALITY_GATE)")
+    print(f"  상태: {'활성화' if gate.enabled else '비활성화'} (XPIPE_QUALITY_GATE)")
     print(f"  최소 confidence: {config.min_confidence}")
     print(f"  최소 텍스트 길이: {config.min_text_length}자")
     print(f"  최대 깨진 문자 비율: {config.max_broken_char_ratio:.0%}")
