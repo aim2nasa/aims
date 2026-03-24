@@ -1375,17 +1375,18 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                     {pipelineEngine && (
                       <Tooltip content={`파이프라인: ${pipelineEngine === 'xpipe' ? 'xPipe 엔진' : '기본 엔진'}`} placement="top">
                         <div style={{
-                          fontSize: '9px',
-                          padding: '1px 4px',
-                          borderRadius: '3px',
-                          marginLeft: '4px',
-                          background: pipelineEngine === 'xpipe' ? 'var(--color-accent)' : 'var(--color-border)',
-                          color: pipelineEngine === 'xpipe' ? '#fff' : 'var(--color-text-tertiary)',
-                          fontWeight: 600,
+                          fontSize: '10px',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          marginLeft: '6px',
+                          background: pipelineEngine === 'xpipe' ? '#5856D6' : '#8E8E93',
+                          color: '#FFFFFF',
+                          fontWeight: 700,
                           letterSpacing: '0.5px',
                           cursor: 'default',
+                          lineHeight: '1.2',
                         }}>
-                          {pipelineEngine === 'xpipe' ? 'xP' : 'LP'}
+                          {pipelineEngine === 'xpipe' ? 'xPipe' : 'Legacy'}
                         </div>
                       </Tooltip>
                     )}
@@ -1457,17 +1458,18 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                     {!leftPaneCollapsed && pipelineEngine && (
                       <Tooltip content={`파이프라인: ${pipelineEngine === 'xpipe' ? 'xPipe 엔진' : '기본 엔진'}`} placement="top">
                         <div style={{
-                          fontSize: '9px',
-                          padding: '1px 4px',
-                          borderRadius: '3px',
-                          marginLeft: '4px',
-                          background: pipelineEngine === 'xpipe' ? 'var(--color-accent)' : 'var(--color-border)',
-                          color: pipelineEngine === 'xpipe' ? '#fff' : 'var(--color-text-tertiary)',
-                          fontWeight: 600,
+                          fontSize: '10px',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          marginLeft: '6px',
+                          background: pipelineEngine === 'xpipe' ? '#5856D6' : '#8E8E93',
+                          color: '#FFFFFF',
+                          fontWeight: 700,
                           letterSpacing: '0.5px',
                           cursor: 'default',
+                          lineHeight: '1.2',
                         }}>
-                          {pipelineEngine === 'xpipe' ? 'xP' : 'LP'}
+                          {pipelineEngine === 'xpipe' ? 'xPipe' : 'Legacy'}
                         </div>
                       </Tooltip>
                     )}
