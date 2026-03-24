@@ -918,15 +918,35 @@
     return doc.result.detections.map(d => escapeHtml(d.doc_type || d)).join(', ');
   }
 
+  /**
+   * 비용을 유효숫자 기준으로 정확하게 포맷
+   * 0.00096608 → "0.000966", 0.0000561 → "0.0000561", 1.23 → "1.23"
+   */
+  function _formatCost(value) {
+    if (!value || value === 0) return '0';
+    // 소수점 이하 유효숫자가 시작되는 위치를 찾아 최소 3자리 유효숫자 표시
+    var str = value.toString();
+    if (value >= 0.01) return value.toFixed(4);
+    // 과학 표기법 처리
+    if (str.indexOf('e') !== -1) return value.toPrecision(3);
+    // 소수점 이하에서 0이 아닌 첫 자리 찾기
+    var parts = str.split('.');
+    if (parts.length < 2) return str;
+    var decimals = parts[1];
+    var firstNonZero = 0;
+    for (var i = 0; i < decimals.length; i++) {
+      if (decimals[i] !== '0') { firstNonZero = i; break; }
+    }
+    // 유효숫자 시작점 + 3자리
+    var digits = Math.min(firstNonZero + 3, 10);
+    return value.toFixed(digits);
+  }
+
   function renderCost(doc) {
     if (doc.cost === null || doc.cost === undefined) {
       return '<span class="text-muted has-tooltip" data-tip="시뮬레이션 모드에서는 비용이 발생하지 않습니다">-</span>';
     }
-    // 매우 작은 비용은 소수점 4자리까지
-    if (doc.cost < 0.001) {
-      return '$' + doc.cost.toFixed(4);
-    }
-    return '$' + doc.cost.toFixed(3);
+    return '$' + _formatCost(doc.cost);
   }
 
   // R5: 이벤트 건수 뱃지
@@ -1014,7 +1034,7 @@
     dom.ftEvents.textContent = eventCount;
 
     const totalCost = documents.reduce((s, d) => s + (d.cost || 0), 0);
-    dom.ftCost.textContent = totalCost > 0 ? '$' + totalCost.toFixed(4) : '-';
+    dom.ftCost.textContent = totalCost > 0 ? '$' + _formatCost(totalCost) : '-';
 
     // 큐 상태 (처리중/대기)
     const processingCount = documents.filter(d => d.status === 'processing').length;
