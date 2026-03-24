@@ -10,6 +10,12 @@ from xpipe.stage import Stage
 # LibreOffice로 변환 가능한 확장자
 CONVERTIBLE_EXTENSIONS = {".hwp", ".doc", ".docx", ".pptx", ".ppt", ".xls", ".xlsx"}
 
+# 직접 읽기 가능한 텍스트 파일 확장자
+TEXT_EXTENSIONS = {
+    ".txt", ".md", ".csv", ".log", ".json", ".xml", ".yaml", ".yml",
+    ".ini", ".cfg", ".conf", ".py", ".js", ".ts", ".html", ".css",
+}
+
 
 class ExtractStage(Stage):
     """텍스트 추출 스테이지
@@ -186,7 +192,6 @@ class ExtractStage(Stage):
         # 추출 방식 결정: MIME + 확장자에 따라 분기
         import os
         ext = os.path.splitext(file_name)[1].lower() if file_name else ""
-        TEXT_EXTENSIONS = {".txt", ".md", ".csv", ".log", ".json", ".xml", ".yaml", ".yml", ".ini", ".cfg", ".conf", ".py", ".js", ".ts", ".html", ".css"}
         is_image = mime.startswith("image/") if mime else False
         is_text = (mime.startswith("text/") if mime else False) or ext in TEXT_EXTENSIONS
         is_pdf = mime == "application/pdf" or mime.startswith("application/pdf")

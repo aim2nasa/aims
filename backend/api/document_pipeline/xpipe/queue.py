@@ -82,11 +82,6 @@ class JobQueue(ABC):
             min_idle_ms: 최소 유휴 시간 (밀리초). 이 시간 이상 처리되지 않은 작업만 인수.
 
         Returns:
-            인수한 작업 목록
-
-        Raises:
-            NotImplementedError: 큐 시스템이 이 기능을 지원하지 않는 경우
+            인수한 작업 목록. 미지원 큐에서는 빈 리스트.
         """
-        raise NotImplementedError(
-            f"{type(self).__name__}은 claim_stale()을 지원하지 않습니다."
-        )
+        return []

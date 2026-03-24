@@ -61,7 +61,6 @@ class CompleteStage(Stage):
                 "total_duration_ms": total_duration_ms,
                 "total_cost": total_cost,
                 "document_type": doc_type,
-                "virus_scan": "미지원 (xPipe에 해당 스테이지 없음)",
             },
         }
 

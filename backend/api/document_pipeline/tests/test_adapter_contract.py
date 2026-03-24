@@ -373,7 +373,7 @@ class TestStorageABCContract:
 
     @pytest.mark.asyncio
     async def test_job_queue_claim_stale_default(self):
-        """JobQueue.claim_stale()은 기본적으로 NotImplementedError"""
+        """JobQueue.claim_stale()은 기본적으로 빈 리스트 반환"""
         class MinimalQueue(JobQueue):
             async def enqueue(self, job_data):
                 return "test"
@@ -383,8 +383,8 @@ class TestStorageABCContract:
                 return True
 
         queue = MinimalQueue()
-        with pytest.raises(NotImplementedError):
-            await queue.claim_stale()
+        result = await queue.claim_stale()
+        assert result == [], f"claim_stale() 기본값은 빈 리스트여야 합니다: {result}"
 
     @pytest.mark.asyncio
     async def test_document_store_insert_error_default(self):

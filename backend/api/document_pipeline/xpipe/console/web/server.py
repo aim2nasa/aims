@@ -53,34 +53,34 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# .env.shared 로드 (API 키 등 환경변수)
+# 환경변수 파일 로드 (API 키 등)
 # ---------------------------------------------------------------------------
-def _find_env_shared() -> Path | None:
-    """상위 디렉토리를 올라가며 .env.shared를 탐색한다."""
+def _find_env_file() -> list[Path]:
+    """상위 디렉토리를 올라가며 .env.shared와 .env를 탐색한다.
+
+    Returns:
+        발견된 환경변수 파일 경로 목록 (.env.shared 우선)
+    """
+    found: list[Path] = []
     current = Path(__file__).resolve().parent
     for _ in range(10):
-        env_path = current / ".env.shared"
-        if env_path.exists():
-            return env_path
+        for name in (".env.shared", ".env"):
+            env_path = current / name
+            if env_path.exists() and env_path not in found:
+                found.append(env_path)
         current = current.parent
-    return None
+    return found
 
 
 def _load_env_files() -> None:
     """환경변수 파일들에서 API 키 등 로드. 먼저 로드된 값이 우선."""
-    # 환경변수로 명시적 지정 가능
+    # XPIPE_ENV_FILE 환경변수가 있으면 그것만 사용
     env_file = os.environ.get("XPIPE_ENV_FILE", "")
     if env_file and Path(env_file).exists():
         candidates = [Path(env_file)]
     else:
-        candidates = []
-        # .env.shared (상위 디렉토리 탐색)
-        env_shared = _find_env_shared()
-        if env_shared:
-            candidates.append(env_shared)
-        # document_pipeline/.env (로컬 — Upstage 등)
-        candidates.append(Path(__file__).resolve().parents[3] / ".env")
-        candidates.append(Path.cwd() / ".env")
+        # 상위 디렉토리 탐색 (.env.shared, .env)
+        candidates = _find_env_file()
     loaded = []
     for env_path in candidates:
         if env_path.exists():
