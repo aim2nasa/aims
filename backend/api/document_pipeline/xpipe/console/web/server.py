@@ -1445,7 +1445,13 @@ async def on_startup():
             "openai": "OPENAI_API_KEY",
             "upstage": "UPSTAGE_API_KEY",
         }
-        state = ServerState()
+        # state를 재생성하지 않고 기존 인스턴스의 env_api_keys만 갱신
+        # (재생성하면 모듈 레벨 alias가 이전 객체를 가리켜 이벤트/문서 추적이 깨짐)
+        state.env_api_keys = {
+            prov: os.environ.get(env_var, "")
+            for prov, env_var in _env_key_map.items()
+        }
+        state.current_config["mode"] = "real" if state.env_api_keys.get("openai") else "stub"
         logger.info("[xPipeWeb] 기본 env_key_map 적용 (uvicorn 직접 실행)")
 
     storage_path = state.current_config.get("storage_path", "")
