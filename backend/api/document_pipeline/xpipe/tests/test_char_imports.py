@@ -14,8 +14,8 @@ class TestProviderImport:
     """xpipe.providers 심볼 import 경로 캡처"""
 
     def test_upstage_ocr_provider_importable(self):
-        """from xpipe.providers import UpstageOCRProvider 경로 동작"""
-        from xpipe.providers import UpstageOCRProvider
+        """from xpipe.providers_builtin import UpstageOCRProvider 경로 동작"""
+        from xpipe.providers_builtin import UpstageOCRProvider
         assert UpstageOCRProvider is not None
         assert hasattr(UpstageOCRProvider, "process")
         assert hasattr(UpstageOCRProvider, "get_name")

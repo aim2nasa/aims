@@ -6,7 +6,7 @@ xPipe AI Provider ABC (코어 인터페이스)
 - EmbeddingProvider: 벡터 임베딩 생성
 
 내장 구현체는 providers_builtin.py에 분리되어 있다.
-하위 호환을 위해 이 모듈에서도 re-export한다.
+구현체는 xpipe.providers_builtin에서 직접 import해야 한다.
 """
 from __future__ import annotations
 
@@ -128,14 +128,3 @@ class EmbeddingProvider(ABC):
     def get_dimensions(self) -> int:
         """임베딩 벡터 차원 수 반환"""
         ...
-
-
-# ---------------------------------------------------------------------------
-# 하위 호환 re-export: 내장 구현체는 providers_builtin.py로 분리됨
-# `from xpipe.providers import OpenAILLMProvider` 경로를 유지하기 위함
-# ---------------------------------------------------------------------------
-from xpipe.providers_builtin import (  # noqa: F401, E402
-    UpstageOCRProvider,
-    OpenAILLMProvider,
-    OpenAIEmbeddingProvider,
-)

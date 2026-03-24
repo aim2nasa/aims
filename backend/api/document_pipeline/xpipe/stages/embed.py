@@ -106,7 +106,7 @@ async def _real_embed(
             logger.debug("ProviderRegistry에 'embedding' role 미등록 — OpenAI 직접 호출 fallback")
 
     # 2순위: OpenAIEmbeddingProvider fallback (ProviderRegistry 미등록 시)
-    from xpipe.providers import OpenAIEmbeddingProvider
+    from xpipe.providers_builtin import OpenAIEmbeddingProvider
 
     api_key = context.get("_api_keys", {}).get("openai", "")
     if not api_key:

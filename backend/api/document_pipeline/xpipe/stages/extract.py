@@ -168,7 +168,7 @@ class ExtractStage(Stage):
                 f"설정 패널에서 API 키를 입력하거나 .env.shared에 설정하세요. "
                 f"(파일: {file_name})"
             )
-        from xpipe.providers import UpstageOCRProvider
+        from xpipe.providers_builtin import UpstageOCRProvider
         provider = UpstageOCRProvider(api_key=api_key)
         result = await provider.process(file_path)
         context["_ocr_pages"] = result.get("pages", 1)

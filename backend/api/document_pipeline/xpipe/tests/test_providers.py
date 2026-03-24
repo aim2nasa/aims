@@ -540,24 +540,24 @@ class TestUpstageOCRProvider:
 
     def test_is_ocr_provider(self):
         """OCRProvider ABC를 올바르게 구현"""
-        from xpipe.providers import UpstageOCRProvider
+        from xpipe.providers_builtin import UpstageOCRProvider
         provider = UpstageOCRProvider()
         assert isinstance(provider, OCRProvider)
 
     def test_get_name(self):
         """이름은 'upstage'"""
-        from xpipe.providers import UpstageOCRProvider
+        from xpipe.providers_builtin import UpstageOCRProvider
         assert UpstageOCRProvider().get_name() == "upstage"
 
     def test_api_key_from_constructor(self):
         """생성자로 전달한 키가 우선"""
-        from xpipe.providers import UpstageOCRProvider
+        from xpipe.providers_builtin import UpstageOCRProvider
         p = UpstageOCRProvider(api_key="test-key-123")
         assert p.api_key == "test-key-123"
 
     def test_no_env_fallback(self, monkeypatch):
         """생성자 키가 없으면 환경변수 참조 없이 빈 문자열"""
-        from xpipe.providers import UpstageOCRProvider
+        from xpipe.providers_builtin import UpstageOCRProvider
         monkeypatch.setenv("UPSTAGE_API_KEY", "env-key-456")
         p = UpstageOCRProvider()
         # 환경변수 fallback이 없으므로 빈 문자열
@@ -565,21 +565,21 @@ class TestUpstageOCRProvider:
 
     def test_api_key_empty_raises(self):
         """API 키 없으면 RuntimeError"""
-        from xpipe.providers import UpstageOCRProvider
+        from xpipe.providers_builtin import UpstageOCRProvider
         p = UpstageOCRProvider(api_key="")
         with pytest.raises(RuntimeError, match="API 키가 설정되지 않았습니다"):
             asyncio.get_event_loop().run_until_complete(p.process("/dummy.png"))
 
     def test_set_api_key(self):
         """런타임 키 변경"""
-        from xpipe.providers import UpstageOCRProvider
+        from xpipe.providers_builtin import UpstageOCRProvider
         p = UpstageOCRProvider()
         p.set_api_key("new-key")
         assert p.api_key == "new-key"
 
     def test_registry_integration(self):
         """ProviderRegistry에 등록 + 조회"""
-        from xpipe.providers import UpstageOCRProvider
+        from xpipe.providers_builtin import UpstageOCRProvider
         registry = ProviderRegistry()
         provider = UpstageOCRProvider(api_key="test")
         registry.register("ocr", provider, priority=10)

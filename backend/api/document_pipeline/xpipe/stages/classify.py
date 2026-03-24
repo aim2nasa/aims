@@ -148,7 +148,7 @@ async def _real_classify(
             logger.debug("ProviderRegistry에 'llm' role 미등록 — OpenAI 직접 호출 fallback")
 
     # 2순위: OpenAILLMProvider fallback (ProviderRegistry 미등록 시)
-    from xpipe.providers import OpenAILLMProvider
+    from xpipe.providers_builtin import OpenAILLMProvider
 
     api_key = context.get("_api_keys", {}).get("openai", "")
     if not api_key:

@@ -55,6 +55,17 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # .env.shared 로드 (API 키 등 환경변수)
 # ---------------------------------------------------------------------------
+def _find_env_shared() -> Path | None:
+    """상위 디렉토리를 올라가며 .env.shared를 탐색한다."""
+    current = Path(__file__).resolve().parent
+    for _ in range(10):
+        env_path = current / ".env.shared"
+        if env_path.exists():
+            return env_path
+        current = current.parent
+    return None
+
+
 def _load_env_files() -> None:
     """환경변수 파일들에서 API 키 등 로드. 먼저 로드된 값이 우선."""
     # 환경변수로 명시적 지정 가능
@@ -62,13 +73,14 @@ def _load_env_files() -> None:
     if env_file and Path(env_file).exists():
         candidates = [Path(env_file)]
     else:
-        candidates = [
-            # .env.shared (프로젝트 루트 기준)
-            Path(__file__).resolve().parents[5] / ".env.shared",
-            # document_pipeline/.env (로컬 — Upstage 등)
-            Path(__file__).resolve().parents[3] / ".env",
-            Path.cwd() / ".env",
-        ]
+        candidates = []
+        # .env.shared (상위 디렉토리 탐색)
+        env_shared = _find_env_shared()
+        if env_shared:
+            candidates.append(env_shared)
+        # document_pipeline/.env (로컬 — Upstage 등)
+        candidates.append(Path(__file__).resolve().parents[3] / ".env")
+        candidates.append(Path.cwd() / ".env")
     loaded = []
     for env_path in candidates:
         if env_path.exists():
