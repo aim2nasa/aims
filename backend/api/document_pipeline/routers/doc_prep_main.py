@@ -1652,8 +1652,8 @@ async def _send_sse_webhook(event: str, payload: dict) -> None:
             await client.post(
                 f"{settings.AIMS_API_URL}{path}",
                 json={
-                    "customerId": payload.get("customer_id", ""),
-                    "fileId": payload.get("file_id", ""),
+                    "customer_id": payload.get("customer_id", ""),
+                    "file_id": payload.get("file_id", ""),
                     "status": payload.get("status", "pending"),
                 },
                 headers={"X-API-Key": settings.WEBHOOK_API_KEY},
