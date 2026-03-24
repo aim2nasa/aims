@@ -1454,6 +1454,23 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                         </div>
                       </Tooltip>
                     )}
+                    {!leftPaneCollapsed && pipelineEngine && (
+                      <Tooltip content={`파이프라인: ${pipelineEngine === 'xpipe' ? 'xPipe 엔진' : '기본 엔진'}`} placement="top">
+                        <div style={{
+                          fontSize: '9px',
+                          padding: '1px 4px',
+                          borderRadius: '3px',
+                          marginLeft: '4px',
+                          background: pipelineEngine === 'xpipe' ? 'var(--color-accent)' : 'var(--color-border)',
+                          color: pipelineEngine === 'xpipe' ? '#fff' : 'var(--color-text-tertiary)',
+                          fontWeight: 600,
+                          letterSpacing: '0.5px',
+                          cursor: 'default',
+                        }}>
+                          {pipelineEngine === 'xpipe' ? 'xP' : 'LP'}
+                        </div>
+                      </Tooltip>
+                    )}
                     <div className={`leftpane-footer__right ${leftPaneCollapsed ? 'leftpane-footer__right--centered' : ''}`}>
                       <Suspense fallback={<div className="leftpane-footer__hamburger-skeleton" />}>
                         <HamburgerButton
