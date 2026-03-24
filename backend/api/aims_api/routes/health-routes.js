@@ -25,13 +25,24 @@ module.exports = function(db) {
       // MongoDB 연결 상태 확인
       await db.admin().ping();
 
+      // document_pipeline 엔진 정보 조회 (non-blocking)
+      let pipelineEngine = '';
+      try {
+        const pipelineRes = await fetch('http://localhost:8100/health', { signal: AbortSignal.timeout(2000) });
+        if (pipelineRes.ok) {
+          const pipelineData = await pipelineRes.json();
+          pipelineEngine = pipelineData.pipeline_engine || '';
+        }
+      } catch { /* ignore */ }
+
       res.json({
         success: true,
         message: 'API 서버가 정상적으로 작동 중입니다.',
         timestamp: utcNowISO(),
         database: 'connected',
         version: VERSION_INFO.fullVersion,
-        versionInfo: VERSION_INFO
+        versionInfo: VERSION_INFO,
+        pipeline_engine: pipelineEngine,
       });
     } catch (error) {
       backendLogger.error('Server', 'Health check 실패 (MongoDB 연결 오류)', error);

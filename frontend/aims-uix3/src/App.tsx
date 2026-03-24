@@ -311,6 +311,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [previewModalVisible, setPreviewModalVisible] = useState(false)
   const [previewModalDocument, setPreviewModalDocument] = useState<PreviewDocumentInfo | null>(null)
 
+  // 파이프라인 엔진 상태 (xpipe/legacy)
+  const [pipelineEngine, setPipelineEngine] = useState<string>('')
+  useEffect(() => {
+    fetch('/api/health').then(r => r.json())
+      .then(data => setPipelineEngine(data.pipeline_engine || ''))
+      .catch(() => setPipelineEngine(''))
+  }, [])
+
   // 사용량 요약 위젯 상태 (LeftPane 하단) - useAppUsageData 훅으로 분리
   const {
     storageInfo: usageStorageInfo,
@@ -1364,6 +1372,23 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                         v{APP_VERSION}
                       </div>
                     </Tooltip>
+                    {pipelineEngine && (
+                      <Tooltip content={`파이프라인: ${pipelineEngine === 'xpipe' ? 'xPipe 엔진' : '기본 엔진'}`} placement="top">
+                        <div style={{
+                          fontSize: '9px',
+                          padding: '1px 4px',
+                          borderRadius: '3px',
+                          marginLeft: '4px',
+                          background: pipelineEngine === 'xpipe' ? 'var(--color-accent)' : 'var(--color-border)',
+                          color: pipelineEngine === 'xpipe' ? '#fff' : 'var(--color-text-tertiary)',
+                          fontWeight: 600,
+                          letterSpacing: '0.5px',
+                          cursor: 'default',
+                        }}>
+                          {pipelineEngine === 'xpipe' ? 'xP' : 'LP'}
+                        </div>
+                      </Tooltip>
+                    )}
                   </div>
                 }
               />
