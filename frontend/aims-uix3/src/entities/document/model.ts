@@ -175,6 +175,11 @@ export const DocumentUtils = {
       'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PPTX',
       'text/plain': 'TXT',
       'text/csv': 'CSV',
+      'application/x-hwp': 'HWP',
+      'application/haansofthwp': 'HWP',
+      'application/vnd.hancom.hwp': 'HWP',
+      'application/hwp+zip': 'HWPX',
+      'application/vnd.hancom.hwpx': 'HWPX',
     };
 
     return mimeMap[mimeType] || mimeType.split('/')[1]?.toUpperCase() || '';

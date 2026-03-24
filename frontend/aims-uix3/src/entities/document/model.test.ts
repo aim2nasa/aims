@@ -107,6 +107,14 @@ describe('DocumentUtils.getFileExtension', () => {
     expect(DocumentUtils.getFileExtension(undefined)).toBe('');
   });
 
+  it('HWP/HWPX 확장자를 올바르게 반환한다', () => {
+    expect(DocumentUtils.getFileExtension('application/x-hwp')).toBe('HWP');
+    expect(DocumentUtils.getFileExtension('application/haansofthwp')).toBe('HWP');
+    expect(DocumentUtils.getFileExtension('application/vnd.hancom.hwp')).toBe('HWP');
+    expect(DocumentUtils.getFileExtension('application/hwp+zip')).toBe('HWPX');
+    expect(DocumentUtils.getFileExtension('application/vnd.hancom.hwpx')).toBe('HWPX');
+  });
+
   it('알 수 없는 MIME 타입은 대문자로 변환한다', () => {
     expect(DocumentUtils.getFileExtension('application/octet-stream')).toBe('OCTET-STREAM');
   });
