@@ -89,9 +89,32 @@ TDD 사이클 준수: 항목 수정 → 테스트 ALL PASS 확인 → 다음 항
 
 overallStatus 세분화도 정상 동작: AR 문서가 `embedding` 상태(크론 처리 중)로 정확히 표시됨.
 
-### Phase 4: 사용자 매뉴얼 — 대기
+### Phase 3.5: 모듈화 완성도 평가 (Alex + Gini + Claude)
 
-xPipe 모듈화 완료 판단 후 진행 예정.
+**판정: FAIL — 완벽하지 않음 (약 80%)**
+
+잔여 Major 이슈 4건:
+
+| # | 이슈 | 파일 | 심각도 |
+|---|------|------|--------|
+| R1 | `adapter_name == "insurance"` 하드코딩 fallback 분기 | `server.py:278` | Major |
+| R2 | 어댑터 유효값에 `"insurance"`, `"legal"` 하드코딩 | `server.py:1162` | Major |
+| R3 | `OPENAI_API_KEY`, `UPSTAGE_API_KEY` 환경변수 직접 참조 5곳 | `server.py` | Major |
+| R4 | ClassifyStage/EmbedStage의 OpenAI fallback 직접 호출 잔존 | `classify.py`, `embed.py` | Major |
+
+→ Phase 2-B로 추가 리팩토링 진행 → **완료** (`09c207f6`)
+
+### Phase 3.5-B: 최종 모듈화 평가 — **3자 ALL PASS**
+
+| 평가자 | 판정 | 근거 |
+|--------|------|------|
+| **Alex** | **PASS** | 4개 기준 모두 충족. stages/에서 openai 직접 import 0건, 도메인 참조 0건 |
+| **Gini** | **PASS** | 이전 지적 4건 모두 수정 확인. 환경변수 캡슐화, 어댑터 플러그인 구조 완성 |
+| **Claude** | **PASS** | 453 테스트 ALL PASS, 프로덕션 실테스트 PASS |
+
+### Phase 4: 사용자 매뉴얼 — 진행 가능
+
+3자 ALL PASS 달성. 모듈화 완료.
 
 ---
 
@@ -102,6 +125,8 @@ xPipe 모듈화 완료 판단 후 진행 예정.
 | `57d38469` | 모듈화 분석 + 리팩토링 계획 문서 |
 | `f4332734` | Phase 1: characterization 테스트 60개 |
 | `17ccb8d3` | Phase 2: 리팩토링 11건 완료 (453 테스트 ALL PASS) |
+| `0fce74be` | Phase 3 실환경 검증 결과 기록 |
+| `09c207f6` | Phase 2-B: 잔여 Major 4건 완전 해소 (3자 ALL PASS) |
 
 ---
 
