@@ -710,7 +710,7 @@ body {
   background: var(--surface);
   border-radius: var(--radius);
   border: 1px solid var(--border-light);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .doc-table {
@@ -1429,9 +1429,8 @@ tr.row-error {
   color: #fff;
   font-size: 11px;
   font-weight: 400;
-  white-space: normal;
-  word-break: keep-all;
-  max-width: 300px;
+  white-space: nowrap;
+  width: max-content;
   line-height: 1.5;
   z-index: 300;
   pointer-events: none;
