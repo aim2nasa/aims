@@ -2121,6 +2121,10 @@ async def _process_via_xpipe(
     await _notify_progress(doc_id, user_id, 70, "classifying", "AI 분류 완료")
 
     # Meta 업데이트
+    # 파일 메타데이터
+    file_size = len(file_content)
+    file_ext = os.path.splitext(original_name or "")[1].lower()
+
     meta_update = {
         "meta.full_text": extracted_text,
         "meta.length": len(extracted_text) if extracted_text else 0,
@@ -2128,6 +2132,9 @@ async def _process_via_xpipe(
         "meta.meta_status": "done",
         "meta.document_type": doc_type or "general",
         "meta.confidence": confidence or 0.0,
+        "meta.size_bytes": file_size,
+        "meta.filename": original_name,
+        "meta.extension": file_ext,
         "document_type": doc_type or "general",
         "status": "completed",
         "overallStatus": "completed",
