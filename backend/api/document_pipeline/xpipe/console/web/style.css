@@ -360,34 +360,6 @@ body {
   border-color: var(--accent);
 }
 
-#adapter-fields {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.adapter-config input {
-  width: 160px;
-  padding: 5px 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-family: var(--mono);
-  background: var(--surface);
-  color: var(--text-primary);
-  outline: none;
-}
-
-.adapter-config input:focus {
-  border-color: var(--accent);
-}
-
-.adapter-config input[readonly] {
-  background: var(--bg);
-  color: var(--text-secondary);
-  cursor: default;
-}
-
 .adapter-status {
   font-size: 11px;
   margin-left: 4px;
@@ -988,6 +960,17 @@ tr.row-error {
   font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
+}
+.adapter-tag {
+  display: block;
+  font-size: 9px;
+  color: var(--accent, #007aff);
+  margin-top: 2px;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+.row-adapter td {
+  background: rgba(0, 122, 255, 0.25);
 }
 
 .proc-ocr {

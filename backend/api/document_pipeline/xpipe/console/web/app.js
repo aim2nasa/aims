@@ -139,8 +139,9 @@
           const adapterVal = adapterSelect.value;
           payload.adapter = adapterVal;
           if (adapterVal !== 'none') {
-            payload.adapter_module = ($('#cfg-adapter-module').value || '').trim();
-            payload.adapter_class = ($('#cfg-adapter-class').value || '').trim();
+            const selectedOpt = adapterSelect.options[adapterSelect.selectedIndex];
+            payload.adapter_module = selectedOpt.dataset.module || '';
+            payload.adapter_class = selectedOpt.dataset.class || '';
           }
         }
         // 저장 경로 (항상 전송 — 빈 값이면 임시 디렉토리로 복원)
@@ -322,7 +323,7 @@
     // 프리셋 매칭: select의 data-module/data-class와 비교
     let matched = false;
     for (const opt of select.options) {
-      if (opt.value === 'none' || opt.value === 'custom') continue;
+      if (opt.value === 'none') continue;
       if (opt.dataset.module === adapterModule && opt.dataset.class === adapterClass) {
         select.value = opt.value;
         matched = true;
@@ -332,47 +333,25 @@
 
     if (adapter === 'none' || (!adapterModule && !adapterClass)) {
       select.value = 'none';
-    } else if (!matched) {
-      select.value = 'custom';
-      $('#cfg-adapter-module').value = adapterModule;
-      $('#cfg-adapter-class').value = adapterClass;
     }
 
     _updateAdapterFieldsVisibility();
   }
 
-  /** 어댑터 select 변경 시 필드 표시/숨김 제어 */
+  /** 어댑터 select 변경 시 테스트 버튼 표시/숨김 */
   function _updateAdapterFieldsVisibility() {
     const select = $('#cfg-adapter');
-    const fields = $('#adapter-fields');
     const testBtn = $('#btn-adapter-test');
-    const moduleInput = $('#cfg-adapter-module');
-    const classInput = $('#cfg-adapter-class');
     const statusEl = $('#adapter-status');
-    if (!select || !fields || !testBtn) return;
+    if (!select) return;
 
     const val = select.value;
 
     if (val === 'none') {
-      fields.style.display = 'none';
-      testBtn.style.display = 'none';
+      if (testBtn) testBtn.style.display = 'none';
       if (statusEl) { statusEl.textContent = ''; statusEl.className = 'adapter-status'; }
-    } else if (val === 'custom') {
-      fields.style.display = '';
-      testBtn.style.display = '';
-      moduleInput.readOnly = false;
-      classInput.readOnly = false;
-      moduleInput.value = moduleInput.value || '';
-      classInput.value = classInput.value || '';
     } else {
-      // 프리셋: data-module/data-class에서 값 채움, readonly
-      const selectedOpt = select.options[select.selectedIndex];
-      fields.style.display = '';
-      testBtn.style.display = '';
-      moduleInput.value = selectedOpt.dataset.module || '';
-      classInput.value = selectedOpt.dataset.class || '';
-      moduleInput.readOnly = true;
-      classInput.readOnly = true;
+      if (testBtn) testBtn.style.display = '';
     }
   }
 
@@ -388,17 +367,12 @@
 
     if (testBtn) {
       testBtn.addEventListener('click', async () => {
-        const moduleVal = ($('#cfg-adapter-module').value || '').trim();
-        const classVal = ($('#cfg-adapter-class').value || '').trim();
+        const selectedOpt = select.options[select.selectedIndex];
+        const moduleVal = selectedOpt.dataset.module || '';
+        const classVal = selectedOpt.dataset.class || '';
         const statusEl = $('#adapter-status');
 
-        if (!moduleVal || !classVal) {
-          if (statusEl) {
-            statusEl.textContent = '모듈 경로와 클래스명을 입력하세요';
-            statusEl.className = 'adapter-status err';
-          }
-          return;
-        }
+        if (!moduleVal || !classVal) return;
 
         testBtn.disabled = true;
         testBtn.textContent = '테스트 중...';
@@ -465,12 +439,8 @@
       : '';
 
     // 어댑터 요약 라벨
-    const ADAPTER_LABELS = { none: '', insurance: '보험 어댑터' };
     const adapterVal = cfg.adapter || 'none';
-    let adapterLabel = ADAPTER_LABELS[adapterVal] || '';
-    if (adapterVal === 'custom') {
-      adapterLabel = (cfg.adapter_class || '사용자 지정');
-    }
+    const adapterLabel = adapterVal !== 'none' ? adapterVal : '';
 
     // 스테이지 뱃지 생성
     const enabled = cfg.enabled_stages || [];
@@ -695,6 +665,10 @@
     dom.docTbody.innerHTML = filtered.map(doc => {
       const ext = getFileExt(doc.filename);
       const procBadge = renderProcessingBadge(ext);
+      const adapterStatus = doc.result && doc.result.adapter_status;
+      const adapterTag = adapterStatus && adapterStatus.connected
+        ? '<span class="adapter-tag">' + escapeHtml(adapterStatus.name) + '</span>'
+        : '';
       const displayName = (doc.result && doc.result.display_name && doc.result.display_name !== doc.filename)
         ? '<span class="fname-display">' + escapeHtml(truncate(doc.result.display_name, 32)) + '</span><span class="fname-orig">' + escapeHtml(truncate(doc.filename, 28)) + '</span>'
         : escapeHtml(truncate(doc.filename, 32));
@@ -720,13 +694,14 @@
       const auditHtml = renderAuditBadge(doc);
       const actionsHtml = renderActions(doc);
       const rowClass = 'row-' + doc.status;
+      const adapterClass = (adapterStatus && adapterStatus.connected) ? ' row-adapter' : '';
       const selClass = doc.id === selectedDocId ? 'accordion-open' : '';
 
       const chevron = doc.id === selectedDocId ? '▼' : '▶';
       const queueNum = doc.queue_number ? '<span class="queue-number">#' + doc.queue_number + '</span>' : '';
-      return '<tr class="' + rowClass + ' ' + selClass + '" data-id="' + doc.id + '">' +
+      return '<tr class="' + rowClass + adapterClass + ' ' + selClass + '" data-id="' + doc.id + '">' +
         '<td class="td-toggle">' + queueNum + '<button type="button" class="btn-accordion-toggle" title="상세 보기">' + chevron + '</button></td>' +
-        '<td>' + procBadge + '</td>' +
+        '<td>' + procBadge + adapterTag + '</td>' +
         '<td class="td-filename td-clickable" data-action="preview" data-id="' + doc.id + '">' + displayName + '</td>' +
         '<td class="td-compact">' + sizeHtml + '</td>' +
         '<td class="td-compact">' + typeHtml + '</td>' +
@@ -916,7 +891,6 @@
     let prevShown = false;
     for (let i = 0; i < stageOrder.length; i++) {
       const name = stageOrder[i];
-      if (name === 'complete') continue;  // "완료"는 도트 표시 불필요 (항상 마지막, 정보 없음)
       const detail = stagesDetail[name] || {};
       const stageData = (doc.stages_data && doc.stages_data[name]) || {};
       // stages_data.status를 우선 참조 (실제 파이프라인 결과), stages_detail은 fallback
