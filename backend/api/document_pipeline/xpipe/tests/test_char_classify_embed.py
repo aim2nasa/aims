@@ -112,7 +112,7 @@ class TestClassifyStageReal:
                     "categories": ["policy", "general"],
                 },
                 "_api_keys": {"openai": "test-key"},
-                "extracted_text": "보험증권 내용",
+                "extracted_text": "샘플 문서 내용",
                 "filename": "test.pdf",
             }
             result = await stage.execute(ctx)

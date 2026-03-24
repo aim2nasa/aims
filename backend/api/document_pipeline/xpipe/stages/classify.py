@@ -24,7 +24,7 @@ class ClassifyStage(Stage):
     _classify_config 예시:
         {
             "system_prompt": "다음 문서를 분류하세요...",
-            "categories": ["보험증권", "계약서", ...],
+            "categories": ["type_a", "type_b", ...],
             "response_format": "json"
         }
     """

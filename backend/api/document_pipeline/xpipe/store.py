@@ -135,7 +135,7 @@ class DocumentStore(ABC):
         """임베딩 대상 문서 조회
 
         처리 완료 후 아직 임베딩되지 않은 문서를 조회한다.
-        현재 AIMS에서는 embedding/full_pipeline.py (크론 1분)에서 호출.
+        호스트 앱의 임베딩 파이프라인(크론 등)에서 호출.
 
         Returns:
             임베딩 대상 문서 목록

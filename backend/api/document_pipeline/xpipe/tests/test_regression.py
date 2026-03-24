@@ -1,13 +1,13 @@
 """
 xPipe 통합 Regression 테스트
 
-xpipe 수정 시 AIMS 파이프라인이 깨지는지 잡아주는 통합 테스트.
+xpipe 수정 시 표준 파이프라인이 깨지는지 잡아주는 통합 테스트.
 기존 222개 단위 테스트와 별도로, 모듈 간 연동·E2E 흐름·어댑터 교체·하위 호환성을 검증한다.
 
 구성:
-  1. 파이프라인 E2E 흐름 (InsuranceAdapter + Pipeline + 전체 모듈 조립)
+  1. 파이프라인 E2E 흐름 (DomainAdapter + Pipeline + 전체 모듈 조립)
   2. 모듈 간 연동 테스트 (Pipeline + EventBus/AuditLog/QualityGate/CostTracker)
-  3. 어댑터 교체 regression (Insurance → Legal, 어댑터 없이, 예외 어댑터)
+  3. 어댑터 교체 regression (Mock → Legal, 어댑터 없이, 예외 어댑터)
   4. 하위 호환성 regression (DomainAdapter 확장, Golden File, ClassificationConfig 호환)
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ import pytest
 
 # --- xpipe 코어 모듈 ---
 from xpipe.pipeline import Pipeline, PipelineDefinition, StageConfig
-from xpipe.pipeline_presets import AIMS_INSURANCE_PRESET
+from xpipe.pipeline_presets import STANDARD_PRESET
 from xpipe.events import EventBus, PipelineEvent
 from xpipe.audit import AuditLog, AuditEntry
 from xpipe.quality import QualityGate, QualityConfig
@@ -44,8 +44,8 @@ from xpipe.stages import (
     CompleteStage,
 )
 
-# --- Mock 어댑터 (insurance 직접 의존 제거) ---
-from xpipe.tests.conftest import MockInsuranceAdapter
+# --- Mock 어댑터 (도메인 무관) ---
+from xpipe.tests.conftest import MockDomainAdapter
 
 # --- poc_legal 어댑터 (PoC 검증용, xpipe 외부) ---
 from poc_legal.adapter import LegalDomainAdapter
@@ -71,9 +71,9 @@ def _register_all_stages(pipeline: Pipeline) -> None:
     pipeline.register_stage("complete", CompleteStage)
 
 
-def _build_aims_pipeline(event_bus: EventBus | None = None) -> Pipeline:
-    """AIMS 보험 프리셋으로 파이프라인을 생성하고 스테이지를 등록"""
-    pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
+def _build_standard_pipeline(event_bus: EventBus | None = None) -> Pipeline:
+    """표준 프리셋으로 파이프라인을 생성하고 스테이지를 등록"""
+    pipeline = Pipeline.from_dict(STANDARD_PRESET)
     if event_bus is not None:
         pipeline.event_bus = event_bus
     _register_all_stages(pipeline)
@@ -81,30 +81,30 @@ def _build_aims_pipeline(event_bus: EventBus | None = None) -> Pipeline:
 
 
 # ---------------------------------------------------------------------------
-# AR/CRS 텍스트 픽스처
+# 특수 문서 텍스트 픽스처 (도메인 무관)
 # ---------------------------------------------------------------------------
 
-_AR_TEXT = (
-    "MetLife\n"
-    "홍길동 고객님을 위한\n"
-    "Annual Review Report\n"
-    "보유계약 현황\n"
-    "발행(기준)일: 2026년 1월 15일\n"
+_SPECIAL_A_TEXT = (
+    "PROVIDER_A\n"
+    "TestEntity prepared for\n"
+    "SPECIAL_DOCUMENT\n"
+    "ENTITY_DATA STATISTICS\n"
+    "Date: 2026-01-15\n"
 )
 
-_CRS_TEXT = (
-    "메트라이프\n"
-    "홍길동 고객님을 위한\n"
-    "Customer Review Service\n"
-    "변액보험 적립금 현황\n"
-    "투자수익률 보고서\n"
-    "발행일: 2026년 3월 10일\n"
+_SPECIAL_B_TEXT = (
+    "PROVIDER_B\n"
+    "TestEntity prepared for\n"
+    "REVIEW_DOCUMENT\n"
+    "METRICS_DATA ANALYSIS\n"
+    "PORTFOLIO report\n"
+    "Date: 2026-03-10\n"
 )
 
 _NORMAL_TEXT = (
-    "삼성화재 자동차보험 증권\n"
-    "계약번호: 2026-001\n"
-    "보험기간: 2026.01.01 ~ 2027.01.01\n"
+    "General document content\n"
+    "Reference: 2026-001\n"
+    "Period: 2026.01.01 ~ 2027.01.01\n"
 )
 
 
@@ -123,7 +123,7 @@ class TestPipelineE2EFlow:
         bus = EventBus()
         bus.on("stage_complete", lambda e: events.append(e))
 
-        pipeline = _build_aims_pipeline(event_bus=bus)
+        pipeline = _build_standard_pipeline(event_bus=bus)
 
         context = {
             "document_id": "e2e-001",
@@ -167,7 +167,7 @@ class TestPipelineE2EFlow:
         """시나리오 2: 텍스트 없는 PDF
         Ingest → Convert(스킵) → Extract(실행) → Classify → DetectSpecial → Embed → Complete
         """
-        pipeline = _build_aims_pipeline()
+        pipeline = _build_standard_pipeline()
 
         context = {
             "document_id": "e2e-002",
@@ -184,33 +184,33 @@ class TestPipelineE2EFlow:
         assert "convert" in result["_pipeline"]["stages_skipped"]
         assert len(result["_pipeline"]["stages_executed"]) == 6
 
-    def test_scenario3_crs_document(self):
-        """시나리오 3: CRS 문서 — 어댑터의 detect_special_documents 검증
+    def test_scenario3_special_b_document(self):
+        """시나리오 3: 특수 문서 B — 어댑터의 detect_special_documents 검증
         Ingest → Extract(스킵) → Classify → DetectSpecial → Embed → Complete
-        + MockInsuranceAdapter가 CRS를 올바르게 감지하는지 교차 검증
+        + MockDomainAdapter가 특수 문서 B를 올바르게 감지하는지 교차 검증
         """
         # 파이프라인 실행
-        pipeline = _build_aims_pipeline()
+        pipeline = _build_standard_pipeline()
         context = {
             "document_id": "e2e-003",
             "has_text": True,
-            "text": _CRS_TEXT,
+            "text": _SPECIAL_B_TEXT,
         }
         result = _run(pipeline.run(context))
 
         assert result["completed"] is True
         assert "extract" in result["_pipeline"]["stages_skipped"]
 
-        # 어댑터 CRS 감지 검증 (파이프라인과 독립적으로도 동작하는지)
-        adapter = MockInsuranceAdapter()
+        # 어댑터 특수 문서 B 감지 검증 (파이프라인과 독립적으로도 동작하는지)
+        adapter = MockDomainAdapter()
         detections = _run(adapter.detect_special_documents(
-            text=_CRS_TEXT,
+            text=_SPECIAL_B_TEXT,
             mime_type="application/pdf",
         ))
         assert len(detections) == 1
-        assert detections[0].doc_type == "customer_review"
+        assert detections[0].doc_type == "review_document"
         assert detections[0].confidence == 1.0
-        assert detections[0].metadata.get("customer_name") is not None
+        assert detections[0].metadata.get("entity_name") is not None
 
         # displayName 생성 검증
         display_name = _run(adapter.generate_display_name(
@@ -218,11 +218,11 @@ class TestPipelineE2EFlow:
             detection=detections[0],
         ))
         assert display_name  # 빈 문자열이 아닌지
-        assert "CRS" in display_name
+        assert "REVIEW" in display_name
 
     def test_scenario4_normal_document_no_special(self):
-        """시나리오 4: 일반 문서 (AR/CRS 아님) → Detection 빈 리스트, 정상 완료"""
-        pipeline = _build_aims_pipeline()
+        """시나리오 4: 일반 문서 (특수 문서 아님) → Detection 빈 리스트, 정상 완료"""
+        pipeline = _build_standard_pipeline()
         context = {
             "document_id": "e2e-004",
             "has_text": True,
@@ -234,33 +234,33 @@ class TestPipelineE2EFlow:
         assert result["_pipeline"]["errors"] == []
 
         # 어댑터 감지 결과: 빈 리스트
-        adapter = MockInsuranceAdapter()
+        adapter = MockDomainAdapter()
         detections = _run(adapter.detect_special_documents(
             text=_NORMAL_TEXT,
             mime_type="application/pdf",
         ))
         assert detections == []
 
-    def test_scenario_ar_document(self):
-        """AR 문서 E2E: 파이프라인 완료 + AR 감지 + displayName 생성"""
-        pipeline = _build_aims_pipeline()
+    def test_scenario_special_a_document(self):
+        """특수 문서 A E2E: 파이프라인 완료 + 감지 + displayName 생성"""
+        pipeline = _build_standard_pipeline()
         context = {
             "document_id": "e2e-005",
             "has_text": True,
-            "text": _AR_TEXT,
+            "text": _SPECIAL_A_TEXT,
         }
         result = _run(pipeline.run(context))
         assert result["completed"] is True
 
-        # 어댑터 AR 감지 검증
-        adapter = MockInsuranceAdapter()
+        # 어댑터 특수 문서 A 감지 검증
+        adapter = MockDomainAdapter()
         detections = _run(adapter.detect_special_documents(
-            text=_AR_TEXT,
+            text=_SPECIAL_A_TEXT,
             mime_type="application/pdf",
         ))
         assert len(detections) == 1
-        assert detections[0].doc_type == "annual_report"
-        assert detections[0].metadata["customer_name"] == "홍길동"
+        assert detections[0].doc_type == "special_report"
+        assert detections[0].metadata["entity_name"] == "TestEntity"
         assert detections[0].metadata["issue_date"] == "2026-01-15"
 
         # displayName 생성
@@ -268,11 +268,11 @@ class TestPipelineE2EFlow:
             doc={},
             detection=detections[0],
         ))
-        assert display_name == "홍길동_AR_2026-01-15.pdf"
+        assert display_name == "TestEntity_SPECIAL_2026-01-15.pdf"
 
     def test_credit_pending_skips_embed(self):
         """credit_pending=True → embed + convert 스킵, 나머지 정상 실행"""
-        pipeline = _build_aims_pipeline()
+        pipeline = _build_standard_pipeline()
         context = {
             "document_id": "e2e-006",
             "credit_pending": True,
@@ -286,7 +286,7 @@ class TestPipelineE2EFlow:
 
     def test_text_and_credit_pending_both_skip(self):
         """텍스트 있음 + 크레딧 부족 → convert + extract + embed 스킵"""
-        pipeline = _build_aims_pipeline()
+        pipeline = _build_standard_pipeline()
         context = {
             "document_id": "e2e-007",
             "has_text": True,
@@ -317,7 +317,7 @@ class TestModuleIntegration:
         bus.on("stage_complete", lambda e: events.append(e))
         bus.on("*", lambda e: None)  # 와일드카드 리스너도 동작하는지
 
-        pipeline = _build_aims_pipeline(event_bus=bus)
+        pipeline = _build_standard_pipeline(event_bus=bus)
         result = _run(pipeline.run({"document_id": "int-001"}))
 
         # 전체 7 스테이지 중 convert 스킵 → 6 이벤트
@@ -378,7 +378,7 @@ class TestModuleIntegration:
 
         bus.on("stage_complete", _on_stage_complete)
 
-        pipeline = _build_aims_pipeline(event_bus=bus)
+        pipeline = _build_standard_pipeline(event_bus=bus)
         _run(pipeline.run({"document_id": "int-003"}))
 
         # 7개 스테이지 중 convert 스킵 → 6개 감사 로그
@@ -395,7 +395,7 @@ class TestModuleIntegration:
 
     def test_pipeline_quality_gate_evaluation(self):
         """Pipeline + QualityGate: 파이프라인 완료 후 품질 평가"""
-        pipeline = _build_aims_pipeline()
+        pipeline = _build_standard_pipeline()
         context = {
             "document_id": "int-004",
             "has_text": True,
@@ -456,7 +456,7 @@ class TestModuleIntegration:
 
         bus.on("stage_complete", _on_stage_complete)
 
-        pipeline = _build_aims_pipeline(event_bus=bus)
+        pipeline = _build_standard_pipeline(event_bus=bus)
         _run(pipeline.run({"document_id": "int-005"}))
 
         # classify + embed → 2건 기록
@@ -468,43 +468,43 @@ class TestModuleIntegration:
         assert summary["total_cost"] > 0
         assert "openai" in summary["by_provider"]
 
-    def test_insurance_adapter_quality_gate(self):
-        """InsuranceAdapter + QualityGate: 분류 결과 품질 평가"""
-        adapter = MockInsuranceAdapter()
+    def test_domain_adapter_quality_gate(self):
+        """MockDomainAdapter + QualityGate: 분류 결과 품질 평가"""
+        adapter = MockDomainAdapter()
         config = _run(adapter.get_classification_config())
 
         gate = QualityGate()
 
         # 높은 confidence 문서
         good_doc = {
-            "full_text": "삼성화재 자동차보험 증권 2026년도",
+            "full_text": "Sample document for type_a classification",
             "classification_confidence": 0.92,
-            "document_type": "policy",
+            "document_type": "type_a",
         }
         good_score = gate.evaluate(good_doc)
         assert good_score.passed is True
 
-        # valid_types에 policy가 포함되어 있는지 확인
-        assert "policy" in config.valid_types
+        # valid_types에 type_a가 포함되어 있는지 확인
+        assert "type_a" in config.valid_types
 
     @pytest.mark.asyncio
-    async def test_insurance_adapter_test_runner(self):
-        """InsuranceAdapter + TestRunner: 외부 테스트 셋으로 어댑터 검증"""
-        adapter = MockInsuranceAdapter()
+    async def test_domain_adapter_test_runner(self):
+        """MockDomainAdapter + TestRunner: 외부 테스트 셋으로 어댑터 검증"""
+        adapter = MockDomainAdapter()
         runner = TestRunner(adapter)
 
         test_cases = [
             TestCase(
-                input_text=_AR_TEXT,
+                input_text=_SPECIAL_A_TEXT,
                 input_mime="application/pdf",
-                expected_detections=[{"doc_type": "annual_report"}],
-                description="AR 감지",
+                expected_detections=[{"doc_type": "special_report"}],
+                description="특수 문서 A 감지",
             ),
             TestCase(
-                input_text=_CRS_TEXT,
+                input_text=_SPECIAL_B_TEXT,
                 input_mime="application/pdf",
-                expected_detections=[{"doc_type": "customer_review"}],
-                description="CRS 감지",
+                expected_detections=[{"doc_type": "review_document"}],
+                description="특수 문서 B 감지",
             ),
             TestCase(
                 input_text=_NORMAL_TEXT,
@@ -527,25 +527,25 @@ class TestModuleIntegration:
 class TestAdapterSwapRegression:
     """어댑터 교체 시 파이프라인 코어가 동일하게 동작하는지 검증"""
 
-    def test_insurance_to_legal_pipeline_core_same(self):
-        """Insurance → Legal 어댑터 교체 시 파이프라인 코어 동일 동작
+    def test_adapter_swap_pipeline_core_same(self):
+        """Adapter A → Adapter B 어댑터 교체 시 파이프라인 코어 동일 동작
 
         어댑터만 다르고, 파이프라인 코어(스테이지 실행 순서, 스킵 조건, 메타데이터)는 동일.
         """
-        insurance_pipeline = _build_aims_pipeline()
-        legal_pipeline = _build_aims_pipeline()  # 같은 프리셋 사용
+        pipeline_a = _build_standard_pipeline()
+        legal_pipeline = _build_standard_pipeline()  # 같은 프리셋 사용
 
         # 동일한 context로 양쪽 실행
         base_context = {"document_id": "swap-001", "has_text": True, "text": "일반 텍스트"}
 
-        insurance_result = _run(insurance_pipeline.run(dict(base_context)))
+        result_a = _run(pipeline_a.run(dict(base_context)))
         legal_result = _run(legal_pipeline.run(dict(base_context)))
 
         # 파이프라인 코어 메타데이터 동일
-        assert insurance_result["_pipeline"]["name"] == legal_result["_pipeline"]["name"]
-        assert insurance_result["_pipeline"]["stages_executed"] == legal_result["_pipeline"]["stages_executed"]
-        assert insurance_result["_pipeline"]["stages_skipped"] == legal_result["_pipeline"]["stages_skipped"]
-        assert insurance_result["status"] == legal_result["status"]
+        assert result_a["_pipeline"]["name"] == legal_result["_pipeline"]["name"]
+        assert result_a["_pipeline"]["stages_executed"] == legal_result["_pipeline"]["stages_executed"]
+        assert result_a["_pipeline"]["stages_skipped"] == legal_result["_pipeline"]["stages_skipped"]
+        assert result_a["status"] == legal_result["status"]
 
     def test_legal_adapter_classification_config(self):
         """Legal 어댑터의 분류 체계가 올바르게 동작하는지"""
@@ -591,7 +591,7 @@ class TestAdapterSwapRegression:
         파이프라인 엔진 자체는 어댑터와 직접 의존 없이 동작한다.
         (스테이지가 어댑터를 호출하는 것이지, Pipeline 엔진이 호출하는 것이 아님)
         """
-        pipeline = _build_aims_pipeline()
+        pipeline = _build_standard_pipeline()
         result = _run(pipeline.run({"document_id": "swap-003"}))
 
         assert result["completed"] is True
@@ -670,11 +670,11 @@ class TestBackwardCompatibility:
         validate_document()와 on_before_ai_call()이 기본 구현(no-op)을 가지므로,
         기존 어댑터가 오버라이드하지 않아도 정상 동작.
         """
-        insurance = MockInsuranceAdapter()
+        adapter_a = MockDomainAdapter()
         legal = LegalDomainAdapter()
 
         # validate_document: 기본 구현 (항상 유효)
-        is_valid, reason = _run(insurance.validate_document("test.pdf", "application/pdf", 1024))
+        is_valid, reason = _run(adapter_a.validate_document("test.pdf", "application/pdf", 1024))
         assert is_valid is True
         assert reason == ""
 
@@ -684,34 +684,34 @@ class TestBackwardCompatibility:
 
         # on_before_ai_call: 기본 구현 (params 그대로 반환)
         params = {"model": "gpt-4o", "temperature": 0.1}
-        result = _run(insurance.on_before_ai_call("classify", params))
+        result = _run(adapter_a.on_before_ai_call("classify", params))
         assert result == params
 
         result = _run(legal.on_before_ai_call("embed", params))
         assert result == params
 
-    def test_aims_preset_golden_file(self):
-        """Pipeline 프리셋(AIMS) 실행 결과가 Golden File과 일치
+    def test_standard_preset_golden_file(self):
+        """Pipeline 표준 프리셋 실행 결과가 Golden File과 일치
 
-        AIMS 보험 프리셋의 구조(스테이지 순서, 스킵 조건)가 변경되지 않았는지 확인.
+        표준 프리셋의 구조(스테이지 순서, 스킵 조건)가 변경되지 않았는지 확인.
         """
         # Golden 정의: 변경되면 테스트가 실패하여 의도적 변경인지 확인
-        assert AIMS_INSURANCE_PRESET["name"] == "standard"
+        assert STANDARD_PRESET["name"] == "standard"
 
         expected_stages = ["ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"]
-        actual_stages = [s["name"] for s in AIMS_INSURANCE_PRESET["stages"]]
+        actual_stages = [s["name"] for s in STANDARD_PRESET["stages"]]
         assert actual_stages == expected_stages
 
         # skip_if 조건 Golden
-        stage_map = {s["name"]: s for s in AIMS_INSURANCE_PRESET["stages"]}
+        stage_map = {s["name"]: s for s in STANDARD_PRESET["stages"]}
         assert stage_map["convert"].get("skip_if") == "!needs_conversion"
         assert stage_map["extract"].get("skip_if") == "has_text"
         assert stage_map["embed"].get("skip_if") == "credit_pending"
         assert stage_map["ingest"].get("skip_if") is None
 
-    def test_aims_preset_execution_golden(self):
-        """AIMS 프리셋 실행 결과 Golden — 각 시나리오별 스테이지 실행 목록 고정"""
-        pipeline = _build_aims_pipeline()
+    def test_standard_preset_execution_golden(self):
+        """표준 프리셋 실행 결과 Golden — 각 시나리오별 스테이지 실행 목록 고정"""
+        pipeline = _build_standard_pipeline()
 
         # 시나리오 A: 기본 (PDF — convert 스킵, 나머지 실행)
         result_a = _run(pipeline.run({"document_id": "golden-a"}))
@@ -738,10 +738,10 @@ class TestBackwardCompatibility:
     def test_classification_config_structure_unchanged(self):
         """ClassificationConfig 구조 변경 없이 기존 어댑터 호환
 
-        Insurance/Legal 어댑터가 반환하는 ClassificationConfig의 필수 필드가
+        Mock/Legal 어댑터가 반환하는 ClassificationConfig의 필수 필드가
         모두 존재하고 올바른 타입인지 확인.
         """
-        for adapter in [MockInsuranceAdapter(), LegalDomainAdapter()]:
+        for adapter in [MockDomainAdapter(), LegalDomainAdapter()]:
             config = _run(adapter.get_classification_config())
 
             # 필수 필드 존재
@@ -766,10 +766,10 @@ class TestBackwardCompatibility:
 
     def test_detection_dataclass_backward_compatible(self):
         """Detection 데이터 클래스의 필수 필드가 보존되는지"""
-        # Insurance 어댑터
-        insurance = MockInsuranceAdapter()
-        ar_detections = _run(insurance.detect_special_documents(
-            text=_AR_TEXT,
+        # Mock 어댑터
+        adapter_a = MockDomainAdapter()
+        ar_detections = _run(adapter_a.detect_special_documents(
+            text=_SPECIAL_A_TEXT,
             mime_type="application/pdf",
         ))
         assert len(ar_detections) == 1
@@ -796,10 +796,10 @@ class TestBackwardCompatibility:
 
     def test_hook_result_structure_unchanged(self):
         """HookResult/StageHookAction 구조가 보존되는지"""
-        insurance = MockInsuranceAdapter()
+        adapter_a = MockDomainAdapter()
 
         # on_stage_complete 호출
-        results = _run(insurance.on_stage_complete(
+        results = _run(adapter_a.on_stage_complete(
             stage="upload_complete",
             doc={"_id": "test-doc", "ownerId": "owner-1"},
             context={"doc_id": "test-doc", "user_id": "owner-1", "customer_id": "cust-1"},
@@ -812,16 +812,16 @@ class TestBackwardCompatibility:
             assert isinstance(r.payload, dict)
 
         # 알 수 없는 stage → 빈 리스트
-        empty_results = _run(insurance.on_stage_complete(
+        empty_results = _run(adapter_a.on_stage_complete(
             stage="unknown_stage",
             doc={},
             context={},
         ))
         assert empty_results == []
 
-    def test_insurance_adapter_all_abstract_methods_implemented(self):
-        """MockInsuranceAdapter가 DomainAdapter의 모든 abstract 메서드를 구현"""
-        adapter = MockInsuranceAdapter()
+    def test_mock_adapter_all_abstract_methods_implemented(self):
+        """MockDomainAdapter가 DomainAdapter의 모든 abstract 메서드를 구현"""
+        adapter = MockDomainAdapter()
 
         # 모든 abstract 메서드가 호출 가능한지 (에러 없이)
         config = _run(adapter.get_classification_config())
@@ -831,7 +831,7 @@ class TestBackwardCompatibility:
         assert isinstance(detections, list)
 
         entity = _run(adapter.resolve_entity(
-            Detection(doc_type="annual_report", confidence=1.0, metadata={}),
+            Detection(doc_type="special_report", confidence=1.0, metadata={}),
             owner_id="",
         ))
         assert isinstance(entity, dict)
@@ -881,7 +881,7 @@ def expected_stages_list(
     skip_embed: bool = False,
     skip_convert: bool = True,  # 기본적으로 convert 스킵 (needs_conversion 없으면)
 ) -> list[str]:
-    """AIMS 프리셋의 예상 실행 스테이지 목록을 반환"""
+    """표준 프리셋의 예상 실행 스테이지 목록을 반환"""
     stages = ["ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"]
     if all_:
         return stages

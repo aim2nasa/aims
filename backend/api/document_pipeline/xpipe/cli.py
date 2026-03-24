@@ -377,7 +377,11 @@ def _cmd_demo(_args: argparse.Namespace) -> int:
     """xPipeWeb 데모 서버 시작"""
     try:
         from xpipe.console.web.server import run_server
-        run_server()
+        # CLI에서 실행 시 기본 Provider 환경변수 매핑
+        run_server(env_key_map={
+            "openai": "OPENAI_API_KEY",
+            "upstage": "UPSTAGE_API_KEY",
+        })
     except ImportError as e:
         print(f"xPipeWeb 서버를 시작할 수 없습니다: {e}")
         print("FastAPI/uvicorn이 설치되어 있는지 확인하세요:")

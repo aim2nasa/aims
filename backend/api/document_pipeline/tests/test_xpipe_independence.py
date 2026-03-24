@@ -58,9 +58,10 @@ FORBIDDEN_MODULES = frozenset({
     "anthropic",
 })
 
-# providers.py는 내장 구현체(OpenAILLMProvider 등)를 포함하므로 openai import 허용
+# providers.py, providers_builtin.py는 내장 구현체(OpenAILLMProvider 등)를 포함하므로 openai import 허용
 PROVIDER_IMPL_EXCEPTIONS: dict[str, frozenset[str]] = {
     "providers.py": frozenset({"openai"}),
+    "providers_builtin.py": frozenset({"openai"}),
 }
 
 

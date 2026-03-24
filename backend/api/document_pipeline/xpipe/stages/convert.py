@@ -110,7 +110,7 @@ class ConvertStage(Stage):
     def _convert_real(file_path: str, file_name: str, converter_url: str = "") -> tuple[str, str, int, str]:
         """PDF 변환 — pdf_converter 서비스 우선, fallback으로 soffice 직접 호출.
 
-        AIMS와 동일한 pdf_converter 서비스를 사용하여 HWP/XLS/PPTX 등을 PDF로 변환.
+        pdf_converter 서비스를 사용하여 HWP/XLS/PPTX 등을 PDF로 변환.
 
         Args:
             converter_url: 변환 서비스 URL. 빈 문자열이면 기본값 사용.
@@ -124,7 +124,7 @@ class ConvertStage(Stage):
         base = os.path.splitext(os.path.basename(file_path))[0]
         converted_path = os.path.join(out_dir, base + ".pdf")
 
-        # 1차: pdf_converter 서비스 (AIMS 표준 방식)
+        # 1차: pdf_converter 서비스
         result = ConvertStage._try_pdf_converter_service(file_path, converted_path, converter_url=converter_url)
         if result:
             return result

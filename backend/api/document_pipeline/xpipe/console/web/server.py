@@ -57,14 +57,18 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 def _load_env_files() -> None:
     """환경변수 파일들에서 API 키 등 로드. 먼저 로드된 값이 우선."""
-    candidates = [
-        # .env.shared (전역)
-        Path.home() / "aims" / ".env.shared",
-        Path(__file__).resolve().parents[5] / ".env.shared",
-        # document_pipeline/.env (로컬 — Upstage 등)
-        Path(__file__).resolve().parents[3] / ".env",
-        Path.cwd() / ".env",
-    ]
+    # 환경변수로 명시적 지정 가능
+    env_file = os.environ.get("XPIPE_ENV_FILE", "")
+    if env_file and Path(env_file).exists():
+        candidates = [Path(env_file)]
+    else:
+        candidates = [
+            # .env.shared (프로젝트 루트 기준)
+            Path(__file__).resolve().parents[5] / ".env.shared",
+            # document_pipeline/.env (로컬 — Upstage 등)
+            Path(__file__).resolve().parents[3] / ".env",
+            Path.cwd() / ".env",
+        ]
     loaded = []
     for env_path in candidates:
         if env_path.exists():
@@ -91,11 +95,8 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_CONCURRENCY = 2
 VERSION = "0.2.5"
 
-# 환경변수 매핑 (한 곳에서만 정의)
-ENV_KEY_MAP: dict[str, str] = {
-    "openai": "OPENAI_API_KEY",
-    "upstage": "UPSTAGE_API_KEY",
-}
+# 환경변수 매핑 — 실행 진입점에서 주입. 코어 모듈은 특정 서비스를 모른다.
+_env_key_map: dict[str, str] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +116,7 @@ class ServerState:
         # 환경변수에서 API 키 1회 읽기 (이후 os.environ 직접 참조 금지)
         self.env_api_keys: dict[str, str] = {
             provider: os.environ.get(env_var, "")
-            for provider, env_var in ENV_KEY_MAP.items()
+            for provider, env_var in _env_key_map.items()
         }
 
         # 인메모리 문서 상태
@@ -690,8 +691,8 @@ async def serve_js():
 async def serve_file(doc_id: str, preview: bool = True):
     """파일 서빙 — preview=true면 변환된 PDF 우선, false면 원본
 
-    AIMS 패턴: 변환된 PDF(convPdfPath) → 프리뷰 가능
-              원본(destPath) → 다운로드용
+    변환된 PDF(convPdfPath) → 프리뷰 가능
+    원본(destPath) → 다운로드용
     """
     from urllib.parse import quote
 
@@ -1213,7 +1214,7 @@ async def update_config(body: ConfigUpdate):
         # real 모드 전환 시 API 키 유효성 경고
         if body.mode == "real":
             missing = []
-            for prov, env_var in ENV_KEY_MAP.items():
+            for prov, env_var in _env_key_map.items():
                 if not state.resolve_api_key(prov):
                     missing.append(f"{prov} ({env_var})")
             if missing:
@@ -1480,16 +1481,31 @@ async def on_shutdown():
 # 엔트리포인트
 # ---------------------------------------------------------------------------
 
-def run_server():
-    """서버 시작"""
+def run_server(env_key_map: dict[str, str] | None = None):
+    """서버 시작
+
+    Args:
+        env_key_map: Provider별 환경변수 이름 매핑.
+                     예: {"openai": "OPENAI_API_KEY", "upstage": "UPSTAGE_API_KEY"}
+                     None이면 빈 dict (코어는 어떤 서비스도 모름).
+    """
+    global _env_key_map, state
+    _env_key_map = env_key_map or {}
+    # env_key_map 설정 후 state를 재초기화하여 API 키를 올바르게 읽음
+    state = ServerState()
     port = int(os.environ.get("XPIPE_DEMO_PORT", "8200"))
     print(f"\n  xPipeWeb v{VERSION}")
     print(f"  http://localhost:{port}")
-    print(f"  스테이지: {len(current_config['enabled_stages'])}개")
-    print(f"  모드: {current_config['mode']}")
+    print(f"  스테이지: {len(state.current_config['enabled_stages'])}개")
+    print(f"  모드: {state.current_config['mode']}")
     print()
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
 
 
 if __name__ == "__main__":
-    run_server()
+    # xPipeWeb 독립 실행 시 기본 Provider 환경변수 매핑
+    _default_env_keys = {
+        "openai": "OPENAI_API_KEY",
+        "upstage": "UPSTAGE_API_KEY",
+    }
+    run_server(env_key_map=_default_env_keys)

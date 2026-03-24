@@ -57,7 +57,7 @@ class PipelineDefinition:
     """파이프라인 정의
 
     Attributes:
-        name: 파이프라인 이름 (예: "aims-insurance", "minimal")
+        name: 파이프라인 이름 (예: "standard", "minimal")
         stages: 실행할 스테이지 설정 목록 (순서대로 실행)
         webhooks: 이벤트 유형별 웹훅 URL 매핑
             예: {"stage_complete": "https://example.com/hook"}

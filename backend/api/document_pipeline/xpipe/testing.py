@@ -7,8 +7,8 @@ DomainAdapter 구현체를 검증한다.
 사용 예:
     from xpipe.testing import TestRunner, TestCase
 
-    runner = TestRunner(InsuranceDomainAdapter())
-    test_cases = TestRunner.load_test_set("tests/external/sample_insurance.json")
+    runner = TestRunner(adapter)
+    test_cases = TestRunner.load_test_set("tests/external/sample_documents.json")
     results = await runner.run_detection_tests(test_cases)
 """
 from __future__ import annotations
@@ -216,7 +216,7 @@ class TestRunner:
             {
                 "input_text": "...",
                 "input_mime": "application/pdf",
-                "expected_detections": [{"doc_type": "annual_report"}],
+                "expected_detections": [{"doc_type": "special_type_a"}],
                 "expected_classification": "policy",
                 "description": "AR 감지 테스트",
                 "filename": "test.pdf"

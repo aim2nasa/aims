@@ -26,9 +26,9 @@ class Category:
     """분류 체계의 단일 카테고리
 
     Attributes:
-        code: 시스템 내부 식별 코드 (예: "health_insurance", "annual_report")
-        name: 사용자 표시용 이름 (예: "건강보험", "연간보고서")
-        parent: 부모 카테고리 코드. 최상위이면 None (예: "insurance")
+        code: 시스템 내부 식별 코드 (예: "type_a", "type_b")
+        name: 사용자 표시용 이름 (예: "유형A", "유형B")
+        parent: 부모 카테고리 코드. 최상위이면 None (예: "domain_x")
     """
     code: str
     name: str
@@ -40,10 +40,10 @@ class Detection:
     """특수 문서 감지 결과
 
     파이프라인 중간 단계에서 도메인 특화 문서를 감지했을 때 반환.
-    예: 보험 도메인에서 AR(연간보고서), CRS(고객검토서) 감지.
+    예: 특정 도메인의 특수문서 패턴 감지.
 
     Attributes:
-        doc_type: 감지된 문서 유형 식별자 (예: "annual_report", "customer_review")
+        doc_type: 감지된 문서 유형 식별자 (예: "special_type_a", "special_type_b")
         confidence: 감지 신뢰도 (0.0 ~ 1.0)
         metadata: 감지 시 추출된 부가 정보 (도메인별 자유 구조)
     """
@@ -135,7 +135,7 @@ class DomainAdapter(ABC):
         """도메인 특화 문서 감지
 
         파이프라인 중간에서 호출되며, 감지 결과에 따라 후속 처리가 분기된다.
-        예: 보험 도메인에서 AR/CRS 감지 → 전용 파싱 파이프라인 트리거.
+        예: 특수문서 감지 → 전용 처리 파이프라인 트리거.
 
         Args:
             text: 추출된 전체 텍스트
@@ -157,16 +157,16 @@ class DomainAdapter(ABC):
     ) -> dict[str, Any]:
         """감지된 특수 문서에서 엔티티 연결 수행
 
-        예: 보험 도메인에서 고객명 → 고객 ID 연결.
+        예: 엔티티명 → 엔티티 ID 연결.
 
         Args:
             detection: detect_special_documents()의 결과 중 하나
-            owner_id: 문서 소유자 ID (설계사 ID 등)
+            owner_id: 문서 소유자 ID
 
         Returns:
             연결 결과. 도메인별 자유 구조.
-            예: {"customer_id": "abc123", "customer_name": "홍길동", "matched": True}
-            연결 실패 시: {"matched": False, "reason": "customer_not_found"}
+            예: {"entity_id": "abc123", "entity_name": "홍길동", "matched": True}
+            연결 실패 시: {"matched": False, "reason": "entity_not_found"}
         """
         ...
 

@@ -1,0 +1,42 @@
+[
+  {
+    "description": "특수 문서 A 감지: SPECIAL_DOCUMENT + ENTITY_DATA (필수+선택 키워드 모두 존재)",
+    "input_text": "PROVIDER_A\nTestEntity prepared for\nSPECIAL_DOCUMENT\n\nENTITY_DATA STATISTICS\nREPORT_SUMMARY overview\n\nRef: 12345678   Item A           2020.01.15\n\nDate: 2026-01-15\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [{"doc_type": "special_report"}],
+    "expected_classification": null,
+    "filename": "document.pdf"
+  },
+  {
+    "description": "특수 문서 B 감지: REVIEW_DOCUMENT + METRICS_DATA (필수+선택 키워드 모두 존재)",
+    "input_text": "PROVIDER_B\nSampleEntity prepared for\nREVIEW_DOCUMENT\n\nMETRICS_DATA ANALYSIS\nPORTFOLIO report\n\nRef: 98765432\nEntity: SampleEntity\nDate: 2026-02-10\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [{"doc_type": "review_document"}],
+    "expected_classification": null,
+    "filename": "review_report.pdf"
+  },
+  {
+    "description": "일반 PDF: 특수 문서 아닌 일반 문서 (감지 없음)",
+    "input_text": "General Document\n\nReference: AB-2026-001\nEntity: SampleOrg\nPeriod: 2026.01.01 ~ 2036.01.01\nAmount: 50,000\n\nDetails\n- Item A: 100M\n- Item B: 50M\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [],
+    "expected_classification": "type_a",
+    "filename": "general.pdf"
+  },
+  {
+    "description": "비PDF 문서: MIME 불일치로 특수 문서 패턴 있어도 감지 안 됨",
+    "input_text": "PROVIDER_A\nTestEntity prepared for\nSPECIAL_DOCUMENT\nENTITY_DATA\n",
+    "input_mime": "image/jpeg",
+    "expected_detections": [],
+    "expected_classification": null,
+    "filename": "report.jpg"
+  },
+  {
+    "description": "부분 키워드 매칭: 필수 키워드만 있고 선택 키워드 없음 → 미감지",
+    "input_text": "SPECIAL_DOCUMENT\n\nThis is a generic document.\nNo entity data or statistics present.\n",
+    "input_mime": "application/pdf",
+    "expected_detections": [],
+    "expected_classification": null,
+    "filename": "generic_report.pdf"
+  }
+]

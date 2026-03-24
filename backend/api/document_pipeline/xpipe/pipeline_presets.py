@@ -34,9 +34,6 @@ STANDARD_PRESET: dict[str, Any] = {
     ],
 }
 
-# 하위 호환 alias
-AIMS_INSURANCE_PRESET = STANDARD_PRESET
-
 
 # ---------------------------------------------------------------------------
 # 최소 파이프라인 프리셋
@@ -59,8 +56,6 @@ MINIMAL_PRESET: dict[str, Any] = {
 PRESETS: dict[str, dict[str, Any]] = {
     "standard": STANDARD_PRESET,
     "minimal": MINIMAL_PRESET,
-    # 하위 호환 alias
-    "aims-insurance": STANDARD_PRESET,
 }
 
 

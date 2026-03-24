@@ -253,7 +253,7 @@ class ExtractStage(Stage):
         if "stage_data" not in context:
             context["stage_data"] = {}
 
-        # AIMS 호환 메타 정보
+        # 표준 메타 필드
         text_preview = text[:500] if text else ""
         context["stage_data"]["extract"] = {
             "status": "completed",
@@ -269,7 +269,7 @@ class ExtractStage(Stage):
                 "full_text": text,
                 "method": method,
                 "ocr_model": ocr_model,
-                # AIMS 호환 필드
+                # 호환 필드
                 "meta_status": "completed",
                 "has_text": bool(text.strip()),
             },

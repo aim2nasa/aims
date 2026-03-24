@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 
 from xpipe.testing import TestCase, TestResult, TestRunner
-from xpipe.tests.conftest import MockInsuranceAdapter
+from xpipe.tests.conftest import MockDomainAdapter
 
 
 @pytest.fixture
 def adapter():
-    return MockInsuranceAdapter()
+    return MockDomainAdapter()
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def runner(adapter):
 def sample_test_set_path():
     """외부 테스트 셋 JSON 파일 경로"""
     return str(
-        Path(__file__).parent / "external" / "sample_insurance.json"
+        Path(__file__).parent / "external" / "sample_documents.json"
     )
 
 
@@ -38,8 +38,8 @@ def sample_test_set_path():
 class TestLoadTestSet:
     """JSON에서 테스트 셋 로드"""
 
-    def test_load_sample_insurance(self, sample_test_set_path):
-        """샘플 보험 테스트 셋 로드"""
+    def test_load_sample_documents(self, sample_test_set_path):
+        """샘플 문서 테스트 셋 로드"""
         test_cases = TestRunner.load_test_set(sample_test_set_path)
         assert len(test_cases) == 5
         assert all(isinstance(tc, TestCase) for tc in test_cases)
@@ -48,12 +48,12 @@ class TestLoadTestSet:
         """로드된 TestCase의 필드가 JSON과 일치하는지"""
         test_cases = TestRunner.load_test_set(sample_test_set_path)
 
-        # 첫 번째: AR 감지 테스트
+        # 첫 번째: 특수 문서 A 감지 테스트
         tc0 = test_cases[0]
-        assert "Annual Review Report" in tc0.input_text
+        assert "SPECIAL_DOCUMENT" in tc0.input_text
         assert tc0.input_mime == "application/pdf"
         assert len(tc0.expected_detections) == 1
-        assert tc0.expected_detections[0]["doc_type"] == "annual_report"
+        assert tc0.expected_detections[0]["doc_type"] == "special_report"
 
     def test_load_nonexistent_file(self):
         """존재하지 않는 파일 로드 시 FileNotFoundError"""
@@ -92,8 +92,8 @@ class TestRunDetectionTests:
     """detect_special_documents() 테스트 실행"""
 
     @pytest.mark.asyncio
-    async def test_run_sample_insurance_detection(self, runner, sample_test_set_path):
-        """샘플 보험 테스트 셋으로 감지 테스트 실행 → 전체 통과"""
+    async def test_run_sample_documents_detection(self, runner, sample_test_set_path):
+        """샘플 문서 테스트 셋으로 감지 테스트 실행 → 전체 통과"""
         test_cases = TestRunner.load_test_set(sample_test_set_path)
         results = await runner.run_detection_tests(test_cases)
 
@@ -102,15 +102,15 @@ class TestRunDetectionTests:
         assert results["failed"] == 0
 
     @pytest.mark.asyncio
-    async def test_ar_detection_pass(self, runner):
-        """AR 텍스트 → annual_report 감지"""
+    async def test_special_a_detection_pass(self, runner):
+        """특수 문서 A 텍스트 → special_report 감지"""
         tc = TestCase(
             input_text=(
-                "MetLife\n홍길동 고객님을 위한\nAnnual Review Report\n"
-                "보유계약 현황\n발행(기준)일: 2026년 1월 15일\n"
+                "PROVIDER_A\nTestEntity prepared for\nSPECIAL_DOCUMENT\n"
+                "ENTITY_DATA STATISTICS\nDate: 2026-01-15\n"
             ),
             input_mime="application/pdf",
-            expected_detections=[{"doc_type": "annual_report"}],
+            expected_detections=[{"doc_type": "special_report"}],
         )
         results = await runner.run_detection_tests([tc])
         assert results["passed"] == 1
@@ -119,7 +119,7 @@ class TestRunDetectionTests:
     async def test_no_detection_pass(self, runner):
         """일반 텍스트 → 감지 없음"""
         tc = TestCase(
-            input_text="일반 보험 증권 문서입니다.",
+            input_text="일반 문서 내용입니다.",
             input_mime="application/pdf",
             expected_detections=[],
         )
@@ -130,9 +130,9 @@ class TestRunDetectionTests:
     async def test_detection_fail_case(self, runner):
         """잘못된 기대값 → 실패 기록"""
         tc = TestCase(
-            input_text="일반 텍스트",
+            input_text="General text without special keywords",
             input_mime="application/pdf",
-            expected_detections=[{"doc_type": "annual_report"}],  # 감지 안 됨
+            expected_detections=[{"doc_type": "special_report"}],  # 감지 안 됨
             description="의도적 실패 테스트",
         )
         results = await runner.run_detection_tests([tc])
@@ -148,12 +148,12 @@ class TestRunClassificationTests:
     """get_classification_config() 검증"""
 
     @pytest.mark.asyncio
-    async def test_valid_types_include_policy(self, runner):
-        """policy가 valid_types에 포함되어 있는지"""
+    async def test_valid_types_include_type_a(self, runner):
+        """type_a가 valid_types에 포함되어 있는지"""
         tc = TestCase(
-            input_text="보험증권",
+            input_text="Type A document",
             input_mime="application/pdf",
-            expected_classification="policy",
+            expected_classification="type_a",
         )
         results = await runner.run_classification_tests([tc])
         assert results["passed"] == 1
@@ -182,11 +182,11 @@ class TestRunClassificationTests:
         assert results["total"] == 0
 
     @pytest.mark.asyncio
-    async def test_sample_insurance_classification(self, runner, sample_test_set_path):
-        """샘플 보험 테스트 셋의 분류 테스트 → policy가 valid_types에 포함"""
+    async def test_sample_classification(self, runner, sample_test_set_path):
+        """샘플 테스트 셋의 분류 테스트 → type_a가 valid_types에 포함"""
         test_cases = TestRunner.load_test_set(sample_test_set_path)
         results = await runner.run_classification_tests(test_cases)
 
-        # 샘플에서 expected_classification이 설정된 건 1개 (policy)
+        # 샘플에서 expected_classification이 설정된 건 1개 (type_a)
         assert results["total"] == 1
         assert results["passed"] == 1

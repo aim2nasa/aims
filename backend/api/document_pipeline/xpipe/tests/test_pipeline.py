@@ -23,7 +23,7 @@ from xpipe.pipeline import (
     _evaluate_skip_condition,
 )
 from xpipe.pipeline_presets import (
-    AIMS_INSURANCE_PRESET,
+    STANDARD_PRESET,
     MINIMAL_PRESET,
     PRESETS,
     get_preset,
@@ -711,10 +711,10 @@ stages:
 class TestPresets:
     """파이프라인 프리셋 테스트"""
 
-    def test_aims_insurance_preset_structure(self):
-        """표준 프리셋 구조 검증 (하위 호환 alias 포함)"""
-        assert AIMS_INSURANCE_PRESET["name"] == "standard"
-        stage_names = [s["name"] for s in AIMS_INSURANCE_PRESET["stages"]]
+    def test_standard_preset_structure(self):
+        """표준 프리셋 구조 검증"""
+        assert STANDARD_PRESET["name"] == "standard"
+        stage_names = [s["name"] for s in STANDARD_PRESET["stages"]]
         assert stage_names == [
             "ingest", "convert", "extract", "classify", "detect_special", "embed", "complete"
         ]
@@ -726,12 +726,9 @@ class TestPresets:
         assert stage_names == ["ingest", "extract", "complete"]
 
     def test_get_preset(self):
-        """get_preset()으로 프리셋 조회 (standard + 하위 호환 alias)"""
+        """get_preset()으로 프리셋 조회"""
         preset = get_preset("standard")
         assert preset["name"] == "standard"
-        # 하위 호환: aims-insurance alias도 동작
-        preset_alias = get_preset("aims-insurance")
-        assert preset_alias["name"] == "standard"
 
     def test_get_preset_not_found(self):
         """없는 프리셋 조회 시 KeyError"""
@@ -755,9 +752,9 @@ class TestPresets:
         assert result["ingested"] is True
         assert result["completed"] is True
 
-    def test_aims_preset_skip_conditions(self):
-        """AIMS 프리셋의 skip_if 조건 검증"""
-        pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
+    def test_standard_preset_skip_conditions(self):
+        """standard 프리셋의 skip_if 조건 검증"""
+        pipeline = Pipeline.from_dict(STANDARD_PRESET)
         _register_builtin_stages(pipeline)
 
         # has_text=True → extract 스킵
@@ -778,15 +775,15 @@ class TestPresets:
 
 
 # ---------------------------------------------------------------------------
-# Golden File 테스트 — AIMS 프리셋 실행 결과 비교
+# Golden File 테스트 — standard 프리셋 실행 결과 비교
 # ---------------------------------------------------------------------------
 
 class TestGoldenFile:
-    """Golden File 테스트 — AIMS 프리셋 실행 → 예상 결과 비교"""
+    """Golden File 테스트 — standard 프리셋 실행 → 예상 결과 비교"""
 
-    def test_aims_full_pipeline(self):
-        """AIMS 전체 파이프라인 실행 결과 (PDF — convert 스킵)"""
-        pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
+    def test_standard_full_pipeline(self):
+        """standard 전체 파이프라인 실행 결과 (PDF — convert 스킵)"""
+        pipeline = Pipeline.from_dict(STANDARD_PRESET)
         _register_builtin_stages(pipeline)
 
         context = {"document_id": "golden-001", "file_path": "/tmp/test.pdf"}
@@ -810,9 +807,9 @@ class TestGoldenFile:
         assert result["completed"] is True
         assert result["status"] == "completed"
 
-    def test_aims_full_pipeline_with_conversion(self):
-        """AIMS 전체 파이프라인 실행 결과 (xlsx — convert 실행)"""
-        pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
+    def test_standard_full_pipeline_with_conversion(self):
+        """standard 전체 파이프라인 실행 결과 (xlsx — convert 실행)"""
+        pipeline = Pipeline.from_dict(STANDARD_PRESET)
         _register_builtin_stages(pipeline)
 
         context = {
@@ -831,9 +828,9 @@ class TestGoldenFile:
         assert result["converted"] is True
         assert result["completed"] is True
 
-    def test_aims_with_existing_text(self):
+    def test_standard_with_existing_text(self):
         """이미 텍스트가 있는 문서 → extract + convert 스킵"""
-        pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
+        pipeline = Pipeline.from_dict(STANDARD_PRESET)
         _register_builtin_stages(pipeline)
 
         context = {
@@ -849,9 +846,9 @@ class TestGoldenFile:
         assert "extract" in result["_pipeline"]["stages_skipped"]
         assert "convert" in result["_pipeline"]["stages_skipped"]
 
-    def test_aims_credit_pending(self):
+    def test_standard_credit_pending(self):
         """크레딧 부족 → embed + convert 스킵"""
-        pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
+        pipeline = Pipeline.from_dict(STANDARD_PRESET)
         _register_builtin_stages(pipeline)
 
         context = {"document_id": "golden-003", "credit_pending": True}
@@ -863,9 +860,9 @@ class TestGoldenFile:
         assert "embed" in result["_pipeline"]["stages_skipped"]
         assert "convert" in result["_pipeline"]["stages_skipped"]
 
-    def test_aims_text_and_credit_pending(self):
+    def test_standard_text_and_credit_pending(self):
         """텍스트 있음 + 크레딧 부족 → convert + extract + embed 스킵"""
-        pipeline = Pipeline.from_dict(AIMS_INSURANCE_PRESET)
+        pipeline = Pipeline.from_dict(STANDARD_PRESET)
         _register_builtin_stages(pipeline)
 
         context = {
