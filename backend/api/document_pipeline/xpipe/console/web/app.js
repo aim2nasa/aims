@@ -1014,7 +1014,7 @@
     dom.ftEvents.textContent = eventCount;
 
     const totalCost = documents.reduce((s, d) => s + (d.cost || 0), 0);
-    dom.ftCost.textContent = totalCost > 0 ? '$' + totalCost.toFixed(3) : '-';
+    dom.ftCost.textContent = totalCost > 0 ? '$' + totalCost.toFixed(4) : '-';
 
     // 큐 상태 (처리중/대기)
     const processingCount = documents.filter(d => d.status === 'processing').length;
