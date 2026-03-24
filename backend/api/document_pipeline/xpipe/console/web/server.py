@@ -1438,6 +1438,16 @@ async def remove_document(doc_id: str):
 
 @app.on_event("startup")
 async def on_startup():
+    global _env_key_map, state
+    # uvicorn 직접 실행 시 _env_key_map이 빈 상태 → 기본값 설정
+    if not _env_key_map:
+        _env_key_map = {
+            "openai": "OPENAI_API_KEY",
+            "upstage": "UPSTAGE_API_KEY",
+        }
+        state = ServerState()
+        logger.info("[xPipeWeb] 기본 env_key_map 적용 (uvicorn 직접 실행)")
+
     storage_path = state.current_config.get("storage_path", "")
     if storage_path:
         # 사용자 지정 경로 사용 + 권한 확인
