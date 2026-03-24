@@ -438,7 +438,8 @@ async def doc_prep_main(
                     "progress": 10,
                     "progressStage": "queued",
                     "progressMessage": "대기열에 추가됨",
-                    "status": "processing"
+                    "status": "processing",
+                    "overallStatus": "pending",
                 }
 
             if customerId:
@@ -1255,7 +1256,9 @@ async def _step_create_or_update_document(ctx: PipelineContext) -> None:
             {"$set": {
                 "progress": 20,
                 "progressStage": "upload",
-                "progressMessage": "업로드 준비 중"
+                "progressMessage": "업로드 준비 중",
+                "overallStatus": "uploading",
+                "overallStatusUpdatedAt": datetime.utcnow(),
             }}
         )
     else:
@@ -1268,7 +1271,8 @@ async def _step_create_or_update_document(ctx: PipelineContext) -> None:
             "progress": 20,
             "progressStage": "upload",
             "progressMessage": "업로드 준비 중",
-            "status": "processing"
+            "status": "processing",
+            "overallStatus": "uploading",
         }
         if ctx.customer_id:
             # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
@@ -1316,6 +1320,12 @@ async def _step_extract_metadata(ctx: PipelineContext) -> Optional[Dict[str, Any
     """
     # Progress: 40% - Starting meta extraction
     await _notify_progress(ctx.doc_id, ctx.user_id, 40, "meta", "메타데이터 추출 중")
+
+    # overallStatus: extracting (메타데이터/텍스트 추출 단계)
+    await ctx.files_collection.update_one(
+        {"_id": ObjectId(ctx.doc_id)},
+        {"$set": {"overallStatus": "extracting", "overallStatusUpdatedAt": datetime.utcnow()}},
+    )
 
     # 🍎 DB에 사전 추출된 meta.full_text가 있는지 확인 (업로드 시 저장됨)
     existing_doc = await ctx.files_collection.find_one(
@@ -1367,6 +1377,11 @@ async def _step_extract_metadata(ctx: PipelineContext) -> Optional[Dict[str, Any
         # PDF 변환 텍스트 추출: 직접 파서로 텍스트가 없고 변환 가능한 형식인 경우
         if (not ctx.full_text or len(ctx.full_text.strip()) == 0) and is_convertible_mime(ctx.detected_mime):
             await _notify_progress(ctx.doc_id, ctx.user_id, 50, "convert", "PDF 변환 후 텍스트 추출 중")
+            # overallStatus: converting (PDF 변환 중)
+            await ctx.files_collection.update_one(
+                {"_id": ObjectId(ctx.doc_id)},
+                {"$set": {"overallStatus": "converting", "overallStatusUpdatedAt": datetime.utcnow()}},
+            )
             logger.info(f"[PDF변환텍스트] 직접 파서 없음, PDF 변환 시도: {ctx.doc_id} (MIME: {ctx.detected_mime})")
 
             converted_text = await convert_and_extract_text(ctx.dest_path)
@@ -1867,7 +1882,9 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
             {"_id": ObjectId(ctx.doc_id)},
             {"$set": {
                 "ocr.status": "queued",
-                "ocr.queued_at": queued_at
+                "ocr.queued_at": queued_at,
+                "overallStatus": "ocr_queued",
+                "overallStatusUpdatedAt": datetime.utcnow(),
             }}
         )
 
@@ -1905,11 +1922,19 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
                 files_collection=ctx.files_collection
             )
 
-    # Progress: 90% - Almost complete
-    await _notify_progress(ctx.doc_id, ctx.user_id, 90, "complete", "처리 완료 중")
+    # Progress: 90% - 텍스트 추출 완료, 임베딩 대기
+    await _notify_progress(ctx.doc_id, ctx.user_id, 90, "embed_pending", "텍스트 추출 완료, 임베딩 대기")
 
-    # Progress: 100% - Complete (no OCR needed)
-    await _notify_progress(ctx.doc_id, ctx.user_id, 100, "complete", "처리 완료")
+    # overallStatus: embed_pending (텍스트 추출 완료, 임베딩 크론 대기)
+    # status: completed (텍스트 추출 단계는 완료)
+    await ctx.files_collection.update_one(
+        {"_id": ObjectId(ctx.doc_id)},
+        {"$set": {
+            "status": "completed",
+            "overallStatus": "embed_pending",
+            "overallStatusUpdatedAt": datetime.utcnow(),
+        }},
+    )
 
     # Send completion notification
     await _notify_document_complete(ctx.doc_id, ctx.user_id)
@@ -2028,7 +2053,7 @@ async def _process_via_xpipe(
             "ownerId": user_id,
             "originalName": original_name,
             "status": "processing",
-            "overallStatus": "processing",
+            "overallStatus": "uploading",
             "progressStage": "upload",
             "createdAt": datetime.utcnow(),
         }
@@ -2055,6 +2080,12 @@ async def _process_via_xpipe(
         await _connect_document_to_customer(customer_id, doc_id, user_id)
 
     await _notify_progress(doc_id, user_id, 20, "upload", "파일 업로드 완료")
+
+    # overallStatus: extracting (파일 저장 완료, 텍스트 추출 시작)
+    await files_collection.update_one(
+        {"_id": ObjectId(doc_id)},
+        {"$set": {"overallStatus": "extracting", "overallStatusUpdatedAt": datetime.utcnow()}},
+    )
 
     # 4. MIME 타입 추론
     import mimetypes as mt
@@ -2112,6 +2143,12 @@ async def _process_via_xpipe(
     # 7. 파이프라인 실행
     result = await pipeline.run(context)
 
+    # overallStatus: classifying (텍스트 추출 완료, AI 분류 중)
+    await files_collection.update_one(
+        {"_id": ObjectId(doc_id)},
+        {"$set": {"overallStatus": "classifying", "overallStatusUpdatedAt": datetime.utcnow()}},
+    )
+
     # 8. 결과를 AIMS MongoDB 스키마에 매핑
     extracted_text = result.get("extracted_text", result.get("text", ""))
     doc_type = result.get("document_type")
@@ -2145,9 +2182,10 @@ async def _process_via_xpipe(
         "meta.extension": file_ext,
         "document_type": doc_type or "general",
         "status": "completed",
-        "overallStatus": "completed",
+        "overallStatus": "embed_pending",
+        "overallStatusUpdatedAt": datetime.utcnow(),
         "progressStage": "complete",
-        "progress": 100,
+        "progress": 90,
         "upload.originalName": original_name,
     }
     await files_collection.update_one(
@@ -2286,7 +2324,12 @@ async def _process_via_legacy(
         if meta_error_response is not None:
             return meta_error_response
 
-        # AI 요약 생성
+        # AI 요약 생성 + 분류
+        # overallStatus: classifying (AI 분류 단계)
+        await ctx.files_collection.update_one(
+            {"_id": ObjectId(ctx.doc_id)},
+            {"$set": {"overallStatus": "classifying", "overallStatusUpdatedAt": datetime.utcnow()}},
+        )
         await _step_ai_summarize(ctx)
 
         # 메타데이터 DB 업데이트 (중복 해시 처리 + DuplicateKeyError 포함)

@@ -403,6 +403,22 @@ export class DocumentProcessingModule {
         return '✓'
       case 'processing':
         return '⟳'
+      case 'uploading':
+        return '↑'
+      case 'converting':
+        return '⟳'
+      case 'extracting':
+        return '⟳'
+      case 'ocr_queued':
+        return '○'
+      case 'ocr_processing':
+        return '⟳'
+      case 'classifying':
+        return '⟳'
+      case 'embed_pending':
+        return '○'
+      case 'embedding':
+        return '⟳'
       case 'error':
         return '✗'
       case 'pending':
@@ -410,7 +426,7 @@ export class DocumentProcessingModule {
       case 'timeout':
         return '⏱'
       case 'credit_pending':
-        return '⏸'  // 일시정지 아이콘 - 크레딧 부족
+        return '⏸'
       default:
         return '?'
     }
@@ -425,6 +441,22 @@ export class DocumentProcessingModule {
         return '완료'
       case 'processing':
         return '처리중'
+      case 'uploading':
+        return '업로드중'
+      case 'converting':
+        return 'PDF변환중'
+      case 'extracting':
+        return '텍스트추출'
+      case 'ocr_queued':
+        return 'OCR대기'
+      case 'ocr_processing':
+        return 'OCR처리중'
+      case 'classifying':
+        return 'AI분류중'
+      case 'embed_pending':
+        return '임베딩대기'
+      case 'embedding':
+        return '임베딩중'
       case 'error':
         return '오류'
       case 'pending':

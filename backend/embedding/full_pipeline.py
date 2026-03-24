@@ -209,10 +209,11 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
             print(f"[FIX] 불일치 상태 수정 완료")
 
         # 1단계-B: overallStatus 불일치 자동 수정
-        # status: "completed" + overallStatus != "completed" → overallStatus를 "completed"로 수정
+        # status: "completed" + overallStatus가 레거시 불일치 상태 → overallStatus를 "completed"로 수정
+        # ⚠️ embed_pending, embedding은 정상 상태이므로 제외 (임베딩 크론 대기/처리 중)
         os_completed_filter = {
             'status': 'completed',
-            'overallStatus': {'$ne': 'completed'}
+            'overallStatus': {'$nin': ['completed', 'embed_pending', 'embedding', 'credit_pending']}
         }
         os_completed_count = collection.count_documents(os_completed_filter)
         if os_completed_count > 0:
@@ -509,7 +510,16 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     continue
 
                 print(f"텍스트 소스: {text_source}.full_text (길이: {len(full_text)})")
-                
+
+                # overallStatus: embedding (임베딩 생성 중)
+                collection.update_one(
+                    {'_id': ObjectId(doc_id)},
+                    {'$set': {
+                        'overallStatus': 'embedding',
+                        'overallStatusUpdatedAt': datetime.now(timezone.utc)
+                    }}
+                )
+
                 # 1단계: 로딩 및 청크 생성
                 chunks = split_text_into_chunks(full_text, {
                     'doc_id': doc_id,

@@ -110,6 +110,48 @@
     color: var(--color-warning);
   }
 
+  .status-icon.status-uploading {
+    color: var(--color-primary-500);
+    animation: processing-pulse 2s ease-in-out infinite;
+  }
+
+  .status-icon.status-converting {
+    color: var(--color-ios-orange);
+    animation: processing-pulse 2s ease-in-out infinite;
+  }
+
+  .status-icon.status-extracting {
+    color: var(--color-primary-500);
+    animation: processing-pulse 2s ease-in-out infinite;
+  }
+
+  .status-icon.status-ocr_queued {
+    color: var(--color-warning);
+  }
+
+  .status-icon.status-ocr_processing {
+    color: var(--color-ios-orange);
+    animation: processing-pulse 2s ease-in-out infinite;
+  }
+
+  .status-icon.status-classifying {
+    color: var(--color-ios-indigo);
+    animation: processing-pulse 2s ease-in-out infinite;
+  }
+
+  .status-icon.status-embed_pending {
+    color: var(--color-ios-teal);
+  }
+
+  .status-icon.status-embedding {
+    color: var(--color-ios-teal);
+    animation: processing-pulse 2s ease-in-out infinite;
+  }
+
+  .status-icon.status-credit_pending {
+    color: var(--color-warning);
+  }
+
   .status-icon.status-timeout {
     color: var(--color-error);
     opacity: 0.7;

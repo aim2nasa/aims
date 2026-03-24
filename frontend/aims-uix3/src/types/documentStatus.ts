@@ -9,7 +9,21 @@
 /**
  * 문서 처리 상태
  */
-export type DocumentStatus = 'completed' | 'processing' | 'error' | 'pending' | 'timeout' | 'credit_pending'
+export type DocumentStatus =
+  | 'pending'           // 큐 대기 / 재처리 대기
+  | 'uploading'         // 파일 저장 중
+  | 'converting'        // PDF 변환 중 (HWP/PPTX 등)
+  | 'extracting'        // 텍스트/메타 추출
+  | 'ocr_queued'        // OCR 대기열 진입
+  | 'ocr_processing'    // OCR 처리 중
+  | 'classifying'       // AI 분류 + 특수문서 감지
+  | 'embed_pending'     // dp/xp 완료, 임베딩 크론 대기
+  | 'embedding'         // 임베딩 생성 중
+  | 'completed'         // 전체 완료
+  | 'credit_pending'    // 크레딧 부족
+  | 'error'             // 실패
+  | 'processing'        // 레거시 호환 (기존 DB 데이터)
+  | 'timeout'           // 타임아웃
 
 /**
  * 처리 단계 상태

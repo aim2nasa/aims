@@ -138,7 +138,9 @@ class OCRWorker:
             await self._update_ocr_status(file_id, {
                 "ocr.status": "running",
                 "ocr.queued_at": queued_at,
-                "ocr.started_at": datetime.utcnow().isoformat()
+                "ocr.started_at": datetime.utcnow().isoformat(),
+                "overallStatus": "ocr_processing",
+                "overallStatusUpdatedAt": datetime.utcnow().isoformat(),
             })
 
             # 4. Process OCR
@@ -319,10 +321,11 @@ class OCRWorker:
             "meta.document_type": ocr_result.get("document_type", "general"),
             "meta.confidence": ocr_result.get("doc_confidence", 0.0),
             "status": "completed",
-            "overallStatus": "completed",
-            "progress": 100,
-            "progressStage": "complete",
-            "progressMessage": "OCR 처리 완료",
+            "overallStatus": "embed_pending",
+            "overallStatusUpdatedAt": datetime.utcnow().isoformat(),
+            "progress": 90,
+            "progressStage": "embed_pending",
+            "progressMessage": "OCR 완료, 임베딩 대기",
         }
 
         # Generate displayName (only if not already set)

@@ -526,8 +526,8 @@ router.get('/admin/dashboard', authenticateJWT, requireRole('admin'), async (req
       }),
       // 전체 완료
       db.collection(COLLECTIONS.FILES).countDocuments({ 'overallStatus': 'completed' }),
-      // 전체 처리중
-      db.collection(COLLECTIONS.FILES).countDocuments({ 'overallStatus': 'processing' }),
+      // 전체 처리중 (세분화된 상태 + 레거시 processing 모두 포함)
+      db.collection(COLLECTIONS.FILES).countDocuments({ 'overallStatus': { $nin: ['completed', 'error', 'credit_pending'] } }),
       // 전체 실패
       db.collection(COLLECTIONS.FILES).countDocuments({ 'overallStatus': 'error' }),
       // 이번 달 OCR 완료 (ocr 서브도큐먼트가 있는 문서만)
