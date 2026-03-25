@@ -97,8 +97,8 @@ async function streamToFile(
     // pipeTo는 signal abort 시 writable을 자동으로 닫고 AbortError를 던짐
     await body.pipeTo(writable, { signal: abortSignal })
   } catch (err) {
-    // 스트리밍 실패 시 writable 정리 보장 (이미 닫힌 경우 무시)
-    try { await writable.close() } catch { /* 이미 닫힘 */ }
+    // 스트리밍 실패 시 불완전한 쓰기를 명시적으로 취소 (abort > close)
+    try { await writable.abort() } catch { /* 이미 닫힘 */ }
     throw err
   }
 }
@@ -149,8 +149,8 @@ export function useDocumentDownload(): UseDocumentDownloadReturn {
 
       return // 성공
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        return // 사용자 취소 (fetch abort 또는 파일 저장 대화상자 취소)
+      if (err instanceof DOMException && (err.name === 'AbortError' || err.name === 'NotAllowedError')) {
+        return // 사용자 취소 (fetch abort, 파일 저장 대화상자 취소, 권한 거부)
       }
       throw err // 호출자에게 에러 전파
     } finally {
