@@ -27,9 +27,11 @@ user_invocable: true
    - PASS → 4단계로
    - FAIL → 이슈 목록 표시, 수정 후 재검수 (자동 수정 시도)
    - 재검수 최대 2회. 2회 FAIL 시 사용자에게 보고하고 중단
-4. 커밋
+4. GINI GATE 마커 생성 + 커밋
+   - Gini PASS 후 `touch D:/aims/.gini-approved` 실행 (PreToolUse 훅 통과용 1회성 마커)
    - CLAUDE.md 규칙 준수: 한글 커밋 메시지, Co-Authored-By 포함
    - regression 테스트 포함 여부는 pre-commit hook이 검증
+   - 마커는 훅이 자동 삭제 (1회 사용 후 소멸)
 ```
 
 ## 판단 기준
