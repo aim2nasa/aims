@@ -3316,6 +3316,13 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       let skippedFiles = 0;
       let processedFiles = 0;
 
+      // 실제 압축 진행 시 progress 전송 (archive.file()은 큐 등록만 하므로 entry 이벤트에서 추적)
+      archive.on('entry', () => {
+        if (activeZipGenerations.get(requestId)?.aborted) return;
+        processedFiles++;
+        sendSSEEvent('progress', { processed: processedFiles + skippedFiles, total: totalFileCount, skipped: skippedFiles });
+      });
+
       // 5. 고객별 문서 추가
       for (const { customer, docs } of customerDocs) {
         // 생성 중단 확인
@@ -3342,8 +3349,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
           let filePath = doc.upload?.convPdfPath || doc.upload?.destPath;
           if (!filePath) {
             skippedFiles++;
-            processedFiles++;
-            sendSSEEvent('progress', { processed: processedFiles, total: totalFileCount, skipped: skippedFiles });
+            sendSSEEvent('progress', { processed: processedFiles + skippedFiles, total: totalFileCount, skipped: skippedFiles });
             continue;
           }
 
@@ -3352,16 +3358,14 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
           if (!resolved.startsWith(BASE_DIR)) {
             console.warn('[문서 다운로드] 경로 탈출 시도 감지:', filePath);
             skippedFiles++;
-            processedFiles++;
-            sendSSEEvent('progress', { processed: processedFiles, total: totalFileCount, skipped: skippedFiles });
+            sendSSEEvent('progress', { processed: processedFiles + skippedFiles, total: totalFileCount, skipped: skippedFiles });
             continue;
           }
 
           // 파일 존재 여부 확인
           if (!fs.existsSync(resolved)) {
             skippedFiles++;
-            processedFiles++;
-            sendSSEEvent('progress', { processed: processedFiles, total: totalFileCount, skipped: skippedFiles });
+            sendSSEEvent('progress', { processed: processedFiles + skippedFiles, total: totalFileCount, skipped: skippedFiles });
             continue;
           }
 
@@ -3407,10 +3411,8 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
           }
           usedNames.add(fileName);
 
-          // ZIP에 파일 추가
+          // ZIP에 파일 추가 (실제 압축 진행률은 archive 'entry' 이벤트에서 전송)
           archive.file(resolved, { name: `${folderPath}/${fileName}` });
-          processedFiles++;
-          sendSSEEvent('progress', { processed: processedFiles, total: totalFileCount, skipped: skippedFiles });
         }
       }
 

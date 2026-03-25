@@ -327,4 +327,103 @@ describe('useDocumentDownload', () => {
       expect(result.current.isDownloading).toBe(false)
     })
   })
+
+  describe('진행률 점진적 전송 (regression: 즉시 100% 버그 수정)', () => {
+    it('onProgress가 점진적으로 호출되어야 함 (한 번에 100% 아님)', async () => {
+      // 5개 파일을 1개씩 점진적으로 progress 이벤트 전송하는 SSE 응답
+      const total = 5
+      let sseData = `event: start\ndata: ${JSON.stringify({ totalFiles: total })}\n\n`
+      for (let i = 1; i <= total; i++) {
+        sseData += `event: progress\ndata: ${JSON.stringify({ processed: i, total, skipped: 0 })}\n\n`
+      }
+      sseData += `event: complete\ndata: ${JSON.stringify({ downloadId: 'd'.repeat(48), filename: '테스트.zip', size: 2048, skippedFiles: 0, expiresIn: 1800 })}\n\n`
+
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(sseData))
+          controller.close()
+        },
+      })
+
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/event-stream' }),
+        body: stream,
+      } as unknown as Response)
+
+      const progressCalls: Array<{ processed: number; total: number; skipped: number }> = []
+      const onProgress = (p: { processed: number; total: number; skipped: number }) => {
+        progressCalls.push({ ...p })
+      }
+
+      const { result } = renderHook(() => useDocumentDownload({ onProgress }))
+
+      await act(async () => {
+        await result.current.download(['customer-1'])
+      })
+
+      // 5번 호출되어야 함 (1/5, 2/5, 3/5, 4/5, 5/5)
+      expect(progressCalls.length).toBe(total)
+
+      // 첫 번째 progress는 100% 미만이어야 함 (즉시 100% 버그 방지)
+      expect(progressCalls[0].processed).toBeLessThan(progressCalls[0].total)
+
+      // 마지막 progress만 100%
+      expect(progressCalls[progressCalls.length - 1].processed).toBe(total)
+
+      // 점진적 증가 확인
+      for (let i = 1; i < progressCalls.length; i++) {
+        expect(progressCalls[i].processed).toBeGreaterThan(progressCalls[i - 1].processed)
+      }
+    })
+
+    it('skip 파일과 정상 파일이 혼재 시 processed = 압축건 + skip건', async () => {
+      // 3개 파일: 1개 skip(즉시) → 2개 정상(entry 이벤트)
+      const total = 3
+      const skipped = 1
+      let sseData = `event: start\ndata: ${JSON.stringify({ totalFiles: total })}\n\n`
+      // skip 1건 (processed=1은 skippedFiles 1건)
+      sseData += `event: progress\ndata: ${JSON.stringify({ processed: 1, total, skipped: 1 })}\n\n`
+      // entry 이벤트 2건 (processed=2, processed=3)
+      sseData += `event: progress\ndata: ${JSON.stringify({ processed: 2, total, skipped: 1 })}\n\n`
+      sseData += `event: progress\ndata: ${JSON.stringify({ processed: 3, total, skipped: 1 })}\n\n`
+      sseData += `event: complete\ndata: ${JSON.stringify({ downloadId: 'e'.repeat(48), filename: '혼합.zip', size: 1024, skippedFiles: skipped, expiresIn: 1800 })}\n\n`
+
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(sseData))
+          controller.close()
+        },
+      })
+
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/event-stream' }),
+        body: stream,
+      } as unknown as Response)
+
+      const progressCalls: Array<{ processed: number; total: number; skipped: number }> = []
+      const onProgress = (p: { processed: number; total: number; skipped: number }) => {
+        progressCalls.push({ ...p })
+      }
+
+      const { result } = renderHook(() => useDocumentDownload({ onProgress }))
+
+      await act(async () => {
+        await result.current.download(['customer-1'])
+      })
+
+      // 3번 호출 (skip 1 + entry 2)
+      expect(progressCalls.length).toBe(3)
+
+      // 마지막 progress에서 processed = total (skip + 압축 합산)
+      const last = progressCalls[progressCalls.length - 1]
+      expect(last.processed).toBe(total)
+      expect(last.skipped).toBe(skipped)
+    })
+  })
 })
