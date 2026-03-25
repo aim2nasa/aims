@@ -2243,7 +2243,14 @@ async def _process_via_xpipe(
             mini_ctx.files_collection = files_collection
             await _execute_hook_results(mini_ctx, hook_results)
 
-    # 10. 완료 알림
+    # 10. 비PDF 파일의 PDF 변환 큐 등록 (브라우저 미리보기용)
+    # PDF/이미지는 브라우저에서 직접 렌더링 가능 → not_required
+    # HWP, Office 문서 등은 PDF 변환 필요 → pending + 큐 등록
+    await _trigger_pdf_conversion_for_xpipe(
+        doc_id, dest_path, original_name, detected_mime, files_collection
+    )
+
+    # 11. 완료 알림
     await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료")
     await _notify_document_complete(doc_id, user_id)
 
@@ -2272,6 +2279,79 @@ def _is_convertible_mime(mime: str) -> bool:
         "application/vnd.ms-powerpoint", "application/vnd.hancom",
     )
     return any(mime.startswith(prefix) for prefix in convertible)
+
+
+def _is_preview_native(mime: str, filename: str) -> bool:
+    """브라우저에서 직접 렌더링 가능한 형식인지 판단 (PDF, 이미지)"""
+    if mime == "application/pdf":
+        return True
+    if mime.startswith("image/"):
+        return True
+    # 확장자 기반 보조 판단 (MIME 탐지 실패 대비)
+    ext = os.path.splitext(filename or "")[1].lower()
+    return ext in (".pdf", ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", ".tif", ".tiff")
+
+
+async def _trigger_pdf_conversion_for_xpipe(
+    doc_id: str,
+    dest_path: str,
+    original_name: str,
+    detected_mime: str,
+    files_collection,
+) -> None:
+    """xPipe 처리 완료 후 비PDF 파일의 PDF 변환 큐 등록 (브라우저 미리보기용)
+
+    PDF/이미지는 변환 불필요(not_required), HWP/Office 등은 큐 등록(pending).
+    변환 큐 등록 실패가 전체 파이프라인을 중단시키지 않도록 격리.
+    """
+    try:
+        # PDF, 이미지 → 브라우저에서 직접 렌더링 가능
+        if _is_preview_native(detected_mime, original_name):
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {"upload.conversion_status": "not_required"}},
+            )
+            return
+
+        # 변환 가능한 포맷인지 확인 (HWP, DOC, XLSX, PPTX 등)
+        if not _is_convertible_mime(detected_mime):
+            # 지원하지 않는 형식 → not_required
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {"upload.conversion_status": "not_required"}},
+            )
+            return
+
+        # 변환 대상 → pending 상태 설정 + 큐 등록
+        await files_collection.update_one(
+            {"_id": ObjectId(doc_id)},
+            {"$set": {"upload.conversion_status": "pending"}},
+        )
+
+        from services.pdf_conversion_queue_service import PdfConversionQueueService
+        await PdfConversionQueueService.enqueue(
+            job_type="preview_pdf",
+            input_path=dest_path,
+            original_name=os.path.basename(original_name or ""),
+            caller="xpipe_pipeline",
+            document_id=doc_id,
+        )
+        logger.info(f"[xPipe] PDF 변환 큐 등록: {doc_id} ({original_name})")
+
+    except Exception as e:
+        # 큐 등록 실패가 문서 처리 결과에 영향을 주지 않도록 격리
+        # pending hang 방지: 실패 시 failed로 설정
+        logger.error(f"[xPipe] PDF 변환 큐 등록 실패: {doc_id} - {e}", exc_info=True)
+        try:
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {
+                    "upload.conversion_status": "failed",
+                    "upload.conversion_error": str(e),
+                }},
+            )
+        except Exception:
+            pass
 
 
 async def _process_via_legacy(
