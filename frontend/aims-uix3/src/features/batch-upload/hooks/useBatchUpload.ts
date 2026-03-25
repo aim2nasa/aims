@@ -363,7 +363,7 @@ export function useBatchUpload(): UseBatchUploadReturn {
       while (true) {
         // 세대 확인 — 새 업로드가 시작되면 이전 worker 즉시 종료
         if (generationRef.current !== currentGeneration) {
-          console.warn(`[useBatchUpload] 좀비 worker 종료: worker gen=${currentGeneration}, current gen=${generationRef.current}`)
+          console.warn(`[useBatchUpload] 좀비 worker 종료: gen=${currentGeneration}, current=${generationRef.current}`)
           return
         }
 
@@ -484,6 +484,7 @@ export function useBatchUpload(): UseBatchUploadReturn {
         }
 
         // 상태 업데이트 - 업로드 시작
+        // ⚠️ duplicateState를 건드리지 않음 — 다른 워커의 중복 다이얼로그를 언마운트시키는 버그 방지
         nextFile.status = 'uploading'
         setProgress((prev) => ({
           ...prev,
@@ -493,10 +494,6 @@ export function useBatchUpload(): UseBatchUploadReturn {
           files: prev.files.map((f) =>
             f.fileId === nextFile.fileId ? { ...f, status: 'uploading' } : f
           ),
-          duplicateState: {
-            ...prev.duplicateState,
-            currentDuplicate: null,
-          },
         }))
 
         // 파일 업로드
@@ -577,7 +574,6 @@ export function useBatchUpload(): UseBatchUploadReturn {
     await Promise.all(activeUploads)
 
     // 완료 상태 설정 — 현재 세대인 경우만 (이전 세대 worker가 완료해도 무시)
-    console.log(`[useBatchUpload] 모든 worker 종료: gen=${currentGeneration}, cancelled=${isCancelledRef.current}, currentGen=${generationRef.current}`)
     if (!isCancelledRef.current && generationRef.current === currentGeneration) {
       setProgress((prev) => ({
         ...prev,
