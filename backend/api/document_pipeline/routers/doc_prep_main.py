@@ -1837,29 +1837,45 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
 
     # Case 3: Check if OCR is needed (no text extracted)
     if not ctx.full_text or len(ctx.full_text.strip()) == 0:
-        # 변환 가능한 포맷(HWP, DOC, PPT 등)이 변환 실패한 경우 → OCR에 보내지 않고 보관 처리
+        # 비변환 파일(이미지 등)은 conv_pdf_path가 불필요하므로 빈 문자열로 초기화
+        conv_pdf_path = ""
+
+        # 변환 가능한 포맷(HWP, DOC, PPT 등)이 텍스트 추출 실패한 경우
+        # → 변환된 PDF가 존재하면 OCR 큐로 전달, 없으면 보관 처리
         if is_convertible_mime(ctx.detected_mime):
-            logger.warning(f"[ConvertFailed] {ctx.detected_mime} 변환 실패, OCR 불가 → 보관 처리: {ctx.doc_id}")
-            await ctx.files_collection.update_one(
+            # DB에서 변환된 PDF 경로 확인
+            conv_doc = await ctx.files_collection.find_one(
                 {"_id": ObjectId(ctx.doc_id)},
-                {"$set": {
-                    "processingSkipReason": "conversion_failed",
-                    "overallStatus": "completed",
-                    "status": "completed",
-                    "meta.mime": ctx.detected_mime,
-                }}
+                {"upload.convPdfPath": 1}
             )
-            await _notify_progress(ctx.doc_id, ctx.user_id, 100, "complete", "PDF 변환 실패 (보관)")
-            await _notify_document_complete(ctx.doc_id, ctx.user_id)
-            pipeline_metrics.record_success(ctx.metric_record)
-            return {
-                "result": "success",
-                "document_id": ctx.doc_id,
-                "status": "completed",
-                "processingSkipReason": "conversion_failed",
-                "mime": ctx.detected_mime,
-                "filename": ctx.original_name
-            }
+            conv_pdf_path = (conv_doc or {}).get("upload", {}).get("convPdfPath", "")
+
+            if conv_pdf_path and os.path.exists(conv_pdf_path):
+                # 변환된 PDF가 존재 → OCR 큐로 전달 (이미지만 있는 PPT/HWP 등)
+                logger.info(f"[ConvertOCR] {ctx.detected_mime} 텍스트 없음, 변환 PDF를 OCR 큐로 전달: {ctx.doc_id}")
+                # OCR 큐 전달 로직은 아래 Case 3 공통 코드로 fall-through
+            else:
+                logger.warning(f"[ConvertFailed] {ctx.detected_mime} 변환 실패, 변환 PDF 없음 → 보관 처리: {ctx.doc_id}")
+                await ctx.files_collection.update_one(
+                    {"_id": ObjectId(ctx.doc_id)},
+                    {"$set": {
+                        "processingSkipReason": "conversion_failed",
+                        "overallStatus": "completed",
+                        "status": "completed",
+                        "meta.mime": ctx.detected_mime,
+                    }}
+                )
+                await _notify_progress(ctx.doc_id, ctx.user_id, 100, "complete", "PDF 변환 실패 (보관)")
+                await _notify_document_complete(ctx.doc_id, ctx.user_id)
+                pipeline_metrics.record_success(ctx.metric_record)
+                return {
+                    "result": "success",
+                    "document_id": ctx.doc_id,
+                    "status": "completed",
+                    "processingSkipReason": "conversion_failed",
+                    "mime": ctx.detected_mime,
+                    "filename": ctx.original_name
+                }
 
         # Progress: 60% - OCR needed
         await _notify_progress(ctx.doc_id, ctx.user_id, 60, "ocr", "OCR 처리 준비 중")
@@ -1867,10 +1883,16 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
 
         queued_at = datetime.utcnow().isoformat()
 
+        # 변환 가능 파일의 경우 변환된 PDF를 OCR 대상으로 사용 (원본 HWP/PPT는 OCR 불가)
+        ocr_file_path = ctx.dest_path
+        if is_convertible_mime(ctx.detected_mime) and conv_pdf_path and os.path.exists(conv_pdf_path):
+            ocr_file_path = conv_pdf_path
+            logger.info(f"[ConvertOCR] 변환 PDF 경로를 OCR 대상으로 사용: {conv_pdf_path}")
+
         # Queue to Redis
         await RedisService.add_to_stream(
             file_id=ctx.doc_id,
-            file_path=ctx.dest_path,
+            file_path=ocr_file_path,
             doc_id=ctx.doc_id,
             owner_id=ctx.user_id,
             queued_at=queued_at,
@@ -2190,6 +2212,20 @@ async def _process_via_xpipe(
         "progress": 90,
         "upload.originalName": original_name,
     }
+
+    # xPipe extract 스테이지에서 OCR이 사용된 경우 ocr.* 필드를 DB에 기록
+    # — 프론트엔드 뱃지 로직이 ocr.status === 'done'을 참조하므로 필수
+    extract_data = result.get("stage_data", {}).get("extract", {})
+    extract_output = extract_data.get("output", {})
+    extract_method = extract_output.get("method", "")
+    if "ocr" in extract_method:
+        meta_update["ocr.status"] = "done"
+        meta_update["ocr.full_text"] = extracted_text
+        meta_update["ocr.done_at"] = datetime.utcnow().isoformat()
+        meta_update["ocr.page_count"] = result.get("_ocr_pages", 1)
+        # OCR confidence: stage_data에 없으면 0.0 (xPipe OCR provider는 confidence를 별도 반환하지 않음)
+        meta_update["ocr.confidence"] = 0.0
+
     await files_collection.update_one(
         {"_id": ObjectId(doc_id)},
         {"$set": meta_update},
@@ -2243,7 +2279,28 @@ async def _process_via_xpipe(
             mini_ctx.files_collection = files_collection
             await _execute_hook_results(mini_ctx, hook_results)
 
-    # 10. 비PDF 파일의 PDF 변환 큐 등록 (브라우저 미리보기용)
+    # 10. AR/CRS가 아닌 일반 문서의 displayName 자동 생성
+    is_ar_or_crs = any(
+        (det.get("doc_type") if isinstance(det, dict) else getattr(det, "doc_type", None))
+        in ("annual_report", "customer_review")
+        for det in detections
+    )
+    if not is_ar_or_crs:
+        existing_doc = await files_collection.find_one(
+            {"_id": ObjectId(doc_id)},
+            {"displayName": 1}
+        )
+        if existing_doc and not existing_doc.get("displayName"):
+            await _generate_display_name(
+                doc_id=doc_id,
+                text=extracted_text,
+                original_name=original_name,
+                user_id=user_id,
+                summary_result={},
+                files_collection=files_collection
+            )
+
+    # 11. 비PDF 파일의 PDF 변환 큐 등록 (브라우저 미리보기용)
     # PDF/이미지는 브라우저에서 직접 렌더링 가능 → not_required
     # HWP, Office 문서 등은 PDF 변환 필요 → pending + 큐 등록
     await _trigger_pdf_conversion_for_xpipe(

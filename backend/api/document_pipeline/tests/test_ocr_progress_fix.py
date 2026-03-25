@@ -50,8 +50,8 @@ class TestOCRSuccessProgress:
             "num_pages": 1,
         }
 
-    async def test_success_sets_progress_100(self):
-        """OCR 성공 시 progress=100, progressStage='complete', progressMessage 설정"""
+    async def test_success_sets_progress_90_embed_pending(self):
+        """OCR 성공 시 progress=90, progressStage='embed_pending' (임베딩 크론 대기)"""
         from workers.ocr_worker import OCRWorker
 
         worker = OCRWorker()
@@ -74,14 +74,14 @@ class TestOCRSuccessProgress:
                 datetime.utcnow().isoformat(), 1
             )
 
-        # progress 필드 검증
-        assert captured_update.get("progress") == 100
-        assert captured_update.get("progressStage") == "complete"
-        assert captured_update.get("progressMessage") == "OCR 처리 완료"
+        # progress 필드 검증 — OCR 완료 후 임베딩 대기 (90%)
+        assert captured_update.get("progress") == 90
+        assert captured_update.get("progressStage") == "embed_pending"
+        assert captured_update.get("progressMessage") == "OCR 완료, 임베딩 대기"
         # 기존 필드도 유지
         assert captured_update.get("ocr.status") == "done"
         assert captured_update.get("status") == "completed"
-        assert captured_update.get("overallStatus") == "completed"
+        assert captured_update.get("overallStatus") == "embed_pending"
 
 
 # ========================================

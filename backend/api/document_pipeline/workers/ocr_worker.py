@@ -311,6 +311,7 @@ class OCRWorker:
         message_id = msg["message_id"]
 
         # Build OCR update
+        ocr_text = (ocr_result.get("full_text") or "").strip()
         ocr_update = {
             "ocr.status": "done",
             "ocr.queued_at": queued_at,
@@ -328,6 +329,13 @@ class OCRWorker:
             "progressStage": "embed_pending",
             "progressMessage": "OCR 완료, 임베딩 대기",
         }
+
+        # OCR로 충분한 텍스트가 추출된 경우, docembed.status를 "pending"으로 리셋
+        # — 이전에 embed 크론이 텍스트 없음으로 "skipped" 처리했을 수 있으므로 재처리 필요
+        if len(ocr_text) >= 10:
+            ocr_update["docembed.status"] = "pending"
+            ocr_update["docembed.skip_reason"] = ""
+            logger.info(f"Resetting docembed.status to pending for file {file_id} (OCR text length: {len(ocr_text)})")
 
         # Generate displayName (only if not already set)
         try:

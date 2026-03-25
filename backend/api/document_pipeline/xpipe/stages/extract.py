@@ -240,6 +240,14 @@ class ExtractStage(Stage):
                 text = self._read_pdf_file(converted, file_name)
             else:
                 text = self._convert_and_extract(file_path, file_name)
+            # 텍스트 추출 실패 시 변환된 PDF를 OCR fallback (이미지만 포함된 PPT/HWP 등)
+            if not text and mode == "real" and converted and os.path.exists(converted):
+                method = "libreoffice+ocr_fallback"
+                try:
+                    text, ocr_model = await self._try_ocr(context, converted, file_name, "application/pdf", ocr_model_name)
+                except Exception as e:
+                    _logger.warning("[ExtractStage] 변환 파일 OCR fallback 예외 (빈 텍스트로 계속): %s — %s", file_name, e)
+                    text, ocr_model = "", "-"
         else:
             # 알 수 없는 형식 — 에러 메시지를 텍스트로 저장하지 않음
             method = "unknown"
@@ -247,11 +255,21 @@ class ExtractStage(Stage):
             text = ""
 
         # 텍스트 추출 결과 검증 — real 모드에서 빈 텍스트는 에러 (가짜 성공 금지)
+        # 단, 변환 파일(HWP/PPT 등)의 OCR fallback 실패는 best-effort이므로 빈 텍스트 허용
         if mode != "stub" and (not text or not text.strip()):
-            raise RuntimeError(
-                f"텍스트 추출 실패: 추출된 텍스트가 없습니다. "
-                f"(파일: {file_name}, 방식: {method})"
-            )
+            if is_convertible and method == "libreoffice+ocr_fallback":
+                # 변환 파일 OCR fallback 실패 — 원본은 보관되므로 에러 대신 빈 텍스트로 처리
+                import logging as _logging
+                _logger = _logging.getLogger(__name__)
+                _logger.warning(
+                    "[ExtractStage] 변환 파일 OCR fallback 실패 (빈 텍스트), 빈 텍스트로 계속 진행: %s", file_name
+                )
+                text = ""
+            else:
+                raise RuntimeError(
+                    f"텍스트 추출 실패: 추출된 텍스트가 없습니다. "
+                    f"(파일: {file_name}, 방식: {method})"
+                )
 
         context["extracted_text"] = text
         context["text"] = text
