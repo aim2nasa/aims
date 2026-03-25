@@ -3239,13 +3239,14 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       const isMulti = customers.length > 1;
       const now = new Date();
       const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
 
       let zipFilename;
       if (isMulti) {
-        zipFilename = `AIMS_문서함_${dateStr}.zip`;
+        zipFilename = `AIMS_문서함_${dateStr}${timeStr}.zip`;
       } else {
         const singleName = customers[0].personal_info?.name || '고객';
-        zipFilename = `${singleName}.zip`;
+        zipFilename = `${singleName}-${dateStr}${timeStr}.zip`;
       }
 
       // 총 문서 수 사전 계산 (진행률 표시용)
