@@ -60,15 +60,9 @@ function authenticateJWT(req, res, next) {
 
     req.user = decoded;
 
-    // ⭐ 개발 환경 전용: x-user-id 헤더로 사용자 ID 오버라이드 (개발자 모드 계정 전환)
-    // 프로덕션에서는 무시됨 (보안)
-    if (process.env.NODE_ENV === 'development') {
-      const devUserId = req.headers['x-user-id'];
-      if (devUserId && devUserId !== decoded.id) {
-        console.log(`[DEV] 사용자 ID 오버라이드: ${decoded.id} → ${devUserId}`);
-        req.user = { ...decoded, id: devUserId };
-      }
-    }
+    // JWT 토큰이 유일한 사용자 ID 소스 (x-user-id 오버라이드 제거됨)
+    // 이유: dev에서 localStorage에 이전 세션의 stale userId가 남아있으면
+    // JWT 사용자와 다른 ownerId로 데이터가 저장되는 심각한 버그 발생
 
     next();
   });
@@ -253,15 +247,7 @@ function authenticateJWTorAPIKey(req, res, next) {
       authMethod: 'jwt'
     };
 
-    // ⭐ 개발 환경 전용: x-user-id 헤더로 사용자 ID 오버라이드 (개발자 모드 계정 전환)
-    // authenticateJWT와 동일한 동작 보장
-    if (process.env.NODE_ENV === 'development') {
-      const devUserId = req.headers['x-user-id'];
-      if (devUserId && devUserId !== decoded.id) {
-        console.log(`[DEV] 사용자 ID 오버라이드: ${decoded.id} → ${devUserId}`);
-        req.user = { ...req.user, id: devUserId };
-      }
-    }
+    // JWT 토큰이 유일한 사용자 ID 소스 (x-user-id 오버라이드 제거됨)
 
     next();
   });

@@ -151,15 +151,10 @@ describe('DocumentRegistrationView - Annual Report 자동 파싱 (aa42058)', () 
     });
   });
 
-  describe('3. 백그라운드 파싱 트리거 (x-user-id 헤더 필수)', () => {
-    it('[회귀 방지 aa42058] 백그라운드 파싱 트리거 시 x-user-id 헤더를 반드시 포함해야 함', async () => {
-      const testUserId = 'test-user-id';
+  describe('3. 백그라운드 파싱 트리거 (JWT 인증)', () => {
+    it('[회귀 방지] 백그라운드 파싱 트리거 시 Authorization 헤더로 JWT 인증해야 함', async () => {
       const testCustomerId = 'test-customer-id';
       const testDocumentId = 'test-doc-id';
-
-      // UserContextService가 올바른 userId를 반환하는지 확인
-      const context = UserContextService.getContext();
-      expect(context.identifierValue).toBe(testUserId);
 
       // 백그라운드 파싱 API 호출 시뮬레이션
       fetchMock.mockResolvedValueOnce({
@@ -170,12 +165,13 @@ describe('DocumentRegistrationView - Annual Report 자동 파싱 (aa42058)', () 
         })
       });
 
-      // 실제 API 호출 (테스트 환경)
+      // JWT 토큰이 유일한 인증 수단 (x-user-id 오버라이드 제거됨)
+      const token = 'test-jwt-token';
       await fetch('http://tars.giize.com:3010/api/ar-background/trigger-parsing', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': testUserId // ⭐ 필수 헤더
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customer_id: testCustomerId,
@@ -183,13 +179,13 @@ describe('DocumentRegistrationView - Annual Report 자동 파싱 (aa42058)', () 
         })
       });
 
-      // fetch가 올바른 헤더와 함께 호출되었는지 검증
+      // fetch가 JWT 인증 헤더와 함께 호출되었는지 검증
       expect(fetchMock).toHaveBeenCalledWith(
         'http://tars.giize.com:3010/api/ar-background/trigger-parsing',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'x-user-id': testUserId // ⭐ 회귀 방지: 이 헤더가 누락되면 테스트 실패
+            'Authorization': `Bearer ${token}`
           }),
           body: expect.stringContaining(testCustomerId)
         })

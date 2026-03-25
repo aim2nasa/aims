@@ -388,7 +388,6 @@ describe('useCustomerRegistrationController', () => {
           method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
-            'x-user-id': expect.any(String)
           })
         })
       );

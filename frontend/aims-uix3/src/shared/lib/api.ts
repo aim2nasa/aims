@@ -104,14 +104,13 @@ export function clearActiveCustomer(): void {
 
 /**
  * 현재 사용자 ID 가져오기
- * 개발자 모드 오버라이드(aims-dev-user-override)를 우선 적용
+ * localStorage에 저장된 로그인 사용자 ID 반환
  *
  * @returns 사용자 ID 문자열 (없으면 빈 문자열)
  */
 export function getCurrentUserId(): string {
   if (typeof window === 'undefined') return ''
-  const devOverride = localStorage.getItem('aims-dev-user-override')
-  return devOverride || localStorage.getItem('aims-current-user-id') || ''
+  return localStorage.getItem('aims-current-user-id') || ''
 }
 
 /**
@@ -181,12 +180,7 @@ export function getAuthHeaders(): Record<string, string> {
 
   const headers: Record<string, string> = {}
 
-  // x-user-id 헤더 추가 (개발자 모드 오버라이드 우선)
-  const devOverride = localStorage.getItem('aims-dev-user-override')
-  const currentUserId = devOverride || localStorage.getItem('aims-current-user-id')
-  if (currentUserId) {
-    headers['x-user-id'] = currentUserId
-  }
+  // JWT 토큰이 유일한 사용자 인증 수단 (x-user-id 헤더 제거됨)
 
   // Authorization 헤더 추가 (getAuthToken 사용으로 v1/v2 호환)
   const token = getAuthToken()
@@ -469,22 +463,10 @@ export async function apiRequest<T = unknown>(
     }
   }
 
-  // 헤더 구성 (개발자 모드 오버라이드 우선)
-  const currentUserId = typeof window !== 'undefined'
-    ? (() => {
-        const devOverride = localStorage.getItem('aims-dev-user-override');
-        if (devOverride) return devOverride;
-        const storedId = localStorage.getItem('aims-current-user-id');
-        if (!storedId) {
-          logger.debug('API', '사용자 ID가 localStorage에 없습니다. x-user-id 헤더가 빈 값으로 전송됩니다.');
-        }
-        return storedId || '';
-      })()
-    : '';
-
+  // 헤더 구성 — JWT 토큰이 유일한 사용자 인증 수단
+  // x-user-id 헤더 제거됨: localStorage의 stale userId로 인해 잘못된 ownerId로 데이터 저장되는 버그 방지
   const requestHeaders: Record<string, string> = {
     ...API_CONFIG.DEFAULT_HEADERS,
-    'x-user-id': currentUserId,
     ...getAuthHeaders(),
     ...(headers as Record<string, string>),
   };

@@ -107,10 +107,8 @@ async function getCustomerDocumentHashes(customerId: string): Promise<Set<string
   // 캐시 미스 → API 일괄 조회
   try {
     const token = getAuthToken();
-    const userId = getCurrentUserId() || 'tester';
     const res = await fetch(`/api/customers/${customerId}/document-hashes`, {
       headers: {
-        'x-user-id': userId,
         ...(token && { Authorization: `Bearer ${token}` })
       }
     });

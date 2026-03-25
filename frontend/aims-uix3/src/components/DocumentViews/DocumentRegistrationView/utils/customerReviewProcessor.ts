@@ -9,7 +9,7 @@
 import { DocumentService } from '@/services/DocumentService';
 import { calculateFileHash } from '@/features/customer/utils/fileHash';
 import { errorReporter } from '@/shared/lib/errorReporter';
-import { getAuthToken, getCurrentUserId } from '@/shared/lib/api';
+import { getAuthToken } from '@/shared/lib/api';
 import { CustomerReviewApi } from '@/features/customer/api/customerReviewApi';
 import type { UploadFile } from '../types/uploadTypes';
 import type { LogLevel } from '../types/logTypes';
@@ -73,11 +73,9 @@ export async function processCustomerReviewFile(
       // 각 document_id로 file_hash 조회
       for (const doc of customerDocs.documents) {
         try {
-          const userId = getCurrentUserId() || 'tester';
           const token = getAuthToken();
           const docStatus = await fetch(`/api/documents/${doc._id}/status`, {
             headers: {
-              'x-user-id': userId,
               ...(token && { Authorization: `Bearer ${token}` })
             }
           });

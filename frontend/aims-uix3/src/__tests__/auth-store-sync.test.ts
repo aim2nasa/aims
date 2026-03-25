@@ -117,13 +117,13 @@ describe('Auth Store 동기화', () => {
       expect(headers['Authorization']).toBe(`Bearer ${token}`)
     })
 
-    it('aims-current-user-id가 있으면 x-user-id 헤더를 포함해야 함', async () => {
+    it('x-user-id 헤더를 포함하지 않아야 함 (JWT 단일 인증)', async () => {
       localStorageMock['aims-current-user-id'] = 'user123'
 
       const { getAuthHeaders } = await import('@/shared/lib/api')
       const headers = getAuthHeaders()
 
-      expect(headers['x-user-id']).toBe('user123')
+      expect(headers['x-user-id']).toBeUndefined()
     })
 
     it('토큰이 없으면 Authorization 헤더가 없어야 함', async () => {
