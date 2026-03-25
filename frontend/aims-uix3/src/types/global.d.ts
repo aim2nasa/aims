@@ -39,10 +39,34 @@ interface AimsHaptic {
   lightTouch: () => void;
 }
 
+/**
+ * File System Access API 타입 (showSaveFilePicker)
+ * 스트리밍 다운로드에서 사용. 미지원 브라우저에서는 undefined.
+ */
+interface FileSystemWritableFileStream extends WritableStream {
+  write(data: BufferSource | Blob | string | { type: string; data?: BufferSource | Blob | string; position?: number; size?: number }): Promise<void>
+  seek(position: number): Promise<void>
+  truncate(size: number): Promise<void>
+}
+
+interface FileSystemFileHandle {
+  createWritable(): Promise<FileSystemWritableFileStream>
+}
+
+interface SaveFilePickerOptions {
+  suggestedName?: string
+  types?: Array<{
+    description?: string
+    accept: Record<string, string[]>
+  }>
+}
+
 declare global {
   interface Window {
     /** AIMS 햅틱 피드백 시스템 전역 인스턴스 */
     aimsHaptic?: AimsHaptic;
+    /** File System Access API — 스트리밍 다운로드용 (Chrome/Edge) */
+    showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
   }
 }
 

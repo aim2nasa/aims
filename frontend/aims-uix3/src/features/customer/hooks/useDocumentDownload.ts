@@ -47,7 +47,7 @@ function parseContentDisposition(header: string | null): string {
 }
 
 /**
- * Blob을 브라우저 다운로드로 트리거
+ * Blob을 브라우저 다운로드로 트리거 (폴백 경로)
  */
 function triggerBrowserDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)
@@ -61,6 +61,46 @@ function triggerBrowserDownload(blob: Blob, filename: string): void {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }, 100)
+}
+
+/**
+ * File System Access API (showSaveFilePicker) 지원 여부 확인
+ */
+function isFileSystemAccessSupported(): boolean {
+  return typeof window.showSaveFilePicker === 'function'
+}
+
+/**
+ * ReadableStream을 File System Access API로 디스크에 직접 스트리밍 저장
+ * - 브라우저 메모리에 전체 파일을 로드하지 않음 (OOM 방지)
+ * - 사용자가 저장 경로를 직접 선택
+ */
+async function streamToFile(
+  body: ReadableStream<Uint8Array>,
+  filename: string,
+  abortSignal?: AbortSignal,
+): Promise<void> {
+  // isFileSystemAccessSupported()로 사전 검증 후 호출됨
+  const fileHandle = await window.showSaveFilePicker!({
+    suggestedName: filename,
+    types: [
+      {
+        description: 'ZIP 파일',
+        accept: { 'application/zip': ['.zip'] },
+      },
+    ],
+  })
+
+  const writable = await fileHandle.createWritable()
+
+  try {
+    // pipeTo는 signal abort 시 writable을 자동으로 닫고 AbortError를 던짐
+    await body.pipeTo(writable, { signal: abortSignal })
+  } catch (err) {
+    // 스트리밍 실패 시 writable 정리 보장 (이미 닫힌 경우 무시)
+    try { await writable.close() } catch { /* 이미 닫힘 */ }
+    throw err
+  }
 }
 
 export function useDocumentDownload(): UseDocumentDownloadReturn {
@@ -96,14 +136,21 @@ export function useDocumentDownload(): UseDocumentDownloadReturn {
         throw new Error(errorMsg)
       }
 
-      const blob = await response.blob()
       const filename = filenameOverride || parseContentDisposition(response.headers.get('Content-Disposition'))
-      triggerBrowserDownload(blob, filename)
+
+      // 스트리밍 다운로드: File System Access API 지원 + response.body 존재 시
+      if (isFileSystemAccessSupported() && response.body) {
+        await streamToFile(response.body, filename, abortRef.current.signal)
+      } else {
+        // 폴백: 메모리에 전체 로드 후 다운로드 (미지원 브라우저, response.body null)
+        const blob = await response.blob()
+        triggerBrowserDownload(blob, filename)
+      }
 
       return // 성공
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        return // 사용자 취소 — 에러 아님
+        return // 사용자 취소 (fetch abort 또는 파일 저장 대화상자 취소)
       }
       throw err // 호출자에게 에러 전파
     } finally {
