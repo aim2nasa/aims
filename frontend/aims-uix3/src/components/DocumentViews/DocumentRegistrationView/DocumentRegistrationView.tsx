@@ -760,12 +760,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 : '시스템에'
 
               addLog(
-                'error',
-                `🔴 중복 파일 거부: ${file.name}`,
+                'info',
+                `⊘ 중복 파일 건너뜀: ${file.name}`,
                 `이미 ${customerInfo} 동일한 파일이 등록되어 있습니다. (${existingInfo.fileName})`
               )
-              console.error(`[DocumentRegistration] 🔴🔴🔴 시스템 해시 중복 거부: ${file.name} (기존: ${existingInfo.fileName})`)
-              updateFileStatus(file, 'error', `중복 파일 - 이미 ${customerInfo} 등록됨`)
+              console.warn(`[DocumentRegistration] 시스템 해시 중복 건너뜀: ${file.name} (기존: ${existingInfo.fileName})`)
+              updateFileStatus(file, 'skipped', `중복 파일 - 이미 ${customerInfo} 등록됨`)
               continue
             }
           } catch (error) {
