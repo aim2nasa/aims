@@ -205,9 +205,11 @@ const DocumentExplorerContent: React.FC<{
     const toastId = toast.show(`${count}명 고객 문서함 압축 준비 중...`, { type: 'info', duration: Infinity })
     progressToastIdRef.current = toastId
     try {
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+      const now = new Date(Date.now() + 9 * 60 * 60 * 1000) // KST (UTC+9)
+      const dateStr = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}`
+      const timeStr = `${String(now.getUTCHours()).padStart(2, '0')}${String(now.getUTCMinutes()).padStart(2, '0')}`
       const initialSuffix = selectedInitial ? `_${selectedInitial}` : ''
-      const zipName = `AIMS_문서함${initialSuffix}_${dateStr}.zip`
+      const zipName = `AIMS_문서함${initialSuffix}_${dateStr}${timeStr}.zip`
       await downloadZip(Array.from(selectedCustomerIds), zipName)
       toast.dismiss(toastId)
       toast.show(`${count}명 고객 문서함 다운로드 시작`, { type: 'success' })

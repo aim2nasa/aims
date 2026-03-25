@@ -3180,6 +3180,23 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       .trim() || '이름없음';
   }
 
+  // 한글 초성 추출 (ZIP 초성 폴더 그룹화용)
+  function getKoreanInitial(name) {
+    if (!name) return '기타';
+    const code = name.charCodeAt(0);
+    // 한글 유니코드 범위: 0xAC00 ~ 0xD7A3
+    if (code >= 0xAC00 && code <= 0xD7A3) {
+      const initials = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+      const index = Math.floor((code - 0xAC00) / 588);
+      return initials[index];
+    }
+    // 영문
+    if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+      return String.fromCharCode(code).toUpperCase();
+    }
+    return '기타';
+  }
+
   // Phase 1: ZIP 파일 준비 (SSE 스트리밍으로 진행률 전송)
   // Content-Type: text/event-stream으로 각 파일 추가 시 progress 이벤트,
   // 완료 시 complete 이벤트(downloadId 포함), 에러 시 error 이벤트 전송
@@ -3197,7 +3214,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       }
 
       // customerIds 크기 제한 (DoS 방지)
-      const MAX_CUSTOMER_IDS = 100;
+      const MAX_CUSTOMER_IDS = 1000;
       if (customerIds.length > MAX_CUSTOMER_IDS) {
         return res.status(400).json({ success: false, error: `한 번에 최대 ${MAX_CUSTOMER_IDS}명까지 다운로드할 수 있습니다.`, timestamp: utcNowISO() });
       }
@@ -3234,6 +3251,9 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
         const name = c.personal_info?.name || '이름없음';
         nameCount.set(name, (nameCount.get(name) || 0) + 1);
       }
+
+      // 초성 폴더 사용 여부 (11명 이상 다중 고객일 때)
+      const useInitialFolder = customers.length >= 11;
 
       // 3. ZIP 파일명 결정
       const isMulti = customers.length > 1;
@@ -3377,8 +3397,11 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
 
           // 폴더 경로 구성
           let folderPath;
-          if (isMulti) {
-            folderPath = `AIMS_문서함_${dateStr}/${customerFolder}/${catLabel}/${subLabel}`;
+          if (isMulti && useInitialFolder) {
+            const initial = getKoreanInitial(customerName);
+            folderPath = `AIMS_문서함_${dateStr}${timeStr}/${initial}/${customerFolder}/${catLabel}/${subLabel}`;
+          } else if (isMulti) {
+            folderPath = `AIMS_문서함_${dateStr}${timeStr}/${customerFolder}/${catLabel}/${subLabel}`;
           } else {
             folderPath = `${customerFolder}/${catLabel}/${subLabel}`;
           }
