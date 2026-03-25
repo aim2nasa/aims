@@ -1126,6 +1126,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   return (
     <CenterPaneView
       visible={visible}
+      suppressAutoBackButton
       title="상세 문서검색"
       titleIcon={<SFSymbol name="search-bold" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} style={{ color: 'var(--color-icon-doc-search)' }} />}
       titleAccessory={

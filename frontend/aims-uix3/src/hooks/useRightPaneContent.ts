@@ -19,6 +19,7 @@ import { api } from '@/shared/lib/api'
 import { logger } from '@/shared/lib/logger'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
+import { useNavigationStore } from '@/shared/store/useNavigationStore'
 
 /**
  * RightPane 콘텐츠 타입
@@ -136,6 +137,9 @@ export function useRightPaneContent(
 
   // 최근 검색 고객 스토어
   const addRecentCustomer = useRecentCustomersStore((state) => state.addRecentCustomer)
+
+  // 네비게이션 히스토리 추적 (조건부 BackButton용)
+  const recordNavigation = useNavigationStore((state) => state.recordNavigation)
 
   // RightPane 상태
   const [rightPaneVisible, setRightPaneVisible] = useState(false)
@@ -341,6 +345,7 @@ export function useRightPaneContent(
 
       // CustomerFullDetailView 표시
       setFullDetailCustomerId(customerId)
+      recordNavigation('customers-full-detail', 'internal')
       setActiveDocumentView('customers-full-detail')
 
       // URL 업데이트 (customerId는 전체 정보 뷰용으로 유지)
@@ -354,7 +359,7 @@ export function useRightPaneContent(
       rightPaneContentType,
       setActiveDocumentView,
       setFullDetailCustomerId,
-      // 🔧 addRecentCustomer 제거 - CustomerFullDetailView에서 처리
+      recordNavigation,
     ]
   )
 
@@ -365,21 +370,24 @@ export function useRightPaneContent(
     // 이전 전체 UI 상태 복원
     const prevState = fullDetailPreviousUIStateRef.current
     if (prevState) {
-      setActiveDocumentView(prevState.view || 'customers-all')
+      const returnView = prevState.view || 'customers-all'
+      recordNavigation(returnView, 'sidebar')
+      setActiveDocumentView(returnView)
       setSelectedCustomer(prevState.customer)
       setRightPaneContentType(prevState.rightPaneContentType)
       setRightPaneVisible(prevState.rightPaneVisible)
       updateURLParams({
-        view: prevState.view || 'customers-all',
+        view: returnView,
         customerId: prevState.customer?._id || null,
       })
       fullDetailPreviousUIStateRef.current = null
     } else {
       // 폴백: 저장된 상태가 없으면 고객 전체보기로
+      recordNavigation('customers-all', 'sidebar')
       setActiveDocumentView('customers-all')
       updateURLParams({ view: 'customers-all', customerId: null })
     }
-  }, [updateURLParams, setActiveDocumentView, setFullDetailCustomerId])
+  }, [updateURLParams, setActiveDocumentView, setFullDetailCustomerId, recordNavigation])
 
   // 고객별 문서 탐색기(CenterPane) 열기 핸들러
   const handleExpandToExplorer = useCallback(
@@ -402,6 +410,7 @@ export function useRightPaneContent(
       setExplorerCustomerId?.(customerId)
       setExplorerCustomerName?.(customerName)
       setExplorerCustomerType?.(customerType || '개인')
+      recordNavigation('customer-document-explorer', 'internal')
       setActiveDocumentView('customer-document-explorer')
 
       updateURLParams({ view: 'customer-document-explorer', customerId, tab: null })
@@ -416,6 +425,7 @@ export function useRightPaneContent(
       setExplorerCustomerId,
       setExplorerCustomerName,
       setExplorerCustomerType,
+      recordNavigation,
     ]
   )
 
@@ -429,6 +439,7 @@ export function useRightPaneContent(
     if (prevState) {
       const returnView = prevState.view || 'customers-full-detail'
       const returnCustomerId = prevState.customer?._id || prevState.explorerCustomerId || null
+      recordNavigation(returnView, 'sidebar')
       setActiveDocumentView(returnView)
       setSelectedCustomer(prevState.customer)
       setRightPaneContentType(prevState.rightPaneContentType)
@@ -440,10 +451,11 @@ export function useRightPaneContent(
       explorerPreviousUIStateRef.current = null
     } else {
       // prevState가 없는 경우 (URL 직접 접근 등) → 고객 목록으로 이동
+      recordNavigation('customers-all', 'sidebar')
       setActiveDocumentView('customers-all')
       updateURLParams({ view: 'customers-all', customerId: null })
     }
-  }, [updateURLParams, setActiveDocumentView, setExplorerCustomerId, setExplorerCustomerName])
+  }, [updateURLParams, setActiveDocumentView, setExplorerCustomerId, setExplorerCustomerName, recordNavigation])
 
   // 고객 정보 새로고침 핸들러 (수정 시 사용)
   const handleCustomerRefresh = useCallback(async () => {

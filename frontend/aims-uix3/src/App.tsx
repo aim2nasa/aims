@@ -14,6 +14,7 @@ import { DevModePasswordModal } from './shared/ui/DevToolsPanel/DevModePasswordM
 import { OnboardingTour, type TourStep } from './shared/components/OnboardingTour'
 import { RightClickGuide } from './shared/components/RightClickGuide'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
+import { useNavigationStore } from './shared/store/useNavigationStore'
 import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
 import { getCurrentUser } from './entities/user/api'
@@ -650,6 +651,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [])
 
+  // 네비게이션 히스토리 추적 (조건부 BackButton용) — popstate보다 앞에 선언 필요
+  const recordNavigation = useNavigationStore((state) => state.recordNavigation)
+
   // 🍎 브라우저 뒤로가기/앞으로가기 처리 (popstate)
   useEffect(() => {
     const handlePopState = () => {
@@ -667,6 +671,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       }
       setActiveDocumentView(viewToRestore)
 
+      // 🍎 Zustand store 동기화 (popstate는 브라우저 히스토리 이동이므로 'sidebar'로 처리하여 previousView 초기화)
+      recordNavigation(viewToRestore, 'sidebar')
+
       // 🍎 customers-full-detail의 경우 customerId 복원
       if (viewToRestore === 'customers-full-detail' && urlCustomerId) {
         setFullDetailCustomerId(urlCustomerId)
@@ -681,7 +688,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
+  }, [recordNavigation])
 
   // iOS Dynamic Type + 햅틱 피드백 시스템 초기화 + 버전 로깅
   useEffect(() => {
@@ -818,7 +825,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [activeDocumentView])
 
   // 메뉴 클릭 핸들러 - 모든 View 지원
-  const handleMenuClick = useCallback((menuKey: string) => {
+  // source: 'sidebar' = 사이드바 직접 클릭, 'internal' = 앱 내부 링크 (기본값)
+  const handleMenuClick = useCallback((menuKey: string, source: 'sidebar' | 'internal' = 'internal') => {
     const allViewKeys = [
       // 빠른 작업
       'quick-actions',
@@ -838,6 +846,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       'inquiry'
     ]
     if (allViewKeys.includes(menuKey)) {
+      // 네비게이션 히스토리 기록 (조건부 BackButton 표시용)
+      recordNavigation(menuKey, source)
+
       setActiveDocumentView(menuKey)
 
       // 메뉴 변경 시 RightPane 닫기 (문서/고객 선택 해제)
@@ -849,7 +860,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // 🍎 URL 업데이트 (view 포함하여 pushState로 히스토리에 추가)
       updateURLParams({ view: menuKey, customerId: null, documentId: null })
     }
-  }, [updateURLParams])
+  }, [updateURLParams, recordNavigation])
 
   // 🎹 전역 단축키 핸들러 - useGlobalShortcuts 훅으로 분리
   useGlobalShortcuts({ onMenuClick: handleMenuClick })
@@ -860,6 +871,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 최근 검색 고객 클릭 핸들러 - 고객 전체보기 페이지로 이동
   const handleRecentCustomerClick = useCallback(async (customerId: string) => {
     // customers-full-detail 뷰로 이동
+    recordNavigation('customers-full-detail', 'internal')
     setActiveDocumentView('customers-full-detail')
     setFullDetailCustomerId(customerId)
 
@@ -885,6 +897,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 🍎 전체보기 → 간략보기 전환 핸들러 (customers-all + customerId 유지)
   const handleSwitchToCompactView = useCallback(async (customerId: string) => {
     // customers-all 뷰로 전환
+    recordNavigation('customers-all', 'internal')
     setActiveDocumentView('customers-all')
     setFullDetailCustomerId(null)
 
@@ -944,8 +957,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   const closeDocumentView = useCallback(() => {
     // null 대신 기본 View로 설정하여 빈 CenterPane 방지
+    recordNavigation(DEFAULT_VIEW, 'sidebar')
     setActiveDocumentView(DEFAULT_VIEW)
-  }, [])
+  }, [recordNavigation])
 
   // 문서/고객 클릭 핸들러들은 useRightPaneContent 훅에서 제공:
   // handleDocumentClick, handleCustomerClick, handleOpenFullDetail,
@@ -1265,6 +1279,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         onMenuClick={handleMenuClick}
         onQuickSearchCustomerClick={(customerId, customer) => {
           // 빠른검색에서 고객 선택 시 customers-full-detail로 이동
+          recordNavigation('customers-full-detail', 'internal')
           setActiveDocumentView('customers-full-detail')
           setFullDetailCustomerId(customerId)
 
@@ -1319,7 +1334,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               <CustomMenu
                 collapsed={false}
                 onMenuClick={(key) => {
-                  handleMenuClick(key)
+                  handleMenuClick(key, 'sidebar')
                   setMobileDrawerOpen(false)
                 }}
                 onCustomerClick={(customerId) => {
@@ -1346,6 +1361,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                           setSelectedCustomer(null)
                           setRightPaneContentType(null)
                           sessionStorage.setItem('accountSettings_activeTab', 'data')
+                          recordNavigation('account-settings', 'sidebar')
                           setActiveDocumentView('account-settings')
                           updateURLParams({ customerId: null, documentId: null })
                           setMobileDrawerOpen(false)
@@ -1407,7 +1423,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <Suspense fallback={<div className="suspense-skeleton" />}>
               <CustomMenu
                 collapsed={leftPaneCollapsed}
-                onMenuClick={handleMenuClick}
+                onMenuClick={(key) => handleMenuClick(key, 'sidebar')}
                 onCustomerClick={handleCustomerClick}
                 onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
                 selectedKey={activeDocumentView || 'dsd'}
@@ -1427,6 +1443,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                             setSelectedCustomer(null)
                             setRightPaneContentType(null)
                             sessionStorage.setItem('accountSettings_activeTab', 'data')
+                            recordNavigation('account-settings', 'sidebar')
                             setActiveDocumentView('account-settings')
                             updateURLParams({ customerId: null, documentId: null })
                           }}
@@ -1699,7 +1716,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <BatchDocumentUploadView
               visible={activeDocumentView === 'batch-document-upload'}
               onClose={closeDocumentView}
-              onViewDocuments={() => setActiveDocumentView('documents-library')}
+              onViewDocuments={() => {
+                recordNavigation('documents-library', 'internal')
+                setActiveDocumentView('documents-library')
+              }}
             />
           </Suspense>
 

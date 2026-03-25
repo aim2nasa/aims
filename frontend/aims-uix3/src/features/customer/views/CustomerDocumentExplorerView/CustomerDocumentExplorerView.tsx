@@ -945,6 +945,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   return (
     <CenterPaneView
       visible={visible}
+      suppressAutoBackButton
       title={`${customerName || '고객'} 문서 분류함`}
       titleIcon={
         <SFSymbol

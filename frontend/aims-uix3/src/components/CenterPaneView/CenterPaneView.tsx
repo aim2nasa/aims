@@ -7,9 +7,11 @@
  * 객체지향 상속 구조의 부모 클래스 역할
  */
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import { Breadcrumb, type BreadcrumbItem } from '@/shared/ui/Breadcrumb'
+import { BackButton } from '@/shared/ui/BackButton'
+import { useNavigationStore } from '@/shared/store/useNavigationStore'
 import './CenterPaneView.css'
 
 interface CenterPaneViewProps {
@@ -49,6 +51,8 @@ interface CenterPaneViewProps {
   onBreadcrumbClick?: (key: string) => void
   /** 페이지 설명 (제목 아래 표시) */
   description?: string
+  /** 자동 조건부 BackButton 비활성화 (자체 BackButton이 있는 뷰에서 사용) */
+  suppressAutoBackButton?: boolean
 }
 
 /**
@@ -118,8 +122,41 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
   placeholderMessage,
   breadcrumbItems,
   onBreadcrumbClick,
-  description
+  description,
+  suppressAutoBackButton = false
 }) => {
+  // 조건부 BackButton: 앱 내부 링크로 진입했을 때만 표시
+  const previousView = useNavigationStore((state) => state.previousView)
+  const navigationSource = useNavigationStore((state) => state.navigationSource)
+
+  const handleAutoBack = useCallback(() => {
+    if (window.history.length > 1) {
+      window.history.back()
+    } else {
+      // fallback: 기본 페이지(고객 관리)로 이동
+      const url = new URL(window.location.href)
+      url.searchParams.set('view', 'customers')
+      window.history.pushState({}, '', url.toString())
+      window.location.reload()
+    }
+  }, [])
+
+  // 자동 BackButton 표시 조건:
+  // 1. suppressAutoBackButton이 false
+  // 2. 외부 전달된 titleLeftAccessory가 없음
+  // 3. 내부 링크(internal)로 진입 && 이전 뷰가 존재
+  const showAutoBackButton = !suppressAutoBackButton
+    && !titleLeftAccessory
+    && navigationSource === 'internal'
+    && previousView !== null
+
+  const effectiveLeftAccessory = titleLeftAccessory || (showAutoBackButton ? (
+    <BackButton
+      onClick={handleAutoBack}
+      tooltipContent="이전 페이지로 돌아가기"
+    />
+  ) : undefined)
+
   if (!visible) return null
 
   return (
@@ -146,10 +183,10 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
 
       {/* 헤더 영역 - 애플 스타일 적용 */}
       <div className="center-pane-view__header">
-        {/* 왼쪽 액세서리 (돌아가기 버튼 등) */}
-        {titleLeftAccessory && (
+        {/* 왼쪽 액세서리 (돌아가기 버튼 등 — 자동 BackButton 포함) */}
+        {effectiveLeftAccessory && (
           <div className="center-pane-view__title-left-accessory">
-            {titleLeftAccessory}
+            {effectiveLeftAccessory}
           </div>
         )}
         <h2 className="center-pane-view__title">

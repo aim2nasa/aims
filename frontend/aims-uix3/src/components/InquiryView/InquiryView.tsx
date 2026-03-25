@@ -845,6 +845,7 @@ export default function InquiryView({
     <>
       <CenterPaneView
         visible={visible}
+        suppressAutoBackButton
         title={getTitle()}
         titleIcon={inquiryIcon}
         titleAccessory={inquiryBackButton}

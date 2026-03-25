@@ -683,6 +683,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   return (
     <CenterPaneView
       visible={visible}
+      suppressAutoBackButton
       title={customer?.personal_info?.name || '고객 정보'}
       titleIcon={customer ? getCustomerTypeIcon() : undefined}
       titleAction={

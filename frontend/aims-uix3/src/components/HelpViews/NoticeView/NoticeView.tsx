@@ -61,6 +61,7 @@ export default function NoticeView({
   return (
     <CenterPaneView
       visible={visible}
+      suppressAutoBackButton
       title={selectedNotice ? selectedNotice.title : '공지사항'}
       titleIcon={<BellIcon />}
       titleAccessory={selectedNotice ? (

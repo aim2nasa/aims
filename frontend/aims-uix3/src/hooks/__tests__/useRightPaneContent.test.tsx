@@ -16,9 +16,10 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { useRightPaneContent, type UseRightPaneContentOptions } from '../useRightPaneContent'
 
 // vi.hoisted를 사용하여 mock 함수들이 vi.mock과 함께 호이스팅되도록 함
-const { mockApiGet, mockGetCustomer } = vi.hoisted(() => ({
+const { mockApiGet, mockGetCustomer, mockRecordNavigation } = vi.hoisted(() => ({
   mockApiGet: vi.fn(),
   mockGetCustomer: vi.fn(),
+  mockRecordNavigation: vi.fn(),
 }))
 
 // api 모듈 mock
@@ -56,6 +57,12 @@ vi.mock('@/services/customerService', () => ({
   CustomerService: {
     getCustomer: mockGetCustomer,
   },
+}))
+
+// useNavigationStore mock
+vi.mock('@/shared/store/useNavigationStore', () => ({
+  useNavigationStore: (selector: (state: { recordNavigation: typeof mockRecordNavigation }) => unknown) =>
+    selector({ recordNavigation: mockRecordNavigation }),
 }))
 
 describe('useRightPaneContent', () => {
@@ -324,6 +331,17 @@ describe('useRightPaneContent', () => {
         tab: null,
       })
     })
+
+    it('recordNavigation을 internal 소스로 호출해야 한다', async () => {
+      const options = createDefaultOptions()
+      const { result } = renderHook(() => useRightPaneContent(options))
+
+      await act(async () => {
+        await result.current.handleOpenFullDetail('customer123')
+      })
+
+      expect(mockRecordNavigation).toHaveBeenCalledWith('customers-full-detail', 'internal')
+    })
   })
 
   describe('handleCloseFullDetail', () => {
@@ -337,6 +355,52 @@ describe('useRightPaneContent', () => {
       })
 
       expect(options.setFullDetailCustomerId).toHaveBeenCalledWith(null)
+      expect(options.setActiveDocumentView).toHaveBeenCalledWith('customers-all')
+    })
+
+    it('복귀 시 recordNavigation을 sidebar 소스로 호출해야 한다 (BackButton 숨김)', () => {
+      const options = createDefaultOptions()
+      const { result } = renderHook(() => useRightPaneContent(options))
+
+      act(() => {
+        result.current.handleCloseFullDetail()
+      })
+
+      // 폴백 경로: customers-all로 복귀
+      expect(mockRecordNavigation).toHaveBeenCalledWith('customers-all', 'sidebar')
+    })
+  })
+
+  describe('handleExpandToExplorer', () => {
+    it('recordNavigation을 internal 소스로 호출해야 한다', () => {
+      const options = createDefaultOptions()
+      options.setExplorerCustomerId = vi.fn()
+      options.setExplorerCustomerName = vi.fn()
+      options.setExplorerCustomerType = vi.fn()
+      const { result } = renderHook(() => useRightPaneContent(options))
+
+      act(() => {
+        result.current.handleExpandToExplorer('customer123', '홍길동', '개인')
+      })
+
+      expect(mockRecordNavigation).toHaveBeenCalledWith('customer-document-explorer', 'internal')
+      expect(options.setActiveDocumentView).toHaveBeenCalledWith('customer-document-explorer')
+    })
+  })
+
+  describe('handleCollapseExplorer', () => {
+    it('복귀 시 recordNavigation을 sidebar 소스로 호출해야 한다 (BackButton 숨김)', () => {
+      const options = createDefaultOptions()
+      options.setExplorerCustomerId = vi.fn()
+      options.setExplorerCustomerName = vi.fn()
+      const { result } = renderHook(() => useRightPaneContent(options))
+
+      act(() => {
+        result.current.handleCollapseExplorer()
+      })
+
+      // 폴백 경로: customers-all로 복귀
+      expect(mockRecordNavigation).toHaveBeenCalledWith('customers-all', 'sidebar')
       expect(options.setActiveDocumentView).toHaveBeenCalledWith('customers-all')
     })
   })
