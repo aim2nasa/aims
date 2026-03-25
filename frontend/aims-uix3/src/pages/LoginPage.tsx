@@ -124,6 +124,12 @@ export default function LoginPage() {
         await processAuthToken(token, {
           setToken, setUser, updateCurrentUser, syncUserIdFromStorage, navigate,
         });
+        // processAuthToken이 localStorage에 새 사용자를 저장하므로 state도 갱신
+        // (같은 LoginPage 내에서 navigate하면 리마운트 안 되어 useState 초기값이 유지되는 문제 방지)
+        try {
+          const stored = localStorage.getItem('aims-remembered-user');
+          if (stored) setRememberedUser(JSON.parse(stored));
+        } catch { /* 무시 */ }
         setIsProcessing(false);
       } catch (error) {
         console.error('[LoginPage] 토큰 처리 실패:', error);
