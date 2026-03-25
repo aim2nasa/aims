@@ -118,6 +118,7 @@ const { setupCustomerRelationshipRoutes } = require('./customer-relationships-ro
 const personalFilesRoutes = require('./routes/personal-files-routes');
 let db;
 let analyticsDb;
+let documentsRouter;
 let fallbackHandlersRegistered = false;
 
 // SSE 클라이언트 관리 (lib/sseManager.js)
@@ -187,7 +188,8 @@ MongoClient.connect(MONGO_URI)
 
     // ==================== 리팩토링된 라우트 등록 (db 연결 후) ====================
     const documentsRoutes = require('./routes/documents-routes');
-    app.use('/api', documentsRoutes(db, analyticsDb, authenticateJWT, upload, qdrantClient, QDRANT_COLLECTION));
+    documentsRouter = documentsRoutes(db, analyticsDb, authenticateJWT, upload, qdrantClient, QDRANT_COLLECTION);
+    app.use('/api', documentsRouter);
 
     app.use('/api', require('./routes/health-routes')(db));
     app.use('/api', require('./routes/users-routes')(db, authenticateJWT, generateToken, qdrantClient, QDRANT_COLLECTION));
@@ -430,6 +432,10 @@ process.on('SIGTERM', () => {
     clearInterval(ocrPermissionCheckInterval);
     console.log('[OCR Permission Check] Interval 정리 완료');
   }
+  if (documentsRouter && documentsRouter._cleanupInterval) {
+    clearInterval(documentsRouter._cleanupInterval);
+    console.log('[Documents] 다운로드 정리 Interval 해제 완료');
+  }
 });
 
 // 메트릭 수집 인터벌
@@ -483,6 +489,10 @@ process.on('SIGINT', () => {
   if (metricsCollectionInterval) {
     clearInterval(metricsCollectionInterval);
     console.log('[Metrics] Interval 정리 완료');
+  }
+  if (documentsRouter && documentsRouter._cleanupInterval) {
+    clearInterval(documentsRouter._cleanupInterval);
+    console.log('[Documents] 다운로드 정리 Interval 해제 완료');
   }
 });
 

@@ -1,51 +1,63 @@
 /**
  * useDocumentDownload 회귀 테스트
  *
- * 대용량 문서함 다운로드 수정 (2026-03-25) 검증:
- * - 스트리밍 경로 (showSaveFilePicker + ReadableStream.pipeTo)
- * - 폴백 경로 (response.blob)
- * - 사용자 취소 (AbortError, NotAllowedError)
+ * 2단계 다운로드 구조 (2026-03-25) 검증:
+ * - Phase 1: POST → JSON 응답 파싱 + downloadId 추출
+ * - Phase 2: <a> 태그 생성 + href에 downloadId + ?token=JWT 검증
+ * - 에러 처리 (서버 4xx/5xx, JSON 파싱 실패)
+ * - 사용자 취소 (AbortError)
  * - 중복 호출 방지
- * - 서버 에러 처리
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useDocumentDownload } from '../useDocumentDownload'
 
 // === Mock 설정 ===
 
+const MOCK_TOKEN = 'test-jwt-token-abc123'
+
 vi.mock('@/shared/lib/api', () => ({
-  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+  getAuthHeaders: () => ({ Authorization: `Bearer ${MOCK_TOKEN}` }),
+  getAuthToken: () => MOCK_TOKEN,
   API_CONFIG: { BASE_URL: '' },
 }))
 
-function createMockResponse(options: {
+// <a> 태그 click 추적용
+let capturedAnchor: HTMLAnchorElement | null = null
+const originalCreateElement = document.createElement.bind(document)
+
+function createPhase1Response(options: {
   ok?: boolean
   status?: number
-  body?: ReadableStream<Uint8Array> | null
-  headers?: Record<string, string>
-  json?: () => Promise<unknown>
-  blob?: () => Promise<Blob>
+  downloadId?: string
+  filename?: string
+  size?: number
+  skippedFiles?: number
+  error?: string
+  jsonError?: boolean
+  success?: boolean
 }) {
-  return {
-    ok: options.ok ?? true,
-    status: options.status ?? 200,
-    body: options.body ?? null,
-    headers: new Headers(options.headers ?? {
-      'Content-Disposition': 'attachment; filename="test.zip"',
-    }),
-    json: options.json ?? (async () => ({})),
-    blob: options.blob ?? (async () => new Blob(['test'], { type: 'application/zip' })),
-  } as unknown as Response
-}
+  const {
+    ok = true,
+    status = 200,
+    downloadId = 'a'.repeat(48),
+    filename = '고객.zip',
+    size = 1024,
+    skippedFiles = 0,
+    error,
+    jsonError = false,
+    success = true,
+  } = options
 
-function createMockReadableStream(): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    start(controller) {
-      controller.enqueue(new Uint8Array([1, 2, 3]))
-      controller.close()
-    },
-  })
+  return {
+    ok,
+    status,
+    json: jsonError
+      ? async () => { throw new Error('not json') }
+      : async () => ok
+        ? { success, data: success ? { downloadId, filename, size, skippedFiles, expiresIn: 1800 } : undefined, error }
+        : { success: false, error: error || `다운로드 준비 실패 (${status})` },
+  } as unknown as Response
 }
 
 describe('useDocumentDownload', () => {
@@ -55,31 +67,48 @@ describe('useDocumentDownload', () => {
     vi.restoreAllMocks()
     fetchMock = vi.fn()
     global.fetch = fetchMock
+    capturedAnchor = null
 
-    // showSaveFilePicker 미지원 기본 설정
-    ;(window as Record<string, unknown>).showSaveFilePicker = undefined
+    // <a> 태그 생성 가로채기
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = originalCreateElement(tag)
+      if (tag === 'a') {
+        capturedAnchor = el as HTMLAnchorElement
+        // click mock (실제 네비게이션 방지)
+        vi.spyOn(el, 'click').mockImplementation(() => {})
+      }
+      return el
+    })
 
-    // triggerBrowserDownload에 필요한 DOM mock
-    URL.createObjectURL = vi.fn(() => 'blob:test')
-    URL.revokeObjectURL = vi.fn()
+    vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node)
+    vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node)
   })
 
-  describe('스트리밍 경로 (File System Access API)', () => {
-    it('showSaveFilePicker 지원 시 streamToFile 경로로 진입해야 함', async () => {
-      const mockWritable = {
-        abort: vi.fn(),
-        close: vi.fn(),
-      }
-      const mockFileHandle = {
-        createWritable: vi.fn().mockResolvedValue(mockWritable),
-      }
-      ;(window as Record<string, unknown>).showSaveFilePicker = vi.fn().mockResolvedValue(mockFileHandle)
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
-      const mockBody = createMockReadableStream()
-      const pipeTo = vi.fn().mockResolvedValue(undefined)
-      Object.defineProperty(mockBody, 'pipeTo', { value: pipeTo })
+  describe('Phase 1: ZIP 준비 요청 (POST)', () => {
+    it('POST /api/documents/download에 customerIds를 전송해야 함', async () => {
+      fetchMock.mockResolvedValue(createPhase1Response({}))
 
-      fetchMock.mockResolvedValue(createMockResponse({ body: mockBody }))
+      const { result } = renderHook(() => useDocumentDownload())
+
+      await act(async () => {
+        await result.current.download(['customer-1', 'customer-2'])
+      })
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const [url, options] = fetchMock.mock.calls[0]
+      expect(url).toBe('/api/documents/download')
+      expect(options.method).toBe('POST')
+      expect(JSON.parse(options.body)).toEqual({ customerIds: ['customer-1', 'customer-2'] })
+      expect(options.headers.Authorization).toBe(`Bearer ${MOCK_TOKEN}`)
+    })
+
+    it('서버 응답에서 downloadId를 추출해야 함', async () => {
+      const testDownloadId = 'b'.repeat(48)
+      fetchMock.mockResolvedValue(createPhase1Response({ downloadId: testDownloadId }))
 
       const { result } = renderHook(() => useDocumentDownload())
 
@@ -87,105 +116,127 @@ describe('useDocumentDownload', () => {
         await result.current.download(['customer-1'])
       })
 
-      // showSaveFilePicker 호출됨
-      expect(window.showSaveFilePicker).toHaveBeenCalled()
-      // pipeTo 호출됨 (스트리밍)
-      expect(pipeTo).toHaveBeenCalled()
+      // Phase 2에서 downloadId가 URL에 포함되어야 함
+      expect(capturedAnchor).not.toBeNull()
+      expect(capturedAnchor!.href).toContain(`/api/documents/download/${testDownloadId}`)
     })
+  })
 
-    it('사용자가 저장 대화상자 취소 시 (AbortError) 에러 미전파', async () => {
-      ;(window as Record<string, unknown>).showSaveFilePicker = vi.fn().mockRejectedValue(
-        new DOMException('The user aborted a request.', 'AbortError')
-      )
-
-      fetchMock.mockResolvedValue(createMockResponse({ body: createMockReadableStream() }))
+  describe('Phase 2: <a> 태그 브라우저 다운로드', () => {
+    it('<a> 태그의 href에 downloadId + ?token=JWT가 포함되어야 함', async () => {
+      const testDownloadId = 'c'.repeat(48)
+      fetchMock.mockResolvedValue(createPhase1Response({ downloadId: testDownloadId }))
 
       const { result } = renderHook(() => useDocumentDownload())
 
-      // 에러 없이 완료되어야 함
+      await act(async () => {
+        await result.current.download(['customer-1'])
+      })
+
+      expect(capturedAnchor).not.toBeNull()
+      expect(capturedAnchor!.href).toContain(`/api/documents/download/${testDownloadId}`)
+      expect(capturedAnchor!.href).toContain(`?token=${encodeURIComponent(MOCK_TOKEN)}`)
+    })
+
+    it('<a> 태그의 download 속성에 서버 제공 filename이 설정되어야 함', async () => {
+      fetchMock.mockResolvedValue(createPhase1Response({ filename: '홍길동.zip' }))
+
+      const { result } = renderHook(() => useDocumentDownload())
+
+      await act(async () => {
+        await result.current.download(['customer-1'])
+      })
+
+      expect(capturedAnchor).not.toBeNull()
+      expect(capturedAnchor!.download).toBe('홍길동.zip')
+    })
+
+    it('filenameOverride 지정 시 서버 filename 대신 사용', async () => {
+      fetchMock.mockResolvedValue(createPhase1Response({ filename: '서버파일명.zip' }))
+
+      const { result } = renderHook(() => useDocumentDownload())
+
+      await act(async () => {
+        await result.current.download(['customer-1'], '커스텀파일명.zip')
+      })
+
+      expect(capturedAnchor).not.toBeNull()
+      expect(capturedAnchor!.download).toBe('커스텀파일명.zip')
+    })
+
+    it('<a> 태그 click()이 호출되어야 함', async () => {
+      fetchMock.mockResolvedValue(createPhase1Response({}))
+
+      const { result } = renderHook(() => useDocumentDownload())
+
+      await act(async () => {
+        await result.current.download(['customer-1'])
+      })
+
+      expect(capturedAnchor).not.toBeNull()
+      expect(capturedAnchor!.click).toHaveBeenCalled()
+    })
+
+    it('Phase 1 완료 후 isDownloading이 false로 변경 (브라우저 다운로드는 추적 불가)', async () => {
+      fetchMock.mockResolvedValue(createPhase1Response({}))
+
+      const { result } = renderHook(() => useDocumentDownload())
+
       await act(async () => {
         await result.current.download(['customer-1'])
       })
 
       expect(result.current.isDownloading).toBe(false)
     })
+  })
 
-    it('사용자가 저장 대화상자 취소 시 (NotAllowedError) 에러 미전파', async () => {
-      ;(window as Record<string, unknown>).showSaveFilePicker = vi.fn().mockRejectedValue(
-        new DOMException('The request is not allowed.', 'NotAllowedError')
-      )
-
-      fetchMock.mockResolvedValue(createMockResponse({ body: createMockReadableStream() }))
-
-      const { result } = renderHook(() => useDocumentDownload())
-
-      await act(async () => {
-        await result.current.download(['customer-1'])
-      })
-
-      expect(result.current.isDownloading).toBe(false)
-    })
-
-    it('스트리밍 실패 시 writable.abort() 호출해야 함', async () => {
-      const mockWritable = {
-        abort: vi.fn().mockResolvedValue(undefined),
-        close: vi.fn(),
-      }
-      const mockFileHandle = {
-        createWritable: vi.fn().mockResolvedValue(mockWritable),
-      }
-      ;(window as Record<string, unknown>).showSaveFilePicker = vi.fn().mockResolvedValue(mockFileHandle)
-
-      const mockBody = createMockReadableStream()
-      const pipeTo = vi.fn().mockRejectedValue(new Error('Network error'))
-      Object.defineProperty(mockBody, 'pipeTo', { value: pipeTo })
-
-      fetchMock.mockResolvedValue(createMockResponse({ body: mockBody }))
+  describe('에러 처리', () => {
+    it('서버 4xx 응답 시 에러 메시지 추출 후 throw', async () => {
+      fetchMock.mockResolvedValue(createPhase1Response({
+        ok: false,
+        status: 403,
+        error: '접근 권한이 없는 고객이 포함되어 있습니다.',
+      }))
 
       const { result } = renderHook(() => useDocumentDownload())
 
-      try {
-        await act(async () => {
+      await expect(
+        act(async () => {
           await result.current.download(['customer-1'])
         })
-      } catch {
-        // 에러 전파 예상됨
-      }
-
-      // abort가 호출되어야 함 (close가 아닌)
-      expect(mockWritable.abort).toHaveBeenCalled()
-      expect(mockWritable.close).not.toHaveBeenCalled()
+      ).rejects.toThrow('접근 권한이 없는 고객이 포함되어 있습니다.')
     })
-  })
 
-  describe('폴백 경로 (response.blob)', () => {
-    it('showSaveFilePicker 미지원 시 blob 폴백 경로로 진입해야 함', async () => {
-      const blobMock = vi.fn().mockResolvedValue(new Blob(['test'], { type: 'application/zip' }))
-      fetchMock.mockResolvedValue(createMockResponse({ blob: blobMock }))
+    it('서버 에러 JSON 파싱 실패 시 기본 에러 메시지', async () => {
+      fetchMock.mockResolvedValue(createPhase1Response({
+        ok: false,
+        status: 500,
+        jsonError: true,
+      }))
 
       const { result } = renderHook(() => useDocumentDownload())
 
-      await act(async () => {
-        await result.current.download(['customer-1'])
-      })
-
-      // blob() 호출됨 (폴백)
-      expect(blobMock).toHaveBeenCalled()
+      await expect(
+        act(async () => {
+          await result.current.download(['customer-1'])
+        })
+      ).rejects.toThrow('다운로드 준비 실패 (500)')
     })
 
-    it('response.body가 null이면 blob 폴백', async () => {
-      ;(window as Record<string, unknown>).showSaveFilePicker = vi.fn()
-
-      const blobMock = vi.fn().mockResolvedValue(new Blob(['test']))
-      fetchMock.mockResolvedValue(createMockResponse({ body: null, blob: blobMock }))
+    it('success=false + error 메시지 시 throw', async () => {
+      fetchMock.mockResolvedValue(createPhase1Response({
+        ok: true,
+        success: false,
+        error: 'ZIP 준비 실패',
+      }))
 
       const { result } = renderHook(() => useDocumentDownload())
 
-      await act(async () => {
-        await result.current.download(['customer-1'])
-      })
-
-      expect(blobMock).toHaveBeenCalled()
+      await expect(
+        act(async () => {
+          await result.current.download(['customer-1'])
+        })
+      ).rejects.toThrow('ZIP 준비 실패')
     })
   })
 
@@ -223,40 +274,6 @@ describe('useDocumentDownload', () => {
     })
   })
 
-  describe('서버 에러 처리', () => {
-    it('서버 4xx 응답 시 에러 메시지 추출 후 throw', async () => {
-      fetchMock.mockResolvedValue(createMockResponse({
-        ok: false,
-        status: 403,
-        json: async () => ({ error: '접근 권한이 없는 고객이 포함되어 있습니다.' }),
-      }))
-
-      const { result } = renderHook(() => useDocumentDownload())
-
-      await expect(
-        act(async () => {
-          await result.current.download(['customer-1'])
-        })
-      ).rejects.toThrow('접근 권한이 없는 고객이 포함되어 있습니다.')
-    })
-
-    it('서버 에러 JSON 파싱 실패 시 기본 에러 메시지', async () => {
-      fetchMock.mockResolvedValue(createMockResponse({
-        ok: false,
-        status: 500,
-        json: async () => { throw new Error('not json') },
-      }))
-
-      const { result } = renderHook(() => useDocumentDownload())
-
-      await expect(
-        act(async () => {
-          await result.current.download(['customer-1'])
-        })
-      ).rejects.toThrow('다운로드 실패 (500)')
-    })
-  })
-
   describe('취소 (cancel)', () => {
     it('cancel 호출 시 isDownloading false로 변경', async () => {
       fetchMock.mockReturnValue(new Promise(() => {}))
@@ -271,6 +288,19 @@ describe('useDocumentDownload', () => {
 
       act(() => {
         result.current.cancel()
+      })
+
+      expect(result.current.isDownloading).toBe(false)
+    })
+
+    it('AbortError 발생 시 에러 미전파', async () => {
+      fetchMock.mockRejectedValue(new DOMException('The user aborted a request.', 'AbortError'))
+
+      const { result } = renderHook(() => useDocumentDownload())
+
+      // 에러 없이 완료되어야 함
+      await act(async () => {
+        await result.current.download(['customer-1'])
       })
 
       expect(result.current.isDownloading).toBe(false)

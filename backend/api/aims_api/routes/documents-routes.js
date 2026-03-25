@@ -26,6 +26,27 @@ module.exports = function(db, analyticsDb, authenticateJWT, upload, qdrantClient
   const router = express.Router();
   const QDRANT_COLLECTION = qdrantCollection;
 
+  // ZIP 다운로드 임시 파일 관리 (이어받기 지원)
+  const pendingDownloads = new Map(); // downloadId → { filePath, filename, userId, expiresAt }
+  const DOWNLOAD_TTL_MS = 30 * 60 * 1000; // 30분
+  const DOWNLOAD_TEMP_DIR = '/tmp/aims-zip-downloads';
+
+  // 임시 디렉토리 생성 + 만료 파일 정리 (5분 간격)
+  const fs = require('fs');
+  const path = require('path');
+  const crypto = require('crypto');
+  const { authenticateJWTWithQuery } = require('../middleware/auth');
+  try { fs.mkdirSync(DOWNLOAD_TEMP_DIR, { recursive: true }); } catch { /* 이미 존재 */ }
+  const cleanupIntervalId = setInterval(() => {
+    const now = Date.now();
+    for (const [id, entry] of pendingDownloads) {
+      if (now > entry.expiresAt) {
+        try { fs.unlinkSync(entry.filePath); } catch { /* 이미 삭제됨 */ }
+        pendingDownloads.delete(id);
+      }
+    }
+  }, 5 * 60 * 1000);
+
   const PDF_CONVERTER_HOST = process.env.PDF_CONVERTER_HOST || 'localhost';
   const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 8005;
 
@@ -3100,14 +3121,55 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
 
 
   // ========================
-  // 고객별 문서함 ZIP 다운로드
-  // POST /api/documents/download
+  // 고객별 문서함 ZIP 다운로드 (2단계: 준비 → 다운로드)
+  // POST /api/documents/download — ZIP 임시 파일 생성, downloadId 반환
+  // GET  /api/documents/download/:downloadId — 정적 파일 전송 (Range 이어받기 지원)
   // ========================
+
+  // 카테고리/서브타입 레이블 매핑 (document_type → 한글명)
+  const CATEGORY_LABELS = {
+    insurance: '보험계약', claim: '보험금청구', identity: '신분·증명',
+    medical: '건강·의료', asset: '자산', corporate: '법인', etc: '기타'
+  };
+  const TYPE_TO_CATEGORY = {
+    policy: 'insurance', coverage_analysis: 'insurance', application: 'insurance',
+    plan_design: 'insurance', annual_report: 'insurance', customer_review: 'insurance',
+    insurance_etc: 'insurance',
+    diagnosis: 'claim', medical_receipt: 'claim', claim_form: 'claim',
+    consent_delegation: 'claim',
+    id_card: 'identity', family_cert: 'identity', personal_docs: 'identity',
+    health_checkup: 'medical',
+    asset_document: 'asset', inheritance_gift: 'asset',
+    corp_basic: 'corporate', hr_document: 'corporate', corp_tax: 'corporate',
+    corp_asset: 'corporate', legal_document: 'corporate',
+    general: 'etc', unclassifiable: 'etc', unspecified: 'etc'
+  };
+  const SUBTYPE_LABELS = {
+    policy: '보험증권', coverage_analysis: '보장분석', application: '청약서',
+    plan_design: '가입설계서', annual_report: '연간보고서(AR)', customer_review: '변액리포트(CRS)',
+    insurance_etc: '기타 보험관련',
+    diagnosis: '진단서·소견서', medical_receipt: '진료비영수증',
+    claim_form: '보험금청구서', consent_delegation: '위임장·동의서',
+    id_card: '신분증', family_cert: '가족관계서류', personal_docs: '기타 통장 및 개인서류',
+    health_checkup: '건강검진결과',
+    asset_document: '자산관련서류', inheritance_gift: '상속·증여',
+    corp_basic: '기본서류', hr_document: '인사·노무', corp_tax: '세무',
+    corp_asset: '법인자산', legal_document: '기타 법률서류',
+    general: '일반문서', unclassifiable: '분류불가', unspecified: '미지정'
+  };
+
+  // 폴더/파일명 안전 처리
+  function sanitizeZipName(name) {
+    return name
+      .replace(/[<>:"/\\|?*]/g, '_')
+      .replace(/\.{2,}/g, '_')
+      .replace(/[.\s]+$/, '')
+      .trim() || '이름없음';
+  }
+
+  // Phase 1: ZIP 파일 준비 (임시 파일 생성 후 downloadId 반환)
   router.post('/documents/download', authenticateJWT, async (req, res) => {
     const archiver = require('archiver');
-    const fs = require('fs');
-    const path = require('path');
-
     const BASE_DIR = path.resolve('/data/files');
 
     try {
@@ -3115,7 +3177,28 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       const userId = req.user.id;
 
       if (!customerIds || !Array.isArray(customerIds) || customerIds.length === 0) {
-        return res.status(400).json({ error: 'customerIds 배열이 필요합니다.' });
+        return res.status(400).json({ success: false, error: 'customerIds 배열이 필요합니다.', timestamp: utcNowISO() });
+      }
+
+      // customerIds 크기 제한 (DoS 방지)
+      const MAX_CUSTOMER_IDS = 100;
+      if (customerIds.length > MAX_CUSTOMER_IDS) {
+        return res.status(400).json({ success: false, error: `한 번에 최대 ${MAX_CUSTOMER_IDS}명까지 다운로드할 수 있습니다.`, timestamp: utcNowISO() });
+      }
+
+      // 디스크 상한: 전체 pending 다운로드 수 제한
+      const MAX_TOTAL_PENDING = 30;
+      if (pendingDownloads.size >= MAX_TOTAL_PENDING) {
+        return res.status(503).json({ success: false, error: '서버 다운로드 대기열이 가득 찼습니다. 잠시 후 다시 시도하세요.', timestamp: utcNowISO() });
+      }
+
+      // 동시 다운로드 제한 (사용자당 최대 3개)
+      let userPendingCount = 0;
+      for (const entry of pendingDownloads.values()) {
+        if (entry.userId === userId) userPendingCount++;
+      }
+      if (userPendingCount >= 3) {
+        return res.status(429).json({ success: false, error: '동시 다운로드는 최대 3건까지 가능합니다. 기존 다운로드를 완료한 후 다시 시도하세요.', timestamp: utcNowISO() });
       }
 
       // 1. 인가 검증: 모든 고객이 요청자 소유인지 확인
@@ -3130,7 +3213,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       }).toArray();
 
       if (customers.length !== customerIds.length) {
-        return res.status(403).json({ error: '접근 권한이 없는 고객이 포함되어 있습니다.' });
+        return res.status(403).json({ success: false, error: '접근 권한이 없는 고객이 포함되어 있습니다.', timestamp: utcNowISO() });
       }
 
       // 2. 동명이인 감지 (ZIP 내 폴더명 충돌 방지)
@@ -3153,87 +3236,25 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
         zipFilename = `${singleName}.zip`;
       }
 
-      // 4. 응답 헤더 설정 (RFC 6266: filename + filename* 둘 다)
-      const encodedFilename = encodeURIComponent(zipFilename);
-      res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition',
-        `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`);
-      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-      res.setHeader('X-Skipped-Files', '0'); // 누락 파일 수 (나중에 업데이트)
-
-      // 5. 스트리밍 타임아웃 해제
-      req.setTimeout(0);
-
-      // 6. archiver 설정
+      // 4. 임시 파일에 ZIP 생성
+      const downloadId = crypto.randomBytes(24).toString('hex');
+      const tempFilePath = path.join(DOWNLOAD_TEMP_DIR, `${downloadId}.zip`);
+      const output = fs.createWriteStream(tempFilePath);
       const archive = archiver('zip', { zlib: { level: 5 } });
 
-      // 에러 핸들링
-      archive.on('error', (err) => {
-        console.error('[문서 다운로드] archiver 오류:', err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'ZIP 생성 실패' });
-        }
-      });
+      // archiver → 임시 파일 파이프
+      archive.pipe(output);
 
       archive.on('warning', (err) => {
         console.warn('[문서 다운로드] archiver 경고:', err);
       });
 
-      // 클라이언트 연결 끊김 시 정리
-      req.on('close', () => {
-        archive.abort();
-      });
-
-      archive.pipe(res);
-
-      // 7. 카테고리/서브타입 레이블 매핑 (document_type → 한글명)
-      // 프론트엔드 documentCategories.ts와 동일한 라벨 사용
-      const CATEGORY_LABELS = {
-        insurance: '보험계약', claim: '보험금청구', identity: '신분·증명',
-        medical: '건강·의료', asset: '자산', corporate: '법인', etc: '기타'
-      };
-      const TYPE_TO_CATEGORY = {
-        policy: 'insurance', coverage_analysis: 'insurance', application: 'insurance',
-        plan_design: 'insurance', annual_report: 'insurance', customer_review: 'insurance',
-        insurance_etc: 'insurance',
-        diagnosis: 'claim', medical_receipt: 'claim', claim_form: 'claim',
-        consent_delegation: 'claim',
-        id_card: 'identity', family_cert: 'identity', personal_docs: 'identity',
-        health_checkup: 'medical',
-        asset_document: 'asset', inheritance_gift: 'asset',
-        corp_basic: 'corporate', hr_document: 'corporate', corp_tax: 'corporate',
-        corp_asset: 'corporate', legal_document: 'corporate',
-        general: 'etc', unclassifiable: 'etc', unspecified: 'etc'
-      };
-      const SUBTYPE_LABELS = {
-        policy: '보험증권', coverage_analysis: '보장분석', application: '청약서',
-        plan_design: '가입설계서', annual_report: '연간보고서(AR)', customer_review: '변액리포트(CRS)',
-        insurance_etc: '기타 보험관련',
-        diagnosis: '진단서·소견서', medical_receipt: '진료비영수증',
-        claim_form: '보험금청구서', consent_delegation: '위임장·동의서',
-        id_card: '신분증', family_cert: '가족관계서류', personal_docs: '기타 통장 및 개인서류',
-        health_checkup: '건강검진결과',
-        asset_document: '자산관련서류', inheritance_gift: '상속·증여',
-        corp_basic: '기본서류', hr_document: '인사·노무', corp_tax: '세무',
-        corp_asset: '법인자산', legal_document: '기타 법률서류',
-        general: '일반문서', unclassifiable: '분류불가', unspecified: '미지정'
-      };
-
-      // 폴더/파일명 안전 처리
-      function sanitizeName(name) {
-        return name
-          .replace(/[<>:"/\\|?*]/g, '_')
-          .replace(/\.{2,}/g, '_')
-          .replace(/[.\s]+$/, '')
-          .trim() || '이름없음';
-      }
-
       let skippedFiles = 0;
 
-      // 8. 고객별 문서 추가
+      // 5. 고객별 문서 추가
       for (const customer of customers) {
         const customerName = customer.personal_info?.name || '이름없음';
-        let customerFolder = sanitizeName(customerName);
+        let customerFolder = sanitizeZipName(customerName);
 
         // 동명이인 처리: ID 접미사 추가
         if (nameCount.get(customerName) > 1) {
@@ -3248,7 +3269,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
         if (docs.length === 0) continue;
 
         // 폴더 내 파일명 충돌 추적
-        const folderFileNames = new Map(); // folderPath → Set<usedName>
+        const folderFileNames = new Map();
 
         for (const doc of docs) {
           // 파일 경로 결정: PDF 변환본 우선, 없으면 원본
@@ -3272,7 +3293,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
             continue;
           }
 
-          // 카테고리/서브타입 폴더 경로 결정 (document_type → meta.document_type 폴백)
+          // 카테고리/서브타입 폴더 경로 결정
           const docType = doc.document_type || (doc.meta && doc.meta.document_type) || 'unspecified';
           const category = TYPE_TO_CATEGORY[docType] || 'etc';
           const catLabel = CATEGORY_LABELS[category] || '기타';
@@ -3319,25 +3340,142 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
         }
       }
 
-      // 누락 파일 수 업데이트 (헤더는 이미 전송되었을 수 있으므로 별도 헤더로)
-      // 참고: 스트리밍이므로 헤더를 사후 변경할 수 없음 → 프론트엔드에서 응답 헤더로 확인
-      // archive.finalize() 전에 trailer는 HTTP/1.1에서 지원하나 실용성 낮음
-      // 대신 프론트엔드가 X-Skipped-Files 헤더를 읽음 (초기값 0, 실제 값은 로그에만)
       if (skippedFiles > 0) {
         console.warn(`[문서 다운로드] ${skippedFiles}건의 파일을 찾을 수 없어 제외됨`);
       }
 
-      await archive.finalize();
+      // ZIP 생성 완료 대기
+      await new Promise((resolve, reject) => {
+        output.on('close', resolve);
+        archive.on('error', (err) => {
+          // 실패 시 임시 파일 정리
+          try { fs.unlinkSync(tempFilePath); } catch { /* 무시 */ }
+          reject(err);
+        });
+        archive.finalize();
+      });
+
+      // 6. 다운로드 정보 등록
+      const stat = fs.statSync(tempFilePath);
+      pendingDownloads.set(downloadId, {
+        filePath: tempFilePath,
+        filename: zipFilename,
+        userId,
+        size: stat.size,
+        skippedFiles,
+        expiresAt: Date.now() + DOWNLOAD_TTL_MS,
+      });
+
+      res.json({
+        success: true,
+        data: {
+          downloadId,
+          filename: zipFilename,
+          size: stat.size,
+          skippedFiles,
+          expiresIn: DOWNLOAD_TTL_MS / 1000, // 초 단위
+        },
+        timestamp: utcNowISO(),
+      });
 
     } catch (error) {
-      console.error('[문서 다운로드] 오류:', error.message);
-      backendLogger.error('Documents', '[문서 다운로드] ZIP 생성 실패', error);
+      console.error('[문서 다운로드] ZIP 준비 오류:', error.message);
+      backendLogger.error('Documents', '[문서 다운로드] ZIP 준비 실패', error);
       if (!res.headersSent) {
-        res.status(500).json({ error: `문서 다운로드 실패: ${error.message}` });
+        res.status(500).json({ success: false, error: `문서 다운로드 준비 실패: ${error.message}`, timestamp: utcNowISO() });
       }
     }
   });
 
+  // Phase 2: ZIP 파일 다운로드 (Range 요청 = 이어받기 지원)
+  // 인증: authenticateJWTWithQuery (?token=JWT 쿼리 파라미터) + userId 소유권 검증
+  router.get('/documents/download/:downloadId', authenticateJWTWithQuery, (req, res) => {
+    const { downloadId } = req.params;
+
+    // downloadId 형식 검증 (48자 hex)
+    if (!/^[a-f0-9]{48}$/.test(downloadId)) {
+      return res.status(400).json({ success: false, error: '유효하지 않은 다운로드 ID입니다.', timestamp: utcNowISO() });
+    }
+
+    const entry = pendingDownloads.get(downloadId);
+    if (!entry) {
+      return res.status(404).json({ success: false, error: '다운로드가 만료되었거나 존재하지 않습니다.', timestamp: utcNowISO() });
+    }
+
+    // 소유권 검증: ZIP을 생성한 사용자만 다운로드 가능
+    if (entry.userId !== req.user.id) {
+      return res.status(403).json({ success: false, error: '다운로드 권한이 없습니다.', timestamp: utcNowISO() });
+    }
+
+    // 만료 확인
+    if (Date.now() > entry.expiresAt) {
+      try { fs.unlinkSync(entry.filePath); } catch { /* 무시 */ }
+      pendingDownloads.delete(downloadId);
+      return res.status(410).json({ success: false, error: '다운로드가 만료되었습니다. 다시 요청하세요.', timestamp: utcNowISO() });
+    }
+
+    // 파일 존재 확인
+    if (!fs.existsSync(entry.filePath)) {
+      pendingDownloads.delete(downloadId);
+      return res.status(410).json({ success: false, error: '다운로드 파일이 삭제되었습니다. 다시 요청하세요.', timestamp: utcNowISO() });
+    }
+
+    const fileSize = entry.size;
+    const encodedFilename = encodeURIComponent(entry.filename);
+
+    // 공통 헤더
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition',
+      `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`);
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'no-cache');
+
+    // Range 요청 처리 (이어받기)
+    const rangeHeader = req.headers.range;
+    if (rangeHeader) {
+      const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+      if (!match) {
+        res.status(416).setHeader('Content-Range', `bytes */${fileSize}`);
+        return res.end();
+      }
+
+      const start = parseInt(match[1], 10);
+      const end = match[2] ? parseInt(match[2], 10) : fileSize - 1;
+
+      if (start >= fileSize || end >= fileSize || start > end) {
+        res.status(416).setHeader('Content-Range', `bytes */${fileSize}`);
+        return res.end();
+      }
+
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
+      res.setHeader('Content-Length', end - start + 1);
+
+      const stream = fs.createReadStream(entry.filePath, { start, end });
+      stream.on('error', (err) => {
+        console.error('[문서 다운로드] 파일 스트림 오류:', err);
+        if (!res.headersSent) res.status(500).end();
+      });
+      stream.pipe(res);
+    } else {
+      // 일반 전체 다운로드
+      res.setHeader('Content-Length', fileSize);
+
+      const stream = fs.createReadStream(entry.filePath);
+      stream.on('error', (err) => {
+        console.error('[문서 다운로드] 파일 스트림 오류:', err);
+        if (!res.headersSent) res.status(500).end();
+      });
+
+      // 임시 파일은 TTL(30분) 만료 시 자동 삭제
+      // 즉시 삭제하면 네트워크 끊김 후 이어받기(Range) 재시도 불가
+      stream.pipe(res);
+    }
+  });
+
+
+  // SIGTERM/SIGINT 시 setInterval 정리 (메모리 누수 방지)
+  router._cleanupInterval = cleanupIntervalId;
 
   return router;
 };
