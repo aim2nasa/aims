@@ -150,7 +150,8 @@ const DocumentExplorerContent: React.FC<{
   // 진행률 토스트 ID를 ref로 관리 (콜백 내에서 최신값 참조)
   const progressToastIdRef = useRef<string | null>(null)
   const handleDownloadProgress = useCallback((progress: import('@/features/customer/hooks/useDocumentDownload').DownloadProgress) => {
-    const msg = `압축 준비 중... (${progress.processed}/${progress.total}건)`
+    const pct = progress.total > 0 ? Math.round((progress.processed / progress.total) * 100) : 0
+    const msg = `압축 준비 중... ${pct}% (${progress.processed}/${progress.total}건)`
     if (progressToastIdRef.current) {
       toast.update(progressToastIdRef.current, msg)
     }
