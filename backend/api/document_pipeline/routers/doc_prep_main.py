@@ -2061,8 +2061,10 @@ async def _process_via_xpipe(
         doc_id = str(result.inserted_id)
 
     # 2. 파일을 임시 경로에 저장
+    # original_name이 '고객사/계약자/피보험자/파일.pdf' 형태의 경로를 포함할 수 있으므로
+    # basename만 사용하여 중간 디렉토리 미생성으로 인한 FileNotFoundError 방지
     tmp_dir = tempfile.mkdtemp()
-    tmp_path = os.path.join(tmp_dir, original_name or "upload.pdf")
+    tmp_path = os.path.join(tmp_dir, os.path.basename(original_name) or "upload.pdf")
     with open(tmp_path, "wb") as f:
         f.write(file_content)
 
@@ -2133,8 +2135,8 @@ async def _process_via_xpipe(
             "valid_types": classification_config.valid_types,
         },
         "_api_keys": {
-            "openai": os.environ.get("OPENAI_API_KEY", ""),
-            "upstage": os.environ.get("UPSTAGE_API_KEY", ""),
+            "openai": settings.OPENAI_API_KEY,
+            "upstage": settings.UPSTAGE_API_KEY,
         },
     }
 
