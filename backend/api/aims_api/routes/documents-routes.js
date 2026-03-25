@@ -3237,9 +3237,9 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
 
       // 3. ZIP 파일명 결정
       const isMulti = customers.length > 1;
-      const now = new Date();
-      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-      const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+      const now = new Date(Date.now() + 9 * 60 * 60 * 1000); // KST (UTC+9)
+      const dateStr = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}`;
+      const timeStr = `${String(now.getUTCHours()).padStart(2, '0')}${String(now.getUTCMinutes()).padStart(2, '0')}`;
 
       let zipFilename;
       if (isMulti) {
