@@ -99,6 +99,18 @@ export function useToast() {
     return show(message, { type: 'success', duration })
   }, [show])
 
+  // 기존 토스트 메시지 업데이트 (진행률 표시 등에 활용)
+  const update = useCallback((id: string, message: string, options?: ToastOptions) => {
+    setToasts(prev => prev.map(t => {
+      if (t.id !== id) return t
+      return {
+        ...t,
+        message,
+        ...(options?.type ? { type: options.type } : {}),
+      }
+    }))
+  }, [])
+
   const dismissAll = useCallback(() => {
     // 모든 타이머 정리
     timersRef.current.forEach(timer => clearTimeout(timer))
@@ -109,6 +121,7 @@ export function useToast() {
   return {
     toasts,
     show,
+    update,
     dismiss,
     dismissAll,
     error,

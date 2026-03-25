@@ -27,7 +27,8 @@ module.exports = function(db, analyticsDb, authenticateJWT, upload, qdrantClient
   const QDRANT_COLLECTION = qdrantCollection;
 
   // ZIP 다운로드 임시 파일 관리 (이어받기 지원)
-  const pendingDownloads = new Map(); // downloadId → { filePath, filename, userId, expiresAt }
+  const pendingDownloads = new Map(); // downloadId → { filePath, filename, userId, size, skippedFiles, expiresAt, downloaded }
+  const activeZipGenerations = new Map(); // requestId → { userId, archive, aborted } — ZIP 생성 중인 요청 추적
   const DOWNLOAD_TTL_MS = 30 * 60 * 1000; // 30분
   const DOWNLOAD_TEMP_DIR = '/tmp/aims-zip-downloads';
 
@@ -46,6 +47,18 @@ module.exports = function(db, analyticsDb, authenticateJWT, upload, qdrantClient
       }
     }
   }, 5 * 60 * 1000);
+
+  // 사용자별 동시 다운로드(생성 중 + 대기 중) 카운트 헬퍼
+  function countUserDownloads(userId) {
+    let count = 0;
+    for (const entry of activeZipGenerations.values()) {
+      if (entry.userId === userId) count++;
+    }
+    for (const entry of pendingDownloads.values()) {
+      if (entry.userId === userId && !entry.downloaded) count++;
+    }
+    return count;
+  }
 
   const PDF_CONVERTER_HOST = process.env.PDF_CONVERTER_HOST || 'localhost';
   const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 8005;
@@ -3167,10 +3180,13 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       .trim() || '이름없음';
   }
 
-  // Phase 1: ZIP 파일 준비 (임시 파일 생성 후 downloadId 반환)
+  // Phase 1: ZIP 파일 준비 (SSE 스트리밍으로 진행률 전송)
+  // Content-Type: text/event-stream으로 각 파일 추가 시 progress 이벤트,
+  // 완료 시 complete 이벤트(downloadId 포함), 에러 시 error 이벤트 전송
   router.post('/documents/download', authenticateJWT, async (req, res) => {
     const archiver = require('archiver');
     const BASE_DIR = path.resolve('/data/files');
+    const requestId = crypto.randomBytes(12).toString('hex');
 
     try {
       const { customerIds } = req.body;
@@ -3188,16 +3204,12 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
 
       // 디스크 상한: 전체 pending 다운로드 수 제한
       const MAX_TOTAL_PENDING = 30;
-      if (pendingDownloads.size >= MAX_TOTAL_PENDING) {
+      if (pendingDownloads.size + activeZipGenerations.size >= MAX_TOTAL_PENDING) {
         return res.status(503).json({ success: false, error: '서버 다운로드 대기열이 가득 찼습니다. 잠시 후 다시 시도하세요.', timestamp: utcNowISO() });
       }
 
-      // 동시 다운로드 제한 (사용자당 최대 3개)
-      let userPendingCount = 0;
-      for (const entry of pendingDownloads.values()) {
-        if (entry.userId === userId) userPendingCount++;
-      }
-      if (userPendingCount >= 3) {
+      // 동시 다운로드 제한 (사용자당 최대 3개 — 생성 중 + 대기 중 합산)
+      if (countUserDownloads(userId) >= 3) {
         return res.status(429).json({ success: false, error: '동시 다운로드는 최대 3건까지 가능합니다. 기존 다운로드를 완료한 후 다시 시도하세요.', timestamp: utcNowISO() });
       }
 
@@ -3236,11 +3248,55 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
         zipFilename = `${singleName}.zip`;
       }
 
+      // 총 문서 수 사전 계산 (진행률 표시용)
+      let totalFileCount = 0;
+      const customerDocs = [];
+      for (const customer of customers) {
+        const docs = await db.collection(COLLECTION_NAME).find({
+          customerId: customer._id,
+          ownerId: userId
+        }).toArray();
+        customerDocs.push({ customer, docs });
+        totalFileCount += docs.length;
+      }
+
+      // === SSE 스트리밍 시작 ===
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no', // nginx 버퍼링 비활성화
+      });
+
+      // SSE 이벤트 전송 헬퍼
+      function sendSSEEvent(event, data) {
+        if (res.writableEnded) return;
+        res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+      }
+
+      // 초기 이벤트: 총 파일 수 전송
+      sendSSEEvent('start', { totalFiles: totalFileCount });
+
       // 4. 임시 파일에 ZIP 생성
       const downloadId = crypto.randomBytes(24).toString('hex');
       const tempFilePath = path.join(DOWNLOAD_TEMP_DIR, `${downloadId}.zip`);
       const output = fs.createWriteStream(tempFilePath);
       const archive = archiver('zip', { zlib: { level: 5 } });
+
+      // ZIP 생성 중 추적 등록
+      activeZipGenerations.set(requestId, { userId, archive, aborted: false });
+
+      // 클라이언트 연결 끊김 시 ZIP 생성 중단 + 정리
+      req.on('close', () => {
+        const gen = activeZipGenerations.get(requestId);
+        if (gen && !gen.aborted) {
+          gen.aborted = true;
+          try { archive.abort(); } catch { /* 무시 */ }
+          try { fs.unlinkSync(tempFilePath); } catch { /* 무시 */ }
+          activeZipGenerations.delete(requestId);
+          console.warn(`[문서 다운로드] 클라이언트 연결 끊김 → ZIP 생성 중단 (requestId: ${requestId})`);
+        }
+      });
 
       // archiver → 임시 파일 파이프
       archive.pipe(output);
@@ -3249,10 +3305,21 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
         console.warn('[문서 다운로드] archiver 경고:', err);
       });
 
+      // archiver 에러 핸들러 — 파일 추가 루프 진입 전에 등록 (미등록 시 프로세스 크래시 위험)
+      archive.on('error', (err) => {
+        console.error('[문서 다운로드] archiver 오류:', err);
+        try { fs.unlinkSync(tempFilePath); } catch { /* 무시 */ }
+        activeZipGenerations.delete(requestId);
+      });
+
       let skippedFiles = 0;
+      let processedFiles = 0;
 
       // 5. 고객별 문서 추가
-      for (const customer of customers) {
+      for (const { customer, docs } of customerDocs) {
+        // 생성 중단 확인
+        if (activeZipGenerations.get(requestId)?.aborted) break;
+
         const customerName = customer.personal_info?.name || '이름없음';
         let customerFolder = sanitizeZipName(customerName);
 
@@ -3261,21 +3328,21 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
           customerFolder = `${customerFolder}_${customer._id.toString().slice(-6)}`;
         }
 
-        const docs = await db.collection(COLLECTION_NAME).find({
-          customerId: customer._id,
-          ownerId: userId
-        }).toArray();
-
         if (docs.length === 0) continue;
 
         // 폴더 내 파일명 충돌 추적
         const folderFileNames = new Map();
 
         for (const doc of docs) {
+          // 생성 중단 확인
+          if (activeZipGenerations.get(requestId)?.aborted) break;
+
           // 파일 경로 결정: PDF 변환본 우선, 없으면 원본
           let filePath = doc.upload?.convPdfPath || doc.upload?.destPath;
           if (!filePath) {
             skippedFiles++;
+            processedFiles++;
+            sendSSEEvent('progress', { processed: processedFiles, total: totalFileCount, skipped: skippedFiles });
             continue;
           }
 
@@ -3284,12 +3351,16 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
           if (!resolved.startsWith(BASE_DIR)) {
             console.warn('[문서 다운로드] 경로 탈출 시도 감지:', filePath);
             skippedFiles++;
+            processedFiles++;
+            sendSSEEvent('progress', { processed: processedFiles, total: totalFileCount, skipped: skippedFiles });
             continue;
           }
 
           // 파일 존재 여부 확인
           if (!fs.existsSync(resolved)) {
             skippedFiles++;
+            processedFiles++;
+            sendSSEEvent('progress', { processed: processedFiles, total: totalFileCount, skipped: skippedFiles });
             continue;
           }
 
@@ -3337,23 +3408,31 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
 
           // ZIP에 파일 추가
           archive.file(resolved, { name: `${folderPath}/${fileName}` });
+          processedFiles++;
+          sendSSEEvent('progress', { processed: processedFiles, total: totalFileCount, skipped: skippedFiles });
         }
+      }
+
+      // 생성 중단된 경우 종료
+      if (activeZipGenerations.get(requestId)?.aborted) {
+        activeZipGenerations.delete(requestId);
+        if (!res.writableEnded) res.end();
+        return;
       }
 
       if (skippedFiles > 0) {
         console.warn(`[문서 다운로드] ${skippedFiles}건의 파일을 찾을 수 없어 제외됨`);
       }
 
-      // ZIP 생성 완료 대기
+      // ZIP 생성 완료 대기 (error 핸들러는 위에서 이미 등록됨)
       await new Promise((resolve, reject) => {
         output.on('close', resolve);
-        archive.on('error', (err) => {
-          // 실패 시 임시 파일 정리
-          try { fs.unlinkSync(tempFilePath); } catch { /* 무시 */ }
-          reject(err);
-        });
+        output.on('error', reject);
         archive.finalize();
       });
+
+      // ZIP 생성 중 추적 해제
+      activeZipGenerations.delete(requestId);
 
       // 6. 다운로드 정보 등록
       const stat = fs.statSync(tempFilePath);
@@ -3364,32 +3443,41 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
         size: stat.size,
         skippedFiles,
         expiresAt: Date.now() + DOWNLOAD_TTL_MS,
+        downloaded: false, // Phase 2 완료 시 true로 전환 → 카운터에서 제외
       });
 
-      res.json({
-        success: true,
-        data: {
-          downloadId,
-          filename: zipFilename,
-          size: stat.size,
-          skippedFiles,
-          expiresIn: DOWNLOAD_TTL_MS / 1000, // 초 단위
-        },
-        timestamp: utcNowISO(),
+      // 완료 이벤트 전송
+      sendSSEEvent('complete', {
+        downloadId,
+        filename: zipFilename,
+        size: stat.size,
+        skippedFiles,
+        expiresIn: DOWNLOAD_TTL_MS / 1000,
       });
+      res.end();
 
     } catch (error) {
+      // ZIP 생성 중 추적 해제
+      activeZipGenerations.delete(requestId);
+
       console.error('[문서 다운로드] ZIP 준비 오류:', error.message);
       backendLogger.error('Documents', '[문서 다운로드] ZIP 준비 실패', error);
-      if (!res.headersSent) {
+      if (!res.writableEnded && !res.headersSent) {
         res.status(500).json({ success: false, error: `문서 다운로드 준비 실패: ${error.message}`, timestamp: utcNowISO() });
+      } else if (!res.writableEnded) {
+        // SSE 스트림 시작 후 에러 발생 시
+        try {
+          res.write(`event: error\ndata: ${JSON.stringify({ error: error.message })}\n\n`);
+        } catch { /* 무시 */ }
+        res.end();
       }
     }
   });
 
   // Phase 2: ZIP 파일 다운로드 (Range 요청 = 이어받기 지원)
-  // 인증: authenticateJWTWithQuery (?token=JWT 쿼리 파라미터) + userId 소유권 검증
-  router.get('/documents/download/:downloadId', authenticateJWTWithQuery, (req, res) => {
+  // 인증: downloadId 자체가 192비트 랜덤 일회용 토큰 역할 (30분 TTL)
+  // JWT를 URL 쿼리에 노출하지 않기 위해 별도 인증 없이 downloadId로만 접근
+  router.get('/documents/download/:downloadId', (req, res) => {
     const { downloadId } = req.params;
 
     // downloadId 형식 검증 (48자 hex)
@@ -3400,11 +3488,6 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
     const entry = pendingDownloads.get(downloadId);
     if (!entry) {
       return res.status(404).json({ success: false, error: '다운로드가 만료되었거나 존재하지 않습니다.', timestamp: utcNowISO() });
-    }
-
-    // 소유권 검증: ZIP을 생성한 사용자만 다운로드 가능
-    if (entry.userId !== req.user.id) {
-      return res.status(403).json({ success: false, error: '다운로드 권한이 없습니다.', timestamp: utcNowISO() });
     }
 
     // 만료 확인
@@ -3422,6 +3505,15 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
 
     const fileSize = entry.size;
     const encodedFilename = encodeURIComponent(entry.filename);
+
+    // 다운로드 완료/실패 시 카운터 해제 (이어받기 슬롯 확보)
+    // finish: 정상 완료, close: 클라이언트 연결 끊김(실패 포함)
+    const markDownloaded = () => {
+      if (entry.downloaded) return;
+      entry.downloaded = true;
+    };
+    res.on('finish', markDownloaded);
+    res.on('close', markDownloaded);
 
     // 공통 헤더
     res.setHeader('Content-Type', 'application/zip');

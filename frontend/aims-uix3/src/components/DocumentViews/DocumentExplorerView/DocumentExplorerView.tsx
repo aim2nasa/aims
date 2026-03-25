@@ -147,7 +147,17 @@ const DocumentExplorerContent: React.FC<{
 
   // === 문서함 다운로드 ===
   const toast = useToastContext()
-  const { download: downloadZip, cancel: cancelDownload, isDownloading } = useDocumentDownload()
+  // 진행률 토스트 ID를 ref로 관리 (콜백 내에서 최신값 참조)
+  const progressToastIdRef = useRef<string | null>(null)
+  const handleDownloadProgress = useCallback((progress: import('@/features/customer/hooks/useDocumentDownload').DownloadProgress) => {
+    const msg = `압축 준비 중... (${progress.processed}/${progress.total}건)`
+    if (progressToastIdRef.current) {
+      toast.update(progressToastIdRef.current, msg)
+    }
+  }, [toast])
+  const { download: downloadZip, cancel: cancelDownload, isDownloading } = useDocumentDownload({
+    onProgress: handleDownloadProgress,
+  })
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set())
   const [customerSelectMode, setCustomerSelectMode] = useState(false)
 
@@ -173,31 +183,41 @@ const DocumentExplorerContent: React.FC<{
 
   // 단일 고객 문서함 다운로드 (··· 메뉴)
   const handleDownloadCustomerDocuments = useCallback(async (customerId: string, customerName: string) => {
-    toast.show(`${customerName} 문서함 다운로드 시작...`, { type: 'info' })
+    const toastId = toast.show(`${customerName} 문서함 압축 준비 중...`, { type: 'info', duration: Infinity })
+    progressToastIdRef.current = toastId
     try {
       await downloadZip([customerId])
-      toast.show(`${customerName} 문서함 다운로드 완료`, { type: 'success' })
+      toast.dismiss(toastId)
+      toast.show(`${customerName} 문서함 다운로드 시작`, { type: 'success' })
     } catch {
+      toast.dismiss(toastId)
       toast.show('다운로드에 실패했습니다', { type: 'error' })
+    } finally {
+      progressToastIdRef.current = null
     }
-  }, [downloadZip])
+  }, [downloadZip, toast])
 
   // 다중 고객 문서함 다운로드 (하단 액션바)
   const handleDownloadSelectedCustomers = useCallback(async () => {
     if (selectedCustomerIds.size === 0) return
     const count = selectedCustomerIds.size
-    toast.show(`${count}명 고객 문서함 다운로드 시작...`, { type: 'info' })
+    const toastId = toast.show(`${count}명 고객 문서함 압축 준비 중...`, { type: 'info', duration: Infinity })
+    progressToastIdRef.current = toastId
     try {
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
       const initialSuffix = selectedInitial ? `_${selectedInitial}` : ''
       const zipName = `AIMS_문서함${initialSuffix}_${dateStr}.zip`
       await downloadZip(Array.from(selectedCustomerIds), zipName)
-      toast.show(`${count}명 고객 문서함 다운로드 완료`, { type: 'success' })
+      toast.dismiss(toastId)
+      toast.show(`${count}명 고객 문서함 다운로드 시작`, { type: 'success' })
       setSelectedCustomerIds(new Set())
     } catch {
+      toast.dismiss(toastId)
       toast.show('다운로드에 실패했습니다', { type: 'error' })
+    } finally {
+      progressToastIdRef.current = null
     }
-  }, [selectedCustomerIds, downloadZip, selectedInitial])
+  }, [selectedCustomerIds, downloadZip, selectedInitial, toast])
 
   // 전체 선택/해제
   const handleToggleSelectAllCustomers = useCallback((allCustomerIds: string[]) => {
