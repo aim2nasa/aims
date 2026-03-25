@@ -106,9 +106,14 @@ class MetaService:
 
             # Basic metadata
             extension = Path(name).suffix.lower()
-            mime_type, _ = mimetypes.guess_type(name)
-            if not mime_type:
-                mime_type = "application/octet-stream"
+            # HWP/HWPX는 OS별로 비표준 MIME을 반환하므로 확장자 기반으로 우선 보정
+            _hwp_mime = {".hwp": "application/x-hwp", ".hwpx": "application/vnd.hancom.hwpx"}
+            if extension in _hwp_mime:
+                mime_type = _hwp_mime[extension]
+            else:
+                mime_type, _ = mimetypes.guess_type(name)
+                if not mime_type:
+                    mime_type = "application/octet-stream"
 
             # Compute file hash
             file_hash = hashlib.sha256(content).hexdigest()

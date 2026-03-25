@@ -927,3 +927,85 @@ def expected_stages_list(
             continue
         result.append(s)
     return result
+
+
+# ---------------------------------------------------------------------------
+# BUG FIX regression 테스트
+# ---------------------------------------------------------------------------
+
+class TestBugFixHwpMimeType:
+    """BUG-1: HWP/HWPX MIME 타입이 octet-stream으로 표시되는 문제 (#8e1941a5 후속)"""
+
+    def test_ingest_hwp_mime_type(self):
+        """HWP 파일의 MIME 타입이 application/x-hwp으로 설정되어야 한다"""
+        ctx = {"filename": "테스트문서.hwp", "file_path": ""}
+        result = _run(IngestStage().execute(ctx))
+        assert result["mime_type"] == "application/x-hwp"
+
+    def test_ingest_hwpx_mime_type(self):
+        """HWPX 파일의 MIME 타입이 application/vnd.hancom.hwpx로 설정되어야 한다"""
+        ctx = {"filename": "테스트문서.hwpx", "file_path": ""}
+        result = _run(IngestStage().execute(ctx))
+        assert result["mime_type"] == "application/vnd.hancom.hwpx"
+
+    def test_ingest_hwp_not_octet_stream(self):
+        """HWP 파일이 application/octet-stream으로 설정되면 안 된다"""
+        ctx = {"filename": "캐치업코리아 2021.11.25.hwp", "file_path": ""}
+        result = _run(IngestStage().execute(ctx))
+        assert result["mime_type"] != "application/octet-stream"
+        assert result["mime_type"] == "application/x-hwp"
+
+    def test_ingest_pdf_unchanged(self):
+        """PDF 등 기존 지원 형식은 영향받지 않는다"""
+        ctx = {"filename": "test.pdf", "file_path": ""}
+        result = _run(IngestStage().execute(ctx))
+        assert result["mime_type"] == "application/pdf"
+
+    def test_ingest_unknown_still_octet_stream(self):
+        """미지원 확장자는 여전히 octet-stream이다"""
+        ctx = {"filename": "unknown.xyz", "file_path": ""}
+        result = _run(IngestStage().execute(ctx))
+        assert result["mime_type"] == "application/octet-stream"
+
+
+class TestBugFixErrorTextInDisplayName:
+    """BUG-2: 변환 실패 에러 메시지가 displayName에 포함되는 문제"""
+
+    def test_extract_convert_failure_returns_empty(self):
+        """변환 실패 시 에러 메시지가 아닌 빈 문자열을 반환해야 한다"""
+        # _convert_and_extract는 LibreOffice 미설치 환경에서 빈 문자열 반환
+        result = ExtractStage._convert_and_extract("/nonexistent/path.hwp", "test.hwp")
+        # 에러 메시지가 텍스트에 포함되면 안 됨
+        assert "변환 실패" not in result
+        assert "LibreOffice" not in result
+        assert "추출 실패" not in result
+
+    def test_extract_error_text_filter(self):
+        """_is_error_text()가 에러 메시지를 정확히 감지한다"""
+        import sys
+        sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[3]))
+        from routers.doc_display_name import _is_error_text
+
+        # 에러 메시지 → True
+        assert _is_error_text("LibreOffice PDF 변환 실패\n파일: test.hwp") is True
+        assert _is_error_text("변환된 PDF에서 텍스트 추출 실패\n파일: test.hwp") is True
+        assert _is_error_text("지원하지 않는 파일 형식입니다.\n\n파일: test\nMIME: x") is True
+
+        # 실제 문서 텍스트 → False
+        assert _is_error_text("삼성화재 자동차보험 증권 2024년 3월") is False
+        assert _is_error_text("") is False
+        assert _is_error_text(None) is False
+
+    def test_extract_text_from_document_filters_error(self):
+        """_extract_text_from_document()가 에러 텍스트를 필터링한다"""
+        import sys
+        sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[3]))
+        from routers.doc_display_name import _extract_text_from_document
+
+        # 에러 텍스트가 full_text에 저장된 레거시 문서
+        doc = {"meta": {"full_text": "LibreOffice PDF 변환 실패\n파일: test.hwp"}}
+        assert _extract_text_from_document(doc) == ""
+
+        # 정상 텍스트
+        doc_ok = {"meta": {"full_text": "삼성화재 자동차보험 증권번호 1234-5678"}}
+        assert "삼성화재" in _extract_text_from_document(doc_ok)

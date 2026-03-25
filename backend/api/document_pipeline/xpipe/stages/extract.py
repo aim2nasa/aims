@@ -35,16 +35,17 @@ class ExtractStage(Stage):
     def _read_text_file(file_path: str, file_name: str, mime: str) -> str:
         """텍스트 파일을 실제로 읽어서 내용을 반환한다.
 
-        읽기 실패 시 메타 정보만 반환.
+        읽기 실패 시 빈 문자열을 반환한다.
+        에러 메시지를 텍스트로 반환하면 AI가 문서 내용으로 오인하기 때문.
         """
         import os
+        import logging as _logging
+
+        _logger = _logging.getLogger(__name__)
 
         if not file_path or not os.path.exists(file_path):
-            return (
-                f"텍스트 파일을 찾을 수 없습니다.\n\n"
-                f"파일: {file_name}\n"
-                f"경로: {file_path}\n"
-            )
+            _logger.warning("텍스트 파일을 찾을 수 없습니다: %s (경로: %s)", file_name, file_path)
+            return ""
 
         # 여러 인코딩 시도
         for encoding in ("utf-8", "cp949", "euc-kr", "latin-1"):
@@ -55,18 +56,12 @@ class ExtractStage(Stage):
             except (UnicodeDecodeError, UnicodeError):
                 continue
             except Exception as exc:
-                return (
-                    f"텍스트 파일 읽기 실패: {exc}\n\n"
-                    f"파일: {file_name}\n"
-                    f"MIME: {mime}\n"
-                )
+                _logger.warning("텍스트 파일 읽기 실패: %s — %s", file_name, exc)
+                return ""
 
         # 모든 인코딩 실패
-        return (
-            f"텍스트 파일 인코딩을 인식할 수 없습니다.\n\n"
-            f"파일: {file_name}\n"
-            f"MIME: {mime}\n"
-        )
+        _logger.warning("텍스트 파일 인코딩을 인식할 수 없습니다: %s (MIME: %s)", file_name, mime)
+        return ""
 
     @staticmethod
     def _read_pdf_file(file_path: str, file_name: str) -> str:
@@ -92,15 +87,23 @@ class ExtractStage(Stage):
 
     @staticmethod
     def _convert_and_extract(file_path: str, file_name: str) -> str:
-        """LibreOffice로 PDF 변환 후 pdfplumber로 텍스트 추출"""
+        """LibreOffice로 PDF 변환 후 pdfplumber로 텍스트 추출
+
+        변환/추출 실패 시 빈 문자열을 반환한다.
+        에러 메시지를 텍스트로 반환하면 AI가 문서 내용으로 오인하기 때문.
+        """
         import subprocess
         import tempfile
         import os
+        import logging as _logging
+
+        _logger = _logging.getLogger(__name__)
 
         import shutil
         soffice = shutil.which("soffice") or shutil.which("libreoffice")
         if not soffice:
-            return f"LibreOffice 미설치 — 텍스트 추출 불가\n파일: {file_name}"
+            _logger.warning("LibreOffice 미설치 — 텍스트 추출 불가: %s", file_name)
+            return ""
 
         with tempfile.TemporaryDirectory() as tmp:
             try:
@@ -109,14 +112,17 @@ class ExtractStage(Stage):
                     capture_output=True, timeout=60,
                 )
             except subprocess.TimeoutExpired:
-                return f"LibreOffice 변환 시간 초과 (60초)\n파일: {file_name}"
+                _logger.warning("LibreOffice 변환 시간 초과 (60초): %s", file_name)
+                return ""
             except Exception as e:
-                return f"LibreOffice 실행 실패: {e}\n파일: {file_name}"
+                _logger.warning("LibreOffice 실행 실패: %s — %s", file_name, e)
+                return ""
 
             # 변환된 PDF 찾기
             pdf_files = [f for f in os.listdir(tmp) if f.endswith(".pdf")]
             if not pdf_files:
-                return f"LibreOffice PDF 변환 실패\n파일: {file_name}"
+                _logger.warning("LibreOffice PDF 변환 실패: %s", file_name)
+                return ""
 
             pdf_path = os.path.join(tmp, pdf_files[0])
             # pdfplumber로 텍스트 추출
@@ -128,11 +134,16 @@ class ExtractStage(Stage):
                         t = page.extract_text()
                         if t:
                             text_parts.append(t)
-                return "\n".join(text_parts) if text_parts else f"변환 성공, 텍스트 없음\n파일: {file_name}"
+                if not text_parts:
+                    _logger.warning("변환 성공, 텍스트 없음: %s", file_name)
+                    return ""
+                return "\n".join(text_parts)
             except ImportError:
-                return f"pdfplumber 미설치 — 텍스트 추출 불가\n파일: {file_name}"
+                _logger.warning("pdfplumber 미설치 — 텍스트 추출 불가: %s", file_name)
+                return ""
             except Exception as e:
-                return f"PDF 텍스트 추출 실패: {e}\n파일: {file_name}"
+                _logger.warning("PDF 텍스트 추출 실패: %s — %s", file_name, e)
+                return ""
 
     async def _try_ocr(
         self,
@@ -227,19 +238,13 @@ class ExtractStage(Stage):
             converted = context.get("converted_pdf_path", "")
             if converted and os.path.exists(converted):
                 text = self._read_pdf_file(converted, file_name)
-                if not text:
-                    text = f"변환된 PDF에서 텍스트 추출 실패\n파일: {file_name}"
             else:
                 text = self._convert_and_extract(file_path, file_name)
         else:
-            # 알 수 없는 형식
+            # 알 수 없는 형식 — 에러 메시지를 텍스트로 저장하지 않음
             method = "unknown"
             ocr_model = "-"
-            text = (
-                f"지원하지 않는 파일 형식입니다.\n\n"
-                f"파일: {file_name}\n"
-                f"MIME: {mime}\n"
-            )
+            text = ""
 
         # 텍스트 추출 결과 검증 — real 모드에서 빈 텍스트는 에러 (가짜 성공 금지)
         if mode != "stub" and (not text or not text.strip()):

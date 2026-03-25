@@ -98,6 +98,32 @@ def sanitize_display_name(name: str, original_filename: str = "") -> str:
     return cleaned + ext
 
 
+def _is_error_text(text: str) -> bool:
+    """추출된 텍스트가 실제 문서 내용이 아닌 시스템 에러 메시지인지 판별
+
+    기존 DB에 에러 메시지가 full_text로 저장된 레거시 데이터를 필터링한다.
+    """
+    if not text or len(text.strip()) > 200:
+        # 200자 초과이면 실제 문서 내용일 가능성이 높음
+        return False
+    _ERROR_PATTERNS = (
+        "LibreOffice 미설치",
+        "LibreOffice 변환 시간 초과",
+        "LibreOffice 실행 실패",
+        "LibreOffice PDF 변환 실패",
+        "변환된 PDF에서 텍스트 추출 실패",
+        "변환 성공, 텍스트 없음",
+        "pdfplumber 미설치",
+        "PDF 텍스트 추출 실패",
+        "텍스트 파일을 찾을 수 없습니다",
+        "텍스트 파일 읽기 실패",
+        "텍스트 파일 인코딩을 인식할 수 없습니다",
+        "지원하지 않는 파일 형식입니다",
+        "OCR 필요 — 시뮬레이션 모드",
+    )
+    return any(pat in text for pat in _ERROR_PATTERNS)
+
+
 def _extract_text_from_document(doc: dict) -> str:
     """
     문서에서 텍스트 추출 (별칭 생성용 - full_text 우선)
@@ -107,6 +133,8 @@ def _extract_text_from_document(doc: dict) -> str:
     full_text는 500자로 truncate하여 프롬프트 크기를 제한한다.
 
     호출자에서 len(text.strip()) < 10 체크로 텍스트 절대량을 검증한다.
+
+    에러 메시지가 full_text에 저장된 레거시 데이터는 필터링한다.
 
     우선순위:
     1. meta.full_text (텍스트 기반 추출)
@@ -119,21 +147,29 @@ def _extract_text_from_document(doc: dict) -> str:
     # 1순위: meta.full_text
     meta = doc.get("meta", {})
     if isinstance(meta, dict) and meta.get("full_text", "").strip():
-        return meta["full_text"][:MAX_TEXT_LENGTH]
+        text = meta["full_text"]
+        if not _is_error_text(text):
+            return text[:MAX_TEXT_LENGTH]
 
     # 2순위: ocr.full_text
     ocr = doc.get("ocr", {})
     if isinstance(ocr, dict) and ocr.get("full_text", "").strip():
-        return ocr["full_text"][:MAX_TEXT_LENGTH]
+        text = ocr["full_text"]
+        if not _is_error_text(text):
+            return text[:MAX_TEXT_LENGTH]
 
     # 3순위: text.full_text
     text_obj = doc.get("text", {})
     if isinstance(text_obj, dict) and text_obj.get("full_text", "").strip():
-        return text_obj["full_text"][:MAX_TEXT_LENGTH]
+        text = text_obj["full_text"]
+        if not _is_error_text(text):
+            return text[:MAX_TEXT_LENGTH]
 
     # 4순위: ocr.summary (폴백)
     if isinstance(ocr, dict) and ocr.get("summary", "").strip():
-        return ocr["summary"]
+        text = ocr["summary"]
+        if not _is_error_text(text):
+            return text
 
     return ""
 

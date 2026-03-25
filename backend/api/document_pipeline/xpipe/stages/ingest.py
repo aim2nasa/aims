@@ -9,6 +9,17 @@ from typing import Any
 from xpipe.stage import Stage
 
 
+# HWP/HWPX MIME 정규화 매핑
+# OS에 따라 mimetypes.guess_type()이 다른 값을 반환할 수 있음:
+#   Windows 레지스트리: application/haansofthwp, application/haansofthwpx
+#   Linux: None (미인식)
+# 모든 환경에서 일관된 MIME 타입을 사용하기 위해 확장자 기반으로 보정
+_HWP_MIME_BY_EXT: dict[str, str] = {
+    ".hwp": "application/x-hwp",
+    ".hwpx": "application/vnd.hancom.hwpx",
+}
+
+
 class IngestStage(Stage):
     """파일 수신 스테이지
 
@@ -33,8 +44,13 @@ class IngestStage(Stage):
             file_size = os.path.getsize(file_path)
 
         # MIME 타입 추론
-        mime_type, _ = mimetypes.guess_type(file_name)
-        mime_type = mime_type or "application/octet-stream"
+        # HWP/HWPX는 OS별로 비표준 MIME을 반환하므로 확장자 기반으로 우선 보정
+        ext = os.path.splitext(file_name)[1].lower() if file_name else ""
+        if ext in _HWP_MIME_BY_EXT:
+            mime_type = _HWP_MIME_BY_EXT[ext]
+        else:
+            mime_type, _ = mimetypes.guess_type(file_name)
+            mime_type = mime_type or "application/octet-stream"
         context["mime_type"] = mime_type
         context["file_size"] = file_size
 
