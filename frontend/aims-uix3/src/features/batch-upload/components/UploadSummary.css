@@ -282,14 +282,13 @@
   }
 
   .upload-summary-btn.secondary {
-    background: var(--color-ios-blue, #007aff);
-    color: white;
-    opacity: 0.85;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
   }
 
   .upload-summary-btn.secondary:hover {
-    background: var(--color-ios-blue-hover, #0066d6);
-    opacity: 1;
+    background: var(--color-bg-quaternary, var(--color-bg-tertiary));
+    color: var(--color-text-primary);
   }
 
 } /* end @layer components */

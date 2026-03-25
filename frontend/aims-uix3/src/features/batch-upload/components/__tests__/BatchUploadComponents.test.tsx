@@ -428,72 +428,154 @@ describe('UploadSummary', () => {
     })
   })
 
-  describe('버튼 동작', () => {
-    it('확인 버튼 클릭 시 onClose 호출', () => {
+  describe('시나리오별 CTA 버튼', () => {
+    const mockOnContinue = vi.fn()
+
+    beforeEach(() => {
+      mockOnContinue.mockClear()
+    })
+
+    it('전체 성공: [계속 일괄등록(Secondary)] [전체 문서 보기(Primary)]', () => {
       render(
         <UploadSummary
-          progress={createMockProgress({ state: 'completed' })}
+          progress={createMockProgress({ state: 'completed', completedFiles: 10, totalFiles: 10, failedFiles: 0 })}
           onClose={mockOnClose}
+          onViewDocuments={mockOnViewDocuments}
+          onContinueBatchUpload={mockOnContinue}
         />
       )
 
-      fireEvent.click(screen.getByText('확인'))
-      expect(mockOnClose).toHaveBeenCalled()
+      expect(screen.getByText('계속 일괄등록')).toBeInTheDocument()
+      expect(screen.getByText('전체 문서 보기')).toBeInTheDocument()
+
+      // Primary 버튼(전체 문서 보기) 클릭
+      fireEvent.click(screen.getByText('전체 문서 보기'))
+      expect(mockOnViewDocuments).toHaveBeenCalled()
+
+      // Secondary 버튼(계속 일괄등록) 클릭
+      fireEvent.click(screen.getByText('계속 일괄등록'))
+      expect(mockOnContinue).toHaveBeenCalled()
     })
 
-    it('실패가 있을 때 재시도 버튼 표시 (바이러스 외 에러)', () => {
+    it('부분 실패 (재시도 가능): [전체 문서 보기(Secondary)] [실패 항목 재시도(Primary)]', () => {
       render(
         <UploadSummary
           progress={createMockProgress({
             state: 'completed',
+            completedFiles: 7,
+            totalFiles: 10,
             failedFiles: 3,
             files: [
               { fileId: 'f1', fileName: 'file1.txt', folderName: '홍길동', customerId: 'c1', customerName: '홍길동', status: 'failed', progress: 0, retryCount: 3, error: '네트워크 오류' },
-              { fileId: 'f2', fileName: 'file2.txt', folderName: '홍길동', customerId: 'c1', customerName: '홍길동', status: 'failed', progress: 0, retryCount: 3, error: '서버 오류' },
-              { fileId: 'f3', fileName: 'file3.txt', folderName: '홍길동', customerId: 'c1', customerName: '홍길동', status: 'failed', progress: 0, retryCount: 3, error: '타임아웃' },
             ],
           })}
           onClose={mockOnClose}
           onRetryFailed={mockOnRetryFailed}
+          onViewDocuments={mockOnViewDocuments}
+          onContinueBatchUpload={mockOnContinue}
         />
       )
 
+      expect(screen.getByText('전체 문서 보기')).toBeInTheDocument()
       expect(screen.getByText('실패 항목 재시도')).toBeInTheDocument()
 
       fireEvent.click(screen.getByText('실패 항목 재시도'))
       expect(mockOnRetryFailed).toHaveBeenCalled()
     })
 
-    it('바이러스 감지 에러만 있을 때 재시도 버튼 숨김', () => {
+    it('부분 실패 (바이러스만, 재시도 불가): [계속 일괄등록(Secondary)] [전체 문서 보기(Primary)]', () => {
       render(
         <UploadSummary
           progress={createMockProgress({
             state: 'completed',
-            failedFiles: 1,
+            completedFiles: 7,
+            totalFiles: 10,
+            failedFiles: 3,
             files: [
               { fileId: 'f1', fileName: 'virus.txt', folderName: '홍길동', customerId: 'c1', customerName: '홍길동', status: 'failed', progress: 0, retryCount: 0, error: '🛡️ 바이러스 감지: Eicar-Signature' },
             ],
           })}
           onClose={mockOnClose}
           onRetryFailed={mockOnRetryFailed}
+          onViewDocuments={mockOnViewDocuments}
+          onContinueBatchUpload={mockOnContinue}
         />
       )
 
-      // 바이러스 감지 에러만 있으면 재시도 버튼이 표시되지 않음
+      // 재시도 불가이므로 "실패 항목 재시도" 없음
       expect(screen.queryByText('실패 항목 재시도')).not.toBeInTheDocument()
+      expect(screen.getByText('계속 일괄등록')).toBeInTheDocument()
+      expect(screen.getByText('전체 문서 보기')).toBeInTheDocument()
     })
 
-    it('처리 상태 보기 버튼 클릭 시 onViewDocuments 호출', () => {
+    it('전체 실패: [돌아가기(Secondary)] [다시 시도(Primary)]', () => {
+      render(
+        <UploadSummary
+          progress={createMockProgress({
+            state: 'completed',
+            completedFiles: 0,
+            totalFiles: 10,
+            failedFiles: 10,
+          })}
+          onClose={mockOnClose}
+          onContinueBatchUpload={mockOnContinue}
+        />
+      )
+
+      expect(screen.getByText('돌아가기')).toBeInTheDocument()
+      expect(screen.getByText('다시 시도')).toBeInTheDocument()
+
+      // 돌아가기 → onClose
+      fireEvent.click(screen.getByText('돌아가기'))
+      expect(mockOnClose).toHaveBeenCalled()
+
+      // 다시 시도 → onContinueBatchUpload
+      fireEvent.click(screen.getByText('다시 시도'))
+      expect(mockOnContinue).toHaveBeenCalled()
+    })
+
+    it('취소됨: [전체 문서 보기(Secondary)] [계속 일괄등록(Primary)]', () => {
+      render(
+        <UploadSummary
+          progress={createMockProgress({ state: 'cancelled', completedFiles: 5 })}
+          onClose={mockOnClose}
+          onViewDocuments={mockOnViewDocuments}
+          onContinueBatchUpload={mockOnContinue}
+        />
+      )
+
+      expect(screen.getByText('전체 문서 보기')).toBeInTheDocument()
+      expect(screen.getByText('계속 일괄등록')).toBeInTheDocument()
+
+      fireEvent.click(screen.getByText('계속 일괄등록'))
+      expect(mockOnContinue).toHaveBeenCalled()
+    })
+
+    it('기존 "확인" 버튼은 더 이상 표시되지 않음', () => {
       render(
         <UploadSummary
           progress={createMockProgress({ state: 'completed' })}
           onClose={mockOnClose}
-          onViewDocuments={mockOnViewDocuments}
         />
       )
 
-      fireEvent.click(screen.getByText('처리 상태 보기'))
-      expect(mockOnViewDocuments).toHaveBeenCalled()
+      expect(screen.queryByText('확인')).not.toBeInTheDocument()
+    })
+
+    it('Primary 버튼은 primary 클래스, Secondary 버튼은 secondary 클래스를 가짐', () => {
+      render(
+        <UploadSummary
+          progress={createMockProgress({ state: 'completed', completedFiles: 10, totalFiles: 10, failedFiles: 0 })}
+          onClose={mockOnClose}
+          onViewDocuments={mockOnViewDocuments}
+          onContinueBatchUpload={mockOnContinue}
+        />
+      )
+
+      const primaryBtn = screen.getByText('전체 문서 보기').closest('button')
+      const secondaryBtn = screen.getByText('계속 일괄등록').closest('button')
+      expect(primaryBtn?.className).toContain('primary')
+      expect(secondaryBtn?.className).toContain('secondary')
     })
   })
 

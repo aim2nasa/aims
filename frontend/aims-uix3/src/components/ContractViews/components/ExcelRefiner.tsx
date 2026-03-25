@@ -3457,8 +3457,8 @@ export function ExcelRefiner() {
                   </div>
                 )}
 
-                {/* 액션 로그 메시지 */}
-                {actionLog && !importProgress && (
+                {/* 액션 로그 메시지 (등록 결과 CTA가 있으면 숨김) */}
+                {actionLog && !importProgress && !importResult && (
                   <div className="excel-refiner__action-log">
                     <span>
                       {(() => {
@@ -3507,6 +3507,79 @@ export function ExcelRefiner() {
                     </span>
                   </div>
                 )}
+
+                {/* 등록 완료 후 CTA 버튼 */}
+                {importResult && !importProgress && (() => {
+                  const totalItems = importResult.개인고객.total + importResult.법인고객.total + importResult.계약.total
+                  const successItems = importResult.개인고객.success + importResult.법인고객.success + importResult.계약.success
+                  const isAllFailed = successItems === 0 && totalItems > 0
+                  const hasContractResults = importResult.계약.total > 0 && importResult.계약.success > 0
+                  const hasCustomerResults = (importResult.개인고객.total > 0 || importResult.법인고객.total > 0)
+
+                  // 뷰 전환 헬퍼
+                  const navigateTo = (view: string) => {
+                    const url = new URL(window.location.href)
+                    url.searchParams.set('view', view)
+                    url.searchParams.delete('customerId')
+                    url.searchParams.delete('documentId')
+                    window.history.pushState({}, '', url.toString())
+                    window.dispatchEvent(new PopStateEvent('popstate'))
+                  }
+
+                  if (isAllFailed) {
+                    // 전체 실패: [돌아가기] [다시 시도]
+                    return (
+                      <div className="excel-refiner__cta-buttons">
+                        <button
+                          type="button"
+                          className="excel-refiner__cta-btn excel-refiner__cta-btn--secondary"
+                          onClick={handleCloseExcel}
+                        >
+                          돌아가기
+                        </button>
+                        <button
+                          type="button"
+                          className="excel-refiner__cta-btn excel-refiner__cta-btn--primary"
+                          onClick={() => {
+                            // 결과만 초기화하고 다시 등록 시도 가능하게
+                            setImportResult(null)
+                          }}
+                        >
+                          다시 시도
+                        </button>
+                      </div>
+                    )
+                  }
+
+                  // 성공 또는 부분 실패
+                  return (
+                    <div className="excel-refiner__cta-buttons">
+                      <button
+                        type="button"
+                        className="excel-refiner__cta-btn excel-refiner__cta-btn--secondary"
+                        onClick={handleCloseExcel}
+                      >
+                        계속 일괄등록
+                      </button>
+                      <button
+                        type="button"
+                        className="excel-refiner__cta-btn excel-refiner__cta-btn--primary"
+                        onClick={() => navigateTo('customers-all')}
+                      >
+                        전체 고객 보기
+                      </button>
+                      {/* 계약 데이터가 등록된 경우 "전체 계약 보기" 링크를 안내 텍스트로 표시 */}
+                      {hasContractResults && hasCustomerResults && (
+                        <a
+                          className="excel-refiner__action-link excel-refiner__cta-contract-link"
+                          onClick={() => navigateTo('contracts-all')}
+                        >
+                          전체 계약 보기
+                        </a>
+                      )}
+                    </div>
+                  )
+                })()}
               </div>
             </div>
 

@@ -306,6 +306,49 @@
     text-decoration-thickness: 2px;
   }
 
+  /* === 등록 완료 후 CTA 버튼 === */
+
+  .excel-refiner__cta-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .excel-refiner__cta-btn {
+    padding: var(--spacing-1) var(--spacing-3);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-caption-1);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--easing-default);
+    white-space: nowrap;
+  }
+
+  .excel-refiner__cta-btn--primary {
+    background: var(--color-ios-blue, #007aff);
+    color: white;
+  }
+
+  .excel-refiner__cta-btn--primary:hover {
+    background: var(--color-ios-blue-hover, #0066d6);
+  }
+
+  .excel-refiner__cta-btn--secondary {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+  }
+
+  .excel-refiner__cta-btn--secondary:hover {
+    background: var(--color-bg-quaternary, var(--color-bg-tertiary));
+    color: var(--color-text-primary);
+  }
+
+  .excel-refiner__cta-contract-link {
+    margin-left: var(--spacing-1);
+    font-size: var(--font-size-caption-1);
+  }
+
   /* === 일괄등록 상세 결과 모달 === */
 
   /* 모달 content를 flex로 확장 */

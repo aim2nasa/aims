@@ -16,9 +16,10 @@ interface UploadSummaryProps {
   onClose: () => void
   onRetryFailed?: () => void
   onViewDocuments?: () => void  // "전체 문서 보기"로 이동
+  onContinueBatchUpload?: () => void  // "계속 일괄등록" (상태 초기화 후 파일 선택으로)
 }
 
-export default function UploadSummary({ progress, onClose, onRetryFailed, onViewDocuments }: UploadSummaryProps) {
+export default function UploadSummary({ progress, onClose, onRetryFailed, onViewDocuments, onContinueBatchUpload }: UploadSummaryProps) {
   const { totalFiles, completedFiles, failedFiles, skippedFiles, folders, state } = progress
   const [showSkippedFiles, setShowSkippedFiles] = useState(false)
 
@@ -209,27 +210,87 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
         </div>
       )}
 
-      {/* 버튼 */}
+      {/* 시나리오별 CTA 버튼 */}
       <div className="upload-summary-actions">
-        {/* 바이러스 감지 외의 실패 항목만 재시도 가능 */}
-        {hasRetryableFailures && onRetryFailed && (
-          <button className="upload-summary-btn secondary" onClick={onRetryFailed}>
-            <SFSymbol
-              name="arrow-clockwise"
-              size={SFSymbolSize.FOOTNOTE}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-            <span>실패 항목 재시도</span>
-          </button>
-        )}
-        {onViewDocuments && !isCancelled && (
-          <button className="upload-summary-btn secondary" onClick={onViewDocuments}>
-            처리 상태 보기
-          </button>
-        )}
-        <button className="upload-summary-btn primary" onClick={onClose}>
-          확인
-        </button>
+        {(() => {
+          // 시나리오별 버튼 매핑 (왼쪽=Secondary, 오른쪽=Primary, Apple HIG)
+          if (isCancelled) {
+            // 취소됨: [전체 문서 보기] [계속 일괄등록]
+            return (
+              <>
+                {onViewDocuments && (
+                  <button className="upload-summary-btn secondary" onClick={onViewDocuments}>
+                    전체 문서 보기
+                  </button>
+                )}
+                <button className="upload-summary-btn primary" onClick={onContinueBatchUpload || onClose}>
+                  계속 일괄등록
+                </button>
+              </>
+            )
+          }
+          if (isFullFailure) {
+            // 전체 실패: [돌아가기] [다시 시도]
+            return (
+              <>
+                <button className="upload-summary-btn secondary" onClick={onClose}>
+                  돌아가기
+                </button>
+                <button className="upload-summary-btn primary" onClick={onContinueBatchUpload || onClose}>
+                  다시 시도
+                </button>
+              </>
+            )
+          }
+          if (isPartialSuccess && hasRetryableFailures && onRetryFailed) {
+            // 부분 실패 (재시도 가능): [전체 문서 보기] [실패 항목 재시도]
+            return (
+              <>
+                {onViewDocuments && (
+                  <button className="upload-summary-btn secondary" onClick={onViewDocuments}>
+                    전체 문서 보기
+                  </button>
+                )}
+                <button className="upload-summary-btn primary" onClick={onRetryFailed}>
+                  <SFSymbol
+                    name="arrow-clockwise"
+                    size={SFSymbolSize.FOOTNOTE}
+                    weight={SFSymbolWeight.MEDIUM}
+                  />
+                  <span>실패 항목 재시도</span>
+                </button>
+              </>
+            )
+          }
+          if (isPartialSuccess) {
+            // 부분 실패 (재시도 불가): [계속 일괄등록] [전체 문서 보기]
+            return (
+              <>
+                <button className="upload-summary-btn secondary" onClick={onContinueBatchUpload || onClose}>
+                  계속 일괄등록
+                </button>
+                {onViewDocuments && (
+                  <button className="upload-summary-btn primary" onClick={onViewDocuments}>
+                    전체 문서 보기
+                  </button>
+                )}
+              </>
+            )
+          }
+          // 전체 성공: [계속 일괄등록] [전체 문서 보기]
+          return (
+            <>
+              <button className="upload-summary-btn secondary" onClick={onContinueBatchUpload || onClose}>
+                계속 일괄등록
+              </button>
+              {onViewDocuments && (
+                <button className="upload-summary-btn primary" onClick={onViewDocuments}>
+                  전체 문서 보기
+                </button>
+              )}
+            </>
+          )
+        })()}
       </div>
     </div>
   )

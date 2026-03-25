@@ -528,6 +528,7 @@ export default function BatchDocumentUploadView({
               onClose={handleComplete}
               onRetryFailed={progress.failedFiles > 0 ? handleRetryFailed : undefined}
               onViewDocuments={onViewDocuments}
+              onContinueBatchUpload={handleComplete}
             />
           </div>
         )
