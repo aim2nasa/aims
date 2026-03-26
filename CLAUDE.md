@@ -36,6 +36,16 @@
 ### 0-4. AutoClicker 표현 규칙 (보안)
 "고객 정보 수집/자동수집" 표현 절대 금지 → "PDF 자동 다운로드"로만 표현.
 
+### 0-5. Identity 규칙 (모든 Agent 필수)
+- **메인 Claude**: 모든 응답은 반드시 `[Claude]`로 시작
+- **서브에이전트**: 각 AGENT.md에 정의된 Identity 태그 사용 (예: `[Alex]`, `[Gini]`, `[Dana]` 등)
+- 태그 없는 응답은 CRITICAL 위반
+
+### 0-6. 작업 순서 원칙 (SUPREME RULE)
+**문제 분석 → 방향 합의 → 그 다음 코딩.** 코딩부터 하는 것 절대 금지.
+- 논의 중에 코드 수정 금지
+- 사용자 승인 전 코드 변경 금지
+
 ---
 
 ## 코드 규칙
@@ -95,8 +105,7 @@ DATA_MUTATING_TOOLS 성공 → `window.location.reload()`. Optimistic Update 금
 ## 에이전트/스킬
 
 ### Identity 규칙
-- **메인 Claude**: 모든 응답은 `[Claude]`로 시작
-- **서브에이전트**: 각 AGENT.md에 정의된 Identity 태그 사용 (예: `[Alex]`, `[Gini]`, `[Dana]` 등)
+> CRITICAL RULES 0-5 참조. 위반 시 중대 위반.
 
 ### 에이전트 (8개)
 - **Alex** (설계+구현): 복잡한 대규모 변경 시
