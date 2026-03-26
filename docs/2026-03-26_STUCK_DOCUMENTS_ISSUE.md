@@ -124,3 +124,21 @@ HWP 파일은 LibreOffice로 PDF 변환 후 pdfplumber로 텍스트를 추출하
 - 유형 B: HWP 변환 타임아웃 (60초 초과) — pdf_converter 서비스 원인 파악 필요
 - PPT OCR fallback 개선
 - "보관 전용 completed"와 상태 정의 충돌 해소
+
+---
+
+### 라운드 2 (2026-03-26) — 유형 B/C 버그 수정 + 상태 정의 보완
+
+**목표**: HWP 타임아웃 완화 + PPT/HWP 이미지 OCR fallback 개선 + 상태 정의서 보완
+
+#### 수정 내역
+
+| # | 파일 | 변경 내용 |
+|---|------|-----------|
+| 1 | `tools/convert/convert2pdf.js` | `HWP_CONVERT_TIMEOUT_MS` 60초 → 120초. 복잡한 HWP 파일의 변환 시간 확보 |
+| 2 | `backend/api/document_pipeline/workers/pdf_conversion_worker.py` | 변환 성공 + 텍스트 0자일 때 `text_extraction_failed` 대신 `ocr_fallback_needed` 마커 설정. 레거시 파이프라인의 OCR fallback이 이 문서를 픽업 가능 |
+| 3 | `docs/DOCUMENT_STATUS_DEFINITION.md` | 규칙 1에 "보관 전용 completed" 서브타입 정의 추가 (`processingSkipReason` 필드 기반) |
+
+#### 설계 결정
+- **HWP 타임아웃**: 60초에서 실패한 3건이 모두 동일한 "표준취업규칙" 문서. 페이지 수가 많거나 복잡한 레이아웃으로 추정. 120초면 대부분의 HWP 변환을 커버할 수 있음
+- **OCR fallback 마커**: 기존 `text_extraction_failed`는 "재시도 불필요" 의미였으나, PPT/HWP 이미지 문서는 OCR로 텍스트 추출이 가능. 별도 필드 `ocr_fallback_needed`를 사용하여 기존 쿼리(`text_extraction_failed: {"$ne": True}`)와 충돌 방지

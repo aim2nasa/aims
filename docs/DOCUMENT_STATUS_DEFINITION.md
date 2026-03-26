@@ -120,6 +120,21 @@ pending → uploading ─┬→ converting ─┐
 - **버그**: OCR만 완료되고 임베딩은 대기 중인데 `completed`로 설정됨
 - **수정**: `docembed.status === "done"`일 때만 `completed`로 전환
 
+#### 서브타입: 보관 전용 completed
+
+`completed`이면서 `processingSkipReason` 필드가 존재하는 문서는 **보관 전용**이다.
+
+| 조건 | 의미 |
+|------|------|
+| `processingSkipReason: "unsupported_format"` | ZIP, AI 등 텍스트 추출이 원천 불가능한 형식 |
+| `processingSkipReason: "no_text_extractable"` | OCR까지 시도했으나 텍스트 0자 (빈 이미지 등) |
+| `processingSkipReason: "conversion_failed"` | PDF 변환 실패하여 텍스트 추출 경로 없음 |
+
+보관 전용 문서의 특성:
+- **AI 검색에 포함되지 않음** (임베딩이 없으므로 벡터 검색 불가)
+- **프론트엔드에서 `ProcessingPathType: 'unsupported'`로 표시**
+- **에러가 아님** — 파일 자체는 정상적으로 보관되며, 다운로드/조회 가능
+
 ### 규칙 2: 관할권 분리
 
 각 서비스는 자기 관할 필드만 수정한다. (커밋 `f3483280`, 2026-02-14)

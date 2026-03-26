@@ -283,13 +283,15 @@ class PdfConversionWorker:
 
             if not extracted_text or not extracted_text.strip():
                 logger.info(
-                    f"[PDF변환워커] 변환 PDF에서 텍스트 없음 (스캔 문서), 재시도 차단 마커 기록: {document_id}"
+                    f"[PDF변환워커] 변환 PDF에서 텍스트 없음 (스캔/이미지 문서), OCR fallback 큐 등록: {document_id}"
                 )
-                # 스캔 문서 → 텍스트 추출 불가 마커 기록하여 무한 재시도 방지
+                # 스캔/이미지 문서 → OCR fallback 마커 설정 + OCR 큐에 직접 등록
                 await files_col.update_one(
                     {"_id": BsonObjectId(document_id)},
-                    {"$set": {"meta.text_extraction_failed": True}},
+                    {"$set": {"meta.ocr_fallback_needed": True}},
                 )
+                # Redis Stream OCR 큐에 등록하여 즉시 OCR 처리 시작
+                await self._enqueue_ocr_fallback(document_id, pdf_path, doc)
                 return False
 
             logger.info(
@@ -392,6 +394,36 @@ class PdfConversionWorker:
                 exc_info=True,
             )
             return False
+
+    async def _enqueue_ocr_fallback(self, document_id: str, pdf_path: str, doc: dict):
+        """OCR fallback이 필요한 문서를 Redis Stream OCR 큐에 등록.
+
+        실패해도 DB 마커(ocr_fallback_needed)는 이미 기록되어 있으므로
+        변환 결과에 영향을 주지 않도록 격리.
+        """
+        try:
+            from services.redis_service import RedisService
+
+            owner_id = doc.get("ownerId", "")
+            original_name = (doc.get("upload") or {}).get("originalName", "")
+            queued_at = datetime.utcnow().isoformat()
+
+            await RedisService.add_to_stream(
+                file_id=document_id,
+                file_path=pdf_path,
+                doc_id=document_id,
+                owner_id=owner_id,
+                queued_at=queued_at,
+                original_name=original_name,
+            )
+            logger.info(
+                f"[PDF변환워커] OCR fallback 큐 등록 완료: {document_id}"
+            )
+        except Exception as e:
+            # OCR 큐 등록 실패는 변환 결과에 영향 없음 (마커로 추후 복구 가능)
+            logger.warning(
+                f"[PDF변환워커] OCR fallback 큐 등록 실패: {document_id} - {e}"
+            )
 
     async def _notify_conversion_failed(self, job: Dict[str, Any], error_message: str):
         """preview_pdf 실패 후: files 컬렉션 업데이트 + SSE 알림"""
@@ -555,6 +587,7 @@ class PdfConversionWorker:
                     "upload.conversion_status": "completed",
                     "upload.convPdfPath": {"$exists": True, "$ne": ""},
                     "meta.text_extraction_failed": {"$ne": True},
+                    "meta.ocr_fallback_needed": {"$ne": True},
                     "$and": [
                         {"$or": [
                             {"meta.full_text": {"$exists": False}},

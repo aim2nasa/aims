@@ -558,8 +558,8 @@ class TestInfiniteLoopRegression:
     # --- TC-01: 스캔 문서 재시도 차단 (핵심 버그 검증) ---
 
     @pytest.mark.asyncio
-    async def test_scan_document_marks_extraction_failed(self):
-        """TC-01: 텍스트 추출 불가(스캔 문서) 시 meta.text_extraction_failed=True 마커가 DB에 기록된다"""
+    async def test_scan_document_marks_ocr_fallback_needed(self):
+        """TC-01: 텍스트 추출 불가(스캔 문서) 시 meta.ocr_fallback_needed=True 마커가 DB에 기록되고 OCR 큐에 등록된다"""
         doc_id = str(ObjectId())
 
         # 문서에 텍스트 없음
@@ -578,7 +578,8 @@ class TestInfiniteLoopRegression:
         tmp.write(b"%PDF-1.4 fake scan pdf")
         tmp.close()
 
-        with patch.object(self.worker, "_extract_text_from_pdf_bytes", return_value=None):
+        with patch.object(self.worker, "_extract_text_from_pdf_bytes", return_value=None), \
+             patch.object(self.worker, "_enqueue_ocr_fallback", new_callable=AsyncMock) as mock_enqueue:
             result = await self.worker._extract_and_update_text(doc_id, tmp.name, self.mock_files_col)
 
         os.unlink(tmp.name)
@@ -586,11 +587,14 @@ class TestInfiniteLoopRegression:
         # 반환값: False (텍스트 추출 실패)
         assert result is False
 
-        # DB에 마커 기록 확인
+        # DB에 ocr_fallback_needed 마커 기록 확인
         self.mock_files_col.update_one.assert_called_once()
         update_call = self.mock_files_col.update_one.call_args
         update_doc = update_call[0][1]
-        assert update_doc["$set"]["meta.text_extraction_failed"] is True
+        assert update_doc["$set"]["meta.ocr_fallback_needed"] is True
+
+        # OCR 큐 등록 확인
+        mock_enqueue.assert_called_once()
 
     # --- TC-02: 거짓 성공 카운트 제거 ---
 
@@ -673,9 +677,11 @@ class TestInfiniteLoopRegression:
         find_call = self.mock_files_col.find.call_args
         query = find_call[0][0]
 
-        # 핵심: meta.text_extraction_failed 필터 존재 확인
+        # 핵심: meta.text_extraction_failed + meta.ocr_fallback_needed 필터 존재 확인
         assert "meta.text_extraction_failed" in query
         assert query["meta.text_extraction_failed"] == {"$ne": True}
+        assert "meta.ocr_fallback_needed" in query
+        assert query["meta.ocr_fallback_needed"] == {"$ne": True}
 
     # --- TC-05: 반환값 계약 검증 ---
 
@@ -697,7 +703,8 @@ class TestInfiniteLoopRegression:
         tmp.write(b"%PDF")
         tmp.close()
 
-        with patch.object(self.worker, "_extract_text_from_pdf_bytes", return_value="   "):
+        with patch.object(self.worker, "_extract_text_from_pdf_bytes", return_value="   "), \
+             patch.object(self.worker, "_enqueue_ocr_fallback", new_callable=AsyncMock):
             result = await self.worker._extract_and_update_text(doc_id, tmp.name, self.mock_files_col)
 
         os.unlink(tmp.name)

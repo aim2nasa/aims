@@ -210,7 +210,7 @@ function getHwp5odtPath() {
 // ========================
 // HWP → ODT 변환 (pyhwp 호출)
 // ========================
-const HWP_CONVERT_TIMEOUT_MS = 60000; // HWP 변환 1분 타임아웃
+const HWP_CONVERT_TIMEOUT_MS = 120000; // HWP 변환 2분 타임아웃
 
 function convertHwpToOdt(hwpPath, odtPath) {
   return new Promise((resolve, reject) => {
