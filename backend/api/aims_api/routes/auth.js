@@ -14,7 +14,7 @@ const backendLogger = require('../lib/backendLogger');
 const PIN_LENGTH = 4;
 const PIN_MAX_FAIL = 5;
 const PIN_SALT_ROUNDS = 10;
-const SESSION_TOKEN_TTL_MS = 60 * 60 * 1000; // 1시간
+const SESSION_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7일
 
 // 취약 PIN 차단 목록
 const WEAK_PINS = new Set([
@@ -944,7 +944,7 @@ module.exports = function(db) {
   /**
    * POST /api/auth/verify-pin — PIN 검증
    * 설계서 4.1절: Authorization 헤더에서 userId 추출 (body에서 받지 않음)
-   * 성공 시 세션 토큰 발급 (1시간 TTL)
+   * 성공 시 세션 토큰 발급 (7일 TTL)
    */
   router.post('/verify-pin', authenticateJWT, async (req, res) => {
     try {
