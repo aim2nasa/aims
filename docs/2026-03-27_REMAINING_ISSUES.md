@@ -42,35 +42,24 @@
 
 ---
 
-## 기술 부채 (Gini 검수에서 발견, 별도 리팩토링)
+## 기술 부채 (Gini 검수에서 발견) ✅ 전체 해결
 
-> 2026-03-27 Gini 검수 시 발견. 이번 버그 수정 범위 밖이며 별도 작업으로 진행.
+> 2026-03-27 Gini 검수 시 발견. 동일 세션에서 해결 완료.
+> 커밋: `5f005768` | 36건 regression 테스트 PASS
 
-### TD-1: `_is_convertible_mime` / `is_convertible_mime` 이중 정의 (Major)
+### TD-1: `_is_convertible_mime` / `is_convertible_mime` 이중 정의 (Major) ✅ 해결
 
-**현상**: 동일 목적의 함수가 두 곳에 각각 다른 로직으로 존재
-- `doc_prep_main.py:2482` — `_is_convertible_mime()`: `startswith` 매칭, XLS/XLSX/haansofthwp 포함
-- `pdf_conversion_text_service.py:32` — `is_convertible_mime()`: 정확 `in` 매칭, 7개 MIME (XLS/XLSX 미포함)
+**문제**: 동일 목적의 함수가 3곳(xPipe 코어, doc_prep_main 로컬, 레거시 서비스)에 각각 다른 로직으로 존재.
 
-**위험**: 동일 파일이 일반 경로 vs xPipe 경로에서 다르게 판단될 수 있음. 특히 XLS/XLSX 파일은 xPipe에서만 convertible로 인식됨.
+**해결**: xPipe 코어(`xpipe/stages/convert.py`)의 `CONVERTIBLE_MIMES`(14개)를 Single Source of Truth로 통합. `doc_prep_main.py`의 로컬 함수 삭제, 레거시 서비스는 xPipe에서 re-export. AIMS-xPipe 아키텍처 원칙(파이프라인 코어 로직은 xPipe 소유)에 부합.
 
-**해결 방향**: 두 함수를 하나로 통합. XLS/XLSX를 변환 대상에 포함할지 비즈니스 결정 필요 → `CONVERTIBLE_MIMES` 단일 정의로 통합.
+### TD-2: `import shutil` 함수 내 중복 선언 (Minor) ✅ 해결
 
-### TD-2: `import shutil` 함수 내 중복 선언 (Minor)
+**해결**: 파일 상단 import로 이동, 함수 내 3곳 중복 삭제.
 
-**현상**: `_process_via_xpipe` 함수 내 3곳(L2236, L2281, L2468)에서 `import shutil`이 반복됨.
+### TD-3: 일반 경로 / xPipe 경로 필드 설정 불일치 (Minor) ✅ 해결
 
-**해결 방향**: 파일 상단 import로 이동.
-
-### TD-3: 일반 경로 / xPipe 경로 필드 설정 불일치 (Minor)
-
-**현상**: `conversion_pending` 설정 시
-- 일반 경로(L1867): `progressStage`, `progress` 미설정
-- xPipe 경로(L2209): `progressStage: "conversion_queued"`, `progress: 60` 설정
-
-xPipe 쪽이 더 완전하므로 기능 문제는 없으나, 양쪽 일관성이 부족함.
-
-**해결 방향**: 일반 경로에도 `progressStage`, `progress` 필드 추가하여 일관성 확보.
+**해결**: 일반 경로에 `progressStage: "conversion_queued"`, `progress: 60` 추가하여 양 경로 일관성 확보.
 
 ---
 
@@ -81,8 +70,17 @@ xPipe 쪽이 더 완전하므로 기능 문제는 없으나, 양쪽 일관성이
 **F5 후**: HWP 2건 TXT + 인사/노무 ✅, 안영미신분증 요약 여전히 비활성 ❌, 암검진 여전히 BIN ❌
 캡처: `D:/tmp/issues_before_f5.png`, `D:/tmp/issues_after_f5.png`
 
-### 수정 후 (2026-03-27 04:30) — 36건 재업로드 테스트
+### 수정 후 (2026-03-27 04:30) — 36건 재업로드 테스트 (1차)
 - HWP 3건: BIN → TXT + 인사/노무 **자동 전환 (F5 불필요)** ✅
 - 안영미신분증.ppt: OCR 배지 + 신분증 + 완료 ✅
 - 암검진067.jpg: OCR 배지 ✅
 캡처: `D:/tmp/processing_1~5.png`, `D:/tmp/issue2_3_check.png`
+
+### 기술부채 수정 후 (2026-03-27 05:15) — 36건 regression 테스트 (2차)
+- 36/36 completed ✅ (DB 확인)
+- XLS/XLSX → TXT (PDF 변환 경유, 기존과 동일) ✅
+- HWP → TXT + 인사/노무 (자동 전환) ✅
+- PPT → OCR + 신분증 ✅
+- JPG → OCR 배지 ✅
+- regression 없음
+캡처: `D:/tmp/regression_test.png`, `D:/tmp/regression_issue23.png`
