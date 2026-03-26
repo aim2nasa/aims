@@ -3111,7 +3111,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       // 문서의 customerId 조회하여 SSE 알림 발송
       const doc = await db.collection(COLLECTION_NAME).findOne(
         { _id: new ObjectId(documentId) },
-        { projection: { customerId: 1, 'upload.originalName': 1 } }
+        { projection: { customerId: 1, ownerId: 1, 'upload.originalName': 1 } }
       );
 
       if (doc && doc.customerId) {
@@ -3123,6 +3123,18 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
           documentName: doc.upload?.originalName || 'Unknown',
           timestamp: utcNowISO()
         });
+      }
+
+      // 전체 문서 보기(DocumentExplorerView)에도 알림 → 자동 갱신 트리거
+      if (doc) {
+        const ownerIdStr = doc.ownerId?.toString() || '';
+        if (ownerIdStr) {
+          notifyDocumentListSubscribers(ownerIdStr, 'document-list-change', {
+            type: 'updated',
+            documentId: documentId,
+            timestamp: utcNowISO()
+          });
+        }
       }
 
       res.json({ success: true });

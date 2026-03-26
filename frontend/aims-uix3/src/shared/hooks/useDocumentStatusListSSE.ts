@@ -91,6 +91,9 @@ export function useDocumentStatusListSSE(
           console.log('[DocumentStatusListSSE] fetchDocuments debounced 호출')
         }
         debouncedRefresh(500)
+
+        // 전체 문서 보기(DocumentExplorerView)도 갱신 트리거
+        window.dispatchEvent(new Event('refresh-document-library'))
       } catch (error) {
         console.error('[DocumentStatusListSSE] document-list-change 이벤트 처리 실패:', error)
         errorReporter.reportApiError(error as Error, { component: 'useDocumentStatusListSSE.documentListChange' })
