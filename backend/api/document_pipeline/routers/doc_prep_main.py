@@ -2137,6 +2137,13 @@ async def _process_via_xpipe(
     from config import get_settings
     settings = get_settings()
 
+    # 변환 PDF 경로 조회 (HWP/PPT 등의 OCR fallback용)
+    conv_doc = await files_collection.find_one(
+        {"_id": ObjectId(doc_id)},
+        {"upload.convPdfPath": 1}
+    )
+    conv_pdf_path = (conv_doc or {}).get("upload", {}).get("convPdfPath", "")
+
     context = {
         "document_id": doc_id,
         "file_path": dest_path,
@@ -2146,6 +2153,7 @@ async def _process_via_xpipe(
         "mode": "real",
         "models": {"llm": "gpt-4.1-mini", "ocr": "upstage", "embedding": "text-embedding-3-small"},
         "needs_conversion": _is_convertible_mime(detected_mime),
+        "converted_pdf_path": conv_pdf_path,  # 변환 PDF 경로 (OCR fallback용)
         "_domain_adapter": adapter,
         "_classify_config": {
             "system_prompt": classification_config.extra.get("system_prompt", ""),
