@@ -177,11 +177,19 @@ async def check_credit_for_upload(user_id: str, estimated_pages: int = 1) -> Dic
 router = APIRouter()
 settings = get_settings()
 
-# Unsupported MIME types
+# Unsupported MIME types — extract.py의 UNSUPPORTED_MIME_TYPES와 동일 범위를 유지할 것
+# application/postscript: .ai (Adobe Illustrator) 파일 — PostScript 기반이므로 이 MIME으로 감지됨
+# application/x-zip-compressed: Windows 환경에서 ZIP 파일의 대체 MIME 타입
+# application/x-rar-compressed, x-7z-compressed, gzip, x-tar: 아카이브 파일
 UNSUPPORTED_MIME_TYPES = [
     "application/postscript",
     "application/zip",
-    "application/octet-stream"
+    "application/x-zip-compressed",
+    "application/x-rar-compressed",
+    "application/x-7z-compressed",
+    "application/gzip",
+    "application/x-tar",
+    "application/octet-stream",
 ]
 
 # 시스템 파일명 목록 — Single Source of Truth: shared/file-validation-constants.json
@@ -2185,6 +2193,57 @@ async def _process_via_xpipe(
             }},
         )
         raise
+
+    # ── 텍스트 추출 불가 파일 → 보관 완료 처리 (에러 아님) ──
+    # ExtractStage에서 unsupported_format 또는 text_extraction_failed 플래그가 설정된 경우
+    if result.get("text_extraction_failed"):
+        skip_reason = (
+            result.get("_extraction_skip_reason")
+            or ("unsupported_format" if result.get("unsupported_format") else "no_text_extractable")
+        )
+        logger.info(
+            f"[xPipe] 텍스트 추출 불가 — 보관 처리: doc_id={doc_id}, "
+            f"file={original_name}, reason={skip_reason}"
+        )
+        await files_collection.update_one(
+            {"_id": ObjectId(doc_id)},
+            {
+                "$set": {
+                    "status": "completed",
+                    "overallStatus": "completed",
+                    "overallStatusUpdatedAt": datetime.utcnow(),
+                    "processingSkipReason": skip_reason,
+                    "meta.mime": detected_mime,
+                    "meta.meta_status": "done",
+                    "meta.filename": original_name,
+                    "meta.extension": os.path.splitext(original_name or "")[1].lower(),
+                    "meta.size_bytes": len(file_content) if file_content else 0,
+                    "upload.originalName": original_name,
+                    "progressStage": "complete",
+                    "progress": 100,
+                },
+                "$unset": {"error": ""},
+            },
+        )
+        await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료 (보관)")
+        await _notify_document_complete(doc_id, user_id)
+
+        # 임시 파일 정리
+        try:
+            import shutil
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+        except Exception:
+            pass
+
+        return {
+            "result": "success",
+            "doc_id": doc_id,
+            "status": "completed",
+            "processingSkipReason": skip_reason,
+            "engine": "xpipe",
+            "mime": detected_mime,
+            "filename": original_name,
+        }
 
     # overallStatus: classifying (텍스트 추출 완료, AI 분류 중)
     await files_collection.update_one(

@@ -19,6 +19,26 @@ TEXT_EXTENSIONS = {
     ".ini", ".cfg", ".conf", ".py", ".js", ".ts", ".html", ".css",
 }
 
+# 텍스트 추출이 원천적으로 불가능한 파일 확장자
+# (아카이브, 디자인 도구 등 — 보관만 가능)
+UNSUPPORTED_EXTENSIONS = {
+    ".zip", ".rar", ".7z", ".tar", ".gz",
+    ".ai", ".psd", ".sketch", ".fig",
+}
+
+# 텍스트 추출 불가 MIME 타입
+# doc_prep_main.py의 UNSUPPORTED_MIME_TYPES와 동일 범위를 유지할 것
+UNSUPPORTED_MIME_TYPES = {
+    "application/zip",
+    "application/x-zip-compressed",      # Windows 환경 MIME 변형
+    "application/x-rar-compressed",
+    "application/x-7z-compressed",
+    "application/gzip",
+    "application/x-tar",
+    "application/postscript",            # .ai 파일
+    "application/octet-stream",          # 감지 불가 바이너리
+}
+
 
 class ExtractStage(Stage):
     """텍스트 추출 스테이지
@@ -208,6 +228,43 @@ class ExtractStage(Stage):
         # 추출 방식 결정: MIME + 확장자에 따라 분기
         import os
         ext = os.path.splitext(file_name)[1].lower() if file_name else ""
+
+        # ── 미지원 파일 형식 조기 감지 ──
+        # 아카이브/디자인 도구 등 텍스트 추출이 원천적으로 불가능한 파일은
+        # RuntimeError 대신 플래그를 설정하여 호출자가 보관 처리할 수 있게 한다.
+        if ext in UNSUPPORTED_EXTENSIONS or mime in UNSUPPORTED_MIME_TYPES:
+            logger.info(
+                "[ExtractStage] 미지원 파일 형식 — 보관 전용: %s (ext=%s, mime=%s)",
+                file_name, ext, mime,
+            )
+            context["unsupported_format"] = True
+            context["text_extraction_failed"] = True
+            context["extracted_text"] = ""
+            context["text"] = ""
+            context["has_text"] = False
+            context["extracted"] = True
+
+            duration_ms = int((time.time() - start) * 1000)
+            if "stage_data" not in context:
+                context["stage_data"] = {}
+            context["stage_data"]["extract"] = {
+                "status": "completed",
+                "duration_ms": duration_ms,
+                "input": {"file_path": file_path, "mime_type": mime, "method": "unsupported_format"},
+                "output": {
+                    "text_length": 0,
+                    "text_preview": "",
+                    "full_text": "",
+                    "method": "unsupported_format",
+                    "ocr_model": "-",
+                    "ocr_confidence": 0.0,
+                    "meta_status": "completed",
+                    "has_text": False,
+                    "skip_reason": "unsupported_format",
+                },
+            }
+            return context
+
         is_image = mime.startswith("image/") if mime else False
         is_text = (mime.startswith("text/") if mime else False) or ext in TEXT_EXTENSIONS
         is_pdf = mime == "application/pdf" or mime.startswith("application/pdf")
@@ -259,24 +316,32 @@ class ExtractStage(Stage):
             ocr_model = "-"
             text = ""
 
-        # 텍스트 추출 결과 검증 — real 모드에서 빈 텍스트는 에러 (가짜 성공 금지)
-        # 단, 변환 파일(HWP/PPT 등)의 OCR fallback 실패는 best-effort이므로 빈 텍스트 허용
+        # 텍스트 추출 결과 검증 — real 모드에서 빈 텍스트 처리
+        # RuntimeError 대신 플래그를 설정하여 호출자가 보관 처리할 수 있게 한다.
         if mode != "stub" and (not text or not text.strip()):
             if is_convertible and method == "libreoffice+ocr_fallback":
-                # 변환 파일 OCR fallback 실패 — 원본은 보관되므로 에러 대신 빈 텍스트로 처리
+                # 변환 파일 OCR fallback 실패 — 원본은 보관되므로 빈 텍스트로 처리
                 logger.warning(
-                    "[ExtractStage] 변환 파일 OCR fallback 실패 (빈 텍스트), 빈 텍스트로 계속 진행: %s", file_name
+                    "[ExtractStage] 변환 파일 OCR fallback 실패 (빈 텍스트), 보관 처리로 전환: %s", file_name
                 )
-                text = ""
             else:
-                raise RuntimeError(
-                    f"텍스트 추출 실패: 추출된 텍스트가 없습니다. "
-                    f"(파일: {file_name}, 방식: {method})"
+                logger.warning(
+                    "[ExtractStage] 텍스트 추출 실패 (0자), 보관 처리로 전환: %s (방식: %s)", file_name, method
                 )
+
+            # 추출 실패 사유 결정
+            if is_convertible:
+                skip_reason = "conversion_failed"
+            else:
+                skip_reason = "no_text_extractable"
+
+            text = ""
+            context["text_extraction_failed"] = True
+            context["_extraction_skip_reason"] = skip_reason
 
         context["extracted_text"] = text
         context["text"] = text
-        context["has_text"] = True
+        context["has_text"] = bool(text and text.strip())
         context["extracted"] = True
 
         # stage_data 기록

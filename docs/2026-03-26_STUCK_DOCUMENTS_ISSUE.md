@@ -97,3 +97,30 @@ HWP 파일은 LibreOffice로 PDF 변환 후 pdfplumber로 텍스트를 추출하
 **해결**:
 - 동일 에러 메시지로 N회(예: 3회) 이상 실패한 문서는 재시도 중단
 - 또는 에러 원인이 "텍스트 추출 불가"인 경우 자동으로 "보관 전용" completed 처리
+
+---
+
+## 해결 과정
+
+### 라운드 1 (2026-03-26) — 유형 A/C/D 근본 해결
+
+**목표**: 미지원 파일 종결 + 텍스트 0자 보관 처리 + MIME 방어
+
+#### 수정 내역
+
+| # | 파일 | 변경 내용 |
+|---|------|-----------|
+| 1 | `xpipe/stages/extract.py` | `UNSUPPORTED_EXTENSIONS`, `UNSUPPORTED_MIME_TYPES` 상수 추가. `execute()` 시작부에서 미지원 파일 조기 감지 → `unsupported_format` 플래그 설정, RuntimeError 미발생 |
+| 2 | `xpipe/stages/extract.py` | 텍스트 0자 시 RuntimeError 대신 `text_extraction_failed` + `_extraction_skip_reason` 플래그 설정. `has_text`를 실제 텍스트 존재 여부로 결정 |
+| 3 | `routers/doc_prep_main.py` | `UNSUPPORTED_MIME_TYPES`에 `application/x-zip-compressed` 추가 (Windows 환경 방어) |
+| 4 | `routers/doc_prep_main.py` | `_process_via_xpipe()`에서 `text_extraction_failed` 플래그 감지 시 보관 완료 처리 분기 추가 (`overallStatus: "completed"`, `processingSkipReason` 설정) |
+| 5 | `xpipe/tests/test_extract_unsupported.py` | regression 테스트 35건 (미지원 확장자/MIME, 텍스트 0자, stub 모드 호환, 정상 파일 영향 없음) |
+
+#### 검증 결과
+- 신규 테스트 35/35 PASSED
+- 기존 xPipe 테스트 305/305 PASSED (기존 2건 실패는 버전 불일치로 무관)
+
+#### 미해결 (라운드 2 대상)
+- 유형 B: HWP 변환 타임아웃 (60초 초과) — pdf_converter 서비스 원인 파악 필요
+- PPT OCR fallback 개선
+- "보관 전용 completed"와 상태 정의 충돌 해소
