@@ -372,14 +372,14 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
         {doc.badgeType || 'BIN'}
       </span>
 
-      {/* 액션 버튼 (요약/전체텍스트) — summary/_hasMetaText/_hasOcrText 유무로 활성/비활성 */}
+      {/* 액션 버튼 (요약/전체텍스트) — meta.summary 또는 ocr.summary 유무로 활성/비활성 */}
       <span className="doc-explorer-tree__doc-actions">
-        <Tooltip content={doc.summary ? '요약 보기' : '요약 없음'} placement="bottom">
+        <Tooltip content={(typeof doc.meta === 'object' && doc.meta?.summary) || (typeof doc.ocr === 'object' && (doc.ocr as any)?.summary) ? '요약 보기' : '요약 없음'} placement="bottom">
           <button
             type="button"
             className="doc-explorer-tree__action-btn"
             aria-label="요약 보기"
-            disabled={!doc.summary}
+            disabled={!(typeof doc.meta === 'object' && doc.meta?.summary) && !(typeof doc.ocr === 'object' && (doc.ocr as any)?.summary)}
             onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
           >
             <SummaryIcon width={13} height={13} />
@@ -1520,14 +1520,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                     {doc.badgeType || 'BIN'}
                   </span>
 
-                  {/* 액션 버튼 — summary/_hasMetaText/_hasOcrText 유무로 활성/비활성 */}
+                  {/* 액션 버튼 — meta.summary 또는 ocr.summary 유무로 활성/비활성 */}
                   <span className="doc-explorer-tree__doc-actions">
-                    <Tooltip content={doc.summary ? '요약 보기' : '요약 없음'} placement="bottom">
+                    <Tooltip content={(typeof doc.meta === 'object' && doc.meta?.summary) || (typeof doc.ocr === 'object' && (doc.ocr as any)?.summary) ? '요약 보기' : '요약 없음'} placement="bottom">
                       <button
                         type="button"
                         className="doc-explorer-tree__action-btn"
                         aria-label="요약 보기"
-                        disabled={!doc.summary}
+                        disabled={!(typeof doc.meta === 'object' && doc.meta?.summary) && !(typeof doc.ocr === 'object' && (doc.ocr as any)?.summary)}
                         onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
                       >
                         <SummaryIcon width={13} height={13} />
