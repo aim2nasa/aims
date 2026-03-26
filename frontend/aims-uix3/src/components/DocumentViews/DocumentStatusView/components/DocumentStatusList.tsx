@@ -603,9 +603,9 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
             </button>
           </Tooltip>
         )}
-        <Tooltip content={isCreditPending ? "크레딧 부족 - 요약 없음" : "요약 보기"}>
+        <Tooltip content={isCreditPending ? "크레딧 부족 - 요약 없음" : (!(typeof document.meta === 'object' && document.meta?.summary) && !(typeof document.ocr === 'object' && (document.ocr as any)?.summary)) ? '요약 없음' : "요약 보기"}>
           <button
-            className={`action-btn action-btn--summary ${isCreditPending ? 'action-btn--disabled' : ''}`}
+            className={`action-btn action-btn--summary ${isCreditPending || (!(typeof document.meta === 'object' && document.meta?.summary) && !(typeof document.ocr === 'object' && (document.ocr as any)?.summary)) ? 'action-btn--disabled' : ''}`}
             onClick={(e) => {
               e.stopPropagation()
               if (!isCreditPending) {
@@ -613,14 +613,14 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
               }
             }}
             aria-label="요약 보기"
-            disabled={isCreditPending}
+            disabled={isCreditPending || (!(typeof document.meta === 'object' && document.meta?.summary) && !(typeof document.ocr === 'object' && (document.ocr as any)?.summary))}
           >
             <SummaryIcon />
           </button>
         </Tooltip>
-        <Tooltip content={isCreditPending ? "크레딧 부족 - 텍스트 없음" : "전체 텍스트 보기"}>
+        <Tooltip content={isCreditPending ? "크레딧 부족 - 텍스트 없음" : (!document._hasMetaText && !document._hasOcrText) ? '전체 텍스트 없음' : "전체 텍스트 보기"}>
           <button
-            className={`action-btn action-btn--full ${isCreditPending ? 'action-btn--disabled' : ''}`}
+            className={`action-btn action-btn--full ${isCreditPending || (!document._hasMetaText && !document._hasOcrText) ? 'action-btn--disabled' : ''}`}
             onClick={(e) => {
               e.stopPropagation()
               if (!isCreditPending) {
@@ -628,7 +628,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
               }
             }}
             aria-label="전체 텍스트 보기"
-            disabled={isCreditPending}
+            disabled={isCreditPending || (!document._hasMetaText && !document._hasOcrText)}
           >
             <DocumentIcon />
           </button>

@@ -1847,9 +1847,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         )}
 
                     {/* 🍎 요약 보기 버튼 */}
-                    <Tooltip content="요약 보기">
+                    <Tooltip content={!(typeof (item as any).meta === 'object' && (item as any).meta?.summary) && !(typeof (item as any).ocr === 'object' && (item as any).ocr?.summary) ? '요약 없음' : '요약 보기'}>
                           <button
                             className="action-button action-button--summary"
+                        disabled={!(typeof (item as any).meta === 'object' && (item as any).meta?.summary) && !(typeof (item as any).ocr === 'object' && (item as any).ocr?.summary)}
                         onClick={(e) => {
                           e.stopPropagation()
                           handleSummaryClickInternal(item)
@@ -1861,9 +1862,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     </Tooltip>
 
                     {/* 🍎 전체 텍스트 보기 버튼 */}
-                    <Tooltip content="전체 텍스트 보기">
+                    <Tooltip content={(item as any).meta?.full_text || (item as any).ocr?.full_text ? '전체 텍스트 보기' : '전체 텍스트 없음'}>
                           <button
                             className="action-button action-button--full"
+                        disabled={!(item as any).meta?.full_text && !(item as any).ocr?.full_text}
                         onClick={(e) => {
                           e.stopPropagation()
                           handleFullTextClickInternal(item)

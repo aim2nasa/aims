@@ -2329,20 +2329,22 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                               <EyeIcon />
                             </button>
                           </Tooltip>
-                          <Tooltip content="요약 보기">
+                          <Tooltip content={!(typeof (item.document as any)?.meta === 'object' && (item.document as any)?.meta?.summary) && !(typeof (item.document as any)?.ocr === 'object' && (item.document as any)?.ocr?.summary) ? '요약 없음' : '요약 보기'}>
                             <button
                               type="button"
                               className="action-btn action-btn--summary"
+                              disabled={!(typeof (item.document as any)?.meta === 'object' && (item.document as any)?.meta?.summary) && !(typeof (item.document as any)?.ocr === 'object' && (item.document as any)?.ocr?.summary)}
                               onClick={(e) => handleSummaryClick(item.document as any, e)}
                               aria-label="요약 보기"
                             >
                               <SummaryIcon />
                             </button>
                           </Tooltip>
-                          <Tooltip content="전체 텍스트 보기">
+                          <Tooltip content={(item.document as any)?._hasMetaText || (item.document as any)?._hasOcrText ? '전체 텍스트 보기' : '전체 텍스트 없음'}>
                             <button
                               type="button"
                               className="action-btn action-btn--full"
+                              disabled={!(item.document as any)?._hasMetaText && !(item.document as any)?._hasOcrText}
                               onClick={(e) => handleFullTextClick(item.document as any, e)}
                               aria-label="전체 텍스트 보기"
                             >

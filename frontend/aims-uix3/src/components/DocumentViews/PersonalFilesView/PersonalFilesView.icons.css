@@ -326,19 +326,22 @@
     outline-color: var(--color-primary-300);
   }
 
-  .action-btn[data-disabled="true"] {
+  .action-btn[data-disabled="true"],
+  .action-btn:disabled {
     opacity: 0.25;
     cursor: not-allowed;
     transform: none;
     color: var(--color-ios-text-tertiary-light);
   }
 
-  html[data-theme="dark"] .action-btn[data-disabled="true"] {
+  html[data-theme="dark"] .action-btn[data-disabled="true"],
+  html[data-theme="dark"] .action-btn:disabled {
     color: var(--color-ios-text-tertiary-dark);
     opacity: 0.2;
   }
 
-  .action-btn[data-disabled="true"]:hover {
+  .action-btn[data-disabled="true"]:hover,
+  .action-btn:disabled:hover {
     transform: none;
   }
 

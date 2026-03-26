@@ -2267,6 +2267,24 @@ async def _process_via_xpipe(
 
     await _notify_progress(doc_id, user_id, 70, "classifying", "AI 분류 완료")
 
+    # 8-1. AI 요약/제목 생성 (텍스트가 충분한 경우)
+    summary_result = {}
+    if extracted_text and len(extracted_text.strip()) >= 10:
+        try:
+            summary_result = await OpenAIService.summarize_text(
+                extracted_text,
+                owner_id=user_id,
+                document_id=doc_id,
+                filename=original_name,
+                classification_config=classification_config,
+            )
+            logger.info(f"[xPipe] AI 요약 생성 완료: {doc_id}")
+        except Exception as summary_err:
+            logger.warning(f"[xPipe] AI 요약 생성 실패 (무시): {doc_id}, error={summary_err}")
+
+    xpipe_summary = summary_result.get("summary", "") if summary_result else ""
+    xpipe_title = summary_result.get("title", "") if summary_result else ""
+
     # Meta 업데이트
     # 파일 메타데이터
     file_size = len(file_content) if file_content else 0
@@ -2285,6 +2303,8 @@ async def _process_via_xpipe(
         "meta.document_type": doc_type or "general",
         "meta.confidence": confidence or 0.0,
         "meta.size_bytes": file_size,
+        "meta.summary": xpipe_summary,
+        "meta.title": xpipe_title,
         "meta.filename": original_name,
         "meta.extension": file_ext,
         "document_type": doc_type or "general",
@@ -2379,7 +2399,7 @@ async def _process_via_xpipe(
                 text=extracted_text,
                 original_name=original_name,
                 user_id=user_id,
-                summary_result={},
+                summary_result=summary_result,
                 files_collection=files_collection
             )
 

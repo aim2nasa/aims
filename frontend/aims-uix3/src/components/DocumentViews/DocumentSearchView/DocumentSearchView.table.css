@@ -347,19 +347,22 @@
     outline-color: var(--color-primary-300);
   }
 
-  .row-actions .action-button[data-disabled="true"] {
+  .row-actions .action-button[data-disabled="true"],
+  .row-actions .action-button:disabled {
     opacity: 0.25;
     cursor: not-allowed;
     transform: none;
     color: var(--color-ios-text-tertiary-light);
   }
 
-  html[data-theme="dark"] .row-actions .action-button[data-disabled="true"] {
+  html[data-theme="dark"] .row-actions .action-button[data-disabled="true"],
+  html[data-theme="dark"] .row-actions .action-button:disabled {
     color: var(--color-ios-text-tertiary-dark);
     opacity: 0.2;
   }
 
-  .row-actions .action-button[data-disabled="true"]:hover {
+  .row-actions .action-button[data-disabled="true"]:hover,
+  .row-actions .action-button:disabled:hover {
     transform: none;
   }
 

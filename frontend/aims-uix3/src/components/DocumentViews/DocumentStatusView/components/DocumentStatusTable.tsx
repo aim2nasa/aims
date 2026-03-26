@@ -212,27 +212,27 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
                             <EyeIcon />
                           </button>
                         </Tooltip>
-                        <Tooltip content={isCompleted ? '요약 보기' : '완료된 문서만 가능'}>
+                        <Tooltip content={!isCompleted ? '완료된 문서만 가능' : (!(typeof doc.meta === 'object' && doc.meta?.summary) && !(typeof doc.ocr === 'object' && (doc.ocr as any)?.summary)) ? '요약 없음' : '요약 보기'}>
                           <button
                             className="action-button action-button--summary"
                             onClick={(e) => {
                               e.stopPropagation()
                               if (isCompleted) onSummaryClick?.(doc)
                             }}
-                            disabled={!isCompleted}
+                            disabled={!isCompleted || (!(typeof doc.meta === 'object' && doc.meta?.summary) && !(typeof doc.ocr === 'object' && (doc.ocr as any)?.summary))}
                             aria-label="요약 보기"
                           >
                             <SummaryIcon />
                           </button>
                         </Tooltip>
-                        <Tooltip content={isCompleted ? '전체 텍스트 보기' : '완료된 문서만 가능'}>
+                        <Tooltip content={!isCompleted ? '완료된 문서만 가능' : (!doc._hasMetaText && !doc._hasOcrText) ? '전체 텍스트 없음' : '전체 텍스트 보기'}>
                           <button
                             className="action-button action-button--full"
                             onClick={(e) => {
                               e.stopPropagation()
                               if (isCompleted) onFullTextClick?.(doc)
                             }}
-                            disabled={!isCompleted}
+                            disabled={!isCompleted || (!doc._hasMetaText && !doc._hasOcrText)}
                             aria-label="전체 텍스트 보기"
                           >
                             <DocumentIcon />
