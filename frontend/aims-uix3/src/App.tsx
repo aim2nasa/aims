@@ -1349,62 +1349,51 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 inquiryUnreadCount={inquiryUnreadCount}
                 noticeHasNew={noticeHasNew}
                 footer={
-                  <div className="leftpane-footer">
-                    <div className="leftpane-footer__left">
-                      <UsageQuotaWidget
-                        storageInfo={usageStorageInfo}
-                        loading={usageLoading}
-                        collapsed={false}
-                        onClick={() => {
-                          setRightPaneVisible(false)
-                          setSelectedDocument(null)
-                          setSelectedCustomer(null)
-                          setRightPaneContentType(null)
-                          sessionStorage.setItem('accountSettings_activeTab', 'data')
-                          recordNavigation('account-settings', 'sidebar')
-                          setActiveDocumentView('account-settings')
-                          updateURLParams({ customerId: null, documentId: null })
-                          setMobileDrawerOpen(false)
-                        }}
-                      />
-                    </div>
-                    <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="top">
-                      <div
-                        className="leftpane-footer__version"
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(FULL_VERSION)
-                            if (window.aimsHaptic) {
-                              window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
-                            }
-                          } catch (err) {
-                            logger.error('App', '버전 복사 실패', err)
-                            errorReporter.reportApiError(err as Error, { component: 'App.copyVersion' })
-                          }
-                        }}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        v{APP_VERSION}
+                  <div className="leftpane-footer-wrapper">
+                    <div className="leftpane-footer">
+                      <div className="leftpane-footer__left">
+                        <UsageQuotaWidget
+                          storageInfo={usageStorageInfo}
+                          loading={usageLoading}
+                          collapsed={false}
+                          onClick={() => {
+                            setRightPaneVisible(false)
+                            setSelectedDocument(null)
+                            setSelectedCustomer(null)
+                            setRightPaneContentType(null)
+                            sessionStorage.setItem('accountSettings_activeTab', 'data')
+                            recordNavigation('account-settings', 'sidebar')
+                            setActiveDocumentView('account-settings')
+                            updateURLParams({ customerId: null, documentId: null })
+                            setMobileDrawerOpen(false)
+                          }}
+                        />
                       </div>
-                    </Tooltip>
-                    {pipelineEngine && (
-                      <Tooltip content={`파이프라인: ${pipelineEngine === 'xpipe' ? 'xPipe 엔진' : '기본 엔진'}`} placement="top">
-                        <div style={{
-                          fontSize: '10px',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          marginLeft: '6px',
-                          background: pipelineEngine === 'xpipe' ? '#5856D6' : '#8E8E93',
-                          color: '#FFFFFF',
-                          fontWeight: 700,
-                          letterSpacing: '0.5px',
-                          cursor: 'default',
-                          lineHeight: '1.2',
-                        }}>
-                          {pipelineEngine === 'xpipe' ? 'xPipe' : 'Legacy'}
+                      <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="top">
+                        <div
+                          className="leftpane-footer__version"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(FULL_VERSION)
+                              if (window.aimsHaptic) {
+                                window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
+                              }
+                            } catch (err) {
+                              logger.error('App', '버전 복사 실패', err)
+                              errorReporter.reportApiError(err as Error, { component: 'App.copyVersion' })
+                            }
+                          }}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          v{APP_VERSION}
                         </div>
                       </Tooltip>
+                    </div>
+                    {pipelineEngine === 'xpipe' && (
+                      <div className="leftpane-branding">
+                        <span className="leftpane-branding__text">Powered by <span className="leftpane-branding__name">xPipe</span></span>
+                      </div>
                     )}
                   </div>
                 }
@@ -1430,74 +1419,63 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 inquiryUnreadCount={inquiryUnreadCount}
                 noticeHasNew={noticeHasNew}
                 footer={
-                  <div className={`leftpane-footer ${leftPaneCollapsed ? 'leftpane-footer--collapsed' : ''}`}>
-                    {!leftPaneCollapsed && (
-                      <div className="leftpane-footer__left">
-                        <UsageQuotaWidget
-                          storageInfo={usageStorageInfo}
-                          loading={usageLoading}
-                          collapsed={leftPaneCollapsed}
-                          onClick={() => {
-                            setRightPaneVisible(false)
-                            setSelectedDocument(null)
-                            setSelectedCustomer(null)
-                            setRightPaneContentType(null)
-                            sessionStorage.setItem('accountSettings_activeTab', 'data')
-                            recordNavigation('account-settings', 'sidebar')
-                            setActiveDocumentView('account-settings')
-                            updateURLParams({ customerId: null, documentId: null })
-                          }}
-                        />
+                  <div className="leftpane-footer-wrapper">
+                    <div className={`leftpane-footer ${leftPaneCollapsed ? 'leftpane-footer--collapsed' : ''}`}>
+                      {!leftPaneCollapsed && (
+                        <div className="leftpane-footer__left">
+                          <UsageQuotaWidget
+                            storageInfo={usageStorageInfo}
+                            loading={usageLoading}
+                            collapsed={leftPaneCollapsed}
+                            onClick={() => {
+                              setRightPaneVisible(false)
+                              setSelectedDocument(null)
+                              setSelectedCustomer(null)
+                              setRightPaneContentType(null)
+                              sessionStorage.setItem('accountSettings_activeTab', 'data')
+                              recordNavigation('account-settings', 'sidebar')
+                              setActiveDocumentView('account-settings')
+                              updateURLParams({ customerId: null, documentId: null })
+                            }}
+                          />
+                        </div>
+                      )}
+                      {!leftPaneCollapsed && (
+                        <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="top">
+                          <div
+                            className="leftpane-footer__version"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(FULL_VERSION)
+                                if (window.aimsHaptic) {
+                                  window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
+                                }
+                              } catch (err) {
+                                logger.error('App', '버전 복사 실패', err)
+                                errorReporter.reportApiError(err as Error, { component: 'App.copyVersion' })
+                              }
+                            }}
+                            role="button"
+                            tabIndex={0}
+                          >
+                            v{APP_VERSION}
+                          </div>
+                        </Tooltip>
+                      )}
+                      <div className={`leftpane-footer__right ${leftPaneCollapsed ? 'leftpane-footer__right--centered' : ''}`}>
+                        <Suspense fallback={<div className="leftpane-footer__hamburger-skeleton" />}>
+                          <HamburgerButton
+                            collapsed={leftPaneCollapsed}
+                            onClick={toggleLeftPaneCollapsed}
+                          />
+                        </Suspense>
+                      </div>
+                    </div>
+                    {!leftPaneCollapsed && pipelineEngine === 'xpipe' && (
+                      <div className="leftpane-branding">
+                        <span className="leftpane-branding__text">Powered by <span className="leftpane-branding__name">xPipe</span></span>
                       </div>
                     )}
-                    {!leftPaneCollapsed && (
-                      <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="top">
-                        <div
-                          className="leftpane-footer__version"
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(FULL_VERSION)
-                              if (window.aimsHaptic) {
-                                window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
-                              }
-                            } catch (err) {
-                              logger.error('App', '버전 복사 실패', err)
-                              errorReporter.reportApiError(err as Error, { component: 'App.copyVersion' })
-                            }
-                          }}
-                          role="button"
-                          tabIndex={0}
-                        >
-                          v{APP_VERSION}
-                        </div>
-                      </Tooltip>
-                    )}
-                    {!leftPaneCollapsed && pipelineEngine && (
-                      <Tooltip content={`파이프라인: ${pipelineEngine === 'xpipe' ? 'xPipe 엔진' : '기본 엔진'}`} placement="top">
-                        <div style={{
-                          fontSize: '10px',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          marginLeft: '6px',
-                          background: pipelineEngine === 'xpipe' ? '#5856D6' : '#8E8E93',
-                          color: '#FFFFFF',
-                          fontWeight: 700,
-                          letterSpacing: '0.5px',
-                          cursor: 'default',
-                          lineHeight: '1.2',
-                        }}>
-                          {pipelineEngine === 'xpipe' ? 'xPipe' : 'Legacy'}
-                        </div>
-                      </Tooltip>
-                    )}
-                    <div className={`leftpane-footer__right ${leftPaneCollapsed ? 'leftpane-footer__right--centered' : ''}`}>
-                      <Suspense fallback={<div className="leftpane-footer__hamburger-skeleton" />}>
-                        <HamburgerButton
-                          collapsed={leftPaneCollapsed}
-                          onClick={toggleLeftPaneCollapsed}
-                        />
-                      </Suspense>
-                    </div>
                   </div>
                 }
               />
