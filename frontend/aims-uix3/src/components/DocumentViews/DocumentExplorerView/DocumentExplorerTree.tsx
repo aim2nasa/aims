@@ -372,23 +372,25 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
         {doc.badgeType || 'BIN'}
       </span>
 
-      {/* 액션 버튼 (요약/전체텍스트) */}
+      {/* 액션 버튼 (요약/전체텍스트) — summary/_hasMetaText/_hasOcrText 유무로 활성/비활성 */}
       <span className="doc-explorer-tree__doc-actions">
-        <Tooltip content="요약 보기" placement="bottom">
+        <Tooltip content={doc.summary ? '요약 보기' : '요약 없음'} placement="bottom">
           <button
             type="button"
             className="doc-explorer-tree__action-btn"
             aria-label="요약 보기"
+            disabled={!doc.summary}
             onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
           >
             <SummaryIcon width={13} height={13} />
           </button>
         </Tooltip>
-        <Tooltip content="전체 텍스트 보기" placement="bottom">
+        <Tooltip content={doc._hasMetaText || doc._hasOcrText ? '전체 텍스트 보기' : '전체 텍스트 없음'} placement="bottom">
           <button
             type="button"
             className="doc-explorer-tree__action-btn"
             aria-label="전체 텍스트 보기"
+            disabled={!doc._hasMetaText && !doc._hasOcrText}
             onClick={(e) => { e.stopPropagation(); onFullTextClick?.(doc) }}
           >
             <DocumentIcon width={13} height={13} />
@@ -1518,23 +1520,25 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                     {doc.badgeType || 'BIN'}
                   </span>
 
-                  {/* 액션 버튼 */}
+                  {/* 액션 버튼 — summary/_hasMetaText/_hasOcrText 유무로 활성/비활성 */}
                   <span className="doc-explorer-tree__doc-actions">
-                    <Tooltip content="요약 보기" placement="bottom">
+                    <Tooltip content={doc.summary ? '요약 보기' : '요약 없음'} placement="bottom">
                       <button
                         type="button"
                         className="doc-explorer-tree__action-btn"
                         aria-label="요약 보기"
+                        disabled={!doc.summary}
                         onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
                       >
                         <SummaryIcon width={13} height={13} />
                       </button>
                     </Tooltip>
-                    <Tooltip content="전체 텍스트 보기" placement="bottom">
+                    <Tooltip content={doc._hasMetaText || doc._hasOcrText ? '전체 텍스트 보기' : '전체 텍스트 없음'} placement="bottom">
                       <button
                         type="button"
                         className="doc-explorer-tree__action-btn"
                         aria-label="전체 텍스트 보기"
+                        disabled={!doc._hasMetaText && !doc._hasOcrText}
                         onClick={(e) => { e.stopPropagation(); onFullTextClick?.(doc) }}
                       >
                         <DocumentIcon width={13} height={13} />

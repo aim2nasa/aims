@@ -872,6 +872,12 @@
     transform: scale(0.95);
   }
 
+  .doc-explorer-tree__action-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+  }
+
   /* Hover actions (이름변경/삭제) */
   .doc-explorer-tree__hover-actions {
     display: none;
