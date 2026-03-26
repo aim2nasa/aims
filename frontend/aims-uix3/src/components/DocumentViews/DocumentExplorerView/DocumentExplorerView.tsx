@@ -647,6 +647,7 @@ const DocumentExplorerContent: React.FC<{
 
   // 이벤트 기반 새로고침 — ref로 최신 selectedInitial 참조 (Race Condition 방지)
   const selectedInitialRef = useRef(selectedInitial)
+  const wasProcessingRef = useRef(false)
   useEffect(() => { selectedInitialRef.current = selectedInitial }, [selectedInitial])
 
   useEffect(() => {
@@ -659,32 +660,25 @@ const DocumentExplorerContent: React.FC<{
     }
   }, [fetchExplorerTree])
 
-  // 처리 중인 문서가 있으면 10초마다 자동 갱신 (PDF 변환/임베딩 완료 반영)
+  // 처리 중인 문서가 있으면 3초마다 자동 갱신 (PDF 변환/임베딩 완료 반영)
   useEffect(() => {
     if (!explorerData?.documents) return
-    const hasProcessing = explorerData.documents.some(
-      (doc: Document) => {
-        const status = (doc as Record<string, unknown>)['overallStatus'] as string | undefined
-        const convStatus = (doc as Record<string, unknown>)['conversionStatus'] as string | undefined
-        const size = (doc as Record<string, unknown>)['size'] as string | undefined
-        const badgeType = (doc as Record<string, unknown>)['badgeType'] as string | undefined
-        const ext = doc.originalName?.split('.').pop()?.toLowerCase() || ''
-        const convertibleExts = ['hwp', 'ppt', 'pptx', 'xls', 'xlsx', 'doc', 'docx']
-        // 아직 완료되지 않은 문서
-        if (status && status !== 'completed') return true
-        // 변환 대상인데 변환 미완료
-        if (convertibleExts.includes(ext) && convStatus && convStatus !== 'completed' && convStatus !== 'not_required') return true
-        // 크기 0 B = 아직 처리 중 (파이프라인이 크기를 기록하기 전)
-        if (size === '0 B' || size === '0') return true
-        // 변환 대상인데 BIN 배지 = 텍스트 추출 전 (비동기 변환 대기)
-        if (convertibleExts.includes(ext) && (!badgeType || badgeType === 'BIN')) return true
-        return false
-      }
-    )
+    const hasProcessing = explorerData.documents.some((doc: Document) => {
+      const status = (doc as Record<string, unknown>)['overallStatus'] as string | undefined
+      return status !== undefined
+        && status !== 'completed'
+        && status !== 'error'
+        && status !== 'credit_pending'
+    })
+    // 처리중 → 완료 전환 감지 시 마지막 1회 fetch
+    if (wasProcessingRef.current && !hasProcessing) {
+      void fetchExplorerTree(selectedInitialRef.current)
+    }
+    wasProcessingRef.current = hasProcessing
     if (!hasProcessing) return
     const interval = setInterval(() => {
       fetchExplorerTree(selectedInitialRef.current)
-    }, 10000)
+    }, 3000)
     return () => clearInterval(interval)
   }, [explorerData?.documents, fetchExplorerTree])
 
