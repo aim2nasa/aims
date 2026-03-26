@@ -2196,13 +2196,59 @@ async def _process_via_xpipe(
         )
         raise
 
-    # ── 텍스트 추출 불가 파일 → 보관 완료 처리 (에러 아님) ──
+    # ── 텍스트 추출 불가 파일 처리 (에러 아님) ──
     # ExtractStage에서 unsupported_format 또는 text_extraction_failed 플래그가 설정된 경우
     if result.get("text_extraction_failed"):
         skip_reason = (
             result.get("_extraction_skip_reason")
             or ("unsupported_format" if result.get("unsupported_format") else "no_text_extractable")
         )
+
+        # 변환 대상 파일(HWP/DOC/PPT/XLS 등)은 PDF 변환 워커가 처리해야 하므로
+        # conversion_pending 상태로 설정 (조기 completed 방지)
+        if _is_convertible_mime(detected_mime):
+            logger.info(
+                f"[xPipe] 텍스트 추출 불가 — 변환 대기: doc_id={doc_id}, "
+                f"file={original_name}, reason={skip_reason}, mime={detected_mime}"
+            )
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {
+                    "$set": {
+                        "status": "converting",
+                        "overallStatus": "conversion_pending",
+                        "overallStatusUpdatedAt": datetime.utcnow(),
+                        "meta.mime": detected_mime,
+                        "meta.filename": original_name,
+                        "meta.extension": os.path.splitext(original_name or "")[1].lower(),
+                        "meta.size_bytes": len(file_content) if file_content else 0,
+                        "upload.originalName": original_name,
+                        "progressStage": "conversion_queued",
+                        "progress": 60,
+                    },
+                    "$unset": {"error": "", "processingSkipReason": ""},
+                },
+            )
+            await _notify_progress(doc_id, user_id, 60, "conversion_queued", "PDF 변환 대기 중")
+
+            # 임시 파일 정리
+            try:
+                import shutil
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+            except Exception:
+                pass
+
+            return {
+                "result": "success",
+                "doc_id": doc_id,
+                "status": "converting",
+                "overallStatus": "conversion_pending",
+                "engine": "xpipe",
+                "mime": detected_mime,
+                "filename": original_name,
+            }
+
+        # 비변환 대상(ZIP/AI/기타 보관 파일) → 보관 완료 처리
         logger.info(
             f"[xPipe] 텍스트 추출 불가 — 보관 처리: doc_id={doc_id}, "
             f"file={original_name}, reason={skip_reason}"
