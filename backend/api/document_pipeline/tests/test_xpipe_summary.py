@@ -121,8 +121,8 @@ def base_xpipe_patches(mock_files_collection):
     p_conv = patch(f"{MODULE}._trigger_pdf_conversion_for_xpipe", new_callable=AsyncMock)
     patches["pdf_conversion"] = p_conv
 
-    # _is_convertible_mime
-    p_mime = patch(f"{MODULE}._is_convertible_mime", return_value=False)
+    # is_convertible_mime (xpipe 정본, services 경유 import)
+    p_mime = patch(f"{MODULE}.is_convertible_mime", return_value=False)
     patches["is_convertible"] = p_mime
 
     # tempfile / shutil cleanup

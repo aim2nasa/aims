@@ -6,19 +6,43 @@ from typing import Any
 
 from xpipe.stage import Stage
 
-# PDF 변환이 필요한 MIME 타입 접두사 목록
-_CONVERTIBLE_MIME_PREFIXES = (
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument",
-    "application/msword",
-    "application/vnd.ms-word",
-    "application/x-hwp",
-    "application/haansofthwp",
-    "application/rtf",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml",
-    "application/vnd.hancom",
-)
+# PDF 변환이 필요한 MIME 타입 목록 (정확 매칭)
+# 사이트 무관 파이프라인 코어 판단 — 이 MIME은 PDF 변환 대상인가?
+CONVERTIBLE_MIMES: set[str] = {
+    # Excel
+    "application/vnd.ms-excel",                                          # XLS
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", # XLSX
+    # Word
+    "application/msword",                                                # DOC
+    "application/vnd.ms-word",                                           # DOC 변형
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  # DOCX
+    # PowerPoint
+    "application/vnd.ms-powerpoint",                                     # PPT
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",  # PPTX
+    # HWP (한글)
+    "application/x-hwp",                                                 # HWP
+    "application/haansofthwp",                                           # HWP 변형
+    "application/vnd.hancom.hwp",                                        # 한컴 HWP
+    "application/vnd.hancom.hwpx",                                       # 한컴 HWPX
+    # RTF
+    "application/rtf",                                                   # RTF
+    # OpenDocument (레거시 호환)
+    "application/vnd.oasis.opendocument.text",                           # ODT
+    "application/vnd.oasis.opendocument.spreadsheet",                    # ODS
+    "application/vnd.oasis.opendocument.presentation",                   # ODP
+}
+
+
+def is_convertible_mime(mime_type: str) -> bool:
+    """MIME 타입이 PDF 변환 대상인지 판단 (정확 매칭)
+
+    Args:
+        mime_type: 파일의 MIME 타입
+
+    Returns:
+        True면 PDF 변환이 필요함
+    """
+    return mime_type in CONVERTIBLE_MIMES
 
 
 class ConvertStage(Stage):
@@ -191,15 +215,5 @@ class ConvertStage(Stage):
         return None
 
 
-def needs_conversion(mime_type: str) -> bool:
-    """주어진 MIME 타입이 PDF 변환이 필요한지 판단
-
-    Args:
-        mime_type: 파일의 MIME 타입
-
-    Returns:
-        True면 PDF 변환이 필요함
-    """
-    if not mime_type:
-        return False
-    return any(mime_type.startswith(prefix) for prefix in _CONVERTIBLE_MIME_PREFIXES)
+# 하위 호환 alias — 기존 코드에서 needs_conversion()을 import하는 곳이 있음
+needs_conversion = is_convertible_mime

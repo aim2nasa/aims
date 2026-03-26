@@ -46,9 +46,10 @@ class TestMetaServiceMimeHandlers:
         ("application/vnd.openxmlformats-officedocument.presentationml.presentation", "_extract_pptx_info"),
     ])
     async def test_direct_parser_mimes(self, mime, expected_handler):
-        """직접 파서가 있는 MIME은 변환 대상이 아니어야 함"""
-        assert not is_convertible_mime(mime), (
-            f"MIME '{mime}' has a direct parser — should NOT be in CONVERTIBLE_MIMES"
+        """직접 파서가 있는 MIME은 MetaService에 해당 핸들러 메서드가 실제로 존재해야 함
+        (xpipe CONVERTIBLE_MIMES에도 포함될 수 있음 — PDF 변환은 별도 경로)"""
+        assert hasattr(MetaService, expected_handler), (
+            f"MetaService must have handler '{expected_handler}' for MIME '{mime}'"
         )
 
     @pytest.mark.asyncio

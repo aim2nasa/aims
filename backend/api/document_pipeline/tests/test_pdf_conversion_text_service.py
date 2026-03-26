@@ -32,26 +32,28 @@ class TestConvertibleMimeClassification:
     """변환 가능 MIME 타입 분류 검증"""
 
     @pytest.mark.parametrize("mime,expected", [
-        # 반드시 변환 대상이어야 하는 형식
+        # 반드시 변환 대상이어야 하는 형식 (xpipe CONVERTIBLE_MIMES 정본 기준)
         ("application/x-hwp", True),
+        ("application/haansofthwp", True),
+        ("application/vnd.hancom.hwp", True),
+        ("application/vnd.hancom.hwpx", True),
         ("application/msword", True),
+        ("application/vnd.ms-word", True),
+        ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", True),
+        ("application/vnd.ms-excel", True),
+        ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", True),
         ("application/vnd.ms-powerpoint", True),
+        ("application/vnd.openxmlformats-officedocument.presentationml.presentation", True),
         ("application/vnd.oasis.opendocument.text", True),
         ("application/vnd.oasis.opendocument.spreadsheet", True),
         ("application/vnd.oasis.opendocument.presentation", True),
         ("application/rtf", True),
-        # 직접 파서가 있으므로 변환 불필요
+        # 변환 대상 아님
         ("application/pdf", False),
-        ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", False),
-        ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", False),
-        ("application/vnd.ms-excel", False),
-        ("application/vnd.openxmlformats-officedocument.presentationml.presentation", False),
-        # 이미지/텍스트 - 변환 대상 아님
         ("image/jpeg", False),
         ("image/png", False),
         ("text/plain", False),
         ("text/html", False),
-        # 지원 불가 형식
         ("application/zip", False),
         ("application/octet-stream", False),
     ])
@@ -74,8 +76,8 @@ class TestConvertibleMimeClassification:
         assert "application/vnd.ms-powerpoint" in CONVERTIBLE_MIMES
 
     def test_all_convertible_mimes_count(self):
-        """변환 대상 MIME 목록이 7개여야 함"""
-        assert len(CONVERTIBLE_MIMES) == 7
+        """변환 대상 MIME 목록이 14개여야 함 (xpipe 정본 기준)"""
+        assert len(CONVERTIBLE_MIMES) == 14
 
 
 # ========================================

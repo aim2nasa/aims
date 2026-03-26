@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import tempfile
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
@@ -1871,6 +1872,8 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
                         "overallStatusUpdatedAt": datetime.utcnow(),
                         "status": "converting",
                         "meta.mime": ctx.detected_mime,
+                        "progressStage": "conversion_queued",
+                        "progress": 60,
                     },
                     "$unset": {
                         "processingSkipReason": ""
@@ -2162,7 +2165,7 @@ async def _process_via_xpipe(
         "mime_type": detected_mime,
         "mode": "real",
         "models": {"llm": "gpt-4.1-mini", "ocr": "upstage", "embedding": "text-embedding-3-small"},
-        "needs_conversion": _is_convertible_mime(detected_mime),
+        "needs_conversion": is_convertible_mime(detected_mime),
         "converted_pdf_path": conv_pdf_path,  # 변환 PDF 경로 (OCR fallback용)
         "_domain_adapter": adapter,
         "_classify_config": {
@@ -2206,7 +2209,7 @@ async def _process_via_xpipe(
 
         # 변환 대상 파일(HWP/DOC/PPT/XLS 등)은 PDF 변환 워커가 처리해야 하므로
         # conversion_pending 상태로 설정 (조기 completed 방지)
-        if _is_convertible_mime(detected_mime):
+        if is_convertible_mime(detected_mime):
             logger.info(
                 f"[xPipe] 텍스트 추출 불가 — 변환 대기: doc_id={doc_id}, "
                 f"file={original_name}, reason={skip_reason}, mime={detected_mime}"
@@ -2233,7 +2236,6 @@ async def _process_via_xpipe(
 
             # 임시 파일 정리
             try:
-                import shutil
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
@@ -2278,7 +2280,6 @@ async def _process_via_xpipe(
 
         # 임시 파일 정리
         try:
-            import shutil
             shutil.rmtree(tmp_dir, ignore_errors=True)
         except Exception:
             pass
@@ -2464,7 +2465,6 @@ async def _process_via_xpipe(
 
     # 임시 파일 정리
     try:
-        import shutil
         shutil.rmtree(tmp_dir, ignore_errors=True)
     except Exception:
         pass
@@ -2479,15 +2479,8 @@ async def _process_via_xpipe(
     }
 
 
-def _is_convertible_mime(mime: str) -> bool:
-    """변환이 필요한 MIME인지 판단"""
-    convertible = (
-        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument",
-        "application/msword", "application/x-hwp", "application/haansofthwp",
-        "application/rtf",
-        "application/vnd.ms-powerpoint", "application/vnd.hancom",
-    )
-    return any(mime.startswith(prefix) for prefix in convertible)
+# _is_convertible_mime 삭제 — xpipe.stages.convert.is_convertible_mime 사용
+# (파일 상단에서 services.pdf_conversion_text_service 경유로 import 됨)
 
 
 def _is_preview_native(mime: str, filename: str) -> bool:
@@ -2523,7 +2516,7 @@ async def _trigger_pdf_conversion_for_xpipe(
             return
 
         # 변환 가능한 포맷인지 확인 (HWP, DOC, XLSX, PPTX 등)
-        if not _is_convertible_mime(detected_mime):
+        if not is_convertible_mime(detected_mime):
             # 지원하지 않는 형식 → not_required
             await files_collection.update_one(
                 {"_id": ObjectId(doc_id)},

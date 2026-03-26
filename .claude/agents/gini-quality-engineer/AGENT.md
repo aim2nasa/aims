@@ -109,6 +109,7 @@ git diff                        # 변경 내용 상세
 | 의존성 방향 | 상위 → 하위 의존만 허용 |
 | Single Source of Truth | 데이터/설정 중복 저장 없음 |
 | API 응답 형식 | 기존 응답 구조와 일관 |
+| **AIMS-xPipe 아키텍처** | **xPipe 코어 → AIMS 역방향 의존 금지. 파이프라인 코어 로직(MIME 판단, 변환, 추출)은 xPipe 소유. AIMS 도메인 로직(AR/CRS, 보험분류)은 xPipe 코어에 침투 금지. 참조: `docs/AIMS_XPIPE_ARCHITECTURE.md`** |
 
 ### 5. 재발 방지 (Prevention)
 

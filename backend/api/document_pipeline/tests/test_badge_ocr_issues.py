@@ -632,23 +632,23 @@ class TestXPipeNoLegacyFallback:
 
 
 class TestIsConvertibleMimeHWP:
-    """_is_convertible_mime()가 HWP MIME 변형을 모두 인식"""
+    """is_convertible_mime()가 HWP MIME 변형을 모두 인식 (xpipe 정본)"""
 
     def test_haansofthwp_mime_is_convertible(self):
         """application/haansofthwp MIME이 변환 대상으로 인식"""
-        from routers.doc_prep_main import _is_convertible_mime
-        assert _is_convertible_mime("application/haansofthwp") is True, \
+        from xpipe.stages.convert import is_convertible_mime
+        assert is_convertible_mime("application/haansofthwp") is True, \
             "application/haansofthwp는 변환 가능 MIME이어야 합니다"
 
     def test_x_hwp_mime_is_convertible(self):
         """application/x-hwp MIME이 변환 대상으로 인식"""
-        from routers.doc_prep_main import _is_convertible_mime
-        assert _is_convertible_mime("application/x-hwp") is True
+        from xpipe.stages.convert import is_convertible_mime
+        assert is_convertible_mime("application/x-hwp") is True
 
     def test_pdf_is_not_convertible(self):
         """PDF는 변환 대상이 아님"""
-        from routers.doc_prep_main import _is_convertible_mime
-        assert _is_convertible_mime("application/pdf") is False
+        from xpipe.stages.convert import is_convertible_mime
+        assert is_convertible_mime("application/pdf") is False
 
 
 class TestXPipeSuccessClearsError:

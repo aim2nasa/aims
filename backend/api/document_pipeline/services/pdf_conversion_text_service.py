@@ -16,22 +16,8 @@ from config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# PDF 변환을 통해 텍스트 추출이 가능한 MIME 타입 목록
-# MetaService에 직접 파서가 없는 형식들
-CONVERTIBLE_MIMES = {
-    "application/x-hwp",                                    # HWP (한글)
-    "application/msword",                                   # DOC (구형 Word)
-    "application/vnd.ms-powerpoint",                        # PPT (구형 PowerPoint)
-    "application/vnd.oasis.opendocument.text",              # ODT
-    "application/vnd.oasis.opendocument.spreadsheet",       # ODS
-    "application/vnd.oasis.opendocument.presentation",      # ODP
-    "application/rtf",                                      # RTF
-}
-
-
-def is_convertible_mime(mime_type: str) -> bool:
-    """MIME 타입이 PDF 변환 텍스트 추출 대상인지 확인"""
-    return mime_type in CONVERTIBLE_MIMES
+# xPipe가 정본(Single Source of Truth) — re-export만 수행
+from xpipe.stages.convert import CONVERTIBLE_MIMES, is_convertible_mime  # noqa: F401
 
 
 async def convert_and_extract_text(
