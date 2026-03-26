@@ -2028,12 +2028,9 @@ async def process_document_pipeline(
                 source_path, mime_type, existing_doc_id,
             )
         except Exception as e:
-            logger.error(f"❌ xPipe 처리 실패, legacy fallback: {e}", exc_info=True)
-            # xPipe 실패 시 자동 fallback (안전장치)
-            return await _process_via_legacy(
-                file_content, original_name, user_id, customer_id,
-                source_path, mime_type, existing_doc_id,
-            )
+            logger.error(f"❌ xPipe 처리 실패: {e}", exc_info=True)
+            # 에러 상태 DB 갱신은 _process_via_xpipe 내부에서 처리
+            raise
 
     return await _process_via_legacy(
         file_content, original_name, user_id, customer_id,
@@ -2165,7 +2162,21 @@ async def _process_via_xpipe(
     await _notify_progress(doc_id, user_id, 40, "processing", "텍스트 추출 중")
 
     # 7. 파이프라인 실행
-    result = await pipeline.run(context)
+    try:
+        result = await pipeline.run(context)
+    except Exception as e:
+        logger.error(f"❌ [xPipe] 파이프라인 실행 실패: {original_name} doc_id={doc_id} — {e}", exc_info=True)
+        await files_collection.update_one(
+            {"_id": ObjectId(doc_id)},
+            {"$set": {
+                "status": "failed",
+                "overallStatus": "error",
+                "error.statusCode": 500,
+                "error.statusMessage": str(e),
+                "error.timestamp": datetime.utcnow().isoformat(),
+            }},
+        )
+        raise
 
     # overallStatus: classifying (텍스트 추출 완료, AI 분류 중)
     await files_collection.update_one(
@@ -2223,8 +2234,8 @@ async def _process_via_xpipe(
         meta_update["ocr.full_text"] = extracted_text
         meta_update["ocr.done_at"] = datetime.utcnow().isoformat()
         meta_update["ocr.page_count"] = result.get("_ocr_pages", 1)
-        # OCR confidence: stage_data에 없으면 0.0 (xPipe OCR provider는 confidence를 별도 반환하지 않음)
-        meta_update["ocr.confidence"] = 0.0
+        # OCR confidence: ExtractStage가 provider로부터 받은 값 사용
+        meta_update["ocr.confidence"] = extract_output.get("ocr_confidence", 0.0)
 
     await files_collection.update_one(
         {"_id": ObjectId(doc_id)},

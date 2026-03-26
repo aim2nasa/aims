@@ -372,6 +372,7 @@ class TestXPipeOCRFieldsRecorded:
                         "method": "ocr",  # OCR 사용
                         "text_length": 30,
                         "ocr_model": "upstage",
+                        "ocr_confidence": 0.929,  # provider가 반환한 실제 confidence
                     }
                 }
             },
@@ -421,6 +422,8 @@ class TestXPipeOCRFieldsRecorded:
                     "ocr.done_at 필드가 있어야 합니다"
                 assert "ocr.page_count" in update_set, \
                     "ocr.page_count 필드가 있어야 합니다"
+                assert update_set.get("ocr.confidence") == 0.929, \
+                    f"ocr.confidence는 provider가 반환한 실제 값(0.929)이어야 합니다. 실제: {update_set.get('ocr.confidence')}"
                 break
 
         assert ocr_update_found, \
@@ -590,3 +593,85 @@ class TestImageFileOCRQueueNoNameError:
         file_path_arg = call_kwargs.kwargs.get("file_path", "")
         assert file_path_arg == "/data/saved.png", \
             f"PNG 이미지도 원본 경로로 OCR 큐에 전달되어야 합니다. 실제: {file_path_arg}"
+
+
+# ========================================
+# 레거시 fallback 제거 + OCR confidence 전파 regression
+# ========================================
+
+class TestXPipeNoLegacyFallback:
+    """PIPELINE_ENGINE=xpipe 시 xPipe 실패가 레거시로 fallback하지 않아야 함"""
+
+    async def test_xpipe_failure_raises_not_fallback(self):
+        """xPipe 실패 시 _process_via_legacy 호출 없이 예외가 전파"""
+        from routers.doc_prep_main import process_document_pipeline
+
+        mock_collection = AsyncMock()
+        mock_collection.update_one = AsyncMock()
+        mock_insert = MagicMock()
+        mock_insert.inserted_id = ObjectId(TEST_DOC_ID)
+        mock_collection.insert_one = AsyncMock(return_value=mock_insert)
+        mock_collection.find_one = AsyncMock(return_value=None)
+
+        with patch("routers.doc_prep_main._get_pipeline_engine", return_value="xpipe"), \
+             patch("routers.doc_prep_main._process_via_xpipe", new_callable=AsyncMock,
+                   side_effect=RuntimeError("xPipe 파이프라인 오류")), \
+             patch("routers.doc_prep_main._process_via_legacy", new_callable=AsyncMock) as mock_legacy:
+
+            with pytest.raises(RuntimeError, match="xPipe 파이프라인 오류"):
+                await process_document_pipeline(
+                    file_content=b"test",
+                    original_name="test.pdf",
+                    user_id="user1",
+                    customer_id=None,
+                    source_path=None,
+                )
+
+            mock_legacy.assert_not_called(), \
+                "xPipe 실패 시 레거시 fallback이 호출되면 안 됩니다"
+
+
+class TestExtractStageOCRConfidencePropagation:
+    """ExtractStage._try_ocr()가 confidence를 context와 stage_data에 전파"""
+
+    async def test_ocr_confidence_stored_in_stage_data(self):
+        """OCR provider 반환 confidence가 stage_data.extract.output.ocr_confidence에 기록"""
+        from xpipe.stages.extract import ExtractStage
+
+        stage = ExtractStage()
+        mock_provider = AsyncMock()
+        mock_provider.get_name.return_value = "upstage"
+        mock_provider.process = AsyncMock(return_value={
+            "text": "OCR 추출 텍스트입니다",
+            "pages": 1,
+            "confidence": 0.875,
+        })
+
+        mock_registry = MagicMock()
+        mock_registry.get.return_value = mock_provider
+        mock_registry.call_with_fallback = AsyncMock(return_value={
+            "text": "OCR 추출 텍스트입니다",
+            "pages": 1,
+            "confidence": 0.875,
+        })
+
+        context = {
+            "file_path": "/tmp/test.jpg",
+            "filename": "test.jpg",
+            "mime_type": "image/jpeg",
+            "mode": "real",
+            "models": {"ocr": "upstage"},
+            "_provider_registry": mock_registry,
+        }
+
+        result = await stage.execute(context)
+
+        # context에 confidence 저장 확인
+        assert result.get("_ocr_confidence") == 0.875, \
+            f"context['_ocr_confidence']는 0.875여야 합니다. 실제: {result.get('_ocr_confidence')}"
+
+        # stage_data에 confidence 전파 확인
+        stage_data = result.get("stage_data", {}).get("extract", {})
+        output = stage_data.get("output", {})
+        assert output.get("ocr_confidence") == 0.875, \
+            f"stage_data.extract.output.ocr_confidence는 0.875여야 합니다. 실제: {output.get('ocr_confidence')}"

@@ -1,10 +1,13 @@
 """ExtractStage — 텍스트 추출 스테이지"""
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any
 
 from xpipe.stage import Stage
+
+logger = logging.getLogger(__name__)
 
 
 # LibreOffice로 변환 가능한 확장자
@@ -175,6 +178,7 @@ class ExtractStage(Stage):
             actual_name = provider.get_name()
             result = await registry.call_with_fallback("ocr", "process", file_path)
             context["_ocr_pages"] = result.get("pages", 1)
+            context["_ocr_confidence"] = result.get("confidence", 0.0)
             return result.get("text", ""), actual_name
 
         # Registry 없음 → 직접 Provider 생성 (API 키 필수)
@@ -189,6 +193,7 @@ class ExtractStage(Stage):
         provider = UpstageOCRProvider(api_key=api_key)
         result = await provider.process(file_path)
         context["_ocr_pages"] = result.get("pages", 1)
+        context["_ocr_confidence"] = result.get("confidence", 0.0)
         return result.get("text", ""), provider.get_name()
 
     async def execute(self, context: dict[str, Any]) -> dict[str, Any]:
@@ -246,7 +251,7 @@ class ExtractStage(Stage):
                 try:
                     text, ocr_model = await self._try_ocr(context, converted, file_name, "application/pdf", ocr_model_name)
                 except Exception as e:
-                    _logger.warning("[ExtractStage] 변환 파일 OCR fallback 예외 (빈 텍스트로 계속): %s — %s", file_name, e)
+                    logger.warning("[ExtractStage] 변환 파일 OCR fallback 예외 (빈 텍스트로 계속): %s — %s", file_name, e)
                     text, ocr_model = "", "-"
         else:
             # 알 수 없는 형식 — 에러 메시지를 텍스트로 저장하지 않음
@@ -259,9 +264,7 @@ class ExtractStage(Stage):
         if mode != "stub" and (not text or not text.strip()):
             if is_convertible and method == "libreoffice+ocr_fallback":
                 # 변환 파일 OCR fallback 실패 — 원본은 보관되므로 에러 대신 빈 텍스트로 처리
-                import logging as _logging
-                _logger = _logging.getLogger(__name__)
-                _logger.warning(
+                logger.warning(
                     "[ExtractStage] 변환 파일 OCR fallback 실패 (빈 텍스트), 빈 텍스트로 계속 진행: %s", file_name
                 )
                 text = ""
@@ -297,6 +300,7 @@ class ExtractStage(Stage):
                 "full_text": text,
                 "method": method,
                 "ocr_model": ocr_model,
+                "ocr_confidence": context.get("_ocr_confidence", 0.0),
                 # 호환 필드
                 "meta_status": "completed",
                 "has_text": bool(text.strip()),
