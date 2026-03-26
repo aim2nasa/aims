@@ -553,7 +553,7 @@ class OpenAIService:
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=60,
-                temperature=0.1
+                temperature=0
             )
 
             title = response.choices[0].message.content.strip()
