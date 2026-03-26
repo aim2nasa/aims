@@ -659,6 +659,27 @@ const DocumentExplorerContent: React.FC<{
     }
   }, [fetchExplorerTree])
 
+  // 처리 중인 문서가 있으면 10초마다 자동 갱신 (PDF 변환/임베딩 완료 반영)
+  useEffect(() => {
+    if (!explorerData?.documents) return
+    const hasProcessing = explorerData.documents.some(
+      (doc: Document) => {
+        const status = (doc as Record<string, unknown>)['overallStatus'] as string | undefined
+        const convStatus = (doc as Record<string, unknown>)['conversionStatus'] as string | undefined
+        const ext = doc.originalName?.split('.').pop()?.toLowerCase() || ''
+        const convertibleExts = ['hwp', 'ppt', 'pptx', 'xls', 'xlsx', 'doc', 'docx']
+        // 아직 완료되지 않은 문서 또는 변환 대상인데 변환 미완료
+        return (status && status !== 'completed') ||
+               (convertibleExts.includes(ext) && convStatus && convStatus !== 'completed' && convStatus !== 'not_required')
+      }
+    )
+    if (!hasProcessing) return
+    const interval = setInterval(() => {
+      fetchExplorerTree(selectedInitialRef.current)
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [explorerData?.documents, fetchExplorerTree])
+
   // 초성 카운트: explorer-tree 응답에서 추출 (별도 API 불필요)
   const serverInitialCounts = useMemo(() => {
     const map = new Map<string, number>()
