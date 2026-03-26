@@ -1,6 +1,9 @@
 __pycache__/
 *.py[cod]
 
+# 테스트용 임시 업로드 폴더
+_tmp_upload/
+
 node_modules
 
 # Python virtual environment
