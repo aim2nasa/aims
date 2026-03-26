@@ -379,13 +379,20 @@ class PdfConversionWorker:
                     f"[PDF변환워커] AI 분류 실패 (텍스트는 저장): {document_id} - {ai_err}"
                 )
 
+            # 임베딩 크론이 텍스트 추출 전에 skipped 처리했을 수 있으므로 pending으로 리셋
+            # credit_pending 상태는 보호 (크레딧 부족 보류 상태를 덮어쓰지 않음)
+            current_embed_status = (doc.get("docembed") or {}).get("status")
+            if current_embed_status != "credit_pending":
+                text_update["docembed.status"] = "pending"
+                text_update["overallStatus"] = "embed_pending"
+
             # DB 업데이트
             await files_col.update_one(
                 {"_id": BsonObjectId(document_id)},
                 {"$set": text_update},
             )
             logger.info(
-                f"[PDF변환워커] 텍스트+분류 DB 업데이트 완료: {document_id}"
+                f"[PDF변환워커] 텍스트+분류 DB 업데이트 + 임베딩 재요청: {document_id}"
             )
             return True
 

@@ -481,7 +481,10 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                             },
                             'status': 'completed',
                             'overallStatus': 'completed',
-                            'overallStatusUpdatedAt': datetime.now(timezone.utc)
+                            'overallStatusUpdatedAt': datetime.now(timezone.utc),
+                            'progress': 100,
+                            'progressStage': 'complete',
+                            'progressMessage': '처리 완료'
                         }}
                     )
                     # 🔵 displayName 자동 생성 (임베딩 스킵이라도 시도)
@@ -559,7 +562,10 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                         },
                         'status': 'completed',  # 임베딩 완료 = 전체 처리 완료
                         'overallStatus': 'completed',
-                        'overallStatusUpdatedAt': datetime.now(timezone.utc)
+                        'overallStatusUpdatedAt': datetime.now(timezone.utc),
+                        'progress': 100,
+                        'progressStage': 'complete',
+                        'progressMessage': '처리 완료'
                     }}
                 )
                 print(f"--- 문서 ID: {doc_id} 처리 완료 (status+overallStatus: completed) ---")
