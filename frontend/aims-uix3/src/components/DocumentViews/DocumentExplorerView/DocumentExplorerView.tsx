@@ -666,11 +666,19 @@ const DocumentExplorerContent: React.FC<{
       (doc: Document) => {
         const status = (doc as Record<string, unknown>)['overallStatus'] as string | undefined
         const convStatus = (doc as Record<string, unknown>)['conversionStatus'] as string | undefined
+        const size = (doc as Record<string, unknown>)['size'] as string | undefined
+        const badgeType = (doc as Record<string, unknown>)['badgeType'] as string | undefined
         const ext = doc.originalName?.split('.').pop()?.toLowerCase() || ''
         const convertibleExts = ['hwp', 'ppt', 'pptx', 'xls', 'xlsx', 'doc', 'docx']
-        // 아직 완료되지 않은 문서 또는 변환 대상인데 변환 미완료
-        return (status && status !== 'completed') ||
-               (convertibleExts.includes(ext) && convStatus && convStatus !== 'completed' && convStatus !== 'not_required')
+        // 아직 완료되지 않은 문서
+        if (status && status !== 'completed') return true
+        // 변환 대상인데 변환 미완료
+        if (convertibleExts.includes(ext) && convStatus && convStatus !== 'completed' && convStatus !== 'not_required') return true
+        // 크기 0 B = 아직 처리 중 (파이프라인이 크기를 기록하기 전)
+        if (size === '0 B' || size === '0') return true
+        // 변환 대상인데 BIN 배지 = 텍스트 추출 전 (비동기 변환 대기)
+        if (convertibleExts.includes(ext) && (!badgeType || badgeType === 'BIN')) return true
+        return false
       }
     )
     if (!hasProcessing) return
