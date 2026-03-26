@@ -180,6 +180,11 @@ export const DocumentUtils = {
       'application/vnd.hancom.hwp': 'HWP',
       'application/hwp+zip': 'HWPX',
       'application/vnd.hancom.hwpx': 'HWPX',
+      'application/zip': 'ZIP',
+      'application/x-zip-compressed': 'ZIP',
+      'application/x-zip': 'ZIP',
+      'application/postscript': 'AI',
+      'application/illustrator': 'AI',
     };
 
     return mimeMap[mimeType] || mimeType.split('/')[1]?.toUpperCase() || '';

@@ -208,6 +208,7 @@ class PdfConversionWorker:
                     },
                     "$unset": {
                         "meta.text_extraction_failed": "",
+                        "processingSkipReason": "",
                     },
                 },
             )
@@ -336,10 +337,11 @@ class PdfConversionWorker:
                 )
                 text_update["meta.summary"] = summary_result.get("summary", "")
                 text_update["meta.title"] = summary_result.get("title", "")
-                text_update["meta.document_type"] = summary_result.get(
-                    "document_type", "general"
-                )
+                classified_type = summary_result.get("document_type", "general")
+                text_update["meta.document_type"] = classified_type
                 text_update["meta.confidence"] = summary_result.get("confidence", 0.0)
+                text_update["document_type"] = classified_type
+                text_update["document_type_auto"] = True
                 logger.info(
                     f"[PDF변환워커] AI 분류 완료: {document_id} → {summary_result.get('document_type', 'general')}"
                 )
