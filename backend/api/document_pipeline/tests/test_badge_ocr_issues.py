@@ -631,6 +631,102 @@ class TestXPipeNoLegacyFallback:
                 "xPipe 실패 시 레거시 fallback이 호출되면 안 됩니다"
 
 
+class TestIsConvertibleMimeHWP:
+    """_is_convertible_mime()가 HWP MIME 변형을 모두 인식"""
+
+    def test_haansofthwp_mime_is_convertible(self):
+        """application/haansofthwp MIME이 변환 대상으로 인식"""
+        from routers.doc_prep_main import _is_convertible_mime
+        assert _is_convertible_mime("application/haansofthwp") is True, \
+            "application/haansofthwp는 변환 가능 MIME이어야 합니다"
+
+    def test_x_hwp_mime_is_convertible(self):
+        """application/x-hwp MIME이 변환 대상으로 인식"""
+        from routers.doc_prep_main import _is_convertible_mime
+        assert _is_convertible_mime("application/x-hwp") is True
+
+    def test_pdf_is_not_convertible(self):
+        """PDF는 변환 대상이 아님"""
+        from routers.doc_prep_main import _is_convertible_mime
+        assert _is_convertible_mime("application/pdf") is False
+
+
+class TestXPipeSuccessClearsError:
+    """xPipe 처리 성공 시 error 필드가 클리어"""
+
+    async def test_xpipe_success_unsets_error_field(self):
+        """xPipe 성공 시 update_one에 $unset: {error: ''} 포함"""
+        from routers.doc_prep_main import _process_via_xpipe
+
+        captured_updates = []
+        mock_collection = AsyncMock()
+
+        async def capture_update(query, update):
+            captured_updates.append(update)
+            result = MagicMock()
+            result.modified_count = 1
+            return result
+
+        mock_collection.update_one = AsyncMock(side_effect=capture_update)
+        mock_insert = MagicMock()
+        mock_insert.inserted_id = ObjectId(TEST_DOC_ID)
+        mock_collection.insert_one = AsyncMock(return_value=mock_insert)
+        mock_collection.find_one = AsyncMock(return_value=None)
+
+        mock_pipeline_result = {
+            "extracted_text": "충분히 긴 텍스트 내용입니다 테스트용",
+            "text": "충분히 긴 텍스트 내용입니다 테스트용",
+            "document_type": "general",
+            "classification_confidence": 0.8,
+            "detections": [],
+            "stage_data": {
+                "extract": {
+                    "status": "completed",
+                    "output": {"method": "pdfplumber", "text_length": 30, "ocr_model": "-", "ocr_confidence": 0.0}
+                }
+            },
+        }
+
+        mock_pipeline = AsyncMock()
+        mock_pipeline.run = AsyncMock(return_value=mock_pipeline_result)
+
+        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_collection), \
+             patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
+             patch("routers.doc_prep_main._notify_progress", new_callable=AsyncMock), \
+             patch("routers.doc_prep_main._notify_document_complete", new_callable=AsyncMock), \
+             patch("routers.doc_prep_main._connect_document_to_customer", new_callable=AsyncMock), \
+             patch("routers.doc_prep_main._generate_display_name", new_callable=AsyncMock), \
+             patch("routers.doc_prep_main._trigger_pdf_conversion_for_xpipe", new_callable=AsyncMock), \
+             patch("xpipe.pipeline.Pipeline", return_value=mock_pipeline), \
+             patch("insurance.adapter.InsuranceDomainAdapter") as mock_adapter_cls:
+
+            mock_adapter = MagicMock()
+            mock_adapter.get_classification_config = AsyncMock(return_value=MagicMock(
+                extra={"system_prompt": ""}, prompt_template="", categories=[], valid_types=[]
+            ))
+            mock_adapter_cls.return_value = mock_adapter
+
+            await _process_via_xpipe(
+                file_content=b"pdf bytes",
+                original_name="test.pdf",
+                user_id="user1",
+                customer_id=None,
+                source_path=None,
+                mime_type="application/pdf",
+                existing_doc_id=TEST_DOC_ID,
+            )
+
+        # $unset이 포함된 update_one 호출이 있어야 함
+        unset_found = False
+        for update in captured_updates:
+            if "$unset" in update and "error" in update["$unset"]:
+                unset_found = True
+                break
+
+        assert unset_found, \
+            "xPipe 성공 시 $unset: {error: ''} 가 update_one에 포함되어야 합니다"
+
+
 class TestExtractStageOCRConfidencePropagation:
     """ExtractStage._try_ocr()가 confidence를 context와 stage_data에 전파"""
 

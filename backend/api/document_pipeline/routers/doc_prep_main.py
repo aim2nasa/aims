@@ -2252,7 +2252,7 @@ async def _process_via_xpipe(
 
     await files_collection.update_one(
         {"_id": ObjectId(doc_id)},
-        {"$set": meta_update},
+        {"$set": meta_update, "$unset": {"error": ""}},
     )
 
     # 9. AR/CRS 감지 결과 처리 (HookResult)
@@ -2356,7 +2356,8 @@ def _is_convertible_mime(mime: str) -> bool:
     """변환이 필요한 MIME인지 판단"""
     convertible = (
         "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument",
-        "application/msword", "application/x-hwp", "application/rtf",
+        "application/msword", "application/x-hwp", "application/haansofthwp",
+        "application/rtf",
         "application/vnd.ms-powerpoint", "application/vnd.hancom",
     )
     return any(mime.startswith(prefix) for prefix in convertible)
