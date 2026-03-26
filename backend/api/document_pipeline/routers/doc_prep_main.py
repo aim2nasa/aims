@@ -2398,6 +2398,20 @@ async def _trigger_pdf_conversion_for_xpipe(
             )
             return
 
+        # 이미 변환된 PDF가 있으면 큐 등록 스킵 (재처리 시)
+        existing = await files_collection.find_one(
+            {"_id": ObjectId(doc_id)},
+            {"upload.convPdfPath": 1}
+        )
+        existing_conv = (existing or {}).get("upload", {}).get("convPdfPath", "")
+        if existing_conv and os.path.exists(existing_conv):
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {"upload.conversion_status": "completed"}},
+            )
+            logger.info(f"[xPipe] PDF 변환 이미 완료, 큐 스킵: {doc_id} ({existing_conv})")
+            return
+
         # 변환 대상 → pending 상태 설정 + 큐 등록
         await files_collection.update_one(
             {"_id": ObjectId(doc_id)},
