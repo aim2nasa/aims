@@ -213,7 +213,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
         # ⚠️ embed_pending, embedding은 정상 상태이므로 제외 (임베딩 크론 대기/처리 중)
         os_completed_filter = {
             'status': 'completed',
-            'overallStatus': {'$nin': ['completed', 'embed_pending', 'embedding', 'credit_pending']}
+            'overallStatus': {'$nin': ['completed', 'embed_pending', 'embedding', 'credit_pending', 'conversion_pending', 'converting']}
         }
         os_completed_count = collection.count_documents(os_completed_filter)
         if os_completed_count > 0:

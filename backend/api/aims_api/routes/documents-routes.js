@@ -914,6 +914,7 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
             if (!badgeType) {
               if (doc._hasMetaText) badgeType = 'TXT';
               else if (doc._hasOcrText) badgeType = 'OCR';
+              else if (doc.meta?.mime && doc.meta.mime.startsWith('image/')) badgeType = 'OCR';
               else badgeType = 'BIN';
             }
 
@@ -952,6 +953,7 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
                 status: doc.ocr.status,
                 confidence: doc.ocr.confidence,
                 done_at: doc.ocr.done_at,
+                summary: doc.ocr.summary,
               } : null,
               docembed: doc.docembed,
               ownerId: doc.ownerId || null,
@@ -1572,8 +1574,20 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
                         // Level 3: ocr.full_text 있으면 "OCR"
                         if: { $ne: [{ $ifNull: ["$ocr.full_text", null] }, null] },
                         then: "OCR",
-                        // Level 4: 나머지 모두 "BIN"
-                        else: "BIN"
+                        else: {
+                          $cond: {
+                            // Level 4: 이미지 파일(image/*)이면 "OCR"
+                            if: {
+                              $and: [
+                                { $ne: [{ $ifNull: ["$meta.mime", null] }, null] },
+                                { $eq: [{ $indexOfCP: [{ $toLower: { $ifNull: ["$meta.mime", ""] } }, "image/"] }, 0] }
+                              ]
+                            },
+                            then: "OCR",
+                            // Level 5: 나머지 모두 "BIN"
+                            else: "BIN"
+                          }
+                        }
                       }
                     }
                   }
@@ -1790,7 +1804,11 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         else if (doc._hasOcrText) {
           badgeType = 'OCR';
         }
-        // Level 3: 나머지 BIN
+        // Level 3: 이미지 파일은 OCR 배지 (image/* MIME)
+        else if (doc.meta?.mime && doc.meta.mime.startsWith('image/')) {
+          badgeType = 'OCR';
+        }
+        // Level 4: 나머지 BIN
         else {
           badgeType = 'BIN';
         }
@@ -1831,6 +1849,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
           status: doc.ocr.status,
           confidence: doc.ocr.confidence,
           done_at: doc.ocr.done_at,
+          summary: doc.ocr.summary,
         } : null,
         docembed: doc.docembed,
         ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
@@ -2124,7 +2143,11 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
       else if (doc._hasOcrText) {
         badgeType = 'OCR';
       }
-      // Level 4: 나머지 모두 BIN (기본값 유지)
+      // Level 4: 이미지 파일은 OCR 배지 (image/* MIME)
+      else if (doc.meta?.mime && doc.meta.mime.startsWith('image/')) {
+        badgeType = 'OCR';
+      }
+      // Level 5: 나머지 모두 BIN (기본값 유지)
 
       stats.badgeTypes[badgeType]++;
 

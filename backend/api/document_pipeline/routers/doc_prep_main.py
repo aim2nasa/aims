@@ -1867,20 +1867,22 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
                 await ctx.files_collection.update_one(
                     {"_id": ObjectId(ctx.doc_id)},
                     {"$set": {
-                        "processingSkipReason": "conversion_failed",
-                        "overallStatus": "completed",
-                        "status": "completed",
+                        "overallStatus": "conversion_pending",
+                        "overallStatusUpdatedAt": datetime.utcnow(),
+                        "status": "converting",
                         "meta.mime": ctx.detected_mime,
+                    },
+                    "$unset": {
+                        "processingSkipReason": ""
                     }}
                 )
-                await _notify_progress(ctx.doc_id, ctx.user_id, 100, "complete", "PDF 변환 실패 (보관)")
-                await _notify_document_complete(ctx.doc_id, ctx.user_id)
+                await _notify_progress(ctx.doc_id, ctx.user_id, 60, "conversion_queued", "PDF 변환 대기 중")
                 pipeline_metrics.record_success(ctx.metric_record)
                 return {
                     "result": "success",
                     "document_id": ctx.doc_id,
-                    "status": "completed",
-                    "processingSkipReason": "conversion_failed",
+                    "status": "converting",
+                    "overallStatus": "conversion_pending",
                     "mime": ctx.detected_mime,
                     "filename": ctx.original_name
                 }
