@@ -2210,7 +2210,12 @@ async def _process_via_xpipe(
 
     # Meta 업데이트
     # 파일 메타데이터
-    file_size = len(file_content)
+    file_size = len(file_content) if file_content else 0
+    if not file_size and dest_path:
+        try:
+            file_size = os.path.getsize(dest_path)
+        except OSError:
+            file_size = 0
     file_ext = os.path.splitext(original_name or "")[1].lower()
 
     meta_update = {
