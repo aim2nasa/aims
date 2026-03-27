@@ -27,7 +27,7 @@
       120px          /* 날짜 (오른쪽 정렬) */
       80px           /* 상태 (아이콘 + 상태명, 정렬 포함) */
       130px          /* 연결된 고객 */
-      104px;         /* 액션 버튼 (4개, 고정) */
+      52px;          /* 액션 버튼 */
     gap: 10px;
     align-items: center;
     padding: var(--spacing-2) 10px;
@@ -103,8 +103,8 @@
   }
 
   .status-list-header .header-actions {
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-end;
+    text-align: right;
   }
 
   /* 🍎 header-filename: 정렬 영역 + 별칭/원본 토글 래퍼 */
@@ -337,7 +337,7 @@
       120px          /* 날짜 (오른쪽 정렬) */
       80px           /* 상태 (아이콘 + 상태명, 정렬 포함) */
       130px          /* 연결된 고객 */
-      104px;         /* 액션 버튼 (4개, 고정) */
+      52px;          /* 액션 버튼 */
     gap: 10px;
     align-items: center;
     height: 40px;

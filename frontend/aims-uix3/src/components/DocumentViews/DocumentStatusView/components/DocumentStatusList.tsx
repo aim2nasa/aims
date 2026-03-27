@@ -48,7 +48,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { defaultWidth: '120px',               defaultPx: 120, minWidth: 80,  resizable: true  },  // 업로드 날짜
   { defaultWidth: '80px',                defaultPx: 80,  minWidth: 50,  resizable: true  },  // 상태
   { defaultWidth: '130px',               defaultPx: 130, minWidth: 60,  resizable: true  },  // 연결된 고객
-  { defaultWidth: '104px',               defaultPx: 104, minWidth: 60,  resizable: false },  // 액션 버튼
+  { defaultWidth: '52px',                defaultPx: 52,  minWidth: 40,  resizable: false },  // 액션 버튼
 ]
 
 const COLUMN_RESIZE_STORAGE_KEY = 'aims-document-library-column-widths'
