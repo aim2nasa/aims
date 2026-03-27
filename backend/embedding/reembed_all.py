@@ -78,7 +78,7 @@ def build_chunk_meta(doc: dict, doc_id: str, text_source: str) -> dict:
         'text_source': text_source,
         'is_annual_report': doc.get('is_annual_report', False),
         'is_customer_review': doc.get('is_customer_review', False),
-        'document_type': doc.get('meta', {}).get('document_type', 'general'),
+        'document_type': doc.get('document_type', 'general'),
     }
 
 
@@ -105,7 +105,7 @@ def run_reembed(dry_run: bool = False):
                         {'$eq': ['$is_annual_report', True]}, 'annual_report',
                         {'$cond': [
                             {'$eq': ['$is_customer_review', True]}, 'customer_review',
-                            {'$ifNull': ['$meta.document_type', 'general']}
+                            {'$ifNull': ['$document_type', 'general']}
                         ]}
                     ]
                 },

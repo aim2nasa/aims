@@ -303,8 +303,9 @@ class PdfConversionWorker:
             text_update = {
                 "meta.full_text": extracted_text,
                 "meta.length": len(extracted_text),
-                "meta.document_type": "general",
                 "meta.confidence": 0.0,
+                "document_type": "general",
+                "document_type_auto": True,
             }
 
             owner_id = doc.get("ownerId", "")
@@ -338,7 +339,6 @@ class PdfConversionWorker:
                 text_update["meta.summary"] = summary_result.get("summary", "")
                 text_update["meta.title"] = summary_result.get("title", "")
                 classified_type = summary_result.get("document_type", "general")
-                text_update["meta.document_type"] = classified_type
                 text_update["meta.confidence"] = summary_result.get("confidence", 0.0)
                 text_update["document_type"] = classified_type
                 text_update["document_type_auto"] = True

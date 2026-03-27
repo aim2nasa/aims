@@ -245,7 +245,7 @@ class TestPath1_NormalPdfWithText:
                 assert set_data["meta.mime"] == "application/pdf"
                 assert set_data["meta.full_text"] == "추출된 텍스트입니다."
                 assert set_data["meta.summary"] == "요약"
-                assert set_data["meta.document_type"] == "general"
+                assert set_data["document_type"] == "general"
                 assert set_data["meta.confidence"] == 0.85
                 assert set_data["meta.meta_status"] == "done"
                 assert set_data["meta.file_hash"] == "abc123"

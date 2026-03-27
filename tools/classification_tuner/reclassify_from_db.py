@@ -258,7 +258,6 @@ async def main():
         "meta.full_text": 1,
         "ocr.full_text": 1,
         "document_type": 1,
-        "meta.document_type": 1,
         "upload.originalName": 1,
         "displayName": 1,
         "customerId": 1,
@@ -345,7 +344,6 @@ async def main():
                 {"_id": doc["_id"]},
                 {"$set": {
                     "document_type": new_type,
-                    "meta.document_type": new_type,
                     "meta.confidence": classification["confidence"],
                     "meta.title": classification["title"],
                     "meta.summary": classification["summary"],

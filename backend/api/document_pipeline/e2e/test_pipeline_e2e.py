@@ -65,9 +65,9 @@ class TestRegressionBaseline:
         completed = files.count_documents({"status": "completed"})
         failed = files.count_documents({"status": "failed"})
         classified = files.count_documents({
-            "meta.document_type": {"$exists": True, "$nin": ["general", None]}
+            "document_type": {"$exists": True, "$nin": ["general", None]}
         })
-        general = files.count_documents({"meta.document_type": "general"})
+        general = files.count_documents({"document_type": "general"})
         ar = files.count_documents({"is_annual_report": True})
         crs = files.count_documents({"is_customer_review": True})
 

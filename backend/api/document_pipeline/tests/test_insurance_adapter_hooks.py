@@ -243,7 +243,7 @@ class TestARDetected:
         status_update = result[0]
         fields = status_update.payload["fields"]
         assert fields["document_type"] == "annual_report"
-        assert fields["meta.document_type"] == "annual_report"
+        assert "meta.document_type" not in fields  # SSoT: top-level만 사용
 
     @pytest.mark.asyncio
     async def test_ar_no_customer_skips_sse(self, adapter, sample_doc, ar_detection):
@@ -330,7 +330,7 @@ class TestCRSDetected:
         status_update = result[0]
         fields = status_update.payload["fields"]
         assert fields["document_type"] == "customer_review"
-        assert fields["meta.document_type"] == "customer_review"
+        assert "meta.document_type" not in fields  # SSoT: top-level만 사용
 
     @pytest.mark.asyncio
     async def test_crs_no_customer_skips_sse(self, adapter, sample_doc, crs_detection):
