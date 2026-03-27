@@ -395,6 +395,8 @@ class OpenAIService:
             confidence = max(0.0, min(1.0, float(confidence)))
 
             title = parsed.get("title", "")
+            if doc_type == "unclassifiable":
+                title = ""
             summary = parsed.get("summary", "")
 
             if not summary:
