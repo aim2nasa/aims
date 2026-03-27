@@ -57,6 +57,7 @@ const mockController: any = {
   handleColumnSort: vi.fn(),
   handlePageChange: vi.fn(),
   handleItemsPerPageChange: vi.fn(),
+  handleLimitChange: vi.fn(),
 }
 
 vi.mock('@/controllers/useDocumentStatusController', () => ({

@@ -7,7 +7,7 @@
  * /api/documents/status API를 사용하여 문서 리스트 표시 (DocumentStatusView와 동일)
  */
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
@@ -69,14 +69,21 @@ interface DocumentLibraryViewProps {
   onNavigate?: (viewKey: string) => void
 }
 
-// 🍎 페이지당 항목 수 옵션
-const ITEMS_PER_PAGE_OPTIONS = [
+// 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
+const ITEMS_PER_PAGE_OPTIONS_BASE = [
+  { value: 'auto', label: '자동' },
   { value: '10', label: '10개씩' },
   { value: '15', label: '15개씩' },
   { value: '20', label: '20개씩' },
   { value: '50', label: '50개씩' },
   { value: '100', label: '100개씩' }
 ]
+
+// 🍎 행 높이 상수 (CSS와 동일하게 유지 — DOM 측정 기준)
+const ROW_HEIGHT = 40   // CSS height: 40px (.status-item)
+const ROW_GAP = 2       // CSS gap: var(--spacing-0-5) ≈ 2px
+// 리스트 헤더 높이 기본값 (sticky header)
+const DEFAULT_LIST_HEADER_HEIGHT = 44
 
 /**
  * DocumentLibraryContent 내부 컴포넌트 (Pure View)
@@ -486,6 +493,89 @@ const DocumentLibraryContent: React.FC<{
     }
   }, [controller.filteredDocuments, onSelectAllIds, isDeleteMode, onToggleDeleteMode, customerFilter, selectedInitial, initialType])
 
+  // 🍎 자동 페이지네이션: 컨테이너 높이 기반 항목 수 자동 계산
+  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | 'manual'>('auto')
+  const [listWrapperHeight, setListWrapperHeight] = useState(0)
+  const listWrapperRef = useRef<HTMLDivElement>(null)
+
+  // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산
+  const autoCalculatedItems = useMemo(() => {
+    // 📱 모바일(≤768px): 페이지네이션 숨김 → 전체 표시
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
+      return 9999
+    }
+    if (listWrapperHeight <= 0) return 15 // 기본값
+
+    const wrapper = listWrapperRef.current
+    if (!wrapper) return 15
+
+    // 리스트 헤더(sticky) 높이 측정
+    const listHeader = wrapper.querySelector('.status-list-header') as HTMLElement | null
+    const measuredHeaderHeight = listHeader ? listHeader.getBoundingClientRect().height : 0
+    const headerHeight = measuredHeaderHeight > 0 ? measuredHeaderHeight : DEFAULT_LIST_HEADER_HEIGHT
+
+    // 사용 가능한 높이 = 래퍼 높이 - 헤더 높이 - 여유분(gap/padding 보정)
+    const SAFETY_MARGIN = 8
+    const availableHeight = listWrapperHeight - headerHeight - SAFETY_MARGIN
+
+    // N개 행의 총 높이 = N * ROW_HEIGHT + (N-1) * ROW_GAP
+    const maxItems = Math.max(1, Math.floor((availableHeight + ROW_GAP) / (ROW_HEIGHT + ROW_GAP)))
+
+    if (import.meta.env.DEV) {
+      console.log('[DocumentLibraryView] 자동 페이지네이션 계산:', {
+        listWrapperHeight, headerHeight, availableHeight, maxItems
+      })
+    }
+
+    return maxItems
+  }, [listWrapperHeight])
+
+  // 🍎 ResizeObserver로 library-list-wrapper 높이 측정
+  useEffect(() => {
+    const wrapper = listWrapperRef.current
+    if (!wrapper) return
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setListWrapperHeight(entry.contentRect.height)
+      }
+    })
+
+    resizeObserver.observe(wrapper)
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  // 🍎 자동 모드일 때 계산값을 controller에 반영
+  useEffect(() => {
+    if (itemsPerPageMode === 'auto' && autoCalculatedItems > 0 && autoCalculatedItems < 9999) {
+      controller.handleLimitChange(autoCalculatedItems)
+    }
+  }, [itemsPerPageMode, autoCalculatedItems, controller.handleLimitChange])
+
+  // 🍎 드롭다운 옵션 (자동 선택 시 계산된 값 표시)
+  const itemsPerPageOptions = useMemo(() => {
+    return ITEMS_PER_PAGE_OPTIONS_BASE.map(opt => {
+      if (opt.value === 'auto') {
+        return {
+          value: 'auto',
+          label: itemsPerPageMode === 'auto' ? `자동(${autoCalculatedItems})` : '자동'
+        }
+      }
+      return opt
+    })
+  }, [itemsPerPageMode, autoCalculatedItems])
+
+  // 🍎 페이지당 항목 수 변경 핸들러 ('auto' 또는 숫자)
+  const handleItemsPerPageChange = useCallback((value: string) => {
+    if (value === 'auto') {
+      setItemsPerPageMode('auto')
+      // 자동 계산값은 위 useEffect에서 반영됨
+    } else {
+      setItemsPerPageMode('manual')
+      controller.handleLimitChange(Number(value))
+    }
+  }, [controller.handleLimitChange])
+
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
 
@@ -799,7 +889,7 @@ const DocumentLibraryContent: React.FC<{
       />
 
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
-      <div className="library-list-wrapper">
+      <div className="library-list-wrapper" ref={listWrapperRef}>
       <AliasProgressOverlay
         progress={aliasProgress}
         onCancel={onAliasCancel}
@@ -846,9 +936,9 @@ const DocumentLibraryContent: React.FC<{
           {/* 🍎 페이지당 항목 수 선택 */}
           <div className="pagination-limit">
             <Dropdown
-              value={String(controller.itemsPerPage)}
-              options={ITEMS_PER_PAGE_OPTIONS}
-              onChange={(value) => controller.handleLimitChange(Number(value))}
+              value={itemsPerPageMode === 'auto' ? 'auto' : String(controller.itemsPerPage)}
+              options={itemsPerPageOptions}
+              onChange={handleItemsPerPageChange}
               aria-label="페이지당 항목 수"
               width={100}
             />
