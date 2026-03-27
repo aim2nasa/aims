@@ -1686,19 +1686,35 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         sortCriteria = { overallStatus: 1, 'upload.uploaded_at': -1 };
       } else if (sort === 'status_desc') {
         sortCriteria = { overallStatus: -1, 'upload.uploaded_at': -1 };
-      } else if (sort === 'filename_asc') {
-        sortCriteria = { 'upload.originalName': 1, 'upload.uploaded_at': -1 };
-      } else if (sort === 'filename_desc') {
-        sortCriteria = { 'upload.originalName': -1, 'upload.uploaded_at': -1 };
+      } else if (sort === 'filename_asc' || sort === 'filename_desc') {
+        // 파일명 정렬: displayName 우선, 없으면 originalName (화면 표시와 일치)
+        const filenameSortOrder = sort === 'filename_asc' ? 1 : -1;
+        documents = await db.collection(COLLECTION_NAME).aggregate([
+          { $match: filter },
+          {
+            $addFields: {
+              _sortFilename: { $ifNull: ['$displayName', '$upload.originalName'] }
+            }
+          },
+          { $sort: { _sortFilename: filenameSortOrder, 'upload.uploaded_at': -1 } },
+          { $skip: skip },
+          { $limit: parseInt(limit) },
+          { $project: { _sortFilename: 0 } },
+          ...TEXT_FLAG_STAGES
+        ], { collation: { locale: 'ko', strength: 2 } }).toArray();
+        // filename 전용 파이프라인 사용했으므로 아래 공용 블록 스킵
+        sortCriteria = null;
       }
 
-      documents = await db.collection(COLLECTION_NAME).aggregate([
-        { $match: filter },
-        { $sort: sortCriteria },
-        { $skip: skip },
-        { $limit: parseInt(limit) },
-        ...TEXT_FLAG_STAGES
-      ], { collation: { locale: 'ko', strength: 2 } }).toArray();
+      if (sortCriteria) {
+        documents = await db.collection(COLLECTION_NAME).aggregate([
+          { $match: filter },
+          { $sort: sortCriteria },
+          { $skip: skip },
+          { $limit: parseInt(limit) },
+          ...TEXT_FLAG_STAGES
+        ], { collation: { locale: 'ko', strength: 2 } }).toArray();
+      }
     }
 
     // customerId가 있는 문서의 customer_id 수집
