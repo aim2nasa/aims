@@ -21,7 +21,7 @@ import { SearchService } from '@/services/searchService'
 import type { SearchResultItem } from '@/entities/search'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { invalidateQueries } from '@/app/queryClient'
-import { DOCUMENT_TYPE_LABELS } from '@/shared/constants/documentCategories'
+import { getDocumentTypeLabelsMap } from '@/shared/constants/documentCategories'
 import './DocumentLinkModal.css'
 
 interface DocumentLinkModalProps {
@@ -39,11 +39,8 @@ interface DocumentLinkModalProps {
   }) => Promise<DocumentCustomerRelation | undefined>
 }
 
-// 시스템 유형 제외한 문서유형 옵션 (정적 상수)
+// 시스템 유형 제외 필터
 const SYSTEM_TYPES = new Set(['annual_report', 'customer_review', 'unspecified'])
-const RELATIONSHIP_OPTIONS: DropdownOption[] = Object.entries(DOCUMENT_TYPE_LABELS)
-  .filter(([value]) => !SYSTEM_TYPES.has(value))
-  .map(([value, label]) => ({ value, label }))
 
 export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   visible,
@@ -63,7 +60,12 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   // 최근 선택한 고객 목록 (전역 상태)
   const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
 
-  const relationshipOptions = RELATIONSHIP_OPTIONS
+  // DB 캐시 기반 문서유형 옵션 (시스템 유형 제외)
+  const relationshipOptions = useMemo<DropdownOption[]>(() => {
+    return Object.entries(getDocumentTypeLabelsMap())
+      .filter(([value]) => !SYSTEM_TYPES.has(value))
+      .map(([value, label]) => ({ value, label }))
+  }, [])
 
   // 단일 문서 또는 여러 문서 배열 처리
   const targetDocuments = useMemo(() => {

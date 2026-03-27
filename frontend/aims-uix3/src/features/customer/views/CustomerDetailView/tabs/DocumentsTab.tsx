@@ -41,7 +41,7 @@ import { useCustomerSSE } from '@/shared/hooks/useCustomerSSE'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { documentTypesService } from '@/services/documentTypesService'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
-import { getCategoryForType, DOCUMENT_TYPE_LABELS } from '@/shared/constants/documentCategories'
+import { getCategoryForType, getDocumentTypeLabelsMap } from '@/shared/constants/documentCategories'
 import { DocumentCategoryFilter } from './DocumentCategoryFilter'
 import './DocumentsTab.layout.css';
 import './DocumentsTab.features.css';
@@ -571,8 +571,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const docTypeLabelMap = useMemo(() => {
     const map = new Map<string, string>()
     map.set('', '-')
-    // 정적 상수에서 직접 가져옴
-    Object.entries(DOCUMENT_TYPE_LABELS).forEach(([value, label]) => {
+    // DB 기반 캐시에서 가져옴
+    Object.entries(getDocumentTypeLabelsMap()).forEach(([value, label]) => {
       map.set(value, label)
     })
     return map

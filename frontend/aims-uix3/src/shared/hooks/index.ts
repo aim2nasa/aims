@@ -18,3 +18,6 @@ export type {
 
 export { useColumnResize } from './useColumnResize'
 export type { ColumnDef } from './useColumnResize'
+
+export { useDocumentTypes, DOCUMENT_TYPES_QUERY_KEY } from './useDocumentTypes'
+export type { DocumentType } from './useDocumentTypes'

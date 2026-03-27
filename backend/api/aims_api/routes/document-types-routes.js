@@ -84,12 +84,16 @@ module.exports = (db, authenticateJWT, requireRole) => {
    */
   router.get('/document-types', async (req, res) => {
     try {
-      const { includeSystem = 'true' } = req.query;
+      const { includeSystem = 'true', includeLegacy = 'false' } = req.query;
 
       const query = {};
       // includeSystem=false 이면 시스템 유형 제외
       if (includeSystem === 'false') {
         query.isSystem = { $ne: true };
+      }
+      // 기본적으로 레거시 유형 제외, includeLegacy=true 시 포함
+      if (includeLegacy !== 'true') {
+        query.isLegacy = { $ne: true };
       }
 
       const documentTypes = await documentTypesCollection

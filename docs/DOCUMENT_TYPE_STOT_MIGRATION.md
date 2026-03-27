@@ -67,6 +67,25 @@ GET /api/document-types (API)
 - null/unspecified → 정렬 맨 뒤 배치 (sortWeight 도입)
 - 모든 유형이 DB에서 한글 라벨을 가져오므로 영문 섞임 문제 해소
 
+## 실행 결과
+
+### Phase 1: DB 마이그레이션 — 완료 (2026-03-27)
+
+스크립트: `backend/scripts/migrate_document_types_v4.py`
+
+| 항목 | 결과 |
+|------|------|
+| 신규 추가 | 7건 (corp_basic, corp_tax, corp_asset, asset_document, personal_docs, consent_delegation, insurance_etc) |
+| 라벨 수정 | 6건 (customer_review, diagnosis, plan_design, legal_document, general, unspecified) |
+| 카테고리 설정 | 18건 (전체 v4 유형에 category 부여) |
+| 순서 변경 | 18건 (v4 DOCUMENT_TYPE_LABELS 순서로 재정렬) |
+| 레거시 표시 | 29건 (v4에 없는 유형에 isLegacy: true) |
+| 멱등성 | 확인됨 (재실행 시 0건 변경) |
+
+### Phase 2: 백엔드 API — 미착수
+### Phase 3: 프론트 전환 — 미착수
+### Phase 4: 정렬 정상화 — 미착수
+
 ## 영향 파일
 
 | Phase | 파일 | 변경 |

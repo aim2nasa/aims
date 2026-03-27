@@ -27,6 +27,7 @@ import { checkFrontendVersionMismatch } from './services/versionService'
 import { errorReporter } from './shared/lib/errorReporter'
 import { logger } from './shared/lib/logger'
 import { consumeModalCleanupBack } from './shared/ui/Modal/hooks/useModalCore'
+import { prefetchDocumentTypes } from './shared/constants/documentCategories'
 
 // Lazy loading으로 성능 최적화
 const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
@@ -457,6 +458,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     loadCurrentUser()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 문서 유형 캐시 초기화 (DB SToT — 동기 함수에서 사용할 캐시를 미리 채움)
+  useEffect(() => {
+    prefetchDocumentTypes()
   }, [])
 
   // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)

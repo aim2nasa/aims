@@ -1,14 +1,105 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
+
+/**
+ * API 모킹: vi.mock 팩토리는 hoisting되므로 인라인으로 데이터 정의
+ */
+vi.mock('@/shared/lib/api', () => ({
+  api: {
+    get: vi.fn().mockResolvedValue({
+      success: true,
+      data: [
+        // 1. 보험계약 (insurance) — 정규 7개
+        { _id: '1', value: 'policy', label: '보험증권', category: 'insurance', order: 1, isSystem: false, isLegacy: false },
+        { _id: '2', value: 'coverage_analysis', label: '보장분석', category: 'insurance', order: 2, isSystem: false, isLegacy: false },
+        { _id: '3', value: 'application', label: '청약서', category: 'insurance', order: 3, isSystem: false, isLegacy: false },
+        { _id: '4', value: 'plan_design', label: '가입설계서', category: 'insurance', order: 4, isSystem: false, isLegacy: false },
+        { _id: '5', value: 'annual_report', label: '연간보고서(AR)', category: 'insurance', order: 5, isSystem: true, isLegacy: false },
+        { _id: '6', value: 'customer_review', label: '변액리포트(CRS)', category: 'insurance', order: 6, isSystem: true, isLegacy: false },
+        { _id: '7', value: 'insurance_etc', label: '기타 보험관련', category: 'insurance', order: 7, isSystem: false, isLegacy: false },
+
+        // 2. 보험금 청구 (claim) — 정규 4개
+        { _id: '8', value: 'diagnosis', label: '진단서/소견서', category: 'claim', order: 8, isSystem: false, isLegacy: false },
+        { _id: '9', value: 'medical_receipt', label: '진료비영수증', category: 'claim', order: 9, isSystem: false, isLegacy: false },
+        { _id: '10', value: 'claim_form', label: '보험금청구서', category: 'claim', order: 10, isSystem: false, isLegacy: false },
+        { _id: '11', value: 'consent_delegation', label: '위임장/동의서', category: 'claim', order: 11, isSystem: false, isLegacy: false },
+
+        // 3. 신분/증명 (identity) — 정규 3개
+        { _id: '12', value: 'id_card', label: '신분증', category: 'identity', order: 12, isSystem: false, isLegacy: false },
+        { _id: '13', value: 'family_cert', label: '가족관계서류', category: 'identity', order: 13, isSystem: false, isLegacy: false },
+        { _id: '14', value: 'personal_docs', label: '기타 통장 및 개인서류', category: 'identity', order: 14, isSystem: false, isLegacy: false },
+
+        // 4. 건강/의료 (medical) — 정규 1개
+        { _id: '15', value: 'health_checkup', label: '건강검진결과', category: 'medical', order: 15, isSystem: false, isLegacy: false },
+
+        // 5. 자산 (asset) — 정규 2개
+        { _id: '16', value: 'asset_document', label: '자산관련서류', category: 'asset', order: 16, isSystem: false, isLegacy: false },
+        { _id: '17', value: 'inheritance_gift', label: '상속/증여', category: 'asset', order: 17, isSystem: false, isLegacy: false },
+
+        // 6. 법인 (corporate) — 정규 5개
+        { _id: '18', value: 'corp_basic', label: '기본서류', category: 'corporate', order: 18, isSystem: false, isLegacy: false },
+        { _id: '19', value: 'hr_document', label: '인사/노무', category: 'corporate', order: 19, isSystem: false, isLegacy: false },
+        { _id: '20', value: 'corp_tax', label: '세무', category: 'corporate', order: 20, isSystem: false, isLegacy: false },
+        { _id: '21', value: 'corp_asset', label: '법인자산', category: 'corporate', order: 21, isSystem: false, isLegacy: false },
+        { _id: '22', value: 'legal_document', label: '기타 법률서류', category: 'corporate', order: 22, isSystem: false, isLegacy: false },
+
+        // 7. 기타 (etc) — 정규 3개
+        { _id: '23', value: 'general', label: '일반문서', category: 'etc', order: 23, isSystem: false, isLegacy: false },
+        { _id: '24', value: 'unclassifiable', label: '분류불가', category: 'etc', order: 24, isSystem: false, isLegacy: false },
+        { _id: '25', value: 'unspecified', label: '-', category: 'etc', order: 25, isSystem: true, isLegacy: false },
+
+        // === 레거시 매핑 ===
+        { _id: '100', value: 'proposal', label: '제안서', category: 'insurance', order: 100, isSystem: false, isLegacy: true },
+        { _id: '101', value: 'terms', label: '약관', category: 'insurance', order: 101, isSystem: false, isLegacy: true },
+        { _id: '102', value: 'change_request', label: '변경요청', category: 'insurance', order: 102, isSystem: false, isLegacy: true },
+        { _id: '103', value: 'surrender', label: '해지', category: 'insurance', order: 103, isSystem: false, isLegacy: true },
+        { _id: '104', value: 'hospital_cert', label: '진료확인서', category: 'claim', order: 104, isSystem: false, isLegacy: true },
+        { _id: '105', value: 'medical_record', label: '진료기록', category: 'claim', order: 105, isSystem: false, isLegacy: true },
+        { _id: '106', value: 'accident_cert', label: '사고증명서', category: 'claim', order: 106, isSystem: false, isLegacy: true },
+        { _id: '107', value: 'consent_form', label: '동의서', category: 'claim', order: 107, isSystem: false, isLegacy: true },
+        { _id: '108', value: 'power_of_attorney', label: '위임장', category: 'claim', order: 108, isSystem: false, isLegacy: true },
+        { _id: '109', value: 'bank_account', label: '통장사본', category: 'identity', order: 109, isSystem: false, isLegacy: true },
+        { _id: '110', value: 'seal_signature', label: '인감', category: 'identity', order: 110, isSystem: false, isLegacy: true },
+        { _id: '111', value: 'business_card', label: '명함', category: 'identity', order: 111, isSystem: false, isLegacy: true },
+        { _id: '112', value: 'income_proof', label: '소득증명', category: 'asset', order: 112, isSystem: false, isLegacy: true },
+        { _id: '113', value: 'employment_cert', label: '재직증명', category: 'asset', order: 113, isSystem: false, isLegacy: true },
+        { _id: '114', value: 'financial_statement', label: '재무제표', category: 'asset', order: 114, isSystem: false, isLegacy: true },
+        { _id: '115', value: 'tax_document', label: '세무서류', category: 'corporate', order: 115, isSystem: false, isLegacy: true },
+        { _id: '116', value: 'transaction_proof', label: '거래증명', category: 'asset', order: 116, isSystem: false, isLegacy: true },
+        { _id: '117', value: 'property_registry', label: '부동산등기', category: 'asset', order: 117, isSystem: false, isLegacy: true },
+        { _id: '118', value: 'vehicle_registry', label: '차량등록', category: 'asset', order: 118, isSystem: false, isLegacy: true },
+        { _id: '119', value: 'business_registry', label: '사업자등록', category: 'asset', order: 119, isSystem: false, isLegacy: true },
+        { _id: '120', value: 'corp_registry', label: '법인등기', category: 'corporate', order: 120, isSystem: false, isLegacy: true },
+        { _id: '121', value: 'shareholder', label: '주주명부', category: 'corporate', order: 121, isSystem: false, isLegacy: true },
+        { _id: '122', value: 'meeting_minutes', label: '의사록', category: 'corporate', order: 122, isSystem: false, isLegacy: true },
+        { _id: '123', value: 'pension', label: '연금', category: 'corporate', order: 123, isSystem: false, isLegacy: true },
+        { _id: '124', value: 'business_plan', label: '사업계획서', category: 'corporate', order: 124, isSystem: false, isLegacy: true },
+        { _id: '125', value: 'contract', label: '계약서', category: 'corporate', order: 125, isSystem: false, isLegacy: true },
+        { _id: '126', value: 'memo', label: '메모', category: 'etc', order: 126, isSystem: false, isLegacy: true },
+        { _id: '127', value: 'claim', label: '보험금청구', category: 'claim', order: 127, isSystem: false, isLegacy: true },
+      ],
+    }),
+  },
+}))
+
 import {
   DOCUMENT_CATEGORIES,
-  DOCUMENT_TYPE_LABELS,
   getCategoryForType,
   getCategoryInfo,
   getDocumentTypeLabel,
   getGroupedDocumentTypes,
+  getTypeDisplayOrder,
+  getDocumentTypeLabelsMap,
+  prefetchDocumentTypes,
+  isDocumentTypeCacheReady,
 } from '../documentCategories'
 
-describe('documentCategories (v4)', () => {
+describe('documentCategories (v4 — DB SToT)', () => {
+  // 모든 테스트 전에 캐시 초기화
+  beforeAll(async () => {
+    await prefetchDocumentTypes()
+    expect(isDocumentTypeCacheReady()).toBe(true)
+  })
+
   describe('DOCUMENT_CATEGORIES', () => {
     it('7개 대분류 카테고리가 정의되어 있다', () => {
       expect(DOCUMENT_CATEGORIES).toHaveLength(7)
@@ -39,24 +130,44 @@ describe('documentCategories (v4)', () => {
       const values = DOCUMENT_CATEGORIES.map(c => c.value)
       expect(values).not.toContain('financial')
       expect(values).not.toContain('legal')
-      // general은 대분류에서 etc로 변경됨
       expect(values).not.toContain('general')
     })
   })
 
-  describe('DOCUMENT_TYPE_LABELS', () => {
-    it('v4 25개 소분류 레이블이 정의되어 있다', () => {
-      expect(Object.keys(DOCUMENT_TYPE_LABELS)).toHaveLength(25)
+  describe('getDocumentTypeLabel', () => {
+    it('v4 정규 타입의 레이블을 반환한다', () => {
+      expect(getDocumentTypeLabel('insurance_etc')).toBe('기타 보험관련')
+      expect(getDocumentTypeLabel('consent_delegation')).toBe('위임장/동의서')
+      expect(getDocumentTypeLabel('personal_docs')).toBe('기타 통장 및 개인서류')
     })
 
-    it('신규 소분류 레이블이 존재한다', () => {
-      expect(DOCUMENT_TYPE_LABELS.insurance_etc).toBe('기타 보험관련')
-      expect(DOCUMENT_TYPE_LABELS.consent_delegation).toBe('위임장/동의서')
-      expect(DOCUMENT_TYPE_LABELS.personal_docs).toBe('기타 통장 및 개인서류')
-      expect(DOCUMENT_TYPE_LABELS.asset_document).toBe('자산관련서류')
-      expect(DOCUMENT_TYPE_LABELS.corp_basic).toBe('기본서류')
-      expect(DOCUMENT_TYPE_LABELS.corp_tax).toBe('세무')
-      expect(DOCUMENT_TYPE_LABELS.corp_asset).toBe('법인자산')
+    it('null/undefined는 -를 반환한다', () => {
+      expect(getDocumentTypeLabel(null)).toBe('-')
+      expect(getDocumentTypeLabel(undefined)).toBe('-')
+    })
+
+    it('매핑에 없는 타입은 기타를 반환한다', () => {
+      expect(getDocumentTypeLabel('unknown')).toBe('기타')
+    })
+  })
+
+  describe('getDocumentTypeLabelsMap', () => {
+    it('레거시 제외한 라벨 맵을 반환한다', () => {
+      const map = getDocumentTypeLabelsMap()
+      expect(Object.keys(map)).toHaveLength(25)
+      expect(map.insurance_etc).toBe('기타 보험관련')
+      expect(map.consent_delegation).toBe('위임장/동의서')
+      expect(map.personal_docs).toBe('기타 통장 및 개인서류')
+      expect(map.asset_document).toBe('자산관련서류')
+      expect(map.corp_basic).toBe('기본서류')
+      expect(map.corp_tax).toBe('세무')
+      expect(map.corp_asset).toBe('법인자산')
+    })
+
+    it('레거시 타입이 포함되지 않는다', () => {
+      const map = getDocumentTypeLabelsMap()
+      expect(map.proposal).toBeUndefined()
+      expect(map.memo).toBeUndefined()
     })
   })
 
@@ -115,12 +226,10 @@ describe('documentCategories (v4)', () => {
     })
 
     it('v3 재정/세무 레거시 타입이 v4 카테고리로 매핑된다', () => {
-      // 자산으로 이동
       expect(getCategoryForType('income_proof')).toBe('asset')
       expect(getCategoryForType('employment_cert')).toBe('asset')
       expect(getCategoryForType('financial_statement')).toBe('asset')
       expect(getCategoryForType('transaction_proof')).toBe('asset')
-      // 법인으로 이동
       expect(getCategoryForType('tax_document')).toBe('corporate')
     })
 
@@ -177,20 +286,14 @@ describe('documentCategories (v4)', () => {
     })
   })
 
-  describe('getDocumentTypeLabel', () => {
-    it('v4 정규 타입의 레이블을 반환한다', () => {
-      expect(getDocumentTypeLabel('insurance_etc')).toBe('기타 보험관련')
-      expect(getDocumentTypeLabel('consent_delegation')).toBe('위임장/동의서')
-      expect(getDocumentTypeLabel('personal_docs')).toBe('기타 통장 및 개인서류')
+  describe('getTypeDisplayOrder', () => {
+    it('order 필드 값을 반환한다', () => {
+      expect(getTypeDisplayOrder('policy')).toBe(1)
+      expect(getTypeDisplayOrder('general')).toBe(23)
     })
 
-    it('null/undefined는 -를 반환한다', () => {
-      expect(getDocumentTypeLabel(null)).toBe('-')
-      expect(getDocumentTypeLabel(undefined)).toBe('-')
-    })
-
-    it('매핑에 없는 타입은 기타를 반환한다', () => {
-      expect(getDocumentTypeLabel('unknown')).toBe('기타')
+    it('알 수 없는 타입은 999를 반환한다', () => {
+      expect(getTypeDisplayOrder('unknown')).toBe(999)
     })
   })
 

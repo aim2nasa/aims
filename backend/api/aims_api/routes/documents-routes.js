@@ -1633,28 +1633,34 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
             as: 'docType_info'
           }
         },
-        // 3단계: 정렬용 한글 라벨 생성
+        // 3단계: 정렬용 한글 라벨 + sortWeight 생성 (null/unspecified → 맨 뒤)
         {
           $addFields: {
+            _isUnspecified: {
+              $or: [
+                { $eq: [{ $ifNull: ['$_normalized_docType', null] }, null] },
+                { $eq: ['$_normalized_docType', 'unspecified'] },
+                { $eq: ['$_normalized_docType', ''] }
+              ]
+            }
+          }
+        },
+        {
+          $addFields: {
+            docType_sortWeight: { $cond: { if: '$_isUnspecified', then: 1, else: 0 } },
             docType_label: {
               $cond: {
-                if: {
-                  $or: [
-                    { $eq: [{ $ifNull: ['$_normalized_docType', null] }, null] },
-                    { $eq: ['$_normalized_docType', 'unspecified'] },
-                    { $eq: ['$_normalized_docType', ''] }
-                  ]
-                },
-                then: '미지정', // 한글 가나다순 정렬
+                if: '$_isUnspecified',
+                then: '미지정',
                 else: { $ifNull: [{ $arrayElemAt: ['$docType_info.label', 0] }, '$_normalized_docType'] }
               }
             }
           }
         },
-        { $sort: { docType_label: sortOrder, 'upload.uploaded_at': -1 } },
+        { $sort: { docType_sortWeight: 1, docType_label: sortOrder, 'upload.uploaded_at': -1 } },
         { $skip: skip },
         { $limit: parseInt(limit) },
-        { $project: { docType_info: 0, docType_label: 0, _normalized_docType: 0 } },
+        { $project: { docType_info: 0, docType_label: 0, docType_sortWeight: 0, _normalized_docType: 0, _isUnspecified: 0 } },
         ...TEXT_FLAG_STAGES
       ], { collation: { locale: 'ko' } }).toArray();
     } else if (sort === 'uploadDate_asc' || sort === 'uploadDate_desc' || !sort) {
@@ -3182,37 +3188,26 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
   // GET  /api/documents/download/:downloadId — 정적 파일 전송 (Range 이어받기 지원)
   // ========================
 
-  // 카테고리/서브타입 레이블 매핑 (document_type → 한글명)
+  // 카테고리 한글 라벨 (category 코드 → 한글명)
   const CATEGORY_LABELS = {
     insurance: '보험계약', claim: '보험금청구', identity: '신분·증명',
     medical: '건강·의료', asset: '자산', corporate: '법인', etc: '기타'
   };
-  const TYPE_TO_CATEGORY = {
-    policy: 'insurance', coverage_analysis: 'insurance', application: 'insurance',
-    plan_design: 'insurance', annual_report: 'insurance', customer_review: 'insurance',
-    insurance_etc: 'insurance',
-    diagnosis: 'claim', medical_receipt: 'claim', claim_form: 'claim',
-    consent_delegation: 'claim',
-    id_card: 'identity', family_cert: 'identity', personal_docs: 'identity',
-    health_checkup: 'medical',
-    asset_document: 'asset', inheritance_gift: 'asset',
-    corp_basic: 'corporate', hr_document: 'corporate', corp_tax: 'corporate',
-    corp_asset: 'corporate', legal_document: 'corporate',
-    general: 'etc', unclassifiable: 'etc', unspecified: 'etc'
-  };
-  const SUBTYPE_LABELS = {
-    policy: '보험증권', coverage_analysis: '보장분석', application: '청약서',
-    plan_design: '가입설계서', annual_report: '연간보고서(AR)', customer_review: '변액리포트(CRS)',
-    insurance_etc: '기타 보험관련',
-    diagnosis: '진단서·소견서', medical_receipt: '진료비영수증',
-    claim_form: '보험금청구서', consent_delegation: '위임장·동의서',
-    id_card: '신분증', family_cert: '가족관계서류', personal_docs: '기타 통장 및 개인서류',
-    health_checkup: '건강검진결과',
-    asset_document: '자산관련서류', inheritance_gift: '상속·증여',
-    corp_basic: '기본서류', hr_document: '인사·노무', corp_tax: '세무',
-    corp_asset: '법인자산', legal_document: '기타 법률서류',
-    general: '일반문서', unclassifiable: '분류불가', unspecified: '미지정'
-  };
+
+  /**
+   * DB document_types 컬렉션에서 TYPE_TO_CATEGORY, SUBTYPE_LABELS 매핑 동적 생성
+   * @returns {{ typeToCategoryMap: Record<string,string>, subtypeLabelMap: Record<string,string> }}
+   */
+  async function buildDocTypeMapping() {
+    const docTypes = await db.collection('document_types').find({}).toArray();
+    const typeToCategoryMap = {};
+    const subtypeLabelMap = {};
+    for (const dt of docTypes) {
+      typeToCategoryMap[dt.value] = dt.category || 'etc';
+      subtypeLabelMap[dt.value] = dt.label || dt.value;
+    }
+    return { typeToCategoryMap, subtypeLabelMap };
+  }
 
   // 폴더/파일명 안전 처리
   function sanitizeZipName(name) {
@@ -3287,6 +3282,9 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
       if (customers.length !== customerIds.length) {
         return res.status(403).json({ success: false, error: '접근 권한이 없는 고객이 포함되어 있습니다.', timestamp: utcNowISO() });
       }
+
+      // 1-b. 문서 유형 매핑 DB 조회 (하드코딩 제거)
+      const { typeToCategoryMap, subtypeLabelMap } = await buildDocTypeMapping();
 
       // 2. 동명이인 감지 (ZIP 내 폴더명 충돌 방지)
       const nameCount = new Map();
@@ -3432,11 +3430,11 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
             continue;
           }
 
-          // 카테고리/서브타입 폴더 경로 결정
+          // 카테고리/서브타입 폴더 경로 결정 (DB 조회 매핑 사용)
           const docType = doc.document_type || (doc.meta && doc.meta.document_type) || 'unspecified';
-          const category = TYPE_TO_CATEGORY[docType] || 'etc';
+          const category = typeToCategoryMap[docType] || 'etc';
           const catLabel = CATEGORY_LABELS[category] || '기타';
-          const subLabel = SUBTYPE_LABELS[docType] || docType;
+          const subLabel = subtypeLabelMap[docType] || docType;
 
           // 폴더 경로 구성
           let folderPath;

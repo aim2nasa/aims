@@ -1,7 +1,15 @@
 /**
  * AIMS 문서 분류 카테고리 매핑
- * TAXONOMY_V4_MIGRATION.md 기준 (7대분류, 25소분류)
+ * TAXONOMY_V4_MIGRATION.md 기준 (7대분류)
+ *
+ * [Phase 3] DB SToT 전환:
+ * - DOCUMENT_TYPE_LABELS, TYPE_TO_CATEGORY 하드코딩 상수 제거
+ * - 모듈 레벨 캐시(_typeCache)에 API 데이터를 저장하여 동기 함수 유지
+ * - prefetchDocumentTypes()로 앱 시작 시 캐시 채움
  */
+
+import { api } from '@/shared/lib/api'
+import type { DocumentType } from '@/shared/hooks/useDocumentTypes'
 
 export interface DocumentCategory {
   value: string
@@ -10,7 +18,7 @@ export interface DocumentCategory {
   color: string
 }
 
-/** 7개 대분류 카테고리 정의 (표시 순서) */
+/** 7개 대분류 카테고리 정의 (표시 순서) — UI 관심사이므로 프론트엔드에 유지 */
 export const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   { value: 'insurance', label: '보험계약', icon: 'shield', color: '#2563eb' },
   { value: 'claim', label: '보험금청구', icon: 'cross.case', color: '#dc2626' },
@@ -21,118 +29,72 @@ export const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   { value: 'etc', label: '기타', icon: 'doc', color: '#6b7280' },
 ]
 
-/** document_type → 소분류 한글 레이블 (v4 기준) */
-export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  // 1. 보험계약 (insurance)
-  policy: '보험증권',
-  coverage_analysis: '보장분석',
-  application: '청약서',
-  plan_design: '가입설계서',
-  annual_report: '연간보고서(AR)',
-  customer_review: '변액리포트(CRS)',
-  insurance_etc: '기타 보험관련',
+// ============================================================================
+// 모듈 레벨 캐시 (prefetchDocumentTypes로 채워짐)
+// ============================================================================
 
-  // 2. 보험금 청구 (claim)
-  diagnosis: '진단서/소견서',
-  medical_receipt: '진료비영수증',
-  claim_form: '보험금청구서',
-  consent_delegation: '위임장/동의서',
-
-  // 3. 신분/증명 (identity)
-  id_card: '신분증',
-  family_cert: '가족관계서류',
-  personal_docs: '기타 통장 및 개인서류',
-
-  // 4. 건강/의료 (medical)
-  health_checkup: '건강검진결과',
-
-  // 5. 자산 (asset)
-  asset_document: '자산관련서류',
-  inheritance_gift: '상속/증여',
-
-  // 6. 법인 (corporate)
-  corp_basic: '기본서류',
-  hr_document: '인사/노무',
-  corp_tax: '세무',
-  corp_asset: '법인자산',
-  legal_document: '기타 법률서류',
-
-  // 7. 기타 (etc)
-  general: '일반문서',
-  unclassifiable: '분류불가',
-  unspecified: '-',
+/** 캐시 엔트리: label + category */
+interface TypeCacheEntry {
+  label: string
+  category: string
+  isSystem?: boolean
+  isLegacy?: boolean
+  order: number
 }
 
-/** document_type → category 매핑 */
-const TYPE_TO_CATEGORY: Record<string, string> = {
-  // 1. 보험계약 (insurance)
-  policy: 'insurance',
-  coverage_analysis: 'insurance',
-  application: 'insurance',
-  plan_design: 'insurance',
-  annual_report: 'insurance',
-  customer_review: 'insurance',
-  insurance_etc: 'insurance',
+/** 모듈 레벨 캐시 — prefetch 후 동기 함수에서 조회 */
+let _typeCache: Map<string, TypeCacheEntry> = new Map()
 
-  // 2. 보험금 청구 (claim)
-  diagnosis: 'claim',
-  medical_receipt: 'claim',
-  claim_form: 'claim',
-  consent_delegation: 'claim',
+/** 캐시 초기화 완료 여부 */
+let _cacheReady = false
 
-  // 3. 신분/증명 (identity)
-  id_card: 'identity',
-  family_cert: 'identity',
-  personal_docs: 'identity',
+/**
+ * 앱 시작 시 호출하여 문서 유형 데이터를 API에서 가져와 캐시에 저장합니다.
+ * App.tsx 초기화 시점에서 호출하세요.
+ *
+ * 실패 시 콘솔 경고만 출력하고, 동기 함수는 기본값('-', 'etc')을 반환합니다.
+ */
+export async function prefetchDocumentTypes(): Promise<void> {
+  try {
+    const response = await api.get<{ success: boolean; data: DocumentType[] }>(
+      '/api/document-types?includeLegacy=true'
+    )
+    const types = response.data
+    const newCache = new Map<string, TypeCacheEntry>()
+    for (const t of types) {
+      newCache.set(t.value, {
+        label: t.label,
+        category: t.category || 'etc',
+        isSystem: t.isSystem,
+        isLegacy: t.isLegacy,
+        order: t.order,
+      })
+    }
+    _typeCache = newCache
+    _cacheReady = true
+  } catch (error) {
+    console.warn('[documentCategories] prefetch 실패 — 동기 함수는 기본값을 반환합니다:', error)
+  }
+}
 
-  // 4. 건강/의료 (medical)
-  health_checkup: 'medical',
+/**
+ * 캐시가 준비되었는지 확인
+ */
+export function isDocumentTypeCacheReady(): boolean {
+  return _cacheReady
+}
 
-  // 5. 자산 (asset)
-  asset_document: 'asset',
-  inheritance_gift: 'asset',
+// ============================================================================
+// 동기 함수들 — 기존 시그니처 100% 유지
+// ============================================================================
 
-  // 6. 법인 (corporate)
-  corp_basic: 'corporate',
-  hr_document: 'corporate',
-  corp_tax: 'corporate',
-  corp_asset: 'corporate',
-  legal_document: 'corporate',
-
-  // 7. 기타 (etc)
-  general: 'etc',
-  unclassifiable: 'etc',
-  unspecified: 'etc',
-
-  // === 레거시 매핑 (DB 마이그레이션 전 방어) ===
-  proposal: 'insurance',          // → plan_design
-  terms: 'insurance',             // → insurance_etc
-  change_request: 'insurance',    // → insurance_etc
-  surrender: 'insurance',         // → insurance_etc
-  hospital_cert: 'claim',         // → diagnosis
-  medical_record: 'claim',        // → diagnosis (현행: medical)
-  accident_cert: 'claim',         // → claim_form
-  consent_form: 'claim',          // → consent_delegation (현행: identity)
-  power_of_attorney: 'claim',     // → consent_delegation (현행: identity)
-  bank_account: 'identity',       // → personal_docs
-  seal_signature: 'identity',     // → personal_docs
-  business_card: 'identity',      // → personal_docs
-  income_proof: 'asset',          // → asset_document (현행: financial)
-  employment_cert: 'asset',       // → asset_document (현행: financial)
-  financial_statement: 'asset',   // → asset_document (현행: financial)
-  tax_document: 'corporate',      // → corp_tax (현행: financial)
-  transaction_proof: 'asset',     // → asset_document (현행: financial)
-  property_registry: 'asset',     // → asset_document
-  vehicle_registry: 'asset',      // → asset_document
-  business_registry: 'asset',     // → asset_document
-  corp_registry: 'corporate',     // → corp_basic
-  shareholder: 'corporate',       // → corp_basic
-  meeting_minutes: 'corporate',   // → corp_basic
-  pension: 'corporate',           // → hr_document
-  business_plan: 'corporate',     // → legal_document
-  contract: 'corporate',          // → legal_document (현행: legal)
-  memo: 'etc',                    // → general
-  claim: 'claim',                 // 기존 레거시
+/**
+ * document_type 값으로 한글 소분류 레이블을 반환
+ * 캐시에 없으면 '기타' 반환
+ */
+export function getDocumentTypeLabel(documentType: string | undefined | null): string {
+  if (!documentType) return '-'
+  return _typeCache.get(documentType)?.label ?? '기타'
 }
 
 /**
@@ -141,15 +103,7 @@ const TYPE_TO_CATEGORY: Record<string, string> = {
  */
 export function getCategoryForType(documentType: string | undefined | null): string {
   if (!documentType) return 'etc'
-  return TYPE_TO_CATEGORY[documentType] ?? 'etc'
-}
-
-/**
- * document_type 값으로 한글 소분류 레이블을 반환
- */
-export function getDocumentTypeLabel(documentType: string | undefined | null): string {
-  if (!documentType) return '-'
-  return DOCUMENT_TYPE_LABELS[documentType] ?? '기타'
+  return _typeCache.get(documentType)?.category ?? 'etc'
 }
 
 /**
@@ -160,14 +114,11 @@ export function getCategoryInfo(categoryValue: string): DocumentCategory | undef
 }
 
 /**
- * 소분류 표시 순서 (DOCUMENT_TYPE_LABELS 키 순서 = GT 폴더 순서)
- * 1.1 보험증권 → 1.2 보장분석 → ... → 7.2 분류불가
+ * 소분류 표시 순서 (DB order 필드 기준)
  */
-const TYPE_DISPLAY_ORDER = Object.keys(DOCUMENT_TYPE_LABELS)
-
 export function getTypeDisplayOrder(typeValue: string): number {
-  const idx = TYPE_DISPLAY_ORDER.indexOf(typeValue)
-  return idx === -1 ? 999 : idx
+  const entry = _typeCache.get(typeValue)
+  return entry ? entry.order : 999
 }
 
 /** 대분류별 소분류 그룹 목록 (시스템 유형 annual_report, customer_review 제외) */
@@ -181,11 +132,27 @@ const SYSTEM_TYPES = new Set(['annual_report', 'customer_review'])
 export function getGroupedDocumentTypes(): DocumentTypeGroup[] {
   return DOCUMENT_CATEGORIES.map(cat => ({
     category: cat,
-    types: Object.keys(DOCUMENT_TYPE_LABELS)
-      .filter(typeValue =>
-        TYPE_TO_CATEGORY[typeValue] === cat.value &&
-        !SYSTEM_TYPES.has(typeValue)
+    types: Array.from(_typeCache.entries())
+      .filter(([value, entry]) =>
+        entry.category === cat.value &&
+        !entry.isLegacy &&
+        !SYSTEM_TYPES.has(value)
       )
-      .map(typeValue => ({ value: typeValue, label: DOCUMENT_TYPE_LABELS[typeValue] ?? typeValue }))
+      .sort((a, b) => a[1].order - b[1].order)
+      .map(([value, entry]) => ({ value, label: entry.label }))
   })).filter(group => group.types.length > 0)
+}
+
+/**
+ * 캐시에서 전체 문서 유형 라벨 맵을 반환 (레거시 제외)
+ * DocumentsTab, DocumentLinkModal 등에서 DOCUMENT_TYPE_LABELS 대체용
+ */
+export function getDocumentTypeLabelsMap(): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const [value, entry] of _typeCache.entries()) {
+    if (!entry.isLegacy) {
+      map[value] = entry.label
+    }
+  }
+  return map
 }
