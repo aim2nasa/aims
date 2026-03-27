@@ -107,7 +107,6 @@ const DocumentLibraryContent: React.FC<{
   onDocumentDoubleClick?: (document: Document) => void
   onDeleteSelected: () => void
   onDeleteSingleDocument: (documentId: string, documentName: string) => Promise<void>
-  onDeleteAll?: () => void
   isDeleting: boolean
   isGeneratingAliases: boolean
   onGenerateAliases: (forceRegenerate: boolean) => void
@@ -122,10 +121,10 @@ const DocumentLibraryContent: React.FC<{
   customerFilter: { id: string; name: string } | null
   /** 고객 필터 설정 핸들러 */
   onCustomerFilterChange: (filter: { id: string; name: string } | null) => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, onDeleteAll, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange }) => {
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
-  // 🍎 개발서버 여부 (localhost에서만 고객 필터/전체 삭제 기능 활성화)
+  // 🍎 개발서버 여부 (localhost에서만 고객 필터 기능 활성화)
   const isDevServer = window.location.hostname === 'localhost'
 
   // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
@@ -790,18 +789,6 @@ const DocumentLibraryContent: React.FC<{
                   >
                     {isDeleting ? '삭제 중...' : '삭제'}
                   </Button>
-                  {isDevServer && onDeleteAll && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={onDeleteAll}
-                      disabled={isDeleting || state.totalCount === 0}
-                    >
-                      {customerFilter?.name
-                        ? `${customerFilter.name} 전체 삭제`
-                        : `전체 삭제 (${state.totalCount})`}
-                    </Button>
-                  )}
                 </>
               )}
 
@@ -1379,45 +1366,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }
   }, [confirmModal])
 
-  // 🍎 전체 문서 삭제 핸들러 (개발자 모드 전용)
-  // 고객 필터 활성화 시 해당 고객 문서만 삭제, 없으면 전체 삭제
-  const handleDeleteAllDocuments = React.useCallback(async () => {
-    const isCustomerFiltered = !!customerFilter?.id
-    const targetLabel = isCustomerFiltered
-      ? `${customerFilter.name}의 모든 문서`
-      : '모든 문서'
-
-    const confirmed = await confirmModal.actions.openModal({
-      title: isCustomerFiltered ? '고객 문서 전체 삭제' : '전체 문서 삭제',
-      message: `${targetLabel}를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`,
-      confirmText: '전체 삭제',
-      cancelText: '취소',
-      showCancel: true,
-      confirmStyle: 'destructive',
-      iconType: 'warning',
-      ...(isCustomerFiltered ? {} : { requireTextConfirm: '전체삭제' }),
-    })
-
-    if (!confirmed) return
-
-    try {
-      setIsDeleting(true)
-      const result = await DocumentService.deleteAllDocuments(customerFilter?.id ?? undefined)
-      console.log(`🗑️ [DEV] 문서 삭제 완료: ${result.deletedCount}건 (${isCustomerFiltered ? customerFilter.name : '전체'})`)
-      window.location.reload()
-    } catch (error) {
-      console.error('Error in handleDeleteAllDocuments:', error)
-      errorReporter.reportApiError(error as Error, { component: 'DocumentLibraryView.handleDeleteAllDocuments' })
-      setIsDeleting(false)
-      await confirmModal.actions.openModal({
-        title: '삭제 실패',
-        message: '문서 삭제 중 오류가 발생했습니다.',
-        confirmText: '확인',
-        showCancel: false,
-      })
-    }
-  }, [confirmModal, customerFilter])
-
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="전체 문서 보기" titleIcon={<span className="menu-icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>} breadcrumbItems={breadcrumbItems} onBreadcrumbClick={onNavigate}>
       <div className="document-library-view">
@@ -1447,7 +1395,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onToggleAliasMode={handleToggleAliasMode}
             onDeleteSelected={handleDeleteSelected}
             onDeleteSingleDocument={handleDeleteSingleDocument}
-            onDeleteAll={handleDeleteAllDocuments}
             isDeleting={isDeleting}
             isGeneratingAliases={isGeneratingAliases}
             onGenerateAliases={handleGenerateAliases}
