@@ -678,8 +678,8 @@ router.get('/documents', authenticateJWT, async (req, res) => {
         customer_relation: customerRelation,
         ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
         customerId: doc.customerId || null,  // 🆕 내 파일 기능
-        document_type: doc.document_type || (doc.meta && doc.meta.document_type) || null,  // 🏷️ 문서 유형
-        document_type_auto: doc.document_type_auto || (doc.meta && doc.meta.document_type_auto) || false  // 🏷️ 자동 분류 여부
+        document_type: doc.document_type || null,  // 🏷️ 문서 유형 (SSoT: top-level만 참조)
+        document_type_auto: doc.document_type_auto || false  // 🏷️ 자동 분류 여부 (SSoT: top-level만 참조)
       };
     });
 
@@ -963,8 +963,8 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
               ownerId: doc.ownerId || null,
               customerId: doc.customerId || null,
               folderId: doc.folderId || null,
-              document_type: doc.document_type || (doc.meta && doc.meta.document_type) || null,
-              document_type_auto: doc.document_type_auto || (doc.meta && doc.meta.document_type_auto) || false,
+              document_type: doc.document_type || null,  // SSoT: top-level만 참조
+              document_type_auto: doc.document_type_auto || false,  // SSoT: top-level만 참조
               virusScan: doc.virusScan || null,
               ...statusInfo
             };
@@ -1018,7 +1018,7 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
             uploadedAt: { $ifNull: ['$upload.uploaded_at', null] },
             fileSize: { $ifNull: ['$meta.size_bytes', null] },
             mimeType: { $ifNull: ['$meta.mime', null] },
-            document_type: { $ifNull: ['$document_type', { $ifNull: ['$meta.document_type', null] }] },
+            document_type: { $ifNull: ['$document_type', null] },  // SSoT: top-level만 참조
             badgeType: '$badgeType'
           }},
           totalCount: { $sum: 1 }
@@ -1619,7 +1619,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
                   { case: { $eq: ['$is_annual_report', true] }, then: 'annual_report' },
                   { case: { $eq: ['$is_customer_review', true] }, then: 'customer_review' }
                 ],
-                default: { $ifNull: ['$document_type', '$meta.document_type'] }
+                default: '$document_type'  // SSoT: top-level만 참조
               }
             }
           }
@@ -1885,8 +1885,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
         customerId: doc.customerId || null,  // 🆕 내 파일 기능
         folderId: doc.folderId || null,  // 🆕 내 파일 폴더 구조
-        document_type: doc.document_type || (doc.meta && doc.meta.document_type) || null,  // 🏷️ 문서 유형
-        document_type_auto: doc.document_type_auto || (doc.meta && doc.meta.document_type_auto) || false,  // 🏷️ 자동 분류 여부
+        document_type: doc.document_type || null,  // 🏷️ 문서 유형 (SSoT: top-level만 참조)
+        document_type_auto: doc.document_type_auto || false,  // 🏷️ 자동 분류 여부 (SSoT: top-level만 참조)
         virusScan: doc.virusScan || null,  // 🔴 바이러스 스캔 정보
         ...statusInfo
       };
@@ -3447,7 +3447,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
           }
 
           // 카테고리/서브타입 폴더 경로 결정 (DB 조회 매핑 사용)
-          const docType = doc.document_type || (doc.meta && doc.meta.document_type) || 'unspecified';
+          const docType = doc.document_type || 'unspecified';  // SSoT: top-level만 참조
           const category = typeToCategoryMap[docType] || 'etc';
           const catLabel = CATEGORY_LABELS[category] || '기타';
           const subLabel = subtypeLabelMap[docType] || docType;

@@ -2561,9 +2561,9 @@ router.get('/customers/:id/documents', authenticateJWT, async (req, res) => {
         conversionStatus: doc.upload?.conversion_status || null,
         isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),
         // 🍎 문서 유형 필드 추가 (CustomerFullDetailView 문서 카드에서 사용)
-        document_type: doc.document_type || (doc.meta && doc.meta.document_type) || null,
-        document_type_auto: doc.document_type_auto || (doc.meta && doc.meta.document_type_auto) || false,
-        document_type_confidence: doc.document_type_confidence || (doc.meta && doc.meta.document_type_confidence) || null,
+        document_type: doc.document_type || null,  // SSoT: top-level만 참조
+        document_type_auto: doc.document_type_auto || false,  // SSoT: top-level만 참조
+        document_type_confidence: doc.document_type_confidence || null,  // SSoT: top-level만 참조
         // 문서 소유 고객 ID (원본/링크 구분용 — 관계자 문서 탭에서 사용)
         customerId: doc.customerId?.toString() || null,
         // 관계자 연결 고객 ID (AR/CRS에서 피보험자로 감지된 고객)

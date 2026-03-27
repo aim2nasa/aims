@@ -142,7 +142,7 @@ def _make_doc(document_type=None, is_ar=False, is_crs=False):
         'overallStatus': 'pending',
     }
     if document_type:
-        doc['meta']['document_type'] = document_type
+        doc['document_type'] = document_type  # SSoT: top-level 필드에 직접 저장
     if is_ar:
         doc['is_annual_report'] = True
     if is_crs:
@@ -207,7 +207,7 @@ class TestPipelinePassesDocTypeFields:
         assert meta['document_type'] == 'general'
 
     def test_ar_doc_also_has_document_type(self):
-        """AR 문서도 document_type 필드는 전달 (meta.document_type 값)"""
+        """AR 문서도 document_type 필드는 전달 (top-level document_type 값)"""
         meta = _run_pipeline_capture_meta(_make_doc(document_type='insurance_etc', is_ar=True))
         assert meta['is_annual_report'] is True
         assert meta['document_type'] == 'insurance_etc'
