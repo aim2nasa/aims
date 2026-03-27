@@ -338,60 +338,65 @@ class OCRWorker:
             logger.info(f"Resetting docembed.status to pending for file {file_id} (OCR text length: {len(ocr_text)})")
 
         # Generate displayName (only if not already set)
-        try:
-            collection = MongoService.get_collection("files")
-            doc = await collection.find_one(
-                {"_id": ObjectId(file_id)},
-                {"displayName": 1, "upload.originalName": 1, "customerId": 1}
-            )
-            if doc and not doc.get("displayName"):
-                original_name = doc.get("upload", {}).get("originalName", "")
-                full_text = ocr_result.get("full_text", "")
+        # unclassifiable 문서는 AI title이 신뢰할 수 없으므로 displayName 생성 스킵
+        ocr_doc_type = ocr_result.get("document_type", "")
+        if ocr_doc_type == "unclassifiable":
+            logger.info(f"[DisplayName] unclassifiable 문서 스킵 (OCR): {file_id}, 원본 파일명 유지")
+        else:
+            try:
+                collection = MongoService.get_collection("files")
+                doc = await collection.find_one(
+                    {"_id": ObjectId(file_id)},
+                    {"displayName": 1, "upload.originalName": 1, "customerId": 1}
+                )
+                if doc and not doc.get("displayName"):
+                    original_name = doc.get("upload", {}).get("originalName", "")
+                    full_text = ocr_result.get("full_text", "")
 
-                # 고객명 조회 (프롬프트에 전달하여 이름 환각 방지)
-                customer_name = None
-                customer_id = doc.get("customerId")
-                if customer_id:
-                    try:
-                        customers_col = MongoService.get_collection("customers")
-                        customer_doc = await customers_col.find_one(
-                            {"_id": ObjectId(str(customer_id))},
-                            {"personal_info.name": 1}
-                        )
-                        if customer_doc:
-                            customer_name = (customer_doc.get("personal_info") or {}).get("name")
-                    except Exception as e:
-                        logger.warning(f"Customer name lookup failed: {e}")
+                    # 고객명 조회 (프롬프트에 전달하여 이름 환각 방지)
+                    customer_name = None
+                    customer_id = doc.get("customerId")
+                    if customer_id:
+                        try:
+                            customers_col = MongoService.get_collection("customers")
+                            customer_doc = await customers_col.find_one(
+                                {"_id": ObjectId(str(customer_id))},
+                                {"personal_info.name": 1}
+                            )
+                            if customer_doc:
+                                customer_name = (customer_doc.get("personal_info") or {}).get("name")
+                        except Exception as e:
+                            logger.warning(f"Customer name lookup failed: {e}")
 
-                # 1순위: summarize_text에서 받은 title
-                # (summarize_text는 이미 텍스트 >= 10자일 때만 호출되므로 별도 체크 불필요)
-                title = ocr_result.get("title")
+                    # 1순위: summarize_text에서 받은 title
+                    # (summarize_text는 이미 텍스트 >= 10자일 때만 호출되므로 별도 체크 불필요)
+                    title = ocr_result.get("title")
 
-                # 2순위: title이 없으면 generate_title_only로 경량 생성
-                if not title and full_text and len(full_text.strip()) >= 10:
-                    try:
-                        title_result = await OpenAIService.generate_title_only(
-                            text=full_text,
-                            owner_id=owner_id,
-                            document_id=doc_id,
-                            original_filename=original_name,
-                            customer_name=customer_name
-                        )
-                        title = title_result.get("title")
-                    except Exception as e:
-                        logger.warning(f"generate_title_only failed: {e}")
+                    # 2순위: title이 없으면 generate_title_only로 경량 생성
+                    if not title and full_text and len(full_text.strip()) >= 10:
+                        try:
+                            title_result = await OpenAIService.generate_title_only(
+                                text=full_text,
+                                owner_id=owner_id,
+                                document_id=doc_id,
+                                original_filename=original_name,
+                                customer_name=customer_name
+                            )
+                            title = title_result.get("title")
+                        except Exception as e:
+                            logger.warning(f"generate_title_only failed: {e}")
 
-                if title:
-                    ext = os.path.splitext(original_name)[1].lower() if original_name else ""
-                    safe_title = re.sub(r'[\\/:*?"<>|]', '', title)
-                    safe_title = re.sub(r'\s+', ' ', safe_title).strip()
-                    if len(safe_title) > 40:
-                        safe_title = safe_title[:40].rstrip()
-                    display_name = f"{safe_title}{ext}" if ext else safe_title
-                    ocr_update["displayName"] = display_name
-                    logger.info(f"OCR displayName generated: {original_name} -> {display_name}")
-        except Exception as e:
-            logger.warning(f"displayName generation failed: {e}")
+                    if title:
+                        ext = os.path.splitext(original_name)[1].lower() if original_name else ""
+                        safe_title = re.sub(r'[\\/:*?"<>|]', '', title)
+                        safe_title = re.sub(r'\s+', ' ', safe_title).strip()
+                        if len(safe_title) > 40:
+                            safe_title = safe_title[:40].rstrip()
+                        display_name = f"{safe_title}{ext}" if ext else safe_title
+                        ocr_update["displayName"] = display_name
+                        logger.info(f"OCR displayName generated: {original_name} -> {display_name}")
+            except Exception as e:
+                logger.warning(f"displayName generation failed: {e}")
 
         # Update MongoDB with OCR results
         await self._update_ocr_status(file_id, ocr_update)

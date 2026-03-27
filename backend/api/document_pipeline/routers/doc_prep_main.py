@@ -1734,6 +1734,13 @@ async def _generate_display_name(
     2순위: generate_title_only() 경량 호출
     """
     try:
+        # unclassifiable 문서는 AI title이 "문서 분류 불가" 등 상태 메시지일 수 있으므로
+        # displayName을 생성하지 않음 → 프론트엔드에서 원본 파일명 표시
+        doc_type = summary_result.get("document_type", "") if summary_result else ""
+        if doc_type == "unclassifiable":
+            logger.info(f"[DisplayName] unclassifiable 문서 스킵: {doc_id}, 원본 파일명 유지")
+            return
+
         ai_title = summary_result.get("title", "") if summary_result else ""
 
         if not ai_title and text and len(text.strip()) >= 10:
