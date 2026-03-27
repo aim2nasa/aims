@@ -613,14 +613,17 @@ router.get('/documents', authenticateJWT, async (req, res) => {
       console.log('[DEBUG] customerIds:', customerIds);
       const customers = await db.collection(COLLECTIONS.CUSTOMERS)
         .find({ _id: { $in: customerIds } })
-        .project({ _id: 1, 'personal_info.name': 1 })
+        .project({ _id: 1, 'personal_info.name': 1, 'insurance_info.customer_type': 1 })
         .toArray();
 
       console.log('[DEBUG] customers found:', customers.length);
       console.log('[DEBUG] customers:', JSON.stringify(customers, null, 2));
 
       customers.forEach(customer => {
-        customerMap[customer._id.toString()] = customer.personal_info?.name || null;
+        customerMap[customer._id.toString()] = {
+          name: customer.personal_info?.name || null,
+          type: customer.insurance_info?.customer_type || null
+        };
       });
 
       console.log('[DEBUG] customerMap:', customerMap);
@@ -653,7 +656,8 @@ router.get('/documents', authenticateJWT, async (req, res) => {
         const customerId = effectiveCustomerId.toString();
         customerRelation = {
           customer_id: customerId,
-          customer_name: customerMap[customerId] || null,
+          customer_name: customerMap[customerId]?.name || null,
+          customer_type: customerMap[customerId]?.type || null,
           notes: doc.customer_notes || ''
         };
       }
@@ -1734,11 +1738,14 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
     if (customerIds.length > 0) {
       const customers = await db.collection(COLLECTIONS.CUSTOMERS)
         .find({ _id: { $in: customerIds } })
-        .project({ _id: 1, 'personal_info.name': 1 })
+        .project({ _id: 1, 'personal_info.name': 1, 'insurance_info.customer_type': 1 })
         .toArray();
 
       customers.forEach(customer => {
-        customerMap[customer._id.toString()] = customer.personal_info?.name || null;
+        customerMap[customer._id.toString()] = {
+          name: customer.personal_info?.name || null,
+          type: customer.insurance_info?.customer_type || null
+        };
       });
     }
 
@@ -1785,7 +1792,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         const customerId = effectiveCustomerId.toString();
         customerRelation = {
           customer_id: customerId,
-          customer_name: customerMap[customerId] || null,
+          customer_name: customerMap[customerId]?.name || null,
+          customer_type: customerMap[customerId]?.type || null,
           notes: doc.customer_notes || ''
         };
       }
