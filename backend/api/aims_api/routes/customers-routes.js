@@ -3847,32 +3847,8 @@ router.post('/notify/document-uploaded', authenticateJWT, async (req, res) => {
 
     console.log(`[SSE] 문서 업로드 알림 전송 - customerId: ${customerId}, userId: ${userId}`);
 
-    // 🔒 바이러스 스캔 트리거 (파일 업로드 직후)
-    // 이미지 등 임베딩 스킵되는 파일도 즉시 스캔되도록 함
-    if (documentId) {
-      try {
-        await virusScanService.scanAfterUpload(db, documentId, 'files');
-        console.log(`[VirusScan] 파일 업로드 직후 스캔 트리거: ${documentId}`);
-      } catch (scanError) {
-        console.error('[VirusScan] 업로드 후 스캔 트리거 오류:', scanError.message);
-        // 스캔 오류는 무시하고 계속 진행
-      }
-
-      // 📄 PDF 변환 트리거 (Office 문서인 경우)
-      // customerId가 있는 문서는 프리뷰를 위해 PDF 변환 필요
-      try {
-        const document = await db.collection(COLLECTION_NAME).findOne({
-          _id: new ObjectId(documentId)
-        });
-        if (document && document.customerId) {
-          const pdfResult = await triggerPdfConversionIfNeeded(document);
-          console.log(`[PDF변환] 업로드 후 트리거: ${documentId} → ${pdfResult}`);
-        }
-      } catch (pdfError) {
-        console.error('[PDF변환] 업로드 후 트리거 오류:', pdfError.message);
-        // PDF 변환 오류는 무시하고 계속 진행
-      }
-    }
+    // 바이러스 스캔 + PDF 변환은 파이프라인 완료 webhook(document-processing-complete)에서 트리거됨
+    // 이 엔드포인트는 SSE 알림 전송만 담당
 
     res.json({ success: true, message: '알림이 전송되었습니다.' });
   } catch (error) {

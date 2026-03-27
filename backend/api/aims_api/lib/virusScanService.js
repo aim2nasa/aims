@@ -124,6 +124,10 @@ async function scanAfterUpload(db, documentId, collectionName = 'files') {
 
   try {
     const collection = db.collection(collectionName);
+    if (typeof documentId === 'string' && !ObjectId.isValid(documentId)) {
+      console.warn(`[VirusScan] 유효하지 않은 documentId: ${documentId}`);
+      return;
+    }
     const docId = (typeof documentId === 'string') ? new ObjectId(documentId) : documentId;
     const doc = await collection.findOne({ _id: docId });
 
