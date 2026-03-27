@@ -290,11 +290,11 @@
   .header-badge-type {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: var(--spacing-1);
     font-size: var(--font-size-caption-2);
     font-weight: 600;
-    text-align: right;
+    text-align: left;
   }
 
   /* 🍎 뱃지 스타일은 shared/styles/document-badges.css에서 공통 관리 */
