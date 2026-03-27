@@ -6,7 +6,7 @@ import redis
 from typing import List, Dict
 from pymongo import MongoClient
 from bson.objectid import ObjectId
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from extract_text_from_mongo import extract_text_from_mongo
 from split_text_into_chunks import split_text_into_chunks
 from create_embeddings import create_embeddings_for_chunks, EmbeddingError
@@ -225,6 +225,32 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                 }}
             )
             print(f"[FIX] overallStatus 불일치(completed) {os_completed_count}건 수정")
+
+        # 1단계-C: embedding 좀비 상태 복구
+        # overallStatus: 'embedding' + overallStatusUpdatedAt이 10분 이상 경과한 문서를 embed_pending으로 리셋
+        # (프로세스 크래시 등으로 영구 잠김 방지)
+        embedding_zombie_threshold = datetime.now(timezone.utc) - timedelta(minutes=10)
+        zombie_filter = {
+            'overallStatus': 'embedding',
+            '$or': [
+                # overallStatusUpdatedAt이 10분 이상 경과
+                {'overallStatusUpdatedAt': {'$lt': embedding_zombie_threshold}},
+                # overallStatusUpdatedAt 필드가 없는 레거시 문서 (타임스탬프 부재 = 좀비 간주)
+                {'overallStatusUpdatedAt': {'$exists': False}}
+            ]
+        }
+        zombie_count = collection.count_documents(zombie_filter)
+        if zombie_count > 0:
+            collection.update_many(
+                zombie_filter,
+                {'$set': {
+                    'overallStatus': 'embed_pending',
+                    'overallStatusUpdatedAt': datetime.now(timezone.utc),
+                    'docembed.status': 'pending',
+                    'docembed.zombie_recovered_at': datetime.now(timezone.utc)
+                }}
+            )
+            print(f"[FIX] embedding 좀비 상태 {zombie_count}건 -> embed_pending 리셋")
 
         # status: "failed" + overallStatus: "processing" → overallStatus를 "error"로 수정
         os_failed_filter = {
@@ -544,6 +570,30 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                 # 토큰 사용량 로깅
                 if token_usage.get('total_tokens', 0) > 0:
                     log_token_usage(owner_id, doc_id, token_usage)
+
+                # quota 소진 감지 시 파이프라인 조기 중단
+                if token_usage.get('quota_exhausted'):
+                    print(f"⚠️ [QUOTA] 크레딧 소진 감지 (부분 성공). 나머지 문서 처리를 중단합니다.")
+                    # 현재 문서의 성공 청크는 저장하고 상태 업데이트
+                    if embedded_chunks:
+                        save_chunks_to_qdrant(embedded_chunks, collection_name="docembed")
+                    collection.update_one(
+                        {'_id': ObjectId(doc_id)},
+                        {'$set': {
+                            'overallStatus': 'completed',
+                            'overallStatusUpdatedAt': datetime.now(timezone.utc),
+                            'docembed.status': 'done',
+                            'docembed.chunks': len(embedded_chunks) if embedded_chunks else 0,
+                            'docembed.partial': True,
+                            'docembed.updated_at': datetime.now(timezone.utc),
+                            'status': 'completed',
+                            'progress': 100,
+                            'progressStage': 'complete',
+                            'progressMessage': '처리 완료 (부분 임베딩)'
+                        }}
+                    )
+                    print(f"--- 문서 ID: {doc_id} 부분 임베딩 완료 ({len(embedded_chunks) if embedded_chunks else 0}개 청크) ---")
+                    break
 
                 # 3단계: Qdrant에 저장
                 if embedded_chunks:
