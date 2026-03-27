@@ -1619,7 +1619,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
                   { case: { $eq: ['$is_annual_report', true] }, then: 'annual_report' },
                   { case: { $eq: ['$is_customer_review', true] }, then: 'customer_review' }
                 ],
-                default: '$document_type'
+                default: { $ifNull: ['$document_type', '$meta.document_type'] }
               }
             }
           }
