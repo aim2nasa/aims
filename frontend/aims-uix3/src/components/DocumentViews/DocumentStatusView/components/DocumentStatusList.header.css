@@ -156,6 +156,46 @@
     color: var(--color-ios-text-tertiary-dark);
   }
 
+  /* === 🍎 COLUMN RESIZE HANDLE: 칼럼 폭 드래그 리사이즈 === */
+  .header-cell--resizable,
+  .header-filename {
+    position: relative;
+  }
+
+  .column-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 10;
+    user-select: none;
+    /* 투명하지만 호버 시 시각적 피드백 */
+    background: transparent;
+    transition: background-color 0.15s ease-out;
+  }
+
+  .column-resize-handle:hover {
+    background-color: var(--color-primary-400);
+    opacity: 0.4;
+    border-radius: 1px;
+  }
+
+  .column-resize-handle:active {
+    background-color: var(--color-primary-500);
+    opacity: 0.6;
+  }
+
+  /* 리사이즈 중 헤더 전체에 col-resize 커서 적용 */
+  .status-list-header--resizing {
+    cursor: col-resize;
+  }
+
+  .status-list-header--resizing * {
+    cursor: col-resize !important;
+  }
+
   /* === 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 === */
   .header-sortable {
     cursor: pointer;

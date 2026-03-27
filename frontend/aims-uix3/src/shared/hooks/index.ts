@@ -15,3 +15,6 @@ export type {
   UseAutoSaveDraftReturn,
   DraftData,
 } from './useAutoSaveDraft'
+
+export { useColumnResize } from './useColumnResize'
+export type { ColumnDef } from './useColumnResize'

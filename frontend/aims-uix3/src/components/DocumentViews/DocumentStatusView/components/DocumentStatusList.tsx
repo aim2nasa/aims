@@ -29,10 +29,29 @@ import { useUserStore } from '../../../../stores/user'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { documentTypesService } from '../../../../services/documentTypesService'
 import { highlightText } from '@/shared/lib/highlightText'
+import { useColumnResize } from '@/shared/hooks'
+import type { ColumnDef } from '@/shared/hooks'
 import './DocumentStatusList.header.css';
 import './DocumentStatusList.cells.css';
 import './DocumentStatusList.responsive.css';
 import './DocumentStatusList.badges.css';
+
+// ─── 칼럼 리사이즈 정의 ───
+
+/** 기본 칼럼 정의 (삭제 모드가 아닌 일반 상태) */
+const COLUMN_DEFS: ColumnDef[] = [
+  { defaultWidth: '45px',                defaultPx: 45,  minWidth: 30,  resizable: true  },  // 유형
+  { defaultWidth: 'minmax(120px, 1fr)',   defaultPx: 300, minWidth: 120, resizable: true  },  // 파일명
+  { defaultWidth: '90px',                defaultPx: 90,  minWidth: 60,  resizable: true  },  // 문서 유형
+  { defaultWidth: '70px',                defaultPx: 70,  minWidth: 50,  resizable: true  },  // 크기
+  { defaultWidth: '60px',                defaultPx: 60,  minWidth: 40,  resizable: true  },  // 타입
+  { defaultWidth: '120px',               defaultPx: 120, minWidth: 80,  resizable: true  },  // 업로드 날짜
+  { defaultWidth: '80px',                defaultPx: 80,  minWidth: 50,  resizable: true  },  // 상태
+  { defaultWidth: '130px',               defaultPx: 130, minWidth: 60,  resizable: true  },  // 연결된 고객
+  { defaultWidth: '104px',               defaultPx: 104, minWidth: 60,  resizable: false },  // 액션 버튼
+]
+
+const COLUMN_RESIZE_STORAGE_KEY = 'aims-document-library-column-widths'
 
 // ─── DocumentStatusRow: 개별 행 컴포넌트 (React.memo) ───
 
@@ -75,6 +94,8 @@ interface DocumentStatusRowProps {
   onRenameCancel?: () => void
   // 검색어 하이라이트
   searchTerm?: string
+  // 칼럼 리사이즈 gridTemplateColumns
+  gridTemplateColumns?: string | null
 }
 
 const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
@@ -109,6 +130,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   onRenameConfirm,
   onRenameCancel,
   searchTerm,
+  gridTemplateColumns,
 }) => {
   // 각 Row 내부에서 싱글/더블클릭 타이머를 자체 관리
   const documentClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -138,6 +160,11 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
       key={key}
       className={`status-item ${isSelected ? 'status-item--selected' : ''}`}
       data-context-menu="document"
+      style={gridTemplateColumns ? {
+        gridTemplateColumns: (isDeleteMode || isBulkLinkMode || isAliasMode)
+          ? `24px ${gridTemplateColumns}`
+          : gridTemplateColumns
+      } : undefined}
       onClick={() => {
         if (isDeleteMode || isBulkLinkMode || isAliasMode) return
         if (!documentId) return
@@ -890,6 +917,21 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   // 현재 로그인한 사용자 ID (내 파일 기능용)
   const { userId } = useUserStore()
 
+  // 🍎 칼럼 리사이즈 훅
+  const {
+    gridTemplateColumns: resizedGridTemplate,
+    handleResizeStart,
+    handleResizeReset,
+    isResizing,
+  } = useColumnResize({
+    storageKey: COLUMN_RESIZE_STORAGE_KEY,
+    columns: COLUMN_DEFS,
+    gap: 10,
+  })
+
+  // 헤더 ref (파일명 칼럼의 실제 폭을 측정하기 위해)
+  const headerRef = useRef<HTMLDivElement>(null)
+
   const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
 
   // 메모 모달 상태 관리
@@ -1148,7 +1190,15 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   return (
     <div className={`document-status-list ${isDeleteMode || isBulkLinkMode || isAliasMode ? 'document-status-list--delete-mode' : ''}`}>
       {/* 🍎 칼럼 헤더 - 스티키 포지셔닝으로 항상 보임 */}
-      <div className="status-list-header">
+      <div
+        className={`status-list-header ${isResizing ? 'status-list-header--resizing' : ''}`}
+        ref={headerRef}
+        style={resizedGridTemplate ? {
+          gridTemplateColumns: (isDeleteMode || isBulkLinkMode || isAliasMode)
+            ? `24px ${resizedGridTemplate}`
+            : resizedGridTemplate
+        } : undefined}
+      >
         {/* 🍎 삭제 모드, 일괄 연결 모드, 또는 별칭 모드: 전체 선택 체크박스 */}
         {(isDeleteMode || isBulkLinkMode || isAliasMode) && (
           <div className="header-checkbox">
@@ -1171,7 +1221,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
         )}
         {/* 🍎 처리유형 칼럼 */}
         <div
-          className={`header-badge-type ${onColumnSort ? 'header-sortable' : ''}`}
+          className={`header-badge-type header-cell--resizable ${onColumnSort ? 'header-sortable' : ''}`}
           onClick={() => onColumnSort?.('badgeType')}
           role={onColumnSort ? 'button' : undefined}
           tabIndex={onColumnSort ? 0 : undefined}
@@ -1179,6 +1229,11 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
         >
           <span>유형</span>
           {onColumnSort && <SortIndicator field="badgeType" currentSortField={sortField} sortDirection={sortDirection} />}
+          <div
+            className="column-resize-handle"
+            onMouseDown={(e) => handleResizeStart(0, e)}
+            onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); handleResizeReset(0); }}
+          />
         </div>
         <div className="header-filename">
           <div
@@ -1212,10 +1267,15 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               </button>
             </Tooltip>
           )}
+          <div
+            className="column-resize-handle"
+            onMouseDown={(e) => handleResizeStart(1, e)}
+            onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); handleResizeReset(1); }}
+          />
         </div>
         {/* 🍎 문서 유형 칼럼 (새 칼럼) */}
         <div
-          className={`header-doctype ${onColumnSort ? 'header-sortable' : ''}`}
+          className={`header-doctype header-cell--resizable ${onColumnSort ? 'header-sortable' : ''}`}
           onClick={() => onColumnSort?.('docType')}
           role={onColumnSort ? 'button' : undefined}
           tabIndex={onColumnSort ? 0 : undefined}
@@ -1226,9 +1286,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </svg>
           <span>문서 유형</span>
           {onColumnSort && <SortIndicator field="docType" currentSortField={sortField} sortDirection={sortDirection} />}
+          <div
+            className="column-resize-handle"
+            onMouseDown={(e) => handleResizeStart(2, e)}
+            onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); handleResizeReset(2); }}
+          />
         </div>
         <div
-          className={`header-size ${onColumnSort ? 'header-sortable' : ''}`}
+          className={`header-size header-cell--resizable ${onColumnSort ? 'header-sortable' : ''}`}
           onClick={() => onColumnSort?.('fileSize')}
           role={onColumnSort ? 'button' : undefined}
           tabIndex={onColumnSort ? 0 : undefined}
@@ -1240,9 +1305,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </svg>
           <span>크기</span>
           {onColumnSort && <SortIndicator field="fileSize" currentSortField={sortField} sortDirection={sortDirection} />}
+          <div
+            className="column-resize-handle"
+            onMouseDown={(e) => handleResizeStart(3, e)}
+            onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); handleResizeReset(3); }}
+          />
         </div>
         <div
-          className={`header-type ${onColumnSort ? 'header-sortable' : ''}`}
+          className={`header-type header-cell--resizable ${onColumnSort ? 'header-sortable' : ''}`}
           onClick={() => onColumnSort?.('mimeType')}
           role={onColumnSort ? 'button' : undefined}
           tabIndex={onColumnSort ? 0 : undefined}
@@ -1253,9 +1323,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </svg>
           <span>타입</span>
           {onColumnSort && <SortIndicator field="mimeType" currentSortField={sortField} sortDirection={sortDirection} />}
+          <div
+            className="column-resize-handle"
+            onMouseDown={(e) => handleResizeStart(4, e)}
+            onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); handleResizeReset(4); }}
+          />
         </div>
         <div
-          className={`header-date ${onColumnSort ? 'header-sortable' : ''}`}
+          className={`header-date header-cell--resizable ${onColumnSort ? 'header-sortable' : ''}`}
           onClick={() => onColumnSort?.('uploadDate')}
           role={onColumnSort ? 'button' : undefined}
           tabIndex={onColumnSort ? 0 : undefined}
@@ -1267,9 +1342,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </svg>
           <span>업로드 날짜</span>
           {onColumnSort && <SortIndicator field="uploadDate" currentSortField={sortField} sortDirection={sortDirection} />}
+          <div
+            className="column-resize-handle"
+            onMouseDown={(e) => handleResizeStart(5, e)}
+            onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); handleResizeReset(5); }}
+          />
         </div>
         <div
-          className={`header-status ${onColumnSort ? 'header-sortable' : ''}`}
+          className={`header-status header-cell--resizable ${onColumnSort ? 'header-sortable' : ''}`}
           onClick={() => onColumnSort?.('status')}
           role={onColumnSort ? 'button' : undefined}
           tabIndex={onColumnSort ? 0 : undefined}
@@ -1281,9 +1361,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </svg>
           <span>상태</span>
           {onColumnSort && <SortIndicator field="status" currentSortField={sortField} sortDirection={sortDirection} />}
+          <div
+            className="column-resize-handle"
+            onMouseDown={(e) => handleResizeStart(6, e)}
+            onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); handleResizeReset(6); }}
+          />
         </div>
         <div
-          className={`header-customer ${onColumnSort ? 'header-sortable' : ''}`}
+          className={`header-customer header-cell--resizable ${onColumnSort ? 'header-sortable' : ''}`}
           onClick={() => onColumnSort?.('customer')}
           role={onColumnSort ? 'button' : undefined}
           tabIndex={onColumnSort ? 0 : undefined}
@@ -1295,6 +1380,11 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </svg>
           <span>연결된 고객</span>
           {onColumnSort && <SortIndicator field="customer" currentSortField={sortField} sortDirection={sortDirection} />}
+          <div
+            className="column-resize-handle"
+            onMouseDown={(e) => handleResizeStart(7, e)}
+            onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); handleResizeReset(7); }}
+          />
         </div>
         <div className="header-actions">
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -1343,6 +1433,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             onRenameConfirm={onRenameConfirm}
             onRenameCancel={onRenameCancel}
             searchTerm={searchTerm}
+            gridTemplateColumns={resizedGridTemplate}
           />
         )
       })}
