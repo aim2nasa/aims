@@ -26,6 +26,29 @@ import { ConfirmModal } from '@/shared/ui/ConfirmModal';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import './ErrorLogsPage.css';
 
+/** 클립보드 복사 (HTTP 환경 fallback 포함) */
+function copyToClipboard(text: string): void {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text: string): void {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const success = document.execCommand('copy');
+  document.body.removeChild(textarea);
+  if (!success) {
+    console.warn('[ErrorLogsPage] 클립보드 복사 실패 (execCommand)');
+  }
+}
+
 // 모달 상태 타입
 interface ModalState {
   type: 'retention' | 'deleteAll' | 'deleteSelected' | null;
@@ -864,7 +887,7 @@ export const ErrorLogsPage = () => {
                         onContextMenu={(e) => {
                           if (log.actor?.user_id) {
                             e.preventDefault();
-                            navigator.clipboard.writeText(log.actor.user_id);
+                            copyToClipboard(log.actor.user_id);
                           }
                         }}
                       >
@@ -993,7 +1016,7 @@ export const ErrorLogsPage = () => {
                       if (detailLog.context.response_status) lines.push(`응답 상태: ${detailLog.context.response_status}`);
                     }
 
-                    navigator.clipboard.writeText(lines.join('\n'));
+                    copyToClipboard(lines.join('\n'));
                   }}
                   title="전체 내용 복사"
                 >
