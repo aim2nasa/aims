@@ -93,7 +93,7 @@ import {
   isDocumentTypeCacheReady,
 } from '../documentCategories'
 
-describe('documentCategories (v4 — DB SToT)', () => {
+describe('documentCategories (v4 — DB SSoT)', () => {
   // 모든 테스트 전에 캐시 초기화
   beforeAll(async () => {
     await prefetchDocumentTypes()

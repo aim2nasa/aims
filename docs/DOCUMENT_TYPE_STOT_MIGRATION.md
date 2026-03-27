@@ -1,10 +1,10 @@
-# 문서유형 SToT 마이그레이션 — DB를 유일한 소스로
+# 문서유형 SSoT 마이그레이션 — DB를 유일한 소스로
 
 > 작성일: 2026-03-27 | 상태: 구현 결정 | 분석: Alex, Gini
 
 ## 문제 (근본 원인)
 
-문서유형 라벨이 **두 곳**에서 따로 관리되어 동기화가 깨짐 (SToT 위반).
+문서유형 라벨이 **두 곳**에서 따로 관리되어 동기화가 깨짐 (SSoT 위반).
 
 | 소스 | 내용 | 개수 |
 |------|------|------|
@@ -28,7 +28,7 @@
 1. 서버사이드 정렬이 MongoDB aggregate $lookup 기반 → DB에 정확한 데이터 필수
 2. aims-admin에 문서유형 CRUD UI가 이미 존재 → DB 관리 인프라 80% 완성
 3. 유형 추가 시 DB 한 곳만 수정 → 코드 배포 불필요
-4. 프론트 상수가 SToT이면 서버에 복사본이 필연적으로 발생
+4. 프론트 상수가 SSoT이면 서버에 복사본이 필연적으로 발생
 
 ### 최종 구조
 ```
@@ -82,9 +82,29 @@ GET /api/document-types (API)
 | 레거시 표시 | 29건 (v4에 없는 유형에 isLegacy: true) |
 | 멱등성 | 확인됨 (재실행 시 0건 변경) |
 
-### Phase 2: 백엔드 API — 미착수
-### Phase 3: 프론트 전환 — 미착수
-### Phase 4: 정렬 정상화 — 미착수
+### Phase 2: 백엔드 API — 완료 (2026-03-27)
+
+| 항목 | 결과 |
+|------|------|
+| document-types API includeLegacy 파라미터 | 추가 (기본값 false) |
+| ZIP 다운로드 하드코딩 제거 | TYPE_TO_CATEGORY/SUBTYPE_LABELS → buildDocTypeMapping() DB 조회 |
+| docType 정렬 null 처리 | sortWeight 도입, null/unspecified 항상 맨 뒤 |
+| 백엔드 테스트 | 1120 테스트 통과 |
+
+### Phase 3: 프론트 전환 — 완료 (2026-03-27)
+
+| 항목 | 결과 |
+|------|------|
+| useDocumentTypes hook | 신규 생성 (TanStack Query, staleTime 30분) |
+| DOCUMENT_TYPE_LABELS 하드코딩 | 제거 → 모듈 레벨 캐시 + prefetch |
+| TYPE_TO_CATEGORY 하드코딩 | 제거 → API 기반 |
+| getDocumentTypeLabel() | 시그니처 유지, 내부 캐시 조회 |
+| getCategoryForType() | 시그니처 유지, 내부 캐시 조회 |
+| App.tsx prefetch 호출 | 추가 |
+| 프론트 테스트 | 4664 테스트 통과 |
+
+### Phase 4: 정렬 정상화 — Phase 2에서 완료
+docType 정렬에 sortWeight 도입하여 null/unspecified가 맨 뒤로 배치됨.
 
 ## 영향 파일
 

@@ -2,7 +2,7 @@
  * AIMS 문서 분류 카테고리 매핑
  * TAXONOMY_V4_MIGRATION.md 기준 (7대분류)
  *
- * [Phase 3] DB SToT 전환:
+ * [Phase 3] DB SSoT 전환:
  * - DOCUMENT_TYPE_LABELS, TYPE_TO_CATEGORY 하드코딩 상수 제거
  * - 모듈 레벨 캐시(_typeCache)에 API 데이터를 저장하여 동기 함수 유지
  * - prefetchDocumentTypes()로 앱 시작 시 캐시 채움

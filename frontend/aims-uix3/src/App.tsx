@@ -460,7 +460,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 문서 유형 캐시 초기화 (DB SToT — 동기 함수에서 사용할 캐시를 미리 채움)
+  // 문서 유형 캐시 초기화 (DB SSoT — 동기 함수에서 사용할 캐시를 미리 채움)
   useEffect(() => {
     prefetchDocumentTypes()
   }, [])
