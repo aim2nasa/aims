@@ -540,6 +540,12 @@ class OpenAIService:
                 )
                 return {"title": None, "error": "credit_exceeded"}
 
+        # 텍스트가 숫자/기호/공백만으로 구성되어 있으면 title 생성 스킵 (환각 방지)
+        meaningful_chars = re.sub(r'[\d\s\W]+', '', text)
+        if len(meaningful_chars) < 5:
+            logger.info(f"[TitleGen] 의미 있는 텍스트 부족 (한글/영문 {len(meaningful_chars)}자), 스킵: doc_id={document_id}")
+            return {"title": None, "error": "insufficient_text"}
+
         # 입력 텍스트 3000자 제한
         if len(text) > 3000:
             text = text[:3000]
