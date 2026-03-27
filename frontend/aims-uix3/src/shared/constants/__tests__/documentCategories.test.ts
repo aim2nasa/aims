@@ -184,9 +184,9 @@ describe('documentCategories (v4)', () => {
       expect(getDocumentTypeLabel('personal_docs')).toBe('기타 통장 및 개인서류')
     })
 
-    it('null/undefined는 미지정을 반환한다', () => {
-      expect(getDocumentTypeLabel(null)).toBe('미지정')
-      expect(getDocumentTypeLabel(undefined)).toBe('미지정')
+    it('null/undefined는 -를 반환한다', () => {
+      expect(getDocumentTypeLabel(null)).toBe('-')
+      expect(getDocumentTypeLabel(undefined)).toBe('-')
     })
 
     it('매핑에 없는 타입은 기타를 반환한다', () => {

@@ -570,8 +570,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   // 🍎 문서유형 정렬용 라벨 맵 생성 (한글 라벨 기준 가나다순 - 백엔드와 동일)
   const docTypeLabelMap = useMemo(() => {
     const map = new Map<string, string>()
-    map.set('', '미지정')
-    map.set('unspecified', '미지정')
+    map.set('', '-')
     // 정적 상수에서 직접 가져옴
     Object.entries(DOCUMENT_TYPE_LABELS).forEach(([value, label]) => {
       map.set(value, label)

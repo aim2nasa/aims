@@ -60,7 +60,7 @@ export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   // 7. 기타 (etc)
   general: '일반문서',
   unclassifiable: '분류불가',
-  unspecified: '미지정',
+  unspecified: '-',
 }
 
 /** document_type → category 매핑 */
@@ -148,7 +148,7 @@ export function getCategoryForType(documentType: string | undefined | null): str
  * document_type 값으로 한글 소분류 레이블을 반환
  */
 export function getDocumentTypeLabel(documentType: string | undefined | null): string {
-  if (!documentType) return '미지정'
+  if (!documentType) return '-'
   return DOCUMENT_TYPE_LABELS[documentType] ?? '기타'
 }
 
