@@ -1480,7 +1480,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $skip: skip },
         { $limit: parseInt(limit) },
         ...TEXT_FLAG_STAGES
-      ]).toArray();
+      ], { collation: { locale: 'ko', strength: 2 } }).toArray();
     } else if (sort === 'fileSize_asc' || sort === 'fileSize_desc') {
       const sortOrder = sort === 'fileSize_asc' ? 1 : -1;
       documents = await db.collection(COLLECTION_NAME).aggregate([
@@ -1692,7 +1692,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         { $skip: skip },
         { $limit: parseInt(limit) },
         ...TEXT_FLAG_STAGES
-      ]).toArray();
+      ], { collation: { locale: 'ko', strength: 2 } }).toArray();
     }
 
     // customerId가 있는 문서의 customer_id 수집
