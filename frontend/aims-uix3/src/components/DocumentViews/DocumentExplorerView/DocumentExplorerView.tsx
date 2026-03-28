@@ -1296,6 +1296,7 @@ const DocumentExplorerContent: React.FC<{
             danger: true,
             onClick: () => {
               if (documentId) {
+                lastDeletedDocIdRef.current = documentId
                 documentActions.deleteDocument(documentId, documentName)
               }
             }
