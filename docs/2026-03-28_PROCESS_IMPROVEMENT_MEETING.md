@@ -1,6 +1,7 @@
-# 업무 프로세스 개선 회의록
+# ACE Process — 업무 프로세스 개선 회의록
 
-> 일자: 2026-03-28 | 참석: 사용자, Claude, Alex, Gini
+> **ACE = AC first, Code, Evidence** (기준 먼저, 코드, 증거)
+> 일자: 2026-03-28 | 참석: 사용자, Claude, Alex, Gini, Dana, Ari, Sora
 > 계기: 전체 문서 보기 정렬 기능 작업에서 발생한 반복적 시행착오
 
 ---
