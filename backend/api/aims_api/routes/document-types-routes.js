@@ -503,7 +503,8 @@ module.exports = (db, authenticateJWT, requireRole) => {
         query.$or = [
           { document_type: { $exists: false } },
           { document_type: null },
-          { document_type: 'unspecified' }
+          { document_type: 'unspecified' },
+          { document_type: 'unclassifiable' }
         ];
       }
 

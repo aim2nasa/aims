@@ -217,10 +217,19 @@ class OCRWorker:
             document_type = "general"
             doc_confidence = 0.0
             ocr_text = (ocr_result.get("full_text") or "").strip()
+
+            # 분류 입력 결정: full_text → 파일명 fallback
+            classify_text = ""
             if ocr_text and len(ocr_text) >= 10:
+                classify_text = ocr_result["full_text"]
+            elif original_name and self.openai_service._is_meaningful_filename(original_name):
+                classify_text = self.openai_service._sanitize_filename_for_prompt(original_name)
+                logger.info(f"[OCRWorker] full_text 부족, 파일명 fallback 분류: {original_name}")
+
+            if classify_text:
                 try:
                     result = await self.openai_service.summarize_text(
-                        ocr_result["full_text"],
+                        classify_text,
                         owner_id=owner_id,
                         document_id=doc_id,
                         filename=original_name or None,
@@ -231,6 +240,11 @@ class OCRWorker:
                     doc_confidence = result.get("confidence", 0.0)
                 except Exception as e:
                     logger.warning(f"Summary generation failed: {e}")
+            else:
+                # 모든 분류 정보 부실 → unclassifiable
+                if not ocr_text or len(ocr_text) < 10:
+                    document_type = "unclassifiable"
+                    doc_confidence = 0.0
 
             return {
                 "error": False,

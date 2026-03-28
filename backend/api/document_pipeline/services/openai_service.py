@@ -439,6 +439,13 @@ class OpenAIService:
         re.compile(r'^document[-_]?\d', re.IGNORECASE),
     ]
 
+    @staticmethod
+    def _sanitize_filename_for_prompt(filename: str) -> str:
+        """AI 프롬프트 삽입 전 파일명 정제 (프롬프트 인젝션 방어)"""
+        name = os.path.basename(filename)[:100]
+        name = re.sub(r'[\r\n\t]', ' ', name)
+        return name.strip()
+
     @classmethod
     def _is_meaningful_filename(cls, filename: str) -> bool:
         """파일명에 의미있는 정보(보험사명, 사람이름 등)가 있는지 판별"""

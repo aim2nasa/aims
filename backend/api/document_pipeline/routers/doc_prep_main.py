@@ -2363,12 +2363,19 @@ async def _process_via_xpipe(
 
     await _notify_progress(doc_id, user_id, 70, "classifying", "AI 분류 완료")
 
-    # 8-1. AI 요약/제목 생성 (텍스트가 충분한 경우)
+    # 8-1. AI 요약/제목 생성 (텍스트 → 파일명 fallback)
     summary_result = {}
+    classify_text = ""
     if extracted_text and len(extracted_text.strip()) >= 10:
+        classify_text = extracted_text
+    elif original_name and OpenAIService._is_meaningful_filename(original_name):
+        classify_text = OpenAIService._sanitize_filename_for_prompt(original_name)
+        logger.info(f"[xPipe] full_text 부족, 파일명 fallback 분류: {original_name}")
+
+    if classify_text:
         try:
             summary_result = await OpenAIService.summarize_text(
-                extracted_text,
+                classify_text,
                 owner_id=user_id,
                 document_id=doc_id,
                 filename=original_name,
@@ -2377,9 +2384,19 @@ async def _process_via_xpipe(
             logger.info(f"[xPipe] AI 요약 생성 완료: {doc_id}")
         except Exception as summary_err:
             logger.warning(f"[xPipe] AI 요약 생성 실패 (무시): {doc_id}, error={summary_err}")
+    elif not extracted_text or len(extracted_text.strip()) < 10:
+        # 모든 분류 정보 부실 → unclassifiable
+        summary_result = {"document_type": "unclassifiable", "confidence": 0.0}
+        logger.info(f"[xPipe] 분류 정보 부실 → unclassifiable: {doc_id}")
 
     xpipe_summary = summary_result.get("summary", "") if summary_result else ""
     xpipe_title = summary_result.get("title", "") if summary_result else ""
+
+    # doc_type이 없으면 summary_result의 document_type으로 fallback
+    if not doc_type and summary_result:
+        doc_type = summary_result.get("document_type")
+        if doc_type:
+            confidence = summary_result.get("confidence", 0.0)
 
     # Meta 업데이트
     # 파일 메타데이터
