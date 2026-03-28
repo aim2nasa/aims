@@ -40,6 +40,11 @@ UNSUPPORTED_MIME_TYPES = {
 }
 
 
+class CorruptedPDFError(Exception):
+    """PDF 파일이 손상되어 파싱할 수 없음"""
+    pass
+
+
 class ExtractStage(Stage):
     """텍스트 추출 스테이지
 
@@ -88,7 +93,11 @@ class ExtractStage(Stage):
 
     @staticmethod
     def _read_pdf_file(file_path: str, file_name: str) -> str:
-        """PDF 파일에서 pdfplumber로 텍스트를 추출한다."""
+        """PDF 파일에서 pdfplumber로 텍스트를 추출한다.
+
+        pdfplumber.open() 자체가 실패하면 CorruptedPDFError를 raise한다.
+        개별 페이지 추출 실패는 해당 페이지만 스킵하고 나머지를 반환한다.
+        """
         import os
 
         if not file_path or not os.path.exists(file_path):
@@ -99,14 +108,21 @@ class ExtractStage(Stage):
             text_parts = []
             with pdfplumber.open(file_path) as pdf:
                 for page in pdf.pages:
-                    page_text = page.extract_text()
-                    if page_text:
-                        text_parts.append(page_text)
+                    try:
+                        page_text = page.extract_text()
+                        if page_text:
+                            text_parts.append(page_text)
+                    except Exception as page_exc:
+                        logger.warning(
+                            "[ExtractStage] PDF 페이지 추출 실패 (스킵): %s page %d — %s",
+                            file_name, page.page_number, page_exc
+                        )
             return "\n".join(text_parts)
         except ImportError:
             return ""
-        except Exception:
-            return ""
+        except Exception as exc:
+            logger.warning("[ExtractStage] PDF 파싱 실패 (손상 의심): %s — %s", file_name, exc)
+            raise CorruptedPDFError(file_name) from exc
 
     @staticmethod
     def _convert_and_extract(file_path: str, file_name: str) -> str:
@@ -165,8 +181,8 @@ class ExtractStage(Stage):
                 _logger.warning("pdfplumber 미설치 — 텍스트 추출 불가: %s", file_name)
                 return ""
             except Exception as e:
-                _logger.warning("PDF 텍스트 추출 실패: %s — %s", file_name, e)
-                return ""
+                _logger.warning("[ExtractStage] 변환 PDF 텍스트 추출 실패 (손상 의심): %s — %s", file_name, e)
+                raise CorruptedPDFError(file_name) from e
 
     async def _try_ocr(
         self,
@@ -285,25 +301,54 @@ class ExtractStage(Stage):
             # PDF: pdfplumber로 텍스트 추출 시도
             method = "pdfplumber"
             ocr_model = "-"
-            text = self._read_pdf_file(file_path, file_name)
-            if not text and mode == "real":
-                # 스캔 PDF → OCR 폴백 시도
-                method = "pdfplumber+ocr_fallback"
-                text, ocr_model = await self._try_ocr(context, file_path, file_name, mime, ocr_model_name)
-            elif not text:
-                # stub 모드: 스캔 PDF는 OCR 불가 — 빈 텍스트 허용 (시뮬레이션)
+            try:
+                text = self._read_pdf_file(file_path, file_name)
+            except CorruptedPDFError as cpf:
+                # 손상/암호화 PDF: OCR 호출 스킵, 에러 상태로 전환
                 text = ""
+                context["text_extraction_failed"] = True
+                context["_extraction_skip_reason"] = "corrupted_pdf"
+                # 암호화 PDF 구분
+                original_exc = str(cpf.__cause__) if cpf.__cause__ else ""
+                if "encrypt" in original_exc.lower() or "password" in original_exc.lower():
+                    context["_user_error_message"] = (
+                        "비밀번호로 보호된 파일입니다. "
+                        "비밀번호를 해제한 후 다시 업로드해 주세요."
+                    )
+                else:
+                    context["_user_error_message"] = (
+                        "파일이 손상되어 내용을 읽을 수 없습니다. "
+                        "원본 파일을 확인하신 후 다시 업로드해 주세요."
+                    )
+            else:
+                if not text and mode == "real":
+                    # 스캔 PDF → OCR 폴백 시도
+                    method = "pdfplumber+ocr_fallback"
+                    text, ocr_model = await self._try_ocr(context, file_path, file_name, mime, ocr_model_name)
+                elif not text:
+                    # stub 모드: 스캔 PDF는 OCR 불가 — 빈 텍스트 허용 (시뮬레이션)
+                    text = ""
         elif is_convertible:
             # HWP/DOC/PPTX/XLS: ConvertStage에서 변환된 PDF가 있으면 사용, 없으면 직접 변환
             method = "libreoffice+pdfplumber"
             ocr_model = "-"
             converted = context.get("converted_pdf_path", "")
-            if converted and os.path.exists(converted):
-                text = self._read_pdf_file(converted, file_name)
-            else:
-                text = self._convert_and_extract(file_path, file_name)
+            try:
+                if converted and os.path.exists(converted):
+                    text = self._read_pdf_file(converted, file_name)
+                else:
+                    text = self._convert_and_extract(file_path, file_name)
+            except CorruptedPDFError:
+                # 변환 산출 PDF 손상: OCR 호출 스킵, 에러 상태로 전환
+                text = ""
+                context["text_extraction_failed"] = True
+                context["_extraction_skip_reason"] = "corrupted_pdf"
+                context["_user_error_message"] = (
+                    "파일이 손상되어 내용을 읽을 수 없습니다. "
+                    "원본 파일을 확인하신 후 다시 업로드해 주세요."
+                )
             # 텍스트 추출 실패 시 변환된 PDF를 OCR fallback (이미지만 포함된 PPT/HWP 등)
-            if not text and mode == "real" and converted and os.path.exists(converted):
+            if not text and not context.get("text_extraction_failed") and mode == "real" and converted and os.path.exists(converted):
                 method = "libreoffice+ocr_fallback"
                 try:
                     text, ocr_model = await self._try_ocr(context, converted, file_name, "application/pdf", ocr_model_name)

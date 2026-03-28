@@ -2208,6 +2208,52 @@ async def _process_via_xpipe(
             or ("unsupported_format" if result.get("unsupported_format") else "no_text_extractable")
         )
 
+        # 손상/암호화 PDF: 에러 상태로 처리 (보관 완료가 아님)
+        if skip_reason == "corrupted_pdf":
+            user_message = result.get(
+                "_user_error_message",
+                "파일이 손상되어 처리할 수 없습니다."
+            )
+            logger.warning(
+                f"[xPipe] 손상 PDF 감지 — 에러 처리: doc_id={doc_id}, "
+                f"file={original_name}"
+            )
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {
+                    "status": "failed",
+                    "overallStatus": "error",
+                    "overallStatusUpdatedAt": datetime.utcnow(),
+                    "error.statusCode": 422,
+                    "error.statusMessage": user_message,
+                    "error.timestamp": datetime.utcnow().isoformat(),
+                    "processingSkipReason": skip_reason,
+                    "meta.mime": detected_mime,
+                    "meta.filename": original_name,
+                    "meta.extension": os.path.splitext(original_name or "")[1].lower(),
+                    "meta.size_bytes": len(file_content) if file_content else 0,
+                    "upload.originalName": original_name,
+                    "progressStage": "error",
+                    "progress": 0,
+                }},
+            )
+            await _notify_progress(doc_id, user_id, -1, "error", user_message)
+            await _notify_document_complete(doc_id, user_id)
+
+            try:
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+            except Exception:
+                pass
+
+            return {
+                "result": "error",
+                "doc_id": doc_id,
+                "status": "failed",
+                "overallStatus": "error",
+                "engine": "xpipe",
+                "error": user_message,
+            }
+
         # 변환 대상 파일(HWP/DOC/PPT/XLS 등)은 PDF 변환 워커가 처리해야 하므로
         # conversion_pending 상태로 설정 (조기 completed 방지)
         if is_convertible_mime(detected_mime):

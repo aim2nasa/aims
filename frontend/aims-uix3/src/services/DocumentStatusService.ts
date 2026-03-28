@@ -532,6 +532,12 @@ export class DocumentStatusService {
    * 문서 진행률 추출
    */
   static extractProgress(document: Document): number {
+    // 에러/타임아웃 상태: progress 값이 있어도 에러로 표시해야 함
+    // (파이프라인 중간에 에러 발생 시 progress가 40 등으로 남아있을 수 있음)
+    if (document.overallStatus === 'error' || document.overallStatus === 'timeout') {
+      return 0
+    }
+
     const embedStage = parseStage<EmbedData>(document.stages?.embed)
     const embedData = parseStage<EmbedData>(document.embed)
     const embedStatus = embedStage?.status ?? embedData?.status
