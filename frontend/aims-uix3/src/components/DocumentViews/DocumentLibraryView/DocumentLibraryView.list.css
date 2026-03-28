@@ -367,6 +367,12 @@
     scrollbar-color: var(--color-scrollbar-thumb, rgba(0, 0, 0, 0.2)) transparent;
   }
 
+  /* library-list-wrapper 안에서는 document-status-list의 overflow를 제거하여
+     status-list-header의 position: sticky가 library-list-wrapper 기준으로 동작하도록 함 */
+  .library-list-wrapper .document-status-list {
+    overflow-y: visible;
+  }
+
   .library-list-wrapper::-webkit-scrollbar {
     width: 6px;
   }
