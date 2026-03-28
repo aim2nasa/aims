@@ -30,7 +30,7 @@ user_invocable: true
 4. GINI GATE 마커 생성 + 커밋
    - Gini PASS 후 `touch D:/aims/.gini-approved` 실행 (PreToolUse 훅 통과용 1회성 마커)
    - CLAUDE.md 규칙 준수: 한글 커밋 메시지, Co-Authored-By 포함
-   - regression 테스트 포함 여부는 pre-commit hook이 검증
+   - regression 테스트 포함 여부는 ACE 4/5의 Gini 게이트에서 검증 (품질 기준 #3)
    - 마커는 훅이 자동 삭제 (1회 사용 후 소멸)
 ```
 

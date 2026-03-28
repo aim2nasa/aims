@@ -95,8 +95,15 @@ git diff                        # 변경 내용 상세
 |------|------|
 | "직접 확인해보니 됩니다" | 자동화된 테스트로 증명 |
 | 수동 재현 불가능한 수정 | 재현 가능한 테스트 케이스 존재 |
+| **regression 테스트 누락** | **변경 영향권의 기존 동작 보호 테스트 존재** |
 
 **테스트 도구**: Jest, React Testing Library, Vitest, pytest
+
+**Regression 게이트 (필수)**:
+- regression 테스트가 필요한 변경인데 누락 → **자동 FAIL (Major)**
+- FAIL 시 흐름: Gini가 누락 지적 → **Alex가 regression 테스트 작성** → Gini 재검수
+- Gini는 **판단만**, 작성은 Alex 담당 (역할 분리)
+- 면제 대상: CSS 미세조정, 텍스트/번역 수정, 주석/문서 변경, 설정값 변경
 
 ### 4. 아키텍처 정합성 (Architectural Consistency)
 
