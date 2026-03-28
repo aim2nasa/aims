@@ -64,6 +64,8 @@ interface CustomerFullDetailViewProps {
   onSwitchToCompactView?: (customerId: string) => void
   /** 문서 탐색기 확대 */
   onExpandToExplorer?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
+  /** 문서 삭제 완료 콜백 (삭제된 문서 ID 전달) */
+  onDocumentDeleted?: (deletedIds: string | string[]) => void
 }
 
 export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
@@ -76,6 +78,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   onNavigate,
   onSwitchToCompactView,
   onExpandToExplorer,
+  onDocumentDeleted,
 }) => {
   // 🍎 상태 관리
   const [customer, setCustomer] = useState<Customer | null>(null)
@@ -959,7 +962,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       </div>
                     </div>
                     <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
-                      <DocumentsTab customer={customer} onDocumentCountChange={setDocumentCount} onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)} onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)} searchTerm={documentSearchTerm} onSearchChange={setDocumentSearchTerm} onNavigate={onNavigate} onExpandToExplorer={onExpandToExplorer && customer ? () => onExpandToExplorer(customer._id, customer.personal_info?.name || '', customer.insurance_info?.customer_type || '개인') : undefined} />
+                      <DocumentsTab customer={customer} onDocumentCountChange={setDocumentCount} onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)} onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)} searchTerm={documentSearchTerm} onSearchChange={setDocumentSearchTerm} onNavigate={onNavigate} onExpandToExplorer={onExpandToExplorer && customer ? () => onExpandToExplorer(customer._id, customer.personal_info?.name || '', customer.insurance_info?.customer_type || '개인') : undefined} onDocumentDeleted={onDocumentDeleted} />
                     </div>
                   </div>
 
@@ -1382,6 +1385,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onNavigate={onNavigate}
                       onExpandToExplorer={onExpandToExplorer && customer ? () => onExpandToExplorer(customer._id, customer.personal_info?.name || '', customer.insurance_info?.customer_type || '개인') : undefined}
                       filterBarPortalTarget={docFilterBarEl}
+                      onDocumentDeleted={onDocumentDeleted}
                     />
                   </div>
                 </section>

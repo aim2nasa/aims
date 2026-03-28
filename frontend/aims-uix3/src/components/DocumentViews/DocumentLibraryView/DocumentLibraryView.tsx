@@ -57,8 +57,8 @@ interface DocumentLibraryViewProps {
   onDocumentClick?: (documentId: string) => void
   /** 문서 더블클릭 핸들러 (모달 프리뷰) */
   onDocumentDoubleClick?: (document: Document) => void
-  /** 문서 삭제 완료 핸들러 */
-  onDocumentDeleted?: () => void
+  /** 문서 삭제 완료 핸들러 (삭제된 문서 ID 전달) */
+  onDocumentDeleted?: (deletedIds: string | string[]) => void
   /** 고객 클릭 핸들러 */
   onCustomerClick?: (customerId: string) => void
   /** 고객 더블클릭 핸들러 (전체보기 페이지로 이동) */
@@ -121,7 +121,9 @@ const DocumentLibraryContent: React.FC<{
   customerFilter: { id: string; name: string } | null
   /** 고객 필터 설정 핸들러 */
   onCustomerFilterChange: (filter: { id: string; name: string } | null) => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange }) => {
+  /** 문서 삭제 완료 핸들러 (삭제된 문서 ID 전달) */
+  onDocumentDeleted?: (deletedIds: string | string[]) => void
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
   // 🍎 개발서버 여부 (localhost에서만 고객 필터 기능 활성화)
@@ -136,9 +138,17 @@ const DocumentLibraryContent: React.FC<{
   // 호버 액션: 문서 삭제/이름변경 — reload 대신 데이터 재조회로 UI 상태 유지
   const refreshDataRef = React.useRef<() => void>(() => {})
   const onRefreshData = React.useCallback(() => { refreshDataRef.current() }, [])
+  const lastDeletedDocIdRef = React.useRef<string | null>(null)
+  const onDeleteSuccessWithNotify = React.useCallback(() => {
+    onRefreshData()
+    if (lastDeletedDocIdRef.current) {
+      onDocumentDeleted?.(lastDeletedDocIdRef.current)
+      lastDeletedDocIdRef.current = null
+    }
+  }, [onRefreshData, onDocumentDeleted])
   const documentActions = useDocumentActions({
     onRenameSuccess: onRefreshData,
-    onDeleteSuccess: onRefreshData,
+    onDeleteSuccess: onDeleteSuccessWithNotify,
   })
   const [renamingDoc, setRenamingDoc] = React.useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
@@ -161,7 +171,10 @@ const DocumentLibraryContent: React.FC<{
   const handleHoverDeleteClick = React.useCallback((document: Document) => {
     const docId = document._id || document.id
     const docName = document.displayName || DocumentStatusService.extractOriginalFilename(document)
-    if (docId) documentActions.deleteDocument(docId, docName)
+    if (docId) {
+      lastDeletedDocIdRef.current = docId
+      documentActions.deleteDocument(docId, docName)
+    }
   }, [documentActions])
 
   const controller = useDocumentStatusController()
@@ -1422,6 +1435,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               onCustomerDoubleClick?.(customerId)
             }}
             {...(onNavigate && { onNavigate })}
+            onDocumentDeleted={onDocumentDeleted}
           />
         </DocumentStatusProvider>
       </div>

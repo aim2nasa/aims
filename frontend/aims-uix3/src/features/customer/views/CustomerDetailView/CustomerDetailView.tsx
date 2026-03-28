@@ -42,6 +42,8 @@ interface CustomerDetailViewProps {
   onDocumentLibraryRefresh?: () => Promise<void>;
   /** RightPane visibility 변경 시 새로고침 트리거 */
   refreshTrigger?: number;
+  /** 문서 삭제 완료 콜백 (삭제된 문서 ID 전달) */
+  onDocumentDeleted?: (deletedIds: string | string[]) => void;
   gapLeft?: number;
   gapRight?: number;
   gapTop?: number;
@@ -57,6 +59,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   onOpenFullDetail,
   onExpandToExplorer,
   onDocumentLibraryRefresh,
+  onDocumentDeleted,
   refreshTrigger,
   gapLeft = 2,
   gapRight = 2,
@@ -571,6 +574,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
             onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)}
             onExpandToExplorer={onExpandToExplorer ? () => onExpandToExplorer(customer._id, customer.personal_info?.name || '', customer.insurance_info?.customer_type || '개인') : undefined}
+            onDocumentDeleted={onDocumentDeleted}
           />
         </div>
 

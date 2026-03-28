@@ -69,6 +69,8 @@ interface DocumentsTabProps {
   onExpandToExplorer?: () => void
   /** 필터바를 외부 컨테이너(섹션 헤더)에 포탈 렌더링할 타겟 */
   filterBarPortalTarget?: HTMLElement | null
+  /** 문서 삭제 완료 핸들러 (삭제된 문서 ID 전달) */
+  onDocumentDeleted?: (deletedIds: string | string[]) => void
 }
 
 // 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
@@ -120,6 +122,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   refreshTrigger,
   onExpandToExplorer,
   filterBarPortalTarget,
+  onDocumentDeleted,
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -153,9 +156,17 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
   // 호버 액션: 문서 삭제/이름변경 — reload 대신 데이터 재조회로 UI 상태 유지
   const onRefreshData = useCallback(() => { refresh() }, [refresh])
+  const lastDeletedDocIdRef = useRef<string | null>(null)
+  const onDeleteSuccessWithNotify = useCallback(() => {
+    onRefreshData()
+    if (lastDeletedDocIdRef.current) {
+      onDocumentDeleted?.(lastDeletedDocIdRef.current)
+      lastDeletedDocIdRef.current = null
+    }
+  }, [onRefreshData, onDocumentDeleted])
   const documentActions = useDocumentActions({
     onRenameSuccess: onRefreshData,
-    onDeleteSuccess: onRefreshData,
+    onDeleteSuccess: onDeleteSuccessWithNotify,
   })
   const [renamingDoc, setRenamingDoc] = useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
@@ -176,7 +187,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
   const handleHoverDeleteClick = useCallback((doc: CustomerDocumentItem) => {
     const docName = doc.displayName || DocumentStatusService.extractOriginalFilename(doc as any)
-    if (doc._id) documentActions.deleteDocument(doc._id, docName)
+    if (doc._id) {
+      lastDeletedDocIdRef.current = doc._id
+      documentActions.deleteDocument(doc._id, docName)
+    }
   }, [documentActions])
 
   // 카테고리 필터 상태
@@ -1004,6 +1018,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       const results = await Promise.all(deletePromises)
       const failedDeletes = results.filter((r) => !r.success)
 
+      // 삭제된 문서가 RP에 표시 중이면 RP 닫기
+      const successIds = results.filter((r) => r.success).map((r) => r.docId)
+      if (successIds.length > 0) {
+        onDocumentDeleted?.(successIds)
+      }
+
       // 선택 초기화 및 삭제 모드 종료
       setSelectedDocumentIds(new Set())
       setIsDeleteMode(false)
@@ -1050,7 +1070,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         showCancel: false,
       })
     }
-  }, [selectedDocumentIds, documents, confirmController, onRefresh, refresh, onDocumentLibraryRefresh, onAnnualReportNeedRefresh, onCustomerReviewNeedRefresh])
+  }, [selectedDocumentIds, documents, confirmController, onRefresh, refresh, onDocumentLibraryRefresh, onAnnualReportNeedRefresh, onCustomerReviewNeedRefresh, onDocumentDeleted])
 
   const renderState = () => {
     if (isLoading && documents.length === 0) {

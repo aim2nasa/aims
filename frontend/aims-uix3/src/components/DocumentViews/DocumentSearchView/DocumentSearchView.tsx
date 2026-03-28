@@ -62,6 +62,8 @@ interface DocumentSearchViewProps {
   onDocumentClick?: (documentId: string) => void
   /** 문서 더블클릭 핸들러 (모달 프리뷰) */
   onDocumentDoubleClick?: (document: SearchResultItem) => void
+  /** 문서 삭제 완료 핸들러 (삭제된 문서 ID 전달) */
+  onDocumentDeleted?: (deletedIds: string | string[]) => void
   /** 고객 클릭 핸들러 (RightPane) */
   onCustomerClick?: (customerId: string) => void
   /** 고객 더블클릭 핸들러 (전체 정보 페이지) */
@@ -101,6 +103,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   onClose,
   onDocumentClick,
   onDocumentDoubleClick,
+  onDocumentDeleted,
   onCustomerClick,
   onCustomerDoubleClick
 }) => {
@@ -140,9 +143,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
   // 호버 액션: 문서 삭제/이름변경 — reload 대신 검색 재실행으로 UI 상태 유지
   const onRefreshSearch = useCallback(() => { handleSearch() }, [handleSearch])
+  const lastDeletedDocIdRef = React.useRef<string | null>(null)
+  const onDeleteSuccessWithNotify = useCallback(() => {
+    onRefreshSearch()
+    if (lastDeletedDocIdRef.current) {
+      onDocumentDeleted?.(lastDeletedDocIdRef.current)
+      lastDeletedDocIdRef.current = null
+    }
+  }, [onRefreshSearch, onDocumentDeleted])
   const documentActions = useDocumentActions({
     onRenameSuccess: onRefreshSearch,
-    onDeleteSuccess: onRefreshSearch,
+    onDeleteSuccess: onDeleteSuccessWithNotify,
   })
   const [renamingDoc, setRenamingDoc] = useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
@@ -173,7 +184,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const handleHoverDeleteClick = useCallback((item: SearchResultItem) => {
     const docId = getSearchItemId(item)
     const docName = ('displayName' in item ? item.displayName : undefined) || DocumentStatusService.extractOriginalFilename(item as unknown as Record<string, unknown>)
-    if (docId) documentActions.deleteDocument(docId, docName)
+    if (docId) {
+      lastDeletedDocIdRef.current = docId
+      documentActions.deleteDocument(docId, docName)
+    }
   }, [documentActions, getSearchItemId])
 
   // Full Text 모달 상태 (기존 - 검색 결과용)
@@ -749,6 +763,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       // 검색 결과 새로고침
       await handleSearch()
 
+      // 삭제된 문서가 RP에 표시 중이면 RP 닫기
+      onDocumentDeleted?.(documentId)
+
       setIsDeleting(false)
     } catch (error) {
       console.error('[DocumentSearchView] 문서 삭제 실패:', error)
@@ -761,7 +778,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         iconType: 'error',
       })
     }
-  }, [showAlert, handleSearch])
+  }, [showAlert, handleSearch, onDocumentDeleted])
 
   // 🍎 문서 컨텍스트 메뉴 섹션
   const documentContextMenuSections: ContextMenuSection[] = useMemo(() => {

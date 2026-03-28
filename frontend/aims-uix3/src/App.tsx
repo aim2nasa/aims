@@ -437,6 +437,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     setExplorerCustomerType,
   })
 
+  // 문서 삭제 완료 콜백: 삭제된 문서가 현재 RP에 표시 중이면 RP 닫기
+  const handleDocumentDeleted = useCallback((deletedIds: string | string[]) => {
+    if (!selectedDocument) return
+    const ids = Array.isArray(deletedIds) ? deletedIds : [deletedIds]
+    if (ids.includes(selectedDocument._id)) {
+      setSelectedDocument(null)
+      setRightPaneVisible(false)
+    }
+  }, [selectedDocument, setSelectedDocument, setRightPaneVisible])
+
   // RP 파일명 모드: localStorage 초기값 동기화
   const [rpFilenameMode, setRpFilenameMode] = useState<'display' | 'original'>(() => {
     if (typeof window === 'undefined') return 'display'
@@ -1537,7 +1547,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
               onDocumentDoubleClick={handleDocumentPreviewModal}
-              onDocumentDeleted={() => setRightPaneVisible(false)}
+              onDocumentDeleted={handleDocumentDeleted}
               onCustomerClick={handleCustomerClick}
               onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
               onRefreshExpose={(refreshFn) => {
@@ -1553,6 +1563,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
               onDocumentDoubleClick={handleDocumentPreviewModal}
+              onDocumentDeleted={handleDocumentDeleted}
               onCustomerClick={handleCustomerClick}
               onCustomerExplorerClick={handleExpandToExplorer}
             />
@@ -1564,6 +1575,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
               onDocumentDoubleClick={handleDocumentPreviewModalFromSearch}
+              onDocumentDeleted={handleDocumentDeleted}
               onCustomerClick={handleCustomerClick}
               onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
             />
@@ -1646,6 +1658,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onNavigate={handleMenuClick}
               onSwitchToCompactView={handleSwitchToCompactView}
               onExpandToExplorer={handleExpandToExplorer}
+              onDocumentDeleted={handleDocumentDeleted}
             />
           </Suspense>
 
@@ -1658,6 +1671,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onClose={handleCollapseExplorer}
               onCollapse={handleCollapseExplorer}
               onDocumentClick={handleDocumentClick}
+              onDocumentDeleted={handleDocumentDeleted}
             />
           </Suspense>
 

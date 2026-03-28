@@ -44,6 +44,8 @@ interface CustomerDocumentExplorerViewProps {
   onCollapse: () => void
   /** 문서 클릭 시 RightPane 프리뷰 (App에서 handleDocumentClick 전달) */
   onDocumentClick?: (documentId: string) => void
+  /** 문서 삭제 완료 핸들러 (삭제된 문서 ID 전달) */
+  onDocumentDeleted?: (deletedIds: string | string[]) => void
 }
 
 /** 소분류 그룹 */
@@ -182,6 +184,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   onClose,
   onCollapse,
   onDocumentClick,
+  onDocumentDeleted,
 }) => {
   const [activeTab, setActiveTab] = usePersistedState<TabType>('cust-doc-explorer-tab', 'my')
   // 펼침 상태: "cat:insurance" 또는 "st:insurance/annual_report" 형식
@@ -216,9 +219,17 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   // 호버 액션: 문서 삭제/이름변경 — reload 대신 데이터 재조회로 UI 상태 유지
   const refreshDataRef = useRef<() => void>(() => {})
   const onRefreshData = useCallback(() => { refreshDataRef.current() }, [])
+  const lastDeletedDocIdRef = useRef<string | null>(null)
+  const onDeleteSuccessWithNotify = useCallback(() => {
+    onRefreshData()
+    if (lastDeletedDocIdRef.current) {
+      onDocumentDeleted?.(lastDeletedDocIdRef.current)
+      lastDeletedDocIdRef.current = null
+    }
+  }, [onRefreshData, onDocumentDeleted])
   const documentActions = useDocumentActions({
     onRenameSuccess: onRefreshData,
-    onDeleteSuccess: onRefreshData,
+    onDeleteSuccess: onDeleteSuccessWithNotify,
   })
   const [renamingDoc, setRenamingDoc] = useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
@@ -239,7 +250,10 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
 
   const handleHoverDeleteClick = useCallback((doc: { _id?: string; displayName?: string; originalName?: string }) => {
     const docName = doc.displayName || doc.originalName || ''
-    if (doc._id) documentActions.deleteDocument(doc._id, docName)
+    if (doc._id) {
+      lastDeletedDocIdRef.current = doc._id
+      documentActions.deleteDocument(doc._id, docName)
+    }
   }, [documentActions])
 
   // 모달 상태

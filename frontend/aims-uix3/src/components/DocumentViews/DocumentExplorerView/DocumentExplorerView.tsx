@@ -64,6 +64,8 @@ export interface DocumentExplorerViewProps {
   onCustomerClick?: (customerId: string) => void
   /** 고객 문서 분류함 열기 */
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
+  /** 문서 삭제 완료 핸들러 (삭제된 문서 ID 전달) */
+  onDocumentDeleted?: (deletedIds: string | string[]) => void
 }
 
 /** explorer-tree API 응답 타입 */
@@ -95,13 +97,14 @@ interface ExplorerTreeData {
 const DocumentExplorerContent: React.FC<{
   onDocumentClick?: (documentId: string) => void
   onDocumentDoubleClick?: (document: Document) => void
+  onDocumentDeleted?: (deletedIds: string | string[]) => void
   onCustomerClick?: (customerId: string) => void
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   selectedInitial: string | null
   onSelectedInitialChange: (initial: string | null) => void
   initialType: InitialType
   onInitialTypeChange: (type: InitialType) => void
-}> = ({ onDocumentClick, onDocumentDoubleClick, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange }) => {
+}> = ({ onDocumentClick, onDocumentDoubleClick, onDocumentDeleted, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange }) => {
 
   // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
@@ -117,9 +120,17 @@ const DocumentExplorerContent: React.FC<{
   // 호버 액션: 문서 삭제/이름변경 — reload 대신 트리 재조회로 UI 상태 유지
   const refreshDataRef = useRef<() => void>(() => {})
   const onRefreshData = useCallback(() => { refreshDataRef.current() }, [])
+  const lastDeletedDocIdRef = useRef<string | null>(null)
+  const onDeleteSuccessWithNotify = useCallback(() => {
+    onRefreshData()
+    if (lastDeletedDocIdRef.current) {
+      onDocumentDeleted?.(lastDeletedDocIdRef.current)
+      lastDeletedDocIdRef.current = null
+    }
+  }, [onRefreshData, onDocumentDeleted])
   const documentActions = useDocumentActions({
     onRenameSuccess: onRefreshData,
-    onDeleteSuccess: onRefreshData,
+    onDeleteSuccess: onDeleteSuccessWithNotify,
   })
   const [renamingDoc, setRenamingDoc] = useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
 
@@ -142,7 +153,10 @@ const DocumentExplorerContent: React.FC<{
   const handleHoverDeleteClick = useCallback((doc: Document) => {
     const docId = doc._id || doc.id
     const docName = doc.displayName || DocumentStatusService.extractOriginalFilename(doc)
-    if (docId) documentActions.deleteDocument(docId, docName)
+    if (docId) {
+      lastDeletedDocIdRef.current = docId
+      documentActions.deleteDocument(docId, docName)
+    }
   }, [documentActions])
 
   // === 문서함 다운로드 ===
@@ -263,8 +277,10 @@ const DocumentExplorerContent: React.FC<{
   // 일괄 삭제 실행
   const handleBatchDelete = useCallback(async () => {
     if (selectedDocumentIds.size === 0) return
+    const idsToDelete = Array.from(selectedDocumentIds)
     await documentActions.deleteDocuments(selectedDocumentIds)
-  }, [selectedDocumentIds, documentActions])
+    onDocumentDeleted?.(idsToDelete)
+  }, [selectedDocumentIds, documentActions, onDocumentDeleted])
 
   // 고객 노드 우클릭 → 컨텍스트 메뉴
   const customerContextMenu = useContextMenu()
@@ -1983,6 +1999,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
   onClose,
   onDocumentClick,
   onDocumentDoubleClick,
+  onDocumentDeleted,
   onCustomerClick,
   onCustomerExplorerClick,
 }) => {
@@ -2006,6 +2023,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
       <DocumentExplorerContent
         onDocumentClick={onDocumentClick}
         onDocumentDoubleClick={onDocumentDoubleClick}
+        onDocumentDeleted={onDocumentDeleted}
         onCustomerClick={onCustomerClick}
         onCustomerExplorerClick={onCustomerExplorerClick}
         selectedInitial={selectedInitial}
