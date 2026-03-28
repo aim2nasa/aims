@@ -1541,7 +1541,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
                     // Level 2: 명백한 BIN MIME 체크 (OCR 건너뜀 💰)
                     if: {
                       $in: [
-                        { $toLower: { $ifNull: ["$metadata.mimetype", ""] } },
+                        { $toLower: { $ifNull: ["$meta.mime", ""] } },
                         [
                           // 압축
                           "application/zip",
@@ -2166,7 +2166,7 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
         badgeType = 'TXT';
       }
       // Level 2: 명백한 BIN MIME 체크 (OCR 건너뜀 💰)
-      else if (isBinaryMimeType(doc.metadata?.mimetype)) {
+      else if (isBinaryMimeType(doc.meta?.mime)) {
         badgeType = 'BIN';
       }
       // Level 3: OCR 텍스트 확인 (_hasOcrText 플래그)
