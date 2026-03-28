@@ -480,16 +480,21 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                         continue  # 다음 문서로
 
                 # full_text 추출 (우선순위: meta.full_text > ocr.full_text > text.full_text)
+                # 공백만 있는 텍스트는 건너뛰고 실제 내용이 있는 텍스트를 선택
                 full_text = None
                 text_source = None
 
-                if doc_data.get('meta', {}).get('full_text'):
+                meta_text = (doc_data.get('meta', {}).get('full_text') or '').strip()
+                ocr_text = (doc_data.get('ocr', {}).get('full_text') or '').strip()
+                text_text = (doc_data.get('text', {}).get('full_text') or '').strip()
+
+                if meta_text:
                     full_text = doc_data['meta']['full_text']
                     text_source = 'meta'
-                elif doc_data.get('ocr', {}).get('full_text'):
+                elif ocr_text:
                     full_text = doc_data['ocr']['full_text']
                     text_source = 'ocr'
-                elif doc_data.get('text', {}).get('full_text'):
+                elif text_text:
                     full_text = doc_data['text']['full_text']
                     text_source = 'text'
 
