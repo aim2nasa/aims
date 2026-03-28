@@ -43,6 +43,7 @@ const FILE_TYPE_ICONS: Record<string, { icon: string; color: string; label: stri
 export interface HoverPreviewProps {
   document: Document | null
   position: { x: number; y: number } | null
+  rightPaneVisible?: boolean
 }
 
 // 지원하는 이미지 MIME 타입
@@ -237,6 +238,17 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
   // 마우스 위치 기반으로 실시간 계산 (위치 + 동적 크기)
   const layout = calculateLayout(position.x, position.y)
 
+  // RightPane과 겹침 판단: RP가 열려 있으면 RP 영역과 썸네일 영역 비교
+  const rpElement = globalThis.document.querySelector('[role="complementary"]')
+  if (rpElement) {
+    const rpRect = rpElement.getBoundingClientRect()
+    const thumbnailRight = layout.x + layout.width
+    // 썸네일 오른쪽 끝이 RP 왼쪽 시작보다 오른쪽이면 겹침
+    if (thumbnailRight > rpRect.left) {
+      return null
+    }
+  }
+
   // ★ 캐시된 이미지이거나 이미 로드된 경우: 로딩 스피너 없이 즉시 표시
   const showSpinner = !isImageCached && !imageLoaded && !imageError
 
@@ -304,6 +316,9 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
 
 // React.memo로 최적화 - props가 변경되지 않으면 리렌더링 안함
 export const HoverPreview = memo(HoverPreviewComponent, (prevProps, nextProps) => {
+  // RightPane 상태 변경 시 반드시 리렌더링 (겹침 판단 재평가)
+  if (prevProps.rightPaneVisible !== nextProps.rightPaneVisible) return false
+
   // document ID와 position이 같으면 리렌더링 안함
   const prevDocId = prevProps.document?._id || prevProps.document?.id
   const nextDocId = nextProps.document?._id || nextProps.document?.id

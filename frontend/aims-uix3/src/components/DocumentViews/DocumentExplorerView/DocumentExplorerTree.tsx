@@ -24,6 +24,7 @@ import { SORT_BY_LABELS } from './types/documentExplorer'
 import { useDocumentExplorerKeyboard } from './hooks/useDocumentExplorerKeyboard'
 import { getDocumentDate } from './utils/treeBuilders'
 import { HoverPreview } from './components/HoverPreview'
+import { useLayoutStore } from '@/shared/store/useLayoutStore'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { DocumentTypeCell } from '@/shared/ui/DocumentTypeCell/DocumentTypeCell'
 import { highlightText } from '@/shared/lib/highlightText'
@@ -1131,6 +1132,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
   const treeContainerRef = useRef<HTMLDivElement>(null)
+  const rightPaneVisible = useLayoutStore(s => s.rightPaneVisible)
 
   // 호버 프리뷰 상태 (useRef로 동기적 업데이트 + forceUpdate로 즉시 렌더링)
   // useState는 비동기적이라 빠른 마우스 이동 시 batching으로 누락될 수 있음
@@ -1635,6 +1637,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         <HoverPreview
           document={hoverStateRef.current?.document ?? null}
           position={hoverStateRef.current?.position ?? null}
+          rightPaneVisible={rightPaneVisible}
         />
       )}
     </>
