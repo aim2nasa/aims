@@ -269,7 +269,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             progress: wasUploading ? 0 : savedFile.progress,
             error: wasUploading ? '업로드가 중단되었습니다 (페이지 새로고침)' : savedFile.error,
             completedAt: savedFile.completedAt ? new Date(savedFile.completedAt) : undefined,
-            relativePath: savedFile.relativePath
           }
         }) ?? []
 
@@ -444,7 +443,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           progress: file.progress,
           error: file.error,
           completedAt: file.completedAt,
-          relativePath: file.relativePath,
           // File 객체 정보만 저장 (실제 File 객체는 저장 불가)
           fileInfo: {
             name: file.file.name,
@@ -661,7 +659,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       progress: 0,
       error: undefined,
       completedAt: undefined,
-      relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined,
       batchId: newBatchId  // 🔴 업로드 묶음 ID 추가
     }))
 
@@ -976,7 +973,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           progress: 0,
           error: undefined,
           completedAt: undefined,
-          relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined,
           customerId: customerFileCustomer?._id,  // 🔗 고객 선택 시 자동 연결
           batchId: newBatchId  // 🔴 업로드 묶음 ID (진행률 추적용)
         })
@@ -3350,7 +3346,6 @@ type StoredUploadFile = {
   progress: number
   error?: string
   completedAt?: string
-  relativePath?: string
   fileSize?: number
   fileInfo?: {
     name?: string
@@ -3364,4 +3359,3 @@ type StoredUploadState = Omit<UploadState, 'files'> & {
   files?: StoredUploadFile[]
 }
 
-type FileWithRelativePath = File & { webkitRelativePath?: string }

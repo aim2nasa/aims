@@ -2298,9 +2298,38 @@ async def _process_via_xpipe(
             }
 
         # 비변환 대상(ZIP/AI/기타 보관 파일) → 보관 완료 처리
+        # 보관 파일도 파일명 기반 분류 시도 (document_type이 None이 되는 것 방지)
+        archive_doc_type = "unclassifiable"
+        archive_confidence = 0.0
+        archive_summary = ""
+        archive_title = ""
+        if original_name and OpenAIService._is_meaningful_filename(original_name):
+            classify_text_for_archive = OpenAIService._sanitize_filename_for_prompt(original_name)
+            try:
+                sr = await OpenAIService.summarize_text(
+                    classify_text_for_archive,
+                    owner_id=user_id,
+                    document_id=doc_id,
+                    filename=original_name,
+                    classification_config=classification_config,
+                )
+                archive_doc_type = sr.get("document_type") or "unclassifiable"
+                archive_confidence = sr.get("confidence", 0.0)
+                archive_summary = sr.get("summary", "")
+                archive_title = sr.get("title", "")
+                logger.info(
+                    f"[xPipe] 보관 파일 파일명 분류 완료: doc_id={doc_id}, "
+                    f"type={archive_doc_type}, file={original_name}"
+                )
+            except Exception as archive_classify_err:
+                logger.warning(
+                    f"[xPipe] 보관 파일 파일명 분류 실패 (무시): doc_id={doc_id}, "
+                    f"error={archive_classify_err}"
+                )
+
         logger.info(
             f"[xPipe] 텍스트 추출 불가 — 보관 처리: doc_id={doc_id}, "
-            f"file={original_name}, reason={skip_reason}"
+            f"file={original_name}, reason={skip_reason}, document_type={archive_doc_type}"
         )
         await files_collection.update_one(
             {"_id": ObjectId(doc_id)},
@@ -2310,8 +2339,13 @@ async def _process_via_xpipe(
                     "overallStatus": "completed",
                     "overallStatusUpdatedAt": datetime.utcnow(),
                     "processingSkipReason": skip_reason,
+                    "document_type": archive_doc_type,
+                    "document_type_auto": True,
                     "meta.mime": detected_mime,
                     "meta.meta_status": "done",
+                    "meta.confidence": archive_confidence,
+                    "meta.summary": archive_summary,
+                    "meta.title": archive_title,
                     "meta.filename": original_name,
                     "meta.extension": os.path.splitext(original_name or "")[1].lower(),
                     "meta.size_bytes": len(file_content) if file_content else 0,

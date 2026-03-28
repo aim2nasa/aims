@@ -389,12 +389,6 @@ export const FileList: React.FC<FileListProps> = ({
                   {uploadFile.error.length > 30 ? `${uploadFile.error.substring(0, 30)}...` : uploadFile.error}
                 </span>
               )}
-              {/* 🍎 PATH: Subtle secondary info */}
-              {uploadFile.relativePath && (
-                <span className="file-item__path-compact" title={uploadFile.relativePath}>
-                  {uploadFile.relativePath}
-                </span>
-              )}
             </div>
 
             {/* 🍎 SIZE: Fixed width column */}

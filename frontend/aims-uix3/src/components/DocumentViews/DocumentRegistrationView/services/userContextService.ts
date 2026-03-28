@@ -98,8 +98,10 @@ export class UserContextService {
       : this.context.identifierValue;
 
     // 🔍 디버깅: userId 확인
-    console.log('[UserContextService] createFormData - identifierType:', this.context.identifierType);
-    console.log('[UserContextService] createFormData - identifierValue:', identifierValue);
+    if (import.meta.env.DEV) {
+      console.log('[UserContextService] createFormData - identifierType:', this.context.identifierType);
+      console.log('[UserContextService] createFormData - identifierValue:', identifierValue);
+    }
 
     // 필수: 사용자 식별자
     formData.append(this.context.identifierType, identifierValue)
