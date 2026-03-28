@@ -60,7 +60,15 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const queryClient = useQueryClient();
 
     // F5 이후에도 유지되는 상태들
-    const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '15');
+    const [itemsPerPage, setItemsPerPage] = useState<string>(() => {
+      return localStorage.getItem('aims-customer-all-items-per-page') || '15'
+    });
+
+    // itemsPerPage 변경 시 localStorage에 자동 저장
+    useEffect(() => {
+      localStorage.setItem('aims-customer-all-items-per-page', itemsPerPage)
+    }, [itemsPerPage]);
+
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
     const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
     // 상태+유형 통합 필터 (5가지 옵션)

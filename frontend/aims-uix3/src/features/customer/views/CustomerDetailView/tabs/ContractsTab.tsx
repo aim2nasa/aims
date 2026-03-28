@@ -286,9 +286,19 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
   // 🍎 페이지네이션 상태 ('auto' 또는 숫자)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>('auto')
+  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>(() => {
+    const saved = localStorage.getItem('aims-customer-contracts-items-per-page')
+    if (!saved || saved === 'auto') return 'auto'
+    const num = parseInt(saved, 10)
+    return isNaN(num) ? 'auto' : num
+  })
   const [containerHeight, setContainerHeight] = useState(0)
   const sectionContainerRef = useRef<HTMLDivElement>(null)
+
+  // itemsPerPageMode 변경 시 localStorage에 자동 저장
+  useEffect(() => {
+    localStorage.setItem('aims-customer-contracts-items-per-page', String(itemsPerPageMode))
+  }, [itemsPerPageMode])
 
   // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산
   // ⚠️ CustomerFullDetailView에서는 .customer-contracts__header가 display:none으로 숨겨지고

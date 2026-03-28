@@ -109,7 +109,14 @@ export default function ContractAllView({
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = usePersistedState('contract-all-page', 1)
-  const [itemsPerPage, setItemsPerPage] = usePersistedState('contract-all-items-per-page', '50')
+  const [itemsPerPage, setItemsPerPage] = useState<string>(() => {
+    return localStorage.getItem('aims-contract-all-items-per-page') || '50'
+  })
+
+  // itemsPerPage 변경 시 localStorage에 자동 저장
+  useEffect(() => {
+    localStorage.setItem('aims-contract-all-items-per-page', itemsPerPage)
+  }, [itemsPerPage])
 
   // 페이지네이션 클릭 애니메이션 상태
   const [prevArrowClicked, setPrevArrowClicked] = useState(false)

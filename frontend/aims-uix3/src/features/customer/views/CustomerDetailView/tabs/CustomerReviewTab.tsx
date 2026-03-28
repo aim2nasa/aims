@@ -90,10 +90,20 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
   const _setSearchTerm = onSearchChange ?? setInternalSearchTerm;
 
   // 페이지네이션 상태
-  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>('auto');
+  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>(() => {
+    const saved = localStorage.getItem('aims-customer-cr-items-per-page');
+    if (!saved || saved === 'auto') return 'auto';
+    const num = parseInt(saved, 10);
+    return isNaN(num) ? 'auto' : num;
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [containerHeight, setContainerHeight] = useState(0);
   const sectionContainerRef = useRef<HTMLDivElement>(null);
+
+  // itemsPerPageMode 변경 시 localStorage에 자동 저장
+  useEffect(() => {
+    localStorage.setItem('aims-customer-cr-items-per-page', String(itemsPerPageMode));
+  }, [itemsPerPageMode]);
 
   // 삭제 기능 상태
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
