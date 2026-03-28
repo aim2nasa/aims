@@ -49,12 +49,18 @@ class UpstageOCRProvider(OCRProvider):
     def get_name(self) -> str:
         return "upstage"
 
+    # 30MB 이상 PDF는 분할 처리
+    CHUNK_THRESHOLD = 30 * 1024 * 1024  # 30MB
+    CHUNK_PAGES = 10  # 청크당 페이지 수
+
     async def process(
         self,
         file_path: str,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Upstage API로 OCR 처리
+
+        30MB 초과 PDF는 자동으로 페이지 분할 후 청크별 OCR 처리.
 
         Args:
             file_path: 처리할 이미지/PDF 파일 경로
@@ -65,11 +71,39 @@ class UpstageOCRProvider(OCRProvider):
         if not self.api_key:
             raise RuntimeError("Upstage API 키가 설정되지 않았습니다")
 
-        import httpx
+        # 대용량 PDF 분할 처리 분기
+        file_size = os.path.getsize(file_path)
+        if file_size > self.CHUNK_THRESHOLD and file_path.lower().endswith(".pdf"):
+            logger.info(
+                "대용량 PDF 감지: %s (%.1fMB) — 분할 OCR 진행",
+                os.path.basename(file_path),
+                file_size / (1024 * 1024),
+            )
+            return await self._process_chunked(file_path)
 
-        filename = os.path.basename(file_path)
+        # 일반 파일: 단일 API 호출
         with open(file_path, "rb") as f:
             file_content = f.read()
+
+        return await self._process_single_chunk(file_content, os.path.basename(file_path))
+
+    async def _process_single_chunk(
+        self,
+        content: bytes,
+        filename: str,
+    ) -> dict[str, Any]:
+        """단일 파일/청크에 대한 Upstage API 호출
+
+        429(Rate Limit)와 타임아웃에 대한 재시도 로직 포함.
+
+        Args:
+            content: 파일 바이너리 데이터
+            filename: API에 전달할 파일명
+
+        Returns:
+            {text, pages, confidence}
+        """
+        import httpx
 
         max_retries = 5
         for attempt in range(max_retries):
@@ -78,7 +112,7 @@ class UpstageOCRProvider(OCRProvider):
                     response = await client.post(
                         self.API_URL,
                         headers={"Authorization": f"Bearer {self.api_key}"},
-                        files={"document": (filename, file_content)},
+                        files={"document": (filename, content)},
                         data={"model": "ocr"},
                     )
 
@@ -87,7 +121,7 @@ class UpstageOCRProvider(OCRProvider):
                         if attempt < max_retries - 1:
                             import asyncio
                             retry_after = response.headers.get("Retry-After")
-                            if retry_after:
+                            if retry_after and retry_after.isdigit():
                                 wait = int(retry_after)
                             else:
                                 wait = 10 * (attempt + 1)  # 10, 20, 30, 40초
@@ -115,6 +149,103 @@ class UpstageOCRProvider(OCRProvider):
                 raise RuntimeError("Upstage OCR 처리 시간 초과 (120초, 재시도 소진)")
 
         raise RuntimeError("Upstage OCR 재시도 실패")
+
+    async def _process_chunked(
+        self,
+        file_path: str,
+    ) -> dict[str, Any]:
+        """대용량 PDF를 페이지 단위로 분할하여 OCR 처리
+
+        PyMuPDF(fitz)로 PDF를 CHUNK_PAGES 페이지씩 분할한 뒤
+        각 청크를 _process_single_chunk()로 개별 처리.
+        청크 간 1초 대기(rate limit 방지).
+
+        파일은 1회만 열고 insert_pdf()로 청크를 추출한다.
+
+        실패 정책: 청크 N 실패 시 RuntimeError를 즉시 전파한다.
+        1~(N-1) 청크의 부분 결과는 반환되지 않으며, 호출자가 전체 재시도해야 한다.
+
+        Args:
+            file_path: PDF 파일 경로
+
+        Returns:
+            {text, pages, confidence} — 전체 텍스트 합산, confidence 가중 평균
+        """
+        import asyncio
+        import fitz  # PyMuPDF
+
+        filename = os.path.basename(file_path)
+
+        try:
+            doc = fitz.open(file_path)
+        except Exception as e:
+            raise RuntimeError(f"PDF 파일을 열 수 없습니다: {filename} — {e}") from e
+
+        with doc:
+            total_pages = len(doc)
+            if total_pages == 0:
+                raise RuntimeError(f"PDF 페이지가 0개입니다: {filename}")
+
+            # 청크 범위 계산: [(0, 10), (10, 20), ...]
+            chunks: list[tuple[int, int]] = []
+            for start in range(0, total_pages, self.CHUNK_PAGES):
+                end = min(start + self.CHUNK_PAGES, total_pages)
+                chunks.append((start, end))
+
+            logger.info(
+                "PDF 분할: 총 %d페이지 → %d개 청크 (%d페이지/청크)",
+                total_pages, len(chunks), self.CHUNK_PAGES,
+            )
+
+            texts: list[str] = []
+            total_billed_pages = 0
+            weighted_confidence = 0.0
+            total_weight = 0
+
+            for idx, (start, end) in enumerate(chunks):
+                chunk_label = f"청크 {idx + 1}/{len(chunks)} (p{start + 1}-{end})"
+                logger.info("처리 중: %s — %s", filename, chunk_label)
+
+                # 이미 열린 doc에서 insert_pdf로 청크 추출 (파일 재오픈 없음)
+                chunk_doc = fitz.open()  # 빈 문서 생성
+                chunk_doc.insert_pdf(doc, from_page=start, to_page=end - 1)
+                chunk_bytes = chunk_doc.tobytes()
+                chunk_doc.close()
+
+                chunk_filename = f"{os.path.splitext(filename)[0]}_p{start + 1}-{end}.pdf"
+
+                result = await self._process_single_chunk(chunk_bytes, chunk_filename)
+
+                chunk_text = result.get("text", "")
+                chunk_pages = result.get("pages", 0)
+                chunk_confidence = result.get("confidence", 0.0)
+
+                texts.append(chunk_text)
+                total_billed_pages += chunk_pages
+                weighted_confidence += chunk_confidence * chunk_pages
+                total_weight += chunk_pages
+
+                logger.info(
+                    "완료: %s — %s (pages=%d, confidence=%.2f)",
+                    filename, chunk_label, chunk_pages, chunk_confidence,
+                )
+
+                # 마지막 청크가 아니면 rate limit 대기
+                if idx < len(chunks) - 1:
+                    await asyncio.sleep(1)
+
+        avg_confidence = weighted_confidence / total_weight if total_weight > 0 else 0.0
+
+        logger.info(
+            "분할 OCR 완료: %s — 총 %d페이지, 평균 confidence=%.2f",
+            filename, total_billed_pages, avg_confidence,
+        )
+
+        return {
+            "text": "\n".join(texts),
+            "pages": total_billed_pages,
+            "confidence": avg_confidence,
+        }
 
     @staticmethod
     def _parse_error(response: Any) -> str:
