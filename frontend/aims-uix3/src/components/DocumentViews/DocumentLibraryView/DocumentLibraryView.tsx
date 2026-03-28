@@ -493,7 +493,10 @@ const DocumentLibraryContent: React.FC<{
   }, [controller.filteredDocuments, onSelectAllIds, isDeleteMode, onToggleDeleteMode, customerFilter, selectedInitial, initialType])
 
   // 🍎 자동 페이지네이션: 컨테이너 높이 기반 항목 수 자동 계산
-  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | 'manual'>('auto')
+  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | 'manual'>(() => {
+    const saved = localStorage.getItem('aims-items-per-page-mode')
+    return saved === 'manual' ? 'manual' : 'auto'
+  })
   const [listWrapperHeight, setListWrapperHeight] = useState(0)
   const listWrapperRef = useRef<HTMLDivElement>(null)
 
@@ -568,9 +571,11 @@ const DocumentLibraryContent: React.FC<{
   const handleItemsPerPageChange = useCallback((value: string) => {
     if (value === 'auto') {
       setItemsPerPageMode('auto')
+      localStorage.setItem('aims-items-per-page-mode', 'auto')
       // 자동 계산값은 위 useEffect에서 반영됨
     } else {
       setItemsPerPageMode('manual')
+      localStorage.setItem('aims-items-per-page-mode', 'manual')
       controller.handleLimitChange(Number(value))
     }
   }, [controller.handleLimitChange])
