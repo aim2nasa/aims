@@ -18,7 +18,7 @@ from bson import ObjectId
 from config import get_settings
 from services.redis_service import RedisService
 from services.mongo_service import MongoService
-from services.upstage_service import UpstageService
+from services.upstage_service import UpstageService, LARGE_PDF_THRESHOLD
 from services.openai_service import OpenAIService
 
 # Configure logging
@@ -202,11 +202,18 @@ class OCRWorker:
                     "userMessage": f"파일을 찾을 수 없습니다: {file_path}"
                 }
 
-            with open(file_path, "rb") as f:
-                content = f.read()
-
-            filename = os.path.basename(file_path)
-            ocr_result = await self.upstage_service.process_ocr(content, filename)
+            # 대용량 PDF(30MB+) → 분할 OCR, 그 외 → 기존 단일 OCR
+            file_size = os.path.getsize(file_path)
+            if file_size > LARGE_PDF_THRESHOLD and file_path.lower().endswith('.pdf'):
+                logger.info(
+                    f"[OCRWorker] 대용량 PDF 감지 ({file_size / 1024 / 1024:.1f}MB) → 분할 OCR 경로"
+                )
+                ocr_result = await self.upstage_service.process_ocr_large(file_path)
+            else:
+                with open(file_path, "rb") as f:
+                    content = f.read()
+                filename = os.path.basename(file_path)
+                ocr_result = await self.upstage_service.process_ocr(content, filename)
 
             if ocr_result.get("error"):
                 return ocr_result
