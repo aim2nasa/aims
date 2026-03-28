@@ -131,7 +131,7 @@ describe('BUG-4: scanAfterUpload ObjectId 변환 누락', () => {
 
   test('findOne에서 변환된 docId를 사용해야 함 (원본 documentId가 아닌)', () => {
     const fnStart = source.indexOf('async function scanAfterUpload');
-    const fnBody = source.substring(fnStart, fnStart + 500);
+    const fnBody = source.substring(fnStart, fnStart + 700);
     expect(fnBody).toMatch(/findOne\(\{\s*_id:\s*docId\s*\}/);
   });
 
