@@ -1657,7 +1657,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
             }
           }
         },
-        { $sort: { docType_sortWeight: 1, docType_label: sortOrder, 'upload.uploaded_at': -1 } },
+        { $sort: { docType_sortWeight: sortOrder, docType_label: sortOrder, 'upload.uploaded_at': -1 } },
         { $skip: skip },
         { $limit: parseInt(limit) },
         { $project: { docType_info: 0, docType_label: 0, docType_sortWeight: 0, _normalized_docType: 0, _isUnspecified: 0 } },
