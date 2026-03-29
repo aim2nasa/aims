@@ -185,6 +185,51 @@ npm run dev
 # 브라우저: Ctrl+Shift+R (하드 새로고침)
 ```
 
+## 반응형 CSS 작성 규칙 (PC 개발 → 모바일 자동 대응)
+
+PC 기준으로 개발하되, 아래 규칙을 지키면 별도 mobile.css 없이 모바일에서도 동작한다.
+
+### 필수 패턴
+
+| BAD (모바일 깨짐) | GOOD (자동 대응) | 설명 |
+|-------------------|-------------------|------|
+| `width: 400px` | `width: min(400px, 100%)` | 화면보다 안 넘침 |
+| `padding: 24px` | `padding: clamp(12px, 2vw, 24px)` | 작은 화면에서 축소 |
+| `gap: 20px` | `gap: clamp(8px, 1.5vw, 20px)` | 작은 화면에서 축소 |
+| `grid-template-columns: 1fr 1fr 1fr` | `grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))` | 자동 줄바꿈 |
+| 넓은 테이블 그대로 노출 | `.responsive-table-scroll` 래퍼 사용 | 가로 스크롤 |
+
+### 핵심 CSS 함수
+
+```css
+/* min() — 최대 크기 제한하되 화면보다 안 넘침 */
+width: min(600px, 100%);
+
+/* clamp() — 최소~최대 범위 내 유동 크기 */
+padding: clamp(8px, 2vw, 24px);
+font-size: clamp(12px, 1.4vw, 15px);
+
+/* auto-fit + minmax — 자동 반응형 그리드 */
+grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+```
+
+### 글로벌 자동 적용 (responsive.css)
+
+아래는 이미 글로벌로 적용되어 있으므로 **별도 처리 불필요**:
+
+| 항목 | 자동 적용 내용 |
+|------|--------------|
+| iOS 자동줌 방지 | 모바일에서 input/textarea/select `font-size: max(16px, inherit)` |
+| 터치 타겟 | `pointer: coarse` 기기에서 모든 button `min-height: 44px` |
+| 가로 스크롤 방지 | `body { overflow-x: hidden }` |
+| 이미지 오버플로 | `img, video, iframe { max-width: 100% }` |
+
+### 금지 사항
+
+- 고정 `width` (px)를 `min()` 래핑 없이 사용 금지
+- mobile.css를 새로 만들지 않음 (기존 파일은 유지)
+- `@media (max-width: ...)` 대신 위 패턴으로 해결 가능한 경우 미디어 쿼리 추가 금지
+
 ## 상세 문서
 
 `frontend/aims-uix3/docs/CSS_SYSTEM.md` 참조

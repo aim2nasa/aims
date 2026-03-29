@@ -46,6 +46,9 @@
     line-height: var(--line-height-normal);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    /* 📱 모바일 가로 스크롤 방지 — 콘텐츠 오버플로 시 잘림 */
+    overflow-x: hidden;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
 
@@ -305,3 +308,17 @@
   }
 
 } /* end @layer reset */
+
+/* ========================================
+ * 📱 모바일 터치 기본값
+ * @layer base — components보다 낮은 우선순위
+ * 컴포넌트에서 명시한 height/min-height가 자연스럽게 우선됨
+ * ======================================== */
+@layer base {
+  @media (pointer: coarse) {
+    button,
+    [role="button"] {
+      min-height: 44px;
+    }
+  }
+}

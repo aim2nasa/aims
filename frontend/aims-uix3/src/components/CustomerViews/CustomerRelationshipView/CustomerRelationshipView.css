@@ -534,14 +534,14 @@
   }
 
   .tree-node__badge--warning {
-    background: rgba(255, 185, 0, 0.15);
-    color: rgb(201, 138, 0);
+    background: var(--color-ios-orange-alpha-15);
+    color: var(--color-warning-600);
     font-weight: 700;
   }
 
   html[data-theme="dark"] .tree-node__badge--warning {
-    background: rgba(255, 185, 0, 0.2);
-    color: rgb(255, 185, 0);
+    background: var(--color-warning-bg-dark);
+    color: var(--color-ios-orange-dark);
   }
 
   /* ============================================
