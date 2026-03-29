@@ -114,11 +114,12 @@ DATA_MUTATING_TOOLS 성공 → `window.location.reload()`. Optimistic Update 금
 - 서브에이전트 호출·결과 교차 검증·최종 보고
 - 서브에이전트의 PASS를 맹신하지 않고 독립적으로 판단
 
-### 에이전트 (10개)
+### 에이전트 (11개)
+- **Merlin** (기획자): 단순 요청 → 상세 기획서. What + Why. 코드를 읽되 쓰지 않는다
 - **Alex** (설계+구현): 복잡한 대규모 변경 시
 - **Gini** (코드 품질): 코드 리뷰 + 보안 + 테스트 커버리지. 코드를 본다
 - **Mira** (화면 품질): 스크린샷 비교 + 디자인 불일치. 화면을 본다
-- **Jude** (AC 감사관): ACE 5/5 보고 전 독립 재검증. 필요 시 Gini/Mira 호출
+- **Jude** (AC 감사관): ACE 5/6 보고 전 독립 재검증. 필요 시 Gini/Mira 호출
 - **e2e-tester**: Playwright 브라우저 테스트
 - **full-deploy**: 배포 자동화
 - **xPipe Steward**: xPipe 프로젝트 전용
