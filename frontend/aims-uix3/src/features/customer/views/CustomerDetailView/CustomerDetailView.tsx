@@ -48,6 +48,8 @@ interface CustomerDetailViewProps {
   gapRight?: number;
   gapTop?: number;
   gapBottom?: number;
+  /** 헤더 우측 닫기 버튼 왼쪽에 추가할 액션 요소 */
+  headerActions?: React.ReactNode;
 }
 
 export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
@@ -65,6 +67,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   gapRight = 2,
   gapTop = 2,
   gapBottom = 2,
+  headerActions,
 }) => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isFamilyModalVisible, setIsFamilyModalVisible] = useState(false);
@@ -634,6 +637,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       gapRight={gapRight}
       gapTop={gapTop}
       gapBottom={gapBottom}
+      headerActions={headerActions}
     >
       <div className="customer-detail-view">
         <div className="customer-detail-view__inner">

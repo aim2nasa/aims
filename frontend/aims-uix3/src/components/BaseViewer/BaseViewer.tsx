@@ -30,6 +30,8 @@ interface BaseViewerProps {
   gapBottom?: number
   /** RP에서 이름 변경 클릭 핸들러 */
   onRename?: () => void
+  /** 헤더 우측 닫기 버튼 왼쪽에 추가할 액션 요소 */
+  headerActions?: React.ReactNode
 }
 
 /**
@@ -65,6 +67,7 @@ export const BaseViewer: React.FC<BaseViewerProps> = ({
   gapTop = 2,
   gapBottom = 2,
   onRename,
+  headerActions,
 }) => {
   if (!visible) return null
 
@@ -105,6 +108,9 @@ export const BaseViewer: React.FC<BaseViewerProps> = ({
             </svg>
           </button>
         )}
+
+        {/* 헤더 액션 (패널 크기 토글 등) */}
+        {headerActions}
 
         {/* 닫기 버튼 - CloseButton 공통 컴포넌트 */}
         <CloseButton onClick={onClose} ariaLabel="뷰어 닫기" />

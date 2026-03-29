@@ -76,6 +76,7 @@ import type { StorageInfo } from './services/userService'
 import type { AIUsageData } from './services/aiUsageService'
 import { UsageQuotaWidget } from './shared/ui/UsageQuotaWidget'
 import { uploadService } from './components/DocumentViews/DocumentRegistrationView/services/uploadService'
+import { PaneSizeToggle } from './shared/ui/PaneSizeToggle/PaneSizeToggle'
 
 // 유틸리티 함수 및 타입 import (App.tsx에서 추출됨)
 import type { SelectedDocument as _SelectedDocument, SmartSearchDocumentResponse } from './utils/documentTransformers'
@@ -1961,6 +1962,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 gapRight={gapValues.gapRight}
                 gapTop={gapValues.gapTop}
                 gapBottom={gapValues.gapBottom}
+                headerActions={!isMobileView ? (
+                  <PaneSizeToggle
+                    currentCenterWidth={centerWidth}
+                    onSizeChange={setCenterWidth}
+                  />
+                ) : undefined}
               />
             </Suspense>
           )}
@@ -1970,6 +1977,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <Suspense fallback={<div className="suspense-skeleton--loading">로딩 중...</div>}>
               <BaseViewer
                 visible={true}
+                headerActions={!isMobileView ? (
+                  <PaneSizeToggle
+                    currentCenterWidth={centerWidth}
+                    onSizeChange={setCenterWidth}
+                  />
+                ) : undefined}
                 onRename={() => {
                   if (!selectedDocument) return
                   const origName = selectedDocument.upload?.originalName || selectedDocument.payload?.originalName || selectedDocument.meta?.originalName || '파일'
