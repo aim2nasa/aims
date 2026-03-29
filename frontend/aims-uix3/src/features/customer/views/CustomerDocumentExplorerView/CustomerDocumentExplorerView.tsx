@@ -46,6 +46,8 @@ interface CustomerDocumentExplorerViewProps {
   onDocumentClick?: (documentId: string) => void
   /** 문서 삭제 완료 핸들러 (삭제된 문서 ID 전달) */
   onDocumentDeleted?: (deletedIds: string | string[]) => void
+  /** RP에서 보고 있는 문서 ID (프리뷰 하이라이트용) */
+  previewDocumentId?: string | null
 }
 
 /** 소분류 그룹 */
@@ -185,6 +187,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   onCollapse,
   onDocumentClick,
   onDocumentDeleted,
+  previewDocumentId,
 }) => {
   const [activeTab, setActiveTab] = usePersistedState<TabType>('cust-doc-explorer-tab', 'my')
   // 펼침 상태: "cat:insurance" 또는 "st:insurance/annual_report" 형식
@@ -697,7 +700,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                             return (
                               <div
                                 key={doc._id}
-                                className="cde-doc-row"
+                                className={`cde-doc-row${previewDocumentId === doc._id ? ' cde-doc-row--preview' : ''}`}
                                 onClick={() => handleDocClick(doc)}
                               >
                                 <span className={`cde-doc-row__icon ${fileClass}`}>

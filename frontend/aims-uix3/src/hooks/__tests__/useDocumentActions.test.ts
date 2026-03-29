@@ -265,5 +265,49 @@ describe('useDocumentActions', () => {
 
       expect(customCallback).toHaveBeenCalled()
     })
+
+    it('이름 변경 성공 시 document-renamed CustomEvent 발행', async () => {
+      mockApiPatch.mockResolvedValue({})
+      const eventListener = vi.fn()
+      window.addEventListener('document-renamed', eventListener)
+
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
+
+      await act(async () => {
+        await result.current.renameDocument('doc123', 'newName.pdf')
+      })
+
+      expect(eventListener).toHaveBeenCalledTimes(1)
+      const event = eventListener.mock.calls[0][0] as CustomEvent
+      expect(event.detail).toEqual({ documentId: 'doc123' })
+
+      window.removeEventListener('document-renamed', eventListener)
+    })
+
+    it('외부 document-renamed 이벤트 수신 시 onRenameSuccess를 호출하지 않음 (CP 갱신은 ref 직접 호출로 처리)', async () => {
+      const { result: _result } = renderHook(() => useDocumentActions(defaultOptions()))
+
+      // 외부에서 이벤트 발행 (다른 뷰/RP에서의 이름 변경 시뮬레이션)
+      // 이벤트 리스너가 제거되었으므로 onRenameSuccess가 호출되지 않아야 함
+      // (generation 충돌 방지를 위해 리스너 제거, CP 갱신은 App.tsx의 ref 직접 호출로 처리)
+      await act(async () => {
+        window.dispatchEvent(new CustomEvent('document-renamed', { detail: { documentId: 'ext-doc' } }))
+      })
+
+      expect(mockOnRenameSuccess).not.toHaveBeenCalled()
+    })
+
+    it('renameDocument 호출 시 onRenameSuccess는 정확히 1회만 호출됨', async () => {
+      mockApiPatch.mockResolvedValue({})
+
+      const { result } = renderHook(() => useDocumentActions(defaultOptions()))
+
+      await act(async () => {
+        await result.current.renameDocument('doc123', 'newName.pdf')
+      })
+
+      // onRenameSuccess는 renameDocument 내부에서 1회만 호출
+      expect(mockOnRenameSuccess).toHaveBeenCalledTimes(1)
+    })
   })
 })

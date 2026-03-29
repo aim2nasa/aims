@@ -68,6 +68,8 @@ interface DocumentSearchViewProps {
   onCustomerClick?: (customerId: string) => void
   /** 고객 더블클릭 핸들러 (전체 정보 페이지) */
   onCustomerDoubleClick?: (customerId: string) => void
+  /** RP에서 보고 있는 문서 ID (프리뷰 하이라이트용) */
+  previewDocumentId?: string | null
 }
 
 /**
@@ -105,7 +107,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   onDocumentDoubleClick,
   onDocumentDeleted,
   onCustomerClick,
-  onCustomerDoubleClick
+  onCustomerDoubleClick,
+  previewDocumentId,
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -1600,11 +1603,13 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   const linkStatus = DocumentProcessingModule.getCustomerLinkStatus(item as Document)
                   const canLink = linkStatus.canLink
                   const linkTooltip = linkStatus.isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
+                  const docId = SearchService.getDocumentId(item)
+                  const isPreview = !!(previewDocumentId && docId && previewDocumentId === docId)
 
                   return (
                     <div
                       key={index}
-                      className="search-result-row"
+                      className={`search-result-row${isPreview ? ' search-result-row--preview' : ''}`}
                       data-search-mode={searchMode}
                       onClick={() => handleItemClick(item)}
                       onDoubleClick={() => handleItemDoubleClick(item)}

@@ -122,7 +122,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
    * 🔍 검색어가 있으면 백엔드에 전달하여 전체 라이브러리 검색
    */
   const fetchDocuments = useCallback(
-    async (isInitialLoad: boolean = false, silent: boolean = false) => {
+    async (isInitialLoad: boolean = false, silent: boolean = false, force: boolean = false) => {
       // 🐛 FIX: 요청 세대 증가 — 이 fetch가 최신인지 확인하는 데 사용
       const thisGeneration = ++fetchGenerationRef.current
 
@@ -171,7 +171,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam, searchFieldParam, undefined, initialParam, initialTypeParam, customerIdParam)
 
         // 🐛 FIX: stale 응답 무시 — 이 fetch 이후에 새로운 fetch가 시작되었으면 결과 버림
-        if (fetchGenerationRef.current !== thisGeneration) {
+        // force=true: 사용자 명시적 갱신(이름 변경 등)은 항상 적용
+        if (!force && fetchGenerationRef.current !== thisGeneration) {
           return
         }
 
@@ -336,7 +337,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
    * 문서 목록 새로고침
    */
   const refreshDocuments = useCallback(async () => {
-    await fetchDocuments(false)
+    await fetchDocuments(false, false, true)
   }, [fetchDocuments])
 
   /**

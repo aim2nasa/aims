@@ -11,6 +11,25 @@
     background-color: var(--color-ios-bg-selected-dark);
   }
 
+  /* === RP 프리뷰 하이라이트: 현재 RP에서 보고 있는 문서 표시 === */
+  .search-result-row--preview {
+    background: var(--color-selection-bg, rgba(59, 130, 246, 0.15));
+    border-left: 3px solid var(--color-primary-500, #3b82f6);
+  }
+
+  html[data-theme="dark"] .search-result-row--preview {
+    background: rgba(59, 130, 246, 0.2);
+    border-left: 3px solid var(--color-primary-400, #60a5fa);
+  }
+
+  .search-result-row--preview:hover {
+    background: var(--color-selection-bg, rgba(59, 130, 246, 0.15));
+  }
+
+  html[data-theme="dark"] .search-result-row--preview:hover {
+    background: rgba(59, 130, 246, 0.2);
+  }
+
   /* 스태거 애니메이션 */
   .search-result-row:nth-child(1) { animation-delay: 0s; }
   .search-result-row:nth-child(2) { animation-delay: 0.03s; }

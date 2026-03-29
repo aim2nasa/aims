@@ -28,6 +28,8 @@ interface BaseViewerProps {
   gapTop?: number
   /** RightPane과의 하단 간격 (px) */
   gapBottom?: number
+  /** RP에서 이름 변경 클릭 핸들러 */
+  onRename?: () => void
 }
 
 /**
@@ -61,7 +63,8 @@ export const BaseViewer: React.FC<BaseViewerProps> = ({
   gapLeft = 2,
   gapRight = 2,
   gapTop = 2,
-  gapBottom = 2
+  gapBottom = 2,
+  onRename,
 }) => {
   if (!visible) return null
 
@@ -88,7 +91,22 @@ export const BaseViewer: React.FC<BaseViewerProps> = ({
           </h2>
         )}
 
-        {/* 🍎 닫기 버튼 - CloseButton 공통 컴포넌트 */}
+        {/* 이름 변경 버튼 */}
+        {onRename && (
+          <button
+            type="button"
+            className="base-viewer__rename-btn"
+            onClick={onRename}
+            aria-label="이름 변경"
+            title="이름 변경"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8.5 1.5L10.5 3.5L3.5 10.5H1.5V8.5L8.5 1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+
+        {/* 닫기 버튼 - CloseButton 공통 컴포넌트 */}
         <CloseButton onClick={onClose} ariaLabel="뷰어 닫기" />
       </div>
 

@@ -412,4 +412,29 @@
     background: var(--color-ios-bg-selected-dark);
   }
 
+  /* === 프리뷰 상태: RP에서 보고 있는 문서 하이라이트 === */
+  .status-item--preview {
+    background: var(--color-selection-bg, rgba(59, 130, 246, 0.15));
+    border-left: 3px solid var(--color-primary-500, #3b82f6);
+  }
+
+  html[data-theme="dark"] .status-item--preview {
+    background: rgba(59, 130, 246, 0.2);
+    border-left: 3px solid var(--color-primary-400, #60a5fa);
+  }
+
+  .status-item--preview:hover {
+    background: var(--color-selection-bg, rgba(59, 130, 246, 0.15));
+  }
+
+  html[data-theme="dark"] .status-item--preview:hover {
+    background: rgba(59, 130, 246, 0.2);
+  }
+
+  /* preview + selected 동시 적용 시 preview 우선 */
+  .status-item--preview.status-item--selected {
+    background: var(--color-selection-bg, rgba(59, 130, 246, 0.15));
+    border-left: 3px solid var(--color-primary-500, #3b82f6);
+  }
+
 } /* end @layer components */

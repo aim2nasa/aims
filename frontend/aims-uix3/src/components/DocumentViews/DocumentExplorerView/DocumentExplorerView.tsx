@@ -66,6 +66,8 @@ export interface DocumentExplorerViewProps {
   onCustomerExplorerClick?: (customerId: string, customerName: string, customerType?: '개인' | '법인') => void
   /** 문서 삭제 완료 핸들러 (삭제된 문서 ID 전달) */
   onDocumentDeleted?: (deletedIds: string | string[]) => void
+  /** RP에서 보고 있는 문서 ID (프리뷰 하이라이트용) */
+  previewDocumentId?: string | null
 }
 
 /** explorer-tree API 응답 타입 */
@@ -104,7 +106,8 @@ const DocumentExplorerContent: React.FC<{
   onSelectedInitialChange: (initial: string | null) => void
   initialType: InitialType
   onInitialTypeChange: (type: InitialType) => void
-}> = ({ onDocumentClick, onDocumentDoubleClick, onDocumentDeleted, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange }) => {
+  previewDocumentId?: string | null
+}> = ({ onDocumentClick, onDocumentDoubleClick, onDocumentDeleted, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange, previewDocumentId }) => {
 
   // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
@@ -1605,7 +1608,7 @@ const DocumentExplorerContent: React.FC<{
                     <button
                       key={docId || index}
                       type="button"
-                      className={`doc-explorer-search-results__item ${selectedDocumentId === docId ? 'doc-explorer-search-results__item--selected' : ''} ${searchResultFocusIndex === index ? 'doc-explorer-search-results__item--focused' : ''}`}
+                      className={`doc-explorer-search-results__item ${(previewDocumentId ?? selectedDocumentId) === docId ? 'doc-explorer-search-results__item--selected' : ''} ${searchResultFocusIndex === index ? 'doc-explorer-search-results__item--focused' : ''}`}
                       onClick={() => handleContentSearchResultClick(item)}
                     >
                       {/* 파일 타입 배지 */}
@@ -1723,7 +1726,7 @@ const DocumentExplorerContent: React.FC<{
           <DocumentExplorerTree
             nodes={treeData.nodes}
             expandedKeys={expandedKeys}
-            selectedDocumentId={selectedDocumentId}
+            selectedDocumentId={previewDocumentId ?? selectedDocumentId}
             groupBy={groupBy}
             onToggleNode={handleToggleNode}
             onDocumentClick={handleDocumentClick}
@@ -2003,6 +2006,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
   onDocumentDeleted,
   onCustomerClick,
   onCustomerExplorerClick,
+  previewDocumentId,
 }) => {
   const breadcrumbItems = getBreadcrumbItems('documents-explorer')
   const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('doc-explorer-selected-initial', null)
@@ -2031,6 +2035,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
         onSelectedInitialChange={setSelectedInitial}
         initialType={initialType}
         onInitialTypeChange={handleInitialTypeChange}
+        previewDocumentId={previewDocumentId}
       />
     </CenterPaneView>
   )

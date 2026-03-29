@@ -97,6 +97,9 @@ export interface UseRightPaneContentReturn {
   setSelectedDocument: React.Dispatch<React.SetStateAction<SelectedDocument | null>>
   setSelectedCustomer: React.Dispatch<React.SetStateAction<Customer | null>>
   setRightPaneContentType: React.Dispatch<React.SetStateAction<RightPaneContentType>>
+
+  // 문서 새로고침
+  refreshDocument: (documentId: string) => Promise<void>
 }
 
 /**
@@ -217,6 +220,19 @@ export function useRightPaneContent(
 
     prevVisibleRef.current = rightPaneVisible
   }, [rightPaneVisible])
+
+  // 외부(CP)에서 이름 변경 시 RP 문서 갱신
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { documentId } = (e as CustomEvent).detail
+      const current = selectedDocumentRef.current
+      if (current && current._id === documentId) {
+        refreshDocument(documentId)
+      }
+    }
+    window.addEventListener('document-renamed', handler)
+    return () => window.removeEventListener('document-renamed', handler)
+  }, [refreshDocument])
 
   // 브라우저 탭 활성화 시 새로고침 트리거 증가 (Page Visibility API)
   useEffect(() => {
@@ -510,5 +526,8 @@ export function useRightPaneContent(
     setSelectedDocument,
     setSelectedCustomer,
     setRightPaneContentType,
+
+    // 문서 새로고침
+    refreshDocument,
   }
 }

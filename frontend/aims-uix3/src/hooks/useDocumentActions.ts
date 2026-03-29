@@ -133,6 +133,8 @@ export function useDocumentActions(options: UseDocumentActionsOptions) {
       }
       setIsRenaming(false)
       onRenameSuccess()
+      // RP 갱신용 CustomEvent (useRightPaneContent가 수신)
+      window.dispatchEvent(new CustomEvent('document-renamed', { detail: { documentId } }))
       return true
     } catch (error) {
       console.error('Error renaming document:', error)

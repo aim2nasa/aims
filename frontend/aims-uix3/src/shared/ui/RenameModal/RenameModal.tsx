@@ -21,6 +21,8 @@ export interface RenameModalProps {
   originalName: string
   /** AI 별칭 */
   displayName?: string
+  /** 브라우저 히스토리 사용 여부 (기본: true) */
+  useHistory?: boolean
 }
 
 export const RenameModal: React.FC<RenameModalProps> = ({
@@ -28,6 +30,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
   onClose,
   onConfirm,
   editField,
+  useHistory,
   originalName,
   displayName,
 }) => {
@@ -105,6 +108,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
       size="sm"
       variant="alert"
       backdropClosable={false}
+      useHistory={useHistory}
       footer={footer}
     >
       <div className="rename-modal__body">

@@ -60,6 +60,7 @@ interface DocumentStatusRowProps {
   index: number
   // per-row boolean (부모에서 계산하여 전달 — memo 최적화)
   isSelected: boolean
+  isPreview?: boolean
   isUpdating: boolean
   isRetryingPdf: boolean
   isRetryingOcr: boolean
@@ -102,6 +103,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   document,
   index,
   isSelected,
+  isPreview,
   isUpdating,
   isRetryingPdf,
   isRetryingOcr,
@@ -158,7 +160,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   return (
     <div
       key={key}
-      className={`status-item ${isSelected ? 'status-item--selected' : ''}`}
+      className={`status-item ${isSelected ? 'status-item--selected' : ''} ${isPreview ? 'status-item--preview' : ''}`}
       data-context-menu="document"
       style={gridTemplateColumns ? {
         gridTemplateColumns: (isDeleteMode || isBulkLinkMode || isAliasMode)
@@ -735,6 +737,8 @@ export interface DocumentStatusListProps {
   onRenameCancel?: () => void
   // 검색어 하이라이트
   searchTerm?: string
+  // RP에서 보고 있는 문서 ID (프리뷰 하이라이트용)
+  previewDocumentId?: string | null
 }
 
 /**
@@ -909,6 +913,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onRenameConfirm,
   onRenameCancel,
   searchTerm,
+  previewDocumentId,
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -1405,6 +1410,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             document={document}
             index={index}
             isSelected={documentId ? selectedDocumentIds.has(documentId) : false}
+            isPreview={Boolean(documentId) && documentId === previewDocumentId}
             isUpdating={updatingDocTypeId === documentId}
             isRetryingPdf={retryingDocumentId === documentId}
             isRetryingOcr={retryingOcrDocumentId === documentId}

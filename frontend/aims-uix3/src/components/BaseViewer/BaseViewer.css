@@ -70,6 +70,34 @@
     white-space: nowrap;
   }
 
+  /* 이름 변경 버튼 */
+  .base-viewer__rename-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: 4px;
+    transition: background-color var(--duration-fast) var(--easing-ease-out),
+                color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .base-viewer__rename-btn:hover {
+    background: var(--color-ios-bg-hover-light);
+    color: var(--color-text-primary);
+  }
+
+  html[data-theme="dark"] .base-viewer__rename-btn:hover {
+    background: var(--color-ios-bg-hover-dark);
+    color: var(--color-text-primary);
+  }
+
   /* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
 
   /* 콘텐츠 영역 - 실제 뷰어 렌더링 */

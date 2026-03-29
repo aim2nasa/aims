@@ -25,6 +25,8 @@ import type { Customer as _Customer } from './entities/customer'
 import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/version'
 import { checkFrontendVersionMismatch } from './services/versionService'
 import { errorReporter } from './shared/lib/errorReporter'
+import { RenameModal } from './shared/ui/RenameModal/RenameModal'
+import { useDocumentActions } from './hooks/useDocumentActions'
 import { logger } from './shared/lib/logger'
 import { consumeModalCleanupBack } from './shared/ui/Modal/hooks/useModalCore'
 import { prefetchDocumentTypes } from './shared/constants/documentCategories'
@@ -453,6 +455,17 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
   })
 
+  // RP 이름 변경 상태
+  const [rpRenamingDoc, setRpRenamingDoc] = useState<{ _id: string; originalName: string; displayName?: string } | null>(null)
+
+  // RP 이름 변경용 useDocumentActions
+  // onRenameSuccess: no-op (document-renamed CustomEvent가 RP 갱신 담당)
+  // CP 갱신은 onConfirm에서 직접 처리
+  const rpDocumentActions = useDocumentActions({
+    onRenameSuccess: () => {},
+    onDeleteSuccess: () => {},
+  })
+
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 숨김
   // 초기 로딩 시 사용자 정보를 전역 상태에 로드 (앱 시작 시 1회만 실행)
   useEffect(() => {
@@ -664,6 +677,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           errorReporter.reportApiError(error as Error, { component: 'App.restoreDocumentFromURL' })
           updateURLParams({ documentId: null })
         })
+    }
+
+    // RP rename 후 재오픈: sessionStorage에 저장된 문서 ID로 RP 복원
+    const reopenDocId = sessionStorage.getItem('aims-reopen-document')
+    if (reopenDocId) {
+      sessionStorage.removeItem('aims-reopen-document')
+      // 문서 목록 로딩 완료 후 RP 재오픈
+      setTimeout(() => {
+        handleDocumentClick(reopenDocId)
+      }, 1000)
     }
   }, [])
 
@@ -1554,6 +1577,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 documentLibraryRefreshRef.current = refreshFn
               }}
               onNavigate={handleMenuClick}
+              previewDocumentId={selectedDocument?._id ?? null}
             />
           </Suspense>
 
@@ -1566,6 +1590,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onDocumentDeleted={handleDocumentDeleted}
               onCustomerClick={handleCustomerClick}
               onCustomerExplorerClick={handleExpandToExplorer}
+              previewDocumentId={selectedDocument?._id ?? null}
             />
           </Suspense>
 
@@ -1578,6 +1603,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onDocumentDeleted={handleDocumentDeleted}
               onCustomerClick={handleCustomerClick}
               onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
+              previewDocumentId={selectedDocument?._id ?? null}
             />
           </Suspense>
 
@@ -1672,6 +1698,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onCollapse={handleCollapseExplorer}
               onDocumentClick={handleDocumentClick}
               onDocumentDeleted={handleDocumentDeleted}
+              previewDocumentId={selectedDocument?._id ?? null}
             />
           </Suspense>
 
@@ -1943,6 +1970,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <Suspense fallback={<div className="suspense-skeleton--loading">로딩 중...</div>}>
               <BaseViewer
                 visible={true}
+                onRename={() => {
+                  if (!selectedDocument) return
+                  const origName = selectedDocument.upload?.originalName || selectedDocument.payload?.originalName || selectedDocument.meta?.originalName || '파일'
+                  setRpRenamingDoc({
+                    _id: selectedDocument._id,
+                    originalName: origName,
+                    displayName: selectedDocument.displayName,
+                  })
+                }}
                 title={(() => {
                   const originalName = selectedDocument.upload?.originalName ||
                                    selectedDocument.payload?.originalName ||
@@ -2022,6 +2058,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   )
                 })()}
                 onClose={() => {
+                  // AC#8: RP 닫기 시 rename 모달도 함께 닫기
+                  setRpRenamingDoc(null)
+
                   // 🍎 미닫이문 UX: 애니메이션 먼저 시작
                   setRightPaneVisible(false)
 
@@ -2135,6 +2174,28 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   return renderViewer()
                 })()}
               </BaseViewer>
+
+              {/* RP 이름 변경 모달 — BaseViewer 위에 표시되므로 history 관리 불필요 */}
+              <RenameModal
+                visible={rpRenamingDoc !== null}
+                onClose={() => setRpRenamingDoc(null)}
+                useHistory={false}
+                onConfirm={async (newName) => {
+                  if (!rpRenamingDoc) return
+                  const docId = rpRenamingDoc._id
+                  const field = rpFilenameMode === 'original' ? 'originalName' as const : 'displayName' as const
+                  setRpRenamingDoc(null)
+                  const success = await rpDocumentActions.renameDocument(docId, newName, field)
+                  if (success) {
+                    // CP 갱신을 위해 reload — RP는 sessionStorage로 복원
+                    sessionStorage.setItem('aims-reopen-document', docId)
+                    window.location.reload()
+                  }
+                }}
+                editField={rpFilenameMode === 'original' ? 'originalName' : 'displayName'}
+                originalName={rpRenamingDoc?.originalName || ''}
+                displayName={rpRenamingDoc?.displayName}
+              />
             </Suspense>
           )}
         </div>

@@ -67,6 +67,8 @@ interface DocumentLibraryViewProps {
   onRefreshExpose?: (refreshFn: () => Promise<void>) => void
   /** 뷰 이동 핸들러 */
   onNavigate?: (viewKey: string) => void
+  /** RP에서 보고 있는 문서 ID (프리뷰 하이라이트용) */
+  previewDocumentId?: string | null
 }
 
 // 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
@@ -123,7 +125,11 @@ const DocumentLibraryContent: React.FC<{
   onCustomerFilterChange: (filter: { id: string; name: string } | null) => void
   /** 문서 삭제 완료 핸들러 (삭제된 문서 ID 전달) */
   onDocumentDeleted?: (deletedIds: string | string[]) => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted }) => {
+  /** RP에서 보고 있는 문서 ID (프리뷰 하이라이트용) */
+  previewDocumentId?: string | null
+  /** 새로고침 함수를 외부로 노출하는 콜백 */
+  onRefreshExpose?: (refreshFn: () => Promise<void>) => void
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
   // 🍎 개발서버 여부 (localhost에서만 고객 필터 기능 활성화)
@@ -182,6 +188,15 @@ const DocumentLibraryContent: React.FC<{
 
   // 이름변경/삭제 성공 시 데이터 재조회 (UI 상태 유지)
   refreshDataRef.current = () => { controller.refreshDocuments() }
+
+  // 새로고침 함수를 외부로 노출 (RP rename 등에서 CP 갱신용)
+  React.useEffect(() => {
+    if (onRefreshExpose) {
+      onRefreshExpose(async () => {
+        await actions.refreshDocuments()
+      })
+    }
+  }, [onRefreshExpose, actions])
 
   // 🍎 고객 필터: 더블클릭 시 고객명 자동 설정
   React.useEffect(() => {
@@ -932,6 +947,7 @@ const DocumentLibraryContent: React.FC<{
         onRenameConfirm={undefined}
         onRenameCancel={undefined}
         searchTerm={state.searchTerm}
+        previewDocumentId={previewDocumentId}
       />
       </div>
 
@@ -1090,6 +1106,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   onCustomerDoubleClick,
   onRefreshExpose,
   onNavigate,
+  previewDocumentId,
 }) => {
   const {
     error,
@@ -1105,15 +1122,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 🍎 Optimistic Update 함수를 저장할 ref
   const removeDocumentsFnRef = React.useRef<((docIds: Set<string>) => void) | null>(null)
 
-  // 🍎 새로고침 함수 expose
-  React.useEffect(() => {
-    if (onRefreshExpose) {
-      onRefreshExpose(async () => {
-        // TanStack Query 캐시 무효화 + 레거시 이벤트 (DocumentLibraryView 내부 새로고침)
-        invalidateQueries.refreshDocumentLibrary()
-      })
-    }
-  }, [onRefreshExpose])
+  // 🍎 새로고침 함수 expose — DocumentLibraryContent 내부에서 처리 (actions 스코프 문제 해결)
 
   // 🍎 삭제 기능 상태
   const [isDeleteMode, setIsDeleteMode] = React.useState(false)
@@ -1436,6 +1445,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             }}
             {...(onNavigate && { onNavigate })}
             onDocumentDeleted={onDocumentDeleted}
+            previewDocumentId={previewDocumentId}
+            onRefreshExpose={onRefreshExpose}
           />
         </DocumentStatusProvider>
       </div>
