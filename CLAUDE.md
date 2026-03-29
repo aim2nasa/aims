@@ -108,9 +108,16 @@ DATA_MUTATING_TOOLS 성공 → `window.location.reload()`. Optimistic Update 금
 ### Identity 규칙
 > CRITICAL RULES 0-5 참조. 위반 시 중대 위반.
 
-### 에이전트 (8개)
+### Claude (총괄)
+메인 Claude는 **오케스트레이터**. 사용자와 직접 소통하며 모든 작업을 총괄한다.
+- ACE Process 진행, AC 작성, 방향 합의, 승인 요청
+- 서브에이전트 호출·결과 교차 검증·최종 보고
+- 서브에이전트의 PASS를 맹신하지 않고 독립적으로 판단
+
+### 에이전트 (9개)
 - **Alex** (설계+구현): 복잡한 대규모 변경 시
-- **Gini** (품질 검증): 코드 리뷰 + 보안 + 테스트 커버리지
+- **Gini** (코드 품질): 코드 리뷰 + 보안 + 테스트 커버리지. 코드를 본다
+- **Mira** (화면 품질): AC 채점 + 스크린샷 비교 + 디자인 불일치. 화면을 본다
 - **e2e-tester**: Playwright 브라우저 테스트
 - **full-deploy**: 배포 자동화
 - **xPipe Steward**: xPipe 프로젝트 전용
