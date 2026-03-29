@@ -233,7 +233,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
             const docType = doc.document_type || doc.docType || ''
             // 🔴 바이러스 스캔 상태도 fingerprint에 포함 (바이러스 감지 시 UI 즉시 반영)
             const virusScanStatus = doc.virusScan?.status || ''
-            return `${id}:${status}:${progress}:${customerRelation}:${convStatus}:${docType}:${virusScanStatus}`
+            // 📝 파일명도 fingerprint에 포함 (이름 변경 시 UI 즉시 반영)
+            const displayName = doc.displayName || ''
+            const originalName = doc.originalName || ''
+            return `${id}:${status}:${progress}:${customerRelation}:${convStatus}:${docType}:${virusScanStatus}:${displayName}:${originalName}`
           }
 
           // 🔧 정렬 순서도 반영하기 위해 sort() 제거
