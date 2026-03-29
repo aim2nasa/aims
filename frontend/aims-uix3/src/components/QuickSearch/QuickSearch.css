@@ -215,22 +215,14 @@
     height: 14px;
   }
 
-  /* 개인 고객: 블루 계열 */
+  /* 개인 고객: 블루 (기준: AllCustomersView) */
   .quick-search__customer-icon--personal {
-    color: var(--color-primary-500, #3b82f6);
+    color: var(--color-icon-blue);
   }
 
-  /* 법인 고객: 오렌지 계열 */
+  /* 법인 고객: 오렌지 (기준: AllCustomersView) */
   .quick-search__customer-icon--corporate {
-    color: var(--color-warning-500, #f97316);
-  }
-
-  html[data-theme="dark"] .quick-search__customer-icon--personal {
-    color: var(--color-primary-400, #60a5fa);
-  }
-
-  html[data-theme="dark"] .quick-search__customer-icon--corporate {
-    color: var(--color-warning-400, #fb923c);
+    color: var(--color-icon-orange);
   }
 
   /* 결과 콘텐츠 */

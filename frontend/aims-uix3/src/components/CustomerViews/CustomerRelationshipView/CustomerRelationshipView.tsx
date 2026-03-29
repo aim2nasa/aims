@@ -1254,7 +1254,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                           {noFamilyRelationshipCustomers.map((customer) => (
                             <div key={customer._id} className="tree-node tree-node--leaf">
                               <span className="tree-node__icon">
-                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal" style={{ opacity: 0.5 }}>
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
                                   <circle cx="10" cy="10" r="10" opacity="0.2" />
                                   <circle cx="10" cy="7" r="3" />
                                   <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
@@ -1384,12 +1384,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                           {noCorporateRelationshipCustomers.map((customer) => (
                             <div key={customer._id} className="tree-node tree-node--leaf">
                               <span className="tree-node__icon">
-                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate" style={{ opacity: 0.5 }}>
-                                  <rect x="2" y="4" width="16" height="14" rx="2" opacity="0.2" />
-                                  <rect x="5" y="7" width="4" height="3" rx="0.5" />
-                                  <rect x="11" y="7" width="4" height="3" rx="0.5" />
-                                  <rect x="5" y="12" width="4" height="3" rx="0.5" />
-                                  <rect x="11" y="12" width="4" height="3" rx="0.5" />
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
+                                  <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                  <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
                                 </svg>
                               </span>
                               <span

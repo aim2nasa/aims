@@ -400,18 +400,18 @@
      고객 타입 아이콘
      ============================================ */
 
-  .customer-icon--personal,
-  .customer-icon--corporate {
-    opacity: 0.65;
+  .customer-icon--personal {
+    color: var(--color-icon-blue);
     width: 16px;
     height: 16px;
     flex-shrink: 0;
-    transition: opacity 0.1s ease;
   }
 
-  .tree-customer-item:hover .customer-icon--personal,
-  .tree-customer-item:hover .customer-icon--corporate {
-    opacity: 0.9;
+  .customer-icon--corporate {
+    color: var(--color-icon-orange);
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
 
   /* ============================================

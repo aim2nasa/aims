@@ -512,17 +512,16 @@
      고객 아이콘
      ============================================ */
 
-  .customer-icon--personal,
-  .customer-icon--corporate {
-    opacity: 0.65;
+  .customer-icon--personal {
+    color: var(--color-icon-blue);
     width: 16px;
     height: 16px;
-    transition: opacity 0.1s ease;
   }
 
-  .tree-node:hover .customer-icon--personal,
-  .tree-node:hover .customer-icon--corporate {
-    opacity: 0.9;
+  .customer-icon--corporate {
+    color: var(--color-icon-orange);
+    width: 16px;
+    height: 16px;
   }
 
   /* ============================================
