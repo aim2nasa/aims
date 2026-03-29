@@ -76,8 +76,8 @@ class TestConvertibleMimeClassification:
         assert "application/vnd.ms-powerpoint" in CONVERTIBLE_MIMES
 
     def test_all_convertible_mimes_count(self):
-        """변환 대상 MIME 목록이 14개여야 함 (xpipe 정본 기준)"""
-        assert len(CONVERTIBLE_MIMES) == 14
+        """변환 대상 MIME 목록이 15개여야 함 (xpipe 정본 기준, haansofthwp 포함)"""
+        assert len(CONVERTIBLE_MIMES) == 15
 
 
 # ========================================

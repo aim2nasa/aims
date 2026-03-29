@@ -61,7 +61,7 @@ FORBIDDEN_MODULES = frozenset({
 # providers.py, providers_builtin.py는 내장 구현체(OpenAILLMProvider 등)를 포함하므로 openai import 허용
 PROVIDER_IMPL_EXCEPTIONS: dict[str, frozenset[str]] = {
     "providers.py": frozenset({"openai"}),
-    "providers_builtin.py": frozenset({"openai"}),
+    "providers_builtin.py": frozenset({"openai", "fitz"}),
 }
 
 
@@ -195,7 +195,7 @@ class TestXpipeIndependence:
             data = tomllib.load(f)
 
         assert data["project"]["name"] == "xpipe"
-        assert data["project"]["version"] == "0.1.0"
+        assert data["project"]["version"] == "0.3.0"
         assert data["project"]["requires-python"] == ">=3.10"
         # 외부 의존성 없음
         assert data["project"]["dependencies"] == []

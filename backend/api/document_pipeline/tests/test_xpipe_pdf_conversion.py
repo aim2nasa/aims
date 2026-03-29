@@ -33,6 +33,7 @@ class TestTriggerPdfConversionForXpipe:
     def mock_files_collection(self):
         col = MagicMock()
         col.update_one = AsyncMock()
+        col.find_one = AsyncMock(return_value=None)
         return col
 
     @pytest.mark.asyncio

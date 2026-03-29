@@ -127,8 +127,8 @@ class TestContractorNamingRules:
     def test_no_fabrication_rule_in_title_prompt(self):
         """_build_title_prompt()에 이름 날조 금지 규칙이 있어야 함"""
         prompt = OpenAIService._build_title_prompt(text="테스트")
-        assert "지어내지 말 것" in prompt
+        assert "절대 사용 금지" in prompt
 
     def test_no_fabrication_rule_in_classification_prompt(self):
         """CLASSIFICATION_USER_PROMPT에 이름 날조 금지 규칙이 있어야 함"""
-        assert "지어내지 말 것" in CLASSIFICATION_USER_PROMPT
+        assert "절대 사용 금지" in CLASSIFICATION_USER_PROMPT

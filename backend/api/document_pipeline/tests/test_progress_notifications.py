@@ -250,7 +250,7 @@ class TestProgressSequence:
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
              patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
              patch("services.meta_service.MetaService.extract_metadata", return_value={
-                 "extracted_text": "some text", "mime_type": "application/pdf", "num_pages": 1,
+                 "extracted_text": "충분한 텍스트입니다", "mime_type": "application/pdf", "num_pages": 1,
                  "file_hash": "abc", "file_size": 1234, "filename": "test.pdf",
                  "extension": "pdf", "error": None,
              }), \
@@ -268,7 +268,7 @@ class TestProgressSequence:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        assert progress_values == [20, 40, 50, 90, 100]
+        assert progress_values == [20, 40, 50, 90]
 
     async def test_ocr_path_progress(self, mock_files_collection):
         """OCR 경로(텍스트 없음): 20→40→50→60→70"""

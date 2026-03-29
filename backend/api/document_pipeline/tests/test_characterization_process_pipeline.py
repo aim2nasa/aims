@@ -260,12 +260,13 @@ class TestPath1_NormalPdfWithText:
             "추출된 텍스트입니다.",
             owner_id="test_user",
             document_id=ANY,
-            filename="test.pdf"
+            filename="test.pdf",
+            classification_config=ANY,
         )
 
     @pytest.mark.asyncio
     async def test_progress_notifications_sequence(self, mock_files_collection):
-        """진행률 알림 순서: 20% → 40% → 50% → 90% → 100%"""
+        """진행률 알림 순서: 20% → 40% → 50% → 90% (100%는 _notify_document_complete에서 전송)"""
         notify = AsyncMock()
         ctx = await _call_pipeline(mock_files_collection, notify_progress_mock=notify)
 
@@ -274,7 +275,6 @@ class TestPath1_NormalPdfWithText:
         assert 40 in progress_values
         assert 50 in progress_values
         assert 90 in progress_values
-        assert 100 in progress_values
 
     @pytest.mark.asyncio
     async def test_document_complete_notified(self, mock_files_collection):
@@ -507,8 +507,8 @@ class TestPath5_ConversionFailed:
             )
 
         assert r["result"] == "success"
-        assert r["status"] == "completed"
-        assert r["processingSkipReason"] == "conversion_failed"
+        assert r["status"] == "converting"
+        assert r["overallStatus"] == "conversion_pending"
 
 
 # ========================================
@@ -527,8 +527,9 @@ class TestPath6_DuplicateKeyError:
 
         async def update_side_effect(*args, **kwargs):
             call_count[0] += 1
-            # 1회: upload info, 2회: meta update에서 DuplicateKeyError
-            if call_count[0] <= 1:
+            # 1회: upload info, 2회: overallStatus:extracting, 3회: overallStatus:classifying
+            # 4회: meta update에서 DuplicateKeyError
+            if call_count[0] <= 3:
                 return MagicMock(modified_count=1)
             raise DuplicateKeyError("duplicate file_hash")
 

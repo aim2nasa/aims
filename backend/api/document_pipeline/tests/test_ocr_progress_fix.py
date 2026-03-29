@@ -185,16 +185,13 @@ class TestConvertibleMimeNoOCR:
         # OCR 큐에 추가되지 않아야 함
         mock_redis.assert_not_called()
 
-        # 결과 검증
-        assert result["status"] == "completed"
-        assert result["processingSkipReason"] == "conversion_failed"
+        # 결과 검증: 변환 대기 상태 (xPipe PDF 변환 큐 대기)
+        assert result["status"] == "converting"
+        assert result["overallStatus"] == "conversion_pending"
 
-        # progress가 100(complete)으로 끝나야 함
-        assert 100 in progress_values
-        assert "complete" in progress_stages
-
-        # document complete 알림 호출
-        mock_complete.assert_called_once()
+        # progress가 60(conversion_queued)으로 끝나야 함
+        assert 60 in progress_values
+        assert "conversion_queued" in progress_stages
 
     async def test_pdf_empty_text_still_queues_ocr(self, mock_files_collection):
         """PDF(is_convertible_mime=False) + 빈 텍스트 → 기존대로 OCR 큐 진입"""

@@ -284,8 +284,9 @@ class TestConvertibleMimeOCRFallback:
         # OCR 큐에 추가되지 않아야 함 (변환 PDF 없으므로)
         mock_redis.assert_not_called()
 
-        # 보관 처리 확인
-        assert result.get("processingSkipReason") == "conversion_failed"
+        # 변환 대기 상태 확인 (xPipe PDF 변환 큐 대기)
+        assert result.get("status") == "converting"
+        assert result.get("overallStatus") == "conversion_pending"
 
 
 # ========================================

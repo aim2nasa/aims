@@ -352,7 +352,7 @@ class TestXpipeShortTextSkipsSummary:
 
             await _process_via_xpipe(
                 file_content=b"fake pdf content",
-                original_name=TEST_ORIGINAL_NAME,
+                original_name="1234567890.pdf",
                 user_id=TEST_USER_ID,
                 customer_id=None,
                 source_path=None,
@@ -399,7 +399,7 @@ class TestXpipeShortTextSkipsSummary:
 
             await _process_via_xpipe(
                 file_content=b"fake pdf content",
-                original_name=TEST_ORIGINAL_NAME,
+                original_name="1234567890.pdf",
                 user_id=TEST_USER_ID,
                 customer_id=None,
                 source_path=None,
@@ -430,7 +430,7 @@ class TestXpipeShortTextSkipsSummary:
 
             await _process_via_xpipe(
                 file_content=b"fake pdf content",
-                original_name=TEST_ORIGINAL_NAME,
+                original_name="1234567890.pdf",
                 user_id=TEST_USER_ID,
                 customer_id=None,
                 source_path=None,
