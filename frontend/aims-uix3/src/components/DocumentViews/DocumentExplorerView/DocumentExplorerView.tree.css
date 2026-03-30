@@ -981,6 +981,10 @@
     -webkit-user-select: none;
     user-select: none;
     min-width: var(--doc-row-min-width, 580px); /* JS 동적 측정값 */
+    /* 스크롤 시 상단 고정 — tree-layout(overflow:auto)의 직접 자식이므로 sticky 동작 */
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   /* 정렬 가능 컬럼 버튼 */
