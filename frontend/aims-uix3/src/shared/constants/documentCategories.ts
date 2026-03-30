@@ -11,6 +11,15 @@
 import { api } from '@/shared/lib/api'
 import type { DocumentType } from '@/shared/hooks/useDocumentTypes'
 
+/**
+ * 레거시 document_type → 현행 document_type 매핑
+ * DB에 category 없이 isLegacy로만 존재하는 값을 현행 값으로 변환하여
+ * 올바른 카테고리를 찾을 수 있게 한다.
+ */
+const LEGACY_TYPE_MAP: Record<string, string> = {
+  'claim': 'claim_form',
+}
+
 export interface DocumentCategory {
   value: string
   label: string
@@ -61,6 +70,7 @@ export async function prefetchDocumentTypes(): Promise<void> {
     )
     const types = response.data
     const newCache = new Map<string, TypeCacheEntry>()
+    // 1차: 모든 유형을 캐시에 적재
     for (const t of types) {
       newCache.set(t.value, {
         label: t.label,
@@ -69,6 +79,15 @@ export async function prefetchDocumentTypes(): Promise<void> {
         isLegacy: t.isLegacy,
         order: t.order,
       })
+    }
+    // 2차: LEGACY_TYPE_MAP에 해당하는 레거시 항목의 category가 'etc'(미지정)이면
+    //       현행 값의 category로 보정 (DB에 category 필드가 누락된 레거시 방어)
+    for (const [legacyValue, currentValue] of Object.entries(LEGACY_TYPE_MAP)) {
+      const legacyEntry = newCache.get(legacyValue)
+      const currentEntry = newCache.get(currentValue)
+      if (legacyEntry && currentEntry && legacyEntry.category === 'etc') {
+        legacyEntry.category = currentEntry.category
+      }
     }
     _typeCache = newCache
     _cacheReady = true
@@ -90,20 +109,30 @@ export function isDocumentTypeCacheReady(): boolean {
 
 /**
  * document_type 값으로 한글 소분류 레이블을 반환
- * 캐시에 없으면 '기타' 반환
+ * 캐시에 없으면 LEGACY_TYPE_MAP으로 현행 값 조회 후 반환, 그래도 없으면 '기타'
  */
 export function getDocumentTypeLabel(documentType: string | undefined | null): string {
   if (!documentType) return '-'
-  return _typeCache.get(documentType)?.label ?? '기타'
+  const entry = _typeCache.get(documentType)
+  if (entry) return entry.label
+  // 레거시 매핑: 현행 값으로 변환하여 재조회
+  const mapped = LEGACY_TYPE_MAP[documentType]
+  if (mapped) return _typeCache.get(mapped)?.label ?? '기타'
+  return '기타'
 }
 
 /**
  * document_type 값으로 카테고리 value를 반환
- * 매핑이 없으면 'etc' 반환
+ * 캐시에 없으면 LEGACY_TYPE_MAP으로 현행 값 조회 후 반환, 그래도 없으면 'etc'
  */
 export function getCategoryForType(documentType: string | undefined | null): string {
   if (!documentType) return 'etc'
-  return _typeCache.get(documentType)?.category ?? 'etc'
+  const entry = _typeCache.get(documentType)
+  if (entry) return entry.category
+  // 레거시 매핑: 현행 값으로 변환하여 재조회
+  const mapped = LEGACY_TYPE_MAP[documentType]
+  if (mapped) return _typeCache.get(mapped)?.category ?? 'etc'
+  return 'etc'
 }
 
 /**

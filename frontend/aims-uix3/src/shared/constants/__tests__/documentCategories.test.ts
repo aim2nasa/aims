@@ -333,4 +333,55 @@ describe('documentCategories (v4 — DB SSoT)', () => {
       expect(allTypes).toHaveLength(23)
     })
   })
+
+  describe('LEGACY_TYPE_MAP fallback — 캐시에 없는 레거시 값 방어', () => {
+    it('LEGACY_TYPE_MAP에 정의된 claim은 캐시에 있으므로 claim 카테고리를 반환한다', () => {
+      // mock에 claim이 category: 'claim'으로 포함되어 있으므로 캐시 히트
+      expect(getCategoryForType('claim')).toBe('claim')
+      expect(getDocumentTypeLabel('claim')).toBe('보험금청구')
+    })
+
+    it('캐시에 없는 미지 타입은 etc로 fallback된다', () => {
+      expect(getCategoryForType('totally_unknown')).toBe('etc')
+      expect(getDocumentTypeLabel('totally_unknown')).toBe('기타')
+    })
+  })
+})
+
+/**
+ * LEGACY_TYPE_MAP fallback 실제 발동 테스트
+ * DB에 'claim' 레거시 항목의 category가 없는 경우를 재현한다.
+ * prefetchDocumentTypes() 2차 보정 로직이 올바르게 동작하는지 검증.
+ */
+describe('documentCategories — LEGACY_TYPE_MAP 캐시 보정 (category 누락 시나리오)', () => {
+  beforeAll(async () => {
+    // mock api.get의 반환값을 일시 변경하여 category 누락 시나리오 재현
+    const { api } = await import('@/shared/lib/api')
+    const mockGet = api.get as ReturnType<typeof vi.fn>
+    mockGet.mockResolvedValueOnce({
+      success: true,
+      data: [
+        // claim_form (현행)은 정상
+        { _id: '10', value: 'claim_form', label: '보험금청구서', category: 'claim', order: 10, isSystem: false, isLegacy: false },
+        // claim (레거시) — category 없음! 이것이 실제 DB 버그 원인
+        { _id: '127', value: 'claim', label: '보험금청구', order: 127, isSystem: false, isLegacy: true },
+      ],
+    })
+    await prefetchDocumentTypes()
+  })
+
+  it('category 누락된 레거시 claim이 prefetch 보정을 통해 claim 카테고리로 매핑된다', () => {
+    // category가 없으면 1차 적재 시 'etc'로 저장되지만,
+    // 2차 보정 단계에서 LEGACY_TYPE_MAP을 통해 claim_form의 category('claim')로 보정됨
+    expect(getCategoryForType('claim')).toBe('claim')
+  })
+
+  it('category 누락된 레거시 claim의 레이블이 정상 반환된다', () => {
+    expect(getDocumentTypeLabel('claim')).toBe('보험금청구')
+  })
+
+  it('현행 claim_form은 영향받지 않는다', () => {
+    expect(getCategoryForType('claim_form')).toBe('claim')
+    expect(getDocumentTypeLabel('claim_form')).toBe('보험금청구서')
+  })
 })

@@ -12,7 +12,8 @@
 const {
   classifyDocument,
   classifyDocuments,
-  TYPE_KEYWORDS
+  TYPE_KEYWORDS,
+  LEGACY_TYPE_MAP
 } = require('../documentTypeClassifier');
 
 describe('documentTypeClassifier', () => {
@@ -31,9 +32,13 @@ describe('documentTypeClassifier', () => {
       expect(TYPE_KEYWORDS.policy.primary).toContain('보험증권');
     });
 
-    it('claim 키워드가 정의되어 있어야 함', () => {
-      expect(TYPE_KEYWORDS.claim).toBeDefined();
-      expect(TYPE_KEYWORDS.claim.primary).toContain('보험금청구');
+    it('claim_form 키워드가 정의되어 있어야 함', () => {
+      expect(TYPE_KEYWORDS.claim_form).toBeDefined();
+      expect(TYPE_KEYWORDS.claim_form.primary).toContain('보험금청구');
+    });
+
+    it('레거시 claim 키가 TYPE_KEYWORDS에 없어야 함', () => {
+      expect(TYPE_KEYWORDS.claim).toBeUndefined();
     });
 
     it('diagnosis 키워드가 정의되어 있어야 함', () => {
@@ -80,10 +85,10 @@ describe('documentTypeClassifier', () => {
       expect(result.suggestedType).toBe('diagnosis');
     });
 
-    it('보험금청구 태그 → claim', () => {
+    it('보험금청구 태그 → claim_form', () => {
       const result = classifyDocument(['보험금청구', '청구서'], '');
 
-      expect(result.suggestedType).toBe('claim');
+      expect(result.suggestedType).toBe('claim_form');
     });
 
     it('제안서 태그 → proposal', () => {
@@ -281,7 +286,26 @@ describe('documentTypeClassifier', () => {
   });
 
   // =============================================================================
-  // 10. 대소문자 무시 테스트
+  // 10. LEGACY_TYPE_MAP 방어 로직 테스트
+  // =============================================================================
+
+  describe('LEGACY_TYPE_MAP 방어', () => {
+    it('LEGACY_TYPE_MAP에 claim → claim_form 매핑이 정의되어 있다', () => {
+      expect(LEGACY_TYPE_MAP.claim).toBe('claim_form');
+    });
+
+    it('자동 분류 결과에 레거시 claim이 아닌 현행 claim_form이 반환된다', () => {
+      const result = classifyDocument(['보험금청구', '청구서', '지급청구'], '');
+
+      // 높은 신뢰도로 자동 적용됨
+      expect(result.autoApplied).toBe(true);
+      expect(result.type).toBe('claim_form');
+      expect(result.suggestedType).toBe('claim_form');
+    });
+  });
+
+  // =============================================================================
+  // 11. 대소문자 무시 테스트
   // =============================================================================
 
   describe('대소문자 무시', () => {

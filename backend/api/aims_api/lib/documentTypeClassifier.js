@@ -30,7 +30,7 @@ const TYPE_KEYWORDS = {
   },
 
   // 보험금 청구 관련
-  claim: {
+  claim_form: {
     primary: ['보험금청구', '청구서', '지급청구'],
     secondary: ['보험금 청구', '청구금액'],
     weight: 1.0
@@ -79,6 +79,15 @@ const TYPE_KEYWORDS = {
   }
   // ⚠️ annual_report, customer_review는 자동분류 대상에서 제외
   // AR/CRS 문서는 각각의 파싱 과정에서만 시스템이 자동으로 분류함
+};
+
+/**
+ * 레거시 document_type → 현행 document_type 매핑
+ * TYPE_KEYWORDS에 레거시 키가 남아있어도 현행 값으로 변환하여 반환한다.
+ * 프론트엔드 documentCategories.ts의 LEGACY_TYPE_MAP과 동기화 유지.
+ */
+const LEGACY_TYPE_MAP = {
+  'claim': 'claim_form',
 };
 
 /**
@@ -156,9 +165,12 @@ function classifyDocument(tags = [], summary = '', filename = '') {
   // 신뢰도 70% 이상이면 자동 적용
   const autoApplied = confidence >= 0.7;
 
+  // 레거시 타입 방어: TYPE_KEYWORDS에 레거시 키가 남아있어도 현행 값으로 변환
+  const resolvedType = LEGACY_TYPE_MAP[bestType] || bestType;
+
   return {
-    type: autoApplied ? bestType : null,
-    suggestedType: bestType,
+    type: autoApplied ? resolvedType : null,
+    suggestedType: resolvedType,
     confidence: Math.round(confidence * 100) / 100,
     matchedKeywords: matchedKeywordsMap[bestType],
     autoApplied
@@ -188,5 +200,6 @@ function classifyDocuments(documents) {
 module.exports = {
   classifyDocument,
   classifyDocuments,
-  TYPE_KEYWORDS
+  TYPE_KEYWORDS,
+  LEGACY_TYPE_MAP
 };
