@@ -227,7 +227,8 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
         const hasActiveProcessing = processing > 0 || error > 0 || pending > 0 || creditPending > 0
         if (!hasActiveProcessing) return null
 
-        const allCompleted = completed + completed_with_skip + creditPending
+        // credit_pending은 "크레딧 부족으로 처리 보류"이므로 완료 건수에서 제외
+        const allCompleted = completed + completed_with_skip
         const rawPct = total > 0 ? Math.round((allCompleted / total) * 100) : 0
         // 🔴 처리 중인 문서가 있으면 100% 표시 방지 (반올림으로 100%가 되는 케이스)
         const completedPct = (rawPct >= 100 && hasActiveProcessing) ? 99 : rawPct

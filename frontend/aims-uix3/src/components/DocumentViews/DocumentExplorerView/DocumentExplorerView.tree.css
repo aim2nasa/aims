@@ -489,6 +489,7 @@
       /* size */ 48px
       /* date */ 80px
       /* badge */ 32px
+      /* status */ 64px
       /* actions */ 40px;
     align-items: center;
     gap: 0 var(--spacing-1-5);
@@ -549,6 +550,7 @@
       /* size */ 48px
       /* date */ 80px
       /* badge */ 32px
+      /* status */ 64px
       /* actions */ 40px;
   }
 
@@ -966,6 +968,7 @@
       /* size */ 48px
       /* date */ 80px
       /* badge */ 32px
+      /* status */ 64px
       /* actions */ 40px;
     align-items: center;
     gap: 0 var(--spacing-1-5);
@@ -1099,6 +1102,150 @@
 
   .doc-explorer-tree__customer-type-icon .customer-icon--personal {
     color: var(--color-icon-blue, #007aff);
+  }
+
+  /* ============================================
+     Document Status Cell (처리 상태 컬럼)
+     ============================================ */
+  .doc-explorer-tree__doc-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-0-5);
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* 상태 아이콘 (공통) */
+  .doc-explorer-tree__status-icon {
+    font-size: 11px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  /* 상태 레이블 (공통) */
+  .doc-explorer-tree__status-label {
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  /* 완료 상태 */
+  .doc-explorer-tree__status-completed {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-0-5);
+  }
+
+  .doc-explorer-tree__status-icon--completed {
+    color: var(--color-success);
+  }
+
+  .doc-explorer-tree__status-label--completed {
+    color: var(--color-success);
+    font-weight: 600;
+  }
+
+  /* 처리중 상태 (스피너 + 레이블/진행률) */
+  .doc-explorer-tree__status-processing {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .doc-explorer-tree__status-spinner {
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid var(--color-primary-200);
+    border-top-color: var(--color-primary-500);
+    border-radius: 50%;
+    animation: explorer-status-spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes explorer-status-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .doc-explorer-tree__status-progress {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--color-primary-500);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 대기 상태 */
+  .doc-explorer-tree__status-pending {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-0-5);
+    color: var(--color-neutral-400);
+  }
+
+  .doc-explorer-tree__status-icon--pending {
+    color: var(--color-neutral-400);
+  }
+
+  /* 에러 상태 */
+  .doc-explorer-tree__status-error {
+    color: var(--color-error);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-0-5);
+  }
+
+  .doc-explorer-tree__status-icon--error {
+    color: var(--color-error);
+  }
+
+  .doc-explorer-tree__status-label--error {
+    color: var(--color-error);
+  }
+
+  .doc-explorer-tree__status-error:hover .doc-explorer-tree__status-retry-text {
+    opacity: 1;
+  }
+
+  .doc-explorer-tree__status-error:hover .doc-explorer-tree__status-label--error {
+    display: none;
+  }
+
+  .doc-explorer-tree__status-retry-text {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--color-error);
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  /* 크레딧 대기 */
+  .doc-explorer-tree__status-credit {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-0-5);
+    color: var(--color-ios-orange, #f59e0b);
+  }
+
+  .doc-explorer-tree__status-icon--credit_pending {
+    color: var(--color-ios-orange, #f59e0b);
+  }
+
+  /* 고객 노드 처리 현황 배지 */
+  .doc-explorer-tree__processing-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-primary-500);
+    white-space: nowrap;
+    margin-left: var(--spacing-1);
+    flex-shrink: 0;
+  }
+
+  .doc-explorer-tree__processing-badge--error {
+    color: var(--color-error);
   }
 
   /* 태블릿 반응형 */

@@ -50,6 +50,9 @@ import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
 import { useDocumentDownload } from '@/features/customer/hooks/useDocumentDownload'
+import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
+import { ExplorerProcessingStatusBar } from './components/ExplorerProcessingStatusBar'
+import { api } from '@/shared/lib/api'
 
 export interface DocumentExplorerViewProps {
   /** View 표시 여부 */
@@ -107,7 +110,9 @@ const DocumentExplorerContent: React.FC<{
   initialType: InitialType
   onInitialTypeChange: (type: InitialType) => void
   previewDocumentId?: string | null
-}> = ({ onDocumentClick, onDocumentDoubleClick, onDocumentDeleted, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange, previewDocumentId }) => {
+  /** View 표시 여부 (SSE/폴링 제어용) */
+  visible?: boolean
+}> = ({ onDocumentClick, onDocumentDoubleClick, onDocumentDeleted, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange, previewDocumentId, visible = true }) => {
 
   // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
@@ -119,6 +124,9 @@ const DocumentExplorerContent: React.FC<{
     setFilenameMode(mode)
     localStorage.setItem('aims-filename-mode', mode)
   }, [])
+
+  // 문서 처리 현황 통계 (글로벌) — visible=false일 때 SSE/폴링 비활성화
+  const { statistics: docStatistics, isLoading: isStatisticsLoading } = useDocumentStatistics({ enabled: visible })
 
   // 호버 액션: 문서 삭제/이름변경 — reload 대신 트리 재조회로 UI 상태 유지
   const refreshDataRef = useRef<() => void>(() => {})
@@ -164,6 +172,25 @@ const DocumentExplorerContent: React.FC<{
 
   // === 문서함 다운로드 ===
   const toast = useToastContext()
+
+  // 에러 문서 재시도 핸들러 (중복 클릭 방어 포함)
+  const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
+  const handleRetryDocument = useCallback(async (documentId: string) => {
+    if (retryingDocumentId) return // 이미 재시도 중이면 무시
+
+    setRetryingDocumentId(documentId)
+    try {
+      await api.post<{ success: boolean }>(`/api/documents/${documentId}/retry`, { stage: 'pdf_conversion' })
+      toast.show('재시도가 시작되었습니다', { type: 'success' })
+    } catch (error) {
+      console.error('[DocumentExplorerView] 재시도 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentExplorerView.handleRetryDocument' })
+      toast.show('재시도 중 오류가 발생했습니다', { type: 'error' })
+    } finally {
+      setRetryingDocumentId(null)
+    }
+  }, [retryingDocumentId, toast])
+
   // 진행률 토스트 ID를 ref로 관리 (콜백 내에서 최신값 참조)
   const progressToastIdRef = useRef<string | null>(null)
   const handleDownloadProgress = useCallback((progress: import('@/features/customer/hooks/useDocumentDownload').DownloadProgress) => {
@@ -1438,6 +1465,12 @@ const DocumentExplorerContent: React.FC<{
         />
       )}
 
+      {/* 문서 처리 현황 바 — 처리 중 문서가 있을 때만 표시 */}
+      <ExplorerProcessingStatusBar
+        statistics={docStatistics}
+        isLoading={isStatisticsLoading}
+      />
+
       {/* 트리 레이아웃 래퍼 — 컬럼 헤더(고정)와 스크롤 영역을 분리 */}
       <div className="doc-explorer-tree-layout">
         {/* 컬럼 헤더 — scroll container 밖에 배치해야 겹침/잘림 버그 없음 */}
@@ -1781,6 +1814,7 @@ const DocumentExplorerContent: React.FC<{
             selectedCustomerIds={selectedCustomerIds}
             onToggleCustomerSelect={customerSelectMode ? handleToggleCustomerSelect : undefined}
             customerSelectMode={customerSelectMode}
+            onRetryClick={handleRetryDocument}
           />
         )}
 
@@ -2034,6 +2068,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
         initialType={initialType}
         onInitialTypeChange={handleInitialTypeChange}
         previewDocumentId={previewDocumentId}
+        visible={visible}
       />
     </CenterPaneView>
   )

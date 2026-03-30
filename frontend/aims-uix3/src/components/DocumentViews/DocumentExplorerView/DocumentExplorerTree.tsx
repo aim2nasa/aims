@@ -14,7 +14,7 @@
 import React, { useCallback, useRef, useMemo, useEffect, useLayoutEffect, useState, useReducer } from 'react'
 // flushSync 제거 — 마우스 이벤트마다 동기 렌더링 강제하면 저사양 PC에서 프리징 발생
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
-import { DocumentUtils } from '@/entities/document'
+import { DocumentUtils, DocumentProcessingModule } from '@/entities/document'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { SummaryIcon, DocumentIcon } from '../components/DocumentActionIcons'
 // InlineRenameInput 제거 — 부모 뷰에서 RenameModal로 대체
@@ -98,6 +98,8 @@ export interface DocumentExplorerTreeProps {
   onToggleCustomerSelect?: (customerId: string) => void
   /** 고객 선택 모드 활성 여부 */
   customerSelectMode?: boolean
+  /** 에러 문서 재시도 핸들러 */
+  onRetryClick?: (documentId: string) => void
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -162,6 +164,8 @@ interface DocumentNodeProps {
   onCheckToggle?: (documentId: string) => void
   onDocTypeChange?: (documentId: string, newType: string) => void
   updatingDocTypeId?: string | null
+  /** 에러 문서 재시도 핸들러 */
+  onRetryClick?: (documentId: string) => void
 }
 
 const DocumentNode = React.memo<DocumentNodeProps>(({
@@ -183,6 +187,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   isEditMode,
   isChecked,
   onCheckToggle,
+  onRetryClick,
 }) => {
   const doc = node.document
   if (!doc) return null
@@ -195,6 +200,8 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   const { showName, altName, isAlias } = getDocName(doc, filenameMode)
   const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : ''
   const fileSize = DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(doc))
+  const docStatus = DocumentStatusService.extractStatus(doc)
+  const docProgress = doc.progress ?? 0
 
   return (
     <div
@@ -307,7 +314,61 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
         {doc.badgeType || 'BIN'}
       </span>
 
-      {/* 액션 버튼 (요약/전체텍스트) — meta.summary 또는 ocr.summary 유무로 활성/비활성 */}
+      {/* 처리 상태 — 모든 상태를 아이콘+레이블로 표시 */}
+      <span className="doc-explorer-tree__doc-status">
+        {docStatus === 'error' ? (
+          <Tooltip content="클릭하여 재시도" placement="bottom">
+            <span
+              className="doc-explorer-tree__status-error"
+              onClick={(e) => { e.stopPropagation(); onRetryClick?.(docId) }}
+              role="button"
+              tabIndex={-1}
+            >
+              <span className="doc-explorer-tree__status-icon doc-explorer-tree__status-icon--error">✗</span>
+              <span className="doc-explorer-tree__status-label doc-explorer-tree__status-label--error">오류</span>
+              <span className="doc-explorer-tree__status-retry-text">재시도</span>
+            </span>
+          </Tooltip>
+        )
+        : docStatus === 'credit_pending' ? (
+          <Tooltip content="크레딧 충전 후 자동 처리됩니다" placement="bottom">
+            <span className="doc-explorer-tree__status-credit">
+              <span className="doc-explorer-tree__status-icon doc-explorer-tree__status-icon--credit_pending">⏸</span>
+            </span>
+          </Tooltip>
+        )
+        : docStatus === 'completed' ? (
+          <Tooltip content="완료" placement="bottom">
+            <span className="doc-explorer-tree__status-completed">
+              <span className="doc-explorer-tree__status-icon doc-explorer-tree__status-icon--completed">✓</span>
+              <span className="doc-explorer-tree__status-label doc-explorer-tree__status-label--completed">완료</span>
+            </span>
+          </Tooltip>
+        )
+        : docStatus === 'pending' || docStatus === 'embed_pending' || docStatus === 'ocr_queued' ? (
+          <Tooltip content={DocumentProcessingModule.getProcessingStatus(doc).label} placement="bottom">
+            <span className="doc-explorer-tree__status-pending">
+              <span className="doc-explorer-tree__status-icon doc-explorer-tree__status-icon--pending">○</span>
+              <span className="doc-explorer-tree__status-label">{DocumentProcessingModule.getProcessingStatus(doc).label}</span>
+            </span>
+          </Tooltip>
+        )
+        : (
+          /* 처리중 상태: processing, uploading, converting, extracting, ocr_processing, classifying, embedding */
+          <Tooltip content={DocumentProcessingModule.getProcessingStatus(doc).label} placement="bottom">
+            <span className={`doc-explorer-tree__status-processing doc-explorer-tree__status-processing--${docStatus}`}>
+              <span className="doc-explorer-tree__status-spinner" />
+              {docProgress > 0 && docProgress < 100
+                ? <span className="doc-explorer-tree__status-progress">{docProgress}%</span>
+                : <span className="doc-explorer-tree__status-label">{DocumentProcessingModule.getProcessingStatus(doc).label}</span>
+              }
+            </span>
+          </Tooltip>
+        )
+        }
+      </span>
+
+      {/* 액션 버튼 (요약/전체텍스트) -- meta.summary 또는 ocr.summary 유무로 활성/비활성 */}
       <span className="doc-explorer-tree__doc-actions">
         <Tooltip content={(typeof doc.meta === 'object' && doc.meta?.summary) || (typeof doc.ocr === 'object' && (doc.ocr as any)?.summary) ? '요약 보기' : '요약 없음'} placement="bottom">
           <button
@@ -379,6 +440,8 @@ interface GroupNodeProps {
   onDownloadCustomerDocuments?: (customerId: string, customerName: string) => void
   selectedCustomerIds?: Set<string>
   onToggleCustomerSelect?: (customerId: string) => void
+  /** 에러 문서 재시도 핸들러 */
+  onRetryClick?: (documentId: string) => void
 }
 
 const GroupNode = React.memo<GroupNodeProps>(({
@@ -418,6 +481,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
   onDownloadCustomerDocuments,
   selectedCustomerIds,
   onToggleCustomerSelect,
+  onRetryClick,
 }) => {
   const isExpanded = expandedKeys.has(node.key)
   const hasChildren = node.children && node.children.length > 0
@@ -442,6 +506,26 @@ const GroupNode = React.memo<GroupNodeProps>(({
 
   // 고객 노드 여부 (level 0 + customerId)
   const isCustomerNode = level === 0 && !!node.metadata?.customerId
+
+  // 고객 노드 처리 현황: 하위 문서 중 미완료 건수 계산
+  const customerProcessingInfo = useMemo(() => {
+    if (!isCustomerNode || !node.children) return null
+    let processingCount = 0
+    let errorCount = 0
+    const countDocs = (children: DocumentTreeNode[]) => {
+      for (const child of children) {
+        if (child.type === 'document' && child.document) {
+          const st = DocumentStatusService.extractStatus(child.document)
+          if (st === 'error') errorCount++
+          else if (st !== 'completed') processingCount++
+        }
+        if (child.children) countDocs(child.children)
+      }
+    }
+    countDocs(node.children)
+    if (processingCount === 0 && errorCount === 0) return null
+    return { processingCount, errorCount }
+  }, [isCustomerNode, node.children])
 
   // 고객 하위 대분류가 펼쳐져 있는지 판단
   const isCustomerChildrenExpanded = isCustomerNode && isExpanded && node.children
@@ -513,7 +597,21 @@ const GroupNode = React.memo<GroupNodeProps>(({
           )}
         </span>
 
-        {/* 고객 노드: 인라인 버튼은 ⋮ 메뉴로 통합 (Step 1: 중복 제거) */}
+        {/* 고객 노드: 처리 현황 배지 (미완료 문서가 있을 때만) */}
+        {isCustomerNode && customerProcessingInfo && (
+          <>
+            {customerProcessingInfo.processingCount > 0 && (
+              <span className="doc-explorer-tree__processing-badge">
+                {customerProcessingInfo.processingCount} 처리중
+              </span>
+            )}
+            {customerProcessingInfo.errorCount > 0 && (
+              <span className="doc-explorer-tree__processing-badge doc-explorer-tree__processing-badge--error">
+                {customerProcessingInfo.errorCount} 에러
+              </span>
+            )}
+          </>
+        )}
 
         {/* 고객 노드: 대분류 요약 배지 (접힌 상태에서 분류 현황을 한눈에) */}
         {!isExpanded && node.metadata?.categorySummary && node.metadata.categorySummary.length > 0 && (
@@ -711,6 +809,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
               onDownloadCustomerDocuments={onDownloadCustomerDocuments}
               selectedCustomerIds={selectedCustomerIds}
               onToggleCustomerSelect={onToggleCustomerSelect}
+              onRetryClick={onRetryClick}
             />
           ))}
         </div>
@@ -762,6 +861,7 @@ interface TreeNodeProps {
   onDownloadCustomerDocuments?: (customerId: string, customerName: string) => void
   selectedCustomerIds?: Set<string>
   onToggleCustomerSelect?: (customerId: string) => void
+  onRetryClick?: (documentId: string) => void
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -801,6 +901,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onDownloadCustomerDocuments,
   selectedCustomerIds,
   onToggleCustomerSelect,
+  onRetryClick,
 }) => {
   if (node.type === 'document') {
     const docId = node.document?._id || node.document?.id || ''
@@ -830,6 +931,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
         onCheckToggle={onCheckToggle}
         onDocTypeChange={onDocTypeChange}
         updatingDocTypeId={updatingDocTypeId}
+        onRetryClick={onRetryClick}
       />
     )
   }
@@ -871,6 +973,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       onDownloadCustomerDocuments={onDownloadCustomerDocuments}
       selectedCustomerIds={selectedCustomerIds}
       onToggleCustomerSelect={onToggleCustomerSelect}
+      onRetryClick={onRetryClick}
     />
   )
 }
@@ -1012,6 +1115,7 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
       )}
     </button>
     <span className="doc-explorer-tree__col-label doc-explorer-tree__col-label--center">배지</span>
+    <span className="doc-explorer-tree__col-label doc-explorer-tree__col-label--center">상태</span>
     <span className="doc-explorer-tree__col-spacer" />
   </div>
 )
@@ -1059,6 +1163,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   selectedCustomerIds,
   onToggleCustomerSelect,
   customerSelectMode = false,
+  onRetryClick,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -1111,8 +1216,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     if (Math.abs(nameColWidth - prevMeasuredRef.current) < 4) return
     prevMeasuredRef.current = nameColWidth
 
-    // 고정 컬럼: 20+32+48+80+32+40=252px, gaps: 6×6=36px, 패딩/여유=32px → 320px
-    const totalMinWidth = nameColWidth + 320
+    // 고정 컬럼: 20+32+48+80+32+64+40=316px, gaps: 7×6=42px, 패딩/여유=32px → 390px
+    const totalMinWidth = nameColWidth + 390
     treeLayout.style.setProperty('--doc-row-min-width', `${totalMinWidth}px`)
   }, [nodes, filenameMode, expandedKeys])
 
@@ -1367,6 +1472,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             onDownloadCustomerDocuments={onDownloadCustomerDocuments}
             selectedCustomerIds={selectedCustomerIds}
             onToggleCustomerSelect={onToggleCustomerSelect}
+            onRetryClick={onRetryClick}
           />
         ))}
       </div>

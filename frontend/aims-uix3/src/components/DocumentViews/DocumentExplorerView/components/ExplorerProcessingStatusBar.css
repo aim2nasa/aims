@@ -1,0 +1,159 @@
+/**
+ * ExplorerProcessingStatusBar.css
+ * 고객별 문서함 처리 현황 바 스타일
+ * Apple Progressive Disclosure + Dense Typography
+ */
+
+@layer components {
+
+  .explorer-psb {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+    padding: 0 var(--spacing-3);
+    margin: 0;
+    background: var(--color-bg-secondary);
+    border-radius: 6px;
+    border: 1px solid var(--color-border-primary);
+
+    /* Progressive Disclosure: 숨김 → 표시 전환 */
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      max-height 0.3s ease,
+      opacity 0.3s ease,
+      padding 0.3s ease,
+      margin 0.3s ease;
+  }
+
+  .explorer-psb--visible {
+    max-height: 48px;
+    overflow: visible;
+    opacity: 1;
+    padding: var(--spacing-1-5) var(--spacing-3);
+    margin: 0 0 var(--spacing-1) 0;
+  }
+
+  /* 스켈레톤 */
+  .explorer-psb--skeleton {
+    max-height: 14px;
+    opacity: 1;
+    padding: var(--spacing-1) var(--spacing-3);
+    margin: 0 0 var(--spacing-1) 0;
+    overflow: hidden;
+  }
+
+  .explorer-psb__skeleton-track {
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--color-neutral-200);
+    animation: explorer-psb-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes explorer-psb-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  /* 컨텐츠 행 */
+  .explorer-psb__content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .explorer-psb__label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-ios-text-secondary);
+    white-space: nowrap;
+  }
+
+  .explorer-psb__text {
+    font-size: var(--font-size-caption-2);
+    font-weight: 400;
+    color: var(--color-ios-text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .explorer-psb__processing {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-primary-500);
+  }
+
+  .explorer-psb__pending {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-neutral-400);
+  }
+
+  .explorer-psb__error {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-error);
+  }
+
+  .explorer-psb__credit {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-ios-orange, #f59e0b);
+    cursor: help;
+  }
+
+  /* 프로그레스 바 */
+  .explorer-psb__bar {
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    overflow: hidden;
+    background: var(--color-neutral-200);
+  }
+
+  .explorer-psb__fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--color-success);
+    transition: width 0.5s ease;
+  }
+
+  .explorer-psb__fill--active {
+    background: var(--color-primary-500);
+    animation: explorer-psb-processing 2s ease-in-out infinite;
+  }
+
+  @keyframes explorer-psb-processing {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* 다크 테마 */
+  html[data-theme="dark"] .explorer-psb {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-primary);
+  }
+
+  html[data-theme="dark"] .explorer-psb__skeleton-track {
+    background: var(--color-neutral-700);
+  }
+
+  html[data-theme="dark"] .explorer-psb__bar {
+    background: var(--color-neutral-700);
+  }
+
+  /* 모바일 반응형 */
+  @media (max-width: 480px) {
+    .explorer-psb--visible {
+      padding: var(--spacing-1) var(--spacing-2);
+      max-height: 40px;
+    }
+
+    .explorer-psb__content {
+      gap: var(--spacing-1);
+    }
+  }
+
+} /* end @layer components */
