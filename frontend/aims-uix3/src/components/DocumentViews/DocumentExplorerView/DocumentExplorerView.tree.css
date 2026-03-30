@@ -487,8 +487,6 @@
       /* name + hover-actions */ minmax(180px, 1fr)
       /* ext */  32px
       /* size */ 48px
-      /* customer */ minmax(40px, 80px)
-      /* doctype */ minmax(40px, 72px)
       /* date */ 80px
       /* badge */ 32px
       /* actions */ 40px;
@@ -549,8 +547,6 @@
       /* name + hover-actions */ minmax(180px, 1fr)
       /* ext */  32px
       /* size */ 48px
-      /* customer */ minmax(40px, 80px)
-      /* doctype */ minmax(40px, 72px)
       /* date */ 80px
       /* badge */ 32px
       /* actions */ 40px;
@@ -968,8 +964,6 @@
       /* name */ minmax(180px, 1fr)
       /* ext */  32px
       /* size */ 48px
-      /* customer */ minmax(40px, 80px)
-      /* doctype */ minmax(40px, 72px)
       /* date */ 80px
       /* badge */ 32px
       /* actions */ 40px;

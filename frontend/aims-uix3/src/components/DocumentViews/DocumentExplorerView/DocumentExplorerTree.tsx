@@ -26,7 +26,6 @@ import { getDocumentDate } from './utils/treeBuilders'
 import { HoverPreview } from './components/HoverPreview'
 import { useLayoutStore } from '@/shared/store/useLayoutStore'
 import { Tooltip } from '@/shared/ui/Tooltip'
-import { DocumentTypeCell } from '@/shared/ui/DocumentTypeCell/DocumentTypeCell'
 import { highlightText } from '@/shared/lib/highlightText'
 
 export interface DocumentExplorerTreeProps {
@@ -176,20 +175,14 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   onDocumentMouseEnter,
   onDocumentMouseMove,
   onDocumentMouseLeave,
-  onCustomerBadgeClick,
   onSummaryClick,
   onFullTextClick,
   onRenameClick,
   onDeleteClick,
   onContextMenu,
-  renamingDocumentId,
-  onRenameConfirm,
-  onRenameCancel,
   isEditMode,
   isChecked,
   onCheckToggle,
-  onDocTypeChange,
-  updatingDocTypeId,
 }) => {
   const doc = node.document
   if (!doc) return null
@@ -197,8 +190,6 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   const docId = doc._id || doc.id || ''
   const isSelected = selectedDocumentId === docId
   const isFocused = focusedKey === node.key
-  const customerName = doc.customer_relation?.customer_name
-  const customerType = doc.customer_relation?.customer_type
   const documentDate = getDocumentDate(doc)
   const filename = DocumentStatusService.extractFilename(doc)
   const { showName, altName, isAlias } = getDocName(doc, filenameMode)
@@ -300,43 +291,6 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       {/* 파일 크기 */}
       <span className="doc-explorer-tree__doc-size">
         {fileSize}
-      </span>
-
-      {/* 고객명 (클릭 시 해당 고객 문서만 필터) + 개인/법인 아이콘 */}
-      <Tooltip content={customerName ? `${customerName} 문서만 보기` : '-'} placement="bottom">
-        <span
-          className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
-          onClick={customerName ? (e) => onCustomerBadgeClick(e, customerName) : undefined}
-        >
-          {customerName && (
-            <span className="doc-explorer-tree__customer-type-icon">
-              {customerType === '법인' ? (
-                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
-                  <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
-                </svg>
-              ) : (
-                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
-                  <circle cx="10" cy="7" r="3" />
-                  <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                </svg>
-              )}
-            </span>
-          )}
-          {customerName ? highlightText(customerName, searchTerm) : '-'}
-        </span>
-      </Tooltip>
-
-      {/* 문서유형 */}
-      <span className="doc-explorer-tree__doc-type" onClick={(e) => e.stopPropagation()}>
-        <DocumentTypeCell
-          documentType={doc.document_type}
-          isAnnualReport={doc.is_annual_report}
-          isCustomerReview={doc.document_type === 'customer_review'}
-          onChange={onDocTypeChange ? (newType) => {
-            if (docId) onDocTypeChange(docId, newType)
-          } : undefined}
-          isUpdating={updatingDocTypeId === docId}
-        />
       </span>
 
       {/* 날짜/시간 */}
@@ -1040,8 +994,6 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
         />
       )}
     </button>
-    <span className="doc-explorer-tree__col-label doc-explorer-tree__col-label--center">고객명</span>
-    <span className="doc-explorer-tree__col-label doc-explorer-tree__col-label--center">유형</span>
     <button
       type="button"
       className={`doc-explorer-tree__col-btn doc-explorer-tree__col-btn--center${sortBy === 'date' ? ' doc-explorer-tree__col-btn--active' : ''}`}
@@ -1159,8 +1111,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     if (Math.abs(nameColWidth - prevMeasuredRef.current) < 4) return
     prevMeasuredRef.current = nameColWidth
 
-    // 고정 컬럼: 20+28+48+80+72+88+24+40=400px, gaps: 8×6=48px, 패딩/여유=32px → 480px
-    const totalMinWidth = nameColWidth + 480
+    // 고정 컬럼: 20+32+48+80+32+40=252px, gaps: 6×6=36px, 패딩/여유=32px → 320px
+    const totalMinWidth = nameColWidth + 320
     treeLayout.style.setProperty('--doc-row-min-width', `${totalMinWidth}px`)
   }, [nodes, filenameMode, expandedKeys])
 
