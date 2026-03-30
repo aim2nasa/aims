@@ -1025,7 +1025,7 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
     </button>
     <button
       type="button"
-      className={`doc-explorer-tree__col-btn doc-explorer-tree__col-btn--right${sortBy === 'size' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+      className={`doc-explorer-tree__col-btn doc-explorer-tree__col-btn--center${sortBy === 'size' ? ' doc-explorer-tree__col-btn--active' : ''}`}
       onClick={() => onSortByChange('size')}
       aria-label="크기 기준 정렬"
     >
@@ -1040,11 +1040,11 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
         />
       )}
     </button>
-    <span className="doc-explorer-tree__col-label">고객명</span>
-    <span className="doc-explorer-tree__col-label">유형</span>
+    <span className="doc-explorer-tree__col-label doc-explorer-tree__col-label--center">고객명</span>
+    <span className="doc-explorer-tree__col-label doc-explorer-tree__col-label--center">유형</span>
     <button
       type="button"
-      className={`doc-explorer-tree__col-btn doc-explorer-tree__col-btn--right${sortBy === 'date' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+      className={`doc-explorer-tree__col-btn doc-explorer-tree__col-btn--center${sortBy === 'date' ? ' doc-explorer-tree__col-btn--active' : ''}`}
       onClick={() => onSortByChange('date')}
       aria-label="날짜 기준 정렬"
     >
@@ -1059,7 +1059,7 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
         />
       )}
     </button>
-    <span className="doc-explorer-tree__col-label">배지</span>
+    <span className="doc-explorer-tree__col-label doc-explorer-tree__col-label--center">배지</span>
     <span className="doc-explorer-tree__col-spacer" />
   </div>
 )

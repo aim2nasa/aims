@@ -485,12 +485,12 @@
     grid-template-columns:
       /* icon/select */ 20px
       /* name + hover-actions */ minmax(180px, 1fr)
-      /* ext */  28px
+      /* ext */  32px
       /* size */ 48px
       /* customer */ minmax(40px, 80px)
       /* doctype */ minmax(40px, 72px)
-      /* date */ 88px
-      /* badge */ 24px
+      /* date */ 80px
+      /* badge */ 32px
       /* actions */ 40px;
     align-items: center;
     gap: 0 var(--spacing-1-5);
@@ -547,12 +547,12 @@
       /* checkbox */ 18px
       /* icon/select */ 20px
       /* name + hover-actions */ minmax(180px, 1fr)
-      /* ext */  28px
+      /* ext */  32px
       /* size */ 48px
       /* customer */ minmax(40px, 80px)
       /* doctype */ minmax(40px, 72px)
-      /* date */ 88px
-      /* badge */ 24px
+      /* date */ 80px
+      /* badge */ 32px
       /* actions */ 40px;
   }
 
@@ -744,6 +744,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 10px;
+    text-align: center;
   }
 
   .doc-explorer-tree__doc-date {
@@ -751,7 +752,7 @@
     font-weight: 400;
     color: var(--color-text-tertiary);
     font-variant-numeric: tabular-nums;
-    text-align: right;
+    text-align: center;
   }
 
   .doc-explorer-tree__doc-date--empty {
@@ -828,7 +829,7 @@
     font-weight: 400;
     color: var(--color-text-tertiary);
     font-variant-numeric: tabular-nums;
-    text-align: right;
+    text-align: center;
   }
 
   /* Action Buttons (요약/전체텍스트) */
@@ -965,12 +966,12 @@
     grid-template-columns:
       /* icon/select */ 20px
       /* name */ minmax(180px, 1fr)
-      /* ext */  28px
+      /* ext */  32px
       /* size */ 48px
       /* customer */ minmax(40px, 80px)
       /* doctype */ minmax(40px, 72px)
-      /* date */ 88px
-      /* badge */ 24px
+      /* date */ 80px
+      /* badge */ 32px
       /* actions */ 40px;
     align-items: center;
     gap: 0 var(--spacing-1-5);
