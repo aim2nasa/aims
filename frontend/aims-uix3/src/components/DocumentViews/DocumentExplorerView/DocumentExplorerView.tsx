@@ -71,6 +71,8 @@ export interface DocumentExplorerViewProps {
   onDocumentDeleted?: (deletedIds: string | string[]) => void
   /** RP에서 보고 있는 문서 ID (프리뷰 하이라이트용) */
   previewDocumentId?: string | null
+  /** 뷰 이동 핸들러 */
+  onNavigate?: (viewKey: string) => void
 }
 
 /** explorer-tree API 응답 타입 */
@@ -112,7 +114,9 @@ const DocumentExplorerContent: React.FC<{
   previewDocumentId?: string | null
   /** View 표시 여부 (SSE/폴링 제어용) */
   visible?: boolean
-}> = ({ onDocumentClick, onDocumentDoubleClick, onDocumentDeleted, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange, previewDocumentId, visible = true }) => {
+  /** 뷰 이동 핸들러 (전체문서보기 점프용) */
+  onNavigate?: (viewKey: string) => void
+}> = ({ onDocumentClick, onDocumentDoubleClick, onDocumentDeleted, onCustomerClick, onCustomerExplorerClick, selectedInitial, onSelectedInitialChange, initialType, onInitialTypeChange, previewDocumentId, visible = true, onNavigate }) => {
 
   // 파일명 표시 모드 (별칭/원본) - localStorage 동기화
   const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
@@ -1469,6 +1473,7 @@ const DocumentExplorerContent: React.FC<{
       <ExplorerProcessingStatusBar
         statistics={docStatistics}
         isLoading={isStatisticsLoading}
+        onNavigate={onNavigate}
       />
 
       {/* 트리 레이아웃 래퍼 — 컬럼 헤더(고정)와 스크롤 영역을 분리 */}
@@ -2039,6 +2044,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
   onCustomerClick,
   onCustomerExplorerClick,
   previewDocumentId,
+  onNavigate,
 }) => {
   const breadcrumbItems = getBreadcrumbItems('documents-explorer')
   const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('doc-explorer-selected-initial', null)
@@ -2069,6 +2075,7 @@ export const DocumentExplorerView: React.FC<DocumentExplorerViewProps> = ({
         onInitialTypeChange={handleInitialTypeChange}
         previewDocumentId={previewDocumentId}
         visible={visible}
+        onNavigate={onNavigate}
       />
     </CenterPaneView>
   )

@@ -104,6 +104,15 @@
     cursor: help;
   }
 
+  /* 클릭 가능 링크 스타일 (전체문서보기 점프) */
+  .explorer-psb__link {
+    cursor: pointer;
+  }
+
+  .explorer-psb__link:hover {
+    text-decoration: underline;
+  }
+
   /* 프로그레스 바 */
   .explorer-psb__bar {
     width: 100%;

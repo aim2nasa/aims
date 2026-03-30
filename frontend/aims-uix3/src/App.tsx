@@ -1592,6 +1592,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onCustomerClick={handleCustomerClick}
               onCustomerExplorerClick={handleExpandToExplorer}
               previewDocumentId={selectedDocument?._id ?? null}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 

@@ -11,6 +11,8 @@ interface ExplorerProcessingStatusBarProps {
   /** 전체 라이브러리 통계 */
   statistics: DocumentStatistics | null
   isLoading: boolean
+  /** 뷰 이동 핸들러 (전체문서보기 점프용) */
+  onNavigate?: (viewKey: string) => void
 }
 
 /** 숫자 포맷 (1,234 형식) */
@@ -18,7 +20,7 @@ function fmt(n: number): string {
   return n.toLocaleString()
 }
 
-export function ExplorerProcessingStatusBar({ statistics, isLoading }: ExplorerProcessingStatusBarProps) {
+export function ExplorerProcessingStatusBar({ statistics, isLoading, onNavigate }: ExplorerProcessingStatusBarProps) {
   // 스켈레톤 로딩 상태
   if (isLoading && !statistics) {
     return (
@@ -50,13 +52,29 @@ export function ExplorerProcessingStatusBar({ statistics, isLoading }: ExplorerP
           {fmt(allCompleted)}/{fmt(total)} 완료 ({completedPct}%)
         </span>
         {processing > 0 && (
-          <span className="explorer-psb__processing">{fmt(processing)} 처리중</span>
+          <span
+            className={`explorer-psb__processing${onNavigate ? ' explorer-psb__link' : ''}`}
+            onClick={onNavigate ? () => onNavigate('documents-library') : undefined}
+            role={onNavigate ? 'link' : undefined}
+            tabIndex={onNavigate ? 0 : undefined}
+            onKeyDown={onNavigate ? (e) => { if (e.key === 'Enter') onNavigate('documents-library') } : undefined}
+          >
+            {fmt(processing)} 처리중
+          </span>
         )}
         {pending > 0 && (
           <span className="explorer-psb__pending">{fmt(pending)} 대기</span>
         )}
         {error > 0 && (
-          <span className="explorer-psb__error">{fmt(error)} 에러</span>
+          <span
+            className={`explorer-psb__error${onNavigate ? ' explorer-psb__link' : ''}`}
+            onClick={onNavigate ? () => onNavigate('documents-library') : undefined}
+            role={onNavigate ? 'link' : undefined}
+            tabIndex={onNavigate ? 0 : undefined}
+            onKeyDown={onNavigate ? (e) => { if (e.key === 'Enter') onNavigate('documents-library') } : undefined}
+          >
+            {fmt(error)} 에러
+          </span>
         )}
         {creditPending > 0 && (
           <span className="explorer-psb__credit" title="크레딧 충전 후 자동 처리됩니다">

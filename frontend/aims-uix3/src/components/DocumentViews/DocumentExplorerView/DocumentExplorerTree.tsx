@@ -27,7 +27,7 @@ import { HoverPreview } from './components/HoverPreview'
 import { useLayoutStore } from '@/shared/store/useLayoutStore'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { highlightText } from '@/shared/lib/highlightText'
-import { formatDateTime as formatDateTimeKST } from '@/shared/lib/timeUtils'
+import { formatDateTime as formatDateTimeKST, formatDate as formatDateKST } from '@/shared/lib/timeUtils'
 
 export interface DocumentExplorerTreeProps {
   nodes: DocumentTreeNode[]
@@ -115,6 +115,16 @@ const formatDateTime = (dateStr: string): string => {
   return full.slice(5)
 }
 
+// 오늘 날짜(KST) — "YYYY.MM.DD" 형식. 문서가 오늘 등록되었는지 판별에 사용
+const getTodayKST = (): string => formatDateKST(new Date().toISOString())
+
+// 문서가 오늘(KST) 등록된 문서인지 판별
+const isDocumentToday = (doc: Document, todayStr: string): boolean => {
+  const dateStr = getDocumentDate(doc)
+  if (!dateStr) return false
+  return formatDateKST(dateStr) === todayStr
+}
+
 // filenameMode에 따라 문서 표시명 결정 — 순수 함수이므로 컴포넌트 바깥에 정의
 const getDocName = (doc: Document, filenameMode: 'display' | 'original'): { showName: string; altName: string; isAlias: boolean } => {
   const originalName = DocumentStatusService.extractOriginalFilename(doc)
@@ -196,11 +206,12 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   const fileSize = DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(doc))
   const docStatus = DocumentStatusService.extractStatus(doc)
   const docProgress = doc.progress ?? 0
+  const isToday = isDocumentToday(doc, getTodayKST())
 
   return (
     <div
       data-node-key={node.key}
-      className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}${isEditMode ? ' doc-explorer-tree__document--edit' : ''}`}
+      className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}${isEditMode ? ' doc-explorer-tree__document--edit' : ''}${isToday ? ' doc-explorer-tree__document--today' : ''}`}
       onClick={(e) => onDocumentClick(doc, e, node.key)}
       onContextMenu={onContextMenu ? (e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(doc, e) } : undefined}
       role="treeitem"
@@ -521,6 +532,24 @@ const GroupNode = React.memo<GroupNodeProps>(({
     return { processingCount, errorCount }
   }, [isCustomerNode, node.children])
 
+  // 카테고리(대분류/소분류) 노드에서 오늘(KST) 등록된 문서 건수 계산
+  const todayNewCount = useMemo(() => {
+    // 고객 노드는 대상 아님 (대분류/소분류만)
+    if (isCustomerNode || !node.children) return 0
+    const today = getTodayKST()
+    let count = 0
+    const countNew = (children: DocumentTreeNode[]) => {
+      for (const child of children) {
+        if (child.type === 'document' && child.document) {
+          if (isDocumentToday(child.document, today)) count++
+        }
+        if (child.children) countNew(child.children)
+      }
+    }
+    countNew(node.children)
+    return count
+  }, [isCustomerNode, node.children])
+
   // 고객 하위 대분류가 펼쳐져 있는지 판단
   const isCustomerChildrenExpanded = isCustomerNode && isExpanded && node.children
     ? node.children.some(child => child.type !== 'document' && expandedKeys.has(child.key))
@@ -588,6 +617,10 @@ const GroupNode = React.memo<GroupNodeProps>(({
           )}
           {!isCustomerNode && node.count !== undefined && (
             <span className="doc-explorer-tree__count-inline"> ({node.count}건)</span>
+          )}
+          {/* 카테고리 NEW 배지: 오늘 등록된 문서가 있을 때 표시 */}
+          {!isCustomerNode && todayNewCount > 0 && (
+            <span className="doc-explorer-tree__new-badge">+{todayNewCount}</span>
           )}
         </span>
 

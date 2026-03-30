@@ -132,8 +132,8 @@ const DocumentLibraryContent: React.FC<{
 }> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
-  // 🍎 개발서버 여부 (localhost에서만 고객 필터 기능 활성화)
-  const isDevServer = window.location.hostname === 'localhost'
+  // 🍎 처리 상태 필터 (전체 | 처리중 | 완료 | 에러)
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'processing' | 'completed' | 'error'>('all')
 
   // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
   const [filenameMode, setFilenameMode] = React.useState<'display' | 'original'>(() => {
@@ -185,6 +185,18 @@ const DocumentLibraryContent: React.FC<{
 
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
+
+  // 🍎 처리 상태 필터 적용된 문서 목록
+  const statusFilteredDocuments = React.useMemo(() => {
+    if (statusFilter === 'all') return controller.filteredDocuments
+    return controller.filteredDocuments.filter(doc => {
+      const st = DocumentStatusService.extractStatus(doc)
+      if (statusFilter === 'completed') return st === 'completed'
+      if (statusFilter === 'error') return st === 'error'
+      // 처리중: completed, error 이외의 모든 상태
+      return st !== 'completed' && st !== 'error'
+    })
+  }, [controller.filteredDocuments, statusFilter])
 
   // 이름변경/삭제 성공 시 데이터 재조회 (UI 상태 유지)
   refreshDataRef.current = () => { controller.refreshDocuments() }
@@ -406,7 +418,7 @@ const DocumentLibraryContent: React.FC<{
         ]
       },
       // 🍎 localhost 전용: 고객 필터링 (고객이 연결된 문서에서만 표시)
-      ...(isDevServer && contextMenuDocument.customer_relation?.customer_id ? [{
+      ...(contextMenuDocument.customer_relation?.customer_id ? [{
         id: 'dev-customer',
         items: [
           {
@@ -756,8 +768,8 @@ const DocumentLibraryContent: React.FC<{
                 </button>
               </Tooltip>
 
-              {/* 🍎 고객 필터 칩: 특정 고객의 문서만 필터링 중일 때 표시 (개발서버 전용) */}
-              {customerFilter && customerFilter.name && isDevServer && (
+              {/* 🍎 고객 필터 칩: 특정 고객의 문서만 필터링 중일 때 표시 */}
+              {customerFilter && customerFilter.name && (
                 <div className="customer-filter-chip">
                   <span className="customer-filter-chip__label">
                     {customerFilter.name}의 문서
@@ -908,6 +920,25 @@ const DocumentLibraryContent: React.FC<{
         className="library-initial-filter"
       />
 
+      {/* 🍎 처리 상태 필터 세그먼트 컨트롤 */}
+      <div className="library-status-filter">
+        {([
+          { value: 'all', label: '전체' },
+          { value: 'processing', label: '처리중' },
+          { value: 'completed', label: '완료' },
+          { value: 'error', label: '에러' },
+        ] as const).map(tab => (
+          <button
+            key={tab.value}
+            type="button"
+            className={`library-status-filter__tab${statusFilter === tab.value ? ' library-status-filter__tab--active' : ''}`}
+            onClick={() => setStatusFilter(tab.value)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
       <div className="library-list-wrapper" ref={listWrapperRef}>
       <AliasProgressOverlay
@@ -915,9 +946,9 @@ const DocumentLibraryContent: React.FC<{
         onCancel={onAliasCancel}
       />
       <DocumentStatusList
-        documents={controller.filteredDocuments}
+        documents={statusFilteredDocuments}
         isLoading={controller.isLoading}
-        isEmpty={controller.filteredDocuments.length === 0 && !state.isLoading}
+        isEmpty={statusFilteredDocuments.length === 0 && !state.isLoading}
         error={controller.error}
         {...(onDocumentClick ? { onDocumentClick } : {})}
         {...(onDocumentDoubleClick ? { onDocumentDoubleClick } : {})}
