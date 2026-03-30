@@ -954,7 +954,9 @@ const DocumentExplorerContent: React.FC<{
 
   // 초성 선택 시 자동 펼침: 고객(level 0) + 대분류(level 1)까지 펼침
   // 설계사가 초성 클릭 즉시 모든 고객의 분류 구조를 한눈에 볼 수 있도록
-  const lastAutoExpandedInitialRef = useRef<string | null>(null)
+  // 재마운트 시 이미 선택된 초성에 대해 자동 펼침이 재실행되지 않도록
+  // sessionStorage에서 복원된 selectedInitial 값으로 초기화
+  const lastAutoExpandedInitialRef = useRef<string | null>(selectedInitial)
   useEffect(() => {
     if (!selectedInitial || isLoading) return
     if (docTreeData.nodes.length === 0) return
