@@ -536,16 +536,24 @@
     font-weight: 600;
   }
 
-  /* 오늘 등록 문서 하이라이트 (좌측 파란 세로선) */
+  /* 오늘 등록 문서 하이라이트 (행 배경색) */
   .doc-explorer-tree__document--today {
-    border-left: 2px solid var(--color-primary-400);
-    padding-left: calc(var(--explorer-spacing-md) - 2px); /* 테두리 보정 */
+    background: var(--color-primary-50, rgba(37, 99, 235, 0.06));
   }
 
-  /* 선택 상태가 우선 (3px > 2px) */
+  html[data-theme="dark"] .doc-explorer-tree__document--today {
+    background: rgba(96, 165, 250, 0.08);
+  }
+
+  /* 오늘 등록 + 선택 동시 적용 시: 선택 배경이 우선 */
   .doc-explorer-tree__document--today.doc-explorer-tree__document--selected {
-    border-left: 3px solid var(--color-primary-500);
-    padding-left: calc(var(--explorer-spacing-md) - var(--spacing-0-75));
+    background: var(--color-selection-bg);
+  }
+  .doc-explorer-tree__document--today.doc-explorer-tree__document--selected:hover {
+    background: var(--color-selection-bg-hover);
+  }
+  html[data-theme="dark"] .doc-explorer-tree__document--today.doc-explorer-tree__document--selected {
+    background: rgba(var(--color-accent-rgb), 0.15);
   }
 
   /* Indentation by level */
@@ -561,15 +569,20 @@
     padding-left: calc(var(--explorer-spacing-md) + 76px);
   }
 
-  /* --today + --level-N 조합: border-left 2px 보정 */
-  .doc-explorer-tree__document--today.doc-explorer-tree__document--level-1 {
-    padding-left: calc(var(--explorer-spacing-md) + 36px - 2px);
-  }
-  .doc-explorer-tree__document--today.doc-explorer-tree__document--level-2 {
-    padding-left: calc(var(--explorer-spacing-md) + 56px - 2px);
-  }
-  .doc-explorer-tree__document--today.doc-explorer-tree__document--level-3 {
-    padding-left: calc(var(--explorer-spacing-md) + 76px - 2px);
+  /* NEW 배지 스타일 */
+  .doc-explorer-tree__new-file-badge {
+    display: inline-flex;
+    align-items: center;
+    background: var(--color-primary-500);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-right: 4px;
+    flex-shrink: 0;
+    vertical-align: middle;
   }
 
   /* 편집 모드: 체크박스 열 추가 */

@@ -244,6 +244,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       <span className="doc-explorer-tree__doc-name-cell">
         <Tooltip content={altName || showName} placement="bottom">
           <span className="doc-explorer-tree__doc-name" onDoubleClick={(e) => { e.stopPropagation(); onRenameClick?.(doc) }}>
+              {isToday && <span className="doc-explorer-tree__new-file-badge">NEW</span>}
               <span
                 className={`doc-explorer-tree__doc-name-text${isAlias ? ' document-name--alias' : ''}`}
                 onMouseEnter={(e) => onDocumentMouseEnter(doc, e)}

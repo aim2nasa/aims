@@ -8,8 +8,8 @@
  * slice(5)로 연도 부분("YYYY.")을 제거한 결과를 검증한다.
  */
 
-import { describe, it, expect } from 'vitest'
-import { formatDateTime as formatDateTimeKST } from '@/shared/lib/timeUtils'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { formatDateTime as formatDateTimeKST, formatDate as formatDateKST } from '@/shared/lib/timeUtils'
 
 // DocumentExplorerTree.tsx line 110-116과 동일한 로직 재현
 const formatDateTime = (dateStr: string | null | undefined): string => {
@@ -104,5 +104,133 @@ describe('DocumentExplorerTree formatDateTime (KST, 연도 제거)', () => {
       const result = formatDateTime('2026-03-15T06:30:00.123456')
       expect(result).toBe('03.15 15:30:00')
     })
+  })
+})
+
+/**
+ * isDocumentToday / getTodayKST / todayNewCount Regression 테스트
+ *
+ * DocumentExplorerTree.tsx의 로컬 함수 로직을 timeUtils.formatDate로 재현:
+ *   getTodayKST()        → formatDateKST(new Date().toISOString())  // "YYYY.MM.DD"
+ *   isDocumentToday(doc)  → formatDateKST(doc.dateStr) === todayStr
+ */
+
+// DocumentExplorerTree.tsx와 동일 로직 재현
+const getTodayKST = (): string => formatDateKST(new Date().toISOString())
+
+const isDocumentToday = (dateStr: string | null | undefined, todayStr: string): boolean => {
+  if (!dateStr) return false
+  return formatDateKST(dateStr) === todayStr
+}
+
+describe('isDocumentToday (KST 날짜 비교)', () => {
+  beforeEach(() => {
+    // 2026-03-30 06:00:00 UTC = 2026-03-30 15:00:00 KST
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-30T06:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('오늘 등록 문서 → true', () => {
+    const todayStr = getTodayKST() // "2026.03.30"
+    expect(todayStr).toBe('2026.03.30')
+    // KST 2026-03-30 09:00:00에 등록된 문서
+    expect(isDocumentToday('2026-03-30T00:00:00.000Z', todayStr)).toBe(true)
+  })
+
+  it('어제 등록 문서 → false', () => {
+    const todayStr = getTodayKST()
+    // KST 2026-03-29 23:59:59에 등록된 문서
+    expect(isDocumentToday('2026-03-29T14:59:59.000Z', todayStr)).toBe(false)
+  })
+
+  it('null/undefined 날짜 → false', () => {
+    const todayStr = getTodayKST()
+    expect(isDocumentToday(null, todayStr)).toBe(false)
+    expect(isDocumentToday(undefined, todayStr)).toBe(false)
+  })
+})
+
+describe('KST 자정 경계 테스트', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('UTC 03.30 15:00 (= KST 03.31 00:00): KST 기준 3월 31일', () => {
+    // 시스템 시간을 KST 03.31 00:00으로 설정
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-30T15:00:00.000Z'))
+
+    const todayStr = getTodayKST()
+    expect(todayStr).toBe('2026.03.31')
+
+    // 이 시각에 등록된 문서는 KST 03.31이므로 오늘 문서
+    expect(isDocumentToday('2026-03-30T15:00:00.000Z', todayStr)).toBe(true)
+    // KST 03.30 23:59:59 문서는 어제
+    expect(isDocumentToday('2026-03-30T14:59:59.000Z', todayStr)).toBe(false)
+  })
+
+  it('UTC 03.30 14:59:59 (= KST 03.30 23:59:59): KST 기준 3월 30일', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-30T14:59:59.000Z'))
+
+    const todayStr = getTodayKST()
+    expect(todayStr).toBe('2026.03.30')
+  })
+})
+
+describe('todayNewCount 로직 검증', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-30T06:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('오늘 문서 2건이면 카운트 2 반환', () => {
+    const todayStr = getTodayKST()
+    const documents = [
+      '2026-03-30T00:00:00.000Z', // KST 03.30 09:00 → 오늘
+      '2026-03-30T08:30:00.000Z', // KST 03.30 17:30 → 오늘
+      '2026-03-29T10:00:00.000Z', // KST 03.29 19:00 → 어제
+    ]
+    const count = documents.filter(d => isDocumentToday(d, todayStr)).length
+    expect(count).toBe(2)
+  })
+
+  it('오늘 문서 없으면 카운트 0', () => {
+    const todayStr = getTodayKST()
+    const documents = [
+      '2026-03-29T10:00:00.000Z',
+      '2026-03-28T05:00:00.000Z',
+    ]
+    const count = documents.filter(d => isDocumentToday(d, todayStr)).length
+    expect(count).toBe(0)
+  })
+})
+
+describe('NEW 배지 렌더링 조건', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-30T06:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('isToday=true인 문서만 NEW 배지 대상', () => {
+    const todayStr = getTodayKST()
+    const todayDoc = '2026-03-30T02:00:00.000Z'    // KST 03.30 → 오늘
+    const yesterdayDoc = '2026-03-29T02:00:00.000Z' // KST 03.29 → 어제
+
+    // NEW 배지는 todayNewCount > 0일 때만 렌더 (isToday=true인 문서가 있을 때)
+    expect(isDocumentToday(todayDoc, todayStr)).toBe(true)
+    expect(isDocumentToday(yesterdayDoc, todayStr)).toBe(false)
   })
 })
