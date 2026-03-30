@@ -901,6 +901,28 @@ const DocumentLibraryContent: React.FC<{
         {/* 오른쪽 영역: SSE 실시간 업데이트로 자동 갱신되므로 수동 컨트롤 불필요 */}
       </div>
 
+      {/* 통합 상태 필터 Segmented Control */}
+      <div className="library-status-segment">
+        {([
+          { value: 'all', label: '전체', count: docStats?.total ?? 0 },
+          { value: 'processing', label: '처리중', count: (docStats?.processing ?? 0) + (docStats?.pending ?? 0) + (docStats?.credit_pending ?? 0) },
+          { value: 'completed', label: '완료', count: docStats?.completed ?? 0 },
+          { value: 'error', label: '에러', count: docStats?.error ?? 0 },
+        ] as const).map(tab => (
+          <button
+            key={tab.value}
+            type="button"
+            className={`library-status-segment__tab${statusFilter === tab.value ? ' library-status-segment__tab--active' : ''}${tab.value === 'error' && tab.count > 0 ? ' library-status-segment__tab--error' : ''}${tab.value === 'processing' && tab.count > 0 ? ' library-status-segment__tab--warning' : ''}`}
+            onClick={() => setStatusFilter(tab.value)}
+          >
+            <span className="library-status-segment__label">{tab.label}</span>
+            {(tab.value === 'all' || tab.count > 0) && (
+              <span className="library-status-segment__count">{tab.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {/* 문서 처리 현황 Status Bar (2분할: 현재 업로드 + 전체 라이브러리) */}
       <DocumentProcessingStatusBar
         statistics={docStats}
@@ -920,24 +942,6 @@ const DocumentLibraryContent: React.FC<{
         className="library-initial-filter"
       />
 
-      {/* 🍎 처리 상태 필터 세그먼트 컨트롤 */}
-      <div className="library-status-filter">
-        {([
-          { value: 'all', label: '전체' },
-          { value: 'processing', label: '처리중' },
-          { value: 'completed', label: '완료' },
-          { value: 'error', label: '에러' },
-        ] as const).map(tab => (
-          <button
-            key={tab.value}
-            type="button"
-            className={`library-status-filter__tab${statusFilter === tab.value ? ' library-status-filter__tab--active' : ''}`}
-            onClick={() => setStatusFilter(tab.value)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
       <div className="library-list-wrapper" ref={listWrapperRef}>
