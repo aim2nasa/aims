@@ -577,12 +577,10 @@
   html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
     color: var(--color-file-pdf-dark);
   }
-  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf,
-  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
     color: var(--color-file-pdf-hover-light);
   }
-  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf,
-  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
     color: var(--color-file-pdf-hover-dark);
   }
 
@@ -593,12 +591,10 @@
   html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
     color: var(--color-file-image-dark);
   }
-  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image,
-  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
     color: var(--color-file-image-hover-light);
   }
-  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image,
-  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
     color: var(--color-file-image-hover-dark);
   }
 
@@ -609,12 +605,10 @@
   html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
     color: var(--color-file-word-dark);
   }
-  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word,
-  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
     color: var(--color-file-word-hover-light);
   }
-  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word,
-  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
     color: var(--color-file-word-hover-dark);
   }
 
@@ -625,12 +619,10 @@
   html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
     color: var(--color-file-excel-dark);
   }
-  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel,
-  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
     color: var(--color-file-excel-hover-light);
   }
-  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel,
-  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
     color: var(--color-file-excel-hover-dark);
   }
 
@@ -641,12 +633,10 @@
   html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
     color: var(--color-file-powerpoint-dark);
   }
-  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint,
-  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
     color: var(--color-file-powerpoint-hover-light);
   }
-  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint,
-  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
     color: var(--color-file-powerpoint-hover-dark);
   }
 
@@ -657,12 +647,10 @@
   html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
     color: var(--color-file-text-dark);
   }
-  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text,
-  .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+  .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
     color: var(--color-file-text-hover-light);
   }
-  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text,
-  html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+  html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
     color: var(--color-file-text-hover-dark);
   }
 

@@ -730,7 +730,6 @@ const DocumentExplorerContent: React.FC<{
     sortBy,
     sortDirection,
     quickFilter,
-    recentDocuments,
     customerFilter,
     dateFilter,
     dateRange,
@@ -743,7 +742,6 @@ const DocumentExplorerContent: React.FC<{
     setSelectedDocumentId,
     setSortBy,
     setQuickFilter,
-    addToRecentDocuments,
     setCustomerFilter,
     jumpToDate,
     getAvailableDates,
@@ -1006,10 +1004,9 @@ const DocumentExplorerContent: React.FC<{
     (doc: Document) => {
       const docId = doc._id || doc.id || ''
       setSelectedDocumentId(docId)
-      addToRecentDocuments(docId)
       onDocumentClick?.(docId)
     },
-    [onDocumentClick, setSelectedDocumentId, addToRecentDocuments]
+    [onDocumentClick, setSelectedDocumentId]
   )
 
   // 고객명 클릭 핸들러 (해당 고객 문서만 필터)
@@ -1734,7 +1731,6 @@ const DocumentExplorerContent: React.FC<{
             onDocumentClick={handleDocumentClick}
             onDocumentDoubleClick={handleDocumentDoubleClick}
             onCustomerClick={handleCustomerClick}
-            recentDocuments={recentDocuments}
             sortBy={sortBy}
             sortDirection={sortDirection}
             searchTerm={searchTerm}

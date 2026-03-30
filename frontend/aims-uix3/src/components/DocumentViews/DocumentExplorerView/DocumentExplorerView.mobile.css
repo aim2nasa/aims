@@ -178,50 +178,6 @@
       grid-column: 4;
     }
 
-    /* Recent item도 동일한 Grid 2줄 레이아웃 */
-    .doc-explorer-tree__recent-item {
-      display: grid;
-      grid-template-columns: auto 1fr auto auto;
-      row-gap: var(--spacing-0-5);
-      column-gap: var(--spacing-1-5);
-      align-items: center;
-      min-width: unset; /* 모바일 2줄 레이아웃에서는 동적 min-width 불필요 */
-    }
-
-    .doc-explorer-tree__recent-item .doc-explorer-tree__doc-icon {
-      grid-row: 1 / 3;
-      grid-column: 1;
-      align-self: start;
-      padding-top: var(--spacing-0-75);
-    }
-
-    .doc-explorer-tree__recent-item .doc-explorer-tree__doc-name {
-      grid-row: 1;
-      grid-column: 2 / -1;
-      flex: unset;
-      min-width: 0;
-    }
-
-    .doc-explorer-tree__recent-item .doc-explorer-tree__doc-customer {
-      grid-row: 2;
-      grid-column: 2;
-      justify-self: start;
-      width: auto;
-      margin-left: 0;
-    }
-
-    .doc-explorer-tree__recent-item .doc-explorer-tree__doc-date {
-      grid-row: 2;
-      grid-column: 3;
-      width: auto;
-      margin-left: 0;
-      text-align: right;
-    }
-
-    .doc-explorer-tree__recent-item .doc-explorer-tree__badge {
-      grid-row: 2;
-      grid-column: 4;
-    }
 
     /* ── 검색 그룹: 세로 스택 (칩 + 입력이 겹치지 않도록) ── */
     .doc-explorer-toolbar__search-group {

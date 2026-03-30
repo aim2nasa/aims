@@ -29,25 +29,6 @@ import { Tooltip } from '@/shared/ui/Tooltip'
 import { DocumentTypeCell } from '@/shared/ui/DocumentTypeCell/DocumentTypeCell'
 import { highlightText } from '@/shared/lib/highlightText'
 
-// 최근 본 문서 아이콘 (시계 + 문서)
-const RecentDocumentsIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 16 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-  >
-    {/* 시계 */}
-    <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
-    <path d="M6 3V6L8 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    {/* 문서 (오른쪽 하단) */}
-    <path d="M10 9V14.5C10 15.05 10.45 15.5 11 15.5H14.5C15.05 15.5 15.5 15.05 15.5 14.5V11L13 9H10Z" fill="currentColor" opacity="0.3" />
-    <path d="M10 9H13L15.5 11V14.5C15.5 15.05 15.05 15.5 14.5 15.5H11C10.45 15.5 10 15.05 10 14.5V9Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
-
 export interface DocumentExplorerTreeProps {
   nodes: DocumentTreeNode[]
   expandedKeys: Set<string>
@@ -57,7 +38,6 @@ export interface DocumentExplorerTreeProps {
   onDocumentClick: (document: Document) => void
   onDocumentDoubleClick: (document: Document) => void
   onCustomerClick?: (customerName: string) => void
-  recentDocuments?: Document[]
   sortBy?: DocumentSortBy
   sortDirection?: SortDirection
   /** 검색어 (하이라이트용) */
@@ -1095,7 +1075,6 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onDocumentClick,
   onDocumentDoubleClick,
   onCustomerClick,
-  recentDocuments = [],
   sortBy = 'date',
   sortDirection = 'desc',
   searchTerm = '',
@@ -1194,21 +1173,6 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   } | null>(null)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rafRef = useRef<number | null>(null)
-
-  // 최근 본 문서 섹션 펼침/접힘 상태 (localStorage에 저장)
-  const [isRecentExpanded, setIsRecentExpanded] = useState(() => {
-    const saved = localStorage.getItem('doc-explorer-recent-expanded')
-    return saved !== null ? saved === 'true' : true // 기본값: 펼침
-  })
-
-  // 상태 변경 시 localStorage에 저장
-  const toggleRecentExpanded = useCallback(() => {
-    setIsRecentExpanded(prev => {
-      const newValue = !prev
-      localStorage.setItem('doc-explorer-recent-expanded', String(newValue))
-      return newValue
-    })
-  }, [])
 
   // 키보드 네비게이션 훅
   const {
@@ -1378,234 +1342,6 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     }, 30)
   }, [])
 
-  // 최근 본 문서 정렬 (훅은 조건부 리턴 전에 호출해야 함)
-  const sortedRecentDocuments = useMemo(() => {
-    if (recentDocuments.length === 0) return []
-
-    const sorted = [...recentDocuments].sort((a, b) => {
-      let comparison = 0
-
-      switch (sortBy) {
-        case 'name': {
-          const nameA = filenameMode === 'display' && a.displayName
-            ? a.displayName.toLowerCase()
-            : DocumentStatusService.extractOriginalFilename(a).toLowerCase()
-          const nameB = filenameMode === 'display' && b.displayName
-            ? b.displayName.toLowerCase()
-            : DocumentStatusService.extractOriginalFilename(b).toLowerCase()
-          comparison = nameA.localeCompare(nameB, 'ko')
-          break
-        }
-        case 'customer': {
-          const customerA = (a.customer_relation?.customer_name || '').toLowerCase()
-          const customerB = (b.customer_relation?.customer_name || '').toLowerCase()
-          comparison = customerA.localeCompare(customerB, 'ko')
-          break
-        }
-        case 'date': {
-          const dateA = getDocumentDate(a) || ''
-          const dateB = getDocumentDate(b) || ''
-          comparison = dateA.localeCompare(dateB)
-          break
-        }
-        case 'badgeType': {
-          const typeA = a.badgeType || 'BIN'
-          const typeB = b.badgeType || 'BIN'
-          comparison = typeA.localeCompare(typeB)
-          break
-        }
-        case 'ext': {
-          const extA = (a.mimeType ? DocumentUtils.getFileExtension(a.mimeType) : '').toLowerCase()
-          const extB = (b.mimeType ? DocumentUtils.getFileExtension(b.mimeType) : '').toLowerCase()
-          comparison = extA.localeCompare(extB)
-          break
-        }
-        case 'size': {
-          const sizeA = DocumentStatusService.extractFileSize(a)
-          const sizeB = DocumentStatusService.extractFileSize(b)
-          comparison = sizeA - sizeB
-          break
-        }
-        default:
-          comparison = 0
-      }
-
-      return sortDirection === 'asc' ? comparison : -comparison
-    })
-
-    return sorted
-  }, [recentDocuments, sortBy, sortDirection, filenameMode])
-
-  // 최근 본 문서 렌더링 (검색 중일 때는 숨김)
-  const renderRecentDocuments = () => {
-    if (sortedRecentDocuments.length === 0) return null
-    if (searchTerm.trim()) return null // 검색 중에는 최근 본 문서 숨김
-
-    return (
-      <div className={`doc-explorer-tree__recent ${!isRecentExpanded ? 'doc-explorer-tree__recent--collapsed' : ''}`}>
-        <div
-          className="doc-explorer-tree__recent-header"
-          onClick={toggleRecentExpanded}
-          role="button"
-          tabIndex={0}
-          aria-expanded={isRecentExpanded ? 'true' : 'false'}
-        >
-          {/* 펼침/접힘 화살표 */}
-          <span className="doc-explorer-tree__recent-chevron">
-            <SFSymbol
-              name={isRecentExpanded ? 'chevron.down' : 'chevron.right'}
-              size={SFSymbolSize.CAPTION_2}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative
-            />
-          </span>
-          {/* 커스텀 아이콘 */}
-          <RecentDocumentsIcon className="doc-explorer-tree__recent-icon" />
-          <span>최근 본 문서</span>
-          <span className="doc-explorer-tree__recent-count">({sortedRecentDocuments.length})</span>
-        </div>
-        {isRecentExpanded && (
-          <div className="doc-explorer-tree__recent-list">
-            {sortedRecentDocuments.map((doc) => {
-              const docId = doc._id || doc.id || ''
-              const isSelected = selectedDocumentId === docId
-              const customerName = doc.customer_relation?.customer_name
-              const customerType = doc.customer_relation?.customer_type
-              const documentDate = getDocumentDate(doc)
-              const filename = DocumentStatusService.extractFilename(doc)
-              const { showName, altName, isAlias } = getDocName(doc, filenameMode)
-              const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : ''
-              const fileSize = DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(doc))
-
-              return (
-                <div
-                  key={`recent-${docId}`}
-                  className={`doc-explorer-tree__recent-item ${isSelected ? 'doc-explorer-tree__recent-item--selected' : ''}`}
-                  onClick={(e) => handleDocumentClick(doc, e)}
-                  onContextMenu={onDocumentContextMenu ? (e) => { e.preventDefault(); e.stopPropagation(); onDocumentContextMenu(doc, e) } : undefined}
-                  role="button"
-                  tabIndex={0}
-                >
-                  {/* 문서 아이콘 (확장자에 따른 아이콘) */}
-                  <span className={`doc-explorer-tree__doc-icon document-icon ${DocumentUtils.getFileTypeClass(doc.mimeType, filename)}`}>
-                    <SFSymbol
-                      name={DocumentUtils.getFileIcon(doc.mimeType, filename)}
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.REGULAR}
-                    />
-                  </span>
-
-                  {/* 문서명: filenameMode에 따라 별칭/원본 전환 */}
-                  <Tooltip content={altName || showName} placement="bottom">
-                    <span className="doc-explorer-tree__doc-name">
-                      <span
-                        className={`doc-explorer-tree__doc-name-text${isAlias ? ' document-name--alias' : ''}`}
-                        onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
-                        onMouseMove={(e) => handleDocumentMouseMove(doc, e)}
-                        onMouseLeave={handleDocumentMouseLeave}
-                      >
-                        {highlightText(showName, searchTerm)}
-                      </span>
-                    </span>
-                  </Tooltip>
-
-                  {/* 파일 타입 */}
-                  <Tooltip content={fileExt || '-'} placement="bottom">
-                    <span className="doc-explorer-tree__doc-ext">
-                      {fileExt || '-'}
-                    </span>
-                  </Tooltip>
-
-                  {/* 파일 크기 */}
-                  <span className="doc-explorer-tree__doc-size">
-                    {fileSize}
-                  </span>
-
-                  {/* 고객명 + 개인/법인 아이콘 */}
-                  <Tooltip content={customerName ? `${customerName} 문서만 보기` : '-'} placement="bottom">
-                    <span
-                      className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
-                      onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
-                    >
-                      {customerName && (
-                        <span className="doc-explorer-tree__customer-type-icon">
-                          {customerType === '법인' ? (
-                            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
-                              <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
-                            </svg>
-                          ) : (
-                            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
-                              <circle cx="10" cy="7" r="3" />
-                              <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                            </svg>
-                          )}
-                        </span>
-                      )}
-                      {customerName ? highlightText(customerName, searchTerm) : '-'}
-                    </span>
-                  </Tooltip>
-
-                  {/* 문서유형 */}
-                  <span className="doc-explorer-tree__doc-type" onClick={(e) => e.stopPropagation()}>
-                    <DocumentTypeCell
-                      documentType={doc.document_type}
-                      isAnnualReport={doc.is_annual_report}
-                      isCustomerReview={doc.document_type === 'customer_review'}
-                      onChange={onDocTypeChange ? (newType) => {
-                        const id = doc._id || doc.id || ''
-                        if (id) onDocTypeChange(id, newType)
-                      } : undefined}
-                      isUpdating={updatingDocTypeId === (doc._id || doc.id || '')}
-                    />
-                  </span>
-
-                  {/* 날짜/시간 */}
-                  <Tooltip content={documentDate || '-'} placement="bottom">
-                    <span
-                      className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
-                    >
-                      {documentDate ? formatDateTime(documentDate) : '-'}
-                    </span>
-                  </Tooltip>
-
-                  {/* 유형 배지 */}
-                  <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
-                    {doc.badgeType || 'BIN'}
-                  </span>
-
-                  {/* 액션 버튼 — meta.summary 또는 ocr.summary 유무로 활성/비활성 */}
-                  <span className="doc-explorer-tree__doc-actions">
-                    <Tooltip content={(typeof doc.meta === 'object' && doc.meta?.summary) || (typeof doc.ocr === 'object' && (doc.ocr as any)?.summary) ? '요약 보기' : '요약 없음'} placement="bottom">
-                      <button
-                        type="button"
-                        className="doc-explorer-tree__action-btn"
-                        aria-label="요약 보기"
-                        disabled={!(typeof doc.meta === 'object' && doc.meta?.summary) && !(typeof doc.ocr === 'object' && (doc.ocr as any)?.summary)}
-                        onClick={(e) => { e.stopPropagation(); onSummaryClick?.(doc) }}
-                      >
-                        <SummaryIcon width={13} height={13} />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content={doc._hasMetaText || doc._hasOcrText ? '전체 텍스트 보기' : '전체 텍스트 없음'} placement="bottom">
-                      <button
-                        type="button"
-                        className="doc-explorer-tree__action-btn"
-                        aria-label="전체 텍스트 보기"
-                        disabled={!doc._hasMetaText && !doc._hasOcrText}
-                        onClick={(e) => { e.stopPropagation(); onFullTextClick?.(doc) }}
-                      >
-                        <DocumentIcon width={13} height={13} />
-                      </button>
-                    </Tooltip>
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    )
-  }
 
   // 빈 상태 (모든 훅 호출 이후에 체크)
   if (nodes.length === 0) {
@@ -1640,7 +1376,6 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         tabIndex={0}
         onKeyDown={keyboardHandleKeyDown}
       >
-        {renderRecentDocuments()}
         {nodes.map((node) => (
           <TreeNode
             key={node.key}

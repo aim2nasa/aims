@@ -9,8 +9,6 @@ import type { Document } from '@/types/documentStatus'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData, DocumentTreeNode, QuickFilterType, DateRange } from '../types/documentExplorer'
 import { buildTree, collectAllKeys, filterDocuments, sortTreeNodes, getDocumentDate } from '../utils/treeBuilders'
 
-const MAX_RECENT_DOCUMENTS = 5
-
 export interface UseDocumentExplorerTreeOptions {
   documents: Document[]
   isLoading?: boolean
@@ -31,8 +29,6 @@ export interface UseDocumentExplorerTreeResult {
   sortBy: DocumentSortBy
   sortDirection: SortDirection
   quickFilter: QuickFilterType
-  recentDocumentIds: string[]
-  recentDocuments: Document[]
   customerFilter: string | null
   dateFilter: Date | null
   dateRange: DateRange | null
@@ -50,7 +46,6 @@ export interface UseDocumentExplorerTreeResult {
   setSortBy: (sortBy: DocumentSortBy) => void
   toggleSortDirection: () => void
   setQuickFilter: (filter: QuickFilterType) => void
-  addToRecentDocuments: (documentId: string) => void
   setCustomerFilter: (customerName: string | null) => void
   clearAllFilters: () => void
   jumpToDate: (date: Date) => boolean
@@ -93,10 +88,6 @@ export function useDocumentExplorerTree({
     'doc-explorer-quick-filter',
     'none'
   )
-  const [recentDocumentIds, setRecentDocumentIds] = usePersistedState<string[]>(
-    'doc-explorer-recent-docs',
-    []
-  )
   const [thumbnailEnabled, setThumbnailEnabledState] = usePersistedState<boolean>(
     'doc-explorer-thumbnail-enabled',
     true // 기본값: 활성화
@@ -107,13 +98,6 @@ export function useDocumentExplorerTree({
   const [customerFilter, setCustomerFilterState] = useState<string | null>(null)
   const [dateFilter, setDateFilter] = useState<Date | null>(null)
   const [dateRange, setDateRangeState] = useState<DateRange | null>(null)
-
-  // 최근 본 문서 객체 목록
-  const recentDocuments = useMemo(() => {
-    return recentDocumentIds
-      .map((id) => documents.find((doc) => (doc._id || doc.id) === id))
-      .filter((doc): doc is Document => doc !== undefined)
-  }, [recentDocumentIds, documents])
 
   // 빠른 필터 적용
   const applyQuickFilter = useCallback(
@@ -376,20 +360,6 @@ export function useDocumentExplorerTree({
     [setQuickFilterState]
   )
 
-  // 최근 본 문서에 추가
-  const addToRecentDocuments = useCallback(
-    (documentId: string) => {
-      setRecentDocumentIds((prev) => {
-        // 이미 있으면 맨 앞으로 이동
-        const filtered = prev.filter((id) => id !== documentId)
-        const newList = [documentId, ...filtered]
-        // 최대 개수 유지
-        return newList.slice(0, MAX_RECENT_DOCUMENTS)
-      })
-    },
-    [setRecentDocumentIds]
-  )
-
   // 고객 필터 설정
   const setCustomerFilter = useCallback(
     (customerName: string | null) => {
@@ -548,8 +518,6 @@ export function useDocumentExplorerTree({
     sortBy,
     sortDirection,
     quickFilter,
-    recentDocumentIds,
-    recentDocuments,
     customerFilter,
     dateFilter,
     dateRange,
@@ -567,7 +535,6 @@ export function useDocumentExplorerTree({
     setSortBy,
     toggleSortDirection,
     setQuickFilter,
-    addToRecentDocuments,
     setCustomerFilter,
     clearAllFilters,
     jumpToDate,
