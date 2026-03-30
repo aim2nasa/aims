@@ -66,6 +66,7 @@
     /* 트리 컨테이너 */
     .doc-explorer-tree-container {
       padding: var(--spacing-1);
+      min-width: unset; /* 모바일에서는 동적 min-width 불필요 */
     }
 
     /* 폴더 행: 터치 친화적 */
@@ -135,6 +136,7 @@
       row-gap: var(--spacing-0-5);
       column-gap: var(--spacing-1-5);
       align-items: center;
+      min-width: unset; /* 모바일 2줄 레이아웃에서는 동적 min-width 불필요 */
     }
 
     /* 아이콘: 2줄 세로 스팬 */
@@ -183,6 +185,7 @@
       row-gap: var(--spacing-0-5);
       column-gap: var(--spacing-1-5);
       align-items: center;
+      min-width: unset; /* 모바일 2줄 레이아웃에서는 동적 min-width 불필요 */
     }
 
     .doc-explorer-tree__recent-item .doc-explorer-tree__doc-icon {

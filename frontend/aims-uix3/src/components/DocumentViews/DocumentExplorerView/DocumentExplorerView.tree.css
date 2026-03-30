@@ -12,7 +12,7 @@
     display: flex;
     flex-direction: column;
     flex: 1;
-    overflow: hidden;
+    overflow: auto; /* 수평 + 수직 모두 — 파일명 동적 확장 시 수평 스크롤 제공 */
     min-height: 0;
   }
 
@@ -22,9 +22,10 @@
   .doc-explorer-tree-container {
     position: relative;
     flex: 1;
-    overflow: auto;
+    /* overflow는 부모(tree-layout)에서 처리 — 파일명 동적 확장이 수평으로 전파되도록 */
     padding: var(--explorer-spacing-md);
     min-height: 0;
+    min-width: var(--doc-row-min-width, 580px); /* JS 동적 측정값 */
   }
 
   /* Loading */
@@ -471,9 +472,9 @@
     transform: scale(0.95);
   }
 
-  /* Children Container */
+  /* Children Container — overflow 제거: 수평 확장이 tree-layout까지 전파되도록 */
   .doc-explorer-tree__children {
-    overflow: hidden;
+    /* overflow: visible (기본값) */
   }
 
   /* ============================================
@@ -483,20 +484,21 @@
     display: grid;
     grid-template-columns:
       /* icon/select */ 20px
-      /* name + hover-actions */ 1fr
-      /* ext */  32px
-      /* size */ 58px
-      /* customer */ minmax(50px, 100px)
-      /* doctype */ minmax(50px, 90px)
-      /* date */ 106px
-      /* badge */ 28px
-      /* actions */ 44px;
+      /* name + hover-actions */ minmax(180px, 1fr)
+      /* ext */  28px
+      /* size */ 48px
+      /* customer */ minmax(40px, 80px)
+      /* doctype */ minmax(40px, 72px)
+      /* date */ 88px
+      /* badge */ 24px
+      /* actions */ 40px;
     align-items: center;
     gap: 0 var(--spacing-1-5);
     padding: var(--spacing-0-75) var(--explorer-spacing-md);
     border-radius: var(--explorer-border-radius);
     cursor: pointer;
     transition: background-color var(--explorer-transition);
+    min-width: var(--doc-row-min-width, 580px); /* JS 동적 측정값 */
   }
 
   /* 문서 호버 - 라이트 테마 대비 강화 */
@@ -544,14 +546,14 @@
     grid-template-columns:
       /* checkbox */ 18px
       /* icon/select */ 20px
-      /* name + hover-actions */ 1fr
-      /* ext */  32px
-      /* size */ 58px
-      /* customer */ minmax(50px, 100px)
-      /* doctype */ minmax(50px, 90px)
-      /* date */ 106px
-      /* badge */ 28px
-      /* actions */ 44px;
+      /* name + hover-actions */ minmax(180px, 1fr)
+      /* ext */  28px
+      /* size */ 48px
+      /* customer */ minmax(40px, 80px)
+      /* doctype */ minmax(40px, 72px)
+      /* date */ 88px
+      /* badge */ 24px
+      /* actions */ 40px;
   }
 
   /* Document Icon */
@@ -974,14 +976,14 @@
     display: grid;
     grid-template-columns:
       /* icon/select */ 20px
-      /* name */ 1fr
-      /* ext */  32px
-      /* size */ 58px
-      /* customer */ minmax(50px, 100px)
-      /* doctype */ minmax(50px, 90px)
-      /* date */ 106px
-      /* badge */ 28px
-      /* actions */ 44px;
+      /* name */ minmax(180px, 1fr)
+      /* ext */  28px
+      /* size */ 48px
+      /* customer */ minmax(40px, 80px)
+      /* doctype */ minmax(40px, 72px)
+      /* date */ 88px
+      /* badge */ 24px
+      /* actions */ 40px;
     align-items: center;
     gap: 0 var(--spacing-1-5);
     padding: var(--spacing-1) var(--explorer-spacing-md);
@@ -990,6 +992,7 @@
     flex-shrink: 0;
     -webkit-user-select: none;
     user-select: none;
+    min-width: var(--doc-row-min-width, 580px); /* JS 동적 측정값 */
   }
 
   /* 정렬 가능 컬럼 버튼 */
@@ -1083,6 +1086,32 @@
   .doc-explorer-tree__col-select-btn--active:hover {
     color: var(--color-primary-600);
     background: rgba(59, 130, 246, 0.08);
+  }
+
+  /* 헤더 컬럼 정렬 (헤더↔데이터 일치) */
+  .doc-explorer-tree__col-btn--center {
+    justify-self: center;
+  }
+
+  .doc-explorer-tree__col-btn--right {
+    justify-self: end;
+  }
+
+  .doc-explorer-tree__col-label--center {
+    text-align: center;
+  }
+
+  .doc-explorer-tree__col-label--right {
+    text-align: right;
+  }
+
+  /* 고객 타입 아이콘 색상 (문서 행 내 개인/법인) */
+  .doc-explorer-tree__customer-type-icon .customer-icon--corporate {
+    color: var(--color-icon-orange, #ff9500);
+  }
+
+  .doc-explorer-tree__customer-type-icon .customer-icon--personal {
+    color: var(--color-icon-blue, #007aff);
   }
 
   /* 태블릿 반응형 */

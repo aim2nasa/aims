@@ -11,7 +11,7 @@
  * - Home/End: 처음/마지막으로 이동
  */
 
-import React, { useCallback, useRef, useMemo, useEffect, useState, useReducer } from 'react'
+import React, { useCallback, useRef, useMemo, useEffect, useLayoutEffect, useState, useReducer } from 'react'
 // flushSync 제거 — 마우스 이벤트마다 동기 렌더링 강제하면 저사양 PC에서 프리징 발생
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { DocumentUtils } from '@/entities/document'
@@ -331,11 +331,11 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
           {customerName && (
             <span className="doc-explorer-tree__customer-type-icon">
               {customerType === '법인' ? (
-                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
                   <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
                 </svg>
               ) : (
-                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
                   <circle cx="10" cy="7" r="3" />
                   <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
                 </svg>
@@ -1028,7 +1028,7 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
     </div>
     <button
       type="button"
-      className={`doc-explorer-tree__col-btn${sortBy === 'ext' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+      className={`doc-explorer-tree__col-btn doc-explorer-tree__col-btn--center${sortBy === 'ext' ? ' doc-explorer-tree__col-btn--active' : ''}`}
       onClick={() => onSortByChange('ext')}
       aria-label="형식 기준 정렬"
     >
@@ -1045,7 +1045,7 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
     </button>
     <button
       type="button"
-      className={`doc-explorer-tree__col-btn${sortBy === 'size' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+      className={`doc-explorer-tree__col-btn doc-explorer-tree__col-btn--right${sortBy === 'size' ? ' doc-explorer-tree__col-btn--active' : ''}`}
       onClick={() => onSortByChange('size')}
       aria-label="크기 기준 정렬"
     >
@@ -1064,7 +1064,7 @@ export const DocumentExplorerColumnHeader: React.FC<DocumentExplorerColumnHeader
     <span className="doc-explorer-tree__col-label">유형</span>
     <button
       type="button"
-      className={`doc-explorer-tree__col-btn${sortBy === 'date' ? ' doc-explorer-tree__col-btn--active' : ''}`}
+      className={`doc-explorer-tree__col-btn doc-explorer-tree__col-btn--right${sortBy === 'date' ? ' doc-explorer-tree__col-btn--active' : ''}`}
       onClick={() => onSortByChange('date')}
       aria-label="날짜 기준 정렬"
     >
@@ -1133,6 +1133,57 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   const lastClickedIdRef = useRef<string | null>(null)
   const treeContainerRef = useRef<HTMLDivElement>(null)
   const rightPaneVisible = useLayoutStore(s => s.rightPaneVisible)
+
+  // ── 파일명 동적 최소 폭 측정 ──
+  // doc-name 요소의 scrollWidth로 실제 렌더링 폭 측정 (overflow:hidden이어도 scrollWidth는 전체 폭 반환)
+  // expandedKeys 변경(폴더 펼침/접힘) 시에도 재측정
+  const prevMeasuredRef = useRef(0)
+  useLayoutEffect(() => {
+    const treeLayout = treeContainerRef.current?.closest('.doc-explorer-tree-layout') as HTMLElement | null
+    if (!treeLayout) return
+
+    // 숨겨진 측정용 span으로 텍스트 실제 폭 측정 (DOM 제약에 영향받지 않음)
+    const nameTexts = treeLayout.querySelectorAll('.doc-explorer-tree__doc-name-text')
+    if (nameTexts.length === 0) {
+      treeLayout.style.removeProperty('--doc-row-min-width')
+      prevMeasuredRef.current = 0
+      return
+    }
+
+    // 측정용 span 생성 — 실제 폰트 스타일 복제
+    const probe = document.createElement('span')
+    const sampleEl = nameTexts[0] as HTMLElement
+    const cs = getComputedStyle(sampleEl)
+    probe.style.cssText = `
+      position: absolute; top: -9999px; left: -9999px;
+      white-space: nowrap; visibility: hidden; pointer-events: none;
+      font: ${cs.font}; letter-spacing: ${cs.letterSpacing};
+      font-feature-settings: ${cs.fontFeatureSettings};
+    `
+    document.body.appendChild(probe)
+
+    let maxNameWidth = 0
+    nameTexts.forEach((el) => {
+      const htmlEl = el as HTMLElement
+      // 별칭 접두사 "+" (CSS ::before) 포함 여부 확인
+      const hasAlias = htmlEl.classList.contains('document-name--alias')
+      probe.textContent = (hasAlias ? '+' : '') + (htmlEl.textContent || '')
+      const w = probe.offsetWidth
+      if (w > maxNameWidth) maxNameWidth = w
+    })
+
+    document.body.removeChild(probe)
+
+    // hover-actions(41px) + 배지/링크아이콘(20px) + 서브픽셀/패딩 여유(55px) = 116px
+    const nameColWidth = Math.max(maxNameWidth + 116, 180)
+
+    if (Math.abs(nameColWidth - prevMeasuredRef.current) < 4) return
+    prevMeasuredRef.current = nameColWidth
+
+    // 고정 컬럼: 20+28+48+80+72+88+24+40=400px, gaps: 8×6=48px, 패딩/여유=32px → 480px
+    const totalMinWidth = nameColWidth + 480
+    treeLayout.style.setProperty('--doc-row-min-width', `${totalMinWidth}px`)
+  }, [nodes, filenameMode, expandedKeys])
 
   // 호버 프리뷰 상태 (useRef로 동기적 업데이트 + forceUpdate로 즉시 렌더링)
   // useState는 비동기적이라 빠른 마우스 이동 시 batching으로 누락될 수 있음
@@ -1479,11 +1530,11 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                       {customerName && (
                         <span className="doc-explorer-tree__customer-type-icon">
                           {customerType === '법인' ? (
-                            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
                               <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
                             </svg>
                           ) : (
-                            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
                               <circle cx="10" cy="7" r="3" />
                               <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
                             </svg>
