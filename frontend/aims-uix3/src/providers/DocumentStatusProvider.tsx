@@ -34,6 +34,8 @@ interface DocumentStatusProviderProps {
   initialTypeFilter?: string | null
   /** 특정 고객 ID로 필터링 (고객별 문서 보기) */
   customerIdFilter?: string | null
+  /** 고객 연결 상태 필터 ('linked' | 'unlinked') */
+  customerLinkFilter?: 'linked' | 'unlinked'
 }
 
 /**
@@ -47,7 +49,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   initialItemsPerPage,
   initialFilter,
   initialTypeFilter,
-  customerIdFilter
+  customerIdFilter,
+  customerLinkFilter
 }) => {
   // State - 캐시된 데이터로 초기화 (네비게이션 시 빈 화면 방지)
   const [documents, setDocuments] = useState<Document[]>(documentCache)
@@ -111,6 +114,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     customerIdFilterRef.current = customerIdFilter
   }, [customerIdFilter])
 
+  // 📝 고객 연결 상태 필터 ref ('linked' | 'unlinked')
+  const customerLinkFilterRef = useRef(customerLinkFilter)
+  useEffect(() => {
+    customerLinkFilterRef.current = customerLinkFilter
+  }, [customerLinkFilter])
+
   // 🐛 FIX: fetch 요청 세대 카운터 — race condition 방지
   // 여러 필터가 동시에 변경되면 다수의 fetch가 동시 발생하는데,
   // 이전 응답이 최신 응답을 덮어쓰지 않도록 세대 번호로 무효화
@@ -168,7 +177,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         const initialParam = initialFilterRef.current || undefined
         const initialTypeParam = initialTypeFilterRef.current || undefined
         const customerIdParam = customerIdFilterRef.current || undefined
-        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam, searchFieldParam, undefined, initialParam, initialTypeParam, customerIdParam)
+        const customerLinkParam = customerLinkFilterRef.current || undefined
+        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, customerLinkParam, fileScopeParam, searchFieldParam, undefined, initialParam, initialTypeParam, customerIdParam)
 
         // 🐛 FIX: stale 응답 무시 — 이 fetch 이후에 새로운 fetch가 시작되었으면 결과 버림
         // force=true: 사용자 명시적 갱신(이름 변경 등)은 항상 적용
@@ -472,6 +482,23 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerIdFilter])
+
+  // 🔄 고객 연결 필터 변경 시 데이터 다시 가져오기
+  useEffect(() => {
+    if (isInitialMountRef.current) return
+    if (typeof window === 'undefined') return
+
+    paginationCache = { totalPages: 1, totalCount: 0 }
+    setTotalCount(0)
+    setTotalPages(1)
+
+    if (currentPage !== 1) {
+      setCurrentPage(1)
+    } else {
+      fetchDocumentsRef.current(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerLinkFilter])
 
   // 🔄 SSE 훅 사용 (실시간 업데이트)
   // - document-list-change: 문서 업로드/삭제/연결 변경 시 즉시 반영

@@ -28,7 +28,6 @@ import { errorReporter } from '@/shared/lib/errorReporter'
 import { LinkIcon } from '../components/DocumentActionIcons'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
-import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { DocumentService } from '@/services/DocumentService'
 import DownloadHelper from '../../../utils/downloadHelper'
 import { DocumentProcessingStatusBar } from './DocumentProcessingStatusBar'
@@ -129,9 +128,11 @@ const DocumentLibraryContent: React.FC<{
   previewDocumentId?: string | null
   /** 새로고침 함수를 외부로 노출하는 콜백 */
   onRefreshExpose?: (refreshFn: () => Promise<void>) => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose }) => {
-  // 개발자 모드 상태
-  const { isDevMode } = useDevModeStore()
+  /** 미연결 문서 필터 활성 여부 */
+  isUnlinkedFilter: boolean
+  /** 미연결 필터 토글 핸들러 */
+  onToggleUnlinkedFilter: () => void
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter }) => {
   // 🍎 처리 상태 필터 (전체 | 처리중 | 완료 | 에러)
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'processing' | 'completed' | 'error'>('all')
 
@@ -703,26 +704,24 @@ const DocumentLibraryContent: React.FC<{
           ) : (
             <>
               {/* === 일반 모드: 기존 레이아웃 === */}
-              {/* 고객 일괄 연결 버튼 (개발자 모드에서만 표시) */}
-              {isDevMode && (
-                <Tooltip content={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}>
-                  <button
-                    type="button"
-                    className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
-                    onClick={onToggleBulkLinkMode}
-                    disabled={isDeleteMode}
-                    aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
-                  >
-                    {isBulkLinkMode ? (
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    ) : (
-                      <LinkIcon width={13} height={13} />
-                    )}
-                  </button>
-                </Tooltip>
-              )}
+              {/* 고객 일괄 연결 버튼 */}
+              <Tooltip content={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}>
+                <button
+                  type="button"
+                  className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
+                  onClick={onToggleBulkLinkMode}
+                  disabled={isDeleteMode}
+                  aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
+                >
+                  {isBulkLinkMode ? (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <LinkIcon width={13} height={13} />
+                  )}
+                </button>
+              </Tooltip>
 
               {/* 별칭 생성 버튼 */}
               <Tooltip content="AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다">
@@ -901,26 +900,38 @@ const DocumentLibraryContent: React.FC<{
         {/* 오른쪽 영역: SSE 실시간 업데이트로 자동 갱신되므로 수동 컨트롤 불필요 */}
       </div>
 
-      {/* 통합 상태 필터 Segmented Control */}
-      <div className="library-status-segment">
-        {([
-          { value: 'all', label: '전체', count: docStats?.total ?? 0 },
-          { value: 'processing', label: '처리중', count: (docStats?.processing ?? 0) + (docStats?.pending ?? 0) + (docStats?.credit_pending ?? 0) },
-          { value: 'completed', label: '완료', count: docStats?.completed ?? 0 },
-          { value: 'error', label: '에러', count: docStats?.error ?? 0 },
-        ] as const).map(tab => (
-          <button
-            key={tab.value}
-            type="button"
-            className={`library-status-segment__tab${statusFilter === tab.value ? ' library-status-segment__tab--active' : ''}${tab.value === 'error' && tab.count > 0 ? ' library-status-segment__tab--error' : ''}${tab.value === 'processing' && tab.count > 0 ? ' library-status-segment__tab--warning' : ''}`}
-            onClick={() => setStatusFilter(tab.value)}
-          >
-            <span className="library-status-segment__label">{tab.label}</span>
-            {(tab.value === 'all' || tab.count > 0) && (
-              <span className="library-status-segment__count">{tab.count}</span>
-            )}
-          </button>
-        ))}
+      {/* 통합 상태 필터 Segmented Control + 미연결 필터 */}
+      <div className="library-status-filter-row">
+        <div className="library-status-segment">
+          {([
+            { value: 'all', label: '전체', count: docStats?.total ?? 0 },
+            { value: 'processing', label: '처리중', count: (docStats?.processing ?? 0) + (docStats?.pending ?? 0) + (docStats?.credit_pending ?? 0) },
+            { value: 'completed', label: '완료', count: docStats?.completed ?? 0 },
+            { value: 'error', label: '에러', count: docStats?.error ?? 0 },
+          ] as const).map(tab => (
+            <button
+              key={tab.value}
+              type="button"
+              className={`library-status-segment__tab${statusFilter === tab.value ? ' library-status-segment__tab--active' : ''}${tab.value === 'error' && tab.count > 0 ? ' library-status-segment__tab--error' : ''}${tab.value === 'processing' && tab.count > 0 ? ' library-status-segment__tab--warning' : ''}`}
+              onClick={() => setStatusFilter(tab.value)}
+            >
+              <span className="library-status-segment__label">{tab.label}</span>
+              {(tab.value === 'all' || tab.count > 0) && (
+                <span className="library-status-segment__count">{tab.count}</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className={`library-unlinked-filter${isUnlinkedFilter ? ' library-unlinked-filter--active' : ''}`}
+          onClick={onToggleUnlinkedFilter}
+          aria-label="미연결 문서만 보기"
+          aria-pressed={isUnlinkedFilter}
+        >
+          <LinkIcon width={12} height={12} />
+          <span>미연결</span>
+        </button>
       </div>
 
       {/* 문서 처리 현황 Status Bar (2분할: 현재 업로드 + 전체 라이브러리) */}
@@ -1167,6 +1178,20 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 🍎 고객 필터 상태 (특정 고객의 문서만 보기)
   const [customerFilter, setCustomerFilter] = React.useState<{ id: string; name: string } | null>(null)
 
+  // 미연결 문서 필터 상태
+  const [isUnlinkedFilter, setIsUnlinkedFilter] = React.useState(false)
+
+  // 미연결 필터 토글 핸들러
+  const handleToggleUnlinkedFilter = React.useCallback(() => {
+    setIsUnlinkedFilter(prev => {
+      // 미연결 필터 켜면 고객 필터 해제
+      if (!prev) {
+        setCustomerFilter(null)
+      }
+      return !prev
+    })
+  }, [])
+
   // 🍎 고객 일괄 연결 기능 상태
   const [isBulkLinkMode, setIsBulkLinkMode] = React.useState(false)
 
@@ -1314,6 +1339,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 🍎 고객 필터 설정 (고객명 포함)
   const handleCustomerFilterChange = React.useCallback((filter: { id: string; name: string } | null) => {
     setCustomerFilter(filter)
+    // 고객 필터 설정 시 미연결 필터 해제
+    if (filter) {
+      setIsUnlinkedFilter(false)
+    }
     // 필터 해제 시 선택 초기화
     if (!filter) {
       setSelectedDocumentIds(new Set())
@@ -1440,7 +1469,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         )}
 
         {/* 🍎 타겟 영역: 상단 바 + 헤더 + 문서 리스트 + 페이지네이션 */}
-        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles" initialFilter={selectedInitial} initialTypeFilter={initialType} customerIdFilter={customerFilter?.id}>
+        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles" initialFilter={selectedInitial} initialTypeFilter={initialType} customerIdFilter={customerFilter?.id} customerLinkFilter={isUnlinkedFilter ? 'unlinked' : undefined}>
           <DocumentLibraryContent
             initialType={initialType}
             onInitialTypeChange={handleInitialTypeChange}
@@ -1482,6 +1511,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onDocumentDeleted={onDocumentDeleted}
             previewDocumentId={previewDocumentId}
             onRefreshExpose={onRefreshExpose}
+            isUnlinkedFilter={isUnlinkedFilter}
+            onToggleUnlinkedFilter={handleToggleUnlinkedFilter}
           />
         </DocumentStatusProvider>
       </div>

@@ -2256,8 +2256,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         )}
 
-        {/* 🎯 [핵심] 파일 업로드 영역 - AR/CRS이거나 (일반 문서 + 고객 선택) 시 표시 */}
-        {((documentTypeMode === 'annual_report') || (documentTypeMode === 'customer_review') || (documentTypeMode === 'normal' && customerFileCustomer)) && !isLogVisible && (
+        {/* 고객 미지정 안내 메시지 - 일반 문서 모드에서 고객 미선택 시 표시 */}
+        {documentTypeMode === 'normal' && !customerFileCustomer && !isLogVisible && (
+          <div className="unlinked-upload-info">
+            <SFSymbol name="info.circle" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+            <span>고객 미지정으로 업로드됩니다. 나중에 전체 문서 보기에서 고객을 연결할 수 있습니다.</span>
+          </div>
+        )}
+
+        {/* 🎯 [핵심] 파일 업로드 영역 - AR/CRS이거나 일반 문서 시 표시 */}
+        {((documentTypeMode === 'annual_report') || (documentTypeMode === 'customer_review') || (documentTypeMode === 'normal')) && !isLogVisible && (
           <FileUploadArea
             onFilesSelected={handleFilesSelected}
             options={fileSelectionOptions}
