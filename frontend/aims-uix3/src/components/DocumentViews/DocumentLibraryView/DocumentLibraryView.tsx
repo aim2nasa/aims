@@ -34,6 +34,7 @@ import { DocumentProcessingStatusBar } from './DocumentProcessingStatusBar'
 import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
 import { useBatchId } from '@/hooks/useBatchId'
 import './DocumentLibraryView.header.css';
+import './DocumentLibraryView.filters.css';
 import './DocumentLibraryView.list.css';
 import './DocumentLibraryView.icons.css';
 import './DocumentLibraryView.mobile.css';
