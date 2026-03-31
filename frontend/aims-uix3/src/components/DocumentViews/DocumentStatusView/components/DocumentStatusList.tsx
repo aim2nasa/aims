@@ -1177,15 +1177,6 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           <p className="empty-message">
             {searchTerm ? `'${searchTerm}'에 대한 검색 결과가 없습니다.` : '문서가 없습니다.'}
           </p>
-          {!searchTerm && onNavigate && (
-            <Button
-              variant="primary"
-              onClick={() => onNavigate('documents-register')}
-              style={{ marginTop: '16px' }}
-            >
-              문서 등록하기
-            </Button>
-          )}
         </div>
       </div>
     )

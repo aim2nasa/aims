@@ -46,6 +46,8 @@ import { useDocumentActions } from '@/hooks/useDocumentActions'
 import { useAliasGeneration, type AliasProgress } from '@/hooks/useAliasGeneration'
 import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
 import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
+import CustomerSelectorModal from '@/shared/ui/CustomerSelectorModal/CustomerSelectorModal'
+import type { Customer } from '@/entities/customer/model'
 
 interface DocumentLibraryViewProps {
   /** View 표시 여부 */
@@ -133,7 +135,9 @@ const DocumentLibraryContent: React.FC<{
   onToggleUnlinkedFilter: () => void
   /** 고객 연결 시작 핸들러 (미연결 필터 + 일괄 연결 모드 동시 진입) */
   onStartCustomerLink: () => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter, onStartCustomerLink }) => {
+  /** 고객 연결 모드 취소 */
+  onCancelBulkLink: () => void
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter, onStartCustomerLink, onCancelBulkLink }) => {
   // 🍎 처리 상태 필터 (전체 | 처리중 | 완료 | 에러)
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'processing' | 'completed' | 'error'>('all')
 
@@ -820,7 +824,7 @@ const DocumentLibraryContent: React.FC<{
                 </>
               )}
 
-              {/* 일괄 연결 모드일 때: 선택된 개수 + 연결 버튼 */}
+              {/* 일괄 연결 모드일 때: 선택된 개수 + 고객 선택 + 취소 */}
               {isBulkLinkMode && (
                 <>
                   <span className="selected-count-inline">
@@ -843,6 +847,13 @@ const DocumentLibraryContent: React.FC<{
                     }}
                   >
                     고객 선택
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={onCancelBulkLink}
+                  >
+                    취소
                   </Button>
                 </>
               )}
@@ -867,6 +878,7 @@ const DocumentLibraryContent: React.FC<{
               onChange={(e) => actions.setSearchTerm(e.target.value)}
               placeholder={filenameMode === 'display' ? '별칭 파일명 검색' : '원본 파일명 검색'}
               className="search-input"
+              disabled={isBulkLinkMode}
             />
             {state.searchTerm && (
               <button
@@ -907,6 +919,7 @@ const DocumentLibraryContent: React.FC<{
                 type="button"
                 className="library-unlinked-filter__clear"
                 onClick={onToggleUnlinkedFilter}
+                disabled={isBulkLinkMode}
                 aria-label="연결 고객 없음 필터 해제"
               >
                 <SFSymbol
@@ -931,7 +944,7 @@ const DocumentLibraryContent: React.FC<{
       </div>
 
       {/* 상태 필터 Segmented Control */}
-      <div className="library-status-segment">
+      <div className="library-status-segment" style={isBulkLinkMode ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
         {([
           { value: 'all', label: '전체', count: docStats?.total ?? 0 },
           { value: 'processing', label: '처리중', count: (docStats?.processing ?? 0) + (docStats?.pending ?? 0) + (docStats?.credit_pending ?? 0) },
@@ -943,6 +956,7 @@ const DocumentLibraryContent: React.FC<{
             type="button"
             className={`library-status-segment__tab${statusFilter === tab.value ? ' library-status-segment__tab--active' : ''}${tab.value === 'error' && tab.count > 0 ? ' library-status-segment__tab--error' : ''}${tab.value === 'processing' && tab.count > 0 ? ' library-status-segment__tab--warning' : ''}`}
             onClick={() => setStatusFilter(tab.value)}
+            disabled={isBulkLinkMode}
           >
             <span className="library-status-segment__label">{tab.label}</span>
             {(tab.value === 'all' || tab.count > 0) && (
@@ -960,16 +974,18 @@ const DocumentLibraryContent: React.FC<{
       />
 
       {/* 초성 필터 바 */}
-      <InitialFilterBar
-        initialType={initialType}
-        onInitialTypeChange={onInitialTypeChange}
-        selectedInitial={selectedInitial}
-        onSelectedInitialChange={onSelectedInitialChange}
-        initialCounts={serverInitialCounts}
-        countLabel="개"
-        targetLabel="문서"
-        className="library-initial-filter"
-      />
+      <div style={isBulkLinkMode ? { pointerEvents: 'none', opacity: 0.4 } : undefined}>
+        <InitialFilterBar
+          initialType={initialType}
+          onInitialTypeChange={onInitialTypeChange}
+          selectedInitial={selectedInitial}
+          onSelectedInitialChange={onSelectedInitialChange}
+          initialCounts={serverInitialCounts}
+          countLabel="개"
+          targetLabel="문서"
+          className="library-initial-filter"
+        />
+      </div>
 
 
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
@@ -1221,6 +1237,22 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     setSelectedDocumentIds(new Set())
   }, [])
 
+  // 🍎 고객 연결 모드 취소 핸들러
+  const handleCancelBulkLink = React.useCallback(() => {
+    setIsBulkLinkMode(false)
+    setIsUnlinkedFilter(false)
+    setSelectedDocumentIds(new Set())
+  }, [])
+
+  // 🍎 컴포넌트 언마운트 시 bulk link 모드 자동 해제 (다른 메뉴 이동 시)
+  React.useEffect(() => {
+    return () => {
+      setIsBulkLinkMode(false)
+      setIsUnlinkedFilter(false)
+      setSelectedDocumentIds(new Set())
+    }
+  }, [])
+
   // 🍎 별칭 일괄 생성 기능 상태
   const [isAliasMode, setIsAliasMode] = React.useState(false)
   const aliasGeneration = useAliasGeneration()
@@ -1236,8 +1268,35 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     setSelectedInitial(null)
   }, [setInitialType, setSelectedInitial])
 
-  const [isDocumentLinkModalVisible, setIsDocumentLinkModalVisible] = React.useState(false)
-  const [selectedDocumentsForLink, setSelectedDocumentsForLink] = React.useState<any[]>([])
+  const [isCustomerSelectorVisible, setIsCustomerSelectorVisible] = React.useState(false)
+  const [documentsToLink, setDocumentsToLink] = React.useState<string[]>([])
+
+  // 🍎 고객 선택 후 문서 일괄 연결 핸들러
+  const handleCustomerSelectedForLink = React.useCallback(async (customer: Customer) => {
+    setIsCustomerSelectorVisible(false)
+
+    try {
+      // 선택된 문서들을 고객에 연결
+      for (const docId of documentsToLink) {
+        await DocumentService.linkDocumentToCustomer(customer._id, {
+          document_id: docId,
+          relationship_type: 'general',
+        })
+      }
+      // 성공 시 페이지 새로고침 (Optimistic Update 금지 규칙)
+      window.location.reload()
+    } catch (error) {
+      console.error('문서 연결 실패:', error)
+      errorReporter.reportApiError(error instanceof Error ? error : new Error('문서 연결 실패'), {
+        component: 'DocumentLibraryView',
+        payload: {
+          action: 'handleCustomerSelectedForLink',
+          documentCount: documentsToLink.length,
+          customerId: customer._id,
+        },
+      })
+    }
+  }, [documentsToLink])
 
   // 🍎 Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController()
@@ -1505,8 +1564,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             aliasProgress={aliasGeneration.progress}
             onAliasCancel={aliasGeneration.cancel}
             onBulkLinkClick={(documents) => {
-              setSelectedDocumentsForLink(documents)
-              setIsDocumentLinkModalVisible(true)
+              setDocumentsToLink(documents.map(d => d._id || '').filter(Boolean))
+              setIsCustomerSelectorVisible(true)
             }}
             onRemoveDocumentsExpose={(fn) => {
               removeDocumentsFnRef.current = fn
@@ -1527,6 +1586,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             isUnlinkedFilter={isUnlinkedFilter}
             onToggleUnlinkedFilter={handleToggleUnlinkedFilter}
             onStartCustomerLink={handleStartCustomerLink}
+            onCancelBulkLink={handleCancelBulkLink}
           />
         </DocumentStatusProvider>
       </div>
@@ -1537,48 +1597,20 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         actions={confirmModal.actions}
       />
 
-      {/* 일괄 고객 연결 모달 */}
-      {isDocumentLinkModalVisible && (
-        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles">
-          <DocumentLinkModalWrapper
-            visible={isDocumentLinkModalVisible}
-            documents={selectedDocumentsForLink}
-            onClose={() => {
-              setIsDocumentLinkModalVisible(false)
-              setSelectedDocumentsForLink([])
-              setSelectedDocumentIds(new Set())
-              setIsBulkLinkMode(false)
-            }}
-            onLinkSuccess={() => {
-              // 고객 연결 성공 시 페이지 새로고침 (Optimistic Update 금지 규칙)
-              window.location.reload()
-            }}
-          />
-        </DocumentStatusProvider>
+      {/* 일괄 고객 연결: CustomerSelectorModal */}
+      {isCustomerSelectorVisible && (
+        <CustomerSelectorModal
+          visible={isCustomerSelectorVisible}
+          onClose={() => {
+            setIsCustomerSelectorVisible(false)
+            setDocumentsToLink([])
+          }}
+          onSelect={handleCustomerSelectedForLink}
+          title={`고객 선택 (${documentsToLink.length}건 연결)`}
+        />
       )}
 
     </CenterPaneView>
-  )
-}
-
-// 일괄 연결용 DocumentLinkModal 래퍼 (DocumentStatusProvider 내부에서 사용)
-const DocumentLinkModalWrapper: React.FC<{
-  visible: boolean
-  documents: Document[]
-  onClose: () => void
-  onLinkSuccess: () => void
-}> = ({ visible, documents, onClose, onLinkSuccess }) => {
-  const controller = useDocumentStatusController()
-
-  return (
-    <DocumentLinkModal
-      visible={visible}
-      documents={documents}
-      onClose={onClose}
-      onLinkSuccess={onLinkSuccess}
-      onFetchCustomerDocuments={controller.fetchCustomerDocuments}
-      onLink={controller.linkDocumentToCustomer}
-    />
   )
 }
 
