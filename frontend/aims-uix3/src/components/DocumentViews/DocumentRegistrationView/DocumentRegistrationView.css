@@ -707,17 +707,15 @@
     display: none;
   }
 
-  /* 고객 미지정 업로드 안내 메시지 */
-  .unlinked-upload-info {
+  /* 고객 선택 상태 안내 메시지 (공통) */
+  .upload-status-info {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: var(--spacing-2);
     margin-top: var(--spacing-3);
     padding: var(--spacing-2-5) var(--spacing-3);
-    background: var(--color-info-bg, rgba(0, 122, 255, 0.08));
     border-radius: var(--radius-md, 8px);
-    color: var(--color-info, var(--color-primary-500));
     font-size: var(--font-size-caption-1);
     line-height: var(--line-height-caption-1);
     text-align: center;
@@ -726,7 +724,24 @@
     margin-right: auto;
   }
 
-  [data-theme="dark"] .unlinked-upload-info {
+  /* 고객 미선택: 주황/경고 톤 */
+  .upload-status-info--unlinked {
+    background: rgba(255, 149, 0, 0.08);
+    color: var(--color-ios-orange);
+  }
+
+  [data-theme="dark"] .upload-status-info--unlinked {
+    background: rgba(255, 159, 10, 0.12);
+    color: var(--color-ios-orange);
+  }
+
+  /* 고객 선택됨: 파란/성공 톤 */
+  .upload-status-info--linked {
+    background: var(--color-info-bg, rgba(0, 122, 255, 0.08));
+    color: var(--color-ios-blue);
+  }
+
+  [data-theme="dark"] .upload-status-info--linked {
     background: rgba(10, 132, 255, 0.12);
     color: var(--color-primary-400);
   }
@@ -797,6 +812,37 @@
 
   .flow-step--active .flow-step__desc {
     color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* 흐름 가이드 아이콘 컬러 (좌측 메뉴와 동일 색상) */
+  .flow-icon {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .flow-icon--orange {
+    color: var(--color-icon-doc-register, #ff9500);
+  }
+
+  .flow-icon--purple {
+    color: var(--color-icon-doc-library, #af52de);
+  }
+
+  .flow-icon--green {
+    color: var(--color-ios-green, #34c759);
+  }
+
+  /* 활성 단계에서도 아이콘 고유 색상 유지 (white 상속 방지) */
+  .flow-step--active .flow-icon--orange {
+    color: var(--color-icon-doc-register, #ff9500);
+  }
+
+  .flow-step--active .flow-icon--purple {
+    color: var(--color-icon-doc-library, #af52de);
+  }
+
+  .flow-step--active .flow-icon--green {
+    color: var(--color-ios-green, #34c759);
   }
 
   .flow-arrow {

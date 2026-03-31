@@ -186,8 +186,9 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
     fireEvent.click(selectButton)
 
     // Then: 고객이 선택되었으므로 고객명이 표시되어야 함
+    // (selected-customer-text + 안내 메시지의 strong 태그에 각각 표시됨)
     await waitFor(() => {
-      expect(screen.getByText('홍길동')).toBeInTheDocument()
+      expect(screen.getAllByText('홍길동').length).toBeGreaterThanOrEqual(1)
     })
   })
 
@@ -243,7 +244,7 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
     fireEvent.click(screen.getByTestId('select-customer-1'))
 
     await waitFor(() => {
-      expect(screen.getByText('홍길동')).toBeInTheDocument()
+      expect(screen.getAllByText('홍길동').length).toBeGreaterThanOrEqual(1)
     })
 
     // Step 2: 고객 해제 (x 버튼 클릭)
@@ -266,7 +267,7 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
 
     // Then: 새 고객이 선택되어야 함
     await waitFor(() => {
-      expect(screen.getByText('김철수')).toBeInTheDocument()
+      expect(screen.getAllByText('김철수').length).toBeGreaterThanOrEqual(1)
     })
 
     // 🔴 핵심 검증: 로그가 초기화되어 드래그존이 표시될 준비가 되어야 함
@@ -313,13 +314,13 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
     })
     fireEvent.click(screen.getByTestId('select-customer-1'))
     await waitFor(() => {
-      expect(screen.getByText('홍길동')).toBeInTheDocument()
+      expect(screen.getAllByText('홍길동').length).toBeGreaterThanOrEqual(1)
     })
 
     // Step 2: 다른 고객으로 변경 (해제 후 재선택)
     fireEvent.click(screen.getByLabelText('고객 선택 해제'))
     await waitFor(() => {
-      expect(screen.queryByText('홍길동')).not.toBeInTheDocument()
+      expect(screen.queryAllByText('홍길동').length).toBe(0)
     })
 
     fireEvent.click(screen.getByText('고객 선택'))
@@ -358,7 +359,7 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
     fireEvent.click(screen.getByTestId('select-customer-1'))
 
     await waitFor(() => {
-      expect(screen.getByText('홍길동')).toBeInTheDocument()
+      expect(screen.getAllByText('홍길동').length).toBeGreaterThanOrEqual(1)
     })
 
     // 같은 고객을 다시 선택 (모달을 열어서)
@@ -388,14 +389,14 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
     fireEvent.click(screen.getByTestId('select-customer-1'))
 
     await waitFor(() => {
-      expect(screen.getByText('홍길동')).toBeInTheDocument()
+      expect(screen.getAllByText('홍길동').length).toBeGreaterThanOrEqual(1)
     })
 
     // Step 2: 고객 해제
     fireEvent.click(screen.getByLabelText('고객 선택 해제'))
 
     await waitFor(() => {
-      expect(screen.queryByText('홍길동')).not.toBeInTheDocument()
+      expect(screen.queryAllByText('홍길동').length).toBe(0)
     })
 
     // Step 3: 같은 고객 다시 선택
@@ -407,7 +408,7 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
 
     // Then: 고객이 정상적으로 선택되어야 함
     await waitFor(() => {
-      expect(screen.getByText('홍길동')).toBeInTheDocument()
+      expect(screen.getAllByText('홍길동').length).toBeGreaterThanOrEqual(1)
     })
   })
 })
@@ -475,7 +476,7 @@ describe('DocumentRegistrationView - isLogVisible 상태 검증', () => {
     fireEvent.click(screen.getByTestId('select-customer-1'))
 
     await waitFor(() => {
-      expect(screen.getByText('홍길동')).toBeInTheDocument()
+      expect(screen.getAllByText('홍길동').length).toBeGreaterThanOrEqual(1)
     })
 
     // 고객 해제

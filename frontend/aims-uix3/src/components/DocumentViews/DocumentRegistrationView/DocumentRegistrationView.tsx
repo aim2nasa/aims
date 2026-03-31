@@ -2173,16 +2173,17 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                       <div className="guide-step">
                         <span className="step-number">1</span>
                         <div className="step-content">
-                          <h4 className="step-title">고객 선택하기 (필수)</h4>
-                          <p className="step-description">• 문서를 등록할 고객을 먼저 선택해주세요</p>
+                          <h4 className="step-title">고객 선택하기 (선택)</h4>
+                          <p className="step-description">• 고객을 선택하면 해당 고객의 문서로 등록됩니다</p>
+                          <p className="step-description">• 미선택 시 나중에 전체 문서 보기에서 연결할 수 있습니다</p>
                         </div>
                       </div>
                       <div className="guide-step">
                         <span className="step-number">2</span>
                         <div className="step-content">
                           <h4 className="step-title">파일 올리기</h4>
-                          <p className="step-description">• 고객을 선택하면 파일 업로드가 활성화돼요</p>
-                          <p className="step-description">• 업로드된 문서는 선택한 고객에게 자동 연결돼요</p>
+                          <p className="step-description">• 파일을 끌어다 놓거나 클릭하여 업로드하세요</p>
+                          <p className="step-description">• 고객 선택 시 해당 고객에게 자동 연결됩니다</p>
                         </div>
                       </div>
                     </>
@@ -2256,12 +2257,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         )}
 
-        {/* 고객 미지정 안내 메시지 - 일반 문서 모드에서 고객 미선택 시 표시 */}
-        {documentTypeMode === 'normal' && !customerFileCustomer && !isLogVisible && (
-          <div className="unlinked-upload-info">
-            <SFSymbol name="info.circle" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} decorative={true} />
-            <span>고객 미지정으로 업로드됩니다. 나중에 전체 문서 보기에서 고객을 연결할 수 있습니다.</span>
-          </div>
+        {/* 고객 선택 상태 안내 메시지 - 일반 문서 모드에서 표시 */}
+        {documentTypeMode === 'normal' && !isLogVisible && (
+          customerFileCustomer ? (
+            <div className="upload-status-info upload-status-info--linked">
+              <SFSymbol name="person.fill.checkmark" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+              <span><strong>{customerFileCustomer.personal_info?.name}</strong> 고객의 문서로 업로드됩니다.</span>
+            </div>
+          ) : (
+            <div className="upload-status-info upload-status-info--unlinked">
+              <SFSymbol name="info.circle" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} decorative={true} />
+              <span><strong>고객 미선택</strong> : 고객 미지정으로 업로드됩니다. 나중에 전체 문서 보기에서 고객을 연결할 수 있습니다.</span>
+            </div>
+          )
         )}
 
         {/* 🎯 [핵심] 파일 업로드 영역 - AR/CRS이거나 일반 문서 시 표시 */}
@@ -2280,7 +2288,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             <div className="flow-step flow-step--active">
               <span className="flow-step__number">①</span>
               <span className="flow-step__title">
-                <SFSymbol name="doc-badge-plus" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+                <span className="flow-icon flow-icon--orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative /></span>
                 문서 등록
               </span>
               <span className="flow-step__desc">지금 이 화면</span>
@@ -2289,7 +2297,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             <div className="flow-step">
               <span className="flow-step__number">②</span>
               <span className="flow-step__title">
-                <SFSymbol name="books-vertical" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+                <span className="flow-icon flow-icon--purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative /></span>
                 전체 문서 보기
               </span>
               <span className="flow-step__desc">처리 현황 확인</span>
@@ -2298,7 +2306,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             <div className="flow-step">
               <span className="flow-step__number">③</span>
               <span className="flow-step__title">
-                <SFSymbol name="folder" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+                <span className="flow-icon flow-icon--green"><SFSymbol name="folder" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative /></span>
                 고객별 문서함
               </span>
               <span className="flow-step__desc">등록 문서 확인</span>
