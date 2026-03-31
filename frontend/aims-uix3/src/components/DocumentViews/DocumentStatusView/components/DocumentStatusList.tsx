@@ -214,11 +214,11 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
     >
       {/* 삭제 모드 또는 일괄 연결 모드: 개별 선택 체크박스 */}
       {(() => {
-        // 일괄 연결 모드: 고객 미연결 문서만 체크박스 표시
+        // 일괄 연결 모드: 미연결 + 완료된 문서만 체크박스 표시
         if (isBulkLinkMode) {
           const hasCustomer = document.customer_relation?.customer_name
-          if (hasCustomer) {
-            // 고객 연결된 문서는 체크박스 없음 (공백으로 레이아웃 유지)
+          if (hasCustomer || !canLink) {
+            // 고객 연결됨 또는 처리 미완료 문서는 체크박스 없음 (공백으로 레이아웃 유지)
             return <div className="document-checkbox-wrapper"></div>
           }
         }
@@ -614,7 +614,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
               <span className="customer-name-text">{document.customer_relation.customer_name}</span>
             </button>
             {/* 고객 변경 아이콘 — 행 호버 시에만 표시 */}
-            {onChangeCustomerClick && (
+            {onChangeCustomerClick && status === 'completed' && (
               <button
                 className="customer-change-icon"
                 onMouseDown={(e) => e.stopPropagation()}
@@ -636,7 +636,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
           </>
         ) : (userId && document.customerId && userId === document.customerId) ? (
           <span className="customer-id-text">{userId}</span>
-        ) : onUnlinkedCustomerClick ? (
+        ) : (onUnlinkedCustomerClick && canLink) ? (
           <button
             className="customer-none customer-none--linkable"
             onMouseDown={(e) => e.stopPropagation()}
