@@ -18,17 +18,20 @@ interface UseDocumentStatisticsOptions {
   enabled?: boolean
   /** 업로드 묶음 ID (현재 세션 필터) */
   batchId?: string | null
+  /** 고객 연결 상태 필터 */
+  customerLink?: 'linked' | 'unlinked'
 }
 
 export function useDocumentStatistics(options: UseDocumentStatisticsOptions | boolean = true) {
   // 하위 호환성: boolean만 전달된 경우
   const normalizedOptions: UseDocumentStatisticsOptions =
     typeof options === 'boolean' ? { enabled: options } : options
-  const { enabled = true, batchId = null } = normalizedOptions
+  const { enabled = true, batchId = null, customerLink } = normalizedOptions
 
   // 🔴 enabled=false면 캐시 사용 안 함 (null 반환해야 함)
   // 🔴 batchId가 있으면 캐시 사용 안 함 (배치별 통계는 독립적)
-  const useCache = enabled && !batchId
+  // 🔴 customerLink가 있으면 캐시 사용 안 함 (필터별 통계는 독립적)
+  const useCache = enabled && !batchId && !customerLink
   const [statistics, setStatistics] = useState<DocumentStatistics | null>(
     enabled === false ? null : (useCache ? statisticsCache : null)
   )
@@ -40,9 +43,13 @@ export function useDocumentStatistics(options: UseDocumentStatisticsOptions | bo
 
   const fetchStatistics = useCallback(async (silent: boolean = false) => {
     try {
-      // batchId가 있으면 쿼리 파라미터로 추가
-      const url = batchId
-        ? `${API_BASE_URL}/api/documents/statistics?batchId=${encodeURIComponent(batchId)}`
+      // 쿼리 파라미터 구성
+      const params = new URLSearchParams()
+      if (batchId) params.set('batchId', batchId)
+      if (customerLink) params.set('customerLink', customerLink)
+      const qs = params.toString()
+      const url = qs
+        ? `${API_BASE_URL}/api/documents/statistics?${qs}`
         : `${API_BASE_URL}/api/documents/statistics`
 
       const response = await fetch(url, {
@@ -59,8 +66,8 @@ export function useDocumentStatistics(options: UseDocumentStatisticsOptions | bo
 
       if (json.success && json.data && mountedRef.current) {
         const data = json.data as DocumentStatistics
-        // batchId가 없을 때만 전역 캐시에 저장
-        if (!batchId) {
+        // batchId/customerLink가 없을 때만 전역 캐시에 저장
+        if (!batchId && !customerLink) {
           statisticsCache = data
         }
         setStatistics(data)
@@ -76,7 +83,7 @@ export function useDocumentStatistics(options: UseDocumentStatisticsOptions | bo
         })
       }
     }
-  }, [batchId])
+  }, [batchId, customerLink])
 
   // SSE 이벤트 수신 시 디바운스 후 통계 재조회
   const debouncedRefresh = useCallback(() => {

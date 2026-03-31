@@ -247,7 +247,9 @@ const DocumentLibraryContent: React.FC<{
 
   // 문서 처리 현황 통계 (Status Bar용)
   // 1. 전체 라이브러리 통계
-  const { statistics: docStats, isLoading: statsLoading } = useDocumentStatistics()
+  const { statistics: docStats, isLoading: statsLoading } = useDocumentStatistics({
+    customerLink: isUnlinkedFilter ? 'unlinked' : undefined
+  })
   // 2. 현재 배치 통계 (batchId가 있을 때만)
   const { statistics: batchStats, isLoading: batchLoading } = useDocumentStatistics({
     enabled: !!currentBatchId,

@@ -2069,7 +2069,7 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
   try {
     // userId 추출 (헤더 또는 쿼리)
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
-    const { batchId } = req.query;  // 🔴 업로드 묶음 ID (현재 세션 필터)
+    const { batchId, customerLink } = req.query;  // 🔴 업로드 묶음 ID (현재 세션 필터)
 
     // 사용자별 필터링 (ownerId 기준)
     const filter = { ownerId: userId };
@@ -2077,6 +2077,13 @@ router.get('/documents/statistics', authenticateJWT, async (req, res) => {
     // 🔴 batchId가 있으면 해당 배치만 필터링
     if (batchId) {
       filter.batchId = batchId;
+    }
+
+    // 🔴 고객 연결 상태 필터 (목록 API와 동일 로직)
+    if (customerLink === 'linked') {
+      filter['customerId'] = { $exists: true, $ne: null };
+    } else if (customerLink === 'unlinked') {
+      filter['customerId'] = null;
     }
 
     // 📊 파일 타입 분포 집계를 기존 통계와 병렬 실행 (batchId 없을 때만)
