@@ -448,6 +448,18 @@
     background: var(--color-bg-tertiary);
   }
 
+  /* 오른쪽 섹션 내 구분선: 별칭AI/삭제와 고객 연결 사이 */
+  .header-right-section__divider {
+    width: 1px;
+    height: 16px;
+    background: var(--color-ios-separator-thin-light);
+    flex-shrink: 0;
+  }
+
+  [data-theme="dark"] .header-right-section__divider {
+    background: var(--color-ios-separator-thin-dark);
+  }
+
   /* 연결 고객 없음 필터 (상단 툴바 맨 우측) */
   .library-unlinked-filter {
     display: inline-flex;

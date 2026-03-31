@@ -618,6 +618,8 @@
     /* Separator Colors */
     --color-ios-separator-light: rgba(0, 0, 0, 0.25);
     --color-ios-separator-dark: rgba(255, 255, 255, 0.25);
+    --color-ios-separator-thin-light: rgba(0, 0, 0, 0.15);
+    --color-ios-separator-thin-dark: rgba(255, 255, 255, 0.15);
     --color-ios-separator-subtle-light: rgba(0, 0, 0, 0.03);
     --color-ios-separator-subtle-dark: rgba(255, 255, 255, 0.03);
 
