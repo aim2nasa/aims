@@ -2344,6 +2344,29 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           />
         )}
 
+        {/* 🍎 다음 단계 안내 (업로드 완료 후 표시) */}
+        {isLogVisible && uploadState.files.length > 0 && (
+          <div className="doc-register-next-steps">
+            <h4 className="doc-register-next-steps__title">다음 단계</h4>
+            <div className="doc-register-next-steps__steps">
+              <div className="doc-register-next-steps__step">
+                <span className="doc-register-next-steps__number">①</span>
+                <span><strong>전체 문서 보기</strong>에서 처리 현황을 확인하세요</span>
+              </div>
+              <div className="doc-register-next-steps__step">
+                <span className="doc-register-next-steps__number">②</span>
+                <span>처리 완료 후 <strong>고객별 문서함</strong>에서 문서를 확인하세요</span>
+              </div>
+              {!customerFileCustomer && (
+                <div className="doc-register-next-steps__tip">
+                  <SFSymbol name="lightbulb" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+                  <span>고객을 지정하지 않았다면, <strong>전체 문서 보기</strong>에서 고객을 연결하세요</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 🍎 처리 상태 보기 & 새 문서 등록 버튼 (업로드 진행/완료 후 표시) */}
         {isLogVisible && uploadState.files.length > 0 && (
           <div className="view-status-button-container">

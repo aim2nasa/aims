@@ -863,4 +863,92 @@
     }
   }
 
+  /* 🍎 다음 단계 안내 카드 */
+  .doc-register-next-steps {
+    max-width: 600px;
+    margin: var(--spacing-4) auto 0;
+    padding: var(--spacing-4);
+    background: rgba(0, 122, 255, 0.05);
+    border: 1px solid rgba(0, 122, 255, 0.1);
+    border-radius: var(--radius-lg);
+    text-align: left;
+  }
+
+  [data-theme="dark"] .doc-register-next-steps {
+    background: rgba(10, 132, 255, 0.08);
+    border-color: rgba(10, 132, 255, 0.15);
+  }
+
+  .doc-register-next-steps__title {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-subheadline);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-3) 0;
+  }
+
+  .doc-register-next-steps__steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2-5);
+  }
+
+  .doc-register-next-steps__step {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-2);
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-footnote);
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .doc-register-next-steps__number {
+    flex-shrink: 0;
+    color: var(--color-ios-blue);
+    font-weight: 600;
+  }
+
+  .doc-register-next-steps__step strong {
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .doc-register-next-steps__tip {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-1);
+    padding: var(--spacing-2) var(--spacing-3);
+    background: rgba(255, 149, 0, 0.08);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-caption-1);
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .doc-register-next-steps__tip .sf-symbol {
+    flex-shrink: 0;
+    color: var(--color-ios-orange, #ff9500);
+  }
+
+  .doc-register-next-steps__tip strong {
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="dark"] .doc-register-next-steps__tip {
+    background: rgba(255, 159, 10, 0.1);
+  }
+
+  @media (max-width: 480px) {
+    .doc-register-next-steps {
+      padding: var(--spacing-3);
+      margin-top: var(--spacing-3);
+    }
+  }
+
 } /* end @layer components */
