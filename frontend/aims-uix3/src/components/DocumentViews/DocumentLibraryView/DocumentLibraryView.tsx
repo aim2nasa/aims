@@ -895,20 +895,38 @@ const DocumentLibraryContent: React.FC<{
             )}
           </div>
 
-          {/* 미연결 필터 토글 */}
-          <button
-            type="button"
-            className={`library-unlinked-filter${isUnlinkedFilter ? ' library-unlinked-filter--active' : ''}`}
-            onClick={onToggleUnlinkedFilter}
-            aria-label="미연결 문서만 보기"
-            aria-pressed={isUnlinkedFilter}
-          >
-            <LinkIcon width={12} height={12} />
-            <span>미연결</span>
-          </button>
         </div>
 
-        {/* 오른쪽 영역: SSE 실시간 업데이트로 자동 갱신되므로 수동 컨트롤 불필요 */}
+        {/* 오른쪽: 연결 고객 없음 필터 */}
+        <div className="header-right-section">
+          {isUnlinkedFilter ? (
+            <div className="library-unlinked-filter library-unlinked-filter--active" role="status" aria-label="연결 고객 없음 필터 적용 중">
+              <span>연결 고객 없음</span>
+              <button
+                type="button"
+                className="library-unlinked-filter__clear"
+                onClick={onToggleUnlinkedFilter}
+                aria-label="연결 고객 없음 필터 해제"
+              >
+                <SFSymbol
+                  name="xmark.circle.fill"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative
+                />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="library-unlinked-filter"
+              onClick={onToggleUnlinkedFilter}
+              aria-label="연결 고객 없는 문서만 보기"
+            >
+              <span>연결 고객 없음</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 상태 필터 Segmented Control */}
