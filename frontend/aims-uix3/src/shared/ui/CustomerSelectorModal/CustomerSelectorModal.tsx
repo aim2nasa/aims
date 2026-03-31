@@ -80,6 +80,37 @@ export interface CustomerSelectorModalProps {
  * />
  * ```
  */
+// 최근 선택 고객 localStorage 키 및 최대 저장 수
+const RECENT_CUSTOMERS_KEY = 'aims_recent_selected_customers';
+const MAX_RECENT = 10;
+
+interface RecentCustomerEntry {
+  _id: string;
+  name: string;
+  type: string;
+}
+
+/** 최근 선택 고객 저장 */
+function saveRecentCustomer(customer: RecentCustomerEntry): void {
+  try {
+    const stored: RecentCustomerEntry[] = JSON.parse(localStorage.getItem(RECENT_CUSTOMERS_KEY) || '[]');
+    const filtered = stored.filter((c) => c._id !== customer._id);
+    const updated = [customer, ...filtered].slice(0, MAX_RECENT);
+    localStorage.setItem(RECENT_CUSTOMERS_KEY, JSON.stringify(updated));
+  } catch {
+    // localStorage 접근 실패 시 무시
+  }
+}
+
+/** 최근 선택 고객 읽기 */
+function getRecentCustomers(): RecentCustomerEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_CUSTOMERS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
 export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   visible,
   onClose,
@@ -89,6 +120,9 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   title = '고객 선택',
   filterCustomerType,
 }) => {
+  // 최근 선택 고객 목록
+  const [recentCustomers, setRecentCustomers] = useState<RecentCustomerEntry[]>([]);
+
   // Server-side data state (직접 API 호출, limit=100 서버사이드)
   const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -153,6 +187,9 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   // 모달 열릴 때 초기 데이터 로드 (100건, 서버사이드)
   useEffect(() => {
     if (visible) {
+      // 최근 선택 고객 로드
+      setRecentCustomers(getRecentCustomers());
+
       const customerType = filterCustomerType === '개인' ? '개인' : filterCustomerType === '법인' ? '법인' : undefined;
       fetchCustomers({ limit: 100, page: 1, status: 'all', customerType });
       setSelectedCustomer(null);
@@ -400,6 +437,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     if (disabledCustomerIds?.has(customer._id)) {
       return;
     }
+    saveRecentCustomer({
+      _id: customer._id,
+      name: customer.personal_info?.name || '',
+      type: customer.insurance_info?.customer_type || '개인',
+    });
     onSelect(customer);
     onClose();
   }, [disabledCustomerIds, onSelect, onClose]);
@@ -407,10 +449,39 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   // 확인 버튼
   const handleConfirm = useCallback(() => {
     if (selectedCustomer) {
+      saveRecentCustomer({
+        _id: selectedCustomer._id,
+        name: selectedCustomer.personal_info?.name || '',
+        type: selectedCustomer.insurance_info?.customer_type || '개인',
+      });
       onSelect(selectedCustomer);
       onClose();
     }
   }, [selectedCustomer, onSelect, onClose]);
+
+  // 최근 고객 칩 클릭 핸들러
+  const handleRecentSelect = useCallback(async (rc: RecentCustomerEntry) => {
+    // 이미 로드된 목록에서 찾기
+    const found = allCustomers.find((c) => c._id === rc._id);
+    if (found) {
+      saveRecentCustomer(rc);
+      onSelect(found);
+      onClose();
+      return;
+    }
+    // 목록에 없으면 API로 개별 조회
+    try {
+      const response = await CustomerService.getCustomers({ search: rc.name, limit: 100, page: 1, status: 'all' });
+      const match = response.customers.find((c) => c._id === rc._id);
+      if (match) {
+        saveRecentCustomer(rc);
+        onSelect(match);
+        onClose();
+      }
+    } catch (err) {
+      console.error('[CustomerSelectorModal] 최근 고객 조회 실패:', err);
+    }
+  }, [allCustomers, onSelect, onClose]);
 
   return (
     <DraggableModal
@@ -464,6 +535,28 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
           />
         </div>
       </div>
+
+      {/* 최근 선택 고객 칩 */}
+      {recentCustomers.length > 0 && (
+        <div className="customer-selector-recent">
+          <span className="customer-selector-recent__label">최근</span>
+          {recentCustomers.map((rc) => (
+            <button
+              key={rc._id}
+              className="customer-selector-recent__chip"
+              onClick={() => handleRecentSelect(rc)}
+            >
+              <SFSymbol
+                name={rc.type === '법인' ? 'building-2' : 'person'}
+                size={SFSymbolSize.CAPTION_2}
+                weight={SFSymbolWeight.MEDIUM}
+                decorative
+              />
+              {rc.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* 탭 (검색 중이 아닐 때만 표시, filterCustomerType이 없을 때만 표시) */}
       {!isSearching && !filterCustomerType && (

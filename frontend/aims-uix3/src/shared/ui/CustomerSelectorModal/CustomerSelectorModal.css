@@ -72,6 +72,69 @@
     color: var(--color-text-tertiary);
   }
 
+  /* ===== 최근 선택 고객 칩 ===== */
+
+  .customer-selector-recent {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0;
+    margin-bottom: var(--spacing-2);
+    flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .customer-selector-recent::-webkit-scrollbar {
+    display: none;
+  }
+
+  .customer-selector-recent__label {
+    font-size: var(--font-size-caption-2);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-tertiary);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .customer-selector-recent__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border, rgba(0,0,0,0.1));
+    border-radius: 14px;
+    font-size: var(--font-size-caption-1);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background var(--duration-fast) var(--easing-ease-out),
+                border-color var(--duration-fast) var(--easing-ease-out);
+  }
+
+  .customer-selector-recent__chip:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-accent);
+  }
+
+  .customer-selector-recent__chip:active {
+    transform: scale(0.97);
+  }
+
+  .customer-selector-recent__chip-type {
+    font-size: var(--font-size-caption-2);
+    color: var(--color-text-tertiary);
+  }
+
+  /* 키보드 열림 시 최근 고객 칩 숨김 */
+  .draggable-modal--keyboard-open .customer-selector-recent {
+    display: none;
+  }
+
   /* ===== Tabs ===== */
 
   .customer-selector-modal__tabs {
