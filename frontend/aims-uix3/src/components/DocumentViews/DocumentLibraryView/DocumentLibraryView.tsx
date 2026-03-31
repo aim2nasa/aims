@@ -85,10 +85,10 @@ const ITEMS_PER_PAGE_OPTIONS_BASE = [
 ]
 
 // 🍎 행 높이 상수 (CSS와 동일하게 유지 — DOM 측정 기준)
-const ROW_HEIGHT = 40   // CSS height: 40px (.status-item)
-const ROW_GAP = 2       // CSS gap: var(--spacing-0-5) ≈ 2px
+const ROW_HEIGHT = 28   // CSS height: 28px (.status-item)
+const ROW_GAP = 1       // CSS gap: 1px
 // 리스트 헤더 높이 기본값 (sticky header)
-const DEFAULT_LIST_HEADER_HEIGHT = 44
+const DEFAULT_LIST_HEADER_HEIGHT = 24
 
 /**
  * DocumentLibraryContent 내부 컴포넌트 (Pure View)
@@ -573,9 +573,13 @@ const DocumentLibraryContent: React.FC<{
     const measuredHeaderHeight = listHeader ? listHeader.getBoundingClientRect().height : 0
     const headerHeight = measuredHeaderHeight > 0 ? measuredHeaderHeight : DEFAULT_LIST_HEADER_HEIGHT
 
-    // 사용 가능한 높이 = 래퍼 높이 - 헤더 높이 - 여유분(gap/padding 보정)
-    const SAFETY_MARGIN = 8
-    const availableHeight = listWrapperHeight - headerHeight - SAFETY_MARGIN
+    // 페이지네이션(sticky bottom) 높이 측정 — wrapper 안에 포함됨
+    const paginationEl = wrapper.querySelector('.document-pagination') as HTMLElement | null
+    const paginationHeight = paginationEl ? paginationEl.getBoundingClientRect().height : 49
+
+    // 사용 가능한 높이 = 래퍼 높이 - 헤더 높이 - 페이지네이션 높이 - 여유분
+    const SAFETY_MARGIN = 20
+    const availableHeight = listWrapperHeight - headerHeight - paginationHeight - SAFETY_MARGIN
 
     // N개 행의 총 높이 = N * ROW_HEIGHT + (N-1) * ROW_GAP
     const maxItems = Math.max(1, Math.floor((availableHeight + ROW_GAP) / (ROW_HEIGHT + ROW_GAP)))

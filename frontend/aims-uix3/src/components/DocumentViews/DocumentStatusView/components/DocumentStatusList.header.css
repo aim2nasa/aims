@@ -340,7 +340,7 @@
       52px;          /* 액션 버튼 */
     gap: 10px;
     align-items: center;
-    height: 30px;
+    height: 28px;
     padding: var(--spacing-0-5) 10px;
     background: var(--color-ios-bg-primary-light);
     border-radius: 4px;
