@@ -362,7 +362,7 @@
     position: relative;
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
+    overflow: auto;  /* 수직 + 수평 스크롤 모두 허용 — RP 열림 시 수평 스크롤 지원 */
     scrollbar-width: thin;
     scrollbar-color: var(--color-scrollbar-thumb, rgba(0, 0, 0, 0.2)) transparent;
   }
@@ -371,10 +371,12 @@
      status-list-header의 position: sticky가 library-list-wrapper 기준으로 동작하도록 함 */
   .library-list-wrapper .document-status-list {
     overflow-y: visible;
+    min-width: fit-content;  /* grid 최소 콘텐츠 폭 보장 — 수평 스크롤 시 행 배경 잘림 방지 */
   }
 
   .library-list-wrapper::-webkit-scrollbar {
     width: 6px;
+    height: 6px;  /* 수평 스크롤바 높이 */
   }
 
   .library-list-wrapper::-webkit-scrollbar-track {
