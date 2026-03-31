@@ -624,7 +624,14 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
             }}
             aria-label="고객 연결"
           >
-            <span className="customer-none-text">고객 연결</span>
+            <div className="customer-icon-wrapper">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--unlinked">
+                <circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 2" />
+                <circle cx="10" cy="7.5" r="2.5" opacity="0.5" />
+                <path d="M10 11c-2.5 0-4.5 1.5-4.5 3.5v1h9v-1c0-2-2-3.5-4.5-3.5z" opacity="0.5" />
+              </svg>
+            </div>
+            <span className="customer-none-text">미연결</span>
           </button>
         ) : (
           <span className="customer-none">-</span>

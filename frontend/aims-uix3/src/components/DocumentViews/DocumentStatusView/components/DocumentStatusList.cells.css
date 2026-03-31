@@ -347,6 +347,9 @@
 
   /* 미연결 고객 클릭 가능 버튼 스타일 */
   .status-customer .customer-none--linkable {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
     background: transparent;
     border: none;
     padding: var(--spacing-1) var(--spacing-2);
@@ -356,11 +359,12 @@
     transition: all 0.2s ease-out;
     font-family: inherit;
     font-size: inherit;
-    color: var(--color-ios-blue-light);
+    color: var(--color-ios-text-quaternary-light);
   }
 
   .status-customer .customer-none--linkable:hover {
     background: var(--color-ios-fill-tertiary-light);
+    color: var(--color-primary-500);
   }
 
   .status-customer .customer-none--linkable:active {
@@ -369,20 +373,26 @@
   }
 
   html[data-theme="dark"] .status-customer .customer-none--linkable {
-    color: var(--color-ios-blue-dark);
+    color: var(--color-ios-text-quaternary-dark);
   }
 
   html[data-theme="dark"] .status-customer .customer-none--linkable:hover {
     background: var(--color-ios-fill-tertiary-dark);
+    color: var(--color-primary-400);
   }
 
   html[data-theme="dark"] .status-customer .customer-none--linkable:active {
     background: var(--color-ios-fill-secondary-dark);
   }
 
+  .status-customer .customer-icon--unlinked {
+    color: inherit;
+  }
+
   .status-customer .customer-none-text {
     font-size: var(--font-size-caption);
     letter-spacing: -0.01em;
+    color: inherit;
   }
 
   /* 고객명 클릭 가능 버튼 스타일 */
