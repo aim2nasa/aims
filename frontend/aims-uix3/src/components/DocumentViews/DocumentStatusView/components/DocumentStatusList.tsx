@@ -10,6 +10,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { Tooltip, DocumentTypeCell, DocumentTypeBadge } from '@/shared/ui'
 import Button from '@/shared/ui/Button'
+import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
@@ -1301,20 +1302,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </div>
           {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
           {onFilenameModeChange && (
-            <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}>
-              <button
-                type="button"
-                className={`filename-mode-toggle ${filenameMode === 'display' ? 'filename-mode-toggle--alias' : 'filename-mode-toggle--original'}`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  const next = filenameMode === 'display' ? 'original' : 'display'
-                  onFilenameModeChange(next)
-                }}
-                aria-label={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}
-              >
-                {filenameMode === 'display' ? '별칭' : '원본'}
-              </button>
-            </Tooltip>
+            <FilenameModeToggle filenameMode={filenameMode} onModeChange={onFilenameModeChange} />
           )}
           <div
             className="column-resize-handle"

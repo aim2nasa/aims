@@ -10,6 +10,7 @@ import { usePersistedState } from '@/hooks/usePersistedState'
 import { CenterPaneView } from '@/components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { Tooltip, BackButton } from '@/shared/ui'
+import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { DocumentTypeCell } from '@/shared/ui/DocumentTypeCell/DocumentTypeCell'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { documentTypesService } from '@/services/documentTypesService'
@@ -998,20 +999,10 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
             {relatedTabLabel}
           </button>
         </div>
-        <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}>
-          <button
-            type="button"
-            className={`filename-mode-toggle ${filenameMode === 'display' ? 'filename-mode-toggle--alias' : 'filename-mode-toggle--original'}`}
-            onClick={() => setFilenameMode(prev => {
-              const next = prev === 'display' ? 'original' : 'display'
-              localStorage.setItem('aims-filename-mode', next)
-              return next
-            })}
-            aria-label={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}
-          >
-            {filenameMode === 'display' ? '별칭' : '원본'}
-          </button>
-        </Tooltip>
+        <FilenameModeToggle filenameMode={filenameMode} onModeChange={(next) => {
+          setFilenameMode(next)
+          localStorage.setItem('aims-filename-mode', next)
+        }} />
       </div>
 
       {/* 내 문서 탭 */}

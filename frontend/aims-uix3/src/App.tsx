@@ -91,6 +91,7 @@ import { API_CONFIG, getAuthHeaders, api, getCurrentUserId } from './shared/lib/
 import type { Document as StatusDocument } from './types/documentStatus'
 import { Modal } from './shared/ui'
 import Tooltip from './shared/ui/Tooltip'
+import { FilenameModeToggle } from './shared/ui/FilenameModeToggle'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -2034,24 +2035,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                       <div className="baseviewer-title-row">
                         <span>{fileName}</span>
                         {nameLabel && (
-                          <Tooltip content={rpFilenameMode === 'display'
-                            ? `AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환`
-                            : `원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환`}>
-                            <button
-                              type="button"
-                              className="baseviewer-title-badge"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setRpFilenameMode(prev => {
-                                  const next = prev === 'display' ? 'original' : 'display'
-                                  localStorage.setItem('aims-filename-mode', next)
-                                  return next
-                                })
-                              }}
-                            >
-                              {nameLabel}
-                            </button>
-                          </Tooltip>
+                          <FilenameModeToggle
+                            filenameMode={rpFilenameMode}
+                            onModeChange={(next) => {
+                              setRpFilenameMode(next)
+                              localStorage.setItem('aims-filename-mode', next)
+                            }}
+                          />
                         )}
                       </div>
                       {hasSubtitle && (

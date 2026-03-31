@@ -1,0 +1,55 @@
+/**
+ * FilenameModeToggle — 별칭/원본 파일명 전환 Pill Badge 버튼
+ * 공용 컴포넌트 전용 스타일 (fnm-toggle 접두사)
+ */
+
+/* 공통 베이스 */
+.fnm-toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease-out;
+}
+
+/* 별칭 모드 (primary — 연한 파란 배경 + 짙은 파란 텍스트) */
+.fnm-toggle--alias {
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  border-color: var(--color-primary-300);
+}
+
+/* 원본 모드 (약한 neutral) */
+.fnm-toggle--original {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-primary);
+}
+
+.fnm-toggle:hover {
+  opacity: 0.75;
+}
+
+.fnm-toggle:active {
+  transform: scale(0.95);
+}
+
+/* 다크모드 */
+html[data-theme="dark"] .fnm-toggle--alias {
+  background: var(--color-primary-900);
+  color: var(--color-primary-300);
+  border-color: var(--color-primary-700);
+}
+
+html[data-theme="dark"] .fnm-toggle--original {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-primary);
+}

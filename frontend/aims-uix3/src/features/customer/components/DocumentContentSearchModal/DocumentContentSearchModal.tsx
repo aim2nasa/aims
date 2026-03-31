@@ -13,6 +13,7 @@ import { SearchService } from '@/services/searchService'
 import { resolveFileUrl, resolvePdfUrl } from '../../../../utils/documentTransformers'
 import type { SearchResultItem } from '@/entities/search'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
+import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { getAuthToken, getCurrentUserId } from '@/shared/lib/api'
 import './DocumentContentSearchModal.css'
@@ -593,18 +594,10 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
               <>
                 <div className="doc-search-left__results-count">
                   <span>{results.length}건</span>
-                  <button
-                    type="button"
-                    className="doc-search-left__mode-btn"
-                    onClick={() => {
-                      const next = filenameMode === 'display' ? 'original' : 'display'
-                      setFilenameMode(next)
-                      localStorage.setItem('aims-filename-mode', next)
-                    }}
-                    title={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
-                  >
-                    {filenameMode === 'display' ? '별칭' : '원본'}
-                  </button>
+                  <FilenameModeToggle filenameMode={filenameMode} onModeChange={(next) => {
+                    setFilenameMode(next)
+                    localStorage.setItem('aims-filename-mode', next)
+                  }} />
                 </div>
                 <div className="doc-search-left__results-list">
                   {results.map((item, index) => {

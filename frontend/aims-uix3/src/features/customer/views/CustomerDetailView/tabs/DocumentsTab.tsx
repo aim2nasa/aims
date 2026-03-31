@@ -15,6 +15,7 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Customer } from '@/entities/customer/model'
 import { Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection, DocumentTypeCell, DocumentTypeBadge } from '@/shared/ui'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
+import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { Dropdown } from '@/shared/ui'
 import { Pagination } from '@/shared/ui/Pagination'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
@@ -1279,21 +1280,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <SortIndicator field="originalName" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
                 {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
-                <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}>
-                  <button
-                    type="button"
-                    className={`filename-mode-toggle ${filenameMode === 'display' ? 'filename-mode-toggle--alias' : 'filename-mode-toggle--original'}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      const next = filenameMode === 'display' ? 'original' : 'display'
-                      setFilenameMode(next)
-                      localStorage.setItem('aims-filename-mode', next)
-                    }}
-                    aria-label={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}
-                  >
-                    {filenameMode === 'display' ? '별칭' : '원본'}
-                  </button>
-                </Tooltip>
+                <FilenameModeToggle filenameMode={filenameMode} onModeChange={(next) => {
+                  setFilenameMode(next)
+                  localStorage.setItem('aims-filename-mode', next)
+                }} />
                 <div {...getResizeHandleProps('filename')} />
               </div>
               {/* 🍎 문서 유형 칼럼 헤더 */}

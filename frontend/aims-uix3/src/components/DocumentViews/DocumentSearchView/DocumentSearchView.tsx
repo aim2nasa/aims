@@ -20,6 +20,7 @@ import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/searc
 import { DocumentUtils, DocumentProcessingModule } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, Tooltip, BackButton, type DropdownOption, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
+import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { api } from '@/shared/lib/api'
 import DownloadHelper from '../../../utils/downloadHelper'
 import DraggableModal from '@/shared/ui/DraggableModal'
@@ -1487,20 +1488,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <SortIndicator field="filename" currentSortField={sortField} sortDirection={sortOrder} />
                   </div>
                   {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
-                  <Tooltip content={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}>
-                    <button
-                      type="button"
-                      className={`filename-mode-toggle ${filenameMode === 'display' ? 'filename-mode-toggle--alias' : 'filename-mode-toggle--original'}`}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        const next = filenameMode === 'display' ? 'original' : 'display'
-                        handleFilenameModeChange(next)
-                      }}
-                      aria-label={filenameMode === 'display' ? 'AI가 지어준 별칭으로 표시 중 · 클릭하면 원본 파일명으로 전환' : '원본 파일명 표시 중 · 클릭하면 AI가 지어준 별칭으로 전환'}
-                    >
-                      {filenameMode === 'display' ? '별칭' : '원본'}
-                    </button>
-                  </Tooltip>
+                  <FilenameModeToggle filenameMode={filenameMode} onModeChange={handleFilenameModeChange} />
                 </div>
                 <div
                   className={`header-customer sortable ${sortField === 'customer' ? 'sorted' : ''}`}
