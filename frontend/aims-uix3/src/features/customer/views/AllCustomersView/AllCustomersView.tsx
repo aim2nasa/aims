@@ -13,6 +13,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import { Dropdown, Tooltip, Modal, ContextMenu, useContextMenu, type ContextMenuSection, InitialFilterBar, type InitialType, KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from '@/shared/ui';
 import Button from '@/shared/ui/Button';
+import { Pagination } from '@/shared/ui/Pagination';
 import { SortIndicator } from '@/shared/ui/SortIndicator';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
@@ -85,8 +86,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('customer-all-sort-direction', 'asc');
 
     // UI 상태 (새로고침 시 초기화되어도 됨)
-    const [prevArrowClicked, setPrevArrowClicked] = useState(false);
-    const [nextArrowClicked, setNextArrowClicked] = useState(false);
+    // 클릭 피드백은 Pagination 컴포넌트 내부에서 처리
 
     // 개발자 모드 상태
     const { isDevMode } = useDevModeStore();
@@ -411,20 +411,9 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       setCurrentPage(1);
     };
 
-    const handlePrevPage = () => {
-      if (pagination.currentPage > 1) {
-        setPrevArrowClicked(true);
-        setTimeout(() => setPrevArrowClicked(false), 150);
-        setCurrentPage(pagination.currentPage - 1);
-      }
-    };
-
-    const handleNextPage = () => {
-      if (pagination.currentPage < pagination.totalPages) {
-        setNextArrowClicked(true);
-        setTimeout(() => setNextArrowClicked(false), 150);
-        setCurrentPage(pagination.currentPage + 1);
-      }
+    // 페이지 변경은 Pagination 컴포넌트에서 직접 호출
+    const handlePageChange = (page: number) => {
+      setCurrentPage(page);
     };
 
     // handleTypeFilterChange는 현재 사용되지 않음 (customerTypeFilter가 'all'로 고정)
@@ -976,45 +965,16 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               />
             </div>
 
-            {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
-            {pagination.totalPages > 1 && (
-              <div className="pagination-controls">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handlePrevPage}
-                  disabled={pagination.currentPage === 1}
-                  className="pagination-button pagination-button--prev"
-                  aria-label="이전 페이지"
-                >
-                  <span className={`pagination-arrow ${prevArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
-                    ‹
-                  </span>
-                </Button>
-
-                <div className="pagination-info">
-                  <span className="pagination-current">{pagination.currentPage}</span>
-                  <span className="pagination-separator">/</span>
-                  <span className="pagination-total">{pagination.totalPages}</span>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleNextPage}
-                  disabled={pagination.currentPage === pagination.totalPages}
-                  className="pagination-button pagination-button--next"
-                  aria-label="다음 페이지"
-                >
-                  <span className={`pagination-arrow ${nextArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
-                    ›
-                  </span>
-                </Button>
-              </div>
+            {/* 🍎 페이지 네비게이션 */}
+            {pagination.totalPages > 1 ? (
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+              />
+            ) : (
+              <div className="pagination-spacer"></div>
             )}
-
-            {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
-            {pagination.totalPages <= 1 && <div className="pagination-spacer"></div>}
           </div>
         )}
 

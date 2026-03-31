@@ -13,6 +13,7 @@ import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection, Modal } from '@/shared/ui'
+import { Pagination } from '@/shared/ui/Pagination'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
@@ -636,21 +637,7 @@ const DocumentLibraryContent: React.FC<{
     }
   }, [controller.handleLimitChange])
 
-  // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
-  const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
-
-  /**
-   * 페이지 변경 핸들러 (클릭 피드백 포함)
-   */
-  const handlePageChangeWithFeedback = (page: number, direction: 'prev' | 'next') => {
-    setClickedButton(direction)
-    controller.handlePageChange(page)
-
-    // 600ms 후 클릭 상태 복원
-    setTimeout(() => {
-      setClickedButton(null)
-    }, 600)
-  }
+  // 클릭 피드백은 Pagination 컴포넌트 내부에서 처리
 
   return (
     <>
@@ -1049,41 +1036,16 @@ const DocumentLibraryContent: React.FC<{
             />
           </div>
 
-          {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
-          {state.totalPages > 1 && (
-            <div className="pagination-controls">
-              <button
-                className="pagination-button pagination-button--prev"
-                onClick={() => handlePageChangeWithFeedback(controller.currentPage - 1, 'prev')}
-                disabled={controller.currentPage === 1}
-                aria-label="이전 페이지"
-              >
-                <span className={`pagination-arrow ${clickedButton === 'prev' ? 'pagination-arrow--clicked' : ''}`}>
-                  ‹
-                </span>
-              </button>
-
-              <div className="pagination-info">
-                <span className="pagination-current">{controller.currentPage}</span>
-                <span className="pagination-separator">/</span>
-                <span className="pagination-total">{state.totalPages}</span>
-              </div>
-
-              <button
-                className="pagination-button pagination-button--next"
-                onClick={() => handlePageChangeWithFeedback(controller.currentPage + 1, 'next')}
-                disabled={controller.currentPage === state.totalPages}
-                aria-label="다음 페이지"
-              >
-                <span className={`pagination-arrow ${clickedButton === 'next' ? 'pagination-arrow--clicked' : ''}`}>
-                  ›
-                </span>
-              </button>
-            </div>
+          {/* 🍎 페이지 네비게이션 */}
+          {state.totalPages > 1 ? (
+            <Pagination
+              currentPage={controller.currentPage}
+              totalPages={state.totalPages}
+              onPageChange={controller.handlePageChange}
+            />
+          ) : (
+            <div className="pagination-spacer"></div>
           )}
-
-          {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
-          {state.totalPages <= 1 && <div className="pagination-spacer"></div>}
         </div>
       )}
 

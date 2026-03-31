@@ -159,6 +159,15 @@
     transform: translateX(2px) scale(1.05);
   }
 
+  /* === Direction-specific animations: first/last === */
+  .pagination-button--first .pagination-arrow--clicked {
+    transform: translateX(-2px) scale(1.05);
+  }
+
+  .pagination-button--last .pagination-arrow--clicked {
+    transform: translateX(2px) scale(1.05);
+  }
+
   /* === PAGINATION INFO === */
   .pagination-info {
     display: flex;
@@ -182,6 +191,33 @@
 
   .pagination-total {
     color: var(--color-text-tertiary);
+  }
+
+  /* === 페이지 번호 클릭 가능 상태 (Progressive Disclosure) === */
+  .pagination-current--editable {
+    cursor: text;
+    border-radius: 4px;
+    padding: 0 var(--spacing-1);
+    transition: background-color 0.15s ease;
+  }
+
+  .pagination-current--editable:hover {
+    background-color: var(--color-bg-tertiary);
+  }
+
+  /* === 페이지 번호 입력 모드 === */
+  .pagination-input {
+    width: 40px;
+    text-align: center;
+    font-size: inherit;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--color-text-primary);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-primary-400);
+    border-radius: 4px;
+    padding: 0 var(--spacing-1);
+    outline: none;
   }
 
   /* ============================================================

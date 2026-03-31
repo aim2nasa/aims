@@ -27,6 +27,7 @@ import {
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService'
 import { Tooltip } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
+import { Pagination } from '@/shared/ui/Pagination'
 import SFSymbol, {
   SFSymbolAnimation,
   SFSymbolSize,
@@ -1868,33 +1869,12 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                 />
               </div>
 
-              <div className="pagination-controls">
-                <button
-                  type="button"
-                  className="pagination-button pagination-button--prev"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  aria-label="이전 페이지"
-                >
-                  <span className="pagination-arrow">‹</span>
-                </button>
-
-                <div className="pagination-info">
-                  <span className="pagination-current">{currentPage}</span>
-                  <span className="pagination-separator">/</span>
-                  <span className="pagination-total">{totalPages}</span>
-                </div>
-
-                <button
-                  type="button"
-                  className="pagination-button pagination-button--next"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  aria-label="다음 페이지"
-                >
-                  <span className="pagination-arrow">›</span>
-                </button>
-              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                variant="compact"
+              />
             </div>
           )}
         </>

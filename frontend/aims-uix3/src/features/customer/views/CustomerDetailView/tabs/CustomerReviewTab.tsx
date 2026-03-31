@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
+import { Pagination } from '@/shared/ui/Pagination';
 import { SortIndicator } from '@/shared/ui/SortIndicator';
 import { CustomerReviewModal } from '@/features/customer/components/CustomerReviewModal';
 import { CustomerReviewApi, type CustomerReview } from '@/features/customer/api/customerReviewApi';
@@ -532,17 +533,9 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     );
   }
 
-  // 페이지 변경 핸들러
-  const handlePrevPage = () => {
-    if (safeCurrentPage > 1) {
-      setCurrentPage(safeCurrentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (safeCurrentPage < totalPages) {
-      setCurrentPage(safeCurrentPage + 1);
-    }
+  // 페이지 변경은 Pagination 컴포넌트에서 직접 호출
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   const handleItemsPerPageChange = (value: string) => {
@@ -753,31 +746,12 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
           />
         </div>
 
-        <div className="pagination-controls">
-          <button
-            className="pagination-button pagination-button--prev"
-            onClick={handlePrevPage}
-            disabled={safeCurrentPage === 1}
-            aria-label="이전 페이지"
-          >
-            <span className="pagination-arrow">{"<"}</span>
-          </button>
-
-          <div className="pagination-info">
-            <span className="pagination-current">{safeCurrentPage}</span>
-            <span className="pagination-separator">/</span>
-            <span className="pagination-total">{totalPages}</span>
-          </div>
-
-          <button
-            className="pagination-button pagination-button--next"
-            onClick={handleNextPage}
-            disabled={safeCurrentPage === totalPages}
-            aria-label="다음 페이지"
-          >
-            <span className="pagination-arrow">{">"}</span>
-          </button>
-        </div>
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          variant="compact"
+        />
       </div>
 
       {/* Customer Review Modal */}

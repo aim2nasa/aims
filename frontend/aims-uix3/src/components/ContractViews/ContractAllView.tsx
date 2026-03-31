@@ -12,6 +12,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Button from '@/shared/ui/Button'
+import { Pagination } from '@/shared/ui/Pagination'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { Dropdown, InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui'
 import { Tooltip } from '@/shared/ui/Tooltip'
@@ -118,9 +119,7 @@ export default function ContractAllView({
     localStorage.setItem('aims-contract-all-items-per-page', itemsPerPage)
   }, [itemsPerPage])
 
-  // 페이지네이션 클릭 애니메이션 상태
-  const [prevArrowClicked, setPrevArrowClicked] = useState(false)
-  const [nextArrowClicked, setNextArrowClicked] = useState(false)
+  // 클릭 피드백은 Pagination 컴포넌트 내부에서 처리
 
   // 증권번호 표시 형식 (false: 앞자리 0 제거, true: 10자리 전체 표시)
   const [showFullPolicyNumber, setShowFullPolicyNumber] = useState(false)
@@ -520,21 +519,9 @@ export default function ContractAllView({
     setCurrentPage(1) // 정렬 시 첫 페이지로 이동
   }
 
-  // 페이지 이동 핸들러
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setPrevArrowClicked(true)
-      setCurrentPage(prev => prev - 1)
-      setTimeout(() => setPrevArrowClicked(false), 150)
-    }
-  }
-
-  const handleNextPage = () => {
-    if (currentPage < pagination.totalPages) {
-      setNextArrowClicked(true)
-      setCurrentPage(prev => prev + 1)
-      setTimeout(() => setNextArrowClicked(false), 150)
-    }
+  // 페이지 변경은 Pagination 컴포넌트에서 직접 호출
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
   }
 
   // 보험료 포맷
@@ -1168,45 +1155,16 @@ export default function ContractAllView({
               />
             </div>
 
-            {/* 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
-            {pagination.totalPages > 1 && (
-              <div className="pagination-controls">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handlePrevPage}
-                  disabled={pagination.currentPage === 1}
-                  className="pagination-button pagination-button--prev"
-                  aria-label="이전 페이지"
-                >
-                  <span className={`pagination-arrow ${prevArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
-                    ‹
-                  </span>
-                </Button>
-
-                <div className="pagination-info">
-                  <span className="pagination-current">{pagination.currentPage}</span>
-                  <span className="pagination-separator">/</span>
-                  <span className="pagination-total">{pagination.totalPages}</span>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleNextPage}
-                  disabled={pagination.currentPage === pagination.totalPages}
-                  className="pagination-button pagination-button--next"
-                  aria-label="다음 페이지"
-                >
-                  <span className={`pagination-arrow ${nextArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
-                    ›
-                  </span>
-                </Button>
-              </div>
+            {/* 페이지 네비게이션 */}
+            {pagination.totalPages > 1 ? (
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+              />
+            ) : (
+              <div className="pagination-spacer"></div>
             )}
-
-            {/* 페이지가 1개일 때 빈 공간 유지 */}
-            {pagination.totalPages <= 1 && <div className="pagination-spacer"></div>}
           </div>
         )}
       </div>

@@ -22,6 +22,7 @@ import {
 } from '../../utils/crGroupingUtils'
 // CSS는 AR 스타일 재사용 (Phase 2에서 공통화)
 import { SortIndicator } from '@/shared/ui/SortIndicator'
+import { Pagination } from '@/shared/ui/Pagination'
 import '../BatchArMappingModal/ArFileTable.css'
 
 // ===== 타입 정의 =====
@@ -923,25 +924,12 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
             {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, sortedRows.length)} / {sortedRows.length}
           </div>
           <div className="ar-file-table__pagination-controls">
-            <button
-              type="button"
-              className="ar-file-table__pagination-btn"
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage <= 1 || disabled}
-            >
-              ◀
-            </button>
-            <span className="ar-file-table__pagination-current">
-              {currentPage} / {totalPages}
-            </span>
-            <button
-              type="button"
-              className="ar-file-table__pagination-btn"
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages || disabled}
-            >
-              ▶
-            </button>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+              variant="compact"
+            />
           </div>
           <select
             className="ar-file-table__pagination-size"

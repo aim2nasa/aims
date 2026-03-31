@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
+import { Pagination } from '@/shared/ui/Pagination';
 import { SortIndicator } from '@/shared/ui/SortIndicator';
 import { ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui/ContextMenu';
 import { useToastContext } from '@/shared/ui/Toast';
@@ -1011,17 +1012,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     );
   }
 
-  // 페이지 변경 핸들러
-  const handlePrevPage = () => {
-    if (safeCurrentPage > 1) {
-      setCurrentPage(safeCurrentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (safeCurrentPage < totalPages) {
-      setCurrentPage(safeCurrentPage + 1);
-    }
+  // 페이지 변경은 Pagination 컴포넌트에서 직접 호출
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   // 🍎 페이지당 항목 수 변경 ('auto' 또는 숫자)
@@ -1269,32 +1262,13 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           />
         </div>
 
-        {/* 페이지 네비게이션 - 항상 표시 */}
-        <div className="pagination-controls">
-          <button
-            className="pagination-button pagination-button--prev"
-            onClick={handlePrevPage}
-            disabled={safeCurrentPage === 1}
-            aria-label="이전 페이지"
-          >
-            <span className="pagination-arrow">‹</span>
-          </button>
-
-          <div className="pagination-info">
-            <span className="pagination-current">{safeCurrentPage}</span>
-            <span className="pagination-separator">/</span>
-            <span className="pagination-total">{totalPages}</span>
-          </div>
-
-          <button
-            className="pagination-button pagination-button--next"
-            onClick={handleNextPage}
-            disabled={safeCurrentPage === totalPages}
-            aria-label="다음 페이지"
-          >
-            <span className="pagination-arrow">›</span>
-          </button>
-        </div>
+        {/* 페이지 네비게이션 */}
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          variant="compact"
+        />
       </div>
 
       {/* 🍎 AR 컨텍스트 메뉴 */}

@@ -13,6 +13,7 @@ import React, { useMemo, useState } from 'react'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import type { Document } from '../../../../types/documentStatus'
 import { Dropdown, type DropdownOption } from '@/shared/ui'
+import { Pagination } from '@/shared/ui/Pagination'
 import Tooltip from '@/shared/ui/Tooltip'
 import {
   DocumentIcon,
@@ -262,37 +263,16 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
             />
           </div>
 
-          {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
-          {totalPages > 1 && (
-            <div className="pagination-controls">
-              <button
-                className="pagination-button pagination-button--prev"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                aria-label="이전 페이지"
-              >
-                <span className="pagination-arrow">‹</span>
-              </button>
-
-              <div className="pagination-info">
-                <span className="pagination-current">{currentPage}</span>
-                <span className="pagination-separator">/</span>
-                <span className="pagination-total">{totalPages}</span>
-              </div>
-
-              <button
-                className="pagination-button pagination-button--next"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                aria-label="다음 페이지"
-              >
-                <span className="pagination-arrow">›</span>
-              </button>
-            </div>
+          {/* 🍎 페이지 네비게이션 */}
+          {totalPages > 1 ? (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          ) : (
+            <div className="pagination-spacer"></div>
           )}
-
-          {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
-          {totalPages <= 1 && <div className="pagination-spacer"></div>}
         </div>
       )}
     </div>
