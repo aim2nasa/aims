@@ -437,23 +437,7 @@
     background: var(--color-bg-tertiary);
   }
 
-  /* ============================================
-     상태 필터 + 미연결 필터 레이아웃
-     ============================================ */
-  .library-status-filter-row {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    margin: 0 var(--spacing-2) var(--spacing-1-5);
-    flex-shrink: 0;
-  }
-
-  .library-status-filter-row .library-status-segment {
-    margin: 0;
-    flex: 1;
-  }
-
-  /* 미연결 문서 필터 토글 버튼 */
+  /* 미연결 문서 필터 토글 버튼 (상단 툴바 검색창 옆) */
   .library-unlinked-filter {
     display: flex;
     align-items: center;
