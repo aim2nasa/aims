@@ -718,49 +718,6 @@ const DocumentLibraryContent: React.FC<{
           ) : (
             <>
               {/* === 일반 모드: 기존 레이아웃 === */}
-              {/* 별칭 생성 버튼 */}
-              <Tooltip content="AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="alias-ai-button"
-                  onClick={onToggleAliasMode}
-                  disabled={isDeleteMode || isBulkLinkMode}
-                  aria-label="별칭 생성"
-                >
-                  <SFSymbol
-                    name="sparkles"
-                    size={SFSymbolSize.CAPTION_2}
-                    weight={SFSymbolWeight.MEDIUM}
-                    decorative={true}
-                  />
-                  별칭AI
-                </Button>
-              </Tooltip>
-
-              {/* 삭제 버튼 */}
-              <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
-                <button
-                  type="button"
-                  className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
-                  onClick={onToggleDeleteMode}
-                  disabled={isBulkLinkMode}
-                  aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
-                >
-                  {isDeleteMode ? (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ) : (
-                    <SFSymbol
-                      name="trash"
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.MEDIUM}
-                      decorative={true}
-                    />
-                  )}
-                </button>
-              </Tooltip>
 
               {/* 🍎 고객 필터 칩: 특정 고객의 문서만 필터링 중일 때 표시 */}
               {customerFilter && customerFilter.name && (
@@ -814,9 +771,40 @@ const DocumentLibraryContent: React.FC<{
                 )}
               </span>
 
-              {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
+              {/* 삭제 버튼 (일반 모드): 건수 바로 뒤에 배치 */}
+              {!isDeleteMode && !isAliasMode && !isBulkLinkMode && (
+                <Tooltip content="삭제">
+                  <button
+                    type="button"
+                    className="edit-mode-icon-button"
+                    onClick={onToggleDeleteMode}
+                    aria-label="삭제"
+                  >
+                    <SFSymbol
+                      name="trash"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                      decorative={true}
+                    />
+                  </button>
+                </Tooltip>
+              )}
+
+              {/* 삭제 모드일 때: 완료 + 선택된 개수 + 삭제 버튼 */}
               {isDeleteMode && (
                 <>
+                  <Tooltip content="삭제 완료">
+                    <button
+                      type="button"
+                      className="edit-mode-icon-button edit-mode-icon-button--active"
+                      onClick={onToggleDeleteMode}
+                      aria-label="삭제 완료"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </Tooltip>
                   <span className="selected-count-inline">
                     {selectedDocumentIds.size}개 선택됨
                   </span>
@@ -905,8 +893,34 @@ const DocumentLibraryContent: React.FC<{
 
         </div>
 
-        {/* 오른쪽: 고객 연결 + 연결 고객 없음 필터 (미연결 문서가 있을 때만 표시) */}
+        {/* 오른쪽: 별칭AI + 삭제 | 고객 연결 + 연결 고객 없음 필터 */}
         <div className="header-right-section">
+          {/* 일반 모드에서만 별칭AI/삭제 버튼 표시 */}
+          {!isAliasMode && !isDeleteMode && !isBulkLinkMode && (
+            <>
+              <Tooltip content="AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="alias-ai-button"
+                  onClick={onToggleAliasMode}
+                  aria-label="별칭 생성"
+                >
+                  <SFSymbol
+                    name="sparkles"
+                    size={SFSymbolSize.CAPTION_2}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                  별칭AI
+                </Button>
+              </Tooltip>
+            </>
+          )}
+          {/* 별칭AI/삭제 버튼과 고객 연결 사이 구분선 */}
+          {!isAliasMode && !isDeleteMode && !isBulkLinkMode && (hasUnlinkedDocs || isUnlinkedFilter) && (
+            <div className="header-right-section__divider" />
+          )}
           {(hasUnlinkedDocs || isUnlinkedFilter || isBulkLinkMode) && (
             <>
               {/* 고객 연결 버튼: 미연결 필터 + 일괄 연결 모드 동시 진입 */}
