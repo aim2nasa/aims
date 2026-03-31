@@ -727,10 +727,9 @@ router.get('/documents/status/initials', authenticateJWT, async (req, res) => {
     } else if (fileScope === 'all') {
       filter = { ownerId: userId };
     } else {
-      // excludeMyFiles (기본값)
+      // excludeMyFiles (기본값) — 미연결 문서도 포함
       filter = {
         ownerId: userId,
-        customerId: { $exists: true, $ne: null },
         $expr: { $ne: [{ $toString: '$customerId' }, userId] }
       };
     }
@@ -1124,10 +1123,9 @@ router.get('/documents/status/all-ids', authenticateJWT, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid initialType' });
     }
 
-    // 기본 필터 구성 (documents/status와 동일)
+    // 기본 필터 구성 (documents/status와 동일) — 미연결 문서도 포함
     let filter = {
       ownerId: userId,
-      customerId: { $exists: true, $ne: null },
       $expr: { $ne: [{ $toString: '$customerId' }, userId] }
     };
 
@@ -1230,12 +1228,11 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
     // userId 추출 (헤더 또는 쿼리)
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     // 필터 조건 구성 - ownerId 필터 추가
-    // ⭐ 기본적으로 고객 문서만 표시 (설계사 개인 파일 제외)
-    // customerId가 ownerId와 같으면 개인 파일이므로 제외
+    // ⭐ 개인 파일만 제외, 미연결 문서는 포함
+    // $expr로 customerId === ownerId(개인 파일)만 제외. 미연결(customerId 없음/null)은 자연스럽게 통과
     let filter = {
       ownerId: userId,
-      customerId: { $exists: true, $ne: null },
-      $expr: { $ne: [{ $toString: '$customerId' }, userId] }  // customerId !== ownerId (타입 변환 필요)
+      $expr: { $ne: [{ $toString: '$customerId' }, userId] }
     };
 
     // 🍎 파일 범위 필터 추가
@@ -1257,7 +1254,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
     if (customerLink === 'linked') {
       filter['customerId'] = { $exists: true, $ne: null };
     } else if (customerLink === 'unlinked') {
-      filter['customerId'] = { $exists: false };
+      delete filter['$expr'];  // 미연결 문서에 $expr 불필요
+      filter['customerId'] = null;  // MongoDB: null은 필드 미존재 + null 값 모두 매치
     }
 
     // 🍎 특정 고객의 문서만 필터링 (고객 필터 기능)
@@ -1270,10 +1268,14 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       // 🍎 searchField에 따라 검색 대상 필드 결정
       if (searchField === 'displayName') {
         // 별칭 모드: displayName 우선, 없으면 originalName도 포함 (OR 검색)
-        filter['$or'] = [
-          { displayName: { $regex: escapedSearch, $options: 'i' } },
-          { 'upload.originalName': { $regex: escapedSearch, $options: 'i' } }
-        ];
+        // $and로 push하여 다른 $or 조건과 충돌 방지
+        if (!filter['$and']) filter['$and'] = [];
+        filter['$and'].push({
+          $or: [
+            { displayName: { $regex: escapedSearch, $options: 'i' } },
+            { 'upload.originalName': { $regex: escapedSearch, $options: 'i' } }
+          ]
+        });
       } else {
         // 원본 모드 (기본값): originalName에서만 검색
         filter['upload.originalName'] = { $regex: escapedSearch, $options: 'i' };
@@ -1347,20 +1349,24 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
             }
             // 특정 고객이 초성 범위에 있으면 기존 customerId 필터 유지
           } else {
-            filter['customerId'] = { $in: initialCustomerIds };
+            // $and로 push하여 다른 조건과 충돌 방지 + 미연결 문서 포함
+            if (!filter['$and']) filter['$and'] = [];
+            filter['$and'].push({
+              $or: [
+                { customerId: { $in: initialCustomerIds } },
+                { customerId: null },
+                { customerId: { $exists: false } }
+              ]
+            });
           }
         } else {
-          return res.json({
-            success: true,
-            data: {
-              documents: [],
-              pagination: {
-                currentPage: parseInt(page),
-                totalPages: 0,
-                totalCount: 0,
-                limit: parseInt(limit)
-              }
-            }
+          // 매칭 고객 없음 — 미연결 문서만 반환
+          if (!filter['$and']) filter['$and'] = [];
+          filter['$and'].push({
+            $or: [
+              { customerId: null },
+              { customerId: { $exists: false } }
+            ]
           });
         }
       }
@@ -1422,6 +1428,7 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
             }
             // 특정 고객이 초성 범위에 있으면 기존 customerId 필터 유지
           } else {
+            // 특정 초성 선택: 해당 초성 고객 문서만 (미연결 제외 — 고객명 기준 필터)
             filter['customerId'] = { $in: initialCustomerIds };
           }
         } else {
