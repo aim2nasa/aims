@@ -1020,11 +1020,10 @@ const DocumentLibraryContent: React.FC<{
         searchTerm={state.searchTerm}
         previewDocumentId={previewDocumentId}
       />
-      </div>
 
-      {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}
+      {/* 🍎 페이지네이션: sticky로 리스트 하단에 고정 */}
       {!controller.isLoading && controller.filteredDocuments.length > 0 && (
-        <div className="document-pagination">
+        <div className="document-pagination document-pagination--sticky">
           {/* 🍎 페이지당 항목 수 선택 */}
           <div className="pagination-limit">
             <Dropdown
@@ -1048,6 +1047,7 @@ const DocumentLibraryContent: React.FC<{
           )}
         </div>
       )}
+      </div>
 
       {/* 모달들 */}
       <DocumentDetailModal

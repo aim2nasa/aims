@@ -26,9 +26,9 @@
   .document-library-container {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-3);
+    gap: var(--spacing-2);
     height: 100%;
-    padding: var(--spacing-4);
+    padding: var(--spacing-3) var(--spacing-4) var(--spacing-2);
   }
 
   /* === 🍎 UNIFIED HEADER: 편집 + 총 문서 + 검색 + 필터 + 폴링 + 새로고침 (한 줄) === */
@@ -340,7 +340,15 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-0-5);
+    gap: 1px;
+  }
+
+  /* 🍎 페이지네이션: 리스트 하단 sticky — 내용 적으면 바로 아래, 많으면 뷰포트 하단 고정 */
+  .document-pagination--sticky {
+    position: sticky;
+    bottom: 0;
+    background: var(--color-bg-primary);
+    z-index: 10;
   }
 
 } /* end @layer components */

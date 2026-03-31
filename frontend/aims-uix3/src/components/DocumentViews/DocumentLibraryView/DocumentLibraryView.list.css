@@ -14,10 +14,10 @@
       124px;    /* 액션 버튼 */
     gap: var(--spacing-3);
     align-items: center;
-    padding: var(--spacing-2) var(--spacing-3);
+    padding: var(--spacing-1) var(--spacing-3);
     background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
     border-radius: 4px;
-    margin-bottom: var(--spacing-1);
+    margin-bottom: 0;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-weight: 600;
     color: #4a5568;
@@ -270,8 +270,8 @@
       124px;    /* 액션 버튼 */
     gap: var(--spacing-3);
     align-items: center;
-    height: 32px;
-    padding: var(--spacing-1-5) var(--spacing-3);
+    height: 28px;
+    padding: var(--spacing-1) var(--spacing-3);
     background: var(--color-ios-bg-primary-light);
     border-radius: 4px;
     cursor: pointer;

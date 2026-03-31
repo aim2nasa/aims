@@ -21,8 +21,8 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-4);
-    padding: var(--spacing-4) 0;
-    margin-top: var(--spacing-2);
+    padding: var(--spacing-2) 0;
+    margin-top: var(--spacing-1);
     border-top: 1px solid var(--color-border-primary);
   }
 
