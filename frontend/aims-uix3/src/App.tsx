@@ -2034,15 +2034,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                     <div className="baseviewer-title-wrapper">
                       <div className="baseviewer-title-row">
                         <span>{fileName}</span>
-                        {nameLabel && (
-                          <FilenameModeToggle
-                            filenameMode={rpFilenameMode}
-                            onModeChange={(next) => {
-                              setRpFilenameMode(next)
-                              localStorage.setItem('aims-filename-mode', next)
-                            }}
-                          />
-                        )}
+                        <FilenameModeToggle
+                          filenameMode={rpFilenameMode}
+                          onModeChange={(next) => {
+                            setRpFilenameMode(next)
+                            localStorage.setItem('aims-filename-mode', next)
+                          }}
+                        />
                       </div>
                       {hasSubtitle && (
                         <div className="baseviewer-subtitle-row">
