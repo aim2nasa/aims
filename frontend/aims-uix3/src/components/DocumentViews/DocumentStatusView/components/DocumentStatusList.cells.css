@@ -345,6 +345,46 @@
     color: var(--color-ios-text-quaternary-dark);
   }
 
+  /* 미연결 고객 클릭 가능 버튼 스타일 */
+  .status-customer .customer-none--linkable {
+    background: transparent;
+    border: none;
+    padding: var(--spacing-1) var(--spacing-2);
+    margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-2));
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--color-ios-blue-light);
+  }
+
+  .status-customer .customer-none--linkable:hover {
+    background: var(--color-ios-fill-tertiary-light);
+  }
+
+  .status-customer .customer-none--linkable:active {
+    background: var(--color-ios-fill-secondary-light);
+    transform: scale(0.97);
+  }
+
+  html[data-theme="dark"] .status-customer .customer-none--linkable {
+    color: var(--color-ios-blue-dark);
+  }
+
+  html[data-theme="dark"] .status-customer .customer-none--linkable:hover {
+    background: var(--color-ios-fill-tertiary-dark);
+  }
+
+  html[data-theme="dark"] .status-customer .customer-none--linkable:active {
+    background: var(--color-ios-fill-secondary-dark);
+  }
+
+  .status-customer .customer-none-text {
+    font-size: var(--font-size-caption);
+    letter-spacing: -0.01em;
+  }
+
   /* 고객명 클릭 가능 버튼 스타일 */
   .status-customer .customer-name-button {
     background: transparent;

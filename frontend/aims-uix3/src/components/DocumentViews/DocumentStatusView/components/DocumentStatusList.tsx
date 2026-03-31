@@ -81,6 +81,7 @@ interface DocumentStatusRowProps {
   onSummaryClick?: (document: Document) => void
   onFullTextClick?: (document: Document) => void
   onLinkClick?: (document: Document) => void
+  onUnlinkedCustomerClick?: (documentId: string) => void
   onCustomerClick?: (customerId: string) => void
   onCustomerDoubleClick?: (customerId: string) => void
   onRowContextMenu?: (document: Document, event: React.MouseEvent) => void
@@ -120,6 +121,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   onSummaryClick,
   onFullTextClick,
   onLinkClick,
+  onUnlinkedCustomerClick,
   onCustomerClick,
   onCustomerDoubleClick,
   onRowContextMenu,
@@ -610,6 +612,20 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
           </button>
         ) : (userId && document.customerId && userId === document.customerId) ? (
           <span className="customer-id-text">{userId}</span>
+        ) : onUnlinkedCustomerClick ? (
+          <button
+            className="customer-none customer-none--linkable"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              const docId = document._id ?? document.id
+              if (docId) onUnlinkedCustomerClick(docId)
+            }}
+            aria-label="고객 연결"
+          >
+            <span className="customer-none-text">고객 연결</span>
+          </button>
         ) : (
           <span className="customer-none">-</span>
         )}
@@ -703,6 +719,8 @@ export interface DocumentStatusListProps {
   onSummaryClick?: (document: Document) => void
   onFullTextClick?: (document: Document) => void
   onLinkClick?: (document: Document) => void
+  // 🍎 미연결 고객 클릭 (단건 고객 연결)
+  onUnlinkedCustomerClick?: (documentId: string) => void
   // 🍎 Sort props
   sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null
   sortDirection?: 'asc' | 'desc'
@@ -891,6 +909,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onSummaryClick,
   onFullTextClick,
   onLinkClick,
+  onUnlinkedCustomerClick,
   sortField,
   sortDirection,
   onColumnSort,
@@ -1418,6 +1437,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             onSummaryClick={onSummaryClick}
             onFullTextClick={onFullTextClick}
             onLinkClick={onLinkClick}
+            onUnlinkedCustomerClick={onUnlinkedCustomerClick}
             onCustomerClick={onCustomerClick}
             onCustomerDoubleClick={onCustomerDoubleClick}
             onRowContextMenu={onRowContextMenu}

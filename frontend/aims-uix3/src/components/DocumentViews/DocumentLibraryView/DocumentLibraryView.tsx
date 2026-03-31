@@ -117,6 +117,7 @@ const DocumentLibraryContent: React.FC<{
   onCustomerClick?: (customerId: string) => void
   onCustomerDoubleClick?: (customerId: string) => void
   onBulkLinkClick: (documents: Document[]) => void
+  onUnlinkedCustomerClick?: (documentId: string) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
   onNavigate?: (viewKey: string) => void
   /** 고객 필터 상태 (null이면 필터 없음) */
@@ -137,7 +138,7 @@ const DocumentLibraryContent: React.FC<{
   onStartCustomerLink: () => void
   /** 고객 연결 모드 취소 */
   onCancelBulkLink: () => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter, onStartCustomerLink, onCancelBulkLink }) => {
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onUnlinkedCustomerClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter, onStartCustomerLink, onCancelBulkLink }) => {
   // 🍎 처리 상태 필터 (전체 | 처리중 | 완료 | 에러)
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'processing' | 'completed' | 'error'>('all')
 
@@ -1005,6 +1006,7 @@ const DocumentLibraryContent: React.FC<{
         onSummaryClick={controller.handleDocumentSummary}
         onFullTextClick={controller.handleDocumentFullText}
         onLinkClick={controller.handleDocumentLink}
+        onUnlinkedCustomerClick={onUnlinkedCustomerClick}
         sortField={controller.sortField}
         sortDirection={controller.sortDirection}
         onColumnSort={controller.handleColumnSort}
@@ -1565,6 +1567,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onAliasCancel={aliasGeneration.cancel}
             onBulkLinkClick={(documents) => {
               setDocumentsToLink(documents.map(d => d._id || '').filter(Boolean))
+              setIsCustomerSelectorVisible(true)
+            }}
+            onUnlinkedCustomerClick={(documentId) => {
+              setDocumentsToLink([documentId])
               setIsCustomerSelectorVisible(true)
             }}
             onRemoveDocumentsExpose={(fn) => {
