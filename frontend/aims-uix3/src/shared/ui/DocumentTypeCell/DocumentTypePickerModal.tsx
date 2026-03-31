@@ -19,8 +19,6 @@ interface DocumentTypePickerPopoverProps {
   onClose: () => void
 }
 
-const GROUPED_TYPES = getGroupedDocumentTypes()
-
 export const DocumentTypePickerPopover: React.FC<DocumentTypePickerPopoverProps> = ({
   visible,
   currentType,
@@ -28,6 +26,8 @@ export const DocumentTypePickerPopover: React.FC<DocumentTypePickerPopoverProps>
   onSelect,
   onClose,
 }) => {
+  // 🐛 FIX: 모듈 레벨에서 호출하면 prefetch 전이라 빈 배열. 렌더 시점에 호출
+  const GROUPED_TYPES = useMemo(() => getGroupedDocumentTypes(), [visible])
   const currentCategory = getCategoryForType(currentType)
   const [expandedCategory, setExpandedCategory] = useState<string>(currentCategory)
   const [selectedType, setSelectedType] = useState<string | null>(null)
