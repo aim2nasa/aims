@@ -19,9 +19,10 @@ interface RecentCustomersProps {
   onCustomerDoubleClick?: (customerId: string) => void
 }
 
-// 개인/법인 고객 아이콘
+// 개인/법인 고객 아이콘 (전체 고객 보기와 동일한 표준 SVG)
 const PersonIcon = () => (
   <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" className="recent-customer-icon--personal">
+    <circle cx="10" cy="10" r="10" opacity="0.2" />
     <circle cx="10" cy="7" r="3" />
     <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
   </svg>
@@ -29,6 +30,7 @@ const PersonIcon = () => (
 
 const BuildingIcon = () => (
   <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" className="recent-customer-icon--corporate">
+    <circle cx="10" cy="10" r="10" opacity="0.2" />
     <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
   </svg>
 )
