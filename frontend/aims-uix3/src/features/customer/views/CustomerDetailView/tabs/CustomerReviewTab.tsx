@@ -199,7 +199,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
       if (opt.value === 'auto') {
         return {
           value: 'auto',
-          label: itemsPerPageMode === 'auto' ? `자동(${autoCalculatedItems})` : '자동'
+          label: itemsPerPageMode === 'auto' ? (autoCalculatedItems >= 9999 ? '자동(전체)' : `자동(${autoCalculatedItems})`) : '자동'
         };
       }
       return opt;
