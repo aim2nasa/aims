@@ -12,7 +12,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-0-5);
-    padding-right: var(--spacing-1);
+    padding-right: 0;
   }
 
   /* === 🍎 COLUMN HEADER: 문서 처리 현황 헤더 === */
