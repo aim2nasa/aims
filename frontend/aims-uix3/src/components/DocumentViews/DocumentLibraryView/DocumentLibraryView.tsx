@@ -102,7 +102,6 @@ const DocumentLibraryContent: React.FC<{
   onSelectAllIds: (ids: string[]) => void
   onSelectDocument: (documentId: string, event: React.MouseEvent) => void
   onToggleDeleteMode: () => void
-  onToggleBulkLinkMode: () => void
   onToggleAliasMode: () => void
   onDocumentClick?: (documentId: string) => void
   onDocumentDoubleClick?: (document: Document) => void
@@ -132,7 +131,9 @@ const DocumentLibraryContent: React.FC<{
   isUnlinkedFilter: boolean
   /** 미연결 필터 토글 핸들러 */
   onToggleUnlinkedFilter: () => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter }) => {
+  /** 고객 연결 시작 핸들러 (미연결 필터 + 일괄 연결 모드 동시 진입) */
+  onStartCustomerLink: () => void
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter, onStartCustomerLink }) => {
   // 🍎 처리 상태 필터 (전체 | 처리중 | 완료 | 에러)
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'processing' | 'completed' | 'error'>('all')
 
@@ -706,25 +707,6 @@ const DocumentLibraryContent: React.FC<{
           ) : (
             <>
               {/* === 일반 모드: 기존 레이아웃 === */}
-              {/* 고객 일괄 연결 버튼 */}
-              <Tooltip content={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}>
-                <button
-                  type="button"
-                  className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
-                  onClick={onToggleBulkLinkMode}
-                  disabled={isDeleteMode}
-                  aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
-                >
-                  {isBulkLinkMode ? (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ) : (
-                    <LinkIcon width={13} height={13} />
-                  )}
-                </button>
-              </Tooltip>
-
               {/* 별칭 생성 버튼 */}
               <Tooltip content="AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다">
                 <Button
@@ -899,8 +881,20 @@ const DocumentLibraryContent: React.FC<{
 
         </div>
 
-        {/* 오른쪽: 연결 고객 없음 필터 */}
+        {/* 오른쪽: 고객 연결 + 연결 고객 없음 필터 */}
         <div className="header-right-section">
+          {/* 고객 연결 버튼: 미연결 필터 + 일괄 연결 모드 동시 진입 */}
+          {!isBulkLinkMode && !isDeleteMode && !isAliasMode && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onStartCustomerLink}
+              aria-label="미연결 문서에 고객 연결"
+            >
+              <LinkIcon width={13} height={13} />
+              고객 연결
+            </Button>
+          )}
           {isUnlinkedFilter ? (
             <div className="library-unlinked-filter library-unlinked-filter--active" role="status" aria-label="연결 고객 없음 필터 적용 중">
               <span>연결 고객 없음</span>
@@ -1214,6 +1208,16 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 🍎 고객 일괄 연결 기능 상태
   const [isBulkLinkMode, setIsBulkLinkMode] = React.useState(false)
 
+  // 🍎 "고객 연결" 버튼 핸들러: 미연결 필터 + 일괄 연결 모드 동시 활성화
+  const handleStartCustomerLink = React.useCallback(() => {
+    setIsUnlinkedFilter(true)
+    setCustomerFilter(null)
+    setIsBulkLinkMode(true)
+    setIsDeleteMode(false)
+    setIsAliasMode(false)
+    setSelectedDocumentIds(new Set())
+  }, [])
+
   // 🍎 별칭 일괄 생성 기능 상태
   const [isAliasMode, setIsAliasMode] = React.useState(false)
   const aliasGeneration = useAliasGeneration()
@@ -1246,18 +1250,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       setIsBulkLinkMode(false)
     }
   }, [isDeleteMode, isBulkLinkMode])
-
-  // 🍎 고객 일괄 연결 모드 토글 핸들러
-  const handleToggleBulkLinkMode = React.useCallback(() => {
-    if (isBulkLinkMode) {
-      setSelectedDocumentIds(new Set())
-    }
-    setIsBulkLinkMode(!isBulkLinkMode)
-    // 일괄 연결 모드 켜면 삭제 모드는 끄기
-    if (!isBulkLinkMode && isDeleteMode) {
-      setIsDeleteMode(false)
-    }
-  }, [isBulkLinkMode, isDeleteMode])
 
   // 🍎 별칭 생성 모드 토글 핸들러
   const handleToggleAliasMode = React.useCallback(() => {
@@ -1501,7 +1493,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onSelectAllIds={handleSelectAllIds}
             onSelectDocument={handleSelectDocument}
             onToggleDeleteMode={handleToggleDeleteMode}
-            onToggleBulkLinkMode={handleToggleBulkLinkMode}
             onToggleAliasMode={handleToggleAliasMode}
             onDeleteSelected={handleDeleteSelected}
             onDeleteSingleDocument={handleDeleteSingleDocument}
@@ -1532,6 +1523,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onRefreshExpose={onRefreshExpose}
             isUnlinkedFilter={isUnlinkedFilter}
             onToggleUnlinkedFilter={handleToggleUnlinkedFilter}
+            onStartCustomerLink={handleStartCustomerLink}
           />
         </DocumentStatusProvider>
       </div>
