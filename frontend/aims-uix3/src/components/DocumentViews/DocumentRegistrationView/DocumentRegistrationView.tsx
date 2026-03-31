@@ -2274,6 +2274,29 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           />
         )}
 
+        {/* 🍎 문서 처리 흐름 안내 - 업로드 전에만 표시 */}
+        {!isLogVisible && (
+          <div className="doc-register-flow-guide">
+            <div className="flow-step flow-step--active">
+              <span className="flow-step__number">①</span>
+              <span className="flow-step__title">문서 등록</span>
+              <span className="flow-step__desc">지금 이 화면</span>
+            </div>
+            <span className="flow-arrow">→</span>
+            <div className="flow-step">
+              <span className="flow-step__number">②</span>
+              <span className="flow-step__title">전체 문서 보기</span>
+              <span className="flow-step__desc">처리 현황 확인</span>
+            </div>
+            <span className="flow-arrow">→</span>
+            <div className="flow-step">
+              <span className="flow-step__number">③</span>
+              <span className="flow-step__title">고객별 문서함</span>
+              <span className="flow-step__desc">등록 문서 확인</span>
+            </div>
+          </div>
+        )}
+
         {/* 🍎 처리 로그 (업로드 시작 후에만 표시) */}
         {isLogVisible && (
           <div className="file-log-container">
