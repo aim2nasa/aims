@@ -1122,7 +1122,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                     .map(([groupId, groupData]) => {
                       const representativeName = groupData.representative.personal_info?.name || '이름없음';
                       const groupKey = `family-${groupId}`;
-                      const relationKey = `${groupKey}-relations`;
 
                       return (
                         <div key={groupKey} className="tree-group">
@@ -1130,8 +1129,12 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                             className="tree-node tree-node--group"
                             onClick={() => toggleNode(groupKey)}
                           >
-                            <span className={`tree-node__icon ${expandedNodes.has(groupKey) ? 'expanded' : ''}`}>
-                              {expandedNodes.has(groupKey) ? '📂' : '📁'}
+                            <span className="tree-node__icon">
+                              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+                                <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                <circle cx="10" cy="7" r="3" />
+                                <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                              </svg>
                             </span>
                             <div className="tree-node__content">
                               <span
@@ -1139,19 +1142,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                 onClick={(e) => handleCustomerClick(groupData.representative._id, e)}
                                 onDoubleClick={(e) => handleCustomerDoubleClick(groupData.representative._id, e)}
                               >
-                                👑 {highlightText(representativeName, searchQuery)} (대표)
+                                {highlightText(representativeName, searchQuery)} (대표)
                               </span>
-                              {groupData.relations.length > 0 && (
-                                <span
-                                  className="tree-node__relation-toggle"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleNode(relationKey);
-                                  }}
-                                >
-                                  {expandedNodes.has(relationKey) ? '🔗' : '🔗'}
-                                </span>
-                              )}
                               <span className="tree-node__badge tree-node__badge--success">
                                 {groupData.members.length}
                               </span>
@@ -1187,42 +1179,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                   </div>
                                 ))}
 
-                              {/* 관계 정보 - 🔗 클릭 시에만 표시 */}
-                              {expandedNodes.has(relationKey) && groupData.relations.length > 0 && (
-                                <div className="relation-list">
-                                  {groupData.relations.map((relation) => {
-                                    // A → B: A의 입장에서 B는 어떤 관계인지 표시
-                                    // relationLabel은 이미 A→B 관계를 나타냄 (from의 입장에서 to의 관계)
-                                    const relationFromA = `${relation.fromName}의 ${relation.relationLabel}`;
-
-                                    // 아이콘도 relationLabel(A→B 관계)에 맞춰 표시
-                                    const getRelationIcon = (label: string) => {
-                                      switch (label) {
-                                        case '배우자': return '❤️';       // 대칭 관계 (하트)
-                                        case '자녀': return '👶';         // A의 자녀
-                                        case '부모': return '👨‍👩';       // A의 부모 = 부모 세대
-                                        case '형제자매': return '👫';     // 대칭 관계
-                                        default: return '👥';
-                                      }
-                                    };
-
-                                    const icon = getRelationIcon(relation.relationLabel);
-
-                                    return (
-                                      <div
-                                        key={relation.key}
-                                        className="relation-item"
-                                        title={relationFromA}
-                                      >
-                                        <span className="relation-item__icon">{icon}</span>
-                                        <span className="relation-item__text">
-                                          {relation.fromName} → {relation.toName}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
                             </div>
                           )}
                         </div>
@@ -1311,8 +1267,11 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                             className="tree-node tree-node--group"
                             onClick={() => toggleNode(companyKey)}
                           >
-                            <span className={`tree-node__icon ${expandedNodes.has(companyKey) ? 'expanded' : ''}`}>
-                              {expandedNodes.has(companyKey) ? '📂' : '📁'}
+                            <span className="tree-node__icon">
+                              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
+                                <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                              </svg>
                             </span>
                             <div className="tree-node__content">
                               <span
@@ -1457,8 +1416,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
         <div className="help-modal-section">
           <p><strong>👨‍👩‍👧‍👦 가족 관계</strong></p>
           <ul>
-            <li>가족 폴더 클릭 → 가족 그룹 표시</li>
-            <li><strong>👑 표시</strong> = 가족 대표</li>
+            <li>가족 그룹 클릭 → 가족 구성원 표시</li>
+            <li><strong>(대표)</strong> 표시 = 가족 대표</li>
             <li>이름 클릭 → <strong>상세 정보</strong></li>
           </ul>
         </div>
@@ -1466,7 +1425,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
         <div className="help-modal-section">
           <p><strong>🏢 법인 관계</strong></p>
           <ul>
-            <li>법인 폴더 클릭 → 소속 <strong>직원/임원</strong> 표시</li>
+            <li>법인 그룹 클릭 → 소속 <strong>직원/임원</strong> 표시</li>
             <li>괄호 안에 <strong>직책</strong> (대표, 임원, 직원)</li>
           </ul>
         </div>
@@ -1483,7 +1442,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
           <p><strong>💡 활용</strong></p>
           <ul>
             <li>가족 보험 설계 → <strong>가족 그룹</strong>에서 확인</li>
-            <li>법인 단체보험 → <strong>법인 폴더</strong>에서 파악</li>
+            <li>법인 단체보험 → <strong>법인 그룹</strong>에서 파악</li>
           </ul>
         </div>
       </div>
