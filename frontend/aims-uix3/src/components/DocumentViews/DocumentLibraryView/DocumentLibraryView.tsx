@@ -656,61 +656,9 @@ const DocumentLibraryContent: React.FC<{
     <>
       {/* 🍎 통합 헤더: 총 문서 개수 + 검색창 + 필터 버튼 + 편집 + 실시간 + 새로고침 (한 줄) */}
       <div className="library-unified-header">
-        {/* 왼쪽: 모드별 컨트롤 + 총 문서 개수 */}
+        {/* 왼쪽: 총 문서 개수 + 삭제/연결 모드 컨트롤 */}
         <div className="header-left-section">
-          {/* === 별칭 모드: A+B 통합 그룹 === */}
-          {isAliasMode ? (
-            <div className="alias-mode-group">
-              <span className="alias-mode-count">
-                {selectedDocumentIds.size}개 선택됨
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onGenerateAliases(forceRegenerateAlias)}
-                disabled={isGeneratingAliases || selectedDocumentIds.size === 0}
-                className="alias-generate-button"
-              >
-                <SFSymbol
-                  name="sparkles"
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
-                {isGeneratingAliases ? '생성 중...' : '별칭 생성'}
-              </Button>
-              <label className="alias-force-label">
-                <input
-                  type="checkbox"
-                  checked={forceRegenerateAlias}
-                  onChange={(e) => setForceRegenerateAlias(e.target.checked)}
-                />
-                <span>별칭이 있는 문서도 새로 만들기</span>
-              </label>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onToggleAliasMode}
-              >
-                취소
-              </Button>
-              <span className="alias-mode-divider" />
-              {/* 총 문서 개수 — AB 다음에 위치 */}
-              <span className="result-count">
-                {state.totalCount > 0 ? (
-                  <>
-                    {((state.currentPage - 1) * state.itemsPerPage) + 1}-
-                    {Math.min(state.currentPage * state.itemsPerPage, state.totalCount)}
-                    {' / '}총 {state.totalCount}개
-                  </>
-                ) : (
-                  '문서 없음'
-                )}
-              </span>
-            </div>
-          ) : (
             <>
-              {/* === 일반 모드: 기존 레이아웃 === */}
 
               {/* 🍎 고객 필터 칩: 특정 고객의 문서만 필터링 중일 때 표시 */}
               {customerFilter && customerFilter.name && (
@@ -841,7 +789,6 @@ const DocumentLibraryContent: React.FC<{
                 </>
               )}
             </>
-          )}
         </div>
 
         {/* 중앙: 검색창 + 필터 버튼 */}
@@ -883,27 +830,61 @@ const DocumentLibraryContent: React.FC<{
 
         {/* 오른쪽: 별칭AI + 삭제 | 고객 연결 + 연결 고객 없음 필터 */}
         <div className="header-right-section">
-          {/* 일반 모드에서만 별칭AI/삭제 버튼 표시 */}
-          {!isAliasMode && !isDeleteMode && !isBulkLinkMode && (
-            <>
-              <Tooltip content="AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="alias-ai-button"
-                  onClick={onToggleAliasMode}
-                  aria-label="별칭 생성"
-                >
-                  <SFSymbol
-                    name="sparkles"
-                    size={SFSymbolSize.CAPTION_2}
-                    weight={SFSymbolWeight.MEDIUM}
-                    decorative={true}
-                  />
-                  별칭AI
-                </Button>
-              </Tooltip>
-            </>
+          {/* 별칭 모드: 별칭AI 버튼 자리에 모드 컨트롤 표시 */}
+          {isAliasMode ? (
+            <div className="alias-mode-group">
+              <span className="alias-mode-count">
+                {selectedDocumentIds.size}개 선택됨
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="alias-ai-button"
+                onClick={() => onGenerateAliases(forceRegenerateAlias)}
+                disabled={isGeneratingAliases || selectedDocumentIds.size === 0}
+              >
+                <SFSymbol
+                  name="sparkles"
+                  size={SFSymbolSize.CAPTION_2}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
+                {isGeneratingAliases ? '생성 중...' : '별칭 생성'}
+              </Button>
+              <label className="alias-force-label">
+                <input
+                  type="checkbox"
+                  checked={forceRegenerateAlias}
+                  onChange={(e) => setForceRegenerateAlias(e.target.checked)}
+                />
+                <span>별칭이 있는 문서도 새로 만들기</span>
+              </label>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onToggleAliasMode}
+              >
+                취소
+              </Button>
+            </div>
+          ) : !isDeleteMode && !isBulkLinkMode && (
+            <Tooltip content="AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="alias-ai-button"
+                onClick={onToggleAliasMode}
+                aria-label="별칭 생성"
+              >
+                <SFSymbol
+                  name="sparkles"
+                  size={SFSymbolSize.CAPTION_2}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
+                별칭AI
+              </Button>
+            </Tooltip>
           )}
           {/* 별칭AI/삭제 버튼과 고객 연결 사이 구분선 */}
           {!isAliasMode && !isDeleteMode && !isBulkLinkMode && (hasUnlinkedDocs || isUnlinkedFilter) && (
