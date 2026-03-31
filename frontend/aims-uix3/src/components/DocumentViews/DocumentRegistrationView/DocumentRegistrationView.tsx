@@ -2279,19 +2279,28 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           <div className="doc-register-flow-guide">
             <div className="flow-step flow-step--active">
               <span className="flow-step__number">①</span>
-              <span className="flow-step__title">문서 등록</span>
+              <span className="flow-step__title">
+                <SFSymbol name="doc-badge-plus" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+                문서 등록
+              </span>
               <span className="flow-step__desc">지금 이 화면</span>
             </div>
             <span className="flow-arrow">→</span>
             <div className="flow-step">
               <span className="flow-step__number">②</span>
-              <span className="flow-step__title">전체 문서 보기</span>
+              <span className="flow-step__title">
+                <SFSymbol name="books-vertical" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+                전체 문서 보기
+              </span>
               <span className="flow-step__desc">처리 현황 확인</span>
             </div>
             <span className="flow-arrow">→</span>
             <div className="flow-step">
               <span className="flow-step__number">③</span>
-              <span className="flow-step__title">고객별 문서함</span>
+              <span className="flow-step__title">
+                <SFSymbol name="folder" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
+                고객별 문서함
+              </span>
               <span className="flow-step__desc">등록 문서 확인</span>
             </div>
           </div>
