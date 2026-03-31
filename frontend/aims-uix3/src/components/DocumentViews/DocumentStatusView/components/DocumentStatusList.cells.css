@@ -327,9 +327,6 @@
   .status-customer .customer-name {
     color: var(--color-ios-text-primary-light);
     font-weight: 600;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
@@ -464,6 +461,48 @@
     display: inline-flex;
     align-items: center;
     gap: 0;
+  }
+
+  /* 연결된 고객 변경 아이콘 — 행 호버 시에만 표시 */
+  .status-customer .customer-change-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    margin-left: var(--spacing-1);
+    border: none;
+    border-radius: var(--radius-sm, 4px);
+    background: transparent;
+    cursor: pointer;
+    color: var(--color-ios-text-quaternary-light);
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .status-customer .customer-change-icon {
+    color: var(--color-ios-text-quaternary-dark);
+  }
+
+  /* 행 호버 시 아이콘 표시 */
+  .status-item:hover .customer-change-icon {
+    opacity: 1;
+  }
+
+  .status-customer .customer-change-icon:hover {
+    color: var(--color-primary-500);
+    background: var(--color-ios-fill-tertiary-light);
+  }
+
+  html[data-theme="dark"] .status-customer .customer-change-icon:hover {
+    color: var(--color-primary-400);
+    background: var(--color-ios-fill-tertiary-dark);
+  }
+
+  .status-customer .customer-change-icon:active {
+    transform: scale(0.9);
   }
 
   /* 내 파일 뱃지 */

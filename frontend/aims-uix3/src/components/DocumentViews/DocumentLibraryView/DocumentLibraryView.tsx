@@ -118,6 +118,7 @@ const DocumentLibraryContent: React.FC<{
   onCustomerDoubleClick?: (customerId: string) => void
   onBulkLinkClick: (documents: Document[]) => void
   onUnlinkedCustomerClick?: (documentId: string) => void
+  onChangeCustomerClick?: (documentId: string, currentCustomerId: string) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
   onNavigate?: (viewKey: string) => void
   /** 고객 필터 상태 (null이면 필터 없음) */
@@ -138,7 +139,7 @@ const DocumentLibraryContent: React.FC<{
   onStartCustomerLink: () => void
   /** 고객 연결 모드 취소 */
   onCancelBulkLink: () => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onUnlinkedCustomerClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter, onStartCustomerLink, onCancelBulkLink }) => {
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onUnlinkedCustomerClick, onChangeCustomerClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter, onStartCustomerLink, onCancelBulkLink }) => {
   // 🍎 처리 상태 필터 (전체 | 처리중 | 완료 | 에러)
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'processing' | 'completed' | 'error'>('all')
 
@@ -1007,6 +1008,7 @@ const DocumentLibraryContent: React.FC<{
         onFullTextClick={controller.handleDocumentFullText}
         onLinkClick={controller.handleDocumentLink}
         onUnlinkedCustomerClick={onUnlinkedCustomerClick}
+        onChangeCustomerClick={onChangeCustomerClick}
         sortField={controller.sortField}
         sortDirection={controller.sortDirection}
         onColumnSort={controller.handleColumnSort}
@@ -1272,13 +1274,34 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
   const [isCustomerSelectorVisible, setIsCustomerSelectorVisible] = React.useState(false)
   const [documentsToLink, setDocumentsToLink] = React.useState<string[]>([])
+  // 🍎 고객 변경 모드: 기존 고객에서 연결 해제 후 새 고객에 연결
+  const [documentToChangeCustomer, setDocumentToChangeCustomer] = React.useState<{
+    docId: string
+    currentCustomerId: string
+  } | null>(null)
 
-  // 🍎 고객 선택 후 문서 일괄 연결 핸들러
+  // 🍎 고객 변경 아이콘 클릭 핸들러
+  const handleChangeCustomerClick = React.useCallback((docId: string, currentCustomerId: string) => {
+    setDocumentToChangeCustomer({ docId, currentCustomerId })
+    setDocumentsToLink([docId])
+    setIsCustomerSelectorVisible(true)
+  }, [])
+
+  // 🍎 고객 선택 후 문서 연결 핸들러 (신규 연결 + 고객 변경 통합)
   const handleCustomerSelectedForLink = React.useCallback(async (customer: Customer) => {
     setIsCustomerSelectorVisible(false)
 
     try {
-      // 선택된 문서들을 고객에 연결
+      // 고객 변경 모드: 기존 고객에서 연결 해제 먼저
+      if (documentToChangeCustomer) {
+        await DocumentService.unlinkDocumentFromCustomer(
+          documentToChangeCustomer.currentCustomerId,
+          documentToChangeCustomer.docId,
+        )
+        setDocumentToChangeCustomer(null)
+      }
+
+      // 선택된 문서들을 새 고객에 연결
       for (const docId of documentsToLink) {
         await DocumentService.linkDocumentToCustomer(customer._id, {
           document_id: docId,
@@ -1289,6 +1312,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       window.location.reload()
     } catch (error) {
       console.error('문서 연결 실패:', error)
+      setDocumentToChangeCustomer(null)
       errorReporter.reportApiError(error instanceof Error ? error : new Error('문서 연결 실패'), {
         component: 'DocumentLibraryView',
         payload: {
@@ -1298,7 +1322,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         },
       })
     }
-  }, [documentsToLink])
+  }, [documentsToLink, documentToChangeCustomer])
 
   // 🍎 Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController()
@@ -1573,6 +1597,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               setDocumentsToLink([documentId])
               setIsCustomerSelectorVisible(true)
             }}
+            onChangeCustomerClick={handleChangeCustomerClick}
             onRemoveDocumentsExpose={(fn) => {
               removeDocumentsFnRef.current = fn
             }}
@@ -1610,9 +1635,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           onClose={() => {
             setIsCustomerSelectorVisible(false)
             setDocumentsToLink([])
+            setDocumentToChangeCustomer(null)
           }}
           onSelect={handleCustomerSelectedForLink}
-          title={`고객 선택 (${documentsToLink.length}건 연결)`}
+          title={documentToChangeCustomer ? '고객 변경' : `고객 선택 (${documentsToLink.length}건 연결)`}
         />
       )}
 

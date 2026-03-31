@@ -47,7 +47,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { defaultWidth: '60px',                defaultPx: 60,  minWidth: 40,  resizable: true  },  // 타입
   { defaultWidth: '120px',               defaultPx: 120, minWidth: 80,  resizable: true  },  // 업로드 날짜
   { defaultWidth: '80px',                defaultPx: 80,  minWidth: 50,  resizable: true  },  // 상태
-  { defaultWidth: '130px',               defaultPx: 130, minWidth: 60,  resizable: true  },  // 연결된 고객
+  { defaultWidth: 'minmax(130px, auto)',  defaultPx: 150, minWidth: 100, resizable: true  },  // 연결된 고객
   { defaultWidth: '52px',                defaultPx: 52,  minWidth: 40,  resizable: false },  // 액션 버튼
 ]
 
@@ -82,6 +82,7 @@ interface DocumentStatusRowProps {
   onFullTextClick?: (document: Document) => void
   onLinkClick?: (document: Document) => void
   onUnlinkedCustomerClick?: (documentId: string) => void
+  onChangeCustomerClick?: (documentId: string, currentCustomerId: string) => void
   onCustomerClick?: (customerId: string) => void
   onCustomerDoubleClick?: (customerId: string) => void
   onRowContextMenu?: (document: Document, event: React.MouseEvent) => void
@@ -122,6 +123,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   onFullTextClick,
   onLinkClick,
   onUnlinkedCustomerClick,
+  onChangeCustomerClick,
   onCustomerClick,
   onCustomerDoubleClick,
   onRowContextMenu,
@@ -555,61 +557,83 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
       {/* 연결된 고객 */}
       <div className="status-customer">
         {document.customer_relation?.customer_name ? (
-          <button
-            className="customer-name customer-name-button"
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
-              const customerId = document.customer_relation?.customer_id
-              if (!customerId) return
+          <>
+            <button
+              className="customer-name customer-name-button"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                const customerId = document.customer_relation?.customer_id
+                if (!customerId) return
 
-              // 더블클릭 대기 (250ms)
-              if (customerClickTimer.current) {
-                clearTimeout(customerClickTimer.current)
-              }
-              customerClickTimer.current = setTimeout(() => {
-                // 싱글클릭: RightPane에 고객 정보 표시
-                if (onCustomerClick) {
-                  onCustomerClick(customerId)
+                // 더블클릭 대기 (250ms)
+                if (customerClickTimer.current) {
+                  clearTimeout(customerClickTimer.current)
                 }
-                customerClickTimer.current = null
-              }, 250)
-            }}
-            onDoubleClick={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
-              const customerId = document.customer_relation?.customer_id
-              if (!customerId) return
+                customerClickTimer.current = setTimeout(() => {
+                  // 싱글클릭: RightPane에 고객 정보 표시
+                  if (onCustomerClick) {
+                    onCustomerClick(customerId)
+                  }
+                  customerClickTimer.current = null
+                }, 250)
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                const customerId = document.customer_relation?.customer_id
+                if (!customerId) return
 
-              // 싱글클릭 타이머 취소
-              if (customerClickTimer.current) {
-                clearTimeout(customerClickTimer.current)
-                customerClickTimer.current = null
-              }
-              // 더블클릭: 고객 전체보기 페이지로 이동
-              if (onCustomerDoubleClick) {
-                onCustomerDoubleClick(customerId)
-              }
-            }}
-            aria-label={`${document.customer_relation.customer_name} 상세 보기`}
-          >
-            <div className="customer-icon-wrapper">
-              {document.customer_relation.customer_type === '법인' ? (
-                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
-                  <circle cx="10" cy="10" r="10" opacity="0.2" />
-                  <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
-                  <circle cx="10" cy="10" r="10" opacity="0.2" />
-                  <circle cx="10" cy="7" r="3" />
-                  <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                </svg>
-              )}
-            </div>
-            <span className="customer-name-text">{document.customer_relation.customer_name}</span>
-          </button>
+                // 싱글클릭 타이머 취소
+                if (customerClickTimer.current) {
+                  clearTimeout(customerClickTimer.current)
+                  customerClickTimer.current = null
+                }
+                // 더블클릭: 고객 전체보기 페이지로 이동
+                if (onCustomerDoubleClick) {
+                  onCustomerDoubleClick(customerId)
+                }
+              }}
+              aria-label={`${document.customer_relation.customer_name} 상세 보기`}
+            >
+              <div className="customer-icon-wrapper">
+                {document.customer_relation.customer_type === '법인' ? (
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
+                    <circle cx="10" cy="10" r="10" opacity="0.2" />
+                    <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+                    <circle cx="10" cy="10" r="10" opacity="0.2" />
+                    <circle cx="10" cy="7" r="3" />
+                    <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                  </svg>
+                )}
+              </div>
+              <span className="customer-name-text">{document.customer_relation.customer_name}</span>
+            </button>
+            {/* 고객 변경 아이콘 — 행 호버 시에만 표시 */}
+            {onChangeCustomerClick && (
+              <button
+                className="customer-change-icon"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  const docId = document._id ?? document.id
+                  const customerId = document.customer_relation?.customer_id
+                  if (docId && customerId) {
+                    onChangeCustomerClick(docId, customerId)
+                  }
+                }}
+                aria-label="연결 고객 변경"
+                title="다른 고객으로 변경"
+              >
+                <SFSymbol name="link" size={SFSymbolSize.CAPTION_2} />
+              </button>
+            )}
+          </>
         ) : (userId && document.customerId && userId === document.customerId) ? (
           <span className="customer-id-text">{userId}</span>
         ) : onUnlinkedCustomerClick ? (
@@ -728,6 +752,8 @@ export interface DocumentStatusListProps {
   onLinkClick?: (document: Document) => void
   // 🍎 미연결 고객 클릭 (단건 고객 연결)
   onUnlinkedCustomerClick?: (documentId: string) => void
+  // 🍎 연결된 고객 변경 클릭
+  onChangeCustomerClick?: (documentId: string, currentCustomerId: string) => void
   // 🍎 Sort props
   sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null
   sortDirection?: 'asc' | 'desc'
@@ -917,6 +943,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onFullTextClick,
   onLinkClick,
   onUnlinkedCustomerClick,
+  onChangeCustomerClick,
   sortField,
   sortDirection,
   onColumnSort,
@@ -1445,6 +1472,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             onFullTextClick={onFullTextClick}
             onLinkClick={onLinkClick}
             onUnlinkedCustomerClick={onUnlinkedCustomerClick}
+            onChangeCustomerClick={onChangeCustomerClick}
             onCustomerClick={onCustomerClick}
             onCustomerDoubleClick={onCustomerDoubleClick}
             onRowContextMenu={onRowContextMenu}
