@@ -836,8 +836,13 @@ const DocumentLibraryContent: React.FC<{
                       onBulkLinkClick(selectedDocs)
                     }}
                     disabled={selectedDocumentIds.size === 0}
+                    style={{
+                      backgroundColor: 'var(--color-ios-orange)',
+                      borderColor: 'var(--color-ios-orange)',
+                      color: '#fff'
+                    }}
                   >
-                    연결
+                    고객 선택
                   </Button>
                 </>
               )}
@@ -1170,8 +1175,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   const {
     error,
     searchQuery,
-    searchParams,
-    loadDocuments,
     clearError,
   } = useDocumentsController()
 
@@ -1547,11 +1550,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               setIsBulkLinkMode(false)
             }}
             onLinkSuccess={() => {
-              // 문서 목록 새로고침
-              loadDocuments(searchParams)
-              // 선택 상태만 초기화 (bulk link 모드는 유지)
-              setSelectedDocumentIds(new Set())
-              setSelectedDocumentsForLink([])
+              // 고객 연결 성공 시 페이지 새로고침 (Optimistic Update 금지 규칙)
+              window.location.reload()
             }}
           />
         </DocumentStatusProvider>
@@ -1567,7 +1567,7 @@ const DocumentLinkModalWrapper: React.FC<{
   documents: Document[]
   onClose: () => void
   onLinkSuccess: () => void
-}> = ({ visible, documents, onClose }) => {
+}> = ({ visible, documents, onClose, onLinkSuccess }) => {
   const controller = useDocumentStatusController()
 
   return (
@@ -1575,6 +1575,7 @@ const DocumentLinkModalWrapper: React.FC<{
       visible={visible}
       documents={documents}
       onClose={onClose}
+      onLinkSuccess={onLinkSuccess}
       onFetchCustomerDocuments={controller.fetchCustomerDocuments}
       onLink={controller.linkDocumentToCustomer}
     />

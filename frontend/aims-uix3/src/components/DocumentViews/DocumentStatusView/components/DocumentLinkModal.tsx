@@ -30,6 +30,8 @@ interface DocumentLinkModalProps {
   document?: Document | null
   documents?: Document[]
   onClose: () => void
+  /** 연결 성공 시 호출되는 콜백 (모달 닫기 전) */
+  onLinkSuccess?: () => void
   onFetchCustomerDocuments: (customerId: string) => Promise<CustomerDocumentsResult>
   onLink: (params: {
     customerId: string
@@ -47,6 +49,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   document,
   documents,
   onClose,
+  onLinkSuccess,
   onFetchCustomerDocuments,
   onLink
 }) => {
@@ -277,8 +280,9 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
         })
       }
 
-      // 성공한 문서가 하나라도 있으면 모달 닫기
+      // 성공한 문서가 하나라도 있으면 성공 콜백 호출 후 모달 닫기
       if (successCount > 0) {
+        onLinkSuccess?.()
         onClose()
       }
     } catch (error) {
