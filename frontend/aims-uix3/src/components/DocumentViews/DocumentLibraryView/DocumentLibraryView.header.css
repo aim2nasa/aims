@@ -366,8 +366,8 @@
     font-size: var(--font-size-caption-1);
     font-weight: 400;
     color: var(--color-text-secondary);
-    background: transparent;
-    border: none;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -377,12 +377,25 @@
 
   .library-status-segment__tab:hover {
     color: var(--color-text-primary);
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.15);
+  }
+
+  [data-theme="dark"] .library-status-segment__tab {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  [data-theme="dark"] .library-status-segment__tab:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
   }
 
   .library-status-segment__tab--active {
     background: var(--color-primary-500);
     color: var(--color-neutral-0);
     font-weight: 600;
+    border-color: transparent;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   }
 
