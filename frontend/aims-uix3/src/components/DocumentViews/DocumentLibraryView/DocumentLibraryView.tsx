@@ -957,10 +957,10 @@ const DocumentLibraryContent: React.FC<{
       {/* 상태 필터 Segmented Control */}
       <div className="library-status-segment" style={isBulkLinkMode ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
         {([
-          { value: 'all', label: '전체', icon: 'tray.full', count: docStats?.total ?? 0 },
-          { value: 'processing', label: '처리중', icon: 'clock', count: (docStats?.processing ?? 0) + (docStats?.pending ?? 0) + (docStats?.credit_pending ?? 0) },
-          { value: 'completed', label: '완료', icon: 'checkmark.circle', count: docStats?.completed ?? 0 },
-          { value: 'error', label: '에러', icon: 'exclamationmark.triangle', count: docStats?.error ?? 0 },
+          { value: 'all', label: '전체', icon: 'tray.full', iconColor: 'var(--color-primary-500)', count: docStats?.total ?? 0 },
+          { value: 'processing', label: '처리중', icon: 'clock', iconColor: 'var(--color-ios-orange)', count: (docStats?.processing ?? 0) + (docStats?.pending ?? 0) + (docStats?.credit_pending ?? 0) },
+          { value: 'completed', label: '완료', icon: 'checkmark', iconColor: 'var(--color-ios-green, #34c759)', count: docStats?.completed ?? 0 },
+          { value: 'error', label: '에러', icon: 'exclamationmark', iconColor: 'var(--color-error, #ff3b30)', count: docStats?.error ?? 0 },
         ] as const).map(tab => (
           <button
             key={tab.value}
@@ -969,12 +969,14 @@ const DocumentLibraryContent: React.FC<{
             onClick={() => setStatusFilter(tab.value)}
             disabled={isBulkLinkMode}
           >
-            <SFSymbol
-              name={tab.icon}
-              size={SFSymbolSize.CAPTION_2}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative
-            />
+            <span style={{ color: statusFilter === tab.value ? 'var(--color-neutral-0)' : tab.iconColor }}>
+              <SFSymbol
+                name={tab.icon}
+                size={SFSymbolSize.CAPTION_2}
+                weight={SFSymbolWeight.MEDIUM}
+                decorative
+              />
+            </span>
             <span className="library-status-segment__label">{tab.label}</span>
             {(tab.value === 'all' || tab.count > 0) && (
               <span className="library-status-segment__count">{tab.count}</span>
