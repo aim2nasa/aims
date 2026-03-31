@@ -661,21 +661,6 @@ const DocumentLibraryContent: React.FC<{
           {/* === 별칭 모드: A+B 통합 그룹 === */}
           {isAliasMode ? (
             <div className="alias-mode-group">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={onToggleAliasMode}
-                aria-label="별칭 완료"
-              >
-                <SFSymbol
-                  name="checkmark"
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
-                완료
-              </Button>
-              <span className="alias-mode-divider" />
               <span className="alias-mode-count">
                 {selectedDocumentIds.size}개 선택됨
               </span>
@@ -702,6 +687,13 @@ const DocumentLibraryContent: React.FC<{
                 />
                 <span>별칭이 있는 문서도 새로 만들기</span>
               </label>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onToggleAliasMode}
+              >
+                취소
+              </Button>
               <span className="alias-mode-divider" />
               {/* 총 문서 개수 — AB 다음에 위치 */}
               <span className="result-count">
@@ -791,21 +783,9 @@ const DocumentLibraryContent: React.FC<{
                 </Tooltip>
               )}
 
-              {/* 삭제 모드일 때: 완료 + 선택된 개수 + 삭제 버튼 */}
+              {/* 삭제 모드일 때: 선택된 개수 + 삭제 + 취소 */}
               {isDeleteMode && (
                 <>
-                  <Tooltip content="삭제 완료">
-                    <button
-                      type="button"
-                      className="edit-mode-icon-button edit-mode-icon-button--active"
-                      onClick={onToggleDeleteMode}
-                      aria-label="삭제 완료"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                  </Tooltip>
                   <span className="selected-count-inline">
                     {selectedDocumentIds.size}개 선택됨
                   </span>
@@ -816,6 +796,13 @@ const DocumentLibraryContent: React.FC<{
                     disabled={isDeleting || selectedDocumentIds.size === 0}
                   >
                     {isDeleting ? '삭제 중...' : '삭제'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={onToggleDeleteMode}
+                  >
+                    취소
                   </Button>
                 </>
               )}
@@ -845,7 +832,7 @@ const DocumentLibraryContent: React.FC<{
                     고객 선택
                   </Button>
                   <Button
-                    variant="destructive"
+                    variant="secondary"
                     size="sm"
                     onClick={onCancelBulkLink}
                   >

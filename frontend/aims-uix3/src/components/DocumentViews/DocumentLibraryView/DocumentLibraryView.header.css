@@ -231,6 +231,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     color: var(--color-ios-text-secondary-light);
     font-weight: 600;
+    margin-right: var(--spacing-2);
   }
 
   html[data-theme="dark"] .result-count {
