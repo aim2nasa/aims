@@ -262,6 +262,11 @@ const DocumentLibraryContent: React.FC<{
     enabled: !!currentBatchId,
     batchId: currentBatchId
   })
+  // 3. 미연결 문서 건수 확인 (고객 연결 버튼/필터 표시 여부 결정용)
+  const { statistics: unlinkedStats } = useDocumentStatistics({
+    customerLink: 'unlinked'
+  })
+  const hasUnlinkedDocs = (unlinkedStats?.total ?? 0) > 0
 
   // 📝 서버사이드 초성 카운트 (DB 전체 대상)
   const [serverInitialCounts, setServerInitialCounts] = React.useState<Map<string, number>>(new Map())
@@ -900,47 +905,51 @@ const DocumentLibraryContent: React.FC<{
 
         </div>
 
-        {/* 오른쪽: 고객 연결 + 연결 고객 없음 필터 */}
+        {/* 오른쪽: 고객 연결 + 연결 고객 없음 필터 (미연결 문서가 있을 때만 표시) */}
         <div className="header-right-section">
-          {/* 고객 연결 버튼: 미연결 필터 + 일괄 연결 모드 동시 진입 */}
-          {!isBulkLinkMode && !isDeleteMode && !isAliasMode && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onStartCustomerLink}
-              aria-label="미연결 문서에 고객 연결"
-            >
-              <LinkIcon width={13} height={13} />
-              고객 연결
-            </Button>
-          )}
-          {isUnlinkedFilter ? (
-            <div className="library-unlinked-filter library-unlinked-filter--active" role="status" aria-label="연결 고객 없음 필터 적용 중">
-              <span>연결 고객 없음</span>
-              <button
-                type="button"
-                className="library-unlinked-filter__clear"
-                onClick={onToggleUnlinkedFilter}
-                disabled={isBulkLinkMode}
-                aria-label="연결 고객 없음 필터 해제"
-              >
-                <SFSymbol
-                  name="xmark.circle.fill"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative
-                />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="library-unlinked-filter"
-              onClick={onToggleUnlinkedFilter}
-              aria-label="연결 고객 없는 문서만 보기"
-            >
-              <span>연결 고객 없음</span>
-            </button>
+          {(hasUnlinkedDocs || isUnlinkedFilter || isBulkLinkMode) && (
+            <>
+              {/* 고객 연결 버튼: 미연결 필터 + 일괄 연결 모드 동시 진입 */}
+              {!isBulkLinkMode && !isDeleteMode && !isAliasMode && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={onStartCustomerLink}
+                  aria-label="미연결 문서에 고객 연결"
+                >
+                  <LinkIcon width={13} height={13} />
+                  고객 연결
+                </Button>
+              )}
+              {isUnlinkedFilter ? (
+                <div className="library-unlinked-filter library-unlinked-filter--active" role="status" aria-label="연결 고객 없음 필터 적용 중">
+                  <span>연결 고객 없음</span>
+                  <button
+                    type="button"
+                    className="library-unlinked-filter__clear"
+                    onClick={onToggleUnlinkedFilter}
+                    disabled={isBulkLinkMode}
+                    aria-label="연결 고객 없음 필터 해제"
+                  >
+                    <SFSymbol
+                      name="xmark.circle.fill"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                      decorative
+                    />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="library-unlinked-filter"
+                  onClick={onToggleUnlinkedFilter}
+                  aria-label="연결 고객 없는 문서만 보기"
+                >
+                  <span>연결 고객 없음</span>
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
