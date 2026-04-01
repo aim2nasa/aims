@@ -81,12 +81,9 @@ class TestStage1B_OverallStatusFix:
         collection = _make_mock_collection()
 
         # count_documents 호출 순서:
-        # 1단계: inconsistent_filter → 0
-        # 1단계-B completed: os_completed_filter → 3
-        # 1단계-B failed: os_failed_filter → 0
-        # 2단계 query_filter → 0
+        # 1단계: 0, 1단계-B completed: 3, 1단계-C zombie: 0, 1단계-B failed: 0, 2단계: 0
         call_count = [0]
-        count_returns = [0, 3, 0, 0]
+        count_returns = [0, 3, 0, 0, 0]
 
         def side_effect_count(f):
             idx = call_count[0]
@@ -120,9 +117,9 @@ class TestStage1B_OverallStatusFix:
         """status=failed + overallStatus=processing → overallStatus를 error로 수정"""
         collection = _make_mock_collection()
 
-        # 1단계: 0, 1단계-B completed: 0, 1단계-B failed: 2, 2단계: 0
+        # 1단계: 0, 1단계-B completed: 0, 1단계-C zombie: 0, 1단계-B failed: 2, 2단계: 0
         call_count = [0]
-        count_returns = [0, 0, 2, 0]
+        count_returns = [0, 0, 0, 2, 0]
 
         def side_effect_count(f):
             idx = call_count[0]
