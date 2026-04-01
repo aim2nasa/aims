@@ -1007,7 +1007,7 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
       const matchedDocs = await db.collection(COLLECTION_NAME).aggregate([
         { $match: searchFilter },
         { $sort: { 'upload.uploaded_at': -1 } },
-        // 고객별 최대 5건씩만 (인라인 미리보기용)
+        // 고객별 매칭 문서 전체 반환 (검색 결과 모두 표시)
         { $group: {
           _id: '$customerId',
           docs: { $push: {
@@ -1021,17 +1021,13 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
             badgeType: '$badgeType'
           }},
           totalCount: { $sum: 1 }
-        }},
-        { $project: {
-          docs: { $slice: ['$docs', 5] },
-          totalCount: 1
         }}
       ]).toArray();
 
       // 파일명 매칭된 고객 ID Set
       const docMatchedIds = new Set(matchedDocs.map(g => String(g._id)));
 
-      // searchDocuments 평탄화 (고객별 최대 5건)
+      // searchDocuments 평탄화 (고객별 전체 문서)
       searchDocuments = [];
       matchedDocs.forEach(group => {
         const cid = String(group._id);

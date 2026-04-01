@@ -683,19 +683,6 @@ const DocumentExplorerContent: React.FC<{
           },
         } as unknown as Document,
       }))
-      // 인라인 표시(최대 5건)보다 전체 매칭 건수가 많으면 "더 보기" 노드 추가
-      if (totalMatchCount > matchedDocs.length) {
-        children.push({
-          key: `more-docs-${c.customerId}`,
-          label: `${totalMatchCount - matchedDocs.length}건 더 보기...`,
-          type: 'subgroup' as const,
-          icon: 'ellipsis',
-          metadata: {
-            customerId: c.customerId,
-            isSpecial: true,
-          },
-        })
-      }
 
       return {
         key: `customer-${c.customerId}`,
