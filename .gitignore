@@ -22,6 +22,7 @@ tools/classification_tuner/results/
 
 # Claude Code local settings (개인 설정만 배제, skills는 공유)
 .claude/settings.local.json
+.claude/plans/
 
 # PyInstaller build output (임시 파일)
 build/
