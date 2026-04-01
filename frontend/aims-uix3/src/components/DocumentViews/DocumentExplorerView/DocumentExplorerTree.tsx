@@ -193,13 +193,53 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   const doc = node.document
   if (!doc) return null
 
+  // 검색 시 행별 파일명 모드 오버라이드 (반대쪽 모드에서 매칭 발견 시 전환용)
+  const [localModeOverride, setLocalModeOverride] = useState<'display' | 'original' | null>(null)
+
+  // 검색어 변경 시 오버라이드 초기화
+  const prevSearchTermRef = useRef(searchTerm)
+  if (prevSearchTermRef.current !== searchTerm) {
+    prevSearchTermRef.current = searchTerm
+    if (localModeOverride !== null) setLocalModeOverride(null)
+  }
+
+  // 전체 모드 변경 시에도 오버라이드 초기화
+  const prevFilenameModeRef = useRef(filenameMode)
+  if (prevFilenameModeRef.current !== filenameMode) {
+    prevFilenameModeRef.current = filenameMode
+    if (localModeOverride !== null) setLocalModeOverride(null)
+  }
+
+  const effectiveMode = localModeOverride ?? filenameMode
+
   const docId = doc._id || doc.id || ''
   const isSelected = selectedDocumentId === docId
   const isFocused = focusedKey === node.key
   const documentDate = getDocumentDate(doc)
   const filename = DocumentStatusService.extractFilename(doc)
-  const { showName, altName, isAlias } = getDocName(doc, filenameMode)
+  const { showName, altName, isAlias } = getDocName(doc, effectiveMode)
   const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : ''
+
+  // 검색 시 반대쪽 모드 매칭 감지: 현재 표시명에 매칭 없고, 반대쪽에 매칭 있을 때
+  const crossModeMatch = useMemo(() => {
+    if (!searchTerm) return null
+    const query = searchTerm.trim().toLowerCase()
+    if (!query) return null
+
+    // 별칭이 없으면 양쪽 모드 모두 원본명을 표시하므로 전환 불필요
+    if (!doc.displayName) return null
+
+    // 현재 표시명에 이미 매칭이 있으면 버튼 불필요
+    if (showName.toLowerCase().includes(query)) return null
+
+    // 반대쪽 모드의 파일명 확인
+    const oppositeMode = effectiveMode === 'display' ? 'original' : 'display'
+    const { showName: oppositeName } = getDocName(doc, oppositeMode)
+    if (oppositeName.toLowerCase().includes(query)) {
+      return oppositeMode
+    }
+    return null
+  }, [searchTerm, showName, effectiveMode, doc])
   const fileSize = DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(doc))
   const docStatus = DocumentStatusService.extractStatus(doc)
   const docProgress = doc.progress ?? 0
@@ -253,8 +293,52 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
           </span>
         </Tooltip>
 
+        {/* 검색 크로스 모드 전환 버튼: 현재 표시명에 매칭 없고 반대쪽에서 매칭 시 표시 */}
+        {crossModeMatch && (
+          <Tooltip
+            content={crossModeMatch === 'original'
+              ? '원본 파일명에서 검색어가 발견됨 · 클릭하면 원본으로 전환'
+              : '별칭에서 검색어가 발견됨 · 클릭하면 별칭으로 전환'}
+            placement="bottom"
+          >
+            <button
+              type="button"
+              className={`fnm-toggle ${crossModeMatch === 'display' ? 'fnm-toggle--alias' : 'fnm-toggle--original'}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                setLocalModeOverride(crossModeMatch)
+              }}
+              aria-label={crossModeMatch === 'original' ? '원본 파일명으로 전환' : '별칭으로 전환'}
+            >
+              {crossModeMatch === 'display' ? '별칭' : '원본'}
+            </button>
+          </Tooltip>
+        )}
+
+        {/* 로컬 모드 오버라이드 중: 원래 모드로 돌아가기 버튼 */}
+        {localModeOverride && !crossModeMatch && (
+          <Tooltip
+            content={filenameMode === 'display'
+              ? '별칭으로 돌아가기'
+              : '원본으로 돌아가기'}
+            placement="bottom"
+          >
+            <button
+              type="button"
+              className={`fnm-toggle ${filenameMode === 'display' ? 'fnm-toggle--alias' : 'fnm-toggle--original'}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                setLocalModeOverride(null)
+              }}
+              aria-label={filenameMode === 'display' ? '별칭으로 돌아가기' : '원본으로 돌아가기'}
+            >
+              {filenameMode === 'display' ? '별칭' : '원본'}
+            </button>
+          </Tooltip>
+        )}
+
         {/* 별칭 생성 실패 표시 */}
-        {filenameMode === 'display' && !isAlias && doc.displayNameStatus === 'failed' && (
+        {effectiveMode === 'display' && !isAlias && doc.displayNameStatus === 'failed' && (
           <Tooltip content="별칭 자동 생성에 실패했습니다. 별칭AI 버튼으로 재생성할 수 있습니다." placement="bottom">
             <span className="document-name__alias-failed">⚠</span>
           </Tooltip>
