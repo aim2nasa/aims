@@ -54,6 +54,12 @@ export class SearchService {
    * @param query 검색 쿼리 파라미터
    * @returns 검색 결과
    */
+  /**
+   * 문서 검색 수행 (raw 결과만 반환, enrichment 없음)
+   *
+   * 시맨틱 검색의 경우 Qdrant raw 결과를 그대로 반환합니다.
+   * enrichment는 페이지 단위로 별도 호출해야 합니다 (enrichPageResults).
+   */
   static async searchDocuments(query: SearchQuery, signal?: AbortSignal): Promise<SearchResponse> {
     try {
       // 현재 사용자 ID 가져오기 (dev override 우선)
@@ -80,152 +86,7 @@ export class SearchService {
 
       const data = await response.json()
 
-      // 시맨틱 검색의 경우 MongoDB에서 전체 문서 정보 가져오기
-      if (query.search_mode === 'semantic' && data.search_results && data.search_results.length > 0) {
-        const enrichedResults = await Promise.all(
-          data.search_results.map(async (item: SemanticSearchResultItem) => {
-            const docId = item.payload?.doc_id
-            if (!docId) return item
-
-            try {
-              // MongoDB에서 전체 문서 정보 조회 (🔥 getAuthToken 사용으로 v1/v2 호환)
-              const token = getAuthToken();
-              const userId = getCurrentUserId() || 'tester';
-              const docResponse = await fetch(`/api/documents/${docId}/status`, {
-                headers: {
-                  'x-user-id': userId,
-                  ...(token && { Authorization: `Bearer ${token}` })
-                },
-                signal,
-              })
-              if (!docResponse.ok) {
-                console.warn(`[SearchService] 문서 ${docId} 조회 실패`)
-                return item
-              }
-
-              const docData = await docResponse.json()
-              if (!docData.success || !docData.data) {
-                return item
-              }
-
-              // Qdrant 결과(payload, score)와 MongoDB 결과(meta, ocr, overallStatus 등) 병합
-              return {
-                ...item,
-                _id: docId,
-                meta: docData.data.raw.meta,
-                ocr: docData.data.raw.ocr,
-                docembed: docData.data.raw.docembed,
-                text: docData.data.raw.text,
-                upload: docData.data.raw.upload,
-                stages: docData.data.computed.uiStages,
-                overallStatus: docData.data.computed.overallStatus,
-                progress: docData.data.computed.progress,
-                customer_relation: docData.data.raw.customer_relation,
-                ownerId: docData.data.raw.ownerId,  // 🆕 내 파일 기능
-                customerId: docData.data.raw.customerId,  // 🆕 내 파일 기능
-                displayName: docData.data.raw.displayName  // 🍎 별칭
-              }
-            } catch (error) {
-              console.error(`[SearchService] 문서 ${docId} 조회 오류:`, error)
-              errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments.enrichDoc', payload: { docId } })
-              return item
-            }
-          })
-        )
-
-        // customer_name 보강 (customer_relation이 있지만 customer_name이 없는 경우)
-        // ⭐ 유효한 customerId만 API 조회 (플레이스홀더 ID 제외)
-        const customerIds = new Set<string>()
-        const invalidCustomerIds = new Set<string>()  // 🆕 내 보관함용
-        enrichedResults.forEach((item) => {
-          if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
-            const customerId = String(item.customer_relation.customer_id)
-            if (isValidCustomerId(customerId)) {
-              customerIds.add(customerId)
-            } else {
-              invalidCustomerIds.add(customerId)  // 플레이스홀더 ID → 내 보관함
-            }
-          }
-        })
-
-        // customer_name + customer_type 일괄 조회 (유효한 ID만)
-        const customerMap: Record<string, { name: string | null; type: string | null }> = {}
-        if (customerIds.size > 0) {
-          await Promise.all(
-            Array.from(customerIds).map(async (customerId) => {
-              try {
-                // ⭐ 설계사별 고객 데이터 격리 (🔥 getAuthToken 사용으로 v1/v2 호환)
-                const currentUserId = getCurrentUserId() || 'tester';
-                const tokenForCustomer = getAuthToken();
-                const customerResponse = await fetch(`/api/customers/${customerId}`, {
-                  headers: {
-                    'x-user-id': currentUserId,
-                    ...(tokenForCustomer && { Authorization: `Bearer ${tokenForCustomer}` })
-                  },
-                  signal,
-                })
-                if (customerResponse.ok) {
-                  const customerData = await customerResponse.json()
-                  if (customerData.success && customerData.data) {
-                    customerMap[customerId] = {
-                      name: customerData.data.personal_info?.name || null,
-                      type: customerData.data.insurance_info?.customer_type || null
-                    }
-                  }
-                }
-              } catch (error) {
-                console.error(`[SearchService] 고객 ${customerId} 조회 오류:`, error)
-                errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments.enrichCustomer', payload: { customerId } })
-              }
-            })
-          )
-        }
-
-        // 🆕 유효하지 않은 customerId는 "내 보관함"으로 표시
-        invalidCustomerIds.forEach((customerId) => {
-          customerMap[customerId] = {
-            name: MY_STORAGE_DISPLAY_NAME,
-            type: MY_STORAGE_MARKER
-          }
-        })
-
-        // 검색 결과에 customer_name + customer_type 추가
-        const finalResults = enrichedResults.map((item) => {
-          if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
-            const customerId = String(item.customer_relation.customer_id)
-            const customerInfo = customerMap[customerId]
-            if (customerInfo) {
-              return {
-                ...item,
-                customer_relation: {
-                  ...item.customer_relation,
-                  customer_name: customerInfo.name,
-                  customer_type: customerInfo.type
-                }
-              }
-            }
-          }
-          return item
-        })
-
-        return {
-          answer: data.answer || null,
-          search_results: finalResults,
-          search_mode: query.search_mode,
-        }
-      }
-
-      // 키워드 검색: 백엔드(SmartSearch)에서 customer_relation 포함하여 반환하므로
-      // 프론트엔드에서 개별 API 호출 없이 그대로 사용
-      if (query.search_mode === 'keyword' && data.search_results && data.search_results.length > 0) {
-        return {
-          answer: data.answer || null,
-          search_results: data.search_results,
-          search_mode: query.search_mode,
-        }
-      }
-
-      // 그 외의 경우 원본 그대로 반환
+      // 시맨틱/키워드 모두 raw 결과 그대로 반환 (enrichment는 View에서 페이지 단위로 수행)
       return {
         answer: data.answer || null,
         search_results: data.search_results || [],
@@ -235,6 +96,167 @@ export class SearchService {
       console.error('[SearchService] 검색 오류:', error)
       errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments' })
       throw error
+    }
+  }
+
+  /**
+   * 페이지 단위 enrichment (시맨틱 검색 결과 보강)
+   *
+   * 시맨틱 검색의 raw 결과(payload 기반)에 MongoDB 문서 정보를 병합합니다.
+   * 페이지 단위(20건)로 호출하므로 Promise.all이 안전합니다.
+   *
+   * @param items 시맨틱 검색 raw 결과 (페이지 단위)
+   * @param signal AbortController signal (새 검색 시 취소용)
+   * @returns enriched 검색 결과
+   */
+  static async enrichPageResults(
+    items: SemanticSearchResultItem[],
+    signal?: AbortSignal
+  ): Promise<SearchResultItem[]> {
+    try {
+      // 1단계: 각 문서의 MongoDB 상세 정보 조회
+      const enrichedResults = await Promise.all(
+        items.map(async (item: SemanticSearchResultItem) => {
+          const docId = item.payload?.doc_id
+          if (!docId) return item
+
+          try {
+            // MongoDB에서 전체 문서 정보 조회 (🔥 getAuthToken 사용으로 v1/v2 호환)
+            const token = getAuthToken();
+            const userId = getCurrentUserId() || 'tester';
+            const docResponse = await fetch(`/api/documents/${docId}/status`, {
+              headers: {
+                'x-user-id': userId,
+                ...(token && { Authorization: `Bearer ${token}` })
+              },
+              signal,
+            })
+            if (!docResponse.ok) {
+              console.warn(`[SearchService] 문서 ${docId} 조회 실패`)
+              return item
+            }
+
+            const docData = await docResponse.json()
+            if (!docData.success || !docData.data) {
+              return item
+            }
+
+            // Qdrant 결과(payload, score)와 MongoDB 결과(meta, ocr, overallStatus 등) 병합
+            return {
+              ...item,
+              _id: docId,
+              meta: docData.data.raw.meta,
+              ocr: docData.data.raw.ocr,
+              docembed: docData.data.raw.docembed,
+              text: docData.data.raw.text,
+              upload: docData.data.raw.upload,
+              stages: docData.data.computed.uiStages,
+              overallStatus: docData.data.computed.overallStatus,
+              progress: docData.data.computed.progress,
+              customer_relation: docData.data.raw.customer_relation,
+              ownerId: docData.data.raw.ownerId,
+              customerId: docData.data.raw.customerId,
+              displayName: docData.data.raw.displayName
+            }
+          } catch (error) {
+            // AbortError는 정상 취소이므로 throw하여 상위에서 처리
+            if (error instanceof DOMException && error.name === 'AbortError') {
+              throw error
+            }
+            console.error(`[SearchService] 문서 ${docId} 조회 오류:`, error)
+            errorReporter.reportApiError(error as Error, { component: 'SearchService.enrichPageResults.enrichDoc', payload: { docId } })
+            return item
+          }
+        })
+      )
+
+      // 2단계: customer_name 보강 (customer_relation이 있지만 customer_name이 없는 경우)
+      // ⭐ 유효한 customerId만 API 조회 (플레이스홀더 ID 제외)
+      const customerIds = new Set<string>()
+      const invalidCustomerIds = new Set<string>()
+      enrichedResults.forEach((item) => {
+        if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
+          const customerId = String(item.customer_relation.customer_id)
+          if (isValidCustomerId(customerId)) {
+            customerIds.add(customerId)
+          } else {
+            invalidCustomerIds.add(customerId)
+          }
+        }
+      })
+
+      // customer_name + customer_type 일괄 조회 (유효한 ID만)
+      const customerMap: Record<string, { name: string | null; type: string | null }> = {}
+      if (customerIds.size > 0) {
+        await Promise.all(
+          Array.from(customerIds).map(async (customerId) => {
+            try {
+              const currentUserId = getCurrentUserId() || 'tester';
+              const tokenForCustomer = getAuthToken();
+              const customerResponse = await fetch(`/api/customers/${customerId}`, {
+                headers: {
+                  'x-user-id': currentUserId,
+                  ...(tokenForCustomer && { Authorization: `Bearer ${tokenForCustomer}` })
+                },
+                signal,
+              })
+              if (customerResponse.ok) {
+                const customerData = await customerResponse.json()
+                if (customerData.success && customerData.data) {
+                  customerMap[customerId] = {
+                    name: customerData.data.personal_info?.name || null,
+                    type: customerData.data.insurance_info?.customer_type || null
+                  }
+                }
+              }
+            } catch (error) {
+              if (error instanceof DOMException && error.name === 'AbortError') {
+                throw error
+              }
+              console.error(`[SearchService] 고객 ${customerId} 조회 오류:`, error)
+              errorReporter.reportApiError(error as Error, { component: 'SearchService.enrichPageResults.enrichCustomer', payload: { customerId } })
+            }
+          })
+        )
+      }
+
+      // 유효하지 않은 customerId는 "내 보관함"으로 표시
+      invalidCustomerIds.forEach((customerId) => {
+        customerMap[customerId] = {
+          name: MY_STORAGE_DISPLAY_NAME,
+          type: MY_STORAGE_MARKER
+        }
+      })
+
+      // 검색 결과에 customer_name + customer_type 추가
+      const finalResults = enrichedResults.map((item) => {
+        if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
+          const customerId = String(item.customer_relation.customer_id)
+          const customerInfo = customerMap[customerId]
+          if (customerInfo) {
+            return {
+              ...item,
+              customer_relation: {
+                ...item.customer_relation,
+                customer_name: customerInfo.name,
+                customer_type: customerInfo.type
+              }
+            }
+          }
+        }
+        return item
+      })
+
+      return finalResults as SearchResultItem[]
+    } catch (error) {
+      // AbortError는 재throw
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw error
+      }
+      console.error('[SearchService] enrichment 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'SearchService.enrichPageResults' })
+      // enrichment 실패 시 raw 결과라도 반환
+      return items as SearchResultItem[]
     }
   }
 

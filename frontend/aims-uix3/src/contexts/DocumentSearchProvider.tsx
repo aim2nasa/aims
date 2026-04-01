@@ -55,7 +55,6 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
         query: query.trim(),
         search_mode: searchMode,
         ...(searchMode === 'keyword' && { mode: keywordMode }),
-        top_k: 50,
         ...(customerId && { customer_id: customerId })
       }
 

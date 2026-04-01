@@ -207,8 +207,7 @@ describe('useDocumentSearch', () => {
       expect(SearchService.searchDocuments).toHaveBeenCalledWith({
         query: '테스트',
         search_mode: 'keyword',
-        mode: 'AND',
-        top_k: 50
+        mode: 'AND'
       }, expect.any(AbortSignal))
       expect(result.current.results).toEqual(mockResults)
       expect(result.current.answer).toBe('검색 결과 답변')
@@ -253,8 +252,7 @@ describe('useDocumentSearch', () => {
       // semantic 모드에서는 mode 파라미터가 포함되지 않음
       expect(SearchService.searchDocuments).toHaveBeenCalledWith({
         query: '시맨틱 검색',
-        search_mode: 'semantic',
-        top_k: 50
+        search_mode: 'semantic'
       }, expect.any(AbortSignal))
       expect(result.current.results).toEqual(mockResults)
       expect(result.current.answer).toBeNull()
@@ -286,8 +284,7 @@ describe('useDocumentSearch', () => {
       expect(SearchService.searchDocuments).toHaveBeenCalledWith({
         query: '공백 포함',
         search_mode: 'keyword',
-        mode: 'AND',
-        top_k: 50
+        mode: 'AND'
       }, expect.any(AbortSignal))
     })
 
@@ -598,13 +595,11 @@ describe('useDocumentSearch', () => {
       expect(SearchService.searchDocuments).toHaveBeenNthCalledWith(1, {
         query: '테스트',
         search_mode: 'keyword',
-        mode: 'AND',
-        top_k: 50
+        mode: 'AND'
       }, expect.any(AbortSignal))
       expect(SearchService.searchDocuments).toHaveBeenNthCalledWith(2, {
         query: '테스트',
-        search_mode: 'semantic',
-        top_k: 50
+        search_mode: 'semantic'
       }, expect.any(AbortSignal))
     })
   })

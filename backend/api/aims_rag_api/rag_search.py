@@ -51,6 +51,7 @@ log_version_info()
 # 🔧 튜닝 파라미터 (환경변수로 재배포 없이 조정 가능)
 RERANK_LIMIT = int(os.getenv("RERANK_LIMIT", "20"))       # Cross-Encoder 재순위화 대상 수
 LLM_CONTEXT_LIMIT = int(os.getenv("LLM_CONTEXT_LIMIT", "8"))  # LLM 답변 생성 시 사용할 청크 수
+SEARCH_FETCH_LIMIT = int(os.getenv("SEARCH_FETCH_LIMIT", "200"))  # top_k 미지정 시 하이브리드 검색 최대 fetch 수
 
 # 🔒 RAG API 인증: 내부 API 키 검증 (미들웨어로 모든 엔드포인트에 적용)
 RAG_API_KEY = os.getenv("RAG_API_KEY", "")
@@ -273,7 +274,7 @@ class SearchRequest(BaseModel):
     search_mode: str = "semantic"
     user_id: Optional[str] = None
     customer_id: Optional[str] = None
-    top_k: Optional[int] = Field(None, ge=1, le=100)  # 결과 개수 제한 (1~100, None=기본값 사용)
+    top_k: Optional[int] = Field(None, ge=1, le=500)  # 결과 개수 제한 (1~500, None=기본값 사용)
     offset: int = 0  # 페이지네이션: 건너뛸 결과 수
 
 class UnifiedSearchResponse(BaseModel):
@@ -675,7 +676,7 @@ async def search_endpoint(request: SearchRequest, raw_request: Request):
             if request.top_k is not None:
                 fetch_count = max(50, request.offset + request.top_k + 10)
             else:
-                fetch_count = 500  # top_k 미지정 시 충분한 수의 결과 가져오기
+                fetch_count = SEARCH_FETCH_LIMIT  # top_k 미지정 시 환경변수 기반 제한
             search_start = time.time()
             search_results = await asyncio.to_thread(
                 hybrid_engine.search,

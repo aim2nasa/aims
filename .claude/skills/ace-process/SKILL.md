@@ -497,3 +497,4 @@ Claude (총괄 오케스트레이터)
 - **모든 AC가 PASS되어야 완료 보고 가능. 일부 PASS + 일부 Code PASS로 완료 보고하는 것은 사기이며 CRITICAL 위반이다.**
 - **Jude FAIL 시 사용자에게 보고 금지. 수정 후 Jude 재감사를 거쳐야 한다.**
 - **Claude는 Jude의 판정을 조작하거나 무시할 수 없다. Jude FAIL = 보고 불가.**
+- **E2E 테스트 로그인: e2e-tester 에이전트에게 카카오 로그인을 위임하지 않는다. Claude가 직접 Playwright MCP로 로그인 완료 후 테스트를 위임하거나 직접 수행한다. 로그인 정보는 `D:\aims\.playwright-mcp\kakao.txt`에 있다.**

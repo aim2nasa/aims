@@ -567,7 +567,7 @@ describe('SearchService.searchDocuments', () => {
     expect(result.search_mode).toBe('keyword');
   });
 
-  it('시맨틱 검색을 수행한다 (MongoDB에서 전체 문서 정보 보강)', async () => {
+  it('시맨틱 검색은 raw 결과만 반환한다 (enrichment 없음)', async () => {
     const mockSearchResponse = {
       search_results: [
         {
@@ -583,30 +583,10 @@ describe('SearchService.searchDocuments', () => {
       answer: 'AI 답변'
     };
 
-    const mockMongoDBResponse = {
-      success: true,
-      data: {
-        raw: {
-          meta: { summary: 'Test summary', full_text: 'Test full text' },
-          ocr: null,
-          customer_relation: null
-        },
-        computed: {
-          overallStatus: 'completed'
-        }
-      }
-    };
-
-    // 첫 번째 호출: 시맨틱 검색 API
+    // 시맨틱 검색 API 호출 1회만
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => mockSearchResponse
-    } as Response);
-
-    // 두 번째 호출: MongoDB 문서 상세 정보 API
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockMongoDBResponse
     } as Response);
 
     const result = await SearchService.searchDocuments({
@@ -614,11 +594,12 @@ describe('SearchService.searchDocuments', () => {
       search_mode: 'semantic'
     });
 
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    // enrichment 없이 fetch 1회만 호출
+    expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(result.search_results).toHaveLength(1);
+    // raw payload가 그대로 반환됨
     expect((result.search_results[0] as any).payload).toHaveProperty('owner_id', 'tester');
-    expect((result.search_results[0] as any).meta).toHaveProperty('summary', 'Test summary');
-    expect((result.search_results[0] as any).overallStatus).toBe('completed');
+    expect((result.search_results[0] as any).payload).toHaveProperty('doc_id', 'doc123');
     expect(result.search_mode).toBe('semantic');
   });
 

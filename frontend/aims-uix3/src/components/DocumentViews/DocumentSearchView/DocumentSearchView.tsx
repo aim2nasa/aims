@@ -16,7 +16,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { SearchService, MY_STORAGE_MARKER, MY_STORAGE_DISPLAY_NAME } from '@/services/searchService'
-import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/search'
+import type { SearchResultItem, SemanticSearchResultItem, SearchMode, KeywordMode } from '@/entities/search'
 import { DocumentUtils, DocumentProcessingModule } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, Tooltip, BackButton, type DropdownOption, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
@@ -393,12 +393,123 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     return sorted
   }, [results, sortField, sortOrder, filenameMode, getFileTypeLabel])
 
-  // 🍎 페이지네이션된 결과
+  // 🍎 페이지네이션된 결과 (raw — enrichment 전)
   const totalSearchPages = Math.max(1, Math.ceil(sortedResults.length / SEARCH_PAGE_SIZE))
-  const paginatedResults = useMemo(() => {
+  const rawPaginatedResults = useMemo(() => {
     const start = (searchPage - 1) * SEARCH_PAGE_SIZE
     return sortedResults.slice(start, start + SEARCH_PAGE_SIZE)
   }, [sortedResults, searchPage])
+
+  // 🍎 Lazy Enrichment: 시맨틱 검색 결과를 페이지 단위로 보강
+  // enrichment 캐시: docId → enriched SearchResultItem (페이지 복귀 시 즉시 사용)
+  const enrichCacheRef = useRef<Map<string, SearchResultItem>>(new Map())
+  // enrichment 진행 중 AbortController
+  const enrichAbortRef = useRef<AbortController | null>(null)
+  // enrichment 로딩 상태
+  const [isEnriching, setIsEnriching] = useState(false)
+  // 현재 페이지의 enriched 결과 (React 렌더 보장)
+  const [enrichedPage, setEnrichedPage] = useState<SearchResultItem[]>([])
+
+  // 검색 결과 변경 시 enrichment 캐시 초기화
+  useEffect(() => {
+    enrichCacheRef.current = new Map()
+    setEnrichedPage([])
+    // 진행 중인 enrichment 취소
+    if (enrichAbortRef.current) {
+      enrichAbortRef.current.abort()
+      enrichAbortRef.current = null
+    }
+  }, [results])
+
+  // 컴포넌트 언마운트 시 진행 중인 enrichment 취소
+  useEffect(() => {
+    return () => {
+      if (enrichAbortRef.current) {
+        enrichAbortRef.current.abort()
+        enrichAbortRef.current = null
+      }
+      setIsEnriching(false)
+    }
+  }, [])
+
+  // 페이지 변경 시 enrichedPage 초기화
+  useEffect(() => {
+    setEnrichedPage([])
+  }, [searchPage])
+
+  // rawPaginatedResults 변경 시 해당 페이지 건만 enrich (시맨틱 검색만)
+  useEffect(() => {
+    if (lastSearchMode !== 'semantic' || rawPaginatedResults.length === 0) return
+
+    // 캐시에 없는 건만 필터링
+    const unenrichedItems = rawPaginatedResults.filter((item) => {
+      const docId = SearchService.getDocumentId(item)
+      return docId && !enrichCacheRef.current.has(docId)
+    })
+
+    if (unenrichedItems.length === 0) return
+
+    // 이전 enrichment 취소
+    if (enrichAbortRef.current) {
+      enrichAbortRef.current.abort()
+    }
+    const controller = new AbortController()
+    enrichAbortRef.current = controller
+
+    setIsEnriching(true)
+
+    SearchService.enrichPageResults(
+      unenrichedItems as SemanticSearchResultItem[],
+      controller.signal
+    )
+      .then((enrichedItems) => {
+        if (controller.signal.aborted) return
+
+        // 캐시에 저장 (페이지 복귀 시 즉시 사용)
+        enrichedItems.forEach((enrichedItem) => {
+          const docId = SearchService.getDocumentId(enrichedItem)
+          if (docId) {
+            enrichCacheRef.current.set(docId, enrichedItem)
+          }
+        })
+
+        // React 렌더 보장: useState로 현재 페이지 enriched 결과 설정
+        setEnrichedPage(enrichedItems)
+        setIsEnriching(false)
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          // AbortError 시에도 로딩 해제
+          setIsEnriching(false)
+          return
+        }
+        console.error('[DocumentSearchView] enrichment 오류:', error)
+        setIsEnriching(false)
+      })
+
+    return () => {
+      controller.abort()
+      setIsEnriching(false)
+      if (enrichAbortRef.current === controller) {
+        enrichAbortRef.current = null
+      }
+    }
+  }, [rawPaginatedResults, lastSearchMode])
+
+  // 🍎 enriched 결과: 현재 페이지 enriched → 캐시 → raw 우선순위로 병합
+  const paginatedResults = useMemo(() => {
+    return rawPaginatedResults.map((item) => {
+      const docId = SearchService.getDocumentId(item)
+      if (!docId) return item
+      // 현재 페이지 enriched 결과 우선
+      const fromPage = enrichedPage.find(
+        (e) => SearchService.getDocumentId(e) === docId
+      )
+      if (fromPage) return fromPage
+      // 캐시에서 조회 (이전 페이지에서 보강된 결과)
+      return enrichCacheRef.current.get(docId) ?? item
+    })
+  }, [rawPaginatedResults, enrichedPage])
 
   // 🍎 정렬 변경 시 1페이지로 리셋
   useEffect(() => { setSearchPage(1) }, [sortField, sortOrder])

@@ -5,11 +5,17 @@
  * - 문서 검색 결과에서 연결된 고객이 표시되지 않는 버그 수정
  * - customer_relation 필드가 검색 결과에 포함되어야 함
  *
+ * Lazy Enrichment 이후:
+ * - searchDocuments()는 raw 결과만 반환 (enrichment 없음)
+ * - 시맨틱 검색의 customer_relation enrichment는 enrichPageResults()가 담당
+ * - 키워드 검색은 백엔드가 customer_relation을 포함하여 반환
+ *
  * @since 2025-11-28
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SearchService } from '../searchService';
+import type { SemanticSearchResultItem } from '@/entities/search';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -25,7 +31,7 @@ const localStorageMock = (() => {
   };
 })();
 
-describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
+describe('SearchService.enrichPageResults - 시맨틱 검색 고객 표시 기능', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
@@ -37,24 +43,20 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
     vi.restoreAllMocks();
   });
 
-  it('시맨틱 검색 결과에 customer_relation이 포함되어야 한다', async () => {
-    // 유효한 MongoDB ObjectId 사용 (24자리 16진수)
+  it('enrichment 후 customer_relation이 결과에 포함되어야 한다', async () => {
     const validCustomerId = '507f1f77bcf86cd799439011';
 
-    const mockSearchResponse = {
-      search_results: [
-        {
-          id: 'semantic1',
-          score: 0.95,
-          payload: {
-            doc_id: 'doc123',
-            original_name: 'test.pdf',
-            owner_id: 'tester'
-          }
+    const rawItems: SemanticSearchResultItem[] = [
+      {
+        id: 'semantic1',
+        score: 0.95,
+        payload: {
+          doc_id: 'doc123',
+          original_name: 'test.pdf',
+          owner_id: 'tester'
         }
-      ],
-      answer: 'AI 답변'
-    };
+      }
+    ];
 
     const mockMongoDBResponse = {
       success: true,
@@ -64,7 +66,7 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
           ocr: null,
           customer_relation: {
             customer_id: validCustomerId,
-            customer_name: '홍길동',  // customer_name 포함하여 추가 API 호출 방지
+            customer_name: '홍길동',
             linked_at: '2025-11-01T00:00:00Z'
           }
         },
@@ -77,20 +79,13 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
     vi.mocked(global.fetch)
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => mockSearchResponse
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
         json: async () => mockMongoDBResponse
       } as Response);
 
-    const result = await SearchService.searchDocuments({
-      query: '테스트',
-      search_mode: 'semantic'
-    });
+    const result = await SearchService.enrichPageResults(rawItems);
 
     // customer_relation이 결과에 포함되어야 함
-    expect((result.search_results[0] as any).customer_relation).toEqual({
+    expect((result[0] as any).customer_relation).toEqual({
       customer_id: validCustomerId,
       customer_name: '홍길동',
       linked_at: '2025-11-01T00:00:00Z'
@@ -98,15 +93,13 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
   });
 
   it('customer_relation이 null인 문서도 정상 처리된다', async () => {
-    const mockSearchResponse = {
-      search_results: [
-        {
-          id: 'semantic1',
-          score: 0.9,
-          payload: { doc_id: 'doc123' }
-        }
-      ]
-    };
+    const rawItems: SemanticSearchResultItem[] = [
+      {
+        id: 'semantic1',
+        score: 0.9,
+        payload: { doc_id: 'doc123' }
+      }
+    ];
 
     const mockMongoDBResponse = {
       success: true,
@@ -114,7 +107,7 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
         raw: {
           meta: {},
           ocr: null,
-          customer_relation: null  // 고객 연결 없음
+          customer_relation: null
         },
         computed: { overallStatus: 'pending' }
       }
@@ -123,37 +116,27 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
     vi.mocked(global.fetch)
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => mockSearchResponse
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
         json: async () => mockMongoDBResponse
       } as Response);
 
-    const result = await SearchService.searchDocuments({
-      query: '테스트',
-      search_mode: 'semantic'
-    });
+    const result = await SearchService.enrichPageResults(rawItems);
 
     // customer_relation이 null이어도 정상 처리
-    expect((result.search_results[0] as any).customer_relation).toBeNull();
+    expect((result[0] as any).customer_relation).toBeNull();
   });
 
   it('여러 문서의 customer_relation이 각각 올바르게 반환된다', async () => {
-    const mockSearchResponse = {
-      search_results: [
-        { id: 's1', score: 0.95, payload: { doc_id: 'doc1' } },
-        { id: 's2', score: 0.9, payload: { doc_id: 'doc2' } }
-      ]
-    };
+    const rawItems: SemanticSearchResultItem[] = [
+      { id: 's1', score: 0.95, payload: { doc_id: 'doc1' } },
+      { id: 's2', score: 0.9, payload: { doc_id: 'doc2' } }
+    ];
 
-    // 각 문서에 대한 MongoDB 응답
     const mockResponse1 = {
       success: true,
       data: {
         raw: {
           meta: {},
-          customer_relation: { customer_id: 'customerA' }
+          customer_relation: { customer_id: 'customerA', customer_name: 'A' }
         },
         computed: { overallStatus: 'completed' }
       }
@@ -164,17 +147,13 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
       data: {
         raw: {
           meta: {},
-          customer_relation: { customer_id: 'customerB' }
+          customer_relation: { customer_id: 'customerB', customer_name: 'B' }
         },
         computed: { overallStatus: 'completed' }
       }
     };
 
     vi.mocked(global.fetch)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockSearchResponse
-      } as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse1
@@ -184,27 +163,21 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
         json: async () => mockResponse2
       } as Response);
 
-    const result = await SearchService.searchDocuments({
-      query: '테스트',
-      search_mode: 'semantic'
-    });
+    const result = await SearchService.enrichPageResults(rawItems);
 
     // 각 문서의 customer_relation이 올바르게 매핑됨
-    expect((result.search_results[0] as any).customer_relation.customer_id).toBe('customerA');
-    expect((result.search_results[1] as any).customer_relation.customer_id).toBe('customerB');
+    expect((result[0] as any).customer_relation.customer_id).toBe('customerA');
+    expect((result[1] as any).customer_relation.customer_id).toBe('customerB');
   });
 
   it('고객이 연결된 문서와 미연결 문서가 섞여있어도 정상 처리된다', async () => {
-    // 유효한 MongoDB ObjectId 사용 (24자리 16진수)
     const validCustomerId = '507f1f77bcf86cd799439022';
 
-    const mockSearchResponse = {
-      search_results: [
-        { id: 's1', score: 0.95, payload: { doc_id: 'doc1' } },
-        { id: 's2', score: 0.9, payload: { doc_id: 'doc2' } },
-        { id: 's3', score: 0.85, payload: { doc_id: 'doc3' } }
-      ]
-    };
+    const rawItems: SemanticSearchResultItem[] = [
+      { id: 's1', score: 0.95, payload: { doc_id: 'doc1' } },
+      { id: 's2', score: 0.9, payload: { doc_id: 'doc2' } },
+      { id: 's3', score: 0.85, payload: { doc_id: 'doc3' } }
+    ];
 
     const mockResponseWithCustomer = {
       success: true,
@@ -213,7 +186,7 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
           meta: {},
           customer_relation: {
             customer_id: validCustomerId,
-            customer_name: '김영희',  // customer_name 포함하여 추가 API 호출 방지
+            customer_name: '김영희',
             linked_at: '2025-01-01T00:00:00Z'
           }
         },
@@ -235,10 +208,6 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
     vi.mocked(global.fetch)
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => mockSearchResponse
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
         json: async () => mockResponseWithCustomer
       } as Response)
       .mockResolvedValueOnce({
@@ -250,23 +219,20 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
         json: async () => mockResponseWithCustomer
       } as Response);
 
-    const result = await SearchService.searchDocuments({
-      query: '테스트',
-      search_mode: 'semantic'
-    });
+    const result = await SearchService.enrichPageResults(rawItems);
 
     // 첫 번째: 고객 연결됨
-    expect((result.search_results[0] as any).customer_relation).toEqual({
+    expect((result[0] as any).customer_relation).toEqual({
       customer_id: validCustomerId,
       customer_name: '김영희',
       linked_at: '2025-01-01T00:00:00Z'
     });
 
     // 두 번째: 고객 미연결
-    expect((result.search_results[1] as any).customer_relation).toBeNull();
+    expect((result[1] as any).customer_relation).toBeNull();
 
     // 세 번째: 고객 연결됨
-    expect((result.search_results[2] as any).customer_relation).toEqual({
+    expect((result[2] as any).customer_relation).toEqual({
       customer_id: validCustomerId,
       customer_name: '김영희',
       linked_at: '2025-01-01T00:00:00Z'
@@ -274,8 +240,58 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
   });
 });
 
+describe('SearchService.searchDocuments - 시맨틱 검색 raw 결과 반환', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    global.fetch = vi.fn();
+    localStorageMock.clear();
+    Object.defineProperty(global, 'localStorage', { value: localStorageMock, writable: true });
+  });
 
-describe('SearchService - 키워드 검색 customer_relation (N+1 제거)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('시맨틱 검색은 raw 결과만 반환한다 (enrichment 없음, fetch 1회)', async () => {
+    const mockSearchResponse = {
+      search_results: [
+        {
+          id: 'semantic1',
+          score: 0.95,
+          payload: {
+            doc_id: 'doc123',
+            original_name: 'test.pdf',
+            owner_id: 'tester'
+          }
+        }
+      ],
+      answer: 'AI 답변'
+    };
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSearchResponse
+      } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '테스트',
+      search_mode: 'semantic'
+    });
+
+    // fetch 1회만 호출 (enrichment 없음)
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    // raw 결과 그대로 반환
+    expect(result.search_results).toHaveLength(1);
+    expect((result.search_results[0] as any).id).toBe('semantic1');
+    expect((result.search_results[0] as any).payload.doc_id).toBe('doc123');
+    // customer_relation은 enrichment 전이므로 없음
+    expect((result.search_results[0] as any).customer_relation).toBeUndefined();
+  });
+});
+
+
+describe('SearchService.searchDocuments - 키워드 검색 customer_relation (N+1 제거)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
