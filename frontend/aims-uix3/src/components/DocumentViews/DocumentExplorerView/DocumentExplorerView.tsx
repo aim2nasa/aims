@@ -81,6 +81,14 @@ interface SearchDocument {
   customerName: string | null
   document_type: string | null
   badgeType: string | null
+  overallStatus: string | null
+  status: string | null
+  progress: number
+  _hasMetaText: boolean
+  _hasOcrText: boolean
+  upload: Record<string, unknown> | null
+  meta: { mime?: string | null; size_bytes?: number | null; pdf_pages?: number | null; meta_status?: string | null; summary?: string | null } | null
+  ocr: { status?: string | null; confidence?: number | null; summary?: string | null } | null
 }
 
 interface ExplorerTreeData {
@@ -677,6 +685,14 @@ const DocumentExplorerContent: React.FC<{
           mimeType: doc.mimeType,
           document_type: doc.document_type,
           badgeType: doc.badgeType,
+          overallStatus: doc.overallStatus,
+          status: doc.status,
+          progress: doc.progress,
+          _hasMetaText: doc._hasMetaText,
+          _hasOcrText: doc._hasOcrText,
+          upload: doc.upload,
+          meta: doc.meta,
+          ocr: doc.ocr,
           customer_relation: {
             customer_id: doc.customerId || '',
             customer_name: doc.customerName || '',

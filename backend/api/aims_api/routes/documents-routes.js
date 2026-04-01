@@ -1007,6 +1007,8 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
       const matchedDocs = await db.collection(COLLECTION_NAME).aggregate([
         { $match: searchFilter },
         { $sort: { 'upload.uploaded_at': -1 } },
+        // TEXT_FLAG_STAGES: _hasMetaText, _hasOcrText 플래그 계산 + full_text 제거
+        ...TEXT_FLAG_STAGES,
         // 고객별 매칭 문서 전체 반환 (검색 결과 모두 표시)
         { $group: {
           _id: '$customerId',
@@ -1018,7 +1020,25 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
             fileSize: { $ifNull: ['$meta.size_bytes', null] },
             mimeType: { $ifNull: ['$meta.mime', null] },
             document_type: { $ifNull: ['$document_type', null] },  // SSoT: top-level만 참조
-            badgeType: '$badgeType'
+            badgeType: '$badgeType',
+            overallStatus: { $ifNull: ['$overallStatus', null] },
+            status: { $ifNull: ['$status', null] },
+            progress: { $ifNull: ['$progress', 0] },
+            _hasMetaText: { $ifNull: ['$_hasMetaText', false] },
+            _hasOcrText: { $ifNull: ['$_hasOcrText', false] },
+            upload: { $ifNull: ['$upload', null] },
+            meta: {
+              mime: { $ifNull: ['$meta.mime', null] },
+              size_bytes: { $ifNull: ['$meta.size_bytes', null] },
+              pdf_pages: { $ifNull: ['$meta.pdf_pages', null] },
+              meta_status: { $ifNull: ['$meta.meta_status', null] },
+              summary: { $ifNull: ['$meta.summary', null] },
+            },
+            ocr: {
+              status: { $ifNull: ['$ocr.status', null] },
+              confidence: { $ifNull: ['$ocr.confidence', null] },
+              summary: { $ifNull: ['$ocr.summary', null] },
+            },
           }},
           totalCount: { $sum: 1 }
         }}
@@ -1033,6 +1053,15 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
         const cid = String(group._id);
         const cName = customerNameMap.get(cid) || '';
         group.docs.forEach(doc => {
+          // badgeType 계산 — /documents/status 엔드포인트와 동일 로직
+          let badgeType = doc.badgeType;
+          if (!badgeType) {
+            if (doc._hasMetaText) badgeType = 'TXT';
+            else if (doc._hasOcrText) badgeType = 'OCR';
+            else if (doc.meta?.mime && doc.meta.mime.startsWith('image/')) badgeType = 'OCR';
+            else badgeType = 'BIN';
+          }
+
           searchDocuments.push({
             _id: String(doc._id),
             displayName: doc.displayName || null,
@@ -1043,7 +1072,15 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
             customerId: cid,
             customerName: cName,
             document_type: doc.document_type,
-            badgeType: doc.badgeType || 'BIN',
+            badgeType,
+            overallStatus: doc.overallStatus || null,
+            status: doc.status || null,
+            progress: doc.progress || 0,
+            _hasMetaText: doc._hasMetaText || false,
+            _hasOcrText: doc._hasOcrText || false,
+            upload: doc.upload || null,
+            meta: doc.meta || null,
+            ocr: doc.ocr || null,
           });
         });
       });

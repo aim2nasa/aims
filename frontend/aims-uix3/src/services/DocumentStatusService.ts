@@ -243,6 +243,14 @@ export class DocumentStatusService {
       customerName: string | null;
       document_type: string | null;
       badgeType: string | null;
+      overallStatus: string | null;
+      status: string | null;
+      progress: number;
+      _hasMetaText: boolean;
+      _hasOcrText: boolean;
+      upload: Record<string, unknown> | null;
+      meta: { mime?: string | null; size_bytes?: number | null; pdf_pages?: number | null; meta_status?: string | null; summary?: string | null } | null;
+      ocr: { status?: string | null; confidence?: number | null; summary?: string | null } | null;
     }>;
   }> {
     try {
