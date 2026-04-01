@@ -14,7 +14,7 @@ import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { usePersistedState } from '@/hooks/usePersistedState'
-import { DocumentExplorerToolbar, type ExplorerSearchMode, type EditModeType } from './DocumentExplorerToolbar'
+import { DocumentExplorerToolbar, type EditModeType } from './DocumentExplorerToolbar'
 import { DocumentExplorerTree, DocumentExplorerColumnHeader } from './DocumentExplorerTree'
 import { InitialFilterBar } from '@/shared/ui/InitialFilterBar'
 import { ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui/ContextMenu'
@@ -28,14 +28,8 @@ import { DocumentSummaryModal } from '../DocumentStatusView/components/DocumentS
 import { DocumentFullTextModal } from '../DocumentStatusView/components/DocumentFullTextModal'
 import { DocumentNotesModal } from '../DocumentStatusView/components/DocumentNotesModal'
 import { DocumentTypePickerModal } from '@/shared/ui/DocumentTypeCell/DocumentTypePickerModal'
-import { DocumentContentSearchModal } from '@/features/customer/components/DocumentContentSearchModal/DocumentContentSearchModal'
 import DownloadHelper from '../../../utils/downloadHelper'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import { SearchService } from '@/services/searchService'
-import type { SearchResultItem } from '@/entities/search'
-import { formatDate, formatDateTime } from '@/shared/lib/timeUtils'
-import { formatFileSize } from '@/shared/lib/fileValidation/constants'
-import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { Tooltip, useToastContext } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { Document } from '@/types/documentStatus'
@@ -330,16 +324,6 @@ const DocumentExplorerContent: React.FC<{
     onCustomerClick?.(customerId)
   }, [onCustomerClick])
 
-  // 고객 범위 검색 (특정 고객의 문서만 검색)
-  const [scopeCustomer, setScopeCustomer] = useState<{ id: string; name: string; type: '개인' | '법인' } | null>(null)
-
-  // 문서 내용 검색 모달 상태
-  const [contentSearchModal, setContentSearchModal] = useState<{ isOpen: boolean; customerId: string; customerName: string; customerType: '개인' | '법인' }>({
-    isOpen: false, customerId: '', customerName: '', customerType: '개인'
-  })
-
-  // === 내용 검색 / AI 질문 상태 (컨텍스트 메뉴보다 먼저 선언) ===
-  const [explorerSearchMode, setExplorerSearchMode] = usePersistedState<ExplorerSearchMode>('doc-explorer-search-mode', 'filename')
 
   // 고객 컨텍스트 메뉴 — 뷰 네비게이션 핸들러
   const navigateToView = useCallback((view: string, customerId: string) => {
@@ -403,202 +387,12 @@ const DocumentExplorerContent: React.FC<{
             onClick: () => {
               navigateToView('customer-document-explorer', contextMenuCustomer.id)
             }
-          },
-          {
-            id: 'content-search',
-            label: '이 고객 문서 검색',
-            icon: (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.35-4.35" />
-              </svg>
-            ),
-            onClick: () => {
-              setScopeCustomer({
-                id: contextMenuCustomer.id,
-                name: contextMenuCustomer.name,
-                type: contextMenuCustomer.customerType || '개인'
-              })
-              // 내용 검색 모드로 전환 (파일명 모드일 때만)
-              setExplorerSearchMode(prev => prev === 'filename' ? 'content' : prev)
-            }
           }
         ]
       }
     ]
-  }, [contextMenuCustomer, onCustomerClick, navigateToView, setExplorerSearchMode])
+  }, [contextMenuCustomer, onCustomerClick, navigateToView])
 
-  // === 내용 검색 / AI 질문 결과 상태 ===
-  const [contentSearchResults, setContentSearchResults] = useState<SearchResultItem[]>([])
-  const [contentSearchAnswer, setContentSearchAnswer] = useState<string | null>(null)
-  const [isContentSearching, setIsContentSearching] = useState(false)
-  const [contentSearchError, setContentSearchError] = useState<string | null>(null)
-  const [lastContentSearchMode, setLastContentSearchMode] = useState<ExplorerSearchMode | null>(null)
-  const contentSearchAbortRef = useRef<AbortController | null>(null)
-
-  // === 내용 검색 결과 정렬 상태 ===
-  type ContentSortField = 'filetype' | 'filename' | 'customer' | 'date' | 'size' | 'score' | null
-  type ContentSortOrder = 'asc' | 'desc'
-  const [contentSortField, setContentSortField] = useState<ContentSortField>(null)
-  const [contentSortOrder, setContentSortOrder] = useState<ContentSortOrder>('asc')
-
-  // === 페이지네이션 상태 ===
-  const CONTENT_PAGE_SIZE = 20
-  const [contentPage, setContentPage] = useState(1)
-
-  // 정렬 핸들러
-  const handleContentSort = useCallback((field: Exclude<ContentSortField, null>) => {
-    if (contentSortField === field) {
-      setContentSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      setContentSortField(field)
-      setContentSortOrder(field === 'score' || field === 'date' ? 'desc' : 'asc')
-    }
-  }, [contentSortField])
-
-  // 파일 확장자 → 표시 형식 라벨 (정렬용)
-  const getFileTypeLabel = useCallback((item: SearchResultItem) => {
-    const name = SearchService.getOriginalName(item)
-    const ext = name.split('.').pop()?.toLowerCase() || ''
-    if (ext === 'pdf') return 'PDF'
-    if (ext === 'hwp' || ext === 'hwpx') return 'HWP'
-    if (ext === 'xlsx' || ext === 'xls') return 'XLS'
-    if (ext === 'docx' || ext === 'doc') return 'DOC'
-    if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'IMG'
-    return ext.toUpperCase().slice(0, 3) || 'ETC'
-  }, [])
-
-  // 정렬된 결과
-  const sortedContentSearchResults = useMemo(() => {
-    if (!contentSortField || !contentSearchResults.length) return contentSearchResults
-
-    return [...contentSearchResults].sort((a, b) => {
-      let cmp = 0
-      if (contentSortField === 'filetype') {
-        cmp = getFileTypeLabel(a).localeCompare(getFileTypeLabel(b))
-      } else if (contentSortField === 'filename') {
-        const nameA = (a.displayName || SearchService.getOriginalName(a)).toLowerCase()
-        const nameB = (b.displayName || SearchService.getOriginalName(b)).toLowerCase()
-        cmp = nameA.localeCompare(nameB, 'ko-KR')
-      } else if (contentSortField === 'customer') {
-        const custA = a.customer_relation?.customer_name || ''
-        const custB = b.customer_relation?.customer_name || ''
-        if (!custA && custB) return 1
-        if (custA && !custB) return -1
-        cmp = custA.localeCompare(custB, 'ko-KR')
-      } else if (contentSortField === 'date') {
-        const dateA = ('upload' in a && a.upload?.uploaded_at) ? new Date(a.upload.uploaded_at).getTime() : 0
-        const dateB = ('upload' in b && b.upload?.uploaded_at) ? new Date(b.upload.uploaded_at).getTime() : 0
-        cmp = dateA - dateB
-      } else if (contentSortField === 'size') {
-        const sizeA = ('meta' in a && a.meta?.size_bytes) || 0
-        const sizeB = ('meta' in b && b.meta?.size_bytes) || 0
-        cmp = sizeA - sizeB
-      } else if (contentSortField === 'score') {
-        const scoreA = ('score' in a ? (a as { score?: number }).score : 0) || 0
-        const scoreB = ('score' in b ? (b as { score?: number }).score : 0) || 0
-        cmp = scoreA - scoreB
-      }
-      return contentSortOrder === 'asc' ? cmp : -cmp
-    })
-  }, [contentSearchResults, contentSortField, contentSortOrder, getFileTypeLabel])
-
-  // 페이지네이션 적용된 결과
-  const totalContentPages = Math.max(1, Math.ceil(sortedContentSearchResults.length / CONTENT_PAGE_SIZE))
-  const paginatedContentResults = useMemo(() => {
-    const start = (contentPage - 1) * CONTENT_PAGE_SIZE
-    return sortedContentSearchResults.slice(start, start + CONTENT_PAGE_SIZE)
-  }, [sortedContentSearchResults, contentPage])
-
-  // 검색 모드 변경 시 정렬 초기화 + 페이지 리셋
-  useEffect(() => {
-    setContentPage(1)
-    if (lastContentSearchMode === 'semantic') {
-      setContentSortField('score')
-      setContentSortOrder('desc')
-    } else if (lastContentSearchMode) {
-      setContentSortField('filename')
-      setContentSortOrder('asc')
-    }
-  }, [lastContentSearchMode])
-
-  // 정렬 변경 시 페이지 리셋
-  useEffect(() => {
-    setContentPage(1)
-  }, [contentSortField, contentSortOrder])
-
-  // 내용 검색 실행 핸들러
-  const handleContentSearch = useCallback(async (query: string) => {
-    if (!query.trim()) return
-
-    // 이전 요청 취소
-    if (contentSearchAbortRef.current) {
-      contentSearchAbortRef.current.abort()
-    }
-    const controller = new AbortController()
-    contentSearchAbortRef.current = controller
-
-    setIsContentSearching(true)
-    setContentSearchError(null)
-    setContentSearchResults([])
-    setContentSearchAnswer(null)
-
-    try {
-      const searchQuery = {
-        query: query.trim(),
-        search_mode: explorerSearchMode === 'semantic' ? 'semantic' as const : 'keyword' as const,
-        ...(explorerSearchMode === 'content' && { mode: 'AND' as const }),
-        ...(scopeCustomer && { customer_id: scopeCustomer.id }),
-      }
-      const response = await SearchService.searchDocuments(searchQuery, controller.signal)
-      setContentSearchResults(response.search_results)
-      setContentSearchAnswer(response.answer || null)
-      setLastContentSearchMode(explorerSearchMode)
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return
-      console.error('[DocumentExplorerView] 내용 검색 오류:', err)
-      errorReporter.reportApiError(err as Error, { component: 'DocumentExplorerView.handleContentSearch' })
-      setContentSearchError('검색 중 오류가 발생했습니다.')
-    } finally {
-      if (!controller.signal.aborted) {
-        setIsContentSearching(false)
-      }
-      if (contentSearchAbortRef.current === controller) {
-        contentSearchAbortRef.current = null
-      }
-    }
-  }, [explorerSearchMode, scopeCustomer])
-
-  // 검색 모드 전환 시 결과 초기화
-  const handleExplorerSearchModeChange = useCallback((mode: ExplorerSearchMode) => {
-    setExplorerSearchMode(mode)
-    setContentSearchResults([])
-    setContentSearchAnswer(null)
-    setContentSearchError(null)
-    setLastContentSearchMode(null)
-  }, [setExplorerSearchMode])
-
-  // 내용 검색 결과 닫기
-  const handleCloseContentSearch = useCallback(() => {
-    setContentSearchResults([])
-    setContentSearchAnswer(null)
-    setContentSearchError(null)
-    setLastContentSearchMode(null)
-    if (contentSearchAbortRef.current) {
-      contentSearchAbortRef.current.abort()
-      contentSearchAbortRef.current = null
-    }
-    setIsContentSearching(false)
-  }, [])
-
-  // cleanup
-  useEffect(() => {
-    return () => {
-      if (contentSearchAbortRef.current) {
-        contentSearchAbortRef.current.abort()
-      }
-    }
-  }, [])
 
   // === explorer-tree API 데이터 (DocumentStatusProvider 대체) ===
   const [explorerData, setExplorerData] = useState<ExplorerTreeData | null>(null)
@@ -808,7 +602,7 @@ const DocumentExplorerContent: React.FC<{
   const serverSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevSearchTermRef = useRef<string>('')
   useEffect(() => {
-    if (selectedInitial || explorerSearchMode !== 'filename') return
+    if (selectedInitial) return
     if (serverSearchTimerRef.current) clearTimeout(serverSearchTimerRef.current)
 
     const trimmed = searchTerm?.trim() || ''
@@ -831,7 +625,7 @@ const DocumentExplorerContent: React.FC<{
     return () => {
       if (serverSearchTimerRef.current) clearTimeout(serverSearchTimerRef.current)
     }
-  }, [searchTerm, selectedInitial, explorerSearchMode, fetchExplorerTree])
+  }, [searchTerm, selectedInitial, fetchExplorerTree])
 
   // 초성 미선택 시: 고객 요약 트리 빌드 (서버 데이터 그대로 렌더링)
   // initialType(탭)에 따라 해당 카테고리 고객만 필터링
@@ -853,12 +647,7 @@ const DocumentExplorerContent: React.FC<{
       customers = customers.filter(c => numberSet.has(c.initial))
     }
 
-    // 검색어로 고객명 필터 (서버 검색이 아닌 경우에만 클라이언트 필터 적용)
-    // explorerSearchMode === 'filename'이면 서버에서 이미 필터됨 (고객명+파일명 통합 검색)
-    if (searchTerm && explorerSearchMode !== 'filename') {
-      const lower = searchTerm.toLowerCase()
-      customers = customers.filter(c => c.name.toLowerCase().includes(lower))
-    }
+    // filename 모드: 서버에서 이미 필터됨 (고객명+파일명 통합 검색)
 
     // searchDocuments를 고객별로 그룹핑
     const searchDocsByCustomer = new Map<string, SearchDocument[]>()
@@ -930,7 +719,7 @@ const DocumentExplorerContent: React.FC<{
       totalDocuments: totalDocs,
       groupStats: { groupCount: customers.length }
     }
-  }, [selectedInitial, filterFetchMode, explorerData?.customers, explorerData?.searchDocuments, searchTerm, initialType, explorerSearchMode])
+  }, [selectedInitial, filterFetchMode, explorerData?.customers, explorerData?.searchDocuments, searchTerm, initialType])
 
   // searchDocuments가 있으면 매칭 문서가 있는 고객을 자동 확장
   useEffect(() => {
@@ -1344,62 +1133,7 @@ const DocumentExplorerContent: React.FC<{
     void fetchExplorerTree(selectedInitial)
   }, [fetchExplorerTree, selectedInitial])
 
-  // 내용 검색 결과에서 문서 클릭 → RightPane 프리뷰 + 트리 이동
-  const handleContentSearchResultClick = useCallback((item: SearchResultItem) => {
-    const docId = ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined) || (('payload' in item && item.payload?.doc_id) ? item.payload.doc_id : '')
-    if (!docId) return
 
-    onDocumentClick?.(docId)
-
-    if (selectedInitial && documents.length > 0) {
-      setSelectedDocumentId(docId)
-      expandToDocument(docId)
-    }
-  }, [onDocumentClick, selectedInitial, documents.length, setSelectedDocumentId, expandToDocument])
-
-  // 검색 결과 키보드 네비게이션
-  const [searchResultFocusIndex, setSearchResultFocusIndex] = useState(-1)
-  const searchResultsListRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setSearchResultFocusIndex(-1)
-  }, [contentSearchResults, contentPage])
-
-  const handleSearchResultKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (!paginatedContentResults.length) return
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault()
-        setSearchResultFocusIndex(prev =>
-          prev < paginatedContentResults.length - 1 ? prev + 1 : 0
-        )
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        setSearchResultFocusIndex(prev =>
-          prev > 0 ? prev - 1 : paginatedContentResults.length - 1
-        )
-        break
-      case 'Enter':
-        if (searchResultFocusIndex >= 0 && paginatedContentResults[searchResultFocusIndex]) {
-          e.preventDefault()
-          handleContentSearchResultClick(paginatedContentResults[searchResultFocusIndex])
-        }
-        break
-      case 'Escape':
-        e.preventDefault()
-        handleCloseContentSearch()
-        break
-    }
-  }, [paginatedContentResults, searchResultFocusIndex, handleCloseContentSearch, handleContentSearchResultClick])
-
-  useEffect(() => {
-    if (searchResultFocusIndex >= 0 && searchResultsListRef.current) {
-      const items = searchResultsListRef.current.querySelectorAll('.doc-explorer-search-results__item')
-      items[searchResultFocusIndex]?.scrollIntoView({ block: 'nearest' })
-    }
-  }, [searchResultFocusIndex])
 
   return (
     <div className="doc-explorer-content">
@@ -1440,34 +1174,22 @@ const DocumentExplorerContent: React.FC<{
         onThumbnailEnabledChange={setThumbnailEnabled}
         filenameMode={filenameMode}
         onFilenameModeChange={handleFilenameModeChange}
-        searchMode={explorerSearchMode}
-        onSearchModeChange={handleExplorerSearchModeChange}
-        onContentSearch={handleContentSearch}
-        isContentSearching={isContentSearching}
-        onContentSearchClear={handleCloseContentSearch}
         editMode={editMode}
         onEditModeChange={handleEditModeChange}
         selectedCount={selectedDocumentIds.size}
-        scopeCustomer={scopeCustomer}
-        onScopeCustomerClear={() => {
-          setScopeCustomer(null)
-          handleCloseContentSearch()
-        }}
         isSummaryMode={!selectedInitial && filterFetchMode !== 'all'}
       />
 
-      {/* 초성 필터 바 - 검색 결과 표시 중에는 숨김 */}
-      {!lastContentSearchMode && (
-        <InitialFilterBar
-          initialType={initialType}
-          onInitialTypeChange={onInitialTypeChange}
-          selectedInitial={selectedInitial}
-          onSelectedInitialChange={onSelectedInitialChange}
-          initialCounts={serverInitialCounts}
-          countLabel="건"
-          targetLabel="고객"
-        />
-      )}
+      {/* 초성 필터 바 */}
+      <InitialFilterBar
+        initialType={initialType}
+        onInitialTypeChange={onInitialTypeChange}
+        selectedInitial={selectedInitial}
+        onSelectedInitialChange={onSelectedInitialChange}
+        initialCounts={serverInitialCounts}
+        countLabel="건"
+        targetLabel="고객"
+      />
 
       {/* 문서 처리 현황 바 — 처리 중 문서가 있을 때만 표시 */}
       <ExplorerProcessingStatusBar
@@ -1479,282 +1201,18 @@ const DocumentExplorerContent: React.FC<{
       {/* 트리 레이아웃 래퍼 — 컬럼 헤더(고정)와 스크롤 영역을 분리 */}
       <div className="doc-explorer-tree-layout">
         {/* 컬럼 헤더 — scroll container 밖에 배치해야 겹침/잘림 버그 없음 */}
-        {!lastContentSearchMode && (
-          <DocumentExplorerColumnHeader
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            onSortByChange={setSortBy}
-            filenameMode={filenameMode}
-            onFilenameModeChange={handleFilenameModeChange}
-            customerSelectMode={customerSelectMode}
-            onToggleCustomerSelectMode={handleToggleCustomerSelectMode}
-          />
-        )}
-        {/* 트리 뷰 또는 검색 결과 (트리 영역을 대체) */}
+        <DocumentExplorerColumnHeader
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortByChange={setSortBy}
+          filenameMode={filenameMode}
+          onFilenameModeChange={handleFilenameModeChange}
+          customerSelectMode={customerSelectMode}
+          onToggleCustomerSelectMode={handleToggleCustomerSelectMode}
+        />
+        {/* 트리 뷰 */}
         <div className="doc-explorer-tree-container">
-        {/* 내용 검색 / AI 질문 결과 — 트리 영역 전체를 대체 */}
-        {lastContentSearchMode ? (
-          <div className="doc-explorer-search-results" tabIndex={0} onKeyDown={handleSearchResultKeyDown}>
-            {/* 결과 헤더 */}
-            <div className="doc-explorer-search-results__header">
-              <div className="doc-explorer-search-results__header-left">
-                <SFSymbol
-                  name={lastContentSearchMode === 'semantic' ? 'sparkles' : 'magnifyingglass'}
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative
-                />
-                <span className="doc-explorer-search-results__title">
-                  {lastContentSearchMode === 'semantic' ? 'AI 질문 결과' : '내용 검색 결과'}
-                </span>
-                <span className="doc-explorer-search-results__count">
-                  {contentSearchResults.length}건
-                </span>
-                {scopeCustomer && (
-                  <span className="doc-explorer-search-results__scope-badge">
-                    {scopeCustomer.name}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                className="doc-explorer-search-results__back"
-                onClick={handleCloseContentSearch}
-                aria-label="검색 결과 닫기"
-              >
-                <SFSymbol
-                  name="xmark.circle.fill"
-                  size={SFSymbolSize.FOOTNOTE}
-                  weight={SFSymbolWeight.REGULAR}
-                />
-              </button>
-            </div>
-
-            {/* AI 답변 (시맨틱 모드) */}
-            {contentSearchAnswer && (
-              <div className="doc-explorer-search-results__answer">
-                <SFSymbol
-                  name="sparkles"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                  className="doc-explorer-search-results__answer-icon"
-                  decorative
-                />
-                <span>{contentSearchAnswer}</span>
-              </div>
-            )}
-
-            {/* 에러 표시 */}
-            {contentSearchError && (
-              <div className="doc-explorer-search-results__error">
-                <SFSymbol name="exclamationmark.triangle" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.REGULAR} decorative />
-                <span>{contentSearchError}</span>
-              </div>
-            )}
-
-            {/* 로딩 중 */}
-            {isContentSearching && (
-              <div className="doc-explorer-search-results__loading">
-                <div className="doc-explorer-search-results__loading-spinner" />
-                <span>검색 중...</span>
-              </div>
-            )}
-
-            {/* 검색 결과 목록 */}
-            {contentSearchResults.length > 0 && (
-              <>
-              {/* 🍎 칼럼 헤더 */}
-              <div className="doc-explorer-search-results__col-header">
-                <div
-                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'filetype' ? 'sorted' : ''}`}
-                  data-col="filetype"
-                  onClick={() => handleContentSort('filetype')}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <span>형식</span>
-                  <SortIndicator field="filetype" currentSortField={contentSortField} sortDirection={contentSortOrder} />
-                </div>
-                <div
-                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'filename' ? 'sorted' : ''}`}
-                  data-col="filename"
-                  onClick={() => handleContentSort('filename')}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <span>파일명</span>
-                  <SortIndicator field="filename" currentSortField={contentSortField} sortDirection={contentSortOrder} />
-                </div>
-                <div
-                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'customer' ? 'sorted' : ''}`}
-                  data-col="customer"
-                  onClick={() => handleContentSort('customer')}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <span>고객</span>
-                  <SortIndicator field="customer" currentSortField={contentSortField} sortDirection={contentSortOrder} />
-                </div>
-                <div
-                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'date' ? 'sorted' : ''}`}
-                  data-col="date"
-                  onClick={() => handleContentSort('date')}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <span>업로드일</span>
-                  <SortIndicator field="date" currentSortField={contentSortField} sortDirection={contentSortOrder} />
-                </div>
-                <div
-                  className={`doc-explorer-search-results__col sortable ${contentSortField === 'size' ? 'sorted' : ''}`}
-                  data-col="size"
-                  onClick={() => handleContentSort('size')}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <span>크기</span>
-                  <SortIndicator field="size" currentSortField={contentSortField} sortDirection={contentSortOrder} />
-                </div>
-                {lastContentSearchMode === 'semantic' && (
-                  <div
-                    className={`doc-explorer-search-results__col sortable ${contentSortField === 'score' ? 'sorted' : ''}`}
-                    data-col="score"
-                    onClick={() => handleContentSort('score')}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <span>유사도</span>
-                    <SortIndicator field="score" currentSortField={contentSortField} sortDirection={contentSortOrder} />
-                  </div>
-                )}
-              </div>
-              <div className="doc-explorer-search-results__list" ref={searchResultsListRef}>
-                {paginatedContentResults.map((item, index) => {
-                  const docId = ('_id' in item ? item._id : undefined) || ('id' in item ? item.id : undefined) || ''
-                  const displayName = item.displayName || SearchService.getOriginalName(item)
-                  const originalName = SearchService.getOriginalName(item)
-                  const summary = SearchService.getSummary(item)
-                  const score = 'score' in item ? (item as { score?: number }).score : undefined
-                  const customerName = item.customer_relation?.customer_name
-                  const customerType = item.customer_relation?.customer_type
-                  const ext = originalName.split('.').pop()?.toLowerCase() || ''
-                  const uploadedAt = ('upload' in item && item.upload?.uploaded_at) ? item.upload.uploaded_at : undefined
-                  const sizeBytes = ('meta' in item && item.meta?.size_bytes) ? item.meta.size_bytes : undefined
-
-                  return (
-                    <button
-                      key={docId || index}
-                      type="button"
-                      className={`doc-explorer-search-results__item ${(previewDocumentId ?? selectedDocumentId) === docId ? 'doc-explorer-search-results__item--selected' : ''} ${searchResultFocusIndex === index ? 'doc-explorer-search-results__item--focused' : ''}`}
-                      onClick={() => handleContentSearchResultClick(item)}
-                    >
-                      {/* 파일 타입 배지 */}
-                      <span className={`doc-explorer-search-results__file-badge doc-explorer-search-results__file-badge--${ext === 'pdf' ? 'pdf' : ext === 'hwp' || ext === 'hwpx' ? 'hwp' : ext === 'xlsx' || ext === 'xls' ? 'excel' : ext === 'docx' || ext === 'doc' ? 'word' : ext === 'jpg' || ext === 'jpeg' || ext === 'png' ? 'image' : 'other'}`}>
-                        {ext === 'pdf' ? 'PDF' : ext === 'hwp' || ext === 'hwpx' ? 'HWP' : ext === 'xlsx' || ext === 'xls' ? 'XLS' : ext === 'docx' || ext === 'doc' ? 'DOC' : ext === 'jpg' || ext === 'jpeg' || ext === 'png' ? 'IMG' : ext.toUpperCase().slice(0, 3)}
-                      </span>
-                      {/* 문서 정보 */}
-                      <div className="doc-explorer-search-results__item-content">
-                        <div className="doc-explorer-search-results__item-top">
-                          <span className="doc-explorer-search-results__item-name">{displayName}</span>
-                        </div>
-                        {summary && (
-                          <span className="doc-explorer-search-results__item-snippet">
-                            {summary.length > 120 ? summary.substring(0, 120) + '...' : summary}
-                          </span>
-                        )}
-                      </div>
-                      {/* 고객 — 개인/법인 아이콘 구분 (AllCustomersView 동일 방식) */}
-                      <span className="doc-explorer-search-results__item-customer">
-                        {customerName ? (
-                          <>
-                            {customerType === '법인' ? (
-                              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate" aria-hidden="true">
-                                <circle cx="10" cy="10" r="10" opacity="0.2" />
-                                <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
-                              </svg>
-                            ) : (
-                              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal" aria-hidden="true">
-                                <circle cx="10" cy="10" r="10" opacity="0.2" />
-                                <circle cx="10" cy="7" r="3" />
-                                <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                              </svg>
-                            )}
-                            {customerName}
-                          </>
-                        ) : (
-                          <span className="doc-explorer-search-results__item-no-customer">-</span>
-                        )}
-                      </span>
-                      {/* 업로드일 */}
-                      <span className="doc-explorer-search-results__item-date">
-                        {uploadedAt ? (
-                          <Tooltip content={formatDateTime(uploadedAt)}>
-                            <span>{formatDate(uploadedAt)}</span>
-                          </Tooltip>
-                        ) : '-'}
-                      </span>
-                      {/* 크기 */}
-                      <span className="doc-explorer-search-results__item-size">
-                        {sizeBytes ? formatFileSize(sizeBytes) : '-'}
-                      </span>
-                      {/* 유사도 (시맨틱만) */}
-                      {lastContentSearchMode === 'semantic' && (
-                        <span className="doc-explorer-search-results__item-score">
-                          {score !== undefined && score > 0 ? `${(score * 100).toFixed(0)}%` : '-'}
-                        </span>
-                      )}
-                      {/* 화살표 (그리드 마지막 요소가 아닌 경우 숨김) */}
-                      <SFSymbol
-                        name="chevron.right"
-                        size={SFSymbolSize.CAPTION_2}
-                        weight={SFSymbolWeight.REGULAR}
-                        className="doc-explorer-search-results__item-arrow"
-                        decorative
-                      />
-                    </button>
-                  )
-                })}
-              </div>
-              {/* 🍎 페이지네이션 */}
-              {totalContentPages > 1 && (
-                <div className="doc-explorer-search-results__pagination">
-                  <button
-                    type="button"
-                    className="doc-explorer-search-results__page-btn"
-                    onClick={() => { setContentPage(p => Math.max(1, p - 1)); searchResultsListRef.current?.scrollTo(0, 0) }}
-                    disabled={contentPage <= 1}
-                    aria-label="이전 페이지"
-                  >
-                    <SFSymbol name="chevron.left" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
-                  </button>
-                  <span className="doc-explorer-search-results__page-info">
-                    <span className="doc-explorer-search-results__page-size">{CONTENT_PAGE_SIZE}건씩</span>
-                    {contentPage} / {totalContentPages}
-                  </span>
-                  <button
-                    type="button"
-                    className="doc-explorer-search-results__page-btn"
-                    onClick={() => { setContentPage(p => Math.min(totalContentPages, p + 1)); searchResultsListRef.current?.scrollTo(0, 0) }}
-                    disabled={contentPage >= totalContentPages}
-                    aria-label="다음 페이지"
-                  >
-                    <SFSymbol name="chevron.right" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
-                  </button>
-                </div>
-              )}
-              </>
-            )}
-
-            {/* 결과 없음 */}
-            {contentSearchResults.length === 0 && !contentSearchError && !isContentSearching && (
-              <div className="doc-explorer-search-results__empty">
-                <SFSymbol name="doc.text.magnifyingglass" size={SFSymbolSize.TITLE_3} weight={SFSymbolWeight.ULTRALIGHT} decorative />
-                <span>검색 결과가 없습니다</span>
-                <span className="doc-explorer-search-results__empty-hint">다른 키워드로 다시 검색해 보세요</span>
-              </div>
-            )}
-          </div>
-        ) : isLoading && !explorerData ? (
+        {isLoading && !explorerData ? (
           <div className="doc-explorer-loading">
             <div className="doc-explorer-loading__spinner" />
             <p>문서를 불러오는 중...</p>
@@ -1789,24 +1247,6 @@ const DocumentExplorerContent: React.FC<{
             onCustomerContextMenu={handleCustomerContextMenu}
             onCustomerDetailClick={handleCustomerDetailClick}
             onCustomerExplorerClick={onCustomerExplorerClick}
-            onOpenQuickSearch={(customerId, customerName, customerType) => {
-              setScopeCustomer({
-                id: customerId,
-                name: customerName,
-                type: customerType || '개인'
-              })
-              if (explorerSearchMode === 'filename') {
-                handleExplorerSearchModeChange('content')
-              }
-            }}
-            onOpenContentSearchModal={(customerId, customerName, customerType) => {
-              setContentSearchModal({
-                isOpen: true,
-                customerId,
-                customerName,
-                customerType: customerType || '개인'
-              })
-            }}
             onOpenFullDetail={(customerId) => {
               navigateToView('customers-full-detail', customerId)
             }}
@@ -2006,15 +1446,6 @@ const DocumentExplorerContent: React.FC<{
         triggerRef={typePickerTriggerRef}
         onSelect={handleDocumentTypeChange}
         onClose={() => setTypePickerVisible(false)}
-      />
-
-      {/* 문서 내용 검색 모달 */}
-      <DocumentContentSearchModal
-        isOpen={contentSearchModal.isOpen}
-        onClose={() => setContentSearchModal(prev => ({ ...prev, isOpen: false }))}
-        customerId={contentSearchModal.customerId}
-        customerName={contentSearchModal.customerName}
-        customerType={contentSearchModal.customerType}
       />
 
       {/* 이름 변경 모달 */}

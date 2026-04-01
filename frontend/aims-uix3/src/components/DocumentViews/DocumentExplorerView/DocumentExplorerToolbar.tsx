@@ -1,6 +1,6 @@
 /**
  * DocumentExplorerToolbar
- * @description 문서 탐색기 툴바 - 분류 기준 선택, 검색(파일명/내용/AI), 펼치기/접기, 빠른 필터
+ * @description 문서 탐색기 툴바 - 분류 기준 선택, 통합검색(파일명), 펼치기/접기, 빠른 필터
  */
 
 import React, { useCallback, useRef, useState, useMemo, useEffect } from 'react'
@@ -9,11 +9,10 @@ import { Tooltip } from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection, QuickFilterType, DateRange } from './types/documentExplorer'
 import { GROUP_BY_LABELS, SORT_BY_LABELS, QUICK_FILTER_LABELS } from './types/documentExplorer'
-import { getRecentSearchQueries, addRecentSearchQuery, type RecentSearchQuery } from '../../../utils/recentSearchQueries'
 import '../DocumentLibraryView/DocumentLibraryView-delete.css'
 
-/** 탐색기 검색 모드 */
-export type ExplorerSearchMode = 'filename' | 'content' | 'semantic'
+/** 탐색기 검색 모드 (filename만 사용) */
+export type ExplorerSearchMode = 'filename'
 
 // 빠른 필터 툴팁 설명
 const QUICK_FILTER_TOOLTIPS: Record<QuickFilterType, string> = {
@@ -60,55 +59,24 @@ export interface DocumentExplorerToolbarProps {
   /** 🍎 파일명 표시 모드 (별칭/원본) */
   filenameMode: 'display' | 'original'
   onFilenameModeChange: (mode: 'display' | 'original') => void
-  /** 검색 모드 (파일명/내용/AI질문) */
-  searchMode: ExplorerSearchMode
-  onSearchModeChange: (mode: ExplorerSearchMode) => void
-  /** 내용검색/AI질문 실행 핸들러 (Enter 키) */
-  onContentSearch: (query: string) => void
-  /** 내용검색 로딩 상태 */
-  isContentSearching?: boolean
-  /** 내용검색 결과 초기화 (검색어 X 클릭 시) */
-  onContentSearchClear?: () => void
   /** 편집 모드 */
   editMode?: EditModeType
   /** 편집 모드 변경 */
   onEditModeChange?: (mode: EditModeType) => void
   /** 선택된 문서 수 */
   selectedCount?: number
-  /** 고객 범위 검색 필터 (특정 고객의 문서만 검색) */
-  scopeCustomer?: { id: string; name: string; type: '개인' | '법인' } | null
-  /** 고객 범위 필터 해제 */
-  onScopeCustomerClear?: () => void
-  /** 요약 모드 여부 (초성 미선택) — 칩/placeholder 동적 변경용 */
+  /** 요약 모드 여부 (초성 미선택) — placeholder 동적 변경용 */
   isSummaryMode?: boolean
 }
-
-/** 검색 모드 칩 정의 — 초성 모드 (문서 트리) */
-const SEARCH_MODE_CHIPS_INITIAL: { value: ExplorerSearchMode; label: string; icon: string }[] = [
-  { value: 'filename', label: '파일명', icon: 'doc.text' },
-  { value: 'content', label: '내용', icon: 'magnifyingglass' },
-  { value: 'semantic', label: 'AI 질문', icon: 'sparkles' },
-]
-
-/** 검색 모드 칩 정의 — 요약 모드 (고객 목록) */
-const SEARCH_MODE_CHIPS_SUMMARY: { value: ExplorerSearchMode; label: string; icon: string }[] = [
-  { value: 'filename', label: '통합 검색', icon: 'magnifyingglass' },
-  { value: 'content', label: '문서 내용', icon: 'doc.text.magnifyingglass' },
-  { value: 'semantic', label: 'AI 질문', icon: 'sparkles' },
-]
 
 /** 검색 모드별 placeholder — 초성 모드 */
 const SEARCH_MODE_PLACEHOLDERS_INITIAL: Record<ExplorerSearchMode, string> = {
   filename: '파일명 · 고객명으로 검색...',
-  content: '문서 내용 검색...',
-  semantic: 'AI에게 질문하기...',
 }
 
 /** 검색 모드별 placeholder — 요약 모드 */
 const SEARCH_MODE_PLACEHOLDERS_SUMMARY: Record<ExplorerSearchMode, string> = {
   filename: '고객명 · 파일명으로 검색...',
-  content: '문서 내용 검색... (Enter)',
-  semantic: 'AI에게 질문하기...',
 }
 
 const SORT_OPTIONS: DocumentSortBy[] = ['name', 'ext', 'size', 'customer', 'date', 'badgeType']
@@ -144,20 +112,12 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   onThumbnailEnabledChange,
   filenameMode,
   onFilenameModeChange,
-  searchMode,
-  onSearchModeChange,
-  onContentSearch,
-  isContentSearching = false,
-  onContentSearchClear,
   editMode = 'none',
   onEditModeChange,
   selectedCount = 0,
-  scopeCustomer,
-  onScopeCustomerClear,
   isSummaryMode = false,
 }) => {
-  // 모드별 칩/placeholder 선택
-  const searchModeChips = isSummaryMode ? SEARCH_MODE_CHIPS_SUMMARY : SEARCH_MODE_CHIPS_INITIAL
+  // 모드별 placeholder 선택
   const searchModePlaceholders = isSummaryMode ? SEARCH_MODE_PLACEHOLDERS_SUMMARY : SEARCH_MODE_PLACEHOLDERS_INITIAL
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -334,99 +294,17 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
     [onGroupByChange]
   )
 
-  // 최근 검색어 상태
-  const [recentQueries, setRecentQueries] = useState<RecentSearchQuery[]>([])
-  const [showRecentQueries, setShowRecentQueries] = useState(false)
-  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // 검색 모드 변경 핸들러
-  const handleSearchModeChange = useCallback((value: string) => {
-    onSearchModeChange(value as ExplorerSearchMode)
-    // 모드 전환 시 검색어 초기화
-    onSearchChange('')
-    searchInputRef.current?.focus()
-  }, [onSearchModeChange, onSearchChange])
-
-  // 검색 실행 핸들러 (Enter 키) — IME 입력 중에는 무시
-  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.nativeEvent.isComposing) return
-    if (e.key === 'Enter' && searchTerm.trim()) {
-      if (searchMode === 'content' || searchMode === 'semantic') {
-        addRecentSearchQuery(searchTerm.trim())
-        onContentSearch(searchTerm.trim())
-        setShowRecentQueries(false)
-      }
-    }
-    if (e.key === 'Escape') {
-      setShowRecentQueries(false)
-      searchInputRef.current?.blur()
-    }
-  }, [searchTerm, searchMode, onContentSearch])
-
-  // 검색창 포커스 시 최근 검색어 표시 (내용/AI 모드만)
-  const handleSearchFocus = useCallback(() => {
-    if (searchMode !== 'filename') {
-      const queries = getRecentSearchQueries()
-      setRecentQueries(queries)
-      if (queries.length > 0) {
-        setShowRecentQueries(true)
-      }
-    }
-  }, [searchMode])
-
-  // 검색창 blur 시 최근 검색어 드롭다운 닫기 (약간 지연하여 클릭 허용)
-  const handleSearchBlur = useCallback(() => {
-    blurTimerRef.current = setTimeout(() => {
-      setShowRecentQueries(false)
-    }, 200)
-  }, [])
-
-  // 최근 검색어 클릭 핸들러
-  const handleRecentQueryClick = useCallback((query: string) => {
-    if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
-    onSearchChange(query)
-    setShowRecentQueries(false)
-    addRecentSearchQuery(query)
-    onContentSearch(query)
-  }, [onSearchChange, onContentSearch])
-
-  // cleanup
-  useEffect(() => {
-    return () => {
-      if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
-    }
-  }, [])
 
   const handleSearchClear = useCallback(() => {
     onSearchChange('')
-    onContentSearchClear?.()
     searchInputRef.current?.focus()
-  }, [onSearchChange, onContentSearchClear])
+  }, [onSearchChange])
 
   return (
     <div className="doc-explorer-toolbar">
-      {/* 검색 모드 칩 + 입력 */}
+      {/* 통합 검색 입력 */}
       <div className="doc-explorer-toolbar__search-group">
-        <div className="doc-explorer-toolbar__mode-chips">
-          {searchModeChips.map((chip) => (
-            <Tooltip key={chip.value} content={chip.value === 'filename' ? (isSummaryMode ? '고객명으로 실시간 필터링' : '파일명 · 고객명으로 실시간 필터링') : chip.value === 'content' ? (isSummaryMode ? '파일명 또는 문서 내용 검색 (Enter)' : '문서 내용에서 키워드 검색 (Enter)') : 'AI가 문서 내용을 이해하여 답변 (Enter)'} placement="bottom">
-              <button
-                type="button"
-                className={`doc-explorer-toolbar__mode-chip ${searchMode === chip.value ? 'doc-explorer-toolbar__mode-chip--active' : ''} ${chip.value === 'semantic' ? 'doc-explorer-toolbar__mode-chip--ai' : ''}`}
-                onClick={() => handleSearchModeChange(chip.value)}
-              >
-                <SFSymbol
-                  name={chip.icon}
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative
-                />
-                <span>{chip.label}</span>
-              </button>
-            </Tooltip>
-          ))}
-        </div>
-        <div className={`doc-explorer-toolbar__search${searchMode === 'semantic' ? ' doc-explorer-toolbar__search--ai' : searchMode === 'content' ? ' doc-explorer-toolbar__search--content' : ''}`}>
+        <div className="doc-explorer-toolbar__search">
           <SFSymbol
             name="magnifyingglass"
             size={SFSymbolSize.CAPTION_1}
@@ -437,32 +315,11 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
             ref={searchInputRef}
             type="text"
             className="doc-explorer-toolbar__search-input"
-            placeholder={searchModePlaceholders[searchMode]}
+            placeholder={searchModePlaceholders.filename}
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            onFocus={handleSearchFocus}
-            onBlur={handleSearchBlur}
           />
-          {isContentSearching && (
-            <span className="doc-explorer-toolbar__search-spinner" />
-          )}
-          {/* Enter 버튼 (내용/AI 모드에서 검색어 입력 시 — 클릭으로도 검색 실행) */}
-          {searchMode !== 'filename' && searchTerm && !isContentSearching && (
-            <button
-              type="button"
-              className="doc-explorer-toolbar__enter-btn"
-              onClick={() => {
-                addRecentSearchQuery(searchTerm.trim())
-                onContentSearch(searchTerm.trim())
-                setShowRecentQueries(false)
-              }}
-              aria-label="검색 실행"
-            >
-              Enter ↵
-            </button>
-          )}
-          {searchTerm && !isContentSearching && (
+          {searchTerm && (
             <button
               type="button"
               className="doc-explorer-toolbar__search-clear"
@@ -476,64 +333,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
               />
             </button>
           )}
-          {/* 최근 검색어 드롭다운 (내용/AI 모드) */}
-          {showRecentQueries && recentQueries.length > 0 && (
-            <div className="doc-explorer-toolbar__recent-queries">
-              <div className="doc-explorer-toolbar__recent-queries-header">
-                최근 검색어
-              </div>
-              {recentQueries.slice(0, 5).map((item) => (
-                <button
-                  key={item.timestamp}
-                  type="button"
-                  className="doc-explorer-toolbar__recent-query-item"
-                  onMouseDown={(e) => {
-                    e.preventDefault() // blur 방지
-                    handleRecentQueryClick(item.query)
-                  }}
-                >
-                  <SFSymbol
-                    name="clock.arrow.circlepath"
-                    size={SFSymbolSize.CAPTION_2}
-                    weight={SFSymbolWeight.REGULAR}
-                    decorative
-                  />
-                  <span className="doc-explorer-toolbar__recent-query-text">{item.query}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
-
       </div>
-
-      {/* 고객 범위 검색 칩 (특정 고객 문서만 검색 시) */}
-      {scopeCustomer && (
-        <div className="doc-explorer-toolbar__scope-chip">
-          <SFSymbol
-            name={scopeCustomer.type === '법인' ? 'building.2' : 'person.fill'}
-            size={SFSymbolSize.CAPTION_2}
-            weight={SFSymbolWeight.REGULAR}
-            decorative
-          />
-          <span className="doc-explorer-toolbar__scope-chip-name">{scopeCustomer.name}</span>
-          <Tooltip content="범위 해제 — 전체 문서 검색" placement="bottom">
-            <button
-              type="button"
-              className="doc-explorer-toolbar__scope-chip-clear"
-              onClick={onScopeCustomerClear}
-              aria-label="고객 범위 해제"
-            >
-              <SFSymbol
-                name="xmark"
-                size={SFSymbolSize.CAPTION_2}
-                weight={SFSymbolWeight.MEDIUM}
-                decorative
-              />
-            </button>
-          </Tooltip>
-        </div>
-      )}
 
       {/* 빠른 필터 칩 */}
       <div className="doc-explorer-toolbar__quick-filters">

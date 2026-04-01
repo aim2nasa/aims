@@ -27,7 +27,6 @@ import { formatDateTimeCompact } from '@/shared/lib/timeUtils'
 import { DocumentUtils } from '@/entities/document/model'
 import { DocumentSummaryModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentSummaryModal'
 import { DocumentFullTextModal } from '@/components/DocumentViews/DocumentStatusView/components/DocumentFullTextModal'
-import { DocumentContentSearchModal } from '@/features/customer/components/DocumentContentSearchModal'
 import { SummaryIcon, DocumentIcon } from '@/components/DocumentViews/components/DocumentActionIcons'
 import type { Document } from '@/types/documentStatus'
 import type { Customer } from '@/entities/customer/model'
@@ -263,8 +262,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
   // 모달 상태
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [activeModal, setActiveModal] = useState<'summary' | 'fulltext' | null>(null)
-  const [isContentSearchOpen, setIsContentSearchOpen] = useState(false)
-
   // 관계자 문서 탭 상태
   const [relatedGroups, setRelatedGroups] = useState<RelatedPersonGroup[]>([])
   const [relatedLoading, setRelatedLoading] = useState(false)
@@ -877,23 +874,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                 </button>
               )}
             </div>
-            {customerId && (
-              <button
-                type="button"
-                className="cde-expand-all-btn"
-                onClick={() => setIsContentSearchOpen(true)}
-                aria-label="내용 검색"
-              >
-                <SFSymbol
-                  name="doc.text"
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.MEDIUM}
-                  color="var(--color-success-600)"
-                  decorative={true}
-                />
-                <span>내용 검색</span>
-              </button>
-            )}
             <button
               type="button"
               className="cde-expand-all-btn"
@@ -1055,23 +1035,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
                       </button>
                     )}
                   </div>
-                  {customerId && (
-                    <button
-                      type="button"
-                      className="cde-expand-all-btn"
-                      onClick={() => setIsContentSearchOpen(true)}
-                      aria-label="내용 검색"
-                    >
-                      <SFSymbol
-                        name="doc.text"
-                        size={SFSymbolSize.CAPTION_2}
-                        weight={SFSymbolWeight.MEDIUM}
-                        color="var(--color-success-600)"
-                        decorative={true}
-                      />
-                      <span>내용 검색</span>
-                    </button>
-                  )}
                   <button
                     type="button"
                     className="cde-expand-all-btn"
@@ -1119,16 +1082,6 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
         onClose={handleModalClose}
         document={selectedDocument}
       />
-      {customerId && (
-        <DocumentContentSearchModal
-          isOpen={isContentSearchOpen}
-          onClose={() => setIsContentSearchOpen(false)}
-          customerId={customerId}
-          customerName={customerName || '고객'}
-          customerType={customerType}
-        />
-      )}
-
       {/* 이름 변경 모달 */}
       <RenameModal
         visible={renamingDoc !== null}
