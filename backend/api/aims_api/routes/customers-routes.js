@@ -2533,14 +2533,6 @@ router.get('/customers/:id/documents', authenticateJWT, async (req, res) => {
       // 기존 customers.documents[] 데이터는 fallback으로만 사용 (점진적 마이그레이션)
       const customerDoc = customer.documents?.find(d => d.document_id?.equals(doc._id));
 
-      // badgeType 계산 (FILE_BADGE_SYSTEM.md 기준)
-      let badgeType = 'BIN';
-      if (doc.meta?.full_text && doc.meta.full_text.trim().length > 0) {
-        badgeType = 'TXT';
-      } else if (doc.ocr?.full_text) {
-        badgeType = 'OCR';
-      }
-
       // AR 문서 여부 판단: doc.is_annual_report 또는 customer.annual_reports에 source_file_id로 존재하는지 확인
       const isAR = doc.is_annual_report === true ||
         (customer.annual_reports || []).some(ar => ar.source_file_id?.equals(doc._id));
@@ -2557,7 +2549,10 @@ router.get('/customers/:id/documents', authenticateJWT, async (req, res) => {
         notes: doc.customer_notes ?? customerDoc?.notes ?? null,
         linkedAt: normalizeTimestamp(doc.customer_linked_at || customerDoc?.upload_date || doc.upload?.uploaded_at),
         ar_metadata: doc.ar_metadata,
-        badgeType: badgeType,
+        // 프론트엔드 DocumentUtils.getDocumentType() SSoT용 원본 필드
+        ocr: doc.ocr ? { status: doc.ocr.status || null, confidence: doc.ocr.confidence || null } : null,
+        meta: { full_text: doc.meta?.full_text ? '1' : null },  // full_text 존재 여부만 전달 (본문 전송 방지)
+        docembed: doc.docembed ? { text_source: doc.docembed.text_source || null } : null,
         conversionStatus: doc.upload?.conversion_status || null,
         isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),
         // 🍎 문서 유형 필드 추가 (CustomerFullDetailView 문서 카드에서 사용)

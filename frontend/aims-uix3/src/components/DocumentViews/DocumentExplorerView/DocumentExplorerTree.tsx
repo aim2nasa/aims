@@ -398,9 +398,9 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
         </span>
       </Tooltip>
 
-      {/* 유형 배지 */}
-      <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
-        {doc.badgeType || 'BIN'}
+      {/* 유형 배지 — DocumentUtils.getDocumentType()으로 통일 계산 */}
+      <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${DocumentUtils.getDocumentType(doc)}`}>
+        {DocumentUtils.getDocumentTypeLabel(doc) || 'BIN'}
       </span>
 
       {/* 처리 상태 — 모든 상태를 아이콘+레이블로 표시 */}

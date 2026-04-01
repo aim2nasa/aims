@@ -23,6 +23,8 @@ vi.mock('@/entities/document', () => ({
     formatFileSize: vi.fn(() => '1.2 MB'),
     getFileTypeClass: vi.fn(() => ''),
     getFileIcon: vi.fn(() => 'doc.fill'),
+    getDocumentType: vi.fn(() => 'bin'),
+    getDocumentTypeLabel: vi.fn(() => 'BIN'),
   },
   DocumentProcessingModule: {
     getProcessingStatus: vi.fn(() => ({ label: '완료' })),

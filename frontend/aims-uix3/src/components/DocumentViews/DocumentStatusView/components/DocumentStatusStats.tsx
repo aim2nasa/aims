@@ -11,6 +11,7 @@
 
 import React from 'react'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
+import { DocumentUtils } from '../../../../entities/document/model'
 import type { Document } from '../../../../types/documentStatus'
 import './DocumentStatusStats.css'
 
@@ -63,10 +64,11 @@ export const DocumentStatusStats: React.FC<DocumentStatusStatsProps> = ({
       else if (status === 'error') counts.error++
       else if (status === 'pending') counts.pending++
 
-      // badgeType별 카운트
-      if (doc.badgeType === 'TXT') counts.txt++
-      else if (doc.badgeType === 'OCR') counts.ocr++
-      else if (doc.badgeType === 'BIN') counts.bin++
+      // badgeType별 카운트 (프론트엔드 SSoT: DocumentUtils.getDocumentTypeLabel)
+      const badgeLabel = DocumentUtils.getDocumentTypeLabel(doc)
+      if (badgeLabel === 'TXT') counts.txt++
+      else if (badgeLabel === 'OCR') counts.ocr++
+      else if (badgeLabel === 'BIN') counts.bin++
     })
 
     return counts

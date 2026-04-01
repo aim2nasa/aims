@@ -105,7 +105,8 @@ export function getDocumentDate(doc: Document): string | undefined {
  * 문서를 리프 노드로 변환합니다
  */
 function createDocumentNode(doc: Document, includeDate = false): DocumentTreeNode {
-  const badgeType = doc.badgeType || 'BIN'
+  // badgeType을 DocumentUtils로 통일 계산
+  const badgeType = DocumentUtils.getDocumentTypeLabel(doc) || 'BIN'
   const iconMap: Record<string, string> = {
     TXT: 'doc.text.fill',
     OCR: 'doc.viewfinder.fill',
@@ -294,7 +295,7 @@ function buildBadgeTypeTree(documents: Document[]): DocumentTreeData {
   }
 
   documents.forEach((doc) => {
-    const type = (doc.badgeType || 'BIN') as 'TXT' | 'OCR' | 'BIN'
+    const type = (DocumentUtils.getDocumentTypeLabel(doc) || 'BIN') as 'TXT' | 'OCR' | 'BIN'
     groups[type].push(doc)
   })
 
@@ -497,8 +498,8 @@ function sortDocumentNodes(
       }
       case 'badgeType': {
         const typeOrder = { TXT: 1, OCR: 2, BIN: 3 }
-        const typeA = (docA.badgeType || 'BIN') as 'TXT' | 'OCR' | 'BIN'
-        const typeB = (docB.badgeType || 'BIN') as 'TXT' | 'OCR' | 'BIN'
+        const typeA = (DocumentUtils.getDocumentTypeLabel(docA) || 'BIN') as 'TXT' | 'OCR' | 'BIN'
+        const typeB = (DocumentUtils.getDocumentTypeLabel(docB) || 'BIN') as 'TXT' | 'OCR' | 'BIN'
         return (typeOrder[typeA] - typeOrder[typeB]) * multiplier
       }
       case 'customer': {

@@ -16,7 +16,7 @@ import { useAppleConfirmController } from '@/controllers/useAppleConfirmControll
 import MoveFolderModal from './MoveFolderModal'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Tooltip, Modal, Button } from '@/shared/ui'
+import { Tooltip, Modal, Button, DocumentTypeBadge } from '@/shared/ui'
 import { api, getCurrentUserId } from '@/shared/lib/api'
 import personalFilesService, { type PersonalFileItem } from '@/services/personalFilesService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
@@ -2203,83 +2203,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                                 </div>
                               </Tooltip>
                             )}
-                            {/* 🍎 TXT/OCR/BIN BADGE */}
-                            {item.document && (() => {
-                              const backendBadgeType = (item.document as any).badgeType
-                              if (backendBadgeType) {
-                                if (backendBadgeType === 'OCR') {
-                                  const confidence = getOcrConfidence(item.document as any)
-                                  if (confidence !== null) {
-                                    const level = getOcrConfidenceLevel(confidence)
-                                    return (
-                                      <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
-                                        <div className={`document-ocr-badge ocr-${level.color}`}>
-                                          OCR
-                                        </div>
-                                      </Tooltip>
-                                    )
-                                  }
-                                  return (
-                                    <Tooltip content="OCR 처리 완료">
-                                      <div className="document-ocr-badge ocr-medium">
-                                        OCR
-                                      </div>
-                                    </Tooltip>
-                                  )
-                                }
-                                if (backendBadgeType === 'TXT') {
-                                  return (
-                                    <Tooltip content="TXT 기반 문서">
-                                      <div className="document-txt-badge">
-                                        TXT
-                                      </div>
-                                    </Tooltip>
-                                  )
-                                }
-                                if (backendBadgeType === 'BIN') {
-                                  return (
-                                    <Tooltip content="바이너리 파일 (텍스트 추출 불가)">
-                                      <div className="document-bin-badge">
-                                        BIN
-                                      </div>
-                                    </Tooltip>
-                                  )
-                                }
-                              }
-
-                              // 하위 호환성
-                              const confidence = getOcrConfidence(item.document as any)
-                              if (confidence === null) {
-                                const typeLabel = DocumentUtils.getDocumentTypeLabel(item.document as any)
-                                if (typeLabel === 'TXT') {
-                                  return (
-                                    <Tooltip content="TXT 기반 문서">
-                                      <div className="document-txt-badge">
-                                        TXT
-                                      </div>
-                                    </Tooltip>
-                                  )
-                                }
-                                if (typeLabel === 'BIN') {
-                                  return (
-                                    <Tooltip content="바이너리 파일 (텍스트 추출 불가)">
-                                      <div className="document-bin-badge">
-                                        BIN
-                                      </div>
-                                    </Tooltip>
-                                  )
-                                }
-                                return null
-                              }
-                              const level = getOcrConfidenceLevel(confidence)
-                              return (
-                                <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
-                                  <div className={`document-ocr-badge ocr-${level.color}`}>
-                                    OCR
-                                  </div>
-                                </Tooltip>
-                              )
-                            })()}
+                            {/* 🍎 TXT/OCR/BIN BADGE — 공유 컴포넌트 (SSoT) */}
+                            {item.document && (
+                              <DocumentTypeBadge document={item.document as any} />
+                            )}
                           </div>
                           <span>{highlightText(item.name, searchTerm)}</span>
                         </>

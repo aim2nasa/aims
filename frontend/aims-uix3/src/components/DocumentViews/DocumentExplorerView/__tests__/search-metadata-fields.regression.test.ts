@@ -9,10 +9,12 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import { DocumentUtils } from '../../../../entities/document/model'
 
 // === 검색 결과 document 매핑 로직 재현 ===
 // ⚠️ 동기화 필요: DocumentExplorerView.tsx의 customerSummaryTree useMemo 내
 // searchDocuments → document 매핑 로직과 동일 구조를 재현합니다.
+// badgeType은 백엔드가 전달하지 않음 — 프론트엔드 DocumentUtils.getDocumentType()으로 판정 (SSoT)
 
 interface SearchDocument {
   _id: string
@@ -24,7 +26,6 @@ interface SearchDocument {
   customerId: string
   customerName: string
   document_type: string | null
-  badgeType: string | null
   overallStatus: string | null
   status: string | null
   progress: number
@@ -33,6 +34,7 @@ interface SearchDocument {
   upload: Record<string, unknown> | null
   meta: { mime?: string | null; size_bytes?: number | null; summary?: string | null } | null
   ocr: { status?: string | null; summary?: string | null } | null
+  docembed?: { text_source?: string } | null
 }
 
 /**
@@ -47,7 +49,6 @@ function mapSearchDocToDocument(doc: SearchDocument) {
     fileSize: doc.fileSize,
     mimeType: doc.mimeType,
     document_type: doc.document_type,
-    badgeType: doc.badgeType,
     overallStatus: doc.overallStatus,
     status: doc.status,
     progress: doc.progress,
@@ -56,6 +57,7 @@ function mapSearchDocToDocument(doc: SearchDocument) {
     upload: doc.upload,
     meta: doc.meta,
     ocr: doc.ocr,
+    docembed: doc.docembed,
     customer_relation: {
       customer_id: doc.customerId || '',
       customer_name: doc.customerName || '',
@@ -76,7 +78,6 @@ function createCompletedSearchDoc(overrides: Partial<SearchDocument> = {}): Sear
     customerId: 'c1',
     customerName: '홍길동',
     document_type: 'insurance',
-    badgeType: 'TXT',
     overallStatus: 'completed',
     status: 'completed',
     progress: 100,
@@ -85,6 +86,7 @@ function createCompletedSearchDoc(overrides: Partial<SearchDocument> = {}): Sear
     upload: { originalName: 'test_document.pdf', uploaded_at: '2026-04-01T12:00:00.000Z' },
     meta: { mime: 'application/pdf', size_bytes: 102400, summary: '테스트 요약입니다.' },
     ocr: { status: 'completed', summary: null },
+    docembed: { text_source: 'meta' },
     ...overrides,
   }
 }
@@ -101,12 +103,14 @@ describe('검색 결과 메타데이터 필드 — regression', () => {
     // 이전 버그: overallStatus가 없어서 프론트엔드가 "대기" 상태로 표시
   })
 
-  it('badgeType이 "TXT"로 매핑되어야 함 (이전: BIN으로 표시)', () => {
-    const searchDoc = createCompletedSearchDoc({ badgeType: 'TXT' })
+  it('DocumentUtils.getDocumentType()이 TXT 문서를 올바르게 판정해야 함', () => {
+    const searchDoc = createCompletedSearchDoc({ _hasMetaText: true, _hasOcrText: false, docembed: { text_source: 'meta' } })
     const mapped = mapSearchDocToDocument(searchDoc)
 
-    expect(mapped.badgeType).toBe('TXT')
-    // 이전 버그: _hasMetaText 누락으로 서버에서 badgeType 계산 실패 → BIN
+    // 프론트엔드 SSoT: DocumentUtils.getDocumentType()으로 badge 판정
+    const badgeLabel = DocumentUtils.getDocumentTypeLabel(mapped)
+    expect(badgeLabel).toBe('TXT')
+    // 이전: 백엔드가 badgeType을 계산하여 전달 → 현재: 프론트엔드에서 판정
   })
 
   it('_hasMetaText가 true로 매핑되어야 함 (전체 텍스트 버튼 활성화)', () => {
@@ -118,16 +122,18 @@ describe('검색 결과 메타데이터 필드 — regression', () => {
     // 이전 버그: _hasMetaText 미전달 → 전체 텍스트 버튼 항상 비활성화
   })
 
-  it('_hasOcrText가 true인 OCR 문서도 텍스트 버튼 활성화 가능', () => {
+  it('_hasOcrText가 true인 OCR 문서도 텍스트 버튼 활성화 + OCR 판정', () => {
     const searchDoc = createCompletedSearchDoc({
       _hasMetaText: false,
       _hasOcrText: true,
-      badgeType: 'OCR',
+      ocr: { status: 'done', summary: null },
+      docembed: { text_source: 'ocr' },
     })
     const mapped = mapSearchDocToDocument(searchDoc)
 
     expect(mapped._hasOcrText).toBe(true)
-    expect(mapped.badgeType).toBe('OCR')
+    const badgeLabel = DocumentUtils.getDocumentTypeLabel(mapped)
+    expect(badgeLabel).toBe('OCR')
   })
 
   it('upload 객체가 전달되어야 날짜가 표시됨', () => {
@@ -167,12 +173,13 @@ describe('검색 결과 메타데이터 필드 — regression', () => {
       progress: 0,
       _hasMetaText: false,
       _hasOcrText: false,
-      badgeType: 'BIN',
+      docembed: null,
     })
     const mapped = mapSearchDocToDocument(searchDoc)
 
     expect(mapped.overallStatus).toBe('error')
-    expect(mapped.badgeType).toBe('BIN')
+    const badgeLabel = DocumentUtils.getDocumentTypeLabel(mapped)
+    expect(badgeLabel).toBe('BIN')
   })
 
   it('모든 필수 필드가 누락 없이 매핑되어야 함', () => {

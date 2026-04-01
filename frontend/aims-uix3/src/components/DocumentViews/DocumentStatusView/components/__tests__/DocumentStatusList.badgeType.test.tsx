@@ -8,7 +8,7 @@
  * 테스트 범위:
  * - badgeType 칼럼 렌더링 (9a319088)
  * - badgeType 정렬 기능 (BIN → OCR → TXT)
- * - 백엔드 badgeType 우선 사용 (a2cc9c92)
+ * - DocumentUtils.getDocumentType() 기반 뱃지 판정 (SSoT)
  * - 뱃지 색상 및 스타일 검증
  * - OCR 신뢰도별 5단계 색상
  */
@@ -162,12 +162,12 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
     })
   })
 
-  describe('[회귀 방지] 백엔드 badgeType 우선 사용 (커밋 a2cc9c92)', () => {
-    it('백엔드에서 제공한 badgeType을 우선 사용해야 함', () => {
+  describe('[회귀 방지] DocumentUtils.getDocumentType() 기반 뱃지 판정', () => {
+    it('meta.full_text가 있으면 TXT 뱃지를 표시해야 함', () => {
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'TXT' // 백엔드에서 제공
+          meta: { full_text: '텍스트 내용' }
         } as any
       ]
 
@@ -185,12 +185,11 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       expect(txtBadge).toHaveTextContent('TXT')
     })
 
-    it('백엔드 badgeType=OCR이면 OCR 뱃지 표시', () => {
+    it('ocr.status=done이면 OCR 뱃지 표시', () => {
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'OCR', // 백엔드에서 제공
-          ocr: { confidence: '0.95' } // 신뢰도도 함께 제공
+          ocr: { status: 'done', confidence: '0.95' }
         } as any
       ]
 
@@ -208,11 +207,11 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       expect(ocrBadge).toHaveTextContent('OCR')
     })
 
-    it('백엔드 badgeType=BIN이면 BIN 뱃지 표시', () => {
+    it('meta/ocr 필드 없으면 BIN 뱃지 표시', () => {
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'BIN' // 백엔드에서 제공
+          // meta, ocr, docembed 없음 → BIN
         } as any
       ]
 
@@ -230,12 +229,11 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       expect(binBadge).toHaveTextContent('BIN')
     })
 
-    it('백엔드 badgeType 없으면 프론트엔드에서 계산 (하위 호환성)', () => {
+    it('ocr.confidence만 있으면 OCR 뱃지 표시 (하위 호환성)', () => {
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          // badgeType 없음
-          ocr: { confidence: '0.85' } // OCR 신뢰도만 있음
+          ocr: { confidence: '0.85' } // confidence만 있음 (status 없음)
         } as any
       ]
 
@@ -258,7 +256,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'TXT'
+          meta: { full_text: '텍스트 내용' }
         } as any
       ]
 
@@ -280,7 +278,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'BIN'
+          // meta, ocr, docembed 없음 → BIN
         } as any
       ]
 
@@ -311,8 +309,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
         const mockDocuments: Document[] = [
           {
             ...createMockDocument({ filename: 'test1.pdf' }),
-            badgeType: 'OCR',
-            ocr: { confidence: String(confidence) }
+            ocr: { status: 'done', confidence: String(confidence) }
           } as any
         ]
 
@@ -336,8 +333,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'OCR',
-          ocr: { confidence: '0.9817' }
+          ocr: { status: 'done', confidence: '0.9817' }
         } as any
       ]
 
@@ -359,7 +355,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'OCR',
+          ocr: { status: 'done' },
           stages: {
             ocr: {
               status: 'completed',
@@ -387,7 +383,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'OCR'
+          ocr: { status: 'done' }
           // confidence 없음
         } as any
       ]
@@ -412,7 +408,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'TXT'
+          meta: { full_text: '텍스트 내용' }
         } as any
       ]
 
@@ -435,8 +431,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'OCR',
-          ocr: { confidence: '0.9234' }
+          ocr: { status: 'done', confidence: '0.9234' }
         } as any
       ]
 
@@ -458,7 +453,7 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'test1.pdf' }),
-          badgeType: 'BIN'
+          // meta, ocr 없음 → BIN
         } as any
       ]
 
@@ -482,15 +477,15 @@ describe('DocumentStatusList - badgeType Sorting (커밋 a2cc9c92, 9a319088)', (
       const mockDocuments: Document[] = [
         {
           ...createMockDocument({ filename: 'bin-file.zip' }),
-          badgeType: 'BIN'
+          // meta, ocr 없음 → BIN
         } as any,
         {
           ...createMockDocument({ filename: 'ocr-file.pdf' }),
-          badgeType: 'OCR'
+          ocr: { status: 'done', confidence: '0.90' }
         } as any,
         {
           ...createMockDocument({ filename: 'txt-file.docx' }),
-          badgeType: 'TXT'
+          meta: { full_text: '텍스트 내용' }
         } as any
       ]
 

@@ -80,7 +80,6 @@ interface SearchDocument {
   customerId: string | null
   customerName: string | null
   document_type: string | null
-  badgeType: string | null
   overallStatus: string | null
   status: string | null
   progress: number
@@ -89,6 +88,7 @@ interface SearchDocument {
   upload: Record<string, unknown> | null
   meta: { mime?: string | null; size_bytes?: number | null; pdf_pages?: number | null; meta_status?: string | null; summary?: string | null } | null
   ocr: { status?: string | null; confidence?: number | null; summary?: string | null } | null
+  docembed?: { text_source?: string } | null
 }
 
 interface ExplorerTreeData {
@@ -684,7 +684,6 @@ const DocumentExplorerContent: React.FC<{
           fileSize: doc.fileSize,
           mimeType: doc.mimeType,
           document_type: doc.document_type,
-          badgeType: doc.badgeType,
           overallStatus: doc.overallStatus,
           status: doc.status,
           progress: doc.progress,
@@ -693,6 +692,7 @@ const DocumentExplorerContent: React.FC<{
           upload: doc.upload,
           meta: doc.meta,
           ocr: doc.ocr,
+          docembed: doc.docembed,
           customer_relation: {
             customer_id: doc.customerId || '',
             customer_name: doc.customerName || '',

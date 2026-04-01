@@ -912,15 +912,6 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
 
             const statusInfo = analyzeDocumentStatus(doc);
 
-            // badgeType 계산
-            let badgeType = doc.badgeType;
-            if (!badgeType) {
-              if (doc._hasMetaText) badgeType = 'TXT';
-              else if (doc._hasOcrText) badgeType = 'OCR';
-              else if (doc.meta?.mime && doc.meta.mime.startsWith('image/')) badgeType = 'OCR';
-              else badgeType = 'BIN';
-            }
-
             return {
               _id: doc._id,
               originalName: doc.upload?.originalName || 'Unknown File',
@@ -932,7 +923,6 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
               is_annual_report: doc.is_annual_report,
               is_customer_review: doc.is_customer_review,
               customer_relation: customerRelation,
-              badgeType,
               _hasMetaText: doc._hasMetaText || false,
               _hasOcrText: doc._hasOcrText || false,
               conversionStatus: doc.upload?.conversion_status || null,
@@ -1020,7 +1010,6 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
             fileSize: { $ifNull: ['$meta.size_bytes', null] },
             mimeType: { $ifNull: ['$meta.mime', null] },
             document_type: { $ifNull: ['$document_type', null] },  // SSoT: top-level만 참조
-            badgeType: '$badgeType',
             overallStatus: { $ifNull: ['$overallStatus', null] },
             status: { $ifNull: ['$status', null] },
             progress: { $ifNull: ['$progress', 0] },
@@ -1039,6 +1028,7 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
               confidence: { $ifNull: ['$ocr.confidence', null] },
               summary: { $ifNull: ['$ocr.summary', null] },
             },
+            docembed: { $ifNull: ['$docembed', null] },
           }},
           totalCount: { $sum: 1 }
         }}
@@ -1053,15 +1043,6 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
         const cid = String(group._id);
         const cName = customerNameMap.get(cid) || '';
         group.docs.forEach(doc => {
-          // badgeType 계산 — /documents/status 엔드포인트와 동일 로직
-          let badgeType = doc.badgeType;
-          if (!badgeType) {
-            if (doc._hasMetaText) badgeType = 'TXT';
-            else if (doc._hasOcrText) badgeType = 'OCR';
-            else if (doc.meta?.mime && doc.meta.mime.startsWith('image/')) badgeType = 'OCR';
-            else badgeType = 'BIN';
-          }
-
           searchDocuments.push({
             _id: String(doc._id),
             displayName: doc.displayName || null,
@@ -1072,7 +1053,6 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
             customerId: cid,
             customerName: cName,
             document_type: doc.document_type,
-            badgeType,
             overallStatus: doc.overallStatus || null,
             status: doc.status || null,
             progress: doc.progress || 0,
@@ -1081,6 +1061,7 @@ router.get('/documents/status/explorer-tree', authenticateJWT, async (req, res) 
             upload: doc.upload || null,
             meta: doc.meta || null,
             ocr: doc.ocr || null,
+            docembed: doc.docembed || null,
           });
         });
       });
@@ -1863,26 +1844,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       // 기존 analyzeDocumentStatus 방식대로 응답 구성
       const statusInfo = analyzeDocumentStatus(doc);
 
-      // badgeType 계산 (MongoDB aggregation 결과 없으면 _hasMetaText/_hasOcrText 플래그 사용)
-      let badgeType = doc.badgeType;
-      if (!badgeType) {
-        // Level 1: meta.full_text에 실제 데이터가 있으면 TXT (_hasMetaText는 aggregation에서 계산)
-        if (doc._hasMetaText) {
-          badgeType = 'TXT';
-        }
-        // Level 2: ocr.full_text 있으면 OCR (_hasOcrText는 aggregation에서 계산)
-        else if (doc._hasOcrText) {
-          badgeType = 'OCR';
-        }
-        // Level 3: 이미지 파일은 OCR 배지 (image/* MIME)
-        else if (doc.meta?.mime && doc.meta.mime.startsWith('image/')) {
-          badgeType = 'OCR';
-        }
-        // Level 4: 나머지 BIN
-        else {
-          badgeType = 'BIN';
-        }
-      }
+      // badgeType: 프론트엔드 DocumentUtils.getDocumentType()에서 계산 (SSoT)
+      // 백엔드는 _hasMetaText/_hasOcrText 플래그만 전달
 
       return {
         _id: doc._id,
@@ -1895,7 +1858,6 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         is_annual_report: doc.is_annual_report,
         is_customer_review: doc.is_customer_review,
         customer_relation: customerRelation,
-        badgeType: badgeType,  // 🔥 항상 badgeType 포함
         _hasMetaText: doc._hasMetaText || false,  // 🔧 full_text 제거 대신 존재 플래그
         _hasOcrText: doc._hasOcrText || false,    // 🔧 full_text 제거 대신 존재 플래그
         conversionStatus: doc.upload?.conversion_status || null,  // 🔥 PDF 변환 상태

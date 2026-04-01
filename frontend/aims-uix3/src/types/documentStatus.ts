@@ -127,6 +127,7 @@ export interface TextData {
  */
 export interface DocEmbedData {
   status?: StageStatus
+  text_source?: string
 }
 
 /**
