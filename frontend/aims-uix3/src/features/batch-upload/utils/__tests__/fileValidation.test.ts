@@ -155,7 +155,9 @@ describe('fileValidation', () => {
     })
 
     test('큰 파일도 통과한다 (Phase 1: 크기 제한 없음)', () => {
-      const largeFile = createMockFile('large.pdf', 100 * 1024 * 1024) // 100MB
+      // 실제 100MB Blob 생성은 타임아웃 → size만 큰 File 객체로 테스트
+      const largeFile = new File(['x'], 'large.pdf', { type: 'application/pdf' })
+      Object.defineProperty(largeFile, 'size', { value: 100 * 1024 * 1024 })
       const result = validateFile(largeFile)
       expect(result.valid).toBe(true)
     })
