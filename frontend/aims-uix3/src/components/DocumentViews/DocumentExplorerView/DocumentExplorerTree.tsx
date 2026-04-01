@@ -304,6 +304,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
             <button
               type="button"
               className={`fnm-toggle ${crossModeMatch === 'display' ? 'fnm-toggle--alias' : 'fnm-toggle--original'}`}
+              style={{ marginLeft: '4px' }}
               onClick={(e) => {
                 e.stopPropagation()
                 setLocalModeOverride(crossModeMatch)
@@ -326,6 +327,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
             <button
               type="button"
               className={`fnm-toggle ${filenameMode === 'display' ? 'fnm-toggle--alias' : 'fnm-toggle--original'}`}
+              style={{ marginLeft: '4px' }}
               onClick={(e) => {
                 e.stopPropagation()
                 setLocalModeOverride(null)
