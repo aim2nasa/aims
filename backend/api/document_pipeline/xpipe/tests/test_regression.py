@@ -983,7 +983,13 @@ class TestBugFixErrorTextInDisplayName:
     def test_extract_error_text_filter(self):
         """_is_error_text()가 에러 메시지를 정확히 감지한다"""
         import sys
+        from unittest.mock import MagicMock
         sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[3]))
+        # xpipe/queue.py가 stdlib queue를 가리는 문제 → 연쇄 import 우회
+        for mod in ("motor", "motor.motor_asyncio", "redis", "redis.asyncio",
+                     "redis.asyncio.connection", "redis.connection",
+                     "services.openai_service", "services.mongo_service"):
+            sys.modules.setdefault(mod, MagicMock())
         from routers.doc_display_name import _is_error_text
 
         # 에러 메시지 → True
@@ -999,7 +1005,13 @@ class TestBugFixErrorTextInDisplayName:
     def test_extract_text_from_document_filters_error(self):
         """_extract_text_from_document()가 에러 텍스트를 필터링한다"""
         import sys
+        from unittest.mock import MagicMock
         sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[3]))
+        # xpipe/queue.py가 stdlib queue를 가리는 문제 → 연쇄 import 우회
+        for mod in ("motor", "motor.motor_asyncio", "redis", "redis.asyncio",
+                     "redis.asyncio.connection", "redis.connection",
+                     "services.openai_service", "services.mongo_service"):
+            sys.modules.setdefault(mod, MagicMock())
         from routers.doc_display_name import _extract_text_from_document
 
         # 에러 텍스트가 full_text에 저장된 레거시 문서

@@ -38,17 +38,20 @@ class TestCLIVersion:
     """xpipe version 명령 테스트"""
 
     def test_version_output(self):
-        """python -m xpipe version → 'xpipe 0.1.0' 출력"""
+        """python -m xpipe version → 'xpipe X.Y.Z' 출력 (동적 버전 비교)"""
+        from xpipe.cli import _get_version
+        expected_version = _get_version()
         result = _run_xpipe("version")
         assert result.returncode == 0
         assert "xpipe" in result.stdout
-        assert "0.1.0" in result.stdout
+        assert expected_version in result.stdout
 
     def test_version_via_cli_main(self):
-        """cli.main()을 직접 호출하여 version 확인"""
+        """cli.main()을 직접 호출하여 version이 semver 형식인지 확인"""
+        import re
         from xpipe.cli import _get_version
         version = _get_version()
-        assert version == "0.1.0"
+        assert re.match(r"^\d+\.\d+\.\d+$", version), f"버전이 semver 형식이 아닙니다: {version}"
 
 
 class TestCLIStatus:

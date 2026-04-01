@@ -691,7 +691,7 @@ class TestExtractStageOCR:
                 "models": {"ocr": "upstage"},
                 "_api_keys": {"upstage": ""},
             }
-            with pytest.raises(RuntimeError, match="UPSTAGE_API_KEY"):
-                asyncio.get_event_loop().run_until_complete(stage.execute(context))
+            result = asyncio.get_event_loop().run_until_complete(stage.execute(context))
+            assert result.get("text_extraction_failed") is True
         finally:
             os.unlink(tmp)

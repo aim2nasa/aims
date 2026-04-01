@@ -565,7 +565,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     'text_source': text_source,
                     'is_annual_report': doc_data.get('is_annual_report', False),
                     'is_customer_review': doc_data.get('is_customer_review', False),
-                    'document_type': doc_data.get('meta', {}).get('document_type', 'general'),
+                    'document_type': doc_data.get('document_type') or doc_data.get('meta', {}).get('document_type', 'general'),
                 })
 
                 # 2단계: 임베딩 생성 (토큰 사용량 포함)
