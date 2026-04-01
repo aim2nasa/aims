@@ -62,19 +62,50 @@ Mira는 **화면을 본다**. 코드를 읽지 않는다.
 
 ## 검증 프로세스
 
+### Pixel Diff 우선 검증 (2026-04-01 도입)
+
+Playwright `toHaveScreenshot()`을 활용한 pixel diff를 **1차 검증**으로 사용한다.
+LLM 시각 판단은 **2차 검증(맥락 판단)**으로 역할이 변경된다.
+
+```
+1차: Pixel Diff (기계적, 정확) — "차이가 있는가/없는가"를 정확히 판별
+2차: LLM 시각 판단 (맥락적) — "그 차이가 의도된 변경인가"를 판단
+```
+
+**검증 흐름:**
+```
+golden image 존재 → toHaveScreenshot() 실행
+  → diff 없음 (PASS) → 시각 AC는 PASS로 간주
+  → diff 있음 → diff 이미지를 Read로 열어서 확인 → 의도된 변경이면 PASS, 아니면 FAIL
+golden image 없음 → 기존 3단계 시각 검증 수행 (아래 참조)
+```
+
+**Pixel diff는 측정 도구로 허용한다.** 단, diff 결과만으로 자동 FAIL 판정은 금지.
+diff가 발생했을 때 "의도된 변경인지"는 AC와 대조하여 Mira가 판단한다.
+
+---
+
 ### Phase 1: 기준 수집
 
 검증 전 반드시 **기준(reference)**을 확보한다.
 
-- 기준 스크린샷이 있으면 **Read 도구로 열어서 직접 본다**
-- 없으면 기준 화면(예: AllCustomersView)을 Playwright로 캡처 후 **Read로 열어서 확인**
+- **golden image가 있으면** (`tests/__snapshots__/`) pixel diff를 1차로 사용
+- golden image가 없으면 기준 화면을 Playwright로 캡처 후 **Read로 열어서 확인**
 - 기준의 핵심 요소를 기록: 모양, 색상, 크기, 배경 형태
 
 ### Phase 2: 대상 화면 검증
 
-#### 🔴 시각 검증 3단계 (CRITICAL — 순서 준수 필수)
+#### 🔴 시각 검증 (CRITICAL)
 
-**"스크린샷을 찍는 것 ≠ 스크린샷을 보는 것"**
+**방법 A: Pixel Diff 검증 (golden image 있을 때 — 우선)**
+
+```
+1단계: toHaveScreenshot() 실행 → diff 결과 확인
+2단계: diff 없음 → PASS / diff 있음 → diff 이미지를 Read로 열어서 확인
+3단계: diff가 AC에서 의도한 변경인지 판단 → PASS/FAIL
+```
+
+**방법 B: 수동 시각 검증 (golden image 없을 때 — 폴백)**
 
 ```
 1단계: 기준 이미지 Read → 핵심 요소 기록
