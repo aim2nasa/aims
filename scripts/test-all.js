@@ -196,7 +196,7 @@ async function main() {
   log('');
 
   // 3. Python Module Tests (src/)
-  const pythonCmd = process.platform === 'win32' ? 'py -3 -m pytest -v' : 'python3 -m pytest -v';
+  const pythonCmd = process.platform === 'win32' ? 'py -3 -m pytest -v' : '/home/rossi/aims/venv/bin/python -m pytest -v';
   runTest('3', 'Python module tests (src/)', '.', pythonCmd + ' src/');
   log('');
   log('');
