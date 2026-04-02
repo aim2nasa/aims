@@ -594,5 +594,121 @@ module.exports = function(db) {
     }
   });
 
+  // =========================================================================
+  // 8. GET /internal/customers/:id/ownership — 고객 소유권 확인
+  // =========================================================================
+  /**
+   * 고객 소유권 확인 (최소 데이터 반환)
+   *
+   * Params: id (ObjectId 문자열)
+   * Query: userId (설계사 ID)
+   * Response: { exists: true/false }
+   */
+  router.get('/internal/customers/:id/ownership', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.query;
+
+      if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'userId는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+        { _id: new ObjectId(id), 'meta.created_by': userId },
+        { projection: { _id: 1, 'meta.created_by': 1 } }
+      );
+
+      res.json({
+        success: true,
+        data: { exists: !!customer },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] customers/:id/ownership 오류:', error.message);
+      backendLogger.error('Internal', 'customers/:id/ownership 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 9. POST /internal/customers/:id/has-report — 중복 파싱 체크
+  // =========================================================================
+  /**
+   * 고객에게 특정 파일의 AR/CRS 파싱 결과가 이미 있는지 확인
+   *
+   * Params: id (고객 ObjectId)
+   * Body: { sourceFileId, reportType: "ar"|"cr" }
+   * Response: { exists: true/false }
+   */
+  router.post('/internal/customers/:id/has-report', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { sourceFileId, reportType } = req.body;
+
+      if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!sourceFileId || !ObjectId.isValid(sourceFileId)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 sourceFileId입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!reportType || !['ar', 'cr'].includes(reportType)) {
+        return res.status(400).json({
+          success: false,
+          error: 'reportType은 "ar" 또는 "cr"이어야 합니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const arrayField = reportType === 'ar'
+        ? 'annual_reports.source_file_id'
+        : 'customer_reviews.source_file_id';
+
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+        { _id: new ObjectId(id), [arrayField]: new ObjectId(sourceFileId) },
+        { projection: { _id: 1 } }
+      );
+
+      res.json({
+        success: true,
+        data: { exists: !!customer },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] customers/:id/has-report 오류:', error.message);
+      backendLogger.error('Internal', 'customers/:id/has-report 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
   return router;
 };

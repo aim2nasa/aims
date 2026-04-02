@@ -20,6 +20,7 @@ from services.cr_parser import parse_customer_review
 from services.cr_parser_table import parse_customer_review_table
 from services.db_writer import save_customer_review
 from system_logger import send_error_log
+from internal_api import check_customer_ownership, has_report
 
 # aims_api 설정 조회 URL
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://100.110.215.65:3010")
@@ -118,12 +119,8 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
             )
             return {"success": False, "error": error_msg}
 
-        # 2.5 중복 파싱 방지: 같은 source_file_id로 이미 CR이 있는지 확인
-        existing_cr = db["customers"].find_one({
-            "_id": ObjectId(customer_id),
-            "customer_reviews.source_file_id": ObjectId(file_id)
-        })
-        if existing_cr:
+        # 2.5 중복 파싱 방지: 같은 source_file_id로 이미 CR이 있는지 확인 (Internal API 경유)
+        if has_report(customer_id, file_id, "cr"):
             # 이미 파싱됨 → 상품명/displayName 누락 시 보정
             cr_meta = doc.get("cr_metadata") or {}
             needs_repair = not cr_meta.get("product_name")
@@ -315,12 +312,8 @@ async def trigger_cr_parsing(
                     detail="Invalid customer_id format"
                 )
 
-            customer = db.customers.find_one({
-                "_id": customer_obj_id,
-                "meta.created_by": user_id
-            })
-
-            if not customer:
+            # customer 소유권 검증 (Internal API 경유)
+            if not check_customer_ownership(str(customer_obj_id), user_id):
                 raise HTTPException(
                     status_code=404,
                     detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
@@ -464,14 +457,10 @@ async def retry_cr_parsing(
                 detail="이미 파싱이 완료된 문서입니다"
             )
 
-        # 소유권 검증
+        # 소유권 검증 (Internal API 경유)
         customer_id = file_doc.get("customerId")
         if customer_id:
-            customer = db["customers"].find_one({
-                "_id": customer_id,
-                "meta.created_by": user_id
-            })
-            if not customer:
+            if not check_customer_ownership(str(customer_id), user_id):
                 raise HTTPException(
                     status_code=403,
                     detail="파일에 접근 권한이 없습니다"

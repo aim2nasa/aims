@@ -18,6 +18,7 @@ from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
 from config import settings
 from system_logger import send_error_log
+from internal_api import check_customer_ownership, has_report
 
 logger = logging.getLogger(__name__)
 
@@ -105,11 +106,7 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
             return {"success": False, "error": error_msg}
 
         # 2.5 🍎 중복 파싱 방지: 같은 source_file_id로 이미 AR이 있는지 확인
-        existing_ar = db["customers"].find_one({
-            "_id": ObjectId(customer_id),
-            "annual_reports.source_file_id": ObjectId(file_id)
-        })
-        if existing_ar:
+        if has_report(customer_id, file_id, "ar"):
             logger.info(f"⏭️ [Queue Parsing] 이미 파싱 완료된 AR 건너뛰기: file_id={file_id}")
             # files 상태도 completed로 업데이트
             db["files"].update_one(
@@ -515,13 +512,8 @@ async def trigger_ar_parsing(
                     detail="Invalid customer_id format"
                 )
 
-            # customer 소유권 검증
-            customer = db.customers.find_one({
-                "_id": customer_obj_id,
-                "meta.created_by": user_id
-            })
-
-            if not customer:
+            # customer 소유권 검증 (Internal API 경유)
+            if not check_customer_ownership(str(customer_obj_id), user_id):
                 raise HTTPException(
                     status_code=404,
                     detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
@@ -662,14 +654,10 @@ async def retry_ar_parsing(
                 detail="이미 파싱이 완료된 문서입니다"
             )
 
-        # ⭐ 소유권 검증: customerId로 고객 찾고, 그 고객의 created_by 확인
+        # ⭐ 소유권 검증: customerId로 고객 찾고, 그 고객의 created_by 확인 (Internal API 경유)
         customer_id = file_doc.get("customerId")
         if customer_id:
-            customer = db["customers"].find_one({
-                "_id": customer_id,
-                "meta.created_by": user_id
-            })
-            if not customer:
+            if not check_customer_ownership(str(customer_id), user_id):
                 raise HTTPException(
                     status_code=403,
                     detail="파일에 접근 권한이 없습니다"
