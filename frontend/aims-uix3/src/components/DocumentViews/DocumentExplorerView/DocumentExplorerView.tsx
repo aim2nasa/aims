@@ -316,6 +316,7 @@ const DocumentExplorerContent: React.FC<{
     if (selectedDocumentIds.size === 0) return
     const idsToDelete = Array.from(selectedDocumentIds)
     await documentActions.deleteDocuments(selectedDocumentIds)
+    setSelectedDocumentIds(new Set())
     onDocumentDeleted?.(idsToDelete)
   }, [selectedDocumentIds, documentActions, onDocumentDeleted])
 
