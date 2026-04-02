@@ -536,28 +536,9 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
         </div>
       )}
 
-      {/* 편집 모드 버튼 (삭제/별칭AI) */}
+      {/* 편집 모드 버튼 (삭제만) */}
       {onEditModeChange && (
         <div className="doc-explorer-toolbar__edit-group">
-          <Tooltip content={editMode === 'alias' ? '별칭 완료' : 'AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다'} placement="bottom">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`alias-ai-button ${editMode === 'alias' ? 'doc-explorer-toolbar__edit-btn--active' : ''}`}
-              onClick={() => onEditModeChange(editMode === 'alias' ? 'none' : 'alias')}
-              disabled={editMode === 'delete'}
-              aria-label={editMode === 'alias' ? '별칭 완료' : 'AI 별칭 생성'}
-            >
-              <SFSymbol
-                name={editMode === 'alias' ? 'checkmark' : 'sparkles'}
-                size={SFSymbolSize.CAPTION_2}
-                weight={SFSymbolWeight.MEDIUM}
-                decorative
-              />
-              {editMode === 'alias' ? '완료' : '별칭AI'}
-            </Button>
-          </Tooltip>
-
           <Tooltip content={editMode === 'delete' ? '삭제 완료' : '일괄 삭제'} placement="bottom">
             <button
               type="button"
@@ -715,6 +696,28 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
           문서 {totalDocuments}
         </span>
       </div>
+
+      {/* 별칭AI 버튼 (우측 끝 — ㅈ 전체 문서 보기와 동일 위치) */}
+      {onEditModeChange && (
+        <Tooltip content={editMode === 'alias' ? '별칭 완료' : 'AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다'} placement="bottom">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`alias-ai-button ${editMode === 'alias' ? 'doc-explorer-toolbar__edit-btn--active' : ''}`}
+            onClick={() => onEditModeChange(editMode === 'alias' ? 'none' : 'alias')}
+            disabled={editMode === 'delete'}
+            aria-label={editMode === 'alias' ? '별칭 완료' : 'AI 별칭 생성'}
+          >
+            <SFSymbol
+              name={editMode === 'alias' ? 'checkmark' : 'sparkles'}
+              size={SFSymbolSize.CAPTION_2}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative
+            />
+            {editMode === 'alias' ? '완료' : '별칭AI'}
+          </Button>
+        </Tooltip>
+      )}
     </div>
   )
 }
