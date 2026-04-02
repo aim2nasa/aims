@@ -47,6 +47,7 @@ import { usePersistedState } from '@/hooks/usePersistedState'
 import { useDocumentActions } from '@/hooks/useDocumentActions'
 import { useAliasGeneration, type AliasProgress } from '@/hooks/useAliasGeneration'
 import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
+import { AliasAIButton } from '@/shared/ui/AliasAIButton/AliasAIButton'
 import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
 import CustomerSelectorModal from '@/shared/ui/CustomerSelectorModal/CustomerSelectorModal'
 import type { Customer } from '@/entities/customer/model'
@@ -837,31 +838,18 @@ const DocumentLibraryContent: React.FC<{
               </label>
             </div>
           )}
-          {/* 별칭AI ↔ 완료: 하나의 버튼, 캡션만 토글 */}
+          {/* 별칭AI ↔ 완료: 공용 토글 버튼 */}
           {!isDeleteMode && !isBulkLinkMode && (
-            <Tooltip content={isAliasMode ? '선택된 문서의 별칭을 생성하고 종료합니다' : 'AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다'}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`alias-ai-button ${isAliasMode ? 'alias-ai-button--active' : ''}`}
-                onClick={() => {
-                  if (isAliasMode && selectedDocumentIds.size > 0) {
-                    onGenerateAliases(forceRegenerateAlias)
-                  }
-                  onToggleAliasMode()
-                }}
-                disabled={isGeneratingAliases}
-                aria-label={isAliasMode ? '별칭 생성 완료' : '별칭 생성'}
-              >
-                <SFSymbol
-                  name={isAliasMode ? 'checkmark' : 'sparkles'}
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
-                {isAliasMode ? '완료' : '별칭AI'}
-              </Button>
-            </Tooltip>
+            <AliasAIButton
+              active={isAliasMode}
+              onClick={() => {
+                if (isAliasMode && selectedDocumentIds.size > 0) {
+                  onGenerateAliases(forceRegenerateAlias)
+                }
+                onToggleAliasMode()
+              }}
+              disabled={isGeneratingAliases}
+            />
           )}
           {/* 별칭AI/삭제 버튼과 고객 연결 사이 구분선 */}
           {!isAliasMode && !isDeleteMode && !isBulkLinkMode && (hasUnlinkedDocs || isUnlinkedFilter) && (

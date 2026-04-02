@@ -9,6 +9,7 @@ import { Tooltip } from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection, QuickFilterType, DateRange } from './types/documentExplorer'
 import { GROUP_BY_LABELS, SORT_BY_LABELS, QUICK_FILTER_LABELS } from './types/documentExplorer'
+import { AliasAIButton } from '@/shared/ui/AliasAIButton/AliasAIButton'
 import '../DocumentLibraryView/DocumentLibraryView-delete.css'
 
 /** 탐색기 검색 모드 (filename만 사용) */
@@ -309,6 +310,17 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
 
   return (
     <div className="doc-explorer-toolbar">
+      {/* 통계 (맨 앞 — ㅈ 전체 문서 보기와 동일 배치) */}
+      <div className="doc-explorer-toolbar__stats">
+        <span className="doc-explorer-toolbar__stat">
+          {GROUP_BY_LABELS[groupBy]} {groupCount}
+        </span>
+        <span className="doc-explorer-toolbar__stat-separator">·</span>
+        <span className="doc-explorer-toolbar__stat">
+          문서 {totalDocuments}
+        </span>
+      </div>
+
       {/* 통합 검색 입력 */}
       <div className="doc-explorer-toolbar__search-group">
         <div className="doc-explorer-toolbar__search">
@@ -693,41 +705,29 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
         </div>
       </div>
 
-      {/* 통계 */}
-      <div className="doc-explorer-toolbar__stats">
-        <span className="doc-explorer-toolbar__stat">
-          {GROUP_BY_LABELS[groupBy]} {groupCount}
-        </span>
-        <span className="doc-explorer-toolbar__stat-separator">·</span>
-        <span className="doc-explorer-toolbar__stat">
-          문서 {totalDocuments}
-        </span>
-      </div>
-
-      {/* 별칭 모드 활성 시: 구분선 + 선택 카운트 + 체크박스 */}
-      {onEditModeChange && editMode === 'alias' && (
-        <div className="alias-mode-group" style={{ marginLeft: 'var(--spacing-2)', paddingLeft: 'var(--spacing-2)', borderLeft: '1px solid var(--color-border-primary)' }}>
-          <span className="alias-mode-count">
-            {selectedCount}개 선택됨
-          </span>
-          <label className="alias-force-label">
-            <input
-              type="checkbox"
-              checked={forceRegenerateAlias}
-              onChange={(e) => setForceRegenerateAlias(e.target.checked)}
-            />
-            <span>별칭이 있는 문서도 새로 만들기</span>
-          </label>
-        </div>
-      )}
-
-      {/* 별칭AI ↔ 완료: 하나의 버튼, 캡션만 토글 */}
+      {/* 별칭 영역: 우측 끝 고정 */}
       {onEditModeChange && (
-        <Tooltip content={editMode === 'alias' ? '선택된 문서의 별칭을 생성하고 종료합니다' : 'AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다'} placement="bottom">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`alias-ai-button ${editMode === 'alias' ? 'doc-explorer-toolbar__edit-btn--active' : ''}`}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 'var(--spacing-1-5)' }}>
+          {/* 별칭 모드 활성 시: 선택 카운트 + 체크박스 */}
+          {editMode === 'alias' && (
+            <div className="alias-mode-group" style={{ paddingRight: 'var(--spacing-2)', borderRight: '1px solid var(--color-border-primary)' }}>
+              <span className="alias-mode-count">
+                {selectedCount}개 선택됨
+              </span>
+              <label className="alias-force-label">
+                <input
+                  type="checkbox"
+                  checked={forceRegenerateAlias}
+                  onChange={(e) => setForceRegenerateAlias(e.target.checked)}
+                />
+                <span>별칭이 있는 문서도 새로 만들기</span>
+              </label>
+            </div>
+          )}
+
+          {/* 별칭AI ↔ 완료: 공용 토글 버튼 */}
+          <AliasAIButton
+            active={editMode === 'alias'}
             onClick={() => {
               if (editMode === 'alias' && selectedCount > 0) {
                 onGenerateAliases?.(forceRegenerateAlias)
@@ -735,17 +735,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
               onEditModeChange(editMode === 'alias' ? 'none' : 'alias')
             }}
             disabled={editMode === 'delete' || isGeneratingAliases}
-            aria-label={editMode === 'alias' ? '별칭 생성 완료' : 'AI 별칭 생성'}
-          >
-            <SFSymbol
-              name={editMode === 'alias' ? 'checkmark' : 'sparkles'}
-              size={SFSymbolSize.CAPTION_2}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative
-            />
-            {editMode === 'alias' ? '완료' : '별칭AI'}
-          </Button>
-        </Tooltip>
+          />
+        </div>
       )}
     </div>
   )

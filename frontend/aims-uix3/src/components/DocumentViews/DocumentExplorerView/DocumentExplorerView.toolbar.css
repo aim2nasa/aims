@@ -601,7 +601,6 @@
     color: var(--color-text-tertiary);
     white-space: nowrap;
     flex-shrink: 0;
-    margin-left: auto;
   }
 
   .doc-explorer-toolbar__stat {
@@ -981,6 +980,18 @@
     cursor: pointer;
     transition: all 150ms ease;
     white-space: nowrap;
+  }
+
+  /* 별칭AI 버튼: 항상 우측 끝 배치 */
+  .doc-explorer-toolbar > .alias-ai-button:last-child {
+    margin-left: auto;
+  }
+  /* alias-mode-group이 있을 때: 그룹이 우측으로 밀리고 버튼은 바로 뒤에 */
+  .doc-explorer-toolbar > .alias-mode-group {
+    margin-left: auto;
+  }
+  .doc-explorer-toolbar > .alias-mode-group ~ .alias-ai-button {
+    margin-left: 0;
   }
 
   /* 별칭AI 버튼: alias-ai-button 클래스 사용 (DocumentLibraryView와 동일) */
