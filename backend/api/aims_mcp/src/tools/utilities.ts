@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
+import { aggregateFiles } from '../internalApi.js';
 
 // ============================================================
 // 스키마 정의
@@ -154,8 +155,8 @@ export async function handleGetStorageInfo(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
-    // 1. 사용자의 파일 총 용량 계산 (ownerId 필드, meta.size_bytes 사용)
-    const usageResult = await db.collection(COLLECTIONS.FILES).aggregate([
+    // 1. 사용자의 파일 총 용량 계산 (Internal API 경유)
+    const usageResult = await aggregateFiles([
       {
         $match: {
           ownerId: userId,
@@ -173,7 +174,7 @@ export async function handleGetStorageInfo(args: unknown) {
           fileCount: { $sum: 1 }
         }
       }
-    ]).toArray();
+    ]);
 
     const usage = usageResult[0] || { totalSize: 0, fileCount: 0 };
 
@@ -416,18 +417,17 @@ function calculateCreditCycle(subscriptionStartDate: Date): { cycleStart: Date; 
 /**
  * OCR 크레딧 사용량 계산
  */
-async function calculateOcrCredits(db: ReturnType<typeof getDB>, userId: string, cycleStart: Date, cycleEnd: Date): Promise<{ pages: number; credits: number }> {
-  const filesCollection = db.collection(COLLECTIONS.FILES);
+async function calculateOcrCredits(_db: ReturnType<typeof getDB>, userId: string, cycleStart: Date, cycleEnd: Date): Promise<{ pages: number; credits: number }> {
   const cycleStartISO = cycleStart.toISOString();
   const cycleEndISO = cycleEnd.toISOString();
 
-  const result = await filesCollection.aggregate([
+  // Internal API 경유: Date는 JSON 직렬화 시 ISO 문자열로 변환됨
+  const result = await aggregateFiles([
     {
       $match: {
         ownerId: userId,
         'ocr.status': 'done',
         $or: [
-          { 'ocr.done_at': { $gte: cycleStart, $lte: cycleEnd } },
           { 'ocr.done_at': { $gte: cycleStartISO, $lte: cycleEndISO } }
         ]
       }
@@ -438,7 +438,7 @@ async function calculateOcrCredits(db: ReturnType<typeof getDB>, userId: string,
         total_pages: { $sum: { $ifNull: ['$ocr.page_count', 1] } }
       }
     }
-  ]).toArray();
+  ]);
 
   const pages = result.length > 0 ? (result[0] as { total_pages: number }).total_pages : 0;
   return {

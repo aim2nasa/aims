@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
+import { countFiles } from '../internalApi.js';
 
 
 /**
@@ -309,9 +310,9 @@ export async function handleGetCustomer(args: unknown) {
       };
     }
 
-    // 문서 수는 files 컬렉션에서 조회 (Single Source of Truth: files.customerId)
-    const documentCount = await db.collection(COLLECTIONS.FILES).countDocuments({
-      customerId: objectId
+    // 문서 수는 Internal API 경유 조회 (Single Source of Truth: files.customerId)
+    const documentCount = await countFiles({
+      customerId: params.customerId
     });
 
     // 계약 수: 가장 최신 annual_report의 contracts 배열에서 조회

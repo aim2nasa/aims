@@ -145,13 +145,14 @@ module.exports = function(db) {
   /**
    * files 컬렉션 범용 쿼리
    *
-   * Body: { filter, projection, sort, limit }
+   * Body: { filter, projection, sort, limit, skip }
    * - filter 내 customerId, _id 필드는 자동으로 ObjectId 변환
    * - limit 기본값: 100, 최대: 1000
+   * - skip 기본값: 0 (페이지네이션용)
    */
   router.post('/internal/files/query', async (req, res) => {
     try {
-      const { filter = {}, projection, sort, limit = 100 } = req.body;
+      const { filter = {}, projection, sort, limit = 100, skip = 0 } = req.body;
 
       // 위험한 MongoDB 연산자 차단
       const dangerousOp = findDangerousOperator(filter);
@@ -168,6 +169,8 @@ module.exports = function(db) {
 
       // limit 제한 (최대 1000)
       const safeLimit = Math.min(Math.max(1, limit), 1000);
+      // skip 제한 (음수 방지)
+      const safeSkip = Math.max(0, skip);
 
       let cursor = db.collection(COLLECTIONS.FILES).find(convertedFilter);
 
@@ -176,6 +179,9 @@ module.exports = function(db) {
       }
       if (sort) {
         cursor = cursor.sort(sort);
+      }
+      if (safeSkip > 0) {
+        cursor = cursor.skip(safeSkip);
       }
       cursor = cursor.limit(safeLimit);
 
@@ -205,7 +211,131 @@ module.exports = function(db) {
   });
 
   // =========================================================================
-  // 2. POST /internal/customers/resolve-by-name — 고객명으로 고객 ID 해석
+  // 2. POST /internal/files/count — 파일 수 조회
+  // =========================================================================
+  /**
+   * files 컬렉션 문서 수 조회
+   *
+   * Body: { filter }
+   * - filter 내 customerId, _id 필드는 자동으로 ObjectId 변환
+   */
+  router.post('/internal/files/count', async (req, res) => {
+    try {
+      const { filter = {} } = req.body;
+
+      // 위험한 MongoDB 연산자 차단
+      const dangerousOp = findDangerousOperator(filter);
+      if (dangerousOp) {
+        return res.status(400).json({
+          success: false,
+          error: `허용되지 않는 연산자: ${dangerousOp}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // ObjectId 필드 변환
+      const convertedFilter = convertObjectIdFields(filter);
+
+      const count = await db.collection(COLLECTIONS.FILES).countDocuments(convertedFilter);
+
+      res.json({
+        success: true,
+        data: { count },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] files/count 오류:', error.message);
+      backendLogger.error('Internal', 'files/count 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 3. POST /internal/files/aggregate — 파일 집계 쿼리
+  // =========================================================================
+  /**
+   * files 컬렉션 aggregate 파이프라인 실행
+   *
+   * Body: { pipeline }
+   * - pipeline 최대 10 스테이지
+   * - $out, $merge 차단 (Write 방지)
+   * - 위험 연산자 차단
+   */
+  router.post('/internal/files/aggregate', async (req, res) => {
+    try {
+      const { pipeline } = req.body;
+
+      if (!pipeline || !Array.isArray(pipeline)) {
+        return res.status(400).json({
+          success: false,
+          error: 'pipeline은 배열이어야 합니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 스테이지 수 제한 (최대 10)
+      if (pipeline.length > 10) {
+        return res.status(400).json({
+          success: false,
+          error: `pipeline 스테이지가 너무 많습니다 (${pipeline.length}/10).`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // Write 연산자 차단 ($out, $merge)
+      for (const stage of pipeline) {
+        if (stage.$out || stage.$merge) {
+          return res.status(400).json({
+            success: false,
+            error: '쓰기 연산자($out, $merge)는 허용되지 않습니다.',
+            timestamp: utcNowISO()
+          });
+        }
+      }
+
+      // 위험한 MongoDB 연산자 차단
+      const dangerousOp = findDangerousOperator(pipeline);
+      if (dangerousOp) {
+        return res.status(400).json({
+          success: false,
+          error: `허용되지 않는 연산자: ${dangerousOp}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // pipeline 내 $match 스테이지의 ObjectId 필드 변환
+      const convertedPipeline = pipeline.map(stage => {
+        if (stage.$match) {
+          return { ...stage, $match: convertObjectIdFields(stage.$match) };
+        }
+        return stage;
+      });
+
+      const results = await db.collection(COLLECTIONS.FILES).aggregate(convertedPipeline).toArray();
+
+      res.json({
+        success: true,
+        data: results,
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] files/aggregate 오류:', error.message);
+      backendLogger.error('Internal', 'files/aggregate 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 4. POST /internal/customers/resolve-by-name — 고객명으로 고객 ID 해석
+  //    (기존 2번에서 번호 변경)
   // =========================================================================
   /**
    * 고객명으로 고객 매칭 (정확 매칭 / 부분 매칭)
@@ -290,7 +420,7 @@ module.exports = function(db) {
   });
 
   // =========================================================================
-  // 3. POST /internal/customers/batch-names — 고객 ID 배치 → 이름 조회
+  // 5. POST /internal/customers/batch-names — 고객 ID 배치 → 이름 조회
   // =========================================================================
   /**
    * 고객 ID 목록으로 이름 배치 조회
@@ -345,7 +475,7 @@ module.exports = function(db) {
   });
 
   // =========================================================================
-  // 4. POST /internal/relationships/by-customer — 고객 관계 조회
+  // 6. POST /internal/relationships/by-customer — 고객 관계 조회
   // =========================================================================
   /**
    * 특정 고객의 양방향 관계 조회
@@ -411,7 +541,7 @@ module.exports = function(db) {
   });
 
   // =========================================================================
-  // 5. GET /internal/customers/:id/name — 단건 고객명+타입 조회
+  // 7. GET /internal/customers/:id/name — 단건 고객명+타입 조회
   // =========================================================================
   /**
    * 고객 ID로 이름과 고객 타입 조회 (단건)

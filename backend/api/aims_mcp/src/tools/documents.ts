@@ -2,6 +2,7 @@ import { z, ZodError } from 'zod';
 import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
+import { queryFiles, countFiles } from '../internalApi.js';
 
 // 스키마 정의
 export const searchDocumentsSchema = z.object({
@@ -260,21 +261,14 @@ export async function handleSearchDocuments(args: unknown) {
 export async function handleGetDocument(args: unknown) {
   try {
     const params = getDocumentSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    const objectId = toSafeObjectId(params.documentId);
-    if (!objectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 문서 ID입니다.' }]
-      };
-    }
-
-    const document = await db.collection(COLLECTIONS.FILES).findOne({
-      _id: objectId,
-      ownerId: userId
-    });
+    // Internal API 경유: queryFiles로 단건 조회
+    const results = await queryFiles(
+      { _id: params.documentId, ownerId: userId },
+      { limit: 1 }
+    );
+    const document = results[0] || null;
 
     if (!document) {
       return {
@@ -353,15 +347,14 @@ export async function handleListCustomerDocuments(args: unknown) {
     const limit = params.limit || 20;
     const offset = params.offset || 0;
 
-    const documents = await db.collection(COLLECTIONS.FILES)
-      .find({
-        customerId: objectId,
-        ownerId: userId
-      })
-      .sort({ 'upload.uploaded_at': -1 })
-      .skip(offset)
-      .limit(limit)
-      .project({
+    // Internal API 경유: 문서 목록 + 총 수 조회
+    const fileFilter = {
+      customerId: params.customerId,
+      ownerId: userId
+    };
+
+    const documents = await queryFiles(fileFilter, {
+      projection: {
         _id: 1,
         'upload.originalName': 1,
         'upload.mimeType': 1,
@@ -372,13 +365,13 @@ export async function handleListCustomerDocuments(args: unknown) {
         'ocr.tags': 1,
         'ocr.summary': 1,
         status: 1
-      })
-      .toArray();
-
-    const totalCount = await db.collection(COLLECTIONS.FILES).countDocuments({
-      customerId: objectId,
-      ownerId: userId
+      },
+      sort: { 'upload.uploaded_at': -1 },
+      skip: offset,
+      limit
     });
+
+    const totalCount = await countFiles(fileFilter);
 
     const hasMore = offset + documents.length < totalCount;
     const nextOffset = hasMore ? offset + documents.length : null;
@@ -434,26 +427,27 @@ export async function handleListCustomerDocuments(args: unknown) {
 export async function handleFindDocumentByFilename(args: unknown) {
   try {
     const params = findDocumentByFilenameSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
     const limit = params.limit || 5;
 
-    // 파일명으로 검색 (부분 일치, 최근 업로드 순)
-    const documents = await db.collection(COLLECTIONS.FILES)
-      .find({
+    // Internal API 경유: 파일명 검색 (부분 일치, 최근 업로드 순)
+    const documents = await queryFiles(
+      {
         ownerId: userId,
         'upload.originalName': { $regex: escapeRegex(params.filename), $options: 'i' }
-      })
-      .sort({ 'upload.uploaded_at': -1 })
-      .limit(limit)
-      .project({
-        _id: 1,
-        'upload.originalName': 1,
-        'upload.uploaded_at': 1,
-        customerId: 1
-      })
-      .toArray();
+      },
+      {
+        projection: {
+          _id: 1,
+          'upload.originalName': 1,
+          'upload.uploaded_at': 1,
+          customerId: 1
+        },
+        sort: { 'upload.uploaded_at': -1 },
+        limit
+      }
+    );
 
     if (documents.length === 0) {
       return {

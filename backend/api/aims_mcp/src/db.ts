@@ -1,6 +1,7 @@
 import { MongoClient, Db, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 import { ZodError, ZodIssue } from 'zod';
+import { queryFiles } from './internalApi.js';
 
 // 공유 스키마에서 import - 모든 백엔드 서비스가 동일한 정의 사용
 export { COLLECTIONS, CUSTOMER_FIELDS, CUSTOMER_TYPES, CUSTOMER_STATUS } from '@aims/shared-schema';
@@ -79,13 +80,13 @@ export async function filterExistingFileIds(sourceFileIds: string[]): Promise<Se
   const validIds = sourceFileIds.filter(id => ObjectId.isValid(id));
   if (validIds.length === 0) return new Set();
 
-  const db = getDB();
-  const objectIds = validIds.map(id => new ObjectId(id));
-  const existingDocs = await db.collection('files')
-    .find({ _id: { $in: objectIds } }, { projection: { _id: 1 } })
-    .toArray();
+  // Internal API 경유: aims_api에서 ObjectId 변환 처리
+  const existingDocs = await queryFiles(
+    { _id: { $in: validIds } },
+    { projection: { _id: 1 }, limit: validIds.length }
+  );
 
-  return new Set(existingDocs.map(doc => doc._id.toString()));
+  return new Set(existingDocs.map(doc => doc._id));
 }
 
 // 컬렉션 이름 상수는 @aims/shared-schema에서 import됨 (상단 참조)
