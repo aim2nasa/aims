@@ -299,21 +299,16 @@ async def _enrich_customer_relations(results: List[Dict[str, Any]], user_id: str
         else:
             placeholder_indices.append(i)
 
-    # 유효한 customerId에 대해 customers 컬렉션 batch 조회
+    # 유효한 customerId에 대해 Internal API 배치 조회
     customer_map: Dict[str, Dict[str, Any]] = {}
     if valid_customer_ids:
         try:
-            customers_collection = MongoService.get_collection("customers")
-            object_ids = [ObjectId(cid) for cid in valid_customer_ids.keys()]
-            cursor = customers_collection.find(
-                {"_id": {"$in": object_ids}, "meta.created_by": user_id},
-                {"personal_info.name": 1, "insurance_info.customer_type": 1}
-            )
-            async for customer in cursor:
-                cid = str(customer["_id"])
-                customer_map[cid] = {
-                    "name": customer.get("personal_info", {}).get("name"),
-                    "type": customer.get("insurance_info", {}).get("customer_type")
+            from services.internal_api import get_customer_names_batch
+            batch_data = await get_customer_names_batch(list(valid_customer_ids.keys()))
+            for cid_str in valid_customer_ids.keys():
+                customer_map[cid_str] = {
+                    "name": batch_data.get("names", {}).get(cid_str),
+                    "type": batch_data.get("types", {}).get(cid_str)
                 }
         except Exception as e:
             logger.warning(f"Customer batch lookup failed: {e}")

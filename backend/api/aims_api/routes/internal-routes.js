@@ -25,7 +25,7 @@ const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
 function verifyInternalApiKey(req, res, next) {
   const apiKey = req.headers['x-api-key'];
 
-  if (!apiKey || apiKey !== INTERNAL_API_KEY) {
+  if (!apiKey || !INTERNAL_API_KEY || apiKey !== INTERNAL_API_KEY) {
     return res.status(401).json({
       success: false,
       error: 'Invalid or missing API key',
@@ -317,17 +317,20 @@ module.exports = function(db) {
 
       const customers = await db.collection(COLLECTIONS.CUSTOMERS).find(
         { _id: { $in: objectIds } },
-        { projection: { 'personal_info.name': 1 } }
+        { projection: { 'personal_info.name': 1, 'insurance_info.customer_type': 1 } }
       ).toArray();
 
       const names = {};
+      const types = {};
       for (const cust of customers) {
-        names[cust._id.toString()] = (cust.personal_info || {}).name || '알 수 없음';
+        const id = cust._id.toString();
+        names[id] = (cust.personal_info || {}).name || '알 수 없음';
+        types[id] = (cust.insurance_info || {}).customer_type || null;
       }
 
       res.json({
         success: true,
-        data: { names },
+        data: { names, types },
         timestamp: utcNowISO()
       });
     } catch (error) {
@@ -399,6 +402,60 @@ module.exports = function(db) {
     } catch (error) {
       console.error('[Internal] relationships/by-customer 오류:', error.message);
       backendLogger.error('Internal', 'relationships/by-customer 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 5. GET /internal/customers/:id/name — 단건 고객명+타입 조회
+  // =========================================================================
+  /**
+   * 고객 ID로 이름과 고객 타입 조회 (단건)
+   *
+   * Params: id (ObjectId 문자열)
+   * Response: { name: "...", customerType: "..." }
+   */
+  router.get('/internal/customers/:id/name', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // ObjectId 유효성 검사
+      if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+        { _id: new ObjectId(id) },
+        { projection: { 'personal_info.name': 1, 'insurance_info.customer_type': 1 } }
+      );
+
+      if (!customer) {
+        return res.json({
+          success: true,
+          data: null,
+          timestamp: utcNowISO()
+        });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          name: (customer.personal_info || {}).name || null,
+          customerType: (customer.insurance_info || {}).customer_type || null
+        },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] customers/:id/name 오류:', error.message);
+      backendLogger.error('Internal', 'customers/:id/name 오류', error);
       res.status(500).json({
         success: false,
         error: error.message,

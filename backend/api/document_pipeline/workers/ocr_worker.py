@@ -112,13 +112,8 @@ class OCRWorker:
                     {"customerId": 1}
                 )
                 if file_doc and file_doc.get("customerId"):
-                    customers_col = MongoService.get_collection("customers")
-                    customer_doc = await customers_col.find_one(
-                        {"_id": ObjectId(str(file_doc["customerId"]))},
-                        {"personal_info.name": 1}
-                    )
-                    if customer_doc:
-                        customer_name = (customer_doc.get("personal_info") or {}).get("name")
+                    from services.internal_api import get_customer_name
+                    customer_name = await get_customer_name(str(file_doc["customerId"]))
             except Exception as e:
                 logger.warning(f"Customer name lookup for summarize_text failed: {e}")
 
@@ -374,16 +369,8 @@ class OCRWorker:
                 customer_name = None
                 customer_id = doc.get("customerId")
                 if customer_id:
-                    try:
-                        customers_col = MongoService.get_collection("customers")
-                        customer_doc = await customers_col.find_one(
-                            {"_id": ObjectId(str(customer_id))},
-                            {"personal_info.name": 1}
-                        )
-                        if customer_doc:
-                            customer_name = (customer_doc.get("personal_info") or {}).get("name")
-                    except Exception as e:
-                        logger.warning(f"Customer name lookup failed: {e}")
+                    from services.internal_api import get_customer_name
+                    customer_name = await get_customer_name(str(customer_id))
 
                 # 1순위: summarize_text에서 받은 title
                 # (unclassifiable일 때 title은 openai_service에서 이미 빈 문자열로 초기화됨)

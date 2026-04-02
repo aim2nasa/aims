@@ -247,16 +247,8 @@ async def generate_single_display_name(request: SingleDisplayNameRequest):
     customer_name = None
     customer_id = doc.get("customerId")
     if customer_id:
-        try:
-            customers_col = MongoService.get_collection("customers")
-            customer_doc = await customers_col.find_one(
-                {"_id": ObjectId(str(customer_id))},
-                {"personal_info.name": 1}
-            )
-            if customer_doc:
-                customer_name = (customer_doc.get("personal_info") or {}).get("name")
-        except Exception as e:
-            logger.warning(f"[DisplayName] 고객명 조회 실패 (계속 진행): {e}")
+        from services.internal_api import get_customer_name
+        customer_name = await get_customer_name(str(customer_id))
 
     try:
         # OpenAI로 제목 생성
@@ -339,16 +331,8 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
         )
         if first_doc and first_doc.get("customerId"):
             # 고객명 조회 (프롬프트에 전달하여 이름 환각 방지)
-            try:
-                customers_col = MongoService.get_collection("customers")
-                customer_doc = await customers_col.find_one(
-                    {"_id": ObjectId(str(first_doc["customerId"]))},
-                    {"personal_info.name": 1}
-                )
-                if customer_doc:
-                    customer_name = (customer_doc.get("personal_info") or {}).get("name")
-            except Exception as e:
-                logger.warning(f"[DisplayName] 배치 고객명 조회 실패 (계속 진행): {e}")
+            from services.internal_api import get_customer_name
+            customer_name = await get_customer_name(str(first_doc["customerId"]))
         if first_doc and first_doc.get("customerId"):
             cursor = collection.find(
                 {
