@@ -132,7 +132,7 @@ def _extract_text_from_document(doc: dict) -> str:
     요약본(summary)보다 원문(full_text)을 우선 사용한다.
     full_text는 500자로 truncate하여 프롬프트 크기를 제한한다.
 
-    호출자에서 len(text.strip()) < 10 체크로 텍스트 절대량을 검증한다.
+    호출자에서 빈 문자열 체크 후, 텍스트 없으면 originalName fallback을 사용한다.
 
     에러 메시지가 full_text에 저장된 레거시 데이터는 필터링한다.
 
@@ -229,15 +229,18 @@ async def generate_single_display_name(request: SingleDisplayNameRequest):
             display_name=existing_display_name, reason="already_exists"
         )
 
-    # 텍스트 추출
-    text = _extract_text_from_document(doc)
-    if not text or len(text.strip()) < 10:
-        return DocumentResult(document_id=doc_id, status="skipped", reason="insufficient_text")
-
-    # 원본 파일명 및 문서 유형 추출
+    # 원본 파일명 추출 (텍스트 fallback에도 사용)
     upload_obj = doc.get("upload")
     upload_original = upload_obj.get("originalName", "") if isinstance(upload_obj, dict) else ""
     original_name = doc.get("originalName") or doc.get("original_name") or upload_original or ""
+
+    # 텍스트 추출 — full_text 없으면 originalName fallback
+    text = _extract_text_from_document(doc)
+    if not text or len(text.strip()) == 0:
+        fallback_name = original_name.strip()
+        if not fallback_name:
+            return DocumentResult(document_id=doc_id, status="skipped", reason="insufficient_text")
+        text = fallback_name
     doc_type = doc.get("document_type") or ""
 
     # 고객명 조회 (프롬프트에 전달하여 이름 환각 방지)
@@ -429,21 +432,24 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
                 skipped += 1
                 continue
 
-            # 5. 텍스트 추출
-            text = _extract_text_from_document(doc)
-            if not text or len(text.strip()) < 10:
-                results.append(DocumentResult(
-                    document_id=doc_id,
-                    status="skipped",
-                    reason="insufficient_text"
-                ))
-                skipped += 1
-                continue
-
-            # 6. 원본 파일명 및 문서 유형 추출
+            # 5. 원본 파일명 추출 (텍스트 fallback에도 사용)
             upload_obj = doc.get("upload")
             upload_original = upload_obj.get("originalName", "") if isinstance(upload_obj, dict) else ""
             original_name = doc.get("originalName") or doc.get("original_name") or upload_original or ""
+
+            # 6. 텍스트 추출 — full_text 없으면 originalName fallback
+            text = _extract_text_from_document(doc)
+            if not text or len(text.strip()) == 0:
+                fallback_name = original_name.strip()
+                if not fallback_name:
+                    results.append(DocumentResult(
+                        document_id=doc_id,
+                        status="skipped",
+                        reason="insufficient_text"
+                    ))
+                    skipped += 1
+                    continue
+                text = fallback_name
             doc_type = doc.get("document_type") or ""
 
             # 7. OpenAI로 제목 생성 (개선: 파일명 + 유형 + 기존 별칭 + 고객명 전달)

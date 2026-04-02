@@ -2315,8 +2315,8 @@ async def _process_via_xpipe(
                 )
                 archive_doc_type = sr.get("document_type") or "unclassifiable"
                 archive_confidence = sr.get("confidence", 0.0)
-                archive_summary = sr.get("summary", "")
-                archive_title = sr.get("title", "")
+                # 파일명 기반 분류에서는 summary/title을 저장하지 않음
+                # summary는 full_text의 AI 요약이므로, full_text 없이 생성하면 안 됨
                 logger.info(
                     f"[xPipe] 보관 파일 파일명 분류 완료: doc_id={doc_id}, "
                     f"type={archive_doc_type}, file={original_name}"
@@ -2400,10 +2400,12 @@ async def _process_via_xpipe(
     # 8-1. AI 요약/제목 생성 (텍스트 → 파일명 fallback)
     summary_result = {}
     classify_text = ""
+    used_filename_fallback = False
     if extracted_text and len(extracted_text.strip()) >= 10:
         classify_text = extracted_text
     elif original_name and OpenAIService._is_meaningful_filename(original_name):
         classify_text = OpenAIService._sanitize_filename_for_prompt(original_name)
+        used_filename_fallback = True
         logger.info(f"[xPipe] full_text 부족, 파일명 fallback 분류: {original_name}")
 
     if classify_text:
@@ -2423,8 +2425,14 @@ async def _process_via_xpipe(
         summary_result = {"document_type": "unclassifiable", "confidence": 0.0}
         logger.info(f"[xPipe] 분류 정보 부실 → unclassifiable: {doc_id}")
 
-    xpipe_summary = summary_result.get("summary", "") if summary_result else ""
-    xpipe_title = summary_result.get("title", "") if summary_result else ""
+    # 파일명 fallback인 경우 summary/title은 저장하지 않음
+    # summary는 full_text의 AI 요약이므로, full_text 없이 생성하면 안 됨
+    if used_filename_fallback:
+        xpipe_summary = ""
+        xpipe_title = ""
+    else:
+        xpipe_summary = summary_result.get("summary", "") if summary_result else ""
+        xpipe_title = summary_result.get("title", "") if summary_result else ""
 
     # doc_type이 없으면 summary_result의 document_type으로 fallback
     if not doc_type and summary_result:

@@ -63,7 +63,17 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [apiHealth, setApiHealth] = useState<boolean | null>(null)
 
   // 🍎 Pagination State
-  const [currentPage, setCurrentPage] = useState<number>(1)
+  // 🔖 URL의 page param에서 초기 페이지 복원 (F5 새로고침 시 페이지 유지)
+  const [currentPage, setCurrentPage] = useState<number>(() => {
+    if (typeof window === 'undefined') return 1
+    const params = new URLSearchParams(window.location.search)
+    const pageParam = params.get('page')
+    if (pageParam) {
+      const parsed = parseInt(pageParam, 10)
+      if (!isNaN(parsed) && parsed >= 1) return parsed
+    }
+    return 1
+  })
   const [itemsPerPage, setItemsPerPage] = useState<number>(() => {
     // 🍎 initialItemsPerPage prop이 있으면 우선 사용 (문서 탐색기 등 전체 문서 필요 시)
     if (initialItemsPerPage !== undefined && initialItemsPerPage > 0) {
@@ -409,6 +419,22 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setSearchTerm(searchQuery)
   }, [searchQuery])
 
+  // 🔖 currentPage 변경 시 URL의 page param 동기화 (replaceState)
+  // page=1이면 param 제거 (깔끔한 URL 유지)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (currentPage > 1) {
+      url.searchParams.set('page', String(currentPage))
+    } else {
+      url.searchParams.delete('page')
+    }
+    // 현재 URL과 다를 때만 replaceState (불필요한 호출 방지)
+    if (url.toString() !== window.location.href) {
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [currentPage])
+
   // 🔧 초기 마운트 여부 추적 (정렬/페이지/검색 변경 시 재조회용)
   const isInitialMountRef = useRef(true)
 
@@ -433,15 +459,16 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
   /**
    * 📝 초성 필터 변경 시 1페이지로 리셋 + 재조회
+   * 🔖 prevRef 패턴: Strict Mode에서도 초기 마운트 스킵 보장
    */
+  const prevInitialFilterRef = useRef(initialFilter)
   useEffect(() => {
-    if (isInitialMountRef.current) return
+    if (prevInitialFilterRef.current === initialFilter) return
+    prevInitialFilterRef.current = initialFilter
     if (typeof window === 'undefined') return
     if (currentPage !== 1) {
-      // 페이지를 1로 리셋 → currentPage useEffect가 자동 fetch 실행
       setCurrentPage(1)
     } else {
-      // 이미 1페이지 → setCurrentPage는 no-op이므로 수동 fetch
       fetchDocumentsRef.current(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -450,8 +477,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   /**
    * 📝 초성 타입 필터 변경 시 1페이지로 리셋 + 재조회
    */
+  const prevInitialTypeFilterRef = useRef(initialTypeFilter)
   useEffect(() => {
-    if (isInitialMountRef.current) return
+    if (prevInitialTypeFilterRef.current === initialTypeFilter) return
+    prevInitialTypeFilterRef.current = initialTypeFilter
     if (typeof window === 'undefined') return
     if (currentPage !== 1) {
       setCurrentPage(1)
@@ -466,11 +495,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
    * 🐛 BUG-1 FIX: 필터 변경 시 캐시된 totalCount를 즉시 리셋하여
    * 이전 전체 수(예: 2492)가 잠깐 표시되는 문제 방지
    */
+  const prevCustomerIdFilterRef = useRef(customerIdFilter)
   useEffect(() => {
-    if (isInitialMountRef.current) return
+    if (prevCustomerIdFilterRef.current === customerIdFilter) return
+    prevCustomerIdFilterRef.current = customerIdFilter
     if (typeof window === 'undefined') return
 
-    // 🐛 BUG-1 FIX: 필터 변경 시 pagination 캐시 즉시 리셋
     paginationCache = { totalPages: 1, totalCount: 0 }
     setTotalCount(0)
     setTotalPages(1)
@@ -484,8 +514,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [customerIdFilter])
 
   // 🔄 고객 연결 필터 변경 시 데이터 다시 가져오기
+  const prevCustomerLinkFilterRef = useRef(customerLinkFilter)
   useEffect(() => {
-    if (isInitialMountRef.current) return
+    if (prevCustomerLinkFilterRef.current === customerLinkFilter) return
+    prevCustomerLinkFilterRef.current = customerLinkFilter
     if (typeof window === 'undefined') return
 
     paginationCache = { totalPages: 1, totalCount: 0 }
@@ -690,8 +722,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setItemsPerPage(limit)
     if (resetPage) {
       setCurrentPage(1)
-    } else {
+    } else if (totalCount > 0) {
       // 자동 계산에 의한 변경: 현재 페이지가 새 최대 페이지를 초과하면 보정
+      // totalCount=0(데이터 미로드)이면 클램핑 스킵 (URL page param 보호)
       const newMaxPage = Math.max(1, Math.ceil(totalCount / limit))
       setCurrentPage(prev => prev > newMaxPage ? newMaxPage : prev)
     }
@@ -771,7 +804,11 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   )
 
   // 🍎 검색어 변경 시 첫 페이지로 리셋
+  // 🔖 prevSearchTermRef로 초기 마운트 스킵 (URL page param 복원 보호)
+  const prevSearchTermRef = useRef(searchTerm)
   useEffect(() => {
+    if (prevSearchTermRef.current === searchTerm) return
+    prevSearchTermRef.current = searchTerm
     setCurrentPage(1)
   }, [searchTerm])
 
