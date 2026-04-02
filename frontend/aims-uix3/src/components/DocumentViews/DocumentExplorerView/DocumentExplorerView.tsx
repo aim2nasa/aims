@@ -1180,6 +1180,28 @@ const DocumentExplorerContent: React.FC<{
         editMode={editMode}
         onEditModeChange={handleEditModeChange}
         selectedCount={selectedDocumentIds.size}
+        onGenerateAliases={(force) => {
+          if (selectedDocumentIds.size === 0) return
+          void aliasGeneration.generate(
+            Array.from(selectedDocumentIds),
+            force,
+          ).then((summary) => {
+            const { completed, skipped, failed } = summary
+            if (completed > 0) {
+              void fetchExplorerTree(selectedInitialRef.current)
+            }
+            const parts: string[] = []
+            if (completed > 0) parts.push(`${completed}건 생성`)
+            if (skipped > 0) parts.push(`${skipped}건 건너뜀`)
+            if (failed > 0) parts.push(`${failed}건 실패`)
+            if (parts.length > 0) {
+              void showAlert({ title: '별칭 생성 완료', message: parts.join(', ') })
+            }
+          }).catch((err) => {
+            console.error('별칭 생성 실패:', err)
+          })
+        }}
+        isGeneratingAliases={isGeneratingAliases}
         isSummaryMode={!selectedInitial && filterFetchMode !== 'all'}
       />
 
@@ -1341,8 +1363,8 @@ const DocumentExplorerContent: React.FC<{
         </div>
       )}
 
-      {/* 편집 모드 하단 액션바 */}
-      {editMode !== 'none' && (
+      {/* 삭제 모드 하단 액션바 (별칭 모드는 상단 툴바에 통합) */}
+      {editMode === 'delete' && (
         <div className="doc-explorer-action-bar">
           <div className="doc-explorer-action-bar__left">
             <span className="doc-explorer-action-bar__count">
@@ -1350,49 +1372,20 @@ const DocumentExplorerContent: React.FC<{
             </span>
           </div>
           <div className="doc-explorer-action-bar__right">
-            {editMode === 'alias' && (
-              <>
-                <label className="doc-explorer-action-bar__force-label">
-                  <input
-                    type="checkbox"
-                    checked={forceRegenerateAlias}
-                    onChange={(e) => setForceRegenerateAlias(e.target.checked)}
-                    aria-label="별칭이 있는 문서도 새로 만들기"
-                  />
-                  <span>별칭이 있는 문서도 새로 만들기</span>
-                </label>
-                <button
-                  type="button"
-                  className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--alias"
-                  onClick={handleGenerateAliases}
-                  disabled={isGeneratingAliases || selectedDocumentIds.size === 0}
-                >
-                  <SFSymbol
-                    name="sparkles"
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.MEDIUM}
-                    decorative
-                  />
-                  {isGeneratingAliases ? '생성 중...' : 'AI 별칭 생성'}
-                </button>
-              </>
-            )}
-            {editMode === 'delete' && (
-              <button
-                type="button"
-                className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--delete"
-                onClick={handleBatchDelete}
-                disabled={documentActions.isDeleting || selectedDocumentIds.size === 0}
-              >
-                <SFSymbol
-                  name="trash"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative
-                />
-                {documentActions.isDeleting ? '삭제 중...' : '일괄 삭제'}
-              </button>
-            )}
+            <button
+              type="button"
+              className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--delete"
+              onClick={handleBatchDelete}
+              disabled={documentActions.isDeleting || selectedDocumentIds.size === 0}
+            >
+              <SFSymbol
+                name="trash"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.MEDIUM}
+                decorative
+              />
+              {documentActions.isDeleting ? '삭제 중...' : '일괄 삭제'}
+            </button>
           </div>
         </div>
       )}

@@ -821,27 +821,12 @@ const DocumentLibraryContent: React.FC<{
 
         {/* 오른쪽: 별칭AI + 삭제 | 고객 연결 + 연결 고객 없음 필터 */}
         <div className="header-right-section">
-          {/* 별칭 모드: 별칭AI 버튼 자리에 모드 컨트롤 표시 */}
-          {isAliasMode ? (
+          {/* 별칭 모드 활성 시: 선택 카운트 + 체크박스 (텍스트만, 버튼 아님) */}
+          {isAliasMode && (
             <div className="alias-mode-group">
               <span className="alias-mode-count">
                 {selectedDocumentIds.size}개 선택됨
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="alias-ai-button"
-                onClick={() => onGenerateAliases(forceRegenerateAlias)}
-                disabled={isGeneratingAliases || selectedDocumentIds.size === 0}
-              >
-                <SFSymbol
-                  name="sparkles"
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
-                {isGeneratingAliases ? '생성 중...' : '별칭 생성'}
-              </Button>
               <label className="alias-force-label">
                 <input
                   type="checkbox"
@@ -850,30 +835,31 @@ const DocumentLibraryContent: React.FC<{
                 />
                 <span>별칭이 있는 문서도 새로 만들기</span>
               </label>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onToggleAliasMode}
-              >
-                취소
-              </Button>
             </div>
-          ) : !isDeleteMode && !isBulkLinkMode && (
-            <Tooltip content="AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다">
+          )}
+          {/* 별칭AI ↔ 완료: 하나의 버튼, 캡션만 토글 */}
+          {!isDeleteMode && !isBulkLinkMode && (
+            <Tooltip content={isAliasMode ? '선택된 문서의 별칭을 생성하고 종료합니다' : 'AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다'}>
               <Button
                 variant="ghost"
                 size="sm"
-                className="alias-ai-button"
-                onClick={onToggleAliasMode}
-                aria-label="별칭 생성"
+                className={`alias-ai-button ${isAliasMode ? 'alias-ai-button--active' : ''}`}
+                onClick={() => {
+                  if (isAliasMode && selectedDocumentIds.size > 0) {
+                    onGenerateAliases(forceRegenerateAlias)
+                  }
+                  onToggleAliasMode()
+                }}
+                disabled={isGeneratingAliases}
+                aria-label={isAliasMode ? '별칭 생성 완료' : '별칭 생성'}
               >
                 <SFSymbol
-                  name="sparkles"
+                  name={isAliasMode ? 'checkmark' : 'sparkles'}
                   size={SFSymbolSize.CAPTION_2}
                   weight={SFSymbolWeight.MEDIUM}
                   decorative={true}
                 />
-                별칭AI
+                {isAliasMode ? '완료' : '별칭AI'}
               </Button>
             </Tooltip>
           )}

@@ -65,6 +65,10 @@ export interface DocumentExplorerToolbarProps {
   onEditModeChange?: (mode: EditModeType) => void
   /** 선택된 문서 수 */
   selectedCount?: number
+  /** 별칭 생성 실행 */
+  onGenerateAliases?: (force: boolean) => void
+  /** 별칭 생성 중 */
+  isGeneratingAliases?: boolean
   /** 요약 모드 여부 (초성 미선택) — placeholder 동적 변경용 */
   isSummaryMode?: boolean
 }
@@ -115,6 +119,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   editMode = 'none',
   onEditModeChange,
   selectedCount = 0,
+  onGenerateAliases,
+  isGeneratingAliases = false,
   isSummaryMode = false,
 }) => {
   // 모드별 placeholder 선택
@@ -125,6 +131,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   const dateButtonRef = useRef<HTMLButtonElement>(null)
   const [showSettings, setShowSettings] = useState(false)
   const settingsRef = useRef<HTMLDivElement>(null)
+  const [forceRegenerateAlias, setForceRegenerateAlias] = useState(false)
 
   // 문서가 있는 날짜 Set (빠른 조회용)
   const availableDatesSet = useMemo(() => {
@@ -697,16 +704,38 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
         </span>
       </div>
 
-      {/* 별칭AI 버튼 (우측 끝 — ㅈ 전체 문서 보기와 동일 위치) */}
+      {/* 별칭 모드 활성 시: 구분선 + 선택 카운트 + 체크박스 */}
+      {onEditModeChange && editMode === 'alias' && (
+        <div className="alias-mode-group" style={{ marginLeft: 'var(--spacing-2)', paddingLeft: 'var(--spacing-2)', borderLeft: '1px solid var(--color-border-primary)' }}>
+          <span className="alias-mode-count">
+            {selectedCount}개 선택됨
+          </span>
+          <label className="alias-force-label">
+            <input
+              type="checkbox"
+              checked={forceRegenerateAlias}
+              onChange={(e) => setForceRegenerateAlias(e.target.checked)}
+            />
+            <span>별칭이 있는 문서도 새로 만들기</span>
+          </label>
+        </div>
+      )}
+
+      {/* 별칭AI ↔ 완료: 하나의 버튼, 캡션만 토글 */}
       {onEditModeChange && (
-        <Tooltip content={editMode === 'alias' ? '별칭 완료' : 'AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다'} placement="bottom">
+        <Tooltip content={editMode === 'alias' ? '선택된 문서의 별칭을 생성하고 종료합니다' : 'AI가 문서 내용을 분석하여 알아보기 쉬운 별칭을 자동 생성합니다'} placement="bottom">
           <Button
             variant="ghost"
             size="sm"
             className={`alias-ai-button ${editMode === 'alias' ? 'doc-explorer-toolbar__edit-btn--active' : ''}`}
-            onClick={() => onEditModeChange(editMode === 'alias' ? 'none' : 'alias')}
-            disabled={editMode === 'delete'}
-            aria-label={editMode === 'alias' ? '별칭 완료' : 'AI 별칭 생성'}
+            onClick={() => {
+              if (editMode === 'alias' && selectedCount > 0) {
+                onGenerateAliases?.(forceRegenerateAlias)
+              }
+              onEditModeChange(editMode === 'alias' ? 'none' : 'alias')
+            }}
+            disabled={editMode === 'delete' || isGeneratingAliases}
+            aria-label={editMode === 'alias' ? '별칭 생성 완료' : 'AI 별칭 생성'}
           >
             <SFSymbol
               name={editMode === 'alias' ? 'checkmark' : 'sparkles'}
