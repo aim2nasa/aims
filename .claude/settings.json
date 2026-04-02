@@ -13,5 +13,10 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "Edit(/.claude/skills/compact-fix/**)"
+    ]
   }
 }
