@@ -13,7 +13,7 @@
 
   /* 콘텐츠 영역 */
   .usage-guide-view__content {
-    padding: var(--spacing-3);
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-3);
@@ -242,6 +242,21 @@
     color: #bf5af2;
   }
 
+  .usage-guide-view__category-icon--customer-views {
+    background: transparent;
+    color: var(--color-ios-indigo, #5856d6);
+  }
+
+  .usage-guide-view__category-icon--doc-search {
+    background: transparent;
+    color: var(--color-ios-cyan, #32ade6);
+  }
+
+  .usage-guide-view__category-icon--alias-ai {
+    background: transparent;
+    color: #bf5af2;
+  }
+
   .usage-guide-view__category-icon--mobile {
     background: transparent;
     color: var(--color-ios-yellow, #ffcc00);
@@ -376,7 +391,7 @@
   /* === 모바일 반응형 (480px 이하) === */
   @media (max-width: 480px) {
     .usage-guide-view__content {
-      padding: var(--spacing-2);
+      padding: 0;
       gap: var(--spacing-2);
     }
 

@@ -183,6 +183,36 @@ const AiAssistantIcon = () => (
   </svg>
 );
 
+// 고객 보기 방식 (사람+눈 모양)
+const CustomerViewsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <circle cx="10" cy="8" r="3.5" opacity="0.85"/>
+    <path d="M10 13c-3.5 0-6 1.5-6 4v1h12v-1c0-2.5-2.5-4-6-4z" opacity="0.85"/>
+    <path d="M18 10c-1.5 0-3 .8-3 2s1.5 2 3 2 3-.8 3-2-1.5-2-3-2z" opacity="0.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    <circle cx="18" cy="11" r="0.8" opacity="0.7"/>
+  </svg>
+);
+
+// 상세 문서검색 (돋보기+문서)
+const DocSearchIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" opacity="0.5"/>
+    <path d="M14 2v6h6" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    <circle cx="13" cy="15" r="3" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.9"/>
+    <path d="M15.5 17.5L18 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.9"/>
+  </svg>
+);
+
+// 별칭AI (AI+태그)
+const AliasAiIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <rect x="2" y="4" width="14" height="10" rx="2" opacity="0.85"/>
+    <text x="9" y="10" textAnchor="middle" dominantBaseline="middle" fill="var(--color-bg-primary, white)" fontSize="7" fontWeight="800" fontFamily="system-ui, -apple-system, sans-serif">AI</text>
+    <path d="M18 8h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1l-2 2v-2h-1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+    <path d="M7 16l-1 3h3l-1-3" opacity="0.6"/>
+  </svg>
+);
+
 // 모바일 (스마트폰 아이콘)
 const MobileIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
@@ -214,6 +244,9 @@ const CATEGORY_ICONS: Record<string, ReactNode> = {
   'family-contract': <FamilyContractIcon />,
   'ai-assistant': <AiAssistantIcon />,
   mobile: <MobileIcon />,
+  'customer-views': <CustomerViewsIcon />,
+  'doc-search': <DocSearchIcon />,
+  'alias-ai': <AliasAiIcon />,
 };
 
 
