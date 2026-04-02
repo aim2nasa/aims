@@ -1806,6 +1806,23 @@
     border-radius: 2px;
   }
 
+  /* === ARROW.DOWN.CIRCLE (다운로드) - 문서함 다운로드 === */
+
+  .sf-symbol--arrow-down-circle .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.17l-4.59-4.58L7.83 10.17 11 13.34V7h2v6.34l3.17-3.17 1.42 1.42L12 17.17z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.17l-4.59-4.58L7.83 10.17 11 13.34V7h2v6.34l3.17-3.17 1.42 1.42L12 17.17z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
   /* === ARROW.UP (위 화살표) - 전송 버튼 === */
 
   .sf-symbol--arrow-up .sf-symbol__shape::before {

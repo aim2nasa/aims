@@ -789,7 +789,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     <span className="doc-explorer-tree__customer-action-icon">
                       <SFSymbol name="folder" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
-                    {isCustomerChildrenExpanded ? '하위 폴더 접기' : '하위 폴더 펼치기'}
+                    <strong>{node.label}</strong> {isCustomerChildrenExpanded ? '하위 폴더 접기' : '하위 폴더 펼치기'}
                   </button>
                 )}
                 {/* 문서함 다운로드 */}
@@ -806,7 +806,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     <span className="doc-explorer-tree__customer-action-icon">
                       <SFSymbol name="arrow.down.circle" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
-                    문서함 다운로드
+                    <strong>{node.label}</strong> 문서함 다운로드
                   </button>
                 )}
                 {/* 구분선: 위쪽 항목이 하나라도 있을 때만 표시 */}
@@ -831,7 +831,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     <span className="doc-explorer-tree__customer-action-icon">
                       <SFSymbol name="archivebox" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
-                    고객 문서 분류함
+                    <strong>{node.label}</strong> 문서 분류함
                   </button>
                 )}
                 {/* 고객 상세 보기 */}
@@ -848,7 +848,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     <span className="doc-explorer-tree__customer-action-icon">
                       <SFSymbol name="doc.text" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
-                    고객 상세 보기
+                    <strong>{node.label}</strong> 상세 보기
                   </button>
                 )}
                 {/* 고객 요약 보기 */}
@@ -865,7 +865,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
                     <span className="doc-explorer-tree__customer-action-icon">
                       <SFSymbol name="person" size={SFSymbolSize.CAPTION_1} decorative />
                     </span>
-                    고객 요약 보기
+                    <strong>{node.label}</strong> 요약 보기
                   </button>
                 )}
               </div>
