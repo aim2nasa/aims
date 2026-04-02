@@ -377,11 +377,17 @@
     color: var(--color-success);
   }
 
-  /* 선택된 개수 표시 */
+  /* 선택된 개수 표시 — 삭제 모드 통일 스타일 */
   .selected-count-inline {
-    font-size: var(--font-size-callout);
-    color: var(--color-text-primary);
-    font-weight: 600;
+    font-size: var(--font-size-caption-1);
+    font-family: var(--font-family-text);
+    font-weight: 400;
+    color: var(--color-error-600);
+    white-space: nowrap;
+  }
+
+  html[data-theme="dark"] .selected-count-inline {
+    color: var(--color-error-400);
   }
 
   /* 체크박스 헤더 */

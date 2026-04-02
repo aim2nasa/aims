@@ -1191,6 +1191,8 @@ const DocumentExplorerContent: React.FC<{
         editMode={editMode}
         onEditModeChange={handleEditModeChange}
         selectedCount={selectedDocumentIds.size}
+        onBatchDelete={handleBatchDelete}
+        isDeleting={documentActions.isDeleting}
         hasDocWithoutAlias={hasDocWithoutAlias}
         aliasSelectableCount={aliasSelectableCount}
         onGenerateAliases={(force) => {
@@ -1377,32 +1379,7 @@ const DocumentExplorerContent: React.FC<{
         </div>
       )}
 
-      {/* 삭제 모드 하단 액션바 (별칭 모드는 상단 툴바에 통합) */}
-      {editMode === 'delete' && (
-        <div className="doc-explorer-action-bar">
-          <div className="doc-explorer-action-bar__left">
-            <span className="doc-explorer-action-bar__count">
-              {selectedDocumentIds.size}건 선택됨
-            </span>
-          </div>
-          <div className="doc-explorer-action-bar__right">
-            <button
-              type="button"
-              className="doc-explorer-action-bar__btn doc-explorer-action-bar__btn--delete"
-              onClick={handleBatchDelete}
-              disabled={documentActions.isDeleting || selectedDocumentIds.size === 0}
-            >
-              <SFSymbol
-                name="trash"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-                decorative
-              />
-              {documentActions.isDeleting ? '삭제 중...' : '일괄 삭제'}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* 삭제 모드: 상단 툴바에 통합됨 (하단 바 제거) */}
 
       {/* 요약 모달 */}
       <DocumentSummaryModal

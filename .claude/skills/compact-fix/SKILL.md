@@ -69,6 +69,13 @@ user-invocable: true
 
 1. **모든 이슈를 실제 환경에서 테스트** — 예외 없음
 2. **PASS/FAIL 명확히 판정** — 스크린샷, URL, 데이터로 증거 확보
+   - 검증 4단계 (반드시 순서대로):
+     1. **computed style 비교** — `getComputedStyle()`로 fontSize, fontWeight, color 등 추출. 두 화면의 값을 데이터로 비교
+     2. **element 스크린샷** — 전체 페이지가 아닌 `element.screenshot()`으로 해당 요소만 고해상도 캡처
+     3. **픽셀 diff** — 두 스크린샷을 `pixelmatch`/`sharp`로 비교, diff 이미지 생성
+     4. **나란히 비교** — 동일 크기 crop으로 시각 증거 제공
+   - **저해상도 핑계 금지** — viewport 1920x1080, element screenshot 사용. 읽히지 않는 스크린샷은 증거가 아님
+   - **코드 분석만으로 CSS 문제를 판단하지 않음** — 반드시 브라우저에서 실제 적용된 값 확인
 3. **FAIL 시 수정 루프:**
    - 원인 추적 (console.log, interceptor 등 활용)
    - 수정 적용

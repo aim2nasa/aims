@@ -748,7 +748,7 @@ const DocumentLibraryContent: React.FC<{
               {/* 삭제 모드일 때: 선택된 개수 + 삭제 + 취소 */}
               {isDeleteMode && (
                 <>
-                  <span className="selected-count-inline">
+                  <span className="selected-count-inline" style={{ fontSize: 'var(--font-size-caption-1)', fontWeight: 400, color: 'var(--color-error-600)' }}>
                     {selectedDocumentIds.size}개 선택됨
                   </span>
                   <Button
