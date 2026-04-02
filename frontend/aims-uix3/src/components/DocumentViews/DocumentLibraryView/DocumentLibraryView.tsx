@@ -1160,6 +1160,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 🍎 Optimistic Update 함수를 저장할 ref
   const removeDocumentsFnRef = React.useRef<((docIds: Set<string>) => void) | null>(null)
 
+  // 🍎 데이터 refetch 함수 ref (window.location.reload 대신 사용 — 현재 페이지 유지)
+  const internalRefreshRef = React.useRef<(() => Promise<void>) | null>(null)
+
   // 🍎 새로고침 함수 expose — DocumentLibraryContent 내부에서 처리 (actions 스코프 문제 해결)
 
   // 🍎 삭제 기능 상태
@@ -1264,8 +1267,11 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           relationship_type: 'general',
         })
       }
-      // 성공 시 페이지 새로고침 (Optimistic Update 금지 규칙)
-      window.location.reload()
+      // 성공 시 데이터 refetch (현재 페이지 유지)
+      await internalRefreshRef.current?.()
+      // 일괄 연결 모드 종료
+      setIsBulkLinkMode(false)
+      setSelectedDocumentIds(new Set())
     } catch (error) {
       console.error('문서 연결 실패:', error)
       setDocumentToChangeCustomer(null)
@@ -1357,7 +1363,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         iconType,
       })
 
-      window.location.reload()
+      // 데이터 refetch (현재 페이지 유지) + 별칭 모드 종료
+      await internalRefreshRef.current?.()
+      setIsAliasMode(false)
+      setSelectedDocumentIds(new Set())
     } catch (err) {
       console.error('별칭 생성 실패:', err)
       await confirmModal.actions.openModal({
@@ -1459,8 +1468,13 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         })
       }
 
-      // 🔄 삭제 완료 후 페이지 새로고침 (CLAUDE.md 규칙 12-1)
-      window.location.reload()
+      // 🔄 삭제 완료 후 데이터 refetch (현재 페이지 유지) + 삭제 모드 종료
+      const deletedIds = Array.from(selectedDocumentIds)
+      setIsDeleting(false)
+      setIsDeleteMode(false)
+      setSelectedDocumentIds(new Set())
+      onDocumentDeleted?.(deletedIds)
+      await internalRefreshRef.current?.()
     } catch (error) {
       console.error('Error in handleDeleteSelected:', error)
       errorReporter.reportApiError(error as Error, { component: 'DocumentLibraryView.handleDeleteSelected' })
@@ -1472,7 +1486,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         showCancel: false,
       })
     }
-  }, [selectedDocumentIds, confirmModal])
+  }, [selectedDocumentIds, confirmModal, onDocumentDeleted])
 
   // 🍎 단일 문서 삭제 핸들러 (컨텍스트 메뉴용)
   const handleDeleteSingleDocument = React.useCallback(async (documentId: string, documentName: string) => {
@@ -1495,8 +1509,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       // API 호출하여 삭제
       await api.delete(`/api/documents/${documentId}`)
 
-      // 🔄 삭제 완료 후 페이지 새로고침 (CLAUDE.md 규칙 12-1)
-      window.location.reload()
+      // 🔄 삭제 완료 후 데이터 refetch (현재 페이지 유지)
+      setIsDeleting(false)
+      onDocumentDeleted?.(documentId)
+      await internalRefreshRef.current?.()
 
     } catch (error) {
       console.error('Error in handleDeleteSingleDocument:', error)
@@ -1569,7 +1585,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             {...(onNavigate && { onNavigate })}
             onDocumentDeleted={onDocumentDeleted}
             previewDocumentId={previewDocumentId}
-            onRefreshExpose={onRefreshExpose}
+            onRefreshExpose={(refreshFn) => {
+              internalRefreshRef.current = refreshFn
+              onRefreshExpose?.(refreshFn)
+            }}
             isUnlinkedFilter={isUnlinkedFilter}
             onToggleUnlinkedFilter={handleToggleUnlinkedFilter}
             onStartCustomerLink={handleStartCustomerLink}
