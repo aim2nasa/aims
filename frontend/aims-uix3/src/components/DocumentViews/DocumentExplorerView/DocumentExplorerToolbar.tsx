@@ -708,20 +708,12 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
       {/* 별칭 영역: 우측 끝 고정 */}
       {onEditModeChange && (
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 'var(--spacing-1-5)' }}>
-          {/* 별칭 모드 활성 시: 선택 카운트 + 체크박스 */}
+          {/* 별칭 모드 활성 시: 선택 카운트 */}
           {editMode === 'alias' && (
             <div className="alias-mode-group" style={{ paddingRight: 'var(--spacing-2)', borderRight: '1px solid var(--color-border-primary)' }}>
               <span className="alias-mode-count">
                 {selectedCount}개 선택됨
               </span>
-              <label className="alias-force-label">
-                <input
-                  type="checkbox"
-                  checked={forceRegenerateAlias}
-                  onChange={(e) => setForceRegenerateAlias(e.target.checked)}
-                />
-                <span>별칭이 있는 문서도 새로 만들기</span>
-              </label>
             </div>
           )}
 

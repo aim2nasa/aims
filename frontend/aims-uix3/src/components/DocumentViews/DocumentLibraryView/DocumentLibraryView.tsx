@@ -828,14 +828,6 @@ const DocumentLibraryContent: React.FC<{
               <span className="alias-mode-count">
                 {selectedDocumentIds.size}개 선택됨
               </span>
-              <label className="alias-force-label">
-                <input
-                  type="checkbox"
-                  checked={forceRegenerateAlias}
-                  onChange={(e) => setForceRegenerateAlias(e.target.checked)}
-                />
-                <span>별칭이 있는 문서도 새로 만들기</span>
-              </label>
             </div>
           )}
           {/* 별칭AI ↔ 완료: 공용 토글 버튼 */}
