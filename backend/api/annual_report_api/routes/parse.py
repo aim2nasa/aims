@@ -17,6 +17,7 @@ from services.parser_factory import get_parser
 from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
 from system_logger import send_error_log
+from internal_api import check_customer_ownership, get_customer_name
 
 logger = logging.getLogger(__name__)
 
@@ -219,15 +220,12 @@ def do_parsing_in_background(
         logger.info("Step 2: 1페이지 메타데이터 추출 중...")
         metadata = extract_customer_info_from_first_page(file_path)
 
-        # ⚠️ customer_id가 제공되면 DB에서 실제 고객명 가져오기 (OCR 오류 방지)
+        # ⚠️ customer_id가 제공되면 DB에서 실제 고객명 가져오기 (OCR 오류 방지, Internal API 경유)
         if customer_id:
-            from bson import ObjectId
-            customer = db.customers.find_one({"_id": ObjectId(customer_id)})
-            if customer:
-                actual_customer_name = customer.get('personal_info', {}).get('name')
-                if actual_customer_name:
-                    logger.info(f"✅ DB에서 실제 고객명 사용: {actual_customer_name} (OCR: {metadata.get('customer_name')})")
-                    metadata["customer_name"] = actual_customer_name
+            actual_customer_name = get_customer_name(customer_id)
+            if actual_customer_name:
+                logger.info(f"✅ DB에서 실제 고객명 사용: {actual_customer_name} (OCR: {metadata.get('customer_name')})")
+                metadata["customer_name"] = actual_customer_name
 
         customer_name = metadata.get("customer_name")
         logger.info(f"📄 메타데이터: {metadata}")
@@ -355,12 +353,8 @@ async def parse_annual_report_endpoint(
         except InvalidId:
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        # customer 소유권 검증 (Internal API 경유)
+        if not check_customer_ownership(str(customer_obj_id), user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
@@ -382,8 +376,9 @@ async def parse_annual_report_endpoint(
 
         logger.info(f"📁 임시 파일 저장: {temp_file_path}")
 
-        # customer 정보 로깅 (이미 위에서 검증 완료)
-        logger.info(f"✅ 고객 확인됨: {customer.get('personal_info', {}).get('name', 'Unknown')}")
+        # customer 정보 로깅 (Internal API 경유)
+        customer_name_for_log = get_customer_name(str(customer_obj_id)) or 'Unknown'
+        logger.info(f"✅ 고객 확인됨: {customer_name_for_log}")
 
         # file_id 생성 (임시)
         file_id = f"temp_{os.path.basename(temp_file_path)}"
@@ -469,12 +464,8 @@ async def parse_annual_report_by_path_endpoint(
         except InvalidId:
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        # customer 소유권 검증 (Internal API 경유)
+        if not check_customer_ownership(str(customer_obj_id), user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"

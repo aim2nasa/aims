@@ -318,16 +318,8 @@ class PdfConversionWorker:
                 customer_name_for_summary = None
                 customer_id_for_summary = doc.get("customerId")
                 if customer_id_for_summary:
-                    try:
-                        customers_col_summary = MongoService.get_collection("customers")
-                        customer_doc_summary = await customers_col_summary.find_one(
-                            {"_id": BsonObjectId(str(customer_id_for_summary))},
-                            {"personal_info.name": 1}
-                        )
-                        if customer_doc_summary:
-                            customer_name_for_summary = (customer_doc_summary.get("personal_info") or {}).get("name")
-                    except Exception:
-                        pass
+                    from services.internal_api import get_customer_name
+                    customer_name_for_summary = await get_customer_name(str(customer_id_for_summary))
 
                 summary_result = await OpenAIService.summarize_text(
                     extracted_text,

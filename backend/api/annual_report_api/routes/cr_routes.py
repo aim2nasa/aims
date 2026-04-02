@@ -19,6 +19,7 @@ from services.cr_parser import parse_customer_review
 from services.cr_parser_table import parse_customer_review_table
 from services.db_writer import get_customer_reviews, delete_customer_reviews, save_customer_review
 from system_logger import send_error_log
+from internal_api import check_customer_ownership
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -312,12 +313,8 @@ async def parse_customer_review_api(
         except InvalidId:
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        # customer 소유권 검증 (Internal API 경유)
+        if not check_customer_ownership(str(customer_obj_id), user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
@@ -435,12 +432,8 @@ async def get_customer_reviews_api(
         except InvalidId:
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        # customer 소유권 검증 (Internal API 경유)
+        if not check_customer_ownership(str(customer_obj_id), user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
@@ -544,12 +537,8 @@ async def delete_customer_reviews_api(
         except InvalidId:
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        # customer 소유권 검증 (Internal API 경유)
+        if not check_customer_ownership(str(customer_obj_id), user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"

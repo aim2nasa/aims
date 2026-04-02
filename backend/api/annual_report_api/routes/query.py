@@ -12,6 +12,7 @@ import logging
 
 from services.db_writer import get_annual_reports, delete_annual_reports, cleanup_duplicate_annual_reports
 from system_logger import send_error_log
+from internal_api import check_customer_ownership
 
 logger = logging.getLogger(__name__)
 
@@ -117,17 +118,10 @@ async def get_customer_annual_reports(
             )
 
         # ⭐ customer_id 유효성 및 소유권 검증
-        try:
-            customer_obj_id = ObjectId(customer_id)
-        except InvalidId:
+        if not ObjectId.is_valid(customer_id):
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        if not check_customer_ownership(customer_id, user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
@@ -218,17 +212,10 @@ async def get_latest_annual_report(
             )
 
         # ⭐ customer 소유권 검증
-        try:
-            customer_obj_id = ObjectId(customer_id)
-        except InvalidId:
+        if not ObjectId.is_valid(customer_id):
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        if not check_customer_ownership(customer_id, user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
@@ -355,17 +342,10 @@ async def delete_customer_annual_reports(
             )
 
         # ⭐ customer 소유권 검증
-        try:
-            customer_obj_id = ObjectId(customer_id)
-        except InvalidId:
+        if not ObjectId.is_valid(customer_id):
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        if not check_customer_ownership(customer_id, user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
@@ -660,17 +640,10 @@ async def cleanup_duplicate_reports(
             )
 
         # ⭐ customer 소유권 검증
-        try:
-            customer_obj_id = ObjectId(customer_id)
-        except InvalidId:
+        if not ObjectId.is_valid(customer_id):
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        if not check_customer_ownership(customer_id, user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"

@@ -313,6 +313,11 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', virusScanRoutes);
     console.log('[Server] virusScanRoutes 등록 완료');
 
+    // ==================== Internal API (서비스 간 통신) ====================
+    const internalRoutes = require('./routes/internal-routes');
+    app.use('/api', internalRoutes(db));
+    console.log('[Server] internalRoutes 등록 완료');
+
     // ==================== Webhooks, AR/CR Background, n8n Proxy ====================
     const webhooksRoutes = require('./routes/webhooks-routes');
     app.use('/api', webhooksRoutes(db, authenticateJWT));

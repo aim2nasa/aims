@@ -9,15 +9,15 @@
 """
 
 from typing import List, Dict, Optional
-from pymongo import MongoClient
 from qdrant_client import QdrantClient, models
 from openai import OpenAI
+import os
 import re
 import math
 import hashlib
 import time
 import concurrent.futures
-from bson import ObjectId
+import requests
 from system_logger import send_error_log
 
 
@@ -56,10 +56,9 @@ class HybridSearchEngine:
     """쿼리 의도에 따라 최적의 검색 전략 사용"""
 
     def __init__(self):
-        # MongoDB 연결 (localhost:27017)
-        self.mongo_client = MongoClient("mongodb://localhost:27017/")
-        self.db = self.mongo_client["docupload"]  # 🔥 수정: aims_db → docupload
-        self.collection = self.db["files"]  # 🔥 수정: docupload.files → files
+        # Internal API 설정 (MongoDB 직접 접근 대신 aims_api 경유)
+        self.aims_api_url = os.getenv("AIMS_API_URL", "http://localhost:3010")
+        self.internal_api_key = os.getenv("INTERNAL_API_KEY", "")
 
         # Qdrant 연결
         self.qdrant_client = QdrantClient(host="localhost", port=6333, check_compatibility=False)
@@ -71,6 +70,38 @@ class HybridSearchEngine:
         self.last_embedding_response = None
         self.last_embedding_ms = 0
 
+    def _api_post(self, path: str, body: dict) -> Optional[dict]:
+        """
+        Internal API POST 호출 헬퍼
+
+        Args:
+            path: API 경로 (예: "/internal/files/query")
+            body: 요청 본문
+
+        Returns:
+            성공 시 응답 data 필드, 실패 시 None
+        """
+        try:
+            resp = requests.post(
+                f"{self.aims_api_url}/api{path}",
+                json=body,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": self.internal_api_key
+                },
+                timeout=10
+            )
+            if resp.status_code == 200:
+                result = resp.json()
+                if result.get("success"):
+                    return result.get("data")
+            print(f"⚠️ Internal API 호출 실패: {path} → {resp.status_code} {resp.text[:200]}")
+            return None
+        except Exception as e:
+            print(f"⚠️ Internal API 연결 오류: {path} → {e}")
+            send_error_log("aims_rag_api", f"Internal API 호출 오류 ({path}): {e}", e)
+            return None
+
     def resolve_customer_from_entities(self, entities: List[str], user_id: str) -> Optional[str]:
         """
         쿼리 엔터티에서 고객명을 찾아 customer_id 자동 매칭.
@@ -80,45 +111,38 @@ class HybridSearchEngine:
         """
         if not entities:
             return None
-        customers_coll = self.db["customers"]
-        base_filter = {
-            "meta.created_by": user_id,
-            "meta.status": "active"
-        }
 
-        # 1순위: 정확 매칭 (기존 동작)
+        # 1순위: 정확 매칭
         for entity in entities:
-            customer = customers_coll.find_one({
-                **base_filter,
-                "personal_info.name": entity
+            data = self._api_post("/internal/customers/resolve-by-name", {
+                "name": entity, "userId": user_id, "mode": "exact"
             })
-            if customer:
-                return str(customer["_id"])
+            if data and data.get("customerId"):
+                return data["customerId"]
 
         # 2순위: 부분 매칭 (2글자 이상, 단건 매칭만)
         for entity in entities:
             if len(entity) < 2:
                 continue
 
-            escaped = re.escape(entity)
-            candidates = list(customers_coll.find(
-                {**base_filter, "personal_info.name": {"$regex": escaped, "$options": "i"}},
-                {"_id": 1, "personal_info.name": 1}
-            ).limit(2))  # 1건인지 판별용 (2건 이상이면 모호하므로 매칭 안 함)
-
-            if len(candidates) == 1:
-                matched_name = (candidates[0].get("personal_info") or {}).get("name", "")
-                print(f"🔍 고객명 부분 매칭: '{entity}' → '{matched_name}'")
-                return str(candidates[0]["_id"])
+            data = self._api_post("/internal/customers/resolve-by-name", {
+                "name": entity, "userId": user_id, "mode": "partial"
+            })
+            if data and data.get("candidates"):
+                candidates = data["candidates"]
+                if len(candidates) == 1:
+                    matched_name = candidates[0].get("customerName", "")
+                    print(f"🔍 고객명 부분 매칭: '{entity}' → '{matched_name}'")
+                    return candidates[0]["customerId"]
 
         return None
 
     def get_customer_relationships(self, customer_id: str, user_id: str) -> Dict:
         """
-        고객의 관계 정보 조회 (customer_relationships 컬렉션)
+        고객의 관계 정보 조회 (Internal API 경유)
 
         양방향 조회: from_customer_id = customer_id OR to_customer_id = customer_id
-        관련 고객명을 customers 컬렉션에서 batch 조회
+        관련 고객명을 batch-names API로 조회
 
         Args:
             customer_id: 기준 고객 ID
@@ -134,29 +158,41 @@ class HybridSearchEngine:
                 "related_customer_ids": ["id1", "id2", ...]
             }
         """
+        empty_result = {
+            "customer_name": "",
+            "relationships": [],
+            "related_customer_ids": []
+        }
+
         try:
-            cust_obj_id = ObjectId(customer_id)
-            rel_coll = self.db["customer_relationships"]
-            customers_coll = self.db["customers"]
+            # 양방향 관계 조회 (Internal API)
+            rel_data = self._api_post("/internal/relationships/by-customer", {
+                "customerId": customer_id, "userId": user_id
+            })
 
-            # 기준 고객명 조회
-            base_customer = customers_coll.find_one(
-                {"_id": cust_obj_id},
-                {"personal_info.name": 1}
-            )
-            customer_name = ""
-            if base_customer:
-                customer_name = (base_customer.get("personal_info") or {}).get("name", "")
+            if rel_data is None:
+                return empty_result
 
-            # 양방향 관계 조회 (소유자 격리: 해당 설계사의 관계만)
-            relationships_raw = list(rel_coll.find({
-                "$or": [
-                    {"relationship_info.from_customer_id": cust_obj_id},
-                    {"relationship_info.to_customer_id": cust_obj_id}
-                ],
-                "relationship_info.status": "active",
-                "meta.created_by": user_id
-            }))
+            relationships_raw = rel_data  # [{_id, relationship_info, meta}, ...]
+
+            # 관련 고객 ID 수집 (기준 고객 제외) + 기준 고객 ID도 포함하여 이름 조회
+            related_ids = set()
+            for rel in relationships_raw:
+                info = rel.get("relationship_info", {})
+                from_id = info.get("from_customer_id", "")
+                to_id = info.get("to_customer_id", "")
+                if from_id and from_id != customer_id:
+                    related_ids.add(from_id)
+                if to_id and to_id != customer_id:
+                    related_ids.add(to_id)
+
+            # 기준 고객 + 관련 고객 이름 batch 조회
+            all_ids_to_lookup = [customer_id] + list(related_ids)
+            names_data = self._api_post("/internal/customers/batch-names", {
+                "ids": all_ids_to_lookup
+            })
+            name_map = (names_data or {}).get("names", {})
+            customer_name = name_map.get(customer_id, "")
 
             if not relationships_raw:
                 return {
@@ -164,27 +200,6 @@ class HybridSearchEngine:
                     "relationships": [],
                     "related_customer_ids": []
                 }
-
-            # 관련 고객 ID 수집 (기준 고객 제외)
-            related_ids = set()
-            for rel in relationships_raw:
-                info = rel.get("relationship_info", {})
-                from_id = info.get("from_customer_id")
-                to_id = info.get("to_customer_id")
-                if from_id and str(from_id) != customer_id:
-                    related_ids.add(from_id)
-                if to_id and str(to_id) != customer_id:
-                    related_ids.add(to_id)
-
-            # 관련 고객명 batch 조회
-            name_map = {}
-            if related_ids:
-                related_customers = customers_coll.find(
-                    {"_id": {"$in": list(related_ids)}},
-                    {"personal_info.name": 1}
-                )
-                for cust in related_customers:
-                    name_map[str(cust["_id"])] = (cust.get("personal_info") or {}).get("name", "알 수 없음")
 
             # 관계 정보 정리 (양방향 레코드 중복 제거)
             relationships = []
@@ -240,11 +255,7 @@ class HybridSearchEngine:
         except Exception as e:
             print(f"⚠️ 고객 관계 조회 실패 (무시하고 진행): {e}")
             send_error_log("aims_rag_api", f"고객 관계 조회 오류: {e}", e)
-            return {
-                "customer_name": "",
-                "relationships": [],
-                "related_customer_ids": []
-            }
+            return empty_result
 
     def search(self, query: str, query_intent: Dict, user_id: str, customer_id: Optional[str] = None, customer_ids: Optional[List[str]] = None, top_k: int = 5) -> List[Dict]:
         """
@@ -282,21 +293,25 @@ class HybridSearchEngine:
 
     def _resolve_customer_doc_ids(self, user_id: str, customer_ids: List[str]) -> List[str]:
         """
-        고객들의 문서 ID 목록을 MongoDB에서 조회
+        고객들의 문서 ID 목록을 Internal API로 조회
 
         Qdrant 벡터 검색 시 doc_id 필터로 사용하여,
         해당 고객들의 문서 집합 안에서만 유사도 검색을 수행한다.
         """
         if len(customer_ids) == 1:
-            cust_filter = {"customerId": ObjectId(customer_ids[0])}
+            cust_filter = {"customerId": customer_ids[0]}
         else:
-            cust_filter = {"customerId": {"$in": [ObjectId(cid) for cid in customer_ids]}}
+            cust_filter = {"customerId": {"$in": customer_ids}}
 
-        docs = self.collection.find(
-            {"ownerId": user_id, **cust_filter},
-            {"_id": 1}
-        )
-        return [str(doc["_id"]) for doc in docs]
+        data = self._api_post("/internal/files/query", {
+            "filter": {"ownerId": user_id, **cust_filter},
+            "projection": {"_id": 1},
+            "limit": 1000
+        })
+
+        if not data:
+            return []
+        return [doc["_id"] for doc in data]
 
     def _entity_search(self, query_intent: Dict, user_id: str, customer_ids: Optional[List[str]], top_k: int) -> List[Dict]:
         """
@@ -336,12 +351,21 @@ class HybridSearchEngine:
         # 고객별 필터링 (단일 또는 복수 고객 지원)
         if customer_ids:
             if len(customer_ids) == 1:
-                mongo_filter["customerId"] = ObjectId(customer_ids[0])
+                mongo_filter["customerId"] = customer_ids[0]
             else:
-                mongo_filter["customerId"] = {"$in": [ObjectId(cid) for cid in customer_ids]}
+                mongo_filter["customerId"] = {"$in": customer_ids}
+
+        # Internal API로 파일 조회
+        data = self._api_post("/internal/files/query", {
+            "filter": mongo_filter,
+            "limit": top_k * 2
+        })
+
+        if not data:
+            return []
 
         results = []
-        for doc in self.collection.find(mongo_filter).limit(top_k * 2):  # 여유있게 가져오기
+        for doc in data:  # 여유있게 가져오기
             # 매칭 점수 계산 (간단한 TF-IDF 스타일)
             score = 0.0
             # 🔥 수정: None 안전 처리 (doc.get()이 None을 반환할 수 있음)
