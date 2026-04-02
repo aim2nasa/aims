@@ -70,6 +70,10 @@ export interface DocumentExplorerToolbarProps {
   onGenerateAliases?: (force: boolean) => void
   /** 별칭 생성 중 */
   isGeneratingAliases?: boolean
+  /** 별칭 없는 문서 존재 여부 (Progressive Disclosure) */
+  hasDocWithoutAlias?: boolean
+  /** 별칭 없는 문서 수 (카운트 문구용) */
+  aliasSelectableCount?: number
   /** 요약 모드 여부 (초성 미선택) — placeholder 동적 변경용 */
   isSummaryMode?: boolean
 }
@@ -122,6 +126,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   selectedCount = 0,
   onGenerateAliases,
   isGeneratingAliases = false,
+  hasDocWithoutAlias = true,
+  aliasSelectableCount = 0,
   isSummaryMode = false,
 }) => {
   // 모드별 placeholder 선택
@@ -705,14 +711,16 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
         </div>
       </div>
 
-      {/* 별칭 영역: 우측 끝 고정 */}
-      {onEditModeChange && (
+      {/* 별칭 영역: 우측 끝 고정 (별칭 없는 문서가 있거나, 별칭 모드 활성 시만 표시) */}
+      {onEditModeChange && (hasDocWithoutAlias || editMode === 'alias') && (
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 'var(--spacing-1-5)' }}>
           {/* 별칭 모드 활성 시: 선택 카운트 */}
           {editMode === 'alias' && (
             <div className="alias-mode-group" style={{ paddingRight: 'var(--spacing-2)', borderRight: '1px solid var(--color-border-primary)' }}>
               <span className="alias-mode-count">
-                {selectedCount}개 선택됨
+                {selectedCount > 0
+                  ? `${selectedCount}개 선택됨`
+                  : `별칭 없는 ${aliasSelectableCount}건 선택 가능`}
               </span>
             </div>
           )}

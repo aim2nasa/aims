@@ -237,6 +237,16 @@ const DocumentLibraryContent: React.FC<{
     }
   }, [customerFilter, state.documents, onCustomerFilterChange])
 
+  // 별칭 없는 문서 존재 여부 및 수 (Progressive Disclosure + 카운트 문구용)
+  const hasDocWithoutAlias = React.useMemo(() =>
+    controller.filteredDocuments.some(doc => !doc.displayName || doc.displayNameStatus === 'failed'),
+    [controller.filteredDocuments]
+  )
+  const aliasSelectableCount = React.useMemo(() =>
+    controller.filteredDocuments.filter(doc => !doc.displayName || doc.displayNameStatus === 'failed').length,
+    [controller.filteredDocuments]
+  )
+
   // 🍎 별칭 생성 모드: 별칭이 있는 문서도 새로 만들기 여부
   const [forceRegenerateAlias, setForceRegenerateAlias] = React.useState(false)
 
@@ -838,12 +848,14 @@ const DocumentLibraryContent: React.FC<{
           {isAliasMode && (
             <div className="alias-mode-group">
               <span className="alias-mode-count">
-                {selectedDocumentIds.size}개 선택됨
+                {selectedDocumentIds.size > 0
+                  ? `${selectedDocumentIds.size}개 선택됨`
+                  : `별칭 없는 ${aliasSelectableCount}건 선택 가능`}
               </span>
             </div>
           )}
-          {/* 별칭AI ↔ 완료: 공용 토글 버튼 */}
-          {!isDeleteMode && !isBulkLinkMode && (
+          {/* 별칭AI ↔ 완료: 공용 토글 버튼 (별칭 없는 문서가 있거나, 별칭 모드 활성 시만 표시) */}
+          {!isDeleteMode && !isBulkLinkMode && (hasDocWithoutAlias || isAliasMode) && (
             <AliasAIButton
               active={isAliasMode}
               onClick={() => {

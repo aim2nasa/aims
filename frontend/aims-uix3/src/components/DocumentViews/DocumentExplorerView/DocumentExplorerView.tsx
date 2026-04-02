@@ -73,6 +73,7 @@ export interface DocumentExplorerViewProps {
 interface SearchDocument {
   _id: string
   displayName: string | null
+  displayNameStatus?: string | null
   originalName: string
   uploadedAt: string | null
   fileSize: number | null
@@ -552,6 +553,16 @@ const DocumentExplorerContent: React.FC<{
     if (selectedInitial || filterFetchMode === 'all') return explorerData.documents
     return []
   }, [selectedInitial, explorerData?.documents, filterFetchMode])
+
+  // 별칭 없는 문서 존재 여부 및 수 (Progressive Disclosure + 카운트 문구용)
+  const hasDocWithoutAlias = useMemo(() =>
+    documents.some(doc => !doc.displayName || doc.displayNameStatus === 'failed'),
+    [documents]
+  )
+  const aliasSelectableCount = useMemo(() =>
+    documents.filter(doc => !doc.displayName || doc.displayNameStatus === 'failed').length,
+    [documents]
+  )
 
   const {
     groupBy,
@@ -1180,6 +1191,8 @@ const DocumentExplorerContent: React.FC<{
         editMode={editMode}
         onEditModeChange={handleEditModeChange}
         selectedCount={selectedDocumentIds.size}
+        hasDocWithoutAlias={hasDocWithoutAlias}
+        aliasSelectableCount={aliasSelectableCount}
         onGenerateAliases={(force) => {
           if (selectedDocumentIds.size === 0) return
           void aliasGeneration.generate(
