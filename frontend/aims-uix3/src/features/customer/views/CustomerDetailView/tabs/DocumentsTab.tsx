@@ -646,8 +646,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   }, [filteredDocuments, sortField, sortDirection, docTypeLabelMap])
 
   // 🍎 페이지네이션 계산
-  const totalPages = Math.ceil(sortedDocuments.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
+  const totalPages = Math.max(1, Math.ceil(sortedDocuments.length / itemsPerPage))
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  const startIndex = (safeCurrentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const paginatedDocuments = sortedDocuments.slice(startIndex, endIndex)
 
@@ -1642,7 +1643,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
               {totalPages > 1 ? (
                 <Pagination
-                  currentPage={currentPage}
+                  currentPage={safeCurrentPage}
                   totalPages={totalPages}
                   onPageChange={handlePageChange}
                 />

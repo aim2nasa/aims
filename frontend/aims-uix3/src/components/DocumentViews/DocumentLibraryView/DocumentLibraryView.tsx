@@ -634,7 +634,7 @@ const DocumentLibraryContent: React.FC<{
   // 🍎 자동 모드일 때 계산값을 controller에 반영
   useEffect(() => {
     if (itemsPerPageMode === 'auto' && autoCalculatedItems > 0 && autoCalculatedItems < 9999) {
-      controller.handleLimitChange(autoCalculatedItems)
+      controller.handleLimitChange(autoCalculatedItems, false)
     }
   }, [itemsPerPageMode, autoCalculatedItems, controller.handleLimitChange])
 

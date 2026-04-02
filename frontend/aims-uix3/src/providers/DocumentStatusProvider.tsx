@@ -686,14 +686,20 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }
   }, [totalPages])
 
-  const handleLimitChange = useCallback((limit: number) => {
+  const handleLimitChange = useCallback((limit: number, resetPage = true) => {
     setItemsPerPage(limit)
-    setCurrentPage(1) // Reset to first page
+    if (resetPage) {
+      setCurrentPage(1)
+    } else {
+      // 자동 계산에 의한 변경: 현재 페이지가 새 최대 페이지를 초과하면 보정
+      const newMaxPage = Math.max(1, Math.ceil(totalCount / limit))
+      setCurrentPage(prev => prev > newMaxPage ? newMaxPage : prev)
+    }
     // localStorage에 설정 저장
     if (typeof window !== 'undefined') {
       localStorage.setItem('aims-items-per-page', limit.toString())
     }
-  }, [])
+  }, [totalCount])
 
   // 🍎 Sort Handler
   const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType') => {

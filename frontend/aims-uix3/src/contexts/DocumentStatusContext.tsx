@@ -48,7 +48,7 @@ export interface DocumentStatusActions {
   setCurrentPage: (page: number) => void
   setItemsPerPage: (limit: number) => void
   handlePageChange: (page: number) => void
-  handleLimitChange: (limit: number) => void
+  handleLimitChange: (limit: number, resetPage?: boolean) => void
   updateDocumentCustomerRelation: (
     documentId: string,
     relation: DocumentCustomerRelation | undefined

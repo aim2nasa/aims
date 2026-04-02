@@ -144,13 +144,28 @@ export const useDocumentsController = () => {
 
   /**
    * 페이지당 항목 수 변경 핸들러
+   * @param newLimit 새 페이지당 항목 수
+   * @param resetPage true(기본값)이면 1페이지로 이동, false이면 현재 페이지 유지 (초과 시 마지막 페이지로 보정)
    */
-  const handleLimitChange = useCallback((newLimit: number) => {
-    const newParams = { ...searchParams, limit: newLimit, offset: 0 };
-    setSearchParams(newParams);
-    setCurrentPage(1);
-    loadDocuments(newParams);
-  }, [searchParams, loadDocuments]);
+  const handleLimitChange = useCallback((newLimit: number, resetPage = true) => {
+    if (resetPage) {
+      const newParams = { ...searchParams, limit: newLimit, offset: 0 };
+      setSearchParams(newParams);
+      setCurrentPage(1);
+      loadDocuments(newParams);
+    } else {
+      // 자동 계산에 의한 변경: 현재 페이지 유지, 초과 시 마지막 페이지로 보정
+      const newMaxPage = Math.max(1, Math.ceil(total / newLimit));
+      const safePage = currentPage > newMaxPage ? newMaxPage : currentPage;
+      const newOffset = (safePage - 1) * newLimit;
+      const newParams = { ...searchParams, limit: newLimit, offset: newOffset };
+      setSearchParams(newParams);
+      if (safePage !== currentPage) {
+        setCurrentPage(safePage);
+      }
+      loadDocuments(newParams);
+    }
+  }, [searchParams, loadDocuments, total, currentPage]);
 
   /**
    * 검색 실행
