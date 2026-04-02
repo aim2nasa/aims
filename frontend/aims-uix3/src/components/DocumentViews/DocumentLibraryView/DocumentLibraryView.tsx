@@ -488,6 +488,18 @@ const DocumentLibraryContent: React.FC<{
 
   // 🍎 전체 선택 핸들러 (Context의 documents 사용)
   // 🐛 BUG-3 FIX: 고객 필터 활성 시 API로 해당 고객의 모든 문서 ID 조회
+  // 별칭 모드에서 이미 별칭이 있는 문서를 필터링하는 헬퍼
+  const filterAliasSelectableIds = React.useCallback((ids: string[]) => {
+    if (!isAliasMode) return ids
+    // 별칭 모드: 이미 별칭이 있는 문서(displayName 존재 + failed 아닌)는 선택 불가
+    const docMap = new Map(controller.filteredDocuments.map(doc => [doc._id ?? doc.id ?? '', doc]))
+    return ids.filter(id => {
+      const doc = docMap.get(id)
+      if (!doc) return true
+      return !doc.displayName || doc.displayNameStatus === 'failed'
+    })
+  }, [isAliasMode, controller.filteredDocuments])
+
   const handleSelectAll = React.useCallback(async (checked: boolean) => {
     if (checked) {
       // 고객 필터가 있으면 API로 전체 ID 조회 (현재 페이지 한정 아님)
@@ -499,25 +511,25 @@ const DocumentLibraryContent: React.FC<{
             initial: selectedInitial || undefined,
             initialType: initialType || undefined,
           })
-          onSelectAllIds(allIds)
+          onSelectAllIds(filterAliasSelectableIds(allIds))
         } catch {
           // API 실패 시 현재 페이지 문서만 선택 (폴백)
           const pageIds = controller.filteredDocuments
             .map(doc => doc._id ?? doc.id ?? '')
             .filter(id => id !== '')
-          onSelectAllIds(pageIds)
+          onSelectAllIds(filterAliasSelectableIds(pageIds))
         }
       } else {
         // 고객 필터 없으면 현재 페이지만 선택 (기존 동작 유지)
         const allIds = controller.filteredDocuments
           .map(doc => doc._id ?? doc.id ?? '')
           .filter(id => id !== '')
-        onSelectAllIds(allIds)
+        onSelectAllIds(filterAliasSelectableIds(allIds))
       }
     } else {
       onSelectAllIds([])
     }
-  }, [controller.filteredDocuments, onSelectAllIds, customerFilter, selectedInitial, initialType])
+  }, [controller.filteredDocuments, onSelectAllIds, customerFilter, selectedInitial, initialType, filterAliasSelectableIds])
 
   // 🍎 고객 문서 전체 선택 핸들러 (고객 필터 활성 시 해당 고객의 모든 문서 전체 선택 + 삭제 모드 진입)
   // 🐛 BUG-3 FIX: API로 해당 고객의 모든 문서 ID 조회
@@ -530,25 +542,25 @@ const DocumentLibraryContent: React.FC<{
           initial: selectedInitial || undefined,
           initialType: initialType || undefined,
         })
-        onSelectAllIds(allIds)
+        onSelectAllIds(filterAliasSelectableIds(allIds))
       } catch {
         // API 실패 시 현재 페이지 문서만 선택
         const pageIds = controller.filteredDocuments
           .map(doc => doc._id ?? doc.id ?? '')
           .filter(id => id !== '')
-        onSelectAllIds(pageIds)
+        onSelectAllIds(filterAliasSelectableIds(pageIds))
       }
     } else {
       const allIds = controller.filteredDocuments
         .map(doc => doc._id ?? doc.id ?? '')
         .filter(id => id !== '')
-      onSelectAllIds(allIds)
+      onSelectAllIds(filterAliasSelectableIds(allIds))
     }
     // 삭제 모드가 아니면 진입
     if (!isDeleteMode) {
       onToggleDeleteMode()
     }
-  }, [controller.filteredDocuments, onSelectAllIds, isDeleteMode, onToggleDeleteMode, customerFilter, selectedInitial, initialType])
+  }, [controller.filteredDocuments, onSelectAllIds, isDeleteMode, onToggleDeleteMode, customerFilter, selectedInitial, initialType, filterAliasSelectableIds])
 
   // 🍎 자동 페이지네이션: 컨테이너 높이 기반 항목 수 자동 계산
   const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | 'manual'>(() => {

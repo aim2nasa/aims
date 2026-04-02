@@ -1267,6 +1267,7 @@ const DocumentExplorerContent: React.FC<{
             onRenameConfirm={undefined}
             onRenameCancel={undefined}
             isEditMode={editMode !== 'none'}
+            isAliasMode={editMode === 'alias'}
             selectedDocumentIds={selectedDocumentIds}
             onSelectDocument={handleSelectDocument}
             onCustomerContextMenu={handleCustomerContextMenu}

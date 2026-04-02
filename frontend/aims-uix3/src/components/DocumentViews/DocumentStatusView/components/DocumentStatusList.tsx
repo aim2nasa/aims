@@ -224,7 +224,19 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
           }
         }
 
-        // 삭제 모드, 일괄 연결 모드, 또는 별칭 모드 (미연결 문서)
+        // 별칭 모드: 이미 별칭이 있는 문서(displayName 존재 + failed 아닌)는 체크박스 대신 완료 표시
+        if (isAliasMode) {
+          const hasAlias = Boolean(document.displayName) && document.displayNameStatus !== 'failed'
+          if (hasAlias) {
+            return (
+              <div className="document-checkbox-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>✓</span>
+              </div>
+            )
+          }
+        }
+
+        // 삭제 모드, 일괄 연결 모드, 또는 별칭 모드 (별칭 없는 문서)
         if (isDeleteMode || isBulkLinkMode || isAliasMode) {
           return (
             <div
@@ -1260,6 +1272,11 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                 if (isBulkLinkMode) {
                   const hasCustomer = doc.customer_relation?.customer_name
                   return hasCustomer || selectedDocumentIds.has(docId)
+                }
+                // 🍎 별칭 모드: 이미 별칭이 있는 문서는 선택 대상에서 제외
+                if (isAliasMode) {
+                  const hasAlias = Boolean(doc.displayName) && doc.displayNameStatus !== 'failed'
+                  return hasAlias || selectedDocumentIds.has(docId)
                 }
                 return selectedDocumentIds.has(docId)
               })}

@@ -66,6 +66,8 @@ export interface DocumentExplorerTreeProps {
   onRenameCancel?: () => void
   /** 편집 모드 활성 여부 (체크박스 표시) */
   isEditMode?: boolean
+  /** 별칭 모드 여부 (이미 별칭이 있는 문서 체크박스 숨김) */
+  isAliasMode?: boolean
   /** 선택된 문서 ID 집합 */
   selectedDocumentIds?: Set<string>
   /** 문서 선택/해제 */
@@ -161,6 +163,7 @@ interface DocumentNodeProps {
   onRenameConfirm?: (documentId: string, newName: string) => void
   onRenameCancel?: () => void
   isEditMode?: boolean
+  isAliasMode?: boolean
   isChecked?: boolean
   onCheckToggle?: (documentId: string) => void
   onDocTypeChange?: (documentId: string, newType: string) => void
@@ -186,6 +189,7 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   onDeleteClick,
   onContextMenu,
   isEditMode,
+  isAliasMode,
   isChecked,
   onCheckToggle,
   onRetryClick,
@@ -255,18 +259,28 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       tabIndex={-1}
       aria-selected={isSelected}
     >
-      {/* 편집 모드: 체크박스 */}
-      {isEditMode && (
-        <span className="doc-explorer-tree__checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
-          <input
-            type="checkbox"
-            className="doc-explorer-tree__checkbox"
-            checked={isChecked || false}
-            onChange={() => onCheckToggle?.(docId)}
-            aria-label={`${showName} 선택`}
-          />
-        </span>
-      )}
+      {/* 편집 모드: 체크박스 (별칭 모드에서 이미 별칭이 있는 문서는 완료 표시) */}
+      {isEditMode && (() => {
+        const hasAlias = isAliasMode && Boolean(doc.displayName) && doc.displayNameStatus !== 'failed'
+        if (hasAlias) {
+          return (
+            <span className="doc-explorer-tree__checkbox-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>✓</span>
+            </span>
+          )
+        }
+        return (
+          <span className="doc-explorer-tree__checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              className="doc-explorer-tree__checkbox"
+              checked={isChecked || false}
+              onChange={() => onCheckToggle?.(docId)}
+              aria-label={`${showName} 선택`}
+            />
+          </span>
+        )
+      })()}
 
       {/* 문서 아이콘 (확장자에 따른 아이콘) */}
       <span className={`doc-explorer-tree__doc-icon document-icon ${DocumentUtils.getFileTypeClass(doc.mimeType, filename)}`}>
@@ -515,6 +529,7 @@ interface GroupNodeProps {
   onRenameConfirm?: (documentId: string, newName: string) => void
   onRenameCancel?: () => void
   isEditMode?: boolean
+  isAliasMode?: boolean
   selectedDocumentIds?: Set<string>
   onCheckToggle?: (documentId: string) => void
   onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent, customerType?: '개인' | '법인') => void
@@ -554,6 +569,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
   onRenameConfirm,
   onRenameCancel,
   isEditMode,
+  isAliasMode,
   selectedDocumentIds,
   onCheckToggle,
   onCustomerContextMenu,
@@ -886,6 +902,7 @@ const GroupNode = React.memo<GroupNodeProps>(({
               onRenameConfirm={onRenameConfirm}
               onRenameCancel={onRenameCancel}
               isEditMode={isEditMode}
+              isAliasMode={isAliasMode}
               selectedDocumentIds={selectedDocumentIds}
               onCheckToggle={onCheckToggle}
               onCustomerContextMenu={onCustomerContextMenu}
@@ -936,6 +953,7 @@ interface TreeNodeProps {
   onRenameConfirm?: (documentId: string, newName: string) => void
   onRenameCancel?: () => void
   isEditMode?: boolean
+  isAliasMode?: boolean
   selectedDocumentIds?: Set<string>
   onCheckToggle?: (documentId: string) => void
   onCustomerContextMenu?: (customerId: string, customerName: string, e: React.MouseEvent, customerType?: '개인' | '법인') => void
@@ -974,6 +992,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onRenameConfirm,
   onRenameCancel,
   isEditMode,
+  isAliasMode,
   selectedDocumentIds,
   onCheckToggle,
   onCustomerContextMenu,
@@ -1012,6 +1031,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
         onRenameConfirm={onRenameConfirm}
         onRenameCancel={onRenameCancel}
         isEditMode={isEditMode}
+        isAliasMode={isAliasMode}
         isChecked={selectedDocumentIds?.has(docId)}
         onCheckToggle={onCheckToggle}
         onDocTypeChange={onDocTypeChange}
@@ -1044,6 +1064,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       onRenameConfirm={onRenameConfirm}
       onRenameCancel={onRenameCancel}
       isEditMode={isEditMode}
+      isAliasMode={isAliasMode}
       selectedDocumentIds={selectedDocumentIds}
       onCheckToggle={onCheckToggle}
       onCustomerContextMenu={onCustomerContextMenu}
@@ -1216,6 +1237,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onRenameConfirm,
   onRenameCancel,
   isEditMode = false,
+  isAliasMode = false,
   selectedDocumentIds,
   onSelectDocument,
   onCustomerContextMenu,
@@ -1526,6 +1548,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             onRenameConfirm={onRenameConfirm}
             onRenameCancel={onRenameCancel}
             isEditMode={isEditMode}
+            isAliasMode={isAliasMode}
             selectedDocumentIds={selectedDocumentIds}
             onCheckToggle={onSelectDocument}
             onCustomerContextMenu={onCustomerContextMenu}
