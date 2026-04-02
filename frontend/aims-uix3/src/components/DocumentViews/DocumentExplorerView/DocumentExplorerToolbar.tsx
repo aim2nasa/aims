@@ -327,6 +327,41 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
         </span>
       </div>
 
+      {/* 편집 모드 버튼 (삭제) — 통계 바로 뒤 배치 (전체 문서 보기와 동일) */}
+      {onEditModeChange && (
+        <div className="doc-explorer-toolbar__edit-group">
+          <Tooltip content={editMode === 'delete' ? '삭제 완료' : '일괄 삭제'} placement="bottom">
+            <button
+              type="button"
+              className={`edit-mode-icon-button ${editMode === 'delete' ? 'edit-mode-icon-button--active' : ''}`}
+              onClick={() => onEditModeChange(editMode === 'delete' ? 'none' : 'delete')}
+              disabled={editMode === 'alias'}
+              aria-label={editMode === 'delete' ? '삭제 완료' : '일괄 삭제'}
+            >
+              {editMode === 'delete' ? (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <SFSymbol
+                  name="trash"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative
+                />
+              )}
+            </button>
+          </Tooltip>
+
+          {/* 삭제 모드 시 선택 건수 표시 */}
+          {editMode === 'delete' && (
+            <span className="doc-explorer-toolbar__edit-count">
+              {selectedCount}건 선택
+            </span>
+          )}
+        </div>
+      )}
+
       {/* 통합 검색 입력 */}
       <div className="doc-explorer-toolbar__search-group">
         <div className="doc-explorer-toolbar__search">
@@ -558,41 +593,6 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
               />
             </button>
           </Tooltip>
-        </div>
-      )}
-
-      {/* 편집 모드 버튼 (삭제만) */}
-      {onEditModeChange && (
-        <div className="doc-explorer-toolbar__edit-group">
-          <Tooltip content={editMode === 'delete' ? '삭제 완료' : '일괄 삭제'} placement="bottom">
-            <button
-              type="button"
-              className={`edit-mode-icon-button ${editMode === 'delete' ? 'edit-mode-icon-button--active' : ''}`}
-              onClick={() => onEditModeChange(editMode === 'delete' ? 'none' : 'delete')}
-              disabled={editMode === 'alias'}
-              aria-label={editMode === 'delete' ? '삭제 완료' : '일괄 삭제'}
-            >
-              {editMode === 'delete' ? (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ) : (
-                <SFSymbol
-                  name="trash"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative
-                />
-              )}
-            </button>
-          </Tooltip>
-
-          {/* 삭제 모드 시 선택 건수 표시 (별칭 모드는 우측 alias-mode-group에서 표시) */}
-          {editMode === 'delete' && (
-            <span className="doc-explorer-toolbar__edit-count">
-              {selectedCount}건 선택
-            </span>
-          )}
         </div>
       )}
 
