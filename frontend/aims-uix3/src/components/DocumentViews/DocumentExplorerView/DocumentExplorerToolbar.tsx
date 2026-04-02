@@ -581,8 +581,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
             </button>
           </Tooltip>
 
-          {/* 편집 모드 활성화 시 선택 건수 표시 */}
-          {editMode !== 'none' && (
+          {/* 삭제 모드 시 선택 건수 표시 (별칭 모드는 우측 alias-mode-group에서 표시) */}
+          {editMode === 'delete' && (
             <span className="doc-explorer-toolbar__edit-count">
               {selectedCount}건 선택
             </span>
