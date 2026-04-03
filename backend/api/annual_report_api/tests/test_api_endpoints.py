@@ -69,21 +69,14 @@ class TestHealthEndpoints:
 class TestAnnualReportQueryEndpoints:
     """Annual Report 조회 엔드포인트 테스트"""
 
+    @patch('routes.query.check_customer_ownership', return_value=True)
     @patch('routes.query.get_annual_reports')
     @patch('main.db')
-    def test_get_customer_annual_reports_success(self, mock_db, mock_get_reports):
+    def test_get_customer_annual_reports_success(self, mock_db, mock_get_reports, mock_ownership):
         """고객의 Annual Reports 조회 성공"""
         # MongoDB 연결 Mock
         customer_id = str(ObjectId())
         user_id = "test_user"
-
-        # customers 컬렉션 Mock (소유권 검증)
-        mock_customers = MagicMock()
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
-            "meta": {"created_by": user_id}
-        }
-        mock_db.customers = mock_customers
 
         mock_get_reports.return_value = {
             "success": True,
@@ -109,21 +102,14 @@ class TestAnnualReportQueryEndpoints:
         assert data["count"] == 1
         assert len(data["data"]) == 1
 
+    @patch('routes.query.check_customer_ownership', return_value=True)
     @patch('routes.query.get_annual_reports')
     @patch('main.db')
-    def test_get_customer_annual_reports_with_limit(self, mock_db, mock_get_reports):
+    def test_get_customer_annual_reports_with_limit(self, mock_db, mock_get_reports, mock_ownership):
         """limit 파라미터로 조회 개수 제한"""
         # MongoDB 연결 Mock
         customer_id = str(ObjectId())
         user_id = "test_user"
-
-        # customers 컬렉션 Mock (소유권 검증)
-        mock_customers = MagicMock()
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
-            "meta": {"created_by": user_id}
-        }
-        mock_db.customers = mock_customers
 
         mock_get_reports.return_value = {
             "success": True,
@@ -142,21 +128,14 @@ class TestAnnualReportQueryEndpoints:
         call_args = mock_get_reports.call_args
         assert call_args is not None
 
+    @patch('routes.query.check_customer_ownership', return_value=True)
     @patch('routes.query.get_annual_reports')
     @patch('main.db')
-    def test_get_customer_annual_reports_empty(self, mock_db, mock_get_reports):
+    def test_get_customer_annual_reports_empty(self, mock_db, mock_get_reports, mock_ownership):
         """Annual Report가 없는 경우"""
         # MongoDB 연결 Mock
         customer_id = str(ObjectId())
         user_id = "test_user"
-
-        # customers 컬렉션 Mock (소유권 검증)
-        mock_customers = MagicMock()
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
-            "meta": {"created_by": user_id}
-        }
-        mock_db.customers = mock_customers
 
         mock_get_reports.return_value = {
             "success": True,
@@ -234,21 +213,14 @@ class TestAnnualReportParseEndpoints:
 class TestAnnualReportDeleteEndpoints:
     """Annual Report 삭제 엔드포인트 테스트"""
 
+    @patch('routes.query.check_customer_ownership', return_value=True)
     @patch('routes.query.delete_annual_reports')
     @patch('main.db')
-    def test_delete_annual_reports_success(self, mock_db, mock_delete):
+    def test_delete_annual_reports_success(self, mock_db, mock_delete, mock_ownership):
         """Annual Reports 삭제 성공"""
         # MongoDB 연결 Mock
         customer_id = str(ObjectId())
         user_id = "test_user"
-
-        # customers 컬렉션 Mock (소유권 검증)
-        mock_customers = MagicMock()
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
-            "meta": {"created_by": user_id}
-        }
-        mock_db.customers = mock_customers
 
         mock_delete.return_value = {
             "success": True,
@@ -268,21 +240,14 @@ class TestAnnualReportDeleteEndpoints:
         assert data["success"] is True
         assert data["deleted_count"] == 3
 
+    @patch('routes.query.check_customer_ownership', return_value=True)
     @patch('routes.query.delete_annual_reports')
     @patch('main.db')
-    def test_delete_annual_reports_none_found(self, mock_db, mock_delete):
+    def test_delete_annual_reports_none_found(self, mock_db, mock_delete, mock_ownership):
         """삭제할 Annual Report가 없는 경우"""
         # MongoDB 연결 Mock
         customer_id = str(ObjectId())
         user_id = "test_user"
-
-        # customers 컬렉션 Mock (소유권 검증)
-        mock_customers = MagicMock()
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
-            "meta": {"created_by": user_id}
-        }
-        mock_db.customers = mock_customers
 
         mock_delete.return_value = {
             "success": True,
@@ -307,9 +272,10 @@ class TestAnnualReportDeleteEndpoints:
 class TestBackgroundParsingEndpoints:
     """백그라운드 파싱 트리거 엔드포인트 테스트"""
 
+    @patch('routes.background.check_customer_ownership', return_value=True)
     @patch('routes.background.process_ar_documents_background')
     @patch('main.db')
-    def test_trigger_parsing_success(self, mock_db, mock_process):
+    def test_trigger_parsing_success(self, mock_db, mock_process, mock_ownership):
         """백그라운드 파싱 트리거 성공"""
         # MongoDB 연결 Mock
         user_id = "test_user"
@@ -348,3 +314,98 @@ class TestBackgroundParsingEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
+
+
+class TestRegisterARContractsEndpoints:
+    """AR 보험계약 등록 엔드포인트 테스트 (POST /customers/{id}/ar-contracts)"""
+
+    @patch('routes.query.check_customer_ownership', return_value=True)
+    @patch('main.db')
+    def test_register_success(self, mock_db, mock_ownership):
+        """정상 등록 성공"""
+        customer_id = str(ObjectId())
+
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "annual_reports": [
+                {"customer_name": "테스트고객", "issue_date": "2025-08-27", "total_contracts": 5}
+            ]
+        }
+        mock_customers.update_one.return_value = MagicMock(modified_count=1)
+        mock_db.customers = mock_customers
+
+        response = client.post(
+            f"/customers/{customer_id}/ar-contracts",
+            json={"issue_date": "2025-08-27", "customer_name": "테스트고객"},
+            headers={"x-user-id": "test_user"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["registered_at"] is not None
+
+    @patch('routes.query.check_customer_ownership', return_value=False)
+    def test_ownership_fail(self, mock_ownership):
+        """소유권 확인 실패 → 404"""
+        response = client.post(
+            f"/customers/{str(ObjectId())}/ar-contracts",
+            json={"issue_date": "2025-08-27"},
+            headers={"x-user-id": "other_user"}
+        )
+        assert response.status_code == 404
+
+    def test_invalid_customer_id(self):
+        """유효하지 않은 customer_id → 400"""
+        response = client.post(
+            "/customers/invalid-id/ar-contracts",
+            json={"issue_date": "2025-08-27"},
+            headers={"x-user-id": "test_user"}
+        )
+        assert response.status_code == 400
+
+    @patch('routes.query.check_customer_ownership', return_value=True)
+    @patch('main.db')
+    def test_duplicate_registration(self, mock_db, mock_ownership):
+        """이미 등록된 AR → duplicate=True"""
+        customer_id = str(ObjectId())
+
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "annual_reports": [
+                {"customer_name": "테스트고객", "issue_date": "2025-08-27", "registered_at": "2025-09-01T00:00:00Z"}
+            ]
+        }
+        mock_db.customers = mock_customers
+
+        response = client.post(
+            f"/customers/{customer_id}/ar-contracts",
+            json={"issue_date": "2025-08-27", "customer_name": "테스트고객"},
+            headers={"x-user-id": "test_user"}
+        )
+        assert response.status_code == 200
+        assert response.json()["duplicate"] is True
+
+    @patch('routes.query.check_customer_ownership', return_value=True)
+    @patch('main.db')
+    def test_customer_none_toctou(self, mock_db, mock_ownership):
+        """소유권 통과 후 find_one None (TOCTOU) → 500"""
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
+
+        response = client.post(
+            f"/customers/{str(ObjectId())}/ar-contracts",
+            json={"issue_date": "2025-08-27"},
+            headers={"x-user-id": "test_user"}
+        )
+        assert response.status_code == 500
+
+    def test_no_user_id(self):
+        """userId 미전달 → 400"""
+        response = client.post(
+            f"/customers/{str(ObjectId())}/ar-contracts",
+            json={"issue_date": "2025-08-27"},
+        )
+        assert response.status_code == 400

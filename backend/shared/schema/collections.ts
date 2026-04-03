@@ -26,6 +26,7 @@ export const COLLECTIONS = {
 
   // 관계 데이터
   CUSTOMER_RELATIONSHIPS: 'customer_relationships',
+  CUSTOMER_MEMOS: 'customer_memos',
 
   // 참조 데이터
   INSURANCE_PRODUCTS: 'insurance_products',

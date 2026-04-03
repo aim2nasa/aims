@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
+import { createRelationship, deleteRelationship } from '../internalApi.js';
 
 // 관계 유형 정의 (aims_api와 동일)
 const RELATIONSHIP_TYPES: Record<string, Record<string, { reverse: string; bidirectional: boolean; label: string }>> = {
@@ -139,17 +140,7 @@ export async function handleCreateRelationship(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
-    // ObjectId 변환
-    const fromObjectId = toSafeObjectId(params.fromCustomerId);
-    const toObjectId = toSafeObjectId(params.toCustomerId);
-
-    if (!fromObjectId || !toObjectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
+    // 자기 참조 체크 (즉시 UX 에러 반환)
     if (params.fromCustomerId === params.toCustomerId) {
       return {
         isError: true,
@@ -157,15 +148,12 @@ export async function handleCreateRelationship(args: unknown) {
       };
     }
 
-    // 관계 유형 검증
+    // 관계 유형 검증 (즉시 UX 에러 반환)
     const allTypes = getAllRelationshipTypes();
     let typeConfig = allTypes[params.relationshipType];
-    let isCustomType = false;
 
     if (!typeConfig) {
-      // corporate 카테고리만 사용자 정의 타입 허용
       if (params.relationshipCategory === 'corporate') {
-        isCustomType = true;
         typeConfig = {
           reverse: params.relationshipType,
           bidirectional: false,
@@ -183,130 +171,60 @@ export async function handleCreateRelationship(args: unknown) {
       }
     }
 
-    // 두 고객이 모두 해당 설계사의 고객인지 확인
+    // 고객명 조회 (응답 메시지용) — Read 유지
+    const fromObjectId = toSafeObjectId(params.fromCustomerId);
+    const toObjectId = toSafeObjectId(params.toCustomerId);
+
+    if (!fromObjectId || !toObjectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
+      };
+    }
+
     const [fromCustomer, toCustomer] = await Promise.all([
-      db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: fromObjectId, 'meta.created_by': userId }),
-      db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: toObjectId, 'meta.created_by': userId })
+      db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: fromObjectId, 'meta.created_by': userId }, { projection: { 'personal_info.name': 1 } }),
+      db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: toObjectId, 'meta.created_by': userId }, { projection: { 'personal_info.name': 1 } })
     ]);
 
-    if (!fromCustomer) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '기준 고객을 찾을 수 없습니다.' }]
-      };
-    }
-
-    if (!toCustomer) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '대상 고객을 찾을 수 없습니다.' }]
-      };
-    }
-
-    // 기존 관계 중복 체크
-    const existingRelation = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
-      'relationship_info.from_customer_id': fromObjectId,
-      'relationship_info.to_customer_id': toObjectId,
-      'relationship_info.status': 'active'
+    // Internal API로 관계 생성 (소유권 확인, 중복 체크, 역방향 처리 포함)
+    const result = await createRelationship({
+      fromCustomerId: params.fromCustomerId,
+      toCustomerId: params.toCustomerId,
+      relationshipType: params.relationshipType,
+      relationshipCategory: params.relationshipCategory,
+      notes: params.notes,
+      userId
     });
 
-    if (existingRelation) {
+    // API 에러 처리 (404: 고객 없음, 409: 중복, 400: 유효하지 않은 유형 등)
+    if (!result.data) {
       return {
         isError: true,
         content: [{
           type: 'text' as const,
-          text: `이미 등록된 관계입니다: ${existingRelation.relationship_info.relationship_type}`
+          text: result.error || '관계 생성에 실패했습니다.'
         }]
       };
     }
 
-    const now = new Date();
-
-    // 관계 데이터 생성
-    const relationshipData = {
-      from_customer: fromObjectId,
-      related_customer: toObjectId,
-      family_representative: fromObjectId,
-      relationship_info: {
-        from_customer_id: fromObjectId,
-        to_customer_id: toObjectId,
-        relationship_type: params.relationshipType,
-        relationship_category: typeConfig.category,
-        is_bidirectional: typeConfig.bidirectional,
-        strength: 'medium',
-        status: 'active'
-      },
-      relationship_details: {
-        description: '',
-        established_date: null,
-        notes: params.notes || '',
-        contact_frequency: 'unknown',
-        influence_level: 'medium'
-      },
-      insurance_relevance: {
-        is_beneficiary: false,
-        is_insured: false,
-        shared_policies: [],
-        referral_potential: 'medium',
-        cross_selling_opportunity: false
-      },
-      meta: {
-        created_at: now,
-        updated_at: now,
-        created_by: new ObjectId('000000000000000000000000'),
-        last_modified_by: new ObjectId('000000000000000000000000'),
-        verified: false,
-        verification_date: null,
-        verified_by: null
-      }
-    };
-
-    // 관계 저장
-    const result = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).insertOne(relationshipData);
-
-    // 양방향 관계이거나 family 관계인 경우 역방향 관계도 생성
-    let reverseCreated = false;
-    if (typeConfig.bidirectional || typeConfig.category === 'family') {
-      const existingReverseRelation = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
-        'relationship_info.from_customer_id': toObjectId,
-        'relationship_info.to_customer_id': fromObjectId,
-        'relationship_info.status': 'active'
-      });
-
-      if (!existingReverseRelation) {
-        const reverseRelationshipData = {
-          ...relationshipData,
-          _id: undefined,
-          from_customer: toObjectId,
-          related_customer: fromObjectId,
-          family_representative: fromObjectId,
-          relationship_info: {
-            ...relationshipData.relationship_info,
-            from_customer_id: toObjectId,
-            to_customer_id: fromObjectId,
-            relationship_type: typeConfig.reverse
-          }
-        };
-
-        await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).insertOne(reverseRelationshipData);
-        reverseCreated = true;
-      }
-    }
+    const fromName = fromCustomer?.personal_info?.name || '(알 수 없음)';
+    const toName = toCustomer?.personal_info?.name || '(알 수 없음)';
 
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
           success: true,
-          relationshipId: result.insertedId.toString(),
-          fromCustomer: fromCustomer.personal_info?.name,
-          toCustomer: toCustomer.personal_info?.name,
+          relationshipId: result.data.relationshipId,
+          fromCustomer: fromName,
+          toCustomer: toName,
           relationshipType: params.relationshipType,
           relationshipLabel: typeConfig.label,
           category: typeConfig.category,
           bidirectional: typeConfig.bidirectional,
-          reverseRelationCreated: reverseCreated,
-          message: `관계가 성공적으로 생성되었습니다: ${fromCustomer.personal_info?.name} → ${toCustomer.personal_info?.name} (${typeConfig.label})`
+          reverseRelationCreated: result.data.reverseCreated,
+          message: `관계가 성공적으로 생성되었습니다: ${fromName} → ${toName} (${typeConfig.label})`
         }, null, 2)
       }]
     };
@@ -345,11 +263,11 @@ export async function handleDeleteRelationship(args: unknown) {
       };
     }
 
-    // 고객이 해당 설계사의 고객인지 확인
+    // 고객명 조회 (응답 메시지용) — Read 유지
     const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
       _id: fromObjectId,
       'meta.created_by': userId
-    });
+    }, { projection: { 'personal_info.name': 1 } });
 
     if (!customer) {
       return {
@@ -358,11 +276,15 @@ export async function handleDeleteRelationship(args: unknown) {
       };
     }
 
-    let relationship;
-    let toCustomer;
+    let relationshipId: string | undefined;
+    let toCustomer: any;
+    let relationshipType: string | undefined;
 
-    // 모드 1: relationshipId로 삭제 (기존 방식)
+    // 모드 1: relationshipId로 삭제
     if (params.relationshipId) {
+      relationshipId = params.relationshipId;
+
+      // 관계 정보 조회 (응답용 — Read 유지)
       const relationshipObjectId = toSafeObjectId(params.relationshipId);
       if (!relationshipObjectId) {
         return {
@@ -371,24 +293,19 @@ export async function handleDeleteRelationship(args: unknown) {
         };
       }
 
-      relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
+      const relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
         _id: relationshipObjectId,
         'relationship_info.from_customer_id': fromObjectId
       });
 
-      if (!relationship) {
-        return {
-          isError: true,
-          content: [{ type: 'text' as const, text: '관계를 찾을 수 없습니다.' }]
-        };
+      if (relationship) {
+        relationshipType = relationship.relationship_info.relationship_type;
+        toCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+          _id: relationship.relationship_info.to_customer_id
+        }, { projection: { 'personal_info.name': 1 } });
       }
-
-      // 대상 고객 정보 조회
-      toCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-        _id: relationship.relationship_info.to_customer_id
-      });
     }
-    // 모드 2: toCustomerId로 삭제 (UX 개선 - 관계 ID 없이 삭제)
+    // 모드 2: toCustomerId로 관계를 찾아서 삭제
     else if (params.toCustomerId) {
       const toObjectId = toSafeObjectId(params.toCustomerId);
       if (!toObjectId) {
@@ -398,11 +315,10 @@ export async function handleDeleteRelationship(args: unknown) {
         };
       }
 
-      // 대상 고객이 해당 설계사의 고객인지 확인
       toCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
         _id: toObjectId,
         'meta.created_by': userId
-      });
+      }, { projection: { 'personal_info.name': 1 } });
 
       if (!toCustomer) {
         return {
@@ -411,8 +327,8 @@ export async function handleDeleteRelationship(args: unknown) {
         };
       }
 
-      // 두 고객 간의 관계 찾기
-      relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
+      // 두 고객 간의 관계 찾기 — Read 유지 (Internal API는 relationshipId만 받으므로)
+      const relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
         'relationship_info.from_customer_id': fromObjectId,
         'relationship_info.to_customer_id': toObjectId,
         'relationship_info.status': 'active'
@@ -427,47 +343,47 @@ export async function handleDeleteRelationship(args: unknown) {
           }]
         };
       }
+
+      relationshipId = relationship._id.toString();
+      relationshipType = relationship.relationship_info.relationship_type;
     }
 
-    if (!relationship) {
+    if (!relationshipId) {
       return {
         isError: true,
         content: [{ type: 'text' as const, text: '삭제할 관계를 찾을 수 없습니다.' }]
       };
     }
 
-    const allTypes = getAllRelationshipTypes();
-    const typeConfig = allTypes[relationship.relationship_info.relationship_type];
-    const relationshipLabel = typeConfig?.label || relationship.relationship_info.relationship_type;
+    // Internal API로 관계 삭제 (역방향 자동 처리 포함)
+    const result = await deleteRelationship(relationshipId, userId);
 
-    // 관계 삭제 (hard delete)
-    await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteOne({
-      _id: relationship._id
-    });
-
-    // 양방향 관계이거나 family 관계인 경우 역방향 관계도 삭제
-    let reverseDeleted = false;
-    if (relationship.relationship_info.is_bidirectional || relationship.relationship_info.relationship_category === 'family') {
-      const deleteResult = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany({
-        'relationship_info.from_customer_id': relationship.relationship_info.to_customer_id,
-        'relationship_info.to_customer_id': relationship.relationship_info.from_customer_id,
-        'relationship_info.status': 'active'
-      });
-      reverseDeleted = deleteResult.deletedCount > 0;
+    if (!result.data) {
+      return {
+        isError: true,
+        content: [{
+          type: 'text' as const,
+          text: result.error || '관계 삭제에 실패했습니다.'
+        }]
+      };
     }
+
+    const allTypes = getAllRelationshipTypes();
+    const typeConfig = relationshipType ? allTypes[relationshipType] : undefined;
+    const relationshipLabel = typeConfig?.label || relationshipType || '(알 수 없음)';
 
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
           success: true,
-          deletedRelationshipId: relationship._id.toString(),
+          deletedRelationshipId: relationshipId,
           fromCustomerName: customer.personal_info?.name,
           toCustomerName: toCustomer?.personal_info?.name,
-          relationshipType: relationship.relationship_info.relationship_type,
+          relationshipType,
           relationshipLabel,
-          reverseRelationDeleted: reverseDeleted,
-          message: `${customer.personal_info?.name} 고객과 ${toCustomer?.personal_info?.name} 고객 간의 가족 관계(${relationshipLabel})가 삭제되었습니다.`
+          reverseRelationDeleted: result.data.reverseDeleted,
+          message: `${customer.personal_info?.name} 고객과 ${toCustomer?.personal_info?.name || '(알 수 없음)'} 고객 간의 관계(${relationshipLabel})가 삭제되었습니다.`
         }, null, 2)
       }]
     };

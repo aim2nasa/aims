@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
-import { countFiles } from '../internalApi.js';
+import { countFiles, createCustomer, updateCustomer } from '../internalApi.js';
 
 
 /**
@@ -386,57 +386,39 @@ export async function handleGetCustomer(args: unknown) {
 export async function handleCreateCustomer(args: unknown) {
   try {
     const params = createCustomerSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    // 이름 중복 체크 (동일 userId 내)
-    const existing = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      'personal_info.name': { $regex: `^${escapeRegex(params.name)}$`, $options: 'i' },
-      'meta.created_by': userId,
-      deleted_at: { $exists: false }
+    // Internal API 호출 (중복 체크 포함)
+    const result = await createCustomer({
+      name: params.name,
+      phone: formatPhoneNumber(params.phone),
+      userId,
+      email: params.email,
+      birthDate: params.birthDate,
+      address: params.address,
+      customerType: params.customerType
     });
 
-    if (existing) {
+    // API 에러 처리 (409: 중복, 400: 필수값 누락 등)
+    if (!result.data) {
       return {
         isError: true,
         content: [{
           type: 'text' as const,
-          text: `같은 이름의 고객이 이미 존재합니다: ${params.name}`
+          text: result.error || '고객 등록에 실패했습니다.'
         }]
       };
     }
-
-    const now = new Date();
-    const newCustomer = {
-      personal_info: {
-        name: params.name,
-        mobile_phone: formatPhoneNumber(params.phone),
-        email: params.email || '',
-        birth_date: params.birthDate || '',
-        address: params.address ? { address1: params.address } : {}
-      },
-      insurance_info: {
-        customer_type: params.customerType || '개인'
-      },
-      meta: {
-        status: 'active',
-        created_by: userId,
-        created_at: now,
-        updated_at: now
-      }
-    };
-
-    const result = await db.collection(COLLECTIONS.CUSTOMERS).insertOne(newCustomer);
 
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
           success: true,
-          customerId: result.insertedId.toString(),
-          name: params.name,
-          customerType: params.customerType || '개인',
-          createdAt: now.toISOString()
+          customerId: result.data.customerId,
+          name: result.data.name,
+          customerType: result.data.customerType,
+          createdAt: result.data.createdAt
         }, null, 2)
       }]
     };
@@ -463,97 +445,40 @@ export async function handleCreateCustomer(args: unknown) {
 export async function handleUpdateCustomer(args: unknown) {
   try {
     const params = updateCustomerSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    const objectId = toSafeObjectId(params.customerId);
-    if (!objectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    // 고객 존재 확인
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: objectId,
-      'meta.created_by': userId
+    // Internal API 호출 (존재 확인, 소유권 확인, 이름 중복 체크 포함)
+    const result = await updateCustomer(params.customerId, {
+      userId,
+      name: params.name,
+      phone: params.phone ? formatPhoneNumber(params.phone) : undefined,
+      phoneType: params.phoneType,
+      email: params.email,
+      birthDate: params.birthDate,
+      postal_code: params.postal_code,
+      address1: params.address1,
+      address2: params.address2
     });
 
-    if (!customer) {
+    // API 에러 처리 (404: 미존재, 409: 이름 중복, 400: 유효하지 않은 ID 등)
+    if (!result.data) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
+        content: [{
+          type: 'text' as const,
+          text: result.error || '고객 정보 수정에 실패했습니다.'
+        }]
       };
     }
-
-    // 이름 변경 시 중복 체크
-    if (params.name && params.name !== customer.personal_info?.name) {
-      const existing = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-        'personal_info.name': { $regex: `^${escapeRegex(params.name)}$`, $options: 'i' },
-        'meta.created_by': userId,
-        _id: { $ne: objectId },
-        deleted_at: { $exists: false }
-      });
-
-      if (existing) {
-        return {
-          isError: true,
-          content: [{
-            type: 'text' as const,
-            text: `같은 이름의 고객이 이미 존재합니다: ${params.name}`
-          }]
-        };
-      }
-    }
-
-    // 업데이트할 필드 구성
-    const updateFields: Record<string, unknown> = {
-      'meta.updated_at': new Date()
-    };
-
-    if (params.name) updateFields['personal_info.name'] = params.name;
-
-    // 전화번호: phoneType에 따라 다른 필드에 저장
-    if (params.phone) {
-      const formattedPhone = formatPhoneNumber(params.phone);
-      const phoneType = params.phoneType || 'mobile'; // 기본값: 휴대폰
-
-      switch (phoneType) {
-        case 'home':
-          updateFields['personal_info.home_phone'] = formattedPhone;
-          break;
-        case 'work':
-          updateFields['personal_info.work_phone'] = formattedPhone;
-          break;
-        case 'mobile':
-        default:
-          updateFields['personal_info.mobile_phone'] = formattedPhone;
-          break;
-      }
-    }
-
-    if (params.email) updateFields['personal_info.email'] = params.email;
-    if (params.birthDate) updateFields['personal_info.birth_date'] = params.birthDate;
-
-    // 구조화된 주소 처리
-    if (params.postal_code) updateFields['personal_info.address.postal_code'] = params.postal_code;
-    if (params.address1) updateFields['personal_info.address.address1'] = params.address1;
-    if (params.address2 !== undefined) updateFields['personal_info.address.address2'] = params.address2;
-
-    await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
-      { _id: objectId },
-      { $set: updateFields }
-    );
 
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
           success: true,
-          customerId: params.customerId,
-          updatedFields: Object.keys(updateFields).filter(k => k !== 'meta.updated_at'),
-          message: '고객 정보가 수정되었습니다.'
+          customerId: result.data.customerId,
+          updatedFields: result.data.updatedFields,
+          message: result.data.message
         }, null, 2)
       }]
     };

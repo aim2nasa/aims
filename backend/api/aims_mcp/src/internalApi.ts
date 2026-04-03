@@ -77,6 +77,187 @@ async function internalApiGet<T = any>(path: string): Promise<T | null> {
 }
 
 // ============================================================
+// Write용 HTTP 헬퍼 (상태코드 + 에러 메시지 반환)
+// ============================================================
+
+interface InternalApiWriteResult<T = any> {
+  data: T | null;
+  status: number;
+  error?: string;
+}
+
+/**
+ * Internal API PUT 요청
+ * 성공 시 data 필드 반환, 실패 시 null + 상태코드 + 에러 메시지
+ */
+async function internalApiPut<T = any>(path: string, body: Record<string, unknown>): Promise<InternalApiWriteResult<T>> {
+  try {
+    const resp = await fetch(`${AIMS_API_URL}/api${path}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': INTERNAL_API_KEY
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10000)
+    });
+
+    const result = await resp.json() as { success: boolean; data?: T; error?: string };
+
+    if (resp.ok && result.success) {
+      return { data: result.data ?? null, status: resp.status };
+    }
+
+    console.error(`[InternalAPI] PUT ${path} HTTP ${resp.status}: ${result.error || ''}`);
+    return { data: null, status: resp.status, error: result.error };
+  } catch (e) {
+    console.error(`[InternalAPI] PUT ${path} 오류:`, e);
+    return { data: null, status: 500, error: e instanceof Error ? e.message : '네트워크 오류' };
+  }
+}
+
+/**
+ * Internal API DELETE 요청
+ * body와 query string 모두 지원
+ */
+async function internalApiDelete<T = any>(
+  path: string,
+  body?: Record<string, unknown>,
+  query?: Record<string, string>
+): Promise<InternalApiWriteResult<T>> {
+  try {
+    let url = `${AIMS_API_URL}/api${path}`;
+    if (query) {
+      const qs = new URLSearchParams(query).toString();
+      url += `?${qs}`;
+    }
+
+    const resp = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': INTERNAL_API_KEY
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      signal: AbortSignal.timeout(10000)
+    });
+
+    const result = await resp.json() as { success: boolean; data?: T; error?: string };
+
+    if (resp.ok && result.success) {
+      return { data: result.data ?? null, status: resp.status };
+    }
+
+    console.error(`[InternalAPI] DELETE ${path} HTTP ${resp.status}: ${result.error || ''}`);
+    return { data: null, status: resp.status, error: result.error };
+  } catch (e) {
+    console.error(`[InternalAPI] DELETE ${path} 오류:`, e);
+    return { data: null, status: 500, error: e instanceof Error ? e.message : '네트워크 오류' };
+  }
+}
+
+/**
+ * Internal API POST 요청 (Write용 — 상태코드 반환)
+ * Read용 internalApiPost와 달리 에러 상태코드도 반환
+ */
+async function internalApiPostWrite<T = any>(path: string, body: Record<string, unknown>): Promise<InternalApiWriteResult<T>> {
+  try {
+    const resp = await fetch(`${AIMS_API_URL}/api${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': INTERNAL_API_KEY
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10000)
+    });
+
+    const result = await resp.json() as { success: boolean; data?: T; error?: string };
+
+    if (resp.ok && result.success) {
+      return { data: result.data ?? null, status: resp.status };
+    }
+
+    console.error(`[InternalAPI] POST(Write) ${path} HTTP ${resp.status}: ${result.error || ''}`);
+    return { data: null, status: resp.status, error: result.error };
+  } catch (e) {
+    console.error(`[InternalAPI] POST(Write) ${path} 오류:`, e);
+    return { data: null, status: 500, error: e instanceof Error ? e.message : '네트워크 오류' };
+  }
+}
+
+// ============================================================
+// customers Write 편의 함수
+// ============================================================
+
+/** 고객 생성 */
+export async function createCustomer(params: {
+  name: string; phone: string; userId: string;
+  email?: string; birthDate?: string; address?: string; customerType?: string;
+}): Promise<InternalApiWriteResult<{ customerId: string; name: string; customerType: string; createdAt: string }>> {
+  return internalApiPostWrite('/internal/customers', params as unknown as Record<string, unknown>);
+}
+
+/** 고객 수정 */
+export async function updateCustomer(customerId: string, params: {
+  userId: string; name?: string; phone?: string; phoneType?: string;
+  email?: string; birthDate?: string; postal_code?: string; address1?: string; address2?: string;
+}): Promise<InternalApiWriteResult<{ customerId: string; updatedFields: string[]; message: string }>> {
+  return internalApiPut(`/internal/customers/${customerId}`, params as unknown as Record<string, unknown>);
+}
+
+/** 고객 메모 필드 동기화 (customer_memos → customers.memo) */
+export async function syncCustomerMemo(
+  customerId: string, memoText: string, userId: string
+): Promise<InternalApiWriteResult<{ success: boolean }>> {
+  return internalApiPut(`/internal/customers/${customerId}/memo-sync`, { memoText, userId });
+}
+
+// ============================================================
+// memos Write 편의 함수
+// ============================================================
+
+/** 메모 생성 */
+export async function createMemo(params: {
+  customerId: string; content: string; userId: string;
+}): Promise<InternalApiWriteResult<{ memoId: string }>> {
+  return internalApiPostWrite('/internal/memos', params as unknown as Record<string, unknown>);
+}
+
+/** 메모 수정 */
+export async function updateMemo(memoId: string, params: {
+  customerId: string; content: string; userId: string;
+}): Promise<InternalApiWriteResult<{ success: boolean }>> {
+  return internalApiPut(`/internal/memos/${memoId}`, params as unknown as Record<string, unknown>);
+}
+
+/** 메모 삭제 */
+export async function deleteMemo(
+  memoId: string, customerId: string, userId: string
+): Promise<InternalApiWriteResult<{ success: boolean }>> {
+  return internalApiDelete(`/internal/memos/${memoId}`, undefined, { customerId, userId });
+}
+
+// ============================================================
+// relationships Write 편의 함수
+// ============================================================
+
+/** 관계 생성 (역방향 자동 처리) */
+export async function createRelationship(params: {
+  fromCustomerId: string; toCustomerId: string; relationshipType: string;
+  relationshipCategory?: string; notes?: string; userId: string;
+}): Promise<InternalApiWriteResult<{ relationshipId: string; reverseCreated: boolean }>> {
+  return internalApiPostWrite('/internal/relationships', params as unknown as Record<string, unknown>);
+}
+
+/** 관계 삭제 (역방향 자동 처리) */
+export async function deleteRelationship(
+  relationshipId: string, userId: string
+): Promise<InternalApiWriteResult<{ success: boolean; reverseDeleted: boolean }>> {
+  return internalApiDelete(`/internal/relationships/${relationshipId}`, { userId });
+}
+
+// ============================================================
 // files 컬렉션 편의 함수
 // ============================================================
 

@@ -315,8 +315,9 @@ class TestCleanupDuplicatesFunction:
 class TestCleanupDuplicatesEndpoint:
     """POST /customers/{customer_id}/annual-reports/cleanup-duplicates 엔드포인트 테스트"""
 
+    @patch('routes.query.check_customer_ownership', return_value=True)
     @patch('main.db')
-    def test_endpoint_successful_cleanup(self, mock_db):
+    def test_endpoint_successful_cleanup(self, mock_db, mock_ownership):
         """정상적인 정리 요청 성공"""
         customer_id = str(ObjectId())
         user_id = str(ObjectId())
@@ -326,28 +327,22 @@ class TestCleanupDuplicatesEndpoint:
         mock_db.customers = mock_customers
         mock_db.__getitem__.return_value = mock_customers  # db["customers"] 지원
 
-        # 고객 소유권 확인 (customer_name 필수 - 동일해야 중복!)
-        mock_customers.find_one.side_effect = [
-            {  # 첫 번째 호출: 소유권 확인 (endpoint)
-                "_id": ObjectId(customer_id),
-                "meta": {"created_by": user_id}
-            },
-            {  # 두 번째 호출: cleanup 함수 내부
-                "_id": ObjectId(customer_id),
-                "annual_reports": [
-                    {
-                        "issue_date": "2025-08-29T00:00:00Z",
-                        "parsed_at": "2025-11-03T06:20:00.000Z",
-                        "customer_name": "테스트고객"
-                    },
-                    {
-                        "issue_date": "2025-08-29T00:00:00Z",
-                        "parsed_at": "2025-11-03T06:25:00.000Z",
-                        "customer_name": "테스트고객"
-                    }
-                ]
-            }
-        ]
+        # cleanup 함수 내부에서 고객 조회
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "annual_reports": [
+                {
+                    "issue_date": "2025-08-29T00:00:00Z",
+                    "parsed_at": "2025-11-03T06:20:00.000Z",
+                    "customer_name": "테스트고객"
+                },
+                {
+                    "issue_date": "2025-08-29T00:00:00Z",
+                    "parsed_at": "2025-11-03T06:25:00.000Z",
+                    "customer_name": "테스트고객"
+                }
+            ]
+        }
 
         mock_customers.update_one.return_value = Mock(modified_count=1)
 
