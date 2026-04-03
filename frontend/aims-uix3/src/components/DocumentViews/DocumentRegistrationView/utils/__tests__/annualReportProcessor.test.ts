@@ -14,10 +14,10 @@ import {
   registerArDocument,
   clearDuplicateCheckCache
 } from '../annualReportProcessor'
-import { calculateFileHash } from '@/features/customer/utils/fileHash'
+import { calculateFileHash } from '@/shared/lib/fileValidation/fileHash'
 
 // Mock dependencies
-vi.mock('@/features/customer/utils/fileHash')
+vi.mock('@/shared/lib/fileValidation/fileHash')
 
 describe('processAnnualReportFile', () => {
   let mockFile: File

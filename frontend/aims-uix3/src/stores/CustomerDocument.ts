@@ -11,6 +11,8 @@
 
 import { CustomerService } from '@/services/customerService';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore';
+import { useCustomerStatusFilterStore } from '@/shared/store/useCustomerStatusFilterStore';
 import type {
   Customer,
   CreateCustomerData,
@@ -355,6 +357,10 @@ export class CustomerDocument {
       // 서버가 업데이트된 고객 데이터 반환
       const updatedCustomer = await CustomerService.deleteCustomer(id);
 
+      // UI 부수효과: 활성 필터 전환 + 최근 고객 제거
+      useCustomerStatusFilterStore.getState().requestFilterChange('active');
+      useRecentCustomersStore.getState().removeRecentCustomer(id);
+
       if (import.meta.env.DEV) {
         console.log('[CustomerDocument] 고객 삭제 완료, 로컬 상태 업데이트:', updatedCustomer);
       }
@@ -392,6 +398,9 @@ export class CustomerDocument {
       }
       const result = await CustomerService.permanentDeleteCustomer(id);
 
+      // UI 부수효과: 최근 고객 제거
+      useRecentCustomersStore.getState().removeRecentCustomer(id);
+
       if (import.meta.env.DEV) {
         console.log('[CustomerDocument] 고객 영구 삭제 완료, 로컬 상태 업데이트:', id, result);
       }
@@ -423,6 +432,9 @@ export class CustomerDocument {
 
       // 서버가 복원된 고객 데이터 반환
       const restoredCustomer = await CustomerService.restoreCustomer(id);
+
+      // UI 부수효과: 활성 필터 전환
+      useCustomerStatusFilterStore.getState().requestFilterChange('active');
 
       if (import.meta.env.DEV) {
         console.log('[CustomerDocument] 고객 복원 완료, 로컬 상태 업데이트:', restoredCustomer);

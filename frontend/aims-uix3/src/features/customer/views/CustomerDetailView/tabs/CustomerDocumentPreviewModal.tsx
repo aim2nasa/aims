@@ -18,7 +18,7 @@ import { PDFViewer } from '../../../../../components/PDFViewer/PDFViewer'
 import { ImageViewer } from '../../../../../components/ImageViewer/ImageViewer'
 import { ViewerControls } from '../../../../../components/ViewerControls'
 import { DocumentUtils } from '@/entities/document'
-import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCustomerDocumentsController'
+import type { PreviewDocumentInfo } from '@/shared/types/document'
 import { formatDateTime } from '@/shared/lib/timeUtils'
 import './CustomerDocumentPreviewModal.css'
 

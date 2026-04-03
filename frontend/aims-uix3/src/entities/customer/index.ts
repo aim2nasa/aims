@@ -1,10 +1,11 @@
 /**
  * AIMS UIX-3 Customer Entity Barrel Export
  * @since 2025-09-15
- * @version 1.0.0
+ *
+ * 타입, 스키마, 유틸리티만 export합니다.
+ * API 함수는 @/services/customerService에서 직접 import하세요.
  */
 
-// Models and types
 export {
   CustomerSchema,
   CreateCustomerSchema,
@@ -24,22 +25,3 @@ export type {
   CustomerSearchPagination,
   CustomerSearchResponse,
 } from './model';
-
-// API functions
-export {
-  getCustomers,
-  getCustomer,
-  createCustomer,
-  updateCustomer,
-  deleteCustomer,
-  restoreCustomer,
-  searchCustomers,
-  getCustomerStats,
-  exportCustomers,
-  importCustomers,
-} from './api';
-
-export type {
-  CustomerStats,
-  ImportCustomersResult,
-} from './api';

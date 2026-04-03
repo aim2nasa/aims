@@ -11,7 +11,7 @@
 
 import React from 'react'
 import type { StorageInfo } from '@/services/userService'
-import { formatFileSize } from '@/features/batch-upload/utils/fileValidation'
+import { formatFileSize } from '@/shared/lib/fileValidation/constants'
 import Tooltip from '@/shared/ui/Tooltip'
 import './UsageQuotaWidget.css'
 

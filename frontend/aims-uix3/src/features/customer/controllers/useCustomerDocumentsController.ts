@@ -14,6 +14,12 @@ import {
 } from '@/services/DocumentService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { handleApiError, isRequestCancelledError } from '@/shared/lib/api'
+import type { PreviewDocumentInfo } from '@/shared/types/document'
+
+/**
+ * @deprecated @/shared/types/document에서 직접 import하세요.
+ */
+export type { PreviewDocumentInfo } from '@/shared/types/document'
 
 interface UseCustomerDocumentsControllerOptions {
   /** 마운트 시 자동 로드 여부 (기본값 true) */
@@ -22,32 +28,6 @@ interface UseCustomerDocumentsControllerOptions {
   enabled?: boolean
   /** 문서 개수 변경 시 콜백 */
   onDocumentsChange?: (count: number) => void
-}
-
-export interface PreviewDocumentInfo {
-  id: string
-  originalName: string
-  fileUrl: string | null
-  /** 프리뷰용 URL (변환된 PDF 또는 원본) */
-  previewFileUrl: string | null
-  mimeType?: string
-  uploadedAt?: string
-  sizeBytes?: number | null
-  /** PDF 변환 상태 */
-  conversionStatus?: string | null
-  /** 프리뷰 가능 여부 */
-  canPreview?: boolean
-  /** 변환된 PDF로 프리뷰하는지 여부 */
-  isConverted?: boolean
-  /** 원본 파일 확장자 (예: 'xlsx', 'pptx') */
-  originalExtension?: string
-  document: CustomerDocumentItem
-  rawDetail: Record<string, unknown> | null
-  /** 바이러스 스캔 정보 */
-  virusScan?: {
-    status?: 'pending' | 'clean' | 'infected' | 'deleted' | 'error'
-    threatName?: string
-  }
 }
 
 interface PreviewState {

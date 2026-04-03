@@ -13,7 +13,7 @@
  */
 
 import { api } from '../api'
-import { calculateFileHash } from '../../../features/customer/utils/fileHash'
+import { calculateFileHash } from './fileHash'
 import { errorReporter } from '../errorReporter'
 
 /**

@@ -12,7 +12,7 @@ import {
   type ExistingFileHash,
 } from '../duplicateChecker'
 import { api } from '../../../../shared/lib/api'
-import { calculateFileHash } from '../../../customer/utils/fileHash'
+import { calculateFileHash } from '@/shared/lib/fileValidation/fileHash'
 
 // Mock errorReporter before import
 vi.mock('../../../../shared/lib/errorReporter', () => ({
@@ -28,7 +28,7 @@ vi.mock('../../../../shared/lib/api', () => ({
   },
 }))
 
-vi.mock('../../../customer/utils/fileHash', () => ({
+vi.mock('@/shared/lib/fileValidation/fileHash', () => ({
   calculateFileHash: vi.fn(),
 }))
 

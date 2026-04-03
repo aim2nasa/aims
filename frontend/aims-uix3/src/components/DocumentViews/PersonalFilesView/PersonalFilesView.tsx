@@ -11,7 +11,7 @@
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import AppleConfirmModal from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
+import { AppleConfirmModal } from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
 import MoveFolderModal from './MoveFolderModal'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'

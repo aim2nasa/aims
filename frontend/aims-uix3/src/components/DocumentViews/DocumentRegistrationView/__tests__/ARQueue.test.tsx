@@ -17,7 +17,7 @@ import {
 } from '../utils/annualReportProcessor';
 
 // Mock dependencies
-vi.mock('@/features/customer/utils/fileHash', () => ({
+vi.mock('@/shared/lib/fileValidation/fileHash', () => ({
   calculateFileHash: vi.fn(() => Promise.resolve(`hash-${Date.now()}`))
 }));
 

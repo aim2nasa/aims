@@ -5,8 +5,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
-import { checkCustomerReviewFromPDF } from '@/features/customer/utils/pdfParser'
-import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
+import { checkCustomerReviewFromPDF, AnnualReportApi } from '@/features/customer'
 import type { Customer } from '@/entities/customer/model'
 import type {
   CrFileInfo,

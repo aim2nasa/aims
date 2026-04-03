@@ -17,7 +17,7 @@ import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useNavigationStore } from './shared/store/useNavigationStore'
 import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
-import { getCurrentUser } from './entities/user/api'
+import { getCurrentUser } from './services/userService'
 import { useInquiryNotifications } from './shared/hooks/useInquiryNotifications'
 import { useUserAccountSSE } from './shared/hooks/useUserAccountSSE'
 import { useNoticeNotifications } from './hooks/useNoticeNotifications'
@@ -68,7 +68,7 @@ const HelpDashboardView = lazy(() => import('./components/HelpViews/HelpDashboar
 const CustomerDocumentPreviewModal = lazy(() => import('./features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'))
 const ChatPanel = lazy(() => import('./components/ChatPanel'))
 import { ViewerControls } from './components/ViewerControls'
-import type { PreviewDocumentInfo } from './features/customer/controllers/useCustomerDocumentsController'
+import type { PreviewDocumentInfo } from './shared/types/document'
 import DownloadHelper from './utils/downloadHelper'
 import { SearchService } from './services/searchService'
 import type { SearchResultItem } from './entities/search'
