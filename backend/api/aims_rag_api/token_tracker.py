@@ -2,36 +2,24 @@
 """
 AI Token Usage Tracker
 
-OpenAI API 응답에서 토큰 사용량을 추출하여 aims_api를 통해 저장합니다.
+OpenAI API 응답에서 토큰 사용량을 추출하여 aims_analytics DB에 직접 저장합니다.
 사용자별, 시스템 전체의 AI 토큰 사용량을 추적합니다.
 
-저장소: aims_api → MongoDB aims_analytics.ai_token_usage
+저장소: MongoDB aims_analytics.ai_token_usage (직접 기록)
 """
 
 from typing import Dict, Optional, Any, List
-import os
 import uuid
-import requests
-from datetime import datetime
 
-
-# aims_api 토큰 로깅 엔드포인트
-AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
-TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
-
-# 내부 API 키 (환경변수 또는 기본값)
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
-
-# 요청 타임아웃 (초)
-REQUEST_TIMEOUT = 5
+from analytics_writer import AnalyticsWriter
 
 
 class TokenTracker:
-    """AI 토큰 사용량 추적 및 저장 (aims_api 통해 로깅)"""
+    """AI 토큰 사용량 추적 및 저장 (aims_analytics DB 직접 기록)"""
 
     def __init__(self):
-        """aims_api를 통한 HTTP 기반 토큰 추적"""
-        pass
+        """AnalyticsWriter를 통한 DB 직접 기록"""
+        self._writer = AnalyticsWriter()
 
     def track_embedding(self, response: Any, model: str = "text-embedding-3-small") -> Dict:
         """
@@ -82,7 +70,7 @@ class TokenTracker:
             "total_tokens": total_tokens
         }
 
-    def _log_to_api(
+    def _log_to_db(
         self,
         user_id: str,
         model: str,
@@ -92,7 +80,7 @@ class TokenTracker:
         metadata: Optional[Dict] = None
     ) -> bool:
         """
-        aims_api에 토큰 사용량 로깅
+        aims_analytics DB에 토큰 사용량 직접 기록
 
         Args:
             user_id: 사용자 ID
@@ -105,45 +93,23 @@ class TokenTracker:
         Returns:
             bool: 로깅 성공 여부
         """
-        try:
-            payload = {
-                "user_id": user_id,
-                "source": "rag_api",
-                "model": model,
-                "prompt_tokens": prompt_tokens,
-                "completion_tokens": completion_tokens,
-                "total_tokens": total_tokens,
-                "request_id": str(uuid.uuid4()),
-                "metadata": metadata or {}
-            }
+        success = self._writer.log_token_usage(
+            user_id=user_id,
+            source="rag_api",
+            model=model,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            request_id=str(uuid.uuid4()),
+            metadata=metadata or {},
+        )
 
-            headers = {
-                "Content-Type": "application/json",
-                "x-api-key": INTERNAL_API_KEY
-            }
+        if success:
+            print(f"[TokenTracker] 토큰 로깅 완료: {model} - {total_tokens} tokens")
+        else:
+            print(f"[TokenTracker] 토큰 로깅 실패: {model}")
 
-            response = requests.post(
-                TOKEN_LOGGING_URL,
-                json=payload,
-                headers=headers,
-                timeout=REQUEST_TIMEOUT
-            )
-
-            if response.status_code == 200:
-                result = response.json()
-                if result.get("success"):
-                    print(f"[TokenTracker] 토큰 로깅 완료: {model} - {total_tokens} tokens")
-                    return True
-
-            print(f"[TokenTracker] 토큰 로깅 실패: {response.status_code} - {response.text}")
-            return False
-
-        except requests.exceptions.RequestException as e:
-            print(f"[TokenTracker] 토큰 로깅 API 호출 오류: {e}")
-            return False
-        except Exception as e:
-            print(f"[TokenTracker] 예상치 못한 오류: {e}")
-            return False
+        return success
 
     def save_usage(
         self,
@@ -154,7 +120,7 @@ class TokenTracker:
         search_log_id: Optional[str] = None
     ) -> str:
         """
-        토큰 사용량 저장 (aims_api를 통해 로깅)
+        토큰 사용량 저장 (aims_analytics DB 직접 기록)
 
         Args:
             user_id: 사용자 ID
@@ -177,7 +143,7 @@ class TokenTracker:
         # 임베딩 사용량 로깅
         if embedding_usage:
             total_tokens += embedding_usage.get("total_tokens", 0)
-            self._log_to_api(
+            self._log_to_db(
                 user_id=user_id,
                 model=embedding_usage.get("model", "text-embedding-3-small"),
                 prompt_tokens=embedding_usage.get("prompt_tokens", 0),
@@ -189,7 +155,7 @@ class TokenTracker:
         # 채팅 사용량 로깅
         if chat_usage:
             total_tokens += chat_usage.get("total_tokens", 0)
-            self._log_to_api(
+            self._log_to_db(
                 user_id=user_id,
                 model=chat_usage.get("model", "gpt-3.5-turbo"),
                 prompt_tokens=chat_usage.get("prompt_tokens", 0),
@@ -229,7 +195,7 @@ if __name__ == '__main__':
     chat_usage = tracker.track_chat_completion(MockChatResponse())
     print(f"채팅 사용량: {chat_usage}")
 
-    # 사용량 저장 테스트 (aims_api를 통해)
+    # 사용량 저장 테스트 (DB 직접 기록)
     request_id = tracker.save_usage(
         user_id="test_user_123",
         embedding_usage=embed_usage,

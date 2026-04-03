@@ -1,6 +1,7 @@
 """
-Redis Service - Redis Stream operations
+Redis Service - Redis Stream operations + Pub/Sub 이벤트 발행
 """
+import json
 import redis.asyncio as redis
 from typing import Optional, Dict, Any, List
 import logging
@@ -10,6 +11,15 @@ from config import get_settings
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
+
+# 이벤트 채널 상수 (aims_api eventBus.js와 동일)
+CHANNELS = {
+    "DOC_PROGRESS": "aims:doc:progress",
+    "DOC_COMPLETE": "aims:doc:complete",
+    "AR_STATUS": "aims:ar:status",
+    "CR_STATUS": "aims:cr:status",
+    "DOC_LIST": "aims:doc:list",
+}
 
 
 class RedisService:
@@ -255,3 +265,13 @@ class RedisService:
         except Exception as e:
             logger.error(f"Redis XADD error: {e}")
             raise
+
+    @classmethod
+    async def publish_event(cls, channel: str, payload: dict):
+        """Redis Pub/Sub 이벤트 발행"""
+        if cls._client is None:
+            await cls.connect()
+        try:
+            await cls._client.publish(channel, json.dumps(payload))
+        except Exception as e:
+            logger.warning(f"[EventBus] Redis publish 실패 ({channel}): {e}")

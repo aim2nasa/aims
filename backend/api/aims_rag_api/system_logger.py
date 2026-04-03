@@ -1,9 +1,12 @@
-# system_logger.py - AIMS 시스템 로그 API 연동 모듈
+# system_logger.py - AIMS 시스템 로그 aims_analytics DB 직접 기록 모듈
 
-import requests
 from typing import Optional, Dict, Any
 
-SYSTEM_LOG_API_URL = "http://localhost:3010/api/system-logs"
+from analytics_writer import AnalyticsWriter
+
+# 모듈 레벨 싱글턴
+_writer = AnalyticsWriter()
+
 
 def send_error_log(
     component: str,
@@ -12,7 +15,7 @@ def send_error_log(
     data: Optional[Dict[str, Any]] = None
 ) -> bool:
     """
-    AIMS 시스템 로그 API에 에러 로그 전송
+    aims_analytics DB에 에러 로그 직접 기록
 
     Args:
         component: 컴포넌트 이름 (예: "aims_rag_api")
@@ -21,31 +24,18 @@ def send_error_log(
         data: 추가 데이터 (선택)
 
     Returns:
-        전송 성공 여부
+        기록 성공 여부
     """
     try:
-        payload = {
-            "level": "error",
-            "source": {
-                "type": "backend",
-                "component": component
-            },
-            "message": message,
-            "data": data or {}
-        }
-
-        if error:
-            payload["data"]["error_type"] = type(error).__name__
-            payload["data"]["error_message"] = str(error)
-
-        response = requests.post(
-            SYSTEM_LOG_API_URL,
-            json=payload,
-            timeout=5
+        return _writer.log_system_event(
+            level="error",
+            message=message,
+            component=component,
+            error=error,
+            data=data,
         )
-        return response.status_code == 200
     except Exception as e:
-        print(f"[system_logger] 시스템 로그 전송 실패: {e}")
+        print(f"[system_logger] 시스템 로그 기록 실패: {e}")
         return False
 
 
@@ -55,25 +45,15 @@ def send_warn_log(
     data: Optional[Dict[str, Any]] = None
 ) -> bool:
     """
-    AIMS 시스템 로그 API에 경고 로그 전송
+    aims_analytics DB에 경고 로그 직접 기록
     """
     try:
-        payload = {
-            "level": "warn",
-            "source": {
-                "type": "backend",
-                "component": component
-            },
-            "message": message,
-            "data": data or {}
-        }
-
-        response = requests.post(
-            SYSTEM_LOG_API_URL,
-            json=payload,
-            timeout=5
+        return _writer.log_system_event(
+            level="warn",
+            message=message,
+            component=component,
+            data=data,
         )
-        return response.status_code == 200
     except Exception as e:
-        print(f"[system_logger] 시스템 로그 전송 실패: {e}")
+        print(f"[system_logger] 시스템 로그 기록 실패: {e}")
         return False

@@ -4,8 +4,6 @@ customers 컬렉션의 annual_reports 배열에 추가
 """
 import logging
 import sys
-import os
-import requests
 from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime, timezone
@@ -39,30 +37,19 @@ def _serialize_for_json(obj):
         return [_serialize_for_json(item) for item in obj]
     return obj
 
-# aims_api webhook URL
-AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
-
-
 def notify_ar_status_change(customer_id: str, file_id: Optional[str], status: str, error_message: Optional[str] = None):
-    """
-    AR 상태 변경을 aims_api에 알림 (SSE 실시간 업데이트용)
-    """
+    """AR 상태 변경 이벤트 발행 (Redis Pub/Sub → aims_api SSE)"""
     try:
-        webhook_url = f"{AIMS_API_URL}/api/webhooks/ar-status-change"
-        payload = {
+        from services.event_publisher import publish_event, CHANNELS
+        publish_event(CHANNELS["AR_STATUS"], {
             "customer_id": customer_id,
             "file_id": file_id,
             "status": status,
             "error_message": error_message
-        }
-        response = requests.post(webhook_url, json=payload, timeout=5)
-        if response.ok:
-            logger.info(f"✅ [SSE] AR 상태 변경 알림 전송: customer_id={customer_id}, status={status}")
-        else:
-            logger.warning(f"⚠️ [SSE] 알림 전송 실패: {response.status_code} - {response.text}")
+        })
+        logger.info(f"✅ [EventBus] AR 상태 변경 이벤트 발행: customer_id={customer_id}, status={status}")
     except Exception as e:
-        # 알림 실패는 무시 (파싱 자체는 성공)
-        logger.warning(f"⚠️ [SSE] 알림 전송 실패 (무시됨): {e}")
+        logger.warning(f"⚠️ [EventBus] AR 이벤트 발행 실패 (무시됨): {e}")
 
 
 def save_annual_report(
@@ -798,25 +785,18 @@ def cleanup_duplicate_annual_reports(
 # ================================================================================
 
 def notify_cr_status_change(customer_id: str, file_id: Optional[str], status: str, error_message: Optional[str] = None):
-    """
-    CR 상태 변경을 aims_api에 알림 (SSE 실시간 업데이트용)
-    """
+    """CR 상태 변경 이벤트 발행 (Redis Pub/Sub → aims_api SSE)"""
     try:
-        webhook_url = f"{AIMS_API_URL}/api/webhooks/cr-status-change"
-        payload = {
+        from services.event_publisher import publish_event, CHANNELS
+        publish_event(CHANNELS["CR_STATUS"], {
             "customer_id": customer_id,
             "file_id": file_id,
             "status": status,
             "error_message": error_message
-        }
-        response = requests.post(webhook_url, json=payload, timeout=5)
-        if response.ok:
-            logger.info(f"✅ [SSE] CR 상태 변경 알림 전송: customer_id={customer_id}, status={status}")
-        else:
-            logger.warning(f"⚠️ [SSE] CR 알림 전송 실패: {response.status_code} - {response.text}")
+        })
+        logger.info(f"✅ [EventBus] CR 상태 변경 이벤트 발행: customer_id={customer_id}, status={status}")
     except Exception as e:
-        # 알림 실패는 무시 (파싱 자체는 성공)
-        logger.warning(f"⚠️ [SSE] CR 알림 전송 실패 (무시됨): {e}")
+        logger.warning(f"⚠️ [EventBus] CR 이벤트 발행 실패 (무시됨): {e}")
 
 
 def save_customer_review(

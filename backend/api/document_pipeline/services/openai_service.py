@@ -4,7 +4,6 @@ OpenAI Service for Text Summarization and Document Classification
 import os
 import re
 import json
-import uuid
 import httpx
 import openai
 import logging
@@ -15,10 +14,9 @@ from xpipe.adapter import ClassificationConfig
 
 logger = logging.getLogger(__name__)
 
-# aims_api 토큰 로깅 설정 — settings에서 로드 (pydantic_settings 통합)
+# aims_api 내부 API 설정 — settings에서 로드 (pydantic_settings 통합)
 _settings = get_settings()
 AIMS_API_BASE_URL = _settings.AIMS_API_URL
-TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
 INTERNAL_API_KEY = _settings.INTERNAL_API_KEY
 
 # 🔴 크레딧 체크 API 설정
@@ -209,7 +207,7 @@ class OpenAIService:
         total_tokens: int
     ) -> bool:
         """
-        aims_api에 토큰 사용량 로깅
+        aims_analytics DB에 토큰 사용량 직접 기록 (motor async)
 
         Args:
             user_id: 문서 소유자 ID
@@ -223,41 +221,16 @@ class OpenAIService:
             bool: 로깅 성공 여부
         """
         try:
-            payload = {
-                "user_id": user_id or "system",
-                "source": "doc_summary",
-                "model": model,
-                "prompt_tokens": prompt_tokens,
-                "completion_tokens": completion_tokens,
-                "total_tokens": total_tokens,
-                "request_id": str(uuid.uuid4()),
-                "metadata": {
-                    "document_id": document_id,
-                    "workflow": "document_pipeline"
-                }
-            }
-
-            headers = {
-                "Content-Type": "application/json",
-                "x-api-key": INTERNAL_API_KEY
-            }
-
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.post(
-                    TOKEN_LOGGING_URL,
-                    json=payload,
-                    headers=headers
-                )
-
-                if response.status_code == 200:
-                    result = response.json()
-                    if result.get("success"):
-                        logger.info(f"[TokenLog] 요약 토큰 로깅 완료: {total_tokens} tokens")
-                        return True
-
-            logger.warning(f"[TokenLog] 토큰 로깅 실패: {response.status_code}")
-            return False
-
+            from services.analytics_writer import AnalyticsWriter
+            return await AnalyticsWriter.log_token_usage(
+                user_id=user_id or "system",
+                source="doc_summary",
+                model=model,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens,
+                metadata={"document_id": document_id, "workflow": "document_pipeline"}
+            )
         except Exception as e:
             logger.warning(f"[TokenLog] 토큰 로깅 오류: {e}")
             return False

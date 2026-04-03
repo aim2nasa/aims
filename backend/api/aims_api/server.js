@@ -21,6 +21,7 @@ const { VERSION_INFO, logVersionInfo } = require('./version');
 const serviceHealthMonitor = require('./lib/serviceHealthMonitor');
 const virusScanService = require('./lib/virusScanService');
 const realtimeMetrics = require('./lib/realtimeMetrics');
+const eventBus = require('./lib/eventBus');
 // 공유 스키마에서 컬렉션명 상수 import
 const { COLLECTIONS, CUSTOMER_FIELDS, CUSTOMER_STATUS } = require('@aims/shared-schema');
 
@@ -219,6 +220,13 @@ MongoClient.connect(MONGO_URI)
     chatHistoryService.initialize(analyticsDb).catch(err => {
       console.error('[Server] ChatHistoryService 초기화 실패:', err.message);
     });
+
+    // EventBus 초기화 (Redis Pub/Sub → SSE 브릿지)
+    try {
+      eventBus.initialize(db);
+    } catch (err) {
+      console.error('[Server] EventBus 초기화 실패 (서버는 계속 실행):', err.message);
+    }
 
     // AI 모델 설정 모듈 초기화
     const aiModelSettings = require('./lib/aiModelSettings');
@@ -441,6 +449,7 @@ process.on('SIGTERM', () => {
     clearInterval(documentsRouter._cleanupInterval);
     console.log('[Documents] 다운로드 정리 Interval 해제 완료');
   }
+  eventBus.shutdown();
 });
 
 // 메트릭 수집 인터벌
@@ -499,6 +508,7 @@ process.on('SIGINT', () => {
     clearInterval(documentsRouter._cleanupInterval);
     console.log('[Documents] 다운로드 정리 Interval 해제 완료');
   }
+  eventBus.shutdown();
 });
 
 module.exports = app;
