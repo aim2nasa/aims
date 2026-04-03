@@ -7,7 +7,10 @@ import { test, expect } from '@playwright/test';
  * 로그인 페이지의 기본 접근성도 검사.
  */
 
-test.use({ storageState: { cookies: [], origins: [] } });
+test.use({
+  storageState: { cookies: [], origins: [] },
+  baseURL: process.env.CI ? 'https://localhost:4173' : 'https://localhost:5177',
+});
 
 test.describe('CI Smoke (인증 불필요)', () => {
   test('로그인 페이지 로드', async ({ page }) => {
