@@ -13,6 +13,14 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # 이벤트 채널 상수 (aims_api eventBus.js와 동일)
+# 페이로드 스키마: @aims/shared-schema redis-events.ts 참조
+# 각 채널의 필수 필드:
+#   DOC_PROGRESS: document_id, progress
+#   DOC_COMPLETE: document_id
+#   AR_STATUS: customer_id, status
+#   CR_STATUS: customer_id, status
+#   DOC_LIST: user_id
+#   DOC_LINK: document_id, customer_id, user_id
 CHANNELS = {
     "DOC_PROGRESS": "aims:doc:progress",
     "DOC_COMPLETE": "aims:doc:complete",

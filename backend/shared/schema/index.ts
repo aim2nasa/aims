@@ -12,3 +12,5 @@
 export * from './collections.js';
 export * from './customers.js';
 export * from './ar-parse-queue.js';
+export * from './internal-api.js';
+export * from './redis-events.js';
