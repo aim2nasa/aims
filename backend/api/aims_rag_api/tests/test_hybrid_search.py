@@ -199,6 +199,7 @@ class TestVectorSearch:
         call_args = mock_openai_client.embeddings.create.call_args
         assert call_args.kwargs['model'] == "text-embedding-3-small"
 
+    @patch('hybrid_search._embedding_cache', {})
     @patch('hybrid_search.send_error_log')
     @patch('hybrid_search.OpenAI')
     @patch('hybrid_search.QdrantClient')
@@ -384,6 +385,7 @@ class TestSearchRouter:
 class TestEmbeddingTracking:
     """임베딩 응답 추적 테스트"""
 
+    @patch('hybrid_search._embedding_cache', {})
     @patch('hybrid_search.OpenAI')
     @patch('hybrid_search.QdrantClient')
     def test_stores_last_embedding_response(self, mock_qdrant, mock_openai):
@@ -406,6 +408,7 @@ class TestEmbeddingTracking:
         assert engine.last_embedding_response is not None
         assert engine.last_embedding_response.usage.total_tokens == 10
 
+    @patch('hybrid_search._embedding_cache', {})
     @patch('hybrid_search.send_error_log')
     @patch('hybrid_search.OpenAI')
     @patch('hybrid_search.QdrantClient')
