@@ -1,9 +1,8 @@
 import { z, ZodError } from 'zod';
-import { ObjectId } from 'mongodb';
-import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { escapeRegex, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
-import { countFiles, createCustomer, updateCustomer } from '../internalApi.js';
+import { countFiles, createCustomer, updateCustomer, queryCustomers, countCustomers, aggregateCustomers, queryRelationships } from '../internalApi.js';
 
 
 /**
@@ -164,7 +163,6 @@ export const customerToolDefinitions = [
 export async function handleSearchCustomers(args: unknown) {
   try {
     const params = searchCustomersSchema.parse(args || {});
-    const db = getDB();
     const userId = getCurrentUserId();
 
     // 기본 필터: 해당 설계사의 고객만
@@ -209,12 +207,10 @@ export async function handleSearchCustomers(args: unknown) {
     const limit = Math.min(params.limit || 10, 50);
     const offset = params.offset || 0;
 
-    const customers = await db.collection(COLLECTIONS.CUSTOMERS)
-      .find(filter)
-      .sort({ 'meta.created_at': -1 })
-      .skip(offset)
-      .limit(limit)
-      .project({
+    // Internal API 경유: customers 쿼리
+    const customers = await queryCustomers(
+      filter,
+      {
         _id: 1,
         'personal_info.name': 1,
         'personal_info.mobile_phone': 1,
@@ -224,17 +220,20 @@ export async function handleSearchCustomers(args: unknown) {
         'insurance_info.customer_type': 1,
         'meta.status': 1,
         'meta.created_at': 1
-      })
-      .toArray();
+      },
+      { 'meta.created_at': -1 },
+      limit,
+      offset
+    );
 
-    const totalCount = await db.collection(COLLECTIONS.CUSTOMERS).countDocuments(filter);
+    const totalCount = await countCustomers(filter);
     const hasMore = offset + customers.length < totalCount;
 
-    // 고객 유형별 카운트 (개인/법인)
-    const typeCounts = await db.collection(COLLECTIONS.CUSTOMERS).aggregate([
+    // 고객 유형별 카운트 (개인/법인) — Internal API aggregate 경유
+    const typeCounts = await aggregateCustomers([
       { $match: filter },
       { $group: { _id: '$insurance_info.customer_type', count: { $sum: 1 } } }
-    ]).toArray();
+    ]);
 
     const personalCount = typeCounts.find(t => t._id === '개인')?.count || 0;
     const corporateCount = typeCounts.find(t => t._id === '법인')?.count || 0;
@@ -287,21 +286,14 @@ export async function handleSearchCustomers(args: unknown) {
 export async function handleGetCustomer(args: unknown) {
   try {
     const params = getCustomerSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    const objectId = toSafeObjectId(params.customerId);
-    if (!objectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: objectId,
-      'meta.created_by': userId
-    });
+    // Internal API 경유: 소유권 필터 포함 쿼리
+    const results = await queryCustomers(
+      { _id: params.customerId, 'meta.created_by': userId },
+      null, null, 1
+    );
+    const customer = results[0] || null;
 
     if (!customer) {
       return {
@@ -321,13 +313,21 @@ export async function handleGetCustomer(args: unknown) {
     )[0];
     const contractCount = latestAr?.contracts?.length || 0;
 
-    // 관계 수: customer_relationships 컬렉션에서 조회 (from_customer 또는 related_customer로 연결)
-    const relationshipCount = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).countDocuments({
-      $or: [
-        { from_customer: objectId },
-        { related_customer: objectId }
-      ]
+    // 관계 수: Internal API 경유 — relationships 쿼리
+    const relFromCustomer = await queryRelationships({
+      'relationship_info.from_customer_id': params.customerId,
+      'relationship_info.status': 'active'
     });
+    const relToCustomer = await queryRelationships({
+      'relationship_info.to_customer_id': params.customerId,
+      'relationship_info.status': 'active'
+    });
+    // 중복 제거 (양방향 관계)
+    const relIds = new Set([
+      ...relFromCustomer.map((r: any) => r._id?.toString()),
+      ...relToCustomer.map((r: any) => r._id?.toString())
+    ]);
+    const relationshipCount = relIds.size;
 
     // 민감 정보 제외
     const safeCustomer = {

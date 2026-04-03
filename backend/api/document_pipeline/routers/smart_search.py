@@ -9,7 +9,7 @@ from bson import ObjectId, Decimal128
 import logging
 import re
 
-from services.mongo_service import MongoService
+from services.internal_api import query_files
 from datetime import datetime
 
 router = APIRouter()
@@ -239,16 +239,11 @@ async def smart_search(request: SearchRequest):
         else:
             return []
 
-        # Execute query
-        collection = MongoService.get_collection("files")
-
-        # 키워드 검색: projection으로 대용량 필드 제외 (응답 크기 대폭 감소)
+        # Execute query — Internal API 경유
         if is_keyword_search:
-            cursor = collection.find(mongo_query, _KEYWORD_SEARCH_PROJECTION)
+            results = await query_files(mongo_query, projection=_KEYWORD_SEARCH_PROJECTION, limit=1000)
         else:
-            cursor = collection.find(mongo_query)
-
-        results = await cursor.to_list(length=None)
+            results = await query_files(mongo_query, limit=1000)
 
         # customer_relation 보강: customerId 기반 고객명 batch 조회 (ObjectId 변환 전에 수행)
         await _enrich_customer_relations(results, user_id)

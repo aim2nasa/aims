@@ -1,8 +1,8 @@
 import { z, ZodError } from 'zod';
-import { ObjectId } from 'mongodb';
-import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
+import { queryCustomers, queryRelationships } from '../internalApi.js';
 
 // 스키마 정의
 export const getCustomerNetworkSchema = z.object({
@@ -148,22 +148,14 @@ function generateAsciiTree(
 export async function handleGetCustomerNetwork(args: unknown) {
   try {
     const params = getCustomerNetworkSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    const objectId = toSafeObjectId(params.customerId);
-    if (!objectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    // 먼저 고객이 해당 설계사의 고객인지 확인
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: objectId,
-      'meta.created_by': userId
-    });
+    // Internal API 경유: 고객 소유권 확인
+    const customerResults = await queryCustomers(
+      { _id: params.customerId, 'meta.created_by': userId },
+      null, null, 1
+    );
+    const customer = customerResults[0] || null;
 
     if (!customer) {
       return {
@@ -172,16 +164,18 @@ export async function handleGetCustomerNetwork(args: unknown) {
       };
     }
 
-    // 관계 조회 - relationship_info 내부 필드 사용 (relationships.ts와 동일 구조)
-    const relationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS)
-      .find({
-        $or: [
-          { 'relationship_info.from_customer_id': objectId },
-          { 'relationship_info.to_customer_id': objectId }
-        ],
+    // Internal API 경유: 관계 조회 (양방향)
+    const [relsFrom, relsTo] = await Promise.all([
+      queryRelationships({
+        'relationship_info.from_customer_id': params.customerId,
+        'relationship_info.status': 'active'
+      }),
+      queryRelationships({
+        'relationship_info.to_customer_id': params.customerId,
         'relationship_info.status': 'active'
       })
-      .toArray();
+    ]);
+    const relationships = [...relsFrom, ...relsTo];
 
     // 관련 고객 ID 수집
     const relatedCustomerIds = new Set<string>();
@@ -197,24 +191,16 @@ export async function handleGetCustomerNetwork(args: unknown) {
       }
     });
 
-    // 관련 고객 정보 조회
-    const relatedObjectIds = Array.from(relatedCustomerIds)
-      .map(id => toSafeObjectId(id))
-      .filter((id): id is ObjectId => id !== null);
+    // Internal API 경유: 관련 고객 정보 조회
+    const relatedIdArray = Array.from(relatedCustomerIds);
+    const relatedCustomers = relatedIdArray.length > 0
+      ? await queryCustomers(
+          { _id: { $in: relatedIdArray } },
+          { _id: 1, 'personal_info.name': 1, 'personal_info.mobile_phone': 1, 'insurance_info.customer_type': 1 }
+        )
+      : [];
 
-    const relatedCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
-      .find({
-        _id: { $in: relatedObjectIds }
-      })
-      .project({
-        _id: 1,
-        'personal_info.name': 1,
-        'personal_info.mobile_phone': 1,
-        'insurance_info.customer_type': 1
-      })
-      .toArray();
-
-    const customerMap = new Map(relatedCustomers.map(c => [c._id.toString(), c]));
+    const customerMap = new Map(relatedCustomers.map((c: any) => [c._id?.toString(), c]));
 
     // 역방향 관계 타입을 기준 고객 관점으로 반전하는 매핑
     // 예: 곽지민→곽승철:parent (곽지민 관점) → 곽승철에서 보면 곽지민은 child
@@ -294,21 +280,19 @@ export async function handleGetCustomerNetwork(args: unknown) {
         }
       });
 
-    // 2차 관계 조회 (법인 고객들의 관계)
+    // 2차 관계 조회 (법인 고객들의 관계) — Internal API 경유
     if (corporateCustomerIds.length > 0) {
-      const corporateObjectIds = corporateCustomerIds
-        .map(id => toSafeObjectId(id))
-        .filter((id): id is ObjectId => id !== null);
-
-      const secondaryRelationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS)
-        .find({
-          $or: [
-            { 'relationship_info.from_customer_id': { $in: corporateObjectIds } },
-            { 'relationship_info.to_customer_id': { $in: corporateObjectIds } }
-          ],
+      const [secRelsFrom, secRelsTo] = await Promise.all([
+        queryRelationships({
+          'relationship_info.from_customer_id': { $in: corporateCustomerIds },
+          'relationship_info.status': 'active'
+        }),
+        queryRelationships({
+          'relationship_info.to_customer_id': { $in: corporateCustomerIds },
           'relationship_info.status': 'active'
         })
-        .toArray();
+      ]);
+      const secondaryRelationships = [...secRelsFrom, ...secRelsTo];
 
       // 2차 관계 고객 ID 수집
       const secondaryCustomerIds = new Set<string>();
@@ -325,22 +309,16 @@ export async function handleGetCustomerNetwork(args: unknown) {
         }
       });
 
-      // 2차 고객 정보 조회
-      const secondaryObjectIds = Array.from(secondaryCustomerIds)
-        .map(id => toSafeObjectId(id))
-        .filter((id): id is ObjectId => id !== null);
+      // Internal API 경유: 2차 고객 정보 조회
+      const secondaryIdArray = Array.from(secondaryCustomerIds);
 
-      if (secondaryObjectIds.length > 0) {
-        const secondaryCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
-          .find({ _id: { $in: secondaryObjectIds } })
-          .project({
-            _id: 1,
-            'personal_info.name': 1,
-            'insurance_info.customer_type': 1
-          })
-          .toArray();
+      if (secondaryIdArray.length > 0) {
+        const secondaryCustomers = await queryCustomers(
+          { _id: { $in: secondaryIdArray } },
+          { _id: 1, 'personal_info.name': 1, 'insurance_info.customer_type': 1 }
+        );
 
-        const secondaryCustomerMap = new Map(secondaryCustomers.map(c => [c._id.toString(), c]));
+        const secondaryCustomerMap = new Map(secondaryCustomers.map((c: any) => [c._id?.toString(), c]));
 
         // 각 법인 노드에 2차 관계 연결
         const processedSecondaryKeys = new Set<string>();

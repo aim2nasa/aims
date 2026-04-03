@@ -219,6 +219,55 @@ def replace_customer_reviews(customer_id: str, customer_reviews: list) -> dict:
 # Phase 1: Read-only 조회 함수 (기존)
 # =========================================================================
 
+def query_files(filter: dict, projection: dict = None, sort: dict = None, limit: int = 100) -> list:
+    """POST /internal/files/query — files 범용 조회. 반환: 문서 리스트 (실패 시 [])"""
+    try:
+        body = {"filter": filter}
+        if projection:
+            body["projection"] = projection
+        if sort:
+            body["sort"] = sort
+        body["limit"] = limit
+        resp = requests.post(
+            f"{AIMS_API_URL}/api/internal/files/query",
+            json=body,
+            headers=_headers(),
+            timeout=10
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("success"):
+                return data.get("data", [])
+    except Exception as e:
+        logger.warning(f"[InternalAPI] files/query 실패: {e}")
+    return []
+
+
+def query_file_one(filter: dict, projection: dict = None) -> dict | None:
+    """files에서 단건 조회 (find_one 대체). query_files(limit=1)[0] 패턴."""
+    results = query_files(filter, projection, limit=1)
+    return results[0] if results else None
+
+
+def get_customer(customer_id: str) -> dict | None:
+    """GET /internal/customers/:id — 고객 상세 조회. 실패 시 None."""
+    try:
+        resp = requests.get(
+            f"{AIMS_API_URL}/api/internal/customers/{customer_id}",
+            headers=_headers(),
+            timeout=10
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("success"):
+                return data.get("data")
+        elif resp.status_code == 404:
+            return None
+    except Exception as e:
+        logger.warning(f"[InternalAPI] 고객 조회 실패 ({customer_id}): {e}")
+    return None
+
+
 def has_report(customer_id: str, source_file_id: str, report_type: str) -> bool:
     """
     고객에게 특정 파일의 AR/CRS 파싱 결과가 이미 있는지 확인.

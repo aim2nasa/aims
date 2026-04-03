@@ -314,3 +314,122 @@ export async function getCustomerName(customerId: string): Promise<{ name: strin
     `/internal/customers/${customerId}/name`
   );
 }
+
+// ============================================================
+// Phase 6: Read Gateway — customers/memos/relationships
+// ============================================================
+
+/**
+ * 고객 단건 조회 (소유권 필터 없음)
+ * GET /internal/customers/:id
+ */
+export async function getCustomer(customerId: string): Promise<any | null> {
+  return internalApiGet(`/internal/customers/${customerId}`);
+}
+
+/**
+ * 고객 범용 쿼리
+ * POST /internal/customers/query
+ * filter 내 _id는 서버에서 자동 ObjectId 변환
+ */
+export async function queryCustomers(
+  filter: Record<string, unknown>,
+  projection?: Record<string, unknown> | null,
+  sort?: Record<string, unknown> | null,
+  limit?: number,
+  skip?: number
+): Promise<any[]> {
+  const body: Record<string, unknown> = { filter };
+  if (projection) body.projection = projection;
+  if (sort) body.sort = sort;
+  if (limit) body.limit = limit;
+  if (skip) body.skip = skip;
+
+  const data = await internalApiPost<any[]>('/internal/customers/query', body);
+  return data || [];
+}
+
+/**
+ * 고객 수 조회
+ * POST /internal/customers/count
+ */
+export async function countCustomers(filter: Record<string, unknown>): Promise<number> {
+  const data = await internalApiPost<{ count: number }>('/internal/customers/count', { filter });
+  return data?.count ?? 0;
+}
+
+/**
+ * 고객 aggregate 파이프라인 실행
+ * POST /internal/customers/aggregate
+ */
+export async function aggregateCustomers(pipeline: Record<string, unknown>[]): Promise<any[]> {
+  const data = await internalApiPost<any[]>('/internal/customers/aggregate', { pipeline });
+  return data || [];
+}
+
+/**
+ * 메모 단건 조회
+ * GET /internal/memos/:id
+ */
+export async function getMemo(memoId: string): Promise<any | null> {
+  return internalApiGet(`/internal/memos/${memoId}`);
+}
+
+/**
+ * 메모 범용 쿼리
+ * POST /internal/memos/query
+ * filter 내 _id, customer_id는 서버에서 자동 ObjectId 변환
+ */
+export async function queryMemos(
+  filter: Record<string, unknown>,
+  projection?: Record<string, unknown> | null,
+  sort?: Record<string, unknown> | null,
+  limit?: number,
+  skip?: number
+): Promise<any[]> {
+  const body: Record<string, unknown> = { filter };
+  if (projection) body.projection = projection;
+  if (sort) body.sort = sort;
+  if (limit) body.limit = limit;
+  if (skip) body.skip = skip;
+
+  const data = await internalApiPost<any[]>('/internal/memos/query', body);
+  return data || [];
+}
+
+/**
+ * 메모 수 조회
+ * POST /internal/memos/count
+ */
+export async function countMemos(filter: Record<string, unknown>): Promise<number> {
+  const data = await internalApiPost<{ count: number }>('/internal/memos/count', { filter });
+  return data?.count ?? 0;
+}
+
+/**
+ * 관계 단건 조회
+ * GET /internal/relationships/:id
+ */
+export async function getRelationship(relationshipId: string): Promise<any | null> {
+  return internalApiGet(`/internal/relationships/${relationshipId}`);
+}
+
+/**
+ * 관계 범용 쿼리
+ * POST /internal/relationships/query
+ * filter 내 ObjectId 필드는 서버에서 자동 변환
+ */
+export async function queryRelationships(
+  filter: Record<string, unknown>,
+  projection?: Record<string, unknown> | null,
+  sort?: Record<string, unknown> | null,
+  limit?: number
+): Promise<any[]> {
+  const body: Record<string, unknown> = { filter };
+  if (projection) body.projection = projection;
+  if (sort) body.sort = sort;
+  if (limit) body.limit = limit;
+
+  const data = await internalApiPost<any[]>('/internal/relationships/query', body);
+  return data || [];
+}

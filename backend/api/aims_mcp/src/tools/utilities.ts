@@ -1,9 +1,9 @@
 import { z, ZodError } from 'zod';
 import { ObjectId } from 'mongodb';
-import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { getDB, escapeRegex, toSafeObjectId, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
-import { aggregateFiles } from '../internalApi.js';
+import { aggregateFiles, queryCustomers } from '../internalApi.js';
 
 // ============================================================
 // 스키마 정의
@@ -506,16 +506,20 @@ async function calculateAiCredits(db: ReturnType<typeof getDB>, userId: string, 
 export async function handleCheckCustomerName(args: unknown) {
   try {
     const params = checkCustomerNameSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
     const trimmedName = params.name.trim();
 
-    // 대소문자 무시하여 중복 체크
-    const existing = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      'meta.created_by': userId,
-      'personal_info.name': { $regex: new RegExp(`^${escapeRegex(trimmedName)}$`, 'i') }
-    });
+    // Internal API 경유: 대소문자 무시하여 중복 체크
+    const results = await queryCustomers(
+      {
+        'meta.created_by': userId,
+        'personal_info.name': { $regex: `^${escapeRegex(trimmedName)}$`, $options: 'i' }
+      },
+      { 'personal_info.name': 1, 'insurance_info.customer_type': 1, 'meta.status': 1 },
+      null, 1
+    );
+    const existing = results[0] || null;
 
     if (existing) {
       return {
@@ -525,7 +529,7 @@ export async function handleCheckCustomerName(args: unknown) {
             exists: true,
             name: trimmedName,
             existingCustomer: {
-              id: existing._id.toString(),
+              id: (existing._id?.toString?.() || existing._id) as string,
               name: existing.personal_info?.name,
               customerType: existing.insurance_info?.customer_type,
               status: existing.meta?.status || 'active'

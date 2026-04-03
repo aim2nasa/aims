@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from bson import ObjectId
 
 from services.openai_service import OpenAIService
-from services.mongo_service import MongoService
+from services.internal_api import query_file_one, query_files
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -201,14 +201,12 @@ async def generate_single_display_name(request: SingleDisplayNameRequest):
     if not request.user_id:
         raise HTTPException(status_code=400, detail="user_id는 필수입니다.")
 
-    collection = MongoService.get_collection("files")
-
     try:
-        obj_id = ObjectId(doc_id)
+        ObjectId(doc_id)  # ID 형식 검증만
     except Exception:
         return DocumentResult(document_id=doc_id, status="failed", reason="invalid_document_id")
 
-    doc = await collection.find_one({"_id": obj_id})
+    doc = await query_file_one({"_id": doc_id})
     if not doc:
         return DocumentResult(document_id=doc_id, status="failed", reason="document_not_found")
 
@@ -308,7 +306,6 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
     if not request.user_id:
         raise HTTPException(status_code=400, detail="user_id는 필수입니다.")
 
-    collection = MongoService.get_collection("files")
     results: List[DocumentResult] = []
     completed = 0
     skipped = 0
@@ -320,8 +317,8 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
     existing_aliases: List[str] = []
     customer_name = None
     try:
-        first_doc = await collection.find_one(
-            {"_id": ObjectId(request.document_ids[0])},
+        first_doc = await query_file_one(
+            {"_id": request.document_ids[0]},
             {"customerId": 1}
         )
         if first_doc and first_doc.get("customerId"):
@@ -329,14 +326,15 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
             from services.internal_api import get_customer_name
             customer_name = await get_customer_name(str(first_doc["customerId"]))
         if first_doc and first_doc.get("customerId"):
-            cursor = collection.find(
+            alias_docs = await query_files(
                 {
                     "customerId": first_doc["customerId"],
                     "displayName": {"$exists": True, "$ne": None}
                 },
-                {"displayName": 1}
+                projection={"displayName": 1},
+                limit=1000
             )
-            async for d in cursor:
+            for d in alias_docs:
                 dn = d.get("displayName")
                 if dn:
                     existing_aliases.append(dn)
@@ -358,7 +356,7 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
         try:
             # 1. 문서 조회
             try:
-                obj_id = ObjectId(doc_id)
+                ObjectId(doc_id)  # ID 형식 검증만
             except Exception:
                 results.append(DocumentResult(
                     document_id=doc_id,
@@ -368,7 +366,7 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
                 failed += 1
                 continue
 
-            doc = await collection.find_one({"_id": obj_id})
+            doc = await query_file_one({"_id": doc_id})
             if not doc:
                 results.append(DocumentResult(
                     document_id=doc_id,
