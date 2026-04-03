@@ -466,28 +466,27 @@ async def register_ar_contracts(
         if not user_id:
             raise HTTPException(status_code=400, detail="user_id required")
 
-        from main import db
-        if db is None:
-            raise HTTPException(status_code=500, detail="데이터베이스 연결 오류")
-
-        # customer 소유권 검증
-        try:
-            customer_obj_id = ObjectId(customer_id)
-        except InvalidId:
+        # customer_id 유효성 검증
+        if not ObjectId.is_valid(customer_id):
             raise HTTPException(status_code=400, detail="Invalid customer_id format")
 
-        customer = db.customers.find_one({
-            "_id": customer_obj_id,
-            "meta.created_by": user_id
-        })
-
-        if not customer:
+        # customer 소유권 검증 (Internal API 경유)
+        if not check_customer_ownership(customer_id, user_id):
             raise HTTPException(
                 status_code=404,
                 detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
             )
 
+        from main import db
+        if db is None:
+            raise HTTPException(status_code=500, detail="데이터베이스 연결 오류")
+
         # annual_reports 배열에서 해당 AR 찾기
+        customer_obj_id = ObjectId(customer_id)
+        customer = db.customers.find_one({"_id": customer_obj_id})
+        if not customer:
+            logger.error(f"소유권 확인 통과 후 고객 문서 없음: {customer_id}")
+            raise HTTPException(status_code=500, detail="고객 데이터 일관성 오류")
         annual_reports = customer.get("annual_reports", [])
         target_issue_date = request.issue_date.split('T')[0]  # YYYY-MM-DD만 비교
 

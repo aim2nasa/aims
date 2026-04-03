@@ -314,3 +314,98 @@ class TestBackgroundParsingEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
+
+
+class TestRegisterARContractsEndpoints:
+    """AR 보험계약 등록 엔드포인트 테스트 (POST /customers/{id}/ar-contracts)"""
+
+    @patch('routes.query.check_customer_ownership', return_value=True)
+    @patch('main.db')
+    def test_register_success(self, mock_db, mock_ownership):
+        """정상 등록 성공"""
+        customer_id = str(ObjectId())
+
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "annual_reports": [
+                {"customer_name": "테스트고객", "issue_date": "2025-08-27", "total_contracts": 5}
+            ]
+        }
+        mock_customers.update_one.return_value = MagicMock(modified_count=1)
+        mock_db.customers = mock_customers
+
+        response = client.post(
+            f"/customers/{customer_id}/ar-contracts",
+            json={"issue_date": "2025-08-27", "customer_name": "테스트고객"},
+            headers={"x-user-id": "test_user"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["registered_at"] is not None
+
+    @patch('routes.query.check_customer_ownership', return_value=False)
+    def test_ownership_fail(self, mock_ownership):
+        """소유권 확인 실패 → 404"""
+        response = client.post(
+            f"/customers/{str(ObjectId())}/ar-contracts",
+            json={"issue_date": "2025-08-27"},
+            headers={"x-user-id": "other_user"}
+        )
+        assert response.status_code == 404
+
+    def test_invalid_customer_id(self):
+        """유효하지 않은 customer_id → 400"""
+        response = client.post(
+            "/customers/invalid-id/ar-contracts",
+            json={"issue_date": "2025-08-27"},
+            headers={"x-user-id": "test_user"}
+        )
+        assert response.status_code == 400
+
+    @patch('routes.query.check_customer_ownership', return_value=True)
+    @patch('main.db')
+    def test_duplicate_registration(self, mock_db, mock_ownership):
+        """이미 등록된 AR → duplicate=True"""
+        customer_id = str(ObjectId())
+
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "annual_reports": [
+                {"customer_name": "테스트고객", "issue_date": "2025-08-27", "registered_at": "2025-09-01T00:00:00Z"}
+            ]
+        }
+        mock_db.customers = mock_customers
+
+        response = client.post(
+            f"/customers/{customer_id}/ar-contracts",
+            json={"issue_date": "2025-08-27", "customer_name": "테스트고객"},
+            headers={"x-user-id": "test_user"}
+        )
+        assert response.status_code == 200
+        assert response.json()["duplicate"] is True
+
+    @patch('routes.query.check_customer_ownership', return_value=True)
+    @patch('main.db')
+    def test_customer_none_toctou(self, mock_db, mock_ownership):
+        """소유권 통과 후 find_one None (TOCTOU) → 500"""
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
+
+        response = client.post(
+            f"/customers/{str(ObjectId())}/ar-contracts",
+            json={"issue_date": "2025-08-27"},
+            headers={"x-user-id": "test_user"}
+        )
+        assert response.status_code == 500
+
+    def test_no_user_id(self):
+        """userId 미전달 → 400"""
+        response = client.post(
+            f"/customers/{str(ObjectId())}/ar-contracts",
+            json={"issue_date": "2025-08-27"},
+        )
+        assert response.status_code == 400
