@@ -132,12 +132,23 @@ if [ -n "$STAGED_BACKEND_FILES" ]; then
       echo "  ✅ aims_mcp TypeScript check passed"
     fi
 
+    # aims_rag_api 테스트 (Docker)
+    if [ "$SHARED_SCHEMA_CHANGED" = "1" ] || echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_rag_api/"; then
+      echo "  📦 Testing aims_rag_api (Docker)..."
+      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'docker exec aims-rag-api python3 -m pytest tests/ -q --tb=short 2>&1' ; then
+        echo "  ❌ aims_rag_api tests failed!"
+        exit 1
+      fi
+      echo "  ✅ aims_rag_api tests passed"
+    fi
+
     # 어떤 모듈도 매칭되지 않은 경우 (embedding, shared 등 기타 백엔드 변경)
     if [ "$SHARED_SCHEMA_CHANGED" = "0" ] && \
        ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_api/" && \
        ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/annual_report_api/" && \
        ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/document_pipeline/" && \
-       ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_mcp/"; then
+       ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_mcp/" && \
+       ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_rag_api/"; then
       echo "  ℹ️  변경된 백엔드 모듈에 대한 테스트 없음 (스킵)"
     fi
 
