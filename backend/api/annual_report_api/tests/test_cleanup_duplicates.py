@@ -32,7 +32,8 @@ client = TestClient(app)
 class TestCleanupDuplicatesFunction:
     """cleanup_duplicate_annual_reports() 함수 유닛 테스트"""
 
-    def test_cleanup_multiple_duplicates_keeps_closest(self):
+    @patch('services.db_writer.get_customer')
+    def test_cleanup_multiple_duplicates_keeps_closest(self, mock_get_customer):
         """여러 중복 AR이 있을 때 가장 가까운 parsed_at을 가진 것만 유지"""
         # 테스트 데이터 준비
         customer_id = str(ObjectId())
@@ -64,11 +65,8 @@ class TestCleanupDuplicatesFunction:
 
         # Mock DB 설정
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        mock_get_customer.return_value = {
+            "_id": customer_id,
             "annual_reports": reports
         }
 
@@ -98,7 +96,8 @@ class TestCleanupDuplicatesFunction:
             assert len(kept_reports) == 1
             assert kept_reports[0]["fsr_name"] == "담당자2"
 
-    def test_cleanup_no_duplicates(self):
+    @patch('services.db_writer.get_customer')
+    def test_cleanup_no_duplicates(self, mock_get_customer):
         """중복이 없으면 아무것도 삭제하지 않음"""
         customer_id = str(ObjectId())
         issue_date = "2025-08-29"
@@ -115,11 +114,8 @@ class TestCleanupDuplicatesFunction:
 
         # Mock DB 설정
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        mock_get_customer.return_value = {
+            "_id": customer_id,
             "annual_reports": reports
         }
 
@@ -137,10 +133,8 @@ class TestCleanupDuplicatesFunction:
         assert result["deleted_count"] == 0
         assert "중복된 Annual Report가 없습니다" in result["message"]
 
-        # Internal API가 호출되지 않아야 함 (중복 없으므로)
-        # replace_annual_reports는 import 시점에 이미 바인딩되므로 별도 검증 불필요
-
-    def test_cleanup_preserves_different_issue_dates(self):
+    @patch('services.db_writer.get_customer')
+    def test_cleanup_preserves_different_issue_dates(self, mock_get_customer):
         """다른 발행일의 AR은 보존되어야 함"""
         customer_id = str(ObjectId())
         issue_date = "2025-08-29"
@@ -172,11 +166,8 @@ class TestCleanupDuplicatesFunction:
 
         # Mock DB 설정
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        mock_get_customer.return_value = {
+            "_id": customer_id,
             "annual_reports": reports
         }
 
@@ -220,16 +211,13 @@ class TestCleanupDuplicatesFunction:
                 reference_linked_at="2025-11-03T06:25:30.000Z"
             )
 
-    def test_cleanup_customer_not_found(self):
+    @patch('services.db_writer.get_customer')
+    def test_cleanup_customer_not_found(self, mock_get_customer):
         """존재하지 않는 고객은 실패 반환"""
         customer_id = str(ObjectId())
+        mock_get_customer.return_value = None  # 고객 없음
 
-        # Mock DB 설정
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-
-        mock_customers.find_one.return_value = None  # 고객 없음
 
         # 함수 실행
         result = cleanup_duplicate_annual_reports(
@@ -244,22 +232,20 @@ class TestCleanupDuplicatesFunction:
         assert "고객을 찾을 수 없습니다" in result["message"]
         assert result["deleted_count"] == 0
 
-    def test_cleanup_invalid_reference_linked_at(self):
+    @patch('services.db_writer.get_customer')
+    def test_cleanup_invalid_reference_linked_at(self, mock_get_customer):
         """유효하지 않은 reference_linked_at은 ValueError 발생"""
         customer_id = str(ObjectId())
 
-        # Mock DB 설정
-        mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        mock_get_customer.return_value = {
+            "_id": customer_id,
             "annual_reports": [
                 {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z", "customer_name": "테스트고객"},
                 {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"}  # 중복 추가
             ]
         }
+
+        mock_db = MagicMock()
 
         # 유효하지 않은 날짜 형식 (customer_name 필수!)
         with pytest.raises(ValueError, match="유효하지 않은 reference_linked_at"):
@@ -271,7 +257,8 @@ class TestCleanupDuplicatesFunction:
                 customer_name="테스트고객"
             )
 
-    def test_cleanup_no_parsed_at_keeps_first(self):
+    @patch('services.db_writer.get_customer')
+    def test_cleanup_no_parsed_at_keeps_first(self, mock_get_customer):
         """parsed_at이 없는 경우 첫 번째 리포트 유지"""
         customer_id = str(ObjectId())
         issue_date = "2025-08-29"
@@ -292,11 +279,8 @@ class TestCleanupDuplicatesFunction:
 
         # Mock DB 설정
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        mock_get_customer.return_value = {
+            "_id": customer_id,
             "annual_reports": reports
         }
 
@@ -322,22 +306,18 @@ class TestCleanupDuplicatesFunction:
 class TestCleanupDuplicatesEndpoint:
     """POST /customers/{customer_id}/annual-reports/cleanup-duplicates 엔드포인트 테스트"""
 
+    @patch('services.db_writer.get_customer')
     @patch('services.db_writer.replace_annual_reports')
     @patch('routes.query.check_customer_ownership', return_value=True)
     @patch('main.db')
-    def test_endpoint_successful_cleanup(self, mock_db, mock_ownership, mock_replace):
+    def test_endpoint_successful_cleanup(self, mock_db, mock_ownership, mock_replace, mock_get_customer):
         """정상적인 정리 요청 성공"""
         customer_id = str(ObjectId())
         user_id = str(ObjectId())
 
-        # Mock DB 설정 (attribute와 dictionary 접근 모두 지원)
-        mock_customers = MagicMock()
-        mock_db.customers = mock_customers
-        mock_db.__getitem__.return_value = mock_customers  # db["customers"] 지원
-
-        # cleanup 함수 내부에서 고객 조회
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        # get_customer mock 설정
+        mock_get_customer.return_value = {
+            "_id": customer_id,
             "annual_reports": [
                 {
                     "issue_date": "2025-08-29T00:00:00Z",
@@ -388,19 +368,12 @@ class TestCleanupDuplicatesEndpoint:
 
         assert response.status_code == 400  # userId required
 
+    @patch('routes.query.check_customer_ownership', return_value=False)
     @patch('main.db')
-    def test_endpoint_unauthorized_customer(self, mock_db):
-        """다른 사용자의 고객은 403 에러"""
+    def test_endpoint_unauthorized_customer(self, mock_db, mock_ownership):
+        """다른 사용자의 고객은 404 에러"""
         customer_id = str(ObjectId())
         user_id = str(ObjectId())
-        other_user_id = str(ObjectId())
-
-        # Mock DB 설정
-        mock_customers = MagicMock()
-        mock_db.customers = mock_customers
-
-        # 다른 userId 소유 - find_one이 None 반환 (권한 없음)
-        mock_customers.find_one.return_value = None
 
         response = client.post(
             f"/customers/{customer_id}/annual-reports/cleanup-duplicates",
@@ -414,17 +387,12 @@ class TestCleanupDuplicatesEndpoint:
         assert response.status_code == 404  # 고객을 찾을 수 없거나 권한 없음
         assert "고객을 찾을 수 없거나 접근 권한이 없습니다" in response.json()["detail"]
 
+    @patch('routes.query.check_customer_ownership', return_value=False)
     @patch('main.db')
-    def test_endpoint_customer_not_found(self, mock_db):
+    def test_endpoint_customer_not_found(self, mock_db, mock_ownership):
         """존재하지 않는 고객은 404 에러"""
         customer_id = str(ObjectId())
         user_id = str(ObjectId())
-
-        # Mock DB 설정
-        mock_customers = MagicMock()
-        mock_db.customers = mock_customers
-
-        mock_customers.find_one.return_value = None  # 고객 없음
 
         response = client.post(
             f"/customers/{customer_id}/annual-reports/cleanup-duplicates",
@@ -456,19 +424,17 @@ class TestCleanupDuplicatesEndpoint:
 class TestCleanupRegressionTests:
     """데이터 무결성 회귀 테스트"""
 
-    def test_cleanup_does_not_affect_other_customers(self):
+    @patch('services.db_writer.get_customer')
+    def test_cleanup_does_not_affect_other_customers(self, mock_get_customer):
         """한 고객의 정리가 다른 고객에 영향을 주지 않음"""
         customer1_id = str(ObjectId())
-        customer2_id = str(ObjectId())
 
         # Mock DB 설정
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
 
         # Customer 1 데이터 (customer_name 필수!)
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer1_id),
+        mock_get_customer.return_value = {
+            "_id": customer1_id,
             "annual_reports": [
                 {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z", "customer_name": "테스트고객"},
                 {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"}
@@ -493,18 +459,17 @@ class TestCleanupRegressionTests:
             call_args = mock_replace.call_args
             assert call_args[0][0] == customer1_id
 
-    def test_multiple_consecutive_cleanups(self):
+    @patch('services.db_writer.get_customer')
+    def test_multiple_consecutive_cleanups(self, mock_get_customer):
         """연속된 정리 작업이 올바르게 동작"""
         customer_id = str(ObjectId())
 
         # Mock DB 설정
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
 
         # 첫 번째 정리: 2025-08-29 (customer_name 필수!)
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        mock_get_customer.return_value = {
+            "_id": customer_id,
             "annual_reports": [
                 {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z", "customer_name": "테스트고객"},
                 {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"},
@@ -528,8 +493,8 @@ class TestCleanupRegressionTests:
             assert result1["deleted_count"] == 1
 
             # 두 번째 정리: 2025-07-15 (customer_name 필수!)
-            mock_customers.find_one.return_value = {
-                "_id": ObjectId(customer_id),
+            mock_get_customer.return_value = {
+                "_id": customer_id,
                 "annual_reports": [
                     {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"},
                     {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:00:00.000Z", "customer_name": "테스트고객"},
@@ -552,7 +517,8 @@ class TestCleanupRegressionTests:
             final_reports = final_call_args[0][1]
             assert len(final_reports) == 2
 
-    def test_cleanup_preserves_all_fields(self):
+    @patch('services.db_writer.get_customer')
+    def test_cleanup_preserves_all_fields(self, mock_get_customer):
         """정리 후에도 유지된 리포트의 모든 필드가 보존됨"""
         customer_id = str(ObjectId())
 
@@ -581,11 +547,8 @@ class TestCleanupRegressionTests:
 
         # Mock DB 설정
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        mock_get_customer.return_value = {
+            "_id": customer_id,
             "annual_reports": reports
         }
 

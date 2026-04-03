@@ -184,24 +184,20 @@ class TestConvertibleMimeOCRFallback:
         mock.delete_one = AsyncMock(return_value=MagicMock(deleted_count=0))
         return mock
 
-    async def test_ppt_no_text_with_conv_pdf_queues_ocr(self, mock_files_collection):
+    async def test_ppt_no_text_with_conv_pdf_queues_ocr(self, mock_files_collection, mock_internal_api_writes):
         """PPT(텍스트 없음) + 변환 PDF 존재 → OCR 큐 진입 + 변환 PDF 경로 사용"""
         from routers.doc_prep_main import process_document_pipeline
 
-        # find_one이 convPdfPath를 반환하도록 설정
+        # query_file_one이 convPdfPath를 반환하도록 설정
         conv_pdf_path = "/data/converted/test.pdf"
 
-        call_count = {"n": 0}
-        original_find_one = mock_files_collection.find_one
-
-        async def smart_find_one(query, projection=None):
-            call_count["n"] += 1
+        async def smart_query_file_one(query, projection=None):
             # convPdfPath 조회 시 변환된 PDF 경로 반환
             if projection and "upload.convPdfPath" in projection:
                 return {"upload": {"convPdfPath": conv_pdf_path}}
             return None
 
-        mock_files_collection.find_one = AsyncMock(side_effect=smart_find_one)
+        mock_internal_api_writes["query_file_one"].side_effect = smart_query_file_one
 
         progress_values = []
         progress_stages = []
@@ -247,17 +243,17 @@ class TestConvertibleMimeOCRFallback:
         assert 60 in progress_values, "OCR 준비 progress(60)가 있어야 합니다"
         assert 70 in progress_values, "OCR 큐 추가 progress(70)가 있어야 합니다"
 
-    async def test_hwp_no_text_no_conv_pdf_archives(self, mock_files_collection):
+    async def test_hwp_no_text_no_conv_pdf_archives(self, mock_files_collection, mock_internal_api_writes):
         """HWP(텍스트 없음) + 변환 PDF 없음 → 보관 처리 (기존 동작 유지)"""
         from routers.doc_prep_main import process_document_pipeline
 
-        # find_one이 convPdfPath 없음을 반환
-        async def smart_find_one(query, projection=None):
+        # query_file_one이 convPdfPath 없음을 반환
+        async def smart_query_file_one(query, projection=None):
             if projection and "upload.convPdfPath" in projection:
                 return {"upload": {}}  # convPdfPath 없음
             return None
 
-        mock_files_collection.find_one = AsyncMock(side_effect=smart_find_one)
+        mock_internal_api_writes["query_file_one"].side_effect = smart_query_file_one
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
              patch("services.file_service.FileService.save_file", return_value=("saved.hwp", "/data/saved.hwp")), \

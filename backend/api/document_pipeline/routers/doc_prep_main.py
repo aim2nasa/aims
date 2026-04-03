@@ -5,6 +5,9 @@ Main orchestrator for document processing pipeline
 큐잉 모드 지원:
 - UPLOAD_QUEUE_ENABLED=True: 요청을 MongoDB 큐에 저장 후 즉시 응답
 - UPLOAD_QUEUE_ENABLED=False: 기존 동기 처리 (롤백용)
+
+컬렉션 스키마 계약: @aims/shared-schema (backend/shared/schema/)
+- files → COLLECTIONS.FILES
 """
 import json
 import logging

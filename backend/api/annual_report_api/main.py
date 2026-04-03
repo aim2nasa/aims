@@ -1,6 +1,11 @@
 """
 Annual Report API - FastAPI 애플리케이션
 보험 고객의 Annual Report PDF 파싱 및 조회 API
+
+컬렉션 스키마 계약 참조: @aims/shared-schema (backend/shared/schema/)
+- files: 스키마 정의는 shared-schema, Python 코드는 db["files"] 직접 사용
+- customers: 동일
+- ar_parse_queue: 스키마 정의는 shared-schema (AR_QUEUE_STATUS 등), Python 코드는 QueueManager 경유
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

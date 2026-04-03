@@ -17,6 +17,8 @@ const fs = require('fs').promises;
 const axios = require('axios');
 const { checkUploadAllowed } = require('../lib/storageQuotaService');
 const backendLogger = require('../lib/backendLogger');
+const { notifyPersonalFilesSubscribers } = require('../lib/sseManager');
+const { utcNowISO } = require('../lib/timeUtils');
 
 // 파일 저장소 기본 경로
 const BASE_STORAGE_PATH = '/data/files/users';
@@ -220,12 +222,9 @@ router.post('/folders', authenticateJWT, async (req, res) => {
 
     // SSE 알림: 폴더 생성
     try {
-      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
-        userId,
-        changeType: 'created',
-        itemId: result.insertedId.toString(),
-        itemName: newFolder.name,
-        itemType: 'folder'
+      notifyPersonalFilesSubscribers(userId, 'file-change', {
+        type: 'created', itemId: result.insertedId.toString(),
+        itemName: newFolder.name, itemType: 'folder', timestamp: utcNowISO()
       });
     } catch (sseErr) {
       console.warn('[SSE] 폴더 생성 알림 실패:', sseErr.message);
@@ -309,12 +308,9 @@ router.post('/upload', authenticateJWT, upload.single('file'), async (req, res) 
 
     // SSE 알림: 파일 업로드
     try {
-      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
-        userId,
-        changeType: 'created',
-        itemId: result.insertedId.toString(),
-        itemName: newFile.name,
-        itemType: 'file'
+      notifyPersonalFilesSubscribers(userId, 'file-change', {
+        type: 'created', itemId: result.insertedId.toString(),
+        itemName: newFile.name, itemType: 'file', timestamp: utcNowISO()
       });
     } catch (sseErr) {
       console.warn('[SSE] 파일 업로드 알림 실패:', sseErr.message);
@@ -426,12 +422,9 @@ router.put('/:itemId/rename', authenticateJWT, async (req, res) => {
 
     // SSE 알림: 이름 변경
     try {
-      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
-        userId,
-        changeType: 'renamed',
-        itemId: itemId,
-        itemName: newName.trim(),
-        itemType: item.type
+      notifyPersonalFilesSubscribers(userId, 'file-change', {
+        type: 'renamed', itemId: itemId,
+        itemName: newName.trim(), itemType: item.type, timestamp: utcNowISO()
       });
     } catch (sseErr) {
       console.warn('[SSE] 이름 변경 알림 실패:', sseErr.message);
@@ -521,12 +514,9 @@ router.delete('/:itemId', authenticateJWT, async (req, res) => {
 
     // SSE 알림: 항목 삭제
     try {
-      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
-        userId,
-        changeType: 'deleted',
-        itemId: itemId,
-        itemName: item.name,
-        itemType: item.type
+      notifyPersonalFilesSubscribers(userId, 'file-change', {
+        type: 'deleted', itemId: itemId,
+        itemName: item.name, itemType: item.type, timestamp: utcNowISO()
       });
     } catch (sseErr) {
       console.warn('[SSE] 항목 삭제 알림 실패:', sseErr.message);
@@ -716,12 +706,9 @@ router.put('/:itemId/move', authenticateJWT, async (req, res) => {
 
     // SSE 알림: 항목 이동
     try {
-      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
-        userId,
-        changeType: 'moved',
-        itemId: itemId,
-        itemName: item.name,
-        itemType: item.type
+      notifyPersonalFilesSubscribers(userId, 'file-change', {
+        type: 'moved', itemId: itemId,
+        itemName: item.name, itemType: item.type, timestamp: utcNowISO()
       });
     } catch (sseErr) {
       console.warn('[SSE] 항목 이동 알림 실패:', sseErr.message);
@@ -921,12 +908,9 @@ router.put('/documents/:documentId/move', authenticateJWT, async (req, res) => {
 
     // SSE 알림: 문서 이동
     try {
-      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
-        userId,
-        changeType: 'moved',
-        itemId: documentId,
-        itemName: document.filename || 'document',
-        itemType: 'document'
+      notifyPersonalFilesSubscribers(userId, 'file-change', {
+        type: 'moved', itemId: documentId,
+        itemName: document.filename || 'document', itemType: 'document', timestamp: utcNowISO()
       });
     } catch (sseErr) {
       console.warn('[SSE] 문서 이동 알림 실패:', sseErr.message);
@@ -997,12 +981,9 @@ router.put('/documents/:documentId/rename', authenticateJWT, async (req, res) =>
 
     // SSE 알림: 문서 이름 변경
     try {
-      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
-        userId,
-        changeType: 'renamed',
-        itemId: documentId,
-        itemName: newName.trim(),
-        itemType: 'document'
+      notifyPersonalFilesSubscribers(userId, 'file-change', {
+        type: 'renamed', itemId: documentId,
+        itemName: newName.trim(), itemType: 'document', timestamp: utcNowISO()
       });
     } catch (sseErr) {
       console.warn('[SSE] 문서 이름 변경 알림 실패:', sseErr.message);

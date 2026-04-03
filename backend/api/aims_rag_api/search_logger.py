@@ -12,6 +12,10 @@ from pymongo import MongoClient
 from datetime import datetime
 import time
 
+# 서비스 고유 컬렉션/DB 상수
+ANALYTICS_DB = "aims_analytics"
+SEARCH_LOGS_COLLECTION = "search_logs"
+
 
 class SearchLogger:
     """검색 로그 수집 및 저장"""
@@ -22,8 +26,8 @@ class SearchLogger:
             mongo_uri: MongoDB 연결 URI
         """
         self.mongo_client = MongoClient(mongo_uri)
-        self.db = self.mongo_client["aims_analytics"]  # 분석 전용 DB
-        self.collection = self.db["search_logs"]
+        self.db = self.mongo_client[ANALYTICS_DB]  # 분석 전용 DB
+        self.collection = self.db[SEARCH_LOGS_COLLECTION]
 
         # 인덱스 생성 (빠른 조회를 위해)
         self._create_indexes()

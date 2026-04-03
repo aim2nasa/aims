@@ -16,6 +16,10 @@ from pymongo import MongoClient
 from datetime import datetime, timedelta
 from collections import defaultdict
 
+# 서비스 고유 컬렉션/DB 상수
+ANALYTICS_DB = "aims_analytics"
+SEARCH_LOGS_COLLECTION = "search_logs"
+
 
 class QualityAnalyzer:
     """검색 품질 지표 분석"""
@@ -26,8 +30,8 @@ class QualityAnalyzer:
             mongo_uri: MongoDB 연결 URI
         """
         self.mongo_client = MongoClient(mongo_uri)
-        self.db = self.mongo_client["aims_analytics"]
-        self.collection = self.db["search_logs"]
+        self.db = self.mongo_client[ANALYTICS_DB]
+        self.collection = self.db[SEARCH_LOGS_COLLECTION]
 
     def get_overall_stats(self, days: int = 7) -> Dict:
         """

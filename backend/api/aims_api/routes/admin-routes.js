@@ -18,6 +18,7 @@ const { getTierDefinitions } = require('../lib/storageQuotaService');
 module.exports = function(db, analyticsDb, authenticateJWT, requireRole, qdrantClient, qdrantCollection) {
   const router = express.Router();
   const QDRANT_COLLECTION = qdrantCollection;
+  const PYTHON_API_URL = process.env.AIMS_RAG_API_URL || 'http://localhost:8000';
   const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
   const COLLECTION_NAME = COLLECTIONS.FILES;
 

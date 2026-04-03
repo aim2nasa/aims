@@ -759,12 +759,12 @@ class TestPath12_PreExtractedTextReuse:
     """DB에 사전 추출된 meta.full_text가 있으면 MetaService 재호출 스킵"""
 
     @pytest.mark.asyncio
-    async def test_skips_meta_extraction(self, mock_files_collection):
+    async def test_skips_meta_extraction(self, mock_files_collection, mock_internal_api_writes):
         """DB에 텍스트 있으면 MetaService 호출 안 함"""
         existing_id = str(ObjectId())
 
-        # find_one이 사전 추출된 텍스트를 반환
-        mock_files_collection.find_one = AsyncMock(return_value={
+        # query_file_one이 사전 추출된 텍스트를 반환하도록 설정
+        pre_extracted_doc = {
             "_id": ObjectId(existing_id),
             "meta": {
                 "full_text": "사전 추출된 텍스트입니다.",
@@ -773,7 +773,8 @@ class TestPath12_PreExtractedTextReuse:
                 "size_bytes": 12345,
                 "filename": "test.pdf",
             }
-        })
+        }
+        mock_internal_api_writes["query_file_one"].return_value = pre_extracted_doc
 
         ctx = await _call_pipeline(
             mock_files_collection,

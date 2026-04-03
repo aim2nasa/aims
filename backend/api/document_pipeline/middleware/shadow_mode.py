@@ -19,6 +19,15 @@ from services.mongo_service import MongoService
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+# Shadow Mode 전용 컬렉션명 상수
+SHADOW_COLLECTIONS = {
+    "METRICS": "shadow_metrics",
+    "MISMATCHES": "shadow_mismatches",
+    "CALLS": "shadow_calls",
+    "ERRORS": "shadow_errors",
+    "MODE_HISTORY": "service_mode_history",
+}
+
 N8N_BASE = "https://n8nd.giize.com/webhook"
 FASTAPI_BASE = "http://localhost:8100/webhook"
 
@@ -254,7 +263,7 @@ async def _log_metrics(
 ):
     """성능 메트릭 로깅"""
     try:
-        collection = MongoService.get_collection("shadow_metrics")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["METRICS"])
         await collection.insert_one({
             "workflow": workflow,
             "timestamp": datetime.utcnow(),
@@ -298,7 +307,7 @@ async def _log_mismatch(
 ) -> str:
     """불일치 MongoDB 로깅"""
     try:
-        collection = MongoService.get_collection("shadow_mismatches")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["MISMATCHES"])
 
         doc = {
             "workflow": workflow,
@@ -324,7 +333,7 @@ async def _log_mismatch(
 async def _log_call(workflow: str, result: str, diff_count: int):
     """모든 Shadow 호출 로깅 (통계용)"""
     try:
-        collection = MongoService.get_collection("shadow_calls")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["CALLS"])
         await collection.insert_one({
             "workflow": workflow,
             "result": result,  # "match", "mismatch", "error"
@@ -338,7 +347,7 @@ async def _log_call(workflow: str, result: str, diff_count: int):
 async def _log_fastapi_error(workflow: str, request_data: dict, error: str):
     """FastAPI 오류 로깅"""
     try:
-        collection = MongoService.get_collection("shadow_errors")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["ERRORS"])
 
         await collection.insert_one({
             "workflow": workflow,

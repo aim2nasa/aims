@@ -418,7 +418,7 @@ module.exports = function(db, authenticateJWT, generateToken, qdrantClient, qdra
       // 3. AR 파싱 큐 정리
       let arQueueCleanedCount = 0;
       try {
-        const queueResult = await db.collection('ar_parse_queue').deleteMany({
+        const queueResult = await db.collection(COLLECTIONS.AR_PARSE_QUEUE).deleteMany({
           file_id: { $in: docIds }
         });
         arQueueCleanedCount = queueResult.deletedCount;
