@@ -21,17 +21,11 @@ TEST_DOC_ID = "507f1f77bcf86cd799439011"
 class TestNotifyProgress:
     """진행률 알림 검증"""
 
-    @pytest.fixture
-    def mock_files_collection(self):
-        mock = AsyncMock()
-        mock.update_one = AsyncMock()
-        return mock
-
-    async def test_mongodb_updated(self, mock_files_collection):
-        """MongoDB에 progress 필드 업데이트"""
+    async def test_mongodb_updated(self, mock_internal_api_writes):
+        """MongoDB에 progress 필드 업데이트 (Internal API 경유)"""
         from routers.doc_prep_main import _notify_progress
 
-        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+        with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
              patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
@@ -41,19 +35,20 @@ class TestNotifyProgress:
 
             await _notify_progress(TEST_DOC_ID, "user1", 50, "meta", "메타 추출 중")
 
-        mock_files_collection.update_one.assert_called_once()
-        call_args = mock_files_collection.update_one.call_args[0]
-        assert call_args[0] == {"_id": ObjectId(TEST_DOC_ID)}
-        set_data = call_args[1]["$set"]
-        assert set_data["progress"] == 50
-        assert set_data["progressStage"] == "meta"
-        assert set_data["progressMessage"] == "메타 추출 중"
+        mock_update = mock_internal_api_writes["update_file"]
+        mock_update.assert_called_once()
+        call_args = mock_update.call_args
+        assert call_args[0][0] == TEST_DOC_ID
+        set_fields = call_args[1]["set_fields"] if "set_fields" in call_args[1] else call_args[0][1]
+        assert set_fields["progress"] == 50
+        assert set_fields["progressStage"] == "meta"
+        assert set_fields["progressMessage"] == "메타 추출 중"
 
-    async def test_progress_100_sets_completed(self, mock_files_collection):
+    async def test_progress_100_sets_completed(self, mock_internal_api_writes):
         """progress=100, stage='complete' → status='completed'"""
         from routers.doc_prep_main import _notify_progress
 
-        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+        with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
              patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
@@ -63,14 +58,16 @@ class TestNotifyProgress:
 
             await _notify_progress(TEST_DOC_ID, "user1", 100, "complete", "처리 완료")
 
-        set_data = mock_files_collection.update_one.call_args[0][1]["$set"]
-        assert set_data["status"] == "completed"
+        mock_update = mock_internal_api_writes["update_file"]
+        call_args = mock_update.call_args
+        set_fields = call_args[1]["set_fields"] if "set_fields" in call_args[1] else call_args[0][1]
+        assert set_fields["status"] == "completed"
 
-    async def test_progress_minus1_sets_failed(self, mock_files_collection):
+    async def test_progress_minus1_sets_failed(self, mock_internal_api_writes):
         """progress=-1, stage='error' → status='failed'"""
         from routers.doc_prep_main import _notify_progress
 
-        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+        with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
              patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
@@ -80,17 +77,19 @@ class TestNotifyProgress:
 
             await _notify_progress(TEST_DOC_ID, "user1", -1, "error", "중복 파일")
 
-        set_data = mock_files_collection.update_one.call_args[0][1]["$set"]
-        assert set_data["status"] == "failed"
-        assert set_data["overallStatus"] == "error"
-        assert "error" in set_data
-        assert set_data["error"]["statusMessage"] == "중복 파일"
+        mock_update = mock_internal_api_writes["update_file"]
+        call_args = mock_update.call_args
+        set_fields = call_args[1]["set_fields"] if "set_fields" in call_args[1] else call_args[0][1]
+        assert set_fields["status"] == "failed"
+        assert set_fields["overallStatus"] == "error"
+        assert "error" in set_fields
+        assert set_fields["error"]["statusMessage"] == "중복 파일"
 
-    async def test_normal_progress_no_overallStatus(self, mock_files_collection):
+    async def test_normal_progress_no_overallStatus(self, mock_internal_api_writes):
         """일반 progress(50)에서는 overallStatus가 설정되지 않음"""
         from routers.doc_prep_main import _notify_progress
 
-        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+        with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
              patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
@@ -100,14 +99,16 @@ class TestNotifyProgress:
 
             await _notify_progress(TEST_DOC_ID, "user1", 50, "meta", "메타 추출 중")
 
-        set_data = mock_files_collection.update_one.call_args[0][1]["$set"]
-        assert "overallStatus" not in set_data
+        mock_update = mock_internal_api_writes["update_file"]
+        call_args = mock_update.call_args
+        set_fields = call_args[1]["set_fields"] if "set_fields" in call_args[1] else call_args[0][1]
+        assert "overallStatus" not in set_fields
 
-    async def test_complete_progress_sets_overallStatus(self, mock_files_collection):
+    async def test_complete_progress_sets_overallStatus(self, mock_internal_api_writes):
         """progress=100 완료 시 status와 overallStatus 동시 설정"""
         from routers.doc_prep_main import _notify_progress
 
-        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+        with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
              patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
@@ -117,15 +118,17 @@ class TestNotifyProgress:
 
             await _notify_progress(TEST_DOC_ID, "user1", 100, "complete", "처리 완료")
 
-        set_data = mock_files_collection.update_one.call_args[0][1]["$set"]
-        assert set_data["status"] == "completed"
-        assert set_data["overallStatus"] == "completed"
+        mock_update = mock_internal_api_writes["update_file"]
+        call_args = mock_update.call_args
+        set_fields = call_args[1]["set_fields"] if "set_fields" in call_args[1] else call_args[0][1]
+        assert set_fields["status"] == "completed"
+        assert set_fields["overallStatus"] == "completed"
 
-    async def test_sse_webhook_called(self, mock_files_collection):
+    async def test_sse_webhook_called(self):
         """SSE webhook 호출 확인"""
         from routers.doc_prep_main import _notify_progress
 
-        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+        with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
              patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
@@ -145,11 +148,11 @@ class TestNotifyProgress:
         assert payload["progress"] == 60
         assert payload["owner_id"] == "user1"
 
-    async def test_error_sends_complete_webhook(self, mock_files_collection):
+    async def test_error_sends_complete_webhook(self):
         """progress=-1 에러 시 document-processing-complete webhook도 호출"""
         from routers.doc_prep_main import _notify_progress
 
-        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+        with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
              patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
@@ -166,13 +169,13 @@ class TestNotifyProgress:
         assert any("document-progress" in u for u in urls)
         assert any("document-processing-complete" in u for u in urls)
 
-    async def test_mongodb_error_isolated(self, mock_files_collection):
+    async def test_mongodb_error_isolated(self, mock_internal_api_writes):
         """MongoDB 오류가 SSE 알림을 막지 않음"""
         from routers.doc_prep_main import _notify_progress
 
-        mock_files_collection.update_one.side_effect = Exception("DB down")
+        mock_internal_api_writes["update_file"].side_effect = Exception("DB down")
 
-        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+        with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
              patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
@@ -186,11 +189,11 @@ class TestNotifyProgress:
         # SSE는 여전히 호출됨
         mock_client.post.assert_called()
 
-    async def test_sse_error_isolated(self, mock_files_collection):
+    async def test_sse_error_isolated(self, mock_internal_api_writes):
         """SSE 오류가 전체 동작을 막지 않음"""
         from routers.doc_prep_main import _notify_progress
 
-        with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
+        with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
              patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(side_effect=Exception("SSE failed"))
@@ -201,8 +204,8 @@ class TestNotifyProgress:
             # 예외 발생하지 않아야 함
             await _notify_progress(TEST_DOC_ID, "user1", 50, "meta", "test")
 
-        # MongoDB는 정상 업데이트
-        mock_files_collection.update_one.assert_called_once()
+        # MongoDB는 정상 업데이트 (Internal API 경유)
+        mock_internal_api_writes["update_file"].assert_called_once()
 
 
 # ========================================

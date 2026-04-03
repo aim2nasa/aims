@@ -1,15 +1,10 @@
 """
 xPipe 경로 비PDF 파일 PDF 변환 큐 등록 회귀 테스트
 
-ISSUE (2026-03-25): xPipe로 처리된 비PDF 파일(HWP, XLSX, PPTX, DOC 등) 95건이
-upload.conversion_status: "not_required"로 설정되어 PDF 변환이 누락됨.
-브라우저 미리보기가 불가능한 상태.
-
 수정: _process_via_xpipe() 완료 후 _trigger_pdf_conversion_for_xpipe()를 호출하여
 비PDF 파일에 대해 preview_pdf 변환 큐 등록.
 
 @since 2026-03-25
-@issue xPipe 비PDF 파일 PDF 변환 누락
 """
 import sys
 import os
@@ -21,11 +16,9 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from bson import ObjectId
 
-# 테스트용 유효한 ObjectId 문자열
 VALID_DOC_ID = str(ObjectId())
 
 
-# _trigger_pdf_conversion_for_xpipe 직접 테스트
 class TestTriggerPdfConversionForXpipe:
     """xPipe 경로에서 비PDF 파일의 PDF 변환 큐 등록 검증"""
 
@@ -37,7 +30,7 @@ class TestTriggerPdfConversionForXpipe:
         return col
 
     @pytest.mark.asyncio
-    async def test_pdf_file_sets_not_required(self, mock_files_collection):
+    async def test_pdf_file_sets_not_required(self, mock_files_collection, mock_internal_api_writes):
         """PDF 파일은 conversion_status를 not_required로 설정"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -49,12 +42,13 @@ class TestTriggerPdfConversionForXpipe:
             files_collection=mock_files_collection,
         )
 
-        mock_files_collection.update_one.assert_called_once()
-        call_args = mock_files_collection.update_one.call_args
-        assert call_args[0][1] == {"$set": {"upload.conversion_status": "not_required"}}
+        mock_update = mock_internal_api_writes["update_file"]
+        mock_update.assert_called_once()
+        set_fields = mock_update.call_args.kwargs.get("set_fields", {})
+        assert set_fields == {"upload.conversion_status": "not_required"}
 
     @pytest.mark.asyncio
-    async def test_image_file_sets_not_required(self, mock_files_collection):
+    async def test_image_file_sets_not_required(self, mock_files_collection, mock_internal_api_writes):
         """이미지 파일(JPEG)은 conversion_status를 not_required로 설정"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -66,12 +60,13 @@ class TestTriggerPdfConversionForXpipe:
             files_collection=mock_files_collection,
         )
 
-        mock_files_collection.update_one.assert_called_once()
-        call_args = mock_files_collection.update_one.call_args
-        assert call_args[0][1] == {"$set": {"upload.conversion_status": "not_required"}}
+        mock_update = mock_internal_api_writes["update_file"]
+        mock_update.assert_called_once()
+        set_fields = mock_update.call_args.kwargs.get("set_fields", {})
+        assert set_fields == {"upload.conversion_status": "not_required"}
 
     @pytest.mark.asyncio
-    async def test_png_image_sets_not_required(self, mock_files_collection):
+    async def test_png_image_sets_not_required(self, mock_files_collection, mock_internal_api_writes):
         """PNG 이미지도 not_required"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -83,11 +78,12 @@ class TestTriggerPdfConversionForXpipe:
             files_collection=mock_files_collection,
         )
 
-        call_args = mock_files_collection.update_one.call_args
-        assert call_args[0][1] == {"$set": {"upload.conversion_status": "not_required"}}
+        mock_update = mock_internal_api_writes["update_file"]
+        set_fields = mock_update.call_args.kwargs.get("set_fields", {})
+        assert set_fields == {"upload.conversion_status": "not_required"}
 
     @pytest.mark.asyncio
-    async def test_hwp_file_enqueues_preview_pdf(self, mock_files_collection):
+    async def test_hwp_file_enqueues_preview_pdf(self, mock_files_collection, mock_internal_api_writes):
         """HWP 파일은 conversion_status를 pending으로 설정하고 변환 큐에 등록"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -103,8 +99,10 @@ class TestTriggerPdfConversionForXpipe:
             )
 
         # 첫 번째 호출: pending 상태 설정
-        first_call = mock_files_collection.update_one.call_args_list[0]
-        assert first_call[0][1] == {"$set": {"upload.conversion_status": "pending"}}
+        mock_update = mock_internal_api_writes["update_file"]
+        first_call = mock_update.call_args_list[0]
+        set_fields = first_call.kwargs.get("set_fields", {})
+        assert set_fields == {"upload.conversion_status": "pending"}
 
         # 큐 등록 확인
         mock_queue.enqueue.assert_called_once_with(
@@ -116,7 +114,7 @@ class TestTriggerPdfConversionForXpipe:
         )
 
     @pytest.mark.asyncio
-    async def test_docx_file_enqueues_preview_pdf(self, mock_files_collection):
+    async def test_docx_file_enqueues_preview_pdf(self, mock_files_collection, mock_internal_api_writes):
         """DOCX 파일은 변환 큐에 등록"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -137,7 +135,7 @@ class TestTriggerPdfConversionForXpipe:
         assert call_kwargs[1]["document_id"] == VALID_DOC_ID
 
     @pytest.mark.asyncio
-    async def test_xlsx_file_enqueues_preview_pdf(self, mock_files_collection):
+    async def test_xlsx_file_enqueues_preview_pdf(self, mock_files_collection, mock_internal_api_writes):
         """XLSX 파일은 변환 큐에 등록"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -155,7 +153,7 @@ class TestTriggerPdfConversionForXpipe:
         mock_queue.enqueue.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_pptx_file_enqueues_preview_pdf(self, mock_files_collection):
+    async def test_pptx_file_enqueues_preview_pdf(self, mock_files_collection, mock_internal_api_writes):
         """PPTX 파일은 변환 큐에 등록"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -173,7 +171,7 @@ class TestTriggerPdfConversionForXpipe:
         mock_queue.enqueue.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_msword_doc_enqueues_preview_pdf(self, mock_files_collection):
+    async def test_msword_doc_enqueues_preview_pdf(self, mock_files_collection, mock_internal_api_writes):
         """구형 DOC 파일은 변환 큐에 등록"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -191,7 +189,7 @@ class TestTriggerPdfConversionForXpipe:
         mock_queue.enqueue.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_unsupported_format_sets_not_required(self, mock_files_collection):
+    async def test_unsupported_format_sets_not_required(self, mock_files_collection, mock_internal_api_writes):
         """지원하지 않는 형식(ZIP 등)은 not_required"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -203,11 +201,12 @@ class TestTriggerPdfConversionForXpipe:
             files_collection=mock_files_collection,
         )
 
-        call_args = mock_files_collection.update_one.call_args
-        assert call_args[0][1] == {"$set": {"upload.conversion_status": "not_required"}}
+        mock_update = mock_internal_api_writes["update_file"]
+        set_fields = mock_update.call_args.kwargs.get("set_fields", {})
+        assert set_fields == {"upload.conversion_status": "not_required"}
 
     @pytest.mark.asyncio
-    async def test_enqueue_failure_sets_failed_status(self, mock_files_collection):
+    async def test_enqueue_failure_sets_failed_status(self, mock_files_collection, mock_internal_api_writes):
         """큐 등록 실패 시 conversion_status를 failed로 설정 (pending hang 방지)"""
         from routers.doc_prep_main import _trigger_pdf_conversion_for_xpipe
 
@@ -223,10 +222,11 @@ class TestTriggerPdfConversionForXpipe:
             )
 
         # 마지막 호출: failed 상태로 롤백
-        last_call = mock_files_collection.update_one.call_args_list[-1]
-        update_set = last_call[0][1]["$set"]
-        assert update_set["upload.conversion_status"] == "failed"
-        assert "큐 서비스 연결 실패" in update_set["upload.conversion_error"]
+        mock_update = mock_internal_api_writes["update_file"]
+        last_call = mock_update.call_args_list[-1]
+        set_fields = last_call.kwargs.get("set_fields", {})
+        assert set_fields["upload.conversion_status"] == "failed"
+        assert "큐 서비스 연결 실패" in set_fields["upload.conversion_error"]
 
     @pytest.mark.asyncio
     async def test_enqueue_failure_does_not_raise(self, mock_files_collection):
@@ -273,12 +273,10 @@ class TestIsPreviewNative:
         ) is False
 
     def test_unknown_mime_with_pdf_extension_is_native(self):
-        """MIME 탐지 실패 시 확장자 기반 폴백"""
         from routers.doc_prep_main import _is_preview_native
         assert _is_preview_native("application/octet-stream", "report.pdf") is True
 
     def test_unknown_mime_with_jpg_extension_is_native(self):
-        """MIME 탐지 실패 시 확장자 기반 폴백"""
         from routers.doc_prep_main import _is_preview_native
         assert _is_preview_native("application/octet-stream", "photo.jpg") is True
 

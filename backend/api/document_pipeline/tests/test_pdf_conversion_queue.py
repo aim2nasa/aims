@@ -457,8 +457,8 @@ class TestPdfConversionWorker:
         assert "delay_seconds" in call_kwargs.kwargs or len(call_kwargs.args) >= 3
 
     @pytest.mark.asyncio
-    async def test_post_process_preview_updates_files(self):
-        """preview_pdf 완료 후 files 컬렉션 업데이트"""
+    async def test_post_process_preview_updates_files(self, mock_internal_api_writes):
+        """preview_pdf 완료 후 Internal API로 files 업데이트"""
         doc_id = str(ObjectId())
         job = {
             "_id": ObjectId(),
@@ -467,12 +467,10 @@ class TestPdfConversionWorker:
         }
         result = {"pdf_path": "/data/files/test.pdf"}
 
-        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
-
         with patch.object(self.worker, "_notify_conversion_complete", new_callable=AsyncMock):
             await self.worker._post_process(job, result)
 
-        self.mock_files_col.update_one.assert_called_once()
+        mock_internal_api_writes["svc_update_file"].assert_called()
 
     def test_get_status(self):
         """워커 상태 조회"""
@@ -558,7 +556,7 @@ class TestInfiniteLoopRegression:
     # --- TC-01: 스캔 문서 재시도 차단 (핵심 버그 검증) ---
 
     @pytest.mark.asyncio
-    async def test_scan_document_marks_ocr_fallback_needed(self):
+    async def test_scan_document_marks_ocr_fallback_needed(self, mock_internal_api_writes):
         """TC-01: 텍스트 추출 불가(스캔 문서) 시 meta.ocr_fallback_needed=True 마커가 DB에 기록되고 OCR 큐에 등록된다"""
         doc_id = str(ObjectId())
 
@@ -570,7 +568,6 @@ class TestInfiniteLoopRegression:
             "ownerId": "test_user",
             "upload": {"originalName": "scan.ppt"},
         }
-        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
 
         # PyMuPDF가 텍스트 없음 반환 (스캔 문서 시뮬레이션)
         import tempfile, os
@@ -584,16 +581,14 @@ class TestInfiniteLoopRegression:
 
         os.unlink(tmp.name)
 
-        # 반환값: False (텍스트 추출 실패)
         assert result is False
 
-        # DB에 ocr_fallback_needed 마커 기록 확인
-        self.mock_files_col.update_one.assert_called_once()
-        update_call = self.mock_files_col.update_one.call_args
-        update_doc = update_call[0][1]
-        assert update_doc["$set"]["meta.ocr_fallback_needed"] is True
+        # Internal API로 ocr_fallback_needed 마커 기록 확인
+        mock_update = mock_internal_api_writes["svc_update_file"]
+        mock_update.assert_called_once()
+        set_fields = mock_update.call_args.kwargs.get("set_fields", {})
+        assert set_fields["meta.ocr_fallback_needed"] is True
 
-        # OCR 큐 등록 확인
         mock_enqueue.assert_called_once()
 
     # --- TC-02: 거짓 성공 카운트 제거 ---
@@ -624,7 +619,7 @@ class TestInfiniteLoopRegression:
     # --- TC-03: 정상 복구 비회귀 ---
 
     @pytest.mark.asyncio
-    async def test_text_extraction_success_returns_true(self):
+    async def test_text_extraction_success_returns_true(self, mock_internal_api_writes):
         """TC-03: 텍스트 추출 성공 시 DB 업데이트 + return True"""
         doc_id = str(ObjectId())
 
@@ -635,7 +630,6 @@ class TestInfiniteLoopRegression:
             "ownerId": "test_user",
             "upload": {"originalName": "report.doc"},
         }
-        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
 
         import tempfile, os
         tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
@@ -655,11 +649,12 @@ class TestInfiniteLoopRegression:
         os.unlink(tmp.name)
 
         assert result is True
-        # DB에 meta.full_text 저장 확인
-        update_calls = self.mock_files_col.update_one.call_args_list
-        assert len(update_calls) >= 1
-        last_update = update_calls[-1][0][1]
-        assert "meta.full_text" in last_update.get("$set", {})
+        # Internal API로 meta.full_text 저장 확인
+        mock_update = mock_internal_api_writes["svc_update_file"]
+        assert mock_update.call_count >= 1
+        # 마지막 호출에서 meta.full_text 확인
+        last_set_fields = mock_update.call_args_list[-1].kwargs.get("set_fields", {})
+        assert "meta.full_text" in last_set_fields
 
     # --- TC-04: 마커 필터링 쿼리 검증 ---
 
@@ -711,7 +706,7 @@ class TestInfiniteLoopRegression:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_return_false_when_file_missing(self):
+    async def test_return_false_when_file_missing(self, mock_internal_api_writes):
         """TC-05b: PDF 파일이 없으면 False 반환 + 마커 기록"""
         doc_id = str(ObjectId())
         self.mock_files_col.find_one.return_value = {
@@ -721,15 +716,15 @@ class TestInfiniteLoopRegression:
             "ownerId": "test",
             "upload": {"originalName": "missing.ppt"},
         }
-        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
 
         result = await self.worker._extract_and_update_text(doc_id, "/nonexistent/path.pdf", self.mock_files_col)
 
         assert result is False
-        # 파일 없어도 마커 기록 확인
-        self.mock_files_col.update_one.assert_called_once()
-        update_doc = self.mock_files_col.update_one.call_args[0][1]
-        assert update_doc["$set"]["meta.text_extraction_failed"] is True
+        # 파일 없어도 마커 기록 확인 (Internal API 경유)
+        mock_update = mock_internal_api_writes["svc_update_file"]
+        mock_update.assert_called_once()
+        set_fields = mock_update.call_args.kwargs.get("set_fields", {})
+        assert set_fields["meta.text_extraction_failed"] is True
 
     @pytest.mark.asyncio
     async def test_return_false_when_doc_not_found(self):
@@ -758,8 +753,8 @@ class TestInfiniteLoopRegression:
     # --- TC-06: 재변환 시 마커 리셋 ---
 
     @pytest.mark.asyncio
-    async def test_post_process_preview_resets_extraction_marker(self):
-        """TC-06: _post_process_preview() 호출 시 meta.text_extraction_failed가 $unset된다"""
+    async def test_post_process_preview_resets_extraction_marker(self, mock_internal_api_writes):
+        """TC-06: _post_process_preview() 호출 시 meta.text_extraction_failed가 unset된다"""
         doc_id = str(ObjectId())
         job = {
             "_id": ObjectId(),
@@ -768,17 +763,20 @@ class TestInfiniteLoopRegression:
         }
         result = {"pdf_path": "/data/files/test.pdf"}
 
-        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
-
         with patch.object(self.worker, "_extract_and_update_text", new_callable=AsyncMock, return_value=True):
             with patch.object(self.worker, "_notify_conversion_complete", new_callable=AsyncMock):
                 await self.worker._post_process(job, result)
 
-        # update_one 호출에서 $unset 확인
-        update_call = self.mock_files_col.update_one.call_args
-        update_doc = update_call[0][1]
-        assert "$unset" in update_doc
-        assert "meta.text_extraction_failed" in update_doc["$unset"]
+        # Internal API update_file 호출에서 unset_fields 확인
+        mock_update = mock_internal_api_writes["svc_update_file"]
+        # _post_process에서 update_file이 호출되어야 함
+        unset_found = False
+        for call_obj in mock_update.call_args_list:
+            unset_fields = call_obj.kwargs.get("unset_fields", {})
+            if "meta.text_extraction_failed" in unset_fields:
+                unset_found = True
+                break
+        assert unset_found, "meta.text_extraction_failed가 unset_fields에 포함되어야 합니다"
 
 
 # ========================================

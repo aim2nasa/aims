@@ -32,8 +32,8 @@ class TestQueueingModeDocCreation:
         mock_collection.update_one = AsyncMock()
         return mock_collection
 
-    async def test_doc_created_before_enqueue(self, client, mock_upload_queue_disabled, mock_files_collection):
-        """큐 등록 전에 문서가 먼저 생성됨"""
+    async def test_doc_created_before_enqueue(self, client, mock_upload_queue_disabled, mock_files_collection, mock_internal_api_writes):
+        """큐 등록 전에 문서가 먼저 생성됨 (Internal API create_file 경유)"""
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
 
@@ -51,11 +51,11 @@ class TestQueueingModeDocCreation:
             )
 
         assert response.status_code == 200
-        assert mock_files_collection.insert_one.called
+        assert mock_internal_api_writes["create_file"].called
         data = response.json()
         assert data["document_id"] == TEST_DOC_ID
 
-    async def test_initial_progress_10(self, client, mock_upload_queue_disabled, mock_files_collection):
+    async def test_initial_progress_10(self, client, mock_upload_queue_disabled, mock_files_collection, mock_internal_api_writes):
         """큐잉 모드 문서의 초기 progress=10"""
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
@@ -73,11 +73,11 @@ class TestQueueingModeDocCreation:
                 files={"file": ("test.pdf", b"content", "application/pdf")},
             )
 
-        insert_call = mock_files_collection.insert_one.call_args[0][0]
+        insert_call = mock_internal_api_writes["create_file"].call_args[0][0]
         assert insert_call["progress"] == 10
         assert insert_call["progressStage"] == "queued"
 
-    async def test_customer_id_stored(self, client, mock_upload_queue_disabled, mock_files_collection):
+    async def test_customer_id_stored(self, client, mock_upload_queue_disabled, mock_files_collection, mock_internal_api_writes):
         """customerId가 문서에 저장됨"""
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
@@ -96,10 +96,10 @@ class TestQueueingModeDocCreation:
                 files={"file": ("test.pdf", b"content", "application/pdf")},
             )
 
-        insert_call = mock_files_collection.insert_one.call_args[0][0]
+        insert_call = mock_internal_api_writes["create_file"].call_args[0][0]
         assert "customerId" in insert_call
 
-    async def test_batch_id_stored(self, client, mock_upload_queue_disabled, mock_files_collection):
+    async def test_batch_id_stored(self, client, mock_upload_queue_disabled, mock_files_collection, mock_internal_api_writes):
         """batchId가 문서에 저장됨"""
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "key"
@@ -117,7 +117,7 @@ class TestQueueingModeDocCreation:
                 files={"file": ("test.pdf", b"content", "application/pdf")},
             )
 
-        insert_call = mock_files_collection.insert_one.call_args[0][0]
+        insert_call = mock_internal_api_writes["create_file"].call_args[0][0]
         assert insert_call["batchId"] == "batch_abc"
 
 
@@ -235,8 +235,8 @@ class TestExistingDocIdPath:
         mock_collection.delete_one = AsyncMock(return_value=MagicMock(deleted_count=0))
         return mock_collection
 
-    async def test_existing_doc_updates_not_inserts(self, mock_files_collection):
-        """기존 문서 → insert 없이 update만"""
+    async def test_existing_doc_updates_not_inserts(self, mock_files_collection, mock_internal_api_writes):
+        """기존 문서 → create_file 없이 update_file만"""
         from routers.doc_prep_main import process_document_pipeline
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
@@ -263,10 +263,10 @@ class TestExistingDocIdPath:
             )
 
         assert result["result"] == "success"
-        assert not mock_files_collection.insert_one.called
-        assert mock_files_collection.update_one.called
+        assert not mock_internal_api_writes["create_file"].called
+        assert mock_internal_api_writes["update_file"].called
 
-    async def test_existing_doc_progress_20(self, mock_files_collection):
+    async def test_existing_doc_progress_20(self, mock_files_collection, mock_internal_api_writes):
         """기존 문서 재진입 시 progress=20으로 업데이트"""
         from routers.doc_prep_main import process_document_pipeline
 
@@ -293,9 +293,9 @@ class TestExistingDocIdPath:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        # 첫 번째 update_one 호출이 progress=20 설정
-        first_update = mock_files_collection.update_one.call_args_list[0]
-        set_data = first_update[0][1]["$set"]
+        # 첫 번째 update_file 호출이 progress=20 설정
+        first_update = mock_internal_api_writes["update_file"].call_args_list[0]
+        set_data = first_update.kwargs.get("set_fields", {})
         assert set_data["progress"] == 20
 
     async def test_full_pipeline_runs_with_existing_doc(self, mock_files_collection):

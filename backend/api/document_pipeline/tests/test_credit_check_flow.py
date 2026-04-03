@@ -160,7 +160,7 @@ class TestCreditPendingDocCreation:
         mock_collection.update_one = AsyncMock()
         return mock_collection
 
-    async def test_overall_status_credit_pending(self, client, mock_upload_queue_disabled, mock_files_collection):
+    async def test_overall_status_credit_pending(self, client, mock_upload_queue_disabled, mock_files_collection, mock_internal_api_writes):
         """크레딧 부족 → overallStatus='credit_pending'"""
         # autouse fixture의 settings를 UPLOAD_QUEUE_ENABLED=True로 변경
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
@@ -187,8 +187,8 @@ class TestCreditPendingDocCreation:
         assert data["status"] == "credit_pending"
         assert data["document_id"] == TEST_DOC_ID
 
-        # 문서 insert_one 호출 확인
-        insert_call = mock_files_collection.insert_one.call_args[0][0]
+        # 문서 create_file 호출 확인 (Internal API 경유)
+        insert_call = mock_internal_api_writes["create_file"].call_args[0][0]
         assert insert_call["overallStatus"] == "credit_pending"
         assert insert_call["progress"] == 0
 
@@ -236,7 +236,7 @@ class TestCreditPendingDocCreation:
 
         mock_meta.assert_called_once()
 
-    async def test_full_text_stored_when_credit_pending(self, client, mock_upload_queue_disabled, mock_files_collection):
+    async def test_full_text_stored_when_credit_pending(self, client, mock_upload_queue_disabled, mock_files_collection, mock_internal_api_writes):
         """크레딧 부족이어도 full_text 저장 (충전 후 임베딩용)"""
         mock_upload_queue_disabled.UPLOAD_QUEUE_ENABLED = True
         mock_upload_queue_disabled.INTERNAL_API_KEY = "internal-key"
@@ -256,11 +256,11 @@ class TestCreditPendingDocCreation:
                 files={"file": ("test.pdf", b"fake pdf content", "application/pdf")},
             )
 
-        # update_one에서 meta.full_text 저장 확인
-        update_calls = mock_files_collection.update_one.call_args_list
+        # update_file에서 meta.full_text 저장 확인
+        update_calls = mock_internal_api_writes["update_file"].call_args_list
         meta_update_found = False
         for call in update_calls:
-            set_data = call[0][1].get("$set", {})
+            set_data = call.kwargs.get("set_fields", {})
             if "meta.full_text" in set_data:
                 assert set_data["meta.full_text"] == "extracted pdf text content"
                 meta_update_found = True

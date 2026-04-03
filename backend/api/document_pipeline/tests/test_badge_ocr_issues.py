@@ -338,21 +338,12 @@ class TestExtractStageConvertibleOCRFallback:
 class TestXPipeOCRFieldsRecorded:
     """xPipe 경로에서 OCR 사용 시 ocr.status, ocr.full_text 등이 DB에 기록"""
 
-    async def test_xpipe_ocr_image_records_ocr_fields(self):
+    async def test_xpipe_ocr_image_records_ocr_fields(self, mock_internal_api_writes):
         """xPipe로 이미지 처리 시 ocr.* 필드가 meta_update에 포함"""
         from routers.doc_prep_main import _process_via_xpipe
 
-        captured_sets = []
         mock_collection = AsyncMock()
-
-        async def capture_update(query, update):
-            if "$set" in update:
-                captured_sets.append(update["$set"])
-            result = MagicMock()
-            result.modified_count = 1
-            return result
-
-        mock_collection.update_one = AsyncMock(side_effect=capture_update)
+        mock_collection.update_one = AsyncMock()
         mock_insert = MagicMock()
         mock_insert.inserted_id = ObjectId(TEST_DOC_ID)
         mock_collection.insert_one = AsyncMock(return_value=mock_insert)
@@ -408,23 +399,24 @@ class TestXPipeOCRFieldsRecorded:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        # 핵심 검증: captured_sets 중 ocr.* 필드가 포함된 업데이트가 있어야 함
+        # 핵심 검증: update_file 호출 중 ocr.* 필드가 포함된 업데이트가 있어야 함
         ocr_update_found = False
-        for update_set in captured_sets:
-            if "ocr.status" in update_set:
+        for call_obj in mock_internal_api_writes["update_file"].call_args_list:
+            set_fields = call_obj.kwargs.get("set_fields", {})
+            if "ocr.status" in set_fields:
                 ocr_update_found = True
-                assert update_set["ocr.status"] == "done", \
-                    f"ocr.status는 'done'이어야 합니다. 실제: {update_set['ocr.status']}"
-                assert "ocr.full_text" in update_set, \
+                assert set_fields["ocr.status"] == "done", \
+                    f"ocr.status는 'done'이어야 합니다. 실제: {set_fields['ocr.status']}"
+                assert "ocr.full_text" in set_fields, \
                     "ocr.full_text 필드가 있어야 합니다"
-                assert update_set["ocr.full_text"] != "", \
+                assert set_fields["ocr.full_text"] != "", \
                     "ocr.full_text는 비어있으면 안 됩니다"
-                assert "ocr.done_at" in update_set, \
+                assert "ocr.done_at" in set_fields, \
                     "ocr.done_at 필드가 있어야 합니다"
-                assert "ocr.page_count" in update_set, \
+                assert "ocr.page_count" in set_fields, \
                     "ocr.page_count 필드가 있어야 합니다"
-                assert update_set.get("ocr.confidence") == 0.929, \
-                    f"ocr.confidence는 provider가 반환한 실제 값(0.929)이어야 합니다. 실제: {update_set.get('ocr.confidence')}"
+                assert set_fields.get("ocr.confidence") == 0.929, \
+                    f"ocr.confidence는 provider가 반환한 실제 값(0.929)이어야 합니다. 실제: {set_fields.get('ocr.confidence')}"
                 break
 
         assert ocr_update_found, \
@@ -655,20 +647,12 @@ class TestIsConvertibleMimeHWP:
 class TestXPipeSuccessClearsError:
     """xPipe 처리 성공 시 error 필드가 클리어"""
 
-    async def test_xpipe_success_unsets_error_field(self):
-        """xPipe 성공 시 update_one에 $unset: {error: ''} 포함"""
+    async def test_xpipe_success_unsets_error_field(self, mock_internal_api_writes):
+        """xPipe 성공 시 update_file에 unset_fields: {error: ''} 포함"""
         from routers.doc_prep_main import _process_via_xpipe
 
-        captured_updates = []
         mock_collection = AsyncMock()
-
-        async def capture_update(query, update):
-            captured_updates.append(update)
-            result = MagicMock()
-            result.modified_count = 1
-            return result
-
-        mock_collection.update_one = AsyncMock(side_effect=capture_update)
+        mock_collection.update_one = AsyncMock()
         mock_insert = MagicMock()
         mock_insert.inserted_id = ObjectId(TEST_DOC_ID)
         mock_collection.insert_one = AsyncMock(return_value=mock_insert)
@@ -717,15 +701,16 @@ class TestXPipeSuccessClearsError:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        # $unset이 포함된 update_one 호출이 있어야 함
+        # unset_fields에 error가 포함된 update_file 호출이 있어야 함
         unset_found = False
-        for update in captured_updates:
-            if "$unset" in update and "error" in update["$unset"]:
+        for call_obj in mock_internal_api_writes["update_file"].call_args_list:
+            unset_fields = call_obj.kwargs.get("unset_fields", {})
+            if "error" in unset_fields:
                 unset_found = True
                 break
 
         assert unset_found, \
-            "xPipe 성공 시 $unset: {error: ''} 가 update_one에 포함되어야 합니다"
+            "xPipe 성공 시 unset_fields: {error: ''} 가 update_file에 포함되어야 합니다"
 
 
 class TestExtractStageOCRConfidencePropagation:

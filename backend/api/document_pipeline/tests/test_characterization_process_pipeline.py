@@ -106,6 +106,7 @@ async def _call_pipeline(
     redis_mock=None,
     cleanup_mock=None,
     read_file_text=None,
+    mock_api=None,
 ):
     """process_document_pipeline() 호출 헬퍼"""
     from routers.doc_prep_main import process_document_pipeline
@@ -177,6 +178,7 @@ async def _call_pipeline(
             "connect_customer": connect_customer_mock,
             "cleanup": cleanup_mock,
             "files_collection": mock_files_collection,
+            "mock_api": mock_api,
         }
 
 
@@ -201,46 +203,45 @@ class TestPath1_NormalPdfWithText:
         assert r["meta"]["meta_status"] == "ok"
 
     @pytest.mark.asyncio
-    async def test_mongodb_insert_then_updates(self, mock_files_collection):
-        """MongoDB: insert_one(새 문서) → update_one(upload info) → update_one(meta) → ..."""
-        ctx = await _call_pipeline(mock_files_collection)
-        fc = ctx["files_collection"]
+    async def test_mongodb_insert_then_updates(self, mock_files_collection, mock_internal_api_writes):
+        """MongoDB: create_file(새 문서) → update_file(upload info) → update_file(meta) → ..."""
+        ctx = await _call_pipeline(mock_files_collection, mock_api=mock_internal_api_writes)
+        api = mock_internal_api_writes
 
-        # 새 문서 생성
-        fc.insert_one.assert_called_once()
-        insert_data = fc.insert_one.call_args[0][0]
+        # 새 문서 생성 (Internal API 경유)
+        api["create_file"].assert_called_once()
+        insert_data = api["create_file"].call_args[0][0]
         assert insert_data["ownerId"] == "test_user"
         assert insert_data["progress"] == 20
         assert insert_data["status"] == "processing"
 
-        # update_one: 최소 2회 (upload info, meta)
-        # 진행률 알림은 _notify_progress가 mock되어 files_collection.update_one에 도달하지 않음
-        assert fc.update_one.call_count >= 2
+        # update_file: 최소 2회 (upload info, meta)
+        assert api["update_file"].call_count >= 2
 
     @pytest.mark.asyncio
-    async def test_upload_info_saved(self, mock_files_collection):
+    async def test_upload_info_saved(self, mock_files_collection, mock_internal_api_writes):
         """upload.originalName, upload.saveName, upload.destPath 저장"""
-        ctx = await _call_pipeline(mock_files_collection)
-        fc = ctx["files_collection"]
+        ctx = await _call_pipeline(mock_files_collection, mock_api=mock_internal_api_writes)
+        api = mock_internal_api_writes
 
-        # 첫 번째 update_one = upload info
-        first_update = fc.update_one.call_args_list[0]
-        set_data = first_update[0][1]["$set"]
+        # 첫 번째 update_file = upload info
+        first_update = api["update_file"].call_args_list[0]
+        set_data = first_update.kwargs.get("set_fields", first_update[1].get("set_fields", {}))
         assert set_data["upload.originalName"] == "test.pdf"
         assert set_data["upload.saveName"] == "saved_test.pdf"
         assert set_data["upload.destPath"] == "/data/uploads/user/saved_test.pdf"
 
     @pytest.mark.asyncio
-    async def test_meta_fields_saved(self, mock_files_collection):
+    async def test_meta_fields_saved(self, mock_files_collection, mock_internal_api_writes):
         """meta.filename, meta.mime, meta.full_text, meta.summary 등 저장"""
-        ctx = await _call_pipeline(mock_files_collection)
-        fc = ctx["files_collection"]
+        ctx = await _call_pipeline(mock_files_collection, mock_api=mock_internal_api_writes)
+        api = mock_internal_api_writes
 
-        # meta update 찾기 (meta.filename 포함된 update)
+        # meta update 찾기 (update_file의 set_fields에 meta.filename이 포함된 호출)
         meta_update_found = False
-        for c in fc.update_one.call_args_list:
-            set_data = c[0][1].get("$set", {})
-            if "meta.filename" in set_data:
+        for c in api["update_file"].call_args_list:
+            set_data = c.kwargs.get("set_fields", c[1].get("set_fields", {})) if c.kwargs or len(c) > 1 else {}
+            if set_data and "meta.filename" in set_data:
                 meta_update_found = True
                 assert set_data["meta.mime"] == "application/pdf"
                 assert set_data["meta.full_text"] == "추출된 텍스트입니다."
@@ -250,7 +251,7 @@ class TestPath1_NormalPdfWithText:
                 assert set_data["meta.meta_status"] == "done"
                 assert set_data["meta.file_hash"] == "abc123"
                 break
-        assert meta_update_found, "meta update가 MongoDB 호출에 없음"
+        assert meta_update_found, "meta update가 Internal API 호출에 없음"
 
     @pytest.mark.asyncio
     async def test_ai_summarize_called(self, mock_files_collection):
@@ -283,16 +284,16 @@ class TestPath1_NormalPdfWithText:
         ctx["notify_complete"].assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_displayname_generated_for_non_ar_crs(self, mock_files_collection):
+    async def test_displayname_generated_for_non_ar_crs(self, mock_files_collection, mock_internal_api_writes):
         """AR/CRS 아닌 일반 문서 → displayName 자동 생성 시도"""
         # displayName이 없는 문서
         mock_files_collection.find_one = AsyncMock(
             side_effect=[None, {"_id": ObjectId(), "displayName": None}]
         )
-        ctx = await _call_pipeline(mock_files_collection)
+        ctx = await _call_pipeline(mock_files_collection, mock_api=mock_internal_api_writes)
 
         # displayName update가 있어야 함 (or displayNameStatus=failed)
-        update_calls = mock_files_collection.update_one.call_args_list
+        update_calls = mock_internal_api_writes["update_file"].call_args_list
         display_related = [
             c for c in update_calls
             if "displayName" in str(c) or "displayNameStatus" in str(c)
@@ -320,20 +321,19 @@ class TestPath2_TextPlain:
         assert "document_id" in r
 
     @pytest.mark.asyncio
-    async def test_text_saved_to_mongodb(self, mock_files_collection):
+    async def test_text_saved_to_mongodb(self, mock_files_collection, mock_internal_api_writes):
         """text.full_text 필드에 텍스트 저장"""
         meta = _standard_meta_result(mime="text/plain", text="텍스트 파일")
-        ctx = await _call_pipeline(mock_files_collection, meta_result=meta)
-        fc = ctx["files_collection"]
+        ctx = await _call_pipeline(mock_files_collection, meta_result=meta, mock_api=mock_internal_api_writes)
 
         # text.full_text update 찾기
         text_update_found = False
-        for c in fc.update_one.call_args_list:
-            set_data = c[0][1].get("$set", {})
+        for c in mock_internal_api_writes["update_file"].call_args_list:
+            set_data = c.kwargs.get("set_fields", {})
             if "text.full_text" in set_data:
                 text_update_found = True
                 break
-        assert text_update_found, "text.full_text update가 MongoDB 호출에 없음"
+        assert text_update_found, "text.full_text update가 Internal API 호출에 없음"
 
     @pytest.mark.asyncio
     async def test_progress_reaches_100(self, mock_files_collection):
@@ -373,16 +373,15 @@ class TestPath3_UnsupportedMime:
         assert r["mime"] == "application/zip"
 
     @pytest.mark.asyncio
-    async def test_mongodb_status_completed(self, mock_files_collection):
+    async def test_mongodb_status_completed(self, mock_files_collection, mock_internal_api_writes):
         """MongoDB: overallStatus=completed, status=completed"""
         meta = _standard_meta_result(mime="application/zip", text="")
-        ctx = await _call_pipeline(mock_files_collection, meta_result=meta)
-        fc = ctx["files_collection"]
+        ctx = await _call_pipeline(mock_files_collection, meta_result=meta, mock_api=mock_internal_api_writes)
 
         # processingSkipReason update 찾기
         skip_found = False
-        for c in fc.update_one.call_args_list:
-            set_data = c[0][1].get("$set", {})
+        for c in mock_internal_api_writes["update_file"].call_args_list:
+            set_data = c.kwargs.get("set_fields", {})
             if "processingSkipReason" in set_data:
                 skip_found = True
                 assert set_data["overallStatus"] == "completed"
@@ -428,15 +427,14 @@ class TestPath4_OcrNeeded:
         redis_mock.add_to_stream.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_mongodb_ocr_status_queued(self, mock_files_collection):
+    async def test_mongodb_ocr_status_queued(self, mock_files_collection, mock_internal_api_writes):
         """MongoDB: ocr.status=queued"""
         meta = _standard_meta_result(mime="application/pdf", text="")
-        ctx = await _call_pipeline(mock_files_collection, meta_result=meta)
-        fc = ctx["files_collection"]
+        ctx = await _call_pipeline(mock_files_collection, meta_result=meta, mock_api=mock_internal_api_writes)
 
         ocr_update_found = False
-        for c in fc.update_one.call_args_list:
-            set_data = c[0][1].get("$set", {})
+        for c in mock_internal_api_writes["update_file"].call_args_list:
+            set_data = c.kwargs.get("set_fields", {})
             if "ocr.status" in set_data:
                 ocr_update_found = True
                 assert set_data["ocr.status"] == "queued"
@@ -519,7 +517,7 @@ class TestPath6_DuplicateKeyError:
     """중복 파일 해시 → DuplicateKeyError → cleanup"""
 
     @pytest.mark.asyncio
-    async def test_raises_after_cleanup(self, mock_files_collection):
+    async def test_raises_after_cleanup(self, mock_files_collection, mock_internal_api_writes):
         """DuplicateKeyError → 에러 알림 → cleanup → 예외 재발생"""
         from routers.doc_prep_main import process_document_pipeline
 
@@ -530,10 +528,10 @@ class TestPath6_DuplicateKeyError:
             # 1회: upload info, 2회: overallStatus:extracting, 3회: overallStatus:classifying
             # 4회: meta update에서 DuplicateKeyError
             if call_count[0] <= 3:
-                return MagicMock(modified_count=1)
+                return {"success": True, "data": {"modifiedCount": 1}}
             raise DuplicateKeyError("duplicate file_hash")
 
-        mock_files_collection.update_one = AsyncMock(side_effect=update_side_effect)
+        mock_internal_api_writes["update_file"].side_effect = update_side_effect
 
         notify = AsyncMock()
         cleanup = AsyncMock()
@@ -592,15 +590,14 @@ class TestPath7_MetaExtractionError:
         assert "document_id" in r
 
     @pytest.mark.asyncio
-    async def test_mongodb_status_failed(self, mock_files_collection):
+    async def test_mongodb_status_failed(self, mock_files_collection, mock_internal_api_writes):
         """MongoDB: status=failed, overallStatus=error"""
         meta = {"error": True, "status": 500, "message": "PDF 파싱 실패"}
-        ctx = await _call_pipeline(mock_files_collection, meta_result=meta)
-        fc = ctx["files_collection"]
+        ctx = await _call_pipeline(mock_files_collection, meta_result=meta, mock_api=mock_internal_api_writes)
 
         failed_update_found = False
-        for c in fc.update_one.call_args_list:
-            set_data = c[0][1].get("$set", {})
+        for c in mock_internal_api_writes["update_file"].call_args_list:
+            set_data = c.kwargs.get("set_fields", {})
             if set_data.get("status") == "failed":
                 failed_update_found = True
                 assert set_data["overallStatus"] == "error"
@@ -616,23 +613,22 @@ class TestPath8_ExistingDocId:
     """existing_doc_id 전달 → insert 없이 기존 문서 업데이트"""
 
     @pytest.mark.asyncio
-    async def test_no_insert_with_existing_id(self, mock_files_collection):
-        """existing_doc_id가 있으면 insert_one 호출 안 함"""
+    async def test_no_insert_with_existing_id(self, mock_files_collection, mock_internal_api_writes):
+        """existing_doc_id가 있으면 create_file 호출 안 함"""
         existing_id = str(ObjectId())
-        ctx = await _call_pipeline(mock_files_collection, existing_doc_id=existing_id)
+        ctx = await _call_pipeline(mock_files_collection, existing_doc_id=existing_id, mock_api=mock_internal_api_writes)
 
-        mock_files_collection.insert_one.assert_not_called()
+        mock_internal_api_writes["create_file"].assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_updates_existing_document(self, mock_files_collection):
+    async def test_updates_existing_document(self, mock_files_collection, mock_internal_api_writes):
         """기존 문서의 progress=20으로 업데이트"""
         existing_id = str(ObjectId())
-        ctx = await _call_pipeline(mock_files_collection, existing_doc_id=existing_id)
-        fc = ctx["files_collection"]
+        ctx = await _call_pipeline(mock_files_collection, existing_doc_id=existing_id, mock_api=mock_internal_api_writes)
 
-        # 첫 번째 update = progress 20 설정
-        first_update = fc.update_one.call_args_list[0]
-        set_data = first_update[0][1]["$set"]
+        # 첫 번째 update_file = progress 20 설정
+        first_update = mock_internal_api_writes["update_file"].call_args_list[0]
+        set_data = first_update.kwargs.get("set_fields", {})
         assert set_data["progress"] == 20
         assert set_data["progressStage"] == "upload"
 
@@ -708,7 +704,7 @@ class TestPath11_ErrorWithCustomerConnection:
     """처리 중 에러 발생 + 고객 연결 완료 상태 → cleanup"""
 
     @pytest.mark.asyncio
-    async def test_cleanup_called_when_customer_connected(self, mock_files_collection):
+    async def test_cleanup_called_when_customer_connected(self, mock_files_collection, mock_internal_api_writes):
         """고객 연결 후 에러 → _cleanup_failed_document 호출"""
         from routers.doc_prep_main import process_document_pipeline
 
@@ -718,9 +714,9 @@ class TestPath11_ErrorWithCustomerConnection:
             call_count[0] += 1
             if call_count[0] >= 2:  # 2번째 update에서 실패 (meta update)
                 raise RuntimeError("Unexpected error")
-            return MagicMock(modified_count=1)
+            return {"success": True, "data": {"modifiedCount": 1}}
 
-        mock_files_collection.update_one = AsyncMock(side_effect=failing_update)
+        mock_internal_api_writes["update_file"].side_effect = failing_update
         cleanup = AsyncMock()
 
         with patch("routers.doc_prep_main.MongoService") as mock_mongo, \
@@ -831,16 +827,16 @@ class TestOrphanCleanup:
     """file_hash가 있으면 고아 문서 삭제 시도"""
 
     @pytest.mark.asyncio
-    async def test_orphan_delete_attempted(self, mock_files_collection):
-        """file_hash 있으면 delete_one 호출"""
-        ctx = await _call_pipeline(mock_files_collection)
-        fc = ctx["files_collection"]
+    async def test_orphan_delete_attempted(self, mock_files_collection, mock_internal_api_writes):
+        """file_hash 있으면 delete_file_by_filter 호출"""
+        ctx = await _call_pipeline(mock_files_collection, mock_api=mock_internal_api_writes)
 
-        # delete_one이 호출되어야 함 (고아 문서 정리)
-        fc.delete_one.assert_called()
-        call_args = fc.delete_one.call_args[0][0]
-        assert call_args["customerId"] is None
-        assert "meta.file_hash" in call_args
+        # delete_file_by_filter가 호출되어야 함 (고아 문서 정리)
+        mock_internal_api_writes["delete_file_by_filter"].assert_called()
+        call_args = mock_internal_api_writes["delete_file_by_filter"].call_args
+        # delete_file_by_filter(owner_id=..., file_hash=..., exclude_id=..., ...)
+        assert call_args.kwargs["owner_id"] == "test_user"
+        assert call_args.kwargs["file_hash"] == "abc123"
 
 
 # ========================================
