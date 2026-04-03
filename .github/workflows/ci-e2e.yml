@@ -45,17 +45,10 @@ jobs:
           npm run preview &
           sleep 5
 
-      - name: Run accessibility tests
+      - name: Run CI smoke tests (no auth required)
         run: |
           cd frontend/aims-uix3
-          npx playwright test tests/a11y --reporter=list
-        continue-on-error: true
-
-      - name: Run visual regression tests
-        run: |
-          cd frontend/aims-uix3
-          npx playwright test tests/visual --reporter=list --update-snapshots
-        continue-on-error: true
+          npx playwright test tests/ci --project=chromium --no-deps --reporter=list
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
