@@ -17,7 +17,7 @@ from services.parser_factory import get_parser
 from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, get_customer_name
+from internal_api import check_customer_ownership, get_customer_name, update_file_parsing_status
 
 logger = logging.getLogger(__name__)
 
@@ -271,26 +271,27 @@ def do_parsing_in_background(
                     # 파일명으로 documents 찾기
                     filename = os.path.basename(file_path)
                     logger.info(f"🔍 파일명으로 문서 검색: {filename}")
-                    files_collection = db["docupload.files"]
+                    # read는 그대로 유지 (Phase 2에서 전환 예정)
+                    files_collection = db["files"]
                     doc = files_collection.find_one({"upload.originalName": filename})
                     if doc:
                         file_oid = doc["_id"]
-                        files_collection.update_one(
-                            {"_id": file_oid},
-                            {"$set": {"is_annual_report": True}}
+                        # Internal API 경유 write
+                        update_file_parsing_status(
+                            str(file_oid), "ar",
+                            doc.get("ar_parsing_status", "pending"),
+                            is_annual_report=True
                         )
                         logger.info(f"✅ is_annual_report=True 설정 완료: {file_oid}")
                     else:
                         logger.warning(f"⚠️  문서를 찾을 수 없음: {filename}")
                 else:
-                    # ObjectId로 직접 검색
-                    file_oid = ObjectId(file_id)
-                    files_collection = db["docupload.files"]
-                    files_collection.update_one(
-                        {"_id": file_oid},
-                        {"$set": {"is_annual_report": True}}
+                    # ObjectId로 직접 검색 — Internal API 경유 write
+                    update_file_parsing_status(
+                        file_id, "ar", "pending",
+                        is_annual_report=True
                     )
-                    logger.info(f"✅ is_annual_report=True 설정 완료: {file_oid}")
+                    logger.info(f"✅ is_annual_report=True 설정 완료: {file_id}")
             except Exception as update_error:
                 logger.warning(f"⚠️  is_annual_report 필드 업데이트 실패: {update_error}")
         else:

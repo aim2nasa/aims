@@ -20,7 +20,8 @@ from services.cr_parser import parse_customer_review
 from services.cr_parser_table import parse_customer_review_table
 from services.db_writer import save_customer_review
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, has_report
+from internal_api import check_customer_ownership, has_report, update_file_parsing_status, replace_customer_reviews
+from services.db_writer import _serialize_for_json
 
 # aims_api 설정 조회 URL
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://100.110.215.65:3010")
@@ -99,24 +100,12 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
         file_path = doc.get("upload", {}).get("destPath")
         if not file_path:
             error_msg = "파일 경로 없음"
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {
-                    "cr_parsing_status": "error",
-                    "cr_parsing_error": error_msg
-                }}
-            )
+            update_file_parsing_status(str(doc["_id"]), "cr", "error", error=error_msg)
             return {"success": False, "error": error_msg}
 
         if not os.path.exists(file_path):
             error_msg = f"파일이 존재하지 않음: {file_path}"
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {
-                    "cr_parsing_status": "error",
-                    "cr_parsing_error": error_msg
-                }}
-            )
+            update_file_parsing_status(str(doc["_id"]), "cr", "error", error=error_msg)
             return {"success": False, "error": error_msg}
 
         # 2.5 중복 파싱 방지: 같은 source_file_id로 이미 CR이 있는지 확인 (Internal API 경유)
@@ -140,18 +129,31 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
                         safe_product = _re.sub(r'[\\/:*?"<>|]', '', product).strip()
                         if safe_product:
                             repair_update["displayName"] = f"{contractor}_CRS_{safe_product}_{issue}.pdf"
-                    # customers.customer_reviews 상품명도 보정
-                    db["customers"].update_one(
-                        {"_id": ObjectId(customer_id), "customer_reviews.source_file_id": ObjectId(file_id)},
-                        {"$set": {"customer_reviews.$.product_name": repaired["product_name"]}}
-                    )
+                    # customers.customer_reviews 상품명도 보정 (Internal API 경유: read-modify-write)
+                    try:
+                        customer_doc = db["customers"].find_one(
+                            {"_id": ObjectId(customer_id)},
+                            {"customer_reviews": 1}
+                        )
+                        if customer_doc and customer_doc.get("customer_reviews"):
+                            reviews = customer_doc["customer_reviews"]
+                            file_oid = ObjectId(file_id)
+                            for review in reviews:
+                                if review.get("source_file_id") == file_oid:
+                                    review["product_name"] = repaired["product_name"]
+                                    break
+                            replace_customer_reviews(customer_id, _serialize_for_json(reviews))
+                    except Exception as repair_err:
+                        logger.warning(f"⚠️ [CR Parsing] 상품명 보정 실패 (무시): {repair_err}")
                     logger.info(f"✅ [CR Parsing] 상품명 보정 완료: {repaired['product_name']}")
-                db["files"].update_one({"_id": doc["_id"]}, {"$set": repair_update})
+                api_kwargs = {}
+                if "displayName" in repair_update:
+                    api_kwargs["displayName"] = repair_update["displayName"]
+                if "cr_metadata" in repair_update:
+                    api_kwargs["cr_metadata"] = repair_update["cr_metadata"]
+                update_file_parsing_status(str(doc["_id"]), "cr", "completed", **api_kwargs)
             else:
-                db["files"].update_one(
-                    {"_id": doc["_id"]},
-                    {"$set": {"cr_parsing_status": "completed"}}
-                )
+                update_file_parsing_status(str(doc["_id"]), "cr", "completed")
             return {"success": True, "message": "이미 파싱 완료됨", "skipped": True}
 
         # 3. CR 파서 설정 조회 및 파싱 실행
@@ -167,13 +169,7 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
 
         if "error" in result:
             logger.error(f"❌ [CR Parsing] 파싱 실패: {result['error']}")
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {
-                    "cr_parsing_status": "error",
-                    "cr_parsing_error": result["error"]
-                }}
-            )
+            update_file_parsing_status(str(doc["_id"]), "cr", "error", error=result["error"])
             return {"success": False, "error": result["error"]}
 
         # 4. 1페이지 메타데이터 추출 (상품명, 발행일, 계약자, 피보험자 등)
@@ -244,34 +240,25 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
             # 🔴 overallStatus는 건드리지 않음 (관할권 분리 원칙)
             # overallStatus는 주 파이프라인(doc_prep_main, full_pipeline)만 관리
             # CRS 스캐너는 cr_parsing_status만 관리
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": cr_update}
-            )
+            api_kwargs = {}
+            if "displayName" in cr_update:
+                api_kwargs["displayName"] = cr_update["displayName"]
+            completed_at = cr_update.get("cr_parsing_completed_at")
+            if isinstance(completed_at, datetime):
+                api_kwargs["completed_at"] = completed_at.isoformat()
+            update_file_parsing_status(str(doc["_id"]), "cr", "completed", **api_kwargs)
             return {"success": True, "message": "파싱 완료"}
         else:
             error_msg = save_result.get("message", "DB 저장 실패")
             logger.error(f"❌ [CR Parsing] DB 저장 실패: {error_msg}")
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {
-                    "cr_parsing_status": "error",
-                    "cr_parsing_error": error_msg
-                }}
-            )
+            update_file_parsing_status(str(doc["_id"]), "cr", "error", error=error_msg)
             return {"success": False, "error": error_msg}
 
     except Exception as e:
         logger.error(f"❌ [CR Parsing] 예외 발생: {e}", exc_info=True)
         send_error_log("annual_report_api", f"CR Parsing 예외 발생: {e}", e)
         try:
-            db["files"].update_one(
-                {"_id": ObjectId(file_id)},
-                {"$set": {
-                    "cr_parsing_status": "error",
-                    "cr_parsing_error": str(e)
-                }}
-            )
+            update_file_parsing_status(str(file_id), "cr", "error", error=str(e))
         except Exception as update_error:
             logger.error(f"❌ [CR Parsing] 상태 업데이트 실패: {update_error}")
         return {"success": False, "error": str(e)}
@@ -336,10 +323,7 @@ async def trigger_cr_parsing(
                         customer_id = file_doc.get("customerId") or (ObjectId(request.customer_id) if request.customer_id else None)
                         if customer_id:
                             # 상태를 processing으로 업데이트
-                            db.files.update_one(
-                                {"_id": file_obj_id},
-                                {"$set": {"cr_parsing_status": "processing"}}
-                            )
+                            update_file_parsing_status(str(file_obj_id), "cr", "processing")
                             # 즉시 파싱 실행
                             result = parse_single_cr_document(db, str(file_obj_id), str(customer_id))
                             if result.get("success"):
@@ -359,10 +343,7 @@ async def trigger_cr_parsing(
 
             for doc in pending_docs:
                 # 상태를 processing으로 업데이트
-                db.files.update_one(
-                    {"_id": doc["_id"]},
-                    {"$set": {"cr_parsing_status": "processing"}}
-                )
+                update_file_parsing_status(str(doc["_id"]), "cr", "processing")
                 # 즉시 파싱 실행
                 result = parse_single_cr_document(db, str(doc["_id"]), request.customer_id)
                 if result.get("success"):
@@ -467,15 +448,10 @@ async def retry_cr_parsing(
                 )
 
         # 상태 초기화 후 즉시 파싱
-        db["files"].update_one(
-            {"_id": file_obj_id},
-            {
-                "$set": {
-                    "cr_parsing_status": "processing",
-                    "cr_parsing_error": None,
-                    "cr_parsing_retry_at": datetime.now(timezone.utc)
-                }
-            }
+        update_file_parsing_status(
+            str(file_obj_id), "cr", "processing",
+            error=None,
+            extra_fields={"cr_parsing_retry_at": datetime.now(timezone.utc).isoformat()}
         )
 
         logger.info(f"🔄 [CR Retry] 파싱 재시도: file_id={request.file_id}")

@@ -12,7 +12,7 @@ import logging
 
 from services.db_writer import get_annual_reports, delete_annual_reports, cleanup_duplicate_annual_reports
 from system_logger import send_error_log
-from internal_api import check_customer_ownership
+from internal_api import check_customer_ownership, register_annual_report
 
 logger = logging.getLogger(__name__)
 
@@ -524,33 +524,27 @@ async def register_ar_contracts(
                 detail=f"발행일 {target_issue_date}의 Annual Report를 찾을 수 없습니다"
             )
 
-        # 이미 등록된 경우 체크
-        target_ar = annual_reports[found_index]
-        if target_ar.get("registered_at"):
+        # Internal API 경유 등록 (duplicate 체크 포함)
+        api_result = register_annual_report(customer_id, target_issue_date)
+
+        if not api_result.get("success"):
+            raise HTTPException(status_code=500, detail="등록 실패: Internal API 호출 오류")
+
+        data = api_result.get("data", {})
+        if data.get("duplicate"):
             return RegisterARContractsResponse(
                 success=True,
                 message="이미 보험계약 탭에 등록된 Annual Report입니다",
-                registered_at=target_ar["registered_at"] if isinstance(target_ar["registered_at"], str) else target_ar["registered_at"].isoformat(),
+                registered_at=data.get("registered_at", ""),
                 duplicate=True
             )
 
-        # registered_at 설정
-        now_iso = datetime.now(timezone.utc).isoformat()
-
-        result = db.customers.update_one(
-            {"_id": customer_obj_id},
-            {"$set": {f"annual_reports.{found_index}.registered_at": now_iso}}
+        logger.info(f"✅ AR 보험계약 등록 완료: customer_id={customer_id}, issue_date={target_issue_date}")
+        return RegisterARContractsResponse(
+            success=True,
+            message="보험계약이 등록되었습니다",
+            registered_at=data.get("registered_at", "")
         )
-
-        if result.modified_count > 0:
-            logger.info(f"✅ AR 보험계약 등록 완료: customer_id={customer_id}, issue_date={target_issue_date}")
-            return RegisterARContractsResponse(
-                success=True,
-                message="보험계약이 등록되었습니다",
-                registered_at=now_iso
-            )
-        else:
-            raise HTTPException(status_code=500, detail="등록 실패: 문서가 수정되지 않았습니다")
 
     except HTTPException:
         raise

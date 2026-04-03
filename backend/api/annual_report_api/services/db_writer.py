@@ -18,8 +18,22 @@ sys.path.insert(0, str(project_root))
 
 from src.shared.time_utils import utc_now_iso
 from system_logger import send_error_log
+from internal_api import push_annual_report, replace_annual_reports, push_customer_review, replace_customer_reviews
 
 logger = logging.getLogger(__name__)
+
+
+def _serialize_for_json(obj):
+    """MongoDB 문서를 JSON 직렬화 가능하도록 변환 (ObjectId, datetime → str)"""
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    if isinstance(obj, dict):
+        return {k: _serialize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_serialize_for_json(item) for item in obj]
+    return obj
 
 # aims_api webhook URL
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
@@ -201,18 +215,12 @@ def save_annual_report(
                             }
                         }
 
-        # 5. customers 컬렉션 업데이트
-        result = customers_collection.update_one(
-            {"_id": customer_obj_id},
-            {
-                "$push": {
-                    "annual_reports": annual_report
-                }
-            }
-        )
+        # 5. customers 컬렉션 업데이트 (Internal API 경유)
+        api_result = push_annual_report(customer_id, _serialize_for_json(annual_report))
+        modified_count = api_result.get("data", {}).get("modifiedCount", 0) if api_result.get("success") else 0
 
         # 6. 결과 확인
-        if result.modified_count > 0:
+        if modified_count > 0:
             logger.info(
                 f"✅ Annual Report 저장 성공: customer={customer_name}, "
                 f"계약={total_contracts}건, 월보험료={total_monthly_premium:,}원"
@@ -568,15 +576,13 @@ def delete_annual_reports(
                 if idx not in report_indices
             ]
 
-        # 고객 문서 업데이트 (annual_reports 배열 교체)
-        result = customers_collection.update_one(
-            {"_id": customer_obj_id},
-            {"$set": {"annual_reports": reports_to_keep}}
-        )
+        # 고객 문서 업데이트 (Internal API 경유 — annual_reports 배열 교체)
+        api_result = replace_annual_reports(customer_id, _serialize_for_json(reports_to_keep))
+        modified_count = api_result.get("data", {}).get("modifiedCount", 0) if api_result.get("success") else 0
 
         deleted_count = len(reports) - len(reports_to_keep)
 
-        if result.modified_count > 0:
+        if modified_count > 0:
             logger.info(f"✅ Annual Reports 삭제 성공: {deleted_count}건")
             return {
                 "success": True,
@@ -751,15 +757,13 @@ def cleanup_duplicate_annual_reports(
         # 유지할 리포트 목록 = other_reports + best_report
         reports_to_keep = other_reports + [best_report]
 
-        # 고객 문서 업데이트
-        result = customers_collection.update_one(
-            {"_id": customer_obj_id},
-            {"$set": {"annual_reports": reports_to_keep}}
-        )
+        # 고객 문서 업데이트 (Internal API 경유 — 중복 정리)
+        api_result = replace_annual_reports(customer_id, _serialize_for_json(reports_to_keep))
+        modified_count = api_result.get("data", {}).get("modifiedCount", 0) if api_result.get("success") else 0
 
         deleted_count = len(same_issue_reports) - 1
 
-        if result.modified_count > 0:
+        if modified_count > 0:
             logger.info(f"✅ 중복 Annual Reports 정리 완료: {deleted_count}건 삭제")
 
             # 유지된 리포트 정보 요약
@@ -986,18 +990,12 @@ def save_customer_review(
                         }
                     }
 
-        # 6. customers 컬렉션 업데이트
-        result = customers_collection.update_one(
-            {"_id": customer_obj_id},
-            {
-                "$push": {
-                    "customer_reviews": customer_review
-                }
-            }
-        )
+        # 6. customers 컬렉션 업데이트 (Internal API 경유)
+        api_result = push_customer_review(customer_id, _serialize_for_json(customer_review))
+        modified_count = api_result.get("data", {}).get("modifiedCount", 0) if api_result.get("success") else 0
 
         # 7. 결과 확인
-        if result.modified_count > 0:
+        if modified_count > 0:
             logger.info(
                 f"✅ Customer Review 저장 성공: contractor={contractor_name}, "
                 f"product={product_name}, 펀드={fund_count}개, 총적립금={total_accumulated_amount:,}원"
@@ -1311,15 +1309,13 @@ def delete_customer_reviews(
             if idx not in review_indices
         ]
 
-        # 고객 문서 업데이트 (customer_reviews 배열 교체)
-        result = customers_collection.update_one(
-            {"_id": customer_obj_id},
-            {"$set": {"customer_reviews": reviews_to_keep}}
-        )
+        # 고객 문서 업데이트 (Internal API 경유 — customer_reviews 배열 교체)
+        api_result = replace_customer_reviews(customer_id, _serialize_for_json(reviews_to_keep))
+        modified_count = api_result.get("data", {}).get("modifiedCount", 0) if api_result.get("success") else 0
 
         deleted_count = len(reviews) - len(reviews_to_keep)
 
-        if result.modified_count > 0:
+        if modified_count > 0:
             logger.info(f"✅ Customer Reviews 삭제 성공: {deleted_count}건")
             return {
                 "success": True,

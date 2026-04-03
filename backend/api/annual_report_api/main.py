@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from config import settings
 from services.queue_manager import ARParseQueueManager
 from system_logger import send_error_log
+from internal_api import update_file_parsing_status
 
 # 로깅 설정
 logging.basicConfig(
@@ -110,10 +111,7 @@ async def scan_pending_ar_documents(log_always: bool = False):
 
                 # 이 파일의 파싱 결과가 없으면 고아 문서 → pending으로 복구
                 if not customer:
-                    db["files"].update_one(
-                        {"_id": orphan["_id"]},
-                        {"$set": {"ar_parsing_status": "pending"}}
-                    )
+                    update_file_parsing_status(str(orphan["_id"]), "ar", "pending")
                     pending_docs.append(orphan)
                     filename = orphan.get("upload", {}).get("originalName", "unknown")
                     logger.info(f"🔧 AR 고아 문서 자가 복구: {filename}")
@@ -127,10 +125,7 @@ async def scan_pending_ar_documents(log_always: bool = False):
             }).limit(10))
 
             for orphan in orphan_no_status:
-                db["files"].update_one(
-                    {"_id": orphan["_id"]},
-                    {"$set": {"ar_parsing_status": "pending"}}
-                )
+                update_file_parsing_status(str(orphan["_id"]), "ar", "pending")
                 pending_docs.append(orphan)
                 filename = orphan.get("upload", {}).get("originalName", "unknown")
                 logger.info(f"🔧 AR 고아 문서 복구 (ar_parsing_status 누락): {filename}")
@@ -147,13 +142,7 @@ async def scan_pending_ar_documents(log_always: bool = False):
             for stuck in stuck_ar:
                 updated_at = stuck.get("updatedAt") or stuck.get("createdAt")
                 if updated_at and updated_at < timeout_threshold:
-                    db["files"].update_one(
-                        {"_id": stuck["_id"]},
-                        {"$set": {
-                            "ar_parsing_status": "pending",
-                            "ar_parsing_error": "processing 타임아웃 (5분 초과) - 자동 재시도"
-                        }}
-                    )
+                    update_file_parsing_status(str(stuck["_id"]), "ar", "pending", error="processing 타임아웃 (5분 초과) - 자동 재시도")
                     pending_docs.append(stuck)
                     filename = stuck.get("upload", {}).get("originalName", "unknown")
                     logger.info(f"🔧 AR processing 타임아웃 복구 (5분 초과): {filename}")
@@ -259,10 +248,7 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
 
                 # 이 파일의 파싱 결과가 없으면 고아 문서 → pending으로 복구
                 if not customer:
-                    db["files"].update_one(
-                        {"_id": orphan["_id"]},
-                        {"$set": {"cr_parsing_status": "pending"}}
-                    )
+                    update_file_parsing_status(str(orphan["_id"]), "cr", "pending")
                     pending_docs.append(orphan)
                     filename = orphan.get("upload", {}).get("originalName", "unknown")
                     logger.info(f"🔧 CRS 고아 문서 자가 복구: {filename}")
@@ -276,10 +262,7 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
             }).limit(10))
 
             for orphan in orphan_no_status:
-                db["files"].update_one(
-                    {"_id": orphan["_id"]},
-                    {"$set": {"cr_parsing_status": "pending"}}
-                )
+                update_file_parsing_status(str(orphan["_id"]), "cr", "pending")
                 pending_docs.append(orphan)
                 filename = orphan.get("upload", {}).get("originalName", "unknown")
                 logger.info(f"🔧 CRS 고아 문서 복구 (cr_parsing_status 누락): {filename}")
@@ -296,13 +279,7 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
             for stuck in stuck_processing:
                 updated_at = stuck.get("updatedAt") or stuck.get("createdAt")
                 if updated_at and updated_at < timeout_threshold:
-                    db["files"].update_one(
-                        {"_id": stuck["_id"]},
-                        {"$set": {
-                            "cr_parsing_status": "pending",
-                            "cr_parsing_error": "processing 타임아웃 (5분 초과) - 자동 재시도"
-                        }}
-                    )
+                    update_file_parsing_status(str(stuck["_id"]), "cr", "pending", error="processing 타임아웃 (5분 초과) - 자동 재시도")
                     pending_docs.append(stuck)
                     filename = stuck.get("upload", {}).get("originalName", "unknown")
                     logger.info(f"🔧 CRS processing 타임아웃 복구 (5분 초과): {filename}")
@@ -321,10 +298,7 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
                 continue
 
             # 상태를 processing으로 업데이트
-            db["files"].update_one(
-                {"_id": file_id},
-                {"$set": {"cr_parsing_status": "processing"}}
-            )
+            update_file_parsing_status(str(file_id), "cr", "processing")
 
             logger.info(f"📄 CRS 파싱 시작: {filename} (file_id={file_id})")
 
@@ -351,13 +325,7 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
             except Exception as parse_error:
                 skipped_count += 1
                 logger.error(f"❌ CRS 파싱 예외: {filename}, error={parse_error}", exc_info=True)
-                db["files"].update_one(
-                    {"_id": file_id},
-                    {"$set": {
-                        "cr_parsing_status": "error",
-                        "cr_parsing_error": str(parse_error)
-                    }}
-                )
+                update_file_parsing_status(str(file_id), "cr", "error", error=str(parse_error))
 
         if found_count > 0:
             logger.info(f"🔍 CRS 스캔: 발견={found_count}, 처리={processed_count}, 스킵={skipped_count}")
@@ -452,11 +420,8 @@ async def queue_worker():
                         error_msg = result.get("error", "Unknown error") if result else "Parsing failed"
                         retry_count = task["retry_count"] + 1  # 다음 재시도 횟수
 
-                        # files 컬렉션에 retry_count 저장 (UI 표시용)
-                        db["files"].update_one(
-                            {"_id": file_id},
-                            {"$set": {"ar_retry_count": retry_count}}
-                        )
+                        # files 컬렉션에 retry_count만 저장 (UI 표시용, 파싱 상태는 건드리지 않음)
+                        update_file_parsing_status(str(file_id), "ar", None, retry_count=retry_count)
 
                         # Rate limit 에러인 경우 OpenAI가 알려준 시간만큼 대기
                         if "rate_limit" in error_msg.lower() or "429" in error_msg:
