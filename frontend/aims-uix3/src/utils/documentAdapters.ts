@@ -4,7 +4,7 @@
  */
 
 import type { SelectedDocument } from './documentTransformers'
-import type { PreviewDocumentInfo } from '../features/customer/controllers/useCustomerDocumentsController'
+import type { PreviewDocumentInfo } from '@/shared/types/document'
 
 /**
  * SelectedDocument를 DownloadHelper 형식으로 변환

@@ -18,6 +18,7 @@ import { SortIndicator } from '@/shared/ui/SortIndicator';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useCustomerStatusFilterStore } from '@/shared/store/useCustomerStatusFilterStore';
+import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore';
 import { CustomerService } from '@/services/customerService';
 import type { Customer } from '@/entities/customer/model';
 import { formatDate, formatDateTime } from '@/shared/lib/timeUtils';
@@ -327,8 +328,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 try {
                   if (isInactive) {
                     await CustomerService.restoreCustomer(customerId);
+                    useCustomerStatusFilterStore.getState().requestFilterChange('active');
                   } else {
                     await CustomerService.deleteCustomer(customerId);
+                    useCustomerStatusFilterStore.getState().requestFilterChange('active');
+                    useRecentCustomersStore.getState().removeRecentCustomer(customerId);
                   }
                   showAlert({ message: `${customerName} 고객이 ${isInactive ? '활성화' : '휴면 처리'}되었습니다.`, iconType: 'success' });
                   refresh();
@@ -485,6 +489,8 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         if (isDevMode) {
           // 개발자 모드: Hard Delete (DB에서 완전 삭제)
           await Promise.all(ids.map(id => CustomerService.permanentDeleteCustomer(id)));
+          // UI 부수효과: 최근 고객 제거
+          ids.forEach(id => useRecentCustomersStore.getState().removeRecentCustomer(id));
           showAlert({
             title: '삭제 완료',
             message: `${ids.length}명의 고객이 영구 삭제되었습니다.`,
@@ -493,6 +499,9 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         } else {
           // 일반 모드: Soft Delete (휴면 처리)
           await CustomerService.deleteCustomers(ids);
+          // UI 부수효과: 활성 필터 전환 + 최근 고객 제거
+          useCustomerStatusFilterStore.getState().requestFilterChange('active');
+          ids.forEach(id => useRecentCustomersStore.getState().removeRecentCustomer(id));
         }
 
         // 삭제 완료 후 새로고침 및 상태 초기화

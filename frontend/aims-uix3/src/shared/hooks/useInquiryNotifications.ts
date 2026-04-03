@@ -11,7 +11,7 @@ import {
   getUnreadIds,
   markAsRead as markAsReadApi,
   getNotificationStreamUrl,
-} from '@/entities/inquiry/api'
+} from '@/services/inquiryService'
 import { useSSESubscription } from './useSSESubscription'
 import { errorReporter } from '@/shared/lib/errorReporter'
 

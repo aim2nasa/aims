@@ -28,8 +28,7 @@ vi.mock('@/features/customer/api/annualReportApi', () => ({
 }))
 
 import { useArBatchAnalysis } from '../hooks/useArBatchAnalysis'
-import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser'
-import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
+import { checkAnnualReportFromPDF, AnnualReportApi } from '@/features/customer'
 
 const mockCheckAR = checkAnnualReportFromPDF as ReturnType<typeof vi.fn>
 const mockSearchCustomers = AnnualReportApi.searchCustomersByName as ReturnType<typeof vi.fn>

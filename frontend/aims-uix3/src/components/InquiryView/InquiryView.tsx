@@ -14,6 +14,8 @@ import {
   addMessage,
   getAttachmentUrl,
   formatFileSize,
+} from '@/services/inquiryService';
+import {
   type InquiryStatus,
   type InquiryCategory,
   type Inquiry,

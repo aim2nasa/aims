@@ -154,10 +154,11 @@ describe('CustomerService - Event Dispatching', () => {
       expect(customerChangedEvent).toBeDefined()
     })
 
-    it('Zustand store에 활성 필터 변경이 요청되어야 함', async () => {
+    it('Service 레이어에서 Zustand store를 직접 호출하지 않아야 함', async () => {
       await CustomerService.deleteCustomer('cust-001')
 
-      expect(mockRequestFilterChange).toHaveBeenCalledWith('active')
+      // F5 수정: store 부수효과는 UI 레이어(stores/CustomerDocument, AllCustomersView)에서 처리
+      expect(mockRequestFilterChange).not.toHaveBeenCalled()
     })
 
     it('API 호출 실패 시 이벤트가 발생하지 않아야 함', async () => {
@@ -198,10 +199,11 @@ describe('CustomerService - Event Dispatching', () => {
       expect(customerChangedEvent).toBeDefined()
     })
 
-    it('Zustand store에 활성 필터 변경이 요청되어야 함', async () => {
+    it('Service 레이어에서 Zustand store를 직접 호출하지 않아야 함', async () => {
       await CustomerService.restoreCustomer('cust-001')
 
-      expect(mockRequestFilterChange).toHaveBeenCalledWith('active')
+      // F5 수정: store 부수효과는 UI 레이어에서 처리
+      expect(mockRequestFilterChange).not.toHaveBeenCalled()
     })
 
     it('API 호출 실패 시 이벤트가 발생하지 않아야 함', async () => {
@@ -297,7 +299,7 @@ describe('CustomerService - Event Dispatching', () => {
       window.removeEventListener('customerChanged', mockListener)
     })
 
-    it('restoreCustomer 후 Zustand store에 필터 변경이 요청되어야 함', async () => {
+    it('restoreCustomer 후 Service 레이어에서 Zustand store를 직접 호출하지 않아야 함', async () => {
       const activeCustomer = createMockCustomer()
 
       vi.mocked(api.post).mockResolvedValue({
@@ -307,7 +309,8 @@ describe('CustomerService - Event Dispatching', () => {
 
       await CustomerService.restoreCustomer('cust-001')
 
-      expect(mockRequestFilterChange).toHaveBeenCalledWith('active')
+      // F5 수정: store 부수효과는 UI 레이어에서 처리
+      expect(mockRequestFilterChange).not.toHaveBeenCalled()
     })
   })
 })

@@ -1,0 +1,1992 @@
+/**
+ * SF Symbol Component Styles
+ * @since 1.0.0
+ *
+ * Apple SF Symbols 스타일 시스템 완벽 구현
+ * iOS Human Interface Guidelines 준수
+ * CLAUDE.md 준수: CSS 변수 활용, 하드코딩 금지
+ */
+
+/* === SF SYMBOL BASE === */
+
+@layer components {
+
+  .sf-symbol {
+    /* 기본 디스플레이 속성 */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    /* iOS 표준 폰트 설정 */
+    font-family: var(--font-family-system);
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* SF Symbol 특성 */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    /* 텍스트와 정렬 */
+    vertical-align: middle;
+
+    /* 기본 색상 */
+    color: currentColor;
+
+    /* 부드러운 전환 */
+    transition: all var(--duration-ios-quick) var(--easing-ios-default);
+  }
+
+  /* === SF SYMBOL SIZES === */
+
+  .sf-symbol--size-caption-2 {
+    font-size: var(--font-size-caption-2); /* 11px */
+    width: 1em;
+    height: 1em;
+  }
+
+  .sf-symbol--size-caption-1 {
+    font-size: var(--font-size-caption-1); /* 12px */
+    width: 1em;
+    height: 1em;
+  }
+
+  .sf-symbol--size-footnote {
+    font-size: var(--font-size-footnote); /* 13px */
+    width: 1em;
+    height: 1em;
+  }
+
+  .sf-symbol--size-callout {
+    font-size: var(--font-size-callout); /* 16px */
+    width: 1em;
+    height: 1em;
+  }
+
+  .sf-symbol--size-body {
+    font-size: var(--font-size-body); /* 17px */
+    width: 1em;
+    height: 1em;
+  }
+
+  .sf-symbol--size-headline {
+    font-size: var(--font-size-headline); /* 17px */
+    width: 1em;
+    height: 1em;
+  }
+
+  .sf-symbol--size-title-3 {
+    font-size: var(--font-size-title-3); /* 20px */
+    width: 1em;
+    height: 1em;
+  }
+
+  .sf-symbol--size-title-2 {
+    font-size: var(--font-size-title-2); /* 22px */
+    width: 1em;
+    height: 1em;
+  }
+
+  .sf-symbol--size-title-1 {
+    font-size: var(--font-size-title-1); /* 28px */
+    width: 1em;
+    height: 1em;
+  }
+
+  .sf-symbol--size-large-title {
+    font-size: var(--font-size-large-title); /* 34px */
+    width: 1em;
+    height: 1em;
+  }
+
+  /* === SF SYMBOL WEIGHTS === */
+
+  .sf-symbol--weight-ultralight {
+    font-weight: 100;
+  }
+
+  .sf-symbol--weight-thin {
+    font-weight: 200;
+  }
+
+  .sf-symbol--weight-light {
+    font-weight: 300;
+  }
+
+  .sf-symbol--weight-regular {
+    font-weight: 400;
+  }
+
+  .sf-symbol--weight-medium {
+    font-weight: 600;
+  }
+
+  .sf-symbol--weight-semibold {
+    font-weight: 600;
+  }
+
+  .sf-symbol--weight-bold {
+    font-weight: 700;
+  }
+
+  .sf-symbol--weight-heavy {
+    font-weight: 800;
+  }
+
+  .sf-symbol--weight-black {
+    font-weight: 900;
+  }
+
+  /* === SF SYMBOL SHAPE (실제 아이콘 모양) === */
+
+  .sf-symbol__shape {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    position: relative;
+    color: inherit;
+  }
+
+  /* === GEAR SYMBOL === */
+
+  .sf-symbol--gear .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* iOS 표준 기어 모양 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 30c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20zm0-6c-3 0-5-2-5-5v-9c0-3 2-5 5-5s5 2 5 5v9c0 3-2 5-5 5zm0 52c3 0 5 2 5 5v9c0 3-2 5-5 5s-5-2-5-5v-9c0-3 2-5 5-5zm26-26c0-3 2-5 5-5h9c3 0 5 2 5 5s-2 5-5 5h-9c-3 0-5-2-5-5zm-52 0c0 3-2 5-5 5h-9c-3 0-5-2-5-5s2-5 5-5h9c3 0 5 2 5 5zm41-18c-2-2-2-5 0-7l6-6c2-2 5-2 7 0s2 5 0 7l-6 6c-2 2-5 2-7 0zm-30 30c2 2 2 5 0 7l-6 6c-2 2-5 2-7 0s-2-5 0-7l6-6c2-2 5-2 7 0zm30 0c2-2 5-2 7 0l6 6c2 2 2 5 0 7s-5 2-7 0l-6-6c-2-2-2-5 0-7zm-30-30c-2 2-5 2-7 0l-6-6c-2-2-2-5 0-7s5-2 7 0l6 6c2 2 2 5 0 7z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 30c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20zm0-6c-3 0-5-2-5-5v-9c0-3 2-5 5-5s5 2 5 5v9c0 3-2 5-5 5zm0 52c3 0 5 2 5 5v9c0 3-2 5-5 5s-5-2-5-5v-9c0-3 2-5 5-5zm26-26c0-3 2-5 5-5h9c3 0 5 2 5 5s-2 5-5 5h-9c-3 0-5-2-5-5zm-52 0c0 3-2 5-5 5h-9c-3 0-5-2-5-5s2-5 5-5h9c3 0 5 2 5 5zm41-18c-2-2-2-5 0-7l6-6c2-2 5-2 7 0s2 5 0 7l-6 6c-2 2-5 2-7 0zm-30 30c2 2 2 5 0 7l-6 6c-2 2-5 2-7 0s-2-5 0-7l6-6c2-2 5-2 7 0zm30 0c2-2 5-2 7 0l6 6c2 2 2 5 0 7s-5 2-7 0l-6-6c-2-2-2-5 0-7zm-30-30c-2 2-5 2-7 0l-6-6c-2-2-2-5 0-7s5-2 7 0l6 6c2 2 2 5 0 7z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === SUN SYMBOL === */
+
+  .sf-symbol--sun-max .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* iOS 표준 태양 모양 */
+    background: currentColor;
+    border-radius: 50%;
+
+    /* 태양 광선 효과 */
+    box-shadow:
+      0 -1.3em 0 -0.6em currentColor,
+      0.9em -0.9em 0 -0.6em currentColor,
+      1.3em 0 0 -0.6em currentColor,
+      0.9em 0.9em 0 -0.6em currentColor,
+      0 1.3em 0 -0.6em currentColor,
+      -0.9em 0.9em 0 -0.6em currentColor,
+      -1.3em 0 0 -0.6em currentColor,
+      -0.9em -0.9em 0 -0.6em currentColor;
+  }
+
+  /* === MOON SYMBOL === */
+
+  .sf-symbol--moon-stars .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.7em;
+    height: 0.7em;
+
+    /* iOS 표준 달 모양 */
+    background: currentColor;
+    border-radius: 50%;
+
+    /* 달 크레이터 효과 */
+    box-shadow:
+      inset 0.15em 0.15em 0 0 var(--color-bg-primary),
+      inset -0.1em -0.1em 0 0 var(--color-bg-primary);
+  }
+
+  /* 달 주변 별들 */
+  .sf-symbol--moon-stars .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 0.1em;
+    right: 0.1em;
+    width: 0.15em;
+    height: 0.15em;
+    background: currentColor;
+    border-radius: 50%;
+
+    /* 추가 별들 */
+    box-shadow:
+      -0.4em 0.3em 0 -0.05em currentColor,
+      0.2em 0.6em 0 -0.05em currentColor;
+  }
+
+  /* === ELLIPSIS SYMBOL === */
+
+  .sf-symbol--ellipsis .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.1em;
+    height: 0.1em;
+
+    /* 세 개의 점 */
+    background: currentColor;
+    border-radius: 50%;
+    box-shadow:
+      -0.25em 0 0 currentColor,
+      0.25em 0 0 currentColor;
+  }
+
+  /* === XMARK (CLOSE) SYMBOL === */
+
+  .sf-symbol--xmark .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 0.15em;
+    height: 0.8em;
+    background: currentColor;
+    border-radius: 0.075em;
+  }
+
+  .sf-symbol--xmark .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    width: 0.15em;
+    height: 0.8em;
+    background: currentColor;
+    border-radius: 0.075em;
+  }
+
+  /* === HAMBURGER MENU SYMBOL === */
+
+  .sf-symbol--line-horizontal-3 .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.1em;
+    background: currentColor;
+    border-radius: 0.05em;
+
+    /* 세 줄 햄버거 메뉴 */
+    box-shadow:
+      0 -0.25em 0 currentColor,
+      0 0.25em 0 currentColor;
+  }
+
+  /* === SIDEBAR SYMBOLS === */
+
+  /* sidebar-left: 사이드바 접힌 상태 아이콘 (펼치기 암시) */
+  .sf-symbol--sidebar-left .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.6em;
+
+    /* iOS 표준 "메뉴 펼치기" 암시 디자인 - 3줄 햄버거 + 우향 화살표 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='8' y='10' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='28' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='46' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3cpath d='M42 25L52 30L42 35L44 30Z' fill='currentColor'/%3e%3crect x='55' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='8' y='10' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='28' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='8' y='46' width='20' height='3' fill='currentColor' rx='1.5'/%3e%3cpath d='M42 25L52 30L42 35L44 30Z' fill='currentColor'/%3e%3crect x='55' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='55' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* sidebar-leading: 사이드바 펼쳐진 상태 아이콘 (접기 암시) */
+  .sf-symbol--sidebar-leading .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.6em;
+
+    /* iOS 표준 "메뉴 접기" 암시 디자인 - 펼쳐진 사이드바 + 좌향 화살표 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='5' y='5' width='25' height='50' fill='currentColor' rx='2'/%3e%3cpath d='M38 25L28 30L38 35L36 30Z' fill='currentColor'/%3e%3crect x='45' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 60'%3e%3crect x='5' y='5' width='25' height='50' fill='currentColor' rx='2'/%3e%3cpath d='M38 25L28 30L38 35L36 30Z' fill='currentColor'/%3e%3crect x='45' y='10' width='17' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='28' width='12' height='3' fill='currentColor' rx='1.5'/%3e%3crect x='45' y='46' width='15' height='3' fill='currentColor' rx='1.5'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === INTERACTIVE STATES === */
+
+  .sf-symbol--interactive {
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    padding: 0.2em;
+    margin: -0.2em;
+
+    /* 터치 타겟 크기 확보 (최소 44px) */
+    min-width: var(--spacing-11);
+    min-height: var(--spacing-11);
+  }
+
+  .sf-symbol--interactive:hover {
+    background-color: var(--color-bg-hover);
+    transform: scale(1.05);
+  }
+
+  .sf-symbol--interactive:active {
+    transform: scale(0.95);
+    background-color: var(--color-bg-active);
+  }
+
+  .sf-symbol--interactive:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  /* === RIPPLE EFFECT === */
+
+  .sf-symbol__ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: var(--color-primary-300);
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .sf-symbol--interactive:active .sf-symbol__ripple {
+    animation: sf-symbol-ripple var(--duration-ios-standard) var(--easing-ios-default);
+  }
+
+  @keyframes sf-symbol-ripple {
+    0% {
+      width: 0;
+      height: 0;
+      opacity: 0.6;
+    }
+    100% {
+      width: 2em;
+      height: 2em;
+      opacity: 0;
+    }
+  }
+
+  /* === ANIMATIONS === */
+
+  .sf-symbol--animation-bounce {
+    animation: sf-symbol-bounce var(--duration-ios-standard) var(--easing-ios-default);
+  }
+
+  @keyframes sf-symbol-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  .sf-symbol--animation-pulse {
+    animation: sf-symbol-pulse 2s infinite var(--easing-ios-default);
+  }
+
+  @keyframes sf-symbol-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .sf-symbol--animation-rotate {
+    animation: sf-symbol-rotate 1s linear infinite;
+  }
+
+  @keyframes sf-symbol-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .sf-symbol--animation-scale {
+    animation: sf-symbol-scale var(--duration-ios-standard) var(--easing-ios-default);
+  }
+
+  @keyframes sf-symbol-scale {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .sf-symbol--animation-fade {
+    animation: sf-symbol-fade 1s var(--easing-ios-default) infinite alternate;
+  }
+
+  @keyframes sf-symbol-fade {
+    0% { opacity: 0.3; }
+    100% { opacity: 1; }
+  }
+
+  .sf-symbol--animation-wiggle {
+    animation: sf-symbol-wiggle 0.5s var(--easing-ios-default) 3;
+  }
+
+  @keyframes sf-symbol-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-3deg); }
+    75% { transform: rotate(3deg); }
+  }
+
+  /* === VARIANTS === */
+
+  .sf-symbol--variant-fill .sf-symbol__shape::before {
+    /* 채워진 버전 - opacity 약간 증가 */
+    opacity: 1;
+  }
+
+  .sf-symbol--variant-circle .sf-symbol__shape {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: 50%;
+    padding: 0.2em;
+  }
+
+  .sf-symbol--variant-square .sf-symbol__shape {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-sm);
+    padding: 0.2em;
+  }
+
+  .sf-symbol--variant-circle-fill .sf-symbol__shape {
+    background: var(--color-primary-500);
+    color: var(--color-neutral-0);
+    border-radius: 50%;
+    padding: 0.2em;
+  }
+
+  .sf-symbol--variant-square-fill .sf-symbol__shape {
+    background: var(--color-primary-500);
+    color: var(--color-neutral-0);
+    border-radius: var(--radius-sm);
+    padding: 0.2em;
+  }
+
+  /* === ACCESSIBILITY === */
+
+  @media (prefers-reduced-motion: reduce) {
+    .sf-symbol {
+      animation: none;
+      transition: none;
+    }
+
+    .sf-symbol--animation-bounce,
+    .sf-symbol--animation-pulse,
+    .sf-symbol--animation-rotate,
+    .sf-symbol--animation-scale,
+    .sf-symbol--animation-fade,
+    .sf-symbol--animation-wiggle {
+      animation: none;
+    }
+  }
+
+  /* === PERSON SYMBOL === */
+
+  .sf-symbol--person .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* iOS 표준 사람 실루엣 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='50' cy='25' r='15'/%3e%3cpath d='M50 45c-15 0-25 10-25 25v20h50V70c0-15-10-25-25-25z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='50' cy='25' r='15'/%3e%3cpath d='M50 45c-15 0-25 10-25 25v20h50V70c0-15-10-25-25-25z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === LIST BULLET SYMBOL === */
+
+  .sf-symbol--list-bullet .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.6em;
+
+    /* iOS 표준 목록 스타일 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 70'%3e%3ccircle cx='10' cy='15' r='4'/%3e%3crect x='25' y='11' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='35' r='4'/%3e%3crect x='25' y='31' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='55' r='4'/%3e%3crect x='25' y='51' width='70' height='8' rx='4'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 70'%3e%3ccircle cx='10' cy='15' r='4'/%3e%3crect x='25' y='11' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='35' r='4'/%3e%3crect x='25' y='31' width='70' height='8' rx='4'/%3e%3ccircle cx='10' cy='55' r='4'/%3e%3crect x='25' y='51' width='70' height='8' rx='4'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === LOCATION SYMBOL === */
+
+  .sf-symbol--location .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* iOS 표준 위치 핀 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 80'%3e%3cpath d='M30 0C13.4 0 0 13.4 0 30c0 30 30 50 30 50s30-20 30-50C60 13.4 46.6 0 30 0zm0 45c-8.3 0-15-6.7-15-15s6.7-15 15-15 15 6.7 15 15-6.7 15-15 15z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 80'%3e%3cpath d='M30 0C13.4 0 0 13.4 0 30c0 30 30 50 30 50s30-20 30-50C60 13.4 46.6 0 30 0zm0 45c-8.3 0-15-6.7-15-15s6.7-15 15-15 15 6.7 15 15-6.7 15-15 15z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === HEART.FILL SYMBOL (배우자/가족) === */
+
+  .sf-symbol--heart-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.75em;
+
+    /* iOS SF Symbols 하트 아이콘 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 90 C 20 70, 5 50, 5 35 C 5 20, 15 10, 25 10 C 35 10, 45 20, 50 30 C 55 20, 65 10, 75 10 C 85 10, 95 20, 95 35 C 95 50, 80 70, 50 90 Z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 90 C 20 70, 5 50, 5 35 C 5 20, 15 10, 25 10 C 35 10, 45 20, 50 30 C 55 20, 65 10, 75 10 C 85 10, 95 20, 95 35 C 95 50, 80 70, 50 90 Z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    opacity: 0.95;
+  }
+
+  /* === HOUSE.FILL SYMBOL (가족/집) === */
+
+  .sf-symbol--house-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.8em;
+
+    /* iOS 표준 집 실루엣 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 80'%3e%3cpath d='M42.5 5L5 35v40h25V55h25v20h25V35L42.5 5z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 80'%3e%3cpath d='M42.5 5L5 35v40h25V55h25v20h25V35L42.5 5z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    opacity: 0.9;
+  }
+
+  /* === PERSON 2 FILL SYMBOL (친척) === */
+
+  .sf-symbol--person-2-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.8em;
+
+    /* iOS 표준 두 사람 실루엣 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    opacity: 0.9;
+  }
+
+  /* === PERSON 3 FILL SYMBOL (사회) === */
+
+  .sf-symbol--person-3-fill .sf-symbol__shape::before {
+    content: '👥';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1em;
+    line-height: 1;
+    opacity: 1;
+  }
+
+  /* === BRIEFCASE FILL SYMBOL (비즈니스) === */
+
+  .sf-symbol--briefcase-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.7em;
+
+    /* iOS 표준 서류가방 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 70'%3e%3cpath d='M30 5h25v10H30V5z'/%3e%3crect x='5' y='15' width='75' height='50' rx='5' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 70'%3e%3cpath d='M30 5h25v10H30V5z'/%3e%3crect x='5' y='15' width='75' height='50' rx='5' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    opacity: 0.9;
+  }
+
+  /* === BUILDING 2 FILL SYMBOL (법인) === */
+
+  .sf-symbol--building-2-fill .sf-symbol__shape::before {
+    content: '🏢';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1em;
+    line-height: 1;
+    opacity: 1;
+  }
+
+  /* === PERSON 2 (TEAM) SYMBOL === */
+
+  .sf-symbol--person-2 .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.8em;
+
+    /* iOS 표준 두 사람 실루엣 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === DOC (DOCUMENT) SYMBOL === */
+
+  .sf-symbol--doc .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.65em;
+    height: 0.8em;
+
+    /* iOS 표준 문서 아이콘 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 65 80'%3e%3cpath d='M10 0v80h45V20L35 0H10zm30 5l15 15H40V5z'/%3e%3crect x='18' y='30' width='30' height='3'/%3e%3crect x='18' y='38' width='30' height='3'/%3e%3crect x='18' y='46' width='25' height='3'/%3e%3crect x='18' y='54' width='30' height='3'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 65 80'%3e%3cpath d='M10 0v80h45V20L35 0H10zm30 5l15 15H40V5z'/%3e%3crect x='18' y='30' width='30' height='3'/%3e%3crect x='18' y='38' width='30' height='3'/%3e%3crect x='18' y='46' width='25' height='3'/%3e%3crect x='18' y='54' width='30' height='3'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === CHART BAR (DASHBOARD) SYMBOL === */
+
+  .sf-symbol--chart-bar .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* iOS 표준 차트 아이콘 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='50' width='12' height='25' rx='2'/%3e%3crect x='28' y='30' width='12' height='45' rx='2'/%3e%3crect x='46' y='20' width='12' height='55' rx='2'/%3e%3crect x='64' y='40' width='12' height='35' rx='2'/%3e%3cpath d='M5 75h70' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='50' width='12' height='25' rx='2'/%3e%3crect x='28' y='30' width='12' height='45' rx='2'/%3e%3crect x='46' y='20' width='12' height='55' rx='2'/%3e%3crect x='64' y='40' width='12' height='35' rx='2'/%3e%3cpath d='M5 75h70' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === BOOKS VERTICAL (LIBRARY) SYMBOL === */
+
+  .sf-symbol--books-vertical .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* iOS 표준 책 3권 세로 정렬 아이콘 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='30' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='50' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3cline x1='13' y1='20' x2='22' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='33' y1='20' x2='42' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='53' y1='20' x2='62' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3crect x='10' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='30' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3crect x='50' y='10' width='15' height='60' rx='2' fill='currentColor'/%3e%3cline x1='13' y1='20' x2='22' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='33' y1='20' x2='42' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3cline x1='53' y1='20' x2='62' y2='20' stroke='white' stroke-width='1.5' opacity='0.3'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === MAGNIFYING GLASS (SEARCH) SYMBOL === */
+
+  .sf-symbol--magnifyingglass .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* iOS 표준 돋보기 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3ccircle cx='30' cy='30' r='25' fill='none' stroke='currentColor' stroke-width='4'/%3e%3cpath d='52 52l22 22' stroke='currentColor' stroke-width='4' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3e%3ccircle cx='30' cy='30' r='25' fill='none' stroke='currentColor' stroke-width='4'/%3e%3cpath d='52 52l22 22' stroke='currentColor' stroke-width='4' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === SEARCH BOLD SYMBOL === */
+
+  .sf-symbol--search-bold .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* 더 뚜렷한 검색 아이콘 - 두꺼운 선 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M10 2a8 8 0 105.3 14.03l5.34 5.34 1.42-1.42-5.34-5.34A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z' fill='black'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M10 2a8 8 0 105.3 14.03l5.34 5.34 1.42-1.42-5.34-5.34A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z' fill='black'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === CHEVRON DOWN SYMBOL === */
+
+  .sf-symbol--chevron-down .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.35em;
+
+    /* iOS 표준 화살표 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 5l25 25 25-25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 5l25 25 25-25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* chevron.up - 위쪽 화살표 */
+  .sf-symbol--chevron-up .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.35em;
+
+    /* iOS 표준 화살표 (위쪽) */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 30l25-25 25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 30l25-25 25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* chevron.right - 오른쪽 화살표 */
+  .sf-symbol--chevron-right .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.35em;
+    height: 0.8em;
+
+    /* iOS 표준 화살표 (오른쪽) */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M5 5l25 25-25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M5 5l25 25-25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* chevron.left - 왼쪽 화살표 (chevron.right 수평 반전) */
+  .sf-symbol--chevron-left .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.35em;
+    height: 0.8em;
+
+    /* iOS 표준 화살표 (왼쪽) */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M30 5L5 30l25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 60'%3e%3cpath d='M30 5L5 30l25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* arrow.up.arrow.down - 양방향 정렬 화살표 */
+  .sf-symbol--arrow-up-arrow-down .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.4em;
+    height: 0.7em;
+
+    /* iOS 표준 양방향 화살표 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 70'%3e%3cpath d='M20 5l-10 10M20 5l10 10M20 5v60M10 55l10 10M30 55l10-10' stroke='currentColor' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 70'%3e%3cpath d='M20 5l-10 10M20 5l10 10M20 5v60M10 55l10 10M30 55l10-10' stroke='currentColor' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === 위트있는 HOVER 애니메이션 === */
+
+  /* 사람 아이콘 - 살짝 인사하는 효과 */
+  .sf-symbol--person:hover .sf-symbol__shape::before {
+    animation: person-wave 0.6s ease-in-out;
+  }
+
+  @keyframes person-wave {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    25% { transform: translate(-50%, -50%) rotate(-2deg); }
+    75% { transform: translate(-50%, -50%) rotate(2deg); }
+  }
+
+  /* 위치 아이콘 - 맵 핀이 톡톡 뛰는 효과 */
+  .sf-symbol--location:hover .sf-symbol__shape::before {
+    animation: location-bounce 0.5s ease-in-out;
+  }
+
+  @keyframes location-bounce {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-0.1em); }
+  }
+
+  /* 팀 아이콘 - 사람들이 서로 인사하는 효과 */
+  .sf-symbol--person-2:hover .sf-symbol__shape::before {
+    animation: team-gather 0.7s ease-in-out;
+  }
+
+  @keyframes team-gather {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.05); }
+  }
+
+  /* 문서 아이콘 - 페이지가 펄럭이는 효과 */
+  .sf-symbol--doc:hover .sf-symbol__shape::before {
+    animation: doc-flutter 0.4s ease-in-out;
+  }
+
+  @keyframes doc-flutter {
+    0%, 100% { transform: translate(-50%, -50%) rotateY(0deg); }
+    50% { transform: translate(-50%, -50%) rotateY(5deg); }
+  }
+
+  /* 차트 아이콘 - 데이터가 올라가는 효과 */
+  .sf-symbol--chart-bar:hover .sf-symbol__shape::before {
+    animation: chart-grow 0.6s ease-in-out;
+  }
+
+  @keyframes chart-grow {
+    0%, 100% { transform: translate(-50%, -50%) scaleY(1); }
+    50% { transform: translate(-50%, -50%) scaleY(1.1); }
+  }
+
+  /* 검색 아이콘 - 돋보기가 확대되는 효과 */
+  .sf-symbol--magnifyingglass:hover .sf-symbol__shape::before {
+    animation: search-focus 0.5s ease-in-out;
+  }
+
+  @keyframes search-focus {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.15); }
+  }
+
+  /* 목록 아이콘 - 리스트가 정렬되는 효과 */
+  .sf-symbol--list-bullet:hover .sf-symbol__shape::before {
+    animation: list-organize 0.5s ease-in-out;
+  }
+
+  @keyframes list-organize {
+    0%, 100% { transform: translate(-50%, -50%) translateX(0); }
+    25% { transform: translate(-50%, -50%) translateX(-0.05em); }
+    75% { transform: translate(-50%, -50%) translateX(0.05em); }
+  }
+
+  /* 사이드바 접힌 상태 - 펼치기 암시 애니메이션 (우향 확장) */
+  .sf-symbol--sidebar-left:hover .sf-symbol__shape::before {
+    animation: sidebar-expand-hint 0.5s ease-in-out;
+  }
+
+  @keyframes sidebar-expand-hint {
+    0%, 100% { transform: translate(-50%, -50%) scale(1) translateX(0); }
+    30% { transform: translate(-50%, -50%) scale(1.02) translateX(0.05em); }
+    70% { transform: translate(-50%, -50%) scale(1.05) translateX(0.1em); }
+  }
+
+  /* 사이드바 펼쳐진 상태 - 접기 암시 애니메이션 (좌향 수축) */
+  .sf-symbol--sidebar-leading:hover .sf-symbol__shape::before {
+    animation: sidebar-collapse-hint 0.5s ease-in-out;
+  }
+
+  @keyframes sidebar-collapse-hint {
+    0%, 100% { transform: translate(-50%, -50%) scale(1) translateX(0); }
+    30% { transform: translate(-50%, -50%) scale(0.98) translateX(-0.05em); }
+    70% { transform: translate(-50%, -50%) scale(0.95) translateX(-0.1em); }
+  }
+
+  /* === PERSON FILL BADGE PLUS SYMBOL === */
+
+  .sf-symbol--person-fill-badge-plus .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* 채워진 사람 + 플러스 배지 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='25' r='15' fill='currentColor'/%3e%3cpath d='M35 45c-15 0-25 10-25 25v20h40V70c0-15-10-25-25-25z' fill='currentColor'/%3e%3ccircle cx='75' cy='20' r='12' fill='currentColor'/%3e%3cpath d='M75 14v12M69 20h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='25' r='15' fill='currentColor'/%3e%3cpath d='M35 45c-15 0-25 10-25 25v20h40V70c0-15-10-25-25-25z' fill='currentColor'/%3e%3ccircle cx='75' cy='20' r='12' fill='currentColor'/%3e%3cpath d='M75 14v12M69 20h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === DOC BADGE PLUS SYMBOL === */
+
+  .sf-symbol--doc-badge-plus .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* 문서 + 플러스 배지 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M15 5v80h45V25L45 5H15zm25 5l15 15H40V10z'/%3e%3crect x='23' y='35' width='25' height='3'/%3e%3crect x='23' y='43' width='25' height='3'/%3e%3crect x='23' y='51' width='20' height='3'/%3e%3crect x='23' y='59' width='25' height='3'/%3e%3ccircle cx='75' cy='25' r='12' fill='currentColor'/%3e%3cpath d='M75 19v12M69 25h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M15 5v80h45V25L45 5H15zm25 5l15 15H40V10z'/%3e%3crect x='23' y='35' width='25' height='3'/%3e%3crect x='23' y='43' width='25' height='3'/%3e%3crect x='23' y='51' width='20' height='3'/%3e%3crect x='23' y='59' width='25' height='3'/%3e%3ccircle cx='75' cy='25' r='12' fill='currentColor'/%3e%3cpath d='M75 19v12M69 25h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === 🍎 TRUE APPLE GEOMETRIC ICONS === */
+
+  /* DOC RICHTEXT (PDF) SYMBOL - 순수 기하학적 */
+  .sf-symbol--doc-richtext .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.5em;
+    height: 0.65em;
+
+    /* 애플 스타일 - 문서 실루엣만 */
+    background: currentColor;
+    border-radius: 0.04em 0.04em 0.04em 0.04em;
+    opacity: 0.7;
+
+    /* 문서 접힌 모서리 효과 */
+    clip-path: polygon(0% 0%, 85% 0%, 100% 15%, 100% 100%, 0% 100%);
+  }
+
+  .sf-symbol--doc-richtext .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 25%;
+    right: 15%;
+    width: 0.08em;
+    height: 0.08em;
+    background: var(--color-bg-primary);
+    transform: rotate(45deg);
+  }
+
+  /* PHOTO SYMBOL - 미니멀한 이미지 */
+  .sf-symbol--photo .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.7em;
+    height: 0.6em;
+
+    /* 애플 스타일 사진 - 단순한 사각형 */
+    background: none;
+    border: 0.08em solid currentColor;
+    border-radius: 0.08em;
+    opacity: 0.7;
+  }
+
+  .sf-symbol--photo .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 0.12em;
+    right: 0.12em;
+    width: 0.15em;
+    height: 0.15em;
+    background: currentColor;
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+
+  /* VIDEO SYMBOL - 깔끔한 재생 버튼 */
+  .sf-symbol--video .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.7em;
+    height: 0.7em;
+
+    /* 애플 스타일 비디오 - 원형 재생 버튼 */
+    background: none;
+    border: 0.08em solid currentColor;
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  .sf-symbol--video .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 52%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-left: 0.15em solid currentColor;
+    border-top: 0.08em solid transparent;
+    border-bottom: 0.08em solid transparent;
+  }
+
+  /* MUSIC NOTE SYMBOL - 단순한 음표 */
+  .sf-symbol--music-note .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.12em;
+    height: 0.45em;
+
+    /* 애플 스타일 음표 - 선과 점 */
+    background: currentColor;
+    border-radius: 0.06em;
+    opacity: 0.8;
+  }
+
+  .sf-symbol--music-note .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -0.05em;
+    width: 0.22em;
+    height: 0.15em;
+    background: currentColor;
+    border-radius: 50%;
+  }
+
+  /* ARCHIVE BOX SYMBOL - 미니멀한 박스 */
+  .sf-symbol--archivebox .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.65em;
+    height: 0.5em;
+
+    /* 애플 스타일 아카이브 - 단순한 박스 */
+    background: none;
+    border: 0.08em solid currentColor;
+    border-radius: 0.08em;
+    opacity: 0.7;
+  }
+
+  .sf-symbol--archivebox .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.3em;
+    height: 0.08em;
+    background: currentColor;
+    border-radius: 0.04em;
+  }
+
+  /* TRAY FULL (서류함) SYMBOL - 문서 저장소 */
+  .sf-symbol--tray-full .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.7em;
+    /* 서류함 아이콘 - 문서가 쌓인 트레이 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3e%3cpath d='M2 14v4c0 1 1 2 2 2h16c1 0 2-1 2-2v-4H2zm3-2h14l2-6H3l2 6zm1-8h12v2H6V4zm2-4h8v2H8V0z' fill='black'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3e%3cpath d='M2 14v4c0 1 1 2 2 2h16c1 0 2-1 2-2v-4H2zm3-2h14l2-6H3l2 6zm1-8h12v2H6V4zm2-4h8v2H8V0z' fill='black'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+  /* DOC TEXT (Word) SYMBOL - 텍스트 라인 */
+  .sf-symbol--doc-text .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.75em;
+
+    /* 애플 스타일 문서 - 라인들 */
+    background: currentColor;
+    border-radius: 0.05em;
+    box-shadow:
+      inset 0.1em 0.15em 0 var(--color-bg-primary),
+      inset 0.1em 0.25em 0 var(--color-bg-primary),
+      inset 0.1em 0.35em 0 var(--color-bg-primary);
+    opacity: 0.8;
+  }
+
+  /* TABLE CELLS (Excel) SYMBOL - 아름다운 스프레드시트 */
+  .sf-symbol--tablecells .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.6em;
+
+    /* 애플 스타일 스프레드시트 - 그리드 패턴 */
+    background: none;
+    border: 0.06em solid currentColor;
+    border-radius: 0.06em;
+    opacity: 0.85;
+    box-shadow:
+      inset 0.18em 0 0 currentColor,
+      inset 0 0.18em 0 currentColor;
+  }
+
+  .sf-symbol--tablecells .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 70%;
+    width: 0.1em;
+    height: 0.1em;
+    background: currentColor;
+    border-radius: 50%;
+    opacity: 0.6;
+    box-shadow:
+      -0.15em 0.1em 0 -0.02em currentColor,
+      0.05em 0.15em 0 -0.02em currentColor;
+  }
+
+  /* PLAY RECTANGLE (PowerPoint) SYMBOL - 아름다운 프레젠테이션 */
+  .sf-symbol--play-rectangle .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.65em;
+    height: 0.5em;
+
+    /* 애플 스타일 프레젠테이션 - 와이드 스크린 */
+    background: none;
+    border: 0.06em solid currentColor;
+    border-radius: 0.06em;
+    opacity: 0.85;
+  }
+
+  .sf-symbol--play-rectangle .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 52%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-left: 0.1em solid currentColor;
+    border-top: 0.06em solid transparent;
+    border-bottom: 0.06em solid transparent;
+    opacity: 0.8;
+  }
+
+  /* CHEVRON LEFT SLASH CHEVRON RIGHT (Code) SYMBOL - 코드 */
+  .sf-symbol--chevron-left-forwardslash-chevron-right .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 30%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    width: 0.08em;
+    height: 0.5em;
+
+    /* 애플 스타일 코드 - 단순한 슬래시 */
+    background: currentColor;
+    border-radius: 0.04em;
+    opacity: 0.7;
+  }
+
+  .sf-symbol--chevron-left-forwardslash-chevron-right .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 70%;
+    transform: translate(-50%, -50%);
+    width: 0.15em;
+    height: 0.15em;
+    border-left: 0.08em solid currentColor;
+    border-bottom: 0.08em solid currentColor;
+    transform: translate(-50%, -50%) rotate(45deg);
+    opacity: 0.6;
+  }
+
+  /* DOC PLAINTEXT (Text) SYMBOL - 플레인 텍스트 */
+  .sf-symbol--doc-plaintext .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.75em;
+
+    /* 애플 스타일 텍스트 - 불규칙한 라인들 */
+    background: currentColor;
+    border-radius: 0.05em;
+    box-shadow:
+      inset 0.08em 0.12em 0 var(--color-bg-primary),
+      inset 0.08em 0.2em 0 var(--color-bg-primary),
+      inset 0.08em 0.28em 0 var(--color-bg-primary),
+      inset 0.08em 0.36em 0 var(--color-bg-primary);
+    opacity: 0.8;
+  }
+
+  /* GEAR SHAPE (Executable) SYMBOL - 실행 파일 */
+  .sf-symbol--gearshape .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.7em;
+    height: 0.7em;
+
+    /* 애플 스타일 기어 - 단순한 원 + 톱니 */
+    background: none;
+    border: 0.08em solid currentColor;
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  .sf-symbol--gearshape .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.25em;
+    height: 0.25em;
+    background: currentColor;
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+
+  /* CHECKMARK (Success) SYMBOL - 애플 스타일 체크마크 */
+  .sf-symbol--checkmark .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 38%;
+    left: 62%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 0.14em;
+    height: 0.50em;
+
+    /* 애플 스타일 체크 - 긴 우측 획 */
+    background: currentColor;
+    border-radius: 0.07em;
+  }
+
+  .sf-symbol--checkmark .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 60%;
+    left: 28%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    width: 0.14em;
+    height: 0.28em;
+    background: currentColor;
+    border-radius: 0.07em;
+  }
+
+  /* EXCLAMATIONMARK (Error) SYMBOL - 애플 스타일 느낌표 (!) */
+  .sf-symbol--exclamationmark .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.15em;
+    height: 0.45em;
+
+    /* 애플 스타일 느낌표 - 막대 부분 */
+    background: currentColor;
+    border-radius: 0.08em;
+  }
+
+  .sf-symbol--exclamationmark .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    bottom: 18%;
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 0.15em;
+    height: 0.15em;
+    background: currentColor;
+    border-radius: 50%;
+  }
+
+  /* EXCLAMATIONMARK CIRCLE FILL SYMBOL - 애플 스타일 경고 (원형 배경 + 느낌표) */
+  .sf-symbol--exclamationmark-circle-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.9em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='white'/%3E%3Crect x='10.5' y='5' width='3' height='9' rx='1.5' fill='black'/%3E%3Ccircle cx='12' cy='17.5' r='1.8' fill='black'/%3E%3C/svg%3E") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='white'/%3E%3Crect x='10.5' y='5' width='3' height='9' rx='1.5' fill='black'/%3E%3Ccircle cx='12' cy='17.5' r='1.8' fill='black'/%3E%3C/svg%3E") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* XMARK CIRCLE FILL SYMBOL - 애플 스타일 닫기 */
+  .sf-symbol--xmark-circle-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.7em;
+    height: 0.7em;
+
+    /* 애플 스타일 닫기 - 채워진 원 */
+    background: currentColor;
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  .sf-symbol--xmark-circle-fill .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 0.08em;
+    height: 0.35em;
+    background: var(--color-bg-primary);
+    border-radius: 0.04em;
+    box-shadow: 0 0 0 0.08em var(--color-bg-primary),
+                0.27em 0 0 -0.08em var(--color-bg-primary),
+                -0.27em 0 0 -0.08em var(--color-bg-primary);
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  /* EYE SYMBOL - 문서 프리뷰 아이콘 */
+  .sf-symbol--eye .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.95em;
+    height: 0.65em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath fill='%23fff' fill-rule='evenodd' d='M50 15c24 0 43 20 50 35-7 15-26 35-50 35S7 65 0 50c7-15 26-35 50-35Zm0 15c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20Zm0 12a8 8 0 1 1 0 16 8 8 0 0 1 0-16Z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath fill='%23fff' fill-rule='evenodd' d='M50 15c24 0 43 20 50 35-7 15-26 35-50 35S7 65 0 50c7-15 26-35 50-35Zm0 15c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20Zm0 12a8 8 0 1 1 0 16 8 8 0 0 1 0-16Z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  .sf-symbol--eye .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.2em;
+    height: 0.2em;
+    background: currentColor;
+    border-radius: 50%;
+    opacity: 0.9;
+  }
+
+  /* TRASH SYMBOL - iOS SF Symbols 스타일 휴지통 */
+  .sf-symbol--trash .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.75em;
+
+    /* iOS 표준 쓰레기통 아이콘 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 100'%3e%3cpath d='M25 20 L25 10 C25 5, 28 0, 35 0 L50 0 C57 0, 60 5, 60 10 L60 20 M10 20 L75 20 M15 25 L15 90 C15 95, 18 100, 25 100 L60 100 C67 100, 70 95, 70 90 L70 25 M32 35 L32 85 M50 35 L50 85' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 100'%3e%3cpath d='M25 20 L25 10 C25 5, 28 0, 35 0 L50 0 C57 0, 60 5, 60 10 L60 20 M10 20 L75 20 M15 25 L15 90 C15 95, 18 100, 25 100 L60 100 C67 100, 70 95, 70 90 L70 25 M32 35 L32 85 M50 35 L50 85' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    opacity: 0.9;
+  }
+
+  /* CLOCK (Recent) SYMBOL - 애플 스타일 시계 */
+  .sf-symbol--clock .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.75em;
+    height: 0.75em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    opacity: 0.9;
+  }
+
+  /* BUILDING (Corporate) SYMBOL - 애플 스타일 빌딩 */
+  .sf-symbol--building .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.75em;
+    height: 0.85em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+    opacity: 0.9;
+  }
+
+  /* ARROW CLOCKWISE (Retry) SYMBOL - 애플 스타일 새로고침 */
+  .sf-symbol--arrow-clockwise .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.7em;
+    height: 0.7em;
+
+    /* 애플 스타일 화살표 - 원형 화살표 */
+    background: none;
+    border: 0.08em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    opacity: 0.7;
+    transform: translate(-50%, -50%) rotate(-30deg);
+  }
+
+  .sf-symbol--arrow-clockwise .sf-symbol__shape::after {
+    content: '';
+    position: absolute;
+    top: 15%;
+    right: 20%;
+    transform: rotate(45deg);
+    width: 0.12em;
+    height: 0.12em;
+    border-right: 0.08em solid currentColor;
+    border-top: 0.08em solid currentColor;
+    opacity: 0.7;
+  }
+
+  /* GEARSHAPE (Settings) SYMBOL - 톱니바퀴 (SVG 마스크 방식) */
+  .sf-symbol--gearshape .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background-color: currentColor;
+    -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>');
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+  }
+
+  .sf-symbol--gearshape .sf-symbol__shape::after {
+    content: none;
+  }
+
+  /* ARROW.RIGHT.SQUARE (Logout) SYMBOL - 로그아웃 아이콘 (SVG 마스크 방식) */
+  .sf-symbol--arrow-right-square .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  .sf-symbol--arrow-right-square .sf-symbol__shape::after {
+    content: none;
+  }
+
+  /* ARROW.UP.RIGHT.SQUARE (Open/External Link) SYMBOL - 새 탭에서 열기 아이콘 */
+  .sf-symbol--arrow-up-right-square .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  .sf-symbol--arrow-up-right-square .sf-symbol__shape::after {
+    content: none;
+  }
+
+  /* PERSON.2 중복 정의 제거됨 — 676번 줄의 SVG mask 버전 사용 */
+
+  /* PHONE SYMBOL - 전화 아이콘 */
+  .sf-symbol--phone .sf-symbol__shape::before {
+    content: '📞';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1em;
+    line-height: 1;
+    opacity: 1;
+  }
+
+  .sf-symbol--phone .sf-symbol__shape::after {
+    content: none;
+  }
+
+  /* CALENDAR SYMBOL - 달력/생년월일 아이콘 */
+  .sf-symbol--calendar .sf-symbol__shape::before {
+    content: '📅';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1em;
+    line-height: 1;
+    opacity: 1;
+  }
+
+  .sf-symbol--calendar .sf-symbol__shape::after {
+    content: none;
+  }
+
+  /* ENVELOPE SYMBOL - 이메일 아이콘 */
+  .sf-symbol--envelope .sf-symbol__shape::before {
+    content: '✉️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1em;
+    line-height: 1;
+    opacity: 1;
+  }
+
+  .sf-symbol--envelope .sf-symbol__shape::after {
+    content: none;
+  }
+
+  /* FOLDER SYMBOL - 폴더 아이콘 */
+  .sf-symbol--folder .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.75em;
+
+    /* iOS 표준 폴더 아이콘 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M1.5 3.5C1.5 2.67157 2.17157 2 3 2H6.08579C6.351 2 6.60536 2.10536 6.79289 2.29289L7.70711 3.20711C7.89464 3.39464 8.149 3.5 8.41421 3.5H13C13.8284 3.5 14.5 4.17157 14.5 5V12.5C14.5 13.3284 13.8284 14 13 14H3C2.17157 14 1.5 13.3284 1.5 12.5V3.5Z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M1.5 3.5C1.5 2.67157 2.17157 2 3 2H6.08579C6.351 2 6.60536 2.10536 6.79289 2.29289L7.70711 3.20711C7.89464 3.39464 8.149 3.5 8.41421 3.5H13C13.8284 3.5 14.5 4.17157 14.5 5V12.5C14.5 13.3284 13.8284 14 13 14H3C2.17157 14 1.5 13.3284 1.5 12.5V3.5Z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  .sf-symbol--folder .sf-symbol__shape::after {
+    content: none;
+  }
+
+  /* === HIGH CONTRAST MODE === */
+
+  @media (prefers-contrast: high) {
+    .sf-symbol {
+      filter: contrast(1.5);
+    }
+
+    .sf-symbol--interactive:hover {
+      background-color: var(--color-primary-500);
+      color: var(--color-neutral-0);
+    }
+  }
+
+  /* === BOLT FILL SYMBOL (번개 아이콘) === */
+
+  .sf-symbol--bolt-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.8em;
+    height: 0.8em;
+
+    /* 번개 아이콘 */
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === BUBBLE.LEFT (말풍선 아이콘) - AI 채팅 === */
+
+  .sf-symbol--bubble-left .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === BUBBLE.LEFT.FILL (말풍선 채움 아이콘) - AI 채팅 활성 === */
+
+  .sf-symbol--bubble-left-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === BUBBLE.LEFT.AND.BUBBLE.RIGHT.FILL (양쪽 말풍선) - 대화 아이콘 === */
+
+  .sf-symbol--bubble-left-and-bubble-right-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.9em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === SPARKLES (반짝임) - AI 아이콘 === */
+
+  .sf-symbol--sparkles .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.9em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 3L10.5 8.5L5 10L10.5 11.5L12 17L13.5 11.5L19 10L13.5 8.5L12 3zM5 16l-.75 2.25L2 19l2.25.75L5 22l.75-2.25L8 19l-2.25-.75L5 16zm14-2l-.75 2.25L16 17l2.25.75.75 2.25.75-2.25L22 17l-2.25-.75L19 14z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 3L10.5 8.5L5 10L10.5 11.5L12 17L13.5 11.5L19 10L13.5 8.5L12 3zM5 16l-.75 2.25L2 19l2.25.75L5 22l.75-2.25L8 19l-2.25-.75L5 16zm14-2l-.75 2.25L16 17l2.25.75.75 2.25.75-2.25L22 17l-2.25-.75L19 14z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === STOP.FILL (정지) - 채팅 중단 버튼 === */
+
+  .sf-symbol--stop-fill .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.7em;
+    height: 0.7em;
+    background: currentColor;
+    border-radius: 2px;
+  }
+
+  /* === ARROW.DOWN.CIRCLE (다운로드) - 문서함 다운로드 === */
+
+  .sf-symbol--arrow-down-circle .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.17l-4.59-4.58L7.83 10.17 11 13.34V7h2v6.34l3.17-3.17 1.42 1.42L12 17.17z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.17l-4.59-4.58L7.83 10.17 11 13.34V7h2v6.34l3.17-3.17 1.42 1.42L12 17.17z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === ARROW.UP (위 화살표) - 전송 버튼 === */
+
+  .sf-symbol--arrow-up .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 7.83l5.59 5.59L20 12l-8-8-8 8 1.41 1.41L11 7.83V20h2V7.83z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 7.83l5.59 5.59L20 12l-8-8-8 8 1.41 1.41L11 7.83V20h2V7.83z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === PLUS (추가) - 새 대화 버튼 === */
+
+  .sf-symbol--plus .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === CLOCK.ARROW.CIRCLEPATH (히스토리) - 이전 대화 버튼 === */
+
+  .sf-symbol--clock-arrow-circlepath .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.9em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13.5 8H12v5l4.28 2.54.72-1.21-3.5-2.08V8zM13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13.5 8H12v5l4.28 2.54.72-1.21-3.5-2.08V8zM13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === QUESTIONMARK.CIRCLE (도움말) - AI 어시스턴트 도움말 버튼 === */
+
+  .sf-symbol--questionmark-circle .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.9em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === PAPERCLIP (첨부파일) - AI 어시스턴트 파일 첨부 버튼 === */
+
+  .sf-symbol--link .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.9em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 000 10h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4a5 5 0 000-10z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 000 10h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4a5 5 0 000-10z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  .sf-symbol--paperclip .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.9em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21.58 12.58l-9-9a6.53 6.53 0 00-9.19 9.19l1.2 1.2a.75.75 0 001.06-1.06l-1.2-1.2a5 5 0 017.08-7.08l9 9a3.53 3.53 0 01-5 5l-9-9a2 2 0 012.83-2.83l8.49 8.49a.75.75 0 001.06-1.06l-8.49-8.49a3.52 3.52 0 00-5 5l9 9a5 5 0 007.08-7.08z'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21.58 12.58l-9-9a6.53 6.53 0 00-9.19 9.19l1.2 1.2a.75.75 0 001.06-1.06l-1.2-1.2a5 5 0 017.08-7.08l9 9a3.53 3.53 0 01-5 5l-9-9a2 2 0 012.83-2.83l8.49 8.49a.75.75 0 001.06-1.06l-8.49-8.49a3.52 3.52 0 00-5 5l9 9a5 5 0 007.08-7.08z'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* 🔔 bell (알림 벨) — fill-only path */
+  .sf-symbol--bell .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.9em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9z'/%3e%3cellipse cx='12' cy='21.5' rx='2' ry='1.2'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9z'/%3e%3cellipse cx='12' cy='21.5' rx='2' ry='1.2'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* 📖 book (책) — fill-only path */
+  .sf-symbol--book .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em;
+    height: 0.9em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M4 4.5A2.5 2.5 0 016.5 2H20v15H6.5A2.5 2.5 0 014 19.5v-15z'/%3e%3cpath d='M4 19.5A2.5 2.5 0 016.5 17H20v5H6.5A2.5 2.5 0 014 19.5z' opacity='0.6'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M4 4.5A2.5 2.5 0 016.5 2H20v15H6.5A2.5 2.5 0 004 19.5v-15z'/%3e%3cpath d='M4 19.5A2.5 2.5 0 016.5 17H20v5H6.5A2.5 2.5 0 014 19.5z' opacity='0.6'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === LOCK.ROTATION (간편 비밀번호 변경) === */
+
+  .sf-symbol--lock-rotation .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='5' y='11' width='14' height='11' rx='2' fill='currentColor'/%3e%3cpath d='M8 11V7a4 4 0 118 0v4' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3cpath d='M19 2a3 3 0 013 3v2' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cpath d='M22 7l-1.5-1.5M22 7l1.5-1.5' fill='none' stroke='currentColor' stroke-width='1.2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='5' y='11' width='14' height='11' rx='2' fill='currentColor'/%3e%3cpath d='M8 11V7a4 4 0 118 0v4' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3e%3cpath d='M19 2a3 3 0 013 3v2' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cpath d='M22 7l-1.5-1.5M22 7l1.5-1.5' fill='none' stroke='currentColor' stroke-width='1.2' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+  /* === IPHONE.SLASH (기기 기억 해제) === */
+
+  .sf-symbol--iphone-slash .sf-symbol__shape::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.85em;
+    height: 0.85em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='7' y='2' width='10' height='20' rx='2' fill='none' stroke='currentColor' stroke-width='1.8'/%3e%3cline x1='10' y1='19' x2='14' y2='19' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cline x1='3' y1='21' x2='21' y2='3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3crect x='7' y='2' width='10' height='20' rx='2' fill='none' stroke='currentColor' stroke-width='1.8'/%3e%3cline x1='10' y1='19' x2='14' y2='19' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/%3e%3cline x1='3' y1='21' x2='21' y2='3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+    mask-size: contain;
+  }
+
+} /* end @layer components */

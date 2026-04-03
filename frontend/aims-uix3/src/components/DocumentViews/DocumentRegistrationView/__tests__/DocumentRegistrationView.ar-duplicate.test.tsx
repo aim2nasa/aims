@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { DocumentService } from '@/services/DocumentService'
-import * as fileHashModule from '@/features/customer/utils/fileHash'
+import * as fileHashModule from '@/shared/lib/fileValidation/fileHash'
 import { processAnnualReportFile } from '../utils/annualReportProcessor'
 
 describe('AR Document Registration', () => {

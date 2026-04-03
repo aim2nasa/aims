@@ -90,7 +90,7 @@ describe('시스템 중복 검사 상태 분류 (Regression)', () => {
       }
 
       // calculateFileHash mock
-      vi.doMock('@/features/customer/utils/fileHash', () => ({
+      vi.doMock('@/shared/lib/fileValidation/fileHash', () => ({
         calculateFileHash: vi.fn().mockResolvedValue(mockHash),
       }))
 
@@ -123,7 +123,7 @@ describe('시스템 중복 검사 상태 분류 (Regression)', () => {
     it('중복 아닌 경우 isDuplicate=false를 반환해야 함', async () => {
       const mockHash = 'sha256-unique-hash-xyz789'
 
-      vi.doMock('@/features/customer/utils/fileHash', () => ({
+      vi.doMock('@/shared/lib/fileValidation/fileHash', () => ({
         calculateFileHash: vi.fn().mockResolvedValue(mockHash),
       }))
 

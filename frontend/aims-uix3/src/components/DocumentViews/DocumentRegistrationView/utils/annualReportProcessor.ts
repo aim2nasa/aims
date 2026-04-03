@@ -9,10 +9,10 @@
  * - 개선: 고객당 1번 일괄 조회 → 로컬 Set 비교
  */
 
-import { calculateFileHash } from '@/features/customer/utils/fileHash';
+import { calculateFileHash } from '@/shared/lib/fileValidation/fileHash';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import { getAuthToken, getCurrentUserId } from '@/shared/lib/api';
-import { AnnualReportApi } from '@/features/customer/api/annualReportApi';
+import { AnnualReportApi } from '@/features/customer';
 import type { UploadFile } from '../types/uploadTypes';
 import type { LogLevel } from '../types/logTypes';
 
