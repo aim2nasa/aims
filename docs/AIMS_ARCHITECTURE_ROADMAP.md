@@ -164,6 +164,14 @@ aims_api (오케스트레이터 + DB 게이트웨이)
 - db/analyticsDb를 생성자 주입으로 전환 (호출부에서 매번 전달하지 않음)
 - regression 테스트 22건 (팩토리 분기, NoCreditPolicy 전 메서드, DefaultCreditPolicy 위임)
 
+### Internal API 계약 테스트 + Redis 이벤트 스키마 (2026-04-04)
+
+`@aims/shared-schema`를 확장하여 서비스 간 API/이벤트 계약을 공식화. | 머지 `f3c050dd`
+- Internal API 응답 타입 11개 + `INTERNAL_API_REQUIRED_FIELDS` (엔드포인트별 필수 필드)
+- Redis 이벤트 채널 6개 + 페이로드 타입 6개 + `EVENT_REQUIRED_FIELDS`
+- 계약 테스트 32건 (스키마 정의 검증 + eventBus CHANNELS 일치 검증)
+- Python 서비스 응답 검증: `_validate_response` 헬퍼 (fail-open, 경고만)
+
 ---
 
 ## 6. 보류 과제
