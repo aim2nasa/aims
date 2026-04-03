@@ -6,6 +6,9 @@ pdf_converter(:8005)에 대한 변환 요청을 순차적으로 처리하여
 동시 요청으로 인한 타임아웃을 방지.
 
 upload_worker.py 패턴 기반.
+
+컬렉션 스키마 계약: @aims/shared-schema (backend/shared/schema/)
+- files → COLLECTIONS.FILES
 """
 import asyncio
 import logging
@@ -17,6 +20,9 @@ from typing import Dict, Any, Optional
 
 import httpx
 import fitz  # PyMuPDF
+
+# 서비스 고유 컬렉션명 상수
+PDF_CONVERSION_QUEUE_COLLECTION = "pdf_conversion_queue"
 
 from config import get_settings
 from services.pdf_conversion_queue_service import PdfConversionQueueService
@@ -507,7 +513,7 @@ class PdfConversionWorker:
         try:
             from services.internal_api import query_files as _query_files
             db = MongoService.get_db()
-            queue_collection = db["pdf_conversion_queue"]
+            queue_collection = db[PDF_CONVERSION_QUEUE_COLLECTION]
 
             # pending 상태인 모든 문서 조회 — Internal API 경유
             pending_docs = await _query_files(

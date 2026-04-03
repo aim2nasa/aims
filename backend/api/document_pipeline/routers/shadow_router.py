@@ -10,7 +10,7 @@ from typing import Optional
 from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from middleware.shadow_mode import shadow_call, ShadowMode, ServiceMode
+from middleware.shadow_mode import shadow_call, ShadowMode, ServiceMode, SHADOW_COLLECTIONS
 from services.mongo_service import MongoService
 
 logger = logging.getLogger(__name__)
@@ -272,7 +272,7 @@ async def set_service_mode(request: Request):
 async def _log_mode_change(previous_mode: str, new_mode: str):
     """서비스 모드 변경 이력 로깅"""
     try:
-        collection = MongoService.get_collection("service_mode_history")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["MODE_HISTORY"])
         await collection.insert_one({
             "previous_mode": previous_mode,
             "new_mode": new_mode,
@@ -300,7 +300,7 @@ async def get_metrics(days: int = Query(default=7, ge=1, le=90)):
     """
     try:
         since = datetime.utcnow() - timedelta(days=days)
-        collection = MongoService.get_collection("shadow_metrics")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["METRICS"])
 
         # 전체 통계
         pipeline = [
@@ -417,7 +417,7 @@ async def get_realtime_metrics(limit: int = Query(default=100, ge=10, le=500)):
         - stats: 실시간 통계
     """
     try:
-        collection = MongoService.get_collection("shadow_metrics")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["METRICS"])
 
         cursor = collection.find({}).sort("timestamp", -1).limit(limit)
 
@@ -485,7 +485,7 @@ async def get_metrics_history(
     """
     try:
         since = datetime.utcnow() - timedelta(days=days)
-        collection = MongoService.get_collection("shadow_metrics")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["METRICS"])
 
         # 시간별 또는 일별 집계
         if interval == "hour":
@@ -555,7 +555,7 @@ async def shadow_stats(days: int = Query(default=7, ge=1, le=90)):
         since = datetime.utcnow() - timedelta(days=days)
 
         # 호출 통계 집계
-        calls_collection = MongoService.get_collection("shadow_calls")
+        calls_collection = MongoService.get_collection(SHADOW_COLLECTIONS["CALLS"])
 
         # 전체 기간 첫 호출/마지막 호출 시간 조회
         first_call_doc = await calls_collection.find_one(
@@ -621,7 +621,7 @@ async def shadow_stats(days: int = Query(default=7, ge=1, le=90)):
                 stats["match_rate"] = 0
 
         # 최근 불일치 목록
-        mismatches_collection = MongoService.get_collection("shadow_mismatches")
+        mismatches_collection = MongoService.get_collection(SHADOW_COLLECTIONS["MISMATCHES"])
         recent_mismatches = []
         cursor = mismatches_collection.find(
             {"timestamp": {"$gte": since}}
@@ -727,7 +727,7 @@ async def get_mismatches(
 ):
     """최근 불일치 목록 조회"""
     try:
-        collection = MongoService.get_collection("shadow_mismatches")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["MISMATCHES"])
 
         query = {}
         if workflow:
@@ -761,7 +761,7 @@ async def resolve_mismatch(mismatch_id: str, resolution: str = Form(...)):
     """불일치 해결 처리"""
     try:
         from bson import ObjectId
-        collection = MongoService.get_collection("shadow_mismatches")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["MISMATCHES"])
 
         result = await collection.update_one(
             {"_id": ObjectId(mismatch_id)},
@@ -786,7 +786,7 @@ async def resolve_mismatch(mismatch_id: str, resolution: str = Form(...)):
 async def delete_resolved_mismatches():
     """해결된 불일치 기록 모두 삭제"""
     try:
-        collection = MongoService.get_collection("shadow_mismatches")
+        collection = MongoService.get_collection(SHADOW_COLLECTIONS["MISMATCHES"])
 
         result = await collection.delete_many({"status": "resolved"})
 
@@ -806,9 +806,9 @@ async def delete_resolved_mismatches():
 async def reset_shadow_stats():
     """Shadow Mode 통계 초기화 (모든 호출 기록 삭제)"""
     try:
-        calls_collection = MongoService.get_collection("shadow_calls")
-        mismatches_collection = MongoService.get_collection("shadow_mismatches")
-        errors_collection = MongoService.get_collection("shadow_errors")
+        calls_collection = MongoService.get_collection(SHADOW_COLLECTIONS["CALLS"])
+        mismatches_collection = MongoService.get_collection(SHADOW_COLLECTIONS["MISMATCHES"])
+        errors_collection = MongoService.get_collection(SHADOW_COLLECTIONS["ERRORS"])
 
         calls_result = await calls_collection.delete_many({})
         mismatches_result = await mismatches_collection.delete_many({})

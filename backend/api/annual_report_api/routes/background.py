@@ -2,6 +2,9 @@
 Annual Report Background Parsing Routes
 
 문서 업로드 완료 후 자동으로 AR 파싱을 트리거하는 백그라운드 처리 API
+
+컬렉션 스키마 계약 참조: @aims/shared-schema (backend/shared/schema/)
+- ar_parse_queue: 스키마 정의는 shared-schema (AR_QUEUE_STATUS 등), Python 코드는 db["ar_parse_queue"] 직접 사용
 """
 
 import logging

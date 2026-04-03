@@ -1,6 +1,10 @@
 """
 Document Pipeline API
 FastAPI replacement for n8n workflows
+
+컬렉션 스키마 계약: @aims/shared-schema (backend/shared/schema/)
+- files → COLLECTIONS.FILES
+- customers → COLLECTIONS.CUSTOMERS
 """
 import asyncio
 import logging

@@ -32,6 +32,9 @@ export const COLLECTIONS = {
   INSURANCE_PRODUCTS: 'insurance_products',
   INSURERS: 'insurers',
 
+  // 큐
+  AR_PARSE_QUEUE: 'ar_parse_queue',
+
   // 기타
   CHAT_SESSIONS: 'chat_sessions',
   CHAT_MESSAGES: 'chat_messages',

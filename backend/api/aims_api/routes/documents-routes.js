@@ -8,7 +8,7 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
-const { COLLECTIONS } = require('@aims/shared-schema');
+const { COLLECTIONS, AR_QUEUE_STATUS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
 const { escapeRegex, toSafeObjectId, isBinaryMimeType, getInitialFromChar, CHOSUNG_RANGE_MAP } = require('../lib/helpers');
@@ -2849,7 +2849,7 @@ router.delete('/documents/:id', authenticateJWT, async (req, res) => {
     // ========== AR 파싱 큐에서 제거 ==========
     // 문서가 삭제되면 ar_parse_queue에서도 제거해야 pending 목록에서 사라짐
     try {
-      const queueDeleteResult = await db.collection('ar_parse_queue').deleteMany({
+      const queueDeleteResult = await db.collection(COLLECTIONS.AR_PARSE_QUEUE).deleteMany({
         file_id: new ObjectId(id)
       });
       if (queueDeleteResult.deletedCount > 0) {
@@ -3038,7 +3038,7 @@ router.delete('/documents', authenticateJWT, async (req, res) => {
     // 문서가 삭제되면 ar_parse_queue에서도 제거해야 pending 목록에서 사라짐
     try {
       const deleteObjectIds = ownedDocIds.map(id => new ObjectId(id));
-      const queueDeleteResult = await db.collection('ar_parse_queue').deleteMany({
+      const queueDeleteResult = await db.collection(COLLECTIONS.AR_PARSE_QUEUE).deleteMany({
         file_id: { $in: deleteObjectIds }
       });
       if (queueDeleteResult.deletedCount > 0) {

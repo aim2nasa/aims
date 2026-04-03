@@ -1,6 +1,15 @@
 """
 AR 파싱 작업 큐 관리 서비스
 MongoDB를 작업 큐로 사용하여 AR 파싱 작업을 관리
+
+스키마 계약: @aims/shared-schema (backend/shared/schema/ar-parse-queue.ts)
+- 컬렉션명: COLLECTIONS.AR_PARSE_QUEUE = "ar_parse_queue"
+- 상태값: AR_QUEUE_STATUS (PENDING/PROCESSING/COMPLETED/FAILED)
+- 필드명: AR_QUEUE_FIELDS (file_id, customer_id, status, ...)
+- 설정값: AR_QUEUE_CONFIG (MAX_RETRY_COUNT=3, STALE_TIMEOUT=300s, RETENTION=7d)
+
+⚠️ 이 파일의 QueueStatus, MAX_RETRY_COUNT, QUEUE_COLLECTION 값을 변경할 경우
+   반드시 @aims/shared-schema의 대응 상수도 함께 수정해야 합니다.
 """
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List

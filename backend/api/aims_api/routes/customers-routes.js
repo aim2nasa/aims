@@ -9,7 +9,7 @@ const express = require('express');
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const fs = require('fs');
-const { COLLECTIONS } = require('@aims/shared-schema');
+const { COLLECTIONS, AR_QUEUE_STATUS, AR_QUEUE_FIELDS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
 const { sanitizeHtml, flattenObject, escapeRegex, CHOSUNG_RANGE_MAP, getInitialFromChar } = require('../lib/helpers');
@@ -2002,22 +2002,22 @@ router.post('/customers/:id/documents', authenticateJWTorAPIKey, async (req, res
     if (document.is_annual_report === true) {
       try {
         const queueDoc = {
-          file_id: new ObjectId(document_id),
-          customer_id: new ObjectId(id),
-          status: 'pending',
-          retry_count: 0,
-          created_at: utcNowDate(),
-          updated_at: utcNowDate(),
-          processed_at: null,
-          error_message: null,
-          metadata: {
+          [AR_QUEUE_FIELDS.FILE_ID]: new ObjectId(document_id),
+          [AR_QUEUE_FIELDS.CUSTOMER_ID]: new ObjectId(id),
+          [AR_QUEUE_FIELDS.STATUS]: AR_QUEUE_STATUS.PENDING,
+          [AR_QUEUE_FIELDS.RETRY_COUNT]: 0,
+          [AR_QUEUE_FIELDS.CREATED_AT]: utcNowDate(),
+          [AR_QUEUE_FIELDS.UPDATED_AT]: utcNowDate(),
+          [AR_QUEUE_FIELDS.PROCESSED_AT]: null,
+          [AR_QUEUE_FIELDS.ERROR_MESSAGE]: null,
+          [AR_QUEUE_FIELDS.METADATA]: {
             filename: document.filename || 'unknown',
             mime_type: document.mimeType || 'unknown'
           }
         };
 
         // 중복 방지: file_id가 이미 존재하면 무시
-        await db.collection('ar_parse_queue').updateOne(
+        await db.collection(COLLECTIONS.AR_PARSE_QUEUE).updateOne(
           { file_id: new ObjectId(document_id) },
           { $setOnInsert: queueDoc },
           { upsert: true }
@@ -2174,7 +2174,7 @@ router.delete('/customers/:id/documents/:document_id', authenticateJWT, async (r
 
     // AR 파싱 큐에서도 제거 (pending 목록에서 사라지도록)
     try {
-      const queueDeleteResult = await db.collection('ar_parse_queue').deleteMany({
+      const queueDeleteResult = await db.collection(COLLECTIONS.AR_PARSE_QUEUE).deleteMany({
         file_id: new ObjectId(document_id),
         customer_id: new ObjectId(id)
       });
@@ -3110,9 +3110,9 @@ router.get('/customers/:customerId/annual-reports/pending', authenticateJWT, asy
     console.log(`📋 [Annual Report] AR 파싱 대기 문서 조회: ${customerId}`);
 
     // ⭐ 새로운 큐 시스템: ar_parse_queue 컬렉션에서 조회
-    const pendingQueue = await db.collection('ar_parse_queue').find({
+    const pendingQueue = await db.collection(COLLECTIONS.AR_PARSE_QUEUE).find({
       customer_id: new ObjectId(customerId),
-      status: { $in: ['pending', 'processing'] }
+      status: { $in: [AR_QUEUE_STATUS.PENDING, AR_QUEUE_STATUS.PROCESSING] }
     }).toArray();
 
     // 파일 정보 가져오기 (ar_parsing_status 포함)
@@ -3135,7 +3135,7 @@ router.get('/customers/:customerId/annual-reports/pending', authenticateJWT, asy
       const file = fileMap.get(queue.file_id.toString());
       if (file && file.ar_parsing_status === 'completed') {
         // 불일치 발견 → 큐에서 삭제 (비동기로 처리, 에러 무시)
-        db.collection('ar_parse_queue').deleteOne({ _id: queue._id }).catch(() => {});
+        db.collection(COLLECTIONS.AR_PARSE_QUEUE).deleteOne({ _id: queue._id }).catch(() => {});
         console.log(`🔧 [Annual Report] 불일치 큐 레코드 삭제: file_id=${queue.file_id} (이미 완료됨)`);
       } else {
         validQueue.push(queue);
