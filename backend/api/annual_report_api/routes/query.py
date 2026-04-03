@@ -12,7 +12,7 @@ import logging
 
 from services.db_writer import get_annual_reports, delete_annual_reports, cleanup_duplicate_annual_reports
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, register_annual_report
+from internal_api import check_customer_ownership, register_annual_report, get_customer
 
 logger = logging.getLogger(__name__)
 
@@ -481,9 +481,8 @@ async def register_ar_contracts(
         if db is None:
             raise HTTPException(status_code=500, detail="데이터베이스 연결 오류")
 
-        # annual_reports 배열에서 해당 AR 찾기
-        customer_obj_id = ObjectId(customer_id)
-        customer = db.customers.find_one({"_id": customer_obj_id})
+        # annual_reports 배열에서 해당 AR 찾기 (Internal API 경유)
+        customer = get_customer(customer_id)
         if not customer:
             logger.error(f"소유권 확인 통과 후 고객 문서 없음: {customer_id}")
             raise HTTPException(status_code=500, detail="고객 데이터 일관성 오류")

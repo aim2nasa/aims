@@ -17,7 +17,7 @@ from services.parser_factory import get_parser
 from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, get_customer_name, update_file_parsing_status
+from internal_api import check_customer_ownership, get_customer_name, update_file_parsing_status, query_file_one
 
 logger = logging.getLogger(__name__)
 
@@ -271,9 +271,8 @@ def do_parsing_in_background(
                     # 파일명으로 documents 찾기
                     filename = os.path.basename(file_path)
                     logger.info(f"🔍 파일명으로 문서 검색: {filename}")
-                    # read는 그대로 유지 (Phase 2에서 전환 예정)
-                    files_collection = db["files"]
-                    doc = files_collection.find_one({"upload.originalName": filename})
+                    # Internal API 경유 조회
+                    doc = query_file_one({"upload.originalName": filename})
                     if doc:
                         file_oid = doc["_id"]
                         # Internal API 경유 write

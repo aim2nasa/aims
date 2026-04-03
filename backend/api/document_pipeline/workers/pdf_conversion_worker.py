@@ -192,10 +192,6 @@ class PdfConversionWorker:
         if not pdf_path:
             return
 
-        from bson import ObjectId as BsonObjectId
-
-        files_col = MongoService.get_collection("files")
-
         # 1. files 컬렉션 업데이트 (변환 상태) — Internal API 경유
         try:
             from services.internal_api import update_file as _update_file, _serialize_for_api
@@ -212,7 +208,7 @@ class PdfConversionWorker:
             logger.error(f"[PDF변환워커] files 업데이트 실패: {document_id} - {e}")
 
         # 2. 변환된 PDF에서 텍스트 추출 → meta.full_text가 비어있으면 업데이트
-        await self._extract_and_update_text(document_id, pdf_path, files_col)
+        await self._extract_and_update_text(document_id, pdf_path)
 
         # 3. aims-api에 SSE 알림 요청
         await self._notify_conversion_complete(document_id, "completed")
@@ -221,7 +217,6 @@ class PdfConversionWorker:
         self,
         document_id: str,
         pdf_path: str,
-        files_col,
     ) -> bool:
         """
         변환된 PDF에서 텍스트 추출 후 meta.full_text가 비어있으면 DB 업데이트.
@@ -234,12 +229,12 @@ class PdfConversionWorker:
             True: 텍스트 추출 성공 및 DB 업데이트 완료
             False: 텍스트 추출 불가 또는 스킵
         """
-        from bson import ObjectId as BsonObjectId
+        from services.internal_api import query_file_one
 
         try:
             # 현재 문서의 meta.full_text 확인 — 이미 있으면 스킵
-            doc = await files_col.find_one(
-                {"_id": BsonObjectId(document_id)},
+            doc = await query_file_one(
+                {"_id": document_id},
                 {
                     "meta.full_text": 1,
                     "ocr.full_text": 1,
@@ -510,15 +505,16 @@ class PdfConversionWorker:
         (시스템 문제로 stuck된 것이므로 retry_count도 리셋)
         """
         try:
+            from services.internal_api import query_files as _query_files
             db = MongoService.get_db()
-            files_collection = db["files"]
             queue_collection = db["pdf_conversion_queue"]
 
-            # pending 상태인 모든 문서 조회
-            pending_docs = await files_collection.find(
+            # pending 상태인 모든 문서 조회 — Internal API 경유
+            pending_docs = await _query_files(
                 {"upload.conversion_status": "pending"},
-                {"_id": 1}
-            ).to_list(length=100)
+                projection={"_id": 1},
+                limit=100
+            )
 
             if not pending_docs:
                 return
@@ -559,11 +555,11 @@ class PdfConversionWorker:
         이슈2(재변환 이슈): 재변환 성공 후 텍스트 추출 미트리거
         """
         try:
-            files_col = MongoService.get_collection("files")
+            from services.internal_api import query_files as _query_files
 
             # 변환 완료 + convPdfPath 있음 + meta/ocr 텍스트 모두 비어있음
             # + 이미 추출 시도하여 실패한 문서는 제외 (무한 재시도 방지)
-            candidates = await files_col.find(
+            candidates = await _query_files(
                 {
                     "upload.conversion_status": "completed",
                     "upload.convPdfPath": {"$exists": True, "$ne": ""},
@@ -582,8 +578,9 @@ class PdfConversionWorker:
                         ]},
                     ],
                 },
-                {"_id": 1, "upload.convPdfPath": 1, "upload.originalName": 1},
-            ).to_list(length=50)
+                projection={"_id": 1, "upload.convPdfPath": 1, "upload.originalName": 1},
+                limit=50
+            )
 
             if not candidates:
                 return
@@ -600,7 +597,7 @@ class PdfConversionWorker:
                     f"[PDF변환워커] 텍스트 누락 감지 (completed): {doc_id} - "
                     f"{(doc.get('upload') or {}).get('originalName', '')}"
                 )
-                success = await self._extract_and_update_text(doc_id, pdf_path, files_col)
+                success = await self._extract_and_update_text(doc_id, pdf_path)
                 if success:
                     recovered += 1
 

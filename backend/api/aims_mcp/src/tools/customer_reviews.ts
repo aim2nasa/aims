@@ -1,7 +1,8 @@
 import { z, ZodError } from 'zod';
-import { getDB, toSafeObjectId, COLLECTIONS, formatZodError, filterExistingFileIds } from '../db.js';
+import { formatZodError, filterExistingFileIds } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
+import { queryCustomers } from '../internalApi.js';
 
 // ============================================================
 // 스키마 정의
@@ -108,22 +109,14 @@ export const customerReviewToolDefinitions = [
 export async function handleGetCustomerReviews(args: unknown) {
   try {
     const params = getCustomerReviewsSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    const objectId = toSafeObjectId(params.customerId);
-    if (!objectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    // 고객이 해당 설계사의 고객인지 확인
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: objectId,
-      'meta.created_by': userId
-    });
+    // Internal API 경유: 소유권 필터 포함 조회
+    const customerResults = await queryCustomers(
+      { _id: params.customerId, 'meta.created_by': userId },
+      null, null, 1
+    );
+    const customer = customerResults[0] || null;
 
     if (!customer) {
       return {
@@ -247,22 +240,14 @@ export async function handleGetCustomerReviews(args: unknown) {
 export async function handleGetCrContractHistory(args: unknown) {
   try {
     const params = getCrContractHistorySchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    const objectId = toSafeObjectId(params.customerId);
-    if (!objectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    // 고객이 해당 설계사의 고객인지 확인
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: objectId,
-      'meta.created_by': userId
-    });
+    // Internal API 경유: 소유권 필터 포함 조회
+    const customerResults = await queryCustomers(
+      { _id: params.customerId, 'meta.created_by': userId },
+      null, null, 1
+    );
+    const customer = customerResults[0] || null;
 
     if (!customer) {
       return {
@@ -480,25 +465,18 @@ export async function handleGetCrContractHistory(args: unknown) {
 export async function handleQueryCustomerReviews(args: unknown) {
   try {
     const params = queryCustomerReviewsSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    // 고객 목록 조회: customerId가 있으면 해당 고객만, 없으면 전체 고객
-    const query: any = { 'meta.created_by': userId, 'customer_reviews.0': { $exists: true } };
+    // Internal API 경유: 고객 목록 조회 (customerId가 있으면 해당 고객만, 없으면 전체 고객)
+    const query: Record<string, unknown> = { 'meta.created_by': userId, 'customer_reviews.0': { $exists: true } };
     if (params.customerId) {
-      const objectId = toSafeObjectId(params.customerId);
-      if (!objectId) {
-        return {
-          isError: true,
-          content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-        };
-      }
-      query._id = objectId;
+      query._id = params.customerId;
     }
 
-    const customers = await db.collection(COLLECTIONS.CUSTOMERS)
-      .find(query, { projection: { 'personal_info.name': 1, customer_reviews: 1 } })
-      .toArray();
+    const customers = await queryCustomers(
+      query,
+      { 'personal_info.name': 1, customer_reviews: 1 }
+    );
 
     // 각 고객의 최신 CRS에서 증권번호별 최신 리뷰 추출
     interface ReviewEntry {

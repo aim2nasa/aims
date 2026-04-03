@@ -37,7 +37,8 @@ from services.pdf_conversion_text_service import (
 )
 from services.internal_api import (
     create_file, update_file, delete_file, delete_file_by_filter,
-    pull_customer_document, _serialize_for_api
+    pull_customer_document, _serialize_for_api,
+    query_file_one,
 )
 
 logger = logging.getLogger(__name__)
@@ -1316,8 +1317,8 @@ async def _step_extract_metadata(ctx: PipelineContext) -> Optional[Dict[str, Any
     }))
 
     # 🍎 DB에 사전 추출된 meta.full_text가 있는지 확인 (업로드 시 저장됨)
-    existing_doc = await ctx.files_collection.find_one(
-        {"_id": ObjectId(ctx.doc_id)},
+    existing_doc = await query_file_one(
+        {"_id": ctx.doc_id},
         {"meta.full_text": 1, "meta.mime": 1, "meta.pdf_pages": 1, "meta.size_bytes": 1, "meta.filename": 1}
     )
     pre_full_text = (existing_doc or {}).get("meta", {}).get("full_text", "")
@@ -1811,8 +1812,8 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
         # → 변환된 PDF가 존재하면 OCR 큐로 전달, 없으면 보관 처리
         if is_convertible_mime(ctx.detected_mime):
             # DB에서 변환된 PDF 경로 확인
-            conv_doc = await ctx.files_collection.find_one(
-                {"_id": ObjectId(ctx.doc_id)},
+            conv_doc = await query_file_one(
+                {"_id": ctx.doc_id},
                 {"upload.convPdfPath": 1}
             )
             conv_pdf_path = (conv_doc or {}).get("upload", {}).get("convPdfPath", "")
@@ -1892,8 +1893,8 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
 
     # 🔵 displayName 자동 생성 (AR/CRS가 아닌 일반 문서)
     if not ctx.is_ar_detected and not ctx.is_crs_detected:
-        existing_doc = await ctx.files_collection.find_one(
-            {"_id": ObjectId(ctx.doc_id)},
+        existing_doc = await query_file_one(
+            {"_id": ctx.doc_id},
             {"displayName": 1}
         )
         if existing_doc and not existing_doc.get("displayName"):
@@ -2095,8 +2096,8 @@ async def _process_via_xpipe(
     settings = get_settings()
 
     # 변환 PDF 경로 조회 (HWP/PPT 등의 OCR fallback용)
-    conv_doc = await files_collection.find_one(
-        {"_id": ObjectId(doc_id)},
+    conv_doc = await query_file_one(
+        {"_id": doc_id},
         {"upload.convPdfPath": 1}
     )
     conv_pdf_path = (conv_doc or {}).get("upload", {}).get("convPdfPath", "")
@@ -2465,8 +2466,8 @@ async def _process_via_xpipe(
         for det in detections
     )
     if not is_ar_or_crs:
-        existing_doc = await files_collection.find_one(
-            {"_id": ObjectId(doc_id)},
+        existing_doc = await query_file_one(
+            {"_id": doc_id},
             {"displayName": 1}
         )
         if existing_doc and not existing_doc.get("displayName"):
@@ -2546,8 +2547,8 @@ async def _trigger_pdf_conversion_for_xpipe(
             return
 
         # 이미 변환된 PDF가 있으면 큐 등록 스킵 (재처리 시)
-        existing = await files_collection.find_one(
-            {"_id": ObjectId(doc_id)},
+        existing = await query_file_one(
+            {"_id": doc_id},
             {"upload.convPdfPath": 1}
         )
         existing_conv = (existing or {}).get("upload", {}).get("convPdfPath", "")

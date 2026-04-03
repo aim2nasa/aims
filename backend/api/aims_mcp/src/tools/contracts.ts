@@ -1,7 +1,8 @@
 import { z, ZodError } from 'zod';
-import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
+import { queryCustomers } from '../internalApi.js';
 
 // ============================================================================
 // 스키마 정의
@@ -311,7 +312,6 @@ function matchesSearch(contract: NormalizedContract, search: string): boolean {
 export async function handleListContracts(args: unknown) {
   try {
     const params = listContractsSchema.parse(args || {});
-    const db = getDB();
     const userId = getCurrentUserId();
 
     // 쿼리 조건: 현재 설계사의 고객만 조회
@@ -322,21 +322,14 @@ export async function handleListContracts(args: unknown) {
 
     // 특정 고객만 조회
     if (params.customerId) {
-      const customerObjectId = toSafeObjectId(params.customerId);
-      if (customerObjectId) {
-        customerQuery['_id'] = customerObjectId;
-      }
+      customerQuery['_id'] = params.customerId;
     }
 
-    // 고객 목록 조회 (annual_reports 배열 포함)
-    const customers = await db.collection(COLLECTIONS.CUSTOMERS)
-      .find(customerQuery)
-      .project({
-        _id: 1,
-        'personal_info.name': 1,
-        'annual_reports': 1
-      })
-      .toArray();
+    // Internal API 경유: 고객 목록 조회 (annual_reports 배열 포함)
+    const customers = await queryCustomers(
+      customerQuery,
+      { _id: 1, 'personal_info.name': 1, 'annual_reports': 1 }
+    );
 
     // 모든 계약 수집 및 정규화
     const allContracts: NormalizedContract[] = [];
@@ -636,37 +629,28 @@ export async function handleListContracts(args: unknown) {
 export async function handleGetContractDetails(args: unknown) {
   try {
     const params = getContractDetailsSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
     const policyNumber = params.policyNumber.trim();
 
-    // 현재 설계사의 모든 고객에서 해당 증권번호 검색
-    const customers = await db.collection(COLLECTIONS.CUSTOMERS)
-      .find({
+    // Internal API 경유: 현재 설계사의 모든 고객에서 해당 증권번호 검색
+    const customers = await queryCustomers(
+      {
         'meta.created_by': userId,
         'annual_reports.contracts.증권번호': policyNumber
-      })
-      .project({
-        _id: 1,
-        'personal_info.name': 1,
-        'annual_reports': 1
-      })
-      .toArray();
+      },
+      { _id: 1, 'personal_info.name': 1, 'annual_reports': 1 }
+    );
 
     if (customers.length === 0) {
-      // 부분 일치 검색 시도
-      const allCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
-        .find({
+      // 부분 일치 검색 시도 — Internal API 경유
+      const allCustomers = await queryCustomers(
+        {
           'meta.created_by': userId,
           'annual_reports': { $exists: true, $ne: [] }
-        })
-        .project({
-          _id: 1,
-          'personal_info.name': 1,
-          'annual_reports': 1
-        })
-        .toArray();
+        },
+        { _id: 1, 'personal_info.name': 1, 'annual_reports': 1 }
+      );
 
       // 부분 일치 검색
       for (const customer of allCustomers) {

@@ -4,10 +4,9 @@ Replaces n8n DocSummary workflow
 """
 from fastapi import APIRouter, HTTPException
 import logging
-from bson import ObjectId
 
 from services.openai_service import OpenAIService
-from services.mongo_service import MongoService
+from services.internal_api import query_file_one
 from models.document import SummaryRequest, SummaryResponse
 
 router = APIRouter()
@@ -16,10 +15,12 @@ openai_service = OpenAIService()
 
 
 async def _get_document_text(doc_id: str) -> str:
-    """DB에서 문서 텍스트 조회"""
+    """DB에서 문서 텍스트 조회 — Internal API 경유"""
     try:
-        collection = MongoService.get_collection("files")
-        doc = await collection.find_one({"_id": ObjectId(doc_id)})
+        doc = await query_file_one(
+            {"_id": doc_id},
+            {"full_text": 1, "extracted_text": 1}
+        )
         if doc:
             # full_text 또는 extracted_text 필드 확인
             return doc.get("full_text") or doc.get("extracted_text") or ""

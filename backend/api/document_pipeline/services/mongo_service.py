@@ -68,12 +68,10 @@ class MongoService:
 
     @classmethod
     async def get_file(cls, file_id: str) -> Optional[Dict[str, Any]]:
-        """Get file document by ID"""
-        db = cls.get_db()
-        doc = await db.files.find_one({"_id": ObjectId(file_id)})
-        if doc:
-            doc["_id"] = str(doc["_id"])
-        return doc
+        """Get file document by ID — Internal API 경유"""
+        from services.internal_api import query_file_one
+        doc = await query_file_one({"_id": file_id})
+        return doc  # Internal API가 이미 _id를 문자열로 반환
 
     @classmethod
     async def insert_error(cls, error_data: Dict[str, Any]) -> str:

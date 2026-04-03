@@ -1,9 +1,8 @@
 import { z, ZodError } from 'zod';
-import { ObjectId } from 'mongodb';
-import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
-import { createRelationship, deleteRelationship } from '../internalApi.js';
+import { createRelationship, deleteRelationship, queryCustomers, queryRelationships, getRelationship } from '../internalApi.js';
 
 // 관계 유형 정의 (aims_api와 동일)
 const RELATIONSHIP_TYPES: Record<string, Record<string, { reverse: string; bidirectional: boolean; label: string }>> = {
@@ -137,7 +136,6 @@ export const relationshipToolDefinitions = [
 export async function handleCreateRelationship(args: unknown) {
   try {
     const params = createRelationshipSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
     // 자기 참조 체크 (즉시 UX 에러 반환)
@@ -171,21 +169,13 @@ export async function handleCreateRelationship(args: unknown) {
       }
     }
 
-    // 고객명 조회 (응답 메시지용) — Read 유지
-    const fromObjectId = toSafeObjectId(params.fromCustomerId);
-    const toObjectId = toSafeObjectId(params.toCustomerId);
-
-    if (!fromObjectId || !toObjectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    const [fromCustomer, toCustomer] = await Promise.all([
-      db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: fromObjectId, 'meta.created_by': userId }, { projection: { 'personal_info.name': 1 } }),
-      db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: toObjectId, 'meta.created_by': userId }, { projection: { 'personal_info.name': 1 } })
+    // 고객명 조회 (응답 메시지용) — Internal API 경유
+    const [fromResults, toResults] = await Promise.all([
+      queryCustomers({ _id: params.fromCustomerId, 'meta.created_by': userId }, { 'personal_info.name': 1 }, null, 1),
+      queryCustomers({ _id: params.toCustomerId, 'meta.created_by': userId }, { 'personal_info.name': 1 }, null, 1)
     ]);
+    const fromCustomer = fromResults[0] || null;
+    const toCustomer = toResults[0] || null;
 
     // Internal API로 관계 생성 (소유권 확인, 중복 체크, 역방향 처리 포함)
     const result = await createRelationship({
@@ -252,22 +242,14 @@ export async function handleCreateRelationship(args: unknown) {
 export async function handleDeleteRelationship(args: unknown) {
   try {
     const params = deleteRelationshipSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    const fromObjectId = toSafeObjectId(params.fromCustomerId);
-    if (!fromObjectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 기준 고객 ID입니다.' }]
-      };
-    }
-
-    // 고객명 조회 (응답 메시지용) — Read 유지
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: fromObjectId,
-      'meta.created_by': userId
-    }, { projection: { 'personal_info.name': 1 } });
+    // 고객명 조회 (응답 메시지용) — Internal API 경유
+    const customerResults = await queryCustomers(
+      { _id: params.fromCustomerId, 'meta.created_by': userId },
+      { 'personal_info.name': 1 }, null, 1
+    );
+    const customer = customerResults[0] || null;
 
     if (!customer) {
       return {
@@ -284,41 +266,25 @@ export async function handleDeleteRelationship(args: unknown) {
     if (params.relationshipId) {
       relationshipId = params.relationshipId;
 
-      // 관계 정보 조회 (응답용 — Read 유지)
-      const relationshipObjectId = toSafeObjectId(params.relationshipId);
-      if (!relationshipObjectId) {
-        return {
-          isError: true,
-          content: [{ type: 'text' as const, text: '유효하지 않은 관계 ID입니다.' }]
-        };
-      }
+      // 관계 정보 조회 (응답용) — Internal API 경유
+      const relationship = await getRelationship(params.relationshipId);
 
-      const relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
-        _id: relationshipObjectId,
-        'relationship_info.from_customer_id': fromObjectId
-      });
-
-      if (relationship) {
+      if (relationship && relationship.relationship_info?.from_customer_id?.toString() === params.fromCustomerId) {
         relationshipType = relationship.relationship_info.relationship_type;
-        toCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-          _id: relationship.relationship_info.to_customer_id
-        }, { projection: { 'personal_info.name': 1 } });
+        const toId = relationship.relationship_info.to_customer_id?.toString();
+        if (toId) {
+          const toResults = await queryCustomers({ _id: toId }, { 'personal_info.name': 1 }, null, 1);
+          toCustomer = toResults[0] || null;
+        }
       }
     }
     // 모드 2: toCustomerId로 관계를 찾아서 삭제
     else if (params.toCustomerId) {
-      const toObjectId = toSafeObjectId(params.toCustomerId);
-      if (!toObjectId) {
-        return {
-          isError: true,
-          content: [{ type: 'text' as const, text: '유효하지 않은 대상 고객 ID입니다.' }]
-        };
-      }
-
-      toCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-        _id: toObjectId,
-        'meta.created_by': userId
-      }, { projection: { 'personal_info.name': 1 } });
+      const toResults = await queryCustomers(
+        { _id: params.toCustomerId, 'meta.created_by': userId },
+        { 'personal_info.name': 1 }, null, 1
+      );
+      toCustomer = toResults[0] || null;
 
       if (!toCustomer) {
         return {
@@ -327,12 +293,13 @@ export async function handleDeleteRelationship(args: unknown) {
         };
       }
 
-      // 두 고객 간의 관계 찾기 — Read 유지 (Internal API는 relationshipId만 받으므로)
-      const relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
-        'relationship_info.from_customer_id': fromObjectId,
-        'relationship_info.to_customer_id': toObjectId,
+      // 두 고객 간의 관계 찾기 — Internal API 경유
+      const relationships = await queryRelationships({
+        'relationship_info.from_customer_id': params.fromCustomerId,
+        'relationship_info.to_customer_id': params.toCustomerId,
         'relationship_info.status': 'active'
-      });
+      }, null, null, 1);
+      const relationship = relationships[0] || null;
 
       if (!relationship) {
         return {
@@ -344,7 +311,7 @@ export async function handleDeleteRelationship(args: unknown) {
         };
       }
 
-      relationshipId = relationship._id.toString();
+      relationshipId = relationship._id?.toString();
       relationshipType = relationship.relationship_info.relationship_type;
     }
 
@@ -409,22 +376,14 @@ export async function handleDeleteRelationship(args: unknown) {
 export async function handleListRelationships(args: unknown) {
   try {
     const params = listRelationshipsSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    const objectId = toSafeObjectId(params.customerId);
-    if (!objectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    // 고객이 해당 설계사의 고객인지 확인
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: objectId,
-      'meta.created_by': userId
-    });
+    // 고객이 해당 설계사의 고객인지 확인 — Internal API 경유
+    const customerResults = await queryCustomers(
+      { _id: params.customerId, 'meta.created_by': userId },
+      null, null, 1
+    );
+    const customer = customerResults[0] || null;
 
     if (!customer) {
       return {
@@ -433,34 +392,28 @@ export async function handleListRelationships(args: unknown) {
       };
     }
 
-    // 관계 조회 필터
-    const filter: Record<string, unknown> = {
-      'relationship_info.from_customer_id': objectId,
+    // 관계 조회 필터 — Internal API 경유
+    const relFilter: Record<string, unknown> = {
+      'relationship_info.from_customer_id': params.customerId,
       'relationship_info.status': 'active'
     };
 
     if (params.category) {
-      filter['relationship_info.relationship_category'] = params.category;
+      relFilter['relationship_info.relationship_category'] = params.category;
     }
 
-    const relationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS)
-      .find(filter)
-      .sort({ 'meta.created_at': -1 })
-      .toArray();
+    const relationships = await queryRelationships(relFilter, null, { 'meta.created_at': -1 });
 
-    // 관련 고객 정보 조회
-    const relatedCustomerIds = relationships.map(rel => rel.relationship_info.to_customer_id);
-    const relatedCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
-      .find({ _id: { $in: relatedCustomerIds } })
-      .project({
-        _id: 1,
-        'personal_info.name': 1,
-        'personal_info.mobile_phone': 1,
-        'insurance_info.customer_type': 1
-      })
-      .toArray();
+    // 관련 고객 정보 조회 — Internal API 경유
+    const relatedCustomerIds = relationships.map(rel => rel.relationship_info.to_customer_id?.toString()).filter(Boolean);
+    const relatedCustomers = relatedCustomerIds.length > 0
+      ? await queryCustomers(
+          { _id: { $in: relatedCustomerIds } },
+          { _id: 1, 'personal_info.name': 1, 'personal_info.mobile_phone': 1, 'insurance_info.customer_type': 1 }
+        )
+      : [];
 
-    const customerMap = new Map(relatedCustomers.map(c => [c._id.toString(), c]));
+    const customerMap = new Map(relatedCustomers.map((c: any) => [c._id?.toString(), c]));
 
     const allTypes = getAllRelationshipTypes();
     const formattedRelationships = relationships.map(rel => {

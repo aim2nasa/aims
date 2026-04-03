@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from config import settings
 from services.queue_manager import ARParseQueueManager
 from system_logger import send_error_log
-from internal_api import update_file_parsing_status
+from internal_api import update_file_parsing_status, query_files, query_file_one, has_report
 
 # 로깅 설정
 logging.basicConfig(
@@ -80,49 +80,45 @@ async def scan_pending_ar_documents(log_always: bool = False):
         from bson import ObjectId
 
         # 🔴 조건1: 아직 파싱 안 된 문서
-        pending_docs = list(db["files"].find({
+        pending_docs = query_files({
             "is_annual_report": True,
             "status": {"$in": ["completed", "credit_pending"]},
             "ar_parsing_status": {"$ne": "completed"},
             "customerId": {"$exists": True, "$ne": None}
-        }).limit(10))
+        }, limit=10)
 
         # 🔴 조건2: 자가 복구 - ar_parsing_status=completed이지만 실제 결과가 없는 고아 문서
         # 30초마다 한 번씩만 체크 (성능 최적화)
         if log_always:
-            orphan_docs = list(db["files"].find({
+            orphan_docs = query_files({
                 "is_annual_report": True,
                 "status": {"$in": ["completed", "credit_pending"]},
                 "ar_parsing_status": "completed",
                 "customerId": {"$exists": True, "$ne": None}
-            }).limit(20))
+            }, limit=20)
 
             for orphan in orphan_docs:
                 customer_id = orphan.get("customerId")
                 if not customer_id:
                     continue
 
-                # 고객의 annual_reports 배열에서 이 파일의 파싱 결과 확인
-                customer = db["customers"].find_one(
-                    {"_id": customer_id,
-                     "annual_reports.source_file_id": orphan["_id"]},
-                    {"_id": 1}
-                )
+                # 고객의 annual_reports 배열에서 이 파일의 파싱 결과 확인 (Internal API 경유)
+                has_ar = has_report(str(customer_id), str(orphan["_id"]), "ar")
 
                 # 이 파일의 파싱 결과가 없으면 고아 문서 → pending으로 복구
-                if not customer:
+                if not has_ar:
                     update_file_parsing_status(str(orphan["_id"]), "ar", "pending")
                     pending_docs.append(orphan)
                     filename = orphan.get("upload", {}).get("originalName", "unknown")
                     logger.info(f"🔧 AR 고아 문서 자가 복구: {filename}")
 
             # 🔴 조건3: is_annual_report=true인데 ar_parsing_status가 아예 없는 고아 문서
-            orphan_no_status = list(db["files"].find({
+            orphan_no_status = query_files({
                 "is_annual_report": True,
                 "status": {"$in": ["completed", "credit_pending"]},
                 "ar_parsing_status": {"$exists": False},
                 "customerId": {"$exists": True, "$ne": None}
-            }).limit(10))
+            }, limit=10)
 
             for orphan in orphan_no_status:
                 update_file_parsing_status(str(orphan["_id"]), "ar", "pending")
@@ -133,11 +129,11 @@ async def scan_pending_ar_documents(log_always: bool = False):
             # 🔴 조건4: processing 상태가 5분 이상 지속된 AR 문서 → 타임아웃 복구
             from datetime import timedelta
             timeout_threshold = datetime.utcnow() - timedelta(minutes=5)
-            stuck_ar = list(db["files"].find({
+            stuck_ar = query_files({
                 "is_annual_report": True,
                 "ar_parsing_status": "processing",
                 "customerId": {"$exists": True, "$ne": None}
-            }).limit(10))
+            }, limit=10)
 
             for stuck in stuck_ar:
                 updated_at = stuck.get("updatedAt") or stuck.get("createdAt")
@@ -217,49 +213,45 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
         from routes.cr_background import parse_single_cr_document
 
         # 🔴 조건1: 아직 파싱 안 된 문서
-        pending_docs = list(db["files"].find({
+        pending_docs = query_files({
             "is_customer_review": True,
             "status": {"$in": ["completed", "credit_pending"]},
             "cr_parsing_status": {"$nin": ["completed", "processing"]},
             "customerId": {"$exists": True, "$ne": None}
-        }).limit(10))
+        }, limit=10)
 
         # 🔴 조건2: 자가 복구 - cr_parsing_status=completed이지만 실제 결과가 없는 고아 문서
         # 30초마다 한 번씩만 체크 (성능 최적화)
         if log_always:
-            orphan_docs = list(db["files"].find({
+            orphan_docs = query_files({
                 "is_customer_review": True,
                 "status": {"$in": ["completed", "credit_pending"]},
                 "cr_parsing_status": "completed",
                 "customerId": {"$exists": True, "$ne": None}
-            }).limit(20))
+            }, limit=20)
 
             for orphan in orphan_docs:
                 customer_id = orphan.get("customerId")
                 if not customer_id:
                     continue
 
-                # 고객의 customer_reviews 배열에서 이 파일의 파싱 결과 확인
-                customer = db["customers"].find_one(
-                    {"_id": customer_id,
-                     "customer_reviews.source_file_id": orphan["_id"]},
-                    {"_id": 1}
-                )
+                # 고객의 customer_reviews 배열에서 이 파일의 파싱 결과 확인 (Internal API 경유)
+                has_cr = has_report(str(customer_id), str(orphan["_id"]), "cr")
 
                 # 이 파일의 파싱 결과가 없으면 고아 문서 → pending으로 복구
-                if not customer:
+                if not has_cr:
                     update_file_parsing_status(str(orphan["_id"]), "cr", "pending")
                     pending_docs.append(orphan)
                     filename = orphan.get("upload", {}).get("originalName", "unknown")
                     logger.info(f"🔧 CRS 고아 문서 자가 복구: {filename}")
 
             # 🔴 조건3: is_customer_review=true인데 cr_parsing_status가 아예 없는 고아 문서
-            orphan_no_status = list(db["files"].find({
+            orphan_no_status = query_files({
                 "is_customer_review": True,
                 "status": {"$in": ["completed", "credit_pending"]},
                 "cr_parsing_status": {"$exists": False},
                 "customerId": {"$exists": True, "$ne": None}
-            }).limit(10))
+            }, limit=10)
 
             for orphan in orphan_no_status:
                 update_file_parsing_status(str(orphan["_id"]), "cr", "pending")
@@ -270,11 +262,11 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
             # 🔴 조건4: processing 상태가 5분 이상 지속된 문서 → 타임아웃 복구
             from datetime import timedelta
             timeout_threshold = datetime.utcnow() - timedelta(minutes=5)
-            stuck_processing = list(db["files"].find({
+            stuck_processing = query_files({
                 "is_customer_review": True,
                 "cr_parsing_status": "processing",
                 "customerId": {"$exists": True, "$ne": None}
-            }).limit(10))
+            }, limit=10)
 
             for stuck in stuck_processing:
                 updated_at = stuck.get("updatedAt") or stuck.get("createdAt")
@@ -505,7 +497,7 @@ async def startup_event():
             # processing/pending 상태인 큐 항목 확인
             inconsistent_count = 0
             for q in db["ar_parse_queue"].find({"status": {"$in": ["pending", "processing"]}}):
-                file_doc = db["files"].find_one({"_id": q["file_id"]})
+                file_doc = query_file_one({"_id": str(q["file_id"])})
                 if file_doc and file_doc.get("ar_parsing_status") == "completed":
                     # 불일치 발견 → 큐에서 삭제
                     db["ar_parse_queue"].delete_one({"_id": q["_id"]})

@@ -18,7 +18,11 @@ sys.path.insert(0, str(project_root))
 
 from src.shared.time_utils import utc_now_iso
 from system_logger import send_error_log
-from internal_api import push_annual_report, replace_annual_reports, push_customer_review, replace_customer_reviews
+from internal_api import (
+    push_annual_report, replace_annual_reports,
+    push_customer_review, replace_customer_reviews,
+    get_customer, query_files, query_file_one
+)
 
 logger = logging.getLogger(__name__)
 
@@ -99,9 +103,8 @@ def save_annual_report(
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
-        # 2. 고객 존재 확인
-        customers_collection = db["customers"]
-        customer = customers_collection.find_one({"_id": customer_obj_id})
+        # 2. 고객 존재 확인 (Internal API 경유)
+        customer = get_customer(customer_id)
 
         if not customer:
             logger.error(f"고객을 찾을 수 없습니다: {customer_id}")
@@ -297,12 +300,8 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
-        # 고객 조회
-        customers_collection = db["customers"]
-        customer = customers_collection.find_one(
-            {"_id": customer_obj_id},
-            {"annual_reports": 1, "name": 1}
-        )
+        # 고객 조회 (Internal API 경유)
+        customer = get_customer(customer_id)
 
         if not customer:
             logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")
@@ -326,13 +325,10 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
                 except Exception as e:
                     logger.debug(f"유효하지 않은 ObjectId 무시: {source_id} - {e}")
 
-        # files 컬렉션 참조
-        files_collection = db["files"]
-
-        # 🔥 파싱 미완료 AR 문서 조회 (files 컬렉션에서)
+        # 🔥 파싱 미완료 AR 문서 조회 (Internal API 경유)
         # 🔧 이미 완료된 source_file_id는 제외!
         query = {
-            "customerId": customer_obj_id,
+            "customerId": customer_id,
             "is_annual_report": True,
             "$or": [
                 {"ar_parsing_status": {"$exists": False}},  # 상태 미설정
@@ -341,11 +337,11 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
         }
         # 이미 완료된 파일은 제외
         if completed_file_ids:
-            query["_id"] = {"$nin": list(completed_file_ids)}
+            query["_id"] = {"$nin": [str(fid) for fid in completed_file_ids]}
 
-        not_completed_ar_files = list(files_collection.find(
+        not_completed_ar_files = query_files(
             query,
-            {
+            projection={
                 "_id": 1,
                 "upload.originalName": 1,
                 "upload.uploaded_at": 1,
@@ -354,8 +350,9 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
                 "ar_retry_count": 1,
                 "ar_metadata": 1,
                 "meta.file_hash": 1
-            }
-        ))
+            },
+            limit=100
+        )
 
         # 파싱 미완료 문서를 annual_reports 형식으로 변환
         for file_doc in not_completed_ar_files:
@@ -430,11 +427,11 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             if "status" not in report:
                 report["status"] = "completed"
 
-            # source_file_id가 있으면 files 컬렉션에서 file_hash 조회 (이미 있으면 스킵)
+            # source_file_id가 있으면 Internal API로 file_hash 조회 (이미 있으면 스킵)
             if source_file_id and "file_hash" not in report:
                 try:
-                    file_doc = files_collection.find_one(
-                        {"_id": source_file_id if isinstance(source_file_id, ObjectId) else ObjectId(source_file_id)},
+                    file_doc = query_file_one(
+                        {"_id": str(source_file_id)},
                         {"meta.file_hash": 1}
                     )
                     if file_doc and "meta" in file_doc and "file_hash" in file_doc["meta"]:
@@ -445,13 +442,12 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             # source_file_id가 없으면 customer_id로 files 조회 (Annual Report 파일 찾기)
             elif not source_file_id and "file_hash" not in report:
                 try:
-                    file_doc = files_collection.find_one(
+                    file_doc = query_file_one(
                         {
-                            "customer_relation.customer_id": customer_obj_id,
+                            "customer_relation.customer_id": customer_id,
                             "is_annual_report": True
                         },
-                        {"meta.file_hash": 1},
-                        sort=[("upload.uploaded_at", -1)]
+                        {"meta.file_hash": 1}
                     )
                     if file_doc and "meta" in file_doc and "file_hash" in file_doc["meta"]:
                         report["file_hash"] = file_doc["meta"]["file_hash"]
@@ -520,12 +516,8 @@ def delete_annual_reports(
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
-        # 고객 조회
-        customers_collection = db["customers"]
-        customer = customers_collection.find_one(
-            {"_id": customer_obj_id},
-            {"annual_reports": 1}
-        )
+        # 고객 조회 (Internal API 경유)
+        customer = get_customer(customer_id)
 
         if not customer:
             logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")
@@ -655,12 +647,8 @@ def cleanup_duplicate_annual_reports(
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
-        # 고객 조회
-        customers_collection = db["customers"]
-        customer = customers_collection.find_one(
-            {"_id": customer_obj_id},
-            {"annual_reports": 1}
-        )
+        # 고객 조회 (Internal API 경유)
+        customer = get_customer(customer_id)
 
         if not customer:
             logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")
@@ -868,9 +856,8 @@ def save_customer_review(
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
-        # 2. 고객 존재 확인
-        customers_collection = db["customers"]
-        customer = customers_collection.find_one({"_id": customer_obj_id})
+        # 2. 고객 존재 확인 (Internal API 경유)
+        customer = get_customer(customer_id)
 
         if not customer:
             logger.error(f"고객을 찾을 수 없습니다: {customer_id}")
@@ -1074,12 +1061,8 @@ def get_customer_reviews(db, customer_id: str, limit: int = 10) -> Dict[str, any
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
-        # 고객 조회
-        customers_collection = db["customers"]
-        customer = customers_collection.find_one(
-            {"_id": customer_obj_id},
-            {"customer_reviews": 1, "name": 1}
-        )
+        # 고객 조회 (Internal API 경유)
+        customer = get_customer(customer_id)
 
         if not customer:
             logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")
@@ -1102,12 +1085,9 @@ def get_customer_reviews(db, customer_id: str, limit: int = 10) -> Dict[str, any
                 except Exception as e:
                     logger.debug(f"유효하지 않은 ObjectId 무시: {source_id} - {e}")
 
-        # files 컬렉션 참조
-        files_collection = db["files"]
-
-        # 🔥 파싱 미완료 CR 문서 조회 (files 컬렉션에서)
+        # 🔥 파싱 미완료 CR 문서 조회 (Internal API 경유)
         query = {
-            "customerId": customer_obj_id,
+            "customerId": customer_id,
             "is_customer_review": True,
             "$or": [
                 {"cr_parsing_status": {"$exists": False}},
@@ -1116,11 +1096,11 @@ def get_customer_reviews(db, customer_id: str, limit: int = 10) -> Dict[str, any
         }
         # 이미 완료된 파일은 제외
         if completed_file_ids:
-            query["_id"] = {"$nin": list(completed_file_ids)}
+            query["_id"] = {"$nin": [str(fid) for fid in completed_file_ids]}
 
-        not_completed_cr_files = list(files_collection.find(
+        not_completed_cr_files = query_files(
             query,
-            {
+            projection={
                 "_id": 1,
                 "upload.originalName": 1,
                 "upload.uploaded_at": 1,
@@ -1129,8 +1109,9 @@ def get_customer_reviews(db, customer_id: str, limit: int = 10) -> Dict[str, any
                 "cr_retry_count": 1,
                 "cr_metadata": 1,
                 "meta.file_hash": 1
-            }
-        ))
+            },
+            limit=100
+        )
 
         # 파싱 미완료 문서를 customer_reviews 형식으로 변환
         for file_doc in not_completed_cr_files:
@@ -1205,11 +1186,11 @@ def get_customer_reviews(db, customer_id: str, limit: int = 10) -> Dict[str, any
             if "status" not in review:
                 review["status"] = "completed"
 
-            # source_file_id가 있으면 files 컬렉션에서 file_hash 조회
+            # source_file_id가 있으면 Internal API로 file_hash 조회
             if source_file_id and "file_hash" not in review:
                 try:
-                    file_doc = files_collection.find_one(
-                        {"_id": source_file_id if isinstance(source_file_id, ObjectId) else ObjectId(source_file_id)},
+                    file_doc = query_file_one(
+                        {"_id": str(source_file_id)},
                         {"meta.file_hash": 1}
                     )
                     if file_doc and "meta" in file_doc and "file_hash" in file_doc["meta"]:
@@ -1276,12 +1257,8 @@ def delete_customer_reviews(
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
-        # 고객 조회
-        customers_collection = db["customers"]
-        customer = customers_collection.find_one(
-            {"_id": customer_obj_id},
-            {"customer_reviews": 1}
-        )
+        # 고객 조회 (Internal API 경유)
+        customer = get_customer(customer_id)
 
         if not customer:
             logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")

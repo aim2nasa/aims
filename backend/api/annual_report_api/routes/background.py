@@ -18,7 +18,7 @@ from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
 from config import settings
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, has_report, update_file_parsing_status
+from internal_api import check_customer_ownership, has_report, update_file_parsing_status, query_file_one, query_files
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +52,8 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         dict: {"success": bool, "message": str, "error": str (optional)}
     """
     try:
-        # 1. 문서 조회
-        doc = db["files"].find_one({"_id": ObjectId(file_id)})
+        # 1. 문서 조회 (Internal API 경유)
+        doc = query_file_one({"_id": file_id})
 
         if not doc:
             return {"success": False, "error": f"문서를 찾을 수 없음: {file_id}"}
@@ -71,8 +71,8 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
 
             for attempt in range(max_wait_attempts):
                 time.sleep(wait_interval)
-                # 파일 재조회
-                doc = db["files"].find_one({"_id": ObjectId(file_id)})
+                # 파일 재조회 (Internal API 경유)
+                doc = query_file_one({"_id": file_id})
                 if doc:
                     file_path = doc.get("upload", {}).get("destPath")
                     if file_path:
@@ -240,16 +240,16 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
 
         # 특정 고객의 문서만 파싱
         if customer_id:
-            query["customer_relation.customer_id"] = ObjectId(customer_id)
+            query["customer_relation.customer_id"] = customer_id
 
         # 특정 파일만 파싱
         if specific_file_id:
-            query["_id"] = ObjectId(specific_file_id)
+            query["_id"] = specific_file_id
             # 특정 파일 지정 시 파싱 상태 필터 및 customer 필터 제거 (강제 재파싱 가능)
             query.pop("$or", None)
             query.pop("customer_relation.customer_id", None)  # 🔧 파일 ID로 직접 조회 시 customer 필터 불필요
 
-        ar_documents = list(db["files"].find(query).sort("upload.uploaded_at", -1))
+        ar_documents = query_files(query, sort={"upload.uploaded_at": -1}, limit=100)
 
         logger.info(f"📄 [BG Parsing] AR 문서 {len(ar_documents)}개 발견")
 
@@ -471,7 +471,7 @@ async def trigger_ar_parsing(
             # 특정 파일만 큐에 추가
             try:
                 file_obj_id = ObjectId(request.file_id)
-                file_doc = db.files.find_one({"_id": file_obj_id})
+                file_doc = query_file_one({"_id": request.file_id})
                 if file_doc:
                     # 🔧 이미 완료된 AR은 큐에 추가하지 않음
                     if file_doc.get("ar_parsing_status") == "completed":
@@ -484,12 +484,12 @@ async def trigger_ar_parsing(
             except InvalidId:
                 pass
         elif request.customer_id:
-            # 해당 고객의 pending AR 문서들을 큐에 추가
-            pending_docs = list(db.files.find({
-                "customerId": ObjectId(request.customer_id),
+            # 해당 고객의 pending AR 문서들을 큐에 추가 (Internal API 경유)
+            pending_docs = query_files({
+                "customerId": request.customer_id,
                 "is_annual_report": True,
                 "ar_parsing_status": {"$in": ["pending", None]}
-            }).limit(20))
+            }, limit=20)
 
             for doc in pending_docs:
                 # 이미 큐에 있는지 확인
@@ -566,8 +566,8 @@ async def retry_ar_parsing(
                 detail="Invalid file_id format"
             )
 
-        # 파일 조회
-        file_doc = db["files"].find_one({"_id": file_obj_id})
+        # 파일 조회 (Internal API 경유)
+        file_doc = query_file_one({"_id": str(file_obj_id)})
 
         if not file_doc:
             raise HTTPException(

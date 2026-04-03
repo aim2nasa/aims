@@ -9,6 +9,7 @@
  * Phase 2: Write (생성/수정/삭제) 엔드포인트 8건
  * Phase 3: annual_report_api write 전환 엔드포인트 9건
  * Phase 4: document_pipeline write 전환 엔드포인트 5건
+ * Phase 6: Read Gateway 전환 엔드포인트 9건
  *
  * @since 2026-04-03
  */
@@ -42,7 +43,11 @@ function verifyInternalApiKey(req, res, next) {
  * ObjectId 변환이 필요한 필드명 목록
  * filter 내에서 이 필드명을 가진 값을 ObjectId로 변환한다.
  */
-const OBJECTID_FIELDS = new Set(['_id', 'customerId']);
+const OBJECTID_FIELDS = new Set([
+  '_id', 'customerId', 'customer_id',
+  'relationship_info.from_customer_id', 'relationship_info.to_customer_id',
+  'from_customer_id', 'to_customer_id'
+]);
 
 /**
  * 위험한 MongoDB 연산자 블랙리스트
@@ -165,17 +170,24 @@ function convertObjectIdFields(filter) {
       if (typeof value === 'string' && ObjectId.isValid(value)) {
         converted[key] = new ObjectId(value);
       } else if (value && typeof value === 'object') {
+        const convertedValue = { ...value };
         // $in 연산자 처리
-        if (value.$in && Array.isArray(value.$in)) {
-          converted[key] = {
-            ...value,
-            $in: value.$in.map(v =>
-              typeof v === 'string' && ObjectId.isValid(v) ? new ObjectId(v) : v
-            )
-          };
-        } else {
-          converted[key] = value;
+        if (convertedValue.$in && Array.isArray(convertedValue.$in)) {
+          convertedValue.$in = convertedValue.$in.map(v =>
+            typeof v === 'string' && ObjectId.isValid(v) ? new ObjectId(v) : v
+          );
         }
+        // $nin 연산자 처리
+        if (convertedValue.$nin && Array.isArray(convertedValue.$nin)) {
+          convertedValue.$nin = convertedValue.$nin.map(v =>
+            typeof v === 'string' && ObjectId.isValid(v) ? new ObjectId(v) : v
+          );
+        }
+        // $ne 연산자 처리
+        if (convertedValue.$ne !== undefined && typeof convertedValue.$ne === 'string' && ObjectId.isValid(convertedValue.$ne)) {
+          convertedValue.$ne = new ObjectId(convertedValue.$ne);
+        }
+        converted[key] = convertedValue;
       } else {
         converted[key] = value;
       }
@@ -2545,6 +2557,570 @@ module.exports = function(db) {
     } catch (error) {
       console.error('[Internal] PATCH /customers/:id/pull-document 오류:', error.message);
       backendLogger.error('Internal', 'PATCH /customers/:id/pull-document 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // Phase 6: Read Gateway 전환 엔드포인트 9건
+  // =========================================================================
+
+  // =========================================================================
+  // 32. GET /internal/customers/:id — 고객 상세 조회
+  // =========================================================================
+  /**
+   * 고객 단건 조회
+   * @param {string} id - 고객 ObjectId
+   * 주의: /customers/:id/name, /customers/:id/ownership 등 하위 경로가
+   *       이미 상단에 정의되어 있으므로 라우트 순서 충돌 없음
+   */
+  router.get('/internal/customers/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        _id: new ObjectId(id)
+      });
+
+      if (!customer) {
+        return res.status(404).json({
+          success: false,
+          error: '고객을 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 최상위 _id만 toString() 직렬화
+      const serialized = {
+        ...customer,
+        _id: customer._id.toString()
+      };
+
+      res.json({
+        success: true,
+        data: serialized,
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] GET /customers/:id 오류:', error.message);
+      backendLogger.error('Internal', 'GET /customers/:id 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 33. POST /internal/customers/query — 고객 범용 검색
+  // =========================================================================
+  /**
+   * customers 컬렉션 범용 쿼리
+   *
+   * Body: { filter, projection, sort, limit, skip }
+   * - filter 내 _id, customerId 필드는 자동으로 ObjectId 변환
+   * - limit 기본값: 100, 최대: 1000
+   */
+  router.post('/internal/customers/query', async (req, res) => {
+    try {
+      const { filter = {}, projection, sort, limit = 100, skip = 0 } = req.body;
+
+      // 위험한 MongoDB 연산자 차단
+      const dangerousOp = findDangerousOperator(filter);
+      if (dangerousOp) {
+        return res.status(400).json({
+          success: false,
+          error: `허용되지 않는 연산자: ${dangerousOp}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // ObjectId 필드 변환
+      const convertedFilter = convertObjectIdFields(filter);
+
+      // limit 제한 (최대 1000)
+      const safeLimit = Math.min(Math.max(1, limit), 1000);
+      // skip 제한 (음수 방지)
+      const safeSkip = Math.max(0, skip);
+
+      let cursor = db.collection(COLLECTIONS.CUSTOMERS).find(convertedFilter);
+
+      if (projection) {
+        cursor = cursor.project(projection);
+      }
+      if (sort) {
+        cursor = cursor.sort(sort);
+      }
+      if (safeSkip > 0) {
+        cursor = cursor.skip(safeSkip);
+      }
+      cursor = cursor.limit(safeLimit);
+
+      const results = await cursor.toArray();
+
+      // _id를 문자열로 변환
+      const serialized = results.map(doc => ({
+        ...doc,
+        _id: doc._id ? doc._id.toString() : doc._id
+      }));
+
+      res.json({
+        success: true,
+        data: serialized,
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] customers/query 오류:', error.message);
+      backendLogger.error('Internal', 'customers/query 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 34. POST /internal/customers/count — 고객 건수 조회
+  // =========================================================================
+  /**
+   * customers 컬렉션 문서 수 조회
+   *
+   * Body: { filter }
+   */
+  router.post('/internal/customers/count', async (req, res) => {
+    try {
+      const { filter = {} } = req.body;
+
+      // 위험한 MongoDB 연산자 차단
+      const dangerousOp = findDangerousOperator(filter);
+      if (dangerousOp) {
+        return res.status(400).json({
+          success: false,
+          error: `허용되지 않는 연산자: ${dangerousOp}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // ObjectId 필드 변환
+      const convertedFilter = convertObjectIdFields(filter);
+
+      const count = await db.collection(COLLECTIONS.CUSTOMERS).countDocuments(convertedFilter);
+
+      res.json({
+        success: true,
+        data: { count },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] customers/count 오류:', error.message);
+      backendLogger.error('Internal', 'customers/count 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 35. POST /internal/customers/aggregate — 고객 집계 쿼리
+  // =========================================================================
+  /**
+   * customers 컬렉션 aggregate 파이프라인 실행
+   *
+   * Body: { pipeline }
+   * - pipeline 최대 10 스테이지
+   * - $out, $merge 차단 (Write 방지)
+   */
+  router.post('/internal/customers/aggregate', async (req, res) => {
+    try {
+      const { pipeline } = req.body;
+
+      if (!pipeline || !Array.isArray(pipeline)) {
+        return res.status(400).json({
+          success: false,
+          error: 'pipeline은 배열이어야 합니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 스테이지 수 제한 (최대 10)
+      if (pipeline.length > 10) {
+        return res.status(400).json({
+          success: false,
+          error: `pipeline 스테이지가 너무 많습니다 (${pipeline.length}/10).`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // Write 연산자 차단 ($out, $merge)
+      for (const stage of pipeline) {
+        if (stage.$out || stage.$merge) {
+          return res.status(400).json({
+            success: false,
+            error: '쓰기 연산자($out, $merge)는 허용되지 않습니다.',
+            timestamp: utcNowISO()
+          });
+        }
+      }
+
+      // 위험한 MongoDB 연산자 차단
+      const dangerousOp = findDangerousOperator(pipeline);
+      if (dangerousOp) {
+        return res.status(400).json({
+          success: false,
+          error: `허용되지 않는 연산자: ${dangerousOp}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // pipeline 내 $match 스테이지의 ObjectId 필드 변환
+      const convertedPipeline = pipeline.map(stage => {
+        if (stage.$match) {
+          return { ...stage, $match: convertObjectIdFields(stage.$match) };
+        }
+        return stage;
+      });
+
+      const results = await db.collection(COLLECTIONS.CUSTOMERS).aggregate(convertedPipeline).toArray();
+
+      res.json({
+        success: true,
+        data: results,
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] customers/aggregate 오류:', error.message);
+      backendLogger.error('Internal', 'customers/aggregate 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 36. GET /internal/memos/:id — 메모 단건 조회
+  // =========================================================================
+  /**
+   * 고객 메모 단건 조회
+   * @param {string} id - 메모 ObjectId
+   */
+  router.get('/internal/memos/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 메모 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const memo = await db.collection(COLLECTIONS.CUSTOMER_MEMOS).findOne({
+        _id: new ObjectId(id)
+      });
+
+      if (!memo) {
+        return res.status(404).json({
+          success: false,
+          error: '메모를 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // _id, customer_id 직렬화
+      const serialized = {
+        ...memo,
+        _id: memo._id.toString(),
+        customer_id: memo.customer_id ? memo.customer_id.toString() : memo.customer_id
+      };
+
+      res.json({
+        success: true,
+        data: serialized,
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] GET /memos/:id 오류:', error.message);
+      backendLogger.error('Internal', 'GET /memos/:id 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 37. POST /internal/memos/query — 메모 검색
+  // =========================================================================
+  /**
+   * customer_memos 컬렉션 범용 쿼리
+   *
+   * Body: { filter, projection, sort, limit, skip }
+   * - limit 기본값: 100, 최대: 1000
+   */
+  router.post('/internal/memos/query', async (req, res) => {
+    try {
+      const { filter = {}, projection, sort, limit = 100, skip = 0 } = req.body;
+
+      // 위험한 MongoDB 연산자 차단
+      const dangerousOp = findDangerousOperator(filter);
+      if (dangerousOp) {
+        return res.status(400).json({
+          success: false,
+          error: `허용되지 않는 연산자: ${dangerousOp}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // ObjectId 필드 변환
+      const convertedFilter = convertObjectIdFields(filter);
+
+      const safeLimit = Math.min(Math.max(1, limit), 1000);
+      const safeSkip = Math.max(0, skip);
+
+      let cursor = db.collection(COLLECTIONS.CUSTOMER_MEMOS).find(convertedFilter);
+
+      if (projection) {
+        cursor = cursor.project(projection);
+      }
+      if (sort) {
+        cursor = cursor.sort(sort);
+      }
+      if (safeSkip > 0) {
+        cursor = cursor.skip(safeSkip);
+      }
+      cursor = cursor.limit(safeLimit);
+
+      const results = await cursor.toArray();
+
+      // _id, customer_id 직렬화
+      const serialized = results.map(doc => ({
+        ...doc,
+        _id: doc._id ? doc._id.toString() : doc._id,
+        customer_id: doc.customer_id ? doc.customer_id.toString() : doc.customer_id
+      }));
+
+      res.json({
+        success: true,
+        data: serialized,
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] memos/query 오류:', error.message);
+      backendLogger.error('Internal', 'memos/query 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 38. POST /internal/memos/count — 메모 건수 조회
+  // =========================================================================
+  /**
+   * customer_memos 컬렉션 문서 수 조회
+   *
+   * Body: { filter }
+   */
+  router.post('/internal/memos/count', async (req, res) => {
+    try {
+      const { filter = {} } = req.body;
+
+      // 위험한 MongoDB 연산자 차단
+      const dangerousOp = findDangerousOperator(filter);
+      if (dangerousOp) {
+        return res.status(400).json({
+          success: false,
+          error: `허용되지 않는 연산자: ${dangerousOp}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // ObjectId 필드 변환
+      const convertedFilter = convertObjectIdFields(filter);
+
+      const count = await db.collection(COLLECTIONS.CUSTOMER_MEMOS).countDocuments(convertedFilter);
+
+      res.json({
+        success: true,
+        data: { count },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] memos/count 오류:', error.message);
+      backendLogger.error('Internal', 'memos/count 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 39. GET /internal/relationships/:id — 관계 단건 조회
+  // =========================================================================
+  /**
+   * 고객 관계 단건 조회
+   * @param {string} id - 관계 ObjectId
+   * 주의: DELETE /internal/relationships/:id (#17)와 HTTP 메서드가 달라 충돌 없음
+   */
+  router.get('/internal/relationships/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 관계 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
+        _id: new ObjectId(id)
+      });
+
+      if (!relationship) {
+        return res.status(404).json({
+          success: false,
+          error: '관계를 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // _id, relationship_info 내 ObjectId 직렬화
+      const serialized = {
+        ...relationship,
+        _id: relationship._id.toString()
+      };
+      if (serialized.relationship_info) {
+        if (serialized.relationship_info.from_customer_id) {
+          serialized.relationship_info = {
+            ...serialized.relationship_info,
+            from_customer_id: serialized.relationship_info.from_customer_id.toString()
+          };
+        }
+        if (serialized.relationship_info.to_customer_id) {
+          serialized.relationship_info = {
+            ...serialized.relationship_info,
+            to_customer_id: serialized.relationship_info.to_customer_id.toString()
+          };
+        }
+      }
+
+      res.json({
+        success: true,
+        data: serialized,
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] GET /relationships/:id 오류:', error.message);
+      backendLogger.error('Internal', 'GET /relationships/:id 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 40. POST /internal/relationships/query — 관계 검색
+  // =========================================================================
+  /**
+   * customer_relationships 컬렉션 범용 쿼리
+   *
+   * Body: { filter, projection, sort, limit, skip }
+   * - limit 기본값: 100, 최대: 1000
+   */
+  router.post('/internal/relationships/query', async (req, res) => {
+    try {
+      const { filter = {}, projection, sort, limit = 100, skip = 0 } = req.body;
+
+      // 위험한 MongoDB 연산자 차단
+      const dangerousOp = findDangerousOperator(filter);
+      if (dangerousOp) {
+        return res.status(400).json({
+          success: false,
+          error: `허용되지 않는 연산자: ${dangerousOp}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // ObjectId 필드 변환
+      const convertedFilter = convertObjectIdFields(filter);
+
+      const safeLimit = Math.min(Math.max(1, limit), 1000);
+      const safeSkip = Math.max(0, skip);
+
+      let cursor = db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).find(convertedFilter);
+
+      if (projection) {
+        cursor = cursor.project(projection);
+      }
+      if (sort) {
+        cursor = cursor.sort(sort);
+      }
+      if (safeSkip > 0) {
+        cursor = cursor.skip(safeSkip);
+      }
+      cursor = cursor.limit(safeLimit);
+
+      const results = await cursor.toArray();
+
+      // _id, relationship_info 내 ObjectId 직렬화
+      const serialized = results.map(doc => {
+        const s = {
+          ...doc,
+          _id: doc._id ? doc._id.toString() : doc._id
+        };
+        if (s.relationship_info) {
+          if (s.relationship_info.from_customer_id) {
+            s.relationship_info = {
+              ...s.relationship_info,
+              from_customer_id: s.relationship_info.from_customer_id.toString()
+            };
+          }
+          if (s.relationship_info.to_customer_id) {
+            s.relationship_info = {
+              ...s.relationship_info,
+              to_customer_id: s.relationship_info.to_customer_id.toString()
+            };
+          }
+        }
+        return s;
+      });
+
+      res.json({
+        success: true,
+        data: serialized,
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] relationships/query 오류:', error.message);
+      backendLogger.error('Internal', 'relationships/query 오류', error);
       res.status(500).json({
         success: false,
         error: error.message,

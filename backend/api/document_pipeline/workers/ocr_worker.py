@@ -17,7 +17,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from bson import ObjectId
 from config import get_settings
 from services.redis_service import RedisService
-from services.mongo_service import MongoService
 from services.upstage_service import UpstageService, LARGE_PDF_THRESHOLD
 from services.openai_service import OpenAIService
 
@@ -106,9 +105,9 @@ class OCRWorker:
             # 0. 고객명 조회 (summarize_text 프롬프트에 전달하여 이름 환각 방지)
             customer_name = None
             try:
-                collection = MongoService.get_collection("files")
-                file_doc = await collection.find_one(
-                    {"_id": ObjectId(file_id)},
+                from services.internal_api import query_file_one
+                file_doc = await query_file_one(
+                    {"_id": file_id},
                     {"customerId": 1}
                 )
                 if file_doc and file_doc.get("customerId"):
@@ -353,9 +352,9 @@ class OCRWorker:
 
         # Generate displayName (only if not already set)
         try:
-            collection = MongoService.get_collection("files")
-            doc = await collection.find_one(
-                {"_id": ObjectId(file_id)},
+            from services.internal_api import query_file_one
+            doc = await query_file_one(
+                {"_id": file_id},
                 {"displayName": 1, "upload.originalName": 1, "customerId": 1}
             )
             if doc and not doc.get("displayName"):

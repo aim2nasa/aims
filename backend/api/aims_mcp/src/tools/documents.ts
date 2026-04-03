@@ -1,8 +1,8 @@
 import { z, ZodError } from 'zod';
-import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { escapeRegex, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
-import { queryFiles, countFiles } from '../internalApi.js';
+import { queryFiles, countFiles, queryCustomers } from '../internalApi.js';
 
 // 스키마 정의
 export const searchDocumentsSchema = z.object({
@@ -320,22 +320,14 @@ export async function handleGetDocument(args: unknown) {
 export async function handleListCustomerDocuments(args: unknown) {
   try {
     const params = listCustomerDocumentsSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    const objectId = toSafeObjectId(params.customerId);
-    if (!objectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    // 해당 고객이 현재 사용자의 고객인지 확인
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: objectId,
-      'meta.created_by': userId
-    });
+    // Internal API 경유: 소유권 확인
+    const customerResults = await queryCustomers(
+      { _id: params.customerId, 'meta.created_by': userId },
+      { 'personal_info.name': 1 }, null, 1
+    );
+    const customer = customerResults[0] || null;
 
     if (!customer) {
       return {

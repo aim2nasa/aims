@@ -1,7 +1,8 @@
 import { z, ZodError } from 'zod';
-import { getDB, COLLECTIONS, formatZodError } from '../db.js';
+import { formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
+import { aggregateCustomers } from '../internalApi.js';
 
 // 스키마 정의
 export const findBirthdayCustomersSchema = z.object({
@@ -31,13 +32,12 @@ export const birthdayToolDefinitions = [
 export async function handleFindBirthdayCustomers(args: unknown) {
   try {
     const params = findBirthdayCustomersSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
-    // MongoDB aggregation으로 생일 필터링
+    // Internal API 경유: MongoDB aggregation으로 생일 필터링
     // personal_info.birth_date 또는 personal_info.birthdate 필드 사용
     // 생일 정보가 없는 고객은 제외 (null safety)
-    const pipeline: object[] = [
+    const pipeline: Record<string, unknown>[] = [
       {
         $match: {
           'meta.created_by': userId,
@@ -93,9 +93,7 @@ export async function handleFindBirthdayCustomers(args: unknown) {
       }
     ];
 
-    const customers = await db.collection(COLLECTIONS.CUSTOMERS)
-      .aggregate(pipeline)
-      .toArray();
+    const customers = await aggregateCustomers(pipeline);
 
     const monthName = ['', '1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'][params.month];
     const dateDesc = params.day ? `${monthName} ${params.day}일` : monthName;

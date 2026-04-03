@@ -20,7 +20,7 @@ from services.cr_parser import parse_customer_review
 from services.cr_parser_table import parse_customer_review_table
 from services.db_writer import save_customer_review
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, has_report, update_file_parsing_status, replace_customer_reviews
+from internal_api import check_customer_ownership, has_report, update_file_parsing_status, replace_customer_reviews, query_file_one, query_files, get_customer
 from services.db_writer import _serialize_for_json
 
 # aims_api 설정 조회 URL
@@ -87,8 +87,8 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
         dict: {"success": bool, "message": str, "error": str (optional)}
     """
     try:
-        # 1. 문서 조회
-        doc = db["files"].find_one({"_id": ObjectId(file_id)})
+        # 1. 문서 조회 (Internal API 경유)
+        doc = query_file_one({"_id": file_id})
 
         if not doc:
             return {"success": False, "error": f"문서를 찾을 수 없음: {file_id}"}
@@ -131,10 +131,7 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
                             repair_update["displayName"] = f"{contractor}_CRS_{safe_product}_{issue}.pdf"
                     # customers.customer_reviews 상품명도 보정 (Internal API 경유: read-modify-write)
                     try:
-                        customer_doc = db["customers"].find_one(
-                            {"_id": ObjectId(customer_id)},
-                            {"customer_reviews": 1}
-                        )
+                        customer_doc = get_customer(customer_id)
                         if customer_doc and customer_doc.get("customer_reviews"):
                             reviews = customer_doc["customer_reviews"]
                             file_oid = ObjectId(file_id)
@@ -313,7 +310,7 @@ async def trigger_cr_parsing(
             # 특정 파일만 파싱
             try:
                 file_obj_id = ObjectId(request.file_id)
-                file_doc = db.files.find_one({"_id": file_obj_id})
+                file_doc = query_file_one({"_id": request.file_id})
                 if file_doc:
                     # 이미 완료된 CR은 건너뜀
                     if file_doc.get("cr_parsing_status") == "completed":
@@ -334,12 +331,12 @@ async def trigger_cr_parsing(
                 pass
 
         elif request.customer_id:
-            # 해당 고객의 pending CR 문서들 파싱
-            pending_docs = list(db.files.find({
-                "customerId": ObjectId(request.customer_id),
+            # 해당 고객의 pending CR 문서들 파싱 (Internal API 경유)
+            pending_docs = query_files({
+                "customerId": request.customer_id,
                 "is_customer_review": True,
                 "cr_parsing_status": {"$in": ["pending", None]}
-            }).limit(20))
+            }, limit=20)
 
             for doc in pending_docs:
                 # 상태를 processing으로 업데이트
@@ -408,8 +405,8 @@ async def retry_cr_parsing(
                 detail="Invalid file_id format"
             )
 
-        # 파일 조회
-        file_doc = db["files"].find_one({"_id": file_obj_id})
+        # 파일 조회 (Internal API 경유)
+        file_doc = query_file_one({"_id": str(file_obj_id)})
 
         if not file_doc:
             raise HTTPException(

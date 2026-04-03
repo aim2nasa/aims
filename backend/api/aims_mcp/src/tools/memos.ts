@@ -1,9 +1,8 @@
 import { z, ZodError } from 'zod';
-import { ObjectId } from 'mongodb';
-import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { escapeRegex, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
-import { createMemo, updateMemo, deleteMemo, syncCustomerMemo } from '../internalApi.js';
+import { createMemo, updateMemo, deleteMemo, syncCustomerMemo, queryCustomers, queryMemos, countMemos, getMemo } from '../internalApi.js';
 
 
 // ── 스키마 정의 ──
@@ -120,15 +119,12 @@ function formatDateTime(date: Date): string {
  */
 async function syncCustomerMemoField(customerId: string, userId: string): Promise<boolean> {
   try {
-    const db = getDB();
-    const customerObjectId = toSafeObjectId(customerId);
-    if (!customerObjectId) return false;
-
-    // customer_memos에서 해당 고객의 모든 메모 조회 (시간순) — Read는 유지
-    const memos = await db.collection('customer_memos')
-      .find({ customer_id: customerObjectId })
-      .sort({ created_at: 1 })
-      .toArray();
+    // Internal API 경유: customer_memos에서 해당 고객의 모든 메모 조회 (시간순)
+    const memos = await queryMemos(
+      { customer_id: customerId },
+      null,
+      { created_at: 1 }
+    );
 
     // 타임스탬프 형식으로 변환
     const memoText = memos.map(m =>
@@ -145,17 +141,14 @@ async function syncCustomerMemoField(customerId: string, userId: string): Promis
 }
 
 /**
- * 고객 존재 및 소유권 확인
+ * 고객 존재 및 소유권 확인 — Internal API 경유
  */
 async function verifyCustomerOwnership(customerId: string, userId: string) {
-  const db = getDB();
-  const customerObjectId = toSafeObjectId(customerId);
-  if (!customerObjectId) return null;
-
-  return db.collection(COLLECTIONS.CUSTOMERS).findOne({
-    _id: customerObjectId,
-    'meta.created_by': userId
-  });
+  const results = await queryCustomers(
+    { _id: customerId, 'meta.created_by': userId },
+    null, null, 1
+  );
+  return results[0] || null;
 }
 
 // ── 핸들러 ──
@@ -228,7 +221,6 @@ export async function handleAddMemo(args: unknown) {
 export async function handleListMemos(args: unknown) {
   try {
     const params = listMemoSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
     const customer = await verifyCustomerOwnership(params.customerId, userId);
@@ -239,26 +231,25 @@ export async function handleListMemos(args: unknown) {
       };
     }
 
-    const customerObjectId = new ObjectId(params.customerId);
     const limit = params.limit ?? 10;
 
-    // 최신순으로 limit건 조회
-    const memos = await db.collection('customer_memos')
-      .find({ customer_id: customerObjectId })
-      .sort({ created_at: -1 })
-      .limit(limit)
-      .toArray();
+    // Internal API 경유: 최신순으로 limit건 조회
+    const memos = await queryMemos(
+      { customer_id: params.customerId },
+      null,
+      { created_at: -1 },
+      limit
+    );
 
-    // 전체 메모 수
-    const total = await db.collection('customer_memos')
-      .countDocuments({ customer_id: customerObjectId });
+    // Internal API 경유: 전체 메모 수
+    const total = await countMemos({ customer_id: params.customerId });
 
     // 구조화된 응답
     const formattedMemos = memos.map(m => ({
-      id: m._id.toHexString(),
+      id: (m._id?.toString?.() || m._id) as string,
       content: m.content,
       created_at: formatDateTime(new Date(m.created_at)),
-      updated_at: m.updated_at && m.updated_at.getTime() !== m.created_at.getTime()
+      updated_at: m.updated_at && new Date(m.updated_at).getTime() !== new Date(m.created_at).getTime()
         ? formatDateTime(new Date(m.updated_at))
         : null,
     }));
@@ -305,13 +296,8 @@ export async function handleDeleteMemo(args: unknown) {
       };
     }
 
-    // 삭제 전 메모 내용 조회 (응답용) — Read 유지
-    const db = getDB();
-    const memoObjectId = toSafeObjectId(params.memoId);
-    const memo = memoObjectId ? await db.collection('customer_memos').findOne({
-      _id: memoObjectId,
-      customer_id: new ObjectId(params.customerId),
-    }) : null;
+    // 삭제 전 메모 내용 조회 (응답용) — Internal API 경유
+    const memo = await getMemo(params.memoId);
 
     // Internal API로 메모 삭제 (존재 확인 포함 — 404 반환)
     const result = await deleteMemo(params.memoId, params.customerId, userId);
@@ -369,13 +355,8 @@ export async function handleUpdateMemo(args: unknown) {
       };
     }
 
-    // 수정 전 메모 내용 조회 (응답용 previousContent) — Read 유지
-    const db = getDB();
-    const memoObjectId = toSafeObjectId(params.memoId);
-    const memo = memoObjectId ? await db.collection('customer_memos').findOne({
-      _id: memoObjectId,
-      customer_id: new ObjectId(params.customerId),
-    }) : null;
+    // 수정 전 메모 내용 조회 (응답용 previousContent) — Internal API 경유
+    const memo = await getMemo(params.memoId);
 
     // Internal API로 메모 수정 (존재 확인 + 소유권 확인 포함)
     const result = await updateMemo(params.memoId, {
@@ -428,17 +409,14 @@ export async function handleUpdateMemo(args: unknown) {
 export async function handleSearchMemos(args: unknown) {
   try {
     const params = searchMemoSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
     const limit = params.limit ?? 20;
 
-    // Step 1: 현재 사용자의 고객 ID 목록 조회
-    const myCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
-      .find(
-        { 'meta.created_by': userId },
-        { projection: { _id: 1, 'personal_info.name': 1 } }
-      )
-      .toArray();
+    // Step 1: 현재 사용자의 고객 ID 목록 조회 — Internal API 경유
+    const myCustomers = await queryCustomers(
+      { 'meta.created_by': userId },
+      { _id: 1, 'personal_info.name': 1 }
+    );
 
     if (myCustomers.length === 0) {
       return {
@@ -453,26 +431,27 @@ export async function handleSearchMemos(args: unknown) {
       };
     }
 
-    const customerIds = myCustomers.map(c => c._id);
+    const customerIds = myCustomers.map((c: any) => c._id?.toString()).filter(Boolean);
     const customerNameMap = new Map(
-      myCustomers.map(c => [c._id.toHexString(), c.personal_info?.name || '(이름 없음)'])
+      myCustomers.map((c: any) => [c._id?.toString(), c.personal_info?.name || '(이름 없음)'])
     );
 
-    // Step 2: 해당 고객 ID 목록 + 키워드 $regex 검색
-    const escapedQuery = params.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const memos = await db.collection('customer_memos')
-      .find({
+    // Step 2: 해당 고객 ID 목록 + 키워드 $regex 검색 — Internal API 경유
+    const escapedQuery = escapeRegex(params.query);
+    const memos = await queryMemos(
+      {
         customer_id: { $in: customerIds },
         content: { $regex: escapedQuery, $options: 'i' }
-      })
-      .sort({ created_at: -1 })
-      .limit(limit)
-      .toArray();
+      },
+      null,
+      { created_at: -1 },
+      limit
+    );
 
-    const results = memos.map(m => ({
-      memoId: m._id.toHexString(),
-      customerId: m.customer_id.toHexString(),
-      customerName: customerNameMap.get(m.customer_id.toHexString()) || '(이름 없음)',
+    const results = memos.map((m: any) => ({
+      memoId: (m._id?.toString?.() || m._id) as string,
+      customerId: (m.customer_id?.toString?.() || m.customer_id) as string,
+      customerName: customerNameMap.get(m.customer_id?.toString?.() || m.customer_id) || '(이름 없음)',
       content: m.content,
       created_at: formatDateTime(new Date(m.created_at)),
     }));

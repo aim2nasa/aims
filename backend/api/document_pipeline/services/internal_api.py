@@ -166,6 +166,42 @@ async def pull_customer_document(customer_id: str, document_id: str) -> dict:
 
 
 # =========================================================================
+# Phase 6: files Read 전환 함수 — find_one / find 대체
+# =========================================================================
+
+async def query_files(filter: dict, projection: dict = None, sort: dict = None, limit: int = 100) -> list:
+    """POST /internal/files/query — files 범용 조회. 반환: 문서 리스트 (실패 시 [])"""
+    settings = get_settings()
+    try:
+        body = {"filter": _serialize_for_api(filter)}
+        if projection:
+            body["projection"] = projection
+        if sort:
+            body["sort"] = sort
+        body["limit"] = limit
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                f"{settings.AIMS_API_URL}/api/internal/files/query",
+                json=body,
+                headers={"x-api-key": settings.INTERNAL_API_KEY, "Content-Type": "application/json"}
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("success"):
+                    return data.get("data", [])
+            logger.warning(f"[InternalAPI] files/query 실패: {resp.status_code}")
+    except Exception as e:
+        logger.warning(f"[InternalAPI] files/query 예외: {e}")
+    return []
+
+
+async def query_file_one(filter: dict, projection: dict = None) -> dict | None:
+    """files 단건 조회 (find_one 대체)."""
+    results = await query_files(filter, projection, limit=1)
+    return results[0] if results else None
+
+
+# =========================================================================
 # Phase 1: Read-only 조회 함수 (기존)
 # =========================================================================
 
