@@ -226,7 +226,7 @@ MongoClient.connect(MONGO_URI)
 
     // EventBus 초기화 (Redis Pub/Sub → SSE 브릿지)
     try {
-      eventBus.initialize(db);
+      eventBus.initialize(db, { qdrantClient });
     } catch (err) {
       console.error('[Server] EventBus 초기화 실패 (서버는 계속 실행):', err.message);
     }

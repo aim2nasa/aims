@@ -19,6 +19,7 @@ CHANNELS = {
     "AR_STATUS": "aims:ar:status",
     "CR_STATUS": "aims:cr:status",
     "DOC_LIST": "aims:doc:list",
+    "DOC_LINK": "aims:doc:link",
 }
 
 
