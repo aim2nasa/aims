@@ -13,7 +13,6 @@ const { calculateOCRCost } = require('../lib/ocrPricing');
 const ocrUsageLogService = require('../lib/ocrUsageLogService');
 const backendLogger = require('../lib/backendLogger');
 const { getUserStorageInfo } = require('../lib/storageQuotaService');
-const { checkCreditForDocumentProcessing } = require('../lib/creditService');
 const { getLastResetTime } = require('../lib/usageResetService');
 
 // Redis 클라이언트 (host network 모드이므로 localhost 사용)
@@ -34,7 +33,7 @@ const redis = new Redis({
  * @param {Function} authenticateJWT - JWT 인증 미들웨어
  * @param {Function} requireRole - 역할 검증 미들웨어
  */
-module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
+module.exports = function(db, analyticsDb, authenticateJWT, requireRole, creditPolicy) {
 
   // 초기화 시 인덱스 생성 (unique → non-unique 마이그레이션 포함)
   ocrUsageLogService.ensureIndexes(analyticsDb).catch(err => {
@@ -1305,7 +1304,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       // 🔴 통합 크레딧 시스템으로 체크 (OCR 페이지 = estimated_pages)
       // checkCreditForDocumentProcessing()는 OCR + 임베딩 크레딧을 함께 계산
       // OCR만 처리하는 경우에도 동일한 함수 사용 (일관성 유지)
-      const creditCheck = await checkCreditForDocumentProcessing(db, analyticsDb, owner_id, page_count);
+      const creditCheck = await creditPolicy.checkForDocumentProcessing(owner_id, page_count);
 
       // 응답 형식 변환 (하위 호환성 유지)
       // 기존: { current_usage, quota, remaining } (페이지 기반)

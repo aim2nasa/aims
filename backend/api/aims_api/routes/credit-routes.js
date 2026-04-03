@@ -11,10 +11,8 @@
 const express = require('express');
 const { COLLECTIONS } = require('@aims/shared-schema');
 
-module.exports = function(db, analyticsDb) {
+module.exports = function(db, creditPolicy) {
   const router = express.Router();
-
-  const { checkCreditForDocumentProcessing } = require('../lib/creditService');
 
   // 내부 API 키 검증
   const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
@@ -46,9 +44,7 @@ module.exports = function(db, analyticsDb) {
         });
       }
 
-      const creditCheck = await checkCreditForDocumentProcessing(
-        db,
-        analyticsDb,
+      const creditCheck = await creditPolicy.checkForDocumentProcessing(
         user_id,
         estimated_pages
       );

@@ -17,7 +17,6 @@ const {
   updateTierDefinition,
   calculateOcrCycle
 } = require('../lib/storageQuotaService');
-const { getUserCreditInfo, getBonusCreditBalance, processCreditPendingDocuments, settleBonusCredits, getCycleSettledAmount } = require('../lib/creditService');
 const backendLogger = require('../lib/backendLogger');
 
 /**
@@ -35,8 +34,9 @@ function formatCreditQuota(quota) {
  * @param {Function} authenticateJWT - JWT 인증 미들웨어
  * @param {Function} requireRole - 역할 검증 미들웨어
  * @param {Function} notifyUserAccountSubscribers - SSE 사용자 계정 알림 함수
+ * @param {import('../lib/creditPolicy').DefaultCreditPolicy|import('../lib/creditPolicy').NoCreditPolicy} creditPolicy - 크레딧 정책
  */
-module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyUserAccountSubscribers) {
+module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyUserAccountSubscribers, creditPolicy) {
 
   /**
    * GET /api/users/me/storage
@@ -66,9 +66,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
       const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
 
       // 크레딧 정보 조회 (일할 계산 정보 전달)
-      const creditInfo = await getUserCreditInfo(
-        db,
-        analyticsDb,
+      const creditInfo = await creditPolicy.getUserInfo(
         userId,
         storageInfo.tier,
         creditQuota,
@@ -83,13 +81,13 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
 
       // 추가 크레딧 (Bonus Credits) 사후 정산 + 조회
       if (!storageInfo.is_unlimited) {
-        await settleBonusCredits(db, analyticsDb, userId);
+        await creditPolicy.settleBonus(userId);
       }
-      const bonusBalance = await getBonusCreditBalance(db, userId);
+      const bonusBalance = await creditPolicy.getBonusBalance(userId);
       const monthlyRemaining = Math.max(0, creditInfo.credits_remaining);
       // 정산 후 미정산분 반영 (잔액 부족 시)
       const monthlyOverage = Math.max(0, creditInfo.credits_used - creditInfo.credit_quota);
-      const alreadySettled = storageInfo.is_unlimited ? 0 : await getCycleSettledAmount(db, userId, cycleStart, cycleEnd);
+      const alreadySettled = storageInfo.is_unlimited ? 0 : await creditPolicy.getCycleSettled(userId, cycleStart, cycleEnd);
       const unsettledOverage = Math.max(0, monthlyOverage - alreadySettled);
       const effectiveBonusBalance = Math.max(0, bonusBalance - unsettledOverage);
       const totalAvailable = storageInfo.is_unlimited ? -1 : (monthlyRemaining + effectiveBonusBalance);
@@ -151,9 +149,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
       const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
 
       // 크레딧 정보 조회 (일할 계산 정보 전달)
-      const creditInfo = await getUserCreditInfo(
-        db,
-        analyticsDb,
+      const creditInfo = await creditPolicy.getUserInfo(
         id,
         storageInfo.tier,
         creditQuota,
@@ -221,7 +217,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
       // 재처리 실패는 tier 변경 성공에 영향을 주지 않음 (grantBonusCredits 설계 원칙 준수)
       let creditPendingResult = { processed: 0, remaining: 0 };
       try {
-        creditPendingResult = await processCreditPendingDocuments(db, id);
+        creditPendingResult = await creditPolicy.processPendingDocuments(id);
         if (creditPendingResult.processed > 0) {
           console.log(`[Storage] 티어 변경(${tier}) → credit_pending ${creditPendingResult.processed}건 재처리, ${creditPendingResult.remaining}건 잔여`);
         }
@@ -383,7 +379,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
           for (const user of affectedUsers) {
             const userId = user._id.toString();
             try {
-              const result = await processCreditPendingDocuments(db, userId);
+              const result = await creditPolicy.processPendingDocuments(userId);
               totalReprocessed += result.processed;
               totalRemaining += result.remaining;
             } catch (userErr) {

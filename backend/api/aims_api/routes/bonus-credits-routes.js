@@ -10,18 +10,6 @@ const router = express.Router();
 const { ObjectId } = require('mongodb');
 const { escapeRegex } = require('../lib/helpers');
 
-// 크레딧 서비스
-const {
-  getBonusCreditBalance,
-  getBonusCreditInfo,
-  grantBonusCredits,
-  checkCreditWithBonus,
-  getCreditTransactions,
-  getCreditPackages,
-  getCreditOverview,
-  getCycleCreditsUsed
-} = require('../lib/creditService');
-
 const { getUserStorageInfo, getTierDefinitions } = require('../lib/storageQuotaService');
 
 /**
@@ -30,8 +18,9 @@ const { getUserStorageInfo, getTierDefinitions } = require('../lib/storageQuotaS
  * @param {Db} analyticsDb - MongoDB aims_analytics DB 인스턴스
  * @param {Function} authenticateJWT - JWT 인증 미들웨어
  * @param {Function} requireRole - 역할 검증 미들웨어
+ * @param {import('../lib/creditPolicy').DefaultCreditPolicy|import('../lib/creditPolicy').NoCreditPolicy} creditPolicy - 크레딧 정책
  */
-module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
+module.exports = function(db, analyticsDb, authenticateJWT, requireRole, creditPolicy) {
 
   // ============================================================
   // 사용자 API
@@ -44,7 +33,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
   router.get('/users/me/bonus-credits', authenticateJWT, async (req, res) => {
     try {
       const userId = req.user.id;
-      const bonusInfo = await getBonusCreditInfo(db, userId);
+      const bonusInfo = await creditPolicy.getBonusInfo(userId);
 
       res.json({
         success: true,
@@ -70,7 +59,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         filter.type = type;
       }
 
-      const transactions = await getCreditTransactions(db, filter, {
+      const transactions = await creditPolicy.getTransactions(filter, {
         limit: parseInt(limit),
         skip: parseInt(skip)
       });
@@ -101,7 +90,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    */
   router.get('/credit-packages', async (req, res) => {
     try {
-      const packages = await getCreditPackages(db, true);
+      const packages = await creditPolicy.getPackages(true);
 
       res.json({
         success: true,
@@ -123,7 +112,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    */
   router.get('/admin/credits/overview', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const overview = await getCreditOverview(db);
+      const overview = await creditPolicy.getOverview();
 
       res.json({
         success: true,
@@ -144,10 +133,10 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       const { id } = req.params;
 
       // 추가 크레딧 정보
-      const bonusInfo = await getBonusCreditInfo(db, id);
+      const bonusInfo = await creditPolicy.getBonusInfo(id);
 
       // 통합 크레딧 체크 (월정액 + 추가)
-      const creditCheck = await checkCreditWithBonus(db, analyticsDb, id, 0);
+      const creditCheck = await creditPolicy.checkWithBonus(id, 0);
 
       // 사용자 정보
       const user = await db.collection('users').findOne(
@@ -212,8 +201,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       }
 
       // 크레딧 부여
-      const result = await grantBonusCredits(
-        db,
+      const result = await creditPolicy.grantBonus(
         id,
         parseInt(amount),
         adminId,
@@ -275,7 +263,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         }
       }
 
-      const transactions = await getCreditTransactions(db, filter, {
+      const transactions = await creditPolicy.getTransactions(filter, {
         limit: parseInt(limit),
         skip: parseInt(skip)
       });
@@ -375,7 +363,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
           // 사이클 크레딧 사용량
           const cycleStart = new Date(storageInfo.ocr_cycle_start + 'T00:00:00+09:00');
           const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
-          const usage = await getCycleCreditsUsed(db, analyticsDb, user._id.toString(), cycleStart, cycleEnd);
+          const usage = await creditPolicy.getCycleUsed(user._id.toString(), cycleStart, cycleEnd);
 
           const monthlyRemaining = Math.max(0, effectiveQuota - usage.total_credits);
           const bonusBalance = user.bonus_credits?.balance ?? 0;
@@ -439,7 +427,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    */
   router.get('/admin/credit-packages', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const packages = await getCreditPackages(db, false);
+      const packages = await creditPolicy.getPackages(false);
 
       res.json({
         success: true,

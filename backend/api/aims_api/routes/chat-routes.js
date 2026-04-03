@@ -8,7 +8,7 @@
 const express = require('express');
 const backendLogger = require('../lib/backendLogger');
 
-module.exports = function(db, analyticsDb, authenticateJWT, upload) {
+module.exports = function(db, analyticsDb, authenticateJWT, upload, creditPolicy) {
   const router = express.Router();
 
   // Services
@@ -73,12 +73,11 @@ router.post('/chat', authenticateJWT, async (req, res) => {
 
   try {
     // 크레딧 한도 체크 (AI 호출 전) - 월정액 + 추가 크레딧 합산
-    const { checkCreditWithBonus, checkCreditBeforeAI } = require('../lib/creditService');
-    const creditCheck = await checkCreditWithBonus(db, analyticsDb, userId, 5);
+    const creditCheck = await creditPolicy.checkWithBonus(userId, 5);
 
     if (!creditCheck.allowed) {
       // 상세 정보를 위해 기본 체크도 수행
-      const basicCheck = await checkCreditBeforeAI(db, analyticsDb, userId, 5);
+      const basicCheck = await creditPolicy.checkBeforeAI(userId, 5);
       console.log(`[Chat] 크레딧 부족 - userId: ${userId}, monthly: ${creditCheck.monthly_remaining}, bonus: ${creditCheck.bonus_balance}, total: ${creditCheck.total_available}`);
 
       // 크레딧 부족 SSE 이벤트 전송
