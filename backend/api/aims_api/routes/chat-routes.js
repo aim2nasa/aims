@@ -7,7 +7,6 @@
 
 const express = require('express');
 const backendLogger = require('../lib/backendLogger');
-const { COLLECTIONS } = require('@aims/shared-schema');
 
 module.exports = function(db, analyticsDb, authenticateJWT, upload) {
   const router = express.Router();
@@ -15,7 +14,6 @@ module.exports = function(db, analyticsDb, authenticateJWT, upload) {
   // Services
   const chatHistoryService = require('../lib/chatHistoryService');
   const { transcribeAudio } = require('../lib/transcribeService');
-  const { checkCreditForDocumentProcessing } = require('../lib/creditService');
 
 // ==================== AI 채팅 API ====================
 
@@ -338,102 +336,6 @@ router.post('/transcribe', authenticateJWT, upload.single('file'), async (req, r
       success: false,
       error: error.message || '음성 변환에 실패했습니다.'
     });
-  }
-});
-
-// ============================================================
-// 내부 API (document_pipeline에서 호출)
-// ============================================================
-
-/**
- * 문서 처리 전 크레딧 체크 (내부 API)
- * @route POST /api/internal/check-credit
- * @description document_pipeline에서 호출하여 크레딧 체크
- * @see docs/EMBEDDING_CREDIT_POLICY.md
- */
-router.post('/internal/check-credit', async (req, res) => {
-  // API Key 인증 (내부 호출용)
-  const apiKey = req.headers['x-api-key'];
-  const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
-
-  if (apiKey !== INTERNAL_API_KEY) {
-    console.warn('[CreditCheck] 잘못된 API Key로 내부 API 호출 시도');
-    return res.status(401).json({ success: false, error: '인증 실패' });
-  }
-
-  try {
-    const { user_id, estimated_pages = 1 } = req.body;
-
-    if (!user_id) {
-      return res.status(400).json({
-        success: false,
-        error: 'user_id가 필요합니다.'
-      });
-    }
-
-    // 크레딧 체크
-    const creditCheck = await checkCreditForDocumentProcessing(
-      db,
-      analyticsDb,
-      user_id,
-      estimated_pages
-    );
-
-    console.log(`[CreditCheck] userId=${user_id}, pages=${estimated_pages}, allowed=${creditCheck.allowed}, reason=${creditCheck.reason}`);
-
-    res.json({
-      success: true,
-      ...creditCheck
-    });
-  } catch (error) {
-    console.error('[CreditCheck] 오류:', error);
-    // fail-open: 에러 시에도 허용 (크레딧 체크 실패로 업로드 막지 않음)
-    res.json({
-      success: true,
-      allowed: true,
-      reason: 'error_fallback',
-      error: error.message
-    });
-  }
-});
-
-/**
- * credit_pending 문서 목록 조회 (내부 API)
- * @route GET /api/internal/credit-pending-documents
- * @description 크레딧 부족으로 보류된 문서 목록 조회
- */
-router.get('/internal/credit-pending-documents', async (req, res) => {
-  const apiKey = req.headers['x-api-key'];
-  const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
-
-  if (apiKey !== INTERNAL_API_KEY) {
-    return res.status(401).json({ success: false, error: '인증 실패' });
-  }
-
-  try {
-    const { user_id } = req.query;
-
-    const filter = { overallStatus: 'credit_pending' };
-    if (user_id) {
-      filter.ownerId = user_id;
-    }
-
-    const pendingDocs = await db.collection(COLLECTIONS.FILES).find(filter).toArray();
-
-    res.json({
-      success: true,
-      count: pendingDocs.length,
-      documents: pendingDocs.map(doc => ({
-        _id: doc._id.toString(),
-        ownerId: doc.ownerId,
-        originalName: doc.upload?.originalName,
-        createdAt: doc.createdAt,
-        credit_pending_since: doc.credit_pending_since
-      }))
-    });
-  } catch (error) {
-    console.error('[CreditPending] 조회 오류:', error);
-    res.status(500).json({ success: false, error: error.message });
   }
 });
 

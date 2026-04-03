@@ -222,3 +222,22 @@ async def get_customer_names_batch(customer_ids: list[str]) -> dict:
     except Exception as e:
         logger.warning(f"[InternalAPI] 배치 고객명 조회 실패: {e}")
     return {"names": {}, "types": {}}
+
+
+async def resolve_customer_by_name(customer_name: str, user_id: str) -> str | None:
+    """고객명으로 정확 매칭 검색. 일치하는 고객의 ID를 반환, 없으면 None."""
+    settings = get_settings()
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                f"{settings.AIMS_API_URL}/api/internal/customers/resolve-by-name",
+                json={"name": customer_name, "userId": user_id, "mode": "exact"},
+                headers={"x-api-key": settings.INTERNAL_API_KEY, "Content-Type": "application/json"}
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("success") and data.get("data"):
+                    return data["data"].get("customerId")
+    except Exception as e:
+        logger.warning(f"[InternalAPI] 고객명 검색 실패 ({customer_name}): {e}")
+    return None

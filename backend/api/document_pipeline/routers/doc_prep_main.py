@@ -746,34 +746,10 @@ async def _detect_and_process_annual_report(
         # 단, customerId(소유권)는 업로드한 고객에 그대로 유지하고 relatedCustomerId로만 연결.
         related_customer_id = None
         if customer_name and user_id:
-            try:
-                async with httpx.AsyncClient() as client:
-                    search_response = await client.get(
-                        f"{settings.AIMS_API_URL}/api/customers",
-                        params={"search": customer_name, "userId": user_id},
-                        headers={"X-API-Key": settings.WEBHOOK_API_KEY},
-                        timeout=10.0
-                    )
-
-                    if search_response.status_code == 200:
-                        search_result = search_response.json()
-                        customers = search_result.get("data", {}).get("customers", [])
-
-                        # 정확히 일치하는 고객 찾기
-                        exact_match = None
-                        for c in customers:
-                            c_name = c.get("personal_info", {}).get("name", "")
-                            if c_name == customer_name:
-                                exact_match = c
-                                break
-
-                        if exact_match:
-                            related_customer_id = exact_match.get("_id")
-                            logger.info(f"✅ AR 관련 고객 발견: {customer_name} (ID: {related_customer_id})")
-                    else:
-                        logger.warning(f"AR 관련 고객 검색 실패: {search_response.text}")
-            except Exception as e:
-                logger.warning(f"AR 관련 고객 검색 중 오류: {e}")
+            from services.internal_api import resolve_customer_by_name
+            related_customer_id = await resolve_customer_by_name(customer_name, user_id)
+            if related_customer_id:
+                logger.info(f"✅ AR 관련 고객 발견: {customer_name} (ID: {related_customer_id})")
 
         # 5. displayName 생성 (AR)
         # 형식: {고객명}_AR_{YYYY-MM-DD}.pdf
@@ -961,34 +937,10 @@ async def _detect_and_process_customer_review(
         # 4. 관련 고객 검색 (relatedCustomerId 설정용 — customerId는 변경하지 않음)
         related_customer_id = None
         if customer_name and user_id:
-            try:
-                async with httpx.AsyncClient() as client:
-                    search_response = await client.get(
-                        f"{settings.AIMS_API_URL}/api/customers",
-                        params={"search": customer_name, "userId": user_id},
-                        headers={"X-API-Key": settings.WEBHOOK_API_KEY},
-                        timeout=10.0
-                    )
-
-                    if search_response.status_code == 200:
-                        search_result = search_response.json()
-                        customers = search_result.get("data", {}).get("customers", [])
-
-                        # 정확히 일치하는 고객 찾기
-                        exact_match = None
-                        for c in customers:
-                            c_name = c.get("personal_info", {}).get("name", "")
-                            if c_name == customer_name:
-                                exact_match = c
-                                break
-
-                        if exact_match:
-                            related_customer_id = exact_match.get("_id")
-                            logger.info(f"✅ CRS 관련 고객 발견: {customer_name} (ID: {related_customer_id})")
-                    else:
-                        logger.warning(f"CRS 관련 고객 검색 실패: {search_response.text}")
-            except Exception as e:
-                logger.warning(f"CRS 관련 고객 검색 중 오류: {e}")
+            from services.internal_api import resolve_customer_by_name
+            related_customer_id = await resolve_customer_by_name(customer_name, user_id)
+            if related_customer_id:
+                logger.info(f"✅ CRS 관련 고객 발견: {customer_name} (ID: {related_customer_id})")
 
         # 5. DB 업데이트
         update_fields = {

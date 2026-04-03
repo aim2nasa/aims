@@ -282,37 +282,16 @@ class InsuranceDomainAdapter(DomainAdapter):
             return {"matched": False, "reason": "no_customer_name_or_owner"}
 
         try:
-            from config import get_settings
-            settings = get_settings()
-
-            async with httpx.AsyncClient() as client:
-                search_response = await client.get(
-                    f"{settings.AIMS_API_URL}/api/customers",
-                    params={"search": customer_name, "userId": owner_id},
-                    headers={"X-API-Key": settings.WEBHOOK_API_KEY},
-                    timeout=10.0
-                )
-
-                if search_response.status_code == 200:
-                    search_result = search_response.json()
-                    customers = search_result.get("data", {}).get("customers", [])
-
-                    # 정확히 일치하는 고객 찾기
-                    for c in customers:
-                        c_name = c.get("personal_info", {}).get("name", "")
-                        if c_name == customer_name:
-                            customer_id = c.get("_id")
-                            logger.info(f"엔티티 연결 성공: {customer_name} (ID: {customer_id})")
-                            return {
-                                "matched": True,
-                                "customer_id": customer_id,
-                                "customer_name": customer_name,
-                            }
-
-                    return {"matched": False, "reason": "no_exact_match"}
-                else:
-                    logger.warning(f"고객 검색 실패: {search_response.text}")
-                    return {"matched": False, "reason": f"api_error_{search_response.status_code}"}
+            from services.internal_api import resolve_customer_by_name
+            customer_id = await resolve_customer_by_name(customer_name, owner_id)
+            if customer_id:
+                logger.info(f"엔티티 연결 성공: {customer_name} (ID: {customer_id})")
+                return {
+                    "matched": True,
+                    "customer_id": customer_id,
+                    "customer_name": customer_name,
+                }
+            return {"matched": False, "reason": "no_exact_match"}
         except Exception as e:
             logger.warning(f"고객 검색 중 오류: {e}")
             return {"matched": False, "reason": f"exception: {e}"}
