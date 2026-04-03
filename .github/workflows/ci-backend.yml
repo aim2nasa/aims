@@ -30,6 +30,12 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Build shared-schema
+        run: |
+          cd backend/shared/schema
+          npm ci
+          npm run build
+
       - name: Install backend dependencies
         run: |
           cd backend/api/aims_api

@@ -187,10 +187,8 @@ export function useDocumentDownload(options?: UseDocumentDownloadOptions): UseDo
       a.style.display = 'none'
       document.body.appendChild(a)
       a.click()
-      // 정리
-      setTimeout(() => {
-        document.body.removeChild(a)
-      }, 100)
+      // 정리 (동기적으로 즉시 제거 — setTimeout 사용 시 테스트 환경에서 document 해제 후 실행됨)
+      document.body.removeChild(a)
 
       return // 성공
     } catch (err) {
