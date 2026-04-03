@@ -13,6 +13,26 @@ logger = logging.getLogger(__name__)
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
 INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
 
+# Internal API 응답 필수 필드 (@aims/shared-schema 참조)
+# @see backend/shared/schema/internal-api.ts INTERNAL_API_REQUIRED_FIELDS
+_REQUIRED_FIELDS = {
+    "files/update": ["modifiedCount"],
+    "customers/name": ["name"],
+    "customers/ownership": ["exists"],
+}
+
+
+def _validate_response(data: dict, endpoint: str) -> bool:
+    """Internal API 응답의 필수 필드 존재 여부 검증. 누락 시 경고 로그."""
+    required = _REQUIRED_FIELDS.get(endpoint)
+    if not required or not data:
+        return True
+    missing = [f for f in required if f not in data]
+    if missing:
+        logger.warning(f"[InternalAPI] 응답 필수 필드 누락 ({endpoint}): {missing}")
+        return False
+    return True
+
 
 def _headers():
     """Internal API 요청 헤더"""
@@ -33,6 +53,7 @@ def check_customer_ownership(customer_id: str, user_id: str) -> bool:
         )
         if resp.status_code == 200:
             data = resp.json()
+            _validate_response(data.get("data", {}), "customers/ownership")
             return data.get("success") and data.get("data", {}).get("exists", False)
     except Exception as e:
         logger.warning(f"[InternalAPI] 소유권 확인 실패 ({customer_id}): {e}")
@@ -50,6 +71,7 @@ def get_customer_name(customer_id: str) -> str | None:
         if resp.status_code == 200:
             data = resp.json()
             if data.get("success") and data.get("data"):
+                _validate_response(data["data"], "customers/name")
                 return data["data"].get("name")
     except Exception as e:
         logger.warning(f"[InternalAPI] 고객명 조회 실패 ({customer_id}): {e}")
@@ -116,7 +138,9 @@ def update_file_parsing_status(file_id: str, parse_type: str, status: str | None
             timeout=10
         )
         if resp.status_code == 200:
-            return resp.json()
+            result = resp.json()
+            _validate_response(result.get("data", {}), "files/update")
+            return result
         else:
             logger.warning(f"[InternalAPI] 파싱 상태 업데이트 실패 ({file_id}): {resp.status_code} {resp.text[:200]}")
             return {"success": False, "error": f"HTTP {resp.status_code}"}
@@ -135,7 +159,9 @@ def push_annual_report(customer_id: str, annual_report: dict) -> dict:
             timeout=15
         )
         if resp.status_code == 200:
-            return resp.json()
+            result = resp.json()
+            _validate_response(result.get("data", {}), "files/update")
+            return result
         logger.warning(f"[InternalAPI] AR push 실패 ({customer_id}): {resp.status_code}")
         return {"success": False, "error": f"HTTP {resp.status_code}"}
     except Exception as e:
@@ -189,7 +215,9 @@ def push_customer_review(customer_id: str, customer_review: dict) -> dict:
             timeout=15
         )
         if resp.status_code == 200:
-            return resp.json()
+            result = resp.json()
+            _validate_response(result.get("data", {}), "files/update")
+            return result
         logger.warning(f"[InternalAPI] CR push 실패 ({customer_id}): {resp.status_code}")
         return {"success": False, "error": f"HTTP {resp.status_code}"}
     except Exception as e:

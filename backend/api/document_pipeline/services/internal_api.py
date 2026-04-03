@@ -13,6 +13,34 @@ from config import get_settings
 logger = logging.getLogger(__name__)
 
 
+# Internal API 응답 필수 필드 (@aims/shared-schema 참조)
+# @see backend/shared/schema/internal-api.ts INTERNAL_API_REQUIRED_FIELDS
+_REQUIRED_FIELDS = {
+    "files/create": ["insertedId"],
+    "files/update": ["modifiedCount"],
+    "files/delete": ["deletedCount"],
+    "files/delete-by-filter": ["deletedCount"],
+    "files/count": ["count"],
+    "customers/name": ["name"],
+    "customers/batch-names": ["names"],
+    "customers/resolve-exact": ["customerId", "customerName"],
+    "customers/ownership": ["exists"],
+    "credit/check": ["allowed", "reason"],
+}
+
+
+def _validate_response(data: dict, endpoint: str) -> bool:
+    """Internal API 응답의 필수 필드 존재 여부 검증. 누락 시 경고 로그."""
+    required = _REQUIRED_FIELDS.get(endpoint)
+    if not required or not data:
+        return True
+    missing = [f for f in required if f not in data]
+    if missing:
+        logger.warning(f"[InternalAPI] 응답 필수 필드 누락 ({endpoint}): {missing}")
+        return False
+    return True
+
+
 def _serialize_for_api(obj):
     """MongoDB 문서를 JSON 직렬화 가능하도록 변환 (Internal API 전송용)"""
     if isinstance(obj, ObjectId):
@@ -40,6 +68,7 @@ async def get_customer_name(customer_id: str) -> str | None:
             if resp.status_code == 200:
                 data = resp.json()
                 if data.get("success") and data.get("data"):
+                    _validate_response(data["data"], "customers/name")
                     return data["data"].get("name")
     except Exception as e:
         logger.warning(f"[InternalAPI] 고객명 조회 실패 ({customer_id}): {e}")
@@ -61,7 +90,9 @@ async def create_file(document: dict) -> dict:
                 headers={"x-api-key": settings.INTERNAL_API_KEY, "Content-Type": "application/json"}
             )
             if resp.status_code == 200:
-                return resp.json()
+                result = resp.json()
+                _validate_response(result.get("data", {}), "files/create")
+                return result
             logger.warning(f"[InternalAPI] 파일 생성 실패: {resp.status_code} {resp.text[:200]}")
             return {"success": False, "error": f"HTTP {resp.status_code}"}
     except Exception as e:
@@ -90,7 +121,9 @@ async def update_file(file_id: str, set_fields: dict = None, unset_fields: dict 
                 headers={"x-api-key": settings.INTERNAL_API_KEY, "Content-Type": "application/json"}
             )
             if resp.status_code == 200:
-                return resp.json()
+                result = resp.json()
+                _validate_response(result.get("data", {}), "files/update")
+                return result
             logger.warning(f"[InternalAPI] 파일 업데이트 실패 ({file_id}): {resp.status_code} {resp.text[:200]}")
             return {"success": False, "error": f"HTTP {resp.status_code}"}
     except Exception as e:
@@ -218,6 +251,7 @@ async def get_customer_names_batch(customer_ids: list[str]) -> dict:
             if resp.status_code == 200:
                 data = resp.json()
                 if data.get("success"):
+                    _validate_response(data.get("data", {}), "customers/batch-names")
                     return data.get("data", {})
     except Exception as e:
         logger.warning(f"[InternalAPI] 배치 고객명 조회 실패: {e}")
@@ -237,6 +271,7 @@ async def resolve_customer_by_name(customer_name: str, user_id: str) -> str | No
             if resp.status_code == 200:
                 data = resp.json()
                 if data.get("success") and data.get("data"):
+                    _validate_response(data["data"], "customers/resolve-exact")
                     return data["data"].get("customerId")
     except Exception as e:
         logger.warning(f"[InternalAPI] 고객명 검색 실패 ({customer_name}): {e}")
