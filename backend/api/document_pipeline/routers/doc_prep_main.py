@@ -1026,28 +1026,18 @@ async def _cleanup_failed_document(doc_id: str, customer_id: Optional[str], dest
 
 
 async def _connect_document_to_customer(customer_id: str, doc_id: str, user_id: str):
-    """Connect document to customer via internal API call"""
-    import httpx
-
-    settings = get_settings()
-
+    """Publish document-customer link event via Redis Pub/Sub"""
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{settings.AIMS_API_URL}/api/customers/{customer_id}/documents",
-                json={
-                    "document_id": doc_id,
-                    "userId": user_id,
-                    "notes": ""
-                },
-                headers={"X-API-Key": settings.WEBHOOK_API_KEY},
-                timeout=10.0
-            )
-
-            if response.status_code != 200:
-                logger.warning(f"Failed to connect document to customer: {response.text}")
+        from services.redis_service import RedisService, CHANNELS
+        await RedisService.publish_event(CHANNELS["DOC_LINK"], {
+            "document_id": doc_id,
+            "customer_id": customer_id,
+            "user_id": user_id,
+            "notes": "",
+        })
+        logger.info(f"📎 문서-고객 연결 이벤트 발행: doc={doc_id}, customer={customer_id}")
     except Exception as e:
-        logger.warning(f"Error connecting document to customer: {e}")
+        logger.warning(f"Error publishing document link event: {e}")
 
 
 async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str, message: str = ""):

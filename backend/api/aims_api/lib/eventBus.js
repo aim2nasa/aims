@@ -43,12 +43,19 @@
  * @property {string} [document_name] - 문서 이름
  * @property {string} [status] - 문서 상태
  *
+ * @typedef {Object} DocLinkPayload
+ * @property {string} document_id - 문서 ID
+ * @property {string} customer_id - 고객 ID
+ * @property {string} user_id - 사용자(설계사) ID
+ * @property {string} [notes] - 메모
+ *
  * 채널 목록:
  * - aims:doc:progress  → DocProgressPayload
  * - aims:doc:complete  → DocCompletePayload
  * - aims:ar:status     → ARStatusPayload
  * - aims:cr:status     → CRStatusPayload
  * - aims:doc:list      → DocListPayload
+ * - aims:doc:link      → DocLinkPayload
  */
 
 const Redis = require('ioredis');
@@ -62,19 +69,24 @@ const CHANNELS = {
   AR_STATUS: 'aims:ar:status',
   CR_STATUS: 'aims:cr:status',
   DOC_LIST: 'aims:doc:list',
+  DOC_LINK: 'aims:doc:link',
 };
 
 let subscriber = null;
 let db = null;
+let qdrantClient = null;
 
 /**
  * EventBus 초기화
  * Redis Pub/Sub subscriber를 생성하고 채널을 구독합니다.
  *
  * @param {import('mongodb').Db} mongoDb - MongoDB 데이터베이스 인스턴스
+ * @param {Object} [options] - 옵션
+ * @param {Object} [options.qdrantClient] - Qdrant 클라이언트 인스턴스
  */
-function initialize(mongoDb) {
+function initialize(mongoDb, options = {}) {
   db = mongoDb;
+  qdrantClient = options.qdrantClient || null;
 
   subscriber = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
@@ -246,6 +258,202 @@ async function handleEvent(channel, payload) {
       });
       break;
     }
+
+    case CHANNELS.DOC_LINK: {
+      const { document_id, customer_id, user_id, notes } = payload;
+      if (!document_id || !customer_id || !user_id) {
+        console.warn('[EventBus] DOC_LINK: 필수 필드 누락', { document_id, customer_id, user_id });
+        return;
+      }
+      await handleDocumentLink(document_id, customer_id, user_id, notes || '');
+      break;
+    }
+  }
+}
+
+/**
+ * 문서-고객 연결 오케스트레이션 (이벤트 기반)
+ * R3: document_pipeline이 Redis PUBLISH → eventBus가 구독하여 실행
+ *
+ * 원래 customers-routes.js POST /customers/:id/documents의 비즈니스 로직
+ *
+ * @param {string} documentId - 문서 ID
+ * @param {string} customerId - 고객 ID
+ * @param {string} userId - 사용자(설계사) ID
+ * @param {string} notes - 메모
+ */
+async function handleDocumentLink(documentId, customerId, userId, notes) {
+  const { ObjectId } = require('mongodb');
+  const { COLLECTIONS } = require('@aims/shared-schema');
+  const { utcNowDate } = require('./timeUtils');
+  const backendLogger = require('./backendLogger');
+
+  const logPrefix = `[DocLink] doc=${documentId}, customer=${customerId}`;
+
+  try {
+    if (!ObjectId.isValid(customerId) || !ObjectId.isValid(documentId)) {
+      console.warn(`${logPrefix} 유효하지 않은 ObjectId`);
+      return;
+    }
+
+    const custOid = new ObjectId(customerId);
+    const docOid = new ObjectId(documentId);
+
+    // 1. 고객 소유권 검증
+    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      _id: custOid,
+      'meta.created_by': userId,
+    });
+    if (!customer) {
+      console.warn(`${logPrefix} 고객 미발견 또는 소유권 불일치 (userId=${userId})`);
+      return;
+    }
+
+    // 2. 문서 소유권 검증
+    const document = await db.collection(COLLECTIONS.FILES).findOne({
+      _id: docOid,
+      ownerId: userId,
+    });
+    if (!document) {
+      console.warn(`${logPrefix} 문서 미발견 또는 소유권 불일치`);
+      return;
+    }
+
+    // 3. 중복 파일 해시 검사
+    const newFileHash = document.meta?.file_hash;
+    if (newFileHash) {
+      const existingDocs = customer.documents || [];
+      if (existingDocs.length > 0) {
+        const existingDocIds = existingDocs.map(d => d.document_id);
+        const duplicateDoc = await db.collection(COLLECTIONS.FILES).findOne({
+          _id: { $in: existingDocIds },
+          'meta.file_hash': newFileHash,
+        });
+        if (duplicateDoc) {
+          console.log(`${logPrefix} 중복 파일 해시 발견, 연결 스킵`);
+          return;
+        }
+      }
+    }
+
+    // 4. 이미 연결 여부 확인
+    const alreadyLinked = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      _id: custOid,
+      'documents.document_id': docOid,
+    });
+    if (alreadyLinked) {
+      console.log(`${logPrefix} 이미 연결됨, 스킵`);
+      return;
+    }
+
+    // 5. customers.documents[]에 push
+    await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+      { _id: custOid },
+      {
+        $push: {
+          documents: {
+            document_id: docOid,
+            upload_date: utcNowDate(),
+            notes: notes || '',
+          },
+        },
+        $set: { 'meta.updated_at': utcNowDate() },
+      }
+    );
+
+    // 6. files.customerId 설정
+    await db.collection(COLLECTIONS.FILES).updateOne(
+      { _id: docOid },
+      { $set: { customerId: custOid, customer_notes: notes || '' } }
+    );
+
+    // 7. Qdrant 동기화 (문서의 모든 청크에 customer_id 설정)
+    if (qdrantClient) {
+      try {
+        const qdrantCollectionName = 'docembed';
+        const scrollResult = await qdrantClient.scroll(qdrantCollectionName, {
+          filter: { must: [{ key: 'doc_id', match: { value: documentId } }] },
+          limit: 1000,
+          with_payload: false,
+        });
+        const points = scrollResult.points || [];
+        if (points.length > 0) {
+          const pointIds = points.map(p => p.id);
+          await qdrantClient.setPayload(qdrantCollectionName, {
+            payload: { customer_id: customerId },
+            points: pointIds,
+          });
+          console.log(`${logPrefix} Qdrant ${pointIds.length}개 청크 동기화 완료`);
+        }
+      } catch (e) {
+        console.warn(`${logPrefix} Qdrant 동기화 실패 (비치명적):`, e.message);
+      }
+    }
+
+    // 8. PDF 변환 트리거 (Office 문서인 경우)
+    try {
+      const createPdfConversionTrigger = require('./pdfConversionTrigger');
+      const { triggerPdfConversionIfNeeded } = createPdfConversionTrigger(db);
+      const pdfResult = await triggerPdfConversionIfNeeded(document);
+      if (pdfResult !== 'not_triggered') {
+        console.log(`${logPrefix} PDF 변환 트리거: ${pdfResult}`);
+      }
+    } catch (e) {
+      console.warn(`${logPrefix} PDF 변환 트리거 실패 (비치명적):`, e.message);
+    }
+
+    // 9. AR 문서면 파싱 큐에 추가
+    if (document.is_annual_report === true) {
+      try {
+        const arQueueCollection = COLLECTIONS.AR_PARSE_QUEUE || 'ar_parse_queue';
+        await db.collection(arQueueCollection).updateOne(
+          { file_id: docOid },
+          {
+            $setOnInsert: {
+              file_id: docOid,
+              customer_id: custOid,
+              status: 'pending',
+              retry_count: 0,
+              created_at: utcNowDate(),
+              updated_at: utcNowDate(),
+              processed_at: null,
+              error_message: null,
+              metadata: {
+                filename: document.filename || 'unknown',
+                mime_type: document.mimeType || 'unknown',
+              },
+            },
+          },
+          { upsert: true }
+        );
+        console.log(`${logPrefix} AR 파싱 큐 추가 완료`);
+      } catch (e) {
+        console.error(`${logPrefix} AR 파싱 큐 추가 실패:`, e.message);
+      }
+    }
+
+    // 10. SSE 알림
+    const custIdStr = customerId.toString();
+    sseManager.notifyCustomerDocSubscribers(custIdStr, 'document-change', {
+      type: 'linked',
+      customerId: custIdStr,
+      documentId: documentId.toString(),
+      documentName: document.upload?.originalName || document.filename || 'unknown',
+      timestamp: utcNowISO(),
+    });
+
+    sseManager.notifyDocumentListSubscribers(userId, 'document-list-change', {
+      type: 'linked',
+      documentId: documentId.toString(),
+      status: 'linked',
+      timestamp: utcNowISO(),
+    });
+
+    console.log(`${logPrefix} ✅ 문서-고객 연결 완료 (이벤트 기반)`);
+
+  } catch (error) {
+    console.error(`${logPrefix} 오케스트레이션 오류:`, error.message);
+    backendLogger.error('EventBus', `DocLink 오류: ${error.message}`, error);
   }
 }
 
@@ -294,4 +502,4 @@ function shutdown() {
   }
 }
 
-module.exports = { initialize, shutdown, CHANNELS };
+module.exports = { initialize, shutdown, CHANNELS, _handleDocumentLink: handleDocumentLink };
