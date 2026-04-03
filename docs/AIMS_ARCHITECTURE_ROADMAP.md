@@ -150,6 +150,20 @@ aims_api (오케스트레이터 + DB 게이트웨이)
 - 단일 모듈 변경 시 최대 91% 시간 단축 (45초 → 4~22초)
 - shared-schema 변경 시 전체 실행 (의존 모듈 전체 영향)
 
+### ICreditPolicy 인터페이스 기반 설계 (2026-04-04)
+
+크레딧 정책을 인터페이스로 격리하여 구현체를 교체 가능한 플러그인 구조로 전환. | 머지 `954b347a`
+
+| 구현체 | 환경변수 | 동작 |
+|--------|---------|------|
+| DefaultCreditPolicy | `CREDIT_POLICY=default` (기본) | 기존 creditService.js 로직 (유료 모델) |
+| NoCreditPolicy | `CREDIT_POLICY=free` | 모든 체크 허용, 관리 no-op (무료 모델) |
+
+- ICreditPolicy 인터페이스: Core(체크 3) / Query(조회 8) / Admin(관리 4) = 15개 메서드
+- 5개 라우트에서 creditService 직접 참조 완전 제거 → creditPolicy 인터페이스 경유
+- db/analyticsDb를 생성자 주입으로 전환 (호출부에서 매번 전달하지 않음)
+- regression 테스트 22건 (팩토리 분기, NoCreditPolicy 전 메서드, DefaultCreditPolicy 위임)
+
 ---
 
 ## 6. 보류 과제
