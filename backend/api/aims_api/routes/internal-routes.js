@@ -8,6 +8,7 @@
  * Phase 1: Read-only (조회 전용) 엔드포인트 9건
  * Phase 2: Write (생성/수정/삭제) 엔드포인트 8건
  * Phase 3: annual_report_api write 전환 엔드포인트 9건
+ * Phase 4: document_pipeline write 전환 엔드포인트 5건
  *
  * @since 2026-04-03
  */
@@ -2268,6 +2269,282 @@ module.exports = function(db) {
     } catch (error) {
       console.error('[Internal] PUT /customers/:id/customer-reviews 오류:', error.message);
       backendLogger.error('Internal', 'PUT /customers/:id/customer-reviews 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // Phase 4: document_pipeline write 전환 엔드포인트
+  // =========================================================================
+
+  // =========================================================================
+  // 27. POST /internal/files — 파일 생성
+  // =========================================================================
+  /**
+   * 파일 문서 생성
+   * @body {object} document - 전체 파일 문서 객체 (필수)
+   */
+  router.post('/internal/files', async (req, res) => {
+    try {
+      const { document } = req.body;
+
+      if (!document || typeof document !== 'object' || Array.isArray(document)) {
+        return res.status(400).json({
+          success: false,
+          error: 'document 객체는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // ObjectId 변환: _id, customerId
+      if (document._id && typeof document._id === 'string' && ObjectId.isValid(document._id)) {
+        document._id = new ObjectId(document._id);
+      }
+      if (document.customerId && typeof document.customerId === 'string' && ObjectId.isValid(document.customerId)) {
+        document.customerId = new ObjectId(document.customerId);
+      }
+
+      const result = await db.collection(COLLECTIONS.FILES).insertOne(document);
+
+      res.json({
+        success: true,
+        data: { insertedId: result.insertedId.toString() },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] POST /files 오류:', error.message);
+      backendLogger.error('Internal', 'POST /files 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 28. PATCH /internal/files/:id — 범용 파일 업데이트
+  // =========================================================================
+  /**
+   * MongoDB 업데이트 연산자를 사용한 범용 파일 업데이트
+   * 허용 연산자: $set, $unset, $addToSet, $currentDate
+   * @param {string} id - 파일 ObjectId
+   * @body {object} $set - 설정할 필드 (optional)
+   * @body {object} $unset - 제거할 필드 (optional)
+   * @body {object} $addToSet - 배열에 추가할 값 (optional)
+   * @body {object} $currentDate - 현재 시각으로 설정할 필드 (optional)
+   */
+  router.patch('/internal/files/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 파일 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 허용된 연산자만 추출
+      const ALLOWED_OPS = ['$set', '$unset', '$addToSet', '$currentDate'];
+      const updateOp = {};
+      for (const op of ALLOWED_OPS) {
+        if (req.body[op] && typeof req.body[op] === 'object' && !Array.isArray(req.body[op]) && Object.keys(req.body[op]).length > 0) {
+          updateOp[op] = req.body[op];
+        }
+      }
+
+      if (Object.keys(updateOp).length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: '업데이트할 내용이 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // $set 내 보안 처리
+      if (updateOp.$set) {
+        // _id 변경 차단
+        delete updateOp.$set._id;
+        // customerId ObjectId 변환
+        if (updateOp.$set.customerId && typeof updateOp.$set.customerId === 'string' && ObjectId.isValid(updateOp.$set.customerId)) {
+          updateOp.$set.customerId = new ObjectId(updateOp.$set.customerId);
+        }
+      }
+
+      const result = await db.collection(COLLECTIONS.FILES).updateOne(
+        { _id: new ObjectId(id) },
+        updateOp
+      );
+
+      res.json({
+        success: true,
+        data: { modifiedCount: result.modifiedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] PATCH /files/:id 오류:', error.message);
+      backendLogger.error('Internal', 'PATCH /files/:id 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 29. DELETE /internal/files/by-filter — 필터 기반 파일 삭제 (고아 문서)
+  // =========================================================================
+  /**
+   * 필터 조건에 맞는 고아 파일 1건 삭제
+   * 정적 경로이므로 /files/:id 보다 먼저 정의
+   * @body {string} ownerId - 설계사 ID (필수)
+   * @body {null} customerId - null 고정 (고아 문서만)
+   * @body {string} file_hash - 파일 해시 (필수)
+   * @body {string} excludeId - 제외할 파일 ObjectId (필수)
+   * @body {string} maxStatus - 이 상태가 아닌 것만 ($ne) (optional)
+   * @body {string} createdBefore - 이 시각 이전 것만 (optional)
+   */
+  router.delete('/internal/files/by-filter', async (req, res) => {
+    try {
+      const { ownerId, file_hash, excludeId, maxStatus, createdBefore } = req.body;
+
+      if (!ownerId || !file_hash || !excludeId) {
+        return res.status(400).json({
+          success: false,
+          error: 'ownerId, file_hash, excludeId는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!ObjectId.isValid(excludeId)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 excludeId입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const filter = {
+        ownerId: ownerId,
+        customerId: null,
+        'meta.file_hash': file_hash,
+        _id: { $ne: new ObjectId(excludeId) }
+      };
+
+      if (maxStatus) {
+        filter.status = { $ne: maxStatus };
+      }
+
+      if (createdBefore) {
+        filter.createdAt = { $lt: new Date(createdBefore) };
+      }
+
+      const result = await db.collection(COLLECTIONS.FILES).deleteOne(filter);
+
+      res.json({
+        success: true,
+        data: { deletedCount: result.deletedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] DELETE /files/by-filter 오류:', error.message);
+      backendLogger.error('Internal', 'DELETE /files/by-filter 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 30. DELETE /internal/files/:id — 파일 삭제
+  // =========================================================================
+  /**
+   * 파일 문서 1건 삭제
+   * @param {string} id - 파일 ObjectId
+   */
+  router.delete('/internal/files/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 파일 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const result = await db.collection(COLLECTIONS.FILES).deleteOne(
+        { _id: new ObjectId(id) }
+      );
+
+      res.json({
+        success: true,
+        data: { deletedCount: result.deletedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] DELETE /files/:id 오류:', error.message);
+      backendLogger.error('Internal', 'DELETE /files/:id 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 31. PATCH /internal/customers/:id/pull-document — 고객 문서 연결 제거
+  // =========================================================================
+  /**
+   * 고객의 documents 배열에서 특정 문서 연결 제거 ($pull)
+   * @param {string} id - 고객 ObjectId
+   * @body {string} document_id - 제거할 문서 ObjectId (필수)
+   */
+  router.patch('/internal/customers/:id/pull-document', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { document_id } = req.body;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!document_id || !ObjectId.isValid(document_id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 document_id입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const result = await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $pull: { documents: { document_id: new ObjectId(document_id) } } }
+      );
+
+      res.json({
+        success: true,
+        data: { modifiedCount: result.modifiedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] PATCH /customers/:id/pull-document 오류:', error.message);
+      backendLogger.error('Internal', 'PATCH /customers/:id/pull-document 오류', error);
       res.status(500).json({
         success: false,
         error: error.message,

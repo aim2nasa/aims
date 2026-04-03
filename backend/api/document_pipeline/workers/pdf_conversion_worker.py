@@ -196,22 +196,17 @@ class PdfConversionWorker:
 
         files_col = MongoService.get_collection("files")
 
-        # 1. files 컬렉션 직접 업데이트 (변환 상태)
+        # 1. files 컬렉션 업데이트 (변환 상태) — Internal API 경유
         try:
-            await files_col.update_one(
-                {"_id": BsonObjectId(document_id)},
-                {
-                    "$set": {
-                        "upload.convPdfPath": pdf_path,
-                        "upload.converted_at": datetime.utcnow(),
-                        "upload.conversion_status": "completed",
-                    },
-                    "$unset": {
-                        "meta.text_extraction_failed": "",
-                        "processingSkipReason": "",
-                    },
-                },
-            )
+            from services.internal_api import update_file as _update_file, _serialize_for_api
+            await _update_file(document_id, set_fields=_serialize_for_api({
+                "upload.convPdfPath": pdf_path,
+                "upload.converted_at": datetime.utcnow(),
+                "upload.conversion_status": "completed",
+            }), unset_fields={
+                "meta.text_extraction_failed": "",
+                "processingSkipReason": "",
+            })
             logger.info(f"[PDF변환워커] files 업데이트: {document_id}")
         except Exception as e:
             logger.error(f"[PDF변환워커] files 업데이트 실패: {document_id} - {e}")
@@ -271,10 +266,8 @@ class PdfConversionWorker:
             if not os.path.exists(pdf_path):
                 logger.warning(f"[PDF변환워커] 변환 PDF 파일 없음: {pdf_path}")
                 # 파일 없음 → 재시도해도 무의미, 마커 기록
-                await files_col.update_one(
-                    {"_id": BsonObjectId(document_id)},
-                    {"$set": {"meta.text_extraction_failed": True}},
-                )
+                from services.internal_api import update_file as _update_file
+                await _update_file(document_id, set_fields={"meta.text_extraction_failed": True})
                 return False
 
             with open(pdf_path, "rb") as f:
@@ -287,10 +280,8 @@ class PdfConversionWorker:
                     f"[PDF변환워커] 변환 PDF에서 텍스트 없음 (스캔/이미지 문서), OCR fallback 큐 등록: {document_id}"
                 )
                 # 스캔/이미지 문서 → OCR fallback 마커 설정 + OCR 큐에 직접 등록
-                await files_col.update_one(
-                    {"_id": BsonObjectId(document_id)},
-                    {"$set": {"meta.ocr_fallback_needed": True}},
-                )
+                from services.internal_api import update_file as _update_file
+                await _update_file(document_id, set_fields={"meta.ocr_fallback_needed": True})
                 # Redis Stream OCR 큐에 등록하여 즉시 OCR 처리 시작
                 await self._enqueue_ocr_fallback(document_id, pdf_path, doc)
                 return False
@@ -378,11 +369,9 @@ class PdfConversionWorker:
                 text_update["docembed.status"] = "pending"
                 text_update["overallStatus"] = "embed_pending"
 
-            # DB 업데이트
-            await files_col.update_one(
-                {"_id": BsonObjectId(document_id)},
-                {"$set": text_update},
-            )
+            # DB 업데이트 — Internal API 경유
+            from services.internal_api import update_file as _update_file, _serialize_for_api
+            await _update_file(document_id, set_fields=_serialize_for_api(text_update))
             logger.info(
                 f"[PDF변환워커] 텍스트+분류 DB 업데이트 + 임베딩 재요청: {document_id}"
             )
@@ -435,16 +424,11 @@ class PdfConversionWorker:
         try:
             from bson import ObjectId as BsonObjectId
 
-            files_col = MongoService.get_collection("files")
-            await files_col.update_one(
-                {"_id": BsonObjectId(document_id)},
-                {
-                    "$set": {
-                        "upload.conversion_status": "failed",
-                        "upload.conversion_error": error_message,
-                    }
-                },
-            )
+            from services.internal_api import update_file as _update_file
+            await _update_file(document_id, set_fields={
+                "upload.conversion_status": "failed",
+                "upload.conversion_error": error_message,
+            })
         except Exception as e:
             logger.error(f"[PDF변환워커] files 실패 업데이트 오류: {document_id} - {e}")
 
@@ -552,16 +536,12 @@ class PdfConversionWorker:
                     continue  # 정상 처리 중
 
                 # stuck 확정 → failed로 복구
-                await files_collection.update_one(
-                    {"_id": doc["_id"]},
-                    {
-                        "$set": {
-                            "upload.conversion_status": "failed",
-                            "upload.conversion_error": "자동 복구: 변환 큐에 작업 없음 (stuck)",
-                            "upload.conversion_retry_count": 0,
-                        }
-                    }
-                )
+                from services.internal_api import update_file as _update_file
+                await _update_file(doc_id_str, set_fields={
+                    "upload.conversion_status": "failed",
+                    "upload.conversion_error": "자동 복구: 변환 큐에 작업 없음 (stuck)",
+                    "upload.conversion_retry_count": 0,
+                })
                 recovered += 1
                 logger.info(f"[PDF변환워커] stuck pending 복구: {doc_id_str}")
 

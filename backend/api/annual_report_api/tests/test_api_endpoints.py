@@ -320,8 +320,9 @@ class TestRegisterARContractsEndpoints:
     """AR 보험계약 등록 엔드포인트 테스트 (POST /customers/{id}/ar-contracts)"""
 
     @patch('routes.query.check_customer_ownership', return_value=True)
+    @patch('routes.query.register_annual_report')
     @patch('main.db')
-    def test_register_success(self, mock_db, mock_ownership):
+    def test_register_success(self, mock_db, mock_register, mock_ownership):
         """정상 등록 성공"""
         customer_id = str(ObjectId())
 
@@ -332,8 +333,12 @@ class TestRegisterARContractsEndpoints:
                 {"customer_name": "테스트고객", "issue_date": "2025-08-27", "total_contracts": 5}
             ]
         }
-        mock_customers.update_one.return_value = MagicMock(modified_count=1)
         mock_db.customers = mock_customers
+
+        mock_register.return_value = {
+            "success": True,
+            "data": {"duplicate": False, "registered_at": "2025-09-01T00:00:00Z"}
+        }
 
         response = client.post(
             f"/customers/{customer_id}/ar-contracts",
@@ -365,8 +370,9 @@ class TestRegisterARContractsEndpoints:
         assert response.status_code == 400
 
     @patch('routes.query.check_customer_ownership', return_value=True)
+    @patch('routes.query.register_annual_report')
     @patch('main.db')
-    def test_duplicate_registration(self, mock_db, mock_ownership):
+    def test_duplicate_registration(self, mock_db, mock_register, mock_ownership):
         """이미 등록된 AR → duplicate=True"""
         customer_id = str(ObjectId())
 
@@ -378,6 +384,11 @@ class TestRegisterARContractsEndpoints:
             ]
         }
         mock_db.customers = mock_customers
+
+        mock_register.return_value = {
+            "success": True,
+            "data": {"duplicate": True, "registered_at": "2025-09-01T00:00:00Z"}
+        }
 
         response = client.post(
             f"/customers/{customer_id}/ar-contracts",

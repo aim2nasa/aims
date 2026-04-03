@@ -41,7 +41,6 @@ class TestCRDuplicateCheck:
             "_id": ObjectId(customer_id),
             "customer_reviews": existing_reviews
         }
-        mock_customers.update_one.return_value = Mock(modified_count=1)
 
         return mock_db, mock_customers
 
@@ -61,31 +60,32 @@ class TestCRDuplicateCheck:
 
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
-        # 동일한 데이터로 저장 시도
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": "고영자",
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-09-09"
-            }
-        )
+        # 동일한 데이터로 저장 시도 (중복이므로 push_customer_review 호출 안 됨)
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": "고영자",
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-09-09"
+                }
+            )
 
-        # 검증: 중복으로 건너뜀
-        assert result["success"] is True
-        assert result.get("duplicate") is True
-        assert "이미 동일한 Customer Review가 존재합니다" in result["message"]
+            # 검증: 중복으로 건너뜀
+            assert result["success"] is True
+            assert result.get("duplicate") is True
+            assert "이미 동일한 Customer Review가 존재합니다" in result["message"]
 
-        # update_one이 호출되지 않아야 함 (저장 안 함)
-        mock_customers.update_one.assert_not_called()
+            # push_customer_review가 호출되지 않아야 함 (저장 안 함)
+            mock_push.assert_not_called()
 
     def test_not_duplicate_different_contractor(self):
         """계약자가 다르면 중복이 아님"""
@@ -103,27 +103,30 @@ class TestCRDuplicateCheck:
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
         # 다른 계약자로 저장 시도
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": "김철수",  # 다른 계약자
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-09-09"
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            mock_push.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 검증: 새로 저장됨
-        assert result["success"] is True
-        assert result.get("duplicate") is not True
-        mock_customers.update_one.assert_called_once()
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": "김철수",  # 다른 계약자
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-09-09"
+                }
+            )
+
+            # 검증: 새로 저장됨
+            assert result["success"] is True
+            assert result.get("duplicate") is not True
+            mock_push.assert_called_once()
 
     def test_not_duplicate_different_policy_number(self):
         """증권번호가 다르면 중복이 아님"""
@@ -141,27 +144,30 @@ class TestCRDuplicateCheck:
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
         # 다른 증권번호로 저장 시도
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423762"},  # 다른 증권번호
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": "고영자",
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-09-09"
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            mock_push.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 검증: 새로 저장됨
-        assert result["success"] is True
-        assert result.get("duplicate") is not True
-        mock_customers.update_one.assert_called_once()
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423762"},  # 다른 증권번호
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": "고영자",
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-09-09"
+                }
+            )
+
+            # 검증: 새로 저장됨
+            assert result["success"] is True
+            assert result.get("duplicate") is not True
+            mock_push.assert_called_once()
 
     def test_not_duplicate_different_product_name(self):
         """상품명이 다르면 중복이 아님"""
@@ -179,27 +185,30 @@ class TestCRDuplicateCheck:
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
         # 다른 상품명으로 저장 시도
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": "고영자",
-                "product_name": "무) 골드플랜 변액연금보험",  # 다른 상품명
-                "issue_date": "2025-09-09"
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            mock_push.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 검증: 새로 저장됨
-        assert result["success"] is True
-        assert result.get("duplicate") is not True
-        mock_customers.update_one.assert_called_once()
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": "고영자",
+                    "product_name": "무) 골드플랜 변액연금보험",  # 다른 상품명
+                    "issue_date": "2025-09-09"
+                }
+            )
+
+            # 검증: 새로 저장됨
+            assert result["success"] is True
+            assert result.get("duplicate") is not True
+            mock_push.assert_called_once()
 
     def test_not_duplicate_different_issue_date(self):
         """발행일이 다르면 중복이 아님"""
@@ -217,27 +226,30 @@ class TestCRDuplicateCheck:
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
         # 다른 발행일로 저장 시도
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": "고영자",
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-10-09"  # 다른 발행일
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            mock_push.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 검증: 새로 저장됨
-        assert result["success"] is True
-        assert result.get("duplicate") is not True
-        mock_customers.update_one.assert_called_once()
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": "고영자",
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-10-09"  # 다른 발행일
+                }
+            )
+
+            # 검증: 새로 저장됨
+            assert result["success"] is True
+            assert result.get("duplicate") is not True
+            mock_push.assert_called_once()
 
     def test_skip_duplicate_check_when_missing_fields(self):
         """필드가 하나라도 없으면 중복 체크 건너뜀 (저장 진행)"""
@@ -255,27 +267,30 @@ class TestCRDuplicateCheck:
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
         # contractor_name 누락
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                # contractor_name 없음
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-09-09"
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            mock_push.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 검증: 중복 체크 건너뛰고 저장됨
-        assert result["success"] is True
-        assert result.get("duplicate") is not True
-        mock_customers.update_one.assert_called_once()
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    # contractor_name 없음
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-09-09"
+                }
+            )
+
+            # 검증: 중복 체크 건너뛰고 저장됨
+            assert result["success"] is True
+            assert result.get("duplicate") is not True
+            mock_push.assert_called_once()
 
     def test_duplicate_with_iso_string_issue_date(self):
         """기존 issue_date가 ISO 문자열 형식일 때도 중복 체크 동작"""
@@ -294,27 +309,28 @@ class TestCRDuplicateCheck:
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
         # 동일한 데이터로 저장 시도
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": "고영자",
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-09-09"
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": "고영자",
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-09-09"
+                }
+            )
 
-        # 검증: 중복으로 건너뜀
-        assert result["success"] is True
-        assert result.get("duplicate") is True
-        mock_customers.update_one.assert_not_called()
+            # 검증: 중복으로 건너뜀
+            assert result["success"] is True
+            assert result.get("duplicate") is True
+            mock_push.assert_not_called()
 
     def test_multiple_existing_reviews_finds_duplicate(self):
         """여러 기존 리뷰 중에서 중복 찾기"""
@@ -344,27 +360,28 @@ class TestCRDuplicateCheck:
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
         # 두 번째 기존 리뷰와 동일한 데이터로 저장 시도
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": "고영자",
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-09-09"
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": "고영자",
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-09-09"
+                }
+            )
 
-        # 검증: 중복으로 건너뜀
-        assert result["success"] is True
-        assert result.get("duplicate") is True
-        mock_customers.update_one.assert_not_called()
+            # 검증: 중복으로 건너뜀
+            assert result["success"] is True
+            assert result.get("duplicate") is True
+            mock_push.assert_not_called()
 
     def test_no_existing_reviews_saves_new(self):
         """기존 리뷰가 없으면 새로 저장"""
@@ -372,27 +389,30 @@ class TestCRDuplicateCheck:
 
         mock_db, mock_customers = self._create_mock_db(customer_id, [])  # 빈 리스트
 
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": "고영자",
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-09-09"
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            mock_push.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 검증: 새로 저장됨
-        assert result["success"] is True
-        assert result.get("duplicate") is not True
-        mock_customers.update_one.assert_called_once()
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": "고영자",
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-09-09"
+                }
+            )
+
+            # 검증: 새로 저장됨
+            assert result["success"] is True
+            assert result.get("duplicate") is not True
+            mock_push.assert_called_once()
 
 
 class TestCRDuplicateCheckEdgeCases:
@@ -408,7 +428,6 @@ class TestCRDuplicateCheckEdgeCases:
             "_id": ObjectId(customer_id),
             "customer_reviews": existing_reviews
         }
-        mock_customers.update_one.return_value = Mock(modified_count=1)
 
         return mock_db, mock_customers
 
@@ -428,27 +447,30 @@ class TestCRDuplicateCheckEdgeCases:
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
         # contractor_name이 None인 경우 (중복 체크 건너뜀)
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": None,  # None
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-09-09"
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            mock_push.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 검증: contractor_name이 None이면 중복 체크 건너뜀 → 저장됨
-        assert result["success"] is True
-        assert result.get("duplicate") is not True
-        mock_customers.update_one.assert_called_once()
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": None,  # None
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-09-09"
+                }
+            )
+
+            # 검증: contractor_name이 None이면 중복 체크 건너뜀 → 저장됨
+            assert result["success"] is True
+            assert result.get("duplicate") is not True
+            mock_push.assert_called_once()
 
     def test_whitespace_in_fields(self):
         """필드에 공백이 있는 경우"""
@@ -466,27 +488,30 @@ class TestCRDuplicateCheckEdgeCases:
         mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
 
         # 공백이 포함된 이름 (다른 것으로 취급)
-        result = save_customer_review(
-            db=mock_db,
-            customer_id=customer_id,
-            report_data={
-                "contract_info": {"policy_number": "0011423761"},
-                "premium_info": {},
-                "fund_allocations": [],
-                "total_accumulated_amount": 19336631,
-                "fund_count": 2
-            },
-            metadata={
-                "contractor_name": "고영자 ",  # 끝에 공백
-                "product_name": "무) 실버플랜 변액유니버셜V보험",
-                "issue_date": "2025-09-09"
-            }
-        )
+        with patch('services.db_writer.push_customer_review') as mock_push:
+            mock_push.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 검증: 공백이 있으면 다른 것으로 취급 → 새로 저장됨
-        assert result["success"] is True
-        assert result.get("duplicate") is not True
-        mock_customers.update_one.assert_called_once()
+            result = save_customer_review(
+                db=mock_db,
+                customer_id=customer_id,
+                report_data={
+                    "contract_info": {"policy_number": "0011423761"},
+                    "premium_info": {},
+                    "fund_allocations": [],
+                    "total_accumulated_amount": 19336631,
+                    "fund_count": 2
+                },
+                metadata={
+                    "contractor_name": "고영자 ",  # 끝에 공백
+                    "product_name": "무) 실버플랜 변액유니버셜V보험",
+                    "issue_date": "2025-09-09"
+                }
+            )
+
+            # 검증: 공백이 있으면 다른 것으로 취급 → 새로 저장됨
+            assert result["success"] is True
+            assert result.get("duplicate") is not True
+            mock_push.assert_called_once()
 
     def test_customer_not_found(self):
         """존재하지 않는 고객"""
