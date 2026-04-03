@@ -31,13 +31,13 @@ function readSource(relativePath) {
 describe('BUG-1: tier 변경 시 credit_pending 재처리 트리거', () => {
   const source = readSource('routes/storage-routes.js');
 
-  test('processCreditPendingDocuments가 creditService에서 import되어야 함', () => {
-    expect(source).toMatch(/processCreditPendingDocuments.*require\('\.\.\/lib\/creditService'\)/s);
+  test('creditPolicy.processPendingDocuments가 사용되어야 함', () => {
+    expect(source).toContain('creditPolicy.processPendingDocuments');
   });
 
-  test('사용자 tier 변경 후 processCreditPendingDocuments 호출이 있어야 함', () => {
+  test('사용자 tier 변경 후 creditPolicy.processPendingDocuments 호출이 있어야 함', () => {
     const updateUserTierIdx = source.indexOf('updateUserTier(db, id, tier)');
-    const processIdx = source.indexOf('processCreditPendingDocuments(db, id)', updateUserTierIdx);
+    const processIdx = source.indexOf('creditPolicy.processPendingDocuments(id)', updateUserTierIdx);
     expect(updateUserTierIdx).toBeGreaterThan(-1);
     expect(processIdx).toBeGreaterThan(updateUserTierIdx);
   });

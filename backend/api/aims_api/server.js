@@ -22,6 +22,7 @@ const serviceHealthMonitor = require('./lib/serviceHealthMonitor');
 const virusScanService = require('./lib/virusScanService');
 const realtimeMetrics = require('./lib/realtimeMetrics');
 const eventBus = require('./lib/eventBus');
+const { createCreditPolicy } = require('./lib/creditPolicy');
 // 공유 스키마에서 컬렉션명 상수 import
 const { COLLECTIONS, CUSTOMER_FIELDS, CUSTOMER_STATUS } = require('@aims/shared-schema');
 
@@ -187,6 +188,9 @@ MongoClient.connect(MONGO_URI)
     db = client.db(DB_NAME);
     analyticsDb = client.db(ANALYTICS_DB_NAME);
 
+    // 크레딧 정책 인스턴스 생성 (환경변수 CREDIT_POLICY로 구현체 선택)
+    const creditPolicy = createCreditPolicy(db, analyticsDb);
+
     // ==================== 리팩토링된 라우트 등록 (db 연결 후) ====================
     const documentsRoutes = require('./routes/documents-routes');
     documentsRouter = documentsRoutes(db, analyticsDb, authenticateJWT, upload, qdrantClient, QDRANT_COLLECTION);
@@ -202,10 +206,10 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', adminRoutes(db, analyticsDb, authenticateJWT, requireRole, qdrantClient, QDRANT_COLLECTION));
 
     const chatRoutes = require('./routes/chat-routes');
-    app.use('/api', chatRoutes(db, analyticsDb, authenticateJWT, upload));
+    app.use('/api', chatRoutes(db, analyticsDb, authenticateJWT, upload, creditPolicy));
 
     const creditRoutes = require('./routes/credit-routes');
-    app.use('/api', creditRoutes(db, analyticsDb));
+    app.use('/api', creditRoutes(db, creditPolicy));
 
     app.use('/api', require('./routes/insurance-contracts-routes')(db, authenticateJWTorAPIKey));
 
@@ -257,7 +261,7 @@ MongoClient.connect(MONGO_URI)
     console.log('[Server] tokenUsageRoutes 등록 완료');
 
     // OCR 사용량 라우트 설정
-    const ocrUsageRoutes = require('./routes/ocr-usage-routes')(db, analyticsDb, authenticateJWT, requireRole);
+    const ocrUsageRoutes = require('./routes/ocr-usage-routes')(db, analyticsDb, authenticateJWT, requireRole, creditPolicy);
     app.use('/api', ocrUsageRoutes);
     console.log('[Server] ocrUsageRoutes 등록 완료');
 
@@ -272,11 +276,11 @@ MongoClient.connect(MONGO_URI)
     console.log('[Server] userActivityRoutes 등록 완료');
 
     // 스토리지 쿼터 라우트 설정 (크레딧 시스템 지원)
-    const storageRoutes = require('./routes/storage-routes')(db, analyticsDb, authenticateJWT, requireRole, notifyUserAccountSubscribers);
+    const storageRoutes = require('./routes/storage-routes')(db, analyticsDb, authenticateJWT, requireRole, notifyUserAccountSubscribers, creditPolicy);
     app.use('/api', storageRoutes);
 
     // 추가 크레딧 라우트 설정 (보너스 크레딧 관리)
-    const bonusCreditsRoutes = require('./routes/bonus-credits-routes')(db, analyticsDb, authenticateJWT, requireRole);
+    const bonusCreditsRoutes = require('./routes/bonus-credits-routes')(db, analyticsDb, authenticateJWT, requireRole, creditPolicy);
     app.use('/api', bonusCreditsRoutes);
     console.log('[Server] bonusCreditsRoutes 등록 완료');
 
