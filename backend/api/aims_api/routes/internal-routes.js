@@ -5,7 +5,8 @@
  * aims_api를 경유하여 데이터를 조회하기 위한 엔드포인트.
  *
  * 인증: x-api-key 헤더로 INTERNAL_API_KEY 검증
- * 모든 엔드포인트는 Read-only (조회 전용)
+ * Phase 1: Read-only (조회 전용) 엔드포인트 9건
+ * Phase 2: Write (생성/수정/삭제) 엔드포인트 8건
  *
  * @since 2026-04-03
  */
@@ -46,6 +47,68 @@ const OBJECTID_FIELDS = new Set(['_id', 'customerId']);
  * 내부 API라도 임의 코드 실행 가능한 연산자는 차단
  */
 const DANGEROUS_OPERATORS = new Set(['$where', '$expr', '$function', '$accumulator']);
+
+/**
+ * 관계 유형 정의 (aims_mcp relationships.ts와 동일)
+ */
+const RELATIONSHIP_TYPES = {
+  family: {
+    spouse: { reverse: 'spouse', bidirectional: true, label: '배우자' },
+    parent: { reverse: 'child', bidirectional: false, label: '부모' },
+    child: { reverse: 'parent', bidirectional: false, label: '자녀' }
+  },
+  relative: {
+    uncle_aunt: { reverse: 'nephew_niece', bidirectional: false, label: '삼촌/이모' },
+    nephew_niece: { reverse: 'uncle_aunt', bidirectional: false, label: '조카' },
+    cousin: { reverse: 'cousin', bidirectional: true, label: '사촌' },
+    in_law: { reverse: 'in_law', bidirectional: true, label: '처가/시가' }
+  },
+  social: {
+    friend: { reverse: 'friend', bidirectional: true, label: '친구' },
+    acquaintance: { reverse: 'acquaintance', bidirectional: true, label: '지인' },
+    neighbor: { reverse: 'neighbor', bidirectional: true, label: '이웃' }
+  },
+  professional: {
+    supervisor: { reverse: 'subordinate', bidirectional: false, label: '상사' },
+    subordinate: { reverse: 'supervisor', bidirectional: false, label: '부하' },
+    colleague: { reverse: 'colleague', bidirectional: true, label: '동료' },
+    business_partner: { reverse: 'business_partner', bidirectional: true, label: '사업파트너' },
+    client: { reverse: 'service_provider', bidirectional: false, label: '클라이언트' },
+    service_provider: { reverse: 'client', bidirectional: false, label: '서비스제공자' }
+  },
+  corporate: {
+    ceo: { reverse: 'company', bidirectional: false, label: '대표이사' },
+    executive: { reverse: 'company', bidirectional: false, label: '임원' },
+    employee: { reverse: 'employer', bidirectional: false, label: '직원' },
+    shareholder: { reverse: 'company', bidirectional: false, label: '주주' },
+    director: { reverse: 'company', bidirectional: false, label: '이사' },
+    company: { reverse: 'employee', bidirectional: false, label: '회사' },
+    employer: { reverse: 'employee', bidirectional: false, label: '고용주' }
+  }
+};
+
+/**
+ * 모든 관계 유형을 평면화하여 반환
+ * @returns {Object} { type: { reverse, bidirectional, label, category } }
+ */
+function getAllRelationshipTypes() {
+  const allTypes = {};
+  Object.entries(RELATIONSHIP_TYPES).forEach(([category, types]) => {
+    Object.entries(types).forEach(([type, config]) => {
+      allTypes[type] = { ...config, category };
+    });
+  });
+  return allTypes;
+}
+
+/**
+ * 정규식 특수문자 이스케이프
+ * @param {string} str - 이스케이프할 문자열
+ * @returns {string} 이스케이프된 문자열
+ */
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 /**
  * filter 내 위험한 연산자 존재 여부 재귀 검사
@@ -702,6 +765,784 @@ module.exports = function(db) {
     } catch (error) {
       console.error('[Internal] customers/:id/has-report 오류:', error.message);
       backendLogger.error('Internal', 'customers/:id/has-report 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // Phase 2: Write API (생성/수정/삭제)
+  // =========================================================================
+
+  // =========================================================================
+  // 10. POST /internal/customers — 고객 생성
+  // =========================================================================
+  /**
+   * 고객 신규 생성
+   * @body {string} name - 고객명 (필수)
+   * @body {string} phone - 전화번호 (필수, 포매팅 없이 전달)
+   * @body {string} [email] - 이메일
+   * @body {string} [birthDate] - 생년월일
+   * @body {string} [address] - 주소
+   * @body {string} [customerType] - 고객 유형 (기본: '개인')
+   * @body {string} userId - 설계사 ID (필수)
+   */
+  router.post('/internal/customers', async (req, res) => {
+    try {
+      const { name, phone, email, birthDate, address, customerType, userId } = req.body;
+
+      if (!name || !phone || !userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'name, phone, userId는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 이름 중복 체크 (동일 userId 내, 대소문자 무관)
+      const existing = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        'personal_info.name': { $regex: `^${escapeRegex(name)}$`, $options: 'i' },
+        'meta.created_by': userId,
+        deleted_at: { $exists: false }
+      });
+
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          error: `같은 이름의 고객이 이미 존재합니다: ${name}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      const now = new Date();
+      const newCustomer = {
+        personal_info: {
+          name,
+          mobile_phone: phone,
+          email: email || '',
+          birth_date: birthDate || '',
+          address: address ? { address1: address } : {}
+        },
+        insurance_info: {
+          customer_type: customerType || '개인'
+        },
+        meta: {
+          status: 'active',
+          created_by: userId,
+          created_at: now,
+          updated_at: now
+        }
+      };
+
+      const result = await db.collection(COLLECTIONS.CUSTOMERS).insertOne(newCustomer);
+
+      res.json({
+        success: true,
+        data: {
+          customerId: result.insertedId.toString(),
+          name,
+          customerType: customerType || '개인',
+          createdAt: now.toISOString()
+        },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] POST /customers 오류:', error.message);
+      backendLogger.error('Internal', 'POST /customers 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 11. PUT /internal/customers/:id — 고객 수정
+  // =========================================================================
+  /**
+   * 고객 정보 수정
+   * @param {string} id - 고객 ObjectId
+   * @body {string} userId - 설계사 ID (필수)
+   * @body {string} [name] - 고객명
+   * @body {string} [phone] - 전화번호
+   * @body {string} [phoneType] - 전화 유형 (mobile/home/work, 기본: mobile)
+   * @body {string} [email] - 이메일
+   * @body {string} [birthDate] - 생년월일
+   * @body {string} [postal_code] - 우편번호
+   * @body {string} [address1] - 주소1
+   * @body {string} [address2] - 주소2
+   */
+  router.put('/internal/customers/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { userId, name, phone, phoneType, email, birthDate, postal_code, address1, address2 } = req.body;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'userId는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+
+      const objectId = new ObjectId(id);
+
+      // 고객 존재 + 소유권 확인
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        _id: objectId,
+        'meta.created_by': userId
+      });
+
+      if (!customer) {
+        return res.status(404).json({
+          success: false,
+          error: '고객을 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 이름 변경 시 중복 체크
+      if (name && name !== customer.personal_info?.name) {
+        const existing = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+          'personal_info.name': { $regex: `^${escapeRegex(name)}$`, $options: 'i' },
+          'meta.created_by': userId,
+          _id: { $ne: objectId },
+          deleted_at: { $exists: false }
+        });
+
+        if (existing) {
+          return res.status(409).json({
+            success: false,
+            error: `같은 이름의 고객이 이미 존재합니다: ${name}`,
+            timestamp: utcNowISO()
+          });
+        }
+      }
+
+      // 업데이트 필드 구성
+      const updateFields = {
+        'meta.updated_at': new Date()
+      };
+
+      if (name) updateFields['personal_info.name'] = name;
+
+      // 전화번호: phoneType에 따라 다른 필드에 저장
+      if (phone) {
+        const pt = phoneType || 'mobile';
+        switch (pt) {
+          case 'home':
+            updateFields['personal_info.home_phone'] = phone;
+            break;
+          case 'work':
+            updateFields['personal_info.work_phone'] = phone;
+            break;
+          case 'mobile':
+          default:
+            updateFields['personal_info.mobile_phone'] = phone;
+            break;
+        }
+      }
+
+      if (email) updateFields['personal_info.email'] = email;
+      if (birthDate) updateFields['personal_info.birth_date'] = birthDate;
+      if (postal_code) updateFields['personal_info.address.postal_code'] = postal_code;
+      if (address1) updateFields['personal_info.address.address1'] = address1;
+      if (address2 !== undefined) updateFields['personal_info.address.address2'] = address2;
+
+      await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: objectId },
+        { $set: updateFields }
+      );
+
+      res.json({
+        success: true,
+        data: {
+          customerId: id,
+          updatedFields: Object.keys(updateFields).filter(k => k !== 'meta.updated_at'),
+          message: '고객 정보가 수정되었습니다.'
+        },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] PUT /customers/:id 오류:', error.message);
+      backendLogger.error('Internal', 'PUT /customers/:id 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 12. PUT /internal/customers/:id/memo-sync — 메모 동기화
+  // =========================================================================
+  /**
+   * 고객의 memo 필드를 직접 업데이트 (customer_memos → customers.memo 동기화용)
+   * @param {string} id - 고객 ObjectId
+   * @body {string} memoText - 동기화할 메모 텍스트
+   * @body {string} userId - 설계사 ID (소유권 검증용)
+   */
+  router.put('/internal/customers/:id/memo-sync', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { memoText, userId } = req.body;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (memoText === undefined || memoText === null) {
+        return res.status(400).json({
+          success: false,
+          error: 'memoText는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'userId는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 소유권 확인
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        _id: new ObjectId(id),
+        'meta.created_by': userId
+      });
+      if (!customer) {
+        return res.status(403).json({
+          success: false,
+          error: '해당 고객의 메모를 수정할 권한이 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { memo: memoText, 'meta.updated_at': new Date() } }
+      );
+
+      res.json({
+        success: true,
+        data: { success: true },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] PUT /customers/:id/memo-sync 오류:', error.message);
+      backendLogger.error('Internal', 'PUT /customers/:id/memo-sync 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 13. POST /internal/memos — 메모 생성
+  // =========================================================================
+  /**
+   * 고객 메모 신규 생성 (customer_memos 컬렉션)
+   * @body {string} customerId - 고객 ObjectId (필수)
+   * @body {string} content - 메모 내용 (필수)
+   * @body {string} userId - 설계사 ID (필수)
+   */
+  router.post('/internal/memos', async (req, res) => {
+    try {
+      const { customerId, content, userId } = req.body;
+
+      if (!customerId || !content || !userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'customerId, content, userId는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!ObjectId.isValid(customerId)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+
+      const now = new Date();
+
+      const newMemo = {
+        customer_id: new ObjectId(customerId),
+        content: content.trim(),
+        created_by: userId,
+        created_at: now,
+        updated_at: now
+      };
+
+      const result = await db.collection(COLLECTIONS.CUSTOMER_MEMOS).insertOne(newMemo);
+
+      res.json({
+        success: true,
+        data: { memoId: result.insertedId.toString() },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] POST /memos 오류:', error.message);
+      backendLogger.error('Internal', 'POST /memos 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 14. PUT /internal/memos/:id — 메모 수정
+  // =========================================================================
+  /**
+   * 메모 내용 수정
+   * @param {string} id - 메모 ObjectId
+   * @body {string} customerId - 고객 ObjectId (필수)
+   * @body {string} content - 수정할 메모 내용 (필수)
+   * @body {string} userId - 설계사 ID (필수)
+   */
+  router.put('/internal/memos/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { customerId, content, userId } = req.body;
+
+      if (!customerId || !content || !userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'customerId, content, userId는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!ObjectId.isValid(id) || !ObjectId.isValid(customerId)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 고객 소유권 확인
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        _id: new ObjectId(customerId),
+        'meta.created_by': userId
+      });
+      if (!customer) {
+        return res.status(403).json({
+          success: false,
+          error: '해당 고객의 메모를 수정할 권한이 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 메모 존재 확인: _id + customer_id 매칭
+      const memo = await db.collection(COLLECTIONS.CUSTOMER_MEMOS).findOne({
+        _id: new ObjectId(id),
+        customer_id: new ObjectId(customerId)
+      });
+
+      if (!memo) {
+        return res.status(404).json({
+          success: false,
+          error: '메모를 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const now = new Date();
+      await db.collection(COLLECTIONS.CUSTOMER_MEMOS).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { content: content.trim(), updated_at: now, updated_by: userId } }
+      );
+
+      res.json({
+        success: true,
+        data: { success: true },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] PUT /memos/:id 오류:', error.message);
+      backendLogger.error('Internal', 'PUT /memos/:id 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 15. DELETE /internal/memos/:id — 메모 삭제
+  // =========================================================================
+  /**
+   * 메모 삭제
+   * @param {string} id - 메모 ObjectId
+   * @query {string} customerId - 고객 ObjectId (필수)
+   */
+  router.delete('/internal/memos/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { customerId } = req.query;
+
+      if (!customerId) {
+        return res.status(400).json({
+          success: false,
+          error: 'customerId 쿼리 파라미터는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!ObjectId.isValid(id) || !ObjectId.isValid(customerId)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+
+
+      // 메모 존재 확인: _id + customer_id 매칭
+      const memo = await db.collection(COLLECTIONS.CUSTOMER_MEMOS).findOne({
+        _id: new ObjectId(id),
+        customer_id: new ObjectId(customerId)
+      });
+
+      if (!memo) {
+        return res.status(404).json({
+          success: false,
+          error: '메모를 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      await db.collection(COLLECTIONS.CUSTOMER_MEMOS).deleteOne({ _id: new ObjectId(id) });
+
+      res.json({
+        success: true,
+        data: { success: true },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] DELETE /memos/:id 오류:', error.message);
+      backendLogger.error('Internal', 'DELETE /memos/:id 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 16. POST /internal/relationships — 관계 생성
+  // =========================================================================
+  /**
+   * 고객 간 관계 생성 (양방향/가족 관계 시 역방향도 자동 생성)
+   * @body {string} fromCustomerId - 기준 고객 ID (필수)
+   * @body {string} toCustomerId - 대상 고객 ID (필수)
+   * @body {string} relationshipType - 관계 유형 (필수)
+   * @body {string} [relationshipCategory] - 관계 카테고리
+   * @body {string} [notes] - 메모
+   * @body {string} userId - 설계사 ID (필수)
+   */
+  router.post('/internal/relationships', async (req, res) => {
+    try {
+      const { fromCustomerId, toCustomerId, relationshipType, relationshipCategory, notes, userId } = req.body;
+
+      if (!fromCustomerId || !toCustomerId || !relationshipType || !userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'fromCustomerId, toCustomerId, relationshipType, userId는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!ObjectId.isValid(fromCustomerId) || !ObjectId.isValid(toCustomerId)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 자기 참조 체크
+      if (fromCustomerId === toCustomerId) {
+        return res.status(400).json({
+          success: false,
+          error: '자기 자신과는 관계를 설정할 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 관계 유형 검증
+      const allTypes = getAllRelationshipTypes();
+      let typeConfig = allTypes[relationshipType];
+      let isCustomType = false;
+
+      if (!typeConfig) {
+        // corporate 카테고리만 사용자 정의 타입 허용
+        if (relationshipCategory === 'corporate') {
+          isCustomType = true;
+          typeConfig = {
+            reverse: relationshipType,
+            bidirectional: false,
+            category: 'corporate',
+            label: relationshipType
+          };
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: `유효하지 않은 관계 유형입니다. 사용 가능한 유형: ${Object.keys(allTypes).join(', ')}`,
+            timestamp: utcNowISO()
+          });
+        }
+      }
+
+
+      const fromObjectId = new ObjectId(fromCustomerId);
+      const toObjectId = new ObjectId(toCustomerId);
+
+      // 두 고객 소유권 확인
+      const [fromCustomer, toCustomer] = await Promise.all([
+        db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: fromObjectId, 'meta.created_by': userId }),
+        db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: toObjectId, 'meta.created_by': userId })
+      ]);
+
+      if (!fromCustomer) {
+        return res.status(404).json({
+          success: false,
+          error: '기준 고객을 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!toCustomer) {
+        return res.status(404).json({
+          success: false,
+          error: '대상 고객을 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 기존 관계 중복 체크
+      const existingRelation = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
+        'relationship_info.from_customer_id': fromObjectId,
+        'relationship_info.to_customer_id': toObjectId,
+        'relationship_info.status': 'active'
+      });
+
+      if (existingRelation) {
+        return res.status(409).json({
+          success: false,
+          error: `이미 등록된 관계입니다: ${existingRelation.relationship_info.relationship_type}`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      const now = new Date();
+      const relationshipData = {
+        from_customer: fromObjectId,
+        related_customer: toObjectId,
+        family_representative: fromObjectId,
+        relationship_info: {
+          from_customer_id: fromObjectId,
+          to_customer_id: toObjectId,
+          relationship_type: relationshipType,
+          relationship_category: typeConfig.category,
+          is_bidirectional: typeConfig.bidirectional,
+          strength: 'medium',
+          status: 'active'
+        },
+        relationship_details: {
+          description: '',
+          established_date: null,
+          notes: notes || '',
+          contact_frequency: 'unknown',
+          influence_level: 'medium'
+        },
+        insurance_relevance: {
+          is_beneficiary: false,
+          is_insured: false,
+          shared_policies: [],
+          referral_potential: 'medium',
+          cross_selling_opportunity: false
+        },
+        meta: {
+          created_at: now,
+          updated_at: now,
+          created_by: fromCustomer.meta?.created_by || userId,
+          last_modified_by: fromCustomer.meta?.created_by || userId,
+          verified: false,
+          verification_date: null,
+          verified_by: null
+        }
+      };
+
+      const result = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).insertOne(relationshipData);
+
+      // 양방향 관계이거나 family 관계인 경우 역방향 관계도 생성
+      let reverseCreated = false;
+      if (typeConfig.bidirectional || typeConfig.category === 'family') {
+        const existingReverseRelation = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
+          'relationship_info.from_customer_id': toObjectId,
+          'relationship_info.to_customer_id': fromObjectId,
+          'relationship_info.status': 'active'
+        });
+
+        if (!existingReverseRelation) {
+          const reverseRelationshipData = {
+            ...relationshipData,
+            from_customer: toObjectId,
+            related_customer: fromObjectId,
+            family_representative: fromObjectId,
+            relationship_info: {
+              ...relationshipData.relationship_info,
+              from_customer_id: toObjectId,
+              to_customer_id: fromObjectId,
+              relationship_type: typeConfig.reverse
+            },
+            meta: {
+              ...relationshipData.meta
+            }
+          };
+
+          await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).insertOne(reverseRelationshipData);
+          reverseCreated = true;
+        }
+      }
+
+      res.json({
+        success: true,
+        data: {
+          relationshipId: result.insertedId.toString(),
+          reverseCreated
+        },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] POST /relationships 오류:', error.message);
+      backendLogger.error('Internal', 'POST /relationships 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 17. DELETE /internal/relationships/:id — 관계 삭제
+  // =========================================================================
+  /**
+   * 관계 삭제 (양방향/가족 관계 시 역방향도 자동 삭제)
+   * @param {string} id - 관계 ObjectId
+   * @body {string} userId - 설계사 ID (필수)
+   */
+  router.delete('/internal/relationships/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.body;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 관계 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'userId는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+
+      const relationshipObjectId = new ObjectId(id);
+
+      // 관계 조회
+      const relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
+        _id: relationshipObjectId
+      });
+
+      if (!relationship) {
+        return res.status(404).json({
+          success: false,
+          error: '관계를 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 고객 소유권 확인 (from_customer가 userId의 고객인지)
+      const fromCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        _id: relationship.relationship_info.from_customer_id,
+        'meta.created_by': userId
+      });
+
+      if (!fromCustomer) {
+        return res.status(403).json({
+          success: false,
+          error: '해당 관계를 삭제할 권한이 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 정방향 삭제
+      await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteOne({
+        _id: relationshipObjectId
+      });
+
+      // 양방향 or family일 때 역방향 삭제
+      let reverseDeleted = false;
+      if (relationship.relationship_info.is_bidirectional || relationship.relationship_info.relationship_category === 'family') {
+        const deleteResult = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany({
+          'relationship_info.from_customer_id': relationship.relationship_info.to_customer_id,
+          'relationship_info.to_customer_id': relationship.relationship_info.from_customer_id,
+          'relationship_info.status': 'active'
+        });
+        reverseDeleted = deleteResult.deletedCount > 0;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          success: true,
+          reverseDeleted
+        },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] DELETE /relationships/:id 오류:', error.message);
+      backendLogger.error('Internal', 'DELETE /relationships/:id 오류', error);
       res.status(500).json({
         success: false,
         error: error.message,
