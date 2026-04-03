@@ -141,21 +141,34 @@ aims_api (오케스트레이터 + DB 게이트웨이)
 
 ---
 
-## 5. 다음 과제
+## 5. 완료된 인프라 개선
 
-### 크레딧 서비스 물리적 분리 (aims_credit)
+### 모듈별 독립 빌드/테스트 파이프라인 (2026-04-04)
 
-creditService.js + credit-routes.js를 독립 마이크로서비스로 추출.
-- 자체 DB 연결 (files, ai_token_usage, users)
-- storageQuotaService 인라인화
-- document_pipeline, aims_rag_api가 aims_credit에 직접 호출
+`.husky/pre-commit`을 모듈별 선택 실행 방식으로 전환. | 머지 `02541f61`
+- 변경된 모듈만 테스트 (git diff --cached 기반)
+- 단일 모듈 변경 시 최대 91% 시간 단축 (45초 → 4~22초)
+- shared-schema 변경 시 전체 실행 (의존 모듈 전체 영향)
 
-### 모듈별 독립 빌드/테스트 파이프라인
+---
 
-각 서비스가 aims_api 없이 독립적으로 빌드/테스트 가능한 CI 구성.
-- Internal API mock 서버 (테스트 시)
-- 서비스별 Dockerfile 최적화
-- 배포 순서 무관한 rolling update
+## 6. 보류 과제
+
+### 크레딧 서비스 물리적 분리 (aims_credit) — 보류
+
+**보류 결정 (2026-04-04):**
+
+R2에서 credit-routes.js로 논리적 분리를 완료했으나, 물리적 분리(독립 마이크로서비스)는 보류한다.
+
+**보류 이유:**
+- `storageQuotaService` 의존 해소 비용이 높음 — creditService가 `getUserStorageInfo`, `getTierDefinitions`에 4곳에서 의존하며, storageQuotaService는 aims_api 전반 15곳에서 사용 중. 크레딧 전용 부분만 추출하려면 storageQuotaService 자체를 공유 라이브러리로 리팩토링해야 함
+- 논리적 분리(credit-routes.js)로 현재 충분히 관리 가능 — 코드 경계가 명확하고, 독립 배포 시 그대로 추출 가능한 구조
+- aims_api 부하가 분리를 요구하는 수준이 아님 — 현재 사용자 규모에서 크레딧 체크는 부하의 극히 일부
+
+**물리적 분리 조건 (재검토 트리거):**
+- aims_api 응답 시간이 P95 > 500ms로 악화될 때
+- 사용자 수가 100명 이상으로 증가하여 크레딧 체크 트래픽이 유의미해질 때
+- 크레딧 로직의 독립 배포 주기가 aims_api와 크게 달라질 때
 
 ---
 
