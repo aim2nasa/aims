@@ -72,6 +72,153 @@ def check_customer_exists(customer_id: str) -> bool:
     return False
 
 
+# =========================================================================
+# Phase 3: Write 전환 함수 — files 파싱 상태 + customers AR/CRS
+# =========================================================================
+
+def update_file_parsing_status(file_id: str, parse_type: str, status: str | None, **kwargs) -> dict:
+    """
+    파일의 AR/CR 파싱 상태를 Internal API 경유로 업데이트.
+
+    Args:
+        file_id: 파일 ObjectId 문자열
+        parse_type: "ar" 또는 "cr"
+        status: "pending" | "processing" | "completed" | "error" | None (None이면 상태 미변경)
+        **kwargs: 선택 필드들
+            error (str): 에러 메시지
+            customerId (str): 고객 ID
+            displayName (str): 파일 표시명
+            is_annual_report (bool)
+            is_customer_review (bool)
+            completed_at (str): ISO 8601
+            started_at_current_date (bool): 서버 시각으로 started_at 설정
+            retry_count (int): 재시도 횟수
+            cr_metadata (dict): CR 메타데이터
+            extra_fields (dict): 추가 필드
+
+    Returns:
+        {"success": bool, "data": {"modifiedCount": int}} 또는 에러 시 {"success": False}
+    """
+    try:
+        body = {"type": parse_type, "status": status}
+
+        # 선택 필드 매핑
+        for key in ("error", "customerId", "displayName", "is_annual_report",
+                     "is_customer_review", "completed_at", "started_at_current_date",
+                     "retry_count", "cr_metadata", "extra_fields"):
+            if key in kwargs and kwargs[key] is not None:
+                body[key] = kwargs[key]
+
+        resp = requests.patch(
+            f"{AIMS_API_URL}/api/internal/files/{file_id}/parsing-status",
+            json=body,
+            headers=_headers(),
+            timeout=10
+        )
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            logger.warning(f"[InternalAPI] 파싱 상태 업데이트 실패 ({file_id}): {resp.status_code} {resp.text[:200]}")
+            return {"success": False, "error": f"HTTP {resp.status_code}"}
+    except Exception as e:
+        logger.error(f"[InternalAPI] 파싱 상태 업데이트 예외 ({file_id}): {e}")
+        return {"success": False, "error": str(e)}
+
+
+def push_annual_report(customer_id: str, annual_report: dict) -> dict:
+    """고객에 AR 결과 추가 ($push). 반환: {"success": bool, "data": {"modifiedCount": int}}"""
+    try:
+        resp = requests.post(
+            f"{AIMS_API_URL}/api/internal/customers/{customer_id}/annual-reports",
+            json={"annual_report": annual_report},
+            headers=_headers(),
+            timeout=15
+        )
+        if resp.status_code == 200:
+            return resp.json()
+        logger.warning(f"[InternalAPI] AR push 실패 ({customer_id}): {resp.status_code}")
+        return {"success": False, "error": f"HTTP {resp.status_code}"}
+    except Exception as e:
+        logger.error(f"[InternalAPI] AR push 예외 ({customer_id}): {e}")
+        return {"success": False, "error": str(e)}
+
+
+def replace_annual_reports(customer_id: str, annual_reports: list) -> dict:
+    """고객의 annual_reports 배열 직접 교체. 삭제/중복 정리용."""
+    try:
+        resp = requests.put(
+            f"{AIMS_API_URL}/api/internal/customers/{customer_id}/annual-reports",
+            json={"annual_reports": annual_reports},
+            headers=_headers(),
+            timeout=15
+        )
+        if resp.status_code == 200:
+            return resp.json()
+        logger.warning(f"[InternalAPI] AR replace 실패 ({customer_id}): {resp.status_code}")
+        return {"success": False, "error": f"HTTP {resp.status_code}"}
+    except Exception as e:
+        logger.error(f"[InternalAPI] AR replace 예외 ({customer_id}): {e}")
+        return {"success": False, "error": str(e)}
+
+
+def register_annual_report(customer_id: str, issue_date: str) -> dict:
+    """AR 보험계약 등록 (registered_at 설정). 반환: {"success": bool, "data": {"duplicate": bool, "registered_at": str}}"""
+    try:
+        resp = requests.patch(
+            f"{AIMS_API_URL}/api/internal/customers/{customer_id}/annual-reports/register",
+            json={"issue_date": issue_date},
+            headers=_headers(),
+            timeout=10
+        )
+        if resp.status_code == 200:
+            return resp.json()
+        logger.warning(f"[InternalAPI] AR register 실패 ({customer_id}): {resp.status_code}")
+        return {"success": False, "error": f"HTTP {resp.status_code}"}
+    except Exception as e:
+        logger.error(f"[InternalAPI] AR register 예외 ({customer_id}): {e}")
+        return {"success": False, "error": str(e)}
+
+
+def push_customer_review(customer_id: str, customer_review: dict) -> dict:
+    """고객에 CRS 결과 추가 ($push). 반환: {"success": bool, "data": {"modifiedCount": int}}"""
+    try:
+        resp = requests.post(
+            f"{AIMS_API_URL}/api/internal/customers/{customer_id}/customer-reviews",
+            json={"customer_review": customer_review},
+            headers=_headers(),
+            timeout=15
+        )
+        if resp.status_code == 200:
+            return resp.json()
+        logger.warning(f"[InternalAPI] CR push 실패 ({customer_id}): {resp.status_code}")
+        return {"success": False, "error": f"HTTP {resp.status_code}"}
+    except Exception as e:
+        logger.error(f"[InternalAPI] CR push 예외 ({customer_id}): {e}")
+        return {"success": False, "error": str(e)}
+
+
+def replace_customer_reviews(customer_id: str, customer_reviews: list) -> dict:
+    """고객의 customer_reviews 배열 직접 교체. 삭제용."""
+    try:
+        resp = requests.put(
+            f"{AIMS_API_URL}/api/internal/customers/{customer_id}/customer-reviews",
+            json={"customer_reviews": customer_reviews},
+            headers=_headers(),
+            timeout=15
+        )
+        if resp.status_code == 200:
+            return resp.json()
+        logger.warning(f"[InternalAPI] CR replace 실패 ({customer_id}): {resp.status_code}")
+        return {"success": False, "error": f"HTTP {resp.status_code}"}
+    except Exception as e:
+        logger.error(f"[InternalAPI] CR replace 예외 ({customer_id}): {e}")
+        return {"success": False, "error": str(e)}
+
+
+# =========================================================================
+# Phase 1: Read-only 조회 함수 (기존)
+# =========================================================================
+
 def has_report(customer_id: str, source_file_id: str, report_type: str) -> bool:
     """
     고객에게 특정 파일의 AR/CRS 파싱 결과가 이미 있는지 확인.

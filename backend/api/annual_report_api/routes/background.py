@@ -18,7 +18,7 @@ from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
 from config import settings
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, has_report
+from internal_api import check_customer_ownership, has_report, update_file_parsing_status
 
 logger = logging.getLogger(__name__)
 
@@ -82,13 +82,7 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
             # 대기 후에도 파일 경로가 없으면 에러
             if not file_path:
                 error_msg = "파일 경로 없음 (업로드 미완료)"
-                db["files"].update_one(
-                    {"_id": ObjectId(file_id)},
-                    {"$set": {
-                        "ar_parsing_status": "error",
-                        "ar_parsing_error": error_msg
-                    }}
-                )
+                update_file_parsing_status(file_id, "ar", "error", error=error_msg)
                 return {"success": False, "error": error_msg}
 
         import os
@@ -96,23 +90,14 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         if not os.path.exists(file_path):
             # 🔥 파일 존재하지 않음 → error 상태로 업데이트 (결과 보장)
             error_msg = f"파일이 존재하지 않음: {file_path}"
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {
-                    "ar_parsing_status": "error",
-                    "ar_parsing_error": error_msg
-                }}
-            )
+            update_file_parsing_status(str(doc["_id"]), "ar", "error", error=error_msg)
             return {"success": False, "error": error_msg}
 
         # 2.5 🍎 중복 파싱 방지: 같은 source_file_id로 이미 AR이 있는지 확인
         if has_report(customer_id, file_id, "ar"):
             logger.info(f"⏭️ [Queue Parsing] 이미 파싱 완료된 AR 건너뛰기: file_id={file_id}")
             # files 상태도 completed로 업데이트
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {"ar_parsing_status": "completed"}}
-            )
+            update_file_parsing_status(str(doc["_id"]), "ar", "completed")
             # 🔧 완료된 작업은 큐에서 삭제
             try:
                 db["ar_parse_queue"].delete_one({"file_id": doc["_id"]})
@@ -136,13 +121,7 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
 
         if "error" in result:
             logger.error(f"❌ [Queue Parsing] 파싱 실패: {result['error']}")
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {
-                    "ar_parsing_status": "error",
-                    "ar_parsing_error": result["error"]
-                }}
-            )
+            update_file_parsing_status(str(doc["_id"]), "ar", "error", error=result["error"])
             return {"success": False, "error": result["error"]}
 
         # 4. MongoDB 저장
@@ -203,10 +182,15 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
             # 🔴 overallStatus는 건드리지 않음 (관할권 분리 원칙)
             # overallStatus는 주 파이프라인(doc_prep_main, full_pipeline)만 관리
             # AR 스캐너는 ar_parsing_status만 관리
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": update_fields}
-            )
+            api_kwargs = {}
+            if "customerId" in update_fields:
+                api_kwargs["customerId"] = str(update_fields["customerId"])
+            if "displayName" in update_fields:
+                api_kwargs["displayName"] = update_fields["displayName"]
+            completed_at = update_fields.get("ar_parsing_completed_at")
+            if isinstance(completed_at, datetime):
+                api_kwargs["completed_at"] = completed_at.isoformat()
+            update_file_parsing_status(str(doc["_id"]), "ar", "completed", **api_kwargs)
 
             # 🔧 완료된 작업은 큐에서 삭제
             try:
@@ -219,26 +203,14 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         else:
             error_msg = save_result.get("message", "DB 저장 실패")
             logger.error(f"❌ [Queue Parsing] DB 저장 실패: {error_msg}")
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {
-                    "ar_parsing_status": "error",
-                    "ar_parsing_error": error_msg
-                }}
-            )
+            update_file_parsing_status(str(doc["_id"]), "ar", "error", error=error_msg)
             return {"success": False, "error": error_msg}
 
     except Exception as e:
         logger.error(f"❌ [Queue Parsing] 예외 발생: {e}", exc_info=True)
         send_error_log("annual_report_api", f"Queue Parsing 예외 발생: {e}", e)
         try:
-            db["files"].update_one(
-                {"_id": ObjectId(file_id)},
-                {"$set": {
-                    "ar_parsing_status": "error",
-                    "ar_parsing_error": str(e)
-                }}
-            )
+            update_file_parsing_status(str(file_id), "ar", "error", error=str(e))
         except Exception as update_error:
             logger.error(f"❌ [Queue Parsing] 상태 업데이트 실패: {update_error}")
         return {"success": False, "error": str(e)}
@@ -295,10 +267,8 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                     doc_customer_id = customer_id
                     logger.info(f"📝 [BG Parsing] 파라미터 customer_id 사용: {customer_id}")
                     # 문서에 customerId 업데이트
-                    db["files"].update_one(
-                        {"_id": doc["_id"]},
-                        {"$set": {"customerId": ObjectId(customer_id)}}
-                    )
+                    current_status = doc.get("ar_parsing_status", "pending")
+                    update_file_parsing_status(str(doc["_id"]), "ar", current_status, customerId=customer_id)
                 if not doc_customer_id:
                     logger.warning(f"⚠️  [BG Parsing] customer_id 없음: {doc.get('_id')}")
                     skipped_count += 1
@@ -328,25 +298,13 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                 #     continue
 
                 # 4. 파싱 필요 - 상태 업데이트
-                db["files"].update_one(
-                    {"_id": doc["_id"]},
-                    {"$set": {
-                        "ar_parsing_status": "processing",
-                        "ar_parsing_started_at": {"$currentDate": True}
-                    }}
-                )
+                update_file_parsing_status(str(doc["_id"]), "ar", "processing", started_at_current_date=True)
 
                 # 5. PDF 파일 경로 가져오기
                 file_path = doc.get("upload", {}).get("destPath")
                 if not file_path:
                     logger.error(f"❌ [BG Parsing] 파일 경로 없음: {doc.get('_id')}")
-                    db["files"].update_one(
-                        {"_id": doc["_id"]},
-                        {"$set": {
-                            "ar_parsing_status": "error",
-                            "ar_parsing_error": "파일 경로 없음"
-                        }}
-                    )
+                    update_file_parsing_status(str(doc["_id"]), "ar", "error", error="파일 경로 없음")
                     skipped_count += 1
                     continue
 
@@ -367,13 +325,7 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
 
                 if "error" in result:
                     logger.error(f"❌ [BG Parsing] 파싱 실패: {result['error']}")
-                    db["files"].update_one(
-                        {"_id": doc["_id"]},
-                        {"$set": {
-                            "ar_parsing_status": "error",
-                            "ar_parsing_error": result["error"]
-                        }}
-                    )
+                    update_file_parsing_status(str(doc["_id"]), "ar", "error", error=result["error"])
                     skipped_count += 1
                     continue
 
@@ -432,34 +384,25 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                     # 🔴 overallStatus는 건드리지 않음 (관할권 분리 원칙)
                     # overallStatus는 주 파이프라인(doc_prep_main, full_pipeline)만 관리
                     # AR 스캐너는 ar_parsing_status만 관리
-                    db["files"].update_one(
-                        {"_id": doc["_id"]},
-                        {"$set": bg_update}
-                    )
+                    api_kwargs = {}
+                    if "displayName" in bg_update:
+                        api_kwargs["displayName"] = bg_update["displayName"]
+                    completed_at = bg_update.get("ar_parsing_completed_at")
+                    if isinstance(completed_at, datetime):
+                        api_kwargs["completed_at"] = completed_at.isoformat()
+                    update_file_parsing_status(str(doc["_id"]), "ar", "completed", **api_kwargs)
 
                     processing_count += 1
                 else:
                     logger.error(f"❌ [BG Parsing] DB 저장 실패: {save_result.get('message')}")
-                    db["files"].update_one(
-                        {"_id": doc["_id"]},
-                        {"$set": {
-                            "ar_parsing_status": "error",
-                            "ar_parsing_error": save_result.get("message", "DB 저장 실패")
-                        }}
-                    )
+                    update_file_parsing_status(str(doc["_id"]), "ar", "error", error=save_result.get("message", "DB 저장 실패"))
                     skipped_count += 1
 
             except Exception as e:
                 logger.error(f"❌ [BG Parsing] 문서 처리 실패: {doc.get('_id')}, {e}", exc_info=True)
                 send_error_log("annual_report_api", f"BG Parsing 문서 처리 실패: {doc.get('_id')}, {e}", e)
                 try:
-                    db["files"].update_one(
-                        {"_id": doc["_id"]},
-                        {"$set": {
-                            "ar_parsing_status": "error",
-                            "ar_parsing_error": str(e)
-                        }}
-                    )
+                    update_file_parsing_status(str(doc["_id"]), "ar", "error", error=str(e))
                 except Exception as update_error:
                     logger.error(f"❌ [BG Parsing] 상태 업데이트 실패: {update_error}")
                 skipped_count += 1
@@ -664,15 +607,10 @@ async def retry_ar_parsing(
                 )
 
         # ar_parsing_status를 초기화 (재파싱 가능하도록)
-        db["files"].update_one(
-            {"_id": file_obj_id},
-            {
-                "$set": {
-                    "ar_parsing_status": "pending",
-                    "ar_parsing_error": None,
-                    "ar_parsing_retry_at": datetime.now(timezone.utc)
-                }
-            }
+        update_file_parsing_status(
+            str(file_obj_id), "ar", "pending",
+            error=None,
+            extra_fields={"ar_parsing_retry_at": datetime.now(timezone.utc).isoformat()}
         )
 
         logger.info(f"🔄 [Retry] AR 파싱 재시도 준비: file_id={request.file_id}, user_id={user_id}")

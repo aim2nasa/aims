@@ -7,6 +7,7 @@
  * 인증: x-api-key 헤더로 INTERNAL_API_KEY 검증
  * Phase 1: Read-only (조회 전용) 엔드포인트 9건
  * Phase 2: Write (생성/수정/삭제) 엔드포인트 8건
+ * Phase 3: annual_report_api write 전환 엔드포인트 9건
  *
  * @since 2026-04-03
  */
@@ -1558,6 +1559,715 @@ module.exports = function(db) {
     } catch (error) {
       console.error('[Internal] DELETE /relationships/:id 오류:', error.message);
       backendLogger.error('Internal', 'DELETE /relationships/:id 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 18. PATCH /internal/files/:id/parsing-status — AR/CR 파싱 상태 업데이트
+  // =========================================================================
+  /**
+   * AR/CR 파싱 상태를 범용적으로 업데이트
+   * @param {string} id - 파일 ObjectId
+   * @body {string} type - "ar" | "cr" (필수)
+   * @body {string} status - "pending" | "processing" | "completed" | "error" (필수)
+   * @body {string} [error] - 에러 메시지 (type에 따라 ar_parsing_error / cr_parsing_error)
+   * @body {string} [customerId] - 파일의 customerId 갱신
+   * @body {string} [displayName] - 파일의 displayName 갱신
+   * @body {boolean} [is_annual_report] - AR 플래그
+   * @body {boolean} [is_customer_review] - CRS 플래그
+   * @body {string} [completed_at] - 파싱 완료 시각 ISO string
+   * @body {boolean} [started_at_current_date] - true이면 서버 시각으로 started_at 설정
+   * @body {number} [retry_count] - AR 재시도 횟수 (type=ar만)
+   * @body {object} [cr_metadata] - CR 메타데이터 (type=cr만)
+   * @body {object} [extra_fields] - 추가 필드 (위험 필드 제외)
+   */
+  router.patch('/internal/files/:id/parsing-status', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 파일 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const { type, status } = req.body;
+
+      // 필수 필드 검증
+      if (!type || !['ar', 'cr'].includes(type)) {
+        return res.status(400).json({
+          success: false,
+          error: 'type은 "ar" 또는 "cr"이어야 합니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const validStatuses = ['pending', 'processing', 'completed', 'error'];
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          error: `status는 ${validStatuses.join(', ')} 중 하나여야 합니다.`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      const prefix = `${type}_parsing_`;
+      const $set = {};
+
+      // 파싱 상태: 제공된 경우에만 설정 (미제공 시 기존 상태 유지)
+      if (status) {
+        $set[`${prefix}status`] = status;
+      }
+
+      // error 필드: 명시적으로 제공된 경우에만 설정
+      if (req.body.error !== undefined) {
+        $set[`${prefix}error`] = req.body.error;
+      } else if (status && status !== 'error') {
+        $set[`${prefix}error`] = null;
+      }
+
+      // 선택 필드들
+      if (req.body.customerId) {
+        if (!ObjectId.isValid(req.body.customerId)) {
+          return res.status(400).json({
+            success: false,
+            error: '유효하지 않은 customerId입니다.',
+            timestamp: utcNowISO()
+          });
+        }
+        $set.customerId = new ObjectId(req.body.customerId);
+      }
+
+      if (req.body.displayName !== undefined) {
+        $set.displayName = req.body.displayName;
+      }
+
+      if (req.body.is_annual_report !== undefined) {
+        $set.is_annual_report = req.body.is_annual_report;
+      }
+
+      if (req.body.is_customer_review !== undefined) {
+        $set.is_customer_review = req.body.is_customer_review;
+      }
+
+      if (req.body.completed_at !== undefined) {
+        $set[`${prefix}completed_at`] = req.body.completed_at;
+      }
+
+      if (req.body.retry_count !== undefined && type === 'ar') {
+        $set.ar_retry_count = req.body.retry_count;
+      }
+
+      if (req.body.cr_metadata !== undefined && type === 'cr') {
+        $set.cr_metadata = req.body.cr_metadata;
+      }
+
+      // extra_fields: 위험 필드 블랙리스트 제외
+      const BLACKLISTED_FIELDS = new Set(['_id', 'status', 'overallStatus', 'upload', 'meta']);
+      if (req.body.extra_fields && typeof req.body.extra_fields === 'object') {
+        for (const [key, value] of Object.entries(req.body.extra_fields)) {
+          if (!BLACKLISTED_FIELDS.has(key)) {
+            $set[key] = value;
+          }
+        }
+      }
+
+      // updateOp 구성
+      const updateOp = { $set };
+
+      // started_at_current_date: 서버 현재 시각 사용
+      if (req.body.started_at_current_date === true) {
+        updateOp.$currentDate = { [`${prefix}started_at`]: true };
+      }
+
+      const result = await db.collection(COLLECTIONS.FILES).updateOne(
+        { _id: new ObjectId(id) },
+        updateOp
+      );
+
+      res.json({
+        success: true,
+        data: { modifiedCount: result.modifiedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] PATCH /files/:id/parsing-status 오류:', error.message);
+      backendLogger.error('Internal', 'PATCH /files/:id/parsing-status 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 19. POST /internal/customers/:id/annual-reports — AR 결과 추가
+  // =========================================================================
+  /**
+   * 고객에 annual_report 결과 추가 ($push)
+   * @param {string} id - 고객 ObjectId
+   * @body {object} annual_report - 추가할 annual_report 객체 (필수)
+   */
+  router.post('/internal/customers/:id/annual-reports', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const { annual_report } = req.body;
+
+      if (!annual_report || typeof annual_report !== 'object') {
+        return res.status(400).json({
+          success: false,
+          error: 'annual_report 객체는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const result = await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $push: { annual_reports: annual_report } }
+      );
+
+      res.json({
+        success: true,
+        data: { modifiedCount: result.modifiedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] POST /customers/:id/annual-reports 오류:', error.message);
+      backendLogger.error('Internal', 'POST /customers/:id/annual-reports 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 20. DELETE /internal/customers/:id/annual-reports — AR 삭제
+  // =========================================================================
+  /**
+   * 고객의 annual_reports에서 특정 리포트 삭제 (배열 교체 방식)
+   * @param {string} id - 고객 ObjectId
+   * @body {number[]} [report_indices] - 삭제할 인덱스 목록
+   * @body {string[]} [source_file_ids] - 삭제할 source_file_id 목록
+   */
+  router.delete('/internal/customers/:id/annual-reports', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const { report_indices, source_file_ids } = req.body;
+
+      if (!report_indices && !source_file_ids) {
+        return res.status(400).json({
+          success: false,
+          error: 'report_indices 또는 source_file_ids 중 하나는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 고객 조회하여 현재 annual_reports 가져오기
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+        { _id: new ObjectId(id) },
+        { projection: { annual_reports: 1 } }
+      );
+
+      if (!customer) {
+        return res.status(404).json({
+          success: false,
+          error: '고객을 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const reports = customer.annual_reports || [];
+      let filteredReports = [...reports];
+      let deletedCount = 0;
+
+      // 인덱스 기반 삭제
+      if (report_indices && Array.isArray(report_indices)) {
+        const indicesToRemove = new Set(report_indices);
+        filteredReports = filteredReports.filter((_, idx) => !indicesToRemove.has(idx));
+      }
+
+      // source_file_id 기반 삭제
+      if (source_file_ids && Array.isArray(source_file_ids)) {
+        const fileIdSet = new Set(source_file_ids.map(fid => fid.toString()));
+        filteredReports = filteredReports.filter(
+          r => !r.source_file_id || !fileIdSet.has(r.source_file_id.toString())
+        );
+      }
+
+      deletedCount = reports.length - filteredReports.length;
+
+      const result = await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { annual_reports: filteredReports } }
+      );
+
+      res.json({
+        success: true,
+        data: { deletedCount, modifiedCount: result.modifiedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] DELETE /customers/:id/annual-reports 오류:', error.message);
+      backendLogger.error('Internal', 'DELETE /customers/:id/annual-reports 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 21. POST /internal/customers/:id/annual-reports/cleanup-duplicates — AR 중복 정리
+  // =========================================================================
+  /**
+   * 동일 issue_date 중복 AR 정리 (parsed_at 기준 최신 1건만 유지)
+   * @param {string} id - 고객 ObjectId
+   * @body {string} issue_date - 중복 정리 대상 발행일 (필수)
+   */
+  router.post('/internal/customers/:id/annual-reports/cleanup-duplicates', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const { issue_date } = req.body;
+
+      if (!issue_date) {
+        return res.status(400).json({
+          success: false,
+          error: 'issue_date는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+        { _id: new ObjectId(id) },
+        { projection: { annual_reports: 1 } }
+      );
+
+      if (!customer) {
+        return res.status(404).json({
+          success: false,
+          error: '고객을 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const reports = customer.annual_reports || [];
+
+      // 해당 issue_date를 가진 리포트와 나머지 분리
+      const matchingReports = [];
+      const otherReports = [];
+
+      reports.forEach(r => {
+        if (r.issue_date === issue_date) {
+          matchingReports.push(r);
+        } else {
+          otherReports.push(r);
+        }
+      });
+
+      // 중복이 2건 미만이면 정리 불필요
+      if (matchingReports.length < 2) {
+        return res.json({
+          success: true,
+          data: { deletedCount: 0 },
+          timestamp: utcNowISO()
+        });
+      }
+
+      // parsed_at 기준 내림차순 정렬, 최신 1건만 유지
+      matchingReports.sort((a, b) => {
+        const dateA = a.parsed_at ? new Date(a.parsed_at).getTime() : 0;
+        const dateB = b.parsed_at ? new Date(b.parsed_at).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      const bestReport = matchingReports[0];
+      const deletedCount = matchingReports.length - 1;
+      const updatedReports = [...otherReports, bestReport];
+
+      await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { annual_reports: updatedReports } }
+      );
+
+      res.json({
+        success: true,
+        data: { deletedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] POST /customers/:id/annual-reports/cleanup-duplicates 오류:', error.message);
+      backendLogger.error('Internal', 'POST /customers/:id/annual-reports/cleanup-duplicates 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 22. PATCH /internal/customers/:id/annual-reports/register — AR 보험계약 등록
+  // =========================================================================
+  /**
+   * AR 보험계약 등록 (registered_at 설정)
+   * @param {string} id - 고객 ObjectId
+   * @body {string} issue_date - 등록 대상 발행일 (필수)
+   */
+  router.patch('/internal/customers/:id/annual-reports/register', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const { issue_date } = req.body;
+
+      if (!issue_date) {
+        return res.status(400).json({
+          success: false,
+          error: 'issue_date는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+        { _id: new ObjectId(id) },
+        { projection: { annual_reports: 1 } }
+      );
+
+      if (!customer) {
+        return res.status(404).json({
+          success: false,
+          error: '고객을 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const reports = customer.annual_reports || [];
+
+      // issue_date 매칭 인덱스 찾기
+      const idx = reports.findIndex(r => r.issue_date === issue_date);
+
+      if (idx === -1) {
+        return res.status(404).json({
+          success: false,
+          error: `issue_date "${issue_date}"에 해당하는 AR을 찾을 수 없습니다.`,
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 이미 등록된 경우
+      if (reports[idx].registered_at) {
+        return res.json({
+          success: true,
+          data: {
+            duplicate: true,
+            registered_at: reports[idx].registered_at
+          },
+          timestamp: utcNowISO()
+        });
+      }
+
+      const registeredAt = new Date().toISOString();
+
+      await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { [`annual_reports.${idx}.registered_at`]: registeredAt } }
+      );
+
+      res.json({
+        success: true,
+        data: {
+          duplicate: false,
+          registered_at: registeredAt
+        },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] PATCH /customers/:id/annual-reports/register 오류:', error.message);
+      backendLogger.error('Internal', 'PATCH /customers/:id/annual-reports/register 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 23. POST /internal/customers/:id/customer-reviews — CRS 결과 추가
+  // =========================================================================
+  /**
+   * 고객에 customer_review 결과 추가 ($push)
+   * @param {string} id - 고객 ObjectId
+   * @body {object} customer_review - 추가할 customer_review 객체 (필수)
+   */
+  router.post('/internal/customers/:id/customer-reviews', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const { customer_review } = req.body;
+
+      if (!customer_review || typeof customer_review !== 'object') {
+        return res.status(400).json({
+          success: false,
+          error: 'customer_review 객체는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const result = await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $push: { customer_reviews: customer_review } }
+      );
+
+      res.json({
+        success: true,
+        data: { modifiedCount: result.modifiedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] POST /customers/:id/customer-reviews 오류:', error.message);
+      backendLogger.error('Internal', 'POST /customers/:id/customer-reviews 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 24. DELETE /internal/customers/:id/customer-reviews — CRS 삭제
+  // =========================================================================
+  /**
+   * 고객의 customer_reviews에서 특정 리뷰 삭제 (배열 교체 방식)
+   * @param {string} id - 고객 ObjectId
+   * @body {number[]} [review_indices] - 삭제할 인덱스 목록
+   * @body {string[]} [source_file_ids] - 삭제할 source_file_id 목록
+   */
+  router.delete('/internal/customers/:id/customer-reviews', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const { review_indices, source_file_ids } = req.body;
+
+      if (!review_indices && !source_file_ids) {
+        return res.status(400).json({
+          success: false,
+          error: 'review_indices 또는 source_file_ids 중 하나는 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      // 고객 조회하여 현재 customer_reviews 가져오기
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+        { _id: new ObjectId(id) },
+        { projection: { customer_reviews: 1 } }
+      );
+
+      if (!customer) {
+        return res.status(404).json({
+          success: false,
+          error: '고객을 찾을 수 없습니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const reviews = customer.customer_reviews || [];
+      let filteredReviews = [...reviews];
+      let deletedCount = 0;
+
+      // 인덱스 기반 삭제
+      if (review_indices && Array.isArray(review_indices)) {
+        const indicesToRemove = new Set(review_indices);
+        filteredReviews = filteredReviews.filter((_, idx) => !indicesToRemove.has(idx));
+      }
+
+      // source_file_id 기반 삭제
+      if (source_file_ids && Array.isArray(source_file_ids)) {
+        const fileIdSet = new Set(source_file_ids.map(fid => fid.toString()));
+        filteredReviews = filteredReviews.filter(
+          r => !r.source_file_id || !fileIdSet.has(r.source_file_id.toString())
+        );
+      }
+
+      deletedCount = reviews.length - filteredReviews.length;
+
+      const result = await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { customer_reviews: filteredReviews } }
+      );
+
+      res.json({
+        success: true,
+        data: { deletedCount, modifiedCount: result.modifiedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] DELETE /customers/:id/customer-reviews 오류:', error.message);
+      backendLogger.error('Internal', 'DELETE /customers/:id/customer-reviews 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 25. PUT /internal/customers/:id/annual-reports — AR 배열 직접 교체
+  // =========================================================================
+  /**
+   * 고객의 annual_reports 배열을 직접 교체 (db_writer.py의 delete/cleanup 로직용)
+   * @param {string} id - 고객 ObjectId
+   * @body {object[]} annual_reports - 교체할 전체 배열 (필수)
+   */
+  router.put('/internal/customers/:id/annual-reports', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const { annual_reports } = req.body;
+
+      if (!Array.isArray(annual_reports)) {
+        return res.status(400).json({
+          success: false,
+          error: 'annual_reports 배열은 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const result = await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { annual_reports } }
+      );
+
+      res.json({
+        success: true,
+        data: { modifiedCount: result.modifiedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] PUT /customers/:id/annual-reports 오류:', error.message);
+      backendLogger.error('Internal', 'PUT /customers/:id/annual-reports 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // =========================================================================
+  // 26. PUT /internal/customers/:id/customer-reviews — CRS 배열 직접 교체
+  // =========================================================================
+  /**
+   * 고객의 customer_reviews 배열을 직접 교체 (db_writer.py의 delete 로직용)
+   * @param {string} id - 고객 ObjectId
+   * @body {object[]} customer_reviews - 교체할 전체 배열 (필수)
+   */
+  router.put('/internal/customers/:id/customer-reviews', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효하지 않은 고객 ID입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const { customer_reviews } = req.body;
+
+      if (!Array.isArray(customer_reviews)) {
+        return res.status(400).json({
+          success: false,
+          error: 'customer_reviews 배열은 필수입니다.',
+          timestamp: utcNowISO()
+        });
+      }
+
+      const result = await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { customer_reviews } }
+      );
+
+      res.json({
+        success: true,
+        data: { modifiedCount: result.modifiedCount },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] PUT /customers/:id/customer-reviews 오류:', error.message);
+      backendLogger.error('Internal', 'PUT /customers/:id/customer-reviews 오류', error);
       res.status(500).json({
         success: false,
         error: error.message,
