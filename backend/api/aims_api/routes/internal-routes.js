@@ -1431,8 +1431,9 @@ module.exports = function(db) {
         });
 
         if (!existingReverseRelation) {
+          const { _id: _, ...relationshipDataWithoutId } = relationshipData;
           const reverseRelationshipData = {
-            ...relationshipData,
+            ...relationshipDataWithoutId,
             from_customer: toObjectId,
             related_customer: fromObjectId,
             family_representative: fromObjectId,
