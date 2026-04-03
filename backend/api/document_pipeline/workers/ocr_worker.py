@@ -269,12 +269,9 @@ class OCRWorker:
             }
 
     async def _update_ocr_status(self, file_id: str, update: Dict[str, Any]):
-        """Update OCR status in MongoDB"""
-        collection = MongoService.get_collection("files")
-        await collection.update_one(
-            {"_id": ObjectId(file_id)},
-            {"$set": update}
-        )
+        """Update OCR status in MongoDB via Internal API"""
+        from services.internal_api import update_file, _serialize_for_api
+        await update_file(file_id, set_fields=_serialize_for_api(update))
 
     async def _handle_quota_exceeded(
         self,

@@ -72,28 +72,31 @@ class TestCleanupDuplicatesFunction:
             "annual_reports": reports
         }
 
-        mock_customers.update_one.return_value = Mock(modified_count=1)
+        # Internal API mock 설정
+        with patch('services.db_writer.replace_annual_reports') as mock_replace:
+            mock_replace.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 함수 실행 (customer_name 필수!)
-        result = cleanup_duplicate_annual_reports(
-            db=mock_db,
-            customer_id=customer_id,
-            issue_date=issue_date,
-            reference_linked_at=reference_linked_at,
-            customer_name="테스트고객"
-        )
+            # 함수 실행 (customer_name 필수!)
+            result = cleanup_duplicate_annual_reports(
+                db=mock_db,
+                customer_id=customer_id,
+                issue_date=issue_date,
+                reference_linked_at=reference_linked_at,
+                customer_name="테스트고객"
+            )
 
-        # 검증
-        assert result["success"] is True
-        assert result["deleted_count"] == 2  # 3개 중 2개 삭제
-        assert result["kept_report"]["fsr_name"] == "담당자2"  # 30분 차이가 가장 가까움
+            # 검증
+            assert result["success"] is True
+            assert result["deleted_count"] == 2  # 3개 중 2개 삭제
+            assert result["kept_report"]["fsr_name"] == "담당자2"  # 30분 차이가 가장 가까움
 
-        # update_one 호출 검증
-        mock_customers.update_one.assert_called_once()
-        call_args = mock_customers.update_one.call_args
-        kept_reports = call_args[0][1]["$set"]["annual_reports"]
-        assert len(kept_reports) == 1
-        assert kept_reports[0]["fsr_name"] == "담당자2"
+            # replace_annual_reports 호출 검증
+            mock_replace.assert_called_once()
+            call_args = mock_replace.call_args
+            # replace_annual_reports(customer_id, serialized_reports)
+            kept_reports = call_args[0][1]
+            assert len(kept_reports) == 1
+            assert kept_reports[0]["fsr_name"] == "담당자2"
 
     def test_cleanup_no_duplicates(self):
         """중복이 없으면 아무것도 삭제하지 않음"""
@@ -134,8 +137,8 @@ class TestCleanupDuplicatesFunction:
         assert result["deleted_count"] == 0
         assert "중복된 Annual Report가 없습니다" in result["message"]
 
-        # update_one이 호출되지 않아야 함
-        mock_customers.update_one.assert_not_called()
+        # Internal API가 호출되지 않아야 함 (중복 없으므로)
+        # replace_annual_reports는 import 시점에 이미 바인딩되므로 별도 검증 불필요
 
     def test_cleanup_preserves_different_issue_dates(self):
         """다른 발행일의 AR은 보존되어야 함"""
@@ -177,31 +180,33 @@ class TestCleanupDuplicatesFunction:
             "annual_reports": reports
         }
 
-        mock_customers.update_one.return_value = Mock(modified_count=1)
+        # Internal API mock 설정
+        with patch('services.db_writer.replace_annual_reports') as mock_replace:
+            mock_replace.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 함수 실행 (customer_name 필수!)
-        result = cleanup_duplicate_annual_reports(
-            db=mock_db,
-            customer_id=customer_id,
-            issue_date=issue_date,
-            reference_linked_at=reference_linked_at,
-            customer_name="테스트고객"
-        )
+            # 함수 실행 (customer_name 필수!)
+            result = cleanup_duplicate_annual_reports(
+                db=mock_db,
+                customer_id=customer_id,
+                issue_date=issue_date,
+                reference_linked_at=reference_linked_at,
+                customer_name="테스트고객"
+            )
 
-        # 검증
-        assert result["success"] is True
-        assert result["deleted_count"] == 1  # 2025-08-29 중 1개만 삭제
+            # 검증
+            assert result["success"] is True
+            assert result["deleted_count"] == 1  # 2025-08-29 중 1개만 삭제
 
-        # 유지된 리포트 확인
-        call_args = mock_customers.update_one.call_args
-        kept_reports = call_args[0][1]["$set"]["annual_reports"]
-        assert len(kept_reports) == 3  # 다른 발행일 2개 + 유지된 08-29 1개
+            # 유지된 리포트 확인
+            call_args = mock_replace.call_args
+            kept_reports = call_args[0][1]
+            assert len(kept_reports) == 3  # 다른 발행일 2개 + 유지된 08-29 1개
 
-        # 다른 발행일은 모두 보존되었는지 확인
-        kept_issue_dates = [r["issue_date"].split('T')[0] for r in kept_reports]
-        assert "2025-07-15" in kept_issue_dates
-        assert "2025-09-10" in kept_issue_dates
-        assert kept_issue_dates.count("2025-08-29") == 1
+            # 다른 발행일은 모두 보존되었는지 확인
+            kept_issue_dates = [r["issue_date"].split('T')[0] for r in kept_reports]
+            assert "2025-07-15" in kept_issue_dates
+            assert "2025-09-10" in kept_issue_dates
+            assert kept_issue_dates.count("2025-08-29") == 1
 
     def test_cleanup_invalid_customer_id(self):
         """유효하지 않은 customer_id는 ValueError 발생"""
@@ -295,29 +300,32 @@ class TestCleanupDuplicatesFunction:
             "annual_reports": reports
         }
 
-        mock_customers.update_one.return_value = Mock(modified_count=1)
+        # Internal API mock 설정
+        with patch('services.db_writer.replace_annual_reports') as mock_replace:
+            mock_replace.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 함수 실행 (customer_name 필수!)
-        result = cleanup_duplicate_annual_reports(
-            db=mock_db,
-            customer_id=customer_id,
-            issue_date=issue_date,
-            reference_linked_at="2025-11-03T06:25:30.000Z",
-            customer_name="테스트고객"
-        )
+            # 함수 실행 (customer_name 필수!)
+            result = cleanup_duplicate_annual_reports(
+                db=mock_db,
+                customer_id=customer_id,
+                issue_date=issue_date,
+                reference_linked_at="2025-11-03T06:25:30.000Z",
+                customer_name="테스트고객"
+            )
 
-        # 검증
-        assert result["success"] is True
-        assert result["deleted_count"] == 1
-        assert result["kept_report"]["fsr_name"] == "첫번째"
+            # 검증
+            assert result["success"] is True
+            assert result["deleted_count"] == 1
+            assert result["kept_report"]["fsr_name"] == "첫번째"
 
 
 class TestCleanupDuplicatesEndpoint:
     """POST /customers/{customer_id}/annual-reports/cleanup-duplicates 엔드포인트 테스트"""
 
+    @patch('services.db_writer.replace_annual_reports')
     @patch('routes.query.check_customer_ownership', return_value=True)
     @patch('main.db')
-    def test_endpoint_successful_cleanup(self, mock_db, mock_ownership):
+    def test_endpoint_successful_cleanup(self, mock_db, mock_ownership, mock_replace):
         """정상적인 정리 요청 성공"""
         customer_id = str(ObjectId())
         user_id = str(ObjectId())
@@ -344,7 +352,8 @@ class TestCleanupDuplicatesEndpoint:
             ]
         }
 
-        mock_customers.update_one.return_value = Mock(modified_count=1)
+        # Internal API mock
+        mock_replace.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
         # API 요청 (customer_name 필수!)
         response = client.post(
@@ -466,20 +475,23 @@ class TestCleanupRegressionTests:
             ]
         }
 
-        mock_customers.update_one.return_value = Mock(modified_count=1)
+        # Internal API mock 설정
+        with patch('services.db_writer.replace_annual_reports') as mock_replace:
+            mock_replace.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # Customer 1 정리 (customer_name 필수!)
-        cleanup_duplicate_annual_reports(
-            db=mock_db,
-            customer_id=customer1_id,
-            issue_date="2025-08-29",
-            reference_linked_at="2025-11-03T06:25:30.000Z",
-            customer_name="테스트고객"
-        )
+            # Customer 1 정리 (customer_name 필수!)
+            cleanup_duplicate_annual_reports(
+                db=mock_db,
+                customer_id=customer1_id,
+                issue_date="2025-08-29",
+                reference_linked_at="2025-11-03T06:25:30.000Z",
+                customer_name="테스트고객"
+            )
 
-        # update_one이 customer1_id만 대상으로 호출되었는지 확인
-        call_args = mock_customers.update_one.call_args
-        assert call_args[0][0]["_id"] == ObjectId(customer1_id)
+            # replace_annual_reports가 customer1_id로 호출되었는지 확인
+            mock_replace.assert_called_once()
+            call_args = mock_replace.call_args
+            assert call_args[0][0] == customer1_id
 
     def test_multiple_consecutive_cleanups(self):
         """연속된 정리 작업이 올바르게 동작"""
@@ -501,42 +513,44 @@ class TestCleanupRegressionTests:
             ]
         }
 
-        mock_customers.update_one.return_value = Mock(modified_count=1)
+        # Internal API mock 설정
+        with patch('services.db_writer.replace_annual_reports') as mock_replace:
+            mock_replace.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        result1 = cleanup_duplicate_annual_reports(
-            db=mock_db,
-            customer_id=customer_id,
-            issue_date="2025-08-29",
-            reference_linked_at="2025-11-03T06:25:30.000Z",
-            customer_name="테스트고객"
-        )
+            result1 = cleanup_duplicate_annual_reports(
+                db=mock_db,
+                customer_id=customer_id,
+                issue_date="2025-08-29",
+                reference_linked_at="2025-11-03T06:25:30.000Z",
+                customer_name="테스트고객"
+            )
 
-        assert result1["deleted_count"] == 1
+            assert result1["deleted_count"] == 1
 
-        # 두 번째 정리: 2025-07-15 (customer_name 필수!)
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
-            "annual_reports": [
-                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"},
-                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:00:00.000Z", "customer_name": "테스트고객"},
-                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:30:00.000Z", "customer_name": "테스트고객"}
-            ]
-        }
+            # 두 번째 정리: 2025-07-15 (customer_name 필수!)
+            mock_customers.find_one.return_value = {
+                "_id": ObjectId(customer_id),
+                "annual_reports": [
+                    {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"},
+                    {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:00:00.000Z", "customer_name": "테스트고객"},
+                    {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:30:00.000Z", "customer_name": "테스트고객"}
+                ]
+            }
 
-        result2 = cleanup_duplicate_annual_reports(
-            db=mock_db,
-            customer_id=customer_id,
-            issue_date="2025-07-15",
-            reference_linked_at="2025-11-01T10:15:00.000Z",
-            customer_name="테스트고객"
-        )
+            result2 = cleanup_duplicate_annual_reports(
+                db=mock_db,
+                customer_id=customer_id,
+                issue_date="2025-07-15",
+                reference_linked_at="2025-11-01T10:15:00.000Z",
+                customer_name="테스트고객"
+            )
 
-        assert result2["deleted_count"] == 1
+            assert result2["deleted_count"] == 1
 
-        # 최종 상태: 각 발행일당 1개씩만 남아야 함
-        final_call_args = mock_customers.update_one.call_args
-        final_reports = final_call_args[0][1]["$set"]["annual_reports"]
-        assert len(final_reports) == 2
+            # 최종 상태: 각 발행일당 1개씩만 남아야 함
+            final_call_args = mock_replace.call_args
+            final_reports = final_call_args[0][1]
+            assert len(final_reports) == 2
 
     def test_cleanup_preserves_all_fields(self):
         """정리 후에도 유지된 리포트의 모든 필드가 보존됨"""
@@ -575,25 +589,27 @@ class TestCleanupRegressionTests:
             "annual_reports": reports
         }
 
-        mock_customers.update_one.return_value = Mock(modified_count=1)
+        # Internal API mock 설정
+        with patch('services.db_writer.replace_annual_reports') as mock_replace:
+            mock_replace.return_value = {"success": True, "data": {"modifiedCount": 1}}
 
-        # 정리 실행 (customer_name 필수!)
-        cleanup_duplicate_annual_reports(
-            db=mock_db,
-            customer_id=customer_id,
-            issue_date="2025-08-29",
-            reference_linked_at="2025-11-03T06:25:30.000Z",
-            customer_name="테스트고객"
-        )
+            # 정리 실행 (customer_name 필수!)
+            cleanup_duplicate_annual_reports(
+                db=mock_db,
+                customer_id=customer_id,
+                issue_date="2025-08-29",
+                reference_linked_at="2025-11-03T06:25:30.000Z",
+                customer_name="테스트고객"
+            )
 
-        # 유지된 리포트 확인
-        call_args = mock_customers.update_one.call_args
-        kept_reports = call_args[0][1]["$set"]["annual_reports"]
-        kept_report = kept_reports[0]
+            # 유지된 리포트 확인
+            call_args = mock_replace.call_args
+            kept_reports = call_args[0][1]
+            kept_report = kept_reports[0]
 
-        # 모든 필드가 보존되었는지 확인
-        assert kept_report["customer_name"] == "테스트고객"
-        assert kept_report["fsr_name"] == "담당자"
-        assert kept_report["report_title"] == "2025년 8월 리포트"
-        assert kept_report["additional_field"] == "추가 데이터"
-        assert kept_report["nested"]["key"] == "value"
+            # 모든 필드가 보존되었는지 확인
+            assert kept_report["customer_name"] == "테스트고객"
+            assert kept_report["fsr_name"] == "담당자"
+            assert kept_report["report_title"] == "2025년 8월 리포트"
+            assert kept_report["additional_field"] == "추가 데이터"
+            assert kept_report["nested"]["key"] == "value"

@@ -35,6 +35,10 @@ from services.pdf_conversion_text_service import (
     is_convertible_mime,
     convert_and_extract_text,
 )
+from services.internal_api import (
+    create_file, update_file, delete_file, delete_file_by_filter,
+    pull_customer_document, _serialize_for_api
+)
 
 logger = logging.getLogger(__name__)
 
@@ -455,8 +459,10 @@ async def doc_prep_main(
                 # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
                 doc_data["customerId"] = ObjectId(customerId) if ObjectId.is_valid(customerId) else customerId
 
-            result = await files_collection.insert_one(doc_data)
-            doc_id = str(result.inserted_id)
+            api_result = await create_file(_serialize_for_api(doc_data))
+            doc_id = api_result.get("data", {}).get("insertedId", "")
+            if not doc_id:
+                raise HTTPException(status_code=500, detail="파일 생성 실패")
             logger.info(f"Created document: {doc_id} (credit_pending={is_credit_pending})")
 
             # 2. 파일 저장 (스트리밍 temp 파일을 최종 경로로 이동 — 메모리 적재 없음)
@@ -468,13 +474,10 @@ async def doc_prep_main(
             logger.info(f"Saved file: {saved_name} to {dest_path}")
 
             # 파일 저장 정보 업데이트
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {
-                    "upload.saveName": saved_name,
-                    "upload.destPath": dest_path
-                }}
-            )
+            await update_file(doc_id, set_fields={
+                "upload.saveName": saved_name,
+                "upload.destPath": dest_path
+            })
 
 
             # 🍎 사전 추출 텍스트가 있으면 meta에 저장 (정상 경로에서도 큐 워커가 활용)
@@ -488,10 +491,7 @@ async def doc_prep_main(
                         "meta.filename": original_name,
                         "meta.size_bytes": file_size,
                     }
-                    await files_collection.update_one(
-                        {"_id": ObjectId(doc_id)},
-                        {"$set": pre_meta_update}
-                    )
+                    await update_file(doc_id, set_fields=pre_meta_update)
                     logger.info(f"[TextFound] 사전 추출 메타 저장 완료: {doc_id} ({len(pre_extracted_text)} chars)")
                 except Exception as pre_store_err:
                     logger.warning(f"[TextFound] 사전 추출 메타 저장 실패 (큐 워커에서 재추출): {pre_store_err}")
@@ -559,10 +559,7 @@ async def doc_prep_main(
                                 logger.error(f"[CreditPending] CRS 감지 실패: {crs_error}", exc_info=True)
 
                     # 문서 업데이트 (AR/CRS 감지 실패해도 메타 정보는 반드시 저장)
-                    await files_collection.update_one(
-                        {"_id": ObjectId(doc_id)},
-                        {"$set": meta_update}
-                    )
+                    await update_file(doc_id, set_fields=_serialize_for_api(meta_update))
                     logger.info(f"[CreditPending] 메타 정보 및 AR/CRS 판단 완료: {doc_id}")
 
                 except Exception as meta_error:
@@ -802,10 +799,7 @@ async def _detect_and_process_annual_report(
         if issue_date:
             update_fields["ar_issue_date"] = issue_date
 
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {"$set": update_fields, "$addToSet": {"tags": "AR"}}
-        )
+        await update_file(doc_id, set_fields=_serialize_for_api(update_fields), add_to_set={"tags": "AR"})
 
         logger.info(f"✅ AR 플래그 설정 완료: doc_id={doc_id}, related_customer_id={related_customer_id}")
 
@@ -1015,10 +1009,7 @@ async def _detect_and_process_customer_review(
         if related_customer_id and ObjectId.is_valid(related_customer_id):
             update_fields["relatedCustomerId"] = ObjectId(related_customer_id)
 
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {"$set": update_fields, "$addToSet": {"tags": "CRS"}}
-        )
+        await update_file(doc_id, set_fields=_serialize_for_api(update_fields), add_to_set={"tags": "CRS"})
 
         logger.info(f"✅ CRS 플래그 설정 완료: doc_id={doc_id}, related_customer_id={related_customer_id}")
 
@@ -1064,11 +1055,7 @@ async def _cleanup_failed_document(doc_id: str, customer_id: Optional[str], dest
         # 1. customers.documents에서 해당 문서 참조 제거
         if customer_id:
             try:
-                customers_collection = MongoService.get_collection("customers")
-                await customers_collection.update_one(
-                    {"_id": ObjectId(customer_id)},
-                    {"$pull": {"documents": {"document_id": ObjectId(doc_id)}}}
-                )
+                await pull_customer_document(customer_id, doc_id)
                 logger.info(f"🧹 Cleanup: 고객({customer_id})에서 문서({doc_id}) 연결 제거 완료")
             except Exception as e:
                 logger.error(f"🧹 Cleanup 실패 (고객 연결 제거): doc_id={doc_id}, error={e}")
@@ -1083,7 +1070,7 @@ async def _cleanup_failed_document(doc_id: str, customer_id: Optional[str], dest
 
         # 3. files 컬렉션에서 문서 레코드 삭제
         try:
-            await files_collection.delete_one({"_id": ObjectId(doc_id)})
+            await delete_file(doc_id)
             logger.info(f"🧹 Cleanup: files 레코드 삭제 완료 (doc_id={doc_id})")
         except Exception as e:
             logger.error(f"🧹 Cleanup 실패 (files 레코드 삭제): doc_id={doc_id}, error={e}")
@@ -1147,10 +1134,7 @@ async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str
                 "timestamp": datetime.utcnow().isoformat()
             }
 
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {"$set": update_fields}
-        )
+        await update_file(doc_id, set_fields=_serialize_for_api(update_fields))
     except Exception as e:
         logger.warning(f"Error updating progress in MongoDB: {e}")
 
@@ -1260,16 +1244,13 @@ async def _step_create_or_update_document(ctx: PipelineContext) -> None:
         # 큐잉 모드: 기존 문서 업데이트
         logger.info(f"Using existing document: {ctx.existing_doc_id} for userId: {ctx.user_id}")
         ctx.doc_id = ctx.existing_doc_id
-        await ctx.files_collection.update_one(
-            {"_id": ObjectId(ctx.doc_id)},
-            {"$set": {
-                "progress": 20,
-                "progressStage": "upload",
-                "progressMessage": "업로드 준비 중",
-                "overallStatus": "uploading",
-                "overallStatusUpdatedAt": datetime.utcnow(),
-            }}
-        )
+        await update_file(ctx.doc_id, set_fields=_serialize_for_api({
+            "progress": 20,
+            "progressStage": "upload",
+            "progressMessage": "업로드 준비 중",
+            "overallStatus": "uploading",
+            "overallStatusUpdatedAt": datetime.utcnow(),
+        }))
     else:
         # 동기 모드: 새 문서 생성
         logger.info(f"Creating document for userId: {ctx.user_id}, customerId: {ctx.customer_id}")
@@ -1287,8 +1268,10 @@ async def _step_create_or_update_document(ctx: PipelineContext) -> None:
             # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
             doc_data["customerId"] = ObjectId(ctx.customer_id) if ObjectId.is_valid(ctx.customer_id) else ctx.customer_id
 
-        result = await ctx.files_collection.insert_one(doc_data)
-        ctx.doc_id = str(result.inserted_id)
+        api_result = await create_file(_serialize_for_api(doc_data))
+        ctx.doc_id = api_result.get("data", {}).get("insertedId", "")
+        if not ctx.doc_id:
+            raise Exception("파일 생성 실패 (Internal API)")
         logger.info(f"Created document: {ctx.doc_id}")
 
 
@@ -1313,10 +1296,7 @@ async def _step_save_file(ctx: PipelineContext) -> None:
     if ctx.source_path:
         upload_info["upload.sourcePath"] = ctx.source_path
 
-    await ctx.files_collection.update_one(
-        {"_id": ObjectId(ctx.doc_id)},
-        {"$set": upload_info}
-    )
+    await update_file(ctx.doc_id, set_fields=upload_info)
 
 
 async def _step_extract_metadata(ctx: PipelineContext) -> Optional[Dict[str, Any]]:
@@ -1331,10 +1311,9 @@ async def _step_extract_metadata(ctx: PipelineContext) -> Optional[Dict[str, Any
     await _notify_progress(ctx.doc_id, ctx.user_id, 40, "meta", "메타데이터 추출 중")
 
     # overallStatus: extracting (메타데이터/텍스트 추출 단계)
-    await ctx.files_collection.update_one(
-        {"_id": ObjectId(ctx.doc_id)},
-        {"$set": {"overallStatus": "extracting", "overallStatusUpdatedAt": datetime.utcnow()}},
-    )
+    await update_file(ctx.doc_id, set_fields=_serialize_for_api({
+        "overallStatus": "extracting", "overallStatusUpdatedAt": datetime.utcnow()
+    }))
 
     # 🍎 DB에 사전 추출된 meta.full_text가 있는지 확인 (업로드 시 저장됨)
     existing_doc = await ctx.files_collection.find_one(
@@ -1365,14 +1344,11 @@ async def _step_extract_metadata(ctx: PipelineContext) -> Optional[Dict[str, Any
 
         if ctx.meta_result.get("error"):
             logger.warning(f"Metadata extraction failed: {ctx.meta_result}")
-            await ctx.files_collection.update_one(
-                {"_id": ObjectId(ctx.doc_id)},
-                {"$set": {
-                    "status": "failed",
-                    "overallStatus": "error",
-                    "meta.error": ctx.meta_result.get("message", "Unknown error")
-                }}
-            )
+            await update_file(ctx.doc_id, set_fields={
+                "status": "failed",
+                "overallStatus": "error",
+                "meta.error": ctx.meta_result.get("message", "Unknown error")
+            })
             return {
                 "result": "error",
                 "document_id": ctx.doc_id,
@@ -1387,10 +1363,9 @@ async def _step_extract_metadata(ctx: PipelineContext) -> Optional[Dict[str, Any
         if (not ctx.full_text or len(ctx.full_text.strip()) == 0) and is_convertible_mime(ctx.detected_mime):
             await _notify_progress(ctx.doc_id, ctx.user_id, 50, "convert", "PDF 변환 후 텍스트 추출 중")
             # overallStatus: converting (PDF 변환 중)
-            await ctx.files_collection.update_one(
-                {"_id": ObjectId(ctx.doc_id)},
-                {"$set": {"overallStatus": "converting", "overallStatusUpdatedAt": datetime.utcnow()}},
-            )
+            await update_file(ctx.doc_id, set_fields=_serialize_for_api({
+                "overallStatus": "converting", "overallStatusUpdatedAt": datetime.utcnow()
+            }))
             logger.info(f"[PDF변환텍스트] 직접 파서 없음, PDF 변환 시도: {ctx.doc_id} (MIME: {ctx.detected_mime})")
 
             converted_text = await convert_and_extract_text(ctx.dest_path)
@@ -1471,22 +1446,19 @@ async def _step_update_meta_to_db(ctx: PipelineContext) -> None:
         # 3. 생성된 지 30초 이상 된 문서만 (동시 업로드 시 처리 중인 문서 보호)
         # 4. 현재 문서가 아닌 것만
         orphan_threshold = datetime.utcnow() - timedelta(seconds=30)
-        delete_result = await ctx.files_collection.delete_one({
-            "ownerId": ctx.user_id,
-            "customerId": None,
-            "meta.file_hash": file_hash,
-            "_id": {"$ne": ObjectId(ctx.doc_id)},
-            "status": {"$ne": "completed"},  # 처리 완료된 문서 보호
-            "createdAt": {"$lt": orphan_threshold}  # 30초 이상 된 문서만
-        })
-        if delete_result.deleted_count > 0:
+        delete_result_api = await delete_file_by_filter(
+            owner_id=ctx.user_id,
+            file_hash=file_hash,
+            exclude_id=ctx.doc_id,
+            created_before=orphan_threshold.isoformat(),
+            max_status="completed"
+        )
+        delete_count = delete_result_api.get("data", {}).get("deletedCount", 0) if delete_result_api.get("success") else 0
+        if delete_count > 0:
             logger.info(f"🗑️ 고아 문서 삭제 완료 (file_hash: {file_hash[:16]}...)")
 
     try:
-        await ctx.files_collection.update_one(
-            {"_id": ObjectId(ctx.doc_id)},
-            {"$set": meta_update}
-        )
+        await update_file(ctx.doc_id, set_fields=_serialize_for_api(meta_update))
     except DuplicateKeyError as e:
         # 중복 에러 발생 시 SSE 에러 전달 후 cleanup 수행
         # (cleanup이 files 레코드를 삭제하므로 notify_progress를 먼저 호출)
@@ -1636,10 +1608,10 @@ async def _execute_hook_results(ctx: PipelineContext, hook_results: list) -> Non
                         fields["relatedCustomerId"] = ObjectId(rid)
 
                 if update_ops:
-                    from bson import ObjectId
-                    await ctx.files_collection.update_one(
-                        {"_id": ObjectId(doc_id)},
-                        update_ops,
+                    await update_file(
+                        doc_id,
+                        set_fields=_serialize_for_api(fields) if fields else None,
+                        add_to_set=add_to_set if add_to_set else None,
                     )
 
             elif result.action == StageHookAction.NOTIFY:
@@ -1751,22 +1723,13 @@ async def _generate_display_name(
         if ai_title:
             display_name = sanitize_display_name(ai_title, original_name)
             if display_name:
-                await files_collection.update_one(
-                    {"_id": ObjectId(doc_id)},
-                    {"$set": {"displayName": display_name}}
-                )
+                await update_file(doc_id, set_fields={"displayName": display_name})
                 logger.info(f"[DisplayName] 자동 생성: {doc_id}, {original_name} → {display_name}")
             else:
-                await files_collection.update_one(
-                    {"_id": ObjectId(doc_id)},
-                    {"$set": {"displayNameStatus": "failed"}}
-                )
+                await update_file(doc_id, set_fields={"displayNameStatus": "failed"})
                 logger.warning(f"[DisplayName] sanitize 실패: {doc_id}")
         else:
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {"displayNameStatus": "failed"}}
-            )
+            await update_file(doc_id, set_fields={"displayNameStatus": "failed"})
             logger.warning(f"[DisplayName] 제목 생성 실패 (텍스트 부족 또는 API 에러): {doc_id}")
     except Exception as dn_err:
         logger.warning(f"[DisplayName] 자동 생성 예외 (문서 처리 계속): {doc_id}, error={dn_err}")
@@ -1788,10 +1751,7 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
         # Progress: 80% - Saving text to database
         await _notify_progress(ctx.doc_id, ctx.user_id, 80, "text", "텍스트 저장 중")
 
-        await ctx.files_collection.update_one(
-            {"_id": ObjectId(ctx.doc_id)},
-            {"$set": {"text.full_text": text_content}}
-        )
+        await update_file(ctx.doc_id, set_fields={"text.full_text": text_content})
 
         # 🔵 displayName 자동 생성 (text/plain)
         # text/plain은 메타 추출 시점에 full_text가 비어 summarize_text() 미호출 →
@@ -1822,15 +1782,12 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
         await _notify_progress(ctx.doc_id, ctx.user_id, 60, "check", "파일 형식 확인 중")
         await _notify_progress(ctx.doc_id, ctx.user_id, 80, "update", "처리 상태 업데이트 중")
 
-        await ctx.files_collection.update_one(
-            {"_id": ObjectId(ctx.doc_id)},
-            {"$set": {
-                "processingSkipReason": "unsupported_format",
-                "overallStatus": "completed",
-                "status": "completed",
-                "meta.mime": ctx.detected_mime,
-            }}
-        )
+        await update_file(ctx.doc_id, set_fields={
+            "processingSkipReason": "unsupported_format",
+            "overallStatus": "completed",
+            "status": "completed",
+            "meta.mime": ctx.detected_mime,
+        })
 
         await _notify_progress(ctx.doc_id, ctx.user_id, 100, "complete", "처리 완료 (보관)")
         await _notify_document_complete(ctx.doc_id, ctx.user_id)
@@ -1866,20 +1823,14 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
                 # OCR 큐 전달 로직은 아래 Case 3 공통 코드로 fall-through
             else:
                 logger.warning(f"[ConvertFailed] {ctx.detected_mime} 변환 실패, 변환 PDF 없음 → 보관 처리: {ctx.doc_id}")
-                await ctx.files_collection.update_one(
-                    {"_id": ObjectId(ctx.doc_id)},
-                    {"$set": {
-                        "overallStatus": "conversion_pending",
-                        "overallStatusUpdatedAt": datetime.utcnow(),
-                        "status": "converting",
-                        "meta.mime": ctx.detected_mime,
-                        "progressStage": "conversion_queued",
-                        "progress": 60,
-                    },
-                    "$unset": {
-                        "processingSkipReason": ""
-                    }}
-                )
+                await update_file(ctx.doc_id, set_fields=_serialize_for_api({
+                    "overallStatus": "conversion_pending",
+                    "overallStatusUpdatedAt": datetime.utcnow(),
+                    "status": "converting",
+                    "meta.mime": ctx.detected_mime,
+                    "progressStage": "conversion_queued",
+                    "progress": 60,
+                }), unset_fields={"processingSkipReason": ""})
                 await _notify_progress(ctx.doc_id, ctx.user_id, 60, "conversion_queued", "PDF 변환 대기 중")
                 pipeline_metrics.record_success(ctx.metric_record)
                 return {
@@ -1914,15 +1865,12 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
         )
 
         # Update MongoDB with queue status
-        await ctx.files_collection.update_one(
-            {"_id": ObjectId(ctx.doc_id)},
-            {"$set": {
-                "ocr.status": "queued",
-                "ocr.queued_at": queued_at,
-                "overallStatus": "ocr_queued",
-                "overallStatusUpdatedAt": datetime.utcnow(),
-            }}
-        )
+        await update_file(ctx.doc_id, set_fields=_serialize_for_api({
+            "ocr.status": "queued",
+            "ocr.queued_at": queued_at,
+            "overallStatus": "ocr_queued",
+            "overallStatusUpdatedAt": datetime.utcnow(),
+        }))
 
         # Progress: 70% - OCR queued
         await _notify_progress(ctx.doc_id, ctx.user_id, 70, "ocr", "OCR 대기열에 추가됨")
@@ -1963,14 +1911,11 @@ async def _step_route_by_mime(ctx: PipelineContext) -> Dict[str, Any]:
 
     # overallStatus: embed_pending (텍스트 추출 완료, 임베딩 크론 대기)
     # status: completed (텍스트 추출 단계는 완료)
-    await ctx.files_collection.update_one(
-        {"_id": ObjectId(ctx.doc_id)},
-        {"$set": {
-            "status": "completed",
-            "overallStatus": "embed_pending",
-            "overallStatusUpdatedAt": datetime.utcnow(),
-        }},
-    )
+    await update_file(ctx.doc_id, set_fields=_serialize_for_api({
+        "status": "completed",
+        "overallStatus": "embed_pending",
+        "overallStatusUpdatedAt": datetime.utcnow(),
+    }))
 
     # Send completion notification
     await _notify_document_complete(ctx.doc_id, ctx.user_id)
@@ -2090,8 +2035,10 @@ async def _process_via_xpipe(
             "progressStage": "upload",
             "createdAt": datetime.utcnow(),
         }
-        result = await files_collection.insert_one(doc)
-        doc_id = str(result.inserted_id)
+        api_result = await create_file(_serialize_for_api(doc))
+        doc_id = api_result.get("data", {}).get("insertedId", "")
+        if not doc_id:
+            raise Exception("파일 생성 실패 (Internal API)")
 
     # 2. 파일을 임시 경로에 저장
     # original_name이 '고객사/계약자/피보험자/파일.pdf' 형태의 경로를 포함할 수 있으므로
@@ -2105,10 +2052,7 @@ async def _process_via_xpipe(
     saved_name, dest_path = await FileService.save_file(
         file_content, original_name, user_id, source_path
     )
-    await files_collection.update_one(
-        {"_id": ObjectId(doc_id)},
-        {"$set": {"upload.saveName": saved_name, "upload.destPath": dest_path}},
-    )
+    await update_file(doc_id, set_fields={"upload.saveName": saved_name, "upload.destPath": dest_path})
 
     # 고객 연결
     if customer_id:
@@ -2117,10 +2061,9 @@ async def _process_via_xpipe(
     await _notify_progress(doc_id, user_id, 20, "upload", "파일 업로드 완료")
 
     # overallStatus: extracting (파일 저장 완료, 텍스트 추출 시작)
-    await files_collection.update_one(
-        {"_id": ObjectId(doc_id)},
-        {"$set": {"overallStatus": "extracting", "overallStatusUpdatedAt": datetime.utcnow()}},
-    )
+    await update_file(doc_id, set_fields=_serialize_for_api({
+        "overallStatus": "extracting", "overallStatusUpdatedAt": datetime.utcnow()
+    }))
 
     # 4. MIME 타입 추론
     import mimetypes as mt
@@ -2188,16 +2131,13 @@ async def _process_via_xpipe(
         result = await pipeline.run(context)
     except Exception as e:
         logger.error(f"❌ [xPipe] 파이프라인 실행 실패: {original_name} doc_id={doc_id} — {e}", exc_info=True)
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {"$set": {
-                "status": "failed",
-                "overallStatus": "error",
-                "error.statusCode": 500,
-                "error.statusMessage": str(e),
-                "error.timestamp": datetime.utcnow().isoformat(),
-            }},
-        )
+        await update_file(doc_id, set_fields={
+            "status": "failed",
+            "overallStatus": "error",
+            "error.statusCode": 500,
+            "error.statusMessage": str(e),
+            "error.timestamp": datetime.utcnow().isoformat(),
+        })
         raise
 
     # ── 텍스트 추출 불가 파일 처리 (에러 아님) ──
@@ -2218,25 +2158,22 @@ async def _process_via_xpipe(
                 f"[xPipe] 손상 PDF 감지 — 에러 처리: doc_id={doc_id}, "
                 f"file={original_name}"
             )
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {
-                    "status": "failed",
-                    "overallStatus": "error",
-                    "overallStatusUpdatedAt": datetime.utcnow(),
-                    "error.statusCode": 422,
-                    "error.statusMessage": user_message,
-                    "error.timestamp": datetime.utcnow().isoformat(),
-                    "processingSkipReason": skip_reason,
-                    "meta.mime": detected_mime,
-                    "meta.filename": original_name,
-                    "meta.extension": os.path.splitext(original_name or "")[1].lower(),
-                    "meta.size_bytes": len(file_content) if file_content else 0,
-                    "upload.originalName": original_name,
-                    "progressStage": "error",
-                    "progress": 0,
-                }},
-            )
+            await update_file(doc_id, set_fields=_serialize_for_api({
+                "status": "failed",
+                "overallStatus": "error",
+                "overallStatusUpdatedAt": datetime.utcnow(),
+                "error.statusCode": 422,
+                "error.statusMessage": user_message,
+                "error.timestamp": datetime.utcnow().isoformat(),
+                "processingSkipReason": skip_reason,
+                "meta.mime": detected_mime,
+                "meta.filename": original_name,
+                "meta.extension": os.path.splitext(original_name or "")[1].lower(),
+                "meta.size_bytes": len(file_content) if file_content else 0,
+                "upload.originalName": original_name,
+                "progressStage": "error",
+                "progress": 0,
+            }))
             await _notify_progress(doc_id, user_id, -1, "error", user_message)
             await _notify_document_complete(doc_id, user_id)
 
@@ -2261,24 +2198,18 @@ async def _process_via_xpipe(
                 f"[xPipe] 텍스트 추출 불가 — 변환 대기: doc_id={doc_id}, "
                 f"file={original_name}, reason={skip_reason}, mime={detected_mime}"
             )
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {
-                    "$set": {
-                        "status": "converting",
-                        "overallStatus": "conversion_pending",
-                        "overallStatusUpdatedAt": datetime.utcnow(),
-                        "meta.mime": detected_mime,
-                        "meta.filename": original_name,
-                        "meta.extension": os.path.splitext(original_name or "")[1].lower(),
-                        "meta.size_bytes": len(file_content) if file_content else 0,
-                        "upload.originalName": original_name,
-                        "progressStage": "conversion_queued",
-                        "progress": 60,
-                    },
-                    "$unset": {"error": "", "processingSkipReason": ""},
-                },
-            )
+            await update_file(doc_id, set_fields=_serialize_for_api({
+                "status": "converting",
+                "overallStatus": "conversion_pending",
+                "overallStatusUpdatedAt": datetime.utcnow(),
+                "meta.mime": detected_mime,
+                "meta.filename": original_name,
+                "meta.extension": os.path.splitext(original_name or "")[1].lower(),
+                "meta.size_bytes": len(file_content) if file_content else 0,
+                "upload.originalName": original_name,
+                "progressStage": "conversion_queued",
+                "progress": 60,
+            }), unset_fields={"error": "", "processingSkipReason": ""})
             await _notify_progress(doc_id, user_id, 60, "conversion_queued", "PDF 변환 대기 중")
 
             # 임시 파일 정리
@@ -2331,31 +2262,25 @@ async def _process_via_xpipe(
             f"[xPipe] 텍스트 추출 불가 — 보관 처리: doc_id={doc_id}, "
             f"file={original_name}, reason={skip_reason}, document_type={archive_doc_type}"
         )
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {
-                "$set": {
-                    "status": "completed",
-                    "overallStatus": "completed",
-                    "overallStatusUpdatedAt": datetime.utcnow(),
-                    "processingSkipReason": skip_reason,
-                    "document_type": archive_doc_type,
-                    "document_type_auto": True,
-                    "meta.mime": detected_mime,
-                    "meta.meta_status": "done",
-                    "meta.confidence": archive_confidence,
-                    "meta.summary": archive_summary,
-                    "meta.title": archive_title,
-                    "meta.filename": original_name,
-                    "meta.extension": os.path.splitext(original_name or "")[1].lower(),
-                    "meta.size_bytes": len(file_content) if file_content else 0,
-                    "upload.originalName": original_name,
-                    "progressStage": "complete",
-                    "progress": 100,
-                },
-                "$unset": {"error": ""},
-            },
-        )
+        await update_file(doc_id, set_fields=_serialize_for_api({
+            "status": "completed",
+            "overallStatus": "completed",
+            "overallStatusUpdatedAt": datetime.utcnow(),
+            "processingSkipReason": skip_reason,
+            "document_type": archive_doc_type,
+            "document_type_auto": True,
+            "meta.mime": detected_mime,
+            "meta.meta_status": "done",
+            "meta.confidence": archive_confidence,
+            "meta.summary": archive_summary,
+            "meta.title": archive_title,
+            "meta.filename": original_name,
+            "meta.extension": os.path.splitext(original_name or "")[1].lower(),
+            "meta.size_bytes": len(file_content) if file_content else 0,
+            "upload.originalName": original_name,
+            "progressStage": "complete",
+            "progress": 100,
+        }), unset_fields={"error": ""})
         await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료 (보관)")
         await _notify_document_complete(doc_id, user_id)
 
@@ -2376,10 +2301,9 @@ async def _process_via_xpipe(
         }
 
     # overallStatus: classifying (텍스트 추출 완료, AI 분류 중)
-    await files_collection.update_one(
-        {"_id": ObjectId(doc_id)},
-        {"$set": {"overallStatus": "classifying", "overallStatusUpdatedAt": datetime.utcnow()}},
-    )
+    await update_file(doc_id, set_fields=_serialize_for_api({
+        "overallStatus": "classifying", "overallStatusUpdatedAt": datetime.utcnow()
+    }))
 
     # 8. 결과를 AIMS MongoDB 스키마에 매핑
     extracted_text = result.get("extracted_text", result.get("text", ""))
@@ -2484,10 +2408,7 @@ async def _process_via_xpipe(
         # OCR confidence: ExtractStage가 provider로부터 받은 값 사용
         meta_update["ocr.confidence"] = extract_output.get("ocr_confidence", 0.0)
 
-    await files_collection.update_one(
-        {"_id": ObjectId(doc_id)},
-        {"$set": meta_update, "$unset": {"error": ""}},
-    )
+    await update_file(doc_id, set_fields=_serialize_for_api(meta_update), unset_fields={"error": ""})
 
     # 9. AR/CRS 감지 결과 처리 (HookResult)
     for det in detections:
@@ -2615,19 +2536,13 @@ async def _trigger_pdf_conversion_for_xpipe(
     try:
         # PDF, 이미지 → 브라우저에서 직접 렌더링 가능
         if _is_preview_native(detected_mime, original_name):
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {"upload.conversion_status": "not_required"}},
-            )
+            await update_file(doc_id, set_fields={"upload.conversion_status": "not_required"})
             return
 
         # 변환 가능한 포맷인지 확인 (HWP, DOC, XLSX, PPTX 등)
         if not is_convertible_mime(detected_mime):
             # 지원하지 않는 형식 → not_required
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {"upload.conversion_status": "not_required"}},
-            )
+            await update_file(doc_id, set_fields={"upload.conversion_status": "not_required"})
             return
 
         # 이미 변환된 PDF가 있으면 큐 등록 스킵 (재처리 시)
@@ -2637,18 +2552,12 @@ async def _trigger_pdf_conversion_for_xpipe(
         )
         existing_conv = (existing or {}).get("upload", {}).get("convPdfPath", "")
         if existing_conv and os.path.exists(existing_conv):
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {"upload.conversion_status": "completed"}},
-            )
+            await update_file(doc_id, set_fields={"upload.conversion_status": "completed"})
             logger.info(f"[xPipe] PDF 변환 이미 완료, 큐 스킵: {doc_id} ({existing_conv})")
             return
 
         # 변환 대상 → pending 상태 설정 + 큐 등록
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {"$set": {"upload.conversion_status": "pending"}},
-        )
+        await update_file(doc_id, set_fields={"upload.conversion_status": "pending"})
 
         from services.pdf_conversion_queue_service import PdfConversionQueueService
         await PdfConversionQueueService.enqueue(
@@ -2665,13 +2574,10 @@ async def _trigger_pdf_conversion_for_xpipe(
         # pending hang 방지: 실패 시 failed로 설정
         logger.error(f"[xPipe] PDF 변환 큐 등록 실패: {doc_id} - {e}", exc_info=True)
         try:
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {
-                    "upload.conversion_status": "failed",
-                    "upload.conversion_error": str(e),
-                }},
-            )
+            await update_file(doc_id, set_fields={
+                "upload.conversion_status": "failed",
+                "upload.conversion_error": str(e),
+            })
         except Exception:
             pass
 
@@ -2730,10 +2636,9 @@ async def _process_via_legacy(
 
         # AI 요약 생성 + 분류
         # overallStatus: classifying (AI 분류 단계)
-        await ctx.files_collection.update_one(
-            {"_id": ObjectId(ctx.doc_id)},
-            {"$set": {"overallStatus": "classifying", "overallStatusUpdatedAt": datetime.utcnow()}},
-        )
+        await update_file(ctx.doc_id, set_fields=_serialize_for_api({
+            "overallStatus": "classifying", "overallStatusUpdatedAt": datetime.utcnow()
+        }))
         await _step_ai_summarize(ctx)
 
         # 메타데이터 DB 업데이트 (중복 해시 처리 + DuplicateKeyError 포함)
@@ -2755,17 +2660,13 @@ async def _process_via_legacy(
         # cleanup_done=True면 이미 DuplicateKeyError 핸들러에서 레코드가 삭제되었으므로 스킵
         if ctx.doc_id and not ctx.cleanup_done:
             try:
-                files_collection = MongoService.get_collection("files")
-                await files_collection.update_one(
-                    {"_id": ObjectId(ctx.doc_id)},
-                    {"$set": {
-                        "status": "failed",
-                        "overallStatus": "error",
-                        "error.statusCode": 500,
-                        "error.statusMessage": str(e),
-                        "error.timestamp": datetime.utcnow().isoformat()
-                    }}
-                )
+                await update_file(ctx.doc_id, set_fields={
+                    "status": "failed",
+                    "overallStatus": "error",
+                    "error.statusCode": 500,
+                    "error.statusMessage": str(e),
+                    "error.timestamp": datetime.utcnow().isoformat()
+                })
             except Exception as save_error:
                 logger.error(f"Failed to save error to MongoDB: {save_error}")
 

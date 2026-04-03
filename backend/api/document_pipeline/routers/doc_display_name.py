@@ -275,14 +275,9 @@ async def generate_single_display_name(request: SingleDisplayNameRequest):
         if not display_name:
             return DocumentResult(document_id=doc_id, status="failed", reason="sanitize_failed")
 
-        # MongoDB 업데이트
-        await collection.update_one(
-            {"_id": obj_id},
-            {
-                "$set": {"displayName": display_name},
-                "$unset": {"displayNameStatus": ""}
-            }
-        )
+        # MongoDB 업데이트 — Internal API 경유
+        from services.internal_api import update_file as _update_file
+        await _update_file(doc_id, set_fields={"displayName": display_name}, unset_fields={"displayNameStatus": ""})
 
         logger.info(f"[DisplayName] 단건 생성 완료: doc_id={doc_id}, displayName={display_name}")
         return DocumentResult(document_id=doc_id, status="completed", display_name=display_name)
@@ -483,14 +478,9 @@ async def batch_generate_display_names(request: BatchDisplayNameRequest):
                 failed += 1
                 continue
 
-            # 9. MongoDB 업데이트 (성공 시 displayNameStatus 제거)
-            await collection.update_one(
-                {"_id": obj_id},
-                {
-                    "$set": {"displayName": display_name},
-                    "$unset": {"displayNameStatus": ""}
-                }
-            )
+            # 9. MongoDB 업데이트 (성공 시 displayNameStatus 제거) — Internal API 경유
+            from services.internal_api import update_file as _update_file
+            await _update_file(doc_id, set_fields={"displayName": display_name}, unset_fields={"displayNameStatus": ""})
 
             results.append(DocumentResult(
                 document_id=doc_id,

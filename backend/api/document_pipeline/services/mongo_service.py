@@ -44,8 +44,8 @@ class MongoService:
 
     @classmethod
     async def insert_file(cls, owner_id: str, customer_id: Optional[str] = None) -> str:
-        """Insert new file document and return ID"""
-        db = cls.get_db()
+        """Insert new file document and return ID — Internal API 경유"""
+        from services.internal_api import create_file, _serialize_for_api
         doc = {
             "ownerId": owner_id,
             "createdAt": datetime.utcnow(),
@@ -54,18 +54,17 @@ class MongoService:
             # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
             doc["customerId"] = ObjectId(customer_id) if ObjectId.is_valid(customer_id) else customer_id
 
-        result = await db.files.insert_one(doc)
-        return str(result.inserted_id)
+        api_result = await create_file(_serialize_for_api(doc))
+        if api_result.get("success"):
+            return api_result["data"]["insertedId"]
+        raise Exception(f"Internal API 파일 생성 실패: {api_result.get('error', 'unknown')}")
 
     @classmethod
     async def update_file(cls, file_id: str, update_data: Dict[str, Any]) -> bool:
-        """Update file document"""
-        db = cls.get_db()
-        result = await db.files.find_one_and_update(
-            {"_id": ObjectId(file_id)},
-            {"$set": update_data}
-        )
-        return result is not None
+        """Update file document — Internal API 경유"""
+        from services.internal_api import update_file as _update_file, _serialize_for_api
+        api_result = await _update_file(file_id, set_fields=_serialize_for_api(update_data))
+        return api_result.get("success", False)
 
     @classmethod
     async def get_file(cls, file_id: str) -> Optional[Dict[str, Any]]:
