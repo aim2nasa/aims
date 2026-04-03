@@ -267,10 +267,11 @@ class TestSearchEndpoint:
         assert response.status_code == 500
         assert "SmartSearch API 호출 오류" in response.json()["detail"]
 
+    @patch('rag_search.check_credit_for_rag', return_value={"allowed": True, "reason": "test_bypass"})
     @patch('rag_search.reranker')
     @patch('rag_search.hybrid_engine')
     @patch('rag_search.query_analyzer')
-    def test_semantic_search_success(self, mock_analyzer, mock_hybrid, mock_reranker):
+    def test_semantic_search_success(self, mock_analyzer, mock_hybrid, mock_reranker, mock_credit):
         """의미 검색이 성공해야 함"""
         # Mock query analyzer
         mock_analyzer.analyze.return_value = {
@@ -316,8 +317,9 @@ class TestSearchEndpoint:
             assert data["answer"] == "AI generated answer"
             assert len(data["search_results"]) == 1
 
+    @patch('rag_search.check_credit_for_rag', return_value={"allowed": True, "reason": "test_bypass"})
     @patch('rag_search.query_analyzer')
-    def test_semantic_search_embedding_failure(self, mock_analyzer):
+    def test_semantic_search_embedding_failure(self, mock_analyzer, mock_credit):
         """분석 실패 시 500 에러를 반환해야 함"""
         # Mock 설정 - 분석 중 에러 발생
         mock_analyzer.analyze.side_effect = Exception("Query analysis failed")
@@ -358,10 +360,11 @@ class TestEdgeCases:
         # 422 또는 500 응답이 예상됨 (실제 동작에 따라 다름)
         assert response.status_code in [200, 422, 500]
 
+    @patch('rag_search.check_credit_for_rag', return_value={"allowed": True, "reason": "test_bypass"})
     @patch('rag_search.reranker')
     @patch('rag_search.hybrid_engine')
     @patch('rag_search.query_analyzer')
-    def test_semantic_search_no_results(self, mock_analyzer, mock_hybrid, mock_reranker):
+    def test_semantic_search_no_results(self, mock_analyzer, mock_hybrid, mock_reranker, mock_credit):
         """검색 결과가 없을 때 처리"""
         # Mock query analyzer
         mock_analyzer.analyze.return_value = {
@@ -534,10 +537,11 @@ class TestPaginationKeyword:
 class TestPaginationSemantic:
     """시맨틱 검색 페이지네이션 테스트"""
 
+    @patch('rag_search.check_credit_for_rag', return_value={"allowed": True, "reason": "test_bypass"})
     @patch('rag_search.reranker')
     @patch('rag_search.hybrid_engine')
     @patch('rag_search.query_analyzer')
-    def test_semantic_pagination_first_page(self, mock_analyzer, mock_hybrid, mock_reranker):
+    def test_semantic_pagination_first_page(self, mock_analyzer, mock_hybrid, mock_reranker, mock_credit):
         """시맨틱 검색: 첫 페이지 (offset=0)"""
         # Mock query analyzer
         mock_analyzer.analyze.return_value = {
@@ -575,10 +579,11 @@ class TestPaginationSemantic:
             assert data["has_more"] == True
             assert len(data["search_results"]) == 5
 
+    @patch('rag_search.check_credit_for_rag', return_value={"allowed": True, "reason": "test_bypass"})
     @patch('rag_search.reranker')
     @patch('rag_search.hybrid_engine')
     @patch('rag_search.query_analyzer')
-    def test_semantic_pagination_second_page(self, mock_analyzer, mock_hybrid, mock_reranker):
+    def test_semantic_pagination_second_page(self, mock_analyzer, mock_hybrid, mock_reranker, mock_credit):
         """시맨틱 검색: 두 번째 페이지 (offset=5)"""
         mock_analyzer.analyze.return_value = {
             "query_type": "concept",
@@ -615,10 +620,11 @@ class TestPaginationSemantic:
             # offset이 5이므로 doc_id가 doc5~doc9여야 함
             assert data["search_results"][0]["doc_id"] == "doc5"
 
+    @patch('rag_search.check_credit_for_rag', return_value={"allowed": True, "reason": "test_bypass"})
     @patch('rag_search.reranker')
     @patch('rag_search.hybrid_engine')
     @patch('rag_search.query_analyzer')
-    def test_semantic_pagination_last_page(self, mock_analyzer, mock_hybrid, mock_reranker):
+    def test_semantic_pagination_last_page(self, mock_analyzer, mock_hybrid, mock_reranker, mock_credit):
         """시맨틱 검색: 마지막 페이지"""
         mock_analyzer.analyze.return_value = {
             "query_type": "concept",
@@ -653,10 +659,11 @@ class TestPaginationSemantic:
             assert data["has_more"] == False  # 10+2 >= 12
             assert len(data["search_results"]) == 2  # 남은 것 2개
 
+    @patch('rag_search.check_credit_for_rag', return_value={"allowed": True, "reason": "test_bypass"})
     @patch('rag_search.reranker')
     @patch('rag_search.hybrid_engine')
     @patch('rag_search.query_analyzer')
-    def test_semantic_pagination_no_results(self, mock_analyzer, mock_hybrid, mock_reranker):
+    def test_semantic_pagination_no_results(self, mock_analyzer, mock_hybrid, mock_reranker, mock_credit):
         """시맨틱 검색: 결과 없음"""
         mock_analyzer.analyze.return_value = {
             "query_type": "concept",
@@ -861,10 +868,11 @@ class TestSecurityP4:
         )
         assert response.status_code == 403
 
+    @patch('rag_search.check_credit_for_rag', return_value={"allowed": True, "reason": "test_bypass"})
     @patch('rag_search.reranker')
     @patch('rag_search.hybrid_engine')
     @patch('rag_search.query_analyzer')
-    def test_semantic_search_accepts_valid_objectid(self, mock_analyzer, mock_hybrid, mock_reranker):
+    def test_semantic_search_accepts_valid_objectid(self, mock_analyzer, mock_hybrid, mock_reranker, mock_credit):
         """P4-1: 유효한 ObjectId 형식 user_id는 허용"""
         mock_analyzer.analyze.return_value = {
             "query_type": "concept", "entities": [], "concepts": ["test"], "metadata_keywords": ["test"]

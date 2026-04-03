@@ -98,131 +98,126 @@ class TestQueryAnalyzer:
 class TestResolveCustomerFromEntities:
     """고객명 자동 매칭 테스트 (정확 매칭 + 부분 매칭)"""
 
-    def _make_engine(self, mock_mongo, mock_qdrant, mock_openai):
-        """Mock된 HybridSearchEngine 생성"""
-        with patch('hybrid_search.MongoClient') as mc, \
-             patch('hybrid_search.QdrantClient') as qc, \
-             patch('hybrid_search.OpenAI') as oc:
-            mc.return_value.__getitem__ = Mock(return_value=mock_mongo)
+    def _make_engine(self):
+        """Mock된 HybridSearchEngine 생성 (Internal API 방식)"""
+        with patch('hybrid_search.QdrantClient'), \
+             patch('hybrid_search.OpenAI'):
             engine = HybridSearchEngine.__new__(HybridSearchEngine)
-            engine.mongo_client = mc.return_value
-            engine.db = mock_mongo
-            engine.collection = mock_mongo["files"]
-            engine.qdrant_client = mock_qdrant
-            engine.openai_client = mock_openai
+            engine.aims_api_url = "http://localhost:3010"
+            engine.internal_api_key = "test-key"
+            engine.qdrant_client = MagicMock()
+            engine.openai_client = MagicMock()
             engine.last_embedding_response = None
             return engine
 
     def test_exact_match_priority(self):
         """정확 매칭이 우선되어야 함"""
-        mock_db = MagicMock()
-        mock_coll = MagicMock()
-        mock_db.__getitem__ = Mock(return_value=mock_coll)
-
-        # 정확 매칭 성공
         from bson import ObjectId
-        customer_id = ObjectId()
-        mock_coll.find_one.return_value = {"_id": customer_id, "personal_info": {"name": "캐치업코리아"}}
+        customer_id = str(ObjectId())
 
-        engine = self._make_engine(mock_db, MagicMock(), MagicMock())
-        result = engine.resolve_customer_from_entities(["캐치업코리아"], "user1")
+        engine = self._make_engine()
 
-        assert result == str(customer_id)
-        # find_one이 호출되었고 find(부분 매칭)는 호출되지 않아야 함
-        mock_coll.find_one.assert_called_once()
-        mock_coll.find.assert_not_called()
-        print("✅ 정확 매칭 우선 테스트 통과")
+        # _api_post mock: 정확 매칭 시 customerId 반환
+        def mock_api_post(path, body):
+            if path == "/internal/customers/resolve-by-name" and body.get("mode") == "exact":
+                return {"customerId": customer_id}
+            return None
+
+        with patch.object(engine, '_api_post', side_effect=mock_api_post) as mock_api:
+            result = engine.resolve_customer_from_entities(["캐치업코리아"], "user1")
+
+            assert result == customer_id
+            # 정확 매칭 성공 시 1번만 호출 (부분 매칭 호출 없음)
+            assert mock_api.call_count == 1
+            print("✅ 정확 매칭 우선 테스트 통과")
 
     def test_partial_match_single_result(self):
         """부분 매칭: 1건 → 자동 매칭"""
-        mock_db = MagicMock()
-        mock_coll = MagicMock()
-        mock_db.__getitem__ = Mock(return_value=mock_coll)
-
         from bson import ObjectId
-        customer_id = ObjectId()
+        customer_id = str(ObjectId())
 
-        # 정확 매칭 실패
-        mock_coll.find_one.return_value = None
-        # 부분 매칭: 1건 발견
-        mock_cursor = MagicMock()
-        mock_cursor.limit.return_value = [{"_id": customer_id, "personal_info": {"name": "캐치업코리아"}}]
-        mock_coll.find.return_value = mock_cursor
+        engine = self._make_engine()
 
-        engine = self._make_engine(mock_db, MagicMock(), MagicMock())
-        result = engine.resolve_customer_from_entities(["캐치업"], "user1")
+        def mock_api_post(path, body):
+            if path == "/internal/customers/resolve-by-name":
+                if body.get("mode") == "exact":
+                    return {"customerId": None}  # 정확 매칭 실패
+                elif body.get("mode") == "partial":
+                    return {"candidates": [{"customerId": customer_id, "customerName": "캐치업코리아"}]}
+            return None
 
-        assert result == str(customer_id)
-        print("✅ 부분 매칭 단건 테스트 통과")
+        with patch.object(engine, '_api_post', side_effect=mock_api_post):
+            result = engine.resolve_customer_from_entities(["캐치업"], "user1")
+
+            assert result == customer_id
+            print("✅ 부분 매칭 단건 테스트 통과")
 
     def test_partial_match_multiple_results_no_match(self):
         """부분 매칭: 2건 이상 → 매칭 안 함"""
-        mock_db = MagicMock()
-        mock_coll = MagicMock()
-        mock_db.__getitem__ = Mock(return_value=mock_coll)
-
         from bson import ObjectId
 
-        # 정확 매칭 실패
-        mock_coll.find_one.return_value = None
-        # 부분 매칭: 2건 발견 (모호함)
-        mock_cursor = MagicMock()
-        mock_cursor.limit.return_value = [
-            {"_id": ObjectId(), "personal_info": {"name": "이승준"}},
-            {"_id": ObjectId(), "personal_info": {"name": "이승호"}}
-        ]
-        mock_coll.find.return_value = mock_cursor
+        engine = self._make_engine()
 
-        engine = self._make_engine(mock_db, MagicMock(), MagicMock())
-        result = engine.resolve_customer_from_entities(["이승"], "user1")
+        def mock_api_post(path, body):
+            if path == "/internal/customers/resolve-by-name":
+                if body.get("mode") == "exact":
+                    return {"customerId": None}
+                elif body.get("mode") == "partial":
+                    return {"candidates": [
+                        {"customerId": str(ObjectId()), "customerName": "이승준"},
+                        {"customerId": str(ObjectId()), "customerName": "이승호"}
+                    ]}
+            return None
 
-        assert result is None
-        print("✅ 부분 매칭 다건 미매칭 테스트 통과")
+        with patch.object(engine, '_api_post', side_effect=mock_api_post):
+            result = engine.resolve_customer_from_entities(["이승"], "user1")
+
+            assert result is None
+            print("✅ 부분 매칭 다건 미매칭 테스트 통과")
 
     def test_partial_match_min_length(self):
         """1글자 엔터티는 부분 매칭 스킵"""
-        mock_db = MagicMock()
-        mock_coll = MagicMock()
-        mock_db.__getitem__ = Mock(return_value=mock_coll)
+        engine = self._make_engine()
 
-        # 정확 매칭 실패
-        mock_coll.find_one.return_value = None
+        def mock_api_post(path, body):
+            if path == "/internal/customers/resolve-by-name":
+                if body.get("mode") == "exact":
+                    return {"customerId": None}
+            return None
 
-        engine = self._make_engine(mock_db, MagicMock(), MagicMock())
-        result = engine.resolve_customer_from_entities(["김"], "user1")
+        with patch.object(engine, '_api_post', side_effect=mock_api_post) as mock_api:
+            result = engine.resolve_customer_from_entities(["김"], "user1")
 
-        assert result is None
-        # find(부분 매칭)가 호출되지 않아야 함
-        mock_coll.find.assert_not_called()
-        print("✅ 1글자 부분 매칭 스킵 테스트 통과")
+            assert result is None
+            # exact 1번 호출, partial은 호출되지 않아야 함 (1글자이므로)
+            calls = [c for c in mock_api.call_args_list if c[0][1].get("mode") == "partial"]
+            assert len(calls) == 0
+            print("✅ 1글자 부분 매칭 스킵 테스트 통과")
 
     def test_user_id_isolation(self):
         """부분 매칭에서도 user_id 격리 필터 유지"""
-        mock_db = MagicMock()
-        mock_coll = MagicMock()
-        mock_db.__getitem__ = Mock(return_value=mock_coll)
+        engine = self._make_engine()
 
-        # 정확 매칭 실패
-        mock_coll.find_one.return_value = None
-        # 부분 매칭 호출 시 빈 결과
-        mock_cursor = MagicMock()
-        mock_cursor.limit.return_value = []
-        mock_coll.find.return_value = mock_cursor
+        def mock_api_post(path, body):
+            if path == "/internal/customers/resolve-by-name":
+                if body.get("mode") == "exact":
+                    return {"customerId": None}
+                elif body.get("mode") == "partial":
+                    return {"candidates": []}
+            return None
 
-        engine = self._make_engine(mock_db, MagicMock(), MagicMock())
-        engine.resolve_customer_from_entities(["캐치업"], "user1")
+        with patch.object(engine, '_api_post', side_effect=mock_api_post) as mock_api:
+            engine.resolve_customer_from_entities(["캐치업"], "user1")
 
-        # find 호출 시 meta.created_by 필터가 포함되어야 함
-        call_args = mock_coll.find.call_args
-        query_filter = call_args[0][0]
-        assert query_filter["meta.created_by"] == "user1"
-        assert query_filter["meta.status"] == "active"
-        print("✅ 부분 매칭 user_id 격리 테스트 통과")
+            # partial 호출 시 userId가 전달되어야 함
+            partial_calls = [c for c in mock_api.call_args_list if c[0][1].get("mode") == "partial"]
+            assert len(partial_calls) == 1
+            assert partial_calls[0][0][1]["userId"] == "user1"
+            print("✅ 부분 매칭 user_id 격리 테스트 통과")
 
     def test_empty_entities(self):
         """빈 엔터티 리스트 → None 반환"""
-        mock_db = MagicMock()
-        engine = self._make_engine(mock_db, MagicMock(), MagicMock())
+        engine = self._make_engine()
 
         assert engine.resolve_customer_from_entities([], "user1") is None
         assert engine.resolve_customer_from_entities(None, "user1") is None
@@ -232,44 +227,42 @@ class TestResolveCustomerFromEntities:
 class TestGetCustomerRelationships:
     """고객 관계 조회 테스트 (소유자 격리 포함)"""
 
-    def _make_engine(self, mock_db):
-        """Mock된 HybridSearchEngine 생성"""
-        with patch('hybrid_search.MongoClient'), \
-             patch('hybrid_search.QdrantClient'), \
+    def _make_engine(self):
+        """Mock된 HybridSearchEngine 생성 (Internal API 방식)"""
+        with patch('hybrid_search.QdrantClient'), \
              patch('hybrid_search.OpenAI'):
             engine = HybridSearchEngine.__new__(HybridSearchEngine)
-            engine.db = mock_db
-            engine.collection = mock_db["files"]
+            engine.aims_api_url = "http://localhost:3010"
+            engine.internal_api_key = "test-key"
+            engine.qdrant_client = MagicMock()
+            engine.openai_client = MagicMock()
             engine.last_embedding_response = None
             return engine
 
     def test_owner_isolation_in_relationships(self):
-        """관계 조회 시 meta.created_by 필터 포함 확인"""
-        mock_db = MagicMock()
-        mock_rel_coll = MagicMock()
-        mock_cust_coll = MagicMock()
-
-        def getitem(name):
-            if name == "customer_relationships":
-                return mock_rel_coll
-            return mock_cust_coll
-
-        mock_db.__getitem__ = Mock(side_effect=getitem)
-
+        """관계 조회 시 userId 필터가 Internal API로 전달 확인"""
         from bson import ObjectId
         cust_id = str(ObjectId())
 
-        mock_cust_coll.find_one.return_value = {"_id": ObjectId(cust_id), "personal_info": {"name": "캐치업코리아"}}
-        mock_rel_coll.find.return_value = []  # 관계 없음
+        engine = self._make_engine()
 
-        engine = self._make_engine(mock_db)
-        engine.get_customer_relationships(cust_id, "user1")
+        def mock_api_post(path, body):
+            if path == "/internal/relationships/by-customer":
+                # userId가 전달되었는지 확인
+                assert body.get("userId") == "user1"
+                return []  # 관계 없음
+            elif path == "/internal/customers/batch-names":
+                return {"names": {cust_id: "캐치업코리아"}}
+            return None
 
-        # customer_relationships 쿼리에 meta.created_by가 포함되어야 함
-        call_args = mock_rel_coll.find.call_args
-        query_filter = call_args[0][0]
-        assert query_filter.get("meta.created_by") == "user1"
-        print("✅ 관계 조회 소유자 격리 테스트 통과")
+        with patch.object(engine, '_api_post', side_effect=mock_api_post) as mock_api:
+            engine.get_customer_relationships(cust_id, "user1")
+
+            # /internal/relationships/by-customer 호출 시 userId 포함 확인
+            rel_calls = [c for c in mock_api.call_args_list if c[0][0] == "/internal/relationships/by-customer"]
+            assert len(rel_calls) == 1
+            assert rel_calls[0][0][1]["userId"] == "user1"
+            print("✅ 관계 조회 소유자 격리 테스트 통과")
 
 
 # 실제 검색 테스트는 MongoDB, Qdrant 연결이 필요하므로
