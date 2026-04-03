@@ -28,8 +28,8 @@ class TestOrphanDocumentCleanup:
         mock_collection.delete_one = AsyncMock(return_value=MagicMock(deleted_count=1))
         return mock_collection
 
-    async def test_orphan_deleted(self, mock_files_collection):
-        """고아 문서(customerId=None, 30초 이상) 삭제"""
+    async def test_orphan_deleted(self, mock_files_collection, mock_internal_api_writes):
+        """고아 문서(customerId=None, 30초 이상) 삭제 — Internal API delete_file_by_filter 경유"""
         from routers.doc_prep_main import process_document_pipeline
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
@@ -53,18 +53,16 @@ class TestOrphanDocumentCleanup:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        # delete_one 호출 확인
-        assert mock_files_collection.delete_one.called
-        delete_query = mock_files_collection.delete_one.call_args[0][0]
-        assert delete_query["ownerId"] == "user1"
-        assert delete_query["customerId"] is None
-        assert delete_query["meta.file_hash"] == "abc123hash"
-        assert delete_query["_id"] == {"$ne": ObjectId(TEST_DOC_ID)}
-        assert delete_query["status"] == {"$ne": "completed"}
-        assert "createdAt" in delete_query
+        # delete_file_by_filter 호출 확인
+        mock_delete = mock_internal_api_writes["delete_file_by_filter"]
+        assert mock_delete.called
+        call_args = mock_delete.call_args
+        assert call_args.kwargs["owner_id"] == "user1"
+        assert call_args.kwargs["file_hash"] == "abc123hash"
+        assert call_args.kwargs["exclude_id"] == TEST_DOC_ID
 
-    async def test_completed_docs_protected(self, mock_files_collection):
-        """status='completed' 문서는 삭제 안됨 (쿼리 조건)"""
+    async def test_completed_docs_protected(self, mock_files_collection, mock_internal_api_writes):
+        """status='completed' 문서는 삭제 안됨 (max_status 파라미터)"""
         from routers.doc_prep_main import process_document_pipeline
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
@@ -88,11 +86,11 @@ class TestOrphanDocumentCleanup:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        delete_query = mock_files_collection.delete_one.call_args[0][0]
-        assert delete_query["status"] == {"$ne": "completed"}
+        call_args = mock_internal_api_writes["delete_file_by_filter"].call_args
+        assert call_args.kwargs["max_status"] == "completed"
 
-    async def test_current_doc_protected(self, mock_files_collection):
-        """현재 문서 자체는 삭제 안됨 (쿼리 조건)"""
+    async def test_current_doc_protected(self, mock_files_collection, mock_internal_api_writes):
+        """현재 문서 자체는 삭제 안됨 (exclude_id)"""
         from routers.doc_prep_main import process_document_pipeline
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
@@ -116,11 +114,11 @@ class TestOrphanDocumentCleanup:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        delete_query = mock_files_collection.delete_one.call_args[0][0]
-        assert delete_query["_id"] == {"$ne": ObjectId(TEST_DOC_ID)}
+        call_args = mock_internal_api_writes["delete_file_by_filter"].call_args
+        assert call_args.kwargs["exclude_id"] == TEST_DOC_ID
 
-    async def test_30_second_threshold(self, mock_files_collection):
-        """30초 이내 문서는 삭제 안됨 (동시 업로드 보호)"""
+    async def test_30_second_threshold(self, mock_files_collection, mock_internal_api_writes):
+        """30초 이내 문서는 삭제 안됨 (created_before 파라미터)"""
         from routers.doc_prep_main import process_document_pipeline
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
@@ -144,14 +142,15 @@ class TestOrphanDocumentCleanup:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        delete_query = mock_files_collection.delete_one.call_args[0][0]
-        assert "$lt" in str(delete_query["createdAt"])
+        call_args = mock_internal_api_writes["delete_file_by_filter"].call_args
+        assert "created_before" in call_args.kwargs
+        assert call_args.kwargs["created_before"]  # non-empty ISO string
 
-    async def test_no_delete_when_hash_is_none(self, mock_files_collection):
+    async def test_no_delete_when_hash_is_none(self, mock_files_collection, mock_internal_api_writes):
         """file_hash가 None이면 삭제 시도 안함"""
         from routers.doc_prep_main import process_document_pipeline
 
-        mock_files_collection.delete_one.reset_mock()
+        mock_internal_api_writes["delete_file_by_filter"].reset_mock()
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
              patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
@@ -174,10 +173,10 @@ class TestOrphanDocumentCleanup:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        mock_files_collection.delete_one.assert_not_called()
+        mock_internal_api_writes["delete_file_by_filter"].assert_not_called()
 
-    async def test_other_user_docs_protected(self, mock_files_collection):
-        """다른 사용자의 문서는 삭제 안됨 (ownerId 필터)"""
+    async def test_other_user_docs_protected(self, mock_files_collection, mock_internal_api_writes):
+        """다른 사용자의 문서는 삭제 안됨 (owner_id 필터)"""
         from routers.doc_prep_main import process_document_pipeline
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
@@ -201,8 +200,8 @@ class TestOrphanDocumentCleanup:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        delete_query = mock_files_collection.delete_one.call_args[0][0]
-        assert delete_query["ownerId"] == "my_user_id"
+        call_args = mock_internal_api_writes["delete_file_by_filter"].call_args
+        assert call_args.kwargs["owner_id"] == "my_user_id"
 
 
 # ========================================
@@ -219,22 +218,21 @@ class TestDuplicateKeyError:
         mock_collection.delete_one = AsyncMock(return_value=MagicMock(deleted_count=0))
         return mock_collection
 
-    async def test_duplicate_key_sets_error_progress(self, mock_files_collection):
+    async def test_duplicate_key_sets_error_progress(self, mock_files_collection, mock_internal_api_writes):
         """DuplicateKeyError 시 progress=-1 에러 알림"""
         from routers.doc_prep_main import process_document_pipeline
         from pymongo.errors import DuplicateKeyError
 
-        # update_one: 첫 번째 호출은 성공, meta 업데이트에서 DuplicateKeyError
+        # update_file: 첫 몇 호출은 성공, meta 업데이트에서 DuplicateKeyError
         call_count = [0]
         async def side_effect_update(*args, **kwargs):
             call_count[0] += 1
-            # meta 업데이트 시 DuplicateKeyError
-            set_data = args[1].get("$set", {}) if len(args) > 1 else {}
+            set_data = kwargs.get("set_fields", {})
             if "meta.file_hash" in set_data:
                 raise DuplicateKeyError("duplicate key error")
-            return MagicMock()
+            return {"success": True, "data": {"modifiedCount": 1}}
 
-        mock_files_collection.update_one = AsyncMock(side_effect=side_effect_update)
+        mock_internal_api_writes["update_file"].side_effect = side_effect_update
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
              patch("services.file_service.FileService.save_file", return_value=("saved.pdf", "/data/saved.pdf")), \
@@ -278,7 +276,7 @@ class TestFileHashStored:
         mock_collection.delete_one = AsyncMock(return_value=MagicMock(deleted_count=0))
         return mock_collection
 
-    async def test_file_hash_in_meta(self, mock_files_collection):
+    async def test_file_hash_in_meta(self, mock_files_collection, mock_internal_api_writes):
         """meta.file_hash에 해시값 저장"""
         from routers.doc_prep_main import process_document_pipeline
 
@@ -303,10 +301,10 @@ class TestFileHashStored:
                 existing_doc_id=TEST_DOC_ID,
             )
 
-        # meta 업데이트에서 file_hash 확인
-        for call_item in mock_files_collection.update_one.call_args_list:
-            set_data = call_item[0][1].get("$set", {})
+        # Internal API update_file에서 file_hash 확인
+        for call_item in mock_internal_api_writes["update_file"].call_args_list:
+            set_data = call_item.kwargs.get("set_fields", {})
             if "meta.file_hash" in set_data:
                 assert set_data["meta.file_hash"] == "sha256_hash_value"
                 return
-        pytest.fail("meta.file_hash was not stored in any update_one call")
+        pytest.fail("meta.file_hash was not stored in any update_file call")

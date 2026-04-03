@@ -309,6 +309,50 @@ def mock_mongo_service(mock_mongo_collection):
 
 
 @pytest.fixture(autouse=True)
+def mock_internal_api_writes():
+    """Auto-mock Internal API write functions to prevent actual HTTP calls.
+
+    Phase 4에서 files_collection.update_one/insert_one/delete_one이
+    Internal API 함수(create_file, update_file 등)로 교체되었으므로,
+    모든 테스트에서 이 함수들이 자동으로 mock되어야 합니다.
+    """
+    with patch("routers.doc_prep_main.update_file", new_callable=AsyncMock) as mock_update, \
+         patch("routers.doc_prep_main.create_file", new_callable=AsyncMock) as mock_create, \
+         patch("routers.doc_prep_main.delete_file", new_callable=AsyncMock) as mock_delete, \
+         patch("routers.doc_prep_main.delete_file_by_filter", new_callable=AsyncMock) as mock_delete_filter, \
+         patch("routers.doc_prep_main.pull_customer_document", new_callable=AsyncMock) as mock_pull, \
+         patch("services.internal_api.create_file", new_callable=AsyncMock) as mock_svc_create, \
+         patch("services.internal_api.update_file", new_callable=AsyncMock) as mock_svc_update, \
+         patch("services.internal_api.delete_file", new_callable=AsyncMock) as mock_svc_delete, \
+         patch("services.internal_api.delete_file_by_filter", new_callable=AsyncMock) as mock_svc_delete_filter, \
+         patch("services.internal_api.pull_customer_document", new_callable=AsyncMock) as mock_svc_pull:
+        # doc_prep_main 경유 mock 기본 반환값
+        mock_update.return_value = {"success": True, "data": {"modifiedCount": 1}}
+        mock_create.return_value = {"success": True, "data": {"insertedId": "507f1f77bcf86cd799439011"}}
+        mock_delete.return_value = {"success": True, "data": {"deletedCount": 1}}
+        mock_delete_filter.return_value = {"success": True, "data": {"deletedCount": 0}}
+        mock_pull.return_value = {"success": True, "data": {"modifiedCount": 1}}
+        # services.internal_api 직접 mock 기본 반환값 (worker lazy import용)
+        mock_svc_update.return_value = {"success": True, "data": {"modifiedCount": 1}}
+        mock_svc_create.return_value = {"success": True, "data": {"insertedId": "507f1f77bcf86cd799439011"}}
+        mock_svc_delete.return_value = {"success": True, "data": {"deletedCount": 1}}
+        mock_svc_delete_filter.return_value = {"success": True, "data": {"deletedCount": 0}}
+        mock_svc_pull.return_value = {"success": True, "data": {"modifiedCount": 1}}
+        yield {
+            "update_file": mock_update,
+            "create_file": mock_create,
+            "delete_file": mock_delete,
+            "delete_file_by_filter": mock_delete_filter,
+            "pull_customer_document": mock_pull,
+            "svc_update_file": mock_svc_update,
+            "svc_create_file": mock_svc_create,
+            "svc_delete_file": mock_svc_delete,
+            "svc_delete_file_by_filter": mock_svc_delete_filter,
+            "svc_pull_customer_document": mock_svc_pull,
+        }
+
+
+@pytest.fixture(autouse=True)
 def mock_upload_queue_disabled():
     """
     Auto-patch UPLOAD_QUEUE_ENABLED=False to run tests in synchronous mode.

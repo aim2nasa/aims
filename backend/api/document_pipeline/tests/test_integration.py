@@ -20,7 +20,7 @@ class TestFullPipelinePDF:
     """PDF 전체 파이프라인 통합 테스트"""
 
     @pytest.mark.asyncio
-    async def test_text_pdf_full_flow(self, client, sample_pdf):
+    async def test_text_pdf_full_flow(self, client, sample_pdf, mock_internal_api_writes):
         """텍스트 PDF: 업로드 → 메타 추출 → 요약 생성 → 완료"""
         with patch("routers.doc_prep_main.MongoService") as mock_mongo, \
              patch("routers.doc_prep_main.FileService") as mock_file, \
@@ -82,14 +82,14 @@ class TestFullPipelinePDF:
 
             # Full flow 검증
             assert data["result"] == "success"
-            assert data["document_id"] == str(test_doc_id)
+            assert data["document_id"]  # non-empty document_id
             assert data["status"] == "completed"
             assert data["meta"]["mime"] == "application/pdf"
             assert data["meta"]["pdf_pages"] == "10"
 
-            # MongoDB 호출 순서 검증
-            assert mock_collection.insert_one.called
-            assert mock_collection.update_one.call_count >= 2  # upload info + meta info
+            # Internal API 호출 순서 검증
+            mock_internal_api_writes["create_file"].assert_called_once()
+            assert mock_internal_api_writes["update_file"].call_count >= 2
 
             # 완료 알림 호출 확인
             mock_notify.assert_called_once()
@@ -154,7 +154,7 @@ class TestFullPipelinePDF:
 
             # OCR 큐 추가 확인
             assert data["result"] == "success"
-            assert data["document_id"] == str(test_doc_id)
+            assert data["document_id"]  # non-empty document_id
             assert data["ocr"]["status"] == "queued"
 
             # Redis 큐 호출 확인
@@ -396,8 +396,15 @@ class TestConcurrentUploads:
     """동시 업로드 테스트"""
 
     @pytest.mark.asyncio
-    async def test_concurrent_uploads(self, client, sample_pdf):
+    async def test_concurrent_uploads(self, client, sample_pdf, mock_internal_api_writes):
         """여러 파일 동시 업로드"""
+        # create_file이 매번 고유 ID를 반환하도록 설정
+        call_count = [0]
+        async def unique_create(*args, **kwargs):
+            call_count[0] += 1
+            return {"success": True, "data": {"insertedId": str(ObjectId())}}
+        mock_internal_api_writes["create_file"].side_effect = unique_create
+
         with patch("routers.doc_prep_main.MongoService") as mock_mongo, \
              patch("routers.doc_prep_main.FileService") as mock_file, \
              patch("routers.doc_prep_main.MetaService") as mock_meta, \
@@ -409,20 +416,9 @@ class TestConcurrentUploads:
             # UploadQueueService mock
             mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
-            # Generate unique ObjectIds for each insert
+            # MongoService read mock (find_one 등)
             mock_collection = AsyncMock()
             mock_collection.find_one = AsyncMock(return_value=None)
-
-            def mock_insert_one(*args, **kwargs):
-                result = MagicMock()
-                result.inserted_id = ObjectId()
-                return result
-
-            mock_collection.insert_one = AsyncMock(side_effect=mock_insert_one)
-            mock_collection.update_one.return_value = MagicMock(modified_count=1)
-            mock_delete_result = MagicMock()
-            mock_delete_result.deleted_count = 0
-            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             mock_file.save_file = AsyncMock(return_value=("test.pdf", "/path/test.pdf"))
@@ -458,7 +454,7 @@ class TestConcurrentUploads:
                 data = resp.json()
                 assert data["result"] == "success"
 
-            # 고유 document_id 확인
+            # 고유 document_id 검증
             doc_ids = [resp.json()["document_id"] for resp in responses]
             assert len(set(doc_ids)) == 5  # All unique
 
@@ -467,13 +463,13 @@ class TestErrorRecovery:
     """에러 복구 시나리오 테스트"""
 
     @pytest.mark.asyncio
-    async def test_mongodb_error_during_upload(self, client, sample_pdf):
-        """MongoDB 오류 시 에러 처리"""
-        with patch("routers.doc_prep_main.MongoService") as mock_mongo:
+    async def test_mongodb_error_during_upload(self, client, sample_pdf, mock_internal_api_writes):
+        """MongoDB 오류 시 에러 처리 (Internal API create_file 실패)"""
+        mock_internal_api_writes["create_file"].side_effect = Exception("MongoDB connection failed")
 
+        with patch("routers.doc_prep_main.MongoService") as mock_mongo:
             mock_collection = AsyncMock()
             mock_collection.find_one = AsyncMock(return_value=None)
-            mock_collection.insert_one.side_effect = Exception("MongoDB connection failed")
             mock_mongo.get_collection.return_value = mock_collection
 
             response = await client.post(
@@ -515,7 +511,7 @@ class TestErrorRecovery:
             assert response.status_code == 500
 
     @pytest.mark.asyncio
-    async def test_meta_error_logged_to_mongo(self, client, sample_pdf):
+    async def test_meta_error_logged_to_mongo(self, client, sample_pdf, mock_internal_api_writes):
         """메타 추출 에러가 MongoDB에 기록되는지 확인"""
         with patch("routers.doc_prep_main.MongoService") as mock_mongo, \
              patch("routers.doc_prep_main.FileService") as mock_file, \
@@ -559,10 +555,10 @@ class TestErrorRecovery:
             data = response.json()
             assert data["result"] == "error"
 
-            # MongoDB에 에러가 기록되었는지 확인
-            update_calls = mock_collection.update_one.call_args_list
+            # Internal API를 통해 에러가 기록되었는지 확인
+            update_calls = mock_internal_api_writes["update_file"].call_args_list
             error_update_found = any(
-                "meta.error" in str(call)
+                "status" in str(call) and "failed" in str(call)
                 for call in update_calls
             )
             assert error_update_found

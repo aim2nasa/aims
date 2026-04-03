@@ -96,11 +96,10 @@ class TestARPatternDetection:
         result = await self._call_detect_ar("", files_collection)
         assert result["is_annual_report"] is False
 
-    async def test_exception_isolation(self, files_collection):
+    async def test_exception_isolation(self, files_collection, mock_internal_api_writes):
         """내부 예외 발생 시 False 반환 (전체 파이프라인 중단 방지)"""
-        # files_collection.update_one이 예외를 던져도 함수는 False 반환
-        files_collection.update_one.side_effect = Exception("DB error")
-        # AR 감지 자체는 성공하지만 DB 업데이트에서 예외 → 함수 예외 캐치 → False
+        # update_file이 예외를 던져도 함수는 False 반환
+        mock_internal_api_writes["update_file"].side_effect = Exception("DB error")
         from routers.doc_prep_main import _detect_and_process_annual_report
 
         with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
@@ -264,7 +263,7 @@ class TestARDBUpdate:
         mock.update_one = AsyncMock()
         return mock
 
-    async def test_ar_flag_and_parsing_status(self, ar_text_sample, files_collection):
+    async def test_ar_flag_and_parsing_status(self, ar_text_sample, files_collection, mock_internal_api_writes):
         """AR 감지 시 is_annual_report=True, ar_parsing_status='pending' 설정"""
         from routers.doc_prep_main import _detect_and_process_annual_report
 
@@ -287,14 +286,15 @@ class TestARDBUpdate:
                 files_collection=files_collection,
             )
 
-        # DB update_one이 호출되었는지 확인
-        assert files_collection.update_one.called
-        call_args = files_collection.update_one.call_args
-        update_set = call_args[0][1]["$set"]
-        assert update_set["is_annual_report"] is True
-        assert update_set["ar_parsing_status"] == "pending"
+        # Internal API update_file이 호출되었는지 확인
+        mock_update = mock_internal_api_writes["update_file"]
+        assert mock_update.called
+        call_args = mock_update.call_args
+        set_fields = call_args.kwargs.get("set_fields", {})
+        assert set_fields["is_annual_report"] is True
+        assert set_fields["ar_parsing_status"] == "pending"
 
-    async def test_display_name_format(self, files_collection):
+    async def test_display_name_format(self, files_collection, mock_internal_api_writes):
         """displayName = '{고객명}_AR_{YYYY-MM-DD}.pdf'"""
         text = "MetLife\n홍길동 고객님을 위한\nAnnual Review Report\n보유계약 현황\n발행(기준)일: 2026년 1월 15일"
         from routers.doc_prep_main import _detect_and_process_annual_report
@@ -318,12 +318,13 @@ class TestARDBUpdate:
                 files_collection=files_collection,
             )
 
-        call_args = files_collection.update_one.call_args
-        update_set = call_args[0][1]["$set"]
-        assert update_set.get("displayName") == "홍길동_AR_2026-01-15.pdf"
+        mock_update = mock_internal_api_writes["update_file"]
+        call_args = mock_update.call_args
+        set_fields = call_args.kwargs.get("set_fields", {})
+        assert set_fields.get("displayName") == "홍길동_AR_2026-01-15.pdf"
 
-    async def test_related_customer_id_as_objectid(self, files_collection):
-        """기존 고객 발견 시 relatedCustomerId는 ObjectId로 저장 (customerId는 변경하지 않음)"""
+    async def test_related_customer_id_as_objectid(self, files_collection, mock_internal_api_writes):
+        """기존 고객 발견 시 relatedCustomerId는 ObjectId 문자열로 저장"""
         text = "MetLife\n홍길동 고객님을 위한\nAnnual Review Report\n보유계약 현황"
         from routers.doc_prep_main import _detect_and_process_annual_report
 
@@ -353,10 +354,12 @@ class TestARDBUpdate:
                 files_collection=files_collection,
             )
 
-        call_args = files_collection.update_one.call_args
-        update_set = call_args[0][1]["$set"]
-        assert "relatedCustomerId" in update_set
-        assert isinstance(update_set["relatedCustomerId"], ObjectId)
+        mock_update = mock_internal_api_writes["update_file"]
+        call_args = mock_update.call_args
+        set_fields = call_args.kwargs.get("set_fields", {})
+        assert "relatedCustomerId" in set_fields
+        # _serialize_for_api가 ObjectId를 str로 변환
+        assert set_fields["relatedCustomerId"] == existing_customer_id
 
 
 # ========================================
@@ -434,7 +437,7 @@ class TestCRSDBUpdate:
         mock.update_one = AsyncMock()
         return mock
 
-    async def test_crs_flag_and_parsing_status(self, crs_text_sample, files_collection):
+    async def test_crs_flag_and_parsing_status(self, crs_text_sample, files_collection, mock_internal_api_writes):
         """CRS 감지 시 is_customer_review=True, cr_parsing_status='pending'"""
         from routers.doc_prep_main import _detect_and_process_customer_review
 
@@ -457,10 +460,11 @@ class TestCRSDBUpdate:
                 files_collection=files_collection,
             )
 
-        call_args = files_collection.update_one.call_args
-        update_set = call_args[0][1]["$set"]
-        assert update_set["is_customer_review"] is True
-        assert update_set["cr_parsing_status"] == "pending"
+        mock_update = mock_internal_api_writes["update_file"]
+        call_args = mock_update.call_args
+        set_fields = call_args.kwargs.get("set_fields", {})
+        assert set_fields["is_customer_review"] is True
+        assert set_fields["cr_parsing_status"] == "pending"
 
     async def test_crs_display_name_with_product(self, crs_text_sample, files_collection):
         """displayName = '{고객명}_CRS_{상품명}_{YYYY-MM-DD}.pdf'"""
@@ -487,7 +491,7 @@ class TestCRSDBUpdate:
 
         assert result["display_name"] == "김철수_CRS_메트라이프 변액종합보험_2026-02-10.pdf"
 
-    async def test_crs_cr_metadata_stored(self, crs_text_sample, files_collection):
+    async def test_crs_cr_metadata_stored(self, crs_text_sample, files_collection, mock_internal_api_writes):
         """cr_metadata에 contractor_name, product_name, issue_date 저장"""
         from routers.doc_prep_main import _detect_and_process_customer_review
 
@@ -510,9 +514,10 @@ class TestCRSDBUpdate:
                 files_collection=files_collection,
             )
 
-        call_args = files_collection.update_one.call_args
-        update_set = call_args[0][1]["$set"]
-        cr_meta = update_set["cr_metadata"]
+        mock_update = mock_internal_api_writes["update_file"]
+        call_args = mock_update.call_args
+        set_fields = call_args.kwargs.get("set_fields", {})
+        cr_meta = set_fields["cr_metadata"]
         assert cr_meta["contractor_name"] == "김철수"
         assert cr_meta["product_name"] == "메트라이프 변액종합보험"
         assert cr_meta["issue_date"] == "2026-02-10"

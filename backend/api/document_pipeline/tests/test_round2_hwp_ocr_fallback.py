@@ -62,13 +62,12 @@ class TestOcrFallbackMarker:
         return w
 
     @pytest.mark.asyncio
-    async def test_empty_text_sets_ocr_fallback_needed(self, worker):
+    async def test_empty_text_sets_ocr_fallback_needed(self, worker, mock_internal_api_writes):
         """변환 PDF에서 텍스트가 0자이면 ocr_fallback_needed: True를 설정해야 한다"""
         document_id = str(ObjectId())
         pdf_path = "/data/files/test.pdf"
 
         mock_files_col = AsyncMock()
-        # find_one 반환: 기존 텍스트 없음
         mock_files_col.find_one.return_value = {
             "_id": ObjectId(document_id),
             "meta": {},
@@ -86,10 +85,11 @@ class TestOcrFallbackMarker:
 
             assert result is False
 
-            # update_one 호출 확인: ocr_fallback_needed 마커
-            mock_files_col.update_one.assert_called_once()
-            call_args = mock_files_col.update_one.call_args
-            set_fields = call_args[0][1]["$set"]
+            # Internal API update_file 호출 확인: ocr_fallback_needed 마커
+            mock_update = mock_internal_api_writes["svc_update_file"]
+            mock_update.assert_called_once()
+            call_args = mock_update.call_args
+            set_fields = call_args.kwargs.get("set_fields", {})
             assert "meta.ocr_fallback_needed" in set_fields
             assert set_fields["meta.ocr_fallback_needed"] is True
 
@@ -97,7 +97,7 @@ class TestOcrFallbackMarker:
             mock_enqueue.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_empty_text_does_not_set_text_extraction_failed(self, worker):
+    async def test_empty_text_does_not_set_text_extraction_failed(self, worker, mock_internal_api_writes):
         """변환 PDF 텍스트 0자일 때 text_extraction_failed를 설정하면 안 된다"""
         document_id = str(ObjectId())
         pdf_path = "/data/files/test.pdf"
@@ -119,13 +119,14 @@ class TestOcrFallbackMarker:
             )
 
             assert result is False
-            call_args = mock_files_col.update_one.call_args
-            set_fields = call_args[0][1]["$set"]
+            mock_update = mock_internal_api_writes["svc_update_file"]
+            call_args = mock_update.call_args
+            set_fields = call_args.kwargs.get("set_fields", {})
             # text_extraction_failed가 아니라 ocr_fallback_needed여야 함
             assert "meta.text_extraction_failed" not in set_fields
 
     @pytest.mark.asyncio
-    async def test_missing_pdf_still_sets_text_extraction_failed(self, worker):
+    async def test_missing_pdf_still_sets_text_extraction_failed(self, worker, mock_internal_api_writes):
         """변환 PDF 파일이 존재하지 않으면 기존대로 text_extraction_failed를 설정해야 한다"""
         document_id = str(ObjectId())
         pdf_path = "/data/files/nonexistent.pdf"
@@ -144,7 +145,8 @@ class TestOcrFallbackMarker:
             )
 
             assert result is False
-            call_args = mock_files_col.update_one.call_args
-            set_fields = call_args[0][1]["$set"]
+            mock_update = mock_internal_api_writes["svc_update_file"]
+            call_args = mock_update.call_args
+            set_fields = call_args.kwargs.get("set_fields", {})
             assert "meta.text_extraction_failed" in set_fields
             assert set_fields["meta.text_extraction_failed"] is True
