@@ -32,17 +32,7 @@ class TestARPatternDetection:
         """Helper: AR 감지 함수 호출"""
         from routers.doc_prep_main import _detect_and_process_annual_report
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=mock_resp)
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             return await _detect_and_process_annual_report(
                 doc_id=TEST_DOC_ID,
                 full_text=full_text,
@@ -102,17 +92,7 @@ class TestARPatternDetection:
         mock_internal_api_writes["update_file"].side_effect = Exception("DB error")
         from routers.doc_prep_main import _detect_and_process_annual_report
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=201, json=MagicMock(return_value={"_id": "c1"})))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             result = await _detect_and_process_annual_report(
                 doc_id=TEST_DOC_ID,
                 full_text="MetLife\n홍길동 고객님을 위한\nAnnual Review Report\n보유계약 현황",
@@ -139,17 +119,7 @@ class TestARCustomerNameExtraction:
     async def _call_detect_ar(self, full_text, files_collection):
         from routers.doc_prep_main import _detect_and_process_annual_report
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=201, json=MagicMock(return_value={"_id": "c1"})))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             return await _detect_and_process_annual_report(
                 doc_id=TEST_DOC_ID,
                 full_text=full_text,
@@ -206,17 +176,7 @@ class TestARIssueDateExtraction:
     async def _call_detect_ar(self, full_text, files_collection):
         from routers.doc_prep_main import _detect_and_process_annual_report
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=201, json=MagicMock(return_value={"_id": "c1"})))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             return await _detect_and_process_annual_report(
                 doc_id=TEST_DOC_ID,
                 full_text=full_text,
@@ -267,17 +227,7 @@ class TestARDBUpdate:
         """AR 감지 시 is_annual_report=True, ar_parsing_status='pending' 설정"""
         from routers.doc_prep_main import _detect_and_process_annual_report
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=201, json=MagicMock(return_value={"_id": "c1"})))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             await _detect_and_process_annual_report(
                 doc_id="507f1f77bcf86cd799439011",
                 full_text=ar_text_sample,
@@ -299,17 +249,7 @@ class TestARDBUpdate:
         text = "MetLife\n홍길동 고객님을 위한\nAnnual Review Report\n보유계약 현황\n발행(기준)일: 2026년 1월 15일"
         from routers.doc_prep_main import _detect_and_process_annual_report
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=201, json=MagicMock(return_value={"_id": "c1"})))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             result = await _detect_and_process_annual_report(
                 doc_id="507f1f77bcf86cd799439011",
                 full_text=text,
@@ -329,23 +269,7 @@ class TestARDBUpdate:
         from routers.doc_prep_main import _detect_and_process_annual_report
 
         existing_customer_id = str(ObjectId())
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            # 기존 고객 검색 결과 (aims_api 응답 구조: data.customers)
-            mock_search_resp = MagicMock()
-            mock_search_resp.status_code = 200
-            mock_search_resp.json.return_value = {
-                "data": {
-                    "customers": [{"_id": existing_customer_id, "personal_info": {"name": "홍길동"}}]
-                }
-            }
-            mock_sse_resp = MagicMock(status_code=200)
-            mock_client.get = AsyncMock(return_value=mock_search_resp)
-            mock_client.post = AsyncMock(return_value=mock_sse_resp)
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=existing_customer_id):
             await _detect_and_process_annual_report(
                 doc_id="507f1f77bcf86cd799439011",
                 full_text=text,
@@ -378,17 +302,7 @@ class TestCRSDetection:
     async def _call_detect_crs(self, full_text, files_collection):
         from routers.doc_prep_main import _detect_and_process_customer_review
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=201, json=MagicMock(return_value={"_id": "c1"})))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             return await _detect_and_process_customer_review(
                 doc_id=TEST_DOC_ID,
                 full_text=full_text,
@@ -441,17 +355,7 @@ class TestCRSDBUpdate:
         """CRS 감지 시 is_customer_review=True, cr_parsing_status='pending'"""
         from routers.doc_prep_main import _detect_and_process_customer_review
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=201, json=MagicMock(return_value={"_id": "c1"})))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             await _detect_and_process_customer_review(
                 doc_id="507f1f77bcf86cd799439011",
                 full_text=crs_text_sample,
@@ -470,17 +374,7 @@ class TestCRSDBUpdate:
         """displayName = '{고객명}_CRS_{상품명}_{YYYY-MM-DD}.pdf'"""
         from routers.doc_prep_main import _detect_and_process_customer_review
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=201, json=MagicMock(return_value={"_id": "c1"})))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             result = await _detect_and_process_customer_review(
                 doc_id="507f1f77bcf86cd799439011",
                 full_text=crs_text_sample,
@@ -495,17 +389,7 @@ class TestCRSDBUpdate:
         """cr_metadata에 contractor_name, product_name, issue_date 저장"""
         from routers.doc_prep_main import _detect_and_process_customer_review
 
-        with patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"customers": []}
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=201, json=MagicMock(return_value={"_id": "c1"})))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             await _detect_and_process_customer_review(
                 doc_id="507f1f77bcf86cd799439011",
                 full_text=crs_text_sample,
@@ -521,3 +405,78 @@ class TestCRSDBUpdate:
         assert cr_meta["contractor_name"] == "김철수"
         assert cr_meta["product_name"] == "메트라이프 변액종합보험"
         assert cr_meta["issue_date"] == "2026-02-10"
+
+
+# ========================================
+# resolve_customer_by_name Unit Tests
+# ========================================
+
+class TestResolveCustomerByName:
+    """Internal API resolve_customer_by_name() 단위 테스트"""
+
+    async def test_exact_match_found(self):
+        """고객명 정확 매칭 → customer ID 반환"""
+        from services.internal_api import resolve_customer_by_name
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "success": True,
+            "data": {"customerId": "abc123", "customerName": "홍길동"}
+        }
+        with patch("services.internal_api.httpx.AsyncClient") as mock_httpx:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_resp)
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=None)
+            mock_httpx.return_value = mock_client
+
+            result = await resolve_customer_by_name("홍길동", "user123")
+            assert result == "abc123"
+
+    async def test_no_match(self):
+        """고객명 미매칭 → None 반환"""
+        from services.internal_api import resolve_customer_by_name
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"success": True, "data": None}
+        with patch("services.internal_api.httpx.AsyncClient") as mock_httpx:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_resp)
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=None)
+            mock_httpx.return_value = mock_client
+
+            result = await resolve_customer_by_name("없는사람", "user123")
+            assert result is None
+
+    async def test_api_error_returns_none(self):
+        """API 오류 시 → None 반환 (fail-safe)"""
+        from services.internal_api import resolve_customer_by_name
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 500
+        with patch("services.internal_api.httpx.AsyncClient") as mock_httpx:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_resp)
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=None)
+            mock_httpx.return_value = mock_client
+
+            result = await resolve_customer_by_name("홍길동", "user123")
+            assert result is None
+
+    async def test_network_exception_returns_none(self):
+        """네트워크 예외 시 → None 반환 (fail-safe)"""
+        from services.internal_api import resolve_customer_by_name
+
+        with patch("services.internal_api.httpx.AsyncClient") as mock_httpx:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(side_effect=Exception("Connection refused"))
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=None)
+            mock_httpx.return_value = mock_client
+
+            result = await resolve_customer_by_name("홍길동", "user123")
+            assert result is None

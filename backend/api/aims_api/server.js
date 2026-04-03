@@ -204,6 +204,9 @@ MongoClient.connect(MONGO_URI)
     const chatRoutes = require('./routes/chat-routes');
     app.use('/api', chatRoutes(db, analyticsDb, authenticateJWT, upload));
 
+    const creditRoutes = require('./routes/credit-routes');
+    app.use('/api', creditRoutes(db, analyticsDb));
+
     app.use('/api', require('./routes/insurance-contracts-routes')(db, authenticateJWTorAPIKey));
 
     // ActivityLogger 초기화

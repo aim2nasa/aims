@@ -424,23 +424,7 @@ class TestResolveEntity:
             metadata={"customer_name": "홍길동"},
         )
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "data": {
-                "customers": [
-                    {"_id": "cust_001", "personal_info": {"name": "홍길동"}},
-                ]
-            }
-        }
-
-        with patch("insurance.adapter.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_client.get = AsyncMock(return_value=mock_response)
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value="cust_001"):
             result = await adapter.resolve_entity(detection, "user_123")
 
         assert result["matched"] is True
@@ -455,51 +439,26 @@ class TestResolveEntity:
             metadata={"customer_name": "홍길동"},
         )
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "data": {
-                "customers": [
-                    {"_id": "cust_002", "personal_info": {"name": "홍길순"}},
-                ]
-            }
-        }
-
-        with patch("insurance.adapter.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_client.get = AsyncMock(return_value=mock_response)
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             result = await adapter.resolve_entity(detection, "user_123")
 
         assert result["matched"] is False
         assert result["reason"] == "no_exact_match"
 
     async def test_api_error_handled(self, adapter):
-        """API 에러 시 matched=False"""
+        """API 에러 시 matched=False (resolve_customer_by_name이 None 반환)"""
         detection = Detection(
             doc_type="annual_report",
             confidence=1.0,
             metadata={"customer_name": "홍길동"},
         )
 
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.text = "Internal Server Error"
-
-        with patch("insurance.adapter.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_client.get = AsyncMock(return_value=mock_response)
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        # resolve_customer_by_name은 API 에러 시 내부에서 None 반환
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, return_value=None):
             result = await adapter.resolve_entity(detection, "user_123")
 
         assert result["matched"] is False
-        assert "api_error" in result["reason"]
+        assert result["reason"] == "no_exact_match"
 
     async def test_network_exception_handled(self, adapter):
         """네트워크 예외 시 matched=False"""
@@ -509,13 +468,8 @@ class TestResolveEntity:
             metadata={"customer_name": "홍길동"},
         )
 
-        with patch("insurance.adapter.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_client.get = AsyncMock(side_effect=Exception("Connection refused"))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
-
+        # resolve_customer_by_name이 예외를 던지는 경우
+        with patch("services.internal_api.resolve_customer_by_name", new_callable=AsyncMock, side_effect=Exception("Connection refused")):
             result = await adapter.resolve_entity(detection, "user_123")
 
         assert result["matched"] is False
