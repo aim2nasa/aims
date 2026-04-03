@@ -56,90 +56,64 @@ aims_api가 DB 스키마의 단일 게이트웨이가 되었다.
 | F6 | entities/ api.ts 빈 껍데기 4개 삭제 | `96499f38` |
 | F7 | controller 위치 규칙 명문화 (CLAUDE.md) | `96499f38` |
 
----
+### R1: 결과 보고 이벤트화 (2026-04-04)
 
-## 3. 로드맵
+**목표 달성: 하위 서비스가 aims_api URL을 몰라도 결과를 보고할 수 있는 구조.**
 
-### R1 (단기): 결과 보고 이벤트화
+16건의 HTTP 콜백을 Redis Pub/Sub + aims_analytics 직접 기록으로 전환.
 
-**목표: 하위 서비스가 aims_api URL을 몰라도 결과를 보고할 수 있는 구조.**
-
-현재 16건의 HTTP 콜백이 aims_api URL에 직접 의존:
-
-| 서비스 | 콜백 유형 | 건수 |
+| 서비스 | 전환 내용 | 건수 |
 |--------|-----------|:----:|
-| document_pipeline | webhook/SSE 알림 (progress, complete, ar/cr-status, conversion) | 8 |
-| document_pipeline | 로그/사용량 기록 (ocr-log, error-logs) | 2 |
-| annual_report_api | webhook/SSE 알림 (ar/cr-status-change) | 2 |
-| aims_rag_api | 로그/사용량 기록 (system-logs, ai-usage/log) | 4 |
+| document_pipeline | webhook/SSE → Redis Pub/Sub (progress, complete, ar/cr-status, conversion) | 8 |
+| document_pipeline | 로그/사용량 → aims_analytics 직접 기록 | 2 |
+| annual_report_api | webhook/SSE → Redis Pub/Sub (ar/cr-status-change) | 2 |
+| aims_rag_api | 로그/사용량 → aims_analytics 직접 기록 | 4 |
 
-**전환 방향:**
-- SSE 알림 → Redis Pub/Sub 또는 MongoDB Change Stream
-- 로그/사용량 → 각 서비스가 aims_analytics DB에 직접 기록 (aims_api 경유 불필요)
+**합계: 11건 역방향 의존 제거** | 머지 `9a8a97f8`
 
-**효과:**
-- document_pipeline, annual_report_api, aims_rag_api에서 `AIMS_API_URL` 환경변수 의존 감소
-- aims_api 장애 시에도 알림/로그가 유실되지 않음 (현재는 HTTP 실패 시 유실)
+### R2: 공유 서비스 분리 (2026-04-04)
 
-### R2 (중기): 공유 서비스 분리
+**목표 달성: aims_api의 공개 API 의존을 Internal API/크레딧 서비스로 정리.**
 
-**목표: aims_api의 "만능" 책임을 분리하여 각 서비스가 필요한 것만 직접 접근.**
+| 항목 | 전환 내용 | 건수 |
+|------|-----------|:----:|
+| 고객검색 | 공개 API `GET /api/customers` → Internal API `POST /internal/customers/resolve-by-name` | 3건 |
+| 크레딧 라우트 | chat-routes.js → credit-routes.js 분리 (물리적 서비스 분리 대비) | 2 엔드포인트 |
+| 환경변수 | INTERNAL_API_KEY 누락 수정 (document_pipeline, aims_mcp) | 2건 |
 
-| 분리 대상 | 현재 | 전환 후 | 영향 범위 |
-|-----------|------|---------|:---------:|
-| 설정 조회 | aims_api `/api/settings/ai-models` | 공유 config (env/파일/etcd) | 4건 |
-| 크레딧/쿼터 | aims_api `/api/internal/check-credit` | 독립 크레딧 서비스 또는 직접 DB | 4건 |
-| 고객명 조회 | aims_api Internal API 경유 | Read replica 직접 접근 | 6건 |
-| files 조회 | aims_api Internal API 경유 | Read replica 직접 접근 | 20+건 |
+**regression 테스트: mock 15곳 전환 + 단위 테스트 4건 추가** | 머지 `e751d71e`
 
-**효과:**
-- 읽기 트래픽이 aims_api를 거치지 않아 부하 분산
-- 각 서비스가 aims_api 없이도 조회 가능 (독립 테스트 가능)
+### R3: 문서연결 이벤트화 (2026-04-04)
 
-### R3 (장기): aims_api 순수 오케스트레이터화
+**목표 달성: 역방향 HTTP 의존 0건. 완전 단방향 의존.**
 
-**목표: aims_api는 프론트엔드 API + 비즈니스 오케스트레이션만 담당. DB 쓰기도 각 서비스가 자신의 도메인에서 직접 수행.**
+| 항목 | 전환 내용 |
+|------|-----------|
+| 문서연결 | `POST /api/customers/{id}/documents` HTTP → Redis PUBLISH `aims:doc:link` |
+| eventBus | DOC_LINK 채널 구독 + handleDocumentLink 10단계 오케스트레이션 |
+| Qdrant | eventBus.initialize에 qdrantClient 주입, 청크 customer_id 동기화 |
+| PDF 변환 | triggerPdfConversionIfNeeded 트리거 포함 |
 
-현재 전환 어려운 49+건의 쓰기 호출:
-- files CRUD (document_pipeline → aims_api) — 8건
-- customers 문서배열 조작 (document_pipeline → aims_api) — 3건
-- AR/CR 결과 저장 (annual_report_api → aims_api) — 6건
-- 파싱 상태 업데이트 (annual_report_api → aims_api) — 30+건
-
-**전환 방향:**
-- 각 서비스가 자기 도메인 DB를 직접 관리 (document_pipeline → files, annual_report_api → AR/CR 데이터)
-- aims_api는 프론트엔드 API 제공 + 서비스 간 이벤트 조율만 담당
-- 완전한 단방향 의존: `frontend → aims_api → {dp, ar, rag, mcp}` (역방향 콜백 0)
-
-**효과:**
-- 각 모듈 물리적 분리 가능 (별도 서버, 별도 배포)
-- aims_api 단일 장애점 해소
-- 서비스별 독립 스케일링
+**regression 테스트: 8건 추가 (소유권, 중복, AR큐, PDF, SSE)** | 머지 `d04c44e7`
 
 ---
 
-## 4. 현재 위치
+## 3. 현재 위치
 
 ```
 [완료] DB Gateway Phase 1~6     ████████████████████ 100%
 [완료] Backend 위반 B1~B7       ████████████████████ 100%
 [완료] Frontend 위반 F1~F7      ████████████████████ 100%
-─────────────────────────────────────────────────────────
-[대기] R1: 이벤트화 (16건)       ░░░░░░░░░░░░░░░░░░░░   0%
-[대기] R2: 공유 서비스 분리       ░░░░░░░░░░░░░░░░░░░░   0%
-[대기] R3: 완전 단방향            ░░░░░░░░░░░░░░░░░░░░   0%
+[완료] R1: 이벤트화 (16건)       ████████████████████ 100%
+[완료] R2: 공유 서비스 분리       ████████████████████ 100%
+[완료] R3: 문서연결 이벤트화      ████████████████████ 100%
 ```
 
-**토대 완료, R1 시작 전.**
-
-DB Gateway로 "모든 DB 접근이 aims_api를 경유"하는 구조를 만들었고,
-B1~B7/F1~F7로 코드 레벨의 위반을 정리했다.
-
-다음 단계 R1은 이 토대 위에서 "aims_api를 몰라도 되는" 방향으로 역방향 콜백을 제거하는 작업이다.
+**R1~R3 완료. 역방향 HTTP 의존 0건 달성.**
 
 ---
 
-## 5. 의존 구조 변화
+## 4. 의존 구조 변화
 
 ### Before (DB Gateway 전)
 ```
@@ -150,23 +124,38 @@ annual_report_api ←→ MongoDB     (각자 직접 접근)
 aims_rag_api ←────→ MongoDB      (직접 접근)
 ```
 
-### Now (토대 완료 후)
+### After (R3 완료)
 ```
-aims_api (DB 단일 게이트웨이)
-  ↑ document_pipeline  (Internal API 경유, webhook 콜백)
-  ↑ annual_report_api  (Internal API 경유, webhook 콜백)
-  ↑ aims_rag_api       (Internal API 경유, 로그 콜백)
-  ↑ aims_mcp           (Internal API 경유, 단방향 ✓)
+aims_api (오케스트레이터 + DB 게이트웨이)
+  ↓ document_pipeline  (Internal API 경유, Redis 이벤트 발행)
+  ↓ annual_report_api  (Internal API 경유, Redis 이벤트 발행)
+  ↓ aims_rag_api       (Internal API 경유, aims_analytics 직접 기록)
+  ↓ aims_mcp           (Internal API 경유, 단방향)
 ```
 
-### Target (R3 완료 후)
-```
-aims_api (오케스트레이터)
-  → document_pipeline  (이벤트 구독, 자체 DB)
-  → annual_report_api  (이벤트 구독, 자체 DB)
-  → aims_rag_api       (이벤트 구독, 자체 DB)
-  → aims_mcp           (Internal API, 단방향)
-```
+**단방향 의존 달성:**
+- 하위 서비스 → aims_api: Internal API (읽기/쓰기)
+- 하위 서비스 → Redis: 이벤트 발행 (aims_api가 구독)
+- 하위 서비스 → aims_analytics: 로그/사용량 직접 기록
+- aims_api → 하위 서비스: **역방향 호출 0건**
+
+---
+
+## 5. 다음 과제
+
+### 크레딧 서비스 물리적 분리 (aims_credit)
+
+creditService.js + credit-routes.js를 독립 마이크로서비스로 추출.
+- 자체 DB 연결 (files, ai_token_usage, users)
+- storageQuotaService 인라인화
+- document_pipeline, aims_rag_api가 aims_credit에 직접 호출
+
+### 모듈별 독립 빌드/테스트 파이프라인
+
+각 서비스가 aims_api 없이 독립적으로 빌드/테스트 가능한 CI 구성.
+- Internal API mock 서버 (테스트 시)
+- 서비스별 Dockerfile 최적화
+- 배포 순서 무관한 rolling update
 
 ---
 
