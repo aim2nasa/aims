@@ -560,8 +560,8 @@ class TestInfiniteLoopRegression:
         """TC-01: 텍스트 추출 불가(스캔 문서) 시 meta.ocr_fallback_needed=True 마커가 DB에 기록되고 OCR 큐에 등록된다"""
         doc_id = str(ObjectId())
 
-        # 문서에 텍스트 없음
-        self.mock_files_col.find_one.return_value = {
+        # query_file_one이 문서에 텍스트 없음을 반환
+        mock_internal_api_writes["svc_query_file_one"].return_value = {
             "_id": ObjectId(doc_id),
             "meta": {},
             "ocr": {},
@@ -577,7 +577,7 @@ class TestInfiniteLoopRegression:
 
         with patch.object(self.worker, "_extract_text_from_pdf_bytes", return_value=None), \
              patch.object(self.worker, "_enqueue_ocr_fallback", new_callable=AsyncMock) as mock_enqueue:
-            result = await self.worker._extract_and_update_text(doc_id, tmp.name, self.mock_files_col)
+            result = await self.worker._extract_and_update_text(doc_id, tmp.name)
 
         os.unlink(tmp.name)
 
@@ -623,7 +623,8 @@ class TestInfiniteLoopRegression:
         """TC-03: 텍스트 추출 성공 시 DB 업데이트 + return True"""
         doc_id = str(ObjectId())
 
-        self.mock_files_col.find_one.return_value = {
+        # query_file_one이 텍스트 없는 문서를 반환
+        mock_internal_api_writes["svc_query_file_one"].return_value = {
             "_id": ObjectId(doc_id),
             "meta": {},
             "ocr": {},
@@ -644,7 +645,7 @@ class TestInfiniteLoopRegression:
                     "document_type": "general",
                     "confidence": 0.9,
                 })
-                result = await self.worker._extract_and_update_text(doc_id, tmp.name, self.mock_files_col)
+                result = await self.worker._extract_and_update_text(doc_id, tmp.name)
 
         os.unlink(tmp.name)
 
@@ -659,18 +660,16 @@ class TestInfiniteLoopRegression:
     # --- TC-04: 마커 필터링 쿼리 검증 ---
 
     @pytest.mark.asyncio
-    async def test_recover_query_excludes_marked_documents(self):
+    async def test_recover_query_excludes_marked_documents(self, mock_internal_api_writes):
         """TC-04: _recover_completed_without_text() 쿼리가 text_extraction_failed=True 문서를 제외한다"""
-        # 빈 결과 반환
-        mock_cursor = AsyncMock()
-        mock_cursor.to_list.return_value = []
-        self.mock_files_col.find.return_value = mock_cursor
+        # svc_query_files 기본 반환값은 [] (빈 목록)
 
         await self.worker._recover_completed_without_text()
 
-        # find() 호출 시 쿼리 조건 확인
-        find_call = self.mock_files_col.find.call_args
-        query = find_call[0][0]
+        # query_files() 호출 시 쿼리 조건 확인
+        mock_svc_query = mock_internal_api_writes["svc_query_files"]
+        mock_svc_query.assert_called_once()
+        query = mock_svc_query.call_args[0][0]
 
         # 핵심: meta.text_extraction_failed + meta.ocr_fallback_needed 필터 존재 확인
         assert "meta.text_extraction_failed" in query
@@ -681,17 +680,16 @@ class TestInfiniteLoopRegression:
     # --- TC-05: 반환값 계약 검증 ---
 
     @pytest.mark.asyncio
-    async def test_return_false_when_text_empty(self):
+    async def test_return_false_when_text_empty(self, mock_internal_api_writes):
         """TC-05a: 텍스트 추출 결과가 빈 문자열이면 False 반환"""
         doc_id = str(ObjectId())
-        self.mock_files_col.find_one.return_value = {
+        mock_internal_api_writes["svc_query_file_one"].return_value = {
             "_id": ObjectId(doc_id),
             "meta": {},
             "ocr": {},
             "ownerId": "test",
             "upload": {"originalName": "scan.ppt"},
         }
-        self.mock_files_col.update_one.return_value = MagicMock(modified_count=1)
 
         import tempfile, os
         tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
@@ -700,7 +698,7 @@ class TestInfiniteLoopRegression:
 
         with patch.object(self.worker, "_extract_text_from_pdf_bytes", return_value="   "), \
              patch.object(self.worker, "_enqueue_ocr_fallback", new_callable=AsyncMock):
-            result = await self.worker._extract_and_update_text(doc_id, tmp.name, self.mock_files_col)
+            result = await self.worker._extract_and_update_text(doc_id, tmp.name)
 
         os.unlink(tmp.name)
         assert result is False
@@ -709,7 +707,7 @@ class TestInfiniteLoopRegression:
     async def test_return_false_when_file_missing(self, mock_internal_api_writes):
         """TC-05b: PDF 파일이 없으면 False 반환 + 마커 기록"""
         doc_id = str(ObjectId())
-        self.mock_files_col.find_one.return_value = {
+        mock_internal_api_writes["svc_query_file_one"].return_value = {
             "_id": ObjectId(doc_id),
             "meta": {},
             "ocr": {},
@@ -717,7 +715,7 @@ class TestInfiniteLoopRegression:
             "upload": {"originalName": "missing.ppt"},
         }
 
-        result = await self.worker._extract_and_update_text(doc_id, "/nonexistent/path.pdf", self.mock_files_col)
+        result = await self.worker._extract_and_update_text(doc_id, "/nonexistent/path.pdf")
 
         assert result is False
         # 파일 없어도 마커 기록 확인 (Internal API 경유)
@@ -727,19 +725,19 @@ class TestInfiniteLoopRegression:
         assert set_fields["meta.text_extraction_failed"] is True
 
     @pytest.mark.asyncio
-    async def test_return_false_when_doc_not_found(self):
+    async def test_return_false_when_doc_not_found(self, mock_internal_api_writes):
         """TC-05c: MongoDB에서 문서를 찾을 수 없으면 False 반환"""
         doc_id = str(ObjectId())
-        self.mock_files_col.find_one.return_value = None
+        # svc_query_file_one 기본 반환값이 None이므로 추가 설정 불필요
 
-        result = await self.worker._extract_and_update_text(doc_id, "/any/path.pdf", self.mock_files_col)
+        result = await self.worker._extract_and_update_text(doc_id, "/any/path.pdf")
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_return_false_when_text_already_exists(self):
+    async def test_return_false_when_text_already_exists(self, mock_internal_api_writes):
         """TC-05d: 이미 텍스트가 있으면 False 반환 (재추출 불필요)"""
         doc_id = str(ObjectId())
-        self.mock_files_col.find_one.return_value = {
+        mock_internal_api_writes["svc_query_file_one"].return_value = {
             "_id": ObjectId(doc_id),
             "meta": {"full_text": "이미 존재하는 텍스트"},
             "ocr": {},
@@ -747,7 +745,7 @@ class TestInfiniteLoopRegression:
             "upload": {"originalName": "doc.ppt"},
         }
 
-        result = await self.worker._extract_and_update_text(doc_id, "/any/path.pdf", self.mock_files_col)
+        result = await self.worker._extract_and_update_text(doc_id, "/any/path.pdf")
         assert result is False
 
     # --- TC-06: 재변환 시 마커 리셋 ---

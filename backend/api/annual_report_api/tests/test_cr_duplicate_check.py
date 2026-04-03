@@ -31,20 +31,17 @@ with patch('pymongo.MongoClient'):
 class TestCRDuplicateCheck:
     """save_customer_review() 중복 체크 유닛 테스트"""
 
-    def _create_mock_db(self, customer_id: str, existing_reviews: list):
-        """테스트용 Mock DB 생성"""
+    def _create_mock_db_and_patch(self, customer_id: str, existing_reviews: list):
+        """테스트용 Mock DB + get_customer patch 데이터 생성"""
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        customer_doc = {
+            "_id": customer_id,  # Internal API 반환값은 str
             "customer_reviews": existing_reviews
         }
+        return mock_db, customer_doc
 
-        return mock_db, mock_customers
-
-    def test_duplicate_all_four_fields_match(self):
+    @patch('services.db_writer.get_customer')
+    def test_duplicate_all_four_fields_match(self, mock_get_customer):
         """4가지 필드 모두 일치하면 중복으로 건너뜀"""
         customer_id = str(ObjectId())
 
@@ -58,7 +55,8 @@ class TestCRDuplicateCheck:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # 동일한 데이터로 저장 시도 (중복이므로 push_customer_review 호출 안 됨)
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -87,7 +85,8 @@ class TestCRDuplicateCheck:
             # push_customer_review가 호출되지 않아야 함 (저장 안 함)
             mock_push.assert_not_called()
 
-    def test_not_duplicate_different_contractor(self):
+    @patch('services.db_writer.get_customer')
+    def test_not_duplicate_different_contractor(self, mock_get_customer):
         """계약자가 다르면 중복이 아님"""
         customer_id = str(ObjectId())
 
@@ -100,7 +99,8 @@ class TestCRDuplicateCheck:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # 다른 계약자로 저장 시도
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -128,7 +128,8 @@ class TestCRDuplicateCheck:
             assert result.get("duplicate") is not True
             mock_push.assert_called_once()
 
-    def test_not_duplicate_different_policy_number(self):
+    @patch('services.db_writer.get_customer')
+    def test_not_duplicate_different_policy_number(self, mock_get_customer):
         """증권번호가 다르면 중복이 아님"""
         customer_id = str(ObjectId())
 
@@ -141,7 +142,8 @@ class TestCRDuplicateCheck:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # 다른 증권번호로 저장 시도
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -169,7 +171,8 @@ class TestCRDuplicateCheck:
             assert result.get("duplicate") is not True
             mock_push.assert_called_once()
 
-    def test_not_duplicate_different_product_name(self):
+    @patch('services.db_writer.get_customer')
+    def test_not_duplicate_different_product_name(self, mock_get_customer):
         """상품명이 다르면 중복이 아님"""
         customer_id = str(ObjectId())
 
@@ -182,7 +185,8 @@ class TestCRDuplicateCheck:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # 다른 상품명으로 저장 시도
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -210,7 +214,8 @@ class TestCRDuplicateCheck:
             assert result.get("duplicate") is not True
             mock_push.assert_called_once()
 
-    def test_not_duplicate_different_issue_date(self):
+    @patch('services.db_writer.get_customer')
+    def test_not_duplicate_different_issue_date(self, mock_get_customer):
         """발행일이 다르면 중복이 아님"""
         customer_id = str(ObjectId())
 
@@ -223,7 +228,8 @@ class TestCRDuplicateCheck:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # 다른 발행일로 저장 시도
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -251,7 +257,8 @@ class TestCRDuplicateCheck:
             assert result.get("duplicate") is not True
             mock_push.assert_called_once()
 
-    def test_skip_duplicate_check_when_missing_fields(self):
+    @patch('services.db_writer.get_customer')
+    def test_skip_duplicate_check_when_missing_fields(self, mock_get_customer):
         """필드가 하나라도 없으면 중복 체크 건너뜀 (저장 진행)"""
         customer_id = str(ObjectId())
 
@@ -264,7 +271,8 @@ class TestCRDuplicateCheck:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # contractor_name 누락
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -292,7 +300,8 @@ class TestCRDuplicateCheck:
             assert result.get("duplicate") is not True
             mock_push.assert_called_once()
 
-    def test_duplicate_with_iso_string_issue_date(self):
+    @patch('services.db_writer.get_customer')
+    def test_duplicate_with_iso_string_issue_date(self, mock_get_customer):
         """기존 issue_date가 ISO 문자열 형식일 때도 중복 체크 동작"""
         customer_id = str(ObjectId())
 
@@ -306,7 +315,8 @@ class TestCRDuplicateCheck:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # 동일한 데이터로 저장 시도
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -332,7 +342,8 @@ class TestCRDuplicateCheck:
             assert result.get("duplicate") is True
             mock_push.assert_not_called()
 
-    def test_multiple_existing_reviews_finds_duplicate(self):
+    @patch('services.db_writer.get_customer')
+    def test_multiple_existing_reviews_finds_duplicate(self, mock_get_customer):
         """여러 기존 리뷰 중에서 중복 찾기"""
         customer_id = str(ObjectId())
 
@@ -357,7 +368,8 @@ class TestCRDuplicateCheck:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # 두 번째 기존 리뷰와 동일한 데이터로 저장 시도
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -383,11 +395,13 @@ class TestCRDuplicateCheck:
             assert result.get("duplicate") is True
             mock_push.assert_not_called()
 
-    def test_no_existing_reviews_saves_new(self):
+    @patch('services.db_writer.get_customer')
+    def test_no_existing_reviews_saves_new(self, mock_get_customer):
         """기존 리뷰가 없으면 새로 저장"""
         customer_id = str(ObjectId())
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, [])  # 빈 리스트
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, [])  # 빈 리스트
+        mock_get_customer.return_value = customer_doc
 
         with patch('services.db_writer.push_customer_review') as mock_push:
             mock_push.return_value = {"success": True, "data": {"modifiedCount": 1}}
@@ -418,20 +432,17 @@ class TestCRDuplicateCheck:
 class TestCRDuplicateCheckEdgeCases:
     """엣지 케이스 테스트"""
 
-    def _create_mock_db(self, customer_id: str, existing_reviews: list):
-        """테스트용 Mock DB 생성"""
+    def _create_mock_db_and_patch(self, customer_id: str, existing_reviews: list):
+        """테스트용 Mock DB + get_customer patch 데이터 생성"""
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        customer_doc = {
+            "_id": customer_id,  # Internal API 반환값은 str
             "customer_reviews": existing_reviews
         }
+        return mock_db, customer_doc
 
-        return mock_db, mock_customers
-
-    def test_empty_string_vs_none(self):
+    @patch('services.db_writer.get_customer')
+    def test_empty_string_vs_none(self, mock_get_customer):
         """빈 문자열과 None 구분"""
         customer_id = str(ObjectId())
 
@@ -444,7 +455,8 @@ class TestCRDuplicateCheckEdgeCases:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # contractor_name이 None인 경우 (중복 체크 건너뜀)
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -472,7 +484,8 @@ class TestCRDuplicateCheckEdgeCases:
             assert result.get("duplicate") is not True
             mock_push.assert_called_once()
 
-    def test_whitespace_in_fields(self):
+    @patch('services.db_writer.get_customer')
+    def test_whitespace_in_fields(self, mock_get_customer):
         """필드에 공백이 있는 경우"""
         customer_id = str(ObjectId())
 
@@ -485,7 +498,8 @@ class TestCRDuplicateCheckEdgeCases:
             }
         ]
 
-        mock_db, mock_customers = self._create_mock_db(customer_id, existing_reviews)
+        mock_db, customer_doc = self._create_mock_db_and_patch(customer_id, existing_reviews)
+        mock_get_customer.return_value = customer_doc
 
         # 공백이 포함된 이름 (다른 것으로 취급)
         with patch('services.db_writer.push_customer_review') as mock_push:
@@ -513,14 +527,13 @@ class TestCRDuplicateCheckEdgeCases:
             assert result.get("duplicate") is not True
             mock_push.assert_called_once()
 
-    def test_customer_not_found(self):
+    @patch('services.db_writer.get_customer')
+    def test_customer_not_found(self, mock_get_customer):
         """존재하지 않는 고객"""
         customer_id = str(ObjectId())
+        mock_get_customer.return_value = None  # 고객 없음
 
         mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-        mock_customers.find_one.return_value = None  # 고객 없음
 
         result = save_customer_review(
             db=mock_db,
@@ -569,7 +582,8 @@ class TestCRDuplicateCheckEdgeCases:
 class TestCRDuplicateCheckSummary:
     """중복 시 반환되는 summary 검증"""
 
-    def test_duplicate_summary_contains_all_four_fields(self):
+    @patch('services.db_writer.get_customer')
+    def test_duplicate_summary_contains_all_four_fields(self, mock_get_customer):
         """중복 시 summary에 4가지 필드 모두 포함"""
         customer_id = str(ObjectId())
 
@@ -582,13 +596,12 @@ class TestCRDuplicateCheckSummary:
             }
         ]
 
-        mock_db = MagicMock()
-        mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
+        mock_get_customer.return_value = {
+            "_id": customer_id,
             "customer_reviews": existing_reviews
         }
+
+        mock_db = MagicMock()
 
         result = save_customer_review(
             db=mock_db,

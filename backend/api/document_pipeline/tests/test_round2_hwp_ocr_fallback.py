@@ -67,8 +67,8 @@ class TestOcrFallbackMarker:
         document_id = str(ObjectId())
         pdf_path = "/data/files/test.pdf"
 
-        mock_files_col = AsyncMock()
-        mock_files_col.find_one.return_value = {
+        # query_file_one이 텍스트 없는 문서를 반환
+        mock_internal_api_writes["svc_query_file_one"].return_value = {
             "_id": ObjectId(document_id),
             "meta": {},
             "ocr": {},
@@ -80,7 +80,7 @@ class TestOcrFallbackMarker:
              patch.object(worker, "_enqueue_ocr_fallback", new_callable=AsyncMock) as mock_enqueue:
 
             result = await worker._extract_and_update_text(
-                document_id, pdf_path, mock_files_col
+                document_id, pdf_path
             )
 
             assert result is False
@@ -102,8 +102,8 @@ class TestOcrFallbackMarker:
         document_id = str(ObjectId())
         pdf_path = "/data/files/test.pdf"
 
-        mock_files_col = AsyncMock()
-        mock_files_col.find_one.return_value = {
+        # query_file_one이 텍스트 없는 문서를 반환
+        mock_internal_api_writes["svc_query_file_one"].return_value = {
             "_id": ObjectId(document_id),
             "meta": {},
             "ocr": {},
@@ -115,7 +115,7 @@ class TestOcrFallbackMarker:
              patch.object(worker, "_enqueue_ocr_fallback", new_callable=AsyncMock):
 
             result = await worker._extract_and_update_text(
-                document_id, pdf_path, mock_files_col
+                document_id, pdf_path
             )
 
             assert result is False
@@ -131,8 +131,8 @@ class TestOcrFallbackMarker:
         document_id = str(ObjectId())
         pdf_path = "/data/files/nonexistent.pdf"
 
-        mock_files_col = AsyncMock()
-        mock_files_col.find_one.return_value = {
+        # query_file_one이 문서를 반환 (파일은 없지만 문서 자체는 존재)
+        mock_internal_api_writes["svc_query_file_one"].return_value = {
             "_id": ObjectId(document_id),
             "meta": {},
             "ocr": {},
@@ -141,7 +141,7 @@ class TestOcrFallbackMarker:
         with patch("workers.pdf_conversion_worker.os.path.exists", return_value=False):
 
             result = await worker._extract_and_update_text(
-                document_id, pdf_path, mock_files_col
+                document_id, pdf_path
             )
 
             assert result is False

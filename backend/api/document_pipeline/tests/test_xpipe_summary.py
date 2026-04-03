@@ -237,7 +237,7 @@ class TestXpipeDisplayNameReceivesSummaryResult:
     """시나리오 3: _generate_display_name() 호출 시 실제 summary_result 전달"""
 
     @pytest.mark.asyncio
-    async def test_display_name_gets_real_summary_result(self, base_xpipe_patches, mock_files_collection):
+    async def test_display_name_gets_real_summary_result(self, base_xpipe_patches, mock_files_collection, mock_internal_api_writes):
         """_generate_display_name()에 summary_result(title 포함)가 전달되어야 한다"""
         xpipe_result = _make_xpipe_result()
         summary_return = {
@@ -245,6 +245,11 @@ class TestXpipeDisplayNameReceivesSummaryResult:
             "title": "AI 생성 제목",
             "document_type": "general",
             "confidence": 0.9,
+        }
+
+        # query_file_one이 displayName 없는 문서를 반환 → _generate_display_name 호출 트리거
+        mock_internal_api_writes["query_file_one"].return_value = {
+            "_id": ObjectId(VALID_DOC_ID),
         }
 
         p_summarize = patch(
