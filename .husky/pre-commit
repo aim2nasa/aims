@@ -74,48 +74,72 @@ if [ -n "$STAGED_PY_FILES" ] && [ -n "$BUMP_PY" ]; then
   echo "  ✅ Python syntax OK"
 fi
 
-# ==================== 3단계: Backend 테스트 (서버 SSH) ====================
+# ==================== 3단계: Backend 모듈별 선택 테스트 (서버 SSH) ====================
 
 STAGED_BACKEND_FILES=$(git diff --cached --name-only -- 'backend/*' || true)
 
 if [ -n "$STAGED_BACKEND_FILES" ]; then
   echo ""
-  echo "🧪 Running backend full regression tests on server..."
+  echo "🧪 Running backend tests on server (module-selective)..."
+
+  # shared-schema 변경 → 전체 모듈 테스트 (의존 모듈 전체 영향)
+  SHARED_SCHEMA_CHANGED=0
+  if echo "$STAGED_BACKEND_FILES" | grep -q "^backend/shared/"; then
+    SHARED_SCHEMA_CHANGED=1
+    echo "  ⚠️  shared-schema 변경 감지 → 전체 모듈 테스트"
+  fi
 
   # SSH 연결 확인 (5초 타임아웃)
   if ssh -o ConnectTimeout=5 -o BatchMode=yes rossi@100.110.215.65 'echo OK' >/dev/null 2>&1; then
 
-    # aims_api 전체 테스트
-    echo "  📦 Testing aims_api (full)..."
-    if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/aims_api && npm run test:ci 2>&1' ; then
-      echo "  ❌ aims_api tests failed!"
-      exit 1
+    # aims_api 테스트
+    if [ "$SHARED_SCHEMA_CHANGED" = "1" ] || echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_api/"; then
+      echo "  📦 Testing aims_api..."
+      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/aims_api && npm run test:ci 2>&1' ; then
+        echo "  ❌ aims_api tests failed!"
+        exit 1
+      fi
+      echo "  ✅ aims_api tests passed"
     fi
-    echo "  ✅ aims_api tests passed"
 
-    # annual_report_api 전체 테스트
-    echo "  📦 Testing annual_report_api (full)..."
-    if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/annual_report_api && source venv/bin/activate && python3 -m pytest -v --tb=short 2>&1' ; then
-      echo "  ❌ annual_report_api tests failed!"
-      exit 1
+    # annual_report_api 테스트
+    if [ "$SHARED_SCHEMA_CHANGED" = "1" ] || echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/annual_report_api/"; then
+      echo "  📦 Testing annual_report_api..."
+      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/annual_report_api && source venv/bin/activate && python3 -m pytest -v --tb=short 2>&1' ; then
+        echo "  ❌ annual_report_api tests failed!"
+        exit 1
+      fi
+      echo "  ✅ annual_report_api tests passed"
     fi
-    echo "  ✅ annual_report_api tests passed"
 
-    # document_pipeline 전체 테스트
-    echo "  📦 Testing document_pipeline (full)..."
-    if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/document_pipeline && source venv/bin/activate && python3 -m pytest tests/ -q --tb=short 2>&1' ; then
-      echo "  ❌ document_pipeline tests failed!"
-      exit 1
+    # document_pipeline 테스트
+    if [ "$SHARED_SCHEMA_CHANGED" = "1" ] || echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/document_pipeline/"; then
+      echo "  📦 Testing document_pipeline..."
+      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/document_pipeline && source venv/bin/activate && python3 -m pytest tests/ -q --tb=short 2>&1' ; then
+        echo "  ❌ document_pipeline tests failed!"
+        exit 1
+      fi
+      echo "  ✅ document_pipeline tests passed"
     fi
-    echo "  ✅ document_pipeline tests passed"
 
     # aims_mcp TypeScript 컴파일 체크
-    echo "  📦 Checking aims_mcp TypeScript..."
-    if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/aims_mcp && npx tsc --noEmit 2>&1' ; then
-      echo "  ❌ aims_mcp TypeScript check failed!"
-      exit 1
+    if [ "$SHARED_SCHEMA_CHANGED" = "1" ] || echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_mcp/"; then
+      echo "  📦 Checking aims_mcp TypeScript..."
+      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/aims_mcp && npx tsc --noEmit 2>&1' ; then
+        echo "  ❌ aims_mcp TypeScript check failed!"
+        exit 1
+      fi
+      echo "  ✅ aims_mcp TypeScript check passed"
     fi
-    echo "  ✅ aims_mcp TypeScript check passed"
+
+    # 어떤 모듈도 매칭되지 않은 경우 (embedding, shared 등 기타 백엔드 변경)
+    if [ "$SHARED_SCHEMA_CHANGED" = "0" ] && \
+       ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_api/" && \
+       ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/annual_report_api/" && \
+       ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/document_pipeline/" && \
+       ! echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/aims_mcp/"; then
+      echo "  ℹ️  변경된 백엔드 모듈에 대한 테스트 없음 (스킵)"
+    fi
 
   else
     echo "  ⚠️  SSH 연결 불가 (100.110.215.65) - 백엔드 테스트 건너뜀"
