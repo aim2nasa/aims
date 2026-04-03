@@ -1204,11 +1204,12 @@ module.exports = function(db) {
    * 메모 삭제
    * @param {string} id - 메모 ObjectId
    * @query {string} customerId - 고객 ObjectId (필수)
+   * @query {string} userId - 설계사 ID (소유권 검증용)
    */
   router.delete('/internal/memos/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      const { customerId } = req.query;
+      const { customerId, userId } = req.query;
 
       if (!customerId) {
         return res.status(400).json({
@@ -1226,7 +1227,20 @@ module.exports = function(db) {
         });
       }
 
-
+      // 고객 소유권 확인
+      if (userId) {
+        const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+          _id: new ObjectId(customerId),
+          'meta.created_by': userId
+        });
+        if (!customer) {
+          return res.status(403).json({
+            success: false,
+            error: '해당 고객의 메모를 삭제할 권한이 없습니다.',
+            timestamp: utcNowISO()
+          });
+        }
+      }
 
       // 메모 존재 확인: _id + customer_id 매칭
       const memo = await db.collection(COLLECTIONS.CUSTOMER_MEMOS).findOne({

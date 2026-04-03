@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
+import { createMemo, updateMemo, deleteMemo, syncCustomerMemo } from '../internalApi.js';
 
 
 // ── 스키마 정의 ──
@@ -115,15 +116,15 @@ function formatDateTime(date: Date): string {
 
 /**
  * customer_memos → customers.memo 동기화
- * 백엔드 syncCustomerMemoField()의 MCP 복제 구현
+ * customer_memos를 읽어 텍스트를 조립한 뒤, Internal API로 customers.memo 업데이트
  */
-async function syncCustomerMemoField(customerId: string): Promise<boolean> {
+async function syncCustomerMemoField(customerId: string, userId: string): Promise<boolean> {
   try {
     const db = getDB();
     const customerObjectId = toSafeObjectId(customerId);
     if (!customerObjectId) return false;
 
-    // customer_memos에서 해당 고객의 모든 메모 조회 (시간순)
+    // customer_memos에서 해당 고객의 모든 메모 조회 (시간순) — Read는 유지
     const memos = await db.collection('customer_memos')
       .find({ customer_id: customerObjectId })
       .sort({ created_at: 1 })
@@ -134,13 +135,9 @@ async function syncCustomerMemoField(customerId: string): Promise<boolean> {
       `[${formatDateTime(new Date(m.created_at))}] ${m.content}`
     ).join('\n');
 
-    // customers.memo 필드 업데이트
-    await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
-      { _id: customerObjectId },
-      { $set: { memo: memoText, 'meta.updated_at': new Date() } }
-    );
-
-    return true;
+    // Internal API로 customers.memo 필드 업데이트
+    const result = await syncCustomerMemo(customerId, memoText, userId);
+    return result.data !== null;
   } catch (error) {
     console.error(`[MCP] syncCustomerMemoField 실패 (고객 ${customerId}):`, error);
     return false;
@@ -169,9 +166,9 @@ async function verifyCustomerOwnership(customerId: string, userId: string) {
 export async function handleAddMemo(args: unknown) {
   try {
     const params = addMemoSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
+    // 소유권 확인 — Internal API(POST /memos)는 소유권 체크를 하지 않으므로 MCP에서 유지
     const customer = await verifyCustomerOwnership(params.customerId, userId);
     if (!customer) {
       return {
@@ -180,19 +177,22 @@ export async function handleAddMemo(args: unknown) {
       };
     }
 
-    const now = new Date();
-    const newMemo = {
-      customer_id: new ObjectId(params.customerId),
+    // Internal API로 메모 생성
+    const result = await createMemo({
+      customerId: params.customerId,
       content: params.content.trim(),
-      created_by: userId,
-      created_at: now,
-      updated_at: now,
-    };
+      userId
+    });
 
-    const result = await db.collection('customer_memos').insertOne(newMemo);
+    if (!result.data) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: result.error || '메모 생성에 실패했습니다.' }]
+      };
+    }
 
     // customers.memo 동기화
-    const syncOk = await syncCustomerMemoField(params.customerId);
+    const syncOk = await syncCustomerMemoField(params.customerId, userId);
 
     return {
       content: [{
@@ -201,9 +201,9 @@ export async function handleAddMemo(args: unknown) {
           success: true,
           customerId: params.customerId,
           customerName: customer.personal_info?.name,
-          memoId: result.insertedId.toHexString(),
+          memoId: result.data.memoId,
           addedContent: params.content,
-          timestamp: formatDateTime(now),
+          timestamp: formatDateTime(new Date()),
           message: '메모가 추가되었습니다.',
           ...(syncOk ? {} : { syncWarning: true })
         }, null, 2)
@@ -294,9 +294,9 @@ export async function handleListMemos(args: unknown) {
 export async function handleDeleteMemo(args: unknown) {
   try {
     const params = deleteMemoSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
+    // 소유권 확인 — 삭제된 메모 내용을 응답에 포함하기 위해 사전 조회 유지
     const customer = await verifyCustomerOwnership(params.customerId, userId);
     if (!customer) {
       return {
@@ -305,32 +305,26 @@ export async function handleDeleteMemo(args: unknown) {
       };
     }
 
+    // 삭제 전 메모 내용 조회 (응답용) — Read 유지
+    const db = getDB();
     const memoObjectId = toSafeObjectId(params.memoId);
-    if (!memoObjectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 메모 ID입니다.' }]
-      };
-    }
-
-    // 메모 존재 확인
-    const memo = await db.collection('customer_memos').findOne({
+    const memo = memoObjectId ? await db.collection('customer_memos').findOne({
       _id: memoObjectId,
       customer_id: new ObjectId(params.customerId),
-    });
+    }) : null;
 
-    if (!memo) {
+    // Internal API로 메모 삭제 (존재 확인 포함 — 404 반환)
+    const result = await deleteMemo(params.memoId, params.customerId, userId);
+
+    if (!result.data) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '메모를 찾을 수 없습니다.' }]
+        content: [{ type: 'text' as const, text: result.error || '메모 삭제에 실패했습니다.' }]
       };
     }
 
-    // 삭제
-    await db.collection('customer_memos').deleteOne({ _id: memoObjectId });
-
     // customers.memo 동기화
-    const syncOk = await syncCustomerMemoField(params.customerId);
+    const syncOk = await syncCustomerMemoField(params.customerId, userId);
 
     return {
       content: [{
@@ -339,7 +333,7 @@ export async function handleDeleteMemo(args: unknown) {
           success: true,
           customerId: params.customerId,
           customerName: customer.personal_info?.name,
-          deletedMemo: memo.content,
+          deletedMemo: memo?.content || '(내용 조회 불가)',
           message: '메모가 삭제되었습니다.',
           ...(syncOk ? {} : { syncWarning: true })
         }, null, 2)
@@ -364,9 +358,9 @@ export async function handleDeleteMemo(args: unknown) {
 export async function handleUpdateMemo(args: unknown) {
   try {
     const params = updateMemoSchema.parse(args);
-    const db = getDB();
     const userId = getCurrentUserId();
 
+    // 소유권 확인 — Internal API(PUT /memos/:id)가 소유권 체크하지만, customerName 응답용으로 유지
     const customer = await verifyCustomerOwnership(params.customerId, userId);
     if (!customer) {
       return {
@@ -375,41 +369,30 @@ export async function handleUpdateMemo(args: unknown) {
       };
     }
 
+    // 수정 전 메모 내용 조회 (응답용 previousContent) — Read 유지
+    const db = getDB();
     const memoObjectId = toSafeObjectId(params.memoId);
-    if (!memoObjectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 메모 ID입니다.' }]
-      };
-    }
-
-    // 메모 존재 확인
-    const memo = await db.collection('customer_memos').findOne({
+    const memo = memoObjectId ? await db.collection('customer_memos').findOne({
       _id: memoObjectId,
       customer_id: new ObjectId(params.customerId),
+    }) : null;
+
+    // Internal API로 메모 수정 (존재 확인 + 소유권 확인 포함)
+    const result = await updateMemo(params.memoId, {
+      customerId: params.customerId,
+      content: params.content.trim(),
+      userId
     });
 
-    if (!memo) {
+    if (!result.data) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '메모를 찾을 수 없습니다.' }]
+        content: [{ type: 'text' as const, text: result.error || '메모 수정에 실패했습니다.' }]
       };
     }
 
-    const now = new Date();
-    await db.collection('customer_memos').updateOne(
-      { _id: memoObjectId },
-      {
-        $set: {
-          content: params.content.trim(),
-          updated_at: now,
-          updated_by: userId,
-        }
-      }
-    );
-
     // customers.memo 동기화
-    const syncOk = await syncCustomerMemoField(params.customerId);
+    const syncOk = await syncCustomerMemoField(params.customerId, userId);
 
     return {
       content: [{
@@ -419,7 +402,7 @@ export async function handleUpdateMemo(args: unknown) {
           customerId: params.customerId,
           customerName: customer.personal_info?.name,
           memoId: params.memoId,
-          previousContent: memo.content,
+          previousContent: memo?.content || '(내용 조회 불가)',
           newContent: params.content.trim(),
           message: '메모가 수정되었습니다.',
           ...(syncOk ? {} : { syncWarning: true })
