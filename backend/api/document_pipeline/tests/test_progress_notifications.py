@@ -124,70 +124,53 @@ class TestNotifyProgress:
         assert set_fields["status"] == "completed"
         assert set_fields["overallStatus"] == "completed"
 
-    async def test_sse_webhook_called(self):
-        """SSE webhook 호출 확인"""
+    async def test_redis_event_published(self):
+        """Redis 이벤트 발행 확인 (R1: webhook → Redis Pub/Sub)"""
         from routers.doc_prep_main import _notify_progress
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
-             patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
+             patch("services.redis_service.RedisService.publish_event", new_callable=AsyncMock) as mock_publish:
 
             await _notify_progress(TEST_DOC_ID, "user1", 60, "ocr", "OCR 처리 중")
 
-        # httpx.AsyncClient.post 호출 확인
-        post_calls = mock_client.post.call_args_list
-        assert len(post_calls) >= 1
-        first_call = post_calls[0]
-        assert "document-progress" in first_call[0][0]
-        payload = first_call[1]["json"]
+        # Redis publish 호출 확인 (DOC_PROGRESS 채널)
+        assert mock_publish.call_count >= 1
+        first_call = mock_publish.call_args_list[0]
+        assert first_call[0][0] == "aims:doc:progress"
+        payload = first_call[0][1]
         assert payload["document_id"] == TEST_DOC_ID
         assert payload["progress"] == 60
         assert payload["owner_id"] == "user1"
 
-    async def test_error_sends_complete_webhook(self):
-        """progress=-1 에러 시 document-processing-complete webhook도 호출"""
+    async def test_error_sends_complete_event(self):
+        """progress=-1 에러 시 DOC_COMPLETE 이벤트도 발행"""
         from routers.doc_prep_main import _notify_progress
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
-             patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
+             patch("services.redis_service.RedisService.publish_event", new_callable=AsyncMock) as mock_publish:
 
             await _notify_progress(TEST_DOC_ID, "user1", -1, "error", "에러 발생")
 
-        # post가 두 번 호출되어야 함 (document-progress + document-processing-complete)
-        post_calls = mock_client.post.call_args_list
-        assert len(post_calls) >= 2
-        urls = [c[0][0] for c in post_calls]
-        assert any("document-progress" in u for u in urls)
-        assert any("document-processing-complete" in u for u in urls)
+        # publish가 두 번 호출되어야 함 (DOC_PROGRESS + DOC_COMPLETE)
+        assert mock_publish.call_count >= 2
+        channels = [c[0][0] for c in mock_publish.call_args_list]
+        assert "aims:doc:progress" in channels
+        assert "aims:doc:complete" in channels
 
     async def test_mongodb_error_isolated(self, mock_internal_api_writes):
-        """MongoDB 오류가 SSE 알림을 막지 않음"""
+        """MongoDB 오류가 Redis 이벤트 발행을 막지 않음"""
         from routers.doc_prep_main import _notify_progress
 
         mock_internal_api_writes["update_file"].side_effect = Exception("DB down")
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=AsyncMock()), \
-             patch("routers.doc_prep_main.httpx.AsyncClient") as mock_httpx:
-            mock_client = AsyncMock()
-            mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_httpx.return_value = mock_client
+             patch("services.redis_service.RedisService.publish_event", new_callable=AsyncMock) as mock_publish:
 
             # 예외 발생하지 않아야 함
             await _notify_progress(TEST_DOC_ID, "user1", 50, "meta", "test")
 
-        # SSE는 여전히 호출됨
-        mock_client.post.assert_called()
+        # Redis 이벤트는 여전히 발행됨
+        mock_publish.assert_called()
 
     async def test_sse_error_isolated(self, mock_internal_api_writes):
         """SSE 오류가 전체 동작을 막지 않음"""

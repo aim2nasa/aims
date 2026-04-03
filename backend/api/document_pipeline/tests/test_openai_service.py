@@ -454,22 +454,17 @@ class TestCheckCreditForSummary:
 # =============================================================================
 
 class TestLogTokenUsage:
-    """토큰 사용량 로깅 테스트"""
+    """토큰 사용량 로깅 테스트 (aims_analytics DB 직접 기록)"""
 
     @pytest.mark.asyncio
     async def test_log_success_returns_true(self):
-        """로깅 성공 시 True 반환"""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True}
+        """DB 기록 성공 시 True 반환"""
+        import sys
+        mock_module = MagicMock()
+        mock_module.AnalyticsWriter.log_token_usage = AsyncMock(return_value=True)
+        sys.modules["services.analytics_writer"] = mock_module
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.return_value = mock_response
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
-
+        try:
             result = await OpenAIService._log_token_usage(
                 user_id="user-123",
                 document_id="doc-456",
@@ -478,22 +473,19 @@ class TestLogTokenUsage:
                 completion_tokens=50,
                 total_tokens=150
             )
-
             assert result is True
+        finally:
+            sys.modules.pop("services.analytics_writer", None)
 
     @pytest.mark.asyncio
-    async def test_log_api_failure_returns_false(self):
-        """API 실패 시 False 반환"""
-        mock_response = MagicMock()
-        mock_response.status_code = 500
+    async def test_log_db_failure_returns_false(self):
+        """DB 기록 실패 시 False 반환"""
+        import sys
+        mock_module = MagicMock()
+        mock_module.AnalyticsWriter.log_token_usage = AsyncMock(return_value=False)
+        sys.modules["services.analytics_writer"] = mock_module
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.return_value = mock_response
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
-
+        try:
             result = await OpenAIService._log_token_usage(
                 user_id="user-123",
                 document_id="doc-456",
@@ -502,19 +494,19 @@ class TestLogTokenUsage:
                 completion_tokens=50,
                 total_tokens=150
             )
-
             assert result is False
+        finally:
+            sys.modules.pop("services.analytics_writer", None)
 
     @pytest.mark.asyncio
     async def test_log_exception_returns_false(self):
         """예외 발생 시 False 반환 (fail-open)"""
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.side_effect = Exception("Network error")
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
+        import sys
+        mock_module = MagicMock()
+        mock_module.AnalyticsWriter.log_token_usage = AsyncMock(side_effect=Exception("DB error"))
+        sys.modules["services.analytics_writer"] = mock_module
 
+        try:
             result = await OpenAIService._log_token_usage(
                 user_id="user-123",
                 document_id="doc-456",
@@ -523,23 +515,20 @@ class TestLogTokenUsage:
                 completion_tokens=50,
                 total_tokens=150
             )
-
             assert result is False
+        finally:
+            sys.modules.pop("services.analytics_writer", None)
 
     @pytest.mark.asyncio
-    async def test_log_payload_structure(self):
-        """로깅 payload 구조 검증"""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True}
+    async def test_log_calls_analytics_writer_with_correct_args(self):
+        """AnalyticsWriter에 올바른 인자 전달"""
+        import sys
+        mock_writer = AsyncMock(return_value=True)
+        mock_module = MagicMock()
+        mock_module.AnalyticsWriter.log_token_usage = mock_writer
+        sys.modules["services.analytics_writer"] = mock_module
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.return_value = mock_response
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
-
+        try:
             await OpenAIService._log_token_usage(
                 user_id="user-123",
                 document_id="doc-456",
@@ -549,32 +538,30 @@ class TestLogTokenUsage:
                 total_tokens=150
             )
 
-            call_args = mock_client_instance.post.call_args
-            payload = call_args[1]["json"]
+            mock_writer.assert_called_once()
+            call_kwargs = mock_writer.call_args[1]
 
-            assert payload["user_id"] == "user-123"
-            assert payload["source"] == "doc_summary"
-            assert payload["model"] == "gpt-4o-mini"
-            assert payload["prompt_tokens"] == 100
-            assert payload["completion_tokens"] == 50
-            assert payload["total_tokens"] == 150
-            assert "request_id" in payload
-            assert "metadata" in payload
+            assert call_kwargs["user_id"] == "user-123"
+            assert call_kwargs["source"] == "doc_summary"
+            assert call_kwargs["model"] == "gpt-4o-mini"
+            assert call_kwargs["prompt_tokens"] == 100
+            assert call_kwargs["completion_tokens"] == 50
+            assert call_kwargs["total_tokens"] == 150
+            assert call_kwargs["metadata"]["document_id"] == "doc-456"
+            assert call_kwargs["metadata"]["workflow"] == "document_pipeline"
+        finally:
+            sys.modules.pop("services.analytics_writer", None)
 
     @pytest.mark.asyncio
     async def test_log_metadata_contains_document_id(self):
         """metadata에 document_id 포함"""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True}
+        import sys
+        mock_writer = AsyncMock(return_value=True)
+        mock_module = MagicMock()
+        mock_module.AnalyticsWriter.log_token_usage = mock_writer
+        sys.modules["services.analytics_writer"] = mock_module
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.return_value = mock_response
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
-
+        try:
             await OpenAIService._log_token_usage(
                 user_id="user-123",
                 document_id="doc-789",
@@ -584,26 +571,22 @@ class TestLogTokenUsage:
                 total_tokens=150
             )
 
-            call_args = mock_client_instance.post.call_args
-            payload = call_args[1]["json"]
-
-            assert payload["metadata"]["document_id"] == "doc-789"
-            assert payload["metadata"]["workflow"] == "document_pipeline"
+            call_kwargs = mock_writer.call_args[1]
+            assert call_kwargs["metadata"]["document_id"] == "doc-789"
+            assert call_kwargs["metadata"]["workflow"] == "document_pipeline"
+        finally:
+            sys.modules.pop("services.analytics_writer", None)
 
     @pytest.mark.asyncio
     async def test_log_null_user_id_defaults_to_system(self):
         """user_id가 None이면 'system' 사용"""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True}
+        import sys
+        mock_writer = AsyncMock(return_value=True)
+        mock_module = MagicMock()
+        mock_module.AnalyticsWriter.log_token_usage = mock_writer
+        sys.modules["services.analytics_writer"] = mock_module
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.return_value = mock_response
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
-
+        try:
             await OpenAIService._log_token_usage(
                 user_id=None,
                 document_id="doc-456",
@@ -613,25 +596,21 @@ class TestLogTokenUsage:
                 total_tokens=150
             )
 
-            call_args = mock_client_instance.post.call_args
-            payload = call_args[1]["json"]
-
-            assert payload["user_id"] == "system"
+            call_kwargs = mock_writer.call_args[1]
+            assert call_kwargs["user_id"] == "system"
+        finally:
+            sys.modules.pop("services.analytics_writer", None)
 
     @pytest.mark.asyncio
     async def test_log_source_is_doc_summary(self):
         """source 필드가 'doc_summary'여야 함"""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True}
+        import sys
+        mock_writer = AsyncMock(return_value=True)
+        mock_module = MagicMock()
+        mock_module.AnalyticsWriter.log_token_usage = mock_writer
+        sys.modules["services.analytics_writer"] = mock_module
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.return_value = mock_response
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
-
+        try:
             await OpenAIService._log_token_usage(
                 user_id="user-123",
                 document_id="doc-456",
@@ -641,99 +620,10 @@ class TestLogTokenUsage:
                 total_tokens=150
             )
 
-            call_args = mock_client_instance.post.call_args
-            payload = call_args[1]["json"]
-
-            assert payload["source"] == "doc_summary"
-
-    @pytest.mark.asyncio
-    async def test_log_api_response_success_false(self):
-        """API 응답의 success가 false면 False 반환"""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": False, "error": "Logging failed"}
-
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.return_value = mock_response
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
-
-            result = await OpenAIService._log_token_usage(
-                user_id="user-123",
-                document_id="doc-456",
-                model="gpt-4o-mini",
-                prompt_tokens=100,
-                completion_tokens=50,
-                total_tokens=150
-            )
-
-            assert result is False
-
-    @pytest.mark.asyncio
-    async def test_log_includes_x_api_key_header(self):
-        """x-api-key 헤더 포함"""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True}
-
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.return_value = mock_response
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
-
-            await OpenAIService._log_token_usage(
-                user_id="user-123",
-                document_id="doc-456",
-                model="gpt-4o-mini",
-                prompt_tokens=100,
-                completion_tokens=50,
-                total_tokens=150
-            )
-
-            call_args = mock_client_instance.post.call_args
-            headers = call_args[1]["headers"]
-
-            assert "x-api-key" in headers
-
-    @pytest.mark.asyncio
-    async def test_log_request_id_is_uuid(self):
-        """request_id가 UUID 형식"""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True}
-
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client_instance = AsyncMock()
-            mock_client_instance.post.return_value = mock_response
-            mock_client_instance.__aenter__.return_value = mock_client_instance
-            mock_client_instance.__aexit__.return_value = None
-            mock_client.return_value = mock_client_instance
-
-            await OpenAIService._log_token_usage(
-                user_id="user-123",
-                document_id="doc-456",
-                model="gpt-4o-mini",
-                prompt_tokens=100,
-                completion_tokens=50,
-                total_tokens=150
-            )
-
-            call_args = mock_client_instance.post.call_args
-            payload = call_args[1]["json"]
-
-            # UUID 형식 검증
-            request_id = payload["request_id"]
-            try:
-                uuid.UUID(request_id)
-                is_valid_uuid = True
-            except ValueError:
-                is_valid_uuid = False
-
-            assert is_valid_uuid
+            call_kwargs = mock_writer.call_args[1]
+            assert call_kwargs["source"] == "doc_summary"
+        finally:
+            sys.modules.pop("services.analytics_writer", None)
 
 
 # =============================================================================
