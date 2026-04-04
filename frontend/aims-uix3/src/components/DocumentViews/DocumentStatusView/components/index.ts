@@ -1,5 +1,0 @@
-export { default as DocumentStatusHeader } from './DocumentStatusHeader'
-export { default as DocumentStatusList } from './DocumentStatusList'
-export { default as DocumentDetailModal } from './DocumentDetailModal'
-export { default as DocumentSummaryModal } from './DocumentSummaryModal'
-export { default as DocumentFullTextModal } from './DocumentFullTextModal'

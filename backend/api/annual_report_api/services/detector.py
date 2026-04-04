@@ -130,13 +130,12 @@ def is_annual_report(pdf_path: str) -> Dict[str, any]:
         }
 
 
-def extract_customer_info_from_first_page(pdf_path: str, original_filename: str = None) -> Dict[str, str]:
+def extract_customer_info_from_first_page(pdf_path: str) -> Dict[str, str]:
     """
     1페이지에서 메타데이터 추출 (AI 불사용, 간단한 텍스트 파싱)
 
     Args:
         pdf_path: PDF 파일 경로
-        original_filename: 원본 파일명 (Source of Truth, 한글/영문 모두 지원)
 
     Returns:
         dict: {
