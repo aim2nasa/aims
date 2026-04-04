@@ -31,3 +31,7 @@ jobs:
     name: E2E & Accessibility
     uses: ./.github/workflows/ci-e2e.yml
     needs: frontend  # Frontend 테스트 통과 후 실행
+
+  architecture:
+    name: Architecture
+    uses: ./.github/workflows/ci-architecture.yml
