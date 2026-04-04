@@ -116,6 +116,19 @@ aims_api가 DB 스키마의 단일 게이트웨이가 되었다.
 
 **실동작 테스트 18/18 PASS** | 커밋 `8c63d221`
 
+### R5: 아키텍처 재검증 잔존 이슈 수정 (2026-04-04)
+
+R1~R4 완료 후 전체 코드 재검증에서 발견된 잔존 역방향 의존 + DB 직접 접근 수정.
+
+| 서비스 | 이전 (위반) | 이후 (전환) |
+|--------|-------------|-------------|
+| annual_report_api | `system_logger.py` → POST `/api/system-logs` | aims_analytics DB 직접 기록 (errorLogger.js 스키마 통일) |
+| document_pipeline | `doc_prep_main.py` → POST `/api/webhooks/ar-status-change`, `cr-status-change` | Redis Pub/Sub (`aims:ar:status`, `aims:cr:status`) |
+| document_pipeline | `ocr_worker.py` → POST `/api/webhooks/document-processing-complete` | Redis Pub/Sub (`aims:doc:complete`) |
+| annual_report_api | `auto_parse_annual_reports.py` → `db["files"]` 직접 접근 | `internal_api.query_files()` 전환 |
+
+**regression 테스트 13건 추가** (스키마 검증 6 + Redis 채널 4 + Internal API 전환 3) | 커밋 `3d8ac41a`
+
 ---
 
 ## 3. 현재 위치
@@ -128,9 +141,10 @@ aims_api가 DB 스키마의 단일 게이트웨이가 되었다.
 [완료] R2: 공유 서비스 분리       ████████████████████ 100%
 [완료] R3: 문서연결 이벤트화      ████████████████████ 100%
 [완료] R4: 라우트 모듈 정리       ████████████████████ 100%
+[완료] R5: 재검증 잔존 수정       ████████████████████ 100%
 ```
 
-**R1~R4 완료. 역방향 HTTP 의존 0건 + aims_api 내부 모듈 정리 달성.**
+**R1~R5 완료. 역방향 HTTP 의존 0건 + DB 직접 접근 0건(운영 코드) 달성.**
 
 ---
 
