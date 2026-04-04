@@ -12,7 +12,7 @@ export { AddressSearchModal } from './components/AddressSearchModal';
 // 공용 뷰
 export { AllCustomersView } from './views/AllCustomersView/AllCustomersView';
 export type { AllCustomersViewRef } from './views/AllCustomersView/AllCustomersView';
-export { CustomerRegistrationView as CustomerRegistrationForm } from './views/CustomerRegistrationView/CustomerRegistrationView';
+export { CustomerRegistrationView } from './views/CustomerRegistrationView/CustomerRegistrationView';
 
 // 공용 유틸 (AR/CRS PDF 파싱)
 export { checkAnnualReportFromPDF, checkCustomerReviewFromPDF } from './utils/pdfParser';

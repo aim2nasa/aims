@@ -32,4 +32,22 @@ export default tseslint.config([
       ],
     },
   },
+  // components/ → features/ 내부 경로 직접 import 차단
+  // barrel export (@/features/xxx) 경유만 허용
+  {
+    files: ['src/components/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/features/*/api/*', '@/features/*/components/*', '@/features/*/views/*', '@/features/*/hooks/*', '@/features/*/controllers/*'],
+              message: 'features/ 내부 경로 직접 import 금지. barrel export (@/features/xxx) 를 사용하세요.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ])
