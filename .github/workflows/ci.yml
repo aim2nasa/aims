@@ -13,6 +13,8 @@ on:
     paths:
       - 'frontend/**'
       - 'backend/**'
+      - 'tests/**'
+      - '.github/workflows/**'
 
 jobs:
   frontend:
