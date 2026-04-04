@@ -256,39 +256,43 @@ describe('페르소나: 생초보 설계사', () => {
       const customersSource = readSourceFile('./tools/customers.ts');
       const memosSource = readSourceFile('./tools/memos.ts');
 
-      // 한글 에러 메시지 확인
-      expect(customersSource).toContain('유효하지 않은 고객 ID입니다');
+      // 한글 에러 메시지 확인 — Internal API 전환 후 MCP 측 에러 메시지
       expect(customersSource).toContain('고객을 찾을 수 없습니다');
-      expect(customersSource).toContain('같은 이름의 고객이 이미 존재합니다');
-      // memos는 customer_memos 컬렉션 구조 — 고객 존재 확인 메시지
+      expect(customersSource).toContain('고객 등록 실패');
+      expect(customersSource).toContain('고객 정보 수정 실패');
+      // memos — 고객 존재 확인 메시지
       expect(memosSource).toContain('고객을 찾을 수 없습니다');
     });
 
     it('영어 기술 용어가 사용자 에러에 노출되지 않음', () => {
-      // isError: true 블록 내에 기술 용어 없어야 함
-      // 다만 코드 내부에서는 사용할 수 있으므로 에러 메시지 문자열만 확인
-      const errorMessages = [
-        '유효하지 않은 고객 ID입니다',
-        '고객을 찾을 수 없습니다'
-      ];
+      // 실제 소스 코드의 isError 블록에서 에러 메시지 텍스트를 추출하여 검증
+      const customersSource = readSourceFile('./tools/customers.ts');
+      const memosSource = readSourceFile('./tools/memos.ts');
 
-      for (const msg of errorMessages) {
-        expect(msg).not.toContain('ObjectId');
-        expect(msg).not.toContain('Zod');
-        expect(msg).not.toContain('regex');
-        expect(msg).not.toContain('validation');
+      const errorTextPattern = /isError:\s*true[\s\S]*?text:\s*[`'"]([\s\S]*?)[`'"]/g;
+      const allSources = customersSource + memosSource;
+      const errorTexts: string[] = [];
+      let match;
+      while ((match = errorTextPattern.exec(allSources)) !== null) {
+        errorTexts.push(match[1]);
+      }
+      expect(errorTexts.length).toBeGreaterThan(0);
+      for (const errorText of errorTexts) {
+        expect(errorText).not.toContain('ObjectId');
+        expect(errorText).not.toContain('Zod');
+        expect(errorText).not.toContain('regex');
+        expect(errorText).not.toContain('validation');
       }
     });
 
-    it('에러 메시지에 해결 힌트 포함 여부', () => {
-      // 현재 에러 메시지가 해결 방법을 제시하는지 확인
-      // 예: "24자리 ID를 확인해주세요"
-      // 현재는 단순 메시지만 있음
+    it('에러 메시지가 사용자 친화적인 한글 메시지를 포함', () => {
       const customersSource = readSourceFile('./tools/customers.ts');
 
-      // 향후 개선: 에러 메시지에 해결 방법 포함
-      // 현재는 단순히 "유효하지 않은 고객 ID입니다"
-      expect(customersSource).toContain('유효하지 않은 고객 ID');
+      // MCP 에러 메시지가 한글 접두사로 시작
+      expect(customersSource).toContain('고객 검색 실패');
+      expect(customersSource).toContain('고객 조회 실패');
+      expect(customersSource).toContain('고객 등록 실패');
+      expect(customersSource).toContain('고객 정보 수정 실패');
     });
   });
 

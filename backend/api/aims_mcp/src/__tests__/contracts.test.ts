@@ -10,7 +10,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ZodError } from 'zod';
 import { listContractsSchema } from '../tools/contracts.js';
 
-// ── DB / Auth / Logger Mock ──────────────────────────────────────────
+// ── Internal API / Auth / Logger Mock ────────────────────────────────
+
+const mockQueryCustomers = vi.fn();
+
+vi.mock('../internalApi.js', () => ({
+  queryCustomers: (...args: any[]) => mockQueryCustomers(...args),
+}));
 
 // 고객 데이터 fixture
 const mockCustomers = [
@@ -67,22 +73,7 @@ const mockCustomers = [
   }
 ];
 
-// 커서 mock
-function createMockCursor(data: unknown[]) {
-  return {
-    project: vi.fn().mockReturnThis(),
-    toArray: vi.fn().mockResolvedValue(data)
-  };
-}
-
-const mockFind = vi.fn();
-const mockCollection = vi.fn().mockReturnValue({ find: mockFind });
-const mockDb = { collection: mockCollection };
-
 vi.mock('../db.js', () => ({
-  getDB: () => mockDb,
-  toSafeObjectId: (id: string) => id ? { toString: () => id } : null,
-  COLLECTIONS: { CUSTOMERS: 'customers' },
   formatZodError: (error: ZodError) => error.issues.map(i => i.message).join(', ')
 }));
 
@@ -159,7 +150,7 @@ describe('contracts - handleListContracts 핸들러', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFind.mockReturnValue(createMockCursor(mockCustomers));
+    mockQueryCustomers.mockResolvedValue(mockCustomers);
   });
 
   // ── 시나리오 1: 파라미터 없이 호출 시 기존 동작 유지 ────────────────
@@ -335,7 +326,7 @@ describe('contracts - 다중 AR 계약 수집', () => {
       }
     ];
 
-    mockFind.mockReturnValue(createMockCursor(multiARCustomers));
+    mockQueryCustomers.mockResolvedValue(multiARCustomers);
     const result = await handleListContracts({});
     const data = parseResponse(result as any);
 
@@ -397,7 +388,7 @@ describe('contracts - 다중 AR 계약 수집', () => {
       }
     ];
 
-    mockFind.mockReturnValue(createMockCursor(duplicateARCustomers));
+    mockQueryCustomers.mockResolvedValue(duplicateARCustomers);
     const result = await handleListContracts({});
     const data = parseResponse(result as any);
 
@@ -419,7 +410,7 @@ describe('contracts - 다중 AR 계약 수집', () => {
   // ── AR이 1개인 경우 기존 동작과 동일 ─────────────────────────
   it('AR이 1개인 고객은 기존과 동일하게 동작', async () => {
     // mockCustomers (상단 fixture)는 AR 1개
-    mockFind.mockReturnValue(createMockCursor(mockCustomers));
+    mockQueryCustomers.mockResolvedValue(mockCustomers);
     const result = await handleListContracts({});
     const data = parseResponse(result as any);
 

@@ -44,6 +44,8 @@ async function verifyAddressViaKakao(address1) {
 const fs = require('fs');
 const path = require('path');
 
+const HELPER_PATH = path.join(__dirname, '..', 'utils', 'address-helper.js');
+const helperSource = fs.readFileSync(HELPER_PATH, 'utf-8');
 const ROUTES_PATH = path.join(__dirname, '..', 'routes', 'customers-routes.js');
 const routesSource = fs.readFileSync(ROUTES_PATH, 'utf-8');
 
@@ -52,24 +54,24 @@ const routesSource = fs.readFileSync(ROUTES_PATH, 'utf-8');
 // ══════════════════════════════════════════════════════════════
 
 describe('주소 검증 소스 코드 검증', () => {
-  test('verifyAddressViaKakao 함수가 존재', () => {
-    expect(routesSource).toContain('async function verifyAddressViaKakao(address1)');
+  test('verifyAddressViaKakao 함수가 address-helper.js에 정의됨', () => {
+    expect(helperSource).toContain('async function verifyAddressViaKakao(address1)');
   });
 
   test('빈 주소 체크가 존재', () => {
-    expect(routesSource).toContain("if (!address1 || !address1.trim()) return 'failed'");
+    expect(helperSource).toContain("if (!address1 || !address1.trim()) return 'failed'");
   });
 
   test('카카오 API URL 사용', () => {
-    expect(routesSource).toContain('dapi.kakao.com/v2/local/search/address.json');
+    expect(helperSource).toContain('dapi.kakao.com/v2/local/search/address.json');
   });
 
   test('타임아웃 설정 존재', () => {
-    expect(routesSource).toContain('timeout: 5000');
+    expect(helperSource).toContain('timeout: 5000');
   });
 
   test('주소 정규화 로직 존재', () => {
-    expect(routesSource).toContain("replace(/\\s+/g, ' ').toLowerCase()");
+    expect(helperSource).toContain("replace(/\\s+/g, ' ').toLowerCase()");
   });
 
   test('verification_status 필드가 bulk import에서 설정됨', () => {

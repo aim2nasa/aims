@@ -28,50 +28,38 @@ describe('MCP 소스 코드 검증', () => {
     });
 
     describe('create_customer 핸들러', () => {
-      it('DB에 mobile_phone 필드로 저장해야 함 (phone 아님)', () => {
-        // newCustomer 객체에서 mobile_phone 사용 확인 (formatPhoneNumber 적용)
-        expect(sourceCode).toContain('mobile_phone: formatPhoneNumber(params.phone)');
-
-        // newCustomer 객체 내에서 phone: params.phone 직접 사용 금지
-        const newCustomerMatch = sourceCode.match(/const newCustomer = \{[\s\S]*?insertOne/);
-        expect(newCustomerMatch).not.toBeNull();
-        if (newCustomerMatch) {
-          // newCustomer 객체 내에 "phone:" 패턴이 없어야 함 (mobile_phone은 OK)
-          expect(newCustomerMatch[0]).not.toMatch(/\bphone:\s*params\.phone/);
-          // mobile_phone은 있어야 함 (formatPhoneNumber 적용)
-          expect(newCustomerMatch[0]).toContain('mobile_phone: formatPhoneNumber(params.phone)');
-        }
+      it('Internal API createCustomer 호출해야 함', () => {
+        expect(sourceCode).toContain('createCustomer({');
       });
 
-      it('created_at에 new Date() 사용해야 함', () => {
-        expect(sourceCode).toContain('created_at: now');
-        expect(sourceCode).toContain('const now = new Date()');
-        // formatDateTime 사용 금지
+      it('전화번호에 formatPhoneNumber 적용해야 함', () => {
+        expect(sourceCode).toContain('phone: formatPhoneNumber(params.phone)');
+      });
+
+      it('userId를 API에 전달해야 함', () => {
+        expect(sourceCode).toContain('userId');
+      });
+
+      it('customerType을 API에 전달해야 함', () => {
+        expect(sourceCode).toContain('customerType: params.customerType');
+      });
+
+      it('formatDateTime 사용 금지', () => {
         expect(sourceCode).not.toContain('formatDateTime');
-      });
-
-      it('updated_at에 new Date() 사용해야 함', () => {
-        expect(sourceCode).toContain('updated_at: now');
-      });
-
-      it('customer_type 기본값이 개인이어야 함', () => {
-        expect(sourceCode).toContain("customer_type: params.customerType || '개인'");
-      });
-
-      it('status 기본값이 active여야 함', () => {
-        expect(sourceCode).toContain("status: 'active'");
       });
     });
 
     describe('update_customer 핸들러', () => {
-      it('업데이트 시 personal_info.mobile_phone 경로 사용해야 함', () => {
-        expect(sourceCode).toContain("updateFields['personal_info.mobile_phone'] = formattedPhone");
-        // personal_info.phone 경로 사용 금지
-        expect(sourceCode).not.toContain("updateFields['personal_info.phone']");
+      it('Internal API updateCustomer 호출해야 함', () => {
+        expect(sourceCode).toContain('updateCustomer(params.customerId');
       });
 
-      it('업데이트 시 meta.updated_at에 new Date() 사용해야 함', () => {
-        expect(sourceCode).toContain("'meta.updated_at': new Date()");
+      it('전화번호에 formatPhoneNumber 적용해야 함', () => {
+        expect(sourceCode).toContain('formatPhoneNumber(params.phone)');
+      });
+
+      it('phoneType을 API에 전달해야 함', () => {
+        expect(sourceCode).toContain('phoneType: params.phoneType');
       });
     });
 
@@ -103,22 +91,19 @@ describe('MCP 소스 코드 검증', () => {
     });
 
     describe('add_customer_memo 핸들러', () => {
-      it('customer_memos 컬렉션에 개별 문서로 저장해야 함', () => {
-        // customer_memos 컬렉션 사용 확인
-        expect(sourceCode).toContain("db.collection('customer_memos')");
-        // COLLECTIONS.CUSTOMERS도 사용 (동기화용)
-        expect(sourceCode).toContain('db.collection(COLLECTIONS.CUSTOMERS)');
+      it('Internal API createMemo 호출해야 함', () => {
+        expect(sourceCode).toContain('createMemo({');
+      });
+
+      it('content를 trim하여 전달해야 함', () => {
+        expect(sourceCode).toContain('content: params.content.trim()');
       });
 
       it('customers.memo 필드에 동기화해야 함', () => {
         // syncCustomerMemoField를 통해 customers.memo 동기화
         expect(sourceCode).toContain('syncCustomerMemoField');
-        expect(sourceCode).toContain("$set: { memo: memoText");
-      });
-
-      it('insertOne으로 새 메모 문서를 추가해야 함', () => {
-        expect(sourceCode).toContain("db.collection('customer_memos').insertOne");
-        expect(sourceCode).toContain('content: params.content.trim()');
+        // Internal API syncCustomerMemo 호출
+        expect(sourceCode).toContain('syncCustomerMemo');
       });
 
       it('타임스탬프 형식으로 동기화 메모를 생성해야 함', () => {
@@ -129,12 +114,13 @@ describe('MCP 소스 코드 검증', () => {
       });
     });
 
-    describe('컬렉션명 상수 사용', () => {
-      it('customers 컬렉션 접근에 COLLECTIONS.CUSTOMERS 사용', () => {
-        // COLLECTIONS import 확인
-        expect(sourceCode).toContain('COLLECTIONS');
-        // 하드코딩 금지
-        expect(sourceCode).not.toMatch(/db\.collection\(['"]customers['"]\)/);
+    describe('Internal API 사용', () => {
+      it('queryMemos를 사용하여 메모 조회', () => {
+        expect(sourceCode).toContain('queryMemos');
+      });
+
+      it('syncCustomerMemo를 사용하여 customers.memo 동기화', () => {
+        expect(sourceCode).toContain('syncCustomerMemo(');
       });
     });
   });

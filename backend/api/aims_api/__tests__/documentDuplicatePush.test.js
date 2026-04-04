@@ -323,7 +323,7 @@ describe('BUG-4: customers.documents 중복 $push 방지', () => {
     const fs = require('fs');
     const path = require('path');
     const sourceCode = fs.readFileSync(
-      path.join(__dirname, '..', 'routes', 'customers-routes.js'),
+      path.join(__dirname, '..', 'routes', 'customer-documents-routes.js'),
       'utf-8'
     );
 

@@ -8,9 +8,9 @@ const fs = require('fs');
 const path = require('path');
 
 describe('메모 동기화 (MCP 호환)', () => {
-  // 메모 코드가 customers-routes.js로 이동됨 (server.js 리팩토링 Phase 9)
+  // 메모 코드가 customer-memos-routes.js로 분리됨 (DB 게이트웨이 리팩토링)
   const serverCode = fs.readFileSync(
-    path.join(__dirname, '../routes/customers-routes.js'),
+    path.join(__dirname, '../routes/customer-memos-routes.js'),
     'utf-8'
   );
 

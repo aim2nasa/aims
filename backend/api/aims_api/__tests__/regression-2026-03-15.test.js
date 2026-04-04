@@ -3,10 +3,10 @@
  *
  * 수정된 버그 6건:
  * 1. credit_pending 재처리 트리거 누락 (storage-routes.js)
- * 2. webhook API 키 인증 불일치 (customers-routes.js, auth.js)
- * 3. virusScanService import 누락 (customers-routes.js)
+ * 2. webhook API 키 인증 불일치 (notification-routes.js, auth.js)
+ * 3. virusScanService import 누락 (notification-routes.js)
  * 4. scanAfterUpload ObjectId 변환 누락 (virusScanService.js)
- * 5. AR/CR 라우트 인증 미들웨어 누락 (customers-routes.js)
+ * 5. AR/CR 라우트 인증 미들웨어 누락 (annual-report-routes.js)
  * 7. ocr_usage_log file_id unique 인덱스 → 재처리 시 중복 에러 (ocrUsageLogService.js)
  *
  * @since 2026-03-15
@@ -72,18 +72,18 @@ describe('BUG-1: tier 변경 시 credit_pending 재처리 트리거', () => {
 });
 
 // =============================================================================
-// 2. webhook API 키 인증 (customers-routes.js, auth.js)
+// 2. webhook API 키 인증 (notification-routes.js, auth.js)
 // =============================================================================
 describe('BUG-2: webhook API 키 — INTERNAL_WEBHOOK_API_KEY 지원', () => {
-  const customersSource = readSource('routes/customers-routes.js');
+  const customersSource = readSource('routes/notification-routes.js');
   const authSource = readSource('middleware/auth.js');
 
-  test('customers-routes: webhook 인증에서 INTERNAL_WEBHOOK_API_KEY를 체크해야 함', () => {
+  test('notification-routes: webhook 인증에서 INTERNAL_WEBHOOK_API_KEY를 체크해야 함', () => {
     // document-processing-complete webhook에서 INTERNAL_WEBHOOK_API_KEY 허용
     expect(customersSource).toContain('INTERNAL_WEBHOOK_API_KEY');
   });
 
-  test('customers-routes: N8N_API_KEY도 fallback으로 허용해야 함', () => {
+  test('notification-routes: N8N_API_KEY도 fallback으로 허용해야 함', () => {
     expect(customersSource).toContain('N8N_API_KEY');
   });
 
@@ -97,10 +97,10 @@ describe('BUG-2: webhook API 키 — INTERNAL_WEBHOOK_API_KEY 지원', () => {
 });
 
 // =============================================================================
-// 3. virusScanService import (customers-routes.js)
+// 3. virusScanService import (notification-routes.js)
 // =============================================================================
 describe('BUG-3: virusScanService import 누락', () => {
-  const source = readSource('routes/customers-routes.js');
+  const source = readSource('routes/notification-routes.js');
 
   test('virusScanService가 require로 import되어야 함', () => {
     expect(source).toMatch(/const\s+virusScanService\s*=\s*require\(['"]\.\.\/lib\/virusScanService['"]\)/);
@@ -144,10 +144,10 @@ describe('BUG-4: scanAfterUpload ObjectId 변환 누락', () => {
 });
 
 // =============================================================================
-// 5. AR/CR 라우트 인증 미들웨어 (customers-routes.js)
+// 5. AR/CR 라우트 인증 미들웨어 (annual-report-routes.js)
 // =============================================================================
 describe('BUG-5: AR/CR 라우트 인증 미들웨어 누락', () => {
-  const source = readSource('routes/customers-routes.js');
+  const source = readSource('routes/annual-report-routes.js');
 
   test('GET /annual-report/status/:file_id에 authenticateJWT가 적용되어야 함', () => {
     const routeMatch = source.match(

@@ -119,20 +119,20 @@ describe('응답 포맷 일관성', () => {
         expect(sourceCode).toContain('success: true');
       });
 
-      it('customerId 필드 포함', () => {
-        expect(sourceCode).toContain('customerId: result.insertedId.toString()');
+      it('customerId 필드 포함 (Internal API 응답에서)', () => {
+        expect(sourceCode).toContain('customerId: result.data.customerId');
       });
 
-      it('name 필드 포함', () => {
-        expect(sourceCode).toContain('name: params.name');
+      it('name 필드 포함 (Internal API 응답에서)', () => {
+        expect(sourceCode).toContain('name: result.data.name');
       });
 
-      it('customerType 필드 포함', () => {
-        expect(sourceCode).toMatch(/customerType:\s*params\.customerType/);
+      it('customerType 필드 포함 (Internal API 응답에서)', () => {
+        expect(sourceCode).toContain('customerType: result.data.customerType');
       });
 
-      it('createdAt 필드 포함 (ISO 문자열)', () => {
-        expect(sourceCode).toContain('createdAt: now.toISOString()');
+      it('createdAt 필드 포함 (Internal API 응답에서)', () => {
+        expect(sourceCode).toContain('createdAt: result.data.createdAt');
       });
     });
 
@@ -141,16 +141,16 @@ describe('응답 포맷 일관성', () => {
         expect(sourceCode).toContain('success: true');
       });
 
-      it('customerId 필드 포함', () => {
-        expect(sourceCode).toContain('customerId: params.customerId');
+      it('customerId 필드 포함 (Internal API 응답에서)', () => {
+        expect(sourceCode).toContain('customerId: result.data.customerId');
       });
 
-      it('updatedFields 필드 포함', () => {
-        expect(sourceCode).toContain('updatedFields:');
+      it('updatedFields 필드 포함 (Internal API 응답에서)', () => {
+        expect(sourceCode).toContain('updatedFields: result.data.updatedFields');
       });
 
-      it('message 필드 포함', () => {
-        expect(sourceCode).toContain("message: '고객 정보가 수정되었습니다.'");
+      it('message 필드 포함 (Internal API 응답에서)', () => {
+        expect(sourceCode).toContain('message: result.data.message');
       });
     });
   });
@@ -180,7 +180,7 @@ describe('응답 포맷 일관성', () => {
       });
 
       it('timestamp 필드 포함', () => {
-        expect(sourceCode).toContain('timestamp: formatDateTime(now)');
+        expect(sourceCode).toContain('timestamp: formatDateTime(new Date())');
       });
 
       it('message 필드 포함', () => {
@@ -227,10 +227,6 @@ describe('응답 포맷 일관성', () => {
           sourceCode = readSourceFile(file);
         });
 
-        it('유효하지 않은 ID 에러 메시지', () => {
-          expect(sourceCode).toMatch(/유효하지 않은.*ID/);
-        });
-
         it('찾을 수 없음 에러 메시지', () => {
           expect(sourceCode).toMatch(/찾을 수 없습니다/);
         });
@@ -265,9 +261,9 @@ describe('응답 포맷 일관성', () => {
 
   describe('응답에서 Date 처리', () => {
 
-    it('customers.ts: createdAt 응답에서 toISOString() 사용', () => {
+    it('customers.ts: createdAt은 Internal API 응답에서 가져옴', () => {
       const customersCode = readSourceFile('./tools/customers.ts');
-      expect(customersCode).toContain('createdAt: now.toISOString()');
+      expect(customersCode).toContain('createdAt: result.data.createdAt');
     });
 
     it('customers.ts: 목록 응답에서 Date 그대로 반환', () => {
@@ -373,8 +369,8 @@ describe('필드명 일관성 (카멜케이스 vs 스네이크케이스)', () =>
       expect(memosCode).toContain('meta.created_by');
     });
 
-    it('memos.ts: meta.updated_at', () => {
-      expect(memosCode).toContain('meta.updated_at');
+    it('memos.ts: created_at (메모 정렬/포맷)', () => {
+      expect(memosCode).toContain('created_at');
     });
   });
 });

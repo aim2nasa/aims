@@ -31,7 +31,7 @@ function readSource(relativePath) {
 // 1. notify/document-uploaded에서 바이러스 스캔/PDF 변환 제거 검증
 // =============================================================================
 describe('FIX-1: notify/document-uploaded는 SSE 알림 전용이어야 함', () => {
-  const source = readSource('routes/customers-routes.js');
+  const source = readSource('routes/notification-routes.js');
 
   // notify/document-uploaded 엔드포인트 본문만 추출
   function getNotifyDocUploadedBody() {
@@ -73,7 +73,7 @@ describe('FIX-1: notify/document-uploaded는 SSE 알림 전용이어야 함', ()
 // 2. document-processing-complete에서 바이러스 스캔이 여전히 트리거되는지 검증
 // =============================================================================
 describe('FIX-2: document-processing-complete에서 바이러스 스캔이 정상 작동해야 함', () => {
-  const source = readSource('routes/customers-routes.js');
+  const source = readSource('routes/notification-routes.js');
 
   function getDocProcessingCompleteBody() {
     const routeStart = source.indexOf("'/webhooks/document-processing-complete'");

@@ -50,12 +50,8 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
         expect(sourceCode).toContain('} catch');
       });
 
-      it('ObjectId 검증', () => {
-        expect(sourceCode).toContain('toSafeObjectId');
-      });
-
-      it('유효하지 않은 ID 에러 메시지', () => {
-        expect(sourceCode).toContain("'유효하지 않은 고객 ID입니다.'");
+      it('Internal API 경유로 고객 조회 (ObjectId 검증은 API 서버 측)', () => {
+        expect(sourceCode).toContain('queryCustomers');
       });
 
       it('고객 없음 에러 메시지', () => {
@@ -95,8 +91,8 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
       });
 
       it('relationship_info 내부 필드로 쿼리', () => {
-        expect(sourceCode).toContain("'relationship_info.from_customer_id': objectId");
-        expect(sourceCode).toContain("'relationship_info.to_customer_id': objectId");
+        expect(sourceCode).toContain("'relationship_info.from_customer_id': params.customerId");
+        expect(sourceCode).toContain("'relationship_info.to_customer_id': params.customerId");
       });
     });
   });
@@ -113,8 +109,8 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
         expect(sourceCode).toContain("'meta.created_by': userId");
       });
 
-      it('toSafeObjectId 사용', () => {
-        expect(sourceCode).toContain('toSafeObjectId');
+      it('Internal API 경유로 고객 조회', () => {
+        expect(sourceCode).toContain('queryCustomers');
       });
     });
 
@@ -368,8 +364,8 @@ describe('금지 패턴 전역 검증', () => {
       expect(sourceCode).toContain('formatDateTime');
     });
 
-    it('customers.memo 필드에 저장 (별도 컬렉션 아님)', () => {
-      expect(sourceCode).toContain('db.collection(COLLECTIONS.CUSTOMERS)');
+    it('customers.memo 필드에 동기화 (Internal API syncCustomerMemo 경유)', () => {
+      expect(sourceCode).toContain('syncCustomerMemo');
       expect(sourceCode).not.toContain('COLLECTIONS.MEMOS');
     });
   });

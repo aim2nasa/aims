@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ObjectId } from 'mongodb';
 
-// ── Internal API Write 함수 mock ──
+// ── Internal API 함수 mock (Read + Write) ──
 
 const mockCreateCustomer = vi.fn();
 const mockUpdateCustomer = vi.fn();
@@ -17,6 +17,12 @@ const mockUpdateMemo = vi.fn();
 const mockDeleteMemo = vi.fn();
 const mockCreateRelationship = vi.fn();
 const mockDeleteRelationship = vi.fn();
+const mockQueryCustomers = vi.fn();
+const mockQueryMemos = vi.fn();
+const mockCountMemos = vi.fn();
+const mockGetMemo = vi.fn();
+const mockGetRelationship = vi.fn();
+const mockQueryRelationships = vi.fn();
 
 vi.mock('../internalApi.js', () => ({
   createCustomer: (...args: any[]) => mockCreateCustomer(...args),
@@ -27,6 +33,12 @@ vi.mock('../internalApi.js', () => ({
   deleteMemo: (...args: any[]) => mockDeleteMemo(...args),
   createRelationship: (...args: any[]) => mockCreateRelationship(...args),
   deleteRelationship: (...args: any[]) => mockDeleteRelationship(...args),
+  queryCustomers: (...args: any[]) => mockQueryCustomers(...args),
+  queryMemos: (...args: any[]) => mockQueryMemos(...args),
+  countMemos: (...args: any[]) => mockCountMemos(...args),
+  getMemo: (...args: any[]) => mockGetMemo(...args),
+  getRelationship: (...args: any[]) => mockGetRelationship(...args),
+  queryRelationships: (...args: any[]) => mockQueryRelationships(...args),
   queryFiles: vi.fn().mockResolvedValue([]),
   countFiles: vi.fn().mockResolvedValue(0),
   getCustomerName: vi.fn().mockResolvedValue(null),
@@ -38,31 +50,10 @@ vi.mock('../auth.js', () => ({
   getCurrentUserId: () => 'test-user-123',
 }));
 
-// ── DB mock (Read 용도: verifyCustomerOwnership, 관계 조회 등) ──
-
-const mockFindOne = vi.fn();
-const mockFind = vi.fn();
-const mockCountDocuments = vi.fn();
-const mockAggregate = vi.fn();
+// ── DB mock (escapeRegex, formatZodError 유틸만 사용) ──
 
 vi.mock('../db.js', () => ({
-  getDB: () => ({
-    collection: () => ({
-      findOne: (...args: any[]) => mockFindOne(...args),
-      find: (...args: any[]) => mockFind(...args),
-      countDocuments: (...args: any[]) => mockCountDocuments(...args),
-      aggregate: (...args: any[]) => mockAggregate(...args),
-    }),
-  }),
-  toSafeObjectId: (id: string) => {
-    return id && ObjectId.isValid(id) ? new ObjectId(id) : null;
-  },
   escapeRegex: (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-  COLLECTIONS: {
-    CUSTOMERS: 'customers',
-    CUSTOMER_RELATIONSHIPS: 'customer_relationships',
-    FILES: 'files',
-  },
   formatZodError: (e: unknown) => String(e),
 }));
 
@@ -107,10 +98,6 @@ function assertError(result: any, messagePart?: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockFindOne.mockReset();
-  mockFind.mockReset();
-  mockCountDocuments.mockReset();
-  mockAggregate.mockReset();
 });
 
 // ============================================================
@@ -216,12 +203,12 @@ describe('handleUpdateCustomer', () => {
 
 describe('handleAddMemo', () => {
   it('성공: 소유권 확인 후 Internal API로 메모 생성', async () => {
-    // verifyCustomerOwnership → 고객 존재
-    mockFindOne.mockResolvedValueOnce({
+    // verifyCustomerOwnership → Internal API queryCustomers
+    mockQueryCustomers.mockResolvedValueOnce([{
       _id: new ObjectId(VALID_CUSTOMER_ID),
       personal_info: { name: '홍길동' },
       meta: { created_by: 'test-user-123' },
-    });
+    }]);
 
     // createMemo 성공
     mockCreateMemo.mockResolvedValue({
@@ -229,11 +216,8 @@ describe('handleAddMemo', () => {
       status: 200,
     });
 
-    // syncCustomerMemoField 내부: customer_memos 조회 → sort → toArray
-    mockFind.mockReturnValueOnce({
-      sort: () => ({ toArray: () => Promise.resolve([]) }),
-    });
-    // syncCustomerMemo 성공
+    // syncCustomerMemoField 내부: queryMemos → syncCustomerMemo
+    mockQueryMemos.mockResolvedValueOnce([]);
     mockSyncCustomerMemo.mockResolvedValue({ data: { success: true }, status: 200 });
 
     const result = await handleAddMemo({
@@ -250,8 +234,8 @@ describe('handleAddMemo', () => {
   });
 
   it('소유권 실패: 고객 없음 → Internal API 호출하지 않음', async () => {
-    // verifyCustomerOwnership → null
-    mockFindOne.mockResolvedValueOnce(null);
+    // verifyCustomerOwnership → 빈 배열 (고객 없음)
+    mockQueryCustomers.mockResolvedValueOnce([]);
 
     const result = await handleAddMemo({
       customerId: VALID_CUSTOMER_ID,
@@ -270,18 +254,18 @@ describe('handleAddMemo', () => {
 
 describe('handleDeleteMemo', () => {
   it('성공: 메모 삭제 + sync 성공', async () => {
-    // verifyCustomerOwnership → 고객 존재
-    mockFindOne
-      .mockResolvedValueOnce({
-        _id: new ObjectId(VALID_CUSTOMER_ID),
-        personal_info: { name: '홍길동' },
-      })
-      // 삭제 전 메모 내용 조회
-      .mockResolvedValueOnce({
-        _id: new ObjectId(VALID_MEMO_ID),
-        content: '삭제될 메모',
-        customer_id: new ObjectId(VALID_CUSTOMER_ID),
-      });
+    // verifyCustomerOwnership → Internal API queryCustomers
+    mockQueryCustomers.mockResolvedValueOnce([{
+      _id: new ObjectId(VALID_CUSTOMER_ID),
+      personal_info: { name: '홍길동' },
+    }]);
+
+    // 삭제 전 메모 내용 조회 — Internal API getMemo
+    mockGetMemo.mockResolvedValueOnce({
+      _id: new ObjectId(VALID_MEMO_ID),
+      content: '삭제될 메모',
+      customer_id: new ObjectId(VALID_CUSTOMER_ID),
+    });
 
     // deleteMemo 성공
     mockDeleteMemo.mockResolvedValue({
@@ -289,10 +273,8 @@ describe('handleDeleteMemo', () => {
       status: 200,
     });
 
-    // syncCustomerMemoField 내부
-    mockFind.mockReturnValueOnce({
-      sort: () => ({ toArray: () => Promise.resolve([]) }),
-    });
+    // syncCustomerMemoField 내부: queryMemos → syncCustomerMemo
+    mockQueryMemos.mockResolvedValueOnce([]);
     mockSyncCustomerMemo.mockResolvedValue({ data: { success: true }, status: 200 });
 
     const result = await handleDeleteMemo({
@@ -309,13 +291,13 @@ describe('handleDeleteMemo', () => {
 
   it('메모 없음 404: isError 응답', async () => {
     // verifyCustomerOwnership → 고객 존재
-    mockFindOne
-      .mockResolvedValueOnce({
-        _id: new ObjectId(VALID_CUSTOMER_ID),
-        personal_info: { name: '홍길동' },
-      })
-      // 삭제 전 메모 조회 → null
-      .mockResolvedValueOnce(null);
+    mockQueryCustomers.mockResolvedValueOnce([{
+      _id: new ObjectId(VALID_CUSTOMER_ID),
+      personal_info: { name: '홍길동' },
+    }]);
+
+    // 삭제 전 메모 조회 → null
+    mockGetMemo.mockResolvedValueOnce(null);
 
     // deleteMemo → 404
     mockDeleteMemo.mockResolvedValue({
@@ -333,17 +315,17 @@ describe('handleDeleteMemo', () => {
 
   it('sync 경고: 삭제 성공이지만 syncCustomerMemo 실패 → syncWarning: true', async () => {
     // verifyCustomerOwnership
-    mockFindOne
-      .mockResolvedValueOnce({
-        _id: new ObjectId(VALID_CUSTOMER_ID),
-        personal_info: { name: '홍길동' },
-      })
-      // 삭제 전 메모 조회
-      .mockResolvedValueOnce({
-        _id: new ObjectId(VALID_MEMO_ID),
-        content: '동기화 실패 테스트',
-        customer_id: new ObjectId(VALID_CUSTOMER_ID),
-      });
+    mockQueryCustomers.mockResolvedValueOnce([{
+      _id: new ObjectId(VALID_CUSTOMER_ID),
+      personal_info: { name: '홍길동' },
+    }]);
+
+    // 삭제 전 메모 조회
+    mockGetMemo.mockResolvedValueOnce({
+      _id: new ObjectId(VALID_MEMO_ID),
+      content: '동기화 실패 테스트',
+      customer_id: new ObjectId(VALID_CUSTOMER_ID),
+    });
 
     // deleteMemo 성공
     mockDeleteMemo.mockResolvedValue({
@@ -351,11 +333,8 @@ describe('handleDeleteMemo', () => {
       status: 200,
     });
 
-    // syncCustomerMemoField 내부 — find 조회
-    mockFind.mockReturnValueOnce({
-      sort: () => ({ toArray: () => Promise.resolve([]) }),
-    });
-    // syncCustomerMemo 실패 (data: null)
+    // syncCustomerMemoField 내부 — queryMemos → syncCustomerMemo 실패
+    mockQueryMemos.mockResolvedValueOnce([]);
     mockSyncCustomerMemo.mockResolvedValue({ data: null, status: 500, error: 'sync 실패' });
 
     const result = await handleDeleteMemo({
@@ -375,18 +354,18 @@ describe('handleDeleteMemo', () => {
 
 describe('handleUpdateMemo', () => {
   it('성공: 소유권 확인 후 메모 수정', async () => {
-    // verifyCustomerOwnership
-    mockFindOne
-      .mockResolvedValueOnce({
-        _id: new ObjectId(VALID_CUSTOMER_ID),
-        personal_info: { name: '홍길동' },
-      })
-      // 수정 전 메모 조회 (previousContent용)
-      .mockResolvedValueOnce({
-        _id: new ObjectId(VALID_MEMO_ID),
-        content: '이전 내용',
-        customer_id: new ObjectId(VALID_CUSTOMER_ID),
-      });
+    // verifyCustomerOwnership — Internal API queryCustomers
+    mockQueryCustomers.mockResolvedValueOnce([{
+      _id: new ObjectId(VALID_CUSTOMER_ID),
+      personal_info: { name: '홍길동' },
+    }]);
+
+    // 수정 전 메모 조회 (previousContent용) — Internal API getMemo
+    mockGetMemo.mockResolvedValueOnce({
+      _id: new ObjectId(VALID_MEMO_ID),
+      content: '이전 내용',
+      customer_id: new ObjectId(VALID_CUSTOMER_ID),
+    });
 
     // updateMemo 성공
     mockUpdateMemo.mockResolvedValue({
@@ -394,10 +373,8 @@ describe('handleUpdateMemo', () => {
       status: 200,
     });
 
-    // syncCustomerMemoField
-    mockFind.mockReturnValueOnce({
-      sort: () => ({ toArray: () => Promise.resolve([]) }),
-    });
+    // syncCustomerMemoField — queryMemos → syncCustomerMemo
+    mockQueryMemos.mockResolvedValueOnce([]);
     mockSyncCustomerMemo.mockResolvedValue({ data: { success: true }, status: 200 });
 
     const result = await handleUpdateMemo({
@@ -415,13 +392,13 @@ describe('handleUpdateMemo', () => {
 
   it('메모 없음 404: isError 응답', async () => {
     // verifyCustomerOwnership
-    mockFindOne
-      .mockResolvedValueOnce({
-        _id: new ObjectId(VALID_CUSTOMER_ID),
-        personal_info: { name: '홍길동' },
-      })
-      // 수정 전 메모 조회 → null
-      .mockResolvedValueOnce(null);
+    mockQueryCustomers.mockResolvedValueOnce([{
+      _id: new ObjectId(VALID_CUSTOMER_ID),
+      personal_info: { name: '홍길동' },
+    }]);
+
+    // 수정 전 메모 조회 → null
+    mockGetMemo.mockResolvedValueOnce(null);
 
     // updateMemo → 404
     mockUpdateMemo.mockResolvedValue({
@@ -445,16 +422,16 @@ describe('handleUpdateMemo', () => {
 
 describe('handleCreateRelationship', () => {
   it('성공: 양방향 관계 생성', async () => {
-    // fromCustomer, toCustomer 조회 (Promise.all)
-    mockFindOne
-      .mockResolvedValueOnce({
+    // fromCustomer, toCustomer 조회 (Promise.all) — Internal API queryCustomers
+    mockQueryCustomers
+      .mockResolvedValueOnce([{
         _id: new ObjectId(VALID_CUSTOMER_ID),
         personal_info: { name: '홍길동' },
-      })
-      .mockResolvedValueOnce({
+      }])
+      .mockResolvedValueOnce([{
         _id: new ObjectId(VALID_CUSTOMER_ID_2),
         personal_info: { name: '김영희' },
-      });
+      }]);
 
     mockCreateRelationship.mockResolvedValue({
       data: {
@@ -482,15 +459,15 @@ describe('handleCreateRelationship', () => {
 
   it('중복 409: isError 응답', async () => {
     // fromCustomer, toCustomer 조회
-    mockFindOne
-      .mockResolvedValueOnce({
+    mockQueryCustomers
+      .mockResolvedValueOnce([{
         _id: new ObjectId(VALID_CUSTOMER_ID),
         personal_info: { name: '홍길동' },
-      })
-      .mockResolvedValueOnce({
+      }])
+      .mockResolvedValueOnce([{
         _id: new ObjectId(VALID_CUSTOMER_ID_2),
         personal_info: { name: '김영희' },
-      });
+      }]);
 
     mockCreateRelationship.mockResolvedValue({
       data: null,
@@ -516,26 +493,27 @@ describe('handleDeleteRelationship', () => {
     const fromOid = new ObjectId(VALID_CUSTOMER_ID);
     const toOid = new ObjectId(VALID_CUSTOMER_ID_2);
 
-    // 1) fromCustomer 조회 (고객 존재 + 소유권)
-    mockFindOne
-      .mockResolvedValueOnce({
+    // 1) fromCustomer 조회 (고객 존재 + 소유권) — Internal API queryCustomers
+    mockQueryCustomers
+      .mockResolvedValueOnce([{
         _id: fromOid,
         personal_info: { name: '홍길동' },
-      })
-      // 2) relationship 조회 (관계 정보)
-      .mockResolvedValueOnce({
-        _id: new ObjectId(VALID_RELATIONSHIP_ID),
-        relationship_info: {
-          from_customer_id: fromOid,
-          to_customer_id: toOid,
-          relationship_type: 'spouse',
-        },
-      })
+      }])
       // 3) toCustomer 이름 조회
-      .mockResolvedValueOnce({
+      .mockResolvedValueOnce([{
         _id: toOid,
         personal_info: { name: '김영희' },
-      });
+      }]);
+
+    // 2) relationship 조회 (관계 정보) — Internal API getRelationship
+    mockGetRelationship.mockResolvedValueOnce({
+      _id: new ObjectId(VALID_RELATIONSHIP_ID),
+      relationship_info: {
+        from_customer_id: fromOid,
+        to_customer_id: toOid,
+        relationship_type: 'spouse',
+      },
+    });
 
     mockDeleteRelationship.mockResolvedValue({
       data: { success: true, reverseDeleted: true },
@@ -559,18 +537,19 @@ describe('handleDeleteRelationship', () => {
     const toOid = new ObjectId(VALID_CUSTOMER_ID_2);
 
     // 1) fromCustomer 조회
-    mockFindOne
-      .mockResolvedValueOnce({
+    mockQueryCustomers
+      .mockResolvedValueOnce([{
         _id: fromOid,
         personal_info: { name: '홍길동' },
-      })
+      }])
       // 2) toCustomer 조회
-      .mockResolvedValueOnce({
+      .mockResolvedValueOnce([{
         _id: toOid,
         personal_info: { name: '김영희' },
-      })
-      // 3) 관계 조회 → null (관계 없음)
-      .mockResolvedValueOnce(null);
+      }]);
+
+    // 3) 관계 조회 → 빈 배열 (관계 없음) — Internal API queryRelationships
+    mockQueryRelationships.mockResolvedValueOnce([]);
 
     const result = await handleDeleteRelationship({
       fromCustomerId: VALID_CUSTOMER_ID,

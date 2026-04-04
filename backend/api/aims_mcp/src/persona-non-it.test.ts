@@ -308,49 +308,74 @@ describe('페르소나: IT 비전문가', () => {
   describe('에러 메시지 가독성', () => {
 
     it('에러 메시지에 "ObjectId" 없음', () => {
+      // 실제 소스 코드의 isError 블록에서 에러 메시지 텍스트를 추출하여 검증
       const customersSource = readSourceFile('./tools/customers.ts');
+      const memosSource = readSourceFile('./tools/memos.ts');
 
-      // isError: true 블록 내의 에러 메시지 확인
-      const errorMessages = [
-        '유효하지 않은 고객 ID입니다',
-        '고객을 찾을 수 없습니다',
-        '같은 이름의 고객이 이미 존재합니다'
-      ];
-
-      for (const msg of errorMessages) {
-        expect(customersSource).toContain(msg);
-        expect(msg).not.toContain('ObjectId');
+      // isError: true 블록 내 text 필드에서 에러 메시지 추출
+      const errorTextPattern = /isError:\s*true[\s\S]*?text:\s*[`'"]([\s\S]*?)[`'"]/g;
+      const allSources = customersSource + memosSource;
+      const errorTexts: string[] = [];
+      let match;
+      while ((match = errorTextPattern.exec(allSources)) !== null) {
+        errorTexts.push(match[1]);
+      }
+      expect(errorTexts.length).toBeGreaterThan(0);
+      for (const errorText of errorTexts) {
+        expect(errorText).not.toContain('ObjectId');
       }
     });
 
     it('에러 메시지에 "Zod" 없음', () => {
+      // 실제 소스 코드의 isError 블록에서 에러 메시지 텍스트를 추출하여 검증
       const customersSource = readSourceFile('./tools/customers.ts');
+      const memosSource = readSourceFile('./tools/memos.ts');
 
-      // 에러 메시지 문자열 내에 Zod 노출 안 됨
-      // (코드 내부에서는 사용하지만 사용자 메시지에는 없음)
-      expect(customersSource).toContain('유효하지 않은 고객 ID');
+      const errorTextPattern = /isError:\s*true[\s\S]*?text:\s*[`'"]([\s\S]*?)[`'"]/g;
+      const allSources = customersSource + memosSource;
+      const errorTexts: string[] = [];
+      let match;
+      while ((match = errorTextPattern.exec(allSources)) !== null) {
+        errorTexts.push(match[1]);
+      }
+      expect(errorTexts.length).toBeGreaterThan(0);
+      for (const errorText of errorTexts) {
+        expect(errorText).not.toContain('Zod');
+      }
     });
 
     it('에러 메시지에 "regex" 없음', () => {
-      const errorMessages = [
-        '유효하지 않은 고객 ID입니다',
-        '고객을 찾을 수 없습니다'
-      ];
+      const customersSource = readSourceFile('./tools/customers.ts');
+      const memosSource = readSourceFile('./tools/memos.ts');
 
-      for (const msg of errorMessages) {
-        expect(msg.toLowerCase()).not.toContain('regex');
-        expect(msg.toLowerCase()).not.toContain('regular expression');
+      const errorTextPattern = /isError:\s*true[\s\S]*?text:\s*[`'"]([\s\S]*?)[`'"]/g;
+      const allSources = customersSource + memosSource;
+      const errorTexts: string[] = [];
+      let match;
+      while ((match = errorTextPattern.exec(allSources)) !== null) {
+        errorTexts.push(match[1]);
+      }
+      expect(errorTexts.length).toBeGreaterThan(0);
+      for (const errorText of errorTexts) {
+        expect(errorText.toLowerCase()).not.toContain('regex');
+        expect(errorText.toLowerCase()).not.toContain('regular expression');
       }
     });
 
     it('에러 메시지에 "validation" 없음', () => {
-      const errorMessages = [
-        '유효하지 않은 고객 ID입니다',
-        '고객을 찾을 수 없습니다'
-      ];
+      const customersSource = readSourceFile('./tools/customers.ts');
+      const memosSource = readSourceFile('./tools/memos.ts');
 
-      for (const msg of errorMessages) {
-        expect(msg.toLowerCase()).not.toContain('validation');
+      const errorTextPattern = /isError:\s*true[\s\S]*?text:\s*[`'"]([\s\S]*?)[`'"]/g;
+      const allSources = customersSource + memosSource;
+      const errorTexts: string[] = [];
+      let match;
+      while ((match = errorTextPattern.exec(allSources)) !== null) {
+        errorTexts.push(match[1]);
+      }
+      expect(errorTexts.length).toBeGreaterThan(0);
+      for (const errorText of errorTexts) {
+        expect(errorText.toLowerCase()).not.toContain('validation');
       }
     });
 
@@ -359,10 +384,11 @@ describe('페르소나: IT 비전문가', () => {
       const memosSource = readSourceFile('./tools/memos.ts');
       const contractsSource = readSourceFile('./tools/contracts.ts');
 
-      // 한글 에러 메시지 확인
-      expect(customersSource).toContain('유효하지 않은 고객 ID');
+      // 한글 에러 메시지 확인 — Internal API 전환 후
       expect(customersSource).toContain('고객을 찾을 수 없습니다');
-      // memos는 customer_memos 컬렉션 구조 — 고객 존재 확인 메시지
+      expect(customersSource).toContain('고객 등록 실패');
+      expect(customersSource).toContain('고객 정보 수정 실패');
+      // memos — 고객 존재 확인 메시지
       expect(memosSource).toContain('고객을 찾을 수 없습니다');
       // contracts.ts는 계약 조회/검색 실패 메시지 확인
       expect(contractsSource).toContain('계약 조회 실패');

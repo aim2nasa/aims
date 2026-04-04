@@ -140,10 +140,10 @@ try {
 }
 
 if (pipelineContent) {
-  // 5. customerId를 ObjectId로 저장
+  // 5. customerId를 ObjectId로 저장 (camelCase 또는 ctx.customer_id 패턴)
   assertIncludes(
     pipelineContent,
-    'ObjectId\\(customer_id\\).*if.*ObjectId\\.is_valid',
+    'ObjectId\\((customerId|ctx\\.customer_id)\\).*if.*ObjectId\\.is_valid',
     'document_pipeline stores customerId as ObjectId',
     'Should convert customerId to ObjectId before storing'
   );

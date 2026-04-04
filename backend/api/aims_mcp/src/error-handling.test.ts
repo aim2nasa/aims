@@ -165,21 +165,22 @@ describe('에러 처리 테스트', () => {
       });
     });
 
-    describe('ObjectId 검증', () => {
-      it('customers.ts: toSafeObjectId 사용', () => {
-        expect(customersCode).toContain('toSafeObjectId');
+    describe('ID 검증 및 에러 처리', () => {
+      it('customers.ts: Internal API가 유효하지 않은 ID를 처리', () => {
+        // Internal API 전환 후 ObjectId 검증은 API 서버에서 처리
+        // MCP 측은 API 에러 응답을 isError로 전달
+        expect(customersCode).toContain('isError: true');
       });
 
-      it('customers.ts: ObjectId 변환 실패 시 에러 반환', () => {
-        expect(customersCode).toContain("text: '유효하지 않은 고객 ID입니다.'");
+      it('customers.ts: 고객 미존재 시 에러 반환', () => {
+        expect(customersCode).toContain("text: '고객을 찾을 수 없습니다.'");
       });
 
-      it('memos.ts: toSafeObjectId 사용', () => {
-        expect(memosCode).toContain('toSafeObjectId');
+      it('memos.ts: 고객 존재 확인 (verifyCustomerOwnership)', () => {
+        expect(memosCode).toContain('verifyCustomerOwnership');
       });
 
-      it('memos.ts: 고객 ID 변환 실패 시 에러 반환', () => {
-        // verifyCustomerOwnership에서 toSafeObjectId 실패 → null → "고객을 찾을 수 없습니다."
+      it('memos.ts: 고객 ID 확인 실패 시 에러 반환', () => {
         expect(memosCode).toContain("text: '고객을 찾을 수 없습니다.'");
       });
     });
@@ -206,11 +207,14 @@ describe('에러 처리 테스트', () => {
     });
 
     describe('중복 체크', () => {
-      it('customers.ts: 이름 중복 체크', () => {
-        expect(customersCode).toContain('같은 이름의 고객이 이미 존재합니다');
+      it('customers.ts: 이름 중복은 Internal API가 처리 (409 응답)', () => {
+        // Internal API 전환 후 중복 체크는 API 서버에서 처리
+        // MCP 측은 API 에러 응답(409)을 isError로 전달
+        expect(customersCode).toContain('createCustomer({');
+        expect(customersCode).toContain('isError: true');
       });
 
-      it('customers.ts: 대소문자 무시 중복 체크', () => {
+      it('customers.ts: 검색 시 대소문자 무시 쿼리', () => {
         expect(customersCode).toContain("$options: 'i'");
       });
     });

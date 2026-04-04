@@ -8,6 +8,11 @@ AR 파싱 결과 보장 테스트
 - completed: customers.annual_reports[]에 저장
 - error: files.ar_parsing_error에 에러 메시지 저장
 - processing: files.ar_parsing_status에 진행중 상태 저장
+
+Internal API 전환 (Phase 3) 이후:
+- parse_single_ar_document는 internal_api 함수(query_file_one, update_file_parsing_status, has_report)를 호출
+- get_annual_reports는 internal_api 함수(get_customer, query_files, query_file_one)를 호출
+- 테스트에서 Internal API 함수를 mock하여 직접 MongoDB를 사용하는 래퍼로 대체
 """
 
 import pytest
@@ -16,7 +21,7 @@ from bson import ObjectId
 from pymongo import MongoClient
 import os
 import sys
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 # 프로젝트 루트 경로 추가
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,6 +34,98 @@ from services.db_writer import get_annual_reports
 TEST_MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 TEST_DB_NAME = "docupload"
 
+
+# =========================================================================
+# Internal API mock 헬퍼: 테스트에서 직접 MongoDB를 사용하는 래퍼
+# =========================================================================
+
+def _make_query_file_one(db):
+    """query_file_one을 직접 MongoDB로 조회하는 래퍼로 생성"""
+    def _query_file_one(filter_dict, projection=None):
+        # Internal API는 _id를 문자열로 받으므로 ObjectId 변환
+        mongo_filter = dict(filter_dict)
+        if "_id" in mongo_filter and isinstance(mongo_filter["_id"], str):
+            mongo_filter["_id"] = ObjectId(mongo_filter["_id"])
+        return db["files"].find_one(mongo_filter, projection)
+    return _query_file_one
+
+
+def _make_query_files(db):
+    """query_files를 직접 MongoDB로 조회하는 래퍼로 생성"""
+    def _query_files(filter_dict, projection=None, sort=None, limit=100):
+        mongo_filter = dict(filter_dict)
+        # Internal API는 _id, customerId를 문자열로 받으므로 ObjectId 변환
+        if "_id" in mongo_filter:
+            val = mongo_filter["_id"]
+            if isinstance(val, str):
+                mongo_filter["_id"] = ObjectId(val)
+            elif isinstance(val, dict):
+                # $nin 등 연산자 처리
+                for op, items in val.items():
+                    if isinstance(items, list):
+                        mongo_filter["_id"][op] = [
+                            ObjectId(i) if isinstance(i, str) else i for i in items
+                        ]
+        if "customerId" in mongo_filter:
+            val = mongo_filter["customerId"]
+            if isinstance(val, str):
+                mongo_filter["customerId"] = ObjectId(val)
+        cursor = db["files"].find(mongo_filter, projection)
+        if sort:
+            cursor = cursor.sort(list(sort.items()))
+        return list(cursor.limit(limit))
+    return _query_files
+
+
+def _make_update_file_parsing_status(db):
+    """update_file_parsing_status를 직접 MongoDB write하는 래퍼로 생성"""
+    def _update_file_parsing_status(file_id, parse_type, status, **kwargs):
+        prefix = "ar" if parse_type == "ar" else "cr"
+        set_fields = {}
+        if status is not None:
+            set_fields[f"{prefix}_parsing_status"] = status
+        error = kwargs.get("error")
+        if error is not None:
+            set_fields[f"{prefix}_parsing_error"] = error
+        elif status == "error" and "error" not in kwargs:
+            pass  # 에러 메시지 없이 에러 상태 설정
+        for key in ("customerId", "displayName"):
+            if key in kwargs and kwargs[key] is not None:
+                if key == "customerId":
+                    set_fields[key] = ObjectId(kwargs[key]) if isinstance(kwargs[key], str) else kwargs[key]
+                else:
+                    set_fields[key] = kwargs[key]
+        if set_fields:
+            result = db["files"].update_one(
+                {"_id": ObjectId(file_id) if isinstance(file_id, str) else file_id},
+                {"$set": set_fields}
+            )
+            return {"success": True, "data": {"modifiedCount": result.modified_count}}
+        return {"success": True, "data": {"modifiedCount": 0}}
+    return _update_file_parsing_status
+
+
+def _make_get_customer(db):
+    """get_customer를 직접 MongoDB로 조회하는 래퍼로 생성"""
+    def _get_customer(customer_id):
+        try:
+            doc = db["customers"].find_one({"_id": ObjectId(customer_id)})
+            if doc:
+                # Internal API가 반환하는 형식: ObjectId → str 변환
+                doc["_id"] = str(doc["_id"])
+                # annual_reports 내 source_file_id도 str 변환
+                for ar in doc.get("annual_reports", []):
+                    if "source_file_id" in ar and isinstance(ar["source_file_id"], ObjectId):
+                        ar["source_file_id"] = str(ar["source_file_id"])
+            return doc
+        except Exception:
+            return None
+    return _get_customer
+
+
+# =========================================================================
+# Fixtures
+# =========================================================================
 
 @pytest.fixture(scope="module")
 def mongo_client():
@@ -180,14 +277,13 @@ def ar_document_completed(files_collection, customers_collection, created_ids):
     customer_id = ObjectId()
     document_id = ObjectId()
 
-    # 🔥 datetime을 UTC timezone-aware로 생성
     customers_collection.insert_one({
         "_id": customer_id,
         "personal_info": {"name": "테스트ARG고객4"},
         "annual_reports": [{
             "source_file_id": document_id,
             "customer_name": "테스트ARG고객4",
-            "issue_date": datetime(2025, 8, 1, tzinfo=timezone.utc),  # UTC timezone 추가
+            "issue_date": datetime(2025, 8, 1, tzinfo=timezone.utc),
             "total_monthly_premium": 100000,
             "total_contracts": 3,
             "contracts": [],
@@ -214,6 +310,11 @@ def ar_document_completed(files_collection, customers_collection, created_ids):
     return {"customer_id": customer_id, "document_id": document_id}
 
 
+# =========================================================================
+# TestARErrorScenarios: 에러 시 올바른 상태 전이 검증
+# Internal API 함수를 직접 MongoDB 래퍼로 mock
+# =========================================================================
+
 class TestARErrorScenarios:
     """각 에러 시나리오에서 올바른 상태 전이 검증"""
 
@@ -222,17 +323,17 @@ class TestARErrorScenarios:
     def test_file_not_found_sets_error_status(
         self, mock_exists, mock_get_parser, db, files_collection, ar_document_pending
     ):
-        """파일 경로 없음 → ar_parsing_status: error"""
+        """파일 경로 없음 -> ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
-        # 파일이 존재하지 않음
         mock_exists.return_value = False
 
-        # parse_single_ar_document 호출
-        result = parse_single_ar_document(db, file_id, customer_id)
+        with patch('routes.background.query_file_one', _make_query_file_one(db)), \
+             patch('routes.background.update_file_parsing_status', _make_update_file_parsing_status(db)), \
+             patch('routes.background.has_report', return_value=False):
+            result = parse_single_ar_document(db, file_id, customer_id)
 
-        # 검증
         assert result["success"] == False
         assert "존재하지 않음" in result.get("error", "")
 
@@ -246,15 +347,17 @@ class TestARErrorScenarios:
     def test_openai_rate_limit_sets_error_status(
         self, mock_exists, mock_get_parser, mock_end_page, db, files_collection, ar_document_pending
     ):
-        """OpenAI 429 Rate Limit → ar_parsing_status: error"""
+        """OpenAI 429 Rate Limit -> ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
         mock_exists.return_value = True
-        # get_parser() returns a parser function; parser function returns error
         mock_get_parser.return_value.return_value = {"error": "Rate limit exceeded (429)"}
 
-        result = parse_single_ar_document(db, file_id, customer_id)
+        with patch('routes.background.query_file_one', _make_query_file_one(db)), \
+             patch('routes.background.update_file_parsing_status', _make_update_file_parsing_status(db)), \
+             patch('routes.background.has_report', return_value=False):
+            result = parse_single_ar_document(db, file_id, customer_id)
 
         assert result["success"] == False
 
@@ -268,14 +371,17 @@ class TestARErrorScenarios:
     def test_openai_timeout_sets_error_status(
         self, mock_exists, mock_get_parser, mock_end_page, db, files_collection, ar_document_pending
     ):
-        """OpenAI 타임아웃 → ar_parsing_status: error"""
+        """OpenAI 타임아웃 -> ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
         mock_exists.return_value = True
         mock_get_parser.return_value.return_value = {"error": "Request timeout after 60s"}
 
-        result = parse_single_ar_document(db, file_id, customer_id)
+        with patch('routes.background.query_file_one', _make_query_file_one(db)), \
+             patch('routes.background.update_file_parsing_status', _make_update_file_parsing_status(db)), \
+             patch('routes.background.has_report', return_value=False):
+            result = parse_single_ar_document(db, file_id, customer_id)
 
         assert result["success"] == False
 
@@ -289,14 +395,17 @@ class TestARErrorScenarios:
     def test_json_parse_error_sets_error_status(
         self, mock_exists, mock_get_parser, mock_end_page, db, files_collection, ar_document_pending
     ):
-        """LLM 응답 JSON 파싱 실패 → ar_parsing_status: error"""
+        """LLM 응답 JSON 파싱 실패 -> ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
         mock_exists.return_value = True
         mock_get_parser.return_value.return_value = {"error": "JSON 파싱 실패: Expecting value"}
 
-        result = parse_single_ar_document(db, file_id, customer_id)
+        with patch('routes.background.query_file_one', _make_query_file_one(db)), \
+             patch('routes.background.update_file_parsing_status', _make_update_file_parsing_status(db)), \
+             patch('routes.background.has_report', return_value=False):
+            result = parse_single_ar_document(db, file_id, customer_id)
 
         assert result["success"] == False
 
@@ -313,12 +422,11 @@ class TestARErrorScenarios:
         self, mock_exists, mock_get_parser, mock_end_page, mock_save, mock_extract,
         db, files_collection, ar_document_pending
     ):
-        """MongoDB 저장 실패 → ar_parsing_status: error"""
+        """MongoDB 저장 실패 -> ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
         mock_exists.return_value = True
-        # Parser returns valid result (no "error" key)
         mock_get_parser.return_value.return_value = {
             "보유계약 현황": [],
             "부활가능 실효계약": [],
@@ -326,7 +434,10 @@ class TestARErrorScenarios:
         }
         mock_save.return_value = {"success": False, "message": "DB connection error"}
 
-        result = parse_single_ar_document(db, file_id, customer_id)
+        with patch('routes.background.query_file_one', _make_query_file_one(db)), \
+             patch('routes.background.update_file_parsing_status', _make_update_file_parsing_status(db)), \
+             patch('routes.background.has_report', return_value=False):
+            result = parse_single_ar_document(db, file_id, customer_id)
 
         assert result["success"] == False
 
@@ -340,14 +451,17 @@ class TestARErrorScenarios:
     def test_unexpected_exception_sets_error_status(
         self, mock_exists, mock_get_parser, mock_end_page, db, files_collection, ar_document_pending
     ):
-        """예상치 못한 예외 → ar_parsing_status: error"""
+        """예상치 못한 예외 -> ar_parsing_status: error"""
         file_id = str(ar_document_pending["document_id"])
         customer_id = str(ar_document_pending["customer_id"])
 
         mock_exists.return_value = True
         mock_get_parser.return_value.side_effect = Exception("Unexpected error occurred")
 
-        result = parse_single_ar_document(db, file_id, customer_id)
+        with patch('routes.background.query_file_one', _make_query_file_one(db)), \
+             patch('routes.background.update_file_parsing_status', _make_update_file_parsing_status(db)), \
+             patch('routes.background.has_report', return_value=False):
+            result = parse_single_ar_document(db, file_id, customer_id)
 
         assert result["success"] == False
 
@@ -356,6 +470,11 @@ class TestARErrorScenarios:
         assert doc.get("ar_parsing_error") is not None
 
 
+# =========================================================================
+# TestGetAnnualReportsIncludesAll: 모든 상태의 AR 반환 검증
+# Internal API (get_customer, query_files, query_file_one)를 직접 MongoDB 래퍼로 mock
+# =========================================================================
+
 class TestGetAnnualReportsIncludesAll:
     """get_annual_reports()가 모든 상태의 AR을 반환하는지 검증"""
 
@@ -363,12 +482,14 @@ class TestGetAnnualReportsIncludesAll:
         """completed 상태 AR이 반환됨"""
         customer_id = str(ar_document_completed["customer_id"])
 
-        result = get_annual_reports(db, customer_id)
+        with patch('services.db_writer.get_customer', _make_get_customer(db)), \
+             patch('services.db_writer.query_files', _make_query_files(db)), \
+             patch('services.db_writer.query_file_one', _make_query_file_one(db)):
+            result = get_annual_reports(db, customer_id)
 
         assert result["success"] == True
         assert result["count"] >= 1
 
-        # completed 상태 리포트 확인
         completed_reports = [r for r in result["data"] if r.get("status") == "completed"]
         assert len(completed_reports) >= 1
 
@@ -376,12 +497,14 @@ class TestGetAnnualReportsIncludesAll:
         """error 상태 AR이 files 컬렉션에서 조회되어 반환됨"""
         customer_id = str(ar_document_with_error["customer_id"])
 
-        result = get_annual_reports(db, customer_id)
+        with patch('services.db_writer.get_customer', _make_get_customer(db)), \
+             patch('services.db_writer.query_files', _make_query_files(db)), \
+             patch('services.db_writer.query_file_one', _make_query_file_one(db)):
+            result = get_annual_reports(db, customer_id)
 
         assert result["success"] == True
         assert result["count"] >= 1
 
-        # error 상태 리포트 확인
         error_reports = [r for r in result["data"] if r.get("status") == "error"]
         assert len(error_reports) >= 1
 
@@ -389,12 +512,14 @@ class TestGetAnnualReportsIncludesAll:
         """processing 상태 AR이 files 컬렉션에서 조회되어 반환됨"""
         customer_id = str(ar_document_processing["customer_id"])
 
-        result = get_annual_reports(db, customer_id)
+        with patch('services.db_writer.get_customer', _make_get_customer(db)), \
+             patch('services.db_writer.query_files', _make_query_files(db)), \
+             patch('services.db_writer.query_file_one', _make_query_file_one(db)):
+            result = get_annual_reports(db, customer_id)
 
         assert result["success"] == True
         assert result["count"] >= 1
 
-        # processing 상태 리포트 확인
         processing_reports = [r for r in result["data"] if r.get("status") == "processing"]
         assert len(processing_reports) >= 1
 
@@ -405,15 +530,13 @@ class TestGetAnnualReportsIncludesAll:
         customer_id = ObjectId()
         created_ids["customers"].append(customer_id)
 
-        # 고객 생성 (completed AR 포함)
-        # 🔥 datetime을 UTC timezone-aware로 생성
         customers_collection.insert_one({
             "_id": customer_id,
             "personal_info": {"name": "테스트ARG고객Mixed"},
             "annual_reports": [{
                 "source_file_id": ObjectId(),
                 "customer_name": "테스트ARG고객Mixed",
-                "issue_date": datetime(2025, 1, 1, tzinfo=timezone.utc),  # UTC timezone 추가
+                "issue_date": datetime(2025, 1, 1, tzinfo=timezone.utc),
                 "total_monthly_premium": 50000,
                 "total_contracts": 2,
                 "contracts": [],
@@ -446,8 +569,10 @@ class TestGetAnnualReportsIncludesAll:
             "upload": {"originalName": "processing_doc.pdf", "uploaded_at": datetime.now(timezone.utc)}
         })
 
-        # 조회
-        result = get_annual_reports(db, str(customer_id))
+        with patch('services.db_writer.get_customer', _make_get_customer(db)), \
+             patch('services.db_writer.query_files', _make_query_files(db)), \
+             patch('services.db_writer.query_file_one', _make_query_file_one(db)):
+            result = get_annual_reports(db, str(customer_id))
 
         assert result["success"] == True
         assert result["count"] == 3  # completed 1 + error 1 + processing 1
@@ -461,14 +586,16 @@ class TestGetAnnualReportsIncludesAll:
         """error 상태 AR에 error_message 필드 포함"""
         customer_id = str(ar_document_with_error["customer_id"])
 
-        result = get_annual_reports(db, customer_id)
+        with patch('services.db_writer.get_customer', _make_get_customer(db)), \
+             patch('services.db_writer.query_files', _make_query_files(db)), \
+             patch('services.db_writer.query_file_one', _make_query_file_one(db)):
+            result = get_annual_reports(db, customer_id)
 
         assert result["success"] == True
 
         error_reports = [r for r in result["data"] if r.get("status") == "error"]
         assert len(error_reports) >= 1
 
-        # error_message 필드 확인
         for report in error_reports:
             assert report.get("error_message") is not None
             assert len(report["error_message"]) > 0
@@ -480,7 +607,6 @@ class TestGetAnnualReportsIncludesAll:
         customer_id = ObjectId()
         created_ids["customers"].append(customer_id)
 
-        # 고객 생성
         customers_collection.insert_one({
             "_id": customer_id,
             "personal_info": {"name": "테스트ARG고객All"},
@@ -516,8 +642,10 @@ class TestGetAnnualReportsIncludesAll:
             "is_annual_report": True
         })
 
-        # get_annual_reports 조회
-        result = get_annual_reports(db, str(customer_id))
+        with patch('services.db_writer.get_customer', _make_get_customer(db)), \
+             patch('services.db_writer.query_files', _make_query_files(db)), \
+             patch('services.db_writer.query_file_one', _make_query_file_one(db)):
+            result = get_annual_reports(db, str(customer_id))
 
         # 검증: 모든 AR 문서가 결과에 포함
         # pending 상태는 error/processing과 다르게 조회되지 않을 수 있음 (파싱 전)
@@ -586,6 +714,10 @@ class TestRetryParsing:
         assert doc_after.get("ar_parsing_error") is None
 
 
+# =========================================================================
+# TestARInvariant: AR 파싱 불변성 테스트
+# =========================================================================
+
 class TestARInvariant:
     """AR 파싱 불변성 테스트: 모든 AR 문서는 반드시 결과를 가진다"""
 
@@ -640,11 +772,13 @@ class TestARInvariant:
             mock_exists.return_value = False
         else:
             mock_exists.return_value = True
-            # get_parser() returns parser function; parser function returns error
             mock_get_parser.return_value.return_value = error_mock
 
-        # 파싱 실행
-        result = parse_single_ar_document(db, str(document_id), str(customer_id))
+        # Internal API mock + 파싱 실행
+        with patch('routes.background.query_file_one', _make_query_file_one(db)), \
+             patch('routes.background.update_file_parsing_status', _make_update_file_parsing_status(db)), \
+             patch('routes.background.has_report', return_value=False):
+            result = parse_single_ar_document(db, str(document_id), str(customer_id))
 
         # 핵심 검증: 에러 발생해도 상태가 반드시 설정됨
         doc = files_collection.find_one({"_id": document_id})
@@ -660,6 +794,10 @@ class TestARInvariant:
             assert len(doc["ar_parsing_error"]) > 0, \
                 "에러 메시지가 비어있음"
 
+
+# =========================================================================
+# TestARCompleteness: AR 완전성 테스트
+# =========================================================================
 
 class TestARCompleteness:
     """AR 완전성 테스트: 모든 AR 문서가 조회 결과에 포함되는지 검증"""
@@ -677,14 +815,13 @@ class TestARCompleteness:
         customer_id = ObjectId()
         created_ids["customers"].append(customer_id)
 
-        # 🔥 datetime을 UTC timezone-aware로 생성
         customers_collection.insert_one({
             "_id": customer_id,
             "personal_info": {"name": "테스트ARG_완전성"},
             "annual_reports": [{
                 "source_file_id": ObjectId(),
                 "customer_name": "테스트ARG_완전성",
-                "issue_date": datetime(2025, 6, 1, tzinfo=timezone.utc),  # UTC timezone 추가
+                "issue_date": datetime(2025, 6, 1, tzinfo=timezone.utc),
                 "uploaded_at": datetime.now(timezone.utc).isoformat(),
                 "parsed_at": datetime.now(timezone.utc).isoformat()
             }],
@@ -715,8 +852,10 @@ class TestARCompleteness:
 
             files_collection.insert_one(doc_data)
 
-        # 조회
-        result = get_annual_reports(db, str(customer_id))
+        with patch('services.db_writer.get_customer', _make_get_customer(db)), \
+             patch('services.db_writer.query_files', _make_query_files(db)), \
+             patch('services.db_writer.query_file_one', _make_query_file_one(db)):
+            result = get_annual_reports(db, str(customer_id))
 
         # 검증
         assert result["success"] == True
