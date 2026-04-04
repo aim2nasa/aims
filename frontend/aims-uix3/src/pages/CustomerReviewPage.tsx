@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../components/SFSymbol'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../components/SFSymbol'
 import Tooltip from '../shared/ui/Tooltip'
 import { CustomerReviewApi, type CustomerReview } from '../features/customer/api/customerReviewApi'
 import { formatDateTime, formatDate } from '@/shared/lib/timeUtils'

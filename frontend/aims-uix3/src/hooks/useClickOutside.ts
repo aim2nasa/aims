@@ -126,4 +126,3 @@ export function useClickOutsideToggle<T extends HTMLElement = HTMLElement>(
   return useClickOutside<T>(() => setIsOpen(false), { ...options, enabled: isOpen })
 }
 
-export default useClickOutside

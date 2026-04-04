@@ -171,4 +171,3 @@ export function ProductSearchModal({
   )
 }
 
-export default ProductSearchModal

@@ -290,4 +290,3 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
   );
 };
 
-export default CustomerEditModal;

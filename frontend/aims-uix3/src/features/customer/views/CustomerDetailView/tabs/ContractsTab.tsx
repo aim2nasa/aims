@@ -28,7 +28,7 @@ import { UserContextService } from '../../../../../components/DocumentViews/Docu
 import { Tooltip } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
 import { Pagination } from '@/shared/ui/Pagination'
-import SFSymbol, {
+import { SFSymbol,
   SFSymbolAnimation,
   SFSymbolSize,
   SFSymbolWeight
@@ -1889,4 +1889,3 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   )
 }
 
-export default ContractsTab

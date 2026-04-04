@@ -414,4 +414,3 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   )
 }
 
-export default AccountSettingsModal

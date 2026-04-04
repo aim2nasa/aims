@@ -89,7 +89,6 @@ export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
   );
 };
 
-export default LoadingSkeleton;
 
 /**
  * 텍스트 라인들을 위한 스켈레톤 그룹

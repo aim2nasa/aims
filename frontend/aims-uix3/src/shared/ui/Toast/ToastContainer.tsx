@@ -116,4 +116,3 @@ export function ToastContainer({
   return createPortal(content, document.body)
 }
 
-export default ToastContainer

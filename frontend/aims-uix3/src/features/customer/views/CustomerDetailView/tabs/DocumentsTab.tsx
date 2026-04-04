@@ -19,7 +19,7 @@ import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { Dropdown } from '@/shared/ui'
 import { Pagination } from '@/shared/ui/Pagination'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
-import SFSymbol, {
+import { SFSymbol,
   SFSymbolAnimation,
   SFSymbolSize,
   SFSymbolWeight
@@ -1731,4 +1731,3 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   )
 }
 
-export default DocumentsTab

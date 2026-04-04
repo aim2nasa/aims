@@ -9,9 +9,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
-import DraggableModal from '@/shared/ui/DraggableModal';
+import { DraggableModal } from '@/shared/ui/DraggableModal';
 import Button from '@/shared/ui/Button';
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import { CustomerReviewApi, type CustomerReview } from '../../api/customerReviewApi';
 import { formatDate, formatDateTime } from '@/shared/lib/timeUtils';
 import './CustomerReviewModal.layout.css';
@@ -529,4 +529,3 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
   );
 };
 
-export default CustomerReviewModal;

@@ -4,4 +4,3 @@ export {
   hasSeenRightClickGuide,
   showRightClickGuide
 } from './RightClickGuide'
-export { default } from './RightClickGuide'

@@ -8,7 +8,7 @@
  */
 
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
-import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'

@@ -7,11 +7,11 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView'
 import RegionalTreeView from './RegionalTreeView'
 import { useCustomerDocument } from '@/hooks/useCustomerDocument'
 import type { Customer } from '../../../entities/customer/model'
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Modal, Tooltip } from '@/shared/ui'
 
 interface CustomerRegionalViewProps {

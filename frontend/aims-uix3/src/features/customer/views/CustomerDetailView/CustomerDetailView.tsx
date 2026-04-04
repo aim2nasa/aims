@@ -9,9 +9,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import BaseViewer from '../../../../components/BaseViewer/BaseViewer';
-import CustomerEditModal from '../CustomerEditModal';
-import FamilyRelationshipModal from '../../components/FamilyRelationshipModal';
-import CorporateRelationshipModal from '../../components/CorporateRelationshipModal';
+import { CustomerEditModal } from '../CustomerEditModal';
+import { FamilyRelationshipModal } from '../../components/FamilyRelationshipModal';
+import { CorporateRelationshipModal } from '../../components/CorporateRelationshipModal';
 import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { Button } from '../../../../shared/ui/Button';
@@ -755,4 +755,4 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   );
 };
 
-export default CustomerDetailView;
+export default CustomerDetailView

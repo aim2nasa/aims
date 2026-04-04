@@ -8,11 +8,11 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import DraggableModal from '@/shared/ui/DraggableModal'
+import { DraggableModal } from '@/shared/ui/DraggableModal'
 import { SearchService } from '@/services/searchService'
 import { resolveFileUrl, resolvePdfUrl } from '../../../../utils/documentTransformers'
 import type { SearchResultItem } from '@/entities/search'
-import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { getAuthToken, getCurrentUserId } from '@/shared/lib/api'
@@ -742,4 +742,3 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
   )
 }
 
-export default DocumentContentSearchModal

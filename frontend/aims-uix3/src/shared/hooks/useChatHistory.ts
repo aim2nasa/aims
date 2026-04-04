@@ -272,4 +272,3 @@ export function useChatHistory(): UseChatHistoryReturn {
   };
 }
 
-export default useChatHistory;

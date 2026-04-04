@@ -11,7 +11,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import { Modal, Tooltip } from '@/shared/ui'
 import FolderDropZone from './components/FolderDropZone'

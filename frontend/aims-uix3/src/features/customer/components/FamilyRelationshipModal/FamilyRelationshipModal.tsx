@@ -106,4 +106,3 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
   );
 };
 
-export default FamilyRelationshipModal;

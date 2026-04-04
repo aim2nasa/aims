@@ -1104,4 +1104,3 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
   }
 );
 
-export default AllCustomersView;

@@ -75,4 +75,3 @@ export function useToastContext(): UseToastReturn {
   return context
 }
 
-export default ToastProvider

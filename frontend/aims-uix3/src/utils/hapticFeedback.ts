@@ -81,7 +81,6 @@ class iOSHapticFeedback {
 // 싱글톤 인스턴스
 const hapticFeedback = new iOSHapticFeedback()
 
-export default hapticFeedback
 
 /**
  * 🍎 편의 함수들 - Apple HIG 권장 사용법
@@ -104,3 +103,5 @@ export const hapticWarning = () => hapticFeedback.trigger('warning')
 
 // 중요한 액션시 사용
 export const hapticImpact = () => hapticFeedback.trigger('medium')
+
+export default hapticFeedback

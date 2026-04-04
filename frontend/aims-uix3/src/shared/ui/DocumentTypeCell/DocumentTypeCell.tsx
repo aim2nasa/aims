@@ -113,4 +113,3 @@ export const DocumentTypeCell: React.FC<DocumentTypeCellProps> = ({
   )
 }
 
-export default DocumentTypeCell

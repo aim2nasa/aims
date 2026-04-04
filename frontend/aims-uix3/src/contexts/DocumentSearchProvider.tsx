@@ -144,4 +144,3 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
   )
 }
 
-export default DocumentSearchProvider

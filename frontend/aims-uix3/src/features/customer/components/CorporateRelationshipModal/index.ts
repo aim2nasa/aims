@@ -1,1 +1,1 @@
-export { CorporateRelationshipModal, default } from './CorporateRelationshipModal';
+export { CorporateRelationshipModal} from './CorporateRelationshipModal';

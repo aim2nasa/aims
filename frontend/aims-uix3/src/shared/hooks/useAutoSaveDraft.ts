@@ -285,4 +285,3 @@ export function useAutoSaveDraft<T>({
   }
 }
 
-export default useAutoSaveDraft

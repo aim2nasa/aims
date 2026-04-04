@@ -254,4 +254,3 @@ export const FileTypePieChart: React.FC<FileTypePieChartProps> = ({
   )
 }
 
-export default FileTypePieChart

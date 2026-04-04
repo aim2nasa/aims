@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
-import CenterPaneView from '../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../CenterPaneView/CenterPaneView'
 import { api } from '@/shared/lib/api'
 import './AutoClickerView.css'
 

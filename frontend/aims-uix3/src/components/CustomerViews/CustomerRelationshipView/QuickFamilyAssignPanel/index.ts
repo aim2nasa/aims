@@ -1,1 +1,1 @@
-export { QuickFamilyAssignPanel, default } from './QuickFamilyAssignPanel';
+export { QuickFamilyAssignPanel} from './QuickFamilyAssignPanel';

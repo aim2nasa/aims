@@ -15,7 +15,7 @@ import { useCustomerRelationshipsController } from '@/controllers/useCustomerRel
 import type { Relationship } from '@/services/relationshipService';
 import { formatDate } from '@/shared/lib/timeUtils';
 import Button from '@/shared/ui/Button';
-import SFSymbol, {
+import { SFSymbol,
   SFSymbolAnimation,
   SFSymbolSize,
   SFSymbolVariant,
@@ -347,4 +347,3 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   );
 };
 
-export default RelationshipsTab;

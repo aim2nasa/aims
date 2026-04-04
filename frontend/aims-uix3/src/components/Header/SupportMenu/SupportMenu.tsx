@@ -202,4 +202,3 @@ export const SupportMenu: React.FC = () => {
   )
 }
 
-export default SupportMenu

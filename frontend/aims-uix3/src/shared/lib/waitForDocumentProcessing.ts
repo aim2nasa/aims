@@ -135,4 +135,3 @@ export function waitForDocumentProcessing(
   });
 }
 
-export default waitForDocumentProcessing;

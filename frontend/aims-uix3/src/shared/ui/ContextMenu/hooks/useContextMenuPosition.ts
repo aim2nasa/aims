@@ -74,4 +74,3 @@ export function useContextMenuPosition(
   return adjustedPosition
 }
 
-export default useContextMenuPosition

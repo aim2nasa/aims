@@ -1,1 +1,1 @@
-export { CustomerReviewModal, default } from './CustomerReviewModal';
+export { CustomerReviewModal} from './CustomerReviewModal';

@@ -8,8 +8,8 @@
 
 import React, { useMemo, useState, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import CenterPaneView from '../../CenterPaneView/CenterPaneView';
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
 import { UsageGuide } from '@/shared/ui/UsageGuide';
 import type { GuideSection } from '@/shared/ui/UsageGuide';

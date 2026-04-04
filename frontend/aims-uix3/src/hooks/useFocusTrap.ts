@@ -173,4 +173,3 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
   return containerRef
 }
 
-export default useFocusTrap

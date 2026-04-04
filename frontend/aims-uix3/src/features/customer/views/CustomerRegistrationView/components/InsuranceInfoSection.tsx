@@ -66,4 +66,3 @@ export const InsuranceInfoSection: React.FC<InsuranceInfoSectionProps> = ({
   );
 };
 
-export default InsuranceInfoSection;

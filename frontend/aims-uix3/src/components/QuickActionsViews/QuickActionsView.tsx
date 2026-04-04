@@ -8,7 +8,7 @@
 
 import React, { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import CenterPaneView from '../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import { StatCard } from '@/shared/ui/StatCard'
 import { getCustomers } from '@/services/customerService'

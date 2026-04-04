@@ -107,4 +107,3 @@ export function useLayoutVisibility(): UseLayoutVisibilityReturn {
   }
 }
 
-export default useLayoutVisibility

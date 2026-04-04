@@ -122,4 +122,3 @@ export const UsageGuide: React.FC<UsageGuideProps> = ({
   )
 }
 
-export default UsageGuide

@@ -282,4 +282,3 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
   );
 };
 
-export default CustomerSelectionModal;

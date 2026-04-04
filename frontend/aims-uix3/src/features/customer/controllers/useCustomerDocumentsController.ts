@@ -380,4 +380,3 @@ export const useCustomerDocumentsController = (
 
 export type UseCustomerDocumentsControllerReturn = ReturnType<typeof useCustomerDocumentsController>
 
-export default useCustomerDocumentsController

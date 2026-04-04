@@ -86,15 +86,6 @@ export async function getCurrentUser(): Promise<User> {
 }
 
 /**
- * 특정 사용자 정보 조회 (관리자용)
- * @deprecated 일반 사용자는 getCurrentUser() 사용
- */
-export async function getUser(_userId: string): Promise<User> {
-  // 현재 사용자면 /api/auth/me 사용
-  return getCurrentUser()
-}
-
-/**
  * 스토리지 정보 타입
  */
 export interface StorageInfo {

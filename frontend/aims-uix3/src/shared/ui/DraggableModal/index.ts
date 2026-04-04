@@ -4,4 +4,3 @@
  */
 
 export { DraggableModal, type DraggableModalProps } from './DraggableModal'
-export { default } from './DraggableModal'

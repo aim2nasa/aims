@@ -184,4 +184,3 @@ export class MemoService {
   }
 }
 
-export default MemoService;

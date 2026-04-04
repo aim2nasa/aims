@@ -1,5 +1,5 @@
 import React, { useEffect, memo } from 'react';
-import DraggableModal from '@/shared/ui/DraggableModal';
+import { DraggableModal } from '@/shared/ui/DraggableModal';
 import { HapticService, HapticType, withHaptic } from '../services/hapticService';
 import Button from '@/shared/ui/Button';
 
@@ -226,4 +226,4 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
   );
 };
 
-export default memo(LayoutControlModal);
+export default LayoutControlModal

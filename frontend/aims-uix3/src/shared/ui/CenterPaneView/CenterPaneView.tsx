@@ -225,4 +225,3 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
   )
 }
 
-export default CenterPaneView

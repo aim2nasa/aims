@@ -8,7 +8,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom';
 import { detectDeviceState } from '@/hooks/useDeviceOrientation';
 import { useChatSSE, ChatMessage, ChatEvent, CreditExceededInfo } from '@/shared/hooks/useChatSSE';
-import CreditExceededDialog from '@/shared/ui/CreditExceededDialog';
+import { CreditExceededDialog } from '@/shared/ui/CreditExceededDialog';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { CustomerService } from '@/services/customerService';
@@ -22,7 +22,7 @@ import { ContractService } from '@/services/contractService';
 import { SavedQuestionsService, SavedQuestion, FrequentQuestionsService, FrequentQuestion } from '@/services/savedQuestionsService';
 import Button from '@/shared/ui/Button';
 import Tooltip from '@/shared/ui/Tooltip';
-import DraggableModal from '@/shared/ui/DraggableModal';
+import { DraggableModal } from '@/shared/ui/DraggableModal';
 import { CustomerDocumentPreviewModal } from '@/features/customer';
 import type { PreviewDocumentInfo } from '@/shared/types/document';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
@@ -3573,4 +3573,4 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   );
 };
 
-export default ChatPanel;
+export default ChatPanel

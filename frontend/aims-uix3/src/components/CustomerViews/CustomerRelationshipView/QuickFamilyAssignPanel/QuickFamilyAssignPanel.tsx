@@ -794,4 +794,3 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
   );
 };
 
-export default QuickFamilyAssignPanel;

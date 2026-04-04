@@ -118,4 +118,3 @@ export const helpApi = {
   },
 };
 
-export default helpApi;

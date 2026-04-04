@@ -8,10 +8,10 @@
  */
 
 import React, { useMemo } from 'react';
-import CenterPaneView from '../../CenterPaneView/CenterPaneView';
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
 import { AllCustomersView, type AllCustomersViewRef } from '@/features/customer';
 import type { Customer } from '@/entities/customer/model';
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils';
 
 interface CustomerAllViewProps {
@@ -87,4 +87,4 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
   );
 };
 
-export default CustomerAllView;
+export default CustomerAllView

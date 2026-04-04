@@ -26,7 +26,7 @@ interface FAQViewProps {
   onClose: () => void;
 }
 
-export default function FAQView({
+export function FAQView({
   visible,
   onClose,
 }: FAQViewProps) {
@@ -183,3 +183,5 @@ export default function FAQView({
     </CenterPaneView>
   );
 }
+
+export default FAQView

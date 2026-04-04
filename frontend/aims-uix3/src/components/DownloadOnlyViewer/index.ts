@@ -1,1 +1,2 @@
-export { DownloadOnlyViewer, default } from './DownloadOnlyViewer'
+export { DownloadOnlyViewer} from './DownloadOnlyViewer'
+export { default } from './DownloadOnlyViewer'

@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useDeviceOrientation } from '../hooks/useDeviceOrientation'
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../components/SFSymbol'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../components/SFSymbol'
 import Tooltip from '../shared/ui/Tooltip'
 import type { AnnualReport, InsuranceContract } from '../features/customer/api/annualReportApi'
 import { AnnualReportApi } from '../features/customer/api/annualReportApi'

@@ -1,1 +1,1 @@
-export { default } from './RecentCustomers'
+export { RecentCustomers } from './RecentCustomers'

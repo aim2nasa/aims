@@ -101,16 +101,5 @@ export function getBreadcrumbItems(
   return items;
 }
 
-/**
- * Breadcrumb 키에서 메뉴 키 추출
- * (customer-detail은 제외하고 실제 메뉴 키만 반환)
- */
-export function getMenuKeyFromBreadcrumb(breadcrumbKey: string): string | null {
-  if (breadcrumbKey === 'customer-detail') return null;
-  return MENU_LABELS[breadcrumbKey] ? breadcrumbKey : null;
-}
 
-export default {
-  getBreadcrumbItems,
-  getMenuKeyFromBreadcrumb,
-};
+

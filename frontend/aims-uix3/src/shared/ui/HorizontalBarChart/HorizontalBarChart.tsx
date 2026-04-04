@@ -26,7 +26,7 @@ export interface HorizontalBarChartProps {
   title?: string;
 }
 
-const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
+export const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
   categories,
   title
 }) => {
@@ -74,4 +74,3 @@ const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
   );
 };
 
-export default HorizontalBarChart;

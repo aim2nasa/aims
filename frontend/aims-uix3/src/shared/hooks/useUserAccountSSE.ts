@@ -97,4 +97,3 @@ export function useUserAccountSSE(
   }
 }
 
-export default useUserAccountSSE

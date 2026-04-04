@@ -38,4 +38,3 @@ export const FilenameModeToggle: React.FC<FilenameModeToggleProps> = ({
   )
 }
 
-export default FilenameModeToggle

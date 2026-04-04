@@ -246,4 +246,3 @@ export const useCustomersController = ({
   };
 };
 
-export default useCustomersController;

@@ -143,4 +143,3 @@ export const useAddressArchiveController = (
   };
 };
 
-export default useAddressArchiveController;

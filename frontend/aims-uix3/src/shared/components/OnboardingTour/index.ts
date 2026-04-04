@@ -9,4 +9,3 @@ export {
   showOnboardingTour,
   type TourStep
 } from './OnboardingTour'
-export { OnboardingTour as default } from './OnboardingTour'

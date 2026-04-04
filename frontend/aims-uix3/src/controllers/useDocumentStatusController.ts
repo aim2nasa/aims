@@ -242,4 +242,3 @@ export const useDocumentStatusController = () => {
   }
 }
 
-export default useDocumentStatusController

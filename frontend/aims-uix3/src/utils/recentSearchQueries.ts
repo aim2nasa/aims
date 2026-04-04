@@ -78,14 +78,3 @@ export function addRecentSearchQuery(query: string): void {
   }
 }
 
-/**
- * 최근 검색어 목록 초기화
- */
-export function clearRecentSearchQueries(): void {
-  try {
-    localStorage.removeItem(getStorageKey())
-  } catch (error) {
-    console.error('Failed to clear recent search queries:', error)
-    errorReporter.reportApiError(error as Error, { component: 'recentSearchQueries.clearRecentSearchQueries' })
-  }
-}

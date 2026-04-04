@@ -367,4 +367,3 @@ export const QuickSearch: React.FC<QuickSearchProps> = ({
   )
 }
 
-export default QuickSearch

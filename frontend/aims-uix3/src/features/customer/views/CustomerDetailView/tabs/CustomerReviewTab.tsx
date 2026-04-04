@@ -770,4 +770,3 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
   );
 };
 
-export default CustomerReviewTab;

@@ -280,4 +280,3 @@ export const useDocumentsController = () => {
   };
 };
 
-export default useDocumentsController;

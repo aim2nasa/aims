@@ -13,7 +13,7 @@ import { useDeviceOrientation } from '@/hooks/useDeviceOrientation'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
-import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { SearchService, MY_STORAGE_MARKER, MY_STORAGE_DISPLAY_NAME } from '@/services/searchService'
 import type { SearchResultItem, SemanticSearchResultItem, SearchMode, KeywordMode } from '@/entities/search'
@@ -23,7 +23,7 @@ import { Dropdown, Tooltip, BackButton, type DropdownOption, ContextMenu, useCon
 import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { api } from '@/shared/lib/api'
 import DownloadHelper from '../../../utils/downloadHelper'
-import DraggableModal from '@/shared/ui/DraggableModal'
+import { DraggableModal } from '@/shared/ui/DraggableModal'
 import {
   DocumentIcon,
   EyeIcon,

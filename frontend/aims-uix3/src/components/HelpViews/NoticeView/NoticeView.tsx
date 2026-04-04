@@ -27,7 +27,7 @@ interface NoticeViewProps {
   onMarkAsRead?: () => void;
 }
 
-export default function NoticeView({
+export function NoticeView({
   visible,
   onClose,
   onMarkAsRead,
@@ -123,3 +123,5 @@ export default function NoticeView({
     </CenterPaneView>
   );
 }
+
+export default NoticeView

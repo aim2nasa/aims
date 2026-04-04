@@ -333,4 +333,3 @@ export const HoverPreview = memo(HoverPreviewComponent, (prevProps, nextProps) =
   return dx < 10 && dy < 10
 })
 
-export default HoverPreview

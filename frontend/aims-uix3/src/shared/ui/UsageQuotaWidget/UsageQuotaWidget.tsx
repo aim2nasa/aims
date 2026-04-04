@@ -84,7 +84,7 @@ const PieChart: React.FC<PieChartProps> = ({ percent, level, icon, tooltip, size
   )
 }
 
-const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
+export const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
   storageInfo,
   loading = false,
   onClick
@@ -179,4 +179,3 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
   )
 }
 
-export default UsageQuotaWidget

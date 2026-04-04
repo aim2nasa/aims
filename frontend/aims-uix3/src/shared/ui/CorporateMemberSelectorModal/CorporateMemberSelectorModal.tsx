@@ -113,4 +113,3 @@ export const CorporateMemberSelectorModal: React.FC<CorporateMemberSelectorModal
   );
 };
 
-export default CorporateMemberSelectorModal;

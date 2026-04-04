@@ -1298,4 +1298,3 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   );
 };
 
-export default AnnualReportTab;

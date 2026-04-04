@@ -130,4 +130,3 @@ export const useAppleConfirm = (): AppleConfirmContextType => {
   return context
 }
 
-export default AppleConfirmProvider

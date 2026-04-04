@@ -132,4 +132,3 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
   );
 };
 
-export default AddressSection;

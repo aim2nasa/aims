@@ -349,4 +349,3 @@ export function useChatSSE(): UseChatSSEReturn {
   };
 }
 
-export default useChatSSE;

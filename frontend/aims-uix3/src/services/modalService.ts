@@ -119,4 +119,3 @@ export class ModalService {
   }
 }
 
-export default ModalService

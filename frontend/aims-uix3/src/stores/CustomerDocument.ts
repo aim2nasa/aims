@@ -513,4 +513,3 @@ export class CustomerDocument {
 /**
  * 전역 접근을 위한 편의 함수
  */
-export const getCustomerDocument = () => CustomerDocument.getInstance();

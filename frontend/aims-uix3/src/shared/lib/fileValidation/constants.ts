@@ -38,7 +38,7 @@ export const ALLOWED_DOCUMENT_EXTENSIONS = [
  * 파일 크기 제한
  * Phase 1: 개별 파일 크기 제한 없음 — 사용자별 저장 용량 쿼터로 관리
  */
-export const FILE_SIZE_LIMITS = {} as const
+const FILE_SIZE_LIMITS = {} as const
 
 /**
  * 파일 크기를 사람이 읽기 좋은 형식으로 변환
