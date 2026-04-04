@@ -1,6 +1,6 @@
 # AIMS Architecture Roadmap
 
-> 최종 갱신: 2026-04-04
+> 최종 갱신: 2026-04-05
 
 ---
 
@@ -129,6 +129,16 @@ R1~R4 완료 후 전체 코드 재검증에서 발견된 잔존 역방향 의존
 
 **regression 테스트 13건 추가** (스키마 검증 6 + Redis 채널 4 + Internal API 전환 3) | 커밋 `3d8ac41a`
 
+### R6: Settings API 전환 + Frontend 경계 강화 (2026-04-04~05)
+
+**목표 달성: settings 공개 API 의존 0건 + Frontend 아키텍처 경계 자동 강제.**
+
+| 항목 | 내용 | 커밋 |
+|:----:|------|------|
+| Settings Internal API | `GET /api/settings/ai-models` 공개 API → `GET /api/internal/settings/ai-models` (x-api-key 인증) 전환. 5곳 전환, regression 테스트 6건, 실동작 7/7 PASS | `a07f2266` |
+| Frontend 역방향 의존 해소 | `components/` → `features/` 깊은 경로 직접 import 9건 → barrel export 경유 전환. `features/help/index.ts` 신규. Playwright E2E 7/7 PASS | `b437abe2` |
+| Gini Minor 수정 | barrel alias 2단계→1단계 단순화. ESLint `no-restricted-imports` 규칙 추가 — `components/`에서 `features/` 내부 경로 import 자동 차단 | `2c6009ab` |
+
 ---
 
 ## 3. 현재 위치
@@ -142,19 +152,20 @@ R1~R4 완료 후 전체 코드 재검증에서 발견된 잔존 역방향 의존
 [완료] R3: 문서연결 이벤트화      ████████████████████ 100%
 [완료] R4: 라우트 모듈 정리       ████████████████████ 100%
 [완료] R5: 재검증 잔존 수정       ████████████████████ 100%
+[완료] R6: Settings + Frontend   ████████████████████ 100%
 ```
 
-**R1~R5 완료. 운영 코드 역방향 HTTP 의존 0건 달성.**
+**R1~R6 완료. 운영 코드 역방향 HTTP 의존 0건 + Frontend 경계 자동 강제 달성.**
 
-### 재검증 현황 (R5 이후, 2026-04-04)
+### 재검증 현황 (R6 이후, 2026-04-05)
 
 | 영역 | 상태 | 잔존 | 비고 |
 |------|:----:|:----:|------|
 | 역방향 HTTP (webhook/로그) | **0건** | — | R5에서 완전 제거 |
-| 역방향 HTTP (settings API) | 3건 | `/api/settings/ai-models` | 보류 과제 (설정 서비스 분리) |
+| 역방향 HTTP (settings API) | **0건** | — | R6에서 Internal API 전환 완료 |
 | DB 직접 접근 (운영) | 1건 | `document_pipeline/main.py` health check | READ-ONLY, 허용 |
 | Frontend shared/ 격리 | **0건** | — | 완전 해소 |
-| Frontend components/ → features/ | 15건 | 마이그레이션 진행 중 | components/ 폐기 시 해소 |
+| Frontend components/ → features/ | **0건** | — | R6에서 barrel export 전환 + ESLint 자동 강제 |
 
 ---
 
@@ -183,7 +194,6 @@ aims_api (오케스트레이터 + DB 게이트웨이)
 - 하위 서비스 → Redis: 이벤트 발행 (aims_api가 구독)
 - 하위 서비스 → aims_analytics: 로그/사용량 직접 기록
 - aims_api → 하위 서비스: **역방향 호출 0건**
-- settings API 3건은 보류 과제 (Internal API 전환 또는 설정 서비스 분리 시 해소)
 
 ---
 
@@ -251,21 +261,6 @@ R1/R3에서 webhook → Redis Pub/Sub 전환 완료. 현재 이벤트 발행/구
 - Redis 이벤트 기반 처리에서 원인 불명의 장애 발생 시
 - 문서 처리 파이프라인에서 "걸린" 상태가 반복될 때
 - 사용자 수 증가로 이벤트 볼륨이 모니터링 없이 관리 불가해질 때
-
-### 설정 서비스 분리 (AI 모델 설정 config-service) — 보류
-
-현재 AI 모델 설정(`aiModelSettings`)은 aims_api 내부 모듈. aims_rag_api, document_pipeline 등이 설정을 조회하려면 aims_api Internal API를 경유해야 함.
-
-**현재 상태:**
-- `aiModelSettings.js`가 aims_api 프로세스 내 인메모리 캐시로 동작
-- 설정 변경 시 aims_api 재시작 필요 (핫 리로드 미지원)
-- 다른 서비스에서 모델 설정 참조 빈도가 낮아 병목 아님
-- **잔존 공개 API 호출 3건**: `config.py:38`, `cr_background.py:40`, `rag_search.py:257`이 `/api/settings/ai-models` 공개 API를 직접 호출. Internal API 엔드포인트 추가 또는 설정 서비스 분리 시 함께 해소
-
-**필요 시점 (재검토 트리거):**
-- AI 모델 설정 변경 빈도가 높아져 aims_api 재시작 비용이 문제될 때
-- 여러 서비스에서 동시에 설정을 참조하여 Internal API 경유가 병목이 될 때
-- 설정 핫 리로드가 필수 요구사항이 될 때
 
 ### aims_api 순수 오케스트레이터화 — 장기 과제
 
