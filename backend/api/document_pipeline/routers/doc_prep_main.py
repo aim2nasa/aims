@@ -1541,33 +1541,25 @@ async def _execute_hook_results(ctx: PipelineContext, hook_results: list) -> Non
 
 
 async def _send_sse_webhook(event: str, payload: dict) -> None:
-    """SSE 웹훅을 aims_api에 전송 (X-API-Key 인증 포함)"""
-    import httpx
-    from config import get_settings
+    """SSE 이벤트를 Redis Pub/Sub으로 발행"""
+    from services.redis_service import RedisService, CHANNELS
 
-    webhook_map = {
-        "ar-status-change": "/api/webhooks/ar-status-change",
-        "cr-status-change": "/api/webhooks/cr-status-change",
+    channel_map = {
+        "ar-status-change": CHANNELS["AR_STATUS"],
+        "cr-status-change": CHANNELS["CR_STATUS"],
     }
-    path = webhook_map.get(event)
-    if not path:
+    channel = channel_map.get(event)
+    if not channel:
         return
 
-    settings = get_settings()
     try:
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                f"{settings.AIMS_API_URL}{path}",
-                json={
-                    "customer_id": payload.get("customer_id", ""),
-                    "file_id": payload.get("file_id", ""),
-                    "status": payload.get("status", "pending"),
-                },
-                headers={"X-API-Key": settings.WEBHOOK_API_KEY},
-                timeout=5.0,
-            )
+        await RedisService.publish_event(channel, {
+            "customer_id": payload.get("customer_id", ""),
+            "file_id": payload.get("file_id", ""),
+            "status": payload.get("status", "pending"),
+        })
     except Exception as e:
-        logger.warning(f"⚠️ SSE 웹훅 전송 실패 ({event}): {e}")
+        logger.warning(f"⚠️ Redis 이벤트 발행 실패 ({event}): {e}")
 
 
 async def _step_detect_ar_crs_legacy(ctx: PipelineContext) -> None:

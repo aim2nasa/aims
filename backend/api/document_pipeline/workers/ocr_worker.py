@@ -494,24 +494,16 @@ class OCRWorker:
         owner_id: str,
         status: str
     ):
-        """Notify AIMS API that processing is complete"""
+        """Redis를 통해 문서 처리 완료 이벤트 발행"""
+        from services.redis_service import RedisService, CHANNELS
         try:
-            async with httpx.AsyncClient() as client:
-                await client.post(
-                    f"{self.aims_api_url}/api/webhooks/document-processing-complete",
-                    json={
-                        "document_id": doc_id,
-                        "owner_id": owner_id,
-                        "status": status
-                    },
-                    headers={
-                        "Content-Type": "application/json",
-                        "X-API-Key": settings.WEBHOOK_API_KEY
-                    },
-                    timeout=10.0
-                )
+            await RedisService.publish_event(CHANNELS["DOC_COMPLETE"], {
+                "document_id": doc_id,
+                "owner_id": owner_id,
+                "status": status,
+            })
         except Exception as e:
-            logger.warning(f"Failed to notify processing complete: {e}")
+            logger.warning(f"Failed to publish processing complete event: {e}")
 
 
 # Global worker instance

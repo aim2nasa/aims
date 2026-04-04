@@ -50,6 +50,14 @@ const OBJECTID_FIELDS = new Set([
 ]);
 
 /**
+ * ISO 문자열을 Date 객체로 변환할 날짜 필드 목록
+ * MongoDB에서 Date 타입으로 저장된 필드와 비교 시 자동 변환 필요
+ */
+const DATE_FIELDS = new Set([
+  'uploadDate', 'createdAt', 'updatedAt', 'completedAt', 'startedAt'
+]);
+
+/**
  * 위험한 MongoDB 연산자 블랙리스트
  * 내부 API라도 임의 코드 실행 가능한 연산자는 차단
  */
@@ -143,6 +151,7 @@ function findDangerousOperator(obj) {
  * MongoDB filter 객체 내의 ObjectId 필드를 재귀적으로 변환
  *
  * - OBJECTID_FIELDS에 해당하는 키의 값이 문자열이면 ObjectId로 변환
+ * - DATE_FIELDS에 해당하는 키의 ISO 문자열을 Date 객체로 변환
  * - $in 연산자 내 문자열 배열도 ObjectId로 변환
  * - $or, $and 등 논리 연산자 내부도 재귀 처리
  *
@@ -186,6 +195,22 @@ function convertObjectIdFields(filter) {
         // $ne 연산자 처리
         if (convertedValue.$ne !== undefined && typeof convertedValue.$ne === 'string' && ObjectId.isValid(convertedValue.$ne)) {
           convertedValue.$ne = new ObjectId(convertedValue.$ne);
+        }
+        converted[key] = convertedValue;
+      } else {
+        converted[key] = value;
+      }
+      continue;
+    }
+
+    // 날짜 필드 처리 — ISO 문자열을 Date 객체로 변환
+    if (DATE_FIELDS.has(key)) {
+      if (typeof value === 'string') {
+        converted[key] = new Date(value);
+      } else if (value && typeof value === 'object') {
+        const convertedValue = {};
+        for (const [op, opVal] of Object.entries(value)) {
+          convertedValue[op] = typeof opVal === 'string' ? new Date(opVal) : opVal;
         }
         converted[key] = convertedValue;
       } else {

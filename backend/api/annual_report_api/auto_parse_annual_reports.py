@@ -32,28 +32,25 @@ from pymongo import MongoClient
 from bson import ObjectId
 
 from config import settings
-from services.detector import AnnualReportDetector
-from services.parser import AnnualReportParser
+from services.detector import is_annual_report
+from services.parser import parse_annual_report
 from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
 from src.shared.time_utils import utc_now_iso
+from internal_api import query_files
 
 
 class AnnualReportAutoParser:
     """Annual Report 자동 파싱 클래스"""
 
     def __init__(self):
-        # MongoDB 연결
+        # MongoDB 연결 (processing_collection 전용 — files/customers는 Internal API 경유)
         self.client = MongoClient(settings.MONGO_URI)
         self.db = self.client[settings.DB_NAME]
-        self.files_collection = self.db["files"]
-        self.customers_collection = self.db["customers"]
 
-        # 서비스 초기화
-        self.detector = AnnualReportDetector()
-        self.parser = AnnualReportParser()
+        # 서비스 초기화 (detector/parser는 모듈 함수로 직접 호출)
 
-        # 처리 상태 추적 컬렉션
+        # 처리 상태 추적 컬렉션 (annual_report_api 자체 컬렉션)
         self.processing_collection = self.db["annual_report_processing"]
 
     def get_unprocessed_files(self, lookback_hours: int = 24, force_all: bool = False) -> List[Dict]:
@@ -75,9 +72,14 @@ class AnnualReportAutoParser:
         # 시간 필터 (force_all이 False일 때만)
         if not force_all:
             since = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
-            query["uploadDate"] = {"$gte": since}
+            query["uploadDate"] = {"$gte": since.isoformat()}
 
-        files = list(self.files_collection.find(query).sort("uploadDate", -1))
+        # Internal API 경유 조회 (files 컬렉션 직접 접근 금지)
+        files = query_files(
+            filter=query,
+            sort={"uploadDate": -1},
+            limit=1000
+        )
 
         # 이미 처리된 파일 필터링
         unprocessed = []
@@ -232,7 +234,7 @@ class AnnualReportAutoParser:
             self.mark_processing_started(file_id)
 
             print(f"\n🔍 Step 1: Annual Report 판단 중...")
-            detection_result = self.detector.is_annual_report(file_path)
+            detection_result = is_annual_report(file_path)
 
             if not detection_result["is_annual_report"]:
                 print(f"❌ Annual Report가 아닙니다.")
@@ -254,7 +256,7 @@ class AnnualReportAutoParser:
             print(f"\n🤖 Step 3: OpenAI로 파싱 중...")
             print(f"   (약 25초 소요 예상...)")
 
-            parsed_data = self.parser.parse_annual_report(file_path, n_pages)
+            parsed_data = parse_annual_report(file_path, end_page=n_pages)
 
             contract_count = len(parsed_data.get("contracts", []))
             print(f"✅ 파싱 완료! {contract_count}개 계약 추출됨")
