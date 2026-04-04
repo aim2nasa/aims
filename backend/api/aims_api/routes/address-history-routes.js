@@ -101,7 +101,7 @@ module.exports = function(db, authenticateJWT) {
   /**
    * 주소 이력 저장 API (내부 사용)
    */
-  router.post('/customers/:id/address-history', async (req, res) => {
+  router.post('/customers/:id/address-history', authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
       const { previous_address, reason, changed_by, notes } = req.body;

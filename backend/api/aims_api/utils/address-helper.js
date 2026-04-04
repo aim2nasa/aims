@@ -15,9 +15,11 @@ const axios = require('axios');
 async function verifyAddressViaKakao(address1) {
   if (!address1 || !address1.trim()) return 'failed';
   try {
-    const kakaoApiKey = process.env.KAKAO_REST_API_KEY
-      ? `KakaoAK ${process.env.KAKAO_REST_API_KEY}`
-      : 'KakaoAK 0e0db455dcbf09ba1309daad71af4174';
+    if (!process.env.KAKAO_REST_API_KEY) {
+      console.error('[verifyAddressViaKakao] KAKAO_REST_API_KEY 환경변수가 설정되지 않았습니다.');
+      return 'failed';
+    }
+    const kakaoApiKey = `KakaoAK ${process.env.KAKAO_REST_API_KEY}`;
     const response = await axios.get('https://dapi.kakao.com/v2/local/search/address.json', {
       params: { query: address1.trim(), page: 1, size: 10, analyze_type: 'similar' },
       headers: { 'Authorization': kakaoApiKey },

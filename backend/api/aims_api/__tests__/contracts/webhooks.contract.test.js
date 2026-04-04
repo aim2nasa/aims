@@ -1,7 +1,7 @@
 /**
  * webhooks.contract.test.js
  * Webhook 엔드포인트 Contract 테스트
- * 웹훅은 내부 서비스 간 호출이므로 인증 없음
+ * 웹훅은 내부 서비스 간 호출 (personal-files-change는 JWT 인증 필요)
  */
 
 const { checkServerAvailability, apiFetch } = require('../helpers/contractTestTemplate');
@@ -37,12 +37,12 @@ describe('POST /api/webhooks/cr-status-change', () => {
 });
 
 describe('POST /api/webhooks/personal-files-change', () => {
-  it('빈 body에 응답', async () => {
+  it('인증 없이 호출 시 401 반환', async () => {
     if (!serverAvailable) return;
     const res = await apiFetch('/api/webhooks/personal-files-change', {
       method: 'POST',
       body: JSON.stringify({}),
     }, null);
-    expect([200, 400, 500]).toContain(res.status);
+    expect([401]).toContain(res.status);
   });
 });

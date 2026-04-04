@@ -519,10 +519,12 @@ export class UploadService {
 
     // 2. SSE 알림 발송
     try {
+      const token = getAuthToken()
       const response = await fetch(`${API_BASE_URL}/api/webhooks/personal-files-change`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           userId,

@@ -86,7 +86,7 @@ module.exports = function(db, authenticateJWT, authenticateJWTWithQuery) {
    * @route POST /api/webhooks/personal-files-change
    * @description Personal Files routes에서 파일 변경 시 호출하여 SSE 알림 발생
    */
-  router.post('/webhooks/personal-files-change', (req, res) => {
+  router.post('/webhooks/personal-files-change', authenticateJWT, (req, res) => {
     try {
       const { userId, changeType, itemId, itemName, itemType } = req.body;
 

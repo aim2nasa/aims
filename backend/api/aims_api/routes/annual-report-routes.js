@@ -8,6 +8,7 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
+const FormData = require('form-data');
 const { COLLECTIONS, AR_QUEUE_STATUS, AR_QUEUE_FIELDS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
