@@ -229,9 +229,9 @@ src/
                 ↑ Redis 이벤트 (하위 → aims_api)
 ```
 
-- 하위 서비스는 aims_api URL만 알면 됨 (Internal API)
-- aims_api는 하위 서비스 URL을 **모름** (역방향 호출 0건)
-- 하위 서비스의 결과 보고는 Redis Pub/Sub으로 비동기 처리
+- 하위 서비스는 aims_api URL만 알면 됨 (Internal API, `AIMS_API_URL` 환경변수)
+- aims_api → 하위 서비스 URL은 환경변수로 주입 (`{SERVICE_NAME}_URL` 표준, 하드코딩 0건)
+- 하위 서비스의 결과 보고는 Redis Pub/Sub으로 비동기 처리 (역방향 HTTP 호출 0건)
 
 ### DB 게이트웨이
 
@@ -252,6 +252,24 @@ src/
 - `DefaultCreditPolicy`: 유료 모델 (크레딧 체크·소비·보너스)
 - `NoCreditPolicy`: 무료 모델 (모든 체크 허용)
 - 환경변수 `CREDIT_POLICY=default|free`로 전환
+
+### 서비스 URL 환경변수 표준
+
+aims_api가 하위 서비스를 호출할 때 사용하는 URL은 모두 환경변수로 관리 (하드코딩 0건):
+
+| 환경변수 | 기본값 | 사용 파일 |
+|---------|--------|----------|
+| `ANNUAL_REPORT_API_URL` | `http://localhost:8004` | admin-routes, annual-report-routes, webhooks-routes |
+| `DOCUMENT_PIPELINE_URL` | `http://localhost:8100` | health-routes, webhooks-routes |
+| `AIMS_RAG_API_URL` | `http://localhost:8000` | admin-routes |
+| `PDF_PROXY_URL` | `http://localhost:8002` | admin-routes |
+| `PDF_CONVERTER_URL` | `http://localhost:8005` | admin-routes |
+| `N8N_URL` | `http://localhost:5678` | admin-routes, webhooks-routes |
+| `AIMS_MCP_URL` | `http://localhost:3011` | admin-routes |
+
+- **네이밍 표준:** `{SERVICE_NAME}_URL`
+- **전달:** `deploy_aims_api.sh`에서 Docker `-e` 옵션으로 주입
+- **패턴:** `process.env.XXX || 'http://localhost:PORT'` (로컬 개발 시 환경변수 없이 동작)
 
 ### Internal API 인증
 

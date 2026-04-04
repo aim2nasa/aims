@@ -140,6 +140,32 @@ R1~R4 완료 후 전체 코드 재검증에서 발견된 잔존 역방향 의존
 | Frontend 역방향 의존 해소 | `components/` → `features/` 깊은 경로 직접 import 9건 → barrel export 경유 전환. `features/help/index.ts` 신규. Playwright E2E 7/7 PASS | `b437abe2` |
 | Gini Minor 수정 | barrel alias 2단계→1단계 단순화. ESLint `no-restricted-imports` 규칙 추가 — `components/`에서 `features/` 내부 경로 import 자동 차단 | `2c6009ab` |
 
+### R7: 서비스 URL 환경변수화 + 자기 호출 제거 (2026-04-05)
+
+**목표 달성: aims_api → 하위 서비스 하드코딩 URL 0건. 진화 독립성 4/7 → 6/7 개선.**
+
+| 항목 | 내용 | 건수 |
+|------|------|:----:|
+| URL 환경변수화 | 하드코딩 `localhost:PORT` 21건 → `process.env.XXX \|\| fallback` 패턴 전환 | 21건 |
+| 자기 호출 제거 | `personal-files-routes.js`의 HTTP 자기 호출 → `documentDeleteService` 내부 함수 직접 호출 | 1건 |
+| documentDeleteService 추출 | `documents-routes.js`에서 문서 삭제 공통 로직(DB+파일+고객참조+AR큐+Qdrant) 70행 분리 | 신규 |
+| deploy 환경변수 전달 | `deploy_aims_api.sh`에 Docker `-e` 옵션으로 7개 환경변수 전달 추가 | 7개 |
+| 환경변수 네이밍 표준 | `{SERVICE_NAME}_URL` 패턴 통일 — 8개 서비스 URL 표준화 | 8개 |
+
+**환경변수 표준:**
+
+| 환경변수 | 기본값 | 대상 서비스 |
+|---------|--------|-----------|
+| `ANNUAL_REPORT_API_URL` | `http://localhost:8004` | annual_report_api |
+| `DOCUMENT_PIPELINE_URL` | `http://localhost:8100` | document_pipeline |
+| `AIMS_RAG_API_URL` | `http://localhost:8000` | aims_rag_api |
+| `PDF_PROXY_URL` | `http://localhost:8002` | pdf_proxy |
+| `PDF_CONVERTER_URL` | `http://localhost:8005` | pdf_converter |
+| `N8N_URL` | `http://localhost:5678` | n8n |
+| `AIMS_MCP_URL` | `http://localhost:3011` | aims_mcp |
+
+**regression 테스트: 기존 12건 갱신 + 신규 30건 (실동작 MongoDB 검증 포함)** | 커밋 `612378a5`
+
 ---
 
 ## 3. 현재 위치
@@ -154,9 +180,10 @@ R1~R4 완료 후 전체 코드 재검증에서 발견된 잔존 역방향 의존
 [완료] R4: 라우트 모듈 정리       ████████████████████ 100%
 [완료] R5: 재검증 잔존 수정       ████████████████████ 100%
 [완료] R6: Settings + Frontend   ████████████████████ 100%
+[완료] R7: URL 환경변수화         ████████████████████ 100%
 ```
 
-**R1~R6 완료. 운영 코드 역방향 HTTP 의존 0건 + Frontend 경계 자동 강제 달성.**
+**R1~R7 완료. 역방향 HTTP 의존 0건 + 하드코딩 URL 0건 + Frontend 경계 자동 강제 달성.**
 
 ### 재검증 현황 (R6 이후, 2026-04-05)
 
@@ -181,20 +208,22 @@ annual_report_api ←→ MongoDB     (각자 직접 접근)
 aims_rag_api ←────→ MongoDB      (직접 접근)
 ```
 
-### After (R5 완료)
+### After (R7 완료)
 ```
 aims_api (오케스트레이터 + DB 게이트웨이)
   ↓ document_pipeline  (Internal API 경유, Redis 이벤트 발행)
   ↓ annual_report_api  (Internal API 경유, aims_analytics 직접 기록)
   ↓ aims_rag_api       (Internal API 경유, aims_analytics 직접 기록)
   ↓ aims_mcp           (Internal API 경유, 단방향)
+  → 하위 서비스 URL: 환경변수({SERVICE_NAME}_URL)로 주입
 ```
 
-**단방향 의존 달성:**
+**단방향 의존 + 환경변수 주입 달성:**
 - 하위 서비스 → aims_api: Internal API (읽기/쓰기)
 - 하위 서비스 → Redis: 이벤트 발행 (aims_api가 구독)
 - 하위 서비스 → aims_analytics: 로그/사용량 직접 기록
-- aims_api → 하위 서비스: **역방향 호출 0건**
+- aims_api → 하위 서비스: 환경변수 URL로 호출 (하드코딩 0건)
+- 자기 호출: **0건** (documentDeleteService로 내부 함수화)
 
 ---
 
