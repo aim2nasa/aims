@@ -96,6 +96,26 @@ aims_api가 DB 스키마의 단일 게이트웨이가 되었다.
 
 **regression 테스트: 8건 추가 (소유권, 중복, AR큐, PDF, SSE)** | 머지 `d04c44e7`
 
+### R4: aims_api 라우트 모듈 정리 (2026-04-04)
+
+**목표 달성: customers-routes.js 4,842행을 도메인별 6개 파일로 분리.**
+
+| 분리 파일 | 도메인 | 라우트 | 행 수 |
+|-----------|--------|:------:|:-----:|
+| customers-routes.js | Customer CRUD & 통계 | 12 | 1,710 |
+| annual-report-routes.js | AR/CRS 프록시 & SSE | 16 | 1,116 |
+| customer-documents-routes.js | 문서 연결/관리 | 8 | 872 |
+| notification-routes.js | Webhook/SSE 알림 | 9 | 606 |
+| customer-memos-routes.js | 메모 CRUD | 4 | 309 |
+| address-history-routes.js | 주소 이력 | 3 | 222 |
+
+공유 모듈 추출:
+- `services/qdrant-sync.js` — Qdrant 청크 customer_id 동기화
+- `utils/address-helper.js` — 카카오 주소 검증 + 정규화
+- `config/sse-channels.js` — SSE 채널 별칭 싱글턴
+
+**실동작 테스트 18/18 PASS** | 커밋 `8c63d221`
+
 ---
 
 ## 3. 현재 위치
@@ -107,9 +127,10 @@ aims_api가 DB 스키마의 단일 게이트웨이가 되었다.
 [완료] R1: 이벤트화 (16건)       ████████████████████ 100%
 [완료] R2: 공유 서비스 분리       ████████████████████ 100%
 [완료] R3: 문서연결 이벤트화      ████████████████████ 100%
+[완료] R4: 라우트 모듈 정리       ████████████████████ 100%
 ```
 
-**R1~R3 완료. 역방향 HTTP 의존 0건 달성.**
+**R1~R4 완료. 역방향 HTTP 의존 0건 + aims_api 내부 모듈 정리 달성.**
 
 ---
 
