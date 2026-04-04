@@ -28,12 +28,13 @@ aims_api가 DB 스키마의 단일 게이트웨이가 되었다.
 | Phase | 내용 | 규모 | 커밋 |
 |:-----:|------|------|------|
 | 1 | aims_rag_api read-only 전환 | 33건, API 9개, 테스트 42건 | `bf6de606` |
+| 2 | aims_mcp DB write 전환 | 11건, Write API 8개, 테스트 56건 | `7a4b3473` |
 | 3 | annual_report_api DB write 전환 | 44건, API 9개, 테스트 38건 | `72d4fdcf` |
 | 4 | document_pipeline DB write 전환 | 52건, API 5개, 테스트 25건 | `be22cde0` |
 | 5 | Dead code 제거 + CI 아키텍처 테스트 | 739 PASS | `6269c362` |
 | 6 | files/customers read 전환 | 97건, API 9개, 테스트 36건 | `14844b9a` |
 
-**합계: 237건 전환, Internal API 40개, regression 테스트 141건**
+**합계: 248건 전환, Internal API 48개, regression 테스트 197건**
 
 ### Phase 1: Backend 위반 수정 (2026-04-03~04)
 
@@ -205,6 +206,7 @@ aims_api (오케스트레이터 + DB 게이트웨이)
 - 변경된 모듈만 테스트 (git diff --cached 기반)
 - 단일 모듈 변경 시 최대 91% 시간 단축 (45초 → 4~22초)
 - shared-schema 변경 시 전체 실행 (의존 모듈 전체 영향)
+- aims_rag_api Docker 기반 테스트 파이프라인 추가 (모듈별 6/6 완성) | 커밋 `c4165171`
 
 ### ICreditPolicy 인터페이스 기반 설계 (2026-04-04)
 
