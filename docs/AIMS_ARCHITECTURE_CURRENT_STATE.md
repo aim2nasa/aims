@@ -57,13 +57,14 @@ aims_api (오케스트레이터 + DB 게이트웨이)
 | document_pipeline → aims_api | Internal API (x-api-key) | 파일/고객 DB 읽기·쓰기 |
 | annual_report_api → aims_api | Internal API (x-api-key) | 고객/파일 DB 읽기·쓰기, AI 설정 조회 |
 | aims_rag_api → aims_api | Internal API (x-api-key) | 크레딧 체크, AI 설정 조회 |
-| aims_mcp → aims_api | Internal API (x-api-key) | 고객/문서/계약 조회 |
+| aims_mcp → aims_api | Internal API (x-api-key) | 고객/문서/계약/상품 조회 |
 | document_pipeline → Redis | PUBLISH | 진행률, 완료, AR/CR 상태 이벤트 |
 | annual_report_api → Redis | PUBLISH | AR/CR 파싱 상태 변경 이벤트 |
 | aims_api → Redis | SUBSCRIBE | 이벤트 수신 → SSE 브로드캐스트, DB 업데이트 |
 | document_pipeline → aims_analytics | 직접 DB 기록 | 로그, 사용량 기록 |
 | annual_report_api → aims_analytics | 직접 DB 기록 | 에러 로그 기록 |
 | aims_rag_api → aims_analytics | 직접 DB 기록 | 검색 로그, 토큰 사용량 |
+| aims_mcp → aims_analytics | 직접 DB 기록 | 에러/경고 로그 (systemLogger) |
 | aims_api → MongoDB (docupload) | 직접 DB 접근 | **유일한 DB 게이트웨이** |
 
 ### 역방향 의존: 0건
@@ -236,7 +237,7 @@ src/
 ### DB 게이트웨이
 
 - MongoDB(docupload) 직접 접근은 **aims_api만** 허용
-- 하위 서비스는 41개 Internal API 엔드포인트를 통해 DB 조회·수정
+- 하위 서비스는 42개 Internal API 엔드포인트를 통해 DB 조회·수정
 - 예외: `document_pipeline/main.py` health check (READ-ONLY, 1건, 허용)
 - aims_analytics DB는 하위 서비스에서 직접 기록 허용 (로그/사용량)
 

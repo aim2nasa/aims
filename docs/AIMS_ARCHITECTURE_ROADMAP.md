@@ -166,6 +166,19 @@ R1~R4 완료 후 전체 코드 재검증에서 발견된 잔존 역방향 의존
 
 **regression 테스트: 기존 12건 갱신 + 신규 30건 (실동작 MongoDB 검증 포함)** | 커밋 `612378a5`
 
+### R8: aims_mcp 아키텍처 위반 수정 (2026-04-05)
+
+**목표 달성: aims_mcp 잔존 위반 4건 해소. 전 서비스 아키텍처 위반 0건.**
+
+| # | 위반 | 수정 |
+|:-:|------|------|
+| 1 | `systemLogger.ts` — 공개 API 하드코딩 호출 (`/api/system-logs`) | aims_analytics DB 직접 기록 (30일 TTL, R1 패턴 동일) |
+| 2 | `documents.ts` — `http://localhost:8000` 하드코딩 | `AIMS_RAG_API_URL` 환경변수 전환 |
+| 3 | `products.ts` — `db.collection()` DB 직접 접근 2건 | `GET /internal/products/search` Internal API 신규 (insurers JOIN 포함) |
+| 4 | `address.ts` — 공개 API 호출 (인증 없음) | `x-api-key` 헤더 추가 (Internal API 인증 패턴 일관성) |
+
+**regression 테스트: aims_mcp vitest 818 PASS + aims_api Jest 1,441 PASS + 실동작 17건** | 커밋 `5a929198`
+
 ---
 
 ## 3. 현재 위치
@@ -181,17 +194,22 @@ R1~R4 완료 후 전체 코드 재검증에서 발견된 잔존 역방향 의존
 [완료] R5: 재검증 잔존 수정       ████████████████████ 100%
 [완료] R6: Settings + Frontend   ████████████████████ 100%
 [완료] R7: URL 환경변수화         ████████████████████ 100%
+[완료] R8: aims_mcp 위반 수정     ████████████████████ 100%
 ```
 
-**R1~R7 완료. 역방향 HTTP 의존 0건 + 하드코딩 URL 0건 + Frontend 경계 자동 강제 달성.**
+**R1~R8 완료. 전 서비스 아키텍처 위반 0건 달성.**
 
-### 재검증 현황 (R6 이후, 2026-04-05)
+### 재검증 현황 (R8 이후, 2026-04-05)
 
 | 영역 | 상태 | 잔존 | 비고 |
 |------|:----:|:----:|------|
 | 역방향 HTTP (webhook/로그) | **0건** | — | R5에서 완전 제거 |
 | 역방향 HTTP (settings API) | **0건** | — | R6에서 Internal API 전환 완료 |
-| DB 직접 접근 (운영) | 1건 | `document_pipeline/main.py` health check | READ-ONLY, 허용 |
+| 역방향 HTTP (aims_mcp 공개 API) | **0건** | — | R8에서 aims_analytics 직접 기록 + x-api-key 추가 |
+| 하드코딩 URL (aims_api) | **0건** | — | R7에서 환경변수 전환 완료 |
+| 하드코딩 URL (aims_mcp) | **0건** | — | R8에서 환경변수 전환 완료 |
+| DB 직접 접근 (aims_mcp) | **0건** | — | R8에서 products Internal API 전환 |
+| DB 직접 접근 (운영, 허용) | 1건 | `document_pipeline/main.py` health check | READ-ONLY, 허용 |
 | Frontend shared/ 격리 | **0건** | — | 완전 해소 |
 | Frontend components/ → features/ | **0건** | — | R6에서 barrel export 전환 + ESLint 자동 강제 |
 
