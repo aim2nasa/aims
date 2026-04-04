@@ -27,7 +27,7 @@ async def extract_metadata(
     file: Optional[UploadFile] = File(None),
     path: Optional[str] = Form(None),
     saved_name: Optional[str] = Form(None),
-    original: Optional[str] = Form(None),
+    original: Optional[str] = Form(None),  # noqa: F841 - n8n 호환용 파라미터 (사용하지 않지만 호출자가 전송)
     owner_id: Optional[str] = Form(None),
     document_id: Optional[str] = Form(None)
 ):
