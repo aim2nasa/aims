@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { sendErrorLog } from '../systemLogger.js';
 
-// 환경변수 또는 기본값
+// 환경변수
 const AIMS_API_URL = process.env.AIMS_API_URL || 'http://localhost:3010';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
 
 // 스키마 정의
 export const searchAddressSchema = z.object({
@@ -79,7 +80,8 @@ export async function handleSearchAddress(args: unknown): Promise<{ content: { t
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-api-key': INTERNAL_API_KEY
       }
     });
 

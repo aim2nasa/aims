@@ -104,7 +104,8 @@ export const documentToolDefinitions = [
   }
 ];
 
-// RAG API 타임아웃 (30초)
+// RAG API 설정
+const AIMS_RAG_API_URL = process.env.AIMS_RAG_API_URL || 'http://localhost:8000';
 const RAG_API_TIMEOUT_MS = 30000;
 
 /**
@@ -124,7 +125,7 @@ export async function handleSearchDocuments(args: unknown) {
       const offset = params.offset || 0;
 
       // RAG API 호출 (타임아웃 적용)
-      const response = await fetch('http://localhost:8000/search', {
+      const response = await fetch(`${AIMS_RAG_API_URL}/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -52,14 +52,18 @@ async function main() {
 process.on('SIGINT', async () => {
   console.error('[aims-mcp] 서버 종료 중...');
   const { closeDB } = await import('./db.js');
+  const { closeAnalyticsDb } = await import('./systemLogger.js');
   await closeDB();
+  await closeAnalyticsDb();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.error('[aims-mcp] 서버 종료 중...');
   const { closeDB } = await import('./db.js');
+  const { closeAnalyticsDb } = await import('./systemLogger.js');
   await closeDB();
+  await closeAnalyticsDb();
   process.exit(0);
 });
 

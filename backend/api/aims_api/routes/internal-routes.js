@@ -3155,6 +3155,150 @@ module.exports = function(db) {
   });
 
   // ============================================
+  // Products 검색 (aims_mcp DB 직접 접근 제거)
+  // ============================================
+
+  /**
+   * GET /api/internal/products/search
+   * 보험상품 검색 (Internal API)
+   *
+   * insurance_products + insurers 컬렉션에서 상품 검색.
+   * aims_mcp의 search_products 도구가 DB 직접 접근 대신 이 API를 호출.
+   *
+   * Query Parameters:
+   * - query: 검색어 (상품명, 보험사명)
+   * - insurerName: 보험사명 필터
+   * - category: 카테고리 필터
+   * - limit: 결과 수 제한 (기본 20, 최대 100)
+   */
+  router.get('/internal/products/search', async (req, res) => {
+    try {
+      const db = req.app.locals.db;
+      const { query, insurerName, category, limit } = req.query;
+      const resultLimit = Math.min(parseInt(limit) || 20, 100);
+
+      // 1) insurers 컬렉션에서 보험사 매칭
+      let insurerIds = [];
+      if (query || insurerName) {
+        const insurerQuery = insurerName || query;
+        const insurerRegex = { $regex: escapeRegex(insurerQuery), $options: 'i' };
+        const matchingInsurers = await db.collection('insurers')
+          .find({
+            $or: [
+              { name: insurerRegex },
+              { shortName: insurerRegex }
+            ]
+          })
+          .project({ _id: 1 })
+          .toArray();
+        insurerIds = matchingInsurers.map(i => i._id);
+      }
+
+      // 2) 상품 검색 필터 구성
+      const filter = {};
+
+      if (query) {
+        const regex = { $regex: escapeRegex(query), $options: 'i' };
+        const orConditions = [{ productName: regex }];
+        if (insurerIds.length > 0) {
+          orConditions.push({ insurer_id: { $in: insurerIds } });
+        }
+        filter.$or = orConditions;
+      }
+
+      // 보험사명으로만 필터링
+      if (insurerName && !query) {
+        if (insurerIds.length > 0) {
+          filter.insurer_id = { $in: insurerIds };
+        } else {
+          return res.json({
+            success: true,
+            data: {
+              count: 0,
+              totalCount: 0,
+              insurerBreakdown: {},
+              products: [],
+              message: `"${insurerName}" 보험사를 찾을 수 없습니다.`
+            },
+            timestamp: utcNowISO()
+          });
+        }
+      }
+
+      if (category) {
+        filter.category = category;
+      }
+
+      // 3) aggregate: insurers JOIN + sort + limit + project
+      const products = await db.collection(COLLECTIONS.INSURANCE_PRODUCTS)
+        .aggregate([
+          { $match: filter },
+          {
+            $lookup: {
+              from: 'insurers',
+              localField: 'insurer_id',
+              foreignField: '_id',
+              as: 'insurer'
+            }
+          },
+          { $unwind: { path: '$insurer', preserveNullAndEmptyArrays: true } },
+          { $sort: { 'insurer.name': 1, productName: 1 } },
+          { $limit: resultLimit },
+          {
+            $project: {
+              _id: 1,
+              productName: 1,
+              insurerName: '$insurer.name',
+              insurerShortName: '$insurer.shortName',
+              category: 1,
+              status: 1,
+              surveyDate: 1,
+              saleStartDate: 1
+            }
+          }
+        ])
+        .toArray();
+
+      // 4) 전체 수
+      const totalCount = await db.collection(COLLECTIONS.INSURANCE_PRODUCTS).countDocuments(filter);
+
+      // 5) 보험사별 그룹화
+      const insurerBreakdown = {};
+      products.forEach(p => {
+        const name = p.insurerName || p.insurerShortName || '기타';
+        insurerBreakdown[name] = (insurerBreakdown[name] || 0) + 1;
+      });
+
+      res.json({
+        success: true,
+        data: {
+          count: products.length,
+          totalCount,
+          insurerBreakdown,
+          products: products.map(p => ({
+            id: p._id.toString(),
+            productName: p.productName,
+            insurerName: p.insurerName || p.insurerShortName,
+            category: p.category,
+            status: p.status,
+            surveyDate: p.surveyDate,
+            saleStartDate: p.saleStartDate
+          }))
+        },
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] products/search 조회 오류:', error.message);
+      backendLogger.error('Internal', 'products/search 조회 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
+  // ============================================
   // Settings 조회 (Phase 7: settings API 의존 제거)
   // ============================================
 

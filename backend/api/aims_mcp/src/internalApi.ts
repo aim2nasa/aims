@@ -433,3 +433,44 @@ export async function queryRelationships(
   const data = await internalApiPost<any[]>('/internal/relationships/query', body);
   return data || [];
 }
+
+// ============================================================
+// products 검색 편의 함수
+// ============================================================
+
+interface SearchProductsResult {
+  count: number;
+  totalCount: number;
+  insurerBreakdown: Record<string, number>;
+  products: Array<{
+    id: string;
+    productName: string;
+    insurerName: string;
+    category: string;
+    status: string;
+    surveyDate: string;
+    saleStartDate: string;
+  }>;
+  message?: string;
+}
+
+/**
+ * 보험상품 검색
+ * GET /internal/products/search
+ */
+export async function searchProducts(params: {
+  query?: string;
+  insurerName?: string;
+  category?: string;
+  limit?: number;
+}): Promise<SearchProductsResult | null> {
+  const searchParams = new URLSearchParams();
+  if (params.query) searchParams.set('query', params.query);
+  if (params.insurerName) searchParams.set('insurerName', params.insurerName);
+  if (params.category) searchParams.set('category', params.category);
+  if (params.limit) searchParams.set('limit', params.limit.toString());
+
+  const qs = searchParams.toString();
+  const path = `/internal/products/search${qs ? `?${qs}` : ''}`;
+  return internalApiGet<SearchProductsResult>(path);
+}
