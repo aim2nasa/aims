@@ -26,7 +26,7 @@ import { InitialFilterBar, calculateInitialCounts, filterByInitial, type Initial
 import NaverMap from '../../NaverMap/NaverMap'
 import { CustomerAddressInputModal } from './CustomerAddressInputModal'
 import { CustomerService } from '@/services/customerService'
-import type { FormattedAddress } from '@/features/customer/api/addressApi'
+import type { FormattedAddress } from '@/features/customer'
 import { errorReporter } from '@/shared/lib/errorReporter'
 
 /**

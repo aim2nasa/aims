@@ -10,7 +10,7 @@ import { useState, ReactNode, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
-import { helpApi, type UsageGuide } from '@/features/help/api';
+import { helpApi, type UsageGuide } from '@/features/help';
 import './UsageGuideView.css';
 import './UsageGuideView.mobile.css';
 

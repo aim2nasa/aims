@@ -9,7 +9,7 @@
 
 import React, { useMemo } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
-import { CustomerRegistrationView as RegistrationForm } from '@/features/customer/views/CustomerRegistrationView/CustomerRegistrationView';
+import { CustomerRegistrationForm as RegistrationForm } from '@/features/customer';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils';
 

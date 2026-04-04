@@ -9,7 +9,7 @@
 
 import React, { useMemo } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
-import { AllCustomersView, AllCustomersViewRef } from '@/features/customer/views/AllCustomersView/AllCustomersView';
+import { AllCustomersView, type AllCustomersViewRef } from '@/features/customer';
 import type { Customer } from '@/entities/customer/model';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils';

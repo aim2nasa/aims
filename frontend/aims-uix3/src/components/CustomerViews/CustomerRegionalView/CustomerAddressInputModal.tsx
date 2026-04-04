@@ -9,8 +9,8 @@
 
 import React, { useState } from 'react';
 import Modal from '@/shared/ui/Modal';
-import { AddressSearchModal } from '@/features/customer/components/AddressSearchModal';
-import type { FormattedAddress } from '@/features/customer/api/addressApi';
+import { AddressSearchModal } from '@/features/customer';
+import type { FormattedAddress } from '@/features/customer';
 import type { Customer } from '@/entities/customer';
 import { Button } from '@/shared/ui/Button';
 import { errorReporter } from '@/shared/lib/errorReporter';

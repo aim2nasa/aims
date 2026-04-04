@@ -10,7 +10,7 @@ import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { BackButton } from '@/shared/ui/BackButton';
 import { formatDateTime } from '@/shared/lib/timeUtils';
-import { helpApi, NOTICE_CATEGORY_LABELS, type Notice } from '@/features/help/api';
+import { helpApi, NOTICE_CATEGORY_LABELS, type Notice } from '@/features/help';
 import './NoticeView.css';
 import './NoticeView.mobile.css';
 

@@ -7,12 +7,22 @@
 
 // 공용 컴포넌트
 export { CustomerDocumentPreviewModal } from './views/CustomerDetailView/tabs/CustomerDocumentPreviewModal';
+export { AddressSearchModal } from './components/AddressSearchModal';
+
+// 공용 뷰
+export { AllCustomersView } from './views/AllCustomersView/AllCustomersView';
+export type { AllCustomersViewRef } from './views/AllCustomersView/AllCustomersView';
+export { CustomerRegistrationView as CustomerRegistrationForm } from './views/CustomerRegistrationView/CustomerRegistrationView';
 
 // 공용 유틸 (AR/CRS PDF 파싱)
 export { checkAnnualReportFromPDF, checkCustomerReviewFromPDF } from './utils/pdfParser';
+
+// 공용 훅
+export { useDocumentDownload } from './hooks/useDocumentDownload';
 
 // 공용 API
 export { AnnualReportApi } from './api/annualReportApi';
 export type { AnnualReport } from './api/annualReportApi';
 export { CustomerReviewApi } from './api/customerReviewApi';
 export type { CustomerReview } from './api/customerReviewApi';
+export type { FormattedAddress } from './api/addressApi';
