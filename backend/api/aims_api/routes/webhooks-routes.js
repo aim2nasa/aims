@@ -23,8 +23,9 @@ const {
 module.exports = function(db, authenticateJWT) {
   const router = express.Router();
 
-  const N8N_INTERNAL_URL = 'http://localhost:5678';
-  const DOCUMENT_PIPELINE_URL = 'http://localhost:8100';
+  const N8N_INTERNAL_URL = process.env.N8N_URL || 'http://localhost:5678';
+  const DOCUMENT_PIPELINE_URL = process.env.DOCUMENT_PIPELINE_URL || 'http://localhost:8100';
+  const ANNUAL_REPORT_API_URL = process.env.ANNUAL_REPORT_API_URL || 'http://localhost:8004';
   const COLLECTION_NAME = COLLECTIONS.FILES;
   const FILES_COLLECTION = COLLECTIONS.FILES;
   const arSSEClients = sseManager.channels.ar;
@@ -193,9 +194,9 @@ router.post("/ar-background/trigger-parsing", authenticateJWT, async (req, res) 
 
     console.log("🚀 [AR 백그라운드 파싱 프록시] 요청 수신, userId:", userId);
 
-    // localhost:8004로 요청 전달
+    // ANNUAL_REPORT_API_URL로 요청 전달
     const response = await axios.post(
-      "http://localhost:8004/ar-background/trigger-parsing",
+      `${ANNUAL_REPORT_API_URL}/ar-background/trigger-parsing`,
       req.body,
       {
         headers: {
@@ -256,9 +257,9 @@ router.post("/ar-background/retry-parsing", authenticateJWT, async (req, res) =>
       console.warn("[AR 파싱 재시도] customerId 조회 실패:", e.message);
     }
 
-    // localhost:8004로 요청 전달
+    // ANNUAL_REPORT_API_URL로 요청 전달
     const response = await axios.post(
-      "http://localhost:8004/ar-background/retry-parsing",
+      `${ANNUAL_REPORT_API_URL}/ar-background/retry-parsing`,
       req.body,
       {
         headers: {
@@ -310,9 +311,9 @@ router.post("/cr-background/trigger-parsing", authenticateJWT, async (req, res) 
 
     console.log("🚀 [CR 백그라운드 파싱 프록시] 요청 수신, userId:", userId);
 
-    // localhost:8004로 요청 전달
+    // ANNUAL_REPORT_API_URL로 요청 전달
     const response = await axios.post(
-      "http://localhost:8004/cr-background/trigger-parsing",
+      `${ANNUAL_REPORT_API_URL}/cr-background/trigger-parsing`,
       req.body,
       {
         headers: {
@@ -372,9 +373,9 @@ router.post("/cr-background/retry-parsing", authenticateJWT, async (req, res) =>
 
     console.log("🔄 [CR 파싱 재시도 프록시] 요청 수신, file_id:", file_id, "userId:", userId);
 
-    // localhost:8004로 요청 전달
+    // ANNUAL_REPORT_API_URL로 요청 전달
     const response = await axios.post(
-      "http://localhost:8004/cr-background/retry-parsing",
+      `${ANNUAL_REPORT_API_URL}/cr-background/retry-parsing`,
       req.body,
       {
         headers: {

@@ -18,6 +18,7 @@ const sseChannels = require('../config/sse-channels');
 
 module.exports = function(db, authenticateJWT, authenticateJWTWithQuery, upload) {
   const router = express.Router();
+  const ANNUAL_REPORT_API_URL = process.env.ANNUAL_REPORT_API_URL || 'http://localhost:8004';
   const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
   const COLLECTION_NAME = COLLECTIONS.FILES;
 
@@ -51,7 +52,7 @@ module.exports = function(db, authenticateJWT, authenticateJWTWithQuery, upload)
         contentType: req.file.mimetype
       });
 
-      const pythonApiUrl = 'http://localhost:8004/annual-report/check';
+      const pythonApiUrl = `${ANNUAL_REPORT_API_URL}/annual-report/check`;
       console.log(`🐍 Python API 호출: ${pythonApiUrl}`);
 
       const response = await axios.post(pythonApiUrl, formData, {
@@ -108,7 +109,7 @@ module.exports = function(db, authenticateJWT, authenticateJWTWithQuery, upload)
         contentType: req.file.mimetype
       });
 
-      const pythonApiUrl = 'http://localhost:8004/customer-review/check';
+      const pythonApiUrl = `${ANNUAL_REPORT_API_URL}/customer-review/check`;
       console.log(`🐍 Python API 호출: ${pythonApiUrl}`);
 
       const response = await axios.post(pythonApiUrl, formData, {
@@ -170,7 +171,7 @@ module.exports = function(db, authenticateJWT, authenticateJWTWithQuery, upload)
       });
       formData.append('customer_id', req.body.customer_id);
 
-      const pythonApiUrl = 'http://localhost:8004/annual-report/parse';
+      const pythonApiUrl = `${ANNUAL_REPORT_API_URL}/annual-report/parse`;
       console.log(`🐍 Python API 호출: ${pythonApiUrl}`);
 
       const response = await axios.post(pythonApiUrl, formData, {

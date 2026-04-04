@@ -16,6 +16,7 @@ const activityLogger = require('../lib/activityLogger');
 const sseManager = require('../lib/sseManager');
 const { notifyCustomerDocSubscribers, notifyDocumentStatusSubscribers, notifyDocumentListSubscribers, notifyPersonalFilesSubscribers, sendSSE } = sseManager;
 const { prepareDocumentResponse, isConvertibleFile, analyzeDocumentStatus } = require('../lib/documentStatusHelper');
+const { deleteDocument } = require('../lib/documentDeleteService');
 const createPdfConversionTrigger = require('../lib/pdfConversionTrigger');
 const { MAX_MANUAL_RETRIES } = createPdfConversionTrigger;
 
@@ -2827,76 +2828,10 @@ router.delete('/documents/:id', authenticateJWT, async (req, res) => {
       });
     }
 
-    // ========== 고객 참조 정리 추가 ==========
-    // 문서 삭제 전에 이 문서를 참조하는 모든 고객의 documents 배열에서 제거
-    try {
-      const customersUpdateResult = await db.collection(CUSTOMERS_COLLECTION).updateMany(
-        { 'documents.document_id': new ObjectId(id) },
-        {
-          $pull: { documents: { document_id: new ObjectId(id) } },
-          $set: { 'meta.updated_at': utcNowDate() }
-        }
-      );
-      if (customersUpdateResult.modifiedCount > 0) {
-        console.log(`✅ 고객 참조 정리: ${customersUpdateResult.modifiedCount}명의 고객에서 문서 참조 제거`);
-      }
-    } catch (customerError) {
-      console.error(`❌ 고객 참조 정리 실패 (doc_id=${id}):`, customerError.message);
-      // 고객 참조 정리 실패해도 문서 삭제는 진행
-    }
-    // ========================================
-
-    // ========== AR 파싱 큐에서 제거 ==========
-    // 문서가 삭제되면 ar_parse_queue에서도 제거해야 pending 목록에서 사라짐
-    try {
-      const queueDeleteResult = await db.collection(COLLECTIONS.AR_PARSE_QUEUE).deleteMany({
-        file_id: new ObjectId(id)
-      });
-      if (queueDeleteResult.deletedCount > 0) {
-        console.log(`✅ AR 파싱 큐 정리: ${queueDeleteResult.deletedCount}개 레코드 삭제`);
-      }
-    } catch (queueError) {
-      console.warn('⚠️ AR 파싱 큐 정리 실패:', queueError.message);
-      // 큐 정리 실패해도 문서 삭제는 진행
-    }
-    // ========================================
-
-    // 파일 시스템에서 파일 삭제
-    const fs = require('fs').promises;
-    if (document.upload?.destPath) {
-      try {
-        await fs.unlink(document.upload.destPath);
-      } catch (fileError) {
-        console.warn('파일 삭제 실패:', fileError.message);
-      }
-    }
-
-    // MongoDB에서 문서 삭제
-    await db.collection(COLLECTION_NAME)
-      .deleteOne({ _id: new ObjectId(id) });
-
-    // Qdrant에서 임베딩 삭제
-    try {
-      console.log(`🗑️  [Qdrant] 문서 임베딩 삭제 시도: doc_id=${id}`);
-
-      // Qdrant에서 doc_id 필터를 사용하여 포인트 삭제
-      await qdrantClient.delete(QDRANT_COLLECTION, {
-        filter: {
-          must: [
-            {
-              key: 'doc_id',
-              match: {
-                value: id
-              }
-            }
-          ]
-        }
-      });
-
-      console.log(`✅ [Qdrant] 문서 임베딩 삭제 완료: doc_id=${id}`);
-    } catch (qdrantError) {
-      console.warn(`⚠️  [Qdrant] 임베딩 삭제 실패:`, qdrantError.message);
-      // Qdrant 삭제 실패해도 문서는 이미 삭제됨
+    // 공통 삭제 서비스 호출 (고객 참조, AR 큐, 파일, DB, Qdrant 정리)
+    const result = await deleteDocument(id, { document });
+    if (!result.success) {
+      return res.status(500).json({ success: false, error: result.error });
     }
 
     // 문서 삭제 성공 로그

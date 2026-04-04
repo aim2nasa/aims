@@ -19,6 +19,11 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, qdrantC
   const router = express.Router();
   const QDRANT_COLLECTION = qdrantCollection;
   const PYTHON_API_URL = process.env.AIMS_RAG_API_URL || 'http://localhost:8000';
+  const N8N_URL = process.env.N8N_URL || 'http://localhost:5678';
+  const ANNUAL_REPORT_API_URL = process.env.ANNUAL_REPORT_API_URL || 'http://localhost:8004';
+  const PDF_PROXY_URL = process.env.PDF_PROXY_URL || 'http://localhost:8002';
+  const PDF_CONVERTER_URL = process.env.PDF_CONVERTER_URL || 'http://localhost:8005';
+  const AIMS_MCP_URL = process.env.AIMS_MCP_URL || 'http://localhost:3011';
   const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
   const COLLECTION_NAME = COLLECTIONS.FILES;
 
@@ -588,25 +593,25 @@ router.get('/admin/dashboard', authenticateJWT, requireRole('admin'), async (req
       // [4] n8n (워크플로우 엔진 - 포트 5678)
       (async () => {
         const start = Date.now();
-        const response = await axios.get('http://localhost:5678/healthz', { timeout: 5000 });
+        const response = await axios.get(`${N8N_URL}/healthz`, { timeout: 5000 });
         return { latency: Date.now() - start, status: response.data?.status || 'ok' };
       })(),
       // [5] Annual Report API (포트 8004)
       (async () => {
         const start = Date.now();
-        const response = await axios.get('http://localhost:8004/openapi.json', { timeout: 5000 });
+        const response = await axios.get(`${ANNUAL_REPORT_API_URL}/openapi.json`, { timeout: 5000 });
         return { latency: Date.now() - start, version: response.data?.info?.version || null };
       })(),
       // [6] PDF Proxy (포트 8002)
       (async () => {
         const start = Date.now();
-        const response = await axios.get('http://localhost:8002/health', { timeout: 5000 });
+        const response = await axios.get(`${PDF_PROXY_URL}/health`, { timeout: 5000 });
         return { latency: Date.now() - start };
       })(),
       // [7] aims_mcp (MCP 서버 - 포트 3011)
       (async () => {
         const start = Date.now();
-        const response = await axios.get('http://localhost:3011/health', { timeout: 5000 });
+        const response = await axios.get(`${AIMS_MCP_URL}/health`, { timeout: 5000 });
         return {
           latency: Date.now() - start,
           version: response.data?.version || null
@@ -615,7 +620,7 @@ router.get('/admin/dashboard', authenticateJWT, requireRole('admin'), async (req
       // [8] PDF Converter (문서→PDF 변환 서버 - 포트 8005)
       (async () => {
         const start = Date.now();
-        const response = await axios.get('http://localhost:8005/health', { timeout: 5000 });
+        const response = await axios.get(`${PDF_CONVERTER_URL}/health`, { timeout: 5000 });
         return { latency: Date.now() - start };
       })()
     ]);
@@ -698,7 +703,7 @@ router.get('/admin/dashboard', authenticateJWT, requireRole('admin'), async (req
       const n8nApiKey = process.env.N8N_API_KEY;
       if (n8nApiKey) {
         // n8n REST API 사용 (비동기, DB 잠금 없음)
-        const n8nResponse = await axios.get('http://localhost:5678/api/v1/workflows', {
+        const n8nResponse = await axios.get(`${N8N_URL}/api/v1/workflows`, {
           headers: { 'X-N8N-API-KEY': n8nApiKey },
           timeout: 5000
         });

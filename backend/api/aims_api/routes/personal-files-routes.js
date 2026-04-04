@@ -14,7 +14,7 @@ const multer = require('multer');
 const path = require('path');
 const { escapeRegex } = require('../lib/helpers');
 const fs = require('fs').promises;
-const axios = require('axios');
+const { deleteDocument } = require('../lib/documentDeleteService');
 const { checkUploadAllowed } = require('../lib/storageQuotaService');
 const backendLogger = require('../lib/backendLogger');
 const { notifyPersonalFilesSubscribers } = require('../lib/sseManager');
@@ -492,11 +492,15 @@ router.delete('/:itemId', authenticateJWT, async (req, res) => {
         if (documentIds.length > 0) {
           console.log(`🗑️ 폴더 삭제: ${documentIds.length}개의 연결된 문서 삭제 시작`);
           
-          // 각 문서에 대해 DELETE /api/documents/:id 호출
+          // 각 문서에 대해 삭제 서비스 직접 호출
           for (const docId of documentIds) {
             try {
-              await axios.delete(`http://localhost:3010/api/documents/${docId}`);
-              console.log(`✅ 문서 삭제 완료: ${docId}`);
+              const result = await deleteDocument(docId.toString());
+              if (result.success) {
+                console.log(`✅ 문서 삭제 완료: ${docId}`);
+              } else {
+                console.warn(`⚠️ 문서 삭제 실패: ${docId}`, result.error);
+              }
             } catch (docError) {
               console.warn(`⚠️ 문서 삭제 실패: ${docId}`, docError.message);
               // 개별 문서 삭제 실패해도 폴더 삭제는 계속 진행

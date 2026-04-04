@@ -118,6 +118,7 @@ const QDRANT_COLLECTION = 'docembed';
 const { setupCustomerRelationshipRoutes } = require('./customer-relationships-routes');
 // 개인 파일 관리 라우트 import
 const personalFilesRoutes = require('./routes/personal-files-routes');
+const documentDeleteService = require('./lib/documentDeleteService');
 let db;
 let analyticsDb;
 let documentsRouter;
@@ -232,6 +233,9 @@ MongoClient.connect(MONGO_URI)
     chatHistoryService.initialize(analyticsDb).catch(err => {
       console.error('[Server] ChatHistoryService 초기화 실패:', err.message);
     });
+
+    // DocumentDeleteService 초기화 (문서 삭제 공통 로직)
+    documentDeleteService.init({ db, qdrantClient, qdrantCollection: QDRANT_COLLECTION });
 
     // EventBus 초기화 (Redis Pub/Sub → SSE 브릿지)
     try {

@@ -16,6 +16,7 @@ const { utcNowISO } = require('../lib/timeUtils');
 
 module.exports = function(db) {
   const router = express.Router();
+  const DOCUMENT_PIPELINE_URL = process.env.DOCUMENT_PIPELINE_URL || 'http://localhost:8100';
 
   /**
    * 헬스체크 API (간단한 ping)
@@ -28,7 +29,7 @@ module.exports = function(db) {
       // document_pipeline 엔진 정보 조회 (non-blocking)
       let pipelineEngine = '';
       try {
-        const pipelineRes = await fetch('http://localhost:8100/health', { signal: AbortSignal.timeout(2000) });
+        const pipelineRes = await fetch(`${DOCUMENT_PIPELINE_URL}/health`, { signal: AbortSignal.timeout(2000) });
         if (pipelineRes.ok) {
           const pipelineData = await pipelineRes.json();
           pipelineEngine = pipelineData.pipeline_engine || '';

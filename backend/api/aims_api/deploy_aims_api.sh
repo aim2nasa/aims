@@ -136,6 +136,13 @@ docker run -d --network host \
   -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
   -e MCP_SERVER_URL="${MCP_SERVER_URL:-http://localhost:3011}" \
   -e ALLOW_TEST_AUTH="${ALLOW_TEST_AUTH:-false}" \
+  -e ANNUAL_REPORT_API_URL="${ANNUAL_REPORT_API_URL:-http://localhost:8004}" \
+  -e DOCUMENT_PIPELINE_URL="${DOCUMENT_PIPELINE_URL:-http://localhost:8100}" \
+  -e AIMS_RAG_API_URL="${AIMS_RAG_API_URL:-http://localhost:8000}" \
+  -e PDF_PROXY_URL="${PDF_PROXY_URL:-http://localhost:8002}" \
+  -e PDF_CONVERTER_URL="${PDF_CONVERTER_URL:-http://localhost:8005}" \
+  -e N8N_URL="${N8N_URL:-http://localhost:5678}" \
+  -e AIMS_MCP_URL="${AIMS_MCP_URL:-http://localhost:3011}" \
   -v /data/files:/data/files \
   -v /data/backup:/data/backup \
   -v /home/rossi/aims/backend/scripts:/home/rossi/aims/backend/scripts:ro \
