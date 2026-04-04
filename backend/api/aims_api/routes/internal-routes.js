@@ -3154,5 +3154,61 @@ module.exports = function(db) {
     }
   });
 
+  // ============================================
+  // Settings 조회 (Phase 7: settings API 의존 제거)
+  // ============================================
+
+  /**
+   * GET /api/internal/settings/ai-models
+   * AI 모델 설정 조회 (Internal API)
+   *
+   * system_settings 컬렉션에서 ai_models 문서를 직접 조회하여
+   * 외부 서비스(annual_report_api, aims_rag_api)가 공개 API 대신 사용.
+   */
+  router.get('/internal/settings/ai-models', async (req, res) => {
+    try {
+      const collection = db.collection('system_settings');
+      let settings = await collection.findOne({ _id: 'ai_models' });
+
+      if (!settings) {
+        // 기본값 반환 (system-settings-routes.js의 DEFAULT와 동일)
+        settings = {
+          chat: { model: 'gpt-4o' },
+          rag: { model: 'gpt-3.5-turbo' },
+          annualReport: { model: 'gpt-4.1', parser: 'openai' },
+          customerReview: { model: 'gpt-4.1', parser: 'regex' }
+        };
+      } else {
+        // 내부 서비스에 불필요한 메타데이터 제거
+        delete settings._id;
+        delete settings.updatedAt;
+        delete settings.updatedBy;
+        delete settings.resetAt;
+        // availableModels/availableParsers도 불필요 (선택 UI용)
+        for (const key of ['chat', 'rag', 'annualReport', 'customerReview']) {
+          if (settings[key]) {
+            delete settings[key].availableModels;
+            delete settings[key].availableParsers;
+            delete settings[key].description;
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        data: settings,
+        timestamp: utcNowISO()
+      });
+    } catch (error) {
+      console.error('[Internal] settings/ai-models 조회 오류:', error.message);
+      backendLogger.error('Internal', 'settings/ai-models 조회 오류', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: utcNowISO()
+      });
+    }
+  });
+
   return router;
 };

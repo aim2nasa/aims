@@ -26,18 +26,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# aims_api 설정 조회 URL
+# aims_api Internal API 설정
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://100.110.215.65:3010")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
 
 
 async def get_cr_parser_setting() -> str:
     """
-    aims_api에서 CR 파서 설정 조회
+    aims_api Internal API에서 CR 파서 설정 조회
     기본값: 'regex'
     """
     try:
+        headers = {"x-api-key": INTERNAL_API_KEY, "Content-Type": "application/json"}
         async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.get(f"{AIMS_API_URL}/api/settings/ai-models")
+            resp = await client.get(
+                f"{AIMS_API_URL}/api/internal/settings/ai-models",
+                headers=headers
+            )
             if resp.status_code == 200:
                 data = resp.json()
                 if data.get("success") and data.get("data"):

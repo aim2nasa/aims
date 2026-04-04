@@ -23,26 +23,36 @@ from system_logger import send_error_log
 from internal_api import check_customer_ownership, has_report, update_file_parsing_status, replace_customer_reviews, query_file_one, query_files, get_customer
 from services.db_writer import _serialize_for_json
 
-# aims_api 설정 조회 URL
+# aims_api Internal API 설정
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://100.110.215.65:3010")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
+def _internal_headers():
+    """Internal API 요청 헤더"""
+    return {"x-api-key": INTERNAL_API_KEY, "Content-Type": "application/json"}
+
+
 def get_cr_parser_setting() -> str:
     """
-    aims_api에서 CR 파서 설정 조회 (동기 버전)
+    aims_api Internal API에서 CR 파서 설정 조회 (동기 버전)
     기본값: 'regex'
     """
     try:
-        resp = requests.get(f"{AIMS_API_URL}/api/settings/ai-models", timeout=5.0)
+        resp = requests.get(
+            f"{AIMS_API_URL}/api/internal/settings/ai-models",
+            headers=_internal_headers(),
+            timeout=5.0
+        )
         if resp.status_code == 200:
             data = resp.json()
             if data.get("success") and data.get("data"):
                 parser = data["data"].get("customerReview", {}).get("parser", "regex")
-                logger.info(f"📊 CR 파서 설정 조회 성공: {parser}")
+                logger.info(f"CR 파서 설정 조회 성공: {parser}")
                 return parser
     except Exception as e:
         logger.warning(f"CR 파서 설정 조회 실패, 기본값 사용: {e}")

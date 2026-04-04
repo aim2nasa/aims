@@ -5,6 +5,7 @@ Annual Report API 설정 파일
 import os
 import time
 import requests
+import logging
 from typing import Optional
 from dotenv import load_dotenv
 from version import APP_VERSION, VERSION_INFO
@@ -12,14 +13,21 @@ from version import APP_VERSION, VERSION_INFO
 # .env 파일 로드
 load_dotenv()
 
-# AI 모델/파서 설정 캐싱
+logger = logging.getLogger(__name__)
+
+# AI 모델/파서 설정 캐싱 (Internal API 경유)
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
 _ai_settings_cache = {"model": None, "parser": None, "timestamp": 0}
 _AI_SETTINGS_CACHE_TTL = 60  # 1분
 
+def _internal_headers():
+    """Internal API 요청 헤더"""
+    return {"x-api-key": INTERNAL_API_KEY, "Content-Type": "application/json"}
+
 def _fetch_ai_settings() -> dict:
     """
-    aims_api에서 AI 설정 조회 (내부용)
+    aims_api Internal API에서 AI 설정 조회 (내부용)
 
     Returns:
         {"model": str, "parser": str}
@@ -33,9 +41,13 @@ def _fetch_ai_settings() -> dict:
             "parser": _ai_settings_cache["parser"]
         }
 
-    # API에서 조회
+    # Internal API에서 조회
     try:
-        response = requests.get(f"{AIMS_API_URL}/api/settings/ai-models", timeout=5)
+        response = requests.get(
+            f"{AIMS_API_URL}/api/internal/settings/ai-models",
+            headers=_internal_headers(),
+            timeout=5
+        )
         if response.status_code == 200:
             data = response.json()
             ar_settings = data.get("data", {}).get("annualReport", {})
@@ -48,7 +60,7 @@ def _fetch_ai_settings() -> dict:
 
             return {"model": model, "parser": parser}
     except Exception as e:
-        print(f"[AnnualReport] AI 설정 조회 실패: {e}")
+        logger.warning(f"[AnnualReport] AI 설정 조회 실패: {e}")
 
     # 실패 시 캐시 또는 기본값
     return {
@@ -59,7 +71,7 @@ def _fetch_ai_settings() -> dict:
 
 def get_annual_report_model() -> str:
     """
-    aims_api에서 연보 파싱 모델 설정 조회 (1분 캐싱)
+    aims_api Internal API에서 연보 파싱 모델 설정 조회 (1분 캐싱)
 
     Returns:
         모델명 (예: "gpt-4.1")
@@ -69,7 +81,7 @@ def get_annual_report_model() -> str:
 
 def get_annual_report_parser() -> str:
     """
-    aims_api에서 연보 파서 타입 조회 (1분 캐싱)
+    aims_api Internal API에서 연보 파서 타입 조회 (1분 캐싱)
 
     Returns:
         파서 타입: "openai" | "pdfplumber" | "upstage"

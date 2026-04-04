@@ -243,7 +243,7 @@ def check_credit_for_rag(user_id: str, estimated_tokens: int = 1000) -> dict:
 
 def get_rag_model() -> str:
     """
-    aims_api에서 RAG 모델 설정 조회 (1분 캐싱)
+    aims_api Internal API에서 RAG 모델 설정 조회 (1분 캐싱)
     """
     import time
     now = time.time()
@@ -252,9 +252,13 @@ def get_rag_model() -> str:
     if _ai_model_cache["model"] and (now - _ai_model_cache["timestamp"]) < _AI_MODEL_CACHE_TTL:
         return _ai_model_cache["model"]
 
-    # API에서 조회
+    # Internal API에서 조회
     try:
-        response = requests.get(f"{AIMS_API_URL}/api/settings/ai-models", timeout=5)
+        response = requests.get(
+            f"{AIMS_API_URL}/api/internal/settings/ai-models",
+            headers={"x-api-key": INTERNAL_API_KEY, "Content-Type": "application/json"},
+            timeout=5
+        )
         if response.status_code == 200:
             data = response.json()
             model = data.get("data", {}).get("rag", {}).get("model", "gpt-3.5-turbo")

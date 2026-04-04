@@ -62,13 +62,16 @@ fi
 
 # 공유 API 키 로드 (.env.shared가 Single Source of Truth)
 OPENAI_KEY=""
+INTERNAL_KEY=""
 if [ -f "$AIMS_DIR/.env.shared" ]; then
   OPENAI_KEY=$(grep "^OPENAI_API_KEY=" "$AIMS_DIR/.env.shared" | cut -d= -f2-)
+  INTERNAL_KEY=$(grep "^INTERNAL_API_KEY=" "$AIMS_DIR/.env.shared" | cut -d= -f2-)
 fi
 
-# 3. ecosystem.config.cjs 생성 (OPENAI_API_KEY 주입)
+# 3. ecosystem.config.cjs 생성 (API 키 주입)
 python3 -c "
-key = '$OPENAI_KEY'
+openai_key = '$OPENAI_KEY'
+internal_key = '$INTERNAL_KEY'
 content = 'module.exports = {\n'
 content += '  apps: [{\n'
 content += '    name: \"annual_report_api\",\n'
@@ -77,7 +80,8 @@ content += '    args: \"main:app --host 0.0.0.0 --port 8004\",\n'
 content += '    interpreter: \"venv/bin/python\",\n'
 content += '    cwd: \"$SCRIPT_DIR\",\n'
 content += '    env: {\n'
-content += '      OPENAI_API_KEY: \"' + key + '\"\n'
+content += '      OPENAI_API_KEY: \"' + openai_key + '\",\n'
+content += '      INTERNAL_API_KEY: \"' + internal_key + '\"\n'
 content += '    }\n'
 content += '  }]\n'
 content += '};\n'
