@@ -13,10 +13,10 @@ Customer Review Service 테이블 추출기 (완전 일반화 구현)
 - 구성비율: "적립금 구성비율" vs "현재투입비율 구성비율" 구분
 """
 
+import logging
 import os
 import re
-import logging
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional
 
 try:
     import pdfplumber
@@ -409,8 +409,8 @@ def extract_cr_fund_table(pdf_path: str, page_nums: List[int] = None) -> Dict[st
 
 # CLI 실행
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     logging.basicConfig(level=logging.DEBUG)
 

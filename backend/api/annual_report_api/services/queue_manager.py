@@ -11,15 +11,16 @@ MongoDB를 작업 큐로 사용하여 AR 파싱 작업을 관리
 ⚠️ 이 파일의 QueueStatus, MAX_RETRY_COUNT, QUEUE_COLLECTION 값을 변경할 경우
    반드시 @aims/shared-schema의 대응 상수도 함께 수정해야 합니다.
 """
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
-from bson import ObjectId
-from pymongo.database import Database
-from pymongo import ASCENDING, DESCENDING
 import logging
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+
+from bson import ObjectId
+from pymongo import ASCENDING
+from pymongo.database import Database
+from system_logger import send_error_log
 
 from .db_writer import notify_ar_status_change
-from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
 

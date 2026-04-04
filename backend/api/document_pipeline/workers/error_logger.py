@@ -3,10 +3,10 @@ ErrorLogger - Error Handling and Notification
 Replaces n8n ErrorLogger workflow
 """
 import logging
-import httpx
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
+import httpx
 from config import get_settings
 from services.mongo_service import MongoService
 
@@ -60,7 +60,7 @@ class ErrorLogger:
 
         try:
             message = {
-                "text": f":warning: *Error in Document Pipeline*",
+                "text": ":warning: *Error in Document Pipeline*",
                 "blocks": [
                     {
                         "type": "header",

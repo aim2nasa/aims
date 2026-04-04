@@ -2,13 +2,13 @@
 Customer Review Service 판단 로직
 PDF 1페이지를 읽고 Customer Review Service 문서 여부 판단 및 메타데이터 추출
 """
+import logging
 import os
 import re
 from typing import Dict
-import logging
 
-from utils.pdf_utils import extract_text_from_page, validate_pdf_file
 from system_logger import send_error_log
+from utils.pdf_utils import extract_text_from_page, validate_pdf_file
 
 logger = logging.getLogger(__name__)
 

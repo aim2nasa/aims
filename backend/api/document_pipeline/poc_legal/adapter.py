@@ -15,13 +15,12 @@ import re
 from typing import Any, Optional
 
 from xpipe.adapter import (
-    DomainAdapter,
     Category,
     ClassificationConfig,
     Detection,
+    DomainAdapter,
     HookResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # 법률 문서 분류 체계

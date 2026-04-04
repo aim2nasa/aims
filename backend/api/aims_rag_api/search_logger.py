@@ -7,10 +7,10 @@
 MongoDB 컬렉션: search_logs
 """
 
-from typing import List, Dict, Optional, Any
-from pymongo import MongoClient
 from datetime import datetime
-import time
+from typing import Dict, List, Optional
+
+from pymongo import MongoClient
 
 # 서비스 고유 컬렉션/DB 상수
 ANALYTICS_DB = "aims_analytics"

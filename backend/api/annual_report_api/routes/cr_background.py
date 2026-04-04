@@ -7,21 +7,29 @@ Customer Review Background Parsing Routes
 
 import logging
 import os
-import requests
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Header
-from pydantic import BaseModel
+
+import requests
 from bson import ObjectId
 from bson.errors import InvalidId
-
+from fastapi import APIRouter, Header, HTTPException
+from pydantic import BaseModel
 from services.cr_detector import extract_cr_metadata_from_first_page
 from services.cr_parser import parse_customer_review
 from services.cr_parser_table import parse_customer_review_table
-from services.db_writer import save_customer_review
+from services.db_writer import _serialize_for_json, save_customer_review
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, has_report, update_file_parsing_status, replace_customer_reviews, query_file_one, query_files, get_customer
-from services.db_writer import _serialize_for_json
+
+from internal_api import (
+    check_customer_ownership,
+    get_customer,
+    has_report,
+    query_file_one,
+    query_files,
+    replace_customer_reviews,
+    update_file_parsing_status,
+)
 
 # aims_api Internal API 설정
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://100.110.215.65:3010")
@@ -212,7 +220,7 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
                     result["contract_info"]["policy_number"] = fn_meta["policy_number"]
 
         # 5. MongoDB 저장
-        logger.info(f"💾 [CR Parsing] DB 저장 중...")
+        logger.info("💾 [CR Parsing] DB 저장 중...")
 
         save_result = save_customer_review(
             db=db,

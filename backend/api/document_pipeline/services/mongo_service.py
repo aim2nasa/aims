@@ -1,12 +1,12 @@
 """
 MongoDB Service
 """
-from motor.motor_asyncio import AsyncIOMotorClient
-from bson import ObjectId
-from typing import Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, Optional
 
+from bson import ObjectId
 from config import get_settings
+from motor.motor_asyncio import AsyncIOMotorClient
 
 
 class MongoService:
@@ -45,7 +45,7 @@ class MongoService:
     @classmethod
     async def insert_file(cls, owner_id: str, customer_id: Optional[str] = None) -> str:
         """Insert new file document and return ID — Internal API 경유"""
-        from services.internal_api import create_file, _serialize_for_api
+        from services.internal_api import _serialize_for_api, create_file
         doc = {
             "ownerId": owner_id,
             "createdAt": datetime.utcnow(),
@@ -62,7 +62,8 @@ class MongoService:
     @classmethod
     async def update_file(cls, file_id: str, update_data: Dict[str, Any]) -> bool:
         """Update file document — Internal API 경유"""
-        from services.internal_api import update_file as _update_file, _serialize_for_api
+        from services.internal_api import _serialize_for_api
+        from services.internal_api import update_file as _update_file
         api_result = await _update_file(file_id, set_fields=_serialize_for_api(update_data))
         return api_result.get("success", False)
 

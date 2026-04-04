@@ -2,8 +2,8 @@
 AR/CRS 파일명에서 메타데이터 추출
 파일명 = Source of Truth (PDF 분석 결과가 인코딩된 이름)
 """
-import re
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 

@@ -2,17 +2,16 @@
 OpenAI API를 사용한 Annual Report 파싱
 기존 tools/annual_report/parse_pdf_with_ai.py 코드 기반
 """
-import os
 import json
-import re
 import logging
-from typing import Dict, Optional
+import os
+import re
 import tempfile
+from typing import Dict, Optional
 
+from config import get_annual_report_model, settings
 from openai import OpenAI
 from PyPDF2 import PdfReader, PdfWriter
-
-from config import settings, get_annual_report_model
 from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)

@@ -3,15 +3,15 @@ DocDisplayName Router - 문서 표시명(displayName) 배치 생성
 AI를 활용하여 문서 내용 기반의 의미 있는 표시명을 생성한다.
 """
 import asyncio
-import re
 import logging
+import re
 from typing import List, Optional
+
+from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from bson import ObjectId
-
-from services.openai_service import OpenAIService
 from services.internal_api import query_file_one, query_files
+from services.openai_service import OpenAIService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

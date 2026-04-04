@@ -10,18 +10,18 @@ Annual Report Background Parsing Routes
 import logging
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Header
-from pydantic import BaseModel
+
 from bson import ObjectId
 from bson.errors import InvalidId
-
-from services.detector import is_annual_report, extract_customer_info_from_first_page
-from services.parser_factory import get_parser
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
+from pydantic import BaseModel
 from services.db_writer import save_annual_report
-from utils.pdf_utils import find_contract_table_end_page
-from config import settings
+from services.detector import extract_customer_info_from_first_page
+from services.parser_factory import get_parser
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, has_report, update_file_parsing_status, query_file_one, query_files
+from utils.pdf_utils import find_contract_table_end_page
+
+from internal_api import check_customer_ownership, has_report, query_file_one, query_files, update_file_parsing_status
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +128,7 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
             return {"success": False, "error": result["error"]}
 
         # 4. MongoDB 저장
-        logger.info(f"💾 [Queue Parsing] DB 저장 중...")
+        logger.info("💾 [Queue Parsing] DB 저장 중...")
         metadata = doc.get("ar_metadata", {})
 
         # 🔴 PDF 1페이지에서 메타데이터 추출 (Source of Truth)
@@ -333,7 +333,7 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                     continue
 
                 # 7. MongoDB 저장
-                logger.info(f"💾 [BG Parsing] DB 저장 중...")
+                logger.info("💾 [BG Parsing] DB 저장 중...")
                 metadata = doc.get("ar_metadata", {})
 
                 # 🔴 PDF 1페이지에서 메타데이터 추출 (Source of Truth)

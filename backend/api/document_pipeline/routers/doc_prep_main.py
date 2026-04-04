@@ -15,34 +15,37 @@ import os
 import re
 import shutil
 import tempfile
-from datetime import datetime, timedelta
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, Tuple, Union
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import JSONResponse
-from bson import ObjectId
-from pymongo.errors import DuplicateKeyError
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, Tuple
 
 import httpx
-
+from bson import ObjectId
 from config import get_settings
-from services.mongo_service import MongoService
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
+from pymongo.errors import DuplicateKeyError
+from routers.doc_display_name import sanitize_display_name
 from services.file_service import FileService
+from services.internal_api import (
+    _serialize_for_api,
+    create_file,
+    delete_file,
+    delete_file_by_filter,
+    pull_customer_document,
+    query_file_one,
+    update_file,
+)
 from services.meta_service import MetaService
+from services.mongo_service import MongoService
 from services.openai_service import OpenAIService
+from services.pdf_conversion_text_service import (
+    convert_and_extract_text,
+    is_convertible_mime,
+)
 from services.redis_service import RedisService
 from services.temp_file_service import TempFileService
 from services.upload_queue_service import UploadQueueService
-from routers.doc_display_name import sanitize_display_name
-from services.pdf_conversion_text_service import (
-    is_convertible_mime,
-    convert_and_extract_text,
-)
-from services.internal_api import (
-    create_file, update_file, delete_file, delete_file_by_filter,
-    pull_customer_document, _serialize_for_api,
-    query_file_one,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +128,7 @@ async def _stream_upload_to_disk(
                 file_size += len(chunk)
                 f.write(chunk)
         return (temp_path, file_size)
-    except Exception as e:
+    except Exception:
         # 스트리밍 실패 시 임시 파일 정리
         if os.path.exists(temp_path):
             os.unlink(temp_path)
@@ -256,7 +259,7 @@ async def doc_prep_main(
 
     # Shadow mode: 문서 생성 없이 메타데이터 추출 및 응답 시뮬레이션만 수행
     if shadow:
-        logger.info(f"[SHADOW] Processing file for comparison (no DB write)")
+        logger.info("[SHADOW] Processing file for comparison (no DB write)")
         logger.info(f"[SHADOW] Using n8n values - saved_name: {shadow_saved_name}, created_at: {shadow_created_at}")
         try:
             file_content = await file.read()
@@ -678,9 +681,7 @@ async def _detect_and_process_annual_report(
         }
     """
     import re
-    import httpx
 
-    settings = get_settings()
 
     try:
         # 1. AR 패턴 매칭 (공백 정규화)
@@ -834,9 +835,6 @@ async def _detect_and_process_customer_review(
             "display_name": str | None
         }
     """
-    import httpx
-
-    settings = get_settings()
 
     try:
         # 1. CRS 패턴 매칭
@@ -996,8 +994,6 @@ async def _cleanup_failed_document(doc_id: str, customer_id: Optional[str], dest
     DuplicateKeyError 등 파이프라인 중간 실패 시 고아 데이터 방지.
     """
     try:
-        files_collection = MongoService.get_collection("files")
-
         # 1. customers.documents에서 해당 문서 참조 제거
         if customer_id:
             try:
@@ -1028,7 +1024,7 @@ async def _cleanup_failed_document(doc_id: str, customer_id: Optional[str], dest
 async def _connect_document_to_customer(customer_id: str, doc_id: str, user_id: str):
     """Publish document-customer link event via Redis Pub/Sub"""
     try:
-        from services.redis_service import RedisService, CHANNELS
+        from services.redis_service import CHANNELS, RedisService
         await RedisService.publish_event(CHANNELS["DOC_LINK"], {
             "document_id": doc_id,
             "customer_id": customer_id,
@@ -1042,13 +1038,9 @@ async def _connect_document_to_customer(customer_id: str, doc_id: str, user_id: 
 
 async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str, message: str = ""):
     """Send progress update notification via SSE webhook and update MongoDB"""
-    import httpx
-
-    settings = get_settings()
 
     # 1. MongoDB에 progress 필드 업데이트 (폴링용)
     try:
-        files_collection = MongoService.get_collection("files")
         update_fields = {
             "progress": progress,
             "progressStage": stage,
@@ -1542,7 +1534,7 @@ async def _execute_hook_results(ctx: PipelineContext, hook_results: list) -> Non
 
 async def _send_sse_webhook(event: str, payload: dict) -> None:
     """SSE 이벤트를 Redis Pub/Sub으로 발행"""
-    from services.redis_service import RedisService, CHANNELS
+    from services.redis_service import CHANNELS, RedisService
 
     channel_map = {
         "ar-status-change": CHANNELS["AR_STATUS"],
@@ -1914,13 +1906,12 @@ async def _process_via_xpipe(
     결과를 AIMS MongoDB 스키마에 매핑한다.
     """
     import tempfile
+
     from xpipe.pipeline import Pipeline, PipelineDefinition, StageConfig
-    from xpipe.stages.ingest import IngestStage
-    from xpipe.stages.convert import ConvertStage
-    from xpipe.stages.extract import ExtractStage
     from xpipe.stages.classify import ClassifyStage
-    from xpipe.stages.detect_special import DetectSpecialStage
     from xpipe.stages.complete import CompleteStage
+    from xpipe.stages.detect_special import DetectSpecialStage
+    from xpipe.stages.extract import ExtractStage
 
     logger.info(f"🚀 [xPipe] 문서 처리 시작: {original_name} (user={user_id})")
 

@@ -10,13 +10,12 @@ OpenAI API 대신 pdfplumber를 사용하여 빠르고 비용 없이 파싱
 - 펀드 구성 현황 추출 (펀드명, 적립금, 구성비율, 수익률, 투입원금)
 """
 
-import pdfplumber
-import re
-import os
 import logging
-from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass, asdict
+import os
+import re
+from typing import Dict, Tuple
 
+import pdfplumber
 from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)

@@ -11,12 +11,12 @@ pdfplumber 테이블 추출 기반 AR 파서 (일반화 버전)
 @see table_extractor.py (핵심 구현)
 """
 
-import os
 import logging
-from typing import Dict, List, Optional
+import os
+from typing import Dict, Optional
 
-from table_extractor import extract_contract_table
 from services.parser_interface import create_error_result, create_success_result
+from table_extractor import extract_contract_table
 
 logger = logging.getLogger(__name__)
 

@@ -2,22 +2,23 @@
 Annual Report 파싱 API 라우터
 POST /annual-report/parse - 파싱 실행 (비동기)
 """
-from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Form, Header
-from pydantic import BaseModel, Field
-from typing import Optional
-from bson import ObjectId
-from bson.errors import InvalidId
 import logging
 import os
-import tempfile
 import shutil
+import tempfile
+from typing import Optional
 
-from services.detector import is_annual_report, extract_customer_info_from_first_page
-from services.parser_factory import get_parser
+from bson import ObjectId
+from bson.errors import InvalidId
+from fastapi import APIRouter, BackgroundTasks, File, Form, Header, HTTPException, UploadFile
+from pydantic import BaseModel, Field
 from services.db_writer import save_annual_report
-from utils.pdf_utils import find_contract_table_end_page
+from services.detector import extract_customer_info_from_first_page, is_annual_report
+from services.parser_factory import get_parser
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, get_customer_name, update_file_parsing_status, query_file_one
+from utils.pdf_utils import find_contract_table_end_page
+
+from internal_api import check_customer_ownership, get_customer_name, query_file_one, update_file_parsing_status
 
 logger = logging.getLogger(__name__)
 
@@ -265,7 +266,6 @@ def do_parsing_in_background(
 
             # 7. docupload.files 컬렉션 업데이트: is_annual_report 필드 설정
             try:
-                from bson import ObjectId
                 # file_id가 temp_로 시작하는 경우 파일명으로 검색
                 if file_id.startswith("temp_"):
                     # 파일명으로 documents 찾기

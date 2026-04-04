@@ -10,10 +10,11 @@
 - Slack/Telegram (선택, 추후 구현)
 """
 
-from typing import Dict, List, Optional
-from quality_analyzer import QualityAnalyzer
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Dict, List, Optional
+
+from quality_analyzer import QualityAnalyzer
 
 # 로깅 설정
 logging.basicConfig(

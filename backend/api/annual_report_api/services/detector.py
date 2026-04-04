@@ -2,12 +2,12 @@
 Annual Report 판단 로직
 PDF 1페이지를 읽고 Annual Report 여부 판단
 """
+import logging
 import os
 from typing import Dict
-import logging
 
-from utils.pdf_utils import extract_text_from_page, validate_pdf_file
 from system_logger import send_error_log
+from utils.pdf_utils import extract_text_from_page, validate_pdf_file
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +151,6 @@ def extract_customer_info_from_first_page(pdf_path: str, original_filename: str 
 
         result = {}
         import re
-        import os
 
         # 1. 고객명 추출: "Annual" 키워드가 포함된 줄의 바로 위 줄에서 추출 (🔴 파일명 사용 절대 금지!)
         # PDF 포맷: "{NAME} 고객님을 위한\nAnnual Review Report"

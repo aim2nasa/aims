@@ -2,11 +2,12 @@
 Annual Report API 설정 파일
 환경 변수 및 전역 설정 관리
 """
+import logging
 import os
 import time
-import requests
-import logging
 from typing import Optional
+
+import requests
 from dotenv import load_dotenv
 from version import APP_VERSION, VERSION_INFO
 

@@ -3,9 +3,10 @@ Redis Pub/Sub 이벤트 발행 모듈
 AR/CR 상태 변경 시 aims_api eventBus로 이벤트 전달
 """
 import json
-import os
-import redis
 import logging
+import os
+
+import redis
 
 logger = logging.getLogger(__name__)
 

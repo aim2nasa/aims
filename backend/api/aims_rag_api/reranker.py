@@ -8,12 +8,13 @@ Cross-Encoder 재순위화 모듈
 - 출력: 관련성 점수 (높을수록 관련 있음)
 """
 
-from typing import List, Dict
-from sentence_transformers import CrossEncoder
-import traceback
-import math
 import gc
+import math
 import os
+import traceback
+from typing import Dict, List
+
+from sentence_transformers import CrossEncoder
 
 # 환경변수로 배치 크기 조정 가능 (기본값 4 — CPU 환경 OOM 방지)
 RERANKER_BATCH_SIZE = int(os.getenv("RERANKER_BATCH_SIZE", "4"))
@@ -35,7 +36,7 @@ class SearchReranker:
         try:
             print(f"🔄 Cross-Encoder 모델 로딩 중: {model_name}")
             self.model = CrossEncoder(model_name, max_length=512)
-            print(f"✅ Cross-Encoder 모델 로딩 완료")
+            print("✅ Cross-Encoder 모델 로딩 완료")
         except Exception as e:
             print(f"❌ Cross-Encoder 모델 로딩 실패: {e}")
             print(traceback.format_exc())
@@ -137,7 +138,7 @@ if __name__ == '__main__':
     reranked_results = reranker.rerank(test_query, test_results, top_k=2)
 
     print(f"\n🔎 쿼리: '{test_query}'")
-    print(f"\n✅ 재순위화 결과:")
+    print("\n✅ 재순위화 결과:")
     for i, result in enumerate(reranked_results, 1):
         print(f"  {i}. {result['payload'].get('original_name', '?')}")
         print(f"     원본 점수: {result.get('original_score', 0):.3f}")

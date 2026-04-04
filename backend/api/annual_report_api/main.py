@@ -7,19 +7,20 @@ Annual Report API - FastAPI 애플리케이션
 - customers: 동일
 - ar_parse_queue: 스키마 정의는 shared-schema (AR_QUEUE_STATUS 등), Python 코드는 QueueManager 경유
 """
+import asyncio
+import logging
+import re
+from datetime import datetime
+
+from config import settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
-import logging
-import asyncio
-import re
-from datetime import datetime, timezone
-
-from config import settings
 from services.queue_manager import ARParseQueueManager
 from system_logger import send_error_log
-from internal_api import update_file_parsing_status, query_files, query_file_one, has_report
+
+from internal_api import has_report, query_file_one, query_files, update_file_parsing_status
 
 # 로깅 설정
 logging.basicConfig(
@@ -82,7 +83,6 @@ async def scan_pending_ar_documents(log_always: bool = False):
         tuple: (enqueued_count, found_count, skipped_count)
     """
     try:
-        from bson import ObjectId
 
         # 🔴 조건1: 아직 파싱 안 된 문서
         pending_docs = query_files({
@@ -186,7 +186,7 @@ async def scan_pending_ar_documents(log_always: bool = False):
         if found_count > 0:
             logger.info(f"🔍 AR 스캔: 발견={found_count}, 등록={enqueued_count}, 스킵={skipped_count}")
         elif log_always:
-            logger.info(f"💓 AR 워커 정상 (파싱 대기 파일 없음)")
+            logger.info("💓 AR 워커 정상 (파싱 대기 파일 없음)")
 
         return (enqueued_count, found_count, skipped_count)
 
@@ -214,7 +214,6 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
         tuple: (processed_count, found_count, skipped_count)
     """
     try:
-        from bson import ObjectId
         from routes.cr_background import parse_single_cr_document
 
         # 🔴 조건1: 아직 파싱 안 된 문서
@@ -327,7 +326,7 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
         if found_count > 0:
             logger.info(f"🔍 CRS 스캔: 발견={found_count}, 처리={processed_count}, 스킵={skipped_count}")
         elif log_always:
-            logger.info(f"💓 CRS 워커 정상 (파싱 대기 파일 없음)")
+            logger.info("💓 CRS 워커 정상 (파싱 대기 파일 없음)")
 
         return (processed_count, found_count, skipped_count)
 
@@ -340,8 +339,9 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
 async def queue_worker():
     """큐 기반 AR 파싱 워커 (1초마다 폴링, 3초마다 스캔)"""
     global background_task_running
-    from routes.background import parse_single_ar_document
     import time
+
+    from routes.background import parse_single_ar_document
 
     # 서버 시작 후 3초 대기 (서버 완전 시작 대기)
     await asyncio.sleep(3)
@@ -498,7 +498,6 @@ async def startup_event():
 
         # 🔧 불일치 데이터 정리: files.ar_parsing_status=completed인데 ar_parse_queue에 남아있는 경우 삭제
         try:
-            from bson import ObjectId
             # processing/pending 상태인 큐 항목 확인
             inconsistent_count = 0
             for q in db["ar_parse_queue"].find({"status": {"$in": ["pending", "processing"]}}):
@@ -592,7 +591,7 @@ async def health_check():
         }
 
 # 라우터 등록
-from routes import parse, query, background, cr_routes, cr_background
+from routes import background, cr_background, cr_routes, parse, query
 
 app.include_router(
     parse.router,

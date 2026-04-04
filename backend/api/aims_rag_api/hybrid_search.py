@@ -8,18 +8,18 @@
 - mixed 쿼리: 두 방법 병합 + 중복 제거
 """
 
-from typing import List, Dict, Optional
-from qdrant_client import QdrantClient, models
-from openai import OpenAI
+import concurrent.futures
+import hashlib
+import math
 import os
 import re
-import math
-import hashlib
 import time
-import concurrent.futures
-import requests
-from system_logger import send_error_log
+from typing import Dict, List, Optional
 
+import requests
+from openai import OpenAI
+from qdrant_client import QdrantClient, models
+from system_logger import send_error_log
 
 # P2-4: 쿼리 임베딩 벡터 LRU 캐시 (TTL 10분)
 # 동일 쿼리 반복 시 OpenAI API 호출을 생략하여 200~800ms 절약

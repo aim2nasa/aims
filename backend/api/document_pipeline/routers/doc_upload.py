@@ -2,12 +2,12 @@
 DocUpload Router - File Upload Handler
 Replaces n8n DocUpload workflow
 """
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from typing import Optional
 import logging
+from typing import Optional
 
-from services.file_service import FileService
+from fastapi import APIRouter, File, Form, UploadFile
 from models.document import UploadResponse
+from services.file_service import FileService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

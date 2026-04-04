@@ -7,18 +7,13 @@ pdfplumber 기반 AR 파서
 - 평균 0.93초/건 (OpenAI 대비 80배 빠름)
 """
 
+import logging
 import os
 import re
-import logging
 from typing import Dict, List, Optional
 
 import pdfplumber
-
-from services.parser_interface import (
-    normalize_contract,
-    create_error_result,
-    create_success_result
-)
+from services.parser_interface import create_error_result, create_success_result, normalize_contract
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +120,7 @@ def parse_table_row(row: List, headers: List[str]) -> Optional[Dict]:
 
     # 순번이 숫자인지 확인 (데이터 행 판별)
     try:
-        seq = int(str(row[0]).strip())
+        int(str(row[0]).strip())  # 순번이 숫자인지 확인
     except (ValueError, TypeError):
         return None
 
@@ -287,7 +282,7 @@ def parse_annual_report(
         logger.info(
             f"✅ pdfplumber 파싱 완료: "
             f"계약 {len(contracts)}건, 부활가능 {len(lapsed_contracts)}건, "
-            f"총월보험료 {total_premium:,}원" if total_premium is not None else f"총월보험료 추출실패"
+            f"총월보험료 {total_premium:,}원" if total_premium is not None else "총월보험료 추출실패"
         )
 
         return create_success_result(

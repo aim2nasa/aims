@@ -2,9 +2,7 @@
 Dynamic Fields Comparison
 n8n vs FastAPI 응답 비교 시 동적 필드 처리
 """
-from typing import Dict, Any, List, Tuple
-import re
-from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
 # 비교 시 무시할 필드 (동적 생성값)
 IGNORE_FIELDS = {
@@ -139,7 +137,7 @@ def _semantic_match(n8n_val: Any, fastapi_val: Any) -> bool:
         return False
 
     # 타입이 같아야 함
-    if type(n8n_val) != type(fastapi_val):
+    if type(n8n_val) != type(fastapi_val):  # noqa: E721 — 의도적 타입 비교
         return False
 
     # 문자열: 길이가 비슷하면 OK (±50%)

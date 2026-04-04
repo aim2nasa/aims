@@ -4,9 +4,10 @@ customers 컬렉션의 annual_reports 배열에 추가
 """
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Optional
-from datetime import datetime, timezone
+
 from bson import ObjectId
 from pymongo.errors import PyMongoError
 
@@ -14,13 +15,18 @@ from pymongo.errors import PyMongoError
 project_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.shared.time_utils import utc_now_iso
 from system_logger import send_error_log
+
 from internal_api import (
-    push_annual_report, replace_annual_reports,
-    push_customer_review, replace_customer_reviews,
-    get_customer, query_files, query_file_one
+    get_customer,
+    push_annual_report,
+    push_customer_review,
+    query_file_one,
+    query_files,
+    replace_annual_reports,
+    replace_customer_reviews,
 )
+from src.shared.time_utils import utc_now_iso
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +46,7 @@ def _serialize_for_json(obj):
 def notify_ar_status_change(customer_id: str, file_id: Optional[str], status: str, error_message: Optional[str] = None):
     """AR 상태 변경 이벤트 발행 (Redis Pub/Sub → aims_api SSE)"""
     try:
-        from services.event_publisher import publish_event, CHANNELS
+        from services.event_publisher import CHANNELS, publish_event
         publish_event(CHANNELS["AR_STATUS"], {
             "customer_id": customer_id,
             "file_id": file_id,
@@ -86,7 +92,7 @@ def save_annual_report(
     try:
         # 1. ObjectId 유효성 검증
         try:
-            customer_obj_id = ObjectId(customer_id)
+            ObjectId(customer_id)  # ObjectId 유효성 검증 (실패 시 예외)
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
@@ -283,7 +289,7 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
     try:
         # ObjectId 변환
         try:
-            customer_obj_id = ObjectId(customer_id)
+            ObjectId(customer_id)  # ObjectId 유효성 검증 (실패 시 예외)
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
@@ -499,7 +505,7 @@ def delete_annual_reports(
     try:
         # ObjectId 변환
         try:
-            customer_obj_id = ObjectId(customer_id)
+            ObjectId(customer_id)  # ObjectId 유효성 검증 (실패 시 예외)
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
@@ -569,7 +575,7 @@ def delete_annual_reports(
                 "deleted_count": deleted_count
             }
         else:
-            logger.warning(f"⚠️  삭제할 항목이 없거나 변경사항이 없습니다")
+            logger.warning("⚠️  삭제할 항목이 없거나 변경사항이 없습니다")
             return {
                 "success": False,
                 "message": "삭제할 항목이 없거나 변경사항이 없습니다",
@@ -630,7 +636,7 @@ def cleanup_duplicate_annual_reports(
     try:
         # ObjectId 변환
         try:
-            customer_obj_id = ObjectId(customer_id)
+            ObjectId(customer_id)  # ObjectId 유효성 검증 (실패 시 예외)
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
@@ -726,7 +732,7 @@ def cleanup_duplicate_annual_reports(
 
         # best_report가 없으면 (parsed_at이 없는 경우) 첫 번째 것 유지
         if best_report is None:
-            logger.warning(f"parsed_at이 없는 리포트들: 첫 번째 리포트 유지")
+            logger.warning("parsed_at이 없는 리포트들: 첫 번째 리포트 유지")
             best_report = same_issue_reports[0]
 
         # 유지할 리포트 목록 = other_reports + best_report
@@ -756,7 +762,7 @@ def cleanup_duplicate_annual_reports(
                 "kept_report": kept_info
             }
         else:
-            logger.warning(f"⚠️  변경사항이 없습니다")
+            logger.warning("⚠️  변경사항이 없습니다")
             return {
                 "success": False,
                 "message": "변경사항이 없습니다",
@@ -787,7 +793,7 @@ def cleanup_duplicate_annual_reports(
 def notify_cr_status_change(customer_id: str, file_id: Optional[str], status: str, error_message: Optional[str] = None):
     """CR 상태 변경 이벤트 발행 (Redis Pub/Sub → aims_api SSE)"""
     try:
-        from services.event_publisher import publish_event, CHANNELS
+        from services.event_publisher import CHANNELS, publish_event
         publish_event(CHANNELS["CR_STATUS"], {
             "customer_id": customer_id,
             "file_id": file_id,
@@ -832,7 +838,7 @@ def save_customer_review(
     try:
         # 1. ObjectId 유효성 검증
         try:
-            customer_obj_id = ObjectId(customer_id)
+            ObjectId(customer_id)  # ObjectId 유효성 검증 (실패 시 예외)
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
@@ -1037,7 +1043,7 @@ def get_customer_reviews(db, customer_id: str, limit: int = 10) -> Dict[str, any
     try:
         # ObjectId 변환
         try:
-            customer_obj_id = ObjectId(customer_id)
+            ObjectId(customer_id)  # ObjectId 유효성 검증 (실패 시 예외)
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
@@ -1233,7 +1239,7 @@ def delete_customer_reviews(
     try:
         # ObjectId 변환
         try:
-            customer_obj_id = ObjectId(customer_id)
+            ObjectId(customer_id)  # ObjectId 유효성 검증 (실패 시 예외)
         except Exception as e:
             raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
 
@@ -1280,7 +1286,7 @@ def delete_customer_reviews(
                 "deleted_count": deleted_count
             }
         else:
-            logger.warning(f"⚠️  삭제할 항목이 없거나 변경사항이 없습니다")
+            logger.warning("⚠️  삭제할 항목이 없거나 변경사항이 없습니다")
             return {
                 "success": False,
                 "message": "삭제할 항목이 없거나 변경사항이 없습니다",

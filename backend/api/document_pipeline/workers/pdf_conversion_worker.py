@@ -16,17 +16,17 @@ import os
 import re
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-import httpx
 import fitz  # PyMuPDF
+import httpx
 
 # 서비스 고유 컬렉션명 상수
 PDF_CONVERSION_QUEUE_COLLECTION = "pdf_conversion_queue"
 
 from config import get_settings
-from services.pdf_conversion_queue_service import PdfConversionQueueService
 from services.mongo_service import MongoService
+from services.pdf_conversion_queue_service import PdfConversionQueueService
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -200,7 +200,8 @@ class PdfConversionWorker:
 
         # 1. files 컬렉션 업데이트 (변환 상태) — Internal API 경유
         try:
-            from services.internal_api import update_file as _update_file, _serialize_for_api
+            from services.internal_api import _serialize_for_api
+            from services.internal_api import update_file as _update_file
             await _update_file(document_id, set_fields=_serialize_for_api({
                 "upload.convPdfPath": pdf_path,
                 "upload.converted_at": datetime.utcnow(),
@@ -371,7 +372,8 @@ class PdfConversionWorker:
                 text_update["overallStatus"] = "embed_pending"
 
             # DB 업데이트 — Internal API 경유
-            from services.internal_api import update_file as _update_file, _serialize_for_api
+            from services.internal_api import _serialize_for_api
+            from services.internal_api import update_file as _update_file
             await _update_file(document_id, set_fields=_serialize_for_api(text_update))
             logger.info(
                 f"[PDF변환워커] 텍스트+분류 DB 업데이트 + 임베딩 재요청: {document_id}"
@@ -423,7 +425,6 @@ class PdfConversionWorker:
             return
 
         try:
-            from bson import ObjectId as BsonObjectId
 
             from services.internal_api import update_file as _update_file
             await _update_file(document_id, set_fields={

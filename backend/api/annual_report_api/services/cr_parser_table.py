@@ -12,18 +12,18 @@ Customer Review Service PDF Parser (테이블 기반 일반화 구현)
 @see cr_table_extractor.py
 """
 
-import pdfplumber
-import os
 import logging
+import os
 from typing import Dict
 
-from system_logger import send_error_log
-
-# 기존 cr_parser에서 계약정보/납입원금 추출 함수 재사용
-from services.cr_parser import extract_contract_info, extract_premium_info
+import pdfplumber
 
 # 새로운 일반화 테이블 추출기
 from cr_table_extractor import extract_cr_fund_table
+
+# 기존 cr_parser에서 계약정보/납입원금 추출 함수 재사용
+from services.cr_parser import extract_contract_info, extract_premium_info
+from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@
 5개 샘플 전체에 대해 테이블 추출 방식 검증
 """
 import os
-import json
+
 from table_extractor import extract_contract_table
 
 # 샘플 디렉토리

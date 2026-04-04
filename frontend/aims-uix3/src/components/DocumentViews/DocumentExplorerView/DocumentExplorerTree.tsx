@@ -195,7 +195,6 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
   onRetryClick,
 }) => {
   const doc = node.document
-  if (!doc) return null
 
   // 검색 시 행별 파일명 모드 오버라이드 (반대쪽 모드에서 매칭 발견 시 전환용)
   const [localModeOverride, setLocalModeOverride] = useState<'display' | 'original' | null>(null)
@@ -216,25 +215,18 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
 
   const effectiveMode = localModeOverride ?? filenameMode
 
-  const docId = doc._id || doc.id || ''
-  const isSelected = selectedDocumentId === docId
-  const isFocused = focusedKey === node.key
-  const documentDate = getDocumentDate(doc)
-  const filename = DocumentStatusService.extractFilename(doc)
-  const { showName, altName, isAlias } = getDocName(doc, effectiveMode)
-  const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : ''
-
   // 검색 시 반대쪽 모드 매칭 감지: 현재 표시명에 매칭 없고, 반대쪽에 매칭 있을 때
   const crossModeMatch = useMemo(() => {
-    if (!searchTerm) return null
+    if (!doc || !searchTerm) return null
     const query = searchTerm.trim().toLowerCase()
     if (!query) return null
 
     // 별칭이 없으면 양쪽 모드 모두 원본명을 표시하므로 전환 불필요
     if (!doc.displayName) return null
 
+    const { showName: currentName } = getDocName(doc, effectiveMode)
     // 현재 표시명에 이미 매칭이 있으면 버튼 불필요
-    if (showName.toLowerCase().includes(query)) return null
+    if (currentName.toLowerCase().includes(query)) return null
 
     // 반대쪽 모드의 파일명 확인
     const oppositeMode = effectiveMode === 'display' ? 'original' : 'display'
@@ -243,7 +235,17 @@ const DocumentNode = React.memo<DocumentNodeProps>(({
       return oppositeMode
     }
     return null
-  }, [searchTerm, showName, effectiveMode, doc])
+  }, [searchTerm, effectiveMode, doc])
+
+  if (!doc) return null
+
+  const docId = doc._id || doc.id || ''
+  const isSelected = selectedDocumentId === docId
+  const isFocused = focusedKey === node.key
+  const documentDate = getDocumentDate(doc)
+  const filename = DocumentStatusService.extractFilename(doc)
+  const { showName, altName, isAlias } = getDocName(doc, effectiveMode)
+  const fileExt = doc.mimeType ? DocumentUtils.getFileExtension(doc.mimeType) : ''
   const fileSize = DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(doc))
   const docStatus = DocumentStatusService.extractStatus(doc)
   const docProgress = doc.progress ?? 0

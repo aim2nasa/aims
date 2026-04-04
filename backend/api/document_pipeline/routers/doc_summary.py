@@ -2,12 +2,12 @@
 DocSummary Router - Text Summarization Handler
 Replaces n8n DocSummary workflow
 """
-from fastapi import APIRouter, HTTPException
 import logging
 
-from services.openai_service import OpenAIService
-from services.internal_api import query_file_one
+from fastapi import APIRouter, HTTPException
 from models.document import SummaryRequest, SummaryResponse
+from services.internal_api import query_file_one
+from services.openai_service import OpenAIService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

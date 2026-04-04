@@ -4,9 +4,10 @@ Internal API 클라이언트 — aims_api 경유 데이터 CRUD
 document_pipeline에서 files/customers 컬렉션에 직접 접근하지 않고
 aims_api의 내부 API를 경유하여 데이터를 조회/변경한다.
 """
-import httpx
 import logging
 from datetime import datetime
+
+import httpx
 from bson import ObjectId
 from config import get_settings
 

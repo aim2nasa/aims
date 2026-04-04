@@ -51,9 +51,6 @@ export const ActionOverflowMenu: React.FC<ActionOverflowMenuProps> = ({
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // 항목이 없으면 렌더링하지 않음
-  if (items.length === 0) return null
-
   // 메뉴 위치 계산
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return
@@ -108,6 +105,9 @@ export const ActionOverflowMenu: React.FC<ActionOverflowMenuProps> = ({
       document.removeEventListener('keydown', handleEscape)
     }
   }, [isOpen])
+
+  // 항목이 없으면 렌더링하지 않음
+  if (items.length === 0) return null
 
   const handleItemClick = (item: OverflowMenuItem) => {
     setIsOpen(false)

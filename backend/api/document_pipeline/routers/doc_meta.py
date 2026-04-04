@@ -2,16 +2,13 @@
 DocMeta Router - Metadata Extraction Handler
 Replaces n8n DocMeta workflow
 """
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Body
-from typing import Optional
 import logging
-import tempfile
-import os
-from pydantic import BaseModel
+from typing import Optional
 
+from fastapi import APIRouter, File, Form, UploadFile
+from pydantic import BaseModel
 from services.meta_service import MetaService
 from services.openai_service import OpenAIService
-from models.document import MetaRequest, MetaResponse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
