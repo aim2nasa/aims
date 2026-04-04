@@ -1,6 +1,6 @@
 # AIMS 서비스 모듈 독립성 평가 보고서
 
-> 작성일: 2026-04-05
+> 최종 갱신: 2026-04-05
 > 평가 기준: 빌드 / 테스트 / 배포 / 진화 4축 독립성
 > 대상: 백엔드 7개 서비스 + 프론트엔드 1개
 
@@ -16,9 +16,9 @@
 | **document_pipeline** | ✅ | ✅ | ✅ | ✅ | 완전 독립 |
 | **annual_report_api** | ✅ | ✅ | ✅ | ✅ | 완전 독립 |
 | **aims_rag_api** | ✅ | ✅ | ✅ | ✅ | 완전 독립 |
+| **aims_api** | ⚠️ | ⚠️ | ✅ | ✅ | 거의 독립 |
 | **frontend** | ✅ | ✅ | ✅ | ⚠️ | 거의 독립 |
 | **aims_mcp** | ⚠️ | ⚠️ | ✅ | ⚠️ | 부분 결합 |
-| **aims_api** | ⚠️ | ⚠️ | ✅ | ❌ | 강한 결합 |
 
 ### 축별 요약
 
@@ -27,7 +27,7 @@
 | **배포** | 7/7 | 개별 deploy 스크립트 + 병렬 배포 | 잘 설계됨 |
 | **테스트** | 5/7 | 단위 테스트 mock 격리, E2E만 결합 | 양호 |
 | **빌드** | 5/7 | shared-schema `file:` 의존 2건 | 양호 |
-| **진화** | 4/7 | aims_api 하드코딩 URL 16건 | 개선 필요 |
+| **진화** | 6/7 | 하드코딩 URL 0건, 환경변수 통일 완료 | 잘 설계됨 |
 
 ---
 
@@ -37,14 +37,14 @@
 
 | 서비스 | 언어 | 소스 라인 | 테스트 파일 | 테스트 수 | Dockerfile |
 |--------|------|--------:|----------:|--------:|:----------:|
-| aims_api | JavaScript | 49,631 | 74 | 1,410 | ✅ Docker |
+| aims_api | JavaScript | 49,631 | 76 | 1,411 | ✅ Docker |
 | annual_report_api | Python | 51,906 | 13 | 154 | ❌ PM2 |
 | frontend | TS/TSX | 39,831 | 248 | 4,840 | ❌ nginx |
 | document_pipeline | Python | 21,641 | 47 | 758 | ❌ PM2 |
 | aims_mcp | TypeScript | 15,954 | 36 | 818 | ❌ PM2 |
 | aims_rag_api | Python | 4,322 | 4 | 32 | ✅ Docker |
 | pdf_proxy | Python | 504 | 1 | - | ❌ PM2 |
-| **합계** | | **183,789** | **423** | **8,012+** | |
+| **합계** | | **183,789** | **425** | **8,013+** | |
 
 ### Internal API (aims_api 제공)
 
@@ -121,61 +121,66 @@ aims_mcp E2E tests ──→ aims_api + aims_rag_api
 
 **스마트 빌드**: 소스 변경 없는 서비스는 QUICK RESTART (빌드 생략).
 
-### 3-4. 진화 독립성 (가장 큰 개선점)
+### 3-4. 진화 독립성
 
-#### 하드코딩 URL 현황: 17건
+#### 하드코딩 URL 현황: 0건 (✅ 해결 완료 — `612378a5`)
 
-| 파일 | 대상 | URL | 환경변수 |
-|------|------|-----|:-------:|
-| admin-routes.js | aims_rag_api | localhost:8000 | ✅ `AIMS_RAG_API_URL` |
-| admin-routes.js | annual_report_api | localhost:8004 | ❌ |
-| admin-routes.js | pdf_proxy | localhost:8002 | ❌ |
-| admin-routes.js | pdf_converter | localhost:8005 | ❌ |
-| annual-report-routes.js | annual_report_api (x3) | localhost:8004 | ❌ |
-| health-routes.js | document_pipeline | localhost:8100 | ❌ |
-| webhooks-routes.js | document_pipeline | localhost:8100 | ❌ |
-| webhooks-routes.js | annual_report_api (x4) | localhost:8004 | ❌ |
-| webhooks-routes.js | n8n | localhost:5678 | ❌ |
-| personal-files-routes.js | **aims_api 자기 호출** | localhost:3010 | ❌ |
+모든 서비스 간 URL이 환경변수 + fallback 패턴으로 전환됨:
 
-**환경변수 사용률: 1/17 (5.9%)**
+| 환경변수 | 기본값 | 사용 파일 |
+|---------|--------|----------|
+| `ANNUAL_REPORT_API_URL` | `http://localhost:8004` | admin-routes, annual-report-routes, webhooks-routes |
+| `DOCUMENT_PIPELINE_URL` | `http://localhost:8100` | health-routes, webhooks-routes |
+| `AIMS_RAG_API_URL` | `http://localhost:8000` | admin-routes |
+| `PDF_PROXY_URL` | `http://localhost:8002` | admin-routes |
+| `PDF_CONVERTER_URL` | `http://localhost:8005` | admin-routes |
+| `N8N_URL` | `http://localhost:5678` | admin-routes, webhooks-routes |
+| `AIMS_MCP_URL` | `http://localhost:3011` | admin-routes |
 
-#### 하드코딩 URL 호출 관계도
+#### 환경변수 네이밍 표준: `{SERVICE_NAME}_URL`
 
 ```
-aims_api (오케스트레이터)
-    ├─→ localhost:8004 (annual_report_api)   x7  ❌ 완전 하드코딩
-    ├─→ localhost:8100 (document_pipeline)   x2  ❌ 완전 하드코딩
-    ├─→ localhost:8000 (aims_rag_api)        x1  ✅ 환경변수 fallback
-    ├─→ localhost:8002 (pdf_proxy)           x1  ❌ 완전 하드코딩
-    ├─→ localhost:8005 (pdf_converter)       x1  ❌ 완전 하드코딩
-    ├─→ localhost:5678 (n8n)                 x1  ❌ 완전 하드코딩
-    └─→ localhost:3010 (자기 자신)            x1  ⚠️ 순환 호출
+AIMS_API_URL             (aims_api — 하위 서비스에서 사용)
+ANNUAL_REPORT_API_URL    (annual_report_api)
+DOCUMENT_PIPELINE_URL    (document_pipeline)
+AIMS_RAG_API_URL         (aims_rag_api)
+PDF_PROXY_URL            (pdf_proxy)
+PDF_CONVERTER_URL        (pdf_converter)
+N8N_URL                  (n8n)
+AIMS_MCP_URL             (aims_mcp)
 ```
 
-**역방향 (하위 → aims_api)은 깨끗함:**
+#### 자기 호출 제거 완료
+
+```javascript
+// Before: HTTP 자기 호출 (안티패턴)
+await axios.delete(`http://localhost:3010/api/documents/${docId}`);
+
+// After: 내부 함수 직접 호출 (612378a5)
+const { deleteDocument } = require('../lib/documentDeleteService');
+await deleteDocument(docId.toString());
+```
+
+`documentDeleteService.js`로 문서 삭제 공통 로직을 추출하여 `documents-routes.js`와 `personal-files-routes.js` 양쪽에서 호출. 의존성 주입(`init`) 패턴 적용.
+
+#### deploy_aims_api.sh 환경변수 전달
+
+Docker `-e` 옵션으로 7개 환경변수가 모두 전달됨:
+```bash
+-e ANNUAL_REPORT_API_URL="${ANNUAL_REPORT_API_URL:-http://localhost:8004}"
+-e DOCUMENT_PIPELINE_URL="${DOCUMENT_PIPELINE_URL:-http://localhost:8100}"
+-e AIMS_RAG_API_URL="${AIMS_RAG_API_URL:-http://localhost:8000}"
+-e PDF_PROXY_URL="${PDF_PROXY_URL:-http://localhost:8002}"
+-e PDF_CONVERTER_URL="${PDF_CONVERTER_URL:-http://localhost:8005}"
+-e N8N_URL="${N8N_URL:-http://localhost:5678}"
+-e AIMS_MCP_URL="${AIMS_MCP_URL:-http://localhost:3011}"
+```
+
+#### 역방향 의존 (하위 → aims_api): 깨끗함
+
 - document_pipeline: `AIMS_API_URL` 환경변수 사용 ✅
 - aims_rag_api: `AIMS_API_URL` 환경변수 사용 ✅
 - aims_mcp: `AIMS_API_URL` 환경변수 사용 ✅
-
-#### 자기 호출 문제
-
-```javascript
-// personal-files-routes.js:498
-await axios.delete(`http://localhost:3010/api/documents/${docId}`);
-```
-
-같은 프로세스 내 다른 라우트를 HTTP로 자기 호출 — 내부 함수 호출로 대체해야 함.
-
-#### 환경변수 이름 불일관
-
-| 서비스 | 변수명 | 정의 위치 |
-|--------|--------|----------|
-| aims_rag_api | `AIMS_RAG_API_URL` | admin-routes.js (코드 내 기본값) |
-| aims_mcp | `AIMS_API_URL` | .env.shared |
-| document_pipeline | `AIMS_API_URL` | internal_api_client.py |
-| aims_mcp | `RAG_API_URL` | tools/rag.ts |
-| annual_report_api | (정의 없음) | 하드코딩만 |
 
 ---
 
@@ -191,71 +196,25 @@ DB 게이트웨이 리팩토링(R1~R6, 2026-04)의 독립성 개선 효과:
 | 하위 서비스 독립 테스트 | 불가능 | **가능** |
 | 공유 스키마 범위 | 없음 (각자 하드코딩) | **중앙 관리** (@aims/shared-schema) |
 
-**DB 게이트웨이 전환은 하위 서비스의 독립성을 크게 개선했음.** 남은 결합은 aims_api → 하위 서비스 방향의 하드코딩 URL.
-
 ---
 
-## 5. 개선 권장사항
+## 5. 개선 이력 및 잔여 권장사항
 
-### P1: aims_api 하드코딩 URL 환경변수화
+### 완료된 개선 (2026-04-05)
 
-**영향: 진화 독립성 핵심 개선**
+| 항목 | 커밋 | 내용 |
+|------|------|------|
+| ~~P1: 하드코딩 URL 환경변수화~~ | `612378a5` | 21건 → 7개 환경변수 + fallback 패턴 |
+| ~~P2: 자기 호출 제거~~ | `612378a5` | HTTP 자기 호출 → documentDeleteService 직접 호출 |
+| ~~P3: 환경변수 네이밍 표준화~~ | `612378a5` | `{SERVICE_NAME}_URL` 패턴 통일 |
 
-16건의 하드코딩 URL을 `.env.shared`의 환경변수로 이전:
+### 잔여 개선 권장사항 (선택)
 
-```bash
-# .env.shared에 추가
-ANNUAL_REPORT_API_URL=http://localhost:8004
-DOCUMENT_PIPELINE_URL=http://localhost:8100
-AIMS_RAG_API_URL=http://localhost:8000
-PDF_PROXY_URL=http://localhost:8002
-PDF_CONVERTER_URL=http://localhost:8005
-N8N_URL=http://localhost:5678
-```
-
-aims_api의 각 라우트에서:
-```javascript
-// Before
-axios.post('http://localhost:8004/ar-background/trigger-parsing', ...)
-
-// After
-const AR_API_URL = process.env.ANNUAL_REPORT_API_URL || 'http://localhost:8004';
-axios.post(`${AR_API_URL}/ar-background/trigger-parsing`, ...)
-```
-
-**예상 공수: 소** (17개 URL 교체, 환경변수 6개 추가)
-
-### P2: 자기 호출 제거
-
-```javascript
-// Before: HTTP 자기 호출
-await axios.delete(`http://localhost:3010/api/documents/${docId}`);
-
-// After: 내부 함수 직접 호출
-await deleteDocument(db, docId);
-```
-
-**예상 공수: 소** (1건)
-
-### P3: 서비스 URL 환경변수 네이밍 표준화
-
-```
-{SERVICE_NAME}_URL 패턴 통일:
-- AIMS_API_URL          (aims_api)
-- ANNUAL_REPORT_API_URL (annual_report_api)
-- DOCUMENT_PIPELINE_URL (document_pipeline)
-- AIMS_RAG_API_URL      (aims_rag_api)
-- PDF_PROXY_URL         (pdf_proxy)
-- PDF_CONVERTER_URL     (pdf_converter)
-```
-
-**예상 공수: 소** (P1과 동시 수행)
-
-### P4: shared-schema를 npm 레지스트리 패키지로 전환 (선택)
+#### P4: shared-schema를 npm 레지스트리 패키지로 전환
 
 현재 `file:../../shared/schema` 로컬 경로 의존을 npm 패키지로 전환하면 모노레포 밖에서도 빌드 가능. 단, 현재 모노레포 구조에서는 `file:` 참조가 실용적이므로 **필요 시에만** 수행.
 
-### P5: 나머지 서비스 컨테이너화 (선택)
+#### P5: 나머지 서비스 컨테이너화
 
 현재 Docker: 2/7 (aims_api, aims_rag_api). PM2 실행 서비스를 Docker로 전환하면 환경 일관성 향상. 단, PM2가 현 운영에서 안정적이므로 **K8s 전환 시에만** 수행.
 
@@ -269,9 +228,9 @@ await deleteDocument(db, docId);
 | 배포 자동화 | ✅ 완료 | 7개 서비스 개별 배포 + 병렬 배포 |
 | 테스트 격리 | ✅ 양호 | 단위 테스트 독립, E2E만 부분 결합 |
 | 빌드 독립성 | ⚠️ 양호 | shared-schema file: 의존 2건 (실용적 수준) |
-| **진화 독립성** | **❌ 개선 필요** | **aims_api 하드코딩 URL 16건 + 자기 호출 1건** |
+| 진화 독립성 | ✅ 완료 | 하드코딩 URL 0건, 환경변수 통일, 자기 호출 제거 |
 
-**핵심 메시지:** DB 게이트웨이 전환으로 **하위 → 상위** 방향의 독립성은 확보되었으나, **상위 → 하위** 방향(aims_api → 하위 서비스)의 하드코딩 URL이 진화 독립성의 병목. P1~P3 개선(예상 공수: 소)으로 해결 가능.
+**핵심 메시지:** DB 게이트웨이 전환(R1~R6)으로 **하위 → 상위** 독립성을 확보하고, URL 환경변수화(`612378a5`)로 **상위 → 하위** 독립성도 확보하여 양방향 진화 독립성이 달성됨. 잔여 결합은 shared-schema `file:` 참조 2건(실용적 수준)과 E2E 테스트의 서비스 간 결합(설계상 불가피)뿐임.
 
 ---
 
