@@ -8,8 +8,9 @@
 3. 혼합 쿼리 (mixed): "곽승철의 USB 개발 경험"
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from hybrid_search import HybridSearchEngine
 
 

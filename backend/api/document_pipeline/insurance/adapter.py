@@ -28,13 +28,11 @@ import logging
 import re
 from typing import Any, Optional
 
-import httpx
-
 from xpipe.adapter import (
-    DomainAdapter,
     Category,
     ClassificationConfig,
     Detection,
+    DomainAdapter,
     HookResult,
     StageHookAction,
 )

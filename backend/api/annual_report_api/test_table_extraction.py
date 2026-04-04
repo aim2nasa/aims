@@ -2,9 +2,9 @@
 pdfplumber 테이블 추출 테스트
 텍스트 추출 vs 테이블 추출 비교
 """
-import pdfplumber
-import json
 import sys
+
+import pdfplumber
 
 # 테스트 PDF 경로
 PDF_PATH = r"D:\MetlifeReport\AnnualReport\신상철보유계약현황2025081.pdf"

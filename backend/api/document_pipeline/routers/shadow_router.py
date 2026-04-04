@@ -7,10 +7,10 @@ Shadow Mode Router
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException, Query
-from fastapi.responses import JSONResponse
 
-from middleware.shadow_mode import shadow_call, ShadowMode, ServiceMode, SHADOW_COLLECTIONS
+from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import JSONResponse
+from middleware.shadow_mode import SHADOW_COLLECTIONS, ServiceMode, ShadowMode, shadow_call
 from services.mongo_service import MongoService
 
 logger = logging.getLogger(__name__)
@@ -838,8 +838,9 @@ async def get_services_status():
     """
     n8n과 FastAPI 서비스 상태 확인
     """
-    import httpx
     from datetime import datetime
+
+    import httpx
 
     async def check_service(name: str, url: str, timeout: float = 5.0):
         """개별 서비스 상태 확인"""

@@ -4,21 +4,21 @@ Replaces n8n OCRWorker workflow
 """
 import asyncio
 import logging
-from datetime import datetime
-from typing import Optional, Dict, Any
-import httpx
 import os
 import re
 import sys
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+import httpx
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from bson import ObjectId
 from config import get_settings
-from services.redis_service import RedisService
-from services.upstage_service import UpstageService, LARGE_PDF_THRESHOLD
 from services.openai_service import OpenAIService
+from services.redis_service import RedisService
+from services.upstage_service import LARGE_PDF_THRESHOLD, UpstageService
 
 # Configure logging
 logging.basicConfig(
@@ -91,7 +91,6 @@ class OCRWorker:
 
     async def _process_message(self, msg: Dict[str, Any]):
         """Process a single OCR message"""
-        message_id = msg["message_id"]
         file_id = msg["file_id"]
         file_path = msg["file_path"]
         doc_id = msg["doc_id"]
@@ -269,7 +268,7 @@ class OCRWorker:
 
     async def _update_ocr_status(self, file_id: str, update: Dict[str, Any]):
         """Update OCR status in MongoDB via Internal API"""
-        from services.internal_api import update_file, _serialize_for_api
+        from services.internal_api import _serialize_for_api, update_file
         await update_file(file_id, set_fields=_serialize_for_api(update))
 
     async def _handle_quota_exceeded(
@@ -495,7 +494,7 @@ class OCRWorker:
         status: str
     ):
         """Redis를 통해 문서 처리 완료 이벤트 발행"""
-        from services.redis_service import RedisService, CHANNELS
+        from services.redis_service import CHANNELS, RedisService
         try:
             await RedisService.publish_event(CHANNELS["DOC_COMPLETE"], {
                 "document_id": doc_id,

@@ -1,6 +1,6 @@
 # system_logger.py - AIMS 시스템 로그 aims_analytics DB 직접 기록 모듈
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from analytics_writer import AnalyticsWriter
 

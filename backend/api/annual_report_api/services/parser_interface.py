@@ -4,8 +4,8 @@ AR 파서 공통 인터페이스 및 타입 정의
 모든 파서(OpenAI, pdfplumber, Upstage)는 이 인터페이스를 따릅니다.
 """
 
-from typing import Dict, List, Optional, TypedDict, Union
 import logging
+from typing import Dict, List, Optional, TypedDict, Union
 
 logger = logging.getLogger(__name__)
 

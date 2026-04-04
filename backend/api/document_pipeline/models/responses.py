@@ -1,8 +1,9 @@
 """
 Common Response Models
 """
+from typing import Any, Optional
+
 from pydantic import BaseModel
-from typing import Optional, Any
 
 
 class ErrorResponse(BaseModel):

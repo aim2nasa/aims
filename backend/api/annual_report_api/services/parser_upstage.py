@@ -7,19 +7,14 @@ Upstage Document AI 기반 AR 파서
 - 평균 5.89초/건
 """
 
+import logging
 import os
 import re
-import logging
 from typing import Dict, List, Optional
 
 import requests
 from bs4 import BeautifulSoup
-
-from services.parser_interface import (
-    normalize_contract,
-    create_error_result,
-    create_success_result
-)
+from services.parser_interface import create_error_result, create_success_result, normalize_contract
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +92,7 @@ def parse_html_table(html: str) -> List[Dict]:
 
                 # 순번 확인
                 try:
-                    seq = int(cells[0].get_text().strip())
+                    int(cells[0].get_text().strip())  # 순번 확인
                 except (ValueError, TypeError):
                     continue
 
@@ -179,7 +174,7 @@ def parse_annual_report(
         logger.info(
             f"✅ Upstage 파싱 완료: "
             f"계약 {len(contracts)}건, "
-            f"총월보험료 {total_premium:,}원" if total_premium is not None else f"총월보험료 추출실패"
+            f"총월보험료 {total_premium:,}원" if total_premium is not None else "총월보험료 추출실패"
         )
 
         return create_success_result(

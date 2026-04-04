@@ -11,10 +11,10 @@
 - 사용자 만족도
 """
 
-from typing import Dict, List, Optional
-from pymongo import MongoClient
 from datetime import datetime, timedelta
-from collections import defaultdict
+from typing import Dict, List
+
+from pymongo import MongoClient
 
 # 서비스 고유 컬렉션/DB 상수
 ANALYTICS_DB = "aims_analytics"

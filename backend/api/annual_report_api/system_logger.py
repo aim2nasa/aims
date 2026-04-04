@@ -3,10 +3,11 @@
 # 스키마: aims_api의 errorLogger.js _insertLog()와 동일 (analytics_writer.py와 통일).
 
 import os
-import uuid
 import traceback
-from typing import Optional, Dict, Any
+import uuid
 from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+
 from pymongo import MongoClient
 
 ANALYTICS_DB = "aims_analytics"

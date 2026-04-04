@@ -3,16 +3,16 @@ Annual Report 조회 API 라우터
 GET /customers/{customer_id}/annual-reports - Annual Reports 조회
 DELETE /customers/{customer_id}/annual-reports - Annual Reports 삭제
 """
-from fastapi import APIRouter, HTTPException, Path, Query, Body, Header
-from pydantic import BaseModel, Field
-from typing import List, Optional, Any, Dict
-from bson import ObjectId
-from bson.errors import InvalidId
 import logging
+from typing import Any, Dict, List, Optional
 
-from services.db_writer import get_annual_reports, delete_annual_reports, cleanup_duplicate_annual_reports
+from bson import ObjectId
+from fastapi import APIRouter, Body, Header, HTTPException, Path, Query
+from pydantic import BaseModel, Field
+from services.db_writer import cleanup_duplicate_annual_reports, delete_annual_reports, get_annual_reports
 from system_logger import send_error_log
-from internal_api import check_customer_ownership, register_annual_report, get_customer
+
+from internal_api import check_customer_ownership, get_customer, register_annual_report
 
 logger = logging.getLogger(__name__)
 
@@ -457,7 +457,7 @@ async def register_ar_contracts(
         HTTPException 404: 고객 또는 AR을 찾을 수 없을 때
         HTTPException 500: 서버 오류
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     logger.info(f"📋 AR 보험계약 등록 요청: customer_id={customer_id}, user_id={user_id}, issue_date={request.issue_date}")
 

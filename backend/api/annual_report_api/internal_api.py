@@ -4,9 +4,10 @@ Internal API 클라이언트 — aims_api 경유 고객 데이터 조회
 annual_report_api에서 customers 컬렉션에 직접 접근하지 않고
 aims_api의 internal 엔드포인트를 경유하여 데이터를 조회한다.
 """
-import os
-import requests
 import logging
+import os
+
+import requests
 
 logger = logging.getLogger(__name__)
 

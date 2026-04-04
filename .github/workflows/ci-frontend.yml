@@ -31,6 +31,11 @@ jobs:
           cd frontend/aims-uix3
           npm run typecheck
 
+      - name: Lint
+        run: |
+          cd frontend/aims-uix3
+          npx eslint src/
+
       - name: Run frontend tests
         run: |
           cd frontend/aims-uix3

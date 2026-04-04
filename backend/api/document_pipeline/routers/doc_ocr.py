@@ -2,13 +2,12 @@
 DocOCR Router - OCR Processing Handler
 Replaces n8n DocOCR workflow
 """
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from typing import Optional
 import logging
+from typing import Optional
 
-from services.upstage_service import UpstageService
+from fastapi import APIRouter, File, Form, UploadFile
 from services.openai_service import OpenAIService
-from models.document import OCRResponse
+from services.upstage_service import UpstageService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

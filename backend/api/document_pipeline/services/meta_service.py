@@ -1,14 +1,14 @@
 """
 Document Metadata Extraction Service
 """
-import os
 import hashlib
-import mimetypes
-import logging
 import io
-from pathlib import Path
+import logging
+import mimetypes
 from datetime import datetime
-from typing import Dict, Any, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 import aiofiles
 
 logger = logging.getLogger(__name__)

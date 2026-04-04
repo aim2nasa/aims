@@ -1,14 +1,14 @@
 """
 OpenAI Service for Text Summarization and Document Classification
 """
+import json
+import logging
 import os
 import re
-import json
+from typing import Any, Dict, List, Optional
+
 import httpx
 import openai
-import logging
-from typing import List, Dict, Any, Optional
-
 from config import get_settings
 from xpipe.adapter import ClassificationConfig
 

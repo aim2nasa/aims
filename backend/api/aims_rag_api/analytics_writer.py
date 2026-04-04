@@ -9,12 +9,12 @@ aims_analytics MongoDB에 직접 기록합니다.
 스키마는 aims_api의 tokenUsageService.js / errorLogger.js와 동일합니다.
 """
 
-from typing import Dict, Optional, Any
-from pymongo import MongoClient
-from datetime import datetime
-import uuid
 import traceback
+import uuid
+from datetime import datetime
+from typing import Any, Dict, Optional
 
+from pymongo import MongoClient
 
 # 서비스 고유 DB 상수 (search_logger.py와 동일)
 ANALYTICS_DB = "aims_analytics"

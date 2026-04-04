@@ -5,13 +5,13 @@ Shadow Mode Middleware
 - 성능 메트릭 수집
 """
 import asyncio
-import httpx
 import logging
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 
+import httpx
 from config import get_settings
 from contracts.dynamic_fields import compare_responses
 from services.mongo_service import MongoService
@@ -370,6 +370,6 @@ def _sanitize_for_mongo(data: Any) -> Any:
     elif isinstance(data, bytes):
         return f"<bytes:{len(data)}>"
     elif hasattr(data, 'read'):  # File-like object
-        return f"<file>"
+        return "<file>"
     else:
         return data

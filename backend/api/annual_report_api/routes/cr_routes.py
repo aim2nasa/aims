@@ -5,22 +5,23 @@ POST /customer-review/parse - CR 파싱 (동기)
 GET /customers/{customer_id}/customer-reviews - Customer Reviews 조회
 DELETE /customers/{customer_id}/customer-reviews - Customer Reviews 삭제
 """
-from fastapi import APIRouter, HTTPException, Path, Query, Body, Header, UploadFile, File
-from pydantic import BaseModel, Field
-from typing import List, Optional, Any, Dict
-from bson import ObjectId
-from bson.errors import InvalidId
 import logging
 import os
 import tempfile
+from typing import Any, Dict, List, Optional
 
-from services.cr_detector import is_customer_review, extract_cr_metadata_from_first_page
+import httpx
+from bson import ObjectId
+from bson.errors import InvalidId
+from fastapi import APIRouter, Body, File, Header, HTTPException, Path, Query, UploadFile
+from pydantic import BaseModel, Field
+from services.cr_detector import extract_cr_metadata_from_first_page, is_customer_review
 from services.cr_parser import parse_customer_review
 from services.cr_parser_table import parse_customer_review_table
-from services.db_writer import get_customer_reviews, delete_customer_reviews, save_customer_review
+from services.db_writer import delete_customer_reviews, get_customer_reviews, save_customer_review
 from system_logger import send_error_log
+
 from internal_api import check_customer_ownership
-import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -564,7 +565,7 @@ async def delete_customer_reviews_api(
                 )
             # "삭제할 항목이 없습니다"는 성공으로 처리 (0건 삭제)
             elif "삭제할 항목이 없" in result.get("message", ""):
-                logger.info(f"ℹ️  삭제할 항목 없음 (이미 삭제되었거나 존재하지 않음)")
+                logger.info("ℹ️  삭제할 항목 없음 (이미 삭제되었거나 존재하지 않음)")
                 return DeleteCustomerReviewsResponse(
                     success=True,
                     message="삭제할 항목이 없습니다 (이미 삭제되었거나 존재하지 않음)",

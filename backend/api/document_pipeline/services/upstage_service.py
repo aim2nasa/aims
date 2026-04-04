@@ -2,11 +2,11 @@
 Upstage OCR Service
 """
 import asyncio
-import os
-import httpx
 import logging
-from typing import Dict, Any, Optional, List
+import os
+from typing import Any, Dict
 
+import httpx
 from config import get_settings
 
 # 대용량 PDF 분할 OCR 임계값 (30MB)
@@ -286,5 +286,5 @@ class UpstageService:
             if "error" in data and "message" in data["error"]:
                 return data["error"]["message"]
             return f"OCR 처리 실패 (HTTP {response.status_code})"
-        except:
+        except Exception:
             return f"OCR 처리 실패 (HTTP {response.status_code})"

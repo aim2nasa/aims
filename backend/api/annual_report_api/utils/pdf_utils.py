@@ -2,13 +2,12 @@
 PDF 처리 유틸리티 함수
 PDF 페이지 읽기, 텍스트 추출, N페이지 동적 탐지
 """
-import os
-from typing import Optional
 import logging
+import os
 
 try:
-    import PyPDF2
     import pdfplumber
+    import PyPDF2
 except ImportError as e:
     logging.error(f"PDF 라이브러리 import 실패: {e}")
     raise

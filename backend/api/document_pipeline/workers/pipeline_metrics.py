@@ -6,11 +6,11 @@ Pipeline Metrics Collector
 1. /health/deep 응답에 포함
 2. 연속 에러 감지 → Slack 알림
 """
-import time
 import logging
+import time
 from collections import deque
-from dataclasses import dataclass, field
-from typing import Dict, Any, Optional
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -2,15 +2,15 @@
 SmartSearch Router - Document Search Handler
 Replaces n8n SmartSearch workflow
 """
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import Optional, List, Any, Dict
-from bson import ObjectId, Decimal128
 import logging
 import re
-
-from services.internal_api import query_files
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from bson import Decimal128, ObjectId
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from services.internal_api import query_files
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

@@ -16,6 +16,7 @@ HTTP + pymongo만으로 파이프라인 상태를 검증합니다.
 - failed: 0건
 """
 import os
+
 import pytest
 
 PIPELINE_URL = os.environ.get("PIPELINE_URL", "http://localhost:8100")
@@ -110,14 +111,14 @@ class TestRegressionBaseline:
     def test_print_baseline(self, stats):
         """기준선 수치 출력"""
         print(f"\n{'='*50}")
-        print(f"  Phase 0 회귀 기준선")
+        print("  Phase 0 회귀 기준선")
         print(f"{'='*50}")
         print(f"  총 문서:       {stats['total']}")
         print(f"  완료/실패:     {stats['completed']} / {stats['failed']}")
         print(f"  성공률:        {stats['success_rate']:.1f}%")
         print(f"  분류 커버리지:  {stats['coverage']:.1f}%")
         print(f"  AR/CRS:        {stats['ar']} / {stats['crs']}")
-        print(f"  분류 정확도:    91.8% (M6 GT)")
+        print("  분류 정확도:    91.8% (M6 GT)")
         print(f"{'='*50}")
 
 

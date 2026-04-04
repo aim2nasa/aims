@@ -89,9 +89,6 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   }
 
 
-  // 헤더 표시 여부 확인
-  if (!visible) return null
-
   // 클래스명 조합
   const headerClasses = [
     'header-progressive',
@@ -117,6 +114,9 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
       onMenuClick?.('customers-full-detail')
     }
   }, [onMenuClick])
+
+  // 헤더 표시 여부 확인
+  if (!visible) return null
 
   return (
     <header

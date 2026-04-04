@@ -5,12 +5,11 @@ Upload Worker - Background MongoDB Queue Consumer
 import asyncio
 import logging
 import uuid
-from datetime import datetime
-from typing import Dict, Any, Set, Optional
+from typing import Any, Dict, Optional, Set
 
 from config import get_settings
-from services.upload_queue_service import UploadQueueService
 from services.temp_file_service import TempFileService
+from services.upload_queue_service import UploadQueueService
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -82,7 +81,6 @@ class UploadWorker:
         """단일 작업 처리"""
         queue_id = str(job["_id"])
         file_data = job.get("file_data", {})
-        request_data = job.get("request_data", {})
 
         logger.info(f"Processing job: {queue_id} - {file_data.get('original_filename')}")
 

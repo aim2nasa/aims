@@ -8,12 +8,13 @@
 - mixed: 혼합 쿼리 → 하이브리드 검색
 """
 
-from openai import OpenAI
-from typing import Dict, List
+import hashlib
 import json
 import re
 import time
-import hashlib
+from typing import Dict
+
+from openai import OpenAI
 from system_logger import send_error_log
 
 # P2-1: 쿼리 분석 결과 캐시 (TTL 10분)
@@ -136,7 +137,7 @@ if __name__ == '__main__':
     for query in test_queries:
         print(f"\n🔎 쿼리: '{query}'")
         intent = analyzer.analyze(query)
-        print(f"📊 분석 결과:")
+        print("📊 분석 결과:")
         print(f"  - 유형: {intent['query_type']}")
         print(f"  - 개체명: {intent['entities']}")
         print(f"  - 개념: {intent['concepts']}")

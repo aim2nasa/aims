@@ -11,16 +11,13 @@ LegalDomainAdapter 테스트 — xPipe 이식성 PoC 검증
 실행: cd backend/api/document_pipeline && python -m pytest poc_legal/test_legal_adapter.py -v
 """
 import pytest
-
+from poc_legal.adapter import LegalDomainAdapter
+from tests.test_adapter_contract import assert_adapter_contract
 from xpipe.adapter import (
-    DomainAdapter,
     ClassificationConfig,
     Detection,
-    HookResult,
+    DomainAdapter,
 )
-from tests.test_adapter_contract import assert_adapter_contract
-from poc_legal.adapter import LegalDomainAdapter
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -9,10 +9,10 @@ upload_queue_service.py 패턴 기반.
 """
 import asyncio
 import logging
-from datetime import datetime, timedelta, timedelta
-from typing import Optional, Dict, Any, List
-from bson import ObjectId
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
+from bson import ObjectId
 from config import get_settings
 from services.mongo_service import MongoService
 

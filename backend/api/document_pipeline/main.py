@@ -11,21 +11,29 @@ import logging
 import shutil
 import time
 from contextlib import asynccontextmanager
+
+import httpx
+from config import get_settings
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
-import httpx
-
-from config import get_settings
+from routers import (
+    doc_display_name_router,
+    doc_meta_router,
+    doc_ocr_router,
+    doc_prep_main_router,
+    doc_summary_router,
+    doc_upload_router,
+    shadow_router,
+    smart_search_router,
+)
 from services.mongo_service import MongoService
 from services.upload_queue_service import UploadQueueService
-from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_meta_router, smart_search_router, doc_prep_main_router, shadow_router, doc_display_name_router
 from workers.error_logger import error_logger
-from workers.upload_worker import upload_worker
-from workers.pdf_conversion_worker import pdf_conversion_worker
 from workers.ocr_worker import ocr_worker
+from workers.pdf_conversion_worker import pdf_conversion_worker
 from workers.pipeline_metrics import pipeline_metrics
+from workers.upload_worker import upload_worker
 
 # Configure logging
 logging.basicConfig(

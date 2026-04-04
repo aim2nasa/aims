@@ -12,11 +12,10 @@ Ground Truth는 원본 PDF에서 수동으로 확인한 값.
 
 import os
 import sys
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # 테스트 대상 모듈
 from cr_table_extractor import extract_cr_fund_table
-
 
 # ============================================================================
 # Ground Truth Data (원본 PDF에서 수동 확인)

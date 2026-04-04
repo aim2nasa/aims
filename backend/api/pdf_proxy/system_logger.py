@@ -1,7 +1,8 @@
 # system_logger.py - AIMS 시스템 로그 API 연동 모듈
 
+from typing import Any, Dict, Optional
+
 import requests
-from typing import Optional, Dict, Any
 
 SYSTEM_LOG_API_URL = "http://localhost:3010/api/system-logs"
 

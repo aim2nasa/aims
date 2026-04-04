@@ -1,40 +1,40 @@
 # rag_search.py
+import asyncio
 import os
 import re
 import time
-from typing import List, Dict, Optional, Any
-from openai import OpenAI
-from qdrant_client import QdrantClient, models
+from typing import Any, Dict, List, Optional
+
+import requests
+from alert_system import AlertSystem
+
 # 💡 T11 변경 사항 시작
 from fastapi import FastAPI, HTTPException, Request
+from hybrid_search import HybridSearchEngine
+from openai import OpenAI
 from pydantic import BaseModel, Field
-import requests
-import json
-import asyncio
+from qdrant_client import QdrantClient, models
+from quality_analyzer import QualityAnalyzer
 
 # 🔥 Phase 1: 하이브리드 검색 추가
 from query_analyzer import QueryAnalyzer
-from hybrid_search import HybridSearchEngine
 
 # 🔥 Phase 2: Cross-Encoder 재순위화 추가
 from reranker import SearchReranker
 
 # 🔥 Phase 3: 검색 품질 모니터링 추가
 from search_logger import SearchLogger
-from quality_analyzer import QualityAnalyzer
-from alert_system import AlertSystem
-
-# 🔥 Phase 4: AI 토큰 사용량 추적 추가
-from token_tracker import TokenTracker
 
 # 시스템 로그 전송
 from system_logger import send_error_log
+
+# 🔥 Phase 4: AI 토큰 사용량 추적 추가
+from token_tracker import TokenTracker
 
 # 버전 정보
 from version import VERSION_INFO, log_version_info
 
 # 시스템 로그 연동
-from system_logger import send_error_log
 
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI(
@@ -58,12 +58,12 @@ RAG_API_KEY = os.getenv("RAG_API_KEY", "")
 if not RAG_API_KEY:
     print("⚠️ [Security] RAG_API_KEY 미설정 — API 인증이 비활성화됩니다. .env.shared에 설정을 권장합니다.")
 
+# P4-5: 인메모리 Rate Limiting (외부 의존성 없음)
+import collections
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-
-# P4-5: 인메모리 Rate Limiting (외부 의존성 없음)
-import collections
 _rate_limit_store: Dict[str, collections.deque] = {}  # {ip: deque of timestamps}
 _RATE_LIMIT_WINDOW = 60  # 60초
 _RATE_LIMIT_MAX = 30  # 윈도우당 최대 요청 수 (/search 엔드포인트)
@@ -663,7 +663,7 @@ async def search_endpoint(request: SearchRequest, raw_request: Request):
 
                 # 관계 정보가 있으면 LLM 컨텍스트 문자열 생성
                 if rel_data["relationships"]:
-                    lines = [f"--- 고객 관계 정보 ---", f"{rel_data['customer_name']}의 관계:"]
+                    lines = ["--- 고객 관계 정보 ---", f"{rel_data['customer_name']}의 관계:"]
                     for r in rel_data["relationships"]:
                         lines.append(f"- {r['type']}: {r['name']}")
                     relationship_context = "\n".join(lines)
@@ -674,7 +674,7 @@ async def search_endpoint(request: SearchRequest, raw_request: Request):
                 else:
                     print(f"🔍 고객 필터: customer_id={search_customer_id} (관계 없음)")
             else:
-                print(f"🔍 고객 필터: 전체")
+                print("🔍 고객 필터: 전체")
 
             # 2단계: 하이브리드 검색 (top_k=None이면 전체 결과 반환)
             if request.top_k is not None:
@@ -820,7 +820,7 @@ async def search_endpoint(request: SearchRequest, raw_request: Request):
         except Exception as e:
             import traceback
             print(f"❌ 하이브리드 검색 중 오류 발생: {e}")
-            print(f"📍 Traceback:")
+            print("📍 Traceback:")
             traceback.print_exc()
             send_error_log("aims_rag_api", f"하이브리드 검색 오류: {e}", e, {"query": request.query, "search_mode": request.search_mode})
             raise HTTPException(status_code=500, detail="검색 중 오류가 발생했습니다.")

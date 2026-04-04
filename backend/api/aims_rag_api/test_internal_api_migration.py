@@ -15,7 +15,7 @@ Internal HTTP API 호출로 전환된 후의 동작을 검증합니다.
 
 import sys
 import unittest
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import MagicMock, patch
 
 # ── 의존성 stub 주입 ──────────────────────────────────────────
 # hybrid_search.py 가 import 하는 외부 모듈(qdrant_client, openai, system_logger)이

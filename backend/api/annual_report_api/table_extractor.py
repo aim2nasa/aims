@@ -16,10 +16,10 @@ Annual Report 테이블 추출기 (완전 일반화 구현)
 
 @see docs/ANNUAL_REPORT_PARSER.md
 """
+import logging
 import os
 import re
-import logging
-from typing import List, Dict, Optional, Any
+from typing import Any, Dict, List, Optional
 
 try:
     import pdfplumber
@@ -367,8 +367,8 @@ def extract_all_samples(sample_dir: str) -> List[Dict[str, Any]]:
 
 # CLI 실행
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     logging.basicConfig(level=logging.INFO)
 

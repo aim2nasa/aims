@@ -4,12 +4,11 @@ Analytics Writer — aims_analytics DB에 AI 토큰 사용량 직접 기록
 motor(async MongoDB driver)를 사용하여 aims_api HTTP 경유 없이 직접 기록.
 aims_api의 tokenUsageService.js와 동일한 스키마 및 비용 계산 로직.
 """
-import uuid
 import logging
+import uuid
 from datetime import datetime, timezone
 
 import motor.motor_asyncio
-
 from config import get_settings
 
 logger = logging.getLogger(__name__)

@@ -14,12 +14,12 @@ Cronjob 설정 예시:
     */5 * * * * cd /path/to/annual_report_api && python auto_parse_annual_reports.py >> logs/auto_parse.log 2>&1
 """
 
-import sys
-import os
-import time
 import argparse
+import os
+import sys
+import time
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -28,15 +28,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, project_root)
 
-from pymongo import MongoClient
-from bson import ObjectId
-
 from config import settings
+from pymongo import MongoClient
+from services.db_writer import save_annual_report
 from services.detector import is_annual_report
 from services.parser import parse_annual_report
-from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
-from src.shared.time_utils import utc_now_iso
+
 from internal_api import query_files
 
 
@@ -228,33 +226,33 @@ class AnnualReportAutoParser:
             if customer_id:
                 print(f"✓ 고객 ID: {customer_id}")
             else:
-                print(f"⚠ 고객 ID 없음 (파일만 처리)")
+                print("⚠ 고객 ID 없음 (파일만 처리)")
 
             # 3. Annual Report 판단
             self.mark_processing_started(file_id)
 
-            print(f"\n🔍 Step 1: Annual Report 판단 중...")
+            print("\n🔍 Step 1: Annual Report 판단 중...")
             detection_result = is_annual_report(file_path)
 
             if not detection_result["is_annual_report"]:
-                print(f"❌ Annual Report가 아닙니다.")
+                print("❌ Annual Report가 아닙니다.")
                 print(f"   신뢰도: {detection_result['confidence']:.2f}")
                 print(f"   발견된 키워드: {detection_result['matched_keywords']}")
                 self.mark_not_annual_report(file_id)
                 return {"success": True, "skipped": True, "reason": "not_annual_report"}
 
-            print(f"✅ Annual Report 확인!")
+            print("✅ Annual Report 확인!")
             print(f"   신뢰도: {detection_result['confidence']:.2f}")
             print(f"   발견된 키워드: {detection_result['matched_keywords']}")
 
             # 4. N-page 탐지
-            print(f"\n🔍 Step 2: 계약 테이블 종료 페이지 탐지 중...")
+            print("\n🔍 Step 2: 계약 테이블 종료 페이지 탐지 중...")
             n_pages = find_contract_table_end_page(file_path)
             print(f"✅ 계약 테이블 종료: {n_pages}페이지")
 
             # 5. OpenAI 파싱
-            print(f"\n🤖 Step 3: OpenAI로 파싱 중...")
-            print(f"   (약 25초 소요 예상...)")
+            print("\n🤖 Step 3: OpenAI로 파싱 중...")
+            print("   (약 25초 소요 예상...)")
 
             parsed_data = parse_annual_report(file_path, end_page=n_pages)
 
@@ -263,16 +261,16 @@ class AnnualReportAutoParser:
 
             # 6. MongoDB 저장
             if customer_id:
-                print(f"\n💾 Step 4: MongoDB 저장 중...")
+                print("\n💾 Step 4: MongoDB 저장 중...")
                 save_annual_report(
                     db=self.db,
                     customer_id=customer_id,
                     report_data=parsed_data,
                     source_file_id=file_id
                 )
-                print(f"✅ 저장 완료!")
+                print("✅ 저장 완료!")
             else:
-                print(f"\n⚠ customer_id가 없어 MongoDB 저장을 건너뜁니다.")
+                print("\n⚠ customer_id가 없어 MongoDB 저장을 건너뜁니다.")
 
             # 7. 처리 완료 기록
             result = {
@@ -301,12 +299,12 @@ class AnnualReportAutoParser:
             force_all: 모든 파일 재처리
         """
         print(f"\n{'='*80}")
-        print(f"🚀 Annual Report 자동 파싱 시작")
+        print("🚀 Annual Report 자동 파싱 시작")
         print(f"{'='*80}")
         print(f"⏰ 실행 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         if force_all:
-            print(f"🔄 모드: 전체 재처리")
+            print("🔄 모드: 전체 재처리")
         else:
             print(f"📅 검색 범위: 최근 {lookback_hours}시간")
 
@@ -314,7 +312,7 @@ class AnnualReportAutoParser:
         unprocessed_files = self.get_unprocessed_files(lookback_hours, force_all)
 
         if not unprocessed_files:
-            print(f"\n✅ 처리할 파일이 없습니다.")
+            print("\n✅ 처리할 파일이 없습니다.")
             return
 
         print(f"\n📋 처리 대상: {len(unprocessed_files)}개 파일")
@@ -339,7 +337,7 @@ class AnnualReportAutoParser:
 
         # 결과 요약
         print(f"\n{'='*80}")
-        print(f"📊 처리 결과 요약")
+        print("📊 처리 결과 요약")
         print(f"{'='*80}")
         print(f"✅ 성공: {success_count}개")
         print(f"⏭️  건너뜀 (Annual Report 아님): {skipped_count}개")
@@ -354,11 +352,11 @@ class AnnualReportAutoParser:
             interval_seconds: 체크 주기 (초)
         """
         print(f"\n{'='*80}")
-        print(f"👀 Annual Report 자동 파싱 모니터링 시작")
+        print("👀 Annual Report 자동 파싱 모니터링 시작")
         print(f"{'='*80}")
         print(f"⏱️  체크 주기: {interval_seconds}초")
         print(f"⏰ 시작 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"🛑 종료: Ctrl+C")
+        print("🛑 종료: Ctrl+C")
         print(f"{'='*80}\n")
 
         try:
@@ -370,7 +368,7 @@ class AnnualReportAutoParser:
 
         except KeyboardInterrupt:
             print(f"\n\n{'='*80}")
-            print(f"🛑 모니터링 종료")
+            print("🛑 모니터링 종료")
             print(f"⏰ 종료 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             print(f"{'='*80}\n")
 
