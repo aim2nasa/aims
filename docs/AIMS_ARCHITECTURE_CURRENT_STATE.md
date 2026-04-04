@@ -268,6 +268,131 @@ src/
 
 ---
 
+## 7. 아키텍처 다이어그램
+
+### 7-1. 전체 서비스 의존성
+
+```mermaid
+flowchart TD
+    FE["Frontend<br/>(React + Vite)"]
+    API["aims_api<br/>:3010<br/>오케스트레이터 + DB 게이트웨이"]
+    DP["document_pipeline<br/>:8100"]
+    AR["annual_report_api<br/>:8004"]
+    RAG["aims_rag_api<br/>:8000"]
+    MCP["aims_mcp"]
+    PDF["pdf_proxy :8002<br/>pdf_converter :8005"]
+    REDIS[("Redis<br/>Pub/Sub 6채널<br/>+ OCR Stream")]
+    MONGO[("MongoDB<br/>docupload")]
+    ANALYTICS[("MongoDB<br/>aims_analytics")]
+    QDRANT[("Qdrant<br/>벡터 DB")]
+    CRON["임베딩 크론<br/>(매 1분)"]
+
+    FE -- "HTTP (JWT)" --> API
+    API -- "Internal API<br/>(x-api-key)" --> DP
+    API -- "Internal API" --> AR
+    API -- "Internal API" --> RAG
+    API -- "Internal API" --> MCP
+    API -- "HTTP" --> PDF
+
+    API -- "유일한 DB 접근" --> MONGO
+    API -- "SUBSCRIBE" --> REDIS
+
+    DP -- "PUBLISH" --> REDIS
+    AR -- "PUBLISH" --> REDIS
+
+    DP -- "직접 기록" --> ANALYTICS
+    AR -- "직접 기록" --> ANALYTICS
+    RAG -- "직접 기록" --> ANALYTICS
+
+    RAG -- "벡터 검색" --> QDRANT
+    CRON -- "임베딩 저장" --> QDRANT
+    API -- "customer_id 동기화" --> QDRANT
+
+    style API fill:#4A90D9,color:#fff,stroke:#2C5F8A
+    style MONGO fill:#4DB33D,color:#fff,stroke:#3A8A2E
+    style REDIS fill:#DC382D,color:#fff,stroke:#A62B23
+    style QDRANT fill:#7B61FF,color:#fff,stroke:#5A45CC
+    style FE fill:#61DAFB,color:#333,stroke:#41B0D5
+```
+
+### 7-2. 문서 업로드 흐름
+
+```mermaid
+flowchart TD
+    START["프론트엔드<br/>파일 선택"]
+    UPLOAD["aims_api<br/>POST /api/documents/upload"]
+    SAVE["파일 저장 + DB 레코드"]
+    PIPELINE["document_pipeline<br/>POST /webhook/docprep-main"]
+    BLOCK{"시스템 파일?"}
+    EXTRACT["pdfplumber<br/>텍스트 추출 (무료)"]
+    ARCRS["AR/CRS 감지<br/>(키워드 매칭)"]
+    HAS_TEXT{"텍스트<br/>있음?"}
+    CLASSIFY["요약/분류<br/>gpt-4o-mini"]
+    CREDIT{"크레딧<br/>충분?"}
+    OCR_QUEUE["Redis Stream<br/>OCR 큐"]
+    OCR["OCR Worker<br/>Upstage API"]
+    CREDIT_PENDING["credit_pending<br/>(보류)"]
+    EMBED["embed_pending"]
+    REDIS_PUB["Redis PUBLISH<br/>aims:doc:complete"]
+    EVENTBUS["aims_api eventBus<br/>(구독)"]
+    SSE["SSE 브로드캐스트"]
+    FE_UPDATE["프론트엔드<br/>실시간 갱신"]
+    EMBEDDING["임베딩 크론 (1분)<br/>OpenAI → Qdrant"]
+    DONE["completed ✅"]
+
+    START --> UPLOAD --> SAVE --> PIPELINE --> BLOCK
+    BLOCK -- "Yes" --> REJECT["차단 ❌"]
+    BLOCK -- "No" --> EXTRACT --> ARCRS --> HAS_TEXT
+    HAS_TEXT -- "Yes" --> CLASSIFY --> EMBED
+    HAS_TEXT -- "No" --> CREDIT
+    CREDIT -- "Yes" --> OCR_QUEUE --> OCR --> CLASSIFY
+    CREDIT -- "No" --> CREDIT_PENDING
+    EMBED --> REDIS_PUB --> EVENTBUS --> SSE --> FE_UPDATE
+    EMBED --> EMBEDDING --> DONE
+
+    style DONE fill:#4DB33D,color:#fff
+    style REJECT fill:#DC382D,color:#fff
+    style CREDIT_PENDING fill:#F5A623,color:#fff
+```
+
+### 7-3. 프론트엔드 모듈 경계
+
+```mermaid
+flowchart TD
+    PAGES["pages/<br/>라우트 (thin wrapper)"]
+    FEATURES["features/<br/>도메인 모듈 5개<br/>customer · annual-report<br/>batch-upload · help · AccountSettings"]
+    SHARED["shared/<br/>ui · lib · store · hooks · design"]
+    COMPONENTS["components/<br/>레거시 뷰 (마이그레이션 중)"]
+    ENTITIES["entities/<br/>Zod 스키마"]
+    SERVICES["services/<br/>API 호출"]
+    CONTEXTS["contexts/<br/>React Context"]
+
+    PAGES --> FEATURES
+    PAGES --> COMPONENTS
+    PAGES --> SHARED
+
+    FEATURES --> SHARED
+    FEATURES --> ENTITIES
+    FEATURES --> SERVICES
+
+    COMPONENTS --> SHARED
+    COMPONENTS --> ENTITIES
+    COMPONENTS --> SERVICES
+    COMPONENTS -. "barrel export만 허용<br/>ESLint 자동 강제 🔒" .-> FEATURES
+
+    SERVICES --> SHARED
+    ENTITIES --> SHARED
+
+    style FEATURES fill:#4A90D9,color:#fff
+    style SHARED fill:#7B61FF,color:#fff
+    style COMPONENTS fill:#F5A623,color:#fff
+    style PAGES fill:#61DAFB,color:#333
+
+    linkStyle 9 stroke:#DC382D,stroke-width:2px,stroke-dasharray:5
+```
+
+---
+
 ## 참조
 
 - [AIMS_ARCHITECTURE_ROADMAP.md](AIMS_ARCHITECTURE_ROADMAP.md) — 개선 이력 (Phase 0 ~ R6)
