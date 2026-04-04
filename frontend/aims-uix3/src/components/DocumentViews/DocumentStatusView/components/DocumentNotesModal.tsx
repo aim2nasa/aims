@@ -212,4 +212,3 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
   )
 }
 
-export default DocumentNotesModal

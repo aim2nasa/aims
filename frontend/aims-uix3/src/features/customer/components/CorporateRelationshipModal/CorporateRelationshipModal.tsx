@@ -110,4 +110,3 @@ export const CorporateRelationshipModal: React.FC<CorporateRelationshipModalProp
   );
 };
 
-export default CorporateRelationshipModal;

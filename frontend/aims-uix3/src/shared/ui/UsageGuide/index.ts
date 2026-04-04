@@ -5,4 +5,3 @@
 
 export { UsageGuide } from './UsageGuide'
 export type { UsageGuideProps, GuideSection } from './UsageGuide'
-export { UsageGuide as default } from './UsageGuide'

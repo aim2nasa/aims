@@ -17,7 +17,7 @@ import type { CustomerMemo } from '@/entities/customer/model';
 import { useMemoController } from '@/features/customer/controllers/useMemoController';
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '@/components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
-import SFSymbol, {
+import { SFSymbol,
   SFSymbolSize,
   SFSymbolWeight,
 } from '../../../../../components/SFSymbol';
@@ -385,4 +385,3 @@ export const MemosTab: React.FC<MemosTabProps> = ({ customer }) => {
   );
 };
 
-export default MemosTab;

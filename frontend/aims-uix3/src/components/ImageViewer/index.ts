@@ -1,1 +1,2 @@
-export { ImageViewer, default } from './ImageViewer'
+export { ImageViewer} from './ImageViewer'
+export { default } from './ImageViewer'

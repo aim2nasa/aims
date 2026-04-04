@@ -200,4 +200,4 @@ export const CustomerProvider: React.FC<CustomerProviderProps> = ({ children }) 
 /**
  * 기본 내보내기
  */
-export default CustomerProvider;
+

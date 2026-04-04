@@ -90,4 +90,3 @@ export function useGlobalShortcuts({ onMenuClick }: GlobalShortcutActions): void
   }, [handleGlobalShortcuts])
 }
 
-export default useGlobalShortcuts

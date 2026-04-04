@@ -398,4 +398,3 @@ export const useCustomerRegistrationController = ({
   };
 };
 
-export default useCustomerRegistrationController;

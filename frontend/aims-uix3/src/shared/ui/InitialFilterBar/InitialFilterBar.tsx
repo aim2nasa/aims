@@ -141,4 +141,3 @@ export const InitialFilterBar: React.FC<InitialFilterBarProps> = ({
   )
 }
 
-export default InitialFilterBar

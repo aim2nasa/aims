@@ -24,7 +24,7 @@ import {
 } from '@/features/customer/api/customerReviewApi'
 import { RelationshipService, type Relationship } from '@/services/relationshipService'
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService'
-import SFSymbol, {
+import { SFSymbol,
   SFSymbolAnimation,
   SFSymbolSize,
   SFSymbolWeight

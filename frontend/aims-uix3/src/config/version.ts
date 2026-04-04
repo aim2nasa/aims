@@ -12,7 +12,7 @@ declare const __GIT_HASH__: string
 declare const __BUILD_TIME__: string
 
 export const APP_VERSION = packageJson.version
-export const APP_NAME = packageJson.name
+const APP_NAME = packageJson.name
 
 /**
  * Git commit hash (빌드 시점에 주입)
@@ -22,7 +22,7 @@ export const GIT_HASH = typeof __GIT_HASH__ !== 'undefined' ? __GIT_HASH__ : 'de
 /**
  * 빌드 날짜 (빌드 시점에 주입)
  */
-export const BUILD_TIME = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString()
+const BUILD_TIME = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString()
 
 /**
  * 전체 버전 문자열 (버전 + git hash)

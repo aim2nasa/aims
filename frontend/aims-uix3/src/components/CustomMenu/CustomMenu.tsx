@@ -3,7 +3,7 @@ import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
-import RecentCustomers from '../RecentCustomers'
+import { RecentCustomers } from '../RecentCustomers'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { flattenForCollapsed } from './menuUtils'
 import './CustomMenu.menu.css';

@@ -68,7 +68,7 @@ vi.mock('@/shared/ui/Toast/ToastContext', () => ({
 
 // === Mock: UI 컴포넌트 ===
 vi.mock('../../../CenterPaneView/CenterPaneView', () => ({
-  default: ({ children, visible }: { children: React.ReactNode; visible: boolean }) =>
+  CenterPaneView: ({ children, visible }: { children: React.ReactNode; visible: boolean }) =>
     visible ? <div>{children}</div> : null,
 }))
 

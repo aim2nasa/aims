@@ -1049,4 +1049,3 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
   )
 }
 
-export default CrFileTable

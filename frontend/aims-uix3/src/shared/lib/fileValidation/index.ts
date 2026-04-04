@@ -58,7 +58,6 @@ export type {
 export {
   BLOCKED_EXTENSIONS,
   ALLOWED_DOCUMENT_EXTENSIONS,
-  FILE_SIZE_LIMITS,
   EXTENSION_MIME_MAP,
   DANGEROUS_MIME_TYPES,
   formatFileSize,
@@ -91,14 +90,6 @@ export {
   checkStorageQuota,
   formatStorageCheckMessage,
 } from './storageChecker'
-
-// Virus Scan Utilities (API-independent functions only)
-// For full virus scan API (getScanStatus, isScanAvailable, scanFile, scanFiles),
-// import directly from '@/shared/lib/fileValidation/virusScanApi'
-export {
-  getInfectedFiles,
-  getScanSummary,
-} from './virusScanUtils'
 
 // Duplicate Checker
 export {

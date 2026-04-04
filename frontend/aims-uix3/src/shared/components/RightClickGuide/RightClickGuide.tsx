@@ -254,4 +254,3 @@ export const showRightClickGuide = () => {
   window.dispatchEvent(new CustomEvent('show-rightclick-guide'))
 }
 
-export default RightClickGuide

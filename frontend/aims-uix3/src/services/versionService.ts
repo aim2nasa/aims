@@ -47,7 +47,7 @@ export function getFrontendVersion(): ServiceVersionInfo {
  * aims_api의 /api/system/versions 단일 엔드포인트 호출
  * (다른 API들은 외부에 노출되지 않음)
  */
-export async function fetchAllBackendVersions(): Promise<ServiceVersionInfo[]> {
+async function fetchAllBackendVersions(): Promise<ServiceVersionInfo[]> {
   try {
     const response = await fetch('/api/system/versions', {
       method: 'GET',

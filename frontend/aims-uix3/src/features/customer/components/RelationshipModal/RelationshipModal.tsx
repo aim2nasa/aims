@@ -552,4 +552,3 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
   );
 };
 
-export default RelationshipModal;

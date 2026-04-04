@@ -212,4 +212,3 @@ export const useCustomerRelationshipsController = (
   };
 };
 
-export default useCustomerRelationshipsController;

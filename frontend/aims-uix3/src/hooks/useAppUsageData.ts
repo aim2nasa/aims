@@ -64,4 +64,3 @@ export function useAppUsageData(): UseAppUsageDataReturn {
   }
 }
 
-export default useAppUsageData

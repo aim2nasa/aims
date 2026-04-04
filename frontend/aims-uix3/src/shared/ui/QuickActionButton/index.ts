@@ -3,5 +3,5 @@
  * @since 1.0.0
  */
 
-export { QuickActionButton, default } from './QuickActionButton';
+export { QuickActionButton} from './QuickActionButton';
 export type { QuickActionButtonProps } from './QuickActionButton';

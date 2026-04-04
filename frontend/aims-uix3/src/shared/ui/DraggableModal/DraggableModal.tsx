@@ -273,4 +273,3 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   return createPortal(modalBody, document.body)
 }
 
-export default DraggableModal

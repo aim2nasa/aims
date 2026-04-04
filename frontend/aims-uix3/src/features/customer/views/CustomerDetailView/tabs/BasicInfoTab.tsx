@@ -194,4 +194,3 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
   );
 };
 
-export default BasicInfoTab;

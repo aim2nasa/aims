@@ -55,5 +55,3 @@ export type {
   UseContextMenuReturn
 } from './types'
 
-// Default export
-export { ContextMenu as default } from './ContextMenu'

@@ -8,8 +8,8 @@
 
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import CenterPaneView from '../../CenterPaneView/CenterPaneView';
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
 import { UsageGuide } from '@/shared/ui/UsageGuide';
 import type { GuideSection } from '@/shared/ui/UsageGuide';
@@ -19,7 +19,7 @@ import { DocumentUtils, type DocumentTypeInput } from '@/entities/document';
 import { Tooltip } from '@/shared/ui';
 import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
 import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
-import HorizontalBarChart from '@/shared/ui/HorizontalBarChart';
+import { HorizontalBarChart } from '@/shared/ui/HorizontalBarChart';
 import { Dropdown } from '@/shared/ui/Dropdown';
 import { formatDate } from '@/shared/lib/timeUtils';
 import './DocumentManagementView.css';

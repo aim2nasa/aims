@@ -120,4 +120,3 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
   )
 }
 
-export default FeedbackToast

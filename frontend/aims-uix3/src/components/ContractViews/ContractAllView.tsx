@@ -9,7 +9,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
-import CenterPaneView from '../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Button from '@/shared/ui/Button'
 import { Pagination } from '@/shared/ui/Pagination'
@@ -78,7 +78,7 @@ const COLUMN_MAX_WIDTH = 400
 // localStorage 키
 const COLUMN_WIDTHS_STORAGE_KEY = 'contractAllView_columnWidths'
 
-export default function ContractAllView({
+export function ContractAllView({
   visible,
   onClose,
   onCustomerClick,
@@ -1305,3 +1305,5 @@ export default function ContractAllView({
     </CenterPaneView>
   )
 }
+
+export default ContractAllView

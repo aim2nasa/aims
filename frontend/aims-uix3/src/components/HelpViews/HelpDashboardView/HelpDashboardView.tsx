@@ -7,7 +7,7 @@
  */
 
 import React from 'react'
-import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import './HelpDashboardView.css'
 import './HelpDashboardView.mobile.css'

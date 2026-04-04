@@ -73,4 +73,3 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   )
 }
 
-export default CloseButton

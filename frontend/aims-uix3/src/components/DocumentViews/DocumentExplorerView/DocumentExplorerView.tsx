@@ -11,7 +11,7 @@
  */
 
 import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
-import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { DocumentExplorerToolbar, type EditModeType } from './DocumentExplorerToolbar'

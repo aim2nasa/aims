@@ -35,7 +35,7 @@ const BuildingIcon = () => (
   </svg>
 )
 
-const RecentCustomers = memo(({ collapsed = false, onCustomerClick, onCustomerDoubleClick }: RecentCustomersProps) => {
+export const RecentCustomers = memo(({ collapsed = false, onCustomerClick, onCustomerDoubleClick }: RecentCustomersProps) => {
   const recentCustomers = useRecentCustomersStore((state) => state.recentCustomers)
   const clearRecentCustomers = useRecentCustomersStore((state) => state.clearRecentCustomers)
 
@@ -126,4 +126,3 @@ const RecentCustomers = memo(({ collapsed = false, onCustomerClick, onCustomerDo
 
 RecentCustomers.displayName = 'RecentCustomers'
 
-export default RecentCustomers

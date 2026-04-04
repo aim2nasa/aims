@@ -631,4 +631,3 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   )
 }
 
-export default BatchArMappingModal

@@ -471,4 +471,3 @@ export class DocumentProcessingModule {
   }
 }
 
-export default DocumentProcessingModule

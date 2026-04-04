@@ -54,4 +54,3 @@ export function ContextMenuItem({
   )
 }
 
-export default ContextMenuItem

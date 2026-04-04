@@ -165,4 +165,3 @@ export const ActionOverflowMenu: React.FC<ActionOverflowMenuProps> = ({
   )
 }
 
-export default ActionOverflowMenu

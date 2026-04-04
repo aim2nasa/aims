@@ -242,21 +242,6 @@ export class HapticService {
 }
 
 /**
- * 컴포넌트에서 사용할 수 있는 햅틱 Hook
- * React 컴포넌트에서 쉽게 햅틱을 사용할 수 있도록 도움
- */
-export const useHaptic = () => {
-  return {
-    trigger: HapticService.trigger,
-    isSupported: HapticService.isSupported(),
-    configure: HapticService.configure,
-    setEnabled: HapticService.setEnabled,
-    setIntensity: HapticService.setIntensity,
-    stop: HapticService.stop
-  }
-}
-
-/**
  * 컴포넌트 이벤트 핸들러에 햅틱을 쉽게 추가하는 유틸리티
  *
  * @param hapticType 햅틱 타입
@@ -290,4 +275,4 @@ export function withHaptic<Args extends unknown[], Return>(
 }
 
 // 기본 내보내기
-export default HapticService
+

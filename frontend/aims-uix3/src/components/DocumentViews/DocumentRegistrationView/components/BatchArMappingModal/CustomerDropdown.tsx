@@ -177,4 +177,3 @@ export const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
   )
 }
 
-export default CustomerDropdown

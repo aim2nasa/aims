@@ -179,4 +179,3 @@ export function useSSESubscription<T = unknown>(
   }
 }
 
-export default useSSESubscription

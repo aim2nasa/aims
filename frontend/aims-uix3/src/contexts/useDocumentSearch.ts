@@ -12,4 +12,3 @@ export const useDocumentSearch = (): DocumentSearchContextValue => {
   return context
 }
 
-export default useDocumentSearch

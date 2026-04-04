@@ -59,4 +59,3 @@ export const QuickActionButton: React.FC<QuickActionButtonProps> = ({
   );
 };
 
-export default QuickActionButton;

@@ -8,8 +8,8 @@
 
 import React, { useState } from 'react'
 import { Button } from '@/shared/ui/Button'
-import DraggableModal from '@/shared/ui/DraggableModal'
-import SFSymbol, {
+import { DraggableModal } from '@/shared/ui/DraggableModal'
+import { SFSymbol,
   SFSymbolAnimation,
   SFSymbolSize,
   SFSymbolWeight

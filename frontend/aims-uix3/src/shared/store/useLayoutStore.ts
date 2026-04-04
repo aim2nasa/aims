@@ -237,4 +237,4 @@ export const useLayoutStore = create<LayoutStore>((set, get) => ({
 }))
 
 // 상수 export
-export { DEFAULT_CENTER_WIDTH_PERCENT, DEFAULT_CENTER_PANE_RATIO }
+export { DEFAULT_CENTER_WIDTH_PERCENT }

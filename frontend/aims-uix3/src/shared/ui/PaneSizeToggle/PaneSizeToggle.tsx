@@ -65,4 +65,3 @@ export const PaneSizeToggle: React.FC<PaneSizeToggleProps> = ({
   )
 }
 
-export default PaneSizeToggle

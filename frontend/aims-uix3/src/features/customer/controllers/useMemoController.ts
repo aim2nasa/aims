@@ -231,4 +231,3 @@ export const useMemoController = (customerId: string): MemoControllerReturn => {
   };
 };
 
-export default useMemoController;

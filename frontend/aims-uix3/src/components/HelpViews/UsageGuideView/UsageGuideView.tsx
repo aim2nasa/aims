@@ -250,7 +250,7 @@ const CATEGORY_ICONS: Record<string, ReactNode> = {
 };
 
 
-export default function UsageGuideView({
+export function UsageGuideView({
   visible,
   onClose,
 }: UsageGuideViewProps) {
@@ -460,3 +460,5 @@ export default function UsageGuideView({
     </CenterPaneView>
   );
 }
+
+export default UsageGuideView

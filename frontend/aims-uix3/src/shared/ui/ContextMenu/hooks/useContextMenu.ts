@@ -96,4 +96,3 @@ export function useContextMenu<T = unknown>(): UseContextMenuReturn<T> {
   }
 }
 
-export default useContextMenu

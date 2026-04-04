@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react'
-import DraggableModal from '@/shared/ui/DraggableModal'
+import { DraggableModal } from '@/shared/ui/DraggableModal'
 import { Button } from '@/shared/ui'
 import type { PersonalFileItem } from '@/services/personalFilesService'
 import { errorReporter } from '@/shared/lib/errorReporter'

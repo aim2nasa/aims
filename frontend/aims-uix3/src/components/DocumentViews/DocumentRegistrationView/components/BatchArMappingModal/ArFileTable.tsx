@@ -1032,4 +1032,3 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
   )
 }
 
-export default ArFileTable

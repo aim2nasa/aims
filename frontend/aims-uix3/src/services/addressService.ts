@@ -100,4 +100,3 @@ export class AddressService {
   }
 }
 
-export default AddressService;

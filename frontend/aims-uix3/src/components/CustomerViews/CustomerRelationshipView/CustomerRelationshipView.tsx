@@ -10,8 +10,8 @@
  */
 
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import CenterPaneView from '../../CenterPaneView/CenterPaneView';
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import Tooltip from '@/shared/ui/Tooltip';
 import Button from '@/shared/ui/Button';
 import { Modal } from '@/shared/ui';

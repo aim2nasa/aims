@@ -101,4 +101,3 @@ export function usePersonalFilesSSE(
   }
 }
 
-export default usePersonalFilesSSE

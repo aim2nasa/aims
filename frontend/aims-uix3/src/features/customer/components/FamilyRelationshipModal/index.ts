@@ -1,1 +1,1 @@
-export { FamilyRelationshipModal, default } from './FamilyRelationshipModal';
+export { FamilyRelationshipModal} from './FamilyRelationshipModal';

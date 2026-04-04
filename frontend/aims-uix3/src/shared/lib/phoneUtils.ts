@@ -7,7 +7,7 @@
 /**
  * 문자열에서 숫자만 추출
  */
-export const extractDigits = (value: string): string => value.replace(/\D/g, '');
+const extractDigits = (value: string): string => value.replace(/\D/g, '');
 
 /**
  * 한국 전화번호 자동 포맷팅

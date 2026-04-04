@@ -10,4 +10,3 @@ export function ContextMenuDivider() {
   return <div className="context-menu__divider" role="separator" aria-orientation="horizontal" />
 }
 
-export default ContextMenuDivider

@@ -155,4 +155,3 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
   );
 };
 
-export default AddressArchiveModal;

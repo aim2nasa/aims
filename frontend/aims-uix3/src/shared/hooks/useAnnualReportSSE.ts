@@ -100,4 +100,3 @@ export function useAnnualReportSSE(
   }
 }
 
-export default useAnnualReportSSE

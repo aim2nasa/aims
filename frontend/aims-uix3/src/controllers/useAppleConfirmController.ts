@@ -132,4 +132,3 @@ export const useAppleConfirmController = () => {
   }
 }
 
-export default useAppleConfirmController

@@ -205,4 +205,3 @@ export const CustomerRegistrationView: React.FC = () => {
   );
 };
 
-export default CustomerRegistrationView;

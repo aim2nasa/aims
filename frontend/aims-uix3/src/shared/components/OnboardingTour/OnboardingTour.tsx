@@ -353,4 +353,3 @@ export const showOnboardingTour = () => {
   window.dispatchEvent(new CustomEvent('show-onboarding-tour'))
 }
 
-export default OnboardingTour

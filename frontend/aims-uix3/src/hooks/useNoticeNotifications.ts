@@ -47,4 +47,3 @@ export function useNoticeNotifications() {
   };
 }
 
-export default useNoticeNotifications;

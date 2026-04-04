@@ -515,8 +515,6 @@ export const {
   restoreCustomer,
   searchCustomers,
   getCustomerStats,
-  exportCustomers,
-  importCustomers,
   bulkImportCustomers,
   checkDuplicateName,
   findCustomersByContractParty,

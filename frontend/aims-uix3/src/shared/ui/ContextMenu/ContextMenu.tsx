@@ -147,4 +147,3 @@ export function ContextMenu({
   return createPortal(menuContent, document.body)
 }
 
-export default ContextMenu

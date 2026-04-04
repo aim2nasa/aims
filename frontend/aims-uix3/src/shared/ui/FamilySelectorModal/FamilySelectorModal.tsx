@@ -107,4 +107,3 @@ export const FamilySelectorModal: React.FC<FamilySelectorModalProps> = ({
   );
 };
 
-export default FamilySelectorModal;

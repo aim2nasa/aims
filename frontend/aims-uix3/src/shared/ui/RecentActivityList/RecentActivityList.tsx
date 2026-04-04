@@ -141,4 +141,3 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
   );
 };
 
-export default RecentActivityList;

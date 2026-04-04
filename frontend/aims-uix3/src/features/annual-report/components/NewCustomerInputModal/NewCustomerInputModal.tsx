@@ -418,4 +418,3 @@ export const NewCustomerInputModal: React.FC<NewCustomerInputModalProps> = ({
   );
 };
 
-export default NewCustomerInputModal;

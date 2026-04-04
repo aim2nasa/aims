@@ -135,4 +135,4 @@ export const SFSymbol: React.FC<SFSymbolProps> = ({
 }
 
 // 기본 내보내기
-export default SFSymbol
+

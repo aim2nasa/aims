@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
-import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import CustomerFileUploadArea from './CustomerFileUploadArea/CustomerFileUploadArea'
@@ -3408,7 +3408,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   )
 }
 
-export default DocumentRegistrationView
 type StoredUploadFile = {
   id: string
   status: UploadStatus
@@ -3428,3 +3427,4 @@ type StoredUploadState = Omit<UploadState, 'files'> & {
   files?: StoredUploadFile[]
 }
 
+export default DocumentRegistrationView

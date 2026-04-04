@@ -564,4 +564,3 @@ export const BatchCrMappingModal: React.FC<BatchCrMappingModalProps> = ({
   )
 }
 
-export default BatchCrMappingModal

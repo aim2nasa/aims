@@ -55,7 +55,7 @@ type ViewMode = 'list' | 'create' | 'detail';
 type SortField = 'status' | 'category' | 'title' | 'createdAt' | 'messageCount';
 type SortDirection = 'asc' | 'desc';
 
-export default function InquiryView({
+export function InquiryView({
   visible,
   onClose,
   unreadIds = new Set(),
@@ -905,3 +905,5 @@ export default function InquiryView({
     </>
   );
 }
+
+export default InquiryView

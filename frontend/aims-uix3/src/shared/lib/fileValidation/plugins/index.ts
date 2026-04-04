@@ -19,7 +19,7 @@ import { validateMimeType } from '../validators/mimeTypeValidator'
  * 위험한 확장자(exe, bat, dll, ps1 등)를 가진 파일을 차단합니다.
  * Priority: 10 (가장 먼저 실행)
  */
-export const extensionValidatorPlugin: FileValidator = {
+const extensionValidatorPlugin: FileValidator = {
   name: 'extension',
   priority: 10,
   enabled: true,
@@ -33,7 +33,7 @@ export const extensionValidatorPlugin: FileValidator = {
  * 0바이트(빈 파일)를 차단합니다. Phase 1: 개별 크기 상한 없음.
  * Priority: 20
  */
-export const fileSizeValidatorPlugin: FileValidator = {
+const fileSizeValidatorPlugin: FileValidator = {
   name: 'fileSize',
   priority: 20,
   enabled: true,
@@ -47,7 +47,7 @@ export const fileSizeValidatorPlugin: FileValidator = {
  * 확장자와 MIME 타입 불일치(위조 파일)를 탐지합니다.
  * Priority: 30
  */
-export const mimeTypeValidatorPlugin: FileValidator = {
+const mimeTypeValidatorPlugin: FileValidator = {
   name: 'mime',
   priority: 30,
   enabled: true,

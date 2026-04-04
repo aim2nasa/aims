@@ -64,7 +64,7 @@ function getTierDisplayName(tier?: string, tierName?: string): string {
   return tierMap[tier || ''] || tier || '알 수 없음'
 }
 
-export default function CreditExceededDialog({
+export function CreditExceededDialog({
   visible,
   onClose,
   creditInfo
@@ -177,3 +177,4 @@ export default function CreditExceededDialog({
     </Modal>
   )
 }
+

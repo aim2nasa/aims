@@ -214,4 +214,3 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
   )
 }
 
-export default ViewerControls

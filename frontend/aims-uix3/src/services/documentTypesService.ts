@@ -72,4 +72,3 @@ export const documentTypesService = {
   autoClassifyDocument
 }
 
-export default documentTypesService

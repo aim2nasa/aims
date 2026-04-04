@@ -1,4 +1,5 @@
 /**
  * ChatPanel 컴포넌트 exports
  */
-export { ChatPanel, default } from './ChatPanel';
+export { ChatPanel} from './ChatPanel';
+export { default } from './ChatPanel';

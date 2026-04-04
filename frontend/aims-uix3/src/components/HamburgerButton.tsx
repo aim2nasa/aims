@@ -47,4 +47,4 @@ const HamburgerButton: React.FC<HamburgerButtonProps> = ({
   );
 };
 
-export default memo(HamburgerButton);
+export default HamburgerButton

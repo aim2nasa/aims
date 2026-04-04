@@ -140,4 +140,3 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
   )
 }
 
-export default AppleConfirmModal

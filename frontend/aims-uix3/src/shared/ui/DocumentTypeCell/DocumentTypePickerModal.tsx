@@ -220,4 +220,4 @@ export const DocumentTypePickerPopover: React.FC<DocumentTypePickerPopoverProps>
 
 // 하위 호환성
 export const DocumentTypePickerModal = DocumentTypePickerPopover
-export default DocumentTypePickerPopover
+

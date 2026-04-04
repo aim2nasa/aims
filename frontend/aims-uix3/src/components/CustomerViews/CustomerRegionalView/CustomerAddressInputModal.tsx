@@ -229,4 +229,3 @@ export const CustomerAddressInputModal: React.FC<CustomerAddressInputModalProps>
   );
 };
 
-export default CustomerAddressInputModal;

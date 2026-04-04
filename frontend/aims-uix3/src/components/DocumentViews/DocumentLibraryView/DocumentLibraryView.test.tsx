@@ -196,7 +196,7 @@ vi.mock('@/entities/document', () => ({
 
 // Mock sub-components and utilities
 vi.mock('../../CenterPaneView/CenterPaneView', () => ({
-  default: ({ children }: any) => <div data-testid="center-pane-view">{children}</div>,
+  CenterPaneView: ({ children }: any) => <div data-testid="center-pane-view">{children}</div>,
 }))
 
 vi.mock('@/shared/ui', () => ({

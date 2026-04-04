@@ -16,7 +16,7 @@ export interface AIUsageChartProps {
   height?: number;
 }
 
-const AIUsageChart: React.FC<AIUsageChartProps> = ({
+export const AIUsageChart: React.FC<AIUsageChartProps> = ({
   data,
   title = 'AI 사용량 추이',
   height = 200
@@ -71,4 +71,3 @@ const AIUsageChart: React.FC<AIUsageChartProps> = ({
   );
 };
 
-export default AIUsageChart;

@@ -246,4 +246,3 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
   );
 };
 
-export default BasicInfoSection;

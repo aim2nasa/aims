@@ -246,4 +246,3 @@ export function useCustomerSSE(
   }
 }
 
-export default useCustomerSSE

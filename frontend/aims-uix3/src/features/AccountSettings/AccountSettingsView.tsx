@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
-import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import Button from '@/shared/ui/Button'
 import Modal from '@/shared/ui/Modal/Modal'

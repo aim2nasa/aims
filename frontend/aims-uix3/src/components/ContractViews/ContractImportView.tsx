@@ -6,7 +6,7 @@
  * CenterPaneView 기반 구현
  */
 
-import CenterPaneView from '../CenterPaneView/CenterPaneView'
+import { CenterPaneView } from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import ExcelRefiner from './components/ExcelRefiner'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
@@ -19,7 +19,7 @@ interface ContractImportViewProps {
   onClose: () => void
 }
 
-export default function ContractImportView({
+export function ContractImportView({
   visible,
   onClose
 }: ContractImportViewProps) {
@@ -49,3 +49,5 @@ export default function ContractImportView({
     </CenterPaneView>
   )
 }
+
+export default ContractImportView

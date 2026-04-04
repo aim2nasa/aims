@@ -98,7 +98,7 @@ export function setActiveCustomer(customerId: string): void {
  *
  * 고객 선택이 해제되었을 때 호출합니다.
  */
-export function clearActiveCustomer(): void {
+function clearActiveCustomer(): void {
   activeCustomerId = null;
 }
 
