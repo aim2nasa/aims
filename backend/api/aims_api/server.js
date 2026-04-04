@@ -200,7 +200,12 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', require('./routes/users-routes')(db, authenticateJWT, generateToken, qdrantClient, QDRANT_COLLECTION));
 
     const customersRoutes = require('./routes/customers-routes');
-    app.use('/api', customersRoutes(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, QDRANT_COLLECTION, upload));
+    app.use('/api', customersRoutes(db, authenticateJWT, authenticateJWTorAPIKey, qdrantClient, QDRANT_COLLECTION));
+    app.use('/api', require('./routes/annual-report-routes')(db, authenticateJWT, authenticateJWTWithQuery, upload));
+    app.use('/api', require('./routes/customer-documents-routes')(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, QDRANT_COLLECTION, upload));
+    app.use('/api', require('./routes/notification-routes')(db, authenticateJWT, authenticateJWTWithQuery));
+    app.use('/api', require('./routes/customer-memos-routes')(db, authenticateJWT, authenticateJWTorAPIKey));
+    app.use('/api', require('./routes/address-history-routes')(db, authenticateJWT));
 
     const adminRoutes = require('./routes/admin-routes');
     app.use('/api', adminRoutes(db, analyticsDb, authenticateJWT, requireRole, qdrantClient, QDRANT_COLLECTION));
