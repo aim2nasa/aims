@@ -377,12 +377,37 @@ def run_service_tests(services):
     return results
 
 
+def check_gini_gate(input_data):
+    """
+    Gini 검수 게이트: .gini-approved 마커 파일 존재 여부 확인
+    - 마커 있으면 삭제 후 통과 (True 반환)
+    - 마커 없으면 차단 메시지 출력 후 exit(2)
+    """
+    marker = os.path.join(os.environ.get("AIMS_ROOT", "D:/aims"), ".gini-approved")
+    if os.path.exists(marker):
+        try:
+            os.remove(marker)
+        except OSError:
+            pass
+        return True
+    else:
+        sys.stderr.write(
+            "[GINI GATE] git commit 직접 실행 금지! "
+            "/gini-commit 스킬을 사용하세요. "
+            "Gini 품질 검수를 반드시 거쳐야 합니다.\n"
+        )
+        sys.exit(2)
+
+
 def main():
     input_data = get_stdin()
 
     # git commit 명령이 아니면 즉시 통과
     if not is_git_commit(input_data):
         sys.exit(0)
+
+    # ━━━━━━ 0단계: Gini 검수 게이트 ━━━━━━
+    check_gini_gate(input_data)
 
     diff = get_staged_diff()
     files = get_staged_files()

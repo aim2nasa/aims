@@ -45,7 +45,7 @@ def run_typecheck() -> tuple[int, str]:
     try:
         result = subprocess.run(
             ["npm", "run", "typecheck"],
-            capture_output=True, text=True, timeout=30, cwd=FRONTEND_DIR,
+            capture_output=True, text=True, timeout=60, cwd=FRONTEND_DIR,
             shell=True
         )
         output = result.stderr + result.stdout
@@ -58,7 +58,7 @@ def run_typecheck() -> tuple[int, str]:
         summary = "\n".join(lines)
         return error_count, summary
     except subprocess.TimeoutExpired:
-        return -1, "typecheck timeout (30s)"
+        return -1, "typecheck timeout (60s)"
     except Exception as e:
         return -1, str(e)
 

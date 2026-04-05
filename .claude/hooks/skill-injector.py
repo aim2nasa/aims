@@ -70,6 +70,20 @@ SKILL_MAP = [
             r"pdfplumber", r"보유계약\s*현황",
         ],
     },
+    {
+        "skill": "css-rules",
+        "keywords": [
+            r"CSS", r"스타일", r"색상", r"color", r"font", r"레이아웃",
+            r"layout", r"애니메이션", r"animation", r"transition",
+        ],
+    },
+    {
+        "skill": "ui-components",
+        "keywords": [
+            r"툴팁", r"tooltip", r"모달", r"modal", r"버튼", r"button",
+            r"드롭다운", r"dropdown", r"토스트", r"toast", r"팝오버", r"popover",
+        ],
+    },
 ]
 
 def load_skill(skill_name: str) -> str | None:
