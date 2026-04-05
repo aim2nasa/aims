@@ -3,6 +3,7 @@ SmartSearch Router - Document Search Handler
 Replaces n8n SmartSearch workflow
 """
 import logging
+import math
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -84,6 +85,8 @@ _SCORE_FIELDS_LOW = [
 
 WEIGHT_HIGH = 3
 WEIGHT_LOW = 1
+# full_text에서만 매칭된 문서의 최소 점수 (projection에서 full_text 제외로 점수 0 방지)
+WEIGHT_BASELINE = 0.5
 # 모든 키워드가 파일명에 매칭될 때 추가 보너스 (키워드 수에 비례)
 ALL_MATCH_BONUS_MULTIPLIER = 5
 
@@ -140,7 +143,33 @@ def _compute_relevance_score(doc: dict, keywords: List[str]) -> float:
     if len(unique_keywords) >= 2 and filename_match_count == len(unique_keywords):
         score += len(unique_keywords) * ALL_MATCH_BONUS_MULTIPLIER
 
+    # baseline: MongoDB가 반환한 문서는 full_text 등에서 매칭된 것이므로 점수 0이면 안 됨
+    # (projection에서 full_text를 제외하여 점수 필드에서 매칭 못 찾는 경우)
+    if score == 0 and unique_keywords:
+        score = WEIGHT_BASELINE * len(unique_keywords)
+
     return score
+
+
+def _paginate(total: int, page: int, page_size: int) -> dict:
+    """페이지네이션 메타 계산: total_pages, start, end 인덱스 반환"""
+    total_pages = math.ceil(total / page_size) if total > 0 else 0
+    start = (page - 1) * page_size
+    end = start + page_size
+    return {"total_pages": total_pages, "start": start, "end": end}
+
+
+def _restore_order(page_docs: list, full_docs: list) -> list:
+    """page_docs의 ID 순서대로 full_docs를 정렬하여 반환.
+    MongoDB 재조회는 ID 순서를 보장하지 않으므로 매핑으로 복원한다.
+    재조회 실패 시 원본(full_text 없는) 문서를 fallback으로 사용."""
+    id_to_full = {str(doc.get("_id", "")): doc for doc in full_docs}
+    result = []
+    for doc in page_docs:
+        doc_id_str = str(doc.get("_id", ""))
+        full_doc = id_to_full.get(doc_id_str)
+        result.append(full_doc if full_doc else doc)
+    return result
 
 
 class SearchRequest(BaseModel):
@@ -149,6 +178,8 @@ class SearchRequest(BaseModel):
     mode: Optional[str] = "OR"  # OR or AND
     user_id: str = "tester"
     customer_id: Optional[str] = ""
+    page: int = 1           # 페이지 번호 (1-based)
+    page_size: int = 20     # 페이지 크기
 
 
 @router.post("/smartsearch")
@@ -169,13 +200,14 @@ async def smart_search(request: SearchRequest):
         mode = (request.mode or "OR").upper()
         user_id = request.user_id
         customer_id = (request.customer_id or "").strip()
+        page = max(1, request.page)
+        page_size = max(1, min(100, request.page_size))  # 1~100 범위 제한
 
         # Build MongoDB query
         mongo_query = None
         effective_keywords = []  # 점수 계산에 사용할 키워드
-        is_keyword_search = False  # 키워드 검색 여부 (projection 적용 판단용)
 
-        # 1. Search by ID
+        # 1. Search by ID — 기존 List[dict] 반환 (하위 호환)
         if doc_id:
             try:
                 conditions = [
@@ -189,15 +221,20 @@ async def smart_search(request: SearchRequest):
                 logger.warning(f"Invalid ObjectId: {doc_id}, error: {e}")
                 return []
 
-        # 2. Search by keywords
+            results = await query_files(mongo_query, limit=1000)
+            await _enrich_customer_relations(results, user_id)
+            results = [_convert_objectids(doc) for doc in results]
+            logger.info(f"SmartSearch ID: id='{doc_id}', results={len(results)}")
+            return results
+
+        # 2. Search by keywords — 페이지네이션 응답
         elif query:
             raw_keywords = [k.strip() for k in query.split() if k.strip()]
             if not raw_keywords:
-                return []
+                return {"results": [], "total": 0, "page": page, "page_size": page_size, "total_pages": 0}
 
             # 불용어 필터링
             effective_keywords = _filter_stopwords(raw_keywords)
-            is_keyword_search = True
             logger.info(f"SmartSearch keywords: raw={raw_keywords} -> filtered={effective_keywords}")
 
             # Fields to search (displayName 추가)
@@ -235,31 +272,53 @@ async def smart_search(request: SearchRequest):
 
             mongo_query = {"$and": conditions}
 
-        # 3. No search criteria
-        else:
-            return []
-
-        # Execute query — Internal API 경유
-        if is_keyword_search:
+            # [1단계] MongoDB 쿼리 (full_text 제외 projection으로 성능 보호)
             results = await query_files(mongo_query, projection=_KEYWORD_SEARCH_PROJECTION, limit=1000)
-        else:
-            results = await query_files(mongo_query, limit=1000)
 
-        # customer_relation 보강: customerId 기반 고객명 batch 조회 (ObjectId 변환 전에 수행)
-        await _enrich_customer_relations(results, user_id)
-
-        # 키워드 매칭 점수 기반 정렬 + 결과 수 제한 (키워드 검색일 때만)
-        if effective_keywords:
+            # [2단계] 점수 계산 + 정렬 (full_text 없이 가능한 필드 + baseline 점수)
             results.sort(
                 key=lambda doc: _compute_relevance_score(doc, effective_keywords),
                 reverse=True
             )
 
-        # Convert all ObjectId/datetime to string for JSON serialization
-        results = [_convert_objectids(doc) for doc in results]
+            # [3단계] 총 건수 + 해당 페이지 슬라이싱
+            total = len(results)
+            pag = _paginate(total, page, page_size)
+            total_pages = pag["total_pages"]
+            page_docs = results[pag["start"]:pag["end"]]
 
-        logger.info(f"SmartSearch: query='{query}', id='{doc_id}', mode={mode}, results={len(results)}")
-        return results
+            if not page_docs:
+                return {"results": [], "total": total, "page": page, "page_size": page_size, "total_pages": total_pages}
+
+            # [4단계] 해당 페이지 문서만 full_text 포함 재조회
+            page_ids = [doc["_id"] for doc in page_docs]
+            full_docs = await query_files(
+                {"_id": {"$in": page_ids}, "ownerId": user_id},
+                limit=page_size
+            )
+
+            # 정렬 순서 유지 (재조회 결과는 MongoDB 반환 순서이므로 원래 순서로 복원)
+            final_results = _restore_order(page_docs, full_docs)
+
+            # customer_relation 보강 (ObjectId 변환 전에 수행)
+            await _enrich_customer_relations(final_results, user_id)
+
+            # Convert all ObjectId/datetime to string for JSON serialization
+            final_results = [_convert_objectids(doc) for doc in final_results]
+
+            # [5단계] 페이지네이션 응답 반환
+            logger.info(f"SmartSearch: query='{query}', mode={mode}, total={total}, page={page}/{total_pages}")
+            return {
+                "results": final_results,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": total_pages
+            }
+
+        # 3. No search criteria
+        else:
+            return []
 
     except Exception as e:
         logger.error(f"SmartSearch failed: {str(e)}")

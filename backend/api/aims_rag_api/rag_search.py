@@ -591,29 +591,40 @@ async def search_endpoint(request: SearchRequest, raw_request: Request):
             )
 
     if request.search_mode == "keyword":
-        # 키워드 검색 로직 (페이지네이션 지원)
-        payload = {"query": request.query, "mode": request.mode, "user_id": request.user_id}
+        # 키워드 검색 로직 — smartsearch 백엔드 페이지네이션 활용
+        # page 계산: offset/top_k → page/page_size 변환
+        page_size = request.top_k or 20
+        page = (request.offset // page_size) + 1 if request.offset else 1
+
+        payload = {
+            "query": request.query,
+            "mode": request.mode,
+            "user_id": request.user_id,
+            "page": page,
+            "page_size": page_size,
+        }
         if request.customer_id:
             payload["customer_id"] = request.customer_id
         try:
             response = requests.post(SMARTSEARCH_API_URL, json=payload)
             response.raise_for_status()
 
-            # 응답 구조를 통일된 형식으로 변경 + 페이지네이션 적용
-            raw_results = response.json()
+            raw_response = response.json()
 
-            # 🔥 페이지네이션: offset과 top_k 적용 (top_k=None이면 전체 반환)
-            total_count = len(raw_results) if isinstance(raw_results, list) else 0
-            if isinstance(raw_results, list):
-                if request.top_k is not None:
-                    paginated_results = raw_results[request.offset:request.offset + request.top_k]
-                else:
-                    paginated_results = raw_results[request.offset:]
+            # smartsearch 응답 형식 분기: dict(페이지네이션) / list(레거시 호환)
+            if isinstance(raw_response, dict) and "results" in raw_response:
+                # 페이지네이션 응답 (full_text 포함)
+                paginated_results = raw_response["results"]
+                total_count = raw_response.get("total", len(paginated_results))
+                total_pages = raw_response.get("total_pages", 1)
+                has_more = page < total_pages
             else:
-                paginated_results = raw_results
-            has_more = (request.offset + len(paginated_results)) < total_count
+                # 레거시 List[dict] 응답 (ID 검색 등)
+                total_count = len(raw_response) if isinstance(raw_response, list) else 0
+                paginated_results = raw_response if isinstance(raw_response, list) else []
+                has_more = False
 
-            print(f"✅ 키워드 검색 완료: 전체 {total_count}개 중 {len(paginated_results)}개 반환 (offset={request.offset}, top_k={request.top_k})")
+            print(f"✅ 키워드 검색 완료: 전체 {total_count}개 �� {len(paginated_results)}개 반환 (page={page}, page_size={page_size})")
 
             return UnifiedSearchResponse(
                 search_mode="keyword",

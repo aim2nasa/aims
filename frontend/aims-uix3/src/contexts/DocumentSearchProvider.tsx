@@ -24,6 +24,8 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
   const [answer, setAnswer] = useState<string | null>(null)
   // 현재 세션에서 검색 실행 여부 (새로고침 시 초기화 → 가이드 표시)
   const [lastSearchMode, setLastSearchMode] = useState<SearchMode | null>(null)
+  // 키워드 검색 백엔드 페이지네이션: 전체 결과 수
+  const [totalCount, setTotalCount] = useState<number | null>(null)
 
   // 임시 상태들 (새로고침 시 초기화되어도 됨)
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -49,6 +51,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     setError(null)
     setResults([])
     setAnswer(null)
+    setTotalCount(null)
 
     try {
       const searchQuery = {
@@ -63,6 +66,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
       setResults(response.search_results)
       setAnswer(response.answer || null)
       setLastSearchMode(searchMode)
+      setTotalCount(response.total_count ?? null)
     } catch (err) {
       // 사용자 취소 시 에러 표시하지 않음
       if (err instanceof DOMException && err.name === 'AbortError') {
@@ -81,6 +85,51 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
       }
     }
   }, [keywordMode, query, searchMode, customerId])
+
+  const handleKeywordPageSearch = useCallback(async (page: number) => {
+    if (!query.trim()) return
+
+    // 이전 진행 중인 요청 중단
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const pageSize = 20
+      const offset = (page - 1) * pageSize
+
+      const searchQuery = {
+        query: query.trim(),
+        search_mode: 'keyword' as const,
+        mode: keywordMode,
+        top_k: pageSize,
+        offset,
+        ...(customerId && { customer_id: customerId }),
+      }
+
+      const response = await SearchService.searchDocuments(searchQuery, controller.signal)
+
+      setResults(response.search_results)
+      setTotalCount(response.total_count ?? null)
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      console.error('[DocumentSearchProvider] 페이지 검색 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'DocumentSearchProvider.handleKeywordPageSearch' })
+      setError('검색 중 오류가 발생했습니다. 다시 시도해 주세요.')
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsLoading(false)
+      }
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null
+      }
+    }
+  }, [keywordMode, query, customerId])
 
   const handleCancel = useCallback(() => {
     if (abortControllerRef.current) {
@@ -116,6 +165,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     setError(null)
     setLastSearchMode(null)
     setCustomerId(null)
+    setTotalCount(null)
   }, [])
 
   const value: DocumentSearchContextValue = {
@@ -128,7 +178,9 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     isLoading,
     error,
     lastSearchMode,
+    totalCount,
     handleSearch,
+    handleKeywordPageSearch,
     handleQueryChange,
     handleSearchModeChange,
     handleKeywordModeChange,

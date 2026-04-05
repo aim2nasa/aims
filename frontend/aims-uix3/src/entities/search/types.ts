@@ -28,8 +28,10 @@ export interface SearchQuery {
   mode?: KeywordMode
   /** 고객 ID (특정 고객의 문서만 검색) */
   customer_id?: string
-  /** 결과 개수 제한 (질문검색/semantic 모드에서만 사용) */
+  /** 결과 개수 제한 */
   top_k?: number
+  /** 페이지네이션 오프셋 (건너뛸 결과 수) */
+  offset?: number
 }
 
 /**
@@ -165,6 +167,10 @@ export interface SearchResponse {
   search_results: SearchResultItem[]
   /** 검색 모드 */
   search_mode: SearchMode
+  /** 전체 검색 결과 수 (백엔드 페이지네이션) */
+  total_count?: number
+  /** 더 많은 결과 존재 여부 */
+  has_more?: boolean
 }
 
 /**

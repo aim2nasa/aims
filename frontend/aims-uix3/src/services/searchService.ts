@@ -91,6 +91,8 @@ export class SearchService {
         answer: data.answer || null,
         search_results: data.search_results || [],
         search_mode: query.search_mode,
+        total_count: data.total_count,
+        has_more: data.has_more,
       }
     } catch (error) {
       console.error('[SearchService] 검색 오류:', error)
