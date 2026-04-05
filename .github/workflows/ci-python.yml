@@ -8,7 +8,7 @@ jobs:
   python-test:
     name: Python Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     services:
       mongodb:
@@ -35,6 +35,7 @@ jobs:
           pip install --no-cache-dir -r backend/api/annual_report_api/requirements.txt
           pip install --no-cache-dir -r backend/api/aims_rag_api/requirements.txt
           pip install --no-cache-dir -r backend/api/pdf_proxy/requirements.txt
+          pip install --no-cache-dir -r backend/api/document_pipeline/requirements.txt
           pip install ruff
 
       - name: Lint Python (ruff)
@@ -55,3 +56,9 @@ jobs:
           OPENAI_API_KEY: sk-test-mock-key-for-ci-testing-only
         run: |
           cd backend/api/aims_rag_api && python -m pytest -v
+
+      - name: Run document_pipeline tests
+        env:
+          OPENAI_API_KEY: sk-test-mock-key-for-ci-testing-only
+        run: |
+          cd backend/api/document_pipeline && python -m pytest tests/ -v --ignore=tests/smoke_test.py --ignore=tests/generate_fixtures.py

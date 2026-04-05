@@ -8,7 +8,7 @@ jobs:
   backend-test:
     name: Backend Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     services:
       mongodb:
@@ -41,7 +41,17 @@ jobs:
           cd backend/api/aims_api
           npm ci
 
-      - name: Run backend tests
+      - name: Run backend tests (aims_api)
         run: |
           cd backend/api/aims_api
           npm run test:ci
+
+      - name: Install aims_mcp dependencies
+        run: |
+          cd backend/api/aims_mcp
+          npm ci
+
+      - name: Run aims_mcp tests
+        run: |
+          cd backend/api/aims_mcp
+          npx vitest run --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**' --exclude='**/__tests__/conversation/**' --exclude='**/*.e2e.test.ts' --exclude='**/__tests__/cross-platform-consistency.test.ts'
