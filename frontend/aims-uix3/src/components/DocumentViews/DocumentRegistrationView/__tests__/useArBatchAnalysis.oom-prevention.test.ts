@@ -102,10 +102,10 @@ describe('useArBatchAnalysis - OOM 방지 대량 파일 시뮬레이션', () => 
       useArBatchAnalysis({ userId: 'test-user' })
     )
 
-    let _groupingResult: Awaited<ReturnType<typeof result.current.analyzeArFiles>> = null
+    let groupingResult: Awaited<ReturnType<typeof result.current.analyzeArFiles>> = null
 
     await act(async () => {
-      _groupingResult = await result.current.analyzeArFiles(files)
+      groupingResult = await result.current.analyzeArFiles(files)
     })
 
     // ── 1. AR 분석 호출 검증 ──
