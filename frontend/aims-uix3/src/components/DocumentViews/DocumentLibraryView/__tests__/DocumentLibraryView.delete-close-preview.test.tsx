@@ -110,7 +110,7 @@ describe('DocumentLibraryView - 문서 삭제 시 프리뷰 창 닫기', () => {
         executionOrder.push('exit_delete_mode')
       })
       const onDocumentDeleted = vi.fn(() => executionOrder.push('close_preview'))
-      const loadDocuments = vi.fn((_params: any, _silent: boolean) => {
+      const loadDocuments = vi.fn((_params: Record<string, unknown>, _silent: boolean) => {
         executionOrder.push('reload_list')
       })
 
@@ -143,7 +143,7 @@ describe('DocumentLibraryView - 문서 삭제 시 프리뷰 창 닫기', () => {
       const setIsDeleteMode = vi.fn((_value: boolean) => {
         executionOrder.push('exit_delete_mode')
       })
-      const loadDocuments = vi.fn((_params: any, _silent: boolean) => {
+      const loadDocuments = vi.fn((_params: Record<string, unknown>, _silent: boolean) => {
         executionOrder.push('reload_list')
       })
 

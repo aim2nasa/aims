@@ -326,6 +326,7 @@ const DocumentLibraryContent: React.FC<{
       }
     }
     prevBulkLinkModeRef.current = isBulkLinkMode
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- controller는 매 렌더 재생성되므로 의도적 제외
   }, [isBulkLinkMode])
 
   // 🍎 문서 컨텍스트 메뉴
@@ -636,6 +637,7 @@ const DocumentLibraryContent: React.FC<{
     if (itemsPerPageMode === 'auto' && autoCalculatedItems > 0 && autoCalculatedItems < 9999) {
       controller.handleLimitChange(autoCalculatedItems, false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- controller는 매 렌더 재생성되므로 의도적 제외
   }, [itemsPerPageMode, autoCalculatedItems, controller.handleLimitChange])
 
   // 🍎 드롭다운 옵션 (자동 선택 시 계산된 값 표시)
@@ -662,6 +664,7 @@ const DocumentLibraryContent: React.FC<{
       localStorage.setItem('aims-items-per-page-mode', 'manual')
       controller.handleLimitChange(Number(value))
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- controller는 매 렌더 재생성되므로 의도적 제외
   }, [controller.handleLimitChange])
 
   // 클릭 피드백은 Pagination 컴포넌트 내부에서 처리
@@ -1526,7 +1529,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         showCancel: false,
       })
     }
-  }, [confirmModal])
+  }, [confirmModal, onDocumentDeleted])
 
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="전체 문서 보기" titleIcon={<span className="menu-icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>} breadcrumbItems={breadcrumbItems} onBreadcrumbClick={onNavigate}>
