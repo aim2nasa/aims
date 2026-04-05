@@ -86,6 +86,16 @@ else:
 if not os.path.exists(CAPTURE_DIR):
     os.makedirs(CAPTURE_DIR)
 
+# PROD 진단 스크린샷 디렉토리 (.diag - 숨김 폴더)
+_DIAG_DIR = os.path.join(CAPTURE_DIR, ".diag")
+# 이전 세션 잔여 파일 정리 후 새로 생성
+import shutil as _shutil
+if os.path.exists(_DIAG_DIR):
+    try:
+        _shutil.rmtree(_DIAG_DIR)
+    except:
+        pass
+
 # DEV_MODE 판별: AC_EXE_PATH 존재=패키징(프로덕션), 미존재=소스(개발)
 # 주의: sys.frozen은 PyInstaller exe 내부에서만 True.
 #        이 스크립트는 SikuliX Jython에서 실행되므로 sys.frozen은 항상 False!
@@ -96,6 +106,13 @@ if os.environ.get("AC_DEV_MODE", "").strip() == "1":
     DEV_MODE = True
 elif os.environ.get("AC_DEV_MODE", "").strip() == "0":
     DEV_MODE = False
+
+# PROD 모드에서만 .diag 디렉토리 생성
+if not DEV_MODE:
+    try:
+        os.makedirs(_DIAG_DIR)
+    except:
+        pass
 
 # ============================================================
 # DEV_DIR / PROD 암호화 진단 초기화
@@ -366,6 +383,21 @@ def _debug_mark_region(x, y, w, h, label=""):
     _debug_markers.append(("region", int(x), int(y), int(w), int(h), label))
     if len(_debug_markers) > 20:
         _debug_markers = _debug_markers[-20:]
+
+def _diag_screenshot(label):
+    """PROD 진단용 스크린샷 저장 (정상 완료 시 자동 삭제)"""
+    if DEV_MODE or not os.path.exists(_DIAG_DIR):
+        return  # DEV에서는 기존 diagnostic 사용
+    try:
+        temp_path = capture(SCREEN)
+        if temp_path:
+            filename = u"step_%s_%s.png" % (label, _date_str)
+            dest = os.path.join(_DIAG_DIR, filename)
+            import shutil
+            shutil.copy(temp_path, dest)
+    except:
+        pass  # 진단 실패가 본 작업을 방해하면 안 됨
+
 
 def _take_crash_screenshot(label):
     """크래시 시 스크린샷 저장 (SikuliX capture 사용) + 디버그 마커 오버레이"""
@@ -1845,16 +1877,19 @@ try:
     click("img/1769598099792.png")  # MetLife 로고 [100% 줌]
     log(u"  [1-1] 메인 화면 로딩 대기 (10초)...")
     sleep(10)
+    _diag_screenshot("1-1_main")
 
     # 공지사항 팝업 닫기 (레이어링 대응 - 모두 닫을 때까지 반복)
     log(u"  [1-1a] 공지사항 팝업 확인...")
     dismiss_notice_popups()
+    _diag_screenshot("1-1a_popup_done")
 
     log(u"  [1-2] 고객관리 클릭...")
     _mgmt = find("img/1769598228284.png")  # 고객관리 탭 [100% 줌]
     _debug_mark_click(_mgmt.getTarget().x, _mgmt.getTarget().y, "1-2 mgmt tab")
     click(_mgmt)
     sleep(5)  # 서브메뉴 열릴 시간 확보
+    _diag_screenshot("1-2_mgmt")
 
     # "고객등록 >"과 "고객관리 >"가 시각적으로 유사하여 오매칭 발생
     # → 드롭다운은 고객관리 탭 아래~오른쪽에 나타남
@@ -1884,10 +1919,41 @@ try:
     except:
         pass
     sleep(3)
+    _diag_screenshot("1-3_reg")
 
     log(u"  [1-4] 고객목록조회 클릭...")
     click("img/1769598272319.png")  # 고객목록조회 [100% 줌]
     sleep(5)
+    _diag_screenshot("1-4_custlist")
+
+    # 1단계 완료 검증: 초성 버튼(ㄱ)이 화면에 보이는지 확인
+    if not exists("img/1769598464024.png", 5):  # ㄱ 버튼
+        log(u"  [WARN] 고객목록조회 화면 미도달 — 1단계 재시도")
+        _diag_screenshot("1-4_verify_fail")
+        # MetLife 로고로 초기화 후 재시도
+        click("img/1769598099792.png")  # MetLife 로고
+        sleep(10)
+        dismiss_notice_popups()
+        _mgmt = find("img/1769598228284.png")  # 고객관리 탭
+        click(_mgmt)
+        sleep(5)
+        _dd_region = Region(int(_mgmt.x), int(_mgmt.y + _mgmt.h), int(_mgmt.w) + 60, 75)
+        for _reg_retry in range(3):
+            _reg_match = _dd_region.exists("img/customer_reg_menu.png", 5)
+            if _reg_match:
+                _dd_region.click(_reg_match)
+                break
+            if _reg_retry < 2:
+                sleep(1)
+        else:
+            _dd_region.click("img/customer_reg_menu.png")
+        sleep(3)
+        click("img/1769598272319.png")  # 고객목록조회
+        sleep(5)
+        _diag_screenshot("1-4_retry_result")
+        if not exists("img/1769598464024.png", 5):
+            _diag_screenshot("1-4_retry_fail")
+            raise Exception(u"1단계 재시도 실패: 고객목록조회 화면 미도달")
 
 except:
     # bare except: Java 예외(SikuliX FindFailed) + Python 예외 모두 캐치
@@ -1927,6 +1993,8 @@ all_error_customers = []
 # OCR 연속 실패 추적
 MAX_OCR_FAILURES = 3  # 연속 실패 허용 횟수
 ocr_consecutive_failures = 0  # 연속 실패 카운터
+
+_diag_screenshot("2-0_before_chosung")
 
 for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     chosung_start_time = time.time()
@@ -2691,5 +2759,13 @@ if INTEGRATED_VIEW_ENABLED and not SCROLL_TEST:
         log(u"[3단계 SKIP] generate_reports.py 없음 + AC_EXE_PATH 없음 → 리포트 생성 건너뜀")
 
 log("=" * 60)
+
+# 정상 완료 → 진단 스크린샷 삭제
+if os.path.exists(_DIAG_DIR):
+    try:
+        import shutil
+        shutil.rmtree(_DIAG_DIR)
+    except:
+        pass
 
 # dev 폴더 정리 및 로그 닫기는 atexit 핸들러(_cleanup_on_exit)에서 처리
