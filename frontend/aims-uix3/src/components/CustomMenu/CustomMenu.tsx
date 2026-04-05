@@ -423,7 +423,7 @@ const CustomMenu = ({
         },
         {
           key: 'customers-register',
-          icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+          icon: <span className="menu-icon-orange"><SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
           label: '고객 수동등록',
           tooltipTitle: '고객 수동등록',
         },
@@ -445,19 +445,19 @@ const CustomMenu = ({
     // ━━━ 고객 ━━━
     {
       key: 'customers',
-      icon: <MenuIcons.User />,
+      icon: <span className="menu-icon-blue"><MenuIcons.User /></span>,
       label: '고객',
       tooltipTitle: '고객',
       children: [
         {
           key: 'customers-all',
-          icon: <MenuIcons.List />,
+          icon: <span className="menu-icon-blue"><MenuIcons.List /></span>,
           label: '전체 고객 보기',
           tooltipTitle: '모든 고객을 보여줍니다',
         },
         {
           key: 'customers-regional',
-          icon: <MenuIcons.Location />,
+          icon: <span className="menu-icon-teal"><MenuIcons.Location /></span>,
           label: '지역별 고객 보기',
           tooltipTitle: '지역별로 고객을 분류하여 보여줍니다',
         },
@@ -489,7 +489,7 @@ const CustomMenu = ({
     // ━━━ 문서 ━━━
     {
       key: 'documents',
-      icon: <MenuIcons.FileText />,
+      icon: <span className="menu-icon-purple"><MenuIcons.FileText /></span>,
       label: '문서',
       tooltipTitle: '문서',
       children: [
