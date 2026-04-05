@@ -163,14 +163,29 @@ class MouseLock:
         root.attributes("-alpha", 0.8)
         root.configure(bg="#cc0000")
 
-        label = tk.Label(
-            root,
-            text="\U0001f512 \ub9c8\uc6b0\uc2a4 \uc7a0\uae08 | Ctrl+Alt+P \ud574\uc81c",
-            font=("맑은 고딕", 11, "bold"),
+        frame = tk.Frame(root, bg="#cc0000")
+        frame.pack(padx=10, pady=8)
+
+        tk.Label(
+            frame,
+            text="\U0001f512 AutoClicker \uc791\uc5c5 \uc911 \u2014 \ub9c8\uc6b0\uc2a4 \uc7a0\uae40",
+            font=("\ub9d1\uc740 \uace0\ub515", 12, "bold"),
             fg="white", bg="#cc0000",
-            padx=12, pady=6,
-        )
-        label.pack()
+        ).pack(anchor="w")
+
+        tk.Label(
+            frame,
+            text=(
+                "\uc790\ub3d9\ud654 \uc791\uc5c5 \uc911 \ub9c8\uc6b0\uc2a4 \uc870\uc791\uc774 \uc791\uc5c5\uc744 "
+                "\ubc29\ud574\ud558\uc9c0 \uc54a\ub3c4\ub85d \ub9c8\uc6b0\uc2a4\ub97c \uc7a0\uac14\uc2b5\ub2c8\ub2e4.\n"
+                "\uc791\uc5c5\uc774 \uc644\ub8cc\ub418\uba74 \uc790\ub3d9\uc73c\ub85c \ud480\ub9bd\ub2c8\ub2e4.\n"
+                "\uc9c0\uae08 \ub9c8\uc6b0\uc2a4\ub97c \uc0ac\uc6a9\ud558\ub824\uba74 Ctrl+Alt+P \ub97c "
+                "\ub204\ub974\uc138\uc694."
+            ),
+            font=("\ub9d1\uc740 \uace0\ub515", 9),
+            fg="#ffe0e0", bg="#cc0000",
+            justify="left",
+        ).pack(anchor="w", pady=(4, 0))
 
         # 위치: 화면 좌측 하단
         root.update_idletasks()

@@ -908,6 +908,8 @@ class AutoClickerApp(ctk.CTk):
                         pass
                 self._status_label.configure(text="완료", text_color="#4CAF50")
                 self._compact_panel.set_play_state("complete")
+            # 마우스 독점 해제 (정상 종료/크래시 모두)
+            mouse_lock.cleanup()
             self._run_btn.configure(
                 text="실행", fg_color="#2d7d46", hover_color="#3a9957",
                 state="normal",
