@@ -16,6 +16,7 @@
 import asyncio
 import io
 import math
+import os
 import sys
 import time
 from datetime import datetime
@@ -570,7 +571,7 @@ async def main():
     print("\n" + "=" * 70)
 
     # 리포트를 파일로도 저장
-    report_path = f"/d/tmp/search_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    report_path = os.path.join("D:\\tmp", f"search_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
     try:
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(f"AIMS 상세검색 테스트 리포트\n")
