@@ -347,7 +347,7 @@
   .document-pagination--sticky {
     position: sticky;
     bottom: 0;
-    background: var(--color-bg-primary);
+    background: var(--color-layout-centerpane-bg);
     z-index: 10;
   }
 
