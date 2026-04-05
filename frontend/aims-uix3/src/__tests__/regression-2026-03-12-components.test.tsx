@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { renderHook, act } from '@testing-library/react'
 import { Input } from '@/shared/ui/Input'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'

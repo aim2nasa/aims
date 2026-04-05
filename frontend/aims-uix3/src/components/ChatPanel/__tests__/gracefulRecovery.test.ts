@@ -4,7 +4,7 @@
  * - shouldSuggestDocSearch: 문서 검색 제안 필요 여부 판단
  */
 import { describe, it, expect } from 'vitest';
-import { hasDocumentIntent, shouldSuggestDocSearch, DOCUMENT_KEYWORDS } from '../ChatPanel';
+import { hasDocumentIntent, shouldSuggestDocSearch, DOCUMENT_KEYWORDS } from '../chatPanelUtils';
 
 describe('hasDocumentIntent', () => {
   it('문서 키워드가 포함된 메시지는 true를 반환한다', () => {

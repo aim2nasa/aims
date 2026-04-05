@@ -264,7 +264,7 @@ describe('[회귀] 배치 업로드 좀비 worker 방지 (3dc19fc0)', () => {
 
     it('이전 세대의 worker는 자동 종료된다', () => {
       let currentGeneration = 0
-      const results: string[] = []
+      const _results: string[] = []
 
       // 첫 번째 업로드 시작
       currentGeneration++
@@ -402,7 +402,8 @@ describe('[회귀] 트리빌더 유틸리티 함수', () => {
   describe('문서 표시 이름 우선순위', () => {
     it('displayName > originalName > filename > name > "이름 없음"', () => {
       // displayName이 있으면 그것을 사용
-      expect('보험증권_홍길동' || 'original.pdf').toBe('보험증권_홍길동')
+      const displayName = '보험증권_홍길동'
+      expect(displayName).toBe('보험증권_홍길동')
 
       // displayName이 없으면 originalName
       const doc = { originalName: 'original.pdf', filename: 'file123.pdf' }
@@ -410,6 +411,7 @@ describe('[회귀] 트리빌더 유틸리티 함수', () => {
       expect(name).toBe('original.pdf')
 
       // 모두 없으면 기본값
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const emptyDoc = {} as any
       const fallback = emptyDoc.displayName || emptyDoc.originalName || emptyDoc.filename || emptyDoc.name || '이름 없음'
       expect(fallback).toBe('이름 없음')
