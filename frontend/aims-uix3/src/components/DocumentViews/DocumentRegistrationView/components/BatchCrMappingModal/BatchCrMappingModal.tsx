@@ -8,7 +8,6 @@ import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { DraggableModal, Button } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type {
-  CrFileGroup,
   CrBatchMappingState,
   CrTableViewState,
   CrFileTableRow,
@@ -249,7 +248,7 @@ export const BatchCrMappingModal: React.FC<BatchCrMappingModalProps> = ({
   onUpdateRowMapping,
   onUpdateRowNewCustomer,
   onToggleRow,
-  onSelectAllRows,
+  onSelectAllRows: _onSelectAllRows,
   onSetRowsSelection,
   onBulkAssignCustomer,
   onBulkAssignNewCustomer,

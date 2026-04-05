@@ -15,8 +15,6 @@ import type {
 } from '../../types/crBatchTypes'
 import {
   formatIssueDate,
-  isRowMapped,
-  getRowMappingDisplayText,
   isRowMappedWithMap,
   getRowMappingDisplayTextWithMap,
 } from '../../utils/crGroupingUtils'
@@ -102,7 +100,7 @@ const CrFileTableRowComponent = React.memo<CrFileTableRowProps>(({
   row,
   rowIndex,
   rowNumber,
-  group,
+  group: _group,
   isMapped,
   isDuplicate,
   isIssueDatePolicyDuplicate,

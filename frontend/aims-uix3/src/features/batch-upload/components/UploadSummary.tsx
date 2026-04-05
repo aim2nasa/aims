@@ -95,9 +95,6 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
   const failedFolders = folders.filter((f) => f.status === 'failed' || f.status === 'partial')
 
   // 바이러스 감지로 실패한 파일이 있는지 확인 (재시도 불가)
-  const hasVirusFailures = progress.files.some(
-    (f) => f.status === 'failed' && f.error?.includes('바이러스 감지')
-  )
   // 재시도 가능한 실패 파일이 있는지 확인
   const hasRetryableFailures = progress.files.some(
     (f) => f.status === 'failed' && !f.error?.includes('바이러스 감지')

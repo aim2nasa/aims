@@ -7,7 +7,7 @@
  * - Annual Report와 동일한 레이아웃 형식 적용
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
 import { DraggableModal } from '@/shared/ui/DraggableModal';
 import Button from '@/shared/ui/Button';

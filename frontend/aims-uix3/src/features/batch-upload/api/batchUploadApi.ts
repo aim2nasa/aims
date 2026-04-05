@@ -7,7 +7,7 @@
  * 바이러스 검사 통합 (ClamAV)
  */
 
-import { api, ApiError, API_CONFIG, getAuthHeaders, getCurrentUserId } from '../../../shared/lib/api'
+import { api, ApiError, getAuthHeaders, getCurrentUserId } from '../../../shared/lib/api'
 import { errorReporter } from '../../../shared/lib/errorReporter'
 import type { CustomerForMatching } from '../utils/customerMatcher'
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'

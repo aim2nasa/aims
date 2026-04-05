@@ -19,8 +19,7 @@ import { getCurrentUser, updateUser, type User } from '@/services/userService'
 import { deleteAccount } from '@/entities/auth/api'
 import { getCurrentUserId } from '@/shared/lib/api'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
-import { getMyAIUsage, getMyDailyUsage, formatTokens, formatCost, type AIUsageData, type DailyUsagePoint } from '@/services/aiUsageService'
-import { AIUsageChart } from '@/shared/ui/AIUsageChart'
+import { getMyAIUsage, getMyDailyUsage, type AIUsageData, type DailyUsagePoint } from '@/services/aiUsageService'
 import { formatFileSize } from '@/shared/lib/fileValidation/constants'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
@@ -126,8 +125,8 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
   // AI 사용량 상태
   const [aiUsage, setAIUsage] = useState<AIUsageData | null>(null)
-  const [dailyUsage, setDailyUsage] = useState<DailyUsagePoint[]>([])
-  const [aiUsageLoading, setAIUsageLoading] = useState(false)
+  const [, setDailyUsage] = useState<DailyUsagePoint[]>([])
+  const [, setAIUsageLoading] = useState(false)
 
   // 아바타 이미지 상태
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(undefined)
@@ -1148,7 +1147,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                     {Object.entries(aiUsage.by_source)
                       .filter(([, tokens]) => tokens && tokens > 0)
                       .sort(([, a], [, b]) => (b || 0) - (a || 0))
-                      .map(([source, tokens], idx, arr) => {
+                      .map(([source, tokens], idx, _arr) => {
                         const sourceLabels: Record<string, string> = {
                           rag_api: 'RAG',
                           n8n_docsummary: '요약',

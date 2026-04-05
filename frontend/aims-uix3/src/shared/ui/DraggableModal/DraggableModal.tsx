@@ -10,7 +10,7 @@
  * - Portal, ESC, body overflow는 Modal이 자동 처리
  */
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { createPortal } from 'react-dom'
 import { useModalDragResize } from '../../../hooks/useModalDragResize'
 import { useDeviceOrientation } from '../../../hooks/useDeviceOrientation'

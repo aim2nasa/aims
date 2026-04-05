@@ -37,8 +37,8 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": false,  // TODO: 정리 후 true로 복원
-    "noUnusedParameters": false,  // TODO: 정리 후 true로 복원
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "exactOptionalPropertyTypes": false,  // TODO: 타입 정리 후 true로 복원
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,

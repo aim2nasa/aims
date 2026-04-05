@@ -186,7 +186,7 @@ const queueLog = (level: LogLevel, component: string, message: string, data?: un
 /**
  * 로그 포맷팅
  */
-const formatMessage = (level: LogLevel, context: string): string => {
+const formatMessage = (_level: LogLevel, context: string): string => {
   const parts: string[] = []
 
   if (config.showTimestamp) {
@@ -364,7 +364,6 @@ export const logger = {
     // 동기적으로 전송 시도 (sendBeacon 사용)
     if (logQueue.length > 0 && navigator.sendBeacon) {
       // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
-      const token = getAuthToken()
       const blob = new Blob([JSON.stringify({ logs: logQueue })], { type: 'application/json' })
       navigator.sendBeacon(`${API_BASE_URL}/api/system-logs/batch`, blob)
       logQueue = []

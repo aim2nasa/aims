@@ -243,7 +243,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   customer,
   onContractCountChange,
   searchTerm: externalSearchTerm,
-  onSearchChange,
+  onSearchChange: _onSearchChange,
   refreshTrigger,
   historyTab = 'ar',
   onArHistoryCountChange,
@@ -281,10 +281,8 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const [crSortDirection, setCrSortDirection] = useState<SortDirection>('asc')
 
   // 🍎 검색어 상태 (외부/내부)
-  const [internalSearchTerm, setInternalSearchTerm] = useState('')
+  const [internalSearchTerm] = useState('')
   const searchTerm = externalSearchTerm ?? internalSearchTerm
-  const _setSearchTerm = onSearchChange ?? setInternalSearchTerm
-
   // 🍎 페이지네이션 상태 ('auto' 또는 숫자)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>(() => {

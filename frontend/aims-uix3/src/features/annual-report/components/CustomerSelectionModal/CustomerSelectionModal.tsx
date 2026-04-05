@@ -87,24 +87,6 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
     return formatDate(createdAt);
   };
 
-  // 최근 AR 날짜 포맷
-  const formatLatestAR = (customer: Customer): string => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const reports = (customer as any).annual_reports;
-    if (!reports || reports.length === 0) return '-';
-
-    // 가장 최근 AR의 발행일
-    const latestReport = reports[0];
-    if (!latestReport?.issue_date) return '-';
-
-    // issue_date가 Date 객체이거나 문자열일 수 있음
-    const issueDate = latestReport.issue_date;
-    if (typeof issueDate === 'string') {
-      return formatDate(issueDate);
-    }
-    return formatDate(issueDate.toString());
-  };
-
   // 계약 수
   const getContractCount = (customer: Customer): string => {
     // contracts 필드가 있으면 그 길이, 없으면 annual_reports의 최신 계약 수

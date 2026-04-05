@@ -632,7 +632,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
     // 가족 그룹 필터링 (대표자 이름 기준)
     Object.entries(structuredData.가족그룹).forEach(([groupId, groupData]) => {
-      const repName = groupData.representative.personal_info?.name || '';
       const filteredReps = filterByInitial([groupData.representative], selectedInitial, (c) => c.personal_info?.name || '');
       if (filteredReps.length > 0) {
         filtered.가족그룹[groupId] = groupData;
@@ -641,7 +640,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
     // 법인 그룹 필터링 (회사명 기준)
     Object.entries(structuredData.법인).forEach(([companyId, groupData]) => {
-      const companyName = groupData.company.personal_info?.name || '';
       const filteredCompanies = filterByInitial([groupData.company], selectedInitial, (c) => c.personal_info?.name || '');
       if (filteredCompanies.length > 0) {
         filtered.법인[companyId] = groupData;

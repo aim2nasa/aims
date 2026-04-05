@@ -269,7 +269,7 @@ export async function processAnnualReportFile(
 export async function registerArDocument(
   file: File,
   customerId: string,
-  issueDate: string | undefined,
+  _issueDate: string | undefined,
   callbacks: {
     addLog: (level: LogLevel, message: string, details?: string) => void;
     generateFileId: () => string;

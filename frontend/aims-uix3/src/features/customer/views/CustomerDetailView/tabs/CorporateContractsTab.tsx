@@ -112,7 +112,7 @@ const CORP_RELATION_TYPE_LABELS: Record<string, string> = {
 export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
   customer,
   searchTerm: externalSearchTerm,
-  onSearchChange,
+  onSearchChange: _onSearchChange,
   onCorporateContractCountChange,
   refreshTrigger
 }) => {
@@ -124,10 +124,8 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
   const [corporateMemberNames, setCorporateMemberNames] = useState<Set<string>>(new Set())
 
   // 🍎 검색어 (외부/내부)
-  const [internalSearchTerm, setInternalSearchTerm] = useState('')
+  const [internalSearchTerm] = useState('')
   const searchTerm = externalSearchTerm ?? internalSearchTerm
-  const _setSearchTerm = onSearchChange ?? setInternalSearchTerm
-
   // 🍎 정렬
   const [sortField, setSortField] = useState<SortField>('policyNumber')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')

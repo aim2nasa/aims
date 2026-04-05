@@ -291,11 +291,6 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     return mimeType.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/.test(fileName)
   }
 
-  // 🍎 프리뷰 가능 여부 (PDF/이미지/변환된 PDF)
-  const canPreview = (item: SearchResultItem): boolean => {
-    return isPdf(item) || isImage(item)
-  }
-
   // 🍎 프리뷰 정보 가져오기 (PDF 변환 파일 포함)
   const fetchPreviewInfo = useCallback(async (item: SearchResultItem) => {
     const docId = getDocumentId(item)

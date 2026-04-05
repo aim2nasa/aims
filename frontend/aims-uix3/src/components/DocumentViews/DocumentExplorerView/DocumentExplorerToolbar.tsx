@@ -99,15 +99,15 @@ const QUICK_FILTER_OPTIONS: QuickFilterType[] = ['today']
 
 export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = ({
   groupBy,
-  onGroupByChange,
+  onGroupByChange: _onGroupByChange,
   searchTerm,
   onSearchChange,
   isAllExpanded,
   onToggleExpandAll,
-  onRefresh,
+  onRefresh: _onRefresh,
   totalDocuments,
   groupCount,
-  isLoading = false,
+  isLoading: _isLoading = false,
   sortBy,
   sortDirection,
   onSortByChange,
@@ -123,8 +123,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   onDateRangeChange,
   thumbnailEnabled,
   onThumbnailEnabledChange,
-  filenameMode,
-  onFilenameModeChange,
+  filenameMode: _filenameMode,
+  onFilenameModeChange: _onFilenameModeChange,
   editMode = 'none',
   onEditModeChange,
   selectedCount = 0,
@@ -144,7 +144,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   const dateButtonRef = useRef<HTMLButtonElement>(null)
   const [showSettings, setShowSettings] = useState(false)
   const settingsRef = useRef<HTMLDivElement>(null)
-  const [forceRegenerateAlias, setForceRegenerateAlias] = useState(false)
+  const [forceRegenerateAlias, _setForceRegenerateAlias] = useState(false)
 
   // 문서가 있는 날짜 Set (빠른 조회용)
   const availableDatesSet = useMemo(() => {
@@ -306,14 +306,6 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   // 월 이름
   const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
   const dayNames = ['일', '월', '화', '수', '목', '금', '토']
-
-  const handleGroupByChange = useCallback(
-    (value: string) => {
-      onGroupByChange(value as DocumentGroupBy)
-    },
-    [onGroupByChange]
-  )
-
 
   const handleSearchClear = useCallback(() => {
     onSearchChange('')

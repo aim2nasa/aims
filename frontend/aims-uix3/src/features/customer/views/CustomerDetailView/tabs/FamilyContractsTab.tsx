@@ -109,7 +109,7 @@ const RELATION_TYPE_LABELS: Record<string, string> = {
 export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   customer,
   searchTerm: externalSearchTerm,
-  onSearchChange,
+  onSearchChange: _onSearchChange,
   onFamilyContractCountChange,
   refreshTrigger
 }) => {
@@ -121,10 +121,8 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
   const [familyMemberNames, setFamilyMemberNames] = useState<Set<string>>(new Set())
 
   // 🍎 검색어 (외부/내부)
-  const [internalSearchTerm, setInternalSearchTerm] = useState('')
+  const [internalSearchTerm] = useState('')
   const searchTerm = externalSearchTerm ?? internalSearchTerm
-  const _setSearchTerm = onSearchChange ?? setInternalSearchTerm
-
   // 🍎 정렬
   const [sortField, setSortField] = useState<SortField>('policyNumber')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')

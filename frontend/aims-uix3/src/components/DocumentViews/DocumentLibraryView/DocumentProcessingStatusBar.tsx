@@ -43,10 +43,6 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
   const arParsing = statistics?.arParsing ?? EMPTY_PARSING
   const crsParsing = statistics?.crsParsing ?? EMPTY_PARSING
 
-  // 현재 배치 통계
-  const batchArParsing = batchStatistics?.arParsing ?? EMPTY_PARSING
-  const batchCrsParsing = batchStatistics?.crsParsing ?? EMPTY_PARSING
-
   // 현재 배치가 있고, 진행 중인지 확인
   const hasBatch = batchStatistics && batchStatistics.total > 0
   const batchTotal = batchStatistics?.total ?? 0

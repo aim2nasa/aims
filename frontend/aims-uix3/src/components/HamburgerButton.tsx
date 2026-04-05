@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from './SFSymbol';
 import { HAPTIC_TYPES } from '../hooks/useHapticFeedback';
 import Tooltip from '../shared/ui/Tooltip';

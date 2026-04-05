@@ -77,7 +77,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
   onCustomerReviewCountChange,
   refreshTrigger,
   searchTerm: externalSearchTerm,
-  onSearchChange
+  onSearchChange: _onSearchChange
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reviews, setReviews] = useState<CustomerReview[]>([]);
@@ -86,10 +86,8 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // 검색어 상태
-  const [internalSearchTerm, setInternalSearchTerm] = useState('');
+  const [internalSearchTerm] = useState('');
   const searchTerm = externalSearchTerm ?? internalSearchTerm;
-  const _setSearchTerm = onSearchChange ?? setInternalSearchTerm;
-
   // 페이지네이션 상태
   const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>(() => {
     const saved = localStorage.getItem('aims-customer-cr-items-per-page');

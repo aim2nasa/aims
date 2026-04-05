@@ -5,11 +5,10 @@
  * 공간 효율적인 리스트 레이아웃
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { Tooltip, DocumentTypeCell, DocumentTypeBadge } from '@/shared/ui'
-import Button from '@/shared/ui/Button'
 import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
@@ -133,9 +132,9 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   onDocTypeChange,
   onRenameClick,
   onDeleteClick,
-  renamingDocumentId,
-  onRenameConfirm,
-  onRenameCancel,
+  renamingDocumentId: _renamingDocumentId,
+  onRenameConfirm: _onRenameConfirm,
+  onRenameCancel: _onRenameCancel,
   searchTerm,
   gridTemplateColumns,
 }) => {
@@ -303,7 +302,6 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
           const altName = filenameMode === 'display' && hasDisplay
             ? `원본: ${originalName}`
             : (hasDisplay ? `별칭: ${document.displayName}` : '')
-          const docId = document._id || document.id
 
           return (
             <>
@@ -969,7 +967,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onCustomerClick,
   onCustomerDoubleClick,
   onRefresh,
-  onNavigate,
+  onNavigate: _onNavigate,
   onRowContextMenu,
   filenameMode = 'display',
   onFilenameModeChange,

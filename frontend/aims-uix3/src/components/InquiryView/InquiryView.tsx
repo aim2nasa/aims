@@ -18,7 +18,6 @@ import {
 import {
   type InquiryStatus,
   type InquiryCategory,
-  type Inquiry,
   CATEGORY_LABELS,
   STATUS_LABELS,
 } from '@/entities/inquiry';

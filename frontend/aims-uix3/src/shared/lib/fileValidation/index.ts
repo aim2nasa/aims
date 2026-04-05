@@ -108,7 +108,7 @@ export type { StorageInfo } from '@/services/userService'
 
 import { validateFiles, type ValidateFileOptions } from './validators'
 import { checkStorageWithInfo, checkStorageQuota } from './storageChecker'
-import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
+import type { StorageInfo } from '@/services/userService'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import type {
   ValidationPipelineResult,

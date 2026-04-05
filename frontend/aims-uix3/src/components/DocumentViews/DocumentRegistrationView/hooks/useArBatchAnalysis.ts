@@ -41,7 +41,6 @@ import {
   bulkAssignNewCustomer,
   toggleTableRowIncluded,
   isAllRowsMapped,
-  getIncludedRowsCount,
 } from '../utils/arGroupingUtils'
 
 export interface UseArBatchAnalysisOptions {

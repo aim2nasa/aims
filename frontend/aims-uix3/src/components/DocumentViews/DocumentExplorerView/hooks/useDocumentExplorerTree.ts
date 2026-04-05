@@ -7,7 +7,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import type { Document } from '@/types/documentStatus'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData, DocumentTreeNode, QuickFilterType, DateRange } from '../types/documentExplorer'
-import { buildTree, collectAllKeys, filterDocuments, sortTreeNodes, getDocumentDate } from '../utils/treeBuilders'
+import { buildTree, filterDocuments, sortTreeNodes, getDocumentDate } from '../utils/treeBuilders'
 
 export interface UseDocumentExplorerTreeOptions {
   documents: Document[]

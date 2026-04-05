@@ -14,8 +14,6 @@ import type {
 } from '../../types/arBatchTypes'
 import {
   formatIssueDate,
-  isRowMapped,
-  getRowMappingDisplayText,
   isRowMappedWithMap,
   getRowMappingDisplayTextWithMap,
 } from '../../utils/arGroupingUtils'
@@ -100,7 +98,7 @@ const ArFileTableRowComponent = React.memo<ArFileTableRowProps>(({
   row,
   rowIndex,
   rowNumber,
-  group,
+  group: _group,
   isMapped,
   isDuplicate,
   isDateDuplicate,

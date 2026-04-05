@@ -2,7 +2,7 @@
  * EmptyState - 빈 상태 표시 컴포넌트
  * 데이터가 없거나 검색 결과가 없을 때 사용
  */
-import React, { type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { Button } from '../Button'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import './EmptyState.css'

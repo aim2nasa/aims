@@ -252,7 +252,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   // 🍎 문서 컨텍스트 메뉴 상태
   const documentContextMenu = useContextMenu()
   const [contextMenuDocument, setContextMenuDocument] = useState<SearchResultItem | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [, setIsDeleting] = useState(false)
 
   const handleFilenameModeChange = React.useCallback((mode: 'display' | 'original') => {
     setFilenameMode(mode)
@@ -406,7 +406,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   // enrichment 진행 중 AbortController
   const enrichAbortRef = useRef<AbortController | null>(null)
   // enrichment 로딩 상태
-  const [isEnriching, setIsEnriching] = useState(false)
+  const [, setIsEnriching] = useState(false)
   // 현재 페이지의 enriched 결과 (React 렌더 보장)
   const [enrichedPage, setEnrichedPage] = useState<SearchResultItem[]>([])
 
@@ -1045,38 +1045,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   }
 
   /**
-   * 🍎 텍스트 스니펫 추출 (키워드 검색용)
-   * 검색어 주변 컨텍스트를 추출하여 보여줌
-   */
-  const getTextSnippet = useCallback((item: SearchResultItem): string => {
-    const fullText = (item as any).ocr?.full_text ||
-                     (item as any).meta?.full_text ||
-                     (item as any).text?.full_text ||
-                     ''
-
-    if (!fullText) return '텍스트를 찾을 수 없습니다.'
-
-    const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
-    if (keywords.length === 0) return fullText.substring(0, 300) + '...'
-
-    // 첫 번째 키워드 기준으로 앞뒤 context 추출
-    const searchLower = fullText.toLowerCase()
-    const keywordLower = keywords[0].toLowerCase()
-    const idx = searchLower.indexOf(keywordLower)
-
-    if (idx === -1) return fullText.substring(0, 300) + '...'
-
-    const start = Math.max(0, idx - 100)
-    const end = Math.min(fullText.length, idx + keywordLower.length + 200)
-    let snippet = fullText.substring(start, end)
-
-    if (start > 0) snippet = '...' + snippet
-    if (end < fullText.length) snippet = snippet + '...'
-
-    return snippet
-  }, [query])
-
-  /**
    * 🍎 모든 키워드 매칭 위치 찾기 (검색어 위치 탐색용)
    * 문서에서 검색어가 나타나는 모든 위치 인덱스를 반환
    */
@@ -1233,27 +1201,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       )
     })
   }
-
-  /**
-   * 🍎 키워드 하이라이트 (키워드 검색용)
-   * 텍스트 내 검색어를 하이라이트 처리
-   */
-  const highlightKeywords = useCallback((text: string): React.ReactNode => {
-    const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
-    if (keywords.length === 0) return text
-
-    const pattern = new RegExp(`(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi')
-    const parts = text.split(pattern)
-
-    return parts.map((part, index) => {
-      const isMatch = keywords.some(kw => part.toLowerCase() === kw.toLowerCase())
-      return isMatch ? (
-        <mark key={index} className="doc-search-highlight">{part}</mark>
-      ) : (
-        <span key={index}>{part}</span>
-      )
-    })
-  }, [query])
 
   return (
     <CenterPaneView
@@ -2220,7 +2167,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       {selectedDocumentForKeywordLocation && (() => {
         const totalMatches = getAllKeywordMatches(selectedDocumentForKeywordLocation).length
         const { displayMatches, originalMatches, displayName, originalName } = getFilenameKeywordMatchesDetailed(selectedDocumentForKeywordLocation)
-        const hasAnyTitleMatch = displayMatches.length > 0 || originalMatches.length > 0
         const currentIndex = keywordMatchIndex
         const hasPrev = currentIndex > 0
         const hasNext = currentIndex < totalMatches - 1
