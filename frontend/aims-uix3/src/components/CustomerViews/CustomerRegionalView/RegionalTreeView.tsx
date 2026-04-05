@@ -753,7 +753,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         return // 모달에서 주소 입력 후 다시 처리
       }
     }
-  }, [selectedCustomerId, customers])
+  }, [selectedCustomerId, customers, setExpandedKeys])
 
   // 외부에서 selectedCustomerId가 변경되면 localSelectedCustomerId도 동기화
   useEffect(() => {

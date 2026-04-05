@@ -144,7 +144,7 @@ describe('P1: API 응답 검증 및 에러 메시지 개선', () => {
 
   describe('API 응답 기본값 시뮬레이션', () => {
     // API 응답 정규화 로직을 직접 테스트
-    const normalizeApiResponse = (rawResult: any) => ({
+    const normalizeApiResponse = (rawResult: Record<string, unknown> | null | undefined) => ({
       createdCount: rawResult?.createdCount ?? 0,
       updatedCount: rawResult?.updatedCount ?? 0,
       skippedCount: rawResult?.skippedCount ?? 0,

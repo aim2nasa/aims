@@ -920,6 +920,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     // 초기 설정
     handleViewportResize();
 
+    const panelNode = panelRef.current;
+
     viewport.addEventListener('resize', handleViewportResize);
     viewport.addEventListener('scroll', handleViewportResize);
 
@@ -927,10 +929,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       viewport.removeEventListener('resize', handleViewportResize);
       viewport.removeEventListener('scroll', handleViewportResize);
       // 정리: 인라인 스타일 제거
-      const panel = panelRef.current;
-      if (panel) {
-        panel.style.height = '';
-        panel.style.top = '';
+      if (panelNode) {
+        panelNode.style.height = '';
+        panelNode.style.top = '';
       }
     };
   }, [isOpen, scrollToBottom]);

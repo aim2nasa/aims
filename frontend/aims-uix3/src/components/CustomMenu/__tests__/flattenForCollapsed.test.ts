@@ -76,9 +76,9 @@ const emptyChildrenParent: MockMenuItem = {
 
 // ─── 테스트 ───
 describe('flattenForCollapsed', () => {
-  // flattenForCollapsed는 MenuItem[]을 받지만, MockMenuItem도 구조가 동일하므로 as any 사용
+  // flattenForCollapsed는 MenuItem[]을 받지만, MockMenuItem도 구조가 동일하므로 타입 변환
   const flatten = (items: MockMenuItem[], collapsed: boolean) =>
-    flattenForCollapsed(items as any, collapsed) as unknown as MockMenuItem[]
+    flattenForCollapsed(items as unknown as Parameters<typeof flattenForCollapsed>[0], collapsed) as unknown as MockMenuItem[]
 
   it('#1: collapsed=false → 원본 그대로 반환 (참조 동일)', () => {
     const items = [standaloneItem, parentWithChildren]

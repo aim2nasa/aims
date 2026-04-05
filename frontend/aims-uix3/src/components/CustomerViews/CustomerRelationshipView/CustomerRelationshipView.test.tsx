@@ -98,12 +98,12 @@ describe('CustomerRelationshipView - 신규 기능 테스트', () => {
       searchCustomers: vi.fn(),
       isStale: vi.fn().mockReturnValue(false),
       invalidate: vi.fn()
-    } as any);
+    } as unknown as ReturnType<typeof useCustomerDocument>);
 
     vi.mocked(RelationshipService.getAllRelationshipsWithCustomers).mockResolvedValue({
       relationships: mockRelationships,
       customers: mockCustomers
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof RelationshipService.getAllRelationshipsWithCustomers>>);
 
     // localStorage mock
     Storage.prototype.getItem = vi.fn();
@@ -287,7 +287,7 @@ describe('CustomerRelationshipView - 신규 기능 테스트', () => {
       vi.mocked(RelationshipService.getAllRelationshipsWithCustomers).mockResolvedValue({
         relationships: [],
         customers: []
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof RelationshipService.getAllRelationshipsWithCustomers>>);
 
       vi.mocked(useCustomerDocument).mockReturnValue({
         customers: [],
@@ -298,7 +298,7 @@ describe('CustomerRelationshipView - 신규 기능 테스트', () => {
         hasMore: false,
         error: null,
         lastUpdated: new Date()
-      } as any);
+      } as unknown as ReturnType<typeof useCustomerDocument>);
 
       renderComponent();
 
@@ -319,7 +319,7 @@ describe('CustomerRelationshipView - 신규 기능 테스트', () => {
         hasMore: false,
         error: null,
         lastUpdated: new Date()
-      } as any);
+      } as unknown as ReturnType<typeof useCustomerDocument>);
 
       renderComponent();
 

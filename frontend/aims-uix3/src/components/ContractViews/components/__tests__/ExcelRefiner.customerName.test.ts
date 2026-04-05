@@ -13,14 +13,14 @@ import * as path from 'path'
 describe('고객명 DB 유일성 검증', () => {
   describe('1. excel-refiner-core 패키지', () => {
     let indexSource: string
-    let typesSource: string
-    let validationSource: string
+    let _typesSource: string
+    let _validationSource: string
 
     beforeAll(() => {
       const corePackagePath = path.join(__dirname, '..', '..', '..', '..', '..', '..', 'packages', 'excel-refiner-core', 'src')
       indexSource = fs.readFileSync(path.join(corePackagePath, 'index.ts'), 'utf-8')
-      typesSource = fs.readFileSync(path.join(corePackagePath, 'types', 'excel.ts'), 'utf-8')
-      validationSource = fs.readFileSync(path.join(corePackagePath, 'hooks', 'useValidation.ts'), 'utf-8')
+      _typesSource = fs.readFileSync(path.join(corePackagePath, 'types', 'excel.ts'), 'utf-8')
+      _validationSource = fs.readFileSync(path.join(corePackagePath, 'hooks', 'useValidation.ts'), 'utf-8')
     })
 
     test('validateCustomerNamesWithDB 함수가 export되어야 함', () => {

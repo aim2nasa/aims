@@ -487,7 +487,7 @@ export function ExcelRefiner() {
   }>({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false, 개인고객Count: 0, 법인고객Count: 0, 계약Count: 0 })
 
   // 고객명-연락처 매핑 (계약 가져오기 시 사용)
-  const [customerPhoneMap, setCustomerPhoneMap] = useState<Map<string, string>>(new Map())
+  const [, setCustomerPhoneMap] = useState<Map<string, string>>(new Map())
 
   // === 시트별 검증 상태 (새 UX 플로우) ===
   const [sheetValidationStatus, setSheetValidationStatus] = useState<Map<string, SheetValidationStatus>>(new Map())
@@ -1425,7 +1425,7 @@ export function ExcelRefiner() {
     // 모든 시트 검증 완료
     setIsValidatingAll(false)
     setActionLog('✓ 모든 시트 검증 완료 - 등록 가능')
-  }, [sheets, isImporting, isValidatingAll])
+  }, [sheets, isImporting, isValidatingAll, updateValidatedHistory, updateValidatingColumns])
 
   // === 동명이인 모달 핸들러 ===
 
@@ -2149,7 +2149,7 @@ export function ExcelRefiner() {
       법인고객Count,
       계약Count
     })
-  }, [sheets])
+  }, [sheets, showAlert])
 
   // 일괄등록 확인 후 실행
   const handleConfirmImport = useCallback(async () => {
@@ -2616,7 +2616,7 @@ export function ExcelRefiner() {
       setIsImporting(false)
       setImportProgress(null)
     }
-  }, [importConfirmModal, currentSheet, user, customerPhoneMap])
+  }, [importConfirmModal, user, sheets, showAlert])
 
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
