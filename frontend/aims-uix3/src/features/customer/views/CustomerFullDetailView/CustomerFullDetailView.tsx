@@ -45,9 +45,13 @@ import { errorReporter } from '@/shared/lib/errorReporter'
 import { AddressApi } from '../../api/addressApi'
 import { isRequestCancelledError, setActiveCustomer } from '@/shared/lib/api'
 import './CustomerFullDetailView.layout.css';
+import './CustomerFullDetailView.focus.css';
 import './CustomerFullDetailView.customer-info.css';
 import './CustomerFullDetailView.tabs.css';
 import './CustomerFullDetailView.mobile.css';
+
+/** Focus Mode에서 확대할 섹션 타입 */
+type FocusSectionType = 'customer-info' | 'contracts' | 'documents' | 'report' | null
 
 interface CustomerFullDetailViewProps {
   visible: boolean
@@ -148,6 +152,41 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const { isMobileLayout: isMobileView } = useDeviceOrientation()
   const [mobileActiveSection, setMobileActiveSection] = usePersistedState<'contracts' | 'documents' | 'report' | 'memo'>('cust-full-detail-mobile-section', 'contracts')
 
+  // 🍎 Focus Mode 상태 (섹션 확대 보기)
+  const FOCUS_STORAGE_KEY = 'aims-customer-full-detail-focus-section'
+
+  /* localStorage 사용 (usePersistedState는 sessionStorage 기반이라 세션 간 지속 불가) */
+  const [focusSection, setFocusSection] = useState<FocusSectionType>(() => {
+    try {
+      const saved = localStorage.getItem(FOCUS_STORAGE_KEY)
+      if (saved && ['customer-info', 'contracts', 'documents', 'report'].includes(saved)) {
+        return saved as FocusSectionType
+      }
+    } catch { /* localStorage 접근 불가 시 기본값 사용 */ }
+    return null
+  })
+
+  // 🍎 Focus Mode localStorage 저장
+  useEffect(() => {
+    try {
+      if (focusSection) {
+        localStorage.setItem(FOCUS_STORAGE_KEY, focusSection)
+      } else {
+        localStorage.removeItem(FOCUS_STORAGE_KEY)
+      }
+    } catch { /* localStorage 접근 불가 시 기본값 사용 */ }
+  }, [focusSection])
+
+  // 🍎 Focus Mode Esc 키 핸들러
+  useEffect(() => {
+    if (!focusSection) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFocusSection(null)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [focusSection])
+
   // 🍎 리사이즈 기본값 및 localStorage 키
   const LAYOUT_STORAGE_KEY = 'aims-customer-full-detail-layout'
   const DEFAULT_TOP_LEFT_WIDTH = 31 // 🍎 상단: 고객정보(31%) ↔ 보험계약(69%)
@@ -202,6 +241,20 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       console.warn('[CustomerFullDetailView] localStorage 레이아웃 삭제 실패:', e)
     }
   }, [])
+
+  // 🍎 Focus Mode 진입/해제 핸들러
+  const handleFocusSection = useCallback((section: FocusSectionType) => {
+    setFocusSection(prev => prev === section ? null : section)
+    // Focus Mode 진입 시 리사이즈 드래그 중이면 리셋
+    setIsDragging(null)
+  }, [])
+
+  // 🍎 섹션 헤더 더블클릭 핸들러 (탭 버튼 영역 제외)
+  const handleSectionDoubleClick = useCallback((e: React.MouseEvent, section: NonNullable<FocusSectionType>) => {
+    if ((e.target as HTMLElement).closest('.customer-info-tabs, .history-tabs, .report-tabs, .customer-full-detail__doc-filter-slot, .customer-full-detail__section-search, .customer-full-detail__content-search-btn')) return
+    handleFocusSection(section)
+  }, [handleFocusSection])
+
   const [isDragging, setIsDragging] = useState<'top-h' | 'bottom-h' | 'vertical' | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const prevIsDragging = useRef<'top-h' | 'bottom-h' | 'vertical' | null>(null)
@@ -295,6 +348,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   useEffect(() => {
     if (prevCustomerIdRef.current !== customerId) {
       prevCustomerIdRef.current = customerId
+      setFocusSection(null)
       setContractSearchTerm('')
       setDocumentSearchTerm('')
       setAnnualReportSearchTerm('')
@@ -1009,7 +1063,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
             /* 🍎 데스크톱 레이아웃 - 2행 4섹션 그리드 */
             <div
               ref={contentRef}
-              className={`customer-full-detail__content ${isDragging === 'top-h' || isDragging === 'bottom-h' ? 'customer-full-detail--resizing-horizontal' : ''} ${isDragging === 'vertical' ? 'customer-full-detail--resizing-vertical' : ''}`}
+              className={`customer-full-detail__content ${focusSection ? 'customer-full-detail__content--focus-mode' : ''} ${isDragging === 'top-h' || isDragging === 'bottom-h' ? 'customer-full-detail--resizing-horizontal' : ''} ${isDragging === 'vertical' ? 'customer-full-detail--resizing-vertical' : ''}`}
               style={{
                 '--top-left-width': `${topLeftWidth}%`,
                 '--bottom-left-width': `${bottomLeftWidth}%`,
@@ -1017,11 +1071,63 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                 '--bottom-row-flex': 1,
               } as React.CSSProperties}
             >
+              {/* 🍎 Focus Mode 네비게이션 바 */}
+              {focusSection && (
+                <nav className="customer-full-detail__focus-nav">
+                  <button
+                    type="button"
+                    className={`focus-nav__tab ${focusSection === 'customer-info' ? 'focus-nav__tab--active' : ''}`}
+                    onClick={() => setFocusSection('customer-info')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="5" r="2.5"/><path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/></svg>
+                    고객정보
+                  </button>
+                  <button
+                    type="button"
+                    className={`focus-nav__tab ${focusSection === 'contracts' ? 'focus-nav__tab--active' : ''}`}
+                    onClick={() => setFocusSection('contracts')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 5h6M5 8h6M5 11h4" stroke="white" strokeWidth="1" strokeLinecap="round"/></svg>
+                    보험이력
+                    {(arHistoryCount + crHistoryCount) > 0 && <span className="focus-nav__count">{arHistoryCount + crHistoryCount}</span>}
+                  </button>
+                  <button
+                    type="button"
+                    className={`focus-nav__tab ${focusSection === 'documents' ? 'focus-nav__tab--active' : ''}`}
+                    onClick={() => setFocusSection('documents')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/></svg>
+                    문서
+                    {documentCount > 0 && <span className="focus-nav__count">{documentCount}</span>}
+                  </button>
+                  <button
+                    type="button"
+                    className={`focus-nav__tab ${focusSection === 'report' ? 'focus-nav__tab--active' : ''}`}
+                    onClick={() => setFocusSection('report')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="12" height="14" rx="1.5" fill="var(--color-success-overlay-bg)"/><rect x="4" y="9" width="1.5" height="4" rx="0.5" fill="var(--color-success-overlay-icon)"/><rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="var(--color-success-overlay-icon)"/><rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="var(--color-success-overlay-icon)"/></svg>
+                    보고서
+                  </button>
+                  <button
+                    type="button"
+                    className="focus-nav__grid-btn"
+                    onClick={() => setFocusSection(null)}
+                    aria-label="그리드 보기로 복귀"
+                  >
+                    {/* 2x2 그리드 아이콘 */}
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+                  </button>
+                </nav>
+              )}
+
               {/* 🍎 상단 행: 고객정보 | 리사이즈 핸들 | 보험계약 */}
-              <div className="customer-full-detail__row customer-full-detail__row--top">
+              <div className="customer-full-detail__row customer-full-detail__row--top" style={focusSection && focusSection !== 'customer-info' && focusSection !== 'contracts' ? { display: 'none' } : undefined}>
                 {/* 🍎 고객 정보 섹션 */}
-                <section className="customer-full-detail__section customer-full-detail__section--customer-info">
-                <h2 className="customer-full-detail__section-title">
+                <section
+                  className="customer-full-detail__section customer-full-detail__section--customer-info"
+                  style={focusSection && focusSection !== 'customer-info' ? { display: 'none' } : undefined}
+                >
+                <h2 className="customer-full-detail__section-title" onDoubleClick={(e) => handleSectionDoubleClick(e, 'customer-info')}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <circle cx="8" cy="5" r="2.5"/>
                     <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
@@ -1043,6 +1149,18 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       메모
                     </button>
                   </div>
+                  {/* 🍎 Focus Mode 확장 버튼 */}
+                  <button
+                    type="button"
+                    className="customer-full-detail__expand-btn"
+                    onClick={(e) => { e.stopPropagation(); handleFocusSection('customer-info') }}
+                    aria-label={focusSection === 'customer-info' ? '그리드 보기로 복귀' : '고객 정보 확대'}
+                  >
+                    {focusSection === 'customer-info'
+                      ? <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M9.5 2v4.5H14M6.5 14v-4.5H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>
+                      : <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M14 2l-4.5 4.5M2 14l4.5-4.5M9.5 2H14v4.5M6.5 14H2v-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>
+                    }
+                  </button>
                 </h2>
                 <div className="customer-full-detail__section-content customer-full-detail__section-content--customer-info">
                   {/* 🍎 고객 정보 탭 콘텐츠 */}
@@ -1176,11 +1294,15 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   role="separator"
                   aria-orientation="vertical"
                   aria-label="고객정보와 보험계약 사이 크기 조절"
+                  style={focusSection ? { display: 'none' } : undefined}
                 />
 
                 {/* 🍎 보험 이력 섹션 (탭 구조: AR 이력, 변액 이력) */}
-                <section className="customer-full-detail__section customer-full-detail__section--contracts">
-                <h2 className="customer-full-detail__section-title">
+                <section
+                  className="customer-full-detail__section customer-full-detail__section--contracts"
+                  style={focusSection && focusSection !== 'contracts' ? { display: 'none' } : undefined}
+                >
+                <h2 className="customer-full-detail__section-title" onDoubleClick={(e) => handleSectionDoubleClick(e, 'contracts')}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <rect x="2" y="2" width="12" height="12" rx="2"/>
                     <path d="M5 5h6M5 8h6M5 11h4" stroke="white" strokeWidth="1" strokeLinecap="round"/>
@@ -1264,6 +1386,18 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       </button>
                     )}
                   </div>
+                  {/* 🍎 Focus Mode 확장 버튼 */}
+                  <button
+                    type="button"
+                    className="customer-full-detail__expand-btn"
+                    onClick={(e) => { e.stopPropagation(); handleFocusSection('contracts') }}
+                    aria-label={focusSection === 'contracts' ? '그리드 보기로 복귀' : '보험이력 확대'}
+                  >
+                    {focusSection === 'contracts'
+                      ? <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9.5 2v4.5H14M6.5 14v-4.5H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      : <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M14 2l-4.5 4.5M2 14l4.5-4.5M9.5 2H14v4.5M6.5 14H2v-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    }
+                  </button>
                 </h2>
                   <div className="customer-full-detail__section-content customer-full-detail__section-content--contracts">
                     {/* 🍎 FamilyContractsTab: 항상 렌더링 (CSS 숨김) → 카운트가 즉시 계산됨 */}
@@ -1312,13 +1446,17 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                 role="separator"
                 aria-orientation="horizontal"
                 aria-label="상단 행과 하단 행 사이 크기 조절"
+                style={focusSection ? { display: 'none' } : undefined}
               />
 
               {/* 🍎 하단 행: 문서 | 리사이즈 핸들 | Annual Report */}
-              <div className="customer-full-detail__row customer-full-detail__row--bottom">
+              <div className="customer-full-detail__row customer-full-detail__row--bottom" style={focusSection && focusSection !== 'documents' && focusSection !== 'report' ? { display: 'none' } : undefined}>
                 {/* 🍎 문서 섹션 */}
-                <section className="customer-full-detail__section customer-full-detail__section--documents">
-                <h2 className="customer-full-detail__section-title">
+                <section
+                  className="customer-full-detail__section customer-full-detail__section--documents"
+                  style={focusSection && focusSection !== 'documents' ? { display: 'none' } : undefined}
+                >
+                <h2 className="customer-full-detail__section-title" onDoubleClick={(e) => handleSectionDoubleClick(e, 'documents')}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
                   </svg>
@@ -1373,6 +1511,18 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       </svg>
                     </button>
                   </Tooltip>
+                  {/* 🍎 Focus Mode 확장 버튼 */}
+                  <button
+                    type="button"
+                    className="customer-full-detail__expand-btn"
+                    onClick={(e) => { e.stopPropagation(); handleFocusSection('documents') }}
+                    aria-label={focusSection === 'documents' ? '그리드 보기로 복귀' : '문서 확대'}
+                  >
+                    {focusSection === 'documents'
+                      ? <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9.5 2v4.5H14M6.5 14v-4.5H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      : <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M14 2l-4.5 4.5M2 14l4.5-4.5M9.5 2H14v4.5M6.5 14H2v-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    }
+                  </button>
                 </h2>
                   <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
                     <DocumentsTab
@@ -1397,11 +1547,15 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   role="separator"
                   aria-orientation="vertical"
                   aria-label="문서와 Annual Report 사이 크기 조절"
+                  style={focusSection ? { display: 'none' } : undefined}
                 />
 
                 {/* 🍎 보고서 섹션 (탭 구조: 연간, 고객리뷰 등) */}
-                <section className="customer-full-detail__section customer-full-detail__section--report">
-                <h2 className="customer-full-detail__section-title">
+                <section
+                  className="customer-full-detail__section customer-full-detail__section--report"
+                  style={focusSection && focusSection !== 'report' ? { display: 'none' } : undefined}
+                >
+                <h2 className="customer-full-detail__section-title" onDoubleClick={(e) => handleSectionDoubleClick(e, 'report')}>
                   <svg
                     width="16"
                     height="16"
@@ -1481,6 +1635,18 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       </button>
                     )}
                   </div>
+                  {/* 🍎 Focus Mode 확장 버튼 */}
+                  <button
+                    type="button"
+                    className="customer-full-detail__expand-btn"
+                    onClick={(e) => { e.stopPropagation(); handleFocusSection('report') }}
+                    aria-label={focusSection === 'report' ? '그리드 보기로 복귀' : '보고서 확대'}
+                  >
+                    {focusSection === 'report'
+                      ? <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9.5 2v4.5H14M6.5 14v-4.5H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      : <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M14 2l-4.5 4.5M2 14l4.5-4.5M9.5 2H14v4.5M6.5 14H2v-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    }
+                  </button>
                 </h2>
                   <div className="customer-full-detail__section-content customer-full-detail__section-content--report">
                     {/* 🍎 연간 보고서 탭 - 항상 렌더링하여 SSE 실시간 업데이트 유지 */}

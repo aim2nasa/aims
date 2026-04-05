@@ -1,0 +1,141 @@
+/**
+ * 🍎 Customer Full Detail View - Focus Mode CSS
+ * 섹션 확대 보기 관련 스타일
+ */
+
+@layer views {
+
+  /* Focus Mode 네비게이션 바 */
+  .customer-full-detail__focus-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1) var(--spacing-3);
+    border-bottom: 1px solid var(--color-ios-separator-light);
+    flex-shrink: 0;
+    background: var(--color-ios-bg-secondary-light);
+  }
+
+  html[data-theme="dark"] .customer-full-detail__focus-nav {
+    background: var(--color-ios-bg-secondary-dark);
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  .focus-nav__tab {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1) var(--spacing-3);
+    border: none;
+    background: none;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .focus-nav__tab--active {
+    color: var(--color-primary);
+    font-weight: 600;
+    border-bottom-color: var(--color-primary);
+  }
+
+  .focus-nav__tab:hover:not(.focus-nav__tab--active) {
+    color: var(--color-text-primary);
+  }
+
+  .focus-nav__tab svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .focus-nav__count {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    margin-left: 2px;
+  }
+
+  .focus-nav__grid-btn {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .focus-nav__grid-btn:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+  }
+
+  .focus-nav__grid-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* 확장 버튼 (각 섹션 헤더 우측) */
+  .customer-full-detail__expand-btn {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .customer-full-detail__section-title:hover .customer-full-detail__expand-btn {
+    opacity: 0.6;
+  }
+
+  .customer-full-detail__expand-btn:hover {
+    opacity: 1;
+    color: var(--color-text-primary);
+  }
+
+  /* Focus Mode 활성 시 확장 버튼 항상 표시 */
+  .customer-full-detail__content--focus-mode .customer-full-detail__expand-btn {
+    opacity: 0.6;
+  }
+
+  .customer-full-detail__content--focus-mode .customer-full-detail__expand-btn:hover {
+    opacity: 1;
+  }
+
+  .customer-full-detail__expand-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Focus Mode 레이아웃 — 선택된 행/섹션만 전체 확장 */
+  .customer-full-detail__content--focus-mode .customer-full-detail__row {
+    flex: 1;
+    grid-template-columns: 1fr;
+  }
+
+  .customer-full-detail__content--focus-mode .customer-full-detail__section {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    grid-column: 1 / -1;
+  }
+
+} /* end @layer views */
