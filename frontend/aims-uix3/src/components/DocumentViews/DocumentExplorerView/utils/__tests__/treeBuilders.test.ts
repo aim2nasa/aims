@@ -49,9 +49,9 @@ describe('buildTree', () => {
 
   it('문서유형별 분류 시 TXT/OCR/BIN으로 그룹화한다', () => {
     const docs: Document[] = [
-      mockDoc({ meta: { full_text: '텍스트 내용' } } as any),
-      mockDoc({ ocr: { status: 'done', confidence: '0.85' } } as any),
-      mockDoc({} as any), // meta/ocr 없으면 BIN
+      mockDoc({ meta: { full_text: '텍스트 내용' } } as unknown as Partial<Document>),
+      mockDoc({ ocr: { status: 'done', confidence: '0.85' } } as unknown as Partial<Document>),
+      mockDoc({} as unknown as Partial<Document>), // meta/ocr 없으면 BIN
     ]
 
     const result = buildTree(docs, 'badgeType')

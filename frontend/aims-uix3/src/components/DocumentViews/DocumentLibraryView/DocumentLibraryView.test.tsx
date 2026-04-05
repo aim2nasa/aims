@@ -124,7 +124,7 @@ vi.mock('@/contexts/DocumentStatusContext', () => ({
 }))
 
 vi.mock('@/providers/DocumentStatusProvider', () => ({
-  DocumentStatusProvider: ({ children }: any) => <div>{children}</div>,
+  DocumentStatusProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
 vi.mock('@/controllers/useDocumentStatusController', () => ({
@@ -154,12 +154,12 @@ vi.mock('@/controllers/useDocumentStatusController', () => ({
 // Mock DocumentStatusService
 vi.mock('@/services/DocumentStatusService', () => ({
   DocumentStatusService: {
-    extractStatus: (document: any) => document.status || 'pending',
-    extractFilename: (document: any) => document.filename || 'unknown.pdf',
-    extractOriginalFilename: (document: any) => document.originalName || document.filename || 'unknown.pdf',
-    extractFileSize: (document: any) => document.fileSize || 0,
-    extractUploadedDate: (document: any) => document.uploadTime || new Date().toISOString(),
-    extractProgress: (document: any) => document.progress || 0,
+    extractStatus: (document: Record<string, unknown>) => (document.status as string) || 'pending',
+    extractFilename: (document: Record<string, unknown>) => (document.filename as string) || 'unknown.pdf',
+    extractOriginalFilename: (document: Record<string, unknown>) => (document.originalName as string) || (document.filename as string) || 'unknown.pdf',
+    extractFileSize: (document: Record<string, unknown>) => (document.fileSize as number) || 0,
+    extractUploadedDate: (document: Record<string, unknown>) => (document.uploadTime as string) || new Date().toISOString(),
+    extractProgress: (document: Record<string, unknown>) => (document.progress as number) || 0,
     getStatusLabel: (status: string) => status === 'completed' ? '완료' : '처리 중',
     getStatusIcon: (status: string) => status === 'completed' ? '✓' : '⋯',
     formatUploadDate: (date: string) => new Date(date).toLocaleDateString('ko-KR'),
@@ -174,19 +174,25 @@ vi.mock('@/entities/document', () => ({
     getFileIcon: () => 'doc.fill',
     formatFileSize: (size: number) => `${(size / 1024).toFixed(1)} KB`,
     getFileExtension: (mimeType: string) => mimeType?.split('/')[1]?.toUpperCase() || 'PDF',
-    getDocumentType: (document: any) => {
+    getDocumentType: (document: Record<string, unknown>) => {
       if (!document) return null
-      if (document.ocr && typeof document.ocr === 'object' && document.ocr.status === 'done') return 'ocr'
-      if (document.docembed && typeof document.docembed === 'object') {
-        if (document.docembed.text_source === 'ocr') return 'ocr'
-        if (document.docembed.text_source === 'meta') return 'txt'
+      const ocr = document.ocr as Record<string, unknown> | undefined
+      const docembed = document.docembed as Record<string, unknown> | undefined
+      const meta = document.meta as Record<string, unknown> | undefined
+      if (ocr && typeof ocr === 'object' && ocr.status === 'done') return 'ocr'
+      if (docembed && typeof docembed === 'object') {
+        if (docembed.text_source === 'ocr') return 'ocr'
+        if (docembed.text_source === 'meta') return 'txt'
       }
-      if (document.meta && typeof document.meta === 'object' && document.meta.full_text && document.meta.full_text.length > 0) return 'txt'
+      if (meta && typeof meta === 'object' && meta.full_text && (meta.full_text as string).length > 0) return 'txt'
       return null
     },
-    getDocumentTypeLabel: (document: any) => {
+    getDocumentTypeLabel: (document: Record<string, unknown>) => {
       if (!document) return ''
-      const type = document.ocr?.status === 'done' ? 'ocr' : document.docembed?.text_source === 'ocr' ? 'ocr' : document.docembed?.text_source === 'meta' ? 'txt' : document.meta?.full_text ? 'txt' : null
+      const ocr = document.ocr as Record<string, unknown> | undefined
+      const docembed = document.docembed as Record<string, unknown> | undefined
+      const meta = document.meta as Record<string, unknown> | undefined
+      const type = ocr?.status === 'done' ? 'ocr' : docembed?.text_source === 'ocr' ? 'ocr' : docembed?.text_source === 'meta' ? 'txt' : meta?.full_text ? 'txt' : null
       if (type === 'ocr') return 'OCR'
       if (type === 'txt') return 'TXT'
       return ''
@@ -196,26 +202,26 @@ vi.mock('@/entities/document', () => ({
 
 // Mock sub-components and utilities
 vi.mock('../../CenterPaneView/CenterPaneView', () => ({
-  CenterPaneView: ({ children }: any) => <div data-testid="center-pane-view">{children}</div>,
+  CenterPaneView: ({ children }: { children: React.ReactNode }) => <div data-testid="center-pane-view">{children}</div>,
 }))
 
 vi.mock('@/shared/ui', () => ({
-  Dropdown: ({ value, onChange }: any) => (
+  Dropdown: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
     <select data-testid="dropdown" value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="option1">Option 1</option>
     </select>
   ),
-  Tooltip: ({ children, content }: any) => (
+  Tooltip: ({ children, content }: { children: React.ReactNode; content: string }) => (
     <div data-testid="tooltip" title={content}>
       {children}
     </div>
   ),
-  Button: ({ children, onClick }: any) => (
+  Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
     <button data-testid="button" onClick={onClick}>
       {children}
     </button>
   ),
-  CloseButton: ({ onClick }: any) => (
+  CloseButton: ({ onClick }: { onClick?: () => void }) => (
     <button data-testid="close-button" onClick={onClick}>×</button>
   ),
   useContextMenu: () => ({
@@ -224,11 +230,11 @@ vi.mock('@/shared/ui', () => ({
     openMenu: vi.fn(),
     closeMenu: vi.fn(),
   }),
-  ContextMenu: ({ children }: any) => <div data-testid="context-menu">{children}</div>,
-  ContextMenuItem: ({ children, onClick }: any) => <div onClick={onClick}>{children}</div>,
+  ContextMenu: ({ children }: { children: React.ReactNode }) => <div data-testid="context-menu">{children}</div>,
+  ContextMenuItem: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => <div onClick={onClick}>{children}</div>,
   ContextMenuDivider: () => <hr />,
-  Modal: ({ children, visible }: any) => visible ? <div data-testid="modal">{children}</div> : null,
-  DocumentTypeCell: ({ documentType }: any) => (
+  Modal: ({ children, visible }: { children: React.ReactNode; visible: boolean }) => visible ? <div data-testid="modal">{children}</div> : null,
+  DocumentTypeCell: ({ documentType }: { documentType?: string }) => (
     <span data-testid="document-type-cell">{documentType || '미지정'}</span>
   ),
   DocumentTypeBadge: () => null,
@@ -238,7 +244,7 @@ vi.mock('@/shared/ui', () => ({
 vi.mock('@/shared/ui/InitialFilterBar', () => ({
   InitialFilterBar: () => <div data-testid="initial-filter-bar">InitialFilterBar</div>,
   calculateInitialCounts: () => new Map(),
-  filterByInitial: (items: any[]) => items,
+  filterByInitial: (items: unknown[]) => items,
 }))
 
 vi.mock('../components/DocumentActionIcons', () => ({
@@ -282,7 +288,7 @@ vi.mock('@/controllers/useAppleConfirmController', () => ({
 }))
 
 vi.mock('../../SFSymbol', () => ({
-  SFSymbol: ({ name }: any) => <span data-testid="sf-symbol">{name}</span>,
+  SFSymbol: ({ name }: { name: string }) => <span data-testid="sf-symbol">{name}</span>,
   SFSymbolSize: {
     CAPTION_2: 'caption-2', CAPTION_1: 'caption-1', FOOTNOTE: 'footnote',
     CALLOUT: 'callout', BODY: 'body', SUBHEADLINE: 'subheadline',

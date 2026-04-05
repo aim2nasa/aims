@@ -3,7 +3,7 @@
  * xlsx 파일 등 썸네일이 없는 파일의 호버 프리뷰 검증
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, act } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { HoverPreview } from '../HoverPreview'
 import type { Document } from '@/types/documentStatus'
 

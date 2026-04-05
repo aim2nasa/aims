@@ -455,7 +455,7 @@ export function useDocumentExplorerTree({
         setSelectedDocumentId(documentId)
       }
     },
-    [treeData.nodes, setExpandedKeys]
+    [treeData, setExpandedKeys]
   )
 
   // 문서가 있는 날짜 목록 반환
