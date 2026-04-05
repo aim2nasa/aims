@@ -120,8 +120,7 @@ describe('항목 1: documentDeleteService 동작 검증', () => {
     expect(customer.documents[0].filename).toBe('other_doc');
   });
 
-  // TODO: deleteDocument()에서 ar_parse_queue 삭제 로직 구현 후 skip 제거
-  test.skip('deleteDocument()로 문서 삭제 시 ar_parse_queue에서 제거됨', async () => {
+  test('deleteDocument()로 문서 삭제 시 ar_parse_queue에서 제거됨', async () => {
     // Given: 문서 + AR 파싱 큐 레코드
     const docId = new ObjectId();
     const queueId = new ObjectId();

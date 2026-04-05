@@ -83,6 +83,7 @@ try {
     serverPath,
     path.join(__dirname, '../routes/documents-routes.js'),
     path.join(__dirname, '../routes/customers-routes.js'),
+    path.join(__dirname, '../lib/documentDeleteService.js'),
   ];
   serverContent = routeFiles
     .filter(f => fs.existsSync(f))
@@ -237,8 +238,33 @@ if (!customerDeleteBlock) {
 
 console.log('\n📋 Test Suite 5: Deletion Order Verification\n');
 
-if (singleDeleteBlock) {
+// 삭제 순서는 documentDeleteService.js에서 검증 (리팩토링 후 삭제 로직이 서비스로 이동)
+const deleteServicePath = path.join(__dirname, '../lib/documentDeleteService.js');
+const deleteServiceContent = fs.existsSync(deleteServicePath)
+  ? fs.readFileSync(deleteServicePath, 'utf-8')
+  : null;
+
+if (deleteServiceContent) {
   // 13. MongoDB 삭제 전에 파일 삭제
+  const fsUnlinkIndex = deleteServiceContent.indexOf('fs.unlink(');
+  const mongoDeleteIndex = deleteServiceContent.indexOf('.deleteOne(');
+
+  assert(
+    fsUnlinkIndex > 0 && mongoDeleteIndex > 0 && fsUnlinkIndex < mongoDeleteIndex,
+    'File deletion before MongoDB deletion',
+    'Physical file should be deleted before MongoDB document'
+  );
+
+  // 14. Qdrant 삭제가 MongoDB 삭제 후에
+  const qdrantDeleteIndex = deleteServiceContent.indexOf('qdrantClient.delete(');
+
+  assert(
+    mongoDeleteIndex > 0 && qdrantDeleteIndex > 0 && mongoDeleteIndex < qdrantDeleteIndex,
+    'Qdrant deletion after MongoDB deletion',
+    'Qdrant should be deleted after MongoDB (already committed)'
+  );
+} else if (singleDeleteBlock) {
+  // fallback: 서비스 파일이 없으면 기존 방식 (라우트에서 직접 삭제하는 구조)
   const fsUnlinkIndex = singleDeleteBlock.indexOf('fs.unlink(');
   const mongoDeleteIndex = singleDeleteBlock.indexOf('.deleteOne({ _id: new ObjectId(id)');
 
@@ -248,7 +274,6 @@ if (singleDeleteBlock) {
     'Physical file should be deleted before MongoDB document'
   );
 
-  // 14. Qdrant 삭제가 MongoDB 삭제 후에
   const qdrantDeleteIndex = singleDeleteBlock.indexOf('qdrantClient.delete(QDRANT_COLLECTION');
 
   assert(
