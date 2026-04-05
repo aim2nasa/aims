@@ -36,7 +36,7 @@ jobs:
           pip install --no-cache-dir -r backend/api/aims_rag_api/requirements.txt
           pip install --no-cache-dir -r backend/api/pdf_proxy/requirements.txt
           pip install --no-cache-dir -r backend/api/document_pipeline/requirements.txt
-          pip install ruff pytest pytest-asyncio httpx
+          pip install ruff pytest "pytest-asyncio>=0.23,<0.25" httpx
 
       - name: Lint Python (ruff)
         run: |
