@@ -1311,8 +1311,9 @@ class TestSummarizeTextEmptySummaryFallback:
         return mock_response
 
     @pytest.mark.asyncio
-    async def test_empty_summary_unclassifiable_returns_guidance_message(self):
-        """unclassifiable + 빈 summary → '문서 유형을 식별할 수 없습니다.' 반환"""
+    async def test_empty_summary_unclassifiable_returns_text_prefix(self):
+        """unclassifiable + 빈 summary → 원본 텍스트 앞 200자 fallback (고정 메시지 아님)"""
+        input_text = "비행기 조종 시스템 설명서입니다. " * 20  # 200자 초과
         mock_response = self._make_mock_response(
             '{"type":"unclassifiable","confidence":1.0,"title":"","summary":"","tags":[]}'
         )
@@ -1325,11 +1326,13 @@ class TestSummarizeTextEmptySummaryFallback:
             mock_get_client.return_value = mock_client
             mock_log.return_value = True
 
-            result = await OpenAIService.summarize_text("원본 텍스트 내용입니다.")
+            result = await OpenAIService.summarize_text(input_text)
 
-            assert result["summary"] == "문서 유형을 식별할 수 없습니다."
             assert result["document_type"] == "unclassifiable"
-            # raw JSON이 summary에 들어가지 않아야 함
+            # 고정 메시지가 아닌 본문 앞부분이 반환되어야 함
+            assert "비행기 조종 시스템" in result["summary"]
+            assert result["summary"] != "문서 유형을 식별할 수 없습니다."
+            assert result["summary"].endswith("...")
             assert "{" not in result["summary"]
 
     @pytest.mark.asyncio

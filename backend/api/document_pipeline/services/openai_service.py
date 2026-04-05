@@ -105,7 +105,8 @@ CLASSIFICATION_SYSTEM_PROMPT = (
     "general은 22개 유형 어디에도 해당하지 않을 때만 선택. "
     "텍스트가 부실해도 파일명이나 별칭에서 유형을 추론 가능하면 반드시 해당 유형으로 분류! "
     "예: 별칭 '체류기간 정보'→id_card, '카드 정보'→personal_docs. "
-    "unclassifiable은 텍스트·파일명·별칭 모두에서 전혀 추론 불가할 때만."
+    "unclassifiable은 텍스트·파일명·별칭 모두에서 전혀 추론 불가할 때만. "
+    "단, unclassifiable이어도 summary는 반드시 본문 내용 기반으로 생성할 것."
 )
 
 CLASSIFICATION_USER_PROMPT = """보험설계사가 관리하는 고객 문서를 아래 22개 유형 중 하나로 분류하세요.
@@ -373,10 +374,7 @@ class OpenAIService:
             summary = parsed.get("summary", "")
 
             if not summary:
-                if doc_type == "unclassifiable":
-                    summary = "문서 유형을 식별할 수 없습니다."
-                else:
-                    summary = text[:200].strip() + ("..." if len(text) > 200 else "")
+                summary = text[:200].strip() + ("..." if len(text) > 200 else "")
 
             logger.info(f"[Classification] doc_id={document_id}, type={doc_type}, confidence={confidence:.2f}")
 
