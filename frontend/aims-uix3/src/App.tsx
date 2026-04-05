@@ -491,6 +491,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setPaginationVisible(true)
       setRightPaneVisible(true)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDocumentView, selectedDocument, selectedCustomer])
 
 
@@ -498,6 +499,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     if (rightPaneVisible && centerWidth !== DEFAULT_CENTER_WIDTH_PERCENT) {
       setCenterWidth(DEFAULT_CENTER_WIDTH_PERCENT)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rightPaneVisible])
 
   // 🍎 Progressive Disclosure: LeftPane 애니메이션 상태 추적
@@ -646,6 +648,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         handleDocumentClick(reopenDocId)
       }, 1000)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // 네비게이션 히스토리 추적 (조건부 BackButton용) — popstate보다 앞에 선언 필요
@@ -857,6 +860,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // 🍎 URL 업데이트 (view 포함하여 pushState로 히스토리에 추가)
       updateURLParams({ view: menuKey, customerId: null, documentId: null })
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateURLParams, recordNavigation])
 
   // 🎹 전역 단축키 핸들러 - useGlobalShortcuts 훅으로 분리
@@ -887,6 +891,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     // URL 업데이트
     updateURLParams({ view: 'customers-all', customerId, documentId: null })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateURLParams])
 
   // 계정 설정 Store에 모든 setter 등록
@@ -921,6 +926,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // 요청 처리 완료
       clearOpenRequest()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openRequested, clearOpenRequest, updateURLParams])
 
   // 🍎 기본 View (빈 CenterPane 방지)
@@ -949,6 +955,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       }
       setRightPaneContentType(null)
     }, 600)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rightPaneContentType, updateURLParams])
 
   // RightPane 더블클릭 핸들러 - 모달로 전환
@@ -969,6 +976,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         setPreviewModalVisible(true);
       }, 600);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rightPaneContentType, selectedDocument, updateURLParams]);
 
   // 문서 리스트에서 더블클릭 시 프리뷰 모달 열기
@@ -2002,6 +2010,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               >
                 {(() => {
                   // 🔴 바이러스 감염 여부 확인
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const virusScan = (selectedDocument as any).virusScan
                   const isVirusInfected = virusScan?.status === 'infected' || virusScan?.status === 'deleted'
 

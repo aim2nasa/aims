@@ -136,6 +136,7 @@ describe('AR 문서 업로드 전체 플로우 통합 테스트', () => {
       })
 
       // 2단계: OCR 처리 완료 (meta.full_text 없음, OCR 신뢰도만 있음)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockDocumentStatus: any = {
         success: true,
         data: {
