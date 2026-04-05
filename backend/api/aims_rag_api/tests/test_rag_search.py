@@ -427,9 +427,15 @@ class TestPaginationKeyword:
     @patch('rag_search.requests.post')
     def test_keyword_pagination_first_page(self, mock_requests_post):
         """키워드 검색: 첫 페이지 (offset=0)"""
-        # Mock - 20개 결과 반환
+        # Mock - smartsearch 페이지네이션 응답 (page=1, total=20, total_pages=4)
         mock_response = MagicMock()
-        mock_response.json.return_value = [{"id": str(i)} for i in range(20)]
+        mock_response.json.return_value = {
+            "results": [{"id": str(i)} for i in range(5)],
+            "total": 20,
+            "page": 1,
+            "page_size": 5,
+            "total_pages": 4
+        }
         mock_response.raise_for_status = MagicMock()
         mock_requests_post.return_value = mock_response
 
@@ -443,15 +449,21 @@ class TestPaginationKeyword:
 
         # 페이지네이션 필드 확인
         assert data["total_count"] == 20
-        assert data["has_more"] == True
+        assert data["has_more"] == True  # page(1) < total_pages(4)
         assert len(data["search_results"]) == 5
 
     @patch('rag_search.requests.post')
     def test_keyword_pagination_second_page(self, mock_requests_post):
         """키워드 검색: 두 번째 페이지 (offset=5)"""
-        # Mock - 20개 결과 반환
+        # Mock - smartsearch 페이지네이션 응답 (page=2, total=20, total_pages=4)
         mock_response = MagicMock()
-        mock_response.json.return_value = [{"id": str(i)} for i in range(20)]
+        mock_response.json.return_value = {
+            "results": [{"id": str(i)} for i in range(5, 10)],
+            "total": 20,
+            "page": 2,
+            "page_size": 5,
+            "total_pages": 4
+        }
         mock_response.raise_for_status = MagicMock()
         mock_requests_post.return_value = mock_response
 
@@ -465,7 +477,7 @@ class TestPaginationKeyword:
 
         # 페이지네이션 필드 확인
         assert data["total_count"] == 20
-        assert data["has_more"] == True  # 5+5 < 20
+        assert data["has_more"] == True  # page(2) < total_pages(4)
         assert len(data["search_results"]) == 5
         # offset이 5이므로 id가 5~9여야 함
         assert data["search_results"][0]["id"] == "5"
@@ -473,9 +485,15 @@ class TestPaginationKeyword:
     @patch('rag_search.requests.post')
     def test_keyword_pagination_last_page(self, mock_requests_post):
         """키워드 검색: 마지막 페이지 (offset=15)"""
-        # Mock - 20개 결과 반환
+        # Mock - smartsearch 페이지네이션 응답 (page=4, total=20, total_pages=4)
         mock_response = MagicMock()
-        mock_response.json.return_value = [{"id": str(i)} for i in range(20)]
+        mock_response.json.return_value = {
+            "results": [{"id": str(i)} for i in range(15, 20)],
+            "total": 20,
+            "page": 4,
+            "page_size": 5,
+            "total_pages": 4
+        }
         mock_response.raise_for_status = MagicMock()
         mock_requests_post.return_value = mock_response
 
@@ -489,15 +507,21 @@ class TestPaginationKeyword:
 
         # 페이지네이션 필드 확인
         assert data["total_count"] == 20
-        assert data["has_more"] == False  # 15+5 >= 20
+        assert data["has_more"] == False  # page(4) < total_pages(4) = False
         assert len(data["search_results"]) == 5
 
     @patch('rag_search.requests.post')
     def test_keyword_pagination_exact_last(self, mock_requests_post):
         """키워드 검색: 정확히 마지막 (offset + len == total)"""
-        # Mock - 10개 결과 반환
+        # Mock - smartsearch 페이지네이션 응답 (page=2, total=10, total_pages=2)
         mock_response = MagicMock()
-        mock_response.json.return_value = [{"id": str(i)} for i in range(10)]
+        mock_response.json.return_value = {
+            "results": [{"id": str(i)} for i in range(5, 10)],
+            "total": 10,
+            "page": 2,
+            "page_size": 5,
+            "total_pages": 2
+        }
         mock_response.raise_for_status = MagicMock()
         mock_requests_post.return_value = mock_response
 
@@ -509,15 +533,22 @@ class TestPaginationKeyword:
         assert response.status_code == 200
         data = response.json()
 
-        # 5 + 5 == 10 → has_more = False
+        # page(2) < total_pages(2) = False → has_more = False
         assert data["total_count"] == 10
         assert data["has_more"] == False
 
     @patch('rag_search.requests.post')
     def test_keyword_pagination_empty_results(self, mock_requests_post):
         """키워드 검색: 빈 결과"""
+        # Mock - smartsearch 페이지네이션 응답 (빈 결과)
         mock_response = MagicMock()
-        mock_response.json.return_value = []
+        mock_response.json.return_value = {
+            "results": [],
+            "total": 0,
+            "page": 1,
+            "page_size": 10,
+            "total_pages": 0
+        }
         mock_response.raise_for_status = MagicMock()
         mock_requests_post.return_value = mock_response
 
@@ -530,7 +561,7 @@ class TestPaginationKeyword:
         data = response.json()
 
         assert data["total_count"] == 0
-        assert data["has_more"] == False
+        assert data["has_more"] == False  # page(1) < total_pages(0) = False
         assert len(data["search_results"]) == 0
 
 
@@ -697,10 +728,24 @@ class TestPaginationConsistency:
     @patch('rag_search.requests.post')
     def test_keyword_total_count_consistency(self, mock_requests_post):
         """키워드 검색: total_count는 페이지와 관계없이 동일"""
-        mock_response = MagicMock()
-        mock_response.json.return_value = [{"id": str(i)} for i in range(15)]
-        mock_response.raise_for_status = MagicMock()
-        mock_requests_post.return_value = mock_response
+        # 각 페이지별 smartsearch 페이지네이션 응답 mock (total=15, total_pages=3)
+        def make_mock_response(results, page):
+            resp = MagicMock()
+            resp.json.return_value = {
+                "results": results,
+                "total": 15,
+                "page": page,
+                "page_size": 5,
+                "total_pages": 3
+            }
+            resp.raise_for_status = MagicMock()
+            return resp
+
+        mock_requests_post.side_effect = [
+            make_mock_response([{"id": str(i)} for i in range(5)], page=1),
+            make_mock_response([{"id": str(i)} for i in range(5, 10)], page=2),
+            make_mock_response([{"id": str(i)} for i in range(10, 15)], page=3),
+        ]
 
         # 첫 페이지
         response1 = client.post(
@@ -730,11 +775,28 @@ class TestPaginationConsistency:
     @patch('rag_search.requests.post')
     def test_keyword_no_duplicate_results(self, mock_requests_post):
         """키워드 검색: 페이지 간 결과 중복 없음"""
-        results = [{"id": str(i)} for i in range(10)]
-        mock_response = MagicMock()
-        mock_response.json.return_value = results
-        mock_response.raise_for_status = MagicMock()
-        mock_requests_post.return_value = mock_response
+        # 각 페이지별 smartsearch 페이지네이션 응답 mock (total=10, total_pages=2)
+        mock_resp1 = MagicMock()
+        mock_resp1.json.return_value = {
+            "results": [{"id": str(i)} for i in range(5)],
+            "total": 10,
+            "page": 1,
+            "page_size": 5,
+            "total_pages": 2
+        }
+        mock_resp1.raise_for_status = MagicMock()
+
+        mock_resp2 = MagicMock()
+        mock_resp2.json.return_value = {
+            "results": [{"id": str(i)} for i in range(5, 10)],
+            "total": 10,
+            "page": 2,
+            "page_size": 5,
+            "total_pages": 2
+        }
+        mock_resp2.raise_for_status = MagicMock()
+
+        mock_requests_post.side_effect = [mock_resp1, mock_resp2]
 
         # 첫 페이지
         response1 = client.post(
@@ -759,26 +821,57 @@ class TestPaginationConsistency:
     @patch('rag_search.requests.post')
     def test_keyword_has_more_boundary(self, mock_requests_post):
         """키워드 검색: has_more 경계 조건"""
-        mock_response = MagicMock()
-        mock_response.json.return_value = [{"id": str(i)} for i in range(10)]
-        mock_response.raise_for_status = MagicMock()
-        mock_requests_post.return_value = mock_response
+        # 3번 호출 각각 다른 페이지네이션 응답
+        # 호출1: page=1, page_size=3, total=10, total_pages=4 → has_more=True (1<4)
+        mock_resp1 = MagicMock()
+        mock_resp1.json.return_value = {
+            "results": [{"id": str(i)} for i in range(3)],
+            "total": 10,
+            "page": 1,
+            "page_size": 3,
+            "total_pages": 4
+        }
+        mock_resp1.raise_for_status = MagicMock()
 
-        # offset + len < total → has_more = True
+        # 호출2: page=2, page_size=5, total=10, total_pages=2 → has_more=False (2<2=False)
+        mock_resp2 = MagicMock()
+        mock_resp2.json.return_value = {
+            "results": [{"id": str(i)} for i in range(5, 10)],
+            "total": 10,
+            "page": 2,
+            "page_size": 5,
+            "total_pages": 2
+        }
+        mock_resp2.raise_for_status = MagicMock()
+
+        # 호출3: page=3, page_size=5, total=10, total_pages=2 → has_more=False (3<2=False), 빈 결과
+        mock_resp3 = MagicMock()
+        mock_resp3.json.return_value = {
+            "results": [],
+            "total": 10,
+            "page": 3,
+            "page_size": 5,
+            "total_pages": 2
+        }
+        mock_resp3.raise_for_status = MagicMock()
+
+        mock_requests_post.side_effect = [mock_resp1, mock_resp2, mock_resp3]
+
+        # page(1) < total_pages(4) → has_more = True
         response1 = client.post(
             "/search",
             json={"query": "test", "search_mode": "keyword", "top_k": 3, "offset": 0}
         )
         assert response1.json()["has_more"] == True
 
-        # offset + len == total → has_more = False
+        # page(2) < total_pages(2) = False → has_more = False
         response2 = client.post(
             "/search",
             json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 5}
         )
         assert response2.json()["has_more"] == False
 
-        # offset + len > total (offset이 total보다 크면 빈 결과)
+        # page(3) < total_pages(2) = False → has_more = False, 빈 결과
         response3 = client.post(
             "/search",
             json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 10}
