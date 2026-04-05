@@ -1870,9 +1870,13 @@ start_time = time.time()
 ###########################################
 # 1단계: 고객목록조회 메뉴 진입
 ###########################################
-log(u"\n[1단계] 고객목록조회 진입")
 
-try:
+def _navigate_to_customer_list():
+    """1단계: 고객목록조회 메뉴 진입 (함수화)
+
+    MetLife 로고 클릭부터 고객목록조회 화면 도달까지 수행.
+    성공 시 True 반환, 화면 미도달 시 False 반환, 오류 시 예외 발생.
+    """
     log(u"  [1-1] 메인 화면으로 이동...")
     click("img/1769598099792.png")  # MetLife 로고 [100% 줌]
     log(u"  [1-1] 메인 화면 로딩 대기 (10초)...")
@@ -1900,6 +1904,7 @@ try:
     _debug_mark_region(_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h, "1-3 search")
     log(u"  [DEBUG] 고객관리 탭: x=%d y=%d w=%d h=%d" % (_mgmt.x, _mgmt.y, _mgmt.w, _mgmt.h))
     log(u"  [DEBUG] 검색 영역: x=%d y=%d w=%d h=%d" % (_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h))
+    _reg_match = None
     for _reg_retry in range(3):
         _reg_match = _dd_region.exists("img/customer_reg_menu.png", 5)
         if _reg_match:
@@ -1926,55 +1931,48 @@ try:
     sleep(5)
     _diag_screenshot("1-4_custlist")
 
-    # 1단계 완료 검증: 초성 버튼(ㄱ)이 화면에 보이는지 확인
+    # 검증: 초성 버튼(ㄱ)이 화면에 보이는지
     if not exists("img/1769598464024.png", 5):  # ㄱ 버튼
-        log(u"  [WARN] 고객목록조회 화면 미도달 — 1단계 재시도")
         _diag_screenshot("1-4_verify_fail")
-        # MetLife 로고로 초기화 후 재시도
-        click("img/1769598099792.png")  # MetLife 로고
-        sleep(10)
-        dismiss_notice_popups()
-        _mgmt = find("img/1769598228284.png")  # 고객관리 탭
-        click(_mgmt)
-        sleep(5)
-        _dd_region = Region(int(_mgmt.x), int(_mgmt.y + _mgmt.h), int(_mgmt.w) + 60, 75)
-        for _reg_retry in range(3):
-            _reg_match = _dd_region.exists("img/customer_reg_menu.png", 5)
-            if _reg_match:
-                _dd_region.click(_reg_match)
-                break
-            if _reg_retry < 2:
-                sleep(1)
-        else:
-            _dd_region.click("img/customer_reg_menu.png")
-        sleep(3)
-        click("img/1769598272319.png")  # 고객목록조회
-        sleep(5)
-        _diag_screenshot("1-4_retry_result")
-        if not exists("img/1769598464024.png", 5):
-            _diag_screenshot("1-4_retry_fail")
-            raise Exception(u"1단계 재시도 실패: 고객목록조회 화면 미도달")
+        return False  # 화면 미도달
+    return True  # 성공
 
-except:
-    # bare except: Java 예외(SikuliX FindFailed) + Python 예외 모두 캐치
-    exc_info = sys.exc_info()
-    _crash_log(u"")
-    _crash_log(u"=" * 60)
-    _crash_log(u"[FATAL] 1단계 네비게이션 실패 - 프로그램 종료")
-    _crash_log(u"=" * 60)
-    _crash_log(u"오류 타입: %s" % exc_info[0])
-    _crash_log(u"오류 내용: %s" % exc_info[1])
-    _crash_log(u"화면이 고객목록조회 메뉴에 접근 가능한 상태인지 확인하세요.")
-    _crash_log(u"")
-    _crash_log(u"스택 트레이스:")
+log(u"\n[1단계] 고객목록조회 진입")
+
+_NAV_MAX_RETRIES = 3
+_nav_success = False
+
+for _nav_attempt in range(_NAV_MAX_RETRIES):
     try:
-        tb_str = traceback.format_exc()
-        for line in tb_str.split("\n"):
-            if line.strip():
-                _crash_log(u"  %s" % line)
+        if _nav_attempt > 0:
+            log(u"\n  [복구] 1단계 재시도 %d/%d — MetLife 로고에서 다시 시작" % (_nav_attempt + 1, _NAV_MAX_RETRIES))
+        _nav_result = _navigate_to_customer_list()
+        if _nav_result:
+            _nav_success = True
+            break
+        else:
+            log(u"  [WARN] 고객목록조회 화면 미도달 (시도 %d/%d)" % (_nav_attempt + 1, _NAV_MAX_RETRIES))
+            if _nav_attempt < _NAV_MAX_RETRIES - 1:
+                log(u"  [복구] MetLife 로고로 복귀 후 재시도...")
+                sleep(2)
     except:
-        pass
+        log(u"  [ERROR] 1단계 네비게이션 오류 (시도 %d/%d)" % (_nav_attempt + 1, _NAV_MAX_RETRIES))
+        _diag_screenshot("1_error_attempt_%d" % (_nav_attempt + 1))
+        if _nav_attempt < _NAV_MAX_RETRIES - 1:
+            log(u"  [복구] MetLife 로고로 복귀 후 재시도...")
+            try:
+                click("img/1769598099792.png")  # MetLife 로고로 초기화
+                sleep(10)
+            except:
+                pass
+            sleep(2)
+
+if not _nav_success:
+    _crash_log(u"")
     _crash_log(u"=" * 60)
+    _crash_log(u"[FATAL] 1단계 네비게이션 실패 - %d회 시도 모두 실패" % _NAV_MAX_RETRIES)
+    _crash_log(u"=" * 60)
+    _crash_log(u"화면이 고객목록조회 메뉴에 접근 가능한 상태인지 확인하세요.")
     _take_crash_screenshot(u"FATAL_navigation_failed")
     _close_log_file()
     raise SystemExit(1)
@@ -2001,10 +1999,29 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     _chosung_customer_results = []  # 초성별 결과 초기화
     log(u"\n  === [%s] 초성 처리 시작 ===" % chosung_name)
     log(u"  [%s] 버튼 클릭..." % chosung_name)
-    try:
-        click(chosung_img)
-    except:
-        _fatal_crash(u"초성 [%s] 버튼 클릭" % chosung_name, chosung_name)
+
+    _chosung_clicked = False
+    for _chosung_retry in range(2):  # 최대 2회 (원래 시도 + 1단계 복귀 재시도)
+        try:
+            click(chosung_img)
+            _chosung_clicked = True
+            break
+        except:
+            if _chosung_retry == 0:
+                log(u"  [WARN] 초성 [%s] 버튼 미발견 — 1단계부터 복구 시도" % chosung_name)
+                _diag_screenshot("chosung_%s_fail" % chosung_name)
+                try:
+                    _recover_result = _navigate_to_customer_list()
+                    if _recover_result:
+                        log(u"  [복구] 1단계 복구 성공 — 초성 [%s] 재시도" % chosung_name)
+                    else:
+                        log(u"  [복구] 1단계 복구 후 화면 미도달")
+                except:
+                    log(u"  [복구] 1단계 복구 실패")
+
+    if not _chosung_clicked:
+        _fatal_crash(u"초성 [%s] 버튼 클릭 (복구 후 재시도 실패)" % chosung_name, chosung_name)
+
     sleep(5)  # 목록 로딩 대기
 
     # 고객명 내림차순 정렬 - ↓ 화살표가 나타날 때까지 클릭
