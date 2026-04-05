@@ -129,7 +129,7 @@ const createDocNode = (id: string, originalName: string, displayName: string | n
     badgeType: 'AR',
     progress: 100,
     customer_relation: { customer_id: 'c1', customer_name: '테스트고객' },
-  } as any,
+  } as unknown as import('@/types/documentStatus').Document,
 })
 
 /** 최소 필수 props */

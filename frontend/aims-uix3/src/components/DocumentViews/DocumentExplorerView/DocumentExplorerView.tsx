@@ -662,7 +662,7 @@ const DocumentExplorerContent: React.FC<{
       totalDocuments: totalDocs,
       groupStats: { groupCount: customers.length }
     }
-  }, [selectedInitial, filterFetchMode, explorerData?.customers, explorerData?.searchDocuments, searchTerm, initialType])
+  }, [selectedInitial, filterFetchMode, explorerData?.customers, explorerData?.searchDocuments, initialType])
 
   // searchDocuments가 있으면 매칭 문서가 있는 고객을 자동 확장
   useEffect(() => {
@@ -1069,7 +1069,7 @@ const DocumentExplorerContent: React.FC<{
         ]
       }
     ]
-  }, [contextMenuDocument, onDocumentClick, documentActions])
+  }, [contextMenuDocument, onDocumentClick, documentActions, handleRenameClick])
 
   // 새로고침 핸들러
   const handleRefresh = useCallback(() => {

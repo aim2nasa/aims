@@ -148,7 +148,7 @@ describe('getDocumentDate', () => {
       upload: { uploaded_at: '2026-03-01T00:00:00Z' },
       uploaded_at: '2026-01-01T00:00:00Z',
       created_at: '2025-12-01T00:00:00Z',
-    } as any
+    } as unknown as Parameters<typeof getDocumentDate>[0]
 
     expect(getDocumentDate(doc)).toBe('2026-03-01T00:00:00Z')
   })
@@ -157,7 +157,7 @@ describe('getDocumentDate', () => {
     const doc = {
       upload: { timestamp: '2026-02-01T00:00:00Z' },
       uploaded_at: '2026-01-01T00:00:00Z',
-    } as any
+    } as unknown as Parameters<typeof getDocumentDate>[0]
 
     expect(getDocumentDate(doc)).toBe('2026-02-01T00:00:00Z')
   })
@@ -166,7 +166,7 @@ describe('getDocumentDate', () => {
     const doc = {
       uploaded_at: '2026-01-01T00:00:00Z',
       created_at: '2025-12-01T00:00:00Z',
-    } as any
+    } as unknown as Parameters<typeof getDocumentDate>[0]
 
     expect(getDocumentDate(doc)).toBe('2026-01-01T00:00:00Z')
   })
@@ -174,13 +174,13 @@ describe('getDocumentDate', () => {
   it('uploaded_at도 없으면 created_at을 사용한다', () => {
     const doc = {
       created_at: '2025-12-01T00:00:00Z',
-    } as any
+    } as unknown as Parameters<typeof getDocumentDate>[0]
 
     expect(getDocumentDate(doc)).toBe('2025-12-01T00:00:00Z')
   })
 
   it('아무 날짜도 없으면 undefined를 반환한다', () => {
-    const doc = {} as any
+    const doc = {} as unknown as Parameters<typeof getDocumentDate>[0]
     expect(getDocumentDate(doc)).toBeUndefined()
   })
 })

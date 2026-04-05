@@ -339,7 +339,7 @@ describe('CustomerRelationshipView - 3단계 뷰 모드 테스트 (커밋 9b2257
 
     it('검색어가 없으면 뷰 모드 유지', () => {
       const searchQuery = ''
-      let viewMode = 'representative'
+      const viewMode = 'representative'
 
       // 검색어가 없으면 현재 모드 유지
       if (searchQuery.length === 0) {

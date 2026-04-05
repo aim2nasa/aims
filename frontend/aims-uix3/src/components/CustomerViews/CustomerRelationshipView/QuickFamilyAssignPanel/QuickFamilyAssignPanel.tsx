@@ -53,6 +53,42 @@ const CORPORATE_RELATIONSHIP_TYPES = [
   { value: 'employee', label: '직원', icon: '👤', description: '법인의 일반 직원' },
 ];
 
+// 한글 초성 추출
+const getInitialConsonant = (name: string): string => {
+  if (!name) return '';
+  const firstChar = name.charAt(0);
+  const code = firstChar.charCodeAt(0);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    const initialIndex = Math.floor((code - 0xAC00) / 588);
+    const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+    return initials[initialIndex] || '';
+  }
+  if (code >= 0x3131 && code <= 0x314E) return firstChar;
+  return '';
+};
+
+// 알파벳 초성 추출
+const getAlphabetInitial = (name: string): string => {
+  if (!name) return '';
+  const firstChar = name.charAt(0).toUpperCase();
+  return (firstChar >= 'A' && firstChar <= 'Z') ? firstChar : '';
+};
+
+// 숫자 초성 추출
+const getNumberInitial = (name: string): string => {
+  if (!name) return '';
+  const firstChar = name.charAt(0);
+  return (firstChar >= '0' && firstChar <= '9') ? firstChar : '';
+};
+
+// 이름의 초성 추출
+const getNameInitial = (name: string, type: 'korean' | 'alphabet' | 'number'): string => {
+  if (type === 'korean') return getInitialConsonant(name);
+  if (type === 'alphabet') return getAlphabetInitial(name);
+  if (type === 'number') return getNumberInitial(name);
+  return '';
+};
+
 /**
  * QuickFamilyAssignPanel - 빠른 가족 등록 패널 (테이블 UI 임베드 버전)
  */
@@ -198,54 +234,8 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
     };
 
     loadAllData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- initialCustomers/initialRelationships는 최초 마운트 시에만 사용하므로 의도적 제외
   }, []);
-
-  // 한글 초성 추출 함수
-  const getInitialConsonant = (name: string): string => {
-    if (!name) return '';
-    const firstChar = name.charAt(0);
-    const code = firstChar.charCodeAt(0);
-
-    if (code >= 0xAC00 && code <= 0xD7A3) {
-      const initialIndex = Math.floor((code - 0xAC00) / 588);
-      const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
-      return initials[initialIndex] || '';
-    }
-
-    if (code >= 0x3131 && code <= 0x314E) {
-      return firstChar;
-    }
-
-    return '';
-  };
-
-  // 알파벳 초성 추출 함수
-  const getAlphabetInitial = (name: string): string => {
-    if (!name) return '';
-    const firstChar = name.charAt(0).toUpperCase();
-    if (firstChar >= 'A' && firstChar <= 'Z') {
-      return firstChar;
-    }
-    return '';
-  };
-
-  // 숫자 초성 추출 함수
-  const getNumberInitial = (name: string): string => {
-    if (!name) return '';
-    const firstChar = name.charAt(0);
-    if (firstChar >= '0' && firstChar <= '9') {
-      return firstChar;
-    }
-    return '';
-  };
-
-  // 이름의 초성 추출
-  const getNameInitial = (name: string, type: 'korean' | 'alphabet' | 'number'): string => {
-    if (type === 'korean') return getInitialConsonant(name);
-    if (type === 'alphabet') return getAlphabetInitial(name);
-    if (type === 'number') return getNumberInitial(name);
-    return '';
-  };
 
   // 검색 중인지 여부
   const isSearching = searchQuery.trim().length > 0;
