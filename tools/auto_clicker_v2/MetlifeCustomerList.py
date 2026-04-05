@@ -229,12 +229,36 @@ def check_pause():
 
 # ===== SikuliX 함수 래핑: 모든 UI 조작 전에 자동으로 일시정지 체크 =====
 _sikuli_click = click  # SikuliX 원본 click 보존
+_sikuli_find = find    # SikuliX 원본 find 보존
 _sikuli_type = type    # SikuliX 원본 type(키보드 입력) 보존
 
 def click(target, *args):
-    """SikuliX click 래퍼 - 클릭 전 항상 일시정지 체크"""
+    """SikuliX click 래퍼 - 일시정지 체크 + 이미지 미발견 시 재시도"""
     check_pause()
+    if isinstance(target, (str, unicode)):
+        for _retry in range(3):
+            _match = exists(target, 5)
+            if _match:
+                return _sikuli_click(_match, *args)
+            if _retry < 2:
+                log(u"    [RETRY] click 이미지 미발견, 재시도 %d/3: %s" % (_retry + 2, target))
+                sleep(1)
+        return _sikuli_click(target, *args)
     return _sikuli_click(target, *args)
+
+def find(target, *args):
+    """SikuliX find 래퍼 - 일시정지 체크 + 이미지 미발견 시 재시도"""
+    check_pause()
+    if isinstance(target, (str, unicode)):
+        for _retry in range(3):
+            _match = exists(target, 5)
+            if _match:
+                return _match
+            if _retry < 2:
+                log(u"    [RETRY] find 이미지 미발견, 재시도 %d/3: %s" % (_retry + 2, target))
+                sleep(1)
+        return _sikuli_find(target, *args)
+    return _sikuli_find(target, *args)
 
 def type(target, *args):
     """SikuliX type 래퍼 - 키 입력 전 항상 일시정지 체크"""
@@ -1841,10 +1865,22 @@ try:
     _debug_mark_region(_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h, "1-3 search")
     log(u"  [DEBUG] 고객관리 탭: x=%d y=%d w=%d h=%d" % (_mgmt.x, _mgmt.y, _mgmt.w, _mgmt.h))
     log(u"  [DEBUG] 검색 영역: x=%d y=%d w=%d h=%d" % (_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h))
-    _dd_region.click("img/customer_reg_menu.png")  # 고객등록 [100% 줌] (재캡처 템플릿)
+    for _reg_retry in range(3):
+        _reg_match = _dd_region.exists("img/customer_reg_menu.png", 5)
+        if _reg_match:
+            _dd_region.click(_reg_match)
+            break
+        if _reg_retry < 2:
+            log(u"  [RETRY] 고객등록 메뉴 재시도 %d/3" % (_reg_retry + 2))
+            sleep(1)
+    else:
+        _dd_region.click("img/customer_reg_menu.png")  # 최종 실패 → FindFailed
     try:
-        _lm = _dd_region.getLastMatch()
-        _debug_mark_click(_lm.getTarget().x, _lm.getTarget().y, "1-3 reg click")
+        if _reg_match:
+            _debug_mark_click(_reg_match.getTarget().x, _reg_match.getTarget().y, "1-3 reg click")
+        else:
+            _lm = _dd_region.getLastMatch()
+            _debug_mark_click(_lm.getTarget().x, _lm.getTarget().y, "1-3 reg click")
     except:
         pass
     sleep(3)
