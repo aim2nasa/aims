@@ -249,7 +249,8 @@ module.exports = function(db) {
    *
    * Body: { filter, projection, sort, limit, skip }
    * - filter 내 customerId, _id 필드는 자동으로 ObjectId 변환
-   * - limit 기본값: 100, 최대: 1000
+   * - limit 기본값: 100, 0은 "제한 없음" (MongoDB cursor.limit(0) = 무제한)
+   * - 양수일 때 최대: 10000 (키워드 검색 등 대량 조회 지원)
    * - skip 기본값: 0 (페이지네이션용)
    */
   router.post('/internal/files/query', async (req, res) => {
@@ -269,8 +270,9 @@ module.exports = function(db) {
       // ObjectId 필드 변환
       const convertedFilter = convertObjectIdFields(filter);
 
-      // limit 제한 (최대 1000)
-      const safeLimit = Math.min(Math.max(1, limit), 1000);
+      // limit 제한: 0은 "제한 없음" (MongoDB cursor.limit(0) = 무제한)
+      // 양수일 때만 최대 10000으로 제한
+      const safeLimit = limit === 0 ? 0 : Math.min(Math.max(1, limit), 10000);
       // skip 제한 (음수 방지)
       const safeSkip = Math.max(0, skip);
 

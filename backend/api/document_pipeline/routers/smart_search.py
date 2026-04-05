@@ -273,7 +273,8 @@ async def smart_search(request: SearchRequest):
             mongo_query = {"$and": conditions}
 
             # [1단계] MongoDB 쿼리 (full_text 제외 projection으로 성능 보호)
-            results = await query_files(mongo_query, projection=_KEYWORD_SEARCH_PROJECTION, limit=1000)
+            # limit=0: 제한 없음. 모든 매칭 문서를 가져와 정확한 점수 정렬 + total 보장
+            results = await query_files(mongo_query, projection=_KEYWORD_SEARCH_PROJECTION, limit=0)
 
             # [2단계] 점수 계산 + 정렬 (full_text 없이 가능한 필드 + baseline 점수)
             results.sort(
