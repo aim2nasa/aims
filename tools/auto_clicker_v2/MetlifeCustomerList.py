@@ -1770,7 +1770,10 @@ if NO_OCR_MODE:
     log(u"MetLife 고객목록조회 - [실험] No-OCR 순차 클릭 모드")
 else:
     log(u"MetLife 고객목록조회 - Upstage Enhanced OCR 연동")
-log(u"로그 파일: %s" % os.path.basename(LOG_FILE))
+if LOG_FILE:
+    log(u"로그 파일: %s" % os.path.basename(LOG_FILE))
+elif _acdump_path:
+    log(u"로그 파일: %s" % os.path.basename(_acdump_path))
 if SELECTED_CHOSUNG:
     log(u"선택 초성: %s" % SELECTED_CHOSUNG)
 else:
@@ -2589,7 +2592,10 @@ else:
 log(u"소요 시간: %d분 %d초" % (minutes, seconds))
 log(u"총 행수: %d행, 오류: %d명" % (all_total_rows, len(all_error_customers)))
 log(u"캡처/OCR 결과: %s" % CAPTURE_DIR)
-log(u"로그 파일: %s" % LOG_FILE)
+if LOG_FILE:
+    log(u"로그 파일: %s" % LOG_FILE)
+elif _acdump_path:
+    log(u"로그 파일: %s" % _acdump_path)
 
 if SCROLL_TEST:
     log(u"")
