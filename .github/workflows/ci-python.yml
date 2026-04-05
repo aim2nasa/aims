@@ -61,4 +61,5 @@ jobs:
         env:
           OPENAI_API_KEY: sk-test-mock-key-for-ci-testing-only
         run: |
+          sudo mkdir -p /data && sudo chmod 777 /data
           cd backend/api/document_pipeline && python -m pytest tests/ -v --ignore=tests/smoke_test.py --ignore=tests/generate_fixtures.py
