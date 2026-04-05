@@ -11,17 +11,7 @@ import { render, fireEvent, act } from '@testing-library/react'
 import App from '../App'
 
 // ============================================
-// 유틸리티 함수
-// ============================================
 
-/**
- * calc() 표현식에서 centerWidth 값 추출
- * 예: "calc(... * 60 / 100)" → 60
- */
-function extractCenterWidthFromCalc(widthExpr: string): number | null {
-  const match = widthExpr.match(/\*\s*(\d+(?:\.\d+)?)\s*\/\s*100/)
-  return match && match[1] ? parseFloat(match[1]) : null
-}
 
 // ============================================
 // Mock 설정
