@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Edit(/.claude/skills/compact-fix/**)",
-      "Edit(/.claude/skills/ace-process/**)"
+      "Edit(/.claude/skills/ace-process/**)",
+      "Bash(git merge:*)",
+      "Bash(git branch:*)"
     ]
   },
   "hooks": {
