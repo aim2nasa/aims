@@ -113,12 +113,27 @@ L 경로 (6단계, 30분+):
 ## 워크플로우
 
 ```
+[사전] 브랜치 생성 — main에서 fix/ 또는 feat/ 브랜치 분기
 [ACE 0/6] 기획 — Merlin 상세 기획서 산출 (What + Why)
 [ACE 1/6] AC 작성 — Claude가 기획서 기반으로 AC 정의 (How to verify)
 [ACE 2/6] 테스트 생성 — AC 기반 테스트 코드 자동 생성 (구현 전)
 [ACE 3/6] 구현 — Alex 설계 + 구현
 [ACE 4/6] 검증 루프 — 단위 테스트 → Gini 검수 → 배포 → E2E (최대 3회)
 [ACE 5/6] Jude 감사 + 보고 — Jude 독립 재검증 → Claude가 결과 전달
+[사후] 머지 + 정리 — main 머지 → push → 브랜치 삭제 (로컬+리모트)
+```
+
+### 브랜치 규칙
+
+**모든 ACE 작업은 브랜치에서 진행한다. main에서 직접 작업 절대 금지.**
+
+```bash
+# 작업 시작
+git checkout main && git pull && git checkout -b fix/{이슈명}  # 또는 feat/{기능명}
+
+# 작업 완료 후 (Jude PASS + 사용자 확인 후)
+git checkout main && git merge {브랜치명} && git push
+git branch -d {브랜치명} && git push origin --delete {브랜치명}
 ```
 
 ## 상세

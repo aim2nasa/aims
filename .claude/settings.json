@@ -1,4 +1,10 @@
 {
+  "permissions": {
+    "allow": [
+      "Edit(/.claude/skills/compact-fix/**)",
+      "Edit(/.claude/skills/ace-process/**)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -12,11 +18,6 @@
           }
         ]
       }
-    ]
-  },
-  "permissions": {
-    "allow": [
-      "Edit(/.claude/skills/compact-fix/**)"
     ]
   }
 }
