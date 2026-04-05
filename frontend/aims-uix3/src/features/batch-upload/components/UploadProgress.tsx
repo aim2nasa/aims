@@ -8,7 +8,6 @@
 
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
 import type { BatchUploadProgress, FolderUploadState } from '../hooks/useBatchUpload'
-import { formatFileSize } from '../utils/fileValidation'
 import './UploadProgress.css'
 
 interface UploadProgressProps {

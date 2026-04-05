@@ -30,14 +30,14 @@ function getStorageKey(): string {
  * 동적으로 userId 기반 키를 사용
  */
 const userIsolatedStorage: StateStorage = {
-  getItem: (name: string): string | null => {
+  getItem: (_name: string): string | null => {
     // name은 무시하고 동적 키 사용
     return localStorage.getItem(getStorageKey())
   },
-  setItem: (name: string, value: string): void => {
+  setItem: (_name: string, value: string): void => {
     localStorage.setItem(getStorageKey(), value)
   },
-  removeItem: (name: string): void => {
+  removeItem: (_name: string): void => {
     localStorage.removeItem(getStorageKey())
   },
 }

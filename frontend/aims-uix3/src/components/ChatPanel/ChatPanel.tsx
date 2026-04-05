@@ -4,10 +4,10 @@
  * @since 2025-12-20
  */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { detectDeviceState } from '@/hooks/useDeviceOrientation';
-import { useChatSSE, ChatMessage, ChatEvent, CreditExceededInfo } from '@/shared/hooks/useChatSSE';
+import { useChatSSE, ChatMessage, ChatEvent } from '@/shared/hooks/useChatSSE';
 import { CreditExceededDialog } from '@/shared/ui/CreditExceededDialog';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
@@ -274,7 +274,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   });
   // 데이터 현황 오버레이
   const [showDataOverlay, setShowDataOverlay] = useState(false);
-  const [dataStats, setDataStats] = useState<DataStats>({ customers: 0, contracts: 0, documents: 0 });
+  const [_dataStats, setDataStats] = useState<DataStats>({ customers: 0, contracts: 0, documents: 0 });
   const [animatedStats, setAnimatedStats] = useState<DataStats>({ customers: 0, contracts: 0, documents: 0 });
   // 각 기능별 현재 예시 인덱스 (pagination용)
   const [exampleIndices, setExampleIndices] = useState<number[]>(
@@ -2131,9 +2131,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       }
     }
   };
-
-  // 대화 초기화 (= 새 대화)
-  const handleClear = handleNewChat;
 
   // 패널 닫기 (컨텍스트 초기화 후 닫기)
   // - 창 닫기 시: 컨텍스트 초기화 (새 대화로 시작)

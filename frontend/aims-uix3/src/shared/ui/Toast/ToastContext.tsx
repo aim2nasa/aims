@@ -2,7 +2,7 @@
  * ToastContext - 전역 Toast 시스템
  * 앱 어디서나 toast.show(), toast.error() 등으로 토스트 표시
  */
-import React, { createContext, useContext, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { useToast, type UseToastReturn } from './useToast'
 import { ToastContainer } from './ToastContainer'
 

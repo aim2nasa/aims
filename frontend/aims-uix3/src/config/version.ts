@@ -12,7 +12,6 @@ declare const __GIT_HASH__: string
 declare const __BUILD_TIME__: string
 
 export const APP_VERSION = packageJson.version
-const APP_NAME = packageJson.name
 
 /**
  * Git commit hash (빌드 시점에 주입)

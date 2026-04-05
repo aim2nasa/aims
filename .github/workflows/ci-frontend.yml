@@ -36,6 +36,15 @@ jobs:
           cd frontend/aims-uix3
           npx eslint src/
 
+      - name: Dead code check (knip)
+        run: |
+          cd frontend/aims-uix3
+          npx knip --no-exit-code --reporter compact 2>&1 | tee /tmp/knip-output.txt
+          if grep -q "Unused files" /tmp/knip-output.txt; then
+            echo "::error::knip detected unused files. Run 'npx knip' locally to see details."
+            exit 1
+          fi
+
       - name: Run frontend tests
         run: |
           cd frontend/aims-uix3

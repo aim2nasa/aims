@@ -24,7 +24,7 @@ import { SFSymbol,
   SFSymbolSize,
   SFSymbolWeight
 } from '../../../../../components/SFSymbol'
-import { formatDateTime, formatDateTimeCompact, formatDate } from '@/shared/lib/timeUtils'
+import { formatDateTime, formatDateTimeCompact } from '@/shared/lib/timeUtils'
 import { api, ApiError } from '@/shared/lib/api'
 import { DocumentUtils } from '@/entities/document'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
@@ -119,7 +119,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   onAnnualReportNeedRefresh,
   onCustomerReviewNeedRefresh,
   searchTerm: externalSearchTerm,
-  onSearchChange,
+  onSearchChange: _onSearchChange,
   onNavigate,
   refreshTrigger,
   onExpandToExplorer,
@@ -214,9 +214,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     localStorage.setItem('aims-customer-documents-items-per-page', String(itemsPerPageMode))
   }, [itemsPerPageMode])
 
-  // PDF 변환 재시도 중인 문서 ID
-  const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
-
   const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
 
   /**
@@ -256,49 +253,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   // 🍎 AI 요약 모달 상태
   const [isSummaryModalVisible, setIsSummaryModalVisible] = useState(false)
   const [summaryDocument, setSummaryDocument] = useState<CustomerDocumentItem | null>(null)
-
-  /**
-   * PDF 변환 재시도 핸들러
-   */
-  const handleRetryPdfConversion = useCallback(async (documentId: string, e: React.MouseEvent) => {
-    e.stopPropagation() // 이벤트 버블링 방지
-
-    if (retryingDocumentId) return // 이미 재시도 중이면 무시
-
-    setRetryingDocumentId(documentId)
-    try {
-      const result = await api.post<{ success: boolean; message?: string; error?: string }>(
-        `/api/documents/${documentId}/retry`,
-        { stage: 'pdf_conversion' }
-      )
-
-      if (result.success) {
-        await showAlert({
-          title: '재시도 시작',
-          message: 'PDF 변환을 다시 시도하고 있습니다.',
-          confirmText: '확인'
-        })
-        // 목록 새로고침
-        await refresh()
-      } else {
-        await showAlert({
-          title: '재시도 실패',
-          message: result.error || '재시도에 실패했습니다.',
-          confirmText: '확인'
-        })
-      }
-    } catch (error) {
-      console.error('[DocumentsTab] PDF 변환 재시도 오류:', error)
-      errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleRetryPdfConversion', payload: { documentId } })
-      await showAlert({
-        title: '오류',
-        message: '재시도 중 오류가 발생했습니다.',
-        confirmText: '확인'
-      })
-    } finally {
-      setRetryingDocumentId(null)
-    }
-  }, [retryingDocumentId, refresh, showAlert])
 
   // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산
   // ⚠️ CustomerFullDetailView에서는 .customer-documents__header가 display:none으로 숨겨지고
@@ -443,10 +397,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   // 🍎 파일명 검색 상태 (외부에서 전달받거나 내부 상태 사용)
-  const [internalSearchTerm, setInternalSearchTerm] = useState('')
+  const [internalSearchTerm] = useState('')
   const searchTerm = externalSearchTerm ?? internalSearchTerm
-  const setSearchTerm = onSearchChange ?? setInternalSearchTerm
-
   // 🍎 메모 모달 상태
   const [notesModalVisible, setNotesModalVisible] = useState(false)
   const [selectedNotes, setSelectedNotes] = useState<{

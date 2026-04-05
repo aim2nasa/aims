@@ -42,7 +42,7 @@ import './DocumentLibraryView.mobile.css';
 import './DocumentLibraryView-delete.css'
 import { InitialFilterBar, type InitialType } from '@/shared/ui/InitialFilterBar'
 import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from '@/shared/ui/InitialFilterBar/types'
-import { invalidateQueries } from '@/app/queryClient'
+import { invalidateQueries as _invalidateQueries } from '@/app/queryClient'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import { useDocumentActions } from '@/hooks/useDocumentActions'
 import { useAliasGeneration, type AliasProgress } from '@/hooks/useAliasGeneration'

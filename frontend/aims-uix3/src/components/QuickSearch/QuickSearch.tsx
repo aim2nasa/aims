@@ -305,7 +305,7 @@ export const QuickSearch: React.FC<QuickSearchProps> = ({
                   </div>
                   {searchResults
                     .filter(r => r.type === 'customer')
-                    .map((result, index) => {
+                    .map((result, _index) => {
                       const globalIndex = searchResults.findIndex(r => r.id === result.id)
                       return (
                         <div

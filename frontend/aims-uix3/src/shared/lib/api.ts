@@ -36,14 +36,6 @@ const getRequestControllers = new Map<string, AbortController>();
 let activeCustomerId: string | null = null;
 
 /**
- * URL에서 고객 ID 추출
- */
-function extractCustomerId(url: string): string | null {
-  const match = url.match(/\/api\/customers\/([a-f0-9]{24})/i);
-  return match ? match[1] : null;
-}
-
-/**
  * 고객 전환 시 이전 고객의 모든 진행 중인 요청 취소 (내부 함수)
  */
 function cancelStaleCustomerRequests(newCustomerId: string): void {
@@ -91,15 +83,6 @@ export function setActiveCustomer(customerId: string): void {
   logger.debug('API', `setActiveCustomer: ${customerId?.slice(-6)} ← prev: ${activeCustomerId?.slice(-6)}`);
   if (!customerId) return;
   cancelStaleCustomerRequests(customerId);
-}
-
-/**
- * 🔧 활성 고객 초기화
- *
- * 고객 선택이 해제되었을 때 호출합니다.
- */
-function clearActiveCustomer(): void {
-  activeCustomerId = null;
 }
 
 /**

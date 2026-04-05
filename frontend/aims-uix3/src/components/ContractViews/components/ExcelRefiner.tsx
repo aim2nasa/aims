@@ -721,13 +721,6 @@ export function ExcelRefiner() {
     return validatingColumnsBySheet.get(sheetName) || new Set<number>()
   }, [validatingColumnsBySheet, currentSheet?.name])
 
-  // 현재 시트의 검증 이력 (파생 상태)
-  const validatedColumnsHistory = useMemo(() => {
-    const sheetName = currentSheet?.name
-    if (!sheetName) return new Set<number>()
-    return validatedColumnsHistoryBySheet.get(sheetName) || new Set<number>()
-  }, [validatedColumnsHistoryBySheet, currentSheet?.name])
-
   // 시트별 검증 컬럼 업데이트 헬퍼
   const updateValidatingColumns = useCallback((sheetName: string, updater: (prev: Set<number>) => Set<number>) => {
     setValidatingColumnsBySheet(prev => {
@@ -1176,179 +1169,6 @@ export function ExcelRefiner() {
       })
     }, 100)
   }, [currentSheet, activeSheetIndex, updateValidatingColumns, updateValidatedHistory, showAlert, validatingInProgress])
-
-  // 필수컬럼검증 (시트별로 다른 필수컬럼 적용)
-  const handleValidateAllRequired = useCallback(async () => {
-    if (!currentSheet || isImporting) return
-
-    // 시트별 필수컬럼 정의
-    // - 개인고객, 법인고객: 고객명만 필수
-    // - 계약: 고객명, 상품명, 계약일, 증권번호 필수
-    const isCustomerSheet = currentSheet.name === '개인고객' || currentSheet.name === '법인고객'
-    const requiredTypes: Array<{ type: ValidationType; label: string }> = isCustomerSheet
-      ? [{ type: 'customerName', label: '고객명' }]
-      : [
-          { type: 'customerName', label: '고객명' },
-          { type: 'productName', label: '상품명' },
-          { type: 'contractDate', label: '계약일' },
-          { type: 'policyNumber', label: '증권번호' }
-        ]
-
-    const columnsToValidate: Array<{ colIndex: number; columnName: string; type: ValidationType; label: string }> = []
-
-    // 각 타입별로 컬럼 찾기
-    requiredTypes.forEach(({ type, label }) => {
-      const colIndex = currentSheet.columns.findIndex(col => col && getValidationType(col) === type)
-      if (colIndex !== -1) {
-        const columnName = currentSheet.columns[colIndex] as string
-        columnsToValidate.push({ colIndex, columnName, type, label })
-      }
-    })
-
-    if (columnsToValidate.length === 0) {
-      setActionLog('⚠️ 검증 가능한 필수 컬럼이 없습니다.')
-      return
-    }
-
-    // 범례 필터 초기화
-    setProductStatusFilter(null)
-
-    // 프로그레스바 초기화
-    setIsImporting(true)
-    setImportProgress({ current: 0, total: columnsToValidate.length, message: '필수컬럼 검증 준비 중...' })
-
-    // 결과 요약을 위한 변수
-    const results: Array<{ label: string; hasIssues: boolean; issueCount: number }> = []
-
-    try {
-      // 순차적으로 검증 실행
-      for (let i = 0; i < columnsToValidate.length; i++) {
-        const { colIndex, columnName, type, label } = columnsToValidate[i]!
-
-        // 프로그레스 업데이트
-        setImportProgress({
-          current: i + 1,
-          total: columnsToValidate.length,
-          message: `${label} 검증 중...`
-        })
-
-        // 이미 검증된 컬럼이면 건너뛰기
-        if (validatingColumns.has(colIndex)) {
-          // 기존 결과에서 이슈 수 가져오기
-          if (type === 'productName' && productMatchResult) {
-            results.push({ label, hasIssues: productMatchResult.unmatched.length > 0, issueCount: productMatchResult.unmatched.length })
-          } else {
-            const existingResult = columnValidationResults.get(colIndex)
-            if (existingResult) {
-              const issueCount = existingResult.empties.length + existingResult.duplicates.length
-              results.push({ label, hasIssues: issueCount > 0, issueCount })
-            }
-          }
-          continue
-        }
-
-        // 검증 중 상태 표시
-        setValidatingInProgress(prev => {
-          const next = new Set(prev)
-          next.add(colIndex)
-          return next
-        })
-
-      // 상품명은 비동기 검증
-      if (type === 'productName') {
-        try {
-          const result = await validateProductNames(currentSheet.data, colIndex)
-          setProductMatchResult(result)
-          setProductNameColumnIndex(colIndex)
-
-          // 수정된 상품명 대체
-          if (result.modified.size > 0) {
-            const idToName = new Map<string, string>()
-            result.productNames.forEach((id, name) => {
-              idToName.set(id, name)
-            })
-
-            setSheets(prev => {
-              const updated = [...prev]
-              const sheet = updated[activeSheetIndex]
-              if (!sheet) return prev
-
-              const newData = [...sheet.data]
-              result.modified.forEach((objectId, rowIndex) => {
-                const originalProductName = idToName.get(objectId)
-                if (originalProductName && newData[rowIndex]) {
-                  newData[rowIndex] = [...newData[rowIndex]]
-                  newData[rowIndex][colIndex] = originalProductName
-                }
-              })
-
-              updated[activeSheetIndex] = {
-                name: sheet.name,
-                columns: sheet.columns,
-                data: newData
-              }
-              return updated
-            })
-          }
-
-          results.push({ label, hasIssues: result.unmatched.length > 0, issueCount: result.unmatched.length })
-        } catch (error) {
-          console.error('상품명 검증 오류:', error)
-          errorReporter.reportApiError(error as Error, { component: 'ExcelRefiner.validateAllProducts.batch', payload: { colIndex } })
-          results.push({ label, hasIssues: true, issueCount: -1 })
-        }
-      } else {
-        // 일반 검증 (동기)
-        await new Promise(resolve => setTimeout(resolve, 50)) // UI 업데이트를 위한 짧은 대기
-        const validationResult = validateColumn(currentSheet.data, colIndex, columnName)
-        const issueCount = validationResult.empties.length + validationResult.duplicates.length
-        results.push({ label, hasIssues: issueCount > 0, issueCount })
-      }
-
-      // 검증 완료 - 컬럼 추가 (현재 시트)
-      updateValidatingColumns(currentSheet.name, prev => {
-        const next = new Set(prev)
-        next.add(colIndex)
-        return next
-      })
-
-      // 검증 완료 이력에 추가 (현재 시트, 누적)
-      updateValidatedHistory(currentSheet.name, prev => {
-        const next = new Set(prev)
-        next.add(colIndex)
-        return next
-      })
-
-      // 검증 중 상태 해제
-      setValidatingInProgress(prev => {
-        const next = new Set(prev)
-        next.delete(colIndex)
-        return next
-      })
-
-      // 마지막으로 클릭된 컬럼 업데이트
-      setLastClickedColumn(colIndex)
-    }
-
-      // 결과 요약 로그 생성
-      const failedCount = results.filter(r => r.hasIssues).length
-      const totalIssues = results.reduce((sum, r) => sum + (r.issueCount > 0 ? r.issueCount : 0), 0)
-
-      const summary = results.map(r => {
-        if (r.issueCount === -1) return `${r.label}(오류)`
-        return r.hasIssues ? `${r.label}(${r.issueCount})` : `${r.label}(✓)`
-      }).join(', ')
-
-      if (failedCount === 0) {
-        setActionLog(`✓ 필수컬럼검증 완료: ${summary}`)
-      } else {
-        setActionLog(`⚠️ 필수컬럼검증: ${summary} - 총 ${totalIssues}건 문제`)
-      }
-    } finally {
-      setIsImporting(false)
-      setImportProgress(null)
-    }
-  }, [currentSheet, activeSheetIndex, validatingColumns, productMatchResult, columnValidationResults, isImporting])
 
   // === 전체 시트 순차 검증 (새 UX 플로우) ===
   const handleValidateAllSheets = useCallback(async () => {
@@ -1883,7 +1703,6 @@ export function ExcelRefiner() {
   const handleDeleteSelected = useCallback(async () => {
     if (selectedRows.size === 0 || !currentSheet) return
 
-    const selectedIndices = Array.from(selectedRows).sort((a, b) => a - b)
     const beforeCount = currentSheet.data.length
 
     // AppleConfirmModal로 삭제 확인
@@ -2028,7 +1847,7 @@ export function ExcelRefiner() {
   }, [])
 
   // 상품 선택 시 데이터 업데이트
-  const handleProductSelect = useCallback((productName: string, productId: string, applyToAll: boolean) => {
+  const handleProductSelect = useCallback((productName: string, _productId: string, applyToAll: boolean) => {
     if (productSearchRowIndex === null || productNameColumnIndex === null || !currentSheet) return
 
     // 클릭한 셀의 원래 상품명 가져오기
@@ -2334,7 +2153,7 @@ export function ExcelRefiner() {
 
   // 일괄등록 확인 후 실행
   const handleConfirmImport = useCallback(async () => {
-    const { customerNames, customers, isCustomerSheet, 개인고객Count, 법인고객Count, 계약Count } = importConfirmModal
+    const { customers, isCustomerSheet, 개인고객Count, 법인고객Count, 계약Count } = importConfirmModal
     setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false, 개인고객Count: 0, 법인고객Count: 0, 계약Count: 0 })
 
     if (!user?._id) {
@@ -3678,7 +3497,7 @@ export function ExcelRefiner() {
                         </Tooltip>
                       </div>
                     </th>
-                    {orderedColumns.map((orderedCol, displayIndex) => {
+                    {orderedColumns.map((orderedCol, _displayIndex) => {
                       const { name: col, dataIndex, isMissing, isExtra } = orderedCol
 
                       // 누락된 컬럼은 빨간색 스타일
@@ -3856,7 +3675,6 @@ export function ExcelRefiner() {
 
                           // 상품명 칼럼에만 매칭 상태 색상 적용 (계약 시트에서만)
                           let matchedProductId: string | null = null
-                          let isUnmatchedProduct = false
                           if (currentSheet?.name === '계약' && dataIndex === productNameColumnIndex && productMatchResult) {
                             const productStatus = getProductCellStatus(originalIndex)
                             if (productStatus) {
@@ -3865,8 +3683,6 @@ export function ExcelRefiner() {
                                 matchedProductId = productMatchResult.originalMatch.get(originalIndex) || null
                               } else if (productStatus === 'modified') {
                                 matchedProductId = productMatchResult.modified.get(originalIndex) || null
-                              } else if (productStatus === 'unmatched') {
-                                isUnmatchedProduct = true
                               }
                             }
                           }
@@ -3918,12 +3734,6 @@ export function ExcelRefiner() {
                                 handleMatchedProductClick(matchedProductId!)
                               }
                             : undefined
-
-                          // 툴팁 결정
-                          let cellTitle = '더블클릭하여 편집'
-                          if (isProductNameColumn) {
-                            cellTitle = isUnmatchedProduct ? '더블클릭: 상품 검색' : '우클릭: 상품 정보 | 더블클릭: 상품 변경'
-                          }
 
                           return (
                             <td

@@ -53,7 +53,6 @@ class SSEWorkerClient {
   private port: MessagePort | null = null
   private listeners = new Map<string, Set<EventCallback>>()
   private isSupported: boolean
-  private isInitialized = false
 
   // 폴백용 상태
   private polyfillConnections = new Map<string, PolyfillConnection>()
@@ -94,7 +93,6 @@ class SSEWorkerClient {
         })
       }
 
-      this.isInitialized = true
       logger.debug('SSE-Client', 'SharedWorker initialized')
     } catch (error) {
       logger.error('SSE-Client', 'SharedWorker initialization failed', error)

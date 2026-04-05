@@ -6,7 +6,7 @@
  * 통계, 빠른 액션, 최근 활동을 포함
  */
 
-import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CenterPaneView } from '../CenterPaneView/CenterPaneView';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';

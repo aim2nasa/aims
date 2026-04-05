@@ -1,4 +1,4 @@
-import React, { useEffect, memo } from 'react';
+import React, { useEffect } from 'react';
 import { DraggableModal } from '@/shared/ui/DraggableModal';
 import { HapticService, HapticType, withHaptic } from '../services/hapticService';
 import Button from '@/shared/ui/Button';

@@ -26,7 +26,7 @@ import { groupFilesByFolder, createFolderMappings, type CustomerForMatching } fr
 import { validateBatch } from './utils/fileValidation'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import { checkStorageWithInfo } from '@/shared/lib/fileValidation'
-import type { FolderMapping, DuplicateAction } from './types'
+import type { FolderMapping } from './types'
 import { getBatchId, setBatchId, addBatchExpectedTotal } from '@/hooks/useBatchId'
 import './BatchDocumentUploadView.css'
 import './BatchDocumentUploadView.mobile.css'
@@ -159,7 +159,7 @@ export default function BatchDocumentUploadView({
   } | null>(null)
   // 용량 초과로 필터링 대기 중인 파일들
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
-  const [pendingMappings, setPendingMappings] = useState<FolderMapping[]>([])
+  const [, setPendingMappings] = useState<FolderMapping[]>([])
 
   // 업로드 훅
   const {

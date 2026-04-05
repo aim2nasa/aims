@@ -11,8 +11,6 @@ import { AppleConfirmProvider } from './contexts/AppleConfirmProvider'
 import { ToastProvider } from './shared/ui/Toast'
 import { DevToolsPanel } from './shared/ui/DevToolsPanel'
 import { DevModePasswordModal } from './shared/ui/DevToolsPanel/DevModePasswordModal'
-import { OnboardingTour, type TourStep } from './shared/components/OnboardingTour'
-import { RightClickGuide } from './shared/components/RightClickGuide'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useNavigationStore } from './shared/store/useNavigationStore'
 import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
@@ -22,7 +20,7 @@ import { useInquiryNotifications } from './shared/hooks/useInquiryNotifications'
 import { useUserAccountSSE } from './shared/hooks/useUserAccountSSE'
 import { useNoticeNotifications } from './hooks/useNoticeNotifications'
 import type { Customer as _Customer } from './entities/customer'
-import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/version'
+import { APP_VERSION, FULL_VERSION, logVersionInfo } from './config/version'
 import { checkFrontendVersionMismatch } from './services/versionService'
 import { errorReporter } from './shared/lib/errorReporter'
 import { RenameModal } from './shared/ui/RenameModal/RenameModal'
@@ -67,13 +65,10 @@ const FAQView = lazy(() => import('./components/HelpViews/FAQView/FAQView'))
 const HelpDashboardView = lazy(() => import('./components/HelpViews/HelpDashboardView/HelpDashboardView'))
 const CustomerDocumentPreviewModal = lazy(() => import('./features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'))
 const ChatPanel = lazy(() => import('./components/ChatPanel'))
-import { ViewerControls } from './components/ViewerControls'
 import type { PreviewDocumentInfo } from './shared/types/document'
 import DownloadHelper from './utils/downloadHelper'
 import { SearchService } from './services/searchService'
 import type { SearchResultItem } from './entities/search'
-import type { StorageInfo } from './services/userService'
-import type { AIUsageData } from './services/aiUsageService'
 import { UsageQuotaWidget } from './shared/ui/UsageQuotaWidget'
 import { uploadService } from './components/DocumentViews/DocumentRegistrationView/services/uploadService'
 import { PaneSizeToggle } from './shared/ui/PaneSizeToggle/PaneSizeToggle'
@@ -104,45 +99,6 @@ const DEFAULT_CENTER_PANE_RATIO = 0.5
 const DEFAULT_CENTER_WIDTH_PERCENT = DEFAULT_CENTER_PANE_RATIO * 100
 const DEFAULT_RIGHT_WIDTH_PERCENT = 100 - DEFAULT_CENTER_WIDTH_PERCENT
 
-// 첫 방문자 가이드 투어 스텝
-const ONBOARDING_STEPS: TourStep[] = [
-  {
-    target: '.header-quick-search-container',
-    title: '빠른 검색',
-    description: '고객명을 입력하면 즉시 검색 결과가 표시됩니다. 원하는 고객을 클릭하면 바로 상세 정보로 이동합니다.',
-    placement: 'bottom',
-    icon: 'magnifyingglass'
-  },
-  {
-    target: '[data-menu-key="documents-register"]',
-    title: '문서 등록',
-    description: '보험 문서(증권, 청약서 등)를 업로드하면 AI가 자동으로 분석하여 고객 정보를 추출합니다.',
-    placement: 'right',
-    icon: 'doc-badge-plus'
-  },
-  {
-    target: '[data-menu-key="customers-register"]',
-    title: '고객 등록',
-    description: '새로운 고객을 직접 등록할 수 있습니다. 문서 없이도 고객 정보를 먼저 입력할 수 있습니다.',
-    placement: 'right',
-    icon: 'person-fill-badge-plus'
-  },
-  {
-    target: '[data-menu-key="documents-library"]',
-    title: '문서 보관함',
-    description: '등록된 모든 문서를 한눈에 확인하고 관리할 수 있습니다. 고객별로 필터링도 가능합니다.',
-    placement: 'right',
-    icon: 'folder'
-  },
-  {
-    target: '.header-user-profile',
-    title: '계정 설정',
-    description: '프로필을 클릭하면 계정 설정, 보안, 알림 등 다양한 설정을 변경할 수 있습니다.',
-    placement: 'bottom',
-    icon: 'gearshape'
-  }
-]
-
 const persistentState = {
   layoutControlModalOpen: false,
   activeDocumentView: (() => {
@@ -165,7 +121,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [isDraggingBRB, setIsDraggingBRB] = useState(false)
 
   // User Store - 사용자 정보 전역 관리
-  const { userId, updateCurrentUser } = useUserStore()
+  const { updateCurrentUser } = useUserStore()
 
   // 현재 보고 있는 문의 ID (카카오톡 스타일: 열린 채팅방은 카운트 증가 안함)
   const [currentViewingInquiryId, setCurrentViewingInquiryId] = useState<string | null>(null)
@@ -908,32 +864,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // 최근 검색 고객 스토어
   const addRecentCustomer = useRecentCustomersStore((state) => state.addRecentCustomer)
-
-  // 최근 검색 고객 클릭 핸들러 - 고객 전체보기 페이지로 이동
-  const handleRecentCustomerClick = useCallback(async (customerId: string) => {
-    // customers-full-detail 뷰로 이동
-    recordNavigation('customers-full-detail', 'internal')
-    setActiveDocumentView('customers-full-detail')
-    setFullDetailCustomerId(customerId)
-
-    // RightPane 닫기
-    setSelectedDocument(null)
-    setSelectedCustomer(null)
-    setRightPaneContentType(null)
-    setRightPaneVisible(false)
-
-    // URL 업데이트
-    updateURLParams({ view: 'customers-full-detail', customerId, documentId: null })
-
-    // 최근 검색 고객 목록 순서 업데이트 (클릭한 고객을 맨 위로)
-    try {
-      const customer = await CustomerService.getCustomer(customerId)
-      addRecentCustomer(customer)
-    } catch (error) {
-      logger.error('App', '최근 고객 순서 업데이트 실패', error)
-      errorReporter.reportApiError(error as Error, { component: 'App.handleSwitchToDetailView' })
-    }
-  }, [updateURLParams, addRecentCustomer])
 
   // 🍎 전체보기 → 간략보기 전환 핸들러 (customers-all + customerId 유지)
   const handleSwitchToCompactView = useCallback(async (customerId: string) => {
@@ -2003,10 +1933,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   const fileName = hasDisplayName && rpFilenameMode === 'display'
                     ? selectedDocument.displayName!
                     : originalName
-                  const nameLabel = hasDisplayName
-                    ? (rpFilenameMode === 'display' ? '별칭' : '원본')
-                    : null
-
                   // OCR 신뢰도 계산
                   const ocrData = selectedDocument.ocr as { confidence?: unknown } | undefined
                   const ocrConfidence = ocrData?.confidence

@@ -8,7 +8,6 @@ import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { DraggableModal, Button } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type {
-  ArFileGroup,
   BatchMappingState,
   ArTableViewState,
   ArFileTableRow,
@@ -315,7 +314,7 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   onUpdateRowMapping,
   onUpdateRowNewCustomer,
   onToggleRow,
-  onSelectAllRows,
+  onSelectAllRows: _onSelectAllRows,
   onSetRowsSelection,
   onBulkAssignCustomer,
   onBulkAssignNewCustomer,

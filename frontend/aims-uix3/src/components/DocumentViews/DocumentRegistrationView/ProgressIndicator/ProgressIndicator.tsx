@@ -8,7 +8,6 @@
 import React, { useMemo } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { UploadState, UploadFile } from '../types/uploadTypes'
-import { uploadHelpers } from '../services/userContextService'
 import './ProgressIndicator.css'
 
 interface ProgressIndicatorProps {

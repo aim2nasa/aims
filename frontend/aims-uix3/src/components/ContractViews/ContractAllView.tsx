@@ -708,16 +708,6 @@ export function ContractAllView({
     }
   }, [resizingColumn, handleResizeMove, handleResizeEnd])
 
-  // 칼럼 폭 초기화
-  const handleResetColumnWidths = useCallback(() => {
-    setColumnWidths(DEFAULT_COLUMN_WIDTHS)
-    try {
-      localStorage.removeItem(COLUMN_WIDTHS_STORAGE_KEY)
-    } catch (e) {
-      console.warn('칼럼 폭 초기화 실패:', e)
-    }
-  }, [])
-
   // CSS 변수로 칼럼 폭 적용
   const gridStyle = useMemo(() => ({
     '--col-type': `${columnWidths.type}px`,

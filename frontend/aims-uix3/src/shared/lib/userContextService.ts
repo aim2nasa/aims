@@ -7,7 +7,7 @@
  */
 
 import type { UploadContext, UserIdentifierType } from '@/shared/types/uploadTypes'
-import { API_CONFIG, getCurrentUserId } from '@/shared/lib/api'
+import { getCurrentUserId } from '@/shared/lib/api'
 
 type UploadMetadataValue = string | number | boolean | null | undefined
 

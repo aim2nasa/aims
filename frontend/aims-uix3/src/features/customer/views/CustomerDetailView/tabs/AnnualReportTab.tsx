@@ -25,7 +25,6 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useCustomerSSE } from '@/shared/hooks/useCustomerSSE';
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService';
 import type { Customer } from '@/entities/customer/model';
-import type { CustomerDocumentItem } from '@/services/DocumentService';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize';
 import './AnnualReportTab.layout.css';
@@ -128,7 +127,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   onAnnualReportCountChange,
   refreshTrigger,
   searchTerm: externalSearchTerm,
-  onSearchChange
+  onSearchChange: _onSearchChange
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reports, setReports] = useState<AnnualReport[]>([]);
@@ -137,9 +136,8 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // 🍎 검색어 상태 (외부/내부)
-  const [internalSearchTerm, setInternalSearchTerm] = useState('');
+  const [internalSearchTerm] = useState('');
   const searchTerm = externalSearchTerm ?? internalSearchTerm;
-  const _setSearchTerm = onSearchChange ?? setInternalSearchTerm;
   // 🍎 페이지네이션 상태 ('auto' 또는 숫자)
   const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>(() => {
     const saved = localStorage.getItem('aims-customer-ar-items-per-page');

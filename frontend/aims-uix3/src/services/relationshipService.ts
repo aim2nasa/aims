@@ -7,7 +7,6 @@
  */
 
 import { api } from '@/shared/lib/api'
-import { errorReporter } from '@/shared/lib/errorReporter'
 import { invalidateQueries } from '@/app/queryClient'
 import type { Customer } from '@/entities/customer/model'
 

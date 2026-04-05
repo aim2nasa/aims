@@ -81,7 +81,7 @@ function saveColumnWidths(storageKey: string, widths: (number | null)[]): void {
 export function useColumnResize({
   storageKey,
   columns,
-  gap = 10,
+  gap: _gap = 10,
 }: UseColumnResizeOptions): UseColumnResizeReturn {
   const [columnWidths, setColumnWidths] = useState<(number | null)[]>(() =>
     loadColumnWidths(storageKey, columns.length)

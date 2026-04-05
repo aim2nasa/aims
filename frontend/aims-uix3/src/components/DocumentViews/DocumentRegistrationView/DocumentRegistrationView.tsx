@@ -17,14 +17,13 @@ import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleC
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
 import { ProcessingLog as Log, LogLevel } from './types/logTypes'
 import { uploadService } from './services/uploadService'
-import { uploadConfig, UserContextService } from './services/userContextService'
+import { uploadConfig } from './services/userContextService'
 import { api, API_CONFIG, getAuthToken } from '@/shared/lib/api'
 import { cachedRequest } from '@/shared/lib/requestCache'
 import { waitForDocumentProcessing } from '@/shared/lib/waitForDocumentProcessing'
 import { checkAnnualReportFromPDF } from '@/features/customer'
 import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
-import { DocumentService } from '@/services/DocumentService'
 import { processAnnualReportFile, registerArDocument, formatIssueDateKorean, clearDuplicateCheckCache, prefetchCustomerData, precomputeFileHashes } from './utils/annualReportProcessor'
 import { processCustomerReviewFile, formatIssueDateKorean as formatIssueDateKoreanCR } from './utils/customerReviewProcessor'
 import { CustomerSelectionModal, NewCustomerInputModal } from '@/features/annual-report'
@@ -46,7 +45,6 @@ import { useArBatchAnalysis } from './hooks/useArBatchAnalysis'
 import { useCrBatchAnalysis } from './hooks/useCrBatchAnalysis'
 import { BatchArMappingModal } from './components/BatchArMappingModal'
 import { BatchCrMappingModal } from './components/BatchCrMappingModal'
-import { registerArDocument as registerArDocumentBatch } from './utils/annualReportProcessor'
 import { getEffectiveMapping } from './utils/arGroupingUtils'
 import { getEffectiveMapping as getCrEffectiveMapping } from './utils/crGroupingUtils'
 import { BatchUploadApi } from '@/features/batch-upload'
@@ -1939,11 +1937,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       newlyCreatedCustomerId: customerId,
     }));
   }, [addLog]);
-
-  // 🎯 새 고객 등록 모달에서 취소 (고객 선택 모달은 이미 열려있음)
-  const handleNewCustomerBack = useCallback(() => {
-    setShowNewCustomerModal(false);
-  }, []);
 
   // ===========================================
   // 🎯 CRS 고객 선택 핸들러 (AR과 동일한 패턴)

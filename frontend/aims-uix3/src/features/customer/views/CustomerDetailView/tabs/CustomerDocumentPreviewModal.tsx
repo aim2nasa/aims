@@ -16,7 +16,6 @@ import { SFSymbol,
 } from '../../../../../components/SFSymbol'
 import { PDFViewer } from '../../../../../components/PDFViewer/PDFViewer'
 import { ImageViewer } from '../../../../../components/ImageViewer/ImageViewer'
-import { ViewerControls } from '../../../../../components/ViewerControls'
 import { DocumentUtils } from '@/entities/document'
 import type { PreviewDocumentInfo } from '@/shared/types/document'
 import { formatDateTime } from '@/shared/lib/timeUtils'
@@ -58,7 +57,6 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
   // 프리뷰용 URL: 변환된 PDF가 있으면 사용, 없으면 원본 사용
   const previewUrl = previewDocument?.previewFileUrl ?? previewDocument?.fileUrl ?? null
   // 다운로드용 URL: 항상 원본 파일
-  const downloadUrl = previewDocument?.fileUrl ?? null
 
   // 프리뷰 URL 기준으로 뷰어 타입 결정
   const isPdf = previewUrl ? isPdfFile(previewUrl) : false

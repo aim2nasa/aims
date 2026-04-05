@@ -30,8 +30,7 @@ import { DocumentNotesModal } from '../DocumentStatusView/components/DocumentNot
 import { DocumentTypePickerModal } from '@/shared/ui/DocumentTypeCell/DocumentTypePickerModal'
 import DownloadHelper from '../../../utils/downloadHelper'
 import { errorReporter } from '@/shared/lib/errorReporter'
-import { Tooltip, useToastContext } from '@/shared/ui'
-import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
+import { useToastContext } from '@/shared/ui'
 import type { Document } from '@/types/documentStatus'
 import './DocumentExplorerView.toolbar.css';
 import './DocumentExplorerView.tree.css';
@@ -207,7 +206,7 @@ const DocumentExplorerContent: React.FC<{
       toast.update(progressToastIdRef.current, msg)
     }
   }, [toast])
-  const { download: downloadZip, cancel: cancelDownload, isDownloading } = useDocumentDownload({
+  const { download: downloadZip, cancel: _cancelDownload, isDownloading } = useDocumentDownload({
     onProgress: handleDownloadProgress,
   })
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set())
@@ -284,10 +283,10 @@ const DocumentExplorerContent: React.FC<{
   }, [])
 
   // === 편집 모드 (일괄 삭제 / AI 별칭 생성) ===
-  const { showConfirm, showAlert } = useAppleConfirm()
+  const { showAlert } = useAppleConfirm()
   const [editMode, setEditMode] = useState<EditModeType>('none')
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set())
-  const [forceRegenerateAlias, setForceRegenerateAlias] = useState(false)
+  const [, setForceRegenerateAlias] = useState(false)
   const aliasGeneration = useAliasGeneration()
   const isGeneratingAliases = aliasGeneration.progress.isRunning
 
@@ -425,77 +424,6 @@ const DocumentExplorerContent: React.FC<{
   // 이름변경/삭제 성공 시 reload 대신 트리 재조회 (UI 상태 유지)
   refreshDataRef.current = () => { fetchExplorerTree(selectedInitial) }
 
-  // AI 별칭 단건 순차 생성 실행 (실시간 프로그레스 바 표시)
-  const handleGenerateAliases = useCallback(async () => {
-    if (selectedDocumentIds.size === 0) return
-    try {
-      const summary = await aliasGeneration.generate(
-        Array.from(selectedDocumentIds),
-        forceRegenerateAlias,
-      )
-      const { completed, skipped, failed, cancelled } = summary
-      const hasCompleted = completed > 0
-      const hasSkipped = skipped > 0
-      const hasFailed = failed > 0
-
-      let title: string
-      let iconType: 'success' | 'info' | 'warning' | 'error'
-      if (cancelled) {
-        title = '별칭 생성이 취소되었습니다'
-        iconType = hasCompleted ? 'warning' : 'info'
-      } else if (hasFailed) {
-        title = hasCompleted ? '일부 문서의 별칭 생성에 실패했습니다' : '별칭 생성에 실패했습니다'
-        iconType = hasCompleted ? 'warning' : 'error'
-      } else if (!hasCompleted && hasSkipped) {
-        title = '새로 생성할 문서가 없습니다'
-        iconType = 'info'
-      } else {
-        title = '별칭 생성 완료'
-        iconType = 'success'
-      }
-
-      const lines: string[] = []
-      if (hasCompleted) lines.push(`${completed}건의 문서에 별칭이 생성되었습니다.`)
-      if (hasFailed) lines.push(`${failed}건 실패 — 잠시 후 다시 시도해 주세요.`)
-      if (hasSkipped) {
-        if (!hasCompleted && !hasFailed) {
-          lines.push(`선택한 ${skipped}건의 문서에 이미 별칭이 있습니다.`)
-          lines.push(`'별칭이 있는 문서도 새로 만들기'를 선택한 후 다시 시도해 주세요.`)
-        } else {
-          lines.push(`${skipped}건은 이미 별칭이 있어 건너뛰었습니다.`)
-        }
-      }
-      if (cancelled) lines.push('나머지 문서는 처리되지 않았습니다.')
-
-      await showAlert({
-        title,
-        message: lines.join('\n'),
-        confirmText: '확인',
-        showCancel: false,
-        iconType,
-      })
-
-      // 서버에서 최신 데이터 재조회 — 트리 펼침/스크롤은 React state로 유지됨
-      await fetchExplorerTree(selectedInitial)
-      // 별칭 편집 모드 종료
-      setEditMode('none')
-      setSelectedDocumentIds(new Set())
-      setForceRegenerateAlias(false)
-      aliasGeneration.reset()
-    } catch (err) {
-      console.error('별칭 생성 실패:', err)
-      errorReporter.reportApiError(err as Error, { component: 'DocumentExplorerView.handleGenerateAliases' })
-      await showAlert({
-        title: '오류',
-        message: '별칭 생성 중 오류가 발생했습니다.',
-        confirmText: '확인',
-        showCancel: false,
-        iconType: 'error',
-      })
-      aliasGeneration.reset()
-    }
-  }, [selectedDocumentIds, forceRegenerateAlias, showAlert, fetchExplorerTree, selectedInitial, aliasGeneration])
-
   // selectedInitial 변경 시 재조회
   useEffect(() => { fetchExplorerTree(selectedInitial) }, [fetchExplorerTree, selectedInitial])
 
@@ -594,7 +522,7 @@ const DocumentExplorerContent: React.FC<{
     setDateRange,
     setThumbnailEnabled,
     expandToLevel,
-    expandToDocument,
+    expandToDocument: _expandToDocument,
   } = useDocumentExplorerTree({
     documents,
     isLoading,

@@ -250,56 +250,6 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   // 검색 중인지 여부
   const isSearching = searchQuery.trim().length > 0;
 
-  // 한글 초성 추출 함수
-  const getInitialConsonant = (name: string): string => {
-    if (!name) return '';
-    const firstChar = name.charAt(0);
-    const code = firstChar.charCodeAt(0);
-
-    // 1. 한글 완성형 문자 (가-힣: 0xAC00-0xD7A3)
-    if (code >= 0xAC00 && code <= 0xD7A3) {
-      const initialIndex = Math.floor((code - 0xAC00) / 588);
-      const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
-      return initials[initialIndex] || '';
-    }
-
-    // 2. 한글 자음 (ㄱ-ㅎ: 0x3131-0x314E)
-    if (code >= 0x3131 && code <= 0x314E) {
-      // 자음 자체를 그대로 반환 (ㄱ, ㄲ, ㄴ, ㄷ, ...)
-      return firstChar;
-    }
-
-    return '';
-  };
-
-  // 알파벳 초성 추출 함수 (대소문자 구분 없음)
-  const getAlphabetInitial = (name: string): string => {
-    if (!name) return '';
-    const firstChar = name.charAt(0).toUpperCase();
-    if (firstChar >= 'A' && firstChar <= 'Z') {
-      return firstChar;
-    }
-    return '';
-  };
-
-  // 숫자 초성 추출 함수
-  const getNumberInitial = (name: string): string => {
-    if (!name) return '';
-    const firstChar = name.charAt(0);
-    if (firstChar >= '0' && firstChar <= '9') {
-      return firstChar;
-    }
-    return '';
-  };
-
-  // 이름의 초성 추출 (타입에 따라)
-  const getNameInitial = (name: string, type: 'korean' | 'alphabet' | 'number'): string => {
-    if (type === 'korean') return getInitialConsonant(name);
-    if (type === 'alphabet') return getAlphabetInitial(name);
-    if (type === 'number') return getNumberInitial(name);
-    return '';
-  };
-
   // 정렬 핸들러
   const handleSort = useCallback((key: string) => {
     let direction: 'asc' | 'desc' = 'asc';

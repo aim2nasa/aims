@@ -15,7 +15,7 @@ import { DocumentTypeCell } from '@/shared/ui/DocumentTypeCell/DocumentTypeCell'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { documentTypesService } from '@/services/documentTypesService'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
-import { RelationshipService, type Relationship } from '@/services/relationshipService'
+import { RelationshipService } from '@/services/relationshipService'
 import { DocumentService, type CustomerDocumentItem } from '@/services/DocumentService'
 import {
   DOCUMENT_CATEGORIES,
@@ -32,7 +32,6 @@ import type { Document } from '@/types/documentStatus'
 import type { Customer } from '@/entities/customer/model'
 import { useDocumentActions } from '@/hooks/useDocumentActions'
 import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
-import { DocumentStatusService } from '@/services/DocumentStatusService'
 import './CustomerDocumentExplorerView.css'
 
 interface CustomerDocumentExplorerViewProps {

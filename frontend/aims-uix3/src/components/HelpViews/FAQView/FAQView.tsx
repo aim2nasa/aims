@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
-import { helpApi, type FAQ, type FAQCategory } from '@/features/help';
+import { helpApi } from '@/features/help';
 import './FAQView.css';
 import './FAQView.mobile.css';
 
