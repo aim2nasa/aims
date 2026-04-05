@@ -276,7 +276,7 @@ describe('Auth Store 동기화', () => {
       const { useUserStore } = await import('@/stores/user')
 
       // 세션 스토리지에 임시 데이터 설정
-      vi.mocked(sessionStorage.setItem).mockImplementation((key, value) => {
+      vi.mocked(sessionStorage.setItem).mockImplementation((_key, _value) => {
         // 세션 스토리지 Mock
       })
 

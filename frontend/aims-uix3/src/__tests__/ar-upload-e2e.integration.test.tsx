@@ -271,6 +271,7 @@ describe('AR 문서 업로드 전체 플로우 통합 테스트', () => {
 
   describe('[통합] badgeType 계산 로직 검증 (백엔드 시뮬레이션)', () => {
     it('meta.full_text가 있으면 TXT 뱃지', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const document: any = {
         meta: { full_text: 'some text' },
         ocr: undefined
@@ -284,6 +285,7 @@ describe('AR 문서 업로드 전체 플로우 통합 테스트', () => {
     })
 
     it('meta.full_text 없고 ocr.full_text만 있으면 OCR 뱃지', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const document: any = {
         meta: undefined,
         ocr: { full_text: 'ocr text', confidence: '0.95' }
@@ -297,6 +299,7 @@ describe('AR 문서 업로드 전체 플로우 통합 테스트', () => {
     })
 
     it('둘 다 없으면 BIN 뱃지', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const document: any = {
         meta: undefined,
         ocr: undefined
@@ -310,6 +313,7 @@ describe('AR 문서 업로드 전체 플로우 통합 테스트', () => {
     })
 
     it('meta.full_text와 ocr.full_text 둘 다 있으면 TXT 우선', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const document: any = {
         meta: { full_text: 'meta text' },
         ocr: { full_text: 'ocr text', confidence: '0.95' }

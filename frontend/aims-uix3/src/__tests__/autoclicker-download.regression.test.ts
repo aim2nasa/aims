@@ -5,7 +5,7 @@
  * @priority MEDIUM - AC 배포 인프라
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
 // ===== 소스에서 추출한 순수 로직 (AutoClickerView.tsx) =====
 
