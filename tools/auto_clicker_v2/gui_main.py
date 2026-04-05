@@ -15,6 +15,7 @@ from tkinter import filedialog, messagebox
 from app_state import AppState
 from data_source import LiveProcessSource
 from path_helper import get_app_dir, get_version_file, get_output_dir, is_frozen
+import mouse_lock
 
 _BASE_DIR = get_app_dir()
 
@@ -715,6 +716,10 @@ class AutoClickerApp(ctk.CTk):
         self._debug_log("_start", f"source started, is_running={self._source.is_running()}")
         self._compact_panel.set_play_state("playing")
 
+        # 마우스 독점 모드 시작
+        mouse_lock.set_on_toggle_callback(self._on_mouse_lock_toggle)
+        mouse_lock.start()
+
         # 실행 중: 최상위 + 위치 고정 + 타이틀바 제거 (드래그 완전 차단)
         self.attributes("-topmost", True)
         if not self._is_compact:
@@ -729,6 +734,8 @@ class AutoClickerApp(ctk.CTk):
     def _stop(self):
         """SikuliX 중지 (프로세스 종료, UI 초기화)"""
         self._debug_log("_stop", f"paused={self._source._paused if self._source else 'N/A'}")
+        # 마우스 독점 해제 + Hook 정리
+        mouse_lock.cleanup()
         if self._source:
             self._source.stop()
         if self._progress_logger:
@@ -758,6 +765,7 @@ class AutoClickerApp(ctk.CTk):
             save_settings(self._settings, self._save_dir)
         except Exception:
             pass
+        mouse_lock.cleanup()
         if self._source and self._source.is_running():
             self._source.stop()
         self.destroy()
@@ -775,6 +783,7 @@ class AutoClickerApp(ctk.CTk):
         if self._source._paused:
             # 즉시 재개
             self._debug_log("_toggle_pause", "RESUMING")
+            mouse_lock.start()
             try:
                 self._source.resume()
             except Exception as e:
@@ -792,6 +801,7 @@ class AutoClickerApp(ctk.CTk):
         else:
             # 즉시 일시정지
             self._debug_log("_toggle_pause", "PAUSING → button='계속'")
+            mouse_lock.stop()
             self._source.pause()
             self._show_paused_ui()
 
@@ -805,6 +815,31 @@ class AutoClickerApp(ctk.CTk):
         self._status_label.configure(text="일시정지", text_color="#e67e22")
         self._compact_panel.set_play_state("paused")
 
+    def _on_mouse_lock_toggle(self, is_locked: bool):
+        """Ctrl+Alt+P 마우스 잠금 토글 콜백 — 일시정지와 연동"""
+        if not self._source or not self._source.is_running():
+            return
+        if is_locked:
+            # 마우스 재잠금 → SikuliX 재개
+            if self._source._paused:
+                try:
+                    self._source.resume()
+                except Exception:
+                    self._source._paused = False
+                label = self._get_chosung_arg() or "전체"
+                self.after(0, lambda: self._run_btn.configure(
+                    text="일시정지", fg_color="#e67e22", hover_color="#f39c12",
+                    state="normal",
+                ))
+                self.after(0, lambda: self._status_label.configure(
+                    text=f"[{label}] 실행 중...", text_color="#4CAF50",
+                ))
+                self.after(0, lambda: self._compact_panel.set_play_state("playing"))
+        else:
+            # 마우스 해제 → SikuliX 일시정지
+            if not self._source._paused:
+                self._source.pause()
+                self.after(0, self._show_paused_ui)
 
     # ===== 이벤트 처리 =====
 
