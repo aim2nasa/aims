@@ -130,7 +130,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     isLoading,
     error,
     lastSearchMode,
+    totalCount,
     handleSearch,
+    handleKeywordPageSearch,
     handleQueryChange,
     handleSearchModeChange,
     handleKeywordModeChange,
@@ -393,12 +395,20 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     return sorted
   }, [results, sortField, sortOrder, filenameMode, getFileTypeLabel])
 
-  // 🍎 페이지네이션된 결과 (raw — enrichment 전)
-  const totalSearchPages = Math.max(1, Math.ceil(sortedResults.length / SEARCH_PAGE_SIZE))
+  // 🍎 페이지네이션: 키워드 검색은 백엔드 페이지네이션, 시맨틱은 클라이언트 페이지네이션
+  const isKeywordBackendPagination = lastSearchMode === 'keyword' && totalCount != null
+  const totalSearchPages = isKeywordBackendPagination
+    ? Math.max(1, Math.ceil(totalCount / SEARCH_PAGE_SIZE))
+    : Math.max(1, Math.ceil(sortedResults.length / SEARCH_PAGE_SIZE))
   const rawPaginatedResults = useMemo(() => {
+    if (isKeywordBackendPagination) {
+      // 키워드 검색: 백엔드가 이미 해당 페이지 결과만 반환 → 그대로 사용
+      return sortedResults
+    }
+    // 시맨틱 검색: 클라이언트 슬라이싱
     const start = (searchPage - 1) * SEARCH_PAGE_SIZE
     return sortedResults.slice(start, start + SEARCH_PAGE_SIZE)
-  }, [sortedResults, searchPage])
+  }, [sortedResults, searchPage, isKeywordBackendPagination])
 
   // 🍎 Lazy Enrichment: 시맨틱 검색 결과를 페이지 단위로 보강
   // enrichment 캐시: docId → enriched SearchResultItem (페이지 복귀 시 즉시 사용)
@@ -515,6 +525,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   useEffect(() => { setSearchPage(1) }, [sortField, sortOrder])
   // 🍎 검색 결과 변경 시 1페이지로 리셋
   useEffect(() => { setSearchPage(1) }, [results])
+
+  // 🍎 페이지 변경 핸들러: 키워드 검색은 백엔드 재조회, 시맨틱은 클라이언트 페이지네이션
+  const handlePageChange = useCallback((newPage: number) => {
+    setSearchPage(newPage)
+    if (isKeywordBackendPagination) {
+      handleKeywordPageSearch(newPage)
+    }
+  }, [isKeywordBackendPagination, handleKeywordPageSearch])
 
   /**
    * Enter 키 입력 핸들러
@@ -1999,8 +2017,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   <button
                     type="button"
                     className="search-results-pagination__btn"
-                    onClick={() => setSearchPage(p => Math.max(1, p - 1))}
-                    disabled={searchPage <= 1}
+                    onClick={() => handlePageChange(Math.max(1, searchPage - 1))}
+                    disabled={searchPage <= 1 || isLoading}
                     aria-label="이전 페이지"
                   >
                     <SFSymbol name="chevron.left" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.SEMIBOLD} decorative />
@@ -2012,8 +2030,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   <button
                     type="button"
                     className="search-results-pagination__btn"
-                    onClick={() => setSearchPage(p => Math.min(totalSearchPages, p + 1))}
-                    disabled={searchPage >= totalSearchPages}
+                    onClick={() => handlePageChange(Math.min(totalSearchPages, searchPage + 1))}
+                    disabled={searchPage >= totalSearchPages || isLoading}
                     aria-label="다음 페이지"
                   >
                     <SFSymbol name="chevron.right" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.SEMIBOLD} decorative />

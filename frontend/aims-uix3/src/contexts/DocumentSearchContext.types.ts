@@ -19,9 +19,13 @@ export interface DocumentSearchContextValue {
   isLoading: boolean
   error: string | null
   lastSearchMode: SearchMode | null
+  /** 전체 검색 결과 수 (키워드 검색 백엔드 페이지네이션) */
+  totalCount: number | null
 
   // Actions
   handleSearch: () => Promise<void>
+  /** 키워드 검색 특정 페이지 조회 (백엔드 페이지네이션) */
+  handleKeywordPageSearch: (page: number) => Promise<void>
   handleQueryChange: (value: string) => void
   handleSearchModeChange: (mode: SearchMode) => void
   handleKeywordModeChange: (mode: KeywordMode) => void
