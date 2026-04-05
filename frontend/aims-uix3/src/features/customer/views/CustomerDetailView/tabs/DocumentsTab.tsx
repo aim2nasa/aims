@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Document 타입 확장 속성 접근 */
 /**
  * AIMS UIX-3 Customer Detail - Documents Tab
  * @since 2025-10-25

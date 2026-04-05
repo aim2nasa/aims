@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- API 응답 타입 캐스팅 */
 /**
  * AIMS UIX-3 Documents Controller
  * @since 2025-09-30
@@ -119,7 +120,7 @@ export const useDocumentsController = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasMore, searchQuery, searchParams]);
+  }, [isLoading, hasMore, searchQuery, searchParams, setSearchParams]);
 
   /**
    * 검색어 변경 핸들러
@@ -128,7 +129,7 @@ export const useDocumentsController = () => {
     setSearchQuery(query);
     setSearchParams(prev => ({ ...prev, offset: 0 }));
     setCurrentPage(1);
-  }, []);
+  }, [setSearchQuery, setSearchParams, setCurrentPage]);
 
   /**
    * 페이지 변경 핸들러
@@ -140,7 +141,7 @@ export const useDocumentsController = () => {
     setCurrentPage(page);
     setSearchParams(newParams);
     loadDocuments(newParams);
-  }, [searchParams, loadDocuments]);
+  }, [searchParams, loadDocuments, setCurrentPage, setSearchParams]);
 
   /**
    * 페이지당 항목 수 변경 핸들러
@@ -165,7 +166,7 @@ export const useDocumentsController = () => {
       }
       loadDocuments(newParams);
     }
-  }, [searchParams, loadDocuments, total, currentPage]);
+  }, [searchParams, loadDocuments, total, currentPage, setSearchParams, setCurrentPage]);
 
   /**
    * 검색 실행
@@ -190,7 +191,7 @@ export const useDocumentsController = () => {
     setSearchParams(newParams);
     setCurrentPage(1);
     loadDocuments(newParams);
-  }, [searchParams, loadDocuments]);
+  }, [searchParams, loadDocuments, setSearchParams, setCurrentPage]);
 
   /**
    * 문서 삭제

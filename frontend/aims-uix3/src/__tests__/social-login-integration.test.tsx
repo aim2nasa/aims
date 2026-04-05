@@ -95,7 +95,7 @@ vi.mock('@/contexts/AppleConfirmProvider', () => ({
 
 vi.mock('@/entities/auth/api', () => ({
   getCurrentUser: mockGetCurrentUser,
-  processAuthToken: vi.fn(async (token: string, deps: Record<string, Function>) => {
+  processAuthToken: vi.fn(async (token: string, deps: Record<string, (...args: unknown[]) => unknown>) => {
     deps.setToken(token);
     const user = await mockGetCurrentUser(token);
     deps.setUser(user);

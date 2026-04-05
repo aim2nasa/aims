@@ -3,7 +3,7 @@
  * @description 기기 기억 플래그에 따라 localStorage/sessionStorage 동적 전환 검증
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 // getStorage 유틸을 직접 테스트하기 위해 모듈에서 export하는 형태로 테스트
 // 실제 authStore는 Zustand persist와 결합되어 있으므로, getStorage 로직만 단위 테스트

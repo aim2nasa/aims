@@ -341,7 +341,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
     } finally {
       setUpdatingDocTypeId(null)
     }
-  }, [updatingDocTypeId, documents, relatedGroups, updateDocumentLocally, refresh, showAlert])
+  }, [updatingDocTypeId, documents, relatedGroups, updateDocumentLocally, refresh, showAlert, setExpandedNodes])
 
   // 검색어로 문서 필터링
   const filteredDocuments = useMemo(() => {
@@ -379,7 +379,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
         })
       }
     }
-  }, [categoryGroups, searchTerm])
+  }, [categoryGroups, searchTerm, setExpandedNodes])
 
   // 관계자 탭 초기 진입 시 대분류 모두 펼치기
   useEffect(() => {
@@ -397,7 +397,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
       })
       return allKeys
     })
-  }, [relatedGroups, activeTab, searchTerm])
+  }, [relatedGroups, activeTab, searchTerm, setExpandedNodes])
 
   // 관계자 문서 검색 필터링
   const filteredRelatedGroups = useMemo<RelatedPersonGroup[]>(() => {
@@ -435,7 +435,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
       }
     }
     setExpandedNodes(allKeys)
-  }, [filteredRelatedGroups, searchTerm, activeTab])
+  }, [filteredRelatedGroups, searchTerm, activeTab, setExpandedNodes])
 
   // 관계자/가족 문서 로드
   useEffect(() => {
@@ -528,7 +528,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
 
     loadRelatedDocuments()
     return () => { cancelled = true }
-  }, [visible, customerId, activeTab])
+  }, [visible, customerId, activeTab, setExpandedNodes])
 
   const toggleNode = useCallback((nodeKey: string) => {
     setExpandedNodes(prev => {
@@ -540,7 +540,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
       }
       return next
     })
-  }, [])
+  }, [setExpandedNodes])
 
   // 전체 펼침/접기: 대분류까지만 (소분류 폴더 헤더는 보이되 파일 목록은 접힌 상태)
   const toggleAll = useCallback(() => {
@@ -570,7 +570,7 @@ export const CustomerDocumentExplorerView: React.FC<CustomerDocumentExplorerView
         return allKeys
       })
     }
-  }, [categoryGroups, relatedGroups, activeTab])
+  }, [categoryGroups, relatedGroups, activeTab, setExpandedNodes])
 
   const handleDocClick = useCallback((doc: CustomerDocumentItem) => {
     if (onDocumentClick && doc._id) {

@@ -9,7 +9,7 @@
  * (같은 컴포넌트 내 navigate → 리마운트 안 됨)
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { createElement } from 'react'
 
@@ -29,7 +29,7 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate }
 })
 
-let mockAuthStore = {
+const mockAuthStore = {
   setToken: mockSetToken, setUser: mockSetUser, logout: vi.fn(),
   isAuthenticated: false, user: null, token: null as string | null,
 }
@@ -87,7 +87,7 @@ describe('계정 전환 시 프로필 동기화 — React 렌더링 증명', () 
     mockAuthStore.token = null
 
     // processAuthToken mock: 실제 동작 재현 — 새 사용자를 localStorage에 저장 + navigate
-    mockProcessAuthToken.mockImplementation(async (_token: string, deps: Record<string, Function>) => {
+    mockProcessAuthToken.mockImplementation(async (_token: string, deps: Record<string, (...args: unknown[]) => unknown>) => {
       deps.setToken(_token)
       deps.setUser({ _id: 'user-youmi', name: 'youmi', email: 'youmi@test.com', role: 'user', avatarUrl: '/youmi.jpg', authProvider: 'kakao' })
       deps.updateCurrentUser({ id: 'user-youmi', name: 'youmi', email: 'youmi@test.com', role: 'user', avatarUrl: '/youmi.jpg' })

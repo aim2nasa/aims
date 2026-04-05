@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { DocumentRegistrationView } from '../DocumentRegistrationView'
 
 // Mock dependencies
@@ -114,7 +114,7 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
    * 헬퍼: 드래그존(FileUploadArea)이 표시되는지 확인
    * FileUploadArea는 "클릭하여 파일 선택" 또는 드래그 영역 텍스트를 포함
    */
-  const isDropzoneVisible = () => {
+  const _isDropzoneVisible = () => {
     // FileUploadArea 컴포넌트의 특징적인 텍스트나 요소로 확인
     const dropzoneTexts = [
       '클릭하여 파일 선택',
@@ -139,7 +139,7 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
   /**
    * 헬퍼: 로그 영역이 표시되는지 확인
    */
-  const isLogAreaVisible = () => {
+  const _isLogAreaVisible = () => {
     return screen.queryByTestId('processing-log') !== null ||
            screen.queryByText('처리 로그', { exact: false }) !== null
   }

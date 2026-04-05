@@ -90,7 +90,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
           setDuplicateStatus('available');
           setDuplicateCustomer(null);
         }
-      } catch (error) {
+      } catch (_error) {
         // 에러 시 idle로 (백엔드에서 최종 검증)
         setDuplicateStatus('idle');
         setDuplicateCustomer(null);

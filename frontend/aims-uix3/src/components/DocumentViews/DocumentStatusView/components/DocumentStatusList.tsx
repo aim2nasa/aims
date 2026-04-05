@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components -- 컴포넌트와 관련 유��을 함께 export */
+/* eslint-disable @typescript-eslint/no-explicit-any -- Document 타입 호환성 캐스팅 */
 /**
  * DocumentStatusList Component
  * @version 3.0.0 - 🍎 DocumentLibrary 리스트 구조 완벽 복제

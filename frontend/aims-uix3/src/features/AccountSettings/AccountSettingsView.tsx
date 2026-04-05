@@ -950,7 +950,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
           </div>
         )
 
-      case 'data':
+      case 'data': {
         const getTierInfo = (tier: string) => {
           const tiers: Record<string, { name: string; color: string }> = {
             free_trial: { name: '무료체험', color: 'var(--color-text-tertiary)' },
@@ -1198,7 +1198,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
             </section>
           </div>
         )
-
+      }
       default:
         return null
     }

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- 컴포넌트와 타입을 함께 export */
 /**
  * PaneSizeToggle Component
  * @since 2026-03-30

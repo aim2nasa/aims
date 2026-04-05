@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- PersonalFileDocument/Document 타입 호환성 캐스팅 */
 /**
  * PersonalFilesView Component
  * @since 2.0.0
@@ -836,7 +837,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         iconType: 'warning'
       })
     }
-  }, [currentFolderId, loadFolderContents, handleCloseContextMenu, confirmModal])
+  }, [currentFolderId, loadFolderContents, handleCloseContextMenu, confirmModal, selectedItem])
 
   // 전체 폴더 목록 로드 (이동 모달용) - 재귀적으로 모든 폴더 수집
   const loadAllFolders = useCallback(async () => {
@@ -953,7 +954,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.handleMove' })
       setError(err instanceof Error ? err.message : '이동에 실패했습니다')
     }
-  }, [selectedItem, currentFolderId, loadFolderContents, expandedFolderIds, loadAllFolders])
+  }, [selectedItem, currentFolderId, loadFolderContents, loadAllFolders])
 
 
   // 컨텍스트 메뉴에서 새 폴더 생성

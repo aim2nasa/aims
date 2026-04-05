@@ -3,10 +3,10 @@
  *
  * 5개 샘플에 대해 100% 정확한 파싱 검증
  */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { parseAnnualReportPage2, type AnnualReportSummary } from '../annualReportParser';
+import { parseAnnualReportPage2 } from '../annualReportParser';
 
 // ============================================================================
 // Test Fixtures - AI가 PDF를 직접 읽어 생성한 예상 결과
@@ -576,7 +576,7 @@ describe('Annual Report Parser', () => {
       ]);
 
       // 총 보험료 합계 검증 (월보험료 총액과 비교)
-      const totalPremium = result.contracts.reduce((sum, c) => sum + c.premium, 0);
+      const _totalPremium = result.contracts.reduce((sum, c) => sum + c.premium, 0);
       // 일시납 제외한 월보험료 확인 (안영미의 경우 마지막 계약이 일시납)
     });
 

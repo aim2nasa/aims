@@ -534,7 +534,7 @@ export const CorporateContractsTab: React.FC<CorporateContractsTabProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }, [customer?._id, onCorporateContractCountChange])
+  }, [customer?._id, onCorporateContractCountChange, customer?.insurance_info?.customer_type, customer?.personal_info?.name])
 
   // 🍎 마운트 시 로드
   useEffect(() => {

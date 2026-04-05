@@ -313,12 +313,13 @@ export function InquiryView({
       let bVal: string | number;
 
       switch (sortField) {
-        case 'status':
+        case 'status': {
           // 상태 우선순위: pending > in_progress > resolved > closed
           const statusOrder: Record<InquiryStatus, number> = { pending: 0, in_progress: 1, resolved: 2, closed: 3 };
           aVal = statusOrder[a.status];
           bVal = statusOrder[b.status];
           break;
+        }
         case 'category':
           aVal = a.category;
           bVal = b.category;

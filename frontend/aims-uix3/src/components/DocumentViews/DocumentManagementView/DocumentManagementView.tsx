@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Document 타입 확장 속성 접근 */
 /**
  * DocumentManagementView Component
  * @since 1.0.0

@@ -29,7 +29,7 @@ const createMockDocument = (): Document => ({
 
 // Mock DocumentStatusProvider
 vi.mock('@/providers/DocumentStatusProvider', () => ({
-  DocumentStatusProvider: ({ children }: any) => <div>{children}</div>,
+  DocumentStatusProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
 // Mock useDocumentStatusContext
@@ -46,7 +46,7 @@ vi.mock('@/contexts/DocumentStatusContext', () => ({
 }))
 
 // Mock useDocumentStatusController
-const mockController: any = {
+const mockController: Record<string, unknown> = {
   sortedAndFilteredDocuments: [createMockDocument()],
   filteredDocuments: [createMockDocument()],
   paginatedDocuments: [createMockDocument()],
@@ -86,7 +86,7 @@ vi.mock('@/controllers/useDocumentsController', () => ({
 
 // Mock CenterPaneView
 vi.mock('../../CenterPaneView/CenterPaneView', () => ({
-  default: ({ children }: any) => <div data-testid="center-pane-view">{children}</div>,
+  default: ({ children }: { children: React.ReactNode }) => <div data-testid="center-pane-view">{children}</div>,
 }))
 
 // Mock DocumentStatusHeader
@@ -140,16 +140,16 @@ vi.mock('@/controllers/useAppleConfirmController', () => ({
 }))
 
 vi.mock('@/shared/ui', () => ({
-  Button: ({ children, onClick }: any) => (
+  Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
     <button onClick={onClick}>{children}</button>
   ),
-  Dropdown: ({ value, onChange }: any) => (
+  Dropdown: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
     <select value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="10">10개씩</option>
     </select>
   ),
-  Tooltip: ({ children }: any) => <div>{children}</div>,
-  CloseButton: ({ onClick }: any) => (
+  Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  CloseButton: ({ onClick }: { onClick?: () => void }) => (
     <button data-testid="close-button" onClick={onClick}>×</button>
   ),
   useContextMenu: () => ({
@@ -158,11 +158,11 @@ vi.mock('@/shared/ui', () => ({
     openMenu: vi.fn(),
     closeMenu: vi.fn(),
   }),
-  ContextMenu: ({ children }: any) => <div data-testid="context-menu">{children}</div>,
-  ContextMenuItem: ({ children, onClick }: any) => <div onClick={onClick}>{children}</div>,
+  ContextMenu: ({ children }: { children: React.ReactNode }) => <div data-testid="context-menu">{children}</div>,
+  ContextMenuItem: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => <div onClick={onClick}>{children}</div>,
   ContextMenuDivider: () => <hr />,
-  Modal: ({ children, visible }: any) => visible ? <div data-testid="modal">{children}</div> : null,
-  DocumentTypeCell: ({ documentType }: any) => (
+  Modal: ({ children, visible }: { children: React.ReactNode; visible: boolean }) => visible ? <div data-testid="modal">{children}</div> : null,
+  DocumentTypeCell: ({ documentType }: { documentType?: string }) => (
     <span data-testid="document-type-cell">{documentType || '미지정'}</span>
   ),
   DocumentTypeBadge: () => null,
@@ -172,12 +172,12 @@ vi.mock('@/shared/ui', () => ({
 vi.mock('@/shared/ui/InitialFilterBar', () => ({
   InitialFilterBar: () => <div data-testid="initial-filter-bar">InitialFilterBar</div>,
   calculateInitialCounts: () => new Map(),
-  filterByInitial: (items: any[]) => items,
+  filterByInitial: (items: unknown[]) => items,
 }))
 
 // Mock SFSymbol - using @/components path alias
 vi.mock('@/components/SFSymbol', () => ({
-  SFSymbol: ({ name, className }: any) => (
+  SFSymbol: ({ name, className }: { name: string; className?: string }) => (
     <span data-testid="sf-symbol" className={className}>{name}</span>
   ),
   SFSymbolSize: {
@@ -195,7 +195,7 @@ vi.mock('@/components/SFSymbol', () => ({
 
 // Mock SFSymbol - relative path used by component
 vi.mock('../../SFSymbol', () => ({
-  SFSymbol: ({ name, className }: any) => (
+  SFSymbol: ({ name, className }: { name: string; className?: string }) => (
     <span data-testid="sf-symbol" className={className}>{name}</span>
   ),
   SFSymbolSize: {

@@ -102,10 +102,10 @@ describe('useArBatchAnalysis - OOM 방지 대량 파일 시뮬레이션', () => 
       useArBatchAnalysis({ userId: 'test-user' })
     )
 
-    let groupingResult: Awaited<ReturnType<typeof result.current.analyzeArFiles>> = null
+    let _groupingResult: Awaited<ReturnType<typeof result.current.analyzeArFiles>> = null
 
     await act(async () => {
-      groupingResult = await result.current.analyzeArFiles(files)
+      _groupingResult = await result.current.analyzeArFiles(files)
     })
 
     // ── 1. AR 분석 호출 검증 ──
@@ -173,7 +173,7 @@ describe('useArBatchAnalysis - OOM 방지 대량 파일 시뮬레이션', () => 
     )
 
     // analyzingFiles 변경 이력 추적
-    const analyzingFilesSnapshots: Array<{ length: number; completedCount: number }> = []
+    const _analyzingFilesSnapshots: Array<{ length: number; completedCount: number }> = []
 
     const { result } = renderHook(() =>
       useArBatchAnalysis({ userId: 'test-user' })
@@ -182,7 +182,7 @@ describe('useArBatchAnalysis - OOM 방지 대량 파일 시뮬레이션', () => 
     // 원본 setBatchState를 감시하기 위해 batchState를 주기적으로 관찰
     // (React가 state를 실제로 적용하는 횟수 = 렌더 횟수)
     let renderCount = 0
-    const { result: counterResult, rerender } = renderHook(() => {
+    const { result: _counterResult, rerender: _rerender } = renderHook(() => {
       renderCount++
       return result.current.batchState
     })
@@ -258,9 +258,9 @@ describe('useArBatchAnalysis - OOM 방지 대량 파일 시뮬레이션', () => 
       }, 50)
     })
 
-    let groupingResult: Awaited<ReturnType<typeof result.current.analyzeArFiles>> = null
+    let _groupingResult: Awaited<ReturnType<typeof result.current.analyzeArFiles>> = null
     await act(async () => {
-      groupingResult = await result.current.analyzeArFiles(files)
+      _groupingResult = await result.current.analyzeArFiles(files)
       await abortPromise
     })
 

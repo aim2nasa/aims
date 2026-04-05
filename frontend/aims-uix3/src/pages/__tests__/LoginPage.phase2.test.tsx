@@ -29,7 +29,7 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate }
 })
 
-let mockAuthStore = {
+const mockAuthStore = {
   setToken: mockSetToken,
   setUser: mockSetUser,
   logout: vi.fn(),

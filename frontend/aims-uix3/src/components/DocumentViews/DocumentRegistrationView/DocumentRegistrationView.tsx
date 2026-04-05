@@ -1072,6 +1072,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       });
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- arBatch/crBatch 객체 전체를 의존성에 추가하면 매 렌더마다 재생성되어 무한 루프 위험
   }, [generateFileId, addLog, customerFileCustomer, promptDuplicateAction, documentTypeMode, arBatch.analyzeArFiles])
 
   /**
@@ -1279,7 +1280,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       console.error(`❌ [AR] 처리 실패:`, error);
       errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.linkARDocument' });
     }
-  }, []);
+  }, [addLog]);
 
   /**
    * 업로드 완료 후 CRS DB 플래그 설정 + 문서 처리 완료 대기 후 자동 연결

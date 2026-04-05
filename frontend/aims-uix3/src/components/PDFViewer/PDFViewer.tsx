@@ -90,6 +90,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   // 페이지 변경 시 위치만 초기화 (scale은 유지)
   useEffect(() => {
     controls.resetPosition()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- controls 객체는 매 렌더마다 재생성되므로 의존성에 추가하면 무한 루프 위��
   }, [pageNumber])
 
   // 컨테이너 크기에 따른 PDF 너비 동적 조정

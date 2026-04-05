@@ -30,7 +30,7 @@ vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({
 }))
 
 // File.prototype.arrayBuffer 모킹 (Node.js/jsdom 환경에서 필요)
-const originalArrayBuffer = File.prototype.arrayBuffer
+const _originalArrayBuffer = File.prototype.arrayBuffer
 File.prototype.arrayBuffer = function() {
   return Promise.resolve(new ArrayBuffer(8))
 }

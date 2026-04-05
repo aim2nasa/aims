@@ -120,7 +120,7 @@ describe('소셜 로그인 및 계정 관리 - Regression 테스트', () => {
       }
 
       // null 필드 필터링 로직 검증
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const user: Record<string, any> = {
         id: apiResponse._id,
         name: apiResponse.name,

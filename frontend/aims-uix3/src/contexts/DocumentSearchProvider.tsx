@@ -143,16 +143,16 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value)
     setError(null)
-  }, [])
+  }, [setQuery])
 
   const handleSearchModeChange = useCallback((mode: SearchMode) => {
     setSearchMode(mode)
     setError(null)
-  }, [])
+  }, [setSearchMode])
 
   const handleKeywordModeChange = useCallback((mode: KeywordMode) => {
     setKeywordMode(mode)
-  }, [])
+  }, [setKeywordMode])
 
   const handleCustomerIdChange = useCallback((id: string | null) => {
     setCustomerId(id)
@@ -166,7 +166,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     setLastSearchMode(null)
     setCustomerId(null)
     setTotalCount(null)
-  }, [])
+  }, [setQuery])
 
   const value: DocumentSearchContextValue = {
     query,

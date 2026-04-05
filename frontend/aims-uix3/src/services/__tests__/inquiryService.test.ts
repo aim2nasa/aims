@@ -38,7 +38,7 @@ vi.mock('@/shared/lib/api', () => ({
   },
 }));
 
-import { api, getAuthToken, API_CONFIG } from '@/shared/lib/api';
+import { api, getAuthToken } from '@/shared/lib/api';
 
 const mockApi = api as {
   get: ReturnType<typeof vi.fn>;

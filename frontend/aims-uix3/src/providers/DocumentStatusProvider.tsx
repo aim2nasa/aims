@@ -577,8 +577,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
     fetchDocuments(true)
     checkApiHealth()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // 초기 로드는 마운트 시 한 번만 실행 (fetchDocuments를 dependency에 포함하면 무한 루프)
+     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 초기 로드는 마운트 시 한 번만 실행 (fetchDocuments를 dependency에 포함하면 무한 루프)
   }, [])
 
   /**

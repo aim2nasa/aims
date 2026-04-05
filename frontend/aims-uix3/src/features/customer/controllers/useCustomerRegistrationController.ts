@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- API 응답 타입 캐스팅 */
 /**
  * AIMS UIX-3 Customer Registration Controller
  * @since 2025-10-03

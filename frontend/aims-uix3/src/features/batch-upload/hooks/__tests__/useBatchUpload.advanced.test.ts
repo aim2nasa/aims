@@ -405,9 +405,9 @@ describe('useBatchUpload - Advanced Scenarios', () => {
         fileCount: 4,
       })
 
-      let uploadCount = 0
+      let _uploadCount = 0
       mockUploadFile.mockImplementation(async (file) => {
-        uploadCount++
+        _uploadCount++
         await new Promise((resolve) => setTimeout(resolve, 10))
         return {
           success: true,
@@ -512,9 +512,9 @@ describe('useBatchUpload - Advanced Scenarios', () => {
         fileCount: 5,
       })
 
-      let uploadCount = 0
+      let _uploadCount = 0
       mockUploadFile.mockImplementation(async (file) => {
-        uploadCount++
+        _uploadCount++
         await new Promise((resolve) => setTimeout(resolve, 50))
         return {
           success: true,

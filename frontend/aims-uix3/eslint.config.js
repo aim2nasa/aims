@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { globalIgnores } from 'eslint/config'
 
-export default tseslint.config([
+export default tseslint.config(
   globalIgnores(['dist']),
   {
     files: ['**/*.{ts,tsx}'],
@@ -42,6 +42,18 @@ export default tseslint.config([
       'no-constant-binary-expression': 'warn',
     },
   },
+  // 테스트 파일: mock 데이터/타입 캐스팅에서 any 사용 허용
+  {
+    files: [
+      '**/*.test.{ts,tsx}',
+      '**/*.test.*.{ts,tsx}',
+      '**/__tests__/**/*.{ts,tsx}',
+      '**/test/**/*.{ts,tsx}',
+    ],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
   // components/ → features/ 내부 경로 직접 import 차단
   // barrel export (@/features/xxx) 경유만 허용
   {
@@ -60,4 +72,4 @@ export default tseslint.config([
       ],
     },
   },
-])
+)

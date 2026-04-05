@@ -87,7 +87,7 @@ vi.mock('@/entities/auth/api', () => ({
   startNaverLoginSwitch: mockStartNaverLoginSwitch,
   startGoogleLogin: mockStartGoogleLogin,
   startGoogleLoginSwitch: mockStartGoogleLoginSwitch,
-  processAuthToken: vi.fn(async (token: string, deps: Record<string, Function>) => {
+  processAuthToken: vi.fn(async (token: string, deps: Record<string, (...args: unknown[]) => unknown>) => {
     deps.setToken(token);
     const API_BASE_URL = '';
     const response = await fetch(`${API_BASE_URL}/api/auth/me`, {

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import PinInput from '../PinInput'
 
 /** onInput 이벤트를 시뮬레이션하는 헬퍼 (InputEvent.data 포함) */

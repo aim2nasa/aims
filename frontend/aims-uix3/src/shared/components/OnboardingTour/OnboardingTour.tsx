@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- 컴포넌트와 관련 유틸을 함께 export */
 /**
  * OnboardingTour Component
  * @since 1.0.0
@@ -138,6 +139,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleNext/handlePrev/handleSkip는 아래에서 정의됨
   }, [isActive, currentStep])
 
   const handleNext = useCallback(() => {
@@ -146,6 +148,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
     } else {
       handleComplete()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleComplete는 아래에서 정의됨
   }, [currentStep, steps.length])
 
   const handlePrev = useCallback(() => {

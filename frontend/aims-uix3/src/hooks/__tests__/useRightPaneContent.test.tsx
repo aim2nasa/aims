@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import { useRightPaneContent, type UseRightPaneContentOptions } from '../useRightPaneContent'
 
 // vi.hoisted를 사용하여 mock 함수들이 vi.mock과 함께 호이스팅되도록 함

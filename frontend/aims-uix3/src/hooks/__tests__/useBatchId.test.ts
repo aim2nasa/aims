@@ -213,7 +213,7 @@ describe('useBatchId', () => {
     })
 
     it('여러 훅 중 하나가 언마운트되어도 다른 훅은 계속 동작해야 함', () => {
-      const { result: result1, unmount: unmount1 } = renderHook(() => useBatchId())
+      const { result: _result1, unmount: unmount1 } = renderHook(() => useBatchId())
       const { result: result2 } = renderHook(() => useBatchId())
 
       unmount1()

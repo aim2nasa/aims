@@ -132,7 +132,7 @@ function broadcastToSubscribers(streamKey: string, type: string, data: unknown) 
     try {
       port.postMessage(message)
       log(`✅ 메시지 전송 성공 - streamKey: ${streamKey}, eventType: ${type}`)
-    } catch (e) {
+    } catch (_e) {
       // 포트가 닫힌 경우 정리
       log(`포트 전송 실패, 정리: ${streamKey}`)
       conn.subscribers.delete(port)

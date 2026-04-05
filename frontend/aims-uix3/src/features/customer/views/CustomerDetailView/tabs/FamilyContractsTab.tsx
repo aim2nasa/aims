@@ -379,7 +379,7 @@ export const FamilyContractsTab: React.FC<FamilyContractsTabProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }, [customer?._id, onFamilyContractCountChange])
+  }, [customer?._id, onFamilyContractCountChange, customer?.personal_info?.name])
 
   // 🍎 마운트 시 로드
   useEffect(() => {

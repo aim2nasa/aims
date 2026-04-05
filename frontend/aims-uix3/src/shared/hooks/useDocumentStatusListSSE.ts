@@ -125,6 +125,7 @@ export function useDocumentStatusListSSE(
         errorReporter.reportApiError(error as Error, { component: 'useDocumentStatusListSSE.documentProgress' })
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- debouncedRefresh는 ref 기반으로 안정적
   }, [])
 
   // 연결 성공 핸들러
@@ -137,6 +138,7 @@ export function useDocumentStatusListSSE(
     }
     // 연결 즉시 최신 상태 조회 (놓친 이벤트 복구, 짧은 debounce)
     debouncedRefresh(300)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- debouncedRefresh는 ref 기반으로 안정적
   }, [])
 
   // 오류 핸들러

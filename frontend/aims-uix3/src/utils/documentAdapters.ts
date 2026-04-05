@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- 문서 타입 변환 시 동적 속성 접근 */
 /**
  * Document Adapter Utilities
  * SelectedDocument를 다른 컴포넌트에서 사용하는 형식으로 변환

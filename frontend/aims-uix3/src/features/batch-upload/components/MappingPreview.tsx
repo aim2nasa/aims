@@ -214,7 +214,7 @@ export default function MappingPreview({
       }
       return next
     })
-  }, [])
+  }, [setExpandedPaths])
 
   const toggleAll = useCallback(() => {
     if (allExpanded) {
@@ -222,7 +222,7 @@ export default function MappingPreview({
     } else {
       setExpandedPaths(new Set(allFolderPaths))
     }
-  }, [allExpanded, allFolderPaths])
+  }, [allExpanded, allFolderPaths, setExpandedPaths])
 
   // 트리 노드 렌더링 (FolderDropZone과 동일한 CSS 라인 구조)
   const renderNode = (node: TreeNode, isLast: boolean): React.ReactNode => {

@@ -139,7 +139,7 @@ describe('AnnualReportTab 파싱 상태 표시', () => {
   });
 
   // Documents API mock helper
-  const mockDocumentsApi = (documents: unknown[] = []) => {
+  const _mockDocumentsApi = (documents: unknown[] = []) => {
     mockApiGet.mockImplementation((url: string) => {
       if (url.includes('/documents')) {
         return Promise.resolve({

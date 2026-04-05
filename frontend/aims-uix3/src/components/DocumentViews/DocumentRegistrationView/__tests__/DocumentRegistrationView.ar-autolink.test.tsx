@@ -265,7 +265,7 @@ describe('AR Auto-Link Feature', () => {
   describe('타임아웃 로직', () => {
     it('최대 시도 횟수를 초과하면 정리해야 함', () => {
       const maxAttempts = 36
-      let attempts = 37 // 초과
+      const attempts = 37 // 초과
 
       const shouldTimeout = attempts >= maxAttempts
 
@@ -274,7 +274,7 @@ describe('AR Auto-Link Feature', () => {
 
     it('최대 시도 횟수 이내면 계속 진행해야 함', () => {
       const maxAttempts = 36
-      let attempts = 10
+      const attempts = 10
 
       const shouldTimeout = attempts >= maxAttempts
 
@@ -283,7 +283,7 @@ describe('AR Auto-Link Feature', () => {
 
     it('정확히 최대 시도 횟수에 도달하면 타임아웃해야 함', () => {
       const maxAttempts = 36
-      let attempts = 36
+      const attempts = 36
 
       const shouldTimeout = attempts >= maxAttempts
 

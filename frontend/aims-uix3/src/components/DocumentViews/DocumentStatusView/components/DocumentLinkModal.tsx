@@ -16,7 +16,7 @@ import type { CustomerDocumentsResult } from '../../../../services/DocumentServi
 import { Button, Dropdown, type DropdownOption, Tooltip, Modal } from '../../../../shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import CustomerSelectorModal from '../../../../shared/ui/CustomerSelectorModal/CustomerSelectorModal'
-import { useRecentCustomersStore, type RecentCustomer } from '@/shared/store/useRecentCustomersStore'
+import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem } from '@/entities/search'
 import { errorReporter } from '@/shared/lib/errorReporter'
@@ -61,7 +61,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [linkLoading, setLinkLoading] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   // 최근 선택한 고객 목록 (전역 상태)
-  const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
+  const { addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
 
   // DB 캐시 기반 문서유형 옵션 (시스템 유형 제외)
   const relationshipOptions = useMemo<DropdownOption[]>(() => {
@@ -115,6 +115,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   /**
    * 고객 선택 시 중복 연결 검사 (단일/일괄 모두 지원)
    */
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- useCallback 의존성으로 사용되지만 매 렌더마다 재생성해도 기능상 문제 없음
   const handleSelectCustomer = async (customer: Customer) => {
     setSelectedCustomer(customer)
     setDuplicateWarning(null)
@@ -152,26 +153,6 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   }
 
   /**
-   * 최근 선택 고객에서 빠른 선택 처리
-   */
-  const handleQuickSelectCustomer = async (recentCustomer: RecentCustomer) => {
-    // Customer 객체 형태로 변환
-    const customer: Customer = {
-      _id: recentCustomer._id,
-      personal_info: {
-        name: recentCustomer.name,
-        mobile_phone: recentCustomer.phone,
-        address: recentCustomer.address ? {
-          address1: recentCustomer.address
-        } : undefined
-      }
-    } as Customer
-
-    // 기존 고객 선택 핸들러 호출
-    await handleSelectCustomer(customer)
-  }
-
-  /**
    * 🍎 최근 고객 드롭다운 옵션 생성 (DocumentSearchView와 동일)
    */
   const recentCustomerOptions = useMemo((): DropdownOption[] => {
@@ -189,7 +170,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     })
 
     return options
-  }, [recentCustomers, getRecentCustomers])
+  }, [getRecentCustomers])
 
   /**
    * 🍎 최근 고객 드롭다운에서 선택 핸들러 (DocumentSearchView와 동일)
@@ -206,10 +187,20 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     const recent = getRecentCustomers()
     const recentCustomer = recent.find(c => c._id === customerId)
     if (recentCustomer) {
-      // Customer 객체 재구성
-      await handleQuickSelectCustomer(recentCustomer)
+      // 최근 선택 고객에서 빠른 선택 처리 (handleQuickSelectCustomer 인라인화)
+      const customer: Customer = {
+        _id: recentCustomer._id,
+        personal_info: {
+          name: recentCustomer.name,
+          mobile_phone: recentCustomer.phone,
+          address: recentCustomer.address ? {
+            address1: recentCustomer.address
+          } : undefined
+        }
+      } as Customer
+      await handleSelectCustomer(customer)
     }
-  }, [getRecentCustomers, handleQuickSelectCustomer])
+  }, [getRecentCustomers, handleSelectCustomer])
 
   /**
    * 연결 실행 (단일/일괄 모두 지원)

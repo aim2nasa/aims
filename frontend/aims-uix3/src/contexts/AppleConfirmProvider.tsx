@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- Context Provider와 hook을 함께 export */
 /**
  * AppleConfirmProvider - 전역 확인 모달 Context
  * @since 2025-11-27

@@ -41,7 +41,7 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
   // 고객 선택 모달 상태
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
   // 최근 선택한 고객 목록 (전역 상태)
-  const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
+  const { addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
 
   /**
    * 최근 고객 드롭다운 옵션 생성 (DocumentLinkModal과 동일)
@@ -64,7 +64,7 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
     })
 
     return options
-  }, [recentCustomers, getRecentCustomers])
+  }, [getRecentCustomers])
 
   /**
    * 최근 고객 드롭다운에서 선택 핸들러

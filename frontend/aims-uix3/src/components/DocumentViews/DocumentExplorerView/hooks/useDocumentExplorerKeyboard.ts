@@ -127,7 +127,7 @@ export function useDocumentExplorerKeyboard({
       focusedKeyRef.current = selectedNode.node.key
       setFocusedKeyState(selectedNode.node.key)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [selectedDocumentId])
 
   // 포커스 설정 함수

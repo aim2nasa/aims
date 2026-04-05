@@ -65,7 +65,7 @@ export function formatDateTime(timestamp: string | Date | undefined | null): str
     }
 
     return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
-  } catch (e) {
+  } catch (_e) {
     return '잘못된 시간';
   }
 }
@@ -110,7 +110,7 @@ export function formatDate(timestamp: string | Date | undefined | null): string 
     const day = parts.find(p => p.type === 'day')?.value || '';
 
     return `${year}.${month}.${day}`;
-  } catch (e) {
+  } catch (_e) {
     return '잘못된 날짜';
   }
 }
@@ -161,7 +161,7 @@ export function formatTime(timestamp: string | Date | undefined | null): string 
     }
 
     return `${hours}:${minutes}:${seconds}`;
-  } catch (e) {
+  } catch (_e) {
     return '잘못된 시간';
   }
 }
@@ -207,7 +207,7 @@ export function formatRelativeTime(timestamp: string | undefined | null): string
 
     // 7일 이상이면 날짜 표시
     return formatDate(timestamp);
-  } catch (e) {
+  } catch (_e) {
     return '잘못된 시간';
   }
 }
@@ -268,7 +268,7 @@ export function parseISOTimestamp(timestamp: string | undefined | null): Date | 
 
     const date = new Date(dateInput);
     return isNaN(date.getTime()) ? null : date;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }

@@ -118,9 +118,9 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
   // Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController();
 
-  // SSE 새로고침 콜백
   const handleSSERefresh = useCallback(() => {
     loadCustomerReviews();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- loadCustomerReviews는 매 렌더마다 재생성
   }, []);
 
   // SSE 실시간 업데이트 - 통합 SSE 사용
@@ -226,9 +226,9 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     defaultWidths: defaultColumnWidths
   })
 
-  // Customer Review 목록 로드
   useEffect(() => {
     loadCustomerReviews();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- loadCustomerReviews는 매 렌더마다 재생성
   }, [customer._id, refreshTrigger]);
 
   // Customer Review 개수 변경 시 부모에게 알림
@@ -463,10 +463,11 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
         case 'fund_count':
           comparison = (a.fund_count || 0) - (b.fund_count || 0);
           break;
-        case 'status':
+        case 'status': {
           const statusOrder = { 'completed': 0, 'processing': 1, 'pending': 2, 'error': 3 };
           comparison = (statusOrder[a.status || 'completed'] || 0) - (statusOrder[b.status || 'completed'] || 0);
           break;
+        }
       }
 
       return sortDirection === 'asc' ? comparison : -comparison;

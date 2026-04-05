@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { validateFile, validateFiles, ValidateFileOptions } from '../../validators'
+import { validateFile, validateFiles } from '../../validators'
 
 describe('validateFile 통합 테스트', () => {
   // 테스트용 File 객체 생성 헬퍼

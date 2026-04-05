@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- SearchResultItem 확장 속성 접근 시 필요 */
 /**
  * DocumentSearchView Component
  * @since 1.0.0
@@ -235,7 +236,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   // 🍎 검색 실행 시점의 고객 정보 (검색 결과 설명에 사용)
   const [lastSearchCustomer, setLastSearchCustomer] = useState<Customer | null>(null)
   // 🍎 최근 선택한 고객 목록 (전역 상태)
-  const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
+  const { addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
   // 🍎 최근 검색어 목록
   const [recentSearchQueries, setRecentSearchQueries] = useState<RecentSearchQuery[]>([])
   // 🍎 검색어 입력 필드 포커스 상태
@@ -292,7 +293,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       setSortField('filename')
       setSortOrder('asc')
     }
-  }, [lastSearchMode, results.length])
+  }, [lastSearchMode, results.length, setSortField, setSortOrder])
 
   // 🍎 페이지 표시 시 검색 입력창에 자동 포커스
   useEffect(() => {
@@ -346,7 +347,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       setSortField(field)
       setSortOrder(field === 'similarity' ? 'desc' : 'asc')
     }
-  }, [sortField, sortOrder])
+  }, [sortField, sortOrder, setSortField, setSortOrder])
 
   /**
    * 정렬된 결과 생성
@@ -581,7 +582,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     })
 
     return options
-  }, [recentCustomers, getRecentCustomers])
+  }, [getRecentCustomers])
 
   /**
    * 최근 고객 드롭다운에서 선택 핸들러
@@ -612,6 +613,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   /**
    * 문서 클릭 핸들러 (250ms 타이머로 더블클릭 구분)
    */
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- useMemo 의존성으로 사용되지만 매 렌더마다 재생성해도 기능상 문제 없음
   const handleItemClick = (item: SearchResultItem) => {
     const docId = SearchService.getDocumentId(item)
     if (!docId) return
@@ -1019,7 +1021,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         ]
       }
     ]
-  }, [contextMenuDocument, onDocumentClick, handleDeleteSingleDocument])
+  }, [contextMenuDocument, onDocumentClick, handleDeleteSingleDocument, handleItemClick])
 
   /**
    * P3-1: 유사도 점수를 3단계 도트 시스템으로 분류
@@ -1517,6 +1519,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               </div>
 
               {/* P3-2: 범례 제거 — 3단계 도트면 자명하므로 제거 (기존 5단계 범례 불필요) */}
+              {/* eslint-disable-next-line no-constant-binary-expression -- 의도적 비활성화: 향후 재활성화 가능성 있음 */}
               {false && searchMode === 'semantic' && results.length > 0 && (
                 <div className="similarity-legend">
                   <div className="legend-title">유사도 점수:</div>

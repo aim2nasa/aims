@@ -4,7 +4,7 @@
  * @since 커밋 00e6014c — 전체문서보기 초성 필터 서버사이드 전환
  */
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from '@/shared/ui/InitialFilterBar/types'
 
 // === 초성 카운트 맵 빌드 로직 (AllCustomersView L271-279 추출) ===

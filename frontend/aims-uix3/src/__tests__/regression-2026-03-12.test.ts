@@ -411,7 +411,7 @@ describe('[회귀] 트리빌더 유틸리티 함수', () => {
       expect(name).toBe('original.pdf')
 
       // 모두 없으면 기본값
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const emptyDoc = {} as any
       const fallback = emptyDoc.displayName || emptyDoc.originalName || emptyDoc.filename || emptyDoc.name || '이름 없음'
       expect(fallback).toBe('이름 없음')

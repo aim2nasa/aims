@@ -228,7 +228,7 @@ describe('BatchUploadApi', () => {
   // ===== 2. uploadFile() =====
 
   describe('uploadFile', () => {
-    const createMockFile = (name: string, size: number = 1024): File => {
+    const createMockFile = (name: string, _size: number = 1024): File => {
       return new File(['test content'], name, { type: 'application/pdf' })
     }
 

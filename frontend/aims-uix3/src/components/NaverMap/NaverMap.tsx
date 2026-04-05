@@ -235,6 +235,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     if (import.meta.env.DEV) {
       console.log('[NaverMap] 지도 초기화 완료')
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- 지도 초기화는 마운트 시 1회만 실행
   }, [])
 
   // ⭐⭐⭐ 지도 컨테이너 크기 변경 감지 및 중앙 유지 (ResizeObserver)
@@ -552,7 +553,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         }
 
         // 캐시에서 먼저 확인
-        let result = globalGeocodeCache.get(address)
+        const result = globalGeocodeCache.get(address)
 
         if (result) {
           // 캐시 히트 - 즉시 반환
@@ -874,6 +875,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       console.error('[NaverMap] 마커 생성 중 오류:', error)
       errorReporter.reportApiError(error as Error, { component: 'NaverMap.createMarkers' })
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- onCustomerSelect/selectedCustomerId는 부모에서 매 렌더마다 재생성될 수 있어 제외
   }, [customers, isMapReady, selectedRegion, selectedDistrict, onGeocodingFailedCustomersChange])
 
   // RightPane 열림/닫힘 시 bounds 재조정 (고객 선택 시)

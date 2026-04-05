@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- 컴포넌트와 관련 유틸을 함께 export */
 /**
  * RightClickGuide Component
  *

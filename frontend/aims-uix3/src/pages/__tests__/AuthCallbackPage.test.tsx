@@ -6,7 +6,7 @@
  *   - 카카오/네이버/구글 인증 에러 처리
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
@@ -54,7 +54,7 @@ vi.mock('@/stores/user', () => ({
 
 vi.mock('@/entities/auth/api', () => ({
   getCurrentUser: mockGetCurrentUser,
-  processAuthToken: vi.fn(async (token: string, deps: Record<string, Function>) => {
+  processAuthToken: vi.fn(async (token: string, deps: Record<string, (...args: unknown[]) => unknown>) => {
     deps.setToken(token);
     const user = await mockGetCurrentUser(token);
     deps.setUser(user);

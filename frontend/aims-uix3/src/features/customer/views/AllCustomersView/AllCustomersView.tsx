@@ -336,7 +336,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   }
                   showAlert({ message: `${customerName} 고객이 ${isInactive ? '활성화' : '휴면 처리'}되었습니다.`, iconType: 'success' });
                   refresh();
-                } catch (err) {
+                } catch (_err) {
                   showAlert({ message: '상태 변경에 실패했습니다.', iconType: 'error' });
                 }
               }

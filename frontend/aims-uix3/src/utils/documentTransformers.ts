@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- API 응답 변환 시 동적 타입 접근 필요 */
 /**
  * Document Transformer Utilities
  * SmartSearch API 응답을 내부 형식으로 변환

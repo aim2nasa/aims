@@ -70,6 +70,7 @@ export default function LoginPage() {
       setPinSetupStep('input');
       // rememberedUser도 없으면 pinSetupStep='check' → 소셜 로그인 화면 표시 (정상)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- rememberedUser는 초기화 후 변경 불필요
   }, [isPinMode, mode, authToken]);
 
   // 로그인 페이지 배경 — html/body/#root 배경색 통일 (다크 모드 흰색 방지)
@@ -140,6 +141,7 @@ export default function LoginPage() {
     };
 
     processToken();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- setSearchParams/updateCurrentUser는 안정적이지만 ESLint가 감지 못함
   }, [searchParams, isProcessing, setToken, setUser, navigate, showAlert]);
 
   /**

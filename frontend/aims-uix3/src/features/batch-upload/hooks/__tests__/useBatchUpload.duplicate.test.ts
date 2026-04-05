@@ -31,7 +31,7 @@ vi.mock('@/shared/lib/fileValidation', async (importOriginal) => {
 const mockUploadFile = vi.mocked(BatchUploadApi.uploadFile)
 const mockGetCustomerFileHashes = vi.mocked(duplicateChecker.getCustomerFileHashes)
 const mockCheckDuplicateFile = vi.mocked(duplicateChecker.checkDuplicateFile)
-const mockGetUniqueFileName = vi.mocked(duplicateChecker.getUniqueFileName)
+const _mockGetUniqueFileName = vi.mocked(duplicateChecker.getUniqueFileName)
 
 describe('useBatchUpload - Duplicate Detection', () => {
   beforeEach(() => {

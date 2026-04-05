@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- SearchResultItem 확장 속성 접근 */
 /**
  * AIMS UIX-3 Document Content Search Modal
  * @since 2025-12-09
@@ -372,6 +373,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     } finally {
       setIsLoadingPreview(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- getFileUrl/isImage/isPdf는 컴포넌트 내 유틸 함수로 매 렌더마다 재생성
   }, [])
 
   // 🍎 문서 선택 핸들러

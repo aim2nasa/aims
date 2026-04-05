@@ -11,8 +11,8 @@
  * 4. 실패 상태 재시도 버튼 표시
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render } from '@testing-library/react'
 import { DocumentStatusList } from '../DocumentStatusList'
 import type { Document } from '../../../../../types/documentStatus'
 

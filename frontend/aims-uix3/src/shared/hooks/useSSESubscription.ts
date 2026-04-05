@@ -58,6 +58,7 @@ export function useSSESubscription<T = unknown>(
 
   // params를 안정화 (JSON 직렬화로 비교)
   const paramsKey = useMemo(() => JSON.stringify(params || {}), [params])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- paramsKey가 변경될 때만 params를 재계산 (JSON 직렬화 기반 안정화)
   const stableParams = useMemo(() => params || {}, [paramsKey])
 
   // 콜백을 ref로 저장하여 의존성 문제 해결

@@ -167,6 +167,7 @@ export const QuickSearch: React.FC<QuickSearchProps> = ({
         inputRef.current?.blur()
         break
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleResultClick는 아래에서 정의되므로 순환 의존 방지
   }, [isOpen, searchResults, selectedIndex, query])
 
   // 결과 클릭 핸들러

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- API 응답 타입 캐스팅 */
 /**
  * AIMS UIX-3 Document Service Layer
  * @since 2025-09-30

@@ -11,9 +11,9 @@
  * - 에러 처리
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, act } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { describe, it, expect } from 'vitest'
+import { render, act } from '@testing-library/react'
+import { QueryClient } from '@tanstack/react-query'
 import { CustomerContextProvider, CustomerContext } from '@/contexts/CustomerContext'
 import type { CustomerContextValue, CustomerState } from '@/contexts/CustomerContext'
 import type { Customer } from '@/entities/customer'
@@ -53,7 +53,7 @@ const mockCustomer2 = createMockCustomer({
 
 // ==================== Test Helpers ====================
 
-const createQueryClient = () =>
+const _createQueryClient = () =>
   new QueryClient({
     defaultOptions: {
       queries: {
@@ -73,24 +73,7 @@ const ContextConsumer: React.FC<{
   return null
 }
 
-// 상태를 렌더링하는 테스트 컴포넌트
-const StateDisplay: React.FC = () => {
-  const context = useContext(CustomerContext)
-  if (!context) return <div>No Context</div>
-
-  return (
-    <div>
-      <span data-testid="loading">{context.state.isLoading.toString()}</span>
-      <span data-testid="customer-count">{context.state.customers.length}</span>
-      <span data-testid="total">{context.state.total}</span>
-      <span data-testid="search-query">{context.state.searchQuery}</span>
-      <span data-testid="error">{context.state.error || 'none'}</span>
-      <span data-testid="show-create-form">{context.state.showCreateForm.toString()}</span>
-      <span data-testid="show-edit-form">{context.state.showEditForm.toString()}</span>
-      <span data-testid="selected-customer">{context.state.selectedCustomer?._id || 'none'}</span>
-    </div>
-  )
-}
+// 참고: StateDisplay 컴포넌트 제거됨 (미사용)
 
 // ==================== Tests ====================
 

@@ -313,7 +313,7 @@ function extractCRMetadata(text: string) {
   const normalizedFields = text.replace(/\s+/g, ' ')
   const insuredIdx = normalizedFields.indexOf('피보험자')
   if (insuredIdx >= 0) {
-    let after = normalizedFields.substring(insuredIdx + 4).replace(/^[\s:：]+/, '')
+    const after = normalizedFields.substring(insuredIdx + 4).replace(/^[\s:：]+/, '')
     const insuredMarkers = ['사망', '증권번호', '보험기간', '보험료', 'FSR']
     let end = after.length
     for (const marker of insuredMarkers) {

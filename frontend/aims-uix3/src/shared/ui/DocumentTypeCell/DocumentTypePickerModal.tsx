@@ -27,6 +27,7 @@ export const DocumentTypePickerPopover: React.FC<DocumentTypePickerPopoverProps>
   onClose,
 }) => {
   // 🐛 FIX: 모듈 레벨에서 호출하면 prefetch 전이라 빈 배열. 렌더 시점에 호출
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- visible 변경 시 최신 문서 유형 목록 재로드 필요 (prefetch 타이밍)
   const GROUPED_TYPES = useMemo(() => getGroupedDocumentTypes(), [visible])
   const currentCategory = getCategoryForType(currentType)
   const [expandedCategory, setExpandedCategory] = useState<string>(currentCategory)
@@ -102,7 +103,7 @@ export const DocumentTypePickerPopover: React.FC<DocumentTypePickerPopoverProps>
       }
     }
     return results
-  }, [searchQuery])
+  }, [searchQuery, GROUPED_TYPES])
 
   const handleToggleCategory = useCallback((catValue: string) => {
     setExpandedCategory(prev => prev === catValue ? '' : catValue)

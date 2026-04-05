@@ -36,7 +36,6 @@ vi.mock('@/shared/lib/fileValidation/duplicateChecker', () => ({
   checkSystemDuplicate: vi.fn(),
 }));
 
-import { api } from '@/shared/lib/api';
 import { checkSystemDuplicate } from '@/shared/lib/fileValidation/duplicateChecker';
 
 describe('DocumentService.uploadDocument() 중복 체크', () => {

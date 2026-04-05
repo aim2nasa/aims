@@ -283,6 +283,7 @@ export function UsageGuideView({
     }
 
     return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- expandedCategories를 의존성에 추가하면 무한 루프 위험 (useMemo 내에서 setExpandedCategories 호출)
   }, [guides, searchQuery]);
 
   // 검색어 클리어 시 접기

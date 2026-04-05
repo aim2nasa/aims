@@ -52,7 +52,7 @@ function createMockMapping(overrides: Partial<FolderMapping> = {}): FolderMappin
 /**
  * 테스트용 파일 생성
  */
-function createMockFile(name: string, size: number = 1024): File {
+function createMockFile(name: string, _size: number = 1024): File {
   const blob = new Blob(['test content'], { type: 'application/pdf' })
   return new File([blob], name, { type: 'application/pdf' })
 }

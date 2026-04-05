@@ -634,7 +634,7 @@ describe('useCustomerDocument', () => {
             personal_info: { name: '테스트' },
           });
         });
-      } catch (error) {
+      } catch (_error) {
         // 에러 예상됨
       }
 

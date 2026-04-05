@@ -13,7 +13,7 @@
  * 4. 중복 파일 검사 - 동일한 SHA-256 해시 로직
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
 // 공통 모듈 (새 문서 등록에서 사용)
 import {

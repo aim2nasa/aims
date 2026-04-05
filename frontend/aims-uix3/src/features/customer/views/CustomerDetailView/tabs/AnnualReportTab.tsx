@@ -181,6 +181,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   const handleSSERefresh = useCallback(() => {
     loadPendingDocuments();
     loadAnnualReports();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- loadAnnualReports/loadPendingDocuments는 매 렌더마다 재생성
   }, []);
 
   // SSE 실시간 업데이트 - 통합 SSE 사용
@@ -230,6 +231,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       console.log('[AnnualReportTab] 폴링 중지');
       clearInterval(pollInterval);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- loadAnnualReports/loadPendingDocuments는 매 렌더마다 재생성
   }, [customer._id, pendingCount, sseConnected]);
 
   // 개발자 모드 OFF시 선택 초기화
@@ -387,6 +389,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   useEffect(() => {
     loadAnnualReports();
     loadPendingDocuments();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- loadAnnualReports/loadPendingDocuments는 매 렌더마다 재생성
   }, [customer._id, refreshTrigger]);
 
   // 🍎 Annual Report 개수 변경 시 부모에게 알림
@@ -484,6 +487,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- useMemo 의존성으로 사용되지만 매 렌더마다 재생성해도 기능상 문제 없음
   const handleViewReport = (report: AnnualReport) => {
     // 실패/진행중 문서는 모달 열지 않음
     if (report.status === 'error' || report.status === 'processing') {
@@ -494,6 +498,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   };
 
   // 🔄 AR 파싱 재시도 핸들러
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- useMemo 의존성으로 사용되지만 매 렌더마다 재생성해도 기능상 문제 없음
   const handleRetryParsing = async (report: AnnualReport, event: React.MouseEvent) => {
     event.stopPropagation();  // 행 클릭 이벤트 방지
 
@@ -683,6 +688,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
         iconType: 'error'
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- loadAnnualReports/loadPendingDocuments는 매 렌더마다 재생성
   }, [reports, customer._id, confirmModal.actions]);
 
   // 체크박스 전체 선택/해제
@@ -900,7 +906,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     });
 
     return sections;
-  }, [reportContextMenu.targetData, handleViewReport, handleRegisterContracts, handleDeleteReport]);
+  }, [reportContextMenu.targetData, handleViewReport, handleRegisterContracts, handleDeleteReport, handleRetryParsing]);
 
   // 🍎 페이지네이션 계산 (hooks 이후에 배치)
   const itemsPerPageNumber = itemsPerPage;

@@ -65,7 +65,7 @@ describe('[회귀] ERROR_CODE_LABELS 상수 검증 (commit 5087f521)', () => {
   })
 
   it('모든 레이블이 빈 문자열이 아니어야 함', () => {
-    Object.entries(ERROR_CODE_LABELS).forEach(([code, label]) => {
+    Object.entries(ERROR_CODE_LABELS).forEach(([_code, label]) => {
       expect(label.length).toBeGreaterThan(0)
     })
   })

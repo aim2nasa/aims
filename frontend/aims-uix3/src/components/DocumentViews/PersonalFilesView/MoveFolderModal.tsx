@@ -51,6 +51,7 @@ export const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
       const pathIds = getPathToFolder(currentItem._id)
       setExpandedFolderIds(new Set(pathIds))
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- getPathToFolder는 allFolders에 의존하며 useEffect 내에서만 사용
   }, [visible, currentItem])
 
   // 특정 폴더까지의 경로 (부모 폴더 ID 목록)
