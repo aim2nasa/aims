@@ -1,7 +1,7 @@
 # AI Regression 22/49 FAIL 상세 분석 및 수정 계획
 
 > 작성일: 2026-04-07
-> 상태: **진행 중 — 43/44 PASS (temp=0), REG-030 Internal API 401 버그 수정 중**
+> 상태: **완료 — 43/44 PASS (98%), temperature=0 + pass@k(3/2)**
 
 ---
 
@@ -190,4 +190,6 @@ search_customers + list_contracts를 하나의 도구(search_customer_with_contr
 | 2026-04-07 | 5차 | 41/44 PASS — temperature=0 미적용 상태에서의 결과 |
 | 2026-04-07 | 6차 | 43/44 PASS (temp=0 수동적용) — REG-010/042 해결, REG-030 잔여 |
 | 2026-04-07 | 버그 발견 | **MCP Internal API 401**: ESM 모듈 로딩 순서 버그. internalApi.ts가 dotenv 전 로드 → INTERNAL_API_KEY='' |
-| 2026-04-07 | 버그 수정 | internalApi.ts에 dotenv.config() 추가. 모든 MCP→Internal API 호출 정상화 |
+| 2026-04-07 | 버그 수정 | internalApi.ts + address.ts에 dotenv.config() 추가. 모든 MCP→Internal API 호출 정상화 |
+| 2026-04-07 | 7차 (최종) | deploy_all.sh 자동 배포 → **43/44 PASS (98%)** temp=0 + pass@k(3/2) |
+| 2026-04-07 | 잔여 | REG-022: 실효 계약 필터 (1/3, 경계값). Docker 재시작 직후 일시적 오류 가능성 |
