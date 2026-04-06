@@ -1,13 +1,14 @@
 """
-PDF Annotation(손글씨) 레이어 추출 GUI v0.1.0
+PDF Annotation(손글씨) 레이어 추출 GUI v0.1.1
 
 PDF에서 Annotation 레이어만 분리 추출하는 실험 도구.
 - Annotation 포함/제외 렌더링 → numpy diff → Annotation만 분리
 - 이진화(흑백) 버전 생성
 - 페이지별 추출 및 저장
+- 추출된 Annotation 이미지를 Upstage OCR로 텍스트 변환
 
 필요 라이브러리:
-    pip install PyMuPDF Pillow numpy
+    pip install PyMuPDF Pillow numpy requests python-dotenv
 """
 
 import os
@@ -15,10 +16,13 @@ import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from io import BytesIO
+from pathlib import Path
 
 import fitz  # PyMuPDF
 import numpy as np
+import requests
 from PIL import Image, ImageTk
+from dotenv import dotenv_values
 
 try:
     from tkinterdnd2 import TkinterDnD, DND_FILES
@@ -26,8 +30,50 @@ try:
 except ImportError:
     HAS_DND = False
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 DIFF_THRESHOLD = 10  # 렌더링 미세 차이 무시 임계값
+UPSTAGE_OCR_URL = "https://api.upstage.ai/v1/document-digitization"
+
+# .env.shared에서 Upstage API 키 로드
+try:
+    _env_path = Path(__file__).resolve().parents[2] / ".env.shared"  # aims/.env.shared
+except NameError:
+    _env_path = Path.cwd() / ".env.shared"
+_env = dotenv_values(_env_path) if _env_path.exists() else {}
+UPSTAGE_API_KEY = _env.get("UPSTAGE_API_KEY", os.environ.get("UPSTAGE_API_KEY", ""))
+
+
+def ocr_image_upstage(image_bytes: bytes, filename: str = "annotation.png") -> dict:
+    """Upstage Document OCR API로 이미지에서 텍스트 추출
+
+    Returns:
+        {"error": bool, "text": str, "confidence": float|None, "message": str}
+    """
+    if not UPSTAGE_API_KEY:
+        return {"error": True, "text": "", "confidence": None,
+                "message": "UPSTAGE_API_KEY가 설정되지 않았습니다.\n"
+                           f"확인 경로: {_env_path}"}
+    try:
+        resp = requests.post(
+            UPSTAGE_OCR_URL,
+            headers={"Authorization": f"Bearer {UPSTAGE_API_KEY}"},
+            files={"document": (filename, image_bytes)},
+            data={"model": "ocr"},
+            timeout=60,
+        )
+        if resp.status_code != 200:
+            return {"error": True, "text": "", "confidence": None,
+                    "message": f"OCR API 오류 (HTTP {resp.status_code}): {resp.text[:200]}"}
+        data = resp.json()
+        return {"error": False, "text": data.get("text", ""),
+                "confidence": data.get("confidence"),
+                "message": "OCR 성공"}
+    except requests.Timeout:
+        return {"error": True, "text": "", "confidence": None,
+                "message": "OCR 요청 시간 초과 (60초)"}
+    except Exception as e:
+        return {"error": True, "text": "", "confidence": None,
+                "message": f"OCR 요청 실패: {e}"}
 
 
 def render_page(page, scale=1.0, clip=None, annots=True):
@@ -127,7 +173,9 @@ class App:
 
         ttk.Separator(mid, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
         ttk.Button(mid, text="현재 페이지 저장", command=self._save_current).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(mid, text="전체 페이지 추출", command=self._extract_all).pack(side=tk.LEFT)
+        ttk.Button(mid, text="전체 페이지 추출", command=self._extract_all).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Separator(mid, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
+        ttk.Button(mid, text="OCR 텍스트 추출", command=self._ocr_all_annot_pages).pack(side=tk.LEFT)
 
         # 상태바
         self.status_var = tk.StringVar(value="대기 중")
@@ -139,40 +187,52 @@ class App:
         self.progress = ttk.Progressbar(self.root, mode="indeterminate")
         self.progress.pack(fill=tk.X, padx=8, side=tk.BOTTOM, pady=(0, 2))
 
-        # 메인: 좌측 정보 + 우측 캔버스
-        paned = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
-        paned.pack(fill=tk.BOTH, expand=True, padx=8, pady=4)
+        # 메인: place로 비율 기반 절대 배치
+        # 좌측 20% | 중앙 40% | 우측 40%
+        main = ttk.Frame(self.root)
+        main.pack(fill=tk.BOTH, expand=True, padx=8, pady=4)
 
-        # 좌측: 페이지별 Annotation 정보
-        left = ttk.LabelFrame(paned, text="Annotation 정보", padding=5)
-        paned.add(left, weight=1)
+        # 좌측: 페이지별 Annotation 정보 (20%)
+        left_lf = tk.LabelFrame(main, text="Annotation 정보", padx=5, pady=5)
+        left_lf.place(relx=0, rely=0, relwidth=0.2, relheight=1.0)
 
-        self.info_tree = ttk.Treeview(left, columns=("page", "count", "types"), show="headings",
-                                       selectmode="browse", height=20)
+        self.info_tree = ttk.Treeview(left_lf, columns=("page", "count", "types"), show="headings",
+                                       selectmode="browse")
         self.info_tree.heading("page", text="페이지")
         self.info_tree.heading("count", text="개수")
         self.info_tree.heading("types", text="타입")
         self.info_tree.column("page", width=50, anchor=tk.CENTER)
         self.info_tree.column("count", width=45, anchor=tk.CENTER)
-        self.info_tree.column("types", width=150)
+        self.info_tree.column("types", width=120)
         self.info_tree.pack(fill=tk.BOTH, expand=True)
         self.info_tree.bind("<<TreeviewSelect>>", self._on_page_select)
 
-        # 우측: 이미지 캔버스
-        right = ttk.LabelFrame(paned, text="미리보기", padding=5)
-        paned.add(right, weight=4)
+        # 중앙: 이미지 캔버스 (40%)
+        center_lf = tk.LabelFrame(main, text="미리보기", padx=5, pady=5)
+        center_lf.place(relx=0.2, rely=0, relwidth=0.4, relheight=1.0)
 
-        canvas_frame = ttk.Frame(right)
-        canvas_frame.pack(fill=tk.BOTH, expand=True)
-
-        self.canvas = tk.Canvas(canvas_frame, bg="#e8e8e8")
-        self.hscroll = ttk.Scrollbar(canvas_frame, orient=tk.HORIZONTAL, command=self.canvas.xview)
-        self.vscroll = ttk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=self.canvas.yview)
-        self.canvas.configure(xscrollcommand=self.hscroll.set, yscrollcommand=self.vscroll.set)
-
-        self.hscroll.pack(side=tk.BOTTOM, fill=tk.X)
-        self.vscroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.canvas = tk.Canvas(center_lf, bg="#e8e8e8")
         self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        # 우측: OCR 입력/출력 (40%) — 상단 이미지 + 하단 텍스트
+        right_frame = tk.Frame(main)
+        right_frame.place(relx=0.6, rely=0, relwidth=0.4, relheight=1.0)
+
+        # 상단: OCR 입력 이미지
+        ocr_input_lf = tk.LabelFrame(right_frame, text="OCR 입력 이미지", padx=5, pady=5)
+        ocr_input_lf.place(relx=0, rely=0, relwidth=1.0, relheight=0.5)
+
+        self.ocr_canvas = tk.Canvas(ocr_input_lf, bg="#f5f5f5")
+        self.ocr_canvas.pack(fill=tk.BOTH, expand=True)
+        self._ocr_photo = None
+
+        # 하단: OCR 출력 텍스트
+        ocr_output_lf = tk.LabelFrame(right_frame, text="OCR 출력 텍스트", padx=5, pady=5)
+        ocr_output_lf.place(relx=0, rely=0.5, relwidth=1.0, relheight=0.5)
+
+        from tkinter import scrolledtext
+        self.result_text = scrolledtext.ScrolledText(ocr_output_lf, wrap=tk.WORD, font=("Consolas", 10))
+        self.result_text.pack(fill=tk.BOTH, expand=True)
 
     # ────────────────────────── 드래그앤드롭 ──────────────────────────
 
@@ -356,10 +416,19 @@ class App:
 
     def _show_image(self, pil_img):
         self.progress.stop()
+        self.canvas.update_idletasks()
+        cw = self.canvas.winfo_width() or 400
+        ch = self.canvas.winfo_height() or 500
+        iw, ih = pil_img.size
+
+        # 캔버스에 fit (축소만, 확대 안 함)
+        scale = min(cw / iw, ch / ih, 1.0)
+        if scale < 1.0:
+            pil_img = pil_img.resize((int(iw * scale), int(ih * scale)), Image.LANCZOS)
+
         self._photo = ImageTk.PhotoImage(pil_img)
         self.canvas.delete("all")
-        self.canvas.create_image(0, 0, image=self._photo, anchor=tk.NW)
-        self.canvas.configure(scrollregion=(0, 0, pil_img.width, pil_img.height))
+        self.canvas.create_image(cw // 2, ch // 2, image=self._photo, anchor=tk.CENTER)
 
         annot_count = self.page_annot_info[self.current_page][1] if self.current_page < len(self.page_annot_info) else 0
         view_label = {
@@ -370,7 +439,7 @@ class App:
         }.get(self.view_var.get(), "")
         self.status_var.set(
             f"페이지 {self.current_page + 1} — {view_label} — "
-            f"Annotation {annot_count}개 — {pil_img.width}x{pil_img.height}px"
+            f"Annotation {annot_count}개 — {iw}x{ih}px"
         )
 
     # ────────────────────────── 저장 ──────────────────────────
@@ -452,6 +521,132 @@ class App:
             self.root.after(0, lambda: self._done_msg(msg, output_dir))
         except Exception as e:
             self.root.after(0, self._show_error, str(e))
+
+    # ────────────────────────── OCR ──────────────────────────
+
+    def _ocr_all_annot_pages(self):
+        if not self.doc:
+            messagebox.showwarning("경고", "먼저 PDF를 열어주세요.")
+            return
+        if self._busy:
+            return
+
+        pages_with = [info for info in self.page_annot_info if info[1] > 0]
+        if not pages_with:
+            messagebox.showinfo("알림", "Annotation이 있는 페이지가 없습니다.")
+            return
+
+        self._busy = True
+        self.progress.start()
+        self.status_var.set(f"OCR 추출 중... ({len(pages_with)}개 페이지)")
+        threading.Thread(target=self._ocr_worker, args=(pages_with,), daemon=True).start()
+
+    def _ocr_worker(self, pages_with):
+        try:
+            scale = 4  # OCR용은 항상 고해상도 (화면 배율과 무관)
+            results = []
+
+            for i, (page_idx, count, types) in enumerate(pages_with):
+                self.root.after(0, self.status_var.set,
+                                f"OCR 추출 중... 페이지 {page_idx + 1} ({i + 1}/{len(pages_with)})")
+
+                # Annotation 영역의 bounding box 계산 → 해당 영역만 crop해서 OCR
+                with self._doc_lock:
+                    page = self.doc[page_idx]
+                    annots = list(page.annots()) if page.annots() else []
+                    if annots:
+                        # 전체 Annotation의 bounding box (여백 포함)
+                        padding = 10
+                        min_x = min(a.rect.x0 for a in annots) - padding
+                        min_y = min(a.rect.y0 for a in annots) - padding
+                        max_x = max(a.rect.x1 for a in annots) + padding
+                        max_y = max(a.rect.y1 for a in annots) + padding
+                        clip = fitz.Rect(max(0, min_x), max(0, min_y), max_x, max_y)
+                    else:
+                        clip = None
+
+                    # clip 영역만 고해상도 렌더링
+                    img_with = render_page(page, scale=scale, clip=clip, annots=True)
+                    img_without = render_page(page, scale=scale, clip=clip, annots=False)
+                annot_only, _ = extract_annotation_diff(img_with, img_without)
+
+                # PNG 바이트로 변환
+                pil_img = numpy_to_pil(annot_only)
+                buf = BytesIO()
+                pil_img.save(buf, format="PNG")
+                image_bytes = buf.getvalue()
+
+                # Upstage OCR 호출
+                ocr_result = ocr_image_upstage(image_bytes, f"page{page_idx + 1}_annot.png")
+
+                page_result = {
+                    "page": page_idx + 1,
+                    "annot_count": count,
+                    "error": ocr_result["error"],
+                    "text": ocr_result["text"],
+                    "confidence": ocr_result["confidence"],
+                    "message": ocr_result["message"],
+                    "input_image": pil_img,
+                    "image_size": (pil_img.width, pil_img.height),
+                }
+                results.append(page_result)
+
+                # 실패 시에도 계속 진행 (페이지별 독립)
+
+            self.root.after(0, self._show_ocr_results, results)
+        except Exception as e:
+            self.root.after(0, self._show_error, str(e))
+        finally:
+            self._busy = False
+
+    def _show_ocr_results(self, results):
+        self.progress.stop()
+
+        # 상단: OCR 입력 이미지 표시 (첫 번째 결과의 이미지)
+        first_img = None
+        for r in results:
+            if r.get("input_image"):
+                first_img = r["input_image"]
+                break
+
+        if first_img:
+            self.ocr_canvas.update_idletasks()
+            cw = self.ocr_canvas.winfo_width() or 300
+            ch = self.ocr_canvas.winfo_height() or 300
+            iw, ih = first_img.size
+            scale = min(cw / iw, ch / ih, 1.0)
+            if scale < 1.0:
+                display_img = first_img.resize((int(iw * scale), int(ih * scale)), Image.LANCZOS)
+            else:
+                display_img = first_img
+            self._ocr_photo = ImageTk.PhotoImage(display_img)
+            self.ocr_canvas.delete("all")
+            self.ocr_canvas.create_image(cw // 2, ch // 2, image=self._ocr_photo, anchor=tk.CENTER)
+
+        # 하단: OCR 출력 텍스트
+        lines = []
+        success_count = sum(1 for r in results if not r["error"])
+
+        for r in results:
+            lines.append(f"--- 페이지 {r['page']} (Annotation {r['annot_count']}개) ---")
+            w, h = r.get("image_size", (0, 0))
+            lines.append(f"  입력 이미지: {w}x{h}px")
+            if r["error"]:
+                lines.append(f"  [오류] {r['message']}")
+            else:
+                conf = f"confidence: {r['confidence']:.2f}" if r["confidence"] else ""
+                lines.append(f"  [성공] {conf}")
+                text = r["text"].strip()
+                if text:
+                    lines.append("")
+                    lines.append(text)
+                else:
+                    lines.append("  (추출된 텍스트 없음)")
+            lines.append("")
+
+        self.result_text.delete("1.0", tk.END)
+        self.result_text.insert("1.0", "\n".join(lines))
+        self.status_var.set(f"OCR 완료 — {success_count}/{len(results)}개 성공")
 
     # ────────────────────────── 유틸 ──────────────────────────
 
