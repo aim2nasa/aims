@@ -181,7 +181,13 @@ if [ "$WITH_REGRESSION" = true ]; then
     echo -n "[14/${TOTAL_STEPS}] AI 어시스턴트 Regression 테스트 ... "
     REGRESSION_START=$(date +%s)
     sleep 5
+    # temperature=0으로 aims_api 재시작 (비결정성 제거)
+    AI_TEMPERATURE=0 pm2 restart aims-api --update-env > /dev/null 2>&1
+    sleep 3
     (python3 "$REGRESSION_SCRIPT" > /tmp/regression_output.txt 2>&1) && REGRESSION_OK=1 || REGRESSION_OK=0
+    # temperature 원복 (일반 사용자는 OpenAI 기본값 사용)
+    unset AI_TEMPERATURE
+    pm2 restart aims-api --update-env > /dev/null 2>&1
     REGRESSION_END=$(date +%s)
     REGRESSION_ELAPSED=$((REGRESSION_END - REGRESSION_START))
     if [ "$REGRESSION_OK" = "1" ]; then

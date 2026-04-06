@@ -969,7 +969,8 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
         messages: currentMessages,
         stream: true,
         stream_options: { include_usage: true },
-        max_tokens: 4096
+        max_tokens: 4096,
+        ...(process.env.AI_TEMPERATURE !== undefined && !isNaN(parseFloat(process.env.AI_TEMPERATURE)) && { temperature: parseFloat(process.env.AI_TEMPERATURE) })
       };
 
       // tools가 있을 때만 포함

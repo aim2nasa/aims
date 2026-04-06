@@ -17,6 +17,7 @@ AI 채팅 API(localhost:3010/api/chat)에 SSE 요청을 보내고,
 exit code: 0=HARD 전체 PASS, 1=HARD FAIL 있음
 """
 
+import argparse
 import json
 import os
 import re
@@ -29,6 +30,10 @@ import urllib.error
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CASES_FILE = os.path.join(SCRIPT_DIR, "regression_cases.json")
 RESULT_FILE = "/tmp/regression_results.json"
+
+# pass@k 기본값 (환경변수로 오버라이드 가능)
+REPEAT_COUNT = int(os.environ.get("REGRESSION_REPEAT", "3"))
+PASS_THRESHOLD = int(os.environ.get("REGRESSION_PASS_THRESHOLD", "2"))
 
 CHAT_API_URL = "http://localhost:3010/api/chat"
 AUTH_API_URL = "http://localhost:3010/api/auth/admin-login"
@@ -221,7 +226,25 @@ def validate_case(case, response):
     }
 
 
+def run_single(case, token):
+    """단일 케이스 1회 실행 및 검증. (response, validation, elapsed) 반환"""
+    start_time = time.time()
+    response = send_chat_request(case["question"], token)
+    elapsed = time.time() - start_time
+    validation = validate_case(case, response)
+    return response, validation, elapsed
+
+
 def main():
+    # CLI 인자 파싱
+    parser = argparse.ArgumentParser(description="AI 어시스턴트 Regression 테스트")
+    parser.add_argument("--quick", action="store_true",
+                        help="빠른 실행 (repeat=1, threshold=1)")
+    args = parser.parse_args()
+
+    repeat_count = 1 if args.quick else REPEAT_COUNT
+    pass_threshold = 1 if args.quick else PASS_THRESHOLD
+
     print("=" * 60)
     print("  AI 어시스턴트 Regression 테스트")
     print("=" * 60)
@@ -232,6 +255,9 @@ def main():
         cases = json.load(f)
 
     print(f"테스트 케이스: {len(cases)}개")
+    print(f"반복 실행: repeat={repeat_count}, threshold={pass_threshold} (pass@k)")
+    ai_temp = os.environ.get("AI_TEMPERATURE", "미설정(OpenAI 기본값)")
+    print(f"temperature: {ai_temp}")
     print(f"검증 기준: HARD (must_contain/must_not_contain/must_call_tools/required_tools) = PASS/FAIL")
     print(f"           SOFT (expected_tools) = WARN (비결정적 AI 수용)")
     print()
@@ -256,46 +282,86 @@ def main():
         print(f"[{i+1}/{len(cases)}] {case_id}: {case_name}")
         print(f"  질문: {question}")
 
-        start_time = time.time()
-        response = send_chat_request(question, token)
-        elapsed = time.time() - start_time
+        # pass@k: 각 케이스를 repeat_count 회 반복 실행
+        runs = []
+        case_pass_count = 0
+        case_fail_count = 0
+        case_total_elapsed = 0.0
+        case_warnings = []
 
-        validation = validate_case(case, response)
-        warn_count = len(validation["warnings"])
-        total_warnings += warn_count
+        for run_idx in range(repeat_count):
+            response, validation, elapsed = run_single(case, token)
+            case_total_elapsed += elapsed
 
+            run_entry = {
+                "result": "PASS" if validation["passed"] else "FAIL",
+                "tools_called": response["tools_called"],
+                "duration": round(elapsed, 1),
+                "failures": validation["failures"],
+                "warnings": validation["warnings"],
+            }
+            runs.append(run_entry)
+
+            if validation["passed"]:
+                case_pass_count += 1
+            else:
+                case_fail_count += 1
+
+            # 경고는 모든 run에서 수집 (중복 제거)
+            for w in validation["warnings"]:
+                if w not in case_warnings:
+                    case_warnings.append(w)
+
+            # run 간 rate limit 방지 (마지막 run 제외)
+            if run_idx < repeat_count - 1:
+                time.sleep(2)
+
+        # 최종 판정: pass_threshold 이상 PASS면 최종 PASS
+        final_passed = case_pass_count >= pass_threshold
+        total_warnings += len(case_warnings)
+
+        # 결과 JSON 엔트리
         result_entry = {
             "id": case_id,
             "name": case_name,
-            "passed": validation["passed"],
-            "failures": validation["failures"],
-            "warnings": validation["warnings"],
-            "elapsed_seconds": round(elapsed, 1),
-            "tools_called": response["tools_called"],
-            "response_preview": response["full_text"][:300],
-            "error": response["error"]
+            "pass_count": case_pass_count,
+            "fail_count": case_fail_count,
+            "repeat_count": repeat_count,
+            "pass_threshold": pass_threshold,
+            "final_result": "PASS" if final_passed else "FAIL",
+            "warnings": case_warnings,
+            "elapsed_seconds": round(case_total_elapsed, 1),
+            "runs": runs,
         }
         results.append(result_entry)
 
-        if validation["passed"]:
+        # 콘솔 출력
+        if final_passed:
             passed += 1
-            status = "PASS"
-            if warn_count > 0:
-                status += f" ({warn_count} warn)"
-            print(f"  {status} ({elapsed:.1f}s) - 도구: {response['tools_called']}")
-            for w in validation["warnings"]:
+            # 마지막 PASS run의 도구 목록을 표시
+            last_pass_tools = []
+            for r in runs:
+                if r["result"] == "PASS":
+                    last_pass_tools = r["tools_called"]
+            warn_suffix = f" ({len(case_warnings)} warn)" if case_warnings else ""
+            print(f"  PASS ({case_pass_count}/{repeat_count}){warn_suffix} ({case_total_elapsed:.1f}s) - 도구: {last_pass_tools}")
+            for w in case_warnings:
                 print(f"    [WARN] {w}")
         else:
             failed += 1
-            print(f"  FAIL ({elapsed:.1f}s)")
-            for failure in validation["failures"]:
-                print(f"    [FAIL] {failure}")
-            for w in validation["warnings"]:
+            print(f"  FAIL ({case_pass_count}/{repeat_count}) ({case_total_elapsed:.1f}s)")
+            for run_idx, r in enumerate(runs):
+                if r["result"] == "PASS":
+                    print(f"    [Run {run_idx+1}] PASS - 도구: {r['tools_called']}")
+                else:
+                    for f_msg in r["failures"]:
+                        print(f"    [Run {run_idx+1}] FAIL: {f_msg}")
+            for w in case_warnings:
                 print(f"    [WARN] {w}")
 
         print()
 
-        # API rate limit 방지: 케이스 간 2초 대기
+        # 케이스 간 rate limit 방지 (마지막 케이스 제외)
         if i < len(cases) - 1:
             time.sleep(2)
 
@@ -306,6 +372,8 @@ def main():
         "passed": passed,
         "failed": failed,
         "warnings": total_warnings,
+        "repeat_count": repeat_count,
+        "pass_threshold": pass_threshold,
         "results": results
     }
 
@@ -314,7 +382,7 @@ def main():
 
     # 요약 출력
     print("=" * 60)
-    print(f"  결과: {passed}/{len(cases)} PASS, {failed}/{len(cases)} FAIL ({total_warnings} warnings)")
+    print(f"  결과: {passed}/{len(cases)} PASS, {failed}/{len(cases)} FAIL (repeat={repeat_count}, threshold={pass_threshold})")
     print(f"  결과 파일: {RESULT_FILE}")
     print("=" * 60)
 
