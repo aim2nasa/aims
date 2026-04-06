@@ -98,7 +98,7 @@ class TestXpipeIndependence:
 
     def test_xpipe_files_exist(self):
         """xpipe 핵심 파일이 존재하는지 확인"""
-        expected = {"__init__.py", "adapter.py", "store.py", "queue.py"}
+        expected = {"__init__.py", "adapter.py", "store.py", "job_queue.py"}
         actual = {f.name for f in _get_xpipe_py_files()}
         assert expected.issubset(actual), f"누락된 파일: {expected - actual}"
 

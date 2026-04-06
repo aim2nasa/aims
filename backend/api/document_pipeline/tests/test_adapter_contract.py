@@ -21,7 +21,7 @@ from xpipe.adapter import (
     StageHookAction,
 )
 from xpipe.store import DocumentStore
-from xpipe.queue import JobQueue
+from xpipe.job_queue import JobQueue
 from insurance.adapter import InsuranceDomainAdapter
 
 

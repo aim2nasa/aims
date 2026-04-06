@@ -60,7 +60,7 @@ def _cmd_status(_args: argparse.Namespace) -> int:
     # ABC 목록
     from xpipe.adapter import DomainAdapter
     from xpipe.store import DocumentStore
-    from xpipe.queue import JobQueue
+    from xpipe.job_queue import JobQueue
     from xpipe.providers import LLMProvider, OCRProvider, EmbeddingProvider
 
     abcs = [
