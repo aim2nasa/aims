@@ -1,5 +1,5 @@
 import { z, ZodError } from 'zod';
-import { formatZodError, filterExistingFileIds } from '../db.js';
+import { escapeRegex, formatZodError, filterExistingFileIds } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
 import { queryCustomers } from '../internalApi.js';
@@ -9,7 +9,8 @@ import { queryCustomers } from '../internalApi.js';
 // ============================================================
 
 export const getCustomerReviewsSchema = z.object({
-  customerId: z.string().describe('고객 ID'),
+  customerId: z.string().optional().describe('고객 ID (customerId 또는 customerName 중 하나 필수)'),
+  customerName: z.string().optional().describe('고객명 (부분 매칭). customerId를 모를 때 사용'),
   limit: z.number().optional().default(10).describe('결과 개수 제한 (기본: 10)')
 });
 
@@ -43,14 +44,18 @@ export const queryCustomerReviewsSchema = z.object({
 export const customerReviewToolDefinitions = [
   {
     name: 'get_customer_reviews',
-    description: '고객의 Customer Review(변액리포트/CRS) 목록을 조회합니다. 증권번호, 상품명, 적립금, 펀드 정보, 사망수익자, 담당 설계사, 적립율, 초회보험료, 월납보험료, 납입보험료 총액(순보험료), 보험계약대출, 중도인출, 추가납입, 펀드별 납입원금 등 변액보험 상세 정보를 확인할 수 있습니다. "납입보험료 총액", "순보험료", "보험계약대출" 등은 이 도구에서만 조회 가능합니다.',
+    description: `고객의 Customer Review(변액리포트/CRS) 목록을 조회합니다. 증권번호, 상품명, 적립금, 펀드 정보, 사망수익자, 담당 설계사, 적립율, 초회보험료, 월납보험료, 납입보험료 총액(순보험료), 보험계약대출, 중도인출, 추가납입, 펀드별 납입원금 등 변액보험 상세 정보를 확인할 수 있습니다. "납입보험료 총액", "순보험료", "보험계약대출" 등은 이 도구에서만 조회 가능합니다.
+
+■ customerId 또는 customerName 중 하나만 있으면 됩니다!
+- "[고객명] 펀드 수익률 보여줘" → get_customer_reviews(customerName="[고객명]")
+- 고객 ID를 이미 알고 있다면 → get_customer_reviews(customerId="xxx")`,
     inputSchema: {
       type: 'object' as const,
       properties: {
-        customerId: { type: 'string', description: '고객 ID' },
+        customerId: { type: 'string', description: '고객 ID (customerId 또는 customerName 중 하나 필수)' },
+        customerName: { type: 'string', description: '고객명 (부분 매칭). customerId를 모를 때 사용' },
         limit: { type: 'number', description: '결과 개수 제한 (기본: 10)' }
-      },
-      required: ['customerId']
+      }
     }
   },
   {
@@ -111,17 +116,30 @@ export async function handleGetCustomerReviews(args: unknown) {
     const params = getCustomerReviewsSchema.parse(args);
     const userId = getCurrentUserId();
 
-    // Internal API 경유: 소유권 필터 포함 조회
-    const customerResults = await queryCustomers(
-      { _id: params.customerId, 'meta.created_by': userId },
-      null, null, 1
-    );
+    if (!params.customerId && !params.customerName) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: 'customerId 또는 customerName 중 하나를 지정해주세요.' }]
+      };
+    }
+
+    // customerId 또는 customerName으로 고객 조회
+    let customerFilter: Record<string, unknown>;
+    if (params.customerId) {
+      customerFilter = { _id: params.customerId, 'meta.created_by': userId };
+    } else {
+      const regex = { $regex: escapeRegex(params.customerName!), $options: 'i' };
+      customerFilter = { 'personal_info.name': regex, 'meta.created_by': userId, 'meta.status': 'active' };
+    }
+
+    const customerResults = await queryCustomers(customerFilter, null, null, 1);
     const customer = customerResults[0] || null;
 
     if (!customer) {
+      const identifier = params.customerId || params.customerName;
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
+        content: [{ type: 'text' as const, text: `"${identifier}"에 해당하는 고객을 찾을 수 없습니다.` }]
       };
     }
 
