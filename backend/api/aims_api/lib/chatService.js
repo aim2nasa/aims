@@ -76,7 +76,7 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 |-----------|------------|
 | [고객명] + 계약/보험/보험료/증권/만기/보장 | **search_customer_with_contracts** |
 | [고객명] + 고객 기본정보만 (이름, 전화번호, 생년월일) | search_customers |
-| [고객명] + 문서/서류/파일 찾아줘 | search_customers → search_documents |
+| [고객명] + 문서/서류/파일 찾아줘 | **search_customer_documents** |
 | 고객명 없이 전체 계약 조회 | list_contracts |
 
 **🔴 고객명 + 계약 질문에 search_customers를 호출하지 마세요! search_customer_with_contracts를 호출하세요!**
@@ -518,14 +518,13 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 ### 1. 🔴 문서 검색: search_documents (CRITICAL!)
 **문서, 서류, 파일 검색 요청은 모두 search_documents 사용!**
 
-**■ 고객의 문서를 찾을 때 (2단계 필수!):**
-1. search_customers로 고객 ID를 먼저 조회
-2. search_documents(query="키워드", customerId="고객ID", searchMode="keyword")
+**■ 고객의 문서를 찾을 때 (통합 도구 1회 호출!):**
+search_customer_documents(customerQuery="고객명", query="키워드")
 
 **예시:**
-- "[고객명] 보험증권 찾아줘" → search_customers("[고객명]") → search_documents(query="보험증권", customerId="...", searchMode="keyword")
-- "[고객명] 건강검진 결과 있어?" → search_customers("[고객명]") → search_documents(query="건강검진", customerId="...", searchMode="keyword")
-- "[법인명] 사업자등록증 찾아줘" → search_customers("[법인명]") → search_documents(query="사업자등록증", customerId="...", searchMode="keyword")
+- "[고객명] 보험증권 찾아줘" → search_customer_documents(customerQuery="[고객명]", query="보험증권")
+- "[고객명] 건강검진 결과 있어?" → search_customer_documents(customerQuery="[고객명]", query="건강검진")
+- "[법인명] 사업자등록증 찾아줘" → search_customer_documents(customerQuery="[법인명]", query="사업자등록증")
 
 **■ 고객 지정 없이 전체 문서 검색:**
 - "퇴직연금 관련 서류 찾아줘" → search_documents(query="퇴직연금", searchMode="keyword")
@@ -541,14 +540,14 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - "[고객명] 종신보험 정보" → search_customer_with_contracts(query="[고객명]", search="종신")
 
 **⚠️ search_documents는 "문서", "서류", "파일", "자료", "찾아줘", "검색해줘" 키워드가 명시된 경우에만 사용!**
-- "[고객명] 자동차 문서 찾아줘" → search_customers → search_documents (문서 검색)
-- "[고객명] 자동차 서류 검색해줘" → search_customers → search_documents (문서 검색)
+- "[고객명] 자동차 문서 찾아줘" → search_customer_documents(customerQuery="[고객명]", query="자동차")
+- "[고객명] 자동차 서류 검색해줘" → search_customer_documents(customerQuery="[고객명]", query="자동차")
 - "[고객명] 자동차 정보" → search_customer_with_contracts (계약 조회) ← "문서/서류/파일" 없으므로!
 - "[고객명] 자동차 정보 알려줘" → search_customer_with_contracts (계약 조회) ← 동일!
 
 **■ 고객 관련 자료/문서 전체 조회:**
-- "[고객명] 관련 자료 찾아줘" → search_customers("[고객명]") → search_documents(query="[고객명]", customerId="...", searchMode="keyword")
-- "[고객명] 관련 문서 전부 보여줘" → search_customers("[고객명]") → list_customer_documents(customerId="...")
+- "[고객명] 관련 자료 찾아줘" → search_customer_documents(customerQuery="[고객명]")
+- "[고객명] 관련 문서 전부 보여줘" → search_customer_documents(customerQuery="[고객명]")
 
 **문서 검색 결과 표시:**
 \`\`\`
@@ -722,14 +721,12 @@ AI: [list_customer_documents(customerId="6947f716ea0d306a0ac63b61", offset=20)]
 예시 4 - 문서 검색 다음 페이지:
 \`\`\`
 사용자: "[고객명] 자동차 관련 문서 찾아줘"
-AI: [search_customers 호출 → customerId 획득]
-    [search_documents 호출 with query="자동차", customerId="698f3ed7...", searchMode="keyword", offset=0]
+AI: [search_customer_documents 호출 with customerQuery="[고객명]", query="자동차"]
     → 결과: { totalCount: 50, hasMore: true, nextOffset: 10,
-        _paginationHint: "다음 페이지: search_documents(query=\\"자동차\\", searchMode=\\"keyword\\", customerId=\\"698f3ed7...\\", offset=10)" }
+        _paginationHint: "다음 페이지: search_customer_documents(customerQuery=\\"[고객명]\\", query=\\"자동차\\", searchMode=\\"keyword\\", offset=10)" }
     "자동차 관련 문서 50건 중 1-10번입니다. 더 보여줘라고 말씀해 주세요."
 사용자: "더 보여줘"
-AI: [_paginationHint 그대로 사용! → search_documents(query="자동차", customerId="698f3ed7...", searchMode="keyword", offset=10)]
-    ← ⛔ search_customers 다시 호출 금지! customerId를 _paginationHint에서 그대로 가져옴!
+AI: [_paginationHint 그대로 사용! → search_customer_documents(customerQuery="[고객명]", query="자동차", searchMode="keyword", offset=10)]
 \`\`\`
 
 **🚨🚨🚨 CRITICAL: _paginationHint 필드를 반드시 확인하고 그대로 사용하세요!**

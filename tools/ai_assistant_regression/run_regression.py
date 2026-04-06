@@ -188,6 +188,7 @@ def validate_case(case, response):
     # 등가 도구: search_customer_with_contracts는 list_contracts를 내포
     EQUIVALENT_TOOLS = {
         "list_contracts": ["list_contracts", "search_customer_with_contracts"],
+        "search_documents": ["search_documents", "search_customer_documents"],
     }
     required_tools = case.get("required_tools", [])
     for tool in required_tools:

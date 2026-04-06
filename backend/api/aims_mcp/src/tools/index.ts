@@ -10,7 +10,7 @@ import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, hand
 import { contractToolDefinitions, handleListContracts, handleGetContractDetails, handleCreateContract } from './contracts.js';
 import { birthdayToolDefinitions, handleFindBirthdayCustomers } from './birthdays.js';
 import { networkToolDefinitions, handleGetCustomerNetwork } from './network.js';
-import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments, handleFindDocumentByFilename } from './documents.js';
+import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments, handleFindDocumentByFilename, handleSearchCustomerDocuments } from './documents.js';
 import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo, handleUpdateMemo, handleSearchMemos } from './memos.js';
 import { productToolDefinitions, handleSearchProducts } from './products.js';
 import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
@@ -54,6 +54,7 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   // 네트워크
   get_customer_network: handleGetCustomerNetwork,
   // 문서 관련
+  search_customer_documents: handleSearchCustomerDocuments,
   search_documents: handleSearchDocuments,
   get_document: handleGetDocument,
   list_customer_documents: handleListCustomerDocuments,

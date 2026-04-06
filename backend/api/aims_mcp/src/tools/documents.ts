@@ -5,6 +5,14 @@ import { sendErrorLog } from '../systemLogger.js';
 import { queryFiles, countFiles, queryCustomers } from '../internalApi.js';
 
 // 스키마 정의
+export const searchCustomerDocumentsSchema = z.object({
+  customerQuery: z.string().describe('고객명 검색어 (필수)'),
+  query: z.string().optional().describe('문서 검색어 (파일명, 내용)'),
+  searchMode: z.enum(['keyword', 'semantic']).optional().default('keyword').describe('검색 모드'),
+  limit: z.number().optional().default(10).describe('결과 개수 제한'),
+  offset: z.number().optional().default(0).describe('페이지네이션 오프셋'),
+});
+
 export const searchDocumentsSchema = z.object({
   query: z.string().describe('검색어'),
   searchMode: z.enum(['semantic', 'keyword']).optional().default('keyword').describe('검색 모드 (기본: keyword)'),
@@ -30,6 +38,36 @@ export const findDocumentByFilenameSchema = z.object({
 
 // Tool 정의
 export const documentToolDefinitions = [
+  {
+    name: 'search_customer_documents',
+    description: `고객명으로 검색하여 해당 고객의 문서를 한번에 조회합니다.
+
+■ 이 도구를 사용하는 경우:
+- [고객명] + 문서/서류/파일 관련 질문
+- "[고객명] 문서 목록 보여줘"
+- "[고객명] 보험증권 문서 찾아줘"
+- "[고객명] 관련 서류 있어?"
+- "[고객명] 파일 검색해줘"
+
+■ search_customers 대신 이 도구를 사용하세요!
+고객명이 언급되고 문서/서류/파일 검색이 필요한 질문은 반드시 이 도구를 호출하세요.
+search_customers는 고객 기본정보만 반환하고 문서 정보는 없습니다.
+
+■ 이 도구를 사용하지 않는 경우:
+- 고객명 없이 전체 문서 검색 → search_documents 사용
+- 고객명 + 계약/보험 정보 → search_customer_with_contracts 사용`,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        customerQuery: { type: 'string', description: '고객명 검색어 (필수)' },
+        query: { type: 'string', description: '문서 검색어 (파일명, 내용)' },
+        searchMode: { type: 'string', enum: ['keyword', 'semantic'], description: '검색 모드 (기본: keyword)' },
+        limit: { type: 'number', description: '결과 개수 제한 (기본: 10)' },
+        offset: { type: 'number', description: '페이지네이션 오프셋 (기본: 0)' }
+      },
+      required: ['customerQuery']
+    }
+  },
   {
     name: 'search_documents',
     description: `문서/서류/파일을 찾거나 검색할 때 사용합니다. 사용자가 특정 문서를 찾거나, 문서 내용을 검색하거나, 어떤 서류가 있는지 확인하려는 의도가 있을 때 이 도구가 적합합니다.
@@ -480,6 +518,192 @@ export async function handleFindDocumentByFilename(args: unknown) {
       content: [{
         type: 'text' as const,
         text: `파일 검색 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 고객명 + 문서 통합 검색 핸들러
+ * 1) 고객명으로 고객 검색 → customerId 획득
+ * 2) 해당 고객의 문서를 RAG API로 검색
+ * 3) 고객 정보 + 문서 목록을 하나의 응답으로 반환
+ */
+export async function handleSearchCustomerDocuments(args: unknown) {
+  try {
+    const params = searchCustomerDocumentsSchema.parse(args);
+    const userId = getCurrentUserId();
+
+    // 1단계: 고객명으로 검색 (부분 매칭)
+    const regex = { $regex: escapeRegex(params.customerQuery), $options: 'i' };
+    const customerFilter: Record<string, unknown> = {
+      'meta.created_by': userId,
+      'meta.status': 'active',
+      'personal_info.name': regex
+    };
+
+    const customers = await queryCustomers(
+      customerFilter,
+      {
+        _id: 1,
+        'personal_info.name': 1,
+        'personal_info.mobile_phone': 1,
+        'personal_info.birth_date': 1,
+        'insurance_info.customer_type': 1,
+      },
+      { 'meta.created_at': -1 },
+      1  // 첫 번째 매칭 고객만
+    );
+
+    if (customers.length === 0) {
+      return {
+        isError: true,
+        content: [{
+          type: 'text' as const,
+          text: `"${params.customerQuery}"에 해당하는 고객을 찾을 수 없습니다.`
+        }]
+      };
+    }
+
+    const customer = customers[0];
+    const customerId = customer._id.toString();
+
+    // 2단계: 해당 고객의 문서 검색 (RAG API 또는 list_customer_documents 방식)
+    const limit = params.limit || 10;
+    const offset = params.offset || 0;
+    const searchQuery = params.query || params.customerQuery;
+
+    // AbortController로 타임아웃 설정
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), RAG_API_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(`${AIMS_RAG_API_URL}/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.RAG_API_KEY || 'iWgbzs5Rbgfb7Xxy6o9P6KkrGkYpfdOK8iaGsT1lcjM'
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          search_mode: params.searchMode || 'keyword',
+          user_id: userId,
+          customer_id: customerId,
+          top_k: limit,
+          offset: offset
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`RAG API 오류: ${response.status}`);
+      }
+
+      const result = await response.json() as {
+        search_mode: string;
+        answer: string | null;
+        total_count?: number;
+        has_more?: boolean;
+        search_results: Array<{
+          doc_id?: string;
+          score?: number;
+          final_score?: number;
+          payload?: {
+            original_name: string;
+            preview: string;
+            mime: string;
+            uploaded_at: string;
+          };
+          _id?: string;
+          upload?: {
+            originalName: string;
+            uploaded_at: string;
+          };
+          meta?: {
+            mime: string;
+            summary: string;
+          };
+          ocr?: {
+            summary: string;
+          };
+        }>;
+      };
+
+      // 페이지네이션 계산
+      const resultCount = result.search_results?.length || 0;
+      const totalCount = result.total_count || resultCount;
+      const hasMore = result.has_more ?? (offset + resultCount < totalCount);
+      const nextOffset = hasMore ? offset + resultCount : null;
+
+      // 3단계: 고객 정보 + 문서 목록 통합 응답
+      const formattedResult = {
+        customer: {
+          id: customerId,
+          name: customer.personal_info?.name,
+          phone: customer.personal_info?.mobile_phone,
+          birthDate: customer.personal_info?.birth_date || null,
+          type: customer.insurance_info?.customer_type,
+        },
+        searchMode: result.search_mode,
+        query: searchQuery,
+        resultCount,
+        totalCount,
+        offset,
+        hasMore,
+        nextOffset,
+        _paginationHint: hasMore
+          ? `다음 페이지: search_customer_documents(customerQuery="${params.customerQuery}"${params.query ? `, query="${params.query}"` : ''}, searchMode="${params.searchMode || 'keyword'}", offset=${nextOffset})`
+          : null,
+        documents: (result.search_results || []).map((doc) => {
+          // 키워드 검색 형식 (MongoDB 문서)
+          if (doc._id) {
+            const preview = doc.ocr?.summary || doc.meta?.summary || '';
+            return {
+              id: doc._id,
+              filename: doc.upload?.originalName || '알 수 없는 파일',
+              preview: preview.substring(0, 200) + (preview.length > 200 ? '...' : ''),
+              mimeType: doc.meta?.mime,
+              uploadedAt: doc.upload?.uploaded_at
+            };
+          }
+          // 시맨틱 검색 형식
+          return {
+            id: doc.doc_id,
+            filename: doc.payload?.original_name,
+            preview: doc.payload?.preview?.substring(0, 200) + '...',
+            mimeType: doc.payload?.mime,
+            uploadedAt: doc.payload?.uploaded_at,
+            score: doc.final_score || doc.score
+          };
+        })
+      };
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify(formattedResult, null, 2)
+        }]
+      };
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        throw new Error(`RAG API 응답 시간 초과 (${RAG_API_TIMEOUT_MS / 1000}초)`);
+      }
+      throw fetchError;
+    }
+  } catch (error) {
+    console.error('[MCP] search_customer_documents 에러:', error);
+    sendErrorLog('aims_mcp', 'search_customer_documents 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `고객 문서 검색 실패: ${errorMessage}`
       }]
     };
   }
