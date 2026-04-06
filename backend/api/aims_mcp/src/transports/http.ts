@@ -38,6 +38,7 @@ async function loadToolHandlers() {
     get_customer: customers.handleGetCustomer,
     create_customer: customers.handleCreateCustomer,
     update_customer: customers.handleUpdateCustomer,
+    search_customer_with_contracts: customers.handleSearchCustomerWithContracts,
     // 계약 관련
     list_contracts: contracts.handleListContracts,
     get_contract_details: contracts.handleGetContractDetails,
@@ -47,6 +48,7 @@ async function loadToolHandlers() {
     // 네트워크
     get_customer_network: network.handleGetCustomerNetwork,
     // 문서 관련
+    search_customer_documents: documents.handleSearchCustomerDocuments,
     search_documents: documents.handleSearchDocuments,
     get_document: documents.handleGetDocument,
     list_customer_documents: documents.handleListCustomerDocuments,
