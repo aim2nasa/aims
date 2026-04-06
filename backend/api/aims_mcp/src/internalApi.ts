@@ -6,6 +6,8 @@
  *
  * @since 2026-04-03
  */
+import dotenv from 'dotenv';
+dotenv.config();
 
 const AIMS_API_URL = process.env.AIMS_API_URL || 'http://localhost:3010';
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';

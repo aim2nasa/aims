@@ -1,7 +1,7 @@
 # AI Regression 22/49 FAIL 상세 분석 및 수정 계획
 
 > 작성일: 2026-04-07
-> 상태: **진행 중 — 41/44 PASS (93%), 잔여 3건 수정 중**
+> 상태: **진행 중 — 43/44 PASS (temp=0), REG-030 Internal API 401 버그 수정 중**
 
 ---
 
@@ -187,4 +187,7 @@ search_customers + list_contracts를 하나의 도구(search_customer_with_contr
 | 2026-04-07 | REG-010/030/042 | description 패턴 추가 + birthDate 규칙 + 시간 표현 규칙 |
 | 2026-04-07 | 버그 발견 | **aims-api는 Docker 컨테이너인데 pm2 restart 사용** → temperature=0 미적용 |
 | 2026-04-07 | 버그 수정 | deploy_all.sh: pm2→Docker 재시작, deploy_aims_api.sh: AI_TEMPERATURE 전달 |
-| 2026-04-07 | 5차 | 41/44 PASS — temperature=0 미적용 상태에서의 결과. 수정 후 재검증 필요 |
+| 2026-04-07 | 5차 | 41/44 PASS — temperature=0 미적용 상태에서의 결과 |
+| 2026-04-07 | 6차 | 43/44 PASS (temp=0 수동적용) — REG-010/042 해결, REG-030 잔여 |
+| 2026-04-07 | 버그 발견 | **MCP Internal API 401**: ESM 모듈 로딩 순서 버그. internalApi.ts가 dotenv 전 로드 → INTERNAL_API_KEY='' |
+| 2026-04-07 | 버그 수정 | internalApi.ts에 dotenv.config() 추가. 모든 MCP→Internal API 호출 정상화 |

@@ -1,4 +1,4 @@
-// REG-010/030/042 수정 검증: description 패턴 추가 + birthDate 규칙 + 시간 표현 규칙
+// REG-010/030/042 수정 + ESM dotenv 로딩 순서 버그 수정 (internalApi.ts, address.ts)
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';

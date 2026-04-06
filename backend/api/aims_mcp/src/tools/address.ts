@@ -1,5 +1,8 @@
 import { z } from 'zod';
+import dotenv from 'dotenv';
 import { sendErrorLog } from '../systemLogger.js';
+
+dotenv.config();
 
 // 환경변수
 const AIMS_API_URL = process.env.AIMS_API_URL || 'http://localhost:3010';
