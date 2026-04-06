@@ -1,7 +1,7 @@
 # AI Regression 22/49 FAIL 상세 분석 및 수정 계획
 
 > 작성일: 2026-04-07
-> 상태: **완료 — 43/44 PASS (98%), 잔여 1건은 AI 비결정성**
+> 상태: **진행 중 — 41/44 PASS (93%), 잔여 3건 수정 중**
 
 ---
 
@@ -184,3 +184,7 @@ search_customers + list_contracts를 하나의 도구(search_customer_with_contr
 | 2026-04-07 | 잔여 | REG-042: AI 비결정성 (간헐적, 재실행 시 PASS 가능) |
 | 2026-04-07 | 문서 | search_customer_documents 통합 도구 추가 (REG-001/002 해결) |
 | 2026-04-07 | 4차 | **43/44 PASS (98%)** — 잔여 REG-010 1건 AI 비결정성 |
+| 2026-04-07 | REG-010/030/042 | description 패턴 추가 + birthDate 규칙 + 시간 표현 규칙 |
+| 2026-04-07 | 버그 발견 | **aims-api는 Docker 컨테이너인데 pm2 restart 사용** → temperature=0 미적용 |
+| 2026-04-07 | 버그 수정 | deploy_all.sh: pm2→Docker 재시작, deploy_aims_api.sh: AI_TEMPERATURE 전달 |
+| 2026-04-07 | 5차 | 41/44 PASS — temperature=0 미적용 상태에서의 결과. 수정 후 재검증 필요 |

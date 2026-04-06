@@ -181,13 +181,21 @@ if [ "$WITH_REGRESSION" = true ]; then
     echo -n "[14/${TOTAL_STEPS}] AI 어시스턴트 Regression 테스트 ... "
     REGRESSION_START=$(date +%s)
     sleep 5
-    # temperature=0으로 aims_api 재시작 (비결정성 제거)
-    AI_TEMPERATURE=0 pm2 restart aims-api --update-env > /dev/null 2>&1
-    sleep 3
+    # temperature=0으로 aims_api Docker 컨테이너 재시작 (비결정성 제거)
+    # set +e: regression 실패/중단 시에도 반드시 temperature 원복 보장
+    set +e
+    export AI_TEMPERATURE=0
+    docker stop aims-api 2>/dev/null || true
+    docker rm aims-api 2>/dev/null || true
+    cd "$AIMS_DIR/backend/api/aims_api" && ./deploy_aims_api.sh > /dev/null 2>&1
+    sleep 5
     (python3 "$REGRESSION_SCRIPT" > /tmp/regression_output.txt 2>&1) && REGRESSION_OK=1 || REGRESSION_OK=0
-    # temperature 원복 (일반 사용자는 OpenAI 기본값 사용)
+    # temperature 원복 (일반 사용자는 OpenAI 기본값 사용) — Docker 컨테이너 재시작
     unset AI_TEMPERATURE
-    pm2 restart aims-api --update-env > /dev/null 2>&1
+    docker stop aims-api 2>/dev/null || true
+    docker rm aims-api 2>/dev/null || true
+    cd "$AIMS_DIR/backend/api/aims_api" && ./deploy_aims_api.sh > /dev/null 2>&1
+    set -e
     REGRESSION_END=$(date +%s)
     REGRESSION_ELAPSED=$((REGRESSION_END - REGRESSION_START))
     if [ "$REGRESSION_OK" = "1" ]; then

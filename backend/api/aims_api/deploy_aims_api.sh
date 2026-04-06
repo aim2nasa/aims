@@ -143,6 +143,7 @@ docker run -d --network host \
   -e PDF_CONVERTER_URL="${PDF_CONVERTER_URL:-http://localhost:8005}" \
   -e N8N_URL="${N8N_URL:-http://localhost:5678}" \
   -e AIMS_MCP_URL="${AIMS_MCP_URL:-http://localhost:3011}" \
+  ${AI_TEMPERATURE:+-e AI_TEMPERATURE="${AI_TEMPERATURE}"} \
   -v /data/files:/data/files \
   -v /data/backup:/data/backup \
   -v /home/rossi/aims/backend/scripts:/home/rossi/aims/backend/scripts:ro \
