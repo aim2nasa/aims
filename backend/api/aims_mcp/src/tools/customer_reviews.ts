@@ -144,6 +144,7 @@ export async function handleGetCustomerReviews(args: unknown) {
     }
 
     const customerName = customer.personal_info?.name || '알 수 없음';
+    const resolvedCustomerId = customer._id?.toString() || params.customerId || '';
 
     // customer_reviews 배열에서 조회 (최신순)
     const customerReviews = customer.customer_reviews || [];
@@ -223,7 +224,7 @@ export async function handleGetCustomerReviews(args: unknown) {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
-          customerId: params.customerId,
+          customerId: resolvedCustomerId,
           customerName,
           totalReviews: customerReviews.length,
           count: formattedReviews.length,

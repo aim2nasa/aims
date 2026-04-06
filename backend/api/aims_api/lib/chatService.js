@@ -916,6 +916,49 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
   let totalCachedTokens = 0;
   const toolCallsExecuted = [];
 
+  // ========== 고객 컨텍스트 하네스 ==========
+  // 도구 결과에서 customerId를 추적하여, 후속 도구 호출에 자동 주입
+  let lastCustomerContext = null; // { customerId, customerName }
+
+  // 컨텍스트를 제공하는 도구: 결과에서 customerId 추출
+  const CONTEXT_PROVIDER_TOOLS = new Set([
+    'search_customer_with_contracts', 'get_customer_reviews',
+    'get_customer', 'search_customers'
+  ]);
+
+  // 컨텍스트를 소비하는 도구: customerId 없으면 자동 주입
+  const CONTEXT_CONSUMER_TOOLS = new Set([
+    'query_customer_reviews', 'get_cr_contract_history', 'list_contracts'
+  ]);
+
+  function extractCustomerContext(toolName, resultText) {
+    try {
+      const parsed = JSON.parse(resultText);
+      if (parsed.customer?.id) {
+        return { customerId: parsed.customer.id, customerName: parsed.customer.name || null };
+      }
+      if (parsed.customerId) {
+        return { customerId: parsed.customerId, customerName: parsed.customerName || null };
+      }
+      // search_customers: 결과가 1명일 때만 컨텍스트 설정
+      if (toolName === 'search_customers' && parsed.customers?.length === 1) {
+        const c = parsed.customers[0];
+        return { customerId: c.id, customerName: c.name || null };
+      }
+    } catch { /* 파싱 실패 무시 */ }
+    return null;
+  }
+
+  function injectCustomerContext(toolName, args) {
+    if (!CONTEXT_CONSUMER_TOOLS.has(toolName)) return args;
+    if (args.customerId) return args; // 이미 있으면 그대로
+    if (!lastCustomerContext) return args;
+
+    console.log(`[ChatService] 고객 컨텍스트 하네스: ${toolName}에 customerId=${lastCustomerContext.customerId} 자동 주입`);
+    return { ...args, customerId: lastCustomerContext.customerId };
+  }
+  // ========== 고객 컨텍스트 하네스 끝 ==========
+
   try {
     // MCP tools 로드
     const tools = await getMCPToolsAsOpenAIFunctions();
@@ -1099,10 +1142,23 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
         yield { type: 'tool_calling', name: toolName };
 
         try {
-          const args = JSON.parse(tc.function.arguments || '{}');
+          let args = JSON.parse(tc.function.arguments || '{}');
+
+          // 고객 컨텍스트 하네스: customerId 자동 주입
+          args = injectCustomerContext(toolName, args);
+
           console.log(`[ChatService] Tool 호출: ${toolName}`, JSON.stringify(args));
           const result = await callMCPTool(toolName, args, userId);
           console.log(`[ChatService] Tool 결과: ${toolName}`, result.substring(0, 200));
+
+          // 고객 컨텍스트 하네스: 결과에서 customerId 추출
+          if (CONTEXT_PROVIDER_TOOLS.has(toolName)) {
+            const ctx = extractCustomerContext(toolName, result);
+            if (ctx) {
+              lastCustomerContext = ctx;
+              console.log(`[ChatService] 고객 컨텍스트 설정: ${ctx.customerName} (${ctx.customerId})`);
+            }
+          }
 
           toolCallsExecuted.push({ name: toolName, success: true });
           yield { type: 'tool_result', name: toolName, success: true };
