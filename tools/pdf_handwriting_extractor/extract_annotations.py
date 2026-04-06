@@ -30,50 +30,197 @@ try:
 except ImportError:
     HAS_DND = False
 
-VERSION = "0.1.1"
+VERSION = "0.1.3"
 DIFF_THRESHOLD = 10  # 렌더링 미세 차이 무시 임계값
-UPSTAGE_OCR_URL = "https://api.upstage.ai/v1/document-digitization"
 
-# .env.shared에서 Upstage API 키 로드
+# ── API 키 로드 (.env 파일들 + 환경변수) ──
 try:
-    _env_path = Path(__file__).resolve().parents[2] / ".env.shared"  # aims/.env.shared
+    _aims_root = Path(__file__).resolve().parents[2]  # aims/
 except NameError:
-    _env_path = Path.cwd() / ".env.shared"
-_env = dotenv_values(_env_path) if _env_path.exists() else {}
-UPSTAGE_API_KEY = _env.get("UPSTAGE_API_KEY", os.environ.get("UPSTAGE_API_KEY", ""))
+    _aims_root = Path.cwd()
+
+_env_files = [
+    _aims_root / "backend" / "api" / "document_pipeline" / ".env",
+    _aims_root / "backend" / "api" / "aims_api" / ".env",
+    _aims_root / "backend" / "api" / "annual_report_api" / ".env",
+    _aims_root / ".env.shared",  # 최우선 (마지막 로드 = 덮어쓰기)
+]
+_env = {}
+for _ef in _env_files:
+    if _ef.exists():
+        _env.update(dotenv_values(_ef))
 
 
-def ocr_image_upstage(image_bytes: bytes, filename: str = "annotation.png") -> dict:
-    """Upstage Document OCR API로 이미지에서 텍스트 추출
+def _get_key(name):
+    return _env.get(name, os.environ.get(name, ""))
+
+
+UPSTAGE_API_KEY = _get_key("UPSTAGE_API_KEY")
+ANTHROPIC_API_KEY = _get_key("ANTHROPIC_API_KEY")
+OPENAI_API_KEY = _get_key("OPENAI_API_KEY")
+GEMINI_API_KEY = _get_key("GEMINI_API_KEY") or _get_key("GOOGLE_API_KEY")
+
+# ── 모델 옵션 ──
+VISION_MODELS = {
+    "upstage-ocr": "Upstage OCR",
+    "claude-sonnet": "Claude Sonnet 4",
+    "gpt-4o": "GPT-4o",
+    "gemini-2.5-flash": "Gemini 2.5 Flash",
+    "gemini-2.5-pro": "Gemini 2.5 Pro",
+    "gemini-2.5-flash-lite": "Gemini 2.5 Flash-Lite",
+}
+
+HANDWRITING_PROMPT = "이 이미지에 손글씨로 쓰여진 텍스트를 정확히 읽어주세요. 텍스트만 출력하세요."
+
+
+def ocr_image(image_bytes: bytes, filename: str = "annotation.png",
+              model: str = "upstage-ocr") -> dict:
+    """이미지에서 손글씨 텍스트 추출
 
     Returns:
-        {"error": bool, "text": str, "confidence": float|None, "message": str}
+        {"error": bool, "text": str, "confidence": float|None, "message": str, "model": str}
     """
+    if model == "upstage-ocr":
+        return _ocr_upstage(image_bytes, filename)
+    elif model == "claude-sonnet":
+        return _ocr_claude(image_bytes)
+    elif model == "gpt-4o":
+        return _ocr_openai(image_bytes)
+    elif model.startswith("gemini"):
+        return _ocr_gemini(image_bytes, model)
+    else:
+        return {"error": True, "text": "", "confidence": None,
+                "message": f"알 수 없는 모델: {model}", "model": model}
+
+
+def _ocr_upstage(image_bytes, filename):
     if not UPSTAGE_API_KEY:
         return {"error": True, "text": "", "confidence": None,
-                "message": "UPSTAGE_API_KEY가 설정되지 않았습니다.\n"
-                           f"확인 경로: {_env_path}"}
+                "message": "UPSTAGE_API_KEY 미설정", "model": "upstage-ocr"}
     try:
         resp = requests.post(
-            UPSTAGE_OCR_URL,
+            "https://api.upstage.ai/v1/document-digitization",
             headers={"Authorization": f"Bearer {UPSTAGE_API_KEY}"},
             files={"document": (filename, image_bytes)},
             data={"model": "ocr"},
+            timeout=120,
+        )
+        if resp.status_code != 200:
+            return {"error": True, "text": "", "confidence": None,
+                    "message": f"HTTP {resp.status_code}: {resp.text[:200]}",
+                    "model": "upstage-ocr"}
+        data = resp.json()
+        return {"error": False, "text": data.get("text", ""),
+                "confidence": data.get("confidence"),
+                "message": "성공", "model": "upstage-ocr"}
+    except Exception as e:
+        return {"error": True, "text": "", "confidence": None,
+                "message": str(e), "model": "upstage-ocr"}
+
+
+def _ocr_claude(image_bytes):
+    if not ANTHROPIC_API_KEY:
+        return {"error": True, "text": "", "confidence": None,
+                "message": "ANTHROPIC_API_KEY 미설정", "model": "claude-sonnet"}
+    import base64
+    b64 = base64.b64encode(image_bytes).decode()
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 1024,
+                "messages": [{"role": "user", "content": [
+                    {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": b64}},
+                    {"type": "text", "text": HANDWRITING_PROMPT},
+                ]}],
+            },
             timeout=60,
         )
         if resp.status_code != 200:
             return {"error": True, "text": "", "confidence": None,
-                    "message": f"OCR API 오류 (HTTP {resp.status_code}): {resp.text[:200]}"}
+                    "message": f"HTTP {resp.status_code}: {resp.text[:200]}",
+                    "model": "claude-sonnet"}
         data = resp.json()
-        return {"error": False, "text": data.get("text", ""),
-                "confidence": data.get("confidence"),
-                "message": "OCR 성공"}
-    except requests.Timeout:
-        return {"error": True, "text": "", "confidence": None,
-                "message": "OCR 요청 시간 초과 (60초)"}
+        text = data.get("content", [{}])[0].get("text", "")
+        return {"error": False, "text": text, "confidence": None,
+                "message": "성공", "model": "claude-sonnet"}
     except Exception as e:
         return {"error": True, "text": "", "confidence": None,
-                "message": f"OCR 요청 실패: {e}"}
+                "message": str(e), "model": "claude-sonnet"}
+
+
+def _ocr_openai(image_bytes):
+    if not OPENAI_API_KEY:
+        return {"error": True, "text": "", "confidence": None,
+                "message": "OPENAI_API_KEY 미설정", "model": "gpt-4o"}
+    import base64
+    b64 = base64.b64encode(image_bytes).decode()
+    try:
+        resp = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "gpt-4o",
+                "max_tokens": 1024,
+                "messages": [{"role": "user", "content": [
+                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
+                    {"type": "text", "text": HANDWRITING_PROMPT},
+                ]}],
+            },
+            timeout=60,
+        )
+        if resp.status_code != 200:
+            return {"error": True, "text": "", "confidence": None,
+                    "message": f"HTTP {resp.status_code}: {resp.text[:200]}",
+                    "model": "gpt-4o"}
+        data = resp.json()
+        text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        return {"error": False, "text": text, "confidence": None,
+                "message": "성공", "model": "gpt-4o"}
+    except Exception as e:
+        return {"error": True, "text": "", "confidence": None,
+                "message": str(e), "model": "gpt-4o"}
+
+
+def _ocr_gemini(image_bytes, model_name):
+    if not GEMINI_API_KEY:
+        return {"error": True, "text": "", "confidence": None,
+                "message": "GEMINI_API_KEY 미설정", "model": model_name}
+    import base64
+    b64 = base64.b64encode(image_bytes).decode()
+    try:
+        resp = requests.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json={
+                "contents": [{"parts": [
+                    {"inline_data": {"mime_type": "image/png", "data": b64}},
+                    {"text": HANDWRITING_PROMPT},
+                ]}],
+            },
+            timeout=60,
+        )
+        if resp.status_code != 200:
+            return {"error": True, "text": "", "confidence": None,
+                    "message": f"HTTP {resp.status_code}: {resp.text[:200]}",
+                    "model": model_name}
+        data = resp.json()
+        text = (data.get("candidates", [{}])[0]
+                .get("content", {}).get("parts", [{}])[0].get("text", ""))
+        return {"error": False, "text": text, "confidence": None,
+                "message": "성공", "model": model_name}
+    except Exception as e:
+        return {"error": True, "text": "", "confidence": None,
+                "message": str(e), "model": model_name}
 
 
 def render_page(page, scale=1.0, clip=None, annots=True):
@@ -175,6 +322,11 @@ class App:
         ttk.Button(mid, text="현재 페이지 저장", command=self._save_current).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(mid, text="전체 페이지 추출", command=self._extract_all).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Separator(mid, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
+        ttk.Label(mid, text="모델:").pack(side=tk.LEFT)
+        self.ocr_model_var = tk.StringVar(value="claude-sonnet")
+        model_combo = ttk.Combobox(mid, textvariable=self.ocr_model_var,
+                                    values=list(VISION_MODELS.keys()), width=15, state="readonly")
+        model_combo.pack(side=tk.LEFT, padx=(2, 5))
         ttk.Button(mid, text="OCR 텍스트 추출", command=self._ocr_all_annot_pages).pack(side=tk.LEFT)
 
         # 상태바
@@ -313,6 +465,7 @@ class App:
             self.root.after(0, self._show_error, str(e))
         finally:
             self._busy = False
+            self.root.after(0, self.progress.stop)
 
     def _show_analysis(self, total_annots, pages_with):
         self.progress.stop()
@@ -413,6 +566,8 @@ class App:
             self.root.after(0, self._show_image, pil_img)
         except Exception as e:
             self.root.after(0, self._show_error, str(e))
+        finally:
+            self.root.after(0, self.progress.stop)
 
     def _show_image(self, pil_img):
         self.progress.stop()
@@ -478,6 +633,8 @@ class App:
             self.root.after(0, lambda: self._done(f"저장 완료: {path}"))
         except Exception as e:
             self.root.after(0, self._show_error, str(e))
+        finally:
+            self.root.after(0, self.progress.stop)
 
     def _extract_all(self):
         if not self.doc:
@@ -521,6 +678,8 @@ class App:
             self.root.after(0, lambda: self._done_msg(msg, output_dir))
         except Exception as e:
             self.root.after(0, self._show_error, str(e))
+        finally:
+            self.root.after(0, self.progress.stop)
 
     # ────────────────────────── OCR ──────────────────────────
 
@@ -538,10 +697,12 @@ class App:
 
         self._busy = True
         self.progress.start()
-        self.status_var.set(f"OCR 추출 중... ({len(pages_with)}개 페이지)")
-        threading.Thread(target=self._ocr_worker, args=(pages_with,), daemon=True).start()
+        model = self.ocr_model_var.get()
+        model_label = VISION_MODELS.get(model, model)
+        self.status_var.set(f"OCR 추출 중... ({len(pages_with)}개 페이지, {model_label})")
+        threading.Thread(target=self._ocr_worker, args=(pages_with, model), daemon=True).start()
 
-    def _ocr_worker(self, pages_with):
+    def _ocr_worker(self, pages_with, model):
         try:
             scale = 4  # OCR용은 항상 고해상도 (화면 배율과 무관)
             results = []
@@ -577,7 +738,8 @@ class App:
                 image_bytes = buf.getvalue()
 
                 # Upstage OCR 호출
-                ocr_result = ocr_image_upstage(image_bytes, f"page{page_idx + 1}_annot.png")
+                ocr_result = ocr_image(image_bytes, f"page{page_idx + 1}_annot.png",
+                                               model=model)
 
                 page_result = {
                     "page": page_idx + 1,
@@ -586,6 +748,7 @@ class App:
                     "text": ocr_result["text"],
                     "confidence": ocr_result["confidence"],
                     "message": ocr_result["message"],
+                    "model": ocr_result.get("model", model),
                     "input_image": pil_img,
                     "image_size": (pil_img.width, pil_img.height),
                 }
@@ -598,6 +761,7 @@ class App:
             self.root.after(0, self._show_error, str(e))
         finally:
             self._busy = False
+            self.root.after(0, self.progress.stop)
 
     def _show_ocr_results(self, results):
         self.progress.stop()
@@ -630,7 +794,7 @@ class App:
         for r in results:
             lines.append(f"--- 페이지 {r['page']} (Annotation {r['annot_count']}개) ---")
             w, h = r.get("image_size", (0, 0))
-            lines.append(f"  입력 이미지: {w}x{h}px")
+            lines.append(f"  입력 이미지: {w}x{h}px | 모델: {r.get('model', '?')}")
             if r["error"]:
                 lines.append(f"  [오류] {r['message']}")
             else:
