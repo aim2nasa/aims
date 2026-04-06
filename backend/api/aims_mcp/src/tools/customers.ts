@@ -4,7 +4,7 @@ import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
 import { countFiles, createCustomer, updateCustomer, queryCustomers, countCustomers, aggregateCustomers, queryRelationships } from '../internalApi.js';
 import {
-  normalizeContract, matchesSearch,
+  normalizeContract, matchesSearch, calculatePaymentStatus,
   type ARContract, type AnnualReport, type NormalizedContract
 } from './contracts.js';
 
@@ -593,7 +593,8 @@ export async function handleSearchCustomerWithContracts(args: unknown) {
         'personal_info.email': 1,
         'personal_info.birth_date': 1,
         'insurance_info.customer_type': 1,
-        'annual_reports': 1
+        'annual_reports': 1,
+        'customer_reviews': 1
       },
       { 'meta.created_at': -1 },
       1  // 첫 번째 매칭 고객만
@@ -616,6 +617,8 @@ export async function handleSearchCustomerWithContracts(args: unknown) {
     // 2단계: 해당 고객의 계약 수집 (contracts.ts 로직 재사용)
     const annualReports: AnnualReport[] = customer.annual_reports || [];
     const allContracts: NormalizedContract[] = [];
+    // 증권번호 기준 중복 제거 (AR 우선, CR 보조)
+    const contractMap = new Map<string, NormalizedContract>();
 
     if (annualReports.length > 0) {
       // issue_date 기준 정렬 (최신 우선)
@@ -624,9 +627,6 @@ export async function handleSearchCustomerWithContracts(args: unknown) {
         const dateB = new Date(b.issue_date || 0).getTime();
         return dateB - dateA;
       });
-
-      // 증권번호 기준 중복 제거 (최신 AR 우선)
-      const contractMap = new Map<string, NormalizedContract>();
 
       for (const ar of sortedReports) {
         // 정상 계약 수집
@@ -663,10 +663,54 @@ export async function handleSearchCustomerWithContracts(args: unknown) {
           }
         }
       }
+    }
 
-      for (const contract of contractMap.values()) {
-        allContracts.push(contract);
+    // customer_reviews(CR)에서 추가 계약 수집 (AR에 없는 증권번호만)
+    const customerReviews: any[] = customer.customer_reviews || [];
+    for (const cr of customerReviews) {
+      const contractInfo = cr.contract_info;
+      if (!contractInfo) continue;
+
+      const policyNumber = contractInfo.policy_number || '';
+      if (policyNumber && contractMap.has(policyNumber)) continue;
+
+      const monthlyPremium = contractInfo.monthly_premium || 0;
+      const initialPremium = contractInfo.initial_premium || 0;
+      const insuredAmount = contractInfo.insured_amount || 0;
+      const contractDate = contractInfo.contract_date || '';
+
+      const normalized: NormalizedContract = {
+        customerId,
+        customerName,
+        policyNumber,
+        productName: cr.product_name || '',
+        insurerName: '',
+        contractor: cr.contractor_name || '',
+        insured: cr.insured_name || '',
+        contractDate,
+        status: '정상',
+        coverageAmount: insuredAmount / 10000,
+        insurancePeriod: '',
+        paymentPeriod: monthlyPremium > 0 ? '' : '일시납',
+        paymentStatus: monthlyPremium > 0 ? calculatePaymentStatus('', contractDate) : '일시납',
+        expiryDate: null,
+        paymentEndDate: null,
+        premium: monthlyPremium > 0 ? monthlyPremium : initialPremium,
+        isLapsed: false,
+        arIssueDate: cr.issue_date || '',
+        arParsedAt: cr.parsed_at
+      };
+
+      if (policyNumber) {
+        contractMap.set(policyNumber, normalized);
+      } else {
+        allContracts.push(normalized);
       }
+    }
+
+    // contractMap의 모든 계약을 allContracts로 flush
+    for (const contract of contractMap.values()) {
+      allContracts.push(contract);
     }
 
     // 3단계: 필터링
