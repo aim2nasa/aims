@@ -12,7 +12,7 @@ _project_root = Path(__file__).parent.parent.parent.parent.parent  # aims/
 _env_shared = _project_root / ".env.shared"
 
 if _env_shared.exists():
-    with open(_env_shared) as f:
+    with open(_env_shared, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
