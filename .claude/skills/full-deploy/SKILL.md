@@ -7,17 +7,12 @@ user_invocable: true
 # AIMS 전체 배포 스킬
 
 서버에 최신 코드를 pull하고 전체 서비스를 배포합니다.
-독립 서비스는 병렬 배포, AI Regression은 기본 제외.
+독립 서비스는 병렬 배포. AI Regression은 포함하지 않음 (별도 실행).
 
 ## 트리거
 
 - `/full-deploy` (사용자 호출)
 - "전체 배포", "전체배포", "deploy all", "풀 디플로이"
-
-## 옵션 감지
-
-사용자가 "regression 포함", "regression 테스트도", "AI 테스트 포함" 등을 언급하면
-`--with-regression` 플래그를 추가한다. 기본은 **regression 제외**.
 
 ## 실행 단계
 
@@ -41,14 +36,8 @@ cd /d/aims && git log origin/main..HEAD --oneline
 
 #### Step 1: 이전 파일 정리 + 배포 시작
 
-regression 제외 (기본):
 ```bash
 ssh rossi@100.110.215.65 'cd ~/aims && rm -f /tmp/deploy_exitcode.txt /tmp/deploy_result.txt && nohup bash -c "./deploy_all.sh > /tmp/deploy_result.txt 2>&1; echo \$? > /tmp/deploy_exitcode.txt" > /dev/null 2>&1 & echo "배포 시작됨 (PID: $!)"'
-```
-
-regression 포함:
-```bash
-ssh rossi@100.110.215.65 'cd ~/aims && rm -f /tmp/deploy_exitcode.txt /tmp/deploy_result.txt && nohup bash -c "./deploy_all.sh --with-regression > /tmp/deploy_result.txt 2>&1; echo \$? > /tmp/deploy_exitcode.txt" > /dev/null 2>&1 & echo "배포 시작됨 (PID: $!)"'
 ```
 
 이 명령은 즉시 반환된다 (배포는 백그라운드 실행).
@@ -95,7 +84,6 @@ ssh rossi@100.110.215.65 'echo "=== pm2 ===" && pm2 list && echo "=== health ===
 | 10-11 | 프론트엔드 병렬 (Frontend + Admin) | ✅/❌ |
 | 12 | 서비스 상태 | ✅/❌ |
 | 13 | Docker 정리 | ✅/❌ |
-| 14 | AI Regression (옵션) | ✅/❌/스킵 |
 | - | 헬스체크 | ✅/❌ |
 
 ## 주의사항
@@ -105,4 +93,4 @@ ssh rossi@100.110.215.65 'echo "=== pm2 ===" && pm2 list && echo "=== health ===
 - **Tailscale IP**: `100.110.215.65`
 - **출력 리다이렉트 필수**: `deploy_all.sh` 출력이 30KB 초과
 - **스마트 빌드**: 소스 변경 없는 서비스는 자동으로 QUICK RESTART
-- **AI Regression**: 기본 제외. `--with-regression` 옵션으로만 실행
+- **AI Regression**: deploy_all.sh에 포함하지 않음. 사용자 명시적 요청 시에만 별도 실행

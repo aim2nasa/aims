@@ -4,7 +4,8 @@
       "Edit(/.claude/skills/compact-fix/**)",
       "Edit(/.claude/skills/ace-process/**)",
       "Bash(git merge:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Edit(/.claude/skills/full-deploy/**)"
     ]
   },
   "hooks": {

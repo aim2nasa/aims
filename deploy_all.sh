@@ -1,9 +1,9 @@
 #!/bin/bash
 # AIMS 전체 배포 스크립트 (tars 서버용)
-# 사용법: cd ~/aims && ./deploy_all.sh [--with-regression]
+# 사용법: cd ~/aims && ./deploy_all.sh
 #
-# 옵션:
-#   --with-regression  AI 어시스턴트 Regression 테스트 포함 (기본: 제외)
+# AI Regression 테스트는 별도 실행:
+#   python3 ~/aims/tools/ai_assistant_regression/run_regression.py
 
 set -e
 
@@ -15,20 +15,7 @@ NC='\033[0m'
 
 AIMS_DIR="$HOME/aims"
 LOCKFILE="/tmp/aims_deploy.lock"
-WITH_REGRESSION=false
-
-# 옵션 파싱
-for arg in "$@"; do
-  case $arg in
-    --with-regression) WITH_REGRESSION=true ;;
-  esac
-done
-
-if [ "$WITH_REGRESSION" = true ]; then
-  TOTAL_STEPS=14
-else
-  TOTAL_STEPS=13
-fi
+TOTAL_STEPS=13
 
 # --- 동시 실행 방지 (flock) ---
 EXISTING_PID=$(cat "$LOCKFILE" 2>/dev/null || true)
@@ -140,9 +127,6 @@ run_parallel_steps() {
 }
 
 echo "=== AIMS 전체 배포 시작 ==="
-if [ "$WITH_REGRESSION" = true ]; then
-  echo "  (AI Regression 테스트 포함)"
-fi
 echo ""
 
 # 1. Git 정리 및 Pull
@@ -174,41 +158,6 @@ run_step 12 "서비스 상태 확인" "pm2 list"
 # 13. Docker 정리
 run_step 13 "Docker 정리" "docker image prune -f && docker container prune -f"
 
-# 14. AI 어시스턴트 Regression 테스트 (--with-regression 옵션 시에만)
-if [ "$WITH_REGRESSION" = true ]; then
-  REGRESSION_SCRIPT="$AIMS_DIR/tools/ai_assistant_regression/run_regression.py"
-  if [ -f "$REGRESSION_SCRIPT" ]; then
-    echo -n "[14/${TOTAL_STEPS}] AI 어시스턴트 Regression 테스트 ... "
-    REGRESSION_START=$(date +%s)
-    sleep 5
-    # temperature=0으로 aims_api Docker 컨테이너 재시작 (비결정성 제거)
-    # set +e: regression 실패/중단 시에도 반드시 temperature 원복 보장
-    set +e
-    export AI_TEMPERATURE=0
-    docker stop aims-api 2>/dev/null || true
-    docker rm aims-api 2>/dev/null || true
-    cd "$AIMS_DIR/backend/api/aims_api" && ./deploy_aims_api.sh > /dev/null 2>&1
-    sleep 5
-    (python3 "$REGRESSION_SCRIPT" > /tmp/regression_output.txt 2>&1) && REGRESSION_OK=1 || REGRESSION_OK=0
-    # temperature 원복 (일반 사용자는 OpenAI 기본값 사용) — Docker 컨테이너 재시작
-    unset AI_TEMPERATURE
-    docker stop aims-api 2>/dev/null || true
-    docker rm aims-api 2>/dev/null || true
-    cd "$AIMS_DIR/backend/api/aims_api" && ./deploy_aims_api.sh > /dev/null 2>&1
-    set -e
-    REGRESSION_END=$(date +%s)
-    REGRESSION_ELAPSED=$((REGRESSION_END - REGRESSION_START))
-    if [ "$REGRESSION_OK" = "1" ]; then
-      echo -e "${GREEN}PASS${NC} ${CYAN}($(format_time $REGRESSION_ELAPSED))${NC}"
-    else
-      echo -e "${YELLOW}FAIL (경고)${NC} ${CYAN}($(format_time $REGRESSION_ELAPSED))${NC}"
-      echo -e "${YELLOW}  AI 응답 비결정적 특성상 배포는 계속됩니다.${NC}"
-      echo -e "${YELLOW}  상세: cat /tmp/regression_output.txt${NC}"
-    fi
-  else
-    echo "[14/${TOTAL_STEPS}] AI Regression 테스트 스킵 (스크립트 없음)"
-  fi
-fi
 
 TOTAL_END=$(date +%s)
 TOTAL_ELAPSED=$((TOTAL_END - TOTAL_START))
