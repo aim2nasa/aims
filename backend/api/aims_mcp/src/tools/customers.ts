@@ -3,6 +3,10 @@ import { escapeRegex, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
 import { countFiles, createCustomer, updateCustomer, queryCustomers, countCustomers, aggregateCustomers, queryRelationships } from '../internalApi.js';
+import {
+  normalizeContract, matchesSearch,
+  type ARContract, type AnnualReport, type NormalizedContract
+} from './contracts.js';
 
 
 /**
@@ -92,6 +96,23 @@ export const updateCustomerSchema = z.object({
   address2: z.string().optional().describe('상세 주소 (동/호수 등 사용자 입력)')
 });
 
+// 고객명 + 계약 통합 검색 스키마
+export const searchCustomerWithContractsSchema = z.object({
+  query: z.string().describe('고객명 검색어 (필수). 부분 매칭 지원'),
+  search: z.string().optional().describe('계약 내 검색어 (상품명, 증권번호)'),
+  status: z.string().optional().describe('계약 상태 (정상, 실효 등)'),
+  includeLapsed: z.boolean().optional().default(false).describe('실효/해지 계약 포함 여부 (기본: false)'),
+  insurerName: z.string().optional().describe('보험사명 필터 (예: "메트라이프")'),
+  paymentStatus: z.string().optional().describe('납입상태 필터 (납입중/납입완료/일시납/전기납)'),
+  coverageAmountMin: z.number().optional().describe('보장금액 최소 (만원 단위)'),
+  contractorNotInsured: z.boolean().optional().describe('계약자와 피보험자가 다른 계약만 (true)'),
+  contractDateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD').optional().describe('이 날짜 이후 계약만 (YYYY-MM-DD)'),
+  contractDateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD').optional().describe('이 날짜 이전 계약만 (YYYY-MM-DD)'),
+  sortBy: z.enum(['contractDate', 'premium', 'coverageAmount', 'expiryDate']).optional().default('contractDate').describe('정렬 기준'),
+  sortOrder: z.enum(['asc', 'desc']).optional().default('desc').describe('정렬 순서'),
+  limit: z.number().optional().default(50).describe('계약 결과 개수 (기본: 50, 최대: 50)')
+});
+
 // Tool 정의
 export const customerToolDefinitions = [
   {
@@ -100,7 +121,7 @@ export const customerToolDefinitions = [
     inputSchema: {
       type: 'object' as const,
       properties: {
-        query: { type: 'string', description: '검색어 (이름의 일부, 전화번호, 이메일). 부분 매칭을 지원하므로 이름 일부만으로도 검색 가능 (예: "마리치" → "주식회사마리치" 검색됨)' },
+        query: { type: 'string', description: '검색어 (이름의 일부, 전화번호, 이메일). 부분 매칭을 지원하므로 이름 일부만으로도 검색 가능 (예: "[법인명]" → "주식회사[법인명]" 검색됨)' },
         lastName: { type: 'string', description: '성씨(한 글자)로만 검색할 때 사용 (예: "김", "이", "박"). 이름의 첫 글자 기준 prefix 매칭. 2글자 이상의 이름 부분 검색은 query를 사용하세요' },
         customerType: { type: 'string', enum: ['개인', '법인'], description: '고객 유형' },
         status: { type: 'string', enum: ['active', 'inactive', 'all'], description: '상태 (기본: active)' },
@@ -153,6 +174,47 @@ export const customerToolDefinitions = [
         address2: { type: 'string', description: '상세 주소 (동/호수 등 사용자가 직접 입력)' }
       },
       required: ['customerId']
+    }
+  },
+  {
+    name: 'search_customer_with_contracts',
+    description: `고객명으로 검색하여 고객 정보와 계약 목록을 한번에 조회합니다.
+
+■ 이 도구를 사용하는 경우:
+- [고객명] + 계약/보험/보험료/증권/만기/보장 관련 질문
+- "[고객명] 계약 현황 알려줘"
+- "[고객명] 보험료 얼마나 내고 있어?"
+- "[고객명] 증권번호 목록 알려줘"
+- "[고객명] 메트라이프 계약만 보여줘"
+- "[고객명] 실효 계약 포함해서 전부 보여줘"
+- "[고객명] 보장금액 1억 이상 계약"
+
+■ search_customers 대신 이 도구를 사용하세요!
+고객명이 언급되고 계약/보험 정보가 필요한 질문은 반드시 이 도구를 호출하세요.
+search_customers는 고객 기본정보만 반환하고 계약 정보는 없습니다.
+
+■ 이 도구를 사용하지 않는 경우:
+- 고객명 없이 전체 계약 조회 → list_contracts 사용
+- 고객 기본정보만 필요 (이름, 전화번호, 생년월일) → search_customers 사용
+- 변액보험/CRS 관련 질의 → get_customer_reviews 또는 query_customer_reviews 사용`,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: '고객명 검색어 (필수). 부분 매칭 지원 (예: "[법인명]" → "주식회사[법인명]")' },
+        search: { type: 'string', description: '계약 내 검색어 (상품명, 증권번호)' },
+        status: { type: 'string', description: '계약 상태 (정상, 실효 등)' },
+        includeLapsed: { type: 'boolean', description: '실효/해지 계약 포함 여부 (기본: false)' },
+        insurerName: { type: 'string', description: '보험사명 필터 (예: "메트라이프", "삼성생명")' },
+        paymentStatus: { type: 'string', description: '납입상태 필터 (납입중/납입완료/일시납/전기납)' },
+        coverageAmountMin: { type: 'number', description: '보장금액 최소 (만원 단위)' },
+        contractorNotInsured: { type: 'boolean', description: '계약자와 피보험자가 다른 계약만 (true)' },
+        contractDateFrom: { type: 'string', description: '이 날짜 이후 계약만 (YYYY-MM-DD)' },
+        contractDateTo: { type: 'string', description: '이 날짜 이전 계약만 (YYYY-MM-DD)' },
+        sortBy: { type: 'string', enum: ['contractDate', 'premium', 'coverageAmount', 'expiryDate'], description: '정렬 기준 (기본: contractDate)' },
+        sortOrder: { type: 'string', enum: ['asc', 'desc'], description: '정렬 순서 (기본: desc)' },
+        limit: { type: 'number', description: '계약 결과 개수 (기본: 50, 최대: 50)' }
+      },
+      required: ['query']
     }
   }
 ];
@@ -494,6 +556,261 @@ export async function handleUpdateCustomer(args: unknown) {
       content: [{
         type: 'text' as const,
         text: `고객 정보 수정 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 고객명 + 계약 통합 검색 핸들러
+ *
+ * 고객명으로 검색 → customerId 획득 → 해당 고객의 계약 목록까지 한번에 반환
+ * contracts.ts의 normalizeContract/필터 로직을 재사용
+ */
+export async function handleSearchCustomerWithContracts(args: unknown) {
+  try {
+    const params = searchCustomerWithContractsSchema.parse(args);
+    const userId = getCurrentUserId();
+
+    // 1단계: 고객명으로 검색 (부분 매칭)
+    const regex = { $regex: escapeRegex(params.query), $options: 'i' };
+    const customerFilter: Record<string, unknown> = {
+      'meta.created_by': userId,
+      'meta.status': 'active',
+      'personal_info.name': regex
+    };
+
+    const customers = await queryCustomers(
+      customerFilter,
+      {
+        _id: 1,
+        'personal_info.name': 1,
+        'personal_info.mobile_phone': 1,
+        'personal_info.email': 1,
+        'personal_info.birth_date': 1,
+        'insurance_info.customer_type': 1,
+        'annual_reports': 1
+      },
+      { 'meta.created_at': -1 },
+      1  // 첫 번째 매칭 고객만
+    );
+
+    if (customers.length === 0) {
+      return {
+        isError: true,
+        content: [{
+          type: 'text' as const,
+          text: `"${params.query}"에 해당하는 고객을 찾을 수 없습니다.`
+        }]
+      };
+    }
+
+    const customer = customers[0];
+    const customerId = customer._id.toString();
+    const customerName = customer.personal_info?.name || '';
+
+    // 2단계: 해당 고객의 계약 수집 (contracts.ts 로직 재사용)
+    const annualReports: AnnualReport[] = customer.annual_reports || [];
+    const allContracts: NormalizedContract[] = [];
+
+    if (annualReports.length > 0) {
+      // issue_date 기준 정렬 (최신 우선)
+      const sortedReports = [...annualReports].sort((a, b) => {
+        const dateA = new Date(a.issue_date || 0).getTime();
+        const dateB = new Date(b.issue_date || 0).getTime();
+        return dateB - dateA;
+      });
+
+      // 증권번호 기준 중복 제거 (최신 AR 우선)
+      const contractMap = new Map<string, NormalizedContract>();
+
+      for (const ar of sortedReports) {
+        // 정상 계약 수집
+        const contracts: ARContract[] = ar.contracts || [];
+        for (const contract of contracts) {
+          const policyNumber = contract['증권번호'] || '';
+          if (policyNumber && contractMap.has(policyNumber)) continue;
+          const normalized = normalizeContract(
+            contract, customerId, customerName,
+            ar.issue_date, ar.parsed_at, false
+          );
+          if (policyNumber) {
+            contractMap.set(policyNumber, normalized);
+          } else {
+            allContracts.push(normalized);
+          }
+        }
+
+        // 실효 계약 수집
+        if (params.includeLapsed) {
+          const lapsedContracts: ARContract[] = ar.lapsed_contracts || [];
+          for (const contract of lapsedContracts) {
+            const policyNumber = contract['증권번호'] || '';
+            if (policyNumber && contractMap.has(policyNumber)) continue;
+            const normalized = normalizeContract(
+              contract, customerId, customerName,
+              ar.issue_date, ar.parsed_at, true
+            );
+            if (policyNumber) {
+              contractMap.set(policyNumber, normalized);
+            } else {
+              allContracts.push(normalized);
+            }
+          }
+        }
+      }
+
+      for (const contract of contractMap.values()) {
+        allContracts.push(contract);
+      }
+    }
+
+    // 3단계: 필터링
+    let filteredContracts = allContracts;
+
+    // 계약 내 검색어
+    if (params.search) {
+      filteredContracts = filteredContracts.filter(c => matchesSearch(c, params.search!));
+    }
+
+    // 계약 상태
+    if (params.status) {
+      const statusLower = params.status.toLowerCase();
+      filteredContracts = filteredContracts.filter(c =>
+        c.status.toLowerCase().includes(statusLower)
+      );
+    }
+
+    // 보험사명
+    if (params.insurerName) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.insurerName.includes(params.insurerName!)
+      );
+    }
+
+    // 납입상태
+    if (params.paymentStatus) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.paymentStatus === params.paymentStatus
+      );
+    }
+
+    // 보장금액 최소
+    if (params.coverageAmountMin !== undefined) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.coverageAmount >= params.coverageAmountMin!
+      );
+    }
+
+    // 계약자 ≠ 피보험자
+    if (params.contractorNotInsured) {
+      filteredContracts = filteredContracts.filter(c =>
+        c.contractor !== c.insured
+      );
+    }
+
+    // 계약일 범위
+    if (params.contractDateFrom) {
+      const fromTime = new Date(params.contractDateFrom).getTime();
+      filteredContracts = filteredContracts.filter(c => {
+        const t = new Date(c.contractDate).getTime();
+        return !isNaN(t) && t >= fromTime;
+      });
+    }
+    if (params.contractDateTo) {
+      const toTime = new Date(params.contractDateTo).getTime() + 86400000 - 1;
+      filteredContracts = filteredContracts.filter(c => {
+        const t = new Date(c.contractDate).getTime();
+        return !isNaN(t) && t <= toTime;
+      });
+    }
+
+    // 4단계: 정렬
+    const sortBy = params.sortBy || 'contractDate';
+    const sortOrder = params.sortOrder || 'desc';
+    const sortMultiplier = sortOrder === 'asc' ? 1 : -1;
+
+    filteredContracts.sort((a, b) => {
+      if (sortBy === 'premium') {
+        return (a.premium - b.premium) * sortMultiplier;
+      }
+      if (sortBy === 'coverageAmount') {
+        return (a.coverageAmount - b.coverageAmount) * sortMultiplier;
+      }
+      if (sortBy === 'expiryDate') {
+        if (!a.expiryDate && !b.expiryDate) return 0;
+        if (!a.expiryDate) return 1;
+        if (!b.expiryDate) return -1;
+        const dateA = new Date(a.expiryDate).getTime();
+        const dateB = new Date(b.expiryDate).getTime();
+        return (dateA - dateB) * sortMultiplier;
+      }
+      const dateA = new Date(a.contractDate || 0).getTime();
+      const dateB = new Date(b.contractDate || 0).getTime();
+      return (dateA - dateB) * sortMultiplier;
+    });
+
+    // 5단계: summary 집계
+    const summary = filteredContracts.reduce(
+      (acc, c) => {
+        const premium = c.premium || 0;
+        acc.totalPremium += premium;
+        acc.totalContracts += 1;
+
+        const isLumpSum = c.paymentPeriod.includes('일시납');
+        const statusLower = c.status.toLowerCase();
+        const isActive = statusLower.includes('정상') || statusLower.includes('유지');
+        if (isLumpSum) {
+          acc.lumpSumPremium += premium;
+        } else if (isActive) {
+          acc.monthlyPremium += premium;
+        }
+
+        if (isActive) {
+          acc.activeContracts += 1;
+        } else if (statusLower.includes('실효') || statusLower.includes('해지') || statusLower.includes('만기')) {
+          acc.lapsedContracts += 1;
+        }
+
+        return acc;
+      },
+      { totalPremium: 0, monthlyPremium: 0, lumpSumPremium: 0, totalContracts: 0, activeContracts: 0, lapsedContracts: 0 }
+    );
+
+    // 6단계: limit 적용
+    const limit = Math.min(params.limit || 50, 50);
+    const paginatedContracts = filteredContracts.slice(0, limit);
+
+    // 7단계: 응답 구성
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          customer: {
+            id: customerId,
+            name: customerName,
+            birthDate: customer.personal_info?.birth_date || null,
+            phone: customer.personal_info?.mobile_phone || null,
+            email: customer.personal_info?.email || null,
+            type: customer.insurance_info?.customer_type || null
+          },
+          contracts: paginatedContracts,
+          summary,
+          totalCount: filteredContracts.length
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] search_customer_with_contracts 에러:', error);
+    sendErrorLog('aims_mcp', 'search_customer_with_contracts 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `고객+계약 검색 실패: ${errorMessage}`
       }]
     };
   }

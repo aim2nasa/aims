@@ -12,8 +12,8 @@ export const listContractsSchema = z.object({
   customerId: z.string().optional().describe('특정 고객의 계약만 조회'),
   search: z.string().optional().describe('검색어 (고객명, 상품명, 증권번호)'),
   status: z.string().optional().describe('계약 상태 (정상, 실효 등)'),
-  contractor: z.string().optional().describe('계약자명으로 필터링 (예: "김보성")'),
-  insured: z.string().optional().describe('피보험자명으로 필터링 (예: "안영미")'),
+  contractor: z.string().optional().describe('계약자명으로 필터링 (예: "[고객명]")'),
+  insured: z.string().optional().describe('피보험자명으로 필터링 (예: "[고객명]")'),
   contractDateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이후 계약만 조회 (YYYY-MM-DD)'),
   contractDateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD이어야 합니다').optional().describe('이 날짜 이전 계약만 조회 (YYYY-MM-DD)'),
   includeLapsed: z.boolean().optional().default(false).describe('실효/해지 계약 포함 여부 (lapsed_contracts 배열에서 수집, 기본: false)'),
@@ -108,7 +108,7 @@ export const contractToolDefinitions = [
 // 타입 정의
 // ============================================================================
 
-interface ARContract {
+export interface ARContract {
   '순번': number;
   '증권번호': string;
   '보험상품': string;
@@ -123,7 +123,7 @@ interface ARContract {
   '보험료(원)': number;
 }
 
-interface AnnualReport {
+export interface AnnualReport {
   customer_name: string;
   issue_date: string;
   contracts: ARContract[];
@@ -135,7 +135,7 @@ interface AnnualReport {
   source_file_id?: string;
 }
 
-interface NormalizedContract {
+export interface NormalizedContract {
   customerId: string;
   customerName: string;
   policyNumber: string;
@@ -168,7 +168,7 @@ interface NormalizedContract {
  * - "N년" → 계약일 + N년 vs 현재 날짜 비교 → "납입완료" / "납입중"
  * - 그 외 (N세 등 파싱 불가) → "납입중"
  */
-function calculatePaymentStatus(paymentPeriod: string, contractDate: string): string {
+export function calculatePaymentStatus(paymentPeriod: string, contractDate: string): string {
   const period = paymentPeriod.trim();
 
   if (period.includes('일시납')) return '일시납';
@@ -196,7 +196,7 @@ function calculatePaymentStatus(paymentPeriod: string, contractDate: string): st
  * - "N세" → null (생년월일 필요, 판단 불가)
  * - 파싱 불가 → null
  */
-function calculateExpiryDate(insurancePeriod: string, contractDate: string): string | null {
+export function calculateExpiryDate(insurancePeriod: string, contractDate: string): string | null {
   const period = insurancePeriod.trim();
 
   if (period.includes('종신')) return null;
@@ -225,7 +225,7 @@ function calculateExpiryDate(insurancePeriod: string, contractDate: string): str
  * - "N세" → null (생년월일 필요, 판단 불가)
  * - 파싱 불가 → null
  */
-function calculatePaymentEndDate(paymentPeriod: string, contractDate: string): string | null {
+export function calculatePaymentEndDate(paymentPeriod: string, contractDate: string): string | null {
   const period = paymentPeriod.trim();
 
   if (period.includes('일시납')) return contractDate || null;
@@ -249,7 +249,7 @@ function calculatePaymentEndDate(paymentPeriod: string, contractDate: string): s
 /**
  * AR 계약 데이터를 정규화된 형식으로 변환
  */
-function normalizeContract(
+export function normalizeContract(
   contract: ARContract,
   customerId: string,
   customerName: string,
@@ -287,7 +287,7 @@ function normalizeContract(
 /**
  * 검색어와 계약이 매칭되는지 확인
  */
-function matchesSearch(contract: NormalizedContract, search: string): boolean {
+export function matchesSearch(contract: NormalizedContract, search: string): boolean {
   const searchLower = search.toLowerCase();
   return (
     contract.customerName.toLowerCase().includes(searchLower) ||

@@ -45,13 +45,13 @@ describe('AI 어시스턴트: 포괄적 정보 요청 도구 선택 규칙', () 
   // -------------------------------------------------------------------------
   // 2. 계약 우선 원칙
   // -------------------------------------------------------------------------
-  test('포괄적 정보 요청 시 list_contracts 우선 사용 규칙이 있어야 함', () => {
-    // "정보" 요청 → list_contracts 우선이라는 규칙이 있어야 함
+  test('포괄적 정보 요청 시 search_customer_with_contracts 우선 사용 규칙이 있어야 함', () => {
+    // "정보" 요청 → search_customer_with_contracts 우선이라는 규칙이 있어야 함
     const promptSection = chatServiceSource.substring(
       chatServiceSource.indexOf('포괄적 정보 요청'),
       chatServiceSource.indexOf('포괄적 정보 요청') + 2000
     );
-    expect(promptSection).toContain('list_contracts');
+    expect(promptSection).toContain('search_customer_with_contracts');
   });
 
   // -------------------------------------------------------------------------
@@ -214,7 +214,7 @@ describe('CRS/변액보험 도구 선택 규칙', () => {
 
   test('decision tree에 3개 CRS 도구가 모두 명시되어야 함', () => {
     const treeStart = chatServiceSource.indexOf('CRS/변액보험 도구 선택');
-    const treeSection = chatServiceSource.substring(treeStart, treeStart + 500);
+    const treeSection = chatServiceSource.substring(treeStart, treeStart + 800);
     expect(treeSection).toContain('query_customer_reviews');
     expect(treeSection).toContain('get_customer_reviews');
     expect(treeSection).toContain('get_cr_contract_history');

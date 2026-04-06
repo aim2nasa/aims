@@ -6,7 +6,7 @@ import {
 import { sendErrorLog } from '../systemLogger.js';
 
 // Tool 정의 및 핸들러 import
-import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, handleCreateCustomer, handleUpdateCustomer } from './customers.js';
+import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, handleCreateCustomer, handleUpdateCustomer, handleSearchCustomerWithContracts } from './customers.js';
 import { contractToolDefinitions, handleListContracts, handleGetContractDetails, handleCreateContract } from './contracts.js';
 import { birthdayToolDefinitions, handleFindBirthdayCustomers } from './birthdays.js';
 import { networkToolDefinitions, handleGetCustomerNetwork } from './network.js';
@@ -44,6 +44,7 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   get_customer: handleGetCustomer,
   create_customer: handleCreateCustomer,
   update_customer: handleUpdateCustomer,
+  search_customer_with_contracts: handleSearchCustomerWithContracts,
   // 계약 관련
   list_contracts: handleListContracts,
   get_contract_details: handleGetContractDetails,

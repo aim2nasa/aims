@@ -37,7 +37,7 @@ export const documentToolDefinitions = [
 ■ 고객의 문서를 찾을 때:
   1. search_customers로 고객 ID를 먼저 조회
   2. search_documents(query="키워드", customerId="고객ID", searchMode="keyword")
-  예: "캐치업코리아 보험증권" → search_customers("캐치업코리아") → search_documents(query="보험증권", customerId="...", searchMode="keyword")
+  예: "[고객명] 보험증권" → search_customers("[고객명]") → search_documents(query="보험증권", customerId="...", searchMode="keyword")
 
 ■ 고객 지정 없이 전체 문서 검색:
   search_documents(query="검색어", searchMode="keyword")

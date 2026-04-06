@@ -185,9 +185,14 @@ def validate_case(case, response):
         failures.append("도구 호출 없이 응답함 (가상 데이터 생성 의심)")
 
     # required_tools 검증 (hard — FAIL): 이 도구는 반드시 호출되어야 함
+    # 등가 도구: search_customer_with_contracts는 list_contracts를 내포
+    EQUIVALENT_TOOLS = {
+        "list_contracts": ["list_contracts", "search_customer_with_contracts"],
+    }
     required_tools = case.get("required_tools", [])
     for tool in required_tools:
-        if tool not in called_tools:
+        accepted = EQUIVALENT_TOOLS.get(tool, [tool])
+        if not any(t in called_tools for t in accepted):
             failures.append(f"필수 도구 '{tool}'가 호출되지 않음 (호출된 도구: {called_tools})")
 
     # expected_tools 검증 (soft — WARN): AI 비결정성 수용
