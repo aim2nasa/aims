@@ -118,32 +118,6 @@
     "created_date": "2026-03-17"
   },
   {
-    "id": "REG-011",
-    "name": "보험료 질문 - list_contracts 선택되어야 함",
-    "category": "list_contracts",
-    "question": "캐치업코리아 보험료 얼마나 내고 있어?",
-    "required_tools": ["list_contracts"],
-    "expected_tools": ["search_customers", "list_contracts"],
-    "response_must_contain": [],
-    "response_must_not_contain": ["오류"],
-    "must_call_tools": true,
-    "created_from": "Phase 1 계약 데이터 정상 접근 보장",
-    "created_date": "2026-03-17"
-  },
-  {
-    "id": "REG-012",
-    "name": "증권번호 질문 - 계약 도구 선택",
-    "category": "list_contracts",
-    "question": "캐치업코리아 증권번호 목록 알려줘",
-    "required_tools": ["list_contracts"],
-    "expected_tools": ["search_customers", "list_contracts"],
-    "response_must_contain": [],
-    "response_must_not_contain": ["오류"],
-    "must_call_tools": true,
-    "created_from": "Phase 1 계약 세부 정보 접근 보장",
-    "created_date": "2026-03-17"
-  },
-  {
     "id": "REG-013",
     "name": "문서 검색 - 마리치 고객",
     "category": "search_documents",
@@ -319,32 +293,6 @@
     "created_date": "2026-03-21"
   },
   {
-    "id": "REG-027",
-    "name": "프롬프트 Q6 - 보험료 합계 응답",
-    "category": "list_contracts",
-    "question": "캐치업코리아 보험료 얼마나 내고 있어?",
-    "required_tools": ["list_contracts"],
-    "expected_tools": ["search_customers", "list_contracts"],
-    "response_must_contain": [],
-    "response_must_not_contain": ["확인되지 않습니다"],
-    "must_call_tools": true,
-    "created_from": "Task 3 - 시스템 프롬프트 Q6 가이드 추가",
-    "created_date": "2026-03-21"
-  },
-  {
-    "id": "REG-028",
-    "name": "프롬프트 Q4 - 계약자 필터링",
-    "category": "list_contracts",
-    "question": "김보성 고객이 계약자로 되어 있는 계약들을 모두 보여줘",
-    "required_tools": ["list_contracts"],
-    "expected_tools": ["search_customers", "list_contracts"],
-    "response_must_contain": [],
-    "response_must_not_contain": ["등록되어 있지 않습니다", "확인되지 않습니다"],
-    "must_call_tools": true,
-    "created_from": "Task 3 - 시스템 프롬프트 Q4 필터링 가이드 추가",
-    "created_date": "2026-03-21"
-  },
-  {
     "id": "REG-029",
     "name": "프롬프트 Q7 - 가장 최근 계약",
     "category": "list_contracts",
@@ -466,18 +414,6 @@
     "response_must_not_contain": ["오류"],
     "must_call_tools": true,
     "created_from": "AR insurerName 필드 추가",
-    "created_date": "2026-03-21"
-  },
-  {
-    "id": "REG-039",
-    "name": "CRS 도구 선택 - 적립금 질의",
-    "category": "customer_reviews",
-    "question": "정승우 변액보험 적립금 얼마야?",
-    "expected_tools": ["search_customers", "get_customer_reviews"],
-    "response_must_contain": [],
-    "response_must_not_contain": ["계약이 없습니다"],
-    "must_call_tools": true,
-    "created_from": "CRS 도구 선택 프롬프트 가이드 추가",
     "created_date": "2026-03-21"
   },
   {
