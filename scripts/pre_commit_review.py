@@ -377,6 +377,71 @@ def run_service_tests(services):
     return results
 
 
+def get_current_branch():
+    """현재 브랜치명 조회"""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace"
+        )
+        return result.stdout.strip()
+    except Exception:
+        return ""
+
+
+def check_regression_test(files):
+    """
+    fix/ 브랜치에서 코드 변경 시 regression 테스트 포함 여부 체크.
+    테스트 없이 버그 수정 커밋을 차단한다.
+
+    Returns:
+        None if OK, error message string if blocked
+    """
+    branch = get_current_branch()
+    if not branch.startswith("fix/"):
+        return None  # fix 브랜치가 아니면 체크 안 함
+
+    CODE_EXTENSIONS = {'.py', '.ts', '.tsx', '.js', '.jsx', '.css'}
+    TEST_PATTERNS = ['test', 'spec', '__tests__']
+    # 테스트 체크 제외 대상
+    EXCLUDE_PATHS = [
+        'scripts/',          # 빌드/배포 스크립트
+        '.claude/',          # Claude 설정
+        'docs/',             # 문서
+    ]
+
+    has_code_change = False
+    has_test_change = False
+
+    for f in files:
+        # 제외 대상
+        if any(f.startswith(p) for p in EXCLUDE_PATHS):
+            continue
+
+        _, ext = os.path.splitext(f)
+        if ext not in CODE_EXTENSIONS:
+            continue
+
+        # 테스트 파일인지 확인
+        f_lower = f.lower()
+        is_test = any(tp in f_lower for tp in TEST_PATTERNS)
+
+        if is_test:
+            has_test_change = True
+        else:
+            has_code_change = True
+
+    if has_code_change and not has_test_change:
+        return (
+            f"[REGRESSION TEST] fix/ 브랜치에서 코드 변경이 있지만 테스트 파일이 없습니다.\n"
+            f"  브랜치: {branch}\n"
+            f"  버그 수정 시 regression 테스트를 반드시 포함하세요.\n"
+            f"  (테스트 파일: *test*, *spec*, __tests__/ 경로)"
+        )
+
+    return None
+
+
 def check_gini_gate(input_data):
     """
     Gini 검수 게이트: .gini-approved 마커 파일 존재 여부 확인
@@ -414,6 +479,12 @@ def main():
 
     if not files or not diff:
         sys.exit(0)
+
+    # ━━━━━━ 0.5단계: Regression 테스트 강제 (fix/ 브랜치) ━━━━━━
+    regression_error = check_regression_test(files)
+    if regression_error:
+        sys.stderr.write(regression_error + "\n")
+        sys.exit(2)
 
     # ━━━━━━ 1단계: 밴드에이드 패턴 감지 ━━━━━━
     warnings, blocks = detect_bandaid_patterns(diff, files)

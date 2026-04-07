@@ -2084,6 +2084,46 @@ async def _process_via_xpipe(
                 "error": user_message,
             }
 
+        # 변환을 이미 시도했으나 실패한 경우 → 에러 상태로 처리 (재대기 무의미)
+        if skip_reason == "conversion_failed" and is_convertible_mime(detected_mime):
+            user_message = "파일 변환에 실패했습니다. 지원되지 않는 형식이거나 파일이 손상되었을 수 있습니다."
+            logger.warning(
+                f"[xPipe] 변환 실패 — 에러 처리: doc_id={doc_id}, "
+                f"file={original_name}, mime={detected_mime}"
+            )
+            await update_file(doc_id, set_fields=_serialize_for_api({
+                "status": "failed",
+                "overallStatus": "error",
+                "overallStatusUpdatedAt": datetime.utcnow(),
+                "error.statusCode": 422,
+                "error.statusMessage": user_message,
+                "error.timestamp": datetime.utcnow().isoformat(),
+                "processingSkipReason": skip_reason,
+                "meta.mime": detected_mime,
+                "meta.filename": original_name,
+                "meta.extension": os.path.splitext(original_name or "")[1].lower(),
+                "meta.size_bytes": len(file_content) if file_content else 0,
+                "upload.originalName": original_name,
+                "progressStage": "error",
+                "progress": 0,
+            }))
+            await _notify_progress(doc_id, user_id, -1, "error", user_message)
+            await _notify_document_complete(doc_id, user_id)
+
+            try:
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+            except Exception:
+                pass
+
+            return {
+                "result": "error",
+                "doc_id": doc_id,
+                "status": "failed",
+                "overallStatus": "error",
+                "engine": "xpipe",
+                "error": user_message,
+            }
+
         # 변환 대상 파일(HWP/DOC/PPT/XLS 등)은 PDF 변환 워커가 처리해야 하므로
         # conversion_pending 상태로 설정 (조기 completed 방지)
         if is_convertible_mime(detected_mime):
