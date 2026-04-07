@@ -6,7 +6,8 @@
       "Bash(git merge:*)",
       "Bash(git branch:*)",
       "Edit(/.claude/skills/full-deploy/**)",
-      "Edit(/.claude/skills/bug-report/**)"
+      "Edit(/.claude/skills/bug-report/**)",
+      "Bash(gh issue:*)"
     ]
   },
   "hooks": {
