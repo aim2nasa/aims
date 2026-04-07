@@ -453,7 +453,9 @@ async def doc_prep_main(
                     "batchId": batchId,
                     "upload": {
                         "originalName": original_name,
-                        "uploaded_at": datetime.utcnow().isoformat()
+                        "uploaded_at": datetime.utcnow().isoformat(),
+                        "fileSize": file_size,
+                        "mimeType": file.content_type,
                     },
                     "progress": 10,
                     "progressStage": "queued",
@@ -480,10 +482,12 @@ async def doc_prep_main(
             )
             logger.info(f"Saved file: {saved_name} to {dest_path}")
 
-            # 파일 저장 정보 업데이트
+            # 파일 저장 정보 업데이트 (fileSize/mimeType도 upload SSoT로 저장)
             await update_file(doc_id, set_fields={
                 "upload.saveName": saved_name,
-                "upload.destPath": dest_path
+                "upload.destPath": dest_path,
+                "upload.fileSize": file_size,
+                "upload.mimeType": file.content_type,
             })
 
 
