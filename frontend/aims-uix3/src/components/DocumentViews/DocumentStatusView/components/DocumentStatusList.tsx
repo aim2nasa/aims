@@ -65,7 +65,6 @@ interface DocumentStatusRowProps {
   isPreview?: boolean
   isUpdating: boolean
   isRetryingPdf: boolean
-  isRetryingOcr: boolean
   // 모드
   isDeleteMode: boolean
   isBulkLinkMode: boolean
@@ -89,7 +88,6 @@ interface DocumentStatusRowProps {
   onCustomerDoubleClick?: (customerId: string) => void
   onRowContextMenu?: (document: Document, event: React.MouseEvent) => void
   onRetryPdfConversion: (documentId: string, e: React.MouseEvent) => void
-  onRetryOcr: (documentId: string, e: React.MouseEvent) => void
   onDocTypeChange: (documentId: string, newType: string) => void
   // 호버 액션: 이름변경/삭제
   onRenameClick?: (document: Document) => void
@@ -110,7 +108,6 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   isPreview,
   isUpdating,
   isRetryingPdf,
-  isRetryingOcr,
   isDeleteMode,
   isBulkLinkMode,
   isAliasMode,
@@ -130,7 +127,6 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   onCustomerDoubleClick,
   onRowContextMenu,
   onRetryPdfConversion,
-  onRetryOcr,
   onDocTypeChange,
   onRenameClick,
   onDeleteClick,
@@ -146,9 +142,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
 
   const status = DocumentStatusService.extractStatus(document)
   const progress = DocumentStatusService.extractProgress(document)
-  // quota_exceeded 에러인 경우 "한도초과"로 표시
-  const isQuotaExceeded = isQuotaExceededError(document)
-  const statusLabel = isQuotaExceeded ? '한도초과' : DocumentStatusService.getStatusLabel(status)
+  const statusLabel = DocumentStatusService.getStatusLabel(status)
   const statusIcon = DocumentStatusService.getStatusIcon(status)
   const isLinked = Boolean(document.customer_relation)
   const isAnnualReport = document.is_annual_report === true
@@ -512,39 +506,19 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
       {/* 상태 (아이콘 + 텍스트) */}
       <div className="status-cell">
         {status === 'error' ? (
-          // 에러 상태: 클릭하여 재시도 (quota_exceeded는 재시도 불가)
+          // 에러 상태: 툴팁으로 에러 메시지 표시 (재시도 없음)
           (() => {
-            const docId = document._id || document.id
             const errorMsg = getErrorMessage(document) || statusLabel
-            const tooltipContent = isRetryingOcr
-              ? 'OCR 재시도 중...'
-              : isQuotaExceeded
-                ? `${errorMsg}\n\nOCR 한도 해제 후 재시도 가능`
-                : `${errorMsg}\n\n클릭하여 재시도`
-
-            // quota_exceeded: 버튼 비활성화 (클릭 불가)
-            const isDisabled = isRetryingOcr || !docId || isQuotaExceeded
-
             return (
-              <Tooltip content={tooltipContent}>
-                <button
-                  type="button"
-                  className={`status-cell-inner ${!isQuotaExceeded ? 'status-cell-inner--clickable' : 'status-cell-inner--disabled'} ${isRetryingOcr ? 'status-cell-inner--retrying' : ''}`}
-                  onClick={(e) => !isQuotaExceeded && docId && onRetryOcr(docId, e)}
-                  disabled={isDisabled}
-                  aria-label={isQuotaExceeded ? 'OCR 한도 초과' : 'OCR 재시도'}
-                >
+              <Tooltip content={errorMsg}>
+                <div className="status-cell-inner">
                   <div className={"status-icon status-" + status}>
-                    {isRetryingOcr ? (
-                      <svg className="retry-spinner" viewBox="0 0 16 16" width="12" height="12">
-                        <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="20 10" />
-                      </svg>
-                    ) : statusIcon}
+                    {statusIcon}
                   </div>
                   <div className="status-text">
-                    <span className="status-label">{isRetryingOcr ? '재시도 중' : statusLabel}</span>
+                    <span className="status-label">{statusLabel}</span>
                   </div>
-                </button>
+                </div>
               </Tooltip>
             )
           })()
@@ -849,29 +823,6 @@ export const formatErrorMessage = (message: string): string => {
   return formatted || '처리 오류'
 }
 
-/**
- * quota_exceeded 에러인지 확인
- * OCR 한도 초과 에러는 수동 재시도 불가
- */
-export const isQuotaExceededError = (document: Document): boolean => {
-  // 1. ocr.status 확인 (타입에 없는 값도 체크 가능하도록 as string 사용)
-  if (document.ocr && typeof document.ocr !== 'string') {
-    const ocrStatus = document.ocr.status as string | undefined
-    if (ocrStatus === 'quota_exceeded') {
-      return true
-    }
-  }
-
-  // 2. stages.ocr.message 확인
-  if (document.stages?.ocr && typeof document.stages.ocr !== 'string') {
-    const message = document.stages.ocr.message
-    if (message && typeof message === 'string' && message.includes('한도 초과')) {
-      return true
-    }
-  }
-
-  return false
-}
 
 /**
  * Document에서 에러 메시지 추출
@@ -938,6 +889,21 @@ export const getErrorMessage = (document: Document): string | null => {
     const meta = document.meta as Record<string, unknown>
     if (meta['meta_status'] === 'error' && meta['message'] && typeof meta['message'] === 'string') {
       return formatErrorMessage(meta['message'])
+    }
+  }
+
+  // 6. progressMessage (파이프라인 에러 사유)
+  const progressMsg = (document as Record<string, unknown>)['progressMessage']
+  if (progressMsg && typeof progressMsg === 'string' && progressMsg !== '처리 중') {
+    return formatErrorMessage(progressMsg)
+  }
+
+  // 7. error.statusMessage (에러 객체)
+  const errorObj = (document as Record<string, unknown>)['error']
+  if (errorObj && typeof errorObj === 'object' && errorObj !== null) {
+    const statusMsg = (errorObj as Record<string, unknown>)['statusMessage']
+    if (statusMsg && typeof statusMsg === 'string') {
+      return formatErrorMessage(statusMsg)
     }
   }
 
@@ -1018,8 +984,6 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   // PDF 변환 재시도 중인 문서 ID
   const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
 
-  // OCR 재시도 중인 문서 ID
-  const [retryingOcrDocumentId, setRetryingOcrDocumentId] = useState<string | null>(null)
 
   /**
    * PDF 변환 재시도 핸들러
@@ -1066,50 +1030,6 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
     }
   }, [retryingDocumentId, onRefresh, showAlert])
 
-  /**
-   * OCR 재시도 핸들러
-   */
-  const handleRetryOcr = useCallback(async (documentId: string, e: React.MouseEvent) => {
-    e.stopPropagation() // 이벤트 버블링 방지
-
-    if (retryingOcrDocumentId) return // 이미 재시도 중이면 무시
-
-    setRetryingOcrDocumentId(documentId)
-    try {
-      const result = await api.post<{ success: boolean; message?: string; error?: string }>(
-        `/api/admin/ocr/reprocess`,
-        { document_id: documentId }
-      )
-
-      if (result.success) {
-        await showAlert({
-          title: 'OCR 재시도 시작',
-          message: 'OCR 처리를 다시 시도하고 있습니다.',
-          confirmText: '확인'
-        })
-        // 목록 새로고침
-        if (onRefresh) {
-          await onRefresh()
-        }
-      } else {
-        await showAlert({
-          title: '재시도 실패',
-          message: result.error || '재시도에 실패했습니다.',
-          confirmText: '확인'
-        })
-      }
-    } catch (error) {
-      console.error('[DocumentStatusList] OCR 재시도 오류:', error)
-      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusList.handleRetryOcr' })
-      await showAlert({
-        title: '오류',
-        message: '재시도 중 오류가 발생했습니다.',
-        confirmText: '확인'
-      })
-    } finally {
-      setRetryingOcrDocumentId(null)
-    }
-  }, [retryingOcrDocumentId, onRefresh, showAlert])
 
   /**
    * 메모 저장 핸들러
@@ -1462,7 +1382,6 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             isPreview={Boolean(documentId) && documentId === previewDocumentId}
             isUpdating={updatingDocTypeId === documentId}
             isRetryingPdf={retryingDocumentId === documentId}
-            isRetryingOcr={retryingOcrDocumentId === documentId}
             isDeleteMode={isDeleteMode}
             isBulkLinkMode={isBulkLinkMode}
             isAliasMode={isAliasMode}
@@ -1482,7 +1401,6 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             onCustomerDoubleClick={onCustomerDoubleClick}
             onRowContextMenu={onRowContextMenu}
             onRetryPdfConversion={handleRetryPdfConversion}
-            onRetryOcr={handleRetryOcr}
             onDocTypeChange={handleDocTypeChange}
             onRenameClick={onRenameClick}
             onDeleteClick={onDeleteClick}
