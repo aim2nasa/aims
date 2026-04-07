@@ -557,7 +557,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
               </div>
             </Tooltip>
             <div className="status-text">
-              {(['processing', 'uploading', 'converting', 'extracting', 'ocr_processing', 'classifying', 'embedding'].includes(status)) && progress ? (
+              {(['processing', 'uploading', 'converting', 'extracting', 'ocr_processing', 'classifying', 'embedding'].includes(status)) && progress > 0 ? (
                 <span className="progress-text">{progress}%</span>
               ) : (
                 <span className="status-label">{statusLabel}</span>

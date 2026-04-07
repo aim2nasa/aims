@@ -576,7 +576,7 @@ export class DocumentStatusService {
       if (embedCompleted || metaFullTextCompleted) {
         return 100
       }
-      return document.progress
+      return document.progress < 0 ? 0 : document.progress
     }
 
     if (document.overallStatus === 'completed') {

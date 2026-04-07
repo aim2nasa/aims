@@ -508,11 +508,14 @@ class PdfConversionWorker:
     async def _recover_stuck_pending_documents(self):
         """
         files 컬렉션에서 conversion_status='pending'이지만
-        큐에 active job이 없는 문서를 failed로 복구.
-        (시스템 문제로 stuck된 것이므로 retry_count도 리셋)
+        큐에 active job이 없는 문서를 복구.
+
+        - 큐에 completed job이 있으면: 변환은 성공했지만 후처리가 실패한 것이므로 후처리 재시도
+        - 큐에 아무 job도 없으면: stuck 확정 → failed로 마킹 (retry_count 리셋)
         """
         try:
             from services.internal_api import query_files as _query_files
+            from services.internal_api import update_file as _update_file
             db = MongoService.get_db()
             queue_collection = db[PDF_CONVERSION_QUEUE_COLLECTION]
 
@@ -538,8 +541,29 @@ class PdfConversionWorker:
                 if active_job:
                     continue  # 정상 처리 중
 
+                # completed job이 있는지 확인 — 변환은 성공했지만 후처리가 실패한 경우
+                completed_job = await queue_collection.find_one({
+                    "document_id": doc_id_str,
+                    "job_type": "preview_pdf",
+                    "status": "completed"
+                })
+                if completed_job:
+                    # 변환 성공한 PDF의 후처리 재시도
+                    result_path = (completed_job.get("result") or {}).get("pdf_path", "")
+                    if result_path:
+                        logger.info(f"[PDF변환워커] stuck pending 후처리 재시도: {doc_id_str}")
+                        try:
+                            await self._post_process_preview(
+                                {"document_id": doc_id_str},
+                                {"pdf_path": result_path}
+                            )
+                            recovered += 1
+                            continue
+                        except Exception as e:
+                            logger.error(f"[PDF변환워커] 후처리 재시도 실패: {doc_id_str} - {e}")
+                    # 후처리 재시도 실패 또는 pdf_path 없음 → 아래 failed 처리로 진행
+
                 # stuck 확정 → failed로 복구
-                from services.internal_api import update_file as _update_file
                 await _update_file(doc_id_str, set_fields={
                     "upload.conversion_status": "failed",
                     "upload.conversion_error": "자동 복구: 변환 큐에 작업 없음 (stuck)",
@@ -549,7 +573,7 @@ class PdfConversionWorker:
                 logger.info(f"[PDF변환워커] stuck pending 복구: {doc_id_str}")
 
             if recovered > 0:
-                logger.info(f"[PDF변환워커] stuck pending 총 {recovered}건 복구 → failed")
+                logger.info(f"[PDF변환워커] stuck pending 총 {recovered}건 복구")
         except Exception as e:
             logger.error(f"[PDF변환워커] stuck pending 복구 에러: {e}")
 
