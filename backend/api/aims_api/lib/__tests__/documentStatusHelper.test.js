@@ -426,6 +426,27 @@ describe('documentStatusHelper - prepareDocumentResponse', () => {
       expect(result.raw.progressMessage).toBeNull();
       expect(result.raw.error).toBeNull();
     });
+
+    it('에러 문서의 displayMessages에 에러 메시지 포함', () => {
+      const doc = {
+        _id: 'doc-001',
+        upload: { destPath: '/uploads/test.pdf' },
+        progress: -1,
+        progressStage: 'error',
+        progressMessage: '파일 변환 실패',
+        status: 'failed',
+        error: { statusCode: 422, statusMessage: '파일 변환 실패' }
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      // raw에 에러 정보 포함
+      expect(result.raw.progressMessage).toBe('파일 변환 실패');
+      expect(result.raw.error.statusCode).toBe(422);
+      // computed에도 에러 메시지 반영
+      expect(result.computed.displayMessages.status).toBe('파일 변환 실패');
+      expect(result.computed.overallStatus).toBe('error');
+    });
   });
 
   describe('computed - 비지원 MIME 타입', () => {

@@ -1891,6 +1891,8 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
         document_type: doc.document_type || null,  // 🏷️ 문서 유형 (SSoT: top-level만 참조)
         document_type_auto: doc.document_type_auto || false,  // 🏷️ 자동 분류 여부 (SSoT: top-level만 참조)
         virusScan: doc.virusScan || null,  // 🔴 바이러스 스캔 정보
+        progressMessage: doc.progressMessage || null,  // 🔴 에러 메시지 (프론트 Tooltip 표시용)
+        error: doc.error || null,  // 🔴 에러 객체 (statusMessage 포함)
         ...statusInfo
       };
     });
