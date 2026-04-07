@@ -389,6 +389,48 @@ def get_current_branch():
         return ""
 
 
+def check_main_code_commit(files):
+    """
+    main 브랜치에서 코드 파일 직접 커밋을 차단한다.
+    코드 변경은 반드시 fix/ 또는 feat/ 브랜치에서 진행해야 한다.
+    (문서, 설정, 스킬 등 비코드 파일은 main에서 허용)
+
+    Returns:
+        None if OK, error message string if blocked
+    """
+    branch = get_current_branch()
+    if branch != "main":
+        return None
+
+    CODE_EXTENSIONS = {'.py', '.ts', '.tsx', '.js', '.jsx', '.css', '.html'}
+    EXCLUDE_PATHS = [
+        'scripts/',          # 빌드/배포 스크립트
+        '.claude/',          # Claude 설정
+        'docs/',             # 문서
+    ]
+
+    code_files = []
+    for f in files:
+        if any(f.startswith(p) for p in EXCLUDE_PATHS):
+            continue
+        _, ext = os.path.splitext(f)
+        if ext in CODE_EXTENSIONS:
+            code_files.append(f)
+
+    if code_files:
+        file_list = "\n".join(f"    - {f}" for f in code_files[:5])
+        if len(code_files) > 5:
+            file_list += f"\n    ... 외 {len(code_files) - 5}개"
+        return (
+            f"[MAIN PROTECT] main 브랜치에서 코드 파일 직접 커밋 금지!\n"
+            f"  코드 변경 파일:\n{file_list}\n"
+            f"  fix/ 또는 feat/ 브랜치를 생성하여 작업하세요.\n"
+            f"  (git checkout -b fix/이슈명)"
+        )
+
+    return None
+
+
 def check_regression_test(files):
     """
     fix/ 브랜치에서 코드 변경 시 regression 테스트 포함 여부 체크.
@@ -480,7 +522,13 @@ def main():
     if not files or not diff:
         sys.exit(0)
 
-    # ━━━━━━ 0.5단계: Regression 테스트 강제 (fix/ 브랜치) ━━━━━━
+    # ━━━━━━ 0.5단계: main 브랜치 코드 커밋 차단 ━━━━━━
+    main_error = check_main_code_commit(files)
+    if main_error:
+        sys.stderr.write(main_error + "\n")
+        sys.exit(2)
+
+    # ━━━━━━ 0.6단계: Regression 테스트 강제 (fix/ 브랜치) ━━━━━━
     regression_error = check_regression_test(files)
     if regression_error:
         sys.stderr.write(regression_error + "\n")
