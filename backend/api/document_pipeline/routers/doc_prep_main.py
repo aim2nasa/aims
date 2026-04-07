@@ -2104,9 +2104,23 @@ async def _process_via_xpipe(
         # 변환을 이미 시도했으나 실패한 경우 → 에러 상태로 처리 (재대기 무의미)
         if skip_reason == "conversion_failed" and is_convertible_mime(detected_mime):
             user_message = "파일 변환에 실패했습니다. 지원되지 않는 형식이거나 파일이 손상되었을 수 있습니다."
+            # 변환 워커가 저장한 상세 에러 (upload.conversion_error) 조회
+            conversion_error = result.get("_conversion_error", "")
+            if not conversion_error:
+                try:
+                    files_col = MongoService.get_collection("files")
+                    existing = await files_col.find_one(
+                        {"_id": ObjectId(doc_id)},
+                        {"upload.conversion_error": 1}
+                    )
+                    conversion_error = (existing or {}).get("upload", {}).get("conversion_error", "")
+                except Exception:
+                    pass
+            detail = f"mime={detected_mime}, file={original_name}"
+            if conversion_error:
+                detail += f", conversion_error={conversion_error}"
             logger.warning(
-                f"[xPipe] 변환 실패 — 에러 처리: doc_id={doc_id}, "
-                f"file={original_name}, mime={detected_mime}"
+                f"[xPipe] 변환 실패 — 에러 처리: doc_id={doc_id}, {detail}"
             )
             await update_file(doc_id, set_fields=_serialize_for_api({
                 "status": "failed",
@@ -2114,6 +2128,7 @@ async def _process_via_xpipe(
                 "overallStatusUpdatedAt": datetime.utcnow(),
                 "error.statusCode": 422,
                 "error.statusMessage": user_message,
+                "error.detail": detail,
                 "error.timestamp": datetime.utcnow().isoformat(),
                 "processingSkipReason": skip_reason,
                 "meta.mime": detected_mime,
