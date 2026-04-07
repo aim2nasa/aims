@@ -380,6 +380,54 @@ describe('documentStatusHelper - prepareDocumentResponse', () => {
     });
   });
 
+  describe('raw - 에러 관련 필드 포함 (#20)', () => {
+    it('progressMessage가 raw에 포함됨', () => {
+      const doc = {
+        _id: 'doc-001',
+        upload: { destPath: '/uploads/test.pdf' },
+        progress: -1,
+        progressStage: 'error',
+        progressMessage: '메타데이터 저장 실패: HTTP 500',
+        status: 'failed'
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      expect(result.raw.progressMessage).toBe('메타데이터 저장 실패: HTTP 500');
+    });
+
+    it('error 객체가 raw에 포함됨', () => {
+      const doc = {
+        _id: 'doc-001',
+        upload: { destPath: '/uploads/test.pdf' },
+        progress: -1,
+        progressStage: 'error',
+        progressMessage: '파일 변환 실패',
+        status: 'failed',
+        error: { statusCode: 422, statusMessage: '파일 변환 실패' }
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      expect(result.raw.error).toEqual({ statusCode: 422, statusMessage: '파일 변환 실패' });
+    });
+
+    it('에러 없는 문서는 progressMessage/error가 null', () => {
+      const doc = {
+        _id: 'doc-001',
+        upload: { destPath: '/uploads/test.pdf' },
+        meta: { meta_status: 'ok', mime: 'application/pdf', full_text: 'text' },
+        ocr: { status: 'ok' },
+        docembed: { status: 'ok' }
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      expect(result.raw.progressMessage).toBeNull();
+      expect(result.raw.error).toBeNull();
+    });
+  });
+
   describe('computed - 비지원 MIME 타입', () => {
     it('zip 파일 → meta 완료 시 즉시 100% 완료', () => {
       const doc = {
