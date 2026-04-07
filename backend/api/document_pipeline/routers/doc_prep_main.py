@@ -2301,7 +2301,12 @@ async def _process_via_xpipe(
         # OCR confidence: ExtractStage가 provider로부터 받은 값 사용
         meta_update["ocr.confidence"] = extract_output.get("ocr_confidence", 0.0)
 
-    await update_file(doc_id, set_fields=_serialize_for_api(meta_update), unset_fields={"error": ""})
+    meta_save_result = await update_file(doc_id, set_fields=_serialize_for_api(meta_update), unset_fields={"error": ""})
+    if not meta_save_result.get("success"):
+        error_detail = meta_save_result.get("error", "알 수 없는 오류")
+        logger.error(f"[xPipe] 메타데이터 저장 실패 (처리 중단): {doc_id}, error={error_detail}")
+        await _notify_progress(doc_id, user_id, -1, "error", f"메타데이터 저장 실패: {error_detail}")
+        return
 
     # 9. AR/CRS 감지 결과 처리 (HookResult)
     for det in detections:

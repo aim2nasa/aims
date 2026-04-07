@@ -184,6 +184,25 @@ function prepareDocumentResponse(doc) {
       };
     }
 
+    // 에러 상태 (progress < 0 또는 progressStage === 'error')
+    if (doc.progress < 0 || doc.progressStage === 'error' || doc.status === 'failed') {
+      const uiStages = {
+        upload: { name: '업로드', status: 'completed', message: '업로드 완료', timestamp: null },
+        meta: { name: '메타데이터', status: 'error', message: doc.progressMessage || '처리 실패', timestamp: null },
+      };
+      return {
+        raw,
+        computed: {
+          uiStages,
+          currentStage: 1,
+          overallStatus: 'error',
+          progress: 0,
+          displayMessages: { status: doc.progressMessage || '처리 실패' },
+          ...pdfFields
+        }
+      };
+    }
+
     // 중간 progress 값 (20~99) - processing 상태 반환
     const uiStages = hasMetaText ? {
       upload: { name: '업로드', status: doc.progress >= 20 ? 'completed' : 'processing', message: doc.progressMessage || '처리 중', timestamp: null },
