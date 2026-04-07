@@ -88,6 +88,26 @@
     color: var(--color-text-tertiary);
   }
 
+  /* ==================== 처리 중 표시 ==================== */
+
+  .folder-drop-zone-content.processing {
+    pointer-events: none;
+    opacity: 0.8;
+  }
+
+  .folder-processing-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-border-light, rgba(0, 0, 0, 0.1));
+    border-top-color: var(--color-primary-500);
+    border-radius: 50%;
+    animation: folder-spin 0.8s linear infinite;
+  }
+
+  @keyframes folder-spin {
+    to { transform: rotate(360deg); }
+  }
+
   /* ==================== 접히는 가이드 (AR/CR 패턴) ==================== */
 
   .folder-guide {

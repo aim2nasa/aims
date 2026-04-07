@@ -5,7 +5,7 @@
  */
 
 import { describe, test, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import FolderDropZone from '../components/FolderDropZone'
 
 describe('FolderDropZone', () => {
@@ -85,6 +85,70 @@ describe('FolderDropZone', () => {
 
       const dropZone = container.querySelector('.folder-drop-zone')
       expect(dropZone).toHaveAttribute('aria-label', '폴더 드롭존 (비활성)')
+    })
+  })
+
+  describe('처리 중 표시', () => {
+    test('onFilesSelected 진행 중 스피너와 "폴더 분석 중..." 텍스트가 표시된다', async () => {
+      let resolveCallback: () => void
+      const onFilesSelected = vi.fn(() => new Promise<void>((resolve) => {
+        resolveCallback = resolve
+      }))
+
+      const { container } = render(<FolderDropZone onFilesSelected={onFilesSelected} />)
+
+      // input으로 파일 선택 시뮬레이션
+      const input = container.querySelector('input[type="file"]') as HTMLInputElement
+      const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
+      Object.defineProperty(input, 'files', { value: [file], writable: false })
+
+      await act(async () => {
+        fireEvent.change(input)
+        // microtask flush — setIsProcessing(true) 반영 대기
+        await new Promise(r => setTimeout(r, 0))
+      })
+
+      // 처리 중 UI 확인
+      expect(screen.getByText('폴더 분석 중...')).toBeInTheDocument()
+      expect(container.querySelector('.folder-processing-spinner')).toBeInTheDocument()
+      expect(screen.queryByText(/지금 바로 폴더를 끌어다 놓으세요/)).not.toBeInTheDocument()
+
+      // 처리 완료
+      await act(async () => {
+        resolveCallback!()
+      })
+
+      // 원래 UI 복원
+      expect(screen.getByText(/지금 바로 폴더를 끌어다 놓으세요/)).toBeInTheDocument()
+      expect(screen.queryByText('폴더 분석 중...')).not.toBeInTheDocument()
+    })
+
+    test('처리 중 file input이 비활성화된다', async () => {
+      let resolveCallback: () => void
+      const onFilesSelected = vi.fn(() => new Promise<void>((resolve) => {
+        resolveCallback = resolve
+      }))
+
+      const { container } = render(<FolderDropZone onFilesSelected={onFilesSelected} />)
+
+      const input = container.querySelector('input[type="file"]') as HTMLInputElement
+      expect(input.disabled).toBe(false)
+
+      const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
+      Object.defineProperty(input, 'files', { value: [file], writable: false })
+
+      await act(async () => {
+        fireEvent.change(input)
+        await new Promise(r => setTimeout(r, 0))
+      })
+
+      expect(input.disabled).toBe(true)
+
+      await act(async () => {
+        resolveCallback!()
+      })
+
+      expect(input.disabled).toBe(false)
     })
   })
 

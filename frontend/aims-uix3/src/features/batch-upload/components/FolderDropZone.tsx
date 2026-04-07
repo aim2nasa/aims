@@ -11,7 +11,7 @@ import { useState, useCallback, useRef, type DragEvent, type ChangeEvent } from 
 import './FolderDropZone.css'
 
 interface FolderDropZoneProps {
-  onFilesSelected: (files: File[]) => void
+  onFilesSelected: (files: File[]) => void | Promise<void>
   disabled?: boolean
 }
 
@@ -20,6 +20,7 @@ export default function FolderDropZone({
   disabled = false
 }: FolderDropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [isGuideExpanded, setIsGuideExpanded] = useState(false)
   const folderInputRef = useRef<HTMLInputElement>(null)
 
@@ -44,85 +45,96 @@ export default function FolderDropZone({
 
     if (disabled) return
 
-    const items = e.dataTransfer.items
-    const allFiles: File[] = []
+    setIsProcessing(true)
+    try {
+      const items = e.dataTransfer.items
+      const allFiles: File[] = []
 
-    // 폴더 엔트리를 재귀적으로 읽는 함수
-    const readEntry = async (entry: FileSystemEntry, path: string): Promise<void> => {
-      if (entry.isFile) {
-        const fileEntry = entry as FileSystemFileEntry
-        return new Promise((resolve) => {
-          fileEntry.file((file) => {
-            // webkitRelativePath를 수동으로 설정한 새 File 객체 생성
-            const fileWithPath = new File([file], file.name, {
-              type: file.type,
-              lastModified: file.lastModified,
+      // 폴더 엔트리를 재귀적으로 읽는 함수
+      const readEntry = async (entry: FileSystemEntry, path: string): Promise<void> => {
+        if (entry.isFile) {
+          const fileEntry = entry as FileSystemFileEntry
+          return new Promise((resolve) => {
+            fileEntry.file((file) => {
+              // webkitRelativePath를 수동으로 설정한 새 File 객체 생성
+              const fileWithPath = new File([file], file.name, {
+                type: file.type,
+                lastModified: file.lastModified,
+              })
+              // webkitRelativePath는 readonly라서 Object.defineProperty 사용
+              Object.defineProperty(fileWithPath, 'webkitRelativePath', {
+                value: path + file.name,
+                writable: false,
+              })
+              allFiles.push(fileWithPath)
+              resolve()
             })
-            // webkitRelativePath는 readonly라서 Object.defineProperty 사용
-            Object.defineProperty(fileWithPath, 'webkitRelativePath', {
-              value: path + file.name,
-              writable: false,
-            })
-            allFiles.push(fileWithPath)
-            resolve()
           })
-        })
-      } else if (entry.isDirectory) {
-        const dirEntry = entry as FileSystemDirectoryEntry
-        const dirReader = dirEntry.createReader()
+        } else if (entry.isDirectory) {
+          const dirEntry = entry as FileSystemDirectoryEntry
+          const dirReader = dirEntry.createReader()
 
-        return new Promise((resolve) => {
-          const readEntries = () => {
-            dirReader.readEntries(async (entries) => {
-              if (entries.length === 0) {
-                resolve()
-                return
-              }
+          return new Promise((resolve) => {
+            const readEntries = () => {
+              dirReader.readEntries(async (entries) => {
+                if (entries.length === 0) {
+                  resolve()
+                  return
+                }
 
-              for (const childEntry of entries) {
-                await readEntry(childEntry, path + entry.name + '/')
-              }
+                for (const childEntry of entries) {
+                  await readEntry(childEntry, path + entry.name + '/')
+                }
 
-              // 더 읽을 엔트리가 있을 수 있음 (100개 제한)
-              readEntries()
-            })
-          }
-          readEntries()
-        })
-      }
-    }
-
-    // DataTransferItemList에서 엔트리 추출
-    if (items) {
-      const entries: FileSystemEntry[] = []
-
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i]
-        if (item.kind === 'file') {
-          const entry = item.webkitGetAsEntry?.()
-          if (entry) {
-            entries.push(entry)
-          }
+                // 더 읽을 엔트리가 있을 수 있음 (100개 제한)
+                readEntries()
+              })
+            }
+            readEntries()
+          })
         }
       }
 
-      // 모든 엔트리 처리
-      for (const entry of entries) {
-        await readEntry(entry, '')
-      }
-    }
+      // DataTransferItemList에서 엔트리 추출
+      if (items) {
+        const entries: FileSystemEntry[] = []
 
-    if (allFiles.length > 0) {
-      onFilesSelected(allFiles)
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i]
+          if (item.kind === 'file') {
+            const entry = item.webkitGetAsEntry?.()
+            if (entry) {
+              entries.push(entry)
+            }
+          }
+        }
+
+        // 모든 엔트리 처리
+        for (const entry of entries) {
+          await readEntry(entry, '')
+        }
+      }
+
+      if (allFiles.length > 0) {
+        await onFilesSelected(allFiles)
+      }
+    } finally {
+      setIsProcessing(false)
     }
   }, [disabled, onFilesSelected])
 
-  const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
 
     const allFiles = Array.from(files)
-    onFilesSelected(allFiles)
+
+    setIsProcessing(true)
+    try {
+      await onFilesSelected(allFiles)
+    } finally {
+      setIsProcessing(false)
+    }
 
     // input 초기화 (같은 폴더 재선택 가능)
     e.target.value = ''
@@ -206,33 +218,43 @@ export default function FolderDropZone({
       </div>
 
       {/* 드롭존 — 화면의 주인공 */}
-      <label className={`folder-drop-zone-content ${disabled ? 'disabled' : ''}`}>
+      <label className={`folder-drop-zone-content ${disabled ? 'disabled' : ''} ${isProcessing ? 'processing' : ''}`}>
         <input
           ref={folderInputRef}
           type="file"
           className="folder-input-hidden"
           onChange={handleInputChange}
-          disabled={disabled}
+          disabled={disabled || isProcessing}
           aria-label="폴더 선택"
           /* @ts-expect-error webkitdirectory is non-standard but widely supported */
           webkitdirectory=""
           multiple
         />
-        {/* + 버튼 — AR/CR 드롭존과 동일한 세로 배치 */}
-        <div className="folder-select-plus-icon">
-          <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-            <path d="M24 10V38M10 24H38" stroke="white" strokeWidth="4" strokeLinecap="round"/>
-          </svg>
-        </div>
-        <span className="folder-drop-zone-title">
-          {isDragOver ? '여기에 놓으세요' : '지금 바로 폴더를 끌어다 놓으세요!'}
-        </span>
-        <span className="folder-drop-zone-description">
-          또는 클릭하여 폴더 선택
-        </span>
-        <span className="folder-drop-zone-hint">
-          내 PC에서 고객 이름으로 만든 폴더를 선택하세요
-        </span>
+        {isProcessing ? (
+          <>
+            <div className="folder-processing-spinner" />
+            <span className="folder-drop-zone-title">폴더 분석 중...</span>
+            <span className="folder-drop-zone-description">파일을 읽고 있습니다</span>
+          </>
+        ) : (
+          <>
+            {/* + 버튼 — AR/CR 드롭존과 동일한 세로 배치 */}
+            <div className="folder-select-plus-icon">
+              <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+                <path d="M24 10V38M10 24H38" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <span className="folder-drop-zone-title">
+              {isDragOver ? '여기에 놓으세요' : '지금 바로 폴더를 끌어다 놓으세요!'}
+            </span>
+            <span className="folder-drop-zone-description">
+              또는 클릭하여 폴더 선택
+            </span>
+            <span className="folder-drop-zone-hint">
+              내 PC에서 고객 이름으로 만든 폴더를 선택하세요
+            </span>
+          </>
+        )}
       </label>
     </div>
   )
