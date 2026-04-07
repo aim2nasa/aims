@@ -136,6 +136,9 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   searchTerm,
   gridTemplateColumns,
 }) => {
+  // 에러 메시지 복사 상태
+  const [copiedErrorDocId, setCopiedErrorDocId] = useState<string | null>(null)
+
   // 각 Row 내부에서 싱글/더블클릭 타이머를 자체 관리
   const documentClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const customerClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -506,17 +509,36 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
       {/* 상태 (아이콘 + 텍스트) */}
       <div className="status-cell">
         {status === 'error' ? (
-          // 에러 상태: 툴팁으로 에러 메시지 표시 (재시도 없음)
+          // 에러 상태: 클릭 시 에러 메시지 클립보드 복사
           (() => {
             const errorMsg = getErrorMessage(document) || statusLabel
+            const docId = document._id || document.id
+            const isCopied = copiedErrorDocId === (docId ?? null)
+            const tooltipContent = isCopied ? '복사됨 ✓' : `${errorMsg}\n\n클릭하여 복사`
+
+            const handleCopyError = (e: React.MouseEvent) => {
+              e.stopPropagation()
+              navigator.clipboard.writeText(errorMsg).then(() => {
+                setCopiedErrorDocId(docId ?? null)
+                setTimeout(() => setCopiedErrorDocId(null), 1500)
+              }).catch(() => {
+                // 클립보드 API 사용 불가 시 무시
+              })
+            }
+
             return (
-              <Tooltip content={errorMsg}>
-                <div className="status-cell-inner">
+              <Tooltip content={tooltipContent}>
+                <div
+                  className="status-cell-inner status-cell-inner--clickable"
+                  onClick={handleCopyError}
+                  role="button"
+                  aria-label="에러 메시지 복사"
+                >
                   <div className={"status-icon status-" + status}>
                     {statusIcon}
                   </div>
                   <div className="status-text">
-                    <span className="status-label">{statusLabel}</span>
+                    <span className="status-label">{isCopied ? '복사됨' : statusLabel}</span>
                   </div>
                 </div>
               </Tooltip>
