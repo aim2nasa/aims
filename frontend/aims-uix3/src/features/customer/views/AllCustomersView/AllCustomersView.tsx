@@ -949,11 +949,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   </div>
                 )}
                 <span className="customer-type">{getCustomerIcon(customer)}</span>
-                <span className="customer-name">{searchValue ? highlightText(customer.personal_info?.name || '이름 없음', searchValue) : (customer.personal_info?.name || '이름 없음')}</span>
+                <span className="customer-name">{debouncedSearch ? highlightText(customer.personal_info?.name || '이름 없음', debouncedSearch) : (customer.personal_info?.name || '이름 없음')}</span>
                 <span className="customer-birth">{getCustomerBirthDate(customer)}</span>
                 <span className="customer-gender">{getCustomerGender(customer)}</span>
-                <span className="customer-phone">{searchValue ? highlightText(getCustomerInfo(customer), searchValue) : getCustomerInfo(customer)}</span>
-                <span className="customer-email">{searchValue ? highlightText(getCustomerEmail(customer), searchValue) : getCustomerEmail(customer)}</span>
+                <span className="customer-phone">{debouncedSearch ? highlightText(getCustomerInfo(customer), debouncedSearch) : getCustomerInfo(customer)}</span>
+                <span className="customer-email">{debouncedSearch ? highlightText(getCustomerEmail(customer), debouncedSearch) : getCustomerEmail(customer)}</span>
                 <span className="customer-address">{getCustomerAddress(customer)}</span>
                 <span className="customer-status">{getCustomerStatus(customer)}</span>
                 <span className="customer-created">{getCustomerCreatedDate(customer)}</span>
