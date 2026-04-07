@@ -21,6 +21,19 @@ export interface CustomerForMatching {
 }
 
 /**
+ * groupFilesByFolder 반환 타입
+ * 재그룹화 시 원본 부모 폴더 정보를 함께 반환
+ */
+export interface FolderGroupResult {
+  /** 재그룹화 시 원본 부모 폴더명 (재그룹화 안 했으면 null) */
+  parentFolderName: string | null
+  /** 부모 폴더 직하 파일들 (하위 폴더에 속하지 않는 루트 파일) */
+  rootFiles: File[]
+  /** 폴더별 파일 그룹 (기존 Map<string, File[]>과 동일) */
+  groups: Map<string, File[]>
+}
+
+/**
  * 폴더명에서 고객명 추출 및 정규화
  * @param folderName 폴더명
  * @returns 정규화된 고객명
@@ -136,7 +149,7 @@ export function calculateMatchingStats(
 export function groupFilesByFolder(
   files: File[],
   customers?: CustomerForMatching[]
-): Map<string, File[]> {
+): FolderGroupResult {
   // 1단계: 일단 최상위 폴더로 그룹화하여 구조 분석
   const topLevelGroups = new Map<string, File[]>()
 
@@ -159,7 +172,7 @@ export function groupFilesByFolder(
     // 2-1: 최상위 폴더가 고객명과 일치하면 하위 폴더 분석 없이 바로 반환
     // (사용자가 고객 폴더를 직접 선택한 경우)
     if (customers && matchFolderToCustomer(parentFolderName, customers)) {
-      return topLevelGroups
+      return { parentFolderName: null, rootFiles: [], groups: topLevelGroups }
     }
 
     // 2-2: 하위 폴더가 있는지 확인 (path parts가 3개 이상: parent/child/file.ext)
@@ -172,6 +185,7 @@ export function groupFilesByFolder(
     if (hasSubfolders) {
       // 2번째 레벨(하위 폴더)로 재그룹화
       const subfolderGroups = new Map<string, File[]>()
+      const rootFiles: File[] = []
 
       for (const file of parentFiles) {
         const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || ''
@@ -184,20 +198,20 @@ export function groupFilesByFolder(
           existing.push(file)
           subfolderGroups.set(subFolder, existing)
         } else if (parts.length === 2) {
-          // 상위 폴더 바로 아래 파일은 무시하거나 별도 처리
-          // (고객 폴더 없이 바로 파일이 있는 경우)
+          // 부모 폴더 직하 파일 — rootFiles에 수집 (기존에는 유실됨)
+          rootFiles.push(file)
         }
       }
 
-      // 하위 폴더가 실제로 있으면 그것을 반환
+      // 하위 폴더가 실제로 있으면 부모 정보와 함께 반환
       if (subfolderGroups.size > 0) {
-        return subfolderGroups
+        return { parentFolderName, rootFiles, groups: subfolderGroups }
       }
     }
   }
 
   // 기본 동작: 최상위 폴더 그룹 반환
-  return topLevelGroups
+  return { parentFolderName: null, rootFiles: [], groups: topLevelGroups }
 }
 
 /**

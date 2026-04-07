@@ -15,6 +15,8 @@ import './MappingPreview.css'
 
 interface MappingPreviewProps {
   mappings: FolderMapping[]
+  parentFolderName?: string | null  // 재그룹화 시 원본 부모 폴더명
+  parentRootFiles?: File[]          // 부모 폴더 직하 파일들
   onBack: () => void
   onStartUpload: (selectedMappings: FolderMapping[]) => void  // 선택된 매핑만 업로드
   expandedPaths?: Set<string>  // 외부에서 제어하는 펼침 상태
@@ -102,6 +104,8 @@ function calculateSize(nodes: TreeNode[]): number {
 
 export default function MappingPreview({
   mappings,
+  parentFolderName,
+  parentRootFiles,
   onBack,
   onStartUpload,
   expandedPaths: controlledExpandedPaths,
@@ -184,6 +188,11 @@ export default function MappingPreview({
   const allFolderPaths = useMemo(() => {
     const paths: string[] = []
 
+    // 부모 폴더가 있으면 포함
+    if (parentFolderName) {
+      paths.push(parentFolderName)
+    }
+
     const collectPaths = (nodes: TreeNode[]) => {
       for (const node of nodes) {
         if (node.type === 'folder') {
@@ -200,7 +209,7 @@ export default function MappingPreview({
     }
 
     return paths
-  }, [mappings])
+  }, [mappings, parentFolderName])
 
   const allExpanded = expandedPaths.size === allFolderPaths.length
 
@@ -311,51 +320,136 @@ export default function MappingPreview({
       {/* 트리 뷰 - FolderDropZone과 동일한 CSS 라인 구조 */}
       <div className="tree-container">
         <div className="guide-node root">
-          {mappings.map((mapping, idx) => {
-            const isExpanded = expandedPaths.has(mapping.folderName)
-            const tree = buildTree(mapping.files, mapping.folderName)
-            const isLast = idx === mappings.length - 1
-            const isSelected = selectedFolders.has(mapping.folderName)
-
-            return (
-              <div key={mapping.folderName} className={`guide-node ${isLast ? 'last' : ''} has-children`}>
-                <div
-                  className={`guide-node-content customer-root ${mapping.matched ? 'matched' : 'unmatched'} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => togglePath(mapping.folderName)}
-                >
-                  {/* 매칭된 폴더에만 체크박스 표시 */}
-                  {mapping.matched && (
-                    <span
-                      className={`guide-checkbox ${isSelected ? 'checked' : ''}`}
-                      onClick={(e) => toggleSelection(mapping.folderName, e)}
-                    >
-                      {isSelected ? '☑' : '☐'}
-                    </span>
+          {parentFolderName ? (
+            // 부모 폴더 wrapper (재그룹화된 경우)
+            <div className="guide-node has-children">
+              <div
+                className="guide-node-content customer-root unmatched"
+                onClick={() => togglePath(parentFolderName)}
+              >
+                <span className="guide-toggle">
+                  {expandedPaths.has(parentFolderName) ? '▼' : '▶'}
+                </span>
+                <span className="guide-icon folder">📁</span>
+                <span className="guide-name customer unmatched">{parentFolderName}</span>
+                <span className="guide-note">미매칭</span>
+                <span className="guide-info">
+                  {mappings.reduce((sum, m) => sum + m.fileCount, 0) + (parentRootFiles?.length ?? 0)}개 · {formatFileSize(
+                    mappings.reduce((sum, m) => sum + m.totalSize, 0) + (parentRootFiles?.reduce((sum, f) => sum + f.size, 0) ?? 0)
                   )}
-                  <span className="guide-toggle">
-                    {isExpanded ? '▼' : '▶'}
-                  </span>
-                  {mapping.matched ? (
-                    <span className="guide-icon customer-icon">
-                      <SFSymbol name="person" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
-                    </span>
-                  ) : (
-                    <span className="guide-icon folder">📁</span>
-                  )}
-                  <span className={`guide-name customer ${mapping.matched ? '' : 'unmatched'}`}>{mapping.folderName}</span>
-                  {!mapping.matched && (
-                    <span className="guide-note">미매칭</span>
-                  )}
-                  <span className="guide-info">{mapping.fileCount}개 · {formatFileSize(mapping.totalSize)}</span>
-                </div>
-                {isExpanded && tree.length > 0 &&
-                  tree.map((node, nodeIdx) =>
-                    renderNode(node, nodeIdx === tree.length - 1)
-                  )
-                }
+                </span>
               </div>
-            )
-          })}
+              {expandedPaths.has(parentFolderName) && (
+                <>
+                  {/* 부모 폴더 직하 루트 파일들 */}
+                  {parentRootFiles?.map((file, fileIdx) => {
+                    const isLastRootFile = fileIdx === (parentRootFiles.length - 1)
+                    const isLast = isLastRootFile && mappings.length === 0
+                    return (
+                      <div key={`root-${file.name}`} className={`guide-node ${isLast ? 'last' : ''}`}>
+                        <div className="guide-node-content">
+                          <span className="guide-icon file">📄</span>
+                          <span className="guide-name file">{file.name}</span>
+                          <span className="guide-info">{formatFileSize(file.size)}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {/* 하위 폴더(매핑) 목록 */}
+                  {mappings.map((mapping, idx) => {
+                    const isExpanded = expandedPaths.has(mapping.folderName)
+                    const tree = buildTree(mapping.files, mapping.folderName)
+                    const isLast = idx === mappings.length - 1
+                    const isSelected = selectedFolders.has(mapping.folderName)
+
+                    return (
+                      <div key={mapping.folderName} className={`guide-node ${isLast ? 'last' : ''} has-children`}>
+                        <div
+                          className={`guide-node-content customer-root ${mapping.matched ? 'matched' : 'unmatched'} ${isSelected ? 'selected' : ''}`}
+                          onClick={() => togglePath(mapping.folderName)}
+                        >
+                          {mapping.matched && (
+                            <span
+                              className={`guide-checkbox ${isSelected ? 'checked' : ''}`}
+                              onClick={(e) => toggleSelection(mapping.folderName, e)}
+                            >
+                              {isSelected ? '☑' : '☐'}
+                            </span>
+                          )}
+                          <span className="guide-toggle">
+                            {isExpanded ? '▼' : '▶'}
+                          </span>
+                          {mapping.matched ? (
+                            <span className="guide-icon customer-icon">
+                              <SFSymbol name="person" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+                            </span>
+                          ) : (
+                            <span className="guide-icon folder">📁</span>
+                          )}
+                          <span className={`guide-name customer ${mapping.matched ? '' : 'unmatched'}`}>{mapping.folderName}</span>
+                          {!mapping.matched && (
+                            <span className="guide-note">미매칭</span>
+                          )}
+                          <span className="guide-info">{mapping.fileCount}개 · {formatFileSize(mapping.totalSize)}</span>
+                        </div>
+                        {isExpanded && tree.length > 0 &&
+                          tree.map((node, nodeIdx) =>
+                            renderNode(node, nodeIdx === tree.length - 1)
+                          )
+                        }
+                      </div>
+                    )
+                  })}
+                </>
+              )}
+            </div>
+          ) : (
+            // 기존 동작: 부모 없이 매핑 목록 직접 표시
+            mappings.map((mapping, idx) => {
+              const isExpanded = expandedPaths.has(mapping.folderName)
+              const tree = buildTree(mapping.files, mapping.folderName)
+              const isLast = idx === mappings.length - 1
+              const isSelected = selectedFolders.has(mapping.folderName)
+
+              return (
+                <div key={mapping.folderName} className={`guide-node ${isLast ? 'last' : ''} has-children`}>
+                  <div
+                    className={`guide-node-content customer-root ${mapping.matched ? 'matched' : 'unmatched'} ${isSelected ? 'selected' : ''}`}
+                    onClick={() => togglePath(mapping.folderName)}
+                  >
+                    {mapping.matched && (
+                      <span
+                        className={`guide-checkbox ${isSelected ? 'checked' : ''}`}
+                        onClick={(e) => toggleSelection(mapping.folderName, e)}
+                      >
+                        {isSelected ? '☑' : '☐'}
+                      </span>
+                    )}
+                    <span className="guide-toggle">
+                      {isExpanded ? '▼' : '▶'}
+                    </span>
+                    {mapping.matched ? (
+                      <span className="guide-icon customer-icon">
+                        <SFSymbol name="person" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+                      </span>
+                    ) : (
+                      <span className="guide-icon folder">📁</span>
+                    )}
+                    <span className={`guide-name customer ${mapping.matched ? '' : 'unmatched'}`}>{mapping.folderName}</span>
+                    {!mapping.matched && (
+                      <span className="guide-note">미매칭</span>
+                    )}
+                    <span className="guide-info">{mapping.fileCount}개 · {formatFileSize(mapping.totalSize)}</span>
+                  </div>
+                  {isExpanded && tree.length > 0 &&
+                    tree.map((node, nodeIdx) =>
+                      renderNode(node, nodeIdx === tree.length - 1)
+                    )
+                  }
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
 

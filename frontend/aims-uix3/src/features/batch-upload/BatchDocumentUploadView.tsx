@@ -52,6 +52,8 @@ interface SerializedState {
   customers: CustomerForMatching[]
   folderMappingsMetadata: Array<Omit<FolderMapping, 'files'> & { serializedFiles: SerializedFileInfo[] }>
   expandedPaths: string[]  // 펼쳐진 폴더 경로들
+  parentFolderName?: string | null
+  parentRootFiles?: SerializedFileInfo[]
   savedAt: string
 }
 
@@ -62,7 +64,9 @@ function saveToSessionStorage(
   step: SerializedState['step'],
   customers: CustomerForMatching[],
   folderMappings: FolderMapping[],
-  expandedPaths: string[]
+  expandedPaths: string[],
+  parentFolderName?: string | null,
+  parentRootFiles?: File[]
 ): void {
   try {
     const state: SerializedState = {
@@ -82,6 +86,12 @@ function saveToSessionStorage(
         }))
       })),
       expandedPaths,
+      parentFolderName: parentFolderName ?? null,
+      parentRootFiles: parentRootFiles?.map(f => ({
+        name: f.name,
+        size: f.size,
+        webkitRelativePath: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name
+      })) ?? [],
       savedAt: new Date().toISOString()
     }
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(state))
@@ -146,6 +156,10 @@ export default function BatchDocumentUploadView({
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const isInitializedRef = useRef(false)
 
+  // 부모 폴더 정보 (재그룹화 시 원본 부모 폴더명 + 루트 파일)
+  const [parentFolderName, setParentFolderName] = useState<string | null>(null)
+  const [parentRootFiles, setParentRootFiles] = useState<File[]>([])
+
   // 🍎 도움말 모달 상태
   const [helpModalVisible, setHelpModalVisible] = useState(false)
 
@@ -202,6 +216,14 @@ export default function BatchDocumentUploadView({
         isPlaceholder: true
       }))
       setFolderMappings(restoredMappings)
+
+      // 부모 폴더 정보 복원
+      if (saved.parentFolderName) {
+        setParentFolderName(saved.parentFolderName)
+      }
+      if (saved.parentRootFiles && saved.parentRootFiles.length > 0) {
+        setParentRootFiles(saved.parentRootFiles.map(createPlaceholderFile))
+      }
     }
   }, [])
 
@@ -210,8 +232,8 @@ export default function BatchDocumentUploadView({
     if (!isInitializedRef.current) return
     if (step === 'upload') return // 업로드 중에는 저장하지 않음
 
-    saveToSessionStorage(step, customers, folderMappings, Array.from(expandedPaths))
-  }, [step, customers, folderMappings, expandedPaths])
+    saveToSessionStorage(step, customers, folderMappings, Array.from(expandedPaths), parentFolderName, parentRootFiles)
+  }, [step, customers, folderMappings, expandedPaths, parentFolderName, parentRootFiles])
 
   // 고객 목록 및 스토리지 정보 로드
   useEffect(() => {
@@ -293,7 +315,7 @@ export default function BatchDocumentUploadView({
     }
 
     // 1. 파일을 폴더별로 그룹화 (고객명 확인을 위해 customers 전달)
-    const fileGroups = groupFilesByFolder(files, customers)
+    const { groups: fileGroups, parentFolderName: detectedParentName, rootFiles } = groupFilesByFolder(files, customers)
 
     if (fileGroups.size === 0) {
       setValidationErrors(['폴더 구조가 없는 파일입니다. 폴더를 선택해주세요.'])
@@ -301,7 +323,8 @@ export default function BatchDocumentUploadView({
     }
 
     // 2. 파일 검증 (tierLimit: -1이면 무제한)
-    const allFiles = Array.from(fileGroups.values()).flat()
+    // rootFiles도 포함하여 전체 파일 목록 구성
+    const allFiles = [...Array.from(fileGroups.values()).flat(), ...rootFiles]
     const validation = validateBatch(allFiles, tierLimit)
 
     // 시스템/임시 파일과 기타 검증 실패를 분리
@@ -368,9 +391,12 @@ export default function BatchDocumentUploadView({
 
     // 5. 정상 진행
     setFolderMappings(mappings)
+    setParentFolderName(detectedParentName)
+    setParentRootFiles(rootFiles)
 
-    // 6. 기본 펼침 상태 설정 (모두 닫힘 - 고객명만 표시)
-    setExpandedPaths(new Set())
+    // 6. 기본 펼침 상태 설정
+    // 부모 폴더가 있으면 기본 펼침 (내용을 바로 볼 수 있도록)
+    setExpandedPaths(detectedParentName ? new Set([detectedParentName]) : new Set())
 
     // 7. 미리보기 단계로 이동
     if (mappings.length > 0) {
@@ -383,6 +409,8 @@ export default function BatchDocumentUploadView({
     setFolderMappings([])
     setValidationErrors([])
     setExpandedPaths(new Set())
+    setParentFolderName(null)
+    setParentRootFiles([])
   }, [])
 
   // 스토리지 초과 다이얼로그: "기존 파일 정리" 클릭
@@ -416,11 +444,13 @@ export default function BatchDocumentUploadView({
     }
 
     // 필터링된 파일로 새 mappings 생성 (고객명 확인을 위해 customers 전달)
-    const fileGroups = groupFilesByFolder(filteredFiles, customers)
-    const mappings = createFolderMappings(fileGroups, customers)
+    const { groups: filteredGroups, parentFolderName: filteredParentName, rootFiles: filteredRootFiles } = groupFilesByFolder(filteredFiles, customers)
+    const mappings = createFolderMappings(filteredGroups, customers)
 
     setFolderMappings(mappings)
-    setExpandedPaths(new Set(mappings.map(m => m.folderName)))
+    setParentFolderName(filteredParentName)
+    setParentRootFiles(filteredRootFiles)
+    setExpandedPaths(new Set(filteredParentName ? [filteredParentName, ...mappings.map(m => m.folderName)] : mappings.map(m => m.folderName)))
     setShowStorageExceededDialog(false)
     setPendingFiles([])
     setPendingMappings([])
@@ -462,6 +492,8 @@ export default function BatchDocumentUploadView({
     setFolderMappings([])
     setValidationErrors([])
     setExpandedPaths(new Set())
+    setParentFolderName(null)
+    setParentRootFiles([])
     clearSessionStorage()
   }, [resetUpload])
 
@@ -499,6 +531,8 @@ export default function BatchDocumentUploadView({
           <div className="batch-upload-content">
             <MappingPreview
               mappings={folderMappings}
+              parentFolderName={parentFolderName}
+              parentRootFiles={parentRootFiles}
               onBack={handleBack}
               onStartUpload={handleStartUpload}
               expandedPaths={expandedPaths}

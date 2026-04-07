@@ -174,7 +174,9 @@ describe('customerMatcher', () => {
   })
 
   describe('groupFilesByFolder', () => {
-    test('파일을 최상위 폴더별로 그룹화한다', () => {
+    // === Regression: 기존 동작 보존 ===
+
+    test('여러 최상위 폴더는 각각 그룹화한다 (AC#4)', () => {
       const files = [
         createMockFileWithPath('홍길동/보험증권.pdf'),
         createMockFileWithPath('홍길동/청구서.pdf'),
@@ -182,22 +184,97 @@ describe('customerMatcher', () => {
         createMockFileWithPath('김철수/하위폴더/첨부.jpg'),
       ]
 
-      const groups = groupFilesByFolder(files)
+      const result = groupFilesByFolder(files)
 
-      expect(groups.size).toBe(2)
-      expect(groups.get('홍길동')?.length).toBe(2)
-      expect(groups.get('김철수')?.length).toBe(2)
+      expect(result.parentFolderName).toBeNull()
+      expect(result.rootFiles).toHaveLength(0)
+      expect(result.groups.size).toBe(2)
+      expect(result.groups.get('홍길동')?.length).toBe(2)
+      expect(result.groups.get('김철수')?.length).toBe(2)
+    })
+
+    test('고객명과 일치하는 단일 폴더는 그대로 반환한다 (AC#3)', () => {
+      const files = [
+        createMockFileWithPath('홍길동/보험증권.pdf'),
+        createMockFileWithPath('홍길동/하위폴더/첨부.pdf'),
+      ]
+
+      const result = groupFilesByFolder(files, mockCustomers)
+
+      expect(result.parentFolderName).toBeNull()
+      expect(result.rootFiles).toHaveLength(0)
+      expect(result.groups.size).toBe(1)
+      expect(result.groups.get('홍길동')?.length).toBe(2)
     })
 
     test('webkitRelativePath가 없는 파일은 건너뛴다', () => {
       const file = new File(['test'], 'orphan.pdf')
-      const groups = groupFilesByFolder([file])
-      expect(groups.size).toBe(0)
+      const result = groupFilesByFolder([file])
+      expect(result.groups.size).toBe(0)
     })
 
-    test('빈 배열은 빈 맵을 반환한다', () => {
-      const groups = groupFilesByFolder([])
-      expect(groups.size).toBe(0)
+    test('빈 배열은 빈 결과를 반환한다', () => {
+      const result = groupFilesByFolder([])
+      expect(result.groups.size).toBe(0)
+      expect(result.parentFolderName).toBeNull()
+      expect(result.rootFiles).toHaveLength(0)
+    })
+
+    // === AC#1, AC#2: 루트 폴더 표시 + 루트 파일 보존 ===
+
+    test('미매칭 단일 폴더: parentFolderName을 반환하고 루트 파일을 보존한다 (AC#1, AC#2)', () => {
+      // "한울" 폴더 안에 루트 파일 + 하위 폴더
+      const files = [
+        createMockFileWithPath('한울/재무제표.pdf', 1000),
+        createMockFileWithPath('한울/사업자등록증.pdf', 2000),
+        createMockFileWithPath('한울/주주명부.xlsx', 500),
+        createMockFileWithPath('한울/하위폴더A/파일1.pdf', 3000),
+        createMockFileWithPath('한울/하위폴더A/파일2.pdf', 4000),
+        createMockFileWithPath('한울/하위폴더B/파일3.pdf', 5000),
+      ]
+
+      const result = groupFilesByFolder(files, mockCustomers)
+
+      // 부모 폴더 정보
+      expect(result.parentFolderName).toBe('한울')
+
+      // 루트 파일 보존 (기존에는 유실됨)
+      expect(result.rootFiles).toHaveLength(3)
+      expect(result.rootFiles.map(f => f.name).sort()).toEqual(
+        ['사업자등록증.pdf', '재무제표.pdf', '주주명부.xlsx'].sort()
+      )
+
+      // 하위 폴더 그룹화
+      expect(result.groups.size).toBe(2)
+      expect(result.groups.get('하위폴더A')?.length).toBe(2)
+      expect(result.groups.get('하위폴더B')?.length).toBe(1)
+    })
+
+    test('미매칭 단일 폴더: 하위 폴더 없이 루트 파일만 있는 경우', () => {
+      const files = [
+        createMockFileWithPath('한울/파일1.pdf'),
+        createMockFileWithPath('한울/파일2.pdf'),
+      ]
+
+      const result = groupFilesByFolder(files, mockCustomers)
+
+      // 하위 폴더 없으므로 기본 동작: 최상위 폴더 그룹 반환
+      expect(result.parentFolderName).toBeNull()
+      expect(result.groups.size).toBe(1)
+      expect(result.groups.get('한울')?.length).toBe(2)
+    })
+
+    test('미매칭 단일 폴더: 루트 파일 없이 하위 폴더만 있는 경우', () => {
+      const files = [
+        createMockFileWithPath('한울/하위A/파일1.pdf'),
+        createMockFileWithPath('한울/하위B/파일2.pdf'),
+      ]
+
+      const result = groupFilesByFolder(files, mockCustomers)
+
+      expect(result.parentFolderName).toBe('한울')
+      expect(result.rootFiles).toHaveLength(0)
+      expect(result.groups.size).toBe(2)
     })
   })
 
