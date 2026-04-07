@@ -212,15 +212,6 @@ const DocumentLibraryContent: React.FC<{
   // 이름변경/삭제 성공 시 데이터 재조회 (UI 상태 유지)
   refreshDataRef.current = () => { controller.refreshDocuments() }
 
-  // 새로고침 함수를 외부로 노출 (RP rename 등에서 CP 갱신용)
-  React.useEffect(() => {
-    if (onRefreshExpose) {
-      onRefreshExpose(async () => {
-        await actions.refreshDocuments()
-      })
-    }
-  }, [onRefreshExpose, actions])
-
   // 🍎 고객 필터: 더블클릭 시 고객명 자동 설정
   React.useEffect(() => {
     if (customerFilter && !customerFilter.name && state.documents.length > 0) {
@@ -267,19 +258,33 @@ const DocumentLibraryContent: React.FC<{
 
   // 문서 처리 현황 통계 (Status Bar용)
   // 1. 전체 라이브러리 통계
-  const { statistics: docStats, isLoading: statsLoading } = useDocumentStatistics({
+  const { statistics: docStats, isLoading: statsLoading, refresh: refreshDocStats } = useDocumentStatistics({
     customerLink: isUnlinkedFilter ? 'unlinked' : undefined
   })
   // 2. 현재 배치 통계 (batchId가 있을 때만)
-  const { statistics: batchStats, isLoading: batchLoading } = useDocumentStatistics({
+  const { statistics: batchStats, isLoading: batchLoading, refresh: refreshBatchStats } = useDocumentStatistics({
     enabled: !!currentBatchId,
     batchId: currentBatchId
   })
   // 3. 미연결 문서 건수 확인 (고객 연결 버튼/필터 표시 여부 결정용)
-  const { statistics: unlinkedStats } = useDocumentStatistics({
+  const { statistics: unlinkedStats, refresh: refreshUnlinkedStats } = useDocumentStatistics({
     customerLink: 'unlinked'
   })
   const hasUnlinkedDocs = (unlinkedStats?.total ?? 0) > 0
+
+  // 새로고침 함수를 외부로 노출 (RP rename 등에서 CP 갱신용)
+  React.useEffect(() => {
+    if (onRefreshExpose) {
+      onRefreshExpose(async () => {
+        await Promise.all([
+          actions.refreshDocuments(),
+          refreshDocStats(),
+          refreshBatchStats(),
+          refreshUnlinkedStats(),
+        ])
+      })
+    }
+  }, [onRefreshExpose, actions, refreshDocStats, refreshBatchStats, refreshUnlinkedStats])
 
   // 📝 서버사이드 초성 카운트 (DB 전체 대상)
   const [serverInitialCounts, setServerInitialCounts] = React.useState<Map<string, number>>(new Map())
