@@ -7,7 +7,7 @@
  * iOS/macOS native table view style
  */
 
-import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect, useCallback } from 'react';
+import React, { forwardRef, useImperativeHandle, useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
@@ -72,6 +72,9 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     }, [itemsPerPage]);
 
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
+    // 로컬 input state: sessionStorage 오버헤드 없이 즉시 반응. IME 조합 방해 방지.
+    const [inputValue, setInputValue] = useState(searchValue);
+    const inputRef = useRef<HTMLInputElement>(null);
     const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
     // 상태+유형 통합 필터 (5가지 옵션)
     const [statusFilter, setStatusFilter] = usePersistedState<
@@ -138,19 +141,18 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState(0);
 
-    // Debounced search (300ms delay for server-side search)
-    const [debouncedSearch, setDebouncedSearch] = useState(searchValue);
+    // inputValue → searchValue 동기화 (300ms debounce)
+    // 타이핑 중에는 sessionStorage 쓰기/API 호출 없음. 멈춘 후 한 번만 실행.
     useEffect(() => {
       const timer = setTimeout(() => {
-        setDebouncedSearch(searchValue);
-        // 검색어 변경 시 첫 페이지로 이동 (기존 값과 다를 때만)
-        if (searchValue !== debouncedSearch) {
+        if (inputValue !== searchValue) {
+          setSearchValue(inputValue);
           setCurrentPage(1);
         }
       }, 300);
       return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchValue]);
+    }, [inputValue]);
 
     // Fetch counter for forced re-fetch after CRUD
     const [fetchKey, setFetchKey] = useState(0);
@@ -173,11 +175,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         limit: parseInt(itemsPerPage),
         status: apiStatus,
         customerType: apiCustomerType,
-        search: debouncedSearch.trim() || undefined,
+        search: searchValue.trim() || undefined,
         sort: sortField ? `${sortField}_${sortDirection}` : undefined,
         initial: selectedInitial || undefined,
       };
-    }, [currentPage, itemsPerPage, statusFilter, debouncedSearch, sortField, sortDirection, selectedInitial]);
+    }, [currentPage, itemsPerPage, statusFilter, searchValue, sortField, sortDirection, selectedInitial]);
 
     // Fetch customers from server
     useEffect(() => {
@@ -389,13 +391,14 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     }), [refresh]);
 
     const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchValue(e.target.value);
-      // 페이지 리셋은 debounce effect에서 처리
+      setInputValue(e.target.value);
     };
 
     const handleClearSearch = () => {
+      setInputValue('');
       setSearchValue('');
-      // 페이지 리셋은 debounce effect에서 처리
+      setCurrentPage(1);
+      inputRef.current?.focus();
     };
 
     const handleItemsPerPageChange = (value: string) => {
@@ -650,32 +653,31 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
           </div>
         )}
 
-        {/* 결과 헤더: 검색 + 필터 */}
-        {!isLoading && (
-          <div className="customer-library-result-header">
+        {/* 결과 헤더: 검색 + 필터 — 로딩 중에도 항상 표시 (포커스 유지) */}
+        <div className="customer-library-result-header">
             {/* 검색 인풋 (왼쪽) */}
             <div className="search-input-wrapper">
               <div className="search-icon">
                 <SFSymbol name="magnifyingglass" size={SFSymbolSize.BODY} />
               </div>
               <input
+                ref={inputRef}
                 type="text"
                 className="search-input"
                 placeholder="이름, 전화번호, 이메일로 검색..."
-                value={searchValue}
+                value={inputValue}
                 onChange={handleSearchInputChange}
               />
-              {searchValue && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearSearch}
-                  className="search-clear-button"
-                  aria-label="검색어 지우기"
-                >
-                  <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_1} />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearSearch}
+                className="search-clear-button"
+                aria-label="검색어 지우기"
+                style={{ visibility: inputValue ? 'visible' : 'hidden' }}
+              >
+                <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_1} />
+              </Button>
             </div>
 
             {/* 필터 버튼 (오른쪽) */}
@@ -775,7 +777,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               )}
             </div>
           </div>
-        )}
 
         {/* 초성 필터 바 */}
         {!isLoading && (
@@ -949,11 +950,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   </div>
                 )}
                 <span className="customer-type">{getCustomerIcon(customer)}</span>
-                <span className="customer-name">{debouncedSearch ? highlightText(customer.personal_info?.name || '이름 없음', debouncedSearch) : (customer.personal_info?.name || '이름 없음')}</span>
+                <span className="customer-name">{searchValue ? highlightText(customer.personal_info?.name || '이름 없음', searchValue) : (customer.personal_info?.name || '이름 없음')}</span>
                 <span className="customer-birth">{getCustomerBirthDate(customer)}</span>
                 <span className="customer-gender">{getCustomerGender(customer)}</span>
-                <span className="customer-phone">{debouncedSearch ? highlightText(getCustomerInfo(customer), debouncedSearch) : getCustomerInfo(customer)}</span>
-                <span className="customer-email">{debouncedSearch ? highlightText(getCustomerEmail(customer), debouncedSearch) : getCustomerEmail(customer)}</span>
+                <span className="customer-phone">{searchValue ? highlightText(getCustomerInfo(customer), searchValue) : getCustomerInfo(customer)}</span>
+                <span className="customer-email">{searchValue ? highlightText(getCustomerEmail(customer), searchValue) : getCustomerEmail(customer)}</span>
                 <span className="customer-address">{getCustomerAddress(customer)}</span>
                 <span className="customer-status">{getCustomerStatus(customer)}</span>
                 <span className="customer-created">{getCustomerCreatedDate(customer)}</span>
