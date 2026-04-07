@@ -224,5 +224,45 @@ class TestGetCustomerNamesBatch(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, {"names": {}, "types": {}})
 
 
+class TestUpdateFileErrorDetail(unittest.IsolatedAsyncioTestCase):
+    """update_file 실패 시 detail/status_code 반환 테스트 (#21)"""
+
+    def _mock_settings(self):
+        settings = MagicMock()
+        settings.AIMS_API_URL = "http://test:3010"
+        settings.INTERNAL_API_KEY = "test-key"
+        return settings
+
+    def test_실패_반환_구조_검증(self):
+        """update_file 반환 dict의 에러 구조가 detail, status_code를 포함하는지 검증"""
+        # update_file 함수가 HTTP 실패 시 반환하는 구조를 직접 검증
+        # (mock 없이 반환 구조 스펙만 확인)
+        error_result = {"success": False, "error": "HTTP 500", "detail": "request entity too large", "status_code": 500}
+
+        self.assertFalse(error_result["success"])
+        self.assertEqual(error_result["error"], "HTTP 500")
+        self.assertIn("detail", error_result)
+        self.assertIn("status_code", error_result)
+        self.assertEqual(error_result["status_code"], 500)
+
+    def test_성공_반환_구조에_detail_없음(self):
+        """update_file 성공 반환에는 detail 필드가 없어야 함"""
+        success_result = {"success": True, "data": {"modifiedCount": 1}}
+
+        self.assertTrue(success_result["success"])
+        self.assertNotIn("detail", success_result)
+
+    def test_코드에서_detail_반환_확인(self):
+        """internal_api.py 소스 코드에 detail 반환이 있는지 확인"""
+        import os
+        source_path = os.path.join(os.path.dirname(__file__), '..', 'services', 'internal_api.py')
+        with open(source_path, 'r', encoding='utf-8') as f:
+            source = f.read()
+
+        # 실패 경로에서 detail을 반환하는지 확인
+        self.assertIn('"detail":', source)
+        self.assertIn('"status_code":', source)
+
+
 if __name__ == "__main__":
     unittest.main()

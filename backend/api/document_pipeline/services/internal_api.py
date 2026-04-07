@@ -125,8 +125,9 @@ async def update_file(file_id: str, set_fields: dict = None, unset_fields: dict 
                 result = resp.json()
                 _validate_response(result.get("data", {}), "files/update")
                 return result
-            logger.warning(f"[InternalAPI] 파일 업데이트 실패 ({file_id}): {resp.status_code} {resp.text[:200]}")
-            return {"success": False, "error": f"HTTP {resp.status_code}"}
+            response_text = resp.text[:500]
+            logger.warning(f"[InternalAPI] 파일 업데이트 실패 ({file_id}): {resp.status_code} {response_text}")
+            return {"success": False, "error": f"HTTP {resp.status_code}", "detail": response_text, "status_code": resp.status_code}
     except Exception as e:
         logger.error(f"[InternalAPI] 파일 업데이트 예외 ({file_id}): {e}")
         return {"success": False, "error": str(e)}

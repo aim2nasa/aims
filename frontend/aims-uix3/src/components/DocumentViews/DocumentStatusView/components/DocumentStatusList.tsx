@@ -518,7 +518,17 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
 
             const handleCopyError = (e: React.MouseEvent) => {
               e.stopPropagation()
-              navigator.clipboard.writeText(errorMsg).then(() => {
+              // 클립보드에는 기술 상세 정보를 포함하여 복사 (디버깅용)
+              const errorObj = (document as Record<string, unknown>)['error']
+              let copyText = errorMsg
+              if (errorObj && typeof errorObj === 'object' && errorObj !== null) {
+                const detail = (errorObj as Record<string, unknown>)['detail']
+                const statusCode = (errorObj as Record<string, unknown>)['statusCode']
+                if (detail && typeof detail === 'string') {
+                  copyText = `${errorMsg}\n\n[기술 정보]\nstatusCode: ${statusCode}\ndetail: ${detail}`
+                }
+              }
+              navigator.clipboard.writeText(copyText).then(() => {
                 setCopiedErrorDocId(docId ?? null)
                 setTimeout(() => setCopiedErrorDocId(null), 1500)
               }).catch(() => {

@@ -1036,7 +1036,7 @@ async def _connect_document_to_customer(customer_id: str, doc_id: str, user_id: 
         logger.warning(f"Error publishing document link event: {e}")
 
 
-async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str, message: str = ""):
+async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str, message: str = "", error_detail: str = None):
     """Send progress update notification via SSE webhook and update MongoDB"""
 
     # 1. MongoDB에 progress 필드 업데이트 (폴링용)
@@ -1056,11 +1056,14 @@ async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str
         if progress == -1 and stage == "error":
             update_fields["status"] = "failed"
             update_fields["overallStatus"] = "error"
-            update_fields["error"] = {
+            error_obj = {
                 "statusCode": 409,
                 "statusMessage": message,
                 "timestamp": datetime.utcnow().isoformat()
             }
+            if error_detail:
+                error_obj["detail"] = error_detail  # 서버 응답 body 등 기술 정보
+            update_fields["error"] = error_obj
 
         await update_file(doc_id, set_fields=_serialize_for_api(update_fields))
     except Exception as e:
@@ -1189,11 +1192,21 @@ async def _step_save_file(ctx: PipelineContext) -> None:
     logger.info(f"Saved file: {saved_name} to {ctx.dest_path}")
 
     # Update MongoDB with upload info
+    # 파일 크기: file_content에서 직접 계산 (SSoT - 메타 추출 실패 시에도 보존)
+    file_size = len(ctx.file_content) if ctx.file_content else 0
+    # MIME 타입: 업로드 시 전달받은 값 우선, 없으면 확장자에서 추론
+    mime_type = ctx.mime_type
+    if not mime_type:
+        import mimetypes as _mimetypes
+        mime_type = _mimetypes.guess_type(ctx.original_name)[0]
+
     upload_info = {
         "upload.originalName": ctx.original_name,
         "upload.saveName": saved_name,
         "upload.destPath": ctx.dest_path,
         "upload.uploaded_at": datetime.utcnow().isoformat(),
+        "upload.fileSize": file_size,
+        "upload.mimeType": mime_type,
     }
     if ctx.source_path:
         upload_info["upload.sourcePath"] = ctx.source_path
@@ -2343,9 +2356,10 @@ async def _process_via_xpipe(
 
     meta_save_result = await update_file(doc_id, set_fields=_serialize_for_api(meta_update), unset_fields={"error": ""})
     if not meta_save_result.get("success"):
-        error_detail = meta_save_result.get("error", "알 수 없는 오류")
-        logger.error(f"[xPipe] 메타데이터 저장 실패 (처리 중단): {doc_id}, error={error_detail}")
-        await _notify_progress(doc_id, user_id, -1, "error", f"메타데이터 저장 실패: {error_detail}")
+        error_msg = meta_save_result.get("error", "알 수 없는 오류")
+        detail = meta_save_result.get("detail", "")
+        logger.error(f"[xPipe] 메타데이터 저장 실패 (처리 중단): {doc_id}, error={error_msg}, detail={detail}")
+        await _notify_progress(doc_id, user_id, -1, "error", f"메타데이터 저장 실패: {error_msg}", error_detail=detail)
         return
 
     # 9. AR/CRS 감지 결과 처리 (HookResult)
