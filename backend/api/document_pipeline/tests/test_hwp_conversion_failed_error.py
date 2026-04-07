@@ -61,10 +61,11 @@ class TestConversionFailedErrorHandling:
             "conversion_failed 블록에서 _notify_progress를 호출하여 에러를 전파해야 합니다"
         )
 
-    def test_conversion_failed_returns_error_result(self):
+    def test_conversion_failed_sets_error_status(self):
         """
-        conversion_failed 분기가 result='error'를 반환하여
-        후속 처리(변환 대기)로 빠지지 않는지 확인한다.
+        conversion_failed 분기가 status='failed', overallStatus='error'를
+        설정하여 후속 처리(변환 대기)로 빠지지 않는지 확인한다.
+        (commit e30609d8)
         """
         source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
         content = source.read_text(encoding="utf-8")
@@ -72,8 +73,11 @@ class TestConversionFailedErrorHandling:
         start = content.index('skip_reason == "conversion_failed"')
         block = content[start:start + 2000]
 
-        assert '"result": "error"' in block, (
-            "conversion_failed 블록이 error result를 반환해야 합니다 (변환 대기로 빠지면 안 됨)"
+        assert '"status": "failed"' in block, (
+            "conversion_failed 블록이 status=failed를 설정해야 합니다"
+        )
+        assert '"overallStatus": "error"' in block, (
+            "conversion_failed 블록이 overallStatus=error를 설정해야 합니다"
         )
 
 
@@ -96,4 +100,65 @@ class TestPreCommitRegressionTestHook:
 
         assert 'branch.startswith("fix/")' in content, (
             "check_regression_test가 fix/ 브랜치를 체크하지 않습니다"
+        )
+
+
+class TestConversionFailedErrorDetail:
+    """
+    [소급 회귀] conversion_failed 에러 시 error.detail에 mime, filename, conversion_error 저장
+    커밋: e30609d8
+    """
+
+    def test_error_detail_field_exists_in_conversion_failed_block(self):
+        """
+        conversion_failed 분기에서 error.detail 필드를 DB에 저장하는지 확인.
+        이전에는 error.detail 없이 저장하여 디버깅 정보가 누락되었음.
+        """
+        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+        content = source.read_text(encoding="utf-8")
+
+        # conversion_failed 블록 추출
+        start = content.index('skip_reason == "conversion_failed"')
+        block = content[start:start + 3000]
+
+        assert '"error.detail"' in block, (
+            "conversion_failed 블록에 'error.detail' 필드 저장이 없습니다. "
+            "mime, filename, conversion_error 정보가 누락됩니다."
+        )
+
+    def test_error_detail_includes_mime_info(self):
+        """error.detail에 mime 정보가 포함되는지 확인"""
+        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+        content = source.read_text(encoding="utf-8")
+
+        start = content.index('skip_reason == "conversion_failed"')
+        block = content[start:start + 3000]
+
+        # detail 변수에 mime 정보가 포함되는지 확인
+        assert "detected_mime" in block or "mime" in block, (
+            "conversion_failed 블록의 detail에 mime 정보가 포함되지 않습니다"
+        )
+
+    def test_error_detail_includes_filename(self):
+        """error.detail에 filename 정보가 포함되는지 확인"""
+        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+        content = source.read_text(encoding="utf-8")
+
+        start = content.index('skip_reason == "conversion_failed"')
+        block = content[start:start + 3000]
+
+        assert "original_name" in block or "filename" in block, (
+            "conversion_failed 블록의 detail에 filename 정보가 포함되지 않습니다"
+        )
+
+    def test_error_detail_includes_conversion_error(self):
+        """error.detail에 conversion_error 정보가 포함되는지 확인"""
+        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+        content = source.read_text(encoding="utf-8")
+
+        start = content.index('skip_reason == "conversion_failed"')
+        block = content[start:start + 3000]
+
+        assert "conversion_error" in block, (
+            "conversion_failed 블록의 detail에 conversion_error 정보가 포함되지 않습니다"
         )

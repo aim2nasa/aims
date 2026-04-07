@@ -612,4 +612,87 @@ describe('documentStatusHelper - 회귀 테스트', () => {
       expect(result.computed.overallStatus).not.toBe('error');
     });
   });
+
+  /**
+   * [소급 회귀] 메타 저장 실패 시 에러 상태 전환 (#17, 37ad6f63)
+   *
+   * 이전 동작: progress=-1, status='failed' 문서가 processing으로 잘못 표시됨
+   * 수정 후:   progress < 0 || progressStage === 'error' || status === 'failed' → overallStatus: 'error'
+   */
+  describe('[회귀] 메타 저장 실패 에러 상태 전환 (#17, 37ad6f63)', () => {
+    it('progress=-1 문서는 overallStatus="error" 반환', () => {
+      const doc = {
+        _id: 'doc-meta-fail-1',
+        upload: { destPath: '/uploads/test.pdf' },
+        progress: -1,
+        progressStage: 'error',
+        progressMessage: '메타데이터 저장 실패: HTTP 500'
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      expect(result.computed.overallStatus).toBe('error');
+      expect(result.computed.progress).toBe(0);
+    });
+
+    it('status="failed" 문서는 overallStatus="error" 반환', () => {
+      const doc = {
+        _id: 'doc-meta-fail-2',
+        upload: { destPath: '/uploads/test.pdf' },
+        progress: 30,
+        status: 'failed',
+        progressMessage: '파일 처리 실패'
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      expect(result.computed.overallStatus).toBe('error');
+    });
+
+    it('progressStage="error" 문서는 overallStatus="error" 반환', () => {
+      const doc = {
+        _id: 'doc-meta-fail-3',
+        upload: { destPath: '/uploads/test.pdf' },
+        progress: 40,
+        progressStage: 'error',
+        progressMessage: '변환 중 오류 발생'
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      expect(result.computed.overallStatus).toBe('error');
+    });
+
+    it('progress=-1 + status="failed" 조합도 overallStatus="error" 반환', () => {
+      const doc = {
+        _id: 'doc-meta-fail-4',
+        upload: { destPath: '/uploads/test.pdf' },
+        progress: -1,
+        progressStage: 'error',
+        status: 'failed',
+        progressMessage: '메타데이터 저장 실패',
+        error: { statusCode: 500, statusMessage: '메타데이터 저장 실패' }
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      expect(result.computed.overallStatus).toBe('error');
+      expect(result.computed.progress).toBe(0);
+      expect(result.computed.displayMessages.status).toBe('메타데이터 저장 실패');
+    });
+
+    it('정상 progress (50) + 정상 상태는 processing 유지', () => {
+      const doc = {
+        _id: 'doc-normal',
+        upload: { destPath: '/uploads/test.pdf' },
+        progress: 50,
+        progressMessage: '처리 중'
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      expect(result.computed.overallStatus).toBe('processing');
+      expect(result.computed.progress).toBe(50);
+    });
+  });
 });
