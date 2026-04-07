@@ -538,7 +538,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
                     {statusIcon}
                   </div>
                   <div className="status-text">
-                    <span className="status-label">{isCopied ? '복사됨' : statusLabel}</span>
+                    <span className="status-label">{statusLabel}</span>
                   </div>
                 </div>
               </Tooltip>
