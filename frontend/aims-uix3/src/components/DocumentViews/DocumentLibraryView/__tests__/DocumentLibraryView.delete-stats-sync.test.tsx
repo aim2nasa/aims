@@ -105,6 +105,44 @@ describe('DocumentLibraryView - 문서 삭제 시 통계 동기화 (#23)', () =>
     })
   })
 
+  describe('refreshDataRef 경로도 통계를 갱신해야 함 (#25)', () => {
+    /**
+     * 소스 코드 구조 검증: refreshDataRef.current 할당 부분이
+     * refreshDocStats, refreshBatchStats, refreshUnlinkedStats를 반드시 포함해야 함.
+     * 이 테스트는 실제 소스 코드를 읽어 회귀를 탐지한다.
+     */
+    it('소스 코드에서 refreshDataRef.current가 통계 refresh 3종을 모두 호출해야 함', async () => {
+      const fs = await import('fs')
+      const path = await import('path')
+      const sourcePath = path.resolve(__dirname, '..', 'DocumentLibraryView.tsx')
+      const source = fs.readFileSync(sourcePath, 'utf-8')
+
+      // refreshDataRef.current 할당 블록 추출
+      const assignmentMatch = source.match(/refreshDataRef\.current\s*=\s*(?:async\s*)?\(\)\s*=>\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/s)
+      expect(assignmentMatch).not.toBeNull()
+
+      const assignmentBody = assignmentMatch![1]
+
+      // 통계 refresh 3종이 모두 호출되어야 함
+      expect(assignmentBody).toContain('refreshDocStats()')
+      expect(assignmentBody).toContain('refreshBatchStats()')
+      expect(assignmentBody).toContain('refreshUnlinkedStats()')
+    })
+
+    it('refreshDataRef.current가 useDocumentStatistics 선언 이후에 위치해야 함', async () => {
+      const fs = await import('fs')
+      const path = await import('path')
+      const sourcePath = path.resolve(__dirname, '..', 'DocumentLibraryView.tsx')
+      const source = fs.readFileSync(sourcePath, 'utf-8')
+
+      const statsDeclarationPos = source.indexOf('useDocumentStatistics')
+      const refAssignmentPos = source.indexOf('refreshDataRef.current = async () => {')
+
+      // refreshDataRef.current 할당이 useDocumentStatistics 선언보다 뒤에 있어야 함
+      expect(refAssignmentPos).toBeGreaterThan(statsDeclarationPos)
+    })
+  })
+
   describe('회귀 방지: 기존 refresh 동작 유지', () => {
     it('refreshDocuments는 반드시 호출되어야 함 (기존 동작)', async () => {
       const refreshDocuments = vi.fn().mockResolvedValue(undefined)

@@ -209,9 +209,6 @@ const DocumentLibraryContent: React.FC<{
     })
   }, [controller.filteredDocuments, statusFilter])
 
-  // 이름변경/삭제 성공 시 데이터 재조회 (UI 상태 유지)
-  refreshDataRef.current = () => { controller.refreshDocuments() }
-
   // 🍎 고객 필터: 더블클릭 시 고객명 자동 설정
   React.useEffect(() => {
     if (customerFilter && !customerFilter.name && state.documents.length > 0) {
@@ -271,6 +268,16 @@ const DocumentLibraryContent: React.FC<{
     customerLink: 'unlinked'
   })
   const hasUnlinkedDocs = (unlinkedStats?.total ?? 0) > 0
+
+  // 이름변경/삭제 성공 시 데이터 + 통계 재조회 (UI 상태 유지)
+  refreshDataRef.current = async () => {
+    await Promise.all([
+      controller.refreshDocuments(),
+      refreshDocStats(),
+      refreshBatchStats(),
+      refreshUnlinkedStats(),
+    ])
+  }
 
   // 새로고침 함수를 외부로 노출 (RP rename 등에서 CP 갱신용)
   React.useEffect(() => {
