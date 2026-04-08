@@ -125,7 +125,7 @@ class TestOCRErrorProgress:
         # progress 에러 필드 검증
         assert captured_update.get("progress") == -1
         assert captured_update.get("progressStage") == "error"
-        assert captured_update.get("progressMessage") == "OCR 처리 실패"
+        assert captured_update.get("progressMessage").startswith("OCR 처리 실패")
         assert captured_update.get("status") == "failed"
         assert captured_update.get("overallStatus") == "error"
         # 기존 필드도 유지

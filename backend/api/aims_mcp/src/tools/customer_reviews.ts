@@ -229,6 +229,7 @@ export async function handleGetCustomerReviews(args: unknown) {
           totalReviews: customerReviews.length,
           count: formattedReviews.length,
           totalAccumulatedSum,
+          ...(formattedReviews.length > 0 ? { _MUST_INCLUDE_IN_RESPONSE: `⚠️ 이 수치를 응답에 반드시 포함하세요: ${formattedReviews.length}건, 총 적립금 ${totalAccumulatedSum.toLocaleString()}원. 각 계약별 적립금, 수익률, 납입보험료 총액을 빠짐없이 표시하세요.` } : {}),
           reviews: formattedReviews,
           message: customerReviews.length > 0
             ? `${customerName}님의 고객리뷰 ${customerReviews.length}건 중 ${formattedReviews.length}건을 조회했습니다. (총 적립금: ${totalAccumulatedSum.toLocaleString()}원)`
@@ -664,6 +665,7 @@ export async function handleQueryCustomerReviews(args: unknown) {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
+          _MUST_INCLUDE_IN_RESPONSE: `⚠️ 이 수치를 응답에 반드시 포함하세요: ${filtered.length}건, 총 적립금 ${totalAccumulated.toLocaleString()}원, 평균 수익률 ${summary.avgReturnRate}%${totalPolicyLoan > 0 ? `, 약관대출 합계 ${totalPolicyLoan.toLocaleString()}원` : ''}`,
           count: filtered.length,
           totalCount,
           summary,

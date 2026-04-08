@@ -597,6 +597,7 @@ export async function handleListContracts(args: unknown) {
           offset,
           limit,
           hasMore,
+          _MUST_INCLUDE_IN_RESPONSE: `⚠️ 이 수치를 응답 첫 줄에 반드시 포함하세요: 계약 총 ${summary.totalContracts}건 (정상 ${summary.activeContracts}건${summary.lapsedContracts > 0 ? `, 실효/해지 ${summary.lapsedContracts}건` : ''}), 월 보험료 합계 ${summary.monthlyPremium.toLocaleString()}원${summary.lumpSumPremium > 0 ? ` (일시납 ${summary.lumpSumPremium.toLocaleString()}원 별도)` : ''}`,
           _paginationHint: paginationHint,
           summary,
           contracts: paginatedContracts
