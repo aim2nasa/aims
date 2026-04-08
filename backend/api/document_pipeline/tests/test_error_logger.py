@@ -37,9 +37,13 @@ def test_error_logger_has_admin_methods():
     assert "report_to_admin_sync" in method_names
 
 
-def test_error_logger_uses_httpx_not_requests():
-    """report_to_admin_sync가 httpx.Client를 사용하는지 검증"""
+def test_error_logger_uses_direct_mongo_not_http():
+    """report_to_admin이 HTTP 호출 대신 MongoDB 직접 기록을 사용하는지 검증"""
     src = pathlib.Path(__file__).resolve().parent.parent / "workers" / "error_logger.py"
     content = src.read_text(encoding="utf-8")
-    assert "httpx.Client" in content, "report_to_admin_sync should use httpx.Client"
+    assert "aims_analytics" in content, "report_to_admin should write to aims_analytics DB"
     assert "requests.post" not in content, "Should not use requests.post"
+    # AIMS_API_URL/api/error-logs 직접 호출이 없어야 함 (아키텍처 규칙)
+    assert 'AIMS_API_URL}/api/error-logs' not in content, (
+        "Should not call AIMS_API_URL/api/error-logs directly"
+    )

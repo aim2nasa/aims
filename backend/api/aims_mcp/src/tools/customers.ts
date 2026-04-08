@@ -679,11 +679,22 @@ export async function handleSearchCustomerWithContracts(args: unknown) {
       const insuredAmount = contractInfo.insured_amount || 0;
       const contractDate = contractInfo.contract_date || '';
 
+      // CRS 상품명에서 납입기간 추출 (예: "종신, 10년납" → "10년")
+      const productName = cr.product_name || '';
+      const paymentYearMatch = productName.match(/(\d+)\s*년\s*납/);
+      let crsPaymentPeriod = '';
+      if (paymentYearMatch) {
+        crsPaymentPeriod = `${paymentYearMatch[1]}년`;
+      } else if (monthlyPremium === 0) {
+        // 상품명에 년납 패턴 없고 월보험료 0이면 일시납으로 분류
+        crsPaymentPeriod = '일시납';
+      }
+
       const normalized: NormalizedContract = {
         customerId,
         customerName,
         policyNumber,
-        productName: cr.product_name || '',
+        productName,
         insurerName: '',
         contractor: cr.contractor_name || '',
         insured: cr.insured_name || '',
@@ -691,8 +702,8 @@ export async function handleSearchCustomerWithContracts(args: unknown) {
         status: '정상',
         coverageAmount: insuredAmount / 10000,
         insurancePeriod: '',
-        paymentPeriod: monthlyPremium > 0 ? '' : '일시납',
-        paymentStatus: monthlyPremium > 0 ? calculatePaymentStatus('', contractDate) : '일시납',
+        paymentPeriod: crsPaymentPeriod,
+        paymentStatus: crsPaymentPeriod === '일시납' ? '일시납' : calculatePaymentStatus(crsPaymentPeriod, contractDate),
         expiryDate: null,
         paymentEndDate: null,
         premium: monthlyPremium > 0 ? monthlyPremium : initialPremium,
@@ -834,6 +845,7 @@ export async function handleSearchCustomerWithContracts(args: unknown) {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
+          _MUST_INCLUDE_IN_RESPONSE: `⚠️ 이 수치를 응답 첫 줄에 반드시 포함하세요: ${customerName}님 계약 총 ${summary.totalContracts}건 (정상 ${summary.activeContracts}건${summary.lapsedContracts > 0 ? `, 실효/해지 ${summary.lapsedContracts}건` : ''}), 월 보험료 합계 ${summary.monthlyPremium.toLocaleString()}원${summary.lumpSumPremium > 0 ? ` (일시납 ${summary.lumpSumPremium.toLocaleString()}원 별도)` : ''}`,
           customer: {
             id: customerId,
             name: customerName,
