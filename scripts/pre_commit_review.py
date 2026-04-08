@@ -528,6 +528,58 @@ def check_dev_verified(files):
         )
 
 
+def check_issue_recording(input_data):
+    """
+    fix/feat 브랜치에서 커밋 메시지에 이슈 번호(#N)가 있으면,
+    해당 이슈에 오늘 날짜 코멘트가 최소 1개 있는지 GitHub API로 검증.
+    작업 과정 기록 없이 커밋하는 것을 차단.
+
+    Returns:
+        None if OK, error message string if blocked
+    """
+    branch = get_current_branch()
+    if not branch.startswith("fix/") and not branch.startswith("feat/"):
+        return None
+
+    # 커밋 메시지에서 이슈 번호 추출
+    command = input_data.get("tool_input", {}).get("command", "")
+    issue_numbers = re.findall(r'#(\d+)', command)
+    if not issue_numbers:
+        return None
+
+    issue_num = issue_numbers[0]
+
+    # GitHub API로 오늘(KST) 코멘트 확인
+    try:
+        from datetime import datetime, timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        kst_midnight = datetime.now(kst).replace(hour=0, minute=0, second=0, microsecond=0)
+        utc_threshold = kst_midnight.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        result = subprocess.run(
+            ["gh", "issue", "view", issue_num, "--json", "comments",
+             "--jq", f'[.comments[] | select(.createdAt >= "{utc_threshold}")] | length'],
+            capture_output=True, text=True, timeout=15
+        )
+
+        if result.returncode != 0:
+            return None  # gh CLI 실패 시 차단하지 않음 (네트워크 문제 등)
+
+        count_str = re.search(r'\d+', result.stdout.strip() or "0")
+        comment_count = int(count_str.group()) if count_str else 0
+        if comment_count == 0:
+            return (
+                f"[ISSUE RECORDING GATE] 이슈 #{issue_num}에 오늘 기록된 코멘트가 없습니다!\n"
+                f"  작업 과정을 이슈에 기록한 후 커밋하세요.\n"
+                f"  gh issue comment {issue_num} --body \"진행 내용...\"\n"
+                f"  (compact-fix/ACE 각 Phase 완료 시 이슈 코멘트 필수)"
+            )
+    except (ValueError, subprocess.TimeoutExpired, FileNotFoundError):
+        return None  # 검증 불가 시 차단하지 않음
+
+    return None
+
+
 def check_gini_gate(input_data):
     """
     Gini 검수 게이트: .gini-approved 마커 파일 존재 여부 확인
@@ -582,6 +634,12 @@ def main():
     dev_error = check_dev_verified(files)
     if dev_error:
         sys.stderr.write(dev_error + "\n")
+        sys.exit(2)
+
+    # ━━━━━��� 0.8단계: 이슈 기록 게이트 (fix/feat 브랜치, 이슈 번호 포함 시) ━━━━━━
+    issue_error = check_issue_recording(input_data)
+    if issue_error:
+        sys.stderr.write(issue_error + "\n")
         sys.exit(2)
 
     # ━━━━━━ 1단계: 밴드에이드 패턴 감지 ━━━━━━

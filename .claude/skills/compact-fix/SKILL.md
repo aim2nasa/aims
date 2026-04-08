@@ -45,6 +45,19 @@ user-invocable: true
 
 **이슈 기록 누락은 CRITICAL 위반.**
 
+### 이슈 기록 하네스 (구조적 강제)
+
+1. **스킬 레벨**: 각 Phase 완료 시 `gh issue comment`가 **다음 Phase 진입 조건**. 코멘트 없이 다음 Phase 진행 금지.
+2. **커밋 레벨**: `pre_commit_review.py`가 커밋 메시지의 `#N`을 감지하여, 해당 이슈에 오늘 코멘트가 없으면 커밋 차단.
+
+**Phase 전환 시 필수 절차:**
+```
+Phase N 작업 완료
+  → gh issue comment {번호} --body "Phase N 결과..."
+  → 코멘트 성공 확인
+  → Phase N+1 진입
+```
+
 ## Phase 0: 브랜치 생성
 
 **목적:** main을 보호하고 작업을 격리한다.

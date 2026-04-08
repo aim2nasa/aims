@@ -114,3 +114,4 @@
 - 이슈 제목이 마음에 안 들면 사용자가 GitHub에서 직접 수정
 - compact-fix 부적합 판단 시 (대규모 변경 등) 사용자에게 ACE 전환 제안
 - **GitHub 이슈 기록 누락은 CRITICAL 위반** — 모든 Phase에서 반드시 코멘트 남길 것
+- **이슈 기록 하네스**: 각 Phase 완료 시 `gh issue comment`가 다음 Phase 진입 조건. `pre_commit_review.py`가 커밋 시 이슈 코멘트 유무도 검증.
