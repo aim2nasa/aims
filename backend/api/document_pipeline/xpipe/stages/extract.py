@@ -214,63 +214,72 @@ class ExtractStage(Stage):
 
     @staticmethod
     def _convert_and_extract(file_path: str, file_name: str) -> str:
-        """LibreOffice로 PDF 변환 후 pdfplumber로 텍스트 추출
+        """pdf_converter 서비스로 PDF 변환 후 pdfplumber로 텍스트 추출
 
         변환/추출 실패 시 빈 문자열을 반환한다.
         에러 메시지를 텍스트로 반환하면 AI가 문서 내용으로 오인하기 때문.
         """
-        import subprocess
-        import tempfile
         import os
-        import logging as _logging
+        import tempfile
+        import httpx
 
-        _logger = _logging.getLogger(__name__)
-
-        import shutil
-        soffice = shutil.which("soffice") or shutil.which("libreoffice")
-        if not soffice:
-            _logger.warning("LibreOffice 미설치 — 텍스트 추출 불가: %s", file_name)
+        if not file_path or not os.path.exists(file_path):
             return ""
 
-        with tempfile.TemporaryDirectory() as tmp:
-            try:
-                result = subprocess.run(
-                    [soffice, "--headless", "--convert-to", "pdf", "--outdir", tmp, file_path],
-                    capture_output=True, timeout=60,
+        # pdf_converter Docker 서비스 호출
+        converter_url = "http://localhost:8005/convert"
+        try:
+            with open(file_path, "rb") as f:
+                resp = httpx.post(
+                    converter_url,
+                    files={"file": (file_name, f)},
+                    timeout=60.0,
                 )
-            except subprocess.TimeoutExpired:
-                _logger.warning("LibreOffice 변환 시간 초과 (60초): %s", file_name)
-                return ""
-            except Exception as e:
-                _logger.warning("LibreOffice 실행 실패: %s — %s", file_name, e)
-                return ""
+        except httpx.ConnectError:
+            logger.warning("pdf_converter 서비스 연결 불가 (localhost:8005): %s", file_name)
+            return ""
+        except httpx.TimeoutException:
+            logger.warning("pdf_converter 변환 시간 초과 (60초): %s", file_name)
+            return ""
 
-            # 변환된 PDF 찾기
-            pdf_files = [f for f in os.listdir(tmp) if f.endswith(".pdf")]
-            if not pdf_files:
-                _logger.warning("LibreOffice PDF 변환 실패: %s", file_name)
-                return ""
-
-            pdf_path = os.path.join(tmp, pdf_files[0])
-            # pdfplumber로 텍스트 추출
+        if resp.status_code != 200:
+            error_msg = ""
             try:
-                import pdfplumber
-                text_parts = []
-                with pdfplumber.open(pdf_path) as pdf:
-                    for page in pdf.pages:
-                        t = page.extract_text()
-                        if t:
-                            text_parts.append(t)
-                if not text_parts:
-                    _logger.warning("변환 성공, 텍스트 없음: %s", file_name)
-                    return ""
-                return "\n".join(text_parts)
-            except ImportError:
-                _logger.warning("pdfplumber 미설치 — 텍스트 추출 불가: %s", file_name)
+                error_msg = resp.json().get("error", "")
+            except Exception:
+                pass
+            logger.warning("pdf_converter 변환 실패 (HTTP %d): %s — %s", resp.status_code, file_name, error_msg)
+            return ""
+
+        # 변환된 PDF를 임시 파일에 저장
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp.write(resp.content)
+            pdf_path = tmp.name
+
+        try:
+            # pdfplumber로 텍스트 추출
+            import pdfplumber
+            text_parts = []
+            with pdfplumber.open(pdf_path) as pdf:
+                for page in pdf.pages:
+                    t = page.extract_text()
+                    if t:
+                        text_parts.append(t)
+            if not text_parts:
+                logger.warning("변환 성공, 텍스트 없음: %s", file_name)
                 return ""
-            except Exception as e:
-                _logger.warning("[ExtractStage] 변환 PDF 텍스트 추출 실패 (손상 의심): %s — %s", file_name, e)
-                raise CorruptedPDFError(file_name) from e
+            return "\n".join(text_parts)
+        except ImportError:
+            logger.warning("pdfplumber 미설치 — 텍스트 추출 불가: %s", file_name)
+            return ""
+        except Exception as e:
+            logger.warning("[ExtractStage] 변환 PDF 텍스트 추출 실패: %s — %s", file_name, e)
+            raise CorruptedPDFError(file_name) from e
+        finally:
+            try:
+                os.unlink(pdf_path)
+            except OSError:
+                pass
 
     @staticmethod
     def _convert_image_to_png(file_path: str, file_name: str) -> str | None:
