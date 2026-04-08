@@ -481,7 +481,8 @@
       "query": "이분희 보험료 얼마 내고 있어?",
       "gt_method": "mongodb_query",
       "gt_customer": "이분희",
-      "expected": "현재 납입중 월 보험료 0원 (납입기간 완료). 개별 계약 보험료: 117,770원 + 15,800원"
+      "expected": "0건 (DB에 해당 계약 없음)",
+      "note": "2026-04-08 DB 기준. AR/CRS 모두 없음"
     },
     {
       "id": "Q6-06",
@@ -810,7 +811,8 @@
       "query": "캐치업코리아 계약자와 피보험자가 다른 계약만 보여줘",
       "gt_method": "mongodb_query",
       "gt_customer": "캐치업코리아",
-      "expected": "계약자≠피보험자 계약 6건"
+      "expected": "계약자≠피보험자 계약 2건",
+      "note": "2026-04-08 DB 기준. AR 6건 중 계약자≠피보험자 2건"
     },
     {
       "id": "AR-23",
@@ -818,7 +820,8 @@
       "query": "캐치업코리아 종신보험만 보여줘",
       "gt_method": "mongodb_query",
       "gt_customer": "캐치업코리아",
-      "expected": "종신보험 7건"
+      "expected": "종신보험 3건",
+      "note": "2026-04-08 DB 기준. AR 6건 중 종신보험 3건"
     },
     {
       "id": "AR-24",
