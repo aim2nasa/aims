@@ -7,7 +7,6 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import httpx
-import requests
 from config import get_settings
 from services.mongo_service import MongoService
 
@@ -184,12 +183,12 @@ class ErrorLogger:
                 component, message, document_id, owner_id,
                 error_type, severity, category, detail
             )
-            requests.post(
-                f"{self.settings.AIMS_API_URL}/api/error-logs",
-                json=payload,
-                headers=self._admin_headers(),
-                timeout=5
-            )
+            with httpx.Client(timeout=5) as client:
+                client.post(
+                    f"{self.settings.AIMS_API_URL}/api/error-logs",
+                    json=payload,
+                    headers=self._admin_headers()
+                )
         except Exception as e:
             logger.warning(f"[ErrorLogger] admin 리포트(sync) 실패: {e}")
 
