@@ -185,10 +185,16 @@ class ConvertStage(Stage):
         url = converter_url or ConvertStage._DEFAULT_CONVERTER_URL
         try:
             import httpx
+            # pdf_converter가 지원하지 않는 확장자를 .txt로 변환하여 전송
+            # (예: .md → .txt, 내용은 동일한 텍스트)
+            upload_name = os.path.basename(file_path)
+            ext = os.path.splitext(upload_name)[1].lower()
+            if ext in CONVERTIBLE_EXTENSIONS_EXTRA:
+                upload_name = os.path.splitext(upload_name)[0] + ".txt"
             with open(file_path, "rb") as f:
                 resp = httpx.post(
                     url,
-                    files={"file": (os.path.basename(file_path), f)},
+                    files={"file": (upload_name, f)},
                     timeout=120.0,
                 )
             if resp.status_code == 200 and len(resp.content) > 0:

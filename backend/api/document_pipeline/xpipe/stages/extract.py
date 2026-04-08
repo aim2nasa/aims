@@ -423,7 +423,9 @@ class ExtractStage(Stage):
         # ── 미지원 파일 형식 조기 감지 ──
         # 아카이브/디자인 도구 등 텍스트 추출이 원천적으로 불가능한 파일은
         # RuntimeError 대신 플래그를 설정하여 호출자가 보관 처리할 수 있게 한다.
-        if ext in UNSUPPORTED_EXTENSIONS or mime in UNSUPPORTED_MIME_TYPES:
+        # 단, TEXT_EXTENSIONS에 해당하는 확장자는 MIME이 불확실해도 텍스트로 처리
+        is_known_text_ext = ext in TEXT_EXTENSIONS
+        if not is_known_text_ext and (ext in UNSUPPORTED_EXTENSIONS or mime in UNSUPPORTED_MIME_TYPES):
             logger.info(
                 "[ExtractStage] 미지원 파일 형식 — 보관 전용: %s (ext=%s, mime=%s)",
                 file_name, ext, mime,

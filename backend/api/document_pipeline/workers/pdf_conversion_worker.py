@@ -124,9 +124,16 @@ class PdfConversionWorker:
 
         convert_url = f"{settings.PDF_CONVERTER_URL}/convert"
 
+        # pdf_converter가 지원하지 않는 확장자(.md 등)를 .txt로 변환하여 전송
+        upload_name = original_name
+        ext = os.path.splitext(original_name)[1].lower()
+        from xpipe.stages.convert import CONVERTIBLE_EXTENSIONS_EXTRA
+        if ext in CONVERTIBLE_EXTENSIONS_EXTRA:
+            upload_name = os.path.splitext(original_name)[0] + ".txt"
+
         async with httpx.AsyncClient(timeout=180.0) as client:
             with open(input_path, "rb") as f:
-                files = {"file": (original_name, f, "application/octet-stream")}
+                files = {"file": (upload_name, f, "application/octet-stream")}
                 response = await client.post(convert_url, files=files)
 
             if response.status_code != 200:

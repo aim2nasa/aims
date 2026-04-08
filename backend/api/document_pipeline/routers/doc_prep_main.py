@@ -2581,8 +2581,8 @@ async def _trigger_pdf_conversion_for_xpipe(
             await update_file(doc_id, set_fields={"upload.conversion_status": "not_required"})
             return
 
-        # 변환 가능한 포맷인지 확인 (HWP, DOC, XLSX, PPTX 등)
-        if not is_convertible_mime(detected_mime):
+        # 변환 가능한 포맷인지 확인 (HWP, DOC, XLSX, PPTX, TXT, MD 등)
+        if not is_convertible_mime(detected_mime, original_name):
             # 지원하지 않는 형식 → not_required
             await update_file(doc_id, set_fields={"upload.conversion_status": "not_required"})
             return
