@@ -1383,7 +1383,8 @@ async def _step_update_meta_to_db(ctx: PipelineContext) -> None:
         # (cleanup이 files 레코드를 삭제하므로 notify_progress를 먼저 호출)
         error_msg = "동일한 파일이 이미 등록되어 있습니다."
         logger.error(f"🔴 중복 파일 에러: {ctx.doc_id} - {error_msg}")
-        await _notify_progress(ctx.doc_id, ctx.user_id, -1, "error", error_msg)
+        error_detail = f"original_name={ctx.original_name}"
+        await _notify_progress(ctx.doc_id, ctx.user_id, -1, "error", error_msg, error_detail=error_detail)
         await _cleanup_failed_document(ctx.doc_id, ctx.customer_id, ctx.dest_path)
         ctx.cleanup_done = True
         raise Exception(error_msg) from e
@@ -2064,6 +2065,7 @@ async def _process_via_xpipe(
                 "_user_error_message",
                 "파일이 손상되어 처리할 수 없습니다."
             )
+            detail = f"skip_reason={skip_reason}, mime={detected_mime}, file={original_name}"
             logger.warning(
                 f"[xPipe] 손상 PDF 감지 — 에러 처리: doc_id={doc_id}, "
                 f"file={original_name}"
@@ -2074,6 +2076,7 @@ async def _process_via_xpipe(
                 "overallStatusUpdatedAt": datetime.utcnow(),
                 "error.statusCode": 422,
                 "error.statusMessage": user_message,
+                "error.detail": detail,
                 "error.timestamp": datetime.utcnow().isoformat(),
                 "processingSkipReason": skip_reason,
                 "meta.mime": detected_mime,
@@ -2084,7 +2087,7 @@ async def _process_via_xpipe(
                 "progressStage": "error",
                 "progress": 0,
             }))
-            await _notify_progress(doc_id, user_id, -1, "error", user_message)
+            await _notify_progress(doc_id, user_id, -1, "error", user_message, error_detail=detail)
             await _notify_document_complete(doc_id, user_id)
 
             try:
@@ -2139,7 +2142,7 @@ async def _process_via_xpipe(
                 "progressStage": "error",
                 "progress": 0,
             }))
-            await _notify_progress(doc_id, user_id, -1, "error", user_message)
+            await _notify_progress(doc_id, user_id, -1, "error", user_message, error_detail=detail)
             await _notify_document_complete(doc_id, user_id)
 
             try:

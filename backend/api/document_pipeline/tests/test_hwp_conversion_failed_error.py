@@ -61,7 +61,7 @@ class TestConversionFailedErrorHandling:
             "conversion_failed 블록에서 _notify_progress를 호출하여 에러를 전파해야 합니다"
         )
 
-    def test_conversion_failed_sets_error_status(self):
+    def test_conversion_failed_sets_error_status_e30609d8(self):
         """
         conversion_failed 분기가 status='failed', overallStatus='error'를
         설정하여 후속 처리(변환 대기)로 빠지지 않는지 확인한다.
@@ -100,6 +100,68 @@ class TestPreCommitRegressionTestHook:
 
         assert 'branch.startswith("fix/")' in content, (
             "check_regression_test가 fix/ 브랜치를 체크하지 않습니다"
+        )
+
+
+class TestCorruptedPdfErrorDetail:
+    """
+    [Regression #21] corrupted_pdf 에러 시 error.detail에 skip_reason, mime, filename 저장
+    """
+
+    def test_corrupted_pdf_block_has_error_detail_in_db(self):
+        """corrupted_pdf 분기에서 error.detail 필드를 DB에 저장하는지 확인"""
+        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+        content = source.read_text(encoding="utf-8")
+
+        start = content.index('skip_reason == "corrupted_pdf"')
+        block = content[start:start + 3000]
+
+        assert '"error.detail"' in block, (
+            "corrupted_pdf 블록에 'error.detail' 필드 저장이 없습니다"
+        )
+
+    def test_corrupted_pdf_notify_progress_has_error_detail(self):
+        """corrupted_pdf 분기에서 _notify_progress에 error_detail 파라미터를 전달하는지 확인"""
+        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+        content = source.read_text(encoding="utf-8")
+
+        start = content.index('skip_reason == "corrupted_pdf"')
+        block = content[start:start + 3000]
+
+        assert "error_detail=" in block, (
+            "corrupted_pdf 블록에서 _notify_progress 호출 시 error_detail 파라미터가 누락되었습니다"
+        )
+
+
+class TestDuplicateFileErrorDetail:
+    """
+    [Regression #21] duplicate_file 에러 시 error.detail에 파일 정보 저장
+    """
+
+    def test_duplicate_file_notify_progress_has_error_detail(self):
+        """DuplicateKeyError 처리에서 _notify_progress에 error_detail 파라미터를 전달하는지 확인"""
+        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+        content = source.read_text(encoding="utf-8")
+
+        start = content.index("except DuplicateKeyError")
+        block = content[start:start + 500]
+
+        assert "error_detail=" in block, (
+            "DuplicateKeyError 처리에서 _notify_progress 호출 시 error_detail 파라미터가 누락되었습니다"
+        )
+
+    def test_duplicate_file_error_detail_no_file_hash(self):
+        """duplicate_file error_detail에 file_hash가 노출되지 않아야 함 (보안)"""
+        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+        content = source.read_text(encoding="utf-8")
+
+        start = content.index("except DuplicateKeyError")
+        block = content[start:start + 500]
+
+        # error_detail에 file_hash가 포함되면 안 됨 (클라이언트 노출 위험)
+        assert "file_hash=" not in block, (
+            "duplicate_file error_detail에 file_hash가 포함되어 있습니다. "
+            "보안상 file_hash는 클라이언트에 노출되면 안 됩니다."
         )
 
 
