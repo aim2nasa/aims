@@ -1,7 +1,7 @@
 {
   "_meta": {
     "version": "2.0",
-    "created": "2026-03-21",
+    "created": "2026-04-08",
     "purpose": "SQ 질의 유형별 GT 테스트 셋 — AI 어시스턴트 응답 품질 측정용",
     "total_cases": 105,
     "coverage": {
@@ -191,7 +191,8 @@
       "query": "캐치업코리아 계약 현황 알려줘",
       "gt_method": "mongodb_query",
       "gt_customer": "캐치업코리아",
-      "expected": "김보성 AR 6건 + 안영미 AR 10건 = 총 16건 계약 목록"
+      "expected": "16건, 월 18,421,877원, (일시납 311,456,000원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q4-02",
@@ -226,7 +227,8 @@
       "query": "곽승철 계약 현황 보여줘",
       "gt_method": "mongodb_query",
       "gt_customer": "곽승철",
-      "expected": "13건 계약 목록, 월 1,292,220원"
+      "expected": "5건, 월 203,700원, (일시납 40,209,100원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q4-06",
@@ -242,7 +244,8 @@
       "query": "이분희 보험 가입 내역 알려줘",
       "gt_method": "mongodb_query",
       "gt_customer": "이분희",
-      "expected": "하이라이프보장보험(117,770원) + 하이라이프종신보험(15,800원) = 2건"
+      "expected": "0건 (DB에 해당 계약 없음)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q4-08",
@@ -250,7 +253,8 @@
       "query": "안영미 계약 현황 확인해줘",
       "gt_method": "mongodb_query",
       "gt_customer": "안영미",
-      "expected": "최신 AR 기준 11건, 월 17,377,367원"
+      "expected": "11건, 월 14,102,137원, (일시납 114,456,000원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q4-09",
@@ -258,7 +262,8 @@
       "query": "송유미 보험 뭐 들었어?",
       "gt_method": "mongodb_query",
       "gt_customer": "송유미",
-      "expected": "월 1,246,642원, 14건 계약"
+      "expected": "3건, 월 167,620원, (일시납 107,750원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q4-10",
@@ -267,7 +272,8 @@
       "gt_method": "mongodb_query",
       "gt_customer": "안영미",
       "gt_filter": "피보험자 == '안영미'",
-      "expected": "피보험자 안영미 계약 21건"
+      "expected": "11건, 월 14,102,137원, (일시납 114,456,000원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q4-11",
@@ -275,7 +281,8 @@
       "query": "은형석 계약 상세 내용 알려줘",
       "gt_method": "mongodb_query",
       "gt_customer": "은형석",
-      "expected": "5건, 최신 AR 기준 월 1,699,090원"
+      "expected": "1건, (일시납 162,420원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q4-12",
@@ -283,7 +290,8 @@
       "query": "한상용 가입한 보험 목록 보여줘",
       "gt_method": "mongodb_query",
       "gt_customer": "한상용",
-      "expected": "7건 계약 목록"
+      "expected": "3건, (일시납 42,769,900원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q4-13",
@@ -310,7 +318,8 @@
       "gt_method": "mongodb_query",
       "gt_customer": "김보성",
       "gt_filter": "피보험자 == '김보성'",
-      "expected": "피보험자가 김보성인 전체 계약 (18건, 증권번호 중복 포함)"
+      "expected": "4건, (일시납 202,146,950원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q5-01",
@@ -454,8 +463,8 @@
       "query": "김보성 월 보험료 총액이 얼마야?",
       "gt_method": "mongodb_query",
       "gt_customer": "김보성",
-      "expected": "월 4,319,740원 (일시납 200,000,000원 별도). 합계 필수",
-      "note": "2026-03-22 DB 기준, AR 중복 포함"
+      "expected": "4건, (일시납 202,146,950원 별도). 합계 필수",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q6-04",
@@ -463,7 +472,8 @@
       "query": "곽승철 고객 총 보험료가 얼마야?",
       "gt_method": "mongodb_query",
       "gt_customer": "곽승철",
-      "expected": "월 1,292,220원. 합계 필수"
+      "expected": "5건, 월 203,700원, (일시납 40,209,100원 별도). 합계 필수",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q6-05",
@@ -479,7 +489,8 @@
       "query": "안영미 보험료 합계 알려줘",
       "gt_method": "mongodb_query",
       "gt_customer": "안영미",
-      "expected": "최신 AR 기준 월 17,377,367원. 합계 필수"
+      "expected": "11건, 월 14,102,137원, (일시납 114,456,000원 별도). 합계 필수",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q6-07",
@@ -487,7 +498,8 @@
       "query": "송유미 보험 총 몇 건이야?",
       "gt_method": "mongodb_query",
       "gt_customer": "송유미",
-      "expected": "14건"
+      "expected": "3건, 월 167,620원, (일시납 107,750원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q6-08",
@@ -495,7 +507,8 @@
       "query": "곽지민 월납 보험료 총액은?",
       "gt_method": "mongodb_query",
       "gt_customer": "곽지민",
-      "expected": "월 4,017,136원"
+      "expected": "13건, 월 1,647,820원, (일시납 11,116,040원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q6-09",
@@ -503,7 +516,8 @@
       "query": "은형석 계약 건수 알려줘",
       "gt_method": "mongodb_query",
       "gt_customer": "은형석",
-      "expected": "5건"
+      "expected": "1건, (일시납 162,420원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q6-10",
@@ -511,8 +525,8 @@
       "query": "한상용 보험료 얼마나 내?",
       "gt_method": "mongodb_query",
       "gt_customer": "한상용",
-      "expected": "월 1,349,807원 (일시납 별도)",
-      "note": "7건, monthlyPremium=1,349,807원 (2026-03-21 DB 기준)"
+      "expected": "3건, (일시납 42,769,900원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "Q7-01",
@@ -706,7 +720,8 @@
       "query": "정승우 변액보험 뭐 있어?",
       "gt_method": "mongodb_query",
       "gt_customer": "정승우",
-      "expected": "무) 마스터플랜 변액유니버셜종신, CRS 2건"
+      "expected": "1건, (일시납 49,600원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "CRS-02",
@@ -730,7 +745,8 @@
       "query": "정승우 지금 해지하면 얼마 받아?",
       "gt_method": "mongodb_query",
       "gt_customer": "정승우",
-      "expected": "해지환급금 정보 제시 (2건)"
+      "expected": "1건, (일시납 49,600원 별도)",
+      "note": "2026-04-08 DB 기준"
     },
     {
       "id": "CRS-05",
