@@ -65,6 +65,14 @@ def extract_text_from_page(pdf_path: str, page_num: int) -> str:
     try:
         # pdfplumber 사용 (더 정확한 텍스트 추출)
         with pdfplumber.open(pdf_path) as pdf:
+            # 1페이지 AR: 요청한 페이지가 없으면 마지막 페이지로 fallback
+            if page_num >= len(pdf.pages) and len(pdf.pages) > 0:
+                logger.info(
+                    f"페이지 {page_num + 1} 없음 (총 {len(pdf.pages)}페이지), "
+                    f"페이지 {len(pdf.pages)}으로 fallback"
+                )
+                page_num = len(pdf.pages) - 1
+
             if page_num < 0 or page_num >= len(pdf.pages):
                 raise IndexError(f"페이지 번호 범위 초과: {page_num} (총 {len(pdf.pages)}페이지)")
 

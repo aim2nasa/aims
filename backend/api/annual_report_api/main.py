@@ -163,11 +163,14 @@ async def scan_pending_ar_documents(log_always: bool = False):
                 skipped_count += 1
                 continue
 
-            # 큐에 이미 있는지 확인
+            # 큐에 이미 있는지 확인 (완료/처리중이면 스킵, 실패면 삭제 후 재등록)
             existing = db["ar_parse_queue"].find_one({"file_id": file_id})
             if existing:
-                skipped_count += 1
-                continue
+                if existing.get("status") in ("completed", "processing", "pending"):
+                    skipped_count += 1
+                    continue
+                # failed 상태: 큐 항목 삭제 후 재등록 진행
+                db["ar_parse_queue"].delete_one({"_id": existing["_id"]})
 
             # 큐에 추가
             success = queue_manager.enqueue(file_id, customer_id, {

@@ -68,9 +68,17 @@ def extract_contract_table(pdf_path: str, page_num: int = 1) -> Dict[str, Any]:
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"PDF 파일을 찾을 수 없습니다: {pdf_path}")
 
-    logger.info(f"테이블 추출 시작: {os.path.basename(pdf_path)}, 페이지 {page_num + 1}")
-
     with pdfplumber.open(pdf_path) as pdf:
+        # 1페이지 AR: 커버+테이블이 한 페이지에 포함 → page_num=0으로 fallback
+        if page_num >= len(pdf.pages) and len(pdf.pages) > 0:
+            logger.info(
+                f"페이지 {page_num + 1} 없음 (총 {len(pdf.pages)}페이지), "
+                f"페이지 1로 fallback: {os.path.basename(pdf_path)}"
+            )
+            page_num = len(pdf.pages) - 1
+
+        logger.info(f"테이블 추출 시작: {os.path.basename(pdf_path)}, 페이지 {page_num + 1}")
+
         if page_num < 0 or page_num >= len(pdf.pages):
             raise IndexError(f"페이지 번호 범위 초과: {page_num} (총 {len(pdf.pages)}페이지)")
 
