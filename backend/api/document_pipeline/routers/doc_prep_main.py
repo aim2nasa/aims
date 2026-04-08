@@ -1942,6 +1942,7 @@ async def _process_via_xpipe(
     from xpipe.pipeline import Pipeline, PipelineDefinition, StageConfig
     from xpipe.stages.classify import ClassifyStage
     from xpipe.stages.complete import CompleteStage
+    from xpipe.stages.convert import ConvertStage
     from xpipe.stages.detect_special import DetectSpecialStage
     from xpipe.stages.extract import ExtractStage
 
@@ -1998,6 +1999,7 @@ async def _process_via_xpipe(
     definition = PipelineDefinition(
         name="aims-xpipe",
         stages=[
+            StageConfig(name="convert"),
             StageConfig(name="extract"),
             StageConfig(name="classify"),
             StageConfig(name="detect_special"),
@@ -2005,6 +2007,7 @@ async def _process_via_xpipe(
         ],
     )
     pipeline = Pipeline(definition)
+    pipeline.register_stage("convert", ConvertStage)
     pipeline.register_stage("extract", ExtractStage)
     pipeline.register_stage("classify", ClassifyStage)
     pipeline.register_stage("detect_special", DetectSpecialStage)
@@ -2118,10 +2121,61 @@ async def _process_via_xpipe(
                 "error": user_message,
             }
 
-        # 변환을 이미 시도했으나 실패한 경우 → 에러 상태로 처리 (재대기 무의미)
+        # 변환 실패 → pdf_conversion_worker 큐에 위임 시도 (백그라운드 재처리)
+        # 큐 등록 성공 시: completed_with_skip (사용자에게 에러 숨김, 백그라운드 재시도)
+        # 큐 등록 실패 시: 기존처럼 에러 표시 (사용자가 재업로드 가능)
         if skip_reason == "conversion_failed" and is_convertible_mime(detected_mime):
+            queue_ok = False
+            try:
+                from services.pdf_conversion_queue_service import PdfConversionQueueService
+                await PdfConversionQueueService.enqueue(
+                    job_type="preview_pdf",
+                    input_path=dest_path,
+                    original_name=os.path.basename(original_name or ""),
+                    caller="xpipe_conversion_retry",
+                    document_id=doc_id,
+                )
+                queue_ok = True
+                logger.info(
+                    f"[xPipe] 변환 실패 → PDF 변환 큐에 위임: doc_id={doc_id}, file={original_name}"
+                )
+            except Exception as eq:
+                logger.error(f"[xPipe] PDF 변환 큐 등록 실패 → 에러 처리: {doc_id} - {eq}")
+
+            if queue_ok:
+                # 큐 등록 성공: 보관 완료 + 백그라운드 재처리 대기
+                await update_file(doc_id, set_fields=_serialize_for_api({
+                    "status": "completed_with_skip",
+                    "overallStatus": "completed_with_skip",
+                    "overallStatusUpdatedAt": datetime.utcnow(),
+                    "processingSkipReason": "conversion_pending",
+                    "upload.conversion_status": "queued",
+                    "meta.mime": detected_mime,
+                    "meta.filename": original_name,
+                    "meta.extension": os.path.splitext(original_name or "")[1].lower(),
+                    "meta.size_bytes": len(file_content) if file_content else 0,
+                    "upload.originalName": original_name,
+                    "progressStage": "complete",
+                    "progress": 100,
+                }))
+                await _notify_progress(doc_id, user_id, 100, "complete", "파일 보관 완료 (변환 처리 중)")
+                await _notify_document_complete(doc_id, user_id)
+
+                try:
+                    shutil.rmtree(tmp_dir, ignore_errors=True)
+                except Exception:
+                    pass
+
+                return {
+                    "result": "completed_with_skip",
+                    "doc_id": doc_id,
+                    "status": "completed_with_skip",
+                    "overallStatus": "completed_with_skip",
+                    "engine": "xpipe",
+                }
+
+            # 큐 등록 실패: 에러 상태로 전환 (사용자에게 재업로드 기회 제공)
             user_message = "파일 변환에 실패했습니다. 지원되지 않는 형식이거나 파일이 손상되었을 수 있습니다."
-            # 변환 워커가 저장한 상세 에러 (upload.conversion_error) 조회
             conversion_error = result.get("_conversion_error", "")
             if not conversion_error:
                 try:

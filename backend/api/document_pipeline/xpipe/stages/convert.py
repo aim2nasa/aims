@@ -132,7 +132,7 @@ class ConvertStage(Stage):
 
     @staticmethod
     def _convert_real(file_path: str, file_name: str, converter_url: str = "") -> tuple[str, str, int, str]:
-        """PDF 변환 — pdf_converter 서비스 우선, fallback으로 soffice 직접 호출.
+        """PDF 변환 — pdf_converter 서비스 전용.
 
         pdf_converter 서비스를 사용하여 HWP/XLS/PPTX 등을 PDF로 변환.
 
@@ -148,17 +148,11 @@ class ConvertStage(Stage):
         base = os.path.splitext(os.path.basename(file_path))[0]
         converted_path = os.path.join(out_dir, base + ".pdf")
 
-        # 1차: pdf_converter 서비스
         result = ConvertStage._try_pdf_converter_service(file_path, converted_path, converter_url=converter_url)
         if result:
             return result
 
-        # 2차: soffice 직접 호출 (fallback)
-        result = ConvertStage._try_soffice_direct(file_path, converted_path, out_dir)
-        if result:
-            return result
-
-        return file_path, "none", 0, "PDF 변환 수단 없음 (pdf_converter 서비스 미실행, soffice 미설치)"
+        return file_path, "none", 0, "PDF 변환 실패: pdf_converter 서비스 미실행 (localhost:8005)"
 
     _DEFAULT_CONVERTER_URL = "http://localhost:8005/convert"
 
@@ -185,34 +179,13 @@ class ConvertStage(Stage):
                 with open(converted_path, "wb") as out:
                     out.write(resp.content)
                 return converted_path, "pdf_converter", os.path.getsize(converted_path), "변환 완료"
-        except Exception:
-            pass
-        return None
-
-    @staticmethod
-    def _try_soffice_direct(
-        file_path: str, converted_path: str, out_dir: str
-    ) -> tuple[str, str, int, str] | None:
-        """soffice 직접 호출로 변환 시도 (fallback)"""
-        import subprocess
-        import shutil
-        import os
-
-        soffice = shutil.which("soffice") or shutil.which("libreoffice")
-        if not soffice:
-            return None
-
-        try:
-            subprocess.run(
-                [soffice, "--headless", "--convert-to", "pdf", "--outdir", out_dir, file_path],
-                capture_output=True, timeout=60,
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(
+                "pdf_converter 서비스 호출 실패: %s — %s", os.path.basename(file_path), e
             )
-        except Exception:
-            return None
-
-        if os.path.exists(converted_path) and os.path.getsize(converted_path) > 0:
-            return converted_path, "soffice", os.path.getsize(converted_path), "변환 완료"
         return None
+
 
 
 # 하위 호환 alias — 기존 코드에서 needs_conversion()을 import하는 곳이 있음

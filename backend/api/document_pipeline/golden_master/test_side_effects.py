@@ -228,15 +228,19 @@ class TestErrorSkipReason:
             assert doc.get("processingSkipReason") == "unsupported_format"
 
     def test_conversion_failed_is_completed(self, db, snapshots):
-        """변환 실패: status=completed + processingSkipReason=conversion_failed"""
+        """변환 실패: 큐 위임 성공 시 completed_with_skip, 실패 시 failed (#39)"""
         snaps = find_snapshots_by_category(snapshots, "error_conversion_failed")
         assert len(snaps) > 0, "conversion_failed 스냅샷 없음"
         for snap in snaps:
             doc = get_doc_from_db(db, snap["doc_id"])
             assert doc is not None
-            assert doc["status"] == "completed", \
-                f"{snap['id']}: status={doc['status']} (expected: completed)"
-            assert doc.get("processingSkipReason") == "conversion_failed"
+            # #39: 큐 위임 성공/실패에 따라 두 가지 상태 허용
+            valid_statuses = {"completed", "completed_with_skip", "failed"}
+            assert doc["status"] in valid_statuses, \
+                f"{snap['id']}: status={doc['status']} (expected one of: {valid_statuses})"
+            valid_reasons = {"conversion_failed", "conversion_pending"}
+            assert doc.get("processingSkipReason") in valid_reasons, \
+                f"{snap['id']}: processingSkipReason={doc.get('processingSkipReason')} (expected one of: {valid_reasons})"
 
 
 # ──────────────────────────────────────────────

@@ -1,8 +1,11 @@
 """
-Regression 테스트: HWP 변환 실패 시 에러 상태 전환 (#19)
+Regression 테스트: HWP 변환 실패 시 처리 흐름 (#19, #39)
 
-이전 동작: HWP 변환 실패 → "변환 대기" (progress: 60, conversion_queued) → 영구 stuck
-수정 후:   HWP 변환 실패 → 에러 상태 (progress: -1, status: failed) → 사용자에게 노출
+#19 이전: HWP 변환 실패 → "변환 대기" (progress: 60) → 영구 stuck
+#19 수정: HWP 변환 실패 → 에러 상태 (progress: -1, status: failed)
+#39 수정: HWP 변환 실패 → 큐 위임 성공 시 completed_with_skip,
+          큐 위임 실패 시 에러 상태 (fallback)
+          + soffice 직접 호출 제거, ConvertStage 파이프라인 등록
 """
 import sys
 from pathlib import Path
@@ -10,74 +13,170 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 
-class TestConversionFailedErrorHandling:
-    """conversion_failed인 변환 대상 파일이 에러 상태로 전환되는지 검증"""
+def _read_doc_prep_main() -> str:
+    """doc_prep_main.py 소스 읽기"""
+    source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+    return source.read_text(encoding="utf-8")
 
-    def test_conversion_failed_not_queued_as_pending(self):
-        """
-        doc_prep_main.py에서 skip_reason == 'conversion_failed'이고
-        is_convertible_mime()인 경우, "변환 대기"가 아닌 에러 처리 분기가
-        먼저 실행되는지 코드 구조를 검증한다.
-        """
-        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
-        content = source.read_text(encoding="utf-8")
 
-        # conversion_failed 에러 처리 분기가 존재하는지
-        assert 'skip_reason == "conversion_failed"' in content, (
-            "conversion_failed 에러 처리 분기가 doc_prep_main.py에 없습니다"
+def _read_convert_stage() -> str:
+    """convert.py 소스 읽기"""
+    source = Path(__file__).parents[1] / "xpipe" / "stages" / "convert.py"
+    return source.read_text(encoding="utf-8")
+
+
+def _extract_conversion_failed_block(content: str, size: int = 5000) -> str:
+    """conversion_failed 분기 블록 추출"""
+    start = content.index('skip_reason == "conversion_failed"')
+    return content[start:start + size]
+
+
+class TestConversionFailedQueueDelegation:
+    """#39: conversion_failed 시 큐 위임 후 completed_with_skip 처리"""
+
+    def test_conversion_failed_delegates_to_queue(self):
+        """변환 실패 시 PdfConversionQueueService.enqueue 호출이 있는지 확인"""
+        block = _extract_conversion_failed_block(_read_doc_prep_main())
+        assert "PdfConversionQueueService" in block, (
+            "conversion_failed 블록에서 PdfConversionQueueService 큐 위임이 없습니다"
+        )
+        assert "enqueue" in block, (
+            "conversion_failed 블록에서 enqueue 호출이 없습니다"
         )
 
-        # conversion_failed 분기가 is_convertible_mime 분기보다 먼저 나오는지
+    def test_queue_success_sets_completed_with_skip(self):
+        """큐 등록 성공 시 completed_with_skip 상태로 처리"""
+        block = _extract_conversion_failed_block(_read_doc_prep_main())
+        assert '"status": "completed_with_skip"' in block, (
+            "큐 등록 성공 시 status를 completed_with_skip으로 설정해야 합니다"
+        )
+        assert '"conversion_pending"' in block, (
+            "큐 등록 성공 시 processingSkipReason이 conversion_pending이어야 합니다"
+        )
+
+    def test_queue_failure_falls_back_to_error(self):
+        """큐 등록 실패 시 에러 상태로 fallback"""
+        block = _extract_conversion_failed_block(_read_doc_prep_main())
+        assert '"status": "failed"' in block, (
+            "큐 등록 실패 시 status를 failed로 설정해야 합니다 (fallback)"
+        )
+        assert '"overallStatus": "error"' in block, (
+            "큐 등록 실패 시 overallStatus를 error로 설정해야 합니다 (fallback)"
+        )
+
+    def test_conversion_failed_before_conversion_pending(self):
+        """conversion_failed 에러 처리가 conversion_pending 설정보다 먼저 나와야 함"""
+        content = _read_doc_prep_main()
         error_pos = content.index('skip_reason == "conversion_failed"')
         pending_pos = content.index('conversion_pending 상태로 설정')
         assert error_pos < pending_pos, (
-            "conversion_failed 에러 처리가 conversion_pending 설정보다 먼저 실행되어야 합니다. "
-            f"에러 처리 위치: {error_pos}, pending 설정 위치: {pending_pos}"
+            "conversion_failed 처리가 conversion_pending보다 먼저 실행되어야 합니다"
         )
 
-    def test_conversion_failed_sets_error_status(self):
-        """
-        conversion_failed 분기에서 status='failed', overallStatus='error'를
-        설정하는지 확인한다.
-        """
-        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
-        content = source.read_text(encoding="utf-8")
 
-        # conversion_failed 블록 추출 (해당 if문부터 다음 return까지)
-        start = content.index('skip_reason == "conversion_failed"')
-        # 해당 블록의 return문 찾기
-        block = content[start:start + 2000]
+class TestConversionFailedErrorFallback:
+    """#19 호환: 큐 실패 시 에러 상태 전환 보장"""
 
-        assert '"status": "failed"' in block, (
-            "conversion_failed 블록에서 status를 'failed'로 설정해야 합니다"
-        )
-        assert '"overallStatus": "error"' in block, (
-            "conversion_failed 블록에서 overallStatus를 'error'로 설정해야 합니다"
-        )
+    def test_error_fallback_has_notify_progress(self):
+        """큐 실패 fallback에서 _notify_progress를 호출하는지 확인"""
+        block = _extract_conversion_failed_block(_read_doc_prep_main())
         assert '_notify_progress' in block, (
-            "conversion_failed 블록에서 _notify_progress를 호출하여 에러를 전파해야 합니다"
+            "conversion_failed 블록에서 _notify_progress 호출이 없습니다"
         )
 
-    def test_conversion_failed_sets_error_status_e30609d8(self):
-        """
-        conversion_failed 분기가 status='failed', overallStatus='error'를
-        설정하여 후속 처리(변환 대기)로 빠지지 않는지 확인한다.
-        (commit e30609d8)
-        """
-        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
-        content = source.read_text(encoding="utf-8")
-
-        start = content.index('skip_reason == "conversion_failed"')
-        block = content[start:start + 2000]
-
-        assert '"status": "failed"' in block, (
-            "conversion_failed 블록이 status=failed를 설정해야 합니다"
+    def test_error_detail_field_exists(self):
+        """큐 실패 fallback에서 error.detail 필드를 DB에 저장하는지 확인"""
+        block = _extract_conversion_failed_block(_read_doc_prep_main())
+        assert '"error.detail"' in block, (
+            "conversion_failed 블록에 error.detail 필드 저장이 없습니다"
         )
-        assert '"overallStatus": "error"' in block, (
-            "conversion_failed 블록이 overallStatus=error를 설정해야 합니다"
+
+    def test_error_detail_includes_mime_info(self):
+        """error.detail에 mime 정보가 포함되는지 확인"""
+        block = _extract_conversion_failed_block(_read_doc_prep_main())
+        assert "detected_mime" in block, (
+            "conversion_failed 블록의 detail에 mime 정보가 없습니다"
+        )
+
+    def test_error_detail_includes_conversion_error(self):
+        """error.detail에 conversion_error 정보가 포함되는지 확인"""
+        block = _extract_conversion_failed_block(_read_doc_prep_main())
+        assert "conversion_error" in block, (
+            "conversion_failed 블록의 detail에 conversion_error가 없습니다"
+        )
+
+
+class TestSofficeRemoved:
+    """#39: soffice 직접 호출이 ConvertStage에서 완전 제거되었는지 검증"""
+
+    def test_no_soffice_direct_method(self):
+        """_try_soffice_direct 메서드가 제거되었는지 확인"""
+        content = _read_convert_stage()
+        assert "_try_soffice_direct" not in content, (
+            "ConvertStage에 _try_soffice_direct 메서드가 아직 존재합니다. "
+            "soffice 직접 호출은 구조적으로 불안정하므로 완전 제거해야 합니다."
+        )
+
+    def test_no_subprocess_import(self):
+        """subprocess 모듈 사용이 없는지 확인"""
+        content = _read_convert_stage()
+        assert "import subprocess" not in content, (
+            "ConvertStage에 subprocess import가 있습니다. soffice 직접 호출 흔적입니다."
+        )
+
+    def test_no_soffice_binary_reference(self):
+        """soffice/libreoffice 바이너리 참조가 없는지 확인"""
+        content = _read_convert_stage()
+        # 주석이나 docstring이 아닌 실행 코드에서 soffice를 참조하는지 체크
+        lines = content.split('\n')
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if stripped.startswith('#') or stripped.startswith('"""') or stripped.startswith("'''"):
+                continue
+            assert 'shutil.which("soffice")' not in line, (
+                f"Line {i}: soffice 바이너리 탐색 코드가 있습니다"
+            )
+            assert 'shutil.which("libreoffice")' not in line, (
+                f"Line {i}: libreoffice 바이너리 탐색 코드가 있습니다"
+            )
+
+    def test_pdf_converter_is_sole_method(self):
+        """pdf_converter 서비스가 유일한 변환 수단인지 확인"""
+        content = _read_convert_stage()
+        assert "_try_pdf_converter_service" in content, (
+            "ConvertStage에 _try_pdf_converter_service가 없습니다"
+        )
+        assert "localhost:8005" in content or "_DEFAULT_CONVERTER_URL" in content, (
+            "pdf_converter 서비스 URL 설정이 없습니다"
+        )
+
+
+class TestConvertStagePipelineRegistration:
+    """#39: ConvertStage가 xPipe 파이프라인에 등록되었는지 검증"""
+
+    def test_convert_stage_imported(self):
+        """doc_prep_main.py에서 ConvertStage를 import하는지 확인"""
+        content = _read_doc_prep_main()
+        assert "from xpipe.stages.convert import ConvertStage" in content, (
+            "doc_prep_main.py에서 ConvertStage import가 없습니다"
+        )
+
+    def test_convert_stage_registered(self):
+        """ConvertStage가 pipeline에 register_stage로 등록되는지 확인"""
+        content = _read_doc_prep_main()
+        assert 'register_stage("convert", ConvertStage)' in content, (
+            "ConvertStage가 파이프라인에 등록되지 않았습니다"
+        )
+
+    def test_convert_before_extract(self):
+        """convert 스테이지가 extract 앞에 배치되는지 확인"""
+        content = _read_doc_prep_main()
+        convert_pos = content.index('StageConfig(name="convert")')
+        extract_pos = content.index('StageConfig(name="extract")')
+        assert convert_pos < extract_pos, (
+            "convert 스테이지가 extract보다 먼저 실행되어야 합니다"
         )
 
 
@@ -88,139 +187,47 @@ class TestPreCommitRegressionTestHook:
         """pre_commit_review.py에 check_regression_test 함수가 있는지 확인"""
         hook_file = Path(__file__).parents[4] / "scripts" / "pre_commit_review.py"
         content = hook_file.read_text(encoding="utf-8")
-
-        assert "def check_regression_test" in content, (
-            "pre_commit_review.py에 check_regression_test 함수가 없습니다"
-        )
+        assert "def check_regression_test" in content
 
     def test_hook_checks_fix_branch(self):
         """fix/ 브랜치에서만 체크하는지 확인"""
         hook_file = Path(__file__).parents[4] / "scripts" / "pre_commit_review.py"
         content = hook_file.read_text(encoding="utf-8")
-
-        assert 'branch.startswith("fix/")' in content, (
-            "check_regression_test가 fix/ 브랜치를 체크하지 않습니다"
-        )
+        assert 'branch.startswith("fix/")' in content
 
 
 class TestCorruptedPdfErrorDetail:
-    """
-    [Regression #21] corrupted_pdf 에러 시 error.detail에 skip_reason, mime, filename 저장
-    """
+    """[Regression #21] corrupted_pdf 에러 시 error.detail 저장"""
 
     def test_corrupted_pdf_block_has_error_detail_in_db(self):
-        """corrupted_pdf 분기에서 error.detail 필드를 DB에 저장하는지 확인"""
         source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
         content = source.read_text(encoding="utf-8")
-
         start = content.index('skip_reason == "corrupted_pdf"')
         block = content[start:start + 3000]
-
-        assert '"error.detail"' in block, (
-            "corrupted_pdf 블록에 'error.detail' 필드 저장이 없습니다"
-        )
+        assert '"error.detail"' in block
 
     def test_corrupted_pdf_notify_progress_has_error_detail(self):
-        """corrupted_pdf 분기에서 _notify_progress에 error_detail 파라미터를 전달하는지 확인"""
         source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
         content = source.read_text(encoding="utf-8")
-
         start = content.index('skip_reason == "corrupted_pdf"')
         block = content[start:start + 3000]
-
-        assert "error_detail=" in block, (
-            "corrupted_pdf 블록에서 _notify_progress 호출 시 error_detail 파라미터가 누락되었습니다"
-        )
+        assert "error_detail=" in block
 
 
 class TestDuplicateFileErrorDetail:
-    """
-    [Regression #21] duplicate_file 에러 시 error.detail에 파일 정보 저장
-    """
+    """[Regression #21] duplicate_file 에러 시 error.detail 저장"""
 
     def test_duplicate_file_notify_progress_has_error_detail(self):
-        """DuplicateKeyError 처리에서 _notify_progress에 error_detail 파라미터를 전달하는지 확인"""
         source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
         content = source.read_text(encoding="utf-8")
-
         start = content.index("except DuplicateKeyError")
         block = content[start:start + 500]
-
-        assert "error_detail=" in block, (
-            "DuplicateKeyError 처리에서 _notify_progress 호출 시 error_detail 파라미터가 누락되었습니다"
-        )
+        assert "error_detail=" in block
 
     def test_duplicate_file_error_detail_no_file_hash(self):
-        """duplicate_file error_detail에 file_hash가 노출되지 않아야 함 (보안)"""
+        """보안: error_detail에 file_hash 노출 금지"""
         source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
         content = source.read_text(encoding="utf-8")
-
         start = content.index("except DuplicateKeyError")
         block = content[start:start + 500]
-
-        # error_detail에 file_hash가 포함되면 안 됨 (클라이언트 노출 위험)
-        assert "file_hash=" not in block, (
-            "duplicate_file error_detail에 file_hash가 포함되어 있습니다. "
-            "보안상 file_hash는 클라이언트에 노출되면 안 됩니다."
-        )
-
-
-class TestConversionFailedErrorDetail:
-    """
-    [소급 회귀] conversion_failed 에러 시 error.detail에 mime, filename, conversion_error 저장
-    커밋: e30609d8
-    """
-
-    def test_error_detail_field_exists_in_conversion_failed_block(self):
-        """
-        conversion_failed 분기에서 error.detail 필드를 DB에 저장하는지 확인.
-        이전에는 error.detail 없이 저장하여 디버깅 정보가 누락되었음.
-        """
-        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
-        content = source.read_text(encoding="utf-8")
-
-        # conversion_failed 블록 추출
-        start = content.index('skip_reason == "conversion_failed"')
-        block = content[start:start + 3000]
-
-        assert '"error.detail"' in block, (
-            "conversion_failed 블록에 'error.detail' 필드 저장이 없습니다. "
-            "mime, filename, conversion_error 정보가 누락됩니다."
-        )
-
-    def test_error_detail_includes_mime_info(self):
-        """error.detail에 mime 정보가 포함되는지 확인"""
-        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
-        content = source.read_text(encoding="utf-8")
-
-        start = content.index('skip_reason == "conversion_failed"')
-        block = content[start:start + 3000]
-
-        # detail 변수에 mime 정보가 포함되는지 확인
-        assert "detected_mime" in block or "mime" in block, (
-            "conversion_failed 블록의 detail에 mime 정보가 포함되지 않습니다"
-        )
-
-    def test_error_detail_includes_filename(self):
-        """error.detail에 filename 정보가 포함되는지 확인"""
-        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
-        content = source.read_text(encoding="utf-8")
-
-        start = content.index('skip_reason == "conversion_failed"')
-        block = content[start:start + 3000]
-
-        assert "original_name" in block or "filename" in block, (
-            "conversion_failed 블록의 detail에 filename 정보가 포함되지 않습니다"
-        )
-
-    def test_error_detail_includes_conversion_error(self):
-        """error.detail에 conversion_error 정보가 포함되는지 확인"""
-        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
-        content = source.read_text(encoding="utf-8")
-
-        start = content.index('skip_reason == "conversion_failed"')
-        block = content[start:start + 3000]
-
-        assert "conversion_error" in block, (
-            "conversion_failed 블록의 detail에 conversion_error 정보가 포함되지 않습니다"
-        )
+        assert "file_hash=" not in block
