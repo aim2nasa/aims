@@ -448,13 +448,14 @@ Jude FAIL (AC#2)
 
 #### Jude PASS 시 → dev 검증 마커 생성
 
-Jude PASS 후, prd 배포를 허용하는 마커를 생성한다:
+Jude PASS 후, 커밋을 허용하는 마커를 생성한다:
 
 ```bash
 touch D:/aims/.dev-verified
 ```
 
-**이 마커가 없으면 `/full-deploy`가 차단된다.**
+**이 마커가 없으면 커밋이 `pre_commit_review.py` 훅에 의해 차단된다.**
+검증된 코드만 커밋한다는 원칙의 하네스.
 
 #### 보고 규칙
 

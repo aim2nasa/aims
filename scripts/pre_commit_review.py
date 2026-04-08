@@ -484,6 +484,50 @@ def check_regression_test(files):
     return None
 
 
+def check_dev_verified(files):
+    """
+    fix/feat 브랜치에서 코드 변경 시 .dev-verified 마커 필수.
+    dev 서버에서 검증 완료 후에만 커밋 허용.
+
+    Returns:
+        None if OK, error message string if blocked
+    """
+    branch = get_current_branch()
+    if not branch.startswith("fix/") and not branch.startswith("feat/"):
+        return None  # fix/feat 브랜치가 아니면 체크 안 함
+
+    CODE_EXTENSIONS = {'.py', '.ts', '.tsx', '.js', '.jsx', '.css', '.html'}
+    EXCLUDE_PATHS = ['scripts/', '.claude/', 'docs/']
+
+    has_code_change = False
+    for f in files:
+        if any(f.startswith(p) for p in EXCLUDE_PATHS):
+            continue
+        _, ext = os.path.splitext(f)
+        if ext in CODE_EXTENSIONS:
+            has_code_change = True
+            break
+
+    if not has_code_change:
+        return None  # 코드 변경 없으면 체크 안 함
+
+    marker = os.path.join(os.environ.get("AIMS_ROOT", "D:/aims"), ".dev-verified")
+    if os.path.exists(marker):
+        try:
+            os.remove(marker)  # 1회용 마커 삭제
+        except OSError:
+            pass
+        return None
+    else:
+        return (
+            "[DEV VERIFY GATE] dev 검증 없이 커밋 금지!\n"
+            "  dev 서버에서 동작 검증을 완료한 후 .dev-verified 마커를 생성하세요.\n"
+            "  - AIMS: https://localhost:5177\n"
+            "  - Admin: http://localhost:5178\n"
+            "  (compact-fix Phase 3 또는 ACE 4/6에서 자동 생성)"
+        )
+
+
 def check_gini_gate(input_data):
     """
     Gini 검수 게이트: .gini-approved 마커 파일 존재 여부 확인
@@ -532,6 +576,12 @@ def main():
     regression_error = check_regression_test(files)
     if regression_error:
         sys.stderr.write(regression_error + "\n")
+        sys.exit(2)
+
+    # ━━━━━━ 0.7단계: dev 검증 게이트 (fix/feat 브랜치, 코드 변경 시) ━━━━━━
+    dev_error = check_dev_verified(files)
+    if dev_error:
+        sys.stderr.write(dev_error + "\n")
         sys.exit(2)
 
     # ━━━━━━ 1단계: 밴드에이드 패턴 감지 ━━━━━━
