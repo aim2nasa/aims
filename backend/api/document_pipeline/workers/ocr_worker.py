@@ -425,16 +425,20 @@ class OCRWorker:
         owner_id = msg["owner_id"]
         message_id = msg["message_id"]
 
+        # 사용자용 간략 메시지 생성 (userMessage 우선, statusMessage fallback)
+        user_message = ocr_result.get("userMessage") or ocr_result.get("statusMessage", "알 수 없는 오류")
+        progress_message = f"OCR 처리 실패: {user_message}"
+
         # Update MongoDB with error
         await self._update_ocr_status(file_id, {
             "ocr.status": "error",
             "ocr.queued_at": queued_at,
             "ocr.failed_at": datetime.utcnow().isoformat(),
             "ocr.statusCode": ocr_result.get("status", 500),
-            "ocr.statusMessage": ocr_result.get("userMessage", "Unknown error"),
+            "ocr.statusMessage": user_message,
             "progress": -1,
             "progressStage": "error",
-            "progressMessage": "OCR 처리 실패",
+            "progressMessage": progress_message,
             "status": "failed",
             "overallStatus": "error",
         })
