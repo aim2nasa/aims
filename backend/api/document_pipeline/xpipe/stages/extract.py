@@ -10,6 +10,20 @@ from xpipe.stage import Stage
 logger = logging.getLogger(__name__)
 
 
+def _collect_element_text(text_el, tspan_tag: str) -> list[str]:
+    """<text> 요소에서 text/tail을 포함한 모든 텍스트 조각을 수집한다."""
+    parts: list[str] = []
+    if text_el.text and text_el.text.strip():
+        parts.append(text_el.text.strip())
+    for child in text_el:
+        if child.tag == tspan_tag:
+            if child.text and child.text.strip():
+                parts.append(child.text.strip())
+            if child.tail and child.tail.strip():
+                parts.append(child.tail.strip())
+    return parts
+
+
 # LibreOffice로 변환 가능한 확장자
 CONVERTIBLE_EXTENSIONS = {".hwp", ".doc", ".docx", ".pptx", ".ppt", ".xls", ".xlsx"}
 
@@ -127,6 +141,76 @@ class ExtractStage(Stage):
         except Exception as exc:
             logger.warning("[ExtractStage] PDF 파싱 실패 (손상 의심): %s — %s", file_name, exc)
             raise CorruptedPDFError(file_name) from exc
+
+    @staticmethod
+    def _extract_svg_text(file_path: str, file_name: str) -> str:
+        """SVG 파일에서 <text>/<tspan> 요소의 텍스트를 직접 추출한다.
+
+        SVG는 XML이므로 OCR 없이 텍스트를 파싱할 수 있다.
+        서버에 폰트가 없으면 OCR 시 한글이 □로 깨지므로,
+        이 방식을 우선 시도한다.
+
+        파싱 실패 시 빈 문자열을 반환한다 (에러 아님, fallback으로 OCR 시도).
+        """
+        import os
+        import xml.etree.ElementTree as ET
+
+        if not file_path or not os.path.exists(file_path):
+            return ""
+
+        try:
+            # XXE 방지: DOCTYPE/ENTITY 포함 시 파싱 거부
+            # (외부 의존성 추가 없이 안전하게 처리)
+            with open(file_path, "r", encoding="utf-8") as f:
+                raw = f.read(10000)  # 앞부분만 확인
+            if "<!DOCTYPE" in raw.upper() or "<!ENTITY" in raw.upper():
+                logger.warning(
+                    "[ExtractStage] SVG에 DOCTYPE/ENTITY 감지 — XXE 방지로 파싱 스킵: %s",
+                    file_name,
+                )
+                return ""
+
+            tree = ET.parse(file_path)
+            root = tree.getroot()
+
+            # namespace 감지: SVG 표준은 namespace 있음, 비표준은 없을 수 있음
+            ns = "{http://www.w3.org/2000/svg}"
+            has_ns = ns in root.tag
+            text_tag = f"{ns}text" if has_ns else "text"
+            tspan_tag = f"{ns}tspan" if has_ns else "tspan"
+
+            lines: list[str] = []
+
+            for text_el in root.iter(text_tag):
+                # <text> 자체의 텍스트 + 하위 <tspan> text/tail 모두 수집
+                parts = _collect_element_text(text_el, tspan_tag)
+                combined = " ".join(parts)
+                if combined.strip():
+                    lines.append(combined.strip())
+
+            return "\n".join(lines)
+        except Exception as exc:
+            logger.debug(
+                "[ExtractStage] SVG 텍스트 파싱 실패 (OCR fallback 예정): %s — %s",
+                file_name, exc,
+            )
+            return ""
+
+    @staticmethod
+    def _is_garbled_text(text: str) -> bool:
+        """OCR 결과 텍스트가 깨졌는지(판독 불가) 감지한다.
+
+        비공백 문자 중 □(U+25A1) 또는 REPLACEMENT CHARACTER(U+FFFD) 비율이
+        30%를 초과하면 깨진 텍스트로 판단한다.
+        텍스트가 10자 미만이면 False를 반환한다 (다른 로직에서 처리).
+        """
+        non_space = [ch for ch in text if not ch.isspace()]
+        if len(non_space) < 10:
+            return False
+
+        garbled_count = sum(1 for ch in non_space if ch in ("\u25a1", "\ufffd"))
+        ratio = garbled_count / len(non_space)
+        return ratio > 0.30
 
     @staticmethod
     def _convert_and_extract(file_path: str, file_name: str) -> str:
@@ -374,6 +458,49 @@ class ExtractStage(Stage):
             converted_tmp = None
 
             if ext in UPSTAGE_UNSUPPORTED_IMAGE_EXTS:
+                # SVG: 텍스트 직접 추출 우선 시도 (폰트 없으면 OCR에서 한글 깨짐)
+                if ext == ".svg":
+                    svg_text = self._extract_svg_text(file_path, file_name)
+                    if svg_text and svg_text.strip():
+                        text = svg_text
+                        method = "svg_text_parse"
+                        ocr_model = "-"
+                        logger.info(
+                            "[ExtractStage] SVG 텍스트 직접 추출 성공: %s (%d자)",
+                            file_name, len(text),
+                        )
+                        # OCR 스킵 — 아래 _try_ocr 블록을 건너뛰기 위해 조기 완료
+                        context["extracted_text"] = text
+                        context["text"] = text
+                        context["has_text"] = True
+                        context["extracted"] = True
+
+                        duration_ms = int((time.time() - start) * 1000)
+                        if "stage_data" not in context:
+                            context["stage_data"] = {}
+                        context["stage_data"]["extract"] = {
+                            "status": "completed",
+                            "duration_ms": duration_ms,
+                            "input": {"file_path": file_path, "mime_type": mime, "method": method},
+                            "output": {
+                                "text_length": len(text),
+                                "text_preview": text[:500],
+                                "full_text": text,
+                                "method": method,
+                                "ocr_model": "-",
+                                "ocr_confidence": 0.0,
+                                "meta_status": "completed",
+                                "has_text": True,
+                                "original_format": ext,
+                            },
+                        }
+                        return context
+                    else:
+                        logger.info(
+                            "[ExtractStage] SVG 텍스트 없음, PNG 변환 + OCR fallback: %s",
+                            file_name,
+                        )
+
                 converted_tmp = self._convert_image_to_png(file_path, file_name)
                 if converted_tmp:
                     ocr_path = converted_tmp
@@ -426,6 +553,20 @@ class ExtractStage(Stage):
                         os.unlink(converted_tmp)
                     except OSError:
                         pass
+
+            # 깨진 텍스트 감지 (폰트 미설치 등으로 □ 문자 다수 포함)
+            if self._is_garbled_text(text):
+                logger.warning(
+                    "[ExtractStage] OCR 결과 판독 불가 (깨진 텍스트 감지): %s", file_name
+                )
+                text = ""
+                context["text_extraction_failed"] = True
+                context["_extraction_skip_reason"] = "garbled_ocr_text"
+                context["_user_error_message"] = (
+                    "OCR 결과가 판독 불가합니다. "
+                    "원본 파일의 글꼴이 지원되지 않을 수 있습니다."
+                )
+                method = method + "+garbled"
         elif is_pdf:
             # PDF: pdfplumber로 텍스트 추출 시도
             method = "pdfplumber"
@@ -492,7 +633,8 @@ class ExtractStage(Stage):
 
         # 텍스트 추출 결과 검증 — real 모드에서 빈 텍스트 처리
         # RuntimeError 대신 플래그를 설정하여 호출자가 보관 처리할 수 있게 한다.
-        if mode != "stub" and (not text or not text.strip()):
+        # 이미 garbled 등으로 실패 사유가 설정된 경우 덮어쓰지 않음
+        if mode != "stub" and (not text or not text.strip()) and not context.get("text_extraction_failed"):
             if is_convertible and method == "libreoffice+ocr_fallback":
                 # 변환 파일 OCR fallback 실패 — 원본은 보관되므로 빈 텍스트로 처리
                 logger.warning(
