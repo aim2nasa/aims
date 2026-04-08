@@ -323,6 +323,13 @@
     }
   }
 
+  /* iOS 자동줌 방지: 터치 기기에서 input font-size 16px 이상 보장 */
+  @media (pointer: coarse) {
+    .quick-search__input {
+      font-size: max(var(--font-size-footnote, 13px), 16px);
+    }
+  }
+
   @media (max-width: 480px) {
     .quick-search {
       width: calc(100% - 16px); /* 좌우 여백 확보 */

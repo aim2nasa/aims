@@ -384,4 +384,21 @@
     box-shadow: var(--shadow-focus-ring-dark, var(--shadow-focus-ring));
   }
 
+  /* 터치 기기: sm 버튼의 터치 영역을 44px로 확장 (시각 크기 유지) */
+  @media (pointer: coarse) {
+    .button--sm {
+      position: relative;
+    }
+    .button--sm::after {
+      content: "";
+      position: absolute;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
 } /* end @layer components */
