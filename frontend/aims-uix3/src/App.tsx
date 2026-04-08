@@ -2064,7 +2064,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
                     const normalizedUrl = previewUrl.toLowerCase()
                     const isPdf = normalizedUrl.endsWith('.pdf')
-                    const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(normalizedUrl)
+                    const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(normalizedUrl)
 
                     if (isPdf) {
                       return (
