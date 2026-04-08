@@ -30,19 +30,35 @@ CONVERTIBLE_MIMES: set[str] = {
     "application/vnd.oasis.opendocument.text",                           # ODT
     "application/vnd.oasis.opendocument.spreadsheet",                    # ODS
     "application/vnd.oasis.opendocument.presentation",                   # ODP
+    # 텍스트 (프리뷰용 PDF 변환)
+    "text/plain",                                                        # TXT
+    "text/html",                                                         # HTML
+}
+
+# MIME 감지가 불확실한 확장자의 PDF 변환 대상 (예: .md → application/octet-stream)
+CONVERTIBLE_EXTENSIONS_EXTRA: set[str] = {
+    ".md", ".markdown",
 }
 
 
-def is_convertible_mime(mime_type: str) -> bool:
-    """MIME 타입이 PDF 변환 대상인지 판단 (정확 매칭)
+def is_convertible_mime(mime_type: str, filename: str = "") -> bool:
+    """MIME 타입 또는 확장자가 PDF 변환 대상인지 판단
 
     Args:
         mime_type: 파일의 MIME 타입
+        filename: 파일명 (확장자 기반 판단용, 선택)
 
     Returns:
         True면 PDF 변환이 필요함
     """
-    return mime_type in CONVERTIBLE_MIMES
+    if mime_type in CONVERTIBLE_MIMES:
+        return True
+    if filename:
+        import os
+        ext = os.path.splitext(filename)[1].lower()
+        if ext in CONVERTIBLE_EXTENSIONS_EXTRA:
+            return True
+    return False
 
 
 class ConvertStage(Stage):

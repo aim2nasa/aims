@@ -412,6 +412,14 @@ class ExtractStage(Stage):
         import os
         ext = os.path.splitext(file_name)[1].lower() if file_name else ""
 
+        # ConvertStage가 텍스트 파일을 PDF로 변환한 경우,
+        # 텍스트 추출은 원본 파일에서 수행 (변환 PDF는 프리뷰 전용)
+        original_mime = context.get("original_mime_type", "")
+        original_path = context.get("original_file_path", "")
+        if original_path and (original_mime.startswith("text/") or ext in TEXT_EXTENSIONS):
+            file_path = original_path
+            mime = original_mime or mime
+
         # ── 미지원 파일 형식 조기 감지 ──
         # 아카이브/디자인 도구 등 텍스트 추출이 원천적으로 불가능한 파일은
         # RuntimeError 대신 플래그를 설정하여 호출자가 보관 처리할 수 있게 한다.

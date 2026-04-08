@@ -2037,7 +2037,7 @@ async def _process_via_xpipe(
         "mime_type": detected_mime,
         "mode": "real",
         "models": {"llm": "gpt-4.1-mini", "ocr": "upstage", "embedding": "text-embedding-3-small"},
-        "needs_conversion": is_convertible_mime(detected_mime),
+        "needs_conversion": is_convertible_mime(detected_mime, original_name),
         "converted_pdf_path": conv_pdf_path,  # 변환 PDF 경로 (OCR fallback용)
         "_domain_adapter": adapter,
         "_classify_config": {
@@ -2124,7 +2124,7 @@ async def _process_via_xpipe(
         # 변환 실패 → pdf_conversion_worker 큐에 위임 시도 (백그라운드 재처리)
         # 큐 등록 성공 시: completed_with_skip (사용자에게 에러 숨김, 백그라운드 재시도)
         # 큐 등록 실패 시: 기존처럼 에러 표시 (사용자가 재업로드 가능)
-        if skip_reason == "conversion_failed" and is_convertible_mime(detected_mime):
+        if skip_reason == "conversion_failed" and is_convertible_mime(detected_mime, original_name):
             queue_ok = False
             try:
                 from services.pdf_conversion_queue_service import PdfConversionQueueService
@@ -2229,7 +2229,7 @@ async def _process_via_xpipe(
 
         # 변환 대상 파일(HWP/DOC/PPT/XLS 등)은 PDF 변환 워커가 처리해야 하므로
         # conversion_pending 상태로 설정 (조기 completed 방지)
-        if is_convertible_mime(detected_mime):
+        if is_convertible_mime(detected_mime, original_name):
             logger.info(
                 f"[xPipe] 텍스트 추출 불가 — 변환 대기: doc_id={doc_id}, "
                 f"file={original_name}, reason={skip_reason}, mime={detected_mime}"

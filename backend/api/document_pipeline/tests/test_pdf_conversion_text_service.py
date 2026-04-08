@@ -52,8 +52,8 @@ class TestConvertibleMimeClassification:
         ("application/pdf", False),
         ("image/jpeg", False),
         ("image/png", False),
-        ("text/plain", False),
-        ("text/html", False),
+        ("text/plain", True),   # #40: 프리뷰용 PDF 변환 대상
+        ("text/html", True),    # #40: 프리뷰용 PDF 변환 대상
         ("application/zip", False),
         ("application/octet-stream", False),
     ])
@@ -76,8 +76,8 @@ class TestConvertibleMimeClassification:
         assert "application/vnd.ms-powerpoint" in CONVERTIBLE_MIMES
 
     def test_all_convertible_mimes_count(self):
-        """변환 대상 MIME 목록이 15개여야 함 (xpipe 정본 기준, haansofthwp 포함)"""
-        assert len(CONVERTIBLE_MIMES) == 15
+        """변환 대상 MIME 목록이 17개여야 함 (xpipe 정본 기준, text/plain·text/html 포함)"""
+        assert len(CONVERTIBLE_MIMES) == 17
 
 
 # ========================================
