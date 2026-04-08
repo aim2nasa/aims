@@ -50,9 +50,7 @@ import { getEffectiveMapping as getCrEffectiveMapping } from './utils/crGrouping
 import { BatchUploadApi } from '@/features/batch-upload'
 import type { ArFileTableRow } from './types/arBatchTypes'
 import type { CrFileTableRow } from './types/crBatchTypes'
-import { getBatchId, setBatchId, addBatchExpectedTotal, useBatchId } from '@/hooks/useBatchId'
-import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
-import { DocumentProcessingStatusBar } from '../DocumentLibraryView/DocumentProcessingStatusBar'
+import { getBatchId, setBatchId, addBatchExpectedTotal } from '@/hooks/useBatchId'
 import './DocumentRegistrationView.css'
 import './DocumentRegistrationView.mobile.css'
 
@@ -89,13 +87,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 고객 ID 변경 추적용 (이전 고객 ID)
   const prevCustomerIdRef = useRef<string | null>(null)
 
-  // 🔴 현재 업로드 배치 ID (실시간 추적 - 파이프라인 처리 진행률 표시용)
-  const currentBatchId = useBatchId()
-  const { statistics: docStats, isLoading: statsLoading } = useDocumentStatistics({ enabled: visible })
-  const { statistics: batchStats, isLoading: batchLoading } = useDocumentStatistics({
-    enabled: visible && !!currentBatchId,
-    batchId: currentBatchId
-  })
 
   // 🍎 처리 로그 표시 상태 (업로드 시작 전에는 숨김)
   const [isLogVisible, setIsLogVisible] = useState<boolean>(false)
@@ -2327,14 +2318,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         )}
 
-        {/* 🔴 파이프라인 처리 진행률 (업로드 후 OCR/임베딩 등 백엔드 처리 상태) */}
-        {isLogVisible && (
-          <DocumentProcessingStatusBar
-            statistics={docStats}
-            batchStatistics={currentBatchId ? batchStats : null}
-            isLoading={statsLoading || batchLoading}
-          />
-        )}
+        {/* 처리 상태는 전체 문서 보기에서 확인 — 업로드 완료 화면에서는 표시하지 않음 */}
 
         {/* 🍎 다음 단계 안내 (업로드 완료 후 표시) */}
         {isLogVisible && uploadState.files.length > 0 && (
@@ -2347,14 +2331,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               </div>
               <div className="doc-register-next-steps__step">
                 <span className="doc-register-next-steps__number">②</span>
-                <span>처리 완료 후 <strong>고객별 문서함</strong>에서 문서를 확인하세요</span>
+                {customerFileCustomer
+                  ? <span>처리 완료 후 <strong>고객별 문서함</strong>에서 문서를 확인하세요</span>
+                  : <span><strong>전체 문서 보기</strong>에서 고객을 연결하세요</span>
+                }
               </div>
-              {!customerFileCustomer && (
-                <div className="doc-register-next-steps__tip">
-                  <SFSymbol name="lightbulb" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} decorative />
-                  <span>고객을 지정하지 않았다면, <strong>전체 문서 보기</strong>에서 고객을 연결하세요</span>
-                </div>
-              )}
+              <div className="doc-register-next-steps__step">
+                <span className="doc-register-next-steps__number">③</span>
+                <span>더 등록할 문서가 있다면 <strong>새 문서 등록</strong>을 클릭하세요</span>
+              </div>
             </div>
           </div>
         )}

@@ -15,6 +15,8 @@ interface DocumentProcessingStatusBarProps {
   /** 현재 업로드 배치 통계 (batchId 기반) */
   batchStatistics?: DocumentStatistics | null
   isLoading: boolean
+  /** 전체 라이브러리 통계(AR/CRS) 숨김 — 업로드 완료 화면 등 배치 진행률만 필요한 경우 */
+  hideLibraryStats?: boolean
 }
 
 /** 파싱 진행률 계산 (credit_pending도 "완료"로 간주) */
@@ -38,7 +40,7 @@ function fmt(n: number): string {
 /** 파싱 통계 기본값 (API 미지원 시 안전 처리) */
 const EMPTY_PARSING: ParsingStats = { total: 0, completed: 0, processing: 0, pending: 0, failed: 0 }
 
-export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoading }: DocumentProcessingStatusBarProps) {
+export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoading, hideLibraryStats }: DocumentProcessingStatusBarProps) {
   // AR/CRS 파싱 통계 (전체 라이브러리)
   const arParsing = statistics?.arParsing ?? EMPTY_PARSING
   const crsParsing = statistics?.crsParsing ?? EMPTY_PARSING
@@ -116,6 +118,9 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
       return true
     }
 
+    // hideLibraryStats: 배치만 표시하는 모드 — 배치 완료 시 숨김
+    if (hideLibraryStats) return false
+
     // 전체 라이브러리에 처리 중인 문서가 있으면 표시
     const creditPending = statistics.credit_pending ?? 0
     const hasActiveProcessing = statistics.processing > 0 || statistics.error > 0 || statistics.pending > 0 || creditPending > 0
@@ -125,7 +130,7 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
       (crsParsing.processing > 0 || crsParsing.pending > 0 || crsParsing.failed > 0 || (crsParsing.credit_pending ?? 0) > 0)
 
     return hasActiveProcessing || hasActiveArParsing || hasActiveCrsParsing
-  }, [statistics, hasBatch, batchIsActive, arParsing, crsParsing])
+  }, [statistics, hasBatch, batchIsActive, arParsing, crsParsing, hideLibraryStats])
 
   // 스켈레톤 로딩 상태
   if (isLoading && !statistics) {
@@ -137,10 +142,11 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
   }
 
   if (!statistics || statistics.total === 0) return null
+  if (!isVisible) return null
 
-  // 전체 라이브러리 요약
-  const hasAr = arParsing.total > 0
-  const hasCrs = crsParsing.total > 0
+  // 전체 라이브러리 요약 (hideLibraryStats 시 숨김)
+  const hasAr = !hideLibraryStats && arParsing.total > 0
+  const hasCrs = !hideLibraryStats && crsParsing.total > 0
 
   return (
     <div className={`processing-status-bar ${isVisible ? 'processing-status-bar--visible' : ''}`}>
@@ -217,7 +223,7 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
       )}
 
       {/* 🔴 처리 중인 문서가 있으면 파이프라인 진행률 항상 표시 (배치 없을 때) */}
-      {!hasBatch && (() => {
+      {!hasBatch && !hideLibraryStats && (() => {
         const { total, completed, processing, error, pending, completed_with_skip } = statistics
         const creditPending = statistics.credit_pending ?? 0
         const hasActiveProcessing = processing > 0 || error > 0 || pending > 0 || creditPending > 0
