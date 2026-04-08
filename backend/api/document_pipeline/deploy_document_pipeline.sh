@@ -43,29 +43,35 @@ else
     echo "requirements.txt unchanged, skipping pip install"
 fi
 
-# Stop existing process
-echo "Stopping existing process..."
-pm2 delete "$SERVICE_NAME" 2>/dev/null || true
-
-# Start with PM2 (OPENAI_API_KEY를 환경변수로 전달)
-echo "Starting $SERVICE_NAME on port $PORT..."
-OPENAI_API_KEY="$OPENAI_API_KEY" pm2 start "$VENV_DIR/bin/uvicorn" \
-    --name "$SERVICE_NAME" \
-    --cwd "$SERVICE_DIR" \
-    --interpreter "$VENV_DIR/bin/python" \
-    -- main:app --host 0.0.0.0 --port $PORT
+# Restart or start with PM2
+if pm2 describe "$SERVICE_NAME" > /dev/null 2>&1; then
+    echo "Restarting $SERVICE_NAME..."
+    pm2 restart "$SERVICE_NAME" --update-env
+else
+    echo "Starting $SERVICE_NAME on port $PORT..."
+    OPENAI_API_KEY="$OPENAI_API_KEY" pm2 start "$VENV_DIR/bin/uvicorn" \
+        --name "$SERVICE_NAME" \
+        --cwd "$SERVICE_DIR" \
+        --interpreter "$VENV_DIR/bin/python" \
+        -- main:app --host 0.0.0.0 --port $PORT
+fi
 
 pm2 save
 
-# Health check
-sleep 3
-if curl -s "http://localhost:$PORT/health" | grep -q "healthy"; then
-    echo "✅ $SERVICE_NAME is running on port $PORT"
-else
-    echo "❌ Health check failed"
-    pm2 logs "$SERVICE_NAME" --lines 20
-    exit 1
-fi
+# Health check (폴링 방식: 최대 10초, 0.5초 간격)
+echo -n "Health check..."
+for i in $(seq 1 20); do
+    if curl -sf "http://localhost:$PORT/health" | grep -q "healthy"; then
+        echo " ✅ $SERVICE_NAME is running on port $PORT"
+        break
+    fi
+    if [ "$i" -eq 20 ]; then
+        echo " ❌ Health check failed (10s timeout)"
+        pm2 logs "$SERVICE_NAME" --lines 20 --nostream
+        exit 1
+    fi
+    sleep 0.5
+done
 
 # Smoke test (SIGKILL 하드 리밋 120초, per-file 30초, 경고만 — 배포 블로킹 방지)
 if [ -f "$SERVICE_DIR/tests/smoke_test.py" ]; then
