@@ -24,8 +24,9 @@ tools/classification_tuner/results/
 .claude/settings.local.json
 .claude/plans/
 
-# Gini Gate 마커 (1회성 커밋 허용 파일)
+# 1회성 게이트 마커 파일
 .gini-approved
+.dev-verified
 
 # PyInstaller build output (임시 파일)
 build/
