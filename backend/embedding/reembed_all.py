@@ -181,7 +181,7 @@ def run_reembed(dry_run: bool = False):
                 }}
             )
 
-            doc_type = meta.get('document_type', 'general')
+            doc_type = doc.get('document_type') or meta.get('document_type', 'general')
             if meta.get('is_annual_report'):
                 doc_type = 'annual_report'
             elif meta.get('is_customer_review'):
