@@ -140,7 +140,7 @@ export const ParsingSettingsPage = () => {
                 onChange={(e) => handleSummarizeModelChange(e.target.value)}
                 disabled={updateMutation.isPending}
               >
-                {modelSettings?.summarize?.availableModels?.map((model) => (
+                {(modelSettings?.summarize?.availableModels || modelSettings?.annualReport?.availableModels || ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo']).map((model) => (
                   <option key={model} value={model}>{model}</option>
                 ))}
               </select>
