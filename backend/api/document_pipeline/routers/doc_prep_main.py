@@ -1995,6 +1995,13 @@ async def _process_via_xpipe(
     import mimetypes as mt
     detected_mime = mime_type or mt.guess_type(original_name or "")[0] or "application/octet-stream"
 
+    # .md 등 mimetypes가 인식 못하는 텍스트 파일은 text/plain으로 교정
+    if detected_mime == "application/octet-stream" and original_name:
+        from xpipe.stages.extract import TEXT_EXTENSIONS
+        ext = os.path.splitext(original_name)[1].lower()
+        if ext in TEXT_EXTENSIONS:
+            detected_mime = "text/plain"
+
     # 5. xPipe Pipeline 조립
     definition = PipelineDefinition(
         name="aims-xpipe",
