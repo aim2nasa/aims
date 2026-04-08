@@ -24,9 +24,13 @@ class TestImageConvertConstants:
     def test_webp_in_unsupported_image_exts(self):
         assert ".webp" in UPSTAGE_UNSUPPORTED_IMAGE_EXTS
 
-    def test_svg_in_unsupported_extensions(self):
-        """SVG는 변환 불가 -> 보관 처리"""
-        assert ".svg" in UNSUPPORTED_EXTENSIONS
+    def test_svg_in_unsupported_image_exts(self):
+        """SVG는 cairosvg로 변환 -> OCR"""
+        assert ".svg" in UPSTAGE_UNSUPPORTED_IMAGE_EXTS
+
+    def test_svg_not_in_unsupported_extensions(self):
+        """SVG는 보관 대상이 아님"""
+        assert ".svg" not in UNSUPPORTED_EXTENSIONS
 
     def test_jpg_png_not_in_unsupported(self):
         """JPG/PNG는 Upstage 지원 -> 변환 불필요"""
@@ -103,6 +107,40 @@ class TestConvertImageToPng:
         result = ExtractStage._convert_image_to_png("/nonexistent/file.gif", "missing.gif")
         assert result is None
 
+    def test_svg_converts_to_png(self):
+        """SVG -> PNG 변환 성공"""
+        try:
+            import cairosvg
+        except ImportError:
+            pytest.skip("cairosvg not installed")
+
+        svg_content = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="red"/></svg>'
+        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False, mode="w") as f:
+            f.write(svg_content)
+            svg_path = f.name
+
+        try:
+            result = ExtractStage._convert_image_to_png(svg_path, "test.svg")
+            assert result is not None
+            assert result.endswith(".png")
+            assert os.path.exists(result)
+            assert os.path.getsize(result) > 0
+            os.unlink(result)
+        finally:
+            os.unlink(svg_path)
+
+    def test_invalid_svg_returns_none(self):
+        """잘못된 SVG -> None 반환"""
+        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False, mode="w") as f:
+            f.write("not valid svg content")
+            bad_path = f.name
+
+        try:
+            result = ExtractStage._convert_image_to_png(bad_path, "bad.svg")
+            assert result is None
+        finally:
+            os.unlink(bad_path)
+
 
 class TestExtractStageImageConvert:
     """ExtractStage.execute()에서 이미지 변환 분기 검증"""
@@ -140,21 +178,34 @@ class TestExtractStageImageConvert:
             os.unlink(gif_path)
 
     @pytest.mark.asyncio
-    async def test_svg_treated_as_unsupported(self):
-        """SVG -> unsupported_format으로 보관 처리"""
-        stage = ExtractStage()
-        context = {
-            "file_path": "/fake/file.svg",
-            "filename": "diagram.svg",
-            "mime_type": "image/svg+xml",
-            "mode": "stub",
-        }
+    async def test_svg_triggers_convert_then_ocr(self):
+        """SVG -> cairosvg 변환 후 OCR"""
+        try:
+            import cairosvg
+        except ImportError:
+            pytest.skip("cairosvg not installed")
 
-        result = await stage.execute(context)
+        svg_content = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="red"/></svg>'
+        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False, mode="w") as f:
+            f.write(svg_content)
+            svg_path = f.name
 
-        assert result.get("unsupported_format") is True
-        assert result["has_text"] is False
-        assert result["stage_data"]["extract"]["output"]["skip_reason"] == "unsupported_format"
+        try:
+            stage = ExtractStage()
+            context = {
+                "file_path": svg_path,
+                "filename": "diagram.svg",
+                "mime_type": "image/svg+xml",
+                "mode": "stub",
+                "models": {"ocr": "upstage"},
+            }
+
+            result = await stage.execute(context)
+
+            assert result["stage_data"]["extract"]["output"]["method"] == "image_convert+ocr"
+            assert result["extracted"] is True
+        finally:
+            os.unlink(svg_path)
 
     @pytest.mark.asyncio
     async def test_jpg_no_convert(self):

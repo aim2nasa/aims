@@ -19,18 +19,15 @@ TEXT_EXTENSIONS = {
     ".ini", ".cfg", ".conf", ".py", ".js", ".ts", ".html", ".css",
 }
 
-# Upstage API 미지원 이미지 확장자 — Pillow로 PNG 변환 후 OCR
-UPSTAGE_UNSUPPORTED_IMAGE_EXTS = {".gif", ".webp"}
-
-# SVG는 cairosvg 미설치로 변환 불가 — 보관 처리
-UNSUPPORTED_IMAGE_EXTS = {".svg"}
+# Upstage API 미지원 이미지 확장자 — PNG 변환 후 OCR
+# GIF/WebP: Pillow, SVG: cairosvg
+UPSTAGE_UNSUPPORTED_IMAGE_EXTS = {".gif", ".webp", ".svg"}
 
 # 텍스트 추출이 원천적으로 불가능한 파일 확장자
-# (아카이브, 디자인 도구, SVG 등 — 보관만 가능)
+# (아카이브, 디자인 도구 등 — 보관만 가능)
 UNSUPPORTED_EXTENSIONS = {
     ".zip", ".rar", ".7z", ".tar", ".gz",
     ".ai", ".psd", ".sketch", ".fig",
-    ".svg",
 }
 
 # 텍스트 추출 불가 MIME 타입
@@ -193,19 +190,46 @@ class ExtractStage(Stage):
 
     @staticmethod
     def _convert_image_to_png(file_path: str, file_name: str) -> str | None:
-        """GIF/WebP 이미지를 PNG로 변환 (Upstage OCR용)
+        """GIF/WebP/SVG 이미지를 PNG로 변환 (Upstage OCR용)
 
-        애니메이션 GIF/WebP는 첫 프레임만 추출.
+        GIF/WebP: Pillow (애니메이션은 첫 프레임만 추출)
+        SVG: cairosvg (벡터 → 래스터 변환)
         변환 실패 시 None 반환.
 
         Returns:
             변환된 PNG 임시파일 경로 또는 None
         """
+        import os
         import tempfile
         import logging as _logging
 
         _logger = _logging.getLogger(__name__)
+        ext = os.path.splitext(file_name)[1].lower()
 
+        # SVG: cairosvg로 변환
+        if ext == ".svg":
+            try:
+                import cairosvg
+
+                tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+                tmp.close()
+                try:
+                    cairosvg.svg2png(url=file_path, write_to=tmp.name)
+                    return tmp.name
+                except Exception:
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+                    raise
+            except ImportError:
+                _logger.warning("[ExtractStage] cairosvg 미설치 — SVG 변환 불가: %s", file_name)
+                return None
+            except Exception as exc:
+                _logger.warning("[ExtractStage] SVG 변환 실패: %s — %s", file_name, exc)
+                return None
+
+        # GIF/WebP: Pillow로 변환
         try:
             from PIL import Image
 
@@ -222,7 +246,6 @@ class ExtractStage(Stage):
                     return tmp.name
                 except Exception:
                     tmp.close()
-                    import os
                     try:
                         os.unlink(tmp.name)
                     except OSError:
