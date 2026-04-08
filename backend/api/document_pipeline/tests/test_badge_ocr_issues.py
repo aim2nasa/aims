@@ -202,7 +202,7 @@ class TestConvertibleMimeOCRFallback:
         progress_values = []
         progress_stages = []
 
-        async def capture_progress(doc_id, owner_id, progress, stage, message=""):
+        async def capture_progress(doc_id, owner_id, progress, stage, message="", **kwargs):
             progress_values.append(progress)
             progress_stages.append(stage)
 
@@ -513,7 +513,7 @@ class TestImageFileOCRQueueNoNameError:
 
         progress_values = []
 
-        async def capture_progress(doc_id, owner_id, progress, stage, message=""):
+        async def capture_progress(doc_id, owner_id, progress, stage, message="", **kwargs):
             progress_values.append(progress)
 
         with patch("services.mongo_service.MongoService.get_collection", return_value=mock_files_collection), \
