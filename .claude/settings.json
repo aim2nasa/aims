@@ -20,6 +20,12 @@
             "command": "py \"d:/aims/scripts/pre_commit_review.py\"",
             "timeout": 180,
             "statusMessage": "근본적 해결 검증 + 테스트 실행 중..."
+          },
+          {
+            "type": "command",
+            "command": "py \"d:/aims/scripts/pre_merge_gate.py\"",
+            "timeout": 10,
+            "statusMessage": "dev 검증 게이트 확인 중..."
           }
         ]
       }
