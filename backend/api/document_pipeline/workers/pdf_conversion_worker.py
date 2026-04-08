@@ -477,23 +477,13 @@ class PdfConversionWorker:
             f"retry {retry_count}/{max_retries} - {error_message}"
         )
 
-        # FileNotFoundError는 재시도 불필요
+        # FileNotFoundError는 재시도 불필요 — admin 에러 보고 불필요 (파일 삭제는 정상 운영)
         if isinstance(error, FileNotFoundError):
             await PdfConversionQueueService.mark_failed(queue_id, error_message)
             await self._notify_conversion_failed(job, error_message)
-            # aims-admin 시스템 로그에 기록
-            try:
-                from workers.error_logger import error_logger
-                await error_logger.report_to_admin(
-                    component="pdf_conversion_worker",
-                    message=f"PDF 변환 실패 (파일 없음): {error_message}",
-                    document_id=job.get("document_id"),
-                    severity="medium",
-                    category="pipeline",
-                    detail={"queue_id": queue_id, "original_name": original_name}
-                )
-            except Exception:
-                pass
+            logger.warning(
+                f"[PDF변환워커] 파일 없음 (admin 보고 생략): {original_name} — {error_message}"
+            )
             return
 
         # 논블로킹 재시도: delay를 process_after로 설정하여 워커 루프를 블로킹하지 않음

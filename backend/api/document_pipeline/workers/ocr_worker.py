@@ -453,24 +453,28 @@ class OCRWorker:
         # Notify processing error
         await self._notify_processing_complete(doc_id, owner_id, "error")
 
-        # aims-admin 시스템 로그에 기록
-        try:
-            from workers.error_logger import error_logger
-            await error_logger.report_to_admin(
-                component="ocr_worker",
-                message=f"OCR 처리 실패: {ocr_result.get('userMessage', 'Unknown error')}",
-                document_id=doc_id,
-                owner_id=owner_id,
-                error_type="OCRError",
-                category="pipeline",
-                detail={
-                    "file_id": file_id,
-                    "status_code": ocr_result.get("status"),
-                    "ocr_message": ocr_result.get("userMessage")
-                }
-            )
-        except Exception:
-            pass
+        # aims-admin 시스템 로그에 기록 — 일시적 에러(타임아웃, rate limit)는 보고하지 않음
+        ocr_status_code = ocr_result.get("status", 0)
+        ocr_user_msg = ocr_result.get("userMessage", "")
+        is_transient = ocr_status_code in (429, 503) or "타임아웃" in ocr_user_msg
+        if not is_transient:
+            try:
+                from workers.error_logger import error_logger
+                await error_logger.report_to_admin(
+                    component="ocr_worker",
+                    message=f"OCR 처리 실패: {ocr_user_msg or 'Unknown error'}",
+                    document_id=doc_id,
+                    owner_id=owner_id,
+                    error_type="OCRError",
+                    category="pipeline",
+                    detail={
+                        "file_id": file_id,
+                        "status_code": ocr_status_code,
+                        "ocr_message": ocr_user_msg
+                    }
+                )
+            except Exception:
+                pass
 
         # Delete from Redis
         await RedisService.ack_and_delete(message_id)
