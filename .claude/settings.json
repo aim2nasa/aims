@@ -7,7 +7,9 @@
       "Bash(git branch:*)",
       "Edit(/.claude/skills/full-deploy/**)",
       "Edit(/.claude/skills/bug/**)",
-      "Bash(gh issue:*)"
+      "Bash(gh issue:*)",
+      "Bash(rm -f .dev-verified)",
+      "Bash(bash .git/hooks/pre-commit)"
     ]
   },
   "hooks": {

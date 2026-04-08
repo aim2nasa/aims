@@ -487,11 +487,14 @@ def check_regression_test(files):
 def check_dev_verified(files):
     """
     fix/feat 브랜치에서 코드 변경 시 .dev-verified 마커 필수.
-    dev 서버에서 검증 완료 후에만 커밋 허용.
+    마커 내 해시가 스테이징된 파일 목록과 일치해야 통과.
+    dev_verify.py가 검증 통과 후에만 올바른 해시로 마커를 생성한다.
 
     Returns:
         None if OK, error message string if blocked
     """
+    import hashlib
+
     branch = get_current_branch()
     if not branch.startswith("fix/") and not branch.startswith("feat/"):
         return None  # fix/feat 브랜치가 아니면 체크 안 함
@@ -512,20 +515,59 @@ def check_dev_verified(files):
         return None  # 코드 변경 없으면 체크 안 함
 
     marker = os.path.join(os.environ.get("AIMS_ROOT", "D:/aims"), ".dev-verified")
-    if os.path.exists(marker):
-        try:
-            os.remove(marker)  # 1회용 마커 삭제
-        except OSError:
-            pass
-        return None
-    else:
+
+    if not os.path.exists(marker):
         return (
             "[DEV VERIFY GATE] dev 검증 없이 커밋 금지!\n"
-            "  dev 서버에서 동작 검증을 완료한 후 .dev-verified 마커를 생성하세요.\n"
-            "  - AIMS: https://localhost:5177\n"
-            "  - Admin: http://localhost:5178\n"
-            "  (compact-fix Phase 3 또는 ACE 4/6에서 자동 생성)"
+            "  py scripts/dev_verify.py 를 실행하여 검증을 통과하세요.\n"
+            "  (compact-fix Phase 3 또는 ACE 4/6에서도 자동 실행)"
         )
+
+    # 해시 검증: 마커 내용이 현재 스테이징 파일과 일치하는지 확인
+    try:
+        with open(marker, "r") as f:
+            content = f.read().strip()
+    except Exception:
+        return (
+            "[DEV VERIFY GATE] .dev-verified 마커를 읽을 수 없습니다.\n"
+            "  py scripts/dev_verify.py 를 다시 실행하세요."
+        )
+
+    # 기대 해시 계산 (git diff --cached --raw 기반, dev_verify.py와 동일)
+    try:
+        hash_result = subprocess.run(
+            ["git", "diff", "--cached", "--raw"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace"
+        )
+        hash_content = hash_result.stdout.strip() or "empty"
+    except Exception:
+        hash_content = "fallback"
+    expected_hash = hashlib.sha256(hash_content.encode()).hexdigest()[:16]
+
+    if not content.startswith("VERIFIED:"):
+        return (
+            "[DEV VERIFY GATE] .dev-verified 마커가 올바르지 않습니다.\n"
+            "  touch로 직접 생성하지 마세요. py scripts/dev_verify.py 를 실행하세요."
+        )
+
+    marker_hash = content.split(":", 1)[1] if ":" in content else ""
+    if marker_hash != expected_hash:
+        return (
+            "[DEV VERIFY GATE] 검증 후 파일이 변경되었습니다.\n"
+            f"  마커 해시: {marker_hash}\n"
+            f"  현재 해시: {expected_hash}\n"
+            "  py scripts/dev_verify.py 를 다시 실행하세요."
+        )
+
+    # 검증 통과 — 마커 소비 (1회용)
+    # 이후 밴드에이드 차단/테스트 실패로 exit(2) 시에도 마커는 삭제된 상태.
+    # 이는 의도된 동작: 다음 커밋 시도 시 dev_verify.py 재실행 필요.
+    try:
+        os.remove(marker)
+    except OSError:
+        pass
+
+    return None
 
 
 def check_issue_recording(input_data):
