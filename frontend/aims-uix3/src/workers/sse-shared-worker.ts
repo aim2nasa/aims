@@ -318,7 +318,7 @@ function setupEventListeners(streamKey: string, conn: Connection) {
 
     // 에러 브로드캐스트
     broadcastToSubscribers(streamKey, 'error', {
-      message: 'SSE connection error',
+      message: 'SSE connection error', // ⚠️ errorReporter.SSE_CONNECTION_ERROR와 동일해야 함
       streamKey
     })
 

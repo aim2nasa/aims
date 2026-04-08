@@ -6,6 +6,7 @@
  */
 
 import { getAuthToken } from './api'
+import { SSE_CONNECTION_ERROR } from './errorReporter'
 import { logger } from './logger'
 
 // 타입 정의
@@ -356,7 +357,7 @@ class SSEWorkerClient {
       eventSource.close()
 
       // 에러 이벤트 전달
-      this.emitPolyfillEvent(streamKey, 'error', { message: 'SSE connection error' })
+      this.emitPolyfillEvent(streamKey, 'error', { message: SSE_CONNECTION_ERROR })
 
       // 재연결 시도
       if (this.polyfillConnections.has(streamKey)) {

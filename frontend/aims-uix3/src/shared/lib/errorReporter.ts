@@ -17,6 +17,12 @@ import { api, ApiError, NetworkError, TimeoutError } from './api';
 const APP_VERSION = import.meta.env['VITE_APP_VERSION'] || '1.0.0';
 
 /**
+ * SSE 연결 에러 메시지 (공유 상수)
+ * errorReporter, sse-shared-worker, sseWorkerClient에서 동일 값 참조
+ */
+export const SSE_CONNECTION_ERROR = 'SSE connection error';
+
+/**
  * 에러 심각도
  */
 type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
@@ -99,6 +105,12 @@ class ErrorReporter {
   private readonly MAX_SAME_ERROR = 5; // 같은 에러 최대 전송 횟수
   private readonly TRANSIENT_502_WINDOW_MS = 5 * 60 * 1000; // 502 판단 윈도우 (5분)
   private readonly TRANSIENT_502_THRESHOLD = 3; // 이 횟수 이상이면 실제 장애로 판단
+
+  // 401/403 반복 감지 (brute force / 권한 탈취 시도 탐지)
+  private recentAuthCount = 0;
+  private lastAuthResetTime = 0;
+  private readonly TRANSIENT_AUTH_WINDOW_MS = 5 * 60 * 1000; // 5분 윈도우
+  private readonly TRANSIENT_AUTH_THRESHOLD = 5; // 5회 이상 반복 시 리포트
 
   constructor() {
     this.setupGlobalHandlers();
@@ -304,10 +316,18 @@ class ErrorReporter {
     }
 
     // SSE 연결 에러 (자동 재연결됨)
-    if (error.message === 'SSE connection error') return true;
+    if (error.message === SSE_CONNECTION_ERROR) return true;
 
-    // 인증 만료/무효 (ProtectedRoute에서 logout 처리됨)
-    if (status === 401 || status === 403) return true;
+    // 인증 에러: 단발은 무시 (ProtectedRoute에서 logout 처리), 반복 시 리포트 (brute force 탐지)
+    if (status === 401 || status === 403) {
+      const now = Date.now();
+      if (now - this.lastAuthResetTime > this.TRANSIENT_AUTH_WINDOW_MS) {
+        this.recentAuthCount = 0;
+        this.lastAuthResetTime = now;
+      }
+      this.recentAuthCount++;
+      return this.recentAuthCount < this.TRANSIENT_AUTH_THRESHOLD;
+    }
 
     return false;
   }
