@@ -514,7 +514,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
             const errorMsg = getErrorMessage(document) || statusLabel
             const docId = document._id || document.id
             const isCopied = copiedErrorDocId === (docId ?? null)
-            const tooltipContent = isCopied ? '복사됨 ✓' : `${errorMsg}\n\n클릭하여 복사`
+            const tooltipContent = isCopied ? '복사됨 ✓' : errorMsg
 
             const handleCopyError = (e: React.MouseEvent) => {
               e.stopPropagation()
@@ -841,6 +841,11 @@ export const formatErrorMessage = (message: string): string => {
     return 'OpenAI 크레딧 소진\n크레딧을 충전해주세요'
   }
 
+  // Upstage 415 미지원 포맷 패턴
+  if (formatted.includes('not supported format') || formatted.includes('415')) {
+    return '지원하지 않는 파일 형식'
+  }
+
   // 너무 긴 경우 첫 문장만
   if (formatted.length > 60) {
     const firstSentence = formatted.match(/^[^.!]+[.!]?/)
@@ -924,19 +929,19 @@ export const getErrorMessage = (document: Document): string | null => {
     }
   }
 
-  // 6. progressMessage (파이프라인 에러 사유)
-  const progressMsg = (document as Record<string, unknown>)['progressMessage']
-  if (progressMsg && typeof progressMsg === 'string' && progressMsg !== '처리 중') {
-    return formatErrorMessage(progressMsg)
-  }
-
-  // 7. error.statusMessage (에러 객체)
+  // 6. error.statusMessage (에러 객체)
   const errorObj = (document as Record<string, unknown>)['error']
   if (errorObj && typeof errorObj === 'object' && errorObj !== null) {
     const statusMsg = (errorObj as Record<string, unknown>)['statusMessage']
     if (statusMsg && typeof statusMsg === 'string') {
       return formatErrorMessage(statusMsg)
     }
+  }
+
+  // 7. progressMessage (파이프라인 에러 사유)
+  const progressMsg = (document as Record<string, unknown>)['progressMessage']
+  if (progressMsg && typeof progressMsg === 'string' && progressMsg !== '처리 중') {
+    return formatErrorMessage(progressMsg)
   }
 
   return null

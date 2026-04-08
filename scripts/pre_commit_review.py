@@ -559,13 +559,10 @@ def check_dev_verified(files):
             "  py scripts/dev_verify.py 를 다시 실행하세요."
         )
 
-    # 검증 통과 — 마커 소비 (1회용)
-    # 이후 밴드에이드 차단/테스트 실패로 exit(2) 시에도 마커는 삭제된 상태.
-    # 이는 의도된 동작: 다음 커밋 시도 시 dev_verify.py 재실행 필요.
-    try:
-        os.remove(marker)
-    except OSError:
-        pass
+    # 검증 통과 — 마커는 삭제하지 않음
+    # husky post-commit에서 커밋 성공 후 삭제 (1회용 소비)
+    # pre_commit_review.py와 husky pre-commit 모두 마커를 참조하므로
+    # 여기서 삭제하면 husky pre-commit에서 마커를 찾지 못함
 
     return None
 

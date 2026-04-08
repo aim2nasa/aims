@@ -275,6 +275,11 @@
     font-weight: 400;
   }
 
+  /* 에러 상태: 클릭 복사 가능 표시 */
+  .status-cell-inner--clickable {
+    cursor: copy;
+  }
+
   /* === 크기 === */
   .document-size {
     font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: metadata (file size) */

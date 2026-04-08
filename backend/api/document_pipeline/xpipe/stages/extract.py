@@ -19,11 +19,18 @@ TEXT_EXTENSIONS = {
     ".ini", ".cfg", ".conf", ".py", ".js", ".ts", ".html", ".css",
 }
 
+# Upstage API 미지원 이미지 확장자 — Pillow로 PNG 변환 후 OCR
+UPSTAGE_UNSUPPORTED_IMAGE_EXTS = {".gif", ".webp"}
+
+# SVG는 cairosvg 미설치로 변환 불가 — 보관 처리
+UNSUPPORTED_IMAGE_EXTS = {".svg"}
+
 # 텍스트 추출이 원천적으로 불가능한 파일 확장자
-# (아카이브, 디자인 도구 등 — 보관만 가능)
+# (아카이브, 디자인 도구, SVG 등 — 보관만 가능)
 UNSUPPORTED_EXTENSIONS = {
     ".zip", ".rar", ".7z", ".tar", ".gz",
     ".ai", ".psd", ".sketch", ".fig",
+    ".svg",
 }
 
 # 텍스트 추출 불가 MIME 타입
@@ -184,6 +191,50 @@ class ExtractStage(Stage):
                 _logger.warning("[ExtractStage] 변환 PDF 텍스트 추출 실패 (손상 의심): %s — %s", file_name, e)
                 raise CorruptedPDFError(file_name) from e
 
+    @staticmethod
+    def _convert_image_to_png(file_path: str, file_name: str) -> str | None:
+        """GIF/WebP 이미지를 PNG로 변환 (Upstage OCR용)
+
+        애니메이션 GIF/WebP는 첫 프레임만 추출.
+        변환 실패 시 None 반환.
+
+        Returns:
+            변환된 PNG 임시파일 경로 또는 None
+        """
+        import tempfile
+        import logging as _logging
+
+        _logger = _logging.getLogger(__name__)
+
+        try:
+            from PIL import Image
+
+            with Image.open(file_path) as img:
+                # 애니메이션인 경우 첫 프레임 선택
+                img.seek(0)
+                # RGBA로 변환 (투명도 보존, 팔레트 모드 대응)
+                converted = img.convert("RGBA")
+
+                tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+                try:
+                    converted.save(tmp, format="PNG")
+                    tmp.close()
+                    return tmp.name
+                except Exception:
+                    tmp.close()
+                    import os
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+                    raise
+        except ImportError:
+            _logger.warning("[ExtractStage] Pillow 미설치 — 이미지 변환 불가: %s", file_name)
+            return None
+        except Exception as exc:
+            _logger.warning("[ExtractStage] 이미지 변환 실패: %s — %s", file_name, exc)
+            return None
+
     async def _try_ocr(
         self,
         context: dict[str, Any],
@@ -296,7 +347,62 @@ class ExtractStage(Stage):
         elif is_image:
             # 이미지: OCR Provider로 처리
             method = "ocr"
-            text, ocr_model = await self._try_ocr(context, file_path, file_name, mime, ocr_model_name)
+            ocr_path = file_path
+            converted_tmp = None
+
+            if ext in UPSTAGE_UNSUPPORTED_IMAGE_EXTS:
+                converted_tmp = self._convert_image_to_png(file_path, file_name)
+                if converted_tmp:
+                    ocr_path = converted_tmp
+                    method = "image_convert+ocr"
+                    logger.info(
+                        "[ExtractStage] 이미지 변환 완료: %s (%s → PNG)", file_name, ext
+                    )
+                else:
+                    # 변환 실패 → 보관 처리
+                    context["text_extraction_failed"] = True
+                    context["_extraction_skip_reason"] = "image_conversion_failed"
+                    context["_user_error_message"] = (
+                        f"이미지 변환에 실패했습니다 ({ext.upper().lstrip('.')} → PNG). "
+                        "다른 형식(JPG, PNG)으로 변환 후 다시 업로드해 주세요."
+                    )
+                    text = ""
+                    ocr_model = "-"
+                    context["extracted_text"] = text
+                    context["text"] = text
+                    context["has_text"] = False
+                    context["extracted"] = True
+
+                    duration_ms = int((time.time() - start) * 1000)
+                    if "stage_data" not in context:
+                        context["stage_data"] = {}
+                    context["stage_data"]["extract"] = {
+                        "status": "completed",
+                        "duration_ms": duration_ms,
+                        "input": {"file_path": file_path, "mime_type": mime, "method": "image_conversion_failed"},
+                        "output": {
+                            "text_length": 0,
+                            "text_preview": "",
+                            "full_text": "",
+                            "method": "image_conversion_failed",
+                            "ocr_model": "-",
+                            "ocr_confidence": 0.0,
+                            "meta_status": "completed",
+                            "has_text": False,
+                            "skip_reason": "image_conversion_failed",
+                        },
+                    }
+                    return context
+
+            try:
+                text, ocr_model = await self._try_ocr(context, ocr_path, file_name, mime, ocr_model_name)
+            finally:
+                # 변환 임시 파일 정리
+                if converted_tmp:
+                    try:
+                        os.unlink(converted_tmp)
+                    except OSError:
+                        pass
         elif is_pdf:
             # PDF: pdfplumber로 텍스트 추출 시도
             method = "pdfplumber"
@@ -396,6 +502,21 @@ class ExtractStage(Stage):
 
         # 표준 메타 필드
         text_preview = text[:500] if text else ""
+        output_data = {
+            "text_length": len(text),
+            "text_preview": text_preview,
+            "full_text": text,
+            "method": method,
+            "ocr_model": ocr_model,
+            "ocr_confidence": context.get("_ocr_confidence", 0.0),
+            # 호환 필드
+            "meta_status": "completed",
+            "has_text": bool(text.strip()),
+        }
+        # 이미지 변환을 거친 경우 원본 포맷 기록
+        if method == "image_convert+ocr":
+            output_data["original_format"] = ext
+
         context["stage_data"]["extract"] = {
             "status": "completed",
             "duration_ms": duration_ms,
@@ -404,17 +525,7 @@ class ExtractStage(Stage):
                 "mime_type": mime,
                 "method": method,
             },
-            "output": {
-                "text_length": len(text),
-                "text_preview": text_preview,
-                "full_text": text,
-                "method": method,
-                "ocr_model": ocr_model,
-                "ocr_confidence": context.get("_ocr_confidence", 0.0),
-                # 호환 필드
-                "meta_status": "completed",
-                "has_text": bool(text.strip()),
-            },
+            "output": output_data,
         }
 
         return context

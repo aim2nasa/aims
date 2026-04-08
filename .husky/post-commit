@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# ==================== .dev-verified 마커 소비 ====================
+if [ -f ".dev-verified" ]; then
+  rm -f ".dev-verified"
+fi
+
 # 🔒 파일 기반 락으로 재진입 방지 (무한 루프 방지)
 LOCK_FILE=".git/version_bump.lock"
 CURRENT_SHA=$(git rev-parse HEAD)

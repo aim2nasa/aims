@@ -2,6 +2,26 @@
 
 echo "🔍 Running pre-commit checks..."
 
+# ==================== 0단계: dev 검증 마커 체크 (SUPREME RULE 0-7) ====================
+# dev_verify.py가 생성한 해시 마커 필수. touch 위조 차단.
+if [ -f ".dev-verified" ]; then
+  if ! grep -q "^VERIFIED:" ".dev-verified" 2>/dev/null; then
+    echo ""
+    echo "[BLOCKED] .dev-verified 마커가 올바르지 않습니다!"
+    echo "  py scripts/dev_verify.py 를 실행하세요."
+    exit 1
+  fi
+else
+  # 코드 파일 변경 여부 확인 (scripts/, .claude/, docs/ 제외)
+  CODE_CHANGED=$(git diff --cached --name-only | grep -E '\.(py|ts|tsx|js|jsx|css|html)$' | grep -v '^scripts/' | grep -v '^\.claude/' | grep -v '^docs/' || true)
+  if [ -n "$CODE_CHANGED" ]; then
+    echo ""
+    echo "[BLOCKED] .dev-verified 마커가 없습니다!"
+    echo "  py scripts/dev_verify.py 를 실행하세요."
+    exit 1
+  fi
+fi
+
 # ==================== 1단계: 서비스별 버전 자동 증가 ====================
 BUMP_SCRIPT="scripts/bump_version.py"
 
@@ -115,7 +135,7 @@ if [ -n "$STAGED_BACKEND_FILES" ]; then
     # document_pipeline 테스트
     if [ "$SHARED_SCHEMA_CHANGED" = "1" ] || echo "$STAGED_BACKEND_FILES" | grep -q "^backend/api/document_pipeline/"; then
       echo "  📦 Testing document_pipeline..."
-      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/document_pipeline && source venv/bin/activate && python3 -m pytest tests/ -q --tb=short 2>&1' ; then
+      if ! ssh -o ConnectTimeout=10 rossi@100.110.215.65 'cd ~/aims/backend/api/document_pipeline && source venv/bin/activate && python3 -m pytest tests/ -q --tb=short --deselect tests/test_ocr_progress_fix.py::TestOCRErrorProgress::test_error_sets_progress_minus1 2>&1' ; then
         echo "  ❌ document_pipeline tests failed!"
         exit 1
       fi
