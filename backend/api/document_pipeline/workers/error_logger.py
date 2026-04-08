@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import httpx
+import requests
 from config import get_settings
 from services.mongo_service import MongoService
 
@@ -102,6 +103,95 @@ class ErrorLogger:
 
         except Exception as e:
             logger.error(f"Failed to send Slack notification: {e}")
+
+
+    def _build_admin_payload(
+        self,
+        component: str,
+        message: str,
+        document_id: str = None,
+        owner_id: str = None,
+        error_type: str = "PipelineError",
+        severity: str = "high",
+        category: str = "pipeline",
+        detail: dict = None
+    ) -> dict:
+        """aims-admin 에러 로그 payload 구성"""
+        return {
+            "error": {
+                "type": error_type,
+                "message": message,
+                "severity": severity,
+                "category": category
+            },
+            "source": {
+                "type": "pipeline",
+                "component": component
+            },
+            "context": {
+                "payload": {
+                    "document_id": document_id,
+                    "owner_id": owner_id,
+                    **(detail or {})
+                }
+            }
+        }
+
+    def _admin_headers(self) -> dict:
+        """내부 API 인증 헤더"""
+        return {"x-api-key": self.settings.INTERNAL_API_KEY}
+
+    async def report_to_admin(
+        self,
+        component: str,
+        message: str,
+        document_id: str = None,
+        owner_id: str = None,
+        error_type: str = "PipelineError",
+        severity: str = "high",
+        category: str = "pipeline",
+        detail: dict = None
+    ) -> None:
+        """파이프라인 에러를 aims-admin 시스템 로그에 기록 (비동기, fire-and-forget)"""
+        try:
+            payload = self._build_admin_payload(
+                component, message, document_id, owner_id,
+                error_type, severity, category, detail
+            )
+            async with httpx.AsyncClient(timeout=5) as client:
+                await client.post(
+                    f"{self.settings.AIMS_API_URL}/api/error-logs",
+                    json=payload,
+                    headers=self._admin_headers()
+                )
+        except Exception as e:
+            logger.warning(f"[ErrorLogger] admin 리포트 실패: {e}")
+
+    def report_to_admin_sync(
+        self,
+        component: str,
+        message: str,
+        document_id: str = None,
+        owner_id: str = None,
+        error_type: str = "PipelineError",
+        severity: str = "high",
+        category: str = "pipeline",
+        detail: dict = None
+    ) -> None:
+        """파이프라인 에러를 aims-admin 시스템 로그에 기록 (동기, fire-and-forget)"""
+        try:
+            payload = self._build_admin_payload(
+                component, message, document_id, owner_id,
+                error_type, severity, category, detail
+            )
+            requests.post(
+                f"{self.settings.AIMS_API_URL}/api/error-logs",
+                json=payload,
+                headers=self._admin_headers(),
+                timeout=5
+            )
+        except Exception as e:
+            logger.warning(f"[ErrorLogger] admin 리포트(sync) 실패: {e}")
 
 
 # Global instance

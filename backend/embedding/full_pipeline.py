@@ -29,6 +29,43 @@ if not N8N_WEBHOOK_API_KEY:
     raise RuntimeError("N8N_WEBHOOK_API_KEY 환경변수가 설정되지 않았습니다. ~/.env.shared를 확인하세요.")
 
 
+def _report_pipeline_error(
+    message: str,
+    severity: str = "high",
+    document_id: str = None,
+    owner_id: str = None,
+    detail: dict = None
+) -> None:
+    """파이프라인 에러를 aims-admin 시스템 로그에 기록 (동기, fire-and-forget)"""
+    try:
+        requests.post(
+            f"{AIMS_API_BASE_URL}/api/error-logs",
+            json={
+                "error": {
+                    "type": "EmbeddingError",
+                    "message": message,
+                    "severity": severity,
+                    "category": "pipeline"
+                },
+                "source": {
+                    "type": "pipeline",
+                    "component": "embedding_pipeline"
+                },
+                "context": {
+                    "payload": {
+                        "document_id": document_id,
+                        "owner_id": owner_id,
+                        **(detail or {})
+                    }
+                }
+            },
+            headers={"x-api-key": INTERNAL_API_KEY},
+            timeout=5
+        )
+    except Exception as e:
+        print(f"[EmbeddingPipeline] admin 리포트 실패: {e}")
+
+
 def check_credit_for_embedding(owner_id: str, estimated_pages: int = 1) -> Dict:
     """
     임베딩 처리 전 크레딧 체크 (aims_api 내부 API 호출)
@@ -668,6 +705,17 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                         'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}
                 )
+                # aims-admin 시스템 로그에 기록
+                try:
+                    _report_pipeline_error(
+                        message=f"임베딩 실패: [{e.error_code}] {e.message}",
+                        severity="high",
+                        document_id=doc_id,
+                        owner_id=owner_id,
+                        detail={"error_code": e.error_code, "retry_count": prev_retry + 1}
+                    )
+                except Exception:
+                    pass
                 # 크레딧 소진 시 전체 파이프라인 중단
                 if e.error_code == 'OPENAI_QUOTA_EXCEEDED':
                     print(f"\n⚠️ OpenAI 크레딧 소진! 파이프라인을 중단합니다.")
@@ -689,6 +737,17 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                         'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}
                 )
+                # aims-admin 시스템 로그에 기록
+                try:
+                    _report_pipeline_error(
+                        message=f"임베딩 실패: {str(e)}",
+                        severity="medium",
+                        document_id=doc_id,
+                        owner_id=owner_id,
+                        detail={"error_code": "UNKNOWN", "retry_count": prev_retry + 1}
+                    )
+                except Exception:
+                    pass
 
     except Exception as e:
         print(f"전체 파이프라인 실행 중 심각한 오류 발생: {e}")

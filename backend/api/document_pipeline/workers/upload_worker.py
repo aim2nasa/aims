@@ -158,6 +158,26 @@ class UploadWorker:
             # 최대 재시도 초과 - 최종 실패
             await UploadQueueService.mark_failed(queue_id, error_message)
 
+            # aims-admin 시스템 로그에 기록
+            try:
+                from workers.error_logger import error_logger
+                request_data = job.get("request_data", {})
+                await error_logger.report_to_admin(
+                    component="upload_worker",
+                    message=f"업로드 처리 최종 실패: {error_message}",
+                    document_id=request_data.get("document_id"),
+                    owner_id=request_data.get("userId"),
+                    category="pipeline",
+                    detail={
+                        "queue_id": queue_id,
+                        "retry_count": retry_count,
+                        "max_retries": max_retries,
+                        "original_filename": job.get("file_data", {}).get("original_filename")
+                    }
+                )
+            except Exception:
+                pass
+
             # 임시 파일 삭제 (실패해도 정리)
             file_data = job.get("file_data", {})
             temp_path = file_data.get("temp_path")

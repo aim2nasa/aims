@@ -449,6 +449,25 @@ class OCRWorker:
         # Notify processing error
         await self._notify_processing_complete(doc_id, owner_id, "error")
 
+        # aims-admin 시스템 로그에 기록
+        try:
+            from workers.error_logger import error_logger
+            await error_logger.report_to_admin(
+                component="ocr_worker",
+                message=f"OCR 처리 실패: {ocr_result.get('userMessage', 'Unknown error')}",
+                document_id=doc_id,
+                owner_id=owner_id,
+                error_type="OCRError",
+                category="pipeline",
+                detail={
+                    "file_id": file_id,
+                    "status_code": ocr_result.get("status"),
+                    "ocr_message": ocr_result.get("userMessage")
+                }
+            )
+        except Exception:
+            pass
+
         # Delete from Redis
         await RedisService.ack_and_delete(message_id)
 

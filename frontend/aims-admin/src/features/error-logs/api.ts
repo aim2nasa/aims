@@ -19,7 +19,7 @@ export interface ErrorLogActor {
 }
 
 export interface ErrorLogSource {
-  type: 'frontend' | 'backend';
+  type: 'frontend' | 'backend' | 'pipeline';
   endpoint?: string;
   method?: string;
   component?: string;
@@ -35,7 +35,7 @@ export interface ErrorLogError {
   message: string;
   stack?: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  category: 'api' | 'network' | 'timeout' | 'validation' | 'runtime' | 'unhandled';
+  category: 'api' | 'network' | 'timeout' | 'validation' | 'runtime' | 'unhandled' | 'pipeline';
 }
 
 export interface ErrorLogMeta {
@@ -109,7 +109,7 @@ export interface GetErrorLogsParams {
   page?: number;
   limit?: number;
   level?: string;  // 'debug', 'info', 'warn', 'error' 또는 콤마로 구분된 복수 레벨
-  source?: 'frontend' | 'backend';
+  source?: 'frontend' | 'backend' | 'pipeline';
   severity?: string;
   category?: string;
   userId?: string;
@@ -322,6 +322,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   validation: '유효성검사',
   runtime: '런타임',
   unhandled: '처리안됨',
+  pipeline: '파이프라인',
 };
 
 /**
@@ -330,6 +331,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
 export const SOURCE_LABELS: Record<string, string> = {
   frontend: '프론트엔드',
   backend: '백엔드',
+  pipeline: '파이프라인',
 };
 
 /**

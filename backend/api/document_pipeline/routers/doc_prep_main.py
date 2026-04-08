@@ -1069,6 +1069,20 @@ async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str
                 error_obj["detail"] = error_detail  # 서버 응답 body 등 기술 정보
             update_fields["error"] = error_obj
 
+            # aims-admin 시스템 로그에 기록
+            try:
+                from workers.error_logger import error_logger
+                await error_logger.report_to_admin(
+                    component="doc_prep_main",
+                    message=message,
+                    document_id=doc_id,
+                    owner_id=owner_id,
+                    category="pipeline",
+                    detail={"error_detail": error_detail} if error_detail else None
+                )
+            except Exception:
+                pass
+
         await update_file(doc_id, set_fields=_serialize_for_api(update_fields))
     except Exception as e:
         logger.warning(f"Error updating progress in MongoDB: {e}")

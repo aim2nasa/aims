@@ -474,6 +474,19 @@ class PdfConversionWorker:
         if isinstance(error, FileNotFoundError):
             await PdfConversionQueueService.mark_failed(queue_id, error_message)
             await self._notify_conversion_failed(job, error_message)
+            # aims-admin 시스템 로그에 기록
+            try:
+                from workers.error_logger import error_logger
+                await error_logger.report_to_admin(
+                    component="pdf_conversion_worker",
+                    message=f"PDF 변환 실패 (파일 없음): {error_message}",
+                    document_id=job.get("document_id"),
+                    severity="medium",
+                    category="pipeline",
+                    detail={"queue_id": queue_id, "original_name": original_name}
+                )
+            except Exception:
+                pass
             return
 
         # 논블로킹 재시도: delay를 process_after로 설정하여 워커 루프를 블로킹하지 않음
@@ -485,6 +498,24 @@ class PdfConversionWorker:
         if not rescheduled:
             # 재시도 초과로 mark_failed됨
             await self._notify_conversion_failed(job, error_message)
+            # aims-admin 시스템 로그에 기록
+            try:
+                from workers.error_logger import error_logger
+                await error_logger.report_to_admin(
+                    component="pdf_conversion_worker",
+                    message=f"PDF 변환 최종 실패: {error_message}",
+                    document_id=job.get("document_id"),
+                    severity="high",
+                    category="pipeline",
+                    detail={
+                        "queue_id": queue_id,
+                        "original_name": original_name,
+                        "retry_count": retry_count,
+                        "max_retries": max_retries
+                    }
+                )
+            except Exception:
+                pass
 
     async def _periodic_cleanup(self):
         """정기적 정리 작업 (3분마다)"""

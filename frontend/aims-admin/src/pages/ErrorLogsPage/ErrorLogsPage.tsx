@@ -80,12 +80,14 @@ const CATEGORY_OPTIONS = [
   { value: 'validation', label: '유효성검사' },
   { value: 'runtime', label: '런타임' },
   { value: 'unhandled', label: '처리안됨' },
+  { value: 'pipeline', label: '파이프라인' },
 ];
 
 const SOURCE_OPTIONS = [
   { value: '', label: '전체 소스' },
   { value: 'frontend', label: '프론트엔드' },
   { value: 'backend', label: '백엔드' },
+  { value: 'pipeline', label: '파이프라인' },
 ];
 
 const LOG_TYPE_OPTIONS = [

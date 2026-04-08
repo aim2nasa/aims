@@ -691,7 +691,7 @@ class ErrorLogger {
    * 카테고리 정규화
    */
   _normalizeCategory(category) {
-    const valid = ['api', 'network', 'timeout', 'validation', 'runtime', 'unhandled'];
+    const valid = ['api', 'network', 'timeout', 'validation', 'runtime', 'unhandled', 'pipeline'];
     if (valid.includes(category)) {
       return category;
     }
