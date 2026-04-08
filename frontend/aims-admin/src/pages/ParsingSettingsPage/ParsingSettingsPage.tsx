@@ -51,6 +51,13 @@ export const ParsingSettingsPage = () => {
     });
   };
 
+  // Summarize 모델 변경
+  const handleSummarizeModelChange = (model: string) => {
+    updateMutation.mutate({
+      summarize: { model }
+    });
+  };
+
   // CR 파서 변경
   const handleCRParserChange = (parser: string) => {
     updateMutation.mutate({
@@ -114,6 +121,29 @@ export const ParsingSettingsPage = () => {
               {modelSettings?.annualReport?.parser !== 'openai' && (
                 <span className="parsing-settings-page__hint">OpenAI 파서에서만 사용</span>
               )}
+            </div>
+          </div>
+        </section>
+
+        {/* 문서 요약/분류 설정 */}
+        <section className="parsing-settings-page__section">
+          <h2 className="parsing-settings-page__section-title">문서 요약/분류</h2>
+          <p className="parsing-settings-page__section-desc">
+            문서 업로드 시 자동 요약 및 분류에 사용되는 AI 모델을 선택합니다.
+          </p>
+          <div className="parsing-settings-page__form">
+            <div className="parsing-settings-page__row">
+              <label className="parsing-settings-page__label">AI 모델</label>
+              <select
+                className="parsing-settings-page__select"
+                value={modelSettings?.summarize?.model || 'gpt-4o-mini'}
+                onChange={(e) => handleSummarizeModelChange(e.target.value)}
+                disabled={updateMutation.isPending}
+              >
+                {modelSettings?.summarize?.availableModels?.map((model) => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </select>
             </div>
           </div>
         </section>

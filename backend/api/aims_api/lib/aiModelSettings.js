@@ -28,6 +28,11 @@ const DEFAULT_AI_MODEL_SETTINGS = {
     parser: 'regex',
     description: 'Customer Review Service PDF 파싱',
     availableModels: ['gpt-4.1', 'gpt-4o', 'gpt-4-turbo']
+  },
+  summarize: {
+    model: 'gpt-4o-mini',
+    description: '문서 요약/분류 (파이프라인)',
+    availableModels: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo']
   }
 };
 

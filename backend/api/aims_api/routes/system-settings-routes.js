@@ -163,6 +163,11 @@ const DEFAULT_AI_MODEL_SETTINGS = {
     description: 'Customer Review Service PDF 파싱',
     availableModels: AVAILABLE_AI_MODELS,
     availableParsers: AVAILABLE_CR_PARSERS
+  },
+  summarize: {
+    model: 'gpt-4o-mini',
+    description: '문서 요약/분류 (파이프라인)',
+    availableModels: AVAILABLE_AI_MODELS
   }
 };
 
@@ -359,7 +364,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
         delete settings.updatedAt;
         delete settings.updatedBy;
         // 항상 최신 availableModels/availableParsers 사용
-        for (const service of ['chat', 'rag', 'annualReport', 'customerReview']) {
+        for (const service of ['chat', 'rag', 'annualReport', 'customerReview', 'summarize']) {
           if (settings[service]) {
             settings[service].availableModels = AVAILABLE_AI_MODELS;
           }
@@ -374,6 +379,10 @@ module.exports = function(db, authenticateJWT, requireRole) {
         } else {
           // customerReview 설정이 없으면 기본값 추가
           settings.customerReview = { ...DEFAULT_AI_MODEL_SETTINGS.customerReview };
+        }
+        // summarize 설정이 없으면 기본값 추가
+        if (!settings.summarize) {
+          settings.summarize = { ...DEFAULT_AI_MODEL_SETTINGS.summarize };
         }
       }
 

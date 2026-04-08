@@ -22,6 +22,31 @@ INTERNAL_API_KEY = _settings.INTERNAL_API_KEY
 # 🔴 크레딧 체크 API 설정
 CREDIT_CHECK_URL = f"{AIMS_API_BASE_URL}/api/internal/check-credit"
 
+# 문서 요약 모델 (aims_api에서 동적 조회, 1분 캐시)
+_summarize_model_cache = {"model": "gpt-4o-mini", "fetched_at": 0}
+
+
+async def _get_summarize_model() -> str:
+    """aims_api에서 summarize 모델명 조회 (1분 캐시)"""
+    import time
+    now = time.time()
+    if now - _summarize_model_cache["fetched_at"] < 60:
+        return _summarize_model_cache["model"]
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.get(
+                f"{AIMS_API_BASE_URL}/api/settings/ai-models",
+                headers={"x-api-key": INTERNAL_API_KEY}
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("success") and data.get("data", {}).get("summarize", {}).get("model"):
+                    _summarize_model_cache["model"] = data["data"]["summarize"]["model"]
+                    _summarize_model_cache["fetched_at"] = now
+    except Exception as e:
+        logger.warning(f"[OpenAI] summarize 모델 조회 실패, 캐시 사용: {e}")
+    return _summarize_model_cache["model"]
+
 
 async def check_credit_for_summary(user_id: str, estimated_tokens: int = 1000) -> dict:
     """
@@ -313,10 +338,13 @@ class OpenAIService:
 
         user_prompt = user_prompt_template.format(file_info=file_info, text=text)
 
+        # Admin에서 설정한 summarize 모델 동적 조회
+        model_name = await _get_summarize_model()
+
         try:
             client = cls._get_client()
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=model_name,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -332,7 +360,7 @@ class OpenAIService:
                 await cls._log_token_usage(
                     user_id=owner_id,
                     document_id=document_id,
-                    model="gpt-4o-mini",
+                    model=model_name,
                     prompt_tokens=response.usage.prompt_tokens,
                     completion_tokens=response.usage.completion_tokens,
                     total_tokens=response.usage.total_tokens
@@ -495,7 +523,7 @@ class OpenAIService:
         summarize_text()와 달리 제목만 생성하므로 토큰 사용량이 적다.
         - 입력: 최대 3000자
         - 출력: max_tokens=60
-        - 모델: gpt-4o-mini
+        - 모델: Admin 설정 (기본 gpt-4o-mini)
 
         Args:
             text: 문서 텍스트
@@ -532,10 +560,13 @@ class OpenAIService:
 
         prompt = cls._build_title_prompt(text, original_filename, document_type, existing_aliases, customer_name)
 
+        # Admin에서 설정한 summarize 모델 동적 조회
+        model_name = await _get_summarize_model()
+
         try:
             client = cls._get_client()
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=model_name,
                 messages=[
                     {"role": "system", "content": "문서 별칭 생성 전문가입니다. 별칭만 출력합니다."},
                     {"role": "user", "content": prompt}
@@ -551,7 +582,7 @@ class OpenAIService:
                 await cls._log_token_usage(
                     user_id=owner_id,
                     document_id=document_id,
-                    model="gpt-4o-mini",
+                    model=model_name,
                     prompt_tokens=response.usage.prompt_tokens,
                     completion_tokens=response.usage.completion_tokens,
                     total_tokens=response.usage.total_tokens

@@ -111,6 +111,7 @@ export interface AIModelSettings {
   rag: AIModelServiceSettings;
   annualReport: AnnualReportServiceSettings;
   customerReview: CustomerReviewServiceSettings;
+  summarize: AIModelServiceSettings;
 }
 
 // 업데이트용 타입 (부분 업데이트 지원)
@@ -119,6 +120,7 @@ export interface AIModelSettingsUpdate {
   rag?: Partial<AIModelServiceSettings>;
   annualReport?: Partial<AnnualReportServiceSettings>;
   customerReview?: Partial<CustomerReviewServiceSettings>;
+  summarize?: Partial<AIModelServiceSettings>;
 }
 
 export interface AIModelSettingsResponse {
