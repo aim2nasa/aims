@@ -173,7 +173,7 @@ describe('FIX-4: doc_prep_main.py — 손상 PDF 에러 처리 분기', () => {
     const handlerIdx = source.indexOf('text_extraction_failed');
     const block = source.substring(handlerIdx, handlerIdx + 5000);
     const cpIdx = block.indexOf('skip_reason == "corrupted_pdf"');
-    const convertIdx = block.indexOf('is_convertible_mime(detected_mime)');
+    const convertIdx = block.indexOf('is_convertible_mime(detected_mime');
     expect(cpIdx).toBeGreaterThan(-1);
     expect(convertIdx).toBeGreaterThan(-1);
     expect(cpIdx).toBeLessThan(convertIdx);

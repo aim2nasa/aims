@@ -64,8 +64,8 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json({ charset: 'utf-8' }));
-app.use(express.urlencoded({ extended: true, charset: 'utf-8' }));
+app.use(express.json({ limit: '50mb', charset: 'utf-8' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true, charset: 'utf-8' }));
 
 // JSON 파싱 에러 핸들러 (body-parser SyntaxError → 400 Bad Request)
 app.use((err, req, res, next) => {
