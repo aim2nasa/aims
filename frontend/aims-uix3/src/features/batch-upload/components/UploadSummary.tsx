@@ -156,14 +156,34 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
           </button>
           {showSkippedFiles && (
             <div className="upload-summary-skipped-list">
-              {progress.files
-                .filter((f) => f.status === 'skipped')
-                .map((file) => (
-                  <div key={file.fileId} className="upload-summary-skipped-item">
-                    <span className="upload-summary-skipped-filename">{file.fileName}</span>
-                    <span className="upload-summary-skipped-customer">{file.customerName}</span>
+              {/* 고객(폴더)별 그룹화 */}
+              {(() => {
+                const skippedFiles = progress.files.filter(f => f.status === 'skipped')
+                const grouped = new Map<string, typeof skippedFiles>()
+                for (const file of skippedFiles) {
+                  const key = file.customerName || file.folderName || '기타'
+                  const list = grouped.get(key) || []
+                  list.push(file)
+                  grouped.set(key, list)
+                }
+                return Array.from(grouped.entries()).map(([customerName, files]) => (
+                  <div key={customerName} className="upload-summary-skipped-folder">
+                    <div className="upload-summary-skipped-folder-header">
+                      <span className="upload-summary-skipped-folder-icon">📁</span>
+                      <span className="upload-summary-skipped-folder-name">{customerName}</span>
+                      <span className="upload-summary-skipped-folder-count">{files.length}개</span>
+                    </div>
+                    <div className="upload-summary-skipped-folder-files">
+                      {files.map(file => (
+                        <div key={file.fileId} className="upload-summary-skipped-file">
+                          <span className="upload-summary-skipped-file-icon">📄</span>
+                          <span className="upload-summary-skipped-filename">{file.fileName}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                ))
+              })()}
             </div>
           )}
         </div>
