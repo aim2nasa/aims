@@ -81,7 +81,7 @@ class TestClassifyStageStub:
         ctx = {
             "mode": "stub",
             "_classify_config": {"system_prompt": "test", "categories": ["a", "b"]},
-            "extracted_text": "테스트 문서",
+            "extracted_text": "테스트 문서 내용입니다 분류 대상",
         }
         result = await stage.execute(ctx)
 
@@ -112,7 +112,7 @@ class TestClassifyStageReal:
                     "categories": ["policy", "general"],
                 },
                 "_api_keys": {"openai": "test-key"},
-                "extracted_text": "샘플 문서 내용",
+                "extracted_text": "샘플 문서 내용입니다 분류 테스트용",
                 "filename": "test.pdf",
             }
             result = await stage.execute(ctx)
@@ -134,7 +134,7 @@ class TestClassifyStageReal:
                 "mode": "real",
                 "_classify_config": {"system_prompt": "분류", "categories": []},
                 "_api_keys": {"openai": "test-key"},
-                "extracted_text": "문서 텍스트",
+                "extracted_text": "문서 텍스트 내용입니다 테스트용",
             }
             result = await stage.execute(ctx)
 
@@ -155,7 +155,7 @@ class TestClassifyStageReal:
                 "mode": "real",
                 "_classify_config": {"system_prompt": "분류", "categories": []},
                 "_api_keys": {"openai": "test-key"},
-                "extracted_text": "진단서 내용",
+                "extracted_text": "진단서 내용입니다 환자 정보 포함",
             }
             result = await stage.execute(ctx)
 
@@ -196,7 +196,7 @@ class TestClassifyStageReal:
             "mode": "real",
             "_classify_config": {"system_prompt": "분류", "categories": []},
             "_api_keys": {},
-            "extracted_text": "문서",
+            "extracted_text": "문서 내용 테스트 분류 대상입니다",
         }
         with pytest.raises(RuntimeError, match="API 키가 없습니다"):
             await stage.execute(ctx)
@@ -218,7 +218,7 @@ class TestClassifyStageReal:
                 "mode": "real",
                 "_classify_config": {"system_prompt": "분류", "categories": []},
                 "_api_keys": {"openai": "test-key"},
-                "extracted_text": "문서",
+                "extracted_text": "문서 내용 테스트 분류 대상입니다",
             }
             result = await stage.execute(ctx)
 
@@ -259,7 +259,7 @@ class TestClassifyStageReal:
                 "mode": "real",
                 "_classify_config": {"system_prompt": "분류", "categories": []},
                 "_api_keys": {"openai": "test-key"},
-                "extracted_text": "문서",
+                "extracted_text": "문서 내용 테스트 분류 대상입니다",
             }
             await stage.execute(ctx)
 
