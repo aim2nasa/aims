@@ -514,11 +514,11 @@ class TestPath5_ConversionFailed:
 # ========================================
 
 class TestPath6_DuplicateKeyError:
-    """중복 파일 해시 → DuplicateKeyError → cleanup"""
+    """중복 파일 해시 → DuplicateKeyError → 자동 정리 (에러 아님) (#52-4)"""
 
     @pytest.mark.asyncio
-    async def test_raises_after_cleanup(self, mock_files_collection, mock_internal_api_writes):
-        """DuplicateKeyError → 에러 알림 → cleanup → 예외 재발생"""
+    async def test_returns_duplicate_skipped_after_cleanup(self, mock_files_collection, mock_internal_api_writes):
+        """DuplicateKeyError → cleanup → duplicate_skipped 결과 반환 (에러 알림 없음)"""
         from routers.doc_prep_main import process_document_pipeline
 
         call_count = [0]
@@ -555,20 +555,24 @@ class TestPath6_DuplicateKeyError:
             mock_meta.extract_metadata = AsyncMock(return_value=_standard_meta_result())
             mock_openai.summarize_text = AsyncMock(return_value={"summary": "요약", "title": "제목", "document_type": "general", "confidence": 0.85})
 
-            with pytest.raises(Exception):
-                await process_document_pipeline(
-                    file_content=b"pdf bytes",
-                    original_name="test.pdf",
-                    user_id="test_user",
-                    customer_id=None,
-                    source_path=None,
-                )
+            # 에러 대신 정상 결과 반환
+            result = await process_document_pipeline(
+                file_content=b"pdf bytes",
+                original_name="test.pdf",
+                user_id="test_user",
+                customer_id=None,
+                source_path=None,
+            )
 
-        # 에러 알림 (-1, error) 또는 cleanup이 호출되어야 함
-        # DuplicateKeyError는 meta update에서 발생 → notify(-1) → cleanup → raise
-        error_calls = [c for c in notify.call_args_list if len(c[0]) > 2 and c[0][2] == -1]
-        assert len(error_calls) >= 1
+        # duplicate_skipped 결과 확인
+        assert result["result"] == "duplicate_skipped"
+
+        # cleanup 호출 확인
         cleanup.assert_called_once()
+
+        # 에러 SSE 알림이 전송되지 않았는지 확인
+        error_calls = [c for c in notify.call_args_list if len(c[0]) > 2 and c[0][2] == -1]
+        assert len(error_calls) == 0, "DuplicateKeyError 시 에러 SSE 알림이 전송되면 안 됨"
 
 
 # ========================================

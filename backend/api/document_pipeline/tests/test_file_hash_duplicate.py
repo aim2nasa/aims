@@ -209,7 +209,7 @@ class TestOrphanDocumentCleanup:
 # ========================================
 
 class TestDuplicateKeyError:
-    """DuplicateKeyError 처리 검증"""
+    """DuplicateKeyError 자동 정리 검증 (#52-4)"""
 
     @pytest.fixture
     def mock_files_collection(self):
@@ -218,15 +218,13 @@ class TestDuplicateKeyError:
         mock_collection.delete_one = AsyncMock(return_value=MagicMock(deleted_count=0))
         return mock_collection
 
-    async def test_duplicate_key_sets_error_progress(self, mock_files_collection, mock_internal_api_writes):
-        """DuplicateKeyError 시 progress=-1 에러 알림"""
+    async def test_duplicate_key_returns_duplicate_skipped(self, mock_files_collection, mock_internal_api_writes):
+        """DuplicateKeyError 시 에러가 아닌 duplicate_skipped 결과 반환"""
         from routers.doc_prep_main import process_document_pipeline
         from pymongo.errors import DuplicateKeyError
 
         # update_file: 첫 몇 호출은 성공, meta 업데이트에서 DuplicateKeyError
-        call_count = [0]
         async def side_effect_update(*args, **kwargs):
-            call_count[0] += 1
             set_data = kwargs.get("set_fields", {})
             if "meta.file_hash" in set_data:
                 raise DuplicateKeyError("duplicate key error")
@@ -243,22 +241,29 @@ class TestDuplicateKeyError:
              }), \
              patch("services.openai_service.OpenAIService.summarize_text", return_value={"summary": "", "tags": []}), \
              patch("routers.doc_prep_main._notify_progress", new_callable=AsyncMock) as mock_progress, \
+             patch("routers.doc_prep_main._cleanup_failed_document", new_callable=AsyncMock) as mock_cleanup, \
              patch("routers.doc_prep_main._detect_and_process_annual_report", return_value={"is_annual_report": False}), \
              patch("routers.doc_prep_main._connect_document_to_customer", new_callable=AsyncMock):
-            with pytest.raises(Exception, match="동일한 파일이 이미 등록"):
-                await process_document_pipeline(
-                    file_content=b"pdf bytes",
-                    original_name="test.pdf",
-                    user_id="user1",
-                    customer_id=None,
-                    source_path=None,
-                    existing_doc_id=TEST_DOC_ID,
-                )
+            # 에러 대신 정상 결과 반환
+            result = await process_document_pipeline(
+                file_content=b"pdf bytes",
+                original_name="test.pdf",
+                user_id="user1",
+                customer_id=None,
+                source_path=None,
+                existing_doc_id=TEST_DOC_ID,
+            )
 
-        # _notify_progress가 progress=-1, stage="error"로 호출됐는지 확인
+        # duplicate_skipped 결과 확인
+        assert result["result"] == "duplicate_skipped"
+        assert result["original_name"] == "test.pdf"
+
+        # cleanup이 호출되었는지 확인
+        mock_cleanup.assert_called_once()
+
+        # 에러 SSE 알림이 전송되지 않았는지 확인 (progress=-1 호출 없음)
         error_calls = [c for c in mock_progress.call_args_list if c[0][2] == -1]
-        assert len(error_calls) > 0
-        assert error_calls[0][0][3] == "error"
+        assert len(error_calls) == 0, "DuplicateKeyError 시 에러 SSE 알림이 전송되면 안 됨"
 
 
 # ========================================

@@ -291,5 +291,34 @@ class TestTimeoutAndRetry(unittest.TestCase):
         self.assertIn("asyncio.sleep", source)
 
 
+class TestUpdateFile409DuplicateKey:
+    """update_file: HTTP 409 → DuplicateKeyError 변환 (#52-4)"""
+
+    def test_409_raises_duplicate_key_error_code_structure(self):
+        """update_file 소스에 HTTP 409 → DuplicateKeyError 변환 코드 존재"""
+        import os
+        source_path = os.path.join(os.path.dirname(__file__), '..', 'services', 'internal_api.py')
+        with open(source_path, 'r', encoding='utf-8') as f:
+            source = f.read()
+
+        # 409 상태 코드 감지 코드 존재
+        assert "resp.status_code == 409" in source, "409 상태 코드 감지 코드가 없음"
+        # DuplicateKeyError raise 코드 존재
+        assert "raise DuplicateKeyError" in source, "DuplicateKeyError raise 코드가 없음"
+        # DuplicateKeyError는 재시도하지 않음 (except DuplicateKeyError: raise)
+        assert "except DuplicateKeyError:" in source, "DuplicateKeyError 재시도 방지 코드가 없음"
+
+    def test_409_no_retry(self):
+        """update_file에서 409(DuplicateKeyError)는 재시도하지 않는지 구조 검증"""
+        import os, re
+        source_path = os.path.join(os.path.dirname(__file__), '..', 'services', 'internal_api.py')
+        with open(source_path, 'r', encoding='utf-8') as f:
+            source = f.read()
+
+        # "except DuplicateKeyError:" 다음에 "raise"가 있어야 함 (재시도 안 함)
+        pattern = r'except DuplicateKeyError:\s+raise'
+        assert re.search(pattern, source), "DuplicateKeyError 후 즉시 raise하는 코드가 없음"
+
+
 if __name__ == "__main__":
     unittest.main()

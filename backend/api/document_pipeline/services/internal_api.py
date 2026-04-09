@@ -104,7 +104,9 @@ async def create_file(document: dict) -> dict:
 async def update_file(file_id: str, set_fields: dict = None, unset_fields: dict = None,
                        add_to_set: dict = None, current_date: dict = None) -> dict:
     """PATCH /internal/files/:id — 범용 파일 업데이트. 반환: {"success": bool, "data": {"modifiedCount": int}}
-    메타 저장 실패가 치명적이므로 Exception 발생 시 1회 재시도 (2초 대기)."""
+    메타 저장 실패가 치명적이므로 Exception 발생 시 1회 재시도 (2초 대기).
+    E11000 중복 키(409)는 재시도 없이 즉시 DuplicateKeyError 발생."""
+    from pymongo.errors import DuplicateKeyError
     import asyncio
     settings = get_settings()
     for attempt in range(2):
@@ -128,9 +130,16 @@ async def update_file(file_id: str, set_fields: dict = None, unset_fields: dict 
                     result = resp.json()
                     _validate_response(result.get("data", {}), "files/update")
                     return result
+                # 409 Conflict = E11000 중복 키 → 재시도 무의미, 즉시 DuplicateKeyError
+                if resp.status_code == 409:
+                    response_data = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {}
+                    error_msg = response_data.get("error", f"Duplicate key error (file_id={file_id})")
+                    raise DuplicateKeyError(error_msg, code=11000, details={"file_id": file_id})
                 response_text = resp.text[:500]
                 logger.warning(f"[InternalAPI] 파일 업데이트 실패 ({file_id}): {resp.status_code} {response_text}")
                 return {"success": False, "error": f"HTTP {resp.status_code}", "detail": response_text, "status_code": resp.status_code}
+        except DuplicateKeyError:
+            raise  # 중복 키는 재시도하지 않고 즉시 상위로 전파
         except Exception as e:
             if attempt == 0:
                 logger.warning(f"[InternalAPI] 파일 업데이트 재시도 ({file_id}): {e}")

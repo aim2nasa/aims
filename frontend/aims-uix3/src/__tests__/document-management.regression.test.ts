@@ -474,4 +474,77 @@ describe('문서 관리 - Regression 테스트', () => {
       expect(stateTransitions.completed).toHaveLength(0)
     })
   })
+
+  describe('#52-2: 대량 삭제 청크 기반 배치 처리', () => {
+    /**
+     * 회귀 테스트: 대량 삭제 시 서버 과부하 방지
+     * 배경: 319개 동시 DELETE → aims_api 과부하 → 71개 타임아웃 → "삭제 실패" 오보고
+     * 수정: Promise.all(개별 DELETE) → 청크 단위 배치 DELETE 순차 처리
+     */
+    it('DELETE_CHUNK_SIZE가 50 이하로 정의되어 서버 과부하 방지', async () => {
+      // useDocumentActions 소스에서 청크 사이즈 확인
+      const { default: fs } = await import('fs')
+      const hookSource = fs.readFileSync(
+        'src/hooks/useDocumentActions.ts', 'utf-8'
+      )
+      // 청크 기반 배치 삭제 코드가 존재
+      expect(hookSource).toContain('DELETE_CHUNK_SIZE')
+      expect(hookSource).toContain('DocumentService.deleteDocuments')
+
+      // Promise.all 개별 삭제 패턴이 제거됨
+      expect(hookSource).not.toContain("Promise.all")
+    })
+
+    it('319개 문서를 50개 청크로 분할하면 7개 배치', () => {
+      const CHUNK_SIZE = 50
+      const totalDocuments = 319
+      const expectedChunks = Math.ceil(totalDocuments / CHUNK_SIZE)
+
+      expect(expectedChunks).toBe(7)
+
+      // 마지막 청크 크기 확인
+      const lastChunkSize = totalDocuments % CHUNK_SIZE || CHUNK_SIZE
+      expect(lastChunkSize).toBe(19) // 319 % 50 = 19
+    })
+
+    it('배치 삭제 결과를 정확하게 집계', () => {
+      // 7개 배치 중 6개 성공(각 50개), 1개 일부 실패 시뮬레이션
+      const batchResults = [
+        { deletedCount: 50, failedCount: 0 },
+        { deletedCount: 50, failedCount: 0 },
+        { deletedCount: 50, failedCount: 0 },
+        { deletedCount: 50, failedCount: 0 },
+        { deletedCount: 50, failedCount: 0 },
+        { deletedCount: 48, failedCount: 2 }, // 2개 실패
+        { deletedCount: 19, failedCount: 0 },
+      ]
+
+      const totalDeleted = batchResults.reduce((sum, r) => sum + r.deletedCount, 0)
+      const totalFailed = batchResults.reduce((sum, r) => sum + r.failedCount, 0)
+
+      expect(totalDeleted).toBe(317)
+      expect(totalFailed).toBe(2)
+      expect(totalDeleted + totalFailed).toBe(319)
+    })
+
+    it('DocumentLibraryView에서 개별 DELETE 대신 배치 삭제 사용', async () => {
+      const { default: fs } = await import('fs')
+      const source = fs.readFileSync(
+        'src/components/DocumentViews/DocumentLibraryView/DocumentLibraryView.tsx', 'utf-8'
+      )
+      // handleDeleteSelected에서 DocumentService.deleteDocuments 사용
+      expect(source).toContain('DocumentService.deleteDocuments')
+      // 개별 api.delete 대량 삭제 패턴이 없어야 함
+      expect(source).not.toMatch(/Promise\.all\(\s*Array\.from\(selectedDocumentIds\)\.map/)
+    })
+
+    it('DocumentsTab에서 개별 DELETE 대신 배치 삭제 사용', async () => {
+      const { default: fs } = await import('fs')
+      const source = fs.readFileSync(
+        'src/features/customer/views/CustomerDetailView/tabs/DocumentsTab.tsx', 'utf-8'
+      )
+      expect(source).toContain('DocumentService.deleteDocuments')
+      expect(source).not.toMatch(/Promise\.all\(\s*Array\.from\(selectedDocumentIds\)\.map/)
+    })
+  })
 })

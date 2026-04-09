@@ -50,6 +50,15 @@ from services.upload_queue_service import UploadQueueService
 
 logger = logging.getLogger(__name__)
 
+
+class _DuplicateFileSkipped(Exception):
+    """동시 업로드 race condition으로 중복 파일이 감지되어 자동 정리됨.
+    에러가 아닌 정상적인 중복 해소 — 외부 핸들러에서 성공으로 처리."""
+    def __init__(self, original_name: str):
+        self.original_name = original_name
+        super().__init__(f"중복 파일 자동 정리: {original_name}")
+
+
 # 크레딧 체크 API 설정
 CREDIT_CHECK_URL = None  # 런타임에 설정
 
@@ -1394,15 +1403,12 @@ async def _step_update_meta_to_db(ctx: PipelineContext) -> None:
     try:
         await update_file(ctx.doc_id, set_fields=_serialize_for_api(meta_update))
     except DuplicateKeyError as e:
-        # 중복 에러 발생 시 SSE 에러 전달 후 cleanup 수행
-        # (cleanup이 files 레코드를 삭제하므로 notify_progress를 먼저 호출)
-        error_msg = "동일한 파일이 이미 등록되어 있습니다."
-        logger.error(f"🔴 중복 파일 에러: {ctx.doc_id} - {error_msg}")
-        error_detail = f"original_name={ctx.original_name}"
-        await _notify_progress(ctx.doc_id, ctx.user_id, -1, "error", error_msg, error_detail=error_detail)
+        # 🔄 중복 파일 자동 정리: 에러가 아닌 정상적인 중복 해소 처리
+        # race condition으로 같은 해시 파일이 동시 업로드된 경우 — 후발 문서를 조용히 정리
+        logger.info(f"🔄 중복 파일 자동 정리: {ctx.doc_id} (original_name={ctx.original_name})")
         await _cleanup_failed_document(ctx.doc_id, ctx.customer_id, ctx.dest_path)
         ctx.cleanup_done = True
-        raise Exception(error_msg) from e
+        raise _DuplicateFileSkipped(ctx.original_name) from e
 
     ctx.detected_mime = ctx.meta_result.get("mime_type", "")
 
@@ -2473,7 +2479,18 @@ async def _process_via_xpipe(
         if delete_count > 0:
             logger.info(f"🗑️ [xPipe] 고아 문서 삭제 완료 (file_hash: {file_hash[:16]}...)")
 
-    meta_save_result = await update_file(doc_id, set_fields=_serialize_for_api(meta_update), unset_fields={"error": ""})
+    try:
+        meta_save_result = await update_file(doc_id, set_fields=_serialize_for_api(meta_update), unset_fields={"error": ""})
+    except DuplicateKeyError:
+        # 🔄 중복 파일 자동 정리: race condition으로 같은 해시 파일이 동시 업로드된 경우
+        logger.info(f"🔄 [xPipe] 중복 파일 자동 정리: {doc_id} (original_name={original_name})")
+        await _cleanup_failed_document(doc_id, customer_id, dest_path)
+        return {
+            "result": "duplicate_skipped",
+            "document_id": doc_id,
+            "original_name": original_name,
+            "message": f"중복 파일 자동 정리: {original_name}"
+        }
     if not meta_save_result.get("success"):
         error_msg = meta_save_result.get("error", "알 수 없는 오류")
         detail = meta_save_result.get("detail", "")
@@ -2720,6 +2737,17 @@ async def _process_via_legacy(
 
         # Step 4: MIME 타입별 분기 처리
         return await _step_route_by_mime(ctx)
+
+    except _DuplicateFileSkipped as dup:
+        # 중복 파일 자동 정리 완료 — 에러가 아닌 성공으로 처리
+        logger.info(f"🔄 중복 파일 건너뜀 (legacy): {dup.original_name}")
+        await pipeline_metrics.record_error(metric_record, "DuplicateFileSkipped")
+        return {
+            "result": "duplicate_skipped",
+            "document_id": ctx.doc_id,
+            "original_name": dup.original_name,
+            "message": str(dup)
+        }
 
     except Exception as e:
         logger.error(f"Error in process_document_pipeline: {e}", exc_info=True)
