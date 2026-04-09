@@ -86,6 +86,8 @@ interface DocumentStatusRowProps {
   onChangeCustomerClick?: (documentId: string, currentCustomerId: string) => void
   onCustomerClick?: (customerId: string) => void
   onCustomerDoubleClick?: (customerId: string) => void
+  // 고객 필터 토글 (클릭 시 해당 고객 문서만 필터)
+  onCustomerFilter?: (filter: { id: string; name: string }) => void
   onRowContextMenu?: (document: Document, event: React.MouseEvent) => void
   onRetryPdfConversion: (documentId: string, e: React.MouseEvent) => void
   onDocTypeChange: (documentId: string, newType: string) => void
@@ -125,6 +127,7 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
   onChangeCustomerClick,
   onCustomerClick,
   onCustomerDoubleClick,
+  onCustomerFilter,
   onRowContextMenu,
   onRetryPdfConversion,
   onDocTypeChange,
@@ -584,7 +587,14 @@ const DocumentStatusRow = React.memo<DocumentStatusRowProps>(({
                 e.stopPropagation()
                 e.preventDefault()
                 const customerId = document.customer_relation?.customer_id
+                const customerName = document.customer_relation?.customer_name
                 if (!customerId) return
+
+                // onCustomerFilter가 있으면 즉시 필터 토글
+                if (onCustomerFilter && customerName) {
+                  onCustomerFilter({ id: customerId, name: customerName })
+                  return
+                }
 
                 // 더블클릭 대기 (250ms)
                 if (customerClickTimer.current) {
@@ -790,6 +800,8 @@ export interface DocumentStatusListProps {
   onCustomerClick?: (customerId: string) => void
   // 🍎 Customer double click handler (전체보기 페이지로 이동)
   onCustomerDoubleClick?: (customerId: string) => void
+  // 🍎 고객 필터 토글 (클릭 시 해당 고객 문서만 필터)
+  onCustomerFilter?: (filter: { id: string; name: string }) => void
   // 🍎 Refresh handler
   onRefresh?: () => Promise<void>
   // 🍎 Navigation handler
@@ -971,6 +983,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onSelectDocument,
   onCustomerClick,
   onCustomerDoubleClick,
+  onCustomerFilter,
   onRefresh,
   onNavigate: _onNavigate,
   onRowContextMenu,
@@ -1436,6 +1449,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             onChangeCustomerClick={onChangeCustomerClick}
             onCustomerClick={onCustomerClick}
             onCustomerDoubleClick={onCustomerDoubleClick}
+            onCustomerFilter={onCustomerFilter}
             onRowContextMenu={onRowContextMenu}
             onRetryPdfConversion={handleRetryPdfConversion}
             onDocTypeChange={handleDocTypeChange}
