@@ -6,17 +6,47 @@
  * 폴더-고객 매핑 미리보기 (윈도우 탐색기 스타일 트리)
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
 import Button from '@/shared/ui/Button'
 import { formatFileSize } from '../utils/fileValidation'
+import type { CustomerForMatching } from '../utils/customerMatcher'
 import type { FolderMapping } from '../types'
 import './MappingPreview.css'
+
+/** 개인 고객 아이콘 (파란색) */
+function PersonIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style={{ color: 'var(--color-primary-500)' }}>
+      <circle cx="10" cy="10" r="10" opacity="0.2" />
+      <circle cx="10" cy="7" r="3" />
+      <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+    </svg>
+  )
+}
+
+/** 법인 고객 아이콘 (주황) */
+function CorporateIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style={{ color: 'var(--color-ios-orange)' }}>
+      <circle cx="10" cy="10" r="10" opacity="0.2" />
+      <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+    </svg>
+  )
+}
+
+/** 고객 타입 아이콘 */
+function CustomerTypeIcon({ customerType }: { customerType?: string }) {
+  if (customerType === '법인') return <CorporateIcon />
+  return <PersonIcon />
+}
 
 interface MappingPreviewProps {
   mappings: FolderMapping[]
   parentFolderName?: string | null  // 재그룹화 시 원본 부모 폴더명
   parentRootFiles?: File[]          // 부모 폴더 직하 파일들
+  customers?: CustomerForMatching[]  // 전체 고객 목록 (수동 매핑 검색용)
+  onMappingChange?: (folderName: string, customer: CustomerForMatching | null) => void  // 매핑 변경 콜백
   onBack: () => void
   onStartUpload: (selectedMappings: FolderMapping[]) => void  // 선택된 매핑만 업로드
   expandedPaths?: Set<string>  // 외부에서 제어하는 펼침 상태
@@ -106,11 +136,81 @@ export default function MappingPreview({
   mappings,
   parentFolderName,
   parentRootFiles,
+  customers,
+  onMappingChange,
   onBack,
   onStartUpload,
   expandedPaths: controlledExpandedPaths,
   onExpandedPathsChange
 }: MappingPreviewProps) {
+  // 수동 매핑 드롭다운 상태
+  const [assigningFolder, setAssigningFolder] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!assigningFolder) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setAssigningFolder(null)
+        setSearchQuery('')
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setAssigningFolder(null)
+        setSearchQuery('')
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [assigningFolder])
+
+  // 드롭다운 열릴 때 검색 input에 포커스
+  useEffect(() => {
+    if (assigningFolder && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [assigningFolder])
+
+  // 검색 필터링된 고객 목록
+  const filteredCustomers = useMemo(() => {
+    if (!customers) return []
+    const query = searchQuery.toLowerCase().trim()
+    if (!query) return customers
+    return customers.filter(c => {
+      const name = c.personal_info?.name?.toLowerCase() || ''
+      return name.includes(query)
+    })
+  }, [customers, searchQuery])
+
+  // 고객 선택 핸들러
+  const handleCustomerSelect = useCallback((folderName: string, customer: CustomerForMatching) => {
+    onMappingChange?.(folderName, customer)
+    setAssigningFolder(null)
+    setSearchQuery('')
+  }, [onMappingChange])
+
+  // 매핑 해제 핸들러
+  const handleUnassign = useCallback((folderName: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    onMappingChange?.(folderName, null)
+  }, [onMappingChange])
+
+  // 수동 매핑 여부 판별 (matched이지만 folderName !== customerName인 경우)
+  const isManuallyMapped = useCallback((mapping: FolderMapping) => {
+    return mapping.matched && mapping.customerName !== null && mapping.folderName !== mapping.customerName
+  }, [])
+
   // 내부 상태 (controlled prop이 없을 때 사용)
   const [internalExpandedPaths, setInternalExpandedPaths] = useState<Set<string>>(() => {
     // 기본적으로 루트 폴더들만 펼침
@@ -270,6 +370,127 @@ export default function MappingPreview({
     )
   }
 
+  // 매핑 노드 렌더링 (parentFolderName 유무와 관계없이 공통 사용)
+  const renderMappingNode = (mapping: FolderMapping, isLast: boolean) => {
+    const isExpanded = expandedPaths.has(mapping.folderName)
+    const tree = buildTree(mapping.files, mapping.folderName)
+    const isSelected = selectedFolders.has(mapping.folderName)
+    const manuallyMapped = isManuallyMapped(mapping)
+    const showAssignDropdown = assigningFolder === mapping.folderName
+
+    // 수동 매핑된 고객의 customer_type 찾기
+    const mappedCustomer = manuallyMapped && customers
+      ? customers.find(c => c._id === mapping.customerId)
+      : null
+
+    return (
+      <div key={mapping.folderName} className={`guide-node ${isLast ? 'last' : ''} has-children`}>
+        <div
+          className={`guide-node-content customer-root ${mapping.matched ? 'matched' : 'unmatched'} ${isSelected ? 'selected' : ''}`}
+          onClick={() => togglePath(mapping.folderName)}
+        >
+          {mapping.matched && (
+            <span
+              className={`guide-checkbox ${isSelected ? 'checked' : ''}`}
+              onClick={(e) => toggleSelection(mapping.folderName, e)}
+            >
+              {isSelected ? '☑' : '☐'}
+            </span>
+          )}
+          <span className="guide-toggle">
+            {isExpanded ? '▼' : '▶'}
+          </span>
+          {mapping.matched ? (
+            <span className="guide-icon customer-icon">
+              {manuallyMapped ? (
+                <CustomerTypeIcon customerType={mappedCustomer?.insurance_info?.customer_type} />
+              ) : (
+                <SFSymbol name="person" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+              )}
+            </span>
+          ) : (
+            <span className="guide-icon folder">📁</span>
+          )}
+          <span className={`guide-name customer ${mapping.matched ? '' : 'unmatched'}`}>
+            {manuallyMapped ? `${mapping.customerName} (${mapping.folderName})` : mapping.folderName}
+          </span>
+          {manuallyMapped && (
+            <>
+              <span className="guide-manual-badge">수동 지정</span>
+              <button
+                type="button"
+                className="guide-unassign-btn"
+                onClick={(e) => handleUnassign(mapping.folderName, e)}
+                title="매핑 해제"
+              >
+                ✕
+              </button>
+            </>
+          )}
+          {!mapping.matched && (
+            <>
+              <span className="guide-note">미매칭</span>
+              {customers && customers.length > 0 && onMappingChange && (
+                <button
+                  type="button"
+                  className="guide-assign-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setAssigningFolder(prev => prev === mapping.folderName ? null : mapping.folderName)
+                    setSearchQuery('')
+                  }}
+                >
+                  고객 지정
+                </button>
+              )}
+            </>
+          )}
+          <span className="guide-info">{mapping.fileCount}개 · {formatFileSize(mapping.totalSize)}</span>
+        </div>
+        {/* 고객 검색 드롭다운 */}
+        {showAssignDropdown && (
+          <div className="customer-search-dropdown" ref={dropdownRef}>
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="customer-search-input"
+              placeholder="고객명 검색"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="customer-search-list">
+              {filteredCustomers.length > 0 ? (
+                filteredCustomers.map(customer => (
+                  <div
+                    key={customer._id}
+                    className="customer-search-item"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleCustomerSelect(mapping.folderName, customer)
+                    }}
+                  >
+                    <span className="customer-type-icon">
+                      <CustomerTypeIcon customerType={customer.insurance_info?.customer_type} />
+                    </span>
+                    <span>{customer.personal_info?.name || '(이름 없음)'}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="customer-search-empty">검색 결과가 없습니다</div>
+              )}
+            </div>
+          </div>
+        )}
+        {isExpanded && tree.length > 0 &&
+          tree.map((node, nodeIdx) =>
+            renderNode(node, nodeIdx === tree.length - 1)
+          )
+        }
+      </div>
+    )
+  }
+
   return (
     <div className="mapping-preview">
       {/* 요약 통계 */}
@@ -356,99 +577,17 @@ export default function MappingPreview({
                     )
                   })}
                   {/* 하위 폴더(매핑) 목록 */}
-                  {mappings.map((mapping, idx) => {
-                    const isExpanded = expandedPaths.has(mapping.folderName)
-                    const tree = buildTree(mapping.files, mapping.folderName)
-                    const isLast = idx === mappings.length - 1
-                    const isSelected = selectedFolders.has(mapping.folderName)
-
-                    return (
-                      <div key={mapping.folderName} className={`guide-node ${isLast ? 'last' : ''} has-children`}>
-                        <div
-                          className={`guide-node-content customer-root ${mapping.matched ? 'matched' : 'unmatched'} ${isSelected ? 'selected' : ''}`}
-                          onClick={() => togglePath(mapping.folderName)}
-                        >
-                          {mapping.matched && (
-                            <span
-                              className={`guide-checkbox ${isSelected ? 'checked' : ''}`}
-                              onClick={(e) => toggleSelection(mapping.folderName, e)}
-                            >
-                              {isSelected ? '☑' : '☐'}
-                            </span>
-                          )}
-                          <span className="guide-toggle">
-                            {isExpanded ? '▼' : '▶'}
-                          </span>
-                          {mapping.matched ? (
-                            <span className="guide-icon customer-icon">
-                              <SFSymbol name="person" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
-                            </span>
-                          ) : (
-                            <span className="guide-icon folder">📁</span>
-                          )}
-                          <span className={`guide-name customer ${mapping.matched ? '' : 'unmatched'}`}>{mapping.folderName}</span>
-                          {!mapping.matched && (
-                            <span className="guide-note">미매칭</span>
-                          )}
-                          <span className="guide-info">{mapping.fileCount}개 · {formatFileSize(mapping.totalSize)}</span>
-                        </div>
-                        {isExpanded && tree.length > 0 &&
-                          tree.map((node, nodeIdx) =>
-                            renderNode(node, nodeIdx === tree.length - 1)
-                          )
-                        }
-                      </div>
-                    )
-                  })}
+                  {mappings.map((mapping, idx) =>
+                    renderMappingNode(mapping, idx === mappings.length - 1)
+                  )}
                 </>
               )}
             </div>
           ) : (
             // 기존 동작: 부모 없이 매핑 목록 직접 표시
-            mappings.map((mapping, idx) => {
-              const isExpanded = expandedPaths.has(mapping.folderName)
-              const tree = buildTree(mapping.files, mapping.folderName)
-              const isLast = idx === mappings.length - 1
-              const isSelected = selectedFolders.has(mapping.folderName)
-
-              return (
-                <div key={mapping.folderName} className={`guide-node ${isLast ? 'last' : ''} has-children`}>
-                  <div
-                    className={`guide-node-content customer-root ${mapping.matched ? 'matched' : 'unmatched'} ${isSelected ? 'selected' : ''}`}
-                    onClick={() => togglePath(mapping.folderName)}
-                  >
-                    {mapping.matched && (
-                      <span
-                        className={`guide-checkbox ${isSelected ? 'checked' : ''}`}
-                        onClick={(e) => toggleSelection(mapping.folderName, e)}
-                      >
-                        {isSelected ? '☑' : '☐'}
-                      </span>
-                    )}
-                    <span className="guide-toggle">
-                      {isExpanded ? '▼' : '▶'}
-                    </span>
-                    {mapping.matched ? (
-                      <span className="guide-icon customer-icon">
-                        <SFSymbol name="person" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
-                      </span>
-                    ) : (
-                      <span className="guide-icon folder">📁</span>
-                    )}
-                    <span className={`guide-name customer ${mapping.matched ? '' : 'unmatched'}`}>{mapping.folderName}</span>
-                    {!mapping.matched && (
-                      <span className="guide-note">미매칭</span>
-                    )}
-                    <span className="guide-info">{mapping.fileCount}개 · {formatFileSize(mapping.totalSize)}</span>
-                  </div>
-                  {isExpanded && tree.length > 0 &&
-                    tree.map((node, nodeIdx) =>
-                      renderNode(node, nodeIdx === tree.length - 1)
-                    )
-                  }
-                </div>
-              )
-            })
+            mappings.map((mapping, idx) =>
+              renderMappingNode(mapping, idx === mappings.length - 1)
+            )
           )}
         </div>
       </div>
@@ -465,7 +604,7 @@ export default function MappingPreview({
       {stats.unmatched > 0 && !stats.hasPlaceholder && (
         <div className="preview-warning">
           <SFSymbol name="exclamationmark-triangle-fill" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
-          <span>미매칭된 {stats.unmatched}개 폴더는 업로드되지 않습니다.</span>
+          <span>미매칭된 {stats.unmatched}개 폴더는 업로드되지 않습니다. "고객 지정" 버튼으로 고객을 수동 연결할 수 있습니다.</span>
         </div>
       )}
 

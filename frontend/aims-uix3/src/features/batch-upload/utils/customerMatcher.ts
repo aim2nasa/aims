@@ -18,6 +18,9 @@ export interface CustomerForMatching {
   personal_info?: {
     name?: string
   }
+  insurance_info?: {
+    customer_type?: string  // '개인' | '법인'
+  }
 }
 
 /**
