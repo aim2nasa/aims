@@ -404,6 +404,19 @@ export default function BatchDocumentUploadView({
     }
   }, [tierLimit, customers, storageInfo])
 
+  // 수동 고객 매핑 변경 핸들러
+  const handleMappingChange = useCallback((folderName: string, customer: CustomerForMatching | null) => {
+    setFolderMappings(prev => prev.map(m => {
+      if (m.folderName !== folderName) return m
+      if (customer) {
+        return { ...m, customerId: customer._id, customerName: customer.personal_info?.name || null, matched: true }
+      } else {
+        // 매핑 해제
+        return { ...m, customerId: null, customerName: null, matched: false }
+      }
+    }))
+  }, [])
+
   const handleBack = useCallback(() => {
     setStep('select')
     setFolderMappings([])
@@ -533,6 +546,8 @@ export default function BatchDocumentUploadView({
               mappings={folderMappings}
               parentFolderName={parentFolderName}
               parentRootFiles={parentRootFiles}
+              customers={customers}
+              onMappingChange={handleMappingChange}
               onBack={handleBack}
               onStartUpload={handleStartUpload}
               expandedPaths={expandedPaths}
