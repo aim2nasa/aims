@@ -1,14 +1,8 @@
 name: CI
 
 on:
-  workflow_dispatch:  # 수동 실행
+  workflow_dispatch:  # 수동 실행 (전체)
   pull_request:
-    branches: [main]
-    paths:
-      - 'frontend/**'
-      - 'backend/**'
-      - '.github/workflows/**'
-  push:
     branches: [main]
     paths:
       - 'frontend/**'
@@ -16,19 +10,69 @@ on:
       - 'tests/**'
       - '.github/workflows/**'
 
+# 동일 PR에서 새 push 시 이전 실행 자동 취소
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
+  # 변경 영역 감지
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      python: ${{ steps.filter.outputs.python }}
+      architecture: ${{ steps.filter.outputs.architecture }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci-frontend.yml'
+            backend:
+              - 'backend/api/aims_api/**'
+              - 'backend/api/aims_mcp/**'
+              - 'backend/shared/**'
+              - '.github/workflows/ci-backend.yml'
+            python:
+              - 'backend/api/annual_report_api/**'
+              - 'backend/api/aims_rag_api/**'
+              - 'backend/api/pdf_proxy/**'
+              - 'backend/api/document_pipeline/**'
+              - '.github/workflows/ci-python.yml'
+            architecture:
+              - 'tests/architecture/**'
+              - '.github/workflows/ci-architecture.yml'
+
   frontend:
     name: Frontend
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/ci-frontend.yml
 
   backend:
     name: Backend
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/ci-backend.yml
 
   python:
     name: Python
+    needs: changes
+    if: needs.changes.outputs.python == 'true' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/ci-python.yml
 
   architecture:
     name: Architecture
+    needs: changes
+    if: needs.changes.outputs.architecture == 'true' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/ci-architecture.yml

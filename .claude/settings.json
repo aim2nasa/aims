@@ -9,7 +9,9 @@
       "Edit(/.claude/skills/bug/**)",
       "Bash(gh issue:*)",
       "Bash(rm -f .dev-verified)",
-      "Bash(bash .git/hooks/pre-commit)"
+      "Bash(bash .git/hooks/pre-commit)",
+      "Bash(gh api:*)",
+      "Bash(gh repo:*)"
     ]
   },
   "hooks": {
