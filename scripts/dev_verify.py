@@ -214,7 +214,6 @@ def run_backend_tests(files):
                         # "N failed" 중 신규 실패만 차단 (기존 실패 목록)
                         KNOWN_FAILURES = {
                             "test_ocr_progress_fix.py::TestOCRErrorProgress::test_error_sets_progress_minus1",
-                            "test_xpipe_classify_no_text.py::TestClassifyNoText::",  # 서버 배포 전 임시 허용
                         }
                         unknown = [
                             line for line in output.split("\n")
