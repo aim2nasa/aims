@@ -61,7 +61,7 @@ async def get_customer_name(customer_id: str) -> str | None:
     """단건 고객명 조회. 실패 시 None 반환."""
     settings = get_settings()
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.get(
                 f"{settings.AIMS_API_URL}/api/internal/customers/{customer_id}/name",
                 headers={"x-api-key": settings.INTERNAL_API_KEY}
@@ -84,7 +84,7 @@ async def create_file(document: dict) -> dict:
     """POST /internal/files — 새 파일 문서 생성. 반환: {"success": bool, "data": {"insertedId": str}}"""
     settings = get_settings()
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
                 f"{settings.AIMS_API_URL}/api/internal/files",
                 json={"document": document},
@@ -103,41 +103,49 @@ async def create_file(document: dict) -> dict:
 
 async def update_file(file_id: str, set_fields: dict = None, unset_fields: dict = None,
                        add_to_set: dict = None, current_date: dict = None) -> dict:
-    """PATCH /internal/files/:id — 범용 파일 업데이트. 반환: {"success": bool, "data": {"modifiedCount": int}}"""
+    """PATCH /internal/files/:id — 범용 파일 업데이트. 반환: {"success": bool, "data": {"modifiedCount": int}}
+    메타 저장 실패가 치명적이므로 Exception 발생 시 1회 재시도 (2초 대기)."""
+    import asyncio
     settings = get_settings()
-    try:
-        body = {}
-        if set_fields:
-            body["$set"] = set_fields
-        if unset_fields:
-            body["$unset"] = unset_fields
-        if add_to_set:
-            body["$addToSet"] = add_to_set
-        if current_date:
-            body["$currentDate"] = current_date
-        async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.patch(
-                f"{settings.AIMS_API_URL}/api/internal/files/{file_id}",
-                json=body,
-                headers={"x-api-key": settings.INTERNAL_API_KEY, "Content-Type": "application/json"}
-            )
-            if resp.status_code == 200:
-                result = resp.json()
-                _validate_response(result.get("data", {}), "files/update")
-                return result
-            response_text = resp.text[:500]
-            logger.warning(f"[InternalAPI] 파일 업데이트 실패 ({file_id}): {resp.status_code} {response_text}")
-            return {"success": False, "error": f"HTTP {resp.status_code}", "detail": response_text, "status_code": resp.status_code}
-    except Exception as e:
-        logger.error(f"[InternalAPI] 파일 업데이트 예외 ({file_id}): {e}")
-        return {"success": False, "error": str(e)}
+    for attempt in range(2):
+        try:
+            body = {}
+            if set_fields:
+                body["$set"] = set_fields
+            if unset_fields:
+                body["$unset"] = unset_fields
+            if add_to_set:
+                body["$addToSet"] = add_to_set
+            if current_date:
+                body["$currentDate"] = current_date
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.patch(
+                    f"{settings.AIMS_API_URL}/api/internal/files/{file_id}",
+                    json=body,
+                    headers={"x-api-key": settings.INTERNAL_API_KEY, "Content-Type": "application/json"}
+                )
+                if resp.status_code == 200:
+                    result = resp.json()
+                    _validate_response(result.get("data", {}), "files/update")
+                    return result
+                response_text = resp.text[:500]
+                logger.warning(f"[InternalAPI] 파일 업데이트 실패 ({file_id}): {resp.status_code} {response_text}")
+                return {"success": False, "error": f"HTTP {resp.status_code}", "detail": response_text, "status_code": resp.status_code}
+        except Exception as e:
+            if attempt == 0:
+                logger.warning(f"[InternalAPI] 파일 업데이트 재시도 ({file_id}): {e}")
+                await asyncio.sleep(2)
+                continue
+            logger.error(f"[InternalAPI] 파일 업데이트 예외 ({file_id}): {e}")
+            return {"success": False, "error": str(e)}
+    return {"success": False, "error": "max retries exceeded"}
 
 
 async def delete_file(file_id: str) -> dict:
     """DELETE /internal/files/:id — 파일 삭제. 반환: {"success": bool, "data": {"deletedCount": int}}"""
     settings = get_settings()
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.delete(
                 f"{settings.AIMS_API_URL}/api/internal/files/{file_id}",
                 headers={"x-api-key": settings.INTERNAL_API_KEY}
@@ -165,7 +173,7 @@ async def delete_file_by_filter(owner_id: str, file_hash: str, exclude_id: str,
             body["createdBefore"] = created_before
         if max_status:
             body["maxStatus"] = max_status
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.request(
                 "DELETE",
                 f"{settings.AIMS_API_URL}/api/internal/files/by-filter",
@@ -185,7 +193,7 @@ async def pull_customer_document(customer_id: str, document_id: str) -> dict:
     """PATCH /internal/customers/:id/pull-document — 고객 documents에서 문서 연결 제거."""
     settings = get_settings()
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.patch(
                 f"{settings.AIMS_API_URL}/api/internal/customers/{customer_id}/pull-document",
                 json={"document_id": document_id},
@@ -214,7 +222,7 @@ async def query_files(filter: dict, projection: dict = None, sort: dict = None, 
         if sort:
             body["sort"] = sort
         body["limit"] = limit
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
                 f"{settings.AIMS_API_URL}/api/internal/files/query",
                 json=body,
@@ -244,7 +252,7 @@ async def get_customer_names_batch(customer_ids: list[str]) -> dict:
     """배치 고객명+타입 조회. 반환: { "names": {id: name}, "types": {id: type} }"""
     settings = get_settings()
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
                 f"{settings.AIMS_API_URL}/api/internal/customers/batch-names",
                 json={"ids": customer_ids},
@@ -264,7 +272,7 @@ async def resolve_customer_by_name(customer_name: str, user_id: str) -> str | No
     """고객명으로 정확 매칭 검색. 일치하는 고객의 ID를 반환, 없으면 None."""
     settings = get_settings()
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
                 f"{settings.AIMS_API_URL}/api/internal/customers/resolve-by-name",
                 json={"name": customer_name, "userId": user_id, "mode": "exact"},

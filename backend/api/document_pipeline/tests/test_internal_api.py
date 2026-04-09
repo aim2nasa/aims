@@ -264,5 +264,32 @@ class TestUpdateFileErrorDetail(unittest.IsolatedAsyncioTestCase):
         self.assertIn('"status_code":', source)
 
 
+class TestTimeoutAndRetry(unittest.TestCase):
+    """timeout 60초 통일 + update_file 재시도 검증"""
+
+    def test_모든_api_함수_timeout_60초(self):
+        """internal_api.py의 모든 httpx timeout이 60초"""
+        import os
+        source_path = os.path.join(os.path.dirname(__file__), "..", "services", "internal_api.py")
+        with open(source_path, "r", encoding="utf-8") as f:
+            source = f.read()
+
+        # timeout=60만 존재, timeout=10이나 timeout=15, timeout=30은 없어야 함
+        self.assertIn("timeout=60", source)
+        self.assertNotIn("timeout=10)", source)
+        self.assertNotIn("timeout=15)", source)
+        self.assertNotIn("timeout=30)", source)
+
+    def test_update_file_재시도_로직_존재(self):
+        """update_file에 재시도 패턴(range(2))이 있는지 확인"""
+        import os
+        source_path = os.path.join(os.path.dirname(__file__), "..", "services", "internal_api.py")
+        with open(source_path, "r", encoding="utf-8") as f:
+            source = f.read()
+
+        self.assertIn("range(2)", source)
+        self.assertIn("asyncio.sleep", source)
+
+
 if __name__ == "__main__":
     unittest.main()
