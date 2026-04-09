@@ -182,16 +182,70 @@ export default function MappingPreview({
     }
   }, [assigningFolder])
 
-  // 검색 필터링된 고객 목록
+  // 폴더명에서 이름 후보 토큰 추출 (구분자로 분리 + 최소 2글자)
+  const extractTokens = useCallback((folderName: string): string[] => {
+    return folderName.toLowerCase()
+      .split(/[.\-_,\s()\[\]]+/)
+      .map(t => t.replace(/[0-9a-z]+$/i, '').trim())  // 후행 숫자/영문 제거 (OK, 20240926 등)
+      .filter(t => t.length >= 2)
+  }, [])
+
+  // 고객명의 폴더명 관련도 점수 (높을수록 관련성 높음, 0=무관)
+  // 100+ = 정확 매칭 (substring), 1~50 = 근사 매칭 (글자 유사도)
+  const getRelevanceScore = useCallback((customerName: string, folder: string, tokens: string[]): number => {
+    const name = customerName.toLowerCase()
+    if (name.length < 2) return 0
+    let bestScore = 0
+    for (const token of tokens) {
+      // 1. 고객명 === 토큰 (완전 일치, 최고 점수)
+      if (name === token) { bestScore = Math.max(bestScore, 300 + name.length); continue }
+      // 2. 폴더명에 고객명 전체 포함 (김태호 ⊂ 김태호.김지현OK)
+      if (folder.includes(name)) bestScore = Math.max(bestScore, 200 + name.length)
+      // 3. 고객명에 토큰 전체 포함 (주식회사마리치 ← 마리치)
+      if (name.includes(token)) bestScore = Math.max(bestScore, 100 + token.length)
+      // 4. 토큰에 고객명 전체 포함
+      if (token.includes(name)) bestScore = Math.max(bestScore, 200 + name.length)
+      // 4. 근사 매칭: 고유 글자 교집합 비율 (마리치 vs 마라치 → {마,치} = 67%)
+      const tokenChars = new Set(token)
+      const nameChars = new Set(name)
+      let shared = 0
+      for (const ch of tokenChars) {
+        if (nameChars.has(ch)) shared++
+      }
+      const shorter = Math.min(tokenChars.size, nameChars.size)
+      if (shared >= 2 && shorter >= 2) {
+        const ratio = shared / shorter
+        if (ratio >= 0.5) {
+          bestScore = Math.max(bestScore, Math.round(ratio * 50))
+        }
+      }
+    }
+    return bestScore
+  }, [])
+
+  // 검색 필터링된 고객 목록 (폴더명과 유사한 고객을 상단에 표시)
   const filteredCustomers = useMemo(() => {
     if (!customers) return []
     const query = searchQuery.toLowerCase().trim()
-    if (!query) return customers
-    return customers.filter(c => {
-      const name = c.personal_info?.name?.toLowerCase() || ''
-      return name.includes(query)
-    })
-  }, [customers, searchQuery])
+
+    // 검색어가 있으면 필터링
+    const base = query
+      ? customers.filter(c => (c.personal_info?.name?.toLowerCase() || '').includes(query))
+      : [...customers]
+
+    // 현재 지정 중인 폴더명으로 유사 고객을 상단 정렬 (점수 높은 순)
+    if (assigningFolder) {
+      const folder = assigningFolder.toLowerCase()
+      const tokens = extractTokens(assigningFolder)
+      base.sort((a, b) => {
+        const scoreA = getRelevanceScore(a.personal_info?.name || '', folder, tokens)
+        const scoreB = getRelevanceScore(b.personal_info?.name || '', folder, tokens)
+        return scoreB - scoreA
+      })
+    }
+
+    return base
+  }, [customers, searchQuery, assigningFolder, extractTokens, getRelevanceScore])
 
   // 고객 선택 핸들러
   const handleCustomerSelect = useCallback((folderName: string, customer: CustomerForMatching) => {
