@@ -784,38 +784,11 @@ const DocumentLibraryContent: React.FC<{
                 </>
               )}
 
-              {/* 일괄 연결 모드일 때: 선택된 개수 + 고객 선택 + 취소 */}
+              {/* 일괄 연결 모드일 때: 선택된 개수만 왼쪽에 표시 (버튼은 오른쪽) */}
               {isBulkLinkMode && (
-                <>
-                  <span className="selected-count-inline">
-                    {selectedDocumentIds.size}개 선택됨
-                  </span>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      const selectedDocs = state.documents.filter(doc =>
-                        selectedDocumentIds.has(doc._id || '')
-                      )
-                      onBulkLinkClick(selectedDocs)
-                    }}
-                    disabled={selectedDocumentIds.size === 0}
-                    style={{
-                      backgroundColor: 'var(--color-ios-orange)',
-                      borderColor: 'var(--color-ios-orange)',
-                      color: '#fff'
-                    }}
-                  >
-                    고객 선택
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={onCancelBulkLink}
-                  >
-                    취소
-                  </Button>
-                </>
+                <span className="selected-count-inline">
+                  {selectedDocumentIds.size}개 선택됨
+                </span>
               )}
             </>
         </div>
@@ -888,8 +861,36 @@ const DocumentLibraryContent: React.FC<{
           )}
           {(hasUnlinkedDocs || isUnlinkedFilter || isBulkLinkMode) && (
             <>
-              {/* 고객 연결 버튼: 미연결 필터 + 일괄 연결 모드 동시 진입 */}
-              {!isBulkLinkMode && !isDeleteMode && !isAliasMode && (
+              {/* 고객 연결 / 일괄 연결 모드 버튼 (같은 위치) */}
+              {isBulkLinkMode ? (
+                <>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      const selectedDocs = state.documents.filter(doc =>
+                        selectedDocumentIds.has(doc._id || '')
+                      )
+                      onBulkLinkClick(selectedDocs)
+                    }}
+                    disabled={selectedDocumentIds.size === 0}
+                    style={{
+                      backgroundColor: 'var(--color-ios-orange)',
+                      borderColor: 'var(--color-ios-orange)',
+                      color: '#fff'
+                    }}
+                  >
+                    고객 선택
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={onCancelBulkLink}
+                  >
+                    취소
+                  </Button>
+                </>
+              ) : !isDeleteMode && !isAliasMode && (
                 <Button
                   variant="secondary"
                   size="sm"

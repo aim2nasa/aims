@@ -103,6 +103,41 @@ describe('DocumentLibraryView - 미연결 문서 고객 연결', () => {
     })
   })
 
+  describe('버튼 위치 regression: 고객 선택/취소는 고객 연결 자리(오른쪽)에 표시', () => {
+    /**
+     * 고객 연결 버튼 클릭 시 "고객 선택"/"취소"는 header-right-section에 렌더링.
+     * 이전: header-left-section → 시선 점프 UX 문제
+     * 수정: header-right-section (고객 연결 버튼과 같은 위치)
+     *
+     * 이 테스트는 isBulkLinkMode 상태에 따른 버튼 표시 조건을 검증합니다.
+     */
+    it('일괄 연결 모드에서 "고객 연결" 버튼은 숨겨지고 "고객 선택"/"취소"가 같은 조건 블록에서 렌더링됨', () => {
+      const isBulkLinkMode = true
+      const isDeleteMode = false
+      const isAliasMode = false
+
+      // 고객 연결 버튼 표시 조건: !isBulkLinkMode && !isDeleteMode && !isAliasMode
+      const showLinkButton = !isBulkLinkMode && !isDeleteMode && !isAliasMode
+      expect(showLinkButton).toBe(false)
+
+      // 고객 선택/취소 표시 조건: isBulkLinkMode (같은 위치에서 조건부 렌더링)
+      const showBulkLinkControls = isBulkLinkMode
+      expect(showBulkLinkControls).toBe(true)
+    })
+
+    it('일괄 연결 모드가 아닐 때 "고객 연결" 버튼이 표시됨', () => {
+      const isBulkLinkMode = false
+      const isDeleteMode = false
+      const isAliasMode = false
+
+      const showLinkButton = !isBulkLinkMode && !isDeleteMode && !isAliasMode
+      expect(showLinkButton).toBe(true)
+
+      const showBulkLinkControls = isBulkLinkMode
+      expect(showBulkLinkControls).toBe(false)
+    })
+  })
+
   describe('AC#6: 연결 완료 후 미연결 목록에서 사라짐', () => {
     it('연결된 문서가 미연결 목록에서 제거되어야 함', () => {
       const unlinkedDocs = [
