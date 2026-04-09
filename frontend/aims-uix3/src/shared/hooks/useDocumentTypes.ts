@@ -51,11 +51,11 @@ export function useDocumentTypes() {
     gcTime: 1000 * 60 * 60,     // 1시간
   })
 
-  /** value → 한글 라벨 (없으면 '-') */
+  /** value → 한글 라벨 (없으면 '분류불가') */
   function getLabel(value: string | null | undefined): string {
-    if (!value) return '-'
+    if (!value) return '분류불가'
     const found = types.find(t => t.value === value)
-    return found?.label ?? '-'
+    return found?.label ?? '분류불가'
   }
 
   /** value → 카테고리 (없으면 'etc') */

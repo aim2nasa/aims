@@ -141,9 +141,17 @@ describe('documentCategories (v4 — DB SSoT)', () => {
       expect(getDocumentTypeLabel('personal_docs')).toBe('기타 통장 및 개인서류')
     })
 
-    it('null/undefined는 -를 반환한다', () => {
-      expect(getDocumentTypeLabel(null)).toBe('-')
-      expect(getDocumentTypeLabel(undefined)).toBe('-')
+    it('null/undefined는 분류불가를 반환한다', () => {
+      expect(getDocumentTypeLabel(null)).toBe('분류불가')
+      expect(getDocumentTypeLabel(undefined)).toBe('분류불가')
+      expect(getDocumentTypeLabel('')).toBe('분류불가')
+    })
+
+    it('"-" 문자열이 레이블로 반환되지 않는다 (regression #49)', () => {
+      // null/undefined/빈문자열 — 모두 '분류불가'여야 함
+      expect(getDocumentTypeLabel(null)).not.toBe('-')
+      expect(getDocumentTypeLabel(undefined)).not.toBe('-')
+      expect(getDocumentTypeLabel('')).not.toBe('-')
     })
 
     it('매핑에 없는 타입은 기타를 반환한다', () => {
