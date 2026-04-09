@@ -49,7 +49,7 @@ class TestClassifyApiKeySource:
                 "mode": "real",
                 "_classify_config": {"system_prompt": "test"},
                 "_api_keys": {"openai": "context-key"},
-                "extracted_text": "문서",
+                "extracted_text": "문서 내용 테스트 분류 대상입니다",
             }
             await stage.execute(ctx)
 
@@ -66,7 +66,7 @@ class TestClassifyApiKeySource:
             "mode": "real",
             "_classify_config": {"system_prompt": "test"},
             "_api_keys": {"openai": ""},
-            "extracted_text": "문서",
+            "extracted_text": "문서 내용 테스트 분류 대상입니다",
         }
         with pytest.raises(RuntimeError, match="API 키가 없습니다"):
             await stage.execute(ctx)
@@ -95,7 +95,7 @@ class TestClassifyApiKeySource:
             "mode": "real",
             "_classify_config": {"system_prompt": "test"},
             "_api_keys": {},  # API 키 없음
-            "extracted_text": "문서",
+            "extracted_text": "문서 내용 테스트 분류 대상입니다",
             "_provider_registry": registry,
         }
         result = await stage.execute(ctx)
