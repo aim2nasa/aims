@@ -195,7 +195,7 @@ function buildCustomerTree(documents: Document[]): DocumentTreeData {
       // 문서를 소분류(doc_type)별로 그룹화
       const typeGroups = new Map<string, Document[]>()
       docs.forEach(doc => {
-        const docType = doc.document_type || doc.docType || 'general'
+        const docType = doc.document_type || doc.docType || 'unclassifiable'
         if (!typeGroups.has(docType)) typeGroups.set(docType, [])
         typeGroups.get(docType)!.push(doc)
       })

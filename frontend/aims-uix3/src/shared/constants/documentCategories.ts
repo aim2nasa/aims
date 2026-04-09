@@ -112,7 +112,7 @@ export function isDocumentTypeCacheReady(): boolean {
  * 캐시에 없으면 LEGACY_TYPE_MAP으로 현행 값 조회 후 반환, 그래도 없으면 '기타'
  */
 export function getDocumentTypeLabel(documentType: string | undefined | null): string {
-  if (!documentType) return '-'
+  if (!documentType) return '분류불가'
   const entry = _typeCache.get(documentType)
   if (entry) return entry.label
   // 레거시 매핑: 현행 값으로 변환하여 재조회

@@ -131,7 +131,7 @@ function buildCategoryGroups(documents: CustomerDocumentItem[]): CategoryGroup[]
   // 1단계: document_type별로 문서 그룹화
   const typeGroups = new Map<string, CustomerDocumentItem[]>()
   for (const doc of documents) {
-    const docType = getEffectiveType(doc) || 'unspecified'
+    const docType = getEffectiveType(doc) || 'unclassifiable'
     if (!typeGroups.has(docType)) typeGroups.set(docType, [])
     typeGroups.get(docType)!.push(doc)
   }
