@@ -712,13 +712,13 @@ module.exports = function(db, analyticsDb, authenticateJWT, authenticateJWTorAPI
       // 문서에 상태 정보 추가
       const documentsWithStatus = documents.map(doc => {
         const statusInfo = analyzeDocumentStatus(doc);
+        const docIdStr = doc._id.toString();
 
         // 🔥 Single Source of Truth: files 컬렉션 데이터 우선 사용
         // 기존 customers.documents[] 데이터는 fallback으로만 사용 (점진적 마이그레이션)
         const customerDoc = customer.documents?.find(d => d.document_id?.toString() === docIdStr);
 
         // AR 문서 여부 판단: doc.is_annual_report 또는 customer.annual_reports에 source_file_id로 존재하는지 확인
-        const docIdStr = doc._id.toString();
         const isAR = doc.is_annual_report === true ||
           (customer.annual_reports || []).some(ar => ar.source_file_id?.toString() === docIdStr);
 

@@ -99,6 +99,14 @@ const mockQdrantClient = {
 };
 const MOCK_QDRANT_COLLECTION = 'docembed';
 
+// 기타 의존성 mock
+const mockNotifyUserAccountSubscribers = jest.fn();
+const mockNotifyDocumentListSubscribers = jest.fn();
+const mockCreditPolicy = {
+  checkCredit: jest.fn().mockResolvedValue({ allowed: true }),
+  deductCredit: jest.fn().mockResolvedValue({ success: true }),
+};
+
 // ==================== 리팩토링된 라우트 모듈 (factory function 패턴) ====================
 
 /**
@@ -156,6 +164,88 @@ const FACTORY_ROUTE_MODULES = [
     path: '../routes/admin-backup-routes',
     args: () => [mockDb, mockAuthenticateJWT, mockRequireRole],
   },
+  {
+    name: 'customer-documents-routes',
+    path: '../routes/customer-documents-routes',
+    args: () => [mockDb, mockAnalyticsDb, mockAuthenticateJWT, mockAuthenticateJWTorAPIKey, mockAuthenticateJWTWithQuery, mockQdrantClient, MOCK_QDRANT_COLLECTION, mockUpload],
+  },
+  {
+    name: 'annual-report-routes',
+    path: '../routes/annual-report-routes',
+    args: () => [mockDb, mockAuthenticateJWT, mockAuthenticateJWTWithQuery, mockUpload],
+  },
+  {
+    name: 'notification-routes',
+    path: '../routes/notification-routes',
+    args: () => [mockDb, mockAuthenticateJWT, mockAuthenticateJWTWithQuery],
+  },
+  {
+    name: 'customer-memos-routes',
+    path: '../routes/customer-memos-routes',
+    args: () => [mockDb, mockAuthenticateJWT, mockAuthenticateJWTorAPIKey],
+  },
+  {
+    name: 'address-history-routes',
+    path: '../routes/address-history-routes',
+    args: () => [mockDb, mockAuthenticateJWT],
+  },
+  {
+    name: 'credit-routes',
+    path: '../routes/credit-routes',
+    args: () => [mockDb, mockCreditPolicy],
+  },
+  {
+    name: 'personal-files-routes',
+    path: '../routes/personal-files-routes',
+    args: () => [mockDb, mockAuthenticateJWT],
+  },
+  {
+    name: 'storage-routes',
+    path: '../routes/storage-routes',
+    args: () => [mockDb, mockAnalyticsDb, mockAuthenticateJWT, mockRequireRole, mockNotifyUserAccountSubscribers, mockCreditPolicy],
+  },
+  {
+    name: 'virus-scan-routes',
+    path: '../routes/virus-scan-routes',
+    args: () => [mockDb, mockAuthenticateJWT, mockRequireRole, mockAuthenticateJWTWithQuery, mockNotifyDocumentListSubscribers],
+  },
+  {
+    name: 'internal-routes',
+    path: '../routes/internal-routes',
+    args: () => [mockDb],
+  },
+  {
+    name: 'ac-routes',
+    path: '../routes/ac-routes',
+    args: () => [mockDb, mockAuthenticateJWT],
+  },
+  {
+    name: 'rustdesk-routes',
+    path: '../routes/rustdesk-routes',
+    args: () => [mockDb, mockAuthenticateJWT],
+  },
+];
+
+// ==================== 직접 export 라우트 목록 ====================
+
+/**
+ * 직접 export 패턴 라우트 모듈 목록
+ * factory function이 아닌 router를 직접 export하는 모듈들
+ */
+const DIRECT_ROUTE_MODULES = [
+  'auth',
+  'bonus-credits-routes',
+  'document-types-routes',
+  'error-logs-routes',
+  'help-content-routes',
+  'inquiries-routes',
+  'ocr-usage-routes',
+  'saved-questions-routes',
+  'security-routes',
+  'system-settings-routes',
+  'token-usage-routes',
+  'usage-reset-routes',
+  'user-activity-routes',
 ];
 
 // ==================== 테스트 ====================
@@ -217,22 +307,6 @@ describe('라우트 모듈 로딩 검증', () => {
   });
 
   describe('기존 라우트 모듈 (직접 export 패턴)', () => {
-    const DIRECT_ROUTE_MODULES = [
-      'auth',
-      'bonus-credits-routes',
-      'document-types-routes',
-      'error-logs-routes',
-      'help-content-routes',
-      'inquiries-routes',
-      'ocr-usage-routes',
-      'saved-questions-routes',
-      'security-routes',
-      'system-settings-routes',
-      'token-usage-routes',
-      'usage-reset-routes',
-      'user-activity-routes',
-    ];
-
     test.each(DIRECT_ROUTE_MODULES)(
       '%s: require() 성공',
       (moduleName) => {
@@ -241,5 +315,37 @@ describe('라우트 모듈 로딩 검증', () => {
         }).not.toThrow();
       }
     );
+  });
+
+  describe('라우트 디렉토리 자동 스캔 — 누락 검출', () => {
+    /**
+     * routes/ 디렉토리의 *-routes.js 파일이 모두 테스트에 등록되어 있는지 자동 검증.
+     * 새 라우트 파일을 추가하고 테스트 목록에 등록하지 않으면 이 테스트가 실패한다.
+     */
+    test('모든 *-routes.js 파일이 FACTORY 또는 DIRECT 목록에 등록되어야 함', () => {
+      const fs = require('fs');
+      const path = require('path');
+
+      const routesDir = path.resolve(__dirname, '..', 'routes');
+      const allRouteFiles = fs.readdirSync(routesDir)
+        .filter(f => f.endsWith('-routes.js'))
+        .map(f => f.replace('.js', ''));
+
+      // 테스트에 등록된 라우트 이름 수집
+      const registeredFactory = FACTORY_ROUTE_MODULES.map(m => m.name);
+      const registeredDirect = DIRECT_ROUTE_MODULES;
+      const allRegistered = new Set([...registeredFactory, ...registeredDirect]);
+
+      const missing = allRouteFiles.filter(name => !allRegistered.has(name));
+
+      expect(missing).toEqual([]);
+      // 실패 시 메시지: "누락된 라우트: [파일명]을 FACTORY_ROUTE_MODULES 또는 DIRECT_ROUTE_MODULES에 추가하세요"
+      if (missing.length > 0) {
+        throw new Error(
+          `누락된 라우트 파일: ${missing.join(', ')}\n` +
+          'FACTORY_ROUTE_MODULES 또는 DIRECT_ROUTE_MODULES에 추가하세요.'
+        );
+      }
+    });
   });
 });
