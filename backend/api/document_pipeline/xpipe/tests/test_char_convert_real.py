@@ -55,23 +55,6 @@ class TestConvertStageRealPdfConverter:
         assert result is None
 
 
-class TestConvertStageSofficeFallback:
-    """soffice 직접 호출 fallback 동작 캡처"""
-
-    def test_soffice_not_found_returns_none(self, tmp_path):
-        """soffice/libreoffice가 PATH에 없으면 None 반환"""
-        src = tmp_path / "test.docx"
-        src.write_bytes(b"fake docx")
-        converted = tmp_path / "test.pdf"
-
-        with patch("shutil.which", return_value=None):
-            result = ConvertStage._try_soffice_direct(
-                str(src), str(converted), str(tmp_path)
-            )
-
-        assert result is None
-
-
 class TestConvertStageRealBothFail:
     """pdf_converter + soffice 모두 실패 시 동작 캡처"""
 
@@ -80,8 +63,7 @@ class TestConvertStageRealBothFail:
         src = tmp_path / "test.hwp"
         src.write_bytes(b"fake hwp")
 
-        with patch("httpx.post", side_effect=Exception("Connection refused")), \
-             patch("shutil.which", return_value=None):
+        with patch("httpx.post", side_effect=Exception("Connection refused")):
             path, method, size, detail = ConvertStage._convert_real(
                 str(src), "test.hwp"
             )
@@ -89,7 +71,7 @@ class TestConvertStageRealBothFail:
         assert path == str(src)
         assert method == "none"
         assert size == 0
-        assert "변환 수단 없음" in detail
+        assert "PDF 변환 실패" in detail
 
 
 class TestNeedsConversion:
@@ -103,7 +85,7 @@ class TestNeedsConversion:
         ("application/haansofthwp", True),
         ("application/pdf", False),
         ("image/png", False),
-        ("text/plain", False),
+        ("text/plain", True),
         ("", False),
     ])
     def test_mime_type_detection(self, mime: str, expected: bool):

@@ -60,6 +60,22 @@ class ClassifyStage(Stage):
         models = context.get("models", {})
         llm_model = models.get("llm", "gpt-4.1-mini")
 
+        # 텍스트 부족 시 AI 호출 없이 즉시 unclassifiable 반환
+        if not text or len(text.strip()) < 10:
+            context["classified"] = True
+            context["document_type"] = "unclassifiable"
+            context["classification_confidence"] = 0.0
+
+            duration_ms = int((time.time() - start) * 1000)
+            if "stage_data" not in context:
+                context["stage_data"] = {}
+            context["stage_data"]["classify"] = {
+                "status": "skipped",
+                "duration_ms": duration_ms,
+                "reason": f"텍스트 부족 (길이: {len(text.strip()) if text else 0}) — AI 분류 스킵",
+            }
+            return context
+
         if mode == "stub":
             doc_type = None
             confidence = None
@@ -106,6 +122,11 @@ async def _real_classify(
     context: dict[str, Any],
 ) -> tuple[str, float, str]:
     """AI 문서 분류 — ProviderRegistry 경유 우선, 없으면 OpenAI 직접 호출 fallback"""
+
+    # 텍스트가 없거나 너무 짧으면 AI 호출 없이 즉시 unclassifiable 반환
+    if not text or len(text.strip()) < 10:
+        logger.info("텍스트 부족으로 분류 불가 (길이: %d) — unclassifiable 반환", len(text.strip()) if text else 0)
+        return ("unclassifiable", 0.0, f"{llm_model} (skipped)")
 
     system_prompt = classify_config.get("system_prompt", "")
     categories = classify_config.get("categories", [])
