@@ -268,6 +268,59 @@ def detect_bandaid_patterns(diff, files):
     return warnings, blocks
 
 
+def check_eslint_aims_api(files):
+    """
+    staged 파일 중 aims_api JS 파일에 ESLint 검사 실행.
+    위반이 있으면 차단 메시지를 반환한다.
+
+    Returns:
+        None if OK, error message string if blocked
+    """
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    aims_api_prefix = "backend/api/aims_api/"
+
+    # aims_api 내 JS 파일만 필터
+    js_files = [
+        f for f in files
+        if f.startswith(aims_api_prefix) and f.endswith('.js')
+    ]
+    if not js_files:
+        return None
+
+    aims_api_dir = os.path.join(project_root, "backend", "api", "aims_api")
+    eslintrc = os.path.join(aims_api_dir, ".eslintrc.js")
+    if not os.path.exists(eslintrc):
+        return None  # ESLint 설정 없으면 스킵
+
+    # 파일 경로를 aims_api 기준 상대 경로로 변환
+    relative_files = [f[len(aims_api_prefix):] for f in js_files]
+
+    try:
+        result = subprocess.run(
+            ["npx", "eslint", "--no-eslintrc", "--config", ".eslintrc.js"] + relative_files,
+            cwd=aims_api_dir,
+            capture_output=True, text=True, timeout=60,
+            encoding="utf-8", errors="replace",
+            shell=(os.name == 'nt')
+        )
+        if result.returncode != 0:
+            output = (result.stdout or "") + (result.stderr or "")
+            # 마지막 5줄만 표시
+            lines = output.strip().split("\n")
+            summary = "\n".join(lines[-5:]) if len(lines) > 5 else output.strip()
+            return (
+                f"[ESLINT] aims_api JS 파일 ESLint 검사 실패:\n"
+                f"  {summary}\n"
+                f"  위반 사항을 수정한 후 다시 커밋하세요."
+            )
+    except subprocess.TimeoutExpired:
+        return None  # 타임아웃은 차단하지 않음
+    except FileNotFoundError:
+        return None  # npx 없으면 스킵
+
+    return None
+
+
 def detect_changed_services(files):
     """변경된 서비스 감지"""
     services = {}
@@ -679,6 +732,12 @@ def main():
     issue_error = check_issue_recording(input_data)
     if issue_error:
         sys.stderr.write(issue_error + "\n")
+        sys.exit(2)
+
+    # ━━━━━━ 0.9단계: aims_api ESLint 검사 ━━━━━━
+    eslint_error = check_eslint_aims_api(files)
+    if eslint_error:
+        sys.stderr.write(eslint_error + "\n")
         sys.exit(2)
 
     # ━━━━━━ 1단계: 밴드에이드 패턴 감지 ━━━━━━
