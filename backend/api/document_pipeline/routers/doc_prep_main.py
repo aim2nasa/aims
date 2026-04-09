@@ -9,6 +9,7 @@ Main orchestrator for document processing pipeline
 컬렉션 스키마 계약: @aims/shared-schema (backend/shared/schema/)
 - files → COLLECTIONS.FILES
 """
+import hashlib
 import json
 import logging
 import os
@@ -2417,6 +2418,11 @@ async def _process_via_xpipe(
             file_size = 0
     file_ext = os.path.splitext(original_name or "")[1].lower()
 
+    # 파일 해시 계산 (SHA-256) — 레거시 meta_service와 동일 방식
+    file_hash = ""
+    if file_content:
+        file_hash = hashlib.sha256(file_content).hexdigest()
+
     meta_update = {
         "meta.full_text": extracted_text,
         "meta.length": len(extracted_text) if extracted_text else 0,
@@ -2424,6 +2430,7 @@ async def _process_via_xpipe(
         "meta.meta_status": "done",
         "meta.confidence": confidence or 0.0,
         "meta.size_bytes": file_size,
+        "meta.file_hash": file_hash,
         "meta.summary": xpipe_summary,
         "meta.title": xpipe_title,
         "meta.filename": original_name,
@@ -2450,6 +2457,21 @@ async def _process_via_xpipe(
         meta_update["ocr.page_count"] = result.get("_ocr_pages", 1)
         # OCR confidence: ExtractStage가 provider로부터 받은 값 사용
         meta_update["ocr.confidence"] = extract_output.get("ocr_confidence", 0.0)
+
+    # 중복 파일 해시 처리: 고아 문서(customerId: null) 안전하게 정리
+    # 레거시 경로와 동일한 로직
+    if file_hash:
+        orphan_threshold = datetime.utcnow() - timedelta(seconds=30)
+        delete_result_api = await delete_file_by_filter(
+            owner_id=user_id,
+            file_hash=file_hash,
+            exclude_id=doc_id,
+            created_before=orphan_threshold.isoformat(),
+            max_status="completed"
+        )
+        delete_count = delete_result_api.get("data", {}).get("deletedCount", 0) if delete_result_api.get("success") else 0
+        if delete_count > 0:
+            logger.info(f"🗑️ [xPipe] 고아 문서 삭제 완료 (file_hash: {file_hash[:16]}...)")
 
     meta_save_result = await update_file(doc_id, set_fields=_serialize_for_api(meta_update), unset_fields={"error": ""})
     if not meta_save_result.get("success"):

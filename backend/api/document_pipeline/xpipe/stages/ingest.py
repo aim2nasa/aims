@@ -1,6 +1,7 @@
 """IngestStage — 파일 수신 스테이지"""
 from __future__ import annotations
 
+import hashlib
 import mimetypes
 import os
 import time
@@ -43,6 +44,16 @@ class IngestStage(Stage):
         if file_path and os.path.exists(file_path):
             file_size = os.path.getsize(file_path)
 
+        # 파일 해시 계산 (SHA-256)
+        file_hash = ""
+        if file_path and os.path.exists(file_path):
+            try:
+                with open(file_path, "rb") as f:
+                    file_hash = hashlib.sha256(f.read()).hexdigest()
+            except OSError:
+                pass  # 읽기 실패 시 빈 해시 유지
+        context["file_hash"] = file_hash
+
         # MIME 타입 추론
         # HWP/HWPX는 OS별로 비표준 MIME을 반환하므로 확장자 기반으로 우선 보정
         ext = os.path.splitext(file_name)[1].lower() if file_name else ""
@@ -81,6 +92,7 @@ class IngestStage(Stage):
                 "uploaded_at": context.get("uploaded_at", ""),
                 "mime_type": mime_type,
                 "file_size": file_size,
+                "file_hash": file_hash,
             },
         }
 
