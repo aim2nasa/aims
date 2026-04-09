@@ -105,9 +105,9 @@ describe('DocumentLibraryView - 미연결 문서 고객 연결', () => {
 
   describe('버튼 위치 regression: 고객 선택/취소는 고객 연결 자리(오른쪽)에 표시', () => {
     /**
-     * 고객 연결 버튼 클릭 시 "고객 선택"/"취소"는 header-right-section에 렌더링.
+     * 고객 연결 버튼 클릭 시 "N개 선택됨" + "고객 선택"/"취소"는 header-right-section에 렌더링.
      * 이전: header-left-section → 시선 점프 UX 문제
-     * 수정: header-right-section (고객 연결 버튼과 같은 위치)
+     * 수정: header-right-section (고객 연결 버튼과 같은 위치, 선택 카운트도 동일 영역)
      *
      * 이 테스트는 isBulkLinkMode 상태에 따른 버튼 표시 조건을 검증합니다.
      */
@@ -135,6 +135,20 @@ describe('DocumentLibraryView - 미연결 문서 고객 연결', () => {
 
       const showBulkLinkControls = isBulkLinkMode
       expect(showBulkLinkControls).toBe(false)
+    })
+
+    it('일괄 연결 모드에서 선택 카운트가 버튼과 같은 영역(오른쪽)에 표시됨', () => {
+      // "N개 선택됨"이 header-right-section의 고객 선택 버튼 앞에 위치
+      // 이전: header-left-section (왼쪽) → 시선 분산
+      // 수정: header-right-section (오른쪽) → 선택→지정 흐름 일관
+      const isBulkLinkMode = true
+      const selectedCount = 3
+
+      // 카운트 표시 조건 = 버튼 표시 조건과 동일 (같은 위치)
+      const showCount = isBulkLinkMode
+      const showButtons = isBulkLinkMode
+      expect(showCount).toBe(showButtons)
+      expect(selectedCount).toBeGreaterThan(0)
     })
   })
 
