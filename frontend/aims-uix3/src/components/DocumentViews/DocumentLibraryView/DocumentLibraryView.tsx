@@ -1016,6 +1016,14 @@ const DocumentLibraryContent: React.FC<{
         onRowContextMenu={handleDocumentContextMenu}
         {...(onCustomerClick ? { onCustomerClick } : {})}
         {...(onCustomerDoubleClick ? { onCustomerDoubleClick } : {})}
+        onCustomerFilter={(filter) => {
+          // 토글: 같은 고객이면 해제, 다른 고객이면 설정
+          if (customerFilter?.id === filter.id) {
+            onCustomerFilterChange(null)
+          } else {
+            onCustomerFilterChange(filter)
+          }
+        }}
         {...(onNavigate ? { onNavigate } : {})}
         onRefresh={controller.refreshDocuments}
         filenameMode={filenameMode}
