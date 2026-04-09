@@ -182,16 +182,32 @@ export default function MappingPreview({
     }
   }, [assigningFolder])
 
-  // 검색 필터링된 고객 목록
+  // 검색 필터링된 고객 목록 (폴더명과 유사한 고객을 상단에 표시)
   const filteredCustomers = useMemo(() => {
     if (!customers) return []
     const query = searchQuery.toLowerCase().trim()
-    if (!query) return customers
-    return customers.filter(c => {
-      const name = c.personal_info?.name?.toLowerCase() || ''
-      return name.includes(query)
-    })
-  }, [customers, searchQuery])
+
+    // 검색어가 있으면 필터링
+    const base = query
+      ? customers.filter(c => (c.personal_info?.name?.toLowerCase() || '').includes(query))
+      : [...customers]
+
+    // 현재 지정 중인 폴더명으로 유사 고객을 상단 정렬
+    if (assigningFolder) {
+      const folder = assigningFolder.toLowerCase()
+      base.sort((a, b) => {
+        const nameA = a.personal_info?.name?.toLowerCase() || ''
+        const nameB = b.personal_info?.name?.toLowerCase() || ''
+        const matchA = nameA.length >= 2 && folder.includes(nameA)
+        const matchB = nameB.length >= 2 && folder.includes(nameB)
+        if (matchA && !matchB) return -1
+        if (!matchA && matchB) return 1
+        return 0
+      })
+    }
+
+    return base
+  }, [customers, searchQuery, assigningFolder])
 
   // 고객 선택 핸들러
   const handleCustomerSelect = useCallback((folderName: string, customer: CustomerForMatching) => {
