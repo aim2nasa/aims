@@ -142,9 +142,11 @@ const DocumentLibraryContent: React.FC<{
   onStartCustomerLink: () => void
   /** 고객 연결 모드 취소 */
   onCancelBulkLink: () => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onUnlinkedCustomerClick, onChangeCustomerClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter, onStartCustomerLink, onCancelBulkLink }) => {
-  // 🍎 처리 상태 필터 (전체 | 처리중 | 완료 | 에러)
-  const [statusFilter, setStatusFilter] = React.useState<'all' | 'processing' | 'completed' | 'error'>('all')
+  /** 처리 상태 필터 (서버사이드 필터링) */
+  statusFilter: 'all' | 'processing' | 'completed' | 'error'
+  /** 처리 상태 필터 변경 핸들러 */
+  onStatusFilterChange: (filter: 'all' | 'processing' | 'completed' | 'error') => void
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, isAliasMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleAliasMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, isGeneratingAliases, onGenerateAliases, aliasProgress, onAliasCancel, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onUnlinkedCustomerClick, onChangeCustomerClick, onRemoveDocumentsExpose, onNavigate, customerFilter, onCustomerFilterChange, onDocumentDeleted, previewDocumentId, onRefreshExpose, isUnlinkedFilter, onToggleUnlinkedFilter, onStartCustomerLink, onCancelBulkLink, statusFilter, onStatusFilterChange }) => {
 
   // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
   const [filenameMode, setFilenameMode] = React.useState<'display' | 'original'>(() => {
@@ -196,18 +198,6 @@ const DocumentLibraryContent: React.FC<{
 
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
-
-  // 🍎 처리 상태 필터 적용된 문서 목록
-  const statusFilteredDocuments = React.useMemo(() => {
-    if (statusFilter === 'all') return controller.filteredDocuments
-    return controller.filteredDocuments.filter(doc => {
-      const st = DocumentStatusService.extractStatus(doc)
-      if (statusFilter === 'completed') return st === 'completed'
-      if (statusFilter === 'error') return st === 'error'
-      // 처리중: completed, error 이외의 모든 상태
-      return st !== 'completed' && st !== 'error'
-    })
-  }, [controller.filteredDocuments, statusFilter])
 
   // 🍎 고객 필터: 더블클릭 시 고객명 자동 설정
   React.useEffect(() => {
@@ -944,7 +934,7 @@ const DocumentLibraryContent: React.FC<{
             key={tab.value}
             type="button"
             className={`library-status-segment__tab${statusFilter === tab.value ? ' library-status-segment__tab--active' : ''}${tab.value === 'error' && tab.count > 0 ? ' library-status-segment__tab--error' : ''}${tab.value === 'processing' && tab.count > 0 ? ' library-status-segment__tab--warning' : ''}`}
-            onClick={() => setStatusFilter(tab.value)}
+            onClick={() => onStatusFilterChange(tab.value)}
             disabled={isBulkLinkMode}
           >
             <span style={{ color: statusFilter === tab.value ? 'var(--color-neutral-0)' : tab.iconColor }}>
@@ -992,9 +982,9 @@ const DocumentLibraryContent: React.FC<{
         onCancel={onAliasCancel}
       />
       <DocumentStatusList
-        documents={statusFilteredDocuments}
+        documents={controller.filteredDocuments}
         isLoading={controller.isLoading}
-        isEmpty={statusFilteredDocuments.length === 0 && !state.isLoading}
+        isEmpty={controller.filteredDocuments.length === 0 && !state.isLoading}
         error={controller.error}
         {...(onDocumentClick ? { onDocumentClick } : {})}
         {...(onDocumentDoubleClick ? { onDocumentDoubleClick } : {})}
@@ -1197,6 +1187,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
   // 미연결 문서 필터 상태
   const [isUnlinkedFilter, setIsUnlinkedFilter] = React.useState(false)
+
+  // 🔴 처리 상태 필터 (서버사이드 필터링용 — Provider에 전달)
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'processing' | 'completed' | 'error'>('all')
 
   // 미연결 필터 토글 핸들러
   const handleToggleUnlinkedFilter = React.useCallback(() => {
@@ -1562,7 +1555,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         )}
 
         {/* 🍎 타겟 영역: 상단 바 + 헤더 + 문서 리스트 + 페이지네이션 */}
-        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles" initialFilter={selectedInitial} initialTypeFilter={initialType} customerIdFilter={customerFilter?.id} customerLinkFilter={isUnlinkedFilter ? 'unlinked' : undefined}>
+        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles" initialFilter={selectedInitial} initialTypeFilter={initialType} customerIdFilter={customerFilter?.id} customerLinkFilter={isUnlinkedFilter ? 'unlinked' : undefined} statusFilter={statusFilter}>
           <DocumentLibraryContent
             initialType={initialType}
             onInitialTypeChange={handleInitialTypeChange}
@@ -1615,6 +1608,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onToggleUnlinkedFilter={handleToggleUnlinkedFilter}
             onStartCustomerLink={handleStartCustomerLink}
             onCancelBulkLink={handleCancelBulkLink}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
           />
         </DocumentStatusProvider>
       </div>

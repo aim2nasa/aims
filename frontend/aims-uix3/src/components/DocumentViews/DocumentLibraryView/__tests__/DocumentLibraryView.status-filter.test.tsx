@@ -2,33 +2,13 @@
  * DocumentLibraryView - 상태 필터 탭 Regression 테스트
  * @since 1.0.0
  *
- * Gini 검수 요청에 따른 회귀 테스트:
- * 1. 전체/처리중/완료/에러 탭 필터링 로직 검증
+ * 회귀 테스트:
+ * 1. 서버사이드 status 필터 파라미터 전달 검증
  * 2. 건수 0인 탭(전체 제외)의 카운트 span 미렌더링
  * 3. docStats가 null일 때 크래시 없이 0 표시
  */
 
-import { describe, it, expect, vi } from 'vitest'
-import { DocumentStatusService } from '@/services/DocumentStatusService'
-
-// DocumentStatusService mock
-vi.mock('@/services/DocumentStatusService')
-
-// --- 테스트 1: statusFilteredDocuments 필터링 로직 검증 ---
-// 컴포넌트 내부 useMemo 로직을 순수 함수로 추출하여 테스트
-function statusFilteredDocuments(
-  filteredDocuments: Array<Record<string, unknown>>,
-  statusFilter: 'all' | 'processing' | 'completed' | 'error'
-) {
-  if (statusFilter === 'all') return filteredDocuments
-  return filteredDocuments.filter(doc => {
-    const st = DocumentStatusService.extractStatus(doc)
-    if (statusFilter === 'completed') return st === 'completed'
-    if (statusFilter === 'error') return st === 'error'
-    // 처리중: completed, error 이외의 모든 상태
-    return st !== 'completed' && st !== 'error'
-  })
-}
+import { describe, it, expect } from 'vitest'
 
 // 탭별 카운트 span 렌더링 여부 판단 로직
 function shouldRenderCount(tabValue: string, count: number): boolean {
@@ -45,69 +25,43 @@ function getTabCounts(docStats: { total?: number; processing?: number; pending?:
   ]
 }
 
+// 서버사이드 status 파라미터 생성 로직 (DocumentStatusProvider에서 추출)
+function buildStatusParam(statusFilter: 'all' | 'processing' | 'completed' | 'error'): string | undefined {
+  return statusFilter !== 'all' ? statusFilter : undefined
+}
+
 describe('DocumentLibraryView - 상태 필터 탭 Regression', () => {
-  const mockDocuments = [
-    { _id: '1', originalFileName: '문서1.pdf' },
-    { _id: '2', originalFileName: '문서2.pdf' },
-    { _id: '3', originalFileName: '문서3.pdf' },
-    { _id: '4', originalFileName: '문서4.pdf' },
-    { _id: '5', originalFileName: '문서5.pdf' },
-  ]
-
-  describe('[시나리오 1] 탭 클릭 시 statusFilteredDocuments 필터 결과', () => {
-    it('전체 탭: 모든 문서를 반환해야 함', () => {
-      const result = statusFilteredDocuments(mockDocuments, 'all')
-      expect(result).toEqual(mockDocuments)
-      expect(result).toHaveLength(5)
+  describe('[시나리오 1] 서버사이드 status 필터 파라미터 전달', () => {
+    it('전체 탭: status 파라미터 미전달 (undefined)', () => {
+      expect(buildStatusParam('all')).toBeUndefined()
     })
 
-    it('완료 탭: completed 상태 문서만 반환', () => {
-      const mockExtract = vi.mocked(DocumentStatusService.extractStatus)
-      mockExtract
-        .mockReturnValueOnce('completed' as never)
-        .mockReturnValueOnce('processing' as never)
-        .mockReturnValueOnce('completed' as never)
-        .mockReturnValueOnce('error' as never)
-        .mockReturnValueOnce('completed' as never)
-
-      const result = statusFilteredDocuments(mockDocuments, 'completed')
-      expect(result).toHaveLength(3)
-      expect(result).toEqual([mockDocuments[0], mockDocuments[2], mockDocuments[4]])
+    it('에러 탭: status=error 전달', () => {
+      expect(buildStatusParam('error')).toBe('error')
     })
 
-    it('에러 탭: error 상태 문서만 반환', () => {
-      const mockExtract = vi.mocked(DocumentStatusService.extractStatus)
-      mockExtract
-        .mockReturnValueOnce('completed' as never)
-        .mockReturnValueOnce('error' as never)
-        .mockReturnValueOnce('processing' as never)
-        .mockReturnValueOnce('error' as never)
-        .mockReturnValueOnce('completed' as never)
-
-      const result = statusFilteredDocuments(mockDocuments, 'error')
-      expect(result).toHaveLength(2)
-      expect(result).toEqual([mockDocuments[1], mockDocuments[3]])
+    it('완료 탭: status=completed 전달', () => {
+      expect(buildStatusParam('completed')).toBe('completed')
     })
 
-    it('처리중 탭: completed/error 제외한 모든 상태 반환', () => {
-      const mockExtract = vi.mocked(DocumentStatusService.extractStatus)
-      mockExtract
-        .mockReturnValueOnce('completed' as never)
-        .mockReturnValueOnce('processing' as never)
-        .mockReturnValueOnce('pending' as never)
-        .mockReturnValueOnce('error' as never)
-        .mockReturnValueOnce('ocr' as never)
-
-      const result = statusFilteredDocuments(mockDocuments, 'processing')
-      expect(result).toHaveLength(3)
-      expect(result).toEqual([mockDocuments[1], mockDocuments[2], mockDocuments[4]])
+    it('처리중 탭: status=processing 전달', () => {
+      expect(buildStatusParam('processing')).toBe('processing')
     })
 
-    it('빈 문서 목록에서 필터링 시 빈 배열 반환', () => {
-      expect(statusFilteredDocuments([], 'all')).toEqual([])
-      expect(statusFilteredDocuments([], 'completed')).toEqual([])
-      expect(statusFilteredDocuments([], 'error')).toEqual([])
-      expect(statusFilteredDocuments([], 'processing')).toEqual([])
+    it('URLSearchParams에 status 파라미터가 올바르게 추가됨', () => {
+      const params = new URLSearchParams({ page: '1', limit: '15' })
+      const status = buildStatusParam('error')
+      if (status) params.append('status', status)
+      expect(params.get('status')).toBe('error')
+      expect(params.toString()).toContain('status=error')
+    })
+
+    it('전체 탭일 때 URLSearchParams에 status 미추가', () => {
+      const params = new URLSearchParams({ page: '1', limit: '15' })
+      const status = buildStatusParam('all')
+      if (status) params.append('status', status)
+      expect(params.get('status')).toBeNull()
+      expect(params.toString()).not.toContain('status=')
     })
   })
 

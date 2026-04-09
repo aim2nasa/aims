@@ -208,7 +208,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
         undefined, // period
         undefined, // initial
         undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
       )
     })
   })
@@ -248,7 +249,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -301,7 +303,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -425,7 +428,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -464,7 +468,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -513,7 +518,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -579,7 +585,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
         undefined, // period
         undefined, // initial
         undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
       )
     })
 
@@ -625,7 +632,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -659,7 +667,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
         undefined, // period
         undefined, // initial
         undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
       )
 
       // 문서가 로드되었는지 확인
@@ -693,7 +702,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -750,7 +760,8 @@ describe('DocumentStatusProvider - 모든 정렬 필드 테스트', () => {
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     }

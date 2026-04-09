@@ -1265,6 +1265,15 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
       filter = { ownerId: userId };
     }
 
+    // 🔴 상태 필터 (에러/처리중/완료 탭)
+    if (status === 'error') {
+      filter.overallStatus = 'error';
+    } else if (status === 'completed') {
+      filter.overallStatus = 'completed';
+    } else if (status === 'processing') {
+      filter.overallStatus = { $nin: ['completed', 'error'] };
+    }
+
     // 🍎 고객 연결 필터 추가
     if (customerLink === 'linked') {
       filter['customerId'] = { $exists: true, $ne: null };

@@ -286,7 +286,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -332,7 +333,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -441,7 +443,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -483,7 +486,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
           undefined, // period
           undefined, // initial
           undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
         )
       })
     })
@@ -528,7 +532,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
             undefined, // period
             undefined, // initial
             undefined, // initialType
-        undefined  // customerId
+        undefined,  // customerId
+        undefined  // status
           )
         })
       }
