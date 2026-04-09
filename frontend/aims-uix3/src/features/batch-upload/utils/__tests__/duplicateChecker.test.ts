@@ -241,8 +241,8 @@ describe('duplicateChecker', () => {
       expect(result.existingDoc).toBeUndefined()
     })
 
-    it('해시가 없는 문서와 파일명 일치 시 중복 감지 (fallback)', async () => {
-      // 해시가 빈 문자열인 문서 (백엔드에서 해시 미제공)
+    it('해시가 없는 문서는 파일명이 같아도 중복으로 감지하지 않음 (fallback 제거)', async () => {
+      // 해시가 빈 문자열인 문서 — fallback 제거로 중복 미감지
       const existingHashes: ExistingFileHash[] = [
         {
           documentId: 'doc-1',
@@ -257,9 +257,8 @@ describe('duplicateChecker', () => {
 
       const result = await checkDuplicateFile(mockFile, existingHashes)
 
-      // 해시는 다르지만 파일명이 같으므로 중복
-      expect(result.isDuplicate).toBe(true)
-      expect(result.existingDoc).toEqual(existingHashes[0])
+      // 해시가 없으므로 중복 아님 (파일명 fallback 제거됨)
+      expect(result.isDuplicate).toBe(false)
     })
 
     it('해시가 있는 문서는 파일명이 같아도 해시 우선 비교', async () => {

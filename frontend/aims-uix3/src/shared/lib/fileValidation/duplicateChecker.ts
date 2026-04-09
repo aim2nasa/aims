@@ -4,8 +4,7 @@
  * @version 2.0.0 - 공통 모듈로 이동 (2025-12-14)
  *
  * 파일 업로드 시 중복 파일 감지를 위한 유틸리티
- * - SHA-256 해시 기반 비교 (백엔드 지원 시)
- * - 파일명 기반 비교 (fallback)
+ * - SHA-256 해시 기반 비교
  *
  * 사용처:
  * - 새 문서 등록 (DocumentRegistrationView)
@@ -93,7 +92,7 @@ export async function getCustomerFileHashes(customerId: string): Promise<Existin
     }
 
     // 2. 각 문서의 해시 조회 (병렬 처리)
-    // 해시가 없어도 파일명 기반 비교를 위해 정보 반환
+    // 각 문서의 해시 정보 조회
     const hashPromises = documents.map(async (doc): Promise<ExistingFileHash> => {
       const fileName = doc.originalName || doc.filename || 'unknown'
       const fileSize = doc.fileSize || 0
@@ -114,7 +113,7 @@ export async function getCustomerFileHashes(customerId: string): Promise<Existin
           uploadedAt,
         }
       } catch {
-        // 해시 조회 실패 시에도 파일명 정보는 반환 (fallback용)
+        // 해시 조회 실패 시에도 문서 정보는 반환
         return {
           documentId: doc._id,
           fileName,
@@ -137,9 +136,7 @@ export async function getCustomerFileHashes(customerId: string): Promise<Existin
 /**
  * 파일이 중복인지 확인
  *
- * 검사 우선순위:
- * 1. SHA-256 해시 비교 (정확한 중복 검사)
- * 2. 파일명 비교 (fallback - 백엔드에서 해시 미제공 시)
+ * SHA-256 해시 비교로 정확한 중복 검사 수행
  *
  * @param file 확인할 파일
  * @param existingHashes 기존 문서 해시 목록
@@ -161,20 +158,6 @@ export async function checkDuplicateFile(
     return {
       isDuplicate: true,
       existingDoc: hashMatch,
-      newFileHash,
-    }
-  }
-
-  // 2차: 파일명 비교 (fallback - 해시가 없는 기존 문서와 비교)
-  // 해시가 없는 문서들 중에서 파일명이 일치하는 것 찾기
-  const nameMatch = existingHashes.find(
-    (doc) => !doc.fileHash && doc.fileName === file.name
-  )
-
-  if (nameMatch) {
-    return {
-      isDuplicate: true,
-      existingDoc: nameMatch,
       newFileHash,
     }
   }
