@@ -784,12 +784,7 @@ const DocumentLibraryContent: React.FC<{
                 </>
               )}
 
-              {/* 일괄 연결 모드일 때: 선택된 개수만 왼쪽에 표시 (버튼은 오른쪽) */}
-              {isBulkLinkMode && (
-                <span className="selected-count-inline">
-                  {selectedDocumentIds.size}개 선택됨
-                </span>
-              )}
+              {/* 일괄 연결 모드 선택 카운트는 오른쪽 버튼 옆에 표시 */}
             </>
         </div>
 
@@ -864,6 +859,9 @@ const DocumentLibraryContent: React.FC<{
               {/* 고객 연결 / 일괄 연결 모드 버튼 (같은 위치) */}
               {isBulkLinkMode ? (
                 <>
+                  <span className="selected-count-inline">
+                    {selectedDocumentIds.size}개 선택됨
+                  </span>
                   <Button
                     variant="primary"
                     size="sm"
