@@ -140,6 +140,69 @@ export default function FolderDropZone({
     e.target.value = ''
   }, [onFilesSelected])
 
+  // showDirectoryPicker API로 브라우저 확인 모달 없이 폴더 선택
+  const handleClick = useCallback(async () => {
+    if (disabled || isProcessing) return
+
+    // showDirectoryPicker 미지원 시 기존 input fallback
+    if (!('showDirectoryPicker' in window)) {
+      folderInputRef.current?.click()
+      return
+    }
+
+    try {
+      const dirHandle = await (window as any).showDirectoryPicker()
+      setIsProcessing(true)
+
+      const allFiles: File[] = []
+
+      // 디렉토리 병렬 탐색 (엔트리 수집 후 파일을 배치로 읽기)
+      async function readDir(handle: any, path: string) {
+        const entries: Array<{ entry: any; path: string }> = []
+        const subdirs: Array<{ handle: any; path: string }> = []
+
+        for await (const entry of handle.values()) {
+          if (entry.kind === 'file') {
+            entries.push({ entry, path })
+          } else if (entry.kind === 'directory') {
+            subdirs.push({ handle: entry, path: path ? `${path}/${entry.name}` : entry.name })
+          }
+        }
+
+        // 파일을 50개씩 배치로 병렬 읽기
+        for (let i = 0; i < entries.length; i += 50) {
+          const batch = entries.slice(i, i + 50)
+          const files = await Promise.all(batch.map(async ({ entry, path: p }) => {
+            const file = await entry.getFile()
+            const newFile = new File([file], file.name, { type: file.type, lastModified: file.lastModified })
+            Object.defineProperty(newFile, 'webkitRelativePath', {
+              value: p ? `${p}/${file.name}` : file.name,
+              writable: false,
+            })
+            return newFile
+          }))
+          allFiles.push(...files)
+        }
+
+        // 하위 디렉토리 병렬 탐색
+        await Promise.all(subdirs.map(sub => readDir(sub.handle, sub.path)))
+      }
+
+      await readDir(dirHandle, dirHandle.name)
+
+      if (allFiles.length > 0) {
+        await onFilesSelected(allFiles)
+      }
+    } catch (err: any) {
+      // 사용자가 취소한 경우 (AbortError) 무시
+      if (err.name !== 'AbortError') {
+        console.error('폴더 선택 오류:', err)
+      }
+    } finally {
+      setIsProcessing(false)
+    }
+  }, [disabled, isProcessing, onFilesSelected])
+
   return (
     <div
       className={`folder-drop-zone ${isDragOver ? 'drag-over' : ''} ${disabled ? 'disabled' : ''}`}
@@ -218,7 +281,14 @@ export default function FolderDropZone({
       </div>
 
       {/* 드롭존 — 화면의 주인공 */}
-      <label className={`folder-drop-zone-content ${disabled ? 'disabled' : ''} ${isProcessing ? 'processing' : ''}`}>
+      <div
+        className={`folder-drop-zone-content ${disabled ? 'disabled' : ''} ${isProcessing ? 'processing' : ''}`}
+        onClick={handleClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
+      >
+        {/* hidden input은 showDirectoryPicker 미지원 브라우저 fallback용 */}
         <input
           ref={folderInputRef}
           type="file"
@@ -255,7 +325,7 @@ export default function FolderDropZone({
             </span>
           </>
         )}
-      </label>
+      </div>
     </div>
   )
 }
