@@ -22,6 +22,7 @@ interface UploadSummaryProps {
 export default function UploadSummary({ progress, onClose, onRetryFailed, onViewDocuments, onContinueBatchUpload }: UploadSummaryProps) {
   const { totalFiles, completedFiles, failedFiles, skippedFiles, folders, state } = progress
   const [showSkippedFiles, setShowSkippedFiles] = useState(false)
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set())
 
   const isFullSuccess = failedFiles === 0 && (completedFiles + skippedFiles) === totalFiles
   const isPartialSuccess = completedFiles > 0 && failedFiles > 0
@@ -166,23 +167,37 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
                   list.push(file)
                   grouped.set(key, list)
                 }
-                return Array.from(grouped.entries()).map(([customerName, files]) => (
-                  <div key={customerName} className="upload-summary-skipped-folder">
-                    <div className="upload-summary-skipped-folder-header">
-                      <span className="upload-summary-skipped-folder-icon">📁</span>
-                      <span className="upload-summary-skipped-folder-name">{customerName}</span>
-                      <span className="upload-summary-skipped-folder-count">{files.length}개</span>
-                    </div>
-                    <div className="upload-summary-skipped-folder-files">
-                      {files.map(file => (
-                        <div key={file.fileId} className="upload-summary-skipped-file">
-                          <span className="upload-summary-skipped-file-icon">📄</span>
-                          <span className="upload-summary-skipped-filename">{file.fileName}</span>
+                return Array.from(grouped.entries()).map(([customerName, files]) => {
+                  const isCollapsed = collapsedFolders.has(customerName)
+                  return (
+                    <div key={customerName} className="upload-summary-skipped-folder">
+                      <div
+                        className="upload-summary-skipped-folder-header"
+                        onClick={() => setCollapsedFolders(prev => {
+                          const next = new Set(prev)
+                          if (next.has(customerName)) next.delete(customerName)
+                          else next.add(customerName)
+                          return next
+                        })}
+                      >
+                        <span className="upload-summary-skipped-folder-toggle">{isCollapsed ? '▶' : '▼'}</span>
+                        <span className="upload-summary-skipped-folder-icon">📁</span>
+                        <span className="upload-summary-skipped-folder-name">{customerName}</span>
+                        <span className="upload-summary-skipped-folder-count">{files.length}개</span>
+                      </div>
+                      {!isCollapsed && (
+                        <div className="upload-summary-skipped-folder-files">
+                          {files.map(file => (
+                            <div key={file.fileId} className="upload-summary-skipped-file">
+                              <span className="upload-summary-skipped-file-icon">📄</span>
+                              <span className="upload-summary-skipped-filename">{file.fileName}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                ))
+                  )
+                })
               })()}
             </div>
           )}

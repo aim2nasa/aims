@@ -147,6 +147,20 @@
     gap: var(--spacing-1-5);
     padding: var(--spacing-1) 0;
     font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius-xs);
+  }
+
+  .upload-summary-skipped-folder-header:hover {
+    background: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
+  }
+
+  .upload-summary-skipped-folder-toggle {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    width: 12px;
+    text-align: center;
+    user-select: none;
   }
 
   .upload-summary-skipped-folder-icon {
