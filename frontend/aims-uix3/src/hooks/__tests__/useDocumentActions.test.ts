@@ -1,6 +1,7 @@
 /**
  * useDocumentActions Hook 테스트
  * 문서 삭제/이름변경 공통 로직 검증
+ * @vitest-environment jsdom
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -37,6 +38,14 @@ vi.mock('@/shared/lib/api', () => ({
 vi.mock('@/shared/lib/errorReporter', () => ({
   errorReporter: {
     reportApiError: vi.fn(),
+  },
+}))
+
+const mockDeleteDocuments = vi.fn()
+
+vi.mock('@/services/DocumentService', () => ({
+  DocumentService: {
+    deleteDocuments: (...args: unknown[]) => mockDeleteDocuments(...args),
   },
 }))
 
@@ -152,9 +161,11 @@ describe('useDocumentActions', () => {
       expect(mockApiDelete).not.toHaveBeenCalled()
     })
 
-    it('다중 문서 삭제 성공', async () => {
+    it('다중 문서 삭제 성공 (배치 API)', async () => {
       mockShowConfirm.mockResolvedValue(true)
-      mockApiDelete.mockResolvedValue({})
+      mockDeleteDocuments.mockResolvedValue({
+        success: true, deletedCount: 3, failedCount: 0, message: '3건 삭제', errors: []
+      })
 
       const { result } = renderHook(() => useDocumentActions(defaultOptions()))
 
@@ -162,16 +173,15 @@ describe('useDocumentActions', () => {
         await result.current.deleteDocuments(new Set(['doc1', 'doc2', 'doc3']))
       })
 
-      expect(mockApiDelete).toHaveBeenCalledTimes(3)
+      expect(mockDeleteDocuments).toHaveBeenCalledWith(['doc1', 'doc2', 'doc3'])
       expect(mockOnDeleteSuccess).toHaveBeenCalled()
     })
 
     it('일부 삭제 실패 시 실패 개수 알림 + 성공 건이 있으므로 콜백 호출', async () => {
       mockShowConfirm.mockResolvedValue(true)
-      mockApiDelete
-        .mockResolvedValueOnce({})
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValueOnce({})
+      mockDeleteDocuments.mockResolvedValue({
+        success: true, deletedCount: 2, failedCount: 1, message: '2건 삭제, 1건 실패', errors: []
+      })
       mockShowAlert.mockResolvedValue(undefined)
 
       const { result } = renderHook(() => useDocumentActions(defaultOptions()))
@@ -182,7 +192,7 @@ describe('useDocumentActions', () => {
 
       expect(mockShowAlert).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: '1개의 문서 삭제에 실패했습니다.',
+          message: '2개 삭제 완료, 1개 실패',
         })
       )
       // 성공 건(2개)이 있으므로 콜백 호출
@@ -191,9 +201,9 @@ describe('useDocumentActions', () => {
 
     it('전체 삭제 실패 시 콜백 호출하지 않음', async () => {
       mockShowConfirm.mockResolvedValue(true)
-      mockApiDelete
-        .mockRejectedValueOnce(new Error('fail1'))
-        .mockRejectedValueOnce(new Error('fail2'))
+      mockDeleteDocuments.mockResolvedValue({
+        success: false, deletedCount: 0, failedCount: 2, message: '0건 삭제', errors: []
+      })
       mockShowAlert.mockResolvedValue(undefined)
 
       const { result } = renderHook(() => useDocumentActions(defaultOptions()))
@@ -204,7 +214,7 @@ describe('useDocumentActions', () => {
 
       expect(mockShowAlert).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: '2개의 문서 삭제에 실패했습니다.',
+          message: '0개 삭제 완료, 2개 실패',
         })
       )
       // 성공 건이 0개이므로 콜백 호출 안 됨

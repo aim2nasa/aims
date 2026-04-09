@@ -1,0 +1,77 @@
+/**
+ * BulkDeleteOverlay 스타일 (#52-3)
+ * 대량 삭제 진행률 오버레이 — 전체 화면 잠금
+ */
+
+.bulk-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-overlay-frosted);
+  pointer-events: all;
+  backdrop-filter: blur(2px);
+}
+
+html[data-theme="dark"] .bulk-delete-overlay {
+  background: var(--color-overlay-frosted-dark);
+}
+
+.bulk-delete-overlay__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: var(--spacing-6) 32px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px var(--color-overlay-dark);
+  min-width: 320px;
+  max-width: 400px;
+}
+
+.bulk-delete-overlay__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.bulk-delete-overlay__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-error-600, #dc2626);
+}
+
+.bulk-delete-overlay__counter {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.bulk-delete-overlay__bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bulk-delete-overlay__bar-fill {
+  height: 100%;
+  width: var(--delete-progress-pct, 0%);
+  background: var(--color-error-500, #ef4444);
+  border-radius: 3px;
+  transition: width 0.3s ease-out;
+}
+
+.bulk-delete-overlay__message {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  text-align: center;
+}

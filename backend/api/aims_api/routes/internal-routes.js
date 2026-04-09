@@ -2427,6 +2427,16 @@ module.exports = function(db) {
         timestamp: utcNowISO()
       });
     } catch (error) {
+      // E11000 중복 키 에러 → 409 Conflict로 구분 (파이프라인이 자동 정리 가능)
+      if (error.code === 11000) {
+        backendLogger.warn('Internal', `PATCH /files/:id 중복 키: ${error.message}`);
+        return res.status(409).json({
+          success: false,
+          error: error.message,
+          code: 'DUPLICATE_KEY',
+          timestamp: utcNowISO()
+        });
+      }
       console.error('[Internal] PATCH /files/:id 오류:', error.message);
       backendLogger.error('Internal', 'PATCH /files/:id 오류', error);
       res.status(500).json({

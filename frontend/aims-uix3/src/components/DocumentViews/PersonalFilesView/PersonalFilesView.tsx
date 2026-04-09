@@ -19,6 +19,8 @@ import { CenterPaneView } from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button, DocumentTypeBadge } from '@/shared/ui'
 import { api, getCurrentUserId } from '@/shared/lib/api'
+import { DocumentService } from '@/services/DocumentService'
+import { BulkDeleteOverlay } from '@/shared/ui/BulkDeleteOverlay'
 import personalFilesService, { type PersonalFileItem } from '@/services/personalFilesService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { DocumentUtils } from '@/entities/document'
@@ -174,6 +176,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [isDeleteMode, setIsDeleteMode] = useState(false)
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteProgress, setDeleteProgress] = useState<{ completed: number; total: number } | null>(null)
 
   // 🍎 문서 → 파일 아이템 변환 캐시 (깜빡임 방지)
   const docToFileItemCache = useRef<Map<string, PersonalFileItem>>(new Map())
@@ -1064,29 +1067,50 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         selectedDocumentIds.has(item._id)
       )
 
-      // 각 항목 삭제 (라이브러리 문서는 API 삭제, 일반 파일/폴더는 폴더 시스템 삭제)
-      const deletePromises = itemsToDelete.map(async (item) => {
-        try {
-          if (item.isLibraryDocument) {
-            // 문서 라이브러리 파일 삭제
-            await api.delete(`/api/documents/${item._id}`)
-          } else {
-            // 폴더 시스템 파일/폴더 삭제 (폴더 삭제 시 하위 항목도 재귀적으로 삭제됨)
-            await personalFilesService.deleteItem(item._id)
-          }
-          return { success: true, itemId: item._id }
-        } catch (error) {
-          console.error(`Error deleting item ${item._id}:`, error)
-          errorReporter.reportApiError(error as Error, { component: 'PersonalFilesView.handleDeleteSelected.item', payload: { itemId: item._id } })
-          return { success: false, itemId: item._id, error }
-        }
-      })
+      setDeleteProgress({ completed: 0, total: itemsToDelete.length })
 
-      const results = await Promise.all(deletePromises)
-      const failedDeletes = results.filter((r) => !r.success)
-      const successfulIds = results
-        .filter((r) => r.success)
-        .map((r) => r.itemId)
+      // 라이브러리 문서 / 개인 파일로 분리
+      const libraryDocIds = itemsToDelete.filter(item => item.isLibraryDocument).map(item => item._id)
+      const personalItems = itemsToDelete.filter(item => !item.isLibraryDocument)
+
+      let failedCount = 0
+      const successfulIds: string[] = []
+
+      // 라이브러리 문서: 청크 단위 배치 삭제 (서버 과부하 방지 — #52-2)
+      let processed = 0
+      if (libraryDocIds.length > 0) {
+        const CHUNK_SIZE = 50
+        for (let i = 0; i < libraryDocIds.length; i += CHUNK_SIZE) {
+          const chunk = libraryDocIds.slice(i, i + CHUNK_SIZE)
+          try {
+            const result = await DocumentService.deleteDocuments(chunk)
+            if (result.deletedCount > 0) successfulIds.push(...chunk.slice(0, result.deletedCount))
+            failedCount += result.failedCount
+          } catch (error) {
+            failedCount += chunk.length
+            console.error(`Batch delete chunk failed:`, error)
+            errorReporter.reportApiError(error as Error, { component: 'PersonalFilesView.handleDeleteSelected', payload: { chunkStart: i } })
+          }
+          processed += chunk.length
+          setDeleteProgress({ completed: processed, total: itemsToDelete.length })
+        }
+      }
+
+      // 개인 파일/폴더: 개별 삭제 (폴더 재귀 삭제 필요)
+      for (const item of personalItems) {
+        try {
+          await personalFilesService.deleteItem(item._id)
+          successfulIds.push(item._id)
+        } catch (error) {
+          failedCount++
+          console.error(`Error deleting personal item ${item._id}:`, error)
+          errorReporter.reportApiError(error as Error, { component: 'PersonalFilesView.handleDeleteSelected.item', payload: { itemId: item._id } })
+        }
+        processed++
+        setDeleteProgress({ completed: processed, total: itemsToDelete.length })
+      }
+
+      setDeleteProgress(null)
 
       // 🍎 캐시에서 삭제된 항목 제거
       successfulIds.forEach(id => {
@@ -1103,10 +1127,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       await loadFolderContents(currentFolderId, { silentRefresh: false })
 
       // 실패한 경우만 오류 모달 표시
-      if (failedDeletes.length > 0) {
+      if (failedCount > 0) {
         await confirmModal.actions.openModal({
-          title: '삭제 실패',
-          message: `${failedDeletes.length}개의 항목 삭제에 실패했습니다.`,
+          title: '삭제 결과',
+          message: `${successfulIds.length}개 삭제 완료, ${failedCount}개 실패`,
           confirmText: '확인',
           showCancel: false,
         })
@@ -2599,6 +2623,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       currentItem={selectedItem}
       allItems={allFoldersForMove}
     />
+    {/* 대량 삭제 진행률 오버레이 (#52-3) */}
+    <BulkDeleteOverlay progress={deleteProgress} />
     </>
   )
 }

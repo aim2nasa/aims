@@ -24,7 +24,7 @@ import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFull
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { AppleConfirmModal } from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
-import { api, ApiError } from '@/shared/lib/api'
+import { api } from '@/shared/lib/api'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { LinkIcon } from '../components/DocumentActionIcons'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
@@ -47,6 +47,7 @@ import { usePersistedState } from '@/hooks/usePersistedState'
 import { useDocumentActions } from '@/hooks/useDocumentActions'
 import { useAliasGeneration, type AliasProgress } from '@/hooks/useAliasGeneration'
 import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
+import { BulkDeleteOverlay } from '@/shared/ui/BulkDeleteOverlay'
 import { AliasAIButton } from '@/shared/ui/AliasAIButton/AliasAIButton'
 import { RenameModal } from '@/shared/ui/RenameModal/RenameModal'
 import CustomerSelectorModal from '@/shared/ui/CustomerSelectorModal/CustomerSelectorModal'
@@ -1181,6 +1182,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   const [isDeleteMode, setIsDeleteMode] = React.useState(false)
   const [selectedDocumentIds, setSelectedDocumentIds] = React.useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = React.useState(false)
+  const [deleteProgress, setDeleteProgress] = React.useState<{ completed: number; total: number } | null>(null)
 
   // 🍎 고객 필터 상태 (특정 고객의 문서만 보기)
   const [customerFilter, setCustomerFilter] = React.useState<{ id: string; name: string } | null>(null)
@@ -1456,28 +1458,35 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     try {
       setIsDeleting(true)
 
-      // 선택된 모든 문서 삭제 (api 모듈 사용 - 토큰/헤더 자동 처리)
-      const deletePromises = Array.from(selectedDocumentIds).map(async (docId) => {
+      // 청크 단위 배치 삭제 (서버 과부하 방지 — #52-2)
+      const CHUNK_SIZE = 50
+      const allIds = Array.from(selectedDocumentIds)
+      let totalDeleted = 0
+      let totalFailed = 0
+
+      setDeleteProgress({ completed: 0, total: allIds.length })
+
+      for (let i = 0; i < allIds.length; i += CHUNK_SIZE) {
+        const chunk = allIds.slice(i, i + CHUNK_SIZE)
         try {
-          await api.delete(`/api/documents/${docId}`)
-          return { success: true, docId }
+          const result = await DocumentService.deleteDocuments(chunk)
+          totalDeleted += result.deletedCount
+          totalFailed += result.failedCount
         } catch (error) {
-          const message = error instanceof ApiError ? error.message : `Failed to delete document ${docId}`
-          console.error(`Error deleting document ${docId}:`, message)
-          errorReporter.reportApiError(error as Error, { component: 'DocumentLibraryView.handleDeleteSelected.item', payload: { docId } })
-          return { success: false, docId, error }
+          totalFailed += chunk.length
+          console.error(`Batch delete chunk failed:`, error)
+          errorReporter.reportApiError(error as Error, { component: 'DocumentLibraryView.handleDeleteSelected', payload: { chunkStart: i } })
         }
-      })
+        setDeleteProgress({ completed: Math.min(i + chunk.length, allIds.length), total: allIds.length })
+      }
 
-      const results = await Promise.all(deletePromises)
-      const failedDeletes = results.filter((r) => !r.success)
+      setDeleteProgress(null)
 
-      // 실패한 경우 오류 모달 표시
-      if (failedDeletes.length > 0) {
+      if (totalFailed > 0) {
         setIsDeleting(false)
         await confirmModal.actions.openModal({
-          title: '삭제 실패',
-          message: `${failedDeletes.length}개의 문서 삭제에 실패했습니다.`,
+          title: '삭제 결과',
+          message: `${totalDeleted}개 삭제 완료, ${totalFailed}개 실패`,
           confirmText: '확인',
           showCancel: false,
         })
@@ -1633,6 +1642,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           title={documentToChangeCustomer ? '고객 변경' : `고객 선택 (${documentsToLink.length}건 연결)`}
         />
       )}
+
+      {/* 대량 삭제 진행률 오버레이 (#52-3) */}
+      <BulkDeleteOverlay progress={deleteProgress} />
 
     </CenterPaneView>
   )

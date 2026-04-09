@@ -38,6 +38,7 @@ import './DocumentExplorerView.features.css';
 import './DocumentExplorerView.datejump.css';
 import './DocumentExplorerView.mobile.css';
 import { useDocumentActions } from '@/hooks/useDocumentActions'
+import { BulkDeleteOverlay } from '@/shared/ui/BulkDeleteOverlay'
 import { useAliasGeneration } from '@/hooks/useAliasGeneration'
 import { AliasProgressOverlay } from '@/shared/ui/AliasProgressOverlay'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
@@ -1374,6 +1375,8 @@ const DocumentExplorerContent: React.FC<{
         displayName={renamingDoc?.displayName}
       />
 
+      {/* 대량 삭제 진행률 오버레이 (#52-3) */}
+      <BulkDeleteOverlay progress={documentActions.deleteProgress} />
     </div>
   )
 }

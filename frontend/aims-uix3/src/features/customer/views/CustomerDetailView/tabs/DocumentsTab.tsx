@@ -18,6 +18,7 @@ import { Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection, 
 import { SortIndicator } from '@/shared/ui/SortIndicator'
 import { FilenameModeToggle } from '@/shared/ui/FilenameModeToggle'
 import { Dropdown } from '@/shared/ui'
+import { BulkDeleteOverlay } from '@/shared/ui/BulkDeleteOverlay'
 import { Pagination } from '@/shared/ui/Pagination'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { SFSymbol,
@@ -26,7 +27,7 @@ import { SFSymbol,
   SFSymbolWeight
 } from '../../../../../components/SFSymbol'
 import { formatDateTime, formatDateTimeCompact } from '@/shared/lib/timeUtils'
-import { api, ApiError } from '@/shared/lib/api'
+import { api } from '@/shared/lib/api'
 import { DocumentUtils } from '@/entities/document'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
@@ -413,6 +414,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const [isDeleteMode, setIsDeleteMode] = useState(false)
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteProgress, setDeleteProgress] = useState<{ completed: number; total: number } | null>(null)
 
   // 🍎 간편 문서검색 상태
   const [simpleSearchQuery, setSimpleSearchQuery] = useState('')
@@ -958,32 +960,39 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     try {
       setIsDeleting(true)
 
-      // 선택된 모든 문서 삭제 (api 모듈 사용 - 토큰/헤더 자동 처리)
-      const deletePromises = Array.from(selectedDocumentIds).map(async (docId) => {
-        try {
-          await api.delete(`/api/documents/${docId}`)
-          return { success: true, docId }
-        } catch (error) {
-          const message = error instanceof ApiError ? error.message : `Failed to delete document ${docId}`
-          console.error(`Error deleting document ${docId}:`, message)
-          errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleDeleteSelected.item', payload: { docId } })
-          return { success: false, docId, error }
-        }
-      })
+      // 청크 단위 배치 삭제 (서버 과부하 방지 — #52-2)
+      const CHUNK_SIZE = 50
+      const allIds = Array.from(selectedDocumentIds)
+      let totalDeleted = 0
+      let totalFailed = 0
 
-      const results = await Promise.all(deletePromises)
-      const failedDeletes = results.filter((r) => !r.success)
+      setDeleteProgress({ completed: 0, total: allIds.length })
+
+      for (let i = 0; i < allIds.length; i += CHUNK_SIZE) {
+        const chunk = allIds.slice(i, i + CHUNK_SIZE)
+        try {
+          const result = await DocumentService.deleteDocuments(chunk)
+          totalDeleted += result.deletedCount
+          totalFailed += result.failedCount
+        } catch (error) {
+          totalFailed += chunk.length
+          console.error(`Batch delete chunk failed:`, error)
+          errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleDeleteSelected', payload: { chunkStart: i } })
+        }
+        setDeleteProgress({ completed: Math.min(i + chunk.length, allIds.length), total: allIds.length })
+      }
+
+      setDeleteProgress(null)
 
       // 삭제된 문서가 RP에 표시 중이면 RP 닫기
-      const successIds = results.filter((r) => r.success).map((r) => r.docId)
-      if (successIds.length > 0) {
-        onDocumentDeleted?.(successIds)
+      if (totalDeleted > 0) {
+        onDocumentDeleted?.(allIds)
       }
 
       // 선택 초기화 및 삭제 모드 종료
       setSelectedDocumentIds(new Set())
       setIsDeleteMode(false)
-      setIsDeleting(false) // 모달 표시 전에 상태 복원
+      setIsDeleting(false)
 
       // 부모 컴포넌트에 삭제 완료 알림
       onRefresh?.()
@@ -1006,10 +1015,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       }
 
       // 실패한 경우만 오류 모달 표시
-      if (failedDeletes.length > 0) {
+      if (totalFailed > 0) {
         await confirmController.actions.openModal({
-          title: '삭제 실패',
-          message: `${failedDeletes.length}개의 문서 삭제에 실패했습니다.`,
+          title: '삭제 결과',
+          message: `${totalDeleted}개 삭제 완료, ${totalFailed}개 실패`,
           confirmText: '확인',
           showCancel: false,
         })
@@ -1680,6 +1689,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         originalName={renamingDoc?.originalName || ''}
         displayName={renamingDoc?.displayName}
       />
+
+      {/* 대량 삭제 진행률 오버레이 (#52-3) */}
+      <BulkDeleteOverlay progress={deleteProgress} />
     </div>
   )
 }

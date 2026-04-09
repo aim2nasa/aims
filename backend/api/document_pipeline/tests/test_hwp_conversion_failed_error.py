@@ -215,17 +215,26 @@ class TestCorruptedPdfErrorDetail:
 
 
 class TestDuplicateFileErrorDetail:
-    """[Regression #21] duplicate_file 에러 시 error.detail 저장"""
+    """[Regression #52-4] duplicate_file → 자동 정리 (에러가 아닌 정상 처리)"""
 
-    def test_duplicate_file_notify_progress_has_error_detail(self):
+    def test_duplicate_key_auto_cleanup(self):
+        """DuplicateKeyError 시 _cleanup_failed_document 호출"""
         source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
         content = source.read_text(encoding="utf-8")
         start = content.index("except DuplicateKeyError")
         block = content[start:start + 500]
-        assert "error_detail=" in block
+        assert "_cleanup_failed_document" in block
+
+    def test_duplicate_key_no_error_notification(self):
+        """DuplicateKeyError 시 에러 SSE 알림을 보내지 않음 (#52-4)"""
+        source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
+        content = source.read_text(encoding="utf-8")
+        start = content.index("except DuplicateKeyError")
+        block = content[start:start + 500]
+        assert "_notify_progress" not in block
 
     def test_duplicate_file_error_detail_no_file_hash(self):
-        """보안: error_detail에 file_hash 노출 금지"""
+        """보안: DuplicateKeyError 핸들러에 file_hash 노출 금지"""
         source = Path(__file__).parents[1] / "routers" / "doc_prep_main.py"
         content = source.read_text(encoding="utf-8")
         start = content.index("except DuplicateKeyError")
