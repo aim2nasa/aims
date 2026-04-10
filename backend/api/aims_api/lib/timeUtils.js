@@ -46,17 +46,26 @@ function toUTCISO(date) {
 /**
  * MongoDB BSON Date를 위한 UTC Date 객체 생성
  *
- * MongoDB에 저장할 때만 사용합니다.
- * 일반적인 경우에는 utcNowISO()를 사용하여 ISO 문자열로 저장하는 것을 권장합니다.
+ * **DB 저장 시 권장 함수 (#55).**
+ * MongoDB에 timestamp를 저장할 때는 반드시 utcNowDate()를 사용하여 BSON Date로 저장해야 합니다.
+ * utcNowISO()는 응답 JSON의 timestamp 필드 등 클라이언트 직렬화 용도로만 사용하세요.
+ *
+ * 이유:
+ * - BSON Date는 인덱스 정렬, 범위 쿼리, $expr/$dateXxx 연산자에서 정확히 동작
+ * - 문자열 timestamp는 정렬은 되지만 타입 안전성 없음
+ * - 혼재 시 정렬/필터 결과가 예측 불가
  *
  * @returns {Date} UTC Date 객체
  *
  * @example
- * // MongoDB 저장용
+ * // ✅ MongoDB 저장 (권장)
  * await collection.updateOne(
  *   { _id: docId },
  *   { $set: { updatedAt: utcNowDate() } }
  * );
+ *
+ * // ❌ DB에 저장하면 안 됨
+ * // await collection.updateOne({ _id }, { $set: { updatedAt: utcNowISO() } });
  */
 function utcNowDate() {
   return new Date();
@@ -175,7 +184,9 @@ function normalizeTimestamp(timestamp) {
 /**
  * 레거시 코드 호환성을 위한 별칭
  *
- * @deprecated utcNowISO() 사용을 권장합니다.
+ * @deprecated 새 코드에서는 사용하지 마세요.
+ *   - DB 저장: utcNowDate() 사용
+ *   - 응답 JSON timestamp: utcNowISO() 사용
  * @returns {string} ISO 8601 UTC 형식
  */
 function getUTCNow() {

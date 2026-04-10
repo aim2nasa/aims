@@ -1369,7 +1369,7 @@ router.delete('/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
         {
           $set: {
             'meta.status': 'inactive',
-            'meta.updated_at': utcNowISO()
+            'meta.updated_at': utcNowDate()
           }
         },
         { returnDocument: 'after' }  // 업데이트 후 문서 반환
@@ -1660,7 +1660,7 @@ router.post('/customers/:id/restore', authenticateJWT, async (req, res) => {
       {
         $set: {
           'meta.status': 'active',
-          'meta.updated_at': utcNowISO(),
+          'meta.updated_at': utcNowDate(),
           deleted_at: null,
           deleted_by: null
         }
