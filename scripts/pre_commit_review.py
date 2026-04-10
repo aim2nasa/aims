@@ -295,9 +295,19 @@ def check_eslint_aims_api(files):
     # 파일 경로를 aims_api 기준 상대 경로로 변환
     relative_files = [f[len(aims_api_prefix):] for f in js_files]
 
+    # 로컬 설치된 ESLint 바이너리를 직접 호출하여 글로벌 버전 간섭 방지 (이슈 #59 후속)
+    # npx 는 PATH 상의 다른 버전(v10+)을 먼저 찾아 --no-eslintrc 옵션 호환성 에러 발생.
+    eslint_bin_candidates = [
+        os.path.join(aims_api_dir, "node_modules", ".bin", "eslint.cmd"),
+        os.path.join(aims_api_dir, "node_modules", ".bin", "eslint"),
+    ]
+    eslint_bin = next((p for p in eslint_bin_candidates if os.path.exists(p)), None)
+    if not eslint_bin:
+        return None  # 로컬 ESLint 미설치 → 스킵
+
     try:
         result = subprocess.run(
-            ["npx", "eslint", "--no-eslintrc", "--config", ".eslintrc.js"] + relative_files,
+            [eslint_bin, "--no-eslintrc", "--config", ".eslintrc.js"] + relative_files,
             cwd=aims_api_dir,
             capture_output=True, text=True, timeout=60,
             encoding="utf-8", errors="replace",
@@ -442,46 +452,35 @@ def get_current_branch():
         return ""
 
 
-def check_main_code_commit(files):
+def check_not_on_main():
     """
-    main 브랜치에서 코드 파일 직접 커밋을 차단한다.
-    코드 변경은 반드시 fix/ 또는 feat/ 브랜치에서 진행해야 한다.
-    (문서, 설정, 스킬 등 비코드 파일은 main에서 허용)
+    main/master 브랜치 직접 커밋 가드 (이슈 #59, 규칙 0-8).
+
+    main/master 브랜치에서는 **어떤 파일도** 직접 커밋을 허용하지 않는다.
+    모든 작업은 fix/* 또는 feat/* 브랜치에서 진행해야 한다.
+
+    긴급 우회: 환경 변수 AIMS_ALLOW_MAIN_COMMIT=1 설정 시 통과.
 
     Returns:
         None if OK, error message string if blocked
     """
     branch = get_current_branch()
-    if branch != "main":
+    if branch not in ("main", "master"):
         return None
 
-    CODE_EXTENSIONS = {'.py', '.ts', '.tsx', '.js', '.jsx', '.css', '.html'}
-    EXCLUDE_PATHS = [
-        'scripts/',          # 빌드/배포 스크립트
-        '.claude/',          # Claude 설정
-        'docs/',             # 문서
-    ]
-
-    code_files = []
-    for f in files:
-        if any(f.startswith(p) for p in EXCLUDE_PATHS):
-            continue
-        _, ext = os.path.splitext(f)
-        if ext in CODE_EXTENSIONS:
-            code_files.append(f)
-
-    if code_files:
-        file_list = "\n".join(f"    - {f}" for f in code_files[:5])
-        if len(code_files) > 5:
-            file_list += f"\n    ... 외 {len(code_files) - 5}개"
-        return (
-            f"[MAIN PROTECT] main 브랜치에서 코드 파일 직접 커밋 금지!\n"
-            f"  코드 변경 파일:\n{file_list}\n"
-            f"  fix/ 또는 feat/ 브랜치를 생성하여 작업하세요.\n"
-            f"  (git checkout -b fix/이슈명)"
+    if os.environ.get("AIMS_ALLOW_MAIN_COMMIT") == "1":
+        sys.stderr.write(
+            "[MAIN PROTECT] ⚠️ AIMS_ALLOW_MAIN_COMMIT=1 로 main 브랜치 커밋 허용됨\n"
         )
+        return None
 
-    return None
+    return (
+        "🚫 [MAIN PROTECT] main/master 브랜치 직접 커밋 금지 (규칙 0-8)\n"
+        f"  현재 브랜치: {branch}\n"
+        "  fix/* 또는 feat/* 브랜치를 생성하여 작업하세요.\n"
+        "    git checkout -b fix/이슈명\n"
+        "  긴급 우회: AIMS_ALLOW_MAIN_COMMIT=1 환경변수 설정"
+    )
 
 
 def check_regression_test(files):
@@ -701,8 +700,14 @@ def main():
     if not is_git_commit(input_data):
         sys.exit(0)
 
-    # ━━━━━━ 0단계: Gini 검수 게이트 ━━━━━━
-    check_gini_gate(input_data)
+    # ━━━━━━ 0단계: main/master 브랜치 직접 커밋 가드 (이슈 #59, 규칙 0-8) ━━━━━━
+    # ⚠️ 반드시 Gini 게이트 이전에 실행되어야 한다.
+    #    그렇지 않으면 main 브랜치 차단 시에도 Gini 마커가 이미 소비되어
+    #    사용자가 수정 후 재커밋할 때 Gini를 처음부터 다시 거쳐야 한다.
+    main_error = check_not_on_main()
+    if main_error:
+        sys.stderr.write(main_error + "\n")
+        sys.exit(2)
 
     diff = get_staged_diff()
     files = get_staged_files()
@@ -710,23 +715,23 @@ def main():
     if not files or not diff:
         sys.exit(0)
 
-    # ━━━━━━ 0.5단계: main 브랜치 코드 커밋 차단 ━━━━━━
-    main_error = check_main_code_commit(files)
-    if main_error:
-        sys.stderr.write(main_error + "\n")
-        sys.exit(2)
-
-    # ━━━━━━ 0.6단계: Regression 테스트 강제 (fix/ 브랜치) ━━━━━━
+    # ━━━━━━ 1단계: Regression 테스트 강제 (fix/ 브랜치) ━━━━━━
     regression_error = check_regression_test(files)
     if regression_error:
         sys.stderr.write(regression_error + "\n")
         sys.exit(2)
 
-    # ━━━━━━ 0.7단계: dev 검증 게이트 (fix/feat 브랜치, 코드 변경 시) ━━━━━━
+    # ━━━━━━ 2단계: dev 검증 게이트 (fix/feat 브랜치, 코드 변경 시) ━━━━━━
+    # ⚠️ 반드시 Gini 게이트 이전에 실행되어야 한다 (이슈 #59).
+    #    dev 검증 실패 시에도 Gini 마커가 소비되는 것을 방지한다.
     dev_error = check_dev_verified(files)
     if dev_error:
         sys.stderr.write(dev_error + "\n")
         sys.exit(2)
+
+    # ━━━━━━ 3단계: Gini 검수 게이트 (마지막 게이트 — 마커 소비) ━━━━━━
+    # 이슈 #59: Gini 마커는 dev 검증이 통과한 경우에만 소비되어야 한다.
+    check_gini_gate(input_data)
 
     # ━━━━━��� 0.8단계: 이슈 기록 게이트 (fix/feat 브랜치, 이슈 번호 포함 시) ━━━━━━
     issue_error = check_issue_recording(input_data)

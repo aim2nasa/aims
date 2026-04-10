@@ -249,15 +249,18 @@ def run_backend_tests(files):
                     continue
 
             if py_cmd:
+                # 이슈 #59 후속: annual_report_api 테스트가 성장하여 120s 초과.
+                # 통합 테스트 포함 시 전체 실행은 약 5분. 600s 로 상향.
                 result = subprocess.run(
                     [py_cmd, "-m", "pytest", "-v", "--tb=short"],
                     cwd=test_dir,
-                    capture_output=True, text=True, timeout=120,
+                    capture_output=True, text=True, timeout=600,
                     encoding="utf-8", errors="replace",
                     shell=(os.name == "nt")
                 )
                 if result.returncode != 0:
                     print(f"  [FAIL] annual_report_api tests FAIL")
+                    print(result.stdout[-1500:] if result.stdout else "")
                     return False
                 print("  [PASS] annual_report_api tests PASS")
 
