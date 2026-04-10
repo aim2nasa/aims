@@ -102,16 +102,30 @@ function extractMetadata(text: string, normalizedText?: string) {
   // 보고서 제목 추출
   if (searchText.includes('Annual Review Report')) {
     metadata.report_title = 'Annual Review Report';
+  } else if (searchText.includes('보유계약 현황') || searchText.includes('보유계약현황')) {
+    // 표지 없는 AR (본문이 1페이지부터 시작)
+    metadata.report_title = '보유계약 현황';
   }
 
-  // 날짜 추출: "2025년 8월 27일" 형식
-  const datePattern = /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/;
-  const dateMatch = searchText.match(datePattern);
-  if (dateMatch && dateMatch[1] && dateMatch[2] && dateMatch[3]) {
-    const year = dateMatch[1];
-    const month = dateMatch[2].padStart(2, '0');
-    const day = dateMatch[3].padStart(2, '0');
+  // 날짜 추출
+  // 우선순위 1: "발행(기준)일 : 2025년 8월 28일" (표지/푸터에서 주로 등장)
+  const issueDatePattern = /발행\s*(?:\(기준\))?\s*일\s*[:：]?\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/;
+  const issueDateMatch = searchText.match(issueDatePattern);
+  if (issueDateMatch && issueDateMatch[1] && issueDateMatch[2] && issueDateMatch[3]) {
+    const year = issueDateMatch[1];
+    const month = issueDateMatch[2].padStart(2, '0');
+    const day = issueDateMatch[3].padStart(2, '0');
     metadata.issue_date = `${year}-${month}-${day}`;
+  } else {
+    // 우선순위 2: 일반 날짜 패턴 (fallback)
+    const datePattern = /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/;
+    const dateMatch = searchText.match(datePattern);
+    if (dateMatch && dateMatch[1] && dateMatch[2] && dateMatch[3]) {
+      const year = dateMatch[1];
+      const month = dateMatch[2].padStart(2, '0');
+      const day = dateMatch[3].padStart(2, '0');
+      metadata.issue_date = `${year}-${month}-${day}`;
+    }
   }
 
   // 고객명 추출: "Annual" 키워드가 포함된 줄의 바로 위 줄에서 추출 (🔴 파일명 사용 절대 금지!)
@@ -141,6 +155,14 @@ function extractMetadata(text: string, normalizedText?: string) {
     }
   }
 
+  // Fallback: 표지 없는 AR 대응 — "{고객명} 님은" 또는 "{고객명} 님의" 패턴
+  if (!metadata.customer_name) {
+    const nameFallbackMatch = searchText.match(/([가-힣]{2,4})\s*님[은의]/);
+    if (nameFallbackMatch && nameFallbackMatch[1]) {
+      metadata.customer_name = nameFallbackMatch[1];
+    }
+  }
+
   return metadata;
 }
 
@@ -162,20 +184,24 @@ export async function checkAnnualReportFromPDF(
     // PDF에서 추출된 텍스트는 여러 공백이 들어갈 수 있으므로 정규화 필요
     const normalizedText = text.replace(/\s+/g, ' ');
 
-    const requiredKeywords = ['Annual Review Report'];
-    const optionalKeywords = ['보유계약 현황', 'MetLife', '고객님을 위한', '메트라이프생명'];
+    // 🔴 제목 키워드: 표지 유무와 무관하게 감지 가능하도록 OR 조건
+    // - "Annual Review Report" → 표지 있는 AR
+    // - "보유계약 현황" → 표지 없는 AR (본문이 1페이지부터)
+    const titleKeywords = ['Annual Review Report', '보유계약 현황', '보유계약현황'];
+    // 필드 키워드: AR 본문에 나타나는 계약 테이블 필드명 (보험사 중립)
+    const fieldKeywords = ['증권번호', '계약자', '피보험자', '보험료', '계약일', '계약상태', '보험상품', '보험기간', '납입기간'];
 
-    const matchedRequired = requiredKeywords.filter((kw) => normalizedText.includes(kw));
-    const matchedOptional = optionalKeywords.filter((kw) => normalizedText.includes(kw));
+    const matchedTitle = titleKeywords.filter((kw) => normalizedText.includes(kw));
+    const matchedFields = fieldKeywords.filter((kw) => normalizedText.includes(kw));
 
     if (import.meta.env.DEV) {
-      console.log('[pdfParser] 매칭된 필수 키워드:', matchedRequired);
-      console.log('[pdfParser] 매칭된 선택 키워드:', matchedOptional);
+      console.log('[pdfParser] 매칭된 제목 키워드:', matchedTitle);
+      console.log('[pdfParser] 매칭된 필드 키워드:', matchedFields);
     }
 
-    // 3. 신뢰도 계산 (필수 키워드가 있고, 선택 키워드 중 1개 이상 있으면 OK)
-    const isAnnualReport = matchedRequired.length > 0 && matchedOptional.length > 0;
-    const confidence = matchedRequired.length > 0 ? 1.0 : 0;
+    // 3. 신뢰도 계산 (제목 1개 이상 AND 필드 2개 이상이면 AR)
+    const isAnnualReport = matchedTitle.length >= 1 && matchedFields.length >= 2;
+    const confidence = isAnnualReport ? 1.0 : 0;
 
     if (!isAnnualReport) {
       if (import.meta.env.DEV) {

@@ -31,8 +31,9 @@ sys.path.insert(0, project_root)
 from config import settings
 from pymongo import MongoClient
 from services.db_writer import save_annual_report
-from services.detector import is_annual_report
-from services.parser import parse_annual_report
+from services.detector import has_cover_page, is_annual_report
+from services.parser_factory import get_parser
+from services.pdf_type_detector import is_image_pdf
 from utils.pdf_utils import find_contract_table_end_page
 
 from internal_api import query_files
@@ -245,16 +246,34 @@ class AnnualReportAutoParser:
             print(f"   신뢰도: {detection_result['confidence']:.2f}")
             print(f"   발견된 키워드: {detection_result['matched_keywords']}")
 
-            # 4. N-page 탐지
-            print("\n🔍 Step 2: 계약 테이블 종료 페이지 탐지 중...")
-            n_pages = find_contract_table_end_page(file_path)
-            print(f"✅ 계약 테이블 종료: {n_pages}페이지")
+            # 🔑 Phase 4-D: 이미지 PDF 사전 판정 → 전처리 스킵 + Upstage 라우팅
+            try:
+                image_pdf = is_image_pdf(file_path)
+            except Exception as e:
+                print(f"⚠️ 이미지 PDF 판정 실패, 텍스트 PDF로 가정: {e}")
+                image_pdf = False
 
-            # 5. OpenAI 파싱
-            print("\n🤖 Step 3: OpenAI로 파싱 중...")
-            print("   (약 25초 소요 예상...)")
+            if image_pdf:
+                print("\n🖼️ 이미지 PDF 감지 → Upstage 라우팅, 텍스트 전처리 스킵")
+                n_pages = None
+                has_cover = True  # 미사용 (Upstage는 전체 문서 처리)
+            else:
+                # 4. N-page 탐지 (텍스트 PDF 전용)
+                print("\n🔍 Step 2: 계약 테이블 종료 페이지 탐지 중...")
+                n_pages = find_contract_table_end_page(file_path)
+                print(f"✅ 계약 테이블 종료: {n_pages}페이지")
 
-            parsed_data = parse_annual_report(file_path, end_page=n_pages)
+                has_cover = has_cover_page(file_path)
+                print(f"   📄 표지 판별: has_cover={has_cover}")
+
+            # 5. 파싱 (factory가 파서 선택: 이미지 PDF면 Upstage 강제)
+            print("\n🤖 Step 3: 파싱 중...")
+            parse_annual_report = get_parser(file_path)
+            parsed_data = parse_annual_report(
+                file_path,
+                end_page=n_pages,
+                has_cover=has_cover,
+            )
 
             contract_count = len(parsed_data.get("contracts", []))
             print(f"✅ 파싱 완료! {contract_count}개 계약 추출됨")

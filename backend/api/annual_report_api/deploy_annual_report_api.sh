@@ -61,33 +61,56 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
 fi
 
 # 공유 API 키 로드 (.env.shared가 Single Source of Truth)
+# Phase 4-E: UPSTAGE_API_KEY도 .env.shared에서 SSoT로 관리
 OPENAI_KEY=""
 INTERNAL_KEY=""
+UPSTAGE_KEY=""
 if [ -f "$AIMS_DIR/.env.shared" ]; then
   OPENAI_KEY=$(grep "^OPENAI_API_KEY=" "$AIMS_DIR/.env.shared" | cut -d= -f2-)
   INTERNAL_KEY=$(grep "^INTERNAL_API_KEY=" "$AIMS_DIR/.env.shared" | cut -d= -f2-)
+  UPSTAGE_KEY=$(grep "^UPSTAGE_API_KEY=" "$AIMS_DIR/.env.shared" | cut -d= -f2-)
+fi
+
+# UPSTAGE_API_KEY 누락 경고 (이미지 PDF 라우팅이 실패하므로 치명적)
+if [ -z "$UPSTAGE_KEY" ]; then
+  echo "⚠️  UPSTAGE_API_KEY가 .env.shared에 없습니다."
+  echo "   이미지 PDF (텍스트 레이어 없음) 파싱이 실패합니다."
+  echo "   ~/aims/.env.shared에 UPSTAGE_API_KEY=up_... 를 추가하세요."
 fi
 
 # 3. ecosystem.config.cjs 생성 (API 키 주입)
-python3 -c "
-openai_key = '$OPENAI_KEY'
-internal_key = '$INTERNAL_KEY'
-content = 'module.exports = {\n'
-content += '  apps: [{\n'
-content += '    name: \"annual_report_api\",\n'
-content += '    script: \"venv/bin/uvicorn\",\n'
-content += '    args: \"main:app --host 0.0.0.0 --port 8004\",\n'
-content += '    interpreter: \"venv/bin/python\",\n'
-content += '    cwd: \"$SCRIPT_DIR\",\n'
-content += '    env: {\n'
-content += '      OPENAI_API_KEY: \"' + openai_key + '\",\n'
-content += '      INTERNAL_API_KEY: \"' + internal_key + '\"\n'
-content += '    }\n'
-content += '  }]\n'
-content += '};\n'
-with open('$SCRIPT_DIR/ecosystem.config.cjs', 'w') as f:
+# - env 값은 Python 리터럴로 안전하게 직렬화 (따옴표/특수문자 대응)
+AIMS_SCRIPT_DIR="$SCRIPT_DIR" \
+AIMS_OPENAI_KEY="$OPENAI_KEY" \
+AIMS_INTERNAL_KEY="$INTERNAL_KEY" \
+AIMS_UPSTAGE_KEY="$UPSTAGE_KEY" \
+python3 <<'PYEOF'
+import json
+import os
+
+script_dir = os.environ["AIMS_SCRIPT_DIR"]
+env_block = {
+    "OPENAI_API_KEY": os.environ.get("AIMS_OPENAI_KEY", ""),
+    "INTERNAL_API_KEY": os.environ.get("AIMS_INTERNAL_KEY", ""),
+    "UPSTAGE_API_KEY": os.environ.get("AIMS_UPSTAGE_KEY", ""),
+}
+
+content = (
+    "module.exports = {\n"
+    "  apps: [{\n"
+    '    name: "annual_report_api",\n'
+    '    script: "venv/bin/uvicorn",\n'
+    '    args: "main:app --host 0.0.0.0 --port 8004",\n'
+    '    interpreter: "venv/bin/python",\n'
+    f'    cwd: {json.dumps(script_dir)},\n'
+    f'    env: {json.dumps(env_block, ensure_ascii=False)}\n'
+    "  }]\n"
+    "};\n"
+)
+
+with open(os.path.join(script_dir, "ecosystem.config.cjs"), "w", encoding="utf-8") as f:
     f.write(content)
-"
+PYEOF
 
 # 4. PM2 재시작
 echo "🚀 PM2 프로세스 재시작..."

@@ -16,8 +16,13 @@ from bson.errors import InvalidId
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
 from pydantic import BaseModel
 from services.db_writer import save_annual_report
-from services.detector import extract_customer_info_from_first_page
+from services.detector import (
+    extract_ar_meta,
+    extract_customer_info_from_first_page,
+    has_cover_page,
+)
 from services.parser_factory import get_parser
+from services.pdf_type_detector import is_image_pdf
 from system_logger import send_error_log
 from utils.pdf_utils import find_contract_table_end_page
 
@@ -114,13 +119,40 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
 
         customer_name = doc.get("ar_metadata", {}).get("customer_name")
 
-        # 🔧 end_page 계산 (2페이지만 OpenAI에 전달하기 위함)
-        end_page_0indexed = find_contract_table_end_page(file_path)
-        end_page = end_page_0indexed + 1  # 1-based로 변환
-        logger.info(f"📄 [Queue Parsing] 계약 테이블 범위: 2~{end_page}페이지")
+        # 🔑 Phase 4-D: 이미지 PDF 사전 판정 → Upstage 강제 라우팅 + 텍스트 의존 전처리 스킵
+        # 이미지 PDF는 pdfplumber 기반 유틸(find_contract_table_end_page 등)이 빈 결과를 내므로
+        # 아예 호출하지 않고 end_page=None, has_cover=True (Upstage가 전체 문서를 처리)
+        try:
+            image_pdf = is_image_pdf(file_path)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [Queue Parsing] 이미지 PDF 판정 실패, 텍스트 PDF로 가정: {e}"
+            )
+            image_pdf = False
 
-        parse_annual_report = get_parser()  # 설정에 따라 파서 선택
-        result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page)
+        if image_pdf:
+            logger.info(
+                f"🖼️ [Queue Parsing] 이미지 PDF 감지 → Upstage 라우팅, 전처리 스킵"
+            )
+            end_page = None
+            has_cover = True  # 미사용 (Upstage는 전체 문서 처리)
+        else:
+            # 🔧 end_page 계산 (텍스트 PDF 전용 전처리)
+            end_page_0indexed = find_contract_table_end_page(file_path)
+            end_page = end_page_0indexed + 1  # 1-based로 변환
+            logger.info(f"📄 [Queue Parsing] 계약 테이블 범위: 2~{end_page}페이지")
+
+            has_cover = has_cover_page(file_path)
+            logger.info(f"📄 [Queue Parsing] 표지 판별: has_cover={has_cover}")
+
+        # pdf_path 전달 → 이미지 PDF 자동 라우팅 (factory 내부에서 재확인)
+        parse_annual_report = get_parser(file_path)
+        result = parse_annual_report(
+            file_path,
+            customer_name=customer_name,
+            end_page=end_page,
+            has_cover=has_cover,
+        )
 
         if "error" in result:
             logger.error(f"❌ [Queue Parsing] 파싱 실패: {result['error']}")
@@ -133,10 +165,29 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
 
         # 🔴 PDF 1페이지에서 메타데이터 추출 (Source of Truth)
         # customer_name, issue_date, fsr_name, report_title 모두 PDF 텍스트 파싱으로만 추출!
-        extracted = extract_customer_info_from_first_page(file_path)
-        logger.info(f"📝 [Queue Parsing] PDF 1페이지 추출 결과: {extracted}")
+        # 🔑 Phase 4-D: 이미지 PDF는 텍스트 레이어가 없어 추출 불가
+        # 🔑 Phase 5.5: 이미지 PDF의 경우 files.meta.full_text(OCR 결과)를
+        #    extract_ar_meta에 전달하여 푸터/본문 메타를 정규식으로 백필한다.
+        if image_pdf:
+            ocr_text = (doc.get("meta") or {}).get("full_text") or None
+            if ocr_text:
+                logger.info(
+                    "🖼️ [Queue Parsing] 이미지 PDF — OCR full_text 기반 메타 폴백 시도"
+                )
+                extracted = extract_ar_meta(
+                    file_path, has_cover=has_cover, ocr_text=ocr_text
+                )
+            else:
+                logger.info(
+                    "🖼️ [Queue Parsing] 이미지 PDF — OCR full_text 없음, 메타 추출 스킵"
+                )
+                extracted = {}
+        else:
+            # Phase 5: 표지 추출 + 푸터 메타 폴백 (표지 없는 텍스트 AR 대응)
+            extracted = extract_ar_meta(file_path, has_cover=has_cover)
+        logger.info(f"📝 [Queue Parsing] PDF 메타 추출 결과 keys: {list(extracted.keys())}")
 
-        # customer_name: PDF 추출 > ar_metadata > OpenAI 결과
+        # customer_name: PDF 추출 > ar_metadata > 파서 결과 (Upstage/OpenAI)
         parsed_customer_name = extracted.get("customer_name") or metadata.get("customer_name") or result.get("고객명")
         if extracted.get("customer_name"):
             metadata["customer_name"] = extracted["customer_name"]
@@ -152,6 +203,10 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         # report_title: PDF 추출
         if extracted.get("report_title"):
             metadata["report_title"] = extracted["report_title"]
+
+        # insurer_name: PDF 추출 (표지/푸터/OCR 폴백)
+        if extracted.get("insurer_name"):
+            metadata["insurer_name"] = extracted["insurer_name"]
 
         # ⭐ AR 파싱은 항상 파일을 업로드한 고객(customer_id 파라미터)에게 저장
         # customer_name은 AR 데이터 내에서 식별용으로만 사용
@@ -317,14 +372,38 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                 # 고객명 가져오기
                 customer_name = doc.get("ar_metadata", {}).get("customer_name")
 
-                # 🔧 end_page 계산 (2페이지만 OpenAI에 전달하기 위함)
-                end_page_0indexed = find_contract_table_end_page(file_path)
-                end_page = end_page_0indexed + 1  # 1-based로 변환
-                logger.info(f"📄 [BG Parsing] 계약 테이블 범위: 2~{end_page}페이지")
+                # 🔑 Phase 4-D: 이미지 PDF 사전 판정 → Upstage 강제 라우팅 + 전처리 스킵
+                try:
+                    image_pdf = is_image_pdf(file_path)
+                except Exception as e:
+                    logger.warning(
+                        f"⚠️ [BG Parsing] 이미지 PDF 판정 실패, 텍스트 PDF로 가정: {e}"
+                    )
+                    image_pdf = False
 
-                # 파싱 실행 (설정에 따라 파서 선택)
-                parse_annual_report = get_parser()
-                result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page)
+                if image_pdf:
+                    logger.info(
+                        f"🖼️ [BG Parsing] 이미지 PDF 감지 → Upstage 라우팅, 전처리 스킵"
+                    )
+                    end_page = None
+                    has_cover = True  # 미사용 (Upstage는 전체 문서 처리)
+                else:
+                    # 🔧 end_page 계산 (텍스트 PDF 전용 전처리)
+                    end_page_0indexed = find_contract_table_end_page(file_path)
+                    end_page = end_page_0indexed + 1  # 1-based로 변환
+                    logger.info(f"📄 [BG Parsing] 계약 테이블 범위: 2~{end_page}페이지")
+
+                    has_cover = has_cover_page(file_path)
+                    logger.info(f"📄 [BG Parsing] 표지 판별: has_cover={has_cover}")
+
+                # 파싱 실행 (pdf_path 전달 → 이미지 PDF 자동 라우팅)
+                parse_annual_report = get_parser(file_path)
+                result = parse_annual_report(
+                    file_path,
+                    customer_name=customer_name,
+                    end_page=end_page,
+                    has_cover=has_cover,
+                )
 
                 if "error" in result:
                     logger.error(f"❌ [BG Parsing] 파싱 실패: {result['error']}")
@@ -337,11 +416,29 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                 metadata = doc.get("ar_metadata", {})
 
                 # 🔴 PDF 1페이지에서 메타데이터 추출 (Source of Truth)
-                # customer_name, issue_date, fsr_name, report_title 모두 PDF 텍스트 파싱으로만 추출!
-                extracted = extract_customer_info_from_first_page(file_path)
-                logger.info(f"📝 [BG Parsing] PDF 1페이지 추출 결과: {extracted}")
+                # 🔑 Phase 4-D: 이미지 PDF는 텍스트 레이어가 없어 추출 불가
+                # 🔑 Phase 5.5: 이미지 PDF의 경우 files.meta.full_text(OCR 결과)를
+                #    extract_ar_meta에 전달하여 푸터/본문 메타를 정규식으로 백필한다.
+                if image_pdf:
+                    ocr_text = (doc.get("meta") or {}).get("full_text") or None
+                    if ocr_text:
+                        logger.info(
+                            "🖼️ [BG Parsing] 이미지 PDF — OCR full_text 기반 메타 폴백 시도"
+                        )
+                        extracted = extract_ar_meta(
+                            file_path, has_cover=has_cover, ocr_text=ocr_text
+                        )
+                    else:
+                        logger.info(
+                            "🖼️ [BG Parsing] 이미지 PDF — OCR full_text 없음, 메타 추출 스킵"
+                        )
+                        extracted = {}
+                else:
+                    # Phase 5: 표지 추출 + 푸터 메타 폴백 (표지 없는 텍스트 AR 대응)
+                    extracted = extract_ar_meta(file_path, has_cover=has_cover)
+                logger.info(f"📝 [BG Parsing] PDF 메타 추출 결과 keys: {list(extracted.keys())}")
 
-                # customer_name: PDF 추출 > ar_metadata > OpenAI 결과
+                # customer_name: PDF 추출 > ar_metadata > 파서 결과 (Upstage/OpenAI)
                 parsed_customer_name = extracted.get("customer_name") or metadata.get("customer_name") or result.get("고객명")
                 if extracted.get("customer_name"):
                     metadata["customer_name"] = extracted["customer_name"]
@@ -357,6 +454,10 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                 # report_title: PDF 추출
                 if extracted.get("report_title"):
                     metadata["report_title"] = extracted["report_title"]
+
+                # insurer_name: PDF 추출 (표지/푸터/OCR 폴백)
+                if extracted.get("insurer_name"):
+                    metadata["insurer_name"] = extracted["insurer_name"]
 
                 # ⭐ AR 파싱은 항상 파일을 업로드한 고객(doc_customer_id)에게 저장
                 # customer_name은 AR 데이터 내에서 식별용으로만 사용

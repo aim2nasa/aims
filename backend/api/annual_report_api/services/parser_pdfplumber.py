@@ -181,7 +181,8 @@ def is_lapsed_contract_table(table: List[List]) -> bool:
 def parse_annual_report(
     pdf_path: str,
     customer_name: Optional[str] = None,
-    end_page: Optional[int] = None
+    end_page: Optional[int] = None,
+    has_cover: bool = True
 ) -> Dict:
     """
     pdfplumber로 AR PDF 파싱
@@ -190,6 +191,7 @@ def parse_annual_report(
         pdf_path: PDF 파일 경로
         customer_name: 고객명 (미사용, 인터페이스 호환성)
         end_page: 마지막 페이지 (미사용, 인터페이스 호환성)
+        has_cover: 표지 유무 (미사용, 인터페이스 호환성)
 
     Returns:
         파싱 결과 딕셔너리:

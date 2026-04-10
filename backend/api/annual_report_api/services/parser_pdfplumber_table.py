@@ -75,7 +75,8 @@ def convert_contract_format(contract: Dict) -> Dict:
 def parse_annual_report(
     pdf_path: str,
     customer_name: Optional[str] = None,
-    end_page: Optional[int] = None
+    end_page: Optional[int] = None,
+    has_cover: bool = True
 ) -> Dict:
     """
     pdfplumber 테이블 추출 방식으로 AR PDF 파싱
@@ -89,6 +90,7 @@ def parse_annual_report(
         pdf_path: PDF 파일 경로
         customer_name: 고객명 (미사용, 인터페이스 호환성)
         end_page: 마지막 페이지 (미사용, 인터페이스 호환성)
+        has_cover: 표지 유무. True면 본문 시작 페이지=2(idx 1), False면 본문 시작 페이지=1(idx 0)
 
     Returns:
         파싱 결과 딕셔너리:
@@ -109,8 +111,9 @@ def parse_annual_report(
         return create_error_result(f"파일이 존재하지 않음: {pdf_path}")
 
     try:
-        # table_extractor로 파싱 (2페이지 = page_num 1)
-        result = extract_contract_table(pdf_path, page_num=1)
+        # table_extractor로 파싱: 표지 있으면 본문은 2페이지(idx 1), 없으면 1페이지(idx 0)
+        page_num = 1 if has_cover else 0
+        result = extract_contract_table(pdf_path, page_num=page_num)
 
         # 계약 정보 변환
         contracts = [convert_contract_format(c) for c in result.get("contracts", [])]
