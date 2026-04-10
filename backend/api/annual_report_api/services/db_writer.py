@@ -130,12 +130,14 @@ def save_annual_report(
             report_title = metadata.get("report_title")
             issue_date_str = metadata.get("issue_date")
             fsr_name = metadata.get("fsr_name")
+            insurer_name = metadata.get("insurer_name")
         else:
             # fallback: 기존 report_data (AI가 추출한 경우 - 비권장)
             customer_name = report_data.get("고객명")
             report_title = None
             issue_date_str = report_data.get("발행기준일")
             fsr_name = None
+            insurer_name = None
 
         # 발행기준일 파싱
         try:
@@ -156,6 +158,7 @@ def save_annual_report(
             "report_title": report_title,
             "issue_date": issue_date,
             "fsr_name": fsr_name,
+            "insurer_name": insurer_name,
 
             # 2~N페이지 계약 데이터 (AI 사용)
             "contracts": contracts,

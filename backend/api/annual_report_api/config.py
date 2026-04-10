@@ -5,14 +5,45 @@ Annual Report API 설정 파일
 import logging
 import os
 import time
+from pathlib import Path
 from typing import Optional
 
 import requests
 from dotenv import load_dotenv
 from version import APP_VERSION, VERSION_INFO
 
-# .env 파일 로드
-load_dotenv()
+# 🔑 SSoT: .env.shared가 공유 API 키의 Single Source of Truth
+# 우선순위: 기존 프로세스 환경변수 > .env.shared > .env (개별 override 금지)
+# - PM2 런타임은 ecosystem.config.cjs에서 env 주입
+# - pytest/로컬 실행 시에는 여기서 .env.shared를 직접 로드
+# - override=False: 이미 설정된 환경변수(PM2 주입값)는 유지
+# - 보안: 로드 실패해도 키 값 자체는 로그에 찍지 않음 (dotenv 내부 구현상 안전)
+_bootstrap_logger = logging.getLogger(__name__)
+try:
+    _project_root = Path(__file__).resolve().parents[3]  # aims/
+    _env_shared = _project_root / ".env.shared"
+    if _env_shared.exists():
+        load_dotenv(dotenv_path=_env_shared, override=False)
+        _bootstrap_logger.info(f"🔐 .env.shared 로드 완료: {_env_shared}")
+    else:
+        _bootstrap_logger.info(
+            f"ℹ️ .env.shared 없음 (PM2/로컬 env에 의존): {_env_shared}"
+        )
+except Exception as _env_err:
+    # 로드 실패해도 PM2 주입/.env로 기동 가능해야 하므로 크래시 금지
+    _bootstrap_logger.warning(
+        f"⚠️ .env.shared 로드 실패, 계속 진행: "
+        f"{type(_env_err).__name__}: {_env_err}"
+    )
+
+# .env 파일 로드 (로컬/개발 전용 보충, .env.shared에 없는 값만 채움)
+try:
+    load_dotenv(override=False)
+except Exception as _env_err:
+    _bootstrap_logger.warning(
+        f"⚠️ .env 로드 실패, 계속 진행: "
+        f"{type(_env_err).__name__}: {_env_err}"
+    )
 
 logger = logging.getLogger(__name__)
 

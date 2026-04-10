@@ -86,7 +86,12 @@ def extract_pdf_pages(pdf_path: str, start_page: int, end_page: int) -> str:
     return temp_path
 
 
-def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None, end_page: Optional[int] = None) -> Dict:
+def parse_annual_report(
+    pdf_path: str,
+    customer_name: Optional[str] = None,
+    end_page: Optional[int] = None,
+    has_cover: bool = True
+) -> Dict:
     """
     Annual Report PDF를 OpenAI API로 파싱
 
@@ -96,6 +101,9 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None, end_
     Args:
         pdf_path: PDF 파일 경로
         customer_name: 고객명 (선택, 검증용)
+        end_page: 계약 테이블 마지막 페이지 (1-based)
+        has_cover: True면 1페이지는 표지라 제외 (2~N), False면 1~N 전체 포함
+                   표지 없는 AR(본문만 있는 보유계약현황)은 1페이지가 본문이므로 포함 필요
 
     Returns:
         dict: {
@@ -139,14 +147,23 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None, end_
         # OpenAI 클라이언트 가져오기
         ai_client = get_openai_client()
 
-        # 0. PDF 페이지 추출 (2~N페이지만, 1페이지 제외로 토큰 절약)
+        # 0. PDF 페이지 추출
+        # - has_cover=True:  표지 있음 → 2~N페이지만 (1페이지 제외, 토큰 절약)
+        # - has_cover=False: 표지 없음 → 1~N페이지 전체 (1페이지가 본문)
         actual_pdf_path = pdf_path
-        if end_page and end_page > 1:
-            logger.info(f"📄 PDF 페이지 추출: 2~{end_page}페이지만 사용 (1페이지 제외, 토큰 절약)")
-            extracted_pdf_path = extract_pdf_pages(pdf_path, start_page=2, end_page=end_page)
+        start_page = 2 if has_cover else 1
+        if end_page and end_page >= start_page:
+            logger.info(
+                f"📄 PDF 페이지 추출: {start_page}~{end_page}페이지 사용 "
+                f"(has_cover={has_cover})"
+            )
+            extracted_pdf_path = extract_pdf_pages(pdf_path, start_page=start_page, end_page=end_page)
             actual_pdf_path = extracted_pdf_path
         else:
-            logger.warning("end_page가 없거나 1 이하입니다. 전체 PDF 사용 (비권장)")
+            logger.warning(
+                f"end_page({end_page})가 start_page({start_page}) 미만입니다. "
+                "전체 PDF 사용 (비권장)"
+            )
 
         # 1. PDF 파일 업로드
         logger.info("📤 PDF 파일 업로드 중...")
@@ -161,13 +178,23 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None, end_
         # 2. Chat Completions API 호출 (파일 입력 지원)
         logger.info("🔍 OpenAI API 호출 중 (약 25초 소요)...")
 
+        page_range_note = (
+            "This PDF contains pages 2~N (page 1 was the cover and was excluded for token optimization)."
+            if has_cover else
+            "This PDF contains pages 1~N (no cover page — the first page is already the contract body)."
+        )
+
         system_prompt = """You are a strict document parsing assistant.
-Extract contract tables AND summary totals from the Annual Report PDF (pages 2~N only, page 1 excluded).
+Extract contract tables AND summary totals from the Annual Report PDF.
 
 Rules:
 1. 반드시 JSON만 반환. (마크다운, 주석, 설명 절대 금지)
 2. JSON Schema:
    {
+     "고객명": string,       // 문서 상단/표지의 '{이름} 고객님을 위한' 또는 '{이름} 님은/님의' 패턴에서
+     "발행기준일": "YYYY-MM-DD",  // 푸터 '발행(기준)일 : YYYY년 M월 D일' 우선
+     "FSR_이름": string,     // 푸터 '담당 : {이름} FSR' 패턴에서 추출 (없으면 null)
+     "보험사명": string,     // 문서 헤더/푸터의 보험사명 (예: 메트라이프생명, 삼성생명 등)
      "총_월보험료": number,  // ⚠️ PDF에 적힌 값 그대로 읽기 (계산 금지!)
      "보유계약 현황": [
        {
@@ -206,8 +233,8 @@ Rules:
    - 숫자만 추출 (쉼표 제거)
    - 정수형으로 변환
 
-NOTE: This PDF contains only pages 2~N (page 1 was excluded for token optimization).
-Customer name and issue date are already extracted from page 1."""
+NOTE: """ + page_range_note + """
+Customer name and issue date are already extracted from page 1 (when has_cover=True)."""
 
         user_text = f"Parse the attached Annual Report PDF into JSON. {'Customer name should be: ' + customer_name if customer_name else ''}"
 

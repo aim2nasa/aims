@@ -13,8 +13,14 @@ from bson.errors import InvalidId
 from fastapi import APIRouter, BackgroundTasks, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 from services.db_writer import save_annual_report
-from services.detector import extract_customer_info_from_first_page, is_annual_report
+from services.detector import (
+    extract_ar_meta,
+    extract_customer_info_from_first_page,
+    has_cover_page,
+    is_annual_report,
+)
 from services.parser_factory import get_parser
+from services.pdf_type_detector import is_image_pdf
 from system_logger import send_error_log
 from utils.pdf_utils import find_contract_table_end_page
 
@@ -217,30 +223,85 @@ def do_parsing_in_background(
                 f"✅ Annual Report 확인됨 (confidence: {check_result['confidence']})"
             )
 
-        # 2. 1페이지 메타데이터 추출 (AI 불사용, 토큰 절약)
-        logger.info("Step 2: 1페이지 메타데이터 추출 중...")
-        metadata = extract_customer_info_from_first_page(file_path)
+        # 🔑 Phase 4-D: 이미지 PDF 사전 판정 → Upstage 강제 라우팅 + 텍스트 의존 전처리 스킵
+        try:
+            image_pdf = is_image_pdf(file_path)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ 이미지 PDF 판정 실패, 텍스트 PDF로 가정: {e}"
+            )
+            image_pdf = False
+
+        # 2. 1페이지 메타데이터 추출 (텍스트 PDF 전용, AI 불사용, 토큰 절약)
+        # Phase 5.5: 이미지 PDF는 files.meta.full_text(OCR)를 정규식 폴백으로 활용
+        if image_pdf:
+            has_cover_pre = True  # 이미지 PDF는 Upstage 전체 처리, has_cover 의미 없음
+            ocr_text = None
+            try:
+                file_doc = query_file_one({"_id": file_id}) or {}
+                ocr_text = (file_doc.get("meta") or {}).get("full_text") or None
+            except Exception as e:
+                logger.warning(f"⚠️ files.meta.full_text 조회 실패: {e}")
+                ocr_text = None
+
+            if ocr_text:
+                logger.info(
+                    "🖼️ 이미지 PDF — OCR full_text 기반 메타 폴백 시도"
+                )
+                metadata = extract_ar_meta(
+                    file_path, has_cover=has_cover_pre, ocr_text=ocr_text
+                )
+            else:
+                logger.info(
+                    "🖼️ 이미지 PDF — OCR full_text 없음, 메타 추출 스킵"
+                )
+                metadata = {}
+        else:
+            logger.info("Step 2: 1페이지 메타데이터 추출 중...")
+            # Phase 5: 표지 유무를 먼저 판별한 뒤, extract_ar_meta로 표지+푸터 통합 추출
+            has_cover_pre = has_cover_page(file_path)
+            metadata = extract_ar_meta(file_path, has_cover=has_cover_pre)
 
         # ⚠️ customer_id가 제공되면 DB에서 실제 고객명 가져오기 (OCR 오류 방지, Internal API 경유)
         if customer_id:
             actual_customer_name = get_customer_name(customer_id)
             if actual_customer_name:
-                logger.info(f"✅ DB에서 실제 고객명 사용: {actual_customer_name} (OCR: {metadata.get('customer_name')})")
+                logger.info(
+                    f"✅ DB에서 실제 고객명 사용: {actual_customer_name} "
+                    f"(OCR: {metadata.get('customer_name')})"
+                )
                 metadata["customer_name"] = actual_customer_name
 
         customer_name = metadata.get("customer_name")
         logger.info(f"📄 메타데이터: {metadata}")
 
-        # 3. N페이지 동적 탐지 (1초)
-        logger.info("Step 3: N페이지 탐지 중...")
-        end_page_0indexed = find_contract_table_end_page(file_path)  # 0-indexed 반환 (예: 2 = 3페이지)
-        end_page_1indexed = end_page_0indexed + 1  # 1-based로 변환 (예: 3 = 3페이지)
-        logger.info(f"📄 계약 테이블 범위: 2 ~ {end_page_1indexed}페이지 (1페이지 제외)")
+        # 3. N페이지 동적 탐지 / 표지 판별 (텍스트 PDF 전용)
+        if image_pdf:
+            logger.info(
+                "🖼️ 이미지 PDF — N페이지 탐지/표지 판별 스킵 (Upstage가 전체 문서 처리)"
+            )
+            end_page_1indexed = None
+            has_cover = True  # 미사용
+        else:
+            logger.info("Step 3: N페이지 탐지 중...")
+            end_page_0indexed = find_contract_table_end_page(file_path)  # 0-indexed
+            end_page_1indexed = end_page_0indexed + 1  # 1-based로 변환
+            logger.info(
+                f"📄 계약 테이블 범위: 2 ~ {end_page_1indexed}페이지 (1페이지 제외)"
+            )
 
-        # 4. AR 파싱 (설정에 따라 파서 선택: openai/pdfplumber/upstage)
-        logger.info("Step 4: AR 파싱 중 (2~N페이지)...")
-        parse_annual_report = get_parser()  # 설정에 따라 파서 선택
-        result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page_1indexed)
+            # Phase 5: Step 2에서 이미 판별한 has_cover_pre 재사용 (중복 파싱 방지)
+            has_cover = has_cover_pre
+
+        # 4. AR 파싱 (pdf_path 전달 → 이미지 PDF 자동 라우팅)
+        logger.info(f"Step 4: AR 파싱 중 (has_cover={has_cover}, image_pdf={image_pdf})...")
+        parse_annual_report = get_parser(file_path)
+        result = parse_annual_report(
+            file_path,
+            customer_name=customer_name,
+            end_page=end_page_1indexed,
+            has_cover=has_cover,
+        )
 
         # 5. 파싱 결과 확인
         if "error" in result:

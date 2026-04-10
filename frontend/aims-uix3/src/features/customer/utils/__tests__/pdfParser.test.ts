@@ -147,10 +147,13 @@ describe('pdfParser', () => {
     // 고객명 추출 테스트 제거 - 사전 선택된 고객 사용으로 변경됨
 
     it('날짜가 없으면 issue_date가 undefined여야 함', async () => {
+      // AR 판정은 제목 키워드 + 필드 키워드 2개 이상 필요
       const mockText = {
         items: [
           { str: 'Annual Review Report' },
-          { str: 'MetLife' }
+          { str: 'MetLife' },
+          { str: '증권번호' },
+          { str: '계약자' }
           // 날짜 없음
         ]
       }
@@ -163,15 +166,16 @@ describe('pdfParser', () => {
 
       const result = await checkAnnualReportFromPDF(file)
 
+      expect(result.is_annual_report).toBe(true)
       expect(result.metadata?.issue_date).toBeUndefined()
     })
 
-    it('report_title이 없으면 undefined여야 함', async () => {
+    it('report_title이 없으면 is_annual_report가 false여야 함', async () => {
       const mockText = {
         items: [
           { str: '안영미 고객님을 위한' },
           { str: 'MetLife' }
-          // Annual Review Report 없음
+          // Annual Review Report 없음, 보유계약 현황 없음
         ]
       }
 
@@ -183,11 +187,81 @@ describe('pdfParser', () => {
 
       const result = await checkAnnualReportFromPDF(file)
 
-      // Annual Review Report가 없으므로 is_annual_report가 false
+      // 제목 키워드가 없으므로 is_annual_report가 false
       expect(result.is_annual_report).toBe(false)
     })
 
     // 고객명 관련 테스트 제거 - 사전 선택된 고객 사용으로 변경됨
+  })
+
+  describe('표지 없는 AR 감지 (#57)', () => {
+    it('표지 없어도 "보유계약 현황" + 필드 2개 이상이면 AR로 감지해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: '보유계약 현황' },
+          { str: '증권번호' },
+          { str: '계약자' },
+          { str: '피보험자' },
+          { str: '보험료' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], '이율_보유계약현황202508.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkAnnualReportFromPDF(file)
+
+      expect(result.is_annual_report).toBe(true)
+      expect(result.confidence).toBe(1.0)
+      expect(result.metadata?.report_title).toBe('보유계약 현황')
+    })
+
+    it('"{이름} 님은" 패턴에서 고객명을 추출해야 함 (표지 없는 AR)', async () => {
+      const mockText = {
+        items: [
+          { str: '보유계약 현황' },
+          { str: '마리치 님은 소중한 고객입니다' },
+          { str: '증권번호' },
+          { str: '계약자' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'anonymous.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkAnnualReportFromPDF(file)
+
+      expect(result.is_annual_report).toBe(true)
+      expect(result.metadata?.customer_name).toBe('마리치')
+    })
+
+    it('"발행(기준)일 : YYYY년 M월 D일" 패턴을 우선 매칭해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: '보유계약 현황' },
+          { str: '증권번호' },
+          { str: '계약자' },
+          { str: '발행(기준)일 : 2025년 8월 28일' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'with-issue-date.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkAnnualReportFromPDF(file)
+
+      expect(result.is_annual_report).toBe(true)
+      expect(result.metadata?.issue_date).toBe('2025-08-28')
+    })
   })
 
   describe('텍스트 항목 처리', () => {
