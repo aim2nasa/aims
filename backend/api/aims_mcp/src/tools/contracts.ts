@@ -108,19 +108,42 @@ export const contractToolDefinitions = [
 // 타입 정의
 // ============================================================================
 
+/**
+ * Annual Report 계약 데이터 (이슈 #58: 영문 키로 통일)
+ * 레거시 한글 키는 마이그레이션 이전 문서 호환을 위해 index signature로만 허용.
+ */
 export interface ARContract {
-  '순번': number;
-  '증권번호': string;
-  '보험상품': string;
-  '보험사'?: string;
-  '계약자': string;
-  '피보험자': string;
-  '계약일': string;
-  '계약상태': string;
-  '가입금액(만원)': number;
-  '보험기간': string;
-  '납입기간': string;
-  '보험료(원)': number;
+  seq?: number;
+  contract_number?: string;
+  product_name?: string;
+  insurance_company?: string;
+  contractor_name?: string;
+  insured_name?: string;
+  contract_date?: string;
+  status?: string;
+  coverage_amount?: number;
+  insurance_period?: string;
+  premium_payment_period?: string;
+  monthly_premium?: number;
+  // 마이그레이션 이전 한글 키 접근용 fallback
+  [key: string]: unknown;
+}
+
+/**
+ * 한글/영문 키 호환 계약 필드 접근자 (이슈 #58 마이그레이션 전환기 안전장치).
+ * 영문 키를 우선 읽고, 없으면 한글 키를 fallback으로 조회한다.
+ */
+function getContractField<T = unknown>(
+  contract: ARContract,
+  englishKey: string,
+  koreanKey: string,
+  defaultValue: T
+): T {
+  const en = contract[englishKey];
+  if (en !== undefined && en !== null && en !== '') return en as T;
+  const ko = contract[koreanKey];
+  if (ko !== undefined && ko !== null && ko !== '') return ko as T;
+  return defaultValue;
 }
 
 export interface AnnualReport {
@@ -257,27 +280,27 @@ export function normalizeContract(
   arParsedAt?: string,
   isLapsed: boolean = false
 ): NormalizedContract {
-  const paymentPeriod = contract['납입기간'] || '';
-  const contractDate = contract['계약일'] || '';
-  const insurancePeriod = contract['보험기간'] || '';
+  const paymentPeriod = getContractField<string>(contract, 'premium_payment_period', '납입기간', '');
+  const contractDate = getContractField<string>(contract, 'contract_date', '계약일', '');
+  const insurancePeriod = getContractField<string>(contract, 'insurance_period', '보험기간', '');
 
   return {
     customerId,
     customerName,
-    policyNumber: contract['증권번호'] || '',
-    productName: contract['보험상품'] || '',
-    insurerName: contract['보험사'] || '',
-    contractor: contract['계약자'] || '',
-    insured: contract['피보험자'] || '',
+    policyNumber: getContractField<string>(contract, 'contract_number', '증권번호', ''),
+    productName: getContractField<string>(contract, 'product_name', '보험상품', ''),
+    insurerName: getContractField<string>(contract, 'insurance_company', '보험사', ''),
+    contractor: getContractField<string>(contract, 'contractor_name', '계약자', ''),
+    insured: getContractField<string>(contract, 'insured_name', '피보험자', ''),
     contractDate,
-    status: contract['계약상태'] || '',
-    coverageAmount: contract['가입금액(만원)'] || 0,
+    status: getContractField<string>(contract, 'status', '계약상태', ''),
+    coverageAmount: getContractField<number>(contract, 'coverage_amount', '가입금액(만원)', 0),
     insurancePeriod,
     paymentPeriod,
     paymentStatus: calculatePaymentStatus(paymentPeriod, contractDate),
     expiryDate: calculateExpiryDate(insurancePeriod, contractDate),
     paymentEndDate: calculatePaymentEndDate(paymentPeriod, contractDate),
-    premium: contract['보험료(원)'] || 0,
+    premium: getContractField<number>(contract, 'monthly_premium', '보험료(원)', 0),
     isLapsed,
     arIssueDate,
     arParsedAt
@@ -355,7 +378,7 @@ export async function handleListContracts(args: unknown) {
           // 정상 계약 수집
           const contracts = ar.contracts || [];
           for (const contract of contracts) {
-            const policyNumber = contract['증권번호'] || '';
+            const policyNumber = getContractField<string>(contract, 'contract_number', '증권번호', '');
             // 이미 최신 AR에서 수집된 증권번호면 스킵
             if (policyNumber && contractMap.has(policyNumber)) {
               continue;
@@ -380,7 +403,7 @@ export async function handleListContracts(args: unknown) {
           if (params.includeLapsed) {
             const lapsedContracts = ar.lapsed_contracts || [];
             for (const contract of lapsedContracts) {
-              const policyNumber = contract['증권번호'] || '';
+              const policyNumber = getContractField<string>(contract, 'contract_number', '증권번호', '');
               // 이미 수집된 증권번호면 스킵
               if (policyNumber && contractMap.has(policyNumber)) {
                 continue;
@@ -635,10 +658,14 @@ export async function handleGetContractDetails(args: unknown) {
     const policyNumber = params.policyNumber.trim();
 
     // Internal API 경유: 현재 설계사의 모든 고객에서 해당 증권번호 검색
+    // 이슈 #58: 영문 키 우선 + 한글 키 레거시 호환 ($or)
     const customers = await queryCustomers(
       {
         'meta.created_by': userId,
-        'annual_reports.contracts.증권번호': policyNumber
+        $or: [
+          { 'annual_reports.contracts.contract_number': policyNumber },
+          { 'annual_reports.contracts.증권번호': policyNumber },
+        ]
       },
       { _id: 1, 'personal_info.name': 1, 'annual_reports': 1 }
     );
@@ -658,9 +685,10 @@ export async function handleGetContractDetails(args: unknown) {
         const annualReports: AnnualReport[] = customer.annual_reports || [];
         for (const ar of annualReports) {
           const contracts = ar.contracts || [];
-          const found = contracts.find(c =>
-            c['증권번호']?.toLowerCase().includes(policyNumber.toLowerCase())
-          );
+          const found = contracts.find(c => {
+            const cn = getContractField<string>(c, 'contract_number', '증권번호', '');
+            return cn.toLowerCase().includes(policyNumber.toLowerCase());
+          });
           if (found) {
             const normalized = normalizeContract(
               found,
@@ -694,7 +722,9 @@ export async function handleGetContractDetails(args: unknown) {
 
     for (const ar of annualReports) {
       const contracts = ar.contracts || [];
-      const found = contracts.find(c => c['증권번호'] === policyNumber);
+      const found = contracts.find(c =>
+        getContractField<string>(c, 'contract_number', '증권번호', '') === policyNumber
+      );
       if (found) {
         const normalized = normalizeContract(
           found,

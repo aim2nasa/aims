@@ -97,13 +97,13 @@ export async function handleGetAnnualReports(args: unknown) {
       totalMonthlyPremium: report.total_monthly_premium || 0,
       sourceFileId: sfId && existingFileIds.has(sfId) ? sfId : undefined,
       contracts: (report.contracts || []).slice(0, 5).map((c: any) => ({
-        순번: c['순번'],
-        보험상품: c['보험상품'],
-        보험사: c['보험사'],
-        계약자: c['계약자'],      // 소유주
-        피보험자: c['피보험자'],
-        월보험료: c['보험료(원)'] || c['월보험료'],
-        계약상태: c['계약상태']
+        순번: c.seq ?? c['순번'],
+        보험상품: c.product_name ?? c['보험상품'],
+        보험사: c.insurance_company ?? c['보험사'],
+        계약자: c.contractor_name ?? c['계약자'],      // 소유주
+        피보험자: c.insured_name ?? c['피보험자'],
+        월보험료: c.monthly_premium ?? c['보험료(원)'] ?? c['월보험료'],
+        계약상태: c.status ?? c['계약상태']
       }))
     };
     });
@@ -229,8 +229,8 @@ export async function handleGetArContractHistory(args: unknown) {
       }
 
       for (const contract of contracts) {
-        // 증권번호 추출 (다양한 필드명 대응)
-        const policyNumber = contract['증권번호'] || contract.policy_number || contract.policyNumber;
+        // 증권번호 추출 (이슈 #58: 영문 키 우선, 한글 키 레거시 fallback)
+        const policyNumber = contract.contract_number || contract['증권번호'] || contract.policy_number || contract.policyNumber;
         if (!policyNumber) continue;
 
         // 특정 증권번호 필터링
@@ -239,16 +239,16 @@ export async function handleGetArContractHistory(args: unknown) {
         const snapshot = {
           issueDate,
           parsedAt,
-          productName: contract['보험상품'] || contract.product_name || '-',
-          insurerName: contract['보험사'] || contract.insurer_name || '-',
-          holder: contract['계약자'] || contract.holder || '-',
-          insured: contract['피보험자'] || contract.insured || '-',
-          contractDate: contract['계약일'] || contract.contract_date || '-',
-          status: contract['계약상태'] || contract.status || '-',
-          premium: contract['보험료(원)'] || contract['월보험료'] || contract.premium || 0,
-          coverageAmount: contract['가입금액'] || contract.coverage_amount || 0,
-          insurancePeriod: contract['보험기간'] || contract.insurance_period || '-',
-          paymentPeriod: contract['납입기간'] || contract.payment_period || '-',
+          productName: contract.product_name || contract['보험상품'] || '-',
+          insurerName: contract.insurance_company || contract['보험사'] || contract.insurer_name || '-',
+          holder: contract.contractor_name || contract['계약자'] || contract.holder || '-',
+          insured: contract.insured_name || contract['피보험자'] || contract.insured || '-',
+          contractDate: contract.contract_date || contract['계약일'] || '-',
+          status: contract.status || contract['계약상태'] || '-',
+          premium: contract.monthly_premium || contract['보험료(원)'] || contract['월보험료'] || contract.premium || 0,
+          coverageAmount: contract.coverage_amount || contract['가입금액(만원)'] || contract['가입금액'] || 0,
+          insurancePeriod: contract.insurance_period || contract['보험기간'] || '-',
+          paymentPeriod: contract.premium_payment_period || contract['납입기간'] || contract.payment_period || '-',
           sourceFileId
         };
 

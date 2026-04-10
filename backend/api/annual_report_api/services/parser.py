@@ -107,24 +107,25 @@ def parse_annual_report(
 
     Returns:
         dict: {
-            "고객명": str,
-            "발행기준일": "YYYY-MM-DD",
-            "보유계약 현황": [
+            "고객명": str,                 # metadata fallback
+            "발행기준일": "YYYY-MM-DD",    # metadata fallback
+            "total_monthly_premium": int,
+            "contracts": [
                 {
-                    "순번": int,
-                    "증권번호": str,
-                    "보험상품": str,
-                    "계약자": str,
-                    "피보험자": str,
-                    "계약일": "YYYY-MM-DD",
-                    "계약상태": str,
-                    "가입금액(만원)": float,
-                    "보험기간": str,
-                    "납입기간": str,
-                    "보험료(원)": int
+                    "seq": int,
+                    "contract_number": str,
+                    "product_name": str,
+                    "contractor_name": str,
+                    "insured_name": str,
+                    "contract_date": "YYYY-MM-DD",
+                    "status": str,
+                    "coverage_amount": float,  # 만원
+                    "insurance_period": str,
+                    "premium_payment_period": str,
+                    "monthly_premium": int     # 원
                 }
             ],
-            "부활가능 실효계약": [...]  # 선택사항
+            "lapsed_contracts": [...]  # 선택사항
         }
 
         파싱 실패 시:
@@ -189,49 +190,45 @@ Extract contract tables AND summary totals from the Annual Report PDF.
 
 Rules:
 1. 반드시 JSON만 반환. (마크다운, 주석, 설명 절대 금지)
-2. JSON Schema:
+2. JSON Schema (⚠️ 필드 키는 반드시 영문으로 반환 — 이슈 #58 스키마 통일):
    {
-     "고객명": string,       // 문서 상단/표지의 '{이름} 고객님을 위한' 또는 '{이름} 님은/님의' 패턴에서
+     "고객명": string,       // 문서 상단/표지의 '{이름} 고객님을 위한' 또는 '{이름} 님은/님의' 패턴
      "발행기준일": "YYYY-MM-DD",  // 푸터 '발행(기준)일 : YYYY년 M월 D일' 우선
-     "FSR_이름": string,     // 푸터 '담당 : {이름} FSR' 패턴에서 추출 (없으면 null)
-     "보험사명": string,     // 문서 헤더/푸터의 보험사명 (예: 메트라이프생명, 삼성생명 등)
-     "총_월보험료": number,  // ⚠️ PDF에 적힌 값 그대로 읽기 (계산 금지!)
-     "보유계약 현황": [
+     "FSR_이름": string,     // 푸터 '담당 : {이름} FSR' 패턴 (없으면 null)
+     "보험사명": string,     // 문서 헤더/푸터의 보험사명
+     "total_monthly_premium": number,  // ⚠️ PDF에 적힌 값 그대로 읽기 (계산 금지!)
+     "contracts": [
        {
-         "순번": number,
-         "증권번호": string,
-         "보험상품": string,
-         "계약자": string,
-         "피보험자": string,
-         "계약일": "YYYY-MM-DD",
-         "계약상태": string,
-         "가입금액(만원)": number,
-         "보험기간": string,
-         "납입기간": string,
-         "보험료(원)": number
+         "seq": number,
+         "contract_number": string,       // 증권번호
+         "product_name": string,          // 보험상품
+         "contractor_name": string,       // 계약자
+         "insured_name": string,          // 피보험자
+         "contract_date": "YYYY-MM-DD",   // 계약일
+         "status": string,                // 계약상태
+         "coverage_amount": number,       // 가입금액 (만원 단위)
+         "insurance_period": string,      // 보험기간
+         "premium_payment_period": string,// 납입기간
+         "monthly_premium": number        // 보험료 (원 단위)
        }
      ],
-     "부활가능 실효계약": [ ... ]  // 있는 경우만
+     "lapsed_contracts": [ ... ]  // 부활가능 실효계약 — 있는 경우만, 동일 스키마
    }
-3. 총_월보험료:
+3. total_monthly_premium:
    - ⚠️ 반드시 PDF에 적힌 값을 그대로 읽을 것 (계산 금지!)
    - "총 월보험료", "월보험료 합계" 등의 표현 찾기
-   - 숫자만 추출 (쉼표 제거)
-   - 정수형으로 변환
-4. 보험상품:
+   - 숫자만 추출 (쉼표 제거), 정수형으로 변환
+4. product_name (보험상품):
    - 반드시 PDF 표 셀 내부의 텍스트만 기록
-   - 표 외부 텍스트(머리말, 각주, 회사명, 마케팅 문구 등)는 절대 포함하지 말 것
+   - 표 외부 텍스트(머리말/각주/회사명/마케팅 문구)는 절대 포함하지 말 것
    - 상품명은 "보험", "종신", "연금", "플랜", "Plus" 등 보험 관련 키워드로 끝나야 함
-   - 줄바꿈으로 나뉜 경우 합쳐서 하나의 문자열로 작성
-   - 의미 없는 단어, 문구, 회사명은 절대 포함하지 않는다
-5. 계약자/피보험자:
-   - 반드시 사람 이름만 기록
-   - 불필요한 텍스트는 제거
-6. 계약일:
+   - 줄바꿈으로 나뉜 경우 합쳐서 하나의 문자열로
+5. contractor_name / insured_name (계약자/피보험자):
+   - 반드시 사람 이름만 기록, 불필요한 텍스트 제거
+6. contract_date (계약일):
    - "YYYY-MM-DD" 형식으로 변환
-7. 보험료(원):
-   - 숫자만 추출 (쉼표 제거)
-   - 정수형으로 변환
+7. monthly_premium (보험료):
+   - 숫자만 추출 (쉼표 제거), 정수형으로 변환
 
 NOTE: """ + page_range_note + """
 Customer name and issue date are already extracted from page 1 (when has_cover=True)."""
@@ -275,7 +272,7 @@ Customer name and issue date are already extracted from page 1 (when has_cover=T
             parsed_json = json.loads(cleaned_output)
 
             # 결과 로깅
-            contract_count = len(parsed_json.get("보유계약 현황", []))
+            contract_count = len(parsed_json.get("contracts", []))
             logger.info(
                 f"✅ 파싱 성공: 고객명={parsed_json.get('고객명')}, "
                 f"계약={contract_count}건, 발행일={parsed_json.get('발행기준일')}"

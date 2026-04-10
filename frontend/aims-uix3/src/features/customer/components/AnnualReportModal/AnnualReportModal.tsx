@@ -243,7 +243,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
             </div>
             <div className="ar-mobile-card__row">
               <span className="ar-mobile-card__label">가입금액</span>
-              <span className="ar-mobile-card__value">{(contract.coverage_amount / 10000).toLocaleString('ko-KR')}만원</span>
+              <span className="ar-mobile-card__value">{(contract.coverage_amount ?? 0).toLocaleString('ko-KR')}만원</span>
             </div>
             <div className="ar-mobile-card__row">
               <span className="ar-mobile-card__label">보험·납입</span>
@@ -252,7 +252,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
           </div>
           <div className="ar-mobile-card__premium">
             <span className="ar-mobile-card__premium-label">월 보험료</span>
-            <span className="ar-mobile-card__premium-value">{contract.monthly_premium.toLocaleString('ko-KR')}원</span>
+            <span className="ar-mobile-card__premium-value">{(contract.monthly_premium ?? 0).toLocaleString('ko-KR')}원</span>
           </div>
         </div>
       );
@@ -484,12 +484,12 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
                         </span>
                       </td>
                       <td className="contracts-table__cell--coverage">
-                        {(contract.coverage_amount / 10000).toLocaleString('ko-KR')}
+                        {(contract.coverage_amount ?? 0).toLocaleString('ko-KR')}
                       </td>
                       <td className="contracts-table__cell--period">{contract.insurance_period || '-'}</td>
                       <td className="contracts-table__cell--payment">{contract.premium_payment_period || '-'}</td>
                       <td className="contracts-table__cell--premium contracts-table__cell--premium-highlight">
-                        {contract.monthly_premium.toLocaleString('ko-KR')}
+                        {(contract.monthly_premium ?? 0).toLocaleString('ko-KR')}
                       </td>
                     </tr>
                   ))
@@ -546,12 +546,12 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
                         </span>
                       </td>
                       <td className="contracts-table__cell--coverage">
-                        {(contract.coverage_amount / 10000).toLocaleString('ko-KR')}
+                        {(contract.coverage_amount ?? 0).toLocaleString('ko-KR')}
                       </td>
                       <td className="contracts-table__cell--period">{contract.insurance_period || '-'}</td>
                       <td className="contracts-table__cell--payment">{contract.premium_payment_period || '-'}</td>
                       <td className="contracts-table__cell--premium contracts-table__cell--premium-highlight">
-                        {contract.monthly_premium.toLocaleString('ko-KR')}
+                        {(contract.monthly_premium ?? 0).toLocaleString('ko-KR')}
                       </td>
                     </tr>
                   ))

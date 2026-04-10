@@ -1024,7 +1024,12 @@ router.get('/customers/by-contract-party', authenticateJWT, async (req, res) => 
     const embeddedMatches = await db.collection(CUSTOMERS_COLLECTION).find({
       'meta.created_by': userId,
       deleted_at: null,
+      // 이슈 #58: 영문 키 우선, 마이그레이션 이전 한글 키 레거시 호환 유지
       $or: [
+        { 'annual_reports.contracts.contractor_name': partyName },
+        { 'annual_reports.contracts.insured_name': partyName },
+        { 'annual_reports.lapsed_contracts.contractor_name': partyName },
+        { 'annual_reports.lapsed_contracts.insured_name': partyName },
         { 'annual_reports.contracts.계약자': partyName },
         { 'annual_reports.contracts.피보험자': partyName },
         { 'annual_reports.lapsed_contracts.계약자': partyName },

@@ -428,9 +428,9 @@ class TestARErrorScenarios:
 
         mock_exists.return_value = True
         mock_get_parser.return_value.return_value = {
-            "보유계약 현황": [],
-            "부활가능 실효계약": [],
-            "총_월보험료": 0
+            "contracts": [],
+            "lapsed_contracts": [],
+            "total_monthly_premium": 0
         }
         mock_save.return_value = {"success": False, "message": "DB connection error"}
 

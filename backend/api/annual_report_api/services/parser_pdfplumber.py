@@ -194,11 +194,11 @@ def parse_annual_report(
         has_cover: 표지 유무 (미사용, 인터페이스 호환성)
 
     Returns:
-        파싱 결과 딕셔너리:
+        파싱 결과 딕셔너리 (영문 키):
         {
-            "총_월보험료": int,
-            "보유계약 현황": [...],
-            "부활가능 실효계약": [...]
+            "total_monthly_premium": int,
+            "contracts": [...],
+            "lapsed_contracts": [...]
         }
         또는
         {

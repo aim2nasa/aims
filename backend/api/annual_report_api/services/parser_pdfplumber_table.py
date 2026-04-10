@@ -23,7 +23,9 @@ logger = logging.getLogger(__name__)
 
 def convert_contract_format(contract: Dict) -> Dict:
     """
-    table_extractor 출력 형식을 표준 파서 인터페이스 형식으로 변환
+    table_extractor 출력 형식을 표준 파서 인터페이스 형식(영문 키)으로 변환
+
+    이슈 #58: 프론트엔드 `InsuranceContract` 인터페이스와 동일한 영문 키로 통일.
 
     Args:
         contract: table_extractor 형식의 계약 정보
@@ -42,33 +44,20 @@ def convert_contract_format(contract: Dict) -> Dict:
             }
 
     Returns:
-        표준 형식의 계약 정보
-            {
-                "순번": int,
-                "증권번호": str,
-                "보험상품": str,
-                "계약자": str,
-                "피보험자": str,
-                "계약일": str,
-                "계약상태": str,
-                "가입금액(만원)": float,
-                "보험기간": str,
-                "납입기간": str,
-                "보험료(원)": int
-            }
+        표준 형식의 계약 정보 (영문 키)
     """
     return {
-        "순번": contract.get("seq", 0),
-        "증권번호": contract.get("policyNumber", ""),
-        "보험상품": contract.get("productName", ""),
-        "계약자": contract.get("contractor", ""),
-        "피보험자": contract.get("insured", ""),
-        "계약일": contract.get("contractDate", ""),
-        "계약상태": contract.get("status", ""),
-        "가입금액(만원)": contract.get("coverageAmount", 0),
-        "보험기간": contract.get("insurancePeriod", ""),
-        "납입기간": contract.get("paymentPeriod", ""),
-        "보험료(원)": contract.get("premium", 0)
+        "seq": contract.get("seq", 0),
+        "contract_number": contract.get("policyNumber", ""),
+        "product_name": contract.get("productName", ""),
+        "contractor_name": contract.get("contractor", ""),
+        "insured_name": contract.get("insured", ""),
+        "contract_date": contract.get("contractDate", ""),
+        "status": contract.get("status", ""),
+        "coverage_amount": contract.get("coverageAmount", 0),
+        "insurance_period": contract.get("insurancePeriod", ""),
+        "premium_payment_period": contract.get("paymentPeriod", ""),
+        "monthly_premium": contract.get("premium", 0),
     }
 
 
@@ -93,11 +82,11 @@ def parse_annual_report(
         has_cover: 표지 유무. True면 본문 시작 페이지=2(idx 1), False면 본문 시작 페이지=1(idx 0)
 
     Returns:
-        파싱 결과 딕셔너리:
+        파싱 결과 딕셔너리 (영문 키):
         {
-            "총_월보험료": int,
-            "보유계약 현황": [...],
-            "부활가능 실효계약": [...]
+            "total_monthly_premium": int,
+            "contracts": [...],
+            "lapsed_contracts": [...]
         }
         또는
         {
