@@ -18,6 +18,7 @@ const express = require('express');
 const { ObjectId } = require('mongodb');
 const { COLLECTIONS } = require('@aims/shared-schema');
 const { utcNowISO } = require('../lib/timeUtils');
+const { coerceFileDocumentDates, coerceFileSetDates, FileInsertSchema, FilePatchSetSchema } = require('../lib/dateCoerce');
 const backendLogger = require('../lib/backendLogger');
 
 // 내부 API 키 (환경변수)
@@ -1719,8 +1720,12 @@ module.exports = function(db) {
         }
       }
 
+      // 날짜 필드 string → BSON Date 게이트웨이 변환 (#55)
+      // ocr_worker가 extra_fields로 overallStatusUpdatedAt를 string으로 보내는 케이스 대응
+      const coercedSet = coerceFileSetDates($set);
+
       // updateOp 구성
-      const updateOp = { $set };
+      const updateOp = { $set: coercedSet };
 
       // started_at_current_date: 서버 현재 시각 사용
       if (req.body.started_at_current_date === true) {
@@ -2051,7 +2056,8 @@ module.exports = function(db) {
         });
       }
 
-      const registeredAt = new Date().toISOString();
+      // BSON Date로 저장 (#55) — Express JSON 직렬화 시 자동으로 ISO 8601 문자열로 변환됨
+      const registeredAt = new Date();
 
       await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
         { _id: new ObjectId(id) },
@@ -2347,7 +2353,21 @@ module.exports = function(db) {
         document.customerId = new ObjectId(document.customerId);
       }
 
-      const result = await db.collection(COLLECTIONS.FILES).insertOne(document);
+      // #55 Zod 검증 (Gateway strict): 잘못된 날짜 문자열 즉시 거부
+      const parseResult = FileInsertSchema.safeParse(document);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid file payload',
+          issues: parseResult.error.issues.map(i => ({ path: i.path, message: i.message })),
+          timestamp: utcNowISO()
+        });
+      }
+
+      // #55 날짜 필드 string → BSON Date 게이트웨이 변환 (중첩 upload.converted_at 포함)
+      const coercedDoc = coerceFileDocumentDates(parseResult.data);
+
+      const result = await db.collection(COLLECTIONS.FILES).insertOne(coercedDoc);
 
       res.json({
         success: true,
@@ -2414,6 +2434,8 @@ module.exports = function(db) {
         if (updateOp.$set.customerId && typeof updateOp.$set.customerId === 'string' && ObjectId.isValid(updateOp.$set.customerId)) {
           updateOp.$set.customerId = new ObjectId(updateOp.$set.customerId);
         }
+        // 날짜 필드 string → BSON Date 게이트웨이 변환 (#55)
+        updateOp.$set = coerceFileSetDates(updateOp.$set);
       }
 
       const result = await db.collection(COLLECTIONS.FILES).updateOne(
